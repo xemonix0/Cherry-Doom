@@ -7,10 +7,10 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # 3.12 is needed for modern FindPython.
 cmake_minimum_required(VERSION 3.12)
-project("Woof"
-    VERSION 6.3.1
-    DESCRIPTION "Woof! is a continuation of Lee Killough's Doom source port MBF targeted at modern systems."
-    HOMEPAGE_URL "https://github.com/fabiangreffrath/woof"
+project("Nugget Doom"
+    VERSION 0.1.0
+    DESCRIPTION "Nugget Doom is a fork of Woof! meant to implement Crispy Doom features"
+    HOMEPAGE_URL "https://github.com/MrAlaux/Nugget-Doom"
     LANGUAGES C)
 
 # Set a default build type if none was specified
@@ -34,7 +34,7 @@ set(PROJECT_COMPANY "Fabian Greffrath and contributors")
 set(PROJECT_COPYRIGHT "Copyright (C) 1993-2021")
 set(PROJECT_LICENSE "GNU General Public License, version 2")
 set(PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
-set(PROJECT_TARNAME "woof")
+set(PROJECT_TARNAME "nugget-doom")
 set(PROJECT_VERSION_RC "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0") # ${PROJECT_VERSION_TWEAK}
 
 # Toggle-able defines added at compile-time.
