@@ -8,12 +8,6 @@ As a Woof! fork, its build instructions should also apply here:
 
 The source code is available at GitHub: https://github.com/MrAlaux/Nugget-Doom
 
-It can cloned via
-
-```
- git clone https://github.com/fabiangreffrath/woof.git
-```
-
 ### Linux
 
 You will need to install the SDL2, SDL2_image, SDL2_mixer and SDL2_net libraries.  Usually your distribution has these libraries in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
