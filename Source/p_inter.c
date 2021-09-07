@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -37,6 +37,8 @@
 #include "d_deh.h"  // Ty 03/22/98 - externalized strings
 
 #include "p_inter.h"
+
+#include "p_maputl.h" // [Nugget] P_AproxDistance
 
 #define BONUSADD        6
 
@@ -256,7 +258,10 @@ void P_GiveCard(player_t *player, card_t card)
 {
   if (player->cards[card])
     return;
-  player->bonuscount = BONUSADD;
+  if (!nugget_comp[comp_keypal] && !(demorecording||demoplayback||netgame))
+    {player->bonuscount += BONUSADD;}
+  else
+    {player->bonuscount = BONUSADD;}
   player->cards[card] = 1;
 }
 
@@ -590,8 +595,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
     case SPR_BFUG:
       if (!P_GiveWeapon (player, wp_bfg, false) )
         return;
-      player->message = 
-	classic_bfg || beta_emulation ? 
+      player->message =
+	classic_bfg || beta_emulation ?
 	"You got the BFG2704!  Oh, yes." :   // killough 8/9/98: beta BFG
 	  s_GOTBFG9000; // Ty 03/22/98 - externalized
       sound = sfx_wpnup;
@@ -708,10 +713,21 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 	  AM_Stop();    // don't die in auto map; switch view prior to dying
     }
 
-  if (target->health < -target->info->spawnhealth && target->info->xdeathstate)
-    P_SetMobjState (target, target->info->xdeathstate);
+  if // [Nugget] Chainsaw/SSG gibbing
+  (extra_gibbing && source && source->player && target->info->xdeathstate
+  && !(demorecording||demoplayback||netgame)
+  && ((source->player->readyweapon == wp_chainsaw // Chainsaw
+       && P_NuggetCheckDist(source, target, 65*FRACUNIT, false))
+      || (source->player->readyweapon == wp_supershotgun // SSG
+          && P_NuggetCheckDist(source, target, 128*FRACUNIT, true))
+      || (source->player->readyweapon == wp_fist // Berserk Fist
+          && source->player->powers[pw_strength]
+          && P_NuggetCheckDist(source, target, 64*FRACUNIT, false))))
+      {P_SetMobjState (target, target->info->xdeathstate);}
+  else if (target->health < -target->info->spawnhealth && target->info->xdeathstate)
+    {P_SetMobjState (target, target->info->xdeathstate);}
   else
-    P_SetMobjState (target, target->info->deathstate);
+    {P_SetMobjState (target, target->info->deathstate);}
 
   target->tics -= P_Random(pr_killtics)&3;
 
@@ -736,6 +752,27 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 
   mo = P_SpawnMobj (target->x,target->y,ONFLOORZ, item);
   mo->flags |= MF_DROPPED;    // special versions of items
+}
+
+// [Nugget] Calculate distance between player and target,
+// used for SSG gibbing and Chainsaw knockback fix
+boolean P_NuggetCheckDist (mobj_t* source, mobj_t* target, fixed_t range, boolean addradius)
+{
+    fixed_t	dist;
+    fixed_t radius = 0;
+    fixed_t range2;
+
+    if (addradius) {radius = target->info->radius;}
+
+    range2 = range + radius;
+
+    dist = P_AproxDistance(target->x - source->x,
+                           target->y - source->y);
+
+    if (dist > range2)
+        {return false;}
+    else
+        {return true;}
 }
 
 //
@@ -782,8 +819,13 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
   // thus kick away unless using the chainsaw.
 
   if (inflictor && !(target->flags & MF_NOCLIP) &&
-      (!source || !source->player ||
-       !(weaponinfo[source->player->readyweapon].flags & WPF_NOTHRUST)))
+      (!source || !source->player
+       // [Nugget] Hack to mostly prevent Chainsaw knockback bug
+       || ((weaponinfo[source->player->readyweapon].flags & WPF_NOTHRUST)
+            && !P_NuggetCheckDist(source, target, 65, false)
+            && nugget_comp[comp_csawthrust]
+            && !(demorecording||demoplayback||netgame))
+       || !(weaponinfo[source->player->readyweapon].flags & WPF_NOTHRUST)))
     {
       unsigned ang = R_PointToAngle2 (inflictor->x, inflictor->y,
                                       target->x,    target->y);
@@ -847,14 +889,14 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
         player->damagecount = 100;  // teleport stomp does 10k points...
 
 #if 0
-      // killough 11/98: 
+      // killough 11/98:
       // This is unused -- perhaps it was designed for
       // a hand-connected input device or VR helmet,
       // to pinch the player when they're hurt :)
 
       {
 	int temp = damage < 100 ? damage : 100;
-	
+
 	if (player == &players[consoleplayer])
 	  I_Tactile (40,10,40+temp*2);
       }
@@ -876,14 +918,14 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       // so that a friend can tell who's hurting a player
       if (player)
 	P_SetTarget(&target->target, source);
-      
+
       // killough 9/8/98:
       // If target's health is less than 50%, move it to the front of its list.
       // This will slightly increase the chances that enemies will choose to
       // "finish it off", but its main purpose is to alert friends of danger.
       if (target->health*2 < target->info->spawnhealth)
 	{
-	  thinker_t *cap = &thinkerclasscap[target->flags & MF_FRIEND ? 
+	  thinker_t *cap = &thinkerclasscap[target->flags & MF_FRIEND ?
 					   th_friends : th_enemies];
 	  (target->thinker.cprev->cnext = target->thinker.cnext)->cprev =
 	    target->thinker.cprev;
@@ -894,7 +936,14 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 
   if ((justhit = (P_Random (pr_painchance) < target->info->painchance &&
 		  !(target->flags & MF_SKULLFLY)))) //killough 11/98: see below
-    P_SetMobjState(target, target->info->painstate);
+  {
+    // [Nugget] Prevent pain state if no damage is caused
+    if (nugget_comp[comp_0dmgpain]
+        && !(demorecording||demoplayback||netgame)
+        && damage == 0) {;} // Do nothing
+    else
+    {P_SetMobjState(target, target->info->painstate);}
+  }
 
   target->reactiontime = 0;           // we're awake now...
 
@@ -902,7 +951,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 
   if (source && source != target && !(source->flags2 & MF2_DMGIGNORED) &&
       (!target->threshold || target->flags2 & MF2_NOTHRESHOLD) &&
-      ((source->flags ^ target->flags) & MF_FRIEND || 
+      ((source->flags ^ target->flags) & MF_FRIEND ||
        monster_infighting || demo_version < 203) &&
       !P_InfightingImmune(target, source))
     {

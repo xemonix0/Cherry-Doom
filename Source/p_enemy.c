@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -42,6 +42,7 @@
 #include "p_enemy.h"
 #include "p_tick.h"
 #include "m_bbox.h"
+#include "w_wad.h" // [Nugget] W_CheckNumForName
 
 static mobj_t *current_actor;
 
@@ -166,10 +167,10 @@ static boolean P_CheckMeleeRange(mobj_t *actor)
 static boolean P_HitFriend(mobj_t *actor)
 {
   return actor->target &&
-    (P_AimLineAttack(actor, 
+    (P_AimLineAttack(actor,
 		     R_PointToAngle2(actor->x, actor->y,
 				     actor->target->x, actor->target->y),
-		     P_AproxDistance(actor->x-actor->target->x, 
+		     P_AproxDistance(actor->x-actor->target->x,
 				     actor->y-actor->target->y), 0),
      linetarget) && linetarget != actor->target &&
     !((linetarget->flags ^ actor->flags) & MF_FRIEND);
@@ -192,11 +193,11 @@ static boolean P_CheckMissileRange(mobj_t *actor)
       // killough 7/18/98: no friendly fire at corpses
       // killough 11/98: prevent too much infighting among friends
 
-      return 
-	!(actor->flags & MF_FRIEND) || 
+      return
+	!(actor->flags & MF_FRIEND) ||
 	(actor->target->health > 0 &&
 	 (!(actor->target->flags & MF_FRIEND) ||
-	  (actor->target->player ? 
+	  (actor->target->player ?
 	   monster_infighting || P_Random(pr_defect) >128 :
 	   !(actor->target->flags & MF_JUSTHIT) && P_Random(pr_defect) >128)));
     }
@@ -239,7 +240,7 @@ static boolean P_CheckMissileRange(mobj_t *actor)
 
   if (P_Random(pr_missrange) < dist)
     return false;
-  
+
   if (actor->flags & MF_FRIEND && P_HitFriend(actor))
     return false;
 
@@ -280,7 +281,7 @@ static boolean P_IsOnLift(const mobj_t *actor)
 	case 231: case 232: case 235: case 236:
 	  return true;
 	}
-  
+
   return false;
 }
 
@@ -295,12 +296,12 @@ static boolean P_IsOnLift(const mobj_t *actor)
 //
 
 static int P_IsUnderDamage(mobj_t *actor)
-{ 
+{
   const struct msecnode_s *seclist;
   const ceiling_t *cl;             // Crushing ceiling
   int dir = 0;
   for (seclist=actor->touching_sectorlist; seclist; seclist=seclist->m_tnext)
-    if ((cl = seclist->m_sector->ceilingdata) && 
+    if ((cl = seclist->m_sector->ceilingdata) &&
 	cl->thinker.function == T_MoveCeiling)
       dir |= cl->direction;
   return dir;
@@ -334,7 +335,7 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) // killough 9/12/98
   if ((unsigned)actor->movedir >= 8)
     I_Error ("Weird actor->movedir!");
 #endif
-  
+
   // killough 10/98: make monsters get affected by ice and sludge too:
 
   if (monster_friction)
@@ -537,16 +538,16 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
   if (turnaround != DI_NODIR)         // find reverse direction
     turnaround ^= 4;
 
-  xdir = 
+  xdir =
     deltax >  10*FRACUNIT ? DI_EAST :
     deltax < -10*FRACUNIT ? DI_WEST : DI_NODIR;
 
-  ydir = 
+  ydir =
     deltay < -10*FRACUNIT ? DI_SOUTH :
     deltay >  10*FRACUNIT ? DI_NORTH : DI_NODIR;
 
   // try direct route
-  if (xdir != DI_NODIR && ydir != DI_NODIR && turnaround != 
+  if (xdir != DI_NODIR && ydir != DI_NODIR && turnaround !=
       (actor->movedir = deltay < 0 ? deltax > 0 ? DI_SOUTHEAST : DI_SOUTHWEST :
        deltax > 0 ? DI_NORTHEAST : DI_NORTHWEST) && P_TryWalk(actor))
     return;
@@ -578,7 +579,7 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay)
     for (tdir = DI_SOUTHEAST; tdir != DI_EAST-1; tdir--)
       if (tdir != turnaround && (actor->movedir = tdir, P_TryWalk(actor)))
 	return;
-  
+
   if ((actor->movedir = turnaround) != DI_NODIR && !P_TryWalk(actor))
     actor->movedir = DI_NODIR;
 }
@@ -681,7 +682,7 @@ static void P_NewChaseDir(mobj_t *actor)
       {
 	P_DoNewChaseDir(actor, dropoff_deltax, dropoff_deltay);
 
-	// If moving away from dropoff, set movecount to 1 so that 
+	// If moving away from dropoff, set movecount to 1 so that
 	// small steps are taken to get monster away from dropoff.
 
 	actor->movecount = 1;
@@ -695,7 +696,7 @@ static void P_NewChaseDir(mobj_t *actor)
 	// in certain situations (e.g. a crowded lift)
 
 	if (actor->flags & target->flags & MF_FRIEND &&
-	    distfriend << FRACBITS > dist && 
+	    distfriend << FRACBITS > dist &&
 	    !P_IsOnLift(target) && !P_IsUnderDamage(actor))
 	  deltax = -deltax, deltay = -deltay;
 	else
@@ -733,7 +734,7 @@ static boolean P_IsVisible(mobj_t *actor, mobj_t *mo, boolean allaround)
 {
   if (!allaround)
     {
-      angle_t an = R_PointToAngle2(actor->x, actor->y, 
+      angle_t an = R_PointToAngle2(actor->x, actor->y,
 				   mo->x, mo->y) - actor->angle;
       if (an > ANG90 && an < ANG270 &&
 	  P_AproxDistance(mo->x-actor->x, mo->y-actor->y) > WAKEUPRANGE)
@@ -779,7 +780,7 @@ static boolean PIT_FindTarget(mobj_t *mo)
 
   // Move the selected monster to the end of its associated
   // list, so that it gets searched last next time.
-	  
+
   {
     thinker_t *cap = &thinkerclasscap[mo->flags & MF_FRIEND ?
 				     th_friends : th_enemies];
@@ -858,7 +859,7 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
       if (!P_IsVisible(actor, player->mo, allaround))
 	continue;
-      
+
       P_SetTarget(&actor->target, player->mo);
 
       // killough 9/9/98: give monsters a threshold towards getting players
@@ -870,10 +871,10 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
     }
 }
 
-// 
+//
 // Friendly monsters, by Lee Killough 7/18/98
 //
-// Friendly monsters go after other monsters first, but 
+// Friendly monsters go after other monsters first, but
 // also return to owner if they cannot find any targets.
 // A marine's best friend :)  killough 7/18/98, 9/98
 //
@@ -935,7 +936,7 @@ static boolean P_LookForMonsters(mobj_t *actor, boolean allaround)
 
 	for (th = cap->cnext; th != cap; th = th->cnext)
 	  if (--n < 0)
-	    { 
+	    {
 	      // Only a subset of the monsters were searched. Move all of
 	      // the ones which were searched so far, to the end of the list.
 
@@ -994,7 +995,7 @@ static boolean P_HelpFriend(mobj_t *actor)
       }
     else
       if (((mobj_t *) th)->flags & MF_JUSTHIT &&
-	  ((mobj_t *) th)->target && 
+	  ((mobj_t *) th)->target &&
 	  ((mobj_t *) th)->target != actor->target &&
 	  !PIT_FindTarget(((mobj_t *) th)->target))
 	{
@@ -1020,10 +1021,10 @@ void A_Look(mobj_t *actor)
   mobj_t *targ;
 
   // killough 7/18/98:
-  // Friendly monsters go after other monsters first, but 
+  // Friendly monsters go after other monsters first, but
   // also return to player, without attacking them, if they
   // cannot find any targets. A marine's best friend :)
-  
+
   actor->threshold = actor->pursuecount = 0;
   if (!(actor->flags & MF_FRIEND && P_LookForTargets(actor, false)) &&
       !((targ = actor->subsector->sector->soundtarget) &&
@@ -1124,7 +1125,7 @@ void A_Chase(mobj_t *actor)
       }
 
   if (!actor->target || !(actor->target->flags&MF_SHOOTABLE))
-    {    
+    {
       if (!P_LookForTargets(actor,true)) // look for a new target
 	P_SetMobjState(actor, actor->info->spawnstate); // no new target
       return;
@@ -1166,7 +1167,7 @@ void A_Chase(mobj_t *actor)
       {   // killough 9/9/98: for backward demo compatibility
 	if (netgame && !P_CheckSight(actor, actor->target) &&
 	    P_LookForPlayers(actor, true))
-	  return;  
+	  return;
       }
     else  // killough 7/18/98, 9/9/98: new monster AI
       if (help_friends && P_HelpFriend(actor))
@@ -1177,17 +1178,17 @@ void A_Chase(mobj_t *actor)
 	else
 	  {
 	    actor->pursuecount = BASETHRESHOLD;
-	    
+
 	    // If current target is bad and a new one is found, return:
 
 	    if (!(actor->target && actor->target->health > 0 &&
-		  ((comp[comp_pursuit] && !netgame) || 
+		  ((comp[comp_pursuit] && !netgame) ||
 		   (((actor->target->flags ^ actor->flags) & MF_FRIEND ||
 		     (!(actor->flags & MF_FRIEND) && monster_infighting)) &&
 		    P_CheckSight(actor, actor->target)))) &&
 		P_LookForTargets(actor, true))
 	      return;
-	    
+
 	    // (Current target was good, or no new target was found.)
 	    //
 	    // If monster is a missile-less friend, give up pursuit and
@@ -1203,10 +1204,10 @@ void A_Chase(mobj_t *actor)
 	    }
 	  }
   }
-  
+
   if (actor->strafecount)
     actor->strafecount--;
-  
+
   // chase towards player
   if (--actor->movecount<0 || !P_SmartMove(actor))
     P_NewChaseDir(actor);
@@ -1281,7 +1282,15 @@ void A_CPosAttack(mobj_t *actor)
 
   if (!actor->target)
     return;
-  S_StartSound(actor, sfx_shotgn);
+
+  if (nugget_comp[comp_cgunnersfx]) { // [Nugget]
+    if (W_CheckNumForName("dschgun") >= 0)
+        {S_StartSound (actor, sfx_chgun);}
+    else
+        {S_StartSound (actor, sfx_pistol);}
+  }
+  else {S_StartSound (actor, sfx_shotgn);}
+
   A_FaceTarget(actor);
   bangle = actor->angle;
   slope = P_AimLineAttack(actor, bangle, MISSILERANGE, 0); // killough 8/2/98
@@ -1401,6 +1410,12 @@ void A_BruisAttack(mobj_t *actor)
 {
   if (!actor->target)
     return;
+
+  // [Nugget] Fix A_BruisAttack not calling A_FaceTarget
+  if (!(nugget_comp[comp_bruistarget])
+      && !(demorecording||demoplayback||netgame))
+    {A_FaceTarget(actor);}
+
   if (P_CheckMeleeRange(actor))
     {
       int damage;
@@ -1454,7 +1469,7 @@ void A_Tracer(mobj_t *actor)
   // during pauses and menu activations, while retaining old demo sync.
   //
   // leveltime would have been better to use to start with in Doom, but
-  // since old demos were recorded using gametic, we must stick with it, 
+  // since old demos were recorded using gametic, we must stick with it,
   // and improvise around it (using leveltime causes desync across levels).
 
   if ((gametic-basetic) & 3)
@@ -1667,11 +1682,11 @@ static boolean P_HealCorpse(mobj_t* actor, int radius, statenum_t healstate, sfx
                       corpsehit->radius = info->radius; // fix Ghost bug
                     }                                               // phares
 
-		  // killough 7/18/98: 
+		  // killough 7/18/98:
 		  // friendliness is transferred from AV to raised corpse
-		  corpsehit->flags = 
+		  corpsehit->flags =
 		    (info->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
-		  
+
                   corpsehit->health = info->spawnhealth;
 		  P_SetTarget(&corpsehit->target, NULL);  // killough 11/98
 
@@ -1774,6 +1789,10 @@ void A_VileTarget(mobj_t *actor)
   P_SetTarget(&actor->tracer, fog);   // killough 11/98
   P_SetTarget(&fog->target, actor);
   P_SetTarget(&fog->tracer, actor->target);
+  // [Nugget] Add this
+  // [crispy] play DSFLAMST sound when Arch-Vile spawns fire attack
+  if (nugget_comp[comp_flamst])
+  {S_StartSound(fog, sfx_flamst);}
   A_Fire(fog);
 }
 
@@ -2452,7 +2471,15 @@ void A_BrainPain(mobj_t *mo)
 void A_BrainScream(mobj_t *mo)
 {
   int x;
-  for (x=mo->x - 196*FRACUNIT ; x< mo->x + 320*FRACUNIT ; x+= FRACUNIT*8)
+
+  int x1, x2; // [Nugget] Fix lopsided IoS death explosions
+  if (nugget_comp[comp_iosdeath]
+      && !(demorecording||demoplayback||netgame))
+    {x1 = x2 = 280;}
+  else
+    {x1 = 196; x2 = 320;}
+
+  for (x=mo->x - x1*FRACUNIT ; x< mo->x + x2*FRACUNIT ; x+= FRACUNIT*8)
     {
       int y = mo->y - 320*FRACUNIT;
       int z = 128 + P_Random(pr_brainscream)*2*FRACUNIT;
@@ -2635,8 +2662,8 @@ void A_Spawn(mobj_t *mo)
     return;
   if (mo->state->misc1)
     {
-      mobj_t *newmobj = P_SpawnMobj(mo->x, mo->y, 
-				    (mo->state->misc2 << FRACBITS) + mo->z, 
+      mobj_t *newmobj = P_SpawnMobj(mo->x, mo->y,
+				    (mo->state->misc2 << FRACBITS) + mo->z,
 				    mo->state->misc1 - 1);
 
       if (comp[comp_friendlyspawn])

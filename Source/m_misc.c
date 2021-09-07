@@ -19,7 +19,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 //
@@ -107,6 +107,10 @@ extern int cfg_scalefactor; // haleyjd 05/11/09
 extern int cfg_aspectratio; // haleyjd 05/11/09
 extern int fullscreen; // [FG] save fullscren mode
 extern boolean flipcorpses; // [crispy] randomly flip corpse, blood and death animation sprites
+
+// [Nugget]
+extern int key_jump;
+extern int key_crouch;
 
 extern char *chat_macros[], *wad_files[], *deh_files[];  // killough 10/98
 
@@ -383,6 +387,56 @@ default_t defaults[] = {
     "1 to keep keyboard LEDs turned off"
   },
 
+  // [Nugget]
+
+  {
+    "adjust_viewheight",
+    (config_t *) &adjust_viewheight,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_gen,
+    wad_yes,
+    "1 to adjust the player's POV closer to Doomguy's head"
+  },
+
+  {
+    "extra_gibbing",
+    (config_t *) &extra_gibbing,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_gen,
+    wad_yes,
+    "1 to enable extra gibbing"
+  },
+
+  {
+    "jump_crouch",
+    (config_t *) &jump_crouch,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_gen,
+    wad_yes,
+    "1 to enable jumping/crouching"
+  },
+
+  {
+    "no_ss_background",
+    (config_t *) &no_ss_background,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_gen,
+    wad_yes,
+    "1 to disable the background in setup screens"
+  },
+
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity_horiz",
     (config_t *) &mouseSensitivity_horiz, NULL,
@@ -623,6 +677,128 @@ default_t defaults[] = {
     "A_Spawn new thing inherits friendliness"
   },
 
+  // [Nugget]
+
+  {
+    "comp_blazing2",
+    (config_t *) &default_nugget_comp[comp_blazing2],
+    (config_t *) &nugget_comp[comp_blazing2],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Blazing doors reopen with wrong sound"
+  },
+
+  {
+    "comp_manualdoor",
+    (config_t *) &default_nugget_comp[comp_manualdoor],
+    (config_t *) &nugget_comp[comp_manualdoor],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Manually reactivated moving doors are silent"
+  },
+
+  {
+    "comp_switchsource",
+    (config_t *) &default_nugget_comp[comp_switchsource],
+    (config_t *) &nugget_comp[comp_switchsource],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Corrected switch sound source"
+  },
+
+  {
+    "comp_cgundblsnd",
+    (config_t *) &default_nugget_comp[comp_cgundblsnd],
+    (config_t *) &nugget_comp[comp_cgundblsnd],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Chaingun makes two sounds with one bullet"
+  },
+
+  {
+    "comp_lscollision",
+    (config_t *) &default_nugget_comp[comp_lscollision],
+    (config_t *) &nugget_comp[comp_lscollision],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Fix Lost Soul colliding with items"
+  },
+
+  {
+    "comp_lsamnesia",
+    (config_t *) &default_nugget_comp[comp_lsamnesia],
+    (config_t *) &nugget_comp[comp_lsamnesia],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Lost Soul forgets target upon impact"
+  },
+
+  {
+    "comp_0dmgpain",
+    (config_t *) &default_nugget_comp[comp_0dmgpain],
+    (config_t *) &nugget_comp[comp_0dmgpain],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Prevent pain state with 0 damage attacks"
+  },
+
+  {
+    "comp_bruistarget",
+    (config_t *) &default_nugget_comp[comp_bruistarget],
+    (config_t *) &nugget_comp[comp_bruistarget],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Bruiser attack doesn't face target"
+  },
+
+  {
+    "comp_cgunnersfx",
+    (config_t *) &default_nugget_comp[comp_cgunnersfx],
+    (config_t *) &nugget_comp[comp_cgunnersfx],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Chaingunner uses pistol/chaingun sound"
+  },
+
+  {
+    "comp_flamst",
+    (config_t *) &default_nugget_comp[comp_flamst],
+    (config_t *) &nugget_comp[comp_flamst],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Arch-Vile fire plays flame start sound"
+  },
+
+  {
+    "comp_deadoof",
+    (config_t *) &default_nugget_comp[comp_deadoof],
+    (config_t *) &nugget_comp[comp_deadoof],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Dead players can still play oof sound"
+  },
+
+  {
+    "comp_iosdeath",
+    (config_t *) &default_nugget_comp[comp_iosdeath],
+    (config_t *) &nugget_comp[comp_iosdeath],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Fix lopsided Icon of Sin explosions"
+  },
+
+  {
+    "comp_keypal",
+    (config_t *) &default_nugget_comp[comp_keypal],
+    (config_t *) &nugget_comp[comp_keypal],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Key pickup resets palette"
+  },
+
+  {
+    "comp_choppers",
+    (config_t *) &default_nugget_comp[comp_choppers],
+    (config_t *) &nugget_comp[comp_choppers],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Fix IDCHOPPERS invulnerability"
+  },
+
+  {
+    "comp_csawthrust",
+    (config_t *) &default_nugget_comp[comp_csawthrust],
+    (config_t *) &nugget_comp[comp_csawthrust],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Partially fix Chainsaw knockback bug"
+  },
+
   // For key bindings, the values stored in the key_* variables       // phares
   // are the internal Doom Codes. The values stored in the default.cfg
   // file are the keyboard codes. I_ScanCode2DoomCode converts from
@@ -761,7 +937,7 @@ default_t defaults[] = {
   {
     "key_strafe",
     (config_t *) &key_strafe, NULL,
-    {KEYD_RALT}, {0,255}, number, ss_keys, wad_no,
+    {0}, {0,255}, number, ss_keys, wad_no,
     "key to use with arrows to strafe"
   },
 
@@ -770,6 +946,20 @@ default_t defaults[] = {
     (config_t *) &key_speed, NULL,
     {KEYD_RSHIFT}, {0,255}, number, ss_keys, wad_no,
     "key to run (move fast)"
+  },
+
+  { // [Nugget]
+    "key_jump",
+    (config_t *) &key_jump, NULL,
+    {KEYD_RALT}, {0,255}, number, ss_keys, wad_no,
+    "key to jump"
+  },
+
+  { // [Nugget]
+    "key_crouch",
+    (config_t *) &key_crouch, NULL,
+    {'c'}, {0,255}, number, ss_keys, wad_no,
+    "key to crouch/duck"
   },
 
   {
@@ -1864,7 +2054,7 @@ default_t defaults[] = {
     {0}, {-1,UL}, number, ss_none, wad_no,
     "SDL joystick device number, -1 to disable"
   },
-    
+
   // joystick sensitivities
   {
     "joystickSens_x",
@@ -2107,7 +2297,7 @@ void M_SaveDefaults (void)
 	    // yet, and this one isn't blank,
 	    // output a blank line for separation
 
-            if ((!blanks && (blanks = 1, 
+            if ((!blanks && (blanks = 1,
 			     *comments[line].text != '\n' &&
 			     putc('\n',f) == EOF)) ||
 		fputs(comments[line].text, f) == EOF)
@@ -2132,7 +2322,7 @@ void M_SaveDefaults (void)
       // in the user config
 
       if (config_help)
-	if ((dp->isstr ? 
+	if ((dp->isstr ?
 	     fprintf(f,"[(\"%s\")]", (char *) dp->defaultvalue.s) :
 	     dp->limit.min == UL ?
 	     dp->limit.max == UL ?
@@ -2147,7 +2337,7 @@ void M_SaveDefaults (void)
 
       // killough 11/98:
       // Write out original default if .wad file has modified the default
-      
+
       if (dp->isstr)
         value.s = dp->modified ? dp->orig_default.s : dp->location->s;
       else
@@ -2157,7 +2347,7 @@ void M_SaveDefaults (void)
       // killough 3/6/98:
       // use spaces instead of tabs for uniform justification
 
-      if (!dp->isstr ? fprintf(f, "%-25s %5i\n", dp->name, 
+      if (!dp->isstr ? fprintf(f, "%-25s %5i\n", dp->name,
 			       strncmp(dp->name, "key_", 4) ? value.i :
 			       I_DoomCode2ScanCode(value.i)) == EOF :
 	  fprintf(f,"%-25s \"%s\"\n", dp->name, (char *) value.s) == EOF)
@@ -2453,7 +2643,7 @@ boolean M_WriteFile(char const *name, void *source, int length)
   FILE *fp;
 
   errno = 0;
-  
+
   if (!(fp = fopen(name, "wb")))       // Try opening file
     return 0;                          // Could not open file for writing
 
@@ -2497,7 +2687,7 @@ int M_ReadFile(char const *name, byte **buffer)
       fclose(fp);
     }
 
-  I_Error("Couldn't read file %s: %s", name, 
+  I_Error("Couldn't read file %s: %s", name,
 	  errno ? strerror(errno) : "(Unknown Error)");
 
   return 0;

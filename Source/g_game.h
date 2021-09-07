@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 //-----------------------------------------------------------------------------
@@ -98,6 +98,8 @@ extern int  key_fire;
 extern int  key_use;
 extern int  key_strafe;
 extern int  key_speed;
+extern int  key_jump; // [Nugget]
+extern int  key_crouch; // [Nugget]
 extern int  key_escape;                                             // phares
 extern int  key_savegame;                                           //    |
 extern int  key_loadgame;                                           //    V
@@ -132,7 +134,7 @@ extern int  key_weapon5;
 extern int  key_weapon6;
 extern int  key_weapon7;
 extern int  key_weapon8;
-extern int  key_weapon9;                                            
+extern int  key_weapon9;
 // [FG] prev/next weapon keys and buttons
 extern int  key_prevweapon;
 extern int  key_nextweapon;

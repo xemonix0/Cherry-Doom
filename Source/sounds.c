@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 //
@@ -113,7 +113,7 @@ musicinfo_t S_music[] = {
 //
 // Information about all the sfx
 //
-// killough 12/98: 
+// killough 12/98:
 // Reimplemented 'singularity' flag, adjusting many sounds below
 
 sfxinfo_t S_sfx[] = {
@@ -204,7 +204,8 @@ sfxinfo_t S_sfx[] = {
   { "punch",  sg_none,   64, 0, -1, -1, 0 },
   { "hoof",   sg_none,   70, 0, -1, -1, 0 },
   { "metal",  sg_none,   70, 0, -1, -1, 0 },
-  { "chgun",  sg_none,   64, &S_sfx[sfx_pistol], 150, 0, 0 },
+  // [Nugget] Make DSCHGUN an independent sound
+  { "chgun",  sg_none,   64, 0, -1, -1, 0 },
   { "tink",   sg_none,   60, 0, -1, -1, 0 },
   { "bdopn",  sg_none,  100, 0, -1, -1, 0 },
   { "bdcls",  sg_none,  100, 0, -1, -1, 0 },

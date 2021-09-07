@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -361,6 +361,35 @@ extern int doom_weapon_toggles;   // killough 10/98
 
 // [FG] centered weapon sprite
 extern int center_weapon;
+
+//----- Nugget ---------------------------------------------------------------
+
+extern int adjust_viewheight;
+extern int extra_gibbing;
+extern int jump_crouch;
+extern int no_ss_background;
+
+enum {
+  comp_blazing2,
+  comp_manualdoor,
+  comp_switchsource,
+  comp_bruistarget,
+  comp_cgundblsnd,
+  comp_lscollision,
+  comp_lsamnesia,
+  comp_0dmgpain,
+  comp_cgunnersfx,
+  comp_flamst,
+  comp_deadoof,
+  comp_iosdeath,
+  comp_keypal,
+  comp_choppers,
+  comp_csawthrust,
+
+  NUGGET_COMP_TOTAL
+};
+
+extern int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
 
 #endif
 

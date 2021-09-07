@@ -126,18 +126,18 @@ if(WIN32)
 endif()
 
 # Standard target definition
-add_executable(woof WIN32 ${WOOF_SOURCES})
-target_woof_settings(woof)
-target_include_directories(woof PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
-target_link_libraries(woof PRIVATE ${WOOF_LIBRARIES}
+add_executable(nugget-doom WIN32 ${WOOF_SOURCES})
+target_woof_settings(nugget-doom)
+target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
+target_link_libraries(nugget-doom PRIVATE ${WOOF_LIBRARIES}
     ZLIB::ZLIB SDL2::SDL2 SDL2::image SDL2::mixer SDL2::net opl)
 
 if(MSVC)
     # MSVC tries to supply a default manifest and complains when it finds ours
     # unless we specifically tell it not to.
-    set_target_properties(woof PROPERTIES LINK_FLAGS "/MANIFEST:NO")
+    set_target_properties(nugget-doom PROPERTIES LINK_FLAGS "/MANIFEST:NO")
     # Enable console for debug build.
-    set_target_properties(woof PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+    set_target_properties(nugget-doom PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
 endif()
 
 # Optional features.
@@ -145,13 +145,13 @@ endif()
 # Our defines are not namespaced, so we pass them at compile-time instead of
 # using config.h.
 if("${${PROJECT_NAME}_INSTRUMENTED}")
-    target_compile_definitions(woof PRIVATE INSTRUMENTED)
+    target_compile_definitions(nugget-doom PRIVATE INSTRUMENTED)
 endif()
 if("${${PROJECT_NAME}_RANGECHECK}")
-    target_compile_definitions(woof PRIVATE RANGECHECK)
+    target_compile_definitions(nugget-doom PRIVATE RANGECHECK)
 endif()
 if("${${PROJECT_NAME}_STRICT}")
-    target_compile_definitions(woof PRIVATE MBF_STRICT)
+    target_compile_definitions(nugget-doom PRIVATE MBF_STRICT)
 endif()
 
 # Assemble library files.
@@ -186,15 +186,15 @@ endif()
 
 # Copy library files to target directory.
 foreach(SDL2_DLL ${WOOF_DLLS})
-    add_custom_command(TARGET woof POST_BUILD
+    add_custom_command(TARGET nugget-doom POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "${SDL2_DLL}" $<TARGET_FILE_DIR:woof> VERBATIM)
+        "${SDL2_DLL}" $<TARGET_FILE_DIR:nugget-doom> VERBATIM)
 endforeach()
 
 # Files to package in our distribution.
 if(WIN32)
-    install(TARGETS woof RUNTIME DESTINATION .)
+    install(TARGETS nugget-doom RUNTIME DESTINATION .)
 else()
-    install(TARGETS woof RUNTIME DESTINATION bin)
+    install(TARGETS nugget-doom RUNTIME DESTINATION bin)
 endif()
 install(FILES ${WOOF_DLLS} DESTINATION .)

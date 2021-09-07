@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: m_cheat.c,v 1.7 1998/05/12 12:47:00 phares Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -84,6 +84,8 @@ static void cheat_printstats();   // killough 8/23/98
 static void cheat_autoaim();      // killough 7/19/98
 static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
+static void cheat_infammo(); // [Nugget] Infinite ammo cheat
+static void cheat_fastweaps(); // [Nugget] Fast weapons cheat
 
 //-----------------------------------------------------------------------------
 //
@@ -137,7 +139,7 @@ struct cheat_s cheat[] = {
   {"idbeholds",  "Berserk",           not_net | not_demo,
    cheat_pw,  pw_strength        },
 
-  {"idbeholdi",  "Invisibility",      not_net | not_demo,  
+  {"idbeholdi",  "Invisibility",      not_net | not_demo,
    cheat_pw,  pw_invisibility    },
 
   {"idbeholdr",  "Radiation Suit",    not_net | not_demo,
@@ -170,7 +172,7 @@ struct cheat_s cheat[] = {
   {"hom",     NULL,                   always,
    cheat_hom      },     // killough 2/07/98: HOM autodetector
 
-  {"key",     NULL,                   not_net | not_demo, 
+  {"key",     NULL,                   not_net | not_demo,
    cheat_key   },     // killough 2/16/98: generalized key cheats
 
   {"keyr",    NULL,                   not_net | not_demo,
@@ -182,13 +184,13 @@ struct cheat_s cheat[] = {
   {"keyb",    NULL,                   not_net | not_demo,
    cheat_keyx  },
 
-  {"keyrc",   NULL,                   not_net | not_demo, 
+  {"keyrc",   NULL,                   not_net | not_demo,
    cheat_keyxx, it_redcard    },
 
   {"keyyc",   NULL,                   not_net | not_demo,
    cheat_keyxx, it_yellowcard },
 
-  {"keybc",   NULL,                   not_net | not_demo, 
+  {"keybc",   NULL,                   not_net | not_demo,
    cheat_keyxx, it_bluecard   },
 
   {"keyrs",   NULL,                   not_net | not_demo,
@@ -222,7 +224,7 @@ struct cheat_s cheat[] = {
    cheat_pitch},         // killough 2/21/98: pitched sound toggle
 
   // killough 2/21/98: reduce RSI injury by adding simpler alias sequences:
-  {"mbfran",     NULL,                always, 
+  {"mbfran",     NULL,                always,
    cheat_tran    },   // killough 2/21/98: same as mbftran
 
   {"fast",    NULL,                   not_net | not_demo,
@@ -231,7 +233,7 @@ struct cheat_s cheat[] = {
   {"ice",     NULL,                   not_net | not_demo,
    cheat_friction   },   // phares 3/10/98: toggle variable friction effects
 
-  {"push",    NULL,                   not_net | not_demo, 
+  {"push",    NULL,                   not_net | not_demo,
    cheat_pushers    },   // phares 3/10/98: toggle pushers
 
   {"nuke",    NULL,                   not_net | not_demo,
@@ -261,6 +263,14 @@ struct cheat_s cheat[] = {
   {"showfps",    NULL,                always,
    cheat_showfps},
 
+// [Nugget] Infinite ammo cheat
+  {"fullclip",    NULL,                not_net|not_demo,
+   cheat_infammo},
+
+// [Nugget] Fast weapons cheat
+  {"valiant",    NULL,                not_net|not_demo,
+   cheat_fastweaps},
+
   {NULL}                 // end-of-list marker
 };
 
@@ -280,12 +290,28 @@ static void cheat_showfps()
   plyr->cheats ^= CF_SHOWFPS;
 }
 
+// [Nugget] Infinite ammo
+static void cheat_infammo() {
+  plyr->cheats ^= CF_INFAMMO;
+  plyr->message = plyr->cheats & CF_INFAMMO
+                  ? "Infinite ammo ON"
+                  : "Infinite ammo OFF";
+}
+
+// [Nugget] Fast weapons
+static void cheat_fastweaps() {
+  plyr->cheats ^= CF_FASTWEAPS;
+  plyr->message = plyr->cheats & CF_FASTWEAPS
+                  ? "Fast Weapons ON"
+                  : "Fast Weapons OFF";
+}
+
 // killough 7/19/98: Autoaiming optional in beta emulation mode
 static void cheat_autoaim()
 {
   extern int autoaim;
   plyr->message = (autoaim=!autoaim) ?
-    "Projectile autoaiming on" : 
+    "Projectile autoaiming on" :
     "Projectile autoaiming off";
 }
 
@@ -293,7 +319,7 @@ static void cheat_mus(buf)
 char buf[3];
 {
   int musnum;
-  
+
   //jff 3/20/98 note: this cheat allowed in netgame/demorecord
 
   //jff 3/17/98 avoid musnum being negative and crashing
@@ -301,11 +327,11 @@ char buf[3];
     return;
 
   plyr->message = s_STSTR_MUS; // Ty 03/27/98 - externalized
-  
+
   if (gamemode == commercial)
     {
       musnum = mus_runnin + (buf[0]-'0')*10 + buf[1]-'0' - 1;
-          
+
       //jff 4/11/98 prevent IDMUS00 in DOOMII and IDMUS36 or greater
       if (musnum < mus_runnin ||  ((buf[0]-'0')*10 + buf[1]-'0') > 35)
         plyr->message = s_STSTR_NOMUS; // Ty 03/27/98 - externalized
@@ -318,7 +344,7 @@ char buf[3];
   else
     {
       musnum = mus_e1m1 + (buf[0]-'1')*9 + (buf[1]-'1');
-          
+
       //jff 4/11/98 prevent IDMUS0x IDMUSx0 in DOOMI and greater than introa
       if (buf[0] < '1' || buf[1] < '1' || ((buf[0]-'1')*9 + buf[1]-'1') > 31)
         plyr->message = s_STSTR_NOMUS; // Ty 03/27/98 - externalized
@@ -334,7 +360,8 @@ char buf[3];
 static void cheat_choppers()
 {
   plyr->weaponowned[wp_chainsaw] = true;
-  plyr->powers[pw_invulnerability] = true;
+  if (nugget_comp[comp_choppers]) {P_GivePower(plyr, pw_invulnerability);}
+  else                            {plyr->powers[pw_invulnerability] = true;}
   plyr->message = s_STSTR_CHOPPERS; // Ty 03/27/98 - externalized
 }
 
@@ -345,11 +372,11 @@ static void cheat_god()
     {
       if (plyr->mo)
         plyr->mo->health = god_health;  // Ty 03/09/98 - deh
-          
+
       plyr->health = god_health;
       plyr->message = s_STSTR_DQDON; // Ty 03/27/98 - externalized
     }
-  else 
+  else
     plyr->message = s_STSTR_DQDOFF; // Ty 03/27/98 - externalized
 }
 
@@ -372,13 +399,13 @@ static void cheat_fa()
 
   plyr->armorpoints = idfa_armor;      // Ty 03/09/98 - deh
   plyr->armortype = idfa_armor_class;  // Ty 03/09/98 - deh
-        
+
   // You can't own weapons that aren't in the game // phares 02/27/98
   for (i=0;i<NUMWEAPONS;i++)
     if (!(((i == wp_plasma || i == wp_bfg) && gamemode == shareware) ||
           (i == wp_supershotgun && gamemode != commercial)))
       plyr->weaponowned[i] = true;
-        
+
   for (i=0;i<NUMAMMO;i++)
     if (i!=am_cell || gamemode!=shareware)
       plyr->ammo[i] = plyr->maxammo[i];
@@ -409,7 +436,7 @@ static void cheat_noclip()
   // Simplified, accepting both "noclip" and "idspispopd".
   // no clipping mode cheat
 
-  plyr->message = (plyr->cheats ^= CF_NOCLIP) & CF_NOCLIP ? 
+  plyr->message = (plyr->cheats ^= CF_NOCLIP) & CF_NOCLIP ?
     s_STSTR_NCON : s_STSTR_NCOFF; // Ty 03/27/98 - externalized
 }
 
@@ -441,7 +468,7 @@ char buf[3];
 
   if (gamemode == commercial)
     {
-      epsd = 1; //jff was 0, but espd is 1-based 
+      epsd = 1; //jff was 0, but espd is 1-based
       map = (buf[0] - '0')*10 + buf[1] - '0';
     }
   else
@@ -471,7 +498,7 @@ char buf[3];
 // killough 2/7/98: simplified using dprintf and made output more user-friendly
 static void cheat_mypos()
 {
-  dprintf("Position (%d,%d,%d)\tAngle %-.0f", 
+  dprintf("Position (%d,%d,%d)\tAngle %-.0f",
           players[consoleplayer].mo->x >> FRACBITS,
           players[consoleplayer].mo->y >> FRACBITS,
           players[consoleplayer].mo->z >> FRACBITS,
@@ -495,7 +522,7 @@ static void cheat_comp()
 static void cheat_friction()
 {
   plyr->message =                       // Ty 03/27/98 - *not* externalized
-    (variable_friction = !variable_friction) ? "Variable Friction enabled" : 
+    (variable_friction = !variable_friction) ? "Variable Friction enabled" :
                                                "Variable Friction disabled";
 }
 
@@ -577,7 +604,7 @@ static void cheat_hom()
 // killough 3/6/98: -fast parameter toggle
 static void cheat_fast()
 {
-  plyr->message = (fastparm = !fastparm) ? "Fast Monsters On" : 
+  plyr->message = (fastparm = !fastparm) ? "Fast Monsters On" :
     "Fast Monsters Off";  // Ty 03/27/98 - *not* externalized
   G_SetFastParms(fastparm); // killough 4/10/98: set -fast parameter correctly
 }
@@ -595,7 +622,7 @@ static void cheat_keyx()
 
 static void cheat_keyxx(int key)
 {
-  plyr->message = (plyr->cards[key] = !plyr->cards[key]) ? 
+  plyr->message = (plyr->cards[key] = !plyr->cards[key]) ?
     "Key Added" : "Key Removed";  // Ty 03/27/98 - *not* externalized
 }
 
@@ -623,7 +650,7 @@ char buf[3];
     {
       if ((plyr->weaponowned[w] = !plyr->weaponowned[w]))
         plyr->message = "Weapon Added";  // Ty 03/27/98 - *not* externalized
-      else 
+      else
         {
           plyr->message = "Weapon Removed"; // Ty 03/27/98 - *not* externalized
           if (w==plyr->readyweapon)         // maybe switch if weapon removed
@@ -654,16 +681,16 @@ char buf[1];
         }
   else
     if (a>=0 && a<NUMAMMO)  // Ty 03/27/98 - *not* externalized
-      { // killough 5/5/98: switch plasma and rockets for now -- KLUDGE 
+      { // killough 5/5/98: switch plasma and rockets for now -- KLUDGE
         a = a==am_cell ? am_misl : a==am_misl ? am_cell : a;  // HACK
-        plyr->message = (plyr->ammo[a] = !plyr->ammo[a]) ? 
+        plyr->message = (plyr->ammo[a] = !plyr->ammo[a]) ?
           plyr->ammo[a] = plyr->maxammo[a], "Ammo Added" : "Ammo Removed";
       }
 }
 
 static void cheat_smart()
 {
-  plyr->message = (monsters_remember = !monsters_remember) ? 
+  plyr->message = (monsters_remember = !monsters_remember) ?
     "Smart Monsters Enabled" : "Smart Monsters Disabled";
 }
 
@@ -753,7 +780,7 @@ boolean M_FindCheats(int key)
           ret = 1;                        // responder has eaten key
         }
       else
-        if (!matchedbefore)               // allow only one cheat at a time 
+        if (!matchedbefore)               // allow only one cheat at a time
           {
             matchedbefore = ret = 1;      // responder has eaten key
             cheat[i].func(cheat[i].arg);  // call cheat handler

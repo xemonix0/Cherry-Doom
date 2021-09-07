@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -93,7 +93,7 @@ boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
       seenstate[state] = 1 + st->nextstate;   // killough 4/9/98
 
       state = st->nextstate;
-    } 
+    }
   while (!mobj->tics && !seenstate[state]);   // killough 4/9/98
 
   if (ret && !mobj->tics)  // killough 4/9/98: detect state cycles
@@ -153,7 +153,12 @@ void P_XYMovement (mobj_t* mo)
 	  mo->flags &= ~MF_SKULLFLY;
 	  mo->momz = 0;
 
-	  P_SetMobjState(mo, mo->info->spawnstate);
+      // [Nugget] Fix forgetful lost soul
+      if (!nugget_comp[comp_lsamnesia]
+          && !(demorecording||demoplayback||netgame))
+        {P_SetMobjState(mo, mo->info->seestate);}
+      else
+        {P_SetMobjState(mo, mo->info->spawnstate);}
 	}
       return;
     }
@@ -162,7 +167,7 @@ void P_XYMovement (mobj_t* mo)
 
   if (mo->momx > MAXMOVE)
     mo->momx = MAXMOVE;
-  else 
+  else
     if (mo->momx < -MAXMOVE)
       mo->momx = -MAXMOVE;
 
@@ -212,9 +217,9 @@ void P_XYMovement (mobj_t* mo)
 	  // killough 8/11/98: bouncing off walls
 	  // killough 10/98:
 	  // Add ability for objects other than players to bounce on ice
-	  
+
 	  if (!(mo->flags & MF_MISSILE) && demo_version >= 203 &&
-	      (mo->flags & MF_BOUNCES || 
+	      (mo->flags & MF_BOUNCES ||
 	       (!player && blockline &&
 		variable_friction && mo->z <= mo->floorz &&
 		P_GetFriction(mo, NULL) > ORIG_FRICTION)))
@@ -248,7 +253,7 @@ void P_XYMovement (mobj_t* mo)
 	  else
 	    if (player)   // try to slide along it
 	      P_SlideMove (mo);
-	    else 
+	    else
 	      if (mo->flags & MF_MISSILE)
 		{
 		  // explode a missile
@@ -314,15 +319,15 @@ void P_XYMovement (mobj_t* mo)
       // killough 10/98:
       // Don't affect main player when voodoo dolls stop, except in old demos:
 
-      if (player && (unsigned)(player->mo->state - states - S_PLAY_RUN1) < 4 
+      if (player && (unsigned)(player->mo->state - states - S_PLAY_RUN1) < 4
 	  && (player->mo == mo || demo_version < 203))
 	P_SetMobjState(player->mo, S_PLAY);
 
       mo->momx = mo->momy = 0;
-      
+
       // killough 10/98: kill any bobbing momentum too (except in voodoo dolls)
       if (player && player->mo == mo)
-	player->momx = player->momy = 0; 
+	player->momx = player->momy = 0;
     }
   else
     {
@@ -389,6 +394,7 @@ static void P_ZMovement (mobj_t* mo)
   // BFG fireballs bounced on floors and ceilings in Pre-Beta Doom
   // killough 8/9/98: added support for non-missile objects bouncing
   // (e.g. grenade, mine, pipebomb)
+  int view; // [Nugget] Adjustable viewheight
 
   if (mo->flags & MF_BOUNCES && mo->momz)
     {
@@ -406,7 +412,7 @@ static void P_ZMovement (mobj_t* mo)
 		    FixedMul(mo->momz, (fixed_t)(FRACUNIT*.85)) :
 		    FixedMul(mo->momz, (fixed_t)(FRACUNIT*.70)) :
 		    FixedMul(mo->momz, (fixed_t)(FRACUNIT*.45)) ;
-		  
+
 		  // Bring it to rest below a certain speed
 		  if (abs(mo->momz) <= mo->info->mass*(GRAVITY*4/256))
 		    mo->momz = 0;
@@ -474,13 +480,24 @@ static void P_ZMovement (mobj_t* mo)
   // killough 8/9/98: end bouncing object code
 
   // check for smooth step up
+  // [Nugget] Check for viewheight setting
+  if (adjust_viewheight && mo->player
+      && !(demorecording||netgame)) {
+    if (mo->intflags & MIF_CROUCHING) {view = ALTCVIEWHEIGHT;}
+    else                                      {view = ALTVIEWHEIGHT;}
+    }
+    else {
+      if (mo->intflags & MIF_CROUCHING) {view = CVIEWHEIGHT;}
+      else                                      {view = VIEWHEIGHT;}
+    }
+
 
   if (mo->player &&
       mo->player->mo == mo &&  // killough 5/12/98: exclude voodoo dolls
       mo->z < mo->floorz)
     {
       mo->player->viewheight -= mo->floorz-mo->z;
-      mo->player->deltaviewheight = (VIEWHEIGHT - mo->player->viewheight)>>3;
+      mo->player->deltaviewheight = (view - mo->player->viewheight)>>3;
     }
 
   // adjust altitude
@@ -530,7 +547,10 @@ floater:
 		// and utter appropriate sound.
 
 		mo->player->deltaviewheight = mo->momz>>3;
-		S_StartSound (mo, sfx_oof);
+		// [Nugget] Add this
+		// [crispy] dead men don't say "oof"
+		if (mo->health > 0 || nugget_comp[comp_deadoof])
+		{S_StartSound (mo, sfx_oof);}
 	      }
 	  mo->momz = 0;
 	}
@@ -708,7 +728,7 @@ void P_MobjThinker (mobj_t* mobj)
       mobj->oldangle = mobj->angle;
   }
 
-  // killough 11/98: 
+  // killough 11/98:
   // removed old code which looked at target references
   // (we use pointer reference counting now)
 
@@ -772,7 +792,7 @@ void P_MobjThinker (mobj_t* mobj)
       if (!--mobj->tics)
 	P_SetMobjState(mobj, mobj->state->nextstate);
     }
-  else                       
+  else
     if (mobj->flags & MF_COUNTKILL && respawnmonsters &&
 	++mobj->movecount >= 12*35 && !(leveltime & 31) &&
 	P_Random (pr_respawn) <= 4)
@@ -803,7 +823,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
 
   // killough 8/23/98: no friends, bouncers, or touchy things in old demos
   if (demo_version < 203)
-    mobj->flags &= ~(MF_BOUNCES | MF_FRIEND | MF_TOUCHY); 
+    mobj->flags &= ~(MF_BOUNCES | MF_FRIEND | MF_TOUCHY);
   else
     if (type == MT_PLAYER)         // Except in old demos, players
       mobj->flags |= MF_FRIEND;    // are always friends.
@@ -844,7 +864,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   mobj->dropoffz =           // killough 11/98: for tracking dropoffs
   mobj->floorz   = mobj->subsector->sector->floorheight;
   mobj->ceilingz = mobj->subsector->sector->ceilingheight;
-  
+
   mobj->z = z == ONFLOORZ ? mobj->floorz : z == ONCEILINGZ ?
     mobj->ceilingz - mobj->height : z;
 
@@ -949,7 +969,7 @@ int P_FindDoomedNum(unsigned type)
 	    hash[h].first = i;
 	  }
     }
-  
+
   i = hash[type % NUMMOBJTYPES].first;
   while (i < NUMMOBJTYPES && mobjinfo[i].doomednum != type)
     i = hash[i].next;
@@ -972,7 +992,7 @@ void P_RespawnSpecials (void)
       iquehead == iquetail ||  // nothing left to respawn?
       leveltime - itemrespawntime[iquetail] < 30*35) // wait 30 seconds
     return;
-  
+
   mthing = &itemrespawnque[iquetail];
 
   x = mthing->x << FRACBITS;
@@ -1034,7 +1054,7 @@ void P_SpawnPlayer (mapthing_t* mthing)
 
   if (mthing->type > 1)
     mobj->flags |= (mthing->type-1)<<MF_TRANSSHIFT;
-  
+
   mobj->angle      = ANG45 * (mthing->angle/45);
   mobj->player     = p;
   mobj->health     = p->health;
@@ -1101,7 +1121,7 @@ void P_SpawnMapThing (mapthing_t* mthing)
   // bits that weren't used in Doom (such as HellMaker wads). So we should
   // then simply ignore all upper bits.
 
-  if (demo_compatibility || 
+  if (demo_compatibility ||
       (demo_version >= 203 && mthing->options & MTF_RESERVED))
     mthing->options &= MTF_EASY|MTF_NORMAL|MTF_HARD|MTF_AMBUSH|MTF_NOTSINGLE;
 
@@ -1166,7 +1186,7 @@ void P_SpawnMapThing (mapthing_t* mthing)
     return;
 
   // killough 11/98: simplify
-  if (gameskill == sk_baby || gameskill == sk_easy ? 
+  if (gameskill == sk_baby || gameskill == sk_easy ?
       !(mthing->options & MTF_EASY) :
       gameskill == sk_hard || gameskill == sk_nightmare ?
       !(mthing->options & MTF_HARD) : !(mthing->options & MTF_NORMAL))
@@ -1220,7 +1240,7 @@ spawnit:
     mobj->tics = 1 + (P_Random (pr_spawnthing) % mobj->tics);
 
   if (!(mobj->flags & MF_FRIEND) &&
-      mthing->options & MTF_FRIEND && 
+      mthing->options & MTF_FRIEND &&
       demo_version>=203)
     {
       mobj->flags |= MF_FRIEND;            // killough 10/98:

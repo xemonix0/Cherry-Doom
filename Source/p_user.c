@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -34,6 +34,7 @@
 #include "p_map.h"
 #include "p_spec.h"
 #include "p_user.h"
+#include "w_wad.h" // [Nugget] W_CheckNumForName
 
 // Index of the special effects (INVUL inverse) map.
 
@@ -89,6 +90,7 @@ void P_CalcHeight (player_t* player)
 {
   int     angle;
   fixed_t bob;
+  fixed_t view;
 
   // Regular movement bobbing
   // (needs to be calculated for gun swing
@@ -120,13 +122,23 @@ void P_CalcHeight (player_t* player)
   }
   else
   {
-  if (player->bob > MAXBOB)                             
+  if (player->bob > MAXBOB)
     player->bob = MAXBOB;
   }
 
+  // [Nugget] Check for viewheight setting
+  if (adjust_viewheight && !(demorecording||netgame)) {
+    if (player->mo->intflags & MIF_CROUCHING) {view = ALTCVIEWHEIGHT;}
+    else                                      {view = ALTVIEWHEIGHT;}
+    }
+    else {
+      if (player->mo->intflags & MIF_CROUCHING) {view = CVIEWHEIGHT;}
+      else                                      {view = VIEWHEIGHT;}
+    }
+
   if (!onground || player->cheats & CF_NOMOMENTUM)
     {
-      player->viewz = player->mo->z + VIEWHEIGHT;
+      player->viewz = player->mo->z + view;
 
       if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
 	player->viewz = player->mo->ceilingz-4*FRACUNIT;
@@ -150,18 +162,24 @@ void P_CalcHeight (player_t* player)
     {
       player->viewheight += player->deltaviewheight;
 
-      if (player->viewheight > VIEWHEIGHT)
+      if (player->viewheight > view)
 	{
-	  player->viewheight = VIEWHEIGHT;
+	  player->viewheight = view;
 	  player->deltaviewheight = 0;
 	}
 
-      if (player->viewheight < VIEWHEIGHT/2)
+      if (player->viewheight < view/2)
 	{
-	  player->viewheight = VIEWHEIGHT/2;
+	  player->viewheight = view/2;
 	  if (player->deltaviewheight <= 0)
 	    player->deltaviewheight = 1;
 	}
+
+	// [Nugget] Check if player just stood up
+	if (!(player->mo->intflags & MIF_CROUCHING) && player->crouchTics) {
+        player->viewheight -= player->mo->floorz - player->mo->z;
+        player->deltaviewheight = (view - player->viewheight)>>3;
+    }
 
       if (player->deltaviewheight)
 	{
@@ -188,6 +206,7 @@ void P_MovePlayer (player_t* player)
 {
   ticcmd_t *cmd = &player->cmd;
   mobj_t *mo = player->mo;
+  int cforwardmove, csidemove; // [Nugget]
 
   mo->angle += cmd->angleturn << 16;
   onground = mo->z <= mo->floorz;
@@ -213,16 +232,24 @@ void P_MovePlayer (player_t* player)
 	  int bobfactor =
 	    friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
 
+	    cforwardmove = cmd->forwardmove;
+	    csidemove = cmd->sidemove;
+
+        // [Nugget] Check for crouching
+        if ((player->mo->intflags & MIF_CROUCHING)
+            && !(demorecording||demoplayback||netgame))
+            {cforwardmove /= 2; csidemove /= 2;}
+
 	  if (cmd->forwardmove)
 	    {
-	      P_Bob(player,mo->angle,cmd->forwardmove*bobfactor);
-	      P_Thrust(player,mo->angle,cmd->forwardmove*movefactor);
+	      P_Bob(player,mo->angle,cforwardmove*bobfactor);
+	      P_Thrust(player,mo->angle,cforwardmove*movefactor);
 	    }
 
 	  if (cmd->sidemove)
 	    {
-	      P_Bob(player,mo->angle-ANG90,cmd->sidemove*bobfactor);
-	      P_Thrust(player,mo->angle-ANG90,cmd->sidemove*movefactor);
+	      P_Bob(player,mo->angle-ANG90,csidemove*bobfactor);
+	      P_Thrust(player,mo->angle-ANG90,csidemove*movefactor);
 	    }
 	}
       if (mo->state == states+S_PLAY)
@@ -276,13 +303,13 @@ void P_DeathThink (player_t* player)
 	  if (player->damagecount)
 	    player->damagecount--;
 	}
-      else 
+      else
 	if (delta < ANG180)
 	  player->mo->angle += ANG5;
 	else
 	  player->mo->angle -= ANG5;
     }
-  else 
+  else
     if (player->damagecount)
       player->damagecount--;
 
@@ -335,6 +362,10 @@ void P_PlayerThink (player_t* player)
       return;
     }
 
+    // [Nugget] Delay jumping and crouching
+    if (player->jumpTics)   {player->jumpTics--;}
+    if (player->crouchTics) {player->crouchTics--;}
+
   // Move around.
   // Reactiontime is used to prevent movement
   //  for a bit after a teleport.
@@ -351,6 +382,66 @@ void P_PlayerThink (player_t* player)
 
   if (player->mo->subsector->sector->special)
     P_PlayerInSpecialSector (player);
+
+  // [Nugget] Crispy jumping
+//  if ((cmd->buttons & BT_JUMP) && onground
+//      && !(player->jumpTics) && !(player->crouchTics)
+//      && !(demorecording||demoplayback||netgame))
+//  {
+//      if (player->mo->intflags & MIF_CROUCHING) {
+//      // [Nugget] Check if ceiling's high enough to stand up.
+//        if ((player->mo->ceilingz - player->mo->floorz)
+//            >= (player->mo->height * 2))
+//        { // [Nugget] Stand up
+//            player->mo->intflags &= ~MIF_CROUCHING;
+//            player->mo->height *= 2;
+//            player->crouchTics = 18;
+//        }
+//      }
+//      else {
+//        player->mo->momz = 8*FRACUNIT;
+//        player->jumpTics = 18;
+//      }
+//  }
+//    // [Nugget] Crouching
+//    if ((cmd->buttons & BT_CROUCH) && !player->crouchTics
+//        && !(demorecording||demoplayback||netgame))
+//    {
+//        if (player->mo->intflags & MIF_CROUCHING) {
+//            // [Nugget] Check if ceiling's high enough to stand up.
+//            if ((player->mo->ceilingz - player->mo->floorz)
+//                >= (player->mo->height * 2))
+//            { // [Nugget] Stand up
+//                player->mo->intflags &= ~MIF_CROUCHING;
+//                player->mo->height *= 2;
+//                player->crouchTics = 18;
+//            }
+//        }
+//        else { // [Nugget] Crouch
+//            player->mo->intflags |= MIF_CROUCHING;
+//            player->mo->height = player->mo->height / 2;
+//            player->crouchTics = 18;
+//        }
+//    }
+
+    // [Nugget] Use crouching player sprites when crouching
+//    if (player->mo->intflags & MIF_CROUCHING) {
+//        if (W_CheckNumForName("PLYCA1") >= 0 ||
+//            W_CheckNumForName("PLYCA1C1") >= 0)
+//            {player->mo->state->sprite = SPR_PLYC;}
+//        }
+
+    // [Nugget] Forcefully stand up if the jump/crouch setting is off
+    if (!jump_crouch && (player->mo->intflags & MIF_CROUCHING))
+    {
+        if ((player->mo->ceilingz - player->mo->floorz)
+            >= (player->mo->height * 2))
+        { // [Nugget] Stand up
+            player->mo->intflags &= ~MIF_CROUCHING;
+            player->mo->height *= 2;
+            player->crouchTics = 18;
+        }
+    }
 
   // Sprite Height problem...                                         // phares
   // Future code:                                                     //  |
@@ -449,6 +540,14 @@ void P_PlayerThink (player_t* player)
   if (player->powers[pw_ironfeet] > 0)        // killough
     player->powers[pw_ironfeet]--;
 
+  // [Nugget] Fast weapons cheat
+  if (player->cheats & CF_FASTWEAPS) {
+    if (player->psprites->tics >= 1)
+        {player->psprites->tics = 1;}
+    if (player->psprites[ps_flash].tics >= 1)
+        {player->psprites[ps_flash].tics = 1;}
+  }
+
   if (player->damagecount)
     player->damagecount--;
 
@@ -462,7 +561,7 @@ void P_PlayerThink (player_t* player)
   // invulernability, and the light amp visor used the last colormap.
   // But white flashes occurred when invulnerability wore off.
 
-  player->fixedcolormap = 
+  player->fixedcolormap =
 
     beta_emulation ?    /* Beta Emulation */
     player->powers[pw_infrared] > 4*32 ||

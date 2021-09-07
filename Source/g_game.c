@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:  none
@@ -145,6 +145,8 @@ int     key_fire;
 int     key_use;
 int     key_strafe;
 int     key_speed;
+int     key_jump; // [Nugget]
+int     key_crouch; // [Nugget]
 int     key_escape = KEYD_ESCAPE;                           // phares 4/13/98
 int     key_savegame;                                               // phares
 int     key_loadgame;                                               //    |
@@ -450,6 +452,15 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   if (gamekeydown[key_strafeleft] || joybuttons[joybstrafeleft])
     side -= sidemove[speed];
 
+  // [Nugget] Jumping and crouching
+//  if (jump_crouch) {
+//    if (gamekeydown[key_jump])
+//    {cmd->buttons |= BT_JUMP;}
+//
+//    if (gamekeydown[key_crouch])
+//    {cmd->buttons |= BT_CROUCH;}
+//  }
+
     // buttons
   cmd->chatchar = HU_dequeueChatChar();
 
@@ -474,7 +485,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   // except in demo_compatibility mode.
   //
   // killough 3/26/98, 4/2/98: fix autoswitch when no weapons are left
- 
+
   if ((!demo_compatibility && players[consoleplayer].attackdown &&
        !P_CheckAmmo(&players[consoleplayer])) || gamekeydown[key_weapontoggle])
     newweapon = P_SwitchWeapon(&players[consoleplayer]);           // phares
@@ -509,7 +520,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       //
       // killough 10/98: make SG/SSG and Fist/Chainsaw
       // weapon toggles optional
-      
+
       if (!demo_compatibility && doom_weapon_toggles)
         {
           const player_t *player = &players[consoleplayer];
@@ -621,7 +632,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     side = MAXPLMOVE;
   else if (side < -MAXPLMOVE)
     side = -MAXPLMOVE;
-  
+
   cmd->forwardmove += forward;
   cmd->sidemove += side;
 
@@ -976,8 +987,8 @@ static void G_ReadDemoTiccmd(ticcmd_t *cmd)
       }
       cmd->buttons = (unsigned char)*demo_p++;
 
-      // killough 3/26/98, 10/98: Ignore savegames in demos 
-      if (demoplayback && 
+      // killough 3/26/98, 10/98: Ignore savegames in demos
+      if (demoplayback &&
 	  cmd->buttons & BT_SPECIAL &&
 	  cmd->buttons & BTS_SAVEGAME)
 	{
@@ -1051,6 +1062,9 @@ static void G_PlayerFinishLevel(int player)
   p->fixedcolormap = 0;   // cancel ir gogles
   p->damagecount = 0;     // no palette changes
   p->bonuscount = 0;
+  // [Nugget] Reset additional player properties
+  p->jumpTics =
+  p->crouchTics = 0;
 }
 
 // [crispy] format time for level statistics
@@ -1133,7 +1147,7 @@ static void G_WriteLevelStat(void)
 
     fprintf(fstream, "%s%s - %s (%s)  K: %d/%d  I: %d/%d  S: %d/%d\n",
             levelString, (secretexit ? "s" : ""),
-            levelTimeString, totalTimeString, playerKills, totalkills, 
+            levelTimeString, totalTimeString, playerKills, totalkills,
             playerItems, totalitems, playerSecrets, totalsecret);
 }
 
@@ -1261,7 +1275,7 @@ static void G_DoCompleted(void)
     wminfo.partime = TICRATE*pars[gameepisode][gamemap];
 
 frommapinfo:
-  
+
   wminfo.nextmapinfo = G_LookupMapinfo(wminfo.nextep+1, wminfo.next+1);
 
   wminfo.maxkills = totalkills;
@@ -1430,12 +1444,12 @@ static void G_DoPlayDemo(void)
 
       classic_bfg = 0;                  // killough 7/19/98
       beta_emulation = 0;               // killough 7/24/98
-      
+
       dogs = 0;                         // killough 7/19/98
       dog_jumping = 0;                  // killough 10/98
 
       monster_backing = 0;              // killough 9/8/98
-      
+
       monster_avoid_hazards = 0;        // killough 9/9/98
 
       monster_friction = 0;             // killough 10/98
@@ -1521,13 +1535,13 @@ static void G_DoPlayDemo(void)
       // killough 2/22/98:
       // Do it anyway for timing demos, to reduce timing noise
       precache = timingdemo;
-  
+
       G_InitNew(skill, episode, map);
 
       // killough 11/98: If OPTIONS were loaded from the wad in G_InitNew(),
       // reload any demo sync-critical ones from the demo itself, to be exactly
       // the same as during recording.
-      
+
       if (option_p)
       {
         if (mbf21)
@@ -1665,7 +1679,7 @@ ULong64 G_Signature(void)
   ULong64 s = 0;
   int lump, i;
   char name[9];
-  
+
   if (gamemode == commercial)
     sprintf(name, "map%02d", gamemap);
   else
@@ -2069,7 +2083,7 @@ void G_Ticker(void)
 	      // check for turbo cheats
 	      // killough 2/14/98, 2/20/98 -- only warn in netgames and demos
 
-	      if ((netgame || demoplayback) && 
+	      if ((netgame || demoplayback) &&
 		  cmd->forwardmove > TURBOTHRESHOLD &&
 		  !(gametic&31) && ((gametic>>5)&3) == i )
 		{
@@ -2103,7 +2117,7 @@ void G_Ticker(void)
 	      else
 		S_ResumeSound();
 	    }
-	
+
 	    if (players[i].cmd.buttons & BTS_SAVEGAME)
 	      {
 		if (!savedescription[0])
@@ -2233,13 +2247,13 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
       if (queuesize < bodyquesize)
 	{
 	  bodyque = realloc(bodyque, bodyquesize*sizeof*bodyque);
-	  memset(bodyque+queuesize, 0, 
+	  memset(bodyque+queuesize, 0,
 		 (bodyquesize-queuesize)*sizeof*bodyque);
 	  queuesize = bodyquesize;
 	}
-      if (bodyqueslot >= bodyquesize) 
-	P_RemoveMobj(bodyque[bodyqueslot % bodyquesize]); 
-      bodyque[bodyqueslot++ % bodyquesize] = players[playernum].mo; 
+      if (bodyqueslot >= bodyquesize)
+	P_RemoveMobj(bodyque[bodyqueslot % bodyquesize]);
+      bodyque[bodyqueslot++ % bodyquesize] = players[playernum].mo;
     }
   else
     if (!bodyquesize)
@@ -2892,7 +2906,7 @@ void G_RecordDemo(char *name)
   int i;
 
   demo_insurance = mbf21 ? 0 : (default_demo_insurance!=0);     // killough 12/98
-      
+
   usergame = false;
   if (demoname) (free)(demoname);
   demoname = (malloc)(strlen(name) + 5);
@@ -3003,8 +3017,8 @@ byte *G_WriteOptions(byte *demo_p)
   *demo_p++ = classic_bfg;          // killough 7/19/98
   *demo_p++ = beta_emulation;       // killough 7/24/98
 
-  *demo_p++ = (distfriend >> 8) & 0xff;  // killough 8/8/98  
-  *demo_p++ =  distfriend       & 0xff;  // killough 8/8/98  
+  *demo_p++ = (distfriend >> 8) & 0xff;  // killough 8/8/98
+  *demo_p++ =  distfriend       & 0xff;  // killough 8/8/98
 
   *demo_p++ = monster_backing;         // killough 9/8/98
 
@@ -3135,7 +3149,7 @@ byte *G_ReadOptions(byte *demo_p)
 
       classic_bfg = *demo_p++;          // killough 7/19/98
       beta_emulation = *demo_p++;       // killough 7/24/98
-      
+
       if (beta_emulation && !M_CheckParm("-beta"))
 	I_Error("The -beta option is required to play "
 		"back beta emulation demos");
@@ -3179,7 +3193,7 @@ byte *G_ReadOptions(byte *demo_p)
       monster_infighting = 1;           // killough 7/19/98
 
       monster_backing = 0;              // killough 9/8/98
-      
+
       monster_avoid_hazards = 0;        // killough 9/9/98
 
       monster_friction = 0;             // killough 10/98

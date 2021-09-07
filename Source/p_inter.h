@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: p_inter.h,v 1.3 1998/05/03 23:08:57 killough Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -32,7 +32,7 @@
 #include "d_player.h"
 #include "p_mobj.h"
 
-// Ty 03/09/98 Moved to an int in p_inter.c for deh and externalization 
+// Ty 03/09/98 Moved to an int in p_inter.c for deh and externalization
 #define MAXHEALTH maxhealth
 
 // follow a player exlusively for 3 seconds
@@ -41,6 +41,7 @@
 boolean P_GivePower(player_t *, int);
 void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void P_DamageMobj(mobj_t *target,mobj_t *inflictor,mobj_t *source,int damage);
+boolean P_NuggetCheckDist(mobj_t*, mobj_t*, fixed_t range, boolean addradius); // [Nugget]
 
 // killough 5/2/98: moved from d_deh.c, g_game.c, m_misc.c, others:
 

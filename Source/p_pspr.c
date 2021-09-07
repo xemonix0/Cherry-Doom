@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -38,6 +38,7 @@
 #include "sounds.h"
 #include "d_event.h"
 #include "p_tick.h"
+#include "w_wad.h" // [Nugget] W_CheckNumForName
 
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
@@ -141,7 +142,7 @@ static void P_BringUpWeapon(player_t *player)
   player->pendingweapon = wp_nochange;
 
   // killough 12/98: prevent pistol from starting visibly at bottom of screen:
-  player->psprites[ps_weapon].sy = demo_version >= 203 ? 
+  player->psprites[ps_weapon].sy = demo_version >= 203 ?
     WEAPONBOTTOM+FRACUNIT*2 : WEAPONBOTTOM;
 
   P_SetPsprite(player, ps_weapon, newstate);
@@ -380,6 +381,8 @@ void P_SubtractAmmo(struct player_s *player, int vanilla_amount)
 {
   int amount;
   ammotype_t ammotype = weaponinfo[player->readyweapon].ammo;
+
+  if (player->cheats & CF_INFAMMO) {return;} // [Nugget] Yikes!
 
   if (mbf21 && ammotype == am_noammo)
     return; // [XA] hmm... I guess vanilla/boom will go out of bounds then?
@@ -916,10 +919,22 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
 
 void A_FireCGun(player_t *player, pspdef_t *psp)
 {
-  S_StartSound(player->mo, sfx_pistol);
+  // [Nugget] Fix "Chaingun sound without ammo" bug
+  if (!nugget_comp[comp_cgundblsnd]) {
+    if (!player->ammo[weaponinfo[player->readyweapon].ammo])
+        return;
+  }
 
-  if (!player->ammo[weaponinfo[player->readyweapon].ammo])
-    return;
+  if (W_CheckNumForName("dschgun") >= 0) // [Nugget] use DSCHGUN if available
+      {S_StartSound (player->mo, sfx_chgun);}
+  else
+      {S_StartSound (player->mo, sfx_pistol);}
+
+  // [Nugget] Fix "Chaingun sound without ammo" bug
+  if (nugget_comp[comp_cgundblsnd]) {
+    if (!player->ammo[weaponinfo[player->readyweapon].ammo])
+        return;
+  }
 
   // killough 8/2/98: workaround for beta chaingun sprites missing at bottom
   // The beta did not have fullscreen, and its chaingun sprites were chopped
@@ -972,8 +987,8 @@ void A_BFGSpray(mobj_t *mo)
       // mo->target is the originator (player) of the missile
 
       // killough 8/2/98: make autoaiming prefer enemies
-      if (demo_version < 203 || 
-	  (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, MF_FRIEND), 
+      if (demo_version < 203 ||
+	  (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, MF_FRIEND),
 	   !linetarget))
 	P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, 0);
 
@@ -1269,6 +1284,8 @@ void A_ConsumeAmmo(player_t *player, pspdef_t *psp)
 
   if (!mbf21)
     return;
+
+  if (player->cheats & CF_INFAMMO) {return;} // [Nugget] Yikes!
 
   // don't do dumb things, kids
   type = weaponinfo[player->readyweapon].ammo;

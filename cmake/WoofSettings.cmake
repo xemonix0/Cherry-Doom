@@ -1,4 +1,4 @@
-# Add woof settings to a target.
+# Add nugget settings to a target.
 
 include(CheckCCompilerFlag)
 

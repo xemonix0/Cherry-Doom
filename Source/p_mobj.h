@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: p_mobj.h,v 1.10 1998/05/03 23:45:09 killough Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -94,7 +94,7 @@
 // things, but nothing can run into a missile).
 // Each block in the grid is 128*128 units, and knows about
 // every line_t that it contains a piece of, and every
-// interactable mobj_t that has its origin contained.  
+// interactable mobj_t that has its origin contained.
 //
 // A valid mobj_t is a mobj_t that has the proper subsector_t
 // filled in for its xy coordinates and is linked into the
@@ -123,7 +123,7 @@ typedef enum
     // Don't use the sector links (invisible but touchable).
     MF_NOSECTOR         = 8,
     // Don't use the blocklinks (inert but displayable)
-    MF_NOBLOCKMAP       = 16,                    
+    MF_NOBLOCKMAP       = 16,
 
     // Not to be activated by sound, deaf monster.
     MF_AMBUSH           = 32,
@@ -156,7 +156,7 @@ typedef enum
     MF_TELEPORT         = 0x8000,
     // Don't hit same species, explode on block.
     // Player missiles as well as fireballs of various kinds.
-    MF_MISSILE          = 0x10000,      
+    MF_MISSILE          = 0x10000,
     // Dropped by a demon, not level spawned.
     // E.g. ammo clips dropped by dying former humans.
     MF_DROPPED          = 0x20000,
@@ -177,7 +177,7 @@ typedef enum
     //  towards intermission kill total.
     // Happy gathering.
     MF_COUNTKILL        = 0x400000,
-    
+
     // On picking up, count this item object
     //  towards intermission item total.
     MF_COUNTITEM        = 0x800000,
@@ -240,6 +240,7 @@ enum {
   MIF_LINEDONE = 4,     // Object has activated W1 or S1 linedef via DEH frame
   // mbf21
   MIF_SCROLLING = 8,    // Object is affected by scroller / pusher / puller
+  MIF_CROUCHING = 16,   // [Nugget] Mobj (player) is crouching
 };
 
 // Map Object definition.
@@ -253,7 +254,7 @@ enum {
 // reason behind monsters going to sleep when loading savegames (the "target"
 // pointer was simply nullified after loading, to prevent Doom from crashing),
 // and the whole reason behind loadgames crashing on savegames of AV attacks.
-// 
+//
 
 // killough 9/8/98: changed some fields to shorts,
 // for better memory usage (if only for cache).
@@ -281,7 +282,7 @@ typedef struct mobj_s
     // Links in blocks (if needed).
     struct mobj_s*      bnext;
     struct mobj_s**     bprev; // killough 8/11/98: change to ptr-to-ptr
-    
+
     struct subsector_s* subsector;
 
     // The closest interval over all contacted Sectors.
@@ -293,7 +294,7 @@ typedef struct mobj_s
 
     // For movement checking.
     fixed_t             radius;
-    fixed_t             height; 
+    fixed_t             height;
 
     // Momentums, used to update position.
     fixed_t             momx;
@@ -305,7 +306,7 @@ typedef struct mobj_s
 
     mobjtype_t          type;
     mobjinfo_t*         info;   // &mobjinfo[mobj->type]
-    
+
     int                 tics;   // state tic counter
     state_t*            state;
     int                 flags;
@@ -324,7 +325,7 @@ typedef struct mobj_s
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
-    short               reactiontime;   
+    short               reactiontime;
 
     // If >0, the current target will be chased no
     // matter what (even if shot by another object)
@@ -340,13 +341,13 @@ typedef struct mobj_s
     struct player_s*    player;
 
     // Player number last looked for.
-    short               lastlook;       
+    short               lastlook;
 
     // For nightmare respawn.
-    mapthing_t          spawnpoint;     
+    mapthing_t          spawnpoint;
 
     // Thing being chased/attacked for tracers.
-    struct mobj_s*      tracer; 
+    struct mobj_s*      tracer;
 
     // new field: last known enemy -- killough 2/15/98
     struct mobj_s*      lastenemy;
@@ -391,6 +392,11 @@ typedef struct mobj_s
 // External declarations (fomerly in p_local.h) -- killough 5/2/98
 
 #define VIEWHEIGHT      (41*FRACUNIT)
+// [Nugget]
+#define CVIEWHEIGHT     (VIEWHEIGHT/2)
+#define ALTVIEWHEIGHT	(45*FRACUNIT)
+#define ALTCVIEWHEIGHT  (ALTVIEWHEIGHT/2)
+
 #define PLAYERRADIUS    (16*FRACUNIT)
 
 #define GRAVITY         FRACUNIT

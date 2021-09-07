@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -173,6 +173,16 @@ void T_VerticalDoor (vldoor_t *door)
             case blazeClose:
             case doorClose:          // Close types do not bounce, merely wait
               break;
+
+            // [Nugget] Add this
+            // [crispy] fix "fast doors reopening with wrong sound"
+            case blazeRaise:
+                if (!nugget_comp[comp_blazing2])
+                {
+                    door->direction = 1;
+                    S_StartSound((mobj_t *)&door->sector->soundorg, sfx_bdopn);
+                    break;
+                }
 
             default:             // other types bounce off the obstruction
               door->direction = 1;
@@ -468,8 +478,15 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
         case  27:
         case  28:
         case  117:
-          if (door->direction == -1)
+          if (door->direction == -1) {
             door->direction = 1;  // go back up
+            // [Nugget] Add this
+            // [crispy] play sound effect when the door is opened again while going down
+            if (!nugget_comp[comp_manualdoor]) {
+            S_StartSound((mobj_t *)&door->sector->soundorg,
+                          line->special == 117 ? sfx_bdopn : sfx_doropn);
+            }
+          }
           else
             {
               if (!thing->player)
@@ -490,6 +507,10 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
               {
                 door->direction = -1;
               }
+              // [Nugget] Add this
+              // [crispy] play sound effect when the door is closed manually
+              if (!nugget_comp[comp_manualdoor])
+              {S_StartSound((mobj_t *)&door->sector->soundorg, line->special == 117 ? sfx_bdcls : sfx_dorcls);}
             }
           return 1;
         }

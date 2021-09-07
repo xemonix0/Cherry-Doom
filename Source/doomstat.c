@@ -16,7 +16,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -71,7 +71,7 @@ int default_monsters_remember=1;
 int monster_infighting=1;       // killough 7/19/98: monster<=>monster attacks
 int default_monster_infighting=1;
 
-int monster_friction=1;       // killough 10/98: monsters affected by friction 
+int monster_friction=1;       // killough 10/98: monsters affected by friction
 int default_monster_friction=1;
 
 // killough 7/19/98: classic Doom BFG
@@ -103,6 +103,17 @@ int monkeys, default_monkeys;
 
 // [FG] centered weapon sprite
 int center_weapon;
+
+//----- Nugget ---------------------------------------------------------------
+
+int adjust_viewheight;
+int bug_fixes;
+int extra_gibbing;
+int jump_crouch;
+int no_ss_background;
+int sound_fixes;
+
+int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
 
 //----------------------------------------------------------------------------
 //
