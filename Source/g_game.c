@@ -65,6 +65,7 @@
 
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
+#define MAX_JOY_BUTTONS 20 // [Nugget] crispy save reload
 
 static size_t   savegamesize = SAVEGAMESIZE; // killough
 static char     *demoname = NULL;
@@ -360,6 +361,14 @@ static int G_NextWeapon(int direction)
     } while (i != start_i && !WeaponSelectable(weapon_order_table[i].weapon));
 
     return weapon_order_table[i].weapon_num;
+}
+
+// [Nugget] Add this
+// [crispy] holding down the "Run" key may trigger special behavior,
+// e.g. quick exit, clean screenshots, resurrection from savegames
+boolean speedkeydown (void) {
+    return (key_speed < NUMKEYS && gamekeydown[key_speed]) ||
+           (joybspeed < MAX_JOY_BUTTONS && joybuttons[joybspeed]);
 }
 
 //
@@ -1032,9 +1041,28 @@ static void G_WriteDemoTiccmd(ticcmd_t* cmd)
 
 boolean secretexit;
 
+// [Nugget] Move a bunch of stuff here
+#define VERSIONSIZE   16
+
+// killough 2/22/98: version id string format for savegames
+#define VERSIONID "MBF %d"
+
+#define CURRENT_SAVE_VERSION "Woof 6.0.0"
+
+static char *savename = NULL;
+
+// [Nugget] Add this
+// [crispy] clear the "savename" variable,
+// i.e. restart level from scratch upon resurrection
+static inline void G_ClearSavename() {
+  if (savename)
+    {M_StringCopy(savename, "", sizeof(savename));}
+}
+
 void G_ExitLevel(void)
 {
   secretexit = false;
+  G_ClearSavename();
   gameaction = ga_completed;
 }
 
@@ -1044,6 +1072,7 @@ void G_ExitLevel(void)
 void G_SecretExitLevel(void)
 {
   secretexit = gamemode != commercial || haswolflevels;
+  G_ClearSavename();
   gameaction = ga_completed;
 }
 
@@ -1570,15 +1599,6 @@ static void G_DoPlayDemo(void)
     "Doom 1.9", demover);
 }
 
-#define VERSIONSIZE   16
-
-// killough 2/22/98: version id string format for savegames
-#define VERSIONID "MBF %d"
-
-#define CURRENT_SAVE_VERSION "Woof 6.0.0"
-
-static char *savename = NULL;
-
 //
 // killough 5/15/98: add forced loadgames, which allow user to override checks
 //
@@ -1961,6 +1981,10 @@ static void G_DoLoadGame(void)
 
   // draw the pattern into the back screen
   R_FillBackScreen();
+
+  // [crispy] if the player is dead in this savegame,
+  // do not consider it for reload
+  if (players[consoleplayer].health <= 0) {G_ClearSavename();}
 
   Z_CheckHeap();
 
@@ -2367,10 +2391,22 @@ void G_DeathMatchSpawnPlayer(int playernum)
 
 void G_DoReborn(int playernum)
 {
-  if (!netgame)
-    gameaction = ga_loadlevel;      // reload the level from scratch
+  if (!netgame) {
+	// [crispy] if the player dies and the game has been loaded or saved
+	// in the mean time, reload that savegame instead of restarting the level
+	// when "Run" is pressed upon resurrection
+	if (!(demorecording||demoplayback||netgame)
+        && savename
+        && speedkeydown())
+	  {gameaction = ga_loadgame;}
+	else {
+	  // reload the level from scratch
+	  gameaction = ga_loadlevel;
+	  G_ClearSavename();
+	}
+  }
   else
-    {                               // respawn at the start
+    { // respawn at the start
       int i;
 
       // first dissasociate the corpse
@@ -2489,6 +2525,7 @@ void G_DeferedInitNew(skill_t skill, int episode, int map)
   d_skill = skill;
   d_episode = episode;
   d_map = map;
+  G_ClearSavename();
   gameaction = ga_newgame;
 }
 
