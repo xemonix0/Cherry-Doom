@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: r_defs.h,v 1.18 1998/04/27 02:12:59 killough Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -117,7 +117,7 @@ typedef struct
   int stairlock;   // -2 on first locked -1 after thinker done 0 normally
   int prevsec;     // -1 or number of sector for previous step
   int nextsec;     // -1 or number of next step sector
-  
+
   // killough 3/7/98: floor and ceiling texture offsets
   fixed_t   floor_xoffs,   floor_yoffs;
   fixed_t ceiling_xoffs, ceiling_yoffs;
@@ -131,7 +131,7 @@ typedef struct
   int bottommap, midmap, topmap; // killough 4/4/98: dynamic colormaps
 
   // killough 10/98: support skies coming from sidedefs. Allows scrolling
-  // skies and other effects. No "level info" kind of lump is needed, 
+  // skies and other effects. No "level info" kind of lump is needed,
   // because you can use an arbitrary number of skies per level with this
   // method. This field only applies when skyflatnum is used for floorpic
   // or ceilingpic, because the rest of Doom needs to know which is sky
@@ -141,7 +141,7 @@ typedef struct
 
   // list of mobjs that are at least partially in the sector
   // thinglist is a subset of touching_thinglist
-  struct msecnode_s *touching_thinglist;               // phares 3/14/98  
+  struct msecnode_s *touching_thinglist;               // phares 3/14/98
 
   int linecount;
   struct line_s **lines;
@@ -174,7 +174,7 @@ typedef struct
 {
   fixed_t textureoffset; // add this to the calculated texture column
   fixed_t rowoffset;     // add this to the calculated texture top
-  short toptexture;      // Texture indices. We do not maintain names here. 
+  short toptexture;      // Texture indices. We do not maintain names here.
   short bottomtexture;
   short midtexture;
   sector_t* sector;      // Sector the SideDef is facing.
@@ -204,18 +204,21 @@ typedef struct line_s
   fixed_t dx, dy;        // Precalculated v2 - v1 for side checking.
   // [FG] extended nodes
   unsigned short flags;           // Animation related.
-  short special;         
+  short special;
   short tag;
   // [FG] extended nodes
   unsigned short sidenum[2];      // Visual appearance: SideDefs.
   fixed_t bbox[4];       // A bounding box, for the linedef's extent
   slopetype_t slopetype; // To aid move clipping.
   sector_t *frontsector; // Front and back sector.
-  sector_t *backsector; 
+  sector_t *backsector;
   int validcount;        // if == validcount, already checked
   void *specialdata;     // thinker_t for reversable actions
   int tranlump;          // killough 4/11/98: translucency filter, -1 == none
   int firsttag,nexttag;  // killough 4/17/98: improves searches for tags.
+  // [Nugget] Add this
+  // [crispy] calculate sound origin of line to be its midpoint
+  degenmobj_t	soundorg;
 } line_t;
 
 //
@@ -269,7 +272,7 @@ typedef struct
   angle_t angle;
   side_t* sidedef;
   line_t* linedef;
-  
+
   // Sector references.
   // Could be retrieved from linedef, too
   // (but that would be slower -- killough)
@@ -313,7 +316,7 @@ typedef post_t column_t;
 // from darkening PLAYPAL to all black.
 // Could use even more than 32 levels.
 
-typedef byte  lighttable_t; 
+typedef byte  lighttable_t;
 
 //
 // Masked 2s linedefs
@@ -342,11 +345,11 @@ typedef struct drawseg_s
 // of patches.
 //
 
-typedef struct 
-{ 
-  short width, height;  // bounding box size 
-  short leftoffset;     // pixels to the left of origin 
-  short topoffset;      // pixels below the origin 
+typedef struct
+{
+  short width, height;  // bounding box size
+  short leftoffset;     // pixels to the left of origin
+  short topoffset;      // pixels below the origin
   int columnofs[8];     // only [width] used
 } patch_t;
 
@@ -370,7 +373,7 @@ typedef struct vissprite_s
 
   // for color translation and shadow draw, maxbright frames as well
   lighttable_t *colormap;
-   
+
   // killough 3/27/98: height sector for underwater/fake ceiling support
   int heightsec;
 
@@ -378,7 +381,7 @@ typedef struct vissprite_s
   int color;
 } vissprite_t;
 
-//  
+//
 // Sprites are patches with a special naming convention
 //  so they can be recognized by R_InitSprites.
 // The base name is NNNNFx or NNNNFxFx, with
