@@ -1896,11 +1896,6 @@ void M_DrawBackground(char* patchname, byte *back_dest)
   int x,y;
   byte *back_src, *src;
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
-    return;
-  }
-
   V_MarkRect (0, 0, SCREENWIDTH, SCREENHEIGHT);
 
   src = back_src =
@@ -2857,7 +2852,11 @@ void M_DrawKeybnd(void)
 
   // Set up the Key Binding screen
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+  }
+  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+
   M_DrawTitle(84,2,"M_KEYBND","KEY BINDINGS");
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
@@ -2977,7 +2976,11 @@ void M_DrawWeapons(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+  }
+  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+
   M_DrawTitle(109,2,"M_WEAP","WEAPONS");
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
@@ -3064,7 +3067,11 @@ void M_DrawStatusHUD(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+  }
+  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+
   M_DrawTitle(59,2,"M_STAT","STATUS BAR / HUD");
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
@@ -3231,7 +3238,11 @@ void M_DrawAutoMap(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+  }
+  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+
   M_DrawTitle(109,2,"M_AUTO","AUTOMAP");
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
@@ -3361,7 +3372,11 @@ void M_DrawEnemy(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+  }
+  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+
   M_DrawTitle(114,2,"M_ENEM","ENEMIES");
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
@@ -3627,7 +3642,11 @@ void M_DrawGeneral(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+  }
+  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+
   M_DrawTitle(114,2,"M_GENERL","GENERAL");
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
@@ -3874,7 +3893,11 @@ void M_DrawCompat(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+  }
+  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+
   M_DrawTitle(52,2,"M_COMPAT","DOOM COMPATIBILITY");
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
@@ -3986,7 +4009,12 @@ void M_DrawMessages(void)
 
 {
   inhelpscreens = true;
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+  }
+  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+
   M_DrawTitle(103,2,"M_MESS","MESSAGES");
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
@@ -4058,7 +4086,12 @@ void M_DrawChatStrings(void)
 
 {
   inhelpscreens = true;
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+  }
+  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+
   M_DrawTitle(83,2,"M_CHAT","CHAT STRINGS");
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
@@ -4639,7 +4672,11 @@ void M_DrawHelp (void)
   inhelpscreens = true;                        // killough 10/98
   if (helplump < 0 || W_IsIWADLump(helplump))
   {
-  M_DrawBackground("FLOOR4_6", screens[0]);
+    if (no_ss_background) { // [Nugget]
+      if (gamestate == GS_LEVEL) {ST_doRefresh();}
+    }
+    else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+
   V_MarkRect (0,0,SCREENWIDTH,SCREENHEIGHT);
   M_DrawScreenItems(helpstrings);
   }
@@ -4728,7 +4765,14 @@ void M_DrawCredits(void)     // killough 10/98: credit screen
   char mbftext_s[32];
   sprintf(mbftext_s, PROJECT_STRING);
   inhelpscreens = true;
-  M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0]);
+
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+  }
+  else {
+    M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0]);
+  }
+
   M_DrawTitle(42,9,"MBFTEXT",mbftext_s);
   V_MarkRect(0,0,SCREENWIDTH,SCREENHEIGHT);
   M_DrawScreenItems(cred_settings);
