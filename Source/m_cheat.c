@@ -460,6 +460,9 @@ static void cheat_behold()
   plyr->message = s_STSTR_BEHOLD; // Ty 03/27/98 - externalized
 }
 
+// [Nugget] We need this
+extern int P_GetNumForMap();
+
 // 'clev' change-level cheat
 static void cheat_clev(buf)
 char buf[3];
@@ -478,12 +481,24 @@ char buf[3];
     }
 
   // Catch invalid maps.
-  if (epsd < 1 || map < 1 ||   // Ohmygod - this is not going to work.
-      (gamemode == retail     && (epsd > 4 || map > 9  )) ||
-      (gamemode == registered && (epsd > 3 || map > 9  )) ||
-      (gamemode == shareware  && (epsd > 1 || map > 9  )) ||
-      (gamemode == commercial && (epsd > 1 || map > 32 )) )
-    return;
+  // [Nugget] Allow me to modify this...
+  // [crispy] only fix episode/map if it doesn't exist
+  if (P_GetNumForMap(epsd, map) < 0) {
+    if ((epsd == 0 && map == 0) // Restart map if IDCLEV00
+        || (gamemode == commercial && map == 0))
+    {
+      epsd = gameepisode;
+      map = gamemap;
+    }
+
+    else if (epsd < 1 || map < 1 ||   // Ohmygod - this is not going to work.
+              (gamemode == retail     && (epsd > 4 || map > 9  )) ||
+              (gamemode == registered && (epsd > 3 || map > 9  )) ||
+              (gamemode == shareware  && (epsd > 1 || map > 9  )) ||
+              (gamemode == commercial && (epsd > 1 || map > 32 )) )
+      {return;}
+  }
+
 
   // So be it.
 
