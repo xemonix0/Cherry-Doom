@@ -1824,6 +1824,7 @@ static void G_DoSaveGame(void)
 
   gameaction = ga_nothing;
   savedescription[0] = 0;
+  savename = M_StringDuplicate(name);
 
   if (name) (free)(name);
 }
@@ -1982,6 +1983,7 @@ static void G_DoLoadGame(void)
   // draw the pattern into the back screen
   R_FillBackScreen();
 
+  // [Nugget] Add this
   // [crispy] if the player is dead in this savegame,
   // do not consider it for reload
   if (players[consoleplayer].health <= 0) {G_ClearSavename();}
@@ -2397,6 +2399,7 @@ void G_DoReborn(int playernum)
 	// when "Run" is pressed upon resurrection
 	if (!(demorecording||demoplayback||netgame)
         && savename
+        && strcmp(savename, "")
         && speedkeydown())
 	  {gameaction = ga_loadgame;}
 	else {
