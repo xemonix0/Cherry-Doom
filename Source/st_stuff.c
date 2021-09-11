@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 //
@@ -208,6 +208,12 @@ static st_stateenum_t st_gamestate;
 // whether left-side main status bar is active
 static boolean st_statusbaron;
 
+// [Nugget] Crispy minimalistic HUD
+// [crispy] distinguish classic status bar with background and player face from Crispy HUD
+static boolean		st_crispyhud;
+static boolean		st_classicstatusbar;
+static boolean		st_statusbarface;
+
 // whether status bar chat is active
 static boolean st_chat;
 
@@ -325,7 +331,7 @@ void ST_Stop(void);
 
 void ST_refreshBackground(boolean force)
 {
-  if (st_statusbaron)
+  if (st_classicstatusbar || force) // [Nugget] Crispy minimalistic HUD
     {
       // [crispy] this is our own local copy of R_FillBackScreen() to
       // fill the entire background of st_backing_screen with the bezel pattern,
@@ -841,6 +847,12 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   st_statusbaron = !fullscreen || (automapactive && !automapoverlay);
   st_firsttime = st_firsttime || refresh;
 
+  // [Nugget] Crispy minimalistic HUD
+  // [crispy] distinguish classic status bar with background and player face from Crispy HUD
+  st_crispyhud = screenblocks >= CRISPY_HUD && (!automapactive || automapoverlay);
+  st_classicstatusbar = st_statusbaron && !st_crispyhud;
+  st_statusbarface = st_classicstatusbar || (st_crispyhud && screenblocks == (11||13));
+
   ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
 
   if (st_firsttime)
@@ -1034,7 +1046,7 @@ void ST_createWidgets(void)
                     ST_ARMSBGY,
                     armsbg,
                     &st_notdeathmatch,
-                    &st_statusbaron);
+                    &st_classicstatusbar); // [Nugget] Crispy minimalistic HUD
 
   // weapons owned
   for(i=0;i<6;i++)
@@ -1061,7 +1073,7 @@ void ST_createWidgets(void)
                      ST_FACESY,
                      faces,
                      &st_faceindex,
-                     &st_statusbaron);
+                     &st_statusbarface);
 
   // armor percentage - should be colored later
   STlib_initPercent(&w_armor,

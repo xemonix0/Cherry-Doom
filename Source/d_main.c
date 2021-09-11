@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -266,8 +266,14 @@ void D_Display (void)
   I_UpdateNoBlit();
 
   // draw the view directly
-  if (gamestate == GS_LEVEL && !automapactive && gametic)
+  if (gamestate == GS_LEVEL && (!automapactive || automapoverlay) && gametic)
+  {
     R_RenderPlayerView (&players[displayplayer]);
+
+    // [Nugget] Crispy minimalistic HUD
+    // [crispy] Crispy HUD
+    if (screenblocks == CRISPY_HUD) {ST_Drawer(false, true);}
+  }
 
   if (gamestate == GS_LEVEL && gametic)
     HU_Drawer ();
@@ -368,7 +374,7 @@ static char *pagename;
 //
 void D_PageTicker(void)
 {
-  // killough 12/98: don't advance internal demos if a single one is 
+  // killough 12/98: don't advance internal demos if a single one is
   // being played. The only time this matters is when using -loadgame with
   // -fastdemo, -playdemo, or -timedemo, and a consistency error occurs.
 
@@ -436,7 +442,7 @@ static void D_DrawTitle2(char *name)
 
 // killough 11/98: tabulate demo sequences
 
-static struct 
+static struct
 {
   void (*func)(char *);
   char *name;
@@ -580,9 +586,9 @@ char *D_DoomExeDir(void)
       memset(base, 0, len);
 
       p = base + len - 1;
-      
+
       strncpy(base, *myargv, len);
-      
+
       while(p >= base)
       {
          if(*p == '/' || *p == '\\')
@@ -2141,7 +2147,7 @@ void D_DoomMain(void)
 
   // start the apropriate game based on parms
 
-  // killough 12/98: 
+  // killough 12/98:
   // Support -loadgame with -record and reimplement -recordfrom.
 
   if ((slot = M_CheckParm("-recordfrom")) && (p = slot+2) < myargc)

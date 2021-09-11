@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -40,6 +40,8 @@
 #define ST_HEIGHT (32*SCREEN_MUL)
 #define ST_WIDTH  ORIGWIDTH
 #define ST_Y      (ORIGHEIGHT - ST_HEIGHT)
+
+#define CRISPY_HUD 11 // [Nugget] Crispy minimalistic HUD
 
 //
 // STATUS BAR

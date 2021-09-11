@@ -109,8 +109,8 @@ extern int fullscreen; // [FG] save fullscren mode
 extern boolean flipcorpses; // [crispy] randomly flip corpse, blood and death animation sprites
 
 // [Nugget]
-extern int key_jump;
-extern int key_crouch;
+//extern int key_jump;
+//extern int key_crouch;
 
 extern char *chat_macros[], *wad_files[], *deh_files[];  // killough 10/98
 
@@ -482,7 +482,7 @@ default_t defaults[] = {
   { // killough 2/21/98: default to 10
     "screenblocks",
     (config_t *) &screenblocks, NULL,
-    {10}, {3,11}, number, ss_none, wad_no,
+    {10}, {3,12}, number, ss_none, wad_no,
     "initial play screen size"
   },
 

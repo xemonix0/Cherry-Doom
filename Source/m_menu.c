@@ -235,8 +235,8 @@ extern int mapcolor_frnd;  // friends colors  // killough 8/8/98
 extern int map_point_coordinates; // killough 10/98
 
 // [Nugget]
-extern int key_jump;
-extern int key_crouch;
+//extern int key_jump;
+//extern int key_crouch;
 
 extern char* chat_macros[];  // chat macros
 extern char *wad_files[], *deh_files[]; // killough 10/98
@@ -1624,7 +1624,7 @@ void M_SizeDisplay(int choice)
 	}
       break;
     case 1:
-      if (screenSize < 8)
+      if (screenSize < 9)
 	{
 	  screenblocks++;
 	  screenSize++;
@@ -5150,8 +5150,9 @@ boolean M_Responder (event_t* ev)
 	{
 	  if (automapactive || chat_on)    // jff 2/22/98
 	    return false;                  // HUD mode control
-	  if (screenSize<8)                // function on default F5
-	    while (screenSize<8 || !hud_displayed) // make hud visible
+    // [Nugget] Replace 'screenSize<8' with 9 to accomodate for Crispy HUD
+	  if (screenSize<9)                // function on default F5
+	    while (screenSize<9 || !hud_displayed) // make hud visible
 	      M_SizeDisplay(1);            // when configuring it
 	  else
 	    {

@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: r_main.c,v 1.13 1998/05/07 00:47:52 killough Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -40,7 +40,7 @@
 #include "st_stuff.h"
 
 // Fineangles in the SCREENWIDTH wide window.
-#define FIELDOFVIEW 2048    
+#define FIELDOFVIEW 2048
 
 // killough: viewangleoffset is a legacy from the pre-v1.2 days, when Doom
 // had Left/Mid/Right viewing. +/-ANG90 offsets were placed here on each
@@ -67,7 +67,7 @@ angle_t clipangle;
 // The viewangletox[viewangle + FINEANGLES/4] lookup
 // maps the visible view angles to screen X coordinates,
 // flattening the arc to a flat projection plane.
-// There will be many angles mapped to the same X. 
+// There will be many angles mapped to the same X.
 
 int viewangletox[FINEANGLES/2];
 
@@ -110,10 +110,10 @@ int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
 
   if (!node->dy)
     return y <= node->y ? node->dx < 0 : node->dx > 0;
-        
+
   x -= node->x;
   y -= node->y;
-  
+
   // Try to quickly decide by looking at sign bits.
   if ((node->dy ^ node->dx ^ x ^ y) < 0)
     return (node->dy ^ x) < 0;  // (left is negative)
@@ -134,10 +134,10 @@ int R_PointOnSegSide(fixed_t x, fixed_t y, seg_t *line)
 
   if (!ldy)
     return y <= ly ? ldx < 0 : ldx > 0;
-  
+
   x -= lx;
   y -= ly;
-        
+
   // Try to quickly decide by looking at sign bits.
   if ((ldy ^ ldx ^ x ^ y) < 0)
     return (ldy ^ x) < 0;          // (left is negative)
@@ -158,11 +158,11 @@ int R_PointOnSegSide(fixed_t x, fixed_t y, seg_t *line)
 // killough 5/2/98: reformatted, cleaned up
 
 angle_t R_PointToAngle(fixed_t x, fixed_t y)
-{       
+{
   return (y -= viewy, (x -= viewx) || y) ?
     x >= 0 ?
-      y >= 0 ? 
-        (x > y) ? tantoangle[SlopeDiv(y,x)] :                      // octant 0 
+      y >= 0 ?
+        (x > y) ? tantoangle[SlopeDiv(y,x)] :                      // octant 0
                 ANG90-1-tantoangle[SlopeDiv(x,y)] :                // octant 1
         x > (y = -y) ? 0-tantoangle[SlopeDiv(y,x)] :               // octant 8
                        ANG270+tantoangle[SlopeDiv(x,y)] :          // octant 7
@@ -174,11 +174,11 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
 }
 
 angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
-{       
+{
   return (y -= viewy, (x -= viewx) || y) ?
     x >= 0 ?
-      y >= 0 ? 
-        (x > y) ? tantoangle[SlopeDiv(y,x)] :                      // octant 0 
+      y >= 0 ?
+        (x > y) ? tantoangle[SlopeDiv(y,x)] :                      // octant 0
                 ANG90-1-tantoangle[SlopeDiv(x,y)] :                // octant 1
         x > (y = -y) ? 0-tantoangle[SlopeDiv(y,x)] :               // octant 8
                        ANG270+tantoangle[SlopeDiv(x,y)] :          // octant 7
@@ -253,7 +253,7 @@ static void R_InitTextureMapping (void)
 {
   register int i,x;
   fixed_t focallength;
-    
+
   // Use tangent table to generate viewangletox:
   //  viewangletox will give the next greatest x
   //  after the view angle.
@@ -262,7 +262,7 @@ static void R_InitTextureMapping (void)
   //  so FIELDOFVIEW angles covers SCREENWIDTH.
 
   focallength = FixedDiv(centerxfrac_nonwide, finetangent[FINEANGLES/4+FIELDOFVIEW/2]);
-        
+
   for (i=0 ; i<FINEANGLES/2 ; i++)
     {
       int t;
@@ -283,7 +283,7 @@ static void R_InitTextureMapping (void)
         }
       viewangletox[i] = t;
     }
-    
+
   // Scan viewangletox[] to generate xtoviewangle[]:
   //  xtoviewangle will give the smallest view angle
   //  that maps to x.
@@ -294,15 +294,15 @@ static void R_InitTextureMapping (void)
         ;
       xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
     }
-    
+
   // Take out the fencepost cases from viewangletox.
   for (i=0; i<FINEANGLES/2; i++)
     if (viewangletox[i] == -1)
       viewangletox[i] = 0;
-    else 
+    else
       if (viewangletox[i] == viewwidth+1)
         viewangletox[i] = viewwidth;
-        
+
   clipangle = xtoviewangle[0];
 }
 
@@ -317,7 +317,7 @@ static void R_InitTextureMapping (void)
 void R_InitLightTables (void)
 {
   int i;
-    
+
   // killough 4/4/98: dynamic colormaps
   c_zlight = malloc(sizeof(*c_zlight) * numcolormaps);
   c_scalelight = malloc(sizeof(*c_scalelight) * numcolormaps);
@@ -372,7 +372,7 @@ void R_ExecuteSetViewSize (void)
 
   setsizeneeded = false;
 
-  if (setblocks == 11)
+  if (setblocks >= 11) // [Nugget] Crispy minimalistic HUD
     {
       scaledviewwidth_nonwide = NONWIDEWIDTH;
       scaledviewwidth = SCREENWIDTH;
@@ -416,9 +416,9 @@ void R_ExecuteSetViewSize (void)
   projection = centerxfrac_nonwide;
 
   R_InitBuffer(scaledviewwidth, scaledviewheight);       // killough 11/98
-        
+
   R_InitTextureMapping();
-    
+
   // psprite scales
   pspritescale = FixedDiv(viewwidth_nonwide, ORIGWIDTH);       // killough 11/98
   pspriteiscale= FixedDiv(ORIGWIDTH, viewwidth_nonwide);       // killough 11/98
@@ -426,20 +426,20 @@ void R_ExecuteSetViewSize (void)
   // thing clipping
   for (i=0 ; i<viewwidth ; i++)
     screenheightarray[i] = viewheight;
-    
+
   // planes
   for (i=0 ; i<viewheight ; i++)
     {   // killough 5/2/98: reformatted
       fixed_t dy = abs(((i-viewheight/2)<<FRACBITS)+FRACUNIT/2);
       yslope[i] = FixedDiv(viewwidth_nonwide*(FRACUNIT/2), dy);
     }
-        
+
   for (i=0 ; i<viewwidth ; i++)
     {
       fixed_t cosadj = abs(finecosine[xtoviewangle[i]>>ANGLETOFINESHIFT]);
       distscale[i] = FixedDiv(FRACUNIT,cosadj);
     }
-    
+
   // Calculate the light levels to use
   //  for each level / scale combination.
   for (i=0; i<LIGHTLEVELS; i++)
@@ -448,7 +448,7 @@ void R_ExecuteSetViewSize (void)
       for (j=0 ; j<MAXLIGHTSCALE ; j++)
         {                                       // killough 11/98:
           int t, level = startmap - j*NONWIDEWIDTH/scaledviewwidth_nonwide/DISTMAP;
-            
+
           if (level < 0)
             level = 0;
 
@@ -532,9 +532,9 @@ angle_t R_InterpolateAngle(angle_t oangle, angle_t nangle, fixed_t scale)
 //
 
 void R_SetupFrame (player_t *player)
-{               
+{
   int i, cm;
-    
+
   viewplayer = player;
   // [AM] Interpolate the player camera if the feature is enabled.
   if (uncapped &&
@@ -561,7 +561,7 @@ void R_SetupFrame (player_t *player)
   viewangle = player->mo->angle + viewangleoffset;
   }
   extralight = player->extralight;
-    
+
   viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
   viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
 
@@ -589,7 +589,7 @@ void R_SetupFrame (player_t *player)
 
       fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
         + player->fixedcolormap*256*sizeof(lighttable_t);
-        
+
       walllights = scalelightfixed;
 
       for (i=0 ; i<MAXLIGHTSCALE ; i++)
@@ -607,7 +607,7 @@ int autodetect_hom = 0;       // killough 2/7/98: HOM autodetection flag
 // R_RenderView
 //
 void R_RenderPlayerView (player_t* player)
-{       
+{
   R_SetupFrame (player);
 
   // Clear buffers.
@@ -615,7 +615,7 @@ void R_RenderPlayerView (player_t* player)
   R_ClearDrawSegs ();
   R_ClearPlanes ();
   R_ClearSprites ();
-    
+
   if (autodetect_hom)
     { // killough 2/10/98: add flashing red HOM indicators
       byte c[47*47];
@@ -692,19 +692,19 @@ void R_RenderPlayerView (player_t* player)
 
   // The head node is the last node output.
   R_RenderBSPNode (numnodes-1);
-    
+
   // [FG] update automap while playing
   if (automapactive && !automapoverlay)
     return;
 
   // Check for new console commands.
   NetUpdate ();
-    
+
   R_DrawPlanes ();
-    
+
   // Check for new console commands.
   NetUpdate ();
-    
+
   R_DrawMasked ();
 
   // Check for new console commands.

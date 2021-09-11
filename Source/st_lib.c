@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: st_lib.c,v 1.8 1998/05/11 10:44:42 jim Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 //
@@ -85,8 +85,8 @@ void STlib_initNum
 
 //
 // STlib_drawNum()
-// 
-// A fairly efficient way to draw a number based on differences from the 
+//
+// A fairly efficient way to draw a number based on differences from the
 // old number.
 //
 // Passed a st_number_t widget, a color range for output, and a flag
@@ -128,7 +128,8 @@ void STlib_drawNum
   if (n->y - ST_Y < 0)
     I_Error("drawNum: n->y - ST_Y < 0");
 
-  V_CopyRect(x + WIDESCREENDELTA, n->y - ST_Y, BG, w*numdigits, h, x + WIDESCREENDELTA, n->y, FG);
+  if (screenblocks < CRISPY_HUD) // [Nugget] Crispy minimalistic HUD
+  {V_CopyRect(x + WIDESCREENDELTA, n->y - ST_Y, BG, w*numdigits, h, x + WIDESCREENDELTA, n->y, FG);}
 
   // if non-number, do not draw it
   if (num == 1994)
@@ -238,7 +239,7 @@ void STlib_updatePercent
     else   //jff 2/18/98 allow use of faster draw routine from config
       V_DrawPatch(per->n.x, per->n.y, FG, per->p);
   }
-  
+
   STlib_updateNum(&per->n, outrng, refresh);
 }
 
@@ -299,7 +300,8 @@ void STlib_updateMultIcon
       if (y - ST_Y < 0)
         I_Error("updateMultIcon: y - ST_Y < 0");
 
-      V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG);
+      if (screenblocks < CRISPY_HUD) // [Nugget] Crispy minimalistic HUD
+      {V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG);}
     }
     if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
       V_DrawPatch(mi->x, mi->y, FG, mi->p[*mi->inum]);
@@ -368,7 +370,8 @@ void STlib_updateBinIcon
     if (*bi->val)
       V_DrawPatch(bi->x, bi->y, FG, bi->p);
     else
-      V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG);
+      if (screenblocks < CRISPY_HUD) // [Nugget] Crispy minimalistic HUD
+      {V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG);}
 
     bi->oldval = *bi->val;
   }
