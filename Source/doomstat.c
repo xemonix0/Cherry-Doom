@@ -107,11 +107,9 @@ int center_weapon;
 //----- Nugget ---------------------------------------------------------------
 
 int adjust_viewheight;
-int bug_fixes;
 int extra_gibbing;
 int jump_crouch;
 int no_ss_background;
-int sound_fixes;
 
 int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
 
