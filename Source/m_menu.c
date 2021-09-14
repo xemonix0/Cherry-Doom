@@ -1250,11 +1250,17 @@ int quitsounds2[8] =
   sfx_sgtatk
 };
 
+extern boolean speedkeydown(void);
+
 void M_QuitResponse(int ch)
 {
   extern int snd_card;      // killough 10/98
   if (ch != 'y')
     return;
+
+  // [Nugget] Quick exit is Run key is held
+  if (speedkeydown()) {exit(0);}
+
   if ((!netgame || demoplayback) // killough 12/98
       && !nosfxparm && snd_card) // avoid delay if no sound card
     {
@@ -1270,6 +1276,9 @@ void M_QuitResponse(int ch)
 void M_QuitDOOM(int choice)
 {
   static char endstring[160];
+
+  // [Nugget] Quick exit is Run key is held
+  if (speedkeydown()) {exit(0);}
 
   // We pick index 0 which is language sensitive,
   // or one at random, between 1 and maximum number.
