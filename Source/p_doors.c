@@ -483,8 +483,8 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
             // [Nugget] Add this
             // [crispy] play sound effect when the door is opened again while going down
             if (!nugget_comp[comp_manualdoor]) {
-            S_StartSound((mobj_t *)&door->sector->soundorg,
-                          line->special == 117 ? sfx_bdopn : sfx_doropn);
+              S_StartSound((mobj_t *)&door->sector->soundorg,
+                            line->special == 117 ? sfx_bdopn : sfx_doropn);
             }
           }
           else
@@ -509,8 +509,10 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
               }
               // [Nugget] Add this
               // [crispy] play sound effect when the door is closed manually
-              if (!nugget_comp[comp_manualdoor])
-              {S_StartSound((mobj_t *)&door->sector->soundorg, line->special == 117 ? sfx_bdcls : sfx_dorcls);}
+              if (!nugget_comp[comp_manualdoor]) {
+                S_StartSound((mobj_t *)&door->sector->soundorg,
+                             line->special == 117 ? sfx_bdcls : sfx_dorcls);
+              }
             }
           return 1;
         }
