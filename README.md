@@ -1,6 +1,37 @@
 # Nugget Doom
 
-Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.chocolate-doom.org/wiki/index.php/Crispy_Doom) fork) is a fork of [Woof!](https://github.com/fabiangreffrath/woof), intended to implement Crispy Doom features and extras on the MBF engine.
+Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.chocolate-doom.org/wiki/index.php/Crispy_Doom) fork) is a fork of [Woof!](https://github.com/fabiangreffrath/woof), intended to implement features I (Alaux) would like to have (including some Crispy Doom features).
+
+## Features
+
+- From Crispy Doom:
+  - Minimalistic HUD (partially implemented)
+  - Resurrect from savegame (Run key + Use key)
+  - Quick exit (hold Run key when entering "Quit Game" in menu, or when confirming on the quit prompt)
+  - Extended IDCLEV functionality (IDCLEV00 restarts current map, IDCLEV beyond 32 in Doom 2 warps to the corresponding map if present)
+  - Interactive character cast (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip)
+- "Extra gibbing" setting to force Berserk Fist, Chainsaw and SSG gibbing
+- "Disable background" setting, to disable the background on setup screens and dynamic Help screen
+- "Adjust Viewheight" setting
+- Two new cheats:
+  - **'FULLCLIP'** for infinite ammo;
+  - **'VALIANT'** for fast weapons.
+- New "Doom compatibility" settings (some adapted from Crispy Doom fixes):
+  - Blazing doors reopen with wrong sound;
+  - Manually reactivated moving doors are silent;
+  - Corrected switch sound source;
+  - Chaingun makes two sounds with one bullet;
+  - Fix Lost Soul colliding with items;
+  - Lost Soul forgets target upon impact;
+  - Prevent Pain state with 0 damage attacks;
+  - Bruiser attack (A_BruisAttack) doesn't face target;
+  - Chaingunner uses pistol/chaingun sound;
+  - Arch-Vile fire plays flame start sound;
+  - Dead players can still play "oof" sound;
+  - Fix lopsided Icon of Sin explosions ;
+  - Key pickup resets palette;
+  - Fix IDCHOPPERS invulnerability;
+  - Partially fix Chainsaw knockback bug.
 
 ## Building
 
