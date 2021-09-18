@@ -13,9 +13,11 @@ Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.cho
 - "Extra gibbing" setting to force Berserk Fist, Chainsaw and SSG gibbing
 - "Disable background" setting, to disable the background on setup screens and dynamic Help screen
 - "Adjust Viewheight" setting
-- Two new cheats:
+- Three new cheats:
   - **'FULLCLIP'** for infinite ammo;
-  - **'VALIANT'** for fast weapons.
+  - **'VALIANT'** for fast weapons;
+    - **'BOBBERS'** serves as a shortcut to toggle the two cheats mentioned above, plus IDFA.
+  - **'GIBBERS'** to force gibbing on dying enemies, independently of damage dealt.
 - New "Doom compatibility" settings (some adapted from Crispy Doom fixes):
   - Blazing doors reopen with wrong sound;
   - Manually reactivated moving doors are silent;
