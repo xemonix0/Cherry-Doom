@@ -716,14 +716,17 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
   if // [Nugget] Chainsaw/SSG gibbing
   (extra_gibbing && source && source->player && target->info->xdeathstate
   && !(demorecording||demoplayback||netgame)
-  && ((source->player->readyweapon == wp_chainsaw // Chainsaw
-       && P_NuggetCheckDist(source, target, 65*FRACUNIT, false))
+  && ((source->player->cheats & CF_GIBBERS)
+      || (source->player->readyweapon == wp_chainsaw // Chainsaw
+          && P_NuggetCheckDist(source, target, 65*FRACUNIT, false))
       || (source->player->readyweapon == wp_supershotgun // SSG
           && P_NuggetCheckDist(source, target, 128*FRACUNIT, true))
       || (source->player->readyweapon == wp_fist // Berserk Fist
           && source->player->powers[pw_strength]
-          && P_NuggetCheckDist(source, target, 64*FRACUNIT, false))))
-      {P_SetMobjState (target, target->info->xdeathstate);}
+          && P_NuggetCheckDist(source, target, 64*FRACUNIT, false))
+      )
+   )
+    {P_SetMobjState (target, target->info->xdeathstate);}
   else if (target->health < -target->info->spawnhealth && target->info->xdeathstate)
     {P_SetMobjState (target, target->info->xdeathstate);}
   else

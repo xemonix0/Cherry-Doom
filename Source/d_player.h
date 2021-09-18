@@ -78,7 +78,9 @@ typedef enum
   // [Nugget] Infinite ammo
   CF_INFAMMO          = 16,
   // [Nugget] Fast weapons
-  CF_FASTWEAPS          = 32
+  CF_FASTWEAPS        = 32,
+  // [Nugget] All gibs
+  CF_GIBBERS          = 64
 
 } cheat_t;
 

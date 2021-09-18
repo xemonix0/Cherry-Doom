@@ -86,6 +86,8 @@ static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
 static void cheat_infammo(); // [Nugget] Infinite ammo cheat
 static void cheat_fastweaps(); // [Nugget] Fast weapons cheat
+static void cheat_bobbers(); // [Nugget] Shortcut to the two cheats above
+static void cheat_gibbers();
 
 //-----------------------------------------------------------------------------
 //
@@ -271,6 +273,14 @@ struct cheat_s cheat[] = {
   {"valiant",    NULL,                not_net|not_demo,
    cheat_fastweaps},
 
+// [Nugget] Shortcut for the two above cheats
+  {"bobbers",    NULL,                not_net|not_demo,
+   cheat_bobbers},
+
+// [Nugget] All gibs
+  {"gibbers",    NULL,                not_net|not_demo,
+   cheat_gibbers},
+
   {NULL}                 // end-of-list marker
 };
 
@@ -304,6 +314,22 @@ static void cheat_fastweaps() {
   plyr->message = plyr->cheats & CF_FASTWEAPS
                   ? "Fast Weapons ON"
                   : "Fast Weapons OFF";
+}
+
+// [Nugget] Shortcut for the two above cheats
+static void cheat_bobbers() {
+  cheat_fa();
+  plyr->cheats ^= CF_INFAMMO;
+  plyr->cheats ^= CF_FASTWEAPS;
+  plyr->message = "Yippee Ki Yay!";
+}
+
+// [Nugget] All gibs
+static void cheat_gibbers() {
+  plyr->cheats ^= CF_GIBBERS;
+  plyr->message = plyr->cheats & CF_GIBBERS
+                  ? "Ludicrous Gibs!"
+                  : "Ludicrous Gibs no more.";
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode
