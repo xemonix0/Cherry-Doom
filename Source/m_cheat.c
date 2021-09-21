@@ -88,6 +88,7 @@ static void cheat_infammo(); // [Nugget] Infinite ammo cheat
 static void cheat_fastweaps(); // [Nugget] Fast weapons cheat
 static void cheat_bobbers(); // [Nugget] Shortcut to the two cheats above
 static void cheat_gibbers();
+static void cheat_notarget(); // [Nugget]: [crispy] implement PrBoom+'s "notarget" cheat
 
 //-----------------------------------------------------------------------------
 //
@@ -281,6 +282,10 @@ struct cheat_s cheat[] = {
   {"gibbers",    NULL,                not_net|not_demo,
    cheat_gibbers},
 
+// [Nugget] No Target cheat
+  {"notarget",    NULL,                not_net|not_demo,
+   cheat_notarget},
+
   {NULL}                 // end-of-list marker
 };
 
@@ -330,6 +335,39 @@ static void cheat_gibbers() {
   plyr->message = plyr->cheats & CF_GIBBERS
                   ? "Ludicrous Gibs!"
                   : "Ludicrous Gibs no more.";
+}
+
+// [Nugget]: [crispy] implement PrBoom+'s "notarget" cheat
+static void cheat_notarget() {
+	plyr->cheats ^= CF_NOTARGET;
+
+	if (plyr->cheats & CF_NOTARGET) {
+    int i;
+		thinker_t *th;
+
+		// [crispy] let mobjs forget their target and tracer
+		for (th = thinkercap.next; th != &thinkercap; th = th->next)
+		{
+			if (th->function == (actionf_t)P_MobjThinker)
+			{
+				mobj_t *const mo = (mobj_t *)th;
+
+				if (mo->target && mo->target->player) {mo->target = NULL;}
+        if (mo->tracer && mo->tracer->player) {mo->tracer = NULL;}
+			}
+		}
+		// [crispy] let sectors forget their soundtarget
+		for (i = 0; i < numsectors; i++) {
+			sector_t *const sector = &sectors[i];
+
+			sector->soundtarget = NULL;
+		}
+	}
+
+  plyr->message = plyr->cheats & CF_NOTARGET
+                  ? "NoTarget Mode ON"
+                  : "NoTarget Mode OFF";
+
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode

@@ -122,6 +122,11 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks,
 
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
+  // [Nugget] Add this
+  // [crispy] monsters are deaf with NOTARGET cheat
+  if (target && target->player && (target->player->cheats & CF_NOTARGET))
+      return;
+
   validcount++;
   P_RecursiveSound(emitter->subsector->sector, 0, target);
 }
@@ -854,6 +859,11 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
       player = &players[actor->lastlook];
 
+      // [Nugget] Add this
+      // [crispy] monsters don't look for players with NOTARGET cheat
+      if (player->cheats & CF_NOTARGET)
+        continue;
+
       if (player->health <= 0)
 	continue;               // dead
 
@@ -1026,13 +1036,20 @@ void A_Look(mobj_t *actor)
   // cannot find any targets. A marine's best friend :)
 
   actor->threshold = actor->pursuecount = 0;
-  if (!(actor->flags & MF_FRIEND && P_LookForTargets(actor, false)) &&
-      !((targ = actor->subsector->sector->soundtarget) &&
-	targ->flags & MF_SHOOTABLE &&
-	(P_SetTarget(&actor->target, targ),
-	 !(actor->flags & MF_AMBUSH) || P_CheckSight(actor, targ))) &&
-      (actor->flags & MF_FRIEND || !P_LookForTargets(actor, false)))
+  if (!(actor->flags & MF_FRIEND && P_LookForTargets(actor, false))
+      && !((targ = actor->subsector->sector->soundtarget)
+           && (targ->flags & MF_SHOOTABLE
+               // [Nugget]: [crispy] monsters don't look for players with NOTARGET cheat
+               || (targ->player && (targ->player->cheats & CF_NOTARGET)))
+           && (P_SetTarget(&actor->target, targ),
+               !(actor->flags & MF_AMBUSH) || P_CheckSight(actor, targ)))
+      && (actor->flags & MF_FRIEND || !P_LookForTargets(actor, false)))
     return;
+
+  // [Nugget] Add this
+  // [crispy] monsters don't look for players with NOTARGET cheat
+//  if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
+//      return;
 
   // go into chase state
 

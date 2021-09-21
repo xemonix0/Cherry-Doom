@@ -80,7 +80,10 @@ typedef enum
   // [Nugget] Fast weapons
   CF_FASTWEAPS        = 32,
   // [Nugget] All gibs
-  CF_GIBBERS          = 64
+  CF_GIBBERS          = 64,
+  // [Nugget] Add this
+  // [crispy] monsters don't target
+  CF_NOTARGET         = 128
 
 } cheat_t;
 
