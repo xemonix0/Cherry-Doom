@@ -210,6 +210,9 @@ void P_MovePlayer (player_t* player)
 
   mo->angle += cmd->angleturn << 16;
   onground = mo->z <= mo->floorz;
+  // [Nugget]: [crispy] give full control in no-clipping mode
+  onground |= (player->mo->flags & MF_NOCLIP);
+
 
   // killough 10/98:
   //
