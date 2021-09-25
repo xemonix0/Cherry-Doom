@@ -5,11 +5,12 @@ Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.cho
 ## Features
 
 - From Crispy Doom:
-  - Minimalistic HUD (partially implemented)
-  - Resurrect from savegame (Run key + Use key)
-  - Quick exit (hold Run key when entering "Quit Game" in menu, or when confirming on the quit prompt)
-  - Extended IDCLEV functionality (IDCLEV00 restarts current map, IDCLEV beyond 32 in Doom 2 warps to the corresponding map if present)
-  - Interactive character cast (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip)
+  - Minimalistic HUD (partially implemented);
+  - Resurrect from savegame (Run key + Use key);
+  - **'RESURRECT'** cheat adapted from Crispy's resurrection with IDDQD;
+  - Quick exit (hold Run key when entering "Quit Game" in menu, or when confirming on the quit prompt);
+  - Extended IDCLEV functionality (IDCLEV00 restarts current map, IDCLEV beyond 32 in Doom 2 warps to the corresponding map if present);
+  - Interactive character cast (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip).
 - "Extra gibbing" setting to force Berserk Fist, Chainsaw and SSG gibbing
 - "Disable background" setting, to disable the background on setup screens and dynamic Help screen
 - "Adjust Viewheight" setting
@@ -17,7 +18,7 @@ Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.cho
   - **'FULLCLIP'** for infinite ammo;
   - **'VALIANT'** for fast weapons;
     - **'BOBBERS'** serves as a shortcut to toggle the two cheats mentioned above, plus IDFA.
-  - **'GIBBERS'** to force gibbing on dying enemies, independently of damage dealt.
+  - **'GIBBERS'** to force gibbing on dying enemies, independently of damage dealt;
 - New "Doom compatibility" settings (some adapted from Crispy Doom fixes):
   - Blazing doors reopen with wrong sound;
   - Manually reactivated moving doors are silent;
