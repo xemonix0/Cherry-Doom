@@ -87,8 +87,9 @@ static void cheat_showfps(); // [FG] FPS counter widget
 static void cheat_infammo(); // [Nugget] Infinite ammo cheat
 static void cheat_fastweaps(); // [Nugget] Fast weapons cheat
 static void cheat_bobbers(); // [Nugget] Shortcut to the two cheats above
-static void cheat_gibbers();
+static void cheat_gibbers(); // [Nugget] All gibs
 static void cheat_notarget(); // [Nugget]: [crispy] implement PrBoom+'s "notarget" cheat
+static void cheat_resurrect(); // [Nugget] Resurrect cheat
 
 //-----------------------------------------------------------------------------
 //
@@ -286,6 +287,10 @@ struct cheat_s cheat[] = {
   {"notarget",    NULL,                not_net|not_demo,
    cheat_notarget},
 
+// [Nugget] Resurrect cheat
+  {"resurrect",    NULL,                not_net|not_demo,
+   cheat_resurrect},
+
   {NULL}                 // end-of-list marker
 };
 
@@ -368,6 +373,34 @@ static void cheat_notarget() {
                   ? "NoTarget Mode ON"
                   : "NoTarget Mode OFF";
 
+}
+
+// [Nugget] Resurrection cheat adapted from Crispy's IDDQD
+static void cheat_resurrect() {
+	// [crispy] dead players are first respawned at the current position
+	mapthing_t mt = {0};
+	if (plyr->playerstate == PST_DEAD) {
+    signed int an;
+    extern void P_SpawnPlayer (mapthing_t* mthing);
+
+    mt.x = plyr->mo->x >> FRACBITS;
+    mt.y = plyr->mo->y >> FRACBITS;
+    mt.angle = (plyr->mo->angle + ANG45/2)*(uint64_t)45/ANG45;
+    mt.type = consoleplayer + 1;
+    P_SpawnPlayer(&mt);
+
+    // [Nugget] Set player health
+    if (plyr->mo) {plyr->mo->health = god_health;}
+    plyr->health = god_health;
+
+    // [crispy] spawn a teleport fog
+    an = plyr->mo->angle >> ANGLETOFINESHIFT;
+    P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
+    S_StartSound(plyr->mo, sfx_slop);
+    // [Nugget] Announce
+    plyr->message = "Resurrected!";
+	}
+	else {plyr->message = "Still alive.";}
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode
