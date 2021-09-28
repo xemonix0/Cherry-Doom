@@ -70,6 +70,8 @@
 #include "i_glob.h" // [FG] I_StartMultiGlob()
 #include "p_map.h" // MELEERANGE
 
+#include "dsdhacked.h"
+
 #ifdef _WIN32
 #include "../win32/win_fopen.h"
 #endif
@@ -321,8 +323,8 @@ void D_Display (void)
     {
       int y = 4;
       if (!automapactive)
-        y += viewwindowy;
-      V_DrawPatchDirect(viewwindowx+(scaledviewwidth-68)/2-WIDESCREENDELTA,
+        y += (viewwindowy>>hires);
+      V_DrawPatchDirect((viewwindowx>>hires)+(scaledviewwidth-68)/2-WIDESCREENDELTA,
                         y,0,W_CacheLumpName ("M_PAUSE", PU_CACHE));
     }
 
@@ -1667,7 +1669,7 @@ static void D_ProcessUMInWad(int i)
 static void D_InitTables(void)
 {
   int i;
-  for (i = 0; i < NUMMOBJTYPES; ++i)
+  for (i = 0; i < num_mobj_types; ++i)
   {
     mobjinfo[i].flags2           = 0;
     mobjinfo[i].infighting_group = IG_DEFAULT;
@@ -1751,6 +1753,8 @@ void D_DoomMain(void)
   int p, slot;
 
   setbuf(stdout,NULL);
+
+  dsdh_InitTables();
 
 #if defined(_WIN32)
     // [FG] compose a proper command line from loose file paths passed as arguments

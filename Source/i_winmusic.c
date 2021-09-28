@@ -1,3 +1,6 @@
+//
+//  Copyright(C) 2021 Roman Fomin
+//
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
 //  as published by the Free Software Foundation; either version 2
@@ -86,6 +89,7 @@ static void MidiErrorMessageBox(DWORD dwError)
 
 #define STREAM_MAX_EVENTS   4
 #define STREAM_NUM_BUFFERS  2
+#define STREAM_CALLBACK_TIMEOUT 2000 // wait 2 seconds for callback
 
 typedef struct
 {
@@ -352,7 +356,6 @@ void I_WIN_StopSong(void)
     WaitForSingleObject(hPlayerThread, INFINITE);
 
     CloseHandle(hPlayerThread);
-    CloseHandle(hBufferReturnEvent);
     CloseHandle(hExitEvent);
     hPlayerThread = NULL;
   }
@@ -360,20 +363,29 @@ void I_WIN_StopSong(void)
   if (hMidiStream)
   {
     int i;
+    DWORD ret;
 
     midiStreamStop(hMidiStream);
     midiOutReset((HMIDIOUT)hMidiStream);
 
-    for (i = 0; i < STREAM_NUM_BUFFERS; ++i)
+    ret = WaitForSingleObject(hBufferReturnEvent, STREAM_CALLBACK_TIMEOUT);
+
+    if (ret == WAIT_TIMEOUT)
+      fprintf(stderr, "Timed out waiting for MIDI callback\n");
+
+    if (ret == WAIT_OBJECT_0)
     {
-      if (buffers[i].prepared)
+      for (i = 0; i < STREAM_NUM_BUFFERS; ++i)
       {
-        mmr = midiOutUnprepareHeader((HMIDIOUT)hMidiStream, &buffers[i].MidiStreamHdr, sizeof(MIDIHDR));
-        if (mmr != MMSYSERR_NOERROR)
+        if (buffers[i].prepared)
         {
-          MidiErrorMessageBox(mmr);
+          mmr = midiOutUnprepareHeader((HMIDIOUT)hMidiStream, &buffers[i].MidiStreamHdr, sizeof(MIDIHDR));
+          if (mmr != MMSYSERR_NOERROR)
+          {
+            MidiErrorMessageBox(mmr);
+          }
+          buffers[i].prepared = false;
         }
-        buffers[i].prepared = false;
       }
     }
 
@@ -383,6 +395,7 @@ void I_WIN_StopSong(void)
       MidiErrorMessageBox(mmr);
     }
 
+    CloseHandle(hBufferReturnEvent);
     hMidiStream = NULL;
   }
 
@@ -408,6 +421,7 @@ void I_WIN_PlaySong(boolean looping)
   }
 
   hPlayerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)PlayerProc, 0, 0, 0);
+  SetThreadPriority(hPlayerThread, THREAD_PRIORITY_TIME_CRITICAL);
 }
 
 void I_WIN_RegisterSong(void *data, int len)

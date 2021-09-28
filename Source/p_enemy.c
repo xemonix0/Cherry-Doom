@@ -1716,6 +1716,10 @@ static boolean P_HealCorpse(mobj_t* actor, int radius, statenum_t healstate, sfx
 		  // killough 8/29/98: add to appropriate thread
 		  P_UpdateThinker(&corpsehit->thinker);
 
+                  // [crispy] count resurrected monsters
+                  if (!(corpsehit->flags & MF_FRIEND))
+                    extrakills++;
+
                   return true;
                 }
             }
@@ -2617,6 +2621,10 @@ void A_SpawnFly(mobj_t *mo)
 
   // killough 7/18/98: brain friendliness is transferred
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
+
+  // [crispy] count spawned monsters
+  if (!(newmobj->flags & MF_FRIEND))
+    extrakills++;
 
   // killough 8/29/98: add to appropriate thread
   P_UpdateThinker(&newmobj->thinker);

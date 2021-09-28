@@ -1441,6 +1441,8 @@ int P_GetNumForMap (int episode, int map) {
 
 // [FG] current map lump number
 int maplumpnum = -1;
+// fast-forward demo to the next map
+boolean demoskip = false;
 
 void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 {
@@ -1451,6 +1453,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   boolean gen_blockmap, pad_reject;
 
   totalkills = totalitems = totalsecret = wminfo.maxfrags = 0;
+  // [crispy] count spawned monsters
+  extrakills = 0;
   wminfo.partime = 180;
   for (i=0; i<MAXPLAYERS; i++)
     players[i].killcount = players[i].secretcount = players[i].itemcount = 0;
@@ -1459,10 +1463,11 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   players[consoleplayer].viewz = 1;
 
   // [FG] fast-forward demo to the desired map
-  if (demowarp == map)
+  if (demowarp == map || demoskip)
   {
     I_EnableWarp(false);
     demowarp = -1;
+    demoskip = false;
   }
 
   // Make sure all sounds are stopped before Z_FreeTags.

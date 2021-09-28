@@ -2453,7 +2453,8 @@ void M_DrawInstructions()
     return;
 
   // killough 8/15/98: warn when values are different
-  if (flags & (S_NUM|S_YESNO) && def->current && def->current->i!=def->location->i)
+  if (flags & (S_NUM|S_YESNO) && def->current && def->current->i!=def->location->i &&
+      !(flags & S_COSMETIC)) // Don't warn about cosmetic options
     {
       int allow = allow_changes() ? 8 : 0;
       if (!(setup_gather | print_warning_about_changes | demoplayback))
@@ -2513,9 +2514,14 @@ static int G_ReloadLevel(void)
 
 	if (gamestate == GS_LEVEL &&
 	    !deathmatch && !netgame &&
-	    !demorecording && !demoplayback &&
+	    !demoplayback &&
 	    !menuactive)
 	{
+		// [crispy] restart demos from the map they were started
+		if (demorecording)
+		{
+			gamemap = startmap;
+		}
 		G_DeferedInitNew(gameskill, gameepisode, gamemap);
 		result = true;
 	}
@@ -2772,6 +2778,8 @@ setup_menu_t keys_settings3[] =  // Key Binding screen strings
   {"LEVELS"      ,S_SKIP|S_TITLE,m_null,KB_X,KB_Y+14*8},
   {"RELOAD LEVEL",S_KEY   ,m_scrn,KB_X,KB_Y+15*8,{&key_menu_reloadlevel}},
   {"NEXT LEVEL"  ,S_KEY   ,m_scrn,KB_X,KB_Y+16*8,{&key_menu_nextlevel}},
+  {"DEMOS"      ,S_SKIP|S_TITLE,m_null,KB_X,KB_Y+17*8},
+  {"FINISH RECORDING DEMO",S_KEY,m_scrn,KB_X,KB_Y+18*8,{&key_demo_quit}},
 
   {"<- PREV",S_SKIP|S_PREV,m_null,KB_PREV,KB_Y+20*8, {keys_settings2}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {keys_settings4}},
@@ -3132,17 +3140,16 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
   {"blue door"                          ,S_COLOR,m_null,AU_X,AU_Y+10*8, {"mapcolor_bdor"}},
   {"yellow door"                        ,S_COLOR,m_null,AU_X,AU_Y+11*8, {"mapcolor_ydor"}},
 
-  {"AUTOMAP LEVEL TITLE COLOR"      ,S_CRITEM,m_null,AU_X,AU_Y+13*8, {"hudcolor_titl"}},
-  {"AUTOMAP COORDINATES COLOR"      ,S_CRITEM,m_null,AU_X,AU_Y+14*8, {"hudcolor_xyco"}},
+  {"Show Secrets only after entering",S_YESNO,m_null,AU_X,AU_Y+13*8, {"map_secret_after"}},
 
-  {"Show Secrets only after entering",S_YESNO,m_null,AU_X,AU_Y+15*8, {"map_secret_after"}},
-
-  {"Show coordinates of automap pointer",S_YESNO,m_null,AU_X,AU_Y+16*8, {"map_point_coord"}},  // killough 10/98
+  {"Show coordinates of automap pointer",S_YESNO,m_null,AU_X,AU_Y+14*8, {"map_point_coord"}},  // killough 10/98
 
   // [FG] show level statistics and level time widgets
-  {"Show player coords", S_CHOICE,m_null,AU_X,AU_Y+17*8, {"map_player_coords"},0,0,NULL,show_widgets_strings},
-  {"Show level stats",   S_CHOICE,m_null,AU_X,AU_Y+18*8, {"map_level_stats"},0,0,NULL,show_widgets_strings},
-  {"Show level time",    S_CHOICE,m_null,AU_X,AU_Y+19*8, {"map_level_time"},0,0,NULL,show_widgets_strings},
+  {"Show player coords", S_CHOICE,m_null,AU_X,AU_Y+15*8, {"map_player_coords"},0,0,NULL,show_widgets_strings},
+  {"Show level stats",   S_CHOICE,m_null,AU_X,AU_Y+16*8, {"map_level_stats"},0,0,NULL,show_widgets_strings},
+  {"Show level time",    S_CHOICE,m_null,AU_X,AU_Y+17*8, {"map_level_time"},0,0,NULL,show_widgets_strings},
+
+  {"Keyed doors are flashing", S_YESNO,m_null,AU_X,AU_Y+18*8, {"map_keyed_door_flash"}},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
@@ -3171,6 +3178,9 @@ setup_menu_t auto_settings2[] =  // 2nd AutoMap Settings screen
   {"player 4 arrow"                 ,S_COLOR ,m_null,AU_X,AU_Y+11*8, {"mapcolor_ply4"}},
 
   {"friends"                        ,S_COLOR ,m_null,AU_X,AU_Y+12*8, {"mapcolor_frnd"}},        // killough 8/8/98
+
+  {"AUTOMAP LEVEL TITLE COLOR"      ,S_CRITEM,m_null,AU_X,AU_Y+14*8, {"hudcolor_titl"}},
+  {"AUTOMAP COORDINATES COLOR"      ,S_CRITEM,m_null,AU_X,AU_Y+15*8, {"hudcolor_xyco"}},
 
   {"<- PREV",S_SKIP|S_PREV,m_null,AU_PREV,AU_Y+20*8, {auto_settings1}},
 
@@ -3757,7 +3767,7 @@ setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
   {"Lost souls get stuck behind walls", S_YESNO, m_null, C_X,
    C_Y + compat_skull * COMP_SPC, {"comp_skull"}},
 
-  {"Blazing doors make double closing sounds", S_YESNO, m_null, C_X,
+  {"Blazing doors make double closing sounds", S_YESNO|S_COSMETIC, m_null, C_X,
    C_Y + compat_blazing * COMP_SPC, {"comp_blazing"}},
 
   // Button for resetting to defaults
@@ -3771,7 +3781,7 @@ setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
 
 setup_menu_t comp_settings2[] =  // Compatibility Settings screen #2
 {
-  {"Tagged doors don't trigger special lighting", S_YESNO, m_null, C_X,
+  {"Tagged doors don't trigger special lighting", S_YESNO|S_COSMETIC, m_null, C_X,
    C_Y + compat_doorlight * COMP_SPC, {"comp_doorlight"}},
 
   {"God mode isn't absolute", S_YESNO, m_null, C_X,
@@ -3783,7 +3793,7 @@ setup_menu_t comp_settings2[] =  // Compatibility Settings screen #2
   {"Zombie players can exit levels", S_YESNO, m_null, C_X,
    C_Y + compat_zombie * COMP_SPC, {"comp_zombie"}},
 
-  {"Sky is unaffected by invulnerability", S_YESNO, m_null, C_X,
+  {"Sky is unaffected by invulnerability", S_YESNO|S_COSMETIC, m_null, C_X,
    C_Y + compat_skymap * COMP_SPC, {"comp_skymap"}},
 
   {"Use exactly Doom's stairbuilding method", S_YESNO, m_null, C_X,
@@ -5193,7 +5203,13 @@ boolean M_Responder (event_t* ev)
 	}
 	if (ch != 0 && ch == key_menu_nextlevel)
 	{
-		if (G_GotoNextLevel())
+		if (demoplayback && singledemo && !demoskip)
+		{
+			demoskip = true;
+			I_EnableWarp(true);
+			return true;
+		}
+		else if (G_GotoNextLevel())
 			return true;
 	}
     }
@@ -6495,7 +6511,18 @@ void M_ResetSetupMenu(void)
 {
   int i;
 
-  SetupMenu[set_compat].status = (demo_version < 203) ? 0 : 1;
+  for (i = compat_telefrag; i < compat_blazing; ++i)
+  {
+    FLAG_SET_BOOM(comp_settings1[i].m_flags, S_DISABLE);
+  }
+  for (i = compat_god; i < compat_skymap; ++i)
+  {
+    FLAG_SET_BOOM(comp_settings2[i].m_flags, S_DISABLE);
+  }
+  for (i = compat_stairs; i < compat_menu; ++i)
+  {
+    FLAG_SET_BOOM(comp_settings2[i].m_flags, S_DISABLE);
+  }
   FLAG_SET_BOOM(enem_settings1[enem_infighting].m_flags, S_DISABLE);
   for (i = enem_backing; i < enem_colored_blood; ++i)
   {

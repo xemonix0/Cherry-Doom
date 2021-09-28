@@ -17,20 +17,20 @@
 //  02111-1307, USA.
 //
 // DESCRIPTION:
-//      Windows native MIDI
+//      DSDHacked support
 
-#ifndef __I_WINMUSIC__
-#define __I_WINMUSIC__
+#ifndef __DSDHACKED__
+#define __DSDHACKED__
 
-#include "doomtype.h"
+void dsdh_InitTables(void);
+void dsdh_FreeTables(void);
 
-boolean I_WIN_InitMusic(void);
-void I_WIN_PlaySong(boolean looping);
-void I_WIN_StopSong();
-void I_WIN_SetMusicVolume(int volume);
-void I_WIN_RegisterSong(void *data, int len);
-void I_WIN_UnRegisterSong();
-
-extern boolean win_midi_registered;
+void dsdh_EnsureStatesCapacity(int limit);
+void dsdh_EnsureSFXCapacity(int limit);
+void dsdh_EnsureMobjInfoCapacity(int limit);
+int dsdh_GetDehSpriteIndex(const char* key);
+int dsdh_GetOriginalSpriteIndex(const char* key);
+int dsdh_GetDehSFXIndex(const char* key, size_t length);
+int dsdh_GetOriginalSFXIndex(const char* key);
 
 #endif

@@ -116,7 +116,7 @@ musicinfo_t S_music[] = {
 // killough 12/98:
 // Reimplemented 'singularity' flag, adjusting many sounds below
 
-sfxinfo_t S_sfx[] = {
+sfxinfo_t original_S_sfx[] = {
   { 0 },  // S_sfx[0] needs to be a dummy for odd reasons.
 
   { "pistol", sg_none,   64, 0, -1, -1, 0 },

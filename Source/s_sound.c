@@ -296,7 +296,7 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
 
 #ifdef RANGECHECK
    // check for bogus sound #
-   if(sfx_id < 1 || sfx_id > NUMSFX)
+   if(sfx_id < 1 || sfx_id > num_sfx)
       I_Error("Bad sfx #: %d", sfx_id);
 #endif
 
@@ -615,6 +615,11 @@ void S_ChangeMusic(int musicnum, int looping)
 void S_ChangeMusInfoMusic (int lumpnum, int looping)
 {
    musicinfo_t *music;
+
+   if (nomusicparm)
+   {
+      return;
+   }
 
    // [crispy] restarting the map plays the original music
    //prevmap = -1;

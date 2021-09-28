@@ -124,6 +124,7 @@ enum {
   // mbf21
   comp_ledgeblock,
   comp_friendlyspawn,
+  comp_voodooscroller,
 
   MBF21_COMP_TOTAL,
 
@@ -219,6 +220,7 @@ extern  int displayplayer;
 // Statistics on a given map, for intermission.
 //
 extern  int totalkills;
+extern  int extrakills; // [crispy] count spawned monsters
 extern  int totalitems;
 extern  int totalsecret;
 
@@ -243,6 +245,8 @@ extern  boolean   timingdemo;
 extern  boolean   fastdemo;
 // [FG] fast-forward demo to the desired map
 extern  int       demowarp;
+// fast-forward demo to the next map
+extern  boolean   demoskip;
 
 extern  gamestate_t  gamestate;
 

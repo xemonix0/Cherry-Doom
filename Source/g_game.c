@@ -69,6 +69,8 @@
 
 static size_t   savegamesize = SAVEGAMESIZE; // killough
 static char     *demoname = NULL;
+// [crispy] the name originally chosen for the demo, i.e. without "-00000"
+static char     *orig_demoname = NULL;
 static boolean  netdemo;
 static byte     *demobuffer;   // made some static -- killough
 static size_t   maxdemosize;
@@ -106,6 +108,7 @@ int             gametic;
 int             levelstarttic; // gametic at level start
 int             basetic;       // killough 9/29/98: for demo sync
 int             totalkills, totalitems, totalsecret;    // for intermission
+int             extrakills;    // [crispy] count spawned monsters
 int             totalleveltimes; // [FG] total time for all completed levels
 boolean         demorecording;
 boolean         longtics;             // cph's doom 1.91 longtics hack
@@ -140,6 +143,8 @@ int     key_menu_clear;
 // [FG] reload current level / go to next level
 int     key_menu_reloadlevel;
 int     key_menu_nextlevel;
+// finish recording demo
+int     key_demo_quit;
 int     key_strafeleft;
 int     key_straferight;
 int     key_fire;
@@ -1013,6 +1018,9 @@ static void G_WriteDemoTiccmd(ticcmd_t* cmd)
 {
   ptrdiff_t position = demo_p - demobuffer;
 
+  if (gamekeydown[key_demo_quit]) // press to end demo recording
+    G_CheckDemoStatus();
+
   demo_p[0] = cmd->forwardmove;
   demo_p[1] = cmd->sidemove;
   if (!longtics)
@@ -1810,6 +1818,10 @@ static void G_DoSaveGame(void)
     memset(save_p, 0, 8);
   save_p += 8;
 
+  // save extrakills
+  CheckSaveGame(sizeof extrakills);
+  saveg_write32(extrakills);
+
   length = save_p - savebuffer;
 
   Z_CheckHeap();
@@ -1972,6 +1984,12 @@ static void G_DoLoadGame(void)
     }
 
     save_p += 8;
+  }
+
+  // restore extrakills
+  if (save_p - savebuffer <= length - sizeof extrakills)
+  {
+    extrakills = saveg_read32();
   }
 
   // done
@@ -2530,6 +2548,15 @@ void G_DeferedInitNew(skill_t skill, int episode, int map)
   d_map = map;
   G_ClearSavename();
   gameaction = ga_newgame;
+
+  if (demorecording)
+  {
+    extern int ddt_cheating;
+
+    ddt_cheating = 0;
+    G_CheckDemoStatus();
+    G_RecordDemo(orig_demoname);
+  }
 }
 
 // killough 7/19/98: Marine's best friend :)
@@ -2632,6 +2659,7 @@ static void G_MBFComp()
   comp[comp_respawn] = 1;
   comp[comp_ledgeblock] = 0;
   comp[comp_friendlyspawn] = 1;
+  comp[comp_voodooscroller] = 1;
 }
 
 static void G_BoomComp()
@@ -2646,6 +2674,7 @@ static void G_BoomComp()
   comp[comp_respawn]  = 1;
   comp[comp_ledgeblock] = 0;
   comp[comp_friendlyspawn] = 1;
+  comp[comp_voodooscroller] = 0;
 }
 
 // killough 3/1/98: function to reload all the default parameter
@@ -2776,6 +2805,11 @@ void G_DoNewGame (void)
   deathmatch = false;
   basetic = gametic;             // killough 9/29/98
 
+  if (demorecording)
+  {
+    G_BeginRecording();
+  }
+
   G_InitNew(d_skill, d_episode, d_map);
   gameaction = ga_nothing;
 }
@@ -2790,7 +2824,7 @@ void G_SetFastParms(int fast_pending)
 
   if (fast != fast_pending)       // only change if necessary
   {
-    for (i = 0; i < NUMMOBJTYPES; ++i)
+    for (i = 0; i < num_mobj_types; ++i)
       if (mobjinfo[i].altspeed != NO_ALTSPEED)
       {
         int swap = mobjinfo[i].speed;
@@ -2800,13 +2834,13 @@ void G_SetFastParms(int fast_pending)
 
     if ((fast = fast_pending))
     {
-      for (i = 0; i < NUMSTATES; i++)
+      for (i = 0; i < num_states; i++)
         if (states[i].flags & STATEF_SKILL5FAST && (states[i].tics != 1 || demo_compatibility))
           states[i].tics >>= 1;  // don't change 1->0 since it causes cycles
     }
     else
     {
-      for (i = 0; i < NUMSTATES; i++)
+      for (i = 0; i < num_states; i++)
         if (states[i].flags & STATEF_SKILL5FAST)
           states[i].tics <<= 1;
     }
@@ -2944,13 +2978,29 @@ void G_InitNew(skill_t skill, int episode, int map)
 void G_RecordDemo(char *name)
 {
   int i;
+  size_t demoname_size;
+  // [crispy] demo file name suffix counter
+  static int j = 0;
+
+  // [crispy] the name originally chosen for the demo, i.e. without "-00000"
+  if (!orig_demoname)
+  {
+    orig_demoname = name;
+  }
 
   demo_insurance = mbf21 ? 0 : (default_demo_insurance!=0);     // killough 12/98
 
   usergame = false;
   if (demoname) (free)(demoname);
-  demoname = (malloc)(strlen(name) + 5);
+  demoname_size = strlen(name) + 5 + 6; // [crispy] + 6 for "-00000"
+  demoname = (malloc)(demoname_size);
   AddDefaultExtension(strcpy(demoname, name), ".lmp");  // 1/18/98 killough
+
+  for(; j <= 99999 && !access(demoname, F_OK); ++j)
+  {
+    M_snprintf(demoname, demoname_size, "%s-%05d.lmp", name, j);
+  }
+
   i = M_CheckParm ("-maxdemo");
   if (i && i<myargc-1)
     maxdemosize = atoi(myargv[i+1])*1024;
@@ -3139,6 +3189,10 @@ byte *G_ReadOptionsMBF21(byte *demo_p)
 
   for (i = 0; i < count; i++)
     comp[i] = *demo_p++;
+
+  // comp_voodooscroller
+  if (count < MBF21_COMP_TOTAL - 1)
+    comp[comp_voodooscroller] = 1;
 
   return demo_p;
 }
@@ -3456,7 +3510,15 @@ boolean G_CheckDemoStatus(void)
 
       free(demobuffer);
       demobuffer = NULL;  // killough
+      // [crispy] if a new game is started during demo recording, start a new demo
+      if (gameaction != ga_newgame)
+      {
       I_Error("Demo %s recorded",demoname);
+      }
+      else
+      {
+        fprintf(stderr, "Demo %s recorded\n", demoname);
+      }
       return false;  // killough
     }
 

@@ -677,6 +677,13 @@ default_t defaults[] = {
     "A_Spawn new thing inherits friendliness"
   },
 
+  {
+    "comp_voodooscroller",
+    (config_t *) &default_comp[comp_voodooscroller], (config_t *) &comp[comp_voodooscroller],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Voodoo dolls on slow scrollers move too slowly"
+  },
+
   // [Nugget]
 
   {
@@ -797,7 +804,6 @@ default_t defaults[] = {
     (config_t *) &nugget_comp[comp_csawthrust],
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Partially fix Chainsaw knockback bug"
-  },
 
   // For key bindings, the values stored in the key_* variables       // phares
   // are the internal Doom Codes. The values stored in the default.cfg
@@ -904,6 +910,13 @@ default_t defaults[] = {
     (config_t *) &key_menu_nextlevel, NULL,
     {0}, {0,255}, number, ss_keys, wad_no,
     "key to go to next level"
+  },
+
+  {
+    "key_demo_quit",
+    (config_t *) &key_demo_quit, NULL,
+    {'q'}, {0,255}, number, ss_keys, wad_no,
+    "key to finish recording demo"
   },
 
   {
@@ -1757,6 +1770,13 @@ default_t defaults[] = {
     (config_t *) &map_secret_after, NULL,
     {1}, {0,1}, number, ss_auto, wad_yes,
     "1 to not show secret sectors till after entered"
+  },
+
+  {
+    "map_keyed_door_flash",
+    (config_t *) &map_keyed_door_flash, NULL,
+    {0}, {0,1}, number, ss_auto, wad_no,
+    "1 to make keyed doors flash on the automap"
   },
 
   // [FG] player coords widget (intentionally not shown outside Automap)
