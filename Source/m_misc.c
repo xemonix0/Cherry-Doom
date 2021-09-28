@@ -804,6 +804,7 @@ default_t defaults[] = {
     (config_t *) &nugget_comp[comp_csawthrust],
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Partially fix Chainsaw knockback bug"
+  },
 
   // For key bindings, the values stored in the key_* variables       // phares
   // are the internal Doom Codes. The values stored in the default.cfg
