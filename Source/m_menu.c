@@ -3600,17 +3600,21 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
 
 enum {
   general_background,
+  general_menutint,
   general_extra_gibbing,
   // general_jump_crouch,
   general_viewheight,
 };
 
-setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen3
+setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
 
   {"Nugget Settings"     ,S_SKIP|S_TITLE, m_null, G_X, G_Y - 12},
 
   {"Disable Background", S_YESNO, m_null, G_X,
    G_Y + general_background*8, {"no_ss_background"}},
+
+  {"Disable palette tint in menus", S_YESNO, m_null, G_X,
+   G_Y + general_menutint*8, {"no_menu_tint"}},
 
   {"Extra Gibbing", S_YESNO, m_null, G_X,
    G_Y + general_extra_gibbing*8, {"extra_gibbing"}},

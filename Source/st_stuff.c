@@ -753,6 +753,9 @@ void ST_doPaletteStuff(void)
       else
         palette = 0;
 
+  // [Nugget] Disable palette tint in menus
+  if (no_menu_tint && menuactive) {palette = 0;}
+
   if (palette != st_palette)
     {
       st_palette = palette;

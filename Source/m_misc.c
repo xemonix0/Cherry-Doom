@@ -390,15 +390,27 @@ default_t defaults[] = {
   // [Nugget]
 
   {
-    "viewheight_value",
-    (config_t *) &viewheight_value,
+    "no_ss_background",
+    (config_t *) &no_ss_background,
     NULL,
-    {41},
-    {8,56},
+    {0},
+    {0,1},
     number,
     ss_gen,
     wad_yes,
-    "Player view height"
+    "1 to disable the background in setup screens"
+  },
+
+  {
+    "no_menu_tint",
+    (config_t *) &no_menu_tint,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_gen,
+    wad_no,
+    "1 to disable palette tint in menus"
   },
 
   {
@@ -426,15 +438,15 @@ default_t defaults[] = {
   },
 
   {
-    "no_ss_background",
-    (config_t *) &no_ss_background,
+    "viewheight_value",
+    (config_t *) &viewheight_value,
     NULL,
-    {0},
-    {0,1},
+    {41},
+    {8,56},
     number,
     ss_gen,
     wad_yes,
-    "1 to disable the background in setup screens"
+    "Player view height"
   },
 
   {

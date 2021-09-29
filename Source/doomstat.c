@@ -106,10 +106,11 @@ int center_weapon;
 
 //----- Nugget ---------------------------------------------------------------
 
-int viewheight_value;
+int no_ss_background;
+int no_menu_tint;
 int extra_gibbing;
 int jump_crouch;
-int no_ss_background;
+int viewheight_value;
 int armor_type_color;
 
 int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
