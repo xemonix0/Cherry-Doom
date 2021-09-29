@@ -799,15 +799,25 @@ void ST_drawWidgets(boolean refresh)
   else
     STlib_updatePercent(&w_health, cr_blue2, refresh); //killough 2/28/98
 
-  //jff 2/16/98 make color of armor depend on amount
-  if (*w_armor.n.num<armor_red)
-    STlib_updatePercent(&w_armor, cr_red, refresh);
-  else if (*w_armor.n.num<armor_yellow)
-    STlib_updatePercent(&w_armor, cr_gold, refresh);
-  else if (*w_armor.n.num<=armor_green)
-    STlib_updatePercent(&w_armor, cr_green, refresh);
-  else
-    STlib_updatePercent(&w_armor, cr_blue2, refresh); //killough 2/28/98
+  // [Nugget] Make color of armor depend on armor type
+  if (armor_type_color) {
+    STlib_updatePercent(&w_armor, plyr->armortype == 2
+                                  ? cr_blue2
+                                  : plyr->armortype == 1
+                                    ? cr_green
+                                    : cr_red, refresh);
+  }
+  else {
+    //jff 2/16/98 make color of armor depend on amount
+    if (*w_armor.n.num<armor_red)
+      STlib_updatePercent(&w_armor, cr_red, refresh);
+    else if (*w_armor.n.num<armor_yellow)
+      STlib_updatePercent(&w_armor, cr_gold, refresh);
+    else if (*w_armor.n.num<=armor_green)
+      STlib_updatePercent(&w_armor, cr_green, refresh);
+    else
+      STlib_updatePercent(&w_armor, cr_blue2, refresh); //killough 2/28/98
+  }
 
   STlib_updateBinIcon(&w_armsbg, refresh);
 

@@ -437,6 +437,18 @@ default_t defaults[] = {
     "1 to disable the background in setup screens"
   },
 
+  {
+    "armor_type_color",
+    (config_t *) &armor_type_color,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_stat,
+    wad_no,
+    "1 to color the armor amount based on armor type"
+  },
+
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity_horiz",
     (config_t *) &mouseSensitivity_horiz, NULL,

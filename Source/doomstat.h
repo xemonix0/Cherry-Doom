@@ -372,6 +372,7 @@ extern int viewheight_value;
 extern int extra_gibbing;
 extern int jump_crouch;
 extern int no_ss_background;
+extern int armor_type_color;
 
 enum {
   comp_blazing2,

@@ -985,12 +985,21 @@ void HU_Drawer(void)
         hud_armorstr[i] = '\0';
         strcat(hud_armorstr,armorstr);
 
+        // [Nugget] Set display color for armor based on armor type
+        if (armor_type_color) {
+          w_armor.cr = plr->armortype == 2
+                      ? colrngs[CR_BLUE]
+                      : plr->armortype == 1
+                        ? colrngs[CR_GREEN]
+                        : colrngs[CR_RED];
+        }
+        else {
         // set the display color from the amount of armor posessed
 	w_armor.cr =
 	  armor<armor_red ? colrngs[CR_RED] :
 	  armor<armor_yellow ? colrngs[CR_GOLD] :
 	  armor<=armor_green ? colrngs[CR_GREEN] : colrngs[CR_BLUE];
-
+        }
         // transfer the init string to the widget
         s = hud_armorstr;
         while (*s)

@@ -3028,24 +3028,25 @@ setup_menu_t* stat_settings[] =
 
 setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
 {
-  {"STATUS BAR"        ,S_SKIP|S_TITLE,m_null,ST_X,ST_Y+ 1*8 },
+  {"STATUS BAR"          ,S_SKIP|S_TITLE,m_null,ST_X,ST_Y+ 1*8 },
 
-  {"USE RED NUMBERS"   ,S_YESNO, m_null,ST_X,ST_Y+ 2*8, {"sts_always_red"}},
-  {"GRAY %"            ,S_YESNO, m_null,ST_X,ST_Y+ 3*8, {"sts_pct_always_gray"}},
-  {"SINGLE KEY DISPLAY",S_YESNO, m_null,ST_X,ST_Y+ 4*8, {"sts_traditional_keys"}},
+  {"USE RED NUMBERS"     ,S_YESNO, m_null,ST_X,ST_Y+ 2*8, {"sts_always_red"}},
+  {"GRAY %"              ,S_YESNO, m_null,ST_X,ST_Y+ 3*8, {"sts_pct_always_gray"}},
+  {"SINGLE KEY DISPLAY"  ,S_YESNO, m_null,ST_X,ST_Y+ 4*8, {"sts_traditional_keys"}},
 
-  {"HEADS-UP DISPLAY"  ,S_SKIP|S_TITLE,m_null,ST_X,ST_Y+ 6*8},
+  {"HEADS-UP DISPLAY"    ,S_SKIP|S_TITLE,m_null,ST_X,ST_Y+ 6*8},
 
-  {"HIDE SECRETS"      ,S_YESNO     ,m_null,ST_X,ST_Y+ 7*8, {"hud_nosecrets"}},
-  {"HEALTH LOW/OK"     ,S_NUM       ,m_null,ST_X,ST_Y+ 8*8, {"health_red"}},
-  {"HEALTH OK/GOOD"    ,S_NUM       ,m_null,ST_X,ST_Y+ 9*8, {"health_yellow"}},
-  {"HEALTH GOOD/EXTRA" ,S_NUM       ,m_null,ST_X,ST_Y+10*8, {"health_green"}},
-  {"ARMOR LOW/OK"      ,S_NUM       ,m_null,ST_X,ST_Y+11*8, {"armor_red"}},
-  {"ARMOR OK/GOOD"     ,S_NUM       ,m_null,ST_X,ST_Y+12*8, {"armor_yellow"}},
-  {"ARMOR GOOD/EXTRA"  ,S_NUM       ,m_null,ST_X,ST_Y+13*8, {"armor_green"}},
-  {"AMMO LOW/OK"       ,S_NUM       ,m_null,ST_X,ST_Y+14*8, {"ammo_red"}},
-  {"AMMO OK/GOOD"      ,S_NUM       ,m_null,ST_X,ST_Y+15*8, {"ammo_yellow"}},
-  {"\"A SECRET IS REVEALED!\" MESSAGE",S_YESNO,m_null,ST_X,ST_Y+16*8, {"hud_secret_message"}},
+  {"HIDE SECRETS"        ,S_YESNO     ,m_null,ST_X,ST_Y+ 7*8, {"hud_nosecrets"}},
+  {"USE ARMOR TYPE COLOR",S_YESNO     ,m_null,ST_X,ST_Y+ 8*8, {"armor_type_color"}},
+  {"HEALTH LOW/OK"       ,S_NUM       ,m_null,ST_X,ST_Y+ 9*8, {"health_red"}},
+  {"HEALTH OK/GOOD"      ,S_NUM       ,m_null,ST_X,ST_Y+ 10*8, {"health_yellow"}},
+  {"HEALTH GOOD/EXTRA"   ,S_NUM       ,m_null,ST_X,ST_Y+11*8, {"health_green"}},
+  {"ARMOR LOW/OK"        ,S_NUM       ,m_null,ST_X,ST_Y+12*8, {"armor_red"}},
+  {"ARMOR OK/GOOD"       ,S_NUM       ,m_null,ST_X,ST_Y+13*8, {"armor_yellow"}},
+  {"ARMOR GOOD/EXTRA"    ,S_NUM       ,m_null,ST_X,ST_Y+14*8, {"armor_green"}},
+  {"AMMO LOW/OK"         ,S_NUM       ,m_null,ST_X,ST_Y+15*8, {"ammo_red"}},
+  {"AMMO OK/GOOD"        ,S_NUM       ,m_null,ST_X,ST_Y+16*8, {"ammo_yellow"}},
+  {"\"A SECRET IS REVEALED!\" MESSAGE",S_YESNO,m_null,ST_X,ST_Y+17*8, {"hud_secret_message"}},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
