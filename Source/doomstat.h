@@ -368,7 +368,7 @@ extern int center_weapon;
 
 //----- Nugget ---------------------------------------------------------------
 
-extern int adjust_viewheight;
+extern int viewheight_value;
 extern int extra_gibbing;
 extern int jump_crouch;
 extern int no_ss_background;

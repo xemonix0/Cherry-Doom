@@ -390,15 +390,15 @@ default_t defaults[] = {
   // [Nugget]
 
   {
-    "adjust_viewheight",
-    (config_t *) &adjust_viewheight,
+    "viewheight_value",
+    (config_t *) &viewheight_value,
     NULL,
-    {0},
-    {0,1},
+    {41},
+    {8,56},
     number,
     ss_gen,
     wad_yes,
-    "1 to adjust the player's POV closer to Doomguy's head"
+    "Player view height"
   },
 
   {

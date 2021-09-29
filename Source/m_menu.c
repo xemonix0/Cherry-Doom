@@ -3617,8 +3617,8 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen3
 //  {"Allow Jump/Crouch", S_YESNO, m_null, G_X,
 //   G_Y + general_jump_crouch*8, {"jump_crouch"}},
 
-  {"Adjust Viewheight", S_YESNO, m_null, G_X,
-   G_Y + general_viewheight*8, {"adjust_viewheight"}},
+  {"View Height (Default = 41)", S_NUM, m_null, G_X,
+   G_Y + general_viewheight*8, {"viewheight_value"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings2}},
 

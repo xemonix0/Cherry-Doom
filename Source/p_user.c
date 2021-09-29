@@ -90,7 +90,7 @@ void P_CalcHeight (player_t* player)
 {
   int     angle;
   fixed_t bob;
-  fixed_t view;
+  fixed_t view; // [Nugget]
 
   // Regular movement bobbing
   // (needs to be calculated for gun swing
@@ -127,14 +127,11 @@ void P_CalcHeight (player_t* player)
   }
 
   // [Nugget] Check for viewheight setting
-  if (adjust_viewheight && !(demorecording||netgame)) {
-    if (player->mo->intflags & MIF_CROUCHING) {view = ALTCVIEWHEIGHT;}
-    else                                      {view = ALTVIEWHEIGHT;}
-    }
-    else {
-      if (player->mo->intflags & MIF_CROUCHING) {view = CVIEWHEIGHT;}
-      else                                      {view = VIEWHEIGHT;}
-    }
+  if (demorecording||netgame) {view = VIEWHEIGHT;}
+  else {
+    if (player->mo->intflags & MIF_CROUCHING) {view = (viewheight_value*FRACUNIT)/2;}
+    else                                      {view = viewheight_value*FRACUNIT;}
+  }
 
   if (!onground || player->cheats & CF_NOMOMENTUM)
     {

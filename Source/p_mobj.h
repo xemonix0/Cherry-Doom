@@ -391,11 +391,7 @@ typedef struct mobj_s
 
 // External declarations (fomerly in p_local.h) -- killough 5/2/98
 
-#define VIEWHEIGHT      (41*FRACUNIT)
-// [Nugget]
-#define CVIEWHEIGHT     (VIEWHEIGHT/2)
-#define ALTVIEWHEIGHT	(45*FRACUNIT)
-#define ALTCVIEWHEIGHT  (ALTVIEWHEIGHT/2)
+#define VIEWHEIGHT      (41*FRACUNIT) // [Nugget] Unused outside of demo recording
 
 #define PLAYERRADIUS    (16*FRACUNIT)
 

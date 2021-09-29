@@ -106,7 +106,7 @@ int center_weapon;
 
 //----- Nugget ---------------------------------------------------------------
 
-int adjust_viewheight;
+int viewheight_value;
 int extra_gibbing;
 int jump_crouch;
 int no_ss_background;

@@ -482,16 +482,11 @@ static void P_ZMovement (mobj_t* mo)
 
   // check for smooth step up
   // [Nugget] Check for viewheight setting
-  if (adjust_viewheight && mo->player
-      && !(demorecording||netgame)) {
-    if (mo->intflags & MIF_CROUCHING) {view = ALTCVIEWHEIGHT;}
-    else                                      {view = ALTVIEWHEIGHT;}
-    }
-    else {
-      if (mo->intflags & MIF_CROUCHING) {view = CVIEWHEIGHT;}
-      else                                      {view = VIEWHEIGHT;}
-    }
-
+  if (demorecording||netgame) {view = VIEWHEIGHT;}
+  else {
+    if (mo->intflags & MIF_CROUCHING) {view = (viewheight_value*FRACUNIT)/2;}
+    else                              {view = viewheight_value*FRACUNIT;}
+  }
 
   if (mo->player &&
       mo->player->mo == mo &&  // killough 5/12/98: exclude voodoo dolls
@@ -1072,7 +1067,16 @@ void P_SpawnPlayer (mapthing_t* mthing)
   p->bonuscount    = 0;
   p->extralight    = 0;
   p->fixedcolormap = 0;
-  p->viewheight    = VIEWHEIGHT;
+  // [Nugget] Check for viewheight setting;
+  // for some reason 'p->viewheight = view' refuses to work, so this is a workaround
+  if (demorecording||netgame)
+  {p->viewheight = VIEWHEIGHT;}
+  else {
+    if (p->mo->intflags & MIF_CROUCHING)
+    {p->viewheight = (viewheight_value*FRACUNIT)/2;}
+    else
+    {p->viewheight = viewheight_value*FRACUNIT;}
+  }
 
   p->momx = p->momy = 0;   // killough 10/98: initialize bobbing to 0.
 
