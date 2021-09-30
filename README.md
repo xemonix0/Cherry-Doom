@@ -5,20 +5,22 @@ Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.cho
 ## Features
 
 - From Crispy Doom:
-  - Minimalistic HUD (partially implemented);
-  - Resurrect from savegame (Run key + Use key);
+  - **Minimalistic HUD** (partially implemented);
+  - **Resurrect from savegame** (Run key + Use key);
   - **'RESURRECT'** cheat adapted from Crispy's resurrection with IDDQD;
   - **'NOTARGET'** cheat;
-  - Quick exit (hold Run key when entering "Quit Game" in menu, or when confirming on the quit prompt);
+  - **Jumping** (default key: <kbd>Alt</kbd>);
+  - **Quick exit** (hold Run key when entering "Quit Game" in menu, or when confirming on the quit prompt);
   - **"Disable palette tint in menus"** setting;
   - **"Use Armor Type Color"** setting for armor count coloring based on armor type;
-  - Extended IDCLEV functionality (IDCLEV00 restarts current map, IDCLEV beyond 32 in Doom 2 warps to the corresponding map if present);
-  - Mid-air control while on noclipping mode;
-  - Interactive character cast (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip).
-- **"Extra Gibbing"** setting to force Berserk Fist, Chainsaw and SSG gibbing
+  - **Extended IDCLEV functionality** (IDCLEV00 restarts current map, IDCLEV beyond 32 in Doom 2 warps to the corresponding map if present);
+  - **Mid-air control** while on noclipping mode;
+  - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip).
 - **"Disable Background"** setting, to disable the background on setup screens and dynamic Help screen
+- **"Extra Gibbing"** setting to force Berserk Fist, Chainsaw and SSG gibbing
+- **Crouching/ducking** (default key: <kbd>C</kbd>)
 - **"View Height"** setting: allows to enter a custom height value between 8 and 56 for the player's POV (default is 41, the original)
-- Three new cheats:
+- Three new **cheats**:
   - **'FULLCLIP'** for infinite ammo;
   - **'VALIANT'** for fast weapons;
     - **'BOBBERS'** serves as a shortcut to toggle the two cheats mentioned above, plus IDFA;
