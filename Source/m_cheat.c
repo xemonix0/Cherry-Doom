@@ -170,6 +170,9 @@ struct cheat_s cheat[] = {
   {"killem",     NULL,                not_net | not_demo,
    cheat_massacre },     // jff 2/01/98 kill all monsters
 
+  {"tntem",     NULL,                not_net | not_demo,
+   cheat_massacre },     // [Nugget] 'killem' alternative
+
   {"iddt",       "Map cheat",         not_dm,
    cheat_ddt      },     // killough 2/07/98: moved from am_map.c
 
@@ -265,6 +268,10 @@ struct cheat_s cheat[] = {
 
 // [FG] FPS counter widget
   {"showfps",    NULL,                always,
+   cheat_showfps},
+
+// [Nugget] 'showfps' alternative
+  {"idrate",    NULL,                always,
    cheat_showfps},
 
 // [Nugget] Infinite ammo cheat
