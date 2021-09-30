@@ -3602,7 +3602,7 @@ enum {
   general_background,
   general_menutint,
   general_extra_gibbing,
-  // general_jump_crouch,
+  general_jump_crouch,
   general_viewheight,
 };
 
@@ -3619,8 +3619,8 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
   {"Extra Gibbing", S_YESNO, m_null, G_X,
    G_Y + general_extra_gibbing*8, {"extra_gibbing"}},
 
-//  {"Allow Jump/Crouch", S_YESNO, m_null, G_X,
-//   G_Y + general_jump_crouch*8, {"jump_crouch"}},
+  {"Allow Jump/Crouch", S_YESNO, m_null, G_X,
+   G_Y + general_jump_crouch*8, {"jump_crouch"}},
 
   {"View Height (Default = 41)", S_NUM, m_null, G_X,
    G_Y + general_viewheight*8, {"viewheight_value"}},

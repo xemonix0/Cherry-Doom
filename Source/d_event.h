@@ -97,10 +97,6 @@ typedef enum
   BT_WEAPONMASK   = (8+16+32+64), // extended to pick up SSG        // phares
   BT_WEAPONSHIFT  = 3,
 
-  // [Nugget] Jump and crouch keys
-//  BT_JUMP         = 256,
-//  BT_CROUCH       = 512,
-
   // Pause the game.
   BTS_PAUSE       = 1,
 

@@ -173,10 +173,11 @@ void P_CalcHeight (player_t* player)
 	}
 
 	// [Nugget] Check if player just stood up
-	if (!(player->mo->intflags & MIF_CROUCHING) && player->crouchTics) {
-        player->viewheight -= player->mo->floorz - player->mo->z;
-        player->deltaviewheight = (view - player->viewheight)>>3;
-    }
+	if (!(player->mo->intflags & MIF_CROUCHING) && player->crouchTics)
+  {
+    player->viewheight -= player->mo->floorz - player->mo->z;
+    player->deltaviewheight = (view - player->viewheight)>>3;
+  }
 
       if (player->deltaviewheight)
 	{
@@ -320,6 +321,11 @@ void P_DeathThink (player_t* player)
 //
 // P_PlayerThink
 //
+// [Nugget]
+#define NUMKEYS 256
+extern boolean gamekeydown[NUMKEYS];
+extern int key_jump;
+extern int key_crouch;
 
 void P_PlayerThink (player_t* player)
 {
@@ -384,45 +390,46 @@ void P_PlayerThink (player_t* player)
     P_PlayerInSpecialSector (player);
 
   // [Nugget] Crispy jumping
-//  if ((cmd->buttons & BT_JUMP) && onground
-//      && !(player->jumpTics) && !(player->crouchTics)
-//      && !(demorecording||demoplayback||netgame))
-//  {
-//      if (player->mo->intflags & MIF_CROUCHING) {
-//      // [Nugget] Check if ceiling's high enough to stand up.
-//        if ((player->mo->ceilingz - player->mo->floorz)
-//            >= (player->mo->height * 2))
-//        { // [Nugget] Stand up
-//            player->mo->intflags &= ~MIF_CROUCHING;
-//            player->mo->height *= 2;
-//            player->crouchTics = 18;
-//        }
-//      }
-//      else {
-//        player->mo->momz = 8*FRACUNIT;
-//        player->jumpTics = 18;
-//      }
-//  }
-//    // [Nugget] Crouching
-//    if ((cmd->buttons & BT_CROUCH) && !player->crouchTics
-//        && !(demorecording||demoplayback||netgame))
-//    {
-//        if (player->mo->intflags & MIF_CROUCHING) {
-//            // [Nugget] Check if ceiling's high enough to stand up.
-//            if ((player->mo->ceilingz - player->mo->floorz)
-//                >= (player->mo->height * 2))
-//            { // [Nugget] Stand up
-//                player->mo->intflags &= ~MIF_CROUCHING;
-//                player->mo->height *= 2;
-//                player->crouchTics = 18;
-//            }
-//        }
-//        else { // [Nugget] Crouch
-//            player->mo->intflags |= MIF_CROUCHING;
-//            player->mo->height = player->mo->height / 2;
-//            player->crouchTics = 18;
-//        }
-//    }
+  if (gamekeydown[key_jump] && jump_crouch && onground
+      && !(player->jumpTics) && !(player->crouchTics)
+      && !(demorecording||demoplayback||netgame))
+  {
+      if (player->mo->intflags & MIF_CROUCHING) {
+      // [Nugget] Check if ceiling's high enough to stand up.
+        if ((player->mo->ceilingz - player->mo->floorz)
+            >= (player->mo->height * 2))
+        { // [Nugget] Stand up
+            player->mo->intflags &= ~MIF_CROUCHING;
+            player->mo->height *= 2;
+            player->crouchTics = 18;
+        }
+      }
+      else {
+        player->mo->momz = 8*FRACUNIT;
+        player->jumpTics = 18;
+      }
+  }
+    // [Nugget] Crouching
+    if (gamekeydown[key_crouch] && jump_crouch
+        && !player->crouchTics
+        && !(demorecording||demoplayback||netgame))
+    {
+        if (player->mo->intflags & MIF_CROUCHING) {
+            // [Nugget] Check if ceiling's high enough to stand up.
+            if ((player->mo->ceilingz - player->mo->floorz)
+                >= (player->mo->height * 2))
+            { // [Nugget] Stand up
+                player->mo->intflags &= ~MIF_CROUCHING;
+                player->mo->height *= 2;
+                player->crouchTics = 18;
+            }
+        }
+        else { // [Nugget] Crouch
+            player->mo->intflags |= MIF_CROUCHING;
+            player->mo->height = player->mo->height / 2;
+            player->crouchTics = 18;
+        }
+    }
 
     // [Nugget] Use crouching player sprites when crouching
 //    if (player->mo->intflags & MIF_CROUCHING) {
@@ -543,9 +550,9 @@ void P_PlayerThink (player_t* player)
   // [Nugget] Fast weapons cheat
   if (player->cheats & CF_FASTWEAPS) {
     if (player->psprites->tics >= 1)
-        {player->psprites->tics = 1;}
+      {player->psprites->tics = 1;}
     if (player->psprites[ps_flash].tics >= 1)
-        {player->psprites[ps_flash].tics = 1;}
+      {player->psprites[ps_flash].tics = 1;}
   }
 
   if (player->damagecount)

@@ -1400,7 +1400,12 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
   if (dist < 1)
     dist = 1;
 
-  th->momz = (dest->z - source->z) / dist;
+  // [Nugget] Check for crouching player
+  if (dest->player && (dest->intflags & MIF_CROUCHING))
+    {th->momz = ((dest->z + dest->height)
+                 - (source->z + (dest->height*2))) / dist;}
+  else
+    {th->momz = (dest->z - source->z) / dist;}
   P_CheckMissileSpawn(th);
   return th;
 }
@@ -1441,7 +1446,11 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   x = source->x;
   y = source->y;
-  z = source->z + 4*8*FRACUNIT;
+  // [Nugget] Check for crouching
+  if (source->player && (source->intflags & MIF_CROUCHING))
+    {z = source->z + (4*8*FRACUNIT)/2;}
+  else
+    {z = source->z + 4*8*FRACUNIT;}
 
   th = P_SpawnMobj (x,y,z, type);
 

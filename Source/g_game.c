@@ -466,15 +466,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   if (gamekeydown[key_strafeleft] || joybuttons[joybstrafeleft])
     side -= sidemove[speed];
 
-  // [Nugget] Jumping and crouching
-//  if (jump_crouch) {
-//    if (gamekeydown[key_jump])
-//    {cmd->buttons |= BT_JUMP;}
-//
-//    if (gamekeydown[key_crouch])
-//    {cmd->buttons |= BT_CROUCH;}
-//  }
-
     // buttons
   cmd->chatchar = HU_dequeueChatChar();
 
