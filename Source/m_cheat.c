@@ -298,6 +298,10 @@ struct cheat_s cheat[] = {
   {"resurrect",    NULL,                not_net|not_demo,
    cheat_resurrect},
 
+// [Nugget] 'resurrect' alternative
+  {"idres",    NULL,                not_net|not_demo,
+   cheat_resurrect},
+
   {NULL}                 // end-of-list marker
 };
 
