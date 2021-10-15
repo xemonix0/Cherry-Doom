@@ -9,7 +9,7 @@ Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.cho
   - **Resurrect from savegame** (Run key + Use key);
   - **'RESURRECT'** cheat adapted from Crispy's resurrection with IDDQD (**'IDRES'** as an alternative combination);
   - **'NOTARGET'** cheat;
-  - **Jumping** (default key: <kbd>Alt</kbd>);
+  - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first);
   - **Quick exit** (hold Run key when entering "Quit Game" in menu, or when confirming on the quit prompt);
   - **"Disable palette tint in menus"** setting;
   - **"Use Armor Type Color"** setting for armor count coloring based on armor type;
@@ -18,7 +18,7 @@ Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.cho
   - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip).
 - **"Disable Background"** setting, to disable the background on setup screens and dynamic Help screen
 - **"Extra Gibbing"** setting to force Berserk Fist, Chainsaw and SSG gibbing
-- **Crouching/ducking** (default key: <kbd>C</kbd>)
+- **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first)
 - **"View Height"** setting: allows to enter a custom height value between 8 and 56 for the player's POV (default is 41, the original)
 - Three new **cheats**:
   - **'FULLCLIP'** for infinite ammo;
