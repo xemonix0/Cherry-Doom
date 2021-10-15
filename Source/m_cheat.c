@@ -290,6 +290,14 @@ struct cheat_s cheat[] = {
   {"gibbers",    NULL,                not_net|not_demo,
    cheat_gibbers},
 
+// [Nugget] Temporary 'gibbers' alternative
+  {"korpin",    NULL,                not_net|not_demo,
+   cheat_gibbers},
+
+// [Nugget] Temporary 'idfa' alternative
+  {"korper",    NULL,                not_net|not_demo,
+   cheat_fa},
+
 // [Nugget] No Target cheat
   {"notarget",    NULL,                not_net|not_demo,
    cheat_notarget},

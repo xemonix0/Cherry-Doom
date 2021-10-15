@@ -713,19 +713,22 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 	  AM_Stop();    // don't die in auto map; switch view prior to dying
     }
 
-  if // [Nugget] Chainsaw/SSG gibbing
-  (extra_gibbing && source && source->player && target->info->xdeathstate
-  && !(demorecording||demoplayback||netgame)
-  && ((source->player->cheats & CF_GIBBERS)
-      || (source->player->readyweapon == wp_chainsaw // Chainsaw
-          && P_NuggetCheckDist(source, target, 65*FRACUNIT, false))
-      || (source->player->readyweapon == wp_supershotgun // SSG
-          && P_NuggetCheckDist(source, target, 128*FRACUNIT, true))
-      || (source->player->readyweapon == wp_fist // Berserk Fist
-          && source->player->powers[pw_strength]
-          && P_NuggetCheckDist(source, target, 64*FRACUNIT, false))
+  if // [Nugget] More gibbing
+  (source && source->player && target->info->xdeathstate
+   && !(demorecording||demoplayback||netgame)
+   && ((source->player->cheats & CF_GIBBERS)
+       || (extra_gibbing
+           && ((source->player->readyweapon == wp_chainsaw
+                && P_NuggetCheckDist(source, target, 65*FRACUNIT, false))
+            || (source->player->readyweapon == wp_supershotgun
+                && P_NuggetCheckDist(source, target, 128*FRACUNIT, true))
+            || (source->player->readyweapon == wp_fist
+                && source->player->powers[pw_strength]
+                && P_NuggetCheckDist(source, target, 64*FRACUNIT, false))
+              )
+          )
       )
-   )
+  )
     {P_SetMobjState (target, target->info->xdeathstate);}
   else if (target->health < -target->info->spawnhealth && target->info->xdeathstate)
     {P_SetMobjState (target, target->info->xdeathstate);}
@@ -758,7 +761,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 }
 
 // [Nugget] Calculate distance between player and target,
-// used for SSG gibbing and Chainsaw knockback fix
+// used for Extra Gibbing and Chainsaw knockback fix
 boolean P_NuggetCheckDist (mobj_t* source, mobj_t* target, fixed_t range, boolean addradius)
 {
     fixed_t	dist;
