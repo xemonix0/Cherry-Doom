@@ -7,7 +7,7 @@ Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.cho
 - From Crispy Doom:
   - **Minimalistic HUD** (partially implemented);
   - **Resurrect from savegame** (Run key + Use key);
-  - **'RESURRECT'** cheat adapted from Crispy's resurrection with IDDQD;
+  - **'RESURRECT'** cheat adapted from Crispy's resurrection with IDDQD (**'IDRES'** as an alternative combination);
   - **'NOTARGET'** cheat;
   - **Jumping** (default key: <kbd>Alt</kbd>);
   - **Quick exit** (hold Run key when entering "Quit Game" in menu, or when confirming on the quit prompt);
