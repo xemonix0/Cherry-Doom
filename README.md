@@ -2,6 +2,10 @@
 
 Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.chocolate-doom.org/wiki/index.php/Crispy_Doom) fork) is a fork of [Woof!](https://github.com/fabiangreffrath/woof), intended to implement features I, Alaux, would like to have. This includes some Crispy Doom features.
 
+### DISCLAIMER
+Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
+**Record demos at your own risk.**
+
 ## Features
 
 - From Crispy Doom:
@@ -55,7 +59,7 @@ You will need to install the SDL2, SDL2_image, SDL2_mixer and SDL2_net libraries
 Once installed, compilation should be as simple as:
 
 ```
- cd woof
+ cd nugget
  mkdir build; cd build
  cmake -DCMAKE_BUILD_TYPE=Debug ..
  make
@@ -76,7 +80,7 @@ It's worth noting that you do not need to download any dependencies.  The build 
 You can cross-compile from Linux to Windows.  First, make sure you have a reasonably recent version of mingw-w64 installed.  From there, cross-compiling should be as easy as:
 
 ```
- cd woof
+ cd nugget
  mkdir build; cd build
  cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../CrossToWin64.cmake ..
  make
