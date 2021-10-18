@@ -2727,6 +2727,8 @@ void G_ReloadDefaults(void)
 
   compatibility = false;     // killough 10/98: replaced by comp[] vector
   memcpy(comp, default_comp, sizeof comp);
+  // [Nugget] Do the same for our comp settings
+  memcpy(nugget_comp, default_nugget_comp, sizeof nugget_comp);
 
   complevel = G_GetDefaultComplevel();
 
