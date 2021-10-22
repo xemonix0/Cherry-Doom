@@ -1261,7 +1261,7 @@ void M_QuitResponse(int ch)
   if (ch != 'y')
     return;
 
-  // [Nugget] Quick exit is Run key is held
+  // [Nugget] Quick exit if Run key is held
   if (speedkeydown()) {exit(0);}
 
   if ((!netgame || demoplayback) // killough 12/98
@@ -1280,8 +1280,11 @@ void M_QuitDOOM(int choice)
 {
   static char endstring[160];
 
-  // [Nugget] Quick exit is Run key is held
-  if (speedkeydown()) {exit(0);}
+  // [Nugget] Quick exit - Have some random trivia:
+  // Originally relied on Run key, as seen in M_QuitResponse, but such approach
+  // doesn't work without a running playsim. Besides, this way it's easier for
+  // the user to acknowledge the existence of the feature.
+  if (quick_exit) {exit(0);}
 
   // We pick index 0 which is language sensitive,
   // or one at random, between 1 and maximum number.
@@ -3621,6 +3624,7 @@ enum {
   general_jump_crouch,
   general_viewheight,
   general_quicksaveload,
+  general_quickexit,
 };
 
 setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
@@ -3642,8 +3646,11 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
   {"View Height (Default = 41)", S_NUM, m_null, G_X,
    G_Y + general_viewheight*8, {"viewheight_value"}},
 
-  {"One Key Quick Save/Load", S_YESNO, m_null, G_X,
+  {"One-Key Quick Save/Load", S_YESNO, m_null, G_X,
    G_Y + general_quicksaveload*8, {"one_key_saveload"}},
+
+  {"Quick Exit", S_YESNO, m_null, G_X,
+   G_Y + general_quickexit*8, {"quick_exit"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings2}},
 

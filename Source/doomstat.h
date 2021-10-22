@@ -375,6 +375,7 @@ extern int jump_crouch;
 extern int viewheight_value;
 extern int armor_type_color;
 extern int one_key_saveload;
+extern int quick_exit;
 
 enum {
   comp_blazing2,

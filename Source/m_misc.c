@@ -473,6 +473,18 @@ default_t defaults[] = {
     "1 for single key quick saving/loading"
   },
 
+  {
+    "quick_exit",
+    (config_t *) &quick_exit,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_gen,
+    wad_no,
+    "1 to skip prompt on Quit Game"
+  },
+
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity_horiz",
     (config_t *) &mouseSensitivity_horiz, NULL,

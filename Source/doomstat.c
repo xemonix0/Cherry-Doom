@@ -113,6 +113,7 @@ int jump_crouch;
 int viewheight_value;
 int armor_type_color;
 int one_key_saveload;
+int quick_exit;
 
 int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
 
