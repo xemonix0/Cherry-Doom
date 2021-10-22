@@ -1518,9 +1518,17 @@ void M_QuickSave(void)
       quickSaveSlot = -2; // means to pick a slot now
       return;
     }
-  // [FG] fix format string vulnerability
-  sprintf(tempstring,QSPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
-  M_StartMessage(tempstring,M_QuickSaveResponse,true);
+
+  // [Nugget] One Key Quicksave
+  if (one_key_saveload) {
+    M_DoSave(quickSaveSlot);
+    S_StartSound(NULL,sfx_swtchx);
+  }
+  else {
+    // [FG] fix format string vulnerability
+    sprintf(tempstring,QSPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
+    M_StartMessage(tempstring,M_QuickSaveResponse,true);
+  }
 }
 
 /////////////////////////////
@@ -1558,9 +1566,17 @@ void M_QuickLoad(void)
       M_StartMessage(s_QSAVESPOT,NULL,false); // Ty 03/27/98 - externalized
       return;
     }
-  // [FG] fix format string vulnerability
-  sprintf(tempstring,QLPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
-  M_StartMessage(tempstring,M_QuickLoadResponse,true);
+
+  // [Nugget] One Key Quickload
+  if (one_key_saveload) {
+    M_LoadSelect(quickSaveSlot);
+    S_StartSound(NULL,sfx_swtchx);
+  }
+  else {
+    // [FG] fix format string vulnerability
+    sprintf(tempstring,QLPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
+    M_StartMessage(tempstring,M_QuickLoadResponse,true);
+  }
 }
 
 /////////////////////////////
@@ -3604,6 +3620,7 @@ enum {
   general_extra_gibbing,
   general_jump_crouch,
   general_viewheight,
+  general_quicksaveload,
 };
 
 setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
@@ -3624,6 +3641,9 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
 
   {"View Height (Default = 41)", S_NUM, m_null, G_X,
    G_Y + general_viewheight*8, {"viewheight_value"}},
+
+  {"One Key Quick Save/Load", S_YESNO, m_null, G_X,
+   G_Y + general_quicksaveload*8, {"one_key_saveload"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings2}},
 

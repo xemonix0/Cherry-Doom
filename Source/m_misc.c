@@ -461,6 +461,18 @@ default_t defaults[] = {
     "1 to color the armor amount based on armor type"
   },
 
+  {
+    "one_key_saveload",
+    (config_t *) &one_key_saveload,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_gen,
+    wad_no,
+    "1 for single key quick saving/loading"
+  },
+
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity_horiz",
     (config_t *) &mouseSensitivity_horiz, NULL,
