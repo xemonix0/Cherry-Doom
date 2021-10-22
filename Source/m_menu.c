@@ -66,6 +66,9 @@ extern boolean  message_dontfuckwithme;
 extern boolean chat_on;          // in heads-up code
 extern int     HU_MoveHud(void); // jff 3/9/98 avoid glitch in HUD display
 
+// [Nugget] Refresh status bar if setup screen background is disabled
+extern void ST_doRefresh();
+
 //
 // defaulted values
 //
@@ -1912,9 +1915,6 @@ menu_t CompatDef =                                           // killough 10/98
 // background for the Help and Setup screens.
 //
 // killough 11/98: rewritten to support hires
-
-// [Nugget] Refresh status bar if setup screen background is disabled
-extern void ST_doRefresh();
 
 void M_DrawBackground(char* patchname, byte *back_dest)
 {
