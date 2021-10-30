@@ -135,7 +135,7 @@ Files: `data/woof.ico,
 Copyright: © 2021 Korp.  
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-Files: `Source/icon.c` (to be replaced)
+Files: `Source/icon.c` (to be replaced)  
 Copyright: © 2020 Julia Nechaevskaya.  
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
