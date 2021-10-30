@@ -1435,9 +1435,13 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 	{
 	  slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
 	  if (!linetarget)
-	    slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
+      // [Nugget] Disable horizontal autoaim
+      if (!no_hor_autoaim || (demorecording||demoplayback||netgame))
+        slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
 	  if (!linetarget)
-	    slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
+      // [Nugget] Disable horizontal autoaim
+      if (!no_hor_autoaim || (demorecording||demoplayback||netgame))
+        slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
 	  if (!linetarget)
 	    an = source->angle, slope = 0;
 	}

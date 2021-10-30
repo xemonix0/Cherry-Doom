@@ -110,6 +110,7 @@ int no_ss_background;
 int no_menu_tint;
 int extra_gibbing;
 int jump_crouch;
+int no_hor_autoaim;
 int viewheight_value;
 int armor_type_color;
 int one_key_saveload;

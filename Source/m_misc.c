@@ -438,6 +438,18 @@ default_t defaults[] = {
   },
 
   {
+    "no_hor_autoaim",
+    (config_t *) &no_hor_autoaim,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_gen,
+    wad_yes,
+    "1 to disable horizontal projectile autoaim"
+  },
+
+  {
     "viewheight_value",
     (config_t *) &viewheight_value,
     NULL,

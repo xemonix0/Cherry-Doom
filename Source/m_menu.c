@@ -3622,6 +3622,7 @@ enum {
   general_menutint,
   general_extra_gibbing,
   general_jump_crouch,
+  general_hor_autoaim,
   general_viewheight,
   general_quicksaveload,
   general_quickexit,
@@ -3642,6 +3643,9 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
 
   {"Allow Jump/Crouch", S_YESNO, m_null, G_X,
    G_Y + general_jump_crouch*8, {"jump_crouch"}},
+
+  {"Disable Horizontal Autoaim", S_YESNO, m_null, G_X,
+   G_Y + general_hor_autoaim*8, {"no_hor_autoaim"}},
 
   {"View Height (Default = 41)", S_NUM, m_null, G_X,
    G_Y + general_viewheight*8, {"viewheight_value"}},
