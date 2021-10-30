@@ -1541,7 +1541,11 @@ void A_Tracer(mobj_t *actor)
   if (dist < 1)
     dist = 1;
 
-  slope = (dest->z+40*FRACUNIT - actor->z) / dist;
+  // [Nugget] Check for crouching
+  if (dest->player && (dest->intflags & MIF_CROUCHING))
+    {slope = (dest->z+20*FRACUNIT - actor->z) / dist;}
+  else
+    {slope = (dest->z+40*FRACUNIT - actor->z) / dist;}
 
   if (slope < actor->momz)
     actor->momz -= FRACUNIT/8;
