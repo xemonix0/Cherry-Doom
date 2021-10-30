@@ -106,15 +106,19 @@ int center_weapon;
 
 //----- Nugget ---------------------------------------------------------------
 
+// General
 int no_ss_background;
 int no_menu_tint;
 int extra_gibbing;
 int jump_crouch;
 int no_hor_autoaim;
 int viewheight_value;
-int armor_type_color;
 int one_key_saveload;
 int quick_exit;
+// Status Bar / HUD
+int armor_type_color;
+// Enemies
+int over_under;
 
 int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
 

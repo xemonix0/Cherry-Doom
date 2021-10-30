@@ -543,19 +543,24 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   // check for skulls slamming into things
 
   if (tmthing->flags & MF_SKULLFLY)
-    {
+  {
+
       // A flying skull is smacking something.
       // Determine damage amount, and the skull comes to a dead stop.
-
       int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
+
+    // [Nugget]: [crispy] check if attacking skull flies over/under thing
+    if (over_under) {
+	    if (tmthing->z > thing->z + thing->height)    {return true;} // over
+	    if (tmthing->z + tmthing->height < thing->z)  {return true;} // under
+    }
 
 	  // [Nugget] Fix lost soul collision
 	  if (nugget_comp[comp_lscollision]
           && !(demorecording||demoplayback||netgame))
-      {
-        if (!(thing->flags & MF_SHOOTABLE))
-            {return !(thing->flags & MF_SOLID);}
-      }
+    {
+      if (!(thing->flags & MF_SHOOTABLE)) {return !(thing->flags & MF_SOLID);}
+    }
 
       P_DamageMobj (thing, tmthing, tmthing, damage);
 
@@ -570,7 +575,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
         {P_SetMobjState(tmthing, tmthing->info->spawnstate);}
 
       return false;   // stop moving
-    }
+  }
 
   // missiles can hit other things
   // killough 8/10/98: bouncing non-solid things can hit other things too
@@ -651,6 +656,34 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 	P_TouchSpecialThing(thing, tmthing); // can remove thing
       return !solid;
     }
+
+  // [Nugget]: [crispy] a solid hanging body will allow sufficiently small things underneath it
+  if (over_under
+      && (thing->flags & (MF_SOLID | MF_SPAWNCEILING)) == (MF_SOLID | MF_SPAWNCEILING)
+      && tmthing->z + tmthing->height <= thing->z)
+  {
+    tmceilingz = thing->z;
+    return true;
+  }
+
+  // [Nugget]: [crispy] allow players to walk over/under shootable objects
+  if (over_under
+      //&& tmthing->player
+      && thing->flags & MF_SHOOTABLE)
+  {
+    if (tmthing->z >= thing->z + thing->height) {
+      // player walks over object
+      tmfloorz = thing->z + thing->height;
+      thing->ceilingz = tmthing->z;
+      return true;
+    }
+    else if (tmthing->z + tmthing->height <= thing->z) {
+      // player walks underneath object
+      tmceilingz = thing->z;
+      thing->floorz = tmthing->z + tmthing->height;
+      return true;
+    }
+  }
 
   // killough 3/16/98: Allow non-solid moving objects to move through solid
   // ones, by allowing the moving thing (tmthing) to move if it's non-solid,

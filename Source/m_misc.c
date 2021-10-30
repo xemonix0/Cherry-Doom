@@ -462,18 +462,6 @@ default_t defaults[] = {
   },
 
   {
-    "armor_type_color",
-    (config_t *) &armor_type_color,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_stat,
-    wad_no,
-    "1 to color the armor amount based on armor type"
-  },
-
-  {
     "one_key_saveload",
     (config_t *) &one_key_saveload,
     NULL,
@@ -495,6 +483,30 @@ default_t defaults[] = {
     ss_gen,
     wad_no,
     "1 to skip prompt on Quit Game"
+  },
+
+  {
+    "armor_type_color",
+    (config_t *) &armor_type_color,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_stat,
+    wad_no,
+    "1 to color the armor amount based on armor type"
+  },
+
+  {
+    "over_under",
+    (config_t *) &over_under,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_enem,
+    wad_no,
+    "1 to allow passing over/under monsters"
   },
 
   { //jff 4/3/98 allow unlimited sensitivity

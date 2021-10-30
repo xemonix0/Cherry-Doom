@@ -368,15 +368,19 @@ extern int center_weapon;
 
 //----- Nugget ---------------------------------------------------------------
 
+// General
 extern int no_ss_background;
 extern int no_menu_tint;
 extern int extra_gibbing;
 extern int jump_crouch;
 extern int no_hor_autoaim;
 extern int viewheight_value;
-extern int armor_type_color;
 extern int one_key_saveload;
 extern int quick_exit;
+// Status Bar / HUD
+extern int armor_type_color;
+// Enemies
+extern int over_under;
 
 enum {
   comp_blazing2,

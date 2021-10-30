@@ -3335,6 +3335,9 @@ enum {
 
   enem_flipcorpses,
 
+  // [Nugget]
+  enem_overunder,
+
   enem_end
 };
 
@@ -3371,6 +3374,9 @@ setup_menu_t enem_settings1[] =  // Enemy Settings screen
 
   // [crispy] randomly flip corpse, blood and death animation sprites
   {"Randomly Mirrored Corpses",S_YESNO,m_null,E_X,E_Y+ enem_flipcorpses*8, {"flipcorpses"}},
+
+  // [Nugget] Crispy's over/under logic
+  {"Creatures move over/under creatures",S_YESNO,m_null,E_X,E_Y+ enem_overunder*8, {"over_under"}},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
