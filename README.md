@@ -8,13 +8,14 @@ Although the new code has been written with the intention of not breaking demo c
 
 ## Features
 
-- From Crispy Doom:
+- From Crispy Doom (inspired or ported code):
   - **Minimalistic HUD** (partially implemented);
   - **Resurrect from savegame** (Run key + Use key);
   - **'RESURRECT'** cheat adapted from Crispy's resurrection with IDDQD (**'IDRES'** as an alternative combination);
   - **'NOTARGET'** cheat;
+  - **"Creatures move over/under creatures"** setting;
   - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first);
-  - **Quick exit** (hold Run key when entering "Quit Game" in menu, or when confirming on the quit prompt);
+  - **"Quick exit"** setting;
   - **"Disable palette tint in menus"** setting;
   - **"Use Armor Type Color"** setting for armor count coloring based on armor type;
   - **Extended IDCLEV functionality** (IDCLEV00 restarts current map, IDCLEV beyond 32 in Doom 2 warps to the corresponding map if present);
@@ -23,6 +24,7 @@ Although the new code has been written with the intention of not breaking demo c
 - **"Disable Background"** setting, to disable the background on setup screens and dynamic Help screen
 - **"Extra Gibbing"** setting to force Berserk Fist, Chainsaw and SSG gibbing
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first)
+- **"Disable Horizontal Autoaim"** setting
 - **"View Height"** setting: allows to enter a custom height value between 8 and 56 for the player's POV (default is 41, the original)
 - Three new **cheats**:
   - **'FULLCLIP'** for infinite ammo;
@@ -129,8 +131,11 @@ License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0]
 
 Files: `data/woof.ico,  
  data/woof.png,  
- data/woof8.ico,  
- Source/icon.c`  
+ data/woof8.ico`  
+Copyright: © 2021 Korp.  
+License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+Files: `Source/icon.c` (to be replaced)
 Copyright: © 2020 Julia Nechaevskaya.  
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
