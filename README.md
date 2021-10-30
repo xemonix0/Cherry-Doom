@@ -24,6 +24,7 @@ Although the new code has been written with the intention of not breaking demo c
 - **"Disable Background"** setting, to disable the background on setup screens and dynamic Help screen
 - **"Extra Gibbing"** setting to force Berserk Fist, Chainsaw and SSG gibbing
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first)
+- **"One-Key Quick Save/Load"** setting: skips the confirmation prompt
 - **"Disable Horizontal Autoaim"** setting
 - **"View Height"** setting: allows to enter a custom height value between 8 and 56 for the player's POV (default is 41, the original)
 - Three new **cheats**:
