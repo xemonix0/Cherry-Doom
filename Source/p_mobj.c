@@ -484,7 +484,7 @@ static void P_ZMovement (mobj_t* mo)
   // [Nugget] Check for viewheight setting
   if (demorecording||netgame) {view = VIEWHEIGHT;}
   else {
-    if (mo->intflags & MIF_CROUCHING) {view = (viewheight_value*FRACUNIT)/2;}
+    if (mo->intflags & MIF_CROUCHING) {view = (viewheight_value*FRACUNIT)>>1;}
     else                              {view = viewheight_value*FRACUNIT;}
   }
 
@@ -1073,7 +1073,7 @@ void P_SpawnPlayer (mapthing_t* mthing)
   {p->viewheight = VIEWHEIGHT;}
   else {
     if (p->mo->intflags & MIF_CROUCHING)
-    {p->viewheight = (viewheight_value*FRACUNIT)/2;}
+    {p->viewheight = (viewheight_value*FRACUNIT)>>1;}
     else
     {p->viewheight = viewheight_value*FRACUNIT;}
   }
@@ -1403,7 +1403,7 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
   // [Nugget] Check for crouching player
   if (dest->player && (dest->intflags & MIF_CROUCHING))
     {th->momz = ((dest->z + dest->height)
-                 - (source->z + (dest->height*2))) / dist;}
+                 - (source->z + (dest->height<<1))) / dist;}
   else
     {th->momz = (dest->z - source->z) / dist;}
   P_CheckMissileSpawn(th);
@@ -1452,7 +1452,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   y = source->y;
   // [Nugget] Check for crouching
   if (source->player && (source->intflags & MIF_CROUCHING))
-    {z = source->z + (4*8*FRACUNIT)/2;}
+    {z = source->z + ((4*8*FRACUNIT)>>1);}
   else
     {z = source->z + 4*8*FRACUNIT;}
 

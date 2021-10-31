@@ -129,7 +129,7 @@ void P_CalcHeight (player_t* player)
   // [Nugget] Check for viewheight setting
   if (demorecording||netgame) {view = VIEWHEIGHT;}
   else {
-    if (player->mo->intflags & MIF_CROUCHING) {view = (viewheight_value*FRACUNIT)/2;}
+    if (player->mo->intflags & MIF_CROUCHING) {view = (viewheight_value*FRACUNIT)>>1;}
     else                                      {view = viewheight_value*FRACUNIT;}
   }
 
@@ -239,7 +239,7 @@ void P_MovePlayer (player_t* player)
         // [Nugget] Check for crouching
         if ((player->mo->intflags & MIF_CROUCHING)
             && !(demorecording||demoplayback||netgame))
-            {cforwardmove /= 2; csidemove /= 2;}
+            {cforwardmove>>=1; csidemove>>=1;}
 
 	  if (cmd->forwardmove)
 	    {
@@ -397,10 +397,10 @@ void P_PlayerThink (player_t* player)
       if (player->mo->intflags & MIF_CROUCHING) {
       // [Nugget] Check if ceiling's high enough to stand up.
         if ((player->mo->ceilingz - player->mo->floorz)
-            >= (player->mo->height * 2))
+            >= (player->mo->height<<1))
         { // [Nugget] Stand up
             player->mo->intflags &= ~MIF_CROUCHING;
-            player->mo->height *= 2;
+            player->mo->height<<=1;
             player->crouchTics = 18;
         }
       }
@@ -417,16 +417,16 @@ void P_PlayerThink (player_t* player)
         if (player->mo->intflags & MIF_CROUCHING) {
             // [Nugget] Check if ceiling's high enough to stand up.
             if ((player->mo->ceilingz - player->mo->floorz)
-                >= (player->mo->height * 2))
+                >= (player->mo->height<<1))
             { // [Nugget] Stand up
                 player->mo->intflags &= ~MIF_CROUCHING;
-                player->mo->height *= 2;
+                player->mo->height<<=1;
                 player->crouchTics = 18;
             }
         }
         else { // [Nugget] Crouch
             player->mo->intflags |= MIF_CROUCHING;
-            player->mo->height = player->mo->height / 2;
+            player->mo->height>>=1;
             player->crouchTics = 18;
         }
     }
@@ -442,10 +442,10 @@ void P_PlayerThink (player_t* player)
     if (!jump_crouch && (player->mo->intflags & MIF_CROUCHING))
     {
         if ((player->mo->ceilingz - player->mo->floorz)
-            >= (player->mo->height * 2))
+            >= (player->mo->height<<1))
         { // [Nugget] Stand up
             player->mo->intflags &= ~MIF_CROUCHING;
-            player->mo->height *= 2;
+            player->mo->height<<=1;
             player->crouchTics = 18;
         }
     }

@@ -258,6 +258,7 @@ void P_GiveCard(player_t *player, card_t card)
 {
   if (player->cards[card])
     return;
+  // [Nugget] Fix for "key pickup resets palette"
   if (!nugget_comp[comp_keypal] && !(demorecording||demoplayback||netgame))
     {player->bonuscount += BONUSADD;}
   else
@@ -764,21 +765,18 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 // used for Extra Gibbing and Chainsaw knockback fix
 boolean P_NuggetCheckDist (mobj_t* source, mobj_t* target, fixed_t range, boolean addradius)
 {
-    fixed_t	dist;
-    fixed_t radius = 0;
-    fixed_t range2;
+  fixed_t	dist;
+  fixed_t radius = 0;
+  fixed_t range2;
 
-    if (addradius) {radius = target->info->radius;}
+  if (addradius) {radius = target->info->radius;}
+  range2 = range + radius;
 
-    range2 = range + radius;
-
-    dist = P_AproxDistance(target->x - source->x,
+  dist = P_AproxDistance(target->x - source->x,
                            target->y - source->y);
 
-    if (dist > range2)
-        {return false;}
-    else
-        {return true;}
+  if (dist > range2)  {return false;}
+  else                {return true;}
 }
 
 //

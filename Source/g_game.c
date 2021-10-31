@@ -368,8 +368,7 @@ static int G_NextWeapon(int direction)
     return weapon_order_table[i].weapon_num;
 }
 
-// [Nugget] Add this
-// [crispy] holding down the "Run" key may trigger special behavior,
+// [Nugget]: [crispy] holding down the "Run" key may trigger special behavior,
 // e.g. quick exit, clean screenshots, resurrection from savegames
 boolean speedkeydown (void) {
     return (key_speed < NUMKEYS && gamekeydown[key_speed]) ||
@@ -1050,8 +1049,7 @@ boolean secretexit;
 
 static char *savename = NULL;
 
-// [Nugget] Add this
-// [crispy] clear the "savename" variable,
+// [Nugget]: [crispy] clear the "savename" variable,
 // i.e. restart level from scratch upon resurrection
 static inline void G_ClearSavename() {
   if (savename)
@@ -1992,8 +1990,7 @@ static void G_DoLoadGame(void)
   // draw the pattern into the back screen
   R_FillBackScreen();
 
-  // [Nugget] Add this
-  // [crispy] if the player is dead in this savegame,
+  // [Nugget]: [crispy] if the player is dead in this savegame,
   // do not consider it for reload
   if (players[consoleplayer].health <= 0) {G_ClearSavename();}
 

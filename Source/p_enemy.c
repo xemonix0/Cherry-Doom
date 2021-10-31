@@ -122,8 +122,7 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks,
 
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
-  // [Nugget] Add this
-  // [crispy] monsters are deaf with NOTARGET cheat
+  // [Nugget]: [crispy] monsters are deaf with NOTARGET cheat
   if (target && target->player && (target->player->cheats & CF_NOTARGET))
       return;
 
@@ -859,8 +858,7 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
       player = &players[actor->lastlook];
 
-      // [Nugget] Add this
-      // [crispy] monsters don't look for players with NOTARGET cheat
+      // [Nugget]: [crispy] monsters don't look for players with NOTARGET cheat
       if (player->cheats & CF_NOTARGET)
         continue;
 
@@ -1046,8 +1044,7 @@ void A_Look(mobj_t *actor)
       && (actor->flags & MF_FRIEND || !P_LookForTargets(actor, false)))
     return;
 
-  // [Nugget] Add this
-  // [crispy] monsters don't look for players with NOTARGET cheat
+  // [Nugget]: [crispy] monsters don't look for players with NOTARGET cheat
 //  if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
 //      return;
 
@@ -1814,8 +1811,7 @@ void A_VileTarget(mobj_t *actor)
   P_SetTarget(&actor->tracer, fog);   // killough 11/98
   P_SetTarget(&fog->target, actor);
   P_SetTarget(&fog->tracer, actor->target);
-  // [Nugget] Add this
-  // [crispy] play DSFLAMST sound when Arch-Vile spawns fire attack
+  // [Nugget]: [crispy] play DSFLAMST sound when Arch-Vile spawns fire attack
   if (nugget_comp[comp_flamst])
   {S_StartSound(fog, sfx_flamst);}
   A_Fire(fog);
