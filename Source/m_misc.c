@@ -426,6 +426,18 @@ default_t defaults[] = {
   },
 
   {
+    "over_under",
+    (config_t *) &over_under,
+    NULL,
+    {0},
+    {0,1},
+    number,
+    ss_gen,
+    wad_no,
+    "1 to allow things to move over/under other things"
+  },
+
+  {
     "jump_crouch",
     (config_t *) &jump_crouch,
     NULL,
@@ -495,18 +507,6 @@ default_t defaults[] = {
     ss_stat,
     wad_no,
     "1 to color the armor amount based on armor type"
-  },
-
-  {
-    "over_under",
-    (config_t *) &over_under,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_enem,
-    wad_no,
-    "1 to allow passing over/under monsters"
   },
 
   { //jff 4/3/98 allow unlimited sensitivity

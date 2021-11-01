@@ -550,14 +550,13 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
 
     // [Nugget]: [crispy] check if attacking skull flies over/under thing
-    if (over_under) {
+    if (over_under && !(demorecording||demoplayback||netgame)) {
 	    if (tmthing->z > thing->z + thing->height)    {return true;} // over
 	    if (tmthing->z + tmthing->height < thing->z)  {return true;} // under
     }
 
 	  // [Nugget] Fix lost soul collision
-	  if (nugget_comp[comp_lscollision]
-          && !(demorecording||demoplayback||netgame))
+	  if (nugget_comp[comp_lscollision] && !(demorecording||demoplayback||netgame))
     {
       if (!(thing->flags & MF_SHOOTABLE)) {return !(thing->flags & MF_SOLID);}
     }
@@ -657,30 +656,21 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       return !solid;
     }
 
-  // [Nugget]: [crispy] a solid hanging body will allow sufficiently small things underneath it
-  if (over_under
-      && (thing->flags & (MF_SOLID | MF_SPAWNCEILING)) == (MF_SOLID | MF_SPAWNCEILING)
-      && tmthing->z + tmthing->height <= thing->z)
+  // [Nugget] Allow things to move over/under other things
+  if (over_under && !(demorecording||demoplayback||netgame))
   {
-    tmceilingz = thing->z;
-    return true;
-  }
-
-  // [Nugget]: [crispy] allow players to walk over/under shootable objects
-  if (over_under
-      //&& tmthing->player
-      && thing->flags & MF_SHOOTABLE)
-  {
-    if (tmthing->z >= thing->z + thing->height) {
-      // player walks over object
-      tmfloorz = thing->z + thing->height;
-      thing->ceilingz = tmthing->z;
+    if (tmthing->z >= thing->z + thing->height) { // over
+      if (tmfloorz < thing->z + thing->height)
+        {tmfloorz = thing->z + thing->height;}
+      if (thing->ceilingz > tmthing->z)
+        {thing->ceilingz = tmthing->z;}
       return true;
     }
-    else if (tmthing->z + tmthing->height <= thing->z) {
-      // player walks underneath object
-      tmceilingz = thing->z;
-      thing->floorz = tmthing->z + tmthing->height;
+    else if (tmthing->z + tmthing->height <= thing->z) { // under
+      if (tmceilingz > thing->z)
+        {tmceilingz = thing->z;}
+      if (thing->floorz < tmthing->z + tmthing->height)
+        {thing->floorz = tmthing->z + tmthing->height;}
       return true;
     }
   }

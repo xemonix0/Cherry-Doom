@@ -372,6 +372,7 @@ extern int center_weapon;
 extern int no_ss_background;
 extern int no_menu_tint;
 extern int extra_gibbing;
+extern int over_under;
 extern int jump_crouch;
 extern int no_hor_autoaim;
 extern int viewheight_value;
@@ -379,8 +380,6 @@ extern int one_key_saveload;
 extern int quick_exit;
 // Status Bar / HUD
 extern int armor_type_color;
-// Enemies
-extern int over_under;
 
 enum {
   comp_blazing2,
