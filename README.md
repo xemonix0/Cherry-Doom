@@ -4,7 +4,7 @@ Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.cho
 
 ### DISCLAIMER
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
-**Record demos at your own risk.**
+**RECORD DEMOS AT YOUR OWN RISK!**
 
 ## Features
 
@@ -13,7 +13,7 @@ Although the new code has been written with the intention of not breaking demo c
   - **Resurrect from savegame** (Run key + Use key);
   - **'RESURRECT'** cheat adapted from Crispy's resurrection with IDDQD (**'IDRES'** as an alternative combination);
   - **'NOTARGET'** cheat;
-  - **"Creatures move over/under creatures"** setting;
+  - **"Things move over/under things"** setting;
   - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first);
   - **"Quick exit"** setting;
   - **"Disable palette tint in menus"** setting;
