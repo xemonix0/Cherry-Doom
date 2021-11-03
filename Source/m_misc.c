@@ -486,8 +486,8 @@ default_t defaults[] = {
   },
 
   {
-    "quick_exit",
-    (config_t *) &quick_exit,
+    "quick_quitgame",
+    (config_t *) &quick_quitgame,
     NULL,
     {0},
     {0,1},

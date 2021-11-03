@@ -1284,7 +1284,7 @@ void M_QuitDOOM(int choice)
   // Originally relied on Run key, as seen in M_QuitResponse, but such approach
   // doesn't work without a running playsim. Besides, this way it's easier for
   // the user to acknowledge the existence of the feature.
-  if (quick_exit) {exit(0);}
+  if (quick_quitgame) {exit(0);}
 
   // We pick index 0 which is language sensitive,
   // or one at random, between 1 and maximum number.
@@ -3657,8 +3657,8 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
   {"One-Key Quick Save/Load", S_YESNO, m_null, G_X,
    G_Y + general_quicksaveload*8, {"one_key_saveload"}},
 
-  {"Quick Exit", S_YESNO, m_null, G_X,
-   G_Y + general_quickexit*8, {"quick_exit"}},
+  {"Quick \"Quit Game\"", S_YESNO, m_null, G_X,
+   G_Y + general_quickexit*8, {"quick_quitgame"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings2}},
 

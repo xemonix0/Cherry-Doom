@@ -115,7 +115,7 @@ int jump_crouch;
 int no_hor_autoaim;
 int viewheight_value;
 int one_key_saveload;
-int quick_exit;
+int quick_quitgame;
 // Status Bar / HUD
 int armor_type_color;
 

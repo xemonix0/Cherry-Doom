@@ -377,7 +377,7 @@ extern int jump_crouch;
 extern int no_hor_autoaim;
 extern int viewheight_value;
 extern int one_key_saveload;
-extern int quick_exit;
+extern int quick_quitgame;
 // Status Bar / HUD
 extern int armor_type_color;
 
