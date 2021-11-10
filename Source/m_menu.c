@@ -3767,11 +3767,13 @@ enum
   compat_cgundblsnd,
   compat_lscollision,
   compat_lsamnesia,
+  compat_fuzzyblood,
+  compat_nonbleeders,
   compat_0dmgpain,
   compat_bruistarget,
-  compat_cgunnersfx,
+  compat_cgunnersfx = 0,
   compat_flamst,
-  compat_deadoof = 0,
+  compat_deadoof,
   compat_iosdeath,
   compat_keypal,
   compat_choppers,
@@ -3879,17 +3881,17 @@ setup_menu_t comp_settings3[] =  // [Nugget] Compatibility Settings screen #3
   {"Lost Soul forgets target upon impact", S_YESNO, m_null, C_X,
    C_Y + compat_lsamnesia * COMP_SPC, {"comp_lsamnesia"}},
 
+  {"Fuzzy things bleed fuzzy blood", S_YESNO, m_null, C_X,
+   C_Y + compat_fuzzyblood * COMP_SPC, {"comp_fuzzyblood"}},
+
+  {"Non-bleeders don't bleed when crushed", S_YESNO, m_null, C_X,
+   C_Y + compat_nonbleeders * COMP_SPC, {"comp_nonbleeders"}},
+
   {"Prevent pain state with 0 damage attacks", S_YESNO, m_null, C_X,
    C_Y + compat_0dmgpain * COMP_SPC, {"comp_0dmgpain"}},
 
   {"Bruiser attack doesn't face target", S_YESNO, m_null, C_X,
    C_Y + compat_bruistarget * COMP_SPC, {"comp_bruistarget"}},
-
-  {"Chaingunner uses pistol/chaingun sound", S_YESNO, m_null, C_X,
-   C_Y + compat_cgunnersfx * COMP_SPC, {"comp_cgunnersfx"}},
-
-  {"Arch-Vile fire plays flame start sound", S_YESNO, m_null, C_X,
-   C_Y + compat_flamst * COMP_SPC, {"comp_flamst"}},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, KB_PREV, C_Y+C_NEXTPREV,{comp_settings2}},
   {"NEXT ->", S_SKIP|S_NEXT, m_null, KB_NEXT, C_Y+C_NEXTPREV,{comp_settings4}},
@@ -3901,6 +3903,12 @@ setup_menu_t comp_settings3[] =  // [Nugget] Compatibility Settings screen #3
 
 setup_menu_t comp_settings4[] =  // [Nugget] Compatibility Settings screen #4
 {
+  {"Chaingunner uses pistol/chaingun sound", S_YESNO, m_null, C_X,
+   C_Y + compat_cgunnersfx * COMP_SPC, {"comp_cgunnersfx"}},
+
+  {"Arch-Vile fire plays flame start sound", S_YESNO, m_null, C_X,
+   C_Y + compat_flamst * COMP_SPC, {"comp_flamst"}},
+
   {"Dead players can still play oof sound", S_YESNO, m_null, C_X,
    C_Y + compat_deadoof * COMP_SPC, {"comp_deadoof"}},
 

@@ -1895,8 +1895,9 @@ static boolean PIT_ChangeSector(mobj_t *thing)
   if (thing->health <= 0)
     {
       P_SetMobjState(thing, S_GIBS);
-      // [Nugget] Controversy trigger?
-      if (thing->flags & MF_NOBLOOD) {thing->sprite = SPR_TNT1;}
+      // [Nugget] No gibs if the thing doesn't bleed to begin with
+      if (nugget_comp[comp_nonbleeders] && thing->flags & MF_NOBLOOD)
+        {thing->sprite = SPR_TNT1; thing->frame = 0;}
       thing->flags &= ~MF_SOLID;
       thing->height = thing->radius = 0;
       if (colored_blood)
@@ -1938,8 +1939,13 @@ static boolean PIT_ChangeSector(mobj_t *thing)
       mo = P_SpawnMobj (thing->x,
 			thing->y,
 			thing->z + thing->height/2,
-			// [Nugget] No blood if no bleeding, should be a setting
-			thing->flags & MF_NOBLOOD ? MT_PUFF : MT_BLOOD);
+			// [Nugget]
+			(nugget_comp[comp_nonbleeders]
+       && thing->flags & MF_NOBLOOD) ? MT_PUFF : MT_BLOOD);
+
+			// [Nugget] Fuzzy blood if applicable
+			if (nugget_comp[comp_fuzzyblood] && thing->flags & MF_SHADOW)
+        {mo->flags |= MF_SHADOW;}
 
       if (colored_blood)
       {

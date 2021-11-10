@@ -543,8 +543,7 @@ floater:
 		// and utter appropriate sound.
 
 		mo->player->deltaviewheight = mo->momz>>3;
-		// [Nugget] Add this
-		// [crispy] dead men don't say "oof"
+		// [Nugget]: [crispy] dead men don't say "oof"
 		if (mo->health > 0 || nugget_comp[comp_deadoof])
 		{S_StartSound (mo, sfx_oof);}
 	      }
@@ -1316,6 +1315,11 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
   th = P_SpawnMobj(x,y,z, MT_BLOOD);
   th->momz = FRACUNIT*2;
   th->tics -= P_Random(pr_spawnblood)&3;
+
+  // [Nugget] Fuzzy blood for fuzzy things
+  if (nugget_comp[comp_fuzzyblood] && bleeder->flags & MF_SHADOW)
+    {th->flags |= MF_SHADOW;}
+
   if (colored_blood)
   {
     th->flags2 |= MF2_COLOREDBLOOD;

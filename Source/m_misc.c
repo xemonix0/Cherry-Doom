@@ -807,6 +807,22 @@ default_t defaults[] = {
   },
 
   {
+    "comp_fuzzyblood",
+    (config_t *) &default_nugget_comp[comp_fuzzyblood],
+    (config_t *) &nugget_comp[comp_fuzzyblood],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Fuzzy things bleed fuzzy blood"
+  },
+
+  {
+    "comp_nonbleeders",
+    (config_t *) &default_nugget_comp[comp_nonbleeders],
+    (config_t *) &nugget_comp[comp_nonbleeders],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Non-bleeders don't bleed when crushed"
+  },
+
+  {
     "comp_0dmgpain",
     (config_t *) &default_nugget_comp[comp_0dmgpain],
     (config_t *) &nugget_comp[comp_0dmgpain],
