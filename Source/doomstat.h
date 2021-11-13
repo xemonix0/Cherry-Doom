@@ -375,6 +375,8 @@ extern int extra_gibbing;
 extern int over_under;
 extern int jump_crouch;
 extern int no_hor_autoaim;
+extern int damagecount_cap;
+extern int bonuscount_cap;
 extern int viewheight_value;
 extern int one_key_saveload;
 extern int quick_quitgame;

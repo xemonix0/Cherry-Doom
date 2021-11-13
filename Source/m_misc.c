@@ -390,122 +390,91 @@ default_t defaults[] = {
   // [Nugget]
 
   {
-    "no_ss_background",
-    (config_t *) &no_ss_background,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_gen,
-    wad_yes,
-    "1 to disable the background in setup screens"
+    "no_ss_background", // name
+    (config_t *) &no_ss_background, // default variable
+    NULL,     // possible nondefault variable
+    {0},      // built-in default value
+    {0,1},    // numerical limits
+    number,   // number or string
+    ss_gen,   // setup screen this appears on
+    wad_yes,  // whether it's allowed in wads
+    "1 to disable the background in setup screens" // description of parameter
   },
 
   {
     "no_menu_tint",
-    (config_t *) &no_menu_tint,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_gen,
-    wad_no,
+    (config_t *) &no_menu_tint, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
     "1 to disable palette tint in menus"
   },
 
   {
     "extra_gibbing",
-    (config_t *) &extra_gibbing,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_gen,
-    wad_yes,
+    (config_t *) &extra_gibbing, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
     "1 to enable extra gibbing"
   },
 
   {
     "over_under",
-    (config_t *) &over_under,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_gen,
-    wad_no,
+    (config_t *) &over_under, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
     "1 to allow things to move over/under other things"
   },
 
   {
     "jump_crouch",
-    (config_t *) &jump_crouch,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_gen,
-    wad_yes,
+    (config_t *) &jump_crouch, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
     "1 to enable jumping/crouching"
   },
 
   {
     "no_hor_autoaim",
-    (config_t *) &no_hor_autoaim,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_gen,
-    wad_yes,
+    (config_t *) &no_hor_autoaim, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
     "1 to disable horizontal projectile autoaim"
   },
 
   {
+    "damagecount_cap",
+    (config_t *) &damagecount_cap, NULL,
+    {100}, {0,100}, number, ss_gen, wad_no,
+    "Player damage tint cap"
+  },
+
+  {
+    "bonuscount_cap",
+    (config_t *) &bonuscount_cap, NULL,
+    {-1}, {-1,100}, number, ss_gen, wad_no,
+    "Player bonus tint cap"
+  },
+
+  {
     "viewheight_value",
-    (config_t *) &viewheight_value,
-    NULL,
-    {41},
-    {8,56},
-    number,
-    ss_gen,
-    wad_yes,
+    (config_t *) &viewheight_value, NULL,
+    {41}, {8,56}, number, ss_gen, wad_yes,
     "Player view height"
   },
 
   {
     "one_key_saveload",
-    (config_t *) &one_key_saveload,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_gen,
-    wad_no,
+    (config_t *) &one_key_saveload, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
     "1 for single key quick saving/loading"
   },
 
   {
     "quick_quitgame",
-    (config_t *) &quick_quitgame,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_gen,
-    wad_no,
+    (config_t *) &quick_quitgame, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
     "1 to skip prompt on Quit Game"
   },
 
   {
     "armor_type_color",
-    (config_t *) &armor_type_color,
-    NULL,
-    {0},
-    {0,1},
-    number,
-    ss_stat,
-    wad_no,
+    (config_t *) &armor_type_color, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
     "1 to color the armor amount based on armor type"
   },
 

@@ -654,6 +654,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
     player->itemcount++;
   P_RemoveMobj (special);
   player->bonuscount += BONUSADD;
+  // [Nugget] Bonuscount cap
+  if (bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap)
+    {player->bonuscount = bonuscount_cap;}
 
   S_StartSound(player->mo, sound);   // killough 4/25/98, 12/98
 }
@@ -889,8 +892,8 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       player->attacker = source;
       player->damagecount += damage;  // add damage after armor / invuln
 
-      if (player->damagecount > 100)
-        player->damagecount = 100;  // teleport stomp does 10k points...
+      if (player->damagecount > damagecount_cap) // [Nugget] Custom red tint cap
+        player->damagecount = damagecount_cap;  // teleport stomp does 10k points...
 
 #if 0
       // killough 11/98:

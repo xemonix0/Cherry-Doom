@@ -3624,6 +3624,8 @@ enum {
   general_overunder,
   general_jump_crouch,
   general_hor_autoaim,
+  general_dmgcountcap,
+  general_boncountcap,
   general_viewheight,
   general_quicksaveload,
   general_quickexit,
@@ -3650,6 +3652,12 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
 
   {"Disable Horizontal Autoaim", S_YESNO, m_null, G_X,
    G_Y + general_hor_autoaim*8, {"no_hor_autoaim"}},
+
+  {"Damage Tint Cap (Default = 100)", S_NUM, m_null, G_X,
+   G_Y + general_dmgcountcap*8, {"damagecount_cap"}},
+
+  {"Bonus Tint Cap (Default = -1)", S_NUM, m_null, G_X,
+   G_Y + general_boncountcap*8, {"bonuscount_cap"}},
 
   {"View Height (Default = 41)", S_NUM, m_null, G_X,
    G_Y + general_viewheight*8, {"viewheight_value"}},
