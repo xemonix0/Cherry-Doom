@@ -833,70 +833,67 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
             && nugget_comp[comp_csawthrust]
             && !(demorecording||demoplayback||netgame))
        || !(weaponinfo[source->player->readyweapon].flags & WPF_NOTHRUST)))
-    {
-      unsigned ang = R_PointToAngle2 (inflictor->x, inflictor->y,
+  {
+    unsigned ang = R_PointToAngle2 (inflictor->x, inflictor->y,
                                       target->x,    target->y);
 
-      fixed_t thrust = damage*(FRACUNIT>>3)*100/target->info->mass;
+    fixed_t thrust = damage*(FRACUNIT>>3)*100/target->info->mass;
 
-      // make fall forwards sometimes
-      if ( damage < 40 && damage > target->health
-           && target->z - inflictor->z > 64*FRACUNIT
-           && P_Random(pr_damagemobj) & 1)
-        {
-          ang += ANG180;
-          thrust *= 4;
-        }
-
-      ang >>= ANGLETOFINESHIFT;
-      target->momx += FixedMul (thrust, finecosine[ang]);
-      target->momy += FixedMul (thrust, finesine[ang]);
-
-      // killough 11/98: thrust objects hanging off ledges
-      if (target->intflags & MIF_FALLING && target->gear >= MAXGEAR)
-	target->gear = 0;
+    // make fall forwards sometimes
+    if ( damage < 40 && damage > target->health
+        && target->z - inflictor->z > 64*FRACUNIT
+        && P_Random(pr_damagemobj) & 1)
+    {
+      ang += ANG180;
+      thrust *= 4;
     }
 
+    ang >>= ANGLETOFINESHIFT;
+    target->momx += FixedMul (thrust, finecosine[ang]);
+    target->momy += FixedMul (thrust, finesine[ang]);
+
+    // killough 11/98: thrust objects hanging off ledges
+    if (target->intflags & MIF_FALLING && target->gear >= MAXGEAR)
+      target->gear = 0;
+  }
+
   // player specific
-  if (player)
-    {
-      // end of game hell hack
-      if (target->subsector->sector->special == 11 && damage >= target->health)
-        damage = target->health - 1;
+  if (player) {
+    // end of game hell hack
+    if (target->subsector->sector->special == 11 && damage >= target->health)
+      damage = target->health - 1;
 
-      // Below certain threshold,
-      // ignore damage in GOD mode, or with INVUL power.
-      // killough 3/26/98: make god mode 100% god mode in non-compat mode
+    // Below certain threshold,
+    // ignore damage in GOD mode, or with INVUL power.
+    // killough 3/26/98: make god mode 100% god mode in non-compat mode
+    if ((damage < 1000 || (!comp[comp_god] && player->cheats&CF_GODMODE)) &&
+        (player->cheats&CF_GODMODE || player->powers[pw_invulnerability]))
+      return;
 
-      if ((damage < 1000 || (!comp[comp_god] && player->cheats&CF_GODMODE)) &&
-          (player->cheats&CF_GODMODE || player->powers[pw_invulnerability]))
-        return;
+    if (player->armortype) {
+      int saved = player->armortype == 1 ? damage/3 : damage/2;
 
-      if (player->armortype)
-        {
-          int saved = player->armortype == 1 ? damage/3 : damage/2;
-          if (player->armorpoints <= saved)
-            {
-              // armor is used up
-              saved = player->armorpoints;
-              player->armortype = 0;
-            }
-          player->armorpoints -= saved;
-          damage -= saved;
-        }
+      if (player->armorpoints <= saved) {
+        // armor is used up
+        saved = player->armorpoints;
+        player->armortype = 0;
+      }
+      player->armorpoints -= saved;
+      damage -= saved;
+    }
 
-      player->health -= damage;       // mirror mobj health here for Dave
-      // [Nugget] BUDDHA cheat
-      if (player->cheats & CF_BUDDHA && player->health < 1)
-        {player->health = 1;}
-      else if (player->health < 0)
-        player->health = 0;
+    player->health -= damage;       // mirror mobj health here for Dave
+    // [Nugget] BUDDHA cheat
+    if (player->cheats & CF_BUDDHA && player->health < 1)
+      {player->health = 1;}
+    else if (player->health < 0)
+      player->health = 0;
 
-      player->attacker = source;
-      player->damagecount += damage;  // add damage after armor / invuln
+    player->attacker = source;
+    player->damagecount += damage;  // add damage after armor / invuln
 
-      if (player->damagecount > damagecount_cap) // [Nugget] Custom red tint cap
-        player->damagecount = damagecount_cap;  // teleport stomp does 10k points...
+    if (player->damagecount > damagecount_cap) // [Nugget] Custom red tint cap
+      player->damagecount = damagecount_cap;  // teleport stomp does 10k points...
 
 #if 0
       // killough 11/98:
@@ -914,9 +911,9 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 
     }
 
-  //  [Nugget] BUDDHA cheat
-  if (player && player->cheats & CF_BUDDHA
-      && (target->health -= damage) < 1)
+  // [Nugget] BUDDHA cheat
+  if (player && (player->cheats & CF_BUDDHA)
+      && (target->health - damage) < 1)
     {target->health = 1;}
   // do the damage
   else if ((target->health -= damage) <= 0)
