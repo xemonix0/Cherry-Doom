@@ -90,6 +90,7 @@ static void cheat_bobbers(); // [Nugget] Shortcut to the two cheats above
 static void cheat_gibbers(); // [Nugget] All gibs
 static void cheat_notarget(); // [Nugget]: [crispy] implement PrBoom+'s "notarget" cheat
 static void cheat_resurrect(); // [Nugget] Resurrect cheat
+static void cheat_buddha(); // [Nugget] Can't go below 1% health
 
 //-----------------------------------------------------------------------------
 //
@@ -310,6 +311,10 @@ struct cheat_s cheat[] = {
   {"idres",    NULL,                not_net|not_demo,
    cheat_resurrect},
 
+// [Nugget] Can't go below 1% health
+  {"buddha",    NULL,                not_net|not_demo,
+   cheat_buddha},
+
   {NULL}                 // end-of-list marker
 };
 
@@ -420,6 +425,14 @@ static void cheat_resurrect() {
     plyr->message = "Resurrected!";
 	}
 	else {plyr->message = "Still alive.";}
+}
+
+// [Nugget] Can't go below 1% health
+static void cheat_buddha() {
+  plyr->cheats ^= CF_BUDDHA;
+  plyr->message = plyr->cheats & CF_BUDDHA
+                  ? "Buddha Mode ON"
+                  : "Buddha Mode OFF";
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode

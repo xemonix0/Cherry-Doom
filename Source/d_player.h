@@ -82,7 +82,9 @@ typedef enum
   // [Nugget] All gibs
   CF_GIBBERS          = 64,
   // [Nugget]: [crispy] monsters don't target
-  CF_NOTARGET         = 128
+  CF_NOTARGET         = 128,
+  // [Nugget] Can't go below 1% health
+  CF_BUDDHA           = 256
 
 } cheat_t;
 
