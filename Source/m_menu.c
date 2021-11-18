@@ -4834,16 +4834,11 @@ setup_menu_t cred_settings[]={
 void M_DrawCredits(void)     // killough 10/98: credit screen
 {
   char mbftext_s[32];
+
   sprintf(mbftext_s, PROJECT_STRING);
   inhelpscreens = true;
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
-  }
-  else {
-    M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0]);
-  }
-
+  M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0]);
   M_DrawTitle(42,9,"MBFTEXT",mbftext_s);
   V_MarkRect(0,0,SCREENWIDTH,SCREENHEIGHT);
   M_DrawScreenItems(cred_settings);
