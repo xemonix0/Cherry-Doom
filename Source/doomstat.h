@@ -400,7 +400,6 @@ enum {
   comp_iosdeath,
   comp_keypal,
   comp_choppers,
-  comp_csawthrust,
 
   NUGGET_COMP_TOTAL
 };

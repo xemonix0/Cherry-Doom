@@ -827,11 +827,6 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 
   if (inflictor && !(target->flags & MF_NOCLIP) &&
       (!source || !source->player
-       // [Nugget] Hack to mostly prevent Chainsaw knockback bug
-       || ((weaponinfo[source->player->readyweapon].flags & WPF_NOTHRUST)
-            && !P_NuggetCheckDist(source, target, 65, false)
-            && nugget_comp[comp_csawthrust]
-            && !(demorecording||demoplayback||netgame))
        || !(weaponinfo[source->player->readyweapon].flags & WPF_NOTHRUST)))
   {
     unsigned ang = R_PointToAngle2 (inflictor->x, inflictor->y,

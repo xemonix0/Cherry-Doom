@@ -3785,7 +3785,6 @@ enum
   compat_iosdeath,
   compat_keypal,
   compat_choppers,
-  compat_csawthrust,
 };
 
 setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
@@ -3928,9 +3927,6 @@ setup_menu_t comp_settings4[] =  // [Nugget] Compatibility Settings screen #4
 
   {"Fix IDCHOPPERS invulnerability", S_YESNO, m_null, C_X,
    C_Y + compat_choppers * COMP_SPC, {"comp_choppers"}},
-
-  {"Partially fix Chainsaw knockback bug", S_YESNO, m_null, C_X,
-   C_Y + compat_csawthrust * COMP_SPC, {"comp_csawthrust"}},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, KB_PREV, C_Y+C_NEXTPREV,{comp_settings3}},
 
