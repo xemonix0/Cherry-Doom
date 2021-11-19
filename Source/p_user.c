@@ -34,6 +34,7 @@
 #include "p_map.h"
 #include "p_spec.h"
 #include "p_user.h"
+#include "m_input.h" // [Nugget]
 #include "w_wad.h" // [Nugget] W_CheckNumForName
 
 // Index of the special effects (INVUL inverse) map.
@@ -321,11 +322,6 @@ void P_DeathThink (player_t* player)
 //
 // P_PlayerThink
 //
-// [Nugget]
-#define NUMKEYS 256
-extern boolean gamekeydown[NUMKEYS];
-extern int key_jump;
-extern int key_crouch;
 
 void P_PlayerThink (player_t* player)
 {
@@ -390,7 +386,7 @@ void P_PlayerThink (player_t* player)
     P_PlayerInSpecialSector (player);
 
   // [Nugget] Crispy jumping
-  if (gamekeydown[key_jump] && jump_crouch && onground
+  if (M_InputGameActive(input_jump) && jump_crouch && onground
       && !(player->jumpTics) && !(player->crouchTics)
       && !(demorecording||demoplayback||netgame))
   {
@@ -410,7 +406,7 @@ void P_PlayerThink (player_t* player)
       }
   }
     // [Nugget] Crouching
-    if (gamekeydown[key_crouch] && jump_crouch
+    if (M_InputGameActive(input_crouch) && jump_crouch
         && !player->crouchTics
         && !(demorecording||demoplayback||netgame))
     {

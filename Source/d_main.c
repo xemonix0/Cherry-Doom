@@ -277,8 +277,7 @@ void D_Display (void)
   {
     R_RenderPlayerView (&players[displayplayer]);
 
-    // [Nugget] Crispy minimalistic HUD
-    // [crispy] Crispy HUD
+    // [Nugget]: [crispy] Crispy HUD
     if (screenblocks == CRISPY_HUD) {ST_Drawer(false, true);}
   }
 

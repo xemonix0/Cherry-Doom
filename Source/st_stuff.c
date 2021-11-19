@@ -211,7 +211,7 @@ static st_stateenum_t st_gamestate;
 // whether left-side main status bar is active
 static boolean st_statusbaron;
 
-// [Nugget] Crispy minimalistic HUD
+// [Nugget]:
 // [crispy] distinguish classic status bar with background and player face from Crispy HUD
 static boolean		st_crispyhud;
 static boolean		st_classicstatusbar;
@@ -874,7 +874,7 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   // [crispy] immediately redraw status bar after help screens have been shown
   st_firsttime = st_firsttime || refresh || inhelpscreens;
 
-  // [Nugget] Crispy minimalistic HUD
+  // [Nugget]:
   // [crispy] distinguish classic status bar with background and player face from Crispy HUD
   st_crispyhud = screenblocks >= CRISPY_HUD && (!automapactive || automapoverlay);
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
