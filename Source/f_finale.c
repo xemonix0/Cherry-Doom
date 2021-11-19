@@ -38,8 +38,9 @@
 #include "d_io.h"
 #include "d_deh.h"  // Ty 03/22/98 - externalizations
 #include "m_misc2.h" // [FG] M_StringDuplicate()
-#include "g_game.h" // [Nugget] for [crispy] key_*
-#include "m_random.h" // [Nugget] for [crispy] Crispy_Random()
+#include "g_game.h" // [Nugget]: [crispy] key_*
+#include "m_input.h" // [Nugget]
+#include "m_random.h" // [Nugget]: [crispy] Crispy_Random()
 
 // Stage of animation:
 //  0 = text, 1 = art screen, 2 = character cast
@@ -189,6 +190,8 @@ void F_StartFinale (void)
          finaletext = s_C1TEXT;  // FIXME - other text, music?
          break;
   }
+
+  using_FMI = false;
 
   if (gamemapinfo)
   {
@@ -750,25 +753,25 @@ boolean F_CastResponder (event_t* ev)
   return false;
 
   // [crispy] make monsters turnable in cast ...
-  if (ev->data1 == key_left) {
+  if (M_InputActivated(input_turnleft)) {
     if (++castangle > 7) {castangle = 0;}
     return false;
   }
-  else if (ev->data1 == key_right) {
+  else if (M_InputActivated(input_turnright)) {
     if (--castangle < 0) {castangle = 7;}
     return false;
   }
   // [crispy] ... and allow to skip through them ..
-  else if (ev->data1 == key_strafeleft) {
+  else if (M_InputActivated(input_strafeleft)) {
 	castskip = castnum ? -1 : arrlen(castorder)-2;
 	return false;
   }
-  else if (ev->data1 == key_straferight) {
+  else if (M_InputActivated(input_straferight)) {
 	castskip = +1;
 	return false;
   }
   // [crispy] ... and finally turn them into gibbs
-  if (ev->data1 == key_speed) {xdeath = true;}
+  if (M_InputActivated(input_speed)) {xdeath = true;}
 
   if (castdeath)
     return true; // already in dying frames

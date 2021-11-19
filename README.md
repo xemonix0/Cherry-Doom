@@ -103,46 +103,46 @@ Help was provided by _kraflab_ (responsible for [dsda-doom](https://github.com/k
 
 ## Legalese
 
-Files: `*`  
-Copyright: © 1993-1996 Id Software, Inc.;  
- © 1993-2008 Raven Software;  
- © 1999 by id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;  
- © 2004 James Haley;  
- © 2005-2014 Simon Howard;  
- © 2020-2021 Fabian Greffrath;  
- © 2020 Alex Mayfield;  
- © 2020-2021 Roman Fomin.  
+Files: `*`
+Copyright: © 1993-1996 Id Software, Inc.;
+ © 1993-2008 Raven Software;
+ © 1999 by id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;
+ © 2004 James Haley;
+ © 2005-2014 Simon Howard;
+ © 2020-2021 Fabian Greffrath;
+ © 2020 Alex Mayfield;
+ © 2020-2021 Roman Fomin.
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `opl/*`  
-Copyright: © 2002-2003 Marcel Telka;  
- © 2005-2014 Simon Howard;  
- © 2013-2018 Alexey Khokholov (Nuke.YKT).  
+Files: `opl/*`
+Copyright: © 2002-2003 Marcel Telka;
+ © 2005-2014 Simon Howard;
+ © 2013-2018 Alexey Khokholov (Nuke.YKT).
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `Source/beta.h`  
-Copyright: © 2001-2019 Contributors to the Freedoom project.  
+Files: `Source/beta.h`
+Copyright: © 2001-2019 Contributors to the Freedoom project.
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `Source/dogs.h`  
-Copyright: © 2017 Nash Muhandes;  
- © apolloaiello;  
- © TobiasKosmos.  
+Files: `Source/dogs.h`
+Copyright: © 2017 Nash Muhandes;
+ © apolloaiello;
+ © TobiasKosmos.
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
-Files: `data/woof.ico,  
- data/woof.png,  
- data/woof8.ico`  
-Copyright: © 2021 Korp.  
+Files: `data/woof.ico,
+ data/woof.png,
+ data/woof8.ico`
+Copyright: © 2021 Korp.
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-Files: `Source/icon.c` (to be replaced)  
-Copyright: © 2020 Julia Nechaevskaya.  
+Files: `Source/icon.c` (to be replaced)
+Copyright: © 2020 Julia Nechaevskaya.
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
-Files: `cmake/FindSDL2.cmake,  
- cmake/FindSDL2_image.cmake,  
- cmake/FindSDL2_mixer.cmake,  
- cmake/FindSDL2_net.cmake`  
-Copyright: © 2018 Alex Mayfield.  
+Files: `cmake/FindSDL2.cmake,
+ cmake/FindSDL2_image.cmake,
+ cmake/FindSDL2_mixer.cmake,
+ cmake/FindSDL2_net.cmake`
+Copyright: © 2018 Alex Mayfield.
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)

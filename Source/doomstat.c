@@ -104,6 +104,19 @@ int monkeys, default_monkeys;
 // [FG] centered weapon sprite
 int center_weapon;
 
+char *MAPNAME(int e, int m)
+{
+  static char name[9];
+
+  if (gamemode == commercial)
+    snprintf(name, sizeof(name), "MAP%02d", m);
+  else
+    snprintf(name, sizeof(name), "E%dM%d", e, m);
+
+  return name;
+}
+
+
 //----- Nugget ---------------------------------------------------------------
 
 // General
@@ -122,6 +135,7 @@ int quick_quitgame;
 int armor_type_color;
 
 int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
+
 
 //----------------------------------------------------------------------------
 //
