@@ -846,7 +846,15 @@ void HU_Drawer(void)
       fixed_t x,y,z;   // killough 10/98:
       void AM_Coordinates(const mobj_t *, fixed_t *, fixed_t *, fixed_t *);
 
-      if (automapactive && !((hud_displayed || hud_timests) && automapoverlay)) // [FG] moved here
+      // [Nugget] With automap overlay disabled,
+      // refresh the Status Bar regardless of screen size
+      if (automapactive && !automapoverlay && screenSize >= 8)
+        {ST_Drawer(true, true);}
+
+      // [FG] moved here
+      if (automapactive
+          && (!((hud_displayed || hud_timests) && automapoverlay)
+              || screenSize == 8)) // [Nugget] Display map title in minimalistic HUD
       {
       // map title
       HUlib_drawTextLine(&w_title, false);
