@@ -1189,7 +1189,7 @@ void M_DrawOptions(void)
      10,mouseSensitivity);   killough */
 
   M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(scrnsize+1),
-	       9,screenSize);
+	       10,screenSize);
 }
 
 void M_Options(int choice)
