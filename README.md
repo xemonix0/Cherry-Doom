@@ -11,27 +11,29 @@ Although the new code has been written with the intention of not breaking demo c
 - From Crispy Doom (inspired or ported code):
   - **Minimalistic HUD** (partially implemented);
   - **Resurrect from savegame** (Run key + Use key);
-  - **'RESURRECT'** cheat adapted from Crispy's resurrection with IDDQD (**'IDRES'** as an alternative combination);
-  - **'NOTARGET'** cheat;
-  - **"Things move over/under things"** setting;
+  - _**'RESURRECT'**_ cheat adapted from Crispy's resurrection with IDDQD (**'IDRES'** as an alternative combination);
+  - _**'NOTARGET'**_ cheat;
+  - _**Things move over/under things**_ setting;
   - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first);
-  - **"Quick exit"** setting;
-  - **"Disable palette tint in menus"** setting;
-  - **"Use Armor Type Color"** setting for armor count coloring based on armor type;
+  - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt;
+  - _**Disable palette tint in menus**_ setting;
+  - _**Use Armor Type Color**_ setting, for armor count coloring based on armor type;
   - **Extended IDCLEV functionality** (IDCLEV00 restarts current map, IDCLEV beyond 32 in Doom 2 warps to the corresponding map if present);
   - **Mid-air control** while on noclipping mode;
   - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip).
-- **"Disable Background"** setting, to disable the background on setup screens and dynamic Help screen
-- **"Extra Gibbing"** setting to force Berserk Fist, Chainsaw and SSG gibbing
+- _**Disable Background**_ setting, to disable the background on setup screens and dynamic Help screen
+- _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tint
+- _**Extra Gibbing**_ setting, to force Berserk Fist, Chainsaw and SSG gibbing
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first)
-- **"One-Key Quick Save/Load"** setting: skips the confirmation prompt
-- **"Disable Horizontal Autoaim"** setting
-- **"View Height"** setting: allows to enter a custom height value between 8 and 56 for the player's POV (default is 41, the original)
-- Three new **cheats**:
-  - **'FULLCLIP'** for infinite ammo;
-  - **'VALIANT'** for fast weapons;
-    - **'BOBBERS'** serves as a shortcut to toggle the two cheats mentioned above, plus IDFA;
-  - **'GIBBERS'** to force gibbing on dying enemies, independently of damage dealt.
+- _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
+- _**Disable Horizontal Autoaim**_ setting
+- _**View Height**_ setting, which allows to enter a custom height value between 8 and 56 for the player's POV (default is 41, the original)
+- New **cheats**:
+  - _**'FULLCLIP'**_ for infinite ammo;
+  - _**'VALIANT'**_ for fast weapons;
+    - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA;
+  - _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt;
+  - _**'BUDDHA'**_ to prevent the player's health from going below 1%, despite still taking damage.
 - New **"Doom compatibility"** settings (some adapted from Crispy Doom fixes):
   - Blazing doors reopen with wrong sound;
   - Manually reactivated moving doors are silent;
@@ -39,15 +41,16 @@ Although the new code has been written with the intention of not breaking demo c
   - Chaingun makes two sounds with one bullet;
   - Fix Lost Soul colliding with items;
   - Lost Soul forgets target upon impact;
+  - Fuzzy things bleed fuzzy blood;
+  - Non-bleeders don't bleed when crushed;
   - Prevent Pain state with 0 damage attacks;
   - Bruiser attack (A_BruisAttack) doesn't face target;
   - Chaingunner uses pistol/chaingun sound;
   - Arch-Vile fire plays flame start sound;
   - Dead players can still play "oof" sound;
-  - Fix lopsided Icon of Sin explosions ;
+  - Fix lopsided Icon of Sin explosions;
   - Key pickup resets palette;
-  - Fix IDCHOPPERS invulnerability;
-  - Partially fix Chainsaw knockback bug.
+  - Fix IDCHOPPERS invulnerability.
 
 ## Building
 
