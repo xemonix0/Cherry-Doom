@@ -566,6 +566,7 @@ static void G_DoLoadLevel(void)
   else //jff 3/27/98 and lets not forget about DOOM and Ultimate DOOM huh?
     switch (gameepisode)
       {
+      default:
       case 1:
         skytexture = R_TextureNumForName ("SKY1");
         break;
@@ -748,7 +749,7 @@ boolean G_Responder(event_t* ev)
          M_InputMatchMouseB(input_strafe, ev->data1) ||
          M_InputMatchMouseB(input_forward, ev->data1)
        ) &&
-       ev->data2 == 2)
+       ev->data2 >= 2 && (ev->data2 % 2) == 0)
   {
     dclick = true;
   }
@@ -1190,6 +1191,7 @@ static void G_DoWorldDone(void)
 {
   idmusnum = -1;             //jff 3/17/98 allow new level's music to be loaded
   gamestate = GS_LEVEL;
+  gameepisode = wminfo.nextep + 1;
   gamemap = wminfo.next+1;
   gamemapinfo = G_LookupMapinfo(gameepisode, gamemap);
   G_DoLoadLevel();
@@ -2493,6 +2495,7 @@ static int G_GetWadComplevel(void)
 static void G_MBFComp()
 {
   comp[comp_respawn] = 1;
+  comp[comp_soul] = 1;
   comp[comp_ledgeblock] = 0;
   comp[comp_friendlyspawn] = 1;
   comp[comp_voodooscroller] = 1;
@@ -2509,6 +2512,7 @@ static void G_BoomComp()
   comp[comp_zombie]   = 1;
   comp[comp_infcheat] = 1;
   comp[comp_respawn]  = 1;
+  comp[comp_soul] = 1;
   comp[comp_ledgeblock] = 0;
   comp[comp_friendlyspawn] = 1;
   comp[comp_voodooscroller] = 0;
@@ -2763,7 +2767,7 @@ void G_InitNew(skill_t skill, int episode, int map)
     episode = 1;
 
   // Disable all sanity checks if there are custom episode definitions. They do not make sense in this case.
-  if (!EpiCustom)
+  if (!EpiCustom && W_CheckNumForName(MAPNAME(episode, map)) == -1)
   {
 
   if (gamemode == retail)

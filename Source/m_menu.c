@@ -2565,7 +2565,7 @@ static int G_ReloadLevel(void)
 	return result;
 }
 
-static int G_GotoNextLevel(void)
+int G_GotoNextLevel(int *e, int *m)
 {
 	int changed = false;
 
@@ -2634,7 +2634,13 @@ static int G_GotoNextLevel(void)
 		}
 	}
 
-	if ((gamestate == GS_LEVEL) &&
+	// [FG] report next level without changing
+	if (e || m)
+	{
+		if (e) *e = epsd;
+		if (m) *m = map;
+	}
+	else if ((gamestate == GS_LEVEL) &&
 		!deathmatch && !netgame &&
 		!demorecording && !demoplayback &&
 		!menuactive)
@@ -5192,7 +5198,7 @@ boolean M_Responder (event_t* ev)
 			I_EnableWarp(true);
 			return true;
 		}
-		else if (G_GotoNextLevel())
+		else if (G_GotoNextLevel(NULL, NULL))
 			return true;
 	}
     }

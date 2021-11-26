@@ -18,7 +18,7 @@ Although the new code has been written with the intention of not breaking demo c
   - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt;
   - _**Disable palette tint in menus**_ setting;
   - _**Use Armor Type Color**_ setting, for armor count coloring based on armor type;
-  - **Extended IDCLEV functionality** (IDCLEV00 restarts current map, IDCLEV beyond 32 in Doom 2 warps to the corresponding map if present);
+  - **IDCLEV00 restarts current map**;
   - **Mid-air control** while on noclipping mode;
   - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip).
 - _**Disable Background**_ setting, to disable the background on setup screens and dynamic Help screen

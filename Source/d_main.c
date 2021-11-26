@@ -699,6 +699,9 @@ static void PrepareAutoloadPaths (void)
 {
     int i;
 
+    if (M_CheckParm("-noload") || M_CheckParm("-noautoload"))
+        return;
+
     for (i = 0; ; i++)
     {
         autoload_paths = realloc(autoload_paths, (i + 1) * sizeof(*autoload_paths));
@@ -1530,7 +1533,7 @@ static void D_AutoloadIWadDir()
 {
   char **base;
 
-  for (base = autoload_paths; *base; base++)
+  for (base = autoload_paths; base && *base; base++)
   {
     char *autoload_dir;
 
@@ -1558,7 +1561,7 @@ static void D_AutoloadPWadDir()
     {
       char **base;
 
-      for (base = autoload_paths; *base; base++)
+      for (base = autoload_paths; base && *base; base++)
       {
         char *autoload_dir;
         autoload_dir = GetAutoloadDir(*base, M_BaseName(myargv[p]), false);
@@ -1624,7 +1627,7 @@ static void D_AutoloadDehDir()
 {
   char **base;
 
-  for (base = autoload_paths; *base; base++)
+  for (base = autoload_paths; base && *base; base++)
   {
     char *autoload_dir;
 
@@ -1652,7 +1655,7 @@ static void D_AutoloadPWadDehDir()
     {
       char **base;
 
-      for (base = autoload_paths; *base; base++)
+      for (base = autoload_paths; base && *base; base++)
       {
         char *autoload_dir;
         autoload_dir = GetAutoloadDir(*base, M_BaseName(myargv[p]), false);
