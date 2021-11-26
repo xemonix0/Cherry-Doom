@@ -52,6 +52,14 @@ Although the new code has been written with the intention of not breaking demo c
   - Key pickup resets palette;
   - Fix IDCHOPPERS invulnerability.
 
+## Versioning
+Nugget Doom follows a fairly simple **X.Y.Z** versioning system:
+  - **X** is increased in the event of at least one major implementation, such as a new spec like _UMAPINFO_;
+  - **Y** is increased in the event of at least one minor implementation, such as a new cheat;
+  - **Z** is increased in the event of at least one bug fix, or merging of _Woof!_ updates, even if the changes to the latter are considered major or minor;
+
+Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
+
 ## Building
 
 As a Woof! fork, its build instructions should also apply here:
