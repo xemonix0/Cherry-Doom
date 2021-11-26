@@ -717,27 +717,25 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 	  AM_Stop();    // don't die in auto map; switch view prior to dying
     }
 
-  if // [Nugget] More gibbing
+  if // [Nugget] Extra Gibbing/GIBBERS cheat
   (source && source->player && target->info->xdeathstate
    && !(demorecording||demoplayback||netgame)
-   && ((source->player->cheats & CF_GIBBERS)
-       || (extra_gibbing
-           && ((source->player->readyweapon == wp_chainsaw
-                && P_NuggetCheckDist(source, target, 65*FRACUNIT, false))
-            || (source->player->readyweapon == wp_supershotgun
-                && P_NuggetCheckDist(source, target, 128*FRACUNIT, true))
-            || (source->player->readyweapon == wp_fist
-                && source->player->powers[pw_strength]
-                && P_NuggetCheckDist(source, target, 64*FRACUNIT, false))
-              )
-          )
-      )
-  )
-    {P_SetMobjState (target, target->info->xdeathstate);}
+   && ((extra_gibbing
+        && (  (source->player->readyweapon == wp_chainsaw
+               && P_NuggetCheckDist(source, target, 65*FRACUNIT, false))
+            ||(source->player->readyweapon == wp_supershotgun
+               && P_NuggetCheckDist(source, target, 128*FRACUNIT, true))
+            ||(source->player->readyweapon == wp_fist
+               && source->player->powers[pw_strength]
+               && P_NuggetCheckDist(source, target, 64*FRACUNIT, false))
+        )  )
+       || (source->player->cheats & CF_GIBBERS)
+  )   )
+    { P_SetMobjState (target, target->info->xdeathstate); }
   else if (target->health < -target->info->spawnhealth && target->info->xdeathstate)
-    {P_SetMobjState (target, target->info->xdeathstate);}
+    { P_SetMobjState (target, target->info->xdeathstate); }
   else
-    {P_SetMobjState (target, target->info->deathstate);}
+    { P_SetMobjState (target, target->info->deathstate); }
 
   target->tics -= P_Random(pr_killtics)&3;
 
@@ -766,20 +764,19 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 
 // [Nugget] Calculate distance between player and target,
 // used for Extra Gibbing and Chainsaw knockback fix
-boolean P_NuggetCheckDist (mobj_t* source, mobj_t* target, fixed_t range, boolean addradius)
+boolean P_NuggetCheckDist(mobj_t* source, mobj_t* target, fixed_t range, boolean addradius)
 {
-  fixed_t	dist;
-  fixed_t radius = 0;
-  fixed_t range2;
+  fixed_t	range2;
+  fixed_t dist;
 
-  if (addradius) {radius = target->info->radius;}
-  range2 = range + radius;
+  range2 = range;
+  if (addradius) { range2 += target->info->radius; }
 
   dist = P_AproxDistance(target->x - source->x,
-                           target->y - source->y);
+                         target->y - source->y);
 
-  if (dist > range2)  {return false;}
-  else                {return true;}
+  if (dist > range2) { return false; }
+  else               { return true; }
 }
 
 //
