@@ -240,7 +240,7 @@ void P_MovePlayer (player_t* player)
         // [Nugget] Check for crouching
         if ((player->mo->intflags & MIF_CROUCHING)
             && !(demorecording||demoplayback||netgame))
-            {cforwardmove>>=1; csidemove>>=1;}
+        { cforwardmove>>=1; csidemove>>=1; }
 
 	  if (cmd->forwardmove)
 	    {
@@ -386,12 +386,16 @@ void P_PlayerThink (player_t* player)
     P_PlayerInSpecialSector (player);
 
   // [Nugget] Crispy jumping
-  if (M_InputGameActive(input_jump) && jump_crouch && onground
-      && !(player->jumpTics) && !(player->crouchTics)
+  if (M_InputGameActive(input_jump) && jump_crouch
+      && ((onground && !(player->jumpTics || player->crouchTics))
+          || player->mo->flags & MF_NOCLIP) // [Nugget] Fly!
       && !(demorecording||demoplayback||netgame))
   {
-      if (player->mo->intflags & MIF_CROUCHING) {
-      // [Nugget] Check if ceiling's high enough to stand up.
+      // [Nugget] Try to stand up if trying to jump while crouching
+      if (player->mo->intflags & MIF_CROUCHING
+          && !(player->mo->flags & MF_NOCLIP)) // unless you're trying to fly
+      {
+      // [Nugget] Check if ceiling's high enough to stand up
         if ((player->mo->ceilingz - player->mo->floorz)
             >= (player->mo->height<<1))
         { // [Nugget] Stand up
@@ -402,7 +406,7 @@ void P_PlayerThink (player_t* player)
       }
       else {
         player->mo->momz = 8*FRACUNIT;
-        player->jumpTics = 18;
+        player->jumpTics = 20;
       }
   }
     // [Nugget] Crouching
@@ -411,7 +415,7 @@ void P_PlayerThink (player_t* player)
         && !(demorecording||demoplayback||netgame))
     {
         if (player->mo->intflags & MIF_CROUCHING) {
-            // [Nugget] Check if ceiling's high enough to stand up.
+            // [Nugget] Check if ceiling's high enough to stand up
             if ((player->mo->ceilingz - player->mo->floorz)
                 >= (player->mo->height<<1))
             { // [Nugget] Stand up
