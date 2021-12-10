@@ -666,6 +666,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 //
 // killough 11/98: make static
 
+extern boolean GIBBERS; // [Nugget] GIBBERS cheat
+
 static void P_KillMobj(mobj_t *source, mobj_t *target)
 {
   mobjtype_t item;
@@ -718,9 +720,8 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
     }
 
   if // [Nugget] Extra Gibbing/GIBBERS cheat
-  (source && source->player && target->info->xdeathstate
-   && !(demorecording||demoplayback||netgame)
-   && ((extra_gibbing
+  (source && target->info->xdeathstate && !(demorecording||demoplayback||netgame)
+   && ((source->player && extra_gibbing
         && (  (source->player->readyweapon == wp_chainsaw
                && P_NuggetCheckDist(source, target, 65*FRACUNIT, false))
             ||(source->player->readyweapon == wp_supershotgun
@@ -728,8 +729,8 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
             ||(source->player->readyweapon == wp_fist
                && source->player->powers[pw_strength]
                && P_NuggetCheckDist(source, target, 64*FRACUNIT, false))
-        )  )
-       || (source->player->cheats & CF_GIBBERS)
+           )
+        ) || GIBBERS
   )   )
     { P_SetMobjState (target, target->info->xdeathstate); }
   else if (target->health < -target->info->spawnhealth && target->info->xdeathstate)

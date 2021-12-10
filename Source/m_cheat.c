@@ -365,12 +365,12 @@ static void cheat_bobbers() {
   plyr->message = "Yippee Ki Yay!";
 }
 
-// [Nugget] All gibs
+// [Nugget] Everything gibs
+boolean GIBBERS;
 static void cheat_gibbers() {
-  plyr->cheats ^= CF_GIBBERS;
-  plyr->message = plyr->cheats & CF_GIBBERS
-                  ? "Ludicrous Gibs!"
-                  : "Ludicrous Gibs no more.";
+  GIBBERS = !GIBBERS;
+  plyr->message = GIBBERS ? "Ludicrous Gibs!"
+                          : "Ludicrous Gibs no more.";
 }
 
 // [Nugget]: [crispy] implement PrBoom+'s "notarget" cheat

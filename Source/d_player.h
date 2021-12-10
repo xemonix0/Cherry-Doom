@@ -79,12 +79,10 @@ typedef enum
   CF_INFAMMO          = 16,
   // [Nugget] Fast weapons
   CF_FASTWEAPS        = 32,
-  // [Nugget] All gibs
-  CF_GIBBERS          = 64,
   // [Nugget]: [crispy] monsters don't target
-  CF_NOTARGET         = 128,
+  CF_NOTARGET         = 64,
   // [Nugget] Can't go below 1% health
-  CF_BUDDHA           = 256
+  CF_BUDDHA           = 128
 
 } cheat_t;
 
