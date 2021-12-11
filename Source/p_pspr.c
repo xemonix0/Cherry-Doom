@@ -529,7 +529,10 @@ void A_CheckReload(player_t *player, pspdef_t *psp)
 
 void A_Lower(player_t *player, pspdef_t *psp)
 {
-  psp->sy += LOWERSPEED;
+  // [Nugget] Double speed with Fast Weapons
+  psp->sy += (player->cheats & CF_FASTWEAPS)
+             ? LOWERSPEED<<1
+             : LOWERSPEED;
 
   // Is already down.
   if (psp->sy < WEAPONBOTTOM)
@@ -564,7 +567,10 @@ void A_Raise(player_t *player, pspdef_t *psp)
 {
   statenum_t newstate;
 
-  psp->sy -= RAISESPEED;
+  // [Nugget] Double speed with Fast Weapons
+  psp->sy -= (player->cheats & CF_FASTWEAPS)
+             ? RAISESPEED<<1
+             : RAISESPEED;
 
   if (psp->sy > WEAPONTOP)
     return;

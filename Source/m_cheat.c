@@ -88,13 +88,15 @@ static void cheat_printstats();   // killough 8/23/98
 static void cheat_autoaim();      // killough 7/19/98
 static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
+static void cheat_nomomentum(); // [Nugget]
 static void cheat_infammo(); // [Nugget] Infinite ammo cheat
 static void cheat_fastweaps(); // [Nugget] Fast weapons cheat
 static void cheat_bobbers(); // [Nugget] Shortcut to the two cheats above
-static void cheat_gibbers(); // [Nugget] All gibs
+static void cheat_gibbers(); // [Nugget] Everything gibs
 static void cheat_notarget(); // [Nugget]: [crispy] implement PrBoom+'s "notarget" cheat
 static void cheat_resurrect(); // [Nugget] Resurrect cheat
 static void cheat_buddha(); // [Nugget] Can't go below 1% health
+static void cheat_fly(); // [Nugget]
 
 //-----------------------------------------------------------------------------
 //
@@ -279,11 +281,15 @@ struct cheat_s cheat[] = {
    cheat_showfps},
 
 // [Nugget] 'showfps' alternative
-  {"idrate",    NULL,                always,
+  {"idrate",    NULL,                 always,
    cheat_showfps},
 
+// [Nugget]
+  {"nomomentum",    NULL,             not_net|not_demo,
+   cheat_nomomentum},
+
 // [Nugget] Infinite ammo cheat
-  {"fullclip",    NULL,                not_net|not_demo,
+  {"fullclip",    NULL,               not_net|not_demo,
    cheat_infammo},
 
 // [Nugget] Fast weapons cheat
@@ -322,6 +328,10 @@ struct cheat_s cheat[] = {
   {"buddha",    NULL,                not_net|not_demo,
    cheat_buddha},
 
+// [Nugget]
+  {"idfly",    NULL,                not_net|not_demo,
+   cheat_fly},
+
   {NULL}                 // end-of-list marker
 };
 
@@ -339,6 +349,14 @@ static void cheat_printstats()    // killough 8/23/98
 static void cheat_showfps()
 {
   plyr->cheats ^= CF_SHOWFPS;
+}
+
+// [Nugget]
+static void cheat_nomomentum() {
+  plyr->cheats ^= CF_NOMOMENTUM;
+  plyr->message = plyr->cheats & CF_NOMOMENTUM
+                  ? "No Momentum Mode ON"
+                  : "No Momentum Mode OFF";
 }
 
 // [Nugget] Infinite ammo
@@ -360,8 +378,15 @@ static void cheat_fastweaps() {
 // [Nugget] Shortcut for the two above cheats
 static void cheat_bobbers() {
   cheat_fa();
-  plyr->cheats ^= CF_INFAMMO;
-  plyr->cheats ^= CF_FASTWEAPS;
+  if (!(plyr->cheats & CF_INFAMMO) || !(plyr->cheats & CF_FASTWEAPS))
+  {
+    plyr->cheats |= CF_INFAMMO;
+    plyr->cheats |= CF_FASTWEAPS;
+  }
+  else {
+    plyr->cheats ^= CF_INFAMMO;
+    plyr->cheats ^= CF_FASTWEAPS;
+  }
   plyr->message = "Yippee Ki Yay!";
 }
 
@@ -440,6 +465,20 @@ static void cheat_buddha() {
   plyr->message = plyr->cheats & CF_BUDDHA
                   ? "Buddha Mode ON"
                   : "Buddha Mode OFF";
+}
+
+// [Nugget]
+static void cheat_fly() {
+  plyr->cheats ^= CF_FLY;
+
+  if (plyr->cheats & CF_FLY)
+    plyr->mo->flags |= MF_NOGRAVITY;
+  else
+    plyr->mo->flags &= ~MF_NOGRAVITY;
+
+  plyr->message = plyr->cheats & CF_FLY
+                  ? "Fly Mode ON"
+                  : "Fly Mode OFF";
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode

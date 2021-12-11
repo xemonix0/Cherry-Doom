@@ -281,15 +281,16 @@ void P_XYMovement (mobj_t* mo)
 
   // slow down
 
-#if 0  // killough 10/98: this is unused code (except maybe in .deh files?)
-  if (player && player->mo == mo && player->cheats & CF_NOMOMENTUM)
-    {
-      // debug option for no sliding at all
-      mo->momx = mo->momy = 0;
-      player->momx = player->momy = 0;         // killough 10/98
-      return;
-    }
-#endif
+  // killough 10/98: this is unused code (except maybe in .deh files?)
+  // [Nugget] Re-enabled
+  if (player && player->mo && player->cheats & CF_NOMOMENTUM)
+  {
+    // debug option for no sliding at all
+    mo->momx = mo->momy = 0;
+    player->momx = player->momy = 0;         // killough 10/98
+    return;
+  }
+
 
   // no friction for missiles or skulls ever, no friction when airborne
   if (mo->flags & (MF_MISSILE | MF_SKULLFLY) || mo->z > mo->floorz)
@@ -594,8 +595,8 @@ floater:
       mo->z = mo->ceilingz - mo->height;
 
       // cph 2001/04/15 -
-      // We might have hit a ceiling but had downward momentum (e.g. ceiling is 
-      // lowering on us), so for old demos we must still do the buggy 
+      // We might have hit a ceiling but had downward momentum (e.g. ceiling is
+      // lowering on us), so for old demos we must still do the buggy
       // momentum reversal here
       if (comp[comp_soul] && mo->flags & MF_SKULLFLY)
 	mo->momz = -mo->momz; // the skull slammed into something
