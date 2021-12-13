@@ -35,7 +35,6 @@
 #include "p_spec.h"
 #include "p_user.h"
 #include "m_input.h" // [Nugget]
-#include "w_wad.h" // [Nugget] W_CheckNumForName
 
 // Index of the special effects (INVUL inverse) map.
 
@@ -128,11 +127,10 @@ void P_CalcHeight (player_t* player)
   }
 
   // [Nugget] Check for viewheight setting
-  if (demorecording||netgame) { view = VIEWHEIGHT; }
-  else {
-    if (player->mo->intflags & MIF_CROUCHING) { view = (viewheight_value*FRACUNIT)>>1; }
-    else                                      { view = viewheight_value*FRACUNIT; }
-  }
+  if (demorecording||netgame)
+    { view = VIEWHEIGHT; }
+  else
+    { view = (viewheight_value*FRACUNIT) - player->crouchOffset; }
 
   if (!onground || player->cheats & CF_NOMOMENTUM)
     {
@@ -173,14 +171,6 @@ void P_CalcHeight (player_t* player)
 	    player->deltaviewheight = 1;
 	}
 
-	// [Nugget] Check if player just stood up
-	if (!(player->mo->intflags & MIF_CROUCHING) && player->crouchTics)
-  {
-    player->viewheight -= player->mo->floorz - player->mo->z;
-    player->deltaviewheight = (view - player->viewheight)>>3;
-  }
-
-      if (player->deltaviewheight)
 	{
 	  player->deltaviewheight += FRACUNIT/4;
 	  if (!player->deltaviewheight)
@@ -325,6 +315,7 @@ void P_DeathThink (player_t* player)
 //
 
 extern int autorun; // [Nugget]
+boolean CrouchKeyHeld; // [Nugget]
 
 void P_PlayerThink (player_t* player)
 {
@@ -383,10 +374,6 @@ void P_PlayerThink (player_t* player)
   if (player->mo->subsector->sector->special)
     P_PlayerInSpecialSector (player);
 
-  // [Nugget] Jumping/Crouching delay
-  if (player->jumpTics)   { player->jumpTics--; }
-  if (player->crouchTics) { player->crouchTics--; }
-
   // [Nugget]
   if (player->cheats & CF_FLY) {
     if (!(player->mo->flags & MF_NOGRAVITY))
@@ -397,6 +384,9 @@ void P_PlayerThink (player_t* player)
     { player->mo->momz = 0; }
   }
 
+  // [Nugget] Jumping delay
+  if (player->jumpTics)   { player->jumpTics--; }
+
   // [Nugget] Jump/Fly Up
   if (M_InputGameActive(input_jump) && !(demorecording||demoplayback||netgame))
   {
@@ -404,21 +394,16 @@ void P_PlayerThink (player_t* player)
       player->mo->momz += ((autorun ^ M_InputGameActive(input_speed)) == 1)
                          ? 2*FRACUNIT
                          : 1*FRACUNIT;
-      if (player->mo->momz > 10*FRACUNIT) { player->mo->momz = 10*FRACUNIT; }
+      if (player->mo->momz > 8*FRACUNIT) { player->mo->momz = 8*FRACUNIT; }
     }
-    else if (jump_crouch && onground && !(player->jumpTics || player->crouchTics))
+    else if (jump_crouch)
     {
-      // Try to stand up if trying to jump while crouching
-      if (player->mo->intflags & MIF_CROUCHING) {
-        if ((player->mo->ceilingz - player->mo->floorz)
-            >= (player->mo->height<<1))
-        { // Stand up
-            player->mo->intflags &= ~MIF_CROUCHING;
-            player->mo->height<<=1;
-            player->crouchTics = 18;
-        }
-      }
-      else { // Jump
+      // Stand up if trying to jump while crouching
+      if (player->mo->intflags & MIF_CROUCHING)
+        { player->mo->intflags &= ~MIF_CROUCHING; }
+      else if (onground && !(player->jumpTics)
+               && (player->mo->height == player->mo->info->height))
+      { // Jump
         player->mo->momz = 8*FRACUNIT;
         player->jumpTics = 20;
       }
@@ -426,44 +411,73 @@ void P_PlayerThink (player_t* player)
   }
 
   // [Nugget] Crouch/Fly Down
-  if (M_InputGameActive(input_crouch) && !(demorecording||demoplayback||netgame))
+  if (!M_InputGameActive(input_crouch)) { CrouchKeyHeld = false; }
+  else if (M_InputGameActive(input_crouch) && !(demorecording||demoplayback||netgame))
   {
     if (player->cheats & CF_FLY) {
       player->mo->momz -= ((autorun ^ M_InputGameActive(input_speed)) == 1)
                          ? 2*FRACUNIT
                          : 1*FRACUNIT;
-      if (player->mo->momz < -10*FRACUNIT) { player->mo->momz = -10*FRACUNIT; }
+      if (player->mo->momz < -8*FRACUNIT) { player->mo->momz = -8*FRACUNIT; }
     }
-    else if (jump_crouch && !player->crouchTics) {
-      if (player->mo->intflags & MIF_CROUCHING) {
-        // [Nugget] Check if ceiling's high enough to stand up
-        if ((player->mo->ceilingz - player->mo->floorz)
-          >= (player->mo->height<<1))
-        { // [Nugget] Stand up
-          player->mo->intflags &= ~MIF_CROUCHING;
-          player->mo->height<<=1;
-          player->crouchTics = 18;
-        }
-      }
-      else { // [Nugget] Crouch
-        player->mo->intflags |= MIF_CROUCHING;
-        player->mo->height>>=1;
-        player->crouchTics = 18;
-      }
+    else if (jump_crouch && !CrouchKeyHeld) {
+      CrouchKeyHeld = true;
+
+      if (player->mo->intflags & MIF_CROUCHING)
+        { player->mo->intflags &= ~MIF_CROUCHING; } // Stand up
+      else
+        { player->mo->intflags |= MIF_CROUCHING; } // Crouch
     }
   }
 
   // [Nugget] Forcefully stand up under certain conditions
   if ((player->mo->intflags & MIF_CROUCHING)
       && (!jump_crouch || player->cheats & CF_FLY))
+    { player->mo->intflags &= ~MIF_CROUCHING; }
+
+  // [Nugget] Smooth crouching
+  if ((player->mo->intflags & MIF_CROUCHING)
+      && player->crouchOffset < (viewheight_value>>1)*FRACUNIT)
   {
+    player->crouchOffset += 2*FRACUNIT;
+    player->mo->height -= 2*FRACUNIT;
+    if (player->crouchOffset >= (viewheight_value>>1)*FRACUNIT)
+    {
+      player->crouchOffset = (viewheight_value>>1)*FRACUNIT;
+      player->mo->height = player->mo->info->height>>1;
+    }
+  }
+  else if (!(player->mo->intflags & MIF_CROUCHING)
+           && (player->crouchOffset
+               || player->mo->height < player->mo->info->height))
+  {
+    // Check if ceiling's high enough to stand up
+    if ((player->mo->ceilingz - player->mo->floorz)
+        > player->mo->height)
+    {
+      player->crouchOffset -= 2*FRACUNIT;
+      player->mo->height += 2*FRACUNIT;
+      // Cap the player's height at ceiling level,
+      // if it isn't high enough
       if ((player->mo->ceilingz - player->mo->floorz)
-          >= (player->mo->height<<1))
-      { // [Nugget] Stand up
-          player->mo->intflags &= ~MIF_CROUCHING;
-          player->mo->height<<=1;
-          player->crouchTics = 18;
+          < player->mo->height)
+      {
+        player->mo->height = player->mo->ceilingz
+                             - player->mo->floorz;
       }
+      if (player->crouchOffset < 0)
+      {
+        player->crouchOffset = 0;
+        player->mo->height = player->mo->info->height;
+        // Cap again if necessary
+        if ((player->mo->ceilingz - player->mo->floorz)
+            < player->mo->height)
+        {
+          player->mo->height = player->mo->ceilingz
+                               - player->mo->floorz;
+        }
+      }
+    }
   }
 
   // Sprite Height problem...                                         // phares

@@ -183,8 +183,9 @@ typedef struct player_s
   // [Woof!] show centered "A secret is revealed!" message
   char*               centermessage;
 
-  // [Nugget] Jumping and crouching delay
-  int jumpTics, crouchTics;
+  // [Nugget]
+  int jumpTics; // Jumping delay
+  fixed_t crouchOffset; // Viewheight offset, for crouching
 
 } player_t;
 

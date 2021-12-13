@@ -937,9 +937,11 @@ static void G_PlayerFinishLevel(int player)
   p->fixedcolormap = 0;   // cancel ir gogles
   p->damagecount = 0;     // no palette changes
   p->bonuscount = 0;
-  // [Nugget] Reset additional player properties
-  p->jumpTics =
-  p->crouchTics = 0;
+  // [Nugget]
+  p->mo->height = p->mo->info->height;
+  p->mo->intflags &= ~MIF_CROUCHING;
+  p->jumpTics = 0;
+  p->crouchOffset = 0;
 }
 
 // [crispy] format time for level statistics

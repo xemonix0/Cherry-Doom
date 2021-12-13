@@ -483,11 +483,10 @@ static void P_ZMovement (mobj_t* mo)
 
   // check for smooth step up
   // [Nugget] Check for viewheight setting
-  if (demorecording||netgame) {view = VIEWHEIGHT;}
-  else {
-    if (mo->intflags & MIF_CROUCHING) {view = (viewheight_value*FRACUNIT)>>1;}
-    else                              {view = viewheight_value*FRACUNIT;}
-  }
+  if (demorecording||netgame)
+    { view = VIEWHEIGHT; }
+  else if (mo->player)
+    { view = (viewheight_value*FRACUNIT) - mo->player->crouchOffset; }
 
   if (mo->player &&
       mo->player->mo == mo &&  // killough 5/12/98: exclude voodoo dolls
@@ -1079,13 +1078,9 @@ void P_SpawnPlayer (mapthing_t* mthing)
   // [Nugget] Check for viewheight setting;
   // for some reason 'p->viewheight = view' refuses to work, so this is a workaround
   if (demorecording||netgame)
-  {p->viewheight = VIEWHEIGHT;}
-  else {
-    if (p->mo->intflags & MIF_CROUCHING)
-    {p->viewheight = (viewheight_value*FRACUNIT)>>1;}
-    else
-    {p->viewheight = viewheight_value*FRACUNIT;}
-  }
+    { p->viewheight = VIEWHEIGHT; }
+  else
+    { p->viewheight = (viewheight_value*FRACUNIT); }
 
   p->momx = p->momy = 0;   // killough 10/98: initialize bobbing to 0.
 
@@ -1415,11 +1410,12 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
     dist = 1;
 
   // [Nugget] Check for crouching player
-  if (dest->player && (dest->intflags & MIF_CROUCHING))
-    {th->momz = ((dest->z + dest->height)
-                 - (source->z + (dest->height<<1))) / dist;}
-  else
-    {th->momz = (dest->z - source->z) / dist;}
+  if (dest->player && dest->player->crouchOffset)
+  {
+    th->momz = ((dest->z - dest->player->crouchOffset)
+                - source->z) / dist;
+  }
+  else { th->momz = (dest->z - source->z) / dist; }
   P_CheckMissileSpawn(th);
   return th;
 }
@@ -1465,10 +1461,10 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   x = source->x;
   y = source->y;
   // [Nugget] Check for crouching
-  if (source->player && (source->intflags & MIF_CROUCHING))
-    {z = source->z + ((4*8*FRACUNIT)>>1);}
+  if (source->player && source->player->crouchOffset)
+    { z = source->z + ((4*8*FRACUNIT) - source->player->crouchOffset); }
   else
-    {z = source->z + 4*8*FRACUNIT;}
+    { z = source->z + 4*8*FRACUNIT; }
 
   th = P_SpawnMobj (x,y,z, type);
 
