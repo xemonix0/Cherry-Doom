@@ -205,51 +205,45 @@ void P_MovePlayer (player_t* player)
   onground |= ((player->mo->flags & MF_NOCLIP)
                || (player->cheats & CF_FLY));
 
-
   // killough 10/98:
   //
   // We must apply thrust to the player and bobbing separately, to avoid
   // anomalies. The thrust applied to bobbing is always the same strength on
   // ice, because the player still "works just as hard" to move, while the
   // thrust applied to the movement varies with 'movefactor'.
-
   if ((!demo_compatibility && demo_version < 203) ||
       cmd->forwardmove | cmd->sidemove) // killough 10/98
+  {
+    if (onground || mo->flags & MF_BOUNCES) // killough 8/9/98
     {
-      if (onground || mo->flags & MF_BOUNCES) // killough 8/9/98
-	{
-	  int friction, movefactor = P_GetMoveFactor(mo, &friction);
+      int friction, movefactor = P_GetMoveFactor(mo, &friction);
 
-	  // killough 11/98:
-	  // On sludge, make bobbing depend on efficiency.
-	  // On ice, make it depend on effort.
+      // killough 11/98:
+      // On sludge, make bobbing depend on efficiency.
+      // On ice, make it depend on effort.
+      int bobfactor = friction < ORIG_FRICTION
+                      ? movefactor
+                      : ORIG_FRICTION_FACTOR;
 
-	  int bobfactor =
-	    friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
-
+	    // [Nugget]
 	    cforwardmove = cmd->forwardmove;
 	    csidemove = cmd->sidemove;
-
-        // [Nugget] Check for crouching
-        if ((player->mo->intflags & MIF_CROUCHING)
-            && !(demorecording||demoplayback||netgame))
+      // Check for crouching
+      if (player->mo->intflags & MIF_CROUCHING)
         { cforwardmove>>=1; csidemove>>=1; }
 
-	  if (cmd->forwardmove)
-	    {
+      if (cmd->forwardmove) {
 	      P_Bob(player,mo->angle,cforwardmove*bobfactor);
 	      P_Thrust(player,mo->angle,cforwardmove*movefactor);
 	    }
-
-	  if (cmd->sidemove)
-	    {
+      if (cmd->sidemove) {
 	      P_Bob(player,mo->angle-ANG90,csidemove*bobfactor);
 	      P_Thrust(player,mo->angle-ANG90,csidemove*movefactor);
 	    }
-	}
-      if (mo->state == states+S_PLAY)
-	P_SetMobjState(mo,S_PLAY_RUN1);
     }
+
+    if (mo->state == states+S_PLAY) { P_SetMobjState(mo,S_PLAY_RUN1); }
+  }
 }
 
 #define ANG5 (ANG90/18)
