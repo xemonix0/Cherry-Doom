@@ -74,11 +74,13 @@ void P_Thrust(player_t* player,angle_t angle,fixed_t move)
 
 void P_Bob(player_t *player, angle_t angle, fixed_t move)
 {
-  if (demo_version < 203)
+  // [Nugget] Disable bobbing
+  if ((demo_version < 203) || bobbing_divisor == 4)
     return;
 
-  player->momx += FixedMul(move,finecosine[angle >>= ANGLETOFINESHIFT]);
-  player->momy += FixedMul(move,finesine[angle]);
+  // [Nugget] Attenuate bobbing
+  player->momx += FixedMul(move,finecosine[angle >>= ANGLETOFINESHIFT]) / bobbing_divisor;
+  player->momy += FixedMul(move,finesine[angle]) / bobbing_divisor;
 }
 
 //

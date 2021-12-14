@@ -128,6 +128,7 @@ int jump_crouch;
 int no_hor_autoaim;
 int damagecount_cap;
 int bonuscount_cap;
+int bobbing_divisor;
 int viewheight_value;
 int one_key_saveload;
 int quick_quitgame;

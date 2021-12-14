@@ -443,6 +443,13 @@ default_t defaults[] = {
   },
 
   {
+    "bobbing_divisor",
+    (config_t *) &bobbing_divisor, NULL,
+    {1}, {1,4}, number, ss_gen, wad_no,
+    "Divisor for weapon and view bobbing"
+  },
+
+  {
     "viewheight_value",
     (config_t *) &viewheight_value, NULL,
     {41}, {8,56}, number, ss_gen, wad_yes,

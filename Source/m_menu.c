@@ -3736,9 +3736,14 @@ enum {
   general_hor_autoaim,
   general_dmgcountcap,
   general_boncountcap,
+  general_bobdivisor,
   general_viewheight,
   general_quicksaveload,
   general_quickexit,
+};
+
+static const char *bobbing_divisor_strings[] = {
+  "", "100%", "50%", "33%", "0%", NULL
 };
 
 setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
@@ -3768,6 +3773,9 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
 
   {"Bonus Tint Cap (Default = -1)", S_NUM, m_null, G_X,
    G_Y + general_boncountcap*8, {"bonuscount_cap"}},
+
+  {"Weapon/View Bobbing Percentage", S_CHOICE, m_null, G_X,
+   G_Y + general_bobdivisor*8, {"bobbing_divisor"}, 0, NULL, bobbing_divisor_strings},
 
   {"View Height (Default = 41)", S_NUM, m_null, G_X,
    G_Y + general_viewheight*8, {"viewheight_value"}},
