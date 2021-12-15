@@ -38,8 +38,6 @@
 
 #include "p_inter.h"
 
-#include "p_maputl.h" // [Nugget] P_AproxDistance
-
 #define BONUSADD        6
 
 // Ty 03/07/98 - add deh externals
@@ -259,7 +257,7 @@ void P_GiveCard(player_t *player, card_t card)
   if (player->cards[card])
     return;
   // [Nugget] Fix for "key pickup resets palette"
-  if (!nugget_comp[comp_keypal] && !(demorecording||demoplayback||netgame))
+  if (!nugget_comp[comp_keypal])
     {player->bonuscount += BONUSADD;}
   else
     {player->bonuscount = BONUSADD;}
@@ -720,7 +718,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
     }
 
   if // [Nugget] Extra Gibbing/GIBBERS cheat
-  (source && target->info->xdeathstate && !(demorecording||demoplayback||netgame)
+  (source && target->info->xdeathstate && casual_play
    && ((source->player && extra_gibbing
         && (  (source->player->readyweapon == wp_chainsaw
                && P_NuggetCheckDist(source, target, 65*FRACUNIT, false))
@@ -765,6 +763,9 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 
 // [Nugget] Calculate distance between player and target,
 // used for Extra Gibbing and Chainsaw knockback fix
+
+extern fixed_t P_AproxDistance();
+
 boolean P_NuggetCheckDist(mobj_t* source, mobj_t* target, fixed_t range, boolean addradius)
 {
   fixed_t	range2;
@@ -942,8 +943,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 		  !(target->flags & MF_SKULLFLY)))) //killough 11/98: see below
   {
     // [Nugget] Prevent pain state if no damage is caused
-    if (nugget_comp[comp_0dmgpain]
-        && !(demorecording||demoplayback||netgame)
+    if (nugget_comp[comp_0dmgpain] && casual_play
         && damage == 0) {;} // Do nothing
     else
     {P_SetMobjState(target, target->info->painstate);}

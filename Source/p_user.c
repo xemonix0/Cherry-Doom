@@ -74,13 +74,11 @@ void P_Thrust(player_t* player,angle_t angle,fixed_t move)
 
 void P_Bob(player_t *player, angle_t angle, fixed_t move)
 {
-  // [Nugget] Disable bobbing
-  if ((demo_version < 203) || bobbing_divisor == 4)
+  if (demo_version < 203)
     return;
 
-  // [Nugget] Attenuate bobbing
-  player->momx += FixedMul(move,finecosine[angle >>= ANGLETOFINESHIFT]) / bobbing_divisor;
-  player->momy += FixedMul(move,finesine[angle]) / bobbing_divisor;
+  player->momx += FixedMul(move,finecosine[angle >>= ANGLETOFINESHIFT]);
+  player->momy += FixedMul(move,finesine[angle]);
 }
 
 //
@@ -109,24 +107,33 @@ void P_CalcHeight (player_t* player)
 
   // [FG] MBF player bobbing rewrite causes demo sync problems
   // http://prboom.sourceforge.net/mbf-bugs.html
-  player->bob = (demo_version >= 203 && player_bobbing) ?
-      (FixedMul(player->momx,player->momx)
-      + FixedMul(player->momy,player->momy))>>2 :
-      (demo_compatibility || player_bobbing) ?
-      (FixedMul (player->mo->momx, player->mo->momx)
-      + FixedMul (player->mo->momy,player->mo->momy))>>2 : 0;
+  // [Nugget] Implement bobbing percentage setting
+  player->bob = (casual_play)
+                ? (bobbing_percentage != 0)
+                  ? (demo_version >= 203)
+                    ? (((FixedMul(player->momx,player->momx)
+                         + FixedMul(player->momy,player->momy))>>2)
+                       / 100) * bobbing_percentage
+                    : (((FixedMul(player->mo->momx,player->mo->momx)
+                         + FixedMul(player->mo->momy,player->mo->momy))>>2)
+                       / 100) * bobbing_percentage
+                  : 0
+                : (demo_version >= 203
+                   && ((bobbing_percentage != 0) || player_bobbing))
+                  ? (FixedMul(player->momx,player->momx)
+                     + FixedMul(player->momy,player->momy))>>2
+                  : (demo_compatibility
+                     && ((bobbing_percentage != 0) || player_bobbing))
+                    ? (FixedMul (player->mo->momx, player->mo->momx)
+                       + FixedMul (player->mo->momy,player->mo->momy))>>2
+                    : 0;
 
   if ((demo_version == 202 || demo_version == 203) &&
       player->mo->friction > ORIG_FRICTION) // ice?
   {
-    if (player->bob > (MAXBOB>>2))
-      player->bob = MAXBOB>>2;
+    if (player->bob > (MAXBOB>>2)) { player->bob = MAXBOB>>2; }
   }
-  else
-  {
-  if (player->bob > MAXBOB)
-    player->bob = MAXBOB;
-  }
+  else if (player->bob > MAXBOB) { player->bob = MAXBOB; }
 
   // [Nugget] Check for viewheight setting
   if (demorecording||netgame)
@@ -135,55 +142,51 @@ void P_CalcHeight (player_t* player)
     { view = (viewheight_value*FRACUNIT) - player->crouchOffset; }
 
   if (!onground || player->cheats & CF_NOMOMENTUM)
-    {
-      player->viewz = player->mo->z + view;
+  {
+    player->viewz = player->mo->z + view;
 
-      if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
-	player->viewz = player->mo->ceilingz-4*FRACUNIT;
+    if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
+      { player->viewz = player->mo->ceilingz-4*FRACUNIT; }
 
-      // phares 2/25/98:
-      // The following line was in the Id source and appears
-      // to be a bug. player->viewz is checked in a similar
-      // manner at a different exit below.
+    // phares 2/25/98:
+    // The following line was in the Id source and appears
+    // to be a bug. player->viewz is checked in a similar
+    // manner at a different exit below.
 
-      // player->viewz = player->mo->z + player->viewheight;
+    // player->viewz = player->mo->z + player->viewheight;
 
-      return;
-    }
+    return;
+  }
 
   angle = (FINEANGLES/20*leveltime)&FINEMASK;
   bob = FixedMul(player->bob/2,finesine[angle]);
 
   // move viewheight
-
   if (player->playerstate == PST_LIVE)
-    {
-      player->viewheight += player->deltaviewheight;
+  {
+    player->viewheight += player->deltaviewheight;
 
-      if (player->viewheight > view)
-	{
-	  player->viewheight = view;
-	  player->deltaviewheight = 0;
-	}
-
-      if (player->viewheight < view/2)
-	{
-	  player->viewheight = view/2;
-	  if (player->deltaviewheight <= 0)
-	    player->deltaviewheight = 1;
-	}
-
-	{
-	  player->deltaviewheight += FRACUNIT/4;
-	  if (!player->deltaviewheight)
-	    player->deltaviewheight = 1;
-	}
+    if (player->viewheight > view) {
+      player->viewheight = view;
+      player->deltaviewheight = 0;
     }
 
-  player->viewz = player->mo->z + player->viewheight + bob;
+    if (player->viewheight < view/2) {
+      player->viewheight = view/2;
+      if (player->deltaviewheight <= 0)
+        { player->deltaviewheight = 1; }
+    }
 
+    {
+      player->deltaviewheight += FRACUNIT/4;
+      if (!player->deltaviewheight)
+        { player->deltaviewheight = 1; }
+    }
+  }
+
+  player->viewz = player->mo->z + player->viewheight + bob;
   if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
-    player->viewz = player->mo->ceilingz-4*FRACUNIT;
+    { player->viewz = player->mo->ceilingz-4*FRACUNIT; }
 }
 
 //
@@ -375,16 +378,19 @@ void P_PlayerThink (player_t* player)
     if (!(player->mo->flags & MF_NOGRAVITY))
       { player->mo->flags |= MF_NOGRAVITY; }
 
-    if (!(M_InputGameActive(input_jump) || M_InputGameActive(input_crouch))
-        || (M_InputGameActive(input_jump) && M_InputGameActive(input_crouch)))
-    { player->mo->momz = 0; }
+    if (casual_play
+        && (!(M_InputGameActive(input_jump)
+              || M_InputGameActive(input_crouch))
+            || (M_InputGameActive(input_jump)
+                && M_InputGameActive(input_crouch))))
+      { player->mo->momz = 0; }
   }
 
   // [Nugget] Jumping delay
   if (player->jumpTics)   { player->jumpTics--; }
 
   // [Nugget] Jump/Fly Up
-  if (M_InputGameActive(input_jump) && !(demorecording||demoplayback||netgame))
+  if (M_InputGameActive(input_jump) && casual_play)
   {
     if (player->cheats & CF_FLY) {
       player->mo->momz += ((autorun ^ M_InputGameActive(input_speed)) == 1)
@@ -408,7 +414,7 @@ void P_PlayerThink (player_t* player)
 
   // [Nugget] Crouch/Fly Down
   if (!M_InputGameActive(input_crouch)) { CrouchKeyHeld = false; }
-  else if (M_InputGameActive(input_crouch) && !(demorecording||demoplayback||netgame))
+  else if (M_InputGameActive(input_crouch) && casual_play)
   {
     if (player->cheats & CF_FLY) {
       player->mo->momz -= ((autorun ^ M_InputGameActive(input_speed)) == 1)

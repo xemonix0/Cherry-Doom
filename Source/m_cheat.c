@@ -88,15 +88,17 @@ static void cheat_printstats();   // killough 8/23/98
 static void cheat_autoaim();      // killough 7/19/98
 static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
-static void cheat_nomomentum(); // [Nugget]
-static void cheat_infammo(); // [Nugget] Infinite ammo cheat
-static void cheat_fastweaps(); // [Nugget] Fast weapons cheat
-static void cheat_bobbers(); // [Nugget] Shortcut to the two cheats above
-static void cheat_gibbers(); // [Nugget] Everything gibs
-static void cheat_notarget(); // [Nugget]: [crispy] implement PrBoom+'s "notarget" cheat
-static void cheat_resurrect(); // [Nugget] Resurrect cheat
-static void cheat_buddha(); // [Nugget] Can't go below 1% health
-static void cheat_fly(); // [Nugget]
+// [Nugget] (All of the following)
+static void cheat_nomomentum();
+static void cheat_fauxdemo(); // Emulates demo or net play state, for debugging
+static void cheat_infammo(); // Infinite ammo cheat
+static void cheat_fastweaps(); // Fast weapons cheat
+static void cheat_bobbers(); // Shortcut to the two cheats above
+static void cheat_gibbers(); // Everything gibs
+static void cheat_notarget(); // [crispy] implement PrBoom+'s "notarget" cheat
+static void cheat_resurrect();
+static void cheat_buddha(); // Can't go below 1% health
+static void cheat_fly();
 
 //-----------------------------------------------------------------------------
 //
@@ -280,55 +282,59 @@ struct cheat_s cheat[] = {
   {"showfps",    NULL,                always,
    cheat_showfps},
 
-// [Nugget] 'showfps' alternative
+// [Nugget] (All of the following)
+
+// 'showfps' alternative
   {"idrate",    NULL,                 always,
    cheat_showfps},
 
-// [Nugget]
   {"nomomentum",    NULL,             not_net|not_demo,
    cheat_nomomentum},
 
-// [Nugget] Infinite ammo cheat
+// Emulates demo or net play state, for debugging
+  {"fauxdemo",    NULL,             not_net|not_demo,
+   cheat_fauxdemo},
+
+// Infinite ammo cheat
   {"fullclip",    NULL,               not_net|not_demo,
    cheat_infammo},
 
-// [Nugget] Fast weapons cheat
+// Fast weapons cheat
   {"valiant",    NULL,                not_net|not_demo,
    cheat_fastweaps},
 
-// [Nugget] Shortcut for the two above cheats
+// Shortcut for the two above cheats
   {"bobbers",    NULL,                not_net|not_demo,
    cheat_bobbers},
 
-// [Nugget] All gibs
+// Everything gibs
   {"gibbers",    NULL,                not_net|not_demo,
    cheat_gibbers},
 
-// [Nugget] Temporary 'gibbers' alternative
+// Temporary 'gibbers' alternative
   {"korpin",    NULL,                not_net|not_demo,
    cheat_gibbers},
 
-// [Nugget] Temporary 'idfa' alternative
+// Temporary 'idfa' alternative
   {"korper",    NULL,                not_net|not_demo,
    cheat_fa},
 
-// [Nugget] No Target cheat
+// No Target cheat
   {"notarget",    NULL,                not_net|not_demo,
    cheat_notarget},
 
-// [Nugget] Resurrect cheat
+// Resurrect cheat
   {"resurrect",    NULL,                not_net|not_demo,
    cheat_resurrect},
 
-// [Nugget] 'resurrect' alternative
+// 'resurrect' alternative
   {"idres",    NULL,                not_net|not_demo,
    cheat_resurrect},
 
-// [Nugget] Can't go below 1% health
+// Can't go below 1% health
   {"buddha",    NULL,                not_net|not_demo,
    cheat_buddha},
 
-// [Nugget]
   {"idfly",    NULL,                not_net|not_demo,
    cheat_fly},
 
@@ -357,6 +363,15 @@ static void cheat_nomomentum() {
   plyr->message = plyr->cheats & CF_NOMOMENTUM
                   ? "No Momentum Mode ON"
                   : "No Momentum Mode OFF";
+}
+
+// [Nugget] Emulates demo or net play state, for debugging
+static void cheat_fauxdemo() {
+  fauxdemo = !fauxdemo;
+  S_StartSound(plyr->mo, sfx_tink);
+  plyr->message = fauxdemo
+                  ? "Fauxdemo ON"
+                  : "Fauxdemo OFF";
 }
 
 // [Nugget] Infinite ammo

@@ -155,7 +155,7 @@ void P_XYMovement (mobj_t* mo)
 
       // [Nugget] Fix forgetful lost soul
       if (!nugget_comp[comp_lsamnesia]
-          && !(demorecording||demoplayback||netgame))
+          && casual_play)
         {P_SetMobjState(mo, mo->info->seestate);}
       else
         {P_SetMobjState(mo, mo->info->spawnstate);}
@@ -483,7 +483,7 @@ static void P_ZMovement (mobj_t* mo)
 
   // check for smooth step up
   // [Nugget] Check for viewheight setting
-  if (demorecording||netgame)
+  if (demorecording||netgame||fauxdemo)
     { view = VIEWHEIGHT; }
   else if (mo->player)
     { view = (viewheight_value*FRACUNIT) - mo->player->crouchOffset; }
@@ -1077,7 +1077,7 @@ void P_SpawnPlayer (mapthing_t* mthing)
   p->fixedcolormap = 0;
   // [Nugget] Check for viewheight setting;
   // for some reason 'p->viewheight = view' refuses to work, so this is a workaround
-  if (demorecording||netgame)
+  if (demorecording||netgame||fauxdemo)
     { p->viewheight = VIEWHEIGHT; }
   else
     { p->viewheight = (viewheight_value*FRACUNIT); }
@@ -1446,11 +1446,11 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 	  slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
 	  if (!linetarget)
       // [Nugget] Disable horizontal autoaim
-      if (!no_hor_autoaim || (demorecording||demoplayback||netgame))
+      if (!no_hor_autoaim || !casual_play)
         slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
 	  if (!linetarget)
       // [Nugget] Disable horizontal autoaim
-      if (!no_hor_autoaim || (demorecording||demoplayback||netgame))
+      if (!no_hor_autoaim || !casual_play)
         slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
 	  if (!linetarget)
 	    an = source->angle, slope = 0;

@@ -119,21 +119,26 @@ char *MAPNAME(int e, int m)
 
 //----- Nugget ---------------------------------------------------------------
 
+boolean fauxdemo;
+boolean casual_play;
+
 // General
 int no_ss_background;
 int no_menu_tint;
-int extra_gibbing;
 int over_under;
 int jump_crouch;
-int no_hor_autoaim;
 int damagecount_cap;
 int bonuscount_cap;
-int bobbing_divisor;
 int viewheight_value;
 int one_key_saveload;
 int quick_quitgame;
+// Weapons
+int bobbing_percentage;
+int no_hor_autoaim;
 // Status Bar / HUD
 int armor_type_color;
+// Enemies
+int extra_gibbing;
 
 int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
 

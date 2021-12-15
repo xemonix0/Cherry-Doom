@@ -403,7 +403,7 @@ default_t defaults[] = {
   {
     "extra_gibbing",
     (config_t *) &extra_gibbing, NULL,
-    {0}, {0,1}, number, ss_gen, wad_yes,
+    {0}, {0,1}, number, ss_enem, wad_yes,
     "1 to enable extra gibbing"
   },
 
@@ -424,7 +424,7 @@ default_t defaults[] = {
   {
     "no_hor_autoaim",
     (config_t *) &no_hor_autoaim, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
+    {0}, {0,1}, number, ss_weap, wad_no,
     "1 to disable horizontal projectile autoaim"
   },
 
@@ -443,10 +443,10 @@ default_t defaults[] = {
   },
 
   {
-    "bobbing_divisor",
-    (config_t *) &bobbing_divisor, NULL,
-    {1}, {1,4}, number, ss_gen, wad_no,
-    "Divisor for weapon and view bobbing"
+    "bobbing_percentage",
+    (config_t *) &bobbing_percentage, NULL,
+    {100}, {0,100}, number, ss_weap, wad_no,
+    "Percentage of weapon and view bobbing intensity"
   },
 
   {

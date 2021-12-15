@@ -1232,17 +1232,17 @@ void M_QuitResponse(int ch)
     return;
 
   // [Nugget] Quick exit if Run key is held
-  if (M_InputGameActive(input_jump)) {exit(0);}
+  if (M_InputGameActive(input_speed)) {exit(0);}
 
   if ((!netgame || demoplayback) // killough 12/98
       && !nosfxparm && snd_card) // avoid delay if no sound card
-    {
-      if (gamemode == commercial)
-	S_StartSound(NULL,quitsounds2[(gametic>>2)&7]);
-      else
-	S_StartSound(NULL,quitsounds[(gametic>>2)&7]);
-      I_WaitVBL(105);
-    }
+  {
+    if (gamemode == commercial)
+      { S_StartSound(NULL,quitsounds2[(gametic>>2)&7]); }
+    else
+      { S_StartSound(NULL,quitsounds[(gametic>>2)&7]); }
+    I_WaitVBL(105);
+  }
   exit(0); // killough
 }
 
@@ -1250,10 +1250,7 @@ void M_QuitDOOM(int choice)
 {
   static char endstring[160];
 
-  // [Nugget] Quick exit - Have some random trivia:
-  // Originally relied on Run key, as seen in M_QuitResponse, but such approach
-  // doesn't work without a running playsim. Besides, this way it's easier for
-  // the user to acknowledge the existence of the feature.
+  // [Nugget] Quick exit
   if (quick_quitgame) {exit(0);}
 
   // We pick index 0 which is language sensitive,
@@ -3010,6 +3007,7 @@ void M_DrawKeybnd(void)
 enum {           // killough 10/98: enum for y-offset info
   weap_recoil,
   weap_bobbing,
+  weap_autoaim,
   weap_bfg,
   weap_stub1,
   weap_pref1,
@@ -3045,7 +3043,13 @@ static const char *weapon_attack_alignment_strings[] = {
 setup_menu_t weap_settings1[] =  // Weapons Settings screen
 {
   {"ENABLE RECOIL", S_YESNO,m_null,WP_X, WP_Y+ weap_recoil*8, {"weapon_recoil"}},
-  {"ENABLE BOBBING",S_YESNO,m_null,WP_X, WP_Y+weap_bobbing*8, {"player_bobbing"}},
+  //{"ENABLE BOBBING",S_YESNO,m_null,WP_X, WP_Y+weap_bobbing*8, {"player_bobbing"}},
+  // [Nugget] Replaces the one above
+  {"Bobbing Percentage", S_NUM, m_null, WP_X,
+   WP_Y + weap_bobbing*8, {"bobbing_percentage"}},
+
+  {"Disable Horizontal Autoaim", S_YESNO, m_null, WP_X,
+   WP_Y + weap_autoaim*8, {"no_hor_autoaim"}},
 
   {"CLASSIC BFG"      ,S_YESNO,m_null,WP_X,  // killough 8/8/98
    WP_Y+ weap_bfg*8, {"classic_bfg"}},
@@ -3148,7 +3152,8 @@ setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
 
   {"HEADS-UP DISPLAY"    ,S_SKIP|S_TITLE,m_null,ST_X,ST_Y+ 6*8},
 
-  {"HIDE SECRETS"        ,S_YESNO     ,m_null,ST_X,ST_Y+ 7*8, {"hud_nosecrets"}},
+  // [Nugget] Correct text
+  {"HIDE STATS"          ,S_YESNO     ,m_null,ST_X,ST_Y+ 7*8, {"hud_nosecrets"}},
   {"USE ARMOR TYPE COLOR",S_YESNO     ,m_null,ST_X,ST_Y+ 8*8, {"armor_type_color"}},
   {"HEALTH LOW/OK"       ,S_NUM       ,m_null,ST_X,ST_Y+ 9*8, {"health_red"}},
   {"HEALTH OK/GOOD"      ,S_NUM       ,m_null,ST_X,ST_Y+ 10*8, {"health_yellow"}},
@@ -3419,13 +3424,10 @@ enum {
   enem_avoid_hazards,
   enem_friction,
   enem_help_friends,
-
   enem_helpers,
-
   enem_distfriend,
-
   enem_dog_jumping,
-
+  enem_extra_gibbing,
   enem_stub1,
   enem_cosmetic,
   enem_colored_blood,
@@ -3462,6 +3464,9 @@ setup_menu_t enem_settings1[] =  // Enemy Settings screen
   {"Distance Friends Stay Away",S_NUM,m_null,E_X,E_Y+ enem_distfriend*8, {"friend_distance"}},
 
   {"Allow dogs to jump down",S_YESNO,m_null,E_X,E_Y+ enem_dog_jumping*8, {"dog_jumping"}},
+
+  // [Nugget]
+  {"Extra Gibbing", S_YESNO, m_null, E_X, E_Y + enem_extra_gibbing*8, {"extra_gibbing"}},
 
   {"Cosmetic",S_SKIP|S_TITLE,m_null,E_X,E_Y+ enem_cosmetic*8},
 
@@ -3730,20 +3735,13 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
 enum {
   general_background,
   general_menutint,
-  general_extra_gibbing,
   general_overunder,
   general_jump_crouch,
-  general_hor_autoaim,
   general_dmgcountcap,
   general_boncountcap,
-  general_bobdivisor,
   general_viewheight,
   general_quicksaveload,
   general_quickexit,
-};
-
-static const char *bobbing_divisor_strings[] = {
-  "", "100%", "50%", "33%", "0%", NULL
 };
 
 setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
@@ -3756,26 +3754,17 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
   {"Disable palette tint in menus", S_YESNO, m_null, G_X,
    G_Y + general_menutint*8, {"no_menu_tint"}},
 
-  {"Extra Gibbing", S_YESNO, m_null, G_X,
-   G_Y + general_extra_gibbing*8, {"extra_gibbing"}},
-
   {"Things Move Over/Under Things", S_YESNO, m_null, G_X,
    G_Y + general_overunder*8, {"over_under"}},
 
   {"Allow Jump/Crouch", S_YESNO, m_null, G_X,
    G_Y + general_jump_crouch*8, {"jump_crouch"}},
 
-  {"Disable Horizontal Autoaim", S_YESNO, m_null, G_X,
-   G_Y + general_hor_autoaim*8, {"no_hor_autoaim"}},
-
   {"Damage Tint Cap (Default = 100)", S_NUM, m_null, G_X,
    G_Y + general_dmgcountcap*8, {"damagecount_cap"}},
 
   {"Bonus Tint Cap (Default = -1)", S_NUM, m_null, G_X,
    G_Y + general_boncountcap*8, {"bonuscount_cap"}},
-
-  {"Weapon/View Bobbing Percentage", S_CHOICE, m_null, G_X,
-   G_Y + general_bobdivisor*8, {"bobbing_divisor"}, 0, NULL, bobbing_divisor_strings},
 
   {"View Height (Default = 41)", S_NUM, m_null, G_X,
    G_Y + general_viewheight*8, {"viewheight_value"}},
@@ -6521,6 +6510,28 @@ void M_ResetSetupMenu(void)
 {
   int i;
 
+  // [FG] exclusive fullscreen
+  if (fullscreen_width != 0 || fullscreen_height != 0)
+  {
+    gen_settings1[general_fullscreen+1].m_flags |= S_DISABLE;
+  }
+
+  // [Nugget]
+  if (!casual_play) {
+    gen_settings3[general_overunder+1].m_flags |= S_DISABLE;
+    gen_settings3[general_jump_crouch+1].m_flags |= S_DISABLE;
+  }
+  else {
+    gen_settings3[general_overunder+1].m_flags &= ~S_DISABLE;
+    gen_settings3[general_jump_crouch+1].m_flags &= ~S_DISABLE;
+  }
+
+  if (demorecording||fauxdemo)
+    { gen_settings3[general_viewheight+1].m_flags |= S_DISABLE; }
+  else
+    { gen_settings3[general_viewheight+1].m_flags &= ~S_DISABLE; }
+
+  // Doom Compatibility
   for (i = compat_telefrag; i <= compat_god; ++i)
   {
     FLAG_SET_BOOM(comp_settings1[i].m_flags, S_DISABLE);
@@ -6530,32 +6541,34 @@ void M_ResetSetupMenu(void)
     FLAG_SET_BOOM(comp_settings2[i].m_flags, S_DISABLE);
   }
 
-  FLAG_SET_BOOM(enem_settings1[enem_infighting].m_flags, S_DISABLE);
-  for (i = enem_backing; i < enem_stub1; ++i)
-  {
-    FLAG_SET_BOOM(enem_settings1[i].m_flags, S_DISABLE);
-  }
-
-  // enem_ghost
-  if (comp[comp_vile])
-    enem_settings1[13].m_flags &= ~S_DISABLE;
-  else
-    enem_settings1[13].m_flags |= S_DISABLE;
-
-  FLAG_SET_VANILLA(enem_settings1[enem_remember].m_flags, S_DISABLE);
+  // Weapons
   FLAG_SET_VANILLA(weap_settings1[weap_recoil].m_flags, S_DISABLE);
-  FLAG_SET_VANILLA(weap_settings1[weap_bobbing].m_flags, S_DISABLE);
-  // weap_pref1 to weap_toggle
-  for (i = 3; i < 13; ++i)
+  if (!casual_play) {
+    weap_settings1[weap_bobbing].m_flags |= S_DISABLE;
+    weap_settings1[weap_autoaim].m_flags |= S_DISABLE;
+  }
+  else {
+    weap_settings1[weap_bobbing].m_flags &= ~S_DISABLE;
+    weap_settings1[weap_autoaim].m_flags &= ~S_DISABLE;
+  }
+  for (i = weap_bfg; i < weap_stub2; ++i)
   {
     FLAG_SET_VANILLA(weap_settings1[i].m_flags, S_DISABLE);
   }
 
-  // [FG] exclusive fullscreen
-  if (fullscreen_width != 0 || fullscreen_height != 0)
+  // Enemies
+  for (i = enem_infighting; i < enem_extra_gibbing; ++i)
   {
-    gen_settings1[general_fullscreen+1].m_flags |= S_DISABLE;
+    FLAG_SET_BOOM(enem_settings1[i].m_flags, S_DISABLE);
   }
+  if (!casual_play)
+    { enem_settings1[enem_extra_gibbing].m_flags |= S_DISABLE; }
+  else
+    { enem_settings1[enem_extra_gibbing].m_flags &= ~S_DISABLE; }
+  if (comp[comp_vile])
+    { enem_settings1[enem_ghost].m_flags &= ~S_DISABLE; }
+  else
+    { enem_settings1[enem_ghost].m_flags |= S_DISABLE; }
 }
 
 //
