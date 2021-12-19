@@ -124,10 +124,24 @@ void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
   // [Nugget]: [crispy] monsters are deaf with NOTARGET cheat
   if (target && target->player && (target->player->cheats & CF_NOTARGET))
-      return;
+    { return; }
 
   validcount++;
   P_RecursiveSound(emitter->subsector->sector, 0, target);
+}
+
+// [Nugget]: [crispy] height check for melee attacks
+static boolean P_NuggetCheckMeleeHeight(mobj_t *actor)
+{
+  mobj_t *pl = actor->target;
+
+  if (!over_under)
+    { return true; }
+  else if (pl->z > actor->z + actor->height
+           || actor->z > pl->z + pl->height)
+    { return false; }
+  else
+    { return true; }
 }
 
 //
@@ -139,10 +153,11 @@ static boolean P_CheckRange(mobj_t *actor, fixed_t range)
   mobj_t *pl = actor->target;
 
   return  // killough 7/18/98: friendly monsters don't attack other friends
-    pl && !(actor->flags & pl->flags & MF_FRIEND) &&
-    (P_AproxDistance(pl->x-actor->x, pl->y-actor->y) <
-     range) &&
-    P_CheckSight(actor, actor->target);
+    pl && !(actor->flags & pl->flags & MF_FRIEND)
+    && (P_AproxDistance(pl->x-actor->x, pl->y-actor->y) < range)
+    // [Nugget]: [crispy] height check for melee attacks
+    && P_NuggetCheckMeleeHeight(actor)
+    && P_CheckSight(actor, actor->target);
 }
 
 //

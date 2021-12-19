@@ -78,46 +78,41 @@ static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 
 void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
 {
-  do
-    {
-      state_t *state;
+  do {
+    state_t *state;
 
-      if (!stnum)
-        {
-          // object removed itself
-          psp->state = NULL;
-          break;
-        }
-
-      // killough 7/19/98: Pre-Beta BFG
-      if (stnum == S_BFG1 && (classic_bfg || beta_emulation))
-	stnum = S_OLDBFG1;                 // Skip to alternative weapon frame
-
-      state = &states[stnum];
-      psp->state = state;
-      psp->tics = state->tics;        // could be 0
-
-      if (state->misc1)
-        {
-          // coordinate set
-          psp->sx = state->misc1 << FRACBITS;
-          psp->sy = state->misc2 << FRACBITS;
-          // [FG] centered weapon sprite
-          psp->sx2 = psp->sx;
-          psp->sy2 = psp->sy;
-        }
-
-      // Call action routine.
-      // Modified handling.
-      if (state->action)
-        {
-          state->action(player, psp);
-          if (!psp->state)
-            break;
-        }
-      stnum = psp->state->nextstate;
+    if (!stnum) {
+      // object removed itself
+      psp->state = NULL;
+      break;
     }
-  while (!psp->tics);     // an initial state of 0 could cycle through
+
+    // killough 7/19/98: Pre-Beta BFG
+    if (stnum == S_BFG1 && (classic_bfg || beta_emulation))
+      { stnum = S_OLDBFG1; } // Skip to alternative weapon frame
+
+    state = &states[stnum];
+    psp->state = state;
+    psp->tics = state->tics; // could be 0
+
+    if (state->misc1) {
+      // coordinate set
+      psp->sx = state->misc1 << FRACBITS;
+      psp->sy = state->misc2 << FRACBITS;
+      // [FG] centered weapon sprite
+      psp->sx2 = psp->sx;
+      psp->sy2 = psp->sy;
+    }
+
+    // Call action routine.
+    // Modified handling.
+    if (state->action) {
+      state->action(player, psp);
+      if (!psp->state) { break; }
+    }
+
+    stnum = psp->state->nextstate;
+  } while (!psp->tics);     // an initial state of 0 could cycle through
 }
 
 //
