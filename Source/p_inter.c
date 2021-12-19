@@ -720,13 +720,13 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
   if // [Nugget] Extra Gibbing/GIBBERS cheat
   (source && target->info->xdeathstate && casual_play
    && ((source->player && extra_gibbing
-        && (  (source->player->readyweapon == wp_chainsaw
-               && P_NuggetCheckDist(source, target, 65*FRACUNIT, false))
+        && (  (source->player->readyweapon == wp_fist
+               && source->player->powers[pw_strength]
+               && P_NuggetCheckDist(source, target, 64*FRACUNIT, true))
+            ||(source->player->readyweapon == wp_chainsaw
+               && P_NuggetCheckDist(source, target, 65*FRACUNIT, true))
             ||(source->player->readyweapon == wp_supershotgun
                && P_NuggetCheckDist(source, target, 128*FRACUNIT, true))
-            ||(source->player->readyweapon == wp_fist
-               && source->player->powers[pw_strength]
-               && P_NuggetCheckDist(source, target, 64*FRACUNIT, false))
            )
         ) || GIBBERS
   )   )
