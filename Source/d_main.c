@@ -278,7 +278,7 @@ void D_Display (void)
     R_RenderPlayerView (&players[displayplayer]);
 
     // [Nugget]: [crispy] Crispy HUD
-    if (screenblocks == CRISPY_HUD) {ST_Drawer(false, true);}
+    if (screenblocks == CRISPY_HUD) { ST_Drawer(false, true); }
   }
 
   if (gamestate == GS_LEVEL && gametic)
@@ -1850,6 +1850,13 @@ static void D_InitTables(void)
 // [FG] fast-forward demo to the desired map
 int demowarp = -1;
 
+// [Nugget]
+void D_NuggetUpdateCasual()
+{
+  casual_play = !(demorecording||demoplayback||netgame||fauxdemo);
+  M_ResetSetupMenu(); // Filthy... but it seems to work
+}
+
 //
 // D_DoomMain
 //
@@ -2335,6 +2342,9 @@ void D_DoomMain(void)
     }
 
   I_InitGraphics();
+
+  // [Nugget]
+  D_NuggetUpdateCasual();
 
   atexit(D_QuitNetGame);       // killough
 

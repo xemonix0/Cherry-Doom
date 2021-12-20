@@ -2025,9 +2025,6 @@ void G_Ticker(void)
       gamestate == GS_INTERMISSION ? WI_Ticker() :
 	gamestate == GS_FINALE ? F_Ticker() :
 	  gamestate == GS_DEMOSCREEN ? D_PageTicker() : (void) 0;
-
-  // [Nugget]
-  casual_play = !(demorecording||demoplayback||netgame||fauxdemo);
 }
 
 //

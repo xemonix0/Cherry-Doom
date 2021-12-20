@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 //
@@ -64,6 +64,7 @@ void D_PageTicker(void);
 void D_PageDrawer(void);
 void D_AdvanceDemo(void);
 void D_StartTitle(void);
+void D_NuggetUpdateCasual(); // [Nugget]
 void D_DoomMain(void);
 
 #endif
