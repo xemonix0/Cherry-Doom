@@ -240,7 +240,9 @@ enum {
   MIF_LINEDONE = 4,     // Object has activated W1 or S1 linedef via DEH frame
   // mbf21
   MIF_SCROLLING = 8,    // Object is affected by scroller / pusher / puller
-  MIF_CROUCHING = 16,   // [Nugget] Mobj (player) is crouching
+  // [Nugget]
+  MIF_CROUCHING = 16,   // Mobj (player) is crouching
+  MIF_OVERUNDER = 32,   // Mobj is over/under another mobj
 };
 
 // Map Object definition.
