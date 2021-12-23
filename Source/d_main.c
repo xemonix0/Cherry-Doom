@@ -2343,9 +2343,6 @@ void D_DoomMain(void)
 
   I_InitGraphics();
 
-  // [Nugget]
-  D_NuggetUpdateCasual();
-
   atexit(D_QuitNetGame);       // killough
 
   for (;;)
@@ -2368,6 +2365,9 @@ void D_DoomMain(void)
         }
       else
         TryRunTics (); // will run at least one tic
+
+      // [Nugget]
+      D_NuggetUpdateCasual();
 
       // killough 3/16/98: change consoleplayer to displayplayer
       S_UpdateSounds(players[displayplayer].mo);// move positional sounds
