@@ -393,8 +393,7 @@ void ST_refreshBackground(boolean force)
       }
 
       // killough 3/7/98: make face background change with displayplayer
-      if (netgame)
-        V_DrawPatch(ST_FX, 0, BG, faceback[displayplayer]);
+      if (netgame) { V_DrawPatch(ST_FX, 0, BG, faceback[displayplayer]); }
 
       // [crispy] copy entire SCREENWIDTH, to preserve the pattern
       // to the left and right of the status bar in widescren mode
@@ -791,59 +790,161 @@ void ST_drawWidgets(boolean refresh)
 
   //jff 2/16/98 make color of ammo depend on amount
   if (*w_ready.num*100 < ammo_red*plyr->maxammo[weaponinfo[w_ready.data].ammo])
-    STlib_updateNum(&w_ready, cr_red, refresh);
-  else
-    if (*w_ready.num*100 <
-        ammo_yellow*plyr->maxammo[weaponinfo[w_ready.data].ammo])
-      STlib_updateNum(&w_ready, cr_gold, refresh);
+  {
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updateNumWS(&w_ready, cr_red, refresh, 0); }
     else
-      STlib_updateNum(&w_ready, cr_green, refresh);
+      { STlib_updateNum(&w_ready, cr_red, refresh); }
+  }
+  else if (*w_ready.num*100 < ammo_yellow*plyr->maxammo[weaponinfo[w_ready.data].ammo])
+  {
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updateNumWS(&w_ready, cr_gold, refresh, 0); }
+    else
+      { STlib_updateNum(&w_ready, cr_gold, refresh); }
+  }
+  else {
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updateNumWS(&w_ready, cr_green, refresh, 0); }
+    else
+      { STlib_updateNum(&w_ready, cr_green, refresh); }
+  }
 
-  for (i=0;i<4;i++)
+  for (i=0;i<4;i++) {
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
     {
-      STlib_updateNum(&w_ammo[i], NULL, refresh);   //jff 2/16/98 no xlation
+      STlib_updateNumWS(&w_ammo[i], NULL, refresh, 2);
+      STlib_updateNumWS(&w_maxammo[i], NULL, refresh, 2);
+    }
+    else {
+      STlib_updateNum(&w_ammo[i], NULL, refresh); //jff 2/16/98 no xlation
       STlib_updateNum(&w_maxammo[i], NULL, refresh);
     }
+  }
 
   //jff 2/16/98 make color of health depend on amount
-  if (*w_health.n.num<health_red)
-    STlib_updatePercent(&w_health, cr_red, refresh);
-  else if (*w_health.n.num<health_yellow)
-    STlib_updatePercent(&w_health, cr_gold, refresh);
-  else if (*w_health.n.num<=health_green)
-    STlib_updatePercent(&w_health, cr_green, refresh);
-  else
-    STlib_updatePercent(&w_health, cr_blue2, refresh); //killough 2/28/98
+  if (*w_health.n.num<health_red) {
+    // [Nugget] Support widescreen Crispy HUD
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updatePercentWS(&w_health, cr_red, refresh, 0); }
+    else
+      { STlib_updatePercent(&w_health, cr_red, refresh); }
+  }
+  else if (*w_health.n.num<health_yellow) {
+    // [Nugget] Support widescreen Crispy HUD
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updatePercentWS(&w_health, cr_gold, refresh, 0); }
+    else
+      { STlib_updatePercent(&w_health, cr_gold, refresh); }
+  }
+  else if (*w_health.n.num<=health_green) {
+    // [Nugget] Support widescreen Crispy HUD
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updatePercentWS(&w_health, cr_green, refresh, 0); }
+    else
+      { STlib_updatePercent(&w_health, cr_green, refresh); }
+  }
+  else {
+    // [Nugget] Support widescreen Crispy HUD
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updatePercentWS(&w_health, cr_blue2, refresh, 0); }
+    else
+      { STlib_updatePercent(&w_health, cr_blue2, refresh); } //killough 2/28/98
+  }
 
   // [Nugget] Make color of armor depend on armor type
   if (armor_type_color) {
-    STlib_updatePercent(&w_armor, plyr->armortype == 2
-                                  ? cr_blue2
-                                  : plyr->armortype == 1
-                                    ? cr_green
-                                    : cr_red, refresh);
+    // [Nugget] Support widescreen Crispy HUD
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+    {
+      STlib_updatePercentWS(&w_armor, plyr->armortype == 2
+                                      ? cr_blue2
+                                      : plyr->armortype == 1
+                                        ? cr_green
+                                        : cr_red, refresh, 2);
+    }
+    else {
+      STlib_updatePercent(&w_armor, plyr->armortype == 2
+                                      ? cr_blue2
+                                      : plyr->armortype == 1
+                                        ? cr_green
+                                        : cr_red, refresh);
+    }
   }
   else {
     //jff 2/16/98 make color of armor depend on amount
-    if (*w_armor.n.num<armor_red)
-      STlib_updatePercent(&w_armor, cr_red, refresh);
-    else if (*w_armor.n.num<armor_yellow)
-      STlib_updatePercent(&w_armor, cr_gold, refresh);
-    else if (*w_armor.n.num<=armor_green)
-      STlib_updatePercent(&w_armor, cr_green, refresh);
-    else
-      STlib_updatePercent(&w_armor, cr_blue2, refresh); //killough 2/28/98
+    if (*w_armor.n.num<armor_red) {
+      // [Nugget] Support widescreen Crispy HUD
+      if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+          && (!automapactive || automapoverlay))
+        { STlib_updatePercentWS(&w_armor, cr_red, refresh, 2); }
+      else
+        { STlib_updatePercent(&w_armor, cr_red, refresh); }
+    }
+    else if (*w_armor.n.num<armor_yellow) {
+      // [Nugget] Support widescreen Crispy HUD
+      if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+          && (!automapactive || automapoverlay))
+        { STlib_updatePercentWS(&w_armor, cr_gold, refresh, 2); }
+      else
+        { STlib_updatePercent(&w_armor, cr_gold, refresh); }
+    }
+    else if (*w_armor.n.num<=armor_green) {
+      // [Nugget] Support widescreen Crispy HUD
+      if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+          && (!automapactive || automapoverlay))
+        { STlib_updatePercentWS(&w_armor, cr_green, refresh, 2); }
+      else
+        { STlib_updatePercent(&w_armor, cr_green, refresh); }
+    }
+    else {
+      // [Nugget] Support widescreen Crispy HUD
+      if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+          && (!automapactive || automapoverlay))
+        { STlib_updatePercentWS(&w_armor, cr_blue2, refresh, 2); }
+      else
+        { STlib_updatePercent(&w_armor, cr_blue2, refresh); } //killough 2/28/98
+    }
   }
 
   STlib_updateBinIcon(&w_armsbg, refresh);
 
-  for (i=0;i<6;i++)
-    STlib_updateMultIcon(&w_arms[i], refresh);
+  for (i=0;i<6;i++) {
+    // [Nugget] Support widescreen Crispy HUD
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updateMultIconWS(&w_arms[i], refresh, 0); }
+    else
+      { STlib_updateMultIcon(&w_arms[i], refresh); }
+  }
 
-  STlib_updateMultIcon(&w_faces, refresh);
+  // [Nugget] This probably shouldn't go here, but it works
+  if (screenblocks == CRISPY_HUD || screenblocks == CRISPY_HUD+2)
+  {
+    if (netgame) { V_DrawPatch(ST_FX, 169, FG, faceback[displayplayer]); }
+    else         { V_DrawPatch(ST_FX, 169, FG, faceback[1]); }
+  }
 
-  for (i=0;i<3;i++)
-    STlib_updateMultIcon(&w_keyboxes[i], refresh);
+  // [Nugget] Support widescreen Crispy HUD
+  STlib_updateMultIconWS(&w_faces, refresh, 1);
+
+  // [Nugget] Support widescreen Crispy HUD
+  for (i=0;i<3;i++) {
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updateMultIconWS(&w_keyboxes[i], refresh, 2); }
+    else
+      { STlib_updateMultIcon(&w_keyboxes[i], refresh); }
+  }
 
   STlib_updateNum(&w_frags, NULL, refresh);
 
@@ -878,7 +979,9 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   // [crispy] distinguish classic status bar with background and player face from Crispy HUD
   st_crispyhud = screenblocks >= CRISPY_HUD && (!automapactive || automapoverlay);
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
-  st_statusbarface = st_classicstatusbar || (st_crispyhud && screenblocks == (11||13));
+  st_statusbarface = st_classicstatusbar
+                     || (st_crispyhud && (screenblocks == CRISPY_HUD
+                                          || screenblocks == CRISPY_HUD+2));
 
   ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
 

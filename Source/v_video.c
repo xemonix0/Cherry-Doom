@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 //
@@ -319,19 +319,21 @@ void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
 //
 // killough 11/98: Consolidated V_DrawPatch and V_DrawPatchFlipped into one
 //
-
-void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
-			boolean flipped)
+// [Nugget] Support widescreen Crispy HUD
+void V_DrawPatchGeneralWS(int x, int y, int scrn, patch_t *patch,
+			boolean flipped, int offset)
 {
   int  w = SHORT(patch->width), col = w-1, colstop = -1, colstep = -1;
-  
+
   if (!flipped)
     col = 0, colstop = w, colstep = 1;
 
   y -= SHORT(patch->topoffset);
   x -= SHORT(patch->leftoffset);
 
-  x += WIDESCREENDELTA; // [crispy] horizontal widescreen offset
+  // [Nugget] Support widescreen Crispy HUD
+  if (offset)
+    { x += WIDESCREENDELTA*offset; } // [crispy] horizontal widescreen offset
 
 #ifdef RANGECHECK_NOTHANKS
   if (x<0
@@ -351,7 +353,7 @@ void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
 
       for ( ; col != colstop ; col += colstep, desttop+=2, x++)
 	{
-	  const column_t *column = 
+	  const column_t *column =
 	    (const column_t *)((byte *)patch + LONG(patch->columnofs[col]));
 
 	  // [FG] prevent framebuffer overflows
@@ -433,7 +435,7 @@ void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
 
       for ( ; col != colstop ; col += colstep, desttop++, x++)
 	{
-	  const column_t *column = 
+	  const column_t *column =
 	    (const column_t *)((byte *)patch + LONG(patch->columnofs[col]));
 
 	  // [FG] prevent framebuffer overflows
@@ -510,23 +512,31 @@ void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
 //
 // jff 1/15/98 new routine to translate patch colors
 //
-
-void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch,
-                           char *outr, int cm)
+// [Nugget] Support widescreen Crispy HUD
+void V_DrawPatchTranslatedWS(int x, int y, int scrn, patch_t *patch,
+                           char *outr, int cm, int offset)
 {
   int col, w;
 
   //jff 2/18/98 if translation not needed, just use the old routine
-  if (outr==cr_red)
-    {
-      V_DrawPatch(x,y,scrn,patch);
-      return;                            // killough 2/21/98: add return
+  if (outr==cr_red) {
+    // [Nugget] Support widescreen Crispy HUD
+    if (offset != 1) {
+      V_DrawPatchGeneralWS(x,y,scrn,patch,false,offset);
+      return;
     }
+    else {
+      V_DrawPatch(x,y,scrn,patch);
+      return; // killough 2/21/98: add return
+    }
+  }
 
   y -= SHORT(patch->topoffset);
   x -= SHORT(patch->leftoffset);
 
-  x += WIDESCREENDELTA; // [crispy] horizontal widescreen offset
+  // [Nugget] Support widescreen Crispy HUD
+  if (offset)
+    { x += WIDESCREENDELTA*offset; } // [crispy] horizontal widescreen offset
 
 #ifdef RANGECHECK
   if (x<0
@@ -682,7 +692,7 @@ void V_DrawPatchFullScreen(int scrn, patch_t *patch)
 //
 // V_DrawBlock
 //
-// Draw a linear block of pixels into the view buffer. 
+// Draw a linear block of pixels into the view buffer.
 //
 // The bytes at src are copied in linear order to the screen rectangle
 // at x,y in screenbuffer scrn, with size width by height.
@@ -690,7 +700,7 @@ void V_DrawPatchFullScreen(int scrn, patch_t *patch)
 // The destination rectangle is marked dirty.
 //
 // No return value.
-// 
+//
 
 void V_DrawBlock(int x, int y, int scrn, int width, int height, byte *src)
 {
@@ -809,12 +819,12 @@ void V_Init(void)
    // haleyjd
    int size = hires ? SCREENWIDTH*SCREENHEIGHT*4 : SCREENWIDTH*SCREENHEIGHT;
    static byte *s;
-   
+
    if(s)
    {
       free(s);
    }
-   
+
    screens[3] = (screens[2] = (screens[1] = s = calloc(size,3)) + size) + size;
 }
 

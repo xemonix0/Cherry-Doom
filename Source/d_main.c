@@ -278,7 +278,8 @@ void D_Display (void)
     R_RenderPlayerView (&players[displayplayer]);
 
     // [Nugget]: [crispy] Crispy HUD
-    if (screenblocks == CRISPY_HUD) { ST_Drawer(false, true); }
+    if (screenblocks >= CRISPY_HUD && screenblocks <= CRISPY_HUD+3)
+      { ST_Drawer(false, true); }
   }
 
   if (gamestate == GS_LEVEL && gametic)

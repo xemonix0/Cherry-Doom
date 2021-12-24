@@ -534,9 +534,10 @@ default_t defaults[] = {
   },
 
   { // killough 2/21/98: default to 10
+    // [Nugget] Add more room for Crispy HUD
     "screenblocks",
     (config_t *) &screenblocks, NULL,
-    {10}, {3,12}, number, ss_none, wad_no,
+    {10}, {3,11+4}, number, ss_none, wad_no,
     "initial play screen size"
   },
 

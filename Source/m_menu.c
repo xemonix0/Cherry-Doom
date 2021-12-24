@@ -1188,8 +1188,9 @@ void M_DrawOptions(void)
   /* M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(mousesens+1),
      10,mouseSensitivity);   killough */
 
+  // [Nugget] Increase size to accommodate for extra screen sizes
   M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(scrnsize+1),
-	       10,screenSize);
+              9+4,screenSize);
 }
 
 void M_Options(int choice)
@@ -1232,7 +1233,7 @@ void M_QuitResponse(int ch)
     return;
 
   // [Nugget] Quick exit if Run key is held
-  if (M_InputGameActive(input_speed)) {exit(0);}
+  if (M_InputGameActive(input_speed)) { exit(0); }
 
   if ((!netgame || demoplayback) // killough 12/98
       && !nosfxparm && snd_card) // avoid delay if no sound card
@@ -1251,7 +1252,7 @@ void M_QuitDOOM(int choice)
   static char endstring[160];
 
   // [Nugget] Quick exit
-  if (quick_quitgame) {exit(0);}
+  if (quick_quitgame) { exit(0); }
 
   // We pick index 0 which is language sensitive,
   // or one at random, between 1 and maximum number.
@@ -1624,27 +1625,23 @@ void M_ChangeMessages(int choice)
 
 void M_SizeDisplay(int choice)
 {
-  switch(choice)
-    {
+  switch(choice) {
     case 0:
-      if (screenSize > 0)
-	{
-	  screenblocks--;
-	  screenSize--;
-	  hud_displayed = 0;
-	}
+      if (screenSize > 0) {
+        screenblocks--;
+        screenSize--;
+        hud_displayed = 0;
+      }
       break;
     case 1:
-      if (screenSize < 9)
-	{
-	  screenblocks++;
-	  screenSize++;
-	}
-      else
-	hud_displayed = !hud_displayed;
+      if (screenSize < 8+4) { // [Nugget] Increase to accommodate for Crispy HUD
+        screenblocks++;
+        screenSize++;
+      }
+      else { hud_displayed = !hud_displayed; }
       break;
-    }
-  R_SetViewSize (screenblocks /*, detailLevel obsolete -- killough */);
+  }
+  R_SetViewSize(screenblocks /*, detailLevel obsolete -- killough */);
 }
 
 //
@@ -2975,9 +2972,9 @@ void M_DrawKeybnd(void)
   // Set up the Key Binding screen
 
   if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
   }
-  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   M_DrawTitle(84,2,"M_KEYBND","KEY BINDINGS");
   M_DrawInstructions();
@@ -3044,7 +3041,7 @@ setup_menu_t weap_settings1[] =  // Weapons Settings screen
 {
   {"ENABLE RECOIL", S_YESNO,m_null,WP_X, WP_Y+ weap_recoil*8, {"weapon_recoil"}},
   //{"ENABLE BOBBING",S_YESNO,m_null,WP_X, WP_Y+weap_bobbing*8, {"player_bobbing"}},
-  // [Nugget] Replaces the one above
+  // [Nugget] The setting below replaces the one above
   {"Bobbing Percentage", S_NUM, m_null, WP_X,
    WP_Y + weap_bobbing*8, {"bobbing_percentage"}},
 
@@ -3110,9 +3107,9 @@ void M_DrawWeapons(void)
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
   if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
   }
-  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   M_DrawTitle(109,2,"M_WEAP","WEAPONS");
   M_DrawInstructions();
@@ -3205,9 +3202,9 @@ void M_DrawStatusHUD(void)
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
   if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
   }
-  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   M_DrawTitle(59,2,"M_STAT","STATUS BAR / HUD");
   M_DrawInstructions();
@@ -3378,9 +3375,9 @@ void M_DrawAutoMap(void)
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
   if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
   }
-  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   M_DrawTitle(109,2,"M_AUTO","AUTOMAP");
   M_DrawInstructions();
@@ -3519,9 +3516,9 @@ void M_DrawEnemy(void)
   inhelpscreens = true;
 
   if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
   }
-  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   M_DrawTitle(114,2,"M_ENEM","ENEMIES");
   M_DrawInstructions();
@@ -3817,9 +3814,9 @@ void M_DrawGeneral(void)
   inhelpscreens = true;
 
   if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
   }
-  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   M_DrawTitle(114,2,"M_GENERL","GENERAL");
   M_DrawInstructions();
@@ -4076,9 +4073,9 @@ void M_DrawCompat(void)
   inhelpscreens = true;
 
   if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
   }
-  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   M_DrawTitle(52,2,"M_COMPAT","DOOM COMPATIBILITY");
   M_DrawInstructions();
@@ -4193,9 +4190,9 @@ void M_DrawMessages(void)
   inhelpscreens = true;
 
   if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
   }
-  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   M_DrawTitle(103,2,"M_MESS","MESSAGES");
   M_DrawInstructions();
@@ -4270,9 +4267,9 @@ void M_DrawChatStrings(void)
   inhelpscreens = true;
 
   if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) {ST_doRefresh();}
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
   }
-  else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   M_DrawTitle(83,2,"M_CHAT","CHAT STRINGS");
   M_DrawInstructions();
@@ -4751,9 +4748,9 @@ void M_DrawHelp (void)
   if (helplump < 0 || W_IsIWADLump(helplump))
   {
     if (no_ss_background) { // [Nugget]
-      if (gamestate == GS_LEVEL) {ST_doRefresh();}
+      if (gamestate == GS_LEVEL) { ST_doRefresh(); }
     }
-    else {M_DrawBackground("FLOOR4_6", screens[0]);} // Draw background
+    else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   V_MarkRect (0,0,SCREENWIDTH,SCREENHEIGHT);
   M_DrawScreenItems(helpstrings);
@@ -5153,12 +5150,12 @@ boolean M_Responder (event_t* ev)
 
       if (M_InputActivated(input_hud))   // heads-up mode
 	{
-	  if (automapactive || chat_on)    // jff 2/22/98
-	    return false;                  // HUD mode control
-    // [Nugget] Replace 'screenSize<8' with 9 to accomodate for Crispy HUD
-	  if (screenSize<9)                // function on default F5
-	    while (screenSize<9 || !hud_displayed) // make hud visible
-	      M_SizeDisplay(1);            // when configuring it
+	  if (automapactive || chat_on)               // jff 2/22/98
+	    return false;                             // HUD mode control
+    // [Nugget] Increase to accommodate for Crispy HUD
+	  if (screenSize<8+4)                         // function on default F5
+	    while (screenSize<8+4 || !hud_displayed)  // make hud visible
+	      M_SizeDisplay(1);                       // when configuring it
 	  else
 	    {
 	      hud_displayed = 1;               //jff 3/3/98 turn hud on

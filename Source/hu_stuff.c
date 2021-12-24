@@ -730,7 +730,8 @@ void HU_MoveHud(void)
 
   // [FG] draw Time/STS widgets above status bar
   if ((scaledviewheight < SCREENHEIGHT)
-      || (screenSize == 8)) // [Nugget] Time/STS display in Crispy minimalistic HUD
+      // [Nugget] Time/STS display in Crispy minimalistic HUD
+      || (screenSize >= 8 && screenSize <= 11))
   {
     w_sttime.x = HU_TITLEX;
     w_sttime.y = HU_TITLEY - HU_GAPY;
@@ -864,15 +865,18 @@ void HU_Drawer(void)
       // [Nugget] With automap overlay disabled,
       // refresh the Status Bar regardless of screen size
       if (automapactive && !automapoverlay && screenSize >= 8)
-        {ST_Drawer(true, true);}
+        { ST_Drawer(true, true); }
 
       // [FG] moved here
       if (automapactive
-          && (!((hud_displayed || hud_timests) && automapoverlay)
-              || screenSize == 8)) // [Nugget] Display map title in minimalistic HUD
+          // [Nugget] Specific cases follow
+          && ((screenSize <= 7 && !((hud_displayed || hud_timests) && automapoverlay))
+              || ((screenSize == 8 || screenSize == 10) && !automapoverlay)
+              || (screenSize == 9 || screenSize == 11)
+              || (screenSize == 12 && !(hud_displayed && automapoverlay))))
       {
-      // map title
-      HUlib_drawTextLine(&w_title, false);
+        // map title
+        HUlib_drawTextLine(&w_title, false);
       }
 
       // [FG] draw player coords widget
@@ -1373,13 +1377,15 @@ void HU_Drawer(void)
           }
         }
     }
-  else if (hud_timests
+  else if (hud_timests && (!automapactive || automapoverlay)
            // [Nugget] Allow Time/STS display in Crispy minimalistic HUD
-           && ((scaledviewheight < SCREENHEIGHT) || (screenSize == 8))
-           && (!automapactive || automapoverlay))
+           && ((scaledviewheight < SCREENHEIGHT)
+               || (screenSize >= 8 && screenSize <= 8+3)))
   {
     // insure HUD display coords are correct
-    if (screenSize <= 8) {HU_MoveHud();}
+    // [Nugget] Only below certain screen size values
+    if (screenSize <= 8+3) { HU_MoveHud(); }
+
     HUlib_drawTextLine(&w_sttime, false);
     HUlib_drawTextLine(&w_monsec, false);
   }
@@ -1628,9 +1634,9 @@ void HU_Ticker(void)
       }
     }
 
-    if (hud_timests
-        && ((scaledviewheight < SCREENHEIGHT)
-            || (screenSize == 8))) // [Nugget] Allow Time/STS display in Crispy minimalistic HUD
+    if (hud_timests && ((scaledviewheight < SCREENHEIGHT)
+        // [Nugget] Allow Time/STS display in Crispy minimalistic HUD
+        || (screenSize >= 8 && screenSize <= 8+3)))
     {
       HU_widget_build_sttime();
       HU_widget_build_monsec();

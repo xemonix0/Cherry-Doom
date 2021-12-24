@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: v_video.h,v 1.9 1998/05/06 11:12:54 jim Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -49,7 +49,7 @@
 
 //jff 2/16/98 palette color ranges for translation
 //jff 2/18/98 conversion to palette lookups for speed
-//jff 4/24/98 now pointers to lumps loaded 
+//jff 4/24/98 now pointers to lumps loaded
 extern char *cr_brick;
 extern char *cr_tan;
 extern char *cr_gray;
@@ -107,15 +107,21 @@ void V_CopyRect(int srcx,  int srcy,  int srcscrn, int width, int height,
 
 // killough 11/98: Consolidated V_DrawPatch and V_DrawPatchFlipped
 
-void V_DrawPatchGeneral(int x,int y,int scrn,patch_t *patch, boolean flipped);
+// [Nugget] Support widescreen Crispy HUD
+void V_DrawPatchGeneralWS(int x, int y, int scrn, patch_t *patch,
+                          boolean flipped, int offset);
 
-#define V_DrawPatch(x,y,s,p)        V_DrawPatchGeneral(x,y,s,p,false)
-#define V_DrawPatchFlipped(x,y,s,p) V_DrawPatchGeneral(x,y,s,p,true)
+#define V_DrawPatch(x,y,s,p)          V_DrawPatchGeneral(x,y,s,p,false)
+#define V_DrawPatchFlipped(x,y,s,p)   V_DrawPatchGeneral(x,y,s,p,true)
+#define V_DrawPatchGeneral(x,y,s,p,f) V_DrawPatchGeneralWS(x,y,s,p,f,1) // [Nugget]
 
 #define V_DrawPatchDirect V_DrawPatch       /* killough 5/2/98 */
 
-void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch, char *outr,
-                           int cm);
+// [Nugget] Support widescreen Crispy HUD
+void V_DrawPatchTranslatedWS(int x, int y, int scrn, patch_t *patch,
+                             char *outr, int cm, int offset);
+
+#define V_DrawPatchTranslated(x,y,s,p,r,cm) V_DrawPatchTranslatedWS(x,y,s,p,r,cm,1)
 
 void V_DrawPatchFullScreen(int scrn, patch_t *patch);
 

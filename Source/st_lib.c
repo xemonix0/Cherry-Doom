@@ -51,7 +51,7 @@ void STlib_init(void)
 {
   // [FG] allow playing with the Doom v1.2 IWAD which is missing the STTMINUS lump
   if (W_CheckNumForName("STTMINUS") >= 0)
-  sttminus = (patch_t *) W_CacheLumpName("STTMINUS", PU_STATIC);
+    sttminus = (patch_t *) W_CacheLumpName("STTMINUS", PU_STATIC);
   else
     sttminus = NULL;
 }
@@ -93,12 +93,13 @@ void STlib_initNum
 // indicating whether refresh is needed.
 // Returns nothing
 //
-void STlib_drawNum
+// [Nugget] Support widescreen Crispy HUD
+void STlib_drawNumWS
 ( st_number_t*  n,
   char *outrng,        //jff 2/16/98 add color translation to digit output
-  boolean refresh )
+  boolean refresh,
+  int offset ) // [Nugget]
 {
-
   int   numdigits = n->width;
   int   num = *n->num;
 
@@ -129,7 +130,7 @@ void STlib_drawNum
     I_Error("drawNum: n->y - ST_Y < 0");
 
   if (screenblocks < CRISPY_HUD) // [Nugget] Crispy minimalistic HUD
-  {V_CopyRect(x + WIDESCREENDELTA, n->y - ST_Y, BG, w*numdigits, h, x + WIDESCREENDELTA, n->y, FG);}
+    { V_CopyRect(x + WIDESCREENDELTA, n->y - ST_Y, BG, w*numdigits, h, x + WIDESCREENDELTA, n->y, FG); }
 
   // if non-number, do not draw it
   if (num == 1994)
@@ -141,10 +142,20 @@ void STlib_drawNum
   // in the special case of 0, you draw 0
   if (!num)
   {
-    if (outrng && !sts_always_red)
-      V_DrawPatchTranslated(x - w, n->y, FG, n->p[ 0 ],outrng,0);
-    else //jff 2/18/98 allow use of faster draw routine from config
-      V_DrawPatch(x - w, n->y, FG, n->p[ 0 ]);
+    if (outrng && !sts_always_red) {
+      // [Nugget] Support widescreen Crispy HUD
+      if (offset != 1)
+        { V_DrawPatchTranslatedWS(x - w, n->y, FG, n->p[ 0 ],outrng,0, offset); }
+      else
+        { V_DrawPatchTranslated(x - w, n->y, FG, n->p[ 0 ],outrng,0); }
+    }
+    else { //jff 2/18/98 allow use of faster draw routine from config
+      // [Nugget] Support widescreen Crispy HUD
+      if (offset != 1)
+        { V_DrawPatchGeneralWS(x - w, n->y, FG, n->p[ 0 ], false, offset); }
+      else
+        { V_DrawPatch(x - w, n->y, FG, n->p[ 0 ]); }
+    }
   }
 
   // draw the new number
@@ -152,10 +163,20 @@ void STlib_drawNum
   while (num && numdigits--)
   {
     x -= w;
-    if (outrng && !sts_always_red)
-      V_DrawPatchTranslated(x, n->y, FG, n->p[ num % 10 ],outrng,0);
-    else //jff 2/18/98 allow use of faster draw routine from config
-      V_DrawPatch(x, n->y, FG, n->p[ num % 10 ]);
+    // [Nugget] Support widescreen Crispy HUD
+    if (outrng && !sts_always_red) {
+      if (offset != 1)
+        { V_DrawPatchTranslatedWS(x, n->y, FG, n->p[ num % 10 ],outrng,0, offset); }
+      else
+        { V_DrawPatchTranslated(x, n->y, FG, n->p[ num % 10 ],outrng,0); }
+    }
+    else { //jff 2/18/98 allow use of faster draw routine from config
+      // [Nugget] Support widescreen Crispy HUD
+      if (offset != 1)
+        { V_DrawPatchGeneralWS(x, n->y, FG, n->p[ num % 10 ], false, offset); }
+      else
+        { V_DrawPatch(x, n->y, FG, n->p[ num % 10 ]); }
+    }
     num /= 10;
   }
 
@@ -163,12 +184,24 @@ void STlib_drawNum
   //jff 2/16/98 add color translation to digit output
   if (neg && sttminus)
   {
-    if (outrng && !sts_always_red)
-      V_DrawPatchTranslated(x - 8, n->y, FG, sttminus,outrng,0);
-    else //jff 2/18/98 allow use of faster draw routine from config
-      V_DrawPatch(x - 8, n->y, FG, sttminus);
+    if (outrng && !sts_always_red) {
+      // [Nugget] Support widescreen Crispy HUD
+      if (offset != 1)
+        { V_DrawPatchTranslatedWS(x - 8, n->y, FG, sttminus,outrng,0, offset); }
+      else
+        { V_DrawPatchTranslated(x - 8, n->y, FG, sttminus,outrng,0); }
+    }
+    else { //jff 2/18/98 allow use of faster draw routine from config
+      // [Nugget] Support widescreen Crispy HUD
+      if (offset != 1)
+        { V_DrawPatchGeneralWS(x - 8, n->y, FG, sttminus, false, offset); }
+      else
+        { V_DrawPatch(x - 8, n->y, FG, sttminus); }
+    }
   }
 }
+
+#define STlib_drawNum(n,rng,ref) STlib_drawNumWS(n,rng,ref,1)
 
 //
 // STlib_updateNum()
@@ -178,12 +211,14 @@ void STlib_drawNum
 // Passed a number widget, the output color range, and a refresh flag
 // Returns nothing
 //
-void STlib_updateNum
+// [Nugget] Support widescreen Crispy HUD
+void STlib_updateNumWS
 ( st_number_t*    n,
   char *outrng, //jff 2/16/98 add color translation to digit output
-  boolean   refresh )
+  boolean   refresh,
+  int offset ) // [Nugget]
 {
-  if (*n->on) STlib_drawNum(n, outrng, refresh);
+  if (*n->on) STlib_drawNumWS(n, outrng, refresh, offset);
 }
 
 //
@@ -217,30 +252,39 @@ void STlib_initPercent
 // Passed a precent widget, the output color range, and a refresh flag
 // Returns nothing
 //
-void STlib_updatePercent
+// [Nugget] Support widescreen Crispy HUD
+void STlib_updatePercentWS
 ( st_percent_t*   per,
   char *outrng,             //jff 2/16/98 add color translation to digit output
-  int refresh )
+  int refresh,
+  int offset ) // [Nugget]
 {
   // Remove the check for 'refresh' because this causes percent symbols to always appear
   // in automap overlay mode.
   if (*per->n.on) // killough 2/21/98: fix percents not updated;
   {
-    if (!sts_always_red)     // also support gray-only percents
-      V_DrawPatchTranslated
-      (
-        per->n.x,
-        per->n.y,
-        FG,
-        per->p,
-        sts_pct_always_gray ? cr_gray : outrng,
-        0
-      );
-    else   //jff 2/18/98 allow use of faster draw routine from config
-      V_DrawPatch(per->n.x, per->n.y, FG, per->p);
+    if (!sts_always_red) { // also support gray-only percents
+      // [Nugget] Support widescreen Crispy HUD
+      if (offset != 1)
+      {
+        V_DrawPatchTranslatedWS(per->n.x, per->n.y, FG, per->p,
+                                sts_pct_always_gray ? cr_gray : outrng, 0, offset);
+      }
+      else {
+        V_DrawPatchTranslated(per->n.x, per->n.y, FG, per->p,
+                              sts_pct_always_gray ? cr_gray : outrng, 0);
+      }
+    }
+    else { //jff 2/18/98 allow use of faster draw routine from config
+      // [Nugget] Support widescreen Crispy HUD
+      if (offset != 1)
+        { V_DrawPatchGeneralWS(per->n.x, per->n.y, FG, per->p, false, offset); }
+      else
+        { V_DrawPatch(per->n.x, per->n.y, FG, per->p); }
+    }
   }
 
-  STlib_updateNum(&per->n, outrng, refresh);
+  STlib_updateNumWS(&per->n, outrng, refresh, offset);
 }
 
 //
@@ -279,9 +323,11 @@ void STlib_initMultIcon
 // Passed a st_multicon_t widget, and a refresh flag
 // Returns nothing.
 //
-void STlib_updateMultIcon
+// [Nugget] Support widescreen Crispy HUD
+void STlib_updateMultIconWS
 ( st_multicon_t*  mi,
-  boolean   refresh )
+  boolean   refresh,
+  int       offset ) // [Nugget]
 {
   int w;
   int h;
@@ -301,10 +347,15 @@ void STlib_updateMultIcon
         I_Error("updateMultIcon: y - ST_Y < 0");
 
       if (screenblocks < CRISPY_HUD) // [Nugget] Crispy minimalistic HUD
-      {V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG);}
+        { V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG); }
     }
-    if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
-      V_DrawPatch(mi->x, mi->y, FG, mi->p[*mi->inum]);
+    if (*mi->inum != -1) { // killough 2/16/98: redraw only if != -1
+      // [Nugget] Support widescreen Crispy HUD
+      if (offset != 1)
+        { V_DrawPatchGeneralWS(mi->x, mi->y, FG, mi->p[*mi->inum], false, offset); }
+      else
+        { V_DrawPatch(mi->x, mi->y, FG, mi->p[*mi->inum]); }
+    }
     mi->oldinum = *mi->inum;
   }
 }
@@ -367,11 +418,17 @@ void STlib_updateBinIcon
     if (y - ST_Y < 0)
       I_Error("updateBinIcon: y - ST_Y < 0");
 
-    if (*bi->val)
-      V_DrawPatch(bi->x, bi->y, FG, bi->p);
+    if (*bi->val) {
+      // [Nugget] Support widescreen Crispy HUD
+      if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+          && (!automapactive || automapoverlay))
+        { V_DrawPatchGeneralWS(bi->x, bi->y, FG, bi->p, false, false); }
+      else
+        { V_DrawPatch(bi->x, bi->y, FG, bi->p); }
+    }
     else
       if (screenblocks < CRISPY_HUD) // [Nugget] Crispy minimalistic HUD
-      {V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG);}
+        { V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG); }
 
     bi->oldval = *bi->val;
   }
