@@ -766,7 +766,7 @@ void ST_doPaletteStuff(void)
         palette = 0;
 
   // [Nugget] Disable palette tint in menus
-  if (no_menu_tint && menuactive) {palette = 0;}
+  if (no_menu_tint && menuactive) { palette = 0; }
 
   if (palette != st_palette)
     {
@@ -827,7 +827,16 @@ void ST_drawWidgets(boolean refresh)
   }
 
   //jff 2/16/98 make color of health depend on amount
-  if (*w_health.n.num<health_red) {
+  // [Nugget] Make it gray if the player's invulnerable
+  if (plyr->powers[pw_invulnerability] || plyr->cheats & CF_GODMODE) {
+    // [Nugget] Support widescreen Crispy HUD
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updatePercentWS(&w_health, cr_gray, refresh, 0); }
+    else
+      { STlib_updatePercent(&w_health, cr_gray, refresh); }
+  }
+  else if (*w_health.n.num<health_red) {
     // [Nugget] Support widescreen Crispy HUD
     if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
         && (!automapactive || automapoverlay))

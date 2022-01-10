@@ -1076,7 +1076,10 @@ void HU_Drawer(void)
       strcat(hud_healthstr,healthstr);
 
       // set the display color from the amount of health posessed
-      if (health<health_red)
+      // [Nugget] Make it gray if the player's invulnerable
+      if (plr->powers[pw_invulnerability] || plr->cheats & CF_GODMODE)
+        { w_health.cr = colrngs[CR_GRAY]; }
+      else if (health<health_red)
         { w_health.cr = colrngs[CR_RED]; }
       else if (health<health_yellow)
         { w_health.cr = colrngs[CR_GOLD]; }
