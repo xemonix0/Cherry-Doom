@@ -852,36 +852,33 @@ void HU_Drawer(void)
   // needed when screen not fullsize
   // killough 11/98: only do it when not fullsize
   // moved here to properly update the w_sttime and w_monsec widgets
-  if (scaledviewheight < 200)
-  {
-    HU_Erase();
-  }
+  if (scaledviewheight < 200) { HU_Erase(); }
 
   // draw the automap widgets if automap is displayed
+  {
+    fixed_t x,y,z;   // killough 10/98:
+    void AM_Coordinates(const mobj_t *, fixed_t *, fixed_t *, fixed_t *);
+
+    // [Nugget] With automap overlay disabled,
+    // refresh the Status Bar regardless of screen size
+    if (automapactive && !automapoverlay && screenSize >= 8)
+      { ST_Drawer(true, true); }
+
+    // [FG] moved here
+    if (automapactive
+        // [Nugget] Specific cases follow
+        && ((screenSize <= 7 && !((hud_displayed || hud_timests) && automapoverlay))
+            || ((screenSize == 8 || screenSize == 10) && !automapoverlay)
+            || (screenSize == 9 || screenSize == 11)
+            || (screenSize == 12 && !(hud_displayed && automapoverlay))))
     {
-      fixed_t x,y,z;   // killough 10/98:
-      void AM_Coordinates(const mobj_t *, fixed_t *, fixed_t *, fixed_t *);
+      // map title
+      HUlib_drawTextLine(&w_title, false);
+    }
 
-      // [Nugget] With automap overlay disabled,
-      // refresh the Status Bar regardless of screen size
-      if (automapactive && !automapoverlay && screenSize >= 8)
-        { ST_Drawer(true, true); }
-
-      // [FG] moved here
-      if (automapactive
-          // [Nugget] Specific cases follow
-          && ((screenSize <= 7 && !((hud_displayed || hud_timests) && automapoverlay))
-              || ((screenSize == 8 || screenSize == 10) && !automapoverlay)
-              || (screenSize == 9 || screenSize == 11)
-              || (screenSize == 12 && !(hud_displayed && automapoverlay))))
-      {
-        // map title
-        HUlib_drawTextLine(&w_title, false);
-      }
-
-      // [FG] draw player coords widget
-      if (automapactive && !(hud_distributed && automapoverlay) && map_player_coords)
-      {
+    // [FG] draw player coords widget
+    if (automapactive && !(hud_distributed && automapoverlay) && map_player_coords)
+    {
       // killough 10/98: allow coordinates to display non-following pointer
       AM_Coordinates(plr->mo, &x, &y, &z);
 
@@ -912,471 +909,460 @@ void HU_Drawer(void)
       while (*s)
         HUlib_addCharToTextLine(&w_coordz, *s++);
       HUlib_drawTextLine(&w_coordz, false);
-      }
-      // [FG] FPS counter widget
-      else if (plr->cheats & CF_SHOWFPS)
-      {
-        extern int fps;
-
-        sprintf(hud_coordstrx,"%-5d FPS", fps);
-        HUlib_clearTextLine(&w_coordx);
-        s = hud_coordstrx;
-        while (*s)
-          HUlib_addCharToTextLine(&w_coordx, *s++);
-        HUlib_drawTextLine(&w_coordx, false);
-      }
-
-      // [FG] draw level stats widget
-      if ((automapactive && map_level_stats == 1) || map_level_stats == 2)
-      {
-        HUlib_drawTextLine(&w_lstatk, false);
-        HUlib_drawTextLine(&w_lstati, false);
-        HUlib_drawTextLine(&w_lstats, false);
-      }
-
-      // [FG] draw level time widget
-      if ((automapactive && map_level_time == 1) || map_level_time == 2)
-      {
-        HUlib_drawTextLine(&w_ltime, false);
-      }
     }
+
+    // [FG] FPS counter widget
+    else if (plr->cheats & CF_SHOWFPS) {
+      extern int fps;
+
+      sprintf(hud_coordstrx,"%-5d FPS", fps);
+      HUlib_clearTextLine(&w_coordx);
+      s = hud_coordstrx;
+      while (*s)
+        HUlib_addCharToTextLine(&w_coordx, *s++);
+      HUlib_drawTextLine(&w_coordx, false);
+    }
+
+    // [FG] draw level stats widget
+    if ((automapactive && map_level_stats == 1) || map_level_stats == 2)
+    {
+      HUlib_drawTextLine(&w_lstatk, false);
+      HUlib_drawTextLine(&w_lstati, false);
+      HUlib_drawTextLine(&w_lstats, false);
+    }
+
+    // [FG] draw level time widget
+    if ((automapactive && map_level_time == 1) || map_level_time == 2)
+      { HUlib_drawTextLine(&w_ltime, false); }
+  }
+
+  // [Nugget] Draw a static crosshair
+  if (crosshair_type && !automapactive && plr->playerstate != PST_DEAD)
+  {
+    patch_t *crosshair;
+    char *type = "";
+    short hOffset = 0, vOffset = 0;
+    int height;
+
+    switch (crosshair_type) {
+      case 1: type = "STCFN046"; break;
+      case 2: type = "STCFN043"; break;
+      case 3: type = "STCFN094"; break;
+    }
+    crosshair = W_CacheLumpName(type, PU_STATIC);
+
+    hOffset = SHORT(crosshair->width/2) - SHORT(crosshair->leftoffset);
+    vOffset -= SHORT(crosshair->topoffset);
+    if (crosshair_type != 3) { vOffset += (SHORT(crosshair->height/2)); }
+
+    height = screenSize <= 7 ? (SCREENHEIGHT-ST_HEIGHT)>>1 : SCREENHEIGHT>>1;
+
+    if (crosshair_health) {
+      int health = plr->health;
+      char *cr;
+
+      // Set the crosshair color based on player health
+      if (plr->powers[pw_invulnerability]
+          || plr->cheats & CF_GODMODE)  { cr = colrngs[CR_GRAY]; }
+      else if (health<health_red)       { cr = colrngs[CR_RED]; }
+      else if (health<health_yellow)    { cr = colrngs[CR_GOLD]; }
+      else if (health<=health_green)    { cr = colrngs[CR_GREEN]; }
+      else                              { cr = colrngs[CR_BLUE2]; }
+
+      V_DrawPatchTranslatedWS((SCREENWIDTH>>1) - hOffset, height - vOffset,
+                              FG, crosshair, cr, 0, 0);
+    }
+    else {
+      V_DrawPatchGeneralWS((SCREENWIDTH>>1) - hOffset, height - vOffset,
+                           FG, crosshair, false, 0);
+    }
+  }
 
   // draw the weapon/health/ammo/armor/kills/keys displays if optioned
   //jff 2/17/98 allow new hud stuff to be turned off
   // killough 2/21/98: really allow new hud stuff to be turned off COMPLETELY
-  if
-    (
-     hud_active>0 &&                  // hud optioned on
-     hud_displayed &&                 // hud on from fullscreen key
-     scaledviewheight==SCREENHEIGHT &&// fullscreen mode is active
-     (!automapactive || automapoverlay)
+  if (
+      hud_active>0                          // hud optioned on
+      && hud_displayed                      // hud on from fullscreen key
+      && scaledviewheight==SCREENHEIGHT     // fullscreen mode is active
+      && (!automapactive || automapoverlay)
      )
-    {
-      HU_MoveHud();                  // insure HUD display coords are correct
+  {
+    HU_MoveHud(); // insure HUD display coords are correct
 
-      // do the hud ammo display
-      // clear the widgets internal line
-      HUlib_clearTextLine(&w_ammo);
-      strcpy(hud_ammostr,"AMM ");
-      if (weaponinfo[plr->readyweapon].ammo == am_noammo)
-        { // special case for weapon with no ammo selected - blank bargraph + N/A
-          strcat(hud_ammostr,"\x7f\x7f\x7f\x7f\x7f\x7f\x7f N/A");
-          w_ammo.cr = colrngs[CR_GRAY];
-        }
+    // do the hud ammo display
+    // clear the widgets internal line
+    HUlib_clearTextLine(&w_ammo);
+    strcpy(hud_ammostr,"AMM ");
+    if (weaponinfo[plr->readyweapon].ammo == am_noammo)
+    { // special case for weapon with no ammo selected - blank bargraph + N/A
+      strcat(hud_ammostr,"\x7f\x7f\x7f\x7f\x7f\x7f\x7f N/A");
+      w_ammo.cr = colrngs[CR_GRAY];
+    }
+    else {
+      int ammo = plr->ammo[weaponinfo[plr->readyweapon].ammo];
+      int fullammo = plr->maxammo[weaponinfo[plr->readyweapon].ammo];
+      int ammopct = (100*ammo)/fullammo;
+      int ammobars = ammopct/4;
+
+      // build the numeric amount init string
+      sprintf(ammostr,"%d/%d",ammo,fullammo);
+      // build the bargraph string
+      // full bargraph chars
+      for (i=4;i<4+ammobars/4;) { hud_ammostr[i++] = 123; }
+      // plus one last character with 0,1,2,3 bars
+      switch(ammobars%4) {
+        case 0:
+          break;
+        case 1:
+          hud_ammostr[i++] = 126;
+          break;
+        case 2:
+          hud_ammostr[i++] = 125;
+          break;
+        case 3:
+          hud_ammostr[i++] = 124;
+          break;
+      }
+      // pad string with blank bar characters
+      while(i<4+7) { hud_ammostr[i++] = 127; }
+      hud_ammostr[i] = '\0';
+      strcat(hud_ammostr,ammostr);
+
+      // set the display color from the percentage of total ammo held
+      if (ammopct<ammo_red)
+        { w_ammo.cr = colrngs[CR_RED]; }
+      else if (ammopct<ammo_yellow)
+        { w_ammo.cr = colrngs[CR_GOLD]; }
       else
-        {
-          int ammo = plr->ammo[weaponinfo[plr->readyweapon].ammo];
-          int fullammo = plr->maxammo[weaponinfo[plr->readyweapon].ammo];
-          int ammopct = (100*ammo)/fullammo;
-          int ammobars = ammopct/4;
+        { w_ammo.cr = colrngs[CR_GREEN]; }
+    }
+    // transfer the init string to the widget
+    s = hud_ammostr;
+    while (*s) { HUlib_addCharToTextLine(&w_ammo, *s++); }
+    // display the ammo widget every frame
+    HUlib_drawTextLine(&w_ammo, false);
 
-          // build the numeric amount init string
-          sprintf(ammostr,"%d/%d",ammo,fullammo);
-          // build the bargraph string
-          // full bargraph chars
-          for (i=4;i<4+ammobars/4;)
-            hud_ammostr[i++] = 123;
-          // plus one last character with 0,1,2,3 bars
-          switch(ammobars%4)
-            {
-            case 0:
-              break;
-            case 1:
-              hud_ammostr[i++] = 126;
-              break;
-            case 2:
-              hud_ammostr[i++] = 125;
-              break;
-            case 3:
-              hud_ammostr[i++] = 124;
-              break;
-            }
-          // pad string with blank bar characters
-          while(i<4+7)
-            hud_ammostr[i++] = 127;
-          hud_ammostr[i] = '\0';
-          strcat(hud_ammostr,ammostr);
+    // do the hud health display
+    {
+      int health = plr->health;
+      int healthbars = health>100? 25 : health/4;
 
-          // set the display color from the percentage of total ammo held
-          if (ammopct<ammo_red)
-            w_ammo.cr = colrngs[CR_RED];
-          else
-            if (ammopct<ammo_yellow)
-              w_ammo.cr = colrngs[CR_GOLD];
-            else
-              w_ammo.cr = colrngs[CR_GREEN];
-        }
+      // clear the widgets internal line
+      HUlib_clearTextLine(&w_health);
+
+      // build the numeric amount init string
+      sprintf(healthstr,"%3d",health);
+      // build the bargraph string
+      // full bargraph chars
+      for (i=4;i<4+healthbars/4;) { hud_healthstr[i++] = 123; }
+      // plus one last character with 0,1,2,3 bars
+      switch(healthbars%4) {
+        case 0:
+          break;
+        case 1:
+          hud_healthstr[i++] = 126;
+          break;
+        case 2:
+          hud_healthstr[i++] = 125;
+          break;
+        case 3:
+          hud_healthstr[i++] = 124;
+          break;
+      }
+      // pad string with blank bar characters
+      while(i<4+7) { hud_healthstr[i++] = 127; }
+      hud_healthstr[i] = '\0';
+      strcat(hud_healthstr,healthstr);
+
+      // set the display color from the amount of health posessed
+      if (health<health_red)
+        { w_health.cr = colrngs[CR_RED]; }
+      else if (health<health_yellow)
+        { w_health.cr = colrngs[CR_GOLD]; }
+      else if (health<=health_green)
+        { w_health.cr = colrngs[CR_GREEN]; }
+      else
+        { w_health.cr = colrngs[CR_BLUE]; }
+
       // transfer the init string to the widget
-      s = hud_ammostr;
-      while (*s)
-        HUlib_addCharToTextLine(&w_ammo, *s++);
-      // display the ammo widget every frame
-      HUlib_drawTextLine(&w_ammo, false);
+      s = hud_healthstr;
+      while (*s) { HUlib_addCharToTextLine(&w_health, *s++); }
+    }
+    // display the health widget every frame
+    HUlib_drawTextLine(&w_health, false);
 
-      // do the hud health display
-      {
-        int health = plr->health;
-        int healthbars = health>100? 25 : health/4;
+    // do the hud armor display
+    {
+      int armor = plr->armorpoints;
+      int armorbars = armor>100? 25 : armor/4;
 
-        // clear the widgets internal line
-        HUlib_clearTextLine(&w_health);
-
-        // build the numeric amount init string
-        sprintf(healthstr,"%3d",health);
-        // build the bargraph string
-        // full bargraph chars
-        for (i=4;i<4+healthbars/4;)
-          hud_healthstr[i++] = 123;
-        // plus one last character with 0,1,2,3 bars
-        switch(healthbars%4)
-          {
-          case 0:
-            break;
-          case 1:
-            hud_healthstr[i++] = 126;
-            break;
-          case 2:
-            hud_healthstr[i++] = 125;
-            break;
-          case 3:
-            hud_healthstr[i++] = 124;
-            break;
-          }
-        // pad string with blank bar characters
-        while(i<4+7)
-          hud_healthstr[i++] = 127;
-        hud_healthstr[i] = '\0';
-        strcat(hud_healthstr,healthstr);
-
-        // set the display color from the amount of health posessed
-        if (health<health_red)
-          w_health.cr = colrngs[CR_RED];
-        else
-          if (health<health_yellow)
-            w_health.cr = colrngs[CR_GOLD];
-          else
-            if (health<=health_green)
-              w_health.cr = colrngs[CR_GREEN];
-            else
-              w_health.cr = colrngs[CR_BLUE];
-
-        // transfer the init string to the widget
-        s = hud_healthstr;
-        while (*s)
-          HUlib_addCharToTextLine(&w_health, *s++);
+      // clear the widgets internal line
+      HUlib_clearTextLine(&w_armor);
+      // build the numeric amount init string
+      sprintf(armorstr,"%3d",armor);
+      // build the bargraph string
+      // full bargraph chars
+      for (i=4;i<4+armorbars/4;) { hud_armorstr[i++] = 123; }
+      // plus one last character with 0,1,2,3 bars
+      switch(armorbars%4) {
+        case 0:
+          break;
+        case 1:
+          hud_armorstr[i++] = 126;
+          break;
+        case 2:
+          hud_armorstr[i++] = 125;
+          break;
+        case 3:
+          hud_armorstr[i++] = 124;
+          break;
       }
-      // display the health widget every frame
-      HUlib_drawTextLine(&w_health, false);
+      // pad string with blank bar characters
+      while(i<4+7) { hud_armorstr[i++] = 127; }
+      hud_armorstr[i] = '\0';
+      strcat(hud_armorstr,armorstr);
 
-      // do the hud armor display
-      {
-        int armor = plr->armorpoints;
-        int armorbars = armor>100? 25 : armor/4;
-
-        // clear the widgets internal line
-        HUlib_clearTextLine(&w_armor);
-        // build the numeric amount init string
-        sprintf(armorstr,"%3d",armor);
-        // build the bargraph string
-        // full bargraph chars
-        for (i=4;i<4+armorbars/4;)
-          hud_armorstr[i++] = 123;
-        // plus one last character with 0,1,2,3 bars
-        switch(armorbars%4)
-          {
-          case 0:
-            break;
-          case 1:
-            hud_armorstr[i++] = 126;
-            break;
-          case 2:
-            hud_armorstr[i++] = 125;
-            break;
-          case 3:
-            hud_armorstr[i++] = 124;
-            break;
-          }
-        // pad string with blank bar characters
-        while(i<4+7)
-          hud_armorstr[i++] = 127;
-        hud_armorstr[i] = '\0';
-        strcat(hud_armorstr,armorstr);
-
-        // [Nugget] Set display color for armor based on armor type
-        if (armor_type_color) {
-          w_armor.cr = plr->armortype == 2
-                      ? colrngs[CR_BLUE]
-                      : plr->armortype == 1
-                        ? colrngs[CR_GREEN]
-                        : colrngs[CR_RED];
-        }
-        else {
+      // [Nugget] Set display color for armor based on armor type
+      if (armor_type_color) {
+        w_armor.cr = plr->armortype == 2
+                     ? colrngs[CR_BLUE]
+                     : plr->armortype == 1
+                       ? colrngs[CR_GREEN]
+                       : colrngs[CR_RED];
+      }
+      else {
         // set the display color from the amount of armor posessed
-	w_armor.cr =
-	  armor<armor_red ? colrngs[CR_RED] :
-	  armor<armor_yellow ? colrngs[CR_GOLD] :
-	  armor<=armor_green ? colrngs[CR_GREEN] : colrngs[CR_BLUE];
-        }
-        // transfer the init string to the widget
-        s = hud_armorstr;
-        while (*s)
-          HUlib_addCharToTextLine(&w_armor, *s++);
+        w_armor.cr = armor<armor_red
+                     ? colrngs[CR_RED]
+                     : armor<armor_yellow
+                       ? colrngs[CR_GOLD]
+                       : armor<=armor_green
+                         ? colrngs[CR_GREEN]
+                         : colrngs[CR_BLUE];
       }
-      // display the armor widget every frame
-      HUlib_drawTextLine(&w_armor, false);
+      // transfer the init string to the widget
+      s = hud_armorstr;
+      while (*s) { HUlib_addCharToTextLine(&w_armor, *s++); }
+    }
+    // display the armor widget every frame
+    HUlib_drawTextLine(&w_armor, false);
 
-      // do the hud weapon display
+    // do the hud weapon display
+    {
+      int w, ammo, fullammo, ammopct;
+
+      // clear the widgets internal line
+      HUlib_clearTextLine(&w_weapon);
+      i=4; hud_weapstr[i] = '\0'; //jff 3/7/98 make sure ammo goes away
+
+      // do each weapon that exists in current gamemode
+      for (w=0;w<=wp_supershotgun;w++) //jff 3/4/98 show fists too, why not?
       {
-        int w, ammo, fullammo, ammopct;
+        int ok=1;
+        //jff avoid executing for weapons that do not exist
+        switch (gamemode) {
+          case shareware:
+            if (w>=wp_plasma && w!=wp_chainsaw) { ok=0; }
+            break;
+          case retail:
+          case registered:
+            if (w>=wp_supershotgun) { ok=0; }
+            break;
+          default:
+          case commercial:
+            break;
+        } if (!ok) continue;
 
-        // clear the widgets internal line
-        HUlib_clearTextLine(&w_weapon);
-        i=4; hud_weapstr[i] = '\0';      //jff 3/7/98 make sure ammo goes away
+        ammo = plr->ammo[weaponinfo[w].ammo];
+        fullammo = plr->maxammo[weaponinfo[w].ammo];
+        ammopct=0;
 
-        // do each weapon that exists in current gamemode
-        for (w=0;w<=wp_supershotgun;w++) //jff 3/4/98 show fists too, why not?
-          {
-            int ok=1;
-            //jff avoid executing for weapons that do not exist
-            switch (gamemode)
-              {
-              case shareware:
-                if (w>=wp_plasma && w!=wp_chainsaw)
-                  ok=0;
-                break;
-              case retail:
-              case registered:
-                if (w>=wp_supershotgun)
-                  ok=0;
-                break;
-              default:
-              case commercial:
-                break;
-              }
-            if (!ok) continue;
+        // skip weapons not currently posessed
+        if (!plr->weaponowned[w]) { continue; }
 
-            ammo = plr->ammo[weaponinfo[w].ammo];
-            fullammo = plr->maxammo[weaponinfo[w].ammo];
-            ammopct=0;
+        ammopct = fullammo? (100*ammo)/fullammo : 100;
 
-            // skip weapons not currently posessed
-            if (!plr->weaponowned[w])
-              continue;
-
-            ammopct = fullammo? (100*ammo)/fullammo : 100;
-
-            // display each weapon number in a color related to the ammo for it
-            hud_weapstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-            if (weaponinfo[w].ammo==am_noammo) //jff 3/14/98 show berserk on HUD
-              hud_weapstr[i++] = plr->powers[pw_strength]? '0'+CR_GREEN : '0'+CR_GRAY;
-            else
-              if (ammopct<ammo_red)
-                hud_weapstr[i++] = '0'+CR_RED;
-              else
-                if (ammopct<ammo_yellow)
-                  hud_weapstr[i++] = '0'+CR_GOLD;
-                else
-                  hud_weapstr[i++] = '0'+CR_GREEN;
-            hud_weapstr[i++] = '0'+w+1;
-            hud_weapstr[i++] = ' ';
-            hud_weapstr[i] = '\0';
+        // display each weapon number in a color related to the ammo for it
+        hud_weapstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
+        if (weaponinfo[w].ammo==am_noammo) //jff 3/14/98 show berserk on HUD
+          { hud_weapstr[i++] = plr->powers[pw_strength]? '0'+CR_GREEN : '0'+CR_GRAY; }
+        else if (ammopct<ammo_red)
+          { hud_weapstr[i++] = '0'+CR_RED; }
+        else if (ammopct<ammo_yellow)
+          { hud_weapstr[i++] = '0'+CR_GOLD; }
+        else
+          { hud_weapstr[i++] = '0'+CR_GREEN; }
+        hud_weapstr[i++] = '0'+w+1;
+        hud_weapstr[i++] = ' ';
+        hud_weapstr[i] = '\0';
           }
 
         // transfer the init string to the widget
         s = hud_weapstr;
-        while (*s)
-          HUlib_addCharToTextLine(&w_weapon, *s++);
+        while (*s) { HUlib_addCharToTextLine(&w_weapon, *s++); }
       }
       // display the weapon widget every frame
       HUlib_drawTextLine(&w_weapon, false);
 
-      if (hud_active>1)
-        {
-          int k;
+      if (hud_active>1) {
+        int k;
 
-          hud_keysstr[4] = '\0';    //jff 3/7/98 make sure deleted keys go away
-          //jff add case for graphic key display
-          if (!deathmatch && hud_graph_keys)
-            {
-              i=0;
-              hud_gkeysstr[i] = '\0'; //jff 3/7/98 init graphic keys widget string
-              // build text string whose characters call out graphic keys from fontk
-              for (k=0;k<6;k++)
-                {
-                  // skip keys not possessed
-                  if (!plr->cards[k])
-                    continue;
+        hud_keysstr[4] = '\0'; //jff 3/7/98 make sure deleted keys go away
+        //jff add case for graphic key display
+        if (!deathmatch && hud_graph_keys) {
+          i=0;
+          hud_gkeysstr[i] = '\0'; //jff 3/7/98 init graphic keys widget string
+          // build text string whose characters call out graphic keys from fontk
+          for (k=0;k<6;k++) {
+            // skip keys not possessed
+            if (!plr->cards[k]) { continue; }
 
-                  hud_gkeysstr[i++] = '!'+k;   // key number plus '!' is char for key
-                  hud_gkeysstr[i++] = ' ';     // spacing
-                  hud_gkeysstr[i++] = ' ';
-                }
-              hud_gkeysstr[i]='\0';
-            }
-          else // not possible in current code, unless deathmatching,
-            {
-              i=4;
-              hud_keysstr[i] = '\0';  //jff 3/7/98 make sure deleted keys go away
-
-              // if deathmatch, build string showing top four frag counts
-              if (deathmatch) //jff 3/17/98 show frags, not keys, in deathmatch
-                {
-                  int top1=-999,top2=-999,top3=-999,top4=-999;
-                  int idx1=-1,idx2=-1,idx3=-1,idx4=-1;
-                  int fragcount,m;
-
-                  // scan thru players
-                  for (k=0;k<MAXPLAYERS;k++)
-                    {
-                      // skip players not in game
-                      if (!playeringame[k])
-                        continue;
-
-                      fragcount = 0;
-                      // compute number of times they've fragged each player
-                      // minus number of times they've been fragged by them
-                      for (m=0;m<MAXPLAYERS;m++)
-                        {
-                          if (!playeringame[m]) continue;
-                          fragcount += (m!=k)?  players[k].frags[m] : -players[k].frags[m];
-                        }
-
-                      // very primitive sort of frags to find top four
-                      if (fragcount>top1)
-                        {
-                          top4=top3; top3=top2; top2 = top1; top1=fragcount;
-                          idx4=idx3; idx3=idx2; idx2 = idx1; idx1=k;
-                        }
-                      else
-                        if (fragcount>top2)
-                          {
-                            top4=top3; top3=top2; top2=fragcount;
-                            idx4=idx3; idx3=idx2; idx2=k;
-                          }
-                        else
-                          if (fragcount>top3)
-                            {
-                              top4=top3; top3=fragcount;
-                              idx4=idx3; idx3=k;
-                            }
-                          else
-                            if (fragcount>top4)
-                              {
-                                top4=fragcount;
-                                idx4=k;
-                              }
-                    }
-
-		  // killough 11/98: replaced cut-and-pasted code with function
-
-                  // if the biggest number exists,
-		  // put it in the init string
-		  i = HU_top(i, idx1, top1);
-
-                  // if the second biggest number exists,
-		  // put it in the init string
-		  i = HU_top(i, idx2, top2);
-
-                  // if the third biggest number exists,
-		  // put it in the init string
-		  i = HU_top(i, idx3, top3);
-
-                  // if the fourth biggest number exists,
-		  // put it in the init string
-		  i = HU_top(i, idx4, top4);
-
-                  hud_keysstr[i] = '\0';
-                } //jff 3/17/98 end of deathmatch clause
-              else // build alphabetical key display (not used currently)
-                {
-                  // scan the keys
-                  for (k=0;k<6;k++)
-                    {
-                      // skip any not possessed by the displayed player's stats
-                      if (!plr->cards[k])
-                        continue;
-
-                      // use color escapes to make text in key's color
-                      hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-                      switch(k)
-                        {
-                        case 0:
-                          hud_keysstr[i++] = '0'+CR_BLUE;
-                          hud_keysstr[i++] = 'B';
-                          hud_keysstr[i++] = 'C';
-                          hud_keysstr[i++] = ' ';
-                          break;
-                        case 1:
-                          hud_keysstr[i++] = '0'+CR_GOLD;
-                          hud_keysstr[i++] = 'Y';
-                          hud_keysstr[i++] = 'C';
-                          hud_keysstr[i++] = ' ';
-                          break;
-                        case 2:
-                          hud_keysstr[i++] = '0'+CR_RED;
-                          hud_keysstr[i++] = 'R';
-                          hud_keysstr[i++] = 'C';
-                          hud_keysstr[i++] = ' ';
-                          break;
-                        case 3:
-                          hud_keysstr[i++] = '0'+CR_BLUE;
-                          hud_keysstr[i++] = 'B';
-                          hud_keysstr[i++] = 'S';
-                          hud_keysstr[i++] = ' ';
-                          break;
-                        case 4:
-                          hud_keysstr[i++] = '0'+CR_GOLD;
-                          hud_keysstr[i++] = 'Y';
-                          hud_keysstr[i++] = 'S';
-                          hud_keysstr[i++] = ' ';
-                          break;
-                        case 5:
-                          hud_keysstr[i++] = '0'+CR_RED;
-                          hud_keysstr[i++] = 'R';
-                          hud_keysstr[i++] = 'S';
-                          hud_keysstr[i++] = ' ';
-                          break;
-                        }
-                      hud_keysstr[i]='\0';
-                    }
-                }
-            }
+            hud_gkeysstr[i++] = '!'+k;  // key number plus '!' is char for key
+            hud_gkeysstr[i++] = ' ';    // spacing
+            hud_gkeysstr[i++] = ' ';
+          }
+          hud_gkeysstr[i]='\0';
         }
-      // display the keys/frags line each frame
-      if (hud_active>1)
-        {
-          HUlib_clearTextLine(&w_keys);      // clear the widget strings
-          HUlib_clearTextLine(&w_gkeys);
+        else { // not possible in current code, unless deathmatching,
+          i=4;
+          hud_keysstr[i] = '\0'; //jff 3/7/98 make sure deleted keys go away
 
-          // transfer the built string (frags or key title) to the widget
-          s = hud_keysstr; //jff 3/7/98 display key titles/key text or frags
-          while (*s)
-            HUlib_addCharToTextLine(&w_keys, *s++);
-          HUlib_drawTextLine(&w_keys, false);
+          // if deathmatch, build string showing top four frag counts
+          if (deathmatch) { //jff 3/17/98 show frags, not keys, in deathmatch
+            int top1=-999,top2=-999,top3=-999,top4=-999;
+            int idx1=-1,idx2=-1,idx3=-1,idx4=-1;
+            int fragcount,m;
 
-          //jff 3/17/98 show graphic keys in non-DM only
-          if (!deathmatch) //jff 3/7/98 display graphic keys
-            {
-              // transfer the graphic key text to the widget
-              s = hud_gkeysstr;
-              while (*s)
-                HUlib_addCharToTextLine(&w_gkeys, *s++);
-              // display the widget
-              HUlib_drawTextLine(&w_gkeys, false);
+            // scan thru players
+            for (k=0;k<MAXPLAYERS;k++) {
+              // skip players not in game
+              if (!playeringame[k]) { continue; }
+
+              fragcount = 0;
+              // compute number of times they've fragged each player
+              // minus number of times they've been fragged by them
+              for (m=0;m<MAXPLAYERS;m++) {
+                if (!playeringame[m]) { continue; }
+                fragcount += (m!=k) ? players[k].frags[m] : -players[k].frags[m];
+              }
+
+              // very primitive sort of frags to find top four
+              if (fragcount>top1) {
+                top4=top3; top3=top2; top2 = top1; top1=fragcount;
+                idx4=idx3; idx3=idx2; idx2 = idx1; idx1=k;
+              }
+              else if (fragcount>top2) {
+                top4=top3; top3=top2; top2=fragcount;
+                idx4=idx3; idx3=idx2; idx2=k;
+              }
+              else if (fragcount>top3) {
+                top4=top3; top3=fragcount;
+                idx4=idx3; idx3=k;
+              }
+              else if (fragcount>top4) {
+                top4=fragcount;
+                idx4=k;
+              }
             }
-        }
 
-      // display the hud kills/items/secret display if optioned
-      if (!hud_nosecrets)
-        {
-          // display the kills/items/secrets each frame, if optioned
-          if (hud_active>1)
-          {
-            HU_widget_build_monsec();
-            HUlib_drawTextLine(&w_monsec, false);
+            // killough 11/98: replaced cut-and-pasted code with function
+
+            // if the biggest number exists,
+            // put it in the init string
+            i = HU_top(i, idx1, top1);
+            // if the second biggest number exists,
+            // put it in the init string
+            i = HU_top(i, idx2, top2);
+            // if the third biggest number exists,
+            // put it in the init string
+            i = HU_top(i, idx3, top3);
+            // if the fourth biggest number exists,
+            // put it in the init string
+            i = HU_top(i, idx4, top4);
+
+            hud_keysstr[i] = '\0';
+          } //jff 3/17/98 end of deathmatch clause
+          else { // build alphabetical key display (not used currently)
+            // scan the keys
+            for (k=0;k<6;k++) {
+              // skip any not possessed by the displayed player's stats
+              if (!plr->cards[k]) { continue; }
+
+              // use color escapes to make text in key's color
+              hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
+              switch(k) {
+                case 0:
+                  hud_keysstr[i++] = '0'+CR_BLUE;
+                  hud_keysstr[i++] = 'B';
+                  hud_keysstr[i++] = 'C';
+                  hud_keysstr[i++] = ' ';
+                  break;
+                case 1:
+                  hud_keysstr[i++] = '0'+CR_GOLD;
+                  hud_keysstr[i++] = 'Y';
+                  hud_keysstr[i++] = 'C';
+                  hud_keysstr[i++] = ' ';
+                  break;
+                case 2:
+                  hud_keysstr[i++] = '0'+CR_RED;
+                  hud_keysstr[i++] = 'R';
+                  hud_keysstr[i++] = 'C';
+                  hud_keysstr[i++] = ' ';
+                  break;
+                case 3:
+                  hud_keysstr[i++] = '0'+CR_BLUE;
+                  hud_keysstr[i++] = 'B';
+                  hud_keysstr[i++] = 'S';
+                  hud_keysstr[i++] = ' ';
+                  break;
+                case 4:
+                  hud_keysstr[i++] = '0'+CR_GOLD;
+                  hud_keysstr[i++] = 'Y';
+                  hud_keysstr[i++] = 'S';
+                  hud_keysstr[i++] = ' ';
+                  break;
+                case 5:
+                  hud_keysstr[i++] = '0'+CR_RED;
+                  hud_keysstr[i++] = 'R';
+                  hud_keysstr[i++] = 'S';
+                  hud_keysstr[i++] = ' ';
+                  break;
+              }
+              hud_keysstr[i]='\0';
+            }
           }
         }
-    }
+      }
+      // display the keys/frags line each frame
+      if (hud_active>1) {
+        HUlib_clearTextLine(&w_keys);      // clear the widget strings
+        HUlib_clearTextLine(&w_gkeys);
+
+        // transfer the built string (frags or key title) to the widget
+        s = hud_keysstr; //jff 3/7/98 display key titles/key text or frags
+        while (*s) { HUlib_addCharToTextLine(&w_keys, *s++); }
+        HUlib_drawTextLine(&w_keys, false);
+
+        //jff 3/17/98 show graphic keys in non-DM only
+        if (!deathmatch) { //jff 3/7/98 display graphic keys
+          // transfer the graphic key text to the widget
+          s = hud_gkeysstr;
+          while (*s) { HUlib_addCharToTextLine(&w_gkeys, *s++); }
+          // display the widget
+          HUlib_drawTextLine(&w_gkeys, false);
+        }
+      }
+
+      // display the hud kills/items/secret display if optioned
+      if (!hud_nosecrets) {
+        // display the kills/items/secrets each frame, if optioned
+        if (hud_active>1) {
+          HU_widget_build_monsec();
+          HUlib_drawTextLine(&w_monsec, false);
+        }
+      }
+  }
   else if (hud_timests && (!automapactive || automapoverlay)
            // [Nugget] Allow Time/STS display in Crispy minimalistic HUD
            && ((scaledviewheight < SCREENHEIGHT)
@@ -1394,21 +1380,16 @@ void HU_Drawer(void)
   // jff 4/24/98 Erase current lines before drawing current
   // needed when screen not fullsize
   // killough 11/98: only do it when not fullsize
-  if (scaledviewheight < 200)
-    HU_Erase();
+  if (scaledviewheight < 200) { HU_Erase(); }
 
   //jff 4/21/98 if setup has disabled message list while active, turn it off
   // if the message review is enabled show the scrolling message review
   // if the message review not enabled, show the standard message widget
   // killough 11/98: simplified
+  if (message_list) { HUlib_drawMText(&w_rtext); }
+  else              { HUlib_drawSText(&w_message); }
 
-  if (message_list)
-    HUlib_drawMText(&w_rtext);
-  else
-    HUlib_drawSText(&w_message);
-
-  if (secret_on)
-    HUlib_drawSText(&w_secret);
+  if (secret_on) { HUlib_drawSText(&w_secret); }
 
   // display the interactive buffer for chat entry
   HUlib_drawIText(&w_chat);

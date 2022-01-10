@@ -136,6 +136,8 @@ int quick_quitgame;
 int bobbing_percentage;
 int no_hor_autoaim;
 // Status Bar / HUD
+int crosshair_type;
+int crosshair_health;
 int armor_type_color;
 // Enemies
 int extra_gibbing;

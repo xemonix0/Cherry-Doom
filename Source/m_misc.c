@@ -379,7 +379,7 @@ default_t defaults[] = {
     "1 to keep keyboard LEDs turned off"
   },
 
-  // [Nugget]
+  // [Nugget] ----------------------------------------
 
   {
     "no_ss_background", // name
@@ -468,6 +468,20 @@ default_t defaults[] = {
     (config_t *) &quick_quitgame, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
     "1 to skip prompt on Quit Game"
+  },
+
+  {
+    "crosshair_type",
+    (config_t *) &crosshair_type, NULL,
+    {0}, {0,3}, number, ss_stat, wad_no,
+    "Crosshair type, 0 = Off"
+  },
+
+  {
+    "crosshair_health",
+    (config_t *) &crosshair_health, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to color the crosshair based on player health"
   },
 
   {

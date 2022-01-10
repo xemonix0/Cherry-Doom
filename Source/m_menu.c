@@ -3739,6 +3739,12 @@ enum {
   general_viewheight,
   general_quicksaveload,
   general_quickexit,
+  general_crosshairtype,
+  general_crosshairhealth,
+};
+
+static const char *crosshair_types[] = {
+  "Off", "Dot", "Cross", "Chevron", NULL
 };
 
 setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
@@ -3771,6 +3777,12 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
 
   {"Quick \"Quit Game\"", S_YESNO, m_null, G_X,
    G_Y + general_quickexit*8, {"quick_quitgame"}},
+
+  {"Crosshair", S_CHOICE, m_null, G_X,
+   G_Y + general_crosshairtype*8, {"crosshair_type"}, 0, NULL, crosshair_types},
+
+  {"Crosshair Shows Health", S_YESNO, m_null, G_X,
+   G_Y + general_crosshairhealth*8, {"crosshair_health"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings2}},
 
