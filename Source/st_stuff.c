@@ -334,83 +334,71 @@ void ST_Stop(void);
 
 void ST_refreshBackground(boolean force)
 {
-  if (st_classicstatusbar || force) // [Nugget] Crispy minimalistic HUD
-    {
-      // [crispy] this is our own local copy of R_FillBackScreen() to
-      // fill the entire background of st_backing_screen with the bezel pattern,
-      // so it appears to the left and right of the status bar in widescreen mode
-      if (SCREENWIDTH != ST_WIDTH)
-      {
-        int x, y;
-        byte *src;
-        byte *dest;
-        const char *name = (gamemode == commercial) ? "GRNROCK" : "FLOOR7_2";
+  if (st_classicstatusbar || force) { // [Nugget] Crispy minimalistic HUD
+    // [crispy] this is our own local copy of R_FillBackScreen() to
+    // fill the entire background of st_backing_screen with the bezel pattern,
+    // so it appears to the left and right of the status bar in widescreen mode
+    if (SCREENWIDTH != ST_WIDTH) {
+      int x, y;
+      byte *src;
+      byte *dest;
+      const char *name = (gamemode == commercial) ? "GRNROCK" : "FLOOR7_2";
 
-        src = W_CacheLumpNum(firstflat + R_FlatNumForName(name), PU_CACHE);
-        dest = screens[BG];
+      src = W_CacheLumpNum(firstflat + R_FlatNumForName(name), PU_CACHE);
+      dest = screens[BG];
 
-        if (hires)
+      if (hires) {
+        for (y = (SCREENHEIGHT-ST_HEIGHT)<<1; y < SCREENHEIGHT<<1; y++)
         {
-          for (y = (SCREENHEIGHT-ST_HEIGHT)<<1; y < SCREENHEIGHT<<1; y++)
-              for (x = 0; x < SCREENWIDTH<<1; x += 2)
-              {
-                  const byte dot = src[(((y>>1)&63)<<6) + ((x>>1)&63)];
-
-                  *dest++ = dot;
-                  *dest++ = dot;
-              }
-        }
-        else
-        {
-          for (y = SCREENHEIGHT-ST_HEIGHT; y < SCREENHEIGHT; y++)
-            for (x = 0; x < SCREENWIDTH; x++)
-            {
-              *dest++ = src[((y&63)<<6) + (x&63)];
-            }
-        }
-
-        // [crispy] preserve bezel bottom edge
-        if (scaledviewwidth == SCREENWIDTH)
-        {
-          patch_t *const patch = W_CacheLumpName("brdr_b", PU_CACHE);
-
-          for (x = 0; x < WIDESCREENDELTA; x += 8)
+          for (x = 0; x < SCREENWIDTH<<1; x += 2)
           {
-            V_DrawPatch(x - WIDESCREENDELTA, 0, BG, patch);
-            V_DrawPatch(ORIGWIDTH + WIDESCREENDELTA - x - 8, 0, BG, patch);
+            const byte dot = src[(((y>>1)&63)<<6) + ((x>>1)&63)];
+
+            *dest++ = dot;
+            *dest++ = dot;
           }
         }
       }
-
-      // [crispy] center unity rerelease wide status bar
-      if (SHORT(sbar->width) > ORIGWIDTH && SHORT(sbar->leftoffset) == 0)
-      {
-        V_DrawPatch(ST_X + (ORIGWIDTH - SHORT(sbar->width)) / 2, 0, BG, sbar);
-      }
-      else
-      {
-        V_DrawPatch(ST_X, 0, BG, sbar);
-      }
-
-      // killough 3/7/98: make face background change with displayplayer
-      if (netgame) { V_DrawPatch(ST_FX, 0, BG, faceback[displayplayer]); }
-
-      // [crispy] copy entire SCREENWIDTH, to preserve the pattern
-      // to the left and right of the status bar in widescren mode
-      if (!force)
-      {
-        V_CopyRect(ST_X, 0, BG, SCREENWIDTH, ST_HEIGHT, ST_X, ST_Y, FG);
-      }
-      else
-      {
-        if (WIDESCREENDELTA > 0 && !st_firsttime)
+      else {
+        for (y = SCREENHEIGHT-ST_HEIGHT; y < SCREENHEIGHT; y++)
         {
-          V_CopyRect(0, 0, BG, WIDESCREENDELTA, ST_HEIGHT, 0, ST_Y, FG);
-          V_CopyRect(ORIGWIDTH + WIDESCREENDELTA, 0, BG, WIDESCREENDELTA, ST_HEIGHT, ORIGWIDTH + WIDESCREENDELTA, ST_Y, FG);
+          for (x = 0; x < SCREENWIDTH; x++)
+            { *dest++ = src[((y&63)<<6) + (x&63)]; }
         }
       }
 
+      // [crispy] preserve bezel bottom edge
+      if (scaledviewwidth == SCREENWIDTH) {
+        patch_t *const patch = W_CacheLumpName("brdr_b", PU_CACHE);
+
+        for (x = 0; x < WIDESCREENDELTA; x += 8)
+        {
+          V_DrawPatch(x - WIDESCREENDELTA, 0, BG, patch);
+          V_DrawPatch(ORIGWIDTH + WIDESCREENDELTA - x - 8, 0, BG, patch);
+        }
+      }
     }
+
+    // [crispy] center unity rerelease wide status bar
+    if (SHORT(sbar->width) > ORIGWIDTH && SHORT(sbar->leftoffset) == 0)
+      { V_DrawPatch(ST_X + (ORIGWIDTH - SHORT(sbar->width)) / 2, 0, BG, sbar); }
+    else
+      { V_DrawPatch(ST_X, 0, BG, sbar); }
+
+    // killough 3/7/98: make face background change with displayplayer
+    if (netgame) { V_DrawPatch(ST_FX, 0, BG, faceback[displayplayer]); }
+
+    // [crispy] copy entire SCREENWIDTH, to preserve the pattern
+    // to the left and right of the status bar in widescren mode
+    if (!force) { V_CopyRect(ST_X, 0, BG, SCREENWIDTH, ST_HEIGHT, ST_X, ST_Y, FG); }
+    else {
+      if (WIDESCREENDELTA > 0 && !st_firsttime)
+      {
+        V_CopyRect(0, 0, BG, WIDESCREENDELTA, ST_HEIGHT, 0, ST_Y, FG);
+        V_CopyRect(ORIGWIDTH + WIDESCREENDELTA, 0, BG, WIDESCREENDELTA, ST_HEIGHT, ORIGWIDTH + WIDESCREENDELTA, ST_Y, FG);
+      }
+    }
+  }
 }
 
 
@@ -789,8 +777,17 @@ void ST_drawWidgets(boolean refresh)
   st_fragson = deathmatch && st_statusbaron;
 
   //jff 2/16/98 make color of ammo depend on amount
-  if (*w_ready.num*100 < ammo_red*plyr->maxammo[weaponinfo[w_ready.data].ammo])
-  {
+  // [Nugget] Make it gray if the player has infinite ammo
+  if (plyr->cheats & CF_INFAMMO) {
+    // [Nugget] Support widescreen Crispy HUD
+    if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
+        && (!automapactive || automapoverlay))
+      { STlib_updateNumWS(&w_ready, cr_gray, refresh, 0); }
+    else
+      { STlib_updateNum(&w_ready, cr_gray, refresh); }
+  }
+  else if (*w_ready.num*100 < ammo_red*plyr->maxammo[weaponinfo[w_ready.data].ammo])
+  { // [Nugget] Support widescreen Crispy HUD
     if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
         && (!automapactive || automapoverlay))
       { STlib_updateNumWS(&w_ready, cr_red, refresh, 0); }
@@ -798,14 +795,14 @@ void ST_drawWidgets(boolean refresh)
       { STlib_updateNum(&w_ready, cr_red, refresh); }
   }
   else if (*w_ready.num*100 < ammo_yellow*plyr->maxammo[weaponinfo[w_ready.data].ammo])
-  {
+  { // [Nugget] Support widescreen Crispy HUD
     if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
         && (!automapactive || automapoverlay))
       { STlib_updateNumWS(&w_ready, cr_gold, refresh, 0); }
     else
       { STlib_updateNum(&w_ready, cr_gold, refresh); }
   }
-  else {
+  else { // [Nugget] Support widescreen Crispy HUD
     if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
         && (!automapactive || automapoverlay))
       { STlib_updateNumWS(&w_ready, cr_green, refresh, 0); }
@@ -816,7 +813,7 @@ void ST_drawWidgets(boolean refresh)
   for (i=0;i<4;i++) {
     if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
         && (!automapactive || automapoverlay))
-    {
+    { // [Nugget] Support widescreen Crispy HUD
       STlib_updateNumWS(&w_ammo[i], NULL, refresh, 2);
       STlib_updateNumWS(&w_maxammo[i], NULL, refresh, 2);
     }
@@ -883,10 +880,10 @@ void ST_drawWidgets(boolean refresh)
     }
     else {
       STlib_updatePercent(&w_armor, plyr->armortype == 2
-                                      ? cr_blue2
-                                      : plyr->armortype == 1
-                                        ? cr_green
-                                        : cr_red, refresh);
+                                    ? cr_blue2
+                                    : plyr->armortype == 1
+                                      ? cr_green
+                                      : cr_red, refresh);
     }
   }
   else {
@@ -1212,7 +1209,7 @@ void ST_createWidgets(void)
                      ST_FACESY,
                      faces,
                      &st_faceindex,
-                     &st_statusbarface);
+                     &st_statusbarface); // [Nugget] Crispy minimalistic HUD
 
   // armor percentage - should be colored later
   STlib_initPercent(&w_armor,

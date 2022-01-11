@@ -1030,7 +1030,10 @@ void HU_Drawer(void)
       strcat(hud_ammostr,ammostr);
 
       // set the display color from the percentage of total ammo held
-      if (ammopct<ammo_red)
+      // [Nugget] Make it gray if the player has infinite ammo
+      if (plr->cheats & CF_INFAMMO)
+        { w_ammo.cr = colrngs[CR_GRAY]; }
+      else if (ammopct<ammo_red)
         { w_ammo.cr = colrngs[CR_RED]; }
       else if (ammopct<ammo_yellow)
         { w_ammo.cr = colrngs[CR_GOLD]; }
@@ -1368,8 +1371,7 @@ void HU_Drawer(void)
   }
   else if (hud_timests && (!automapactive || automapoverlay)
            // [Nugget] Allow Time/STS display in Crispy minimalistic HUD
-           && ((scaledviewheight < SCREENHEIGHT)
-               || (screenSize >= 8 && screenSize <= 8+3)))
+           && screenSize <= 8+3)
   {
     // insure HUD display coords are correct
     // [Nugget] Only below certain screen size values
@@ -1380,11 +1382,6 @@ void HU_Drawer(void)
   }
 
   //jff 3/4/98 display last to give priority
-  // jff 4/24/98 Erase current lines before drawing current
-  // needed when screen not fullsize
-  // killough 11/98: only do it when not fullsize
-  if (scaledviewheight < 200) { HU_Erase(); }
-
   //jff 4/21/98 if setup has disabled message list while active, turn it off
   // if the message review is enabled show the scrolling message review
   // if the message review not enabled, show the standard message widget
