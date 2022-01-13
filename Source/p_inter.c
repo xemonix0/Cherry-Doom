@@ -258,9 +258,9 @@ void P_GiveCard(player_t *player, card_t card)
     return;
   // [Nugget] Fix for "key pickup resets palette"
   if (!nugget_comp[comp_keypal])
-    {player->bonuscount += BONUSADD;}
+    { player->bonuscount += BONUSADD; }
   else
-    {player->bonuscount = BONUSADD;}
+    { player->bonuscount = BONUSADD; }
   player->cards[card] = 1;
 }
 
@@ -654,7 +654,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   player->bonuscount += BONUSADD;
   // [Nugget] Bonuscount cap
   if (bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap)
-    {player->bonuscount = bonuscount_cap;}
+    { player->bonuscount = bonuscount_cap; }
 
   S_StartSound(player->mo, sound);   // killough 4/25/98, 12/98
 }
@@ -722,11 +722,11 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
    && ((source->player && extra_gibbing
         && (  (source->player->readyweapon == wp_fist
                && source->player->powers[pw_strength]
-               && P_NuggetCheckDist(source, target, 64*FRACUNIT, true))
+               && P_NuggetCheckDist(source, target, 64*FRACUNIT))
             ||(source->player->readyweapon == wp_chainsaw
-               && P_NuggetCheckDist(source, target, 65*FRACUNIT, true))
+               && P_NuggetCheckDist(source, target, 65*FRACUNIT))
             ||(source->player->readyweapon == wp_supershotgun
-               && P_NuggetCheckDist(source, target, 128*FRACUNIT, true))
+               && P_NuggetCheckDist(source, target, 128*FRACUNIT))
            )
         ) || GIBBERS
   )   )
@@ -766,16 +766,11 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 
 extern fixed_t P_AproxDistance();
 
-boolean P_NuggetCheckDist(mobj_t* source, mobj_t* target, fixed_t range, boolean addradius)
+boolean P_NuggetCheckDist(mobj_t* source, mobj_t* target, fixed_t range)
 {
-  fixed_t	range2;
-  fixed_t dist;
-
-  range2 = range;
-  if (addradius) { range2 += target->info->radius; }
-
-  dist = P_AproxDistance(target->x - source->x,
-                         target->y - source->y);
+  const fixed_t range2 = range + target->info->radius;
+  const fixed_t dist = P_AproxDistance(target->x - source->x,
+                                       target->y - source->y);
 
   if (dist > range2) { return false; }
   else               { return true; }
@@ -879,7 +874,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
     player->health -= damage;       // mirror mobj health here for Dave
     // [Nugget] BUDDHA cheat
     if (player->cheats & CF_BUDDHA && player->health < 1)
-      {player->health = 1;}
+      { player->health = 1; }
     else if (player->health < 0)
       player->health = 0;
 
@@ -887,7 +882,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
     player->damagecount += damage;  // add damage after armor / invuln
 
     if (player->damagecount > damagecount_cap) // [Nugget] Custom red tint cap
-      player->damagecount = damagecount_cap;  // teleport stomp does 10k points...
+      { player->damagecount = damagecount_cap; }
 
 #if 0
       // killough 11/98:
@@ -908,13 +903,12 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
   // [Nugget] BUDDHA cheat
   if (player && (player->cheats & CF_BUDDHA)
       && (target->health - damage) < 1)
-    {target->health = 1;}
-  // do the damage
+    { target->health = 1; }
   else if ((target->health -= damage) <= 0)
-    {
-      P_KillMobj(source, target);
-      return;
-    }
+  { // do the damage
+    P_KillMobj(source, target);
+    return;
+  }
 
   // killough 9/7/98: keep track of targets so that friends can help friends
   if (demo_version >= 203)
@@ -943,10 +937,10 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 		  !(target->flags & MF_SKULLFLY)))) //killough 11/98: see below
   {
     // [Nugget] Prevent pain state if no damage is caused
-    if (nugget_comp[comp_0dmgpain] && casual_play
-        && damage == 0) {;} // Do nothing
+    if (nugget_comp[comp_0dmgpain] && casual_play && damage == 0)
+      {;} // Do nothing
     else
-    {P_SetMobjState(target, target->info->painstate);}
+      { P_SetMobjState(target, target->info->painstate); }
   }
 
   target->reactiontime = 0;           // we're awake now...

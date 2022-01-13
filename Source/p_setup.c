@@ -453,7 +453,7 @@ void P_LoadLineDefs (int lump)
           ld->bbox[BOXTOP] = v1->y;
         }
 
-      // [Nugget] Add this
+      // [Nugget]:
       // [crispy] calculate sound origin of line to be its midpoint
 	  ld->soundorg.x = ld->bbox[BOXLEFT] / 2 + ld->bbox[BOXRIGHT] / 2;
 	  ld->soundorg.y = ld->bbox[BOXTOP] / 2 + ld->bbox[BOXBOTTOM] / 2;

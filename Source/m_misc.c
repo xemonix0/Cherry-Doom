@@ -753,7 +753,7 @@ default_t defaults[] = {
     "Voodoo dolls on slow scrollers move too slowly"
   },
 
-  // [Nugget]
+  // [Nugget] ------------------------------
 
   {
     "comp_blazing2",

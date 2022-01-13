@@ -948,8 +948,7 @@ void HU_Drawer(void)
       case 1: type = "STCFN046"; break;
       case 2: type = "STCFN043"; break;
       case 3: type = "STCFN094"; break;
-    }
-    crosshair = W_CacheLumpName(type, PU_STATIC);
+    } crosshair = W_CacheLumpName(type, PU_STATIC);
 
     hOffset = SHORT(crosshair->width/2) - SHORT(crosshair->leftoffset);
     vOffset -= SHORT(crosshair->topoffset);
@@ -958,7 +957,7 @@ void HU_Drawer(void)
     height = screenSize <= 7 ? (SCREENHEIGHT-ST_HEIGHT)>>1 : SCREENHEIGHT>>1;
 
     if (crosshair_health) {
-      int health = plr->health;
+      const int health = plr->health;
       char *cr;
 
       // Set the crosshair color based on player health

@@ -377,7 +377,7 @@ void P_SubtractAmmo(struct player_s *player, int vanilla_amount)
   int amount;
   ammotype_t ammotype = weaponinfo[player->readyweapon].ammo;
 
-  if (player->cheats & CF_INFAMMO) {return;} // [Nugget] Yikes!
+  if (player->cheats & CF_INFAMMO) { return; } // [Nugget] Yikes!
 
   if (mbf21 && ammotype == am_noammo)
     return; // [XA] hmm... I guess vanilla/boom will go out of bounds then?
@@ -926,10 +926,9 @@ void A_FireCGun(player_t *player, pspdef_t *psp)
         return;
   }
 
-  if (W_CheckNumForName("dschgun") >= 0) // [Nugget] use DSCHGUN if available
-      {S_StartSound (player->mo, sfx_chgun);}
-  else
-      {S_StartSound (player->mo, sfx_pistol);}
+  // [Nugget] use DSCHGUN if available
+  S_StartSound(player->mo, W_CheckNumForName("dschgun") >= 0
+                           ? sfx_chgun : sfx_pistol);
 
   // [Nugget] Fix "Chaingun sound without ammo" bug
   if (nugget_comp[comp_cgundblsnd]) {
@@ -1286,7 +1285,7 @@ void A_ConsumeAmmo(player_t *player, pspdef_t *psp)
   if (!mbf21)
     return;
 
-  if (player->cheats & CF_INFAMMO) {return;} // [Nugget] Yikes!
+  if (player->cheats & CF_INFAMMO) { return; } // [Nugget] Yikes!
 
   // don't do dumb things, kids
   type = weaponinfo[player->readyweapon].ammo;

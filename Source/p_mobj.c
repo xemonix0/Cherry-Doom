@@ -153,8 +153,7 @@ void P_XYMovement (mobj_t* mo)
       mo->momz = 0;
 
       // [Nugget] Fix forgetful lost soul
-      if (!nugget_comp[comp_lsamnesia]
-          && casual_play)
+      if (!nugget_comp[comp_lsamnesia] && casual_play)
         { P_SetMobjState(mo, mo->info->seestate); }
       else
         { P_SetMobjState(mo, mo->info->spawnstate); }
@@ -669,8 +668,7 @@ void P_MobjThinker (mobj_t* mobj)
 
   // [Nugget] Things with both MF_SKULLFLY and MIF_OVERUNDER
   // have buggy behavior, so take the latter away
-  if ((mobj->flags & MF_SKULLFLY)
-      && (mobj->intflags & MIF_OVERUNDER))
+  if ((mobj->flags & MF_SKULLFLY) && (mobj->intflags & MIF_OVERUNDER))
     { mobj->intflags &= ~MIF_OVERUNDER; }
 
   // momentum movement
@@ -1250,7 +1248,7 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
 
   // [Nugget] Fuzzy blood for fuzzy things
   if (nugget_comp[comp_fuzzyblood] && bleeder->flags & MF_SHADOW)
-    {th->flags |= MF_SHADOW;}
+    { th->flags |= MF_SHADOW; }
 
   if (colored_blood)
   {

@@ -387,7 +387,7 @@ void P_PlayerThink (player_t* player)
   }
 
   // [Nugget] Jumping delay
-  if (player->jumpTics)   { player->jumpTics--; }
+  if (player->jumpTics) { player->jumpTics--; }
 
   // [Nugget] Jump/Fly Up
   if (M_InputGameActive(input_jump) && casual_play)
@@ -582,9 +582,9 @@ void P_PlayerThink (player_t* player)
   // [Nugget] Fast weapons cheat
   if (player->cheats & CF_FASTWEAPS) {
     if (player->psprites->tics >= 1)
-      {player->psprites->tics = 1;}
+      { player->psprites->tics = 1; }
     if (player->psprites[ps_flash].tics >= 1)
-      {player->psprites[ps_flash].tics = 1;}
+      { player->psprites[ps_flash].tics = 1; }
   }
 
   if (player->damagecount)

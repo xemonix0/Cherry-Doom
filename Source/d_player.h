@@ -75,11 +75,12 @@ typedef enum
   CF_NOMOMENTUM       = 4,
   // [FG] FPS counter widget
   CF_SHOWFPS          = 8,
-  CF_INFAMMO          = 16, // [Nugget] Infinite ammo
-  CF_FASTWEAPS        = 32, // [Nugget] Fast weapons
-  CF_NOTARGET         = 64, // [Nugget]: [crispy] monsters don't target
-  CF_BUDDHA           = 128, // [Nugget] Can't go below 1% health
-  CF_FLY              = 256 // [Nugget]
+  // [Nugget] All of the following:
+  CF_INFAMMO          = 16, // Infinite ammo
+  CF_FASTWEAPS        = 32,
+  CF_NOTARGET         = 64, // [crispy] monsters don't target
+  CF_BUDDHA           = 128, // Can't go below 1% health
+  CF_FLY              = 256
 
 } cheat_t;
 

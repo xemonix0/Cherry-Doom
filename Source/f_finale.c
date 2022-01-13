@@ -469,7 +469,7 @@ boolean         castattacking;
 // [Nugget] Add the following... ------------------------------
 static signed char	castangle; // [crispy] turnable cast
 static signed char	castskip; // [crispy] skippable cast
-static boolean	castflip; // [crispy] flippable death sequence
+static boolean	    castflip; // [crispy] flippable death sequence
 
 // [crispy] randomize seestate and deathstate sounds in the cast
 static int F_RandomizeSound (int sound) {
@@ -542,9 +542,9 @@ static int F_SoundForState (int st) {
 	// [crispy] fix Doomguy in casting sequence
 	if (castaction == NULL) {
 		if (st == S_PLAY_ATK2)
-			{return sfx_dshtgn;}
+			{ return sfx_dshtgn; }
 		else
-			{return 0;}
+			{ return 0; }
 	}
 	else {
 		int i;
@@ -555,10 +555,10 @@ static int F_SoundForState (int st) {
 
 			if ((!as->early && castaction == as->action) ||
 			    (as->early && nextaction == as->action))
-                {return as->sound;}
+        { return as->sound; }
 		}
 	}
-    return 0;
+  return 0;
 }
 // [Nugget] ... up until here. ------------------------------
 
@@ -629,27 +629,26 @@ void F_CastTicker (void)
     castframes = 0;
     // [Nugget] Add these two
     castangle = 0; // [crispy] turnable cast
-	castflip = false; // [crispy] flippable death sequence
+    castflip = false; // [crispy] flippable death sequence
   }
   else {
     // just advance to next state in animation
-    // [Nugget] Add this
-    // [crispy] fix Doomguy in casting sequence
+    // [Nugget]: [crispy] fix Doomguy in casting sequence
 	/*
 	if (!castdeath && caststate == &states[S_PLAY_ATK1])
 	    goto stopattack;	// Oh, gross hack!
 	*/
     // [crispy] Allow A_RandomJump() in deaths in cast sequence
 	if (caststate->action == A_RandomJump && Woof_Random() < caststate->misc2)
-        {st = caststate->misc1;}
+    { st = caststate->misc1; }
 	else {
         // [crispy] fix Doomguy in casting sequence
         if (!castdeath && caststate == &states[S_PLAY_ATK1])
-            {st = S_PLAY_ATK2;}
+          { st = S_PLAY_ATK2; }
         else if (!castdeath && caststate == &states[S_PLAY_ATK2])
-            {goto stopattack;}	// Oh, gross hack!
+          { goto stopattack; }	// Oh, gross hack!
         else
-            {st = caststate->nextstate;}
+          { st = caststate->nextstate; }
 	}
 	caststate = &states[st];
 	castframes++;
@@ -725,19 +724,18 @@ void F_CastTicker (void)
   }
 
   casttics = caststate->tics;
-  if (casttics == -1)
-  { // [Nugget] Add all this
+  if (casttics == -1) {
+    // [Nugget] Add all this
     // [crispy] Allow A_RandomJump() in deaths in cast sequence
-	if (caststate->action == A_RandomJump) {
+    if (caststate->action == A_RandomJump) {
 	    if (Woof_Random() < caststate->misc2)
-            {caststate = &states[caststate->misc1];}
+        { caststate = &states[caststate->misc1]; }
 	    else
-            {caststate = &states[caststate->nextstate];}
-        casttics = caststate->tics;
-	}
-
-	if (casttics == -1) {casttics = 15;}
+        { caststate = &states[caststate->nextstate]; }
+      casttics = caststate->tics;
     }
+    if (casttics == -1) { casttics = 15; }
+  }
 }
 
 
@@ -747,7 +745,7 @@ void F_CastTicker (void)
 
 boolean F_CastResponder (event_t* ev)
 {
-  boolean xdeath = false; // [Nugget] for [crispy]
+  boolean xdeath = false; // [Nugget]: [crispy]
 
   if (ev->type != ev_keydown)
   return false;
@@ -879,9 +877,9 @@ void F_CastDrawer (void)
 
   // draw the current frame in the middle of the screen
   sprdef = &sprites[caststate->sprite];
-  // [Nugget] Add this
-  // [crispy] the TNT1 sprite is not supposed to be rendered anyway
-  if (!sprdef->numframes && caststate->sprite == SPR_TNT1) {return;}
+  // [Nugget]: [crispy] the TNT1 sprite is not supposed to be rendered anyway
+  if (!sprdef->numframes && caststate->sprite == SPR_TNT1)
+    { return; }
   sprframe = &sprdef->spriteframes[ caststate->frame & FF_FRAMEMASK];
   lump = sprframe->lump[castangle]; // [crispy] turnable cast
   flip = (boolean)sprframe->flip[castangle] ^ castflip; // [crispy] turnable cast, flippable death sequence

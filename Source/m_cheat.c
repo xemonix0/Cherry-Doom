@@ -465,7 +465,7 @@ static void cheat_resurrect() {
     P_SpawnPlayer(&mt);
 
     // [Nugget] Set player health
-    if (plyr->mo) {plyr->mo->health = god_health;}
+    if (plyr->mo) { plyr->mo->health = god_health; }
     plyr->health = god_health;
 
     // [crispy] spawn a teleport fog
@@ -475,7 +475,7 @@ static void cheat_resurrect() {
     // [Nugget] Announce
     plyr->message = "Resurrected!";
 	}
-	else {plyr->message = "Still alive.";}
+	else { plyr->message = "Still alive."; }
 }
 
 // [Nugget] Can't go below 1% health
@@ -491,9 +491,9 @@ static void cheat_fly() {
   plyr->cheats ^= CF_FLY;
 
   if (plyr->cheats & CF_FLY)
-    plyr->mo->flags |= MF_NOGRAVITY;
+    { plyr->mo->flags |= MF_NOGRAVITY; }
   else
-    plyr->mo->flags &= ~MF_NOGRAVITY;
+    { plyr->mo->flags &= ~MF_NOGRAVITY; }
 
   plyr->message = plyr->cheats & CF_FLY
                   ? "Fly Mode ON"
@@ -554,8 +554,8 @@ char buf[3];
 static void cheat_choppers()
 {
   plyr->weaponowned[wp_chainsaw] = true;
-  if (nugget_comp[comp_choppers]) {P_GivePower(plyr, pw_invulnerability);}
-  else                            {plyr->powers[pw_invulnerability] = true;}
+  if (nugget_comp[comp_choppers]) { P_GivePower(plyr, pw_invulnerability); }
+  else                            { plyr->powers[pw_invulnerability] = true; }
   plyr->message = s_STSTR_CHOPPERS; // Ty 03/27/98 - externalized
 }
 

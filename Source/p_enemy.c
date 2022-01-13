@@ -133,13 +133,12 @@ void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 // [Nugget]: [crispy] height check for melee attacks
 static boolean P_NuggetCheckMeleeHeight(mobj_t *actor)
 {
-  mobj_t *pl = actor->target;
+  const mobj_t *pl = actor->target;
 
-  if (!over_under)
+  if (!over_under || !casual_play)
     { return true; }
-  else if ((pl->z > actor->z + actor->height
-            || actor->z > pl->z + pl->height)
-           && casual_play)
+  else if (pl->z > actor->z + actor->height
+           || actor->z > pl->z + pl->height)
     { return false; }
   else
     { return true; }
@@ -1060,10 +1059,6 @@ void A_Look(mobj_t *actor)
       && (actor->flags & MF_FRIEND || !P_LookForTargets(actor, false)))
     return;
 
-  // [Nugget]: [crispy] monsters don't look for players with NOTARGET cheat
-//  if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
-//      return;
-
   // go into chase state
 
   if (actor->info->seesound)
@@ -1314,12 +1309,10 @@ void A_CPosAttack(mobj_t *actor)
     return;
 
   if (nugget_comp[comp_cgunnersfx]) { // [Nugget]
-    if (W_CheckNumForName("dschgun") >= 0)
-        {S_StartSound (actor, sfx_chgun);}
-    else
-        {S_StartSound (actor, sfx_pistol);}
+    S_StartSound(actor, W_CheckNumForName("dschgun") >= 0
+                        ? sfx_chgun : sfx_pistol);
   }
-  else {S_StartSound (actor, sfx_shotgn);}
+  else { S_StartSound (actor, sfx_shotgn); }
 
   A_FaceTarget(actor);
   bangle = actor->angle;
@@ -1442,9 +1435,8 @@ void A_BruisAttack(mobj_t *actor)
     return;
 
   // [Nugget] Fix A_BruisAttack not calling A_FaceTarget
-  if (!(nugget_comp[comp_bruistarget])
-      && !(demorecording||demoplayback||netgame))
-    {A_FaceTarget(actor);}
+  if (!(nugget_comp[comp_bruistarget]) && casual_play)
+    { A_FaceTarget(actor); }
 
   if (P_CheckMeleeRange(actor))
     {
@@ -1556,9 +1548,9 @@ void A_Tracer(mobj_t *actor)
 
   // [Nugget] Check for crouching
   if (dest->player && (dest->intflags & MIF_CROUCHING))
-    {slope = (dest->z+20*FRACUNIT - actor->z) / dist;}
+    { slope = (dest->z+20*FRACUNIT - actor->z) / dist; }
   else
-    {slope = (dest->z+40*FRACUNIT - actor->z) / dist;}
+    { slope = (dest->z+40*FRACUNIT - actor->z) / dist; }
 
   if (slope < actor->momz)
     actor->momz -= FRACUNIT/8;
@@ -1839,7 +1831,7 @@ void A_VileTarget(mobj_t *actor)
   P_SetTarget(&fog->tracer, actor->target);
   // [Nugget]: [crispy] play DSFLAMST sound when Arch-Vile spawns fire attack
   if (nugget_comp[comp_flamst])
-  {S_StartSound(fog, sfx_flamst);}
+    { S_StartSound(fog, sfx_flamst); }
   A_Fire(fog);
 }
 
@@ -2518,13 +2510,12 @@ void A_BrainPain(mobj_t *mo)
 void A_BrainScream(mobj_t *mo)
 {
   int x;
-
   int x1, x2; // [Nugget] Fix lopsided IoS death explosions
-  if (nugget_comp[comp_iosdeath]
-      && !(demorecording||demoplayback||netgame))
-    {x1 = x2 = 280;}
+
+  if (nugget_comp[comp_iosdeath] && casual_play)
+    { x1 = x2 = 280; }
   else
-    {x1 = 196; x2 = 320;}
+    { x1 = 196; x2 = 320; }
 
   for (x=mo->x - x1*FRACUNIT ; x< mo->x + x2*FRACUNIT ; x+= FRACUNIT*8)
     {
