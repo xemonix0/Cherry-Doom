@@ -383,7 +383,20 @@ void P_PlayerThink (player_t* player)
               || M_InputGameActive(input_crouch))
             || (M_InputGameActive(input_jump)
                 && M_InputGameActive(input_crouch))))
-      { player->mo->momz = 0; }
+    {
+      if (player->cheats & CF_NOMOMENTUM)
+        { player->mo->momz = 0; }
+      else {
+        if (player->mo->momz > 0) {
+          player->mo->momz -= 1*FRACUNIT;
+          if (player->mo->momz < 0) { player->mo->momz = 0; }
+        }
+        else if (player->mo->momz < 0) {
+          player->mo->momz += 1*FRACUNIT;
+          if (player->mo->momz > 0) { player->mo->momz = 0; }
+        }
+      }
+    }
   }
 
   // [Nugget] Jumping delay
@@ -394,8 +407,7 @@ void P_PlayerThink (player_t* player)
   {
     if (player->cheats & CF_FLY) {
       player->mo->momz += ((autorun ^ M_InputGameActive(input_speed)) == 1)
-                         ? 2*FRACUNIT
-                         : 1*FRACUNIT;
+                          ? 2*FRACUNIT : 1*FRACUNIT;
       if (player->mo->momz > 8*FRACUNIT) { player->mo->momz = 8*FRACUNIT; }
     }
     else if (jump_crouch)
@@ -418,8 +430,7 @@ void P_PlayerThink (player_t* player)
   {
     if (player->cheats & CF_FLY) {
       player->mo->momz -= ((autorun ^ M_InputGameActive(input_speed)) == 1)
-                         ? 2*FRACUNIT
-                         : 1*FRACUNIT;
+                          ? 2*FRACUNIT : 1*FRACUNIT;
       if (player->mo->momz < -8*FRACUNIT) { player->mo->momz = -8*FRACUNIT; }
     }
     else if (jump_crouch && !CrouchKeyHeld) {

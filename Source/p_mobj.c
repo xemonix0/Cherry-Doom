@@ -272,7 +272,9 @@ void P_XYMovement (mobj_t* mo)
   }
 
   // no friction for missiles or skulls ever, no friction when airborne
-  if (mo->flags & (MF_MISSILE | MF_SKULLFLY) || mo->z > mo->floorz)
+  if (mo->flags & (MF_MISSILE | MF_SKULLFLY)
+      // [Nugget] Do apply friction if airborne with the flight cheat on
+      || (mo->z > mo->floorz && !(player && player->cheats & CF_FLY)))
     { return; }
 
   // killough 8/11/98: add bouncers
