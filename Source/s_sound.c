@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 //
@@ -119,7 +119,7 @@ static void S_StopChannel(int cnum)
    {
       if(I_SoundIsPlaying(channels[cnum].handle))
          I_StopSound(channels[cnum].handle);      // stop the sound playing
-      
+
       // haleyjd 09/27/06: clear the entire channel
       memset(&channels[cnum], 0, sizeof(channel_t));
    }
@@ -151,19 +151,19 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
    if(!source)
       I_Error("S_AdjustSoundParams: NULL source\n");
 #endif
-   
+
    // calculate the distance to sound origin
    //  and clip it if necessary
    //
    // killough 11/98: scale coordinates down before calculations start
    // killough 12/98: use exact distance formula instead of approximation
-   
+
    adx = abs((listener->x >> FRACBITS) - (source->x >> FRACBITS));
    ady = abs((listener->y >> FRACBITS) - (source->y >> FRACBITS));
-   
+
    if(ady > adx)
       dist = adx, adx = ady, ady = dist;
-   
+
    dist = adx ? FixedDiv(adx, finesine[(tantoangle[FixedDiv(ady,adx) >> DBITS]
                                         + ANG90) >> ANGLETOFINESHIFT]) : 0;
 
@@ -179,10 +179,10 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
 
    if(dist > S_CLIPPING_DIST >> FRACBITS)
       return 0;
-  
+
    // angle of source to listener
    angle = R_PointToAngle2(listener->x, listener->y, source->x, source->y);
-   
+
    if(angle <= listener->angle)
       angle += 0xffffffff;
    angle -= listener->angle;
@@ -198,7 +198,7 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
 
    // haleyjd 09/27/06: decrease priority with volume attenuation
    *pri = *pri + (127 - *vol);
-   
+
    if(*pri > 255) // cap to 255
       *pri = 255;
 
@@ -237,7 +237,7 @@ static int S_getChannel(const mobj_t *origin, sfxinfo_t *sfxinfo,
          break;
       }
    }
-   
+
    // Find an open channel
    if(cnum == numChannels)
    {
@@ -274,10 +274,9 @@ static int S_getChannel(const mobj_t *origin, sfxinfo_t *sfxinfo,
    if(cnum >= numChannels)
       I_Error("S_getChannel: handle %d out of range\n", cnum);
 #endif
-   
+
    return cnum;
 }
-
 
 void S_StartSound(const mobj_t *origin, int sfx_id)
 {
@@ -285,7 +284,7 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
    int volumeScale = 127;
    int volume = snd_SfxVolume;
    sfxinfo_t *sfx;
-   
+
    //jff 1/22/98 return if sound is not enabled
    if(!snd_card || nosfxparm)
       return;
@@ -301,12 +300,13 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
 #endif
 
    sfx = &S_sfx[sfx_id];
-   
+
    // Initialize sound parameters
-   if(sfx->link)
+   // [Nugget] Unless there's a lump for the sound link
+   if(sfx->link && !(I_GetSfxLumpNum(sfx) >= 0))
    {
       pitch = sfx->pitch;
-      volumeScale += sfx->volume;      
+      volumeScale += sfx->volume;
    }
    else
       pitch = NORM_PITCH;
@@ -324,7 +324,7 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
 
    // Check to see if it is audible, modify the params
    // killough 3/7/98, 4/25/98: code rearranged slightly
-   
+
    if(!origin || origin == players[displayplayer].mo)
    {
       sep = NORM_SEP;
@@ -351,10 +351,10 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
          pitch += 8 - (M_Random()&15);
       else if(sfx_id != sfx_itemup && sfx_id != sfx_tink)
          pitch += 16 - (M_Random()&31);
-      
+
       if(pitch < 0)
          pitch = 0;
-      
+
       if(pitch > 255)
          pitch = 255;
    }
@@ -371,8 +371,10 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
    channels[cnum].sfxinfo = sfx;
    channels[cnum].origin  = origin;
 
-   while(sfx->link)
-      sfx = sfx->link;     // sf: skip thru link(s)
+   // [Nugget] Check if there's a lump for the sound,
+   // and skip the loop if there is, therefore using the lump instead
+   while(sfx->link && !(I_GetSfxLumpNum(sfx) >= 0))
+    { sfx = sfx->link; } // sf: skip thru link(s)
 
    // Assigns the handle to one of the channels in the mix/output buffer.
    handle = I_StartSound(sfx, cnum, volume, sep, pitch, priority);
@@ -381,7 +383,7 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
    if(handle >= 0)
    {
       channels[cnum].handle = handle;
-      
+
       // haleyjd 05/29/06: record volume scale value
       // haleyjd 06/03/06: record pitch too (wtf is going on here??)
       // haleyjd 09/27/06: store priority and singularity values (!!!)
@@ -403,7 +405,7 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
 void S_StopSound(const mobj_t *origin)
 {
    int cnum;
-   
+
    //jff 1/22/98 return if sound is not enabled
    if(!snd_card || nosfxparm)
       return;
@@ -474,11 +476,11 @@ void S_ResumeSound(void)
 void S_UpdateSounds(const mobj_t *listener)
 {
    int cnum;
-   
+
    //jff 1/22/98 return if sound is not enabled
    if(!snd_card || nosfxparm)
       return;
-   
+
    for(cnum = 0; cnum < numChannels; ++cnum)
    {
       channel_t *c = &channels[cnum];
@@ -501,17 +503,17 @@ void S_UpdateSounds(const mobj_t *listener)
             int pitch = c->pitch; // haleyjd 06/03/06: use channel's pitch!
             int sep = NORM_SEP;
             int pri = c->o_priority; // haleyjd 09/27/06: priority
-            
+
             // check non-local sounds for distance clipping
             // or modify their params
 
             if(c->origin && listener != c->origin) // killough 3/20/98
             {
-               if(!S_AdjustSoundParams(listener, 
-                                       c->origin, 
-                                       c->volume, 
+               if(!S_AdjustSoundParams(listener,
+                                       c->origin,
+                                       c->volume,
                                        &volume,
-                                       &sep, 
+                                       &sep,
                                        &pitch,
                                        &pri))
                   S_StopChannel(cnum);
@@ -554,12 +556,12 @@ void S_SetSfxVolume(int volume)
    //jff 1/22/98 return if sound is not enabled
    if(!snd_card || nosfxparm)
       return;
-   
+
 #ifdef RANGECHECK
    if(volume < 0 || volume > 127)
       I_Error("Attempt to set sfx volume at %d", volume);
 #endif
-   
+
    snd_SfxVolume = volume;
 }
 
@@ -569,22 +571,22 @@ void S_ChangeMusic(int musicnum, int looping)
 
    musinfo.current_item = -1;
    S_music[mus_musinfo].lumpnum = -1;
-   
+
    //jff 1/22/98 return if music is not enabled
    if(!mus_card || nomusicparm)
       return;
-   
+
    if(musicnum <= mus_None || musicnum >= NUMMUSIC)
       I_Error("Bad music number %d", musicnum);
-   
+
    music = &S_music[musicnum];
-   
+
    if(mus_playing == music)
       return;
-   
+
    // shutdown old music
    S_StopMusic();
-   
+
    // get lumpnum if neccessary
    if(!music->lumpnum)
    {
@@ -592,15 +594,15 @@ void S_ChangeMusic(int musicnum, int looping)
       sprintf(namebuf, "d_%s", music->name);
       music->lumpnum = W_GetNumForName(namebuf);
    }
-   
+
    // load & register it
    music->data   = W_CacheLumpNum(music->lumpnum, PU_STATIC);
    // julian: added lump length
    music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
-   
+
    // play it
    I_PlaySong((void *)music->handle, looping);
-   
+
    mus_playing = music;
 
    // [crispy] musinfo.items[0] is reserved for the map's default music
@@ -677,17 +679,17 @@ void S_StopMusic(void)
 {
    if(!mus_playing)
       return;
-   
+
    if(mus_paused)
       I_ResumeSong(mus_playing->handle);
-   
+
    I_StopSong((void *)mus_playing->handle);
    I_UnRegisterSong((void *)mus_playing->handle);
    if (mus_playing->data != NULL) // for wads with "empty" music lumps (Nihility.wad)
    {
    Z_ChangeTag(mus_playing->data, PU_CACHE);
    }
-   
+
    mus_playing->data = NULL;
    mus_playing = NULL;
 }
@@ -709,10 +711,10 @@ static inline int WRAP(int i, int w)
 void S_Start(void)
 {
    int cnum,mnum;
-   
+
    // kill all playing sounds at start of level
    //  (trust me - a good idea)
-   
+
    //jff 1/22/98 skip sound init if sound not enabled
    if(snd_card && !nosfxparm)
    {
@@ -726,7 +728,7 @@ void S_Start(void)
    //jff 1/22/98 return if music is not enabled
    if (!mus_card || nomusicparm)
       return;
-   
+
    // start new music for the level
    mus_paused = 0;
 
@@ -740,7 +742,7 @@ void S_Start(void)
       }
    // If the mapinfo defined music cannot be found, try the default for the given map.
    }
-   
+
    if(idmusnum!=-1)
       mnum = idmusnum; //jff 3/17/98 reload IDMUS music if not -1
    else
@@ -787,16 +789,16 @@ void S_Init(int sfxVolume, int musicVolume)
    if(snd_card && !nosfxparm)
    {
       printf("S_Init: default sfx volume %d\n", sfxVolume);  // killough 8/8/98
-      
+
       // haleyjd
       I_SetChannels();
-      
+
       S_SetSfxVolume(sfxVolume);
-      
+
       // Allocating the internal channels for mixing
       // (the maximum numer of sounds rendered
       // simultaneously) within zone memory.
-      
+
       // killough 10/98:
       channels = calloc(numChannels = default_numChannels, sizeof(channel_t));
       // [FG] removed map objects may finish their sounds
@@ -804,7 +806,7 @@ void S_Init(int sfxVolume, int musicVolume)
    }
 
    S_SetMusicVolume(musicVolume);
-   
+
    // no sounds are playing, and they are not mus_paused
    mus_paused = 0;
 }

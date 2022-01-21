@@ -204,8 +204,7 @@ sfxinfo_t original_S_sfx[] = {
   { "punch",  sg_none,   64, 0, -1, -1, 0 },
   { "hoof",   sg_none,   70, 0, -1, -1, 0 },
   { "metal",  sg_none,   70, 0, -1, -1, 0 },
-  // [Nugget] Make DSCHGUN an independent sound
-  { "chgun",  sg_none,   64, 0, -1, -1, 0 },
+  { "chgun",  sg_none,   64, &original_S_sfx[sfx_pistol], 150, 0, 0 },
   { "tink",   sg_none,   60, 0, -1, -1, 0 },
   { "bdopn",  sg_none,  100, 0, -1, -1, 0 },
   { "bdcls",  sg_none,  100, 0, -1, -1, 0 },
