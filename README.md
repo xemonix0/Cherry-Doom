@@ -9,21 +9,24 @@ Although the new code has been written with the intention of not breaking demo c
 ## Features
 
 - From Crispy Doom (inspired or ported code):
-  - **Minimalistic HUD** (partially implemented);
+  - **Minimalistic HUD** (without translucent variants);
   - **Resurrect from savegame** (Run key + Use key);
   - _**'RESURRECT'**_ cheat adapted from Crispy's resurrection with IDDQD (**'IDRES'** as an alternative combination);
   - _**'NOTARGET'**_ cheat;
   - _**Things move over/under things**_ setting;
+  - **Static crosshair**, without highlight on target;
   - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first);
   - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt;
   - _**Disable palette tint in menus**_ setting;
   - _**Use Armor Type Color**_ setting, for armor count coloring based on armor type;
   - **IDCLEV00 restarts current map**;
   - **Mid-air control** while on noclipping mode;
-  - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip).
+  - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip);
+  - Reenabled _**'NOMOMENTUM'**_ cheat.
 - _**Disable Background**_ setting, to disable the background on setup screens and dynamic Help screen
 - _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tint
 - _**Extra Gibbing**_ setting, to force Berserk Fist, Chainsaw and SSG gibbing
+- _**Bobbing Percentage**_ setting
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first)
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
 - _**Disable Horizontal Autoaim**_ setting
@@ -33,7 +36,9 @@ Although the new code has been written with the intention of not breaking demo c
   - _**'VALIANT'**_ for fast weapons;
     - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA;
   - _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt;
+  - _**'IDFLY'**_ to fly;
   - _**'BUDDHA'**_ to prevent the player's health from going below 1%, despite still taking damage.
+- **Sound Links check for a dedicated lump**, therefore allowing usage of a custom sound effect
 - New **"Doom compatibility"** settings (some adapted from Crispy Doom fixes):
   - Blazing doors reopen with wrong sound;
   - Manually reactivated moving doors are silent;
@@ -143,13 +148,10 @@ License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0]
 
 Files: `data/woof.ico,
  data/woof.png,
- data/woof8.ico`
-Copyright: © 2021 Korp.
+ data/woof8.ico,
+ Source/icon.c`
+Copyright: © 2022 Korp.
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-
-Files: `Source/icon.c` (to be replaced)
-Copyright: © 2020 Julia Nechaevskaya.
-License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
 Files: `cmake/FindSDL2.cmake,
  cmake/FindSDL2_image.cmake,
