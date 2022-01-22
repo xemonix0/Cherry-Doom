@@ -401,13 +401,6 @@ default_t defaults[] = {
   },
 
   {
-    "extra_gibbing",
-    (config_t *) &extra_gibbing, NULL,
-    {0}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable extra gibbing"
-  },
-
-  {
     "over_under",
     (config_t *) &over_under, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,
@@ -422,13 +415,6 @@ default_t defaults[] = {
   },
 
   {
-    "no_hor_autoaim",
-    (config_t *) &no_hor_autoaim, NULL,
-    {0}, {0,1}, number, ss_weap, wad_no,
-    "1 to disable horizontal projectile autoaim"
-  },
-
-  {
     "damagecount_cap",
     (config_t *) &damagecount_cap, NULL,
     {100}, {0,100}, number, ss_gen, wad_no,
@@ -440,13 +426,6 @@ default_t defaults[] = {
     (config_t *) &bonuscount_cap, NULL,
     {-1}, {-1,100}, number, ss_gen, wad_no,
     "Player bonus tint cap"
-  },
-
-  {
-    "bobbing_percentage",
-    (config_t *) &bobbing_percentage, NULL,
-    {100}, {0,100}, number, ss_weap, wad_no,
-    "Percentage of weapon and view bobbing intensity"
   },
 
   {
@@ -471,6 +450,20 @@ default_t defaults[] = {
   },
 
   {
+    "bobbing_percentage",
+    (config_t *) &bobbing_percentage, NULL,
+    {100}, {0,100}, number, ss_weap, wad_no,
+    "Percentage of weapon and view bobbing intensity"
+  },
+
+  {
+    "no_hor_autoaim",
+    (config_t *) &no_hor_autoaim, NULL,
+    {0}, {0,1}, number, ss_weap, wad_no,
+    "1 to disable horizontal projectile autoaim"
+  },
+
+  {
     "crosshair_type",
     (config_t *) &crosshair_type, NULL,
     {0}, {0,3}, number, ss_stat, wad_no,
@@ -489,6 +482,13 @@ default_t defaults[] = {
     (config_t *) &armor_type_color, NULL,
     {0}, {0,1}, number, ss_stat, wad_no,
     "1 to color the armor amount based on armor type"
+  },
+
+  {
+    "extra_gibbing",
+    (config_t *) &extra_gibbing, NULL,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable extra gibbing"
   },
 
   { //jff 4/3/98 allow unlimited sensitivity

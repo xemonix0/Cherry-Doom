@@ -968,11 +968,11 @@ void HU_Drawer(void)
       else if (health<=health_green)    { cr = colrngs[CR_GREEN]; }
       else                              { cr = colrngs[CR_BLUE2]; }
 
-      V_DrawPatchTranslatedWS((SCREENWIDTH>>1) - hOffset, height - vOffset,
+      V_DrawPatchTranslatedWS((SCREENWIDTH/2) - hOffset, height - vOffset,
                               FG, crosshair, cr, 0, 0);
     }
     else {
-      V_DrawPatchGeneralWS((SCREENWIDTH>>1) - hOffset, height - vOffset,
+      V_DrawPatchGeneralWS((SCREENWIDTH/2) - hOffset, height - vOffset,
                            FG, crosshair, false, 0);
     }
   }

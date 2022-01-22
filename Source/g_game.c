@@ -1844,7 +1844,7 @@ static void G_DoLoadGame(void)
 
   // [Nugget]: [crispy] if the player is dead in this savegame,
   // do not consider it for reload
-  if (players[consoleplayer].health <= 0) {G_ClearSavename();}
+  if (players[consoleplayer].health <= 0) { G_ClearSavename(); }
 
   Z_CheckHeap();
 

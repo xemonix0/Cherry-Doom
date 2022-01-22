@@ -97,7 +97,9 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
 
     if (state->misc1) {
       // coordinate set
-      psp->sx = state->misc1 << FRACBITS;
+      // [Nugget] Subtract 1 pixel from the misc1 calculation,
+      // for consistency with the first person sprite centering fix
+      psp->sx = (state->misc1 << FRACBITS) - (1<<FRACBITS);
       psp->sy = state->misc2 << FRACBITS;
       // [FG] centered weapon sprite
       psp->sx2 = psp->sx;
@@ -473,7 +475,8 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
   // bob the weapon based on movement speed
   {
     int angle = (128*leveltime) & FINEMASK;
-    psp->sx = FRACUNIT + FixedMul(player->bob, finecosine[angle]);
+    // [Nugget] Fix first person sprite centering
+    psp->sx = /*FRACUNIT +*/ FixedMul(player->bob, finecosine[angle]);
     angle &= FINEANGLES/2-1;
     psp->sy = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
   }
@@ -526,7 +529,7 @@ void A_Lower(player_t *player, pspdef_t *psp)
 {
   // [Nugget] Double speed with Fast Weapons
   psp->sy += (player->cheats & CF_FASTWEAPS)
-             ? LOWERSPEED<<1
+             ? LOWERSPEED*2
              : LOWERSPEED;
 
   // Is already down.
@@ -564,7 +567,7 @@ void A_Raise(player_t *player, pspdef_t *psp)
 
   // [Nugget] Double speed with Fast Weapons
   psp->sy -= (player->cheats & CF_FASTWEAPS)
-             ? RAISESPEED<<1
+             ? RAISESPEED*2
              : RAISESPEED;
 
   if (psp->sy > WEAPONTOP)
@@ -1069,14 +1072,15 @@ void P_MovePsprites(player_t *player)
     else if (!player->attackdown || center_weapon == 2)
     {
       int angle = (128*leveltime) & FINEMASK;
-      psp->sx2 = FRACUNIT + FixedMul(player->bob, finecosine[angle]);
+      // [Nugget] Fix first person sprite centering
+      psp->sx2 = /*FRACUNIT +*/ FixedMul(player->bob, finecosine[angle]);
       angle &= FINEANGLES/2-1;
       psp->sy2 = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
     }
     // [FG] center the weapon sprite horizontally and push up vertically
     else if (center_weapon == 1)
     {
-      psp->sx2 = FRACUNIT;
+      psp->sx2 = /*FRACUNIT*/ 0; // [Nugget] Fix first person sprite centering
       psp->sy2 = WEAPONTOP;
     }
   }

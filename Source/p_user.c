@@ -233,7 +233,7 @@ void P_MovePlayer (player_t* player)
 	    csidemove = cmd->sidemove;
       // Check for crouching
       if (player->mo->intflags & MIF_CROUCHING)
-        { cforwardmove>>=1; csidemove>>=1; }
+        { cforwardmove /= 2; csidemove /= 2; }
 
       if (cmd->forwardmove) {
 	      P_Bob(player,mo->angle,cforwardmove*bobfactor);
@@ -450,14 +450,14 @@ void P_PlayerThink (player_t* player)
 
   // [Nugget] Smooth crouching
   if ((player->mo->intflags & MIF_CROUCHING)
-      && player->crouchOffset < (viewheight_value>>1)*FRACUNIT)
+      && player->crouchOffset < (viewheight_value/2)*FRACUNIT)
   {
     player->crouchOffset += 2*FRACUNIT;
     player->mo->height -= 2*FRACUNIT;
-    if (player->crouchOffset >= (viewheight_value>>1)*FRACUNIT)
+    if (player->crouchOffset >= (viewheight_value/2)*FRACUNIT)
     {
-      player->crouchOffset = (viewheight_value>>1)*FRACUNIT;
-      player->mo->height = player->mo->info->height>>1;
+      player->crouchOffset = (viewheight_value/2)*FRACUNIT;
+      player->mo->height = player->mo->info->height/2;
     }
   }
   else if (!(player->mo->intflags & MIF_CROUCHING)
