@@ -390,6 +390,7 @@ extern int no_hor_autoaim;
 // Status Bar / HUD
 extern int crosshair_type;
 extern int crosshair_health;
+extern int crosshair_target;
 extern int armor_type_color;
 // Enemies
 extern int extra_gibbing;

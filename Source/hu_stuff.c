@@ -38,6 +38,7 @@
 #include "d_deh.h"   /* Ty 03/27/98 - externalization of mapnamesx arrays */
 #include "r_draw.h"
 #include "m_input.h"
+#include "p_map.h" // crosshair (linetarget)
 
 // global heads up display controls
 
@@ -939,41 +940,96 @@ void HU_Drawer(void)
   // [Nugget] Draw a static crosshair
   if (crosshair_type && !automapactive && plr->playerstate != PST_DEAD)
   {
-    patch_t *crosshair;
+    patch_t *crosshair, *crosshair2;
     char *type = "";
     short hOffset = 0, vOffset = 0;
     int height;
+    char *cr = colrngs[CR_RED]; // The default color
+    int health;
 
+    // Get the patch
     switch (crosshair_type) {
-      case 1: type = "STCFN046"; break;
-      case 2: type = "STCFN043"; break;
-      case 3: type = "STCFN094"; break;
+      case 1: type = "STCFN046"; break; // Dot
+      case 2: type = "STCFN043"; break; // Cross
+      case 3: type = "STCFN094"; break; // Chevron
+      case 4: type = "STCFN062"; break; // Chevrons
+      case 5: type = "STCFN040"; break; // Arcs (Parentheses)
+      default:                   break;
     } crosshair = W_CacheLumpName(type, PU_STATIC);
+    // Get the second patch, if necessary
+    switch (crosshair_type) {
+      case 4: type = "STCFN060"; break; // Second Chevron
+      case 5: type = "STCFN041"; break; // Second Arc
+      default:                   break;
+    } crosshair2 = W_CacheLumpName(type, PU_STATIC);
 
+    // Center patch(es), and negate offsets if present
     hOffset = SHORT(crosshair->width/2) - SHORT(crosshair->leftoffset);
     vOffset -= SHORT(crosshair->topoffset);
+    // Special treatment for the single chevron
     if (crosshair_type != 3) { vOffset += (SHORT(crosshair->height/2)); }
 
+    // Center on the screen
     height = screenSize <= 7 ? (SCREENHEIGHT-ST_HEIGHT)>>1 : SCREENHEIGHT>>1;
 
-    if (crosshair_health) {
-      const int health = plr->health;
-      char *cr;
+    // Check for linetarget
+    if (crosshair_health == 2 || crosshair_target)
+    {
+      angle_t an = plr->mo->angle;
+      const ammotype_t ammo = weaponinfo[plr->readyweapon].ammo;
+      const fixed_t range = (ammo == am_noammo) ? MELEERANGE : 16*64*FRACUNIT;
 
+      P_AimLineAttack(plr->mo, an, range, 0);
+      if ((ammo == am_misl || ammo == am_cell)
+          && (!no_hor_autoaim || !casual_play))
+      {
+        if (!linetarget)
+          { P_AimLineAttack(plr->mo, an += 1<<26, range, 0); }
+        if (!linetarget)
+          { P_AimLineAttack(plr->mo, an -= 2<<26, range, 0); }
+      }
+    }
+
+    if (crosshair_health == 2)
+    { // Set the crosshair color based on target health
+      if (linetarget && !(linetarget->flags & MF_SHADOW)) {
+        health = linetarget->health;
+        if (health < linetarget->info->spawnhealth/4)
+          { cr = colrngs[CR_RED]; }
+        else if (health < linetarget->info->spawnhealth/2)
+          { cr = colrngs[CR_BRICK]; }
+        else if (health < (linetarget->info->spawnhealth/2)*1.5)
+          { cr = colrngs[CR_GOLD]; }
+        else
+          { cr = colrngs[CR_GREEN]; }
+      }
+      else // Make it gray if no linetarget
+        { cr = colrngs[CR_GRAY]; }
+    }
+    // Make the crosshair gray if aiming at target
+    else if (crosshair_target
+             && linetarget && !(linetarget->flags & MF_SHADOW))
+      { cr = colrngs[CR_GRAY]; }
+    else if (crosshair_health == 1) {
       // Set the crosshair color based on player health
+      health = plr->health;
       if (plr->powers[pw_invulnerability]
           || plr->cheats & CF_GODMODE)  { cr = colrngs[CR_GRAY]; }
       else if (health<health_red)       { cr = colrngs[CR_RED]; }
       else if (health<health_yellow)    { cr = colrngs[CR_GOLD]; }
       else if (health<=health_green)    { cr = colrngs[CR_GREEN]; }
       else                              { cr = colrngs[CR_BLUE2]; }
+    }
 
+    if (crosshair_type >= 4) { // Draw double patches
+      V_DrawPatchTranslatedWS((SCREENWIDTH/2) - hOffset - 9, height - vOffset,
+                              FG, crosshair, cr, 0, 0);
+      V_DrawPatchTranslatedWS((SCREENWIDTH/2) - hOffset + 8, height - vOffset,
+                              FG, crosshair2, cr, 0, 0);
+    }
+    else { // Draw single patch
       V_DrawPatchTranslatedWS((SCREENWIDTH/2) - hOffset, height - vOffset,
                               FG, crosshair, cr, 0, 0);
-    }
-    else {
-      V_DrawPatchGeneralWS((SCREENWIDTH/2) - hOffset, height - vOffset,
-                           FG, crosshair, false, 0);
     }
   }
 

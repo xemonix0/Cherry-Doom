@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: m_menu.h,v 1.4 1998/05/16 09:17:18 killough Exp $
@@ -19,12 +19,12 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
 //   Menu widget stuff, episode selection and such.
-//    
+//
 //-----------------------------------------------------------------------------
 
 #ifndef __M_MENU__
@@ -88,32 +88,32 @@ extern int warning_about_changes, print_warning_about_changes;
 // The following #defines are for the m_flags field of each item on every
 // Setup Screen. They can be OR'ed together where appropriate
 
-#define S_HILITE     0x1 // Cursor is sitting on this item
-#define S_SELECT     0x2 // We're changing this item
-#define S_TITLE      0x4 // Title item
-#define S_YESNO      0x8 // Yes or No item
-#define S_CRITEM    0x10 // Message color
-#define S_COLOR     0x20 // Automap color
-#define S_CHAT      0x40 // Chat String
-#define S_RESET     0x80 // Reset to Defaults Button
-#define S_PREV     0x100 // Previous menu exists
-#define S_NEXT     0x200 // Next menu exists
-#define S_INPUT    0x400 // Composite input
-#define S_WEAP     0x800 // Weapon #
-#define S_NUM     0x1000 // Numerical item
-#define S_SKIP    0x2000 // Cursor can't land here
-#define S_KEEP    0x4000 // Don't swap key out
-#define S_END     0x8000 // Last item in list (dummy)
-#define S_LEVWARN 0x10000// killough 8/30/98: Always warn about pending change
-#define S_PRGWARN 0x20000// killough 10/98: Warn about change until next run
-#define S_BADVAL  0x40000// killough 10/98: Warn about bad value
-#define S_FILE    0x80000// killough 10/98: Filenames
-#define S_LEFTJUST 0x100000 // killough 10/98: items which are left-justified
-#define S_CREDIT  0x200000  // killough 10/98: credit
-#define S_BADVID  0x400000  // killough 12/98: video mode change error
-#define S_CHOICE  0x800000  // [FG] selection of choices
-#define S_DISABLE 0x1000000 // Disable item
-#define S_COSMETIC 0x2000000 // Don't warn about change
+#define S_HILITE    0x1       // Cursor is sitting on this item
+#define S_SELECT    0x2       // We're changing this item
+#define S_TITLE     0x4       // Title item
+#define S_YESNO     0x8       // Yes or No item
+#define S_CRITEM    0x10      // Message color
+#define S_COLOR     0x20      // Automap color
+#define S_CHAT      0x40      // Chat String
+#define S_RESET     0x80      // Reset to Defaults Button
+#define S_PREV      0x100     // Previous menu exists
+#define S_NEXT      0x200     // Next menu exists
+#define S_INPUT     0x400     // Composite input
+#define S_WEAP      0x800     // Weapon #
+#define S_NUM       0x1000    // Numerical item
+#define S_SKIP      0x2000    // Cursor can't land here
+#define S_KEEP      0x4000    // Don't swap key out
+#define S_END       0x8000    // Last item in list (dummy)
+#define S_LEVWARN   0x10000   // killough 8/30/98: Always warn about pending change
+#define S_PRGWARN   0x20000   // killough 10/98: Warn about change until next run
+#define S_BADVAL    0x40000   // killough 10/98: Warn about bad value
+#define S_FILE      0x80000   // killough 10/98: Filenames
+#define S_LEFTJUST  0x100000  // killough 10/98: items which are left-justified
+#define S_CREDIT    0x200000  // killough 10/98: credit
+#define S_BADVID    0x400000  // killough 12/98: video mode change error
+#define S_CHOICE    0x800000  // [FG] selection of choices
+#define S_DISABLE   0x1000000 // Disable item
+#define S_COSMETIC  0x2000000 // Don't warn about change
 
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
@@ -152,7 +152,7 @@ typedef enum {
 //
 // killough 11/98:
 //
-// Restructured to allow simpler table entries, 
+// Restructured to allow simpler table entries,
 // and to Xref with defaults[] array in m_misc.c.
 // Moved from m_menu.c to m_menu.h so that m_misc.c can use it.
 
@@ -178,7 +178,7 @@ typedef struct setup_menu_s
   const char **selectstrings; // [FG] selection of choices
 } setup_menu_t;
 
-#endif    
+#endif
 
 //----------------------------------------------------------------------------
 //

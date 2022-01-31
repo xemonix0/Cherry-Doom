@@ -2362,27 +2362,27 @@ void M_DrawScreenItems(setup_menu_t* src)
   if (print_warning_about_changes > 0)   // killough 8/15/98: print warning
   {
     if (warning_about_changes & S_BADVAL)
-      {
-	strcpy(menu_buffer, "Value out of Range");
-	M_DrawMenuString(100,176,CR_RED);
-      }
-    else
-      if (warning_about_changes & S_PRGWARN)
-	{
-	  strcpy(menu_buffer,
-		 "Warning: Program must be restarted to see changes");
-	  M_DrawMenuString(3, 176, CR_RED);
-	}
-      else
-	if (warning_about_changes & S_BADVID)
-	  {
-	    strcpy(menu_buffer, "Video mode not supported");
-	    M_DrawMenuString(80,176,CR_RED);
-	  }
-	else
+    {
+      strcpy(menu_buffer,
+             "Value out of Range");
+      M_DrawMenuString(100,176,CR_RED);
+    }
+    else if (warning_about_changes & S_PRGWARN)
+    {
+      strcpy(menu_buffer,
+             "Warning: Program must be restarted to see changes");
+      M_DrawMenuString(3, 176, CR_RED);
+    }
+    else if (warning_about_changes & S_BADVID)
 	  {
 	    strcpy(menu_buffer,
-		   "Warning: Changes are pending until next game");
+             "Video mode not supported");
+	    M_DrawMenuString(80,176,CR_RED);
+	  }
+    else
+	  {
+	    strcpy(menu_buffer,
+             "Warning: Changes are pending until next game");
 	    M_DrawMenuString(18,184,CR_RED);
 	  }
   }
@@ -3739,12 +3739,14 @@ enum {
   general_viewheight,
   general_quicksaveload,
   general_quickexit,
-  general_crosshairtype,
-  general_crosshairhealth,
 };
 
 static const char *crosshair_types[] = {
-  "Off", "Dot", "Cross", "Chevron", NULL
+  "Off", "Dot", "Cross", "Chevron", "Chevrons", "Arcs", NULL
+};
+
+static const char *crosshair_health_source[] = {
+  "Off", "Player's", "Target's", NULL
 };
 
 setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
@@ -3779,10 +3781,13 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
    G_Y + general_quickexit*8, {"quick_quitgame"}},
 
   {"Crosshair", S_CHOICE, m_null, G_X,
-   G_Y + general_crosshairtype*8, {"crosshair_type"}, 0, NULL, crosshair_types},
+   G_Y + 9*8, {"crosshair_type"}, 0, NULL, crosshair_types},
 
-  {"Crosshair Shows Health", S_YESNO, m_null, G_X,
-   G_Y + general_crosshairhealth*8, {"crosshair_health"}},
+  {"Crosshair Shows Health", S_CHOICE, m_null, G_X,
+   G_Y + 10*8, {"crosshair_health"}, 0, NULL, crosshair_health_source},
+
+  {"Crosshair Highlights On Target", S_YESNO, m_null, G_X,
+   G_Y + 11*8, {"crosshair_target"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings2}},
 
@@ -6534,6 +6539,10 @@ void M_ResetSetupMenu(void)
     gen_settings3[general_overunder+1].m_flags &= ~S_DISABLE;
     gen_settings3[general_jump_crouch+1].m_flags &= ~S_DISABLE;
   }
+  if (crosshair_health == 2)
+    { gen_settings3[11+1].m_flags |= S_DISABLE; }
+  else
+    { gen_settings3[11+1].m_flags &= ~S_DISABLE; }
 
   if (demorecording||fauxdemo)
     { gen_settings3[general_viewheight+1].m_flags |= S_DISABLE; }

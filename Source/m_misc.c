@@ -466,15 +466,22 @@ default_t defaults[] = {
   {
     "crosshair_type",
     (config_t *) &crosshair_type, NULL,
-    {0}, {0,3}, number, ss_stat, wad_no,
+    {0}, {0,5}, number, ss_stat, wad_no,
     "Crosshair type, 0 = Off"
   },
 
   {
     "crosshair_health",
     (config_t *) &crosshair_health, NULL,
+    {0}, {0,2}, number, ss_stat, wad_no,
+    "Color crosshair based on player (1) or target (2) health"
+  },
+
+  {
+    "crosshair_target",
+    (config_t *) &crosshair_target, NULL,
     {0}, {0,1}, number, ss_stat, wad_no,
-    "1 to color the crosshair based on player health"
+    "1 to highlight targets with the crosshair"
   },
 
   {
