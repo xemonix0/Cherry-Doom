@@ -287,6 +287,8 @@ static st_binicon_t  w_armsbg;
 
 // weapon ownership widgets
 static st_multicon_t w_arms[6];
+// [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
+static int st_shotguns;
 
 // face status widget
 static st_multicon_t w_faces;
@@ -924,6 +926,9 @@ void ST_drawWidgets(boolean refresh)
 
   STlib_updateBinIcon(&w_armsbg, refresh);
 
+  // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
+  st_shotguns = plyr->weaponowned[wp_shotgun] | plyr->weaponowned[wp_supershotgun];
+
   for (i=0;i<6;i++) {
     // [Nugget] Support widescreen Crispy HUD
     if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
@@ -936,8 +941,8 @@ void ST_drawWidgets(boolean refresh)
   // [Nugget] This probably shouldn't go here, but it works
   if (screenblocks == CRISPY_HUD || screenblocks == CRISPY_HUD+2)
   {
-    if (netgame) { V_DrawPatch(ST_FX, 169, FG, faceback[displayplayer]); }
-    else         { V_DrawPatch(ST_FX, 169, FG, faceback[1]); }
+    if (netgame) { V_DrawPatch(ST_FX, SCREENHEIGHT - 31, FG, faceback[displayplayer]); }
+    else         { V_DrawPatch(ST_FX, SCREENHEIGHT - 31, FG, faceback[1]); }
   }
 
   // [Nugget] Support widescreen Crispy HUD
@@ -1185,14 +1190,15 @@ void ST_createWidgets(void)
                     &st_classicstatusbar); // [Nugget] Crispy minimalistic HUD
 
   // weapons owned
-  for(i=0;i<6;i++)
-    {
-      STlib_initMultIcon(&w_arms[i],
-                         ST_ARMSX+(i%3)*ST_ARMSXSPACE,
-                         ST_ARMSY+(i/3)*ST_ARMSYSPACE,
-                         arms[i], (int *) &plyr->weaponowned[i+1],
-                         &st_armson);
-    }
+  for(i=0;i<6;i++) {
+    STlib_initMultIcon(&w_arms[i],
+                       ST_ARMSX+(i%3)*ST_ARMSXSPACE,
+                       ST_ARMSY+(i/3)*ST_ARMSYSPACE,
+                       arms[i], (int *) &plyr->weaponowned[i+1],
+                       &st_armson);
+  }
+  // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
+  w_arms[1].inum = &st_shotguns;
 
   // frags sum
   STlib_initNum(&w_frags,

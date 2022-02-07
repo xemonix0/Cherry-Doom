@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -695,7 +695,7 @@ static void R_Subsector(int num)
                 frontsector->ceiling_yoffs
                 ) : NULL;
 
-  // killough 9/18/98: Fix underwater slowdown, by passing real sector 
+  // killough 9/18/98: Fix underwater slowdown, by passing real sector
   // instead of fake one. Improve sprite lighting by basing sprite
   // lightlevels on floor & ceiling lightlevels in the surrounding area.
   //
@@ -705,7 +705,7 @@ static void R_Subsector(int num)
   // That is part of the 242 effect!!!  If you simply pass sub->sector to
   // the old code you will not get correct lighting for underwater sprites!!!
   // Either you must pass the fake sector and handle validcount here, on the
-  // real sector, or you must account for the lighting in some other way, 
+  // real sector, or you must account for the lighting in some other way,
   // like passing it as an argument.
 
   R_AddSprites(sub->sector, (floorlightlevel+ceilinglightlevel)/2);
