@@ -123,6 +123,7 @@ boolean fauxdemo;
 boolean casual_play;
 
 // General
+  // Nugget Settings (Page 3)
 int no_ss_background;
 int no_menu_tint;
 int over_under;
@@ -132,6 +133,13 @@ int bonuscount_cap;
 int viewheight_value;
 int one_key_saveload;
 int quick_quitgame;
+  // Accessibility (Page 4)
+//int a11y_sector_lighting;
+int a11y_extra_lighting;
+int a11y_weapon_flash;
+int a11y_weapon_pspr;
+int a11y_palette_changes;
+int a11y_invul_colormap;
 // Weapons
 int bobbing_percentage;
 int no_hor_autoaim;

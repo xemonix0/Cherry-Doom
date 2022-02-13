@@ -1930,10 +1930,25 @@ void M_DrawBackground(char* patchname, byte *back_dest)
 {
   int x,y;
   byte *back_src, *src;
+#if 0 // Might use this later
+  int dedicatedBG; // [Nugget]
+#endif
 
   V_MarkRect (0, 0, SCREENWIDTH, SCREENHEIGHT);
 
-  src = back_src =
+#if 0
+	// [Nugget]: [NS] Try to load the background from a lump.
+	// Look for a Nugget background first
+	if (dedicatedBG = W_CheckNumForName("NUGGETBG"),
+      dedicatedBG != -1 && W_LumpLength(dedicatedBG) >= 64*64)
+    { src = W_CacheLumpNum(dedicatedBG, PU_STATIC); }
+  else // Look for a Crispy background
+	if (dedicatedBG = W_CheckNumForName("CRISPYBG"),
+      dedicatedBG != -1 && W_LumpLength(dedicatedBG) >= 64*64)
+    { src = W_CacheLumpNum(dedicatedBG, PU_STATIC); }
+  else // Use the background passed to the function
+#endif
+	src = back_src =
     W_CacheLumpNum(firstflat+R_FlatNumForName(patchname),PU_CACHE);
 
   if (hires)       // killough 11/98: hires support
@@ -3540,13 +3555,15 @@ void M_DrawEnemy(void)
 extern int usejoystick, usemouse, default_mus_card, default_snd_card;
 extern int realtic_clock_rate, tran_filter_pct;
 
-setup_menu_t gen_settings1[], gen_settings2[], gen_settings3[];
+setup_menu_t gen_settings1[], gen_settings2[], gen_settings3[], gen_settings4[];
 
 setup_menu_t* gen_settings[] =
 {
   gen_settings1,
   gen_settings2,
+  // [Nugget]
   gen_settings3,
+  gen_settings4,
   NULL
 };
 
@@ -3790,6 +3807,45 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
    G_Y + 11*8, {"crosshair_target"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings2}},
+  {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {gen_settings4}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
+
+enum {
+//  general_a11y_seclight,
+  general_a11y_extralight,
+  general_a11y_flash,
+  general_a11y_pspr,
+  general_a11y_palette,
+  general_a11y_invul,
+};
+
+setup_menu_t gen_settings4[] = { // [Nugget] General Settings screen 4
+
+  {"Accessibility"     ,S_SKIP|S_TITLE, m_null, G_X, G_Y - 12},
+
+//  {"Flickering Sector Lighting", S_YESNO, m_null, G_X,
+//   G_Y + general_a11y_seclight*8, {"a11y_sector_lighting"}},
+
+  {"Extra Lighting", S_NUM, m_null, G_X,
+   G_Y + general_a11y_extralight*8, {"a11y_extra_lighting"}},
+
+  {"Weapon Flash Lighting", S_YESNO, m_null, G_X,
+   G_Y + general_a11y_flash*8, {"a11y_weapon_flash"}},
+
+  {"Weapon Flash Sprite", S_YESNO, m_null, G_X,
+   G_Y + general_a11y_pspr*8, {"a11y_weapon_pspr"}},
+
+  {"Palette Changes", S_YESNO, m_null, G_X,
+   G_Y + general_a11y_palette*8, {"a11y_palette_changes"}},
+
+  {"Invulnerability Colormap", S_YESNO, m_null, G_X,
+   G_Y + general_a11y_invul*8, {"a11y_invul_colormap"}},
+
+  {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings3}},
 
   // Final entry
 

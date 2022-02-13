@@ -560,7 +560,15 @@ void R_SetupFrame (player_t *player)
   viewz = player->viewz; // [FG] moved here
   viewangle = player->mo->angle + viewangleoffset;
   }
-  extralight = player->extralight;
+
+  // [Nugget]: [crispy] A11Y
+  if (a11y_weapon_flash)
+    { extralight = player->extralight; }
+  else
+    { extralight = 0; }
+
+  // [Nugget]: [crispy] A11Y
+  extralight += a11y_extra_lighting;
 
   viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
   viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];

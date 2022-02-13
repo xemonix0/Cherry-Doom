@@ -449,6 +449,50 @@ default_t defaults[] = {
     "1 to skip prompt on Quit Game"
   },
 
+#if 0
+  {
+    "a11y_sector_lighting",
+    (config_t *) &a11y_sector_lighting, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "0 to disable flickering lights"
+  },
+#endif
+
+  {
+    "a11y_extra_lighting",
+    (config_t *) &a11y_extra_lighting, NULL,
+    {0}, {0,8}, number, ss_gen, wad_no,
+    "Increase to make maps brighter"
+  },
+
+  {
+    "a11y_weapon_flash",
+    (config_t *) &a11y_weapon_flash, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "0 to disable weapon light flashes"
+  },
+
+  {
+    "a11y_weapon_pspr",
+    (config_t *) &a11y_weapon_pspr, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "0 to disable weapon muzzleflash rendering"
+  },
+
+  {
+    "a11y_palette_changes",
+    (config_t *) &a11y_palette_changes, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "0 to disable palette tint changes"
+  },
+
+  {
+    "a11y_invul_colormap",
+    (config_t *) &a11y_invul_colormap, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "0 to disable the Invulnerability colormap"
+  },
+
   {
     "bobbing_percentage",
     (config_t *) &bobbing_percentage, NULL,

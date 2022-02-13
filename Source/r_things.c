@@ -782,9 +782,13 @@ void R_DrawPlayerSprites(void)
   mceilingclip = negonearray;
 
   // add all active psprites
-  for (i=0, psp=viewplayer->psprites; i<NUMPSPRITES; i++,psp++)
-    if (psp->state)
-      R_DrawPSprite (psp);
+  for (i=0, psp=viewplayer->psprites;
+       // [Nugget]: [crispy] A11Y number of player (first person) sprites to draw
+       i < (a11y_weapon_pspr ? NUMPSPRITES : (NUMPSPRITES-1));
+       i++,psp++)
+  {
+    if (psp->state) { R_DrawPSprite (psp); }
+  }
 }
 
 //

@@ -720,7 +720,10 @@ void ST_doPaletteStuff(void)
         cnt = bzc;
     }
 
-  if (cnt)
+  // [Nugget]: [crispy] A11Y
+  if (!a11y_palette_changes)
+    { palette = 0; }
+  else if (cnt)
   {
     // In Chex Quest, the player never sees red. Instead, the radiation suit
     // palette is used to tint the screen green, as though the player is being

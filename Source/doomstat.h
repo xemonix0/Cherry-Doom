@@ -375,6 +375,7 @@ extern boolean fauxdemo;
 extern boolean casual_play;
 
 // General
+  // Nugget Settings (Page 3)
 extern int no_ss_background;
 extern int no_menu_tint;
 extern int over_under;
@@ -384,6 +385,13 @@ extern int bonuscount_cap;
 extern int viewheight_value;
 extern int one_key_saveload;
 extern int quick_quitgame;
+  // Accessibility (Page 4)
+//extern int a11y_sector_lighting;
+extern int a11y_extra_lighting;
+extern int a11y_weapon_flash;
+extern int a11y_weapon_pspr;
+extern int a11y_palette_changes;
+extern int a11y_invul_colormap;
 // Weapons
 extern int bobbing_percentage;
 extern int no_hor_autoaim;
