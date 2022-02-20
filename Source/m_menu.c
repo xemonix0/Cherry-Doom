@@ -3766,6 +3766,10 @@ static const char *crosshair_health_source[] = {
   "Off", "Player's", "Target's", NULL
 };
 
+static const char *crosshair_targets[] = {
+  "Off", "Non-Fuzzy", "All", NULL
+};
+
 setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
 
   {"Nugget Settings"     ,S_SKIP|S_TITLE, m_null, G_X, G_Y - 12},
@@ -3803,8 +3807,8 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
   {"Crosshair Shows Health", S_CHOICE, m_null, G_X,
    G_Y + 10*8, {"crosshair_health"}, 0, NULL, crosshair_health_source},
 
-  {"Crosshair Highlights On Target", S_YESNO, m_null, G_X,
-   G_Y + 11*8, {"crosshair_target"}},
+  {"Crosshair Highlights On Target", S_CHOICE, m_null, G_X,
+   G_Y + 11*8, {"crosshair_target"}, 0, NULL, crosshair_targets},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings2}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {gen_settings4}},
@@ -6595,10 +6599,6 @@ void M_ResetSetupMenu(void)
     gen_settings3[general_overunder+1].m_flags &= ~S_DISABLE;
     gen_settings3[general_jump_crouch+1].m_flags &= ~S_DISABLE;
   }
-  if (crosshair_health == 2)
-    { gen_settings3[11+1].m_flags |= S_DISABLE; }
-  else
-    { gen_settings3[11+1].m_flags &= ~S_DISABLE; }
 
   if (demorecording||fauxdemo)
     { gen_settings3[general_viewheight+1].m_flags |= S_DISABLE; }

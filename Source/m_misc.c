@@ -524,8 +524,8 @@ default_t defaults[] = {
   {
     "crosshair_target",
     (config_t *) &crosshair_target, NULL,
-    {0}, {0,1}, number, ss_stat, wad_no,
-    "1 to highlight targets with the crosshair"
+    {0}, {0,2}, number, ss_stat, wad_no,
+    "Highlight non-fuzzy (1) or all (2) targets with crosshair"
   },
 
   {

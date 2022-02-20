@@ -992,7 +992,9 @@ void HU_Drawer(void)
 
     if (crosshair_health == 2)
     { // Set the crosshair color based on target health
-      if (linetarget && !(linetarget->flags & MF_SHADOW)) {
+      if (linetarget
+          && (!(linetarget->flags & MF_SHADOW) || crosshair_target == 2))
+      {
         health = linetarget->health;
         if (health < linetarget->info->spawnhealth/4)
           { cr = colrngs[CR_RED]; }
@@ -1007,11 +1009,11 @@ void HU_Drawer(void)
         { cr = colrngs[CR_GRAY]; }
     }
     // Make the crosshair gray if aiming at target
-    else if (crosshair_target
-             && linetarget && !(linetarget->flags & MF_SHADOW))
+    else if (crosshair_target && linetarget
+             && (!(linetarget->flags & MF_SHADOW) || crosshair_target == 2))
       { cr = colrngs[CR_GRAY]; }
+    // Set the crosshair color based on player health
     else if (crosshair_health == 1) {
-      // Set the crosshair color based on player health
       health = plr->health;
       if (plr->powers[pw_invulnerability]
           || plr->cheats & CF_GODMODE)  { cr = colrngs[CR_GRAY]; }

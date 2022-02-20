@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: p_lights.c,v 1.11 1998/05/18 09:04:41 jim Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -52,7 +52,7 @@
 void T_FireFlicker (fireflicker_t* flick)
 {
   int amount;
-  
+
   if (--flick->count)
     return;
 
@@ -244,7 +244,7 @@ void P_SpawnStrobeFlash
   flash->thinker.function = T_StrobeFlash;
   flash->maxlight = sector->lightlevel;
   flash->minlight = P_FindMinSurroundingLight(sector, sector->lightlevel);
-  
+
   if (flash->minlight == flash->maxlight)
     flash->minlight = 0;
 
@@ -330,7 +330,7 @@ int EV_StartLightStrobing(line_t* line)
 int EV_TurnTagLightsOff(line_t* line)
 {
   int j;
-  
+
   // search sectors for those with same tag as activating line
 
   // killough 10/98: replaced inefficient search with fast search
@@ -380,10 +380,10 @@ int EV_LightTurnOn(line_t *line, int bright)
 	    tbright = temp->lightlevel;
 
       sector->lightlevel = tbright;
-      
-      //jff 5/17/98 unless compatibility optioned 
+
+      //jff 5/17/98 unless compatibility optioned
       //then maximum near ANY tagged sector
-      
+
       if (comp[comp_model])
 	bright = tbright;
     }
@@ -406,7 +406,7 @@ int EV_LightTurnOnPartway(line_t *line, fixed_t level)
 {
   int i;
 
-  if (level < 0)          // clip at extremes 
+  if (level < 0)          // clip at extremes
     level = 0;
   if (level > FRACUNIT)
     level = FRACUNIT;
