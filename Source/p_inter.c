@@ -761,8 +761,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
   mo->flags |= MF_DROPPED;    // special versions of items
 }
 
-// [Nugget] Calculate distance between player and target,
-// used for Extra Gibbing and Chainsaw knockback fix
+// [Nugget] Compare distance between player and target, used for Extra Gibbing
 
 extern fixed_t P_AproxDistance();
 

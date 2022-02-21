@@ -417,9 +417,13 @@ void P_PlayerThink (player_t* player)
         { player->mo->intflags &= ~MIF_CROUCHING; }
       else if (onground && !(player->jumpTics)
                && (player->mo->height == player->mo->info->height))
-      { // Jump
-        player->mo->momz = 8*FRACUNIT;
-        player->jumpTics = 20;
+      { // Try to jump
+        // Check if ceiling's high enough to jump; this prevents a bug with crushers
+        if ((player->mo->ceilingz - player->mo->floorz) > player->mo->info->height)
+        { // Jump
+          player->mo->momz = 8*FRACUNIT;
+          player->jumpTics = 20;
+        }
       }
     }
   }

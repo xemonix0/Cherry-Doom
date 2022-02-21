@@ -3759,7 +3759,7 @@ enum {
 };
 
 static const char *wipe_types[] = {
-  "None", "Melt", "ColXForm", NULL
+  "None", "Melt", "Seizure", NULL
 };
 
 static const char *crosshair_types[] = {

@@ -235,14 +235,14 @@ typedef enum
 // (some degree of opaqueness is good, to avoid compatibility woes)
 
 enum {
-  MIF_FALLING = 1,      // Object is falling
-  MIF_ARMED = 2,        // Object is armed (for MF_TOUCHY objects)
-  MIF_LINEDONE = 4,     // Object has activated W1 or S1 linedef via DEH frame
+  MIF_FALLING = 1,    // Object is falling
+  MIF_ARMED = 2,      // Object is armed (for MF_TOUCHY objects)
+  MIF_LINEDONE = 4,   // Object has activated W1 or S1 linedef via DEH frame
   // mbf21
-  MIF_SCROLLING = 8,    // Object is affected by scroller / pusher / puller
+  MIF_SCROLLING = 8,  // Object is affected by scroller / pusher / puller
   // [Nugget]
-  MIF_CROUCHING = 16,   // Mobj (player) is crouching
-  MIF_OVERUNDER = 32,   // Mobj is over/under another mobj
+  MIF_CROUCHING = 16, // Mobj (player) is crouching
+  MIF_OVERUNDER = 32, // Mobj is over/under another mobj
 };
 
 // Map Object definition.

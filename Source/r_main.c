@@ -630,6 +630,7 @@ void R_RenderPlayerView (player_t* player)
       extern int lastshottic;
       int i , color = !flashing_hom || (gametic % 20) < 9 ? 0xb0 : 0;
       memset(*screens+viewwindowy*linesize,color,viewheight*linesize);
+      // [Nugget] Note: this is the code for the Killough face easter egg
       for (i=0;i<47*47;i++)
         {
           char t =
