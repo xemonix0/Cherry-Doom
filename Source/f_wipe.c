@@ -65,15 +65,20 @@ static int wipe_doColorXForm(int width, int height, int ticks)
   byte *w   = wipe_scr;
   byte *e   = wipe_scr_end;
   byte *end = wipe_scr+width*height;
-  for (;w != end; w++, e++)
-    if (*w != *e)
-      {
-        int newval;
-        unchanged = false;
-        *w = *w > *e ?
-          (newval = *w - ticks) < *e ? *e : newval :
-          (newval = *w + ticks) > *e ? *e : newval ;
-      }
+
+  // [Nugget] Speed it up
+  ticks *= 8;
+
+  for (;w != end; w++, e++) {
+    if (*w != *e) {
+      int newval;
+      unchanged = false;
+      *w = *w > *e ? (newval = *w - ticks) < *e
+                     ? *e : newval
+                   : (newval = *w + ticks) > *e
+                     ? *e : newval ;
+    }
+  }
   return unchanged;
 }
 
@@ -176,14 +181,19 @@ int wipe_EndScreen(int x, int y, int width, int height)
   return 0;
 }
 
+// [Nugget] Rearrange for convenience
 static int (*const wipes[])(int, int, int) = {
-  wipe_initColorXForm,
-  wipe_doColorXForm,
-  wipe_exitColorXForm,
+  0, 0, 0, // [Nugget]
   wipe_initMelt,
   wipe_doMelt,
-  wipe_exitMelt
+  wipe_exitMelt,
+  wipe_initColorXForm,
+  wipe_doColorXForm,
+  wipe_exitColorXForm
 };
+
+// [Nugget]
+extern int wipe_type;
 
 // killough 3/5/98: reformatted and cleaned up
 int wipe_ScreenWipe(int wipeno, int x, int y, int width, int height, int ticks)
@@ -192,6 +202,9 @@ int wipe_ScreenWipe(int wipeno, int x, int y, int width, int height, int ticks)
 
   if (hires)     // killough 11/98: hires support
     width <<= 1, height <<= 1, ticks <<= 1;
+
+  // [Nugget] No wipe
+  //if (!wipe_type) { return 0; }
 
   if (!go)                                         // initial stuff
     {

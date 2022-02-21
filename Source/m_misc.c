@@ -394,6 +394,13 @@ default_t defaults[] = {
   },
 
   {
+    "wipe_type",
+    (config_t *) &wipe_type, NULL,
+    {1}, {0,2}, number, ss_gen, wad_yes,
+    "Screen wipe type (0 = None, 1 = Melt, 2 = ColorXForm)"
+  },
+
+  {
     "no_menu_tint",
     (config_t *) &no_menu_tint, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,

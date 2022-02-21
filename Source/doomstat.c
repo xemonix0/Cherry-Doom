@@ -125,6 +125,7 @@ boolean casual_play;
 // General
   // Nugget Settings (Page 3)
 int no_ss_background;
+int wipe_type;
 int no_menu_tint;
 int over_under;
 int jump_crouch;

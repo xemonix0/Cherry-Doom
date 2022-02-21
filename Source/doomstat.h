@@ -377,6 +377,7 @@ extern boolean casual_play;
 // General
   // Nugget Settings (Page 3)
 extern int no_ss_background;
+extern int wipe_type;
 extern int no_menu_tint;
 extern int over_under;
 extern int jump_crouch;

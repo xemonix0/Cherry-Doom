@@ -3748,7 +3748,7 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
 
 enum {
   general_background,
-  general_menutint,
+  general_menutint = 2, // temp
   general_overunder,
   general_jump_crouch,
   general_dmgcountcap,
@@ -3756,6 +3756,10 @@ enum {
   general_viewheight,
   general_quicksaveload,
   general_quickexit,
+};
+
+static const char *wipe_types[] = {
+  "None", "Melt", "ColXForm", NULL
 };
 
 static const char *crosshair_types[] = {
@@ -3776,6 +3780,9 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
 
   {"Disable Background", S_YESNO, m_null, G_X,
    G_Y + general_background*8, {"no_ss_background"}},
+
+  {"Screen Wipe Style", S_CHOICE, m_null, G_X,
+   G_Y + 1*8, {"wipe_type"}, 0, NULL, wipe_types},
 
   {"Disable palette tint in menus", S_YESNO, m_null, G_X,
    G_Y + general_menutint*8, {"no_menu_tint"}},
@@ -3802,13 +3809,13 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
    G_Y + general_quickexit*8, {"quick_quitgame"}},
 
   {"Crosshair", S_CHOICE, m_null, G_X,
-   G_Y + 9*8, {"crosshair_type"}, 0, NULL, crosshair_types},
+   G_Y + (general_quickexit+1)*8, {"crosshair_type"}, 0, NULL, crosshair_types},
 
   {"Crosshair Shows Health", S_CHOICE, m_null, G_X,
-   G_Y + 10*8, {"crosshair_health"}, 0, NULL, crosshair_health_source},
+   G_Y + (general_quickexit+2)*8, {"crosshair_health"}, 0, NULL, crosshair_health_source},
 
   {"Crosshair Highlights On Target", S_CHOICE, m_null, G_X,
-   G_Y + 11*8, {"crosshair_target"}, 0, NULL, crosshair_targets},
+   G_Y + (general_quickexit+3)*8, {"crosshair_target"}, 0, NULL, crosshair_targets},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings2}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {gen_settings4}},
