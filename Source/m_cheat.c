@@ -50,36 +50,17 @@
 //
 //-----------------------------------------------------------------------------
 
-static void cheat_mus();
-static void cheat_choppers();
-static void cheat_god();
-static void cheat_fa();
-static void cheat_k();
-static void cheat_kfa();
-static void cheat_noclip();
-static void cheat_pw();
-static void cheat_behold();
-static void cheat_clev();
-static void cheat_clev0();
-static void cheat_mypos();
-static void cheat_comp();
-static void cheat_friction();
-static void cheat_pushers();
-static void cheat_tran();
-static void cheat_massacre();
-static void cheat_ddt();
-static void cheat_hom();
-static void cheat_fast();
-static void cheat_key();
-static void cheat_keyx();
-static void cheat_keyxx();
-static void cheat_weap();
-static void cheat_weapx();
-static void cheat_ammo();
-static void cheat_ammox();
-static void cheat_smart();
-static void cheat_pitch();
-static void cheat_nuke();
+// [Nugget] Rearranged
+static void cheat_mus();    static void cheat_choppers(); static void cheat_god();
+static void cheat_fa();     static void cheat_k();        static void cheat_kfa();
+static void cheat_noclip(); static void cheat_pw();       static void cheat_behold();
+static void cheat_clev();   static void cheat_clev0();    static void cheat_mypos();
+static void cheat_comp();   static void cheat_friction(); static void cheat_pushers();
+static void cheat_tran();   static void cheat_massacre(); static void cheat_ddt();
+static void cheat_hom();    static void cheat_fast();     static void cheat_key();
+static void cheat_keyx();   static void cheat_keyxx();    static void cheat_weap();
+static void cheat_weapx();  static void cheat_ammo();     static void cheat_ammox();
+static void cheat_smart();  static void cheat_pitch();    static void cheat_nuke();
 
 #ifdef INSTRUMENTED
 static void cheat_printstats();   // killough 8/23/98
@@ -99,6 +80,8 @@ static void cheat_notarget(); // [crispy] implement PrBoom+'s "notarget" cheat
 static void cheat_resurrect();
 static void cheat_buddha(); // Can't go below 1% health
 static void cheat_fly();
+static void cheat_turbo();
+static void cheat_spawn(); // Spawn a mobj
 
 //-----------------------------------------------------------------------------
 //
@@ -311,14 +294,6 @@ struct cheat_s cheat[] = {
   {"gibbers",    NULL,                not_net|not_demo,
    cheat_gibbers},
 
-// Temporary 'gibbers' alternative
-  {"korpin",    NULL,                not_net|not_demo,
-   cheat_gibbers},
-
-// Temporary 'idfa' alternative
-  {"korper",    NULL,                not_net|not_demo,
-   cheat_fa},
-
 // No Target cheat
   {"notarget",    NULL,                not_net|not_demo,
    cheat_notarget},
@@ -337,6 +312,15 @@ struct cheat_s cheat[] = {
 
   {"idfly",    NULL,                not_net|not_demo,
    cheat_fly},
+
+  {"turbo",    NULL,                not_net|not_demo,
+   cheat_turbo,      -3},
+
+  {"spawn",    NULL,                not_net|not_demo,
+   cheat_spawn,      -3},
+
+  {"summon",    NULL,                not_net|not_demo,
+   cheat_spawn,      -3},
 
   {NULL}                 // end-of-list marker
 };
@@ -369,7 +353,6 @@ static void cheat_nomomentum() {
 extern void D_NuggetUpdateCasual();
 static void cheat_fauxdemo() {
   fauxdemo = !fauxdemo;
-
   D_NuggetUpdateCasual();
 
   S_StartSound(plyr->mo, sfx_tink);
@@ -432,8 +415,8 @@ static void cheat_notarget() {
 			{
 				mobj_t *const mo = (mobj_t *)th;
 
-				if (mo->target && mo->target->player) {mo->target = NULL;}
-        if (mo->tracer && mo->tracer->player) {mo->tracer = NULL;}
+				if (mo->target && mo->target->player) { mo->target = NULL; }
+        if (mo->tracer && mo->tracer->player) { mo->tracer = NULL; }
 			}
 		}
 		// [crispy] let sectors forget their soundtarget
@@ -498,6 +481,69 @@ static void cheat_fly() {
   plyr->message = plyr->cheats & CF_FLY
                   ? "Fly Mode ON"
                   : "Fly Mode OFF";
+}
+
+// [Nugget]
+static void cheat_turbo(buf) char buf[3];
+{
+  int scale = 200;
+  extern int forwardmove[2];
+  extern int sidemove[2];
+
+  if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
+  {
+    dprintf("Turbo: Digits only.");
+    return;
+  }
+
+  scale = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
+
+  if      (scale < 10)  { scale = 10; }
+  else if (scale > 255) { scale = 255; }
+  // It gets kinda wonky at that scale already,
+  // but going any further inverts movement
+
+  dprintf("turbo scale: %i%%",scale);
+  forwardmove[0] = 25*scale/100;
+  forwardmove[1] = 50*scale/100;
+  sidemove[0] = 20*scale/100;
+  sidemove[1] = 40*scale/100;
+}
+
+// [Nugget]
+static void cheat_spawn(buf) char buf[3];
+{
+  fixed_t x, y, z;
+  int type;
+
+  if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
+  {
+    dprintf("Spawn: Digits only.");
+    return;
+  }
+
+  type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
+
+  // Don't spawn things beyond the Music Source dummy (inclusive);
+  // Worth noting that this approach isn't quite compatible with
+  // DSDHacked's capabilities.
+  if (type < -1 || type > MT_BIBLE) {
+    dprintf("Invalid mobjtype %i", type);
+    return;
+  }
+
+  // Spawn them in front of the player, accounting for radius,
+  // and in mid-air
+  x = plyr->mo->x
+      + FixedMul((64*FRACUNIT) + mobjinfo[type].radius,
+                 finecosine[plyr->mo->angle>>ANGLETOFINESHIFT]);
+  y = plyr->mo->y
+      + FixedMul((64*FRACUNIT) + mobjinfo[type].radius,
+                 finesine[plyr->mo->angle>>ANGLETOFINESHIFT]);
+  z = plyr->mo->z + 32*FRACUNIT;
+
+  P_SpawnMobj(x,y,z,type);
+  dprintf("Mobj spawned! (Type = %i)", type);
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode

@@ -1,3 +1,6 @@
+// [Nugget] Built-in app icon, sometimes used by SDL.
+// Thanks to Gibbon/atsb for the conversion!
+
 static int icon_w = 128;
 static int icon_h = 128;
 

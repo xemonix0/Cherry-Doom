@@ -400,22 +400,20 @@ void D_PageTicker(void)
 
 void D_PageDrawer(void)
 {
-  if (pagename)
-    {
-      int l = W_CheckNumForName(pagename);
-      byte *t = W_CacheLumpNum(l, PU_CACHE);
-      size_t s = W_LumpLength(l);
-      unsigned c = 0;
-      while (s--)
-	c = c*3 + t[s];
-      V_DrawPatchFullScreen(0, (patch_t *) t);
-      if (c==2119826587u || c==2391756584u)
-        // [FG] removed the embedded DOGOVRLY title pic overlay graphic lump
-        if (W_CheckNumForName("DOGOVRLY") > 0)
-        {
-	V_DrawPatch(0, 0, 0, W_CacheLumpName("DOGOVRLY", PU_CACHE));
-        }
-    }
+  if (pagename) {
+    int l = W_CheckNumForName(pagename);
+    byte *t = W_CacheLumpNum(l, PU_CACHE);
+    size_t s = W_LumpLength(l);
+    unsigned c = 0;
+
+    while (s--)
+      c = c*3 + t[s];
+    V_DrawPatchFullScreen(0, (patch_t *) t);
+    if (c==2119826587u || c==2391756584u)
+      // [FG] removed the embedded DOGOVRLY title pic overlay graphic lump
+      if (W_CheckNumForName("DOGOVRLY") > 0)
+        { V_DrawPatch(0, 0, 0, W_CacheLumpName("DOGOVRLY", PU_CACHE)); }
+  }
   else
     M_DrawCredits();
 }
