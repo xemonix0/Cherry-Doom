@@ -71,17 +71,20 @@ static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
 // [Nugget] (All of the following)
 static void cheat_nomomentum();
-static void cheat_fauxdemo(); // Emulates demo or net play state, for debugging
-static void cheat_infammo(); // Infinite ammo cheat
-static void cheat_fastweaps(); // Fast weapons cheat
-static void cheat_bobbers(); // Shortcut to the two cheats above
-static void cheat_gibbers(); // Everything gibs
-static void cheat_notarget(); // [crispy] implement PrBoom+'s "notarget" cheat
+static void cheat_fauxdemo();   // Emulates demo or net play state, for debugging
+static void cheat_infammo();    // Infinite ammo cheat
+static void cheat_fastweaps();  // Fast weapons cheat
+static void cheat_bobbers();    // Shortcut to the two cheats above
+boolean GIBBERS;                // Used for 'GIBBERS'
+static void cheat_gibbers();    // Everything gibs
+static void cheat_notarget();   // [crispy] implement PrBoom+'s "notarget" cheat
 static void cheat_resurrect();
-static void cheat_buddha(); // Can't go below 1% health
+static void cheat_buddha();     // Can't go below 1% health
 static void cheat_fly();
 static void cheat_turbo();
-static void cheat_spawn(); // Spawn a mobj
+static int spawneetype = -1; static boolean spawneefriend; // Used for 'SPAWNR'
+// Spawn a mobj:            Enemy           Friend          Repeat the last
+static void cheat_spawn(),  cheat_spawne(), cheat_spawnf(), cheat_spawnr();
 
 //-----------------------------------------------------------------------------
 //
@@ -166,7 +169,7 @@ struct cheat_s cheat[] = {
    cheat_massacre },     // jff 2/01/98 kill all monsters
 
   {"tntem",     NULL,                not_net | not_demo,
-   cheat_massacre },     // [Nugget] 'killem' alternative
+   cheat_massacre },     // [Nugget] 'KILLEM' alternative
 
   {"iddt",       "Map cheat",         not_dm,
    cheat_ddt      },     // killough 2/07/98: moved from am_map.c
@@ -267,60 +270,68 @@ struct cheat_s cheat[] = {
 
 // [Nugget] (All of the following)
 
-// 'showfps' alternative
-  {"idrate",    NULL,                 always,
-   cheat_showfps},
+  {"idrate", NULL, always,
+   cheat_showfps}, // 'SHOWFPS' alternative
 
-  {"nomomentum",    NULL,             not_net|not_demo,
+  {"nomomentum", NULL, not_net|not_demo,
    cheat_nomomentum},
 
-// Emulates demo or net play state, for debugging
-  {"fauxdemo",    NULL,             not_net|not_demo,
-   cheat_fauxdemo},
+  {"fauxdemo", NULL, not_net|not_demo,
+   cheat_fauxdemo}, // Emulates demo/net play state, for debugging
 
-// Infinite ammo cheat
-  {"fullclip",    NULL,               not_net|not_demo,
-   cheat_infammo},
+  {"fullclip", NULL, not_net|not_demo,
+   cheat_infammo}, // Infinite ammo cheat
 
-// Fast weapons cheat
-  {"valiant",    NULL,                not_net|not_demo,
-   cheat_fastweaps},
+  {"valiant", NULL, not_net|not_demo,
+   cheat_fastweaps}, // Fast weapons cheat
 
-// Shortcut for the two above cheats
-  {"bobbers",    NULL,                not_net|not_demo,
-   cheat_bobbers},
+  {"bobbers", NULL, not_net|not_demo,
+   cheat_bobbers}, // Shortcut for the two above cheats
 
-// Everything gibs
-  {"gibbers",    NULL,                not_net|not_demo,
-   cheat_gibbers},
+  {"gibbers", NULL, not_net|not_demo,
+   cheat_gibbers}, // Everything gibs
 
-// No Target cheat
-  {"notarget",    NULL,                not_net|not_demo,
+  {"notarget", NULL, not_net|not_demo,
    cheat_notarget},
 
-// Resurrect cheat
-  {"resurrect",    NULL,                not_net|not_demo,
+  {"resurrect", NULL, not_net|not_demo,
    cheat_resurrect},
 
-// 'resurrect' alternative
-  {"idres",    NULL,                not_net|not_demo,
-   cheat_resurrect},
+  {"idres", NULL, not_net|not_demo,
+   cheat_resurrect}, // 'RESURRECT' alternative
 
-// Can't go below 1% health
-  {"buddha",    NULL,                not_net|not_demo,
-   cheat_buddha},
+  {"buddha", NULL, not_net|not_demo,
+   cheat_buddha}, // Can't go below 1% health
 
-  {"idfly",    NULL,                not_net|not_demo,
+  {"idfly", NULL, not_net|not_demo,
    cheat_fly},
 
-  {"turbo",    NULL,                not_net|not_demo,
-   cheat_turbo,      -3},
+  {"turbo", NULL, not_net|not_demo,
+   cheat_turbo, -3},
 
-  {"spawn",    NULL,                not_net|not_demo,
-   cheat_spawn,      -3},
+  {"spawn", NULL, not_net|not_demo,
+   cheat_spawn}, // Spawn "Menu"
 
-  {"summon",    NULL,                not_net|not_demo,
-   cheat_spawn,      -3},
+  {"spawne", NULL, not_net|not_demo,
+   cheat_spawne, -3}, // Spawn a hostile mobj
+
+  {"spawnf", NULL, not_net|not_demo,
+   cheat_spawnf, -3}, // Spawn a friendly mobj
+
+  {"spawnr", NULL, not_net|not_demo,
+   cheat_spawnr}, // Repeat the last spawn
+
+  {"summon", NULL, not_net|not_demo,
+   cheat_spawn}, // 'SPAWN' alternative
+
+  {"summone", NULL, not_net|not_demo,
+   cheat_spawne, -3}, // 'SPAWNE' alternative
+
+  {"summonf", NULL, not_net|not_demo,
+   cheat_spawnf, -3}, // 'SPAWNF' alternative
+
+  {"summonr", NULL, not_net|not_demo,
+   cheat_spawnr}, // 'SPAWNR' alternative
 
   {NULL}                 // end-of-list marker
 };
@@ -393,7 +404,6 @@ static void cheat_bobbers() {
 }
 
 // [Nugget] Everything gibs
-boolean GIBBERS;
 static void cheat_gibbers() {
   GIBBERS = !GIBBERS;
   plyr->message = GIBBERS ? "Ludicrous Gibs!"
@@ -511,39 +521,99 @@ static void cheat_turbo(buf) char buf[3];
 }
 
 // [Nugget]
-static void cheat_spawn(buf) char buf[3];
+static void cheat_spawn() { plyr->message = "Enemy, Friend or Repeat?"; }
+
+// [Nugget] Spawn a hostile mobj
+static void cheat_spawne(buf) char buf[3];
 {
   fixed_t x, y, z;
   int type;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-  {
-    dprintf("Spawn: Digits only.");
-    return;
-  }
+    { dprintf("Spawn: Digits only."); return; }
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
   // Don't spawn things beyond the Music Source dummy (inclusive);
   // Worth noting that this approach isn't quite compatible with
   // DSDHacked's capabilities.
-  if (type < -1 || type > MT_BIBLE) {
+  if (type < 0 || type > MT_BIBLE) {
     dprintf("Invalid mobjtype %i", type);
     return;
   }
 
+  // Valid mobjtype, so pass the value to spawneetype
+  spawneetype = type;
+  spawneefriend = false;
+
   // Spawn them in front of the player, accounting for radius,
   // and in mid-air
   x = plyr->mo->x
-      + FixedMul((64*FRACUNIT) + mobjinfo[type].radius,
+      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
                  finecosine[plyr->mo->angle>>ANGLETOFINESHIFT]);
   y = plyr->mo->y
-      + FixedMul((64*FRACUNIT) + mobjinfo[type].radius,
+      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
                  finesine[plyr->mo->angle>>ANGLETOFINESHIFT]);
   z = plyr->mo->z + 32*FRACUNIT;
 
-  P_SpawnMobj(x,y,z,type);
-  dprintf("Mobj spawned! (Type = %i)", type);
+  P_SpawnMobj(x,y,z,spawneetype);
+  dprintf("Mobj spawned! (Enemy - Type = %i)", spawneetype);
+}
+
+// [Nugget] Spawn a friendly mobj
+static void cheat_spawnf(buf) char buf[3];
+{
+  fixed_t x, y, z;
+  int type;
+  mobj_t *spawnee;
+
+  if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
+    { dprintf("Spawn: Digits only."); return; }
+
+  type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
+
+  if (type < 0 || type > MT_BIBLE)
+    { dprintf("Invalid mobjtype %i", type); return; }
+
+  spawneetype = type;
+  spawneefriend = true;
+
+  x = plyr->mo->x
+      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
+                 finecosine[plyr->mo->angle>>ANGLETOFINESHIFT]);
+  y = plyr->mo->y
+      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
+                 finesine[plyr->mo->angle>>ANGLETOFINESHIFT]);
+  z = plyr->mo->z + 32*FRACUNIT;
+
+  spawnee = P_SpawnMobj(x,y,z,spawneetype);
+  spawnee->flags |= MF_FRIEND;
+
+  dprintf("Mobj spawned! (Friend - Type = %i)", spawneetype);
+}
+
+// [Nugget] Spawn the last spawned mobj
+static void cheat_spawnr()
+{
+  fixed_t x, y, z;
+  mobj_t *spawnee;
+
+  if (spawneetype == -1)
+    { plyr->message = "You must spawn a mobj first!"; return; }
+
+  x = plyr->mo->x
+      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
+                 finecosine[plyr->mo->angle>>ANGLETOFINESHIFT]);
+  y = plyr->mo->y
+      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
+                 finesine[plyr->mo->angle>>ANGLETOFINESHIFT]);
+  z = plyr->mo->z + 32*FRACUNIT;
+
+  spawnee = P_SpawnMobj(x,y,z,spawneetype);
+  if (spawneefriend) { spawnee->flags |= MF_FRIEND; }
+
+  dprintf("Mobj spawned! (%s - Type = %i)",
+          spawneefriend ? "Friend" : "Enemy", spawneetype);
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode
