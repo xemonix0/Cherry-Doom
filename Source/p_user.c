@@ -602,6 +602,16 @@ void P_PlayerThink (player_t* player)
       { player->psprites[ps_flash].tics = 1; }
   }
 
+  // [Nugget] Thing Scan cheat
+  if (player->cheats & CF_SCANNER) {
+    // Check if the player is aiming at a thing
+    P_AimLineAttack(player->mo, player->mo->angle, 16*64*FRACUNIT, 0);
+    if (linetarget) { // Give some info on the thing
+      dprintf("Type: %i - Health: %i/%i", linetarget->type,
+              linetarget->health, linetarget->info->spawnhealth);
+    }
+  }
+
   if (player->damagecount)
     player->damagecount--;
 

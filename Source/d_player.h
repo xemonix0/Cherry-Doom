@@ -80,7 +80,8 @@ typedef enum
   CF_FASTWEAPS        = 32,
   CF_NOTARGET         = 64, // [crispy] monsters don't target
   CF_BUDDHA           = 128, // Can't go below 1% health
-  CF_FLY              = 256
+  CF_FLY              = 256,
+  CF_SCANNER          = 512 // Give info on the current target
 
 } cheat_t;
 
