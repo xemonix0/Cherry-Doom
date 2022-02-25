@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 //  Copyright (C) 1999 by
@@ -16,7 +16,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:  Head up display
@@ -35,7 +35,7 @@
 #define HU_FONTEND      (0x7f) /*jff 2/16/98 '_' the last font characters */
 
 // Calculate # of glyphs in font.
-#define HU_FONTSIZE     (HU_FONTEND - HU_FONTSTART + 1) 
+#define HU_FONTSIZE     (HU_FONTEND - HU_FONTSTART + 1)
 
 #define HU_BROADCAST    5
 
@@ -89,13 +89,15 @@ extern int map_player_coords, map_level_stats, map_level_time; // [FG] level sta
 extern int hud_timests; // Time/STS above status bar
 
 extern int hud_crosshair;
+extern int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 extern boolean hud_crosshair_health;
 extern boolean hud_crosshair_target;
 extern int hud_crosshair_color;
 extern int hud_crosshair_target_color;
 
-#define HU_CROSSHAIRS 5
+#define HU_CROSSHAIRS 5+5 // [Nugget] Add more crosshairs
 extern const char *crosshair_nam[HU_CROSSHAIRS];
+extern const char *crosshair_sh_nam[HU_CROSSHAIRS]; // [Nugget] Shaded crosshairs
 extern const char *crosshair_str[HU_CROSSHAIRS+1];
 
 #endif

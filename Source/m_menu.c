@@ -3800,7 +3800,7 @@ setup_menu_t stat_settings2[] =
   {"",S_SKIP,m_null,ST_X,ST_Y+stat2_stub2*8 }, // Stub
   {"CROSSHAIR",S_SKIP|S_TITLE,m_null,ST_X,ST_Y+ stat2_title3*8 },
     {"ENABLE CROSSHAIR",      S_CHOICE,m_null,ST_X,ST_Y+stat2_xhair*8, {"hud_crosshair"}, 0, M_UpdateCrosshairItems, crosshair_str},
-    {"SHADED CROSSHAIRS",     S_YESNO,m_null,ST_X,ST_Y+stat2_xhairsh*8, {"hud_crosshair_shaded"}},
+    {"SHADED CROSSHAIR",      S_YESNO,m_null,ST_X,ST_Y+stat2_xhairsh*8, {"hud_crosshair_shaded"}},
     {"COLOR BY HEALTH",       S_CHOICE, m_null,ST_X,ST_Y+stat2_xhairhealth*8, {"hud_crosshair_health"}, 0, 0, crosshair_health}, // [Nugget] Player OR Linetarget health
     {"HIGHLIGHT ON TARGET",   S_CHOICE, m_null,ST_X,ST_Y+stat2_xhairtarget*8, {"hud_crosshair_target"}, 0, M_UpdateCrosshairItems, crosshair_targets},
     {"DEFAULT COLOR",         S_CRITEM,m_null,ST_X,ST_Y+stat2_xhaircolor*8, {"hud_crosshair_color"}},

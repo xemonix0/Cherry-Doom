@@ -145,11 +145,6 @@ int a11y_invul_colormap;
 // Weapons
 int bobbing_percentage;
 int no_hor_autoaim;
-// Status Bar / HUD
-int crosshair_type;
-int crosshair_health;
-int crosshair_target;
-int armor_type_color;
 // Enemies
 int extra_gibbing;
 
