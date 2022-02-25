@@ -73,15 +73,14 @@ typedef enum
   CF_GODMODE          = 2,
   // Not really a cheat, just a debug aid.
   CF_NOMOMENTUM       = 4,
-  // [FG] FPS counter widget
-  CF_SHOWFPS          = 8,
+  // BUDDHA cheat
+  CF_BUDDHA           = 8,
   // [Nugget] All of the following:
   CF_INFAMMO          = 16, // Infinite ammo
   CF_FASTWEAPS        = 32,
   CF_NOTARGET         = 64, // [crispy] monsters don't target
-  CF_BUDDHA           = 128, // Can't go below 1% health
-  CF_FLY              = 256,
-  CF_SCANNER          = 512 // Give info on the current target
+  CF_FLY              = 128,
+  CF_SCANNER          = 256 // Give info on the current target
 
 } cheat_t;
 
@@ -120,7 +119,7 @@ typedef struct player_s
   int                 armortype;
 
   // Power ups. invinc and invis are tic counters.
-  int                 powers[NUMPOWERS];
+  int                 powers[NUMPOWERS+4];
   boolean             cards[NUMCARDS];
   boolean             backpack;
 

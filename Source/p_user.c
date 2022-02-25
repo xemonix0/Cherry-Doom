@@ -243,6 +243,11 @@ void P_MovePlayer (player_t* player)
 	      P_Bob(player,mo->angle-ANG90,csidemove*bobfactor);
 	      P_Thrust(player,mo->angle-ANG90,csidemove*movefactor);
 	    }
+      // Add (cmd-> forwardmove || cmd-> sidemove) check to prevent the players
+      // always in S_PLAY_RUN1 animation in complevel Boom.
+      if ((cmd->forwardmove || cmd->sidemove) &&
+          (mo->state == states+S_PLAY))
+        P_SetMobjState(mo,S_PLAY_RUN1);
     }
 
     if (mo->state == states+S_PLAY) { P_SetMobjState(mo,S_PLAY_RUN1); }
@@ -610,6 +615,18 @@ void P_PlayerThink (player_t* player)
       dprintf("Type: %i - Health: %i/%i", linetarget->type,
               linetarget->health, linetarget->info->spawnhealth);
     }
+  }
+
+  if (player->powers[pw_renderstats])
+  {
+    extern void R_ShowRenderingStats();
+    R_ShowRenderingStats();
+  }
+
+  if (player->powers[pw_mapcoords])
+  {
+    extern void cheat_mypos_print();
+    cheat_mypos_print();
   }
 
   if (player->damagecount)

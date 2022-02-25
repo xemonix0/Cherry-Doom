@@ -61,6 +61,7 @@ static void cheat_hom();    static void cheat_fast();     static void cheat_key(
 static void cheat_keyx();   static void cheat_keyxx();    static void cheat_weap();
 static void cheat_weapx();  static void cheat_ammo();     static void cheat_ammox();
 static void cheat_smart();  static void cheat_pitch();    static void cheat_nuke();
+static void cheat_rate();   static void cheat_buddha();
 
 #ifdef INSTRUMENTED
 static void cheat_printstats();   // killough 8/23/98
@@ -79,7 +80,6 @@ boolean GIBBERS;                // Used for 'GIBBERS'
 static void cheat_gibbers();    // Everything gibs
 static void cheat_notarget();   // [crispy] implement PrBoom+'s "notarget" cheat
 static void cheat_resurrect();
-static void cheat_buddha();     // Can't go below 1% health
 static void cheat_fly();
 static void cheat_turbo();
 static int spawneetype = -1; static boolean spawneefriend; // Used for 'SPAWNR'
@@ -118,6 +118,9 @@ struct cheat_s cheat[] = {
   {"iddqd",      "God mode",          not_net | not_demo,
    cheat_god      },
 
+  {"buddha",     "Buddha mode",       not_net | not_demo,
+   cheat_buddha   },
+
   {"idk",        NULL,                not_net | not_demo | not_deh,
    cheat_k },  // The most controversial cheat code in Doom history!!!
 
@@ -132,6 +135,9 @@ struct cheat_s cheat[] = {
 
   {"idclip",     "No Clipping 2",     not_net | not_demo,
    cheat_noclip },
+
+  {"idbeholdo",  NULL,                not_net | not_demo | not_deh,
+   cheat_pw,  NUMPOWERS }, // [FG] disable all powerups at once
 
   {"idbeholdv",  "Invincibility",     not_net | not_demo,
    cheat_pw,  pw_invulnerability },
@@ -160,7 +166,7 @@ struct cheat_s cheat[] = {
   {"idclev",     "Level Warp",        not_net | not_demo | not_menu,
    cheat_clev0,   },
 
-  {"idmypos",    "Player Position",   not_net | not_demo,
+  {"idmypos",    "Player Position",   not_dm, // [FG] not_net | not_demo,
    cheat_mypos    },
 
   {"comp",    NULL,                   not_net | not_demo,
@@ -245,6 +251,9 @@ struct cheat_s cheat[] = {
   {"nuke",    NULL,                   not_net | not_demo,
    cheat_nuke       },   // killough 12/98: disable nukage damage
 
+  {"rate",    NULL,                   always,
+   cheat_rate       },
+
   {"aim",        NULL,                not_net | not_demo | beta_only,
    cheat_autoaim},
 
@@ -266,13 +275,11 @@ struct cheat_s cheat[] = {
 #endif
 
 // [FG] FPS counter widget
-  {"showfps",    NULL,                always,
+// [Nugget] Just use 'fps'
+  {"fps",    NULL,                always,
    cheat_showfps},
 
 // [Nugget] (All of the following)
-
-  {"idrate", NULL, always,
-   cheat_showfps}, // 'SHOWFPS' alternative
 
   {"nomomentum", NULL, not_net|not_demo,
    cheat_nomomentum},
@@ -300,9 +307,6 @@ struct cheat_s cheat[] = {
 
   {"idres", NULL, not_net|not_demo,
    cheat_resurrect}, // 'RESURRECT' alternative
-
-  {"buddha", NULL, not_net|not_demo,
-   cheat_buddha}, // Can't go below 1% health
 
   {"idfly", NULL, not_net|not_demo,
    cheat_fly},
@@ -356,7 +360,7 @@ static void cheat_printstats()    // killough 8/23/98
 // [FG] FPS counter widget
 static void cheat_showfps()
 {
-  plyr->cheats ^= CF_SHOWFPS;
+  plyr->powers[pw_showfps] ^= 1;
 }
 
 // [Nugget]
@@ -450,13 +454,16 @@ static void cheat_notarget() {
 
 }
 
+// [Nugget] Used for resurrection, both right here in cheat_resurrect()
+// and later in cheat_god()
+extern void P_SpawnPlayer (mapthing_t* mthing);
+
 // [Nugget] Resurrection cheat adapted from Crispy's IDDQD
 static void cheat_resurrect() {
 	// [crispy] dead players are first respawned at the current position
 	mapthing_t mt = {0};
 	if (plyr->playerstate == PST_DEAD) {
     signed int an;
-    extern void P_SpawnPlayer (mapthing_t* mthing);
 
     mt.x = plyr->mo->x >> FRACBITS;
     mt.y = plyr->mo->y >> FRACBITS;
@@ -476,14 +483,6 @@ static void cheat_resurrect() {
     plyr->message = "Resurrected!";
 	}
 	else { plyr->message = "Still alive."; }
-}
-
-// [Nugget] Can't go below 1% health
-static void cheat_buddha() {
-  plyr->cheats ^= CF_BUDDHA;
-  plyr->message = plyr->cheats & CF_BUDDHA
-                  ? "Buddha Mode ON"
-                  : "Buddha Mode OFF";
 }
 
 // [Nugget]
@@ -692,6 +691,24 @@ static void cheat_choppers()
 
 static void cheat_god()
 {                                    // 'dqd' cheat for toggleable god mode
+  // [crispy] dead players are first respawned at the current position
+  if (plyr->playerstate == PST_DEAD)
+  {
+    signed int an;
+    mapthing_t mt = {0};
+
+    mt.x = plyr->mo->x >> FRACBITS;
+    mt.y = plyr->mo->y >> FRACBITS;
+    mt.angle = (plyr->mo->angle + ANG45/2)*(uint64_t)45/ANG45;
+    mt.type = consoleplayer + 1;
+    P_SpawnPlayer(&mt);
+
+    // [crispy] spawn a teleport fog
+    an = plyr->mo->angle >> ANGLETOFINESHIFT;
+    P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
+    S_StartSound(plyr->mo, sfx_slop);
+  }
+
   plyr->cheats ^= CF_GODMODE;
   if (plyr->cheats & CF_GODMODE)
     {
@@ -703,6 +720,15 @@ static void cheat_god()
     }
   else
     plyr->message = s_STSTR_DQDOFF; // Ty 03/27/98 - externalized
+}
+
+static void cheat_buddha()
+{
+  plyr->cheats ^= CF_BUDDHA;
+  if (plyr->cheats & CF_BUDDHA)
+    plyr->message = "Buddha Mode ON";
+  else
+    plyr->message = "Buddha Mode OFF";
 }
 
 static void cheat_tst()
@@ -768,6 +794,12 @@ static void cheat_noclip()
 // 'behold?' power-up cheats (modified for infinite duration -- killough)
 static void cheat_pw(int pw)
 {
+  if (pw == NUMPOWERS)
+  {
+    memset(plyr->powers, 0, sizeof(plyr->powers));
+    plyr->mo->flags &= ~MF_SHADOW; // [crispy] cancel invisibility
+  }
+  else
   if (plyr->powers[pw])
     plyr->powers[pw] = pw!=pw_strength && pw!=pw_allmap;  // killough
   else
@@ -872,10 +904,16 @@ char buf[3];
 // killough 2/7/98: simplified using dprintf and made output more user-friendly
 static void cheat_mypos()
 {
-  dprintf("Position (%d,%d,%d)\tAngle %-.0f",
-          players[consoleplayer].mo->x >> FRACBITS,
-          players[consoleplayer].mo->y >> FRACBITS,
-          players[consoleplayer].mo->z >> FRACBITS,
+  plyr->powers[pw_renderstats] = 0;
+  if (!(plyr->powers[pw_mapcoords] ^= 1))
+    plyr->message = "";
+}
+
+void cheat_mypos_print()
+{
+  dprintf("X=%.10f Y=%.10f A=%-.0f",
+          (double)players[consoleplayer].mo->x / FRACUNIT,
+          (double)players[consoleplayer].mo->y / FRACUNIT,
           players[consoleplayer].mo->angle * (90.0/ANG90));
 }
 
@@ -1079,6 +1117,13 @@ static void cheat_nuke()
   extern int disable_nuke;
   plyr->message = (disable_nuke = !disable_nuke) ? "Nukage Disabled" :
     "Nukage Enabled";
+}
+
+static void cheat_rate()
+{
+  plyr->powers[pw_mapcoords] = 0;
+  if (!(plyr->powers[pw_renderstats] ^= 1))
+    plyr->message = "";
 }
 
 //-----------------------------------------------------------------------------

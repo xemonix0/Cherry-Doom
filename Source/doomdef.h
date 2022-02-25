@@ -84,9 +84,6 @@ typedef enum
     exe_chex,        // Chex Quest
 } GameVersion_t;
 
-// [FG] support the BFG Edition IWADs
-extern int bfgedition;
-
 // [FG] flashing disk icon
 #define DISK_ICON_THRESHOLD (20 * 1024)
 
@@ -215,7 +212,10 @@ typedef enum {
   pw_ironfeet,
   pw_allmap,
   pw_infrared,
-  NUMPOWERS
+  NUMPOWERS,
+  pw_mapcoords,
+  pw_renderstats,
+  pw_showfps
 } powertype_t;
 
 // Power up durations (how many seconds till expiration).

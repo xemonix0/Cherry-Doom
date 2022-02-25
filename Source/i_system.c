@@ -67,57 +67,65 @@ void I_Sleep(int ms)
     SDL_Delay(ms);
 }
 
+// Same as I_GetTime, but returns time in milliseconds
+
+static Uint32 basetime = 0;
+
+int I_GetTimeMS(void)
+{
+  return SDL_GetTicks() - basetime;
+}
+
 // Most of the following has been rewritten by Lee Killough
 //
 // I_GetTime
 //
 
-static Uint32 basetime=0;
-
 int I_GetTime_RealTime(void)
 {
-   // haleyjd
-   Uint32        ticks;
-   
-   // milliseconds since SDL initialization
-   ticks = SDL_GetTicks();
-   
-   return ((ticks - basetime)*TICRATE)/1000;
-}
-
-// Same as I_GetTime, but returns time in milliseconds
-
-int I_GetTimeMS(void)
-{
-    Uint32 ticks;
-
-    ticks = SDL_GetTicks();
-
-    return ticks - basetime;
+  return (int64_t)I_GetTimeMS() * TICRATE / 1000;
 }
 
 // killough 4/13/98: Make clock rate adjustable by scale factor
 int realtic_clock_rate = 100;
-static Long64 I_GetTime_Scale = 1<<24;
-int I_GetTime_Scaled(void)
+int clock_rate;
+
+static int I_GetTime_Scaled(void)
 {
-   // haleyjd:
-   return (int)((Long64) I_GetTime_RealTime() * I_GetTime_Scale >> 24);
+  return (int64_t)I_GetTimeMS() * clock_rate * TICRATE / 100000;
 }
 
-static int  I_GetTime_FastDemo(void)
+static int I_GetTime_FastDemo(void)
 {
   static int fasttic;
   return fasttic++;
 }
 
-static int I_GetTime_Error()
+static int I_GetTime_Error(void)
 {
   I_Error("Error: GetTime() used before initialization");
   return 0;
 }
 
 int (*I_GetTime)() = I_GetTime_Error;                           // killough
+
+// During a fast demo, no time elapses in between ticks
+static int I_GetFracTimeFastDemo(void)
+{
+  return 0;
+}
+
+static int I_GetFracRealTime(void)
+{
+  return (int64_t)I_GetTimeMS() * TICRATE % 1000 * FRACUNIT / 1000;
+}
+
+static int I_GetFracScaledTime(void)
+{
+  return (int64_t)I_GetTimeMS() * clock_rate * TICRATE / 100 % 1000 * FRACUNIT / 1000;
+}
+
+int (*I_GetFracTime)(void) = I_GetFracRealTime;
 
 int controllerpresent;                                         // phares 4/3/98
 
@@ -224,10 +232,13 @@ void I_InitKeyboard(void)
 }
 
 extern boolean nomusicparm, nosfxparm;
+static void I_ErrorMsg();
 
 void I_Init(void)
 {
-   int clock_rate = realtic_clock_rate, p;
+   int p;
+
+   clock_rate = realtic_clock_rate;
    
    if((p = M_CheckParm("-speed")) && p < myargc-1 &&
       (p = atoi(myargv[p+1])) >= 10 && p <= 1000)
@@ -238,15 +249,21 @@ void I_Init(void)
 
    // killough 4/14/98: Adjustable speedup based on realtic_clock_rate
    if(fastdemo)
+   {
       I_GetTime = I_GetTime_FastDemo;
+      I_GetFracTime = I_GetFracTimeFastDemo;
+   }
    else
       if(clock_rate != 100)
       {
-         I_GetTime_Scale = ((Long64) clock_rate << 24) / 100;
          I_GetTime = I_GetTime_Scaled;
+         I_GetFracTime = I_GetFracScaledTime;
       }
       else
+      {
          I_GetTime = I_GetTime_RealTime;
+         I_GetFracTime = I_GetFracRealTime;
+      }
 
    I_InitJoystick();
 
@@ -254,7 +271,8 @@ void I_Init(void)
 
   // killough 3/6/98: end of keyboard / autorun state changes
 
-   atexit(I_Shutdown);
+   I_AtExit(I_Shutdown, true);
+   I_AtExitPrio(I_ErrorMsg, true, "I_ErrorMsg", exit_priority_verylast);
    
    // killough 2/21/98: avoid sound initialization if no sound & no music
    { 
@@ -287,6 +305,7 @@ void I_EnableWarp (boolean warp)
 	else
 	{
 		I_GetTime = I_GetTime_old;
+		D_StartGameLoop();
 		nodrawers = nodrawers_old;
 		noblit = noblit_old;
 		nomusicparm = nomusicparm_old;
@@ -294,38 +313,35 @@ void I_EnableWarp (boolean warp)
 	}
 }
 
-int waitAtExit;
-
 //
 // I_Quit
 //
 
 static char errmsg[2048];    // buffer of error message -- killough
-
-static int has_exited;
+static boolean was_demorecording = false;
 
 void I_Quit (void)
 {
-   has_exited=1;   /* Prevent infinitely recursive exits -- killough */
-   
-   if (*errmsg)
-      puts(errmsg);   // killough 8/8/98
-   else
+   if (!*errmsg && !was_demorecording)
       I_EndDoom();
-   
-   if (demorecording)
-      G_CheckDemoStatus();
-   M_SaveDefaults();
 
-#if defined(_MSC_VER)
-   // Under Visual C++, the console window likes to rudely slam
-   // shut -- this can stop it
-   if(*errmsg || waitAtExit)
+   SDL_QuitSubSystem(SDL_INIT_VIDEO);
+
+   SDL_Quit();
+}
+
+void I_QuitFirst (void)
+{
+   if (demorecording)
    {
-      puts("Press any key to continue");
-      getch();
+      was_demorecording = true;
+      G_CheckDemoStatus();
    }
-#endif
+}
+
+void I_QuitLast (void)
+{
+   M_SaveDefaults();
 }
 
 // [FG] returns true if stdout is a real console, false if it is a file
@@ -346,39 +362,30 @@ static boolean I_ConsoleStdout(void)
 
 void I_Error(const char *error, ...) // killough 3/20/98: add const
 {
-   boolean exit_gui_popup;
+    size_t len = sizeof(errmsg) - strlen(errmsg) - 1; // [FG] for '\n'
+    char *dest = errmsg + strlen(errmsg);
 
-   if (has_exited)    // If it hasn't exited yet, exit now -- killough
-   {
-      exit(-1);
-   }
-   else
-   {
-      has_exited=1;   // Prevent infinitely recursive exits -- killough
-   }
+    va_list argptr;
+    va_start(argptr,error);
+    vsnprintf(dest,len,error,argptr);
+    strcat(dest,"\n");
+    va_end(argptr);
 
-   if(!*errmsg)   // ignore all but the first message -- killough
-   {
-      va_list argptr;
-      va_start(argptr,error);
-      vsprintf(errmsg,error,argptr);
-      va_end(argptr);
-   }
+    fputs(dest, stderr);
 
-    // If specified, don't show a GUI window for error messages when the
-    // game exits with an error.
-    exit_gui_popup = !M_CheckParm("-nogui");
+    I_SafeExit(-1);
+}
 
+static void I_ErrorMsg()
+{
     // Pop up a GUI dialog box to show the error message, if the
     // game was not run from the console (and the user will
     // therefore be unable to otherwise see the message).
-    if (exit_gui_popup && !I_ConsoleStdout())
+    if (*errmsg && !M_CheckParm("-nogui") && !I_ConsoleStdout())
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                  PROJECT_STRING, errmsg, NULL);
     }
-   
-   exit(-1);
 }
 
 // killough 2/22/98: Add support for ENDBOOM, which is PC-specific
@@ -390,10 +397,11 @@ void I_EndDoom(void)
 {
     int lumpnum;
     byte *endoom;
+    extern boolean main_loop_started;
 
     // Don't show ENDOOM if we have it disabled.
 
-    if (!show_endoom)
+    if (!show_endoom || !main_loop_started)
     {
         return;
     }

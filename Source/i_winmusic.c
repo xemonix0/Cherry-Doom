@@ -20,10 +20,12 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "doomtype.h"
-#include "m_misc.h"
-#include "m_misc2.h"
+#include "i_sound.h"
+#include "memio.h"
+#include "mus2mid.h"
 #include "midifile.h"
 
 static HMIDISTRM hMidiStream;
@@ -211,7 +213,7 @@ static void MIDItoStream(midi_file_t *file)
     int i;
 
     int num_tracks =  MIDI_NumTracks(file);
-    win_midi_track_t *tracks = (malloc)(num_tracks * sizeof(win_midi_track_t));
+    win_midi_track_t *tracks = malloc(num_tracks * sizeof(win_midi_track_t));
 
     int current_time = 0;
 
@@ -221,7 +223,7 @@ static void MIDItoStream(midi_file_t *file)
         tracks[i].absolute_time = 0;
     }
 
-    song.native_events = (calloc)(MIDI_NumEvents(file), sizeof(native_event_t));
+    song.native_events = calloc(MIDI_NumEvents(file), sizeof(native_event_t));
 
     while (1)
     {
@@ -259,6 +261,7 @@ static void MIDItoStream(midi_file_t *file)
 
         if (!MIDI_GetNextEvent(tracks[idx].iter, &event))
         {
+            MIDI_FreeIterator(tracks[idx].iter);
             tracks[idx].iter = NULL;
             continue;
         }
@@ -312,11 +315,11 @@ static void MIDItoStream(midi_file_t *file)
 
     if (tracks)
     {
-        (free)(tracks);
+        free(tracks);
     }
 }
 
-boolean I_WIN_InitMusic(void)
+static boolean I_WIN_InitMusic(void)
 {
     UINT MidiDevice = MIDI_MAPPER;
     MIDIHDR *hdr = &buffer.MidiStreamHdr;
@@ -350,27 +353,34 @@ boolean I_WIN_InitMusic(void)
     return true;
 }
 
-void I_WIN_SetMusicVolume(int volume)
+static void UpdateVolume()
 {
     int i;
-
-    volume_factor = (float)volume / 15;
 
     // Send MIDI controller events to adjust the volume.
     for (i = 0; i < MIDI_CHANNELS_PER_TRACK; ++i)
     {
+        DWORD msg = 0;
+
         int value = channel_volume[i] * volume_factor;
 
-        DWORD msg = MIDI_EVENT_CONTROLLER | i |
-                    (MIDI_CONTROLLER_MAIN_VOLUME << 8) |
-                    (value << 16);
+        msg = MIDI_EVENT_CONTROLLER | i | (MIDI_CONTROLLER_MAIN_VOLUME << 8) |
+              (value << 16);
 
         midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
     }
 }
 
-void I_WIN_StopSong(void)
+static void I_WIN_SetMusicVolume(int volume)
 {
+    volume_factor = (float)volume / 15;
+
+    UpdateVolume();
+}
+
+static void I_WIN_StopSong(void *handle)
+{
+    int i;
     MMRESULT mmr;
 
     if (hPlayerThread)
@@ -380,6 +390,29 @@ void I_WIN_StopSong(void)
 
         CloseHandle(hPlayerThread);
         hPlayerThread = NULL;
+    }
+
+    for (i = 0; i < MIDI_CHANNELS_PER_TRACK; ++i)
+    {
+        DWORD msg = 0;
+
+        // RPN sequence to adjust pitch bend range (RPN value 0x0000)
+        msg = MIDI_EVENT_CONTROLLER | i | 0x65 << 8 | 0x00 << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+        msg = MIDI_EVENT_CONTROLLER | i | 0x64 << 8 | 0x00 << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+
+        // reset pitch bend range to central tuning +/- 2 semitones and 0 cents
+        msg = MIDI_EVENT_CONTROLLER | i | 0x06 << 8 | 0x02 << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+        msg = MIDI_EVENT_CONTROLLER | i | 0x26 << 8 | 0x00 << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+
+        // end of RPN sequence
+        msg = MIDI_EVENT_CONTROLLER | i | 0x64 << 8 | 0x7F << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+        msg = MIDI_EVENT_CONTROLLER | i | 0x65 << 8 | 0x7F << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
     }
 
     mmr = midiStreamStop(hMidiStream);
@@ -394,7 +427,7 @@ void I_WIN_StopSong(void)
     }
 }
 
-void I_WIN_PlaySong(boolean looping)
+static void I_WIN_PlaySong(void *handle, boolean looping)
 {
     MMRESULT mmr;
 
@@ -409,26 +442,74 @@ void I_WIN_PlaySong(boolean looping)
     {
         MidiErrorMessageBox(mmr);
     }
+
+    UpdateVolume();
 }
 
-void I_WIN_RegisterSong(void *data, int size)
+static void I_WIN_PauseSong(void *handle)
+{
+    MMRESULT mmr;
+
+    mmr = midiStreamPause(hMidiStream);
+    if (mmr != MMSYSERR_NOERROR)
+    {
+        MidiErrorMessageBox(mmr);
+    }
+}
+
+static void I_WIN_ResumeSong(void *handle)
+{
+    MMRESULT mmr;
+
+    mmr = midiStreamRestart(hMidiStream);
+    if (mmr != MMSYSERR_NOERROR)
+    {
+        MidiErrorMessageBox(mmr);
+    }
+}
+
+static void *I_WIN_RegisterSong(void *data, int len)
 {
     int i;
     midi_file_t *file;
-    char *filename;
 
     MIDIPROPTIMEDIV timediv;
     MIDIPROPTEMPO tempo;
     MMRESULT mmr;
 
-    filename = M_TempFile("doom.mid");
-    M_WriteFile(filename, data, size);
-    file = MIDI_LoadFile(filename);
+    if (IsMid(data, len))
+    {
+        file = MIDI_LoadFile(data, len);
+    }
+    else
+    {
+        // Assume a MUS file and try to convert
+        MEMFILE *instream;
+        MEMFILE *outstream;
+        void *outbuf;
+        size_t outbuf_len;
+
+        instream = mem_fopen_read(data, len);
+        outstream = mem_fopen_write();
+
+        if (mus2mid(instream, outstream) == 0)
+        {
+            mem_get_buf(outstream, &outbuf, &outbuf_len);
+            file = MIDI_LoadFile(outbuf, outbuf_len);
+        }
+        else
+        {
+            file = NULL;
+        }
+
+        mem_fclose(instream);
+        mem_fclose(outstream);
+    }
 
     if (file == NULL)
     {
         fprintf(stderr, "I_WIN_RegisterSong: Failed to load MID.\n");
-        return;
+        return NULL;
     }
 
     // Initialize channels volume.
@@ -444,7 +525,7 @@ void I_WIN_RegisterSong(void *data, int size)
     if (mmr != MMSYSERR_NOERROR)
     {
         MidiErrorMessageBox(mmr);
-        return;
+        return NULL;
     }
 
     // Set initial tempo.
@@ -455,7 +536,7 @@ void I_WIN_RegisterSong(void *data, int size)
     if (mmr != MMSYSERR_NOERROR)
     {
         MidiErrorMessageBox(mmr);
-        return;
+        return NULL;
     }
 
     MIDItoStream(file);
@@ -468,26 +549,27 @@ void I_WIN_RegisterSong(void *data, int size)
     FillBuffer();
     StreamOut();
 
-    (free)(filename);
+    return (void *)1;
 }
 
-void I_WIN_UnRegisterSong(void)
+static void I_WIN_UnRegisterSong(void *handle)
 {
     if (song.native_events)
     {
-        (free)(song.native_events);
+        free(song.native_events);
         song.native_events = NULL;
     }
     song.num_events = 0;
     song.position = 0;
 }
 
-void I_WIN_ShutdownMusic(void)
+static void I_WIN_ShutdownMusic(void)
 {
     MIDIHDR *hdr = &buffer.MidiStreamHdr;
     MMRESULT mmr;
 
-    I_WIN_StopSong();
+    I_WIN_StopSong(NULL);
+    I_WIN_UnRegisterSong(NULL);
 
     mmr = midiOutUnprepareHeader((HMIDIOUT)hMidiStream, hdr, sizeof(MIDIHDR));
     if (mmr != MMSYSERR_NOERROR)
@@ -506,5 +588,18 @@ void I_WIN_ShutdownMusic(void)
     CloseHandle(hBufferReturnEvent);
     CloseHandle(hExitEvent);
 }
+
+music_module_t music_win_module =
+{
+    I_WIN_InitMusic,
+    I_WIN_ShutdownMusic,
+    I_WIN_SetMusicVolume,
+    I_WIN_PauseSong,
+    I_WIN_ResumeSong,
+    I_WIN_RegisterSong,
+    I_WIN_PlaySong,
+    I_WIN_StopSong,
+    I_WIN_UnRegisterSong,
+};
 
 #endif

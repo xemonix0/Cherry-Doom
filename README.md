@@ -80,11 +80,9 @@ Once installed, compilation should be as simple as:
 ```
  cd nugget
  mkdir build; cd build
- cmake -DCMAKE_BUILD_TYPE=Debug ..
+ cmake ..
  make
 ```
-
-If you want a release build, use `Release` for the build type instead of `Debug`.  Also, if you happen to have [Ninja](https://ninja-build.org/) installed, you can add `-G Ninja` to the `cmake` invocation for faster build times.
 
 After successful compilation the resulting binary can be found in the `Source/` directory.
 
@@ -96,12 +94,12 @@ It's worth noting that you do not need to download any dependencies.  The build 
 
 ### Cross-compiling
 
-You can cross-compile from Linux to Windows.  First, make sure you have a reasonably recent version of mingw-w64 installed.  From there, cross-compiling should be as easy as:
+You may want to cross-compile from Linux to Windows.  First, make sure you have a reasonably recent version of the [Mingw-w64](https://www.mingw-w64.org/) package installed.  From there, cross-compiling should be as easy as:
 
 ```
  cd nugget
  mkdir build; cd build
- cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../CrossToWin64.cmake ..
+ cmake -DCMAKE_TOOLCHAIN_FILE=../CrossToWin64.cmake ..
  make
 ```
 
@@ -120,20 +118,19 @@ Help was provided by _kraflab_ (responsible for [dsda-doom](https://github.com/k
 ## Legalese
 
 Files: `*`
-Copyright: © 1993-1996 Id Software, Inc.;
+Copyright:
+ © 1993-1996 Id Software, Inc.;
  © 1993-2008 Raven Software;
  © 1999 by id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;
  © 2004 James Haley;
- © 2005-2014 Simon Howard;
+ © 2005-2018 Simon Howard;
+ © 2006 Ben Ryves;
+ © 2017 Christoph Oelckers;
+ © 2019 Fernando Carmona Varo;
+ © 2019 Jonathan Dowland;
  © 2020-2021 Fabian Greffrath;
  © 2020 Alex Mayfield;
  © 2020-2021 Roman Fomin.
-License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
-
-Files: `opl/*`
-Copyright: © 2002-2003 Marcel Telka;
- © 2005-2014 Simon Howard;
- © 2013-2018 Alexey Khokholov (Nuke.YKT).
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `Source/beta.h`
@@ -141,10 +138,25 @@ Copyright: © 2001-2019 Contributors to the Freedoom project.
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `Source/dogs.h`
-Copyright: © 2017 Nash Muhandes;
+Copyright:
+ © 2017 Nash Muhandes;
  © apolloaiello;
  © TobiasKosmos.
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+
+Files: `Source/u_scanner.*`
+Copyright:
+ © 2010 Braden "Blzut3" Obrzut;
+ © 2019 Fernando Carmona Varo.
+License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
+
+Files: `cmake/FindFluidSynth.cmake`
+Copyright: © 2018 Christophe Giboudeaux.
+License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
+
+Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_mixer.cmake, cmake/FindSDL2_net.cmake`
+Copyright: © 2018 Alex Mayfield.
+License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `data/woof.ico,
  data/woof.png,
@@ -153,9 +165,35 @@ Files: `data/woof.ico,
 Copyright: © 2022 Korp.
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-Files: `cmake/FindSDL2.cmake,
- cmake/FindSDL2_image.cmake,
- cmake/FindSDL2_mixer.cmake,
- cmake/FindSDL2_net.cmake`
-Copyright: © 2018 Alex Mayfield.
+Files: `miniz/*`
+Copyright:
+ © 2010-2014 Rich Geldreich and Tenacious Software LLC;
+ © 2013-2014 RAD Game Tools and Valve Software.
+License: [MIT](https://opensource.org/licenses/MIT)
+
+Files: `opl/*`
+Copyright:
+ © 2005-2014 Simon Howard;
+ © 2013-2018 Alexey Khokholov (Nuke.YKT).
+License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+
+Files: `soundfonts/TimGM6mb.sf2`
+Copyright:
+ © 2004 Tim Brechbill;
+ © 2010 David Bolton.
+License: [GPL-2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+
+Files: `textscreen/*`
+Copyright:
+ © 1993-1996 Id Software, Inc.;
+ © 1999 Thomas A. Fine;
+ © 2002-2004 The DOSBox Team;
+ © 2005-2017 Simon Howard.
+License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+
+Files: `win32/stdint.h`
+Copyright: © 2006-2008 Alexander Chemeris.
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
+
+Files: `win32/win_opendir.*`
+License: Public Domain

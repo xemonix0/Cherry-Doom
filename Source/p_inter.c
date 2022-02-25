@@ -871,9 +871,10 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
     }
 
     player->health -= damage;       // mirror mobj health here for Dave
-    // [Nugget] BUDDHA cheat
-    if (player->cheats & CF_BUDDHA && player->health < 1)
-      { player->health = 1; }
+    // BUDDHA cheat
+    if (player->cheats & CF_BUDDHA &&
+        player->health < 1)
+      player->health = 1;
     else if (player->health < 0)
       player->health = 0;
 
@@ -899,15 +900,21 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 
     }
 
-  // [Nugget] BUDDHA cheat
-  if (player && (player->cheats & CF_BUDDHA)
-      && (target->health - damage) < 1)
-    { target->health = 1; }
-  else if ((target->health -= damage) <= 0)
-  { // do the damage
-    P_KillMobj(source, target);
-    return;
+  // do the damage
+  target->health -= damage;
+
+  // BUDDHA cheat
+  if (player && player->cheats & CF_BUDDHA &&
+      target->health < 1)
+  {
+    target->health = 1;
   }
+  else
+  if (target->health <= 0)
+    {
+      P_KillMobj(source, target);
+      return;
+    }
 
   // killough 9/7/98: keep track of targets so that friends can help friends
   if (demo_version >= 203)

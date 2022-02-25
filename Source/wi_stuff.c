@@ -37,6 +37,7 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "hu_stuff.h"
+#include "m_misc2.h"
 
 // Ty 03/17/98: flag that new par times have been loaded in d_deh
 extern boolean deh_pars;  
@@ -1764,6 +1765,8 @@ static void WI_updateStats(void)
                     (demo_version < 203 || cnt_total_time >= wbs->totaltimes / TICRATE)
                    )
                   {
+                    if (demo_version < 203)
+                      cnt_total_time = wbs->totaltimes / TICRATE;
                     S_StartSound(0, sfx_barexp);
                     sp_state++;
                   }
@@ -1837,15 +1840,13 @@ static void WI_drawStats(void)
 	WI_drawTime(ORIGWIDTH - SP_TIMEX, SP_TIMEY, cnt_par, true);
       }
 
-  // [FG] draw total time after level time and par time
-  if (sp_state > 8)
+  // [FG] draw total time alongside level time and par time
   {
-    const int ttime = wbs->totaltimes / TICRATE;
-    const boolean wide = (ttime > 61*59) || (SP_TIMEX + SHORT(total->width) >= ORIGWIDTH/4);
+    const boolean wide = (wbs->totaltimes / TICRATE > 61*59) || (SP_TIMEX + SHORT(total->width) >= ORIGWIDTH/4);
 
     V_DrawPatch(SP_TIMEX, SP_TIMEY + 16, FB, total);
     // [FG] choose x-position depending on width of time string
-    WI_drawTime((wide ? ORIGWIDTH : ORIGWIDTH/2) - SP_TIMEX, SP_TIMEY + 16, ttime, false);
+    WI_drawTime((wide ? ORIGWIDTH : ORIGWIDTH/2) - SP_TIMEX, SP_TIMEY + 16, cnt_total_time, false);
   }
 }
 
@@ -1987,7 +1988,7 @@ void WI_loadData(void)
                                      PU_STATIC, 0);
       for (i=0 ; i<NUMCMAPS ; i++)
         { 
-          snprintf(name, sizeof(name), "CWILV%2.2d", i);
+          M_snprintf(name, sizeof(name), "CWILV%2.2d", i);
           if (W_CheckNumForName(name) != -1)
           {
           lnames[i] = W_CacheLumpName(name, PU_STATIC);
@@ -2035,7 +2036,7 @@ void WI_loadData(void)
                   if (wbs->epsd != 1 || j != 8) 
                     {
                       // animations
-                      snprintf(name, sizeof(name), "WIA%d%.2d%.2d", wbs->epsd, j, i);
+                      M_snprintf(name, sizeof(name), "WIA%d%.2d%.2d", wbs->epsd, j, i);
                       a->p[i] = W_CacheLumpName(name, PU_STATIC);
                     }
                   else
@@ -2142,6 +2143,7 @@ void WI_loadData(void)
 //
 void WI_Drawer (void)
 {
+  extern void WI_DrawTimeWidget(void);
   switch (state)
     {
     case StatCount:
@@ -2152,6 +2154,8 @@ void WI_Drawer (void)
           WI_drawNetgameStats();
         else
           WI_drawStats();
+      // [FG] draw Time widget on intermission screen
+      WI_DrawTimeWidget();
       break;
   
     case ShowNextLoc:

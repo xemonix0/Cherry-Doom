@@ -31,7 +31,12 @@
 #define __DOOMTYPE__
 
 #include <stddef.h> // [FG] NULL
+
+#if defined(_MSC_VER) && _MSC_VER < 1800
+#include "../win32/stdint.h"
+#else
 #include <stdint.h> // [FG] intptr_t types
+#endif
 
 #include "config.h"
 
@@ -76,9 +81,22 @@ typedef int64_t Long64;
 #ifndef MAX
  #define MAX(a,b) (((a)>(b))?(a):(b))
 #endif
+#ifndef BETWEEN
+ #define BETWEEN(l,u,x) ((l)>(x)?(l):(x)>(u)?(u):(x))
+#endif
 
 #if defined(_MSC_VER) && !defined(__cplusplus)
 #define inline __inline
+#endif
+
+#if defined(__GNUC__)
+ #define PRINTF_ATTR(fmt, first) __attribute__((format(printf, fmt, first)))
+ #define PRINTF_ARG_ATTR(x) __attribute__((format_arg(x)))
+ #define NORETURN __attribute__((noreturn))
+#else
+ #define PRINTF_ATTR(fmt, first)
+ #define PRINTF_ARG_ATTR(x)
+ #define NORETURN
 #endif
 
 // The packed attribute forces structures to be packed into the minimum
@@ -88,37 +106,20 @@ typedef int64_t Long64;
 // structures where alignment is important, particularly data read/written
 // to disk.
 
-#ifdef __GNUC__
+#if defined(__GNUC__)
+ #define PACKED_PREFIX
  #if defined(_WIN32) && !defined(__clang__)
-  #define PACKEDATTR __attribute__((packed,gcc_struct))
+  #define PACKED_SUFFIX __attribute__((packed,gcc_struct))
  #else
-  #define PACKEDATTR __attribute__((packed))
+  #define PACKED_SUFFIX __attribute__((packed))
  #endif
-
- #define PRINTF_ATTR(fmt, first) __attribute__((format(printf, fmt, first)))
- #define PRINTF_ARG_ATTR(x) __attribute__((format_arg(x)))
- #define NORETURN __attribute__((noreturn))
+#elif defined(__WATCOMC__)
+ #define PACKED_PREFIX _Packed
+ #define PACKED_SUFFIX
 #else
- #if defined(_MSC_VER)
-  #define PACKEDATTR __pragma(pack(pop))
- #else
-  #define PACKEDATTR
- #endif
-
- #define PRINTF_ATTR(fmt, first)
- #define PRINTF_ARG_ATTR(x)
- #define NORETURN
+ #define PACKED_PREFIX
+ #define PACKED_SUFFIX
 #endif
-
-#ifdef __WATCOMC__
- #define PACKEDPREFIX _Packed
-#elif defined(_MSC_VER)
- #define PACKEDPREFIX __pragma(pack(push,1))
-#else
- #define PACKEDPREFIX
-#endif
-
-#define PACKED_STRUCT(...) PACKEDPREFIX struct __VA_ARGS__ PACKEDATTR
 
 #endif
 

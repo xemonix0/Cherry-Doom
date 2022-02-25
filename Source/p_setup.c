@@ -324,17 +324,17 @@ void P_LoadNodes (int lump)
           no->children[j] = (unsigned short)SHORT(mn->children[j]); // [FG] extended nodes
 
           // [FG] extended nodes
-          if (no->children[j] == 0xFFFF)
+          if (no->children[j] == (unsigned short)-1)
               no->children[j] = -1;
           else
-          if (no->children[j] & 0x8000)
+          if (no->children[j] & NF_SUBSECTOR_VANILLA)
           {
-              no->children[j] &= ~0x8000;
+              no->children[j] &= ~NF_SUBSECTOR_VANILLA;
 
-               if (no->children[j] >= numsubsectors)
+              if (no->children[j] >= numsubsectors)
                   no->children[j] = 0;
 
-               no->children[j] |= NF_SUBSECTOR;
+              no->children[j] |= NF_SUBSECTOR;
           }
 
           for (k=0 ; k<4 ; k++)
@@ -1421,8 +1421,6 @@ static boolean P_LoadReject(int lumpnum, int totallines)
 //
 // killough 5/3/98: reformatted, cleaned up
 
-// [FG] current map lump number
-int maplumpnum = -1;
 // fast-forward demo to the next map
 boolean demoskip = false;
 
@@ -1551,9 +1549,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   if (precache)
     R_PrecacheLevel();
 
-  // [FG] current map lump number
-  maplumpnum = lumpnum;
-
   // [FG] log level setup
   {
     const int ttime = (totalleveltimes + leveltime) / TICRATE;
@@ -1564,7 +1559,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
       NULL);
 
     fprintf(stderr, "P_SetupLevel: %.8s (%s), %s%s%s\n Skill %d%s, Total %d:%02d:%02d\n Demo Version %d\n",
-      lumpinfo[maplumpnum].name, W_WadNameForLump(maplumpnum),
+      lumpname, W_WadNameForLump(lumpnum),
       mapformat == MFMT_ZDBSPX ? "ZDBSP nodes" :
       mapformat == MFMT_ZDBSPZ ? "compressed ZDBSP nodes" :
       mapformat == MFMT_DEEPBSP ? "DeepBSP nodes" :

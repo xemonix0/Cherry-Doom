@@ -32,9 +32,6 @@
 #include "SDL_mixer.h"
 #include <math.h>
 
-#include "i_sdlmusic.h"
-#include "i_oplmusic.h"
-
 #include "doomstat.h"
 #include "i_sound.h"
 #include "w_wad.h"
@@ -55,18 +52,20 @@ boolean precache_sounds;
 // [FG] optional low-pass filter
 boolean lowpass_filter;
 // [FG] music backend
-music_backend_t music_backend;
+midi_player_t midi_player;
 
-int snd_card;   // default.cfg variables for digi and midi drives
-int mus_card;   // jff 1/18/98
+// Music modules
+extern music_module_t music_win_module;
+extern music_module_t music_fl_module;
+extern music_module_t music_sdl_module;
+extern music_module_t music_opl_module;
 
-int default_snd_card;  // killough 10/98: add default_ versions
-int default_mus_card;
+static music_module_t *midi_player_module = NULL;
+static music_module_t *active_module = NULL;
 
 // haleyjd: safety variables to keep changes to *_card from making
 // these routines think that sound has been initialized when it hasn't
 boolean snd_init = false;
-boolean mus_init = false;
 
 // haleyjd 10/28/05: updated for Julian's music code, need full quality now
 int snd_samplerate = 44100;
@@ -685,13 +684,7 @@ void I_ShutdownSound(void)
 //
 void I_InitSound(void)
 {   
-   // [FG] initialize music backend function pointers
-   if (music_backend == music_backend_opl)
-      I_OPL_InitMusicBackend();
-   else
-      I_SDL_InitMusicBackend();
-
-   if(!nosfxparm)
+   if(!nosfxparm || !nomusicparm)
    {
       int audio_buffers;
 
@@ -705,16 +698,12 @@ void I_InitSound(void)
       if (SDL_Init(SDL_INIT_AUDIO) < 0)
       {
          printf("Couldn't initialize SDL audio: %s\n", SDL_GetError());
-         snd_card = 0;
-         mus_card = 0;
          return;
       }
   
       if(Mix_OpenAudioDevice(snd_samplerate, MIX_DEFAULT_FORMAT, 2, audio_buffers, NULL, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE) < 0)
       {
          printf("Couldn't open audio with desired format.\n");
-         snd_card = 0;
-         mus_card = 0;
          return;
       }
 
@@ -726,12 +715,12 @@ void I_InitSound(void)
       Mix_AllocateChannels(MAX_CHANNELS);
       printf("Configured audio device with %d samples/slice.\n", SAMPLECOUNT);
 
-      atexit(I_ShutdownSound);
+      I_AtExit(I_ShutdownSound, true);
 
       snd_init = true;
 
       // [FG] precache all sound effects
-      if (precache_sounds)
+      if (!nosfxparm && precache_sounds)
       {
          int i;
 
@@ -751,17 +740,103 @@ void I_InitSound(void)
       // haleyjd 04/11/03: don't use music if sfx aren't init'd
       // (may be dependent, docs are unclear)
       if(!nomusicparm)
-         I_InitMusic();
+      {
+         // always initilize SDL music
+         active_module = &music_sdl_module;
+         active_module->I_InitMusic();
+         I_AtExit(active_module->I_ShutdownMusic, true);
+
+         if (midi_player == midi_player_opl)
+            midi_player_module = &music_opl_module;
+      #if defined(_WIN32)
+         else if (midi_player == midi_player_win)
+            midi_player_module = &music_win_module;
+      #endif
+      #if defined(HAVE_FLUIDSYNTH)
+         else if (midi_player == midi_player_fl)
+            midi_player_module = &music_fl_module;
+      #endif
+
+         if (midi_player_module)
+         {
+            active_module = midi_player_module;
+            if (active_module->I_InitMusic())
+            {
+              I_AtExit(active_module->I_ShutdownMusic, true);
+            }
+            else
+            {
+              // fall back to Native/SDL on error
+              midi_player = 0;
+              midi_player_module = NULL;
+              active_module = &music_sdl_module;
+            }
+         }
+      }
    }   
 }
 
-// [FG] music backend function pointers
-boolean (*I_InitMusic)(void);
-void (*I_ShutdownMusic)(void);
-void (*I_SetMusicVolume)(int volume);
-void (*I_PauseSong)(void *handle);
-void (*I_ResumeSong)(void *handle);
-void *(*I_RegisterSong)(void *data, int size);
-void (*I_PlaySong)(void *handle, boolean looping);
-void (*I_StopSong)(void *handle);
-void (*I_UnRegisterSong)(void *handle);
+boolean I_InitMusic(void)
+{
+    return active_module->I_InitMusic();
+}
+
+void I_ShutdownMusic(void)
+{
+    active_module->I_ShutdownMusic();
+}
+
+void I_SetMusicVolume(int volume)
+{
+    active_module->I_SetMusicVolume(volume);
+}
+
+void I_PauseSong(void *handle)
+{
+    active_module->I_PauseSong(handle);
+}
+
+void I_ResumeSong(void *handle)
+{
+    active_module->I_ResumeSong(handle);
+}
+
+boolean IsMid(byte *mem, int len)
+{
+    return len > 4 && !memcmp(mem, "MThd", 4);
+}
+
+boolean IsMus(byte *mem, int len)
+{
+    return len > 4 && !memcmp(mem, "MUS\x1a", 4);
+}
+
+void *I_RegisterSong(void *data, int size)
+{
+    if (IsMus(data, size) || IsMid(data, size))
+    {
+        if (midi_player_module)
+        {
+            active_module = midi_player_module;
+            return active_module->I_RegisterSong(data, size);
+        }
+    }
+
+    active_module = &music_sdl_module;
+    return active_module->I_RegisterSong(data, size);
+}
+
+void I_PlaySong(void *handle, boolean looping)
+{
+    active_module->I_PlaySong(handle, looping);
+}
+
+void I_StopSong(void *handle)
+{
+    active_module->I_StopSong(handle);
+}
+
+void I_UnRegisterSong(void *handle)
+{
+    active_module->I_UnRegisterSong(handle);
+}

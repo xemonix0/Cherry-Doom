@@ -1072,6 +1072,10 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
       size_t offset = deathmatch_p - deathmatchstarts;
 
+      // doom2.exe has at most 10 deathmatch starts
+      if (demo_compatibility && offset >= 10)
+        return;
+
       if (offset >= num_deathmatchstarts)
 	{
 	  num_deathmatchstarts = num_deathmatchstarts ?
@@ -1111,7 +1115,7 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   // check for apropriate skill level
 
-  if (!netgame && mthing->options & MTF_NOTSINGLE)//jff "not single" thing flag
+  if (!coop_spawns && !netgame && mthing->options & MTF_NOTSINGLE)//jff "not single" thing flag
     return;
 
   //jff 3/30/98 implement "not deathmatch" thing flag
@@ -1121,7 +1125,7 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   //jff 3/30/98 implement "not cooperative" thing flag
 
-  if (netgame && !deathmatch && mthing->options & MTF_NOTCOOP)
+  if ((coop_spawns || netgame) && !deathmatch && mthing->options & MTF_NOTCOOP)
     return;
 
   // killough 11/98: simplify

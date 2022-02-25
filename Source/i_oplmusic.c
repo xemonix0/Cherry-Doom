@@ -21,7 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mmus2mid.h"
+#include "mus2mid.h"
+#include "memio.h"
 #include "doomtype.h"
 
 #include "i_sound.h"
@@ -50,7 +51,11 @@
 
 #define PERCUSSION_LOG_LEN 16
 
-typedef PACKED_STRUCT (
+#if defined(_MSC_VER)
+#pragma pack(push, 1)
+#endif
+
+typedef PACKED_PREFIX struct
 {
     byte tremolo;
     byte attack;
@@ -58,25 +63,29 @@ typedef PACKED_STRUCT (
     byte waveform;
     byte scale;
     byte level;
-}) genmidi_op_t;
+} PACKED_SUFFIX genmidi_op_t;
 
-typedef PACKED_STRUCT (
+typedef PACKED_PREFIX struct
 {
     genmidi_op_t modulator;
     byte feedback;
     genmidi_op_t carrier;
     byte unused;
     short base_note_offset;
-}) genmidi_voice_t;
+} PACKED_SUFFIX genmidi_voice_t;
 
-typedef PACKED_STRUCT (
+typedef PACKED_PREFIX struct
 {
     unsigned short flags;
     byte fine_tuning;
     byte fixed_note;
 
     genmidi_voice_t voices[2];
-}) genmidi_instr_t;
+} PACKED_SUFFIX genmidi_instr_t;
+
+#if defined(_MSC_VER)
+#pragma pack(pop)
+#endif
 
 // Data associated with a channel of a track that is currently playing.
 
@@ -1618,39 +1627,9 @@ static void I_OPL_UnRegisterSong(void *handle)
     }
 }
 
-// Determine whether memory block is a .mid file
-
-static boolean IsMid(byte *mem, int len)
-{
-    return len > 4 && !memcmp(mem, "MThd", 4);
-}
-
-static boolean ConvertMus(byte *musdata, int len, char *filename)
-{
-    MIDI mididata;
-    UBYTE *mid;
-    int midlen;
-    int result;
-
-    // [FG] remove dependency on memio
-    memset(&mididata, 0, sizeof(MIDI));
-    result = mmus2mid(musdata, &mididata, 89, 0);
-
-    if (result == 0)
-    {
-        MIDIToMidi(&mididata, &mid, &midlen);
-
-        M_WriteFile(filename, mid, midlen);
-        free(mid);
-    }
-
-    return result;
-}
-
 static void *I_OPL_RegisterSong(void *data, int len)
 {
     midi_file_t *result;
-    char *filename;
 
     if (!music_initialized)
     {
@@ -1660,31 +1639,40 @@ static void *I_OPL_RegisterSong(void *data, int len)
     // MUS files begin with "MUS"
     // Reject anything which doesnt have this signature
 
-    filename = M_TempFile("doom.mid");
-
     // [crispy] remove MID file size limit
     if (IsMid(data, len) /* && len < MAXMIDLENGTH */)
     {
-        M_WriteFile(filename, data, len);
+        result = MIDI_LoadFile(data, len);
     }
     else
     {
         // Assume a MUS file and try to convert
+        MEMFILE *instream;
+        MEMFILE *outstream;
+        void *outbuf;
+        size_t outbuf_len;
 
-        ConvertMus(data, len, filename);
+        instream = mem_fopen_read(data, len);
+        outstream = mem_fopen_write();
+
+        if (mus2mid(instream, outstream) == 0)
+        {
+            mem_get_buf(outstream, &outbuf, &outbuf_len);
+            result = MIDI_LoadFile(outbuf, outbuf_len);
+        }
+        else
+        {
+            result = NULL;
+        }
+
+        mem_fclose(instream);
+        mem_fclose(outstream);
     }
-
-    result = MIDI_LoadFile(filename);
 
     if (result == NULL)
     {
         fprintf(stderr, "I_OPL_RegisterSong: Failed to load MID.\n");
     }
-
-    // remove file now
-
-    remove(filename);
-    (free)(filename);
 
     return result;
 }
@@ -1724,8 +1712,6 @@ static void I_OPL_ShutdownMusic(void)
 }
 
 // Initialize music subsystem
-
-extern int snd_samplerate;
 
 static boolean I_OPL_InitMusic(void)
 {
@@ -1785,16 +1771,15 @@ static boolean I_OPL_InitMusic(void)
     return true;
 }
 
-// [FG] initialize music backend function pointers
-void I_OPL_InitMusicBackend()
+music_module_t music_opl_module =
 {
-	I_InitMusic = I_OPL_InitMusic;
-	I_ShutdownMusic = I_OPL_ShutdownMusic;
-	I_SetMusicVolume = I_OPL_SetMusicVolume;
-	I_PauseSong = I_OPL_PauseSong;
-	I_ResumeSong = I_OPL_ResumeSong;
-	I_RegisterSong = I_OPL_RegisterSong;
-	I_PlaySong = I_OPL_PlaySong;
-	I_StopSong = I_OPL_StopSong;
-	I_UnRegisterSong = I_OPL_UnRegisterSong;
-}
+    I_OPL_InitMusic,
+    I_OPL_ShutdownMusic,
+    I_OPL_SetMusicVolume,
+    I_OPL_PauseSong,
+    I_OPL_ResumeSong,
+    I_OPL_RegisterSong,
+    I_OPL_PlaySong,
+    I_OPL_StopSong,
+    I_OPL_UnRegisterSong,
+};

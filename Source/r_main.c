@@ -465,6 +465,9 @@ void R_ExecuteSetViewSize (void)
 
     // [crispy] forcefully initialize the status bar backing screen
     ST_refreshBackground(true);
+
+    // [FG] spectre drawing mode
+    R_SetFuzzColumnMode();
 }
 
 //
@@ -609,6 +612,25 @@ void R_SetupFrame (player_t *player)
   validcount++;
 }
 
+//
+// R_ShowStats
+//
+
+int rendered_visplanes, rendered_segs, rendered_vissprites;
+
+void R_ShowRenderingStats(void)
+{
+  dprintf("Segs %d, Visplanes %d, Sprites %d",
+          rendered_segs, rendered_visplanes, rendered_vissprites);
+}
+
+static void R_ClearStats(void)
+{
+  rendered_visplanes = 0;
+  rendered_segs = 0;
+  rendered_vissprites = 0;
+}
+
 int autodetect_hom = 0;       // killough 2/7/98: HOM autodetection flag
 
 //
@@ -616,6 +638,8 @@ int autodetect_hom = 0;       // killough 2/7/98: HOM autodetection flag
 //
 void R_RenderPlayerView (player_t* player)
 {
+  R_ClearStats();
+
   R_SetupFrame (player);
 
   // Clear buffers.

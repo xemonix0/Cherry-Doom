@@ -68,17 +68,25 @@ typedef struct
   int         speed;
 } anim_t;
 
+#if defined(_MSC_VER)
+#pragma pack(push, 1)
+#endif
+
 //
 //      source animation definition
 //
-typedef PACKED_STRUCT (
+typedef PACKED_PREFIX struct
 {
   // [FG] signed char!
   signed char istexture;            //jff 3/23/98 make char for comparison
   char endname[9];           //  if false, it is a flat
   char startname[9];
   int  speed;
-}) animdef_t; //jff 3/23/98 pack to read from memory
+} PACKED_SUFFIX animdef_t; //jff 3/23/98 pack to read from memory
+
+#if defined(_MSC_VER)
+#pragma pack(pop)
+#endif
 
 #define MAXANIMS 32                   // no longer a strict limit -- killough
 static anim_t *lastanim, *anims;      // new structure w/o limits -- killough
@@ -2337,21 +2345,15 @@ void P_SpawnSpecials (void)
   // See if -timer needs to be used.
   levelTimer = false;
 
-  i = M_CheckParm("-avg");   // Austin Virtual Gaming 20 min timer on DM play
-  if (i && deathmatch)
-    {
-      levelTimer = true;
-      levelTimeCount = 20 * 60 * TICRATE;
-    }
-
-  i = M_CheckParm("-timer"); // user defined timer on game play
-  if (i && deathmatch)
-    {
-      int time;
-      time = atoi(myargv[i+1]) * 60 * TICRATE;
-      levelTimer = true;
-      levelTimeCount = time;
-    }
+  if (timelimit > 0 && deathmatch)
+  {
+    levelTimer = true;
+    levelTimeCount = timelimit * 60 * TICRATE;
+  }
+  else
+  {
+    levelTimer = false;
+  }
 
   // See if -frags has been used
   levelFragLimit = false;

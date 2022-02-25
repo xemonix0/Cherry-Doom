@@ -33,21 +33,16 @@
 #include "doomstat.h"
 #include "i_sound.h"
 
-extern boolean mus_init;
-
-boolean win_midi_stream_opened;
-boolean win_midi_registered;
-
 ///
 // MUSIC API.
 //
 
 // julian (10/25/2005): rewrote (nearly) entirely
 
-#include "mmus2mid.h"
+#include "mus2mid.h"
+#include "memio.h"
 #include "m_misc.h"
 #include "m_misc2.h"
-#include "i_winmusic.h"
 
 // Only one track at a time
 static Mix_Music *music = NULL;
@@ -72,16 +67,7 @@ static void *music_block = NULL;
 static void I_SDL_UnRegisterSong(void *handle);
 static void I_SDL_ShutdownMusic(void)
 {
-#if defined(_WIN32)
-   if (win_midi_stream_opened)
-   {
-      I_WIN_ShutdownMusic();
-   }
-   else
-#endif
-   {
-      I_SDL_UnRegisterSong((void *)1);
-   }
+   I_SDL_UnRegisterSong((void *)1);
 }
 
 //
@@ -89,26 +75,13 @@ static void I_SDL_ShutdownMusic(void)
 //
 static boolean I_SDL_InitMusic(void)
 {
-   switch(mus_card)
-   {
-   case -1:
-      printf("I_InitMusic: Using SDL_mixer.\n");
-      mus_init = true;
+   printf("I_InitMusic: Using SDL_mixer.\n");
 
-      // Initialize SDL_Mixer for MIDI music playback
-      Mix_Init(MIX_INIT_MID | MIX_INIT_FLAC | MIX_INIT_OGG | MIX_INIT_MP3); // [crispy] initialize some more audio formats
-   #if defined(_WIN32)
-      win_midi_stream_opened = I_WIN_InitMusic();
-   #endif
-      break;   
-   default:
-      printf("I_InitMusic: Music is disabled.\n");
-      break;
-   }
-   
-   atexit(I_SDL_ShutdownMusic);
+   // Initialize SDL_Mixer for MIDI music playback
+   // [crispy] initialize some more audio formats
+   Mix_Init(MIX_INIT_MID | MIX_INIT_FLAC | MIX_INIT_OGG | MIX_INIT_MP3);
 
-   return mus_init;
+   return true;
 }
 
 // jff 1/18/98 changed interface to make mididata destroyable
@@ -116,16 +89,6 @@ static boolean I_SDL_InitMusic(void)
 static void I_SDL_SetMusicVolume(int volume);
 static void I_SDL_PlaySong(void *handle, boolean looping)
 {
-   if(!mus_init)
-      return;
-
-#if defined(_WIN32)
-   if (win_midi_registered)
-   {
-      I_WIN_PlaySong(looping);
-   }
-   else
-#endif
    if(CHECK_MUSIC(handle) && Mix_PlayMusic(music, looping ? -1 : 0) == -1)
    {
       dprintf("I_PlaySong: Mix_PlayMusic failed\n");
@@ -146,17 +109,8 @@ static void I_SDL_SetMusicVolume(int volume)
 {
    current_midi_volume = volume;
 
-#if defined(_WIN32)
-   if (win_midi_registered)
-   {
-      I_WIN_SetMusicVolume(current_midi_volume);
-   }
-   else
-#endif
-   {
-      // haleyjd 09/04/06: adjust to use scale from 0 to 15
-      Mix_VolumeMusic((current_midi_volume * 128) / 15);
-   }
+   // haleyjd 09/04/06: adjust to use scale from 0 to 15
+   Mix_VolumeMusic((current_midi_volume * 128) / 15);
 }
 
 //
@@ -164,13 +118,6 @@ static void I_SDL_SetMusicVolume(int volume)
 //
 static void I_SDL_PauseSong(void *handle)
 {
-#if defined(_WIN32)
-   if (win_midi_registered)
-   {
-      I_WIN_SetMusicVolume(0);
-   }
-   else
-#endif
    if(CHECK_MUSIC(handle))
    {
       // Not for mids
@@ -189,13 +136,6 @@ static void I_SDL_PauseSong(void *handle)
 //
 static void I_SDL_ResumeSong(void *handle)
 {
-#if defined(_WIN32)
-   if (win_midi_registered)
-   {
-      I_WIN_SetMusicVolume(current_midi_volume);
-   }
-   else
-#endif
    if(CHECK_MUSIC(handle))
    {
       // Not for mids
@@ -211,13 +151,6 @@ static void I_SDL_ResumeSong(void *handle)
 //
 static void I_SDL_StopSong(void *handle)
 {
-#if defined(_WIN32)
-   if (win_midi_registered)
-   {
-      I_WIN_StopSong();
-   }
-   else
-#endif
    if(CHECK_MUSIC(handle))
       Mix_HaltMusic();
 }
@@ -227,14 +160,6 @@ static void I_SDL_StopSong(void *handle)
 //
 static void I_SDL_UnRegisterSong(void *handle)
 {
-#if defined(_WIN32)
-   if (win_midi_registered)
-   {
-      I_WIN_UnRegisterSong();
-      win_midi_registered = false;
-   }
-   else
-#endif
    if(CHECK_MUSIC(handle))
    {   
       // Stop and free song
@@ -264,58 +189,53 @@ static void *I_SDL_RegisterSong(void *data, int size)
    if(music != NULL)
       I_SDL_UnRegisterSong((void *)1);
 
-   if (size < 4 || memcmp(data, "MUS\x1a", 4)) // [crispy] MUS_HEADER_MAGIC
+   if (!IsMus(data, size))
    {
-   #if defined(_WIN32)
-      if (size >= 4 && memcmp(data, "MThd", 4) == 0) // MIDI header magic
+      // Workaround for SDL_mixer doesn't always detect mp3s
+      // https://github.com/libsdl-org/SDL_mixer/issues/288
+      const SDL_version *ver = Mix_Linked_Version();
+      if (ver->major == 2 && ver->minor == 0 && (ver->patch == 2 || ver->patch == 4))
       {
-         music = NULL;
-         I_WIN_RegisterSong(data, size);
-         win_midi_registered = true;
-         return (void *)1;
+        byte *magic = data;
+        if (size >= 2 && magic[0] == 0xFF && magic[1] == 0xF3)
+          magic[1] = 0xFA;
       }
-      else
-   #endif
-      {
-         // Workaround for SDL_mixer doesn't always detect mp3s
-         // https://github.com/libsdl-org/SDL_mixer/issues/288
-         const SDL_version *ver = Mix_Linked_Version();
-         if (ver->major == 2 && ver->minor == 0 && (ver->patch == 2 || ver->patch == 4))
-         {
-            byte *magic = data;
-            if (size >= 2 && magic[0] == 0xFF && magic[1] == 0xF3)
-              magic[1] = 0xFA;
-         }
-         rw    = SDL_RWFromMem(data, size);
-         music = Mix_LoadMUS_RW(rw, false);
-      }
+      rw    = SDL_RWFromMem(data, size);
+      music = Mix_LoadMUS_RW(rw, false);
+
    }
    else // Assume a MUS file and try to convert
    {
-      int err;
-      MIDI mididata;
-      UBYTE *mid;
-      int midlen;
+      MEMFILE *instream;
+      MEMFILE *outstream;
+      byte *mid;
+      size_t midlen;
+      int result;
 
-      memset(&mididata, 0, sizeof(MIDI));
+      instream = mem_fopen_read(data, size);
+      outstream = mem_fopen_write();
 
-      if((err = mmus2mid((byte *)data, &mididata, 89, 0)))
+      result = mus2mid(instream, outstream);
+
+      if (result == 0)
       {
-         // Nope, not a mus.
-         dprintf("Error loading music: %d", err);
+         void *outbuf;
+
+         mem_get_buf(outstream, &outbuf, &midlen);
+
+         mid = malloc(midlen);
+         memcpy(mid, outbuf, midlen);
+      }
+
+      mem_fclose(instream);
+      mem_fclose(outstream);
+
+      if (result)
+      {
+         dprintf("Error loading music: %d", result);
          return NULL;
       }
 
-      // Hurrah! Let's make it a mid and give it to SDL_mixer
-      MIDIToMidi(&mididata, &mid, &midlen);
-
-   #if defined(_WIN32)
-      music = NULL;
-      I_WIN_RegisterSong(mid, midlen);
-      win_midi_registered = true;
-      free(mid);
-      return (void *)1;
-   #endif
       {
          rw    = SDL_RWFromMem(mid, midlen);
          music = Mix_LoadMUS_RW(rw, false);
@@ -340,16 +260,15 @@ static void *I_SDL_RegisterSong(void *data, int size)
    return music;
 }
 
-// [FG] initialize music backend function pointers
-void I_SDL_InitMusicBackend()
+music_module_t music_sdl_module =
 {
-	I_InitMusic = I_SDL_InitMusic;
-	I_ShutdownMusic = I_SDL_ShutdownMusic;
-	I_SetMusicVolume = I_SDL_SetMusicVolume;
-	I_PauseSong = I_SDL_PauseSong;
-	I_ResumeSong = I_SDL_ResumeSong;
-	I_RegisterSong = I_SDL_RegisterSong;
-	I_PlaySong = I_SDL_PlaySong;
-	I_StopSong = I_SDL_StopSong;
-	I_UnRegisterSong = I_SDL_UnRegisterSong;
-}
+    I_SDL_InitMusic,
+    I_SDL_ShutdownMusic,
+    I_SDL_SetMusicVolume,
+    I_SDL_PauseSong,
+    I_SDL_ResumeSong,
+    I_SDL_RegisterSong,
+    I_SDL_PlaySong,
+    I_SDL_StopSong,
+    I_SDL_UnRegisterSong,
+};

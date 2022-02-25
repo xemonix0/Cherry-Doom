@@ -41,6 +41,7 @@ enum
   input_jump, // [Nugget]
   input_crouch, // [Nugget]
   input_autorun,
+  input_novert,
   input_reverse,
   input_use,
   input_fire,
