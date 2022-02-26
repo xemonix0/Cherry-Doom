@@ -7869,6 +7869,39 @@ static const char cr_white[] =
 // [FG] crosshair patches
 #include "cross.h"
 
+// [Nugget] cheese :)
+// Copyright (C) 2022 Korp (CC BY-NC-SA 4.0)
+static const char bon1e0[] = {
+  21,0,13,0,11,0,12,0,92,0,0,0,102,0,0,0,
+  114,0,0,0,128,0,0,0,144,0,0,0,160,0,0,0,
+  176,0,0,0,192,0,0,0,209,0,0,0,226,0,0,0,
+  244,0,0,0,6,1,0,0,24,1,0,0,42,1,0,0,
+  60,1,0,0,78,1,0,0,96,1,0,0,114,1,0,0,
+  132,1,0,0,149,1,0,0,165,1,0,0,2,5,163,163,
+  163,163,164,165,165,255,2,7,162,162,162,163,163,164,164,165,
+  165,255,2,9,161,161,161,163,164,165,162,163,164,165,165,255,
+  1,11,162,162,161,161,162,238,77,164,162,163,163,165,165,255,
+  1,11,162,162,161,161,162,239,47,164,162,163,162,164,164,255,
+  1,11,161,161,161,161,161,164,165,162,163,239,165,163,163,255,
+  1,11,161,161,161,161,161,162,162,162,164,239,164,162,162,255,
+  0,12,161,161,161,161,161,161,162,162,163,163,163,162,163,163,
+  255,0,12,161,161,161,161,161,161,162,162,164,77,162,162,163,
+  163,255,0,13,161,161,161,161,161,161,162,162,162,163,162,162,
+  162,164,164,255,0,13,161,161,161,161,161,161,162,162,162,162,
+  163,165,162,164,164,255,0,13,161,161,161,161,161,161,162,164,
+  162,162,162,163,162,163,163,255,0,13,161,161,161,161,161,161,
+  162,162,162,162,163,239,164,162,162,255,0,13,161,161,161,161,
+  161,161,162,239,164,162,164,2,164,162,162,255,0,13,161,161,
+  161,161,161,161,162,164,164,162,163,164,162,163,163,255,0,13,
+  161,161,161,161,161,161,162,163,162,162,163,163,163,164,164,255,
+  0,13,161,161,161,161,161,161,162,162,162,163,164,163,163,164,
+  164,255,0,13,161,161,161,161,161,161,162,162,239,2,77,164,
+  163,164,164,255,0,12,161,161,161,161,161,161,162,165,2,239,
+  165,162,162,162,255,1,11,161,161,161,161,162,163,164,239,77,
+  163,162,164,164,255,2,9,162,162,161,163,163,163,164,164,163,
+  164,164,255
+};
+
 // killough 1/31/98:
 // Table of predefined lumps, used to make up for any wad deficiencies.
 // Always overriden by iwad or pwads.
@@ -7939,11 +7972,11 @@ const lumpinfo_t predefined_lumps[]={
   { "BOXLR",    sizeof boxlr, boxlr },
 
   // [FG] crosshair patches
-  // [Nugget] Add more crosshairs
   { "CROSS1",   sizeof cross1, cross1 },
   { "CROSS2",   sizeof cross2, cross2 },
   { "CROSS3",   sizeof cross3, cross3 },
   { "CROSS4",   sizeof cross4, cross4 },
+  // [Nugget] Add more crosshairs
   { "CROSS5",   sizeof cross5, cross5 },
   { "CROSS6",   sizeof cross6, cross6 },
   { "CROSS7",   sizeof cross7, cross7 },
@@ -7953,17 +7986,21 @@ const lumpinfo_t predefined_lumps[]={
   // [Nugget] Shaded crosshairs
   { "CROSS1SH", sizeof cross1sh, cross1sh },
   { "CROSS2SH", sizeof cross2sh, cross2sh },
-  { "CROSS3SH", sizeof cross3sh, cross3sh },
+  // Skip the dot
   { "CROSS4SH", sizeof cross4sh, cross4sh },
   { "CROSS5SH", sizeof cross5sh, cross5sh },
   { "CROSS6SH", sizeof cross6sh, cross6sh },
   { "CROSS7SH", sizeof cross7sh, cross7sh },
   { "CROSS8SH", sizeof cross8sh, cross8sh },
+  { "CROSS9SH", sizeof cross9sh, cross9sh },
 
   // killough 8/98: remove ENDBOOM lump, use id's ENDOOM instead
 
   { "S_START"},                              // killough 3/21/98
   { "TNT1A0",   sizeof invis_sprite, invis_sprite },            // invis sprite
+
+  // [Nugget] cheese :)
+  { "BON1E0",   sizeof bon1e0,   bon1e0   },
 
   // killough 7/19/98: Marine's best friend :)
   {"DOGSA1", sizeof dogsa1, dogsa1},

@@ -38,6 +38,9 @@
 
 #include "p_inter.h"
 
+// [Nugget] cheese :)
+extern boolean cheese;
+
 #define BONUSADD        6
 
 // Ty 03/07/98 - add deh externals
@@ -349,7 +352,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (player->health > (maxhealth * 2))
         player->health = (maxhealth * 2);
       player->mo->health = player->health;
-      player->message = s_GOTHTHBONUS; // Ty 03/22/98 - externalized
+      // [Nugget] cheese :)
+      player->message = cheese ? "Picked up a cheese."
+                               : s_GOTHTHBONUS; // Ty 03/22/98 - externalized
       break;
 
     case SPR_BON2:

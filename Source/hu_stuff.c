@@ -871,9 +871,9 @@ const char *crosshair_nam[HU_CROSSHAIRS] =
   { NULL, "CROSS1", "CROSS2", "CROSS3", "CROSS4", "CROSS5", "CROSS6", "CROSS7", "CROSS8", "CROSS9" };
 // [Nugget] Shaded crosshairs
 const char *crosshair_sh_nam[HU_CROSSHAIRS] =
-  { NULL, "CROSS1SH", "CROSS2SH", "CROSS3SH", "CROSS4SH", "CROSS5SH", "CROSS6SH", "CROSS7SH", "CROSS8SH", "CROSS9" };
+  { NULL, "CROSS1SH", "CROSS2SH", "CROSS3", "CROSS4SH", "CROSS5SH", "CROSS6SH", "CROSS7SH", "CROSS8SH", "CROSS9SH" };
 const char *crosshair_str[HU_CROSSHAIRS+1] =
-  { "none", "cross", "big cross", "circle", "big circle", "chevron", "chevrons", "arcs", "angle", "dot", NULL };
+  { "none", "cross", "angle", "dot",  "big cross", "circle", "big circle", "chevron", "chevrons", "arcs", NULL };
 
 static void HU_InitCrosshair(void)
 {

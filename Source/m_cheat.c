@@ -86,6 +86,8 @@ static int spawneetype = -1; static boolean spawneefriend; // Used for 'SPAWNR'
 // Spawn a mobj:            Enemy           Friend          Repeat the last
 static void cheat_spawn(),  cheat_spawne(), cheat_spawnf(), cheat_spawnr();
 static void cheat_scanner();    // Give info on the current target
+boolean cheese;
+static void cheat_cheese();     // cheese :)
 
 //-----------------------------------------------------------------------------
 //
@@ -343,6 +345,9 @@ struct cheat_s cheat[] = {
 
   {"analyze", NULL, not_net|not_demo,
    cheat_scanner}, // 'SCANNER' alternative
+
+  {"cheese", NULL, not_net|not_demo,
+   cheat_cheese}, // cheese :)
 
   {NULL}                 // end-of-list marker
 };
@@ -628,6 +633,13 @@ static void cheat_scanner() {
   plyr->message = plyr->cheats & CF_SCANNER
                   ? "Thing Scanner ON"
                   : "Thing Scanner OFF";
+}
+
+// [Nugget] cheese :)
+static void cheat_cheese() {
+  cheese = !cheese;
+  plyr->message = cheese ? "cheese :)"
+                         : "no cheese :(";
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode
