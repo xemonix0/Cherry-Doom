@@ -9,8 +9,8 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # 3.12 is needed for modern FindPython.
 cmake_minimum_required(VERSION 3.12)
 project("Nugget Doom"
-    VERSION 1.7.0
-    DESCRIPTION "Nugget Doom 1.7.0"
+    VERSION 1.8.0
+    DESCRIPTION "Nugget Doom 1.8.0"
     HOMEPAGE_URL "https://github.com/MrAlaux/Nugget-Doom"
     LANGUAGES C)
 
@@ -37,7 +37,7 @@ endif()
 
 # Hardcoded defines added to configure and resource files.
 set(PROJECT_COMPANY "Alaux and contributors")
-set(PROJECT_COPYRIGHT "Copyright (C) 1993-2021")
+set(PROJECT_COPYRIGHT "Copyright (C) 1993-2022")
 set(PROJECT_LICENSE "GNU General Public License, version 2")
 set(PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
 set(PROJECT_TARNAME "nugget-doom")
