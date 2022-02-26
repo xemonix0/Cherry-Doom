@@ -11,14 +11,13 @@ Although the new code has been written with the intention of not breaking demo c
 - From Crispy Doom (inspired or ported code):
   - **Minimalistic HUD** (without translucent variants);
   - **Resurrect from savegame** (Run key + Use key);
-  - _**'RESURRECT'**_ cheat adapted from Crispy's resurrection with IDDQD (**'IDRES'** as an alternative combination);
   - _**'NOTARGET'**_ cheat;
   - _**Things move over/under things**_ setting;
-  - **Static crosshair**, without highlight on target;
   - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first);
   - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt;
   - _**Disable palette tint in menus**_ setting;
-  - _**Use Armor Type Color**_ setting, for armor count coloring based on armor type;
+  - **Most of its accessibility settings** (toggle for _Flickering Sector Lights_ is not yet implemented);
+  - **SSG is accounted for on the Arms widget**;
   - **IDCLEV00 restarts current map**;
   - **Mid-air control** while on noclipping mode;
   - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip);
@@ -27,7 +26,12 @@ Although the new code has been written with the intention of not breaking demo c
 - _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tint
 - _**Extra Gibbing**_ setting, to force Berserk Fist, Chainsaw and SSG gibbing
 - _**Bobbing Percentage**_ setting
+- **Crosshair:**
+  - **Coloring based on linetarget health**;
+  - **Highlight on fuzzy targets**;
+  - **5 new types**.
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first)
+- **Screen wipe/transition effect selection** (**Warning**: _"Seizure"_ might legitimately be seizure-inducing, use with caution)
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
 - _**Disable Horizontal Autoaim**_ setting
 - _**View Height**_ setting, which allows to enter a custom height value between 8 and 56 for the player's POV (default is 41, the original)
@@ -37,8 +41,12 @@ Although the new code has been written with the intention of not breaking demo c
     - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA;
   - _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt;
   - _**'IDFLY'**_ to fly;
-  - _**'BUDDHA'**_ to prevent the player's health from going below 1%, despite still taking damage.
+  - _**'SPAWN'**_ to spawn a hostile or friendly actor based on its mobjtype index;
+  - _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD;
+  - _**'SCANNER' / 'ANALYZE'**_ to give some info on the player's linetarget, similar to GZDoom's _'linetarget'_ console command;
+  - _**'TURBO'**_ to change the player speed in-game.
 - **Sound Links check for a dedicated lump**, therefore allowing usage of a custom sound effect
+- **"Correct" first person sprite centering** (the original code had an offset of one pixel to the right)
 - New **"Doom compatibility"** settings (some adapted from Crispy Doom fixes):
   - Blazing doors reopen with wrong sound;
   - Manually reactivated moving doors are silent;
@@ -113,7 +121,7 @@ Please report any bugs, glitches or crashes that you encounter to the GitHub [Is
 
 ## Acknowledgement
 
-Help was provided by _kraflab_ (responsible for [dsda-doom](https://github.com/kraflab/dsda-doom)), _melak47_ and _Fabian Greffrath_ himself.
+Help was provided by _kraflab_ (responsible for [dsda-doom](https://github.com/kraflab/dsda-doom)), _melak47_, _atsb_ (a.k.a. _Gibbon_) and _Fabian Greffrath_ himself.
 
 ## Legalese
 
