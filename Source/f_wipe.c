@@ -203,9 +203,6 @@ int wipe_ScreenWipe(int wipeno, int x, int y, int width, int height, int ticks)
   if (hires)     // killough 11/98: hires support
     width <<= 1, height <<= 1, ticks <<= 1;
 
-  // [Nugget] No wipe
-  //if (!wipe_type) { return 0; }
-
   if (!go)                                         // initial stuff
     {
       go = 1;

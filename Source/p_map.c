@@ -1888,7 +1888,7 @@ static boolean PIT_ChangeSector(mobj_t *thing)
       P_SetMobjState(thing, S_GIBS);
       // [Nugget] No gibs if the thing doesn't bleed to begin with
       if (nugget_comp[comp_nonbleeders] && thing->flags & MF_NOBLOOD)
-        {thing->sprite = SPR_TNT1; thing->frame = 0;}
+        { thing->sprite = SPR_TNT1; thing->frame = 0; }
       thing->flags &= ~MF_SOLID;
       thing->height = thing->radius = 0;
       if (colored_blood)
@@ -1936,7 +1936,7 @@ static boolean PIT_ChangeSector(mobj_t *thing)
 
 			// [Nugget] Fuzzy blood if applicable
 			if (nugget_comp[comp_fuzzyblood] && thing->flags & MF_SHADOW)
-        {mo->flags |= MF_SHADOW;}
+        { mo->flags |= MF_SHADOW; }
 
       if (colored_blood)
       {

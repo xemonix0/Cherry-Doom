@@ -19,7 +19,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -301,20 +301,20 @@ static boolean MouseShouldBeGrabbed(void)
    // if the window doesnt have focus, never grab it
    if (!window_focused)
       return false;
-   
-   // always grab the mouse when full screen (dont want to 
+
+   // always grab the mouse when full screen (dont want to
    // see the mouse pointer)
    if (fullscreen)
       return true;
-   
+
    // if we specify not to grab the mouse, never grab
    if (!grabmouse)
       return false;
-   
-   // when menu is active or game is paused, release the mouse 
+
+   // when menu is active or game is paused, release the mouse
    if (menuactive || paused)
       return false;
-   
+
    // only grab mouse when playing levels (but not demos)
    return (gamestate == GS_LEVEL) && !demoplayback;
 }
@@ -329,7 +329,7 @@ static void SetShowCursor(boolean show)
    SDL_GetRelativeMouseState(NULL, NULL);
 }
 
-// 
+//
 // UpdateGrab
 //
 // haleyjd 10/08/05: from Chocolate DOOM
@@ -338,14 +338,14 @@ static void UpdateGrab(void)
 {
    static boolean currently_grabbed = false;
    boolean grab;
-   
+
    grab = MouseShouldBeGrabbed();
-   
+
    if (grab && !currently_grabbed)
    {
       SetShowCursor(false);
    }
-   
+
    if (!grab && currently_grabbed)
    {
       int screen_w, screen_h;
@@ -362,8 +362,8 @@ static void UpdateGrab(void)
       SDL_WarpMouseInWindow(screen, screen_w - 16, screen_h - 16);
       SDL_GetRelativeMouseState(NULL, NULL);
    }
-   
-   currently_grabbed = grab;   
+
+   currently_grabbed = grab;
 }
 
 //
@@ -875,7 +875,7 @@ void I_FinishUpdate(void)
    {
       static int lasttic;
       byte *s = screens[0];
-      
+
       int i = I_GetTime();
       int tics = i - lasttic;
       lasttic = i;
@@ -1036,17 +1036,17 @@ void I_SetPalette(byte *palette)
    // haleyjd
    int i;
    SDL_Color colors[256];
-   
+
    if (!in_graphics_mode)             // killough 8/11/98
       return;
-   
+
    for(i = 0; i < 256; ++i)
    {
       colors[i].r = gammatable[usegamma][*palette++];
       colors[i].g = gammatable[usegamma][*palette++];
       colors[i].b = gammatable[usegamma][*palette++];
    }
-   
+
    SDL_SetPaletteColors(sdlscreen->format->palette, colors, 0, 256);
 }
 
@@ -1579,7 +1579,7 @@ static void I_InitGraphicsMode(void)
    in_graphics_mode = 1;
    setsizeneeded = true;
 
-   I_InitDiskFlash();        // Initialize disk icon   
+   I_InitDiskFlash();        // Initialize disk icon
    I_SetPalette(W_CacheLumpName("PLAYPAL",PU_CACHE));
 }
 
@@ -1593,24 +1593,24 @@ void I_ResetScreen(void)
    }
 
    I_ShutdownGraphics();     // Switch out of old graphics mode
-   
+
    changeres = true; // haleyjd 05/11/09
 
    I_InitGraphicsMode();     // Switch to new graphics mode
-   
+
    changeres = false;
-   
+
    if (automapactive)
       AM_Start();             // Reset automap dimensions
-   
+
    ST_Start();               // Reset palette
-   
+
    if (gamestate == GS_INTERMISSION)
    {
       WI_DrawBackground();
       V_CopyRect(0, 0, 1, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0);
    }
-   
+
    Z_CheckHeap();
 
    M_ResetSetupMenuVideo();
@@ -1634,7 +1634,7 @@ void I_InitGraphics(void)
   // enter graphics mode
   //
 
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) 
+  if (SDL_Init(SDL_INIT_VIDEO) < 0)
   {
     I_Error("Failed to initialize video: %s", SDL_GetError());
   }

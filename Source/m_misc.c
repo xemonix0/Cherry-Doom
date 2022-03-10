@@ -512,6 +512,13 @@ default_t defaults[] = {
     "1 to enable extra gibbing"
   },
 
+  {
+    "bloodier_gibbing",
+    (config_t *) &bloodier_gibbing, NULL,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable bloodier gibbing"
+  },
+
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity_horiz",
     (config_t *) &mouseSensitivity_horiz, NULL,

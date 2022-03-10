@@ -147,6 +147,7 @@ int bobbing_percentage;
 int no_hor_autoaim;
 // Enemies
 int extra_gibbing;
+int bloodier_gibbing;
 
 int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
 

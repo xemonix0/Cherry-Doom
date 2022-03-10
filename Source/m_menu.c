@@ -4049,6 +4049,7 @@ enum {
   enem_distfriend,
   enem_dog_jumping,
   enem_extra_gibbing,
+  enem_bloodier_gibbing,
   enem_stub1,
   enem_cosmetic,
   enem_colored_blood,
@@ -4079,6 +4080,7 @@ setup_menu_t enem_settings1[] =  // Enemy Settings screen
     {"Allow dogs to jump down",S_YESNO,m_null,E_X,E_Y+ enem_dog_jumping*8, {"dog_jumping"}},
     // [Nugget]
     {"Extra Gibbing", S_YESNO, m_null, E_X, E_Y + enem_extra_gibbing*8, {"extra_gibbing"}},
+    {"Bloodier Gibbing", S_YESNO, m_null, E_X, E_Y + enem_bloodier_gibbing*8, {"bloodier_gibbing"}},
   {"",S_SKIP,m_null,E_X,E_Y+ enem_stub1*8}, // Stub
   {"Cosmetic",S_SKIP|S_TITLE,m_null,E_X,E_Y+ enem_cosmetic*8},
     // [FG] colored blood and gibs

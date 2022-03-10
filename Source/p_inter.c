@@ -664,6 +664,71 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   S_StartSound(player->mo, sound);   // killough 4/25/98, 12/98
 }
 
+// [Nugget] Check for Extra Gibbing
+boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
+{
+  extern fixed_t P_AproxDistance();
+
+  if (source && source->player && extra_gibbing
+      &&
+      (  (source->player->readyweapon == wp_fist
+          && source->player->powers[pw_strength]
+          && (P_AproxDistance(target->x - source->x, target->y - source->y)
+              < (64*FRACUNIT + target->info->radius)))
+       ||(source->player->readyweapon == wp_chainsaw
+          && (P_AproxDistance(target->x - source->x, target->y - source->y)
+              < (65*FRACUNIT + target->info->radius)))
+       ||(source->player->readyweapon == wp_supershotgun
+          && (P_AproxDistance(target->x - source->x, target->y - source->y)
+              < (128*FRACUNIT + target->info->radius)))
+       )
+     )
+    { return true; }
+  else
+    { return false; }
+}
+
+// [Nugget] Bloodier Gibbing
+void P_NuggetGib(mobj_t *mo)
+{
+  extern int V_BloodColor();
+  int q = 20 + (Woof_Random()%20+1); // Spawn 20-40 blood splats
+
+  if (!casual_play || !bloodier_gibbing)
+    { return; }
+
+  for (int i = 0; i < q; i++)
+  {
+    mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + mo->height/1.5,
+                                (nugget_comp[comp_nonbleeders]
+                                 && mo->flags & MF_NOBLOOD)
+                                ? MT_PUFF : MT_BLOOD);
+
+    // Fuzzy blood if applicable
+    if (nugget_comp[comp_fuzzyblood] && mo->flags & MF_SHADOW)
+      { splat->flags |= MF_SHADOW; }
+
+    if (colored_blood) {
+      splat->flags2 |= MF2_COLOREDBLOOD;
+      splat->bloodcolor = V_BloodColor(mo->info->bloodcolor);
+    }
+
+    // Apply random momentum in all directions
+    splat->momx = (Woof_Random() - Woof_Random())<<12;
+    splat->momy = (Woof_Random() - Woof_Random())<<12;
+    splat->momz = Woof_Random()<<12;
+
+    // Physics differ between versions (complevels),
+    // so this is done to get rather decent behavior in Vanilla
+    if (demo_version < 200)
+      { splat->flags |= MF_NOCLIP; }
+
+    // Randomize duration of the first frame
+    splat->tics += (Woof_Random()&3) - (Woof_Random()&3);
+    if (splat->tics < 1) { splat->tics = 1; }
+  }
+}
+
 //
 // KillMobj
 //
@@ -723,21 +788,17 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
     }
 
   if // [Nugget] Extra Gibbing/GIBBERS cheat
-  (source && target->info->xdeathstate && casual_play
-   && ((source->player && extra_gibbing
-        && (  (source->player->readyweapon == wp_fist
-               && source->player->powers[pw_strength]
-               && P_NuggetCheckDist(source, target, 64*FRACUNIT))
-            ||(source->player->readyweapon == wp_chainsaw
-               && P_NuggetCheckDist(source, target, 65*FRACUNIT))
-            ||(source->player->readyweapon == wp_supershotgun
-               && P_NuggetCheckDist(source, target, 128*FRACUNIT))
-           )
-        ) || GIBBERS
-  )   )
-    { P_SetMobjState (target, target->info->xdeathstate); }
+  (target->info->xdeathstate && casual_play
+   && (P_NuggetExtraGibbing(source, target) || GIBBERS))
+  {
+    P_SetMobjState(target, target->info->xdeathstate);
+    P_NuggetGib(target); // Bloodier Gibbing
+  }
   else if (target->health < -target->info->spawnhealth && target->info->xdeathstate)
-    { P_SetMobjState (target, target->info->xdeathstate); }
+  {
+    P_SetMobjState (target, target->info->xdeathstate);
+    P_NuggetGib(target); // [Nugget] Bloodier Gibbing
+  }
   else
     { P_SetMobjState (target, target->info->deathstate); }
 
@@ -764,20 +825,6 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 
   mo = P_SpawnMobj (target->x,target->y,ONFLOORZ, item);
   mo->flags |= MF_DROPPED;    // special versions of items
-}
-
-// [Nugget] Compare distance between player and target, used for Extra Gibbing
-
-extern fixed_t P_AproxDistance();
-
-boolean P_NuggetCheckDist(mobj_t* source, mobj_t* target, fixed_t range)
-{
-  const fixed_t range2 = range + target->info->radius;
-  const fixed_t dist = P_AproxDistance(target->x - source->x,
-                                       target->y - source->y);
-
-  if (dist > range2) { return false; }
-  else               { return true; }
 }
 
 //

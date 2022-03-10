@@ -407,6 +407,7 @@ extern int bobbing_percentage;
 extern int no_hor_autoaim;
 // Enemies
 extern int extra_gibbing;
+extern int bloodier_gibbing;
 
 enum {
   comp_blazing2,

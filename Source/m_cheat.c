@@ -984,6 +984,12 @@ static void cheat_massacre()    // jff 2/01/98 kill all monsters
   extern void A_PainDie(mobj_t *);
   // killough 7/20/98: kill friendly monsters only if no others to kill
   int mask = MF_FRIEND;
+
+  // [Nugget] Temporarily disable Bloodier Gibbing if enabled;
+  // it's too much to handle on maps with many monsters
+  int oldgibbing = bloodier_gibbing;
+  bloodier_gibbing = false;
+
   do
     while ((currentthinker=currentthinker->next)!=&thinkercap)
       if (currentthinker->function == P_MobjThinker &&
@@ -1006,6 +1012,9 @@ static void cheat_massacre()    // jff 2/01/98 kill all monsters
   // killough 3/22/98: make more intelligent about plural
   // Ty 03/27/98 - string(s) *not* externalized
   dprintf("%d Monster%s Killed", killcount, killcount==1 ? "" : "s");
+
+  // [Nugget] Reenable Bloodier Gibbing
+  bloodier_gibbing = oldgibbing;
 }
 
 // killough 2/7/98: move iddt cheat from am_map.c to here
