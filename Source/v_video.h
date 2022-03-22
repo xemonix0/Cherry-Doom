@@ -107,21 +107,16 @@ void V_CopyRect(int srcx,  int srcy,  int srcscrn, int width, int height,
 
 // killough 11/98: Consolidated V_DrawPatch and V_DrawPatchFlipped
 
-// [Nugget] Support widescreen Crispy HUD
-void V_DrawPatchGeneralWS(int x, int y, int scrn, patch_t *patch,
-                          boolean flipped, int offset);
+void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
+                          boolean flipped);
 
 #define V_DrawPatch(x,y,s,p)          V_DrawPatchGeneral(x,y,s,p,false)
 #define V_DrawPatchFlipped(x,y,s,p)   V_DrawPatchGeneral(x,y,s,p,true)
-#define V_DrawPatchGeneral(x,y,s,p,f) V_DrawPatchGeneralWS(x,y,s,p,f,1) // [Nugget]
 
 #define V_DrawPatchDirect V_DrawPatch       /* killough 5/2/98 */
 
-// [Nugget] Support widescreen Crispy HUD
-void V_DrawPatchTranslatedWS(int x, int y, int scrn, patch_t *patch,
-                             char *outr, int cm, int offset);
-
-#define V_DrawPatchTranslated(x,y,s,p,r,cm) V_DrawPatchTranslatedWS(x,y,s,p,r,cm,1)
+void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch,
+                             char *outr, int cm);
 
 void V_DrawPatchFullScreen(int scrn, patch_t *patch);
 

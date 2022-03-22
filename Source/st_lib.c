@@ -93,12 +93,10 @@ void STlib_initNum
 // indicating whether refresh is needed.
 // Returns nothing
 //
-// [Nugget] Support widescreen Crispy HUD
-void STlib_drawNumWS
+void STlib_drawNum
 ( st_number_t*  n,
   char *outrng,        //jff 2/16/98 add color translation to digit output
-  boolean refresh,
-  int offset ) // [Nugget]
+  boolean refresh )
 {
   int   numdigits = n->width;
   int   num = *n->num;
@@ -142,20 +140,10 @@ void STlib_drawNumWS
   // in the special case of 0, you draw 0
   if (!num)
   {
-    if (outrng && !sts_always_red) {
-      // [Nugget] Support widescreen Crispy HUD
-      if (offset != 1)
-        { V_DrawPatchTranslatedWS(x - w, n->y, FG, n->p[ 0 ],outrng,0, offset); }
-      else
-        { V_DrawPatchTranslated(x - w, n->y, FG, n->p[ 0 ],outrng,0); }
-    }
-    else { //jff 2/18/98 allow use of faster draw routine from config
-      // [Nugget] Support widescreen Crispy HUD
-      if (offset != 1)
-        { V_DrawPatchGeneralWS(x - w, n->y, FG, n->p[ 0 ], false, offset); }
-      else
-        { V_DrawPatch(x - w, n->y, FG, n->p[ 0 ]); }
-    }
+    if (outrng && !sts_always_red)
+      { V_DrawPatchTranslated(x - w, n->y, FG, n->p[ 0 ],outrng,0); }
+    else //jff 2/18/98 allow use of faster draw routine from config
+      { V_DrawPatch(x - w, n->y, FG, n->p[ 0 ]); }
   }
 
   // draw the new number
@@ -163,20 +151,10 @@ void STlib_drawNumWS
   while (num && numdigits--)
   {
     x -= w;
-    // [Nugget] Support widescreen Crispy HUD
-    if (outrng && !sts_always_red) {
-      if (offset != 1)
-        { V_DrawPatchTranslatedWS(x, n->y, FG, n->p[ num % 10 ],outrng,0, offset); }
-      else
-        { V_DrawPatchTranslated(x, n->y, FG, n->p[ num % 10 ],outrng,0); }
-    }
-    else { //jff 2/18/98 allow use of faster draw routine from config
-      // [Nugget] Support widescreen Crispy HUD
-      if (offset != 1)
-        { V_DrawPatchGeneralWS(x, n->y, FG, n->p[ num % 10 ], false, offset); }
-      else
-        { V_DrawPatch(x, n->y, FG, n->p[ num % 10 ]); }
-    }
+    if (outrng && !sts_always_red)
+      { V_DrawPatchTranslated(x, n->y, FG, n->p[ num % 10 ],outrng,0); }
+    else //jff 2/18/98 allow use of faster draw routine from config
+      { V_DrawPatch(x, n->y, FG, n->p[ num % 10 ]); }
     num /= 10;
   }
 
@@ -184,24 +162,12 @@ void STlib_drawNumWS
   //jff 2/16/98 add color translation to digit output
   if (neg && sttminus)
   {
-    if (outrng && !sts_always_red) {
-      // [Nugget] Support widescreen Crispy HUD
-      if (offset != 1)
-        { V_DrawPatchTranslatedWS(x - 8, n->y, FG, sttminus,outrng,0, offset); }
-      else
-        { V_DrawPatchTranslated(x - 8, n->y, FG, sttminus,outrng,0); }
-    }
-    else { //jff 2/18/98 allow use of faster draw routine from config
-      // [Nugget] Support widescreen Crispy HUD
-      if (offset != 1)
-        { V_DrawPatchGeneralWS(x - 8, n->y, FG, sttminus, false, offset); }
-      else
-        { V_DrawPatch(x - 8, n->y, FG, sttminus); }
-    }
+    if (outrng && !sts_always_red)
+      { V_DrawPatchTranslated(x - 8, n->y, FG, sttminus,outrng,0); }
+    else //jff 2/18/98 allow use of faster draw routine from config
+      { V_DrawPatch(x - 8, n->y, FG, sttminus); }
   }
 }
-
-#define STlib_drawNum(n,rng,ref) STlib_drawNumWS(n,rng,ref,1)
 
 //
 // STlib_updateNum()
@@ -211,14 +177,12 @@ void STlib_drawNumWS
 // Passed a number widget, the output color range, and a refresh flag
 // Returns nothing
 //
-// [Nugget] Support widescreen Crispy HUD
-void STlib_updateNumWS
+void STlib_updateNum
 ( st_number_t*    n,
   char *outrng, //jff 2/16/98 add color translation to digit output
-  boolean   refresh,
-  int offset ) // [Nugget]
+  boolean   refresh )
 {
-  if (*n->on) STlib_drawNumWS(n, outrng, refresh, offset);
+  if (*n->on) STlib_drawNum(n, outrng, refresh);
 }
 
 //
@@ -252,39 +216,24 @@ void STlib_initPercent
 // Passed a precent widget, the output color range, and a refresh flag
 // Returns nothing
 //
-// [Nugget] Support widescreen Crispy HUD
-void STlib_updatePercentWS
+void STlib_updatePercent
 ( st_percent_t*   per,
   char *outrng,             //jff 2/16/98 add color translation to digit output
-  int refresh,
-  int offset ) // [Nugget]
+  int refresh )
 {
   // Remove the check for 'refresh' because this causes percent symbols to always appear
   // in automap overlay mode.
   if (*per->n.on) // killough 2/21/98: fix percents not updated;
   {
     if (!sts_always_red) { // also support gray-only percents
-      // [Nugget] Support widescreen Crispy HUD
-      if (offset != 1)
-      {
-        V_DrawPatchTranslatedWS(per->n.x, per->n.y, FG, per->p,
-                                sts_pct_always_gray ? cr_gray : outrng, 0, offset);
-      }
-      else {
-        V_DrawPatchTranslated(per->n.x, per->n.y, FG, per->p,
+      V_DrawPatchTranslated(per->n.x, per->n.y, FG, per->p,
                               sts_pct_always_gray ? cr_gray : outrng, 0);
-      }
     }
-    else { //jff 2/18/98 allow use of faster draw routine from config
-      // [Nugget] Support widescreen Crispy HUD
-      if (offset != 1)
-        { V_DrawPatchGeneralWS(per->n.x, per->n.y, FG, per->p, false, offset); }
-      else
-        { V_DrawPatch(per->n.x, per->n.y, FG, per->p); }
-    }
+    else //jff 2/18/98 allow use of faster draw routine from config
+      { V_DrawPatch(per->n.x, per->n.y, FG, per->p); }
   }
 
-  STlib_updateNumWS(&per->n, outrng, refresh, offset);
+  STlib_updateNum(&per->n, outrng, refresh);
 }
 
 //
@@ -323,11 +272,9 @@ void STlib_initMultIcon
 // Passed a st_multicon_t widget, and a refresh flag
 // Returns nothing.
 //
-// [Nugget] Support widescreen Crispy HUD
-void STlib_updateMultIconWS
+void STlib_updateMultIcon
 ( st_multicon_t*  mi,
-  boolean   refresh,
-  int       offset ) // [Nugget]
+  boolean   refresh )
 {
   int w;
   int h;
@@ -349,13 +296,8 @@ void STlib_updateMultIconWS
       if (screenblocks < CRISPY_HUD) // [Nugget] Crispy minimalistic HUD
         { V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG); }
     }
-    if (*mi->inum != -1) { // killough 2/16/98: redraw only if != -1
-      // [Nugget] Support widescreen Crispy HUD
-      if (offset != 1)
-        { V_DrawPatchGeneralWS(mi->x, mi->y, FG, mi->p[*mi->inum], false, offset); }
-      else
-        { V_DrawPatch(mi->x, mi->y, FG, mi->p[*mi->inum]); }
-    }
+    if (*mi->inum != -1) // killough 2/16/98: redraw only if != -1
+      { V_DrawPatch(mi->x, mi->y, FG, mi->p[*mi->inum]); }
     mi->oldinum = *mi->inum;
   }
 }
@@ -418,14 +360,8 @@ void STlib_updateBinIcon
     if (y - ST_Y < 0)
       I_Error("updateBinIcon: y - ST_Y < 0");
 
-    if (*bi->val) {
-      // [Nugget] Support widescreen Crispy HUD
-      if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
-          && (!automapactive || automapoverlay))
-        { V_DrawPatchGeneralWS(bi->x, bi->y, FG, bi->p, false, false); }
-      else
-        { V_DrawPatch(bi->x, bi->y, FG, bi->p); }
-    }
+    if (*bi->val)
+      { V_DrawPatch(bi->x, bi->y, FG, bi->p); }
     else
       if (screenblocks < CRISPY_HUD) // [Nugget] Crispy minimalistic HUD
         { V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG); }

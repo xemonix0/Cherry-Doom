@@ -151,14 +151,10 @@ void STlib_initNum
   boolean* on,
   int width );
 
-// [Nugget] Support widescreen Crispy HUD
-void STlib_updateNumWS
+void STlib_updateNum
 ( st_number_t* n,
   char *outrng,           //jff 1/16/98 add color translation to digit output
-  boolean refresh,
-  int offset ); // [Nugget]
-
-#define STlib_updateNum(n,rng,ref) STlib_updateNumWS(n,rng,ref,1) // [Nugget]
+  boolean refresh );
 
 
 // Percent widget routines
@@ -171,14 +167,10 @@ void STlib_initPercent
   boolean* on,
   patch_t* percent );
 
-// [Nugget] Support widescreen Crispy HUD
-void STlib_updatePercentWS
+void STlib_updatePercent
 ( st_percent_t* per,
   char *outrng,          //jff 1/16/98 add color translation to percent output
-  int refresh,
-  int offset ); // [Nugget]
-
-#define STlib_updatePercent(per,rng,ref) STlib_updatePercentWS(per,rng,ref,1) // [Nugget]
+  int refresh );
 
 
 // Multiple Icon widget routines
@@ -190,13 +182,9 @@ void STlib_initMultIcon
   int* inum,
   boolean* on );
 
-// [Nugget] Support widescreen Crispy HUD
-void STlib_updateMultIconWS
+void STlib_updateMultIcon
 ( st_multicon_t* mi,
-  boolean refresh,
-  int offset ); // [Nugget]
-
-#define STlib_updateMultIcon(mi,ref) STlib_updateMultIconWS(mi,ref,1) // [Nugget]
+  boolean refresh );
 
 
 // Binary Icon widget routines

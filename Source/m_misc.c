@@ -427,6 +427,13 @@ default_t defaults[] = {
   },
 
   {
+    "no_berserk_tint",
+    (config_t *) &no_berserk_tint, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to disable Berserk tint"
+  },
+
+  {
     "viewheight_value",
     (config_t *) &viewheight_value, NULL,
     {41}, {8,56}, number, ss_gen, wad_yes,

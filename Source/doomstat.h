@@ -392,6 +392,7 @@ extern int over_under;
 extern int jump_crouch;
 extern int damagecount_cap;
 extern int bonuscount_cap;
+extern int no_berserk_tint;
 extern int viewheight_value;
 extern int one_key_saveload;
 extern int quick_quitgame;

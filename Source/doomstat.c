@@ -132,6 +132,7 @@ int over_under;
 int jump_crouch;
 int damagecount_cap;
 int bonuscount_cap;
+int no_berserk_tint;
 int viewheight_value;
 int one_key_saveload;
 int quick_quitgame;

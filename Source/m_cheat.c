@@ -87,6 +87,7 @@ static int spawneetype = -1; static boolean spawneefriend; // Used for 'SPAWNR'
 static void cheat_spawn(),  cheat_spawne(), cheat_spawnf(), cheat_spawnr();
 static void cheat_scanner();    // Give info on the current target
 boolean cheese;
+static void cheat_mdk();        // Inspired by ZDoom's console command
 static void cheat_cheese();     // cheese :)
 
 //-----------------------------------------------------------------------------
@@ -345,6 +346,9 @@ struct cheat_s cheat[] = {
 
   {"analyze", NULL, not_net|not_demo,
    cheat_scanner}, // 'SCANNER' alternative
+
+  {"mdk", NULL, not_net|not_demo,
+   cheat_mdk},
 
   {"cheese", NULL, not_net|not_demo,
    cheat_cheese}, // cheese :)
@@ -633,6 +637,17 @@ static void cheat_scanner() {
   plyr->message = plyr->cheats & CF_SCANNER
                   ? "Thing Scanner ON"
                   : "Thing Scanner OFF";
+}
+
+// [Nugget] Deal 1 million damage
+static void cheat_mdk() {
+  extern void P_LineAttack();
+  extern fixed_t P_AimLineAttack();
+  const fixed_t slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, 0);
+
+  P_LineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, slope, 1000000);
+
+  plyr->message = "MDK!";
 }
 
 // [Nugget] cheese :)

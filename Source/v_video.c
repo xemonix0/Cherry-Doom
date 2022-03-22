@@ -342,9 +342,8 @@ void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
 //
 // killough 11/98: Consolidated V_DrawPatch and V_DrawPatchFlipped into one
 //
-// [Nugget] Support widescreen Crispy HUD
-void V_DrawPatchGeneralWS(int x, int y, int scrn, patch_t *patch,
-			boolean flipped, int offset)
+void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
+			boolean flipped)
 {
   int  w = SHORT(patch->width), col = w-1, colstop = -1, colstep = -1;
 
@@ -354,9 +353,7 @@ void V_DrawPatchGeneralWS(int x, int y, int scrn, patch_t *patch,
   y -= SHORT(patch->topoffset);
   x -= SHORT(patch->leftoffset);
 
-  // [Nugget] Support widescreen Crispy HUD
-  if (offset)
-    { x += WIDESCREENDELTA*offset; } // [crispy] horizontal widescreen offset
+  x += WIDESCREENDELTA; // [crispy] horizontal widescreen offset
 
 #ifdef RANGECHECK_NOTHANKS
   if (x<0
@@ -536,30 +533,21 @@ void V_DrawPatchGeneralWS(int x, int y, int scrn, patch_t *patch,
 // jff 1/15/98 new routine to translate patch colors
 //
 // [Nugget] Support widescreen Crispy HUD
-void V_DrawPatchTranslatedWS(int x, int y, int scrn, patch_t *patch,
-                           char *outr, int cm, int offset)
+void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch,
+                           char *outr, int cm)
 {
   int col, w;
 
   //jff 2/18/98 if translation not needed, just use the old routine
   if (outr==cr_red) {
-    // [Nugget] Support widescreen Crispy HUD
-    if (offset != 1) {
-      V_DrawPatchGeneralWS(x,y,scrn,patch,false,offset);
-      return;
-    }
-    else {
-      V_DrawPatch(x,y,scrn,patch);
-      return; // killough 2/21/98: add return
-    }
+    V_DrawPatch(x,y,scrn,patch);
+    return; // killough 2/21/98: add return
   }
 
   y -= SHORT(patch->topoffset);
   x -= SHORT(patch->leftoffset);
 
-  // [Nugget] Support widescreen Crispy HUD
-  if (offset)
-    { x += WIDESCREENDELTA*offset; } // [crispy] horizontal widescreen offset
+  x += WIDESCREENDELTA; // [crispy] horizontal widescreen offset
 
 #ifdef RANGECHECK
   if (x<0
