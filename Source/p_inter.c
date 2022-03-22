@@ -717,6 +717,7 @@ void P_NuggetGib(mobj_t *mo)
     splat->momx = (Woof_Random() - Woof_Random())<<12;
     splat->momy = (Woof_Random() - Woof_Random())<<12;
     splat->momz = Woof_Random()<<12;
+    splat->flags |= MF_DROPOFF;
 
     // Physics differ between versions (complevels),
     // so this is done to get rather decent behavior in Vanilla
