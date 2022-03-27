@@ -43,6 +43,12 @@
 
 #define CRISPY_HUD 11 // [Nugget] Crispy minimalistic HUD
 
+// [Nugget] Smooth counts
+extern int STHealth;
+extern int STArmor;
+
+void NuggetSmoothCount(int* shownval, int realval); // [Nugget]
+
 //
 // STATUS BAR
 //

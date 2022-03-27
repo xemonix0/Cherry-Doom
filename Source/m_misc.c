@@ -513,6 +513,13 @@ default_t defaults[] = {
   },
 
   {
+    "smooth_counts",
+    (config_t *) &smooth_counts, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to enable smooth health/armor counts"
+  },
+
+  {
     "extra_gibbing",
     (config_t *) &extra_gibbing, NULL,
     {0}, {0,1}, number, ss_enem, wad_yes,

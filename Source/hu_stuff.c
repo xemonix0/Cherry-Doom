@@ -1157,13 +1157,13 @@ void HU_Drawer(void)
     // do the hud health display
     {
       int health = plr->health;
-      int healthbars = health>100? 25 : health/4;
+      int healthbars = STHealth>100? 25 : STHealth/4; // [Nugget] Smooth counts
 
       // clear the widgets internal line
       HUlib_clearTextLine(&w_health);
 
       // build the numeric amount init string
-      sprintf(healthstr,"%3d",health);
+      sprintf(healthstr,"%3d",STHealth); // [Nugget] Smooth counts
       // build the bargraph string
       // full bargraph chars
       for (i=4;i<4+healthbars/4;) { hud_healthstr[i++] = 123; }
@@ -1209,12 +1209,12 @@ void HU_Drawer(void)
     // do the hud armor display
     {
       int armor = plr->armorpoints;
-      int armorbars = armor>100? 25 : armor/4;
+      int armorbars = STArmor>100? 25 : STArmor/4; // [Nugget] Smooth counts
 
       // clear the widgets internal line
       HUlib_clearTextLine(&w_armor);
       // build the numeric amount init string
-      sprintf(armorstr,"%3d",armor);
+      sprintf(armorstr,"%3d",STArmor); // [Nugget] Smooth counts
       // build the bargraph string
       // full bargraph chars
       for (i=4;i<4+armorbars/4;) { hud_armorstr[i++] = 123; }

@@ -406,6 +406,8 @@ extern int a11y_invul_colormap;
 // Weapons
 extern int bobbing_percentage;
 extern int no_hor_autoaim;
+// Status Bar/HUD
+extern int smooth_counts;
 // Enemies
 extern int extra_gibbing;
 extern int bloodier_gibbing;

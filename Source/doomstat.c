@@ -146,6 +146,8 @@ int a11y_invul_colormap;
 // Weapons
 int bobbing_percentage;
 int no_hor_autoaim;
+// Status Bar/HUD
+int smooth_counts;
 // Enemies
 int extra_gibbing;
 int bloodier_gibbing;

@@ -3711,6 +3711,8 @@ enum {
   stat1_armorg,
   stat1_ammor,
   stat1_ammoy,
+  stat1_stub3,
+  stat1_smooth,
 };
 
 setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
@@ -3732,6 +3734,8 @@ setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
     {"ARMOR GOOD/EXTRA"     ,S_NUM       ,m_null,ST_X,ST_Y+stat1_armorg*8, {"armor_green"}},
     {"AMMO LOW/OK"          ,S_NUM       ,m_null,ST_X,ST_Y+stat1_ammor*8, {"ammo_red"}},
     {"AMMO OK/GOOD"         ,S_NUM       ,m_null,ST_X,ST_Y+stat1_ammoy*8, {"ammo_yellow"}},
+
+    {"SMOOTH HEALTH/ARMOR COUNT"  ,S_YESNO     ,m_null,ST_X,ST_Y+stat1_smooth*8, {"smooth_counts"}},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},

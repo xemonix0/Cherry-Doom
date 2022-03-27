@@ -335,6 +335,37 @@ static int      st_randomnumber;
 
 extern char     *mapnames[];
 
+// [Nugget] Smooth counts
+// These are default values, which most likely go unused
+// since G_InitNew and G_DoLoadGame update them right away
+int STHealth = 100;
+int STArmor = 0;
+
+void NuggetSmoothCount(int* shownval, int realval)
+{
+  if (!smooth_counts) {
+    *shownval = realval;
+    return;
+  }
+
+  if (*shownval < realval) {
+    int step = (realval - *shownval) / 20;
+    if      (step > 7) { step = 7; }
+    else if (step < 1) { step = 1; }
+    *shownval += step+1;
+    if (*shownval > realval)
+      { *shownval = realval; }
+  }
+  else if (*shownval > realval) {
+    int step = (*shownval - realval) / 20;
+    if      (step > 7) { step = 7; }
+    else if (step < 1) { step = 1; }
+    *shownval -= step+1;
+    if (*shownval < realval)
+      { *shownval = realval; }
+  }
+}
+
 //
 // STATUS BAR CODE
 //
@@ -702,6 +733,9 @@ void ST_updateWidgets(void)
 
 void ST_Ticker(void)
 {
+  NuggetSmoothCount(&STHealth, plyr->health);
+  NuggetSmoothCount(&STArmor, plyr->armorpoints);
+
   st_clock++;
   st_randomnumber = M_Random();
   ST_updateWidgets();
@@ -782,6 +816,9 @@ void ST_drawWidgets(boolean refresh)
 {
   int i;
   int maxammo = plyr->maxammo[weaponinfo[w_ready.data].ammo];
+  // [Nugget] Used to color health and armor counts based on
+  // the real values, only ever relevant when using smooth counts
+  const int health = plyr->health, armor = plyr->armorpoints;
 
   // used by w_arms[] widgets
   st_armson = st_statusbaron && !deathmatch;
@@ -810,14 +847,15 @@ void ST_drawWidgets(boolean refresh)
   }
 
   //jff 2/16/98 make color of health depend on amount
+  // [Nugget] Use the player's health value instead of the percent's value
   // [Nugget] Make it gray if the player's invulnerable
   if (plyr->powers[pw_invulnerability] || plyr->cheats & CF_GODMODE)
     { STlib_updatePercent(&w_health, cr_gray, refresh); }
-  else if (*w_health.n.num<health_red)
+  else if (health<health_red)
     { STlib_updatePercent(&w_health, cr_red, refresh); }
-  else if (*w_health.n.num<health_yellow)
+  else if (health<health_yellow)
     { STlib_updatePercent(&w_health, cr_gold, refresh); }
-  else if (*w_health.n.num<=health_green)
+  else if (health<=health_green)
     { STlib_updatePercent(&w_health, cr_green, refresh); }
   else
     { STlib_updatePercent(&w_health, cr_blue2, refresh); } //killough 2/28/98
@@ -833,11 +871,12 @@ void ST_drawWidgets(boolean refresh)
   }
   else {
     //jff 2/16/98 make color of armor depend on amount
-    if (*w_armor.n.num<armor_red)
+    // [Nugget] Use the player's armor value instead of the percent's value
+    if (armor<armor_red)
       { STlib_updatePercent(&w_armor, cr_red, refresh); }
-    else if (*w_armor.n.num<armor_yellow)
+    else if (armor<armor_yellow)
       { STlib_updatePercent(&w_armor, cr_gold, refresh); }
-    else if (*w_armor.n.num<=armor_green)
+    else if (armor<=armor_green)
       { STlib_updatePercent(&w_armor, cr_green, refresh); }
     else
       { STlib_updatePercent(&w_armor, cr_blue2, refresh); } //killough 2/28/98
@@ -858,10 +897,8 @@ void ST_drawWidgets(boolean refresh)
     else         { V_DrawPatch(ST_FX, SCREENHEIGHT - 31, FG, faceback[1]); }
   }
 
-  // [Nugget] Support widescreen Crispy HUD
   STlib_updateMultIcon(&w_faces, refresh);
 
-  // [Nugget] Support widescreen Crispy HUD
   for (i=0;i<3;i++)
     { STlib_updateMultIcon(&w_keyboxes[i], refresh); }
 
@@ -1102,7 +1139,7 @@ void ST_createWidgets(void)
                     ST_HEALTHX - delta,
                     ST_HEALTHY,
                     tallnum,
-                    &plyr->health,
+                    &STHealth, // [Nugget] Smooth counts
                     &st_statusbaron,
                     tallpercent);
 
@@ -1147,7 +1184,7 @@ void ST_createWidgets(void)
                     ST_ARMORX + delta,
                     ST_ARMORY,
                     tallnum,
-                    &plyr->armorpoints,
+                    &STArmor, // [Nugget] Smooth counts
                     &st_statusbaron, tallpercent);
 
   // keyboxes 0-2

@@ -1942,6 +1942,11 @@ static void G_DoLoadGame(void)
       time/3600, (time%3600)/60, time%60,
       ttime/3600, (ttime%3600)/60, ttime%60);
   }
+
+  // [Nugget] Update smooth count values;
+  // the same procedure is done in G_InitNew, but we have to repeat it here
+  STHealth = players[displayplayer].health;
+  STArmor = players[displayplayer].armorpoints;
 }
 
 //
@@ -2903,6 +2908,10 @@ void G_InitNew(skill_t skill, int episode, int map)
     G_MBFComp();
 
   G_DoLoadLevel();
+
+  // [Nugget] Update smooth count values
+  STHealth = players[displayplayer].health;
+  STArmor = players[displayplayer].armorpoints;
 }
 
 //
