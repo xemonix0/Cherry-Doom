@@ -123,7 +123,7 @@ void P_CalcHeight (player_t* player)
                   ? (FixedMul(player->momx,player->momx)
                      + FixedMul(player->momy,player->momy))>>2
                   : (demo_compatibility
-                     && ((bobbing_percentage != 0) || player_bobbing))
+                     || (bobbing_percentage != 0) || player_bobbing)
                     ? (FixedMul (player->mo->momx, player->mo->momx)
                        + FixedMul (player->mo->momy,player->mo->momy))>>2
                     : 0;
