@@ -532,7 +532,6 @@ void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
 //
 // jff 1/15/98 new routine to translate patch colors
 //
-// [Nugget] Support widescreen Crispy HUD
 void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch,
                            char *outr, int cm)
 {

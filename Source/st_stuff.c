@@ -864,22 +864,18 @@ void ST_drawWidgets(boolean refresh)
   // [Nugget] Use code from our implementation, differently formatted to save space
   if (hud_armor_type) {
     STlib_updatePercent(&w_armor, plyr->armortype == 2
-                                    ? cr_blue2
-                                    : plyr->armortype == 1
-                                      ? cr_green
-                                      : cr_red, refresh);
+                                  ? cr_blue2
+                                  : plyr->armortype == 1
+                                    ? cr_green
+                                    : cr_red, refresh);
   }
   else {
     //jff 2/16/98 make color of armor depend on amount
     // [Nugget] Use the player's armor value instead of the percent's value
-    if (armor<armor_red)
-      { STlib_updatePercent(&w_armor, cr_red, refresh); }
-    else if (armor<armor_yellow)
-      { STlib_updatePercent(&w_armor, cr_gold, refresh); }
-    else if (armor<=armor_green)
-      { STlib_updatePercent(&w_armor, cr_green, refresh); }
-    else
-      { STlib_updatePercent(&w_armor, cr_blue2, refresh); } //killough 2/28/98
+    if (armor<armor_red)          { STlib_updatePercent(&w_armor, cr_red, refresh); }
+    else if (armor<armor_yellow)  { STlib_updatePercent(&w_armor, cr_gold, refresh); }
+    else if (armor<=armor_green)  { STlib_updatePercent(&w_armor, cr_green, refresh); }
+    else                          { STlib_updatePercent(&w_armor, cr_blue2, refresh); } //killough 2/28/98
   }
 
   STlib_updateBinIcon(&w_armsbg, refresh);

@@ -394,6 +394,7 @@ extern int damagecount_cap;
 extern int bonuscount_cap;
 extern int no_berserk_tint;
 extern int viewheight_value;
+extern int s_clipping_dist_x2;
 extern int one_key_saveload;
 extern int quick_quitgame;
   // Accessibility (Page 4)

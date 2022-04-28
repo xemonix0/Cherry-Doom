@@ -86,8 +86,8 @@ static int spawneetype = -1; static boolean spawneefriend; // Used for 'SPAWNR'
 // Spawn a mobj:            Enemy           Friend          Repeat the last
 static void cheat_spawn(),  cheat_spawne(), cheat_spawnf(), cheat_spawnr();
 static void cheat_scanner();    // Give info on the current target
-boolean cheese;
 static void cheat_mdk();        // Inspired by ZDoom's console command
+boolean cheese;
 static void cheat_cheese();     // cheese :)
 
 //-----------------------------------------------------------------------------
@@ -380,7 +380,7 @@ static void cheat_nomomentum() {
                   : "No Momentum Mode OFF";
 }
 
-// [Nugget] Emulates demo or net play state, for debugging
+// [Nugget] Emulates demo and/or net play state, for debugging
 extern void D_NuggetUpdateCasual();
 static void cheat_fauxdemo() {
   fauxdemo = !fauxdemo;
@@ -552,10 +552,8 @@ static void cheat_spawne(buf) char buf[3];
   // Don't spawn things beyond the Music Source dummy (inclusive);
   // Worth noting that this approach isn't quite compatible with
   // DSDHacked's capabilities.
-  if (type < 0 || type > MT_BIBLE) {
-    dprintf("Invalid mobjtype %i", type);
-    return;
-  }
+  if (type < 0 || type > MT_BIBLE)
+    { dprintf("Invalid mobjtype %i", type); return; }
 
   // Valid mobjtype, so pass the value to spawneetype
   spawneetype = type;
@@ -1028,7 +1026,7 @@ static void cheat_massacre()    // jff 2/01/98 kill all monsters
   // Ty 03/27/98 - string(s) *not* externalized
   dprintf("%d Monster%s Killed", killcount, killcount==1 ? "" : "s");
 
-  // [Nugget] Reenable Bloodier Gibbing
+  // [Nugget] Return Bloodier Gibbing to its original state
   bloodier_gibbing = oldgibbing;
 }
 

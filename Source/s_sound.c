@@ -52,7 +52,9 @@
 
 #define S_CLOSE_DIST (200<<FRACBITS)
 
-#define S_ATTENUATOR ((S_CLIPPING_DIST-S_CLOSE_DIST)>>FRACBITS)
+// [Nugget] Unused, calculated directly in S_AdjustSoundParams
+// since S_CLIPPING_DIST might be doubled
+//#define S_ATTENUATOR ((S_CLIPPING_DIST-S_CLOSE_DIST)>>FRACBITS)
 
 //jff 1/22/98 make sound enabling variables readable here
 extern boolean nosfxparm, nomusicparm;
@@ -141,6 +143,8 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
    fixed_t adx, ady, dist;
    angle_t angle;
    int basevolume;            // haleyjd
+   // [Nugget] Double sound clipping distance
+   int clippingdist = S_CLIPPING_DIST*(s_clipping_dist_x2+1);
 
    // haleyjd 08/12/04: we cannot adjust a sound for a NULL listener.
    if(!listener)
@@ -177,7 +181,7 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
       return *vol > 0;
    }
 
-   if(dist > S_CLIPPING_DIST >> FRACBITS)
+   if(dist > clippingdist >> FRACBITS) // [Nugget] Double sound clipping distance
       return 0;
 
    // angle of source to listener
@@ -192,9 +196,11 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
    *sep = NORM_SEP - FixedMul(S_STEREO_SWING>>FRACBITS,finesine[angle]);
 
    // volume calculation
-   *vol = dist < S_CLOSE_DIST >> FRACBITS ? basevolume :
-      basevolume * ((S_CLIPPING_DIST>>FRACBITS)-dist) /
-      S_ATTENUATOR;
+   // [Nugget] Variable sound clipping distance
+   *vol = dist < S_CLOSE_DIST >> FRACBITS
+          ? basevolume
+          : basevolume * ((clippingdist>>FRACBITS)-dist) /
+            ((clippingdist-S_CLOSE_DIST)>>FRACBITS);
 
    // haleyjd 09/27/06: decrease priority with volume attenuation
    *pri = *pri + (127 - *vol);

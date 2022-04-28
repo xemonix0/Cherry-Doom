@@ -134,6 +134,7 @@ int damagecount_cap;
 int bonuscount_cap;
 int no_berserk_tint;
 int viewheight_value;
+int s_clipping_dist_x2;
 int one_key_saveload;
 int quick_quitgame;
   // Accessibility (Page 4)

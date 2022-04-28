@@ -373,15 +373,10 @@ default_t defaults[] = {
   // [Nugget] ----------------------------------------
 
   {
-    "no_ss_background", // name
-    (config_t *) &no_ss_background, // default variable
-    NULL,     // possible nondefault variable
-    {0},      // built-in default value
-    {0,1},    // numerical limits
-    number,   // number or string
-    ss_gen,   // setup screen this appears on
-    wad_yes,  // whether it's allowed in wads
-    "1 to disable the background in setup screens" // description of parameter
+    "no_ss_background",
+    (config_t *) &no_ss_background, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to disable the background in setup screens"
   },
 
   {
@@ -438,6 +433,13 @@ default_t defaults[] = {
     (config_t *) &viewheight_value, NULL,
     {41}, {8,56}, number, ss_gen, wad_yes,
     "Player view height"
+  },
+
+  {
+    "s_clipping_dist_x2",
+    (config_t *) &s_clipping_dist_x2, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to double the sound clipping distance"
   },
 
   {
@@ -532,6 +534,8 @@ default_t defaults[] = {
     {0}, {0,1}, number, ss_enem, wad_yes,
     "1 to enable bloodier gibbing"
   },
+
+  // [Nugget] End -------------------------------------
 
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity_horiz",
@@ -931,6 +935,8 @@ default_t defaults[] = {
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Fix IDCHOPPERS invulnerability"
   },
+
+  // [Nugget] End --------------------------
 
   {
     "comp_reservedlineflag",

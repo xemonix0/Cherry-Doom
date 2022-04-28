@@ -2898,12 +2898,17 @@ enum {
   gen3_boncountcap,
   gen3_berserktint,
   gen3_viewheight,
+  gen3_sclipdist,
   gen3_quicksaveload,
   gen3_quickexit,
 };
 
 static const char *wipe_types[] = {
   "None", "Melt", "Seizure", NULL
+};
+
+static const char *s_clipping_dists[] = {
+  "1200", "2400", NULL
 };
 
 setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
@@ -2919,6 +2924,7 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
     {"Bonus Tint Cap (Default = -1)",   S_NUM,    m_null, G_X, G_Y + gen3_boncountcap*8,    {"bonuscount_cap"}},
     {"Disable Berserk Tint",            S_YESNO,  m_null, G_X, G_Y + gen3_berserktint*8,    {"no_berserk_tint"}},
     {"View Height (Default = 41)",      S_NUM,    m_null, G_X, G_Y + gen3_viewheight*8,     {"viewheight_value"}},
+    {"Sound Clipping Distance",         S_CHOICE, m_null, G_X, G_Y + gen3_sclipdist*8,      {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
     {"One-Key Quick Save/Load",         S_YESNO,  m_null, G_X, G_Y + gen3_quicksaveload*8,  {"one_key_saveload"}},
     {"Quick \"Quit Game\"",             S_YESNO,  m_null, G_X, G_Y + gen3_quickexit*8,      {"quick_quitgame"}},
 

@@ -1139,14 +1139,10 @@ void HU_Drawer(void)
 
       // set the display color from the percentage of total ammo held
       // [Nugget] Make it gray if the player has infinite ammo
-      if (plr->cheats & CF_INFAMMO)
-        { w_ammo.cr = colrngs[CR_GRAY]; }
-      else if (ammopct<ammo_red)
-        { w_ammo.cr = colrngs[CR_RED]; }
-      else if (ammopct<ammo_yellow)
-        { w_ammo.cr = colrngs[CR_GOLD]; }
-      else
-        { w_ammo.cr = colrngs[CR_GREEN]; }
+      if (plr->cheats & CF_INFAMMO) { w_ammo.cr = colrngs[CR_GRAY]; }
+      else if (ammopct<ammo_red)    { w_ammo.cr = colrngs[CR_RED]; }
+      else if (ammopct<ammo_yellow) { w_ammo.cr = colrngs[CR_GOLD]; }
+      else                          { w_ammo.cr = colrngs[CR_GREEN]; }
     }
     // transfer the init string to the widget
     s = hud_ammostr;
@@ -1157,7 +1153,7 @@ void HU_Drawer(void)
     // do the hud health display
     {
       int health = plr->health;
-      int healthbars = STHealth>100? 25 : STHealth/4; // [Nugget] Smooth counts
+      int healthbars = STHealth>100 ? 25 : STHealth/4; // [Nugget] Smooth counts
 
       // clear the widgets internal line
       HUlib_clearTextLine(&w_health);
@@ -1209,7 +1205,7 @@ void HU_Drawer(void)
     // do the hud armor display
     {
       int armor = plr->armorpoints;
-      int armorbars = STArmor>100? 25 : STArmor/4; // [Nugget] Smooth counts
+      int armorbars = STArmor>100 ? 25 : STArmor/4; // [Nugget] Smooth counts
 
       // clear the widgets internal line
       HUlib_clearTextLine(&w_armor);
