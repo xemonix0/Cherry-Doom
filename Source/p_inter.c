@@ -668,17 +668,18 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
 {
   extern fixed_t P_AproxDistance();
+  extern void A_Punch(), A_Saw(), A_FireShotgun2();
 
   if (source && source->player && extra_gibbing
       &&
-      (  (source->player->readyweapon == wp_fist
+      (  (source->player->psprites->state->action == A_Punch
           && source->player->powers[pw_strength]
           && (P_AproxDistance(target->x - source->x, target->y - source->y)
               < (64*FRACUNIT + target->info->radius)))
-       ||(source->player->readyweapon == wp_chainsaw
+       ||(source->player->psprites->state->action == A_Saw
           && (P_AproxDistance(target->x - source->x, target->y - source->y)
               < (65*FRACUNIT + target->info->radius)))
-       ||(source->player->readyweapon == wp_supershotgun
+       ||(source->player->psprites->state->action == A_FireShotgun2
           && (P_AproxDistance(target->x - source->x, target->y - source->y)
               < (128*FRACUNIT + target->info->radius)))
        )
