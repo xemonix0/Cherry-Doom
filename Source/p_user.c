@@ -50,6 +50,9 @@
 
 boolean onground; // whether player is on ground or in air
 
+// [Nugget]
+#define CROUCHUNITS 2*FRACUNIT
+
 //
 // P_Thrust
 // Moves the given origin along a given angle.
@@ -136,7 +139,7 @@ void P_CalcHeight (player_t* player)
   else if (player->bob > MAXBOB) { player->bob = MAXBOB; }
 
   // [Nugget] Check for viewheight setting
-  if (demorecording||netgame)
+  if (demorecording||netgame||fauxdemo)
     { view = VIEWHEIGHT; }
   else
     { view = (viewheight_value*FRACUNIT) - player->crouchOffset; }
@@ -319,7 +322,7 @@ void P_DeathThink (player_t* player)
 //
 
 extern int autorun; // [Nugget]
-boolean CrouchKeyHeld; // [Nugget]
+boolean CrouchKeyDown; // [Nugget]
 
 void P_PlayerThink (player_t* player)
 {
@@ -408,7 +411,7 @@ void P_PlayerThink (player_t* player)
   if (player->jumpTics) { player->jumpTics--; }
 
   // [Nugget] Jump/Fly Up
-  if (M_InputGameActive(input_jump) && casual_play)
+  if (casual_play && M_InputGameActive(input_jump))
   {
     if (player->cheats & CF_FLY) {
       player->mo->momz += ((autorun ^ M_InputGameActive(input_speed)) == 1)
@@ -434,16 +437,16 @@ void P_PlayerThink (player_t* player)
   }
 
   // [Nugget] Crouch/Fly Down
-  if (!M_InputGameActive(input_crouch)) { CrouchKeyHeld = false; }
-  else if (M_InputGameActive(input_crouch) && casual_play)
+  if (!M_InputGameActive(input_crouch)) { CrouchKeyDown = false; }
+  else if (casual_play && M_InputGameActive(input_crouch))
   {
     if (player->cheats & CF_FLY) {
       player->mo->momz -= ((autorun ^ M_InputGameActive(input_speed)) == 1)
                           ? 2*FRACUNIT : 1*FRACUNIT;
       if (player->mo->momz < -8*FRACUNIT) { player->mo->momz = -8*FRACUNIT; }
     }
-    else if (jump_crouch && !CrouchKeyHeld) {
-      CrouchKeyHeld = true;
+    else if (jump_crouch && !CrouchKeyDown) {
+      CrouchKeyDown = true;
 
       if (player->mo->intflags & MIF_CROUCHING)
         { player->mo->intflags &= ~MIF_CROUCHING; } // Stand up
@@ -461,8 +464,8 @@ void P_PlayerThink (player_t* player)
   if ((player->mo->intflags & MIF_CROUCHING)
       && player->crouchOffset < (viewheight_value/2)*FRACUNIT)
   {
-    player->crouchOffset += 2*FRACUNIT;
-    player->mo->height -= 2*FRACUNIT;
+    player->crouchOffset += CROUCHUNITS;
+    player->mo->height -= CROUCHUNITS;
     if (player->crouchOffset >= (viewheight_value/2)*FRACUNIT)
     {
       player->crouchOffset = (viewheight_value/2)*FRACUNIT;
@@ -474,30 +477,20 @@ void P_PlayerThink (player_t* player)
                || player->mo->height < player->mo->info->height))
   {
     // Check if ceiling's high enough to stand up
-    if ((player->mo->ceilingz - player->mo->floorz)
-        > player->mo->height)
+    if ((player->mo->ceilingz - player->mo->floorz) > player->mo->height)
     {
-      player->crouchOffset -= 2*FRACUNIT;
-      player->mo->height += 2*FRACUNIT;
-      // Cap the player's height at ceiling level,
-      // if it isn't high enough
-      if ((player->mo->ceilingz - player->mo->floorz)
-          < player->mo->height)
-      {
-        player->mo->height = player->mo->ceilingz
-                             - player->mo->floorz;
-      }
-      if (player->crouchOffset < 0)
-      {
+      player->crouchOffset -= CROUCHUNITS;
+      player->mo->height += CROUCHUNITS;
+      // Cap the player's height at ceiling level, if it isn't high enough
+      if ((player->mo->ceilingz - player->mo->floorz) < player->mo->height)
+        { player->mo->height = player->mo->ceilingz - player->mo->floorz; }
+
+      if (player->crouchOffset < 0) {
         player->crouchOffset = 0;
         player->mo->height = player->mo->info->height;
         // Cap again if necessary
-        if ((player->mo->ceilingz - player->mo->floorz)
-            < player->mo->height)
-        {
-          player->mo->height = player->mo->ceilingz
-                               - player->mo->floorz;
-        }
+        if ((player->mo->ceilingz - player->mo->floorz) < player->mo->height)
+          { player->mo->height = player->mo->ceilingz - player->mo->floorz; }
       }
     }
   }
@@ -611,10 +604,9 @@ void P_PlayerThink (player_t* player)
   if (player->cheats & CF_SCANNER) {
     // Check if the player is aiming at a thing
     P_AimLineAttack(player->mo, player->mo->angle, 16*64*FRACUNIT, 0);
-    if (linetarget) { // Give some info on the thing
+    if (linetarget) // Give some info on the thing
       dprintf("Type: %i - Health: %i/%i", linetarget->type,
               linetarget->health, linetarget->info->spawnhealth);
-    }
   }
 
   if (player->powers[pw_renderstats])

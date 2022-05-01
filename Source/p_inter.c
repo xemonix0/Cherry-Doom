@@ -260,10 +260,8 @@ void P_GiveCard(player_t *player, card_t card)
   if (player->cards[card])
     return;
   // [Nugget] Fix for "key pickup resets palette"
-  if (!nugget_comp[comp_keypal])
-    { player->bonuscount += BONUSADD; }
-  else
-    { player->bonuscount = BONUSADD; }
+  if (!nugget_comp[comp_keypal])  { player->bonuscount += BONUSADD; }
+  else                            { player->bonuscount = BONUSADD; }
   player->cards[card] = 1;
 }
 
@@ -670,18 +668,18 @@ boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
   extern fixed_t P_AproxDistance();
   extern void A_Punch(), A_Saw(), A_FireShotgun2();
 
-  if (source && source->player && extra_gibbing
+  if (extra_gibbing && source && source->player
       &&
       (  (source->player->psprites->state->action == A_Punch
           && source->player->powers[pw_strength]
           && (P_AproxDistance(target->x - source->x, target->y - source->y)
-              < (64*FRACUNIT + target->info->radius)))
+              < ((64*FRACUNIT) + target->info->radius)))
        ||(source->player->psprites->state->action == A_Saw
           && (P_AproxDistance(target->x - source->x, target->y - source->y)
-              < (65*FRACUNIT + target->info->radius)))
+              < ((65*FRACUNIT) + target->info->radius)))
        ||(source->player->psprites->state->action == A_FireShotgun2
           && (P_AproxDistance(target->x - source->x, target->y - source->y)
-              < (128*FRACUNIT + target->info->radius)))
+              < ((128*FRACUNIT) + target->info->radius)))
        )
      )
     { return true; }
@@ -722,8 +720,7 @@ void P_NuggetGib(mobj_t *mo)
 
     // Physics differ between versions (complevels),
     // so this is done to get rather decent behavior in Vanilla
-    if (demo_version < 200)
-      { splat->flags |= MF_NOCLIP; }
+    if (demo_version < 200) { splat->flags |= MF_NOCLIP; }
 
     // Randomize duration of the first frame
     splat->tics += (Woof_Random()&3) - (Woof_Random()&3);
@@ -790,8 +787,8 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
     }
 
   if // [Nugget] Extra Gibbing/GIBBERS cheat
-  (target->info->xdeathstate && casual_play
-   && (P_NuggetExtraGibbing(source, target) || GIBBERS))
+  (casual_play && target->info->xdeathstate
+   && (GIBBERS || P_NuggetExtraGibbing(source, target)))
   {
     P_SetMobjState(target, target->info->xdeathstate);
     P_NuggetGib(target); // Bloodier Gibbing
@@ -997,7 +994,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 		  !(target->flags & MF_SKULLFLY)))) //killough 11/98: see below
   {
     // [Nugget] Prevent pain state if no damage is caused
-    if (nugget_comp[comp_0dmgpain] && casual_play && damage == 0)
+    if (casual_play && nugget_comp[comp_0dmgpain] && damage == 0)
       {;} // Do nothing
     else
       { P_SetMobjState(target, target->info->painstate); }

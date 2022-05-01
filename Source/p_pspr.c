@@ -529,8 +529,7 @@ void A_Lower(player_t *player, pspdef_t *psp)
 {
   // [Nugget] Double speed with Fast Weapons
   psp->sy += (player->cheats & CF_FASTWEAPS)
-             ? LOWERSPEED*2
-             : LOWERSPEED;
+             ? LOWERSPEED*2 : LOWERSPEED;
 
   // Is already down.
   if (psp->sy < WEAPONBOTTOM)
@@ -567,8 +566,7 @@ void A_Raise(player_t *player, pspdef_t *psp)
 
   // [Nugget] Double speed with Fast Weapons
   psp->sy -= (player->cheats & CF_FASTWEAPS)
-             ? RAISESPEED*2
-             : RAISESPEED;
+             ? RAISESPEED*2 : RAISESPEED;
 
   if (psp->sy > WEAPONTOP)
     return;
@@ -924,20 +922,18 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
 void A_FireCGun(player_t *player, pspdef_t *psp)
 {
   // [Nugget] Fix "Chaingun sound without ammo" bug
-  if (!nugget_comp[comp_cgundblsnd]) {
+  if (!nugget_comp[comp_cgundblsnd])
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
-        return;
-  }
+      { return; }
 
   // [Nugget] use DSCHGUN if available
   S_StartSound(player->mo, W_CheckNumForName("dschgun") >= 0
                            ? sfx_chgun : sfx_pistol);
 
   // [Nugget] Fix "Chaingun sound without ammo" bug
-  if (nugget_comp[comp_cgundblsnd]) {
+  if (nugget_comp[comp_cgundblsnd])
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
-        return;
-  }
+      { return; }
 
   // killough 8/2/98: workaround for beta chaingun sprites missing at bottom
   // The beta did not have fullscreen, and its chaingun sprites were chopped

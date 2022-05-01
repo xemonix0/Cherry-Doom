@@ -543,15 +543,14 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
     int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
 
     // [Nugget]: [crispy] check if attacking skull flies over/under thing
-    if (over_under && casual_play) {
+    if (casual_play && over_under) {
 	    if (tmthing->z > thing->z + thing->height)        { return true; } // over
 	    else if (tmthing->z + tmthing->height < thing->z) { return true; } // under
     }
 
 	  // [Nugget] Fix lost soul collision
-	  if (nugget_comp[comp_lscollision] && casual_play) {
+	  if (casual_play && nugget_comp[comp_lscollision])
       if (!(thing->flags & MF_SHOOTABLE)) { return !(thing->flags & MF_SOLID); }
-    }
 
     P_DamageMobj (thing, tmthing, tmthing, damage);
 
@@ -559,7 +558,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
     tmthing->momx = tmthing->momy = tmthing->momz = 0;
 
     // [Nugget] Fix forgetful lost soul
-    if (!nugget_comp[comp_lsamnesia] && casual_play)
+    if (casual_play && !nugget_comp[comp_lsamnesia])
       { P_SetMobjState(tmthing, tmthing->info->seestate); }
     else
       { P_SetMobjState(tmthing, tmthing->info->spawnstate); }
@@ -635,7 +634,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   }
 
   // [Nugget] Allow things to move over/under solid things
-  if (over_under && (thing->flags & MF_SOLID) && casual_play)
+  if (casual_play && over_under && (thing->flags & MF_SOLID))
   {
     if (tmthing->z >= thing->z + thing->height) { // over
       thing->intflags   |= MIF_OVERUNDER;

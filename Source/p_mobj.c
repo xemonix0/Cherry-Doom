@@ -153,7 +153,7 @@ void P_XYMovement (mobj_t* mo)
       mo->momz = 0;
 
       // [Nugget] Fix forgetful lost soul
-      if (!nugget_comp[comp_lsamnesia] && casual_play)
+      if (casual_play && !nugget_comp[comp_lsamnesia])
         { P_SetMobjState(mo, mo->info->seestate); }
       else
         { P_SetMobjState(mo, mo->info->spawnstate); }
@@ -274,7 +274,7 @@ void P_XYMovement (mobj_t* mo)
   // no friction for missiles or skulls ever, no friction when airborne
   if (mo->flags & (MF_MISSILE | MF_SKULLFLY)
       // [Nugget] Do apply friction if airborne with the flight cheat on
-      || (mo->z > mo->floorz && !(player && player->cheats & CF_FLY)))
+      || (!(player && player->cheats & CF_FLY) && (mo->z > mo->floorz)))
     { return; }
 
   // killough 8/11/98: add bouncers
@@ -436,8 +436,8 @@ static void P_ZMovement (mobj_t* mo)
   } // killough 8/9/98: end bouncing object code
 
   // check for smooth step up
-  // [Nugget] Check for viewheight setting
-  if (demorecording||netgame||fauxdemo)
+  // [Nugget] Adjustable viewheight
+  if (demorecording||netgame||fauxdemo) // Allowed in demo playback
     { view = VIEWHEIGHT; }
   else if (mo->player)
     { view = (viewheight_value*FRACUNIT) - mo->player->crouchOffset; }
@@ -653,7 +653,7 @@ void P_MobjThinker (mobj_t* mobj)
   }
 
   // [Nugget] cheese :)
-  if (mobj->type == MT_MISC2 && cheese && mobj->health != 2997)
+  if (cheese && mobj->type == MT_MISC2 && mobj->health != 2997)
   {
     mobj->health = 2997;      mobj->tics = -1;
     mobj->sprite = SPR_BON1;  mobj->frame = 4;
@@ -1015,9 +1015,9 @@ void P_SpawnPlayer (mapthing_t* mthing)
   p->bonuscount    = 0;
   p->extralight    = 0;
   p->fixedcolormap = 0;
-  // [Nugget] Check for viewheight setting;
+  // [Nugget] Adjustable viewheight;
   // for some reason 'p->viewheight = view' refuses to work, so this is a workaround
-  if (demorecording||netgame||fauxdemo)
+  if (demorecording||netgame||fauxdemo) // Allowed in demo playback
     { p->viewheight = VIEWHEIGHT; }
   else
     { p->viewheight = (viewheight_value*FRACUNIT); }
@@ -1355,11 +1355,9 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
 
   // [Nugget] Check for crouching player
   if (dest->player && dest->player->crouchOffset)
-  {
-    th->momz = ((dest->z - dest->player->crouchOffset)
-                - source->z) / dist;
-  }
-  else { th->momz = (dest->z - source->z) / dist; }
+    { th->momz = ((dest->z - dest->player->crouchOffset) - source->z) / dist; }
+  else
+    { th->momz = (dest->z - source->z) / dist; }
   P_CheckMissileSpawn(th);
   return th;
 }
@@ -1390,11 +1388,11 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 	  slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
 	  if (!linetarget)
       // [Nugget] Disable horizontal autoaim
-      if (!no_hor_autoaim || !casual_play)
+      if (!casual_play || !no_hor_autoaim)
         slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
 	  if (!linetarget)
       // [Nugget] Disable horizontal autoaim
-      if (!no_hor_autoaim || !casual_play)
+      if (!casual_play || !no_hor_autoaim)
         slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
 	  if (!linetarget)
 	    an = source->angle, slope = 0;

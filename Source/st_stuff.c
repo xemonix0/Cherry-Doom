@@ -353,16 +353,14 @@ void NuggetSmoothCount(int* shownval, int realval)
     if      (step > 7) { step = 7; }
     else if (step < 1) { step = 1; }
     *shownval += step+1;
-    if (*shownval > realval)
-      { *shownval = realval; }
+    if (*shownval > realval) { *shownval = realval; }
   }
   else if (*shownval > realval) {
     int step = (*shownval - realval) / 20;
     if      (step > 7) { step = 7; }
     else if (step < 1) { step = 1; }
     *shownval -= step+1;
-    if (*shownval < realval)
-      { *shownval = realval; }
+    if (*shownval < realval) { *shownval = realval; }
   }
 }
 
@@ -862,13 +860,12 @@ void ST_drawWidgets(boolean refresh)
 
   // color of armor depends on type
   // [Nugget] Use code from our implementation, differently formatted to save space
-  if (hud_armor_type) {
+  if (hud_armor_type)
     STlib_updatePercent(&w_armor, plyr->armortype == 2
                                   ? cr_blue2
                                   : plyr->armortype == 1
                                     ? cr_green
                                     : cr_red, refresh);
-  }
   else {
     //jff 2/16/98 make color of armor depend on amount
     // [Nugget] Use the player's armor value instead of the percent's value
@@ -1114,8 +1111,8 @@ void ST_createWidgets(void)
   int i;
   // [Nugget] Widescreen Crispy HUD
   int delta = 0;
-  if ((screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3)
-      && (!automapactive || automapoverlay))
+  if ((!automapactive || automapoverlay)
+      && (screenblocks == CRISPY_HUD+2 || screenblocks == CRISPY_HUD+3))
     { delta = WIDESCREENDELTA; }
 
   // ready weapon ammo

@@ -135,7 +135,7 @@ static boolean P_NuggetCheckMeleeHeight(mobj_t *actor)
 {
   const mobj_t *pl = actor->target;
 
-  if (!over_under || !casual_play)
+  if (!casual_play || !over_under)
     { return true; }
   else if (pl->z > actor->z + actor->height
            || actor->z > pl->z + pl->height)
@@ -1308,11 +1308,11 @@ void A_CPosAttack(mobj_t *actor)
   if (!actor->target)
     return;
 
-  if (nugget_comp[comp_cgunnersfx]) { // [Nugget]
+  if (nugget_comp[comp_cgunnersfx]) // [Nugget]
     S_StartSound(actor, W_CheckNumForName("dschgun") >= 0
                         ? sfx_chgun : sfx_pistol);
-  }
-  else { S_StartSound (actor, sfx_shotgn); }
+  else
+    { S_StartSound (actor, sfx_shotgn); }
 
   A_FaceTarget(actor);
   bangle = actor->angle;
@@ -1435,7 +1435,7 @@ void A_BruisAttack(mobj_t *actor)
     return;
 
   // [Nugget] Fix A_BruisAttack not calling A_FaceTarget
-  if (!(nugget_comp[comp_bruistarget]) && casual_play)
+  if (casual_play && !(nugget_comp[comp_bruistarget]))
     { A_FaceTarget(actor); }
 
   if (P_CheckMeleeRange(actor))
@@ -2512,7 +2512,7 @@ void A_BrainScream(mobj_t *mo)
   int x;
   int x1, x2; // [Nugget] Fix lopsided IoS death explosions
 
-  if (nugget_comp[comp_iosdeath] && casual_play)
+  if (casual_play && nugget_comp[comp_iosdeath])
     { x1 = x2 = 280; }
   else
     { x1 = 196; x2 = 320; }
