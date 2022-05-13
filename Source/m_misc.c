@@ -431,7 +431,7 @@ default_t defaults[] = {
   {
     "viewheight_value",
     (config_t *) &viewheight_value, NULL,
-    {41}, {8,56}, number, ss_gen, wad_yes,
+    {41}, {32,56}, number, ss_gen, wad_yes,
     "Player view height"
   },
 

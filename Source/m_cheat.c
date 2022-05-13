@@ -516,10 +516,7 @@ static void cheat_turbo(buf) char buf[3];
   extern int sidemove[2];
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-  {
-    dprintf("Turbo: Digits only.");
-    return;
-  }
+    { dprintf("Turbo: Digits only.");  return; }
 
   scale = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
@@ -545,7 +542,7 @@ static void cheat_spawne(buf) char buf[3];
   int type;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-    { dprintf("Spawn: Digits only."); return; }
+    { dprintf("Spawn: Digits only.");  return; }
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
@@ -553,7 +550,7 @@ static void cheat_spawne(buf) char buf[3];
   // Worth noting that this approach isn't quite compatible with
   // DSDHacked's capabilities.
   if (type < 0 || type > MT_BIBLE)
-    { dprintf("Invalid mobjtype %i", type); return; }
+    { dprintf("Invalid mobjtype %i", type);  return; }
 
   // Valid mobjtype, so pass the value to spawneetype
   spawneetype = type;
@@ -581,12 +578,12 @@ static void cheat_spawnf(buf) char buf[3];
   mobj_t *spawnee;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-    { dprintf("Spawn: Digits only."); return; }
+    { dprintf("Spawn: Digits only.");  return; }
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
   if (type < 0 || type > MT_BIBLE)
-    { dprintf("Invalid mobjtype %i", type); return; }
+    { dprintf("Invalid mobjtype %i", type);  return; }
 
   spawneetype = type;
   spawneefriend = true;
