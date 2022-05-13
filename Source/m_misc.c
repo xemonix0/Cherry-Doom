@@ -468,7 +468,7 @@ default_t defaults[] = {
   {
     "a11y_extra_lighting",
     (config_t *) &a11y_extra_lighting, NULL,
-    {0}, {0,8}, number, ss_gen, wad_no,
+    {0}, {-16,16}, number, ss_gen, wad_no,
     "Increase to make maps brighter"
   },
 
