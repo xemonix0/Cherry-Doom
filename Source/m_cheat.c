@@ -83,10 +83,11 @@ static void cheat_resurrect();
 static void cheat_fly();
 static void cheat_turbo();
 static int spawneetype = -1; static boolean spawneefriend; // Used for 'SPAWNR'
-// Spawn a mobj:            Enemy           Friend          Repeat the last
+// Spawn a mobj:            Enemy           Friend          Repeat last spawn
 static void cheat_spawn(),  cheat_spawne(), cheat_spawnf(), cheat_spawnr();
 static void cheat_scanner();    // Give info on the current target
 static void cheat_mdk();        // Inspired by ZDoom's console command
+static void cheat_saitama();    // MDK Fist
 boolean cheese;
 static void cheat_cheese();     // cheese :)
 
@@ -278,7 +279,7 @@ struct cheat_s cheat[] = {
 #endif
 
 // [FG] FPS counter widget
-// [Nugget] Just use 'fps'
+// [Nugget] Change to just "fps"
   {"fps",    NULL,                always,
    cheat_showfps},
 
@@ -327,7 +328,7 @@ struct cheat_s cheat[] = {
    cheat_spawnf, -3}, // Spawn a friendly mobj
 
   {"spawnr", NULL, not_net|not_demo,
-   cheat_spawnr}, // Repeat the last spawn
+   cheat_spawnr}, // Repeat last spawn
 
   {"summon", NULL, not_net|not_demo,
    cheat_spawn}, // 'SPAWN' alternative
@@ -342,13 +343,19 @@ struct cheat_s cheat[] = {
    cheat_spawnr}, // 'SPAWNR' alternative
 
   {"scanner", NULL, not_net|not_demo,
-   cheat_scanner}, // Give info on the current target
+   cheat_scanner}, // Give info on the current linetarget
 
   {"analyze", NULL, not_net|not_demo,
    cheat_scanner}, // 'SCANNER' alternative
 
+  {"linetarget", NULL, not_net|not_demo,
+   cheat_scanner}, // 'SCANNER' alternative
+
   {"mdk", NULL, not_net|not_demo,
    cheat_mdk},
+
+  {"saitama", NULL, not_net|not_demo,
+   cheat_saitama}, // MDK Fist
 
   {"cheese", NULL, not_net|not_demo,
    cheat_cheese}, // cheese :)
@@ -533,7 +540,7 @@ static void cheat_turbo(buf) char buf[3];
 }
 
 // [Nugget]
-static void cheat_spawn() { plyr->message = "Enemy, Friend or Repeat?"; }
+static void cheat_spawn() { plyr->message = "Spawn: Enemy, Friend or Repeat Last?"; }
 
 // [Nugget] Spawn a hostile mobj
 static void cheat_spawne(buf) char buf[3];
@@ -550,7 +557,7 @@ static void cheat_spawne(buf) char buf[3];
   // Worth noting that this approach isn't quite compatible with
   // DSDHacked's capabilities.
   if (type < 0 || type > MT_BIBLE)
-    { dprintf("Invalid mobjtype %i", type);  return; }
+    { dprintf("Spawn: Invalid mobjtype %i", type);  return; }
 
   // Valid mobjtype, so pass the value to spawneetype
   spawneetype = type;
@@ -583,7 +590,7 @@ static void cheat_spawnf(buf) char buf[3];
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
   if (type < 0 || type > MT_BIBLE)
-    { dprintf("Invalid mobjtype %i", type);  return; }
+    { dprintf("Spawn: Invalid mobjtype %i", type);  return; }
 
   spawneetype = type;
   spawneefriend = true;
@@ -643,6 +650,14 @@ static void cheat_mdk() {
   P_LineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, slope, 1000000);
 
   plyr->message = "MDK!";
+}
+
+// [Nugget] MDK Fist
+static void cheat_saitama() {
+  plyr->cheats ^= CF_SAITAMA;
+  plyr->message = plyr->cheats & CF_SAITAMA
+                  ? "MDK Fist ON"
+                  : "MDK Fist OFF";
 }
 
 // [Nugget] cheese :)

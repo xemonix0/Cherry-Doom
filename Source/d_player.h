@@ -76,11 +76,12 @@ typedef enum
   // BUDDHA cheat
   CF_BUDDHA           = 8,
   // [Nugget] All of the following:
-  CF_INFAMMO          = 16, // Infinite ammo
-  CF_FASTWEAPS        = 32,
-  CF_NOTARGET         = 64, // [crispy] monsters don't target
+  CF_INFAMMO          = 16,   // Infinite ammo
+  CF_FASTWEAPS        = 32,   // Fast Weapons
+  CF_NOTARGET         = 64,   // [crispy] monsters don't target
   CF_FLY              = 128,
-  CF_SCANNER          = 256 // Give info on the current target
+  CF_SCANNER          = 256,  // Give info on the current target
+  CF_SAITAMA          = 512   // MDK Fist
 
 } cheat_t;
 

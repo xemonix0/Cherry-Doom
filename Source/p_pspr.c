@@ -625,6 +625,15 @@ void A_Punch(player_t *player, pspdef_t *psp)
   int t, slope, damage = (P_Random(pr_punch)%10+1)<<1;
   int range;
 
+  // [Nugget] MDK Fist, basically an absurdly high damage sniper
+  if (player->cheats & CF_SAITAMA)
+  {
+    slope = P_AimLineAttack(player->mo, player->mo->angle, MISSILERANGE, 0);
+    P_LineAttack(player->mo, player->mo->angle, MISSILERANGE,
+                 slope, 1000000);
+    return;
+  }
+
   if (player->powers[pw_strength])
     damage *= 10;
 
