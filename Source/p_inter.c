@@ -703,6 +703,8 @@ void P_NuggetGib(mobj_t *mo)
                                  && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
+    splat->flags = MF_NOBLOCKMAP; // Wipe the rest of flags, if any
+
     // Fuzzy blood if applicable
     if (nugget_comp[comp_fuzzyblood] && mo->flags & MF_SHADOW)
       { splat->flags |= MF_SHADOW; }
