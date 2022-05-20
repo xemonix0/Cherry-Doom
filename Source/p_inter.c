@@ -703,7 +703,8 @@ void P_NuggetGib(mobj_t *mo)
                                  && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
-    splat->flags = MF_NOBLOCKMAP; // Wipe the rest of flags, if any
+    // Set these flags, wipe the default ones
+    splat->flags = (MF_NOBLOCKMAP|MF_DROPOFF);
 
     // Fuzzy blood if applicable
     if (nugget_comp[comp_fuzzyblood] && mo->flags & MF_SHADOW)
@@ -718,7 +719,6 @@ void P_NuggetGib(mobj_t *mo)
     splat->momx = (Woof_Random() - Woof_Random())<<12;
     splat->momy = (Woof_Random() - Woof_Random())<<12;
     splat->momz = Woof_Random()<<12;
-    splat->flags |= MF_DROPOFF;
 
     // Physics differ between versions (complevels),
     // so this is done to get rather decent behavior in Vanilla
