@@ -265,7 +265,8 @@ static patch_t *faceback[MAXPLAYERS]; // killough 3/7/98: make array
 static patch_t *armsbg;
 
 // weapon ownership patches
-static patch_t *arms[6][2];
+// [Nugget] Increase the range for Alternative Arms display
+static patch_t *arms[8][2];
 
 // ready-weapon widget
 static st_number_t w_ready;
@@ -981,7 +982,8 @@ void ST_loadGraphics(void)
   armsbg = (patch_t *) W_CacheLumpName("STARMS", PU_STATIC);
 
   // arms ownership widgets
-  for (i=0;i<6;i++)
+  // [Nugget] Increase the range for Alternative Arms display
+  for (i=0;i<8;i++)
     {
       sprintf(namebuf, "STGNUM%d", i+2);
 
@@ -1146,14 +1148,16 @@ void ST_createWidgets(void)
 
   // weapons owned
   for(i=0;i<6;i++) {
+    // [Nugget] Alternative Arms display (Saw/SSG instead of Pistol)
+    int alt = alt_arms ? ((i==5 && gamemode==commercial) ? 2 : 1) : 0;
     STlib_initMultIcon(&w_arms[i],
                        ST_ARMSX+(i%3)*ST_ARMSXSPACE - delta,
                        ST_ARMSY+(i/3)*ST_ARMSYSPACE,
-                       arms[i], (int *) &plyr->weaponowned[i+1],
+                       arms[i+alt], (int *) &plyr->weaponowned[i+1+alt],
                        &st_armson);
   }
   // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
-  w_arms[1].inum = &st_shotguns;
+  if (!alt_arms) { w_arms[1].inum = &st_shotguns; }
 
   // frags sum
   STlib_initNum(&w_frags,

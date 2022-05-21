@@ -3622,11 +3622,11 @@ setup_menu_t weap_settings1[] =  // Weapons Settings screen
     {"9th CHOICE WEAPON",S_WEAP,m_null,WP_X,WP_Y+weap_pref9*8, {"weapon_choice_9"}},
 
     {"Enable Fist/Chainsaw\n& SG/SSG toggle", S_YESNO, m_null, WP_X,
-   WP_Y+ weap_toggle*8, {"doom_weapon_toggles"}},
+     WP_Y+ weap_toggle*8, {"doom_weapon_toggles"}},
 
   {"Cosmetic",S_SKIP|S_TITLE,m_null,WP_X,WP_Y+weap_consmetic*8},
 
-  // [FG] centered or bobbing weapon sprite
+    // [FG] centered or bobbing weapon sprite
     {"Weapon Attack Alignment",S_CHOICE,m_null,WP_X, WP_Y+weap_center*8, {"center_weapon"}, 0, NULL, weapon_attack_alignment_strings},
 
   // Button for resetting to defaults
@@ -3706,6 +3706,7 @@ enum {
   stat1_rednum,
   stat1_graypcnt,
   stat1_keys,
+  stat1_arms,
   stat1_stub2,
   stat1_title2,
   stat1_stats,
@@ -3721,13 +3722,17 @@ enum {
   stat1_smooth,
 };
 
+// [Nugget]
+extern void ST_createWidgets();
+
 setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
 {
   {""                     ,S_SKIP,m_null,ST_X,ST_Y+stat1_stub1*8 }, // Stub
   {"STATUS BAR"           ,S_SKIP|S_TITLE,m_null,ST_X,ST_Y+stat1_title1*8 },
-    {"USE RED NUMBERS"      ,S_YESNO, m_null,ST_X,ST_Y+stat1_rednum*8, {"sts_always_red"}},
-    {"GRAY %"               ,S_YESNO, m_null,ST_X,ST_Y+stat1_graypcnt*8, {"sts_pct_always_gray"}},
-    {"SINGLE KEY DISPLAY"   ,S_YESNO, m_null,ST_X,ST_Y+stat1_keys*8, {"sts_traditional_keys"}},
+    {"USE RED NUMBERS"          ,S_YESNO, m_null,ST_X,ST_Y+stat1_rednum*8, {"sts_always_red"}},
+    {"GRAY %"                   ,S_YESNO, m_null,ST_X,ST_Y+stat1_graypcnt*8, {"sts_pct_always_gray"}},
+    {"SINGLE KEY DISPLAY"       ,S_YESNO, m_null,ST_X,ST_Y+stat1_keys*8, {"sts_traditional_keys"}},
+    {"Alternative Arms Display" ,S_YESNO, m_null,ST_X,ST_Y+stat1_arms*8, {"alt_arms"}, 0, ST_createWidgets},
   {""                     ,S_SKIP,m_null,ST_X,ST_Y+stat1_stub2*8 }, // Stub
   {"HEADS-UP DISPLAY"     ,S_SKIP|S_TITLE,m_null,ST_X,ST_Y+stat1_title2*8},
     // [Nugget] Correct text

@@ -515,6 +515,13 @@ default_t defaults[] = {
   },
 
   {
+    "alt_arms",
+    (config_t *) &alt_arms, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to enable alternative Arms widget display"
+  },
+
+  {
     "smooth_counts",
     (config_t *) &smooth_counts, NULL,
     {0}, {0,1}, number, ss_stat, wad_no,
