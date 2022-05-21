@@ -704,7 +704,7 @@ void P_NuggetGib(mobj_t *mo)
                                 ? MT_PUFF : MT_BLOOD);
 
     // Set these flags, wipe the default ones
-    splat->flags = (MF_NOBLOCKMAP|MF_DROPOFF);
+    splat->flags = (MF_NOBLOCKMAP|MF_DROPOFF|MF_TELEPORT);
 
     // Fuzzy blood if applicable
     if (nugget_comp[comp_fuzzyblood] && mo->flags & MF_SHADOW)

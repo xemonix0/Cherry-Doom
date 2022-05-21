@@ -555,7 +555,7 @@ static void cheat_spawne(buf) char buf[3];
 
   // Don't spawn things beyond the Music Source dummy (inclusive);
   // Worth noting that this approach isn't quite compatible with
-  // DSDHacked's capabilities.
+  // DEHEXTRA and DSDHacked's capabilities.
   if (type < 0 || type > MT_BIBLE)
     { dprintf("Spawn: Invalid mobjtype %i", type);  return; }
 
