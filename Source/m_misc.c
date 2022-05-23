@@ -508,6 +508,13 @@ default_t defaults[] = {
   },
 
   {
+    "bobbing_style",
+    (config_t *) &bobbing_style, NULL,
+    {0}, {0,6}, number, ss_weap, wad_yes,
+    "Weapon Bobbing Style"
+  },
+
+  {
     "no_hor_autoaim",
     (config_t *) &no_hor_autoaim, NULL,
     {0}, {0,1}, number, ss_weap, wad_no,

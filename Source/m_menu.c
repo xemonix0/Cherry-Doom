@@ -2911,6 +2911,10 @@ static const char *s_clipping_dists[] = {
   "1200", "2400", NULL
 };
 
+static const char *bobbing_styles[] = {
+  "Vanilla", "Inverse Vanilla", "Alpha", "Inverse Alpha", "Smooth", "Inverse Smooth", "Quake", NULL
+};
+
 setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
 
   {"Nugget Settings"     ,S_SKIP|S_TITLE, m_null, G_X, G_Y - 12},
@@ -2927,6 +2931,7 @@ setup_menu_t gen_settings3[] = { // [Nugget] General Settings screen 3
     {"Sound Clipping Distance",         S_CHOICE, m_null, G_X, G_Y + gen3_sclipdist*8,      {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
     {"One-Key Quick Save/Load",         S_YESNO,  m_null, G_X, G_Y + gen3_quicksaveload*8,  {"one_key_saveload"}},
     {"Quick \"Quit Game\"",             S_YESNO,  m_null, G_X, G_Y + gen3_quickexit*8,      {"quick_quitgame"}},
+    {"Bobbing Style",                   S_CHOICE, m_null, G_X, G_Y + (gen3_quickexit+1)*8,  {"bobbing_style"}, 0, NULL, bobbing_styles},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings2}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {gen_settings4}},

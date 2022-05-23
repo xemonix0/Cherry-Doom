@@ -146,6 +146,7 @@ int a11y_palette_changes;
 int a11y_invul_colormap;
 // Weapons
 int bobbing_percentage;
+int bobbing_style;
 int no_hor_autoaim;
 // Status Bar/HUD
 int alt_arms;

@@ -406,6 +406,7 @@ extern int a11y_palette_changes;
 extern int a11y_invul_colormap;
 // Weapons
 extern int bobbing_percentage;
+extern int bobbing_style;
 extern int no_hor_autoaim;
 // Status Bar/HUD
 extern int alt_arms;
@@ -436,6 +437,16 @@ enum {
 };
 
 extern int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
+
+enum { // Bobbing Styles
+  bob_Vanilla,
+  bob_InvVanilla,
+  bob_Alpha,
+  bob_InvAlpha,
+  bob_Smooth,
+  bob_InvSmooth,
+  bob_Quake
+};
 
 #endif
 
