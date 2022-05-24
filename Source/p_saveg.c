@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -949,6 +949,12 @@ static void saveg_read_player_t(player_t *str)
     {
       str->oldviewz = 0;
     }
+
+    // [Nugget]
+    // int jumpTics;
+    str->jumpTics = saveg_read32();
+    // fixed_t crouchOffset;
+    str->crouchOffset = saveg_read32();
 }
 
 static void saveg_write_player_t(player_t *str)
@@ -1089,6 +1095,12 @@ static void saveg_write_player_t(player_t *str)
 
     // [Woof!]: angle_t oldviewz;
     saveg_write32(str->oldviewz);
+
+    // [Nugget]
+    // int jumpTics;
+    saveg_write32(str->jumpTics);
+    // fixed_t crouchOffset;
+    saveg_write32(str->crouchOffset);
 }
 
 
@@ -1961,8 +1973,8 @@ void P_ArchiveWorld (void)
 
   // killough 3/22/98: fix bug caused by hoisting save_p too early
   // killough 10/98: adjust size for changes below
-  size_t size = 
-    (sizeof(short)*5 + sizeof sec->floorheight + sizeof sec->ceilingheight) 
+  size_t size =
+    (sizeof(short)*5 + sizeof sec->floorheight + sizeof sec->ceilingheight)
     * numsectors + sizeof(short)*3*numlines + 4;
 
   for (i=0; i<numlines; i++)
@@ -2183,14 +2195,14 @@ void P_ArchiveThinkers (void)
             // or player corpses waiting for deferred removal will be saved as
             // raw pointer values instead of twizzled numbers, causing a crash
             // on savegame load!
-            target = target->thinker.function == P_MobjThinker ? 
+            target = target->thinker.function == P_MobjThinker ?
                         (mobj_t *)target->thinker.prev : NULL;
 
         }
         saveg_writep(target);
      }
   }
-  
+
   // killough 2/14/98: restore prev pointers
   {
     thinker_t *prev = &thinkercap;

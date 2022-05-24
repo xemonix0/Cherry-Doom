@@ -420,6 +420,16 @@ void P_DeathThink (player_t* player)
   if (player->viewheight < 6*FRACUNIT)
     player->viewheight = 6*FRACUNIT;
 
+  // [Nugget] Gradually decrease the crouching offset;
+  // should give a nice arching POV effect, appropriate for the context
+  if (player->crouchOffset) {
+    int step = player->crouchOffset/4;
+    if (step < FRACUNIT) { step = FRACUNIT; }
+
+    player->crouchOffset -= step;
+    if (player->crouchOffset < 0) { player->crouchOffset = 0; }
+  }
+
   player->deltaviewheight = 0;
   onground = (player->mo->z <= player->mo->floorz);
   P_CalcHeight (player);
