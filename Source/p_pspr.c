@@ -117,6 +117,43 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
   } while (!psp->tics);     // an initial state of 0 could cycle through
 }
 
+// [Nugget] Bob weapon based on selected style
+void P_NuggetBobbing(player_t* player, fixed_t* sx, fixed_t* sy)
+{
+  int angle = (128*leveltime) & FINEMASK;
+  // Correct first person sprite centering
+  *sx = /*FRACUNIT +*/ FixedMul(player->bob, finecosine[angle]); // Default, differs in a few styles
+  *sy = WEAPONTOP; // Used for all styles, their specific values are added to this one right after
+
+  // Bobbing Styles, ported from Zandronum
+  switch (bobbing_style) {
+    case bob_Vanilla:
+      *sy += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+    case bob_InvVanilla:
+      *sy += player->bob - FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+    case bob_Alpha:
+      *sx = FixedMul(player->bob, finesine[angle]);
+      *sy += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+    case bob_InvAlpha:
+      *sx = FixedMul(player->bob, finesine[angle]);
+      *sy += player->bob - FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+    case bob_Smooth:
+      *sy += (player->bob - FixedMul(player->bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
+      break;
+    case bob_InvSmooth:
+      *sy += (FixedMul(player->bob, finecosine[angle*2 & (FINEANGLES-1)]) + player->bob) / 2;
+      break;
+    case bob_Quake:
+      *sx = 0;
+      *sy += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+  }
+}
+
 //
 // P_BringUpWeapon
 // Starts bringing the pending weapon up
@@ -473,48 +510,14 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
     player->attackdown = false;
 
   // bob the weapon based on movement speed
-  if (!casual_play)
-  {
+  if (!casual_play) {
     int angle = (128*leveltime) & FINEMASK;
     // [Nugget] Fix first person sprite centering
     psp->sx = /*FRACUNIT +*/ FixedMul(player->bob, finecosine[angle]);
     angle &= FINEANGLES/2-1;
     psp->sy = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
   }
-  // [Nugget] Bobbing Styles, ported from Zandronum
-  else {
-    int angle = (128*leveltime) & FINEMASK;
-    // [Nugget] Fix first person sprite centering
-    psp->sx = /*FRACUNIT +*/ FixedMul(player->bob, finecosine[angle]); // Default, differs only in Alpha styles
-    psp->sy = WEAPONTOP; // Used for all styles, their specific values are added to this one right after
-
-    switch (bobbing_style) {
-      case bob_Vanilla:
-        psp->sy += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
-        break;
-      case bob_InvVanilla:
-        psp->sy += player->bob - FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
-        break;
-      case bob_Alpha:
-        psp->sx = FixedMul(player->bob, finesine[angle]);
-        psp->sy += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
-        break;
-      case bob_InvAlpha:
-        psp->sx = FixedMul(player->bob, finesine[angle]);
-        psp->sy += player->bob - FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
-        break;
-      case bob_Smooth:
-        psp->sy += (player->bob - FixedMul(player->bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
-        break;
-      case bob_InvSmooth:
-        psp->sy += (FixedMul(player->bob, finecosine[angle*2 & (FINEANGLES-1)]) + player->bob) / 2;
-        break;
-      case bob_Quake:
-        psp->sx = 0;
-        psp->sy += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
-        break;
-    }
-  }
+  else { P_NuggetBobbing(player, &psp->sx, &psp->sy); }
 }
 
 //
@@ -1110,43 +1113,9 @@ void P_MovePsprites(player_t *player)
     }
     // [FG] not attacking means idle
     else if (!player->attackdown || center_weapon == 2)
-    {
-      int angle = (128*leveltime) & FINEMASK;
-      // [Nugget] Fix first person sprite centering
-      psp->sx2 = /*FRACUNIT +*/ FixedMul(player->bob, finecosine[angle]); // Default, differs in a few styles
-      psp->sy2 = WEAPONTOP; // Used for all styles, their specific values are added to this one right after
-
-      // [Nugget] Bobbing Styles, ported from Zandronum
-      switch (bobbing_style) {
-        case bob_Vanilla:
-          psp->sy2 += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
-          break;
-        case bob_InvVanilla:
-          psp->sy2 += player->bob - FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
-          break;
-        case bob_Alpha:
-          psp->sx2 = FixedMul(player->bob, finesine[angle]);
-          psp->sy2 += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
-          break;
-        case bob_InvAlpha:
-          psp->sx2 = FixedMul(player->bob, finesine[angle]);
-          psp->sy2 += player->bob - FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
-          break;
-        case bob_Smooth:
-          psp->sy2 += (player->bob - FixedMul(player->bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
-          break;
-        case bob_InvSmooth:
-          psp->sy2 += (FixedMul(player->bob, finecosine[angle*2 & (FINEANGLES-1)]) + player->bob) / 2;
-          break;
-        case bob_Quake:
-          psp->sx2 = 0;
-          psp->sy2 += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
-          break;
-      }
-    }
+      { P_NuggetBobbing(player, &psp->sx2, &psp->sy2); }
     // [FG] center the weapon sprite horizontally and push up vertically
-    else if (center_weapon == 1)
-    {
+    else if (center_weapon == 1) {
       psp->sx2 = /*FRACUNIT*/ 0; // [Nugget] Fix first person sprite centering
       psp->sy2 = WEAPONTOP;
     }
