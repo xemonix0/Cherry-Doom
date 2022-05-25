@@ -1519,6 +1519,9 @@ void M_QuickSaveResponse(int ch)
     }
 }
 
+// [Nugget] Restore this temp buffer
+char tempstring[84]; // [FG] increase
+
 void M_QuickSave(void)
 {
   if (!usergame && (!demoplayback || netgame))  // killough 10/98
@@ -1544,8 +1547,10 @@ void M_QuickSave(void)
     M_DoSave(quickSaveSlot);
     S_StartSound(NULL,sfx_swtchx);
   }
-  else
-    { M_QuickSaveResponse('y'); }
+  else { // [Nugget] Restore quick save/load prompts
+    sprintf(tempstring,QSPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
+    M_StartMessage(tempstring,M_QuickSaveResponse,true);
+  }
 }
 
 /////////////////////////////
@@ -1593,8 +1598,10 @@ void M_QuickLoad(void)
     M_LoadSelect(quickSaveSlot);
     S_StartSound(NULL,sfx_swtchx);
   }
-  else
-    { M_QuickLoadResponse('y'); }
+  else { // [Nugget] Restore quick save/load prompts
+    sprintf(tempstring,QLPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
+    M_StartMessage(tempstring,M_QuickLoadResponse,true);
+  }
 }
 
 /////////////////////////////
