@@ -6659,10 +6659,14 @@ void M_ResetSetupMenu(void)
   {
     FLAG_SET_BOOM(enem_settings1[i].m_flags, S_DISABLE);
   }
-  if (!casual_play)
-    { enem_settings1[enem_extra_gibbing].m_flags |= S_DISABLE; }
-  else
-    { enem_settings1[enem_extra_gibbing].m_flags &= ~S_DISABLE; }
+  if (!casual_play) {
+    enem_settings1[enem_extra_gibbing].m_flags |= S_DISABLE;
+    enem_settings1[enem_bloodier_gibbing].m_flags |= S_DISABLE;
+  }
+  else {
+    enem_settings1[enem_extra_gibbing].m_flags &= ~S_DISABLE;
+    enem_settings1[enem_bloodier_gibbing].m_flags &= ~S_DISABLE;
+  }
   if (comp[comp_vile])
     { enem_settings1[enem_ghost].m_flags &= ~S_DISABLE; }
   else
