@@ -43,8 +43,10 @@ set(PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
 set(PROJECT_TARNAME "nugget-doom")
 if(MSVC_VERSION LESS 1400)
     set(WOOF_ICON "woof8.ico")
+    set(SETUP_ICON "setup8.ico")
 else()
     set(WOOF_ICON "woof.ico")
+    set(SETUP_ICON "setup.ico")
 endif()
 set(PROJECT_VERSION_RC "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0") # ${PROJECT_VERSION_TWEAK}
 
@@ -61,6 +63,8 @@ option("${PROJECT_NAME}_STRICT" "Prefer original MBF code paths over demo compat
 check_library_exists(m pow "" m_FOUND)
 check_include_file("dirent.h" HAVE_DIRENT_H)
 check_symbol_exists(strsignal "string.h" HAVE_STRSIGNAL)
+check_symbol_exists(strcasecmp "strings.h" HAVE_DECL_STRCASECMP)
+check_symbol_exists(strncasecmp "strings.h" HAVE_DECL_STRNCASECMP)
 
 # Library requirements.
 #
@@ -72,22 +76,22 @@ if(NOT SDL2_DIR)
         message(STATUS "Downloading SDL2 Development Library...")
         if(MSVC)
             file(DOWNLOAD
-                "https://www.libsdl.org/release/SDL2-devel-2.0.20-VC.zip"
+                "https://www.libsdl.org/release/SDL2-devel-2.0.22-VC.zip"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-VC.zip"
-                EXPECTED_HASH SHA256=5b1512ca6c9d2427bd2147da01e5e954241f8231df12f54a7074dccde416df18)
+                EXPECTED_HASH SHA256=32adc96d8b25e5671189f1f38a4fc7deb105fbb1b3ed78ffcb23f5b8f36b3922)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-VC.zip"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
         else()
             file(DOWNLOAD
-                "https://www.libsdl.org/release/SDL2-devel-2.0.20-mingw.tar.gz"
+                "https://www.libsdl.org/release/SDL2-devel-2.0.22-mingw.tar.gz"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-mingw.tar.gz"
-                EXPECTED_HASH SHA256=38094d82a857d6c62352e5c5cdec74948c5b4d25c59cbd298d6d233568976bd1)
+                EXPECTED_HASH SHA256=0e91e35973366aa1e6f81ee368924d9b4f93f9da4d2f2a89ec80b06eadcf23d1)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-mingw.tar.gz"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
         endif()
-        set(SDL2_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2-2.0.20")
+        set(SDL2_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2-2.0.22")
     endif()
 endif()
 find_package(SDL2 2.0.7)
@@ -147,23 +151,16 @@ find_package(SDL2_net)
 # FluidSynth backend
 find_package(FluidSynth)
 
-# Python 3.
-#
-# Optional, not needed for most things.  If you're missing it you need to
-# install it yourself.
-find_package(Python3 COMPONENTS Interpreter)
-
 configure_file(config.h.in config.h)
 
-# Files that should be installed with the install target.
-configure_file(WoofInstall.cmake.in WoofInstall.cmake ESCAPE_QUOTES @ONLY)
-install(SCRIPT "${PROJECT_BINARY_DIR}/WoofInstall.cmake")
 if(WIN32)
-    install(FILES "${PROJECT_BINARY_DIR}/COPYING.txt" DESTINATION .)
-    install(FILES "${PROJECT_BINARY_DIR}/README.txt" DESTINATION .)
+    install(FILES COPYING DESTINATION .)
+    install(FILES README.md DESTINATION .)
     install(FILES betagrph.wad DESTINATION .)
     install(FILES betalevl.wad DESTINATION .)
     install(FILES watermap.wad DESTINATION .)
+    install(DIRECTORY docs/ DESTINATION docs)
+    install(DIRECTORY examples/ DESTINATION docs/examples)
     install(DIRECTORY autoload/ DESTINATION autoload)
     if(FluidSynth_FOUND)
         install(DIRECTORY soundfonts/ DESTINATION soundfonts)
@@ -174,6 +171,8 @@ else()
     install(FILES betagrph.wad DESTINATION "share/${PROJECT_TARNAME}")
     install(FILES betalevl.wad DESTINATION "share/${PROJECT_TARNAME}")
     install(FILES watermap.wad DESTINATION "share/${PROJECT_TARNAME}")
+    install(DIRECTORY docs/ DESTINATION "share/doc/${PROJECT_TARNAME}")
+    install(DIRECTORY examples/ DESTINATION "share/doc/${PROJECT_TARNAME}/examples")
     install(DIRECTORY autoload/ DESTINATION "share/${PROJECT_TARNAME}/autoload")
     if(FluidSynth_FOUND)
         install(DIRECTORY soundfonts/ DESTINATION "share/${PROJECT_TARNAME}/soundfonts")
@@ -193,9 +192,8 @@ include(CPack)
 
 # Where to find other CMakeLists.txt files.
 add_subdirectory(data)
-add_subdirectory(docs)
-add_subdirectory(examples)
 add_subdirectory(opl)
 add_subdirectory(textscreen)
-add_subdirectory(Source)
+add_subdirectory(src)
 add_subdirectory(toolsrc)
+add_subdirectory(setup)

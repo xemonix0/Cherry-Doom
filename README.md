@@ -92,7 +92,7 @@ Once installed, compilation should be as simple as:
  make
 ```
 
-After successful compilation the resulting binary can be found in the `Source/` directory.
+After successful compilation the resulting binary can be found in the `src/` directory.
 
 ### Windows
 
@@ -123,7 +123,7 @@ Please report any bugs, glitches or crashes that you encounter to the GitHub [Is
 
 Help was provided by _kraflab_ (responsible for [dsda-doom](https://github.com/kraflab/dsda-doom)), _melak47_, _atsb_ (a.k.a. _Gibbon_) and _Fabian Greffrath_ himself.
 
-## Legalese
+# Legalese
 
 Files: `*`
 Copyright:
@@ -136,23 +136,23 @@ Copyright:
  © 2017 Christoph Oelckers;
  © 2019 Fernando Carmona Varo;
  © 2019 Jonathan Dowland;
- © 2020-2021 Fabian Greffrath;
+ © 2020-2022 Fabian Greffrath;
  © 2020 Alex Mayfield;
- © 2020-2021 Roman Fomin.
+ © 2020-2022 Roman Fomin.
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `Source/beta.h`
+Files: `src/beta.h`
 Copyright: © 2001-2019 Contributors to the Freedoom project.
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `Source/dogs.h`
+Files: `src/dogs.h`
 Copyright:
  © 2017 Nash Muhandes;
  © apolloaiello;
  © TobiasKosmos.
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
-Files: `Source/u_scanner.*`
+Files: `src/u_scanner.*`
 Copyright:
  © 2010 Braden "Blzut3" Obrzut;
  © 2019 Fernando Carmona Varo.
@@ -166,12 +166,13 @@ Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_mixer.cmake, cmake/FindSDL2_net.cma
 Copyright: © 2018 Alex Mayfield.
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `data/woof.ico,
- data/woof.png,
- data/woof8.ico,
- Source/icon.c`
+Files: `data/woof.ico, data/woof.png, data/woof8.ico, src/icon.c`
 Copyright: © 2022 Korp.
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+Files: `data/setup.ico, data/woof-setup.png, data/setup8.ico, setup/setup_icon.c, src/thermo.h`
+Copyright: © 2020-2022 Julia Nechaevskaya.
+License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
 Files: `miniz/*`
 Copyright:
