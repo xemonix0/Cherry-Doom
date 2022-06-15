@@ -1031,7 +1031,10 @@ static void HU_UpdateCrosshair(void)
   crosshair.y = (screenblocks <= 10) ? (ORIGHEIGHT-ST_HEIGHT)/2 : ORIGHEIGHT/2;
 
   // [Nugget] Check for linetarget
-  if ((hud_crosshair_health == 2 || hud_crosshair_target) && !strictmode)
+  if (freeaim == freeaim_direct && linetarget)
+    { linetarget = NULL; }
+  if ((hud_crosshair_health == 2 || hud_crosshair_target)
+      && (freeaim != freeaim_direct) && !strictmode)
   {
     angle_t an = plr->mo->angle;
     const ammotype_t ammo = weaponinfo[plr->readyweapon].ammo;
@@ -1054,7 +1057,7 @@ static void HU_UpdateCrosshair(void)
 
   // [Nugget] Begin checking, in order of priority
 
-  if (STRICTMODE(hud_crosshair_health) == 2)
+  if ((hud_crosshair_health == 2) && (freeaim != freeaim_direct) && !strictmode)
   { // [Nugget] Set the crosshair color based on target health
     if (linetarget
         && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2))
@@ -1072,12 +1075,14 @@ static void HU_UpdateCrosshair(void)
     else // [Nugget] Make it gray if no linetarget
       { crosshair.cr = colrngs[CR_GRAY]; }
   }
-  // [Nugget] Make the crosshair highlight if aiming at target
   else if (STRICTMODE(hud_crosshair_target) && linetarget
            && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2))
-    { crosshair.cr = colrngs[hud_crosshair_target_color]; }
-  // [Nugget] Set the crosshair color based on player health
-  else if (hud_crosshair_health == 1) {
+  { // [Nugget] Make the crosshair highlight if aiming at target
+    crosshair.cr = colrngs[hud_crosshair_target_color];
+  }
+  else if (hud_crosshair_health == 1
+           || (hud_crosshair_health == 2 && freeaim == freeaim_direct))
+  { // [Nugget] Set the crosshair color based on player health
     health = plr->health;
     if (plr->powers[pw_invulnerability]
         || plr->cheats & CF_GODMODE)  { crosshair.cr = colrngs[CR_GRAY]; }

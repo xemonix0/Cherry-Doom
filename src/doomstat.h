@@ -444,9 +444,11 @@ extern int a11y_weapon_pspr;
 extern int a11y_palette_changes;
 extern int a11y_invul_colormap;
 // Weapons
+extern int no_hor_autoaim;
+extern int freeaim;
+enum { freeaim_off, freeaim_direct, freeaim_autoaim };
 extern int bobbing_percentage;
 extern int bobbing_style;
-extern int no_hor_autoaim;
 // Status Bar/HUD
 extern int alt_arms;
 extern int smooth_counts;

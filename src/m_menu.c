@@ -3780,6 +3780,12 @@ enum {           // killough 10/98: enum for y-offset info
   weap_stub1,
   weap_bfg,
   weap_autoaim,
+  weap_freeaim,
+};
+
+// [Nugget]
+static const char *freeaim_types[] = {
+  "Off", "Direct", "Autoaim", NULL
 };
 
 setup_menu_t weap_settings1[] =  // Weapons Settings screen
@@ -3796,6 +3802,7 @@ setup_menu_t weap_settings1[] =  // Weapons Settings screen
   {"",S_SKIP,m_null,M_X,M_Y+weap_stub1*M_SPC }, // Stub
     {"Pre-Beta BFG"      ,S_YESNO,m_null,M_X, M_Y+weap_bfg*M_SPC, {"classic_bfg"}}, // killough 8/8/98
     {"Disable Horizontal Autoaim",S_YESNO,m_null,M_X,M_Y+weap_autoaim*M_SPC, {"no_hor_autoaim"}},
+    {"Freeaim",S_CHOICE,m_null,M_X,M_Y+weap_freeaim*M_SPC, {"freeaim"}, 0, NULL, freeaim_types},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},

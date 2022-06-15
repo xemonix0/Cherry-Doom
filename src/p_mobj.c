@@ -1402,27 +1402,29 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   angle_t an = source->angle;
 
-  // killough 7/19/98: autoaiming was not in original beta
-  if (!beta_emulation || autoaim)
-    {
+  if (STRICTMODE(freeaim) == freeaim_direct)
+    { slope = PLAYER_SLOPE(source->player); }
+  else {
+    // killough 7/19/98: autoaiming was not in original beta
+    if (!beta_emulation || autoaim) {
       // killough 8/2/98: prefer autoaiming at enemies
       int mask = demo_version < 203 ? 0 : MF_FRIEND;
-      do
-	{
-	  slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
-	  if (!linetarget)
-      // [Nugget] Disable horizontal autoaim
-      if (!casual_play || !no_hor_autoaim)
-        slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
-	  if (!linetarget)
-      // [Nugget] Disable horizontal autoaim
-      if (!casual_play || !no_hor_autoaim)
-        slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
-	  if (!linetarget)
-	    an = source->angle, slope = 0;
-	}
-      while (mask && (mask=0, !linetarget));  // killough 8/2/98
+      do {
+        slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
+        if (!linetarget)
+          // [Nugget] Disable horizontal autoaim
+          if (!casual_play || !STRICTMODE(no_hor_autoaim))
+            slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
+        if (!linetarget)
+          // [Nugget] Disable horizontal autoaim
+          if (!casual_play || !STRICTMODE(no_hor_autoaim))
+            slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
+        if (!linetarget)
+          an = source->angle,
+          slope = (STRICTMODE(freeaim) == freeaim_autoaim) ? PLAYER_SLOPE(source->player) : 0;
+      } while (mask && (mask=0, !linetarget));  // killough 8/2/98
     }
+  }
 
   x = source->x;
   y = source->y;

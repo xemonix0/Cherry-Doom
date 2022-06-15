@@ -889,20 +889,26 @@ fixed_t bulletslope;
 
 static void P_BulletSlope(mobj_t *mo)
 {
-  angle_t an = mo->angle;    // see which target is to be aimed at
+  // [Nugget] Crispy freeaim
+  if (STRICTMODE(freeaim) == freeaim_direct)
+    { bulletslope = PLAYER_SLOPE(mo->player); }
+  else {
+    angle_t an = mo->angle;    // see which target is to be aimed at
 
-  // killough 8/2/98: make autoaiming prefer enemies
-  int mask = demo_version < 203 ? 0 : MF_FRIEND;
+    // killough 8/2/98: make autoaiming prefer enemies
+    int mask = demo_version < 203 ? 0 : MF_FRIEND;
 
-  do
-    {
+    do {
       bulletslope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
       if (!linetarget)
-	bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
+        bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
       if (!linetarget)
-	bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
-    }
-  while (mask && (mask=0, !linetarget));  // killough 8/2/98
+        bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
+      // [Nugget] Crispy freeaim
+      if (!linetarget && STRICTMODE(freeaim) == freeaim_autoaim)
+        bulletslope = PLAYER_SLOPE(mo->player);
+    } while (mask && (mask=0, !linetarget));  // killough 8/2/98
+  }
 }
 
 //

@@ -576,6 +576,20 @@ default_t defaults[] = {
   },
 
   {
+    "no_hor_autoaim",
+    (config_t *) &no_hor_autoaim, NULL,
+    {0}, {0,1}, number, ss_weap, wad_no,
+    "1 to disable horizontal projectile autoaim"
+  },
+
+  {
+    "freeaim",
+    (config_t *) &freeaim, NULL,
+    {0}, {0,2}, number, ss_weap, wad_no,
+    "Weapon freeaim (1 = Direct, 2 = Direct + Autoaim)"
+  },
+
+  {
     "bobbing_percentage",
     (config_t *) &bobbing_percentage, NULL,
     {100}, {0,100}, number, ss_weap, wad_no,
@@ -587,13 +601,6 @@ default_t defaults[] = {
     (config_t *) &bobbing_style, NULL,
     {0}, {0,6}, number, ss_weap, wad_yes,
     "Weapon Bobbing Style"
-  },
-
-  {
-    "no_hor_autoaim",
-    (config_t *) &no_hor_autoaim, NULL,
-    {0}, {0,1}, number, ss_weap, wad_no,
-    "1 to disable horizontal projectile autoaim"
   },
 
   {
