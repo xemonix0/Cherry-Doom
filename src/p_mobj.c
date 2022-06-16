@@ -1402,7 +1402,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   angle_t an = source->angle;
 
-  if (STRICTMODE(freeaim) == freeaim_direct)
+  if (STRICTMODE(freeaim) == freeaim_direct && casual_play)
     { slope = PLAYER_SLOPE(source->player); }
   else {
     // killough 7/19/98: autoaiming was not in original beta
@@ -1421,7 +1421,8 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
             slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
         if (!linetarget)
           an = source->angle,
-          slope = (STRICTMODE(freeaim) == freeaim_autoaim) ? PLAYER_SLOPE(source->player) : 0;
+          slope = (STRICTMODE(freeaim) == freeaim_autoaim && casual_play)
+                  ? PLAYER_SLOPE(source->player) : 0;
       } while (mask && (mask=0, !linetarget));  // killough 8/2/98
     }
   }

@@ -890,7 +890,7 @@ fixed_t bulletslope;
 static void P_BulletSlope(mobj_t *mo)
 {
   // [Nugget] Crispy freeaim
-  if (STRICTMODE(freeaim) == freeaim_direct)
+  if (STRICTMODE(freeaim) == freeaim_direct && casual_play)
     { bulletslope = PLAYER_SLOPE(mo->player); }
   else {
     angle_t an = mo->angle;    // see which target is to be aimed at
@@ -905,7 +905,7 @@ static void P_BulletSlope(mobj_t *mo)
       if (!linetarget)
         bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
       // [Nugget] Crispy freeaim
-      if (!linetarget && STRICTMODE(freeaim) == freeaim_autoaim)
+      if (!linetarget && STRICTMODE(freeaim) == freeaim_autoaim && casual_play)
         bulletslope = PLAYER_SLOPE(mo->player);
     } while (mask && (mask=0, !linetarget));  // killough 8/2/98
   }
