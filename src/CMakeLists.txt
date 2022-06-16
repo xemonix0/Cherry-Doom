@@ -212,21 +212,21 @@ if(WIN32)
     list(APPEND SETUP_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/setup-res.rc")
 endif()
 
-add_executable(woof-setup WIN32 ${SETUP_SOURCES})
-target_woof_settings(woof-setup)
+add_executable(nugget-doom-setup WIN32 ${SETUP_SOURCES})
+target_woof_settings(nugget-doom-setup)
 
 # Some platforms have SDL2main, others don't.
 if(SDL2_MAIN_LIBRARY)
     set(SETUP_LIBRARIES SDL2::SDL2main)
 endif()
 
-target_include_directories(woof-setup PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
-target_link_libraries(woof-setup PRIVATE ${SETUP_LIBRARIES}
+target_include_directories(nugget-doom-setup PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
+target_link_libraries(nugget-doom-setup PRIVATE ${SETUP_LIBRARIES}
     SDL2::SDL2 SDL2::net textscreen setup)
 
 if(MSVC)
-    set_target_properties(woof-setup PROPERTIES LINK_FLAGS "/MANIFEST:NO")
-    set_target_properties(woof-setup PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+    set_target_properties(nugget-doom-setup PROPERTIES LINK_FLAGS "/MANIFEST:NO")
+    set_target_properties(nugget-doom-setup PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
 endif()
 
 # Install
@@ -261,9 +261,9 @@ endforeach()
 
 # Files to package in our distribution.
 if(WIN32)
-    install(TARGETS nugget-doom RUNTIME DESTINATION .)
+    install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION .)
 else()
-    install(TARGETS nugget-doom RUNTIME DESTINATION bin)
+    install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION bin)
 endif()
 install(FILES ${WOOF_DLLS} DESTINATION .)
 
