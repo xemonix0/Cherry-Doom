@@ -116,7 +116,7 @@ execute_context_t *NewExecuteContext(void)
     execute_context_t *result;
 
     result = malloc(sizeof(execute_context_t));
-    
+
     result->response_file = TempFile("woof.rsp");
     result->stream = M_fopen(result->response_file, "w");
 
@@ -125,7 +125,7 @@ execute_context_t *NewExecuteContext(void)
         fprintf(stderr, "Error opening response file\n");
         exit(-1);
     }
-    
+
     return result;
 }
 
@@ -317,7 +317,7 @@ static int ExecuteCommand(const char *program, const char *arg)
 
     childpid = fork();
 
-    if (childpid == 0) 
+    if (childpid == 0)
     {
         // This is the child.  Execute the command.
 
@@ -336,7 +336,7 @@ static int ExecuteCommand(const char *program, const char *arg)
 
         waitpid(childpid, &result, 0);
 
-        if (WIFEXITED(result) && WEXITSTATUS(result) != 0x80) 
+        if (WIFEXITED(result) && WEXITSTATUS(result) != 0x80)
         {
             return WEXITSTATUS(result);
         }
@@ -352,9 +352,9 @@ static int ExecuteCommand(const char *program, const char *arg)
 static const char *GetExecutableName(void)
 {
 #ifdef _WIN32
-    return "woof.exe";
+    return "nugget-doom.exe";
 #else
-    return "woof";
+    return "nugget-doom";
 #endif
 }
 
@@ -362,7 +362,7 @@ int ExecuteDoom(execute_context_t *context)
 {
     char *response_file_arg;
     int result;
-    
+
     fclose(context->stream);
 
     // Build the command line
