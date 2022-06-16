@@ -139,7 +139,7 @@ void P_CalcHeight (player_t* player)
   else if (player->bob > MAXBOB) { player->bob = MAXBOB; }
 
   // [Nugget] Adjustable viewheight
-  view = (demorecording||netgame||fauxdemo)
+  view = (demorecording||netgame||fauxdemo||strictmode)
          ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
 
   if (!onground || player->cheats & CF_NOMOMENTUM)
@@ -215,15 +215,15 @@ void P_MovePlayer (player_t* player)
                || (player->cheats & CF_FLY));
 
   // [Nugget]
-  if (player->cheats & CF_FLY) {
+  if (player->cheats & CF_FLY && casual_play)
+  {
     if (!(player->mo->flags & MF_NOGRAVITY))
       { player->mo->flags |= MF_NOGRAVITY; }
 
-    if (casual_play
-        && (!(M_InputGameActive(input_jump)
-              || M_InputGameActive(input_crouch))
-            || (M_InputGameActive(input_jump)
-                && M_InputGameActive(input_crouch))))
+    if (!(M_InputGameActive(input_jump)
+          || M_InputGameActive(input_crouch))
+        || (M_InputGameActive(input_jump)
+            && M_InputGameActive(input_crouch)))
     { // Stop moving...
       if (player->cheats & CF_NOMOMENTUM)
         { player->mo->momz = 0; } // ... instantly
@@ -244,7 +244,7 @@ void P_MovePlayer (player_t* player)
   if (player->jumpTics) { player->jumpTics--; }
 
   // [Nugget] Jump/Fly Up
-  if (casual_play && M_InputGameActive(input_jump))
+  if (casual_play && !strictmode && M_InputGameActive(input_jump))
   {
     if (player->cheats & CF_FLY) {
       player->mo->momz += ((autorun ^ M_InputGameActive(input_speed)) == 1)
@@ -266,7 +266,8 @@ void P_MovePlayer (player_t* player)
 
   // [Nugget] Crouch/Fly Down
   if (!M_InputGameActive(input_crouch)) { CrouchKeyDown = false; }
-  else if (casual_play) {
+  else if (casual_play && !strictmode)
+  {
     if (player->cheats & CF_FLY) {
       player->mo->momz -= ((autorun ^ M_InputGameActive(input_speed)) == 1)
                           ? 2*FRACUNIT : 1*FRACUNIT;
@@ -386,7 +387,8 @@ void P_MovePlayer (player_t* player)
         P_SetMobjState(mo,S_PLAY_RUN1);
     }
     // [Nugget] Allow minimal mid-air movement if Jumping is enabled
-    else if (casual_play && !onground && jump_crouch) {
+    else if (casual_play && !onground && STRICTMODE(jump_crouch))
+    {
       if (cmd->forwardmove)
         { P_Thrust(player,mo->angle,cmd->forwardmove); }
       if (cmd->sidemove)

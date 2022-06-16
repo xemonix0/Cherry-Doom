@@ -153,7 +153,7 @@ void P_XYMovement (mobj_t* mo)
       mo->momz = 0;
 
       // [Nugget] Fix forgetful lost soul
-      if (casual_play && !nugget_comp[comp_lsamnesia])
+      if (casual_play && !STRICTMODE(nugget_comp[comp_lsamnesia]))
         { P_SetMobjState(mo, mo->info->seestate); }
       else
         { P_SetMobjState(mo, mo->info->spawnstate); }
@@ -437,7 +437,7 @@ static void P_ZMovement (mobj_t* mo)
 
   // check for smooth step up
   // [Nugget] Adjustable viewheight
-  if (demorecording||netgame||fauxdemo) // Allowed in demo playback
+  if (demorecording||netgame||fauxdemo||strictmode) // Allowed in demo playback
     { view = VIEWHEIGHT; }
   else if (mo->player)
     { view = viewheight_value*FRACUNIT; }
@@ -1040,7 +1040,7 @@ void P_SpawnPlayer (mapthing_t* mthing)
   p->extralight    = 0;
   p->fixedcolormap = 0;
   // [Nugget] Adjustable viewheight
-  p->viewheight = (demorecording||netgame||fauxdemo)
+  p->viewheight = (demorecording||netgame||fauxdemo||strictmode)
                   ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
 
   p->momx = p->momy = 0;   // killough 10/98: initialize bobbing to 0.

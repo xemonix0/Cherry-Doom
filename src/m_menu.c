@@ -3834,7 +3834,8 @@ static const char *weapon_attack_alignment_strings[] = {
 
 static void M_UpdateCenteredWeaponItem(void)
 {
-  DISABLE_ITEM((!cosmetic_bobbing || !bobbing_percentage), weap_settings2[weap2_center]);
+  DISABLE_ITEM((!cosmetic_bobbing || !bobbing_percentage || strictmode),
+               weap_settings2[weap2_center]);
 }
 
 setup_menu_t weap_settings2[] =  // Weapons Settings screen 2
@@ -6902,8 +6903,23 @@ static void M_UpdateStrictModeItems(void)
 {
   DISABLE_STRICT(gen_settings2[general_end3 + general_brightmaps]);
   DISABLE_STRICT(gen_settings3[general_realtic]);
-  DISABLE_STRICT(weap_settings2[weap2_center]);
+  for (int i = gen4_menutint; i <= gen4_sclipdist; i++) // [Nugget]
+    { DISABLE_STRICT(gen_settings4[i]); }
+
+  // [Nugget]
+  DISABLE_STRICT(comp_settings4[comp4_lscollision]);
+  DISABLE_STRICT(comp_settings4[comp4_lsamnesia]);
+  DISABLE_STRICT(comp_settings4[comp4_nonbleeders]);
+  DISABLE_STRICT(comp_settings4[comp4_0dmgpain]);
+  DISABLE_STRICT(comp_settings4[comp4_bruistarget]);
+  DISABLE_STRICT(comp_settings5[comp5_iosdeath]);
+  DISABLE_STRICT(comp_settings5[comp5_keypal]);
+
+  DISABLE_STRICT(weap_settings1[weap_autoaim]); // [Nugget]
+  DISABLE_STRICT(weap_settings1[weap_freeaim]); // [Nugget]
+
   DISABLE_STRICT(auto_settings1[5]); // map_player_coords
+
   DISABLE_ITEM(strictmode || !comp[comp_vile], enem_settings2[enem2_ghost]);
   DISABLE_STRICT(enem_settings2[enem2_colored_blood]);
   DISABLE_STRICT(enem_settings2[enem2_flipcorpses]);
@@ -6938,14 +6954,16 @@ void M_ResetSetupMenu(void)
 
   // Enemies ---
   DISABLE_BOOM(enem_settings1[enem_infighting]);
-  for (i = enem_backing; i <= enem_dog_jumping; ++i) { DISABLE_BOOM(enem_settings1[i]); }
+  for (i = enem_backing; i <= enem_dog_jumping; ++i)
+    { DISABLE_BOOM(enem_settings1[i]); }
   DISABLE_VANILLA(enem_settings1[enem_remember]);
-  DISABLE_ITEM(!casual_play, enem_settings1[enem_extra_gibbing]);
-  DISABLE_ITEM(!casual_play, enem_settings1[enem_bloodier_gibbing]);
+  DISABLE_ITEM((!casual_play || strictmode), enem_settings1[enem_extra_gibbing]);
+  DISABLE_ITEM((!casual_play || strictmode), enem_settings1[enem_bloodier_gibbing]);
   DISABLE_ITEM(!comp[comp_vile], enem_settings2[enem2_ghost]);
 
   // Weapons ---
-  for (i = weap_pref1; i <= weap_pref9; ++i) { DISABLE_ITEM(demo_compatibility, weap_settings1[i]); }
+  for (i = weap_pref1; i <= weap_pref9; ++i)
+    { DISABLE_ITEM(demo_compatibility, weap_settings1[i]); }
 
   M_UpdateCrosshairItems();
   M_UpdateCenteredWeaponItem();

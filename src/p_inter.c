@@ -260,8 +260,10 @@ void P_GiveCard(player_t *player, card_t card)
   if (player->cards[card])
     return;
   // [Nugget] Fix for "key pickup resets palette"
-  if (!nugget_comp[comp_keypal])  { player->bonuscount += BONUSADD; }
-  else                            { player->bonuscount = BONUSADD; }
+  if (!STRICTMODE(nugget_comp[comp_keypal]))
+    { player->bonuscount += BONUSADD; }
+  else
+    { player->bonuscount = BONUSADD; }
   player->cards[card] = 1;
 }
 
@@ -656,7 +658,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   P_RemoveMobj (special);
   player->bonuscount += BONUSADD;
   // [Nugget] Bonuscount cap
-  if (bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap)
+  if (!strictmode && bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap)
     { player->bonuscount = bonuscount_cap; }
 
   S_StartSound(player->mo, sound);   // killough 4/25/98, 12/98
@@ -668,7 +670,7 @@ boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
   extern fixed_t P_AproxDistance();
   extern void A_Punch(), A_Saw(), A_FireShotgun2();
 
-  if (extra_gibbing && source && source->player
+  if (STRICTMODE(extra_gibbing) && source && source->player
       &&
       (  (source->player->psprites->state->action == A_Punch
           && source->player->powers[pw_strength]
@@ -693,13 +695,13 @@ void P_NuggetGib(mobj_t *mo)
   extern int V_BloodColor();
   int q = 20 + (Woof_Random()%20+1); // Spawn 20-40 blood splats
 
-  if (!casual_play || !bloodier_gibbing)
+  if (!casual_play || !STRICTMODE(bloodier_gibbing))
     { return; }
 
   for (int i = 0; i < q; i++)
   {
     mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + mo->height/1.5,
-                                (nugget_comp[comp_nonbleeders]
+                                (STRICTMODE(nugget_comp[comp_nonbleeders])
                                  && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
@@ -968,7 +970,8 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
     player->attacker = source;
     player->damagecount += damage;  // add damage after armor / invuln
 
-    if (player->damagecount > damagecount_cap) // [Nugget] Custom red tint cap
+    // [Nugget] Custom red tint cap
+    if (player->damagecount > damagecount_cap && !strictmode)
       { player->damagecount = damagecount_cap; }
 
 #if 0
@@ -1030,7 +1033,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 		  !(target->flags & MF_SKULLFLY)))) //killough 11/98: see below
   {
     // [Nugget] Prevent pain state if no damage is caused
-    if (casual_play && nugget_comp[comp_0dmgpain] && damage == 0)
+    if (casual_play && STRICTMODE(nugget_comp[comp_0dmgpain]) && damage == 0)
       {;} // Do nothing
     else
       { P_SetMobjState(target, target->info->painstate); }

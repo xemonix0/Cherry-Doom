@@ -135,7 +135,7 @@ static boolean P_NuggetCheckMeleeHeight(mobj_t *actor)
 {
   const mobj_t *pl = actor->target;
 
-  if (!casual_play || !over_under)
+  if (!casual_play || !STRICTMODE(over_under))
     { return true; }
   else if (pl->z > actor->z + actor->height
            || actor->z > pl->z + pl->height)
@@ -1451,7 +1451,7 @@ void A_BruisAttack(mobj_t *actor)
     return;
 
   // [Nugget] Fix A_BruisAttack not calling A_FaceTarget
-  if (casual_play && !(nugget_comp[comp_bruistarget]))
+  if (casual_play && !STRICTMODE(nugget_comp[comp_bruistarget]))
     { A_FaceTarget(actor); }
 
   if (P_CheckMeleeRange(actor))
@@ -2539,7 +2539,7 @@ void A_BrainScream(mobj_t *mo)
   int x;
   int x1, x2; // [Nugget] Fix lopsided IoS death explosions
 
-  if (casual_play && nugget_comp[comp_iosdeath])
+  if (casual_play && STRICTMODE(nugget_comp[comp_iosdeath]))
     { x1 = x2 = 280; }
   else
     { x1 = 196; x2 = 320; }

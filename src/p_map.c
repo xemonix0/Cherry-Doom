@@ -547,13 +547,13 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
     int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
 
     // [Nugget]: [crispy] check if attacking skull flies over/under thing
-    if (casual_play && over_under) {
+    if (casual_play && STRICTMODE(over_under)) {
 	    if (tmthing->z > thing->z + thing->height)        { return true; } // over
 	    else if (tmthing->z + tmthing->height < thing->z) { return true; } // under
     }
 
 	  // [Nugget] Fix lost soul collision
-	  if (casual_play && nugget_comp[comp_lscollision])
+	  if (casual_play && STRICTMODE(nugget_comp[comp_lscollision]))
       if (!(thing->flags & MF_SHOOTABLE)) { return !(thing->flags & MF_SOLID); }
 
     P_DamageMobj (thing, tmthing, tmthing, damage);
@@ -562,7 +562,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
     tmthing->momx = tmthing->momy = tmthing->momz = 0;
 
     // [Nugget] Fix forgetful lost soul
-    if (casual_play && !nugget_comp[comp_lsamnesia])
+    if (casual_play && !STRICTMODE(nugget_comp[comp_lsamnesia]))
       { P_SetMobjState(tmthing, tmthing->info->seestate); }
     else
       { P_SetMobjState(tmthing, tmthing->info->spawnstate); }
@@ -638,7 +638,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   }
 
   // [Nugget] Allow things to move over/under solid things
-  if (casual_play && over_under && (thing->flags & MF_SOLID))
+  if (casual_play && STRICTMODE(over_under) && (thing->flags & MF_SOLID))
   {
     if (tmthing->z >= thing->z + thing->height) { // over
       thing->intflags   |= MIF_OVERUNDER;
@@ -1905,7 +1905,8 @@ static boolean PIT_ChangeSector(mobj_t *thing)
     {
       P_SetMobjState(thing, S_GIBS);
       // [Nugget] No gibs if the thing doesn't bleed to begin with
-      if (nugget_comp[comp_nonbleeders] && thing->flags & MF_NOBLOOD)
+      if (STRICTMODE(nugget_comp[comp_nonbleeders])
+          && thing->flags & MF_NOBLOOD)
         { thing->sprite = SPR_TNT1; thing->frame = 0; }
       thing->flags &= ~MF_SOLID;
       thing->height = thing->radius = 0;
@@ -1949,7 +1950,7 @@ static boolean PIT_ChangeSector(mobj_t *thing)
 			thing->y,
 			thing->z + thing->height/2,
 			// [Nugget]
-			(nugget_comp[comp_nonbleeders]
+			(STRICTMODE(nugget_comp[comp_nonbleeders])
        && thing->flags & MF_NOBLOOD) ? MT_PUFF : MT_BLOOD);
 
 			// [Nugget] Fuzzy blood if applicable
