@@ -1402,7 +1402,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   angle_t an = source->angle;
 
-  if (STRICTMODE(freeaim) == freeaim_direct && casual_play)
+  if (mouselook && freeaim == freeaim_direct && casual_play && !strictmode)
     { slope = PLAYER_SLOPE(source->player); }
   else {
     // killough 7/19/98: autoaiming was not in original beta

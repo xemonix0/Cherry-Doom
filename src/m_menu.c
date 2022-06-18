@@ -2826,17 +2826,6 @@ static const char *midi_player_strings[] = {
   NULL
 };
 
-void static M_SmoothLight(void)
-{
-  extern void P_SegLengths(boolean contrast_only);
-  // [crispy] re-calculate the zlight[][] array
-  R_InitLightTables();
-  // [crispy] re-calculate the scalelight[][] array
-  R_ExecuteSetViewSize();
-  // [crispy] re-calculate fake contrast
-  P_SegLengths(true);
-}
-
 static const char *gamma_strings[] = {
   // Darker
   "0.50", "0.55", "0.60", "0.65", "0.70", "0.75", "0.80", "0.85", "0.90",
@@ -2943,25 +2932,6 @@ enum {
 #define G_Y3 (M_Y + (general_end3 + 1) * M_SPC)
 #define G_Y4 (G_Y3 + (general_end4 + 1) * M_SPC)
 
-static void M_ResetTimeScale(void)
-{
-  if (strictmode)
-    I_SetTimeScale(100);
-  else
-  {
-    int p, time_scale;
-
-    p = M_CheckParmWithArgs("-speed", 1);
-
-    if (p)
-      time_scale = BETWEEN(10, 1000, atoi(myargv[p+1]));
-    else
-      time_scale = realtic_clock_rate;
-
-    I_SetTimeScale(time_scale);
-  }
-}
-
 static const char *default_skill_strings[] = {
   // dummy first option because defaultskill is 1-based
   "", "ITYTD", "HNTR", "HMP", "UV", "NM", NULL
@@ -2975,6 +2945,19 @@ static const char *default_endoom_strings[] = {
   "off", "on", "PWAD only", NULL
 };
 
+static void M_UpdateFreeaimItem(); // [Nugget]
+
+void static M_SmoothLight(void)
+{
+  extern void P_SegLengths(boolean contrast_only);
+  // [crispy] re-calculate the zlight[][] array
+  R_InitLightTables();
+  // [crispy] re-calculate the scalelight[][] array
+  R_ExecuteSetViewSize();
+  // [crispy] re-calculate fake contrast
+  P_SegLengths(true);
+}
+
 setup_menu_t gen_settings2[] = { // General Settings screen2
 
   {"Mouse Settings"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
@@ -2982,7 +2965,7 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
     {"Double Click acts as \"Use\"", S_YESNO, m_null, M_X,
      M_Y+ general_mouse1*M_SPC, {"dclick_use"}},
     {"Permanent Mouselook", S_YESNO, m_null, M_X,
-     M_Y+ general_mouse2*M_SPC, {"mouselook"}},
+     M_Y+ general_mouse2*M_SPC, {"mouselook"}, 0, M_UpdateFreeaimItem},
     // [FG] invert vertical axis
     {"Invert vertical axis", S_YESNO, m_null, M_X,
      M_Y+ general_mouse3*M_SPC, {"mouse_y_invert"}},
@@ -3010,6 +2993,25 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
 
   {0,S_SKIP|S_END,m_null}
 };
+
+static void M_ResetTimeScale(void)
+{
+  if (strictmode)
+    I_SetTimeScale(100);
+  else
+  {
+    int p, time_scale;
+
+    p = M_CheckParmWithArgs("-speed", 1);
+
+    if (p)
+      time_scale = BETWEEN(10, 1000, atoi(myargv[p+1]));
+    else
+      time_scale = realtic_clock_rate;
+
+    I_SetTimeScale(time_scale);
+  }
+}
 
 setup_menu_t gen_settings3[] = { // General Settings screen3
 
@@ -6899,6 +6901,11 @@ void M_ResetMenu(void)
 
 #define DISABLE_STRICT(item) DISABLE_ITEM(strictmode, item)
 
+static void M_UpdateFreeaimItem(void) // [Nugget]
+{
+  DISABLE_ITEM((!mouselook || strictmode), weap_settings1[weap_freeaim]);
+}
+
 static void M_UpdateStrictModeItems(void)
 {
   DISABLE_STRICT(gen_settings2[general_end3 + general_brightmaps]);
@@ -6916,7 +6923,7 @@ static void M_UpdateStrictModeItems(void)
   DISABLE_STRICT(comp_settings5[comp5_keypal]);
 
   DISABLE_STRICT(weap_settings1[weap_autoaim]); // [Nugget]
-  DISABLE_STRICT(weap_settings1[weap_freeaim]); // [Nugget]
+  M_UpdateFreeaimItem(); // [Nugget]
 
   DISABLE_STRICT(auto_settings1[5]); // map_player_coords
 
@@ -6966,6 +6973,7 @@ void M_ResetSetupMenu(void)
     { DISABLE_ITEM(demo_compatibility, weap_settings1[i]); }
 
   M_UpdateCrosshairItems();
+  M_UpdateFreeaimItem(); // [Nugget]
   M_UpdateCenteredWeaponItem();
   M_UpdateMultiLineMsgItem();
   M_UpdateStrictModeItems();

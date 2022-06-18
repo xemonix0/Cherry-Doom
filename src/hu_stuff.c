@@ -1026,15 +1026,16 @@ static void HU_InitCrosshair(void)
 
 static void HU_UpdateCrosshair(void)
 {
+  extern int mouselook; // [Nugget]
   int health; // [Nugget] Could be player or target health
 
   crosshair.y = (screenblocks <= 10) ? (ORIGHEIGHT-ST_HEIGHT)/2 : ORIGHEIGHT/2;
 
   // [Nugget] Check for linetarget
-  if (freeaim == freeaim_direct && linetarget)
+  if (mouselook && freeaim == freeaim_direct && linetarget)
     { linetarget = NULL; }
   if ((hud_crosshair_health == 2 || hud_crosshair_target)
-      && (freeaim != freeaim_direct) && !strictmode)
+      && (freeaim != freeaim_direct || !mouselook) && !strictmode)
   {
     angle_t an = plr->mo->angle;
     const ammotype_t ammo = weaponinfo[plr->readyweapon].ammo;
@@ -1050,14 +1051,13 @@ static void HU_UpdateCrosshair(void)
         { P_AimLineAttack(plr->mo, an += 1<<26, range, 0); }
       if (!linetarget)
         { P_AimLineAttack(plr->mo, an -= 2<<26, range, 0); }
-        P_AimLineAttack(plr->mo, an -= 2<<26, range, 0);
     }
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
   }
 
   // [Nugget] Begin checking, in order of priority
 
-  if ((hud_crosshair_health == 2) && (freeaim != freeaim_direct) && !strictmode)
+  if ((hud_crosshair_health == 2) && (freeaim != freeaim_direct || !mouselook) && !strictmode)
   { // [Nugget] Set the crosshair color based on target health
     if (linetarget
         && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2))
@@ -1081,7 +1081,9 @@ static void HU_UpdateCrosshair(void)
     crosshair.cr = colrngs[hud_crosshair_target_color];
   }
   else if (hud_crosshair_health == 1
-           || (hud_crosshair_health == 2 && freeaim == freeaim_direct))
+           || (hud_crosshair_health == 2
+               && ((mouselook && freeaim == freeaim_direct)
+                   || strictmode)))
   { // [Nugget] Set the crosshair color based on player health
     health = plr->health;
     if (plr->powers[pw_invulnerability]
