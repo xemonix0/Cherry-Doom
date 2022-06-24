@@ -2406,7 +2406,8 @@ void M_DrawSetting(setup_menu_t* s)
 
 	  for (i = 0 ; i < char_width ; i++)
 	    colorblock[i] = PAL_BLACK;
-	  V_DrawBlock(x+cursor_start-1+WIDESCREENDELTA,y+7,0,char_width,1,colorblock);
+	  if (x+cursor_start-1+WIDESCREENDELTA+char_width < SCREENWIDTH)
+	    V_DrawBlock(x+cursor_start-1+WIDESCREENDELTA,y+7,0,char_width,1,colorblock);
 	}
 
       // Draw the setting for the item
@@ -3042,6 +3043,7 @@ setup_menu_t gen_settings3[] = { // General Settings screen3
 void M_Trans(void) // To reset translucency after setting it in menu
 {
     R_InitTranMap(0);
+    DISABLE_ITEM(!STRICTMODE_VANILLA(general_translucency), gen_settings1[general_transpct]);
 }
 
 enum {
@@ -3990,11 +3992,17 @@ enum {
 
 static void M_UpdateCrosshairItems (void)
 {
-    DISABLE_ITEM(!hud_crosshair, stat_settings2[stat2_xhairsh]);
-    DISABLE_ITEM(!hud_crosshair, stat_settings2[stat2_xhairhealth]);
-    DISABLE_ITEM(!(hud_crosshair && !strictmode), stat_settings2[stat2_xhairtarget]);
-    DISABLE_ITEM(!hud_crosshair, stat_settings2[stat2_xhaircolor]);
-    DISABLE_ITEM(!(hud_crosshair && STRICTMODE(hud_crosshair_target)), stat_settings2[stat2_xhairtcolor]);
+    DISABLE_ITEM(!hud_crosshair,                  stat_settings2[stat2_xhairsh]);
+    DISABLE_ITEM(!hud_crosshair,                  stat_settings2[stat2_xhairhealth]);
+    DISABLE_ITEM(!STRICTMODE(hud_crosshair),      stat_settings2[stat2_xhairtarget]);
+    DISABLE_ITEM(!hud_crosshair,                  stat_settings2[stat2_xhaircolor]);
+    DISABLE_ITEM(!STRICTMODE(hud_crosshair && hud_crosshair_target),
+                                                  stat_settings2[stat2_xhairtcolor]);
+    DISABLE_ITEM(!hud_crosshair, stat_settings2[8]);
+    DISABLE_ITEM(!STRICTMODE(hud_crosshair), stat_settings2[9]);
+    DISABLE_ITEM(!hud_crosshair, stat_settings2[10]);
+    DISABLE_ITEM(!STRICTMODE(hud_crosshair && hud_crosshair_target),
+        stat_settings2[11]);
 }
 
 // [Nugget]
@@ -4431,13 +4439,14 @@ setup_menu_t* mess_settings[] =
 
 static void M_UpdateMultiLineMsgItem(void)
 {
-  DISABLE_ITEM(!message_list, mess_settings1[8]);
+  DISABLE_ITEM(!message_list, mess_settings1[mess_list]);
 }
 
 setup_menu_t mess_settings1[] =  // Messages screen
 {
     {"\"A Secret is Revealed!\" Message", S_YESNO, m_null, M_X,
      M_Y + mess_secret*M_SPC, {"hud_secret_message"}},
+  {"",S_SKIP,m_null,M_X,M_Y+mess_stub1*M_SPC }, // Stub
     {"Center Messages", S_YESNO, m_null, M_X,
      M_Y + mess_centered*M_SPC, {"message_centered"}},
     {"Colorize Player Messages", S_YESNO, m_null, M_X,
@@ -4450,6 +4459,7 @@ setup_menu_t mess_settings1[] =  // Messages screen
      M_Y + mess_color_chat*M_SPC, {"hudcolor_chat"}, 0, NULL, hudcolor_str},
     {"Chat Message Duration (ms)", S_NUM, m_null, M_X,
      M_Y  + mess_chat_timer*M_SPC, {"chat_msg_timer"}},
+  {"",S_SKIP,m_null,M_X,M_Y+mess_stub2*M_SPC }, // Stub
     {"Multi-Line Messages", S_YESNO, m_null, M_X,
      M_Y + mess_list*M_SPC, {"message_list"}, 0, M_UpdateMultiLineMsgItem},
     {"Number of Lines", S_NUM, m_null,  M_X,
@@ -4971,19 +4981,19 @@ void M_DrawStringCR(int cx, int cy, char *color, const char* ch)
 
 void M_DrawString(int cx, int cy, int color, const char* ch)
 {
-  return M_DrawStringCR(cx, cy, colrngs[color], ch);
+  M_DrawStringCR(cx, cy, colrngs[color], ch);
 }
 
 void M_DrawStringDisable(int cx, int cy, const char* ch)
 {
-  return M_DrawStringCR(cx, cy, cr_dark, ch);
+  M_DrawStringCR(cx, cy, cr_dark, ch);
 }
 
 // cph 2006/08/06 - M_DrawString() is the old M_DrawMenuString, except that it is not tied to menu_buffer
 
 void M_DrawMenuString(int cx, int cy, int color)
 {
-  return M_DrawString(cx, cy, color, menu_buffer);
+  M_DrawString(cx, cy, color, menu_buffer);
 }
 
 // M_GetPixelWidth() returns the number of pixels in the width of
@@ -6908,6 +6918,7 @@ static void M_UpdateFreeaimItem(void) // [Nugget]
 
 static void M_UpdateStrictModeItems(void)
 {
+  DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[general_trans]);
   DISABLE_STRICT(gen_settings2[general_end3 + general_brightmaps]);
   DISABLE_STRICT(gen_settings3[general_realtic]);
   for (int i = gen4_menutint; i <= gen4_sclipdist; i++) // [Nugget]
@@ -6966,7 +6977,7 @@ void M_ResetSetupMenu(void)
   DISABLE_VANILLA(enem_settings1[enem_remember]);
   DISABLE_ITEM((!casual_play || strictmode), enem_settings1[enem_extra_gibbing]);
   DISABLE_ITEM((!casual_play || strictmode), enem_settings1[enem_bloodier_gibbing]);
-  DISABLE_ITEM(!comp[comp_vile], enem_settings2[enem2_ghost]);
+  DISABLE_ITEM(!comp[comp_vile] || strictmode, enem_settings2[enem2_ghost]);
 
   // Weapons ---
   for (i = weap_pref1; i <= weap_pref9; ++i)
@@ -6978,6 +6989,7 @@ void M_ResetSetupMenu(void)
   M_UpdateMultiLineMsgItem();
   M_UpdateStrictModeItems();
   M_ResetTimeScale();
+  M_Trans();
 }
 
 void M_ResetSetupMenuVideo(void)

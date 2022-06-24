@@ -351,7 +351,7 @@ static char* PrepareColor(const char *str, const char *col)
     char *str_replace, col_replace[16];
 
     M_snprintf(col_replace, sizeof(col_replace),
-               "\x1b%c%s\x1b%c", '0'-1, col, '0'-1);
+               "\x1b%c%s\x1b%c", '0'+CR_NONE, col, '0'+CR_NONE);
     str_replace = M_StringReplace(str, col, col_replace);
 
     return str_replace;
@@ -364,7 +364,7 @@ static void UpdateColor(char *str, int cr)
 
     if (!message_colorized)
     {
-        cr = -1;
+        cr = CR_NONE;
     }
 
     for (i = 0; i < len; ++i)
@@ -696,15 +696,15 @@ void HU_Start(void)
 
   // initialize the automaps coordinate widget
   //jff 3/3/98 split coordstr widget into 3 parts
-  sprintf(hud_coordstrx,"X\t%-5d",0); //jff 2/22/98 added z
+  sprintf(hud_coordstrx,"X\t\x1b%c%-5d", '0'+CR_GRAY, 0); //jff 2/22/98 added z
   s = hud_coordstrx;
   while (*s)
     HUlib_addCharToTextLine(&w_coordx, *s++);
-  sprintf(hud_coordstry,"Y\t%-5d",0); //jff 3/3/98 split x,y,z
+  sprintf(hud_coordstry,"Y\t\x1b%c%-5d", '0'+CR_GRAY, 0); //jff 3/3/98 split x,y,z
   s = hud_coordstry;
   while (*s)
     HUlib_addCharToTextLine(&w_coordy, *s++);
-  sprintf(hud_coordstrz,"Z\t%-5d",0); //jff 3/3/98 split x,y,z
+  sprintf(hud_coordstrz,"Z\t\x1b%c%-5d", '0'+CR_GRAY, 0); //jff 3/3/98 split x,y,z
   s = hud_coordstrz;
   while (*s)
     HUlib_addCharToTextLine(&w_coordz, *s++);
@@ -717,17 +717,17 @@ void HU_Start(void)
   HUlib_initTextLine(&w_lstats, 0-WIDESCREENDELTA, HU_LSTATS_Y, hu_font,
 		     HU_FONTSTART, colrngs[hudcolor_mesg]);
   HUlib_initTextLine(&w_ltime, 0-WIDESCREENDELTA, HU_LTIME_Y, hu_font,
-		     HU_FONTSTART, colrngs[hudcolor_mesg]);
+		     HU_FONTSTART, colrngs[CR_GRAY]);
 
-  sprintf(hud_lstatk, "K\t%d/%d", 0, 0);
+  sprintf(hud_lstatk, "K\t\x1b%c%d/%d", '0'+CR_GRAY, 0, 0);
   s = hud_lstatk;
   while (*s)
     HUlib_addCharToTextLine(&w_lstatk, *s++);
-  sprintf(hud_lstati, "I\t%d/%d", 0, 0);
+  sprintf(hud_lstati, "I\t\x1b%c%d/%d", '0'+CR_GRAY, 0, 0);
   s = hud_lstati;
   while (*s)
     HUlib_addCharToTextLine(&w_lstati, *s++);
-  sprintf(hud_lstats, "S\t%d/%d", 0, 0);
+  sprintf(hud_lstats, "S\t\x1b%c%d/%d", '0'+CR_GRAY, 0, 0);
   s = hud_lstats;
   while (*s)
     HUlib_addCharToTextLine(&w_lstats, *s++);
@@ -1192,62 +1192,64 @@ void HU_Drawer(void)
            STRICTMODE(map_player_coords) == 1) ||
           STRICTMODE(map_player_coords) == 2)
       {
-      // killough 10/98: allow coordinates to display non-following pointer
-      AM_Coordinates(plr->mo, &x, &y, &z);
+        // killough 10/98: allow coordinates to display non-following pointer
+        AM_Coordinates(plr->mo, &x, &y, &z);
 
-      //jff 2/16/98 output new coord display
-      // x-coord
-      sprintf(hud_coordstrx,"X\t%-5d", x>>FRACBITS); // killough 10/98
-      HUlib_clearTextLine(&w_coordx);
-      s = hud_coordstrx;
-      while (*s)
-        HUlib_addCharToTextLine(&w_coordx, *s++);
-      HUlib_drawTextLine(&w_coordx, false);
+        //jff 2/16/98 output new coord display
+        // x-coord
+        sprintf(hud_coordstrx,"X\t\x1b%c%-5d", '0'+CR_GRAY, x>>FRACBITS); // killough 10/98
+        HUlib_clearTextLine(&w_coordx);
+        s = hud_coordstrx;
+        while (*s)
+          HUlib_addCharToTextLine(&w_coordx, *s++);
+        HUlib_drawTextLine(&w_coordx, false);
 
-      //jff 3/3/98 split coord display into x,y,z lines
-      // y-coord
-      sprintf(hud_coordstry,"Y\t%-5d", y>>FRACBITS); // killough 10/98
-      HUlib_clearTextLine(&w_coordy);
-      s = hud_coordstry;
-      while (*s)
-        HUlib_addCharToTextLine(&w_coordy, *s++);
-      HUlib_drawTextLine(&w_coordy, false);
+        //jff 3/3/98 split coord display into x,y,z lines
+        // y-coord
+        sprintf(hud_coordstry,"Y\t\x1b%c%-5d", '0'+CR_GRAY, y>>FRACBITS); // killough 10/98
+        HUlib_clearTextLine(&w_coordy);
+        s = hud_coordstry;
+        while (*s)
+          HUlib_addCharToTextLine(&w_coordy, *s++);
+        HUlib_drawTextLine(&w_coordy, false);
 
-      //jff 3/3/98 split coord display into x,y,z lines
-      //jff 2/22/98 added z
-      // z-coord
-      sprintf(hud_coordstrz,"Z\t%-5d", z>>FRACBITS);  // killough 10/98
-      HUlib_clearTextLine(&w_coordz);
-      s = hud_coordstrz;
-      while (*s)
-        HUlib_addCharToTextLine(&w_coordz, *s++);
-      HUlib_drawTextLine(&w_coordz, false);
+        //jff 3/3/98 split coord display into x,y,z lines
+        //jff 2/22/98 added z
+        // z-coord
+        sprintf(hud_coordstrz,"Z\t\x1b%c%-5d", '0'+CR_GRAY, z>>FRACBITS);  // killough 10/98
+        HUlib_clearTextLine(&w_coordz);
+        s = hud_coordstrz;
+        while (*s)
+          HUlib_addCharToTextLine(&w_coordz, *s++);
+        HUlib_drawTextLine(&w_coordz, false);
+      }
+      // [FG] FPS counter widget
+      else if (plr->powers[pw_showfps])
+      {
+        extern int fps;
+
+        sprintf(hud_coordstrx,"\x1b%c%-5d \x1b%cFPS", '0'+CR_GRAY, fps, '0'+CR_NONE);
+        HUlib_clearTextLine(&w_coordx);
+        s = hud_coordstrx;
+        while (*s)
+          HUlib_addCharToTextLine(&w_coordx, *s++);
+        HUlib_drawTextLine(&w_coordx, false);
+      }
+
+      // [FG] draw level stats widget
+      if ((automapactive && map_level_stats == 1) || map_level_stats == 2)
+      {
+        HUlib_drawTextLine(&w_lstatk, false);
+        HUlib_drawTextLine(&w_lstati, false);
+        HUlib_drawTextLine(&w_lstats, false);
+      }
+
+      // [FG] draw level time widget
+      if ((automapactive && map_level_time == 1) || map_level_time == 2)
+      {
+        HUlib_drawTextLine(&w_ltime, false);
+      }
     }
-
-    // [FG] FPS counter widget
-    else if (plr->powers[pw_showfps]) {
-      extern int fps;
-
-      sprintf(hud_coordstrx,"%-5d FPS", fps);
-      HUlib_clearTextLine(&w_coordx);
-      s = hud_coordstrx;
-      while (*s)
-        HUlib_addCharToTextLine(&w_coordx, *s++);
-      HUlib_drawTextLine(&w_coordx, false);
-    }
-
-    // [FG] draw level stats widget
-    if ((automapactive && map_level_stats == 1) || map_level_stats == 2)
-    {
-      HUlib_drawTextLine(&w_lstatk, false);
-      HUlib_drawTextLine(&w_lstati, false);
-      HUlib_drawTextLine(&w_lstats, false);
-    }
-
-    // [FG] draw level time widget
-    if ((automapactive && map_level_time == 1) || map_level_time == 2)
-      { HUlib_drawTextLine(&w_ltime, false); }
-  }
 
   // draw the weapon/health/ammo/armor/kills/keys displays if optioned
   //jff 2/17/98 allow new hud stuff to be turned off
@@ -1895,25 +1897,25 @@ void HU_Ticker(void)
       {
         if (extrakills)
         {
-          sprintf(hud_lstatk, "K\t%d/%d+%d",
+          sprintf(hud_lstatk, "K\t\x1b%c%d/%d+%d", '0'+CR_GRAY,
             plr->killcount, totalkills, extrakills);
         }
         else
         {
-          sprintf(hud_lstatk, "K\t%d/%d",plr->killcount, totalkills);
+          sprintf(hud_lstatk, "K\t\x1b%c%d/%d", '0'+CR_GRAY, plr->killcount, totalkills);
         }
         HUlib_clearTextLine(&w_lstatk);
         s = hud_lstatk;
         while (*s)
           HUlib_addCharToTextLine(&w_lstatk, *s++);
 
-        sprintf(hud_lstati, "I\t%d/%d", plr->itemcount, totalitems);
+        sprintf(hud_lstati, "I\t\x1b%c%d/%d", '0'+CR_GRAY, plr->itemcount, totalitems);
         HUlib_clearTextLine(&w_lstati);
         s = hud_lstati;
         while (*s)
           HUlib_addCharToTextLine(&w_lstati, *s++);
 
-        sprintf(hud_lstats, "S\t%d/%d", plr->secretcount, totalsecret);
+        sprintf(hud_lstats, "S\t\x1b%c%d/%d", '0'+CR_GRAY, plr->secretcount, totalsecret);
         HUlib_clearTextLine(&w_lstats);
         s = hud_lstats;
         while (*s)
