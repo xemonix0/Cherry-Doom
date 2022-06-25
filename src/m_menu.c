@@ -2946,7 +2946,7 @@ static const char *default_endoom_strings[] = {
   "off", "on", "PWAD only", NULL
 };
 
-static void M_UpdateFreeaimItem(); // [Nugget]
+static void M_UpdateFreeaimItem(void); // [Nugget]
 
 void static M_SmoothLight(void)
 {
@@ -3941,7 +3941,7 @@ enum {
 };
 
 // [Nugget]
-extern void ST_createWidgets();
+extern void ST_createWidgets(void);
 
 setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
 {
