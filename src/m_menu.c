@@ -3998,11 +3998,6 @@ static void M_UpdateCrosshairItems (void)
     DISABLE_ITEM(!hud_crosshair,                  stat_settings2[stat2_xhaircolor]);
     DISABLE_ITEM(!STRICTMODE(hud_crosshair && hud_crosshair_target),
                                                   stat_settings2[stat2_xhairtcolor]);
-    DISABLE_ITEM(!hud_crosshair, stat_settings2[8]);
-    DISABLE_ITEM(!STRICTMODE(hud_crosshair), stat_settings2[9]);
-    DISABLE_ITEM(!hud_crosshair, stat_settings2[10]);
-    DISABLE_ITEM(!STRICTMODE(hud_crosshair && hud_crosshair_target),
-        stat_settings2[11]);
 }
 
 // [Nugget]
