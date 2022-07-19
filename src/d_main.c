@@ -209,7 +209,6 @@ void D_ProcessEvents (void)
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate = GS_DEMOSCREEN;
-boolean        screen_melt = true;
 extern int     showMessages;
 
 void D_Display (void)
@@ -245,7 +244,7 @@ void D_Display (void)
     }
 
   // save the current screen if about to wipe
-  if ((wipe = gamestate != wipegamestate) && NOTSTRICTMODE(screen_melt))
+  if ((wipe = gamestate != wipegamestate) && NOTSTRICTMODE(wipe_type))
     wipe_StartScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
 
   if (gamestate == GS_LEVEL && gametic)
@@ -351,14 +350,11 @@ void D_Display (void)
     HU_DemoProgressBar(true);
 
   // normal update
-  if (!wipe || STRICTMODE(!screen_melt))
+  if (!wipe || STRICTMODE(!wipe_type)) // [Nugget]
     {
       I_FinishUpdate ();              // page flip or blit buffer
       return;
     }
-
-  // [Nugget] No wipe
-  if (!wipe_type) { return; }
 
   // wipe update
   wipe_EndScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
@@ -376,7 +372,7 @@ void D_Display (void)
       while (!tics);
       wipestart = nowtime;
       // [Nugget] Support more wipe types
-      done = wipe_ScreenWipe(wipe_type,0,0,SCREENWIDTH,SCREENHEIGHT,tics);
+      done = wipe_ScreenWipe(NOTSTRICTMODE(wipe_type),0,0,SCREENWIDTH,SCREENHEIGHT,tics);
       M_Drawer();                   // menu is drawn even on top of wipes
       I_FinishUpdate();             // page flip or blit buffer
     }
