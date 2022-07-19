@@ -1,4 +1,4 @@
-# Nugget Doom
+﻿# Nugget Doom
 
 Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.chocolate-doom.org/wiki/index.php/Crispy_Doom) fork) is a fork of [Woof!](https://github.com/fabiangreffrath/woof), intended to implement features I, Alaux, would like to have. This includes some Crispy Doom features.
 
@@ -82,15 +82,15 @@ Nugget Doom follows a fairly simple **X.Y.Z** versioning system:
 
 Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
 
-## Building
+# Building
 
 As a Woof! fork, its build instructions should also apply here:
 
 The source code is available at GitHub: https://github.com/MrAlaux/Nugget-Doom
 
-### Linux
+## Linux, and Windows with MSYS2
 
-You will need to install the SDL2, SDL2_image, SDL2_mixer and SDL2_net libraries.  Usually your distribution has these libraries in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
+On Linux, you will need to install the SDL2, SDL2_mixer and SDL2_net libraries.  Usually your distribution should have the corresponding packages in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
 
 Once installed, compilation should be as simple as:
 
@@ -103,13 +103,13 @@ Once installed, compilation should be as simple as:
 
 After successful compilation the resulting binary can be found in the `src/` directory.
 
-### Windows
+## Windows
 
 Visual Studio 2019 comes with built-in support for CMake by opening the source tree as a folder.  Otherwise, you should probably use the GUI tool included with CMake to set up the project and generate build files for your tool or IDE of choice.
 
 It's worth noting that you do not need to download any dependencies.  The build system will automatically download them for you.
 
-### Cross-compiling
+## Cross-compiling
 
 You may want to cross-compile from Linux to Windows.  First, make sure you have a reasonably recent version of the [Mingw-w64](https://www.mingw-w64.org/) package installed.  From there, cross-compiling should be as easy as:
 
@@ -122,7 +122,7 @@ You may want to cross-compile from Linux to Windows.  First, make sure you have 
 
 Much like a native Windows build, you do not need to download any dependencies.
 
-## Contact
+# Contact
 
 The homepage for Nugget Doom is https://github.com/MrAlaux/Nugget-Doom
 

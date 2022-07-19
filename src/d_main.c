@@ -37,6 +37,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "../miniz/miniz.h"
+
 #include "doomdef.h"
 #include "doomstat.h"
 #include "dstrings.h"
@@ -91,8 +93,23 @@ static char *D_dehout(void)
   static char *s;      // cache results over multiple calls
   if (!s)
     {
+      //!
+      // @category mod
+      // @arg <filename>
+      //
+      // Enables verbose dehacked parser logging.
+      //
+
       int p = M_CheckParm("-dehout");
       if (!p)
+
+        //!
+        // @category mod
+        // @arg <filename>
+        //
+        // Alias for -dehout.
+        //
+
         p = M_CheckParm("-bexout");
       s = p && ++p < myargc ? myargv[p] : "";
     }
@@ -127,7 +144,6 @@ skill_t startskill;
 int     startepisode;
 int     startmap;
 boolean autostart;
-FILE    *debugfile;
 int     startloadgame;
 
 boolean advancedemo;
@@ -193,6 +209,7 @@ void D_ProcessEvents (void)
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate = GS_DEMOSCREEN;
+boolean        screen_melt = true;
 extern int     showMessages;
 
 void D_Display (void)
@@ -228,7 +245,7 @@ void D_Display (void)
     }
 
   // save the current screen if about to wipe
-  if ((wipe = gamestate != wipegamestate))
+  if ((wipe = gamestate != wipegamestate) && NOTSTRICTMODE(screen_melt))
     wipe_StartScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
 
   if (gamestate == GS_LEVEL && gametic)
@@ -334,7 +351,7 @@ void D_Display (void)
     HU_DemoProgressBar(true);
 
   // normal update
-  if (!wipe)
+  if (!wipe || STRICTMODE(!screen_melt))
     {
       I_FinishUpdate ();              // page flip or blit buffer
       return;
@@ -565,6 +582,73 @@ void D_StartTitle (void)
 // print title for every printed line
 static char title[128];
 
+char **tempdirs = NULL;
+
+static void AutoLoadWADs(const char *path);
+
+static boolean D_AddZipFile(const char *file)
+{
+  int i;
+  mz_zip_archive zip_archive;
+  char *str, *tempdir;
+  static int idx = 0;
+
+  if (!M_StringCaseEndsWith(file, ".zip"))
+  {
+    return false;
+  }
+
+  memset(&zip_archive, 0, sizeof(zip_archive));
+  if (!mz_zip_reader_init_file(&zip_archive, file, MZ_ZIP_FLAG_DO_NOT_SORT_CENTRAL_DIRECTORY))
+  {
+    I_Error("D_AddZipFile: Failed to open %s\n", file);
+    return false;
+  }
+
+  str = M_StringJoin("_", PROJECT_SHORTNAME, "_", M_BaseName(file), NULL);
+  tempdir = M_TempFile(str);
+  free(str);
+  M_MakeDirectory(tempdir);
+
+  for (i = 0; i < (int)mz_zip_reader_get_num_files(&zip_archive); ++i)
+  {
+    mz_zip_archive_file_stat file_stat;
+    const char *name;
+
+    mz_zip_reader_file_stat(&zip_archive, i, &file_stat);
+
+    if (file_stat.m_is_directory)
+      continue;
+
+    name = M_BaseName(file_stat.m_filename);
+
+    if (M_StringCaseEndsWith(name, ".wad") || M_StringCaseEndsWith(name, ".lmp") ||
+        M_StringCaseEndsWith(name, ".ogg") || M_StringCaseEndsWith(name, ".flac") ||
+        M_StringCaseEndsWith(name, ".mp3"))
+    {
+      char *dest = M_StringJoin(tempdir, DIR_SEPARATOR_S, name, NULL);
+
+      if (!mz_zip_reader_extract_to_file(&zip_archive, i, dest, 0))
+      {
+        printf("D_AddZipFile: Failed to extract %s to %s\n",
+                file_stat.m_filename, tempdir);
+      }
+
+      free(dest);
+    }
+  }
+
+  mz_zip_reader_end(&zip_archive);
+
+  AutoLoadWADs(tempdir);
+
+  tempdirs = I_Realloc(tempdirs, (idx + 2) * sizeof(*tempdirs));
+  tempdirs[idx++] = tempdir;
+  tempdirs[idx] = NULL;
+
+  return true;
+}
+
 //
 // D_AddFile
 //
@@ -577,11 +661,15 @@ void D_AddFile(const char *file)
 {
   static int numwadfiles, numwadfiles_alloc;
 
+  if (D_AddZipFile(file))
+    return;
+
   if (numwadfiles >= numwadfiles_alloc)
     wadfiles = I_Realloc(wadfiles, (numwadfiles_alloc = numwadfiles_alloc ?
                                   numwadfiles_alloc * 2 : 8)*sizeof*wadfiles);
   // [FG] search for PWADs by their filename
-  wadfiles[numwadfiles++] = !file ? NULL : D_TryFindWADByName(file);
+  wadfiles[numwadfiles++] = D_TryFindWADByName(file);
+  wadfiles[numwadfiles] = NULL;
 }
 
 // Return the path where the executable lies -- Lee Killough
@@ -652,7 +740,7 @@ char *D_DoomPrefDir(void)
         // ~/.local/share/chocolate-doom.  On Windows, we behave like
         // Vanilla Doom and save in the current directory.
 
-        result = SDL_GetPrefPath("", PROJECT_TARNAME);
+        result = SDL_GetPrefPath("", PROJECT_SHORTNAME);
         if (result != NULL)
         {
             dir = M_StringDuplicate(result);
@@ -713,7 +801,13 @@ static void PrepareAutoloadPaths (void)
 {
     int i;
 
-    if (M_CheckParm("-noload") || M_CheckParm("-noautoload"))
+    //!
+    // @category mod
+    //
+    // Disable auto-loading of .wad and .deh files.
+    //
+
+    if (M_CheckParm("-noautoload"))
         return;
 
     for (i = 0; ; i++)
@@ -866,6 +960,14 @@ void IdentifyVersion (void)
   screenshotdir = M_StringDuplicate("."); // [FG] default to current dir
 
   basesavegame = M_StringDuplicate(D_DoomPrefDir());       //jff 3/27/98 default to current dir
+
+  //!
+  // @arg <directory>
+  //
+  // Specify a path from which to load and save games. If the directory
+  // does not exist then it will automatically be created.
+  //
+
   i = M_CheckParmWithArgs("-save", 1);
   if (i > 0)
   {
@@ -881,7 +983,12 @@ void IdentifyVersion (void)
     screenshotdir = M_StringDuplicate(basesavegame);
   }
 
-  // [FG] set screenshot path to -shotdir parm or fall back to -save parm or current dir
+  //!
+  // @arg <directory>
+  //
+  // Specify a path to save screenshots. If the directory does not
+  // exist then it will automatically be created.
+  //
 
   i = M_CheckParmWithArgs("-shotdir", 1);
   if (i > 0)
@@ -970,22 +1077,17 @@ void IdentifyVersion (void)
 
 // [FG] emulate a specific version of Doom
 
-static struct
-{
-    const char *description;
-    const char *cmdline;
-    GameVersion_t version;
-} gameversions[] = {
-    {"Doom 1.9",      "1.9",      exe_doom_1_9},
-    {"Ultimate Doom", "ultimate", exe_ultimate},
-    {"Final Doom",    "final",    exe_final},
-    {"Chex Quest",    "chex",     exe_chex},
-    { NULL,           NULL,       0},
-};
-
 static void InitGameVersion(void)
 {
     int i, p;
+
+    //!
+    // @arg <version>
+    // @category compat
+    //
+    // Emulate a specific version of Doom. Valid values are "1.9",
+    // "ultimate", "final", "chex". Implies -complevel vanilla.
+    //
 
     p = M_CheckParm("-gameversion");
 
@@ -1045,11 +1147,6 @@ static void InitGameVersion(void)
             gameversion = exe_final;
         }
     }
-}
-
-const char* GetGameVersionCmdline(void)
-{
-  return gameversions[gameversion].cmdline;
 }
 
 // killough 5/3/98: old code removed
@@ -1170,7 +1267,8 @@ static int GuessFileType(const char *name)
         iwad_found = true;
     }
     else if (M_StringEndsWith(lower, ".wad") ||
-             M_StringEndsWith(lower, ".lmp"))
+             M_StringEndsWith(lower, ".lmp") ||
+             M_StringEndsWith(lower, ".zip"))
     {
         ret = FILETYPE_PWAD;
     }
@@ -1297,7 +1395,23 @@ static void D_ProcessDehCommandLine(void)
   // Ty 03/18/98 also allow .bex extension.  .bex overrides if both exist.
   // killough 11/98: also allow -bex
 
+  //!
+  // @arg <files>
+  // @category mod
+  // @help
+  //
+  // Load the given dehacked/bex patch(es).
+  //
+
   int p = M_CheckParm ("-deh");
+
+  //!
+  // @arg <files>
+  // @category mod
+  //
+  // Alias for -deh.
+  //
+
   if (p || (p = M_CheckParm("-bex")))
     {
       // the parms after p are deh/bex file names,
@@ -1346,7 +1460,7 @@ static void AutoLoadWADs(const char *path)
     const char *filename;
 
     glob = I_StartMultiGlob(path, GLOB_FLAG_NOCASE|GLOB_FLAG_SORTED,
-                            "*.wad", "*.lmp", NULL);
+                            "*.wad", "*.lmp", "*.zip", "*.ogg", "*.flac", "*.mp3", NULL);
     for (;;)
     {
         filename = I_NextGlob(glob);
@@ -1359,8 +1473,6 @@ static void AutoLoadWADs(const char *path)
 
     I_EndGlob(glob);
 }
-
-// auto-loading of .wad files.
 
 static void D_AutoloadIWadDir()
 {
@@ -1387,20 +1499,18 @@ static void D_AutoloadIWadDir()
 
 static void D_AutoloadPWadDir()
 {
-  int p = M_CheckParm("-file");
-  if (p)
-  {
-    while (++p != myargc && myargv[p][0] != '-')
-    {
-      char **base;
+  int i;
 
-      for (base = autoload_paths; base && *base; base++)
-      {
-        char *autoload_dir;
-        autoload_dir = GetAutoloadDir(*base, M_BaseName(myargv[p]), false);
-        AutoLoadWADs(autoload_dir);
-        free(autoload_dir);
-      }
+  for (i = 1; wadfiles[i]; ++i)
+  {
+    char **base;
+
+    for (base = autoload_paths; base && *base; base++)
+    {
+      char *autoload_dir;
+      autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[i]), false);
+      AutoLoadWADs(autoload_dir);
+      free(autoload_dir);
     }
   }
 }
@@ -1454,20 +1564,18 @@ static void D_AutoloadDehDir()
 
 static void D_AutoloadPWadDehDir()
 {
-  int p = M_CheckParm("-file");
-  if (p)
-  {
-    while (++p != myargc && myargv[p][0] != '-')
-    {
-      char **base;
+  int i;
 
-      for (base = autoload_paths; base && *base; base++)
-      {
-        char *autoload_dir;
-        autoload_dir = GetAutoloadDir(*base, M_BaseName(myargv[p]), false);
-        AutoLoadPatches(autoload_dir);
-        free(autoload_dir);
-      }
+  for (i = 1; wadfiles[i]; ++i)
+  {
+    char **base;
+
+    for (base = autoload_paths; base && *base; base++)
+    {
+      char *autoload_dir;
+      autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[i]), false);
+      AutoLoadPatches(autoload_dir);
+      free(autoload_dir);
     }
   }
 }
@@ -1485,7 +1593,12 @@ static void D_AutoloadPWadDehDir()
 
 static void D_ProcessDehInWad(int i, boolean in_iwad)
 {
-  // [FG] avoid loading DEHACKED lumps embedded into WAD files
+  //!
+  // @category mod
+  //
+  // Avoid loading DEHACKED lumps embedded into WAD files.
+  //
+
   if (M_CheckParm("-nodehlump"))
   {
     return;
@@ -1663,20 +1776,36 @@ void D_DoomMain(void)
 
   setbuf(stdout,NULL);
 
-  Z_Init();                  // 1/18/98 killough: start up memory stuff first
-
   I_AtExitPrio(I_QuitFirst, true,  "I_QuitFirst", exit_priority_first);
   I_AtExitPrio(I_QuitLast,  false, "I_QuitLast",  exit_priority_last);
   I_AtExitPrio(I_Quit,      true,  "I_Quit",      exit_priority_last);
 
   I_AtExitPrio(I_ErrorMsg,  true,  "I_ErrorMsg",  exit_priority_verylast);
 
-  dsdh_InitTables();
-
 #if defined(_WIN32)
-    // [FG] compose a proper command line from loose file paths passed as arguments
-    // to allow for loading WADs and DEHACKED patches by drag-and-drop
-    M_AddLooseFiles();
+  // [FG] compose a proper command line from loose file paths passed as
+  // arguments to allow for loading WADs and DEHACKED patches by drag-and-drop
+  M_AddLooseFiles();
+#endif
+
+#if defined(HAVE_PARAMS_GEN)
+
+  //!
+  //
+  // Print command line help.
+  //
+
+  if (M_ParmExists("-help") || M_ParmExists("--help"))
+  {
+    M_PrintHelpString();
+    I_SafeExit(0);
+  }
+
+  // Don't check undocumented options if -devparm is set
+  if (!M_ParmExists("-devparm"))
+  {
+    M_CheckCommandLine();
+  }
 #endif
 
   FindResponseFile();         // Append response file arguments to command-line
@@ -1689,11 +1818,20 @@ void D_DoomMain(void)
   // [FG] emulate a specific version of Doom
   InitGameVersion();
 
+  dsdh_InitTables();
+
   D_InitTables();
 
   modifiedgame = false;
 
   // killough 7/19/98: beta emulation option
+
+  //!
+  // @category game
+  //
+  // Press beta emulation mode (complevel mbf only).
+  //
+
   beta_emulation = !!M_CheckParm("-beta");
 
   if (beta_emulation)
@@ -1713,23 +1851,81 @@ void D_DoomMain(void)
 #endif
 
   // jff 1/24/98 set both working and command line value of play parms
+
+  //!
+  // @category game
+  // @vanilla
+  //
+  // Disable monsters.
+  //
+
   nomonsters = clnomonsters = M_CheckParm ("-nomonsters");
+
+  //!
+  // @category game
+  // @vanilla
+  //
+  // Monsters respawn after being killed.
+  //
+
   respawnparm = clrespawnparm = M_CheckParm ("-respawn");
+
+  //!
+  // @category game
+  // @vanilla
+  //
+  // Monsters move faster.
+  //
+
   fastparm = clfastparm = M_CheckParm ("-fast");
   // jff 1/24/98 end of set to both working and command line value
 
+  //!
+  // @category game
+  // @help
+  //
+  // Enables automatic pistol starts on each level.
+  //
+
   pistolstart = M_CheckParm ("-pistolstart");
+
+  //!
+  // @vanilla
+  //
+  // Developer mode.
+  //
 
   devparm = M_CheckParm ("-devparm");
 
+  //!
+  // @category net
+  // @vanilla
+  //
+  // Start a deathmatch game.
+  //
+
+  if (M_CheckParm ("-deathmatch"))
+    deathmatch = 1;
+
+  //!
+  // @category net
+  // @vanilla
+  //
+  // Start a deathmatch 2.0 game. Weapons do not stay in place and
+  // all items respawn after 30 seconds.
+  //
+
   if (M_CheckParm ("-altdeath"))
     deathmatch = 2;
-  else
-    if (M_CheckParm ("-deathmatch"))
-      deathmatch = 1;
 
-  // Start a deathmatch 3.0 game. Weapons stay in place and all items respawn
-  // after 30 seconds.
+  //!
+  // @category net
+  // @vanilla
+  //
+  // Start a deathmatch 3.0 game.  Weapons stay in place and
+  // all items respawn after 30 seconds.
+  //
+
   if (M_CheckParm ("-dm3"))
     deathmatch = 3;
 
@@ -1806,6 +2002,16 @@ void D_DoomMain(void)
     printf(D_DEVSTR);
 
 #ifdef _WIN32
+
+  //!
+  // @category obscure
+  // @platform windows
+  // @vanilla
+  //
+  // Save configuration data and savegames in c:\doomdata,
+  // allowing play from CD.
+  //
+
   if (M_CheckParm("-cdrom"))
     {
       printf(D_CDROM);
@@ -1817,15 +2023,23 @@ void D_DoomMain(void)
     }
 #endif
 
-  // turbo option
+  //!
+  // @category game
+  // @arg <x>
+  // @vanilla
+  //
+  // Turbo mode.  The player's speed is multiplied by x%.  If unspecified,
+  // x defaults to 200.  Values are rounded up to 10 and down to 400.
+  //
+
   if ((p=M_CheckParm ("-turbo")))
     {
       int scale = 200;
       extern int forwardmove[2];
       extern int sidemove[2];
 
-      if (p<myargc-1)
-        scale = atoi(myargv[p+1]);
+      if (p < myargc - 1 && myargv[p + 1][0] != '-')
+        scale = M_ParmArgToInt(p);
       if (scale < 10)
         scale = 10;
       if (scale > 400)
@@ -1852,6 +2066,14 @@ void D_DoomMain(void)
 
   // killough 1/31/98, 5/2/98: reload hack removed, -wart same as -warp now.
 
+  //!
+  // @arg <files>
+  // @vanilla
+  // @help
+  //
+  // Load the specified PWAD files.
+  //
+
   if ((p = M_CheckParm ("-file")))
     {
       // the parms after p are wadfile/lump names,
@@ -1871,11 +2093,38 @@ void D_DoomMain(void)
 
   D_AutoloadPWadDir();
 
+  //!
+  // @arg <demo>
+  // @category demo
+  // @vanilla
+  // @help
+  //
+  // Play back the demo named demo.lmp.
+  //
+
   if (!(p = M_CheckParm("-playdemo")) || p >= myargc-1)    // killough
   {
+
+    //!
+    // @arg <demo>
+    // @category demo
+    //
+    // Plays the given demo as fast as possible.
+    //
+
     if ((p = M_CheckParm ("-fastdemo")) && p < myargc-1)   // killough
       fastdemo = true;             // run at fastest speed possible
     else
+
+      //!
+      // @arg <demo>
+      // @category demo
+      // @vanilla
+      //
+      // Play back the demo named demo.lmp, determining the framerate
+      // of the screen.
+      //
+
       p = M_CheckParm ("-timedemo");
   }
 
@@ -1891,30 +2140,80 @@ void D_DoomMain(void)
 
   // get skill / episode / map from parms
 
-  startskill = sk_none; // jff 3/24/98 was sk_medium, just note not picked
+  startskill = sk_default; // jff 3/24/98 was sk_medium, just note not picked
   startepisode = 1;
   startmap = 1;
   autostart = false;
 
+  //!
+  // @category game
+  // @arg <skill>
+  // @vanilla
+  // @help
+  //
+  // Set the game skill, 1-5 (1: easiest, 5: hardest). A skill of 0 disables all
+  // monsters only in -complevel vanilla.
+  //
+
   if ((p = M_CheckParm ("-skill")) && p < myargc-1)
-    {
-      startskill = myargv[p+1][0]-'1';
-      autostart = true;
-    }
+   {
+     startskill = M_ParmArgToInt(p);
+     startskill--;
+     if (startskill >= sk_none && startskill <= sk_nightmare)
+      {
+        autostart = true;
+      }
+     else
+      {
+        I_Error("Invalid parameter '%s' for -skill, valid values are 1-5 "
+                "(1: easiest, 5: hardest). "
+                "A skill of 0 disables all monsters.", myargv[p+1]);
+      }
+   }
+
+  //!
+  // @category game
+  // @arg <n>
+  // @vanilla
+  //
+  // Start playing on episode n (1-99)
+  //
 
   if ((p = M_CheckParm ("-episode")) && p < myargc-1)
     {
-      startepisode = myargv[p+1][0]-'0';
-      startmap = 1;
-      autostart = true;
+      startepisode = M_ParmArgToInt(p);
+      if (startepisode >= 1 && startepisode <= 99)
+       {
+         startmap = 1;
+         autostart = true;
+       }
+      else
+       {
+          I_Error("Invalid parameter '%s' for -episode, valid values are 1-99.",
+                  myargv[p+1]);
+       }
     }
+
+  //!
+  // @arg <n>
+  // @category net
+  // @vanilla
+  //
+  // For multiplayer games: exit each level after n minutes.
+  //
 
   if ((p = M_CheckParm ("-timer")) && p < myargc-1 && deathmatch)
     {
-      int time = atoi(myargv[p+1]);
-      timelimit = time;
-      printf("Levels will end after %d minute%s.\n", time, time>1 ? "s" : "");
+      timelimit = M_ParmArgToInt(p);
+      printf("Levels will end after %d minute%s.\n", timelimit, timelimit>1 ? "s" : "");
     }
+
+  //!
+  // @category net
+  // @vanilla
+  //
+  // Austin Virtual Gaming: end levels after 20 minutes.
+  //
 
   if ((p = M_CheckParm ("-avg")) && p < myargc-1 && deathmatch)
     {
@@ -1922,26 +2221,35 @@ void D_DoomMain(void)
     puts("Austin Virtual Gaming: Levels will end after 20 minutes");
     }
 
+  //!
+  // @category game
+  // @arg <x> <y>|<xy>
+  // @vanilla
+  // @help
+  //
+  // Start a game immediately, warping to ExMy (Doom 1) or MAPxy (Doom 2).
+  //
+
   if (((p = M_CheckParm ("-warp")) ||      // killough 5/2/98
        (p = M_CheckParm ("-wart"))) && p < myargc-1)
   {
     if (gamemode == commercial)
       {
-        startmap = atoi(myargv[p+1]);
+        startmap = M_ParmArgToInt(p);
         autostart = true;
       }
     else    // 1/25/98 killough: fix -warp xxx from crashing Doom 1 / UD
       // [crispy] only if second argument is not another option
       if (p < myargc-2 && myargv[p+2][0] != '-')
         {
-          startepisode = atoi(myargv[++p]);
-          startmap = atoi(myargv[p+1]);
+          startepisode = M_ParmArgToInt(p);
+          startmap = M_ParmArg2ToInt(p);
           autostart = true;
         }
       // [crispy] allow second digit without space in between for Doom 1
       else
         {
-          int em = atoi(myargv[++p]);
+          int em = M_ParmArgToInt(p);
           startepisode = em / 10;
           startmap = em % 10;
           autostart = true;
@@ -1952,17 +2260,60 @@ void D_DoomMain(void)
 
   //jff 1/22/98 add command line parms to disable sound and music
   {
+    //!
+    // @vanilla
+    //
+    // Disable all sound output.
+    //
+
     int nosound = M_CheckParm("-nosound");
+
+    //!
+    // @vanilla
+    //
+    // Disable music.
+    //
+
     nomusicparm = nosound || M_CheckParm("-nomusic");
+
+    //!
+    // @vanilla
+    //
+    // Disable sound effects.
+    //
+
     nosfxparm   = nosound || M_CheckParm("-nosfx");
   }
   //jff end of sound/music command line parms
 
   // killough 3/2/98: allow -nodraw generally
+
+  //!
+  // @category video
+  // @vanilla
+  //
+  // Disable rendering the screen entirely.
+  //
+
   nodrawers = M_CheckParm ("-nodraw");
+
+  //!
+  // @category video
+  // @vanilla
+  //
+  // Disable blitting the screen.
+  //
+
   noblit = M_CheckParm ("-noblit");
 
   // jff 4/21/98 allow writing predefined lumps out as a wad
+
+  //!
+  // @category mod
+  //
+  // Allow writing predefined lumps out as a WAD.
+  //
+
   if ((p = M_CheckParm("-dumplumps")) && p < myargc-1)
     WritePredefinedLumpWad(myargv[p+1]);
 
@@ -1976,8 +2327,6 @@ void D_DoomMain(void)
   // init subsystems
   puts("V_Init: allocate screens.");    // killough 11/98: moved down to here
   V_Init();
-
-  D_AddFile(NULL);           // killough 11/98
 
   puts("W_Init: Init WADfiles.");
   W_InitMultipleFiles(wadfiles);
@@ -2035,6 +2384,12 @@ void D_DoomMain(void)
 
   D_ProcessDefaultsInWads();
 
+  //!
+  // @category mod
+  //
+  // Disable UMAPINFO loading.
+  //
+
   if (!M_CheckParm("-nomapinfo"))
   {
     D_ProcessUMInWads();
@@ -2053,10 +2408,18 @@ void D_DoomMain(void)
   if (*startup5) puts(startup5);
   // End new startup strings
 
+  //!
+  // @category game
+  // @arg <s>
+  // @vanilla
+  //
+  // Load the game in slot s.
+  //
+
   p = M_CheckParmWithArgs("-loadgame", 1);
   if (p)
   {
-    startloadgame = atoi(myargv[p+1]);
+    startloadgame = M_ParmArgToInt(p);
   }
   else
   {
@@ -2111,10 +2474,24 @@ void D_DoomMain(void)
       puts("External statistics registered.");
     }
 
+  //!
+  // @category game
+  //
+  // Start single player game with items spawns as in cooperative netgame.
+  //
+
   if (M_ParmExists("-coop_spawns"))
     {
       coop_spawns = true;
     }
+
+  //!
+  // @arg <min:sec>
+  // @category demo
+  //
+  // Skip min:sec time during viewing of the demo.
+  // "-warp <x> -skipsec <min:sec>" will skip min:sec time on level x.
+  //
 
   p = M_CheckParmWithArgs("-skipsec", 1);
   if (p)
@@ -2129,6 +2506,10 @@ void D_DoomMain(void)
       {
         demoskip_tics = (int) (sec * TICRATE);
       }
+      else
+      {
+        I_Error("Invalid parameter '%s' for -skipsec, should be min:sec", myargv[p+1]);
+      }
 
       demoskip_tics = abs(demoskip_tics);
     }
@@ -2138,11 +2519,30 @@ void D_DoomMain(void)
   // killough 12/98:
   // Support -loadgame with -record and reimplement -recordfrom.
 
+  //!
+  // @arg <save> <demo>
+  // @category demo
+  //
+  // Records a demo starting from a saved game. It is the same as "-loadgame
+  // <save> -record <demo>". "-loadgame <save> -playdemo <demo>" plays back the
+  // demo starting from the saved game.
+  //
+
   if ((slot = M_CheckParm("-recordfrom")) && (p = slot+2) < myargc)
     G_RecordDemo(myargv[p]);
   else
     {
       slot = M_CheckParm("-loadgame");
+
+      //!
+      // @arg <demo>
+      // @category demo
+      // @vanilla
+      // @help
+      //
+      // Record a demo named demo.lmp.
+      //
+
       if ((p = M_CheckParm("-record")) && ++p < myargc)
 	{
 	  autostart = true;
@@ -2208,17 +2608,9 @@ void D_DoomMain(void)
 
   // killough 12/98: inlined D_DoomLoop
 
-  if (M_CheckParm ("-debugfile"))
-    {
-      char filename[20];
-      sprintf(filename,"debug%i.txt",consoleplayer);
-      printf("debug output to: %s\n",filename);
-      debugfile = M_fopen(filename,"w");
-    }
-
   if (!demorecording)
   {
-    I_AtExitPrio(D_EndDoom,  false, "D_EndDoom",  exit_priority_last);
+    I_AtExitPrio(D_EndDoom, false, "D_EndDoom", exit_priority_last);
   }
 
   TryRunTics();

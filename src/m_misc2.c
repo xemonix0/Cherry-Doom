@@ -62,7 +62,7 @@ char *M_TempFile(const char *s)
 
     // Check the TEMP environment variable to find the location.
 
-    tempdir = getenv("TEMP");
+    tempdir = M_getenv("TEMP");
 
     if (tempdir == NULL)
     {
@@ -354,6 +354,12 @@ boolean M_StringEndsWith(const char *s, const char *suffix)
 {
     return strlen(s) >= strlen(suffix)
         && strcmp(s + strlen(s) - strlen(suffix), suffix) == 0;
+}
+
+boolean M_StringCaseEndsWith(const char *s, const char *suffix)
+{
+    return strlen(s) >= strlen(suffix)
+        && strcasecmp(s + strlen(s) - strlen(suffix), suffix) == 0;
 }
 
 // Return a newly-malloced string with all the strings given as arguments

@@ -562,16 +562,11 @@ void R_ExecuteSetViewSize (void)
 void R_Init (void)
 {
   R_InitData();
-  puts("\nR_InitData");
   R_SetViewSize(screenblocks);
   R_InitPlanes();
-  puts("R_InitPlanes");
   R_InitLightTables();
-  puts("R_InitLightTables");
   R_InitSkyMap();
-  puts("R_InitSkyMap");
   R_InitTranslationTables();
-  puts("R_InitTranslationsTables");
 }
 
 //
@@ -722,8 +717,9 @@ int rendered_visplanes, rendered_segs, rendered_vissprites;
 
 void R_ShowRenderingStats(void)
 {
-  dprintf("Segs %d, Visplanes %d, Sprites %d",
-          rendered_segs, rendered_visplanes, rendered_vissprites);
+  extern int fps;
+  doomprintf("Segs %d, Visplanes %d, Sprites %d, FPS %d",
+          rendered_segs, rendered_visplanes, rendered_vissprites, fps);
 }
 
 static void R_ClearStats(void)

@@ -97,6 +97,8 @@ extern boolean demobar;
 extern boolean smoothlight;
 extern boolean brightmaps;
 extern boolean r_swirl;
+extern int death_use_action;
+extern boolean palette_changes;
 
 extern char *chat_macros[];  // killough 10/98
 
@@ -256,6 +258,13 @@ default_t defaults[] = {
   },
 
   {
+    "st_solidbackground",
+    (config_t *) &st_solidbackground, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 for solid color status bar background in widescreen mode"
+  },
+
+  {
     "gamma2",
     (config_t *) &gamma2, NULL,
     {9}, {0,17}, number, ss_gen, wad_no,
@@ -267,6 +276,20 @@ default_t defaults[] = {
     (config_t *) &default_bodyquesize, NULL,
     {32}, {UL,UL},number, ss_gen, wad_no,
     "number of dead bodies in view supported (negative value = no limit)"
+  },
+
+  { // killough 2/8/98
+    "death_use_action",
+    (config_t *) &death_use_action, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "\"use\" button action on death (0 = default, 1 = load save, 2 = nothing)"
+  },
+
+  { // [Nugget] Replace screen melt toggle
+    "wipe_type",
+    (config_t *) &wipe_type, NULL,
+    {1}, {0,2}, number, ss_gen, wad_yes,
+    "Screen wipe type (0 = None, 1 = Melt, 2 = ColorXForm)"
   },
 
   { // killough 10/98
@@ -452,13 +475,6 @@ default_t defaults[] = {
     (config_t *) &no_ss_background, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,
     "1 to disable the background in setup screens"
-  },
-
-  {
-    "wipe_type",
-    (config_t *) &wipe_type, NULL,
-    {1}, {0,2}, number, ss_gen, wad_yes,
-    "Screen wipe type (0 = None, 1 = Melt, 2 = ColorXForm)"
   },
 
   {
@@ -2014,6 +2030,13 @@ default_t defaults[] = {
     "1 to make keyed doors flash on the automap"
   },
 
+  {
+    "map_smooth_lines",
+    (config_t *) &map_smooth_lines, NULL,
+    {0}, {0,1}, number, ss_auto, wad_no,
+    "1 to enable smooth automap lines"
+  },
+
   // [FG] player coords widget
   {
     "map_player_coords",
@@ -2976,7 +2999,12 @@ void M_LoadOptions(void)
 {
   int lump;
 
-  // [FG] avoid loading OPTIONS lumps embedded into WAD files
+  //!
+  // @category mod
+  //
+  // Avoid loading OPTIONS lumps embedded into WAD files.
+  //
+
   if (!M_CheckParm("-nooptions"))
   {
   if ((lump = W_CheckNumForName("OPTIONS")) != -1)
@@ -3045,6 +3073,14 @@ void M_LoadDefaults (void)
 
   if (!defaultfile)
   {
+    //!
+    // @arg <file>
+    // @vanilla
+    //
+    // Load main configuration from the specified file, instead of the
+    // default.
+    //
+
     if ((i = M_CheckParm("-config")) && i < myargc-1)
       defaultfile = strdup(myargv[i+1]);
     else
@@ -3270,7 +3306,7 @@ void M_ScreenShot (void)
   // players[consoleplayer].message = "screen shot"
 
   // killough 10/98: print error message and change sound effect if error
-  S_StartSound(NULL, !success ? dprintf("%s", errno ? strerror(errno) :
+  S_StartSound(NULL, !success ? doomprintf("%s", errno ? strerror(errno) :
 					"Could not take screenshot"), sfx_oof :
                gamemode==commercial ? sfx_radio : sfx_tink);
 

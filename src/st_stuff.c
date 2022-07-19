@@ -335,9 +335,9 @@ static int      st_randomnumber;
 
 extern char     *mapnames[];
 
-// [Nugget] Smooth counts
-// These are default values, which most likely go unused
-// since G_InitNew and G_DoLoadGame update them right away
+// [Nugget] Smooth counts;
+// These are default values, which should go unused if
+// the variables are correctly updated elsewhere
 int STHealth = 100;
 int STArmor = 0;
 
@@ -370,43 +370,96 @@ void NuggetSmoothCount(int* shownval, int realval)
 
 void ST_Stop(void);
 
+int st_solidbackground;
+
 void ST_refreshBackground(boolean force)
 {
-  if (st_classicstatusbar || force) {
-    // [crispy] this is our own local copy of R_FillBackScreen() to
-    // fill the entire background of st_backing_screen with the bezel pattern,
-    // so it appears to the left and right of the status bar in widescreen mode
+  if (st_classicstatusbar) {
     if (SCREENWIDTH != ST_WIDTH) {
       int x, y;
-      byte *src;
-      byte *dest;
-      const char *name = (gamemode == commercial) ? "GRNROCK" : "FLOOR7_2";
+      byte *dest = screens[BG];
 
-      src = W_CacheLumpNum(firstflat + R_FlatNumForName(name), PU_CACHE);
-      dest = screens[BG];
+      if (st_solidbackground) {
+        // [FG] calculate average color of the 16px left and right of the status bar
+        const int vstep[][2] = {{0, 1}, {1, 2}, {2, ST_HEIGHT}};
+        const int hstep = hires ? (4 * SCREENWIDTH) : SCREENWIDTH;
+        const int w = MIN(SHORT(sbar->width), SCREENWIDTH);
+        const int depth = 16;
+        byte *pal = W_CacheLumpName("PLAYPAL", PU_STATIC);
+        int v;
 
-      if (hires) {
-        for (y = (SCREENHEIGHT-ST_HEIGHT)<<1; y < SCREENHEIGHT<<1; y++)
-            for (x = 0; x < SCREENWIDTH<<1; x += 2) {
+        // [FG] temporarily draw status bar to background buffer
+        V_DrawPatch(ST_X, 0, BG, sbar);
+
+        // [FG] separate colors for the top rows
+        for (v = 0; v < arrlen(vstep); v++)
+        {
+          const int v0 = vstep[v][0], v1 = vstep[v][1];
+          unsigned r = 0, g = 0, b = 0;
+          byte col;
+
+          for (y = v0; y < v1; y++)
+            for (x = 0; x < depth; x++)
+            {
+              byte *c = dest + y * hstep + ((x + WIDESCREENDELTA) << hires);
+              r += pal[3 * c[0] + 0];
+              g += pal[3 * c[0] + 1];
+              b += pal[3 * c[0] + 2];
+
+              c += (w - 2 * x - 1) << hires;
+              r += pal[3 * c[0] + 0];
+              g += pal[3 * c[0] + 1];
+              b += pal[3 * c[0] + 2];
+            }
+
+          r /= 2 * depth * (v1 - v0);
+          g /= 2 * depth * (v1 - v0);
+          b /= 2 * depth * (v1 - v0);
+
+          // [FG] tune down to half saturation (for empiric reasons)
+          col = I_GetPaletteIndex(pal, r/2, g/2, b/2);
+
+          // [FG] fill background buffer with average status bar color
+          for (y = (v0 << hires); y < (v1 << hires); y++)
+            { memset(dest + y * (SCREENWIDTH << hires), col, (SCREENWIDTH << hires)); }
+        }
+
+        Z_ChangeTag (pal, PU_CACHE);
+      }
+      else {
+        // [crispy] this is our own local copy of R_FillBackScreen() to
+        // fill the entire background of st_backing_screen with the bezel pattern,
+        // so it appears to the left and right of the status bar in widescreen mode
+        byte *src;
+        const char *name = (gamemode == commercial) ? "GRNROCK" : "FLOOR7_2";
+
+        src = W_CacheLumpNum(firstflat + R_FlatNumForName(name), PU_CACHE);
+
+        if (hires) {
+          for (y = (SCREENHEIGHT-ST_HEIGHT)<<1; y < SCREENHEIGHT<<1; y++)
+            for (x = 0; x < SCREENWIDTH<<1; x += 2)
+            {
                 const byte dot = src[(((y>>1)&63)<<6) + ((x>>1)&63)];
 
                 *dest++ = dot;
                 *dest++ = dot;
             }
-      }
-      else {
-        for (y = SCREENHEIGHT-ST_HEIGHT; y < SCREENHEIGHT; y++)
-          for (x = 0; x < SCREENWIDTH; x++)
-            { *dest++ = src[((y&63)<<6) + (x&63)]; }
-      }
+        }
+        else {
+          for (y = SCREENHEIGHT-ST_HEIGHT; y < SCREENHEIGHT; y++)
+            for (x = 0; x < SCREENWIDTH; x++)
+             { *dest++ = src[((y&63)<<6) + (x&63)]; }
+        }
 
-      // [crispy] preserve bezel bottom edge
-      if (scaledviewwidth == SCREENWIDTH) {
-        patch_t *const patch = W_CacheLumpName("brdr_b", PU_CACHE);
+        // [crispy] preserve bezel bottom edge
+        if (scaledviewwidth == SCREENWIDTH) {
+          patch_t *const patch = W_CacheLumpName("brdr_b", PU_CACHE);
 
-        for (x = 0; x < WIDESCREENDELTA; x += 8) {
-          V_DrawPatch(x - WIDESCREENDELTA, 0, BG, patch);
-          V_DrawPatch(ORIGWIDTH + WIDESCREENDELTA - x - 8, 0, BG, patch);
+          for (x = 0; x < WIDESCREENDELTA; x += 8)
+          {
+            V_DrawPatch(x - WIDESCREENDELTA, 0, BG, patch);
+            V_DrawPatch(ORIGWIDTH + WIDESCREENDELTA - x - 8, 0, BG, patch);
+          }
         }
       }
     }
@@ -418,21 +471,22 @@ void ST_refreshBackground(boolean force)
       { V_DrawPatch(ST_X, 0, BG, sbar); }
 
     if (st_notdeathmatch)
-      { V_DrawPatch(ST_ARMSBGX, 0, BG, armsbg); }
+      V_DrawPatch(ST_ARMSBGX, 0, BG, armsbg);
 
     // killough 3/7/98: make face background change with displayplayer
     if (netgame)
-      { V_DrawPatch(ST_FX, 0, BG, faceback[displayplayer]); }
+      V_DrawPatch(ST_FX, 0, BG, faceback[displayplayer]);
 
     // [crispy] copy entire SCREENWIDTH, to preserve the pattern
     // to the left and right of the status bar in widescren mode
     if (!force)
-      { V_CopyRect(ST_X, 0, BG, SCREENWIDTH, ST_HEIGHT, ST_X, ST_Y, FG); }
-    else {
-      if (WIDESCREENDELTA > 0 && !st_firsttime) {
-        V_CopyRect(0, 0, BG, WIDESCREENDELTA, ST_HEIGHT, 0, ST_Y, FG);
-        V_CopyRect(ORIGWIDTH + WIDESCREENDELTA, 0, BG, WIDESCREENDELTA, ST_HEIGHT, ORIGWIDTH + WIDESCREENDELTA, ST_Y, FG);
-      }
+    {
+      V_CopyRect(ST_X, 0, BG, SCREENWIDTH, ST_HEIGHT, ST_X, ST_Y, FG);
+    }
+    else if (WIDESCREENDELTA > 0 && !st_firsttime)
+    {
+      V_CopyRect(0, 0, BG, WIDESCREENDELTA, ST_HEIGHT, 0, ST_Y, FG);
+      V_CopyRect(ORIGWIDTH + WIDESCREENDELTA, 0, BG, WIDESCREENDELTA, ST_HEIGHT, ORIGWIDTH + WIDESCREENDELTA, ST_Y, FG);
     }
   }
 }
@@ -739,6 +793,7 @@ void ST_Ticker(void)
 }
 
 static int st_palette = 0;
+boolean palette_changes = true;
 
 void ST_doPaletteStuff(void)
 {
@@ -758,7 +813,7 @@ void ST_doPaletteStuff(void)
     }
 
   // [Nugget]: [crispy] A11Y
-  if (!a11y_palette_changes)
+  if (STRICTMODE(!a11y_palette_changes))
     { palette = 0; }
   else if (cnt)
   {
@@ -814,6 +869,7 @@ void ST_doPaletteStuff(void)
 void ST_drawWidgets(boolean refresh)
 {
   int i;
+  int ammopct = *w_ready.num*100;
   int maxammo = plyr->maxammo[weaponinfo[w_ready.data].ammo];
   // [Nugget] Used to color health and armor counts based on
   // the real values, only ever relevant when using smooth counts
@@ -831,16 +887,11 @@ void ST_drawWidgets(boolean refresh)
 
   //jff 2/16/98 make color of ammo depend on amount
   // [Nugget] Make it gray if the player has infinite ammo
-  if (plyr->cheats & CF_INFAMMO)
-    { STlib_updateNum(&w_ready, cr_gray, refresh); }
-  else if (*w_ready.num*100 < ammo_red*maxammo)
-    { STlib_updateNum(&w_ready, cr_red, refresh); }
-  else if (*w_ready.num*100 < ammo_yellow*maxammo)
-    { STlib_updateNum(&w_ready, cr_gold, refresh); }
-  else if (*w_ready.num > maxammo)
-    { STlib_updateNum(&w_ready, cr_blue2, refresh); }
-  else
-    { STlib_updateNum(&w_ready, cr_green, refresh); }
+  if (plyr->cheats & CF_INFAMMO)           { STlib_updateNum(&w_ready, cr_gray, refresh); }
+  else if (ammopct < ammo_red*maxammo)     { STlib_updateNum(&w_ready, cr_red, refresh); }
+  else if (ammopct < ammo_yellow*maxammo)  { STlib_updateNum(&w_ready, cr_gold, refresh); }
+  else if (ammopct > maxammo)              { STlib_updateNum(&w_ready, cr_blue2, refresh); }
+  else                                     { STlib_updateNum(&w_ready, cr_green, refresh); }
 
   for (i=0;i<4;i++) {
     STlib_updateNum(&w_ammo[i], NULL, refresh); //jff 2/16/98 no xlation
@@ -850,32 +901,34 @@ void ST_drawWidgets(boolean refresh)
   //jff 2/16/98 make color of health depend on amount
   // [Nugget] Use the player's health value instead of the percent's value
   // [Nugget] Make it gray if the player's invulnerable
-  if (plyr->powers[pw_invulnerability] || plyr->cheats & CF_GODMODE)
-    { STlib_updatePercent(&w_health, cr_gray, refresh); }
-  else if (health<health_red)
-    { STlib_updatePercent(&w_health, cr_red, refresh); }
-  else if (health<health_yellow)
-    { STlib_updatePercent(&w_health, cr_gold, refresh); }
-  else if (health<=health_green)
-    { STlib_updatePercent(&w_health, cr_green, refresh); }
-  else
-    { STlib_updatePercent(&w_health, cr_blue2, refresh); } //killough 2/28/98
+  if ((plyr->powers[pw_invulnerability] > 4*32
+       || plyr->powers[pw_invulnerability] & 8)
+      || plyr->cheats & CF_GODMODE) { STlib_updatePercent(&w_health, cr_gray, refresh); }
+  else if (health<health_red)       { STlib_updatePercent(&w_health, cr_red, refresh); }
+  else if (health<health_yellow)    { STlib_updatePercent(&w_health, cr_gold, refresh); }
+  else if (health<=health_green)    { STlib_updatePercent(&w_health, cr_green, refresh); }
+  else                              { STlib_updatePercent(&w_health, cr_blue2, refresh); } //killough 2/28/98
 
   // color of armor depends on type
-  // [Nugget] Use code from our implementation, differently formatted to save space
-  if (hud_armor_type)
-    STlib_updatePercent(&w_armor, plyr->armortype == 2
-                                  ? cr_blue2
-                                  : plyr->armortype == 1
+  // [Nugget] Use code from our implementation,
+  // differently formatted to save space, and check for God Mode
+  if (hud_armor_type && !(plyr->cheats & CF_GODMODE))
+  {
+    STlib_updatePercent(&w_armor, (!plyr->armortype)
+                                  ? cr_red
+                                  : (plyr->armortype == 1)
                                     ? cr_green
-                                    : cr_red, refresh);
+                                    : cr_blue2, refresh);
+  }
   else {
     //jff 2/16/98 make color of armor depend on amount
     // [Nugget] Use the player's armor value instead of the percent's value
-    if (armor<armor_red)          { STlib_updatePercent(&w_armor, cr_red, refresh); }
-    else if (armor<armor_yellow)  { STlib_updatePercent(&w_armor, cr_gold, refresh); }
-    else if (armor<=armor_green)  { STlib_updatePercent(&w_armor, cr_green, refresh); }
-    else                          { STlib_updatePercent(&w_armor, cr_blue2, refresh); } //killough 2/28/98
+    // [Nugget] Make it gray if the player's in God Mode
+    if (plyr->cheats & CF_GODMODE)  { STlib_updatePercent(&w_armor, cr_gray, refresh); }
+    else if (armor<armor_red)       { STlib_updatePercent(&w_armor, cr_red, refresh); }
+    else if (armor<armor_yellow)    { STlib_updatePercent(&w_armor, cr_gold, refresh); }
+    else if (armor<=armor_green)    { STlib_updatePercent(&w_armor, cr_green, refresh); }
+    else                            { STlib_updatePercent(&w_armor, cr_blue2, refresh); } //killough 2/28/98
   }
 
   // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget

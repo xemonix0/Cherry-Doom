@@ -628,9 +628,7 @@ void HU_Start(void)
   // create the hud monster/secret widget
   // totals and current values for kills, items, secrets
   // lower left of screen
-  HUlib_initTextLine(&w_monsec, hud_distributed ? HU_MONSECX_D : HU_MONSECX,
-		     (scaledviewheight < SCREENHEIGHT || (screenSize >= 8 && screenSize <= 11)) ? (ST_Y - HU_GAPY) :
-		     hud_distributed? HU_MONSECY_D : HU_MONSECY, hu_font2,
+  HUlib_initTextLine(&w_monsec, 0, 0, hu_font2,
 		     HU_FONTSTART, colrngs[CR_GRAY]);
 
   // create the hud text refresh widget
@@ -1313,6 +1311,7 @@ void HU_Drawer(void)
       if (plr->cheats & CF_INFAMMO) { w_ammo.cr = colrngs[CR_GRAY]; }
       else if (ammopct<ammo_red)    { w_ammo.cr = colrngs[CR_RED]; }
       else if (ammopct<ammo_yellow) { w_ammo.cr = colrngs[CR_GOLD]; }
+      else if (ammopct>fullammo)    { w_ammo.cr = colrngs[CR_BLUE2]; }
       else                          { w_ammo.cr = colrngs[CR_GREEN]; }
     }
     // transfer the init string to the widget
@@ -1355,16 +1354,13 @@ void HU_Drawer(void)
 
       // set the display color from the amount of health posessed
       // [Nugget] Make it gray if the player's invulnerable
-      if (plr->powers[pw_invulnerability] || plr->cheats & CF_GODMODE)
-        { w_health.cr = colrngs[CR_GRAY]; }
-      else if (health<health_red)
-        { w_health.cr = colrngs[CR_RED]; }
-      else if (health<health_yellow)
-        { w_health.cr = colrngs[CR_GOLD]; }
-      else if (health<=health_green)
-        { w_health.cr = colrngs[CR_GREEN]; }
-      else
-        { w_health.cr = colrngs[CR_BLUE]; }
+      if ((plr->powers[pw_invulnerability] > 4*32
+           || plr->powers[pw_invulnerability] & 8)
+          || plr->cheats & CF_GODMODE)  { w_health.cr = colrngs[CR_GRAY]; }
+      else if (health<health_red)       { w_health.cr = colrngs[CR_RED]; }
+      else if (health<health_yellow)    { w_health.cr = colrngs[CR_GOLD]; }
+      else if (health<=health_green)    { w_health.cr = colrngs[CR_GREEN]; }
+      else                              { w_health.cr = colrngs[CR_BLUE]; }
 
       // transfer the init string to the widget
       s = hud_healthstr;
@@ -1405,22 +1401,22 @@ void HU_Drawer(void)
       strcat(hud_armorstr,armorstr);
 
       // color of armor depends on type
-      if (hud_armor_type) {
-        w_armor.cr = (!plr->armortype)
-                     ? colrngs[CR_RED]
-                     : (plr->armortype == 1)
-                       ? colrngs[CR_GREEN]
-                       : colrngs[CR_BLUE];
+      if (hud_armor_type && !(plr->cheats & CF_GODMODE))
+      {
+        w_armor.cr =  (!plr->armortype)
+                      ? colrngs[CR_RED]
+                      : (plr->armortype == 1)
+                        ? colrngs[CR_GREEN]
+                        : colrngs[CR_BLUE];
       }
       else {
         // set the display color from the amount of armor posessed
-        w_armor.cr =  armor<armor_red
-                      ? colrngs[CR_RED]
-                      : armor<armor_yellow
-                        ? colrngs[CR_GOLD]
-                        : armor<=armor_green
-                          ? colrngs[CR_GREEN]
-                          : colrngs[CR_BLUE];
+        // [Nugget] Make it gray if the player's in God Mode
+        if (plr->cheats & CF_GODMODE) { w_armor.cr = colrngs[CR_GRAY]; }
+        else if (armor<armor_red)     { w_armor.cr = colrngs[CR_RED]; }
+        else if (armor<armor_yellow)  { w_armor.cr = colrngs[CR_GOLD]; }
+        else if (armor<=armor_green)  { w_armor.cr = colrngs[CR_GREEN]; }
+        else                          { w_armor.cr = colrngs[CR_BLUE]; }
       }
 
       // transfer the init string to the widget

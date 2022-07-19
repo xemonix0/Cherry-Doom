@@ -6,8 +6,8 @@ include(ExternalProject)
 # Adds the cmake directory to the CMake include path.
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# 3.12 is needed for modern FindPython.
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.6)
+
 project("Nugget Doom"
     VERSION 1.9.1
     DESCRIPTION "Nugget Doom 1.9.1"
@@ -30,7 +30,14 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     message(FATAL_ERROR "In-tree builds are not supported.")
 endif()
 
-if(MINGW)
+execute_process(COMMAND uname OUTPUT_VARIABLE uname)
+if (NOT MSVC AND (uname MATCHES "^MSYS" OR uname MATCHES "^MINGW"))
+    set(MSYS ON)
+else()
+    set(MSYS OFF)
+endif()
+
+if(MSYS)
     # 3.16 is needed for GET_RUNTIME_DEPENDENCIES.
     cmake_minimum_required(VERSION 3.16)
 endif()
@@ -40,17 +47,16 @@ set(PROJECT_COMPANY "Alaux and contributors")
 set(PROJECT_COPYRIGHT "Copyright (C) 1993-2022")
 set(PROJECT_LICENSE "GNU General Public License, version 2")
 set(PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
-set(PROJECT_TARNAME "nugget-doom")
+set(PROJECT_SHORTNAME "nugget-doom")
 set(WOOF_ICON "woof.ico")
 set(SETUP_ICON "setup.ico")
 set(PROJECT_VERSION_RC "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0") # ${PROJECT_VERSION_TWEAK}
 
 if(NOT WIN32)
-    set(WOOFDATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_TARNAME}" CACHE PATH "Path to install supplemental files" FORCE)
+    set(WOOFDATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_SHORTNAME}" CACHE PATH "Path to install supplemental files" FORCE)
 endif()
 
 # Toggle-able defines added at compile-time.
-option("${PROJECT_NAME}_INSTRUMENTED" "Enable memory allocation statistics" OFF)
 option("${PROJECT_NAME}_RANGECHECK" "Enable bounds-checking of performance-sensitive functions" ON)
 option("${PROJECT_NAME}_STRICT" "Prefer original MBF code paths over demo compatiblity with PrBoom+" OFF)
 
@@ -67,11 +73,12 @@ check_symbol_exists(strncasecmp "strings.h" HAVE_DECL_STRNCASECMP)
 
 # SDL2.  On Windows, we use the official development library.
 if(NOT SDL2_DIR)
-    if(WIN32 AND (MSVC OR CMAKE_CROSSCOMPILING))
+    if(WIN32 AND NOT MSYS)
         message(STATUS "Downloading SDL2 Development Library...")
+        set(pkgver "2.0.22")
         if(MSVC)
             file(DOWNLOAD
-                "https://www.libsdl.org/release/SDL2-devel-2.0.22-VC.zip"
+                "https://www.libsdl.org/release/SDL2-devel-${pkgver}-VC.zip"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-VC.zip"
                 EXPECTED_HASH SHA256=32adc96d8b25e5671189f1f38a4fc7deb105fbb1b3ed78ffcb23f5b8f36b3922)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
@@ -79,51 +86,53 @@ if(NOT SDL2_DIR)
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
         else()
             file(DOWNLOAD
-                "https://www.libsdl.org/release/SDL2-devel-2.0.22-mingw.tar.gz"
+                "https://www.libsdl.org/release/SDL2-devel-${pkgver}-mingw.tar.gz"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-mingw.tar.gz"
                 EXPECTED_HASH SHA256=0e91e35973366aa1e6f81ee368924d9b4f93f9da4d2f2a89ec80b06eadcf23d1)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-mingw.tar.gz"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
         endif()
-        set(SDL2_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2-2.0.22")
+        set(SDL2_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2-${pkgver}")
     endif()
 endif()
 find_package(SDL2 2.0.7)
 
 # SDL2_mixer.  On Windows, we use the official development library.
 if(NOT SDL2_MIXER_DIR)
-    if(WIN32 AND (MSVC OR CMAKE_CROSSCOMPILING))
+    if(WIN32 AND NOT MSYS)
         message(STATUS "Downloading SDL2_mixer Development Library...")
+        set(pkgver "2.6.1")
         if(MSVC)
             file(DOWNLOAD
-                "https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-devel-2.0.4-VC.zip"
+                "https://github.com/libsdl-org/SDL_mixer/releases/download/release-${pkgver}/SDL2_mixer-devel-${pkgver}-VC.zip"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-VC.zip"
-                EXPECTED_HASH SHA256=258788438b7e0c8abb386de01d1d77efe79287d9967ec92fbb3f89175120f0b0)
+                EXPECTED_HASH SHA256=e086e1fed423a801e0e7573af063f2f51d3bcef0c9da356ed8a62a7a7f7a0815)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-VC.zip"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
         else()
             file(DOWNLOAD
-                "https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-devel-2.0.4-mingw.tar.gz"
+                "https://github.com/libsdl-org/SDL_mixer/releases/download/release-${pkgver}/SDL2_mixer-devel-${pkgver}-mingw.tar.gz"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-mingw.tar.gz"
-                EXPECTED_HASH SHA256=14250b2ade20866c7b17cf1a5a5e2c6f3920c443fa3744f45658c8af405c09f1)
+                EXPECTED_HASH SHA256=479fe5d61ef390c1b26adb69636b12b8a6f706e841516b02e33922483b2d6463)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-mingw.tar.gz"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
         endif()
-        set(SDL2_MIXER_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-2.0.4")
+        set(SDL2_MIXER_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-${pkgver}")
     endif()
 endif()
 find_package(SDL2_mixer 2.0.2)
 
 # SDL2_net.  On Windows, we use the official development library.
 if(NOT SDL2_NET_DIR)
-    if(WIN32 AND (MSVC OR CMAKE_CROSSCOMPILING))
+    if(WIN32 AND NOT MSYS)
         message(STATUS "Downloading SDL2_net Development Library...")
+        set(pkgver "2.0.1")
         if(MSVC)
             file(DOWNLOAD
-                "https://www.libsdl.org/projects/SDL_net/release/SDL2_net-devel-2.0.1-VC.zip"
+                "https://www.libsdl.org/projects/SDL_net/release/SDL2_net-devel-${pkgver}-VC.zip"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2_net-VC.zip"
                 EXPECTED_HASH SHA256=c1e423f2068adc6ff1070fa3d6a7886700200538b78fd5adc36903a5311a243e)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
@@ -131,14 +140,14 @@ if(NOT SDL2_NET_DIR)
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
         else()
             file(DOWNLOAD
-                "https://www.libsdl.org/projects/SDL_net/release/SDL2_net-devel-2.0.1-mingw.tar.gz"
+                "https://www.libsdl.org/projects/SDL_net/release/SDL2_net-devel-${pkgver}-mingw.tar.gz"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2_net-mingw.tar.gz"
                 EXPECTED_HASH SHA256=fe0652ab1bdbeae277d7550f2ed686a37a5752f7a624f54f19cf1bd6ba5cb9ff)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2_net-mingw.tar.gz"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
         endif()
-        set(SDL2_NET_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2_net-2.0.1")
+        set(SDL2_NET_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2_net-${pkgver}")
     endif()
 endif()
 find_package(SDL2_net)
@@ -147,21 +156,25 @@ find_package(SDL2_net)
 if (NOT FluidSynth_DIR)
     if (WIN32 AND MSVC AND CMAKE_SIZEOF_VOID_P STREQUAL 4)
         message(STATUS "Downloading FluidSynth Development Library...")
+        set(pkgver "2.2.7")
         file(DOWNLOAD
-            "https://github.com/FluidSynth/fluidsynth/releases/download/v2.2.7/fluidsynth-2.2.7-winXP-x86.zip"
+            "https://github.com/FluidSynth/fluidsynth/releases/download/v${pkgver}/fluidsynth-${pkgver}-winXP-x86.zip"
             "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-x86.zip"
             EXPECTED_HASH SHA256=59c568ef8bc9b34ab1248b791073e1263e3e7192f7bed931bf0735041f2ca06c)
         execute_process(
             COMMAND "${CMAKE_COMMAND}" -E make_directory
-            "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-2.2.7")
+            "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-${pkgver}")
         execute_process(
             COMMAND "${CMAKE_COMMAND}" -E tar xf
             "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-x86.zip"
-            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-2.2.7")
-        set(FluidSynth_DIR "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-2.2.7")
+            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-${pkgver}")
+        set(FluidSynth_DIR "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-${pkgver}")
     endif()
 endif()
 find_package(FluidSynth)
+
+# Python 3
+find_package(Python3 COMPONENTS Interpreter)
 
 configure_file(config.h.in config.h)
 
@@ -178,16 +191,16 @@ if(WIN32)
         install(DIRECTORY soundfonts/ DESTINATION soundfonts)
     endif()
 else()
-    install(FILES COPYING DESTINATION "share/doc/${PROJECT_TARNAME}")
-    install(FILES README.md DESTINATION "share/doc/${PROJECT_TARNAME}")
-    install(FILES betagrph.wad DESTINATION "share/${PROJECT_TARNAME}")
-    install(FILES betalevl.wad DESTINATION "share/${PROJECT_TARNAME}")
-    install(FILES watermap.wad DESTINATION "share/${PROJECT_TARNAME}")
-    install(DIRECTORY docs/ DESTINATION "share/doc/${PROJECT_TARNAME}")
-    install(DIRECTORY examples/ DESTINATION "share/doc/${PROJECT_TARNAME}/examples")
-    install(DIRECTORY autoload/ DESTINATION "share/${PROJECT_TARNAME}/autoload")
+    install(FILES COPYING DESTINATION "share/doc/${PROJECT_SHORTNAME}")
+    install(FILES README.md DESTINATION "share/doc/${PROJECT_SHORTNAME}")
+    install(FILES betagrph.wad DESTINATION "share/${PROJECT_SHORTNAME}")
+    install(FILES betalevl.wad DESTINATION "share/${PROJECT_SHORTNAME}")
+    install(FILES watermap.wad DESTINATION "share/${PROJECT_SHORTNAME}")
+    install(DIRECTORY docs/ DESTINATION "share/doc/${PROJECT_SHORTNAME}")
+    install(DIRECTORY examples/ DESTINATION "share/doc/${PROJECT_SHORTNAME}/examples")
+    install(DIRECTORY autoload/ DESTINATION "share/${PROJECT_SHORTNAME}/autoload")
     if(FluidSynth_FOUND)
-        install(DIRECTORY soundfonts/ DESTINATION "share/${PROJECT_TARNAME}/soundfonts")
+        install(DIRECTORY soundfonts/ DESTINATION "share/${PROJECT_SHORTNAME}/soundfonts")
     endif()
 endif()
 
@@ -209,3 +222,4 @@ add_subdirectory(textscreen)
 add_subdirectory(src)
 add_subdirectory(toolsrc)
 add_subdirectory(setup)
+add_subdirectory(man)

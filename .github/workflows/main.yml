@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  linux:
+  linux64:
     runs-on: ubuntu-latest
 
     strategy:
@@ -23,7 +23,7 @@ jobs:
       - name: Configure
         env:
           CC: ${{ matrix.compiler }}
-        run: cmake -B build -G "Ninja"
+        run: cmake -B build -G "Ninja" -DENABLE_WERROR=ON
 
       - name: Build
         run: cmake --build build
@@ -45,15 +45,9 @@ jobs:
       - name: Run cppcheck
         shell: bash
         run: |
-          cppcheck --error-exitcode=1 -j2 -DRANGECHECK -D_WIN32 -Isrc src toolsrc 2> stderr.txt
-          RET=$?
-          if [ -s stderr.txt ]
-          then
-            cat stderr.txt
-          fi
-          exit $RET
+          cppcheck --error-exitcode=1 -q -U_WIN32 -Isrc opl setup textscreen
 
-  msys2:
+  win64_msys2:
     runs-on: windows-latest
 
     defaults:
@@ -65,8 +59,8 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: mingw64
+          update: true
           install: >-
-            git
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja
@@ -77,7 +71,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Configure
-        run: cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DENABLE_WERROR=ON
 
       - name: Build
         run: cmake --build build
@@ -93,14 +87,14 @@ jobs:
           name: Win64
           path: build/*.zip
 
-  msvc:
+  win32_msvc:
     runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Configure
-        run: cmake -B build -T v141_xp -A Win32
+        run: cmake -B build -T v141_xp -A Win32 -DENABLE_WERROR=ON
 
       - name: Build
         shell: bash

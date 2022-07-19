@@ -34,6 +34,7 @@
 #include "p_map.h"
 #include "p_spec.h"
 #include "p_user.h"
+#include "g_game.h"
 #include "m_input.h" // [Nugget]
 
 // Index of the special effects (INVUL inverse) map.
@@ -199,7 +200,6 @@ void P_CalcHeight (player_t* player)
 //
 // killough 10/98: simplified
 
-extern int autorun; // [Nugget]
 boolean CrouchKeyDown; // [Nugget]
 
 void P_MovePlayer (player_t* player)
@@ -396,10 +396,7 @@ void P_MovePlayer (player_t* player)
     }
   }
 
-  // [crispy] apply lookdir delta
-  if (cmd->lookdir == TOCENTER)
-    { player->centering = true; }
-  else if (!menuactive && !demoplayback) {
+  if (!menuactive && !demoplayback) {
     player->lookdir = BETWEEN(-LOOKDIRMIN * MLOOKUNIT,
                                LOOKDIRMAX * MLOOKUNIT,
                                player->lookdir + cmd->lookdir);
@@ -407,6 +404,15 @@ void P_MovePlayer (player_t* player)
 }
 
 #define ANG5 (ANG90/18)
+
+typedef enum
+{
+  death_use_default,
+  death_use_reload,
+  death_use_nothing
+} death_use_action_t;
+
+death_use_action_t death_use_action;
 
 //
 // P_DeathThink
@@ -473,7 +479,29 @@ void P_DeathThink (player_t* player)
       player->damagecount--;
 
   if (player->cmd.buttons & BT_USE)
-    player->playerstate = PST_REBORN;
+  {
+    if (demorecording || demoplayback || netgame)
+      player->playerstate = PST_REBORN;
+    else switch(death_use_action)
+    {
+      case death_use_default:
+        player->playerstate = PST_REBORN;
+        break;
+      case death_use_reload:
+        if (savegameslot >= 0)
+        {
+          char *file = G_SaveGameName(savegameslot);
+          G_LoadGame(file, savegameslot, false);
+          free(file);
+        }
+        else
+          player->playerstate = PST_REBORN;
+        break;
+      case death_use_nothing:
+      default:
+        break;
+    }
+  }
 }
 
 //
@@ -680,7 +708,7 @@ void P_PlayerThink (player_t* player)
     // Check if the player is aiming at a thing
     P_AimLineAttack(player->mo, player->mo->angle, 16*64*FRACUNIT, 0);
     if (linetarget) // Give some info on the thing
-      dprintf("Type: %i - Health: %i/%i", linetarget->type,
+      doomprintf("Type: %i - Health: %i/%i", linetarget->type,
               linetarget->health, linetarget->info->spawnhealth);
   }
 

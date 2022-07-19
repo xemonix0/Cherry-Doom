@@ -66,6 +66,15 @@ extern GameMission_t  gamemission;
 // [FG] emulate a specific version of Doom
 extern GameVersion_t gameversion;
 
+typedef struct
+{
+    const char *description;
+    const char *cmdline;
+    GameVersion_t version;
+} GameVersions_t;
+
+extern GameVersions_t gameversions[];
+
 extern char *MAPNAME(int e, int m);
 
 // Set if homebrew PWAD stuff has been added.
@@ -299,11 +308,15 @@ extern  int       demoskip_tics;
 
 extern  boolean   strictmode, default_strictmode;
 
-#define STRICTMODE(x) (strictmode ? 0 : x)
+#define STRICTMODE(x) (strictmode ? 0 : (x))
+
+#define NOTSTRICTMODE(x) (strictmode ? 1 : (x))
 
 #define STRICTMODE_COMP(x) (strictmode ? comp[x] : default_comp[x])
 
-#define STRICTMODE_VANILLA(x) (strictmode && demo_compatibility ? 0 : x)
+#define STRICTMODE_VANILLA(x) (strictmode && demo_compatibility ? 0 : (x))
+
+extern  int       savegameslot;
 
 extern  gamestate_t  gamestate;
 
@@ -340,7 +353,6 @@ extern wbstartstruct_t wminfo;
 
 // File handling stuff.
 extern  char   *basedefault;
-extern  FILE   *debugfile;
 
 // if true, load all graphics at level load
 extern  boolean precache;

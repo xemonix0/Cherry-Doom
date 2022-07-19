@@ -40,6 +40,8 @@
 #include "m_random.h"
 #include "m_bbox.h"
 #include "v_video.h"
+#include "m_argv.h"
+#include "m_misc2.h"
 
 static mobj_t    *tmthing;
 static int       tmflags;
@@ -2300,6 +2302,23 @@ void P_CreateSecNodeList(mobj_t *thing,fixed_t x,fixed_t y)
    }
 }
 
+/* cphipps 2004/08/30 -
+ * Must clear tmthing at tic end, as it might contain a pointer to a
+ * removed thinker, or the level might have ended/been ended and we
+ * clear the objects it was pointing too. Hopefully we don't need to
+ * carry this between tics for sync. */
+
+void P_MapStart(void)
+{
+  if (tmthing)
+    I_Error("P_MapStart: tmthing set!");
+}
+
+void P_MapEnd(void)
+{
+  tmthing = NULL;
+}
+
 // [FG] SPECHITS overflow emulation from Chocolate Doom / PrBoom+
 
 static void SpechitOverrun(line_t *ld)
@@ -2309,7 +2328,30 @@ static void SpechitOverrun(line_t *ld)
 
     if (baseaddr == 0)
     {
-        baseaddr = DEFAULT_SPECHIT_MAGIC;
+        int p;
+
+        // This is the first time we have had an overrun.  Work out
+        // what base address we are going to use.
+        // Allow a spechit value to be specified on the command line.
+
+        //!
+        // @category compat
+        // @arg <n>
+        //
+        // Use the specified magic value when emulating spechit overruns.
+        //
+
+        p = M_CheckParmWithArgs("-spechit", 1);
+
+        if (p > 0)
+        {
+            if (!M_StrToInt(myargv[p+1], (int *) &baseaddr))
+              I_Error("Invalid parameter '%s' for -spechit.", myargv[p+1]);
+        }
+        else
+        {
+            baseaddr = DEFAULT_SPECHIT_MAGIC;
+        }
     }
 
     // Calculate address used in doom2.exe

@@ -68,7 +68,6 @@
 
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
-#define MAX_JOY_BUTTONS 20 // [Nugget] crispy save reload
 
 static size_t   savegamesize = SAVEGAMESIZE; // killough
 static char     *demoname = NULL;
@@ -127,7 +126,7 @@ boolean         haswolflevels = false;// jff 4/18/98 wolf levels present
 byte            *savebuffer;
 int             autorun = false;      // always running?          // phares
 int             novert = false;
-int             mouselook = false;
+boolean         mouselook = false;
 // killough 4/13/98: Make clock rate adjustable by scale factor
 int             realtic_clock_rate = 100;
 
@@ -179,7 +178,7 @@ boolean analog_movement;
 boolean analog_turning;
 int controller_axes[NUM_AXES];
 
-int   savegameslot;
+int   savegameslot = -1;
 char  savedescription[32];
 
 //jff 3/24/98 declare startskill external, define defaultskill here
@@ -347,6 +346,9 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   int newweapon;                                          // phares
   ticcmd_t *base;
 
+  extern boolean boom_weapon_state_injection;
+  static boolean done_autoswitch = false;
+
   G_DemoSkipTics();
 
   base = I_BaseTiccmd();   // empty, or external driver
@@ -372,13 +374,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     tspeed = 2;             // slow turn
   else
     tspeed = speed;
-
-  // [crispy] mouse look
-  if (mouselook == -1)
-  {
-    mouselook = 0;
-    cmd->lookdir = TOCENTER;
-  }
 
   // turn 180 degrees in one keystroke?                           // phares
                                                                   //    |
@@ -458,9 +453,21 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   //
   // killough 3/26/98, 4/2/98: fix autoswitch when no weapons are left
 
+  if (!players[consoleplayer].attackdown)
+  {
+    done_autoswitch = false;
+  }
+
   if ((!demo_compatibility && players[consoleplayer].attackdown &&
-       !P_CheckAmmo(&players[consoleplayer])) || M_InputGameActive(input_weapontoggle))
+       !P_CheckAmmo(&players[consoleplayer]) &&
+       ((boom_weapon_state_injection && !done_autoswitch) ||
+       (cmd->buttons & BT_ATTACK && players[consoleplayer].pendingweapon == wp_nochange))) ||
+       M_InputGameActive(input_weapontoggle))
+  {
+    done_autoswitch = true;
+    boom_weapon_state_injection = false;
     newweapon = P_SwitchWeapon(&players[consoleplayer]);           // phares
+  }
   else
     {                                 // phares 02/26/98: Added gamemode checks
       // [FG] prev/next weapon keys and buttons
@@ -716,8 +723,10 @@ static void G_DoLoadLevel(void)
 
   P_SetupLevel (gameepisode, gamemap, 0, gameskill);
   displayplayer = consoleplayer;    // view the guy you are playing
+  // [Nugget] Update smooth count values
+  STHealth = players[displayplayer].health;
+  STArmor = players[displayplayer].armorpoints;
   gameaction = ga_nothing;
-  Z_CheckHeap();
 
   // clear cmd building stuff
   memset (gamekeydown, 0, sizeof(gamekeydown));
@@ -1011,27 +1020,9 @@ static void G_WriteDemoTiccmd(ticcmd_t* cmd)
 
 boolean secretexit;
 
-// [Nugget] Move a bunch of stuff here
-#define VERSIONSIZE   16
-
-// killough 2/22/98: version id string format for savegames
-#define VERSIONID "MBF %d"
-
-#define CURRENT_SAVE_VERSION "Woof 6.0.0"
-
-static char *savename = NULL;
-
-// [Nugget]: [crispy] clear the "savename" variable,
-// i.e. restart level from scratch upon resurrection
-static inline void G_ClearSavename() {
-  if (savename)
-    {M_StringCopy(savename, "", sizeof(savename));}
-}
-
 void G_ExitLevel(void)
 {
   secretexit = false;
-  G_ClearSavename();
   gameaction = ga_completed;
 }
 
@@ -1041,7 +1032,6 @@ void G_ExitLevel(void)
 void G_SecretExitLevel(void)
 {
   secretexit = gamemode != commercial || haswolflevels;
-  G_ClearSavename();
   gameaction = ga_completed;
 }
 
@@ -1163,7 +1153,13 @@ static void G_DoCompleted(void)
 {
   int i;
 
-  // [crispy] Write level statistics upon exit
+  //!
+  // @category demo
+  // @help
+  //
+  // Write level statistics upon exit to levelstat.txt
+  //
+
   if (M_CheckParm("-levelstat"))
   {
       G_WriteLevelStat();
@@ -1343,7 +1339,15 @@ static void G_DoWorldDone(void)
 
 static char *defdemoname;
 
-#define INVALID_DEMO(a,b) do{fprintf(stderr,"G_DoPlayDemo: "a,b);gameaction=ga_nothing;demoplayback=true;G_CheckDemoStatus();return;}while(0)
+#define INVALID_DEMO(a, b) \
+   do \
+   { \
+     fprintf(stderr, "G_DoPlayDemo: " a, b); \
+     gameaction = ga_nothing; \
+     demoplayback = true; \
+     G_CheckDemoStatus(); \
+     return; \
+   } while(0)
 
 static void G_DoPlayDemo(void)
 {
@@ -1580,13 +1584,17 @@ static void G_DoPlayDemo(void)
 
   // [FG] report compatibility mode
   fprintf(stderr, "G_DoPlayDemo: Playing demo with %s (%d) compatibility.\n",
-    mbf21 ? "MBF21" :
-    demover >= 203 ? "MBF" :
-    demover >= 200 ? (compatibility ? "Boom compatibility" : "Boom") :
-    gameversion == exe_final ? "Final Doom" :
-    gameversion == exe_ultimate ? "Ultimate Doom" :
-    "Doom 1.9", demover);
+    G_GetCurrentComplevelName(), demover);
 }
+
+#define VERSIONSIZE   16
+
+// killough 2/22/98: version id string format for savegames
+#define VERSIONID "MBF %d"
+
+#define CURRENT_SAVE_VERSION "Woof 6.0.0"
+
+static char *savename = NULL;
 
 //
 // killough 5/15/98: add forced loadgames, which allow user to override checks
@@ -1686,16 +1694,16 @@ char* G_MBFSaveGameName(int slot)
 //
 // killough 12/98: use faster algorithm which has less IO
 
-ULong64 G_Signature(void)
+static ULong64 G_Signature(int sig_epi, int sig_map)
 {
   ULong64 s = 0;
   int lump, i;
   char name[9];
 
   if (gamemode == commercial)
-    sprintf(name, "map%02d", gamemap);
+    sprintf(name, "map%02d", sig_map);
   else
-    sprintf(name, "E%dM%d", gameepisode, gamemap);
+    sprintf(name, "E%dM%d", sig_epi, sig_map);
 
   lump = W_CheckNumForName(name);
 
@@ -1742,7 +1750,7 @@ static void G_DoSaveGame(void)
   *save_p++ = gamemap;
 
   {  // killough 3/16/98, 12/98: store lump name checksum
-    uint64_t checksum = G_Signature();
+    uint64_t checksum = G_Signature(gameepisode, gamemap);
     saveg_write64(checksum);
   }
 
@@ -1775,17 +1783,11 @@ static void G_DoSaveGame(void)
   // killough 11/98: save revenant tracer state
   *save_p++ = (gametic-basetic) & 255;
 
-  // killough 3/22/98: add Z_CheckHeap after each call to ensure consistency
-  Z_CheckHeap();
   P_ArchivePlayers();
-  Z_CheckHeap();
   P_ArchiveWorld();
-  Z_CheckHeap();
   P_ArchiveThinkers();
-  Z_CheckHeap();
   P_ArchiveSpecials();
   P_ArchiveRNG();    // killough 1/18/98: save RNG information
-  Z_CheckHeap();
   P_ArchiveMap();    // killough 1/22/98: save automap information
 
   *save_p++ = 0xe6;   // consistancy marker
@@ -1808,10 +1810,8 @@ static void G_DoSaveGame(void)
 
   length = save_p - savebuffer;
 
-  Z_CheckHeap();
-
   if (!M_WriteFile(name, savebuffer, length))
-    dprintf("%s", errno ? strerror(errno) : "Could not save game: Error unknown");
+    doomprintf("%s", errno ? strerror(errno) : "Could not save game: Error unknown");
   else
     players[consoleplayer].message = s_GGSAVED;  // Ty 03/27/98 - externalized
 
@@ -1820,7 +1820,6 @@ static void G_DoSaveGame(void)
 
   gameaction = ga_nothing;
   savedescription[0] = 0;
-  savename = M_StringDuplicate(name);
 
   if (name) free(name);
 }
@@ -1830,6 +1829,7 @@ static void G_DoLoadGame(void)
   int  length, i;
   char vcheck[VERSIONSIZE];
   byte saveg_complevel = 203;
+  int tmp_compat, tmp_skill, tmp_epi, tmp_map;
 
   // [crispy] loaded game must always be single player.
   // Needed for ability to use a further game loading, as well as
@@ -1872,16 +1872,15 @@ static void G_DoLoadGame(void)
   }
 
   // killough 2/14/98: load compatibility mode
-  compatibility = *save_p++;
+  tmp_compat = *save_p++;
 
-  gameskill = *save_p++;
-  gameepisode = *save_p++;
-  gamemap = *save_p++;
-  gamemapinfo = G_LookupMapinfo(gameepisode, gamemap);
+  tmp_skill = *save_p++;
+  tmp_epi = *save_p++;
+  tmp_map = *save_p++;
 
   if (!forced_loadgame)
    {  // killough 3/16/98, 12/98: check lump name checksum
-     uint64_t checksum = G_Signature();
+     uint64_t checksum = G_Signature(tmp_epi, tmp_map);
      uint64_t rchecksum = saveg_read64();
      if (checksum != rchecksum)
        {
@@ -1897,6 +1896,12 @@ static void G_DoLoadGame(void)
    }
 
   while (*save_p++);
+
+  compatibility = tmp_compat;
+  gameskill = tmp_skill;
+  gameepisode = tmp_epi;
+  gamemap = tmp_map;
+  gamemapinfo = G_LookupMapinfo(gameepisode, gamemap);
 
   for (i=0 ; i<MAXPLAYERS ; i++)
     playeringame[i] = *save_p++;
@@ -1934,12 +1939,14 @@ static void G_DoLoadGame(void)
   basetic = gametic - (int) *save_p++;
 
   // dearchive all the modifications
+  P_MapStart();
   P_UnArchivePlayers();
   P_UnArchiveWorld();
   P_UnArchiveThinkers();
   P_UnArchiveSpecials();
   P_UnArchiveRNG();    // killough 1/18/98: load RNG information
   P_UnArchiveMap();    // killough 1/22/98: load automap information
+  P_MapEnd();
 
   if (*save_p != 0xe6)
     I_Error ("Bad savegame");
@@ -1986,11 +1993,10 @@ static void G_DoLoadGame(void)
   // draw the pattern into the back screen
   R_FillBackScreen();
 
-  // [Nugget]: [crispy] if the player is dead in this savegame,
-  // do not consider it for reload
-  if (players[consoleplayer].health <= 0) { G_ClearSavename(); }
-
-  Z_CheckHeap();
+  // [Nugget] Update smooth count values;
+  // the same procedure is done in G_LoadLevel, but we have to repeat it here
+  STHealth = players[displayplayer].health;
+  STArmor = players[displayplayer].armorpoints;
 
   // killough 12/98: support -recordfrom and -loadgame -playdemo
   if (!command_loadgame)
@@ -2007,21 +2013,12 @@ static void G_DoLoadGame(void)
 
   // [FG] log game loading
   {
-    const int time = leveltime / TICRATE;
-    const int ttime = (totalleveltimes + leveltime) / TICRATE;
     char *maplump = MAPNAME(gameepisode, gamemap);
     int maplumpnum = W_CheckNumForName(maplump);
 
-    fprintf(stderr, "G_DoLoadGame: Slot %d, %.8s (%s), Skill %d, Time %02d:%02d:%02d/%02d:%02d:%02d\n",
-      savegameslot, maplump, W_WadNameForLump(maplumpnum), gameskill,
-      time/3600, (time%3600)/60, time%60,
-      ttime/3600, (ttime%3600)/60, ttime%60);
+    fprintf(stderr, "G_DoLoadGame: Slot %d, %.8s (%s)\n",
+      savegameslot, maplump, W_WadNameForLump(maplumpnum));
   }
-
-  // [Nugget] Update smooth count values;
-  // the same procedure is done in G_InitNew, but we have to repeat it here
-  STHealth = players[displayplayer].health;
-  STArmor = players[displayplayer].armorpoints;
 }
 
 //
@@ -2034,9 +2031,11 @@ void G_Ticker(void)
   int i;
 
   // do player reborns if needed
+  P_MapStart();
   for (i=0 ; i<MAXPLAYERS ; i++)
     if (playeringame[i] && players[i].playerstate == PST_REBORN)
       G_DoReborn (i);
+  P_MapEnd();
 
   // do things to change the game state
   while (gameaction != ga_nothing)
@@ -2126,7 +2125,7 @@ void G_Ticker(void)
 		  !(gametic&31) && ((gametic>>5)&3) == i )
 		{
 		  extern char *player_names[];
-		  dprintf("%s is turbo!", player_names[i]); // killough 9/29/98
+		  doomprintf("%s is turbo!", player_names[i]); // killough 9/29/98
 		}
 
 	      if (netgame && !netdemo && !(gametic%ticdup) )
@@ -2413,21 +2412,8 @@ void G_DeathMatchSpawnPlayer(int playernum)
 
 void G_DoReborn(int playernum)
 {
-  if (!netgame) {
-	// [crispy] if the player dies and the game has been loaded or saved
-	// in the mean time, reload that savegame instead of restarting the level
-	// when "Run" is pressed upon resurrection
-	if (!(demorecording||demoplayback||netgame)
-        && savename
-        && strcmp(savename, "")
-        && M_InputGameActive(input_speed))
-	  {gameaction = ga_loadgame;}
-	else {
-	  // reload the level from scratch
-	  gameaction = ga_loadlevel;
-	  G_ClearSavename();
-	}
-  }
+  if (!netgame)
+    gameaction = ga_loadlevel;      // reload the level from scratch
   else
     { // respawn at the start
       int i;
@@ -2546,7 +2532,6 @@ void G_DeferedInitNew(skill_t skill, int episode, int map)
   d_skill = skill;
   d_episode = episode;
   d_map = map;
-  G_ClearSavename();
   gameaction = ga_newgame;
 
   if (demorecording)
@@ -2560,11 +2545,25 @@ void G_DeferedInitNew(skill_t skill, int episode, int map)
 // killough 7/19/98: Marine's best friend :)
 static int G_GetHelpers(void)
 {
+  //!
+  // @category game
+  //
+  // Enables a single helper dog.
+  //
+
   int j = M_CheckParm ("-dog");
 
   if (!j)
+
+    //!
+    // @arg <n>
+    // @category game
+    //
+    // Overrides the current number of helper dogs, setting it to n.
+    //
+
     j = M_CheckParm ("-dogs");
-  return j ? j+1 < myargc ? atoi(myargv[j+1]) : 1 : default_dogs;
+  return j ? j+1 < myargc ? M_ParmArgToInt(j) : 1 : default_dogs;
 }
 
 // [FG] support named complevels on the command line, e.g. "-complevel boom",
@@ -2625,6 +2624,23 @@ static int G_GetDefaultComplevel()
   }
 }
 
+const char *G_GetCurrentComplevelName(void)
+{
+  switch (demo_version)
+  {
+    case 109:
+      return gameversions[gameversion].description;
+    case 202:
+      return "Boom";
+    case 203:
+      return "MBF";
+    case 221:
+      return "MBF21";
+    default:
+      return "Unknown";
+  }
+}
+
 static int G_GetWadComplevel(void)
 {
   int lumpnum;
@@ -2669,7 +2685,7 @@ static void G_MBFDefaults(void)
   memset(comp, 0, sizeof comp);
 
   comp[comp_zombie] = 1;
-};
+}
 
 static void G_MBF21Defaults(void)
 {
@@ -2683,7 +2699,7 @@ static void G_MBF21Defaults(void)
   comp[comp_friendlyspawn] = 1;
   comp[comp_voodooscroller] = 0;
   comp[comp_reservedlineflag] = 1;
-};
+}
 
 static void G_MBFComp()
 {
@@ -2759,7 +2775,7 @@ void G_ReloadDefaults(void)
 
   //jff 3/24/98 set startskill from defaultskill in config file, unless
   // it has already been set by a -skill parameter
-  if (startskill==sk_none)
+  if (startskill==sk_default)
     startskill = (skill_t)(defaultskill-1);
 
   demoplayback = false;
@@ -2779,6 +2795,16 @@ void G_ReloadDefaults(void)
   demo_version = G_GetWadComplevel();
 
   {
+
+    //!
+    // @arg <version>
+    // @category compat
+    // @help
+    //
+    // Emulate a specific version of Doom/Boom/MBF. Valid values are
+    // "vanilla", "boom", "mbf", "mbf21".
+    //
+
     int i = M_CheckParmWithArgs("-complevel", 1);
 
     if (i > 0)
@@ -2786,6 +2812,10 @@ void G_ReloadDefaults(void)
       int l = G_GetNamedComplevel(myargv[i+1]);
       if (l > -1)
         demo_version = l;
+      else
+        I_Error("Invalid parameter '%s' for -complevel, "
+                "valid values are vanilla, boom, mbf, mbf21.",
+                myargv[i+1]);
     }
   }
 
@@ -2793,6 +2823,13 @@ void G_ReloadDefaults(void)
     demo_version = G_GetDefaultComplevel();
 
   strictmode = default_strictmode;
+
+  //!
+  // @category demo
+  // @help
+  //
+  // Sets compatibility and cosmetic settings according to DSDA rules.
+  //
 
   if (M_CheckParm("-strict"))
     strictmode = true;
@@ -3048,10 +3085,6 @@ void G_InitNew(skill_t skill, int episode, int map)
     G_MBFComp();
 
   G_DoLoadLevel();
-
-  // [Nugget] Update smooth count values
-  STHealth = players[displayplayer].health;
-  STArmor = players[displayplayer].armorpoints;
 }
 
 //
@@ -3083,9 +3116,18 @@ void G_RecordDemo(char *name)
     M_snprintf(demoname, demoname_size, "%s-%05d.lmp", name, j);
   }
 
+  //!
+  // @arg <size>
+  // @category demo
+  // @vanilla
+  //
+  // Sets the initial size of the demo recording buffer (KiB). This is no longer a
+  // hard limit, and the buffer will expand if the given limit is exceeded.
+  //
+
   i = M_CheckParm ("-maxdemo");
   if (i && i<myargc-1)
-    maxdemosize = atoi(myargv[i+1])*1024;
+    maxdemosize = M_ParmArgToInt(i) * 1024;
   if (maxdemosize < 0x20000)  // killough
     maxdemosize = 0x20000;
   demobuffer = Z_Malloc(maxdemosize, PU_STATIC, 0); // killough
@@ -3487,6 +3529,8 @@ void G_BeginRecording(void)
     for (i=0; i<4; i++)  // intentionally hard-coded 4 -- killough
       *demo_p++ = playeringame[i];
   }
+
+  doomprintf("Demo Recording: %s", M_BaseName(demoname));
 }
 
 //
@@ -3506,7 +3550,6 @@ void G_DeferedPlayDemo(char* name)
 }
 
 #define DEMO_FOOTER_SEPARATOR "\n"
-extern const char* GetGameVersionCmdline(void);
 extern char **dehfiles;
 
 static void G_AddDemoFooter(void)
@@ -3547,7 +3590,7 @@ static void G_AddDemoFooter(void)
   if (demo_compatibility)
   {
     mem_fputs(" -complevel vanilla", stream);
-    tmp = M_StringJoin(" -gameversion ", GetGameVersionCmdline(), NULL);
+    tmp = M_StringJoin(" -gameversion ", gameversions[gameversion].cmdline, NULL);
     mem_fputs(tmp, stream);
     free(tmp);
   }
@@ -3660,7 +3703,7 @@ boolean G_CheckDemoStatus(void)
 
 #define MAX_MESSAGE_SIZE 1024
 
-void dprintf(const char *s, ...)
+void doomprintf(const char *s, ...)
 {
   static char msg[MAX_MESSAGE_SIZE];
   va_list v;

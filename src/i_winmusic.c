@@ -14,9 +14,8 @@
 // DESCRIPTION:
 //      Windows native MIDI
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
 
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
 #include <stdio.h>
@@ -24,6 +23,7 @@
 
 #include "doomtype.h"
 #include "i_sound.h"
+#include "m_misc2.h"
 #include "memio.h"
 #include "mus2mid.h"
 #include "midifile.h"
@@ -87,7 +87,7 @@ static buffer_t buffer;
 
 // Message box for midiStream errors.
 
-static void MidiErrorMessageBox(DWORD dwError)
+static void MidiError(const char *prefix, DWORD dwError)
 {
     char szErrorBuf[MAXERRORLENGTH];
     MMRESULT mmr;
@@ -95,11 +95,13 @@ static void MidiErrorMessageBox(DWORD dwError)
     mmr = midiOutGetErrorText(dwError, (LPSTR) szErrorBuf, MAXERRORLENGTH);
     if (mmr == MMSYSERR_NOERROR)
     {
-        MessageBox(NULL, szErrorBuf, "midiStream Error", MB_ICONEXCLAMATION);
+        char *msg = M_StringJoin(prefix, ": ", szErrorBuf, NULL);
+        MessageBox(NULL, msg, "midiStream Error", MB_ICONEXCLAMATION);
+        free(msg);
     }
     else
     {
-        fprintf(stderr, "Unknown midiStream error.\n");
+        fprintf(stderr, "%s: Unknown midiStream error.\n", prefix);
     }
 }
 
@@ -166,7 +168,7 @@ static void StreamOut(void)
     mmr = midiStreamOut(hMidiStream, hdr, sizeof(MIDIHDR));
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiStreamOut", mmr);
     }
 }
 
@@ -206,11 +208,25 @@ static DWORD WINAPI PlayerProc(void)
     return 0;
 }
 
+static void FreeSong(void)
+{
+    if (song.native_events)
+    {
+        free(song.native_events);
+        song.native_events = NULL;
+    }
+    song.num_events = 0;
+    song.position = 0;
+    song.looping = false;
+}
+
 // Convert a multi-track MIDI file to an array of Windows MIDIEVENT structures.
 
 static void MIDItoStream(midi_file_t *file)
 {
     int i;
+
+    int non_meta_events = 0;
 
     int num_tracks =  MIDI_NumTracks(file);
     win_midi_track_t *tracks = malloc(num_tracks * sizeof(win_midi_track_t));
@@ -304,6 +320,11 @@ static void MIDItoStream(midi_file_t *file)
         {
             native_event_t *native_event = &song.native_events[song.num_events];
 
+            if (event->event_type != MIDI_EVENT_META)
+            {
+                non_meta_events++;
+            }
+
             native_event->dwDeltaTime = min_time - current_time;
             native_event->dwStreamID = 0;
             native_event->dwEvent = data;
@@ -311,6 +332,12 @@ static void MIDItoStream(midi_file_t *file)
             song.num_events++;
             current_time = min_time;
         }
+    }
+
+    // Fix MIDI files that only contain meta type events (MAYhem19.wad MAP03)
+    if (!non_meta_events)
+    {
+        FreeSong();
     }
 
     if (tracks)
@@ -330,7 +357,7 @@ static boolean I_WIN_InitMusic(void)
                          CALLBACK_FUNCTION);
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiStreamOpen", mmr);
         return false;
     }
 
@@ -343,7 +370,7 @@ static boolean I_WIN_InitMusic(void)
     mmr = midiOutPrepareHeader((HMIDIOUT)hMidiStream, hdr, sizeof(MIDIHDR));
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiOutPrepareHeader", mmr);
         return false;
     }
 
@@ -418,12 +445,12 @@ static void I_WIN_StopSong(void *handle)
     mmr = midiStreamStop(hMidiStream);
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiStreamStop", mmr);
     }
     mmr = midiOutReset((HMIDIOUT)hMidiStream);
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiOutReset", mmr);
     }
 }
 
@@ -440,7 +467,7 @@ static void I_WIN_PlaySong(void *handle, boolean looping)
     mmr = midiStreamRestart(hMidiStream);
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiStreamRestart", mmr);
     }
 
     UpdateVolume();
@@ -453,7 +480,7 @@ static void I_WIN_PauseSong(void *handle)
     mmr = midiStreamPause(hMidiStream);
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiStreamPause", mmr);
     }
 }
 
@@ -464,7 +491,7 @@ static void I_WIN_ResumeSong(void *handle)
     mmr = midiStreamRestart(hMidiStream);
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiStreamRestart", mmr);
     }
 }
 
@@ -524,7 +551,7 @@ static void *I_WIN_RegisterSong(void *data, int len)
                              MIDIPROP_SET | MIDIPROP_TIMEDIV);
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiStreamProperty", mmr);
         return NULL;
     }
 
@@ -535,7 +562,7 @@ static void *I_WIN_RegisterSong(void *data, int len)
                              MIDIPROP_SET | MIDIPROP_TEMPO);
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiStreamProperty", mmr);
         return NULL;
     }
 
@@ -554,13 +581,7 @@ static void *I_WIN_RegisterSong(void *data, int len)
 
 static void I_WIN_UnRegisterSong(void *handle)
 {
-    if (song.native_events)
-    {
-        free(song.native_events);
-        song.native_events = NULL;
-    }
-    song.num_events = 0;
-    song.position = 0;
+    FreeSong();
 }
 
 static void I_WIN_ShutdownMusic(void)
@@ -571,12 +592,16 @@ static void I_WIN_ShutdownMusic(void)
     I_WIN_StopSong(NULL);
     I_WIN_UnRegisterSong(NULL);
 
-    midiOutUnprepareHeader((HMIDIOUT)hMidiStream, hdr, sizeof(MIDIHDR));
+    mmr = midiOutUnprepareHeader((HMIDIOUT)hMidiStream, hdr, sizeof(MIDIHDR));
+    if (mmr != MMSYSERR_NOERROR)
+    {
+        MidiError("midiOutUnprepareHeader", mmr);
+    }
 
     mmr = midiStreamClose(hMidiStream);
     if (mmr != MMSYSERR_NOERROR)
     {
-        MidiErrorMessageBox(mmr);
+        MidiError("midiStreamClose", mmr);
     }
 
     hMidiStream = NULL;
@@ -597,5 +622,3 @@ music_module_t music_win_module =
     I_WIN_StopSong,
     I_WIN_UnRegisterSong,
 };
-
-#endif

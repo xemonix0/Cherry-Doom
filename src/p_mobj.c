@@ -97,7 +97,7 @@ boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
   while (!mobj->tics && !seenstate[state]);   // killough 4/9/98
 
   if (ret && !mobj->tics)  // killough 4/9/98: detect state cycles
-    dprintf("Warning: State Cycle Detected");
+    doomprintf("Warning: State Cycle Detected");
 
   if (!--recursion)
     for (;(state=seenstate[i]);i=state-1)
@@ -1164,10 +1164,11 @@ void P_SpawnMapThing (mapthing_t* mthing)
     return;
 
   // killough 11/98: simplify
-  if (gameskill == sk_baby || gameskill == sk_easy ?
+  if ((gameskill == sk_none && demo_compatibility) ||
+      (gameskill == sk_baby || gameskill == sk_easy ?
       !(mthing->options & MTF_EASY) :
       gameskill == sk_hard || gameskill == sk_nightmare ?
-      !(mthing->options & MTF_HARD) : !(mthing->options & MTF_NORMAL))
+      !(mthing->options & MTF_HARD) : !(mthing->options & MTF_NORMAL)))
     return;
 
   // [crispy] support MUSINFO lump (dynamic music changing)
@@ -1188,7 +1189,7 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   if (i == num_mobj_types)
     {
-      dprintf("Unknown Thing type %i at (%i, %i)",
+      doomprintf("Unknown Thing type %i at (%i, %i)",
 	      mthing->type, mthing->x, mthing->y);
       return;
     }

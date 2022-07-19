@@ -2378,11 +2378,21 @@ void P_SpawnSpecials (void)
 
   // See if -frags has been used
   levelFragLimit = false;
+
+  //!
+  // @category net
+  // @arg <n>
+  //
+  // The -frags option allows you to deathmatch until one player achieves <n>
+  // frags, at which time the level ends and scores are displayed. If <n> is
+  // not specified the match is to 10 frags.
+  //
+
   i = M_CheckParm("-frags");  // Ty 03/18/98 Added -frags support
   if (i && deathmatch)
     {
       int frags;
-      frags = atoi(myargv[i+1]);
+      frags = M_ParmArgToInt(i);
       if (frags <= 0) frags = 10;  // default 10 if no count provided
       levelFragLimit = true;
       levelFragLimitCount = frags;

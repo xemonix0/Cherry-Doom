@@ -292,7 +292,7 @@ int grabmouse = 1;
 // Flag indicating whether the screen is currently visible:
 // when the screen isnt visible, don't render the screen
 boolean screenvisible;
-static boolean window_focused;
+static boolean window_focused = true;
 boolean fullscreen;
 
 //
@@ -697,8 +697,6 @@ void I_GetEvent(void)
 {
     SDL_Event sdlevent;
 
-    SDL_PumpEvents();
-
     while (SDL_PollEvent(&sdlevent))
     {
         switch (sdlevent.type)
@@ -739,14 +737,11 @@ void I_GetEvent(void)
                 break;
 
             case SDL_QUIT:
-/*
                 {
                     event_t event;
                     event.type = ev_quit;
                     D_PostEvent(&event);
                 }
-*/
-                I_SafeExit(0);
                 break;
 
             case SDL_WINDOWEVENT:
@@ -1106,6 +1101,37 @@ void I_SetPalette(byte *palette)
    SDL_SetPaletteColors(sdlscreen->format->palette, colors, 0, 256);
 }
 
+// Taken from Chocolate Doom chocolate-doom/src/i_video.c:L841-867
+
+byte I_GetPaletteIndex(byte *palette, int r, int g, int b)
+{
+  byte best;
+  int best_diff, diff;
+  int i;
+
+  best = 0; best_diff = INT_MAX;
+
+  for (i = 0; i < 256; ++i)
+  {
+    diff = (r - palette[3 * i + 0]) * (r - palette[3 * i + 0])
+          + (g - palette[3 * i + 1]) * (g - palette[3 * i + 1])
+          + (b - palette[3 * i + 2]) * (b - palette[3 * i + 2]);
+
+    if (diff < best_diff)
+    {
+      best = i;
+      best_diff = diff;
+    }
+
+    if (diff == 0)
+    {
+      break;
+    }
+  }
+
+  return best;
+}
+
 void I_ShutdownGraphics(void)
 {
    if (in_graphics_mode)  // killough 10/98
@@ -1359,20 +1385,60 @@ static void I_InitGraphicsMode(void)
    {
       firsttime = false;
 
+      //!
+      // @category video
+      //
+      // Enables 640x400 resolution for internal video buffer.
+      //
+
       if (M_CheckParm("-hires"))
          hires = true;
+
+      //!
+      // @category video
+      //
+      // Enables original 320x200 resolution for internal video buffer.
+      //
+
       else if (M_CheckParm("-nohires"))
          hires = false;
 
       if (M_CheckParm("-grabmouse"))
          grabmouse = 1;
+
+      //!
+      // @category video
+      //
+      // Don't grab the mouse when running in windowed mode.
+      //
+
       else if (M_CheckParm("-nograbmouse"))
          grabmouse = 0;
 
+      //!
+      // @category video
+      //
+      // Don't scale up the screen. Implies -window.
+      //
+
       if (M_CheckParm("-1"))
          scalefactor = 1;
+
+      //!
+      // @category video
+      //
+      // Double up the screen to 2x its normal size. Implies -window.
+      //
+
       else if (M_CheckParm("-2"))
          scalefactor = 2;
+
+      //!
+      // @category video
+      //
+      // Triple up the screen to 3x its normal size. Implies -window.
+      //
+
       else if (M_CheckParm("-3"))
          scalefactor = 3;
       else if (M_CheckParm("-4"))
@@ -1380,10 +1446,23 @@ static void I_InitGraphicsMode(void)
       else if (M_CheckParm("-5"))
          scalefactor = 5;
 
+      //!
+      // @category video
+      //
+      // Run in a window.
+      //
+
       if (M_CheckParm("-window") || scalefactor > 0)
       {
          fullscreen = false;
       }
+
+      //!
+      // @category video
+      //
+      // Run in fullscreen mode.
+      //
+
       else if (M_CheckParm("-fullscreen") || fullscreen ||
                fullscreen_width != 0 || fullscreen_height != 0)
       {
@@ -1670,8 +1749,6 @@ void I_ResetScreen(void)
       V_CopyRect(0, 0, 1, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0);
    }
 
-   Z_CheckHeap();
-
    M_ResetSetupMenuVideo();
 }
 
@@ -1704,8 +1781,6 @@ void I_InitGraphics(void)
   I_InitGamma2Table();
 
   I_InitGraphicsMode();    // killough 10/98
-
-  Z_CheckHeap();
 
   M_ResetSetupMenuVideo();
 }

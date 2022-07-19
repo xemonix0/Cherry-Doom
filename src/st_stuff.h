@@ -37,7 +37,7 @@
 // Size of statusbar.
 // Now sensitive for scaling.
 
-#define ST_HEIGHT (32*SCREEN_MUL)
+#define ST_HEIGHT 32
 #define ST_WIDTH  ORIGWIDTH
 #define ST_Y      (ORIGHEIGHT - ST_HEIGHT)
 
@@ -102,6 +102,8 @@ extern int sts_traditional_keys;  // display keys the traditional way
 
 extern int hud_backpack_thresholds; // backpack changes thresholds
 extern int hud_armor_type; // color of armor depends on type
+
+extern int st_solidbackground;
 
 #endif
 

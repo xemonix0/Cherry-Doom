@@ -35,7 +35,6 @@ set(WOOF_SOURCES
     i_main.c
     i_oplmusic.c
     i_sdlmusic.c
-    i_winmusic.c
     i_sound.c              i_sound.h
     i_system.c             i_system.h
     i_timer.c              i_timer.h
@@ -118,11 +117,10 @@ set(WOOF_SOURCES
     z_zone.c               z_zone.h
     ../miniz/miniz.c       ../miniz/miniz.h)
 
-list(APPEND WOOF_LIBRARIES textscreen)
-
 if(WIN32)
     list(APPEND
         WOOF_SOURCES
+        i_winmusic.c
         ../win32/win_version.c ../win32/win_version.h)
     if(MSVC)
         list(APPEND
@@ -156,13 +154,18 @@ add_executable(nugget-doom WIN32 ${WOOF_SOURCES})
 target_woof_settings(nugget-doom)
 target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 
+if(Python3_EXECUTABLE)
+    add_dependencies(nugget-doom paramsgen)
+    target_compile_definitions(nugget-doom PRIVATE HAVE_PARAMS_GEN)
+endif()
+
 if (FluidSynth_FOUND)
     list(APPEND WOOF_LIBRARIES FluidSynth::FluidSynth)
     target_compile_definitions(nugget-doom PRIVATE HAVE_FLUIDSYNTH)
 endif()
 
 target_link_libraries(nugget-doom PRIVATE ${WOOF_LIBRARIES}
-    SDL2::SDL2 SDL2::mixer SDL2::net opl)
+    SDL2::SDL2 SDL2::mixer SDL2::net opl textscreen)
 
 if(MSVC)
     # MSVC tries to supply a default manifest and complains when it finds ours
@@ -176,9 +179,6 @@ endif()
 #
 # Our defines are not namespaced, so we pass them at compile-time instead of
 # using config.h.
-if("${${PROJECT_NAME}_INSTRUMENTED}")
-    target_compile_definitions(nugget-doom PRIVATE INSTRUMENTED)
-endif()
 if("${${PROJECT_NAME}_RANGECHECK}")
     target_compile_definitions(nugget-doom PRIVATE RANGECHECK)
 endif()
@@ -186,9 +186,7 @@ if("${${PROJECT_NAME}_STRICT}")
     target_compile_definitions(nugget-doom PRIVATE MBF_STRICT)
 endif()
 
-target_compile_definitions(nugget-doom PRIVATE MINIZ_NO_STDIO)
 target_compile_definitions(nugget-doom PRIVATE MINIZ_NO_TIME)
-target_compile_definitions(nugget-doom PRIVATE MINIZ_NO_ARCHIVE_APIS)
 
 set(SETUP_SOURCES
     i_main.c
@@ -228,29 +226,38 @@ if(MSVC)
     set_target_properties(nugget-doom-setup PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
 endif()
 
+if(WIN32)
+    add_executable(conredir WIN32 "../win32/win_console_wrapper.c")
+    target_woof_settings(conredir)
+    if(MSVC)
+        set_target_properties(conredir PROPERTIES
+                              LINK_FLAGS "/MANIFEST:NO /SUBSYSTEM:CONSOLE")
+    else()
+        set_target_properties(conredir PROPERTIES LINK_FLAGS "-municode -mconsole")
+    endif()
+
+    add_custom_command(TARGET conredir POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy
+            "$<TARGET_FILE_DIR:nugget-doom>/conredir.exe"
+            "$<TARGET_FILE_DIR:nugget-doom>/nugget-doom.com" VERBATIM)
+endif()
+
 # Install
 
 # Assemble library files.
 set(WOOF_DLLS "")
-if(WIN32 AND (MSVC OR CMAKE_CROSSCOMPILING))
+if(WIN32 AND NOT MSYS)
     # SDL2
     list(APPEND WOOF_DLLS "${SDL2_DLL_DIR}/SDL2.dll")
 
     # SDL2_mixer
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/libFLAC-8.dll")
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/libmodplug-1.dll")
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/libmpg123-0.dll")
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/libogg-0.dll")
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/libopus-0.dll")
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/libopusfile-0.dll")
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/libvorbis-0.dll")
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/libvorbisfile-3.dll")
+    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/optional/libmodplug-1.dll")
     list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/SDL2_mixer.dll")
 
     # SDL2_net
     list(APPEND WOOF_DLLS "${SDL2_NET_DLL_DIR}/SDL2_net.dll")
 
-    if (FluidSynth_FOUND AND MSVC)
+    if (FluidSynth_DLL_DIR)
       file(GLOB files "${FluidSynth_DLL_DIR}/*.dll")
       foreach(file ${files})
         list(APPEND WOOF_DLLS ${file})
@@ -268,6 +275,7 @@ endforeach()
 # Files to package in our distribution.
 if(WIN32)
     install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION .)
+    install(FILES "$<TARGET_FILE_DIR:nugget-doom>/nugget-doom.com" DESTINATION .)
 else()
     install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION bin)
 endif()
@@ -282,7 +290,7 @@ add_custom_command(TARGET nugget-doom POST_BUILD
     "${CMAKE_CURRENT_BINARY_DIR}/autoload" VERBATIM)
 
 # Try get dependencies in MSYS2 environment.
-if(WIN32 AND NOT MSVC AND NOT CMAKE_CROSSCOMPILING)
+if(MSYS)
     find_program(DLLTOOL_EXECUTABLE
         NAMES dlltool dlltool.exe
     )

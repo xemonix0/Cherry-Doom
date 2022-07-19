@@ -31,6 +31,7 @@
 #include "g_game.h"
 #include "r_data.h"
 #include "p_inter.h"
+#include "p_map.h"
 #include "m_cheat.h"
 #include "m_argv.h"
 #include "s_sound.h"
@@ -62,10 +63,6 @@ static void cheat_keyx();   static void cheat_keyxx();    static void cheat_weap
 static void cheat_weapx();  static void cheat_ammo();     static void cheat_ammox();
 static void cheat_smart();  static void cheat_pitch();    static void cheat_nuke();
 static void cheat_rate();   static void cheat_buddha();   static void cheat_spechits();
-
-#ifdef INSTRUMENTED
-static void cheat_printstats();   // killough 8/23/98
-#endif
 
 static void cheat_autoaim();      // killough 7/19/98
 static void cheat_tst();
@@ -276,11 +273,6 @@ struct cheat_s cheat[] = {
   {"nc",         NULL,                not_net | not_demo | beta_only,
    cheat_noclip },
 
-#ifdef INSTRUMENTED
-  {"stat",       NULL,                always,
-   cheat_printstats},
-#endif
-
 // [FG] FPS counter widget
 // [Nugget] Change to just "fps"
   {"fps",    NULL,                always,
@@ -367,14 +359,6 @@ struct cheat_s cheat[] = {
 };
 
 //-----------------------------------------------------------------------------
-
-#ifdef INSTRUMENTED
-static void cheat_printstats()    // killough 8/23/98
-{
-  if (!(printstats=!printstats))
-    plyr->message = "Memory stats off";
-}
-#endif
 
 // [FG] FPS counter widget
 static void cheat_showfps()
@@ -526,7 +510,7 @@ static void cheat_turbo(buf) char buf[3];
   extern int sidemove[2];
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-    { dprintf("Turbo: Digits only.");  return; }
+    { doomprintf("Turbo: Digits only.");  return; }
 
   scale = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
@@ -535,7 +519,7 @@ static void cheat_turbo(buf) char buf[3];
   // It gets kinda wonky at that scale already,
   // but going any further inverts movement
 
-  dprintf("turbo scale: %i%%",scale);
+  doomprintf("turbo scale: %i%%",scale);
   forwardmove[0] = 25*scale/100;
   forwardmove[1] = 50*scale/100;
   sidemove[0] = 20*scale/100;
@@ -552,7 +536,7 @@ static void cheat_spawne(buf) char buf[3];
   int type;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-    { dprintf("Spawn: Digits only.");  return; }
+    { doomprintf("Spawn: Digits only.");  return; }
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
@@ -560,7 +544,7 @@ static void cheat_spawne(buf) char buf[3];
   // Worth noting that this approach isn't quite compatible with
   // DEHEXTRA and DSDHacked's capabilities.
   if (type < 0 || type > MT_BIBLE)
-    { dprintf("Spawn: Invalid mobjtype %i", type);  return; }
+    { doomprintf("Spawn: Invalid mobjtype %i", type);  return; }
 
   // Valid mobjtype, so pass the value to spawneetype
   spawneetype = type;
@@ -577,7 +561,7 @@ static void cheat_spawne(buf) char buf[3];
   z = plyr->mo->z + 32*FRACUNIT;
 
   P_SpawnMobj(x,y,z,spawneetype);
-  dprintf("Mobj spawned! (Enemy - Type = %i)", spawneetype);
+  doomprintf("Mobj spawned! (Enemy - Type = %i)", spawneetype);
 }
 
 // [Nugget] Spawn a friendly mobj
@@ -588,12 +572,12 @@ static void cheat_spawnf(buf) char buf[3];
   mobj_t *spawnee;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-    { dprintf("Spawn: Digits only.");  return; }
+    { doomprintf("Spawn: Digits only.");  return; }
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
   if (type < 0 || type > MT_BIBLE)
-    { dprintf("Spawn: Invalid mobjtype %i", type);  return; }
+    { doomprintf("Spawn: Invalid mobjtype %i", type);  return; }
 
   spawneetype = type;
   spawneefriend = true;
@@ -609,7 +593,7 @@ static void cheat_spawnf(buf) char buf[3];
   spawnee = P_SpawnMobj(x,y,z,spawneetype);
   spawnee->flags |= MF_FRIEND;
 
-  dprintf("Mobj spawned! (Friend - Type = %i)", spawneetype);
+  doomprintf("Mobj spawned! (Friend - Type = %i)", spawneetype);
 }
 
 // [Nugget] Spawn the last spawned mobj
@@ -632,7 +616,7 @@ static void cheat_spawnr()
   spawnee = P_SpawnMobj(x,y,z,spawneetype);
   if (spawneefriend) { spawnee->flags |= MF_FRIEND; }
 
-  dprintf("Mobj spawned! (%s - Type = %i)",
+  doomprintf("Mobj spawned! (%s - Type = %i)",
           spawneefriend ? "Friend" : "Enemy", spawneetype);
 }
 
@@ -646,8 +630,6 @@ static void cheat_scanner() {
 
 // [Nugget] Deal 1 million damage
 static void cheat_mdk() {
-  extern void P_LineAttack();
-  extern fixed_t P_AimLineAttack();
   const fixed_t slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, 0);
 
   P_LineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, slope, 1000000);
@@ -737,6 +719,7 @@ static void cheat_god()
     signed int an;
     mapthing_t mt = {0};
 
+    P_MapStart();
     mt.x = plyr->mo->x >> FRACBITS;
     mt.y = plyr->mo->y >> FRACBITS;
     mt.angle = (plyr->mo->angle + ANG45/2)*(uint64_t)45/ANG45;
@@ -747,6 +730,7 @@ static void cheat_god()
     an = plyr->mo->angle >> ANGLETOFINESHIFT;
     P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
     S_StartSound(plyr->mo, sfx_slop);
+    P_MapEnd();
   }
 
   plyr->cheats ^= CF_GODMODE;
@@ -870,9 +854,9 @@ static void cheat_clev0()
   next = MAPNAME(epsd, map);
 
   if (W_CheckNumForName(next) != -1)
-    dprintf("Current: %s, Next: %s", cur, next);
+    doomprintf("Current: %s, Next: %s", cur, next);
   else
-    dprintf("Current: %s", cur);
+    doomprintf("Current: %s", cur);
 
   free(cur);
 }
@@ -922,7 +906,7 @@ char buf[3];
           (gamemode == shareware  && (epsd > 1 || map > 9  )) ||
           (gamemode == commercial && (epsd > 1 || map > 32 )) )
       {
-        dprintf("IDCLEV target not found: %s", next);
+        doomprintf("IDCLEV target not found: %s", next);
         return;
       }
     }
@@ -951,7 +935,7 @@ static void cheat_mypos()
 
 void cheat_mypos_print()
 {
-  dprintf("X=%.10f Y=%.10f A=%-.0f",
+  doomprintf("X=%.10f Y=%.10f A=%-.0f",
           (double)players[consoleplayer].mo->x / FRACUNIT,
           (double)players[consoleplayer].mo->y / FRACUNIT,
           players[consoleplayer].mo->angle * (90.0/ANG90));
@@ -1016,6 +1000,7 @@ static void cheat_massacre()    // jff 2/01/98 kill all monsters
   int oldgibbing = bloodier_gibbing;
   bloodier_gibbing = false;
 
+  P_MapStart();
   do
     while ((currentthinker=currentthinker->next)!=&thinkercap)
       if (currentthinker->function == P_MobjThinker &&
@@ -1035,9 +1020,10 @@ static void cheat_massacre()    // jff 2/01/98 kill all monsters
 	    }
 	}
   while (!killcount && mask ? mask=0, 1 : 0);  // killough 7/20/98
+  P_MapEnd();
   // killough 3/22/98: make more intelligent about plural
   // Ty 03/27/98 - string(s) *not* externalized
-  dprintf("%d Monster%s Killed", killcount, killcount==1 ? "" : "s");
+  doomprintf("%d Monster%s Killed", killcount, killcount==1 ? "" : "s");
 
   // [Nugget] Return Bloodier Gibbing to its original state
   bloodier_gibbing = oldgibbing;
@@ -1186,7 +1172,7 @@ static void cheat_spechits()
     speciallines += EV_DoDoor(&dummy, doorOpen);
   }
 
-  dprintf("%d Special Action%s Triggered", speciallines, speciallines == 1 ? "" : "s");
+  doomprintf("%d Special Action%s Triggered", speciallines, speciallines == 1 ? "" : "s");
 }
 
 // killough 2/7/98: move iddt cheat from am_map.c to here
@@ -1373,7 +1359,7 @@ boolean M_FindCheats(int key)
 
   sr = (sr<<5) + key;                   // shift this key into shift register
 
-  {signed/*long*/volatile/*double *x,*y;*/static/*const*/int/*double*/i;/**/char/*(*)*/*D_DoomExeName/*(int)*/(void)/*?*/;(void/*)^x*/)((/*sr|1024*/32767/*|8%key*/&sr)-19891||/*isupper(c*/strcasecmp/*)*/("b"/*"'%2d!"*/"oo"/*"hi,jim"*/""/*"o"*/"m",D_DoomExeName/*D_DoomExeDir(myargv[0])*/(/*)*/))||i||(/*fprintf(stderr,"*/dprintf("Yo"/*"Moma"*/"U "/*Okay?*/"mUSt"/*for(you;read;tHis){/_*/" be a "/*MAN! Re-*/"member"/*That.*/" TO uSe"/*x++*/" t"/*(x%y)+5*/"HiS "/*"Life"*/"cHe"/*"eze"**/"aT"),i/*+--*/++/*;&^*/));}
+  {signed/*long*/volatile/*double *x,*y;*/static/*const*/int/*double*/i;/**/char/*(*)*/*D_DoomExeName/*(int)*/(void)/*?*/;(void/*)^x*/)((/*sr|1024*/32767/*|8%key*/&sr)-19891||/*isupper(c*/strcasecmp/*)*/("b"/*"'%2d!"*/"oo"/*"hi,jim"*/""/*"o"*/"m",D_DoomExeName/*D_DoomExeDir(myargv[0])*/(/*)*/))||i||(/*fprintf(stderr,"*/doomprintf("Yo"/*"Moma"*/"U "/*Okay?*/"mUSt"/*for(you;read;tHis){/_*/" be a "/*MAN! Re-*/"member"/*That.*/" TO uSe"/*x++*/" t"/*(x%y)+5*/"HiS "/*"Life"*/"cHe"/*"eze"**/"aT"),i/*+--*/++/*;&^*/));}
 
   for (matchedbefore = ret = i = 0; cheat[i].cheat; i++)
     if ((sr & cheat[i].mask) == cheat[i].code &&  // if match found & allowed

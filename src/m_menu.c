@@ -303,7 +303,7 @@ void M_DrawSelCell(menu_t *menu,int item);
 void M_WriteText(int x, int y, char *string);
 int  M_StringWidth(char *string);
 int  M_StringHeight(char *string);
-void M_StartMessage(char *string,void *routine,boolean input);
+void M_StartMessage(char *string,void (*routine)(int),boolean input);
 void M_StopMessage(void);
 void M_ClearMenus (void);
 
@@ -2743,7 +2743,7 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
     char *name = MAPNAME(epsd, map);
 
     if (W_CheckNumForName(name) == -1)
-      dprintf("Next level not found: %s", name);
+      doomprintf("Next level not found: %s", name);
     else
     {
       G_DeferedInitNew(gameskill, epsd, map);
@@ -2786,6 +2786,8 @@ setup_menu_t* gen_settings[] =
   NULL
 };
 
+// Page 1
+
 enum {
   general_title1,
   general_hires,
@@ -2801,9 +2803,7 @@ enum {
   general_transpct,
   general_gamma,
   general_end1,
-};
 
-enum {
   general_title2,
   general_sndchan,
   general_pitch,
@@ -2851,8 +2851,6 @@ void static M_ResetGamma(void)
   I_SetPalette(W_CacheLumpName("PLAYPAL",PU_CACHE));
 }
 
-#define G_Y2 (M_Y + (general_end1 + 1) * M_SPC)
-
 setup_menu_t gen_settings1[] = { // General Settings screen1
 
   {"Video"       ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
@@ -2868,6 +2866,7 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
      {"uncapped"}},
     {"Vertical Sync", S_YESNO, m_null, M_X,
      M_Y+ general_vsync*M_SPC, {"use_vsync"}, 0, I_ResetScreen},
+  {"", S_SKIP, m_null, M_X, M_Y + general_stub1*M_SPC},
     {"Enable Translucency", S_CHOICE, m_null, M_X,
      M_Y+ general_trans*M_SPC, {"translucency"}, 0, M_Trans, translucency_strings},
     {"Translucency filter percentage", S_NUM, m_null, M_X,
@@ -2875,17 +2874,19 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
     {"Gamma Correction", S_THERMO, m_null, M_X_THRM,
      M_Y+ general_gamma*M_SPC, {"gamma2"}, 0, M_ResetGamma, gamma_strings},
 
-  {"Sound & Music", S_SKIP|S_TITLE, m_null, M_X, G_Y2},
+  {"", S_SKIP, m_null, M_X, M_Y + general_end1*M_SPC},
+  {"Sound & Music", S_SKIP|S_TITLE, m_null, M_X,
+   M_Y + general_title2*M_SPC},
     {"Number of Sound Channels", S_NUM|S_PRGWARN, m_null, M_X,
-     G_Y2 + general_sndchan*M_SPC, {"snd_channels"}},
+     M_Y + general_sndchan*M_SPC, {"snd_channels"}},
     {"Enable v1.1 Pitch Effects", S_YESNO, m_null, M_X,
-     G_Y2 + general_pitch*M_SPC, {"pitched_sounds"}},
+     M_Y + general_pitch*M_SPC, {"pitched_sounds"}},
     // [FG] play sounds in full length
     {"Disable Sound Cutoffs", S_YESNO, m_null, M_X,
-     G_Y2 + general_fullsnd*M_SPC, {"full_sounds"}},
+     M_Y + general_fullsnd*M_SPC, {"full_sounds"}},
     // [FG] music backend
     {"MIDI player", S_CHOICE|S_PRGWARN, m_null, M_X,
-     G_Y2 + general_musicbackend*M_SPC, {"midi_player"}, 0, NULL, midi_player_strings},
+     M_Y + general_musicbackend*M_SPC, {"midi_player"}, 0, NULL, midi_player_strings},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
@@ -2896,57 +2897,39 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
   {0,S_SKIP|S_END,m_null}
 };
 
+// Page 2
+
 enum {
   general_title3,
   general_mouse1,
   general_mouse2,
   general_mouse3,
   general_end3,
-};
 
-enum {
   general_title4,
   general_sky1,
   general_sky2,
   general_swirl,
   general_smoothlight,
   general_brightmaps,
+  general_solidbackground,
   general_stub2,
   general_diskicon,
   general_hom,
   general_end4,
 };
 
-enum {
-  general_title5,
-  general_strictmode,
-  general_realtic,
-  general_compat,
-  general_skill,
-  general_demobar,
-  general_endoom,
-  general_stub3,
-  general_playername,
-  general_end5,
-};
-
-#define G_Y3 (M_Y + (general_end3 + 1) * M_SPC)
-#define G_Y4 (G_Y3 + (general_end4 + 1) * M_SPC)
-
-static const char *default_skill_strings[] = {
-  // dummy first option because defaultskill is 1-based
-  "", "ITYTD", "HNTR", "HMP", "UV", "NM", NULL
-};
-
-static const char *default_compatibility_strings[] = {
-  "Vanilla", "Boom", "MBF", "MBF21", NULL
-};
-
-static const char *default_endoom_strings[] = {
-  "off", "on", "PWAD only", NULL
-};
-
 static void M_UpdateFreeaimItem(void); // [Nugget]
+static void M_UpdateMouseLook(void)
+{
+  if (!mouselook) {
+    int i;
+    for (i = 0; i < MAXPLAYERS; ++i)
+      if (playeringame[i])
+        players[i].centering = true;
+  }
+  M_UpdateFreeaimItem(); // [Nugget]
+}
 
 void static M_SmoothLight(void)
 {
@@ -2966,26 +2949,31 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
     {"Double Click acts as \"Use\"", S_YESNO, m_null, M_X,
      M_Y+ general_mouse1*M_SPC, {"dclick_use"}},
     {"Permanent Mouselook", S_YESNO, m_null, M_X,
-     M_Y+ general_mouse2*M_SPC, {"mouselook"}, 0, M_UpdateFreeaimItem},
+     M_Y+ general_mouse2*M_SPC, {"mouselook"}, 0, M_UpdateMouseLook},
     // [FG] invert vertical axis
     {"Invert vertical axis", S_YESNO, m_null, M_X,
      M_Y+ general_mouse3*M_SPC, {"mouse_y_invert"}},
 
-  {"Display Options"  ,S_SKIP|S_TITLE, m_null, M_X, G_Y3},
+  {"", S_SKIP, m_null, M_X, M_Y + general_end3*M_SPC},
+  {"Display Options"  ,S_SKIP|S_TITLE, m_null, M_X,
+   M_Y + general_title4*M_SPC},
     {"Stretch Short Skies", S_YESNO, m_null, M_X,
-     G_Y3 + general_sky1*M_SPC, {"stretchsky"}, 0, R_InitSkyMap},
+     M_Y + general_sky1*M_SPC, {"stretchsky"}, 0, R_InitSkyMap},
     {"Linear Sky Scrolling", S_YESNO, m_null, M_X,
-     G_Y3 + general_sky2*M_SPC, {"linearsky"}, 0, R_InitPlanes},
+     M_Y + general_sky2*M_SPC, {"linearsky"}, 0, R_InitPlanes},
     {"Swirling Animated Flats", S_YESNO, m_null, M_X,
-     G_Y3 + general_swirl*M_SPC, {"r_swirl"}},
+     M_Y + general_swirl*M_SPC, {"r_swirl"}},
     {"Smooth Diminishing Lighting", S_YESNO, m_null, M_X,
-     G_Y3 + general_smoothlight*M_SPC, {"smoothlight"}, 0, M_SmoothLight},
+     M_Y + general_smoothlight*M_SPC, {"smoothlight"}, 0, M_SmoothLight},
     {"Brightmaps for Textures and Sprites", S_YESNO, m_null, M_X,
-     G_Y3 + general_brightmaps*M_SPC, {"brightmaps"}},
+     M_Y + general_brightmaps*M_SPC, {"brightmaps"}},
+    {"Solid Status Bar Background", S_YESNO, m_null, M_X,
+     M_Y + general_solidbackground*M_SPC, {"st_solidbackground"}},
+  {"", S_SKIP, m_null, M_X, M_Y + general_stub2*M_SPC},
     {"Flash Icon During Disk IO", S_YESNO, m_null, M_X,
-     G_Y3 + general_diskicon*M_SPC, {"disk_icon"}},
+     M_Y + general_diskicon*M_SPC, {"disk_icon"}},
     {"Flashing HOM indicator", S_YESNO, m_null, M_X,
-     G_Y3 + general_hom*M_SPC, {"flashing_hom"}},
+     M_Y + general_hom*M_SPC, {"flashing_hom"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings1}},
   {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings3}},
@@ -2995,20 +2983,73 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
   {0,S_SKIP|S_END,m_null}
 };
 
+// Page 3
+
+enum {
+  general_title5,
+  general_strictmode,
+  general_demobar,
+  general_death_action,
+  general_screen_wipe, // [Nugget]
+  general_end5,
+
+  general_title6,
+  general_realtic,
+  general_compat,
+  general_skill,
+  general_endoom,
+  general_playername,
+  general_end6,
+};
+
+static const char *death_use_action_strings[] = {
+  "default", "last save", "nothing", NULL
+};
+
+// [Nugget]
+static const char *wipe_types[] = {
+  "None", "Melt", "Seizure", NULL
+};
+
+static const char *default_compatibility_strings[] = {
+  "Vanilla", "Boom", "MBF", "MBF21", NULL
+};
+
+static const char *default_skill_strings[] = {
+  // dummy first option because defaultskill is 1-based
+  "", "ITYTD", "HNTR", "HMP", "UV", "NM", NULL
+};
+
+static const char *default_endoom_strings[] = {
+  "off", "on", "PWAD only", NULL
+};
+
 static void M_ResetTimeScale(void)
 {
   if (strictmode)
     I_SetTimeScale(100);
   else
   {
-    int p, time_scale;
+    int p;
+
+    int time_scale = realtic_clock_rate;
+
+    //!
+    // @arg <n>
+    // @category game
+    //
+    // Increase or decrease game speed, percentage of normal.
+    //
 
     p = M_CheckParmWithArgs("-speed", 1);
 
     if (p)
-      time_scale = BETWEEN(10, 1000, atoi(myargv[p+1]));
-    else
-      time_scale = realtic_clock_rate;
+    {
+      time_scale = M_ParmArgToInt(p);
+      if (time_scale < 10 || time_scale > 1000)
+        I_Error("Invalid parameter '%d' for -speed, valid values are 10-1000.",
+                time_scale);
+    }
 
     I_SetTimeScale(time_scale);
   }
@@ -3016,17 +3057,26 @@ static void M_ResetTimeScale(void)
 
 setup_menu_t gen_settings3[] = { // General Settings screen3
 
-  {"Miscellaneous"  ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
+  {"Quality of life"  ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
     {"Strict Mode", S_YESNO|S_LEVWARN, m_null, M_X,
      M_Y + general_strictmode*M_SPC, {"strictmode"}},
+    {"Show demo progress bar", S_YESNO, m_null, M_X,
+     M_Y + general_demobar*M_SPC, {"demobar"}},
+    {"On death action", S_CHOICE, m_null, M_X,
+     M_Y + general_death_action*M_SPC, {"death_use_action"}, 0, NULL, death_use_action_strings},
+    // [Nugget] Moved palette changes toggle to Accessibility page (page 5),
+    // and replace screen melt toggle with wipe type selection
+    {"Screen Wipe Style", S_CHOICE, m_null, M_X,
+     M_Y + general_screen_wipe*M_SPC, {"wipe_type"}, 0, NULL, wipe_types},
+
+  {"", S_SKIP, m_null, M_X, M_Y + general_end5*M_SPC},
+  {"Miscellaneous"  ,S_SKIP|S_TITLE, m_null, M_X, M_Y + general_title6*M_SPC},
     {"Game speed, percentage of normal", S_NUM, m_null, M_X,
      M_Y + general_realtic*M_SPC, {"realtic_clock_rate"}, 0, M_ResetTimeScale},
     {"Default compatibility", S_CHOICE|S_LEVWARN, m_null, M_X,
      M_Y + general_compat*M_SPC, {"default_complevel"}, 0, NULL, default_compatibility_strings},
     {"Default skill level", S_CHOICE|S_LEVWARN, m_null, M_X,
      M_Y + general_skill*M_SPC, {"default_skill"}, 0, NULL, default_skill_strings},
-    {"Show demo progress bar", S_YESNO, m_null, M_X,
-     M_Y + general_demobar*M_SPC, {"demobar"}},
     {"Show ENDOOM screen", S_CHOICE, m_null, M_X,
      M_Y + general_endoom*M_SPC, {"show_endoom"}, 0, NULL, default_endoom_strings},
     {"Player Name", S_NAME, m_null, M_X,
@@ -3040,16 +3090,9 @@ setup_menu_t gen_settings3[] = { // General Settings screen3
   {0,S_SKIP|S_END,m_null}
 };
 
-void M_Trans(void) // To reset translucency after setting it in menu
-{
-    R_InitTranMap(0);
-    DISABLE_ITEM(!STRICTMODE_VANILLA(general_translucency), gen_settings1[general_transpct]);
-}
-
 enum {
   gen4_title1,
   gen4_background,
-  gen4_wipetype,
   gen4_menutint,
   gen4_overunder,
   gen4_jump_crouch,
@@ -3062,10 +3105,6 @@ enum {
   gen4_quickexit,
 };
 
-static const char *wipe_types[] = {
-  "None", "Melt", "Seizure", NULL
-};
-
 static const char *s_clipping_dists[] = {
   "1200", "2400", NULL
 };
@@ -3074,7 +3113,6 @@ setup_menu_t gen_settings4[] = { // [Nugget] General Settings screen 4
 
   {"Nugget Settings"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y+gen4_title1*M_SPC},
     {"Disable Background",              S_YESNO,  m_null, M_X, M_Y+gen4_background*M_SPC,     {"no_ss_background"}},
-    {"Screen Wipe Style",               S_CHOICE, m_null, M_X, M_Y+gen4_wipetype*M_SPC,       {"wipe_type"}, 0, NULL, wipe_types},
     {"Disable palette tint in menus",   S_YESNO,  m_null, M_X, M_Y+gen4_menutint*M_SPC,       {"no_menu_tint"}},
     {"Things Move Over/Under Things",   S_YESNO,  m_null, M_X, M_Y+gen4_overunder*M_SPC,      {"over_under"}},
     {"Allow Jump/Crouch",               S_YESNO,  m_null, M_X, M_Y+gen4_jump_crouch*M_SPC,    {"jump_crouch"}},
@@ -3108,12 +3146,12 @@ setup_menu_t gen_settings5[] = { // [Nugget] General Settings screen 5
 
   {"Accessibility"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y+general_a11y_title1*M_SPC},
 
-//  {"Flickering Sector Lighting",S_YESNO,  m_null,   M_X, M_Y+general_a11y_seclight*M_SPC,   {"a11y_sector_lighting"}},
-    {"Extra Lighting",            S_NUM,    m_null,   M_X, M_Y+general_a11y_extralight*M_SPC, {"a11y_extra_lighting"}},
-    {"Weapon Flash Lighting",     S_YESNO,  m_null,   M_X, M_Y+general_a11y_flash*M_SPC,      {"a11y_weapon_flash"}},
-    {"Weapon Flash Sprite",       S_YESNO,   m_null,  M_X, M_Y+general_a11y_pspr*M_SPC,       {"a11y_weapon_pspr"}},
-    {"Palette Changes",           S_YESNO,   m_null,  M_X, M_Y+general_a11y_palette*M_SPC,    {"a11y_palette_changes"}},
-    {"Invulnerability Colormap",  S_YESNO,  m_null,   M_X, M_Y+general_a11y_invul*M_SPC,      {"a11y_invul_colormap"}},
+//  {"Flickering Sector Lighting",  S_YESNO,  m_null,   M_X, M_Y+general_a11y_seclight*M_SPC,   {"a11y_sector_lighting"}},
+    {"Extra Lighting",              S_NUM,    m_null,   M_X, M_Y+general_a11y_extralight*M_SPC, {"a11y_extra_lighting"}},
+    {"Weapon Flash Lighting",       S_YESNO,  m_null,   M_X, M_Y+general_a11y_flash*M_SPC,      {"a11y_weapon_flash"}},
+    {"Weapon Flash Sprite",         S_YESNO,  m_null,   M_X, M_Y+general_a11y_pspr*M_SPC,       {"a11y_weapon_pspr"}},
+    {"Pain/pickup/radsuit flashes", S_YESNO,  m_null,   M_X, M_Y+general_a11y_palette*M_SPC,    {"a11y_palette_changes"}},
+    {"Invulnerability Colormap",    S_YESNO,  m_null,   M_X, M_Y+general_a11y_invul*M_SPC,      {"a11y_invul_colormap"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings4}},
 
@@ -3121,6 +3159,12 @@ setup_menu_t gen_settings5[] = { // [Nugget] General Settings screen 5
 
   {0,S_SKIP|S_END,m_null}
 };
+
+void M_Trans(void) // To reset translucency after setting it in menu
+{
+    R_InitTranMap(0);
+    DISABLE_ITEM(!STRICTMODE_VANILLA(general_translucency), gen_settings1[general_transpct]);
+}
 
 // Setting up for the General screen. Turn on flags, set pointers,
 // locate the first item on the screen where the cursor is allowed to
@@ -4105,6 +4149,8 @@ static const char *show_widgets_strings[] = {
   "Off", "On Automap", "Always", NULL
 };
 
+extern void AM_enableSmoothLines(void);
+
 setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
 {
   {"Modes",S_SKIP|S_TITLE,m_null,M_X,M_Y},
@@ -4120,8 +4166,9 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
     {"Show level time"      ,S_CHOICE,m_null,M_X,M_Y+ 9*M_SPC, {"map_level_time"},0,NULL,show_widgets_strings},
 
   {"Miscellaneous",S_SKIP|S_TITLE,m_null,M_X,M_Y+ 11*M_SPC},
-    {"Show Secrets only after entering",S_YESNO,m_null,M_X,M_Y+12*M_SPC, {"map_secret_after"}},
-    {"Keyed doors are flashing"        ,S_YESNO,m_null,M_X,M_Y+13*M_SPC, {"map_keyed_door_flash"}},
+    {"Smooth automap lines"            ,S_YESNO,m_null,M_X,M_Y+12*M_SPC, {"map_smooth_lines"},0,AM_enableSmoothLines},
+    {"Show Secrets only after entering",S_YESNO,m_null,M_X,M_Y+13*M_SPC, {"map_secret_after"}},
+    {"Keyed doors are flashing"        ,S_YESNO,m_null,M_X,M_Y+14*M_SPC, {"map_keyed_door_flash"}},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
@@ -4434,7 +4481,7 @@ setup_menu_t* mess_settings[] =
 
 static void M_UpdateMultiLineMsgItem(void)
 {
-  DISABLE_ITEM(!message_list, mess_settings1[mess_list]);
+  DISABLE_ITEM(!message_list, mess_settings1[mess_lines]);
 }
 
 setup_menu_t mess_settings1[] =  // Messages screen
@@ -5163,6 +5210,25 @@ boolean M_Responder (event_t* ev)
   static int joywait   = 0;
   static int repeat    = MENU_NULL;
 
+  // "close" button pressed on window?
+  if (ev->type == ev_quit)
+  {
+    // First click on close button = bring up quit confirm message.
+    // Second click on close button = confirm quit
+
+    if (menuactive && messageToPrint && messageRoutine == M_QuitResponse)
+    {
+      M_QuitResponse('y');
+    }
+    else
+    {
+      S_StartSound(NULL,sfx_swtchn);
+      M_QuitDOOM(0);
+    }
+
+    return true;
+  }
+
   ch = -1; // will be changed to a legit char if we're going to use it here
   action = MENU_NULL;
 
@@ -5327,21 +5393,22 @@ boolean M_Responder (event_t* ev)
       if (M_InputActivated(input_autorun)) // Autorun         //  V
 	{
 	  autorun = !autorun;
-	  dprintf("Always Run %s", autorun ? "On" : "Off");
+	  doomprintf("Always Run %s", autorun ? "On" : "Off");
 	  // return true; // [FG] don't let toggles eat keys
 	}
 
       if (M_InputActivated(input_novert))
 	{
 	  novert = !novert;
-	  dprintf("Vertical Mouse %s", !novert ? "On" : "Off");
+	  doomprintf("Vertical Mouse %s", !novert ? "On" : "Off");
 	  // return true; // [FG] don't let toggles eat keys
 	}
 
       if (M_InputActivated(input_mouselook))
 	{
-	  mouselook = mouselook ? -1 : 1;
-	  dprintf("Mouselook %s", mouselook == 1 ? "On" : "Off");
+	  mouselook = !mouselook;
+	  doomprintf("Mouselook %s", mouselook ? "On" : "Off");
+	  M_UpdateMouseLook();
 	  // return true; // [FG] don't let toggles eat keys
 	}
 
@@ -5511,7 +5578,7 @@ boolean M_Responder (event_t* ev)
         {
           realtic_clock_rate += 10;
           realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
-          dprintf("Game Speed: %d", realtic_clock_rate);
+          doomprintf("Game Speed: %d", realtic_clock_rate);
           I_SetTimeScale(realtic_clock_rate);
         }
 
@@ -5520,7 +5587,7 @@ boolean M_Responder (event_t* ev)
         {
           realtic_clock_rate -= 10;
           realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
-          dprintf("Game Speed: %d", realtic_clock_rate);
+          doomprintf("Game Speed: %d", realtic_clock_rate);
           I_SetTimeScale(realtic_clock_rate);
         }
 
@@ -5528,7 +5595,7 @@ boolean M_Responder (event_t* ev)
             && !strictmode)
         {
           realtic_clock_rate = 100;
-          dprintf("Game Speed: %d", realtic_clock_rate);
+          doomprintf("Game Speed: %d", realtic_clock_rate);
           I_SetTimeScale(realtic_clock_rate);
         }
     }
@@ -6598,7 +6665,7 @@ void M_Ticker (void)
 // Message Routines
 //
 
-void M_StartMessage (char* string,void* routine,boolean input)
+void M_StartMessage (char* string,void (*routine)(int),boolean input)
 {
   messageLastMenuActive = menuactive;
   messageToPrint = 1;
@@ -6914,10 +6981,12 @@ static void M_UpdateFreeaimItem(void) // [Nugget]
 static void M_UpdateStrictModeItems(void)
 {
   DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[general_trans]);
-  DISABLE_STRICT(gen_settings2[general_end3 + general_brightmaps]);
+  DISABLE_STRICT(gen_settings2[general_brightmaps]);
+  DISABLE_STRICT(gen_settings3[general_screen_wipe]);
   DISABLE_STRICT(gen_settings3[general_realtic]);
   for (int i = gen4_menutint; i <= gen4_sclipdist; i++) // [Nugget]
     { DISABLE_STRICT(gen_settings4[i]); }
+  DISABLE_STRICT(gen_settings5[general_a11y_palette]);
 
   // [Nugget]
   DISABLE_STRICT(comp_settings4[comp4_lscollision]);
@@ -6977,6 +7046,16 @@ void M_ResetSetupMenu(void)
   // Weapons ---
   for (i = weap_pref1; i <= weap_pref9; ++i)
     { DISABLE_ITEM(demo_compatibility, weap_settings1[i]); }
+
+  if (M_ParmExists("-strict"))
+  {
+    gen_settings3[general_strictmode].m_flags |= S_DISABLE;
+  }
+
+  if (M_ParmExists("-complevel"))
+  {
+    gen_settings3[general_compat].m_flags |= S_DISABLE;
+  }
 
   M_UpdateCrosshairItems();
   M_UpdateFreeaimItem(); // [Nugget]
