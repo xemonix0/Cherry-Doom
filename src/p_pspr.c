@@ -48,6 +48,7 @@
 #define BFGCELLS bfgcells        /* Ty 03/09/98 externalized in p_inter.c */
 
 extern void P_Thrust(player_t *, angle_t, fixed_t);
+extern boolean mouselook; // [Nugget]
 
 // The following array holds the recoil values         // phares
 static struct
@@ -808,7 +809,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
 
   if (weapon_recoil && !(player->mo->flags & MF_NOCLIP))
     P_Thrust(player, ANG180 + player->mo->angle,
-	     512*recoil_values[wp_plasma].thrust);
+             512*recoil_values[wp_plasma].thrust);
 
   if (weapon_recoilpitch && (leveltime & 2))
   {
@@ -819,52 +820,66 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
 
   player->extralight = 2;
 
-  do
+  do {
+    mobj_t *th, *mo = player->mo;
+    angle_t an = mo->angle;
+    angle_t an1 = ((P_Random(pr_bfg)&127) - 64) * (ANG90/768) + an;
+    angle_t an2 = ((P_Random(pr_bfg)&127) - 64) * (ANG90/640) + ANG90;
+    extern int autoaim;
+    fixed_t slope; // [Nugget] Moved here
+
+    // [Nugget] Freeaim
+    if (mouselook && freeaim == freeaim_direct && casual_play && !strictmode)
     {
-      mobj_t *th, *mo = player->mo;
-      angle_t an = mo->angle;
-      angle_t an1 = ((P_Random(pr_bfg)&127) - 64) * (ANG90/768) + an;
-      angle_t an2 = ((P_Random(pr_bfg)&127) - 64) * (ANG90/640) + ANG90;
-      extern int autoaim;
-
-      if (autoaim || !beta_emulation)
-	{
-	  // killough 8/2/98: make autoaiming prefer enemies
-	  int mask = MF_FRIEND;
-	  fixed_t slope;
-	  do
-	    {
-	      slope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
-	      if (!linetarget)
-		slope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
-	      if (!linetarget)
-		slope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
-	      if (!linetarget)
-		slope = 0, an = mo->angle;
-	    }
-	  while (mask && (mask=0, !linetarget));     // killough 8/2/98
-	  an1 += an - mo->angle;
-	  // sf: despite killough's infinite wisdom.. even
-	  // he is prone to mistakes. seems negative numbers
-	  // won't survive a bitshift!
-	  if (slope < 0)
-	    an2 -= tantoangle[-slope >> DBITS];
-	  else
-	    an2 += tantoangle[slope >> DBITS];
-	}
-
-      th = P_SpawnMobj(mo->x, mo->y,
-		       mo->z + 62*FRACUNIT - player->psprites[ps_weapon].sy,
-		       type);
-      P_SetTarget(&th->target, mo);
-      th->angle = an1;
-      th->momx = finecosine[an1>>ANGLETOFINESHIFT] * 25;
-      th->momy = finesine[an1>>ANGLETOFINESHIFT] * 25;
-      th->momz = finetangent[an2>>ANGLETOFINESHIFT] * 25;
-      // [FG] suppress interpolation of player missiles for the first tic
-      th->interp = -1;
-      P_CheckMissileSpawn(th);
+      an1 += an - mo->angle;
+      slope = PLAYER_SLOPE(player);
+      if (slope < 0)
+        an2 -= tantoangle[-slope >> DBITS];
+      else
+        an2 += tantoangle[slope >> DBITS];
     }
+    else if (autoaim || !beta_emulation)
+    {
+      // killough 8/2/98: make autoaiming prefer enemies
+      int mask = MF_FRIEND;
+      do {
+        slope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
+        if (!linetarget)
+          // [Nugget] Disable horizontal autoaim
+          if (!casual_play || !STRICTMODE(no_hor_autoaim))
+            slope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
+        if (!linetarget)
+          // [Nugget] Disable horizontal autoaim
+          if (!casual_play || !STRICTMODE(no_hor_autoaim))
+            slope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
+        if (!linetarget)
+          an = mo->angle,
+          slope = (STRICTMODE(freeaim) == freeaim_autoaim && casual_play)
+                  ? PLAYER_SLOPE(player) : 0;
+      }
+      while (mask && (mask=0, !linetarget));     // killough 8/2/98
+      an1 += an - mo->angle;
+      // sf: despite killough's infinite wisdom.. even
+      // he is prone to mistakes. seems negative numbers
+      // won't survive a bitshift!
+      if (slope < 0)
+        an2 -= tantoangle[-slope >> DBITS];
+      else
+        an2 += tantoangle[slope >> DBITS];
+    }
+
+    th = P_SpawnMobj(mo->x, mo->y,
+         mo->z + 62*FRACUNIT - player->psprites[ps_weapon].sy - player->crouchOffset, // [Nugget]
+         type);
+    P_SetTarget(&th->target, mo);
+    th->angle = an1;
+    th->momx = finecosine[an1>>ANGLETOFINESHIFT] * 25;
+    th->momy = finesine[an1>>ANGLETOFINESHIFT] * 25;
+    th->momz = finetangent[an2>>ANGLETOFINESHIFT] * 25;
+    // [FG] suppress interpolation of player missiles for the first tic
+    th->interp = -1;
+    P_CheckMissileSpawn(th);
+  }
   while ((type != MT_PLASMA2) && (type = MT_PLASMA2)); //killough: obfuscated!
 }
 
@@ -892,8 +907,6 @@ fixed_t bulletslope;
 
 static void P_BulletSlope(mobj_t *mo)
 {
-  extern int mouselook; // [Nugget]
-
   // [Nugget] Crispy freeaim
   if (mouselook && freeaim == freeaim_direct && casual_play && !strictmode)
     { bulletslope = PLAYER_SLOPE(mo->player); }
