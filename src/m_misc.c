@@ -1307,6 +1307,14 @@ default_t defaults[] = {
     input_crouch, { {input_type_key, 'c'} }
   },
 
+  { // [Nugget]
+    "input_crosshair",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle crosshair",
+    input_crosshair, { {0, 0} }
+  },
+
   {
     "input_savegame",
     NULL, NULL,
@@ -2272,11 +2280,18 @@ default_t defaults[] = {
     "0 for off, 1 for time, 2 for stats, 3 for both"
   },
 
-  {
+  { // [Nugget]
+    "hud_crosshair_on",
+    (config_t *) &hud_crosshair_on, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "enable crosshair"
+  },
+
+  { // [Nugget] Change minimum to 1
     "hud_crosshair",
     (config_t *) &hud_crosshair, NULL,
-    {0}, {0,HU_CROSSHAIRS-1}, number, ss_stat, wad_no,
-    "enable crosshair"
+    {1}, {1,HU_CROSSHAIRS-1}, number, ss_stat, wad_no,
+    "crosshair type"
   },
 
   { // [Nugget]

@@ -3638,6 +3638,7 @@ setup_menu_t keys_settings4[] =  // Key Binding screen strings
   {"NUGGET",S_SKIP|S_TITLE,m_null,KB_X,M_Y+13*M_SPC},
     {"JUMP",S_INPUT,m_scrn,KB_X,M_Y+14*M_SPC,{0},input_jump},
     {"CROUCH",S_INPUT,m_scrn,KB_X,M_Y+15*M_SPC,{0},input_crouch},
+    {"CROSSHAIR",S_INPUT,m_scrn,KB_X,M_Y+16*M_SPC,{0},input_crosshair},
 
   {"<- PREV", S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings3}},
   {"NEXT ->", S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings5}},
@@ -4027,6 +4028,7 @@ enum {
   stat2_stub2,
   stat2_title3,
   stat2_xhair,
+  stat2_xhairtype,
   stat2_xhairsh,
   stat2_xhairhealth,
   stat2_xhairtarget,
@@ -4036,11 +4038,13 @@ enum {
 
 static void M_UpdateCrosshairItems (void)
 {
-    DISABLE_ITEM(!hud_crosshair,                  stat_settings2[stat2_xhairsh]);
-    DISABLE_ITEM(!hud_crosshair,                  stat_settings2[stat2_xhairhealth]);
-    DISABLE_ITEM(!STRICTMODE(hud_crosshair),      stat_settings2[stat2_xhairtarget]);
-    DISABLE_ITEM(!hud_crosshair,                  stat_settings2[stat2_xhaircolor]);
-    DISABLE_ITEM(!STRICTMODE(hud_crosshair && hud_crosshair_target),
+    // [Nugget] Check for toggle instead of type
+    DISABLE_ITEM(!hud_crosshair_on,               stat_settings2[stat2_xhairtype]);
+    DISABLE_ITEM(!hud_crosshair_on,               stat_settings2[stat2_xhairsh]);
+    DISABLE_ITEM(!hud_crosshair_on,               stat_settings2[stat2_xhairhealth]);
+    DISABLE_ITEM(!STRICTMODE(hud_crosshair_on),   stat_settings2[stat2_xhairtarget]);
+    DISABLE_ITEM(!hud_crosshair_on,               stat_settings2[stat2_xhaircolor]);
+    DISABLE_ITEM(!STRICTMODE(hud_crosshair_on && hud_crosshair_target),
                                                   stat_settings2[stat2_xhairtcolor]);
 }
 
@@ -4072,7 +4076,8 @@ setup_menu_t stat_settings2[] =
     {"SMOOTH HEALTH/ARMOR COUNT"      ,S_YESNO     ,m_null,M_X,M_Y+stat2_smooth*M_SPC, {"smooth_counts"}},
   {"",S_SKIP,m_null,M_X,M_Y+stat2_stub2*M_SPC }, // Stub
   {"CROSSHAIR",S_SKIP|S_TITLE,m_null,M_X,M_Y+ stat2_title3*M_SPC },
-    {"ENABLE CROSSHAIR",      S_CHOICE,m_null,M_X,M_Y+stat2_xhair*M_SPC, {"hud_crosshair"}, 0, M_UpdateCrosshairItems, crosshair_str},
+    {"ENABLE CROSSHAIR",      S_YESNO, m_null,M_X,M_Y+stat2_xhair*M_SPC, {"hud_crosshair_on"}},
+    {"CROSSHAIR TYPE",        S_CHOICE,m_null,M_X,M_Y+stat2_xhairtype*M_SPC, {"hud_crosshair"}, 0, M_UpdateCrosshairItems, crosshair_str},
     {"SHADED CROSSHAIR",      S_YESNO, m_null,M_X,M_Y+stat2_xhairsh*M_SPC, {"hud_crosshair_shaded"}},
     {"COLOR BY HEALTH",       S_CHOICE, m_null,M_X,M_Y+stat2_xhairhealth*M_SPC, {"hud_crosshair_health"}, 0, 0, crosshair_health},
     {"HIGHLIGHT ON TARGET",   S_CHOICE, m_null,M_X,M_Y+stat2_xhairtarget*M_SPC, {"hud_crosshair_target"}, 0, M_UpdateCrosshairItems, crosshair_targets},
@@ -5390,7 +5395,15 @@ boolean M_Responder (event_t* ev)
 
   if (!menuactive)                                            // phares
     {                                                         //  |
-      if (M_InputActivated(input_autorun)) // Autorun         //  V
+                                                              //  V
+      // [Nugget]
+      if (M_InputActivated(input_crosshair))
+	{
+	  hud_crosshair_on = !hud_crosshair_on;
+	  doomprintf("Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
+	}
+
+      if (M_InputActivated(input_autorun)) // Autorun
 	{
 	  autorun = !autorun;
 	  doomprintf("Always Run %s", autorun ? "On" : "Off");

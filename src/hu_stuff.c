@@ -223,6 +223,7 @@ int message_timer  = HU_MSGTIMEOUT * (1000/TICRATE);     // killough 11/98
 int chat_msg_timer = HU_MSGTIMEOUT * (1000/TICRATE);     // killough 11/98
 
 static void HU_InitCrosshair(void);
+boolean hud_crosshair_on; // [Nugget] Keep the variable below just for the type
 int hud_crosshair;
 int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 boolean hud_crosshair_health;
@@ -801,7 +802,7 @@ void HU_Start(void)
 		    &always_off);
 
   // init crosshair
-  if (hud_crosshair)
+  if (hud_crosshair_on) // [Nugget] Use crosshair toggle
     HU_InitCrosshair();
 
   // now allow the heads-up display to run
@@ -1688,7 +1689,7 @@ void HU_Drawer(void)
   HUlib_drawIText(&w_chat);
 
   // display crosshair
-  if (hud_crosshair)
+  if (hud_crosshair_on) // [Nugget] Use crosshair toggle
     HU_DrawCrosshair();
 }
 
@@ -1939,7 +1940,7 @@ void HU_Ticker(void)
     }
 
     // update crosshair properties
-    if (hud_crosshair)
+    if (hud_crosshair_on) // [Nugget] Use crosshair toggle
       HU_UpdateCrosshair();
 }
 

@@ -93,6 +93,7 @@ extern int defdemotics, deftotaldemotics;
 
 extern int crispy_hud;
 
+extern boolean hud_crosshair_on; // [Nugget] Keep the variable below just for the type
 extern int hud_crosshair;
 extern int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 extern boolean hud_crosshair_health;
