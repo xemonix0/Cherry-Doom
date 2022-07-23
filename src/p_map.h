@@ -60,6 +60,8 @@ void    P_UseLines(player_t *player);
 
 // killough 8/2/98: add 'mask' argument to prevent friends autoaiming at others
 fixed_t P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance,int mask);
+// [Nugget] Used for direct freeaim
+fixed_t P_AimSlopedLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,fixed_t slope,int mask);
 void    P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
                      fixed_t slope, int damage );
 void    P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance);

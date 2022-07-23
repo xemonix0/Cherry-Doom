@@ -1403,6 +1403,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   angle_t an = source->angle;
 
+  // [Nugget] Freeaim
   if (mouselook && freeaim == freeaim_direct && casual_play && !strictmode)
     { slope = PLAYER_SLOPE(source->player); }
   else {

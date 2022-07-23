@@ -1011,7 +1011,7 @@ static void HU_InitCrosshair(void)
 
   if (crosshair_nam[hud_crosshair])
   {
-    crosshair.patch = hud_crosshair_shaded
+    crosshair.patch = hud_crosshair_shaded // [Nugget]
                       ? W_CacheLumpName(crosshair_sh_nam[hud_crosshair], PU_STATIC)
                       : W_CacheLumpName(crosshair_nam[hud_crosshair], PU_STATIC);
 
@@ -1025,16 +1025,13 @@ static void HU_InitCrosshair(void)
 
 static void HU_UpdateCrosshair(void)
 {
-  extern int mouselook; // [Nugget]
+  extern boolean mouselook; // [Nugget]
   int health; // [Nugget] Could be player or target health
 
   crosshair.y = (screenblocks <= 10) ? (ORIGHEIGHT-ST_HEIGHT)/2 : ORIGHEIGHT/2;
 
   // [Nugget] Check for linetarget
-  if (mouselook && freeaim == freeaim_direct && linetarget)
-    { linetarget = NULL; }
-  if ((hud_crosshair_health == 2 || hud_crosshair_target)
-      && (freeaim != freeaim_direct || !mouselook) && !strictmode)
+  if ((hud_crosshair_health == 2 || hud_crosshair_target) && !strictmode)
   {
     angle_t an = plr->mo->angle;
     const ammotype_t ammo = weaponinfo[plr->readyweapon].ammo;
@@ -1042,50 +1039,52 @@ static void HU_UpdateCrosshair(void)
     boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
 
     overflow[emu_intercepts].enabled = false;
-    P_AimLineAttack(plr->mo, an, range, 0);
-    if ((ammo == am_misl || ammo == am_cell)
-        && (!no_hor_autoaim || !casual_play))
+    if (mouselook && freeaim == freeaim_direct && casual_play)
     {
-      if (!linetarget)
-        { P_AimLineAttack(plr->mo, an += 1<<26, range, 0); }
-      if (!linetarget)
-        { P_AimLineAttack(plr->mo, an -= 2<<26, range, 0); }
+      P_AimSlopedLineAttack(plr->mo, an, range, PLAYER_SLOPE(plr),
+                            (demo_version < 203) ? 0 : MF_FRIEND);
+    }
+    else {
+      P_AimLineAttack(plr->mo, an, range, 0);
+      if ((ammo == am_misl || ammo == am_cell)
+          && (!no_hor_autoaim || !casual_play))
+      {
+        if (!linetarget) { P_AimLineAttack(plr->mo, an += 1<<26, range, 0); }
+        if (!linetarget) { P_AimLineAttack(plr->mo, an -= 2<<26, range, 0); }
+      }
     }
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
   }
 
   // [Nugget] Begin checking, in order of priority
 
-  if ((hud_crosshair_health == 2) && (freeaim != freeaim_direct || !mouselook) && !strictmode)
+  if ((hud_crosshair_health == 2) && !strictmode)
   { // [Nugget] Set the crosshair color based on target health
     if (linetarget
         && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2))
     {
+      const int spawnhealth = linetarget->info->spawnhealth;
       health = linetarget->health;
-      if (health < linetarget->info->spawnhealth/4)
-        { crosshair.cr = colrngs[CR_RED]; }
-      else if (health < linetarget->info->spawnhealth/2)
-        { crosshair.cr = colrngs[CR_BRICK]; }
-      else if (health < (linetarget->info->spawnhealth/2)*1.5)
-        { crosshair.cr = colrngs[CR_GOLD]; }
-      else
-        { crosshair.cr = colrngs[CR_GREEN]; }
+      if (health < spawnhealth/4)             { crosshair.cr = colrngs[CR_RED]; }
+      else if (health < spawnhealth/2)        { crosshair.cr = colrngs[CR_BRICK]; }
+      else if (health < (spawnhealth/2)*1.5)  { crosshair.cr = colrngs[CR_GOLD]; }
+      else                                    { crosshair.cr = colrngs[CR_GREEN]; }
     }
     else // [Nugget] Make it gray if no linetarget
       { crosshair.cr = colrngs[CR_GRAY]; }
   }
-  else if (STRICTMODE(hud_crosshair_target) && linetarget
-           && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2))
+  else
+  if (STRICTMODE(hud_crosshair_target) && linetarget
+      && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2))
   { // [Nugget] Make the crosshair highlight if aiming at target
     crosshair.cr = colrngs[hud_crosshair_target_color];
   }
-  else if (hud_crosshair_health == 1
-           || (hud_crosshair_health == 2
-               && ((mouselook && freeaim == freeaim_direct)
-                   || strictmode)))
+  else
+  if (hud_crosshair_health == 1 || (hud_crosshair_health == 2 && strictmode))
   { // [Nugget] Set the crosshair color based on player health
     health = plr->health;
-    if (plr->powers[pw_invulnerability]
+    if ((plr->powers[pw_invulnerability] > 4*32
+         || plr->powers[pw_invulnerability] & 8)
         || plr->cheats & CF_GODMODE)  { crosshair.cr = colrngs[CR_GRAY]; }
     else if (health<health_red)       { crosshair.cr = colrngs[CR_RED]; }
     else if (health<health_yellow)    { crosshair.cr = colrngs[CR_GOLD]; }

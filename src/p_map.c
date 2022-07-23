@@ -1523,6 +1523,64 @@ static boolean PTR_AimTraverse (intercept_t *in)
   return false;   // don't go any farther
 }
 
+// [Nugget] Used for P_AimSlopedLineAttack
+static boolean PTR_AimSlopedTraverse(intercept_t *in)
+{
+  fixed_t slope, dist, thingtopslope, thingbottomslope;
+  mobj_t *th;
+
+  if (in->isaline) {
+    line_t *li = in->d.line;
+
+    if (li->special) { P_ShootSpecialLine (shootthing, li); }
+
+    if (li->flags & ML_TWOSIDED) { // crosses a two sided (really 2s) line
+      P_LineOpening (li);
+      dist = FixedMul(attackrange, in->frac);
+
+      if (li->backsector == NULL) {
+        if ((slope = FixedDiv(openbottom - shootz , dist)) <= aimslope &&
+            (slope = FixedDiv(opentop - shootz , dist)) >= aimslope)
+          return true;      // shot continues
+      }
+      else
+      if ((li->frontsector->floorheight==li->backsector->floorheight ||
+           (slope = FixedDiv(openbottom - shootz , dist)) <= aimslope) &&
+          (li->frontsector->ceilingheight==li->backsector->ceilingheight ||
+           (slope = FixedDiv (opentop - shootz , dist)) >= aimslope))
+        return true;      // shot continues
+    }
+
+    // hit line
+    return false;
+  }
+
+  // shoot a thing
+
+  th = in->d.thing;
+  if (th == shootthing) { return true; } // can't shoot self
+  if (!(th->flags&MF_SHOOTABLE)) { return true; } // corpse or something
+  // friends don't aim at friends (except players), at least not first
+  if (th->flags & shootthing->flags & aim_flags_mask && !th->player)
+    return true;
+
+  // check angles to see if the thing can be aimed at
+  dist = FixedMul (attackrange, in->frac);
+  thingtopslope = FixedDiv (th->z+th->height - shootz , dist);
+  if (thingtopslope < aimslope) { return true; } // shot over the thing
+  thingbottomslope = FixedDiv (th->z - shootz, dist);
+  if (thingbottomslope > aimslope) { return true; } // shot under the thing
+
+  // this thing can be hit!
+  if (thingtopslope > topslope) { thingtopslope = topslope; }
+  if (thingbottomslope < bottomslope) { thingbottomslope = bottomslope; }
+
+  linetarget = th; // [Nugget] Finally!
+
+  // don't go any farther
+  return false;
+}
+
 //
 // PTR_ShootTraverse
 //
@@ -1671,6 +1729,29 @@ fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 
   if (linetarget)
     return aimslope;
+
+  return 0;
+}
+
+// [Nugget] Used for direct freeaim
+fixed_t P_AimSlopedLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,fixed_t slope,int mask)
+{
+  fixed_t x2, y2;
+
+  t1 = P_SubstNullMobj(t1);
+  angle >>= ANGLETOFINESHIFT;
+  shootthing = t1;
+  x2 = t1->x + (distance>>FRACBITS)*finecosine[angle];
+  y2 = t1->y + (distance>>FRACBITS)*finesine[angle];
+  shootz = t1->z + (t1->height>>1) + 8*FRACUNIT;
+  aimslope = slope;
+  attackrange = distance;
+  linetarget = NULL;
+  aim_flags_mask = mask;
+
+  P_PathTraverse(t1->x,t1->y,x2,y2,PT_ADDLINES|PT_ADDTHINGS,PTR_AimSlopedTraverse);
+
+  if (linetarget) { return aimslope; }
 
   return 0;
 }
