@@ -630,7 +630,14 @@ static void cheat_scanner() {
 
 // [Nugget] Deal 1 million damage
 static void cheat_mdk() {
-  const fixed_t slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, 0);
+  fixed_t slope;
+  if (mouselook && freeaim == freeaim_direct)
+    { slope = PLAYER_SLOPE(plyr); }
+  else {
+    slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, 0);
+    if (!linetarget && mouselook && freeaim == freeaim_autoaim)
+      { slope = PLAYER_SLOPE(plyr); }
+  }
 
   P_LineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, slope, 1000000);
 

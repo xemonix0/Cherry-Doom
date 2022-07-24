@@ -684,7 +684,14 @@ void A_Punch(player_t *player, pspdef_t *psp)
   // [Nugget] MDK Fist, basically an absurdly high damage sniper
   if (player->cheats & CF_SAITAMA)
   {
-    slope = P_AimLineAttack(player->mo, player->mo->angle, MISSILERANGE, 0);
+    if (mouselook && freeaim == freeaim_direct)
+      { slope = PLAYER_SLOPE(player); }
+    else {
+      slope = P_AimLineAttack(player->mo, player->mo->angle, 32*64*FRACUNIT, 0);
+      if (!linetarget && mouselook && freeaim == freeaim_autoaim)
+        { slope = PLAYER_SLOPE(player); }
+    }
+
     P_LineAttack(player->mo, player->mo->angle, MISSILERANGE,
                  slope, 1000000);
     return;
