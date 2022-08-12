@@ -875,6 +875,12 @@ void ST_drawWidgets(boolean refresh)
   // the real values, only ever relevant when using smooth counts
   const int health = plyr->health, armor = plyr->armorpoints;
 
+  // clear area
+  if (!st_crispyhud && st_statusbaron)
+  {
+    V_CopyRect(WIDESCREENDELTA, 0, BG, ST_WIDTH, ST_HEIGHT, WIDESCREENDELTA, ST_Y, FG);
+  }
+
   // used by w_arms[] widgets
   st_armson = st_statusbaron && !deathmatch;
 

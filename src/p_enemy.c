@@ -122,7 +122,7 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks,
 
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
-  // [Nugget]: [crispy] monsters are deaf with NOTARGET cheat
+  // [crispy] monsters are deaf with NOTARGET cheat
   if (target && target->player && (target->player->cheats & CF_NOTARGET))
     { return; }
 
@@ -889,7 +889,7 @@ static boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
       player = &players[actor->lastlook];
 
-      // [Nugget]: [crispy] monsters don't look for players with NOTARGET cheat
+      // [crispy] monsters don't look for players with NOTARGET cheat
       if (player->cheats & CF_NOTARGET)
         continue;
 
@@ -1059,20 +1059,24 @@ void A_Look(mobj_t *actor)
 {
   mobj_t *targ;
 
+  targ = actor->subsector->sector->soundtarget;
+
+  // [crispy] monsters don't look for players with NOTARGET cheat
+  if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
+    return;
+
   // killough 7/18/98:
   // Friendly monsters go after other monsters first, but
   // also return to player, without attacking them, if they
   // cannot find any targets. A marine's best friend :)
 
   actor->threshold = actor->pursuecount = 0;
-  if (!(actor->flags & MF_FRIEND && P_LookForTargets(actor, false))
-      && !((targ = actor->subsector->sector->soundtarget)
-           && (targ->flags & MF_SHOOTABLE
-               // [Nugget]: [crispy] monsters don't look for players with NOTARGET cheat
-               || (targ->player && (targ->player->cheats & CF_NOTARGET)))
-           && (P_SetTarget(&actor->target, targ),
-               !(actor->flags & MF_AMBUSH) || P_CheckSight(actor, targ)))
-      && (actor->flags & MF_FRIEND || !P_LookForTargets(actor, false)))
+  if (!(actor->flags & MF_FRIEND && P_LookForTargets(actor, false)) &&
+      !(targ &&
+	targ->flags & MF_SHOOTABLE &&
+	(P_SetTarget(&actor->target, targ),
+	 !(actor->flags & MF_AMBUSH) || P_CheckSight(actor, targ))) &&
+      (actor->flags & MF_FRIEND || !P_LookForTargets(actor, false)))
     return;
 
   // go into chase state

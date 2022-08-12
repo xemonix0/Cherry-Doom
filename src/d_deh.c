@@ -41,6 +41,7 @@
 #include "p_inter.h"
 #include "g_game.h"
 #include "d_think.h"
+#include "d_main.h" // D_DehChangePredefinedTranslucency()
 #include "w_wad.h"
 
 #include "dsdhacked.h"
@@ -111,6 +112,8 @@ static int dehfseek(DEHFILE *fp, long offset)
 
 // variables used in other routines
 boolean deh_pars = FALSE; // in wi_stuff to allow pars in modified games
+
+boolean deh_set_blood_color = FALSE;
 
 char **dehfiles = NULL;  // filenames of .deh files for demo footer
 
@@ -1001,7 +1004,6 @@ typedef struct
 // killough 8/9/98: make DEH_BLOCKMAX self-adjusting
 #define DEH_BLOCKMAX (sizeof deh_blocks/sizeof*deh_blocks)  // size of array
 #define DEH_MAXKEYLEN 32 // as much of any key as we'll look at
-#define DEH_MOBJINFOMAX 32 // number of mobjinfo configuration keys
 
 // Put all the block header values, and the function to be called when that
 // one is encountered, in this array:
@@ -1036,6 +1038,49 @@ static boolean includenotext = false;
 // within the structure, so we can use index of the string in this
 // array to offset by sizeof(int) into the mobjinfo_t array at [nn]
 // * things are base zero but dehacked considers them to start at #1. ***
+
+enum {
+  DEH_MOBJINFO_DOOMEDNUM,
+  DEH_MOBJINFO_SPAWNSTATE,
+  DEH_MOBJINFO_SPAWNHEALTH,
+  DEH_MOBJINFO_SEESTATE,
+  DEH_MOBJINFO_SEESOUND,
+  DEH_MOBJINFO_REACTIONTIME,
+  DEH_MOBJINFO_ATTACKSOUND,
+  DEH_MOBJINFO_PAINSTATE,
+  DEH_MOBJINFO_PAINCHANCE,
+  DEH_MOBJINFO_PAINSOUND,
+  DEH_MOBJINFO_MELEESTATE,
+  DEH_MOBJINFO_MISSILESTATE,
+  DEH_MOBJINFO_DEATHSTATE,
+  DEH_MOBJINFO_XDEATHSTATE,
+  DEH_MOBJINFO_DEATHSOUND,
+  DEH_MOBJINFO_SPEED,
+  DEH_MOBJINFO_RADIUS,
+  DEH_MOBJINFO_HEIGHT,
+  DEH_MOBJINFO_MASS,
+  DEH_MOBJINFO_DAMAGE,
+  DEH_MOBJINFO_ACTIVESOUND,
+  DEH_MOBJINFO_FLAGS,
+  DEH_MOBJINFO_RAISESTATE,
+
+  // mbf21
+  DEH_MOBJINFO_INFIGHTING_GROUP,
+  DEH_MOBJINFO_PROJECTILE_GROUP,
+  DEH_MOBJINFO_SPLASH_GROUP,
+  DEH_MOBJINFO_FLAGS2,
+  DEH_MOBJINFO_RIPSOUND,
+  DEH_MOBJINFO_ALTSPEED,
+  DEH_MOBJINFO_MELEERANGE,
+
+  // [Woof!]
+  DEH_MOBJINFO_BLOODCOLOR,
+
+  // DEHEXTRA
+  DEH_MOBJINFO_DROPPEDITEM,
+
+  DEH_MOBJINFOMAX
+};
 
 char *deh_mobjinfo[DEH_MOBJINFOMAX] =
 {
@@ -1872,36 +1917,38 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
         }
       for (ix=0; ix < DEH_MOBJINFOMAX; ix++)
         {
-          if (!strcasecmp(key,deh_mobjinfo[ix]))  // killough 8/98
+          if (strcasecmp(key,deh_mobjinfo[ix]))  // killough 8/98
+            continue;
+
+          switch (ix)
             {
               // mbf21: process thing flags
-              if (!strcasecmp(key, "MBF21 Bits"))
+              case DEH_MOBJINFO_FLAGS2:
+                if (!value)
                 {
-                 if (!value)
-                 {
                   for (value = 0; (strval = strtok(strval, ",+| \t\f\r")); strval = NULL)
-                   {
-                     size_t iy;
+                  {
+                    size_t iy;
 
-                     for (iy = 0; iy < DEH_MOBJFLAGMAX_MBF21; iy++)
-                      {
-                        if (strcasecmp(strval, deh_mobjflags_mbf21[iy].name))
-                          continue;
+                    for (iy = 0; iy < DEH_MOBJFLAGMAX_MBF21; iy++)
+                    {
+                      if (strcasecmp(strval, deh_mobjflags_mbf21[iy].name))
+                        continue;
 
-                        value |= deh_mobjflags_mbf21[iy].value;
-                        break;
-                      }
-
-                     if (iy >= DEH_MOBJFLAGMAX_MBF21 && fpout)
-                       {
-                         fprintf(fpout, "Could not find MBF21 bit mnemonic %s\n", strval);
-                       }
+                      value |= deh_mobjflags_mbf21[iy].value;
+                      break;
                     }
-                 }
 
-                  mobjinfo[indexnum].flags2 = value;
+                    if (iy >= DEH_MOBJFLAGMAX_MBF21 && fpout)
+                      fprintf(fpout, "Could not find MBF21 bit mnemonic %s\n", strval);
+                  }
                 }
-              else if (!strcasecmp(key,"bits") && !value) // killough 10/98
+
+                mobjinfo[indexnum].flags2 = value;
+                break;
+
+              case DEH_MOBJINFO_FLAGS:
+                if (!value) // killough 10/98
                 {
                   // figure out what the bits are
                   value = 0;
@@ -1932,8 +1979,12 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
                   if (fpout) fprintf(fpout, "Bits = 0x%08lX = %ld \n",
                                      value, value);
                 }
-              // mbf21: dehacked thing groups
-              if (ix == 23)
+
+                mobjinfo[indexnum].flags = value;
+                D_DehChangePredefinedTranslucency(indexnum);
+                break;
+
+              case DEH_MOBJINFO_INFIGHTING_GROUP:
                 {
                   mobjinfo_t *mi = &mobjinfo[indexnum];
                   mi->infighting_group = (int)(value);
@@ -1944,7 +1995,9 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
                   }
                   mi->infighting_group = mi->infighting_group + IG_END;
                 }
-              else if (ix == 24)
+                break;
+
+              case DEH_MOBJINFO_PROJECTILE_GROUP:
                 {
                   mobjinfo_t *mi = &mobjinfo[indexnum];
                   mi->projectile_group = (int)(value);
@@ -1953,7 +2006,9 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
                   else
                     mi->projectile_group = mi->projectile_group + PG_END;
                 }
-              else if (ix == 25)
+                break;
+
+              case DEH_MOBJINFO_SPLASH_GROUP:
                 {
                   mobjinfo_t *mi = &mobjinfo[indexnum];
                   mi->splash_group = (int)(value);
@@ -1964,19 +2019,37 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
                   }
                   mi->splash_group = mi->splash_group + SG_END;
                 }
-              else if (ix == 31)
+                break;
+
+              case DEH_MOBJINFO_BLOODCOLOR:
                 {
                   mobjinfo_t *mi = &mobjinfo[indexnum];
-                  mi->droppeditem = (int)(value - 1); // make it base zero (deh is 1-based)
+
+                  if (value < 0 || value > 8)
+                  {
+                    I_Error("Blood color must be >= 0 and <= 8 (check your dehacked)");
+                    return;
+                  }
+                  mi->bloodcolor = (int)(value);
+
+                  if (mi->bloodcolor)
+                    deh_set_blood_color = TRUE;
                 }
-              else
-              {
-              pix = (int *)&mobjinfo[indexnum];
-              pix[ix] = (int)value;
-              }
-              if (fpout) fprintf(fpout,"Assigned %d to %s(%d) at index %d\n",
-                                 (int)value, key, indexnum, ix);
+                break;
+
+              case DEH_MOBJINFO_DROPPEDITEM:
+                // make it base zero (deh is 1-based)
+                mobjinfo[indexnum].droppeditem = (int)(value - 1);
+                break;
+
+              default:
+                pix = (int *)&mobjinfo[indexnum];
+                pix[ix] = (int)value;
+                break;
             }
+
+          if (fpout) fprintf(fpout,"Assigned %d to %s(%d) at index %d\n",
+                             (int)value, key, indexnum, ix);
         }
     }
   return;

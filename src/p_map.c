@@ -1993,7 +1993,7 @@ static boolean PIT_ChangeSector(mobj_t *thing)
         { thing->sprite = SPR_TNT1; thing->frame = 0; }
       thing->flags &= ~MF_SOLID;
       thing->height = thing->radius = 0;
-      if (STRICTMODE(colored_blood))
+      if (thing->info->bloodcolor)
       {
         thing->flags2 |= MF2_COLOREDBLOOD;
         thing->bloodcolor = V_BloodColor(thing->info->bloodcolor);
@@ -2040,7 +2040,7 @@ static boolean PIT_ChangeSector(mobj_t *thing)
 			if (nugget_comp[comp_fuzzyblood] && thing->flags & MF_SHADOW)
         { mo->flags |= MF_SHADOW; }
 
-      if (STRICTMODE(colored_blood))
+      if (thing->info->bloodcolor)
       {
         mo->flags2 |= MF2_COLOREDBLOOD;
         mo->bloodcolor = V_BloodColor(thing->info->bloodcolor);

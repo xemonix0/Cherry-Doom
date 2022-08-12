@@ -118,7 +118,7 @@ extern int monkeys, default_monkeys;
 // v1.1-like pitched sounds
 extern int pitched_sounds;
 
-extern int general_translucency;
+extern int translucency;
 
 enum {
   TRANSLUCENCY_OFF,
@@ -202,6 +202,8 @@ extern  boolean         respawnmonsters;
 
 // Netgame? Only true if >1 player.
 extern  boolean netgame;
+
+extern boolean D_CheckNetConnect(void);
 
 // Flag: true only if started as net deathmatch.
 // An enum might handle altdeath/cooperative better.
@@ -298,13 +300,13 @@ extern  boolean   timingdemo;
 // Run tick clock at fastest speed possible while playing demo.  killough
 extern  boolean   fastdemo;
 // [FG] fast-forward demo to the desired map
-extern  int       demowarp;
+extern  int       playback_warp;
 // fast-forward demo to the next map
-extern  boolean   demonext;
+extern  boolean   playback_nextlevel;
 // skipping demo
-extern  int       demoskip_tics;
+extern  int       playback_skiptics;
 
-#define DEMOSKIP (demowarp >= 0 || demoskip_tics > 0 || demonext)
+#define PLAYBACK_SKIP (playback_warp >= 0 || playback_skiptics || playback_nextlevel)
 
 extern  boolean   strictmode, default_strictmode;
 

@@ -629,7 +629,9 @@ void HU_Start(void)
   // create the hud monster/secret widget
   // totals and current values for kills, items, secrets
   // lower left of screen
-  HUlib_initTextLine(&w_monsec, 0, 0, hu_font2,
+  HUlib_initTextLine(&w_monsec, hud_distributed ? HU_MONSECX_D : HU_MONSECX,
+		     (scaledviewheight < SCREENHEIGHT || (screenSize >= 8 && screenSize <= 11)) ? (ST_Y - HU_GAPY) :
+		     hud_distributed? HU_MONSECY_D : HU_MONSECY, hu_font2,
 		     HU_FONTSTART, colrngs[CR_GRAY]);
 
   // create the hud text refresh widget
@@ -1118,10 +1120,10 @@ static void HU_DrawCrosshair(void)
 // [crispy] print a bar indicating demo progress at the bottom of the screen
 boolean HU_DemoProgressBar(boolean force)
 {
-  const int progress = SCREENWIDTH * defdemotics / deftotaldemotics;
+  const int progress = SCREENWIDTH * playback_tic / playback_totaltics;
   static int old_progress = 0;
 
-  if (progress - old_progress)
+  if (old_progress < progress)
   {
     old_progress = progress;
   }
@@ -1174,20 +1176,13 @@ void HU_Drawer(void)
       { ST_Drawer(true, true); }
 
     // [FG] moved here
-    if (automapactive
-        // [Nugget] Specific cases follow
-        && ((screenSize <= 7 && !((hud_displayed || hud_timests) && automapoverlay))
-            || ((screenSize == 8 || screenSize == 10) && !automapoverlay)
-            || (screenSize == 9 || screenSize == 11)
-            || (screenSize == 12 && !(hud_displayed && automapoverlay))))
-    {
+    if (automapactive) {
       // map title
       HUlib_drawTextLine(&w_title, false);
     }
 
       // [FG] draw player coords widget
-      if ((automapactive && !(hud_distributed && automapoverlay) &&
-           STRICTMODE(map_player_coords) == 1) ||
+      if ((automapactive && STRICTMODE(map_player_coords) == 1) ||
           STRICTMODE(map_player_coords) == 2)
       {
         // killough 10/98: allow coordinates to display non-following pointer
@@ -1882,15 +1877,52 @@ void HU_Ticker(void)
     // [FG] calculate level stats and level time widgets
     {
       char *s;
+      const int offset_msglist = (message_list ? HU_REFRESHSPACING * (hud_msg_lines - 1) : 0);
+
+      w_title.y = HU_TITLEY;
+
+      w_coordx.y = HU_COORDX_Y;
+      w_coordy.y = HU_COORDY_Y;
+      w_coordz.y = HU_COORDZ_Y;
 
       // [crispy] move map title to the bottom
-      if (automapoverlay && screenblocks >= 11 && !hud_displayed)
-        w_title.y = HU_TITLEY + ST_HEIGHT;
-      else
-        w_title.y = HU_TITLEY;
+      if (automapoverlay)
+      {
+        const int offset_timests = (hud_timests ? (hud_timests == 3 ? 2 : 1) : 0) * HU_GAPY;
+        const int offset_nosecrets = (hud_nosecrets ? 1 : 2) * HU_GAPY;
+
+        if (screenblocks >= 11+4) // [Nugget] Account for extra screen sizes
+        {
+          if (hud_displayed && hud_active)
+          {
+            if (screenSize >= 8 && screenSize <= 11)
+              w_title.y -= offset_timests;
+            else
+            {
+              if (hud_distributed)
+              {
+                w_title.y += ST_HEIGHT;
+                w_coordx.y += 2 * HU_GAPY;
+                w_coordy.y += 2 * HU_GAPY;
+                w_coordz.y += 2 * HU_GAPY;
+              }
+              if (hud_active > 1)
+                w_title.y -= offset_nosecrets;
+            }
+          }
+          else
+            w_title.y += ST_HEIGHT;
+        }
+        else
+          w_title.y -= offset_timests;
+      }
 
       if (map_level_stats)
       {
+        w_lstatk.y = HU_LSTATK_Y + offset_msglist;
+        w_lstati.y = HU_LSTATI_Y + offset_msglist;
+        w_lstats.y = HU_LSTATS_Y + offset_msglist;
+
         if (extrakills)
         {
           sprintf(hud_lstatk, "K\t\x1b%c%d/%d+%d", '0'+CR_GRAY,
@@ -1921,6 +1953,8 @@ void HU_Ticker(void)
       if (map_level_time)
       {
         const int time = leveltime / TICRATE; // [FG] in seconds
+
+        w_ltime.y = HU_LTIME_Y + offset_msglist;
 
         sprintf(hud_ltime, "%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);
         HUlib_clearTextLine(&w_ltime);

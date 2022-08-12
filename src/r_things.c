@@ -411,8 +411,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
           ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
       }
     else
-      if (vis->mobjflags & MF_TRANSLUCENT &&
-          STRICTMODE_VANILLA(general_translucency & TRANSLUCENCY_THINGS)) // phares
+      if (vis->mobjflags & MF_TRANSLUCENT) // phares
         {
           colfunc = R_DrawTLColumn;
           tranmap = main_tranmap;       // killough 4/11/98
@@ -568,7 +567,7 @@ void R_ProjectSprite (mobj_t* thing)
   gzt = interpz + spritetopoffset[lump];
 
   // killough 4/9/98: clip things which are out of view due to height
-  if (interpz > viewz + FixedDiv(viewheightfrac, xscale) ||
+  if (interpz > (int64_t)viewz + FixedDiv(viewheightfrac, xscale) ||
       gzt < (int64_t)viewz - FixedDiv(viewheightfrac - viewheight, xscale))
     return;
 
@@ -685,6 +684,8 @@ void R_AddSprites(sector_t* sec, int lightlevel)
 // R_DrawPSprite
 //
 
+boolean pspr_interp = true; // weapon bobbing interpolation
+
 void R_DrawPSprite (pspdef_t *psp)
 {
   fixed_t       tx;
@@ -797,23 +798,19 @@ void R_DrawPSprite (pspdef_t *psp)
     x1_saved = vis->x1;
     texturemid_saved = vis->texturemid;
 
-    // Do not interpolate on the first tic of the level,
-    // otherwise oldx1 and oldtexturemid are not reset
-    if (leveltime > 1)
+    if (lump == oldlump && pspr_interp)
     {
-      if (lump == oldlump)
-      {
-        int deltax = vis->x2 - vis->x1;
-        vis->x1 = oldx1 + FixedMul(vis->x1 - oldx1, fractionaltic);
-        vis->x2 = vis->x1 + deltax;
-        vis->texturemid = oldtexturemid + FixedMul(vis->texturemid - oldtexturemid, fractionaltic);
-      }
-      else
-      {
-        oldx1 = vis->x1;
-        oldtexturemid = vis->texturemid;
-        oldlump = lump;
-      }
+      int deltax = vis->x2 - vis->x1;
+      vis->x1 = oldx1 + FixedMul(vis->x1 - oldx1, fractionaltic);
+      vis->x2 = vis->x1 + deltax;
+      vis->texturemid = oldtexturemid + FixedMul(vis->texturemid - oldtexturemid, fractionaltic);
+    }
+    else
+    {
+      oldx1 = vis->x1;
+      oldtexturemid = vis->texturemid;
+      oldlump = lump;
+      pspr_interp = true;
     }
   }
 

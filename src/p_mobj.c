@@ -30,6 +30,7 @@
 #include "doomstat.h"
 #include "m_random.h"
 #include "r_main.h"
+#include "r_things.h"
 #include "p_maputl.h"
 #include "p_map.h"
 #include "p_tick.h"
@@ -1045,6 +1046,8 @@ void P_SpawnPlayer (mapthing_t* mthing)
 
   p->momx = p->momy = 0;   // killough 10/98: initialize bobbing to 0.
 
+  pspr_interp = false;
+
   // setup gun psprite
 
   P_SetupPsprites (p);
@@ -1292,7 +1295,7 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
   if (nugget_comp[comp_fuzzyblood] && bleeder->flags & MF_SHADOW)
     { th->flags |= MF_SHADOW; }
 
-  if (STRICTMODE(colored_blood))
+  if (bleeder->info->bloodcolor)
   {
     th->flags2 |= MF2_COLOREDBLOOD;
     th->bloodcolor = V_BloodColor(bleeder->info->bloodcolor);

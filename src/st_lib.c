@@ -105,7 +105,6 @@ void STlib_drawNum
   int   num = *n->num;
 
   int   w = SHORT(n->p[0]->width);
-  int   h = SHORT(n->p[0]->height);
   int   x = n->x;
 
   int   neg;
@@ -124,29 +123,18 @@ void STlib_drawNum
     num = -num;
   }
 
-  // clear the area
-  x = n->x - numdigits*w;
-
-  if (n->y - ST_Y < 0)
-    I_Error("drawNum: n->y - ST_Y < 0");
-
-  if (!st_crispyhud)
-    { V_CopyRect(x + WIDESCREENDELTA, n->y - ST_Y, BG, w*numdigits, h, x + WIDESCREENDELTA, n->y, FG); }
-
   // if non-number, do not draw it
   if (num == 1994)
     return;
-
-  x = n->x;
 
   //jff 2/16/98 add color translation to digit output
   // in the special case of 0, you draw 0
   if (!num)
   {
     if (outrng && !sts_always_red)
-      { V_DrawPatchTranslated(x - w, n->y, FG, n->p[ 0 ],outrng,0); }
+      V_DrawPatchTranslated(x - w, n->y, FG, n->p[ 0 ],outrng,0);
     else //jff 2/18/98 allow use of faster draw routine from config
-      { V_DrawPatch(x - w, n->y, FG, n->p[ 0 ]); }
+      V_DrawPatch(x - w, n->y, FG, n->p[ 0 ]);
   }
 
   // draw the new number
@@ -155,9 +143,9 @@ void STlib_drawNum
   {
     x -= w;
     if (outrng && !sts_always_red)
-      { V_DrawPatchTranslated(x, n->y, FG, n->p[ num % 10 ],outrng,0); }
+      V_DrawPatchTranslated(x, n->y, FG, n->p[ num % 10 ],outrng,0);
     else //jff 2/18/98 allow use of faster draw routine from config
-      { V_DrawPatch(x, n->y, FG, n->p[ num % 10 ]); }
+      V_DrawPatch(x, n->y, FG, n->p[ num % 10 ]);
     num /= 10;
   }
 
@@ -165,10 +153,11 @@ void STlib_drawNum
   //jff 2/16/98 add color translation to digit output
   if (neg && sttminus)
   {
+    w = SHORT(sttminus->width);
     if (outrng && !sts_always_red)
-      { V_DrawPatchTranslated(x - 8, n->y, FG, sttminus,outrng,0); }
+      V_DrawPatchTranslated(x - w, n->y, FG, sttminus,outrng,0);
     else //jff 2/18/98 allow use of faster draw routine from config
-      { V_DrawPatch(x - 8, n->y, FG, sttminus); }
+      V_DrawPatch(x - w, n->y, FG, sttminus);
   }
 }
 
@@ -279,29 +268,10 @@ void STlib_updateMultIcon
 ( st_multicon_t*  mi,
   boolean   refresh )
 {
-  int w;
-  int h;
-  int x;
-  int y;
-
-  if (*mi->on && (mi->oldinum != *mi->inum || refresh))
+  if (*mi->on)
   {
-    if (mi->oldinum != -1)
-    {
-      x = mi->x - SHORT(mi->p[mi->oldinum]->leftoffset);
-      y = mi->y - SHORT(mi->p[mi->oldinum]->topoffset);
-      w = SHORT(mi->p[mi->oldinum]->width);
-      h = SHORT(mi->p[mi->oldinum]->height);
-
-      if (y - ST_Y < 0)
-        I_Error("updateMultIcon: y - ST_Y < 0");
-
-      if (!st_crispyhud)
-        { V_CopyRect(x + WIDESCREENDELTA, y-ST_Y, BG, w, h, x + WIDESCREENDELTA, y, FG); }
-    }
-    if (*mi->inum != -1) // killough 2/16/98: redraw only if != -1
-      { V_DrawPatch(mi->x, mi->y, FG, mi->p[*mi->inum]); }
-    mi->oldinum = *mi->inum;
+    if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
+      V_DrawPatch(mi->x, mi->y, FG, mi->p[*mi->inum]);
   }
 }
 

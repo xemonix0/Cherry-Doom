@@ -175,11 +175,11 @@ Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_mixer.cmake, cmake/FindSDL2_net.cma
 Copyright: © 2018 Alex Mayfield.
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `data/woof.ico, data/woof.png, data/woof8.ico, src/icon.c`
+Files: `data/woof.ico, data/woof.png, data/woof8.ico, src/icon.c, data/setup.ico, data/setup8.ico, setup/setup_icon.c, data/woof-setup.png`
 Copyright: © 2022 Korp.
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-Files: `data/setup.ico, data/woof-setup.png, data/setup8.ico, setup/setup_icon.c, src/thermo.h`
+Files: `src/thermo.h`
 Copyright: © 2020-2022 Julia Nechaevskaya.
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 

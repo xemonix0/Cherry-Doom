@@ -1295,6 +1295,8 @@ void A_WeaponBulletAttack(player_t *player, pspdef_t *psp)
 
     P_LineAttack(player->mo, angle, MISSILERANGE, slope, damage);
   }
+
+  A_Recoil(player);
 }
 
 //
@@ -1341,6 +1343,8 @@ void A_WeaponMeleeAttack(player_t *player, pspdef_t *psp)
 
   // attack, dammit!
   P_LineAttack(player->mo, angle, range, slope, damage);
+
+  A_Recoil(player);
 
   // missed? ah, welp.
   if (!linetarget)

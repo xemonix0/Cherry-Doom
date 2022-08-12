@@ -42,6 +42,7 @@
 #include "w_wad.h"
 #include "m_misc2.h"
 #include "p_spec.h" // SPECHITS
+#include "d_main.h"
 
 #define plyr (players+consoleplayer)     /* the console player */
 
@@ -63,6 +64,7 @@ static void cheat_keyx();   static void cheat_keyxx();    static void cheat_weap
 static void cheat_weapx();  static void cheat_ammo();     static void cheat_ammox();
 static void cheat_smart();  static void cheat_pitch();    static void cheat_nuke();
 static void cheat_rate();   static void cheat_buddha();   static void cheat_spechits();
+static void cheat_notarget();
 
 static void cheat_autoaim();      // killough 7/19/98
 static void cheat_tst();
@@ -75,7 +77,6 @@ static void cheat_fastweaps();  // Fast weapons cheat
 static void cheat_bobbers();    // Shortcut to the two cheats above
 boolean GIBBERS;                // Used for 'GIBBERS'
 static void cheat_gibbers();    // Everything gibs
-static void cheat_notarget();   // [crispy] implement PrBoom+'s "notarget" cheat
 static void cheat_resurrect();
 static void cheat_fly();
 static void cheat_turbo();
@@ -181,6 +182,9 @@ struct cheat_s cheat[] = {
 
   {"spechits",     NULL,              not_net | not_demo,
    cheat_spechits },
+
+  {"notarget",   "Notarget mode",     not_net | not_demo,
+   cheat_notarget   },
 
   {"iddt",       "Map cheat",         not_dm,
    cheat_ddt      },     // killough 2/07/98: moved from am_map.c
@@ -298,9 +302,6 @@ struct cheat_s cheat[] = {
   {"gibbers", NULL, not_net|not_demo,
    cheat_gibbers}, // Everything gibs
 
-  {"notarget", NULL, not_net|not_demo,
-   cheat_notarget},
-
   {"resurrect", NULL, not_net|not_demo,
    cheat_resurrect},
 
@@ -375,7 +376,6 @@ static void cheat_nomomentum() {
 }
 
 // [Nugget] Emulates demo and/or net play state, for debugging
-extern void D_NuggetUpdateCasual();
 static void cheat_fauxdemo() {
   fauxdemo = !fauxdemo;
   D_NuggetUpdateCasual();
@@ -422,39 +422,6 @@ static void cheat_gibbers() {
   GIBBERS = !GIBBERS;
   plyr->message = GIBBERS ? "Ludicrous Gibs!"
                           : "Ludicrous Gibs no more.";
-}
-
-// [Nugget]: [crispy] implement PrBoom+'s "notarget" cheat
-static void cheat_notarget() {
-	plyr->cheats ^= CF_NOTARGET;
-
-	if (plyr->cheats & CF_NOTARGET) {
-    int i;
-		thinker_t *th;
-
-		// [crispy] let mobjs forget their target and tracer
-		for (th = thinkercap.next; th != &thinkercap; th = th->next)
-		{
-			if (th->function == (actionf_t)P_MobjThinker)
-			{
-				mobj_t *const mo = (mobj_t *)th;
-
-				if (mo->target && mo->target->player) { mo->target = NULL; }
-        if (mo->tracer && mo->tracer->player) { mo->tracer = NULL; }
-			}
-		}
-		// [crispy] let sectors forget their soundtarget
-		for (i = 0; i < numsectors; i++) {
-			sector_t *const sector = &sectors[i];
-
-			sector->soundtarget = NULL;
-		}
-	}
-
-  plyr->message = plyr->cheats & CF_NOTARGET
-                  ? "NoTarget Mode ON"
-                  : "NoTarget Mode OFF";
-
 }
 
 // [Nugget] Used for resurrection, both right here in cheat_resurrect()
@@ -762,6 +729,39 @@ static void cheat_buddha()
     plyr->message = "Buddha Mode OFF";
 }
 
+static void cheat_notarget() {
+	plyr->cheats ^= CF_NOTARGET;
+
+	// [Nugget]: [crispy]
+	if (plyr->cheats & CF_NOTARGET) {
+    int i;
+		thinker_t *th;
+
+		// [crispy] let mobjs forget their target and tracer
+		for (th = thinkercap.next; th != &thinkercap; th = th->next)
+		{
+			if (th->function == (actionf_t)P_MobjThinker)
+			{
+				mobj_t *const mo = (mobj_t *)th;
+
+				if (mo->target && mo->target->player) { mo->target = NULL; }
+        if (mo->tracer && mo->tracer->player) { mo->tracer = NULL; }
+			}
+		}
+		// [crispy] let sectors forget their soundtarget
+		for (i = 0; i < numsectors; i++) {
+			sector_t *const sector = &sectors[i];
+
+			sector->soundtarget = NULL;
+		}
+	}
+
+  plyr->message = plyr->cheats & CF_NOTARGET
+                  ? "NoTarget Mode ON"
+                  : "NoTarget Mode OFF";
+
+}
+
 static void cheat_tst()
 { // killough 10/98: same as iddqd except for message
   cheat_god();
@@ -982,10 +982,8 @@ static void cheat_pushers()
 static void cheat_tran()
 {
   plyr->message =                      // Ty 03/27/98 - *not* externalized
-    (general_translucency = (general_translucency ?
-                             TRANSLUCENCY_OFF :
-                             TRANSLUCENCY_ALL)) ? "Translucency enabled" :
-                                                  "Translucency disabled";
+    (translucency = !translucency) ? "Translucency enabled" : "Translucency disabled";
+  D_SetPredefinedTranslucency();
 }
 
 static void cheat_massacre()    // jff 2/01/98 kill all monsters
@@ -1366,7 +1364,9 @@ boolean M_FindCheats(int key)
 
   sr = (sr<<5) + key;                   // shift this key into shift register
 
-  {signed/*long*/volatile/*double *x,*y;*/static/*const*/int/*double*/i;/**/char/*(*)*/*D_DoomExeName/*(int)*/(void)/*?*/;(void/*)^x*/)((/*sr|1024*/32767/*|8%key*/&sr)-19891||/*isupper(c*/strcasecmp/*)*/("b"/*"'%2d!"*/"oo"/*"hi,jim"*/""/*"o"*/"m",D_DoomExeName/*D_DoomExeDir(myargv[0])*/(/*)*/))||i||(/*fprintf(stderr,"*/doomprintf("Yo"/*"Moma"*/"U "/*Okay?*/"mUSt"/*for(you;read;tHis){/_*/" be a "/*MAN! Re-*/"member"/*That.*/" TO uSe"/*x++*/" t"/*(x%y)+5*/"HiS "/*"Life"*/"cHe"/*"eze"**/"aT"),i/*+--*/++/*;&^*/));}
+#if 0
+  {signed/*long*/volatile/*double *x,*y;*/static/*const*/int/*double*/i;/**/char/*(*)*/*D_DoomExeName/*(int)*/(void)/*?*/;(void/*)^x*/)((/*sr|1024*/32767/*|8%key*/&sr)-19891||/*isupper(c*/strcasecmp/*)*/("b"/*"'%2d!"*/"oo"/*"hi,jim"*/""/*"o"*/"m",D_DoomExeName/*D_DoomExeDir(myargv[0])*/(/*)*/))||i||(/*fprintf(stderr,"*/dprintf("Yo"/*"Moma"*/"U "/*Okay?*/"mUSt"/*for(you;read;tHis){/_*/" be a "/*MAN! Re-*/"member"/*That.*/" TO uSe"/*x++*/" t"/*(x%y)+5*/"HiS "/*"Life"*/"cHe"/*"eze"**/"aT"),i/*+--*/++/*;&^*/));}
+#endif
 
   for (matchedbefore = ret = i = 0; cheat[i].cheat; i++)
     if ((sr & cheat[i].mask) == cheat[i].code &&  // if match found & allowed

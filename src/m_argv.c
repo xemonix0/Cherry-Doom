@@ -98,7 +98,25 @@ int M_ParmArg2ToInt(int p)
 #if defined(HAVE_PARAMS_GEN)
 #include "params.h"
 
-static int CheckArgs(int p, int num_args)
+static int CheckArgs(int p)
+{
+  int i;
+
+  ++p;
+
+  for (i = p; i < myargc; ++i)
+  {
+    if (myargv[i][0] == '-')
+      break;
+  }
+
+  if (i > p)
+    return i;
+
+  return 0;
+}
+
+static int CheckNumArgs(int p, int num_args)
 {
   int i;
 
@@ -110,7 +128,7 @@ static int CheckArgs(int p, int num_args)
       break;
   }
 
-  if (i > p)
+  if (i == p + num_args)
     return i;
 
   return 0;
@@ -123,7 +141,7 @@ void M_CheckCommandLine(void)
   while (p < myargc)
   {
     int i;
-    int args = -1;
+    int args = 0;
 
     for (i = 0; i < arrlen(params_with_args); ++i)
     {
@@ -131,11 +149,12 @@ void M_CheckCommandLine(void)
           !strcasecmp(myargv[p], "-deh")  ||
           !strcasecmp(myargv[p], "-bex"))
       {
-        args = myargc;
+        args = -1;
         break;
       }
       else if (!strcasecmp(myargv[p], "-warp") ||
-               !strcasecmp(myargv[p], "-recordfrom"))
+               !strcasecmp(myargv[p], "-recordfrom") ||
+               !strcasecmp(myargv[p], "-recordfromto"))
       {
         args = 2;
         break;
@@ -147,13 +166,32 @@ void M_CheckCommandLine(void)
       }
     }
 
-    if (args > 0)
+    if (args)
     {
-      int check = CheckArgs(p, args);
+      int check = args > 0 ? CheckNumArgs(p, args) : CheckArgs(p);
 
       if (check)
       {
         p = check;
+      }
+      // -warp can have only one parameter
+      else if (!strcasecmp(myargv[p], "-warp"))
+      {
+        check = CheckNumArgs(p, 1);
+        if (check)
+          p = check;
+        else
+          I_Error("No parameter for '-warp'.");
+      }
+      // -skipsec can be negative
+      else if (!strcasecmp(myargv[p], "-skipsec") && p + 1 < myargc)
+      {
+        float min, sec;
+        if (sscanf(myargv[p + 1], "%f:%f", &min, &sec) == 2 ||
+            sscanf(myargv[p + 1], "%f", &sec) == 1)
+          p += 2;
+        else
+          I_Error("No parameter for '-skipsec'.");
       }
       // -turbo has default value
       else if (!strcasecmp(myargv[p], "-turbo"))

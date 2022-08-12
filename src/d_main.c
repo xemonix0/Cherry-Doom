@@ -222,7 +222,7 @@ void D_Display (void)
   int wipestart;
   boolean done, wipe, redrawsbar;
 
-  if (demobar && DEMOSKIP)
+  if (demobar && PLAYBACK_SKIP)
   {
     if (HU_DemoProgressBar(false))
     {
@@ -657,14 +657,16 @@ void D_AddFile(const char *file)
 {
   static int numwadfiles, numwadfiles_alloc;
 
-  if (D_AddZipFile(file))
+  char *path = D_TryFindWADByName(file);
+
+  if (D_AddZipFile(path))
     return;
 
   if (numwadfiles >= numwadfiles_alloc)
     wadfiles = I_Realloc(wadfiles, (numwadfiles_alloc = numwadfiles_alloc ?
                                   numwadfiles_alloc * 2 : 8)*sizeof*wadfiles);
   // [FG] search for PWADs by their filename
-  wadfiles[numwadfiles++] = D_TryFindWADByName(file);
+  wadfiles[numwadfiles++] = path;
   wadfiles[numwadfiles] = NULL;
 }
 
@@ -1724,6 +1726,70 @@ static void D_InitTables(void)
     states[i].flags |= STATEF_SKILL5FAST;
 }
 
+void D_SetBloodColor(void)
+{
+  extern boolean deh_set_blood_color;
+
+  if (deh_set_blood_color)
+    return;
+
+  if (STRICTMODE(colored_blood))
+  {
+    mobjinfo[MT_HEAD].bloodcolor = 3; // Blue
+    mobjinfo[MT_BRUISER].bloodcolor = 2; // Green
+    mobjinfo[MT_KNIGHT].bloodcolor = 2; // Green
+  }
+  else
+  {
+    mobjinfo[MT_HEAD].bloodcolor = 0;
+    mobjinfo[MT_BRUISER].bloodcolor = 0;
+    mobjinfo[MT_KNIGHT].bloodcolor = 0;
+  }
+}
+
+static const int predefined_translucency[] = {
+    // MBF
+    MT_FIRE,      MT_SMOKE,     MT_FATSHOT,  MT_BRUISERSHOT,
+    MT_SPAWNFIRE, MT_TROOPSHOT, MT_HEADSHOT, MT_PLASMA,
+    MT_BFG,       MT_ARACHPLAZ, MT_PUFF,     MT_TFOG,
+    MT_IFOG,      MT_MISC12,    MT_INV,      MT_INS,
+    MT_MEGA,
+    // [Woof!]
+    MT_PLASMA1,   MT_PLASMA2
+};
+
+static boolean deh_set_translucency[arrlen(predefined_translucency)] = {false};
+
+void D_DehChangePredefinedTranslucency(int index)
+{
+  int i;
+
+  for (i = 0; i < arrlen(predefined_translucency); ++i)
+  {
+    if (predefined_translucency[i] == index)
+    {
+      deh_set_translucency[i] = true;
+      break;
+    }
+  }
+}
+
+void D_SetPredefinedTranslucency(void)
+{
+  int i;
+
+  for (i = 0; i < arrlen(predefined_translucency); ++i)
+  {
+    if (deh_set_translucency[i])
+      continue;
+
+    if (STRICTMODE_VANILLA(translucency))
+      mobjinfo[predefined_translucency[i]].flags |= MF_TRANSLUCENT;
+    else
+      mobjinfo[predefined_translucency[i]].flags &= ~MF_TRANSLUCENT;
+  }
+}
+
 // killough 2/22/98: Add support for ENDBOOM, which is PC-specific
 // killough 8/1/98: change back to ENDOOM
 
@@ -1753,7 +1819,7 @@ static void D_EndDoom(void)
 }
 
 // [FG] fast-forward demo to the desired map
-int demowarp = -1;
+int playback_warp = -1;
 
 // [Nugget]
 void D_NuggetUpdateCasual()
@@ -1768,7 +1834,7 @@ void D_NuggetUpdateCasual()
 
 void D_DoomMain(void)
 {
-  int p, slot;
+  int p;
 
   setbuf(stdout,NULL);
 
@@ -2049,6 +2115,13 @@ void D_DoomMain(void)
 
   if (beta_emulation)
     {
+      char *path = D_FindWADByName("betagrph.wad");
+      if (path == NULL)
+      {
+        I_Error("'BETAGRPH.WAD' is required for beta emulation! "
+                "You can find it in the 'mbf.zip' archive at "
+                "https://www.doomworld.com/idgames/source/mbf");
+      }
       D_AddFile("betagrph.wad");
     }
 
@@ -2111,7 +2184,7 @@ void D_DoomMain(void)
     if ((p = M_CheckParm ("-fastdemo")) && p < myargc-1)   // killough
       fastdemo = true;             // run at fastest speed possible
     else
-
+    {
       //!
       // @arg <demo>
       // @category demo
@@ -2122,6 +2195,10 @@ void D_DoomMain(void)
       //
 
       p = M_CheckParm ("-timedemo");
+
+      if (!p)
+        p = M_CheckParm("-recordfromto");
+    }
   }
 
   if (p && p < myargc-1)
@@ -2251,7 +2328,7 @@ void D_DoomMain(void)
           autostart = true;
         }
     // [FG] fast-forward demo to the desired map
-    demowarp = startmap;
+    playback_warp = startmap;
   }
 
   //jff 1/22/98 add command line parms to disable sound and music
@@ -2437,11 +2514,6 @@ void D_DoomMain(void)
   I_InitJoystick();
   I_InitSound();
 
-  if (fastdemo)
-  {
-    I_SetFastdemoTimer(true);
-  }
-
   puts("NET_Init: Init network subsystem.");
   NET_Init();
 
@@ -2450,6 +2522,8 @@ void D_DoomMain(void)
 
   puts("D_CheckNetGame: Checking network game status.");
   D_CheckNetGame();
+
+  M_ResetTimeScale();
 
   puts("S_Init: Setting up sound.");
   S_Init(snd_SfxVolume /* *8 */, snd_MusicVolume /* *8*/ );
@@ -2496,18 +2570,16 @@ void D_DoomMain(void)
 
       if (sscanf(myargv[p+1], "%f:%f", &min, &sec) == 2)
       {
-        demoskip_tics = (int) ((60 * min + sec) * TICRATE);
+        playback_skiptics = (int) ((60 * min + sec) * TICRATE);
       }
       else if (sscanf(myargv[p+1], "%f", &sec) == 1)
       {
-        demoskip_tics = (int) (sec * TICRATE);
+        playback_skiptics = (int) (sec * TICRATE);
       }
       else
       {
         I_Error("Invalid parameter '%s' for -skipsec, should be min:sec", myargv[p+1]);
       }
-
-      demoskip_tics = abs(demoskip_tics);
     }
 
   // start the apropriate game based on parms
@@ -2516,19 +2588,42 @@ void D_DoomMain(void)
   // Support -loadgame with -record and reimplement -recordfrom.
 
   //!
-  // @arg <save> <demo>
+  // @arg <savenum> <demofile>
   // @category demo
   //
-  // Records a demo starting from a saved game. It is the same as "-loadgame
-  // <save> -record <demo>". "-loadgame <save> -playdemo <demo>" plays back the
-  // demo starting from the saved game.
+  // Record a demo, loading from the given filename. Equivalent to -loadgame
+  // <savenum> -record <demofile>.
   //
 
-  if ((slot = M_CheckParm("-recordfrom")) && (p = slot+2) < myargc)
-    G_RecordDemo(myargv[p]);
+  p = M_CheckParmWithArgs("-recordfrom", 2);
+  if (p)
+  {
+    startloadgame = M_ParmArgToInt(p);
+    G_RecordDemo(myargv[p + 2]);
+  }
   else
+  {
+    //!
+    // @arg <demofile1> <demofile2>
+    // @category demo
+    //
+    // Allows continuing <demofile1> after it ends or when the user presses the
+    // join demo key, the result getting saved as <demofile2>. Equivalent
+    // to -playdemo <demofile1> -record <demofile2>.
+    //
+
+    p = M_CheckParmWithArgs("-recordfromto", 2);
+    if (p)
     {
-      slot = M_CheckParm("-loadgame");
+      G_DeferedPlayDemo(myargv[p + 1]);
+      singledemo = true;              // quit after one demo
+      G_RecordDemo(myargv[p + 2]);
+    }
+    else
+    {
+      p = M_CheckParmWithArgs("-loadgame", 1);
+      if (p)
+        startloadgame = M_ParmArgToInt(p);
 
       //!
       // @arg <demo>
@@ -2545,6 +2640,7 @@ void D_DoomMain(void)
 	  G_RecordDemo(myargv[p]);
 	}
     }
+  }
 
   if ((p = M_CheckParm ("-fastdemo")) && ++p < myargc)
     {                                 // killough
@@ -2570,13 +2666,13 @@ void D_DoomMain(void)
 	else
 	  {
 	    // [FG] no demo playback
-	    demowarp = -1;
-	    demoskip_tics = -1;
+	    playback_warp = -1;
+	    playback_skiptics = 0;
 	  }
 
-  if (slot && ++slot < myargc)
+  if (fastdemo)
   {
-    startloadgame = atoi(myargv[slot]);
+    I_SetFastdemoTimer(true);
   }
 
   // [FG] init graphics (WIDESCREENDELTA) before HUD widgets
@@ -2595,7 +2691,8 @@ void D_DoomMain(void)
       if (autostart || netgame)
 	{
 	  G_InitNew(startskill, startepisode, startmap);
-	  if (demorecording)
+	  // [crispy] no need to write a demo header in demo continue mode
+	  if (demorecording && gameaction != ga_playdemo)
 	    G_BeginRecording();
 	}
       else

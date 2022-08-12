@@ -150,7 +150,7 @@ boolean menuactive;    // The menus are up
 #define M_X_THRM     (M_X - M_THRM_WIDTH)
 
 #define DISABLE_ITEM(condition, item) \
-        (condition ? (item.m_flags |= S_DISABLE) : (item.m_flags &= ~S_DISABLE))
+        ((condition) ? (item.m_flags |= S_DISABLE) : (item.m_flags &= ~S_DISABLE))
 
 char savegamestrings[10][SAVESTRINGSIZE];
 
@@ -2837,14 +2837,6 @@ static const char *gamma_strings[] = {
   NULL
 };
 
-static const char *translucency_strings[] = {
-  "Off",
-  "Walls",
-  "Things",
-  "All",
-  NULL
-};
-
 void static M_ResetGamma(void)
 {
   usegamma = 0;
@@ -2867,8 +2859,8 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
     {"Vertical Sync", S_YESNO, m_null, M_X,
      M_Y+ general_vsync*M_SPC, {"use_vsync"}, 0, I_ResetScreen},
   {"", S_SKIP, m_null, M_X, M_Y + general_stub1*M_SPC},
-    {"Enable Translucency", S_CHOICE, m_null, M_X,
-     M_Y+ general_trans*M_SPC, {"translucency"}, 0, M_Trans, translucency_strings},
+    {"Enable predefined translucency", S_YESNO, m_null, M_X,
+     M_Y+ general_trans*M_SPC, {"translucency"}, 0, M_Trans},
     {"Translucency filter percentage", S_NUM, m_null, M_X,
      M_Y+ general_transpct*M_SPC, {"tran_filter_pct"}, 0, M_Trans},
     {"Gamma Correction", S_THERMO, m_null, M_X_THRM,
@@ -2922,7 +2914,7 @@ enum {
 static void M_UpdateFreeaimItem(void); // [Nugget]
 static void M_UpdateMouseLook(void)
 {
-  if (!mouselook) {
+  if (!mouselook || !padlook) {
     int i;
     for (i = 0; i < MAXPLAYERS; ++i)
       if (playeringame[i])
@@ -3024,9 +3016,9 @@ static const char *default_endoom_strings[] = {
   "off", "on", "PWAD only", NULL
 };
 
-static void M_ResetTimeScale(void)
+void M_ResetTimeScale(void)
 {
-  if (strictmode)
+  if (strictmode || D_CheckNetConnect())
     I_SetTimeScale(100);
   else
   {
@@ -3150,7 +3142,7 @@ setup_menu_t gen_settings5[] = { // [Nugget] General Settings screen 5
     {"Extra Lighting",              S_NUM,    m_null,   M_X, M_Y+general_a11y_extralight*M_SPC, {"a11y_extra_lighting"}},
     {"Weapon Flash Lighting",       S_YESNO,  m_null,   M_X, M_Y+general_a11y_flash*M_SPC,      {"a11y_weapon_flash"}},
     {"Weapon Flash Sprite",         S_YESNO,  m_null,   M_X, M_Y+general_a11y_pspr*M_SPC,       {"a11y_weapon_pspr"}},
-    {"Pain/pickup/radsuit flashes", S_YESNO,  m_null,   M_X, M_Y+general_a11y_palette*M_SPC,    {"a11y_palette_changes"}},
+    {"Pain/pickup/powerup flashes", S_YESNO,  m_null,   M_X, M_Y+general_a11y_palette*M_SPC,    {"a11y_palette_changes"}},
     {"Invulnerability Colormap",    S_YESNO,  m_null,   M_X, M_Y+general_a11y_invul*M_SPC,      {"a11y_invul_colormap"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings4}},
@@ -3163,7 +3155,11 @@ setup_menu_t gen_settings5[] = { // [Nugget] General Settings screen 5
 void M_Trans(void) // To reset translucency after setting it in menu
 {
     R_InitTranMap(0);
-    DISABLE_ITEM(!STRICTMODE_VANILLA(general_translucency), gen_settings1[general_transpct]);
+
+    D_SetPredefinedTranslucency();
+
+    DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[general_trans]);
+    DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[general_transpct]);
 }
 
 // Setting up for the General screen. Turn on flags, set pointers,
@@ -3605,10 +3601,15 @@ setup_menu_t keys_settings3[] =
     {"TURNING", S_CHOICE, m_scrn, KB_X, M_Y+6*M_SPC,
       {"axis_turn"}, 0, NULL, controller_axes_strings},
 
-    {"INVERT X", S_YESNO, m_scrn, KB_X, M_Y+8*M_SPC, {"invertx"}},
-    {"INVERT Y", S_YESNO, m_scrn, KB_X, M_Y+9*M_SPC, {"inverty"}},
+    {"PADLOOK TOGGLE", S_INPUT, m_scrn, KB_X, M_Y+8*M_SPC,
+      {0}, input_padlook},
+    {"LOOKING", S_CHOICE, m_scrn, KB_X, M_Y+9*M_SPC,
+      {"axis_look"}, 0, NULL, controller_axes_strings},
 
-    {"SENSITIVITY", S_THERMO, m_scrn, KB_X, M_Y+11*M_SPC, {"axis_turn_sens"}},
+    {"INVERT X", S_YESNO, m_scrn, KB_X, M_Y+11*M_SPC, {"invertx"}},
+    {"INVERT Y", S_YESNO, m_scrn, KB_X, M_Y+12*M_SPC, {"inverty"}},
+
+    {"SENSITIVITY", S_THERMO, m_scrn, KB_X, M_Y+14*M_SPC, {"axis_turn_sens"}},
 
   {"<- PREV", S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings2}},
   {"NEXT ->", S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings4}},
@@ -3628,12 +3629,12 @@ setup_menu_t keys_settings4[] =  // Key Binding screen strings
   {"DEMOS" ,S_SKIP|S_TITLE,m_null,KB_X,M_Y+5*M_SPC},
     {"FAST-FORWARD" ,S_INPUT,m_scrn,KB_X,M_Y+6*M_SPC,{0},input_demo_fforward},
     {"FINISH DEMO"  ,S_INPUT,m_scrn,KB_X,M_Y+7*M_SPC,{0},input_demo_quit},
+    {"JOIN DEMO"    ,S_INPUT,m_scrn,KB_X,M_Y+8*M_SPC,{0},input_demo_join},
 
   // [FG] reload current level / go to next level
-  {"MISCELLANEOUS",S_SKIP|S_TITLE,m_null,KB_X,M_Y+9*M_SPC},
-    {"RELOAD LEVEL" ,S_INPUT,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_menu_reloadlevel},
-    {"NEXT LEVEL"   ,S_INPUT,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_menu_nextlevel},
-
+  {"MISCELLANEOUS",S_SKIP|S_TITLE,m_null,KB_X,M_Y+10*M_SPC},
+    {"RESTART LEVEL/DEMO",S_INPUT,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_menu_reloadlevel},
+    {"NEXT LEVEL"   ,S_INPUT,m_scrn,KB_X,M_Y+12*M_SPC,{0},input_menu_nextlevel},
   // [Nugget]
   {"NUGGET",S_SKIP|S_TITLE,m_null,KB_X,M_Y+13*M_SPC},
     {"JUMP",S_INPUT,m_scrn,KB_X,M_Y+14*M_SPC,{0},input_jump},
@@ -4397,7 +4398,7 @@ setup_menu_t enem_settings2[] =  // Enemy Settings screen 2
 {
   {"Cosmetic",S_SKIP|S_TITLE,m_null,M_X,M_Y+ enem2_title1*M_SPC},
     // [FG] colored blood and gibs
-    {"Colored Blood",S_YESNO,m_null,M_X,M_Y+ enem2_colored_blood*M_SPC, {"colored_blood"}},
+    {"Colored Blood",S_YESNO,m_null,M_X,M_Y+ enem2_colored_blood*M_SPC, {"colored_blood"}, 0, D_SetBloodColor},
     // [crispy] randomly flip corpse, blood and death animation sprites
     {"Randomly Mirrored Corpses",S_YESNO,m_null,M_X,M_Y+ enem2_flipcorpses*M_SPC, {"flipcorpses"}},
     // [crispy] resurrected pools of gore ("ghost monsters") are translucent
@@ -4455,6 +4456,7 @@ void M_DrawEnemy(void)
   if (default_verify)
     M_DrawDefVerify();
 }
+
 
 /////////////////////////////
 //
@@ -5425,6 +5427,14 @@ boolean M_Responder (event_t* ev)
 	  // return true; // [FG] don't let toggles eat keys
 	}
 
+      if (M_InputActivated(input_padlook))
+	{
+	  padlook = !padlook;
+	  doomprintf("Padlook %s", padlook ? "On" : "Off");
+	  M_UpdateMouseLook();
+	  // return true; // [FG] don't let toggles eat keys
+	}
+
       if (ch == key_help)      // Help key
 	{
 	  M_StartControlPanel ();
@@ -5533,7 +5543,7 @@ boolean M_Responder (event_t* ev)
 
       if (M_InputActivated(input_hud))   // heads-up mode
 	{
-	  if (automapactive || chat_on)               // jff 2/22/98
+	  if ((automapactive && !automapoverlay) || chat_on)   // jff 2/22/98
 	    return false;                             // HUD mode control
     // [Nugget] Increase to accommodate for Crispy HUD
 	  if (screenSize<8+4)                         // function on default F5
@@ -5565,9 +5575,9 @@ boolean M_Responder (event_t* ev)
 	// [FG] reload current level / go to next level
 	if (M_InputActivated(input_menu_nextlevel))
 	{
-		if (demoplayback && singledemo && !DEMOSKIP)
+		if (demoplayback && singledemo && !PLAYBACK_SKIP)
 		{
-			demonext = true;
+			playback_nextlevel = true;
 			G_EnableWarp(true);
 			return true;
 		}
@@ -5577,7 +5587,8 @@ boolean M_Responder (event_t* ev)
 
         if (M_InputActivated(input_demo_fforward))
         {
-          if (demoplayback && singledemo && !DEMOSKIP && !fastdemo)
+          if (demoplayback && !PLAYBACK_SKIP && !fastdemo
+              && !D_CheckNetConnect())
           {
             static boolean fastdemo_timer = false;
             fastdemo_timer = !fastdemo_timer;
@@ -5586,7 +5597,7 @@ boolean M_Responder (event_t* ev)
           }
         }
 
-        if (M_InputActivated(input_speed_up) && (!netgame || demoplayback)
+        if (M_InputActivated(input_speed_up) && !D_CheckNetConnect()
             && !strictmode)
         {
           realtic_clock_rate += 10;
@@ -5595,7 +5606,7 @@ boolean M_Responder (event_t* ev)
           I_SetTimeScale(realtic_clock_rate);
         }
 
-        if (M_InputActivated(input_speed_down) && (!netgame || demoplayback)
+        if (M_InputActivated(input_speed_down) && !D_CheckNetConnect()
             && !strictmode)
         {
           realtic_clock_rate -= 10;
@@ -5604,7 +5615,7 @@ boolean M_Responder (event_t* ev)
           I_SetTimeScale(realtic_clock_rate);
         }
 
-        if (M_InputActivated(input_speed_default) && (!netgame || demoplayback)
+        if (M_InputActivated(input_speed_default) && !D_CheckNetConnect()
             && !strictmode)
         {
           realtic_clock_rate = 100;
@@ -6993,6 +7004,8 @@ static void M_UpdateFreeaimItem(void) // [Nugget]
 
 static void M_UpdateStrictModeItems(void)
 {
+  extern boolean deh_set_blood_color;
+
   DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[general_trans]);
   DISABLE_STRICT(gen_settings2[general_brightmaps]);
   DISABLE_STRICT(gen_settings3[general_screen_wipe]);
@@ -7016,7 +7029,7 @@ static void M_UpdateStrictModeItems(void)
   DISABLE_STRICT(auto_settings1[5]); // map_player_coords
 
   DISABLE_ITEM(strictmode || !comp[comp_vile], enem_settings2[enem2_ghost]);
-  DISABLE_STRICT(enem_settings2[enem2_colored_blood]);
+  DISABLE_ITEM(strictmode || deh_set_blood_color, enem_settings2[enem2_colored_blood]);
   DISABLE_STRICT(enem_settings2[enem2_flipcorpses]);
 
 }
@@ -7075,7 +7088,6 @@ void M_ResetSetupMenu(void)
   M_UpdateCenteredWeaponItem();
   M_UpdateMultiLineMsgItem();
   M_UpdateStrictModeItems();
-  M_ResetTimeScale();
   M_Trans();
 }
 
