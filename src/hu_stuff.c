@@ -1042,10 +1042,8 @@ static void HU_UpdateCrosshair(void)
 
     overflow[emu_intercepts].enabled = false;
     if (mouselook && freeaim == freeaim_direct && casual_play)
-    {
       P_AimSlopedLineAttack(plr->mo, an, range, PLAYER_SLOPE(plr),
                             (demo_version < 203) ? 0 : MF_FRIEND);
-    }
     else {
       P_AimLineAttack(plr->mo, an, range, 0);
       if ((ammo == am_misl || ammo == am_cell)
