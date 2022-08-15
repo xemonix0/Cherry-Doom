@@ -431,10 +431,11 @@ extern void P_SpawnPlayer (mapthing_t* mthing);
 // [Nugget] Resurrection cheat adapted from Crispy's IDDQD
 static void cheat_resurrect() {
 	// [crispy] dead players are first respawned at the current position
-	mapthing_t mt = {0};
-	if (plyr->playerstate == PST_DEAD) {
+  if (plyr->playerstate == PST_DEAD) {
     signed int an;
+    mapthing_t mt = {0};
 
+    P_MapStart();
     mt.x = plyr->mo->x >> FRACBITS;
     mt.y = plyr->mo->y >> FRACBITS;
     mt.angle = (plyr->mo->angle + ANG45/2)*(uint64_t)45/ANG45;
@@ -449,10 +450,12 @@ static void cheat_resurrect() {
     an = plyr->mo->angle >> ANGLETOFINESHIFT;
     P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
     S_StartSound(plyr->mo, sfx_slop);
+    P_MapEnd();
+
     // [Nugget] Announce
     plyr->message = "Resurrected!";
-	}
-	else { plyr->message = "Still alive."; }
+  }
+  else { plyr->message = "Still alive."; }
 }
 
 // [Nugget]
