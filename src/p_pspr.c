@@ -39,6 +39,7 @@
 #include "d_event.h"
 #include "p_tick.h"
 #include "w_wad.h" // [Nugget] W_CheckNumForName
+#include "m_input.h" // [Nugget]
 
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
@@ -675,6 +676,10 @@ void A_GunFlash(player_t *player, pspdef_t *psp)
 // A_Punch
 //
 
+// [Nugget]
+#define ANG20 (ANG60/3)
+#define ANG2 (ANG20/10)
+
 void A_Punch(player_t *player, pspdef_t *psp)
 {
   angle_t angle;
@@ -684,16 +689,36 @@ void A_Punch(player_t *player, pspdef_t *psp)
   // [Nugget] MDK Fist, basically an absurdly high damage sniper
   if (player->cheats & CF_SAITAMA)
   {
-    if (mouselook && freeaim == freeaim_direct)
-      { slope = PLAYER_SLOPE(player); }
-    else {
-      slope = P_AimLineAttack(player->mo, player->mo->angle, 32*64*FRACUNIT, 0);
-      if (!linetarget && mouselook && freeaim == freeaim_autoaim)
+    // Alt Fire, more like an overpowered BFG
+    if (M_InputGameActive(input_strafe)) {
+      for (int i=0; i<21; i++) {
+        angle = player->mo->angle + ANG20 - (ANG2*i);
+
+        if (mouselook && freeaim == freeaim_direct)
+          { slope = PLAYER_SLOPE(player); }
+        else {
+          slope = P_AimLineAttack(player->mo, angle, 32*64*FRACUNIT, 0);
+          if (!linetarget && mouselook && freeaim == freeaim_autoaim)
+            { slope = PLAYER_SLOPE(player); }
+        }
+
+        P_LineAttack(player->mo, angle, MISSILERANGE, slope, 1000000);
+      }
+    }
+    else { // Just one bullet
+      angle = player->mo->angle;
+
+      if (mouselook && freeaim == freeaim_direct)
         { slope = PLAYER_SLOPE(player); }
+      else {
+        slope = P_AimLineAttack(player->mo, angle, 32*64*FRACUNIT, 0);
+        if (!linetarget && mouselook && freeaim == freeaim_autoaim)
+          { slope = PLAYER_SLOPE(player); }
+      }
+
+      P_LineAttack(player->mo, angle, MISSILERANGE, slope, 1000000);
     }
 
-    P_LineAttack(player->mo, player->mo->angle, MISSILERANGE,
-                 slope, 1000000);
     return;
   }
 
