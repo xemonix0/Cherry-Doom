@@ -105,6 +105,8 @@ lighttable_t **colormaps;
 
 int extralight;                           // bumped light from gun blasts
 
+static fixed_t      fovscale; // [Nugget] FOV from Doom Retro
+
 void (*colfunc)(void) = R_DrawColumn;     // current column draw function
 
 //
@@ -265,15 +267,15 @@ static void R_InitTextureMapping (void)
   // Calc focallength
   //  so FIELDOFVIEW angles covers SCREENWIDTH.
 
-  focallength = FixedDiv(centerxfrac_nonwide, finetangent[FINEANGLES/4+FIELDOFVIEW/2]);
+  focallength = FixedDiv(centerxfrac, fovscale); // [Nugget] FOV from Doom Retro
 
   for (i=0 ; i<FINEANGLES/2 ; i++)
     {
       int t;
-      if (finetangent[i] > FRACUNIT*2)
+      if (finetangent[i] > fovscale)
         t = -1;
       else
-        if (finetangent[i] < -FRACUNIT*2)
+        if (finetangent[i] < -fovscale)
           t = viewwidth+1;
       else
         {
@@ -441,6 +443,8 @@ void R_SetViewSize(int blocks)
 void R_ExecuteSetViewSize (void)
 {
   int i, j;
+  fixed_t num; // [Nugget] FOV from Doom Retro
+  extern int WIDEFOVDELTA;
 
   setsizeneeded = false;
 
@@ -487,7 +491,8 @@ void R_ExecuteSetViewSize (void)
   centerxfrac = centerx<<FRACBITS;
   centeryfrac = centery<<FRACBITS;
   centerxfrac_nonwide = (viewwidth_nonwide/2)<<FRACBITS;
-  projection = centerxfrac_nonwide;
+  fovscale = finetangent[FINEANGLES / 4 + (fov + WIDEFOVDELTA) * FINEANGLES / 360 / 2]; // [Nugget] FOV from Doom Retro
+  projection = FixedDiv(centerxfrac, fovscale); // [Nugget] FOV from Doom Retro
   viewheightfrac = viewheight<<(FRACBITS+1); // [FG] sprite clipping optimizations
 
   R_InitBuffer(scaledviewwidth, scaledviewheight);       // killough 11/98
@@ -503,13 +508,15 @@ void R_ExecuteSetViewSize (void)
     screenheightarray[i] = viewheight;
 
   // planes
+  num = FixedMul(FixedDiv(FRACUNIT, fovscale), viewwidth * FRACUNIT / 2); // [Nugget] FOV from Doom Retro
+
   for (i=0 ; i<viewheight ; i++)
     {   // killough 5/2/98: reformatted
       for (j = 0; j < LOOKDIRS; j++)
       {
         // [crispy] re-generate lookup-table for yslope[] whenever "viewheight" or "hires" change
         fixed_t dy = abs(((i-viewheight/2-(j-LOOKDIRMIN)*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
-        yslopes[j][i] = FixedDiv(viewwidth_nonwide*(FRACUNIT/2), dy);
+        yslopes[j][i] = FixedDiv(num, dy);
       }
     }
   yslope = yslopes[LOOKDIRMIN];

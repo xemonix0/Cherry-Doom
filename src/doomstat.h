@@ -443,6 +443,7 @@ extern boolean casual_play;
 extern int no_ss_background;
 extern int wipe_type;
 extern int no_menu_tint;
+extern int fov;
 extern int over_under;
 extern int jump_crouch;
 extern int damagecount_cap;

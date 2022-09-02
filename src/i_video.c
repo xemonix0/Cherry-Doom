@@ -59,6 +59,7 @@
 int SCREENWIDTH, SCREENHEIGHT;
 int NONWIDEWIDTH; // [crispy] non-widescreen SCREENWIDTH
 int WIDESCREENDELTA; // [crispy] horizontal widescreen offset
+int WIDEFOVDELTA; // [Nugget] FOV from Doom Retro
 
 static SDL_Surface *sdlscreen;
 
@@ -1356,6 +1357,10 @@ void I_GetScreenDimensions(void)
       // [crispy] ... but never exceeds MAX_SCREENWIDTH (array size!)
       SCREENWIDTH = MIN(SCREENWIDTH, MAX_SCREENWIDTH / 2);
    }
+
+   // [Nugget] FOV from Doom Retro
+   // fov * 0.82 is vertical FOV for 4:3 aspect ratio
+   WIDEFOVDELTA = (int)(atan(SCREENWIDTH / (SCREENHEIGHT / tan(fov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - fov - 2;
 
    WIDESCREENDELTA = (SCREENWIDTH - NONWIDEWIDTH) / 2;
 }

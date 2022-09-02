@@ -146,6 +146,7 @@ boolean casual_play;
 int no_ss_background;
 int wipe_type;
 int no_menu_tint;
+int fov;
 int over_under;
 int jump_crouch;
 int damagecount_cap;
