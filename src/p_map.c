@@ -1636,21 +1636,18 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 	  // fix bullet-eaters -- killough:
 	  if  (li->backsector && li->backsector->ceilingpic == skyflatnum)
     {
-      if(!casual_play)
-      {
+      if (!casual_play) {
 	      if (demo_compatibility || li->backsector->ceilingheight < z)
 	        return false;
       }
-      else
-        if (li->backsector->ceilingheight < z) // [nugget] freeaim - fix disappearing bullet puffs when outside
-          return false;
+      else if (li->backsector->ceilingheight < z) // [Nugget] freeaim - fix disappearing bullet puffs when outside
+        return false;
     }
 	}
-      // [nugget] Taken from Crispy Doom - check if the bullet puff's z-coordinate is below of above
+      // [Nugget] Taken from Crispy Doom - check if the bullet puff's z-coordinate is below or above
       // its spawning sector's floor or ceiling, respectively, and move its
       // coordinates to the point where the trajectory hits the plane
-      if (casual_play)
-      {
+      if (casual_play) {
           const int lineside = P_PointOnLineSide(x, y, li);
           int side;
 
