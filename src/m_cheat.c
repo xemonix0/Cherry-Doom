@@ -504,6 +504,7 @@ static void cheat_spawne(buf) char buf[3];
 {
   fixed_t x, y, z;
   int type;
+  mobj_t *spawnee;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
     { doomprintf("Spawn: Digits only.");  return; }
@@ -530,7 +531,10 @@ static void cheat_spawne(buf) char buf[3];
                  finesine[plyr->mo->angle>>ANGLETOFINESHIFT]);
   z = plyr->mo->z + 32*FRACUNIT;
 
-  P_SpawnMobj(x,y,z,spawneetype);
+  spawnee = P_SpawnMobj(x,y,z,spawneetype);
+  if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
+    { extrakills++; }
+
   doomprintf("Mobj spawned! (Enemy - Type = %i)", spawneetype);
 }
 
@@ -585,9 +589,11 @@ static void cheat_spawnr()
 
   spawnee = P_SpawnMobj(x,y,z,spawneetype);
   if (spawneefriend) { spawnee->flags |= MF_FRIEND; }
+  if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
+    { extrakills++; }
 
   doomprintf("Mobj spawned! (%s - Type = %i)",
-          spawneefriend ? "Friend" : "Enemy", spawneetype);
+             spawneefriend ? "Friend" : "Enemy", spawneetype);
 }
 
 // [Nugget] Give info on the current target
