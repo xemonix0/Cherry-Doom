@@ -3876,7 +3876,7 @@ enum {           // killough 10/98: enum for y-offset info
 
 // [Nugget]
 static const char *bobbing_styles[] = {
-  "Vanilla", "Inverse Vanilla", "Alpha", "Inverse Alpha", "Smooth", "Inverse Smooth", "Quake", NULL
+  "Vanilla", "Inv. Vanilla", "Alpha", "Inv. Alpha", "Smooth", "Inv. Smooth", "Quake", NULL
 };
 
 // [FG] centered or bobbing weapon sprite
