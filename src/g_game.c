@@ -1915,6 +1915,10 @@ static void G_DoSaveGame(void)
     memset(save_p, 0, 8);
   save_p += 8;
 
+  // [Nugget] Save extraspawns
+  CheckSaveGame(sizeof extraspawns);
+  saveg_write32(extraspawns);
+
   // save extrakills
   CheckSaveGame(sizeof extrakills);
   saveg_write32(extrakills);
@@ -2088,6 +2092,12 @@ static void G_DoLoadGame(void)
     }
 
     save_p += 8;
+  }
+
+  // [Nugget] Restore extraspawns
+  if (save_p - savebuffer <= length - sizeof extraspawns)
+  {
+    extraspawns = saveg_read32();
   }
 
   // restore extrakills

@@ -1925,14 +1925,15 @@ void HU_Ticker(void)
         w_lstati.y = HU_LSTATI_Y + offset_msglist;
         w_lstats.y = HU_LSTATS_Y + offset_msglist;
 
-        if (extrakills)
+        if (extraspawns && !smarttotals) // [Nugget] Smart Totals from So Doom
         {
           sprintf(hud_lstatk, "K\t\x1b%c%d/%d+%d", '0'+CR_GRAY,
-            plr->killcount, totalkills, extrakills);
+            plr->killcount, totalkills, extraspawns);
         }
         else
         {
-          sprintf(hud_lstatk, "K\t\x1b%c%d/%d", '0'+CR_GRAY, plr->killcount, totalkills);
+          sprintf(hud_lstatk, "K\t\x1b%c%d/%d", '0'+CR_GRAY,
+                  plr->killcount - (smarttotals ? extrakills : 0), totalkills); // [Nugget] Smart Totals from So Doom
         }
         HUlib_clearTextLine(&w_lstatk);
         s = hud_lstatk;
