@@ -269,7 +269,8 @@ extern  int displayplayer;
 // Statistics on a given map, for intermission.
 //
 extern  int totalkills;
-extern  int extrakills; // [crispy] count spawned monsters
+extern  int extraspawns; // [Nugget]: [crispy] count resurrected and (re)spawned monsters
+extern  int extrakills; // [Nugget]: [So Doom] count kills of resurrected and (re)spawned monsters
 extern  int totalitems;
 extern  int totalsecret;
 
@@ -468,6 +469,7 @@ extern int bobbing_percentage;
 extern int bobbing_style;
 // Status Bar/HUD
 extern int alt_arms;
+extern int smarttotals;
 extern int smooth_counts;
 // Enemies
 extern int extra_gibbing;

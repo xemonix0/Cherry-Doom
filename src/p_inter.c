@@ -760,8 +760,12 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
       // count for intermission
       // killough 7/20/98: don't count friends
       if (!(target->flags & MF_FRIEND))
-	if (target->flags & MF_COUNTKILL)
+	if (target->flags & MF_COUNTKILL) {
 	  source->player->killcount++;
+    // [Nugget]: [So Doom] count deaths of resurrected/Nightmare-respawned/Icon of Sin-spawned monsters
+    if (target->intflags & MIF_EXTRASPAWNED)
+      extrakills++;
+	}
       if (target->player)
         source->player->frags[target->player-players]++;
     }
@@ -771,8 +775,12 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
           // count all monster deaths,
           // even those caused by other monsters
 	  // killough 7/20/98: don't count friends
-	  if (!(target->flags & MF_FRIEND))
+	  if (!(target->flags & MF_FRIEND)) {
 	    players->killcount++;
+      // [Nugget]: [So Doom] count deaths of resurrected/Nightmare-respawned/Icon of Sin-spawned monsters
+      if (target->intflags & MIF_EXTRASPAWNED)
+        extrakills++;
+	  }
         }
 #ifndef MBF_STRICT
       // For compatibility with PrBoom+ complevel 11 netgame

@@ -4027,6 +4027,7 @@ enum {
   stat2_stub1,
   stat2_title2,
   stat2_timests,
+  stat2_smart,
   stat2_smooth,
   stat2_stub2,
   stat2_title3,
@@ -4076,7 +4077,8 @@ setup_menu_t stat_settings2[] =
   {"",S_SKIP,m_null,M_X,M_Y+stat2_stub1*M_SPC }, // Stub
   {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title2*M_SPC },
     {"SHOW TIME/STS ABOVE STATUS BAR" ,S_CHOICE,m_null,M_X,M_Y+stat2_timests*M_SPC, {"hud_timests"}, 0, NULL, timests_str},
-    {"SMOOTH HEALTH/ARMOR COUNT"      ,S_YESNO     ,m_null,M_X,M_Y+stat2_smooth*M_SPC, {"smooth_counts"}},
+    {"SMART TOTALS"                   ,S_YESNO ,m_null,M_X,M_Y+stat2_smart*M_SPC, {"smarttotals"}},
+    {"SMOOTH HEALTH/ARMOR COUNT"      ,S_YESNO ,m_null,M_X,M_Y+stat2_smooth*M_SPC, {"smooth_counts"}},
   {"",S_SKIP,m_null,M_X,M_Y+stat2_stub2*M_SPC }, // Stub
   {"CROSSHAIR",S_SKIP|S_TITLE,m_null,M_X,M_Y+ stat2_title3*M_SPC },
     {"ENABLE CROSSHAIR",      S_YESNO, m_null,M_X,M_Y+stat2_xhair*M_SPC, {"hud_crosshair_on"}},

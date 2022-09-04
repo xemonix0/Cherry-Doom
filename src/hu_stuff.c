@@ -923,9 +923,9 @@ static void HU_widget_build_monsec(void)
     }
   }
 
-  kills_color = (kills - extrakills >= totalkills ? '0'+CR_BLUE : '0'+CR_GOLD);
-  kills_percent_color = (kills >= totalkills ? '0'+CR_BLUE : '0'+CR_GOLD);
-  kills_percent = (totalkills == 0 ? 100 : kills * 100 / totalkills);
+  kills_color = (kills - (smarttotals ? extrakills : extraspawns) >= totalkills ? '0'+CR_BLUE : '0'+CR_GOLD); // [Nugget] Smart Totals from So Doom
+  kills_percent_color = (kills - (smarttotals ? extrakills : 0) >= totalkills ? '0'+CR_BLUE : '0'+CR_GOLD); // [Nugget] Smart Totals from So Doom
+  kills_percent = (totalkills == 0 ? 100 : (kills - (smarttotals ? extrakills : 0)) * 100 / totalkills); // [Nugget] Smart Totals from So Doom
   items_color = (items >= totalitems ? '0'+CR_BLUE : '0'+CR_GOLD);
   secrets_color = (secrets >= totalsecret ? '0'+CR_BLUE : '0'+CR_GOLD);
 
@@ -933,18 +933,22 @@ static void HU_widget_build_monsec(void)
   {
     offset = sprintf(hud_monsecstr,
       "STS \x1b%cK %s \x1b%c%d/%d",
-      '0'+CR_RED, kills_str, kills_color, kills, totalkills);
+      '0'+CR_RED, kills_str, kills_color,
+      kills - (smarttotals ? extrakills : 0), // [Nugget] Smart Totals from So Doom
+      totalkills);
   }
   else
   {
     offset = sprintf(hud_monsecstr,
       "STS \x1b%cK \x1b%c%d/%d",
-      '0'+CR_RED, kills_color, plr->killcount, totalkills);
+      '0'+CR_RED, kills_color,
+      plr->killcount - (smarttotals ? extrakills : 0), // [Nugget] Smart Totals from So Doom
+      totalkills);
   }
 
-  if (extrakills)
+  if (extraspawns && !smarttotals) // [Nugget] Smart Totals from So Doom
   {
-    offset += sprintf(hud_monsecstr + offset, "+%d", extrakills);
+    offset += sprintf(hud_monsecstr + offset, "+%d", extraspawns);
   }
 
   sprintf(hud_monsecstr + offset,

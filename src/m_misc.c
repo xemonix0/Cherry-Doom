@@ -636,6 +636,13 @@ default_t defaults[] = {
   },
 
   {
+    "smarttotals",
+    (config_t *) &smarttotals, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to enable Smart Totals"
+  },
+
+  {
     "smooth_counts",
     (config_t *) &smooth_counts, NULL,
     {0}, {0,1}, number, ss_stat, wad_no,

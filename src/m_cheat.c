@@ -532,8 +532,9 @@ static void cheat_spawne(buf) char buf[3];
   z = plyr->mo->z + 32*FRACUNIT;
 
   spawnee = P_SpawnMobj(x,y,z,spawneetype);
+  spawnee->intflags |= MIF_EXTRASPAWNED;
   if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
-    { extrakills++; }
+    { extraspawns++; }
 
   doomprintf("Mobj spawned! (Enemy - Type = %i)", spawneetype);
 }
@@ -588,9 +589,13 @@ static void cheat_spawnr()
   z = plyr->mo->z + 32*FRACUNIT;
 
   spawnee = P_SpawnMobj(x,y,z,spawneetype);
-  if (spawneefriend) { spawnee->flags |= MF_FRIEND; }
-  if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
-    { extrakills++; }
+  if (spawneefriend)
+    { spawnee->flags |= MF_FRIEND; }
+  else {
+    spawnee->intflags |= MIF_EXTRASPAWNED;
+    if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
+      { extraspawns++; }
+  }
 
   doomprintf("Mobj spawned! (%s - Type = %i)",
              spawneefriend ? "Friend" : "Enemy", spawneetype);

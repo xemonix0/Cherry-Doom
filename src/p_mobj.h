@@ -241,8 +241,9 @@ enum {
   // mbf21
   MIF_SCROLLING = 8,  // Object is affected by scroller / pusher / puller
   // [Nugget]
-  MIF_CROUCHING = 16, // Mobj (player) is crouching
-  MIF_OVERUNDER = 32, // Mobj is over/under another mobj
+  MIF_CROUCHING = 16,     // Mobj (player) is crouching
+  MIF_OVERUNDER = 32,     // Mobj is over/under another mobj
+  MIF_EXTRASPAWNED = 64,  // [So Doom] Nightmare-spawned, Icon of Sin-spawned and Archvile-resurrected monsters
 };
 
 // Map Object definition.

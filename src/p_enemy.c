@@ -1758,7 +1758,7 @@ static boolean P_HealCorpse(mobj_t* actor, int radius, statenum_t healstate, sfx
 
                   // [crispy] count resurrected monsters
                   if (!(corpsehit->flags & MF_FRIEND))
-                    extrakills++;
+                    extraspawns++; // [Nugget] Smart Totals from So Doom
 
                   return true;
                 }
@@ -2670,9 +2670,12 @@ void A_SpawnFly(mobj_t *mo)
   // killough 7/18/98: brain friendliness is transferred
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
 
+	// [Nugget]: [So Doom]
+	newmobj->intflags |= MIF_EXTRASPAWNED;
+
   // [crispy] count spawned monsters
   if (!(newmobj->flags & MF_FRIEND))
-    extrakills++;
+    extraspawns++;
 
   // killough 8/29/98: add to appropriate thread
   P_UpdateThinker(&newmobj->thinker);

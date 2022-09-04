@@ -170,6 +170,7 @@ int bobbing_percentage;
 int bobbing_style;
 // Status Bar/HUD
 int alt_arms;
+int smarttotals;
 int smooth_counts;
 // Enemies
 int extra_gibbing;

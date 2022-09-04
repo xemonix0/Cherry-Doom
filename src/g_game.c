@@ -114,7 +114,8 @@ int             gametic;
 int             levelstarttic; // gametic at level start
 int             basetic;       // killough 9/29/98: for demo sync
 int             totalkills, totalitems, totalsecret;    // for intermission
-int             extrakills;    // [crispy] count spawned monsters
+int             extraspawns;   // [Nugget]: [crispy] count spawned monsters
+int             extrakills;    // [Nugget]: [So Doom] count deaths of resurrected and (re)spawned monsters
 int             totalleveltimes; // [FG] total time for all completed levels
 boolean         demorecording;
 boolean         longtics;             // cph's doom 1.91 longtics hack
