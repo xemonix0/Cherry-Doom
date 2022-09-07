@@ -1685,86 +1685,90 @@ static boolean P_HealCorpse(mobj_t* actor, int radius, statenum_t healstate, sfx
   int bx, by;
 
   if (actor->movedir != DI_NODIR)
+  {
+    // check for corpses to raise
+    viletryx =
+      actor->x + actor->info->speed*xspeed[actor->movedir];
+    viletryy =
+      actor->y + actor->info->speed*yspeed[actor->movedir];
+
+    xl = (viletryx - bmaporgx - MAXRADIUS*2)>>MAPBLOCKSHIFT;
+    xh = (viletryx - bmaporgx + MAXRADIUS*2)>>MAPBLOCKSHIFT;
+    yl = (viletryy - bmaporgy - MAXRADIUS*2)>>MAPBLOCKSHIFT;
+    yh = (viletryy - bmaporgy + MAXRADIUS*2)>>MAPBLOCKSHIFT;
+
+    vileobj = actor;
+    viletryradius = radius;
+    for (bx=xl ; bx<=xh ; bx++)
     {
-      // check for corpses to raise
-      viletryx =
-        actor->x + actor->info->speed*xspeed[actor->movedir];
-      viletryy =
-        actor->y + actor->info->speed*yspeed[actor->movedir];
-
-      xl = (viletryx - bmaporgx - MAXRADIUS*2)>>MAPBLOCKSHIFT;
-      xh = (viletryx - bmaporgx + MAXRADIUS*2)>>MAPBLOCKSHIFT;
-      yl = (viletryy - bmaporgy - MAXRADIUS*2)>>MAPBLOCKSHIFT;
-      yh = (viletryy - bmaporgy + MAXRADIUS*2)>>MAPBLOCKSHIFT;
-
-      vileobj = actor;
-      viletryradius = radius;
-      for (bx=xl ; bx<=xh ; bx++)
+      for (by=yl ; by<=yh ; by++)
+      {
+        // Call PIT_VileCheck to check
+        // whether object is a corpse
+        // that canbe raised.
+        if (!P_BlockThingsIterator(bx,by,PIT_VileCheck))
         {
-          for (by=yl ; by<=yh ; by++)
-            {
-              // Call PIT_VileCheck to check
-              // whether object is a corpse
-              // that canbe raised.
-              if (!P_BlockThingsIterator(bx,by,PIT_VileCheck))
-                {
-		  mobjinfo_t *info;
+          mobjinfo_t *info;
 
-                  // got one!
-                  mobj_t *temp = actor->target;
-                  actor->target = corpsehit;
-                  A_FaceTarget(actor);
-                  actor->target = temp;
+          // got one!
+          mobj_t *temp = actor->target;
+          actor->target = corpsehit;
+          A_FaceTarget(actor);
+          actor->target = temp;
 
-                  P_SetMobjState(actor, healstate);
-                  S_StartSound(corpsehit, healsound);
-                  info = corpsehit->info;
+          P_SetMobjState(actor, healstate);
+          S_StartSound(corpsehit, healsound);
+          info = corpsehit->info;
 
-                  P_SetMobjState(corpsehit,info->raisestate);
+          P_SetMobjState(corpsehit,info->raisestate);
 
-                  if (comp[comp_vile])
-                    corpsehit->height <<= 2;                        // phares
-                  else                                              //   V
-                    {
-                      corpsehit->height = info->height; // fix Ghost bug
-                      corpsehit->radius = info->radius; // fix Ghost bug
-                    }                                               // phares
+          if (comp[comp_vile])
+            corpsehit->height <<= 2;                        // phares
+          else                                              //   V
+          {
+            corpsehit->height = info->height; // fix Ghost bug
+            corpsehit->radius = info->radius; // fix Ghost bug
+          }                                               // phares
 
-		  // killough 7/18/98:
-		  // friendliness is transferred from AV to raised corpse
-		  corpsehit->flags =
-		    (info->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
+          // killough 7/18/98:
+          // friendliness is transferred from AV to raised corpse
+          corpsehit->flags =
+          (info->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
 
-		  // [crispy] resurrected pools of gore ("ghost monsters") are translucent
-		  if (STRICTMODE(ghost_monsters) && corpsehit->height == 0
-		      && corpsehit->radius == 0)
-		  {
-		      corpsehit->flags |= MF_TRANSLUCENT;
-		      fprintf(stderr, "A_VileChase: Resurrected ghost monster (%d) at (%d/%d)!\n",
-		              corpsehit->type, corpsehit->x>>FRACBITS, corpsehit->y>>FRACBITS);
-		  }
+          // [crispy] resurrected pools of gore ("ghost monsters") are translucent
+          if (STRICTMODE(ghost_monsters) && corpsehit->height == 0
+              && corpsehit->radius == 0)
+          {
+            corpsehit->flags |= MF_TRANSLUCENT;
+            fprintf(stderr, "A_VileChase: Resurrected ghost monster (%d) at (%d/%d)!\n",
+                    corpsehit->type, corpsehit->x>>FRACBITS, corpsehit->y>>FRACBITS);
+          }
 
-                  corpsehit->health = info->spawnhealth;
-		  P_SetTarget(&corpsehit->target, NULL);  // killough 11/98
+          corpsehit->health = info->spawnhealth;
+          P_SetTarget(&corpsehit->target, NULL);  // killough 11/98
 
-		  if (demo_version >= 203)
-		    {         // kilough 9/9/98
-		      P_SetTarget(&corpsehit->lastenemy, NULL);
-		      corpsehit->flags &= ~MF_JUSTHIT;
-		    }
+          if (demo_version >= 203)
+          {         // kilough 9/9/98
+            P_SetTarget(&corpsehit->lastenemy, NULL);
+            corpsehit->flags &= ~MF_JUSTHIT;
+          }
 
-		  // killough 8/29/98: add to appropriate thread
-		  P_UpdateThinker(&corpsehit->thinker);
+          // killough 8/29/98: add to appropriate thread
+          P_UpdateThinker(&corpsehit->thinker);
 
-                  // [crispy] count resurrected monsters
-                  if (!(corpsehit->flags & MF_FRIEND))
-                    extraspawns++; // [Nugget] Smart Totals from So Doom
+          // [Nugget]: [So Doom]
+          corpsehit->intflags |= MIF_EXTRASPAWNED;
 
-                  return true;
-                }
-            }
+          // [crispy] count resurrected monsters
+          // [Nugget] Only if counted towards killcount
+          if ((corpsehit->flags & MF_COUNTKILL) && !(corpsehit->flags & MF_FRIEND))
+            extraspawns++; // [Nugget] Smart Totals from So Doom
+
+          return true;
         }
+      }
     }
+  }
   return false;
 }
 
@@ -2106,6 +2110,11 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
 
   // killough 7/20/98: PEs shoot lost souls with the same friendliness
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
+
+  // [Nugget] Count towards extraspawns if for some reason
+  // the spawned mobj counts towards killcount
+  if ((newmobj->flags & MF_COUNTKILL) && !(newmobj->flags & MF_FRIEND))
+    extraspawns++;
 
   // killough 8/29/98: add to appropriate thread
   P_UpdateThinker(&newmobj->thinker);
@@ -2674,8 +2683,9 @@ void A_SpawnFly(mobj_t *mo)
 	newmobj->intflags |= MIF_EXTRASPAWNED;
 
   // [crispy] count spawned monsters
-  if (!(newmobj->flags & MF_FRIEND))
-    extraspawns++;
+  // [Nugget] Only if counted towards killcount
+  if ((newmobj->flags & MF_COUNTKILL) && !(newmobj->flags & MF_FRIEND))
+    extraspawns++; // [Nugget] Smart Totals from So Doom
 
   // killough 8/29/98: add to appropriate thread
   P_UpdateThinker(&newmobj->thinker);
