@@ -5407,6 +5407,7 @@ boolean M_Responder (event_t* ev)
 	{
 	  hud_crosshair_on = !hud_crosshair_on;
 	  doomprintf("Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
+	  HU_InitCrosshair();
 	}
 
       if (M_InputActivated(input_autorun)) // Autorun

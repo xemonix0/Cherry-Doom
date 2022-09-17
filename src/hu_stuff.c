@@ -222,7 +222,6 @@ int message_list;      // killough 11/98: made global
 int message_timer  = HU_MSGTIMEOUT * (1000/TICRATE);     // killough 11/98
 int chat_msg_timer = HU_MSGTIMEOUT * (1000/TICRATE);     // killough 11/98
 
-static void HU_InitCrosshair(void);
 boolean hud_crosshair_on; // [Nugget] Keep the variable below just for the type
 int hud_crosshair;
 int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
@@ -1010,7 +1009,7 @@ const char *crosshair_sh_nam[HU_CROSSHAIRS] =
 const char *crosshair_str[HU_CROSSHAIRS+1] =
   { "none", "cross", "angle", "dot",  "big cross", "circle", "big circle", "chevron", "chevrons", "arcs", NULL };
 
-static void HU_InitCrosshair(void)
+void HU_InitCrosshair(void)
 {
   if (crosshair.patch)
     Z_ChangeTag(crosshair.patch, PU_CACHE);

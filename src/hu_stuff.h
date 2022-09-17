@@ -93,6 +93,7 @@ extern int playback_tic, playback_totaltics;
 
 extern int crispy_hud;
 
+void HU_InitCrosshair(void); // [Nugget] Not static anymore
 extern boolean hud_crosshair_on; // [Nugget] Keep the variable below just for the type
 extern int hud_crosshair;
 extern int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
