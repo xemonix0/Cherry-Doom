@@ -719,7 +719,7 @@ void R_DrawPSprite (pspdef_t *psp)
   flip = (boolean) sprframe->flip[0];
 
   // calculate edges of the shape
-  tx = psp->sx2-160*FRACUNIT; // [FG] centered weapon sprite
+  tx = psp->sx3-160*FRACUNIT; // [Nugget] & [FG] centered weapon sprite
 
   tx -= spriteoffset[lump];
   x1 = (centerxfrac + FixedMul (tx,pspritescale))>>FRACBITS;
@@ -742,7 +742,7 @@ void R_DrawPSprite (pspdef_t *psp)
 
   // killough 12/98: fix psprite positioning problem
   vis->texturemid = (BASEYCENTER<<FRACBITS) /* + FRACUNIT/2 */ -
-                    (psp->sy2-spritetopoffset[lump]); // [FG] centered weapon sprite
+                    (psp->sy3-spritetopoffset[lump]); // [Nugget] & [FG] centered weapon sprite
 
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
@@ -1117,17 +1117,17 @@ void R_DrawMasked(void)
         drawsegs_xranges[0].items[drawsegs_xranges[0].count].x1 = ds->x1;
         drawsegs_xranges[0].items[drawsegs_xranges[0].count].x2 = ds->x2;
         drawsegs_xranges[0].items[drawsegs_xranges[0].count].user = ds;
-        
+
         // Andrey Budko: ~13% of speed improvement on sunder.wad map10
         if (ds->x1 < centerx)
         {
-          drawsegs_xranges[1].items[drawsegs_xranges[1].count] = 
+          drawsegs_xranges[1].items[drawsegs_xranges[1].count] =
             drawsegs_xranges[0].items[drawsegs_xranges[0].count];
           drawsegs_xranges[1].count++;
         }
         if (ds->x2 >= centerx)
         {
-          drawsegs_xranges[2].items[drawsegs_xranges[2].count] = 
+          drawsegs_xranges[2].items[drawsegs_xranges[2].count] =
             drawsegs_xranges[0].items[drawsegs_xranges[0].count];
           drawsegs_xranges[2].count++;
         }

@@ -115,13 +115,15 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
       if (state->misc1)
         {
           // coordinate set
-          // [Nugget] Subtract 1 pixel from the misc1 calculation,
-          // for consistency with the first person sprite centering fix
-          psp->sx = (state->misc1 << FRACBITS) - (1<<FRACBITS);
+          psp->sx = state->misc1 << FRACBITS;
           psp->sy = state->misc2 << FRACBITS;
-          // [FG] centered weapon sprite
-          psp->sx2 = psp->sx;
-          psp->sy2 = psp->sy;
+          // [Nugget] Subtract 1 pixel from the misc1 calculation, for
+          // consistency with the first person sprite centering correction
+          psp->sx2 = (state->misc1 << FRACBITS) - (1<<FRACBITS);
+          psp->sy2 = state->misc2 << FRACBITS;
+          // [Nugget] & [FG] centered weapon sprite
+          psp->sx3 = psp->sx2;
+          psp->sy3 = psp->sy2;
         }
 
       // Call action routine.
@@ -134,50 +136,6 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
         }
       stnum = psp->state->nextstate;
   } while (!psp->tics);     // an initial state of 0 could cycle through
-}
-
-// [Nugget] Bob weapon based on selected style
-void P_NuggetBobbing(player_t* player, fixed_t* sx, fixed_t* sy)
-{
-  const fixed_t bob = player->bob2;
-  const int angle = (128*leveltime) & FINEMASK;
-  // Correct first person sprite centering
-  *sx = /*FRACUNIT +*/ FixedMul(bob, finecosine[angle]); // Default, differs in a few styles
-  *sy = WEAPONTOP; // Used for all styles, their specific values are added to this one right after
-
-  // Bobbing Styles, ported from Zandronum
-  switch (bobbing_style) {
-    case bob_Vanilla:
-      *sy += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
-      break;
-
-    case bob_InvVanilla:
-      *sy += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
-      break;
-
-    case bob_Alpha:
-      *sx = FixedMul(bob, finesine[angle]);
-      *sy += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
-      break;
-
-    case bob_InvAlpha:
-      *sx = FixedMul(bob, finesine[angle]);
-      *sy += bob - FixedMul(player->bob2, finesine[angle & (FINEANGLES/2-1)]);
-      break;
-
-    case bob_Smooth:
-      *sy += (bob - FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
-      break;
-
-    case bob_InvSmooth:
-      *sy += (FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)]) + bob) / 2;
-      break;
-
-    case bob_Quake:
-      *sx = 0;
-      *sy += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
-      break;
-  }
 }
 
 //
@@ -204,6 +162,11 @@ static void P_BringUpWeapon(player_t *player)
   // killough 12/98: prevent pistol from starting visibly at bottom of screen:
   player->psprites[ps_weapon].sy = demo_version >= 203 ?
     WEAPONBOTTOM+FRACUNIT*2 : WEAPONBOTTOM;
+  // [Nugget]
+  player->psprites[ps_weapon].sy2 = demo_version >= 203
+                                   ? WEAPONBOTTOM+FRACUNIT*2
+                                   : WEAPONBOTTOM;
+
 
   P_SetPsprite(player, ps_weapon, newstate);
 }
@@ -536,15 +499,12 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
     player->attackdown = false;
 
   // bob the weapon based on movement speed
-  if (!casual_play)
   {
     int angle = (128*leveltime) & FINEMASK;
-    // [Nugget] Fix first person sprite centering
-    psp->sx = /*FRACUNIT +*/ FixedMul(player->bob, finecosine[angle]);
+    psp->sx = FRACUNIT + FixedMul(player->bob, finecosine[angle]);
     angle &= FINEANGLES/2-1;
     psp->sy = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
   }
-  else { P_NuggetBobbing(player, &psp->sx, &psp->sy); }
 }
 
 //
@@ -596,8 +556,12 @@ void A_CheckReload(player_t *player, pspdef_t *psp)
 void A_Lower(player_t *player, pspdef_t *psp)
 {
   // [Nugget] Double speed with Fast Weapons
-  psp->sy += (player->cheats & CF_FASTWEAPS)
-             ? LOWERSPEED*2 : LOWERSPEED;
+  const int speed = (player->cheats & CF_FASTWEAPS)
+                    ? LOWERSPEED*2 : LOWERSPEED;
+
+  psp->sy += speed;
+  // [Nugget]
+  psp->sy2 += speed;
 
   // Is already down.
   if (psp->sy < WEAPONBOTTOM)
@@ -607,6 +571,8 @@ void A_Lower(player_t *player, pspdef_t *psp)
   if (player->playerstate == PST_DEAD)
     {
       psp->sy = WEAPONBOTTOM;
+      // [Nugget]
+      psp->sy2 = WEAPONBOTTOM;
       return;      // don't bring weapon back up
     }
 
@@ -631,15 +597,20 @@ void A_Lower(player_t *player, pspdef_t *psp)
 void A_Raise(player_t *player, pspdef_t *psp)
 {
   statenum_t newstate;
-
   // [Nugget] Double speed with Fast Weapons
-  psp->sy -= (player->cheats & CF_FASTWEAPS)
-             ? RAISESPEED*2 : RAISESPEED;
+  const int speed = (player->cheats & CF_FASTWEAPS)
+                    ? RAISESPEED*2 : RAISESPEED;
+
+  psp->sy -= speed;
+  // [Nugget]
+  psp->sy2 -= speed;
 
   if (psp->sy > WEAPONTOP)
     return;
 
   psp->sy = WEAPONTOP;
+  // [Nugget]
+  psp->sy2 = WEAPONTOP;
 
   // The weapon has been raised all the way,
   //  so change to the ready state.
@@ -1176,14 +1147,54 @@ void P_SetupPsprites(player_t *player)
   P_BringUpWeapon(player);
 }
 
+// [Nugget] Bob weapon based on selected style
+static void P_NuggetBobbing(player_t* player, fixed_t* sx, fixed_t* sy)
+{
+  const fixed_t bob = player->bob2;
+  const int angle = (128*leveltime) & FINEMASK;
+  // Correct first person sprite centering
+  *sx = /*FRACUNIT +*/ FixedMul(bob, finecosine[angle]); // Default, differs in a few styles
+  *sy = WEAPONTOP; // Used for all styles, their specific values are added to this one right after
+
+  // Bobbing Styles, ported from Zandronum
+  switch (bobbing_style) {
+    case bob_Vanilla:
+      *sy += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+
+    case bob_InvVanilla:
+      *sy += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+
+    case bob_Alpha:
+      *sx = FixedMul(bob, finesine[angle]);
+      *sy += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+
+    case bob_InvAlpha:
+      *sx = FixedMul(bob, finesine[angle]);
+      *sy += bob - FixedMul(player->bob2, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+
+    case bob_Smooth:
+      *sy += (bob - FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
+      break;
+
+    case bob_InvSmooth:
+      *sy += (FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)]) + bob) / 2;
+      break;
+
+    case bob_Quake:
+      *sx = 0;
+      *sy += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+  }
+}
+
 //
 // P_MovePsprites
 // Called every tic by player thinking routine.
 //
-
-#if 0 // [Nugget] Unused
-#define BOBBING_75 2
-#endif
 
 #define WEAPON_CENTERED 1
 #define WEAPON_BOBBING 2
@@ -1206,25 +1217,34 @@ void P_MovePsprites(player_t *player)
 
   // [FG] centered weapon sprite
   psp = &player->psprites[ps_weapon];
-  psp->sx2 = psp->sx;
-  psp->sy2 = psp->sy;
+
+  // [Nugget] Calculate sx2 and sy2 to use as a base
+  if (!player->attackdown
+      && psp->state->action.p2 != (actionf_p2)A_Lower
+      && psp->state->action.p2 != (actionf_p2)A_Raise)
+    { P_NuggetBobbing(player, &psp->sx2, &psp->sy2); }
+  player->psprites[ps_flash].sx2 = player->psprites[ps_weapon].sx2;
+  player->psprites[ps_flash].sy2 = player->psprites[ps_weapon].sy2;
+
+  psp->sx3 = psp->sx2;
+  psp->sy3 = psp->sy2;
 
   if (psp->state && !bobbing_percentage)
   {
     static fixed_t last_sy = 32 * FRACUNIT;
 
-    psp->sx2 = FRACUNIT;
+    psp->sx3 = FRACUNIT;
 
     if (psp->state->action.p2 != (actionf_p2)A_Lower &&
         psp->state->action.p2 != (actionf_p2)A_Raise)
     {
-      last_sy = psp->sy2;
-      psp->sy2 = 32 * FRACUNIT;
+      last_sy = psp->sy3;
+      psp->sy3 = 32 * FRACUNIT;
     }
     else if (psp->state->action.p2 == (actionf_p2)A_Lower)
     {
       // We want to move smoothly from where we were
-      psp->sy2 -= (last_sy - 32 * FRACUNIT);
+      psp->sy3 -= (last_sy - 32 * FRACUNIT);
     }
   }
   else if (psp->state && center_weapon)
@@ -1237,16 +1257,16 @@ void P_MovePsprites(player_t *player)
     }
     // [FG] not attacking means idle
     else if (!player->attackdown || center_weapon == WEAPON_BOBBING)
-      { P_NuggetBobbing(player, &psp->sx2, &psp->sy2); }
+      { P_NuggetBobbing(player, &psp->sx3, &psp->sy3); }
     // [FG] center the weapon sprite horizontally and push up vertically
     else if (center_weapon == WEAPON_CENTERED) {
-      psp->sx2 = /*FRACUNIT*/ 0; // [Nugget] Fix first person sprite centering
-      psp->sy2 = WEAPONTOP;
+      psp->sx3 = /*FRACUNIT*/ 0; // [Nugget] Correct first person sprite centering
+      psp->sy3 = WEAPONTOP;
     }
   }
 
-  player->psprites[ps_flash].sx2 = player->psprites[ps_weapon].sx2;
-  player->psprites[ps_flash].sy2 = player->psprites[ps_weapon].sy2;
+  player->psprites[ps_flash].sx3 = player->psprites[ps_weapon].sx3;
+  player->psprites[ps_flash].sy3 = player->psprites[ps_weapon].sy3;
 }
 
 //

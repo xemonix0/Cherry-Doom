@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: p_pspr.h,v 1.5 1998/05/03 22:54:44 killough Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -70,11 +70,18 @@ typedef struct pspdef_s
 {
   state_t *state;       // a NULL state means not active
   int     tics;
+  // [Nugget] Original values, used for playsim
   fixed_t sx;
   fixed_t sy;
-  // [FG] centered weapon sprite
+  // [Nugget] Dummy values, calculated separate from and roughly like the
+  // originals, used as a base for the rendered values;
+  // Bobbing Styles are applied
   fixed_t sx2;
   fixed_t sy2;
+  // [Nugget] Rendered values; Bobbing Styles and Weapon Attack Alignment
+  // are applied
+  fixed_t sx3;
+  fixed_t sy3;
 } pspdef_t;
 
 extern int weapon_preferences[2][NUMWEAPONS+1];      // killough 5/2/98

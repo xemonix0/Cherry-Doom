@@ -126,13 +126,13 @@ void P_CalcHeight (player_t* player)
   }
   else if (player->bob > MAXBOB) { player->bob = MAXBOB; }
 
-  // [Nugget] Adjustable viewheight
-  view = (demorecording||netgame||fauxdemo||strictmode)
-         ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
-
   // [crispy] variable player view bob
   // [Nugget] Implement bobbing percentage setting
   player->bob2 = (player->bob / 100) * bobbing_percentage;
+
+  // [Nugget] Adjustable viewheight
+  view = (demorecording||netgame||fauxdemo||strictmode)
+         ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
 
   if (!onground || player->cheats & CF_NOMOMENTUM)
   {
