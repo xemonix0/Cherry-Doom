@@ -284,7 +284,7 @@ static boolean P_IsOnLift(const mobj_t *actor)
   int l;
 
   // Short-circuit: it's on a lift which is active.
-  if (sec->floordata && ((thinker_t *) sec->floordata)->function==T_PlatRaise)
+  if (sec->floordata && ((thinker_t *) sec->floordata)->function.p1==(actionf_p1)T_PlatRaise)
     return true;
 
   // Check to see if it's in a sector which can be activated as a lift.
@@ -321,7 +321,7 @@ static int P_IsUnderDamage(mobj_t *actor)
   int dir = 0;
   for (seclist=actor->touching_sectorlist; seclist; seclist=seclist->m_tnext)
     if ((cl = seclist->m_sector->ceilingdata) &&
-	cl->thinker.function == T_MoveCeiling)
+	cl->thinker.function.p1 == (actionf_p1)T_MoveCeiling)
       dir |= cl->direction;
   return dir;
 }
@@ -2064,7 +2064,7 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
       for (currentthinker = thinkercap.next;
            currentthinker != &thinkercap;
            currentthinker = currentthinker->next)
-        if ((currentthinker->function == P_MobjThinker)
+        if ((currentthinker->function.p1 == (actionf_p1)P_MobjThinker)
             && ((mobj_t *)currentthinker)->type == MT_SKULL)
 	  if (--count < 0)         // killough 8/29/98: early exit
 	    return;
@@ -2301,7 +2301,7 @@ void A_BossDeath(mobj_t *mo)
     // scan the remaining thinkers to see
     // if all bosses are dead
     for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
-      if (th->function == P_MobjThinker)
+      if (th->function.p1 == (actionf_p1)P_MobjThinker)
         {
           mobj_t *mo2 = (mobj_t *) th;
           if (mo2 != mo && mo2->type == mo->type && mo2->health > 0)
@@ -2408,7 +2408,7 @@ void A_BossDeath(mobj_t *mo)
   // scan the remaining thinkers to see
   // if all bosses are dead
   for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
-    if (th->function == P_MobjThinker)
+    if (th->function.p1 == (actionf_p1)P_MobjThinker)
       {
         mobj_t *mo2 = (mobj_t *) th;
         if (mo2 != mo && mo2->type == mo->type && mo2->health > 0)
@@ -2521,7 +2521,7 @@ void P_SpawnBrainTargets(void)  // killough 3/26/98: renamed old function
   brain.easy = 0;           // killough 3/26/98: always init easy to 0
 
   for (thinker=thinkercap.next; thinker != &thinkercap; thinker=thinker->next)
-    if (thinker->function == P_MobjThinker)
+    if (thinker->function.p1 == (actionf_p1)P_MobjThinker)
       {
         mobj_t *m = (mobj_t *) thinker;
 
@@ -2723,7 +2723,7 @@ void A_KeenDie(mobj_t* mo)
   // scan the remaining thinkers to see if all Keens are dead
 
   for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
-    if (th->function == P_MobjThinker)
+    if (th->function.p1 == (actionf_p1)P_MobjThinker)
       {
         mobj_t *mo2 = (mobj_t *) th;
         if (mo2 != mo && mo2->type == mo->type && mo2->health > 0)
@@ -2763,14 +2763,14 @@ void A_Turn(mobj_t *mo)
 {
   if (demo_version < 203)
     return;
-  mo->angle += (angle_t)(((ULong64) mo->state->misc1 << 32) / 360);
+  mo->angle += (angle_t)(((uint64_t) mo->state->misc1 << 32) / 360);
 }
 
 void A_Face(mobj_t *mo)
 {
   if (demo_version < 203)
     return;
-  mo->angle = (angle_t)(((ULong64) mo->state->misc1 << 32) / 360);
+  mo->angle = (angle_t)(((uint64_t) mo->state->misc1 << 32) / 360);
 }
 
 void A_Scratch(mobj_t *mo)

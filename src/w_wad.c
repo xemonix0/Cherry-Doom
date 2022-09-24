@@ -55,14 +55,10 @@ static int W_FileLength(int handle)
 
 void ExtractFileBase(const char *path, char *dest)
 {
-  const char *src = path + strlen(path) - 1;
+  const char *src;
   int length;
 
-  // back up until a \ or the start
-  while (src != path && src[-1] != ':' // killough 3/22/98: allow c:filename
-         && *(src-1) != '\\'
-         && *(src-1) != '/')
-    src--;
+  src = M_BaseName(path);
 
   // copy up to eight characters
   memset(dest,0,8);
@@ -440,7 +436,7 @@ void W_ReadLump(int lump, void *dest)
 
   if (l->data)     // killough 1/31/98: predefined lump data
     memcpy(dest, l->data, l->size);
-  else
+  else if (l->size) // [FG] ignore empty lumps
     {
       int c;
 
@@ -553,6 +549,47 @@ boolean W_IsIWADLump (const int lump)
 {
 	return lump >= 0 && lump < numlumps &&
 	       lumpinfo[lump].wad_file == wadfiles[0];
+}
+
+// [FG] avoid demo lump name collisions
+void W_DemoLumpNameCollision(char **name)
+{
+  const char *const safename = "DEMO1";
+  char basename[9];
+  int i, lump;
+
+  ExtractFileBase(*name, basename);
+
+  // [FG] lumps called DEMO* are considered safe
+  if (!strncasecmp(basename, safename, 4))
+  {
+    return;
+  }
+
+  lump = W_CheckNumForName(basename);
+
+  if (lump >= 0)
+  {
+    for (i = lump - 1; i >= 0; i--)
+    {
+      if (!strncasecmp(lumpinfo[i].name, basename, 8))
+      {
+        break;
+      }
+    }
+
+    if (i >= 0)
+    {
+      fprintf(stderr, "Demo lump name collision detected with lump \'%.8s\' from %s.\n",
+              lumpinfo[i].name, W_WadNameForLump(i));
+
+      // [FG] the DEMO1 lump is almost certainly always a demo lump
+      M_StringCopy(lumpinfo[lump].name, safename, 8);
+      *name = lumpinfo[lump].name;
+
+      W_InitLumpHash();
+    }
+  }
 }
 
 void W_CloseFileDescriptors(void)

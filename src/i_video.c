@@ -135,7 +135,6 @@ static void AxisToButton(int value, int* state, int direction)
         static event_t up;
         up.data1 = *state;
         up.type = ev_joyb_up;
-        up.data2 = up.data3 = up.data4 = 0;
         D_PostEvent(&up);
     }
 
@@ -144,7 +143,6 @@ static void AxisToButton(int value, int* state, int direction)
         static event_t down;
         down.data1 = button;
         down.type = ev_joyb_down;
-        down.data2 = down.data3 = down.data4 = 0;
         D_PostEvent(&down);
     }
 
@@ -196,7 +194,6 @@ static void UpdateJoystickButtonState(unsigned int button, boolean on)
     }
 
     event.data1 = button;
-    event.data2 = event.data3 = event.data4 = 0;
     D_PostEvent(&event);
 }
 
@@ -247,7 +244,6 @@ static void UpdateControllerAxisState(unsigned int value, boolean left_trigger)
     }
 
     event.data1 = button;
-    event.data2 = event.data3 = event.data4 = 0;
     D_PostEvent(&event);
 }
 
@@ -480,8 +476,18 @@ static void UpdateMouseButtonState(unsigned int button, boolean on, unsigned int
 
     event.data1 = button;
     event.data2 = dclick;
-    event.data3 = event.data4 = 0;
     D_PostEvent(&event);
+}
+
+static event_t delay_event;
+
+static void DelayEvent(void)
+{
+    if (delay_event.data1)
+    {
+        D_PostEvent(&delay_event);
+        delay_event.data1 = 0;
+    }
 }
 
 static void MapMouseWheelToButtons(SDL_MouseWheelEvent *wheel)
@@ -489,7 +495,7 @@ static void MapMouseWheelToButtons(SDL_MouseWheelEvent *wheel)
     // SDL2 distinguishes button events from mouse wheel events.
     // We want to treat the mouse wheel as two buttons, as per
     // SDL1
-    static event_t up, down;
+    static event_t down;
     int button;
 
     if (wheel->y <= 0)
@@ -504,14 +510,11 @@ static void MapMouseWheelToButtons(SDL_MouseWheelEvent *wheel)
     // post a button down event
     down.type = ev_mouseb_down;
     down.data1 = button;
-    down.data2 = down.data3 = down.data4 = 0;
     D_PostEvent(&down);
 
-    // post a button up event
-    up.type = ev_mouseb_up;
-    up.data1 = button;
-    up.data2 = up.data3 = up.data4 = 0;
-    D_PostEvent(&up);
+    // hold button for one tic, required for checks in G_BuildTiccmd
+    delay_event.type = ev_mouseb_up;
+    delay_event.data1 = button;
 }
 
 static void I_HandleMouseEvent(SDL_Event *sdlevent)
@@ -546,8 +549,6 @@ static void I_HandleKeyboardEvent(SDL_Event *sdlevent)
         case SDL_KEYDOWN:
             event.type = ev_keydown;
             event.data1 = TranslateKey(&sdlevent->key.keysym);
-            event.data2 = 0;
-            event.data3 = 0;
 
             if (event.data1 != 0)
             {
@@ -564,9 +565,6 @@ static void I_HandleKeyboardEvent(SDL_Event *sdlevent)
             // that was typed, but if something wants to detect
             // key releases it should do so based on data1
             // (key ID), not the printable char.
-
-            event.data2 = 0;
-            event.data3 = 0;
 
             if (event.data1 != 0)
             {
@@ -697,6 +695,8 @@ void I_ToggleToggleFullScreen(void)
 void I_GetEvent(void)
 {
     SDL_Event sdlevent;
+
+    DelayEvent();
 
     while (SDL_PollEvent(&sdlevent))
     {
@@ -1510,14 +1510,9 @@ static void I_InitGraphicsMode(void)
    // [JN] Windows 11 idiocy. Indicate that window using OpenGL mode (while it's
    // a Direct3D in fact), so SDL texture will not be freezed upon vsync
    // toggling.
+   if (I_CheckWindows11())
    {
-      SDL_version ver;
-      SDL_GetVersion(&ver);
-      if (I_CheckWindows11() &&
-          ver.major == 2 && ver.minor == 0 && (ver.patch == 20 || ver.patch == 22))
-      {
-        flags |= SDL_WINDOW_OPENGL;
-      }
+      flags |= SDL_WINDOW_OPENGL;
    }
 #endif
 

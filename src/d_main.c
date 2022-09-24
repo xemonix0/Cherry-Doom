@@ -129,7 +129,6 @@ boolean clfastparm;     // checkparm of -fast
 boolean nomonsters;     // working -nomonsters
 boolean respawnparm;    // working -respawn
 boolean fastparm;       // working -fast
-boolean pistolstart;    // working -pistolstart
 
 boolean singletics = false; // debug flag to cancel adaptiveness
 
@@ -555,14 +554,10 @@ void D_DoAdvanceDemo(void)
   name = demostates[demosequence][gamemode].name;
   if (name && !strcasecmp(name, "TITLEPIC"))
   {
-    int i = W_CheckNumForName("TITLEPIC");
-    int j = W_CheckNumForName("DMENUPIC");
-
-    if (i < 0 || (j >= 0 && W_IsIWADLump(i)))
-      name = (j >= 0) ? "DMENUPIC" : "INTERPIC";
+    if (W_CheckNumForName("TITLEPIC") < 0)
+      name = "DMENUPIC";
   }
-  demostates[demosequence][gamemode].func
-    (name);
+  demostates[demosequence][gamemode].func(name);
 }
 
 //
@@ -673,52 +668,32 @@ void D_AddFile(const char *file)
 // Return the path where the executable lies -- Lee Killough
 char *D_DoomExeDir(void)
 {
-   // haleyjd: modified to prevent returning empty string
-   static char *base;
-   if(!base)        // cache multiple requests
-   {
-      size_t len = strlen(*myargv) + 1;
-      char *p;
+  static char *base;
 
-      base = malloc(len);
-      memset(base, 0, len);
+  if (!base) // cache multiple requests
+  {
+    base = M_DirName(myargv[0]);
+  }
 
-      p = base + len - 1;
-
-      strncpy(base, *myargv, len);
-
-      while(p >= base)
-      {
-         if(*p == '/' || *p == '\\')
-         {
-            *p = '\0';
-            break;
-         }
-         *p = '\0';
-         p--;
-      }
-   }
-
-   if(*base == '\0')
-      *base = '.';
-
-   return base;
+  return base;
 }
 
 // killough 10/98: return the name of the program the exe was invoked as
 char *D_DoomExeName(void)
 {
-  static char *name;    // cache multiple requests
-  if (!name)
-    {
-      char *p = *myargv + strlen(*myargv);
-      int i = 0;
-      while (p > *myargv && p[-1] != '/' && p[-1] != '\\' && p[-1] != ':')
-        p--;
-      while (p[i] && p[i] != '.')
-        i++;
-      strncpy(name = malloc(i+1), p, i)[i] = 0;
-    }
+  static char *name;
+
+  if (!name) // cache multiple requests
+  {
+    char *ext;
+
+    name = M_StringDuplicate(M_BaseName(myargv[0]));
+
+    ext = strrchr(name, '.');
+    if (ext)
+      *ext = '\0';
+  }
+
   return name;
 }
 
@@ -1850,8 +1825,6 @@ void D_DoomMain(void)
   M_AddLooseFiles();
 #endif
 
-#if defined(HAVE_PARAMS_GEN)
-
   //!
   //
   // Print command line help.
@@ -1868,7 +1841,6 @@ void D_DoomMain(void)
   {
     M_CheckCommandLine();
   }
-#endif
 
   FindResponseFile();         // Append response file arguments to command-line
 
@@ -1941,15 +1913,6 @@ void D_DoomMain(void)
 
   fastparm = clfastparm = M_CheckParm ("-fast");
   // jff 1/24/98 end of set to both working and command line value
-
-  //!
-  // @category game
-  // @help
-  //
-  // Enables automatic pistol starts on each level.
-  //
-
-  pistolstart = M_CheckParm ("-pistolstart");
 
   //!
   // @vanilla
@@ -2407,10 +2370,6 @@ void D_DoomMain(void)
   // Check for wolf levels
   haswolflevels = (W_CheckNumForName("map31") >= 0);
 
-  // Moved after WAD initialization because we are checking the COMPLVL lump
-  G_ReloadDefaults();    // killough 3/4/98: set defaults just loaded.
-  // jff 3/24/98 this sets startskill if it was -1
-
   putchar('\n');     // killough 3/6/98: add a newline, by popular demand :)
 
   // process deh in IWAD
@@ -2431,6 +2390,10 @@ void D_DoomMain(void)
   D_AutoloadPWadDehDir();
 
   PostProcessDeh();
+
+  // Moved after WAD initialization because we are checking the COMPLVL lump
+  G_ReloadDefaults();    // killough 3/4/98: set defaults just loaded.
+  // jff 3/24/98 this sets startskill if it was -1
 
   // Check for -file in shareware
   if (modifiedgame)

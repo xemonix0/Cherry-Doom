@@ -193,6 +193,9 @@ typedef struct player_s
   // [crispy] weapon recoil pitch
   fixed_t             recoilpitch, oldrecoilpitch;
 
+  // [crispy] variable player view bob
+  fixed_t             bob2;
+
   // [Nugget]
   int jumpTics; // Jumping delay
   fixed_t crouchOffset; // Viewheight offset, for crouching

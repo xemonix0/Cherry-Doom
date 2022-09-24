@@ -54,7 +54,9 @@
 
 // [Nugget] Unused, calculated directly in S_AdjustSoundParams
 // since S_CLIPPING_DIST might be doubled
-//#define S_ATTENUATOR ((S_CLIPPING_DIST-S_CLOSE_DIST)>>FRACBITS)
+#if 0
+#define S_ATTENUATOR ((S_CLIPPING_DIST-S_CLOSE_DIST)>>FRACBITS)
+#endif
 
 //jff end sound enabling variables readable here
 
@@ -72,9 +74,9 @@ typedef struct channel_s
 } channel_t;
 
 // the set of channels available
-static channel_t *channels;
+static channel_t channels[MAX_CHANNELS];
 // [FG] removed map objects may finish their sounds
-static degenmobj_t *sobjs;
+static degenmobj_t sobjs[MAX_CHANNELS];
 
 // These are not used, but should be (menu).
 // Maximum volume of a sound effect.
@@ -812,14 +814,10 @@ void S_Init(int sfxVolume, int musicVolume)
 
       S_SetSfxVolume(sfxVolume);
 
-      // Allocating the internal channels for mixing
-      // (the maximum numer of sounds rendered
-      // simultaneously) within zone memory.
-
-      // killough 10/98:
-      channels = calloc(numChannels = default_numChannels, sizeof(channel_t));
-      // [FG] removed map objects may finish their sounds
-      sobjs = calloc(numChannels, sizeof(degenmobj_t));
+      // Reset channel memory
+      numChannels = default_numChannels;
+      memset(channels, 0, sizeof(channels));
+      memset(sobjs, 0, sizeof(sobjs));
    }
 
    S_SetMusicVolume(musicVolume);

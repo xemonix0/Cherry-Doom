@@ -160,7 +160,7 @@ sector_t* GetSectorAtNullAddress(void)
   static boolean null_sector_is_initialized = false;
   static sector_t null_sector;
 
-  if (demo_compatibility)
+  if (demo_compatibility && overflow[emu_missedbackside].enabled)
   {
     overflow[emu_missedbackside].triggered = true;
 
@@ -523,8 +523,11 @@ void P_LoadLineDefs2(int lump)
       if (ld->sidenum[0] == NO_INDEX)
 	ld->sidenum[0] = 0;  // Substitute dummy sidedef for missing right side
 
-      if (ld->sidenum[1] == NO_INDEX && !demo_compatibility)
+      if (ld->sidenum[1] == NO_INDEX)
+      {
+	if (!demo_compatibility || !overflow[emu_missedbackside].enabled)
 	ld->flags &= ~ML_TWOSIDED;  // Clear 2s flag for missing left side
+      }
 
       // haleyjd 05/02/06: Reserved line flag. If set, we must clear all
       // BOOM or later extended line flags. This is necessitated by E2M7.
@@ -579,6 +582,9 @@ void P_LoadSideDefs2(int lump)
 
       sd->textureoffset = SHORT(msd->textureoffset)<<FRACBITS;
       sd->rowoffset = SHORT(msd->rowoffset)<<FRACBITS;
+      // [crispy] smooth texture scrolling
+      sd->basetextureoffset = sd->textureoffset;
+      sd->baserowoffset = sd->rowoffset;
 
       // killough 4/4/98: allow sidedef texture names to be overloaded
       // killough 4/11/98: refined to allow colormaps to work as wall
@@ -1336,10 +1342,10 @@ void P_RemoveSlimeTrails(void)                // killough 10/98
 		hit[v - vertexes] = 1;        // Mark this vertex as processed
 		if (v != l->v1 && v != l->v2) // Exclude endpoints of linedefs
 		  { // Project the vertex back onto the parent linedef
-		    Long64 dx2 = (l->dx >> FRACBITS) * (l->dx >> FRACBITS);
-		    Long64 dy2 = (l->dy >> FRACBITS) * (l->dy >> FRACBITS);
-		    Long64 dxy = (l->dx >> FRACBITS) * (l->dy >> FRACBITS);
-		    Long64 s = dx2 + dy2;
+		    int64_t dx2 = (l->dx >> FRACBITS) * (l->dx >> FRACBITS);
+		    int64_t dy2 = (l->dy >> FRACBITS) * (l->dy >> FRACBITS);
+		    int64_t dxy = (l->dx >> FRACBITS) * (l->dy >> FRACBITS);
+		    int64_t s = dx2 + dy2;
 		    int x0 = v->x, y0 = v->y, x1 = l->v1->x, y1 = l->v1->y;
 		    // [FG] move vertex coordinates used for rendering
 		    v->r_x = (fixed_t)((dx2 * x0 + dy2 * x1 + dxy * (y0 - y1)) / s);

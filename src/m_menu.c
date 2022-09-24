@@ -2755,720 +2755,18 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
 }
 
 
-// [Nugget] Move here
-int mult_screens_index; // the index of the current screen in a set
-// phares 4/16/98:
-// X,Y position of reset button. This is the same for every screen, and is
-// only defined once here.
-#define X_BUTTON 301
-#define Y_BUTTON   3
-#define KB_X  120
-
-/////////////////////////////
-//
-// The General table.
-// killough 10/10/98
-// [Nugget] Moved to the top
-
-extern int usejoystick, usemouse;
-extern int realtic_clock_rate, tran_filter_pct;
-
-setup_menu_t gen_settings1[], gen_settings2[], gen_settings3[], gen_settings4[], gen_settings5[];
-
-setup_menu_t* gen_settings[] =
-{
-  gen_settings1,
-  gen_settings2,
-  gen_settings3,
-  // [Nugget]
-  gen_settings4,
-  gen_settings5,
-  NULL
-};
-
-// Page 1
-
-enum {
-  general_title1,
-  general_hires,
-  // [FG] fullscreen mode menu toggle
-  general_fullscreen,
-  // widescreen mode
-  general_widescreen,
-  // [FG] uncapped rendering frame rate
-  general_uncapped,
-  general_vsync,
-  general_stub1,
-  general_trans,
-  general_transpct,
-  general_gamma,
-  general_end1,
-
-  general_title2,
-  general_sndchan,
-  general_pitch,
-  // [FG] play sounds in full length
-  general_fullsnd,
-  // [FG] music backend
-  general_musicbackend,
-  general_end2,
-};
-
-static const char *midi_player_strings[] = {
-#if defined(_WIN32)
-  "Native",
-#else
-  "SDL",
-#endif
-#if defined(HAVE_FLUIDSYNTH)
-  "FluidSynth",
-#endif
-  "OPL",
-  NULL
-};
-
-static const char *gamma_strings[] = {
-  // Darker
-  "0.50", "0.55", "0.60", "0.65", "0.70", "0.75", "0.80", "0.85", "0.90",
-  // No gamma correction
-  "1.0",
-  // Lighter
-  "1.125", "1.25", "1.375", "1.5", "1.625", "1.75", "1.875", "2.0",
-  NULL
-};
-
-void static M_ResetGamma(void)
-{
-  usegamma = 0;
-  I_SetPalette(W_CacheLumpName("PLAYPAL",PU_CACHE));
-}
-
-setup_menu_t gen_settings1[] = { // General Settings screen1
-
-  {"Video"       ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
-    {"High Resolution", S_YESNO, m_null, M_X, M_Y+ general_hires*M_SPC,
-     {"hires"}, 0, I_ResetScreen},
-    // [FG] fullscreen mode menu toggle
-    {"Fullscreen Mode", S_YESNO, m_null, M_X, M_Y+ general_fullscreen*M_SPC,
-     {"fullscreen"}, 0, I_ToggleToggleFullScreen},
-    {"Widescreen Rendering", S_YESNO, m_null, M_X, M_Y+ general_widescreen*M_SPC,
-     {"widescreen"}, 0, I_ResetScreen},
-    // [FG] uncapped frame rate
-    {"Uncapped Frame Rate", S_YESNO, m_null, M_X, M_Y+ general_uncapped*M_SPC,
-     {"uncapped"}},
-    {"Vertical Sync", S_YESNO, m_null, M_X,
-     M_Y+ general_vsync*M_SPC, {"use_vsync"}, 0, I_ResetScreen},
-  {"", S_SKIP, m_null, M_X, M_Y + general_stub1*M_SPC},
-    {"Enable predefined translucency", S_YESNO, m_null, M_X,
-     M_Y+ general_trans*M_SPC, {"translucency"}, 0, M_Trans},
-    {"Translucency filter percentage", S_NUM, m_null, M_X,
-     M_Y+ general_transpct*M_SPC, {"tran_filter_pct"}, 0, M_Trans},
-    {"Gamma Correction", S_THERMO, m_null, M_X_THRM,
-     M_Y+ general_gamma*M_SPC, {"gamma2"}, 0, M_ResetGamma, gamma_strings},
-
-  {"", S_SKIP, m_null, M_X, M_Y + general_end1*M_SPC},
-  {"Sound & Music", S_SKIP|S_TITLE, m_null, M_X,
-   M_Y + general_title2*M_SPC},
-    {"Number of Sound Channels", S_NUM|S_PRGWARN, m_null, M_X,
-     M_Y + general_sndchan*M_SPC, {"snd_channels"}},
-    {"Enable v1.1 Pitch Effects", S_YESNO, m_null, M_X,
-     M_Y + general_pitch*M_SPC, {"pitched_sounds"}},
-    // [FG] play sounds in full length
-    {"Disable Sound Cutoffs", S_YESNO, m_null, M_X,
-     M_Y + general_fullsnd*M_SPC, {"full_sounds"}},
-    // [FG] music backend
-    {"MIDI player", S_CHOICE|S_PRGWARN, m_null, M_X,
-     M_Y + general_musicbackend*M_SPC, {"midi_player"}, 0, NULL, midi_player_strings},
-
-  // Button for resetting to defaults
-  {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
-
-  {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {gen_settings2}},
-
-  // Final entry
-  {0,S_SKIP|S_END,m_null}
-};
-
-// Page 2
-
-enum {
-  general_title3,
-  general_mouse1,
-  general_mouse2,
-  general_mouse3,
-  general_end3,
-
-  general_title4,
-  general_sky1,
-  general_sky2,
-  general_swirl,
-  general_smoothlight,
-  general_brightmaps,
-  general_solidbackground,
-  general_stub2,
-  general_diskicon,
-  general_hom,
-  general_end4,
-};
-
-static void M_UpdateFreeaimItem(void); // [Nugget]
-static void M_UpdateMouseLook(void)
-{
-  if (!mouselook || !padlook) {
-    int i;
-    for (i = 0; i < MAXPLAYERS; ++i)
-      if (playeringame[i])
-        players[i].centering = true;
-  }
-  M_UpdateFreeaimItem(); // [Nugget]
-}
-
-void static M_SmoothLight(void)
-{
-  extern void P_SegLengths(boolean contrast_only);
-  // [crispy] re-calculate the zlight[][] array
-  R_InitLightTables();
-  // [crispy] re-calculate the scalelight[][] array
-  R_ExecuteSetViewSize();
-  // [crispy] re-calculate fake contrast
-  P_SegLengths(true);
-}
-
-setup_menu_t gen_settings2[] = { // General Settings screen2
-
-  {"Mouse Settings"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
-    // [FG] double click acts as "use"
-    {"Double Click acts as \"Use\"", S_YESNO, m_null, M_X,
-     M_Y+ general_mouse1*M_SPC, {"dclick_use"}},
-    {"Permanent Mouselook", S_YESNO, m_null, M_X,
-     M_Y+ general_mouse2*M_SPC, {"mouselook"}, 0, M_UpdateMouseLook},
-    // [FG] invert vertical axis
-    {"Invert vertical axis", S_YESNO, m_null, M_X,
-     M_Y+ general_mouse3*M_SPC, {"mouse_y_invert"}},
-
-  {"", S_SKIP, m_null, M_X, M_Y + general_end3*M_SPC},
-  {"Display Options"  ,S_SKIP|S_TITLE, m_null, M_X,
-   M_Y + general_title4*M_SPC},
-    {"Stretch Short Skies", S_YESNO, m_null, M_X,
-     M_Y + general_sky1*M_SPC, {"stretchsky"}, 0, R_InitSkyMap},
-    {"Linear Sky Scrolling", S_YESNO, m_null, M_X,
-     M_Y + general_sky2*M_SPC, {"linearsky"}, 0, R_InitPlanes},
-    {"Swirling Animated Flats", S_YESNO, m_null, M_X,
-     M_Y + general_swirl*M_SPC, {"r_swirl"}},
-    {"Smooth Diminishing Lighting", S_YESNO, m_null, M_X,
-     M_Y + general_smoothlight*M_SPC, {"smoothlight"}, 0, M_SmoothLight},
-    {"Brightmaps for Textures and Sprites", S_YESNO, m_null, M_X,
-     M_Y + general_brightmaps*M_SPC, {"brightmaps"}},
-    {"Solid Status Bar Background", S_YESNO, m_null, M_X,
-     M_Y + general_solidbackground*M_SPC, {"st_solidbackground"}},
-  {"", S_SKIP, m_null, M_X, M_Y + general_stub2*M_SPC},
-    {"Flash Icon During Disk IO", S_YESNO, m_null, M_X,
-     M_Y + general_diskicon*M_SPC, {"disk_icon"}},
-    {"Flashing HOM indicator", S_YESNO, m_null, M_X,
-     M_Y + general_hom*M_SPC, {"flashing_hom"}},
-
-  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings1}},
-  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings3}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-};
-
-// Page 3
-
-enum {
-  general_title5,
-  general_strictmode,
-  general_demobar,
-  general_death_action,
-  general_screen_wipe, // [Nugget]
-  general_end5,
-
-  general_title6,
-  general_realtic,
-  general_compat,
-  general_skill,
-  general_endoom,
-  general_playername,
-  general_end6,
-};
-
-static const char *death_use_action_strings[] = {
-  "default", "last save", "nothing", NULL
-};
-
-// [Nugget]
-static const char *wipe_types[] = {
-  "None", "Melt", "Seizure", NULL
-};
-
-static const char *default_compatibility_strings[] = {
-  "Vanilla", "Boom", "MBF", "MBF21", NULL
-};
-
-static const char *default_skill_strings[] = {
-  // dummy first option because defaultskill is 1-based
-  "", "ITYTD", "HNTR", "HMP", "UV", "NM", NULL
-};
-
-static const char *default_endoom_strings[] = {
-  "off", "on", "PWAD only", NULL
-};
-
-void M_ResetTimeScale(void)
-{
-  if (strictmode || D_CheckNetConnect())
-    I_SetTimeScale(100);
-  else
-  {
-    int p;
-
-    int time_scale = realtic_clock_rate;
-
-    //!
-    // @arg <n>
-    // @category game
-    //
-    // Increase or decrease game speed, percentage of normal.
-    //
-
-    p = M_CheckParmWithArgs("-speed", 1);
-
-    if (p)
-    {
-      time_scale = M_ParmArgToInt(p);
-      if (time_scale < 10 || time_scale > 1000)
-        I_Error("Invalid parameter '%d' for -speed, valid values are 10-1000.",
-                time_scale);
-    }
-
-    I_SetTimeScale(time_scale);
-  }
-}
-
-setup_menu_t gen_settings3[] = { // General Settings screen3
-
-  {"Quality of life"  ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
-    {"Strict Mode", S_YESNO|S_LEVWARN, m_null, M_X,
-     M_Y + general_strictmode*M_SPC, {"strictmode"}},
-    {"Show demo progress bar", S_YESNO, m_null, M_X,
-     M_Y + general_demobar*M_SPC, {"demobar"}},
-    {"On death action", S_CHOICE, m_null, M_X,
-     M_Y + general_death_action*M_SPC, {"death_use_action"}, 0, NULL, death_use_action_strings},
-    // [Nugget] Moved palette changes toggle to Accessibility page (page 5),
-    // and replace screen melt toggle with wipe type selection
-    {"Screen Wipe Style", S_CHOICE, m_null, M_X,
-     M_Y + general_screen_wipe*M_SPC, {"wipe_type"}, 0, NULL, wipe_types},
-
-  {"", S_SKIP, m_null, M_X, M_Y + general_end5*M_SPC},
-  {"Miscellaneous"  ,S_SKIP|S_TITLE, m_null, M_X, M_Y + general_title6*M_SPC},
-    {"Game speed, percentage of normal", S_NUM, m_null, M_X,
-     M_Y + general_realtic*M_SPC, {"realtic_clock_rate"}, 0, M_ResetTimeScale},
-    {"Default compatibility", S_CHOICE|S_LEVWARN, m_null, M_X,
-     M_Y + general_compat*M_SPC, {"default_complevel"}, 0, NULL, default_compatibility_strings},
-    {"Default skill level", S_CHOICE|S_LEVWARN, m_null, M_X,
-     M_Y + general_skill*M_SPC, {"default_skill"}, 0, NULL, default_skill_strings},
-    {"Show ENDOOM screen", S_CHOICE, m_null, M_X,
-     M_Y + general_endoom*M_SPC, {"show_endoom"}, 0, NULL, default_endoom_strings},
-    {"Player Name", S_NAME, m_null, M_X,
-     M_Y + general_playername*M_SPC, {"net_player_name"}},
-
-  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings2}},
-  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings4}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-};
-
-enum {
-  gen4_title1,
-  gen4_background,
-  gen4_menutint,
-  gen4_fov,
-  gen4_overunder,
-  gen4_jump_crouch,
-  gen4_dmgcountcap,
-  gen4_boncountcap,
-  gen4_berserktint,
-  gen4_viewheight,
-  gen4_sclipdist,
-  gen4_quicksaveload,
-  gen4_quickexit,
-};
-
-static const char *s_clipping_dists[] = {
-  "1200", "2400", NULL
-};
-
-setup_menu_t gen_settings4[] = { // [Nugget] General Settings screen 4
-
-  {"Nugget Settings"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y+gen4_title1*M_SPC},
-    {"Disable Background",              S_YESNO,  m_null, M_X, M_Y+gen4_background*M_SPC,     {"no_ss_background"}},
-    {"Disable palette tint in menus",   S_YESNO,  m_null, M_X, M_Y+gen4_menutint*M_SPC,       {"no_menu_tint"}},
-    {"Field of View",                   S_NUM,    m_null, M_X, M_Y+gen4_fov*M_SPC,            {"fov"}, 0, I_ResetScreen},
-    {"Things Move Over/Under Things",   S_YESNO,  m_null, M_X, M_Y+gen4_overunder*M_SPC,      {"over_under"}},
-    {"Allow Jump/Crouch",               S_YESNO,  m_null, M_X, M_Y+gen4_jump_crouch*M_SPC,    {"jump_crouch"}},
-    {"Damage Tint Cap (Default = 100)", S_NUM,    m_null, M_X, M_Y+gen4_dmgcountcap*M_SPC,    {"damagecount_cap"}},
-    {"Bonus Tint Cap (Default = -1)",   S_NUM,    m_null, M_X, M_Y+gen4_boncountcap*M_SPC,    {"bonuscount_cap"}},
-    {"Disable Berserk Tint",            S_YESNO,  m_null, M_X, M_Y+gen4_berserktint*M_SPC,    {"no_berserk_tint"}},
-    {"View Height (Default = 41)",      S_NUM,    m_null, M_X, M_Y+gen4_viewheight*M_SPC,     {"viewheight_value"}},
-    {"Sound Clipping Distance",         S_CHOICE, m_null, M_X, M_Y+gen4_sclipdist*M_SPC,      {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
-    {"One-Key Quick Save/Load",         S_YESNO,  m_null, M_X, M_Y+gen4_quicksaveload*M_SPC,  {"one_key_saveload"}},
-    {"Quick \"Quit Game\"",             S_YESNO,  m_null, M_X, M_Y+gen4_quickexit*M_SPC,      {"quick_quitgame"}},
-
-  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings3}},
-  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings5}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-};
-
-enum {
-  general_a11y_title1,
-//  general_a11y_seclight,
-  general_a11y_extralight,
-  general_a11y_flash,
-  general_a11y_pspr,
-  general_a11y_palette,
-  general_a11y_invul,
-};
-
-setup_menu_t gen_settings5[] = { // [Nugget] General Settings screen 5
-
-  {"Accessibility"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y+general_a11y_title1*M_SPC},
-
-//  {"Flickering Sector Lighting",  S_YESNO,  m_null,   M_X, M_Y+general_a11y_seclight*M_SPC,   {"a11y_sector_lighting"}},
-    {"Extra Lighting",              S_NUM,    m_null,   M_X, M_Y+general_a11y_extralight*M_SPC, {"a11y_extra_lighting"}},
-    {"Weapon Flash Lighting",       S_YESNO,  m_null,   M_X, M_Y+general_a11y_flash*M_SPC,      {"a11y_weapon_flash"}},
-    {"Weapon Flash Sprite",         S_YESNO,  m_null,   M_X, M_Y+general_a11y_pspr*M_SPC,       {"a11y_weapon_pspr"}},
-    {"Pain/pickup/powerup flashes", S_YESNO,  m_null,   M_X, M_Y+general_a11y_palette*M_SPC,    {"a11y_palette_changes"}},
-    {"Invulnerability Colormap",    S_YESNO,  m_null,   M_X, M_Y+general_a11y_invul*M_SPC,      {"a11y_invul_colormap"}},
-
-  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings4}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-};
-
-void M_Trans(void) // To reset translucency after setting it in menu
-{
-    R_InitTranMap(0);
-
-    D_SetPredefinedTranslucency();
-
-    DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[general_trans]);
-    DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[general_transpct]);
-}
-
-// Setting up for the General screen. Turn on flags, set pointers,
-// locate the first item on the screen where the cursor is allowed to
-// land.
-
-void M_General(int choice)
-{
-  M_SetupNextMenu(&GeneralDef);
-
-  setup_active = true;
-  setup_screen = ss_gen;
-  set_general_active = true;
-  setup_select = false;
-  default_verify = false;
-  setup_gather = false;
-  mult_screens_index = 0;
-  current_setup_menu = gen_settings[0];
-  set_menu_itemon = M_GetSetupMenuItemOn();
-  while (current_setup_menu[set_menu_itemon++].m_flags & S_SKIP);
-  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
-}
-
-// The drawing part of the General Setup initialization. Draw the
-// background, title, instruction line, and items.
-
-void M_DrawGeneral(void)
-{
-  inhelpscreens = true;
-
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
-
-  M_DrawTitle(114,2,"M_GENERL","GENERAL");
-  M_DrawInstructions();
-  M_DrawScreenItems(current_setup_menu);
-
-  // If the Reset Button has been selected, an "Are you sure?" message
-  // is overlayed across everything else.
-
-  if (default_verify)
-    M_DrawDefVerify();
-}
-
-
-/////////////////////////////
-//
-// The Compatibility table.
-// killough 10/10/98
-// [Nugget] Moved the definition to be on top of the rest of setup screens
-
-#define C_X  284
-#define COMP_SPC 12
-
-setup_menu_t comp_settings1[], comp_settings2[], comp_settings3[], comp_settings4[], comp_settings5[];
-
-setup_menu_t* comp_settings[] =
-{
-  comp_settings1,
-  comp_settings2,
-  comp_settings3,
-  // [Nugget]
-  comp_settings4,
-  comp_settings5,
-  NULL
-};
-
-enum
-{
-  compat_telefrag,
-  compat_dropoff,
-  compat_falloff,
-  compat_staylift,
-  compat_doorstuck,
-  compat_pursuit,
-  compat_vile,
-  compat_pain,
-  compat_skull,
-  compat_god,
-  compat_infcheat = 0,
-  compat_zombie,
-  compat_stairs,
-  compat_floors,
-  compat_model,
-  compat_zerotags,
-  compat_cosmetic,
-  compat_blazing,
-  compat_doorlight,
-  compat_skymap,
-  compat_menu,
-  compat_emu0 = 0,
-  compat_emu1,
-  compat_emu2,
-  compat_emu3,
-};
-
-setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
-{
-    {"Any monster can telefrag on MAP30", S_YESNO, m_null, C_X,
-     M_Y + compat_telefrag * COMP_SPC, {"comp_telefrag"}},
-    {"Some objects never hang over tall ledges", S_YESNO, m_null, C_X,
-     M_Y + compat_dropoff * COMP_SPC, {"comp_dropoff"}},
-    {"Objects don't fall under their own weight", S_YESNO, m_null, C_X,
-     M_Y + compat_falloff * COMP_SPC, {"comp_falloff"}},
-    {"Monsters randomly walk off of moving lifts", S_YESNO, m_null, C_X,
-     M_Y + compat_staylift * COMP_SPC, {"comp_staylift"}},
-    {"Monsters get stuck on doortracks", S_YESNO, m_null, C_X,
-     M_Y + compat_doorstuck * COMP_SPC, {"comp_doorstuck"}},
-    {"Monsters don't give up pursuit of targets", S_YESNO, m_null, C_X,
-     M_Y + compat_pursuit * COMP_SPC, {"comp_pursuit"}},
-    {"Arch-Vile resurrects invincible ghosts", S_YESNO, m_null, C_X,
-     M_Y + compat_vile * COMP_SPC, {"comp_vile"}},
-    {"Pain Elemental limited to 20 lost souls", S_YESNO, m_null, C_X,
-     M_Y + compat_pain * COMP_SPC, {"comp_pain"}},
-    {"Lost souls get stuck behind walls", S_YESNO, m_null, C_X,
-     M_Y + compat_skull * COMP_SPC, {"comp_skull"}},
-    {"God mode isn't absolute", S_YESNO, m_null, C_X,
-     M_Y + compat_god * COMP_SPC, {"comp_god"}},
-
-  // Button for resetting to defaults
-  {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
-
-  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings2}},
-
-  // Final entry
-  {0,S_SKIP|S_END,m_null}
-};
-
-setup_menu_t comp_settings2[] =  // Compatibility Settings screen #2
-{
-    {"Powerup cheats are not infinite duration", S_YESNO, m_null, C_X,
-     M_Y + compat_infcheat * COMP_SPC, {"comp_infcheat"}},
-    {"Zombie players can exit levels", S_YESNO, m_null, C_X,
-     M_Y + compat_zombie * COMP_SPC, {"comp_zombie"}},
-    {"Use exactly Doom's stairbuilding method", S_YESNO, m_null, C_X,
-     M_Y + compat_stairs * COMP_SPC, {"comp_stairs"}},
-    {"Use exactly Doom's floor motion behavior", S_YESNO, m_null, C_X,
-     M_Y + compat_floors * COMP_SPC, {"comp_floors"}},
-    {"Use exactly Doom's linedef trigger model", S_YESNO, m_null, C_X,
-     M_Y + compat_model * COMP_SPC, {"comp_model"}},
-    {"Linedef effects work with sector tag = 0", S_YESNO, m_null, C_X,
-     M_Y + compat_zerotags * COMP_SPC, {"comp_zerotags"}},
-  {"Cosmetic", S_SKIP|S_TITLE, m_null, C_X,
-   M_Y + compat_cosmetic * COMP_SPC},
-    {"Blazing doors make double closing sounds", S_YESNO|S_COSMETIC, m_null, C_X,
-     M_Y + compat_blazing * COMP_SPC, {"comp_blazing"}},
-    {"Tagged doors don't trigger special lighting", S_YESNO|S_COSMETIC, m_null, C_X,
-     M_Y + compat_doorlight * COMP_SPC, {"comp_doorlight"}},
-    {"Sky is unaffected by invulnerability", S_YESNO|S_COSMETIC, m_null, C_X,
-     M_Y + compat_skymap * COMP_SPC, {"comp_skymap"}},
-    {"Use Doom's main menu ordering", S_YESNO, m_null, C_X,
-     M_Y + compat_menu * COMP_SPC, {"traditional_menu"}, 0, M_ResetMenu},
-
-  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings1}},
-  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings3}},
-
-  // Final entry
-  {0,S_SKIP|S_END,m_null}
-};
-
-setup_menu_t comp_settings3[] =  // Compatibility Settings screen #3
-{
-    {"Overflow Emulation", S_SKIP|S_TITLE, m_null, C_X,
-     M_Y + compat_emu0 * COMP_SPC},
-    {"Emulate SPECHITS overflow", S_YESNO, m_null, C_X,
-     M_Y + compat_emu1 * COMP_SPC, {"emu_spechits"}},
-    {"Emulate REJECT overflow", S_YESNO|S_LEVWARN, m_null, C_X,
-     M_Y + compat_emu2 * COMP_SPC, {"emu_reject"}},
-    {"Emulate INTERCEPTS overflow", S_YESNO, m_null, C_X,
-     M_Y + compat_emu3 * COMP_SPC, {"emu_intercepts"}},
-
-  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings2}},
-  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings4}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-};
-
-// [Nugget]
-enum {
-  comp4_blazing2,
-  comp4_manualdoor,
-  comp4_switchsource,
-  comp4_cgundblsnd,
-  comp4_lscollision,
-  comp4_lsamnesia,
-  comp4_fuzzyblood,
-  comp4_nonbleeders,
-  comp4_0dmgpain,
-  comp4_bruistarget,
-};
-
-setup_menu_t comp_settings4[] =  // [Nugget] Compatibility Settings screen #3
-{
-    {"Blazing doors reopen with wrong sound", S_YESNO, m_null, C_X,
-     M_Y + comp4_blazing2 * COMP_SPC, {"comp_blazing2"}},
-    {"Manually reactivated moving doors are silent", S_YESNO, m_null, C_X,
-     M_Y + comp4_manualdoor * COMP_SPC, {"comp_manualdoor"}},
-    {"Corrected switch sound source", S_YESNO, m_null, C_X,
-     M_Y + comp4_switchsource * COMP_SPC, {"comp_switchsource"}},
-    {"Chaingun makes two sounds with one bullet", S_YESNO, m_null, C_X,
-     M_Y + comp4_cgundblsnd * COMP_SPC, {"comp_cgundblsnd"}},
-    {"Fix Lost Soul colliding with items", S_YESNO, m_null, C_X,
-     M_Y + comp4_lscollision * COMP_SPC, {"comp_lscollision"}},
-    {"Lost Soul forgets target upon impact", S_YESNO, m_null, C_X,
-     M_Y + comp4_lsamnesia * COMP_SPC, {"comp_lsamnesia"}},
-    {"Fuzzy things bleed fuzzy blood", S_YESNO, m_null, C_X,
-     M_Y + comp4_fuzzyblood * COMP_SPC, {"comp_fuzzyblood"}},
-    {"Non-bleeders don't bleed when crushed", S_YESNO, m_null, C_X,
-     M_Y + comp4_nonbleeders * COMP_SPC, {"comp_nonbleeders"}},
-    {"Prevent pain state with 0 damage attacks", S_YESNO, m_null, C_X,
-     M_Y + comp4_0dmgpain * COMP_SPC, {"comp_0dmgpain"}},
-    {"Bruiser attack doesn't face target", S_YESNO, m_null, C_X,
-     M_Y + comp4_bruistarget * COMP_SPC, {"comp_bruistarget"}},
-
-  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings3}},
-  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings5}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-};
-
-// [Nugget]
-enum {
-  comp5_cgunnersfx,
-  comp5_flamst,
-  comp5_deadoof,
-  comp5_iosdeath,
-  comp5_keypal,
-  comp5_choppers,
-};
-
-setup_menu_t comp_settings5[] =  // [Nugget] Compatibility Settings screen #4
-{
-    {"Chaingunner uses pistol/chaingun sound", S_YESNO, m_null, C_X,
-     M_Y + comp5_cgunnersfx * COMP_SPC, {"comp_cgunnersfx"}},
-    {"Arch-Vile fire plays flame start sound", S_YESNO, m_null, C_X,
-     M_Y + comp5_flamst * COMP_SPC, {"comp_flamst"}},
-    {"Dead players can still play oof sound", S_YESNO, m_null, C_X,
-     M_Y + comp5_deadoof * COMP_SPC, {"comp_deadoof"}},
-    {"Fix lopsided Icon of Sin explosions", S_YESNO, m_null, C_X,
-     M_Y + comp5_iosdeath * COMP_SPC, {"comp_iosdeath"}},
-    {"Key pickup resets palette", S_YESNO, m_null, C_X,
-     M_Y + comp5_keypal * COMP_SPC, {"comp_keypal"}},
-    {"Fix IDCHOPPERS invulnerability", S_YESNO, m_null, C_X,
-     M_Y + comp5_choppers * COMP_SPC, {"comp_choppers"}},
-
-  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings4}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-};
-
-
-// Setting up for the Compatibility screen. Turn on flags, set pointers,
-// locate the first item on the screen where the cursor is allowed to
-// land.
-
-void M_Compat(int choice)
-{
-  M_SetupNextMenu(&CompatDef);
-
-  setup_active = true;
-  setup_screen = ss_comp;
-  set_general_active = true;
-  setup_select = false;
-  default_verify = false;
-  setup_gather = false;
-  mult_screens_index = 0;
-  current_setup_menu = comp_settings[0];
-  set_menu_itemon = M_GetSetupMenuItemOn();
-  while (current_setup_menu[set_menu_itemon++].m_flags & S_SKIP);
-  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
-}
-
-// The drawing part of the Compatibility Setup initialization. Draw the
-// background, title, instruction line, and items.
-
-void M_DrawCompat(void)
-{
-  inhelpscreens = true;
-
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
-
-  M_DrawTitle(52,2,"M_COMPAT","DOOM COMPATIBILITY");
-  M_DrawInstructions();
-  M_DrawScreenItems(current_setup_menu);
-
-  // If the Reset Button has been selected, an "Are you sure?" message
-  // is overlayed across everything else.
-
-  if (default_verify)
-    M_DrawDefVerify();
-}
-
-
 /////////////////////////////
 //
 // The Key Binding Screen tables.
+
+#define KB_X  120
+
+// phares 4/16/98:
+// X,Y position of reset button. This is the same for every screen, and is
+// only defined once here.
+
+#define X_BUTTON 301
+#define Y_BUTTON   3
 
 // Definitions of the (in this case) five key binding screens.
 setup_menu_t keys_settings1[];
@@ -3493,6 +2791,8 @@ setup_menu_t* keys_settings[] =
   keys_settings8,
   NULL
 };
+
+int mult_screens_index; // the index of the current screen in a set
 
 // Here's an example from this first screen, with explanations.
 //
@@ -3884,17 +3184,21 @@ static const char *weapon_attack_alignment_strings[] = {
   "OFF", "CENTERED", "BOBBING", NULL
 };
 
+#if 0 // [Nugget] Unused
+static const char *default_bobfactor_strings[] = {
+  "OFF", "FULL", "75%", NULL
+};
+#endif
+
 static void M_UpdateCenteredWeaponItem(void)
 {
-  DISABLE_ITEM((!cosmetic_bobbing || !bobbing_percentage || strictmode),
+  DISABLE_ITEM((!bobbing_percentage || strictmode),
                weap_settings2[weap2_center]);
 }
 
 setup_menu_t weap_settings2[] =  // Weapons Settings screen 2
 {
   {"Cosmetic",S_SKIP|S_TITLE,m_null,M_X,M_Y+weap2_title1*M_SPC},
-    //{"Enable Bobbing",S_YESNO,m_null,M_X, M_Y+weap2_bobbing*M_SPC, {"cosmetic_bobbing"}, 0, M_UpdateCenteredWeaponItem},
-    // [Nugget] The setting below replaces the one above
     {"Bobbing Percentage",S_NUM,m_null,M_X, M_Y+weap2_bobbing*M_SPC, {"bobbing_percentage"}, 0, M_UpdateCenteredWeaponItem},
     {"Bobbing Style",S_CHOICE, m_null, M_X, M_Y+weap2_bobstyle*M_SPC, {"bobbing_style"}, 0, NULL, bobbing_styles},
     {"Enable Recoil Pitch", S_YESNO,m_null,M_X, M_Y+ weap2_recoilpitch*M_SPC, {"weapon_recoilpitch"}},
@@ -4076,7 +3380,7 @@ setup_menu_t stat_settings2[] =
     {"COLOR OF ARMOR DEPENDS ON TYPE" ,S_YESNO,m_null,M_X,M_Y+stat2_armortype*M_SPC, {"hud_armor_type"}},
   {"",S_SKIP,m_null,M_X,M_Y+stat2_stub1*M_SPC }, // Stub
   {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title2*M_SPC },
-    {"SHOW TIME/STS ABOVE STATUS BAR" ,S_CHOICE,m_null,M_X,M_Y+stat2_timests*M_SPC, {"hud_timests"}, 0, NULL, timests_str},
+    {"SHOW TIME/STATS ABOVE STATUS BAR" ,S_CHOICE,m_null,M_X,M_Y+stat2_timests*M_SPC, {"hud_timests"}, 0, NULL, timests_str},
     {"SMART TOTALS"                   ,S_YESNO ,m_null,M_X,M_Y+stat2_smart*M_SPC, {"smarttotals"}},
     {"SMOOTH HEALTH/ARMOR COUNT"      ,S_YESNO ,m_null,M_X,M_Y+stat2_smooth*M_SPC, {"smooth_counts"}},
   {"",S_SKIP,m_null,M_X,M_Y+stat2_stub2*M_SPC }, // Stub
@@ -4451,6 +3755,721 @@ void M_DrawEnemy(void)
   else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
 
   M_DrawTitle(114,2,"M_ENEM","ENEMIES");
+  M_DrawInstructions();
+  M_DrawScreenItems(current_setup_menu);
+
+  // If the Reset Button has been selected, an "Are you sure?" message
+  // is overlayed across everything else.
+
+  if (default_verify)
+    M_DrawDefVerify();
+}
+
+
+/////////////////////////////
+//
+// The General table.
+// killough 10/10/98
+
+extern int usejoystick, usemouse;
+extern int realtic_clock_rate, tran_filter_pct;
+
+setup_menu_t gen_settings1[], gen_settings2[], gen_settings3[], gen_settings4[], gen_settings5[];
+
+setup_menu_t* gen_settings[] =
+{
+  gen_settings1,
+  gen_settings2,
+  gen_settings3,
+  // [Nugget]
+  gen_settings4,
+  gen_settings5,
+  NULL
+};
+
+// Page 1
+
+enum {
+  general_title1,
+  general_hires,
+  // [FG] fullscreen mode menu toggle
+  general_fullscreen,
+  // widescreen mode
+  general_widescreen,
+  // [FG] uncapped rendering frame rate
+  general_uncapped,
+  general_vsync,
+  general_stub1,
+  general_trans,
+  general_transpct,
+  general_gamma,
+  general_end1,
+
+  general_title2,
+  general_sndchan,
+  general_pitch,
+  // [FG] play sounds in full length
+  general_fullsnd,
+  // [FG] music backend
+  general_musicbackend,
+  general_end2,
+};
+
+static const char *midi_player_strings[] = {
+#if defined(_WIN32)
+  "Native",
+#else
+  "SDL",
+#endif
+#if defined(HAVE_FLUIDSYNTH)
+  "FluidSynth",
+#endif
+  "OPL",
+  NULL
+};
+
+static const char *gamma_strings[] = {
+  // Darker
+  "0.50", "0.55", "0.60", "0.65", "0.70", "0.75", "0.80", "0.85", "0.90",
+  // No gamma correction
+  "1.0",
+  // Lighter
+  "1.125", "1.25", "1.375", "1.5", "1.625", "1.75", "1.875", "2.0",
+  NULL
+};
+
+void static M_ResetGamma(void)
+{
+  usegamma = 0;
+  I_SetPalette(W_CacheLumpName("PLAYPAL",PU_CACHE));
+}
+
+setup_menu_t gen_settings1[] = { // General Settings screen1
+
+  {"Video"       ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
+    {"High Resolution", S_YESNO, m_null, M_X, M_Y+ general_hires*M_SPC,
+     {"hires"}, 0, I_ResetScreen},
+    // [FG] fullscreen mode menu toggle
+    {"Fullscreen Mode", S_YESNO, m_null, M_X, M_Y+ general_fullscreen*M_SPC,
+     {"fullscreen"}, 0, I_ToggleToggleFullScreen},
+    {"Widescreen Rendering", S_YESNO, m_null, M_X, M_Y+ general_widescreen*M_SPC,
+     {"widescreen"}, 0, I_ResetScreen},
+    // [FG] uncapped frame rate
+    {"Uncapped Frame Rate", S_YESNO, m_null, M_X, M_Y+ general_uncapped*M_SPC,
+     {"uncapped"}},
+    {"Vertical Sync", S_YESNO, m_null, M_X,
+     M_Y+ general_vsync*M_SPC, {"use_vsync"}, 0, I_ResetScreen},
+  {"", S_SKIP, m_null, M_X, M_Y + general_stub1*M_SPC},
+    {"Enable predefined translucency", S_YESNO, m_null, M_X,
+     M_Y+ general_trans*M_SPC, {"translucency"}, 0, M_Trans},
+    {"Translucency filter percentage", S_NUM, m_null, M_X,
+     M_Y+ general_transpct*M_SPC, {"tran_filter_pct"}, 0, M_Trans},
+    {"Gamma Correction", S_THERMO, m_null, M_X_THRM,
+     M_Y+ general_gamma*M_SPC, {"gamma2"}, 0, M_ResetGamma, gamma_strings},
+
+  {"", S_SKIP, m_null, M_X, M_Y + general_end1*M_SPC},
+  {"Sound & Music", S_SKIP|S_TITLE, m_null, M_X,
+   M_Y + general_title2*M_SPC},
+    {"Number of Sound Channels", S_NUM|S_PRGWARN, m_null, M_X,
+     M_Y + general_sndchan*M_SPC, {"snd_channels"}},
+    {"Enable v1.1 Pitch Effects", S_YESNO, m_null, M_X,
+     M_Y + general_pitch*M_SPC, {"pitched_sounds"}},
+    // [FG] play sounds in full length
+    {"Disable Sound Cutoffs", S_YESNO, m_null, M_X,
+     M_Y + general_fullsnd*M_SPC, {"full_sounds"}},
+    // [FG] music backend
+    {"MIDI player", S_CHOICE|S_PRGWARN, m_null, M_X,
+     M_Y + general_musicbackend*M_SPC, {"midi_player"}, 0, NULL, midi_player_strings},
+
+  // Button for resetting to defaults
+  {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
+
+  {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {gen_settings2}},
+
+  // Final entry
+  {0,S_SKIP|S_END,m_null}
+};
+
+// Page 2
+
+enum {
+  general_title3,
+  general_mouse1,
+  general_mouse2,
+  general_mouse3,
+  general_end3,
+
+  general_title4,
+  general_sky1,
+  general_sky2,
+  general_swirl,
+  general_smoothlight,
+  general_brightmaps,
+  general_solidbackground,
+  general_stub2,
+  general_diskicon,
+  general_hom,
+  general_endoom,
+  general_end4,
+};
+
+static const char *default_endoom_strings[] = {
+  "off", "on", "PWAD only", NULL
+};
+
+static void M_UpdateFreeaimItem(void); // [Nugget]
+static void M_UpdateMouseLook(void)
+{
+  if (!mouselook || !padlook) {
+    int i;
+    for (i = 0; i < MAXPLAYERS; ++i)
+      if (playeringame[i])
+        players[i].centering = true;
+  }
+  M_UpdateFreeaimItem(); // [Nugget]
+}
+
+void static M_SmoothLight(void)
+{
+  extern void P_SegLengths(boolean contrast_only);
+  // [crispy] re-calculate the zlight[][] array
+  R_InitLightTables();
+  // [crispy] re-calculate the scalelight[][] array
+  R_ExecuteSetViewSize();
+  // [crispy] re-calculate fake contrast
+  P_SegLengths(true);
+}
+
+setup_menu_t gen_settings2[] = { // General Settings screen2
+
+  {"Mouse Settings"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
+    // [FG] double click acts as "use"
+    {"Double Click acts as \"Use\"", S_YESNO, m_null, M_X,
+     M_Y+ general_mouse1*M_SPC, {"dclick_use"}},
+    {"Permanent Mouselook", S_YESNO, m_null, M_X,
+     M_Y+ general_mouse2*M_SPC, {"mouselook"}, 0, M_UpdateMouseLook},
+    // [FG] invert vertical axis
+    {"Invert vertical axis", S_YESNO, m_null, M_X,
+     M_Y+ general_mouse3*M_SPC, {"mouse_y_invert"}},
+
+  {"", S_SKIP, m_null, M_X, M_Y + general_end3*M_SPC},
+  {"Display Options"  ,S_SKIP|S_TITLE, m_null, M_X,
+   M_Y + general_title4*M_SPC},
+    {"Stretch Short Skies", S_YESNO, m_null, M_X,
+     M_Y + general_sky1*M_SPC, {"stretchsky"}, 0, R_InitSkyMap},
+    {"Linear Sky Scrolling", S_YESNO, m_null, M_X,
+     M_Y + general_sky2*M_SPC, {"linearsky"}, 0, R_InitPlanes},
+    {"Swirling Animated Flats", S_YESNO, m_null, M_X,
+     M_Y + general_swirl*M_SPC, {"r_swirl"}},
+    {"Smooth Diminishing Lighting", S_YESNO, m_null, M_X,
+     M_Y + general_smoothlight*M_SPC, {"smoothlight"}, 0, M_SmoothLight},
+    {"Brightmaps for Textures and Sprites", S_YESNO, m_null, M_X,
+     M_Y + general_brightmaps*M_SPC, {"brightmaps"}},
+    {"Solid Status Bar Background", S_YESNO, m_null, M_X,
+     M_Y + general_solidbackground*M_SPC, {"st_solidbackground"}},
+  {"", S_SKIP, m_null, M_X, M_Y + general_stub2*M_SPC},
+    {"Flash Icon During Disk IO", S_YESNO, m_null, M_X,
+     M_Y + general_diskicon*M_SPC, {"disk_icon"}},
+    {"Flashing HOM indicator", S_YESNO, m_null, M_X,
+     M_Y + general_hom*M_SPC, {"flashing_hom"}},
+    {"Show ENDOOM screen", S_CHOICE, m_null, M_X,
+     M_Y + general_endoom*M_SPC, {"show_endoom"}, 0, NULL, default_endoom_strings},
+
+  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings1}},
+  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings3}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
+
+// Page 3
+
+enum {
+  general_title5,
+  general_strictmode,
+  general_demobar,
+  general_death_action,
+  general_screen_wipe, // [Nugget]
+  general_end5,
+
+  general_title6,
+  general_blockmapfix,
+  general_pistolstart,
+  general_end6,
+
+  general_title7,
+  general_realtic,
+  general_compat,
+  general_skill,
+  general_playername,
+  general_end7,
+};
+
+static const char *death_use_action_strings[] = {
+  "default", "last save", "nothing", NULL
+};
+
+// [Nugget]
+static const char *wipe_types[] = {
+  "None", "Melt", "Seizure", NULL
+};
+
+static const char *default_compatibility_strings[] = {
+  "Vanilla", "Boom", "MBF", "MBF21", NULL
+};
+
+static const char *default_skill_strings[] = {
+  // dummy first option because defaultskill is 1-based
+  "", "ITYTD", "HNTR", "HMP", "UV", "NM", NULL
+};
+
+void M_ResetTimeScale(void)
+{
+  if (strictmode || D_CheckNetConnect())
+    I_SetTimeScale(100);
+  else
+  {
+    int p;
+
+    int time_scale = realtic_clock_rate;
+
+    //!
+    // @arg <n>
+    // @category game
+    //
+    // Increase or decrease game speed, percentage of normal.
+    //
+
+    p = M_CheckParmWithArgs("-speed", 1);
+
+    if (p)
+    {
+      time_scale = M_ParmArgToInt(p);
+      if (time_scale < 10 || time_scale > 1000)
+        I_Error("Invalid parameter '%d' for -speed, valid values are 10-1000.",
+                time_scale);
+    }
+
+    I_SetTimeScale(time_scale);
+  }
+}
+
+setup_menu_t gen_settings3[] = { // General Settings screen3
+
+  {"Quality of life"  ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
+    {"Strict Mode", S_YESNO|S_LEVWARN, m_null, M_X,
+     M_Y + general_strictmode*M_SPC, {"strictmode"}},
+    {"Show demo progress bar", S_YESNO, m_null, M_X,
+     M_Y + general_demobar*M_SPC, {"demobar"}},
+    {"On death action", S_CHOICE, m_null, M_X,
+     M_Y + general_death_action*M_SPC, {"death_use_action"}, 0, NULL, death_use_action_strings},
+    // [Nugget] Moved palette changes toggle to Accessibility page (page 5),
+    // and replace screen melt toggle with wipe type selection
+    {"Screen Wipe Style", S_CHOICE, m_null, M_X,
+     M_Y + general_screen_wipe*M_SPC, {"wipe_type"}, 0, NULL, wipe_types},
+
+  {"", S_SKIP, m_null, M_X, M_Y + general_end5*M_SPC},
+  {"Compatibility-breaking Features"  ,S_SKIP|S_TITLE, m_null, M_X, M_Y + general_title6*M_SPC},
+    {"Improved Hit Detection", S_YESNO, m_null, M_X,
+     M_Y + general_blockmapfix*M_SPC, {"blockmapfix"}},
+    {"Pistol Start", S_YESNO, m_null, M_X,
+     M_Y + general_pistolstart*M_SPC, {"pistolstart"}},
+
+  {"", S_SKIP, m_null, M_X, M_Y + general_end6*M_SPC},
+  {"Miscellaneous"  ,S_SKIP|S_TITLE, m_null, M_X, M_Y + general_title7*M_SPC},
+    {"Game speed, percentage of normal", S_NUM, m_null, M_X,
+     M_Y + general_realtic*M_SPC, {"realtic_clock_rate"}, 0, M_ResetTimeScale},
+    {"Default compatibility", S_CHOICE|S_LEVWARN, m_null, M_X,
+     M_Y + general_compat*M_SPC, {"default_complevel"}, 0, NULL, default_compatibility_strings},
+    {"Default skill level", S_CHOICE|S_LEVWARN, m_null, M_X,
+     M_Y + general_skill*M_SPC, {"default_skill"}, 0, NULL, default_skill_strings},
+    {"Player Name", S_NAME, m_null, M_X,
+     M_Y + general_playername*M_SPC, {"net_player_name"}},
+
+  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings2}},
+  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings4}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
+
+enum {
+  gen4_title1,
+  gen4_background,
+  gen4_menutint,
+  gen4_fov,
+  gen4_overunder,
+  gen4_jump_crouch,
+  gen4_dmgcountcap,
+  gen4_boncountcap,
+  gen4_berserktint,
+  gen4_viewheight,
+  gen4_sclipdist,
+  gen4_quicksaveload,
+  gen4_quickexit,
+};
+
+static const char *s_clipping_dists[] = {
+  "1200", "2400", NULL
+};
+
+setup_menu_t gen_settings4[] = { // [Nugget] General Settings screen 4
+
+  {"Nugget Settings"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y+gen4_title1*M_SPC},
+    {"Disable Background",              S_YESNO,  m_null, M_X, M_Y+gen4_background*M_SPC,     {"no_ss_background"}},
+    {"Disable palette tint in menus",   S_YESNO,  m_null, M_X, M_Y+gen4_menutint*M_SPC,       {"no_menu_tint"}},
+    {"Field of View",                   S_NUM,    m_null, M_X, M_Y+gen4_fov*M_SPC,            {"fov"}, 0, I_ResetScreen},
+    {"Things Move Over/Under Things",   S_YESNO,  m_null, M_X, M_Y+gen4_overunder*M_SPC,      {"over_under"}},
+    {"Allow Jump/Crouch",               S_YESNO,  m_null, M_X, M_Y+gen4_jump_crouch*M_SPC,    {"jump_crouch"}},
+    {"Damage Tint Cap (Default = 100)", S_NUM,    m_null, M_X, M_Y+gen4_dmgcountcap*M_SPC,    {"damagecount_cap"}},
+    {"Bonus Tint Cap (Default = -1)",   S_NUM,    m_null, M_X, M_Y+gen4_boncountcap*M_SPC,    {"bonuscount_cap"}},
+    {"Disable Berserk Tint",            S_YESNO,  m_null, M_X, M_Y+gen4_berserktint*M_SPC,    {"no_berserk_tint"}},
+    {"View Height (Default = 41)",      S_NUM,    m_null, M_X, M_Y+gen4_viewheight*M_SPC,     {"viewheight_value"}},
+    {"Sound Clipping Distance",         S_CHOICE, m_null, M_X, M_Y+gen4_sclipdist*M_SPC,      {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
+    {"One-Key Quick Save/Load",         S_YESNO,  m_null, M_X, M_Y+gen4_quicksaveload*M_SPC,  {"one_key_saveload"}},
+    {"Quick \"Quit Game\"",             S_YESNO,  m_null, M_X, M_Y+gen4_quickexit*M_SPC,      {"quick_quitgame"}},
+
+  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings3}},
+  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings5}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
+
+enum {
+  general_a11y_title1,
+//  general_a11y_seclight,
+  general_a11y_extralight,
+  general_a11y_flash,
+  general_a11y_pspr,
+  general_a11y_palette,
+  general_a11y_invul,
+};
+
+setup_menu_t gen_settings5[] = { // [Nugget] General Settings screen 5
+
+  {"Accessibility"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y+general_a11y_title1*M_SPC},
+
+//  {"Flickering Sector Lighting",  S_YESNO,  m_null,   M_X, M_Y+general_a11y_seclight*M_SPC,   {"a11y_sector_lighting"}},
+    {"Extra Lighting",              S_NUM,    m_null,   M_X, M_Y+general_a11y_extralight*M_SPC, {"a11y_extra_lighting"}},
+    {"Weapon Flash Lighting",       S_YESNO,  m_null,   M_X, M_Y+general_a11y_flash*M_SPC,      {"a11y_weapon_flash"}},
+    {"Weapon Flash Sprite",         S_YESNO,  m_null,   M_X, M_Y+general_a11y_pspr*M_SPC,       {"a11y_weapon_pspr"}},
+    {"Pain/pickup/powerup flashes", S_YESNO,  m_null,   M_X, M_Y+general_a11y_palette*M_SPC,    {"a11y_palette_changes"}},
+    {"Invulnerability Colormap",    S_YESNO,  m_null,   M_X, M_Y+general_a11y_invul*M_SPC,      {"a11y_invul_colormap"}},
+
+  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings4}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
+
+void M_Trans(void) // To reset translucency after setting it in menu
+{
+    R_InitTranMap(0);
+
+    D_SetPredefinedTranslucency();
+
+    DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[general_trans]);
+    DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[general_transpct]);
+}
+
+// Setting up for the General screen. Turn on flags, set pointers,
+// locate the first item on the screen where the cursor is allowed to
+// land.
+
+void M_General(int choice)
+{
+  M_SetupNextMenu(&GeneralDef);
+
+  setup_active = true;
+  setup_screen = ss_gen;
+  set_general_active = true;
+  setup_select = false;
+  default_verify = false;
+  setup_gather = false;
+  mult_screens_index = 0;
+  current_setup_menu = gen_settings[0];
+  set_menu_itemon = M_GetSetupMenuItemOn();
+  while (current_setup_menu[set_menu_itemon++].m_flags & S_SKIP);
+  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+}
+
+// The drawing part of the General Setup initialization. Draw the
+// background, title, instruction line, and items.
+
+void M_DrawGeneral(void)
+{
+  inhelpscreens = true;
+
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
+  }
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+
+  M_DrawTitle(114,2,"M_GENERL","GENERAL");
+  M_DrawInstructions();
+  M_DrawScreenItems(current_setup_menu);
+
+  // If the Reset Button has been selected, an "Are you sure?" message
+  // is overlayed across everything else.
+
+  if (default_verify)
+    M_DrawDefVerify();
+}
+
+
+/////////////////////////////
+//
+// The Compatibility table.
+// killough 10/10/98
+
+#define C_X  284
+#define COMP_SPC 12
+
+setup_menu_t comp_settings1[], comp_settings2[], comp_settings3[], comp_settings4[], comp_settings5[];
+
+setup_menu_t* comp_settings[] =
+{
+  comp_settings1,
+  comp_settings2,
+  comp_settings3,
+  // [Nugget]
+  comp_settings4,
+  comp_settings5,
+  NULL
+};
+
+enum
+{
+  compat_telefrag,
+  compat_dropoff,
+  compat_falloff,
+  compat_staylift,
+  compat_doorstuck,
+  compat_pursuit,
+  compat_vile,
+  compat_pain,
+  compat_skull,
+  compat_god,
+  compat_infcheat = 0,
+  compat_zombie,
+  compat_stairs,
+  compat_floors,
+  compat_model,
+  compat_zerotags,
+  compat_cosmetic,
+  compat_blazing,
+  compat_doorlight,
+  compat_skymap,
+  compat_menu,
+  compat_emu0 = 0,
+  compat_emu1,
+  compat_emu2,
+  compat_emu3,
+  compat_emu4,
+};
+
+setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
+{
+    {"Any monster can telefrag on MAP30", S_YESNO, m_null, C_X,
+     M_Y + compat_telefrag * COMP_SPC, {"comp_telefrag"}},
+    {"Some objects never hang over tall ledges", S_YESNO, m_null, C_X,
+     M_Y + compat_dropoff * COMP_SPC, {"comp_dropoff"}},
+    {"Objects don't fall under their own weight", S_YESNO, m_null, C_X,
+     M_Y + compat_falloff * COMP_SPC, {"comp_falloff"}},
+    {"Monsters randomly walk off of moving lifts", S_YESNO, m_null, C_X,
+     M_Y + compat_staylift * COMP_SPC, {"comp_staylift"}},
+    {"Monsters get stuck on doortracks", S_YESNO, m_null, C_X,
+     M_Y + compat_doorstuck * COMP_SPC, {"comp_doorstuck"}},
+    {"Monsters don't give up pursuit of targets", S_YESNO, m_null, C_X,
+     M_Y + compat_pursuit * COMP_SPC, {"comp_pursuit"}},
+    {"Arch-Vile resurrects invincible ghosts", S_YESNO, m_null, C_X,
+     M_Y + compat_vile * COMP_SPC, {"comp_vile"}},
+    {"Pain Elemental limited to 20 lost souls", S_YESNO, m_null, C_X,
+     M_Y + compat_pain * COMP_SPC, {"comp_pain"}},
+    {"Lost souls get stuck behind walls", S_YESNO, m_null, C_X,
+     M_Y + compat_skull * COMP_SPC, {"comp_skull"}},
+    {"God mode isn't absolute", S_YESNO, m_null, C_X,
+     M_Y + compat_god * COMP_SPC, {"comp_god"}},
+
+  // Button for resetting to defaults
+  {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
+
+  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings2}},
+
+  // Final entry
+  {0,S_SKIP|S_END,m_null}
+};
+
+setup_menu_t comp_settings2[] =  // Compatibility Settings screen #2
+{
+    {"Powerup cheats are not infinite duration", S_YESNO, m_null, C_X,
+     M_Y + compat_infcheat * COMP_SPC, {"comp_infcheat"}},
+    {"Zombie players can exit levels", S_YESNO, m_null, C_X,
+     M_Y + compat_zombie * COMP_SPC, {"comp_zombie"}},
+    {"Use exactly Doom's stairbuilding method", S_YESNO, m_null, C_X,
+     M_Y + compat_stairs * COMP_SPC, {"comp_stairs"}},
+    {"Use exactly Doom's floor motion behavior", S_YESNO, m_null, C_X,
+     M_Y + compat_floors * COMP_SPC, {"comp_floors"}},
+    {"Use exactly Doom's linedef trigger model", S_YESNO, m_null, C_X,
+     M_Y + compat_model * COMP_SPC, {"comp_model"}},
+    {"Linedef effects work with sector tag = 0", S_YESNO, m_null, C_X,
+     M_Y + compat_zerotags * COMP_SPC, {"comp_zerotags"}},
+  {"Cosmetic", S_SKIP|S_TITLE, m_null, C_X,
+   M_Y + compat_cosmetic * COMP_SPC},
+    {"Blazing doors make double closing sounds", S_YESNO|S_COSMETIC, m_null, C_X,
+     M_Y + compat_blazing * COMP_SPC, {"comp_blazing"}},
+    {"Tagged doors don't trigger special lighting", S_YESNO|S_COSMETIC, m_null, C_X,
+     M_Y + compat_doorlight * COMP_SPC, {"comp_doorlight"}},
+    {"Sky is unaffected by invulnerability", S_YESNO|S_COSMETIC, m_null, C_X,
+     M_Y + compat_skymap * COMP_SPC, {"comp_skymap"}},
+    {"Use Doom's main menu ordering", S_YESNO, m_null, C_X,
+     M_Y + compat_menu * COMP_SPC, {"traditional_menu"}, 0, M_ResetMenu},
+
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings1}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings3}},
+
+  // Final entry
+  {0,S_SKIP|S_END,m_null}
+};
+
+setup_menu_t comp_settings3[] =  // Compatibility Settings screen #3
+{
+    {"Overflow Emulation", S_SKIP|S_TITLE, m_null, C_X,
+     M_Y + compat_emu0 * COMP_SPC},
+    {"Emulate SPECHITS overflow", S_YESNO, m_null, C_X,
+     M_Y + compat_emu1 * COMP_SPC, {"emu_spechits"}},
+    {"Emulate REJECT overflow", S_YESNO|S_LEVWARN, m_null, C_X,
+     M_Y + compat_emu2 * COMP_SPC, {"emu_reject"}},
+    {"Emulate INTERCEPTS overflow", S_YESNO, m_null, C_X,
+     M_Y + compat_emu3 * COMP_SPC, {"emu_intercepts"}, 0, M_UpdateCriticalItems},
+    {"Enable missed backside emulation", S_YESNO|S_LEVWARN, m_null, C_X,
+     M_Y + compat_emu4 * COMP_SPC, {"emu_missedbackside"}},
+
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings2}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings4}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
+
+// [Nugget]
+enum {
+  comp4_blazing2,
+  comp4_manualdoor,
+  comp4_switchsource,
+  comp4_cgundblsnd,
+  comp4_lscollision,
+  comp4_lsamnesia,
+  comp4_fuzzyblood,
+  comp4_nonbleeders,
+  comp4_0dmgpain,
+  comp4_bruistarget,
+};
+
+setup_menu_t comp_settings4[] =  // [Nugget] Compatibility Settings screen #3
+{
+    {"Blazing doors reopen with wrong sound", S_YESNO, m_null, C_X,
+     M_Y + comp4_blazing2 * COMP_SPC, {"comp_blazing2"}},
+    {"Manually reactivated moving doors are silent", S_YESNO, m_null, C_X,
+     M_Y + comp4_manualdoor * COMP_SPC, {"comp_manualdoor"}},
+    {"Corrected switch sound source", S_YESNO, m_null, C_X,
+     M_Y + comp4_switchsource * COMP_SPC, {"comp_switchsource"}},
+    {"Chaingun makes two sounds with one bullet", S_YESNO, m_null, C_X,
+     M_Y + comp4_cgundblsnd * COMP_SPC, {"comp_cgundblsnd"}},
+    {"Fix Lost Soul colliding with items", S_YESNO, m_null, C_X,
+     M_Y + comp4_lscollision * COMP_SPC, {"comp_lscollision"}},
+    {"Lost Soul forgets target upon impact", S_YESNO, m_null, C_X,
+     M_Y + comp4_lsamnesia * COMP_SPC, {"comp_lsamnesia"}},
+    {"Fuzzy things bleed fuzzy blood", S_YESNO, m_null, C_X,
+     M_Y + comp4_fuzzyblood * COMP_SPC, {"comp_fuzzyblood"}},
+    {"Non-bleeders don't bleed when crushed", S_YESNO, m_null, C_X,
+     M_Y + comp4_nonbleeders * COMP_SPC, {"comp_nonbleeders"}},
+    {"Prevent pain state with 0 damage attacks", S_YESNO, m_null, C_X,
+     M_Y + comp4_0dmgpain * COMP_SPC, {"comp_0dmgpain"}},
+    {"Bruiser attack doesn't face target", S_YESNO, m_null, C_X,
+     M_Y + comp4_bruistarget * COMP_SPC, {"comp_bruistarget"}},
+
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings3}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings5}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
+
+// [Nugget]
+enum {
+  comp5_cgunnersfx,
+  comp5_flamst,
+  comp5_deadoof,
+  comp5_iosdeath,
+  comp5_keypal,
+  comp5_choppers,
+};
+
+setup_menu_t comp_settings5[] =  // [Nugget] Compatibility Settings screen #4
+{
+    {"Chaingunner uses pistol/chaingun sound", S_YESNO, m_null, C_X,
+     M_Y + comp5_cgunnersfx * COMP_SPC, {"comp_cgunnersfx"}},
+    {"Arch-Vile fire plays flame start sound", S_YESNO, m_null, C_X,
+     M_Y + comp5_flamst * COMP_SPC, {"comp_flamst"}},
+    {"Dead players can still play oof sound", S_YESNO, m_null, C_X,
+     M_Y + comp5_deadoof * COMP_SPC, {"comp_deadoof"}},
+    {"Fix lopsided Icon of Sin explosions", S_YESNO, m_null, C_X,
+     M_Y + comp5_iosdeath * COMP_SPC, {"comp_iosdeath"}},
+    {"Key pickup resets palette", S_YESNO, m_null, C_X,
+     M_Y + comp5_keypal * COMP_SPC, {"comp_keypal"}},
+    {"Fix IDCHOPPERS invulnerability", S_YESNO, m_null, C_X,
+     M_Y + comp5_choppers * COMP_SPC, {"comp_choppers"}},
+
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings4}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
+
+
+// Setting up for the Compatibility screen. Turn on flags, set pointers,
+// locate the first item on the screen where the cursor is allowed to
+// land.
+
+void M_Compat(int choice)
+{
+  M_SetupNextMenu(&CompatDef);
+
+  setup_active = true;
+  setup_screen = ss_comp;
+  set_general_active = true;
+  setup_select = false;
+  default_verify = false;
+  setup_gather = false;
+  mult_screens_index = 0;
+  current_setup_menu = comp_settings[0];
+  set_menu_itemon = M_GetSetupMenuItemOn();
+  while (current_setup_menu[set_menu_itemon++].m_flags & S_SKIP);
+  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+}
+
+// The drawing part of the Compatibility Setup initialization. Draw the
+// background, title, instruction line, and items.
+
+void M_DrawCompat(void)
+{
+  inhelpscreens = true;
+
+  if (no_ss_background) { // [Nugget]
+    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
+  }
+  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+
+  M_DrawTitle(52,2,"M_COMPAT","DOOM COMPATIBILITY");
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
 
@@ -5955,6 +5974,12 @@ boolean M_Responder (event_t* ev)
 		group  = ptr1->m_group;
 		if ((ch = ev->data1) == -1)
 		  return true;
+		// Don't bind movement and turning to mouse wheel. It needs to
+		// be impossible to input a one-frame of movement automatically
+		// in speedrunning.
+		if ((ch == MOUSE_BUTTON_WHEELUP || ch == MOUSE_BUTTON_WHEELDOWN) &&
+		    s_input >= input_forward && s_input <= input_straferight)
+		  return true;
 		for (i = 0 ; keys_settings[i] && search ; i++)
 		  for (ptr2 = keys_settings[i] ; !(ptr2->m_flags & S_END) ; ptr2++)
 		    if (ptr2->m_group == group && ptr1 != ptr2)
@@ -7051,21 +7076,30 @@ void M_ResetSetupMenu(void)
   int i;
 
   // General ---
+
   // [FG] exclusive fullscreen
   DISABLE_ITEM((fullscreen_width != 0 || fullscreen_height != 0), gen_settings1[general_fullscreen]);
+
+  if (M_ParmExists("-strict"))
+    { gen_settings3[general_strictmode].m_flags |= S_DISABLE; }
+  if (M_ParmExists("-complevel"))
+    { gen_settings3[general_compat].m_flags |= S_DISABLE; }
+
   // [Nugget]
   DISABLE_ITEM(!casual_play, gen_settings4[gen4_overunder]);
   DISABLE_ITEM(!casual_play, gen_settings4[gen4_jump_crouch]);
   DISABLE_ITEM((demorecording||fauxdemo), gen_settings4[gen4_viewheight]);
 
   // Doom Compatibility ---
+
   for (i = compat_telefrag; i <= compat_god; ++i)       { DISABLE_BOOM(comp_settings1[i]); }
   for (i = compat_infcheat; i <= compat_zerotags; ++i)  { DISABLE_BOOM(comp_settings2[i]); }
   for (i = compat_blazing; i <= compat_skymap; ++i)     { DISABLE_STRICT(comp_settings2[i]); }
   // comp_emu1 to comp_emu3
-  for (i = compat_emu1; i <= compat_emu3; ++i)          { DISABLE_VANILLA_ONLY(comp_settings3[i]); }
+  for (i = compat_emu1; i <= compat_emu4; ++i)          { DISABLE_VANILLA_ONLY(comp_settings3[i]); }
 
   // Enemies ---
+
   DISABLE_BOOM(enem_settings1[enem_infighting]);
   for (i = enem_backing; i <= enem_dog_jumping; ++i)
     { DISABLE_BOOM(enem_settings1[i]); }
@@ -7075,31 +7109,39 @@ void M_ResetSetupMenu(void)
   DISABLE_ITEM(!comp[comp_vile] || strictmode, enem_settings2[enem2_ghost]);
 
   // Weapons ---
+
   for (i = weap_pref1; i <= weap_pref9; ++i)
     { DISABLE_ITEM(demo_compatibility, weap_settings1[i]); }
-
-  if (M_ParmExists("-strict"))
-  {
-    gen_settings3[general_strictmode].m_flags |= S_DISABLE;
-  }
-
-  if (M_ParmExists("-complevel"))
-  {
-    gen_settings3[general_compat].m_flags |= S_DISABLE;
-  }
 
   M_UpdateCrosshairItems();
   M_UpdateFreeaimItem(); // [Nugget]
   M_UpdateCenteredWeaponItem();
   M_UpdateMultiLineMsgItem();
   M_UpdateStrictModeItems();
+  M_UpdateCriticalItems();
   M_Trans();
+}
+
+#define DISABLE_CRITICAL(item) \
+        DISABLE_ITEM(critical || strictmode, item)
+
+void M_UpdateCriticalItems(void)
+{
+  if (demo_compatibility && overflow[emu_intercepts].enabled)
+    gen_settings3[general_blockmapfix].m_flags |= S_DISABLE;
+  else
+    DISABLE_CRITICAL(gen_settings3[general_blockmapfix]);
+
+  if (M_ParmExists("-pistolstart"))
+    gen_settings3[general_pistolstart].m_flags |= S_DISABLE;
+  else
+    DISABLE_CRITICAL(gen_settings3[general_pistolstart]);
 }
 
 void M_ResetSetupMenuVideo(void)
 {
-  // enem_fuzz
   DISABLE_ITEM(!hires, enem_settings2[enem2_fuzz]);
+  DISABLE_ITEM(!useaspect, gen_settings1[general_widescreen]);
 }
 
 //

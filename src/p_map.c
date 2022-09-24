@@ -1902,7 +1902,7 @@ static boolean P_SplashImmune(mobj_t *target, mobj_t *spot)
     mobjinfo[target->type].splash_group == mobjinfo[spot->type].splash_group;
 }
 
-static boolean PIT_RadiusAttack(mobj_t *thing)
+boolean PIT_RadiusAttack(mobj_t *thing)
 {
   fixed_t dx, dy, dist;
 
@@ -1999,7 +1999,7 @@ static boolean crushchange, nofit;
 // PIT_ChangeSector
 //
 
-static boolean PIT_ChangeSector(mobj_t *thing)
+boolean PIT_ChangeSector(mobj_t *thing)
 {
   mobj_t *mo;
 

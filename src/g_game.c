@@ -135,7 +135,10 @@ int             realtic_clock_rate = 100;
 
 int             default_complevel;
 
+boolean         pistolstart, default_pistolstart;
+
 boolean         strictmode, default_strictmode;
+boolean         critical;
 
 // [crispy] store last cmd to track joins
 static ticcmd_t* last_cmd = NULL;
@@ -329,16 +332,17 @@ static void G_DemoSkipTics(void)
 
   if (playback_warp == -1)
   {
+    int curtic;
+
     if (playback_skiptics < 0)
     {
-      if (warp)
-        playback_skiptics = playback_totaltics - playback_levelstarttic + playback_skiptics;
-      else
-        playback_skiptics = playback_totaltics + playback_skiptics;
+      playback_skiptics = playback_totaltics + playback_skiptics;
+      warp = false; // ignore -warp
     }
 
-    if ((warp && playback_skiptics < playback_tic - playback_levelstarttic) ||
-        (!warp && playback_skiptics < playback_tic))
+    curtic = (warp ? playback_tic - playback_levelstarttic : playback_tic);
+
+    if (playback_skiptics < curtic)
     {
       G_EnableWarp(false);
       S_RestartMusic();
@@ -742,26 +746,13 @@ static void G_DoLoadLevel(void)
     headsecnode = NULL;
    }
 
+  critical = (gameaction == ga_playdemo || demorecording || D_CheckNetConnect());
+  M_UpdateCriticalItems();
+
   // [crispy] pistol start
-  if (pistolstart)
+  if (CRITICAL(pistolstart))
   {
-    if (!demorecording && !demoplayback && !netgame)
-    {
-      G_PlayerReborn(0);
-    }
-    else if ((demoplayback || netdemo) && !singledemo)
-    {
-      // no-op - silently ignore pistolstart when playing demo from the
-      // demo reel
-    }
-    else
-    {
-      const char message[] = "The -pistolstart option is not supported"
-                             " for demos and\n"
-                             " network play.";
-      if (!demo_p) demorecording = false;
-      I_Error(message);
-    }
+    G_PlayerReborn(0);
   }
 
   P_SetupLevel (gameepisode, gamemap, 0, gameskill);
@@ -849,12 +840,14 @@ boolean G_Responder(event_t* ev)
 	  ST_Start();    // killough 3/7/98: switch status bar views too
 	  HU_Start();
 	  S_UpdateSounds(players[displayplayer].mo);
+	  // [crispy] re-init automap variables for correct player arrow angle
+	  if (automapactive)
+	    AM_initVariables();
       return true;
     }
 
   if (M_InputActivated(input_menu_reloadlevel) &&
       (gamestate == GS_LEVEL || gamestate == GS_INTERMISSION) &&
-      !deathmatch &&
       !menuactive)
   {
     sendreload = true;
@@ -1079,8 +1072,6 @@ static void G_ReadDemoTiccmd(ticcmd_t *cmd)
 	  cmd->buttons &= ~BT_SPECIALMASK;
 	  players[consoleplayer].message = "Game Saved (Suppressed)";
 	}
-
-       playback_tic++;
     }
 }
 
@@ -1681,14 +1672,22 @@ static void G_DoPlayDemo(void)
 
   // [crispy] demo progress bar
   {
+    int i;
+    int playerscount = 0;
     byte *demo_ptr = demo_p;
 
     playback_totaltics = playback_tic = 0;
 
+    for (i = 0; i < MAXPLAYERS; ++i)
+    {
+      if (playeringame[i])
+        ++playerscount;
+    }
+
     while (*demo_ptr != DEMOMARKER && (demo_ptr - demobuffer) < lumplength)
     {
-      demo_ptr += (longtics ? 5 : 4);
-      playback_totaltics++;
+      demo_ptr += playerscount * (longtics ? 5 : 4);
+      ++playback_totaltics;
     }
   }
 
@@ -1805,9 +1804,9 @@ char* G_MBFSaveGameName(int slot)
 //
 // killough 12/98: use faster algorithm which has less IO
 
-static ULong64 G_Signature(int sig_epi, int sig_map)
+static uint64_t G_Signature(int sig_epi, int sig_map)
 {
-  ULong64 s = 0;
+  uint64_t s = 0;
   int lump, i;
   char name[9];
 
@@ -2278,6 +2277,9 @@ void G_Ticker(void)
 		}
 	    }
 	}
+
+      if (demoplayback)
+        ++playback_tic;
 
       // check for special buttons
       for (i=0; i<MAXPLAYERS; i++)
@@ -2973,6 +2975,18 @@ void G_ReloadDefaults(void)
 
   if (M_CheckParm("-strict"))
     strictmode = true;
+
+  pistolstart = default_pistolstart;
+
+  //!
+  // @category game
+  // @help
+  //
+  // Enables automatic pistol starts on each level.
+  //
+
+  if (M_CheckParm("-pistolstart"))
+    pistolstart = true;
 
   // Reset MBF compatibility options in strict mode
   if (strictmode)
@@ -3687,6 +3701,9 @@ void D_CheckNetPlaybackSkip(void);
 
 void G_DeferedPlayDemo(char* name)
 {
+  // [FG] avoid demo lump name collisions
+  W_DemoLumpNameCollision(&name);
+
   defdemoname = name;
   gameaction = ga_playdemo;
 
@@ -3792,6 +3809,16 @@ boolean G_CheckDemoStatus(void)
   ticcmd_t* cmd = last_cmd;
   last_cmd = NULL;
 
+  if (timingdemo)
+    {
+      int endtime = I_GetTime_RealTime();
+      // killough -- added fps information and made it work for longer demos:
+      unsigned realtics = endtime-starttime;
+      I_Error ("Timed %u gametics in %u realtics = %-.1f frames per second",
+               (unsigned) gametic,realtics,
+               (unsigned) gametic * (double) TICRATE / realtics);
+    }
+
   if (demoplayback)
     {
       if (demorecording)
@@ -3855,16 +3882,6 @@ boolean G_CheckDemoStatus(void)
         I_SafeExit(0);
       }
       return false;  // killough
-    }
-
-  if (timingdemo)
-    {
-      int endtime = I_GetTime_RealTime();
-      // killough -- added fps information and made it work for longer demos:
-      unsigned realtics = endtime-starttime;
-      I_Error ("Timed %u gametics in %u realtics = %-.1f frames per second",
-               (unsigned) gametic,realtics,
-               (unsigned) gametic * (double) TICRATE / realtics);
     }
 
   return false;

@@ -174,7 +174,7 @@ static int P_ThinkerToIndex(thinker_t* thinker)
 
     for (th = thinkercap.next, i = 0; th != &thinkercap; th = th->next)
     {
-        if (th->function == P_MobjThinker)
+        if (th->function.p1 == (actionf_p1)P_MobjThinker)
         {
             i++;
             if (th == thinker)
@@ -196,7 +196,7 @@ static thinker_t* P_IndexToThinker(int index)
 
     for (th = thinkercap.next, i = 0; th != &thinkercap; th = th->next)
     {
-        if (th->function == P_MobjThinker)
+        if (th->function.p1 == (actionf_p1)P_MobjThinker)
         {
             i++;
             if (i == index)
@@ -273,7 +273,7 @@ static void saveg_read_thinker_t(thinker_t *str)
     str->next = saveg_readp();
 
     // think_t function;
-    str->function = (think_t)(intptr_t)saveg_readp();
+    str->function.v = (actionf_v)(intptr_t)saveg_readp();
 
     // struct thinker_s* cnext;
     str->cnext = saveg_readp();
@@ -826,6 +826,7 @@ static void saveg_read_player_t(player_t *str)
 
     // fixed_t bob;
     str->bob = saveg_read32();
+    str->bob2 = str->bob;
 
     // fixed_t momx;
     str->momx = saveg_read32();
@@ -2097,6 +2098,9 @@ void P_UnArchiveWorld (void)
 
 	    si->textureoffset = saveg_read32();
 	    si->rowoffset = saveg_read32();
+	    // [crispy] smooth texture scrolling
+	    si->basetextureoffset = si->textureoffset;
+	    si->baserowoffset = si->rowoffset;
 
             si->toptexture = saveg_read16();
             si->bottomtexture = saveg_read16();
@@ -2134,7 +2138,7 @@ void P_ArchiveThinkers (void)
   // the prev field as a placeholder, since it can be restored later.
 
   for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
-    if (th->function == P_MobjThinker)
+    if (th->function.p1 == (actionf_p1)P_MobjThinker)
       th->prev = (thinker_t *) ++size;
 
   // check that enough room is available in savegame buffer
@@ -2143,7 +2147,7 @@ void P_ArchiveThinkers (void)
   // save off the current thinkers
 
   for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
-    if (th->function == P_MobjThinker)
+    if (th->function.p1 == (actionf_p1)P_MobjThinker)
       {
         mobj_t *mobj = &tmp;
         memcpy (mobj, th, sizeof(*mobj));
@@ -2156,13 +2160,13 @@ void P_ArchiveThinkers (void)
         // mobj thinker.
 
         if (mobj->target)
-          mobj->target = mobj->target->thinker.function ==
-            P_MobjThinker ?
+          mobj->target = mobj->target->thinker.function.p1 ==
+            (actionf_p1)P_MobjThinker ?
             (mobj_t *) mobj->target->thinker.prev : NULL;
 
         if (mobj->tracer)
-          mobj->tracer = mobj->tracer->thinker.function ==
-            P_MobjThinker ?
+          mobj->tracer = mobj->tracer->thinker.function.p1 ==
+            (actionf_p1)P_MobjThinker ?
             (mobj_t *) mobj->tracer->thinker.prev : NULL;
 
         // killough 2/14/98: new field: save last known enemy. Prevents
@@ -2170,20 +2174,20 @@ void P_ArchiveThinkers (void)
         // seeing player anymore.
 
         if (mobj->lastenemy)
-          mobj->lastenemy = mobj->lastenemy->thinker.function ==
-            P_MobjThinker ?
+          mobj->lastenemy = mobj->lastenemy->thinker.function.p1 ==
+            (actionf_p1)P_MobjThinker ?
             (mobj_t *) mobj->lastenemy->thinker.prev : NULL;
 
         // killough 2/14/98: end changes
 
         if (mobj->above_thing)                                      // phares
-          mobj->above_thing = mobj->above_thing->thinker.function ==
-            P_MobjThinker ?
+          mobj->above_thing = mobj->above_thing->thinker.function.p1 ==
+            (actionf_p1)P_MobjThinker ?
             (mobj_t *) mobj->above_thing->thinker.prev : NULL;
 
         if (mobj->below_thing)
-          mobj->below_thing = mobj->below_thing->thinker.function ==
-            P_MobjThinker ?
+          mobj->below_thing = mobj->below_thing->thinker.function.p1 ==
+            (actionf_p1)P_MobjThinker ?
             (mobj_t *) mobj->below_thing->thinker.prev : NULL;      // phares
 
         if (mobj->player)
@@ -2211,7 +2215,7 @@ void P_ArchiveThinkers (void)
             // or player corpses waiting for deferred removal will be saved as
             // raw pointer values instead of twizzled numbers, causing a crash
             // on savegame load!
-            target = target->thinker.function == P_MobjThinker ?
+            target = target->thinker.function.p1 == (actionf_p1)P_MobjThinker ?
                         (mobj_t *)target->thinker.prev : NULL;
 
         }
@@ -2263,7 +2267,7 @@ void P_UnArchiveThinkers (void)
   for (th = thinkercap.next; th != &thinkercap; )
     {
       thinker_t *next = th->next;
-      if (th->function == P_MobjThinker)
+      if (th->function.p1 == (actionf_p1)P_MobjThinker)
         P_RemoveMobj ((mobj_t *) th);
       else
         Z_Free (th);
@@ -2313,7 +2317,7 @@ void P_UnArchiveThinkers (void)
       //      mobj->floorz = mobj->subsector->sector->floorheight;
       //      mobj->ceilingz = mobj->subsector->sector->ceilingheight;
 
-      mobj->thinker.function = P_MobjThinker;
+      mobj->thinker.function.p1 = (actionf_p1)P_MobjThinker;
       P_AddThinker (&mobj->thinker);
     }
 
@@ -2407,7 +2411,7 @@ void P_ArchiveSpecials (void)
   // save off the current thinkers (memory size calculation -- killough)
 
   for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
-    if (!th->function)
+    if (!th->function.v)
       {
         platlist_t *pl;
         ceilinglist_t *cl;     //jff 2/22/98 need this for ceilings too now
@@ -2427,18 +2431,18 @@ void P_ArchiveSpecials (void)
       }
     else
       size +=
-        th->function==T_MoveCeiling  ? 4+sizeof(ceiling_t) :
-        th->function==T_VerticalDoor ? 4+sizeof(vldoor_t)  :
-        th->function==T_MoveFloor    ? 4+sizeof(floormove_t):
-        th->function==T_PlatRaise    ? 4+sizeof(plat_t)    :
-        th->function==T_LightFlash   ? 4+sizeof(lightflash_t):
-        th->function==T_StrobeFlash  ? 4+sizeof(strobe_t)  :
-        th->function==T_Glow         ? 4+sizeof(glow_t)    :
-        th->function==T_MoveElevator ? 4+sizeof(elevator_t):
-        th->function==T_Scroll       ? 4+sizeof(scroll_t)  :
-        th->function==T_Pusher       ? 4+sizeof(pusher_t)  :
-        th->function==T_FireFlicker? 4+sizeof(fireflicker_t) :
-        th->function==T_Friction     ? 4+sizeof(friction_t) :
+        th->function.p1==(actionf_p1)T_MoveCeiling  ? 4+sizeof(ceiling_t) :
+        th->function.p1==(actionf_p1)T_VerticalDoor ? 4+sizeof(vldoor_t)  :
+        th->function.p1==(actionf_p1)T_MoveFloor    ? 4+sizeof(floormove_t):
+        th->function.p1==(actionf_p1)T_PlatRaise    ? 4+sizeof(plat_t)    :
+        th->function.p1==(actionf_p1)T_LightFlash   ? 4+sizeof(lightflash_t):
+        th->function.p1==(actionf_p1)T_StrobeFlash  ? 4+sizeof(strobe_t)  :
+        th->function.p1==(actionf_p1)T_Glow         ? 4+sizeof(glow_t)    :
+        th->function.p1==(actionf_p1)T_MoveElevator ? 4+sizeof(elevator_t):
+        th->function.p1==(actionf_p1)T_Scroll       ? 4+sizeof(scroll_t)  :
+        th->function.p1==(actionf_p1)T_Pusher       ? 4+sizeof(pusher_t)  :
+        th->function.p1==(actionf_p1)T_FireFlicker  ? 4+sizeof(fireflicker_t) :
+        th->function.p1==(actionf_p1)T_Friction     ? 4+sizeof(friction_t) :
       0;
 
   CheckSaveGame(size);          // killough
@@ -2446,7 +2450,7 @@ void P_ArchiveSpecials (void)
   // save off the current thinkers
   for (th=thinkercap.next; th!=&thinkercap; th=th->next)
     {
-      if (!th->function)
+      if (!th->function.v)
         {
           platlist_t *pl;
           ceilinglist_t *cl;    //jff 2/22/98 add iter variable for ceilings
@@ -2467,7 +2471,7 @@ void P_ArchiveSpecials (void)
           continue;
         }
 
-      if (th->function == T_MoveCeiling)
+      if (th->function.p1 == (actionf_p1)T_MoveCeiling)
         {
         ceiling:                               // killough 2/14/98
           saveg_write8(tc_ceiling);
@@ -2476,7 +2480,7 @@ void P_ArchiveSpecials (void)
           continue;
         }
 
-      if (th->function == T_VerticalDoor)
+      if (th->function.p1 == (actionf_p1)T_VerticalDoor)
         {
           saveg_write8(tc_door);
           saveg_write_pad();
@@ -2484,7 +2488,7 @@ void P_ArchiveSpecials (void)
           continue;
         }
 
-      if (th->function == T_MoveFloor)
+      if (th->function.p1 == (actionf_p1)T_MoveFloor)
         {
           saveg_write8(tc_floor);
           saveg_write_pad();
@@ -2492,7 +2496,7 @@ void P_ArchiveSpecials (void)
           continue;
         }
 
-      if (th->function == T_PlatRaise)
+      if (th->function.p1 == (actionf_p1)T_PlatRaise)
         {
         plat:   // killough 2/14/98: added fix for original plat height above
           saveg_write8(tc_plat);
@@ -2501,7 +2505,7 @@ void P_ArchiveSpecials (void)
           continue;
         }
 
-      if (th->function == T_LightFlash)
+      if (th->function.p1 == (actionf_p1)T_LightFlash)
         {
           saveg_write8(tc_flash);
           saveg_write_pad();
@@ -2509,7 +2513,7 @@ void P_ArchiveSpecials (void)
           continue;
         }
 
-      if (th->function == T_StrobeFlash)
+      if (th->function.p1 == (actionf_p1)T_StrobeFlash)
         {
           saveg_write8(tc_strobe);
           saveg_write_pad();
@@ -2517,7 +2521,7 @@ void P_ArchiveSpecials (void)
           continue;
         }
 
-      if (th->function == T_Glow)
+      if (th->function.p1 == (actionf_p1)T_Glow)
         {
           saveg_write8(tc_glow);
           saveg_write_pad();
@@ -2526,7 +2530,7 @@ void P_ArchiveSpecials (void)
         }
 
       // killough 10/4/98: save flickers
-      if (th->function == T_FireFlicker)
+      if (th->function.p1 == (actionf_p1)T_FireFlicker)
         {
           saveg_write8(tc_flicker);
           saveg_write_pad();
@@ -2535,7 +2539,7 @@ void P_ArchiveSpecials (void)
         }
 
       //jff 2/22/98 new case for elevators
-      if (th->function == T_MoveElevator)
+      if (th->function.p1 == (actionf_p1)T_MoveElevator)
         {
           saveg_write8(tc_elevator);
           saveg_write_pad();
@@ -2544,7 +2548,7 @@ void P_ArchiveSpecials (void)
         }
 
       // killough 3/7/98: Scroll effect thinkers
-      if (th->function == T_Scroll)
+      if (th->function.p1 == (actionf_p1)T_Scroll)
         {
           saveg_write8(tc_scroll);
           saveg_write_scroll_t((scroll_t *) th);
@@ -2553,7 +2557,7 @@ void P_ArchiveSpecials (void)
 
       // phares 3/22/98: Push/Pull effect thinkers
 
-      if (th->function == T_Pusher)
+      if (th->function.p1 == (actionf_p1)T_Pusher)
         {
           saveg_write8(tc_pusher);
           saveg_write_pusher_t((pusher_t *) th);
@@ -2561,7 +2565,7 @@ void P_ArchiveSpecials (void)
         }
 
       // store friction for complevel Boom
-      if (th->function == T_Friction)
+      if (th->function.p1 == (actionf_p1)T_Friction)
         {
           saveg_write8(tc_friction);
           saveg_write_pad();
@@ -2582,6 +2586,8 @@ void P_UnArchiveSpecials (void)
 {
   byte tclass;
 
+  P_FreeScrollers();
+
   // read in saved thinkers
   while ((tclass = saveg_read8()) != tc_endspecials)  // killough 2/14/98
     switch (tclass)
@@ -2593,8 +2599,8 @@ void P_UnArchiveSpecials (void)
           saveg_read_ceiling_t(ceiling);
           ceiling->sector->ceilingdata = ceiling; //jff 2/22/98
 
-          if (ceiling->thinker.function)
-            ceiling->thinker.function = T_MoveCeiling;
+          if (ceiling->thinker.function.p1)
+            ceiling->thinker.function.p1 = (actionf_p1)T_MoveCeiling;
 
           P_AddThinker (&ceiling->thinker);
           P_AddActiveCeiling(ceiling);
@@ -2611,7 +2617,7 @@ void P_UnArchiveSpecials (void)
           door->line = (size_t)door->line!=-1? &lines[(size_t)door->line] : NULL;
 
           door->sector->ceilingdata = door;       //jff 2/22/98
-          door->thinker.function = T_VerticalDoor;
+          door->thinker.function.p1 = (actionf_p1)T_VerticalDoor;
           P_AddThinker (&door->thinker);
           break;
         }
@@ -2622,7 +2628,7 @@ void P_UnArchiveSpecials (void)
           floormove_t *floor = Z_Malloc (sizeof(*floor), PU_LEVEL, NULL);
           saveg_read_floormove_t(floor);
           floor->sector->floordata = floor; //jff 2/22/98
-          floor->thinker.function = T_MoveFloor;
+          floor->thinker.function.p1 = (actionf_p1)T_MoveFloor;
           P_AddThinker (&floor->thinker);
           break;
         }
@@ -2634,8 +2640,8 @@ void P_UnArchiveSpecials (void)
           saveg_read_plat_t(plat);
           plat->sector->floordata = plat; //jff 2/22/98
 
-          if (plat->thinker.function)
-            plat->thinker.function = T_PlatRaise;
+          if (plat->thinker.function.p1)
+            plat->thinker.function.p1 = (actionf_p1)T_PlatRaise;
 
           P_AddThinker (&plat->thinker);
           P_AddActivePlat(plat);
@@ -2647,7 +2653,7 @@ void P_UnArchiveSpecials (void)
         {
           lightflash_t *flash = Z_Malloc (sizeof(*flash), PU_LEVEL, NULL);
           saveg_read_lightflash_t(flash);
-          flash->thinker.function = T_LightFlash;
+          flash->thinker.function.p1 = (actionf_p1)T_LightFlash;
           P_AddThinker (&flash->thinker);
           break;
         }
@@ -2657,7 +2663,7 @@ void P_UnArchiveSpecials (void)
         {
           strobe_t *strobe = Z_Malloc (sizeof(*strobe), PU_LEVEL, NULL);
           saveg_read_strobe_t(strobe);
-          strobe->thinker.function = T_StrobeFlash;
+          strobe->thinker.function.p1 = (actionf_p1)T_StrobeFlash;
           P_AddThinker (&strobe->thinker);
           break;
         }
@@ -2667,7 +2673,7 @@ void P_UnArchiveSpecials (void)
         {
           glow_t *glow = Z_Malloc (sizeof(*glow), PU_LEVEL, NULL);
           saveg_read_glow_t(glow);
-          glow->thinker.function = T_Glow;
+          glow->thinker.function.p1 = (actionf_p1)T_Glow;
           P_AddThinker (&glow->thinker);
           break;
         }
@@ -2677,7 +2683,7 @@ void P_UnArchiveSpecials (void)
         {
           fireflicker_t *flicker = Z_Malloc (sizeof(*flicker), PU_LEVEL, NULL);
           saveg_read_fireflicker_t(flicker);
-          flicker->thinker.function = T_FireFlicker;
+          flicker->thinker.function.p1 = (actionf_p1)T_FireFlicker;
           P_AddThinker (&flicker->thinker);
           break;
         }
@@ -2690,7 +2696,7 @@ void P_UnArchiveSpecials (void)
           saveg_read_elevator_t(elevator);
           elevator->sector->floordata = elevator; //jff 2/22/98
           elevator->sector->ceilingdata = elevator; //jff 2/22/98
-          elevator->thinker.function = T_MoveElevator;
+          elevator->thinker.function.p1 = (actionf_p1)T_MoveElevator;
           P_AddThinker (&elevator->thinker);
           break;
         }
@@ -2699,8 +2705,10 @@ void P_UnArchiveSpecials (void)
         {
           scroll_t *scroll = Z_Malloc (sizeof(scroll_t), PU_LEVEL, NULL);
           saveg_read_scroll_t(scroll);
-          scroll->thinker.function = T_Scroll;
+          scroll->thinker.function.p1 = (actionf_p1)T_Scroll;
           P_AddThinker(&scroll->thinker);
+          if (scroll->type >= sc_side && scroll->type <= sc_ceiling)
+            P_AddScroller(scroll);
           break;
         }
 
@@ -2708,7 +2716,7 @@ void P_UnArchiveSpecials (void)
         {
           pusher_t *pusher = Z_Malloc (sizeof(pusher_t), PU_LEVEL, NULL);
           saveg_read_pusher_t(pusher);
-          pusher->thinker.function = T_Pusher;
+          pusher->thinker.function.p1 = (actionf_p1)T_Pusher;
           // can't convert from index to pointer, old save version
           if (pusher->source == NULL)
           {
@@ -2727,7 +2735,7 @@ void P_UnArchiveSpecials (void)
         {
           friction_t *friction = Z_Malloc (sizeof(friction_t), PU_LEVEL, NULL);
           saveg_read_friction_t(friction);
-          friction->thinker.function = T_Friction;
+          friction->thinker.function.p1 = (actionf_p1)T_Friction;
           P_AddThinker(&friction->thinker);
           break;
         }

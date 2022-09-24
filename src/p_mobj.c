@@ -88,8 +88,8 @@ boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
       // Modified handling.
       // Call action functions when the state is set
 
-      if (st->action)
-	st->action(mobj);
+      if (st->action.p1)
+	st->action.p1(mobj);
 
       seenstate[state] = 1 + st->nextstate;   // killough 4/9/98
 
@@ -693,35 +693,37 @@ void P_MobjThinker (mobj_t* mobj)
   // momentum movement
   if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY
       || mobj->intflags & MIF_OVERUNDER) // [Nugget]
-  {
-    P_XYMovement(mobj);
-    mobj->intflags &= ~MIF_SCROLLING;
-    if (mobj->thinker.function == P_RemoveThinkerDelayed) // killough
-      { return; } // mobj was removed
-  }
+    {
+      P_XYMovement(mobj);
+      mobj->intflags &= ~MIF_SCROLLING;
+      if (mobj->thinker.function.p1 == (actionf_p1)P_RemoveThinkerDelayed) // killough
+	return;       // mobj was removed
+    }
 
   if (mobj->z != mobj->floorz || mobj->momz)
+    {
+      P_ZMovement(mobj);
+      if (mobj->thinker.function.p1 == (actionf_p1)P_RemoveThinkerDelayed) // killough
+	return;       // mobj was removed
+    }
+  else
+    if (!(mobj->momx | mobj->momy) && !sentient(mobj))
+      {                                  // non-sentient objects at rest
+	mobj->intflags |= MIF_ARMED;     // arm a mine which has come to rest
+
+	// killough 9/12/98: objects fall off ledges if they are hanging off
+	// slightly push off of ledge if hanging more than halfway off
+
+	if (mobj->z > mobj->dropoffz &&      // Only objects contacting dropoff
+	    !(mobj->flags & MF_NOGRAVITY) && // Only objects which fall
+	    !comp[comp_falloff] && demo_version >= 203) // Not in old demos
+	  P_ApplyTorque(mobj);               // Apply torque
+	else
+	  mobj->intflags &= ~MIF_FALLING, mobj->gear = 0;  // Reset torque
+      }
+
+  if (mbf21)
   {
-    P_ZMovement(mobj);
-    if (mobj->thinker.function == P_RemoveThinkerDelayed) // killough
-      { return; } // mobj was removed
-  }
-  else if (!(mobj->momx | mobj->momy) && !sentient(mobj))
-  {                                  // non-sentient objects at rest
-    mobj->intflags |= MIF_ARMED;     // arm a mine which has come to rest
-
-    // killough 9/12/98: objects fall off ledges if they are hanging off
-    // slightly push off of ledge if hanging more than halfway off
-
-    if (mobj->z > mobj->dropoffz &&                 // Only objects contacting dropoff
-        !(mobj->flags & MF_NOGRAVITY) &&            // Only objects which fall
-        !comp[comp_falloff] && demo_version >= 203) // Not in old demos
-      { P_ApplyTorque(mobj); }                            // Apply torque
-    else
-      { mobj->intflags &= ~MIF_FALLING, mobj->gear = 0; } // Reset torque
-  }
-
-  if (mbf21) {
     sector_t* sector = mobj->subsector->sector;
 
     if (
@@ -735,7 +737,8 @@ void P_MobjThinker (mobj_t* mobj)
       P_DamageMobj(mobj, NULL, NULL, 10000);
 
       // must have been removed
-      if (mobj->thinker.function != P_MobjThinker) { return; }
+      if (mobj->thinker.function.p1 != (actionf_p1)P_MobjThinker)
+        return;
     }
   }
 
@@ -820,7 +823,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   mobj->z = z == ONFLOORZ ? mobj->floorz : z == ONCEILINGZ ?
     mobj->ceilingz - mobj->height : z;
 
-  mobj->thinker.function = P_MobjThinker;
+  mobj->thinker.function.p1 = (actionf_p1)P_MobjThinker;
   mobj->above_thing = mobj->below_thing = 0;           // phares
 
   // for Boom friction code

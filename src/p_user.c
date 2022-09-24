@@ -90,6 +90,9 @@ void P_Bob(player_t *player, angle_t angle, fixed_t move)
 // Calculate the walking / running height adjustment
 //
 
+// [crispy] variable player view bob
+static const int bobfactors[3] = {0, 4, 3};
+
 void P_CalcHeight (player_t* player)
 {
   int     angle;
@@ -143,6 +146,9 @@ void P_CalcHeight (player_t* player)
   view = (demorecording||netgame||fauxdemo||strictmode)
          ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
 
+  // [crispy] variable player view bob
+  player->bob2 = bobfactors[cosmetic_bobbing] * player->bob / 4;
+
   if (!onground || player->cheats & CF_NOMOMENTUM)
   {
     // [Nugget] Account for crouching
@@ -162,7 +168,7 @@ void P_CalcHeight (player_t* player)
   }
 
   angle = (FINEANGLES/20*leveltime)&FINEMASK;
-  bob = cosmetic_bobbing ? FixedMul(player->bob/2,finesine[angle]) : 0;
+  bob = FixedMul(player->bob2/2,finesine[angle]);
 
   // move viewheight
   if (player->playerstate == PST_LIVE)

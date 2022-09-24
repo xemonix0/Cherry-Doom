@@ -154,9 +154,9 @@ add_executable(nugget-doom WIN32 ${WOOF_SOURCES})
 target_woof_settings(nugget-doom)
 target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 
-if(Python3_EXECUTABLE)
-    add_dependencies(nugget-doom paramsgen)
-    target_compile_definitions(nugget-doom PRIVATE HAVE_PARAMS_GEN)
+option(ENABLE_PARAMSGEN "Regenerate the src/params.h header file" OFF)
+if(ENABLE_PARAMSGEN AND Python3_EXECUTABLE)
+   add_dependencies(nugget-doom paramsgen)
 endif()
 
 if (FluidSynth_FOUND)

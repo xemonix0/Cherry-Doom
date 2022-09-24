@@ -39,6 +39,7 @@ static const iwad_t iwads[] =
     { "freedoom1.wad", doom,       retail,       "Freedoom: Phase 1" },
     { "freedm.wad",    doom2,      commercial,   "FreeDM" },
     { "rekkrsa.wad",   pack_rekkr, retail,       "REKKR" },
+    { "rekkrsl.wad",   pack_rekkr, retail,       "REKKR: Sunken Land" },
 };
 
 // "128 IWAD search directories should be enough for anybody".
@@ -176,6 +177,20 @@ static registry_value_t root_path_keys[] =
         SOFTWARE_KEY "\\GOG.com\\Games\\1435827232",
         "PATH",
     },
+
+    // DOOM Unity port
+    {
+        HKEY_LOCAL_MACHINE,
+        SOFTWARE_KEY "\\GOG.com\\Games\\2015545325",
+        "PATH"
+    },
+
+    // DOOM II Unity port
+    {
+        HKEY_LOCAL_MACHINE,
+        SOFTWARE_KEY "\\GOG.com\\Games\\1426071866",
+        "PATH"
+    },
 };
 
 // Subdirectories of the above install path, where IWADs are installed.
@@ -211,6 +226,10 @@ static char *steam_install_subdirs[] =
     // From Doom 3: BFG Edition:
 
     "steamapps\\common\\DOOM 3 BFG Edition\\base\\wads",
+
+    "steamapps\\common\\ultimate doom\\rerelease\\DOOM_Data\\StreamingAssets",
+    "steamapps\\common\\doom 2\\rerelease\\DOOM II_Data\\StreamingAssets",
+    "steamapps\\common\\doom 2\\finaldoombase"
 };
 
 static char *GetRegistryString(registry_value_t *reg_val)

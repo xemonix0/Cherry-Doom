@@ -97,75 +97,85 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
   do {
     state_t *state;
 
-    if (!stnum) {
-      // object removed itself
-      psp->state = NULL;
-      break;
-    }
+      if (!stnum)
+        {
+          // object removed itself
+          psp->state = NULL;
+          break;
+        }
 
-    // killough 7/19/98: Pre-Beta BFG
-    if (stnum == S_BFG1 && (classic_bfg || beta_emulation))
-      { stnum = S_OLDBFG1; } // Skip to alternative weapon frame
+      // killough 7/19/98: Pre-Beta BFG
+      if (stnum == S_BFG1 && (classic_bfg || beta_emulation))
+	stnum = S_OLDBFG1;                 // Skip to alternative weapon frame
 
-    state = &states[stnum];
-    psp->state = state;
-    psp->tics = state->tics; // could be 0
+      state = &states[stnum];
+      psp->state = state;
+      psp->tics = state->tics;        // could be 0
 
-    if (state->misc1) {
-      // coordinate set
-      // [Nugget] Subtract 1 pixel from the misc1 calculation,
-      // for consistency with the first person sprite centering fix
-      psp->sx = (state->misc1 << FRACBITS) - (1<<FRACBITS);
-      psp->sy = state->misc2 << FRACBITS;
-      // [FG] centered weapon sprite
-      psp->sx2 = psp->sx;
-      psp->sy2 = psp->sy;
-    }
+      if (state->misc1)
+        {
+          // coordinate set
+          // [Nugget] Subtract 1 pixel from the misc1 calculation,
+          // for consistency with the first person sprite centering fix
+          psp->sx = (state->misc1 << FRACBITS) - (1<<FRACBITS);
+          psp->sy = state->misc2 << FRACBITS;
+          // [FG] centered weapon sprite
+          psp->sx2 = psp->sx;
+          psp->sy2 = psp->sy;
+        }
 
-    // Call action routine.
-    // Modified handling.
-    if (state->action) {
-      state->action(player, psp);
-      if (!psp->state) { break; }
-    }
-
-    stnum = psp->state->nextstate;
+      // Call action routine.
+      // Modified handling.
+      if (state->action.p2)
+        {
+          state->action.p2(player, psp);
+          if (!psp->state)
+            break;
+        }
+      stnum = psp->state->nextstate;
   } while (!psp->tics);     // an initial state of 0 could cycle through
 }
 
 // [Nugget] Bob weapon based on selected style
 void P_NuggetBobbing(player_t* player, fixed_t* sx, fixed_t* sy)
 {
-  int angle = (128*leveltime) & FINEMASK;
+  const fixed_t bob = player->bob2;
+  const int angle = (128*leveltime) & FINEMASK;
   // Correct first person sprite centering
-  *sx = /*FRACUNIT +*/ FixedMul(player->bob, finecosine[angle]); // Default, differs in a few styles
+  *sx = /*FRACUNIT +*/ FixedMul(bob, finecosine[angle]); // Default, differs in a few styles
   *sy = WEAPONTOP; // Used for all styles, their specific values are added to this one right after
 
   // Bobbing Styles, ported from Zandronum
   switch (bobbing_style) {
     case bob_Vanilla:
-      *sy += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+      *sy += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;
+
     case bob_InvVanilla:
-      *sy += player->bob - FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+      *sy += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;
+
     case bob_Alpha:
-      *sx = FixedMul(player->bob, finesine[angle]);
-      *sy += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+      *sx = FixedMul(bob, finesine[angle]);
+      *sy += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;
+
     case bob_InvAlpha:
-      *sx = FixedMul(player->bob, finesine[angle]);
-      *sy += player->bob - FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+      *sx = FixedMul(bob, finesine[angle]);
+      *sy += bob - FixedMul(player->bob2, finesine[angle & (FINEANGLES/2-1)]);
       break;
+
     case bob_Smooth:
-      *sy += (player->bob - FixedMul(player->bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
+      *sy += (bob - FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
       break;
+
     case bob_InvSmooth:
-      *sy += (FixedMul(player->bob, finecosine[angle*2 & (FINEANGLES-1)]) + player->bob) / 2;
+      *sy += (FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)]) + bob) / 2;
       break;
+
     case bob_Quake:
       *sx = 0;
-      *sy += FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+      *sy += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;
   }
 }
@@ -526,7 +536,8 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
     player->attackdown = false;
 
   // bob the weapon based on movement speed
-  if (!casual_play) {
+  if (!casual_play)
+  {
     int angle = (128*leveltime) & FINEMASK;
     // [Nugget] Fix first person sprite centering
     psp->sx = /*FRACUNIT +*/ FixedMul(player->bob, finecosine[angle]);
@@ -1170,6 +1181,10 @@ void P_SetupPsprites(player_t *player)
 // Called every tic by player thinking routine.
 //
 
+#if 0 // [Nugget] Unused
+#define BOBBING_75 2
+#endif
+
 #define WEAPON_CENTERED 1
 #define WEAPON_BOBBING 2
 
@@ -1194,18 +1209,19 @@ void P_MovePsprites(player_t *player)
   psp->sx2 = psp->sx;
   psp->sy2 = psp->sy;
 
-  if (psp->state && !cosmetic_bobbing)
+  if (psp->state && !bobbing_percentage)
   {
     static fixed_t last_sy = 32 * FRACUNIT;
 
     psp->sx2 = FRACUNIT;
 
-    if (psp->state->action != A_Lower && psp->state->action != A_Raise)
+    if (psp->state->action.p2 != (actionf_p2)A_Lower &&
+        psp->state->action.p2 != (actionf_p2)A_Raise)
     {
       last_sy = psp->sy2;
       psp->sy2 = 32 * FRACUNIT;
     }
-    else if (psp->state->action == A_Lower)
+    else if (psp->state->action.p2 == (actionf_p2)A_Lower)
     {
       // We want to move smoothly from where we were
       psp->sy2 -= (last_sy - 32 * FRACUNIT);
@@ -1215,8 +1231,8 @@ void P_MovePsprites(player_t *player)
   {
     // [FG] don't center during lowering and raising states
     if (psp->state->misc1 ||
-        psp->state->action == A_Lower ||
-        psp->state->action == A_Raise)
+        psp->state->action.p2 == (actionf_p2)A_Lower ||
+        psp->state->action.p2 == (actionf_p2)A_Raise)
     {
     }
     // [FG] not attacking means idle

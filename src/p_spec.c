@@ -56,6 +56,7 @@
 #include "r_draw.h"  // R_SetFuzzPosTic
 #include "r_sky.h"   // R_GetSkyColor
 #include "m_swap.h"
+#include "i_video.h" // [FG] uncapped
 
 //
 // Animating textures and planes
@@ -2298,17 +2299,17 @@ void P_UpdateSpecials (void)
 
   // Animate flats and textures globally
   for (anim = anims ; anim < lastanim ; anim++)
-    for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
+    for (i = 0 ; i < anim->numpics ; i++)
       {
         pic = anim->basepic + ( (leveltime/anim->speed + i)%anim->numpics );
         if (anim->istexture)
-          texturetranslation[i] = pic;
+          texturetranslation[anim->basepic + i] = pic;
         else
         {
-          flattranslation[i] = pic;
+          flattranslation[anim->basepic + i] = pic;
           // [crispy] add support for SMMU swirling flats
           if (anim->speed > 65535 || anim->numpics == 1 || r_swirl)
-            flattranslation[i] = -1;
+            flattranslation[anim->basepic + i] = -1;
         }
       }
 
@@ -2591,20 +2592,26 @@ void T_Scroll(scroll_t *s)
 
     case sc_side:                   // killough 3/7/98: Scroll wall texture
         side = sides + s->affectee;
-        side->textureoffset += dx;
-        side->rowoffset += dy;
+        side->basetextureoffset += dx;
+        side->baserowoffset += dy;
+        side->textureoffset = side->basetextureoffset;
+        side->rowoffset = side->baserowoffset;
         break;
 
     case sc_floor:                  // killough 3/7/98: Scroll floor texture
         sec = sectors + s->affectee;
-        sec->floor_xoffs += dx;
-        sec->floor_yoffs += dy;
+        sec->base_floor_xoffs += dx;
+        sec->base_floor_yoffs += dy;
+        sec->floor_xoffs = sec->base_floor_xoffs;
+        sec->floor_yoffs = sec->base_floor_yoffs;
         break;
 
     case sc_ceiling:               // killough 3/7/98: Scroll ceiling texture
         sec = sectors + s->affectee;
-        sec->ceiling_xoffs += dx;
-        sec->ceiling_yoffs += dy;
+        sec->base_ceiling_xoffs += dx;
+        sec->base_ceiling_yoffs += dy;
+        sec->ceiling_xoffs = sec->base_ceiling_xoffs;
+        sec->ceiling_yoffs = sec->base_ceiling_yoffs;
         break;
 
     case sc_carry:
@@ -2638,6 +2645,91 @@ void T_Scroll(scroll_t *s)
     }
 }
 
+// [crispy] smooth texture scrolling
+
+static int maxscrollers, numscrollers;
+static scroll_t **scrollers;
+
+void P_AddScroller (scroll_t *s)
+{
+  if (numscrollers == maxscrollers)
+  {
+    maxscrollers = maxscrollers ? 2 * maxscrollers : 32;
+    scrollers = I_Realloc(scrollers, maxscrollers * sizeof(*scrollers));
+  }
+  scrollers[numscrollers++] = s;
+}
+
+void P_FreeScrollers (void)
+{
+  maxscrollers = 0;
+  numscrollers = 0;
+  if (scrollers)
+    free(scrollers);
+  scrollers = NULL;
+}
+
+void R_InterpolateTextureOffsets (void)
+{
+  if (uncapped && leveltime > oldleveltime)
+  {
+    int i;
+
+    for (i = 0; i < numscrollers; i++)
+    {
+      scroll_t *s = scrollers[i];
+      int dx, dy;
+
+      if (s->accel)
+      {
+        dx = s->vdx;
+        dy = s->vdy;
+      }
+      else
+      {
+        dx = s->dx;
+        dy = s->dy;
+
+        if (s->control != -1)
+        {   // compute scroll amounts based on a sector's height changes
+          fixed_t height = sectors[s->control].floorheight +
+            sectors[s->control].ceilingheight;
+          fixed_t delta = height - s->last_height;
+          dx = FixedMul(dx, delta);
+          dy = FixedMul(dy, delta);
+        }
+      }
+
+      if (!dx && !dy)
+        continue;
+
+      switch(s->type)
+      {
+        side_t *side;
+        sector_t *sec;
+
+        case sc_side:
+          side = sides + s->affectee;
+          side->textureoffset = side->basetextureoffset + FixedMul(dx, fractionaltic);
+          side->rowoffset = side->baserowoffset + FixedMul(dy, fractionaltic);
+          break;
+        case sc_floor:
+          sec = sectors + s->affectee;
+          sec->floor_xoffs = sec->base_floor_xoffs + FixedMul(dx, fractionaltic);
+          sec->floor_yoffs = sec->base_floor_yoffs + FixedMul(dy, fractionaltic);
+          break;
+        case sc_ceiling:
+          sec = sectors + s->affectee;
+          sec->ceiling_xoffs = sec->base_ceiling_xoffs + FixedMul(dx, fractionaltic);
+          sec->ceiling_yoffs = sec->base_ceiling_yoffs + FixedMul(dy, fractionaltic);
+          break;
+        default:
+          break;
+      }
+    }
+  }
+}
+
 //
 // Add_Scroller()
 //
@@ -2660,7 +2752,7 @@ static void Add_Scroller(int type, fixed_t dx, fixed_t dy,
                          int control, int affectee, int accel)
 {
   scroll_t *s = Z_Malloc(sizeof *s, PU_LEVSPEC, 0);
-  s->thinker.function = T_Scroll;
+  s->thinker.function.p1 = (actionf_p1)T_Scroll;
   s->type = type;
   s->dx = dx;
   s->dy = dy;
@@ -2671,6 +2763,9 @@ static void Add_Scroller(int type, fixed_t dx, fixed_t dy,
       sectors[control].floorheight + sectors[control].ceilingheight;
   s->affectee = affectee;
   P_AddThinker(&s->thinker);
+
+  if (type >= sc_side && type <= sc_ceiling)
+    P_AddScroller(s);
 }
 
 // Adds wall scroller. Scroll amount is rotated with respect to wall's
@@ -2683,7 +2778,7 @@ static void Add_Scroller(int type, fixed_t dx, fixed_t dy,
 // killough 10/98:
 // fix scrolling aliasing problems, caused by long linedefs causing overflowing
 
-static void Add_WallScroller(Long64 dx, Long64 dy, const line_t *l,
+static void Add_WallScroller(int64_t dx, int64_t dy, const line_t *l,
                              int control, int accel)
 {
   fixed_t x = abs(l->dx), y = abs(l->dy), d;
@@ -2709,6 +2804,8 @@ static void P_SpawnScrollers(void)
 {
   int i;
   line_t *l = lines;
+
+  P_FreeScrollers();
 
   for (i=0;i<numlines;i++,l++)
     {
@@ -2823,7 +2920,7 @@ static void Add_Friction(int friction, int movefactor, int affectee)
 {
     friction_t *f = Z_Malloc(sizeof *f, PU_LEVSPEC, 0);
 
-    f->thinker.function/*.acp1*/ = /*(actionf_p1) */T_Friction;
+    f->thinker.function.p1 = (actionf_p1)T_Friction;
     f->friction = friction;
     f->movefactor = movefactor;
     f->affectee = affectee;
@@ -3054,7 +3151,7 @@ static void Add_Pusher(int type, int x_mag, int y_mag,
 {
   pusher_t *p = Z_Malloc(sizeof *p, PU_LEVSPEC, 0);
 
-  p->thinker.function = T_Pusher;
+  p->thinker.function.p1 = (actionf_p1)T_Pusher;
   p->source = source;
   p->type = type;
   p->x_mag = x_mag>>FRACBITS;
@@ -3109,7 +3206,7 @@ boolean PIT_PushThing(mobj_t* thing)
         {
           int x = (thing->x-sx) >> FRACBITS;
           int y = (thing->y-sy) >> FRACBITS;
-          speed = (fixed_t)(((Long64) tmpusher->magnitude << 23) / (x*x+y*y+1));
+          speed = (fixed_t)(((int64_t) tmpusher->magnitude << 23) / (x*x+y*y+1));
         }
 
       // If speed <= 0, you're outside the effective radius. You also have

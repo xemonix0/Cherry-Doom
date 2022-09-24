@@ -567,7 +567,6 @@ void AM_changeWindowLoc(void)
 //
 void AM_initVariables(void)
 {
-  int pnum;
   static event_t st_notify = { ev_keyup, AM_MSGENTERED };
 
   automapactive = true;
@@ -584,13 +583,7 @@ void AM_initVariables(void)
   m_w = FTOM(f_w);
   m_h = FTOM(f_h);
 
-  // find player to center on initially
-  if (!playeringame[pnum = consoleplayer])
-  for (pnum=0;pnum<MAXPLAYERS;pnum++)
-    if (playeringame[pnum])
-  break;
-
-  plr = &players[pnum];
+  plr = &players[displayplayer];
   m_x = (plr->mo->x >> FRACTOMAPBITS) - m_w/2;
   m_y = (plr->mo->y >> FRACTOMAPBITS) - m_h/2;
   AM_Ticker(); // initialize variables for interpolation
@@ -1619,6 +1612,8 @@ void AM_drawWalls(void)
   int i;
   static mline_t l;
 
+  const boolean keyed_door_flash = map_keyed_door_flash && (leveltime & 16);
+
   // draw the unclipped visible portions of all lines
   for (i=0;i<numlines;i++)
   {
@@ -1650,7 +1645,7 @@ void AM_drawWalls(void)
             lines[i].special==198
           )
         )
-          AM_drawMline(&l, mapcolor_exit); // exit line
+          AM_drawMline(&l, keyed_door_flash ? mapcolor_grid : mapcolor_exit); // exit line
         // jff 1/10/98 add new color for 1S secret sector boundary
         else if (mapcolor_secr && //jff 4/3/98 0 is disable
             (
@@ -1694,7 +1689,7 @@ void AM_drawWalls(void)
             lines[i].special==198
           )
         )
-          AM_drawMline(&l, mapcolor_exit); // exit line
+          AM_drawMline(&l, keyed_door_flash ? mapcolor_grid : mapcolor_exit); // exit line
         else if //jff 1/5/98 this clause implements showing keyed doors
         (
           (mapcolor_bdor || mapcolor_ydor || mapcolor_rdor) &&
@@ -1712,7 +1707,7 @@ void AM_drawWalls(void)
               (lines[i].frontsector->floorheight==lines[i].frontsector->ceilingheight))
           {
 #endif
-            if (map_keyed_door_flash && (leveltime & 16))
+            if (keyed_door_flash)
             {
                AM_drawMline(&l, mapcolor_grid);
             }
@@ -1947,11 +1942,12 @@ void AM_drawPlayers(void)
   int   their_color = -1;
   int   color;
   mpoint_t pt;
-  // [crispy] smooth player arrow rotation
-  const angle_t smoothangle = automaprotate ? plr->mo->angle : viewangle;
 
   if (!netgame)
   {
+    // [crispy] smooth player arrow rotation
+    const angle_t smoothangle = automaprotate ? plr->mo->angle : viewangle;
+
     // interpolate player arrow
     if (uncapped && leveltime > oldleveltime)
     {
@@ -1994,6 +1990,8 @@ void AM_drawPlayers(void)
 
   for (i=0;i<MAXPLAYERS;i++)
   {
+    angle_t smoothangle;
+
     their_color++;
     p = &players[i];
 
@@ -2009,11 +2007,26 @@ void AM_drawPlayers(void)
     else
       color = mapcolor_plyr[their_color];   //jff 1/6/98 use default color
 
-    pt.x = p->mo->x >> FRACTOMAPBITS;
-    pt.y = p->mo->y >> FRACTOMAPBITS;
+    // [crispy] interpolate other player arrows
+    if (uncapped && leveltime > oldleveltime)
+    {
+        pt.x = (p->mo->oldx + FixedMul(p->mo->x - p->mo->oldx, fractionaltic)) >> FRACTOMAPBITS;
+        pt.y = (p->mo->oldy + FixedMul(p->mo->y - p->mo->oldy, fractionaltic)) >> FRACTOMAPBITS;
+    }
+    else
+    {
+        pt.x = p->mo->x >> FRACTOMAPBITS;
+        pt.y = p->mo->y >> FRACTOMAPBITS;
+    }
+
     if (automaprotate)
     {
       AM_rotatePoint(&pt);
+      smoothangle = p->mo->angle;
+    }
+    else
+    {
+      smoothangle = R_InterpolateAngle(p->mo->oldangle, p->mo->angle, fractionaltic);
     }
 
     AM_drawLineCharacter
@@ -2021,7 +2034,7 @@ void AM_drawPlayers(void)
       player_arrow,
       NUMPLYRLINES,
       0,
-      p->mo->angle,
+      smoothangle,
       color,
       pt.x,
       pt.y
