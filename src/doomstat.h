@@ -438,8 +438,6 @@ extern int doom_weapon_toggles;   // killough 10/98
 // [FG] centered weapon sprite
 extern int center_weapon;
 
-extern int cosmetic_bobbing;
-
 //----- Nugget ---------------------------------------------------------------
 
 extern boolean fauxdemo;

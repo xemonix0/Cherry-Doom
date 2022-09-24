@@ -121,8 +121,6 @@ int monkeys, default_monkeys;
 // [FG] centered weapon sprite
 int center_weapon;
 
-int cosmetic_bobbing;
-
 char *MAPNAME(int e, int m)
 {
   static char name[9];

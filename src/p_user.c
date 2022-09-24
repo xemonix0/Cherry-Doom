@@ -90,9 +90,6 @@ void P_Bob(player_t *player, angle_t angle, fixed_t move)
 // Calculate the walking / running height adjustment
 //
 
-// [crispy] variable player view bob
-static const int bobfactors[3] = {0, 4, 3};
-
 void P_CalcHeight (player_t* player)
 {
   int     angle;
@@ -114,26 +111,13 @@ void P_CalcHeight (player_t* player)
 
   // [FG] MBF player bobbing rewrite causes demo sync problems
   // http://prboom.sourceforge.net/mbf-bugs.html
-  // [Nugget] Implement bobbing percentage setting
-  player->bob = (casual_play)
-                ? (bobbing_percentage != 0)
-                  ? (demo_version >= 203)
-                    ? (((FixedMul(player->momx,player->momx)
-                         + FixedMul(player->momy,player->momy))>>2)
-                       / 100) * bobbing_percentage
-                    : (((FixedMul(player->mo->momx,player->mo->momx)
-                         + FixedMul(player->mo->momy,player->mo->momy))>>2)
-                       / 100) * bobbing_percentage
-                  : 0
-                : (demo_version >= 203
-                   && ((bobbing_percentage != 0) || player_bobbing))
-                  ? (FixedMul(player->momx,player->momx)
-                     + FixedMul(player->momy,player->momy))>>2
-                  : (demo_compatibility
-                     || (bobbing_percentage != 0) || player_bobbing)
-                    ? (FixedMul (player->mo->momx, player->mo->momx)
-                       + FixedMul (player->mo->momy,player->mo->momy))>>2
-                    : 0;
+  player->bob = (demo_version >= 203 && player_bobbing)
+                ? (FixedMul(player->momx,player->momx)
+                   + FixedMul(player->momy,player->momy))>>2
+                : (demo_compatibility || player_bobbing)
+                  ? (FixedMul (player->mo->momx, player->mo->momx)
+                     + FixedMul (player->mo->momy,player->mo->momy))>>2
+                  : 0;
 
   if ((demo_version == 202 || demo_version == 203) &&
       player->mo->friction > ORIG_FRICTION) // ice?
@@ -147,7 +131,8 @@ void P_CalcHeight (player_t* player)
          ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
 
   // [crispy] variable player view bob
-  player->bob2 = bobfactors[cosmetic_bobbing] * player->bob / 4;
+  // [Nugget] Implement bobbing percentage setting
+  player->bob2 = (player->bob / 100) * bobbing_percentage;
 
   if (!onground || player->cheats & CF_NOMOMENTUM)
   {

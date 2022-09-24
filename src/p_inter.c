@@ -672,14 +672,14 @@ boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
 
   if (STRICTMODE(extra_gibbing) && source && source->player
       &&
-      (  (source->player->psprites->state->action == A_Punch
+      (  (source->player->psprites->state->action.p2 == (actionf_p2)A_Punch
           && source->player->powers[pw_strength]
           && (P_AproxDistance(target->x - source->x, target->y - source->y)
               < ((64*FRACUNIT) + target->info->radius)))
-       ||(source->player->psprites->state->action == A_Saw
+       ||(source->player->psprites->state->action.p2 == (actionf_p2)A_Saw
           && (P_AproxDistance(target->x - source->x, target->y - source->y)
               < ((65*FRACUNIT) + target->info->radius)))
-       ||(source->player->psprites->state->action == A_FireShotgun2
+       ||(source->player->psprites->state->action.p2 == (actionf_p2)A_FireShotgun2
           && (P_AproxDistance(target->x - source->x, target->y - source->y)
               < ((128*FRACUNIT) + target->info->radius)))
        )
