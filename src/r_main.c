@@ -39,8 +39,10 @@
 #include "v_video.h"
 #include "st_stuff.h"
 
+#if 0 // [Nugget] Unused
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW 2048
+#endif
 
 // killough: viewangleoffset is a legacy from the pre-v1.2 days, when Doom
 // had Left/Mid/Right viewing. +/-ANG90 offsets were placed here on each
@@ -658,6 +660,11 @@ void R_SetupFrame (player_t *player)
   // [crispy] pitch is actual lookdir and weapon pitch
   pitch = player->lookdir / MLOOKUNIT + player->recoilpitch;
   }
+
+  // [Nugget] Mitigate misalignment between PLAYER_SLOPE() and 'lookdir'
+  // on FOVs greater than 'ORIGFOV'; doing it for lesser FOVs would require
+  // generating more values in yslopes[]
+  if ((ORIGFOV/fov) < 1) { pitch = pitch * ORIGFOV/fov; }
 
   // [Nugget]: [crispy] A11Y
   if (a11y_weapon_flash)

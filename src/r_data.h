@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: r_data.h,v 1.6 1998/05/03 22:55:43 killough Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -32,6 +32,9 @@
 
 #include "r_defs.h"
 #include "r_state.h"
+
+// [Nugget]
+#define ORIGFOV 81
 
 #define LOOKDIRMIN	110 // [crispy] -110, actually
 #define LOOKDIRMAX	90
@@ -54,7 +57,7 @@ int R_FlatNumForName (const char* name);   // killough -- const added
 // Called by P_Ticker for switches and animations,
 // returns the texture number for the texture name.
 int R_TextureNumForName (const char *name);    // killough -- const added
-int R_CheckTextureNumForName (const char *name); 
+int R_CheckTextureNumForName (const char *name);
 
 void R_InitTranMap(int);      // killough 3/6/98: translucency initialization
 int R_ColormapNumForName(const char *name);      // killough 4/4/98
