@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 //
@@ -346,7 +346,7 @@ static void do_draw_plane(visplane_t *pl)
 	an = viewangle;
 
 	if (pl->picnum & PL_SKYFLAT)
-	  { 
+	  {
 	    // Sky Linedef
 	    const line_t *l = &lines[pl->picnum & ~PL_SKYFLAT];
 

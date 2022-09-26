@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: r_plane.h,v 1.6 1998/04/27 01:48:34 killough Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -45,7 +45,7 @@ void R_ClearPlanes(void);
 void R_DrawPlanes (void);
 
 visplane_t *R_FindPlane(
-                        fixed_t height, 
+                        fixed_t height,
                         int picnum,
                         int lightlevel,
                         fixed_t xoffs,  // killough 2/28/98: add x-y offsets

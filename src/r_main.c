@@ -517,11 +517,12 @@ void R_ExecuteSetViewSize (void)
       for (j = 0; j < LOOKDIRS; j++)
       {
         // [crispy] re-generate lookup-table for yslope[] whenever "viewheight" or "hires" change
-        fixed_t dy = abs(((i-viewheight/2-(j-LOOKDIRMIN)*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
+        // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
+        fixed_t dy = abs(((i-viewheight/2-(j-(LOOKDIRMIN * ORIGFOV/fov))*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
         yslopes[j][i] = FixedDiv(num, dy);
       }
     }
-  yslope = yslopes[LOOKDIRMIN];
+  yslope = yslopes[(LOOKDIRMIN * ORIGFOV/fov)]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
 
   for (i=0 ; i<viewwidth ; i++)
     {
@@ -661,10 +662,9 @@ void R_SetupFrame (player_t *player)
   pitch = player->lookdir / MLOOKUNIT + player->recoilpitch;
   }
 
-  // [Nugget] Mitigate misalignment between PLAYER_SLOPE() and 'lookdir'
-  // on FOVs greater than 'ORIGFOV'; doing it for lesser FOVs would require
-  // generating more values in yslopes[]
-  if ((ORIGFOV/fov) < 1) { pitch = pitch * ORIGFOV/fov; }
+  // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
+  // by reducing the rendered pitch
+  pitch = pitch * ORIGFOV/fov;
 
   // [Nugget]: [crispy] A11Y
   if (a11y_weapon_flash)
@@ -675,10 +675,11 @@ void R_SetupFrame (player_t *player)
   // [Nugget]: [crispy] A11Y
   extralight += a11y_extra_lighting;
 
-  if (pitch > LOOKDIRMAX)
-    pitch = LOOKDIRMAX;
-  else if (pitch < -LOOKDIRMIN)
-    pitch = -LOOKDIRMIN;
+  // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
+  if (pitch > (LOOKDIRMAX * ORIGFOV/fov))
+    pitch = LOOKDIRMAX * ORIGFOV/fov;
+  else if (pitch < (-LOOKDIRMIN * ORIGFOV/fov))
+    pitch = -LOOKDIRMIN * ORIGFOV/fov;
 
   // apply new yslope[] whenever "lookdir", "viewheight" or "hires" change
   tempCentery = viewheight/2 + pitch * viewblocks / 10;
@@ -686,7 +687,7 @@ void R_SetupFrame (player_t *player)
   {
       centery = tempCentery;
       centeryfrac = centery << FRACBITS;
-      yslope = yslopes[LOOKDIRMIN + pitch];
+      yslope = yslopes[(LOOKDIRMIN * ORIGFOV/fov) + pitch]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   }
 
   viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
