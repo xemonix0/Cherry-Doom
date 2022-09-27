@@ -1800,6 +1800,7 @@ int playback_warp = -1;
 void D_NuggetUpdateCasual()
 {
   casual_play = !(demorecording||demoplayback||netgame||fauxdemo);
+  if (fov != ORIGFOV) { I_ResetScreen(); } // Enforce original FOV
   M_ResetSetupMenu(); // Filthy... but it seems to work
 }
 
@@ -2675,15 +2676,15 @@ void D_DoomMain(void)
 
   D_StartGameLoop();
 
+  // [Nugget]
+  D_NuggetUpdateCasual();
+
   for (;;)
     {
       // frame syncronous IO operations
       I_StartFrame ();
 
       TryRunTics (); // will run at least one tic
-
-      // [Nugget]
-      D_NuggetUpdateCasual();
 
       // killough 3/16/98: change consoleplayer to displayplayer
       S_UpdateSounds(players[displayplayer].mo);// move positional sounds

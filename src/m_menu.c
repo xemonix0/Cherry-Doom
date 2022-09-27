@@ -3385,8 +3385,8 @@ setup_menu_t stat_settings2[] =
     {"SMOOTH HEALTH/ARMOR COUNT"      ,S_YESNO ,m_null,M_X,M_Y+stat2_smooth*M_SPC, {"smooth_counts"}},
   {"",S_SKIP,m_null,M_X,M_Y+stat2_stub2*M_SPC }, // Stub
   {"CROSSHAIR",S_SKIP|S_TITLE,m_null,M_X,M_Y+ stat2_title3*M_SPC },
-    {"ENABLE CROSSHAIR",      S_YESNO, m_null,M_X,M_Y+stat2_xhair*M_SPC, {"hud_crosshair_on"}},
-    {"CROSSHAIR TYPE",        S_CHOICE,m_null,M_X,M_Y+stat2_xhairtype*M_SPC, {"hud_crosshair"}, 0, M_UpdateCrosshairItems, crosshair_str},
+    {"ENABLE CROSSHAIR",      S_YESNO, m_null,M_X,M_Y+stat2_xhair*M_SPC, {"hud_crosshair_on"}, 0, M_UpdateCrosshairItems},
+    {"CROSSHAIR TYPE",        S_CHOICE,m_null,M_X,M_Y+stat2_xhairtype*M_SPC, {"hud_crosshair"}, 0, 0, crosshair_str},
     {"SHADED CROSSHAIR",      S_YESNO, m_null,M_X,M_Y+stat2_xhairsh*M_SPC, {"hud_crosshair_shaded"}},
     {"COLOR BY HEALTH",       S_CHOICE, m_null,M_X,M_Y+stat2_xhairhealth*M_SPC, {"hud_crosshair_health"}, 0, 0, crosshair_health},
     {"HIGHLIGHT ON TARGET",   S_CHOICE, m_null,M_X,M_Y+stat2_xhairtarget*M_SPC, {"hud_crosshair_target"}, 0, M_UpdateCrosshairItems, crosshair_targets},
@@ -7029,7 +7029,7 @@ void M_ResetMenu(void)
 
 static void M_UpdateFreeaimItem(void) // [Nugget]
 {
-  DISABLE_ITEM((!mouselook || strictmode), weap_settings1[weap_freeaim]);
+  DISABLE_ITEM((!mouselook || !casual_play || strictmode), weap_settings1[weap_freeaim]);
 }
 
 static void M_UpdateStrictModeItems(void)
@@ -7040,24 +7040,33 @@ static void M_UpdateStrictModeItems(void)
   DISABLE_STRICT(gen_settings2[general_brightmaps]);
   DISABLE_STRICT(gen_settings3[general_screen_wipe]);
   DISABLE_STRICT(gen_settings3[general_realtic]);
-  for (int i = gen4_menutint; i <= gen4_sclipdist; i++) // [Nugget]
+
+  // [Nugget]
+  for (int i = gen4_menutint; i <= gen4_sclipdist; i++)
     { DISABLE_STRICT(gen_settings4[i]); }
+  DISABLE_ITEM((demorecording||netgame||strictmode||fauxdemo), gen_settings4[gen4_fov]);
+  DISABLE_ITEM((!casual_play || strictmode), gen_settings4[gen4_overunder]);
+  DISABLE_ITEM((!casual_play || strictmode), gen_settings4[gen4_jump_crouch]);
+  DISABLE_ITEM((demorecording||netgame||strictmode||fauxdemo), gen_settings4[gen4_viewheight]);
+
   DISABLE_STRICT(gen_settings5[general_a11y_palette]);
 
   // [Nugget]
-  DISABLE_STRICT(comp_settings4[comp4_lscollision]);
-  DISABLE_STRICT(comp_settings4[comp4_lsamnesia]);
-  DISABLE_STRICT(comp_settings4[comp4_nonbleeders]);
-  DISABLE_STRICT(comp_settings4[comp4_0dmgpain]);
-  DISABLE_STRICT(comp_settings4[comp4_bruistarget]);
-  DISABLE_STRICT(comp_settings5[comp5_iosdeath]);
-  DISABLE_STRICT(comp_settings5[comp5_keypal]);
+  DISABLE_ITEM((!casual_play || strictmode), comp_settings4[comp4_lscollision]);
+  DISABLE_ITEM((!casual_play || strictmode), comp_settings4[comp4_lsamnesia]);
+  DISABLE_ITEM((!casual_play || strictmode), comp_settings4[comp4_nonbleeders]);
+  DISABLE_ITEM((!casual_play || strictmode), comp_settings4[comp4_0dmgpain]);
+  DISABLE_ITEM((!casual_play || strictmode), comp_settings4[comp4_bruistarget]);
+  DISABLE_ITEM((!casual_play || strictmode), comp_settings5[comp5_iosdeath]);
+  DISABLE_ITEM((!casual_play || strictmode), comp_settings5[comp5_keypal]);
 
-  DISABLE_STRICT(weap_settings1[weap_autoaim]); // [Nugget]
+  DISABLE_ITEM((!casual_play || strictmode), weap_settings1[weap_autoaim]); // [Nugget]
   M_UpdateFreeaimItem(); // [Nugget]
 
   DISABLE_STRICT(auto_settings1[5]); // map_player_coords
 
+  DISABLE_ITEM((!casual_play || strictmode), enem_settings1[enem_extra_gibbing]); // [Nugget]
+  DISABLE_ITEM((!casual_play || strictmode), enem_settings1[enem_bloodier_gibbing]); // [Nugget]
   DISABLE_ITEM(strictmode || !comp[comp_vile], enem_settings2[enem2_ghost]);
   DISABLE_ITEM(strictmode || deh_set_blood_color, enem_settings2[enem2_colored_blood]);
   DISABLE_STRICT(enem_settings2[enem2_flipcorpses]);
@@ -7085,11 +7094,6 @@ void M_ResetSetupMenu(void)
   if (M_ParmExists("-complevel"))
     { gen_settings3[general_compat].m_flags |= S_DISABLE; }
 
-  // [Nugget]
-  DISABLE_ITEM(!casual_play, gen_settings4[gen4_overunder]);
-  DISABLE_ITEM(!casual_play, gen_settings4[gen4_jump_crouch]);
-  DISABLE_ITEM((demorecording||fauxdemo), gen_settings4[gen4_viewheight]);
-
   // Doom Compatibility ---
 
   for (i = compat_telefrag; i <= compat_god; ++i)       { DISABLE_BOOM(comp_settings1[i]); }
@@ -7104,8 +7108,6 @@ void M_ResetSetupMenu(void)
   for (i = enem_backing; i <= enem_dog_jumping; ++i)
     { DISABLE_BOOM(enem_settings1[i]); }
   DISABLE_VANILLA(enem_settings1[enem_remember]);
-  DISABLE_ITEM((!casual_play || strictmode), enem_settings1[enem_extra_gibbing]);
-  DISABLE_ITEM((!casual_play || strictmode), enem_settings1[enem_bloodier_gibbing]);
   DISABLE_ITEM(!comp[comp_vile] || strictmode, enem_settings2[enem2_ghost]);
 
   // Weapons ---

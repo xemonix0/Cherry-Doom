@@ -107,7 +107,9 @@ lighttable_t **colormaps;
 
 int extralight;                           // bumped light from gun blasts
 
-static fixed_t      fovscale; // [Nugget] FOV from Doom Retro
+// [Nugget] FOV from Doom Retro
+static fixed_t fovscale;
+extern int rfov;
 
 void (*colfunc)(void) = R_DrawColumn;     // current column draw function
 
@@ -493,7 +495,7 @@ void R_ExecuteSetViewSize (void)
   centerxfrac = centerx<<FRACBITS;
   centeryfrac = centery<<FRACBITS;
   centerxfrac_nonwide = (viewwidth_nonwide/2)<<FRACBITS;
-  fovscale = finetangent[FINEANGLES / 4 + (fov + WIDEFOVDELTA) * FINEANGLES / 360 / 2]; // [Nugget] FOV from Doom Retro
+  fovscale = finetangent[FINEANGLES / 4 + (rfov + WIDEFOVDELTA) * FINEANGLES / 360 / 2]; // [Nugget] FOV from Doom Retro
   projection = FixedDiv(centerxfrac, fovscale); // [Nugget] FOV from Doom Retro
   viewheightfrac = viewheight<<(FRACBITS+1); // [FG] sprite clipping optimizations
 
@@ -518,11 +520,11 @@ void R_ExecuteSetViewSize (void)
       {
         // [crispy] re-generate lookup-table for yslope[] whenever "viewheight" or "hires" change
         // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
-        fixed_t dy = abs(((i-viewheight/2-(j-(LOOKDIRMIN * ORIGFOV/fov))*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
+        fixed_t dy = abs(((i-viewheight/2-(j-(LOOKDIRMIN * ORIGFOV/rfov))*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
         yslopes[j][i] = FixedDiv(num, dy);
       }
     }
-  yslope = yslopes[(LOOKDIRMIN * ORIGFOV/fov)]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
+  yslope = yslopes[(LOOKDIRMIN * ORIGFOV/rfov)]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
 
   for (i=0 ; i<viewwidth ; i++)
     {
@@ -664,7 +666,7 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   // by reducing the rendered pitch
-  pitch = pitch * ORIGFOV/fov;
+  pitch = pitch * ORIGFOV/rfov;
 
   // [Nugget]: [crispy] A11Y
   if (a11y_weapon_flash)
@@ -676,10 +678,10 @@ void R_SetupFrame (player_t *player)
   extralight += a11y_extra_lighting;
 
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
-  if (pitch > (LOOKDIRMAX * ORIGFOV/fov))
-    pitch = LOOKDIRMAX * ORIGFOV/fov;
-  else if (pitch < (-LOOKDIRMIN * ORIGFOV/fov))
-    pitch = -LOOKDIRMIN * ORIGFOV/fov;
+  if (pitch > (LOOKDIRMAX * ORIGFOV/rfov))
+    pitch = LOOKDIRMAX * ORIGFOV/rfov;
+  else if (pitch < (-LOOKDIRMIN * ORIGFOV/rfov))
+    pitch = -LOOKDIRMIN * ORIGFOV/rfov;
 
   // apply new yslope[] whenever "lookdir", "viewheight" or "hires" change
   tempCentery = viewheight/2 + pitch * viewblocks / 10;
@@ -687,7 +689,7 @@ void R_SetupFrame (player_t *player)
   {
       centery = tempCentery;
       centeryfrac = centery << FRACBITS;
-      yslope = yslopes[(LOOKDIRMIN * ORIGFOV/fov) + pitch]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
+      yslope = yslopes[(LOOKDIRMIN * ORIGFOV/rfov) + pitch]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   }
 
   viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
