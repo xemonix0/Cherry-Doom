@@ -117,13 +117,11 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
           // coordinate set
           psp->sx = state->misc1 << FRACBITS;
           psp->sy = state->misc2 << FRACBITS;
+          // [FG] centered weapon sprite
           // [Nugget] Subtract 1 pixel from the misc1 calculation, for
           // consistency with the first person sprite centering correction
           psp->sx2 = (state->misc1 << FRACBITS) - (1<<FRACBITS);
           psp->sy2 = state->misc2 << FRACBITS;
-          // [Nugget] & [FG] centered weapon sprite
-          psp->sx3 = psp->sx2;
-          psp->sy3 = psp->sy2;
         }
 
       // Call action routine.
@@ -1218,33 +1216,28 @@ void P_MovePsprites(player_t *player)
   // [FG] centered weapon sprite
   psp = &player->psprites[ps_weapon];
 
-  // [Nugget] Calculate sx2 and sy2 to use as a base
-  if (!player->attackdown
+  // [Nugget] Calculate sx2 and sy2 separately from sx and sy
+  if ((!player->attackdown || center_weapon == WEAPON_BOBBING) // [FG] not attacking means idle
       && psp->state->action.p2 != (actionf_p2)A_Lower
       && psp->state->action.p2 != (actionf_p2)A_Raise)
     { P_NuggetBobbing(player, &psp->sx2, &psp->sy2); }
-  player->psprites[ps_flash].sx2 = player->psprites[ps_weapon].sx2;
-  player->psprites[ps_flash].sy2 = player->psprites[ps_weapon].sy2;
-
-  psp->sx3 = psp->sx2;
-  psp->sy3 = psp->sy2;
 
   if (psp->state && !bobbing_percentage)
   {
     static fixed_t last_sy = 32 * FRACUNIT;
 
-    psp->sx3 = FRACUNIT;
+    psp->sx2 = /*FRACUNIT*/ 0; // [Nugget] Correct first person sprite centering
 
     if (psp->state->action.p2 != (actionf_p2)A_Lower &&
         psp->state->action.p2 != (actionf_p2)A_Raise)
     {
-      last_sy = psp->sy3;
-      psp->sy3 = 32 * FRACUNIT;
+      last_sy = psp->sy2;
+      psp->sy2 = 32 * FRACUNIT;
     }
     else if (psp->state->action.p2 == (actionf_p2)A_Lower)
     {
       // We want to move smoothly from where we were
-      psp->sy3 -= (last_sy - 32 * FRACUNIT);
+      psp->sy2 -= (last_sy - 32 * FRACUNIT);
     }
   }
   else if (psp->state && center_weapon)
@@ -1255,18 +1248,16 @@ void P_MovePsprites(player_t *player)
         psp->state->action.p2 == (actionf_p2)A_Raise)
     {
     }
-    // [FG] not attacking means idle
-    else if (!player->attackdown || center_weapon == WEAPON_BOBBING)
-      { P_NuggetBobbing(player, &psp->sx3, &psp->sy3); }
     // [FG] center the weapon sprite horizontally and push up vertically
-    else if (center_weapon == WEAPON_CENTERED) {
-      psp->sx3 = /*FRACUNIT*/ 0; // [Nugget] Correct first person sprite centering
-      psp->sy3 = WEAPONTOP;
+    else if (player->attackdown && center_weapon == WEAPON_CENTERED)
+    {
+      psp->sx2 = /*FRACUNIT*/ 0; // [Nugget] Correct first person sprite centering
+      psp->sy2 = WEAPONTOP;
     }
   }
 
-  player->psprites[ps_flash].sx3 = player->psprites[ps_weapon].sx3;
-  player->psprites[ps_flash].sy3 = player->psprites[ps_weapon].sy3;
+  player->psprites[ps_flash].sx2 = player->psprites[ps_weapon].sx2;
+  player->psprites[ps_flash].sy2 = player->psprites[ps_weapon].sy2;
 }
 
 //

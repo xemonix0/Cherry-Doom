@@ -70,18 +70,11 @@ typedef struct pspdef_s
 {
   state_t *state;       // a NULL state means not active
   int     tics;
-  // [Nugget] Original values, used for playsim
   fixed_t sx;
   fixed_t sy;
-  // [Nugget] Dummy values, calculated separate from and roughly like the
-  // originals, used as a base for the rendered values;
-  // Bobbing Styles are applied
+  // [FG] centered weapon sprite
   fixed_t sx2;
   fixed_t sy2;
-  // [Nugget] Rendered values; Bobbing Styles and Weapon Attack Alignment
-  // are applied
-  fixed_t sx3;
-  fixed_t sy3;
 } pspdef_t;
 
 extern int weapon_preferences[2][NUMWEAPONS+1];      // killough 5/2/98
