@@ -10,8 +10,6 @@ Although the new code has been written with the intention of not breaking demo c
 
 - From Crispy Doom (inspired or ported code):
   - **Minimalistic HUD** (without translucent variants);
-  - **Resurrect from savegame** (Run key + Use key);
-  - _**'NOTARGET'**_ cheat;
   - _**Things move over/under things**_ setting;
   - **Freeaim** (Vertical Aiming);
   - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first);
@@ -24,24 +22,28 @@ Although the new code has been written with the intention of not breaking demo c
   - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip);
   - Reenabled _**'NOMOMENTUM'**_ cheat.
 - _**Disable Background**_ setting, to disable the background on setup screens and dynamic Help screen
+- _**Field of View**_ setting, as featured in Doom Retro
 - _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tint
 - _**Disable Berserk Tint**_ setting
 - _**Extra Gibbing**_ setting, to force Berserk Fist, Chainsaw and SSG gibbing
 - _**Bloodier Gibbing**_ setting
+- _**Smart Totals**_ setting
 - _**Bobbing Styles**_ selection, as seen in Zandronum
 - _**Bobbing Percentage**_ setting
 - **Crosshair:**
-  - **Coloring based on linetarget health**;
-  - **Highlight on fuzzy targets**;
-  - **5 new types**.
+  - Coloring based on linetarget health;
+  - Highlight on fuzzy targets;
+  - 5 new types;
+  - Dedicated toggle key.
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first)
 - **Screen wipe/transition effect selection** (**Warning**: _"Seizure"_ might legitimately be seizure-inducing, use with caution)
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
 - _**Disable Horizontal Autoaim**_ setting
+- **Gray-colored Health count when invulnerable**, which also flashes when the effect is running out
 - _**Smooth Health/Armor Count**_ setting, to progressively increase and decrease said displayed values, similar to Heretic
 - _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
-- _**View Height**_ setting, which allows to enter a custom height value between 8 and 56 for the player's POV (default is 41, the original)
+- _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV (default is 41, the original)
 - New **cheats**:
   - _**'FULLCLIP'**_ for infinite ammo;
   - _**'VALIANT'**_ for fast weapons;
@@ -51,8 +53,8 @@ Although the new code has been written with the intention of not breaking demo c
   - _**'SPAWN'**_ to spawn a hostile or friendly actor based on its mobjtype index;
   - _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD;
   - _**'SCANNER' / 'ANALYZE'**_ to give some info on the player's linetarget, similar to GZDoom's _'linetarget'_ console command;
-  - _**'MDK'**_, much like in ZDoom
-  - _**'SAITAMA'**_, to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack)
+  - _**'MDK'**_, much like in ZDoom;
+  - _**'SAITAMA'**_, to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, also featuring an alternate attack when holding down Strafe On);
   - _**'TURBO'**_ to change the player speed in-game.
 - **Sound Links check for a dedicated lump**, therefore allowing usage of a custom sound effect
 - **"Correct" first person sprite centering** (the original code had an offset of one pixel to the right)
