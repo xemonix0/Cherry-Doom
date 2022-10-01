@@ -3131,6 +3131,7 @@ enum {           // killough 10/98: enum for y-offset info
   weap_pref9,
   weap_stub1,
   weap_bfg,
+  weap_recoil, // [Nugget] Restore Weapon Recoil menu item
   weap_autoaim,
   weap_freeaim,
 };
@@ -3153,6 +3154,7 @@ setup_menu_t weap_settings1[] =  // Weapons Settings screen
     {"9th CHOICE WEAPON",S_WEAP,m_null,M_X,M_Y+weap_pref9*M_SPC, {"weapon_choice_9"}},
   {"",S_SKIP,m_null,M_X,M_Y+weap_stub1*M_SPC }, // Stub
     {"Pre-Beta BFG"      ,S_YESNO,m_null,M_X, M_Y+weap_bfg*M_SPC, {"classic_bfg"}}, // killough 8/8/98
+    {"Enable Recoil", S_YESNO,m_null,M_X, M_Y+ weap_recoil*M_SPC, {"weapon_recoil"}}, // [Nugget] Restore Weapon Recoil menu item
     {"Disable Horizontal Autoaim",S_YESNO,m_null,M_X,M_Y+weap_autoaim*M_SPC, {"no_hor_autoaim"}},
     {"Freeaim",S_CHOICE,m_null,M_X,M_Y+weap_freeaim*M_SPC, {"freeaim"}, 0, NULL, freeaim_types},
 
