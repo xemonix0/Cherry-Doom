@@ -918,6 +918,33 @@ void ST_drawWidgets(boolean refresh)
   else if (ammopct > maxammo)              { STlib_updateNum(&w_ready, cr_blue2, refresh); }
   else                                     { STlib_updateNum(&w_ready, cr_green, refresh); }
 
+  // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
+  if (plyr->readyweapon == wp_fist
+      && weaponinfo[plyr->readyweapon].ammo == am_noammo // [Nugget] Check for unlimited ammo type
+      && plyr->powers[pw_strength])
+  {
+    static int lump = -1;
+    patch_t *patch;
+
+    if (lump < 0) {
+      lump = (W_CheckNumForName)("PSTRA0", ns_sprites); // [Nugget] ns_global does NOT work in this case
+
+      if (lump < 0)
+      { lump = (W_CheckNumForName)("MEDIA0", ns_sprites); }
+    }
+
+    // [Nugget] One extra check, just in case
+    if (lump > 0) {
+      int delta = (screenblocks >= CRISPY_HUD+2) ? WIDESCREENDELTA : 0; // [Nugget]
+      patch = W_CacheLumpNum(lump, PU_CACHE);
+
+      // [crispy] (23,179) is the center of the Ammo widget
+      V_DrawPatch(ST_AMMOX - 21 - SHORT(patch->width)/2 + SHORT(patch->leftoffset) - delta, // [Nugget] Apply WIDESCREENDELTA here
+                  179 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
+                  FG, patch);
+    }
+  }
+
   for (i=0;i<4;i++) {
     STlib_updateNum(&w_ammo[i], NULL, refresh); //jff 2/16/98 no xlation
     STlib_updateNum(&w_maxammo[i], NULL, refresh);
