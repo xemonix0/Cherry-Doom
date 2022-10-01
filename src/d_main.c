@@ -1799,7 +1799,7 @@ int playback_warp = -1;
 // [Nugget]
 void D_NuggetUpdateCasual()
 {
-  casual_play = !(demorecording||demoplayback||netgame||fauxdemo);
+  casual_play = !(demorecording||demoplayback||timingdemo||netgame||fauxdemo);
   if (fov != ORIGFOV) { I_ResetScreen(); } // Enforce original FOV
   M_ResetSetupMenu(); // Filthy... but it seems to work
 }

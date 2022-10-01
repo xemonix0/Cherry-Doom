@@ -1694,6 +1694,10 @@ static void G_DoPlayDemo(void)
   // [FG] report compatibility mode
   fprintf(stderr, "G_DoPlayDemo: Playing demo with %s (%d) compatibility.\n",
     G_GetCurrentComplevelName(), demover);
+
+  // [Nugget]
+  D_NuggetUpdateCasual();
+
 }
 
 #define VERSIONSIZE   16
