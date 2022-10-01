@@ -488,6 +488,9 @@ floater:
         // and utter appropriate sound.
 
         mo->player->deltaviewheight = mo->momz>>3;
+        // [Nugget]: [crispy] squat down weapon sprite as well
+        if (weaponsquat)
+          { mo->player->psprites[ps_weapon].dy = ((-mo->momz>>1) > 24*FRACUNIT) ? (24*FRACUNIT) : (-mo->momz>>1); }
         // [Nugget]: [crispy] dead men don't say "oof"
         if (mo->health > 0 || nugget_comp[comp_deadoof])
           { S_StartSound (mo, sfx_oof); }

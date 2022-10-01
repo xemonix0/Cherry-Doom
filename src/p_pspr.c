@@ -162,9 +162,10 @@ static void P_BringUpWeapon(player_t *player)
     WEAPONBOTTOM+FRACUNIT*2 : WEAPONBOTTOM;
   // [Nugget]
   player->psprites[ps_weapon].sy2 = demo_version >= 203
-                                   ? WEAPONBOTTOM+FRACUNIT*2
-                                   : WEAPONBOTTOM;
-
+                                    ? WEAPONBOTTOM+FRACUNIT*2
+                                    : WEAPONBOTTOM;
+  // [Nugget]: [crispy] squat down weapon sprite
+  player->psprites[ps_weapon].dy = 0;
 
   P_SetPsprite(player, ps_weapon, newstate);
 }
@@ -1150,9 +1151,10 @@ static void P_NuggetBobbing(player_t* player, fixed_t* sx, fixed_t* sy)
 {
   const fixed_t bob = player->bob2;
   const int angle = (128*leveltime) & FINEMASK;
-  // Correct first person sprite centering
-  *sx = /*FRACUNIT +*/ FixedMul(bob, finecosine[angle]); // Default, differs in a few styles
-  *sy = WEAPONTOP; // Used for all styles, their specific values are added to this one right after
+  // sx - Default, differs in a few styles
+  *sx = /*FRACUNIT +*/ FixedMul(bob, finecosine[angle]); // Correct first person sprite centering
+  // sy - Used for all styles, their specific values are added to this one right after
+  *sy = WEAPONTOP + abs(player->psprites[ps_weapon].dy); // Squat weapon down on impact
 
   // Bobbing Styles, ported from Zandronum
   switch (bobbing_style) {
@@ -1232,7 +1234,7 @@ void P_MovePsprites(player_t *player)
         psp->state->action.p2 != (actionf_p2)A_Raise)
     {
       last_sy = psp->sy2;
-      psp->sy2 = 32 * FRACUNIT;
+      psp->sy2 = (32 * FRACUNIT) + abs(psp->dy); // [Nugget] Squat weapon down on impact
     }
     else if (psp->state->action.p2 == (actionf_p2)A_Lower)
     {
@@ -1256,6 +1258,15 @@ void P_MovePsprites(player_t *player)
     }
   }
 
+  // [Nugget]: [crispy] squat down weapon sprite a bit after hitting the ground
+	if (psp->dy) {
+    if (psp->dy > 24*FRACUNIT)  { psp->dy = 24*FRACUNIT; }
+		else                        { psp->dy -= FRACUNIT; }
+
+		if (psp->dy < 0) { psp->dy = 0; }
+	}
+
+  player->psprites[ps_flash].dy = player->psprites[ps_weapon].dy;
   player->psprites[ps_flash].sx2 = player->psprites[ps_weapon].sx2;
   player->psprites[ps_flash].sy2 = player->psprites[ps_weapon].sy2;
 }

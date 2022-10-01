@@ -166,6 +166,7 @@ int no_hor_autoaim;
 int freeaim;
 int bobbing_percentage;
 int bobbing_style;
+int weaponsquat;
 // Status Bar/HUD
 int alt_arms;
 int smarttotals;

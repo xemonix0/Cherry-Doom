@@ -72,6 +72,8 @@ typedef struct pspdef_s
   int     tics;
   fixed_t sx;
   fixed_t sy;
+  // [Nugget]: [crispy] squat down weapon sprite
+  fixed_t	dy;
   // [FG] centered weapon sprite
   fixed_t sx2;
   fixed_t sy2;

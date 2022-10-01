@@ -762,11 +762,15 @@ static void saveg_read_pspdef_t(pspdef_t *str)
 
     // [Woof!]: fixed_t sy2;
     str->sy2 = saveg_read32();
+
+    // [Nugget] fixed_t dy;
+    str->dy = saveg_read32();
     }
     else
     {
         str->sx2 = str->sx;
         str->sy2 = str->sy;
+        str->dy = 0; // [Nugget]
     }
 }
 
@@ -796,6 +800,9 @@ static void saveg_write_pspdef_t(pspdef_t *str)
 
     // [Woof!]: fixed_t sy2;
     saveg_write32(str->sy2);
+
+    // [Nugget] fixed_t dy;
+    saveg_write32(str->dy);
 }
 
 //

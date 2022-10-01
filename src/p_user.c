@@ -251,6 +251,8 @@ void P_MovePlayer (player_t* player)
       { // Jump
         player->mo->momz = 8*FRACUNIT;
         player->jumpTics = 20;
+        // [Nugget]: [crispy] squat down weapon sprite a bit
+        if (weaponsquat) { player->psprites[ps_weapon].dy = player->mo->momz>>1; }
       }
     }
   }

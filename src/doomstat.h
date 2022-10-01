@@ -471,6 +471,7 @@ extern int freeaim;
 enum { freeaim_off, freeaim_direct, freeaim_autoaim };
 extern int bobbing_percentage;
 extern int bobbing_style;
+extern int weaponsquat;
 // Status Bar/HUD
 extern int alt_arms;
 extern int smarttotals;

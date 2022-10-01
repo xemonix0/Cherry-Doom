@@ -634,6 +634,13 @@ default_t defaults[] = {
   },
 
   {
+    "weaponsquat",
+    (config_t *) &weaponsquat, NULL,
+    {0}, {0,1}, number, ss_weap, wad_yes,
+    "1 to squat weapon down on impact"
+  },
+
+  {
     "alt_arms",
     (config_t *) &alt_arms, NULL,
     {0}, {0,1}, number, ss_stat, wad_yes,
@@ -1028,7 +1035,7 @@ default_t defaults[] = {
     "comp_iosdeath",
     (config_t *) &default_nugget_comp[comp_iosdeath],
     (config_t *) &nugget_comp[comp_iosdeath],
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_comp, wad_yes,
     "Fix lopsided Icon of Sin explosions"
   },
 
