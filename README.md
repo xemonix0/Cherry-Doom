@@ -9,7 +9,6 @@ Although the new code has been written with the intention of not breaking demo c
 ## Features
 
 - From Crispy Doom (inspired or ported code):
-  - **Minimalistic HUD** (without translucent variants);
   - _**Things move over/under things**_ setting;
   - **Freeaim** (Vertical Aiming);
   - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first);
@@ -52,7 +51,7 @@ Although the new code has been written with the intention of not breaking demo c
   - _**'IDFLY'**_ to fly;
   - _**'SPAWN'**_ to spawn a hostile or friendly actor based on its mobjtype index;
   - _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD;
-  - _**'SCANNER' / 'ANALYZE'**_ to give some info on the player's linetarget, similar to GZDoom's _'linetarget'_ console command;
+  - _**'SCANNER' / 'ANALYZE' / 'LINETARGET'**_ to give some info on the player's linetarget, similar to GZDoom's _'linetarget'_ console command;
   - _**'MDK'**_, much like in ZDoom;
   - _**'SAITAMA'**_, to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, also featuring an alternate attack when holding down Strafe On);
   - _**'TURBO'**_ to change the player speed in-game.
