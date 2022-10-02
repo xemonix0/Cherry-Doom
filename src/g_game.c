@@ -3244,6 +3244,9 @@ void G_InitNew(skill_t skill, int episode, int map)
     G_MBFComp();
 
   G_DoLoadLevel();
+
+  // [Nugget]
+  D_NuggetUpdateCasual();
 }
 
 //

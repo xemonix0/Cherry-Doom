@@ -137,7 +137,7 @@ char *MAPNAME(int e, int m)
 //----- Nugget ---------------------------------------------------------------
 
 boolean fauxdemo;
-boolean casual_play;
+boolean casual_play, old_casual_play = -1;
 
 // General
   // Nugget Settings (Page 3)

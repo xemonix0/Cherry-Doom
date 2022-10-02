@@ -1800,8 +1800,13 @@ int playback_warp = -1;
 void D_NuggetUpdateCasual()
 {
   casual_play = !(demorecording||demoplayback||timingdemo||netgame||fauxdemo);
-  if (fov != ORIGFOV) { I_ResetScreen(); } // Enforce original FOV
-  M_ResetSetupMenu(); // Filthy... but it seems to work
+  if (old_casual_play == -1) { old_casual_play = casual_play; }
+
+  if (old_casual_play != casual_play) {
+    old_casual_play = casual_play;
+    if (fov != ORIGFOV) { I_ResetScreen(); } // Enforce original FOV
+    M_ResetSetupMenu(); // Filthy... but it seems to work
+  }
 }
 
 //

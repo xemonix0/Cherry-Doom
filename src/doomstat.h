@@ -441,7 +441,7 @@ extern int center_weapon;
 //----- Nugget ---------------------------------------------------------------
 
 extern boolean fauxdemo;
-extern boolean casual_play;
+extern boolean casual_play, old_casual_play;
 
 // General
   // Nugget Settings (Page 3)
