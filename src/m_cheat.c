@@ -100,6 +100,7 @@ boolean GIBBERS;                // Used for 'GIBBERS'
 static void cheat_gibbers();    // Everything gibs
 static void cheat_resurrect();
 static void cheat_fly();
+static void cheat_nlev();       // End level
 static void cheat_turbo();
 static int spawneetype = -1; static boolean spawneefriend; // Used for 'SPAWNR'
 // Spawn a mobj:            Enemy           Friend          Repeat last spawn
@@ -331,6 +332,12 @@ struct cheat_s cheat[] = {
   {"idfly", NULL, not_net|not_demo,
    {cheat_fly} },
 
+  {"idnlev", NULL, not_net|not_demo,
+   {cheat_nlev} },
+
+  {"idnext", NULL, not_net|not_demo,
+   {cheat_nlev} }, // 'IDNLEV' alternative
+
   {"turbo", NULL, not_net|not_demo,
    {cheat_turbo}, {-3} },
 
@@ -490,6 +497,11 @@ static void cheat_fly() {
   plyr->message = plyr->cheats & CF_FLY
                   ? "Fly Mode ON"
                   : "Fly Mode OFF";
+}
+
+// [Nugget]
+static void cheat_nlev() {
+  G_ExitLevel();
 }
 
 // [Nugget]
