@@ -4124,7 +4124,7 @@ setup_menu_t gen_settings4[] = { // [Nugget] General Settings screen 4
   {"Nugget Settings"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y+gen4_title1*M_SPC},
     {"Disable Background",              S_YESNO,  m_null, M_X, M_Y+gen4_background*M_SPC,     {"no_ss_background"}},
     {"Disable palette tint in menus",   S_YESNO,  m_null, M_X, M_Y+gen4_menutint*M_SPC,       {"no_menu_tint"}},
-    {"Field of View",                   S_NUM,    m_null, M_X, M_Y+gen4_fov*M_SPC,            {"fov"}, 0, I_ResetScreen},
+    {"Field of View",                   S_NUM,    m_null, M_X, M_Y+gen4_fov*M_SPC,            {"fov"}, 0, R_ExecuteSetViewSize},
     {"Things Move Over/Under Things",   S_YESNO,  m_null, M_X, M_Y+gen4_overunder*M_SPC,      {"over_under"}},
     {"Allow Jump/Crouch",               S_YESNO,  m_null, M_X, M_Y+gen4_jump_crouch*M_SPC,    {"jump_crouch"}},
     {"Damage Tint Cap (Default = 100)", S_NUM,    m_null, M_X, M_Y+gen4_dmgcountcap*M_SPC,    {"damagecount_cap"}},
