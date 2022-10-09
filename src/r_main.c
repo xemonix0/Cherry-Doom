@@ -39,7 +39,10 @@
 #include "v_video.h"
 #include "st_stuff.h"
 
-#include <math.h> // [Nugget]
+// [Nugget]
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 #if 0 // [Nugget] Unused
 // Fineangles in the SCREENWIDTH wide window.
