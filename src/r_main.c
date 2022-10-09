@@ -39,6 +39,8 @@
 #include "v_video.h"
 #include "st_stuff.h"
 
+#include <math.h> // [Nugget]
+
 #if 0 // [Nugget] Unused
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW 2048
