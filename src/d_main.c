@@ -396,7 +396,11 @@ void D_PageTicker(void)
   // being played. The only time this matters is when using -loadgame with
   // -fastdemo, -playdemo, or -timedemo, and a consistency error occurs.
 
-  if (!singledemo && --pagetic < 0)
+  // [Nugget]
+  if (!no_page_ticking || (no_page_ticking == 1 && !menuactive))
+    --pagetic;
+
+  if (!singledemo && pagetic < 0)
     D_AdvanceDemo();
 }
 

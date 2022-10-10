@@ -555,6 +555,13 @@ default_t defaults[] = {
   },
 
   {
+    "no_page_ticking",
+    (config_t *) &no_page_ticking, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Advancement of internal demos (0 = Always, 1 = Not on menus, 2 = Never)"
+  },
+
+  {
     "quick_quitgame",
     (config_t *) &quick_quitgame, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,

@@ -4130,11 +4130,16 @@ enum {
   gen4_viewheight,
   gen4_sclipdist,
   gen4_quicksaveload,
+  gen4_nopagetic,
   gen4_quickexit,
 };
 
 static const char *s_clipping_dists[] = {
   "1200", "2400", NULL
+};
+
+static const char *page_ticking_conds[] = {
+  "Always", "Not On Menus", "Never", NULL
 };
 
 setup_menu_t gen_settings4[] = { // [Nugget] General Settings screen 4
@@ -4151,6 +4156,7 @@ setup_menu_t gen_settings4[] = { // [Nugget] General Settings screen 4
     {"View Height (Default = 41)",      S_NUM,    m_null, M_X, M_Y+gen4_viewheight*M_SPC,     {"viewheight_value"}},
     {"Sound Clipping Distance",         S_CHOICE, m_null, M_X, M_Y+gen4_sclipdist*M_SPC,      {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
     {"One-Key Quick Save/Load",         S_YESNO,  m_null, M_X, M_Y+gen4_quicksaveload*M_SPC,  {"one_key_saveload"}},
+    {"Advance Internal Demos",          S_CHOICE, m_null, M_X, M_Y+gen4_nopagetic*M_SPC,      {"no_page_ticking"}, 0, NULL, page_ticking_conds},
     {"Quick \"Quit Game\"",             S_YESNO,  m_null, M_X, M_Y+gen4_quickexit*M_SPC,      {"quick_quitgame"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings3}},

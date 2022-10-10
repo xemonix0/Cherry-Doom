@@ -153,6 +153,7 @@ int no_berserk_tint;
 int viewheight_value;
 int s_clipping_dist_x2;
 int one_key_saveload;
+int no_page_ticking;
 int quick_quitgame;
   // Accessibility (Page 4)
 //int a11y_sector_lighting;

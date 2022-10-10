@@ -457,6 +457,7 @@ extern int no_berserk_tint;
 extern int viewheight_value;
 extern int s_clipping_dist_x2;
 extern int one_key_saveload;
+extern int no_page_ticking;
 extern int quick_quitgame;
   // Accessibility (Page 4)
 //extern int a11y_sector_lighting;
