@@ -2365,6 +2365,13 @@ default_t defaults[] = {
     "default crosshair color"
   },
 
+  { // [Nugget]
+    "hud_crosshair_force_color",
+    (config_t *) &hud_crosshair_force_color, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to force default color when coloring by target health with no target"
+  },
+
   {
     "hud_crosshair_target_color",
     (config_t *) &hud_crosshair_target_color, NULL,

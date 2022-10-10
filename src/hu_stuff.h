@@ -100,6 +100,7 @@ extern int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 extern boolean hud_crosshair_health;
 extern boolean hud_crosshair_target;
 extern int hud_crosshair_color;
+extern boolean hud_crosshair_force_color; // [Nugget] Force default crosshair color when coloring based on target health
 extern int hud_crosshair_target_color;
 
 #define HU_CROSSHAIRS 5+5 // [Nugget] Add more crosshairs

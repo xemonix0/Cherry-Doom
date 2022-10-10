@@ -228,6 +228,7 @@ int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 boolean hud_crosshair_health;
 boolean hud_crosshair_target;
 int hud_crosshair_color;
+boolean hud_crosshair_force_color; // [Nugget] Force default crosshair color when coloring based on target health
 int hud_crosshair_target_color;
 
 //jff 2/16/98 initialization strings for ammo, health, armor widgets
@@ -1073,8 +1074,10 @@ static void HU_UpdateCrosshair(void)
       else if (health < (spawnhealth/2)*1.5)  { crosshair.cr = colrngs[CR_GOLD]; }
       else                                    { crosshair.cr = colrngs[CR_GREEN]; }
     }
-    else // [Nugget] Make it gray if no linetarget
-      { crosshair.cr = colrngs[CR_GRAY]; }
+    else // [Nugget] Make it gray if no linetarget, unless we force default color
+      crosshair.cr = hud_crosshair_force_color
+                     ? colrngs[hud_crosshair_color]
+                     : colrngs[CR_GRAY];
   }
   else
   if (STRICTMODE(hud_crosshair_target) && linetarget
