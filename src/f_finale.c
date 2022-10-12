@@ -617,13 +617,13 @@ void F_CastTicker (void)
 
   if (caststate->tics == -1 || caststate->nextstate == S_NULL || castskip) // [crispy] skippable cast
   {
-	if (castskip) {
-	    castnum += castskip;
-	    castskip = 0;
-	}
-	else
-	// switch from deathstate to next monster
-    castnum++;
+    if (castskip) {
+        castnum += castskip;
+        castskip = 0;
+    }
+    else
+      // switch from deathstate to next monster
+      castnum++;
     castdeath = false;
     if (castorder[castnum].name == NULL)
       castnum = 0;
@@ -752,28 +752,28 @@ boolean F_CastResponder (event_t* ev)
   boolean xdeath = false; // [Nugget]: [crispy]
 
   if (ev->type != ev_keydown)
-  return false;
+    return false;
 
   // [crispy] make monsters turnable in cast ...
   if (M_InputActivated(input_turnleft)) {
-    if (++castangle > 7) {castangle = 0;}
+    if (++castangle > 7) { castangle = 0; }
     return false;
   }
   else if (M_InputActivated(input_turnright)) {
-    if (--castangle < 0) {castangle = 7;}
+    if (--castangle < 0) { castangle = 7; }
     return false;
   }
   // [crispy] ... and allow to skip through them ..
   else if (M_InputActivated(input_strafeleft)) {
-	castskip = castnum ? -1 : arrlen(castorder)-2;
-	return false;
+    castskip = castnum ? -1 : arrlen(castorder)-2;
+    return false;
   }
   else if (M_InputActivated(input_straferight)) {
-	castskip = +1;
-	return false;
+    castskip = +1;
+    return false;
   }
   // [crispy] ... and finally turn them into gibbs
-  if (M_InputActivated(input_speed)) {xdeath = true;}
+  if (M_InputActivated(input_speed)) { xdeath = true; }
 
   if (castdeath)
     return true; // already in dying frames
@@ -781,30 +781,30 @@ boolean F_CastResponder (event_t* ev)
   // go into death frame
   castdeath = true;
   if (xdeath && mobjinfo[castorder[castnum].type].xdeathstate)
-	{caststate = &states[mobjinfo[castorder[castnum].type].xdeathstate];}
+    { caststate = &states[mobjinfo[castorder[castnum].type].xdeathstate]; }
   else
-    {caststate = &states[mobjinfo[castorder[castnum].type].deathstate];}
+    { caststate = &states[mobjinfo[castorder[castnum].type].deathstate]; }
   casttics = caststate->tics;
   // [crispy] Allow A_RandomJump() in deaths in cast sequence
   if (casttics == -1 && caststate->action.p2 == (actionf_p2)A_RandomJump)
   {
     if (Woof_Random() < caststate->misc2)
-        {caststate = &states [caststate->misc1];}
+      { caststate = &states [caststate->misc1]; }
     else
-        {caststate = &states [caststate->nextstate];}
+      { caststate = &states [caststate->nextstate]; }
     casttics = caststate->tics;
   }
   castframes = 0;
   castattacking = false;
   if (xdeath && mobjinfo[castorder[castnum].type].xdeathstate)
-    {S_StartSound (NULL, sfx_slop);}
+    { S_StartSound (NULL, sfx_slop); }
   else
   if (mobjinfo[castorder[castnum].type].deathsound)
-	{S_StartSound (NULL, F_RandomizeSound(mobjinfo[castorder[castnum].type].deathsound));}
+    { S_StartSound (NULL, F_RandomizeSound(mobjinfo[castorder[castnum].type].deathsound)); }
 
   // [crispy] flippable death sequence
   castflip = flipcorpses && castdeath
-             && (mobjinfo[castorder[castnum].type].flags & MF2_FLIPPABLE)
+             && (mobjinfo[castorder[castnum].type].flags2 & MF2_FLIPPABLE)
              && (Woof_Random() & 1);
 
   return true;
