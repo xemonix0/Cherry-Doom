@@ -47,6 +47,9 @@
 
 #define HU_MSGTIMEOUT   (4*TICRATE)
 
+// [Nugget] Macro brought over from hu_stuff.h
+#define HU_GAPY 8
+
 //
 // Heads up text
 //

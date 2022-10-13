@@ -42,6 +42,7 @@
 #include "p_map.h" // crosshair (linetarget)
 #include "m_misc2.h"
 #include "m_swap.h"
+#include "m_nughud.h" // [Nugget]
 
 // global heads up display controls
 
@@ -82,7 +83,7 @@ extern int screenSize; // [Nugget]
 #define HU_LTIME_Y  (5 + 4*SHORT(hu_font['A'-HU_FONTSTART]->height))
 
 //jff 2/16/98 add ammo, health, armor widgets, 2/22/98 less gap
-#define HU_GAPY 8
+// [Nugget] Moved HU_GAPY to hu_stuff.h so m_nughud.c can access it
 #define HU_HUDHEIGHT (6*HU_GAPY)
 #define HU_HUDX (2-WIDESCREENDELTA)
 #define HU_HUDY (SCREENHEIGHT-HU_HUDHEIGHT-1)
@@ -838,13 +839,26 @@ void HU_MoveHud(void)
   // [FG] draw Time/STS widgets above status bar
   if (scaledviewheight < SCREENHEIGHT || (screenSize >= 8 && screenSize <= 9))
   {
+    const boolean crispyhud = screenSize >= 8 && screenSize <= 9 && (!automapactive || automapoverlay);
+
     // adjust Time widget if set to Time only
     short t_offset = (hud_timests == 1) ? 1 : 2;
-    w_sttime.x = HU_TITLEX;
-    w_sttime.y = ST_Y - t_offset*HU_GAPY;
 
-    w_monsec.x = HU_TITLEX;
-    w_monsec.y = ST_Y - HU_GAPY;
+    // [Nugget] Nugget HUD
+
+    w_sttime.x = crispyhud  ? ((nughud.time.misc && hud_timests == 1)
+                               ? nughud.sts.x + WIDESCREENDELTA*nughud.sts.wide
+                               : nughud.time.x + WIDESCREENDELTA*nughud.time.wide)
+                            : HU_TITLEX;
+    w_sttime.y = crispyhud  ? ((nughud.time.misc && hud_timests == 1)
+                               ? nughud.sts.y
+                               : nughud.time.y)
+                            : ST_Y - t_offset*HU_GAPY;
+
+    w_monsec.x = crispyhud  ? nughud.sts.x + WIDESCREENDELTA*nughud.sts.wide
+                            : HU_TITLEX;
+    w_monsec.y = crispyhud  ? nughud.sts.y
+                            : ST_Y - HU_GAPY;
 
     ohud_distributed = -1;
     return;

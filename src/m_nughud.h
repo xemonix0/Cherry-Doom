@@ -29,7 +29,7 @@ typedef struct nughud_widget_s {
   int x;
   int y;
   int wide;
-  int bg;
+  int misc;
 } nughud_widget_t;
 
 typedef struct nughud_s {
@@ -42,6 +42,8 @@ typedef struct nughud_s {
   struct nughud_widget_s keys[3];
   struct nughud_widget_s ammos[4];
   struct nughud_widget_s maxammos[4];
+  struct nughud_widget_s time;
+  struct nughud_widget_s sts;
 } nughud_t;
 
 extern nughud_t nughud;

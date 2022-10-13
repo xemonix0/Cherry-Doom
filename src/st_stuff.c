@@ -942,7 +942,7 @@ void ST_drawWidgets(boolean refresh)
 
   // [Nugget] This probably shouldn't go here, but it works
   if ((screenblocks == CRISPY_HUD || screenblocks == CRISPY_HUD+1)
-      && nughud.face.x > -1 && nughud.face.bg)
+      && nughud.face.x > -1 && nughud.face.misc)
   {
     // [Nugget] Nugget HUD
     V_DrawPatch(nughud.face.x + (st_widecrispyhud ? WIDESCREENDELTA*nughud.face.wide : 0),
