@@ -2193,6 +2193,13 @@ default_t defaults[] = {
     "number of message lines"
   },
 
+  { // [Nugget] Restore message scroll direction toggle
+    "hud_msg_scrollup",
+    (config_t *) &hud_msg_scrollup, NULL,
+    {1}, {0,1}, number, ss_mess, wad_yes,
+    "1 enables message review list scrolling upward"
+  },
+
   {
     "message_colorized",
     (config_t *) &message_colorized, NULL,

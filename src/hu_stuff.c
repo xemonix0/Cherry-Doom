@@ -218,6 +218,8 @@ int hudcolor_xyco;  // color range of new coords on automap
 int hudcolor_mesg;  // color range of scrolling messages
 int hudcolor_chat;  // color range of chat lines
 int hud_msg_lines;  // number of message lines in window
+// [Nugget] Restore message scroll direction toggle
+int hud_msg_scrollup;  // killough 11/98: allow messages to scroll upwards
 int message_list;      // killough 11/98: made global
 
 int message_timer  = HU_MSGTIMEOUT * (1000/TICRATE);     // killough 11/98
