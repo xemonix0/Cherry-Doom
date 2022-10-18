@@ -5457,7 +5457,8 @@ boolean M_Responder (event_t* ev)
 
   // If there is no active menu displayed...
 
-  if (!menuactive)                                            // phares
+  // [Nugget] Ignore these inputs if typing on chat
+  if (!menuactive && !chat_on)                                // phares
     {                                                         //  |
                                                               //  V
       // [Nugget]
@@ -5589,7 +5590,7 @@ boolean M_Responder (event_t* ev)
 
       if (M_InputActivated(input_zoomout))     // zoom out
 	{
-	  if (automapactive || chat_on)
+	  if (automapactive)
 	    return false;
 	  M_SizeDisplay(0);
 	  S_StartSound(NULL,sfx_stnmov);
@@ -5598,7 +5599,7 @@ boolean M_Responder (event_t* ev)
 
       if (M_InputActivated(input_zoomin))               // zoom in
 	{                                 // jff 2/23/98
-	  if (automapactive || chat_on)     // allow
+	  if (automapactive)                // allow
 	    return false;                   // key_hud==key_zoomin
 	  M_SizeDisplay(1);                                             //  ^
 	  S_StartSound(NULL,sfx_stnmov);                                //  |
@@ -5607,7 +5608,7 @@ boolean M_Responder (event_t* ev)
 
       if (M_InputActivated(input_hud))   // heads-up mode
 	{
-	  if ((automapactive && !automapoverlay) || chat_on)   // jff 2/22/98
+	  if (automapactive && !automapoverlay)       // jff 2/22/98
 	    return false;                             // HUD mode control
     // [Nugget] Increase to accommodate for Crispy HUD
 	  if (screenSize<8+2)                         // function on default F5
