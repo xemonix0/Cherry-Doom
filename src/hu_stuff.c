@@ -230,6 +230,7 @@ int hud_crosshair;
 int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 boolean hud_crosshair_health;
 boolean hud_crosshair_target;
+boolean hud_crosshair_lockon; // [Nugget] Crosshair locks on target
 int hud_crosshair_color;
 boolean hud_crosshair_force_color; // [Nugget] Force default crosshair color when coloring based on target health
 int hud_crosshair_target_color;
@@ -1039,7 +1040,7 @@ void HU_InitCrosshair(void)
 
     crosshair.w = SHORT(crosshair.patch->width)/2;
     crosshair.h = SHORT(crosshair.patch->height)/2;
-    crosshair.x = ORIGWIDTH/2;
+    // [Nugget] Skip setting 'crosshair.x' here, since "lock on" might change it
   }
   else
     crosshair.patch = NULL;
@@ -1050,6 +1051,8 @@ static void HU_UpdateCrosshair(void)
   extern boolean mouselook; // [Nugget]
   int health; // [Nugget] Could be player or target health
 
+  // [Nugget] Set both of these here, might change if "lock on" is enabled
+  crosshair.x = ORIGWIDTH/2;
   crosshair.y = (screenblocks <= 10) ? (ORIGHEIGHT-ST_HEIGHT)/2 : ORIGHEIGHT/2;
 
   // [Nugget] Check for linetarget
@@ -1074,6 +1077,41 @@ static void HU_UpdateCrosshair(void)
       }
     }
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
+
+    // [Nugget] Lock crosshair on linetarget
+    if (hud_crosshair_lockon && !(mouselook && freeaim == freeaim_direct) && linetarget)
+    {
+      // This is essentially an adaptation of the code that determines
+      // where sprites are drawn on the screen, i.e. R_ProjectSprite()
+
+      extern fixed_t fractionaltic, viewcos, viewsin, projection;
+      extern int rfov;
+      fixed_t interpx, interpy, interpz, tr_x, tr_y, xscale;
+
+      // [AM] Interpolate between current and last position, if prudent.
+      if (uncapped && linetarget->interp == true && leveltime > oldleveltime)
+      {
+        interpx = linetarget->oldx + FixedMul(linetarget->x - linetarget->oldx, fractionaltic);
+        interpy = linetarget->oldy + FixedMul(linetarget->y - linetarget->oldy, fractionaltic);
+        interpz = linetarget->oldz + FixedMul(linetarget->z - linetarget->oldz, fractionaltic);
+      }
+      else {
+        interpx = linetarget->x;
+        interpy = linetarget->y;
+        interpz = linetarget->z;
+      }
+
+      tr_x = interpx - viewx;
+      tr_y = interpy - viewy;
+      xscale = FixedDiv(projection, FixedMul(tr_x, viewcos)
+                                    - (-FixedMul(tr_y, viewsin))) / 2;
+
+      crosshair.x += FixedMul(-(-FixedMul(tr_x, viewsin)
+                                + FixedMul(tr_y, viewcos)),xscale) / FRACUNIT;
+
+      crosshair.y += (FixedMul(viewz - (interpz + linetarget->height/2), xscale)
+                      / FRACUNIT) + ((plr->lookdir / MLOOKUNIT + plr->recoilpitch)* ORIGFOV/rfov);
+    }
   }
 
   // [Nugget] Begin checking, in order of priority
