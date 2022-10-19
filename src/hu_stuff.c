@@ -1079,7 +1079,8 @@ static void HU_UpdateCrosshair(void)
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 
     // [Nugget] Lock crosshair on linetarget
-    if (hud_crosshair_lockon && !(mouselook && freeaim == freeaim_direct) && linetarget)
+    if (hud_crosshair_lockon && !(mouselook && freeaim == freeaim_direct)
+        && linetarget && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2))
     {
       // This is essentially an adaptation of the code that determines
       // where sprites are drawn on the screen, i.e. R_ProjectSprite()

@@ -3953,7 +3953,10 @@ static void M_UpdateMouseLook(void)
       if (playeringame[i])
         players[i].centering = true;
   }
-  M_UpdateFreeaimItem(); // [Nugget]
+
+  // [Nugget]
+  M_UpdateFreeaimItem();
+  M_UpdateCrosshairItems();
 }
 
 void static M_SmoothLight(void)
