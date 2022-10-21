@@ -1128,7 +1128,7 @@ static void HU_UpdateCrosshair(void)
       tr_x = interpx - viewx;
       tr_y = interpy - viewy;
       xscale = FixedDiv(projection, FixedMul(tr_x, viewcos)
-                                    - (-FixedMul(tr_y, viewsin))) / 2;
+                                    - (-FixedMul(tr_y, viewsin))) / (hires+1);
 
       if (hud_crosshair_lockon == lockon_full)
         crosshair.x += FixedMul(-(-FixedMul(tr_x, viewsin)
