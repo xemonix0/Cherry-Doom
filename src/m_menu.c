@@ -3372,6 +3372,7 @@ enum {
   stat3_xhairhealth,
   stat3_xhairtarget,
   stat3_xhairlockon,
+  stat3_xhairindicators,
   stat3_xhaircolor,
   stat3_xhairforce,
   stat3_xhairtcolor,
@@ -3387,6 +3388,9 @@ static void M_UpdateCrosshairItems (void)
     DISABLE_ITEM(!STRICTMODE(hud_crosshair_on && hud_crosshair_target
                              && !(mouselook && freeaim == freeaim_direct)),
                                                   stat_settings3[stat3_xhairlockon]);
+    DISABLE_ITEM(!STRICTMODE(hud_crosshair_on && hud_crosshair_target
+                             && !(mouselook && freeaim == freeaim_direct)),
+                                                  stat_settings3[stat3_xhairindicators]);
     DISABLE_ITEM(!hud_crosshair_on,               stat_settings3[stat3_xhaircolor]);
     DISABLE_ITEM(!STRICTMODE(hud_crosshair_on && hud_crosshair_health == 2),
                                                   stat_settings3[stat3_xhairforce]);
@@ -3419,6 +3423,7 @@ setup_menu_t stat_settings3[] =
     {"COLOR BY HEALTH",       S_CHOICE, m_null,M_X,M_Y+stat3_xhairhealth*M_SPC, {"hud_crosshair_health"}, 0, M_UpdateCrosshairItems, crosshair_health},
     {"HIGHLIGHT ON TARGET",   S_CHOICE, m_null,M_X,M_Y+stat3_xhairtarget*M_SPC, {"hud_crosshair_target"}, 0, M_UpdateCrosshairItems, crosshair_targets},
     {"LOCK ON TARGET",        S_CHOICE, m_null,M_X,M_Y+stat3_xhairlockon*M_SPC, {"hud_crosshair_lockon"}, 0, 0, crosshair_lockon_modes},
+    {"HORIZ. AUTOAIM INDICATORS",S_YESNO, m_null,M_X,M_Y+stat3_xhairindicators*M_SPC, {"hud_crosshair_indicators"}},
     {"DEFAULT COLOR",         S_CRITEM,m_null,M_X,M_Y+stat3_xhaircolor*M_SPC, {"hud_crosshair_color"}, 0, NULL, hudcolor_str},
     {"FORCE DEFAULT COLOR",   S_YESNO, m_null,M_X,M_Y+stat3_xhairforce*M_SPC, {"hud_crosshair_force_color"}},
     {"HIGHLIGHT COLOR",       S_CRITEM,m_null,M_X,M_Y+stat3_xhairtcolor*M_SPC, {"hud_crosshair_target_color"}, 0, NULL, hudcolor_str},

@@ -2386,6 +2386,13 @@ default_t defaults[] = {
     "Lock crosshair on target (1 = Vertical only, 2 = Full)"
   },
 
+  { // [Nugget]
+    "hud_crosshair_indicators",
+    (config_t *) &hud_crosshair_indicators, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to enable horizontal autoaim indicators for crosshair"
+  },
+
   {
     "hud_crosshair_color",
     (config_t *) &hud_crosshair_color, NULL,

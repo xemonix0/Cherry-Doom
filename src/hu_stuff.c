@@ -231,6 +231,7 @@ int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 boolean hud_crosshair_health;
 boolean hud_crosshair_target;
 int hud_crosshair_lockon; // [Nugget] Crosshair locks on target
+boolean hud_crosshair_indicators; // [Nugget] Horizontal autoaim indicators
 int hud_crosshair_color;
 boolean hud_crosshair_force_color; // [Nugget] Force default crosshair color when coloring based on target health
 int hud_crosshair_target_color;
@@ -1012,6 +1013,9 @@ static void HU_widget_build_sttime(void)
 typedef struct
 {
   patch_t *patch;
+  patch_t *patchl, *patchr; // [Nugget] Horizontal autoaim indicators
+  int lw, lh, rw, rh;
+  int side; // [Nugget] Horizontal autoaim indicators
   int w, h, x, y;
   char *cr;
 } crosshair_t;
@@ -1032,6 +1036,10 @@ void HU_InitCrosshair(void)
   if (crosshair.patch)
     Z_ChangeTag(crosshair.patch, PU_CACHE);
 
+  // [Nugget] Horizontal autoaim indicators
+  if (crosshair.patchl) { Z_ChangeTag(crosshair.patchl, PU_CACHE); }
+  if (crosshair.patchr) { Z_ChangeTag(crosshair.patchr, PU_CACHE); }
+
   if (crosshair_nam[hud_crosshair])
   {
     crosshair.patch = hud_crosshair_shaded // [Nugget]
@@ -1044,6 +1052,14 @@ void HU_InitCrosshair(void)
   }
   else
     crosshair.patch = NULL;
+
+  // [Nugget] Horizontal autoaim indicators
+  crosshair.patchl = W_CacheLumpName(hud_crosshair_shaded ? "CROSSILS" : "CROSSIL", PU_STATIC);
+  crosshair.lw = SHORT(crosshair.patchl->width);
+  crosshair.lh = SHORT(crosshair.patchl->height)/2;
+  crosshair.patchr = W_CacheLumpName(hud_crosshair_shaded ? "CROSSIRS" : "CROSSIR", PU_STATIC);
+  crosshair.rw = SHORT(crosshair.patchr->width);
+  crosshair.rh = SHORT(crosshair.patchr->height)/2;
 }
 
 static void HU_UpdateCrosshair(void)
@@ -1056,6 +1072,7 @@ static void HU_UpdateCrosshair(void)
   crosshair.y = (screenblocks <= 10) ? (ORIGHEIGHT-ST_HEIGHT)/2 : ORIGHEIGHT/2;
 
   // [Nugget] Check for linetarget
+  crosshair.side = 0;
   if ((hud_crosshair_health == 2 || hud_crosshair_target) && !strictmode)
   {
     angle_t an = plr->mo->angle;
@@ -1072,8 +1089,14 @@ static void HU_UpdateCrosshair(void)
       if ((ammo == am_misl || ammo == am_cell)
           && (!no_hor_autoaim || !casual_play))
       {
-        if (!linetarget) { P_AimLineAttack(plr->mo, an += 1<<26, range, 0); }
-        if (!linetarget) { P_AimLineAttack(plr->mo, an -= 2<<26, range, 0); }
+        if (!linetarget) {
+          P_AimLineAttack(plr->mo, an += 1<<26, range, 0);
+          if (linetarget && hud_crosshair_indicators) { crosshair.side = -1; }
+        }
+        if (!linetarget) {
+          P_AimLineAttack(plr->mo, an -= 2<<26, range, 0);
+          if (linetarget && hud_crosshair_indicators) { crosshair.side = 1; }
+        }
       }
     }
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
@@ -1170,11 +1193,20 @@ static void HU_DrawCrosshair(void)
     return;
   }
 
-  if (crosshair.patch) {
+  if (crosshair.patch)
     V_DrawPatchTranslated(crosshair.x - crosshair.w,
                           crosshair.y - crosshair.h,
                           0, crosshair.patch, crosshair.cr, 0);
-  }
+
+  // [Nugget] Horizontal autoaim indicators
+  if (crosshair.side == -1)
+    V_DrawPatchTranslated(crosshair.x - crosshair.w - crosshair.lw,
+                          crosshair.y - crosshair.lh,
+                          0, crosshair.patchl, crosshair.cr, 0);
+  else if (crosshair.side == 1)
+    V_DrawPatchTranslated(crosshair.x + crosshair.w,
+                          crosshair.y - crosshair.rh,
+                          0, crosshair.patchr, crosshair.cr, 0);
 }
 
 // [crispy] print a bar indicating demo progress at the bottom of the screen
