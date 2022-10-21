@@ -3401,6 +3401,9 @@ static const char *crosshair_health[] = {
 static const char *crosshair_targets[] = {
   "Off", "Non-Fuzzy", "All", NULL
 };
+static const char *crosshair_lockon_modes[] = {
+  "Off", "Vertically", "Full", NULL
+};
 
 static const char *hudcolor_str[] = {
     "BRICK", "TAN", "GRAY", "GREEN", "BROWN", "GOLD", "RED", "BLUE", "ORANGE",
@@ -3415,7 +3418,7 @@ setup_menu_t stat_settings3[] =
     {"SHADED CROSSHAIR",      S_YESNO, m_null,M_X,M_Y+stat3_xhairsh*M_SPC, {"hud_crosshair_shaded"}},
     {"COLOR BY HEALTH",       S_CHOICE, m_null,M_X,M_Y+stat3_xhairhealth*M_SPC, {"hud_crosshair_health"}, 0, M_UpdateCrosshairItems, crosshair_health},
     {"HIGHLIGHT ON TARGET",   S_CHOICE, m_null,M_X,M_Y+stat3_xhairtarget*M_SPC, {"hud_crosshair_target"}, 0, M_UpdateCrosshairItems, crosshair_targets},
-    {"LOCK ON TARGET",        S_YESNO, m_null,M_X,M_Y+stat3_xhairlockon*M_SPC, {"hud_crosshair_lockon"}},
+    {"LOCK ON TARGET",        S_CHOICE, m_null,M_X,M_Y+stat3_xhairlockon*M_SPC, {"hud_crosshair_lockon"}, 0, 0, crosshair_lockon_modes},
     {"DEFAULT COLOR",         S_CRITEM,m_null,M_X,M_Y+stat3_xhaircolor*M_SPC, {"hud_crosshair_color"}, 0, NULL, hudcolor_str},
     {"FORCE DEFAULT COLOR",   S_YESNO, m_null,M_X,M_Y+stat3_xhairforce*M_SPC, {"hud_crosshair_force_color"}},
     {"HIGHLIGHT COLOR",       S_CRITEM,m_null,M_X,M_Y+stat3_xhairtcolor*M_SPC, {"hud_crosshair_target_color"}, 0, NULL, hudcolor_str},

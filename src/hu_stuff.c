@@ -230,7 +230,7 @@ int hud_crosshair;
 int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 boolean hud_crosshair_health;
 boolean hud_crosshair_target;
-boolean hud_crosshair_lockon; // [Nugget] Crosshair locks on target
+int hud_crosshair_lockon; // [Nugget] Crosshair locks on target
 int hud_crosshair_color;
 boolean hud_crosshair_force_color; // [Nugget] Force default crosshair color when coloring based on target health
 int hud_crosshair_target_color;
@@ -1107,8 +1107,9 @@ static void HU_UpdateCrosshair(void)
       xscale = FixedDiv(projection, FixedMul(tr_x, viewcos)
                                     - (-FixedMul(tr_y, viewsin))) / 2;
 
-      crosshair.x += FixedMul(-(-FixedMul(tr_x, viewsin)
-                                + FixedMul(tr_y, viewcos)),xscale) / FRACUNIT;
+      if (hud_crosshair_lockon == lockon_full)
+        crosshair.x += FixedMul(-(-FixedMul(tr_x, viewsin)
+                                  + FixedMul(tr_y, viewcos)),xscale) / FRACUNIT;
 
       crosshair.y += (FixedMul(viewz - (interpz + linetarget->height/2), xscale)
                       / FRACUNIT) + ((plr->lookdir / MLOOKUNIT + plr->recoilpitch)* ORIGFOV/rfov);
