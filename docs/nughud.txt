@@ -42,7 +42,8 @@ On the other hand, we have patches. These are graphics that can be drawn
 anywhere on the screen, behind the widgets. They use an additional string
 variable that determines the name of the patch to be used, which can be a sprite
 (i.e. a lump between S_ markers, like "MEDIA0") or a graphic (like "STBAR").
-The name MUST be enclosed between quotation marks.
+Note that custom lumps CAN be used (for example, a graphic called "NEWPATCH").
+The name used in the NUGHUD lump MUST be enclosed between quotation marks.
 
 
 By default and compared to the original Crispy HUD, the NUGHUD hides the face
