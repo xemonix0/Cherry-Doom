@@ -26,11 +26,18 @@
 #define __M_NUGHUD__
 
 typedef struct nughud_widget_s {
-  int x;
-  int y;
+  int x,y;
   int wide;
   int misc;
 } nughud_widget_t;
+
+typedef struct nughud_patch_s {
+  int x,y;
+  int wide;
+  char *name;
+} nughud_patch_t;
+
+#define NUMNUGHUDPATCHES 8
 
 typedef struct nughud_s {
   struct nughud_widget_s ammo;
@@ -44,6 +51,7 @@ typedef struct nughud_s {
   struct nughud_widget_s maxammos[4];
   struct nughud_widget_s time;
   struct nughud_widget_s sts;
+  struct nughud_patch_s patches[NUMNUGHUDPATCHES];
 } nughud_t;
 
 extern nughud_t nughud;

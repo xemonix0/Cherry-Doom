@@ -12,7 +12,9 @@ Excerpt from mbfedit.txt:
 "The OPTIONS lump has the same format as mbf.cfg: A text file listing option
 names and values, optionally separated by blank or comment lines."
 
-For the most part, there are three variables for each widget:
+
+In practice, there are two types of elements in the NUGHUD. Both types use the
+following variables for each item:
 
 - An integer for X position. Can be any number between -1 and 320 (inclusive).
   A value of -1 will disable the widget.
@@ -25,9 +27,23 @@ For the most part, there are three variables for each widget:
   the widget left, a value of 1 will shift it right, and a value of 0 won't
   shift it at all.
 
-There are some additional variables: one to toggle the face background, whose
-position is linked to that of the face, and another to have the Time widget be
-relocated to the position of the STS widget, in case the latter is inactive.
+Now, each type of element of specifically:
+
+First, we have widgets (like the Health count). These mostly just use the
+variables listed above, but there are some exceptions:
+
+- There's an integer to toggle the face background, whose position is linked to
+  that of the face.
+
+- There's another integer to have the Time widget be relocated to the position
+  of the STS widget, in case the latter is inactive.
+
+On the other hand, we have patches. These are graphics that can be drawn
+anywhere on the screen, behind the widgets. They use an additional string
+variable that determines the name of the patch to be used, which can be a sprite
+(i.e. a lump between S_ markers, like "MEDIA0") or a graphic (like "STBAR").
+The name MUST be enclosed between quotation marks.
+
 
 By default and compared to the original Crispy HUD, the NUGHUD hides the face
 widget and shows 8 weapon numbers in the Arms display instead of 6.
@@ -66,56 +82,56 @@ nughud_health_wide -1
 nughud_arms2_x 111
 ; Y position of the weapon number 2
 nughud_arms2_y 172
-; Apply widescreen delta to the weapon number 2
+; Apply widescreen delta to the Arms Number 2
 nughud_arms2_wide -1
 
 ; X position of the weapon number 3
 nughud_arms3_x 119
 ; Y position of the weapon number 3
 nughud_arms3_y 172
-; Apply widescreen delta to the weapon number 3
+; Apply widescreen delta to the Arms Number 3
 nughud_arms3_wide -1
 
 ; X position of the weapon number 4
 nughud_arms4_x 127
 ; Y position of the weapon number 4
 nughud_arms4_y 172
-; Apply widescreen delta to the weapon number 4
+; Apply widescreen delta to the Arms Number 4
 nughud_arms4_wide -1
 
 ; X position of the weapon number 5
 nughud_arms5_x 135
 ; Y position of the weapon number 5
 nughud_arms5_y 172
-; Apply widescreen delta to the weapon number 5
+; Apply widescreen delta to the Arms Number 5
 nughud_arms5_wide -1
 
 ; X position of the weapon number 6
 nughud_arms6_x 111
 ; Y position of the weapon number 6
 nughud_arms6_y 182
-; Apply widescreen delta to the weapon number 6
+; Apply widescreen delta to the Arms Number 6
 nughud_arms6_wide -1
 
 ; X position of the weapon number 7
 nughud_arms7_x 119
 ; Y position of the weapon number 7
 nughud_arms7_y 182
-; Apply widescreen delta to the weapon number 2
+; Apply widescreen delta to the Arms Number 7
 nughud_arms7_wide -1
 
 ; X position of the weapon number 8
 nughud_arms8_x 127
 ; Y position of the weapon number 8
 nughud_arms8_y 182
-; Apply widescreen delta to the weapon number 8
+; Apply widescreen delta to the Arms Number 8
 nughud_arms8_wide -1
 
 ; X position of the weapon number 9
 nughud_arms9_x 135
 ; Y position of the weapon number 9
 nughud_arms9_y 182
-; Apply widescreen delta to the weapon number 9
+; Apply widescreen delta to the Arms Number 9
 nughud_arms9_wide -1
 
 ; X position of the Frags count
@@ -233,4 +249,76 @@ nughud_sts_x 0
 nughud_sts_y 160
 ; Apply widescreen delta to the STS widget
 nughud_sts_wide -1
+
+; X position of Patch 1
+nughud_patch1_x 0
+; Y position of Patch 1
+nughud_patch1_y 0
+; Apply widescreen delta to Patch 1
+nughud_patch1_wide 0
+; Name of Patch 1
+nughud_patch1_name ""
+
+; X position of Patch 2
+nughud_patch2_x 0
+; Y position of Patch 2
+nughud_patch2_y 0
+; Apply widescreen delta to Patch 2
+nughud_patch2_wide 0
+; Name of Patch 2
+nughud_patch2_name ""
+
+; X position of Patch3 
+nughud_patch3_x 0
+; Y position of Patch 3
+nughud_patch3_y 0
+; Apply widescreen delta to Patch 3
+nughud_patch3_wide 0
+; Name of Patch 3
+nughud_patch3_name ""
+
+; X position of Patch 4
+nughud_patch4_x 0
+; Y position of Patch 4
+nughud_patch4_y 0
+; Apply widescreen delta to Patch 4
+nughud_patch4_wide 0
+; Name of Patch 4
+nughud_patch4_name ""
+
+; X position of Patch 5
+nughud_patch5_x 0
+; Y position of Patch5 
+nughud_patch5_y 0
+; Apply widescreen delta to Patch 5
+nughud_patch5_wide 0
+; Name of Patch 5
+nughud_patch5_name ""
+
+; X position of Patch 6
+nughud_patch6_x 0
+; Y position of Patch 6
+nughud_patch6_y 0
+; Apply widescreen delta to Patch 6
+nughud_patch6_wide 0
+; Name of Patch 6
+nughud_patch6_name ""
+
+; X position of Patch 7
+nughud_patch7_x 0
+; Y position of Patch 7
+nughud_patch7_y 0
+; Apply widescreen delta to Patch 7
+nughud_patch7_wide 0
+; Name of Patch 7
+nughud_patch7_name ""
+
+; X position of Patch 8
+nughud_patch8_x 0
+; Y position of Patch 8
+nughud_patch8_y 0
+; Apply widescreen delta to Patch 8
+nughud_patch8_wide 0
+; Name of Patch 8
+nughud_patch8_name ""
 "
