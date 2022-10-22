@@ -1103,7 +1103,8 @@ static void HU_UpdateCrosshair(void)
 
     // [Nugget] Lock crosshair on linetarget
     if (hud_crosshair_lockon && !(mouselook && freeaim == freeaim_direct)
-        && linetarget && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2))
+        && linetarget && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2)
+        && gamestate == wipegamestate)
     {
       // This is essentially an adaptation of the code that determines
       // where sprites are drawn on the screen, i.e. R_ProjectSprite()
