@@ -70,7 +70,7 @@ nughud_ammo_x 44
 ; Y position of the Ammo count
 nughud_ammo_y 171
 ; Apply widescreen delta to the Ammo count
-nughud_ammo_y -1
+nughud_ammo_wide -1
 
 ; X position of the Health count
 nughud_health_x 90
