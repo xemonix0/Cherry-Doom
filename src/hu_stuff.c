@@ -850,11 +850,11 @@ void HU_MoveHud(void)
 
     // [Nugget] Nugget HUD
 
-    w_sttime.x = crispyhud  ? ((nughud.time.misc && hud_timests == 1)
+    w_sttime.x = crispyhud  ? ((nughud.time_sts && hud_timests == 1)
                                ? nughud.sts.x + WIDESCREENDELTA*nughud.sts.wide
                                : nughud.time.x + WIDESCREENDELTA*nughud.time.wide)
                             : HU_TITLEX;
-    w_sttime.y = crispyhud  ? ((nughud.time.misc && hud_timests == 1)
+    w_sttime.y = crispyhud  ? ((nughud.time_sts && hud_timests == 1)
                                ? nughud.sts.y
                                : nughud.time.y)
                             : ST_Y - t_offset*HU_GAPY;

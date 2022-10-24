@@ -32,10 +32,10 @@ Now, each type of element of specifically:
 First, we have widgets (like the Health count). These mostly just use the
 variables listed above, but there are some exceptions:
 
-- There's an integer to toggle the face background, whose position is linked to
-  that of the face.
+- There's a boolean (value of 0 or 1) to toggle the face background, whose
+  position is linked to that of the face.
 
-- There's another integer to have the Time widget be relocated to the position
+- There's another boolean to have the Time widget be relocated to the position
   of the STS widget, in case the latter is inactive.
 
 On the other hand, we have patches. These are graphics that can be drawn
@@ -44,6 +44,9 @@ variable that determines the name of the patch to be used, which can be a sprite
 (i.e. a lump between S_ markers, like "MEDIA0") or a graphic (like "STBAR").
 Note that custom lumps CAN be used (for example, a graphic called "NEWPATCH").
 The name used in the NUGHUD lump MUST be enclosed between quotation marks.
+
+Lastly, there's an additional fixed point variable (value between 0 and 200,
+inclusive) to increase the height at which weapon sprites are drawn.
 
 
 By default and compared to the original Crispy HUD, the NUGHUD hides the face
@@ -322,4 +325,7 @@ nughud_patch8_y 0
 nughud_patch8_wide 0
 ; Name of Patch 8
 nughud_patch8_name ""
+
+; Upwards offset to apply to weapon sprites
+nughud_weapheight 0
 "

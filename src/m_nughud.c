@@ -76,7 +76,7 @@ default_t nughud_defaults[] = {
   { "nughud_face_x",        (config_t *)&nughud.face.x,           NULL, {-1},             {-1,320}, number },
   { "nughud_face_y",        (config_t *)&nughud.face.y,           NULL, {ST_FACESY},      {0,200},  number },
   { "nughud_face_wide",     (config_t *)&nughud.face.wide,        NULL, {0},              {-1,1},   number },
-  { "nughud_face_bg",       (config_t *)&nughud.face.misc,        NULL, {1},              {0,1},    number },
+  { "nughud_face_bg",       (config_t *)&nughud.face_bg,          NULL, {1},              {0,1},    number },
   { "nughud_armor_x",       (config_t *)&nughud.armor.x,          NULL, {ST_ARMORX},      {-1,320}, number },
   { "nughud_armor_y",       (config_t *)&nughud.armor.y,          NULL, {ST_ARMORY},      {0,200},  number },
   { "nughud_armor_wide",    (config_t *)&nughud.armor.wide,       NULL, {1},              {-1,1},   number },
@@ -116,7 +116,7 @@ default_t nughud_defaults[] = {
   { "nughud_time_x",        (config_t *)&nughud.time.x,           NULL, {0},              {0,320},  number },
   { "nughud_time_y",        (config_t *)&nughud.time.y,           NULL, {ST_Y-2*HU_GAPY}, {0,200},  number },
   { "nughud_time_wide",     (config_t *)&nughud.time.wide,        NULL, {-1},             {-1,1},   number },
-  { "nughud_time_sts",      (config_t *)&nughud.time.misc,        NULL, {1},              {0,1},    number },
+  { "nughud_time_sts",      (config_t *)&nughud.time_sts,         NULL, {1},              {0,1},    number },
   { "nughud_sts_x",         (config_t *)&nughud.sts.x,            NULL, {0},              {0,320},  number },
   { "nughud_sts_y",         (config_t *)&nughud.sts.y,            NULL, {ST_Y-HU_GAPY},   {0,200},  number },
   { "nughud_sts_wide",      (config_t *)&nughud.sts.wide,         NULL, {-1},             {-1,1},   number },
@@ -152,6 +152,7 @@ default_t nughud_defaults[] = {
   { "nughud_patch8_y",      (config_t *)&nughud.patches[7].y,     NULL, {0},              {0,200},  number },
   { "nughud_patch8_wide",   (config_t *)&nughud.patches[7].wide,  NULL, {0},              {-1,1},   number },
   { "nughud_patch8_name",   (config_t *)&nughud.patches[7].name,  NULL, {.s = NULL},      {0},      string },
+  { "nughud_weapheight",    (config_t *)&nughud.weapheight,       NULL, {0},              {0,200},  number },
 
   {NULL}         // last entry
 };
