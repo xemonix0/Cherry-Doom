@@ -852,7 +852,8 @@ void ST_drawWidgets(boolean refresh)
       }
 
   // used by w_arms[] widgets
-  st_armson = st_statusbaron && !deathmatch;
+  // [Nugget] Draw both Arms and Frags in Nugget HUD
+  st_armson = st_statusbaron && (!deathmatch || st_crispyhud);
 
   // used by w_frags widget
   st_fragson = deathmatch && st_statusbaron;

@@ -59,6 +59,12 @@ will restore the face widget:
 "
 ; This is a comment!
 nughud_face_x 143
+
+; Move the Frags widget elsewhere, since in the default NUGHUD distribution, it
+; is drawn right where the face is drawn in the traditional Status Bar.
+nughud_frags_x 314
+nughud_frags_y 155
+nughud_frags_wide 1
 "
 
 --------------------------------------------------------------------------------
@@ -139,11 +145,11 @@ nughud_arms9_y 182
 nughud_arms9_wide -1
 
 ; X position of the Frags count
-nughud_frags_x 138
+nughud_frags_x 174
 ; Y position of the Frags count
 nughud_frags_y 171
 ; Apply widescreen delta to the Frags count
-nughud_frags_wide -1
+nughud_frags_wide 0
 
 ; X position of the Face
 nughud_face_x -1
