@@ -111,6 +111,7 @@ lighttable_t **colormaps;
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
 int extralight;                           // bumped light from gun blasts
+int extra_level_brightness;               // level brightness feature
 
 // [Nugget] FOV from Doom Retro
 static fixed_t fovscale;
@@ -684,7 +685,7 @@ void R_SetupFrame (player_t *player)
     { extralight = 0; }
 
   // [Nugget]: [crispy] A11Y
-  extralight += a11y_extra_lighting;
+  extralight += STRICTMODE(extra_level_brightness); // level brightness feature
 
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   if (pitch > (LOOKDIRMAX * ORIGFOV/rfov))

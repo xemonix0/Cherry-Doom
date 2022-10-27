@@ -52,16 +52,16 @@
 //
 //-----------------------------------------------------------------------------
 
-static void cheat_mus(cheatarg_t arg);
+static void cheat_mus(char *buf);
 static void cheat_choppers();
 static void cheat_god();
 static void cheat_fa();
 static void cheat_k();
 static void cheat_kfa();
 static void cheat_noclip();
-static void cheat_pw(cheatarg_t arg);
+static void cheat_pw(int pw);
 static void cheat_behold();
-static void cheat_clev(cheatarg_t arg);
+static void cheat_clev(char *buf);
 static void cheat_clev0();
 static void cheat_mypos();
 static void cheat_comp();
@@ -74,11 +74,11 @@ static void cheat_hom();
 static void cheat_fast();
 static void cheat_key();
 static void cheat_keyx();
-static void cheat_keyxx(cheatarg_t arg);
+static void cheat_keyxx(int key);
 static void cheat_weap();
-static void cheat_weapx(cheatarg_t arg);
+static void cheat_weapx(char *buf);
 static void cheat_ammo();
-static void cheat_ammox(cheatarg_t arg);
+static void cheat_ammox(char *buf);
 static void cheat_smart();
 static void cheat_pitch();
 static void cheat_nuke();
@@ -87,7 +87,7 @@ static void cheat_buddha();
 static void cheat_spechits();
 static void cheat_notarget();
 
-static void cheat_autoaim(); // killough 7/19/98
+static void cheat_autoaim();      // killough 7/19/98
 static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
 // [Nugget] (All of the following)
@@ -134,7 +134,7 @@ static void cheat_cheese();     // cheese :)
 
 struct cheat_s cheat[] = {
   {"idmus",      "Change music",      always,
-   {cheat_mus}, {-2} },
+   {cheat_mus}, -2 },
 
   {"idchoppers", "Chainsaw",          not_net | not_demo,
    {cheat_choppers} },
@@ -161,31 +161,31 @@ struct cheat_s cheat[] = {
    {cheat_noclip} },
 
   {"idbeholdo",  NULL,                not_net | not_demo | not_deh,
-   {cheat_pw}, {NUMPOWERS} }, // [FG] disable all powerups at once
+   {cheat_pw}, NUMPOWERS }, // [FG] disable all powerups at once
 
   {"idbeholdv",  "Invincibility",     not_net | not_demo,
-   {cheat_pw}, {pw_invulnerability} },
+   {cheat_pw}, pw_invulnerability },
 
   {"idbeholds",  "Berserk",           not_net | not_demo,
-   {cheat_pw}, {pw_strength} },
+   {cheat_pw}, pw_strength },
 
   {"idbeholdi",  "Invisibility",      not_net | not_demo,
-   {cheat_pw}, {pw_invisibility} },
+   {cheat_pw}, pw_invisibility },
 
   {"idbeholdr",  "Radiation Suit",    not_net | not_demo,
-   {cheat_pw}, {pw_ironfeet} },
+   {cheat_pw}, pw_ironfeet },
 
   {"idbeholda",  "Auto-map",          not_net | not_demo,
-   {cheat_pw}, {pw_allmap} },
+   {cheat_pw}, pw_allmap },
 
   {"idbeholdl",  "Lite-Amp Goggles",  not_net | not_demo,
-   {cheat_pw}, {pw_infrared} },
+   {cheat_pw}, pw_infrared },
 
   {"idbehold",   "BEHOLD menu",       not_net | not_demo,
    {cheat_behold} },
 
   {"idclev",     "Level Warp",        not_net | not_demo | not_menu,
-   {cheat_clev}, {-2} },
+   {cheat_clev}, -2 },
 
   {"idclev",     "Level Warp",        not_net | not_demo | not_menu,
    {cheat_clev0} },
@@ -227,34 +227,34 @@ struct cheat_s cheat[] = {
    {cheat_keyx} },
 
   {"keyrc",   NULL,                   not_net | not_demo,
-   {cheat_keyxx}, {it_redcard} },
+   {cheat_keyxx}, it_redcard },
 
   {"keyyc",   NULL,                   not_net | not_demo,
-   {cheat_keyxx}, {it_yellowcard} },
+   {cheat_keyxx}, it_yellowcard },
 
   {"keybc",   NULL,                   not_net | not_demo,
-   {cheat_keyxx}, {it_bluecard} },
+   {cheat_keyxx}, it_bluecard },
 
   {"keyrs",   NULL,                   not_net | not_demo,
-   {cheat_keyxx}, {it_redskull} },
+   {cheat_keyxx}, it_redskull },
 
   {"keyys",   NULL,                   not_net | not_demo,
-   {cheat_keyxx}, {it_yellowskull} },
+   {cheat_keyxx}, it_yellowskull },
 
   {"keybs",   NULL,                   not_net | not_demo,
-   {cheat_keyxx}, {it_blueskull} }, // killough 2/16/98: end generalized keys
+   {cheat_keyxx}, it_blueskull }, // killough 2/16/98: end generalized keys
 
   {"weap",    NULL,                   not_net | not_demo,
    {cheat_weap} },    // killough 2/16/98: generalized weapon cheats
 
   {"weap",    NULL,                   not_net | not_demo,
-   {cheat_weapx}, {-1} },
+   {cheat_weapx}, -1 },
 
   {"ammo",    NULL,                   not_net | not_demo,
    {cheat_ammo} },
 
   {"ammo",    NULL,                   not_net | not_demo,
-   {cheat_ammox}, {-1} }, // killough 2/16/98: end generalized weapons
+   {cheat_ammox}, -1 }, // killough 2/16/98: end generalized weapons
 
   {"tran",    NULL,                   always,
    {cheat_tran} },    // invoke translucency         // phares
@@ -339,16 +339,16 @@ struct cheat_s cheat[] = {
    {cheat_nlev} }, // 'IDNLEV' alternative
 
   {"turbo", NULL, not_net|not_demo,
-   {cheat_turbo}, {-3} },
+   {cheat_turbo}, -3 },
 
   {"spawn", NULL, not_net|not_demo,
    {cheat_spawn} }, // Spawn "Menu"
 
   {"spawne", NULL, not_net|not_demo,
-   {cheat_spawne}, {-3} }, // Spawn a hostile mobj
+   {cheat_spawne}, -3 }, // Spawn a hostile mobj
 
   {"spawnf", NULL, not_net|not_demo,
-   {cheat_spawnf}, {-3} }, // Spawn a friendly mobj
+   {cheat_spawnf}, -3 }, // Spawn a friendly mobj
 
   {"spawnr", NULL, not_net|not_demo,
    {cheat_spawnr} }, // Repeat last spawn
@@ -357,10 +357,10 @@ struct cheat_s cheat[] = {
    {cheat_spawn} }, // 'SPAWN' alternative
 
   {"summone", NULL, not_net|not_demo,
-   {cheat_spawne}, {-3} }, // 'SPAWNE' alternative
+   {cheat_spawne}, -3 }, // 'SPAWNE' alternative
 
   {"summonf", NULL, not_net|not_demo,
-   {cheat_spawnf}, {-3} }, // 'SPAWNF' alternative
+   {cheat_spawnf}, -3 }, // 'SPAWNF' alternative
 
   {"summonr", NULL, not_net|not_demo,
    {cheat_spawnr} }, // 'SPAWNR' alternative
@@ -505,10 +505,8 @@ static void cheat_nlev() {
 }
 
 // [Nugget]
-static void cheat_turbo(cheatarg_t arg)
+static void cheat_turbo(char *buf)
 {
-  char *buf = arg.s;
-
   int scale = 200;
   extern int forwardmove[2];
   extern int sidemove[2];
@@ -534,10 +532,8 @@ static void cheat_turbo(cheatarg_t arg)
 static void cheat_spawn() { plyr->message = "Spawn: Enemy, Friend or Repeat Last?"; }
 
 // [Nugget] Spawn a hostile mobj
-static void cheat_spawne(cheatarg_t arg)
+static void cheat_spawne(char *buf)
 {
-  char *buf = arg.s;
-
   fixed_t x, y, z;
   int type;
   mobj_t *spawnee;
@@ -576,10 +572,8 @@ static void cheat_spawne(cheatarg_t arg)
 }
 
 // [Nugget] Spawn a friendly mobj
-static void cheat_spawnf(cheatarg_t arg)
+static void cheat_spawnf(char *buf)
 {
-  char *buf = arg.s;
-
   fixed_t x, y, z;
   int type;
   mobj_t *spawnee;
@@ -687,9 +681,8 @@ static void cheat_autoaim()
     "Projectile autoaiming off";
 }
 
-static void cheat_mus(cheatarg_t arg)
+static void cheat_mus(char *buf)
 {
-  char *buf = arg.s;
   int musnum;
 
   //jff 3/20/98 note: this cheat allowed in netgame/demorecord
@@ -875,9 +868,8 @@ static void cheat_noclip()
 }
 
 // 'behold?' power-up cheats (modified for infinite duration -- killough)
-static void cheat_pw(cheatarg_t arg)
+static void cheat_pw(int pw)
 {
-  int pw = arg.i;
   if (pw == NUMPOWERS)
   {
     memset(plyr->powers, 0, sizeof(plyr->powers));
@@ -921,9 +913,8 @@ static void cheat_clev0()
   free(cur);
 }
 
-static void cheat_clev(cheatarg_t arg)
+static void cheat_clev(char *buf)
 {
-  char *buf = arg.s;
   int epsd, map;
   mapentry_t* entry;
 
@@ -1039,7 +1030,7 @@ static void cheat_tran()
   D_SetPredefinedTranslucency();
 }
 
-static void cheat_massacre() // jff 2/01/98 kill all monsters
+static void cheat_massacre()    // jff 2/01/98 kill all monsters
 {
   // jff 02/01/98 'em' cheat - kill all monsters
   // partially taken from Chi's .46 port
@@ -1269,9 +1260,8 @@ static void cheat_keyx()
   plyr->message = "Card, Skull";        // Ty 03/27/98 - *not* externalized
 }
 
-static void cheat_keyxx(cheatarg_t arg)
+static void cheat_keyxx(int key)
 {
-  int key = arg.i;
   plyr->message = (plyr->cards[key] = !plyr->cards[key]) ?
     "Key Added" : "Key Removed";  // Ty 03/27/98 - *not* externalized
 }
@@ -1284,9 +1274,8 @@ static void cheat_weap()
     "Weapon number 1-9" : "Weapon number 1-8";
 }
 
-static void cheat_weapx(cheatarg_t arg)
+static void cheat_weapx(char *buf)
 {
-  char *buf = arg.s;
   int w = *buf - '1';
 
   if ((w==wp_supershotgun && gamemode!=commercial) ||      // killough 2/28/98
@@ -1294,7 +1283,7 @@ static void cheat_weapx(cheatarg_t arg)
     return;
 
   if (w==wp_fist)           // make '1' apply beserker strength toggle
-    cheat_pw((cheatarg_t){.i = pw_strength});
+    cheat_pw(pw_strength);
   else
     if (w >= 0 && w < NUMWEAPONS)
     {
@@ -1315,9 +1304,8 @@ static void cheat_ammo()
   plyr->message = "Ammo 1-4, Backpack";  // Ty 03/27/98 - *not* externalized
 }
 
-static void cheat_ammox(cheatarg_t arg)
+static void cheat_ammox(char *buf)
 {
-  char *buf = arg.s;
   int a = *buf - '1';
   if (*buf == 'b')  // Ty 03/27/98 - strings *not* externalized
     if ((plyr->backpack = !plyr->backpack))
@@ -1385,7 +1373,7 @@ boolean M_FindCheats(int key)
     {
       *arg++ = tolower(key);             // store key in arg buffer
       if (!--argsleft)                   // if last key in arg list,
-        cheat[cht].func.p1((cheatarg_t){.s = argbuf}); // process the arg buffer
+        cheat[cht].func.s(argbuf);       // process the arg buffer
       return 1;                          // affirmative response
     }
 
@@ -1431,18 +1419,18 @@ boolean M_FindCheats(int key)
         !(cheat[i].when & beta_only && !beta_emulation) &&
         !(cheat[i].when & not_deh  && cheat[i].deh_modified))
     {
-      if (cheat[i].arg.i < 0)             // if additional args are required
+      if (cheat[i].arg < 0)               // if additional args are required
         {
           cht = i;                        // remember this cheat code
           arg = argbuf;                   // point to start of arg buffer
-          argsleft = -cheat[i].arg.i;     // number of args expected
+          argsleft = -cheat[i].arg;       // number of args expected
           ret = 1;                        // responder has eaten key
         }
       else
         if (!matchedbefore)               // allow only one cheat at a time
           {
             matchedbefore = ret = 1;      // responder has eaten key
-            cheat[i].func.p1(cheat[i].arg);  // call cheat handler
+            cheat[i].func.i(cheat[i].arg); // call cheat handler
           }
     }
   return ret;

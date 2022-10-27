@@ -182,4 +182,6 @@ int M_GetJoyBForName(const char* name);
 const char* M_GetNameForMouseB(int joyb);
 int M_GetMouseBForName(const char* name);
 
+boolean M_IsMouseWheel(int mouseb);
+
 #endif

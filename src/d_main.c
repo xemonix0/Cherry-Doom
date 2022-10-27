@@ -75,6 +75,7 @@
 #include "p_map.h" // MELEERANGE
 #include "i_endoom.h"
 #include "d_quit.h"
+#include "m_snapshot.h"
 
 #include "dsdhacked.h"
 
@@ -287,6 +288,9 @@ void D_Display (void)
     if (screenblocks >= CRISPY_HUD && screenblocks <= CRISPY_HUD+1)
       { ST_Drawer(false, true); }
   }
+
+  if (gameaction == ga_savegame)
+    M_TakeSnapshot();
 
   if (gamestate == GS_LEVEL && gametic)
     HU_Drawer ();

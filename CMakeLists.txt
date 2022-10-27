@@ -55,7 +55,8 @@ set(SETUP_ICON "setup.ico")
 set(PROJECT_VERSION_RC "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0") # ${PROJECT_VERSION_TWEAK}
 
 if(NOT WIN32)
-    set(WOOFDATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_SHORTNAME}" CACHE PATH "Path to install supplemental files" FORCE)
+    set(WOOFDATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_SHORTNAME}" CACHE PATH "Path to install supplemental files")
+    set(WOOFSOUNDFONT "${WOOFDATADIR}/soundfonts/TimGM6mb.sf2" CACHE PATH "FluidSynth soundfont path")
 endif()
 
 # Toggle-able defines added at compile-time.
@@ -77,12 +78,12 @@ check_symbol_exists(strncasecmp "strings.h" HAVE_DECL_STRNCASECMP)
 if(NOT SDL2_DIR)
     if(WIN32 AND NOT MSYS)
         message(STATUS "Downloading SDL2 Development Library...")
-        set(pkgver "2.24.0")
+        set(pkgver "2.24.1")
         if(MSVC)
             file(DOWNLOAD
                 "https://github.com/libsdl-org/SDL/releases/download/release-${pkgver}/SDL2-devel-${pkgver}-VC.zip"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-VC.zip"
-                EXPECTED_HASH SHA256=97c6e2d17c0baebf4c84ede27ec42e211358f3694b9f558ead3a9c542c4a004e)
+                EXPECTED_HASH SHA256=ff0dfdd8e89c2cef3be8378e4a39c27b5ee7acb689a7cb09aa14dd14242f9a9c)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-VC.zip"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
@@ -90,7 +91,7 @@ if(NOT SDL2_DIR)
             file(DOWNLOAD
                 "https://github.com/libsdl-org/SDL/releases/download/release-${pkgver}/SDL2-devel-${pkgver}-mingw.tar.gz"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-mingw.tar.gz"
-                EXPECTED_HASH SHA256=5036914a59a79db85fb92739c988b1fb3d6492c67c9333c58e888d7bd1a26701)
+                EXPECTED_HASH SHA256=48b2a6c35801088a7e1828a2a9fb2e43e144d409e190031f4a52571b1d660cf4)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-mingw.tar.gz"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
@@ -158,11 +159,11 @@ find_package(SDL2_net)
 if (NOT FluidSynth_DIR)
     if (WIN32 AND MSVC AND CMAKE_SIZEOF_VOID_P STREQUAL 4)
         message(STATUS "Downloading FluidSynth Development Library...")
-        set(pkgver "2.2.8")
+        set(pkgver "2.3.0")
         file(DOWNLOAD
             "https://github.com/FluidSynth/fluidsynth/releases/download/v${pkgver}/fluidsynth-${pkgver}-winXP-x86.zip"
             "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-x86.zip"
-            EXPECTED_HASH SHA256=03660c347f8cafda099afe4f1cc04080355441b8a68e09355550bd3067c798aa)
+            EXPECTED_HASH SHA256=ea84ee14b9c9f394085bbbe6651df7a119879b5e19ebed47d7fd096b18b56c09)
         execute_process(
             COMMAND "${CMAKE_COMMAND}" -E make_directory
             "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-${pkgver}")
@@ -173,7 +174,8 @@ if (NOT FluidSynth_DIR)
         set(FluidSynth_DIR "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-${pkgver}")
     endif()
 endif()
-find_package(FluidSynth)
+# 2.2.0 for unicode fopen on Windows
+find_package(FluidSynth 2.2.0)
 
 # Python 3
 find_package(Python3 COMPONENTS Interpreter)
@@ -192,10 +194,14 @@ if(WIN32)
 else()
     install(FILES COPYING DESTINATION "share/doc/${PROJECT_SHORTNAME}")
     install(FILES README.md DESTINATION "share/doc/${PROJECT_SHORTNAME}")
-    install(DIRECTORY docs/ DESTINATION "share/doc/${PROJECT_SHORTNAME}")
-    install(DIRECTORY examples/ DESTINATION "share/doc/${PROJECT_SHORTNAME}/examples")
     install(DIRECTORY autoload/ DESTINATION "share/${PROJECT_SHORTNAME}/autoload")
-    if(FluidSynth_FOUND)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/docs")
+        install(DIRECTORY docs/ DESTINATION "share/doc/${PROJECT_SHORTNAME}")
+    endif()
+    if(EXISTS "${CMAKE_SOURCE_DIR}/examples")
+        install(DIRECTORY examples/ DESTINATION "share/doc/${PROJECT_SHORTNAME}/examples")
+    endif()
+    if(EXISTS "${CMAKE_SOURCE_DIR}/soundfonts" AND FluidSynth_FOUND)
         install(DIRECTORY soundfonts/ DESTINATION "share/${PROJECT_SHORTNAME}/soundfonts")
     endif()
 endif()

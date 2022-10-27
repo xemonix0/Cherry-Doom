@@ -51,6 +51,7 @@ set(WOOF_SOURCES
     m_misc2.c              m_misc2.h
     m_nughud.c             m_nughud.h
     m_random.c             m_random.h
+    m_snapshot.c           m_snapshot.h
     m_swap.h
     memio.c                memio.h
     midifile.c             midifile.h
@@ -68,6 +69,7 @@ set(WOOF_SOURCES
     net_sdl.c              net_sdl.h
     net_server.c           net_server.h
     net_structrw.c         net_structrw.h
+    p_action.h
     p_ceilng.c
     p_doors.c
     p_enemy.c              p_enemy.h
@@ -139,19 +141,57 @@ if (WIN32)
     list(APPEND WOOF_LIBRARIES winmm)
 endif()
 
-# Some platforms have SDL2main, others don't.
-if(SDL2_MAIN_LIBRARY)
-    list(APPEND WOOF_LIBRARIES SDL2::SDL2main)
-endif()
-
+# Standard target definition
 if(WIN32)
+    add_library(nugget-doom SHARED EXCLUDE_FROM_ALL ${WOOF_SOURCES})
+    target_compile_definitions(nugget-doom PRIVATE WIN_LAUNCHER)
+    # Some platforms have SDL2main, others don't.
+    if(SDL2_MAIN_LIBRARY)
+        list(APPEND WIN_LAUNCHER_LIBS SDL2::SDL2main)
+    endif()
+    list(APPEND WIN_LAUNCHER_LIBS SDL2::SDL2 nugget-doom)
+
     # Stamp out and compile resource file on Windows.
     configure_file(resource.rc.in "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
-    list(APPEND WOOF_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
-endif()
 
-# Standard target definition
-add_executable(nugget-doom WIN32 ${WOOF_SOURCES})
+    add_executable(nugget-doom-com WIN32
+        ../win32/win_launcher.c
+        "${CMAKE_CURRENT_BINARY_DIR}/resource.rc"
+    )
+    target_woof_settings(nugget-doom-com)
+    target_link_libraries(nugget-doom-com PRIVATE ${WIN_LAUNCHER_LIBS})
+    if(MSVC)
+        # MSVC tries to supply a default manifest and complains when it finds
+        # ours unless we specifically tell it not to.
+        target_link_options(nugget-doom-com PRIVATE "/MANIFEST:NO" "/SUBSYSTEM:CONSOLE")
+    else()
+        target_link_options(nugget-doom-com PRIVATE "-mconsole")
+    endif()
+    set_target_properties(nugget-doom-com PROPERTIES
+        RUNTIME_OUTPUT_NAME "nugget-doom"
+        SUFFIX ".com"
+    )
+
+    add_executable(nugget-doom-exe WIN32
+        ../win32/win_launcher.c
+        "${CMAKE_CURRENT_BINARY_DIR}/resource.rc"
+    )
+    target_woof_settings(nugget-doom-exe)
+    target_link_libraries(nugget-doom-exe PRIVATE ${WIN_LAUNCHER_LIBS})
+    if(MSVC)
+        target_link_options(nugget-doom-exe PRIVATE "/MANIFEST:NO")
+    endif()
+    set_target_properties(nugget-doom-exe PROPERTIES
+        RUNTIME_OUTPUT_NAME "nugget-doom"
+        SUFFIX ".exe"
+    )
+else()
+    # Some platforms have SDL2main, others don't.
+    if(SDL2_MAIN_LIBRARY)
+        list(APPEND WOOF_LIBRARIES SDL2::SDL2main)
+    endif()
+    add_executable(nugget-doom ${WOOF_SOURCES})
+endif()
 target_woof_settings(nugget-doom)
 target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 
@@ -167,14 +207,6 @@ endif()
 
 target_link_libraries(nugget-doom PRIVATE ${WOOF_LIBRARIES}
     SDL2::SDL2 SDL2::mixer SDL2::net opl textscreen)
-
-if(MSVC)
-    # MSVC tries to supply a default manifest and complains when it finds ours
-    # unless we specifically tell it not to.
-    set_target_properties(nugget-doom PROPERTIES LINK_FLAGS "/MANIFEST:NO")
-    # Enable console for debug build.
-    set_target_properties(nugget-doom PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
-endif()
 
 # Optional features.
 #
@@ -224,23 +256,6 @@ target_link_libraries(nugget-doom-setup PRIVATE ${SETUP_LIBRARIES}
 
 if(MSVC)
     set_target_properties(nugget-doom-setup PROPERTIES LINK_FLAGS "/MANIFEST:NO")
-    set_target_properties(nugget-doom-setup PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
-endif()
-
-if(WIN32)
-    add_executable(conredir WIN32 "../win32/win_console_wrapper.c")
-    target_woof_settings(conredir)
-    if(MSVC)
-        set_target_properties(conredir PROPERTIES
-                              LINK_FLAGS "/MANIFEST:NO /SUBSYSTEM:CONSOLE")
-    else()
-        set_target_properties(conredir PROPERTIES LINK_FLAGS "-municode -mconsole")
-    endif()
-
-    add_custom_command(TARGET conredir POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -E copy
-            "$<TARGET_FILE_DIR:nugget-doom>/conredir.exe"
-            "$<TARGET_FILE_DIR:nugget-doom>/nugget-doom.com" VERBATIM)
 endif()
 
 # Install
@@ -275,10 +290,9 @@ endforeach()
 
 # Files to package in our distribution.
 if(WIN32)
-    install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION .)
-    install(FILES "$<TARGET_FILE_DIR:nugget-doom>/nugget-doom.com" DESTINATION .)
+    install(TARGETS nugget-doom nugget-doom-exe nugget-doom-com nugget-doom-setup RUNTIME DESTINATION .)
 else()
-    install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION bin)
+    install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 install(FILES ${WOOF_DLLS} DESTINATION .)
 

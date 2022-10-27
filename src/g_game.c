@@ -66,6 +66,8 @@
 #include "u_mapinfo.h"
 #include "m_input.h"
 #include "memio.h"
+#include "m_snapshot.h"
+#include "m_swap.h" // [FG] LONG
 
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
@@ -175,6 +177,8 @@ boolean *mousebuttons = &mousearray[1];    // allow [-1]
 // mouse values are used once
 int   mousex;
 int   mousey;
+int   mousex2;
+int   mousey2;
 boolean dclick;
 
 boolean joyarray[MAX_JSB+1]; // [FG] support more joystick buttons
@@ -579,7 +583,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   // [crispy] mouse look
   if (mouselook)
   {
-    cmd->lookdir = mouse_y_invert ? -mousey : mousey;
+    cmd->lookdir = mouse_y_invert ? -mousey2 : mousey2;
   }
   else if (!novert)
   {
@@ -598,11 +602,11 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   }
 
   if (strafe)
-    side += mousex*2;
+    side += mousex2*2;
   else
     cmd->angleturn -= mousex*0x8;
 
-  mousex = mousey = 0;
+  mousex = mousex2 = mousey = mousey2 = 0;
 
   if (forward > MAXPLMOVE)
     forward = MAXPLMOVE;
@@ -747,7 +751,7 @@ static void G_DoLoadLevel(void)
     headsecnode = NULL;
    }
 
-  critical = (gameaction == ga_playdemo || demorecording || D_CheckNetConnect());
+  critical = (gameaction == ga_playdemo || demorecording || demoplayback || D_CheckNetConnect());
   M_UpdateCriticalItems();
 
   // [crispy] pistol start
@@ -765,7 +769,7 @@ static void G_DoLoadLevel(void)
 
   // clear cmd building stuff
   memset (gamekeydown, 0, sizeof(gamekeydown));
-  mousex = mousey = 0;
+  mousex = mousex2 = mousey = mousey2 = 0;
   sendpause = sendsave = paused = false;
   // [FG] array size!
   memset (mousearray, 0, sizeof(mousearray));
@@ -954,10 +958,14 @@ boolean G_Responder(event_t* ev)
       return true;
 
     case ev_mouse:
-      if (mouseSensitivity_horiz)
+      if (mouseSensitivity_horiz) // [FG] turn
         mousex = ev->data2*(mouseSensitivity_horiz+5)/10;
-      if (mouseSensitivity_vert)
+      if (mouseSensitivity_horiz2) // [FG] strafe
+        mousex2 = ev->data2*(mouseSensitivity_horiz2+5)/10;
+      if (mouseSensitivity_vert) // [FG] move
         mousey = ev->data3*(mouseSensitivity_vert+5)/10;
+      if (mouseSensitivity_vert2) // [FG] look
+        mousey2 = ev->data3*(mouseSensitivity_vert2+5)/10;
       return true;    // eat events
 
     case ev_joyb_down:
@@ -1243,6 +1251,8 @@ static void G_WriteLevelStat(void)
 // G_DoCompleted
 //
 
+boolean um_pars = false;
+
 static void G_DoCompleted(void)
 {
   int i;
@@ -1273,14 +1283,23 @@ static void G_DoCompleted(void)
 
   wminfo.lastmapinfo = gamemapinfo;
   wminfo.nextmapinfo = NULL;
+  um_pars = false;
   if (gamemapinfo)
   {
     const char *next = NULL;
+    boolean intermission = false;
 
-    if (U_CheckField(gamemapinfo->endpic) && gamemapinfo->nointermission)
+    if (U_CheckField(gamemapinfo->endpic))
     {
-      gameaction = ga_victory;
-      return;
+      if (gamemapinfo->nointermission)
+      {
+        gameaction = ga_victory;
+        return;
+      }
+      else
+      {
+        intermission = true;
+      }
     }
 
     if (secretexit && gamemapinfo->nextsecret[0])
@@ -1299,8 +1318,14 @@ static void G_DoCompleted(void)
         for (i = 0; i < MAXPLAYERS; i++)
           players[i].didsecret = false;
       }
+    }
+
+    if (next || intermission)
+    {
       wminfo.didsecret = players[consoleplayer].didsecret;
       wminfo.partime = gamemapinfo->partime * TICRATE;
+      if (wminfo.partime > 0)
+        um_pars = true;
       goto frommapinfo;	// skip past the default setup.
     }
   }
@@ -1368,10 +1393,33 @@ static void G_DoCompleted(void)
           wminfo.next = gamemap;          // go to next level
     }
 
-  if ( gamemode == commercial )
-    wminfo.partime = TICRATE*cpars[gamemap-1];
+  if (gamemode == commercial)
+  {
+    // MAP33 reads its par time from beyond the cpars[] array.
+    if (demo_compatibility && gamemap == 33)
+    {
+      int cpars32;
+
+      memcpy(&cpars32, s_GAMMALVL0, sizeof(int));
+      wminfo.partime = TICRATE*LONG(cpars32);
+    }
+    else if (gamemap >= 1 && gamemap <= 34)
+    {
+      wminfo.partime = TICRATE*cpars[gamemap-1];
+    }
+  }
   else
-    wminfo.partime = TICRATE*pars[gameepisode][gamemap];
+  {
+    // Doom Episode 4 doesn't have a par time, so this overflows into the cpars[] array.
+    if (demo_compatibility && gameepisode == 4 && gamemap >= 1 && gamemap <= 9)
+    {
+      wminfo.partime = TICRATE*cpars[gamemap];
+    }
+    else if (gameepisode >= 1 && gameepisode <= 3 && gamemap >= 1 && gamemap <= 9)
+    {
+      wminfo.partime = TICRATE*pars[gameepisode][gamemap];
+    }
+  }
 
 frommapinfo:
 
@@ -1926,6 +1974,11 @@ static void G_DoSaveGame(void)
   CheckSaveGame(sizeof extrakills);
   saveg_write32(extrakills);
 
+  // [FG] save snapshot
+  CheckSaveGame(M_SnapshotDataSize());
+  M_WriteSnapshot(save_p);
+  save_p += M_SnapshotDataSize();
+
   length = save_p - savebuffer;
 
   if (!M_WriteFile(name, savebuffer, length))
@@ -2208,7 +2261,7 @@ void G_Ticker(void)
   if (demoplayback && sendsave)
     {
       sendsave = false;
-      G_DoSaveGame();
+      gameaction = ga_savegame;
     }
 
   // killough 9/29/98: Skip some commands while pausing during demo

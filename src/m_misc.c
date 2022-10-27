@@ -106,6 +106,8 @@ extern int death_use_action;
 extern boolean palette_changes;
 extern boolean screen_melt;
 extern boolean blockmapfix;
+extern int extra_level_brightness;
+extern int menu_background;
 
 extern char *chat_macros[];  // killough 10/98
 
@@ -269,6 +271,20 @@ default_t defaults[] = {
     (config_t *) &gamma2, NULL,
     {9}, {0,17}, number, ss_gen, wad_no,
     "custom gamma level (0 = 0.5, 9 = 1.0, 17 = 2.0)"
+  },
+
+  {
+    "extra_level_brightness",
+    (config_t *) &extra_level_brightness, NULL,
+    {0}, {0,4}, number, ss_gen, wad_no,
+    "level brightness"
+  },
+
+  {
+    "menu_background",
+    (config_t *) &menu_background, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "draw menu background (0 = on, 1 = off, 2 = dark)"
   },
 
   { // killough 2/8/98
@@ -695,14 +711,28 @@ default_t defaults[] = {
     "mouse_sensitivity_horiz",
     (config_t *) &mouseSensitivity_horiz, NULL,
     {10}, {0,UL}, number, ss_none, wad_no,
-    "adjust horizontal (x) mouse sensitivity"
+    "adjust horizontal (x) mouse sensitivity for turning"
   },
 
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity_vert",
     (config_t *) &mouseSensitivity_vert, NULL,
+    {0}, {0,UL}, number, ss_none, wad_no,
+    "adjust vertical (y) mouse sensitivity for moving"
+  },
+
+  {
+    "mouse_sensitivity_horiz_strafe",
+    (config_t *) &mouseSensitivity_horiz2, NULL,
+    {0}, {0,UL}, number, ss_none, wad_no,
+    "adjust horizontal (x) mouse sensitivity for strafing"
+  },
+
+  {
+    "mouse_sensitivity_vert_look",
+    (config_t *) &mouseSensitivity_vert2, NULL,
     {10}, {0,UL}, number, ss_none, wad_no,
-    "adjust vertical (y) mouse sensitivity"
+    "adjust vertical (y) mouse sensitivity for looking"
   },
 
   {
@@ -2620,8 +2650,8 @@ default_t defaults[] = {
   {
     "soundfont_path",
     (config_t *) &soundfont_path, NULL,
-#ifdef WOOFDATADIR
-    {.s = WOOFDATADIR""DIR_SEPARATOR_S"soundfonts"DIR_SEPARATOR_S"TimGM6mb.sf2"},
+#ifdef WOOFSOUNDFONT
+    {.s = WOOFSOUNDFONT},
 #else
     {.s = "soundfonts"DIR_SEPARATOR_S"TimGM6mb.sf2"},
 #endif
@@ -2687,8 +2717,8 @@ default_t defaults[] = {
   {
     "widescreen",
     (config_t *) &widescreen, NULL,
-    {0}, {0, 1}, number, ss_none, wad_no,
-    "1 to enable widescreen mode"
+    {RATIO_ORIG}, {RATIO_ORIG, NUM_RATIOS-1}, number, ss_none, wad_no,
+    "widescreen mode (0 = disable, 1 = match screen, 2 = 16:10, 3 = 16:9, 4 = 21:9"
   },
 
   // display index
@@ -3117,7 +3147,7 @@ boolean M_ParseOption(const char *p, boolean wad)
                   // Don't bind movement and turning to mouse wheel. It needs to
                   // be impossible to input a one-frame of movement
                   // automatically in speedrunning.
-                  if ((value == MOUSE_BUTTON_WHEELUP || value == MOUSE_BUTTON_WHEELDOWN) &&
+                  if (M_IsMouseWheel(value) &&
                       dp->ident >= input_forward && dp->ident <= input_straferight)
                   {
                   }

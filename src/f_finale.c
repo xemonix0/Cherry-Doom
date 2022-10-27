@@ -34,15 +34,14 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "dstrings.h"
-#include "m_menu.h"
 #include "d_deh.h"  // Ty 03/22/98 - externalizations
 #include "m_misc2.h" // [FG] M_StringDuplicate()
 #include "m_swap.h"
+#include "r_draw.h"
 // [Nugget] Include the following
 #include "g_game.h" // [crispy] key_*
 #include "m_input.h"
 #include "m_random.h" // [crispy] Crispy_Random()
-
 
 // Stage of animation:
 //  0 = text, 1 = art screen, 2 = character cast
@@ -400,7 +399,7 @@ void F_TextWrite (void)
   // erase the entire screen to a tiled background
 
   // killough 11/98: the background-filling code was already in m_menu.c
-  M_DrawBackground(finaleflat, screens[0]);
+  R_DrawBackground(finaleflat, screens[0]);
   }
 
   // draw some of the text onto the screen

@@ -41,6 +41,8 @@
 #include "w_wad.h" // [Nugget] W_CheckNumForName
 #include "m_input.h" // [Nugget]
 
+#include "p_action.h"
+
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
 #define WEAPONBOTTOM (FRACUNIT*128)
