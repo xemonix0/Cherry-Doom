@@ -157,10 +157,8 @@ int no_page_ticking;
 int quick_quitgame;
   // Accessibility (Page 4)
 //int a11y_sector_lighting;
-int a11y_extra_lighting;
 int a11y_weapon_flash;
 int a11y_weapon_pspr;
-int a11y_palette_changes;
 int a11y_invul_colormap;
 // Weapons
 int no_hor_autoaim;

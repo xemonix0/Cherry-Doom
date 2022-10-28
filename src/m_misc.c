@@ -274,13 +274,6 @@ default_t defaults[] = {
   },
 
   {
-    "extra_level_brightness",
-    (config_t *) &extra_level_brightness, NULL,
-    {0}, {0,4}, number, ss_gen, wad_no,
-    "level brightness"
-  },
-
-  {
     "menu_background",
     (config_t *) &menu_background, NULL,
     {0}, {0,2}, number, ss_gen, wad_no,
@@ -494,13 +487,6 @@ default_t defaults[] = {
   // [Nugget] ----------------------------------------
 
   {
-    "no_ss_background",
-    (config_t *) &no_ss_background, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to disable the background in setup screens"
-  },
-
-  {
     "no_menu_tint",
     (config_t *) &no_menu_tint, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
@@ -594,10 +580,10 @@ default_t defaults[] = {
 #endif
 
   {
-    "a11y_extra_lighting",
-    (config_t *) &a11y_extra_lighting, NULL,
-    {0}, {-16,16}, number, ss_gen, wad_no,
-    "Increase to make maps brighter"
+    "extra_level_brightness",
+    (config_t *) &extra_level_brightness, NULL,
+    {0}, {-16,16}, number, ss_gen, wad_no, // [Nugget] Broader light level range
+    "level brightness"
   },
 
   {
@@ -615,8 +601,8 @@ default_t defaults[] = {
   },
 
   {
-    "a11y_palette_changes",
-    (config_t *) &a11y_palette_changes, NULL,
+    "palette_changes",
+    (config_t *) &palette_changes, NULL,
     {1}, {0,1}, number, ss_gen, wad_no,
     "0 to disable palette tint changes"
   },

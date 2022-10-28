@@ -763,7 +763,7 @@ void ST_doPaletteStuff(void)
     }
 
   // [Nugget]: [crispy] A11Y
-  if (STRICTMODE(!a11y_palette_changes))
+  if (STRICTMODE(!palette_changes))
     { palette = 0; }
   else if (cnt)
   {
