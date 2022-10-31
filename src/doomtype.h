@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:
@@ -90,6 +90,9 @@ typedef unsigned char byte;
 #ifndef BETWEEN
  #define BETWEEN(l,u,x) ((l)>(x)?(l):(x)>(u)?(u):(x))
 #endif
+
+// [Nugget]
+#define ISBETWEEN(min,val,max) (((min) <= (val)) && ((val) <= (max)))
 
 #if defined(_MSC_VER) && !defined(__cplusplus)
 #define inline __inline

@@ -285,7 +285,7 @@ void D_Display (void)
     R_RenderPlayerView (&players[displayplayer]);
 
     // [Nugget]: [crispy] Crispy HUD
-    if (screenblocks >= CRISPY_HUD && screenblocks <= CRISPY_HUD+1)
+    if (ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE))
       { ST_Drawer(false, true); }
   }
 

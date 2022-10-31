@@ -62,6 +62,7 @@
 #include "r_plane.h" // [FG] R_InitPlanes()
 #include "m_argv.h"
 #include "m_snapshot.h"
+#include "st_stuff.h" // [Nugget]
 
 // [crispy] remove DOS reference from the game quit confirmation dialogs
 #include "SDL_platform.h"
@@ -209,17 +210,7 @@ menu_t* currentMenu; // current menudef
 // externs added for setup menus
 // [FG] double click acts as "use"
 extern int dclick_use;
-extern int health_red;    // health amount less than which status is red
-extern int health_yellow; // health amount less than which status is yellow
-extern int health_green;  // health amount above is blue, below is green
-extern int armor_red;     // armor amount less than which status is red
-extern int armor_yellow;  // armor amount less than which status is yellow
-extern int armor_green;   // armor amount above is blue, below is green
-extern int ammo_red;      // ammo percent less than which status is red
-extern int ammo_yellow;   // ammo percent less is yellow more green
-extern int sts_always_red;// status numbers do not change colors
-extern int sts_pct_always_gray;// status percents do not change colors
-extern int sts_traditional_keys;  // display keys the traditional way
+// [Nugget] Removed a bunch of extern declarations, since we included st_stuff.h
 extern int mapcolor_back; // map background
 extern int mapcolor_grid; // grid lines color
 extern int mapcolor_wall; // normal 1s wall color
@@ -5704,7 +5695,7 @@ boolean M_Responder (event_t* ev)
 	  else
 	    {
 	      hud_displayed = 1;               //jff 3/3/98 turn hud on
-	      hud_active = (screenSize >= 8 && screenSize <= 9)
+	      hud_active = ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3)
                      ? !hud_active : (hud_active+1)%3; // cycle hud_active
 	      if (!hud_active)                 //jff 3/4/98 add distributed
 		{

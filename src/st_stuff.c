@@ -962,8 +962,8 @@ void ST_drawWidgets(boolean refresh)
       { STlib_updateMultIcon(&w_arms[i], refresh); }
 
   // [Nugget] This probably shouldn't go here, but it works
-  if ((screenblocks == CRISPY_HUD || screenblocks == CRISPY_HUD+1)
-      && nughud.face.x > -1 && nughud.face_bg)
+  if (ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE)
+      && (nughud.face.x > -1) && nughud.face_bg)
   {
     // [Nugget] Nugget HUD
     V_DrawPatch(nughud.face.x + (st_widecrispyhud ? WIDESCREENDELTA*nughud.face.wide : 0),
@@ -1025,7 +1025,7 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   st_statusbarface = st_classicstatusbar || (st_crispyhud && nughud.face.x);
 
   oldwide = st_widecrispyhud; // [Nugget]
-  st_widecrispyhud = screenblocks >= CRISPY_HUD+1 && (!automapactive || automapoverlay);
+  st_widecrispyhud = screenblocks >= CRISPY_HUD_WIDE && (!automapactive || automapoverlay);
 
   if (oldcrispy != st_crispyhud || oldwide != st_widecrispyhud) // [Nugget]
     { ST_createWidgets(); }

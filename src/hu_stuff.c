@@ -635,8 +635,9 @@ void HU_Start(void)
   // totals and current values for kills, items, secrets
   // lower left of screen
   HUlib_initTextLine(&w_monsec, hud_distributed ? HU_MONSECX_D : HU_MONSECX,
-		     (scaledviewheight < SCREENHEIGHT || (screenSize >= 8 && screenSize <= 9)) ? (ST_Y - HU_GAPY) :
-		     hud_distributed? HU_MONSECY_D : HU_MONSECY, hu_font2,
+		     ((scaledviewheight < SCREENHEIGHT)
+          || ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3))
+         ? (ST_Y - HU_GAPY) : hud_distributed? HU_MONSECY_D : HU_MONSECY, hu_font2,
 		     HU_FONTSTART, colrngs[CR_GRAY]);
 
   // create the hud text refresh widget
@@ -841,9 +842,11 @@ void HU_MoveHud(void)
   }
 
   // [FG] draw Time/STS widgets above status bar
-  if (scaledviewheight < SCREENHEIGHT || (screenSize >= 8 && screenSize <= 9))
+  if ((scaledviewheight < SCREENHEIGHT)
+      || ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3))
   {
-    const boolean crispyhud = screenSize >= 8 && screenSize <= 9 && (!automapactive || automapoverlay);
+    const boolean crispyhud = ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3)
+                              && (!automapactive || automapoverlay);
 
     // adjust Time widget if set to Time only
     short t_offset = (hud_timests == 1) ? 1 : 2;
@@ -1264,7 +1267,7 @@ void HU_Drawer(void)
 
     // [Nugget] With automap overlay disabled,
     // refresh the Status Bar regardless of screen size
-    if (automapactive && !automapoverlay && screenSize >= 8)
+    if (automapactive && !automapoverlay && screenSize >= CRISPY_HUD-3)
       { ST_Drawer(true, true); }
 
     // [FG] moved here
@@ -1749,11 +1752,11 @@ void HU_Drawer(void)
   }
   else if (hud_timests && (!automapactive || automapoverlay)
            // [Nugget] Allow Time/STS display in Crispy minimalistic HUD
-           && screenSize <= 8+1)
+           && screenSize <= CRISPY_HUD_WIDE-3)
   {
     // insure HUD display coords are correct
     // [Nugget] Only below certain screen size values
-    if (screenSize <= 8+1) { HU_MoveHud(); }
+    if (screenSize <= CRISPY_HUD_WIDE-3) { HU_MoveHud(); }
 
     if (hud_timests & HU_STTIME)
       HUlib_drawTextLine(&w_sttime, false);
@@ -1987,7 +1990,7 @@ void HU_Ticker(void)
         {
           if (hud_displayed && hud_active)
           {
-            if (screenSize >= 8 && screenSize <= 9)
+            if (ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3))
               w_title.y -= offset_timests;
             else
             {
@@ -2059,7 +2062,7 @@ void HU_Ticker(void)
 
     if (hud_timests && ((scaledviewheight < SCREENHEIGHT)
         // [Nugget] Allow Time/STS display in Crispy minimalistic HUD
-        || (screenSize >= 8 && screenSize <= 8+1)))
+        || ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3)))
     {
       HU_widget_build_sttime();
       HU_widget_build_monsec();
