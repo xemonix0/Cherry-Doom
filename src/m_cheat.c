@@ -553,6 +553,8 @@ static void cheat_spawne(char *buf)
   spawneetype = type;
   spawneefriend = false;
 
+  P_MapStart();
+
   // Spawn them in front of the player, accounting for radius,
   // and in mid-air
   x = plyr->mo->x
@@ -567,6 +569,8 @@ static void cheat_spawne(char *buf)
   spawnee->intflags |= MIF_EXTRASPAWNED;
   if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
     { extraspawns++; }
+
+  P_MapEnd();
 
   doomprintf("Mobj spawned! (Enemy - Type = %i)", spawneetype);
 }
@@ -644,6 +648,9 @@ static void cheat_scanner() {
 // [Nugget] Deal 1 million damage
 static void cheat_mdk() {
   fixed_t slope;
+
+  P_MapStart();
+
   if (mouselook && freeaim == freeaim_direct)
     { slope = PLAYER_SLOPE(plyr); }
   else {
@@ -653,6 +660,8 @@ static void cheat_mdk() {
   }
 
   P_LineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, slope, 1000000);
+
+  P_MapEnd();
 
   plyr->message = "MDK!";
 }
