@@ -593,6 +593,8 @@ static void cheat_spawnf(char *buf)
   spawneetype = type;
   spawneefriend = true;
 
+  P_MapStart();
+
   x = plyr->mo->x
       + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
                  finecosine[plyr->mo->angle>>ANGLETOFINESHIFT]);
@@ -603,6 +605,8 @@ static void cheat_spawnf(char *buf)
 
   spawnee = P_SpawnMobj(x,y,z,spawneetype);
   spawnee->flags |= MF_FRIEND;
+
+  P_MapEnd();
 
   doomprintf("Mobj spawned! (Friend - Type = %i)", spawneetype);
 }
@@ -615,6 +619,8 @@ static void cheat_spawnr()
 
   if (spawneetype == -1)
     { plyr->message = "You must spawn a mobj first!"; return; }
+
+  P_MapStart();
 
   x = plyr->mo->x
       + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
@@ -632,6 +638,8 @@ static void cheat_spawnr()
     if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
       { extraspawns++; }
   }
+
+  P_MapEnd();
 
   doomprintf("Mobj spawned! (%s - Type = %i)",
              spawneefriend ? "Friend" : "Enemy", spawneetype);
