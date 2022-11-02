@@ -447,7 +447,6 @@ extern boolean casual_play, old_casual_play;
 
 // General
   // Nugget Settings (Page 3)
-extern int no_ss_background;
 extern int wipe_type;
 extern int no_menu_tint;
 extern int fov;

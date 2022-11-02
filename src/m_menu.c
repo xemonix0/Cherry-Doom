@@ -3100,10 +3100,7 @@ void M_DrawKeybnd(void)
 
   // Set up the Key Binding screen
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(84,2,"M_KEYBND","KEY BINDINGS");
   M_DrawInstructions();
@@ -3254,10 +3251,7 @@ void M_DrawWeapons(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(109,2,"M_WEAP","WEAPONS");
   M_DrawInstructions();
@@ -3472,10 +3466,7 @@ void M_DrawStatusHUD(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(59,2,"M_STAT","STATUS BAR / HUD");
   M_DrawInstructions();
@@ -3654,10 +3645,7 @@ void M_DrawAutoMap(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(109,2,"M_AUTO","AUTOMAP");
   M_DrawInstructions();
@@ -3796,10 +3784,7 @@ void M_DrawEnemy(void)
 {
   inhelpscreens = true;
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(114,2,"M_ENEM","ENEMIES");
   M_DrawInstructions();
@@ -4317,10 +4302,7 @@ void M_DrawGeneral(void)
 {
   inhelpscreens = true;
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(114,2,"M_GENERL","GENERAL");
   M_DrawInstructions();
@@ -4576,10 +4558,7 @@ void M_DrawCompat(void)
 {
   inhelpscreens = true;
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(52,2,"M_COMPAT","DOOM COMPATIBILITY");
   M_DrawInstructions();
@@ -4691,10 +4670,7 @@ void M_DrawMessages(void)
 {
   inhelpscreens = true;
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(103,2,"M_MESS","MESSAGES");
   M_DrawInstructions();
@@ -4764,10 +4740,7 @@ void M_DrawChatStrings(void)
 {
   inhelpscreens = true;
 
-  if (no_ss_background) { // [Nugget]
-    if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-  }
-  else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(83,2,"M_CHAT","CHAT STRINGS");
   M_DrawInstructions();
@@ -5227,10 +5200,7 @@ void M_DrawHelp (void)
   inhelpscreens = true;                        // killough 10/98
   if (helplump < 0 || W_IsIWADLump(helplump))
   {
-    if (no_ss_background) { // [Nugget]
-      if (gamestate == GS_LEVEL) { ST_doRefresh(); }
-    }
-    else { M_DrawBackground("FLOOR4_6", screens[0]); } // Draw background
+    M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   V_MarkRect (0,0,SCREENWIDTH,SCREENHEIGHT);
   M_DrawScreenItems(helpstrings);

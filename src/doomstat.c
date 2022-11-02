@@ -141,7 +141,6 @@ boolean casual_play, old_casual_play = -1;
 
 // General
   // Nugget Settings (Page 3)
-int no_ss_background;
 int wipe_type;
 int no_menu_tint;
 int fov;
