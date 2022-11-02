@@ -665,7 +665,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 }
 
 // [Nugget] Check for Extra Gibbing
-boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
+static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
 {
   extern fixed_t P_AproxDistance();
   extern void A_Punch(), A_Saw(), A_FireShotgun2();
@@ -690,7 +690,7 @@ boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
 }
 
 // [Nugget] Bloodier Gibbing
-void P_NuggetGib(mobj_t *mo)
+static void P_NuggetGib(mobj_t *mo)
 {
   extern int V_BloodColor();
   int q = 20 + (Woof_Random()%20+1); // Spawn 20-40 blood splats
@@ -701,7 +701,7 @@ void P_NuggetGib(mobj_t *mo)
   for (int i = 0; i < q; i++)
   {
     mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + mo->height/1.5,
-                                (STRICTMODE(nugget_comp[comp_nonbleeders])
+                                (nugget_comp[comp_nonbleeders]
                                  && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
