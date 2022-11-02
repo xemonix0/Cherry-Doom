@@ -844,7 +844,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
     fixed_t slope; // [Nugget] Moved here
 
     // [Nugget] Freeaim
-    if (mouselook && freeaim == freeaim_direct && casual_play && !strictmode)
+    if (mouselook && freeaim == freeaim_direct && casual_play)
     {
       an1 += an - mo->angle;
       slope = PLAYER_SLOPE(player);
@@ -861,15 +861,15 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
         slope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
         if (!linetarget)
           // [Nugget] Disable horizontal autoaim
-          if (!casual_play || !STRICTMODE(no_hor_autoaim))
+          if (!casual_play || !no_hor_autoaim)
             slope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
         if (!linetarget)
           // [Nugget] Disable horizontal autoaim
-          if (!casual_play || !STRICTMODE(no_hor_autoaim))
+          if (!casual_play || !no_hor_autoaim)
             slope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
         if (!linetarget)
           an = mo->angle,
-          slope = (STRICTMODE(freeaim) == freeaim_autoaim && casual_play)
+          slope = (freeaim == freeaim_autoaim && casual_play)
                   ? PLAYER_SLOPE(player) : 0;
       }
       while (mask && (mask=0, !linetarget));     // killough 8/2/98
@@ -923,7 +923,7 @@ fixed_t bulletslope;
 static void P_BulletSlope(mobj_t *mo)
 {
   // [Nugget] Crispy freeaim
-  if (mouselook && freeaim == freeaim_direct && casual_play && !strictmode)
+  if (mouselook && freeaim == freeaim_direct && casual_play)
     { bulletslope = PLAYER_SLOPE(mo->player); }
   else {
     angle_t an = mo->angle;    // see which target is to be aimed at
@@ -938,7 +938,7 @@ static void P_BulletSlope(mobj_t *mo)
       if (!linetarget)
         bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
       // [Nugget] Crispy freeaim
-      if (!linetarget && STRICTMODE(freeaim) == freeaim_autoaim && casual_play)
+      if (!linetarget && freeaim == freeaim_autoaim && casual_play)
         bulletslope = PLAYER_SLOPE(mo->player);
     } while (mask && (mask=0, !linetarget));  // killough 8/2/98
   }

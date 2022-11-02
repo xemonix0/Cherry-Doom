@@ -154,7 +154,7 @@ void P_XYMovement (mobj_t* mo)
       mo->momz = 0;
 
       // [Nugget] Fix forgetful lost soul
-      if (casual_play && !STRICTMODE(nugget_comp[comp_lsamnesia]))
+      if (casual_play && !nugget_comp[comp_lsamnesia])
         { P_SetMobjState(mo, mo->info->seestate); }
       else
         { P_SetMobjState(mo, mo->info->spawnstate); }
@@ -1416,7 +1416,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   angle_t an = source->angle;
 
   // [Nugget] Freeaim
-  if (mouselook && freeaim == freeaim_direct && casual_play && !strictmode)
+  if (mouselook && freeaim == freeaim_direct && casual_play)
     { slope = PLAYER_SLOPE(source->player); }
   else {
     // killough 7/19/98: autoaiming was not in original beta
@@ -1427,15 +1427,15 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
         slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
         if (!linetarget)
           // [Nugget] Disable horizontal autoaim
-          if (!casual_play || !STRICTMODE(no_hor_autoaim))
+          if (!casual_play || !no_hor_autoaim)
             slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
         if (!linetarget)
           // [Nugget] Disable horizontal autoaim
-          if (!casual_play || !STRICTMODE(no_hor_autoaim))
+          if (!casual_play || !no_hor_autoaim)
             slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
         if (!linetarget)
           an = source->angle,
-          slope = (STRICTMODE(freeaim) == freeaim_autoaim && casual_play)
+          slope = (freeaim == freeaim_autoaim && casual_play)
                   ? PLAYER_SLOPE(source->player) : 0;
       } while (mask && (mask=0, !linetarget));  // killough 8/2/98
     }

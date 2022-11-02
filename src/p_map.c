@@ -549,13 +549,13 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
     int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
 
     // [Nugget]: [crispy] check if attacking skull flies over/under thing
-    if (casual_play && STRICTMODE(over_under)) {
-	    if (tmthing->z > thing->z + thing->height)        { return true; } // over
-	    else if (tmthing->z + tmthing->height < thing->z) { return true; } // under
+    if (casual_play && over_under) {
+      if (tmthing->z > thing->z + thing->height)        { return true; } // over
+      else if (tmthing->z + tmthing->height < thing->z) { return true; } // under
     }
 
-	  // [Nugget] Fix lost soul collision
-	  if (casual_play && STRICTMODE(nugget_comp[comp_lscollision]))
+    // [Nugget] Fix lost soul collision
+    if (casual_play && nugget_comp[comp_lscollision])
       if (!(thing->flags & MF_SHOOTABLE)) { return !(thing->flags & MF_SOLID); }
 
     P_DamageMobj (thing, tmthing, tmthing, damage);
@@ -564,7 +564,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
     tmthing->momx = tmthing->momy = tmthing->momz = 0;
 
     // [Nugget] Fix forgetful lost soul
-    if (casual_play && !STRICTMODE(nugget_comp[comp_lsamnesia]))
+    if (casual_play && !nugget_comp[comp_lsamnesia])
       { P_SetMobjState(tmthing, tmthing->info->seestate); }
     else
       { P_SetMobjState(tmthing, tmthing->info->spawnstate); }
@@ -640,7 +640,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   }
 
   // [Nugget] Allow things to move over/under solid things
-  if (casual_play && STRICTMODE(over_under) && (thing->flags & MF_SOLID))
+  if (casual_play && over_under && (thing->flags & MF_SOLID))
   {
     if (tmthing->z >= thing->z + thing->height) { // over
       thing->intflags   |= MIF_OVERUNDER;
@@ -1635,34 +1635,29 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 	  // it's a sky hack wall
 	  // fix bullet-eaters -- killough:
 	  if  (li->backsector && li->backsector->ceilingpic == skyflatnum)
-    {
-      if (!casual_play) {
-	      if (demo_compatibility || li->backsector->ceilingheight < z)
-	        return false;
-      }
-      else if (li->backsector->ceilingheight < z) // [Nugget] freeaim - fix disappearing bullet puffs when outside
-        return false;
-    }
+        // [Nugget] freeaim - fix disappearing bullet puffs when outside
+        if ((demo_compatibility && !casual_play) || li->backsector->ceilingheight < z)
+          { return false; }
 	}
       // [Nugget] Taken from Crispy Doom - check if the bullet puff's z-coordinate is below or above
       // its spawning sector's floor or ceiling, respectively, and move its
       // coordinates to the point where the trajectory hits the plane
       if (casual_play) {
-          const int lineside = P_PointOnLineSide(x, y, li);
-          int side;
+        const int lineside = P_PointOnLineSide(x, y, li);
+        int side;
 
-          if ((side = li->sidenum[lineside]) != NO_INDEX)
+        if ((side = li->sidenum[lineside]) != NO_INDEX)
+        {
+          const sector_t* const sector = sides[side].sector;
+
+          if (z < sector->floorheight || (z > sector->ceilingheight && sector->ceilingpic != skyflatnum))
           {
-              const sector_t* const sector = sides[side].sector;
-
-              if (z < sector->floorheight || (z > sector->ceilingheight && sector->ceilingpic != skyflatnum))
-              {
-                  z = BETWEEN(sector->floorheight, sector->ceilingheight, z);
-                  frac = FixedDiv(z - shootz, FixedMul(aimslope, attackrange));
-                  x = trace.x + FixedMul(trace.dx, frac);
-                  y = trace.y + FixedMul(trace.dy, frac);
-              }
+            z = BETWEEN(sector->floorheight, sector->ceilingheight, z);
+            frac = FixedDiv(z - shootz, FixedMul(aimslope, attackrange));
+            x = trace.x + FixedMul(trace.dx, frac);
+            y = trace.y + FixedMul(trace.dy, frac);
           }
+        }
       }
 
       // Spawn bullet puffs.

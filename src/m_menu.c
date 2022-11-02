@@ -7181,29 +7181,29 @@ static void M_UpdateStrictModeItems(void)
   for (int i = gen4_menutint; i <= gen4_sclipdist; i++)
     { DISABLE_STRICT(gen_settings4[i]); }
   DISABLE_ITEM((demorecording||netgame||strictmode||fauxdemo), gen_settings4[gen4_fov]);
-  DISABLE_ITEM((!casual_play || strictmode), gen_settings4[gen4_overunder]);
-  DISABLE_ITEM((!casual_play || strictmode), gen_settings4[gen4_jump_crouch]);
+  DISABLE_ITEM(!casual_play, gen_settings4[gen4_overunder]);
+  DISABLE_ITEM(!casual_play, gen_settings4[gen4_jump_crouch]);
   DISABLE_ITEM((demorecording||netgame||strictmode||fauxdemo), gen_settings4[gen4_viewheight]);
 
   DISABLE_STRICT(gen_settings5[general_screen_wipe]);
   DISABLE_STRICT(gen_settings5[general_level_brightness]);
 
   // [Nugget]
-  DISABLE_ITEM((!casual_play || strictmode), comp_settings4[comp4_lscollision]);
-  DISABLE_ITEM((!casual_play || strictmode), comp_settings4[comp4_lsamnesia]);
-  DISABLE_ITEM((!casual_play || strictmode), comp_settings4[comp4_nonbleeders]);
-  DISABLE_ITEM((!casual_play || strictmode), comp_settings4[comp4_0dmgpain]);
-  DISABLE_ITEM((!casual_play || strictmode), comp_settings4[comp4_bruistarget]);
-  DISABLE_ITEM((!casual_play || strictmode), comp_settings5[comp5_iosdeath]);
-  DISABLE_ITEM((!casual_play || strictmode), comp_settings5[comp5_keypal]);
+  DISABLE_ITEM(!casual_play, comp_settings4[comp4_lscollision]);
+  DISABLE_ITEM(!casual_play, comp_settings4[comp4_lsamnesia]);
+  DISABLE_ITEM(!casual_play, comp_settings4[comp4_nonbleeders]);
+  DISABLE_ITEM(!casual_play, comp_settings4[comp4_0dmgpain]);
+  DISABLE_ITEM(!casual_play, comp_settings4[comp4_bruistarget]);
+  DISABLE_ITEM(!casual_play, comp_settings5[comp5_iosdeath]);
+  DISABLE_ITEM(!casual_play, comp_settings5[comp5_keypal]);
 
-  DISABLE_ITEM((!casual_play || strictmode), weap_settings1[weap_autoaim]); // [Nugget]
+  DISABLE_ITEM(!casual_play, weap_settings1[weap_autoaim]); // [Nugget]
   M_UpdateFreeaimItem(); // [Nugget]
 
   DISABLE_STRICT(auto_settings1[5]); // map_player_coords
 
-  DISABLE_ITEM((!casual_play || strictmode), enem_settings1[enem_extra_gibbing]); // [Nugget]
-  DISABLE_ITEM((!casual_play || strictmode), enem_settings1[enem_bloodier_gibbing]); // [Nugget]
+  DISABLE_ITEM(!casual_play, enem_settings1[enem_extra_gibbing]); // [Nugget]
+  DISABLE_ITEM(!casual_play, enem_settings1[enem_bloodier_gibbing]); // [Nugget]
   DISABLE_ITEM(strictmode || !comp[comp_vile], enem_settings2[enem2_ghost]);
   DISABLE_ITEM(strictmode || deh_set_blood_color, enem_settings2[enem2_colored_blood]);
   DISABLE_STRICT(enem_settings2[enem2_flipcorpses]);
@@ -7212,7 +7212,7 @@ static void M_UpdateStrictModeItems(void)
 
 static void M_UpdateFreeaimItem(void) // [Nugget]
 {
-  DISABLE_ITEM((!mouselook || !casual_play || strictmode), weap_settings1[weap_freeaim]);
+  DISABLE_ITEM((!mouselook || !casual_play), weap_settings1[weap_freeaim]);
 }
 
 #define DISABLE_BOOM(item) \

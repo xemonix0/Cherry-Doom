@@ -670,7 +670,7 @@ boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
   extern fixed_t P_AproxDistance();
   extern void A_Punch(), A_Saw(), A_FireShotgun2();
 
-  if (STRICTMODE(extra_gibbing) && source && source->player
+  if (casual_play && extra_gibbing && source && source->player
       &&
       (  (source->player->psprites->state->action.p2 == (actionf_p2)A_Punch
           && source->player->powers[pw_strength]
@@ -695,7 +695,7 @@ void P_NuggetGib(mobj_t *mo)
   extern int V_BloodColor();
   int q = 20 + (Woof_Random()%20+1); // Spawn 20-40 blood splats
 
-  if (!casual_play || !STRICTMODE(bloodier_gibbing))
+  if (!casual_play || !bloodier_gibbing)
     { return; }
 
   for (int i = 0; i < q; i++)
@@ -832,14 +832,10 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
 	  AM_Stop();    // don't die in auto map; switch view prior to dying
     }
 
-  if // [Nugget] Extra Gibbing/GIBBERS cheat
-  (casual_play && target->info->xdeathstate
-   && (GIBBERS || P_NuggetExtraGibbing(source, target)))
-  {
-    P_SetMobjState(target, target->info->xdeathstate);
-    P_NuggetGib(target); // Bloodier Gibbing
-  }
-  else if (target->health < -target->info->spawnhealth && target->info->xdeathstate)
+  // [Nugget] Extra Gibbing/GIBBERS cheat
+  if (target->info->xdeathstate
+      && ((target->health < -target->info->spawnhealth)
+          || GIBBERS || P_NuggetExtraGibbing(source, target)))
   {
     P_SetMobjState (target, target->info->xdeathstate);
     P_NuggetGib(target); // [Nugget] Bloodier Gibbing
@@ -1041,9 +1037,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 		  !(target->flags & MF_SKULLFLY)))) //killough 11/98: see below
   {
     // [Nugget] Prevent pain state if no damage is caused
-    if (casual_play && STRICTMODE(nugget_comp[comp_0dmgpain]) && damage == 0)
-      {;} // Do nothing
-    else
+    if (!(casual_play && nugget_comp[comp_0dmgpain] && damage == 0))
       { P_SetMobjState(target, target->info->painstate); }
   }
 
