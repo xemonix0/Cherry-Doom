@@ -682,7 +682,7 @@ static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
        ||(source->player->psprites->state->action.p2 == (actionf_p2)A_FireShotgun2
           && (P_AproxDistance(target->x - source->x, target->y - source->y)
               < ((128*FRACUNIT) + target->info->radius)))
-       )
+      )
      )
     { return true; }
   else

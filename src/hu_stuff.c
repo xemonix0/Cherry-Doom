@@ -1191,6 +1191,8 @@ static void HU_DrawCrosshair(void)
       //|| menuactive
       //|| paused
       //|| secret_on
+      // [Nugget] Add this check; for some reason .cr is sometimes uninitialized
+      || !crosshair.cr
      )
   {
     return;

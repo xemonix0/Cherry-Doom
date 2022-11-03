@@ -5511,12 +5511,12 @@ boolean M_Responder (event_t* ev)
                                                               //  V
       // [Nugget]
       if (M_InputActivated(input_crosshair))
-	{
-	  hud_crosshair_on = !hud_crosshair_on;
-	  HU_InitCrosshair();
-	  M_UpdateCrosshairItems();
-	  doomprintf("Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
-	}
+    {
+      if ((hud_crosshair_on = !hud_crosshair_on))
+        { HU_InitCrosshair(); }
+      M_UpdateCrosshairItems();
+      doomprintf("Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
+    }
 
       if (M_InputActivated(input_autorun)) // Autorun
 	{
