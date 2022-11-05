@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: hu_lib.h,v 1.9 1998/05/11 10:13:31 jim Exp $
@@ -18,7 +18,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
 // DESCRIPTION:  none
@@ -71,7 +71,7 @@ typedef struct
   int   len;                            // current line length
 
   // whether this line needs to be udpated
-  int   needsupdate;        
+  int   needsupdate;
 
 } hu_textline_t;
 
@@ -119,7 +119,7 @@ typedef struct
   int     lm;
 
   // pointer to boolean stating whether to update window
-  boolean*    on; 
+  boolean*    on;
   boolean   laston;   // last value of *->on;
 
 } hu_itext_t;
@@ -159,7 +159,7 @@ boolean HUlib_delCharFromTextLine(hu_textline_t *t);
 void HUlib_drawTextLine(hu_textline_t *l, boolean drawcursor);
 
 // erases text line
-void HUlib_eraseTextLine(hu_textline_t *l); 
+void HUlib_eraseTextLine(hu_textline_t *l);
 
 
 //
@@ -178,7 +178,7 @@ void HUlib_initSText
   boolean*  on );
 
 // add a new line
-void HUlib_addLineToSText(hu_stext_t* s);  
+void HUlib_addLineToSText(hu_stext_t* s);
 
 // add a text message to an stext widget
 void HUlib_addMessageToSText
@@ -265,7 +265,7 @@ boolean HUlib_keyInIText
 void HUlib_drawIText(hu_itext_t* it);
 
 // erases all itext lines
-void HUlib_eraseIText(hu_itext_t* it); 
+void HUlib_eraseIText(hu_itext_t* it);
 
 #endif
 

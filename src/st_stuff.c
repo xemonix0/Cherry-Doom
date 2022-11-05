@@ -274,20 +274,22 @@ int STArmor = 0;
 
 void NuggetSmoothCount(int* shownval, int realval)
 {
-  if (!smooth_counts) {
+  int step = *shownval - realval;
+
+  if (!smooth_counts || !step) {
     *shownval = realval;
     return;
   }
 
   if (*shownval < realval) {
-    int step = (realval - *shownval) / 20;
+    step = (realval - *shownval) / 20;
     if      (step > 7) { step = 7; }
     else if (step < 1) { step = 1; }
     *shownval += step+1;
     if (*shownval > realval) { *shownval = realval; }
   }
   else if (*shownval > realval) {
-    int step = (*shownval - realval) / 20;
+    step = (*shownval - realval) / 20;
     if      (step > 7) { step = 7; }
     else if (step < 1) { step = 1; }
     *shownval -= step+1;
