@@ -74,262 +74,190 @@ executable), with added comments for clarity. Feel free to use it as a base to
 make new configurations:
 
 "
-; X position of the Ammo count
+; Ammo count
+; X position
 nughud_ammo_x 44
-; Y position of the Ammo count
+; Y position
 nughud_ammo_y 171
-; Apply widescreen delta to the Ammo count
+; Apply widescreen delta
 nughud_ammo_wide -1
 
-; X position of the Health count
+; Health count
 nughud_health_x 90
-; Y position of the Health count
 nughud_health_y 171
-; Apply widescreen delta to the Health count
 nughud_health_wide -1
 
-; X position of the weapon number 2
+; Arms number 2
 nughud_arms2_x 111
-; Y position of the weapon number 2
 nughud_arms2_y 172
-; Apply widescreen delta to the Arms Number 2
 nughud_arms2_wide -1
 
-; X position of the weapon number 3
+; Arms number 3
 nughud_arms3_x 119
-; Y position of the weapon number 3
 nughud_arms3_y 172
-; Apply widescreen delta to the Arms Number 3
 nughud_arms3_wide -1
 
-; X position of the weapon number 4
+; Arms number 4
 nughud_arms4_x 127
-; Y position of the weapon number 4
 nughud_arms4_y 172
-; Apply widescreen delta to the Arms Number 4
 nughud_arms4_wide -1
 
-; X position of the weapon number 5
+; Arms number 5
 nughud_arms5_x 135
-; Y position of the weapon number 5
 nughud_arms5_y 172
-; Apply widescreen delta to the Arms Number 5
 nughud_arms5_wide -1
 
-; X position of the weapon number 6
+; Arms number 6
 nughud_arms6_x 111
-; Y position of the weapon number 6
 nughud_arms6_y 182
-; Apply widescreen delta to the Arms Number 6
 nughud_arms6_wide -1
 
-; X position of the weapon number 7
+; Arms number 7
 nughud_arms7_x 119
-; Y position of the weapon number 7
 nughud_arms7_y 182
-; Apply widescreen delta to the Arms Number 7
 nughud_arms7_wide -1
 
-; X position of the weapon number 8
+; Arms number 8
 nughud_arms8_x 127
-; Y position of the weapon number 8
 nughud_arms8_y 182
-; Apply widescreen delta to the Arms Number 8
 nughud_arms8_wide -1
 
-; X position of the weapon number 9
+; Arms number 9
 nughud_arms9_x 135
-; Y position of the weapon number 9
 nughud_arms9_y 182
-; Apply widescreen delta to the Arms Number 9
 nughud_arms9_wide -1
 
-; X position of the Frags count
+; Frags count
 nughud_frags_x 174
-; Y position of the Frags count
 nughud_frags_y 171
-; Apply widescreen delta to the Frags count
 nughud_frags_wide 0
 
-; X position of the Face
+; Face
 nughud_face_x -1
-; Y position of the Face
 nughud_face_y 168
-; Apply widescreen delta to the Face
 nughud_face_wide 0
 ; Draw Face background
 nughud_face_bg 1
 
-; X position of the Armor count
+; Armor count
 nughud_armor_x 221
-; Y position of the Armor count
 nughud_armor_y 171
-; Apply widescreen delta to the Armor count
 nughud_armor_wide 1
 
-; X position of the Blue Key
+; Blue Key
 nughud_key0_x 239
-; Y position of the Blue Key
 nughud_key0_y 171
-; Apply widescreen delta to the Blue Key
 nughud_key0_wide 1
 
-; X position of the Yellow Key
+; Yellow Key
 nughud_key1_x 239
-; Y position of the Yellow key
 nughud_key1_y 181
-; Apply widescreen delta to the Yellow Key
 nughud_key1_wide 1
 
-; X position of the Red Key
+; Red Key
 nughud_key2_x 239
-; Y position of the Red Key
 nughud_key2_y 191
-; Apply widescreen delta to the Red Key
 nughud_key2_wide 1
 
-; X position of the Bullets count
+; Bullets count
 nughud_ammo0_x 288
-; Y position of the Bullets count
 nughud_ammo0_y 173
-; Apply widescreen delta to the Bullets count
 nughud_ammo0_wide 1
 
-; X position of the Shells count
+; Shells count
 nughud_ammo1_x 288
-; Y position of the Shells count
 nughud_ammo1_y 179
-; Apply widescreen delta to the Shells count
 nughud_ammo1_wide 1
 
-; X position of the Cells count
+; Cells count
 nughud_ammo2_x 288
-; Y position of the Cells count
 nughud_ammo2_y 191
-; Apply widescreen delta to the Cells count
 nughud_ammo2_wide 1
 
-; X position of the Rockets count
+; Rockets count
 nughud_ammo3_x 288
-; Y position of the Rockets count
 nughud_ammo3_y 185
-; Apply widescreen delta to the Rockets count
 nughud_ammo3_wide 1
 
-; X position of the Max Bullets count
+; Max Bullets count
 nughud_maxammo0_x 314
-; Y position of the Max Bullets count
 nughud_maxammo0_y 173
-; Apply widescreen delta to the Max Bullets count
 nughud_maxammo0_wide 1
 
-; X position of the Max Shells count
+; Max Shells count
 nughud_maxammo1_x 314
-; Y position of the Max Shells count
 nughud_maxammo1_y 179
-; Apply widescreen delta to the Max Shells count
 nughud_maxammo1_wide 1
 
-; X position of the Max Cells count
+; Max Cells count
 nughud_maxammo2_x 314
-; Y position of the Max Cells count
 nughud_maxammo2_y 191
-; Apply widescreen delta to the Max Cells count
 nughud_maxammo2_wide 1
 
-; X position of the Max Rockets count
+; Max Rockets count
 nughud_maxammo3_x 314
-; Y position of the Max Rockets count
 nughud_maxammo3_y 185
-; Apply widescreen delta to the Max Rockets count
 nughud_maxammo3_wide 1
 
-; X position of the Time widget
+; Time widget
 nughud_time_x 0
-; Y position of the Time widget
 nughud_time_y 152
-; Apply widescreen delta to the Time widget
 nughud_time_wide -1
 ; Relocate Time widget to position of STS widget if the latter is disabled
 nughud_time_sts 1
 
-; X position of the STS widget
+; STS widget
 nughud_sts_x 0
-; Y position of the STS widget
 nughud_sts_y 160
-; Apply widescreen delta to the STS widget
 nughud_sts_wide -1
 
-; X position of Patch 1
+; Patch 1
 nughud_patch1_x 0
-; Y position of Patch 1
 nughud_patch1_y 0
-; Apply widescreen delta to Patch 1
 nughud_patch1_wide 0
-; Name of Patch 1
+; Name of Patch
 nughud_patch1_name ""
 
-; X position of Patch 2
+; Patch 2
 nughud_patch2_x 0
-; Y position of Patch 2
 nughud_patch2_y 0
-; Apply widescreen delta to Patch 2
 nughud_patch2_wide 0
-; Name of Patch 2
 nughud_patch2_name ""
 
-; X position of Patch3 
+; Patch 3 
 nughud_patch3_x 0
-; Y position of Patch 3
 nughud_patch3_y 0
-; Apply widescreen delta to Patch 3
 nughud_patch3_wide 0
-; Name of Patch 3
 nughud_patch3_name ""
 
-; X position of Patch 4
+; Patch 4
 nughud_patch4_x 0
-; Y position of Patch 4
 nughud_patch4_y 0
-; Apply widescreen delta to Patch 4
 nughud_patch4_wide 0
-; Name of Patch 4
 nughud_patch4_name ""
 
-; X position of Patch 5
+; Patch 5
 nughud_patch5_x 0
-; Y position of Patch5 
 nughud_patch5_y 0
-; Apply widescreen delta to Patch 5
 nughud_patch5_wide 0
-; Name of Patch 5
 nughud_patch5_name ""
 
-; X position of Patch 6
+; Patch 6
 nughud_patch6_x 0
-; Y position of Patch 6
 nughud_patch6_y 0
-; Apply widescreen delta to Patch 6
 nughud_patch6_wide 0
-; Name of Patch 6
 nughud_patch6_name ""
 
-; X position of Patch 7
+; Patch 7
 nughud_patch7_x 0
-; Y position of Patch 7
 nughud_patch7_y 0
-; Apply widescreen delta to Patch 7
 nughud_patch7_wide 0
-; Name of Patch 7
 nughud_patch7_name ""
 
-; X position of Patch 8
+; Patch 8
 nughud_patch8_x 0
-; Y position of Patch 8
 nughud_patch8_y 0
-; Apply widescreen delta to Patch 8
 nughud_patch8_wide 0
-; Name of Patch 8
 nughud_patch8_name ""
 
 ; Upwards offset to apply to weapon sprites
