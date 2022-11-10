@@ -12,15 +12,16 @@ Although the new code has been written with the intention of not breaking demo c
   - _**Things move over/under things**_ setting;
   - **Freeaim** (Vertical Aiming);
   - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first);
+  - _**Squat Weapon Down On Impact**_ setting;
   - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt;
   - _**Disable palette tint in menus**_ setting;
   - **Most of its accessibility settings** (toggle for _Flickering Sector Lights_ is not yet implemented);
+  - **Draw Berserk in place of Ammo count when the Fist is equipped**;
   - **SSG is accounted for on the Arms widget**;
   - **IDCLEV00 restarts current map**;
   - **Mid-air control** while on noclipping mode;
   - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip);
   - Reenabled _**'NOMOMENTUM'**_ cheat.
-- _**Disable Background**_ setting, to disable the background on setup screens and dynamic Help screen
 - _**Field of View**_ setting, as featured in Doom Retro
 - _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tint
 - _**Disable Berserk Tint**_ setting
@@ -31,6 +32,8 @@ Although the new code has been written with the intention of not breaking demo c
 - _**Bobbing Percentage**_ setting
 - **Crosshair:**
   - Coloring based on linetarget health;
+  - Target lock-on;
+  - Horizontal autoaim indicators;
   - Highlight on fuzzy targets;
   - 5 new types;
   - Dedicated toggle key.
@@ -43,6 +46,7 @@ Although the new code has been written with the intention of not breaking demo c
 - _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
 - _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV (default is 41, the original)
+- Setting of condition to _**Advance Internal Demos**_
 - New **cheats**:
   - _**'FULLCLIP'**_ for infinite ammo;
   - _**'VALIANT'**_ for fast weapons;
@@ -54,7 +58,13 @@ Although the new code has been written with the intention of not breaking demo c
   - _**'SCANNER' / 'ANALYZE' / 'LINETARGET'**_ to give some info on the player's linetarget, similar to GZDoom's _'linetarget'_ console command;
   - _**'MDK'**_, much like in ZDoom;
   - _**'SAITAMA'**_, to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, also featuring an alternate attack when holding down Strafe On);
+  - _**'IDNLEV' / 'IDNEXT'**_, to end the level;
   - _**'TURBO'**_ to change the player speed in-game.
+- Restored _**Weapon Recoil**_ menu item
+- Restored _**Message Listing Scrolls Upwards**_ setting, and enabled it by default
+- **Offer selection of widescreen ratios** in the setup menu itself
+- Toggle to **allow chat in singleplayer**
+- **NUGHUD lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.txt`)
 - **Sound Links check for a dedicated lump**, therefore allowing usage of a custom sound effect
 - **"Correct" first person sprite centering** (the original code had an offset of one pixel to the right)
 - New **"Doom compatibility"** settings (some adapted from Crispy Doom fixes):
