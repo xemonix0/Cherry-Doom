@@ -3847,6 +3847,11 @@ enum {
   general_end2,
 };
 
+// [Nugget]
+static const char *widescreen_ratios[] = {
+  "Off", "Auto", "16:10", "16:9", "21:9", NULL
+};
+
 static const char *midi_player_strings[] = {
 #if defined(_WIN32)
   "Native",
@@ -3900,8 +3905,8 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
   {"Fullscreen Mode", S_YESNO, m_null, M_X, M_Y+ general_fullscreen*M_SPC,
    {"fullscreen"}, 0, I_ToggleToggleFullScreen},
 
-  {"Widescreen Rendering", S_YESNO, m_null, M_X, M_Y+ general_widescreen*M_SPC,
-   {"widescreen"}, 0, I_ResetScreen},
+  {"Widescreen Rendering", S_CHOICE, m_null, M_X, M_Y+ general_widescreen*M_SPC,
+   {"widescreen"}, 0, I_ResetScreen, widescreen_ratios},
 
   // [FG] uncapped frame rate
   {"Uncapped Frame Rate", S_YESNO, m_null, M_X, M_Y+ general_uncapped*M_SPC,
