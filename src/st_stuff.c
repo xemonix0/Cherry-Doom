@@ -272,24 +272,6 @@ extern char     *mapnames[];
 int STHealth = 100;
 int STArmor = 0;
 
-void NuggetSmoothCount(int* shownval, int realval)
-{
-  int step = realval - *shownval;
-
-  if (!smooth_counts || !step) {
-    *shownval = realval;
-    return;
-  }
-  else {
-    int sign = step / abs(step);
-    step = BETWEEN(1, 7, abs(step) / 20);
-    *shownval += (step+1)*sign;
-    if (  (sign > 0 && *shownval > realval)
-        ||(sign < 0 && *shownval < realval))
-      { *shownval = realval; }
-  }
-}
-
 //
 // STATUS BAR CODE
 //
@@ -726,10 +708,27 @@ void ST_updateWidgets(void)
 
 }
 
+static int NuggetSmoothCount(int shownval, int realval)
+{
+  int step = realval - shownval;
+
+  if (!smooth_counts || !step) { return realval; }
+  else {
+    int sign = step / abs(step);
+    step = BETWEEN(1, 7, abs(step) / 20);
+    shownval += (step+1)*sign;
+    if (  (sign > 0 && shownval > realval)
+        ||(sign < 0 && shownval < realval))
+      { shownval = realval; }
+
+    return shownval;
+  }
+}
+
 void ST_Ticker(void)
 {
-  NuggetSmoothCount(&STHealth, plyr->health);
-  NuggetSmoothCount(&STArmor, plyr->armorpoints);
+  STHealth = NuggetSmoothCount(STHealth, plyr->health);
+  STArmor  = NuggetSmoothCount(STArmor, plyr->armorpoints);
 
   st_clock++;
   st_randomnumber = M_Random();
