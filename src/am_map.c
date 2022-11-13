@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: am_map.c,v 1.24 1998/05/10 12:05:24 jim Exp $
@@ -18,10 +18,10 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 //
-// DESCRIPTION:  
+// DESCRIPTION:
 //   the automap code
 //
 //-----------------------------------------------------------------------------
@@ -72,6 +72,9 @@ int map_keyed_door_flash; // keyed doors are flashing
 
 int map_smooth_lines;
 
+// [Nugget] Dark automap overlay
+static int viewshade;
+
 //jff 4/3/98 add symbols for "no-color" for disable and "black color" for black
 #define NC 0
 #define BC 247
@@ -82,7 +85,7 @@ int map_smooth_lines;
 #define MAPUNIT (1<<MAPBITS)
 #define FRACTOMAPBITS (FRACBITS-MAPBITS)
 
-// [Woof!] New radius to use with FRACTOMAPBITS, since orginal 
+// [Woof!] New radius to use with FRACTOMAPBITS, since orginal
 // PLAYERRADIUS macro can't be used in this implementation.
 #define MAPPLAYERRADIUS (16*(1<<MAPBITS))
 
@@ -199,10 +202,10 @@ mline_t triangle_guy[] =
 };
 
 #undef R
-#undef np867R 
-#undef p867R  
-#undef np5R   
-#undef p5R    
+#undef np867R
+#undef p867R
+#undef np5R
+#undef p5R
 
 #define NUMTRIANGLEGUYLINES (sizeof(triangle_guy)/sizeof(mline_t))
 
@@ -247,7 +250,7 @@ int automap_grid = 0;
 
 boolean automapactive = false;
 
-boolean automapoverlay = false;
+int automapoverlay = false; // [Nugget] Changed to int
 
 // location of window on screen
 static int  f_x;
@@ -277,7 +280,7 @@ static int64_t  m_h;
 
 // based on level size
 static fixed_t  min_x;
-static fixed_t  min_y; 
+static fixed_t  min_y;
 static fixed_t  max_x;
 static fixed_t  max_y;
 
@@ -601,7 +604,7 @@ void AM_initVariables(void)
 
 //
 // AM_loadPics()
-// 
+//
 // Load the patches for the mark numbers
 //
 // Sets the marknums[i] variables to the patches for each digit
@@ -733,8 +736,8 @@ void AM_Stop (void)
 
 //
 // AM_Start()
-// 
-// Start up automap operations, 
+//
+// Start up automap operations,
 //  if a new level, or game start, (re)initialize level variables
 //  init map variables
 //  load mark patches
@@ -908,18 +911,18 @@ boolean AM_Responder
       m_paninc.x = 0;
       m_paninc.y = 0;
       // Ty 03/27/98 - externalized
-      plr->message = followplayer ? s_AMSTR_FOLLOWON : s_AMSTR_FOLLOWOFF;  
+      plr->message = followplayer ? s_AMSTR_FOLLOWON : s_AMSTR_FOLLOWOFF;
     }
     else if (M_InputActivated(input_map_grid))
     {
       automap_grid = !automap_grid;      // killough 2/28/98
       // Ty 03/27/98 - *not* externalized
-      plr->message = automap_grid ? s_AMSTR_GRIDON : s_AMSTR_GRIDOFF;  
+      plr->message = automap_grid ? s_AMSTR_GRIDON : s_AMSTR_GRIDOFF;
     }
     else if (M_InputActivated(input_map_mark))
     {
-      // Ty 03/27/98 - *not* externalized     
-      sprintf(buffer, "%s %d", s_AMSTR_MARKEDSPOT, markpointnum);  
+      // Ty 03/27/98 - *not* externalized
+      sprintf(buffer, "%s %d", s_AMSTR_MARKEDSPOT, markpointnum);
       plr->message = buffer;
       AM_addMark();
     }
@@ -931,11 +934,14 @@ boolean AM_Responder
     else                                                        // phares
     if (M_InputActivated(input_map_overlay))
     {
-      automapoverlay = !automapoverlay;
-      if (automapoverlay)
-        plr->message = s_AMSTR_OVERLAYON;
-      else
-        plr->message = s_AMSTR_OVERLAYOFF;
+      // [Nugget] Accommodate for dark automap overlay
+      if (++automapoverlay > 2) { automapoverlay = 0; }
+
+      switch (automapoverlay) {
+        case 2:  plr->message = "Dark Overlay On";  break;
+        case 1:  plr->message = s_AMSTR_OVERLAYON;  break;
+        default: plr->message = s_AMSTR_OVERLAYOFF; break;
+      }
     }
     else if (M_InputActivated(input_map_rotate))
     {
@@ -1055,8 +1061,10 @@ void AM_Coordinates(const mobj_t *mo, fixed_t *x, fixed_t *y, fixed_t *z)
 //
 void AM_Ticker (void)
 {
-  if (!automapactive)
+  if (!automapactive) {
+    viewshade = 0; // [Nugget] Dark automap overlay
     return;
+  }
 
   amclock++;
 
@@ -1112,7 +1120,7 @@ boolean AM_clipMline
   int   dx;
   int   dy;
 
-    
+
 #define DOOUTCODE(oc, mx, my) \
   (oc) = 0; \
   if ((my) < 0) (oc) |= TOP; \
@@ -1120,7 +1128,7 @@ boolean AM_clipMline
   if ((mx) < 0) (oc) |= LEFT; \
   else if ((mx) >= f_w) (oc) |= RIGHT;
 
-    
+
   // do trivial rejects and outcodes
   if (ml->a.y > m_y2)
   outcode1 = TOP;
@@ -1240,7 +1248,7 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
   register int ay;
   register int d;
 
-#ifdef RANGECHECK         // killough 2/22/98    
+#ifdef RANGECHECK         // killough 2/22/98
   static int fuck = 0;
 
   // For debugging only
@@ -1668,7 +1676,7 @@ void AM_drawWalls(void)
         // jff 1/10/98 add color change for all teleporter types
         if
         (
-            mapcolor_tele && !(lines[i].flags & ML_SECRET) && 
+            mapcolor_tele && !(lines[i].flags & ML_SECRET) &&
             (lines[i].special == 39 || lines[i].special == 97 ||
             lines[i].special == 125 || lines[i].special == 126)
         )
@@ -1743,7 +1751,7 @@ void AM_drawWalls(void)
         }
         else if
         (
-            mapcolor_clsd &&  
+            mapcolor_clsd &&
             !(lines[i].flags & ML_SECRET) &&    // non-secret closed door
             ((lines[i].backsector->floorheight==lines[i].backsector->ceilingheight) ||
             (lines[i].frontsector->floorheight==lines[i].frontsector->ceilingheight))
@@ -1758,7 +1766,7 @@ void AM_drawWalls(void)
               (map_secret_after &&
                (
                 (P_WasSecret(lines[i].frontsector)
-                 && !P_IsSecret(lines[i].frontsector)) || 
+                 && !P_IsSecret(lines[i].frontsector)) ||
                 (P_WasSecret(lines[i].backsector)
                  && !P_IsSecret(lines[i].backsector))
                )
@@ -1785,8 +1793,8 @@ void AM_drawWalls(void)
           AM_drawMline(&l, mapcolor_cchg); // ceiling level change
         }
         else if (mapcolor_flat && ddt_cheating)
-        { 
-          AM_drawMline(&l, mapcolor_flat); //2S lines that appear only in IDDT  
+        {
+          AM_drawMline(&l, mapcolor_flat); //2S lines that appear only in IDDT
         }
       }
     } // now draw the lines only visible because the player has computermap
@@ -1927,7 +1935,7 @@ void AM_drawLineCharacter
 //
 // AM_drawPlayers()
 //
-// Draws the player arrow in single player, 
+// Draws the player arrow in single player,
 // or all the player arrows in a netgame.
 //
 // Passed nothing, returns nothing
@@ -1972,7 +1980,7 @@ void AM_drawPlayers(void)
         mapcolor_sngl,      //jff color
         pt.x,
         pt.y
-      ); 
+      );
     else
       AM_drawLineCharacter
       (
@@ -1982,7 +1990,7 @@ void AM_drawPlayers(void)
         smoothangle,
         mapcolor_sngl,      //jff color
         pt.x,
-        pt.y);        
+        pt.y);
     return;
   }
 
@@ -2297,6 +2305,24 @@ void AM_Drawer (void)
     AM_clearFB(mapcolor_back);       //jff 1/5/98 background default color
     pspr_interp = false;
   }
+  // [Nugget] Dark automap overlay
+  else if (automapoverlay == 2)
+  {
+    int y;
+    byte *dest = screens[0];
+    static int firsttic;
+
+    for (y = 0; y < (SCREENWIDTH << hires) * (SCREENHEIGHT << hires); y++)
+      { dest[y] = colormaps[0][viewshade * 256 + dest[y]]; }
+
+    if (viewshade < 20 && gametic != firsttic)
+    {
+      viewshade += 2;
+      firsttic = gametic;
+    }
+  }
+  else { viewshade = 0; }
+
   if (automap_grid)                  // killough 2/28/98: change var name
     AM_drawGrid(mapcolor_grid);      //jff 1/7/98 grid default color
   AM_drawWalls();

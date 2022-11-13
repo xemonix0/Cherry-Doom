@@ -2149,11 +2149,11 @@ default_t defaults[] = {
     "1 to enable automap follow player mode"
   },
 
-  {
+  { // [Nugget] Accommodate for dark automap overlay
     "automapoverlay",
     (config_t *) &automapoverlay, NULL,
-    {0}, {0,1}, number, ss_auto, wad_no,
-    "1 to enable automap overlay mode"
+    {0}, {0,2}, number, ss_auto, wad_no,
+    "Automap overlay mode (1 = on, 2 = dark)"
   },
 
   {

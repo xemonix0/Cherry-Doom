@@ -256,16 +256,12 @@ void D_Display (void)
     case GS_LEVEL:
       if (!gametic)
         break;
-      if (automapactive)
-      {
-        // [FG] update automap while playing
-        R_RenderPlayerView (&players[displayplayer]);
-        AM_Drawer();
-      }
+      // [Nugget] Removed Automap code block
       if (wipe || (scaledviewheight != 200 && fullscreen) // killough 11/98
           || (inhelpscreensstate && !inhelpscreens))
         redrawsbar = true;              // just put away the help screen
-      ST_Drawer(scaledviewheight == 200, redrawsbar );    // killough 11/98
+      // [Nugget] Moved ST_Drawer() call below,
+      // to ensure it is called AFTER AM_Drawer()
       fullscreen = scaledviewheight == 200;               // killough 11/98
       break;
     case GS_INTERMISSION:
@@ -280,14 +276,9 @@ void D_Display (void)
     }
 
   // draw the view directly
-  if (gamestate == GS_LEVEL && (!automapactive || automapoverlay) && gametic)
-  {
+  // [Nugget] Removed '&& !automapactive' condition
+  if (gamestate == GS_LEVEL && gametic)
     R_RenderPlayerView (&players[displayplayer]);
-
-    // [Nugget]: [crispy] Crispy HUD
-    if (ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE))
-      { ST_Drawer(false, true); }
-  }
 
   if (gameaction == ga_savegame)
     M_TakeSnapshot();
@@ -323,7 +314,8 @@ void D_Display (void)
   inhelpscreensstate = inhelpscreens;
   oldgamestate = wipegamestate = gamestate;
 
-  if (gamestate == GS_LEVEL && automapactive && automapoverlay)
+  // [Nugget] Removed '&& automapoverlay' condition
+  if (gamestate == GS_LEVEL && automapactive)
     {
       AM_Drawer();
       HU_Drawer();
@@ -332,6 +324,12 @@ void D_Display (void)
       viewactivestate = false;
       inhelpscreensstate = true;
     }
+
+  // [Nugget] Moved here, as to be called after AM_Drawer()
+  if (gamestate == GS_LEVEL)
+    ST_Drawer(   scaledviewheight == 200
+              && !ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE), // [Nugget]
+              redrawsbar);
 
   // draw pause pic
   if (paused)
