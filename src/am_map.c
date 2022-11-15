@@ -314,6 +314,7 @@ static patch_t *marknums[10];   // numbers used for marking by the automap
 mpoint_t *markpoints = NULL;    // where the points are
 int markpointnum = 0; // next point to be assigned (also number of points now)
 int markpointnum_max = 0;       // killough 2/22/98
+static int markblinktimer; // [Nugget] Blink marks
 int followplayer = 1; // specifies whether to follow the player around
 
 static boolean stopped = true;
@@ -943,6 +944,12 @@ boolean AM_Responder
         plr->message = buffer;
       }
     }
+    // [Nugget] Blink marks
+    else if (M_InputActivated(input_map_blink) && markpointnum)
+    {
+      markblinktimer = 4*TICRATE;
+      plr->message = "Blinking marks...";
+    }
     else
     if (M_InputActivated(input_map_overlay))
     {
@@ -1077,6 +1084,9 @@ void AM_Ticker (void)
     viewshade = 0; // [Nugget] Dark automap overlay
     return;
   }
+
+  // [Nugget] Blink marks
+  if (markblinktimer) { markblinktimer--; }
 
   amclock++;
 
@@ -2247,7 +2257,10 @@ void AM_drawMarks(void)
 	      fx += 1<<hires;
 
 	    if (fx >= f_x && fx < f_w - w && fy >= f_y && fy < f_h - h)
-	      V_DrawPatch((fx >> hires) - WIDESCREENDELTA, fy >> hires, FB, marknums[d]);
+          // [Nugget] Blink marks
+          V_DrawPatchTranslated((fx >> hires) - WIDESCREENDELTA,
+                                fy >> hires, FB, marknums[d],
+                                (markblinktimer & 8) ? cr_dark : cr_red, 0);
 
 	    fx -= w - (1<<hires);     // killough 2/22/98: 1 space backwards
 

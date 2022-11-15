@@ -1616,6 +1616,14 @@ default_t defaults[] = {
     input_map_clear, { {input_type_key, 'c'} }
   },
 
+  { // [Nugget]
+    "input_map_blink",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to make automap markers blink",
+    input_map_blink, { {input_type_key, 'b'} }
+  },
+
   {
     "input_map_grid",
     NULL, NULL,

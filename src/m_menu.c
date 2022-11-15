@@ -3020,8 +3020,9 @@ setup_menu_t keys_settings6[] =  // Key Binding screen strings
     {"MARK PLACE" ,S_INPUT     ,m_map ,KB_X,M_Y+12*M_SPC,{0},input_map_mark},
     // [Nugget] Only the last mark is cleared; change this text
     {"CLEAR LAST MARK",S_INPUT ,m_map ,KB_X,M_Y+13*M_SPC,{0},input_map_clear},
-    {"FULL/ZOOM"  ,S_INPUT     ,m_map ,KB_X,M_Y+14*M_SPC,{0},input_map_gobig},
-    {"GRID"       ,S_INPUT     ,m_map ,KB_X,M_Y+15*M_SPC,{0},input_map_grid},
+    {"BLINK MARKS",S_INPUT     ,m_map ,KB_X,M_Y+14*M_SPC,{0},input_map_blink}, // [Nugget]
+    {"FULL/ZOOM"  ,S_INPUT     ,m_map ,KB_X,M_Y+15*M_SPC,{0},input_map_gobig},
+    {"GRID"       ,S_INPUT     ,m_map ,KB_X,M_Y+16*M_SPC,{0},input_map_grid},
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings5}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings7}},
