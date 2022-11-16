@@ -940,8 +940,7 @@ boolean AM_Responder
         { plr->message = s_AMSTR_MARKSCLEARED; }
       else {
         AM_clearLastMark();
-        sprintf(buffer, "Cleared spot %d", markpointnum);
-        plr->message = buffer;
+        doomprintf("Cleared spot %d", markpointnum);
       }
     }
     // [Nugget] Blink marks
