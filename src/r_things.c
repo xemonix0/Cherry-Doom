@@ -697,7 +697,7 @@ void R_DrawPSprite (pspdef_t *psp)
   boolean       flip;
   vissprite_t   *vis;
   vissprite_t   avis;
-  extern boolean st_crispyhud; // [Nugget]
+  extern boolean st_crispyhud, oldcrispy; // [Nugget]
 
   // decide which patch to use
 
@@ -802,7 +802,9 @@ void R_DrawPSprite (pspdef_t *psp)
     x1_saved = vis->x1;
     texturemid_saved = vis->texturemid;
 
-    if (lump == oldlump && pspr_interp)
+    if (lump == oldlump && pspr_interp
+        // [Nugget]
+        && (st_crispyhud == oldcrispy || !nughud.weapheight))
     {
       int deltax = vis->x2 - vis->x1;
       vis->x1 = oldx1 + FixedMul(vis->x1 - oldx1, fractionaltic);

@@ -1000,12 +1000,10 @@ void ST_diffDraw(void)
 }
 
 int oldscreenblocks;
+boolean oldcrispy, oldwide; // [Nugget]
 
 void ST_Drawer(boolean fullscreen, boolean refresh)
 {
-  // [Nugget]
-  boolean oldcrispy, oldwide;
-
   st_statusbaron = !fullscreen || (automapactive && !automapoverlay);
   // [crispy] immediately redraw status bar after help screens have been shown
   st_firsttime = st_firsttime || refresh || inhelpscreens;
