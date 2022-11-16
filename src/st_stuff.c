@@ -1013,13 +1013,14 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   // [Nugget]:
   // [crispy] distinguish classic status bar with background and player face from Crispy HUD
   oldcrispy = st_crispyhud; // [Nugget]
-  st_crispyhud = screenblocks >= CRISPY_HUD && (!automapactive || automapoverlay);
+  st_crispyhud = ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE)
+                 && (!automapactive || automapoverlay);
 
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
   st_statusbarface = st_classicstatusbar || (st_crispyhud && nughud.face.x);
 
   oldwide = st_widecrispyhud; // [Nugget]
-  st_widecrispyhud = screenblocks >= CRISPY_HUD_WIDE && (!automapactive || automapoverlay);
+  st_widecrispyhud = (screenblocks == CRISPY_HUD_WIDE) && (!automapactive || automapoverlay);
 
   if (oldcrispy != st_crispyhud || oldwide != st_widecrispyhud) // [Nugget]
     { ST_createWidgets(); }
