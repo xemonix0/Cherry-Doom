@@ -999,7 +999,6 @@ void ST_diffDraw(void)
   ST_drawWidgets(false);
 }
 
-int oldscreenblocks;
 boolean oldcrispy, oldwide; // [Nugget]
 
 void ST_Drawer(boolean fullscreen, boolean refresh)
