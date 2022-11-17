@@ -56,6 +56,7 @@ int mapcolor_bdor;    // blue door color (of enabling one but not other )
 int mapcolor_ydor;    // yellow door color
 int mapcolor_tele;    // teleporter line color
 int mapcolor_secr;    // secret sector boundary color
+int mapcolor_uscr; // [Nugget] Unrevealed secret sector boundary color
 int mapcolor_exit;    // jff 4/23/98 add exit line color
 int mapcolor_unsn;    // computer map unseen line color
 int mapcolor_flat;    // line with no floor/ceiling changes
@@ -1675,20 +1676,14 @@ void AM_drawWalls(void)
           AM_drawMline(&l, keyed_door_flash ? mapcolor_grid : mapcolor_exit); // exit line
         // jff 1/10/98 add new color for 1S secret sector boundary
         else if (mapcolor_secr && //jff 4/3/98 0 is disable
-            (
-             (
-              map_secret_after &&
-              P_WasSecret(lines[i].frontsector) &&
-              !P_IsSecret(lines[i].frontsector)
-             )
-             ||
-             (
-              !map_secret_after &&
-              P_WasSecret(lines[i].frontsector)
-             )
-            )
-          )
+                 P_WasSecret(lines[i].frontsector) &&
+                 !P_IsSecret(lines[i].frontsector)
+                )
           AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
+        // [Nugget] Unrevealed secret sector boundary
+        else if (mapcolor_uscr && !map_secret_after
+                 && P_IsSecret(lines[i].frontsector))
+          AM_drawMline(&l, mapcolor_uscr);
         else                               //jff 2/16/98 fixed bug
           AM_drawMline(&l, mapcolor_wall); // special was cleared
       }
@@ -1783,26 +1778,24 @@ void AM_drawWalls(void)
         else if
         (
             mapcolor_secr && //jff 2/16/98 fixed bug
-            (                    // special was cleared after getting it
-              (map_secret_after &&
-               (
-                (P_WasSecret(lines[i].frontsector)
-                 && !P_IsSecret(lines[i].frontsector)) ||
-                (P_WasSecret(lines[i].backsector)
-                 && !P_IsSecret(lines[i].backsector))
-               )
-              )
-              ||  //jff 3/9/98 add logic to not show secret til after entered
-              (   // if map_secret_after is true
-                !map_secret_after &&
-                 (P_WasSecret(lines[i].frontsector) ||
-                  P_WasSecret(lines[i].backsector))
-              )
+            (
+             (P_WasSecret(lines[i].frontsector)
+              && !P_IsSecret(lines[i].frontsector)) ||
+             (P_WasSecret(lines[i].backsector)
+              && !P_IsSecret(lines[i].backsector))
             )
         )
         {
           AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
         } //jff 1/6/98 end secret sector line change
+        // [Nugget] Unrevealed secret sector 2S lines
+        else if (mapcolor_uscr && !map_secret_after
+                 && (P_IsSecret(lines[i].frontsector)
+                     || P_IsSecret(lines[i].backsector))
+                )
+        {
+          AM_drawMline(&l, mapcolor_uscr);
+        }
         else if (lines[i].backsector->floorheight !=
                   lines[i].frontsector->floorheight)
         {

@@ -3570,19 +3570,21 @@ setup_menu_t auto_settings3[] =  // 3rd AutoMap Settings screen
 {
   {"teleporter line"                ,S_COLOR ,m_null,M_X,M_Y, {"mapcolor_tele"}},
   {"secret sector boundary"         ,S_COLOR ,m_null,M_X,M_Y+ 1*M_SPC, {"mapcolor_secr"}},
+  // [Nugget]
+  {"unrevealed secret sector boundary",S_COLOR ,m_null,M_X,M_Y+ 2*M_SPC, {"mapcolor_uscr"}},
   //jff 4/23/98 add exit line to automap
-  {"exit line"                      ,S_COLOR ,m_null,M_X,M_Y+ 2*M_SPC, {"mapcolor_exit"}},
-  {"computer map unseen line"       ,S_COLOR ,m_null,M_X,M_Y+ 3*M_SPC, {"mapcolor_unsn"}},
-  {"line w/no floor/ceiling changes",S_COLOR ,m_null,M_X,M_Y+ 4*M_SPC, {"mapcolor_flat"}},
-  {"general sprite"                 ,S_COLOR ,m_null,M_X,M_Y+ 5*M_SPC, {"mapcolor_sprt"}},
-  {"crosshair"                      ,S_COLOR ,m_null,M_X,M_Y+ 6*M_SPC, {"mapcolor_hair"}},
-  {"single player arrow"            ,S_COLOR ,m_null,M_X,M_Y+ 7*M_SPC, {"mapcolor_sngl"}},
-  {"player 1 arrow"                 ,S_COLOR ,m_null,M_X,M_Y+ 8*M_SPC, {"mapcolor_ply1"}},
-  {"player 2 arrow"                 ,S_COLOR ,m_null,M_X,M_Y+ 9*M_SPC, {"mapcolor_ply2"}},
-  {"player 3 arrow"                 ,S_COLOR ,m_null,M_X,M_Y+10*M_SPC, {"mapcolor_ply3"}},
-  {"player 4 arrow"                 ,S_COLOR ,m_null,M_X,M_Y+11*M_SPC, {"mapcolor_ply4"}},
+  {"exit line"                      ,S_COLOR ,m_null,M_X,M_Y+ 3*M_SPC, {"mapcolor_exit"}},
+  {"computer map unseen line"       ,S_COLOR ,m_null,M_X,M_Y+ 4*M_SPC, {"mapcolor_unsn"}},
+  {"line w/no floor/ceiling changes",S_COLOR ,m_null,M_X,M_Y+ 5*M_SPC, {"mapcolor_flat"}},
+  {"general sprite"                 ,S_COLOR ,m_null,M_X,M_Y+ 6*M_SPC, {"mapcolor_sprt"}},
+  {"crosshair"                      ,S_COLOR ,m_null,M_X,M_Y+ 7*M_SPC, {"mapcolor_hair"}},
+  {"single player arrow"            ,S_COLOR ,m_null,M_X,M_Y+ 8*M_SPC, {"mapcolor_sngl"}},
+  {"player 1 arrow"                 ,S_COLOR ,m_null,M_X,M_Y+ 9*M_SPC, {"mapcolor_ply1"}},
+  {"player 2 arrow"                 ,S_COLOR ,m_null,M_X,M_Y+ 10*M_SPC, {"mapcolor_ply2"}},
+  {"player 3 arrow"                 ,S_COLOR ,m_null,M_X,M_Y+11*M_SPC, {"mapcolor_ply3"}},
+  {"player 4 arrow"                 ,S_COLOR ,m_null,M_X,M_Y+12*M_SPC, {"mapcolor_ply4"}},
 
-  {"friends"                        ,S_COLOR ,m_null,M_X,M_Y+13*M_SPC, {"mapcolor_frnd"}},        // killough 8/8/98
+  {"friends"                        ,S_COLOR ,m_null,M_X,M_Y+14*M_SPC, {"mapcolor_frnd"}},        // killough 8/8/98
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {auto_settings2}},
 

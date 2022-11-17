@@ -2019,6 +2019,13 @@ default_t defaults[] = {
     "color used for lines around secret sectors"
   },
 
+  { // [Nugget] blue
+    "mapcolor_uscr",
+    (config_t *) &mapcolor_uscr, NULL,
+    {200}, {0,255}, number, ss_auto, wad_yes,
+    "color used for lines around unrevealed secret sectors"
+  },
+
   { // none
     "mapcolor_exit",
     (config_t *) &mapcolor_exit, NULL,
