@@ -283,8 +283,8 @@ void D_Display (void)
   if (gameaction == ga_savegame)
     M_TakeSnapshot();
 
-  if (gamestate == GS_LEVEL && gametic)
-    HU_Drawer ();
+  // [Nugget] Moved HU_Drawer() call below,
+  // to ensure it is called AFTER AM_Drawer() and ST_Drawer()
 
   // clean up border stuff
   if (gamestate != oldgamestate && gamestate != GS_LEVEL)
@@ -318,7 +318,8 @@ void D_Display (void)
   if (gamestate == GS_LEVEL && automapactive)
     {
       AM_Drawer();
-      HU_Drawer();
+      // [Nugget] Removed HU_Drawer() call, since we
+      // now call it right after this code block
 
       // [crispy] force redraw of status bar and border
       viewactivestate = false;
@@ -330,6 +331,10 @@ void D_Display (void)
     ST_Drawer(   scaledviewheight == 200
               && !ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE), // [Nugget]
               redrawsbar);
+
+  // [Nugget] Moved here too, as to be called after AM_Drawer() and ST_Drawer()
+  if (gamestate == GS_LEVEL && gametic)
+    HU_Drawer();
 
   // draw pause pic
   if (paused)
