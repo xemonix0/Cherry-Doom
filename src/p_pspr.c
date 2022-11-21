@@ -160,10 +160,8 @@ static void P_BringUpWeapon(player_t *player)
   player->pendingweapon = wp_nochange;
 
   // killough 12/98: prevent pistol from starting visibly at bottom of screen:
-  player->psprites[ps_weapon].sy = demo_version >= 203 ?
-    WEAPONBOTTOM+FRACUNIT*2 : WEAPONBOTTOM;
-  // [Nugget]
-  player->psprites[ps_weapon].sy2 = demo_version >= 203
+  player->psprites[ps_weapon].sy2 = // [Nugget]
+  player->psprites[ps_weapon].sy  = demo_version >= 203
                                     ? WEAPONBOTTOM+FRACUNIT*2
                                     : WEAPONBOTTOM;
   // [Nugget]: [crispy] squat down weapon sprite
@@ -349,6 +347,8 @@ boolean P_CheckAmmo(player_t *player)
 {
   ammotype_t ammo = weaponinfo[player->readyweapon].ammo;
   int count = 1;  // Regular
+  
+  if (player->cheats & CF_INFAMMO) { return true; } // [Nugget] Yikes!
 
   if (mbf21)
     count = weaponinfo[player->readyweapon].ammopershot;
