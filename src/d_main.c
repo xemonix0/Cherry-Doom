@@ -327,14 +327,16 @@ void D_Display (void)
     }
 
   // [Nugget] Moved here, as to be called after AM_Drawer()
-  if (gamestate == GS_LEVEL)
+  if (gamestate == GS_LEVEL && gametic)
+  {
     ST_Drawer(   scaledviewheight == 200
               && !ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE), // [Nugget]
               redrawsbar);
 
-  // [Nugget] Moved here too, as to be called after AM_Drawer() and ST_Drawer()
-  if (gamestate == GS_LEVEL && gametic)
+    // Moved here too, as to be called
+    // after AM_Drawer() and ST_Drawer()
     HU_Drawer();
+  }
 
   // draw pause pic
   if (paused)
