@@ -289,7 +289,7 @@ void M_NughudLoadDefaults (void)
   register default_t *dp;
 
   for (dp = nughud_defaults; dp->name; dp++)
-    if (dp->type == string)
+    if (dp->type == string && dp->defaultvalue.s)
       { dp->location->s = strdup(dp->defaultvalue.s); }
     else if (dp->type == number)
       { dp->location->i = dp->defaultvalue.i; }
