@@ -696,8 +696,8 @@ void P_PlayerThink (player_t* player)
       { player->psprites[ps_flash].tics = 1; }
   }
 
-  // [Nugget] Thing Scan cheat
-  if (player->cheats & CF_SCANNER) {
+  // [Nugget] Linetarget Query cheat
+  if (player->cheats & CF_LINETARGET) {
     boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
 
     overflow[emu_intercepts].enabled = false;

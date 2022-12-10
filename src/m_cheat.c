@@ -92,7 +92,7 @@ static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
 // [Nugget] (All of the following)
 static void cheat_nomomentum();
-static void cheat_fauxdemo();   // Emulates demo or net play state, for debugging
+static void cheat_fauxdemo();   // Emulates demo/net play state, for debugging
 static void cheat_infammo();    // Infinite ammo cheat
 static void cheat_fastweaps();  // Fast weapons cheat
 static void cheat_bobbers();    // Shortcut to the two cheats above
@@ -100,12 +100,13 @@ boolean GIBBERS;                // Used for 'GIBBERS'
 static void cheat_gibbers();    // Everything gibs
 static void cheat_resurrect();
 static void cheat_fly();
-static void cheat_nlev();       // End level
+static void cheat_nextmap();    // Emulate level exit
+static void cheat_nextsecret(); // Emulate secret level exit
 static void cheat_turbo();
-static int spawneetype = -1; static boolean spawneefriend; // Used for 'SPAWNR'
-// Spawn a mobj:            Enemy           Friend          Repeat last spawn
-static void cheat_spawn(),  cheat_spawne(), cheat_spawnf(), cheat_spawnr();
-static void cheat_scanner();    // Give info on the current target
+static int spawneetype = -1; static boolean spawneefriend; // Used for 'SUMMONR'
+// Summon a mobj:           Enemy            Friend           Repeat last spawn
+static void cheat_summon(), cheat_summone(), cheat_summonf(), cheat_summonr();
+static void cheat_linetarget(); // Give info on the current linetarget
 static void cheat_mdk();        // Inspired by ZDoom's console command
 static void cheat_saitama();    // MDK Fist
 boolean cheese;
@@ -332,47 +333,29 @@ struct cheat_s cheat[] = {
   {"idfly", NULL, not_net|not_demo,
    {cheat_fly} },
 
-  {"idnlev", NULL, not_net|not_demo,
-   {cheat_nlev} },
+  {"nextmap", NULL, not_net|not_demo,
+   {cheat_nextmap} },
 
-  {"idnext", NULL, not_net|not_demo,
-   {cheat_nlev} }, // 'IDNLEV' alternative
+  {"nextsecret", NULL, not_net|not_demo,
+   {cheat_nextsecret} },
 
   {"turbo", NULL, not_net|not_demo,
    {cheat_turbo}, -3 },
 
-  {"spawn", NULL, not_net|not_demo,
-   {cheat_spawn} }, // Spawn "Menu"
-
-  {"spawne", NULL, not_net|not_demo,
-   {cheat_spawne}, -3 }, // Spawn a hostile mobj
-
-  {"spawnf", NULL, not_net|not_demo,
-   {cheat_spawnf}, -3 }, // Spawn a friendly mobj
-
-  {"spawnr", NULL, not_net|not_demo,
-   {cheat_spawnr} }, // Repeat last spawn
-
   {"summon", NULL, not_net|not_demo,
-   {cheat_spawn} }, // 'SPAWN' alternative
+   {cheat_summon} }, // Summon "Menu"
 
   {"summone", NULL, not_net|not_demo,
-   {cheat_spawne}, -3 }, // 'SPAWNE' alternative
+   {cheat_summone}, -3 }, // Summon a hostile mobj
 
   {"summonf", NULL, not_net|not_demo,
-   {cheat_spawnf}, -3 }, // 'SPAWNF' alternative
+   {cheat_summonf}, -3 }, // Summon a friendly mobj
 
   {"summonr", NULL, not_net|not_demo,
-   {cheat_spawnr} }, // 'SPAWNR' alternative
-
-  {"scanner", NULL, not_net|not_demo,
-   {cheat_scanner} }, // Give info on the current linetarget
-
-  {"analyze", NULL, not_net|not_demo,
-   {cheat_scanner} }, // 'SCANNER' alternative
+   {cheat_summonr} }, // Repeat last summon
 
   {"linetarget", NULL, not_net|not_demo,
-   {cheat_scanner} }, // 'SCANNER' alternative
+   {cheat_linetarget} }, // Give info on the current linetarget
 
   {"mdk", NULL, not_net|not_demo,
    {cheat_mdk} },
@@ -396,10 +379,8 @@ static void cheat_showfps()
 
 // [Nugget]
 static void cheat_nomomentum() {
-  plyr->cheats ^= CF_NOMOMENTUM;
-  plyr->message = plyr->cheats & CF_NOMOMENTUM
-                  ? "No Momentum Mode ON"
-                  : "No Momentum Mode OFF";
+  plyr->message = (plyr->cheats ^= CF_NOMOMENTUM)
+                  ? "No Momentum Mode ON" : "No Momentum Mode OFF";
 }
 
 // [Nugget] Emulates demo and/or net play state, for debugging
@@ -408,32 +389,26 @@ static void cheat_fauxdemo() {
   D_NuggetUpdateCasual();
 
   S_StartSound(plyr->mo, sfx_tink);
-  plyr->message = fauxdemo
-                  ? "Fauxdemo ON"
-                  : "Fauxdemo OFF";
+  plyr->message = fauxdemo ? "Fauxdemo ON" : "Fauxdemo OFF";
 }
 
 // [Nugget] Infinite ammo
 static void cheat_infammo() {
-  plyr->cheats ^= CF_INFAMMO;
-  plyr->message = plyr->cheats & CF_INFAMMO
-                  ? "Infinite ammo ON"
-                  : "Infinite ammo OFF";
+  plyr->message = (plyr->cheats ^= CF_INFAMMO)
+                  ? "Infinite ammo ON" : "Infinite ammo OFF";
 }
 
 // [Nugget] Fast weapons
 static void cheat_fastweaps() {
-  plyr->cheats ^= CF_FASTWEAPS;
-  plyr->message = plyr->cheats & CF_FASTWEAPS
-                  ? "Fast Weapons ON"
-                  : "Fast Weapons OFF";
+  plyr->message = (plyr->cheats ^= CF_FASTWEAPS)
+                  ? "Fast Weapons ON" : "Fast Weapons OFF";
 }
 
 // [Nugget] Shortcut for the two above cheats
 static void cheat_bobbers() {
-  cheat_fa();
   if (!(plyr->cheats & CF_INFAMMO) || !(plyr->cheats & CF_FASTWEAPS))
   {
+    cheat_fa();
     plyr->cheats |= CF_INFAMMO;
     plyr->cheats |= CF_FASTWEAPS;
   }
@@ -446,9 +421,8 @@ static void cheat_bobbers() {
 
 // [Nugget] Everything gibs
 static void cheat_gibbers() {
-  GIBBERS = !GIBBERS;
-  plyr->message = GIBBERS ? "Ludicrous Gibs!"
-                          : "Ludicrous Gibs no more.";
+  plyr->message = (GIBBERS = !GIBBERS)
+                  ? "Ludicrous Gibs!" : "Ludicrous Gibs no more.";
 }
 
 // [Nugget] Used for resurrection, both right here in cheat_resurrect()
@@ -494,14 +468,17 @@ static void cheat_fly() {
   else
     { plyr->mo->flags &= ~MF_NOGRAVITY; }
 
-  plyr->message = plyr->cheats & CF_FLY
-                  ? "Fly Mode ON"
-                  : "Fly Mode OFF";
+  plyr->message = (plyr->cheats & CF_FLY) ? "Fly Mode ON" : "Fly Mode OFF";
 }
 
 // [Nugget]
-static void cheat_nlev() {
+static void cheat_nextmap() {
   G_ExitLevel();
+}
+
+// [Nugget]
+static void cheat_nextsecret() {
+  G_SecretExitLevel();
 }
 
 // [Nugget]
@@ -529,17 +506,20 @@ static void cheat_turbo(char *buf)
 }
 
 // [Nugget]
-static void cheat_spawn() { plyr->message = "Spawn: Enemy, Friend or Repeat Last?"; }
+static void cheat_summon()
+{
+  plyr->message = "Summon: Enemy, Friend or Repeat Last?";
+}
 
-// [Nugget] Spawn a hostile mobj
-static void cheat_spawne(char *buf)
+// [Nugget] Summon a hostile mobj
+static void cheat_summone(char *buf)
 {
   fixed_t x, y, z;
   int type;
   mobj_t *spawnee;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-    { doomprintf("Spawn: Digits only.");  return; }
+    { doomprintf("Summon: Digits only.");  return; }
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
@@ -547,7 +527,7 @@ static void cheat_spawne(char *buf)
   // Worth noting that this approach isn't quite compatible with
   // DEHEXTRA and DSDHacked's capabilities.
   if (type < 0 || type > MT_BIBLE)
-    { doomprintf("Spawn: Invalid mobjtype %i", type);  return; }
+    { doomprintf("Summon: Invalid mobjtype %i", type);  return; }
 
   // Valid mobjtype, so pass the value to spawneetype
   spawneetype = type;
@@ -572,23 +552,23 @@ static void cheat_spawne(char *buf)
 
   P_MapEnd();
 
-  doomprintf("Mobj spawned! (Enemy - Type = %i)", spawneetype);
+  doomprintf("Mobj summoned! (Enemy - Type = %i)", spawneetype);
 }
 
-// [Nugget] Spawn a friendly mobj
-static void cheat_spawnf(char *buf)
+// [Nugget] Summon a friendly mobj
+static void cheat_summonf(char *buf)
 {
   fixed_t x, y, z;
   int type;
   mobj_t *spawnee;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-    { doomprintf("Spawn: Digits only.");  return; }
+    { doomprintf("Summon: Digits only.");  return; }
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
   if (type < 0 || type > MT_BIBLE)
-    { doomprintf("Spawn: Invalid mobjtype %i", type);  return; }
+    { doomprintf("Summon: Invalid mobjtype %i", type);  return; }
 
   spawneetype = type;
   spawneefriend = true;
@@ -608,17 +588,17 @@ static void cheat_spawnf(char *buf)
 
   P_MapEnd();
 
-  doomprintf("Mobj spawned! (Friend - Type = %i)", spawneetype);
+  doomprintf("Mobj summoned! (Friend - Type = %i)", spawneetype);
 }
 
-// [Nugget] Spawn the last spawned mobj
-static void cheat_spawnr()
+// [Nugget] Summon the last summoned mobj
+static void cheat_summonr()
 {
   fixed_t x, y, z;
   mobj_t *spawnee;
 
   if (spawneetype == -1)
-    { plyr->message = "You must spawn a mobj first!"; return; }
+    { plyr->message = "You must summon a mobj first!"; return; }
 
   P_MapStart();
 
@@ -641,16 +621,14 @@ static void cheat_spawnr()
 
   P_MapEnd();
 
-  doomprintf("Mobj spawned! (%s - Type = %i)",
+  doomprintf("Mobj summoned! (%s - Type = %i)",
              spawneefriend ? "Friend" : "Enemy", spawneetype);
 }
 
-// [Nugget] Give info on the current target
-static void cheat_scanner() {
-  plyr->cheats ^= CF_SCANNER;
-  plyr->message = plyr->cheats & CF_SCANNER
-                  ? "Thing Scanner ON"
-                  : "Thing Scanner OFF";
+// [Nugget] Give info on the current linetarget
+static void cheat_linetarget() {
+  plyr->message = (plyr->cheats ^= CF_LINETARGET)
+                  ? "Linetarget Query ON" : "Linetarget Query OFF";
 }
 
 // [Nugget] Deal 1 million damage
@@ -676,17 +654,12 @@ static void cheat_mdk() {
 
 // [Nugget] MDK Fist
 static void cheat_saitama() {
-  plyr->cheats ^= CF_SAITAMA;
-  plyr->message = plyr->cheats & CF_SAITAMA
-                  ? "MDK Fist ON"
-                  : "MDK Fist OFF";
+  plyr->message = (plyr->cheats ^= CF_SAITAMA) ? "MDK Fist ON" : "MDK Fist OFF";
 }
 
 // [Nugget] cheese :)
 static void cheat_cheese() {
-  cheese = !cheese;
-  plyr->message = cheese ? "cheese :)"
-                         : "no cheese :(";
+  plyr->message = (cheese = !cheese) ? "cheese :)" : "no cheese :(";
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode

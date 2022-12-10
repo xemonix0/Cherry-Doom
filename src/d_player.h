@@ -81,7 +81,7 @@ typedef enum
   CF_INFAMMO          = 32,   // Infinite ammo
   CF_FASTWEAPS        = 64,   // Fast Weapons
   CF_FLY              = 128,
-  CF_SCANNER          = 256,  // Give info on the current target
+  CF_LINETARGET       = 256,  // Give info on the current linetarget
   CF_SAITAMA          = 512   // MDK Fist
 
 } cheat_t;
