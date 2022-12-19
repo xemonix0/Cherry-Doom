@@ -1057,25 +1057,27 @@ static void I_RestoreDiskBackground(void)
   disk_to_draw = 0;
 }
 
-static const float gammalevels[18] =
+// [Nugget] Extended, not static anymore
+const float gammalevels[GAMMA2MAX+1] =
 {
     // Darker
-    0.50f, 0.55f, 0.60f, 0.65f, 0.70f, 0.75f, 0.80f, 0.85f, 0.90f,
+    0.50f, 0.55f, 0.60f, 0.65f, 0.70f, 0.75f, 0.80f, 0.85f, 0.90f, 0.95f,
 
     // No gamma correction
     1.0f,
 
     // Lighter
-    1.125f, 1.25f, 1.375f, 1.5f, 1.625f, 1.75f, 1.875f, 2.0f,
+    1.05f, 1.10f, 1.15f, 1.20f, 1.25f, 1.30f, 1.35f, 1.40f, 1.45f, 1.50f,
+    1.55f, 1.60f, 1.65f, 1.70f, 1.75f, 1.80f, 1.85f, 1.90f, 1.95f, 2.0f,
 };
 
-static byte gamma2table[18][256];
+static byte gamma2table[GAMMA2MAX+1][256];
 
 static void I_InitGamma2Table(void)
 {
   int i, j;
 
-  for (i = 0; i < 18; ++i)
+  for (i = 0; i < GAMMA2MAX+1; ++i)
     for (j = 0; j < 256; ++j)
     {
       gamma2table[i][j] = (byte)(pow(j / 255.0, 1.0 / gammalevels[i]) * 255.0 + 0.5);
@@ -1094,7 +1096,7 @@ void I_SetPalette(byte *palette)
    if (!in_graphics_mode)             // killough 8/11/98
       return;
 
-   if (gamma2 != 9) // 1.0f
+   if (gamma2 != 10) // 1.0f
    {
       gamma = gamma2table[gamma2];
    }

@@ -87,6 +87,10 @@ extern int window_width, window_height;
 extern char *window_position;
 extern int fullscreen_width, fullscreen_height; // [FG] exclusive fullscreen
 
+// [Nugget]
+#define GAMMA2MAX 30
+extern const float gammalevels[GAMMA2MAX+1];
+
 extern int gamma2;
 byte I_GetPaletteIndex(byte *palette, int r, int g, int b);
 
