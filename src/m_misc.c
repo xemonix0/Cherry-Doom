@@ -2022,7 +2022,7 @@ default_t defaults[] = {
   { // [Nugget] blue
     "mapcolor_uscr",
     (config_t *) &mapcolor_uscr, NULL,
-    {200}, {0,255}, number, ss_auto, wad_yes,
+    {198}, {0,255}, number, ss_auto, wad_yes,
     "color used for lines around unrevealed secret sectors"
   },
 
