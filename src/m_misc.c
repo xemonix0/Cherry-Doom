@@ -496,7 +496,7 @@ default_t defaults[] = {
   {
     "fov",
     (config_t *) &fov, NULL,
-    {ORIGFOV}, {45,135}, number, ss_gen, wad_no,
+    {ORIGFOV}, {MINFOV,MAXFOV}, number, ss_gen, wad_no,
     "Field of View"
   },
 
