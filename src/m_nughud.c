@@ -25,6 +25,7 @@
 #include "m_menu.h"
 #include "w_wad.h"
 #include "i_video.h"
+#include "p_mobj.h"
 #include "hu_stuff.h"
 #include "st_stuff.h"
 #include "m_misc.h"
