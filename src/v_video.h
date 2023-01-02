@@ -118,8 +118,7 @@ void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
 
 #define V_DrawPatchDirect V_DrawPatch       /* killough 5/2/98 */
 
-void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch,
-                             char *outr, int cm);
+void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch, char *outr);
 
 void V_DrawPatchFullScreen(int scrn, patch_t *patch);
 
@@ -137,7 +136,7 @@ void V_PutBlock(int x, int y, int scrn, int width, int height, byte *src);
 
 void V_DrawHorizLine(int x, int y, int scrn, int width, byte color);
 
-#define V_MarkRect(x,y,width,height)  /* killough 11/98: unused */
+void V_ShadeScreen(void);
 
 // [FG] colored blood and gibs
 

@@ -31,7 +31,7 @@
 
 #include "m_io.h" // haleyjd
 #include "SDL_filesystem.h" // [FG] SDL_GetPrefPath()
-#include "SDL_stdinc.h" // [FG] SDL_qsort()
+#include <stdlib.h> // [FG] qsort()
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -75,7 +75,6 @@
 #include "p_map.h" // MELEERANGE
 #include "i_endoom.h"
 #include "d_quit.h"
-#include "m_snapshot.h"
 
 #include "dsdhacked.h"
 
@@ -280,9 +279,6 @@ void D_Display (void)
   if (gamestate == GS_LEVEL && gametic)
     R_RenderPlayerView (&players[displayplayer]);
 
-  if (gameaction == ga_savegame)
-    M_TakeSnapshot();
-
   // [Nugget] Moved HU_Drawer() call below,
   // to ensure it is called AFTER AM_Drawer() and ST_Drawer()
 
@@ -298,7 +294,7 @@ void D_Display (void)
     }
 
   // see if the border needs to be updated to the screen
-  if (gamestate == GS_LEVEL && (!automapactive || automapoverlay) && scaledviewwidth != 320)
+  if (gamestate == GS_LEVEL && automap_off && scaledviewwidth != SCREENWIDTH)
     {
       if (menuactive || menuactivestate || !viewactivestate)
         borderdrawcount = 3;
@@ -795,6 +791,9 @@ static void PrepareAutoloadPaths (void)
     //
 
     if (M_CheckParm("-noautoload"))
+        return;
+
+    if (gamemode == shareware)
         return;
 
     for (i = 0; ; i++)
@@ -1356,7 +1355,7 @@ static void M_AddLooseFiles(void)
     // sort the argument list by file type, except for the zeroth argument
     // which is the executable invocation itself
 
-    SDL_qsort(arguments + 1, myargc - 1, sizeof(*arguments), CompareByFileType);
+    qsort(arguments + 1, myargc - 1, sizeof(*arguments), CompareByFileType);
 
     newargv[0] = myargv[0];
 
@@ -1809,6 +1808,39 @@ static void D_EndDoom(void)
 
 // [FG] fast-forward demo to the desired map
 int playback_warp = -1;
+
+// [FG] check for SSG assets
+static boolean CheckHaveSSG (void)
+{
+  const int ssg_sfx[] = {sfx_dshtgn, sfx_dbopn, sfx_dbload, sfx_dbcls};
+  char ssg_sprite[] = "SHT2A0";
+  int i;
+
+  if (gamemode == commercial)
+  {
+    return true;
+  }
+
+  for (i = 0; i < arrlen(ssg_sfx); i++)
+  {
+    if (I_GetSfxLumpNum(&S_sfx[ssg_sfx[i]]) < 0)
+    {
+      return false;
+    }
+  }
+
+  for (i = 'A'; i <= 'J'; i++)
+  {
+    ssg_sprite[4] = i;
+
+    if ((W_CheckNumForName)(ssg_sprite, ns_sprites) < 0)
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 // [Nugget]
 void D_NuggetUpdateCasual()
@@ -2412,7 +2444,7 @@ void D_DoomMain(void)
   PostProcessDeh();
 
   // Moved after WAD initialization because we are checking the COMPLVL lump
-  G_ReloadDefaults();    // killough 3/4/98: set defaults just loaded.
+  G_ReloadDefaults(false); // killough 3/4/98: set defaults just loaded.
   // jff 3/24/98 this sets startskill if it was -1
 
   // Check for -file in shareware
@@ -2496,6 +2528,8 @@ void D_DoomMain(void)
   I_InitTimer();
   I_InitJoystick();
   I_InitSound();
+  I_InitMusic();
+  M_GetMidiDevices();
 
   puts("NET_Init: Init network subsystem.");
   NET_Init();
@@ -2526,6 +2560,9 @@ void D_DoomMain(void)
       I_AtExit(StatDump, true);
       puts("External statistics registered.");
     }
+
+  // [FG] check for SSG assets
+  have_ssg = CheckHaveSSG();
 
   //!
   // @category game
@@ -2571,11 +2608,11 @@ void D_DoomMain(void)
   // Support -loadgame with -record and reimplement -recordfrom.
 
   //!
-  // @arg <savenum> <demofile>
+  // @arg <s> <demo>
   // @category demo
   //
-  // Record a demo, loading from the given filename. Equivalent to -loadgame
-  // <savenum> -record <demofile>.
+  // Record a demo, loading from the given save slot. Equivalent to -loadgame
+  // <s> -record <demo>.
   //
 
   p = M_CheckParmWithArgs("-recordfrom", 2);
@@ -2587,12 +2624,12 @@ void D_DoomMain(void)
   else
   {
     //!
-    // @arg <demofile1> <demofile2>
+    // @arg <demo1> <demo2>
     // @category demo
     //
-    // Allows continuing <demofile1> after it ends or when the user presses the
-    // join demo key, the result getting saved as <demofile2>. Equivalent
-    // to -playdemo <demofile1> -record <demofile2>.
+    // Allows continuing <demo1> after it ends or when the user presses the join
+    // demo key, the result getting saved as <demo2>. Equivalent to -playdemo
+    // <demo1> -record <demo2>.
     //
 
     p = M_CheckParmWithArgs("-recordfromto", 2);

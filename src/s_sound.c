@@ -29,6 +29,8 @@
 // killough 3/7/98: modified to allow arbitrary listeners in spy mode
 // killough 5/2/98: reindented, removed useless code, beautified
 
+#include <stdlib.h> // [FG] qsort()
+
 #include "doomstat.h"
 #include "s_sound.h"
 #include "s_musinfo.h" // [crispy] struct musinfo
@@ -71,6 +73,8 @@ typedef struct channel_s
   int priority;            // current priority value
   int singularity;         // haleyjd 09/27/06: stored singularity value
   int idnum;               // haleyjd 09/30/06: unique id num for sound event
+  boolean loop;
+  int loop_timeout;
 } channel_t;
 
 // the set of channels available
@@ -125,6 +129,20 @@ static void S_StopChannel(int cnum)
       // haleyjd 09/27/06: clear the entire channel
       memset(&channels[cnum], 0, sizeof(channel_t));
    }
+}
+
+void S_StopLoopSounds (void)
+{
+  int cnum;
+
+  if (!nosfxparm)
+  {
+    for (cnum = 0; cnum < numChannels; ++cnum)
+    {
+      if (channels[cnum].sfxinfo && channels[cnum].loop)
+        S_StopChannel(cnum);
+    }
+  }
 }
 
 //
@@ -212,6 +230,28 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
 }
 
 //
+// S_CompareChannels
+//
+// A comparison function that determines which sound channel should
+// take priority. Can be used with std::sort.
+//
+// Returns true if the first channel should precede the second.
+//
+static int S_CompareChannels(const void *arg_a, const void *arg_b)
+{
+  const channel_t *a = (const channel_t *) arg_a;
+  const channel_t *b = (const channel_t *) arg_b;
+
+  // Note that a higher priority number means lower priority!
+  const int ret = a->priority - b->priority;
+
+  return ret ? ret : (b->idnum - a->idnum);
+}
+
+// How many instances of the same sfx can be playing concurrently
+int parallel_sfx_limit;
+
+//
 // S_getChannel :
 //
 //   If none available, return -1.  Otherwise channel #.
@@ -219,12 +259,15 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
 //   Note that a higher priority number means lower priority!
 //
 static int S_getChannel(const mobj_t *origin, sfxinfo_t *sfxinfo,
-                        int priority, int singularity)
+                        int priority, int singularity,
+                        boolean loop, int loop_timeout)
 {
    // channel number to use
    int cnum;
-   int lowestpriority = -1; // haleyjd
-   int lpcnum = -1;
+   int instances = 0;
+
+   // Sort the sound channels by descending priority levels
+   qsort(channels, numChannels, sizeof(channel_t), S_CompareChannels);
 
    // haleyjd 09/28/06: moved this here. If we kill a sound already
    // being played, we can use that channel. There is no need to
@@ -233,63 +276,76 @@ static int S_getChannel(const mobj_t *origin, sfxinfo_t *sfxinfo,
    // kill old sound
    // killough 12/98: replace is_pickup hack with singularity flag
    // haleyjd 06/12/08: only if subchannel matches
-   for(cnum = 0; cnum < numChannels; ++cnum)
+   for (cnum = 0; cnum < numChannels; ++cnum)
    {
-      if(channels[cnum].sfxinfo &&
-         channels[cnum].singularity == singularity &&
+     if (!channels[cnum].sfxinfo)
+       continue;
+
+     // [FG] looping sounds don't interrupt each other
+     if (channels[cnum].sfxinfo == sfxinfo &&
+         channels[cnum].origin == origin &&
+         channels[cnum].loop && loop)
+     {
+       channels[cnum].loop_timeout = loop_timeout;
+       return -1;
+     }
+
+     if (channels[cnum].singularity == singularity &&
          channels[cnum].origin == origin)
-      {
-         S_StopChannel(cnum);
-         break;
-      }
+     {
+       S_StopChannel(cnum);
+       return cnum;
+     }
+
+     // Limit the number of identical sounds playing at once
+     if (channels[cnum].sfxinfo == sfxinfo)
+     {
+       if (++instances >= parallel_sfx_limit)
+       {
+         if (priority < channels[cnum].priority)
+         {
+           S_StopChannel(cnum);
+           return cnum;
+         }
+         else
+         {
+           return -1;
+         }
+       }
+     }
    }
 
    // Find an open channel
-   if(cnum == numChannels)
+   for (cnum = 0; cnum < numChannels; ++cnum)
    {
-      // haleyjd 09/28/06: it isn't necessary to look for playing sounds in
-      // the same singularity class again, as we just did that above. Here
-      // we are looking for an open channel. We will also keep track of the
-      // channel found with the lowest sound priority while doing this.
-      for(cnum = 0; cnum < numChannels && channels[cnum].sfxinfo; ++cnum)
-      {
-         if(channels[cnum].priority > lowestpriority)
-         {
-            lowestpriority = channels[cnum].priority;
-            lpcnum = cnum;
-         }
-      }
+     if (!channels[cnum].sfxinfo)
+       return cnum;
    }
 
    // None available?
-   if(cnum == numChannels)
+   for (cnum = numChannels - 1; cnum >= 0; --cnum)
    {
-      // Look for lower priority
-      // haleyjd: we have stored the channel found with the lowest priority
-      // in the loop above
-      if(priority > lowestpriority)
-         return -1;                  // No lower priority.  Sorry, Charlie.
-      else
-      {
-         S_StopChannel(lpcnum);      // Otherwise, kick out lowest priority.
-         cnum = lpcnum;
-      }
+     // Look for lower priority
+     if (priority < channels[cnum].priority)
+     {
+       S_StopChannel(cnum);
+       return cnum;
+     }
    }
 
-#ifdef RANGECHECK
-   if(cnum >= numChannels)
-      I_Error("S_getChannel: handle %d out of range\n", cnum);
-#endif
-
-   return cnum;
+   return -1;
 }
 
-void S_StartSound(const mobj_t *origin, int sfx_id)
+
+static void S_StartSoundEx(const mobj_t *origin, int sfx_id, int loop_timeout)
 {
    int sep, pitch, o_priority, priority, singularity, cnum, handle;
    int volumeScale = 127;
    int volume = snd_SfxVolume;
    sfxinfo_t *sfx;
+   const boolean loop = loop_timeout > 0;
+
+   loop_timeout += gametic;
 
    //jff 1/22/98 return if sound is not enabled
    if(nosfxparm)
@@ -366,7 +422,7 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
    }
 
    // try to find a channel
-   if((cnum = S_getChannel(origin, sfx, priority, singularity)) < 0)
+   if((cnum = S_getChannel(origin, sfx, priority, singularity, loop, loop_timeout)) < 0)
       return;
 
 #ifdef RANGECHECK
@@ -383,7 +439,7 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
     { sfx = sfx->link; } // sf: skip thru link(s)
 
    // Assigns the handle to one of the channels in the mix/output buffer.
-   handle = I_StartSound(sfx, cnum, volume, sep, pitch, priority);
+   handle = I_StartSound(sfx, cnum, volume, sep, pitch, priority, loop);
 
    // haleyjd: check to see if the sound was started
    if(handle >= 0)
@@ -399,10 +455,21 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
       channels[cnum].priority    = priority;    // scaled priority
       channels[cnum].singularity = singularity;
       channels[cnum].idnum       = I_SoundID(handle); // unique instance id
+      channels[cnum].loop        = loop;
+      channels[cnum].loop_timeout = loop_timeout;
    }
    else // haleyjd: the sound didn't start, so clear the channel info
       memset(&channels[cnum], 0, sizeof(channel_t));
+}
 
+void S_StartSound(const mobj_t *origin, int sfx_id)
+{
+  S_StartSoundEx(origin, sfx_id, 0);
+}
+
+void S_LoopSound(const mobj_t *origin, int sfx_id, int timeout)
+{
+  S_StartSoundEx(origin, sfx_id, timeout);
 }
 
 //
@@ -502,7 +569,11 @@ void S_UpdateSounds(const mobj_t *listener)
 
       if(sfx)
       {
-         if(I_SoundIsPlaying(c->handle))
+         if (c->loop && gametic > c->loop_timeout)
+         {
+           S_StopChannel(cnum);
+         }
+         else if (I_SoundIsPlaying(c->handle))
          {
             // initialize parameters
             int volume = snd_SfxVolume;
@@ -545,11 +616,6 @@ void S_SetMusicVolume(int volume)
 #ifdef RANGECHECK
    if(volume < 0 || volume > 16)
       I_Error("Attempt to set music volume at %d\n", volume);
-#endif
-
-   // haleyjd: I don't think it should do this in SDL
-#if 0
-   I_SetMusicVolume(127);
 #endif
 
    I_SetMusicVolume(volume);
@@ -639,9 +705,6 @@ void S_ChangeMusInfoMusic (int lumpnum, int looping)
       return;
    }
 
-   // [crispy] restarting the map plays the original music
-   //prevmap = -1;
-
    // [crispy] play no music if this is not the right map
    if (nodrawers && singletics)
    {
@@ -655,11 +718,6 @@ void S_ChangeMusInfoMusic (int lumpnum, int looping)
    }
 
    music = &S_music[mus_musinfo];
-
-   if (music->lumpnum == lumpnum)
-   {
-      return;
-   }
 
    S_StopMusic();
 
@@ -771,25 +829,7 @@ void S_Start(void)
       if (gamemode == commercial)
          mnum = mus_runnin + WRAP(gamemap - 1, NUMMUSIC - mus_runnin);
       else
-      {
-         static const int spmus[] =     // Song - Who? - Where?
-         {
-            mus_e3m4,     // American     e4m1
-            mus_e3m2,     // Romero       e4m2
-            mus_e3m3,     // Shawn        e4m3
-            mus_e1m5,     // American     e4m4
-            mus_e2m7,     // Tim  e4m5
-            mus_e2m4,     // Romero       e4m6
-            mus_e2m6,     // J.Anderson   e4m7 CHIRON.WAD
-            mus_e2m5,     // Shawn        e4m8
-            mus_e1m9      // Tim          e4m9
-         };
-
-         if(gameepisode < 4)
-            mnum = mus_e1m1 + WRAP((gameepisode-1)*9 + gamemap-1, mus_runnin - mus_e1m1);
-         else
-            mnum = spmus[WRAP(gamemap-1, 9)];
-      }
+         mnum = mus_e1m1 + WRAP((gameepisode-1)*9 + gamemap-1, mus_runnin - mus_e1m1);
    }
 
    // [crispy] reset musinfo data at the start of a new map
@@ -803,6 +843,36 @@ void S_Start(void)
 // Sets channels, SFX and music volume,
 //  allocates channel buffer, sets S_sfx lookup.
 //
+
+static void InitE4Music (void)
+{
+  int i, j;
+  static const int spmus[] = // Song - Who? - Where?
+  {
+    mus_e3m4, // American    e4m1
+    mus_e3m2, // Romero      e4m2
+    mus_e3m3, // Shawn       e4m3
+    mus_e1m5, // American    e4m4
+    mus_e2m7, // Tim         e4m5
+    mus_e2m4, // Romero      e4m6
+    mus_e2m6, // J.Anderson  e4m7 CHIRON.WAD
+    mus_e2m5, // Shawn       e4m8
+    mus_e1m9  // Tim         e4m9
+  };
+
+  for (i = mus_e4m1, j = 0; i <= mus_e4m9; i++, j++)
+  {
+    musicinfo_t *music = &S_music[i];
+    char namebuf[9];
+
+    sprintf(namebuf, "d_%s", music->name);
+
+    if (W_CheckNumForName(namebuf) == -1)
+    {
+      music->name = S_music[spmus[j]].name;
+    }
+  }
+}
 
 void S_Init(int sfxVolume, int musicVolume)
 {
@@ -824,6 +894,9 @@ void S_Init(int sfxVolume, int musicVolume)
 
    // no sounds are playing, and they are not mus_paused
    mus_paused = 0;
+
+   if (gamemode != commercial)
+     InitE4Music();
 }
 
 //----------------------------------------------------------------------------

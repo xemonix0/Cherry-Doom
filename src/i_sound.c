@@ -45,8 +45,6 @@
 boolean precache_sounds;
 // [FG] optional low-pass filter
 boolean lowpass_filter;
-// [FG] music backend
-midi_player_t midi_player;
 // [FG] variable pitch bend range
 int pitch_bend_range;
 
@@ -55,6 +53,25 @@ extern music_module_t music_win_module;
 extern music_module_t music_fl_module;
 extern music_module_t music_sdl_module;
 extern music_module_t music_opl_module;
+
+typedef struct
+{
+    music_module_t *module;
+    int num_devices;
+} music_modules_t;
+
+static music_modules_t music_modules[] =
+{
+#if defined(_WIN32)
+    { &music_win_module, 1 },
+#else
+    { &music_sdl_module, 1 },
+#endif
+#if defined(HAVE_FLUIDSYNTH)
+    { &music_fl_module, 1 },
+#endif
+    { &music_opl_module, 1 },
+};
 
 static music_module_t *midi_player_module = NULL;
 static music_module_t *active_module = NULL;
@@ -519,7 +536,7 @@ int I_GetSfxLumpNum(sfxinfo_t *sfx)
 // active sounds, which is maintained as a given number
 // of internal channels. Returns a handle.
 //
-int I_StartSound(sfxinfo_t *sound, int cnum, int vol, int sep, int pitch, int pri)
+int I_StartSound(sfxinfo_t *sound, int cnum, int vol, int sep, int pitch, int pri, boolean loop)
 {
    static unsigned int id = 0;
    int handle;
@@ -549,7 +566,7 @@ int I_StartSound(sfxinfo_t *sound, int cnum, int vol, int sep, int pitch, int pr
    if(addsfx(sound, handle, pitch))
    {
       channelinfo[handle].idnum = id++; // give the sound a unique id
-      Mix_PlayChannelTimed(handle, &channelinfo[handle].chunk, 0, -1);
+      Mix_PlayChannelTimed(handle, &channelinfo[handle].chunk, loop ? -1 : 0, -1);
       updateSoundParams(handle, vol, sep, pitch);
    }
    else
@@ -707,12 +724,10 @@ void I_InitSound(void)
 {   
    if(!nosfxparm || !nomusicparm)
    {
-      int audio_buffers;
+      Uint16 mix_format;
+      int mix_channels;
 
       printf("I_InitSound: ");
-
-      /* Initialize variables */
-      audio_buffers = GetSliceSize();
 
       // haleyjd: the docs say we should do this
       // In SDL2, SDL_InitSubSystem() and SDL_Init() are interchangeable.
@@ -722,18 +737,24 @@ void I_InitSound(void)
          return;
       }
   
-      if(Mix_OpenAudioDevice(snd_samplerate, MIX_DEFAULT_FORMAT, 2, audio_buffers, NULL, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE) < 0)
+      if (Mix_OpenAudioDevice(snd_samplerate, AUDIO_S16SYS, 2, GetSliceSize(), NULL,
+                              SDL_AUDIO_ALLOW_FREQUENCY_CHANGE) < 0)
       {
          printf("Couldn't open audio with desired format.\n");
          return;
       }
 
       // [FG] feed actual sample frequency back into config variable
-      Mix_QuerySpec(&snd_samplerate, NULL, NULL);
+      Mix_QuerySpec(&snd_samplerate, &mix_format, &mix_channels);
+      printf("Configured audio device with %.1f kHz (%s%d%s), %d channels.\n",
+             (float)snd_samplerate / 1000,
+             SDL_AUDIO_ISFLOAT(mix_format) ? "F" : SDL_AUDIO_ISSIGNED(mix_format) ? "S" : "U",
+             (int)SDL_AUDIO_BITSIZE(mix_format),
+             SDL_AUDIO_BITSIZE(mix_format) > 8 ? (SDL_AUDIO_ISBIGENDIAN(mix_format) ? "MSB" : "LSB") : "",
+             mix_channels);
 
       // [FG] let SDL_Mixer do the actual sound mixing
       Mix_AllocateChannels(MAX_CHANNELS);
-      printf("Configured audio device with %d samples/slice.\n", audio_buffers);
 
       I_AtExit(I_ShutdownSound, true);
 
@@ -756,60 +777,99 @@ void I_InitSound(void)
          stopchan(0);
          printf("done.\n");
       }
+   }
+}
 
-      // haleyjd 04/11/03: don't use music if sfx aren't init'd
-      // (may be dependent, docs are unclear)
-      if(!nomusicparm)
-      {
-         // always initilize SDL music
-         active_module = &music_sdl_module;
-         active_module->I_InitMusic();
-         I_AtExit(active_module->I_ShutdownMusic, true);
+int midi_player; // current music module
 
-         if (midi_player == midi_player_opl)
-            midi_player_module = &music_opl_module;
-      #if defined(_WIN32)
-         else if (midi_player == midi_player_win)
-            midi_player_module = &music_win_module;
-      #endif
-      #if defined(HAVE_FLUIDSYNTH)
-         else if (midi_player == midi_player_fl)
-            midi_player_module = &music_fl_module;
-      #endif
+void I_SetMidiPlayer(int device)
+{
+    int i, accum;
 
-         if (midi_player_module)
-         {
-            active_module = midi_player_module;
-            if (active_module->I_InitMusic())
-            {
-              I_AtExit(active_module->I_ShutdownMusic, true);
-            }
-            else
-            {
-              // fall back to Native/SDL on error
-              midi_player = 0;
-              midi_player_module = NULL;
-              active_module = &music_sdl_module;
-            }
-         }
-      }
-   }   
+    if (midi_player_module)
+    {
+        midi_player_module->I_ShutdownMusic();
+        midi_player_module = NULL;
+    }
+
+    for (i = 0, accum = 0; i < arrlen(music_modules); ++i)
+    {
+        int num_devices = music_modules[i].num_devices;
+
+        if (device >= accum && device < accum + num_devices)
+        {
+            midi_player_module = music_modules[i].module;
+            midi_player = i;
+            device -= accum;
+            break;
+        }
+
+        accum += num_devices;
+    }
+
+    if (!midi_player_module->I_InitMusic(device))
+    {
+        midi_player_module = music_modules[0].module;
+        if (midi_player_module != &music_sdl_module)
+        {
+            midi_player_module->I_InitMusic(0);
+        }
+    }
+    active_module = midi_player_module;
 }
 
 boolean I_InitMusic(void)
 {
-    return active_module->I_InitMusic();
+    // haleyjd 04/11/03: don't use music if sfx aren't init'd
+    // (may be dependent, docs are unclear)
+    if (nomusicparm)
+    {
+        return false;
+    }
+
+    // always initilize SDL music
+    music_sdl_module.I_InitMusic(0);
+
+    I_AtExit(I_ShutdownMusic, true);
+
+    if (midi_player < arrlen(music_modules))
+    {
+        midi_player_module = music_modules[midi_player].module;
+        if (midi_player_module->I_InitMusic(DEFAULT_MIDI_DEVICE))
+        {
+            active_module = midi_player_module;
+            return true;
+        }
+    }
+
+    // Fall back to module 0 device 0.
+    midi_player = 0;
+    midi_player_module = music_modules[0].module;
+    if (midi_player_module != &music_sdl_module)
+    {
+       midi_player_module->I_InitMusic(0);
+    }
+    active_module = midi_player_module;
+
+    return true;
 }
 
 void I_ShutdownMusic(void)
 {
-    active_module->I_ShutdownMusic();
+    music_sdl_module.I_ShutdownMusic();
+
+    if (midi_player_module && midi_player_module != &music_sdl_module)
+    {
+        midi_player_module->I_ShutdownMusic();
+    }
 }
 
 void I_SetMusicVolume(int volume)
 {
     if (active_module)
-      active_module->I_SetMusicVolume(volume);
+    {
+        active_module->I_SetMusicVolume(volume);
+    }
 }
 
 void I_PauseSong(void *handle)
@@ -843,6 +903,11 @@ void *I_RegisterSong(void *data, int size)
         }
     }
 
+    if (midi_player_module == &music_opl_module)
+    {
+        midi_player_module->I_ShutdownMusic();
+    }
+
     active_module = &music_sdl_module;
     return active_module->I_RegisterSong(data, size);
 }
@@ -860,4 +925,33 @@ void I_StopSong(void *handle)
 void I_UnRegisterSong(void *handle)
 {
     active_module->I_UnRegisterSong(handle);
+}
+
+// Get a list of devices for all music modules. Retrieve the selected device, as
+// each module manages and stores its own devices independently.
+
+int I_DeviceList(const char *devices[], int size, int *current_device)
+{
+    int i, accum;
+
+    *current_device = 0;
+
+    for (i = 0, accum = 0; i < arrlen(music_modules); ++i)
+    {
+        int numdev, curdev;
+        music_module_t *module = music_modules[i].module;
+
+        numdev = module->I_DeviceList(devices + accum, size - accum, &curdev);
+
+        music_modules[i].num_devices = numdev;
+
+        if (midi_player == i)
+        {
+            *current_device = accum + curdev;
+        }
+
+        accum += numdev;
+    }
+
+    return accum;
 }

@@ -72,10 +72,13 @@ extern int axis_strafe;
 extern int axis_turn;
 extern int axis_look;
 extern int axis_turn_sens;
-extern boolean invertx;
-extern boolean inverty;
-extern boolean analog_movement;
-extern boolean analog_turning;
+extern int axis_move_sens;
+extern int axis_look_sens;
+extern boolean invert_turn;
+extern boolean invert_forward;
+extern boolean invert_strafe;
+extern boolean invert_look;
+extern boolean analog_controls;
 extern int realtic_clock_rate;         // killough 4/13/98: adjustable timer
 extern int tran_filter_pct;            // killough 2/21/98
 extern int showMessages;
@@ -90,14 +93,20 @@ extern int mouse_threshold;
 extern int show_endoom;
 #if defined(HAVE_FLUIDSYNTH)
 extern char *soundfont_path;
+extern char *soundfont_dir;
 extern boolean mus_chorus;
 extern boolean mus_reverb;
 extern int     mus_gain;
 #endif
 #if defined(_WIN32)
+extern char *winmm_device;
+extern int winmm_reset_type;
+extern int winmm_reset_delay;
 extern int winmm_reverb_level;
 extern int winmm_chorus_level;
 #endif
+extern int opl_gain;
+extern int midi_player_menu;
 extern boolean demobar;
 extern boolean smoothlight;
 extern boolean brightmaps;
@@ -105,9 +114,9 @@ extern boolean r_swirl;
 extern int death_use_action;
 extern boolean palette_changes;
 extern boolean screen_melt;
+extern boolean hangsolid;
 extern boolean blockmapfix;
 extern int extra_level_brightness;
-extern int menu_background;
 
 extern char *chat_macros[];  // killough 10/98
 
@@ -276,7 +285,7 @@ default_t defaults[] = {
   {
     "menu_background",
     (config_t *) &menu_background, NULL,
-    {0}, {0,2}, number, ss_gen, wad_no,
+    {background_on}, {background_on,background_dark}, number, ss_gen, wad_no,
     "draw menu background (0 = on, 1 = off, 2 = dark)"
   },
 
@@ -443,16 +452,23 @@ default_t defaults[] = {
   },
 
   {
+    "hangsolid",
+    (config_t *) &hangsolid, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to walk under solid hanging bodies"
+  },
+
+  {
     "blockmapfix",
     (config_t *) &blockmapfix, NULL,
-    {0}, {0,1}, number, ss_enem, wad_no,
+    {0}, {0,1}, number, ss_gen, wad_no,
     "1 to enable blockmap bug fix"
   },
 
   {
     "pistolstart",
     (config_t *) &default_pistolstart, (config_t *) &pistolstart,
-    {0}, {0,1}, number, ss_enem, wad_no,
+    {0}, {0,1}, number, ss_gen, wad_no,
     "1 to enable pistol start"
   },
 
@@ -473,7 +489,7 @@ default_t defaults[] = {
   { // killough 2/28/98
     "sts_traditional_keys",
     (config_t *) &sts_traditional_keys, NULL,
-    {1}, {0,1}, number, ss_stat, wad_yes,
+    {0}, {0,1}, number, ss_stat, wad_yes,
     "1 to disable doubled card and skull key display on status bar"
   },
 
@@ -582,7 +598,7 @@ default_t defaults[] = {
   {
     "extra_level_brightness",
     (config_t *) &extra_level_brightness, NULL,
-    {0}, {-16,16}, number, ss_gen, wad_no, // [Nugget] Broader light level range
+    {0}, {-8,8}, number, ss_gen, wad_no, // [Nugget] Broader light level range
     "level brightness"
   },
 
@@ -798,6 +814,7 @@ default_t defaults[] = {
     {0}, {0,4}, number, ss_none, wad_no,
     "screen brightness (gamma correction)"
   },
+
 
   // killough 10/98: compatibility vector:
 
@@ -2174,8 +2191,8 @@ default_t defaults[] = {
   { // [Nugget] Accommodate for dark automap overlay
     "automapoverlay",
     (config_t *) &automapoverlay, NULL,
-    {0}, {0,2}, number, ss_auto, wad_no,
-    "Automap overlay mode (1 = on, 2 = dark)"
+    {overlay_off}, {overlay_off,overlay_dark}, number, ss_auto, wad_no,
+    "automap overlay mode (1 = on, 2 = dark)"
   },
 
   {
@@ -2414,7 +2431,7 @@ default_t defaults[] = {
     "hud_crosshair_target",
     (config_t *) &hud_crosshair_target, NULL,
     {0}, {0,2}, number, ss_stat, wad_no,
-    "1 to change crosshair color on target"
+    "change crosshair color on target (1 = highlight, 2 = health)"
   },
 
   {
@@ -2431,18 +2448,18 @@ default_t defaults[] = {
     "1 to enable horizontal autoaim indicators for crosshair"
   },
 
+  { // [Nugget]
+    "hud_crosshair_fuzzy",
+    (config_t *) &hud_crosshair_fuzzy, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to account for fuzzy targets when coloring and/or locking-on"
+  },
+
   {
     "hud_crosshair_color",
     (config_t *) &hud_crosshair_color, NULL,
     {CR_GRAY}, {0,9}, number, ss_stat, wad_no,
     "default crosshair color"
-  },
-
-  { // [Nugget]
-    "hud_crosshair_force_color",
-    (config_t *) &hud_crosshair_force_color, NULL,
-    {0}, {0,1}, number, ss_stat, wad_no,
-    "1 to force default color when coloring by target health with no target"
   },
 
   {
@@ -2518,50 +2535,57 @@ default_t defaults[] = {
   {
     "axis_forward",
     (config_t *) &axis_forward, NULL,
-    {AXIS_LEFTY}, {0,3}, number, ss_keys, wad_no,
-    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y"
+    {AXIS_LEFTY}, {0,4}, number, ss_keys, wad_no,
+    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
   },
 
   {
     "axis_strafe",
     (config_t *) &axis_strafe, NULL,
-    {AXIS_LEFTX}, {0,3}, number, ss_keys, wad_no,
-    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y"
+    {AXIS_LEFTX}, {0,4}, number, ss_keys, wad_no,
+    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
   },
 
   {
     "axis_turn",
     (config_t *) &axis_turn, NULL,
-    {AXIS_RIGHTX}, {0,3}, number, ss_keys, wad_no,
-    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y"
+    {AXIS_RIGHTX}, {0,4}, number, ss_keys, wad_no,
+    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
   },
 
   {
     "axis_look",
     (config_t *) &axis_look, NULL,
-    {AXIS_RIGHTY}, {0,3}, number, ss_keys, wad_no,
-    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y"
+    {AXIS_RIGHTY}, {0,4}, number, ss_keys, wad_no,
+    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
+  },
+
+  {
+    "axis_move_sens",
+    (config_t *) &axis_move_sens, NULL,
+    {10}, {0,UL}, number, ss_none, wad_no,
+    "game controller movement sensitivity"
   },
 
   {
     "axis_turn_sens",
     (config_t *) &axis_turn_sens, NULL,
     {10}, {0,UL}, number, ss_none, wad_no,
-    "game controller sensitivity"
+    "game controller turning sensitivity"
   },
 
   {
-    "analog_movement",
-    (config_t *) &analog_movement, NULL,
-    {1}, {0, 1}, number, ss_keys, wad_no,
-    "1 to enable analog movement"
+    "axis_look_sens",
+    (config_t *) &axis_look_sens, NULL,
+    {10}, {0,UL}, number, ss_none, wad_no,
+    "game controller looking sensitivity"
   },
 
   {
-    "analog_turning",
-    (config_t *) &analog_turning, NULL,
+    "analog_controls",
+    (config_t *) &analog_controls, NULL,
     {1}, {0, 1}, number, ss_keys, wad_no,
-    "1 to enable analog turning"
+    "1 to enable analog controls"
   },
 
   {
@@ -2580,17 +2604,31 @@ default_t defaults[] = {
   },
 
   {
-    "invertx",
-    (config_t *) &invertx, NULL,
+    "invert_turn",
+    (config_t *) &invert_turn, NULL,
     {0}, {0, 1}, number, ss_keys, wad_no,
-    "1 to invert horizontal axes"
+    "1 to invert gamepad turning axis"
   },
 
   {
-    "inverty",
-    (config_t *) &inverty, NULL,
+    "invert_forward",
+    (config_t *) &invert_forward, NULL,
     {0}, {0, 1}, number, ss_keys, wad_no,
-    "1 to invert vertical axes"
+    "1 to invert gamepad forward axis"
+  },
+
+  {
+    "invert_strafe",
+    (config_t *) &invert_strafe, NULL,
+    {0}, {0, 1}, number, ss_keys, wad_no,
+    "1 to invert gamepad strafe axis"
+  },
+
+  {
+    "invert_look",
+    (config_t *) &invert_look, NULL,
+    {0}, {0, 1}, number, ss_keys, wad_no,
+    "1 to invert gamepad look axis"
   },
 
   {
@@ -2646,25 +2684,60 @@ default_t defaults[] = {
     "1 to play sounds in full length"
   },
 
+  {
+    "parallel_sfx_limit",
+    (config_t *) &parallel_sfx_limit, NULL,
+    {4}, {1, MAX_CHANNELS}, number, ss_none, wad_no,
+    "parallel same-sound limit (MAX_CHANNELS = disable)"
+  },
+
   // [FG] music backend
   {
     "midi_player",
     (config_t *) &midi_player, NULL,
-    {0}, {0, num_midi_players-1}, number, ss_gen, wad_no,
-    "0 for SDL2_Mixer (default), 1 for OPL Emulation"
+    {0}, {0, 2},
+    number, ss_gen, wad_no,
+#if defined(_WIN32)
+    "0 for Native (default), "
+#else
+    "0 for SDL2 (default), "
+#endif
+#if defined(HAVE_FLUIDSYNTH)
+    "1 for FluidSynth, 2 for OPL Emulation"
+#else
+    "1 for OPL Emulation"
+#endif
+  },
+
+  {
+    "midi_player_menu",
+    (config_t *) &midi_player_menu, NULL,
+    {0}, {0, MAX_MIDI_PLAYER_MENU_ITEMS - 1}, number, ss_gen, wad_no,
+    "MIDI Player menu index"
   },
 
 #if defined(HAVE_FLUIDSYNTH)
   {
-    "soundfont_path",
-    (config_t *) &soundfont_path, NULL,
-#ifdef WOOFSOUNDFONT
-    {.s = WOOFSOUNDFONT},
+    "soundfont_dir",
+    (config_t *) &soundfont_dir, NULL,
+#if defined(_WIN32)
+    {.s = "soundfonts"},
 #else
-    {.s = "soundfonts"DIR_SEPARATOR_S"TimGM6mb.sf2"},
+    /* RedHat/Fedora/Arch */
+    {.s = "/usr/share/soundfonts:"
+    /* Debian/Ubuntu/OpenSUSE */
+    "/usr/share/sounds/sf2:"
+    "/usr/share/sounds/sf3"},
 #endif
     {0}, string, ss_none, wad_no,
-    "FluidSynth soundfont path"
+    "FluidSynth soundfont directories"
+  },
+
+  {
+    "soundfont_path",
+    (config_t *) &soundfont_path, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "FluidSynth current soundfont path"
   },
 
   {
@@ -2689,19 +2762,47 @@ default_t defaults[] = {
   },
 #endif
 
+  {
+    "opl_gain",
+    (config_t *) &opl_gain, NULL,
+    {200}, {100, 1000}, number, ss_none, wad_no,
+    "fine tune OPL emulation output level (default 200%)"
+  },
+
 #if defined(_WIN32)
   {
-    "winmm_chorus_level",
-    (config_t *) &winmm_chorus_level, NULL,
-    {0}, {0, 127}, number, ss_none, wad_no,
-    "fine tune default chorus level for native MIDI"
+    "winmm_device",
+    (config_t *) &winmm_device, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "Native MIDI device"
+  },
+
+  {
+    "winmm_reset_type",
+    (config_t *) &winmm_reset_type, NULL,
+    {-1}, {-1, 4}, number, ss_none, wad_no,
+    "SysEx reset for native MIDI (-1 = Default, 0 = None, 1 = GS, 2 = GM, 3 = GM2, 4 = XG)"
+  },
+
+  {
+    "winmm_reset_delay",
+    (config_t *) &winmm_reset_delay, NULL,
+    {0}, {0, 2000}, number, ss_none, wad_no,
+    "Delay after reset for native MIDI (milliseconds)"
   },
 
   {
     "winmm_reverb_level",
     (config_t *) &winmm_reverb_level, NULL,
-    {40}, {0, 127}, number, ss_none, wad_no,
-    "fine tune default reverb level for native MIDI"
+    {-1}, {-1, 127}, number, ss_none, wad_no,
+    "Reverb send level for native MIDI (-1 = Default, 0 = Off, 127 = Max)"
+  },
+
+  {
+    "winmm_chorus_level",
+    (config_t *) &winmm_chorus_level, NULL,
+    {-1}, {-1, 127}, number, ss_none, wad_no,
+    "Chorus send level for native MIDI (-1 = Default, 0 = Off, 127 = Max)"
   },
 #endif
 
@@ -2719,6 +2820,13 @@ default_t defaults[] = {
     (config_t *) &integer_scaling, NULL,
     {0}, {0, 1}, number, ss_none, wad_no,
     "1 to force integer scales"
+  },
+
+  {
+    "vga_porch_flash",
+    (config_t *) &vga_porch_flash, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to emulate VGA \"porch\" behaviour"
   },
 
   // widescreen mode
@@ -3049,6 +3157,10 @@ boolean M_ParseOption(const char *p, boolean wad)
       (wad && !dp->wad_allowed))
     return 1;
 
+  if (demo_version < 203 && dp->setup_menu &&
+      !(dp->setup_menu->m_flags & S_COSMETIC))
+    return 1;
+
   if (dp->type == string)     // get a string default
     {
       int len = strlen(strparm)-1;
@@ -3206,7 +3318,7 @@ void M_LoadOptions(void)
 	  int len = 0;
 	  while (len < size && p[len++] && p[len-1] != '\n');
 	  if (len >= buflen)
-	    buf = realloc(buf, buflen = len+1);
+	    buf = I_Realloc(buf, buflen = len+1);
 	  strncpy(buf, p, len)[len] = 0;
 	  p += len;
 	  size -= len;

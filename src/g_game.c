@@ -189,10 +189,14 @@ int axis_strafe;
 int axis_turn;
 int axis_look;
 int axis_turn_sens;
-boolean invertx;
-boolean inverty;
-boolean analog_movement;
-boolean analog_turning;
+int axis_move_sens;
+int axis_look_sens;
+static const int direction[] = { 1, -1 };
+boolean invert_turn;
+boolean invert_forward;
+boolean invert_strafe;
+boolean invert_look;
+boolean analog_controls;
 int controller_axes[NUM_AXES];
 
 int   savegameslot = -1;
@@ -228,7 +232,7 @@ static boolean WeaponSelectable(weapontype_t weapon)
 {
     // Can't select the super shotgun in Doom 1.
 
-    if (weapon == wp_supershotgun && gamemission == doom)
+    if (weapon == wp_supershotgun && !have_ssg)
     {
         return false;
     }
@@ -283,6 +287,11 @@ static int G_NextWeapon(int direction)
         {
             break;
         }
+    }
+
+    if (i == arrlen(weapon_order_table))
+    {
+        return wp_nochange;
     }
 
     // Switch weapon. Don't loop forever.
@@ -419,9 +428,11 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       if (M_InputGameActive(input_turnleft))
         side -= sidemove[speed];
 
-      if (analog_turning && controller_axes[axis_turn] != 0)
+      if (analog_controls && controller_axes[axis_turn])
       {
-        side += FixedMul(sidemove[speed], controller_axes[axis_turn] * 2);
+        fixed_t x = axis_move_sens * controller_axes[axis_turn] / 10;
+        x = direction[invert_turn] * x;
+        side += FixedMul(sidemove[speed], x);
       }
     }
   else
@@ -431,15 +442,15 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       if (M_InputGameActive(input_turnleft))
         cmd->angleturn += angleturn[tspeed];
 
-      if (analog_turning && controller_axes[axis_turn] != 0)
+      if (analog_controls && controller_axes[axis_turn])
       {
-        fixed_t x = controller_axes[axis_turn] * 2;
+        fixed_t x = controller_axes[axis_turn];
 
         // response curve to compensate for lack of near-centered accuracy
         x = FixedMul(FixedMul(x, x), x);
 
-        x = axis_turn_sens * x / 10;
-        cmd->angleturn -= FixedMul(angleturn[speed], x);
+        x = direction[invert_turn] * axis_turn_sens * x / 10;
+        cmd->angleturn -= FixedMul(angleturn[1], x);
       }
     }
 
@@ -452,13 +463,20 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   if (M_InputGameActive(input_strafeleft))
     side -= sidemove[speed];
 
-  if (analog_movement && controller_axes[axis_forward] != 0)
+  if (analog_controls)
   {
-    forward -= FixedMul(forwardmove[speed], controller_axes[axis_forward] * 2);
-  }
-  if (analog_movement && controller_axes[axis_strafe] != 0)
-  {
-    side += FixedMul(sidemove[speed], controller_axes[axis_strafe] * 2);
+    if (controller_axes[axis_forward])
+    {
+      fixed_t y = axis_move_sens * controller_axes[axis_forward] / 10;
+      y = direction[invert_forward] * y;
+      forward -= FixedMul(forwardmove[speed], y);
+    }
+    if (controller_axes[axis_strafe])
+    {
+      fixed_t x = axis_move_sens * controller_axes[axis_strafe] / 10;
+      x = direction[invert_strafe] * x;
+      side += FixedMul(sidemove[speed], x);
+    }
   }
 
     // buttons
@@ -515,7 +533,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         M_InputGameActive(input_weapon6) && gamemode != shareware ? wp_plasma :
         M_InputGameActive(input_weapon7) && gamemode != shareware ? wp_bfg :
         M_InputGameActive(input_weapon8) ? wp_chainsaw :
-        M_InputGameActive(input_weapon9) && gamemode == commercial ? wp_supershotgun :
+        M_InputGameActive(input_weapon9) && have_ssg ? wp_supershotgun :
         wp_nochange;
 
       // killough 3/22/98: For network and demo consistency with the
@@ -553,7 +571,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
           // in use, or if the SSG is not already in use and the
           // player prefers it.
 
-          if (newweapon == wp_shotgun && gamemode == commercial &&
+          if (newweapon == wp_shotgun && have_ssg &&
               player->weaponowned[wp_supershotgun] &&
               (!player->weaponowned[wp_shotgun] ||
                player->readyweapon == wp_shotgun ||
@@ -590,15 +608,15 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     forward += mousey;
   }
 
-  if (padlook && controller_axes[axis_look] != 0)
+  if (padlook && controller_axes[axis_look])
   {
-    fixed_t y = controller_axes[axis_look] * 2;
+    fixed_t y = controller_axes[axis_look];
 
     // response curve to compensate for lack of near-centered accuracy
     y = FixedMul(FixedMul(y, y), y);
 
-    y = axis_turn_sens * y / 10;
-    cmd->lookdir -= FixedMul(lookspeed[speed], y);
+    y = direction[invert_look] * axis_look_sens * y / 10;
+    cmd->lookdir -= FixedMul(lookspeed[0], y);
   }
 
   if (strafe)
@@ -822,6 +840,44 @@ static void G_ReloadLevel(void)
     G_BeginRecording();
 }
 
+static boolean G_StrictModeSkipEvent(event_t *ev)
+{
+  static boolean enable_mouse = false;
+  static boolean enable_controller = false;
+  static boolean first_event = true;
+
+  if (!strictmode || !demorecording)
+    return false;
+
+  switch (ev->type)
+  {
+    case ev_mouseb_down:
+    case ev_mouseb_up:
+    case ev_mouse:
+        if (first_event)
+        {
+          first_event = false;
+          enable_mouse = true;
+        }
+        return !enable_mouse;
+
+    case ev_joyb_down:
+    case ev_joyb_up:
+    case ev_joystick:
+        if (first_event && (ev->data1 || ev->data2 || ev->data3 || ev->data4))
+        {
+          first_event = false;
+          enable_controller = true;
+        }
+        return !enable_controller;
+
+    default:
+        break;
+  }
+
+  return false;
+}
+
 //
 // G_Responder
 // Get info needed to make ticcmd_ts for the players.
@@ -935,6 +991,9 @@ boolean G_Responder(event_t* ev)
     return true;
   }
 
+  if (G_StrictModeSkipEvent(ev))
+    return true; // eat events
+
   switch (ev->type)
     {
     case ev_keydown:
@@ -979,13 +1038,10 @@ boolean G_Responder(event_t* ev)
       return true;
 
     case ev_joystick:
-      {
-        const int direction[] = {1, -1};
-        controller_axes[AXIS_LEFTX]  = direction[invertx] * ev->data1;
-        controller_axes[AXIS_LEFTY]  = direction[inverty] * ev->data2;
-        controller_axes[AXIS_RIGHTX] = direction[invertx] * ev->data3;
-        controller_axes[AXIS_RIGHTY] = direction[inverty] * ev->data4;
-      }
+      controller_axes[AXIS_LEFTX]  = ev->data1 * 2;
+      controller_axes[AXIS_LEFTY]  = ev->data2 * 2;
+      controller_axes[AXIS_RIGHTX] = ev->data3 * 2;
+      controller_axes[AXIS_RIGHTY] = ev->data4 * 2;
       return true;    // eat events
 
     default:
@@ -1211,15 +1267,7 @@ static void G_WriteLevelStat(void)
         }
     }
 
-    if (gamemode == commercial)
-    {
-        M_snprintf(levelString, sizeof(levelString), "MAP%02d", gamemap);
-    }
-    else
-    {
-        M_snprintf(levelString, sizeof(levelString), "E%dM%d",
-                    gameepisode, gamemap);
-    }
+    strcpy(levelString, MAPNAME(gameepisode, gamemap));
 
     G_FormatLevelStatTime(levelTimeString, leveltime);
     G_FormatLevelStatTime(totalTimeString, totalleveltimes + leveltime);
@@ -1862,10 +1910,7 @@ static uint64_t G_Signature(int sig_epi, int sig_map)
   int lump, i;
   char name[9];
 
-  if (gamemode == commercial)
-    sprintf(name, "map%02d", sig_map);
-  else
-    sprintf(name, "E%dM%d", sig_epi, sig_map);
+  strcpy(name, MAPNAME(sig_epi, sig_map));
 
   lump = W_CheckNumForName(name);
 
@@ -2002,6 +2047,8 @@ static void G_DoLoadGame(void)
   uint64_t checksum;
   byte saveg_complevel = 203;
   int tmp_compat, tmp_skill, tmp_epi, tmp_map;
+
+  I_SetFastdemoTimer(false);
 
   // [crispy] loaded game must always be single player.
   // Needed for ability to use a further game loading, as well as
@@ -2195,7 +2242,7 @@ static void G_DoLoadGame(void)
     int maplumpnum = W_CheckNumForName(maplump);
 
     fprintf(stderr, "G_DoLoadGame: Slot %d, %.8s (%s)\n",
-      savegameslot, maplump, W_WadNameForLump(maplumpnum));
+      10*savepage+savegameslot, maplump, W_WadNameForLump(maplumpnum));
   }
 }
 
@@ -2382,6 +2429,10 @@ void G_Ticker(void)
       gamestate == GS_INTERMISSION ? WI_Ticker() :
 	gamestate == GS_FINALE ? F_Ticker() :
 	  gamestate == GS_DEMOSCREEN ? D_PageTicker() : (void) 0;
+
+  // [FG] stop looping sounds if P_Ticker() didn't run through
+  if (leveltime == oldleveltime)
+    S_StopLoopSounds();
 }
 
 //
@@ -2767,7 +2818,7 @@ static int G_GetHelpers(void)
 
 // [FG] support named complevels on the command line, e.g. "-complevel boom",
 
-static int G_GetNamedComplevel (const char *arg)
+int G_GetNamedComplevel (const char *arg)
 {
   int i;
 
@@ -2932,7 +2983,7 @@ static void G_BoomComp()
 // killough 3/1/98: function to reload all the default parameter
 // settings before a new game begins
 
-void G_ReloadDefaults(void)
+void G_ReloadDefaults(boolean keep_demover)
 {
   // killough 3/1/98: Initialize options based on config file
   // (allows functions above to load different values for demos
@@ -2991,9 +3042,11 @@ void G_ReloadDefaults(void)
   // [Nugget] Do the same for our comp settings
   memcpy(nugget_comp, default_nugget_comp, sizeof nugget_comp);
 
-  demo_version = G_GetWadComplevel();
-
+  if (!keep_demover)
   {
+    int i;
+
+    demo_version = G_GetWadComplevel();
 
     //!
     // @arg <version>
@@ -3004,7 +3057,7 @@ void G_ReloadDefaults(void)
     // "vanilla", "boom", "mbf", "mbf21".
     //
 
-    int i = M_CheckParmWithArgs("-complevel", 1);
+    i = M_CheckParmWithArgs("-complevel", 1);
 
     if (i > 0)
     {
@@ -3016,10 +3069,10 @@ void G_ReloadDefaults(void)
                 "valid values are vanilla, boom, mbf, mbf21.",
                 myargv[i+1]);
     }
-  }
 
-  if (demo_version == -1)
-    demo_version = G_GetDefaultComplevel();
+    if (demo_version == -1)
+      demo_version = G_GetDefaultComplevel();
+  }
 
   strictmode = default_strictmode;
 
@@ -3110,7 +3163,8 @@ void G_ReloadDefaults(void)
 
 void G_DoNewGame (void)
 {
-  G_ReloadDefaults();            // killough 3/1/98
+  I_SetFastdemoTimer(false);
+  G_ReloadDefaults(false); // killough 3/1/98
   netgame = false;               // killough 3/29/98
   deathmatch = false;
   basetic = gametic;             // killough 9/29/98
@@ -3160,10 +3214,7 @@ mapentry_t *G_LookupMapinfo(int episode, int map)
   int i;
   char lumpname[9];
 
-  if (gamemode == commercial)
-    M_snprintf(lumpname, 9, "MAP%02d", map);
-  else
-    M_snprintf(lumpname, 9, "E%dM%d", episode, map);
+  strcpy(lumpname, MAPNAME(episode, map));
 
   for (i = 0; i < U_mapinfo.mapcount; i++)
   {
@@ -3197,14 +3248,13 @@ int G_ValidateMapName(const char *mapname, int *pEpi, int *pMap)
   {
     if (sscanf(mapuname, "E%dM%d", &epi, &map) != 2)
       return 0;
-    M_snprintf(lumpname, 9, "E%dM%d", epi, map);
+    strcpy(lumpname, MAPNAME(epi, map));
   }
   else
   {
     if (sscanf(mapuname, "MAP%d", &map) != 1)
       return 0;
-    M_snprintf(lumpname, 9, "MAP%02d", map);
-    epi = 1;
+    strcpy(lumpname, MAPNAME(epi = 1, map));
   }
 
   if (epi > 4)
@@ -3291,8 +3341,7 @@ void G_InitNew(skill_t skill, int episode, int map)
   //jff 4/16/98 force marks on automap cleared every new level start
   AM_clearMarks();
 
-  if (demo_version >= 203)
-    M_LoadOptions();     // killough 11/98: read OPTIONS lump from wad
+  M_LoadOptions();     // killough 11/98: read OPTIONS lump from wad
 
   if (demo_version == 203)
     G_MBFComp();
@@ -3913,7 +3962,7 @@ boolean G_CheckDemoStatus(void)
         Z_ChangeTag(demobuffer, PU_CACHE);
       }
 
-      G_ReloadDefaults();    // killough 3/1/98
+      G_ReloadDefaults(false); // killough 3/1/98
       netgame = false;       // killough 3/29/98
       deathmatch = false;
       D_AdvanceDemo();

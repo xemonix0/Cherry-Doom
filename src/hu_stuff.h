@@ -103,12 +103,31 @@ extern boolean hud_crosshair_on; // [Nugget] Keep the variable below just for th
 extern int hud_crosshair;
 extern int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 extern boolean hud_crosshair_health;
-extern boolean hud_crosshair_target;
-extern int hud_crosshair_lockon; // [Nugget] Crosshair locks on target
-enum { lockon_off, lockon_vertical, lockon_full };
+
+typedef enum
+{
+  crosstarget_off,
+  crosstarget_highlight,
+  crosstarget_health, // [Alaux] Color crosshair by target health
+} crosstarget_t;
+extern crosstarget_t hud_crosshair_target;
+
+// [Alaux] Lock crosshair on target
+typedef enum
+{
+  crosslockon_off,
+  crosslockon_vertical, // [Nugget] Vertical-only lock-on
+  crosslockon_full,
+} crosslockon_t;
+extern crosslockon_t hud_crosshair_lockon;
+
 extern boolean hud_crosshair_indicators; // [Nugget] Horizontal autoaim indicators
+extern boolean hud_crosshair_fuzzy; // [Nugget] Account for fuzzy targets
+extern mobj_t *crosshair_target;
+void HU_UpdateCrosshairLock(int x, int y);
+void HU_DrawCrosshair(void);
+
 extern int hud_crosshair_color;
-extern boolean hud_crosshair_force_color; // [Nugget] Force default crosshair color when coloring based on target health
 extern int hud_crosshair_target_color;
 
 #define HU_CROSSHAIRS 5+5 // [Nugget] Add more crosshairs

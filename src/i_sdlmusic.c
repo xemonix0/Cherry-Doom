@@ -73,7 +73,7 @@ static void I_SDL_ShutdownMusic(void)
 //
 // I_InitMusic
 //
-static boolean I_SDL_InitMusic(void)
+static boolean I_SDL_InitMusic(int device)
 {
    // Initialize SDL_Mixer for MIDI music playback
    // [crispy] initialize some more audio formats
@@ -255,6 +255,17 @@ static void *I_SDL_RegisterSong(void *data, int size)
    return music;
 }
 
+static int I_SDL_DeviceList(const char *devices[], int size, int *current_device)
+{
+    *current_device = 0;
+    if (size > 0)
+    {
+        devices[0] = "SDL2 Mixer";
+        return 1;
+    }
+    return 0;
+}
+
 music_module_t music_sdl_module =
 {
     I_SDL_InitMusic,
@@ -266,4 +277,5 @@ music_module_t music_sdl_module =
     I_SDL_PlaySong,
     I_SDL_StopSong,
     I_SDL_UnRegisterSong,
+    I_SDL_DeviceList,
 };

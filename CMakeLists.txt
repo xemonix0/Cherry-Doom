@@ -56,7 +56,6 @@ set(PROJECT_VERSION_RC "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJ
 
 if(NOT WIN32)
     set(WOOFDATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_SHORTNAME}" CACHE PATH "Path to install supplemental files")
-    set(WOOFSOUNDFONT "${WOOFDATADIR}/soundfonts/TimGM6mb.sf2" CACHE PATH "FluidSynth soundfont path")
 endif()
 
 # Toggle-able defines added at compile-time.
@@ -78,12 +77,12 @@ check_symbol_exists(strncasecmp "strings.h" HAVE_DECL_STRNCASECMP)
 if(NOT SDL2_DIR)
     if(WIN32 AND NOT MSYS)
         message(STATUS "Downloading SDL2 Development Library...")
-        set(pkgver "2.24.1")
+        set(pkgver "2.26.1")
         if(MSVC)
             file(DOWNLOAD
                 "https://github.com/libsdl-org/SDL/releases/download/release-${pkgver}/SDL2-devel-${pkgver}-VC.zip"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-VC.zip"
-                EXPECTED_HASH SHA256=ff0dfdd8e89c2cef3be8378e4a39c27b5ee7acb689a7cb09aa14dd14242f9a9c)
+                EXPECTED_HASH SHA256=256a8b46e4a278b7b2b649368bc38a400d943de5b3ef8c14e1b907725cd70072)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-VC.zip"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
@@ -91,7 +90,7 @@ if(NOT SDL2_DIR)
             file(DOWNLOAD
                 "https://github.com/libsdl-org/SDL/releases/download/release-${pkgver}/SDL2-devel-${pkgver}-mingw.tar.gz"
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-mingw.tar.gz"
-                EXPECTED_HASH SHA256=48b2a6c35801088a7e1828a2a9fb2e43e144d409e190031f4a52571b1d660cf4)
+                EXPECTED_HASH SHA256=aa43e1531a89551f9f9e14b27953a81d4ac946a9e574b5813cd0f2b36e83cc1c)
             execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
                 "${CMAKE_CURRENT_BINARY_DIR}/SDL2-mingw.tar.gz"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")

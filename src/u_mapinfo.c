@@ -22,7 +22,9 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "doomstat.h"
 #include "info.h"
+#include "i_system.h"
 #include "m_misc2.h"
 #include "u_scanner.h"
 
@@ -421,7 +423,7 @@ static char *ParseMultiString(u_scanner_t* s, int error)
     else
     {
       size_t newlen = strlen(build) + strlen(s->string) + 2; // strlen for both the existing text and the new line, plus room for one \n and one \0
-      build = (char*)realloc(build, newlen); // Prepare the destination memory for the below strcats
+      build = (char*)I_Realloc(build, newlen); // Prepare the destination memory for the below strcats
       strcat(build, "\n"); // Replace the existing text's \0 terminator with a \n
       strcat(build, s->string); // Concatenate the new line onto the existing text
     }
@@ -745,6 +747,34 @@ void U_ParseMapInfo(boolean is_default, const char *buffer, size_t length)
       default_mapinfo.maps = (mapentry_t*)realloc(default_mapinfo.maps, sizeof(mapentry_t)*default_mapinfo.mapcount);
       default_mapinfo.maps[default_mapinfo.mapcount-1] = parsed;
       continue;
+    }
+
+    // Set default level progression here to simplify the checks elsewhere.
+    // Doing this lets us skip all normal code for this if nothing has been defined.
+    if (parsed.endpic[0] && (strcmp(parsed.endpic, "-") != 0))
+    {
+      parsed.nextmap[0] = 0;
+    }
+    else if (!parsed.nextmap[0] && !parsed.endpic[0])
+    {
+      if (!strcasecmp(parsed.mapname, "MAP30"))
+        strcpy(parsed.endpic, "$CAST");
+      else if (!strcasecmp(parsed.mapname, "E1M8"))
+        strcpy(parsed.endpic, gamemode == retail ? "CREDIT" : "HELP2");
+      else if (!strcasecmp(parsed.mapname, "E2M8"))
+        strcpy(parsed.endpic, "VICTORY2");
+      else if (!strcasecmp(parsed.mapname, "E3M8"))
+        strcpy(parsed.endpic, "$BUNNY");
+      else if (!strcasecmp(parsed.mapname, "E4M8"))
+        strcpy(parsed.endpic, "ENDPIC");
+      else
+      {
+        int ep, map;
+
+        G_ValidateMapName(parsed.mapname, &ep, &map);
+
+        strcpy(parsed.nextmap, MAPNAME(ep, map + 1));
+      }
     }
 
     // Does this property already exist? If yes, replace it.

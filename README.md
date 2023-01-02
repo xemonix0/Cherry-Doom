@@ -145,20 +145,21 @@ Help was provided by _kraflab_ (responsible for [dsda-doom](https://github.com/k
 
 # Legalese
 
-Files: `*`
-Copyright:
- © 1993-1996 Id Software, Inc.;
- © 1993-2008 Raven Software;
- © 1999 by id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;
- © 2004 James Haley;
- © 2005-2018 Simon Howard;
- © 2006 Ben Ryves;
- © 2017 Christoph Oelckers;
- © 2019 Fernando Carmona Varo;
- © 2019 Jonathan Dowland;
- © 2020-2022 Fabian Greffrath;
- © 2020 Alex Mayfield;
- © 2020-2022 Roman Fomin.
+Files: `*`  
+Copyright:  
+ © 1993-1996 Id Software, Inc.;  
+ © 1993-2008 Raven Software;  
+ © 1999 by id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;  
+ © 2004 James Haley;  
+ © 2005-2018 Simon Howard;  
+ © 2006 Ben Ryves;  
+ © 2017 Christoph Oelckers;  
+ © 2019 Fernando Carmona Varo;  
+ © 2019 Jonathan Dowland;  
+ © 2020-2022 Fabian Greffrath;  
+ © 2020 Alex Mayfield;  
+ © 2020-2022 Roman Fomin;  
+ © 2022 ceski.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/beta.h`

@@ -64,7 +64,8 @@ static void cheat_behold();
 static void cheat_clev(char *buf);
 static void cheat_clev0();
 static void cheat_mypos();
-static void cheat_comp();
+static void cheat_comp(char *buf);
+static void cheat_comp0();
 static void cheat_friction();
 static void cheat_pushers();
 static void cheat_tran();
@@ -194,8 +195,11 @@ struct cheat_s cheat[] = {
   {"idmypos",    "Player Position",   not_dm, // [FG] not_net | not_demo,
    {cheat_mypos} },
 
-  {"comp",    NULL,                   not_net | not_demo,
-   {cheat_comp} },       // phares
+  {"comp",    NULL,                   not_net | not_demo | not_menu,
+   {cheat_comp}, -2 },
+
+  {"comp",    NULL,                   not_net | not_demo | not_menu,
+   {cheat_comp0} },
 
   {"killem",     NULL,                not_net | not_demo,
    {cheat_massacre} },   // jff 2/01/98 kill all monsters
@@ -674,7 +678,8 @@ static void cheat_autoaim()
 static void cheat_mus(char *buf)
 {
   int musnum;
-
+  mapentry_t* entry;
+  
   //jff 3/20/98 note: this cheat allowed in netgame/demorecord
 
   //jff 3/17/98 avoid musnum being negative and crashing
@@ -683,12 +688,32 @@ static void cheat_mus(char *buf)
 
   plyr->message = s_STSTR_MUS; // Ty 03/27/98 - externalized
 
+  // First check if we have a mapinfo entry for the requested level.
+  if (gamemode == commercial)
+    entry = G_LookupMapinfo(1, 10*(buf[0]-'0') + (buf[1]-'0'));
+  else
+    entry = G_LookupMapinfo(buf[0]-'0', buf[1]-'0');
+
+  if (entry && entry->music[0])
+  {
+     musnum = W_CheckNumForName(entry->music);
+
+     if (musnum == -1)
+        plyr->message = s_STSTR_NOMUS;
+     else
+     {
+        S_ChangeMusInfoMusic(musnum, 1);
+        idmusnum = -1;
+     }
+     return;
+  }
+
   if (gamemode == commercial)
     {
       musnum = mus_runnin + (buf[0]-'0')*10 + buf[1]-'0' - 1;
 
       //jff 4/11/98 prevent IDMUS00 in DOOMII and IDMUS36 or greater
-      if (musnum < mus_runnin ||  ((buf[0]-'0')*10 + buf[1]-'0') > 35)
+      if (musnum < mus_runnin || musnum >= NUMMUSIC)
         plyr->message = s_STSTR_NOMUS; // Ty 03/27/98 - externalized
       else
         {
@@ -701,7 +726,7 @@ static void cheat_mus(char *buf)
       musnum = mus_e1m1 + (buf[0]-'1')*9 + (buf[1]-'1');
 
       //jff 4/11/98 prevent IDMUS0x IDMUSx0 in DOOMI and greater than introa
-      if (buf[0] < '1' || buf[1] < '1' || ((buf[0]-'1')*9 + buf[1]-'1') > 31)
+      if (musnum < mus_e1m1 || musnum >= mus_runnin)
         plyr->message = s_STSTR_NOMUS; // Ty 03/27/98 - externalized
       else
         {
@@ -820,7 +845,7 @@ static void cheat_fa()
   // You can't own weapons that aren't in the game // phares 02/27/98
   for (i=0;i<NUMWEAPONS;i++)
     if (!(((i == wp_plasma || i == wp_bfg) && gamemode == shareware) ||
-          (i == wp_supershotgun && gamemode != commercial)))
+          (i == wp_supershotgun && !have_ssg)))
       plyr->weaponowned[i] = true;
 
   for (i=0;i<NUMAMMO;i++)
@@ -984,15 +1009,28 @@ void cheat_mypos_print()
 
 // compatibility cheat
 
-static void cheat_comp()
+static void cheat_comp0()
 {
-  int i;
+  doomprintf("Complevel: %s", G_GetCurrentComplevelName());
+}
 
-  plyr->message =   // Ty 03/27/98 - externalized
-    (compatibility = !compatibility) ? s_STSTR_COMPON : s_STSTR_COMPOFF;
+static void cheat_comp(char *buf)
+{
+  int new_demover;
 
-  for (i=0; i<COMP_TOTAL; i++)  // killough 10/98: reset entire vector
-    comp[i] = compatibility;
+  buf[2] = '\0';
+
+  if (buf[0] == '0')
+    buf++;
+
+  new_demover = G_GetNamedComplevel(buf);
+
+  if (new_demover != -1)
+  {
+    demo_version = new_demover;
+    G_ReloadDefaults(true);
+    doomprintf("New Complevel: %s", G_GetCurrentComplevelName());
+  }
 }
 
 // variable friction cheat
@@ -1260,7 +1298,7 @@ static void cheat_keyxx(int key)
 
 static void cheat_weap()
 {                                   // Ty 03/27/98 - *not* externalized
-  plyr->message = gamemode==commercial ?           // killough 2/28/98
+  plyr->message = have_ssg ? // killough 2/28/98
     "Weapon number 1-9" : "Weapon number 1-8";
 }
 
@@ -1268,7 +1306,7 @@ static void cheat_weapx(char *buf)
 {
   int w = *buf - '1';
 
-  if ((w==wp_supershotgun && gamemode!=commercial) ||      // killough 2/28/98
+  if ((w==wp_supershotgun && !have_ssg) ||      // killough 2/28/98
       ((w==wp_bfg || w==wp_plasma) && gamemode==shareware))
     return;
 

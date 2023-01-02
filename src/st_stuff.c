@@ -84,9 +84,10 @@ extern boolean inhelpscreens;
           (ST_NUMSTRAIGHTFACES+ST_NUMTURNFACES+ST_NUMSPECIALFACES)
 
 #define ST_NUMEXTRAFACES        2
+#define ST_NUMXDTHFACES         9
 
 #define ST_NUMFACES \
-          (ST_FACESTRIDE*ST_NUMPAINFACES+ST_NUMEXTRAFACES)
+          (ST_FACESTRIDE*ST_NUMPAINFACES+ST_NUMEXTRAFACES+ST_NUMXDTHFACES)
 
 #define ST_TURNOFFSET           (ST_NUMSTRAIGHTFACES)
 #define ST_OUCHOFFSET           (ST_TURNOFFSET + ST_NUMTURNFACES)
@@ -94,6 +95,7 @@ extern boolean inhelpscreens;
 #define ST_RAMPAGEOFFSET        (ST_EVILGRINOFFSET + 1)
 #define ST_GODFACE              (ST_NUMPAINFACES*ST_FACESTRIDE)
 #define ST_DEADFACE             (ST_GODFACE+1)
+#define ST_XDTHFACE             (ST_DEADFACE+1)
 
 // [Nugget] Moved face position macros to st_stuff.h so m_nughud.c can access them
 
@@ -190,6 +192,7 @@ static patch_t *keys[NUMCARDS+3];
 
 // face status patches
 static patch_t *faces[ST_NUMFACES];
+static int have_xdthfaces;
 
 // face background
 static patch_t *faceback[MAXPLAYERS]; // killough 3/7/98: make array
@@ -465,6 +468,19 @@ int ST_calcPainOffset(void)
 //  dead > evil grin > turned head > straight ahead
 //
 
+static int ST_DeadFace(void)
+{
+  const int state = (plyr->mo->state - states) - mobjinfo[plyr->mo->type].xdeathstate;
+
+  // [FG] support face gib animations as in the 3DO/Jaguar/PSX ports
+  if (have_xdthfaces && state >= 0)
+  {
+    return ST_XDTHFACE + MIN(state, have_xdthfaces - 1);
+  }
+
+  return ST_DEADFACE;
+}
+
 void ST_updateFaceWidget(void)
 {
   int         i;
@@ -480,7 +496,7 @@ void ST_updateFaceWidget(void)
       if (!plyr->health)
         {
           priority = 9;
-          st_faceindex = ST_DEADFACE;
+          st_faceindex = ST_DeadFace();
           st_facecount = 1;
         }
     }
@@ -810,7 +826,7 @@ void ST_doPaletteStuff(void)
     }
 }
 
-void ST_drawWidgets(boolean refresh)
+void ST_drawWidgets(void)
 {
   int i;
   int ammopct = *w_ready.num*100;
@@ -818,6 +834,10 @@ void ST_drawWidgets(boolean refresh)
   // [Nugget] Used to color health and armor counts based on
   // the real values, only ever relevant when using smooth counts
   const int health = plyr->health, armor = plyr->armorpoints;
+
+  boolean st_invul = (plyr->powers[pw_invulnerability] > 4*32 ||
+                      plyr->powers[pw_invulnerability] & 8) ||
+                      plyr->cheats & CF_GODMODE;
 
   // clear area
   if (!st_crispyhud && st_statusbaron)
@@ -859,11 +879,11 @@ void ST_drawWidgets(boolean refresh)
   if (!st_crispyhud || nughud.ammo.x > -1) { // [Nugget] Nugget HUD
     //jff 2/16/98 make color of ammo depend on amount
     // [Nugget] Make it gray if the player has infinite ammo
-    if (plyr->cheats & CF_INFAMMO)           { STlib_updateNum(&w_ready, cr_gray, refresh); }
-    else if (ammopct < ammo_red*maxammo)     { STlib_updateNum(&w_ready, cr_red, refresh); }
-    else if (ammopct < ammo_yellow*maxammo)  { STlib_updateNum(&w_ready, cr_gold, refresh); }
-    else if (ammopct > maxammo)              { STlib_updateNum(&w_ready, cr_blue2, refresh); }
-    else                                     { STlib_updateNum(&w_ready, cr_green, refresh); }
+    if (plyr->cheats & CF_INFAMMO)           { STlib_updateNum(&w_ready, cr_gray); }
+    else if (ammopct < ammo_red*maxammo)     { STlib_updateNum(&w_ready, cr_red); }
+    else if (ammopct < ammo_yellow*maxammo)  { STlib_updateNum(&w_ready, cr_gold); }
+    else if (ammopct > maxammo)              { STlib_updateNum(&w_ready, cr_blue2); }
+    else                                     { STlib_updateNum(&w_ready, cr_green); }
   }
 
   // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
@@ -897,27 +917,25 @@ void ST_drawWidgets(boolean refresh)
 
   if (st_crispyhud) { // [Nugget] Nugget HUD
     for (i=0;i<4;i++) {
-      if (nughud.ammos[i].x > -1)     { STlib_updateNum(&w_ammo[i], NULL, refresh); }
-      if (nughud.maxammos[i].x > -1)  { STlib_updateNum(&w_maxammo[i], NULL, refresh); }
+      if (nughud.ammos[i].x > -1)     { STlib_updateNum(&w_ammo[i], NULL); }
+      if (nughud.maxammos[i].x > -1)  { STlib_updateNum(&w_maxammo[i], NULL); }
     }
   }
   else
     for (i=0;i<4;i++) {
-      STlib_updateNum(&w_ammo[i], NULL, refresh); //jff 2/16/98 no xlation
-      STlib_updateNum(&w_maxammo[i], NULL, refresh);
+      STlib_updateNum(&w_ammo[i], NULL); //jff 2/16/98 no xlation
+      STlib_updateNum(&w_maxammo[i], NULL);
     }
 
   if (!st_crispyhud || nughud.health.x > -1) { // [Nugget] Nugget HUD
     //jff 2/16/98 make color of health depend on amount
     // [Nugget] Use the player's health value instead of the percent's value
-    // [Nugget] Make it gray if the player's invulnerable
-    if ((plyr->powers[pw_invulnerability] > 4*32
-         || plyr->powers[pw_invulnerability] & 8)
-        || plyr->cheats & CF_GODMODE) { STlib_updatePercent(&w_health, cr_gray, refresh); }
-    else if (health<health_red)       { STlib_updatePercent(&w_health, cr_red, refresh); }
-    else if (health<health_yellow)    { STlib_updatePercent(&w_health, cr_gold, refresh); }
-    else if (health<=health_green)    { STlib_updatePercent(&w_health, cr_green, refresh); }
-    else                              { STlib_updatePercent(&w_health, cr_blue2, refresh); } //killough 2/28/98
+    // [Alaux] Make color of health gray when invulnerable
+    if (st_invul)                     { STlib_updatePercent(&w_health, cr_gray); }
+    else if (health<health_red)       { STlib_updatePercent(&w_health, cr_red); }
+    else if (health<health_yellow)    { STlib_updatePercent(&w_health, cr_gold); }
+    else if (health<=health_green)    { STlib_updatePercent(&w_health, cr_green); }
+    else                              { STlib_updatePercent(&w_health, cr_blue2); } //killough 2/28/98
   }
 
   if (!st_crispyhud || nughud.armor.x > -1) { // [Nugget] Nugget HUD
@@ -930,17 +948,17 @@ void ST_drawWidgets(boolean refresh)
                                     ? cr_red
                                     : (plyr->armortype == 1)
                                       ? cr_green
-                                      : cr_blue2, refresh);
+                                      : cr_blue2);
     }
     else {
       //jff 2/16/98 make color of armor depend on amount
       // [Nugget] Use the player's armor value instead of the percent's value
       // [Nugget] Make it gray if the player's in God Mode
-      if (plyr->cheats & CF_GODMODE)  { STlib_updatePercent(&w_armor, cr_gray, refresh); }
-      else if (armor<armor_red)       { STlib_updatePercent(&w_armor, cr_red, refresh); }
-      else if (armor<armor_yellow)    { STlib_updatePercent(&w_armor, cr_gold, refresh); }
-      else if (armor<=armor_green)    { STlib_updatePercent(&w_armor, cr_green, refresh); }
-      else                            { STlib_updatePercent(&w_armor, cr_blue2, refresh); } //killough 2/28/98
+      if (plyr->cheats & CF_GODMODE)  { STlib_updatePercent(&w_armor, cr_gray); }
+      else if (armor<armor_red)       { STlib_updatePercent(&w_armor, cr_red); }
+      else if (armor<armor_yellow)    { STlib_updatePercent(&w_armor, cr_gold); }
+      else if (armor<=armor_green)    { STlib_updatePercent(&w_armor, cr_green); }
+      else                            { STlib_updatePercent(&w_armor, cr_blue2); } //killough 2/28/98
     }
   }
 
@@ -949,11 +967,11 @@ void ST_drawWidgets(boolean refresh)
 
   if (st_crispyhud) { // [Nugget] Nugget HUD
     for (i=0; i<8; i++)
-      if (nughud.arms[i].x > -1) { STlib_updateMultIcon(&w_arms[i], refresh); }
+      if (nughud.arms[i].x > -1) { STlib_updateMultIcon(&w_arms[i]); }
   }
   else
     for (i=0; i<6; i++)
-      { STlib_updateMultIcon(&w_arms[i], refresh); }
+      { STlib_updateMultIcon(&w_arms[i]); }
 
   // [Nugget] This probably shouldn't go here, but it works
   if (ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE)
@@ -965,19 +983,18 @@ void ST_drawWidgets(boolean refresh)
   }
 
   if (!st_crispyhud || nughud.face.x > -1) // [Nugget] Nugget HUD
-    { STlib_updateMultIcon(&w_faces, refresh); }
+    { STlib_updateMultIcon(&w_faces); }
 
   if (st_crispyhud) { // [Nugget] Nugget HUD
     for (i=0; i<3; i++)
-      if (nughud.keys[i].x > -1) { STlib_updateMultIcon(&w_keyboxes[i], refresh); }
+      if (nughud.keys[i].x > -1) { STlib_updateMultIcon(&w_keyboxes[i]); }
   }
   else
     for (i=0;i<3;i++)
-      { STlib_updateMultIcon(&w_keyboxes[i], refresh); }
+      { STlib_updateMultIcon(&w_keyboxes[i]); }
 
   if (!st_crispyhud || nughud.frags.x > -1) // [Nugget] Nugget HUD
-    { STlib_updateNum(&w_frags, NULL, refresh); }
-
+    { STlib_updateNum(&w_frags, NULL); }
 }
 
 void ST_doRefresh(void)
@@ -989,29 +1006,28 @@ void ST_doRefresh(void)
   ST_refreshBackground(false);
 
   // and refresh all widgets
-  ST_drawWidgets(true);
+  ST_drawWidgets();
 
 }
 
 void ST_diffDraw(void)
 {
   // update all widgets
-  ST_drawWidgets(false);
+  ST_drawWidgets();
 }
 
 boolean oldcrispy, oldwide; // [Nugget]
 
 void ST_Drawer(boolean fullscreen, boolean refresh)
 {
-  st_statusbaron = !fullscreen || (automapactive && !automapoverlay);
+  st_statusbaron = !fullscreen || automap_on;
   // [crispy] immediately redraw status bar after help screens have been shown
   st_firsttime = st_firsttime || refresh || inhelpscreens;
 
   // [Nugget]:
   // [crispy] distinguish classic status bar with background and player face from Crispy HUD
   oldcrispy = st_crispyhud; // [Nugget]
-  st_crispyhud = ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE)
-                 && (!automapactive || automapoverlay);
+  st_crispyhud = ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE) && automap_off;
 
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
   st_statusbarface = st_classicstatusbar || (st_crispyhud && nughud.face.x);
@@ -1106,6 +1122,18 @@ void ST_loadGraphics(void)
     }
   faces[facenum++] = W_CacheLumpName("STFGOD0", PU_STATIC);
   faces[facenum++] = W_CacheLumpName("STFDEAD0", PU_STATIC);
+
+  // [FG] support face gib animations as in the 3DO/Jaguar/PSX ports
+  for (i = 0; i < ST_NUMXDTHFACES; i++)
+  {
+    sprintf(namebuf, "STFXDTH%d", i);
+
+    if (W_CheckNumForName(namebuf) != -1)
+      faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
+    else
+      break;
+  }
+  have_xdthfaces = i;
 }
 
 void ST_loadData(void)
@@ -1146,7 +1174,8 @@ void ST_unloadGraphics(void)
     Z_ChangeTag(faceback[i], PU_CACHE);
 
   for (i=0;i<ST_NUMFACES;i++)
-    Z_ChangeTag(faces[i], PU_CACHE);
+    if (faces[i])
+      Z_ChangeTag(faces[i], PU_CACHE);
 
   // Note: nobody ain't seen no unloading of stminus yet. Dude.
 }

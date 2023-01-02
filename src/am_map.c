@@ -40,6 +40,7 @@
 #include "dstrings.h"
 #include "d_deh.h"    // Ty 03/27/98 - externalizations
 #include "m_input.h"
+#include "m_menu.h"
 
 //jff 1/7/98 default automap colors added
 int mapcolor_back;    // map background
@@ -251,7 +252,7 @@ int automap_grid = 0;
 
 boolean automapactive = false;
 
-int automapoverlay = false; // [Nugget] Changed to int
+overlay_t automapoverlay = overlay_off;
 
 // location of window on screen
 static int  f_x;
@@ -652,10 +653,11 @@ void AM_clearMarks(void)
   markpointnum = 0;
 }
 
-// [Nugget] Clear just the last mark
+// [Alaux] Clear just the last mark
 static void AM_clearLastMark(void)
 {
-  if (markpointnum) { markpointnum--; }
+  if (markpointnum)
+    markpointnum--;
 }
 
 void AM_enableSmoothLines(void)
@@ -936,9 +938,9 @@ boolean AM_Responder
     }
     else if (M_InputActivated(input_map_clear))
     {
-      // [Nugget] Clear just the last mark
+      // [Alaux] Clear just the last mark
       if (!markpointnum)
-        { plr->message = s_AMSTR_MARKSCLEARED; }
+        plr->message = s_AMSTR_MARKSCLEARED;
       else {
         AM_clearLastMark();
         doomprintf("Cleared spot %d", markpointnum);
@@ -953,10 +955,11 @@ boolean AM_Responder
     else
     if (M_InputActivated(input_map_overlay))
     {
-      // [Nugget] Accommodate for dark automap overlay
-      if (++automapoverlay > 2) { automapoverlay = 0; }
+      if (++automapoverlay > overlay_dark)
+        automapoverlay = overlay_off;
 
-      switch (automapoverlay) {
+      switch (automapoverlay)
+      {
         case 2:  plr->message = "Dark Overlay On";  break;
         case 1:  plr->message = s_AMSTR_OVERLAYON;  break;
         default: plr->message = s_AMSTR_OVERLAYOFF; break;
@@ -2252,7 +2255,7 @@ void AM_drawMarks(void)
           // [Nugget] Blink marks
           V_DrawPatchTranslated((fx >> hires) - WIDESCREENDELTA,
                                 fy >> hires, FB, marknums[d],
-                                (markblinktimer & 8) ? cr_dark : cr_red, 0);
+                                (markblinktimer & 8) ? cr_dark : cr_red);
 
 	    fx -= w - (1<<hires);     // killough 2/22/98: 1 space backwards
 
@@ -2322,23 +2325,9 @@ void AM_Drawer (void)
     AM_clearFB(mapcolor_back);       //jff 1/5/98 background default color
     pspr_interp = false;
   }
-  // [Nugget] Dark automap overlay
-  else if (automapoverlay == 2)
-  {
-    int y;
-    byte *dest = screens[0];
-    static int firsttic;
-
-    for (y = 0; y < (SCREENWIDTH << hires) * (SCREENHEIGHT << hires); y++)
-      { dest[y] = colormaps[0][viewshade * 256 + dest[y]]; }
-
-    if (viewshade < 20 && gametic != firsttic)
-    {
-      viewshade += 2;
-      firsttic = gametic;
-    }
-  }
-  else { viewshade = 0; }
+  // [Alaux] Dark automap overlay
+  else if (automapoverlay == overlay_dark && !M_MenuIsShaded())
+    V_ShadeScreen();
 
   if (automap_grid)                  // killough 2/28/98: change var name
     AM_drawGrid(mapcolor_grid);      //jff 1/7/98 grid default color
@@ -2349,8 +2338,6 @@ void AM_Drawer (void)
   AM_drawCrosshair(mapcolor_hair);   //jff 1/7/98 default crosshair color
 
   AM_drawMarks();
-
-  V_MarkRect(f_x, f_y, f_w, f_h);
 }
 
 //----------------------------------------------------------------------------

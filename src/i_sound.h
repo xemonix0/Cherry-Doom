@@ -75,7 +75,7 @@ int I_GetSfxLumpNum(sfxinfo_t *sfxinfo);
 
 // Starts a sound in a particular sound channel.
 int I_StartSound(sfxinfo_t *sound, int cnum, int vol, int sep, int pitch, 
-                 int pri);
+                 int pri, boolean loop);
 
 // Stops a sound channel.
 void I_StopSound(int handle);
@@ -98,7 +98,7 @@ int I_SoundID(int handle);
 
 typedef struct
 {
-    boolean (*I_InitMusic)(void);
+    boolean (*I_InitMusic)(int device);
     void (*I_ShutdownMusic)(void);
     void (*I_SetMusicVolume)(int volume);
     void (*I_PauseSong)(void *handle);
@@ -107,26 +107,17 @@ typedef struct
     void (*I_PlaySong)(void *handle, boolean looping);
     void (*I_StopSong)(void *handle);
     void (*I_UnRegisterSong)(void *handle);
+    int (*I_DeviceList)(const char *devices[], int size, int *current_device);
 } music_module_t;
 
-typedef enum
-{
-#if defined(_WIN32)
-    midi_player_win,
-#else
-    midi_player_sdl,
-#endif
-#if defined(HAVE_FLUIDSYNTH)
-    midi_player_fl,
-#endif
-    midi_player_opl,
-    num_midi_players,
-} midi_player_t;
-
-extern midi_player_t midi_player;
+extern int midi_player;
 
 boolean I_InitMusic(void);
 void I_ShutdownMusic(void);
+
+#define DEFAULT_MIDI_DEVICE -1 // use saved music module device
+
+void I_SetMidiPlayer(int device);
 
 // Volume.
 void I_SetMusicVolume(int volume);
@@ -149,6 +140,8 @@ void I_StopSong(void *handle);
 
 // See above (register), then think backwards
 void I_UnRegisterSong(void *handle);
+
+int I_DeviceList(const char *devices[], int size, int *current_device);
 
 // Determine whether memory block is a .mid file
 boolean IsMid(byte *mem, int len);

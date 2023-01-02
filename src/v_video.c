@@ -241,23 +241,6 @@ void V_InitColorTranslation(void)
 }
 
 //
-// V_MarkRect
-//
-// Marks a rectangular portion of the screen specified by
-// upper left origin and height and width dirty to minimize
-// the amount of screen update necessary. No return value.
-//
-// killough 11/98: commented out, macroized to no-op, since it's unused now
-
-#if 0
-void V_MarkRect(int x, int y, int width, int height)
-{
-  M_AddToBox(dirtybox, x, y);
-  M_AddToBox(dirtybox, x+width-1, y+height-1);
-}
-#endif
-
-//
 // V_CopyRect
 //
 // Copies a source rectangle in a screen buffer to a destination
@@ -293,8 +276,6 @@ void V_CopyRect(int srcx, int srcy, int srcscrn, int width,
     width = SCREENWIDTH - destx;
   if (desty + height > SCREENHEIGHT)
     height = SCREENHEIGHT - desty;
-
-  V_MarkRect (destx, desty, width, height);
 
   if (hires)   // killough 11/98: hires support
     {
@@ -363,9 +344,6 @@ void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
       || (unsigned)scrn>4)
       return;      // killough 1/19/98: commented out printfs
 #endif
-
-  if (!scrn)
-    V_MarkRect (x, y, SHORT(patch->width), SHORT(patch->height));
 
   if (hires)       // killough 11/98: hires support (well, sorta :)
     {
@@ -528,12 +506,12 @@ void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
 // the color translation lumps loaded in V_InitColorTranslation
 //
 // The patch is drawn at x,y in the screen buffer scrn. Color translation
-// is performed thru the table pointed to by outr. cm is not used.
+// is performed thru the table pointed to by outr.
 //
 // jff 1/15/98 new routine to translate patch colors
 //
-void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch,
-                           char *outr, int cm)
+
+void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch, char *outr)
 {
   int col, w;
 
@@ -556,9 +534,6 @@ void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch,
       || (unsigned)scrn>4)
     return;    // killough 1/19/98: commented out printfs
 #endif
-
-  if (!scrn)
-    V_MarkRect (x, y, SHORT(patch->width), SHORT(patch->height));
 
   col = 0;
   w = SHORT(patch->width);
@@ -769,8 +744,6 @@ void V_DrawBlock(int x, int y, int scrn, int width, int height, byte *src)
     I_Error ("Bad V_DrawBlock");
 #endif
 
-  V_MarkRect(x, y, width, height);
-
   if (hires)   // killough 11/98: hires support
     {
       byte *dest = screens[scrn] + y*SCREENWIDTH*4+x*2;
@@ -881,6 +854,36 @@ void V_DrawHorizLine(int x, int y, int scrn, int width, byte color)
     memset(dest, color, width);
     dest += SCREENWIDTH << hires;
   }
+}
+
+void V_ShadeScreen(void)
+{
+  int y;
+  byte *dest = screens[0];
+  const int targshade = 20, step = 2;
+  static int oldtic = -1;
+  static int screenshade;
+
+  // [FG] start a new sequence
+  if (gametic - oldtic > targshade / step)
+  {
+    screenshade = 0;
+  }
+
+  for (y = 0; y < (SCREENWIDTH << hires) * (SCREENHEIGHT << hires); y++)
+  {
+    dest[y] = colormaps[0][screenshade * 256 + dest[y]];
+  }
+
+  if (screenshade < targshade && gametic != oldtic)
+  {
+    screenshade += step;
+
+    if (screenshade > targshade)
+      screenshade = targshade;
+  }
+  
+  oldtic = gametic;
 }
 
 //

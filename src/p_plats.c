@@ -62,7 +62,7 @@ void T_PlatRaise(plat_t* plat)
           || plat->type == raiseToNearestAndChange)
       {
         if (!(leveltime&7))
-          S_StartSound((mobj_t *)&plat->sector->soundorg, sfx_stnmov);
+          S_LoopSound((mobj_t *)&plat->sector->soundorg, sfx_stnmov, 8);
       }
       
       // if encountered an obstacle, and not a crush type, reverse direction                    

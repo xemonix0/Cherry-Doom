@@ -54,6 +54,7 @@ set(WOOF_SOURCES
     m_snapshot.c           m_snapshot.h
     m_swap.h
     memio.c                memio.h
+    midifallback.c         midifallback.h
     midifile.c             midifile.h
     mus2mid.c              mus2mid.h
     net_client.c           net_client.h
@@ -195,11 +196,6 @@ endif()
 target_woof_settings(nugget-doom)
 target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 
-option(ENABLE_PARAMSGEN "Regenerate the src/params.h header file" OFF)
-if(ENABLE_PARAMSGEN AND Python3_EXECUTABLE)
-   add_dependencies(nugget-doom paramsgen)
-endif()
-
 if (FluidSynth_FOUND)
     list(APPEND WOOF_LIBRARIES FluidSynth::FluidSynth)
     target_compile_definitions(nugget-doom PRIVATE HAVE_FLUIDSYNTH)
@@ -268,6 +264,8 @@ if(WIN32 AND NOT MSYS)
 
     # SDL2_mixer
     list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/optional/libmodplug-1.dll")
+    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/optional/libopus-0.dll")
+    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/optional/libopusfile-0.dll")
     list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/SDL2_mixer.dll")
 
     # SDL2_net

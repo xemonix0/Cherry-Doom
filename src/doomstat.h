@@ -80,6 +80,8 @@ extern char *MAPNAME(int e, int m);
 // Set if homebrew PWAD stuff has been added.
 extern  boolean modifiedgame;
 
+extern boolean have_ssg;
+
 // compatibility with old engines (monster behavior, metrics, etc.)
 extern int compatibility, default_compatibility;          // killough 1/31/98
 
@@ -246,8 +248,20 @@ extern int snd_DesiredSfxDevice;
 extern  boolean statusbaractive;
 
 extern  boolean automapactive; // In AutoMap mode?
-extern  int automapoverlay; // [Nugget] Changed to int
+
+typedef enum
+{
+  overlay_off,
+  overlay_on,
+  overlay_dark,
+} overlay_t;
+
+extern  overlay_t automapoverlay;
 extern  boolean automaprotate;
+
+#define automap_on (automapactive && !automapoverlay)
+#define automap_off (!automapactive || automapoverlay)
+
 extern  boolean menuactive;    // Menu overlayed?
 extern  boolean paused;        // Game Pause?
 extern  boolean viewactive;

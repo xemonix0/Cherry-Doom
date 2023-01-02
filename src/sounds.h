@@ -36,11 +36,7 @@
 // SoundFX struct.
 //
 
-struct sfxinfo_struct;
-
-typedef struct sfxinfo_struct sfxinfo_t;
-
-struct sfxinfo_struct {
+typedef struct sfxinfo_struct {
 
   // up to 6-character name
   char *name;
@@ -61,7 +57,7 @@ struct sfxinfo_struct {
   int priority;
 
   // referenced sound if a link
-  sfxinfo_t *link;
+  struct sfxinfo_struct *link;
 
   // pitch if a link
   int pitch;
@@ -82,7 +78,9 @@ struct sfxinfo_struct {
 
   // haleyjd 04/23/08: additional caching data
   unsigned int alen;   // length of converted sound pointed to by data
-};
+} sfxinfo_t;
+
+extern int parallel_sfx_limit;
 
 //
 // MusicInfo struct.
@@ -141,6 +139,15 @@ typedef enum {
   mus_e3m7,
   mus_e3m8,
   mus_e3m9,
+  mus_e4m1,
+  mus_e4m2,
+  mus_e4m3,
+  mus_e4m4,
+  mus_e4m5,
+  mus_e4m6,
+  mus_e4m7,
+  mus_e4m8,
+  mus_e4m9,
   mus_inter,
   mus_intro,
   mus_bunny,

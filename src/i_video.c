@@ -153,23 +153,25 @@ int axisbuttons[] = { -1, -1, -1, -1 };
 
 void I_UpdateJoystick(void)
 {
-    if (controller != NULL)
+    static event_t ev;
+
+    if (controller == NULL)
     {
-        static event_t ev;
-
-        ev.type = ev_joystick;
-        ev.data1 = GetAxisState(SDL_CONTROLLER_AXIS_LEFTX);
-        ev.data2 = GetAxisState(SDL_CONTROLLER_AXIS_LEFTY);
-        ev.data3 = GetAxisState(SDL_CONTROLLER_AXIS_RIGHTX);
-        ev.data4 = GetAxisState(SDL_CONTROLLER_AXIS_RIGHTY);
-
-        AxisToButton(ev.data1, &axisbuttons[0], CONTROLLER_LEFT_STICK_LEFT);
-        AxisToButton(ev.data2, &axisbuttons[1], CONTROLLER_LEFT_STICK_UP);
-        AxisToButton(ev.data3, &axisbuttons[2], CONTROLLER_RIGHT_STICK_LEFT);
-        AxisToButton(ev.data4, &axisbuttons[3], CONTROLLER_RIGHT_STICK_UP);
-
-        D_PostEvent(&ev);
+        return;
     }
+
+    ev.type = ev_joystick;
+    ev.data1 = GetAxisState(SDL_CONTROLLER_AXIS_LEFTX);
+    ev.data2 = GetAxisState(SDL_CONTROLLER_AXIS_LEFTY);
+    ev.data3 = GetAxisState(SDL_CONTROLLER_AXIS_RIGHTX);
+    ev.data4 = GetAxisState(SDL_CONTROLLER_AXIS_RIGHTY);
+
+    AxisToButton(ev.data1, &axisbuttons[0], CONTROLLER_LEFT_STICK_LEFT);
+    AxisToButton(ev.data2, &axisbuttons[1], CONTROLLER_LEFT_STICK_UP);
+    AxisToButton(ev.data3, &axisbuttons[2], CONTROLLER_RIGHT_STICK_LEFT);
+    AxisToButton(ev.data4, &axisbuttons[3], CONTROLLER_RIGHT_STICK_UP);
+
+    D_PostEvent(&ev);
 }
 
 //
@@ -750,7 +752,7 @@ void I_GetEvent(void)
 
             case SDL_QUIT:
                 {
-                    event_t event;
+                    static event_t event;
                     event.type = ev_quit;
                     D_PostEvent(&event);
                 }
@@ -884,6 +886,7 @@ static int actualheight;
 
 int uncapped; // [FG] uncapped rendering frame rate
 int integer_scaling; // [FG] force integer scales
+int vga_porch_flash; // emulate VGA "porch" behaviour
 int fps; // [FG] FPS counter widget
 int widescreen; // widescreen mode
 
@@ -1096,13 +1099,13 @@ void I_SetPalette(byte *palette)
    if (!in_graphics_mode)             // killough 8/11/98
       return;
 
-   if (gamma2 != 10) // 1.0f
+   if (usegamma)
    {
-      gamma = gamma2table[gamma2];
+      gamma = gammatable[usegamma];
    }
    else
    {
-      gamma = gammatable[usegamma];
+      gamma = gamma2table[gamma2];
    }
 
    for(i = 0; i < 256; ++i)
@@ -1113,6 +1116,15 @@ void I_SetPalette(byte *palette)
    }
 
    SDL_SetPaletteColors(sdlscreen->format->palette, colors, 0, 256);
+
+   if (vga_porch_flash)
+   {
+      // "flash" the pillars/letterboxes with palette changes,
+      // emulating VGA "porch" behaviour
+      SDL_SetRenderDrawColor(renderer,
+                             colors[0].r, colors[0].g, colors[0].b,
+                             SDL_ALPHA_OPAQUE);
+   }
 }
 
 // Taken from Chocolate Doom chocolate-doom/src/i_video.c:L841-867
@@ -1259,8 +1271,8 @@ void I_InitWindowIcon(void)
 
     surface = SDL_CreateRGBSurfaceFrom((void *) icon_data, icon_w, icon_h,
                                        32, icon_w * 4,
-                                       0xff << 24, 0xff << 16,
-                                       0xff << 8, 0xff << 0);
+                                       0xffu << 24, 0xffu << 16,
+                                       0xffu << 8, 0xffu << 0);
 
     SDL_SetWindowIcon(screen, surface);
     SDL_FreeSurface(surface);

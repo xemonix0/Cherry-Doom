@@ -909,7 +909,7 @@ void R_DrawBorder (int x, int y, int w, int h, int s)
 
 void R_FillBackScreen (void)
 {
-  if (scaledviewwidth == 320)
+  if (scaledviewwidth == SCREENWIDTH)
     return;
 
   // killough 11/98: use the function in m_menu.c
@@ -965,8 +965,6 @@ void R_DrawViewBorder(void)
   // copy bottom 
   for (i = viewwindowy >> hires; i--; ofs += SCREENWIDTH)
     R_VideoErase(ofs, SCREENWIDTH); 
- 
-  V_MarkRect (0,0,SCREENWIDTH, SCREENHEIGHT-SBARHEIGHT); 
 } 
 
 //----------------------------------------------------------------------------

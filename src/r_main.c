@@ -673,7 +673,6 @@ void R_SetupFrame (player_t *player)
   // [crispy] pitch is actual lookdir and weapon pitch
   pitch = player->lookdir / MLOOKUNIT + player->recoilpitch;
   }
-
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   // by reducing the rendered pitch
   pitch = pitch * ORIGFOV/rfov;
@@ -684,8 +683,7 @@ void R_SetupFrame (player_t *player)
   else
     { extralight = 0; }
 
-  // [Nugget]: [crispy] A11Y
-  extralight += STRICTMODE(extra_level_brightness); // level brightness feature
+  extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness); // level brightness feature
 
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   if (pitch > (LOOKDIRMAX * ORIGFOV/rfov))
@@ -857,7 +855,7 @@ void R_RenderPlayerView (player_t* player)
   R_RenderBSPNode (numnodes-1);
 
   // [FG] update automap while playing
-  if (automapactive && !automapoverlay)
+  if (automap_on)
     return;
 
   // Check for new console commands.

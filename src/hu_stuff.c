@@ -42,6 +42,7 @@
 #include "p_map.h" // crosshair (linetarget)
 #include "m_misc2.h"
 #include "m_swap.h"
+#include "r_main.h"
 #include "m_nughud.h" // [Nugget]
 
 // global heads up display controls
@@ -229,11 +230,11 @@ boolean hud_crosshair_on; // [Nugget] Keep the variable below just for the type
 int hud_crosshair;
 int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 boolean hud_crosshair_health;
-boolean hud_crosshair_target;
-int hud_crosshair_lockon; // [Nugget] Crosshair locks on target
+crosstarget_t hud_crosshair_target;
+crosslockon_t hud_crosshair_lockon;
 boolean hud_crosshair_indicators; // [Nugget] Horizontal autoaim indicators
+boolean hud_crosshair_fuzzy; // [Nugget] Account for fuzzy targets
 int hud_crosshair_color;
-boolean hud_crosshair_force_color; // [Nugget] Force default crosshair color when coloring based on target health
 int hud_crosshair_target_color;
 
 //jff 2/16/98 initialization strings for ammo, health, armor widgets
@@ -391,6 +392,25 @@ void HU_ResetMessageColors(void)
     {
         UpdateColor(*colorize_strings[i].str, colorize_strings[i].cr);
     }
+}
+
+static boolean hu_invul;
+
+static char* ColorByHealth(int health, int maxhealth, boolean invul)
+{
+  if (invul)
+    return colrngs[CR_GRAY];
+
+  health = 100 * health / maxhealth;
+
+  if (health < health_red)
+    return colrngs[CR_RED];
+  else if (health < health_yellow)
+    return colrngs[CR_GOLD];
+  else if (health <= health_green)
+    return colrngs[CR_GREEN];
+  else
+    return colrngs[CR_BLUE];
 }
 
 //
@@ -1050,7 +1070,6 @@ void HU_InitCrosshair(void)
 
     crosshair.w = SHORT(crosshair.patch->width)/2;
     crosshair.h = SHORT(crosshair.patch->height)/2;
-    // [Nugget] Skip setting 'crosshair.x' here, since "lock on" might change it
   }
   else
     crosshair.patch = NULL;
@@ -1064,23 +1083,24 @@ void HU_InitCrosshair(void)
   crosshair.rh = SHORT(crosshair.patchr->height)/2;
 }
 
+mobj_t *crosshair_target; // [Alaux] Lock crosshair on target
+
 static void HU_UpdateCrosshair(void)
 {
   extern boolean mouselook; // [Nugget]
-  int health; // [Nugget] Could be player or target health
 
-  // [Nugget] Set both of these here, might change if "lock on" is enabled
   crosshair.x = ORIGWIDTH/2;
   crosshair.y = (screenblocks <= 10) ? (ORIGHEIGHT-ST_HEIGHT)/2 : ORIGHEIGHT/2;
-
-  // [Nugget] Check for linetarget
   crosshair.side = 0;
-  if ((hud_crosshair_health == 2 || hud_crosshair_target) && !strictmode)
+
+  if (STRICTMODE(hud_crosshair_target || hud_crosshair_lockon))
   {
     angle_t an = plr->mo->angle;
     const ammotype_t ammo = weaponinfo[plr->readyweapon].ammo;
     const fixed_t range = (ammo == am_noammo) ? MELEERANGE : 16*64*FRACUNIT;
     boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
+    
+    crosshair_target = linetarget = NULL;
 
     overflow[emu_intercepts].enabled = false;
     if (mouselook && freeaim == freeaim_direct && casual_play)
@@ -1102,88 +1122,47 @@ static void HU_UpdateCrosshair(void)
       }
     }
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
-
-    // [Nugget] Lock crosshair on linetarget
-    if (hud_crosshair_lockon && !(mouselook && freeaim == freeaim_direct)
-        && linetarget && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2)
-        && gamestate == wipegamestate)
-    {
-      // This is essentially an adaptation of the code that determines
-      // where sprites are drawn on the screen, i.e. R_ProjectSprite()
-
-      extern fixed_t fractionaltic, viewcos, viewsin, projection;
-      extern int rfov;
-      fixed_t interpx, interpy, interpz, tr_x, tr_y, xscale;
-
-      // [AM] Interpolate between current and last position, if prudent.
-      if (uncapped && linetarget->interp == true && leveltime > oldleveltime)
-      {
-        interpx = linetarget->oldx + FixedMul(linetarget->x - linetarget->oldx, fractionaltic);
-        interpy = linetarget->oldy + FixedMul(linetarget->y - linetarget->oldy, fractionaltic);
-        interpz = linetarget->oldz + FixedMul(linetarget->z - linetarget->oldz, fractionaltic);
-      }
-      else {
-        interpx = linetarget->x;
-        interpy = linetarget->y;
-        interpz = linetarget->z;
-      }
-
-      tr_x = interpx - viewx;
-      tr_y = interpy - viewy;
-      xscale = FixedDiv(projection, FixedMul(tr_x, viewcos)
-                                    - (-FixedMul(tr_y, viewsin))) / (hires+1);
-
-      if (hud_crosshair_lockon == lockon_full)
-        crosshair.x += FixedMul(-(-FixedMul(tr_x, viewsin)
-                                  + FixedMul(tr_y, viewcos)),xscale) / FRACUNIT;
-
-      crosshair.y += (FixedMul(viewz - (interpz + linetarget->height/2), xscale)
-                      / FRACUNIT) + ((plr->lookdir / MLOOKUNIT + plr->recoilpitch)* ORIGFOV/rfov);
-    }
+    
+    crosshair_target = linetarget;
   }
 
   // [Nugget] Begin checking, in order of priority
 
-  if ((hud_crosshair_health == 2) && !strictmode)
-  { // [Nugget] Set the crosshair color based on target health
-    if (linetarget
-        && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2))
+  if (hud_crosshair_target && crosshair_target
+      && (!(crosshair_target->flags & MF_SHADOW) || hud_crosshair_fuzzy)) // [Nugget]
+  {
+    // [Alaux] Color crosshair by target health
+    if (hud_crosshair_target == crosstarget_health)
     {
       const int spawnhealth = linetarget->info->spawnhealth;
-      health = linetarget->health;
-      if (health < spawnhealth/4)             { crosshair.cr = colrngs[CR_RED]; }
-      else if (health < spawnhealth/2)        { crosshair.cr = colrngs[CR_BRICK]; }
-      else if (health < (spawnhealth/2)*1.5)  { crosshair.cr = colrngs[CR_GOLD]; }
-      else                                    { crosshair.cr = colrngs[CR_GREEN]; }
+      const int health = linetarget->health;
+
+      if      (health < spawnhealth*0.25) { crosshair.cr = colrngs[CR_RED]; }
+      else if (health < spawnhealth*0.50) { crosshair.cr = colrngs[CR_BRICK]; }
+      else if (health < spawnhealth*0.75) { crosshair.cr = colrngs[CR_GOLD]; }
+      else                                { crosshair.cr = colrngs[CR_GREEN]; }
     }
-    else // [Nugget] Make it gray if no linetarget, unless we force default color
-      crosshair.cr = hud_crosshair_force_color
-                     ? colrngs[hud_crosshair_color]
-                     : colrngs[CR_GRAY];
+    else
+    {
+      crosshair.cr = colrngs[hud_crosshair_target_color];
+    }
   }
   else
-  if (STRICTMODE(hud_crosshair_target) && linetarget
-      && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_target == 2))
-  { // [Nugget] Make the crosshair highlight if aiming at target
-    crosshair.cr = colrngs[hud_crosshair_target_color];
-  }
+  if (hud_crosshair_health)
+    { crosshair.cr = ColorByHealth(plr->health, 100, hu_invul); }
   else
-  if (hud_crosshair_health == 1 || (hud_crosshair_health == 2 && strictmode))
-  { // [Nugget] Set the crosshair color based on player health
-    health = plr->health;
-    if ((plr->powers[pw_invulnerability] > 4*32
-         || plr->powers[pw_invulnerability] & 8)
-        || plr->cheats & CF_GODMODE)  { crosshair.cr = colrngs[CR_GRAY]; }
-    else if (health<health_red)       { crosshair.cr = colrngs[CR_RED]; }
-    else if (health<health_yellow)    { crosshair.cr = colrngs[CR_GOLD]; }
-    else if (health<=health_green)    { crosshair.cr = colrngs[CR_GREEN]; }
-    else                              { crosshair.cr = colrngs[CR_BLUE2]; }
-  }
-  else // [Nugget] Use the default color
     { crosshair.cr = colrngs[hud_crosshair_color]; }
 }
 
-static void HU_DrawCrosshair(void)
+void HU_UpdateCrosshairLock(int x, int y)
+{
+  if (hud_crosshair_lockon == crosslockon_full)
+    { crosshair.x = ((viewwindowx + x) >> hires) - WIDESCREENDELTA; }
+
+  crosshair.y = ((viewwindowy + y) >> hires);
+}
+
+void HU_DrawCrosshair(void)
 {
   // [Nugget] Skip some conditions
   if (plr->playerstate != PST_LIVE
@@ -1201,17 +1180,17 @@ static void HU_DrawCrosshair(void)
   if (crosshair.patch)
     V_DrawPatchTranslated(crosshair.x - crosshair.w,
                           crosshair.y - crosshair.h,
-                          0, crosshair.patch, crosshair.cr, 0);
+                          0, crosshair.patch, crosshair.cr);
 
   // [Nugget] Horizontal autoaim indicators
   if (crosshair.side == -1)
     V_DrawPatchTranslated(crosshair.x - crosshair.w - crosshair.lw,
                           crosshair.y - crosshair.lh,
-                          0, crosshair.patchl, crosshair.cr, 0);
+                          0, crosshair.patchl, crosshair.cr);
   else if (crosshair.side == 1)
     V_DrawPatchTranslated(crosshair.x + crosshair.w,
                           crosshair.y - crosshair.rh,
-                          0, crosshair.patchr, crosshair.cr, 0);
+                          0, crosshair.patchr, crosshair.cr);
 }
 
 // [crispy] print a bar indicating demo progress at the bottom of the screen
@@ -1255,6 +1234,10 @@ void HU_Drawer(void)
   int i;
 
   plr = &players[displayplayer];         // killough 3/7/98
+
+  hu_invul = (plr->powers[pw_invulnerability] > 4*32 ||
+              plr->powers[pw_invulnerability] & 8) ||
+              plr->cheats & CF_GODMODE;
 
   // jff 4/24/98 Erase current lines before drawing current
   // needed when screen not fullsize
@@ -1338,180 +1321,176 @@ void HU_Drawer(void)
 
   // draw the weapon/health/ammo/armor/kills/keys displays if optioned
   //jff 2/17/98 allow new hud stuff to be turned off
-  // killough 2/21/98: really allow new hud stuff to be turned off COMPLETELY
-  if (
-      hud_active>0                          // hud optioned on
-      && hud_displayed                      // hud on from fullscreen key
-      && scaledviewheight==SCREENHEIGHT     // fullscreen mode is active
-      && (!automapactive || automapoverlay)
+  // killough 2/21/98: really allow new hud stuff to be turned off COMPLETELY  
+  if
+    (
+     hud_active>0 &&                  // hud optioned on
+     hud_displayed &&                 // hud on from fullscreen key
+     scaledviewheight==SCREENHEIGHT &&// fullscreen mode is active
+     automap_off
      )
   {
     HU_MoveHud(); // insure HUD display coords are correct
 
-    // do the hud ammo display
-    // clear the widgets internal line
-    HUlib_clearTextLine(&w_ammo);
-    strcpy(hud_ammostr,"AMM ");
-    if (weaponinfo[plr->readyweapon].ammo == am_noammo)
-    { // special case for weapon with no ammo selected - blank bargraph + N/A
-      strcat(hud_ammostr,"\x7f\x7f\x7f\x7f\x7f\x7f\x7f N/A");
-      w_ammo.cr = colrngs[CR_GRAY];
-    }
-    else {
-      int ammo = plr->ammo[weaponinfo[plr->readyweapon].ammo];
-      int fullammo = plr->maxammo[weaponinfo[plr->readyweapon].ammo];
-      int ammopct = (100*ammo)/fullammo;
-      int ammobars = ammopct/4;
-
-      // build the numeric amount init string
-      sprintf(ammostr,"%d/%d",ammo,fullammo);
-      // build the bargraph string
-      // full bargraph chars
-      for (i=4;i<4+ammobars/4;)
-        hud_ammostr[i++] = 123;
-      // plus one last character with 0,1,2,3 bars
-      switch(ammobars%4) {
-        case 0:
-          break;
-        case 1:
-          hud_ammostr[i++] = 126;
-          break;
-        case 2:
-          hud_ammostr[i++] = 125;
-          break;
-        case 3:
-          hud_ammostr[i++] = 124;
-          break;
-      }
-      // pad string with blank bar characters
-      while(i<4+7)
-        hud_ammostr[i++] = 127;
-      hud_ammostr[i] = '\0';
-      strcat(hud_ammostr,ammostr);
-
-      // backpack changes thresholds (ammo widget)
-      if (plr->backpack && !hud_backpack_thresholds && fullammo)
-        ammopct = (100*ammo)/(fullammo/2);
-
-      // set the display color from the percentage of total ammo held
-      // [Nugget] Make it gray if the player has infinite ammo
-      if (plr->cheats & CF_INFAMMO) { w_ammo.cr = colrngs[CR_GRAY]; }
-      else if (ammopct<ammo_red)    { w_ammo.cr = colrngs[CR_RED]; }
-      else if (ammopct<ammo_yellow) { w_ammo.cr = colrngs[CR_GOLD]; }
-      else if (ammopct>fullammo)    { w_ammo.cr = colrngs[CR_BLUE2]; }
-      else                          { w_ammo.cr = colrngs[CR_GREEN]; }
-    }
-    // transfer the init string to the widget
-    s = hud_ammostr;
-    while (*s) { HUlib_addCharToTextLine(&w_ammo, *s++); }
-    // display the ammo widget every frame
-    HUlib_drawTextLine(&w_ammo, false);
-
-    // do the hud health display
-    {
-      int health = plr->health;
-      int healthbars = STHealth>100 ? 25 : STHealth/4; // [Nugget] Smooth counts
-
+      // do the hud ammo display
       // clear the widgets internal line
-      HUlib_clearTextLine(&w_health);
-
-      // build the numeric amount init string
-      sprintf(healthstr,"%3d",STHealth); // [Nugget] Smooth counts
-      // build the bargraph string
-      // full bargraph chars
-      for (i=4;i<4+healthbars/4;) { hud_healthstr[i++] = 123; }
-      // plus one last character with 0,1,2,3 bars
-      switch(healthbars%4) {
-        case 0:
-          break;
-        case 1:
-          hud_healthstr[i++] = 126;
-          break;
-        case 2:
-          hud_healthstr[i++] = 125;
-          break;
-        case 3:
-          hud_healthstr[i++] = 124;
-          break;
-      }
-      // pad string with blank bar characters
-      while(i<4+7) { hud_healthstr[i++] = 127; }
-      hud_healthstr[i] = '\0';
-      strcat(hud_healthstr,healthstr);
-
-      // set the display color from the amount of health posessed
-      // [Nugget] Make it gray if the player's invulnerable
-      if ((plr->powers[pw_invulnerability] > 4*32
-           || plr->powers[pw_invulnerability] & 8)
-          || plr->cheats & CF_GODMODE)  { w_health.cr = colrngs[CR_GRAY]; }
-      else if (health<health_red)       { w_health.cr = colrngs[CR_RED]; }
-      else if (health<health_yellow)    { w_health.cr = colrngs[CR_GOLD]; }
-      else if (health<=health_green)    { w_health.cr = colrngs[CR_GREEN]; }
-      else                              { w_health.cr = colrngs[CR_BLUE]; }
-
-      // transfer the init string to the widget
-      s = hud_healthstr;
-      while (*s) { HUlib_addCharToTextLine(&w_health, *s++); }
-    }
-    // display the health widget every frame
-    HUlib_drawTextLine(&w_health, false);
-
-    // do the hud armor display
-    {
-      int armor = plr->armorpoints;
-      int armorbars = STArmor>100 ? 25 : STArmor/4; // [Nugget] Smooth counts
-
-      // clear the widgets internal line
-      HUlib_clearTextLine(&w_armor);
-      // build the numeric amount init string
-      sprintf(armorstr,"%3d",STArmor); // [Nugget] Smooth counts
-      // build the bargraph string
-      // full bargraph chars
-      for (i=4;i<4+armorbars/4;) { hud_armorstr[i++] = 123; }
-      // plus one last character with 0,1,2,3 bars
-      switch(armorbars%4) {
-        case 0:
-          break;
-        case 1:
-          hud_armorstr[i++] = 126;
-          break;
-        case 2:
-          hud_armorstr[i++] = 125;
-          break;
-        case 3:
-          hud_armorstr[i++] = 124;
-          break;
-      }
-      // pad string with blank bar characters
-      while(i<4+7) { hud_armorstr[i++] = 127; }
-      hud_armorstr[i] = '\0';
-      strcat(hud_armorstr,armorstr);
-
-      // color of armor depends on type
-      if (hud_armor_type && !(plr->cheats & CF_GODMODE))
-      {
-        w_armor.cr =  (!plr->armortype)
-                      ? colrngs[CR_RED]
-                      : (plr->armortype == 1)
-                        ? colrngs[CR_GREEN]
-                        : colrngs[CR_BLUE];
+      HUlib_clearTextLine(&w_ammo);
+      strcpy(hud_ammostr,"AMM ");
+      if (weaponinfo[plr->readyweapon].ammo == am_noammo)
+      { // special case for weapon with no ammo selected - blank bargraph + N/A
+        strcat(hud_ammostr,"\x7f\x7f\x7f\x7f\x7f\x7f\x7f N/A");
+        w_ammo.cr = colrngs[CR_GRAY];
       }
       else {
-        // set the display color from the amount of armor posessed
-        // [Nugget] Make it gray if the player's in God Mode
-        if (plr->cheats & CF_GODMODE) { w_armor.cr = colrngs[CR_GRAY]; }
-        else if (armor<armor_red)     { w_armor.cr = colrngs[CR_RED]; }
-        else if (armor<armor_yellow)  { w_armor.cr = colrngs[CR_GOLD]; }
-        else if (armor<=armor_green)  { w_armor.cr = colrngs[CR_GREEN]; }
-        else                          { w_armor.cr = colrngs[CR_BLUE]; }
-      }
+        int ammo = plr->ammo[weaponinfo[plr->readyweapon].ammo];
+        int fullammo = plr->maxammo[weaponinfo[plr->readyweapon].ammo];
+        int ammopct = (100*ammo)/fullammo;
+        int ammobars = ammopct/4;
 
+        // build the numeric amount init string
+        sprintf(ammostr,"%d/%d",ammo,fullammo);
+        // build the bargraph string
+        // full bargraph chars
+        for (i=4;i<4+ammobars/4;)
+          hud_ammostr[i++] = 123;
+        // plus one last character with 0,1,2,3 bars
+        switch(ammobars%4) {
+          case 0:
+            break;
+          case 1:
+            hud_ammostr[i++] = 126;
+            break;
+          case 2:
+            hud_ammostr[i++] = 125;
+            break;
+          case 3:
+            hud_ammostr[i++] = 124;
+            break;
+        }
+        // pad string with blank bar characters
+        while(i<4+7)
+          hud_ammostr[i++] = 127;
+        hud_ammostr[i] = '\0';
+        strcat(hud_ammostr,ammostr);
+
+        // backpack changes thresholds (ammo widget)
+        if (plr->backpack && !hud_backpack_thresholds && fullammo)
+          ammopct = (100*ammo)/(fullammo/2);
+
+        // set the display color from the percentage of total ammo held
+        // [Nugget] Make it gray if the player has infinite ammo
+        if (plr->cheats & CF_INFAMMO) { w_ammo.cr = colrngs[CR_GRAY]; }
+        else if (ammopct<ammo_red)    { w_ammo.cr = colrngs[CR_RED]; }
+        else if (ammopct<ammo_yellow) { w_ammo.cr = colrngs[CR_GOLD]; }
+        else if (ammopct>fullammo)    { w_ammo.cr = colrngs[CR_BLUE2]; }
+        else                          { w_ammo.cr = colrngs[CR_GREEN]; }
+      }
       // transfer the init string to the widget
-      s = hud_armorstr;
-      while (*s) { HUlib_addCharToTextLine(&w_armor, *s++); }
-    }
-    // display the armor widget every frame
-    HUlib_drawTextLine(&w_armor, false);
+      s = hud_ammostr;
+      while (*s) { HUlib_addCharToTextLine(&w_ammo, *s++); }
+      // display the ammo widget every frame
+      HUlib_drawTextLine(&w_ammo, false);
+
+      // do the hud health display
+      {
+        int health = plr->health;
+        int healthbars = STHealth>100 ? 25 : STHealth/4; // [Nugget] Smooth counts
+
+        // clear the widgets internal line
+        HUlib_clearTextLine(&w_health);
+
+        // build the numeric amount init string
+        sprintf(healthstr,"%3d",STHealth); // [Nugget] Smooth counts
+        // build the bargraph string
+        // full bargraph chars
+        for (i=4;i<4+healthbars/4;) { hud_healthstr[i++] = 123; }
+        // plus one last character with 0,1,2,3 bars
+        switch(healthbars%4) {
+          case 0:
+            break;
+          case 1:
+            hud_healthstr[i++] = 126;
+            break;
+          case 2:
+            hud_healthstr[i++] = 125;
+            break;
+          case 3:
+            hud_healthstr[i++] = 124;
+            break;
+        }
+        // pad string with blank bar characters
+        while(i<4+7) { hud_healthstr[i++] = 127; }
+        hud_healthstr[i] = '\0';
+        strcat(hud_healthstr,healthstr);
+
+        // set the display color from the amount of health posessed
+        w_health.cr = ColorByHealth(health, 100, hu_invul);
+
+        // transfer the init string to the widget
+        s = hud_healthstr;
+        while (*s)
+          HUlib_addCharToTextLine(&w_health, *s++);
+      }
+      // display the health widget every frame
+      HUlib_drawTextLine(&w_health, false);
+
+      // do the hud armor display
+      {
+        int armor = plr->armorpoints;
+        int armorbars = STArmor>100 ? 25 : STArmor/4; // [Nugget] Smooth counts
+
+        // clear the widgets internal line
+        HUlib_clearTextLine(&w_armor);
+        // build the numeric amount init string
+        sprintf(armorstr,"%3d",STArmor); // [Nugget] Smooth counts
+        // build the bargraph string
+        // full bargraph chars
+        for (i=4;i<4+armorbars/4;)
+          hud_armorstr[i++] = 123;
+        // plus one last character with 0,1,2,3 bars
+        switch(armorbars%4) {
+          case 0:
+            break;
+          case 1:
+            hud_armorstr[i++] = 126;
+            break;
+          case 2:
+            hud_armorstr[i++] = 125;
+            break;
+          case 3:
+            hud_armorstr[i++] = 124;
+            break;
+        }
+        // pad string with blank bar characters
+        while(i<4+7) { hud_armorstr[i++] = 127; }
+        hud_armorstr[i] = '\0';
+        strcat(hud_armorstr,armorstr);
+
+        // color of armor depends on type
+        if (hud_armor_type && !(plr->cheats & CF_GODMODE))
+        {
+          w_armor.cr =  (!plr->armortype)
+                        ? colrngs[CR_RED]
+                        : (plr->armortype == 1)
+                          ? colrngs[CR_GREEN]
+                          : colrngs[CR_BLUE];
+        }
+        else {
+          // set the display color from the amount of armor posessed
+          // [Nugget] Make it gray if the player's in God Mode
+          if (plr->cheats & CF_GODMODE) { w_armor.cr = colrngs[CR_GRAY]; }
+          else if (armor<armor_red)     { w_armor.cr = colrngs[CR_RED]; }
+          else if (armor<armor_yellow)  { w_armor.cr = colrngs[CR_GOLD]; }
+          else if (armor<=armor_green)  { w_armor.cr = colrngs[CR_GREEN]; }
+          else                          { w_armor.cr = colrngs[CR_BLUE]; }
+        }
+
+        // transfer the init string to the widget
+        s = hud_armorstr;
+        while (*s) { HUlib_addCharToTextLine(&w_armor, *s++); }
+      }
+      // display the armor widget every frame
+      HUlib_drawTextLine(&w_armor, false);
 
       // do the hud weapon display
       {
@@ -1534,7 +1513,7 @@ void HU_Drawer(void)
                 break;
               case retail:
               case registered:
-                if (w>=wp_supershotgun)
+                if (w>=wp_supershotgun && !have_ssg)
                   ok=0;
                 break;
               default:
@@ -1747,7 +1726,7 @@ void HU_Drawer(void)
         }
       }
   }
-  else if (hud_timests && (!automapactive || automapoverlay)
+  else if (hud_timests && automap_off
            // [Nugget] Allow Time/STS display in Crispy minimalistic HUD
            && screenSize <= CRISPY_HUD_WIDE-3)
   {
@@ -1773,10 +1752,6 @@ void HU_Drawer(void)
 
   // display the interactive buffer for chat entry
   HUlib_drawIText(&w_chat);
-
-  // display crosshair
-  if (hud_crosshair_on) // [Nugget] Use crosshair toggle
-    HU_DrawCrosshair();
 }
 
 // [FG] draw Time widget on intermission screen

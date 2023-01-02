@@ -233,7 +233,7 @@ static int P_SwitchWeaponMBF21(player_t *player)
         checkweapon = wp_chainsaw;
         break;
       case 9:
-        if (gamemode == commercial)
+        if (have_ssg)
           checkweapon = wp_supershotgun;
         break;
     }
@@ -312,7 +312,7 @@ int P_SwitchWeapon(player_t *player)
           newweapon = wp_chainsaw;
         break;
       case 9:
-        if (player->weaponowned[wp_supershotgun] && gamemode == commercial &&
+        if (player->weaponowned[wp_supershotgun] && have_ssg &&
             player->ammo[am_shell] >= (demo_compatibility ? 3 : 2))
           newweapon = wp_supershotgun;
         break;
@@ -776,7 +776,7 @@ void A_Saw(player_t *player, pspdef_t *psp)
                           linetarget->x, linetarget->y);
 
   if (angle - player->mo->angle > ANG180)
-    if (angle - player->mo->angle < -ANG90/20)
+    if ((signed int) (angle - player->mo->angle) < -ANG90/20)
       player->mo->angle = angle + ANG90/21;
     else
       player->mo->angle -= ANG90/20;
