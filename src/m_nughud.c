@@ -195,7 +195,7 @@ default_t *M_NughudLookupDefault(const char *name)
 
 boolean M_NughudParseOption(const char *p, boolean wad)
 {
-  char name[80], strparm[100];
+  char name[80], strparm[1024];
   default_t *dp;
   int parm;
 
@@ -204,7 +204,7 @@ boolean M_NughudParseOption(const char *p, boolean wad)
   //jff 3/3/98 skip lines not starting with an alphanum
   // killough 10/98: move to be made part of main test, add comment-handling
 
-  if (sscanf(p, "%79s %99[^\n]", name, strparm) != 2 || !isalnum(*name)
+  if (sscanf(p, "%79s %1023[^\n]", name, strparm) != 2 || !isalnum(*name)
       || !(dp = M_NughudLookupDefault(name))
       || (*strparm == '"') == (dp->type != string))
     { return 1; }
