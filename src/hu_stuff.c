@@ -1099,7 +1099,7 @@ static void HU_UpdateCrosshair(void)
     const ammotype_t ammo = weaponinfo[plr->readyweapon].ammo;
     const fixed_t range = (ammo == am_noammo) ? MELEERANGE : 16*64*FRACUNIT;
     boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
-    
+
     crosshair_target = linetarget = NULL;
 
     overflow[emu_intercepts].enabled = false;
