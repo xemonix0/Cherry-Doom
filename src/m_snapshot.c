@@ -57,7 +57,7 @@ void M_ResetSnapshot (int i)
 
 boolean M_ReadSnapshot (int i, FILE *fp)
 {
-  char str[16] = {0};
+  char str[22] = {0};
 
   M_ResetSnapshot (i);
 
