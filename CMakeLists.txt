@@ -9,8 +9,8 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 cmake_minimum_required(VERSION 3.6)
 
 project("Nugget Doom"
-    VERSION 1.11.0
-    DESCRIPTION "Nugget Doom 1.11.0"
+    VERSION 1.12.0
+    DESCRIPTION "Nugget Doom 1.12.0"
     HOMEPAGE_URL "https://github.com/MrAlaux/Nugget-Doom"
     LANGUAGES C)
 

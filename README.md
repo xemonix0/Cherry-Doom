@@ -31,12 +31,12 @@ Although the new code has been written with the intention of not breaking demo c
 - _**Bobbing Styles**_ selection, as seen in Zandronum
 - _**Bobbing Percentage**_ setting
 - **Crosshair:**
-  - Coloring based on linetarget health;
-  - Target lock-on;
+  - Vertical-only target lock-on;
   - Horizontal autoaim indicators;
-  - Highlight on fuzzy targets;
+  - Option to account for fuzzy targets;
   - 5 new types;
   - Dedicated toggle key.
+- _**Blink [Automap] Marks**_ key (default: <kbd>B</kbd>)
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first)
 - **Screen wipe/transition effect selection** (**Warning**: _"Seizure"_ might legitimately be seizure-inducing, use with caution)
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
@@ -44,6 +44,7 @@ Although the new code has been written with the intention of not breaking demo c
 - **Gray-colored Health count when invulnerable**, which also flashes when the effect is running out
 - _**Smooth Health/Armor Count**_ setting, to progressively increase and decrease said displayed values, similar to Heretic
 - _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
+- **Automap color for unrevealed secret sectors**
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
 - _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV (default is 41, the original)
 - Setting of condition to _**Advance Internal Demos**_
@@ -53,17 +54,20 @@ Although the new code has been written with the intention of not breaking demo c
     - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA;
   - _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt;
   - _**'IDFLY'**_ to fly;
-  - _**'SPAWN'**_ to spawn a hostile or friendly actor based on its mobjtype index;
+  - _**'SUMMON'**_ to spawn a hostile or friendly actor based on its mobjtype index;
   - _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD;
-  - _**'SCANNER' / 'ANALYZE' / 'LINETARGET'**_ to give some info on the player's linetarget, similar to GZDoom's _'linetarget'_ console command;
+  - _**'LINETARGET'**_ to give some info on the player's linetarget, similar to GZDoom's _'linetarget'_ console command;
   - _**'MDK'**_, much like in ZDoom;
   - _**'SAITAMA'**_, to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, also featuring an alternate attack when holding down Strafe On);
-  - _**'IDNLEV' / 'IDNEXT'**_, to end the level;
+  - _**'NEXTMAP'**_, to exit the level;
+  - _**'NEXTSECRET'**_, to exit the level as if using a secret exit;
   - _**'TURBO'**_ to change the player speed in-game.
 - Restored _**Weapon Recoil**_ menu item
 - Restored _**Message Listing Scrolls Upwards**_ setting, and enabled it by default
 - **Offer selection of widescreen ratios** in the setup menu itself
 - Toggle to **allow chat in singleplayer**
+- Toggle to have the **Gamma Correction key cycle through new gamma levels**
+- **Gamma Correction slider now ranges from 0.50 to 2.0 in steps of 0.05**
 - **NUGHUD lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.txt`)
 - **Sound Links check for a dedicated lump**, therefore allowing usage of a custom sound effect
 - **"Correct" first person sprite centering** (the original code had an offset of one pixel to the right)
