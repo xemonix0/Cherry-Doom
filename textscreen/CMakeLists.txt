@@ -1,4 +1,4 @@
-include(WoofSettings)
+include(NuggetDoomSettings)
 
 add_library(textscreen STATIC
             textscreen.h
@@ -22,7 +22,7 @@ add_library(textscreen STATIC
             txt_sdl.c           txt_sdl.h
             txt_utf8.c          txt_utf8.h)
 
-target_woof_settings(textscreen)
+target_nuggetdoom_settings(textscreen)
 
 target_include_directories(textscreen
                            INTERFACE "."

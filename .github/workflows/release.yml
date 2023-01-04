@@ -47,10 +47,10 @@ jobs:
       - name: Release
         uses: ncipollo/release-action@v1
         with:
-          name: Woof! ${{ env.VERSION }}
+          name: Nugget Doom ${{ env.VERSION }}
           bodyFile: CHANGELOG.md
           allowUpdates: true
-          artifacts: build/Woof*.zip
+          artifacts: build/Nugget-Doom*.zip
 
   win32_msvc:
     runs-on: windows-2019
@@ -79,7 +79,7 @@ jobs:
       - name: Release
         uses: ncipollo/release-action@v1
         with:
-          name: Woof! ${{ env.VERSION }}
+          name: Nugget Doom ${{ env.VERSION }}
           bodyFile: CHANGELOG.md
           allowUpdates: true
-          artifacts: build/Woof*.zip
+          artifacts: build/Nugget-Doom*.zip

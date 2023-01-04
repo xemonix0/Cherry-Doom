@@ -117,7 +117,7 @@ execute_context_t *NewExecuteContext(void)
 
     result = malloc(sizeof(execute_context_t));
 
-    result->response_file = TempFile("woof.rsp");
+    result->response_file = TempFile("nugget-doom.rsp");
     result->stream = M_fopen(result->response_file, "w");
 
     if (result->stream == NULL)

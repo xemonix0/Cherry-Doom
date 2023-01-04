@@ -76,7 +76,7 @@ if(${FORCE_COLORED_OUTPUT})
     endif()
 endif()
 
-function(target_woof_settings)
+function(target_nuggetdoom_settings)
     foreach(target ${ARGN})
         target_compile_options(${target} PRIVATE ${COMMON_COMPILE_OPTIONS})
     endforeach()

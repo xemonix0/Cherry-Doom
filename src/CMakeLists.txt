@@ -1,6 +1,6 @@
-include(WoofSettings)
+include(NuggetDoomSettings)
 
-set(WOOF_SOURCES
+set(NUGGETDOOM_SOURCES
     am_map.c                am_map.h
     beta.h
     d_deh.c                 d_deh.h
@@ -123,28 +123,28 @@ set(WOOF_SOURCES
 
 if(WIN32)
     list(APPEND
-        WOOF_SOURCES
+        NUGGETDOOM_SOURCES
         i_winmusic.c
         ../win32/win_version.c ../win32/win_version.h)
     if(MSVC)
         list(APPEND
-            WOOF_SOURCES
+            NUGGETDOOM_SOURCES
             ../win32/win_opendir.c ../win32/win_opendir.h)
     endif()
 endif()
 
 # Some platforms require standard libraries to be linked against.
 if(m_FOUND)
-    list(APPEND WOOF_LIBRARIES m)
+    list(APPEND NUGGETDOOM_LIBRARIES m)
 endif()
 
 if (WIN32)
-    list(APPEND WOOF_LIBRARIES winmm)
+    list(APPEND NUGGETDOOM_LIBRARIES winmm)
 endif()
 
 # Standard target definition
 if(WIN32)
-    add_library(nugget-doom SHARED EXCLUDE_FROM_ALL ${WOOF_SOURCES})
+    add_library(nugget-doom SHARED EXCLUDE_FROM_ALL ${NUGGETDOOM_SOURCES})
     target_compile_definitions(nugget-doom PRIVATE WIN_LAUNCHER)
     # Some platforms have SDL2main, others don't.
     if(SDL2_MAIN_LIBRARY)
@@ -159,7 +159,7 @@ if(WIN32)
         ../win32/win_launcher.c
         "${CMAKE_CURRENT_BINARY_DIR}/resource.rc"
     )
-    target_woof_settings(nugget-doom-com)
+    target_nuggetdoom_settings(nugget-doom-com)
     target_link_libraries(nugget-doom-com PRIVATE ${WIN_LAUNCHER_LIBS})
     if(MSVC)
         # MSVC tries to supply a default manifest and complains when it finds
@@ -177,7 +177,7 @@ if(WIN32)
         ../win32/win_launcher.c
         "${CMAKE_CURRENT_BINARY_DIR}/resource.rc"
     )
-    target_woof_settings(nugget-doom-exe)
+    target_nuggetdoom_settings(nugget-doom-exe)
     target_link_libraries(nugget-doom-exe PRIVATE ${WIN_LAUNCHER_LIBS})
     if(MSVC)
         target_link_options(nugget-doom-exe PRIVATE "/MANIFEST:NO")
@@ -189,19 +189,19 @@ if(WIN32)
 else()
     # Some platforms have SDL2main, others don't.
     if(SDL2_MAIN_LIBRARY)
-        list(APPEND WOOF_LIBRARIES SDL2::SDL2main)
+        list(APPEND NUGGETDOOM_LIBRARIES SDL2::SDL2main)
     endif()
-    add_executable(nugget-doom ${WOOF_SOURCES})
+    add_executable(nugget-doom ${NUGGETDOOM_SOURCES})
 endif()
-target_woof_settings(nugget-doom)
+target_nuggetdoom_settings(nugget-doom)
 target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 
 if (FluidSynth_FOUND)
-    list(APPEND WOOF_LIBRARIES FluidSynth::FluidSynth)
+    list(APPEND NUGGETDOOM_LIBRARIES FluidSynth::FluidSynth)
     target_compile_definitions(nugget-doom PRIVATE HAVE_FLUIDSYNTH)
 endif()
 
-target_link_libraries(nugget-doom PRIVATE ${WOOF_LIBRARIES}
+target_link_libraries(nugget-doom PRIVATE ${NUGGETDOOM_LIBRARIES}
     SDL2::SDL2 SDL2::mixer SDL2::net opl textscreen)
 
 # Optional features.
@@ -239,7 +239,7 @@ if(WIN32)
 endif()
 
 add_executable(nugget-doom-setup WIN32 ${SETUP_SOURCES})
-target_woof_settings(nugget-doom-setup)
+target_nuggetdoom_settings(nugget-doom-setup)
 
 # Some platforms have SDL2main, others don't.
 if(SDL2_MAIN_LIBRARY)
@@ -257,30 +257,30 @@ endif()
 # Install
 
 # Assemble library files.
-set(WOOF_DLLS "")
+set(NUGGETDOOM_DLLS "")
 if(WIN32 AND NOT MSYS)
     # SDL2
-    list(APPEND WOOF_DLLS "${SDL2_DLL_DIR}/SDL2.dll")
+    list(APPEND NUGGETDOOM_DLLS "${SDL2_DLL_DIR}/SDL2.dll")
 
     # SDL2_mixer
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/optional/libmodplug-1.dll")
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/optional/libopus-0.dll")
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/optional/libopusfile-0.dll")
-    list(APPEND WOOF_DLLS "${SDL2_MIXER_DLL_DIR}/SDL2_mixer.dll")
+    list(APPEND NUGGETDOOM_DLLS "${SDL2_MIXER_DLL_DIR}/optional/libmodplug-1.dll")
+    list(APPEND NUGGETDOOM_DLLS "${SDL2_MIXER_DLL_DIR}/optional/libopus-0.dll")
+    list(APPEND NUGGETDOOM_DLLS "${SDL2_MIXER_DLL_DIR}/optional/libopusfile-0.dll")
+    list(APPEND NUGGETDOOM_DLLS "${SDL2_MIXER_DLL_DIR}/SDL2_mixer.dll")
 
     # SDL2_net
-    list(APPEND WOOF_DLLS "${SDL2_NET_DLL_DIR}/SDL2_net.dll")
+    list(APPEND NUGGETDOOM_DLLS "${SDL2_NET_DLL_DIR}/SDL2_net.dll")
 
     if (FluidSynth_DLL_DIR)
       file(GLOB files "${FluidSynth_DLL_DIR}/*.dll")
       foreach(file ${files})
-        list(APPEND WOOF_DLLS ${file})
+        list(APPEND NUGGETDOOM_DLLS ${file})
       endforeach()
     endif()
 endif()
 
 # Copy library files to target directory.
-foreach(SDL2_DLL ${WOOF_DLLS})
+foreach(SDL2_DLL ${NUGGETDOOM_DLLS})
     add_custom_command(TARGET nugget-doom POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "${SDL2_DLL}" $<TARGET_FILE_DIR:nugget-doom> VERBATIM)
@@ -292,7 +292,7 @@ if(WIN32)
 else()
     install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
-install(FILES ${WOOF_DLLS} DESTINATION .)
+install(FILES ${NUGGETDOOM_DLLS} DESTINATION .)
 
 # Copy autoload directory content to binary directory.
 add_custom_command(TARGET nugget-doom POST_BUILD

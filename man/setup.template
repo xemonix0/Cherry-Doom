@@ -1,6 +1,6 @@
 .TH @PROJECT_SHORTNAME@-setup 6
 .SH NAME
-@PROJECT_SHORTNAME@-setup \- configuration tool for Woof!
+@PROJECT_SHORTNAME@-setup \- configuration tool for Nugget Doom
 .SH SYNOPSIS
 .B @PROJECT_SHORTNAME@-setup
 [OPTIONS]
@@ -10,9 +10,8 @@
  provides a menu\-based interface to start and join network games.
 .PP
 .SH AUTHOR
-Woof! is written and maintained by Fabian Greffrath.  It is based on
-the MBF and WinMBF source codes, released by Lee Killough and Team Eternity,
-respectively, and on the LinuxDoom source code, released by Id Software.
+Nugget Doom is written and maintained by Alaux.  It is based on the Woof!
+source code, released by Fabian Greffrath.
 .SH COPYRIGHT
 Copyright \(co id Software Inc;
 Copyright \(co 1999 id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;

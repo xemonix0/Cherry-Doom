@@ -1,4 +1,4 @@
-include(WoofSettings)
+include(NuggetDoomSettings)
 
 add_library(opl STATIC
             opl_internal.h
@@ -7,7 +7,7 @@ add_library(opl STATIC
             opl_sdl.c
             opl3.c          opl3.h)
 
-target_woof_settings(opl)
+target_nuggetdoom_settings(opl)
 
 target_include_directories(opl
                            INTERFACE "."

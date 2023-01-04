@@ -104,7 +104,7 @@ static void I_Signal(void)
 void D_DoomMain(void);
 
 #if defined(WIN_LAUNCHER)
-__declspec(dllexport) int Woof_Main(int argc, char **argv)
+__declspec(dllexport) int NuggetDoom_Main(int argc, char **argv)
 #else
 int main(int argc, char **argv)
 #endif

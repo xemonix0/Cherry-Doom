@@ -1,19 +1,16 @@
 .TH @PROJECT_SHORTNAME@ 6
 .SH NAME
-@PROJECT_SHORTNAME@ \- Woof! is a continuation of Lee Killough's Doom source port MBF targeted
-at modern systems
+@PROJECT_SHORTNAME@ \- Nugget Doom is a fork of Fabian Greffrath's Doom source port Woof!,
+intended to implement additional features.
 .SH SYNOPSIS
-.B woof
+.B nugget-doom
 [\fIOPTIONS\fR]
 .SH DESCRIPTION
 .PP
-MBF stands for "Marine's Best Friend" and is widely regarded the successor
-of the Boom source port by TeamTNT. It serves as the code base for popular
-Doom source ports such as PrBoom+/DSDA-Doom or The Eternity Engine. As the
-original engine was limited to run only under MS-DOS, it has been ported to
-Windows by Team Eternity under the name WinMBF in 2004. Woof! is developed
-based on the WinMBF code with the aim to make MBF more widely available and
-convenient to use on modern systems.
+Woof! is a source port based on Team Eternity's WinMBF, with the objective
+of making the former accessible on modern systems. Nugget Doom is developed
+based on the Woof! code, aiming to implement additional features that are
+not present in it.
 .br
 @content
 .SH IWAD SEARCH PATHS
@@ -35,9 +32,8 @@ automatically when a WAD file of the corresponding name is loaded.
 .SH SEE ALSO
 \fB@PROJECT_SHORTNAME@-setup\fR(6),
 .SH AUTHOR
-Woof! is written and maintained by Fabian Greffrath.  It is based on
-the MBF and WinMBF source codes, released by Lee Killough and Team Eternity,
-respectively, and on the LinuxDoom source code, released by Id Software.
+Nugget Doom is written and maintained by Alaux.  It is based on the Woof!
+source code, released by Fabian Greffrath.
 .SH COPYRIGHT
 Copyright \(co id Software Inc;
 Copyright \(co 1999 id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;

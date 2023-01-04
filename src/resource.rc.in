@@ -1,4 +1,4 @@
-1 ICON "@PROJECT_SOURCE_DIR@/data/@WOOF_ICON@"
+1 ICON "@PROJECT_SOURCE_DIR@/data/@NUGGETDOOM_ICON@"
 
 #include <winuser.h>
 

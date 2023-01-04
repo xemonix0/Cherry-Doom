@@ -577,7 +577,7 @@ def carray_output(targets, substs, template):
 
     content += "};\n\n#define HELP_STRING \""
 
-    content += "Usage: woof [options] \\n\\\n"
+    content += "Usage: nugget-doom [options] \\n\\\n"
 
     c = dict(categories)
 

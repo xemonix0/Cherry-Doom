@@ -1,11 +1,11 @@
-include(WoofSettings)
+include(NuggetDoomSettings)
 
 add_library(setup STATIC
             mainmenu.c
             multiplayer.c       multiplayer.h
             execute.c           execute.h)
 
-target_woof_settings(setup)
+target_nuggetdoom_settings(setup)
 
 target_include_directories(setup
                            INTERFACE "."

@@ -561,9 +561,9 @@ void BuildIWADDirList(void)
         AddIWADDir(env);
     }
 
-#ifdef WOOFDATADIR
+#ifdef NUGGETDOOMDATADIR
     // [FG] Add a build-time configurable data directory
-    AddIWADDir(WOOFDATADIR);
+    AddIWADDir(NUGGETDOOMDATADIR);
 #endif
 
 #ifdef _WIN32
