@@ -41,13 +41,10 @@
 
 // [Nugget]
 #ifndef M_PI
-#define M_PI 3.14159265358979323846
+  #define M_PI 3.14159265358979323846
 #endif
 
-#if 0 // [Nugget] Unused
-// Fineangles in the SCREENWIDTH wide window.
-#define FIELDOFVIEW 2048
-#endif
+// [Nugget] Removed unused FIELDOFVIEW macro
 
 // killough: viewangleoffset is a legacy from the pre-v1.2 days, when Doom
 // had Left/Mid/Right viewing. +/-ANG90 offsets were placed here on each
