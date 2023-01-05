@@ -206,6 +206,7 @@ else()
 endif()
 
 # Generate distribution packages with CPack.
+set(CPACK_PACKAGE_NAME "Nugget-Doom")
 if(WIN32)
     set(CPACK_GENERATOR ZIP)
 else()
