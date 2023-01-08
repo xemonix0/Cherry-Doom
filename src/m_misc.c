@@ -659,6 +659,13 @@ default_t defaults[] = {
   },
 
   {
+    "show_berserk",
+    (config_t *) &show_berserk, NULL,
+    {1}, {0,1}, number, ss_weap, wad_yes,
+    "1 to display Berserk pack when using the Fist, if available"
+  },
+
+  {
     "weaponsquat",
     (config_t *) &weaponsquat, NULL,
     {0}, {0,1}, number, ss_weap, wad_yes,

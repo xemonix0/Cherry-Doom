@@ -888,7 +888,7 @@ void ST_drawWidgets(void)
 
   // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
   if ((!st_crispyhud || nughud.ammo.x > -1) // [Nugget] Nugget HUD
-      && plyr->readyweapon == wp_fist
+      && show_berserk && plyr->readyweapon == wp_fist
       && weaponinfo[plyr->readyweapon].ammo == am_noammo // [Nugget] Check for unlimited ammo type
       && plyr->powers[pw_strength])
   {

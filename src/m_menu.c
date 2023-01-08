@@ -3215,6 +3215,7 @@ enum {           // killough 10/98: enum for y-offset info
   weap2_title1,
   weap2_bobbing,
   weap2_bobstyle,
+  weap2_berserk,
   weap2_recoilpitch,
   weap2_squat,
   weap2_center // [FG] centered weapon sprite
@@ -3247,6 +3248,7 @@ setup_menu_t weap_settings2[] =  // Weapons Settings screen 2
   {"Cosmetic",S_SKIP|S_TITLE,m_null,M_X,M_Y+weap2_title1*M_SPC},
     {"Bobbing Percentage",S_NUM,m_null,M_X, M_Y+weap2_bobbing*M_SPC, {"bobbing_percentage"}, 0, M_UpdateCenteredWeaponItem},
     {"Bobbing Style",S_CHOICE, m_null, M_X, M_Y+weap2_bobstyle*M_SPC, {"bobbing_style"}, 0, NULL, bobbing_styles},
+    {"Show Berserk when using Fist", S_YESNO,m_null,M_X, M_Y+ weap2_berserk*M_SPC, {"show_berserk"}},
     {"Enable Recoil Pitch", S_YESNO,m_null,M_X, M_Y+ weap2_recoilpitch*M_SPC, {"weapon_recoilpitch"}},
     {"Squat Weapon Down On Impact", S_YESNO,m_null,M_X, M_Y+ weap2_squat*M_SPC, {"weaponsquat"}},
     // [FG] centered or bobbing weapon sprite
