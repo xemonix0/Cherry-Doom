@@ -1225,6 +1225,7 @@ void P_MovePsprites(player_t *player)
   // [Nugget] Calculate sx2 and sy2 separately from sx and sy
   if ((!player->attackdown || center_weapon == WEAPON_BOBBING) // [FG] not attacking means idle
       && psp->state
+      && !psp->state->misc1
       && psp->state->action.p2 != (actionf_p2)A_Lower
       && psp->state->action.p2 != (actionf_p2)A_Raise)
     { P_NuggetBobbing(player); }
@@ -1264,12 +1265,12 @@ void P_MovePsprites(player_t *player)
   }
 
   // [Nugget]: [crispy] squat down weapon sprite a bit after hitting the ground
-	if (psp->dy) {
+  if (psp->dy) {
     if (psp->dy > 24*FRACUNIT)  { psp->dy = 24*FRACUNIT; }
-		else                        { psp->dy -= FRACUNIT; }
+    else                        { psp->dy -= FRACUNIT; }
 
-		if (psp->dy < 0) { psp->dy = 0; }
-	}
+    if (psp->dy < 0) { psp->dy = 0; }
+  }
 
   player->psprites[ps_flash].dy = player->psprites[ps_weapon].dy;
   player->psprites[ps_flash].sx2 = player->psprites[ps_weapon].sx2;
