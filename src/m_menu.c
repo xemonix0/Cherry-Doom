@@ -2984,8 +2984,8 @@ setup_menu_t keys_settings4[] =  // Key Binding screen strings
   {"NEXT MAP"     ,S_INPUT,m_scrn,KB_X,M_Y+12*M_SPC,{0},input_menu_nextlevel},
   // [Nugget]
   {"NUGGET",S_SKIP|S_TITLE,m_null,KB_X,M_Y+13*M_SPC},
-    {"JUMP",S_INPUT,m_scrn,KB_X,M_Y+14*M_SPC,{0},input_jump},
-    {"CROUCH",S_INPUT,m_scrn,KB_X,M_Y+15*M_SPC,{0},input_crouch},
+    {"JUMP/FLY UP",S_INPUT,m_scrn,KB_X,M_Y+14*M_SPC,{0},input_jump},
+    {"CROUCH/FLY DOWN",S_INPUT,m_scrn,KB_X,M_Y+15*M_SPC,{0},input_crouch},
     {"CROSSHAIR",S_INPUT,m_scrn,KB_X,M_Y+16*M_SPC,{0},input_crosshair},
 
   {"<- PREV", S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings3}},
