@@ -126,10 +126,6 @@ void P_CalcHeight (player_t* player)
   }
   else if (player->bob > MAXBOB) { player->bob = MAXBOB; }
 
-  // [crispy] variable player view bob
-  // [Nugget] Implement bobbing percentage setting
-  player->bob2 = (player->bob / 100) * bobbing_percentage;
-
   // [Nugget] Adjustable viewheight
   view = (demorecording||netgame||fauxdemo||strictmode)
          ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
@@ -153,7 +149,8 @@ void P_CalcHeight (player_t* player)
   }
 
   angle = (FINEANGLES/20*leveltime)&FINEMASK;
-  bob = FixedMul(player->bob2/2,finesine[angle]);
+  // [Nugget] View bobbing percentage setting
+  bob = FixedMul((player->bob * view_bobbing_percentage / 100) / 2, finesine[angle]);
 
   // move viewheight
   if (player->playerstate == PST_LIVE)

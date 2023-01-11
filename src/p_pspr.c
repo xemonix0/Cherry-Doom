@@ -1152,7 +1152,8 @@ void P_SetupPsprites(player_t *player)
 static void P_NuggetBobbing(player_t* player)
 {
   pspdef_t *psp = player->psprites;
-  const fixed_t bob = player->bob2;
+  // [Nugget] Weapon bobbing percentage setting
+  const fixed_t bob = player->bob * weapon_bobbing_percentage / 100;
   const int angle = (128*leveltime) & FINEMASK;
 
   // sx - Default, differs in a few styles
@@ -1177,7 +1178,7 @@ static void P_NuggetBobbing(player_t* player)
 
     case bob_InvAlpha:
       psp->sx2 = FixedMul(bob, finesine[angle]);
-      psp->sy2 += bob - FixedMul(player->bob2, finesine[angle & (FINEANGLES/2-1)]);
+      psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;
 
     case bob_Smooth:
@@ -1230,7 +1231,7 @@ void P_MovePsprites(player_t *player)
       && psp->state->action.p2 != (actionf_p2)A_Raise)
     { P_NuggetBobbing(player); }
 
-  if (psp->state && !bobbing_percentage)
+  if (psp->state && !weapon_bobbing_percentage)
   {
     static fixed_t last_sy = 32 * FRACUNIT;
 

@@ -151,6 +151,7 @@ int jump_crouch;
 int damagecount_cap;
 int bonuscount_cap;
 int no_berserk_tint;
+int view_bobbing_percentage;
 int viewheight_value;
 int s_clipping_dist_x2;
 int one_key_saveload;
@@ -164,7 +165,7 @@ int a11y_invul_colormap;
 // Weapons
 int no_hor_autoaim;
 int freeaim;
-int bobbing_percentage;
+int weapon_bobbing_percentage;
 int bobbing_style;
 int show_berserk;
 int weaponsquat;

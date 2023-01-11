@@ -3213,7 +3213,7 @@ setup_menu_t weap_settings1[] =  // Weapons Settings screen
 
 enum {           // killough 10/98: enum for y-offset info
   weap2_title1,
-  weap2_bobbing,
+  weap2_weapbobbing,
   weap2_bobstyle,
   weap2_berserk,
   weap2_recoilpitch,
@@ -3239,14 +3239,14 @@ static const char *default_bobfactor_strings[] = {
 
 static void M_UpdateCenteredWeaponItem(void)
 {
-  DISABLE_ITEM(!STRICTMODE(bobbing_percentage),
+  DISABLE_ITEM(!STRICTMODE(weapon_bobbing_percentage),
                weap_settings2[weap2_center]);
 }
 
 setup_menu_t weap_settings2[] =  // Weapons Settings screen 2
 {
   {"Cosmetic",S_SKIP|S_TITLE,m_null,M_X,M_Y+weap2_title1*M_SPC},
-    {"Bobbing Percentage",S_NUM,m_null,M_X, M_Y+weap2_bobbing*M_SPC, {"bobbing_percentage"}, 0, M_UpdateCenteredWeaponItem},
+    {"Weapon Bobbing Percentage",S_NUM,m_null,M_X, M_Y+weap2_weapbobbing*M_SPC, {"weapon_bobbing_percentage"}, 0, M_UpdateCenteredWeaponItem},
     {"Bobbing Style",S_CHOICE, m_null, M_X, M_Y+weap2_bobstyle*M_SPC, {"bobbing_style"}, 0, NULL, bobbing_styles},
     {"Show Berserk when using Fist", S_YESNO,m_null,M_X, M_Y+ weap2_berserk*M_SPC, {"show_berserk"}},
     {"Enable Recoil Pitch", S_YESNO,m_null,M_X, M_Y+ weap2_recoilpitch*M_SPC, {"weapon_recoilpitch"}},
@@ -4313,6 +4313,7 @@ enum {
   gen4_dmgcountcap,
   gen4_boncountcap,
   gen4_berserktint,
+  gen4_viewbobbing,
   gen4_viewheight,
   gen4_sclipdist,
   gen4_quicksaveload,
@@ -4338,6 +4339,7 @@ setup_menu_t gen_settings4[] = { // [Nugget] General Settings screen 4
     {"Damage Tint Cap (Default = 100)", S_NUM,    m_null, M_X, M_Y+gen4_dmgcountcap*M_SPC,    {"damagecount_cap"}},
     {"Bonus Tint Cap (Default = -1)",   S_NUM,    m_null, M_X, M_Y+gen4_boncountcap*M_SPC,    {"bonuscount_cap"}},
     {"Disable Berserk Tint",            S_YESNO,  m_null, M_X, M_Y+gen4_berserktint*M_SPC,    {"no_berserk_tint"}},
+    {"View Bobbing Percentage",         S_NUM,    m_null, M_X, M_Y+gen4_viewbobbing*M_SPC,    {"view_bobbing_percentage"}},
     {"View Height (Default = 41)",      S_NUM,    m_null, M_X, M_Y+gen4_viewheight*M_SPC,     {"viewheight_value"}},
     {"Sound Clipping Distance",         S_CHOICE, m_null, M_X, M_Y+gen4_sclipdist*M_SPC,      {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
     {"One-Key Quick Save/Load",         S_YESNO,  m_null, M_X, M_Y+gen4_quicksaveload*M_SPC,  {"one_key_saveload"}},

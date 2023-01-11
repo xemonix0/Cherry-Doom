@@ -552,6 +552,13 @@ default_t defaults[] = {
   },
 
   {
+    "view_bobbing_percentage",
+    (config_t *) &view_bobbing_percentage, NULL,
+    {100}, {0,100}, number, ss_gen, wad_no,
+    "Percentage of view bobbing intensity"
+  },
+
+  {
     "viewheight_value",
     (config_t *) &viewheight_value, NULL,
     {41}, {32,56}, number, ss_gen, wad_yes,
@@ -645,10 +652,10 @@ default_t defaults[] = {
   },
 
   {
-    "bobbing_percentage",
-    (config_t *) &bobbing_percentage, NULL,
+    "weapon_bobbing_percentage",
+    (config_t *) &weapon_bobbing_percentage, NULL,
     {100}, {0,100}, number, ss_weap, wad_no,
-    "Percentage of weapon and view bobbing intensity"
+    "Percentage of weapon bobbing intensity"
   },
 
   {
