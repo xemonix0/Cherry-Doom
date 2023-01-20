@@ -120,9 +120,9 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
           psp->sx = state->misc1 << FRACBITS;
           psp->sy = state->misc2 << FRACBITS;
           // [FG] centered weapon sprite
-          // [Nugget] Subtract 1 pixel from the misc1 calculation, for
-          // consistency with the first person sprite centering correction
-          psp->sx2 = (state->misc1 << FRACBITS) - (1<<FRACBITS);
+          // [Nugget] If applicable, subtract 1 pixel from the misc1 calculation,
+          // for consistency with the first person sprite centering correction
+          psp->sx2 = (state->misc1 - sx_fix) << FRACBITS;
           psp->sy2 = state->misc2 << FRACBITS;
         }
 
@@ -1157,7 +1157,7 @@ static void P_NuggetBobbing(player_t* player)
   const int angle = (128*leveltime) & FINEMASK;
 
   // sx - Default, differs in a few styles
-  psp->sx2 = /*FRACUNIT +*/ FixedMul(bob, finecosine[angle]); // Correct first person sprite centering
+  psp->sx2 = ((1 - sx_fix)*FRACUNIT) + FixedMul(bob, finecosine[angle]);
   // sy - Used for all styles, their specific values are added to this one right after
   psp->sy2 = WEAPONTOP + abs(psp->dy); // Squat weapon down on impact
 
@@ -1235,7 +1235,7 @@ void P_MovePsprites(player_t *player)
   {
     static fixed_t last_sy = 32 * FRACUNIT;
 
-    psp->sx2 = /*FRACUNIT*/ 0; // [Nugget] Correct first person sprite centering
+    psp->sx2 = (1 - sx_fix)*FRACUNIT; // [Nugget] Correct first person sprite centering
 
     if (psp->state->action.p2 != (actionf_p2)A_Lower &&
         psp->state->action.p2 != (actionf_p2)A_Raise &&
@@ -1261,7 +1261,7 @@ void P_MovePsprites(player_t *player)
     // [FG] center the weapon sprite horizontally and push up vertically
     else if (player->attackdown && center_weapon == WEAPON_CENTERED)
     {
-      psp->sx2 = /*FRACUNIT*/ 0; // [Nugget] Correct first person sprite centering
+      psp->sx2 = (1 - sx_fix)*FRACUNIT; // [Nugget] Correct first person sprite centering
       psp->sy2 = WEAPONTOP;
     }
   }

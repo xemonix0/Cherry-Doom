@@ -498,6 +498,7 @@ extern int bloodier_gibbing;
 // CFG only
 extern int sp_chat;
 extern int gammacycle;
+extern int sx_fix;
 
 enum {
   comp_blazing2,

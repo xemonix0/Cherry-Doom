@@ -728,6 +728,13 @@ default_t defaults[] = {
     "1 to make gamma key cycle through custom gamma levels"
   },
 
+  {
+    "sx_fix",
+    (config_t *) &sx_fix, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to correct first person sprite centering"
+  },
+
   // [Nugget] End -------------------------------------
 
   { //jff 4/3/98 allow unlimited sensitivity
