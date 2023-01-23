@@ -101,6 +101,8 @@ boolean GIBBERS;                // Used for 'GIBBERS'
 static void cheat_gibbers();    // Everything gibs
 static void cheat_resurrect();
 static void cheat_fly();
+boolean freeze;
+static void cheat_freeze();
 static void cheat_nextmap();    // Emulate level exit
 static void cheat_nextsecret(); // Emulate secret level exit
 static void cheat_turbo();
@@ -337,6 +339,9 @@ struct cheat_s cheat[] = {
   {"idfly", NULL, not_net|not_demo,
    {cheat_fly} },
 
+  {"freeze", NULL, not_net|not_demo,
+   {cheat_freeze} },
+
   {"nextmap", NULL, not_net|not_demo,
    {cheat_nextmap} },
 
@@ -468,11 +473,16 @@ static void cheat_fly() {
   plyr->cheats ^= CF_FLY;
 
   if (plyr->cheats & CF_FLY)
-    { plyr->mo->flags |= MF_NOGRAVITY; }
+  { plyr->mo->flags |= MF_NOGRAVITY; }
   else
-    { plyr->mo->flags &= ~MF_NOGRAVITY; }
+  { plyr->mo->flags &= ~MF_NOGRAVITY; }
 
   plyr->message = (plyr->cheats & CF_FLY) ? "Fly Mode ON" : "Fly Mode OFF";
+}
+
+// [Nugget]
+static void cheat_freeze() {
+  plyr->message = (freeze = !freeze) ? "Freeze Mode ON" : "Freeze Mode OFF";
 }
 
 // [Nugget]
@@ -493,7 +503,7 @@ static void cheat_turbo(char *buf)
   extern int sidemove[2];
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-    { doomprintf("Turbo: Digits only.");  return; }
+  { doomprintf("Turbo: Digits only.");  return; }
 
   scale = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
@@ -523,7 +533,7 @@ static void cheat_summone(char *buf)
   mobj_t *spawnee;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-    { doomprintf("Summon: Digits only.");  return; }
+  { doomprintf("Summon: Digits only.");  return; }
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
@@ -531,7 +541,7 @@ static void cheat_summone(char *buf)
   // Worth noting that this approach isn't quite compatible with
   // DEHEXTRA and DSDHacked's capabilities.
   if (type < 0 || type > MT_BIBLE)
-    { doomprintf("Summon: Invalid mobjtype %i", type);  return; }
+  { doomprintf("Summon: Invalid mobjtype %i", type);  return; }
 
   // Valid mobjtype, so pass the value to spawneetype
   spawneetype = type;
@@ -552,7 +562,7 @@ static void cheat_summone(char *buf)
   spawnee = P_SpawnMobj(x,y,z,spawneetype);
   spawnee->intflags |= MIF_EXTRASPAWNED;
   if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
-    { extraspawns++; }
+  { extraspawns++; }
 
   P_MapEnd();
 
@@ -567,12 +577,12 @@ static void cheat_summonf(char *buf)
   mobj_t *spawnee;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-    { doomprintf("Summon: Digits only.");  return; }
+  { doomprintf("Summon: Digits only.");  return; }
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
   if (type < 0 || type > MT_BIBLE)
-    { doomprintf("Summon: Invalid mobjtype %i", type);  return; }
+  { doomprintf("Summon: Invalid mobjtype %i", type);  return; }
 
   spawneetype = type;
   spawneefriend = true;
@@ -602,7 +612,7 @@ static void cheat_summonr()
   mobj_t *spawnee;
 
   if (spawneetype == -1)
-    { plyr->message = "You must summon a mobj first!"; return; }
+  { plyr->message = "You must summon a mobj first!"; return; }
 
   P_MapStart();
 
@@ -616,11 +626,11 @@ static void cheat_summonr()
 
   spawnee = P_SpawnMobj(x,y,z,spawneetype);
   if (spawneefriend)
-    { spawnee->flags |= MF_FRIEND; }
+  { spawnee->flags |= MF_FRIEND; }
   else {
     spawnee->intflags |= MIF_EXTRASPAWNED;
     if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
-      { extraspawns++; }
+    { extraspawns++; }
   }
 
   P_MapEnd();
@@ -642,11 +652,11 @@ static void cheat_mdk() {
   P_MapStart();
 
   if (mouselook && freeaim == freeaim_direct)
-    { slope = PLAYER_SLOPE(plyr); }
+  { slope = PLAYER_SLOPE(plyr); }
   else {
     slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, 0);
     if (!linetarget && mouselook && freeaim == freeaim_autoaim)
-      { slope = PLAYER_SLOPE(plyr); }
+    { slope = PLAYER_SLOPE(plyr); }
   }
 
   P_LineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, slope, 1000000);

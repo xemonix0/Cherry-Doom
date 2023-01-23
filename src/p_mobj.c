@@ -652,6 +652,7 @@ static inline void MusInfoThinker (mobj_t *thing)
 void P_MobjThinker (mobj_t* mobj)
 {
   extern boolean cheese; // [Nugget] cheese :)
+  extern boolean freeze; // [Nugget]
 
   // [crispy] support MUSINFO lump (dynamic music changing)
   if (mobj->type == MT_MUSICSOURCE) {
@@ -668,6 +669,12 @@ void P_MobjThinker (mobj_t* mobj)
   else if (!cheese && mobj->health == 2997) {
     mobj->health = mobj->info->spawnhealth;
     P_SetMobjState(mobj, mobj->info->spawnstate);
+  }
+  
+  // [Nugget]
+  if (freeze && !mobj->player) {
+    mobj->interp = -1;
+    return;
   }
 
   // [FG] suppress interpolation of player missiles for the first tic
