@@ -6,11 +6,16 @@
 
 The NUGHUD lump is a variant of MBF's OPTIONS lump, used specifically by Nugget
 Doom to customize the Crispy/Minimalistic HUD. As implied, it uses the same
-format as the OPTIONS lump, and can only be loaded from WADs.
+format as the OPTIONS lump.
 Excerpt from mbfedit.txt:
 
 "The OPTIONS lump has the same format as mbf.cfg: A text file listing option
 names and values, optionally separated by blank or comment lines."
+
+In a similar fashion, NUGHUD lumps can be loaded just like OPTIONS lumps; either
+by dropping a file explicitly named "nughud.lmp" (case-insensitive) in the
+corresponding autoload folder, or by using the "-file" command-line parameter
+(works with any filename).
 
 
 In practice, there are two types of elements in the NUGHUD. Both types use the
@@ -27,25 +32,26 @@ following variables for each item:
   the widget left, a value of 1 will shift it right, and a value of 0 won't
   shift it at all.
 
-Now, each type of element of specifically:
+As for each type of element of specifically:
 
-First, we have widgets (like the Health count). These mostly just use the
-variables listed above, but there are some exceptions:
+Widgets (like the Health count) just use the variables listed above, with some
+exceptions:
 
-- There's a boolean (value of 0 or 1) to toggle the face background, whose
-  position is linked to that of the face.
+- A boolean (value of 0 or 1) to toggle the face background, whose position is
+  linked to that of the face.
 
-- There's another boolean to have the Time widget be relocated to the position
-  of the STS widget, in case the latter is inactive.
+- A boolean to have the Time widget be relocated to the position of the STS
+  widget, in case the latter is inactive.
 
-On the other hand, we have patches. These are graphics that can be drawn
-anywhere on the screen, behind the widgets. They use an additional string
-variable that determines the name of the patch to be used, which can be a sprite
-(i.e. a lump between S_ markers, like "MEDIA0") or a graphic (like "STBAR").
+Patches are graphics that can be drawn anywhere on the screen, behind the
+widgets. They make use of an additional string variable that determines the name
+of the patch to be used, which can be a sprite (i.e. a lump between S_ markers,
+like "MEDIA0") or a graphic (like "STBAR").
+
 Note that custom lumps CAN be used (for example, a graphic called "NEWPATCH").
 The name used in the NUGHUD lump MUST be enclosed between quotation marks.
 
-Lastly, there's an additional fixed point variable (value between 0 and 200,
+Additionally, there's a fixed-point variable (value between 0 and 200,
 inclusive) to increase the height at which weapon sprites are drawn.
 
 
@@ -69,11 +75,13 @@ nughud_frags_wide 1
 
 --------------------------------------------------------------------------------
 
-The following text is the default configuration for the NUGHUD (built into the
-executable), with added comments for clarity. Feel free to use it as a base to
-make new configurations:
+The following text is the default distribution for the NUGHUD as defined in the
+executable, converted to text and with added comments for clarity. Feel free to
+use it as a base to make new distribution:
 
 "
+; Default Nugget HUD distribution
+
 ; Ammo count
 ; X position
 nughud_ammo_x 44
@@ -211,50 +219,44 @@ nughud_sts_x 0
 nughud_sts_y 160
 nughud_sts_wide -1
 
-; Patch 1
+; Patches
+
 nughud_patch1_x 0
 nughud_patch1_y 0
 nughud_patch1_wide 0
 ; Name of Patch
 nughud_patch1_name ""
 
-; Patch 2
 nughud_patch2_x 0
 nughud_patch2_y 0
 nughud_patch2_wide 0
 nughud_patch2_name ""
 
-; Patch 3 
 nughud_patch3_x 0
 nughud_patch3_y 0
 nughud_patch3_wide 0
 nughud_patch3_name ""
 
-; Patch 4
 nughud_patch4_x 0
 nughud_patch4_y 0
 nughud_patch4_wide 0
 nughud_patch4_name ""
 
-; Patch 5
 nughud_patch5_x 0
 nughud_patch5_y 0
 nughud_patch5_wide 0
 nughud_patch5_name ""
 
-; Patch 6
 nughud_patch6_x 0
 nughud_patch6_y 0
 nughud_patch6_wide 0
 nughud_patch6_name ""
 
-; Patch 7
 nughud_patch7_x 0
 nughud_patch7_y 0
 nughud_patch7_wide 0
 nughud_patch7_name ""
 
-; Patch 8
 nughud_patch8_x 0
 nughud_patch8_y 0
 nughud_patch8_wide 0
