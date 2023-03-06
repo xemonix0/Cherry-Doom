@@ -862,30 +862,38 @@ void HU_MoveHud(void)
   }
 
   // [FG] draw Time/STS widgets above status bar
-  if ((scaledviewheight < SCREENHEIGHT)
-      || ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3))
+  if ((scaledviewheight < SCREENHEIGHT) || st_crispyhud) // [Nugget]
   {
-    const boolean crispyhud = ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3)
-                              && (!automapactive || automapoverlay);
+    const int delta = st_widecrispyhud ? WIDESCREENDELTA : 0; // [Nugget]
 
     // adjust Time widget if set to Time only
     short t_offset = (hud_timests == 1) ? 1 : 2;
 
     // [Nugget] Nugget HUD
 
-    w_sttime.x = crispyhud  ? ((nughud.time_sts && hud_timests == 1)
-                               ? nughud.sts.x + WIDESCREENDELTA*nughud.sts.wide
-                               : nughud.time.x + WIDESCREENDELTA*nughud.time.wide)
-                            : HU_TITLEX;
-    w_sttime.y = crispyhud  ? ((nughud.time_sts && hud_timests == 1)
-                               ? nughud.sts.y
-                               : nughud.time.y)
-                            : ST_Y - t_offset*HU_GAPY;
+    if (st_crispyhud && nughud.time.x > -1) {
+      if (nughud.time_sts && hud_timests == 1) {
+        w_sttime.x = nughud.sts.x + delta*nughud.sts.wide;
+        w_sttime.y = nughud.sts.y;
+      }
+      else {
+        w_sttime.x = nughud.time.x + delta*nughud.time.wide;
+        w_sttime.y = nughud.time.y;
+      }
+    }
+    else {
+      w_sttime.x = HU_TITLEX;
+      w_sttime.y = ST_Y - t_offset*HU_GAPY;
+    }
 
-    w_monsec.x = crispyhud  ? nughud.sts.x + WIDESCREENDELTA*nughud.sts.wide
-                            : HU_TITLEX;
-    w_monsec.y = crispyhud  ? nughud.sts.y
-                            : ST_Y - HU_GAPY;
+    if (st_crispyhud && nughud.sts.x > -1) {
+      w_monsec.x = nughud.sts.x + delta*nughud.sts.wide;
+      w_monsec.y = nughud.sts.y;
+    }
+    else {
+      w_monsec.x = HU_TITLEX;
+      w_monsec.y = ST_Y - HU_GAPY;
+    }
 
     ohud_distributed = -1;
     return;

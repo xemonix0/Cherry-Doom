@@ -153,7 +153,7 @@ boolean st_crispyhud;
 static boolean st_classicstatusbar;
 static boolean st_statusbarface;
 // [Nugget] Widescreen Crispy HUD
-static boolean st_widecrispyhud;
+boolean st_widecrispyhud;
 void ST_createWidgets(); // Prototype this
 
 // whether status bar chat is active
@@ -900,7 +900,7 @@ void ST_drawWidgets(void)
         // [Nugget] Note: ns_global does NOT work in this case
         && ((lump = (W_CheckNumForName)("PSTRA0", ns_sprites)) < 0)
         && ((lump = (W_CheckNumForName)("MEDIA0", ns_sprites)) < 0))
-      { return; } // Couldn't find a lump
+    { return; } // Couldn't find a lump
 
     delta = WIDESCREENDELTA * nughud.ammo.wide * st_widecrispyhud; // [Nugget]
     patch = W_CacheLumpNum(lump, PU_CACHE);

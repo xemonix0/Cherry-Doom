@@ -39,8 +39,6 @@
 int sts_always_red;      //jff 2/18/98 control to disable status color changes
 int sts_pct_always_gray; // killough 2/21/98: always gray %'s? bug or feature?
 
-extern boolean st_crispyhud;
-
 patch_t*    sttminus;
 
 //

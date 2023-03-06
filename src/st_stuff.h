@@ -177,6 +177,8 @@ extern int sts_always_red;// status numbers do not change colors
 extern int sts_pct_always_gray;// status percents do not change colors
 extern int sts_traditional_keys;  // display keys the traditional way
 
+extern boolean st_crispyhud, st_widecrispyhud; // [Nugget]
+
 extern int hud_backpack_thresholds; // backpack changes thresholds
 extern int hud_armor_type; // color of armor depends on type
 

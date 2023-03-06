@@ -15,14 +15,18 @@ names and values, optionally separated by blank or comment lines."
 In a similar fashion, NUGHUD lumps can be loaded just like OPTIONS lumps; either
 by dropping a file explicitly named "nughud.lmp" (case-insensitive) in the
 corresponding autoload folder, or by using the "-file" command-line parameter
-(works with any filename).
+to load a file explicitly named "nughud.#", where # can be any extension name
+(".lmp" is recommended).
+
+The lump can also be loaded from inside WADs, where it must be explicitly
+called "NUGHUD".
 
 
 In practice, there are two types of elements in the NUGHUD. Both types use the
 following variables for each item:
 
 - An integer for X position. Can be any number between -1 and 320 (inclusive).
-  A value of -1 will disable the widget.
+  A value of -1 will disable the widget (See exceptions for Time/STS below).
 
 - An integer for Y position. Can be any number between 0 and 200 (inclusive).
 
@@ -37,11 +41,16 @@ As for each type of element of specifically:
 Widgets (like the Health count) just use the variables listed above, with some
 exceptions:
 
-- A boolean (value of 0 or 1) to toggle the face background, whose position is
-  linked to that of the face.
+- A boolean (value of 0 or 1) to toggle the Face background, whose position is
+  linked to that of the Face itself.
 
 - A boolean to have the Time widget be relocated to the position of the STS
   widget, in case the latter is inactive.
+
+Additionally, an X position value of -1 for the Time and STS widgets will not
+disable them, but instead draw them at their default position, whereas with
+greater values their position will be affected by the widescreen delta.
+Said widgets can be disabled from the Status Bar/HUD setup menu.
 
 Patches are graphics that can be drawn anywhere on the screen, behind the
 widgets. They make use of an additional string variable that determines the name
@@ -58,16 +67,16 @@ inclusive) to increase the height at which weapon sprites are drawn.
 By default and compared to the original Crispy HUD, the NUGHUD hides the face
 widget and shows 8 weapon numbers in the Arms display instead of 6.
 
-As an example of the format, loading a WAD with a NUGHUD lump with the following
-contents (text within the quotation marks, NOT including the quotation marks)
-will restore the face widget:
+As an example of the format, loading a NUGHUD lump with the following contents
+(text within the quotation marks, NOT including the quotation marks) will
+restore the Face widget:
 
 "
 ; This is a comment!
 nughud_face_x 143
 
 ; Move the Frags widget elsewhere, since in the default NUGHUD distribution, it
-; is drawn right where the face is drawn in the traditional Status Bar.
+; is drawn right where the Face is drawn in the traditional Status Bar.
 nughud_frags_x 314
 nughud_frags_y 155
 nughud_frags_wide 1
@@ -77,7 +86,11 @@ nughud_frags_wide 1
 
 The following text is the default distribution for the NUGHUD as defined in the
 executable, converted to text and with added comments for clarity. Feel free to
-use it as a base to make new distribution:
+use it as a base to make new distributions.
+
+It is advised that you do not include values for variables that you do not wish
+to modify, as to avoid issues if the handling of any of them is altered in the
+future.
 
 "
 ; Default Nugget HUD distribution
@@ -208,14 +221,14 @@ nughud_maxammo3_y 185
 nughud_maxammo3_wide 1
 
 ; Time widget
-nughud_time_x 0
+nughud_time_x -1
 nughud_time_y 152
 nughud_time_wide -1
 ; Relocate Time widget to position of STS widget if the latter is disabled
 nughud_time_sts 1
 
 ; STS widget
-nughud_sts_x 0
+nughud_sts_x -1
 nughud_sts_y 160
 nughud_sts_wide -1
 
