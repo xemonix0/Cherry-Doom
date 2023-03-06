@@ -25,10 +25,10 @@ called "NUGHUD".
 In practice, there are two types of elements in the NUGHUD. Both types use the
 following variables for each item:
 
-- An integer for X position. Can be any number between -1 and 320 (inclusive).
+- An integer for X position. Can be any number between -1 and 319 (inclusive).
   A value of -1 will disable the widget (See exceptions for Time/STS below).
 
-- An integer for Y position. Can be any number between 0 and 200 (inclusive).
+- An integer for Y position. Can be any number between 0 and 199 (inclusive).
 
 - An integer to apply a widescreen delta when using the widescreen Crispy HUD.
   Can be any number between -1 and 1 (inclusive).
