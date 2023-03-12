@@ -1,6 +1,6 @@
 ﻿# Nugget Doom
 
-Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.chocolate-doom.org/wiki/index.php/Crispy_Doom) fork) is a fork of [Woof!](https://github.com/fabiangreffrath/woof), intended to implement features I, Alaux, would like to have. This includes some Crispy Doom features.
+Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.chocolate-doom.org/wiki/index.php/Crispy_Doom) fork) is a fork of [Woof!](https://github.com/fabiangreffrath/woof), simply intended to implement additional features.
 
 ### DISCLAIMER
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
@@ -8,92 +8,117 @@ Although the new code has been written with the intention of not breaking demo c
 
 ## Features
 
-- From Crispy Doom (inspired or ported code):
-  - _**Things move over/under things**_ setting;
-  - **Freeaim** (Vertical Aiming);
-  - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first);
-  - _**Squat Weapon Down On Impact**_ setting;
-  - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt;
-  - _**Disable palette tint in menus**_ setting;
-  - **Most of its accessibility settings** (toggle for _Flickering Sector Lights_ is not yet implemented);
-  - **Draw Berserk in place of Ammo count when the Fist is equipped**;
-  - **SSG is accounted for on the Arms widget**;
-  - **IDCLEV00 restarts current map**;
-  - **Mid-air control** while on noclipping mode;
-  - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip);
-  - Reenabled _**'NOMOMENTUM'**_ cheat.
-- _**Field of View**_ setting, as featured in Doom Retro
+Most of Nugget Doom's features come from other sources, like source ports and mods; the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them. These acknowledgements are included in the feature lists below, but keep in mind that some are missing.
+
+### General
+
+- **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
+- **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**
+- **Screen Wipe Style** selection (**Warning**: _"Seizure"_ might legitimately be seizure-inducing, use with caution)
+- _**Disable palette tint in menus**_ setting [i.b. Crispy Doom]
+- _**Field of View**_ setting [p.f. Doom Retro]
+- _**Things move over/under things**_ setting [p.f. Crispy Doom]
+- **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first) [p.f. Crispy Doom]
+- **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first) [i.b. ZDoom]
 - _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tint
 - _**Disable Berserk Tint**_ setting
-- _**Extra Gibbing**_ setting, to force Berserk Fist, Chainsaw and SSG gibbing
-- _**Bloodier Gibbing**_ setting
-- _**Smart Totals**_ setting
-- _**Bobbing Styles**_ selection, as seen in Zandronum
-- _**Bobbing Percentage**_ setting
+- _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV [i.b. Brutal Doom]
+- _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
+- _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
+- Setting of condition to _**Advance Internal Demos**_
+- _**Quick "Quit Game"**_ setting, to skip the confirmation prompt [p.f. Crispy Doom]
+- Toggling of _**Weapon Flash Lighting**_ [p.f. Crispy Doom]
+- Toggling of _**Weapon Flash Sprite**_ [p.f. Crispy Doom]
+- Toggling of _**Invulnerability Colormap**_ [p.f. Crispy Doom]
+
+### Weapons
+
+- Restored _**Weapon Recoil**_ menu item
+- _**Disable Horizontal Autoaim**_ setting
+- **Freeaim** (Vertical Aiming) [p.f. Crispy Doom]
+- _**Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
+- _**Bobbing Styles**_ selection [p.f. Zandronum]
+- **Draw Berserk in place of Ammo count when the Fist is equipped** [p.f. Crispy Doom]
+- _**Squat Weapon Down On Impact**_ setting [p.f. Crispy Doom]
+- **"Correct" first person sprite centering** (the original code had an offset of one pixel to the right)
+
+### Status Bar/HUD
+
+- **NUGHUD lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.txt`)
+- **SSG is accounted for on the Arms widget** [p.f. Crispy Doom]
+- _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
+- _**Smart Totals**_ setting [p.f. So Doom]
+- _**Smooth Health/Armor Count**_ setting, to progressively increase and decrease said displayed values [i.b. Heretic]
 - **Crosshair:**
+  - 5 new types;
+  - Shaded variants for all types;
   - Vertical-only target lock-on;
   - Horizontal autoaim indicators;
-  - Option to account for fuzzy targets;
-  - 5 new types;
+  - Option to account for fuzzy targets [i.b. From Doom With Love];
   - Dedicated toggle key.
-- _**Blink [Automap] Marks**_ key (default: <kbd>B</kbd>)
-- **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first)
-- **Screen wipe/transition effect selection** (**Warning**: _"Seizure"_ might legitimately be seizure-inducing, use with caution)
-- _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
-- _**Disable Horizontal Autoaim**_ setting
-- **Gray-colored Health count when invulnerable**, which also flashes when the effect is running out
-- _**Smooth Health/Armor Count**_ setting, to progressively increase and decrease said displayed values, similar to Heretic
-- _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
+
+### Automap
+
 - **Automap color for unrevealed secret sectors**
-- _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
-- _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV (default is 41, the original)
-- Setting of condition to _**Advance Internal Demos**_
-- New **cheats**:
-  - _**'FULLCLIP'**_ for infinite ammo;
-  - _**'VALIANT'**_ for fast weapons;
-    - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA;
-  - _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt;
-  - _**'IDFLY'**_ to fly;
-  - _**'SUMMON'**_ to spawn a hostile or friendly actor based on its mobjtype index;
-  - _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD;
-  - _**'LINETARGET'**_ to give some info on the player's linetarget, similar to GZDoom's _'linetarget'_ console command;
-  - _**'MDK'**_, much like in ZDoom;
-  - _**'SAITAMA'**_, to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, also featuring an alternate attack when holding down Strafe On);
-  - _**'NEXTMAP'**_, to exit the level;
-  - _**'NEXTSECRET'**_, to exit the level as if using a secret exit;
-  - _**'TURBO'**_ to change the player speed in-game.
-- Restored _**Weapon Recoil**_ menu item
+- _**Blink [Automap] Marks**_ key (default: <kbd>B</kbd>)
+
+### Enemies
+
+- _**Extra Gibbing**_ setting, to force Berserk Fist, Chainsaw and SSG gibbing [i.b. Smooth Doom]
+- _**Bloodier Gibbing**_ setting [i.b. Smooth Doom]
+
+### Doom Compatibility
+
+- Blazing doors reopen with wrong sound
+- Manually reactivated moving doors are silent
+- Corrected switch sound source
+- Chaingun makes two sounds with one bullet
+- Fix Lost Soul colliding with items
+- Lost Soul forgets target upon impact
+- Fuzzy things bleed fuzzy blood
+- Non-bleeders don't bleed when crushed
+- Prevent Pain state with 0 damage attacks
+- Bruiser attack (A_BruisAttack) doesn't face target
+- Chaingunner uses pistol/chaingun sound
+- Arch-Vile fire plays flame start sound
+- Dead players can still play "oof" sound
+- Fix lopsided Icon of Sin explosions
+- Key pickup resets palette
+- Fix IDCHOPPERS invulnerability
+
+### Cheats
+
+- _**'FULLCLIP'**_ for infinite ammo
+- _**'VALIANT'**_ for fast weapons [i.b. ZDoom]
+  - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA
+- _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt
+- _**'IDFLY'**_ to fly [i.b. PrBoom+, ZDoom]
+- _**'SUMMON'**_ to spawn a hostile or friendly actor based on its mobjtype index [i.b. ZDoom]
+- _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD [i.b. ZDoom]
+- _**'LINETARGET'**_ to give some info on the player's linetarget [i.b. ZDoom]
+- _**'MDK'**_ [i.b. ZDoom]
+- _**'SAITAMA'**_, to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, also featuring an alternate attack when holding down Strafe On)
+- _**'NEXTMAP'**_, to exit the level [i.b. ZDoom]
+- _**'NEXTSECRET'**_, to exit the level as if using a secret exit [i.b. ZDoom]
+- _**'TURBO'**_ to change the player speed in-game
+- **IDCLEV00 restarts current map** [p.f. Crispy Doom]
+- **Mid-air control** while on noclipping mode [p.f. Crispy Doom]
+- Reenabled _**'NOMOMENTUM'**_ cheat [p.f. Crispy Doom]
+
+### Miscellaneous
+
+- **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
 - Restored _**Message Listing Scrolls Upwards**_ setting, and enabled it by default
-- **Offer selection of widescreen ratios** in the setup menu itself
-- Toggle to **allow chat in singleplayer**
-- Toggle to have the **Gamma Correction key cycle through new gamma levels**
-- **Gamma Correction slider now ranges from 0.50 to 2.0 in steps of 0.05**
-- **NUGHUD lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.txt`)
+- Toggle to **allow chat in singleplayer** (can only be toggled by editing the .cfg file)
+- Toggle to have the **Gamma Correction key cycle through new gamma levels** (can only be toggled by editing the .cfg file)
 - **Sound Links check for a dedicated lump**, therefore allowing usage of a custom sound effect
-- **"Correct" first person sprite centering** (the original code had an offset of one pixel to the right)
-- New **"Doom compatibility"** settings (some adapted from Crispy Doom fixes):
-  - Blazing doors reopen with wrong sound;
-  - Manually reactivated moving doors are silent;
-  - Corrected switch sound source;
-  - Chaingun makes two sounds with one bullet;
-  - Fix Lost Soul colliding with items;
-  - Lost Soul forgets target upon impact;
-  - Fuzzy things bleed fuzzy blood;
-  - Non-bleeders don't bleed when crushed;
-  - Prevent Pain state with 0 damage attacks;
-  - Bruiser attack (A_BruisAttack) doesn't face target;
-  - Chaingunner uses pistol/chaingun sound;
-  - Arch-Vile fire plays flame start sound;
-  - Dead players can still play "oof" sound;
-  - Fix lopsided Icon of Sin explosions;
-  - Key pickup resets palette;
-  - Fix IDCHOPPERS invulnerability.
 
 ## Versioning
+
 Nugget Doom follows a fairly simple **X.Y.Z** versioning system:
   - **X** is increased in the event of at least one major implementation, such as a new spec like _UMAPINFO_;
   - **Y** is increased in the event of at least one minor implementation, such as a new cheat;
-  - **Z** is increased in the event of at least one bug fix, text/code reformatting, or merging of _Woof!_ updates, even if the changes to the latter are considered minor or major;
+  - **Z** is increased in the event of at least one bug fix, text/code reformatting, or merging of _Woof!_ updates, even if the changes to the latter are considered minor or major.
 
 Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
 
@@ -163,7 +188,8 @@ Copyright:
  © 2020-2022 Fabian Greffrath;  
  © 2020 Alex Mayfield;  
  © 2020-2022 Roman Fomin;  
- © 2022 ceski.  
+ © 2022 ceski;  
+ © 2021-2023 Alaux.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/beta.h`
