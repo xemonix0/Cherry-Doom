@@ -73,9 +73,9 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ### Doom Compatibility
 
-- Blazing doors reopen with wrong sound
-- Manually reactivated moving doors are silent
-- Corrected switch sound source
+- Blazing doors reopen with wrong sound [p.f. Crispy Doom]
+- Manually reactivated moving doors are silent [p.f. Crispy Doom]
+- Corrected switch sound source [p.f. Crispy Doom]
 - Chaingun makes two sounds with one bullet
 - Fix Lost Soul colliding with items
 - Lost Soul forgets target upon impact
@@ -84,8 +84,8 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - Prevent Pain state with 0 damage attacks
 - Bruiser attack (A_BruisAttack) doesn't face target
 - Chaingunner uses pistol/chaingun sound
-- Arch-Vile fire plays flame start sound
-- Dead players can still play "oof" sound
+- Arch-Vile fire plays flame start sound [p.f. Crispy Doom]
+- Dead players can still play "oof" sound [p.f. Crispy Doom]
 - Fix lopsided Icon of Sin explosions
 - Key pickup resets palette
 - Fix IDCHOPPERS invulnerability
