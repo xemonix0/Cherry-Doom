@@ -725,7 +725,7 @@ default_t defaults[] = {
     "gammacycle",
     (config_t *) &gammacycle, NULL,
     {0}, {0,1}, number, ss_none, wad_no,
-    "1 to make gamma key cycle through custom gamma levels"
+    "1 to make gamma key cycle through extended gamma levels"
   },
 
   {
