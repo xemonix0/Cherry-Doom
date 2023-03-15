@@ -10,10 +10,13 @@ Although the new code has been written with the intention of not breaking demo c
 
 Most of Nugget Doom's features come from other sources, like source ports and mods; the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them. These acknowledgements are included in the feature lists below, but keep in mind that some are missing.
 
+A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`. For these settings, their internal variable names are provided alongside the label as guidance.
+
 ### General
 
 - **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
 - **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**
+- Toggle for **Gamma Correction key cycling**, through either original or extended gamma levels (CFG-Only: `gammacycle`)
 - **Screen Wipe Style** selection (**Warning**: _"Seizure"_ might legitimately be seizure-inducing, use with caution)
 - _**Disable palette tint in menus**_ setting [i.b. Crispy Doom]
 - _**Field of View**_ setting [p.f. Doom Retro]
@@ -22,6 +25,7 @@ Most of Nugget Doom's features come from other sources, like source ports and mo
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first) [i.b. ZDoom]
 - _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tint
 - _**Disable Berserk Tint**_ setting
+- _**View Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV [i.b. Brutal Doom]
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
@@ -36,11 +40,11 @@ Most of Nugget Doom's features come from other sources, like source ports and mo
 - Restored _**Weapon Recoil**_ menu item
 - _**Disable Horizontal Autoaim**_ setting
 - **Freeaim** (Vertical Aiming) [p.f. Crispy Doom]
-- _**Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
+- _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Bobbing Styles**_ selection [p.f. Zandronum]
-- **Draw Berserk in place of Ammo count when the Fist is equipped** [p.f. Crispy Doom]
+- Setting to **Draw Berserk in place of Ammo count when the Fist is equipped** [p.f. Crispy Doom]
 - _**Squat Weapon Down On Impact**_ setting [p.f. Crispy Doom]
-- **"Correct" first person sprite centering** (the original code had an offset of one pixel to the right)
+- **"Correct" first person sprite centering** setting, to toggle the 1px first person sprite misalignment (CFG-Only: `sx_fix`)
 
 ### Status Bar/HUD
 
@@ -93,24 +97,24 @@ Most of Nugget Doom's features come from other sources, like source ports and mo
   - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA
 - _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt
 - _**'IDFLY'**_ to fly [i.b. PrBoom+, ZDoom]
+- _**'FREEZE'**_ to freeze gameplay [i.b. ZDoom]
 - _**'SUMMON'**_ to spawn a hostile or friendly actor based on its mobjtype index [i.b. ZDoom]
 - _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD [i.b. ZDoom]
 - _**'LINETARGET'**_ to give some info on the player's linetarget [i.b. ZDoom]
 - _**'MDK'**_ [i.b. ZDoom]
-- _**'SAITAMA'**_, to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, also featuring an alternate attack when holding down Strafe On)
-- _**'NEXTMAP'**_, to exit the level [i.b. ZDoom]
-- _**'NEXTSECRET'**_, to exit the level as if using a secret exit [i.b. ZDoom]
+- _**'SAITAMA'**_ to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, also featuring an alternate attack when holding down Strafe On)
+- _**'NEXTMAP'**_ to exit the level [i.b. ZDoom]
+- _**'NEXTSECRET'**_ to exit the level as if using a secret exit [i.b. ZDoom]
 - _**'TURBO'**_ to change the player speed in-game
 - **IDCLEV00 restarts current map** [p.f. Crispy Doom]
-- **Mid-air control** while on noclipping mode [p.f. Crispy Doom]
+- **Mid-air control while on noclipping mode** [p.f. Crispy Doom]
 - Reenabled _**'NOMOMENTUM'**_ cheat [p.f. Crispy Doom]
 
 ### Miscellaneous
 
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
 - Restored _**Message Listing Scrolls Upwards**_ setting, and enabled it by default
-- Toggle to **allow chat in singleplayer** (can only be toggled by editing the .cfg file)
-- Toggle to have the **Gamma Correction key cycle through new gamma levels** (can only be toggled by editing the .cfg file)
+- Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - **Sound Links check for a dedicated lump**, therefore allowing usage of a custom sound effect
 
 ## Versioning
