@@ -7450,7 +7450,8 @@ void M_UpdateCriticalItems(void)
 void M_ResetSetupMenuVideo(void)
 {
   DISABLE_ITEM(!hires, enem_settings2[enem2_fuzz]);
-  DISABLE_ITEM(!useaspect, gen_settings1[gen1_widescreen]);
+  // [Nugget] Since we allow widescreen with correction disabled, disable this check
+  /*DISABLE_ITEM(!useaspect, gen_settings1[gen1_widescreen]);*/
 }
 
 //

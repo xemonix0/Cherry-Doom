@@ -2673,6 +2673,13 @@ default_t defaults[] = {
     "1 to perform aspect ratio correction"
   },
 
+  { // [Nugget]
+    "stretch_to_fit",
+    (config_t *) &stretch_to_fit, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to stretch viewport to fit window"
+  },
+
   // [FG] save fullscren mode
   {
     "fullscreen",
@@ -2855,7 +2862,7 @@ default_t defaults[] = {
     "widescreen",
     (config_t *) &widescreen, NULL,
     {RATIO_ORIG}, {RATIO_ORIG, NUM_RATIOS-1}, number, ss_none, wad_no,
-    "widescreen mode (0 = disable, 1 = match screen, 2 = 16:10, 3 = 16:9, 4 = 21:9"
+    "widescreen mode (0 = disable, 1 = match screen, 2 = 16:10, 3 = 16:9, 4 = 21:9)"
   },
 
   // display index

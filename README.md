@@ -15,6 +15,8 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 ### General
 
 - **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
+- Allowed **usage of widescreen without aspect ratio correction**
+- Toggle to **stretch game window to fit screen** (CFG-Only: `stretch-to-fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
 - **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**
 - Toggle for **Gamma Correction key cycling**, through either original or extended gamma levels (CFG-Only: `gammacycle`)
 - **Screen Wipe Style** selection (**Warning**: _"Seizure"_ might legitimately be seizure-inducing, use with caution)

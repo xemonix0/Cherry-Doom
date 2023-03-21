@@ -882,6 +882,7 @@ fixed_t fractionaltic;
 
 // [FG] aspect ratio correction
 int useaspect;
+int stretch_to_fit; // [Nugget]
 static int actualheight;
 
 int uncapped; // [FG] uncapped rendering frame rate
@@ -1196,7 +1197,9 @@ boolean I_WritePNGfile(char *filename)
 
   // [FG] adjust cropping rectangle if necessary
   SDL_GetRendererOutputSize(renderer, &rect.w, &rect.h);
-  if (useaspect || integer_scaling)
+  // [Nugget] Changed conditions; screenshots wouldn't be cropped
+  // to viewport size with aspect ratio correction disabled
+  if (!stretch_to_fit || integer_scaling)
   {
     int temp;
     if (integer_scaling)
@@ -1367,7 +1370,8 @@ void I_GetScreenDimensions(void)
    }
 
    // [crispy] widescreen rendering makes no sense without aspect ratio correction
-   if (widescreen && useaspect)
+   // [Nugget] Maybe it doesn't... but allow it anyways
+   if (widescreen /*&& useaspect*/)
    {
       switch(widescreen)
       {
@@ -1682,7 +1686,11 @@ static void I_InitGraphicsMode(void)
               SDL_GetError());
    }
 
-   SDL_RenderSetLogicalSize(renderer, v_w, actualheight);
+   // [Nugget]
+   if (stretch_to_fit && !integer_scaling)
+   { SDL_RenderSetLogicalSize(renderer, 0, 0); }
+   else
+   { SDL_RenderSetLogicalSize(renderer, v_w, actualheight); }
 
    // [FG] force integer scales
    SDL_RenderSetIntegerScale(renderer, integer_scaling);

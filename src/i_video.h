@@ -79,6 +79,7 @@ extern int disk_icon;  // killough 10/98
 extern int hires;      // killough 11/98
 
 extern int useaspect;
+extern int stretch_to_fit; // [Nugget]
 extern int uncapped; // [FG] uncapped rendering frame rate
 extern int integer_scaling; // [FG] force integer scales
 extern int vga_porch_flash; // emulate VGA "porch" behaviour
