@@ -1,5 +1,6 @@
 //  Copyright © 2013-2022 Fabian Greffrath
 //  Copyright © 2022 Roman Fomin
+//  Copyright © 2022 Alaux
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -19,7 +20,7 @@
 // DESCRIPTION:
 //      crosshair patches
 
-// [Nugget] Use a brighter shade of red and add new crosshairs
+// [Nugget] Brighter shade of red for existing crosshairs
 
 static unsigned char cross00[] = { // Cross
   5,0,5,0,0,0,0,0,28,0,0,0,34,0,0,0,40,0,0,0,53,0,0,0,59,0,0,0,2,1,0,176,0,255,
@@ -45,6 +46,9 @@ static unsigned char cross03[] = { // Big Cross
   0xff, 0x04, 0x01, 0xb0, 0xb0, 0xb0, 0xff, 0x04, 0x01, 0xb0, 0xb0, 0xb0,
   0xff
 };
+
+// [Nugget] New crosshairs
+
 static unsigned char cross04[] = { // Circle
   5,0,5,0,0,0,0,0,28,0,0,0,36,0,0,0,
   47,0,0,0,63,0,0,0,74,0,0,0,1,3,176,176,
