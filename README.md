@@ -176,7 +176,7 @@ Please report any bugs, glitches or crashes that you encounter to the GitHub [Is
 
 ## Acknowledgement
 
-Help was provided by _kraflab_ (responsible for [dsda-doom](https://github.com/kraflab/dsda-doom)), _melak47_, _atsb_ (a.k.a. _Gibbon_) and _Fabian Greffrath_ himself.
+Help was provided by [_Ryan Krafnick_ (a.k.a. _kraflab_)](https://github.com/kraflab), [_melak47_](https://github.com/melak47), [_atsb_ (a.k.a. _Gibbon_)](https://github.com/atsb), [_Roman Fomin_ (a.k.a. _rfomin_)](https://github.com/rfomin) and [_Fabian Greffrath_](https://github.com/fabiangreffrath) himself.
 
 # Legalese
 
