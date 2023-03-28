@@ -8,7 +8,7 @@ Although the new code has been written with the intention of not breaking demo c
 
 ## Features
 
-Most of Nugget Doom's features come from other sources, like source ports and mods; the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them. These acknowledgements are included in the feature lists below, but keep in mind that some are missing.
+Most of Nugget Doom's features come from other sources, like source ports and mods; the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them. These acknowledgements are included in the feature lists below; be aware that some might be inaccurate or outright missing.
 
 A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`. For these settings, their internal variable names are provided alongside the label as guidance.
 
@@ -75,22 +75,22 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ### Doom Compatibility
 
+- Fix Lost Soul colliding with items
+- Lost Soul forgets target upon impact
+- Fuzzy things bleed fuzzy blood [i.b. Crispy Doom]
+- Non-bleeders don't bleed when crushed [i.b. Crispy Doom]
+- Prevent Pain state with 0 damage attacks
+- Bruiser attack (A_BruisAttack) doesn't face target
+- Fix lopsided Icon of Sin explosions
+- Permanent IDCHOPPERS invulnerability
 - Blazing doors reopen with wrong sound [p.f. Crispy Doom]
 - Manually reactivated moving doors are silent [p.f. Crispy Doom]
 - Corrected switch sound source [p.f. Crispy Doom]
 - Chaingun makes two sounds with one bullet
-- Fix Lost Soul colliding with items
-- Lost Soul forgets target upon impact
-- Fuzzy things bleed fuzzy blood
-- Non-bleeders don't bleed when crushed
-- Prevent Pain state with 0 damage attacks
-- Bruiser attack (A_BruisAttack) doesn't face target
 - Chaingunner uses pistol/chaingun sound
 - Arch-Vile fire plays flame start sound [p.f. Crispy Doom]
 - Dead players can still play "oof" sound [p.f. Crispy Doom]
-- Fix lopsided Icon of Sin explosions
 - Key pickup resets palette
-- Fix IDCHOPPERS invulnerability
 
 ### Cheats
 

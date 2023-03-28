@@ -4304,7 +4304,7 @@ setup_menu_t gen_settings3[] = { // General Settings screen3
   {0,S_SKIP|S_END,m_null}
 };
 
-enum {
+enum { // [Nugget]
   gen4_title1,
   gen4_menutint,
   gen4_fov,
@@ -4329,22 +4329,22 @@ static const char *page_ticking_conds[] = {
   "Always", "Not On Menus", "Never", NULL
 };
 
-setup_menu_t gen_settings4[] = { // [Nugget] General Settings screen 4
+setup_menu_t gen_settings4[] = { // [Nugget]
 
-  {"Nugget Settings"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y+gen4_title1*M_SPC},
-    {"Disable palette tint in menus",   S_YESNO,  m_null, M_X, M_Y+gen4_menutint*M_SPC,       {"no_menu_tint"}},
-    {"Field of View",                   S_NUM,    m_null, M_X, M_Y+gen4_fov*M_SPC,            {"fov"}, 0, R_ExecuteSetViewSize},
-    {"Things Move Over/Under Things",   S_YESNO,  m_null, M_X, M_Y+gen4_overunder*M_SPC,      {"over_under"}},
-    {"Allow Jump/Crouch",               S_YESNO,  m_null, M_X, M_Y+gen4_jump_crouch*M_SPC,    {"jump_crouch"}},
-    {"Damage Tint Cap (Default = 100)", S_NUM,    m_null, M_X, M_Y+gen4_dmgcountcap*M_SPC,    {"damagecount_cap"}},
-    {"Bonus Tint Cap (Default = -1)",   S_NUM,    m_null, M_X, M_Y+gen4_boncountcap*M_SPC,    {"bonuscount_cap"}},
-    {"Disable Berserk Tint",            S_YESNO,  m_null, M_X, M_Y+gen4_berserktint*M_SPC,    {"no_berserk_tint"}},
-    {"View Bobbing Percentage",         S_NUM,    m_null, M_X, M_Y+gen4_viewbobbing*M_SPC,    {"view_bobbing_percentage"}},
-    {"View Height (Default = 41)",      S_NUM,    m_null, M_X, M_Y+gen4_viewheight*M_SPC,     {"viewheight_value"}},
-    {"Sound Clipping Distance",         S_CHOICE, m_null, M_X, M_Y+gen4_sclipdist*M_SPC,      {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
-    {"One-Key Quick Save/Load",         S_YESNO,  m_null, M_X, M_Y+gen4_quicksaveload*M_SPC,  {"one_key_saveload"}},
-    {"Advance Internal Demos",          S_CHOICE, m_null, M_X, M_Y+gen4_nopagetic*M_SPC,      {"no_page_ticking"}, 0, NULL, page_ticking_conds},
-    {"Quick \"Quit Game\"",             S_YESNO,  m_null, M_X, M_Y+gen4_quickexit*M_SPC,      {"quick_quitgame"}},
+  {"Nugget Settings", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen4_title1 * M_SPC},
+    {"Disable palette tint in menus",   S_YESNO,  m_null, M_X, M_Y + gen4_menutint      * M_SPC, {"no_menu_tint"}},
+    {"Field of View",                   S_NUM,    m_null, M_X, M_Y + gen4_fov           * M_SPC, {"fov"}, 0, R_ExecuteSetViewSize},
+    {"Things Move Over/Under Things",   S_YESNO,  m_null, M_X, M_Y + gen4_overunder     * M_SPC, {"over_under"}},
+    {"Allow Jump/Crouch",               S_YESNO,  m_null, M_X, M_Y + gen4_jump_crouch   * M_SPC, {"jump_crouch"}},
+    {"Damage Tint Cap (Default = 100)", S_NUM,    m_null, M_X, M_Y + gen4_dmgcountcap   * M_SPC, {"damagecount_cap"}},
+    {"Bonus Tint Cap (Default = -1)",   S_NUM,    m_null, M_X, M_Y + gen4_boncountcap   * M_SPC, {"bonuscount_cap"}},
+    {"Disable Berserk Tint",            S_YESNO,  m_null, M_X, M_Y + gen4_berserktint   * M_SPC, {"no_berserk_tint"}},
+    {"View Bobbing Percentage",         S_NUM,    m_null, M_X, M_Y + gen4_viewbobbing   * M_SPC, {"view_bobbing_percentage"}},
+    {"View Height (Default = 41)",      S_NUM,    m_null, M_X, M_Y + gen4_viewheight    * M_SPC, {"viewheight_value"}},
+    {"Sound Clipping Distance",         S_CHOICE, m_null, M_X, M_Y + gen4_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
+    {"One-Key Quick Save/Load",         S_YESNO,  m_null, M_X, M_Y + gen4_quicksaveload * M_SPC, {"one_key_saveload"}},
+    {"Advance Internal Demos",          S_CHOICE, m_null, M_X, M_Y + gen4_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
+    {"Quick \"Quit Game\"",             S_YESNO,  m_null, M_X, M_Y + gen4_quickexit     * M_SPC, {"quick_quitgame"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings3}},
   {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings5}},
@@ -4354,9 +4354,11 @@ setup_menu_t gen_settings4[] = { // [Nugget] General Settings screen 4
   {0,S_SKIP|S_END,m_null}
 };
 
-enum {
+enum { // [Nugget]
   gen5_a11y_title1,
-//  gen5_a11y_seclight,
+#if 0 // [Nugget] For future use, hopefully
+  gen5_a11y_seclight,
+#endif
   gen5_level_brightness,
   gen5_a11y_flash,
   gen5_a11y_pspr,
@@ -4364,21 +4366,17 @@ enum {
   gen5_a11y_invul,
 };
 
-setup_menu_t gen_settings5[] = { // [Nugget] General Settings screen 5
+setup_menu_t gen_settings5[] = { // [Nugget]
 
-  {"Accessibility"     ,S_SKIP|S_TITLE, m_null, M_X, M_Y+gen5_a11y_title1*M_SPC},
-//    {"Flickering Sector Lighting",  S_YESNO,  m_null, M_X,
-//     M_Y+gen5_a11y_seclight*M_SPC,     {"a11y_sector_lighting"}},
-    {"Level Brightness",            S_THERMO, m_null, M_X_THRM,
-     M_Y+gen5_level_brightness*M_SPC,  {"extra_level_brightness"}},
-    {"Weapon Flash Lighting",       S_YESNO,  m_null, M_X,
-     M_Y+gen5_a11y_flash*M_SPC,        {"a11y_weapon_flash"}},
-    {"Weapon Flash Sprite",         S_YESNO,  m_null, M_X,
-     M_Y+gen5_a11y_pspr*M_SPC,         {"a11y_weapon_pspr"}},
-    {"Pain/pickup/powerup flashes", S_YESNO,  m_null, M_X,
-     M_Y+gen5_palette_changes*M_SPC,   {"palette_changes"}},
-    {"Invulnerability Colormap",    S_YESNO,  m_null, M_X,
-     M_Y+gen5_a11y_invul*M_SPC,        {"a11y_invul_colormap"}},
+  {"Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen5_a11y_title1 * M_SPC},
+#if 0 // [Nugget] For future use, hopefully
+    {"Flickering Sector Lighting",  S_YESNO,  m_null, M_X,      M_Y+gen5_a11y_seclight   *M_SPC, {"a11y_sector_lighting"}},
+#endif
+    {"Level Brightness",            S_THERMO, m_null, M_X_THRM, M_Y + gen5_level_brightness * M_SPC, {"extra_level_brightness"}},
+    {"Weapon Flash Lighting",       S_YESNO,  m_null, M_X,      M_Y + gen5_a11y_flash       * M_SPC, {"a11y_weapon_flash"}},
+    {"Weapon Flash Sprite",         S_YESNO,  m_null, M_X,      M_Y + gen5_a11y_pspr        * M_SPC, {"a11y_weapon_pspr"}},
+    {"Pain/pickup/powerup flashes", S_YESNO,  m_null, M_X,      M_Y + gen5_palette_changes  * M_SPC, {"palette_changes"}},
+    {"Invulnerability Colormap",    S_YESNO,  m_null, M_X,      M_Y + gen5_a11y_invul       * M_SPC, {"a11y_invul_colormap"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings4}},
 
@@ -4606,42 +4604,29 @@ setup_menu_t comp_settings3[] =  // Compatibility Settings screen #3
   {0,S_SKIP|S_END,m_null}
 };
 
-// [Nugget]
-enum {
-  comp4_blazing2,
-  comp4_manualdoor,
-  comp4_switchsource,
-  comp4_cgundblsnd,
+enum { // [Nugget]
+  comp4_title1,
   comp4_lscollision,
   comp4_lsamnesia,
   comp4_fuzzyblood,
   comp4_nonbleeders,
   comp4_0dmgpain,
   comp4_bruistarget,
+  comp4_iosdeath,
+  comp4_choppers,
 };
 
-setup_menu_t comp_settings4[] =  // [Nugget] Compatibility Settings screen #3
+setup_menu_t comp_settings4[] =  // [Nugget]
 {
-    {"Blazing doors reopen with wrong sound", S_YESNO, m_null, C_X,
-     M_Y + comp4_blazing2 * COMP_SPC, {"comp_blazing2"}},
-    {"Manually reactivated moving doors are silent", S_YESNO, m_null, C_X,
-     M_Y + comp4_manualdoor * COMP_SPC, {"comp_manualdoor"}},
-    {"Corrected switch sound source", S_YESNO, m_null, C_X,
-     M_Y + comp4_switchsource * COMP_SPC, {"comp_switchsource"}},
-    {"Chaingun makes two sounds with one bullet", S_YESNO, m_null, C_X,
-     M_Y + comp4_cgundblsnd * COMP_SPC, {"comp_cgundblsnd"}},
-    {"Fix Lost Soul colliding with items", S_YESNO, m_null, C_X,
-     M_Y + comp4_lscollision * COMP_SPC, {"comp_lscollision"}},
-    {"Lost Soul forgets target upon impact", S_YESNO, m_null, C_X,
-     M_Y + comp4_lsamnesia * COMP_SPC, {"comp_lsamnesia"}},
-    {"Fuzzy things bleed fuzzy blood", S_YESNO, m_null, C_X,
-     M_Y + comp4_fuzzyblood * COMP_SPC, {"comp_fuzzyblood"}},
-    {"Non-bleeders don't bleed when crushed", S_YESNO, m_null, C_X,
-     M_Y + comp4_nonbleeders * COMP_SPC, {"comp_nonbleeders"}},
-    {"Prevent pain state with 0 damage attacks", S_YESNO, m_null, C_X,
-     M_Y + comp4_0dmgpain * COMP_SPC, {"comp_0dmgpain"}},
-    {"Bruiser attack doesn't face target", S_YESNO, m_null, C_X,
-     M_Y + comp4_bruistarget * COMP_SPC, {"comp_bruistarget"}},
+  {"Nugget - Additional Settings", S_SKIP|S_TITLE, m_null, C_X, M_Y + comp4_title1 * COMP_SPC},
+    {"Fix Lost Soul colliding with items",       S_YESNO, m_null, C_X, M_Y + comp4_lscollision * COMP_SPC, {"comp_lscollision"}},
+    {"Lost Soul forgets target upon impact",     S_YESNO, m_null, C_X, M_Y + comp4_lsamnesia   * COMP_SPC, {"comp_lsamnesia"}},
+    {"Fuzzy things bleed fuzzy blood",           S_YESNO, m_null, C_X, M_Y + comp4_fuzzyblood  * COMP_SPC, {"comp_fuzzyblood"}},
+    {"Non-bleeders don't bleed when crushed",    S_YESNO, m_null, C_X, M_Y + comp4_nonbleeders * COMP_SPC, {"comp_nonbleeders"}},
+    {"Prevent pain state with 0 damage attacks", S_YESNO, m_null, C_X, M_Y + comp4_0dmgpain    * COMP_SPC, {"comp_0dmgpain"}},
+    {"Bruiser attack doesn't face target",       S_YESNO, m_null, C_X, M_Y + comp4_bruistarget * COMP_SPC, {"comp_bruistarget"}},
+    {"Fix lopsided Icon of Sin explosions",      S_YESNO, m_null, C_X, M_Y + comp4_iosdeath    * COMP_SPC, {"comp_iosdeath"}},
+    {"Permanent IDCHOPPERS invulnerability",     S_YESNO, m_null, C_X, M_Y + comp4_choppers    * COMP_SPC, {"comp_choppers"}},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings3}},
   {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings5}},
@@ -4651,30 +4636,29 @@ setup_menu_t comp_settings4[] =  // [Nugget] Compatibility Settings screen #3
   {0,S_SKIP|S_END,m_null}
 };
 
-// [Nugget]
-enum {
+enum { // [Nugget]
+  comp5_title1,
+  comp5_blazing2,
+  comp5_manualdoor,
+  comp5_switchsource,
+  comp5_cgundblsnd,
   comp5_cgunnersfx,
   comp5_flamst,
   comp5_deadoof,
-  comp5_iosdeath,
   comp5_keypal,
-  comp5_choppers,
 };
 
-setup_menu_t comp_settings5[] =  // [Nugget] Compatibility Settings screen #4
+setup_menu_t comp_settings5[] =  // [Nugget]
 {
-    {"Chaingunner uses pistol/chaingun sound", S_YESNO, m_null, C_X,
-     M_Y + comp5_cgunnersfx * COMP_SPC, {"comp_cgunnersfx"}},
-    {"Arch-Vile fire plays flame start sound", S_YESNO, m_null, C_X,
-     M_Y + comp5_flamst * COMP_SPC, {"comp_flamst"}},
-    {"Dead players can still play oof sound", S_YESNO, m_null, C_X,
-     M_Y + comp5_deadoof * COMP_SPC, {"comp_deadoof"}},
-    {"Fix lopsided Icon of Sin explosions", S_YESNO, m_null, C_X,
-     M_Y + comp5_iosdeath * COMP_SPC, {"comp_iosdeath"}},
-    {"Key pickup resets palette", S_YESNO, m_null, C_X,
-     M_Y + comp5_keypal * COMP_SPC, {"comp_keypal"}},
-    {"Fix IDCHOPPERS invulnerability", S_YESNO, m_null, C_X,
-     M_Y + comp5_choppers * COMP_SPC, {"comp_choppers"}},
+  {"Nugget - Additional Cosmetic Settings", S_SKIP|S_TITLE, m_null, C_X, M_Y + comp5_title1 * COMP_SPC},
+    {"Blazing doors reopen with wrong sound",        S_YESNO|S_COSMETIC, m_null, C_X, M_Y + comp5_blazing2     * COMP_SPC, {"comp_blazing2"}},
+    {"Manually reactivated moving doors are silent", S_YESNO|S_COSMETIC, m_null, C_X, M_Y + comp5_manualdoor   * COMP_SPC, {"comp_manualdoor"}},
+    {"Corrected switch sound source",                S_YESNO|S_COSMETIC, m_null, C_X, M_Y + comp5_switchsource * COMP_SPC, {"comp_switchsource"}},
+    {"Chaingun makes two sounds with one bullet",    S_YESNO|S_COSMETIC, m_null, C_X, M_Y + comp5_cgundblsnd   * COMP_SPC, {"comp_cgundblsnd"}},
+    {"Chaingunner uses pistol/chaingun sound",       S_YESNO|S_COSMETIC, m_null, C_X, M_Y + comp5_cgunnersfx   * COMP_SPC, {"comp_cgunnersfx"}},
+    {"Arch-Vile fire plays flame start sound",       S_YESNO|S_COSMETIC, m_null, C_X, M_Y + comp5_flamst       * COMP_SPC, {"comp_flamst"}},
+    {"Dead players can still play oof sound",        S_YESNO|S_COSMETIC, m_null, C_X, M_Y + comp5_deadoof      * COMP_SPC, {"comp_deadoof"}},
+    {"Key pickup resets palette",                    S_YESNO|S_COSMETIC, m_null, C_X, M_Y + comp5_keypal       * COMP_SPC, {"comp_keypal"}},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings4}},
 
@@ -7334,14 +7318,10 @@ static void M_UpdateStrictModeItems(void)
   DISABLE_STRICT(gen_settings5[gen5_level_brightness]);
 
   // [Nugget]
-  DISABLE_ITEM(!casual_play, comp_settings4[comp4_lscollision]);
-  DISABLE_ITEM(!casual_play, comp_settings4[comp4_lsamnesia]);
-  DISABLE_ITEM(!casual_play, comp_settings4[comp4_nonbleeders]);
-  DISABLE_ITEM(!casual_play, comp_settings4[comp4_0dmgpain]);
-  DISABLE_ITEM(!casual_play, comp_settings4[comp4_bruistarget]);
-  DISABLE_ITEM(!casual_play, comp_settings5[comp5_iosdeath]);
-  DISABLE_ITEM(!casual_play, comp_settings5[comp5_keypal]);
-
+  for (int i = comp4_lscollision; i <= comp4_iosdeath; i++)
+  { DISABLE_ITEM(!casual_play, comp_settings4[i]); }
+  DISABLE_STRICT(comp_settings5[comp5_keypal]);
+  
   DISABLE_ITEM(!casual_play, weap_settings1[weap1_autoaim]); // [Nugget]
   M_UpdateFreeaimItem(); // [Nugget]
 

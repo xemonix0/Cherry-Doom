@@ -1000,39 +1000,44 @@ default_t defaults[] = {
     "Voodoo dolls on slow scrollers move too slowly"
   },
 
+  {
+    "comp_reservedlineflag",
+    (config_t *) &default_comp[comp_reservedlineflag], (config_t *) &comp[comp_reservedlineflag],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "ML_RESERVED clears extended flags"
+  },
+
+  // [FG] overflow emulation
+
+  {
+    "emu_spechits",
+    (config_t *) &overflow[emu_spechits].enabled, NULL,
+    {1}, {0,1}, number, ss_comp, wad_no,
+    "1 to enable SPECHITS overflow emulation"
+  },
+
+  {
+    "emu_reject",
+    (config_t *) &overflow[emu_reject].enabled, NULL,
+    {1}, {0,1}, number, ss_comp, wad_no,
+    "1 to enable REJECT overflow emulation"
+  },
+
+  {
+    "emu_intercepts",
+    (config_t *) &overflow[emu_intercepts].enabled, NULL,
+    {1}, {0,1}, number, ss_comp, wad_no,
+    "1 to enable INTERCEPTS overflow emulation"
+  },
+
+  {
+    "emu_missedbackside",
+    (config_t *) &overflow[emu_missedbackside].enabled, NULL,
+    {0}, {0,1}, number, ss_comp, wad_no,
+    "1 to enable missed backside emulation"
+  },
+
   // [Nugget] ------------------------------
-
-  {
-    "comp_blazing2",
-    (config_t *) &default_nugget_comp[comp_blazing2],
-    (config_t *) &nugget_comp[comp_blazing2],
-    {1}, {0,1}, number, ss_comp, wad_yes,
-    "Blazing doors reopen with wrong sound"
-  },
-
-  {
-    "comp_manualdoor",
-    (config_t *) &default_nugget_comp[comp_manualdoor],
-    (config_t *) &nugget_comp[comp_manualdoor],
-    {1}, {0,1}, number, ss_comp, wad_yes,
-    "Manually reactivated moving doors are silent"
-  },
-
-  {
-    "comp_switchsource",
-    (config_t *) &default_nugget_comp[comp_switchsource],
-    (config_t *) &nugget_comp[comp_switchsource],
-    {0}, {0,1}, number, ss_comp, wad_yes,
-    "Corrected switch sound source"
-  },
-
-  {
-    "comp_cgundblsnd",
-    (config_t *) &default_nugget_comp[comp_cgundblsnd],
-    (config_t *) &nugget_comp[comp_cgundblsnd],
-    {1}, {0,1}, number, ss_comp, wad_yes,
-    "Chaingun makes two sounds with one bullet"
-  },
 
   {
     "comp_lscollision",
@@ -1083,6 +1088,54 @@ default_t defaults[] = {
   },
 
   {
+    "comp_iosdeath",
+    (config_t *) &default_nugget_comp[comp_iosdeath],
+    (config_t *) &nugget_comp[comp_iosdeath],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Fix lopsided Icon of Sin explosions"
+  },
+
+  {
+    "comp_choppers",
+    (config_t *) &default_nugget_comp[comp_choppers],
+    (config_t *) &nugget_comp[comp_choppers],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Permanent IDCHOPPERS invulnerability"
+  },
+
+  {
+    "comp_blazing2",
+    (config_t *) &default_nugget_comp[comp_blazing2],
+    (config_t *) &nugget_comp[comp_blazing2],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Blazing doors reopen with wrong sound"
+  },
+
+  {
+    "comp_manualdoor",
+    (config_t *) &default_nugget_comp[comp_manualdoor],
+    (config_t *) &nugget_comp[comp_manualdoor],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Manually reactivated moving doors are silent"
+  },
+
+  {
+    "comp_switchsource",
+    (config_t *) &default_nugget_comp[comp_switchsource],
+    (config_t *) &nugget_comp[comp_switchsource],
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Corrected switch sound source"
+  },
+
+  {
+    "comp_cgundblsnd",
+    (config_t *) &default_nugget_comp[comp_cgundblsnd],
+    (config_t *) &nugget_comp[comp_cgundblsnd],
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Chaingun makes two sounds with one bullet"
+  },
+
+  {
     "comp_cgunnersfx",
     (config_t *) &default_nugget_comp[comp_cgunnersfx],
     (config_t *) &nugget_comp[comp_cgunnersfx],
@@ -1107,14 +1160,6 @@ default_t defaults[] = {
   },
 
   {
-    "comp_iosdeath",
-    (config_t *) &default_nugget_comp[comp_iosdeath],
-    (config_t *) &nugget_comp[comp_iosdeath],
-    {0}, {0,1}, number, ss_comp, wad_yes,
-    "Fix lopsided Icon of Sin explosions"
-  },
-
-  {
     "comp_keypal",
     (config_t *) &default_nugget_comp[comp_keypal],
     (config_t *) &nugget_comp[comp_keypal],
@@ -1122,52 +1167,7 @@ default_t defaults[] = {
     "Key pickup resets palette"
   },
 
-  {
-    "comp_choppers",
-    (config_t *) &default_nugget_comp[comp_choppers],
-    (config_t *) &nugget_comp[comp_choppers],
-    {0}, {0,1}, number, ss_comp, wad_yes,
-    "Fix IDCHOPPERS invulnerability"
-  },
-
   // [Nugget] End --------------------------
-
-  {
-    "comp_reservedlineflag",
-    (config_t *) &default_comp[comp_reservedlineflag], (config_t *) &comp[comp_reservedlineflag],
-    {1}, {0,1}, number, ss_comp, wad_yes,
-    "ML_RESERVED clears extended flags"
-  },
-
-  // [FG] overflow emulation
-
-  {
-    "emu_spechits",
-    (config_t *) &overflow[emu_spechits].enabled, NULL,
-    {1}, {0,1}, number, ss_comp, wad_no,
-    "1 to enable SPECHITS overflow emulation"
-  },
-
-  {
-    "emu_reject",
-    (config_t *) &overflow[emu_reject].enabled, NULL,
-    {1}, {0,1}, number, ss_comp, wad_no,
-    "1 to enable REJECT overflow emulation"
-  },
-
-  {
-    "emu_intercepts",
-    (config_t *) &overflow[emu_intercepts].enabled, NULL,
-    {1}, {0,1}, number, ss_comp, wad_no,
-    "1 to enable INTERCEPTS overflow emulation"
-  },
-
-  {
-    "emu_missedbackside",
-    (config_t *) &overflow[emu_missedbackside].enabled, NULL,
-    {0}, {0,1}, number, ss_comp, wad_no,
-    "1 to enable missed backside emulation"
-  },
 
   // For key bindings, the values stored in the key_* variables       // phares
   // are the internal Doom Codes. The values stored in the default.cfg
