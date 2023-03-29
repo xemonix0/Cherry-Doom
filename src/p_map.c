@@ -557,8 +557,9 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
     }
 
     // [Nugget] Fix lost soul collision
-    if (casual_play && nugget_comp[comp_lscollision])
-      if (!(thing->flags & MF_SHOOTABLE)) { return !(thing->flags & MF_SOLID); }
+    if (casual_play && nugget_comp[comp_lscollision]
+        && !(thing->flags & MF_SHOOTABLE))
+    { return !(thing->flags & MF_SOLID); }
 
     P_DamageMobj (thing, tmthing, tmthing, damage);
 
@@ -567,9 +568,9 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
     // [Nugget] Fix forgetful lost soul
     if (casual_play && !nugget_comp[comp_lsamnesia])
-      { P_SetMobjState(tmthing, tmthing->info->seestate); }
+    { P_SetMobjState(tmthing, tmthing->info->seestate); }
     else
-      { P_SetMobjState(tmthing, tmthing->info->spawnstate); }
+    { P_SetMobjState(tmthing, tmthing->info->spawnstate); }
 
     return false;   // stop moving
   }
@@ -1652,7 +1653,7 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 	  if  (li->backsector && li->backsector->ceilingpic == skyflatnum)
         // [Nugget] freeaim - fix disappearing bullet puffs when outside
         if ((demo_compatibility && !casual_play) || li->backsector->ceilingheight < z)
-          { return false; }
+        { return false; }
 	}
       // [Nugget] Taken from Crispy Doom - check if the bullet puff's z-coordinate is below or above
       // its spawning sector's floor or ceiling, respectively, and move its
@@ -1768,7 +1769,7 @@ fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 }
 
 // [Nugget] Used for direct freeaim
-fixed_t P_AimSlopedLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,fixed_t slope,int mask)
+fixed_t P_AimSlopedLineAttack(mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope, int mask)
 {
   fixed_t x2, y2;
 

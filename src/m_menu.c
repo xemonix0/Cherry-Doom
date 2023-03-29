@@ -6,6 +6,7 @@
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
 //  Copyright(C) 2020-2021 Fabian Greffrath
+//  Copyright(C) 2021-2023 Alaux
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -5417,7 +5418,7 @@ setup_menu_t cred_settings[]={
   {"Woof! by",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*woof + CR_SH*cr_woof},
   {"Fabian Greffrath",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*woof + CR_SH*cr_woof},
 
-  // [Nugget] You're not alone, Fab [insert moyai here]
+  // [Nugget] [insert moyai here]
   {"Nugget Doom by",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*nugget + CR_SH*cr_nugget},
   {"Alaux",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*nugget + CR_SH*cr_nugget},
 

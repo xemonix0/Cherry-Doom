@@ -1,6 +1,6 @@
 //  Copyright © 2013-2022 Fabian Greffrath
 //  Copyright © 2022 Roman Fomin
-//  Copyright © 2022 Alaux
+//  Copyright © 2022-2023 Alaux
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License

@@ -968,8 +968,7 @@ static void cheat_clev(char *buf)
     if (W_CheckNumForName(next) == -1)
     {
       // [Nugget] Restart map with IDCLEV00
-      if ((epsd == 0 && map == 0)
-          || (gamemode == commercial && map == 0))
+      if ((epsd == 0 && map == 0) || (gamemode == commercial && map == 0))
       {
         epsd = gameepisode;
         map = gamemap;

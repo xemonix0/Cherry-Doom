@@ -57,7 +57,7 @@ int mapcolor_bdor;    // blue door color (of enabling one but not other )
 int mapcolor_ydor;    // yellow door color
 int mapcolor_tele;    // teleporter line color
 int mapcolor_secr;    // secret sector boundary color
-int mapcolor_uscr; // [Nugget] Unrevealed secret sector boundary color
+int mapcolor_uscr;    // [Nugget] Unrevealed secret sector boundary color
 int mapcolor_exit;    // jff 4/23/98 add exit line color
 int mapcolor_unsn;    // computer map unseen line color
 int mapcolor_flat;    // line with no floor/ceiling changes

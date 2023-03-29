@@ -972,9 +972,11 @@ static void HU_widget_build_monsec(void)
     }
   }
 
-  kills_color = (kills - (smarttotals ? extrakills : extraspawns) >= totalkills ? '0'+CR_BLUE : '0'+CR_GOLD); // [Nugget] Smart Totals from So Doom
-  kills_percent_color = (kills - (smarttotals ? extrakills : 0) >= totalkills ? '0'+CR_BLUE : '0'+CR_GOLD); // [Nugget] Smart Totals from So Doom
-  kills_percent = (totalkills == 0 ? 100 : (kills - (smarttotals ? extrakills : 0)) * 100 / totalkills); // [Nugget] Smart Totals from So Doom
+  // [Nugget] Smart Totals from So Doom
+  kills_color = (kills - (smarttotals ? extrakills : extraspawns) >= totalkills ? '0'+CR_BLUE : '0'+CR_GOLD);
+  kills_percent_color = (kills - (smarttotals ? extrakills : 0) >= totalkills ? '0'+CR_BLUE : '0'+CR_GOLD);
+  kills_percent = (totalkills == 0 ? 100 : (kills - (smarttotals ? extrakills : 0)) * 100 / totalkills);
+  
   items_color = (items >= totalitems ? '0'+CR_BLUE : '0'+CR_GOLD);
   secrets_color = (secrets >= totalsecret ? '0'+CR_BLUE : '0'+CR_GOLD);
 

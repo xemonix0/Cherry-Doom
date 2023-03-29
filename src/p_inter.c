@@ -261,9 +261,9 @@ void P_GiveCard(player_t *player, card_t card)
     return;
   // [Nugget] Fix for "key pickup resets palette"
   if (!STRICTMODE(nugget_comp[comp_keypal]))
-    { player->bonuscount += BONUSADD; }
+  { player->bonuscount += BONUSADD; }
   else
-    { player->bonuscount = BONUSADD; }
+  { player->bonuscount = BONUSADD; }
   player->cards[card] = 1;
 }
 
@@ -659,7 +659,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   player->bonuscount += BONUSADD;
   // [Nugget] Bonuscount cap
   if (!strictmode && bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap)
-    { player->bonuscount = bonuscount_cap; }
+  { player->bonuscount = bonuscount_cap; }
 
   S_StartSound(player->mo, sound);   // killough 4/25/98, 12/98
 }
@@ -696,7 +696,7 @@ static void P_NuggetGib(mobj_t *mo)
   int q = 20 + (Woof_Random()%20+1); // Spawn 20-40 blood splats
 
   if (!casual_play || !bloodier_gibbing)
-    { return; }
+  { return; }
 
   for (int i = 0; i < q; i++)
   {
@@ -710,7 +710,7 @@ static void P_NuggetGib(mobj_t *mo)
 
     // Fuzzy blood if applicable
     if (nugget_comp[comp_fuzzyblood] && mo->flags & MF_SHADOW)
-      { splat->flags |= MF_SHADOW; }
+    { splat->flags |= MF_SHADOW; }
 
     if (colored_blood) {
       splat->flags2 |= MF2_COLOREDBLOOD;
@@ -841,7 +841,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
     P_NuggetGib(target); // [Nugget] Bloodier Gibbing
   }
   else
-    { P_SetMobjState (target, target->info->deathstate); }
+  { P_SetMobjState (target, target->info->deathstate); }
 
   target->tics -= P_Random(pr_killtics)&3;
 
@@ -976,7 +976,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 
     // [Nugget] Custom red tint cap
     if (player->damagecount > damagecount_cap && !strictmode)
-      { player->damagecount = damagecount_cap; }
+    { player->damagecount = damagecount_cap; }
 
 #if 0
       // killough 11/98:
@@ -1038,7 +1038,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
   {
     // [Nugget] Prevent pain state if no damage is caused
     if (!(casual_play && nugget_comp[comp_0dmgpain] && damage == 0))
-      { P_SetMobjState(target, target->info->painstate); }
+    { P_SetMobjState(target, target->info->painstate); }
   }
 
   target->reactiontime = 0;           // we're awake now...

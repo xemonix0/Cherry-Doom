@@ -1332,7 +1332,7 @@ void A_CPosAttack(mobj_t *actor)
     S_StartSound(actor, W_CheckNumForName("dschgun") >= 0
                         ? sfx_chgun : sfx_pistol);
   else
-    { S_StartSound (actor, sfx_shotgn); }
+  { S_StartSound (actor, sfx_shotgn); }
 
   A_FaceTarget(actor);
   bangle = actor->angle;
@@ -1456,7 +1456,7 @@ void A_BruisAttack(mobj_t *actor)
 
   // [Nugget] Fix A_BruisAttack not calling A_FaceTarget
   if (casual_play && !nugget_comp[comp_bruistarget])
-    { A_FaceTarget(actor); }
+  { A_FaceTarget(actor); }
 
   if (P_CheckMeleeRange(actor))
     {
@@ -1568,9 +1568,9 @@ void A_Tracer(mobj_t *actor)
 
   // [Nugget] Check for crouching
   if (dest->player && (dest->intflags & MIF_CROUCHING))
-    { slope = (dest->z+20*FRACUNIT - actor->z) / dist; }
+  { slope = (dest->z+20*FRACUNIT - actor->z) / dist; }
   else
-    { slope = (dest->z+40*FRACUNIT - actor->z) / dist; }
+  { slope = (dest->z+40*FRACUNIT - actor->z) / dist; }
 
   if (slope < actor->momz)
     actor->momz -= FRACUNIT/8;
@@ -1857,7 +1857,7 @@ void A_VileTarget(mobj_t *actor)
   P_SetTarget(&fog->tracer, actor->target);
   // [Nugget]: [crispy] play DSFLAMST sound when Arch-Vile spawns fire attack
   if (nugget_comp[comp_flamst])
-    { S_StartSound(fog, sfx_flamst); }
+  { S_StartSound(fog, sfx_flamst); }
   A_Fire(fog);
 }
 
@@ -2549,9 +2549,9 @@ void A_BrainScream(mobj_t *mo)
   int x1, x2; // [Nugget] Fix lopsided IoS death explosions
 
   if (casual_play && nugget_comp[comp_iosdeath])
-    { x1 = x2 = 280; }
+  { x1 = x2 = 280; }
   else
-    { x1 = 196; x2 = 320; }
+  { x1 = 196; x2 = 320; }
 
   for (x=mo->x - x1*FRACUNIT ; x< mo->x + x2*FRACUNIT ; x+= FRACUNIT*8)
     {
