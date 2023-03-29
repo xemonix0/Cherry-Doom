@@ -411,6 +411,13 @@ void R_DrawSkyColumn(void)
 // Spectre/Invisibility.
 //
 
+// [Nugget - ceski] Selective fuzz darkening, credit: Linguica (https://www.doomworld.com/forum/post/1335769)
+int fuzzdark_mode;
+#define FUZZDARK    ((!fuzzdark_mode || (fuzzoffset[fuzzpos] && (count != dc_yh - dc_yl + 1))) ? 6*256 : 0)
+#define FUZZDARKCUT ((!fuzzdark_mode || !fuzzoffset[fuzzpos]) ? 6*256 : 0)
+#define FUZZLINE    (linesize * (fuzzoffset[fuzzpos] ? 1 : -1))
+#define FUZZLINECUT (linesize * fuzzoffset[fuzzpos])
+
 #define FUZZTABLE 50 
 
 // killough 11/98: convert fuzzoffset to be screenwidth-independent
@@ -507,10 +514,11 @@ static void R_DrawFuzzColumn_orig(void)
       // fraggle 1/8/2000: fix with the bugfix from lees
       // why_i_left_doom.html
 
-      *dest = fullcolormap[6*256+dest[fuzzoffset[fuzzpos++] ? linesize : -linesize]];
+      *dest = fullcolormap[FUZZDARK + dest[FUZZLINE]];
       dest += linesize;             // killough 11/98
 
       // Clamp table lookup index.
+      fuzzpos++;
       fuzzpos &= (fuzzpos - FUZZTABLE) >> (8*sizeof fuzzpos-1); //killough 1/99
     } 
   while (--count);
@@ -519,7 +527,7 @@ static void R_DrawFuzzColumn_orig(void)
   // draw one extra line using only pixels of that line and the one above
   if (cutoff)
   {
-    *dest = fullcolormap[6*256+dest[linesize*fuzzoffset[fuzzpos]]];
+    *dest = fullcolormap[FUZZDARKCUT + dest[FUZZLINECUT]];
   }
 }
 
@@ -567,12 +575,13 @@ static void R_DrawFuzzColumn_block(void)
   dest = ylookup[dc_yl] + columnofs[dc_x];
 
   count+=2;
+  count /= 2;
 
   do
     {
       // [FG] draw only even pixels as 2x2 squares
       //      using the same fuzzoffset value
-      const byte fuzz = fullcolormap[6*256+dest[fuzzoffset[fuzzpos] ? 2*linesize : -2*linesize]];
+      const byte fuzz = fullcolormap[FUZZDARK + dest[2 * FUZZLINE]];
 
       dest[0] = fuzz;
       dest[1] = fuzz;
@@ -585,11 +594,11 @@ static void R_DrawFuzzColumn_block(void)
       fuzzpos++;
       fuzzpos &= (fuzzpos - FUZZTABLE) >> (8*sizeof fuzzpos-1);
     }
-  while (count -= 2);
+  while (--count);
 
   if (cutoff)
     {
-      const byte fuzz = fullcolormap[6*256+dest[2*linesize*fuzzoffset[fuzzpos]]];
+      const byte fuzz = fullcolormap[FUZZDARKCUT + dest[2 * FUZZLINECUT]];
 
       dest[0] = fuzz;
       dest[1] = fuzz;

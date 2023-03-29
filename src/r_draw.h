@@ -60,6 +60,9 @@ void R_SetFuzzPosDraw(void);
 extern int fuzzcolumn_mode;
 void R_SetFuzzColumnMode(void);
 
+// [Nugget - ceski] Selective fuzz darkening
+extern int fuzzdark_mode;
+
 void R_DrawSkyColumn(void);
 
 // Draw with color translation tables, for player sprite rendering,
