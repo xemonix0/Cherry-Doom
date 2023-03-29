@@ -3844,6 +3844,7 @@ enum {
   enem2_flipcorpses,
   enem2_ghost,
   enem2_fuzz,
+  enem2_fuzzdark,
 
   enem2_end
 };
@@ -3859,6 +3860,8 @@ setup_menu_t enem_settings2[] =  // Enemy Settings screen 2
     {"Translucent Ghost Monsters",S_YESNO,m_null,M_X,M_Y+ enem2_ghost*M_SPC, {"ghost_monsters"}},
     // [FG] spectre drawing mode
     {"Blocky Spectre Drawing",S_YESNO,m_null,M_X,M_Y+ enem2_fuzz*M_SPC, {"fuzzcolumn_mode"}, 0, R_SetFuzzColumnMode},
+    // [Nugget - ceski] Selective fuzz darkening
+    {"Selective Fuzz Darkening",S_YESNO,m_null,M_X,M_Y+ enem2_fuzzdark*M_SPC, {"fuzzdark_mode"}},
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {enem_settings1}},
 
