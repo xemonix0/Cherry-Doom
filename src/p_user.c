@@ -376,14 +376,14 @@ void P_MovePlayer (player_t* player)
 
           if (cmd->forwardmove)
             {
-              P_Bob(player,mo->angle,cmd->forwardmove*bobfactor);
-              P_Thrust(player,mo->angle,cmd->forwardmove*movefactor);
+              P_Bob(player,mo->angle,cforwardmove*bobfactor);
+              P_Thrust(player,mo->angle,cforwardmove*movefactor);
             }
 
           if (cmd->sidemove)
             {
-              P_Bob(player,mo->angle-ANG90,cmd->sidemove*bobfactor);
-              P_Thrust(player,mo->angle-ANG90,cmd->sidemove*movefactor);
+              P_Bob(player,mo->angle-ANG90,csidemove*bobfactor);
+              P_Thrust(player,mo->angle-ANG90,csidemove*movefactor);
             }
         }
       // [Nugget] Allow minimal mid-air movement if Jumping is enabled
