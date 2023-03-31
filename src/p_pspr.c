@@ -557,12 +557,10 @@ void A_CheckReload(player_t *player, pspdef_t *psp)
 void A_Lower(player_t *player, pspdef_t *psp)
 {
   // [Nugget] Double speed with Fast Weapons
-  const int speed = (player->cheats & CF_FASTWEAPS)
-                    ? LOWERSPEED*2 : LOWERSPEED;
+  const int speed = (player->cheats & CF_FASTWEAPS) ? LOWERSPEED*2 : LOWERSPEED;
 
   psp->sy += speed;
-  // [Nugget]
-  psp->sy2 += speed;
+  psp->sy2 += speed; // [Nugget]
 
   // Is already down.
   if (psp->sy < WEAPONBOTTOM)
@@ -571,9 +569,7 @@ void A_Lower(player_t *player, pspdef_t *psp)
   // Player is dead.
   if (player->playerstate == PST_DEAD)
     {
-      psp->sy = WEAPONBOTTOM;
-      // [Nugget]
-      psp->sy2 = WEAPONBOTTOM;
+      psp->sy = psp->sy2 = WEAPONBOTTOM; // [Nugget]
       return;      // don't bring weapon back up
     }
 
@@ -599,19 +595,15 @@ void A_Raise(player_t *player, pspdef_t *psp)
 {
   statenum_t newstate;
   // [Nugget] Double speed with Fast Weapons
-  const int speed = (player->cheats & CF_FASTWEAPS)
-                    ? RAISESPEED*2 : RAISESPEED;
+  const int speed = (player->cheats & CF_FASTWEAPS) ? RAISESPEED*2 : RAISESPEED;
 
   psp->sy -= speed;
-  // [Nugget]
-  psp->sy2 -= speed;
+  psp->sy2 -= speed; // [Nugget]
 
   if (psp->sy > WEAPONTOP)
     return;
 
-  psp->sy = WEAPONTOP;
-  // [Nugget]
-  psp->sy2 = WEAPONTOP;
+  psp->sy = psp->sy2 = WEAPONTOP; // [Nugget]
 
   // The weapon has been raised all the way,
   //  so change to the ready state.
@@ -678,11 +670,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
         angle = player->mo->angle + ANG20 - (ANG2*i);
 
         if (mouselook && freeaim == freeaim_direct)
-          { slope = PLAYER_SLOPE(player); }
+        { slope = PLAYER_SLOPE(player); }
         else {
           slope = P_AimLineAttack(player->mo, angle, 32*64*FRACUNIT, 0);
           if (!linetarget && mouselook && freeaim == freeaim_autoaim)
-            { slope = PLAYER_SLOPE(player); }
+          { slope = PLAYER_SLOPE(player); }
         }
 
         P_LineAttack(player->mo, angle, MISSILERANGE, slope, 1000000);
@@ -692,11 +684,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
       angle = player->mo->angle;
 
       if (mouselook && freeaim == freeaim_direct)
-        { slope = PLAYER_SLOPE(player); }
+      { slope = PLAYER_SLOPE(player); }
       else {
         slope = P_AimLineAttack(player->mo, angle, 32*64*FRACUNIT, 0);
         if (!linetarget && mouselook && freeaim == freeaim_autoaim)
-          { slope = PLAYER_SLOPE(player); }
+        { slope = PLAYER_SLOPE(player); }
       }
 
       P_LineAttack(player->mo, angle, MISSILERANGE, slope, 1000000);
@@ -909,7 +901,7 @@ void A_FirePlasma(player_t *player, pspdef_t *psp)
 
   // killough 7/11/98: emulate Doom's beta version, which alternated fireballs
   P_SpawnPlayerMissile(player->mo, beta_emulation ?
-		       player->refire&1 ? MT_PLASMA2 : MT_PLASMA1 : MT_PLASMA);
+                       player->refire&1 ? MT_PLASMA2 : MT_PLASMA1 : MT_PLASMA);
 }
 
 //
@@ -924,7 +916,7 @@ static void P_BulletSlope(mobj_t *mo)
 {
   // [Nugget] Crispy freeaim
   if (mouselook && freeaim == freeaim_direct && casual_play)
-    { bulletslope = PLAYER_SLOPE(mo->player); }
+  { bulletslope = PLAYER_SLOPE(mo->player); }
   else {
     angle_t an = mo->angle;    // see which target is to be aimed at
 
@@ -1040,7 +1032,7 @@ void A_FireCGun(player_t *player, pspdef_t *psp)
   // [Nugget] Fix "Chaingun sound without ammo" bug
   if (!nugget_comp[comp_cgundblsnd])
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
-      { return; }
+    { return; }
 
   // [Nugget] use DSCHGUN if available
   S_StartSound(player->mo, W_CheckNumForName("dschgun") >= 0
@@ -1049,7 +1041,7 @@ void A_FireCGun(player_t *player, pspdef_t *psp)
   // [Nugget] Fix "Chaingun sound without ammo" bug
   if (nugget_comp[comp_cgundblsnd])
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
-      { return; }
+    { return; }
 
   // killough 8/2/98: workaround for beta chaingun sprites missing at bottom
   // The beta did not have fullscreen, and its chaingun sprites were chopped
@@ -1104,9 +1096,9 @@ void A_BFGSpray(mobj_t *mo)
 
       // killough 8/2/98: make autoaiming prefer enemies
       if (demo_version < 203 ||
-	  (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, MF_FRIEND),
-	   !linetarget))
-	P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, 0);
+          (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, MF_FRIEND),
+           !linetarget))
+        P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, 0);
 
       if (!linetarget)
         continue;
@@ -1229,7 +1221,7 @@ void P_MovePsprites(player_t *player)
       && !psp->state->misc1
       && psp->state->action.p2 != (actionf_p2)A_Lower
       && psp->state->action.p2 != (actionf_p2)A_Raise)
-    { P_NuggetBobbing(player); }
+  { P_NuggetBobbing(player); }
 
   if (psp->state && !weapon_bobbing_percentage)
   {
@@ -1488,7 +1480,7 @@ void A_ConsumeAmmo(player_t *player, pspdef_t *psp)
   // don't do dumb things, kids
   type = weaponinfo[player->readyweapon].ammo;
   if (!psp->state || type == am_noammo)
-	return;
+        return;
 
   // use the weapon's ammo-per-shot amount if zero.
   // to subtract zero ammo, don't call this function. ;)

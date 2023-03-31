@@ -493,7 +493,7 @@ void R_ExecuteSetViewSize (void)
   viewblocks = MIN(setblocks, 10) << hires;
 
   // [Nugget] FOV from Doom Retro
-  rfov = !casual_play ? ORIGFOV : fov;
+  rfov = (!casual_play) ? ORIGFOV : fov;
   // fov * 0.82 is vertical FOV for 4:3 aspect ratio
   WIDEFOVDELTA = (int)(atan(SCREENWIDTH / (SCREENHEIGHT / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov - 2;
 
@@ -676,17 +676,17 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget]: [crispy] A11Y
   if (a11y_weapon_flash)
-    { extralight = player->extralight; }
+  { extralight = player->extralight; }
   else
-    { extralight = 0; }
+  { extralight = 0; }
 
   extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness); // level brightness feature
 
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   if (pitch > (LOOKDIRMAX * ORIGFOV/rfov))
-    pitch = LOOKDIRMAX * ORIGFOV/rfov;
+  { pitch = LOOKDIRMAX * ORIGFOV/rfov; }
   else if (pitch < (-LOOKDIRMIN * ORIGFOV/rfov))
-    pitch = -LOOKDIRMIN * ORIGFOV/rfov;
+  { pitch = -LOOKDIRMIN * ORIGFOV/rfov; }
 
   // apply new yslope[] whenever "lookdir", "viewheight" or "hires" change
   tempCentery = viewheight/2 + pitch * viewblocks / 10;

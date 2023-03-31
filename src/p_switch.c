@@ -190,8 +190,7 @@ void P_ChangeSwitchTexture
   {
     if (switchlist[i] == texTop)     // if an upper texture
     {
-      // [Nugget] Add this
-      // [crispy] corrected sound source
+      // [Nugget]: [crispy] corrected sound source
       S_StartSound(nugget_comp[comp_switchsource]
                    ? (mobj_t *)&line->soundorg
                    : buttonlist->soundorg, sound);     // switch activation sound
@@ -206,8 +205,7 @@ void P_ChangeSwitchTexture
     {
       if (switchlist[i] == texMid)   // if a normal texture
       {
-        // [Nugget] Add this
-        // [crispy] corrected sound source
+        // [Nugget]: [crispy] corrected sound source
         S_StartSound(nugget_comp[comp_switchsource]
                      ? (mobj_t *)&line->soundorg
                      : buttonlist->soundorg, sound);   // switch activation sound
@@ -222,8 +220,7 @@ void P_ChangeSwitchTexture
       {
         if (switchlist[i] == texBot) // if a lower texture
         {
-          // [Nugget] Add this
-          // [crispy] corrected sound source
+          // [Nugget]: [crispy] corrected sound source
           S_StartSound(nugget_comp[comp_switchsource]
                        ? (mobj_t *)&line->soundorg
                        : buttonlist->soundorg, sound); // switch activation sound

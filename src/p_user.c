@@ -111,74 +111,83 @@ void P_CalcHeight (player_t* player)
 
   // [FG] MBF player bobbing rewrite causes demo sync problems
   // http://prboom.sourceforge.net/mbf-bugs.html
-  player->bob = (demo_version >= 203 && player_bobbing)
-                ? (FixedMul(player->momx,player->momx)
-                   + FixedMul(player->momy,player->momy))>>2
-                : (demo_compatibility || player_bobbing)
-                  ? (FixedMul (player->mo->momx, player->mo->momx)
-                     + FixedMul (player->mo->momy,player->mo->momy))>>2
-                  : 0;
+  player->bob = (demo_version >= 203 && player_bobbing) ?
+      (FixedMul(player->momx,player->momx)
+      + FixedMul(player->momy,player->momy))>>2 :
+      (demo_compatibility || player_bobbing) ?
+      (FixedMul (player->mo->momx, player->mo->momx)
+      + FixedMul (player->mo->momy,player->mo->momy))>>2 : 0;
 
   if ((demo_version == 202 || demo_version == 203) &&
       player->mo->friction > ORIG_FRICTION) // ice?
   {
-    if (player->bob > (MAXBOB>>2)) { player->bob = MAXBOB>>2; }
+    if (player->bob > (MAXBOB>>2))
+      player->bob = MAXBOB>>2;
   }
-  else if (player->bob > MAXBOB) { player->bob = MAXBOB; }
+  else
+  {
+  if (player->bob > MAXBOB)                             
+    player->bob = MAXBOB;
+  }
 
   // [Nugget] Adjustable viewheight
   view = (demorecording||netgame||fauxdemo||strictmode)
          ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
 
   if (!onground || player->cheats & CF_NOMOMENTUM)
-  {
-    // [Nugget] Account for crouching
-    player->viewz = player->mo->z + view - player->crouchOffset;
+    {
+      // [Nugget] Account for crouching
+      player->viewz = player->mo->z + view - player->crouchOffset;
 
-    if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
-      { player->viewz = player->mo->ceilingz-4*FRACUNIT; }
+      if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
+        player->viewz = player->mo->ceilingz-4*FRACUNIT;
 
-    // phares 2/25/98:
-    // The following line was in the Id source and appears
-    // to be a bug. player->viewz is checked in a similar
-    // manner at a different exit below.
+      // phares 2/25/98:
+      // The following line was in the Id source and appears
+      // to be a bug. player->viewz is checked in a similar
+      // manner at a different exit below.
 
-    // player->viewz = player->mo->z + player->viewheight;
+      // player->viewz = player->mo->z + player->viewheight;
 
-    return;
-  }
+      return;
+    }
 
   angle = (FINEANGLES/20*leveltime)&FINEMASK;
   // [Nugget] View bobbing percentage setting
   bob = FixedMul((player->bob * view_bobbing_percentage / 100) / 2, finesine[angle]);
 
   // move viewheight
+
   if (player->playerstate == PST_LIVE)
-  {
-    player->viewheight += player->deltaviewheight;
-
-    if (player->viewheight > view) {
-      player->viewheight = view;
-      player->deltaviewheight = 0;
-    }
-
-    if (player->viewheight < view/2) {
-      player->viewheight = view/2;
-      if (player->deltaviewheight <= 0)
-        { player->deltaviewheight = 1; }
-    }
-
     {
-      player->deltaviewheight += FRACUNIT/4;
-      if (!player->deltaviewheight)
-        { player->deltaviewheight = 1; }
+      player->viewheight += player->deltaviewheight;
+
+      if (player->viewheight > VIEWHEIGHT)
+	{
+	  player->viewheight = VIEWHEIGHT;
+	  player->deltaviewheight = 0;
+	}
+
+      if (player->viewheight < VIEWHEIGHT/2)
+	{
+	  player->viewheight = VIEWHEIGHT/2;
+	  if (player->deltaviewheight <= 0)
+	    player->deltaviewheight = 1;
+	}
+
+      if (player->deltaviewheight)
+	{
+	  player->deltaviewheight += FRACUNIT/4;
+	  if (!player->deltaviewheight)
+	    player->deltaviewheight = 1;
+	}
     }
-  }
 
   // [Nugget] Account for crouching
   player->viewz = player->mo->z + player->viewheight + bob - player->crouchOffset;
+  
   if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
-    { player->viewz = player->mo->ceilingz-4*FRACUNIT; }
+    player->viewz = player->mo->ceilingz-4*FRACUNIT;
 }
 
 //
@@ -206,7 +215,7 @@ void P_MovePlayer (player_t* player)
   if (player->cheats & CF_FLY)
   {
     if (!(player->mo->flags & MF_NOGRAVITY))
-      { player->mo->flags |= MF_NOGRAVITY; }
+    { player->mo->flags |= MF_NOGRAVITY; }
 
     if (!(M_InputGameActive(input_jump)
           || M_InputGameActive(input_crouch))
@@ -214,15 +223,17 @@ void P_MovePlayer (player_t* player)
             && M_InputGameActive(input_crouch)))
     { // Stop moving...
       if (player->cheats & CF_NOMOMENTUM)
-        { player->mo->momz = 0; } // ... instantly
+      { player->mo->momz = 0; } // ... instantly
       else { // ... slowly
         if (player->mo->momz > 0) {
           player->mo->momz -= 1*FRACUNIT;
-          if (player->mo->momz < 0) { player->mo->momz = 0; }
+          if (player->mo->momz < 0)
+          { player->mo->momz = 0; }
         }
         else if (player->mo->momz < 0) {
           player->mo->momz += 1*FRACUNIT;
-          if (player->mo->momz > 0) { player->mo->momz = 0; }
+          if (player->mo->momz > 0)
+          { player->mo->momz = 0; }
         }
       }
     }
@@ -241,7 +252,7 @@ void P_MovePlayer (player_t* player)
     }
     else if (jump_crouch) {
       if (player->mo->intflags & MIF_CROUCHING) // Stand up first
-        { player->mo->intflags &= ~MIF_CROUCHING; }
+      { player->mo->intflags &= ~MIF_CROUCHING; }
       else if (onground && !(player->jumpTics)
                && (player->mo->height == player->mo->info->height)
                && ((player->mo->ceilingz - player->mo->floorz) > player->mo->height))
@@ -267,16 +278,16 @@ void P_MovePlayer (player_t* player)
       CrouchKeyDown = true;
 
       if (player->mo->intflags & MIF_CROUCHING)
-        { player->mo->intflags &= ~MIF_CROUCHING; } // Stand up
+      { player->mo->intflags &= ~MIF_CROUCHING; } // Stand up
       else
-        { player->mo->intflags |= MIF_CROUCHING; } // Crouch
+      { player->mo->intflags |= MIF_CROUCHING; } // Crouch
     }
   }
 
   // [Nugget] Forcefully stand up under certain conditions
   if ((player->mo->intflags & MIF_CROUCHING)
       && (!jump_crouch || player->cheats & CF_FLY))
-    { player->mo->intflags &= ~MIF_CROUCHING; }
+  { player->mo->intflags &= ~MIF_CROUCHING; }
 
   // [Nugget] Smooth crouching
   if ((player->mo->intflags & MIF_CROUCHING)
@@ -289,18 +300,18 @@ void P_MovePlayer (player_t* player)
     player->crouchOffset += ((float)(viewheight_value/2)*FRACUNIT)
                             / ((float)(player->mo->info->height/2)/step);
     if (!onground) // Crouch jumping!
-      { player->mo->z += step; }
+    { player->mo->z += step; }
 
     if (player->mo->height <= player->mo->info->height/2)
     { // Done crouching
       if (!onground) // Take away any extra height increase
-        { player->mo->z -= (player->mo->info->height/2) - player->mo->height; }
+      { player->mo->z -= (player->mo->info->height/2) - player->mo->height; }
       player->mo->height = player->mo->info->height/2;
       player->crouchOffset = (viewheight_value/2)*FRACUNIT;
     }
 
     if (player->crouchOffset > (viewheight_value/2)*FRACUNIT)
-      { player->crouchOffset = (viewheight_value/2)*FRACUNIT; }
+    { player->crouchOffset = (viewheight_value/2)*FRACUNIT; }
   }
   else if (!(player->mo->intflags & MIF_CROUCHING)
            && (player->mo->height < (player->mo->ceilingz - player->mo->floorz))
@@ -315,7 +326,7 @@ void P_MovePlayer (player_t* player)
     if (!onground) { // Inverse crouch jumping
       player->mo->z -= step;
       if (player->mo->z < player->mo->floorz)
-        { player->mo->z = player->mo->floorz; }
+      { player->mo->z = player->mo->floorz; }
     }
 
     if (player->mo->height > (player->mo->ceilingz - player->mo->floorz))
@@ -332,7 +343,7 @@ void P_MovePlayer (player_t* player)
     }
 
     if (player->crouchOffset < 0)
-      { player->crouchOffset = 0; }
+    { player->crouchOffset = 0; }
   }
 
   // killough 10/98:
@@ -341,52 +352,58 @@ void P_MovePlayer (player_t* player)
   // anomalies. The thrust applied to bobbing is always the same strength on
   // ice, because the player still "works just as hard" to move, while the
   // thrust applied to the movement varies with 'movefactor'.
+
   if ((!demo_compatibility && demo_version < 203) ||
       cmd->forwardmove | cmd->sidemove) // killough 10/98
-  {
-    if (onground || mo->flags & MF_BOUNCES) // killough 8/9/98
     {
-      int friction, movefactor = P_GetMoveFactor(mo, &friction);
+      if (onground || mo->flags & MF_BOUNCES) // killough 8/9/98
+        {
+          int friction, movefactor = P_GetMoveFactor(mo, &friction);
 
-      // killough 11/98:
-      // On sludge, make bobbing depend on efficiency.
-      // On ice, make it depend on effort.
-      int bobfactor = friction < ORIG_FRICTION
-                      ? movefactor
-                      : ORIG_FRICTION_FACTOR;
+          // killough 11/98:
+          // On sludge, make bobbing depend on efficiency.
+          // On ice, make it depend on effort.
 
-	    // [Nugget]
-	    cforwardmove = cmd->forwardmove;
-	    csidemove = cmd->sidemove;
-      // Check for crouching
-      if (player->mo->intflags & MIF_CROUCHING)
-        { cforwardmove /= 2; csidemove /= 2; }
+          int bobfactor =
+            friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
 
-      if (cmd->forwardmove) {
-	      P_Bob(player,mo->angle,cforwardmove*bobfactor);
-	      P_Thrust(player,mo->angle,cforwardmove*movefactor);
-	    }
-      if (cmd->sidemove) {
-	      P_Bob(player,mo->angle-ANG90,csidemove*bobfactor);
-	      P_Thrust(player,mo->angle-ANG90,csidemove*movefactor);
-	    }
+          // [Nugget]
+          cforwardmove = cmd->forwardmove;
+          csidemove = cmd->sidemove;
+          // Check for crouching
+          if (player->mo->intflags & MIF_CROUCHING)
+          { cforwardmove /= 2; csidemove /= 2; }
+
+          if (cmd->forwardmove)
+            {
+              P_Bob(player,mo->angle,cmd->forwardmove*bobfactor);
+              P_Thrust(player,mo->angle,cmd->forwardmove*movefactor);
+            }
+
+          if (cmd->sidemove)
+            {
+              P_Bob(player,mo->angle-ANG90,cmd->sidemove*bobfactor);
+              P_Thrust(player,mo->angle-ANG90,cmd->sidemove*movefactor);
+            }
+        }
+      // [Nugget] Allow minimal mid-air movement if Jumping is enabled
+      else if (casual_play && !onground && jump_crouch)
+      {
+        if (cmd->forwardmove)
+        { P_Thrust(player,mo->angle,cmd->forwardmove); }
+        if (cmd->sidemove)
+        { P_Thrust(player,mo->angle-ANG90,cmd->sidemove); }
+      }
+      
       // Add (cmd-> forwardmove || cmd-> sidemove) check to prevent the players
       // always in S_PLAY_RUN1 animation in complevel Boom.
       if ((cmd->forwardmove || cmd->sidemove) &&
           (mo->state == states+S_PLAY))
         P_SetMobjState(mo,S_PLAY_RUN1);
     }
-    // [Nugget] Allow minimal mid-air movement if Jumping is enabled
-    else if (casual_play && !onground && jump_crouch)
-    {
-      if (cmd->forwardmove)
-        { P_Thrust(player,mo->angle,cmd->forwardmove); }
-      if (cmd->sidemove)
-        { P_Thrust(player,mo->angle-ANG90,cmd->sidemove); }
-    }
-  }
 
-  if (!menuactive && !demoplayback) {
+  if (!menuactive && !demoplayback)
+  {
     player->lookdir = BETWEEN(-LOOKDIRMIN * MLOOKUNIT,
                                LOOKDIRMAX * MLOOKUNIT,
                                player->lookdir + cmd->lookdir);
@@ -442,27 +459,27 @@ void P_DeathThink (player_t* player)
   if (player->attacker && player->attacker != player->mo)
     {
       angle = R_PointToAngle2 (player->mo->x,
-			       player->mo->y,
-			       player->attacker->x,
-			       player->attacker->y);
+                               player->mo->y,
+                               player->attacker->x,
+                               player->attacker->y);
 
       delta = angle - player->mo->angle;
 
       if (delta < ANG5 || delta > (unsigned)-ANG5)
-	{
-	  // Looking at killer,
-	  //  so fade damage flash down.
+        {
+          // Looking at killer,
+          //  so fade damage flash down.
 
-	  player->mo->angle = angle;
+          player->mo->angle = angle;
 
-	  if (player->damagecount)
-	    player->damagecount--;
-	}
+          if (player->damagecount)
+            player->damagecount--;
+        }
       else
-	if (delta < ANG180)
-	  player->mo->angle += ANG5;
-	else
-	  player->mo->angle -= ANG5;
+        if (delta < ANG180)
+          player->mo->angle += ANG5;
+        else
+          player->mo->angle -= ANG5;
     }
   else
     if (player->damagecount)
@@ -622,28 +639,28 @@ void P_PlayerThink (player_t* player)
       // other games which rely on user preferences, we must use the latter.
 
       if (demo_compatibility)
-	{ // compatibility mode -- required for old demos -- killough
-	  if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
-	      (player->readyweapon != wp_chainsaw ||
-	       !player->powers[pw_strength]))
-	    newweapon = wp_chainsaw;
-	  if (have_ssg &&
-	      newweapon == wp_shotgun &&
-	      player->weaponowned[wp_supershotgun] &&
-	      player->readyweapon != wp_supershotgun)
-	    newweapon = wp_supershotgun;
-	}
+        { // compatibility mode -- required for old demos -- killough
+          if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
+              (player->readyweapon != wp_chainsaw ||
+               !player->powers[pw_strength]))
+            newweapon = wp_chainsaw;
+          if (have_ssg &&
+              newweapon == wp_shotgun &&
+              player->weaponowned[wp_supershotgun] &&
+              player->readyweapon != wp_supershotgun)
+            newweapon = wp_supershotgun;
+        }
 
       // killough 2/8/98, 3/22/98 -- end of weapon selection changes
 
       if (player->weaponowned[newweapon] && newweapon != player->readyweapon)
 
-	// Do not go to plasma or BFG in shareware,
-	//  even if cheated.
+        // Do not go to plasma or BFG in shareware,
+        //  even if cheated.
 
-	if ((newweapon != wp_plasma && newweapon != wp_bfg)
-	    || (gamemode != shareware) )
-	  player->pendingweapon = newweapon;
+        if ((newweapon != wp_plasma && newweapon != wp_bfg)
+            || (gamemode != shareware) )
+          player->pendingweapon = newweapon;
     }
 
   // check for use
@@ -651,10 +668,10 @@ void P_PlayerThink (player_t* player)
   if (cmd->buttons & BT_USE)
     {
       if (!player->usedown)
-	{
-	  P_UseLines (player);
-	  player->usedown = true;
-	}
+        {
+          P_UseLines (player);
+          player->usedown = true;
+        }
     }
   else
     player->usedown = false;
@@ -688,9 +705,9 @@ void P_PlayerThink (player_t* player)
   // [Nugget] Fast weapons cheat
   if (player->cheats & CF_FASTWEAPS) {
     if (player->psprites[ps_weapon].tics >= 1)
-      { player->psprites[ps_weapon].tics = 1; }
+    { player->psprites[ps_weapon].tics = 1; }
     if (player->psprites[ps_flash].tics >= 1)
-      { player->psprites[ps_flash].tics = 1; }
+    { player->psprites[ps_flash].tics = 1; }
   }
 
   // [Nugget] Linetarget Query cheat
@@ -732,34 +749,35 @@ void P_PlayerThink (player_t* player)
   if (player->bonuscount)
     player->bonuscount--;
 
-  // [Nugget]: [crispy] A11Y
-  if (!a11y_invul_colormap) {
-    if (player->powers[pw_invulnerability] || player->powers[pw_infrared])
-	    player->fixedcolormap = 1;
-    else
-	    player->fixedcolormap = 0;
-  }
-  else
   // Handling colormaps.
   // killough 3/20/98: reformat to terse C syntax
 
   // killough 7/11/98: beta version had invisibility, instead of
   // invulernability, and the light amp visor used the last colormap.
   // But white flashes occurred when invulnerability wore off.
-  player->fixedcolormap =
-    beta_emulation /* Beta Emulation */
-    ? player->powers[pw_infrared] > 4*32
-      || player->powers[pw_infrared] & 8
-      ? 32 : player->powers[pw_invisibility] > 4*32
-             || player->powers[pw_invisibility] & 8
-             || (player->powers[pw_invulnerability] < 4*32
-                 && player->powers[pw_invulnerability] > 0
-                 && player->powers[pw_invulnerability] & 8)
-             ? 33 : 0
-    : player->powers[pw_invulnerability] > 4*32 /* Regular Doom */
-      || player->powers[pw_invulnerability] & 8
-      ? INVERSECOLORMAP : player->powers[pw_infrared] > 4*32
-                          || player->powers[pw_infrared] & 8;
+
+  // [Nugget]: [crispy] A11Y
+  if (!a11y_invul_colormap) {
+    if (player->powers[pw_invulnerability] || player->powers[pw_infrared])
+    { player->fixedcolormap = 1; }
+    else
+    { player->fixedcolormap = 0; }
+  }
+  else
+  player->fixedcolormap = 
+
+    beta_emulation ?    /* Beta Emulation */
+    player->powers[pw_infrared] > 4*32 ||
+    player->powers[pw_infrared] & 8 ? 32 :
+    player->powers[pw_invisibility] > 4*32 ||
+    player->powers[pw_invisibility] & 8 ||
+    (player->powers[pw_invulnerability] < 4*32 &&
+     player->powers[pw_invulnerability] > 0 &&
+     player->powers[pw_invulnerability] & 8) ? 33 : 0 :
+
+    player->powers[pw_invulnerability] > 4*32 ||    /* Regular Doom */
+    player->powers[pw_invulnerability] & 8 ? INVERSECOLORMAP :
+    player->powers[pw_infrared] > 4*32 || player->powers[pw_infrared] & 8;
 }
 
 //----------------------------------------------------------------------------

@@ -470,35 +470,37 @@ int             castonmelee;
 boolean         castattacking;
 
 // [Nugget] Add the following... ------------------------------
+
 static signed char	castangle; // [crispy] turnable cast
 static signed char	castskip; // [crispy] skippable cast
 static boolean	    castflip; // [crispy] flippable death sequence
 
 // [crispy] randomize seestate and deathstate sounds in the cast
-static int F_RandomizeSound (int sound) {
-	switch (sound) {
-		// [crispy] actor->info->seesound, from p_enemy.c:A_Look()
-		case sfx_posit1: case sfx_posit2: case sfx_posit3:
-			return sfx_posit1 + Woof_Random()%3;
-			break;
+static int F_RandomizeSound (int sound)
+{
+  switch (sound) {
+    // [crispy] actor->info->seesound, from p_enemy.c:A_Look()
+    case sfx_posit1: case sfx_posit2: case sfx_posit3:
+      return sfx_posit1 + Woof_Random()%3;
+      break;
 
-		case sfx_bgsit1: case sfx_bgsit2:
-			return sfx_bgsit1 + Woof_Random()%2;
-			break;
+    case sfx_bgsit1: case sfx_bgsit2:
+      return sfx_bgsit1 + Woof_Random()%2;
+      break;
 
-		// [crispy] actor->info->deathsound, from p_enemy.c:A_Scream()
-		case sfx_podth1: case sfx_podth2: case sfx_podth3:
-			return sfx_podth1 + Woof_Random()%3;
-			break;
+    // [crispy] actor->info->deathsound, from p_enemy.c:A_Scream()
+    case sfx_podth1: case sfx_podth2: case sfx_podth3:
+      return sfx_podth1 + Woof_Random()%3;
+      break;
 
-		case sfx_bgdth1: case sfx_bgdth2:
-			return sfx_bgdth1 + Woof_Random()%2;
-			break;
+    case sfx_bgdth1: case sfx_bgdth2:
+      return sfx_bgdth1 + Woof_Random()%2;
+      break;
 
-		default:
-			return sound;
-			break;
-	}
+    default:
+      return sound;
+      break;
+  }
 }
 
 extern void A_BruisAttack(); extern void A_BspiAttack(); extern void A_CPosAttack();
@@ -507,62 +509,66 @@ extern void A_FatAttack2(); extern void A_FatAttack3(); extern void A_HeadAttack
 extern void A_PainAttack(); extern void A_PosAttack(); extern void A_SargAttack();
 extern void A_SkelFist(); extern void A_SkelMissile(); extern void A_SkelWhoosh();
 extern void A_SkullAttack(); extern void A_SPosAttack(); extern void A_TroopAttack();
-extern void A_VileTarget(); extern void A_RandomJump(); extern boolean flipcorpses;
+extern void A_VileTarget(); extern void A_RandomJump();
+
+extern boolean flipcorpses;
 
 typedef struct {
-	void *const action;
-	const int sound;
-	const boolean early;
+  void *const action;
+  const int sound;
+  const boolean early;
 } actionsound_t;
 
 static const actionsound_t actionsounds[] = {
-	{A_PosAttack,   sfx_pistol, false},
-	{A_SPosAttack,  sfx_shotgn, false},
-	{A_CPosAttack,  sfx_shotgn, false},
-	{A_CPosRefire,  sfx_shotgn, false},
-	{A_VileTarget,  sfx_vilatk, true},
-	{A_SkelWhoosh,  sfx_skeswg, false},
-	{A_SkelFist,    sfx_skepch, false},
-	{A_SkelMissile, sfx_skeatk, true},
-	{A_FatAttack1,  sfx_firsht, false},
-	{A_FatAttack2,  sfx_firsht, false},
-	{A_FatAttack3,  sfx_firsht, false},
-	{A_HeadAttack,  sfx_firsht, true},
-	{A_BruisAttack, sfx_firsht, true},
-	{A_TroopAttack, sfx_claw,   false},
-	{A_SargAttack,  sfx_sgtatk, true},
-	{A_SkullAttack, sfx_sklatk, false},
-	{A_PainAttack,  sfx_sklatk, true},
-	{A_BspiAttack,  sfx_plasma, false},
-	{A_CyberAttack, sfx_rlaunc, false},
+  {A_PosAttack,   sfx_pistol, false},
+  {A_SPosAttack,  sfx_shotgn, false},
+  {A_CPosAttack,  sfx_shotgn, false},
+  {A_CPosRefire,  sfx_shotgn, false},
+  {A_VileTarget,  sfx_vilatk, true},
+  {A_SkelWhoosh,  sfx_skeswg, false},
+  {A_SkelFist,    sfx_skepch, false},
+  {A_SkelMissile, sfx_skeatk, true},
+  {A_FatAttack1,  sfx_firsht, false},
+  {A_FatAttack2,  sfx_firsht, false},
+  {A_FatAttack3,  sfx_firsht, false},
+  {A_HeadAttack,  sfx_firsht, true},
+  {A_BruisAttack, sfx_firsht, true},
+  {A_TroopAttack, sfx_claw,   false},
+  {A_SargAttack,  sfx_sgtatk, true},
+  {A_SkullAttack, sfx_sklatk, false},
+  {A_PainAttack,  sfx_sklatk, true},
+  {A_BspiAttack,  sfx_plasma, false},
+  {A_CyberAttack, sfx_rlaunc, false},
 };
 
 // [crispy] play attack sound based on state action function (instead of state number)
-static int F_SoundForState (int st) {
-	void *const castaction = (void *) caststate->action.p2;
-	void *const nextaction = (void *) (&states[caststate->nextstate])->action.p2;
+static int F_SoundForState (int st)
+{
+  void *const castaction = (void *) caststate->action.p2;
+  void *const nextaction = (void *) (&states[caststate->nextstate])->action.p2;
 
-	// [crispy] fix Doomguy in casting sequence
-	if (castaction == NULL) {
-		if (st == S_PLAY_ATK2)
-			{ return sfx_dshtgn; }
-		else
-			{ return 0; }
-	}
-	else {
-		int i;
+  // [crispy] fix Doomguy in casting sequence
+  if (castaction == NULL) {
+    if (st == S_PLAY_ATK2)
+    { return sfx_dshtgn; }
+    else
+    { return 0; }
+  }
+  else {
+    int i;
 
-		for (i = 0; i < arrlen(actionsounds); i++)
-		{
-			const actionsound_t *const as = &actionsounds[i];
+    for (i = 0; i < arrlen(actionsounds); i++)
+    {
+      const actionsound_t *const as = &actionsounds[i];
 
-			if ((!as->early && castaction == as->action) ||
-			    (as->early && nextaction == as->action))
-        { return as->sound; }
-		}
-	}
+      if ((!as->early && castaction == as->action) ||
+          (as->early && nextaction == as->action))
+      { return as->sound; }
+    }
+  }
   return 0;
 }
+
 // [Nugget] ... up until here. ------------------------------
 
 //
@@ -637,14 +643,14 @@ void F_CastTicker (void)
   else {
     // just advance to next state in animation
     // [Nugget]: [crispy] fix Doomguy in casting sequence
-	/*
-	if (!castdeath && caststate == &states[S_PLAY_ATK1])
-	    goto stopattack;	// Oh, gross hack!
-	*/
+    /*
+    if (!castdeath && caststate == &states[S_PLAY_ATK1])
+        goto stopattack;	// Oh, gross hack!
+    */
     // [crispy] Allow A_RandomJump() in deaths in cast sequence
-	if (caststate->action.p2 == (actionf_p2)A_RandomJump && Woof_Random() < caststate->misc2)
+    if (caststate->action.p2 == (actionf_p2)A_RandomJump && Woof_Random() < caststate->misc2)
     { st = caststate->misc1; }
-	else {
+    else {
         // [crispy] fix Doomguy in casting sequence
         if (!castdeath && caststate == &states[S_PLAY_ATK1])
           { st = S_PLAY_ATK2; }
@@ -652,13 +658,13 @@ void F_CastTicker (void)
           { goto stopattack; }	// Oh, gross hack!
         else
           { st = caststate->nextstate; }
-	}
-	caststate = &states[st];
-	castframes++;
+    }
+    caststate = &states[st];
+    castframes++;
 
-	sfx = F_SoundForState(st);
+    sfx = F_SoundForState(st);
 /*
-	// sound hacks....
+    // sound hacks....
     switch (st)
     {
       case S_PLAY_ATK1:     sfx = sfx_dshtgn; break;
@@ -731,10 +737,10 @@ void F_CastTicker (void)
     // [Nugget] Add all this
     // [crispy] Allow A_RandomJump() in deaths in cast sequence
     if (caststate->action.p2 == (actionf_p2)A_RandomJump) {
-	    if (Woof_Random() < caststate->misc2)
-        { caststate = &states[caststate->misc1]; }
-	    else
-        { caststate = &states[caststate->nextstate]; }
+      if (Woof_Random() < caststate->misc2)
+      { caststate = &states[caststate->misc1]; }
+      else
+      { caststate = &states[caststate->nextstate]; }
       casttics = caststate->tics;
     }
     if (casttics == -1) { casttics = 15; }
@@ -780,26 +786,26 @@ boolean F_CastResponder (event_t* ev)
   // go into death frame
   castdeath = true;
   if (xdeath && mobjinfo[castorder[castnum].type].xdeathstate)
-    { caststate = &states[mobjinfo[castorder[castnum].type].xdeathstate]; }
+  { caststate = &states[mobjinfo[castorder[castnum].type].xdeathstate]; }
   else
-    { caststate = &states[mobjinfo[castorder[castnum].type].deathstate]; }
+  { caststate = &states[mobjinfo[castorder[castnum].type].deathstate]; }
   casttics = caststate->tics;
   // [crispy] Allow A_RandomJump() in deaths in cast sequence
   if (casttics == -1 && caststate->action.p2 == (actionf_p2)A_RandomJump)
   {
     if (Woof_Random() < caststate->misc2)
-      { caststate = &states [caststate->misc1]; }
+    { caststate = &states [caststate->misc1]; }
     else
-      { caststate = &states [caststate->nextstate]; }
+    { caststate = &states [caststate->nextstate]; }
     casttics = caststate->tics;
   }
   castframes = 0;
   castattacking = false;
   if (xdeath && mobjinfo[castorder[castnum].type].xdeathstate)
-    { S_StartSound (NULL, sfx_slop); }
+  { S_StartSound (NULL, sfx_slop); }
   else
   if (mobjinfo[castorder[castnum].type].deathsound)
-    { S_StartSound (NULL, F_RandomizeSound(mobjinfo[castorder[castnum].type].deathsound)); }
+  { S_StartSound (NULL, F_RandomizeSound(mobjinfo[castorder[castnum].type].deathsound)); }
 
   // [crispy] flippable death sequence
   castflip = flipcorpses && castdeath
@@ -882,7 +888,7 @@ void F_CastDrawer (void)
   sprdef = &sprites[caststate->sprite];
   // [Nugget]: [crispy] the TNT1 sprite is not supposed to be rendered anyway
   if (!sprdef->numframes && caststate->sprite == SPR_TNT1)
-    { return; }
+  { return; }
   sprframe = &sprdef->spriteframes[ caststate->frame & FF_FRAMEMASK];
   lump = sprframe->lump[castangle]; // [crispy] turnable cast
   flip = (boolean)sprframe->flip[castangle] ^ castflip; // [crispy] turnable cast, flippable death sequence

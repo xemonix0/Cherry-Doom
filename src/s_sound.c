@@ -57,7 +57,7 @@
 // [Nugget] Unused, calculated directly in S_AdjustSoundParams
 // since S_CLIPPING_DIST might be doubled
 #if 0
-#define S_ATTENUATOR ((S_CLIPPING_DIST-S_CLOSE_DIST)>>FRACBITS)
+  #define S_ATTENUATOR ((S_CLIPPING_DIST-S_CLOSE_DIST)>>FRACBITS)
 #endif
 
 //jff end sound enabling variables readable here
@@ -436,7 +436,7 @@ static void S_StartSoundEx(const mobj_t *origin, int sfx_id, int loop_timeout)
    // [Nugget] Check if there's a lump for the sound,
    // and skip the loop if there is, therefore using the lump instead
    while(sfx->link && !(I_GetSfxLumpNum(sfx) >= 0))
-    { sfx = sfx->link; } // sf: skip thru link(s)
+   { sfx = sfx->link; } // sf: skip thru link(s)
 
    // Assigns the handle to one of the channels in the mix/output buffer.
    handle = I_StartSound(sfx, cnum, volume, sep, pitch, priority, loop);

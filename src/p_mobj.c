@@ -147,27 +147,36 @@ void P_XYMovement (mobj_t* mo)
 
   if (!(mo->momx | mo->momy) // Any momentum?
       && !(mo->intflags & MIF_OVERUNDER)) // [Nugget]
-  {
-    if (mo->flags & MF_SKULLFLY) {
-      // the skull slammed into something
-      mo->flags &= ~MF_SKULLFLY;
-      mo->momz = 0;
+    {
+      if (mo->flags & MF_SKULLFLY)
+      {
+        // the skull slammed into something
 
-      // [Nugget] Fix forgetful lost soul
-      if (casual_play && !nugget_comp[comp_lsamnesia])
+        mo->flags &= ~MF_SKULLFLY;
+        mo->momz = 0;
+
+        // [Nugget] Fix forgetful lost soul
+        if (casual_play && !nugget_comp[comp_lsamnesia])
         { P_SetMobjState(mo, mo->info->seestate); }
-      else
+        else
         { P_SetMobjState(mo, mo->info->spawnstate); }
+      }
+      return;
     }
-    return;
-  }
 
   player = mo->player;
 
-  if (mo->momx > MAXMOVE)       { mo->momx = MAXMOVE; }
-  else if (mo->momx < -MAXMOVE) { mo->momx = -MAXMOVE; }
-  if (mo->momy > MAXMOVE)       { mo->momy = MAXMOVE; }
-  else if (mo->momy < -MAXMOVE) { mo->momy = -MAXMOVE; }
+  if (mo->momx > MAXMOVE)
+    mo->momx = MAXMOVE;
+  else 
+    if (mo->momx < -MAXMOVE)
+      mo->momx = -MAXMOVE;
+
+  if (mo->momy > MAXMOVE)
+    mo->momy = MAXMOVE;
+  else
+    if (mo->momy < -MAXMOVE)
+      mo->momy = -MAXMOVE;
 
   xmove = mo->momx;
   ymove = mo->momy;
@@ -176,90 +185,100 @@ void P_XYMovement (mobj_t* mo)
   oldy = mo->y; // when on ice & up against wall. These will be compared
                 // to your x,y values later to see if you were able to move
 
-  do {
-    fixed_t ptryx, ptryy;
+  do
+    {
+      fixed_t ptryx, ptryy;
 
-    // killough 8/9/98: fix bug in original Doom source:
-    // Large negative displacements were never considered.
-    // This explains the tendency for Mancubus fireballs
-    // to pass through walls.
+      // killough 8/9/98: fix bug in original Doom source:
+      // Large negative displacements were never considered.
+      // This explains the tendency for Mancubus fireballs
+      // to pass through walls.
 
-    if (xmove > MAXMOVE/2 || ymove > MAXMOVE/2 // killough 8/9/98:
-        || ((xmove < -MAXMOVE/2 || ymove < -MAXMOVE/2)
-            && demo_version >= 203))
+      if (xmove > MAXMOVE/2 || ymove > MAXMOVE/2 ||  // killough 8/9/98:
+      ((xmove < -MAXMOVE/2 || ymove < -MAXMOVE/2) && demo_version >= 203))
     {
       ptryx = mo->x + xmove/2;
       ptryy = mo->y + ymove/2;
       xmove >>= 1;
       ymove >>= 1;
     }
-    else {
+      else
+    {
       ptryx = mo->x + xmove;
       ptryy = mo->y + ymove;
       xmove = ymove = 0;
     }
 
-    // killough 3/15/98: Allow objects to drop off
-    if (!P_TryMove(mo, ptryx, ptryy, true))
+      // killough 3/15/98: Allow objects to drop off
+
+      if (!P_TryMove(mo, ptryx, ptryy, true))
     {
       // blocked move
 
       // killough 8/11/98: bouncing off walls
       // killough 10/98:
       // Add ability for objects other than players to bounce on ice
-
-      if (!(mo->flags & MF_MISSILE) && demo_version >= 203
-          && (mo->flags & MF_BOUNCES
-              || (!player && blockline
-                  && variable_friction
-                  && mo->z <= mo->floorz
-                  && P_GetFriction(mo, NULL) > ORIG_FRICTION)))
-	    {
-	      if (blockline) {
-          fixed_t r = ((blockline->dx >> FRACBITS) * mo->momx
-                       + (blockline->dy >> FRACBITS) * mo->momy)
-                       / ((blockline->dx >> FRACBITS)*(blockline->dx >> FRACBITS)
-                          + (blockline->dy >> FRACBITS)*(blockline->dy >> FRACBITS));
+      
+      if (!(mo->flags & MF_MISSILE) && demo_version >= 203 &&
+          (mo->flags & MF_BOUNCES || 
+           (!player && blockline &&
+        variable_friction && mo->z <= mo->floorz &&
+        P_GetFriction(mo, NULL) > ORIG_FRICTION)))
+        {
+          if (blockline)
+        {
+          fixed_t r = ((blockline->dx >> FRACBITS) * mo->momx +
+                   (blockline->dy >> FRACBITS) * mo->momy) /
+            ((blockline->dx >> FRACBITS)*(blockline->dx >> FRACBITS)+
+             (blockline->dy >> FRACBITS)*(blockline->dy >> FRACBITS));
           fixed_t x = FixedMul(r, blockline->dx);
           fixed_t y = FixedMul(r, blockline->dy);
 
           // reflect momentum away from wall
+
           mo->momx = x*2 - mo->momx;
           mo->momy = y*2 - mo->momy;
 
           // if under gravity, slow down in
           // direction perpendicular to wall.
-          if (!(mo->flags & MF_NOGRAVITY)) {
-            mo->momx = (mo->momx + x)/2;
-            mo->momy = (mo->momy + y)/2;
-          }
-        }
-	      else { mo->momx = mo->momy = 0; }
-	    }
-      else if (player) { P_SlideMove (mo); } // try to slide along it
-	    else if (mo->flags & MF_MISSILE)
-      {
-        // explode a missile
 
-        if (ceilingline && ceilingline->backsector
-            && ceilingline->backsector->ceilingpic == skyflatnum)
+          if (!(mo->flags & MF_NOGRAVITY))
+            {
+              mo->momx = (mo->momx + x)/2;
+              mo->momy = (mo->momy + y)/2;
+            }
+        }
+          else
+        mo->momx = mo->momy = 0;
+        }
+      else
+        if (player)   // try to slide along it
+          P_SlideMove (mo);
+        else 
+          if (mo->flags & MF_MISSILE)
         {
-          if (demo_compatibility // killough
-              || mo->z > ceilingline->backsector->ceilingheight)
-		      {
+          // explode a missile
+
+          if (ceilingline &&
+              ceilingline->backsector &&
+              ceilingline->backsector->ceilingpic == skyflatnum)
+            if (demo_compatibility ||  // killough
+            mo->z > ceilingline->backsector->ceilingheight)
+              {
             // Hack to prevent missiles exploding
             // against the sky.
             // Does not handle sky floors.
+
             P_RemoveMobj (mo);
             return;
-		      }
+              }
+          P_ExplodeMissile (mo);
         }
-        P_ExplodeMissile (mo);
-      }
-      else // whatever else it is, it is now standing still in (x,y)
-        { mo->momx = mo->momy = 0; }
+          else // whatever else it is, it is now standing still in (x,y)
+        mo->momx = mo->momy = 0;
     }
-  } while (xmove | ymove);
+    }
+  while (xmove | ymove);
 
   // slow down
 
@@ -276,72 +295,79 @@ void P_XYMovement (mobj_t* mo)
   if (mo->flags & (MF_MISSILE | MF_SKULLFLY)
       // [Nugget] Do apply friction if airborne with the flight cheat on
       || (!(player && player->cheats & CF_FLY) && (mo->z > mo->floorz)))
-    { return; }
+    return;
 
   // killough 8/11/98: add bouncers
   // killough 9/15/98: add objects falling off ledges
   // killough 11/98: only include bouncers hanging off ledges
-  if (((mo->flags & MF_BOUNCES && mo->z > mo->dropoffz)
-       || mo->flags & MF_CORPSE || mo->intflags & MIF_FALLING)
-      && (mo->momx > FRACUNIT/4 || mo->momx < -FRACUNIT/4
-          || mo->momy > FRACUNIT/4 || mo->momy < -FRACUNIT/4)
-      && mo->floorz != mo->subsector->sector->floorheight)
-    { return; } // do not stop sliding if halfway off a step with some momentum
+  if (((mo->flags & MF_BOUNCES && mo->z > mo->dropoffz) ||
+       mo->flags & MF_CORPSE || mo->intflags & MIF_FALLING) &&
+      (mo->momx > FRACUNIT/4 || mo->momx < -FRACUNIT/4 ||
+       mo->momy > FRACUNIT/4 || mo->momy < -FRACUNIT/4) &&
+      mo->floorz != mo->subsector->sector->floorheight)
+    return;  // do not stop sliding if halfway off a step with some momentum
 
   // killough 11/98:
   // Stop voodoo dolls that have come to rest, despite any
   // moving corresponding player, except in old demos:
-  if (mo->momx > -STOPSPEED && mo->momx < STOPSPEED
-      && mo->momy > -STOPSPEED && mo->momy < STOPSPEED
-      && (!player || !(player->cmd.forwardmove | player->cmd.sidemove)
-          || (player->mo != mo && demo_version >= 203
-              && (comp[comp_voodooscroller]
-                  || !(mo->intflags & MIF_SCROLLING)))))
-  {
-    // if in a walking frame, stop moving
-    // killough 10/98:
-    // Don't affect main player when voodoo dolls stop, except in old demos:
-    if (player && (unsigned)(player->mo->state - states - S_PLAY_RUN1) < 4
-        && (player->mo == mo || demo_version < 203))
-      { P_SetMobjState(player->mo, S_PLAY); }
 
-    mo->momx = mo->momy = 0;
+  if (mo->momx > -STOPSPEED && mo->momx < STOPSPEED &&
+      mo->momy > -STOPSPEED && mo->momy < STOPSPEED &&
+      (!player || !(player->cmd.forwardmove | player->cmd.sidemove) ||
+       (player->mo != mo && demo_version >= 203 &&
+        (comp[comp_voodooscroller] || !(mo->intflags & MIF_SCROLLING)))))
+    {
+      // if in a walking frame, stop moving
 
-    // killough 10/98: kill any bobbing momentum too (except in voodoo dolls)
-    if (player && player->mo == mo) { player->momx = player->momy = 0; }
+      // killough 10/98:
+      // Don't affect main player when voodoo dolls stop, except in old demos:
+
+      if (player && (unsigned)(player->mo->state - states - S_PLAY_RUN1) < 4 
+          && (player->mo == mo || demo_version < 203))
+        P_SetMobjState(player->mo, S_PLAY);
+
+      mo->momx = mo->momy = 0;
+      
+      // killough 10/98: kill any bobbing momentum too (except in voodoo dolls)
+      if (player && player->mo == mo)
+        player->momx = player->momy = 0; 
   }
-  else {
-    // phares 3/17/98
-    //
-    // Friction will have been adjusted by friction thinkers for
-    // icy or muddy floors. Otherwise it was never touched and
-    // remained set at ORIG_FRICTION
-    //
-    // killough 8/28/98: removed inefficient thinker algorithm,
-    // instead using touching_sectorlist in P_GetFriction() to
-    // determine friction (and thus only when it is needed).
-    //
-    // killough 10/98: changed to work with new bobbing method.
-    // Reducing player momentum is no longer needed to reduce
-    // bobbing, so ice works much better now.
+  else
+    {
+      // phares 3/17/98
+      //
+      // Friction will have been adjusted by friction thinkers for
+      // icy or muddy floors. Otherwise it was never touched and
+      // remained set at ORIG_FRICTION
+      //
+      // killough 8/28/98: removed inefficient thinker algorithm,
+      // instead using touching_sectorlist in P_GetFriction() to
+      // determine friction (and thus only when it is needed).
+      //
+      // killough 10/98: changed to work with new bobbing method.
+      // Reducing player momentum is no longer needed to reduce
+      // bobbing, so ice works much better now.
 
-    if (demo_version < 203) {
-      // phares 9/10/98: reduce bobbing/momentum when on ice & up against wall
-      if ((oldx == mo->x) && (oldy == mo->y)) { // Did you go anywhere?
-        // No. Use original friction. This allows you to not bob so much
-        // if you're on ice, but keeps enough momentum around to break free
-        // when you're mildly stuck in a wall.
-        mo->momx = FixedMul(mo->momx,ORIG_FRICTION);
-        mo->momy = FixedMul(mo->momy,ORIG_FRICTION);
+      if (demo_version < 203)
+      {
+        // phares 9/10/98: reduce bobbing/momentum when on ice & up against wall
+
+        if ((oldx == mo->x) && (oldy == mo->y)) // Did you go anywhere?
+          { // No. Use original friction. This allows you to not bob so much
+            // if you're on ice, but keeps enough momentum around to break free
+            // when you're mildly stuck in a wall.
+          mo->momx = FixedMul(mo->momx,ORIG_FRICTION);
+          mo->momy = FixedMul(mo->momy,ORIG_FRICTION);
+          }
+        else
+          { // Yes. Use stored friction.
+          mo->momx = FixedMul(mo->momx,mo->friction);
+          mo->momy = FixedMul(mo->momy,mo->friction);
+          }
+        mo->friction = ORIG_FRICTION; // reset to normal for next tic
       }
-      else {
-        // Yes. Use stored friction.
-        mo->momx = FixedMul(mo->momx,mo->friction);
-        mo->momy = FixedMul(mo->momy,mo->friction);
-      }
-      mo->friction = ORIG_FRICTION; // reset to normal for next tic
-    }
-    else {
+      else
+      {
       fixed_t friction = P_GetFriction(mo, NULL);
 
       mo->momx = FixedMul(mo->momx, friction);
@@ -350,12 +376,14 @@ void P_XYMovement (mobj_t* mo)
       // killough 10/98: Always decrease player bobbing by ORIG_FRICTION.
       // This prevents problems with bobbing on ice, where it was not being
       // reduced fast enough, leading to all sorts of kludges being developed.
-      if (player && player->mo == mo) { // Not voodoo dolls
-        player->momx = FixedMul(player->momx, ORIG_FRICTION);
-        player->momy = FixedMul(player->momy, ORIG_FRICTION);
-      }
+
+      if (player && player->mo == mo)     //  Not voodoo dolls
+        {
+          player->momx = FixedMul(player->momx, ORIG_FRICTION);
+          player->momy = FixedMul(player->momy, ORIG_FRICTION);
+        }
+     }
     }
-  }
 }
 
 //
@@ -369,181 +397,217 @@ static void P_ZMovement (mobj_t* mo)
   // BFG fireballs bounced on floors and ceilings in Pre-Beta Doom
   // killough 8/9/98: added support for non-missile objects bouncing
   // (e.g. grenade, mine, pipebomb)
-  int view; // [Nugget] Adjustable viewheight
 
-  if (mo->flags & MF_BOUNCES && mo->momz) {
-    mo->z += mo->momz;
-    if (mo->z <= mo->floorz) { // bounce off floors
-      mo->z = mo->floorz;
-      if (mo->momz < 0) {
-	      mo->momz = -mo->momz;
-	      if (!(mo->flags & MF_NOGRAVITY)) { // bounce back with decay
-          mo->momz = mo->flags & MF_FLOAT     // floaters fall slowly
-                     ? mo->flags & MF_DROPOFF // DROPOFF indicates rate
-                        ? FixedMul(mo->momz, (fixed_t)(FRACUNIT*.85))
-                        : FixedMul(mo->momz, (fixed_t)(FRACUNIT*.70))
-                     : FixedMul(mo->momz, (fixed_t)(FRACUNIT*.45)) ;
+  if (mo->flags & MF_BOUNCES && mo->momz)
+    {
+      mo->z += mo->momz;
+      if (mo->z <= mo->floorz)                  // bounce off floors
+        {
+          mo->z = mo->floorz;
+          if (mo->momz < 0)
+            {
+              mo->momz = -mo->momz;
+              if (!(mo->flags & MF_NOGRAVITY))  // bounce back with decay
+                {
+                  mo->momz = mo->flags & MF_FLOAT ?   // floaters fall slowly
+                    mo->flags & MF_DROPOFF ?          // DROPOFF indicates rate
+                    FixedMul(mo->momz, (fixed_t)(FRACUNIT*.85)) :
+                    FixedMul(mo->momz, (fixed_t)(FRACUNIT*.70)) :
+                    FixedMul(mo->momz, (fixed_t)(FRACUNIT*.45)) ;
+                  
+                  // Bring it to rest below a certain speed
+                  if (abs(mo->momz) <= mo->info->mass*(GRAVITY*4/256))
+                    mo->momz = 0;
+                }
 
-          // Bring it to rest below a certain speed
-          if (abs(mo->momz) <= mo->info->mass*(GRAVITY*4/256))
-            { mo->momz = 0; }
+              // killough 11/98: touchy objects explode on impact
+              if (mo->flags & MF_TOUCHY && mo->intflags & MIF_ARMED &&
+                  mo->health > 0)
+                P_DamageMobj(mo, NULL, NULL, mo->health);
+              else
+                if (mo->flags & MF_FLOAT && sentient(mo))
+                  goto floater;
+              return;
+            }
         }
+      else
+        if (mo->z >= mo->ceilingz - mo->height)   // bounce off ceilings
+          {
+            mo->z = mo->ceilingz - mo->height;
+            if (mo->momz > 0)
+              {
+                if (mo->subsector->sector->ceilingpic != skyflatnum)
+                  mo->momz = -mo->momz;    // always bounce off non-sky ceiling
+                else
+                  if (mo->flags & MF_MISSILE)
+                    P_RemoveMobj(mo);      // missiles don't bounce off skies
+                  else
+                    if (mo->flags & MF_NOGRAVITY)
+                      mo->momz = -mo->momz; // bounce unless under gravity
 
-	      // killough 11/98: touchy objects explode on impact
-	      if (mo->flags & MF_TOUCHY && mo->intflags & MIF_ARMED
-           && mo->health > 0)
-          { P_DamageMobj(mo, NULL, NULL, mo->health); }
-	      else if (mo->flags & MF_FLOAT && sentient(mo))
-          { goto floater; }
-	      return;
-	    }
-    }
-    else if (mo->z >= mo->ceilingz - mo->height) { // bounce off ceilings
-	    mo->z = mo->ceilingz - mo->height;
-	    if (mo->momz > 0) {
-        if (mo->subsector->sector->ceilingpic != skyflatnum)
-          { mo->momz = -mo->momz; } // always bounce off non-sky ceiling
-        else if (mo->flags & MF_MISSILE)
-          { P_RemoveMobj(mo); } // missiles don't bounce off skies
-        else if (mo->flags & MF_NOGRAVITY)
-		      { mo->momz = -mo->momz; } // bounce unless under gravity
+                if (mo->flags & MF_FLOAT && sentient(mo))
+                  goto floater;
 
-        if (mo->flags & MF_FLOAT && sentient(mo)) { goto floater; }
-        return;
-      }
-	  }
-    else {
-	    if (!(mo->flags & MF_NOGRAVITY))      // free-fall under gravity
-	      { mo->momz -= mo->info->mass*(GRAVITY/256); }
-	    if (mo->flags & MF_FLOAT && sentient(mo))
-	      { goto floater; }
-	    return;
-	  }
+                return;
+              }
+          }
+        else
+          {
+            if (!(mo->flags & MF_NOGRAVITY))      // free-fall under gravity
+              mo->momz -= mo->info->mass*(GRAVITY/256);
+            if (mo->flags & MF_FLOAT && sentient(mo))
+              goto floater;
+            return;
+          }
 
     // came to a stop
     mo->momz = 0;
 
-    if (mo->flags & MF_MISSILE) {
-      if (ceilingline && ceilingline->backsector
-          && ceilingline->backsector->ceilingpic == skyflatnum
-          && mo->z > ceilingline->backsector->ceilingheight)
-      { P_RemoveMobj(mo); } // don't explode on skies
-    else
-      { P_ExplodeMissile(mo); }
+      if (mo->flags & MF_MISSILE)
+      {
+        if (ceilingline &&
+            ceilingline->backsector &&
+            ceilingline->backsector->ceilingpic == skyflatnum &&
+            mo->z > ceilingline->backsector->ceilingheight)
+          P_RemoveMobj(mo);  // don't explode on skies
+        else
+          P_ExplodeMissile(mo);
+      }
+
+      if (mo->flags & MF_FLOAT && sentient(mo))
+        goto floater;
+      return;
     }
 
-    if (mo->flags & MF_FLOAT && sentient(mo)) { goto floater; }
-    return;
-  } // killough 8/9/98: end bouncing object code
+  // killough 8/9/98: end bouncing object code
 
   // check for smooth step up
-  // [Nugget] Adjustable viewheight
-  if (demorecording||netgame||fauxdemo||strictmode) // Allowed in demo playback
-    { view = VIEWHEIGHT; }
-  else if (mo->player)
-    { view = viewheight_value*FRACUNIT; }
 
-  if (mo->player // killough 5/12/98: exclude voodoo dolls
-      && mo->player->mo == mo && mo->z < mo->floorz)
-  {
-    mo->player->viewheight -= mo->floorz-mo->z;
-    mo->player->deltaviewheight = (view - mo->player->viewheight)>>3;
-  }
+  if (mo->player &&
+      mo->player->mo == mo &&  // killough 5/12/98: exclude voodoo dolls
+      mo->z < mo->floorz)
+    {
+      // [Nugget] Adjustable viewheight
+      int view = (demorecording||netgame||fauxdemo||strictmode) // Allowed in demo playback
+                 ? VIEWHEIGHT : viewheight_value*FRACUNIT;
+      
+      mo->player->viewheight -= mo->floorz-mo->z;
+      mo->player->deltaviewheight = (view - mo->player->viewheight)>>3;
+    }
 
   // adjust altitude
   mo->z += mo->momz;
 
 floater:
-  // float down towards target if too close
-  if (!((mo->flags ^ MF_FLOAT) & (MF_FLOAT | MF_SKULLFLY | MF_INFLOAT))
-      && mo->target)     // killough 11/98: simplify
-  {
-    fixed_t delta;
-    if (P_AproxDistance(mo->x - mo->target->x, mo->y - mo->target->y) <
-        abs(delta = mo->target->z + (mo->height>>1) - mo->z)*3)
-      { mo->z += delta < 0 ? -FLOATSPEED : FLOATSPEED; }
-  }
+
+    // float down towards target if too close
+
+    if (!((mo->flags ^ MF_FLOAT) & (MF_FLOAT | MF_SKULLFLY | MF_INFLOAT)) &&
+        mo->target)     // killough 11/98: simplify
+      {
+        fixed_t delta;
+        if (P_AproxDistance(mo->x - mo->target->x, mo->y - mo->target->y) <
+            abs(delta = mo->target->z + (mo->height>>1) - mo->z)*3)
+          mo->z += delta < 0 ? -FLOATSPEED : FLOATSPEED;
+      }
 
   // clip movement
-  if (mo->z <= mo->floorz) {
-    // hit the floor
 
-    // [FG] game version specific differences
-    int correct_lost_soul_bounce = !demo_compatibility || gameversion >= exe_ultimate;
-
-    if ((!comp[comp_soul] || correct_lost_soul_bounce) && mo->flags & MF_SKULLFLY)
-      { mo->momz = -mo->momz; } // the skull slammed into something
-
-    if (mo->momz < 0) {
-      // killough 11/98: touchy objects explode on impact
-      if (mo->flags & MF_TOUCHY && mo->intflags & MIF_ARMED
-          && mo->health > 0)
-        { P_DamageMobj(mo, NULL, NULL, mo->health); }
-      else if (mo->player // killough 5/12/98: exclude voodoo dolls
-               && mo->player->mo == mo && mo->momz < -GRAVITY*8)
-      {
-        // Squat down.
-        // Decrease viewheight for a moment
-        // after hitting the ground (hard),
-        // and utter appropriate sound.
-
-        mo->player->deltaviewheight = mo->momz>>3;
-        // [Nugget]: [crispy] squat down weapon sprite as well
-        if (weaponsquat)
-          { mo->player->psprites[ps_weapon].dy = ((-mo->momz>>1) > 24*FRACUNIT) ? (24*FRACUNIT) : (-mo->momz>>1); }
-        // [Nugget]: [crispy] dead men don't say "oof"
-        if (mo->health > 0 || nugget_comp[comp_deadoof])
-          { S_StartSound (mo, sfx_oof); }
-      }
-      mo->momz = 0;
-    }
-
-    mo->z = mo->floorz;
-
-    // [FG] game version specific differences
-    if (!correct_lost_soul_bounce && mo->flags & MF_SKULLFLY)
-      { mo->momz = -mo->momz; }
-
-    if (!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
+  if (mo->z <= mo->floorz)
     {
-      P_ExplodeMissile (mo);
-      return;
+      // hit the floor
+
+      // [FG] game version specific differences
+      int correct_lost_soul_bounce = !demo_compatibility || gameversion >= exe_ultimate;
+
+      if ((!comp[comp_soul] || correct_lost_soul_bounce) && mo->flags & MF_SKULLFLY)
+      {
+        mo->momz = -mo->momz; // the skull slammed into something
+      }
+
+      if (mo->momz < 0)
+        {
+          // killough 11/98: touchy objects explode on impact
+          if (mo->flags & MF_TOUCHY && mo->intflags & MIF_ARMED &&
+              mo->health > 0)
+            P_DamageMobj(mo, NULL, NULL, mo->health);
+          else
+            if (mo->player && // killough 5/12/98: exclude voodoo dolls
+                mo->player->mo == mo &&
+                mo->momz < -GRAVITY*8)
+              {
+                // Squat down.
+                // Decrease viewheight for a moment
+                // after hitting the ground (hard),
+                // and utter appropriate sound.
+
+                mo->player->deltaviewheight = mo->momz>>3;
+                // [Nugget]: [crispy] squat down weapon sprite as well
+                if (weaponsquat)
+                { mo->player->psprites[ps_weapon].dy = ((-mo->momz>>1) > 24*FRACUNIT) ? (24*FRACUNIT) : (-mo->momz>>1); }
+                // [Nugget]: [crispy] dead men don't say "oof"
+                if (mo->health > 0 || nugget_comp[comp_deadoof])
+                { S_StartSound (mo, sfx_oof); }
+              }
+          mo->momz = 0;
+        }
+
+      mo->z = mo->floorz;
+
+      // [FG] game version specific differences
+      if (!correct_lost_soul_bounce && mo->flags & MF_SKULLFLY)
+      {
+        mo->momz = -mo->momz;
+      }
+
+      if (!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
+        {
+          P_ExplodeMissile (mo);
+          return;
+        }
     }
-  }
-  else if (mo->flags2 & MF2_LOGRAV) {
-    if (mo->momz == 0) { mo->momz = -(GRAVITY >> 3) * 2; }
-    else               { mo->momz -= GRAVITY >> 3; }
-  }
-  else if (!(mo->flags & MF_NOGRAVITY)) { // still above the floor
-    if (!mo->momz) { mo->momz = -GRAVITY; }
-    mo->momz -= GRAVITY;
-  }
+  else if (mo->flags2 & MF2_LOGRAV)
+    {
+      if (mo->momz == 0)
+        mo->momz = -(GRAVITY >> 3) * 2;
+      else
+        mo->momz -= GRAVITY >> 3;
+    }
+  else // still above the floor
+    if (!(mo->flags & MF_NOGRAVITY))
+      {
+        if (!mo->momz)
+          mo->momz = -GRAVITY;
+        mo->momz -= GRAVITY;
+      }
 
   if (mo->z + mo->height > mo->ceilingz)
-  {
-    // cph 2001/04/15 -
-    // Lost souls were meant to bounce off of ceilings
-    if (!comp[comp_soul] && mo->flags & MF_SKULLFLY)
-      { mo->momz = -mo->momz; } // the skull slammed into something
-
-    // hit the ceiling
-    if (mo->momz > 0) { mo->momz = 0; }
-
-    mo->z = mo->ceilingz - mo->height;
-
-    // cph 2001/04/15 -
-    // We might have hit a ceiling but had downward momentum (e.g. ceiling is
-    // lowering on us), so for old demos we must still do the buggy
-    // momentum reversal here
-    if (comp[comp_soul] && mo->flags & MF_SKULLFLY)
-      { mo->momz = -mo->momz; } // the skull slammed into something
-
-    if (!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
     {
-      P_ExplodeMissile (mo);
-      return;
+      // cph 2001/04/15 -
+      // Lost souls were meant to bounce off of ceilings
+      if (!comp[comp_soul] && mo->flags & MF_SKULLFLY)
+        mo->momz = -mo->momz; // the skull slammed into something
+
+      // hit the ceiling
+
+      if (mo->momz > 0)
+        mo->momz = 0;
+
+      mo->z = mo->ceilingz - mo->height;
+
+      // cph 2001/04/15 -
+      // We might have hit a ceiling but had downward momentum (e.g. ceiling is 
+      // lowering on us), so for old demos we must still do the buggy 
+      // momentum reversal here
+      if (comp[comp_soul] && mo->flags & MF_SKULLFLY)
+        mo->momz = -mo->momz; // the skull slammed into something
+
+      if (!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
+        {
+          P_ExplodeMissile (mo);
+          return;
+        }
     }
-  }
 }
 
 //
@@ -588,7 +652,7 @@ void P_NightmareRespawn(mobj_t* mobj)
   // because of removal of the body?
 
   mo = P_SpawnMobj(mobj->x, mobj->y,
-		   mobj->subsector->sector->floorheight, MT_TFOG);
+                   mobj->subsector->sector->floorheight, MT_TFOG);
 
   // initiate teleport sound
 
@@ -619,8 +683,8 @@ void P_NightmareRespawn(mobj_t* mobj)
   // killough 11/98: transfer friendliness from deceased
   mo->flags = (mo->flags & ~MF_FRIEND) | (mobj->flags & MF_FRIEND);
 
-	// [Nugget]: [So Doom]
-	mo->intflags |= MIF_EXTRASPAWNED;
+  // [Nugget]: [So Doom]
+  mo->intflags |= MIF_EXTRASPAWNED;
 
   // [crispy] count respawned monsters
   if (!(mo->flags & MF_FRIEND))
@@ -655,7 +719,8 @@ void P_MobjThinker (mobj_t* mobj)
   extern boolean freeze; // [Nugget]
 
   // [crispy] support MUSINFO lump (dynamic music changing)
-  if (mobj->type == MT_MUSICSOURCE) {
+  if (mobj->type == MT_MUSICSOURCE)
+  {
       MusInfoThinker(mobj);
       return;
   }
@@ -666,7 +731,8 @@ void P_MobjThinker (mobj_t* mobj)
     mobj->health = 2997;      mobj->tics = -1;
     mobj->sprite = SPR_BON1;  mobj->frame = 4;
   }
-  else if (!cheese && mobj->health == 2997) {
+  else if (!cheese && mobj->health == 2997)
+  {
     mobj->health = mobj->info->spawnhealth;
     P_SetMobjState(mobj, mobj->info->spawnstate);
   }
@@ -678,17 +744,23 @@ void P_MobjThinker (mobj_t* mobj)
   }
 
   // [FG] suppress interpolation of player missiles for the first tic
-  if (mobj->interp == -1) { mobj->interp = false; }
-  else // [AM] Handle interpolation unless we're an active player.
+  if (mobj->interp == -1)
+  {
+      mobj->interp = false;
+  }
+  else
+  // [AM] Handle interpolation unless we're an active player.
   if (!(mobj->player != NULL && mobj == mobj->player->mo))
   {
-    // Assume we can interpolate at the beginning
-    // of the tic.
-    mobj->interp = true;
+      // Assume we can interpolate at the beginning
+      // of the tic.
+      mobj->interp = true;
 
-    // Store starting position for mobj interpolation.
-    mobj->oldx = mobj->x; mobj->oldy = mobj->y;
-    mobj->oldz = mobj->z; mobj->oldangle = mobj->angle;
+      // Store starting position for mobj interpolation.
+      mobj->oldx = mobj->x;
+      mobj->oldy = mobj->y;
+      mobj->oldz = mobj->z;
+      mobj->oldangle = mobj->angle;
   }
 
   // killough 11/98:
@@ -698,7 +770,7 @@ void P_MobjThinker (mobj_t* mobj)
   // [Nugget] Things with both MF_SKULLFLY and MIF_OVERUNDER
   // have buggy behavior, so take the latter away
   if ((mobj->flags & MF_SKULLFLY) && (mobj->intflags & MIF_OVERUNDER))
-    { mobj->intflags &= ~MIF_OVERUNDER; }
+  { mobj->intflags &= ~MIF_OVERUNDER; }
 
   // momentum movement
   if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY
@@ -707,29 +779,29 @@ void P_MobjThinker (mobj_t* mobj)
       P_XYMovement(mobj);
       mobj->intflags &= ~MIF_SCROLLING;
       if (mobj->thinker.function.p1 == (actionf_p1)P_RemoveThinkerDelayed) // killough
-	return;       // mobj was removed
+        return;       // mobj was removed
     }
 
   if (mobj->z != mobj->floorz || mobj->momz)
     {
       P_ZMovement(mobj);
       if (mobj->thinker.function.p1 == (actionf_p1)P_RemoveThinkerDelayed) // killough
-	return;       // mobj was removed
+        return;       // mobj was removed
     }
   else
     if (!(mobj->momx | mobj->momy) && !sentient(mobj))
       {                                  // non-sentient objects at rest
-	mobj->intflags |= MIF_ARMED;     // arm a mine which has come to rest
+        mobj->intflags |= MIF_ARMED;     // arm a mine which has come to rest
 
-	// killough 9/12/98: objects fall off ledges if they are hanging off
-	// slightly push off of ledge if hanging more than halfway off
+        // killough 9/12/98: objects fall off ledges if they are hanging off
+        // slightly push off of ledge if hanging more than halfway off
 
-	if (mobj->z > mobj->dropoffz &&      // Only objects contacting dropoff
-	    !(mobj->flags & MF_NOGRAVITY) && // Only objects which fall
-	    !comp[comp_falloff] && demo_version >= 203) // Not in old demos
-	  P_ApplyTorque(mobj);               // Apply torque
-	else
-	  mobj->intflags &= ~MIF_FALLING, mobj->gear = 0;  // Reset torque
+        if (mobj->z > mobj->dropoffz &&      // Only objects contacting dropoff
+            !(mobj->flags & MF_NOGRAVITY) && // Only objects which fall
+            !comp[comp_falloff] && demo_version >= 203) // Not in old demos
+          P_ApplyTorque(mobj);               // Apply torque
+        else
+          mobj->intflags &= ~MIF_FALLING, mobj->gear = 0;  // Reset torque
       }
 
   if (mbf21)
@@ -755,13 +827,17 @@ void P_MobjThinker (mobj_t* mobj)
   // cycle through states,
   // calling action functions at transitions
   // killough 11/98: simplify
-  if (mobj->tics != -1) { // you can cycle through multiple states in a tic
-    if (!--mobj->tics) { P_SetMobjState(mobj, mobj->state->nextstate); }
-  }
-  else if (mobj->flags & MF_COUNTKILL && respawnmonsters
-           && ++mobj->movecount >= 12*35 && !(leveltime & 31)
-           && P_Random (pr_respawn) <= 4)
-    { P_NightmareRespawn(mobj); } // check for nightmare respawn
+
+  if (mobj->tics != -1)      // you can cycle through multiple states in a tic
+    {
+      if (!--mobj->tics)
+	P_SetMobjState(mobj, mobj->state->nextstate);
+    }
+  else                       
+    if (mobj->flags & MF_COUNTKILL && respawnmonsters &&
+	++mobj->movecount >= 12*35 && !(leveltime & 31) &&
+	P_Random (pr_respawn) <= 4)
+      P_NightmareRespawn(mobj);          // check for nightmare respawn
 }
 
 
@@ -866,7 +942,7 @@ void P_RemoveMobj (mobj_t *mobj)
       itemrespawnque[iquehead] = mobj->spawnpoint;
       itemrespawntime[iquehead++] = leveltime;
       if ((iquehead &= ITEMQUESIZE-1) == iquetail)   // lose one off the end?
-	iquetail = (iquetail+1)&(ITEMQUESIZE-1);
+        iquetail = (iquetail+1)&(ITEMQUESIZE-1);
     }
 
   // unlink from sector and block lists
@@ -948,14 +1024,14 @@ int P_FindDoomedNum(unsigned type)
     {
       hash = Z_Malloc(sizeof *hash * num_mobj_types, PU_CACHE, (void **) &hash);
       for (i=0; i<num_mobj_types; i++)
-	hash[i].first = num_mobj_types;
+        hash[i].first = num_mobj_types;
       for (i=0; i<num_mobj_types; i++)
-	if (mobjinfo[i].doomednum != -1)
-	  {
-	    unsigned h = (unsigned) mobjinfo[i].doomednum % num_mobj_types;
-	    hash[i].next = hash[h].first;
-	    hash[h].first = i;
-	  }
+        if (mobjinfo[i].doomednum != -1)
+          {
+            unsigned h = (unsigned) mobjinfo[i].doomednum % num_mobj_types;
+            hash[i].next = hash[h].first;
+            hash[h].first = i;
+          }
     }
   i = hash[type % num_mobj_types].first;
   while (i < num_mobj_types && mobjinfo[i].doomednum != type)
@@ -1130,15 +1206,15 @@ void P_SpawnMapThing (mapthing_t* mthing)
         return;
 
       if (offset >= num_deathmatchstarts)
-	{
-	  num_deathmatchstarts = num_deathmatchstarts ?
-	    num_deathmatchstarts*2 : 16;
-	  deathmatchstarts = Z_Realloc(deathmatchstarts,
-				     num_deathmatchstarts *
-				     sizeof(*deathmatchstarts),
-				     PU_STATIC, 0);
-	  deathmatch_p = deathmatchstarts + offset;
-	}
+        {
+          num_deathmatchstarts = num_deathmatchstarts ?
+            num_deathmatchstarts*2 : 16;
+          deathmatchstarts = Z_Realloc(deathmatchstarts,
+                                     num_deathmatchstarts *
+                                     sizeof(*deathmatchstarts),
+                                     PU_STATIC, 0);
+          deathmatch_p = deathmatchstarts + offset;
+        }
       memcpy(deathmatch_p++, mthing, sizeof*mthing);
       return;
     }
@@ -1149,20 +1225,20 @@ void P_SpawnMapThing (mapthing_t* mthing)
     {
       // killough 7/19/98: Marine's best friend :)
       if (!netgame && mthing->type > 1 && mthing->type <= dogs+1 &&
-	  !players[mthing->type-1].secretcount)
-	{  // use secretcount to avoid multiple dogs in case of multiple starts
-	  players[mthing->type-1].secretcount = 1;
+          !players[mthing->type-1].secretcount)
+        {  // use secretcount to avoid multiple dogs in case of multiple starts
+          players[mthing->type-1].secretcount = 1;
 
-	  // killough 10/98: force it to be a friend
-	  mthing->options |= MTF_FRIEND;
-	  i = MT_DOGS;
-	  goto spawnit;
-	}
+          // killough 10/98: force it to be a friend
+          mthing->options |= MTF_FRIEND;
+          i = MT_DOGS;
+          goto spawnit;
+        }
 
       // save spots for respawning in network games
       playerstarts[mthing->type-1] = *mthing;
       if (!deathmatch)
-	P_SpawnPlayer (mthing);
+        P_SpawnPlayer (mthing);
 
       return;
     }
@@ -1209,7 +1285,7 @@ void P_SpawnMapThing (mapthing_t* mthing)
   if (i == num_mobj_types)
     {
       doomprintf("Unknown Thing type %i at (%i, %i)",
-	      mthing->type, mthing->x, mthing->y);
+              mthing->type, mthing->x, mthing->y);
       return;
     }
 
@@ -1309,7 +1385,7 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
 
   // [Nugget] Fuzzy blood for fuzzy things
   if (nugget_comp[comp_fuzzyblood] && bleeder->flags & MF_SHADOW)
-    { th->flags |= MF_SHADOW; }
+  { th->flags |= MF_SHADOW; }
 
   if (bleeder->info->bloodcolor)
   {
@@ -1397,9 +1473,9 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
 
   // [Nugget] Check for crouching player
   if (dest->player && dest->player->crouchOffset)
-    { th->momz = ((dest->z - dest->player->crouchOffset) - source->z) / dist; }
+  { th->momz = ((dest->z - dest->player->crouchOffset) - source->z) / dist; }
   else
-    { th->momz = (dest->z - source->z) / dist; }
+  { th->momz = (dest->z - source->z) / dist; }
   P_CheckMissileSpawn(th);
   return th;
 }
@@ -1424,27 +1500,30 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   // [Nugget] Freeaim
   if (mouselook && freeaim == freeaim_direct && casual_play)
-    { slope = PLAYER_SLOPE(source->player); }
+  { slope = PLAYER_SLOPE(source->player); }
   else {
     // killough 7/19/98: autoaiming was not in original beta
     if (!beta_emulation || autoaim) {
       // killough 8/2/98: prefer autoaiming at enemies
       int mask = demo_version < 203 ? 0 : MF_FRIEND;
-      do {
-        slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
-        if (!linetarget)
-          // [Nugget] Disable horizontal autoaim
-          if (!casual_play || !no_hor_autoaim)
-            slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
-        if (!linetarget)
-          // [Nugget] Disable horizontal autoaim
-          if (!casual_play || !no_hor_autoaim)
-            slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
-        if (!linetarget)
-          an = source->angle,
-          slope = (freeaim == freeaim_autoaim && casual_play)
-                  ? PLAYER_SLOPE(source->player) : 0;
-      } while (mask && (mask=0, !linetarget));  // killough 8/2/98
+      do
+        {
+          slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
+          if (!linetarget)
+            // [Nugget] Disable horizontal autoaim
+            if (!casual_play || !no_hor_autoaim)
+              slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
+          if (!linetarget)
+            // [Nugget] Disable horizontal autoaim
+            if (!casual_play || !no_hor_autoaim)
+              slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
+          if (!linetarget)
+            an = source->angle,
+            // [Nugget]
+            slope = (freeaim == freeaim_autoaim && casual_play)
+                    ? PLAYER_SLOPE(source->player) : 0;
+        }
+      while (mask && (mask=0, !linetarget));  // killough 8/2/98
     }
   }
 
@@ -1452,9 +1531,9 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   y = source->y;
   // [Nugget] Check for crouching
   if (source->player && source->player->crouchOffset)
-    { z = source->z + ((4*8*FRACUNIT) - source->player->crouchOffset); }
+  { z = source->z + ((4*8*FRACUNIT) - source->player->crouchOffset); }
   else
-    { z = source->z + 4*8*FRACUNIT; }
+  { z = source->z + 4*8*FRACUNIT; }
 
   th = P_SpawnMobj (x,y,z, type);
 

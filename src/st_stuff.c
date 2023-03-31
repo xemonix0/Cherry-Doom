@@ -774,7 +774,7 @@ void ST_doPaletteStuff(void)
 
   // [Nugget]: [crispy] A11Y
   if (STRICTMODE(!palette_changes))
-    { palette = 0; }
+  { palette = 0; }
   else if (cnt)
   {
     // In Chex Quest, the player never sees red. Instead, the radiation suit
@@ -1035,7 +1035,7 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   st_widecrispyhud = (screenblocks == CRISPY_HUD_WIDE) && (!automapactive || automapoverlay);
 
   if (oldcrispy != st_crispyhud || oldwide != st_widecrispyhud) // [Nugget]
-    { ST_createWidgets(); }
+  { ST_createWidgets(); }
 
   ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
 
