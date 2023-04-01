@@ -91,6 +91,7 @@ byte *R_DistortedFlat(int flatnum)
 	static int swirltic = -1;
 	static int swirlflat = -1;
 	static byte distortedflat[FLATSIZE];
+	extern int freeze; // [Nugget]
 
 	if (!offsets)
 	{
@@ -99,7 +100,8 @@ byte *R_DistortedFlat(int flatnum)
 
 	if (swirltic != leveltime)
 	{
-		offset = offsets + ((leveltime & (SEQUENCE - 1)) * FLATSIZE);
+		if (freeze != 2) // [Nugget] Freeze swirling flats
+		{ offset = offsets + ((leveltime & (SEQUENCE - 1)) * FLATSIZE); }
 
 		swirltic = leveltime;
 		swirlflat = -1;

@@ -101,7 +101,7 @@ boolean GIBBERS;                // Used for 'GIBBERS'
 static void cheat_gibbers();    // Everything gibs
 static void cheat_resurrect();
 static void cheat_fly();
-boolean freeze;
+int freeze;
 static void cheat_freeze();
 static void cheat_nextmap();    // Emulate level exit
 static void cheat_nextsecret(); // Emulate secret level exit
@@ -482,7 +482,11 @@ static void cheat_fly() {
 
 // [Nugget]
 static void cheat_freeze() {
-  plyr->message = (freeze = !freeze) ? "Freeze Mode ON" : "Freeze Mode OFF";
+  if (++freeze > 2) { freeze = 0; }
+  
+  plyr->message =   (!freeze)     ? "Freeze: OFF"
+                  : (freeze == 1) ? "Freeze: Entities"
+                  :                 "Freeze: World";
 }
 
 // [Nugget]

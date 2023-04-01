@@ -2671,7 +2671,9 @@ void P_FreeScrollers (void)
 
 void R_InterpolateTextureOffsets (void)
 {
-  if (uncapped && leveltime > oldleveltime)
+  extern int freeze; // [Nugget]
+  
+  if (uncapped && leveltime > oldleveltime && freeze != 2) // [Nugget] Freeze scrollers
   {
     int i;
 

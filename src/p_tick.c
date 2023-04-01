@@ -244,6 +244,43 @@ static void P_RunThinkers (void)
   T_MusInfo();
 }
 
+// [Nugget] From DSDA-Doom
+static void P_FrozenTicker(void)
+{
+  int i;
+
+  P_MapStart();
+
+  if (gamestate == GS_LEVEL)
+  {
+    thinker_t* th;
+    mobj_t* mo;
+
+    for (i = 0; i < MAXPLAYERS; i++)
+      if (playeringame[i])
+        P_PlayerThink(&players[i]);
+
+    for (i = 0; i < MAXPLAYERS; i++)
+      if (playeringame[i])
+        P_MobjThinker(players[i].mo);
+
+    for (th = thinkercap.next; th != &thinkercap; th = th->next)
+      if (th->function.p1 == (actionf_p1)P_MobjThinker)
+      {
+        mo = (mobj_t *) th;
+
+        if (mo->player && mo->player == &players[displayplayer])
+          continue;
+
+        mo->oldx = mo->x;
+        mo->oldy = mo->y;
+        mo->oldz = mo->z;
+      }
+  }
+
+  P_MapEnd();
+}
+
 //
 // P_Ticker
 //
@@ -251,6 +288,7 @@ static void P_RunThinkers (void)
 void P_Ticker (void)
 {
   int i;
+  extern int freeze;
 
   // pause if in menu and at least one tic has been run
   //
@@ -261,21 +299,27 @@ void P_Ticker (void)
   // All of this complicated mess is used to preserve demo sync.
 
   if (paused || (menuactive && !demoplayback && !netgame &&
-		 players[consoleplayer].viewz != 1))
+                 players[consoleplayer].viewz != 1))
     return;
 
-  P_MapStart();
-  if (gamestate == GS_LEVEL)
-  {
-  for (i=0; i<MAXPLAYERS; i++)
-    if (playeringame[i])
-      P_PlayerThink(&players[i]);
-  }
+  // [Nugget]
+  if (freeze == 2)
+  { P_FrozenTicker(); }
+  else {
+    P_MapStart();
+    if (gamestate == GS_LEVEL)
+    {
+    for (i=0; i<MAXPLAYERS; i++)
+      if (playeringame[i])
+        P_PlayerThink(&players[i]);
+    }
 
-  P_RunThinkers();
-  P_UpdateSpecials();
-  P_RespawnSpecials();
-  P_MapEnd();
+    P_RunThinkers();
+    P_UpdateSpecials();
+    P_RespawnSpecials();
+    P_MapEnd();
+  }
+  
   leveltime++;                       // for par times
 }
 

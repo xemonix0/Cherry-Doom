@@ -99,7 +99,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
   - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA
 - _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt
 - _**'IDFLY'**_ to fly [i.b. PrBoom+, ZDoom]
-- _**'FREEZE'**_ to freeze gameplay [i.b. ZDoom]
+- _**'FREEZE'**_ to freeze gameplay [p.f. DSDA-Doom; i.b. ZDoom]
 - _**'SUMMON'**_ to spawn a hostile or friendly actor based on its mobjtype index [i.b. ZDoom]
 - _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD [i.b. ZDoom]
 - _**'LINETARGET'**_ to give some info on the player's linetarget [i.b. ZDoom]

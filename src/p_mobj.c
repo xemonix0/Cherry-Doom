@@ -716,7 +716,7 @@ static inline void MusInfoThinker (mobj_t *thing)
 void P_MobjThinker (mobj_t* mobj)
 {
   extern boolean cheese; // [Nugget] cheese :)
-  extern boolean freeze; // [Nugget]
+  extern int freeze; // [Nugget]
 
   // [crispy] support MUSINFO lump (dynamic music changing)
   if (mobj->type == MT_MUSICSOURCE)
@@ -738,7 +738,7 @@ void P_MobjThinker (mobj_t* mobj)
   }
   
   // [Nugget]
-  if (freeze && !mobj->player) {
+  if ((freeze == 1) && !mobj->player) {
     mobj->interp = -1;
     return;
   }
