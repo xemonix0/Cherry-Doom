@@ -12,6 +12,7 @@
 
 * **Allowed widescreen without aspect ratio correction**
 * **Extended FOV range**: now goes from 20 to 160
+* **Allowed some freelook while dead**
 * **Rearranged _Doom Compatibility_ setup menu's pages 4 and 5**
 * **Changed maximum NUGHUD drawing position values**: from `X = 320` and `Y = 200` to `X = 319` and `Y = 199` respectively; this might affect some existing NUGHUDs
 * **Mentioned flight keys** in Key Bindings setup menu

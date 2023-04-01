@@ -486,6 +486,14 @@ void P_DeathThink (player_t* player)
     if (player->damagecount)
       player->damagecount--;
 
+  // [Nugget] Allow some freelook while dead
+  if ((player->viewheight == 6*FRACUNIT) && !menuactive && !demoplayback)
+  {
+    player->lookdir = BETWEEN(-LOOKDIRMIN * MLOOKUNIT / 2,
+                               LOOKDIRMAX * MLOOKUNIT / 2,
+                               player->lookdir + player->cmd.lookdir);
+  }
+
   if (player->cmd.buttons & BT_USE)
   {
     if (demorecording || demoplayback || netgame)
