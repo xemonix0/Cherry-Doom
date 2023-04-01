@@ -1849,7 +1849,9 @@ void D_NuggetUpdateCasual()
 
   if (old_casual_play != casual_play) {
     old_casual_play = casual_play;
-    if (fov != ORIGFOV) { R_ExecuteSetViewSize(); } // Enforce original FOV if not casual play
+    
+    R_SetRenderedFOV(casual_play ? fov : ORIGFOV);
+    
     M_ResetSetupMenu(); // Filthy... but it seems to work
   }
 }

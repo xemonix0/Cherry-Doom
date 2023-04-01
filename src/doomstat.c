@@ -180,6 +180,8 @@ int bloodier_gibbing;
 int sp_chat;
 int gammacycle;
 int sx_fix;
+// Misc
+int zoom_fov;
 
 int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
 

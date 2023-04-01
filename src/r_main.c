@@ -111,8 +111,9 @@ int extralight;                           // bumped light from gun blasts
 int extra_level_brightness;               // level brightness feature
 
 // [Nugget] FOV from Doom Retro
+int rfov; // Rendered FOV (might be different from user-defined FOV)
 static fixed_t fovscale;
-int WIDEFOVDELTA, rfov; // [Nugget] FOV from Doom Retro
+int WIDEFOVDELTA;
 
 void (*colfunc)(void) = R_DrawColumn;     // current column draw function
 
@@ -443,6 +444,15 @@ void R_SetViewSize(int blocks)
   setblocks = blocks;
 }
 
+// [Nugget]
+void R_SetRenderedFOV(int value)
+{
+  if (rfov != value) {
+    rfov = value;
+    R_ExecuteSetViewSize();
+  }
+}
+
 //
 // R_ExecuteSetViewSize
 //
@@ -493,7 +503,6 @@ void R_ExecuteSetViewSize (void)
   viewblocks = MIN(setblocks, 10) << hires;
 
   // [Nugget] FOV from Doom Retro
-  rfov = (!casual_play) ? ORIGFOV : fov;
   // fov * 0.82 is vertical FOV for 4:3 aspect ratio
   WIDEFOVDELTA = (int)(atan(SCREENWIDTH / (SCREENHEIGHT / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov - 2;
 

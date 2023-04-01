@@ -499,6 +499,8 @@ extern int bloodier_gibbing;
 extern int sp_chat;
 extern int gammacycle;
 extern int sx_fix;
+// Misc
+extern int zoom_fov;
 
 enum {
   comp_blazing2,

@@ -197,13 +197,13 @@ void P_CalcHeight (player_t* player)
 //
 // killough 10/98: simplified
 
-boolean CrouchKeyDown; // [Nugget]
-
 void P_MovePlayer (player_t* player)
 {
   ticcmd_t *cmd = &player->cmd;
   mobj_t *mo = player->mo;
-  int cforwardmove, csidemove; // [Nugget]
+  // [Nugget]
+  static boolean crouchKeyDown = false;
+  int cforwardmove, csidemove;
 
   mo->angle += cmd->angleturn << 16;
   onground = mo->z <= mo->floorz;
@@ -266,7 +266,7 @@ void P_MovePlayer (player_t* player)
   }
 
   // [Nugget] Crouch/Fly Down
-  if (!M_InputGameActive(input_crouch)) { CrouchKeyDown = false; }
+  if (!M_InputGameActive(input_crouch)) { crouchKeyDown = false; }
   else if (casual_play)
   {
     if (player->cheats & CF_FLY) {
@@ -274,8 +274,9 @@ void P_MovePlayer (player_t* player)
                           ? 2*FRACUNIT : 1*FRACUNIT;
       if (player->mo->momz < -8*FRACUNIT) { player->mo->momz = -8*FRACUNIT; }
     }
-    else if (jump_crouch && !CrouchKeyDown) {
-      CrouchKeyDown = true;
+    else if (jump_crouch && crouchKeyDown == false)
+    {
+      crouchKeyDown = true;
 
       if (player->mo->intflags & MIF_CROUCHING)
       { player->mo->intflags &= ~MIF_CROUCHING; } // Stand up
@@ -519,6 +520,9 @@ void P_PlayerThink (player_t* player)
 {
   ticcmd_t*    cmd;
   weapontype_t newweapon;
+  // [Nugget]
+  static boolean zoomed = false;
+  static boolean zoomKeyDown = false;
 
   // [AM] Assume we can interpolate at the beginning
   //      of the tic.
@@ -585,9 +589,18 @@ void P_PlayerThink (player_t* player)
 
   if (player->playerstate == PST_DEAD)
     {
+      if (zoomed) { R_SetRenderedFOV(fov); } // [Nugget] Reset FOV upon death
+      
       P_DeathThink (player);
       return;
     }
+
+  if (!M_InputGameActive(input_zoom)) { zoomKeyDown = false; }
+  else if (casual_play && zoomKeyDown == false)
+  {
+    zoomKeyDown = true;
+    R_SetRenderedFOV((zoomed = !zoomed) ? zoom_fov : fov);
+  }
 
   // Move around.
   // Reactiontime is used to prevent movement

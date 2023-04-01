@@ -2983,11 +2983,6 @@ setup_menu_t keys_settings4[] =  // Key Binding screen strings
   {"MISCELLANEOUS",S_SKIP|S_TITLE,m_null,KB_X,M_Y+10*M_SPC},
   {"RELOAD MAP/DEMO",S_INPUT,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_menu_reloadlevel},
   {"NEXT MAP"     ,S_INPUT,m_scrn,KB_X,M_Y+12*M_SPC,{0},input_menu_nextlevel},
-  // [Nugget]
-  {"NUGGET",S_SKIP|S_TITLE,m_null,KB_X,M_Y+13*M_SPC},
-    {"JUMP/FLY UP",S_INPUT,m_scrn,KB_X,M_Y+14*M_SPC,{0},input_jump},
-    {"CROUCH/FLY DOWN",S_INPUT,m_scrn,KB_X,M_Y+15*M_SPC,{0},input_crouch},
-    {"CROSSHAIR",S_INPUT,m_scrn,KB_X,M_Y+16*M_SPC,{0},input_crosshair},
 
   {"<- PREV", S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings3}},
   {"NEXT ->", S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings5}},
@@ -3098,6 +3093,14 @@ setup_menu_t keys_settings8[] =  // Key Binding screen strings
   {"PLAYER 4"   ,S_INPUT     ,m_scrn,KB_X,M_Y+5*M_SPC,{0},input_chat_dest3},
   {"BACKSPACE"  ,S_INPUT     ,m_scrn,KB_X,M_Y+6*M_SPC,{0},input_chat_backspace},
   {"ENTER"      ,S_INPUT     ,m_scrn,KB_X,M_Y+7*M_SPC,{0},input_chat_enter},
+  
+  // [Nugget]
+  {"NUGGET",S_SKIP|S_TITLE,m_null,KB_X,M_Y+9*M_SPC},
+  {"JUMP/FLY UP"     ,S_INPUT,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_jump},
+  {"CROUCH/FLY DOWN" ,S_INPUT,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_crouch},
+  {"TOGGLE CROSSHAIR",S_INPUT,m_scrn,KB_X,M_Y+12*M_SPC,{0},input_crosshair},
+  {"TOGGLE ZOOM"     ,S_INPUT,m_scrn,KB_X,M_Y+13*M_SPC,{0},input_zoom},
+  {"ZOOM FOV"        ,S_NUM,  m_null,KB_X,M_Y+14*M_SPC,{"zoom_fov"}},
 
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings7}},
 
@@ -4325,6 +4328,11 @@ enum { // [Nugget]
   gen4_quickexit,
 };
 
+void M_SetRenderedFOV(void)
+{
+  R_SetRenderedFOV(fov);
+}
+
 static const char *s_clipping_dists[] = {
   "1200", "2400", NULL
 };
@@ -4337,7 +4345,7 @@ setup_menu_t gen_settings4[] = { // [Nugget]
 
   {"Nugget Settings", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen4_title1 * M_SPC},
     {"Disable palette tint in menus",   S_YESNO,  m_null, M_X, M_Y + gen4_menutint      * M_SPC, {"no_menu_tint"}},
-    {"Field of View",                   S_NUM,    m_null, M_X, M_Y + gen4_fov           * M_SPC, {"fov"}, 0, R_ExecuteSetViewSize},
+    {"Field of View",                   S_NUM,    m_null, M_X, M_Y + gen4_fov           * M_SPC, {"fov"}, 0, M_SetRenderedFOV},
     {"Things Move Over/Under Things",   S_YESNO,  m_null, M_X, M_Y + gen4_overunder     * M_SPC, {"over_under"}},
     {"Allow Jump/Crouch",               S_YESNO,  m_null, M_X, M_Y + gen4_jump_crouch   * M_SPC, {"jump_crouch"}},
     {"Damage Tint Cap (Default = 100)", S_NUM,    m_null, M_X, M_Y + gen4_dmgcountcap   * M_SPC, {"damagecount_cap"}},

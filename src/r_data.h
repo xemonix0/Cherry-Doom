@@ -35,8 +35,8 @@
 
 // [Nugget]
 #define ORIGFOV 81
-#define MINFOV  45
-#define MAXFOV  135
+#define MINFOV  20
+#define MAXFOV  160
 
 #define LOOKDIRMIN	110 // [crispy] -110, actually
 #define LOOKDIRMAX	90

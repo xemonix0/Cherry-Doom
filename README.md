@@ -115,6 +115,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 ### Miscellaneous
 
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
+- **Zoom key**
 - Restored _**Message Listing Scrolls Upwards**_ setting, and enabled it by default
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump

@@ -1433,6 +1433,21 @@ default_t defaults[] = {
     input_crosshair, { {0, 0} }
   },
 
+  { // [Nugget]
+    "input_zoom",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle zoom",
+    input_zoom, { {0, 0} }
+  },
+
+  {
+    "zoom_fov",
+    (config_t *) &zoom_fov, NULL,
+    {MINFOV}, {MINFOV,MAXFOV}, number, ss_keys, wad_no,
+    "Field of View when zoom is enabled"
+  },
+
   {
     "input_savegame",
     NULL, NULL,

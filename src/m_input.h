@@ -40,7 +40,6 @@ enum
   input_strafe,
   input_jump, // [Nugget]
   input_crouch, // [Nugget]
-  input_crosshair, // [Nugget]
   input_autorun,
   input_novert,
   input_reverse,
@@ -51,6 +50,8 @@ enum
 
   input_mouselook,
   input_padlook,
+  input_crosshair, // [Nugget]
+  input_zoom, // [Nugget]
 
   input_weapon1,
   input_weapon2,
