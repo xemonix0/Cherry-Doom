@@ -10,7 +10,7 @@ Although the new code has been written with the intention of not breaking demo c
 
 Most of Nugget Doom's features come from other sources, like source ports and mods; the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them. These acknowledgements are included in the feature lists below; be aware that some might be inaccurate or outright missing.
 
-A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`. For these settings, their internal variable names are provided alongside the label as guidance.
+A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`. For these settings, their internal variable names are provided alongside the _CFG-Only_ label as guidance.
 
 ### General
 
@@ -98,13 +98,13 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**'VALIANT'**_ for fast weapons [i.b. ZDoom]
   - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA
 - _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt
-- _**'IDFLY'**_ to fly [i.b. PrBoom+, ZDoom]
+- _**'IDFLY'**_ to fly (uses jumping/crouching keys) [i.b. PrBoom+, ZDoom]
 - _**'FREEZE'**_ to freeze gameplay [p.f. DSDA-Doom; i.b. ZDoom]
 - _**'SUMMON'**_ to spawn a hostile or friendly actor based on its mobjtype index [i.b. ZDoom]
 - _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD [i.b. ZDoom]
 - _**'LINETARGET'**_ to give some info on the player's linetarget [i.b. ZDoom]
 - _**'MDK'**_ [i.b. ZDoom]
-- _**'SAITAMA'**_ to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, also featuring an alternate attack when holding down Strafe On)
+- _**'SAITAMA'**_ to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, featuring an alternate multishot attack when holding down Strafe On)
 - _**'NEXTMAP'**_ to exit the level [i.b. ZDoom]
 - _**'NEXTSECRET'**_ to exit the level as if using a secret exit [i.b. ZDoom]
 - _**'TURBO'**_ to change the player speed in-game
@@ -122,7 +122,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ## Versioning
 
-Nugget Doom follows a fairly simple **X.Y.Z** versioning system:
+Nugget Doom follows a fairly simple (albeit arbitrary) **X.Y.Z** versioning system:
   - **X** is increased in the event of at least one major implementation, such as a new spec like _UMAPINFO_;
   - **Y** is increased in the event of at least one minor implementation, such as a new cheat;
   - **Z** is increased in the event of at least one bug fix, text/code reformatting, or merging of _Woof!_ updates, even if the changes to the latter are considered minor or major.
@@ -133,7 +133,7 @@ Incrementing any of the first values will reset the latter (i.e. a major change 
 
 As a Woof! fork, its build instructions should also apply here:
 
-The source code is available at GitHub: https://github.com/MrAlaux/Nugget-Doom
+The source code is available at GitHub: https://github.com/MrAlaux/Nugget-Doom.
 
 ## Linux, and Windows with MSYS2
 
@@ -171,7 +171,7 @@ Much like a native Windows build, you do not need to download any dependencies.
 
 # Contact
 
-The homepage for Nugget Doom is https://github.com/MrAlaux/Nugget-Doom
+The homepage for Nugget Doom is https://github.com/MrAlaux/Nugget-Doom.
 
 Please report any bugs, glitches or crashes that you encounter to the GitHub [Issue Tracker](https://github.com/MrAlaux/Nugget-Doom/issues).
 
