@@ -4758,10 +4758,14 @@ static void M_UpdateMultiLineMsgItem(void)
   DISABLE_ITEM(!message_list, mess_settings1[mess_scrollup]);
 }
 
+static const char *secretmessage_str[] = { // [Nugget]
+  "Off", "On", "Count", NULL
+};
+
 setup_menu_t mess_settings1[] =  // Messages screen
 {
-  {"\"A Secret is Revealed!\" Message", S_YESNO, m_null, M_X, 
-   M_Y + mess_secret*M_SPC, {"hud_secret_message"}},
+  {"\"A Secret is Revealed!\" Message", S_CHOICE, m_null, M_X, 
+   M_Y + mess_secret*M_SPC, {"hud_secret_message"}, 0, NULL, secretmessage_str}, // [Nugget]
 
   {"", S_SKIP, m_null, M_X, M_Y + mess_stub1*M_SPC},
 

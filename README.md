@@ -73,6 +73,11 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**Extra Gibbing**_ setting, to force Berserk Fist, Chainsaw and SSG gibbing [i.b. Smooth Doom]
 - _**Bloodier Gibbing**_ setting [i.b. Smooth Doom]
 
+### Messages
+
+- **Secret count in "secret revealed" message** [p.f. Crispy Doom]
+- Restored _**Message Listing Scrolls Upwards**_ setting, and enabled it by default
+
 ### Doom Compatibility
 
 - Fix Lost Soul colliding with items
@@ -116,7 +121,6 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
 - **Zoom key**
-- Restored _**Message Listing Scrolls Upwards**_ setting, and enabled it by default
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
 

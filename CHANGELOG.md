@@ -4,6 +4,7 @@
 * **Separated View Bobbing from Weapon Bobbing**; each now has its own value
 * **Selective fuzz darkening** (thanks @ceski-1)
 * **Zoom key**
+* **Secret count in "secret revealed" message**
 * **Toggle for Berserk display** in place of the Ammo count
 * **Toggle for weapon sprite centering correction**
 * _**'FREEZE'**_ cheat (partially ported from DSDA-Doom)

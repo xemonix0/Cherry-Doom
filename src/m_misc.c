@@ -2423,7 +2423,7 @@ default_t defaults[] = {
   {
     "hud_secret_message",
     (config_t *) &hud_secret_message, NULL,
-    {0}, {0,1}, number, ss_mess, wad_no,
+    {0}, {0,2}, number, ss_mess, wad_no, // [Nugget]
     "\"A secret is revealed!\" message"
   },
 

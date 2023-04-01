@@ -57,6 +57,9 @@
 #include "r_sky.h"   // R_GetSkyColor
 #include "m_swap.h"
 #include "i_video.h" // [FG] uncapped
+// [Nugget]
+#include "hu_stuff.h" // hud_secret_message
+#include "m_misc2.h" // M_snprintf()
 
 //
 // Animating textures and planes
@@ -2088,12 +2091,14 @@ int disable_nuke;  // killough 12/98: nukage disabling cheat
 
 static void P_SecretRevealed(player_t *player)
 {
-  extern int hud_secret_message;
-
   if (hud_secret_message && player == &players[consoleplayer])
   {
     static int sfx_id = -1;
-    player->centermessage = s_HUSTR_SECRETFOUND;
+    static char str_count[32]; // [Nugget]
+
+    // [Nugget] Secret count in secret revealed message, from Crispy Doom
+    M_snprintf(str_count, sizeof(str_count), "Secret %d of %d revealed!", player->secretcount, totalsecret);
+    player->centermessage = (hud_secret_message == secretmessage_count) ? str_count : s_HUSTR_SECRETFOUND;
 
     if (sfx_id == -1)
     {
