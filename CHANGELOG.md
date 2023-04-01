@@ -1,10 +1,11 @@
 ## New Features
 
-* **Stretch-to-fit viewport behavior**
+* **Stretch-to-fit viewport behavior** (partially ported from Crispy Doom)
 * **Separated View Bobbing from Weapon Bobbing**; each now has its own value
-* **Selective fuzz darkening** (thanks @ceski-1)
+* _**Selective fuzz darkening**_ (thanks @ceski-1)
 * **Zoom key**
-* **Secret count in "secret revealed" message**
+* **Secret count in "secret revealed" message** (ported from Crispy Doom)
+* _**Imitate player's breathing**_ setting (ported from International Doom)
 * **Toggle for Berserk display** in place of the Ammo count
 * **Toggle for weapon sprite centering correction**
 * _**'FREEZE'**_ cheat (partially ported from DSDA-Doom)

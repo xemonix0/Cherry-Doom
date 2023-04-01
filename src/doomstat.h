@@ -457,7 +457,8 @@ extern int center_weapon;
 //----- Nugget ---------------------------------------------------------------
 
 extern boolean fauxdemo;
-extern boolean casual_play, old_casual_play;
+extern boolean casual_play;
+extern int old_casual_play;
 
 // General
   // Nugget Settings (Page 3)
@@ -471,6 +472,7 @@ extern int bonuscount_cap;
 extern int no_berserk_tint;
 extern int view_bobbing_percentage;
 extern int viewheight_value;
+extern int breathing;
 extern int s_clipping_dist_x2;
 extern int one_key_saveload;
 extern int no_page_ticking;

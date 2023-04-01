@@ -139,7 +139,8 @@ char *MAPNAME(int e, int m)
 //----- Nugget ---------------------------------------------------------------
 
 boolean fauxdemo;
-boolean casual_play, old_casual_play = -1;
+boolean casual_play;
+int old_casual_play = -1;
 
 // General
   // Nugget Settings (Page 3)
@@ -153,6 +154,7 @@ int bonuscount_cap;
 int no_berserk_tint;
 int view_bobbing_percentage;
 int viewheight_value;
+int breathing;
 int s_clipping_dist_x2;
 int one_key_saveload;
 int no_page_ticking;

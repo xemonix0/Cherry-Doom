@@ -566,6 +566,13 @@ default_t defaults[] = {
   },
 
   {
+    "breathing",
+    (config_t *) &breathing, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to imitate player's breathing (minimal idle bobbing)"
+  },
+
+  {
     "s_clipping_dist_x2",
     (config_t *) &s_clipping_dist_x2, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,

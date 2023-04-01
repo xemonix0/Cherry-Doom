@@ -54,6 +54,12 @@ boolean onground; // whether player is on ground or in air
 // [Nugget]
 #define CROUCHUNITS 3*FRACUNIT
 
+// [Nugget]: [JN] Player's breathing imitation.
+static fixed_t breathing_val;
+static boolean breathing_dir;
+#define BREATHING_STEP 32
+#define BREATHING_MAX  1408
+
 //
 // P_Thrust
 // Moves the given origin along a given angle.
@@ -162,25 +168,44 @@ void P_CalcHeight (player_t* player)
     {
       player->viewheight += player->deltaviewheight;
 
+      // [Nugget]: [JN] Imitate player's breathing.
+      if (STRICTMODE(breathing))
+      {
+        if (breathing_dir)
+        { // Inhale (camera up)
+          breathing_val += BREATHING_STEP;
+          if (breathing_val >= BREATHING_MAX)
+          { breathing_dir = false; }
+        }
+        else
+        { // Exhale (camera down)
+          breathing_val -= BREATHING_STEP;
+          if (breathing_val <= -BREATHING_MAX)
+          { breathing_dir = true; }
+        }
+
+        player->viewheight += breathing_val;
+      }
+            
       if (player->viewheight > VIEWHEIGHT)
-	{
-	  player->viewheight = VIEWHEIGHT;
-	  player->deltaviewheight = 0;
-	}
+        {
+          player->viewheight = VIEWHEIGHT;
+          player->deltaviewheight = 0;
+        }
 
       if (player->viewheight < VIEWHEIGHT/2)
-	{
-	  player->viewheight = VIEWHEIGHT/2;
-	  if (player->deltaviewheight <= 0)
-	    player->deltaviewheight = 1;
-	}
+        {
+          player->viewheight = VIEWHEIGHT/2;
+          if (player->deltaviewheight <= 0)
+            player->deltaviewheight = 1;
+        }
 
       if (player->deltaviewheight)
-	{
-	  player->deltaviewheight += FRACUNIT/4;
-	  if (!player->deltaviewheight)
-	    player->deltaviewheight = 1;
-	}
+        {
+          player->deltaviewheight += FRACUNIT/4;
+          if (!player->deltaviewheight)
+            player->deltaviewheight = 1;
+        }
     }
 
   // [Nugget] Account for crouching

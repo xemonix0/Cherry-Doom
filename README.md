@@ -29,6 +29,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**Disable Berserk Tint**_ setting
 - _**View Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV [i.b. Brutal Doom]
+- _**Imitate player's breathing**_ setting [p.f. International Doom]
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
 - Setting of condition to _**Advance Internal Demos**_
