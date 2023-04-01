@@ -1,20 +1,24 @@
 ## New Features
-* Implemented key to make the Automap marks blink (default key: <kbd>B</kbd>)
-* Implemented an Automap color for unrevealed secret sectors
-* Implemented a toggle to have the Gamma Correction key cycle through "new" gamma levels instead
+
+* Allowed **widescreen without aspect ratio correction**
+* Implemented **stretch-to-fit viewport behavior**
+* **Separated View Bobbing from Weapon Bobbing**; each now has its own value
+* Implemented **selective fuzz darkening** (thanks @ceski-1)
+* Implemented **toggle for Berserk display** in place of the Ammo count
+* Implemented **toggle for weapon sprite centering correction**
+* _**'FREEZE'**_ cheat (partially ported from DSDA-Doom)
 
 ## Changes
-* Merged Woof 10.5.0 and Woof 10.5.1's changes, therefore:
-   * The toggle to account for fuzzy targets in the crosshair now has its own variable
-   * Removed "Force Default [Crosshair] Color" setting
-   * Changed Level Brightness range from (-16, 16) to (-8, 8)
-* Weapons no longer need ammo to be fired when the Infinite Ammo cheat is enabled
-* Fixed a crash in Linux
-* Cheats:
-   * Replaced 'IDNLEV' / 'IDNEXT' with 'NEXTMAP'
-   * Implemented 'NEXTSECRET' cheat
-   * Removed 'SPAWN' alternative for 'SUMMON'
-   * Removed 'SCANNER' and 'ANALYZE' alternatives for 'LINETARGET'
-   * 'BOBBERS' now gives Full Ammo and Keys only when toggling on
-* "New" Gamma Correction slider now ranges from 0.5 to 2.0 in steps of 0.05
-* Changed "Horiz. Autoaim Indicators" description to "Horizontal Autoaim Indicators"
+
+* **Specified `CPACK_PACKAGE_NAME`** as "Nugget-Doom" (thanks @Mariiibo)
+* **Mentioned flight keys** in Key Bindings setup menu
+* **Rearranged _Doom Compatibility_ setup menu's pages 4 and 5**
+* **Changed maximum NUGHUD drawing position values**: from `X = 320` and `Y = 200` to `X = 319` and `Y = 199` respectively
+* **Changed `gammacycle`'s description**
+
+## Bug Fixes
+
+* **Fixed Berserk being drawn in fullscreen HUD**
+* **Fixed weapon switching with bobbing disabled and forced weapon sprite coordinates**
+* **Prevented weapon bobbing when forcing weapon sprite coordinates**
+* **Corrected position of Time/STS widgets in NUGHUD**; this might change the position in which they're displayed in some existing NUGHUDs
