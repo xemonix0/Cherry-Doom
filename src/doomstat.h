@@ -497,6 +497,7 @@ extern int smooth_counts;
 // Enemies
 extern int extra_gibbing;
 extern int bloodier_gibbing;
+extern int zdoom_item_drops;
 // CFG only
 extern int sp_chat;
 extern int gammacycle;

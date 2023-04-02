@@ -3796,6 +3796,7 @@ enum {
   enem1_dog_jumping,
   enem1_extra_gibbing,
   enem1_bloodier_gibbing,
+  enem1_zdoom_drops,
 
   enem1_end
 };
@@ -3829,8 +3830,9 @@ setup_menu_t enem_settings1[] =  // Enemy Settings screen
   {"Allow dogs to jump down",S_YESNO,m_null,M_X,M_Y+ enem1_dog_jumping*M_SPC, {"dog_jumping"}},
   
   // [Nugget]
-  {"Extra Gibbing", S_YESNO, m_null, M_X, M_Y+enem1_extra_gibbing*M_SPC, {"extra_gibbing"}},
-  {"Bloodier Gibbing", S_YESNO, m_null, M_X, M_Y+enem1_bloodier_gibbing*M_SPC, {"bloodier_gibbing"}},
+  {"Extra Gibbing",         S_YESNO, m_null, M_X, M_Y + enem1_extra_gibbing    *M_SPC, {"extra_gibbing"}},
+  {"Bloodier Gibbing",      S_YESNO, m_null, M_X, M_Y + enem1_bloodier_gibbing *M_SPC, {"bloodier_gibbing"}},
+  {"ZDoom-like item drops", S_YESNO, m_null, M_X, M_Y + enem1_zdoom_drops      *M_SPC, {"zdoom_item_drops"}},
 
   {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {enem_settings2}},
   // Button for resetting to defaults
@@ -7326,7 +7328,7 @@ static void M_UpdateStrictModeItems(void)
 
   // [Nugget]
   for (int i = gen4_menutint; i <= gen4_sclipdist; i++)
-    { DISABLE_STRICT(gen_settings4[i]); }
+  { DISABLE_STRICT(gen_settings4[i]); }
   DISABLE_ITEM((demorecording||netgame||strictmode||fauxdemo), gen_settings4[gen4_fov]);
   DISABLE_ITEM(!casual_play, gen_settings4[gen4_overunder]);
   DISABLE_ITEM(!casual_play, gen_settings4[gen4_jump_crouch]);
@@ -7345,8 +7347,10 @@ static void M_UpdateStrictModeItems(void)
 
   DISABLE_STRICT(auto_settings1[auto1_coords]); // map_player_coords
 
-  DISABLE_ITEM(!casual_play, enem_settings1[enem1_extra_gibbing]); // [Nugget]
-  DISABLE_ITEM(!casual_play, enem_settings1[enem1_bloodier_gibbing]); // [Nugget]
+  // [Nugget]
+  for (int i = enem1_extra_gibbing; i <= enem1_zdoom_drops; i++)
+  { DISABLE_ITEM(!casual_play, enem_settings1[i]); }
+
   DISABLE_ITEM(strictmode || !comp[comp_vile], enem_settings2[enem2_ghost]);
   DISABLE_ITEM(strictmode || deh_set_blood_color, enem_settings2[enem2_colored_blood]);
   DISABLE_STRICT(enem_settings2[enem2_flipcorpses]);

@@ -722,6 +722,13 @@ default_t defaults[] = {
   },
 
   {
+    "zdoom_item_drops",
+    (config_t *) &zdoom_item_drops, NULL,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable ZDoom-like item drops for dying enemies"
+  },
+
+  {
     "sp_chat",
     (config_t *) &sp_chat, NULL,
     {0}, {0,1}, number, ss_none, wad_no,

@@ -73,6 +73,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 - _**Extra Gibbing**_ setting, to force Berserk Fist, Chainsaw and SSG gibbing [i.b. Smooth Doom]
 - _**Bloodier Gibbing**_ setting [i.b. Smooth Doom]
+- _**ZDoom-like item drops**_ setting [of course, i.b. ZDoom]
 
 ### Messages
 

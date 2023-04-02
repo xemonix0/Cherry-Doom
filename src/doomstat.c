@@ -178,6 +178,7 @@ int smooth_counts;
 // Enemies
 int extra_gibbing;
 int bloodier_gibbing;
+int zdoom_item_drops;
 // CFG only
 int sp_chat;
 int gammacycle;
