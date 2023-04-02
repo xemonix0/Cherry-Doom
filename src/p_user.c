@@ -187,15 +187,15 @@ void P_CalcHeight (player_t* player)
         player->viewheight += breathing_val;
       }
             
-      if (player->viewheight > VIEWHEIGHT)
+      if (player->viewheight > viewheight_value*FRACUNIT)
         {
-          player->viewheight = VIEWHEIGHT;
+          player->viewheight = viewheight_value*FRACUNIT;
           player->deltaviewheight = 0;
         }
 
-      if (player->viewheight < VIEWHEIGHT/2)
+      if (player->viewheight < viewheight_value*FRACUNIT/2)
         {
-          player->viewheight = VIEWHEIGHT/2;
+          player->viewheight = viewheight_value*FRACUNIT/2;
           if (player->deltaviewheight <= 0)
             player->deltaviewheight = 1;
         }

@@ -489,7 +489,7 @@ static void P_ZMovement (mobj_t* mo)
     {
       // [Nugget] Adjustable viewheight
       int view = (demorecording||netgame||fauxdemo||strictmode) // Allowed in demo playback
-                 ? VIEWHEIGHT : viewheight_value*FRACUNIT;
+                 ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
       
       mo->player->viewheight -= mo->floorz-mo->z;
       mo->player->deltaviewheight = (view - mo->player->viewheight)>>3;
