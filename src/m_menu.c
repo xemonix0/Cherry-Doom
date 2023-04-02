@@ -7320,41 +7320,36 @@ void M_ResetMenu(void)
 static void M_UpdateStrictModeItems(void)
 {
   extern boolean deh_set_blood_color;
-
-  DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[gen1_trans]);
+  // map_player_coords
+  DISABLE_STRICT(auto_settings1[auto1_coords]);
+  DISABLE_ITEM(strictmode || deh_set_blood_color, enem_settings2[enem2_colored_blood]); // [Nugget] Now in page 2
+  DISABLE_STRICT(enem_settings2[enem2_flipcorpses]); // [Nugget] Now in page 2
+  DISABLE_STRICT(gen_settings3[gen3_realtic]); // [Nugget] Now in page 3
   DISABLE_STRICT(gen_settings2[gen2_brightmaps]);
-  DISABLE_STRICT(gen_settings3[gen3_screen_wipe]);
-  DISABLE_STRICT(gen_settings3[gen3_realtic]);
+  DISABLE_STRICT(gen_settings5[gen5_level_brightness]); // [Nugget] Now in page 5
+  DISABLE_ITEM(strictmode && demo_compatibility, gen_settings1[gen1_trans]);
+  DISABLE_STRICT(gen_settings5[gen5_palette_changes]); // [Nugget] Now in page 5
+  DISABLE_STRICT(gen_settings3[gen3_screen_wipe]); // [Nugget]
 
   // [Nugget]
+  
   for (int i = gen4_menutint; i <= gen4_sclipdist; i++)
   { DISABLE_STRICT(gen_settings4[i]); }
   DISABLE_ITEM((demorecording||netgame||strictmode||fauxdemo), gen_settings4[gen4_fov]);
-  DISABLE_ITEM(!casual_play, gen_settings4[gen4_overunder]);
-  DISABLE_ITEM(!casual_play, gen_settings4[gen4_jump_crouch]);
+  DISABLE_ITEM(!casual_play,                                   gen_settings4[gen4_overunder]);
+  DISABLE_ITEM(!casual_play,                                   gen_settings4[gen4_jump_crouch]);
   DISABLE_ITEM((demorecording||netgame||strictmode||fauxdemo), gen_settings4[gen4_viewheight]);
-
-  DISABLE_STRICT(gen_settings3[gen3_screen_wipe]);
-  DISABLE_STRICT(gen_settings5[gen5_level_brightness]);
 
   // [Nugget]
   for (int i = comp4_lscollision; i <= comp4_iosdeath; i++)
   { DISABLE_ITEM(!casual_play, comp_settings4[i]); }
   DISABLE_STRICT(comp_settings5[comp5_keypal]);
   
-  DISABLE_ITEM(!casual_play, weap_settings1[weap1_autoaim]); // [Nugget]
-  M_UpdateFreeaimItem(); // [Nugget]
+  DISABLE_ITEM(!casual_play, weap_settings1[weap1_autoaim]);
+  M_UpdateFreeaimItem();
 
-  DISABLE_STRICT(auto_settings1[auto1_coords]); // map_player_coords
-
-  // [Nugget]
   for (int i = enem1_extra_gibbing; i <= enem1_zdoom_drops; i++)
   { DISABLE_ITEM(!casual_play, enem_settings1[i]); }
-
-  DISABLE_ITEM(strictmode || !comp[comp_vile], enem_settings2[enem2_ghost]);
-  DISABLE_ITEM(strictmode || deh_set_blood_color, enem_settings2[enem2_colored_blood]);
-  DISABLE_STRICT(enem_settings2[enem2_flipcorpses]);
-
 }
 
 static void M_UpdateFreeaimItem(void) // [Nugget]
@@ -7392,12 +7387,12 @@ void M_ResetSetupMenu(void)
   }
 
   DISABLE_BOOM(enem_settings1[enem1_infighting]);
-  for (i = enem1_backing; i < enem1_extra_gibbing; ++i)
+  for (i = enem1_backing; i <= enem1_dog_jumping; ++i) // [Nugget]
   {
     DISABLE_BOOM(enem_settings1[i]);
   }
 
-  DISABLE_ITEM(!comp[comp_vile] || strictmode, enem_settings2[enem2_ghost]);
+  DISABLE_ITEM(!comp[comp_vile] || strictmode, enem_settings2[enem2_ghost]); // [Nugget] Now in page 2
 
   DISABLE_VANILLA(enem_settings1[enem1_remember]);
 
@@ -7419,7 +7414,7 @@ void M_ResetSetupMenu(void)
 
   if (M_ParmExists("-complevel"))
   {
-    gen_settings3[gen3_compat].m_flags |= S_DISABLE;
+    gen_settings3[gen3_compat].m_flags |= S_DISABLE; // [Nugget] Now in page 3
   }
 
   M_UpdateCrosshairItems();
