@@ -1621,10 +1621,8 @@ void M_QuickSave(void)
     }
 
   // [Nugget] One Key Quicksave
-  if (one_key_saveload) {
-    M_DoSave(quickSaveSlot);
-    S_StartSound(NULL,sfx_swtchx);
-  }
+  if (one_key_saveload)
+  { M_QuickSaveResponse('y'); }
   else { // [Nugget] Restore quick save/load prompts
     sprintf(tempstring,QSPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
     M_StartMessage(tempstring,M_QuickSaveResponse,true);
@@ -1672,10 +1670,8 @@ void M_QuickLoad(void)
     }
 
   // [Nugget] One Key Quickload
-  if (one_key_saveload) {
-    M_LoadSelect(quickSaveSlot);
-    S_StartSound(NULL,sfx_swtchx);
-  }
+  if (one_key_saveload)
+  { M_QuickLoadResponse('y'); }
   else { // [Nugget] Restore quick save/load prompts
     sprintf(tempstring,QLPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
     M_StartMessage(tempstring,M_QuickLoadResponse,true);
