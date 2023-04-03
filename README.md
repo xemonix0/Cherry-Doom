@@ -86,7 +86,6 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - Lost Soul forgets target upon impact
 - Fuzzy things bleed fuzzy blood [i.b. Crispy Doom]
 - Non-bleeders don't bleed when crushed [i.b. Crispy Doom]
-- Prevent Pain state with 0 damage attacks
 - Bruiser attack (A_BruisAttack) doesn't face target
 - Fix lopsided Icon of Sin explosions
 - Permanent IDCHOPPERS invulnerability

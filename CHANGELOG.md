@@ -20,6 +20,7 @@
 - **Changed maximum NUGHUD drawing position values**: from `X = 320` and `Y = 200` to `X = 319` and `Y = 199` respectively; this might affect some existing NUGHUDs
 - **Mentioned flight keys** in Key Bindings setup menu
 - **Changed `gammacycle`'s description**
+- **Removed "Prevent Pain state with 0 damage attacks" Doom Compat setting**
 - **Specified `CPACK_PACKAGE_NAME`** as "Nugget-Doom" (thanks @Mariiibo)
 
 ## Bug Fixes
