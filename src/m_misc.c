@@ -1086,14 +1086,6 @@ default_t defaults[] = {
   },
 
   {
-    "comp_0dmgpain",
-    (config_t *) &default_nugget_comp[comp_0dmgpain],
-    (config_t *) &nugget_comp[comp_0dmgpain],
-    {0}, {0,1}, number, ss_comp, wad_yes,
-    "Prevent pain state with 0 damage attacks"
-  },
-
-  {
     "comp_bruistarget",
     (config_t *) &default_nugget_comp[comp_bruistarget],
     (config_t *) &nugget_comp[comp_bruistarget],

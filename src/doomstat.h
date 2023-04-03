@@ -515,7 +515,6 @@ enum {
   comp_lsamnesia,
   comp_fuzzyblood,
   comp_nonbleeders,
-  comp_0dmgpain,
   comp_cgunnersfx,
   comp_flamst,
   comp_deadoof,

@@ -993,10 +993,10 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       // to pinch the player when they're hurt :)
 
       {
-	int temp = damage < 100 ? damage : 100;
+        int temp = damage < 100 ? damage : 100;
 
-	if (player == &players[consoleplayer])
-	  I_Tactile (40,10,40+temp*2);
+        if (player == &players[consoleplayer])
+          I_Tactile (40,10,40+temp*2);
       }
 #endif
 
@@ -1024,30 +1024,26 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       // If target is a player, set player's target to source,
       // so that a friend can tell who's hurting a player
       if (player)
-	P_SetTarget(&target->target, source);
+        P_SetTarget(&target->target, source);
 
       // killough 9/8/98:
       // If target's health is less than 50%, move it to the front of its list.
       // This will slightly increase the chances that enemies will choose to
       // "finish it off", but its main purpose is to alert friends of danger.
       if (target->health*2 < target->info->spawnhealth)
-	{
-	  thinker_t *cap = &thinkerclasscap[target->flags & MF_FRIEND ?
-					   th_friends : th_enemies];
-	  (target->thinker.cprev->cnext = target->thinker.cnext)->cprev =
-	    target->thinker.cprev;
-	  (target->thinker.cnext = cap->cnext)->cprev = &target->thinker;
-	  (target->thinker.cprev = cap)->cnext = &target->thinker;
-	}
+        {
+          thinker_t *cap = &thinkerclasscap[target->flags & MF_FRIEND ?
+                                           th_friends : th_enemies];
+          (target->thinker.cprev->cnext = target->thinker.cnext)->cprev =
+            target->thinker.cprev;
+          (target->thinker.cnext = cap->cnext)->cprev = &target->thinker;
+          (target->thinker.cprev = cap)->cnext = &target->thinker;
+        }
     }
 
   if ((justhit = (P_Random (pr_painchance) < target->info->painchance &&
-		  !(target->flags & MF_SKULLFLY)))) //killough 11/98: see below
-  {
-    // [Nugget] Prevent pain state if no damage is caused
-    if (!(casual_play && nugget_comp[comp_0dmgpain] && damage == 0))
-    { P_SetMobjState(target, target->info->painstate); }
-  }
+                  !(target->flags & MF_SKULLFLY)))) //killough 11/98: see below
+    P_SetMobjState(target, target->info->painstate);
 
   target->reactiontime = 0;           // we're awake now...
 
@@ -1066,10 +1062,10 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       // killough 9/9/98: cleaned up, made more consistent:
 
       if (!target->lastenemy || target->lastenemy->health <= 0 ||
-	  (demo_version < 203 ? !target->lastenemy->player :
-	   !((target->flags ^ target->lastenemy->flags) & MF_FRIEND) &&
-	   target->target != source)) // remember last enemy - killough
-	P_SetTarget(&target->lastenemy, target->target);
+          (demo_version < 203 ? !target->lastenemy->player :
+           !((target->flags ^ target->lastenemy->flags) & MF_FRIEND) &&
+           target->target != source)) // remember last enemy - killough
+        P_SetTarget(&target->lastenemy, target->target);
 
       P_SetTarget(&target->target, source);       // killough 11/98
       target->threshold = BASETHRESHOLD;
@@ -1080,7 +1076,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 
   // killough 11/98: Don't attack a friend, unless hit by that friend.
   if (justhit && (target->target == source || !target->target ||
-		  !(target->flags & target->target->flags & MF_FRIEND)))
+                  !(target->flags & target->target->flags & MF_FRIEND)))
     target->flags |= MF_JUSTHIT;    // fight back!
 }
 
