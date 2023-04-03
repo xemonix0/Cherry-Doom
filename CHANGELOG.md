@@ -29,3 +29,4 @@
 - **Fixed weapon switching with bobbing disabled and forced weapon sprite coordinates**
 - **Prevented weapon bobbing when forcing weapon sprite coordinates**
 - **Corrected position of Time/STS widgets in NUGHUD**; this might change the position in which they're displayed in some existing NUGHUDs
+- **Fixed automatic quicksave renaming when using One-Key Quicksave**
