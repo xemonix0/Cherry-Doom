@@ -306,8 +306,8 @@ default_t defaults[] = {
   { // [Nugget] Replace screen melt toggle
     "wipe_type",
     (config_t *) &wipe_type, NULL,
-    {1}, {0,2}, number, ss_gen, wad_yes,
-    "Screen wipe type (0 = None, 1 = Melt, 2 = ColorXForm)"
+    {1}, {0,3}, number, ss_gen, wad_yes,
+    "Screen wipe type (0 = None, 1 = Melt, 2 = ColorXForm, 3 = Fade)"
   },
 
   { // killough 10/98

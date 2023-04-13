@@ -67,7 +67,7 @@ static int wipe_doColorXForm(int width, int height, int ticks)
   byte *end = wipe_scr+width*height;
 
   // [Nugget] Speed it up
-  ticks *= 8;
+  ticks *= 4 * (hires ? 1 : 2);
 
   for (;w != end; w++, e++) {
     if (*w != *e) {
@@ -168,6 +168,56 @@ static int wipe_exitMelt(int width, int height, int ticks)
   return 0;
 }
 
+// [Nugget] "Fade" wipe
+
+static boolean fadeIn;
+
+static int wipe_initFade(int width, int height, int ticks)
+{
+  fadeIn = false;
+  return 0;
+}
+
+static int wipe_doFade(int width, int height, int ticks)
+{
+  boolean done = false;
+  int y;
+  static int screenshade = 1;
+  static const int targshade = 31;
+  
+  // [Nugget] Speed it up
+  ticks *= (hires ? 1 : 2);
+
+  memcpy(wipe_scr, fadeIn ? wipe_scr_end : wipe_scr_start, width*height);
+
+  for (y = 0; y < (SCREENWIDTH << hires) * (SCREENHEIGHT << hires); y++)
+  { wipe_scr[y] = colormaps[0][screenshade * 256 + wipe_scr[y]]; }
+
+  if (!fadeIn) { // Fade out to black
+    screenshade += ticks;
+
+    if (screenshade > targshade) {
+      screenshade = targshade;
+      fadeIn = true;
+    }
+  }
+  else { // Fade in from black
+    screenshade -= ticks;
+
+    if (screenshade < 1) {
+      screenshade = 1;
+      done = true;
+    }
+  }
+  
+  return done;
+}
+
+static int wipe_exitFade(int width, int height, int ticks)
+{
+  return 0;
+}
+
 int wipe_StartScreen(int x, int y, int width, int height)
 {
   I_ReadScreen(wipe_scr_start = screens[2]);
@@ -189,7 +239,11 @@ static int (*const wipes[])(int, int, int) = {
   wipe_exitMelt,
   wipe_initColorXForm,
   wipe_doColorXForm,
-  wipe_exitColorXForm
+  wipe_exitColorXForm,
+  // [Nugget]
+  wipe_initFade,
+  wipe_doFade,
+  wipe_exitFade
 };
 
 // [Nugget]

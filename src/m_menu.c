@@ -4188,7 +4188,7 @@ static const char *menu_background_strings[] = {
 
 // [Nugget]
 static const char *wipe_types[] = {
-  "None", "Melt", "Seizure", NULL
+  "None", "Melt", "Seizure", "Fade", NULL
 };
 
 setup_menu_t gen_settings2[] = { // General Settings screen2
