@@ -569,7 +569,7 @@ default_t defaults[] = {
     "breathing",
     (config_t *) &breathing, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,
-    "1 to imitate player's breathing (minimal idle bobbing)"
+    "1 to imitate player's breathing (subtle idle bobbing)"
   },
 
   {
