@@ -388,7 +388,8 @@ static void cheat_showfps()
 
 // [Nugget]
 static void cheat_nomomentum() {
-  plyr->message = (plyr->cheats ^= CF_NOMOMENTUM)
+  plyr->cheats ^= CF_NOMOMENTUM;
+  plyr->message = (plyr->cheats & CF_NOMOMENTUM)
                   ? "No Momentum Mode ON" : "No Momentum Mode OFF";
 }
 
@@ -403,13 +404,15 @@ static void cheat_fauxdemo() {
 
 // [Nugget] Infinite ammo
 static void cheat_infammo() {
-  plyr->message = (plyr->cheats ^= CF_INFAMMO)
+  plyr->cheats ^= CF_INFAMMO;
+  plyr->message = (plyr->cheats & CF_INFAMMO)
                   ? "Infinite ammo ON" : "Infinite ammo OFF";
 }
 
 // [Nugget] Fast weapons
 static void cheat_fastweaps() {
-  plyr->message = (plyr->cheats ^= CF_FASTWEAPS)
+  plyr->cheats ^= CF_FASTWEAPS;
+  plyr->message = (plyr->cheats & CF_FASTWEAPS)
                   ? "Fast Weapons ON" : "Fast Weapons OFF";
 }
 
@@ -507,20 +510,19 @@ static void cheat_turbo(char *buf)
   extern int sidemove[2];
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-  { doomprintf("Turbo: Digits only.");  return; }
+  { doomprintf("Turbo: Digits only");  return; }
 
   scale = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
-  if      (scale < 10)  { scale = 10; }
-  else if (scale > 255) { scale = 255; }
-  // It gets kinda wonky at that scale already,
-  // but going any further inverts movement
+  // Limit the scale; it gets kinda wonky at 255 already,
+  // but going any further outright inverts movement
+  scale = BETWEEN(10, 255, scale);
 
-  doomprintf("turbo scale: %i%%",scale);
-  forwardmove[0] = 25*scale/100;
-  forwardmove[1] = 50*scale/100;
-  sidemove[0] = 20*scale/100;
-  sidemove[1] = 40*scale/100;
+  doomprintf("Turbo Scale: %i%%",scale);
+  forwardmove[0] = 25 * scale / 100;
+  forwardmove[1] = 50 * scale / 100;
+  sidemove[0]    = 20 * scale / 100;
+  sidemove[1]    = 40 * scale / 100;
 }
 
 // [Nugget]
@@ -529,106 +531,57 @@ static void cheat_summon()
   plyr->message = "Summon: Enemy, Friend or Repeat Last?";
 }
 
-// [Nugget] Summon a hostile mobj
-static void cheat_summone(char *buf)
+// [Nugget] Auxiliary functions for the summon cheats
+
+static boolean GetMobjType(char *buf)
 {
-  fixed_t x, y, z;
   int type;
-  mobj_t *spawnee;
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-  { doomprintf("Summon: Digits only.");  return; }
+  {
+    doomprintf("Summon: Digits only");
+    return false;
+  }
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
   // Don't spawn things beyond the Music Source dummy (inclusive);
   // Worth noting that this approach isn't quite compatible with
   // DEHEXTRA and DSDHacked's capabilities.
-  if (type < 0 || type > MT_BIBLE)
-  { doomprintf("Summon: Invalid mobjtype %i", type);  return; }
-
-  // Valid mobjtype, so pass the value to spawneetype
-  spawneetype = type;
-  spawneefriend = false;
-
-  P_MapStart();
-
-  // Spawn them in front of the player, accounting for radius,
-  // and in mid-air
-  x = plyr->mo->x
-      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
-                 finecosine[plyr->mo->angle>>ANGLETOFINESHIFT]);
-  y = plyr->mo->y
-      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
-                 finesine[plyr->mo->angle>>ANGLETOFINESHIFT]);
-  z = plyr->mo->z + 32*FRACUNIT;
-
-  spawnee = P_SpawnMobj(x,y,z,spawneetype);
-  spawnee->intflags |= MIF_EXTRASPAWNED;
-  if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
-  { extraspawns++; }
-
-  P_MapEnd();
-
-  doomprintf("Mobj summoned! (Enemy - Type = %i)", spawneetype);
-}
-
-// [Nugget] Summon a friendly mobj
-static void cheat_summonf(char *buf)
-{
-  fixed_t x, y, z;
-  int type;
-  mobj_t *spawnee;
-
-  if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
-  { doomprintf("Summon: Digits only.");  return; }
-
-  type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
-
-  if (type < 0 || type > MT_BIBLE)
-  { doomprintf("Summon: Invalid mobjtype %i", type);  return; }
+  if (type < 0 || type > MT_BIBLE) {
+    doomprintf("Summon: Invalid mobjtype %i", type);
+    return false;
+  }
 
   spawneetype = type;
-  spawneefriend = true;
-
-  P_MapStart();
-
-  x = plyr->mo->x
-      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
-                 finecosine[plyr->mo->angle>>ANGLETOFINESHIFT]);
-  y = plyr->mo->y
-      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
-                 finesine[plyr->mo->angle>>ANGLETOFINESHIFT]);
-  z = plyr->mo->z + 32*FRACUNIT;
-
-  spawnee = P_SpawnMobj(x,y,z,spawneetype);
-  spawnee->flags |= MF_FRIEND;
-
-  P_MapEnd();
-
-  doomprintf("Mobj summoned! (Friend - Type = %i)", spawneetype);
+  
+  return true;
 }
 
-// [Nugget] Summon the last summoned mobj
-static void cheat_summonr()
+static void SummonMobj(boolean friendly)
 {
   fixed_t x, y, z;
   mobj_t *spawnee;
-
-  if (spawneetype == -1)
-  { plyr->message = "You must summon a mobj first!"; return; }
+  
+  if (spawneetype == -1) {
+    plyr->message = "You must summon a mobj first!";
+    return;
+  }
+  
+  spawneefriend = friendly;
 
   P_MapStart();
-
-  x = plyr->mo->x
-      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
-                 finecosine[plyr->mo->angle>>ANGLETOFINESHIFT]);
-  y = plyr->mo->y
-      + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
-                 finesine[plyr->mo->angle>>ANGLETOFINESHIFT]);
+  
+  x = plyr->mo->x + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
+                             finecosine[plyr->mo->angle >> ANGLETOFINESHIFT]);
+                 
+  y = plyr->mo->y + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
+                             finesine[plyr->mo->angle >> ANGLETOFINESHIFT]);
+                 
   z = plyr->mo->z + 32*FRACUNIT;
 
-  spawnee = P_SpawnMobj(x,y,z,spawneetype);
+  spawnee = P_SpawnMobj(x, y, z, spawneetype);
+  
   if (spawneefriend)
   { spawnee->flags |= MF_FRIEND; }
   else {
@@ -636,16 +589,35 @@ static void cheat_summonr()
     if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
     { extraspawns++; }
   }
-
+  
   P_MapEnd();
 
   doomprintf("Mobj summoned! (%s - Type = %i)",
              spawneefriend ? "Friend" : "Enemy", spawneetype);
 }
 
+// [Nugget] Summon a hostile mobj
+static void cheat_summone(char *buf)
+{
+  if (GetMobjType(buf)) { SummonMobj(false); }
+}
+
+// [Nugget] Summon a friendly mobj
+static void cheat_summonf(char *buf)
+{
+  if (GetMobjType(buf)) { SummonMobj(true); }
+}
+
+// [Nugget] Summon the last summoned mobj
+static void cheat_summonr()
+{
+  SummonMobj(spawneefriend);
+}
+
 // [Nugget] Give info on the current linetarget
 static void cheat_linetarget() {
-  plyr->message = (plyr->cheats ^= CF_LINETARGET)
+  plyr->cheats ^= CF_LINETARGET;
+  plyr->message = (plyr->cheats & CF_LINETARGET)
                   ? "Linetarget Query ON" : "Linetarget Query OFF";
 }
 
@@ -672,7 +644,8 @@ static void cheat_mdk() {
 
 // [Nugget] MDK Fist
 static void cheat_saitama() {
-  plyr->message = (plyr->cheats ^= CF_SAITAMA) ? "MDK Fist ON" : "MDK Fist OFF";
+  plyr->cheats ^= CF_SAITAMA;
+  plyr->message = (plyr->cheats & CF_SAITAMA) ? "MDK Fist ON" : "MDK Fist OFF";
 }
 
 // [Nugget] cheese :)

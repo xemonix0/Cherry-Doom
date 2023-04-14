@@ -10,3 +10,4 @@
 ## Bug Fixes
 
 - **Made _"Seizure"_ screen wipe's speed consistent** in low and high resolution
+- **Fixed some cheat activation messages**
