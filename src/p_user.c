@@ -554,7 +554,6 @@ void P_PlayerThink (player_t* player)
   ticcmd_t*    cmd;
   weapontype_t newweapon;
   // [Nugget]
-  static boolean zoomed = false;
   static boolean zoomKeyDown = false;
 
   // [AM] Assume we can interpolate at the beginning
@@ -622,7 +621,10 @@ void P_PlayerThink (player_t* player)
 
   if (player->playerstate == PST_DEAD)
     {
-      if (zoomed) { R_SetRenderedFOV(fov); } // [Nugget] Reset FOV upon death
+      if (zoomed) { // [Nugget] Reset FOV upon death
+        zoomed = false;
+        R_SetFOV(false);
+      }
       
       P_DeathThink (player);
       return;
@@ -632,7 +634,8 @@ void P_PlayerThink (player_t* player)
   else if (casual_play && zoomKeyDown == false)
   {
     zoomKeyDown = true;
-    R_SetRenderedFOV((zoomed = !zoomed) ? zoom_fov : fov);
+    zoomed = !zoomed;
+    R_SetFOV(false);
   }
 
   // Move around.

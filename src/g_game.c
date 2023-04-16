@@ -1017,14 +1017,21 @@ boolean G_Responder(event_t* ev)
       return true;
 
     case ev_mouse:
+      // [Nugget]
+      int fovdiff = 1;
+      if (zoomed) {
+        if (fov < tfov) { fovdiff = tfov / fov; }
+        else            { fovdiff = fov / tfov; }
+      }
+      
       if (mouseSensitivity_horiz) // [FG] turn
-        mousex = ev->data2*(mouseSensitivity_horiz+5)/10;
+        mousex = ev->data2*((mouseSensitivity_horiz+5)/10) / fovdiff; // [Nugget]
       if (mouseSensitivity_horiz2) // [FG] strafe
         mousex2 = ev->data2*(mouseSensitivity_horiz2+5)/10;
       if (mouseSensitivity_vert) // [FG] move
         mousey = ev->data3*(mouseSensitivity_vert+5)/10;
       if (mouseSensitivity_vert2) // [FG] look
-        mousey2 = ev->data3*(mouseSensitivity_vert2+5)/10;
+        mousey2 = ev->data3*((mouseSensitivity_vert2+5)/10) / fovdiff; // [Nugget]
       return true;    // eat events
 
     case ev_joyb_down:
@@ -3334,6 +3341,12 @@ void G_InitNew(skill_t skill, int episode, int map)
   gamemap = map;
   gameskill = skill;
   gamemapinfo = G_LookupMapinfo(gameepisode, gamemap);
+
+  // [Nugget]
+  if (zoomed) {
+    zoomed = false;
+    R_SetFOV(true);
+  }
 
   // [FG] total time for all completed levels
   totalleveltimes = 0;

@@ -2795,6 +2795,11 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
   return false;
 }
 
+// [Nugget]
+static void M_SetFOV(void)
+{
+  R_SetFOV(false);
+}
 
 /////////////////////////////
 //
@@ -3096,7 +3101,7 @@ setup_menu_t keys_settings8[] =  // Key Binding screen strings
   {"CROUCH/FLY DOWN" ,S_INPUT,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_crouch},
   {"TOGGLE CROSSHAIR",S_INPUT,m_scrn,KB_X,M_Y+12*M_SPC,{0},input_crosshair},
   {"TOGGLE ZOOM"     ,S_INPUT,m_scrn,KB_X,M_Y+13*M_SPC,{0},input_zoom},
-  {"ZOOM FOV"        ,S_NUM,  m_null,KB_X,M_Y+14*M_SPC,{"zoom_fov"}},
+  {"ZOOM FOV"        ,S_NUM,  m_null,KB_X,M_Y+14*M_SPC,{"zoom_fov"}, 0, M_SetFOV},
 
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings7}},
 
@@ -4327,11 +4332,6 @@ enum { // [Nugget]
   gen4_quickexit,
 };
 
-void M_SetRenderedFOV(void)
-{
-  R_SetRenderedFOV(fov);
-}
-
 static const char *s_clipping_dists[] = {
   "1200", "2400", NULL
 };
@@ -4344,7 +4344,7 @@ setup_menu_t gen_settings4[] = { // [Nugget]
 
   {"Nugget Settings", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen4_title1 * M_SPC},
     {"Disable palette tint in menus",   S_YESNO,  m_null, M_X, M_Y + gen4_menutint      * M_SPC, {"no_menu_tint"}},
-    {"Field of View",                   S_NUM,    m_null, M_X, M_Y + gen4_fov           * M_SPC, {"fov"}, 0, M_SetRenderedFOV},
+    {"Field of View",                   S_NUM,    m_null, M_X, M_Y + gen4_fov           * M_SPC, {"fov"}, 0, M_SetFOV},
     {"Things Move Over/Under Things",   S_YESNO,  m_null, M_X, M_Y + gen4_overunder     * M_SPC, {"over_under"}},
     {"Allow Jump/Crouch",               S_YESNO,  m_null, M_X, M_Y + gen4_jump_crouch   * M_SPC, {"jump_crouch"}},
     {"Damage Tint Cap (Default = 100)", S_NUM,    m_null, M_X, M_Y + gen4_dmgcountcap   * M_SPC, {"damagecount_cap"}},

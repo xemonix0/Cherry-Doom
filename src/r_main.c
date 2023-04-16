@@ -111,7 +111,9 @@ int extralight;                           // bumped light from gun blasts
 int extra_level_brightness;               // level brightness feature
 
 // [Nugget] FOV from Doom Retro
-int rfov; // Rendered FOV (might be different from user-defined FOV)
+int tfov; // Target FOV
+int rfov; // Currently applied FOV
+boolean zoomed = false, fovchange = false;
 static fixed_t fovscale;
 int WIDEFOVDELTA;
 
@@ -445,11 +447,13 @@ void R_SetViewSize(int blocks)
 }
 
 // [Nugget]
-void R_SetRenderedFOV(int value)
+void R_SetFOV(boolean instant)
 {
-  if (rfov != value) {
-    rfov = value;
-    R_ExecuteSetViewSize();
+  tfov = (casual_play ? (zoomed ? zoom_fov : fov) : ORIGFOV);
+
+  if (rfov != tfov) {
+    if (instant) { rfov = tfov; }
+    fovchange = true;
   }
 }
 
@@ -501,6 +505,25 @@ void R_ExecuteSetViewSize (void)
   viewwidth_nonwide = scaledviewwidth_nonwide << hires;
 
   viewblocks = MIN(setblocks, 10) << hires;
+
+  // [Nugget] Gradually change FOV
+  if (rfov != tfov) {
+    static int oldtic = -1;
+    
+    if (gametic != oldtic) {
+      int step = tfov - rfov;
+      int sign = step / abs(step);
+      step = BETWEEN(2, 16, abs(step) / 4);
+      rfov += step*sign;
+      if (  (sign > 0 && rfov > tfov)
+          ||(sign < 0 && rfov < tfov))
+      { rfov = tfov; }
+    }
+    
+    oldtic = gametic;
+  }
+  
+  if (rfov == tfov) { fovchange = false; }
 
   // [Nugget] FOV from Doom Retro
   // fov * 0.82 is vertical FOV for 4:3 aspect ratio

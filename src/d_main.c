@@ -235,10 +235,14 @@ void D_Display (void)
     return;
 
   redrawsbar = false;
-
+  
+  // [Nugget] Moved this function call from the block below this one;
+  // changing FOV doesn't require redrawing of the background
+  if (setsizeneeded || fovchange)
+  { R_ExecuteSetViewSize(); }
+  
   if (setsizeneeded)                // change the view size if needed
     {
-      R_ExecuteSetViewSize();
       oldgamestate = -1;            // force background redraw
       borderdrawcount = 3;
     }
@@ -1850,7 +1854,7 @@ void D_NuggetUpdateCasual()
   if (old_casual_play != casual_play) {
     old_casual_play = casual_play;
     
-    R_SetRenderedFOV(casual_play ? fov : ORIGFOV);
+    R_SetFOV(true);
     
     M_ResetSetupMenu(); // Filthy... but it seems to work
   }

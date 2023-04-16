@@ -117,7 +117,11 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y);
 void R_RenderPlayerView(player_t *player);   // Called by G_Drawer.
 void R_Init(void);                           // Called by startup code.
 void R_SetViewSize(int blocks);              // Called by M_Responder.
-void R_SetRenderedFOV(int value);            // [Nugget]
+
+// [Nugget]
+extern int tfov;
+extern boolean zoomed, fovchange;
+extern void R_SetFOV(boolean instant);
 
 void R_InitLightTables(void);                // killough 8/9/98
 
