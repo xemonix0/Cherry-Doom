@@ -124,6 +124,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
 - **Zoom key**
+- **Automap position isn't reset to player position when opening it with Follow Mode off**
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
 
