@@ -885,6 +885,9 @@ static boolean G_StrictModeSkipEvent(event_t *ev)
 
 boolean G_Responder(event_t* ev)
 {
+  // [Nugget] Used to reduce mouse sensitivity when zoomed in
+  int fovdiff = 1;
+  
   // allow spy mode changes even during the demo
   // killough 2/22/98: even during DM demo
   //
@@ -1017,8 +1020,6 @@ boolean G_Responder(event_t* ev)
       return true;
 
     case ev_mouse:
-      // [Nugget]
-      int fovdiff = 1;
       if (zoomed) {
         if (fov < tfov) { fovdiff = tfov / fov; }
         else            { fovdiff = fov / tfov; }
