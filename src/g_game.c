@@ -628,9 +628,11 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   
   // [Nugget] Decrease the intensity of some movements if zoomed in
   if (!strictmode && fovfx[FOVFX_ZOOM]) {
-    float divisor = R_FOVDiff();
-    cmd->angleturn /= divisor;
-    cmd->lookdir /= divisor;
+    float divisor = fov / (fov + fovfx[FOVFX_ZOOM]);
+    if (divisor >= 1) {
+      cmd->angleturn /= divisor;
+      cmd->lookdir /= divisor;
+    }
   }
 
   if (forward > MAXPLMOVE)

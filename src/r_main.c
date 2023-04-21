@@ -476,11 +476,6 @@ void R_SetZoom(int state)
   { zoomed = ZOOM_OFF; }
 }
 
-float R_FOVDiff(void) // Used to decrease mouse sensitivity as zoom increases
-{
-  return (!strictmode && fovfx[FOVFX_ZOOM]) ? bfov / (bfov + fovfx[FOVFX_ZOOM]) : 1;
-}
-
 //
 // R_ExecuteSetViewSize
 //

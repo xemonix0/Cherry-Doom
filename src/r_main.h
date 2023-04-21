@@ -134,7 +134,6 @@ enum {
 };
 extern int  R_GetZoom(void);
 extern void R_SetZoom(int state);
-extern float R_FOVDiff(void);
 
 void R_InitLightTables(void);                // killough 8/9/98
 

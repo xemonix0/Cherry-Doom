@@ -764,8 +764,10 @@ void R_DrawPSprite (pspdef_t *psp)
   // killough 12/98: fix psprite positioning problem
   vis->texturemid = (BASEYCENTER<<FRACBITS) /* + FRACUNIT/2 */ -
                     (psp->sy2-spritetopoffset[lump]) // [FG] centered weapon sprite
+                    // [Nugget]
                     + ((st_crispyhud && screenblocks < 13)
-                       ? nughud.weapheight*FRACUNIT : 0); // [Nugget] Nugget HUD
+                       ? nughud.weapheight*FRACUNIT : 0) // Nugget HUD
+                    + ((fovfx[FOVFX_ZOOM] < 0) ? fovfx[FOVFX_ZOOM]*FRACUNIT*1/2 : 0); // Lower weapon based on zoom
 
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
