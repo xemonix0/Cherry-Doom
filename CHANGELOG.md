@@ -1,6 +1,7 @@
 ## New Features
 
 - **_"Fade"_ screen wipe**
+- _**Teleporter Zoom**_ setting
 
 ## Changes
 

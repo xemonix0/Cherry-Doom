@@ -143,7 +143,7 @@ boolean casual_play;
 int old_casual_play = -1;
 
 // General
-  // Nugget Settings (Page 3)
+  // Page 4
 int wipe_type;
 int no_menu_tint;
 int fov;
@@ -155,11 +155,12 @@ int no_berserk_tint;
 int view_bobbing_percentage;
 int viewheight_value;
 int breathing;
+int teleporter_zoom;
 int s_clipping_dist_x2;
+  // Page 5
 int one_key_saveload;
 int no_page_ticking;
 int quick_quitgame;
-  // Accessibility (Page 4)
 //int a11y_sector_lighting;
 int a11y_weapon_flash;
 int a11y_weapon_pspr;

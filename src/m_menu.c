@@ -4326,10 +4326,8 @@ enum { // [Nugget]
   gen4_viewbobbing,
   gen4_viewheight,
   gen4_idlebobbing,
+  gen4_telezoom,
   gen4_sclipdist,
-  gen4_quicksaveload,
-  gen4_nopagetic,
-  gen4_quickexit,
 };
 
 static const char *s_clipping_dists[] = {
@@ -4343,20 +4341,18 @@ static const char *page_ticking_conds[] = {
 setup_menu_t gen_settings4[] = { // [Nugget]
 
   {"Nugget Settings", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen4_title1 * M_SPC},
-    {"Disable palette tint in menus",   S_YESNO,  m_null, M_X, M_Y + gen4_menutint      * M_SPC, {"no_menu_tint"}},
-    {"Field of View",                   S_NUM,    m_null, M_X, M_Y + gen4_fov           * M_SPC, {"fov"}, 0, M_SetFOV},
-    {"Things Move Over/Under Things",   S_YESNO,  m_null, M_X, M_Y + gen4_overunder     * M_SPC, {"over_under"}},
-    {"Allow Jump/Crouch",               S_YESNO,  m_null, M_X, M_Y + gen4_jump_crouch   * M_SPC, {"jump_crouch"}},
-    {"Damage Tint Cap (Default = 100)", S_NUM,    m_null, M_X, M_Y + gen4_dmgcountcap   * M_SPC, {"damagecount_cap"}},
-    {"Bonus Tint Cap (Default = -1)",   S_NUM,    m_null, M_X, M_Y + gen4_boncountcap   * M_SPC, {"bonuscount_cap"}},
-    {"Disable Berserk Tint",            S_YESNO,  m_null, M_X, M_Y + gen4_berserktint   * M_SPC, {"no_berserk_tint"}},
-    {"View Bobbing Percentage",         S_NUM,    m_null, M_X, M_Y + gen4_viewbobbing   * M_SPC, {"view_bobbing_percentage"}},
-    {"View Height (Default = 41)",      S_NUM,    m_null, M_X, M_Y + gen4_viewheight    * M_SPC, {"viewheight_value"}},
-    {"Subtle Idle Bobbing/Breathing",   S_YESNO,  m_null, M_X, M_Y + gen4_idlebobbing   * M_SPC, {"breathing"}},
-    {"Sound Clipping Distance",         S_CHOICE, m_null, M_X, M_Y + gen4_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
-    {"One-Key Quick Save/Load",         S_YESNO,  m_null, M_X, M_Y + gen4_quicksaveload * M_SPC, {"one_key_saveload"}},
-    {"Advance Internal Demos",          S_CHOICE, m_null, M_X, M_Y + gen4_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
-    {"Quick \"Quit Game\"",             S_YESNO,  m_null, M_X, M_Y + gen4_quickexit     * M_SPC, {"quick_quitgame"}},
+    {"Disable palette tint in menus",   S_YESNO,  m_null, M_X, M_Y + gen4_menutint    * M_SPC, {"no_menu_tint"}},
+    {"Field of View",                   S_NUM,    m_null, M_X, M_Y + gen4_fov         * M_SPC, {"fov"}, 0, M_SetFOV},
+    {"Things Move Over/Under Things",   S_YESNO,  m_null, M_X, M_Y + gen4_overunder   * M_SPC, {"over_under"}},
+    {"Allow Jump/Crouch",               S_YESNO,  m_null, M_X, M_Y + gen4_jump_crouch * M_SPC, {"jump_crouch"}},
+    {"Damage Tint Cap (Default = 100)", S_NUM,    m_null, M_X, M_Y + gen4_dmgcountcap * M_SPC, {"damagecount_cap"}},
+    {"Bonus Tint Cap (Default = -1)",   S_NUM,    m_null, M_X, M_Y + gen4_boncountcap * M_SPC, {"bonuscount_cap"}},
+    {"Disable Berserk Tint",            S_YESNO,  m_null, M_X, M_Y + gen4_berserktint * M_SPC, {"no_berserk_tint"}},
+    {"View Bobbing Percentage",         S_NUM,    m_null, M_X, M_Y + gen4_viewbobbing * M_SPC, {"view_bobbing_percentage"}},
+    {"View Height (Default = 41)",      S_NUM,    m_null, M_X, M_Y + gen4_viewheight  * M_SPC, {"viewheight_value"}},
+    {"Subtle Idle Bobbing/Breathing",   S_YESNO,  m_null, M_X, M_Y + gen4_idlebobbing * M_SPC, {"breathing"}},
+    {"Teleporter Zoom",                 S_YESNO,  m_null, M_X, M_Y + gen4_telezoom    * M_SPC, {"teleporter_zoom"}},
+    {"Sound Clipping Distance",         S_CHOICE, m_null, M_X, M_Y + gen4_sclipdist   * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings3}},
   {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings5}},
@@ -4367,7 +4363,12 @@ setup_menu_t gen_settings4[] = { // [Nugget]
 };
 
 enum { // [Nugget]
-  gen5_a11y_title1,
+  gen5_title1,
+  gen5_quicksaveload,
+  gen5_nopagetic,
+  gen5_quickexit,
+  gen5_stub1,
+  gen5_title2,
 #if 0 // [Nugget] For future use, hopefully
   gen5_a11y_seclight,
 #endif
@@ -4380,7 +4381,12 @@ enum { // [Nugget]
 
 setup_menu_t gen_settings5[] = { // [Nugget]
 
-  {"Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen5_a11y_title1 * M_SPC},
+  {"Nugget Settings", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen5_title1 * M_SPC},
+    {"One-Key Quick Save/Load",         S_YESNO,  m_null, M_X, M_Y + gen5_quicksaveload * M_SPC, {"one_key_saveload"}},
+    {"Advance Internal Demos",          S_CHOICE, m_null, M_X, M_Y + gen5_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
+    {"Quick \"Quit Game\"",             S_YESNO,  m_null, M_X, M_Y + gen5_quickexit     * M_SPC, {"quick_quitgame"}},
+    
+  {"Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen5_title2 * M_SPC},
 #if 0 // [Nugget] For future use, hopefully
     {"Flickering Sector Lighting",  S_YESNO,  m_null, M_X,      M_Y+gen5_a11y_seclight   *M_SPC, {"a11y_sector_lighting"}},
 #endif
@@ -7329,10 +7335,8 @@ static void M_UpdateStrictModeItems(void)
   
   for (int i = gen4_menutint; i <= gen4_sclipdist; i++)
   { DISABLE_STRICT(gen_settings4[i]); }
-  DISABLE_ITEM((demorecording||netgame||strictmode||fauxdemo), gen_settings4[gen4_fov]);
-  DISABLE_ITEM(!casual_play,                                   gen_settings4[gen4_overunder]);
-  DISABLE_ITEM(!casual_play,                                   gen_settings4[gen4_jump_crouch]);
-  DISABLE_ITEM((demorecording||netgame||strictmode||fauxdemo), gen_settings4[gen4_viewheight]);
+  DISABLE_ITEM(!casual_play, gen_settings4[gen4_overunder]);
+  DISABLE_ITEM(!casual_play, gen_settings4[gen4_jump_crouch]);
 
   // [Nugget]
   for (int i = comp4_lscollision; i <= comp4_iosdeath; i++)

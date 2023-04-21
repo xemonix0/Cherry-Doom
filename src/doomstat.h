@@ -462,7 +462,7 @@ extern boolean casual_play;
 extern int old_casual_play;
 
 // General
-  // Nugget Settings (Page 3)
+  // Page 4
 extern int wipe_type;
 extern int no_menu_tint;
 extern int fov;
@@ -474,11 +474,12 @@ extern int no_berserk_tint;
 extern int view_bobbing_percentage;
 extern int viewheight_value;
 extern int breathing;
+extern int teleporter_zoom;
 extern int s_clipping_dist_x2;
+  // Page 5
 extern int one_key_saveload;
 extern int no_page_ticking;
 extern int quick_quitgame;
-  // Accessibility (Page 4)
 //extern int a11y_sector_lighting;
 extern int a11y_weapon_flash;
 extern int a11y_weapon_pspr;

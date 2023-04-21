@@ -573,6 +573,13 @@ default_t defaults[] = {
   },
 
   {
+    "teleporter_zoom",
+    (config_t *) &teleporter_zoom, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to apply a zoom effect when teleporting"
+  },
+
+  {
     "s_clipping_dist_x2",
     (config_t *) &s_clipping_dist_x2, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,

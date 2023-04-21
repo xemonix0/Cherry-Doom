@@ -83,6 +83,12 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
             player->viewz = thing->z + player->viewheight;
             // [crispy] center view after teleporting
             player->centering = true;
+            
+            // [Nugget] Teleporter zoom
+            if (STRICTMODE(teleporter_zoom)) {
+              fovfx[FOVFX_TELEPORT] = 55; // Actually, 50 is applied
+              fovchange = true;
+            }
           }
 
           // spawn teleport fog and emit sound at source
@@ -97,16 +103,16 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
                        sfx_telept);
 
           if (thing->player)       // don't move for a bit // killough 10/98
-	    // killough 10/98: beta teleporters were a bit faster
-	    thing->reactiontime = beta_emulation ? 4 : 18;
+            // killough 10/98: beta teleporters were a bit faster
+            thing->reactiontime = beta_emulation ? 4 : 18;
 
           thing->angle = m->angle;
 
           thing->momx = thing->momy = thing->momz = 0;
 
-	  // killough 10/98: kill all bobbing momentum too
-	  if (player)
-	    player->momx = player->momy = 0;
+          // killough 10/98: kill all bobbing momentum too
+          if (player)
+            player->momx = player->momy = 0;
 
           return 1;
         }

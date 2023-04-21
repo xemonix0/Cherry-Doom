@@ -121,6 +121,7 @@ void R_SetViewSize(int blocks);              // Called by M_Responder.
 // [Nugget]
 enum {
   FOVFX_ZOOM,
+  FOVFX_TELEPORT,
   
   NUMFOVFX
 };

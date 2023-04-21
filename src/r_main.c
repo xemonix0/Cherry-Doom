@@ -573,10 +573,11 @@ void R_ExecuteSetViewSize (void)
         { fovchange = true; }
       }
       
-      for (i = NUMFOVFX+1;  i < NUMFOVFX;  i++) {
-        if      (fovfx[i] > 0) { fovfx[i] -= 1; }
-        else if (fovfx[i] < 0) { fovfx[i] += 1; }
-        if (fovfx[i]) { fovchange = true; }
+      if (fovfx[FOVFX_TELEPORT]) {
+        if ((fovfx[FOVFX_TELEPORT] -= 5) <= 0)
+        { fovfx[FOVFX_TELEPORT] = 0; }
+        else
+        { fovchange = true; }
       }
     }
     
