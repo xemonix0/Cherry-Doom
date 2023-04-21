@@ -2798,7 +2798,7 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
 // [Nugget]
 static void M_SetFOV(void)
 {
-  R_SetFOV(false);
+  fovchange = true;
 }
 
 /////////////////////////////

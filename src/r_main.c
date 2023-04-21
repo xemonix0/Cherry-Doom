@@ -111,11 +111,17 @@ int extralight;                           // bumped light from gun blasts
 int extra_level_brightness;               // level brightness feature
 
 // [Nugget] FOV from Doom Retro
-int tfov; // Target FOV
-int rfov; // Currently applied FOV
-boolean zoomed = false, fovchange = false;
+
+int fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
+static int zoomed = 0; // Current zoom state
+
+boolean fovchange = false;
+static int bfov = ORIGFOV; // Base FOV
+static int rfov = ORIGFOV; // Rendered (currently applied) FOV, with effects added to it
+
 static fixed_t fovscale;
 int WIDEFOVDELTA;
+
 
 void (*colfunc)(void) = R_DrawColumn;     // current column draw function
 
@@ -447,14 +453,32 @@ void R_SetViewSize(int blocks)
 }
 
 // [Nugget]
-void R_SetFOV(boolean instant)
-{
-  tfov = (casual_play ? (zoomed ? zoom_fov : fov) : ORIGFOV);
 
-  if (rfov != tfov) {
-    if (instant) { rfov = tfov; }
+int R_GetZoom(void)
+{
+  return zoomed;
+}
+
+void R_SetZoom(int state)
+{
+  if (state == ZOOM_RESET || zoomed == ZOOM_RESET)
+  {
+    zoomed = ZOOM_RESET;
     fovchange = true;
+    return;
   }
+  
+  if (zoomed != state) { fovchange = true; }
+  
+  if (!strictmode && (zoom_fov - bfov))
+  { zoomed = state; }
+  else
+  { zoomed = ZOOM_OFF; }
+}
+
+float R_FOVDiff(void) // Used to decrease mouse sensitivity as zoom increases
+{
+  return (!strictmode && fovfx[FOVFX_ZOOM]) ? bfov / (bfov + fovfx[FOVFX_ZOOM]) : 1;
 }
 
 //
@@ -506,25 +530,64 @@ void R_ExecuteSetViewSize (void)
 
   viewblocks = MIN(setblocks, 10) << hires;
 
-  // [Nugget] Gradually change FOV
-  if (rfov != tfov) {
+  // [Nugget] FOV changes
+  if (fovchange) {
     static int oldtic = -1;
-    
-    if (gametic != oldtic) {
-      int step = tfov - rfov;
-      int sign = step / abs(step);
-      step = BETWEEN(2, 16, abs(step) / 4);
-      rfov += step*sign;
-      if (  (sign > 0 && rfov > tfov)
-          ||(sign < 0 && rfov < tfov))
-      { rfov = tfov; }
+    int fx = 0;
+    int zoomtarget = 0;
+
+    bfov = (!strictmode ? fov : ORIGFOV);
+    fovchange = false;
+
+    if (strictmode || zoomed == ZOOM_RESET) { // Force zoom reset
+      zoomtarget = fovfx[FOVFX_ZOOM] = 0;
+      zoomed = ZOOM_OFF;
+    }
+    else {
+      zoomtarget = (zoomed ? zoom_fov - bfov : 0);
+      // In case bfov changes while zoomed in...
+      if (zoomed && abs(fovfx[FOVFX_ZOOM]) > abs(zoomtarget))
+      { fovfx[FOVFX_ZOOM] = zoomtarget; }
+    }
+
+    if (!strictmode) {
+      if (fovfx[FOVFX_ZOOM] != zoomtarget)
+      { fovchange = true; }
+      else for (i = 0;  i < NUMFOVFX;  i++)
+        if (fovfx[i]) { fovchange = true; }
+    }
+  
+    if (fovchange && gametic != oldtic)
+    {
+      fovchange = false;
+      
+      if (zoomtarget || fovfx[FOVFX_ZOOM]) { // Special handling for zoom
+        int step = zoomtarget - fovfx[FOVFX_ZOOM];
+        int sign = ((step > 0) ? 1 : -1);
+        step = BETWEEN(2, 16, abs(step) / 4);
+        fovfx[FOVFX_ZOOM] += step*sign;
+        if (  (sign > 0 && fovfx[FOVFX_ZOOM] > zoomtarget)
+            ||(sign < 0 && fovfx[FOVFX_ZOOM] < zoomtarget))
+        { fovfx[FOVFX_ZOOM] = zoomtarget; }
+        else
+        { fovchange = true; }
+      }
+      
+      for (i = NUMFOVFX+1;  i < NUMFOVFX;  i++) {
+        if      (fovfx[i] > 0) { fovfx[i] -= 1; }
+        else if (fovfx[i] < 0) { fovfx[i] += 1; }
+        if (fovfx[i]) { fovchange = true; }
+      }
     }
     
     oldtic = gametic;
+
+    for (i = 0;  i < NUMFOVFX;  i++)
+    { fx += fovfx[i]; }
+    
+    rfov = bfov + fx;
   }
   
-  if (rfov == tfov) { fovchange = false; }
-
   // [Nugget] FOV from Doom Retro
   // fov * 0.82 is vertical FOV for 4:3 aspect ratio
   WIDEFOVDELTA = (int)(atan(SCREENWIDTH / (SCREENHEIGHT / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov - 2;

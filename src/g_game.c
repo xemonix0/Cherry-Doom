@@ -625,6 +625,13 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     cmd->angleturn -= mousex*0x8;
 
   mousex = mousex2 = mousey = mousey2 = 0;
+  
+  // [Nugget] Decrease the intensity of some movements if zoomed in
+  if (!strictmode && fovfx[FOVFX_ZOOM]) {
+    float divisor = R_FOVDiff();
+    cmd->angleturn /= divisor;
+    cmd->lookdir /= divisor;
+  }
 
   if (forward > MAXPLMOVE)
     forward = MAXPLMOVE;
@@ -885,9 +892,6 @@ static boolean G_StrictModeSkipEvent(event_t *ev)
 
 boolean G_Responder(event_t* ev)
 {
-  // [Nugget] Used to reduce mouse sensitivity when zoomed in
-  int fovdiff = 1;
-  
   // allow spy mode changes even during the demo
   // killough 2/22/98: even during DM demo
   //
@@ -1020,19 +1024,14 @@ boolean G_Responder(event_t* ev)
       return true;
 
     case ev_mouse:
-      if (zoomed) {
-        if (fov < tfov) { fovdiff = tfov / fov; }
-        else            { fovdiff = fov / tfov; }
-      }
-      
       if (mouseSensitivity_horiz) // [FG] turn
-        mousex = ev->data2*((mouseSensitivity_horiz+5)/10) / fovdiff; // [Nugget]
+        mousex = ev->data2*(mouseSensitivity_horiz+5)/10;
       if (mouseSensitivity_horiz2) // [FG] strafe
         mousex2 = ev->data2*(mouseSensitivity_horiz2+5)/10;
       if (mouseSensitivity_vert) // [FG] move
         mousey = ev->data3*(mouseSensitivity_vert+5)/10;
       if (mouseSensitivity_vert2) // [FG] look
-        mousey2 = ev->data3*((mouseSensitivity_vert2+5)/10) / fovdiff; // [Nugget]
+        mousey2 = ev->data3*(mouseSensitivity_vert2+5)/10;
       return true;    // eat events
 
     case ev_joyb_down:
@@ -3343,11 +3342,8 @@ void G_InitNew(skill_t skill, int episode, int map)
   gameskill = skill;
   gamemapinfo = G_LookupMapinfo(gameepisode, gamemap);
 
-  // [Nugget]
-  if (zoomed) {
-    zoomed = false;
-    R_SetFOV(true);
-  }
+  // [Nugget] Force zoom reset
+  if (R_GetZoom() == 1) { R_SetZoom(ZOOM_RESET); }
 
   // [FG] total time for all completed levels
   totalleveltimes = 0;

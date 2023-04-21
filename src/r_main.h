@@ -119,9 +119,21 @@ void R_Init(void);                           // Called by startup code.
 void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // [Nugget]
-extern int tfov;
-extern boolean zoomed, fovchange;
-extern void R_SetFOV(boolean instant);
+enum {
+  FOVFX_ZOOM,
+  
+  NUMFOVFX
+};
+extern int fovfx[NUMFOVFX];
+extern boolean fovchange;
+enum {
+  ZOOM_RESET = -1,
+  ZOOM_OFF   =  0,
+  ZOOM_ON    =  1,
+};
+extern int  R_GetZoom(void);
+extern void R_SetZoom(int state);
+extern float R_FOVDiff(void);
 
 void R_InitLightTables(void);                // killough 8/9/98
 

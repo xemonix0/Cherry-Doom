@@ -1854,9 +1854,9 @@ void D_NuggetUpdateCasual()
   if (old_casual_play != casual_play) {
     old_casual_play = casual_play;
     
-    R_SetFOV(true);
+    R_SetZoom(ZOOM_RESET); // This also resets FOV in general, regardless of zoom
     
-    M_ResetSetupMenu(); // Filthy... but it seems to work
+    M_ResetSetupMenu();
   }
 }
 

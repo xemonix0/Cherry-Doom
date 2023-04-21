@@ -621,21 +621,18 @@ void P_PlayerThink (player_t* player)
 
   if (player->playerstate == PST_DEAD)
     {
-      if (zoomed) { // [Nugget] Reset FOV upon death
-        zoomed = false;
-        R_SetFOV(false);
-      }
+      // [Nugget] Disable zoom upon death
+      if (R_GetZoom() == 1) { R_SetZoom(ZOOM_OFF); }
       
       P_DeathThink (player);
       return;
     }
 
   if (!M_InputGameActive(input_zoom)) { zoomKeyDown = false; }
-  else if (casual_play && zoomKeyDown == false)
+  else if (STRICTMODE(zoomKeyDown == false))
   {
     zoomKeyDown = true;
-    zoomed = !zoomed;
-    R_SetFOV(false);
+    R_SetZoom(!R_GetZoom());
   }
 
   // Move around.
