@@ -120,7 +120,7 @@ static int bfov = ORIGFOV; // Base FOV
 static int rfov = ORIGFOV; // Rendered (currently applied) FOV, with effects added to it
 
 static fixed_t fovscale;
-int WIDEFOVDELTA;
+static int WIDEFOVDELTA;
 
 
 void (*colfunc)(void) = R_DrawColumn;     // current column draw function
