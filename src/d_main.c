@@ -236,13 +236,10 @@ void D_Display (void)
 
   redrawsbar = false;
   
-  // [Nugget] Moved this function call from the block below this one;
-  // changing FOV doesn't require redrawing of the background
-  if (setsizeneeded || fovchange)
-  { R_ExecuteSetViewSize(); }
-  
-  if (setsizeneeded)                // change the view size if needed
+  if (setsizeneeded                 // change the view size if needed
+      || fovchange) // [Nugget]
     {
+      R_ExecuteSetViewSize();
       oldgamestate = -1;            // force background redraw
       borderdrawcount = 3;
     }
