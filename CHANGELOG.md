@@ -45,6 +45,7 @@
 - **Made _"Seizure"_ screen wipe's speed consistent** in low and high resolution
 - **Fixed some cheat activation messages**
 - **Zoom FOV is now mostly unaffected by changes to normal FOV, and vice versa**
+- **Fixed Face widget not being drawn in NUGHUD if `nughud.face.x = 0`**
 - **Fixed not-found** (surely non-existent) **NUGHUD and Berserk/Medkit graphics being looked up constantly**
 - **In Strict Mode:**
   - Fixed `damagecount`

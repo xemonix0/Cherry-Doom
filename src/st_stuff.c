@@ -974,8 +974,8 @@ void ST_drawWidgets(void)
       && (nughud.face.x > -1) && nughud.face_bg)
   {
     // [Nugget] Nugget HUD
-    V_DrawPatch(nughud.face.x + (st_widecrispyhud ? WIDESCREENDELTA*nughud.face.wide : 0),
-                nughud.face.y+1, FG, faceback[netgame ? displayplayer : 1]);
+    V_DrawPatch(nughud.face.x + (delta*nughud.face.wide), nughud.face.y+1,
+                FG, faceback[netgame ? displayplayer : 1]);
   }
 
   if (!st_crispyhud || nughud.face.x > -1) // [Nugget] Nugget HUD
@@ -1026,7 +1026,7 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   st_crispyhud = ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE) && automap_off;
 
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
-  st_statusbarface = st_classicstatusbar || (st_crispyhud && nughud.face.x);
+  st_statusbarface = st_classicstatusbar || (st_crispyhud && nughud.face.x > -1);
 
   oldwide = st_widecrispyhud; // [Nugget]
   st_widecrispyhud = (screenblocks == CRISPY_HUD_WIDE) && (!automapactive || automapoverlay);
