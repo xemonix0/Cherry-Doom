@@ -850,15 +850,15 @@ void ST_drawWidgets(void)
     for (i=0; i<NUMNUGHUDPATCHES; i++)
       if (nughud.patches[i].name != NULL)
       {
-        static int lump[NUMNUGHUDPATCHES] = { -1, -1, -1, -1, -1, -1, -1, -1 };
+        static int lump[NUMNUGHUDPATCHES] = { -2, -2, -2, -2, -2, -2, -2, -2 };
         
-        if (lump[i] < 0) {
+        if (lump[i] == -2) {
           lump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_sprites);
-          if (lump[i] < 0)
+          if (lump[i] == -1)
           { lump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_global); }
         }
 
-        if (lump[i] > 0)
+        if (lump[i] >= 0)
         { V_DrawPatch(nughud.patches[i].x + (delta*nughud.patches[i].wide),
                       nughud.patches[i].y, FG, W_CacheLumpNum(lump[i], PU_CACHE)); }
       }
@@ -890,16 +890,16 @@ void ST_drawWidgets(void)
       && weaponinfo[plyr->readyweapon].ammo == am_noammo // [Nugget] Check for unlimited ammo type
       && plyr->powers[pw_strength])
   {
-    static int lump = -1;
+    static int lump = -2;
     patch_t *patch;
 
-    if (lump < 0) {
+    if (lump == -2) {
       lump = (W_CheckNumForName)("PSTRA0", ns_sprites);
-      if (lump < 0)
+      if (lump == -1)
       { lump = (W_CheckNumForName)("MEDIA0", ns_sprites); }
     }
     
-    if (lump > 0) {
+    if (lump >= 0) {
       patch = W_CacheLumpNum(lump, PU_CACHE);
       
       // [crispy] (23,179) is the center of the Ammo widget
