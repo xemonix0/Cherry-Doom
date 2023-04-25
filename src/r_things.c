@@ -765,7 +765,7 @@ void R_DrawPSprite (pspdef_t *psp)
   vis->texturemid = (BASEYCENTER<<FRACBITS) /* + FRACUNIT/2 */ -
                     (psp->sy2-spritetopoffset[lump]) // [FG] centered weapon sprite
                     // [Nugget]
-                    + ((st_crispyhud && screenblocks < 13)
+                    + (STRICTMODE(st_crispyhud && screenblocks < 13)
                        ? nughud.weapheight*FRACUNIT : 0) // Nugget HUD
                     + ((fovfx[FOVFX_ZOOM] < 0) ? fovfx[FOVFX_ZOOM]*FRACUNIT*1/2 : 0); // Lower weapon based on zoom
 
@@ -825,7 +825,7 @@ void R_DrawPSprite (pspdef_t *psp)
 
     if (lump == oldlump && pspr_interp
         // [Nugget]
-        && (st_crispyhud == oldcrispy || !nughud.weapheight))
+        && (st_crispyhud == oldcrispy || STRICTMODE(!nughud.weapheight)))
     {
       int deltax = vis->x2 - vis->x1;
       vis->x1 = oldx1 + FixedMul(vis->x1 - oldx1, fractionaltic);
@@ -885,7 +885,7 @@ void R_DrawPlayerSprites(void)
   // add all active psprites
   for (i=0, psp=viewplayer->psprites;
        // [Nugget]: [crispy] A11Y number of player (first person) sprites to draw
-       i < (a11y_weapon_pspr ? NUMPSPRITES : (NUMPSPRITES-1));
+       i < (NOTSTRICTMODE(a11y_weapon_pspr) ? NUMPSPRITES : (NUMPSPRITES-1));
        i++,psp++)
   {
     if (psp->state) { R_DrawPSprite (psp); }

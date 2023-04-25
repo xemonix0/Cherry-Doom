@@ -100,7 +100,8 @@ void P_CalcHeight (player_t* player)
 {
   int     angle;
   fixed_t bob;
-  fixed_t view; // [Nugget]
+  // [Nugget] Adjustable viewheight
+  const fixed_t view = (!strictmode ? viewheight_value*FRACUNIT : VIEWHEIGHT);
 
   // Regular movement bobbing
   // (needs to be calculated for gun swing
@@ -135,10 +136,6 @@ void P_CalcHeight (player_t* player)
   if (player->bob > MAXBOB)                             
     player->bob = MAXBOB;
   }
-
-  // [Nugget] Adjustable viewheight
-  view = (demorecording||netgame||fauxdemo||strictmode)
-         ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
 
   if (!onground || player->cheats & CF_NOMOMENTUM)
     {
@@ -187,15 +184,15 @@ void P_CalcHeight (player_t* player)
         player->viewheight += breathing_val;
       }
             
-      if (player->viewheight > viewheight_value*FRACUNIT)
+      if (player->viewheight > view)
         {
-          player->viewheight = viewheight_value*FRACUNIT;
+          player->viewheight = view;
           player->deltaviewheight = 0;
         }
 
-      if (player->viewheight < viewheight_value*FRACUNIT/2)
+      if (player->viewheight < view/2)
         {
-          player->viewheight = viewheight_value*FRACUNIT/2;
+          player->viewheight = view/2;
           if (player->deltaviewheight <= 0)
             player->deltaviewheight = 1;
         }
@@ -285,7 +282,8 @@ void P_MovePlayer (player_t* player)
         player->mo->momz = 8*FRACUNIT;
         player->jumpTics = 20;
         // [Nugget]: [crispy] squat down weapon sprite a bit
-        if (weaponsquat) { player->psprites[ps_weapon].dy = player->mo->momz>>1; }
+        if (STRICTMODE(weaponsquat))
+        { player->psprites[ps_weapon].dy = player->mo->momz>>1; }
       }
     }
   }
@@ -362,7 +360,7 @@ void P_MovePlayer (player_t* player)
       player->mo->height = player->mo->ceilingz - player->mo->floorz;
     }
 
-    if (player->mo->height > player->mo->info->height)
+    if (player->mo->height >= player->mo->info->height)
     { // Done standing up
       player->mo->height = player->mo->info->height;
       player->crouchOffset = 0;
@@ -803,7 +801,8 @@ void P_PlayerThink (player_t* player)
   // But white flashes occurred when invulnerability wore off.
 
   // [Nugget]: [crispy] A11Y
-  if (!a11y_invul_colormap) {
+  if (STRICTMODE(!a11y_invul_colormap))
+  {
     if (player->powers[pw_invulnerability] || player->powers[pw_infrared])
     { player->fixedcolormap = 1; }
     else

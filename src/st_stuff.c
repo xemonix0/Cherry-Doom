@@ -728,7 +728,7 @@ static int NuggetSmoothCount(int shownval, int realval)
 {
   int step = realval - shownval;
 
-  if (!smooth_counts || !step) { return realval; }
+  if (NOTSTRICTMODE(!smooth_counts || !step)) { return realval; }
   else {
     int sign = step / abs(step);
     step = BETWEEN(1, 7, abs(step) / 20);
@@ -768,12 +768,12 @@ void ST_doPaletteStuff(void)
     {
       // slowly fade the berzerk out
       int bzc = 12 - (plyr->powers[pw_strength]>>6);
-      if (bzc > cnt && !no_berserk_tint)
+      if (bzc > cnt && !STRICTMODE(no_berserk_tint)) // [Nugget]
         cnt = bzc;
     }
 
-  // [Nugget]: [crispy] A11Y
-  if (STRICTMODE(!palette_changes))
+  // [Nugget] Disable palette tint in menus
+  if (STRICTMODE(!palette_changes || (no_menu_tint && menuactive)))
   { palette = 0; }
   else if (cnt)
   {
@@ -812,9 +812,6 @@ void ST_doPaletteStuff(void)
         palette = RADIATIONPAL;
       else
         palette = 0;
-
-  // [Nugget] Disable palette tint in menus
-  if (no_menu_tint && menuactive) { palette = 0; }
 
   if (palette != st_palette)
     {

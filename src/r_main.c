@@ -115,7 +115,7 @@ int extra_level_brightness;               // level brightness feature
 int fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
 static int zoomed = 0; // Current zoom state
 
-boolean fovchange = false;
+boolean fovchange = true;
 static int bfov = ORIGFOV; // Base FOV
 static int rfov = ORIGFOV; // Rendered (currently applied) FOV, with effects added to it
 
@@ -766,7 +766,7 @@ void R_SetupFrame (player_t *player)
   pitch = pitch * ORIGFOV/rfov;
 
   // [Nugget]: [crispy] A11Y
-  if (a11y_weapon_flash)
+  if (NOTSTRICTMODE(a11y_weapon_flash))
   { extralight = player->extralight; }
   else
   { extralight = 0; }

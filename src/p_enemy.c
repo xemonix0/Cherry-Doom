@@ -1324,15 +1324,19 @@ void A_SPosAttack(mobj_t* actor)
 void A_CPosAttack(mobj_t *actor)
 {
   int angle, bangle, damage, slope, t;
+  // [Nugget] Use Pistol sound (or Chaingun sound if available) instead
+  static int sound = -1;
+  if (sound == -1)
+  { sound = (W_CheckNumForName("dschgun") > -1 ? sfx_chgun : sfx_pistol); }
 
   if (!actor->target)
     return;
 
-  if (nugget_comp[comp_cgunnersfx]) // [Nugget]
-    S_StartSound(actor, W_CheckNumForName("dschgun") >= 0
-                        ? sfx_chgun : sfx_pistol);
+  // [Nugget]
+  if (STRICTMODE(nugget_comp[comp_cgunnersfx]))
+    S_StartSound (actor, sound);
   else
-  { S_StartSound (actor, sfx_shotgn); }
+    S_StartSound (actor, sfx_shotgn);
 
   A_FaceTarget(actor);
   bangle = actor->angle;
@@ -1856,7 +1860,7 @@ void A_VileTarget(mobj_t *actor)
   P_SetTarget(&fog->target, actor);
   P_SetTarget(&fog->tracer, actor->target);
   // [Nugget]: [crispy] play DSFLAMST sound when Arch-Vile spawns fire attack
-  if (nugget_comp[comp_flamst])
+  if (STRICTMODE(nugget_comp[comp_flamst]))
   { S_StartSound(fog, sfx_flamst); }
   A_Fire(fog);
 }

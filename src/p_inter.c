@@ -260,7 +260,7 @@ void P_GiveCard(player_t *player, card_t card)
   if (player->cards[card])
     return;
   // [Nugget] Fix for "key pickup resets palette"
-  if (!STRICTMODE(nugget_comp[comp_keypal]))
+  if (STRICTMODE(!nugget_comp[comp_keypal]))
   { player->bonuscount += BONUSADD; }
   else
   { player->bonuscount = BONUSADD; }
@@ -658,7 +658,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   P_RemoveMobj (special);
   player->bonuscount += BONUSADD;
   // [Nugget] Bonuscount cap
-  if (!strictmode && bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap)
+  if (STRICTMODE(bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap))
   { player->bonuscount = bonuscount_cap; }
 
   S_StartSound(player->mo, sound);   // killough 4/25/98, 12/98
@@ -982,8 +982,10 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
     player->attacker = source;
     player->damagecount += damage;  // add damage after armor / invuln
 
+    if (player->damagecount > 100)
+      player->damagecount = 100;  // teleport stomp does 10k points...
     // [Nugget] Custom red tint cap
-    if (player->damagecount > damagecount_cap && !strictmode)
+    else if (STRICTMODE(player->damagecount > damagecount_cap))
     { player->damagecount = damagecount_cap; }
 
 #if 0

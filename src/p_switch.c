@@ -142,9 +142,8 @@ void P_StartButton
       buttonlist[i].where = w;
       buttonlist[i].btexture = texture;
       buttonlist[i].btimer = time;
-      // [Nugget] Add this
-      // [crispy] corrected sound source
-      buttonlist[i].soundorg = nugget_comp[comp_switchsource]
+      // [Nugget]: [crispy] corrected sound source
+      buttonlist[i].soundorg = STRICTMODE(nugget_comp[comp_switchsource])
                                ? (mobj_t *)&line->soundorg
                                : (mobj_t *)&line->frontsector->soundorg;
       return;
@@ -191,7 +190,7 @@ void P_ChangeSwitchTexture
     if (switchlist[i] == texTop)     // if an upper texture
     {
       // [Nugget]: [crispy] corrected sound source
-      S_StartSound(nugget_comp[comp_switchsource]
+      S_StartSound(STRICTMODE(nugget_comp[comp_switchsource])
                    ? (mobj_t *)&line->soundorg
                    : buttonlist->soundorg, sound);     // switch activation sound
       sides[line->sidenum[0]].toptexture = switchlist[i^1];       //chg texture
@@ -206,7 +205,7 @@ void P_ChangeSwitchTexture
       if (switchlist[i] == texMid)   // if a normal texture
       {
         // [Nugget]: [crispy] corrected sound source
-        S_StartSound(nugget_comp[comp_switchsource]
+        S_StartSound(STRICTMODE(nugget_comp[comp_switchsource])
                      ? (mobj_t *)&line->soundorg
                      : buttonlist->soundorg, sound);   // switch activation sound
         sides[line->sidenum[0]].midtexture = switchlist[i^1];     //chg texture
@@ -221,7 +220,7 @@ void P_ChangeSwitchTexture
         if (switchlist[i] == texBot) // if a lower texture
         {
           // [Nugget]: [crispy] corrected sound source
-          S_StartSound(nugget_comp[comp_switchsource]
+          S_StartSound(STRICTMODE(nugget_comp[comp_switchsource])
                        ? (mobj_t *)&line->soundorg
                        : buttonlist->soundorg, sound); // switch activation sound
           sides[line->sidenum[0]].bottomtexture = switchlist[i^1];//chg texture

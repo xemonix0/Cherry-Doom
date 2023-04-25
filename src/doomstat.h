@@ -459,7 +459,6 @@ extern int center_weapon;
 
 extern boolean fauxdemo;
 extern boolean casual_play;
-extern int old_casual_play;
 
 // General
   // Page 4

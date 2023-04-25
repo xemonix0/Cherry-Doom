@@ -162,7 +162,8 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
    angle_t angle;
    int basevolume;            // haleyjd
    // [Nugget] Double sound clipping distance
-   int clippingdist = S_CLIPPING_DIST*(s_clipping_dist_x2+1);
+   const int clippingdist = S_CLIPPING_DIST * (STRICTMODE(s_clipping_dist_x2) + 1);
+   const int attenuator = (clippingdist-S_CLOSE_DIST)>>FRACBITS;
 
    // haleyjd 08/12/04: we cannot adjust a sound for a NULL listener.
    if(!listener)
@@ -217,8 +218,7 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
    // [Nugget] Variable sound clipping distance
    *vol = dist < S_CLOSE_DIST >> FRACBITS
           ? basevolume
-          : basevolume * ((clippingdist>>FRACBITS)-dist) /
-            ((clippingdist-S_CLOSE_DIST)>>FRACBITS);
+          : basevolume * ((clippingdist>>FRACBITS)-dist) / attenuator;
 
    // haleyjd 09/27/06: decrease priority with volume attenuation
    *pri = *pri + (127 - *vol);

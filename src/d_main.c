@@ -1849,11 +1849,16 @@ static boolean CheckHaveSSG (void)
 // [Nugget]
 void D_NuggetUpdateCasual()
 {
+  static int old_casual = -1;
+  
   casual_play = !(demorecording||demoplayback||timingdemo||netgame||fauxdemo||strictmode);
+  
+  if (old_casual == -1) { old_casual = casual_play; }
 
-  if (old_casual_play != casual_play) {
-    old_casual_play = casual_play;
+  if (old_casual != casual_play) {
+    old_casual = casual_play;
     
+    I_SetPalette(W_CacheLumpName("PLAYPAL",PU_CACHE)), // Gamma
     R_SetZoom(ZOOM_RESET); // This also resets FOV in general, regardless of zoom
     
     M_ResetSetupMenu();

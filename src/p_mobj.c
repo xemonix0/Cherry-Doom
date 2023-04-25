@@ -488,8 +488,7 @@ static void P_ZMovement (mobj_t* mo)
       mo->z < mo->floorz)
     {
       // [Nugget] Adjustable viewheight
-      int view = (demorecording||netgame||fauxdemo||strictmode) // Allowed in demo playback
-                 ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
+      int view = (!strictmode ? viewheight_value*FRACUNIT : VIEWHEIGHT);
       
       mo->player->viewheight -= mo->floorz-mo->z;
       mo->player->deltaviewheight = (view - mo->player->viewheight)>>3;
@@ -543,10 +542,10 @@ floater:
 
                 mo->player->deltaviewheight = mo->momz>>3;
                 // [Nugget]: [crispy] squat down weapon sprite as well
-                if (weaponsquat)
+                if (STRICTMODE(weaponsquat))
                 { mo->player->psprites[ps_weapon].dy = ((-mo->momz>>1) > 24*FRACUNIT) ? (24*FRACUNIT) : (-mo->momz>>1); }
                 // [Nugget]: [crispy] dead men don't say "oof"
-                if (mo->health > 0 || nugget_comp[comp_deadoof])
+                if (mo->health > 0 || NOTSTRICTMODE(nugget_comp[comp_deadoof]))
                 { S_StartSound (mo, sfx_oof); }
               }
           mo->momz = 0;
@@ -1133,8 +1132,7 @@ void P_SpawnPlayer (mapthing_t* mthing)
   p->extralight    = 0;
   p->fixedcolormap = 0;
   // [Nugget] Adjustable viewheight
-  p->viewheight = (demorecording||netgame||fauxdemo||strictmode)
-                  ? VIEWHEIGHT : (viewheight_value*FRACUNIT);
+  p->viewheight = (!strictmode ? viewheight_value*FRACUNIT : VIEWHEIGHT);
 
   p->momx = p->momy = 0;   // killough 10/98: initialize bobbing to 0.
 

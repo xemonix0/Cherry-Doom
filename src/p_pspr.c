@@ -122,7 +122,7 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
           // [FG] centered weapon sprite
           // [Nugget] If applicable, subtract 1 pixel from the misc1 calculation,
           // for consistency with the first person sprite centering correction
-          psp->sx2 = (state->misc1 - sx_fix) << FRACBITS;
+          psp->sx2 = (state->misc1 - STRICTMODE(sx_fix)) << FRACBITS;
           psp->sy2 = state->misc2 << FRACBITS;
         }
 
@@ -1029,17 +1029,20 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
 
 void A_FireCGun(player_t *player, pspdef_t *psp)
 {
+  // [Nugget] use DSCHGUN if available
+  static int sound = -1;
+  if (sound == -1)
+  { sound = (W_CheckNumForName("dschgun") > -1 ? sfx_chgun : sfx_pistol); }
+  
   // [Nugget] Fix "Chaingun sound without ammo" bug
-  if (!nugget_comp[comp_cgundblsnd])
+  if (STRICTMODE(!nugget_comp[comp_cgundblsnd]))
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
     { return; }
 
-  // [Nugget] use DSCHGUN if available
-  S_StartSound(player->mo, W_CheckNumForName("dschgun") >= 0
-                           ? sfx_chgun : sfx_pistol);
+  S_StartSound(player->mo, !strictmode ? sound : sfx_pistol); // [Nugget]
 
   // [Nugget] Fix "Chaingun sound without ammo" bug
-  if (nugget_comp[comp_cgundblsnd])
+  if (NOTSTRICTMODE(nugget_comp[comp_cgundblsnd]))
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
     { return; }
 
@@ -1147,14 +1150,15 @@ static void P_NuggetBobbing(player_t* player)
   // [Nugget] Weapon bobbing percentage setting
   const fixed_t bob = player->bob * weapon_bobbing_percentage / 100;
   const int angle = (128*leveltime) & FINEMASK;
+  int style = STRICTMODE(bobbing_style);
 
   // sx - Default, differs in a few styles
-  psp->sx2 = ((1 - sx_fix)*FRACUNIT) + FixedMul(bob, finecosine[angle]);
+  psp->sx2 = ((1 - STRICTMODE(sx_fix))*FRACUNIT) + FixedMul(bob, finecosine[angle]);
   // sy - Used for all styles, their specific values are added to this one right after
   psp->sy2 = WEAPONTOP + abs(psp->dy); // Squat weapon down on impact
 
   // Bobbing Styles, ported from Zandronum
-  switch (bobbing_style) {
+  switch (style) {
     case bob_Vanilla:
       psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;
@@ -1227,7 +1231,7 @@ void P_MovePsprites(player_t *player)
   {
     static fixed_t last_sy = 32 * FRACUNIT;
 
-    psp->sx2 = (1 - sx_fix)*FRACUNIT; // [Nugget] Correct first person sprite centering
+    psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first person sprite centering
 
     if (psp->state->action.p2 != (actionf_p2)A_Lower &&
         psp->state->action.p2 != (actionf_p2)A_Raise &&
@@ -1253,7 +1257,7 @@ void P_MovePsprites(player_t *player)
     // [FG] center the weapon sprite horizontally and push up vertically
     else if (player->attackdown && center_weapon == WEAPON_CENTERED)
     {
-      psp->sx2 = (1 - sx_fix)*FRACUNIT; // [Nugget] Correct first person sprite centering
+      psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first person sprite centering
       psp->sy2 = WEAPONTOP;
     }
   }

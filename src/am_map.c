@@ -1689,9 +1689,9 @@ void AM_drawWalls(void)
                 )
           AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
         // [Nugget] Unrevealed secret sector boundary
-        else if (mapcolor_uscr && !map_secret_after
-                 && P_IsSecret(lines[i].frontsector))
-          AM_drawMline(&l, mapcolor_uscr);
+        else if ((!strictmode ? mapcolor_uscr : mapcolor_secr)
+                 && !map_secret_after && P_IsSecret(lines[i].frontsector))
+          AM_drawMline(&l, (!strictmode ? mapcolor_uscr : mapcolor_secr));
         else                               //jff 2/16/98 fixed bug
           AM_drawMline(&l, mapcolor_wall); // special was cleared
       }
@@ -1797,12 +1797,13 @@ void AM_drawWalls(void)
           AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
         } //jff 1/6/98 end secret sector line change
         // [Nugget] Unrevealed secret sector 2S lines
-        else if (mapcolor_uscr && !map_secret_after
+        else if ((!strictmode ? mapcolor_uscr : mapcolor_secr)
+                 && !map_secret_after
                  && (P_IsSecret(lines[i].frontsector)
                      || P_IsSecret(lines[i].backsector))
                 )
         {
-          AM_drawMline(&l, mapcolor_uscr);
+          AM_drawMline(&l, (!strictmode ? mapcolor_uscr : mapcolor_secr));
         }
         else if (lines[i].backsector->floorheight !=
                   lines[i].frontsector->floorheight)

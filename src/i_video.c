@@ -1100,7 +1100,7 @@ void I_SetPalette(byte *palette)
    if (!in_graphics_mode)             // killough 8/11/98
       return;
 
-   if (usegamma)
+   if (usegamma || strictmode)
    {
       gamma = gammatable[usegamma];
    }

@@ -2180,7 +2180,8 @@ boolean HU_Responder(event_t *ev)
       else // killough 10/02/98: no chat if demo playback
         if (!demoplayback)
           {
-	    if ((netgame || sp_chat) && M_InputActivated(input_chat)) // [Nugget] Singleplayer chat
+	    if ((netgame || STRICTMODE(sp_chat)) // [Nugget] Singleplayer chat
+		&& M_InputActivated(input_chat))
 	      {
 		eatkey = chat_on = true;
 		HUlib_resetIText(&w_chat);

@@ -3244,8 +3244,7 @@ static const char *default_bobfactor_strings[] = {
 
 static void M_UpdateCenteredWeaponItem(void)
 {
-  DISABLE_ITEM(!STRICTMODE(weapon_bobbing_percentage),
-               weap_settings2[weap2_center]);
+  DISABLE_ITEM(!weapon_bobbing_percentage, weap_settings2[weap2_center]);
 }
 
 setup_menu_t weap_settings2[] =  // Weapons Settings screen 2
@@ -4386,6 +4385,7 @@ setup_menu_t gen_settings5[] = { // [Nugget]
     {"Advance Internal Demos",          S_CHOICE, m_null, M_X, M_Y + gen5_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
     {"Quick \"Quit Game\"",             S_YESNO,  m_null, M_X, M_Y + gen5_quickexit     * M_SPC, {"quick_quitgame"}},
     
+  {"", S_SKIP, m_null, M_X, M_Y + gen5_stub1*M_SPC},
   {"Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen5_title2 * M_SPC},
 #if 0 // [Nugget] For future use, hopefully
     {"Flickering Sector Lighting",  S_YESNO,  m_null, M_X,      M_Y+gen5_a11y_seclight   *M_SPC, {"a11y_sector_lighting"}},
@@ -5787,31 +5787,29 @@ boolean M_Responder (event_t* ev)
 	}
 
       if (M_InputActivated(input_gamma))       // gamma toggle
-	{
-      if (gammacycle) {
-        static char buffer[28];
-      
-        gamma2 += 5;
-        if (gamma2 > GAMMA2MAX) { gamma2 -= GAMMA2MAX; }
-        sprintf(buffer, "Gamma Correction Level %0.2f", gammalevels[gamma2]);
-        players[consoleplayer].message = buffer;
-        M_ResetGamma();
-      }
-      else {
-	    usegamma++;
-	    if (usegamma > 4)
-	      usegamma = 0;
-	    players[consoleplayer].message =
-	      usegamma == 0 ? s_GAMMALVL0 :
-	      usegamma == 1 ? s_GAMMALVL1 :
-	      usegamma == 2 ? s_GAMMALVL2 :
-	      usegamma == 3 ? s_GAMMALVL3 :
-	      s_GAMMALVL4;
-	    gamma2 = 10; // 1.0f
-	    I_SetPalette (W_CacheLumpName ("PLAYPAL",PU_CACHE));
-	  }
-	  return true;
-	}
+        {
+          if (STRICTMODE(gammacycle))
+          {
+            gamma2 += 5;
+            if (gamma2 > GAMMA2MAX) { gamma2 -= GAMMA2MAX; }
+            doomprintf("Gamma Correction Level %0.2f", gammalevels[gamma2]);
+            M_ResetGamma();
+          }
+          else {
+            usegamma++;
+            if (usegamma > 4)
+              usegamma = 0;
+            players[consoleplayer].message =
+              usegamma == 0 ? s_GAMMALVL0 :
+              usegamma == 1 ? s_GAMMALVL1 :
+              usegamma == 2 ? s_GAMMALVL2 :
+              usegamma == 3 ? s_GAMMALVL3 :
+              s_GAMMALVL4;
+            gamma2 = 10; // 1.0f
+            I_SetPalette (W_CacheLumpName ("PLAYPAL",PU_CACHE));
+          }
+          return true;
+        }
 
 
       if (M_InputActivated(input_zoomout))     // zoom out
@@ -5833,26 +5831,26 @@ boolean M_Responder (event_t* ev)
 	}
 
       if (M_InputActivated(input_hud))   // heads-up mode
-	{
-	  if (automap_on)       // jff 2/22/98
-	    return false;                             // HUD mode control
-    // [Nugget] Increase to accommodate for Crispy HUD
-	  if (screenSize<8+2)                         // function on default F5
-	    while (screenSize<8+2 || !hud_displayed)  // make hud visible
-	      M_SizeDisplay(1);                       // when configuring it
-	  else
-	    {
-	      hud_displayed = 1;               //jff 3/3/98 turn hud on
-	      hud_active = ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3)
-                     ? !hud_active : (hud_active+1)%3; // cycle hud_active
-	      if (!hud_active)                 //jff 3/4/98 add distributed
-		{
-		  hud_distributed = !hud_distributed; // to cycle
-		  HU_MoveHud(); //jff 3/9/98 move it now to avoid glitch
-		}
-	    }
-	  return true;
-	}
+        {
+          if (automap_on)       // jff 2/22/98
+            return false;                             // HUD mode control
+          // [Nugget] Increase to accommodate for Crispy HUD
+          if (screenSize<8+2)                         // function on default F5
+            while (screenSize<8+2 || !hud_displayed)  // make hud visible
+              M_SizeDisplay(1);                       // when configuring it
+          else
+            {
+              hud_displayed = 1;               //jff 3/3/98 turn hud on
+              hud_active = ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3)
+                           ? !hud_active : (hud_active+1)%3; // cycle hud_active
+              if (!hud_active)                 //jff 3/4/98 add distributed
+                {
+                  hud_distributed = !hud_distributed; // to cycle
+                  HU_MoveHud(); //jff 3/9/98 move it now to avoid glitch
+                }
+            }
+          return true;
+        }
 
       // killough 10/98: allow key shortcut into Setup menu
       if (M_InputActivated(input_setup))
@@ -7333,21 +7331,34 @@ static void M_UpdateStrictModeItems(void)
 
   // [Nugget]
   
-  for (int i = gen4_menutint; i <= gen4_sclipdist; i++)
+  DISABLE_STRICT(gen_settings1[gen1_gamma]);
+  
+  for (int i = gen4_menutint; i <= gen4_berserktint; i++)
   { DISABLE_STRICT(gen_settings4[i]); }
   DISABLE_ITEM(!casual_play, gen_settings4[gen4_overunder]);
   DISABLE_ITEM(!casual_play, gen_settings4[gen4_jump_crouch]);
+  for (int i = gen4_viewheight; i <= gen4_sclipdist; i++)
+  { DISABLE_STRICT(gen_settings4[i]); }
+  for (int i = gen5_level_brightness; i <= gen5_a11y_invul; i++)
+  { DISABLE_STRICT(gen_settings5[i]); }
 
-  // [Nugget]
   for (int i = comp4_lscollision; i <= comp4_iosdeath; i++)
   { DISABLE_ITEM(!casual_play, comp_settings4[i]); }
-  DISABLE_STRICT(comp_settings5[comp5_keypal]);
+  for (int i = comp5_blazing2; i <= comp5_keypal; i++)
+  { DISABLE_STRICT(comp_settings5[i]); }
   
   DISABLE_ITEM(!casual_play, weap_settings1[weap1_autoaim]);
   M_UpdateFreeaimItem();
+  DISABLE_STRICT(weap_settings2[weap2_bobstyle]);
+  DISABLE_STRICT(weap_settings2[weap2_squat]);
+  
+  DISABLE_STRICT(stat_settings2[stat2_smooth]);
+  
+  DISABLE_STRICT(auto_settings3[auto3_col_uscr]);
 
   for (int i = enem1_extra_gibbing; i <= enem1_zdoom_drops; i++)
   { DISABLE_ITEM(!casual_play, enem_settings1[i]); }
+  DISABLE_STRICT(enem_settings2[enem2_fuzzdark]);
 }
 
 static void M_UpdateFreeaimItem(void) // [Nugget]

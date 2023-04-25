@@ -140,7 +140,6 @@ char *MAPNAME(int e, int m)
 
 boolean fauxdemo;
 boolean casual_play;
-int old_casual_play = -1;
 
 // General
   // Page 4

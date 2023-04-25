@@ -413,8 +413,8 @@ void R_DrawSkyColumn(void)
 
 // [Nugget - ceski] Selective fuzz darkening, credit: Linguica (https://www.doomworld.com/forum/post/1335769)
 int fuzzdark_mode;
-#define FUZZDARK    ((!fuzzdark_mode || (fuzzoffset[fuzzpos] && (count != dc_yh - dc_yl + 1))) ? 6*256 : 0)
-#define FUZZDARKCUT ((!fuzzdark_mode || !fuzzoffset[fuzzpos]) ? 6*256 : 0)
+#define FUZZDARK    ((NOTSTRICTMODE(!fuzzdark_mode) || (fuzzoffset[fuzzpos] && (count != dc_yh - dc_yl + 1))) ? 6*256 : 0)
+#define FUZZDARKCUT ((NOTSTRICTMODE(!fuzzdark_mode) || !fuzzoffset[fuzzpos]) ? 6*256 : 0)
 #define FUZZLINE    (linesize * (fuzzoffset[fuzzpos] ? 1 : -1))
 #define FUZZLINECUT (linesize * fuzzoffset[fuzzpos])
 
