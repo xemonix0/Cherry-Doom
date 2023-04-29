@@ -34,6 +34,10 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**Subtle Idle Bobbing/Breathing**_ setting [p.f. International Doom]
 - _**Teleporter Zoom**_ setting [i.b. ZDoom]
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
+- **Event Timers:**
+  - _"Use" Button Timer_ [p.f. Crispy Doom]; 
+  - _Teleport Timer_ [i.b. the above];
+  - _Key Pickup Timer_ [same as above].
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
 - Setting of condition to _**Advance Internal Demos**_
 - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt [p.f. Crispy Doom]

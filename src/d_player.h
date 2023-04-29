@@ -197,8 +197,12 @@ typedef struct player_s
   // as view and weapon bobbing have been separated
 
   // [Nugget]
+  
   int jumpTics; // Jumping delay
   fixed_t crouchOffset; // Viewheight offset, for crouching
+  
+  // Momentarily display the time at which an event occurred
+  int event_type, event_time, event_tics;
 
 } player_t;
 

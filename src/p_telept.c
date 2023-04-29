@@ -84,6 +84,14 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
             // [crispy] center view after teleporting
             player->centering = true;
             
+            // [Nugget] Teleport timer
+            if (STRICTMODE(timer_teleport == 2 || (timer_teleport && (demorecording||demoplayback))))
+            {
+              player->event_type = TIMER_TELEPORT;
+              player->event_time = leveltime;
+              player->event_tics = 5*TICRATE/2; // [crispy] 2.5 seconds
+            }
+            
             // [Nugget] Teleporter zoom
             if (STRICTMODE(teleporter_zoom)) {
               fovfx[FOVFX_TELEPORT] = 55; // Actually, 50 is applied

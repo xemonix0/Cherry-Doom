@@ -157,6 +157,9 @@ int breathing;
 int teleporter_zoom;
 int s_clipping_dist_x2;
   // Page 5
+int timer_use;
+int timer_teleport;
+int timer_key_pickup;
 int one_key_saveload;
 int no_page_ticking;
 int quick_quitgame;

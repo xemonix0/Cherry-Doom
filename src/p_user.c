@@ -715,6 +715,14 @@ void P_PlayerThink (player_t* player)
         {
           P_UseLines (player);
           player->usedown = true;
+          
+          // [Nugget] Key pickup timer
+          if (timer_use == 2 || (timer_use && (demorecording||demoplayback)))
+          {
+            player->event_type = TIMER_USE;
+            player->event_time = leveltime;
+            player->event_tics = 5*TICRATE/2; // [crispy] 2.5 seconds
+          }
         }
     }
   else

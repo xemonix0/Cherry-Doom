@@ -1323,7 +1323,8 @@ void HU_Drawer(void)
       }
 
       // [FG] draw level time widget
-      if ((automapactive && map_level_time == 1) || map_level_time == 2)
+      if ((automapactive && map_level_time == 1) || map_level_time == 2
+          || plr->event_tics) // [Nugget] Event timer
       {
         HUlib_drawTextLine(&w_ltime, false);
       }
@@ -2035,6 +2036,24 @@ void HU_Ticker(void)
         w_ltime.y = HU_LTIME_Y + offset_msglist;
 
         sprintf(hud_ltime, "%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);
+        HUlib_clearTextLine(&w_ltime);
+        s = hud_ltime;
+        while (*s)
+          HUlib_addCharToTextLine(&w_ltime, *s++);
+      }
+
+      // [Nugget] Event timer overrides the level time widget
+      if (plr->event_tics) {
+        const int   type = plr->event_type;
+        const int   mins = plr->event_time / (60 * TICRATE);
+        const float secs = (float)(plr->event_time % (60 * TICRATE)) / TICRATE;
+
+        if (!plr->event_tics--) { plr->event_type = plr->event_time = 0; }
+
+        sprintf(hud_ltime, "%c %02i:%05.02f",
+                type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
+                mins, secs);
+                
         HUlib_clearTextLine(&w_ltime);
         s = hud_ltime;
         while (*s)

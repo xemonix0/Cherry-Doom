@@ -476,6 +476,10 @@ extern int breathing;
 extern int teleporter_zoom;
 extern int s_clipping_dist_x2;
   // Page 5
+enum { TIMER_USE = 1, TIMER_TELEPORT, TIMER_KEYPICKUP, };
+extern int timer_use;
+extern int timer_teleport;
+extern int timer_key_pickup;
 extern int one_key_saveload;
 extern int no_page_ticking;
 extern int quick_quitgame;

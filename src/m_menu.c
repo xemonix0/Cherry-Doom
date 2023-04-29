@@ -4363,6 +4363,9 @@ setup_menu_t gen_settings4[] = { // [Nugget]
 
 enum { // [Nugget]
   gen5_title1,
+  gen5_timeruse,
+  gen5_timertelept,
+  gen5_timerkey,
   gen5_quicksaveload,
   gen5_nopagetic,
   gen5_quickexit,
@@ -4378,9 +4381,16 @@ enum { // [Nugget]
   gen5_a11y_invul,
 };
 
+static const char *timer_strings[] = {
+  "Off", "In Demos", "Always", NULL
+};
+
 setup_menu_t gen_settings5[] = { // [Nugget]
 
   {"Nugget Settings", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen5_title1 * M_SPC},
+    {"\"Use\" Button Timer",            S_CHOICE, m_null, M_X, M_Y + gen5_timeruse      * M_SPC, {"timer_use"},        0, NULL, timer_strings},
+    {"Teleport Timer",                  S_CHOICE, m_null, M_X, M_Y + gen5_timertelept   * M_SPC, {"timer_teleport"},   0, NULL, timer_strings},
+    {"Key Pickup Timer",                S_CHOICE, m_null, M_X, M_Y + gen5_timerkey      * M_SPC, {"timer_key_pickup"}, 0, NULL, timer_strings},
     {"One-Key Quick Save/Load",         S_YESNO,  m_null, M_X, M_Y + gen5_quicksaveload * M_SPC, {"one_key_saveload"}},
     {"Advance Internal Demos",          S_CHOICE, m_null, M_X, M_Y + gen5_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
     {"Quick \"Quit Game\"",             S_YESNO,  m_null, M_X, M_Y + gen5_quickexit     * M_SPC, {"quick_quitgame"}},
@@ -7335,20 +7345,28 @@ static void M_UpdateStrictModeItems(void)
   
   for (int i = gen4_menutint; i <= gen4_berserktint; i++)
   { DISABLE_STRICT(gen_settings4[i]); }
+  
   DISABLE_ITEM(!casual_play, gen_settings4[gen4_overunder]);
   DISABLE_ITEM(!casual_play, gen_settings4[gen4_jump_crouch]);
+  
   for (int i = gen4_viewheight; i <= gen4_sclipdist; i++)
   { DISABLE_STRICT(gen_settings4[i]); }
+  
+  DISABLE_STRICT(gen_settings5[gen5_timertelept]);
+  DISABLE_STRICT(gen_settings5[gen5_timerkey]);
+  
   for (int i = gen5_level_brightness; i <= gen5_a11y_invul; i++)
   { DISABLE_STRICT(gen_settings5[i]); }
 
   for (int i = comp4_lscollision; i <= comp4_iosdeath; i++)
   { DISABLE_ITEM(!casual_play, comp_settings4[i]); }
+  
   for (int i = comp5_blazing2; i <= comp5_keypal; i++)
   { DISABLE_STRICT(comp_settings5[i]); }
   
   DISABLE_ITEM(!casual_play, weap_settings1[weap1_autoaim]);
   M_UpdateFreeaimItem();
+  
   DISABLE_STRICT(weap_settings2[weap2_bobstyle]);
   DISABLE_STRICT(weap_settings2[weap2_squat]);
   
@@ -7358,6 +7376,7 @@ static void M_UpdateStrictModeItems(void)
 
   for (int i = enem1_extra_gibbing; i <= enem1_zdoom_drops; i++)
   { DISABLE_ITEM(!casual_play, enem_settings1[i]); }
+  
   DISABLE_STRICT(enem_settings2[enem2_fuzzdark]);
 }
 

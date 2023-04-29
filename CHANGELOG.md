@@ -2,6 +2,9 @@
 
 - **_"Fade"_ screen wipe**
 - _**Teleporter Zoom**_ setting
+- _**"Use" Button Timer**_ setting
+- _**Teleport Timer**_ setting
+- _**Key Pickup Timer**_ setting
 
 ## Changes
 

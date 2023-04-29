@@ -587,6 +587,27 @@ default_t defaults[] = {
   },
 
   {
+    "timer_use",
+    (config_t *) &timer_use, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Show time at which Use was pressed (0 = Off, 1 = In Demos, 2 = Always)"
+  },
+
+  {
+    "timer_teleport",
+    (config_t *) &timer_teleport, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Show time at which a teleporter was used (0 = Off, 1 = In Demos, 2 = Always)"
+  },
+
+  {
+    "timer_key_pickup",
+    (config_t *) &timer_key_pickup, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Show time at which a key was picked up (0 = Off, 1 = In Demos, 2 = Always)"
+  },
+
+  {
     "one_key_saveload",
     (config_t *) &one_key_saveload, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
