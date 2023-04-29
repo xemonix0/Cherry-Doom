@@ -992,11 +992,12 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
     player->attacker = source;
     player->damagecount += damage;  // add damage after armor / invuln
 
+    // [Nugget] Custom red tint cap
+    if (STRICTMODE(player->damagecount > damagecount_cap))
+    { player->damagecount = damagecount_cap; }
+    else
     if (player->damagecount > 100)
       player->damagecount = 100;  // teleport stomp does 10k points...
-    // [Nugget] Custom red tint cap
-    else if (STRICTMODE(player->damagecount > damagecount_cap))
-    { player->damagecount = damagecount_cap; }
 
 #if 0
       // killough 11/98:
