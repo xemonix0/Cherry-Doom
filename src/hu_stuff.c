@@ -1760,7 +1760,7 @@ void HU_Ticker(void)
     HU_enableWidget(&w_sttime, hud_level_time || plr->event_tics); // [Nugget] Event timers
   }
   else if (scaledviewheight &&
-           (scaledviewheight < SCREENHEIGHT || st_crispyhud) && // [Nugget] Allow Time/STS in Crispy HUD
+           (scaledviewheight < SCREENHEIGHT || screenblocks < 13) && // [Nugget] Allow Time/STS in Crispy HUD
            automap_off)
   {
     HU_enableWidget(&w_monsec, hud_level_stats);

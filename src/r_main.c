@@ -650,7 +650,9 @@ void R_ExecuteSetViewSize (void)
         }
     }
 
-    HU_disableAllWidgets();
+    // [Nugget] Don't call this, as it would make
+    // the HUD widgets disappear during FOV changes
+    /*HU_disableAllWidgets();*/
 
     // [crispy] forcefully initialize the status bar backing screen
     ST_refreshBackground(true);
