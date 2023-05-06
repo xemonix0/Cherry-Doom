@@ -1474,7 +1474,10 @@ void HU_Drawer(void)
   // needed when screen not fullsize
   // killough 11/98: only do it when not fullsize
   // moved here to properly update the w_sttime and w_monsec widgets
-  if (scaledviewheight < 200) { HU_Erase(); }
+  if (scaledviewheight < 200)
+  {
+    HU_Erase();
+  }
 
   if (message_list)
     HUlib_drawMText(&w_rtext, align_text);
@@ -1492,18 +1495,24 @@ void HU_Drawer(void)
   {
     if (w->line->visible)
     {
-      // [Nugget] Special treatment for Time/STS in Nugget HUD
+      // [Nugget] Special treatment for some widgets in Nugget HUD
       if (st_crispyhud) {
+        nughud_widget_t *nw = NULL;
         const int delta = st_widecrispyhud ? WIDESCREENDELTA : 0;
-        
-        if (w->line == &w_sttime) {
-          w->line->x = nughud.time.x + (delta*nughud.time.wide);
-          w->line->y = nughud.time.y;
-          HUlib_drawTextLine(w->line, align_direct, false);
-        }
-        else if (w->line == &w_monsec) {
-          w->line->x = nughud.sts.x + (delta*nughud.sts.wide);
-          w->line->y = nughud.sts.y;
+        const int left = 2 - WIDESCREENDELTA, right = 318 + WIDESCREENDELTA;
+        int alignment; // Used as the default if x == -1
+
+        if      (w->line == &w_sttime) { nw = &nughud.time;  alignment = left;  }
+        else if (w->line == &w_monsec) { nw = &nughud.sts;   alignment = left;  }
+        else if (w->line == &w_title)  { nw = &nughud.title; alignment = left;  }
+        else if (w->line == &w_coord)  { nw = &nughud.coord; alignment = right; }
+        else if (w->line == &w_fps)    { nw = &nughud.fps;   alignment = right; }
+
+        if (nw) {
+          w->line->x = (nw->x > -1) ? nw->x + (delta*nw->wide) : alignment;
+          if (alignment == right)
+          { w->line->x -= w->line->width; }
+          w->line->y = nw->y;
           HUlib_drawTextLine(w->line, align_direct, false);
         }
       }
@@ -1739,7 +1748,6 @@ void HU_Ticker(void)
       scaledviewheight == SCREENHEIGHT &&
       automap_off)
   {
-
     // [Nugget] Removed crispy_hud code
 
     HU_enableWidget(&w_weapon, true);

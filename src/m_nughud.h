@@ -55,6 +55,9 @@ typedef struct nughud_s {
   nughud_widget_t time;
   boolean         time_sts;
   nughud_widget_t sts;
+  nughud_widget_t title;
+  nughud_widget_t coord;
+  nughud_widget_t fps;
   nughud_patch_t  patches[NUMNUGHUDPATCHES];
   fixed_t         weapheight;
 } nughud_t;
