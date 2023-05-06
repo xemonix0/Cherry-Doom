@@ -1164,21 +1164,38 @@ static void HU_widget_build_sttime(void)
   int offset = 0;
   extern int time_scale;
 
-  if (time_scale != 100)
-  {
-    offset += sprintf(hud_timestr, "\x1b%c%d%% ",
-            '0'+CR_BLUE, time_scale);
+  // [Nugget] Event timer
+  if (plr->event_tics) {
+    const int   type = plr->event_type;
+    const int   mins = plr->event_time / (60 * TICRATE);
+    const float secs = (float)(plr->event_time % (60 * TICRATE)) / TICRATE;
+
+    if (!plr->event_tics--) { plr->event_type = plr->event_time = 0; }
+
+    offset += sprintf(hud_timestr, "\x1b%c%c %02i:%05.02f ",
+                      '0'+CR_GOLD,
+                      type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
+                      mins, secs);
   }
 
-  if (totalleveltimes)
-  {
-    const int time = (totalleveltimes + leveltime) / TICRATE;
+  // [Nugget] Print the rest of text only if the widget is enabled
+  if (hud_level_time) {
+    if (time_scale != 100)
+    {
+      offset += sprintf(hud_timestr + offset, "\x1b%c%d%% ",
+              '0'+CR_BLUE, time_scale);
+    }
 
-    offset += sprintf(hud_timestr + offset, "\x1b%c%d:%02d ",
-            '0'+CR_GREEN, time/60, time%60);
+    if (totalleveltimes)
+    {
+      const int time = (totalleveltimes + leveltime) / TICRATE;
+
+      offset += sprintf(hud_timestr + offset, "\x1b%c%d:%02d ",
+              '0'+CR_GREEN, time/60, time%60);
+    }
+    sprintf(hud_timestr + offset, "\x1b%c%d:%05.2f",
+      '0'+CR_GRAY, leveltime/TICRATE/60, (float)(leveltime%(60*TICRATE))/TICRATE);
   }
-  sprintf(hud_timestr + offset, "\x1b%c%d:%05.2f",
-    '0'+CR_GRAY, leveltime/TICRATE/60, (float)(leveltime%(60*TICRATE))/TICRATE);
 
   HUlib_clearTextLine(&w_sttime);
   HUlib_addStringToTextLine(&w_sttime, hud_timestr);
@@ -1716,14 +1733,14 @@ void HU_Ticker(void)
     HU_enableWidget(&w_keys, true);
 
     HU_enableWidget(&w_monsec, hud_level_stats);
-    HU_enableWidget(&w_sttime, hud_level_time);
+    HU_enableWidget(&w_sttime, hud_level_time || plr->event_tics); // [Nugget] Event timers
   }
   else if (scaledviewheight &&
            scaledviewheight < SCREENHEIGHT &&
            automap_off)
   {
     HU_enableWidget(&w_monsec, hud_level_stats);
-    HU_enableWidget(&w_sttime, hud_level_time);
+    HU_enableWidget(&w_sttime, hud_level_time || plr->event_tics); // [Nugget] Event timers
   }
 
   while (w->line)
