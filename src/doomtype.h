@@ -82,9 +82,6 @@ typedef unsigned char byte;
  #define BETWEEN(l,u,x) ((l)>(x)?(l):(x)>(u)?(u):(x))
 #endif
 
-// [Nugget]
-#define ISBETWEEN(min,val,max) (((min) <= (val)) && ((val) <= (max)))
-
 #if defined(_MSC_VER) && !defined(__cplusplus)
 #define inline __inline
 #endif

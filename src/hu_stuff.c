@@ -1493,8 +1493,7 @@ void HU_Drawer(void)
     if (w->line->visible)
     {
       // [Nugget] Special treatment for Time/STS in Nugget HUD
-      if (ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3))
-      {
+      if (st_crispyhud) {
         const int delta = st_widecrispyhud ? WIDESCREENDELTA : 0;
         
         if (w->line == &w_sttime) {
@@ -1753,9 +1752,7 @@ void HU_Ticker(void)
     HU_enableWidget(&w_sttime, hud_level_time || plr->event_tics); // [Nugget] Event timers
   }
   else if (scaledviewheight &&
-           (scaledviewheight < SCREENHEIGHT
-            // [Nugget] Allow Time/STS in Crispy HUD
-            || ISBETWEEN(CRISPY_HUD-3, screenSize, CRISPY_HUD_WIDE-3)) &&
+           (scaledviewheight < SCREENHEIGHT || st_crispyhud) && // [Nugget] Allow Time/STS in Crispy HUD
            automap_off)
   {
     HU_enableWidget(&w_monsec, hud_level_stats);

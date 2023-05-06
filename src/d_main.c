@@ -323,8 +323,12 @@ void D_Display (void)
   // [Nugget] Moved here, as to be called after AM_Drawer()
   if (gamestate == GS_LEVEL && gametic)
   {
-    ST_Drawer(   scaledviewheight == 200
-              && !ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE), // [Nugget]
+    // [Nugget]:
+    // [crispy] distinguish classic status bar with background and player face from Crispy HUD
+    oldcrispy = st_crispyhud; // [Nugget]
+    st_crispyhud = (CRISPY_HUD <= screenblocks && screenblocks <= CRISPY_HUD_WIDE) && automap_off;
+
+    ST_Drawer(scaledviewheight == 200 && !st_crispyhud, // [Nugget]
               redrawsbar);
 
     // Moved here too, as to be called

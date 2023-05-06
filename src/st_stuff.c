@@ -990,8 +990,7 @@ void ST_drawWidgets(void)
     { STlib_updateMultIcon(&w_arms[i]); }
 
   // [Nugget] This probably shouldn't go here, but it works
-  if (ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE)
-      && (nughud.face.x > -1) && nughud.face_bg)
+  if (st_crispyhud && (nughud.face.x > -1) && nughud.face_bg)
   {
     // [Nugget] Nugget HUD
     V_DrawPatch(nughud.face.x + (delta*nughud.face.wide), nughud.face.y+1,
@@ -1032,18 +1031,15 @@ void ST_diffDraw(void)
   ST_drawWidgets();
 }
 
-boolean oldcrispy, oldwide; // [Nugget]
+boolean oldcrispy; // [Nugget]
 
 void ST_Drawer(boolean fullscreen, boolean refresh)
 {
+  static boolean oldwide; // [Nugget]
+  
   st_statusbaron = !fullscreen || automap_on;
   // [crispy] immediately redraw status bar after help screens have been shown
   st_firsttime = st_firsttime || refresh || inhelpscreens;
-
-  // [Nugget]:
-  // [crispy] distinguish classic status bar with background and player face from Crispy HUD
-  oldcrispy = st_crispyhud; // [Nugget]
-  st_crispyhud = ISBETWEEN(CRISPY_HUD, screenblocks, CRISPY_HUD_WIDE) && automap_off;
 
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
   st_statusbarface = st_classicstatusbar || (st_crispyhud && nughud.face.x > -1);
