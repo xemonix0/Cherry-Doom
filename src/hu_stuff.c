@@ -1500,7 +1500,7 @@ void HU_Drawer(void)
         nughud_widget_t *nw = NULL;
         const int delta = st_widecrispyhud ? WIDESCREENDELTA : 0;
         const int left = 2 - WIDESCREENDELTA, right = 318 + WIDESCREENDELTA;
-        int alignment; // Used as the default if x == -1
+        int alignment = 0; // Used as the default if x == -1
 
         if      (w->line == &w_sttime) { nw = &nughud.time;  alignment = left;  }
         else if (w->line == &w_monsec) { nw = &nughud.sts;   alignment = left;  }
