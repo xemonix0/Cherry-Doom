@@ -3101,11 +3101,11 @@ setup_menu_t keys_settings9[] =  // Key Binding screen strings
   
   // [Nugget]
   {"NUGGET",S_SKIP|S_TITLE,m_null,KB_X,M_Y+9*M_SPC},
-  {"JUMP/FLY UP"     ,S_INPUT,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_jump},
-  {"CROUCH/FLY DOWN" ,S_INPUT,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_crouch},
-  {"TOGGLE CROSSHAIR",S_INPUT,m_scrn,KB_X,M_Y+12*M_SPC,{0},input_crosshair},
-  {"TOGGLE ZOOM"     ,S_INPUT,m_scrn,KB_X,M_Y+13*M_SPC,{0},input_zoom},
-  {"ZOOM FOV"        ,S_NUM,  m_null,KB_X,M_Y+14*M_SPC,{"zoom_fov"}, 0, M_SetFOV},
+  {"JUMP/FLY UP"     ,S_INPUT|S_STRICT|S_CRITICAL,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_jump},
+  {"CROUCH/FLY DOWN" ,S_INPUT|S_STRICT|S_CRITICAL,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_crouch},
+  {"TOGGLE CROSSHAIR",S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+12*M_SPC,{0},input_crosshair},
+  {"TOGGLE ZOOM"     ,S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+13*M_SPC,{0},input_zoom},
+  {"ZOOM FOV"        ,S_NUM  |S_STRICT,           m_null,KB_X,M_Y+14*M_SPC,{"zoom_fov"}, 0, M_SetFOV},
 
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings8}},
 
@@ -4797,7 +4797,7 @@ setup_menu_t comp_settings4[] =  // [Nugget]
     {"Non-bleeders don't bleed when crushed", S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_nonbleeders * COMP_SPC, {"comp_nonbleeders"}},
     {"Bruiser attack doesn't face target",    S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_bruistarget * COMP_SPC, {"comp_bruistarget"}},
     {"Fix lopsided Icon of Sin explosions",   S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_iosdeath    * COMP_SPC, {"comp_iosdeath"}},
-    {"Permanent IDCHOPPERS invulnerability",  S_YESNO,                     m_null, C_X, M_Y + comp4_choppers    * COMP_SPC, {"comp_choppers"}},
+    {"Permanent IDCHOPPERS invulnerability",  S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_choppers    * COMP_SPC, {"comp_choppers"}},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings3}},
   {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings5}},

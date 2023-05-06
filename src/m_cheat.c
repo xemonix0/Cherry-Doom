@@ -743,8 +743,10 @@ static void cheat_choppers()
   plyr->weaponowned[wp_chainsaw] = true;
   
   // [Nugget]
-  if (nugget_comp[comp_choppers]) { P_GivePower(plyr, pw_invulnerability); }
-  else                            { plyr->powers[pw_invulnerability] = true; }
+  if (casual_play && nugget_comp[comp_choppers])
+  { P_GivePower(plyr, pw_invulnerability); }
+  else
+  { plyr->powers[pw_invulnerability] = true; }
   
   doomprintf(MESSAGES_NONE, "%s", s_STSTR_CHOPPERS); // Ty 03/27/98 - externalized
 }
