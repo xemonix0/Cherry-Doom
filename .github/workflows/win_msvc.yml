@@ -16,7 +16,7 @@ env:
 
 jobs:
   msvc:
-    if: ${{ github.repository == 'fabiangreffrath/woof' }}
+    if: ${{ github.repository == 'MrAlaux/Nugget-Doom' }}
     runs-on: windows-latest
 
     strategy:

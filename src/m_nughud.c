@@ -116,11 +116,11 @@ default_t nughud_defaults[] = {
   { "nughud_maxammo3_y",    (config_t *)&nughud.maxammos[3].y,    NULL, {ST_MAXAMMO3Y},   {0,199},  number },
   { "nughud_maxammo3_wide", (config_t *)&nughud.maxammos[3].wide, NULL, {1},              {-1,1},   number },
   { "nughud_time_x",        (config_t *)&nughud.time.x,           NULL, {-1},             {0,319},  number },
-  { "nughud_time_y",        (config_t *)&nughud.time.y,           NULL, {ST_Y-2*HU_GAPY}, {0,199},  number },
+  { "nughud_time_y",        (config_t *)&nughud.time.y,           NULL, {ST_Y-2*8},       {0,199},  number },
   { "nughud_time_wide",     (config_t *)&nughud.time.wide,        NULL, {-1},             {-1,1},   number },
   { "nughud_time_sts",      (config_t *)&nughud.time_sts,         NULL, {1},              {0,1},    number },
   { "nughud_sts_x",         (config_t *)&nughud.sts.x,            NULL, {-1},             {0,319},  number },
-  { "nughud_sts_y",         (config_t *)&nughud.sts.y,            NULL, {ST_Y-HU_GAPY},   {0,199},  number },
+  { "nughud_sts_y",         (config_t *)&nughud.sts.y,            NULL, {ST_Y-8},         {0,199},  number },
   { "nughud_sts_wide",      (config_t *)&nughud.sts.wide,         NULL, {-1},             {-1,1},   number },
   { "nughud_patch1_x",      (config_t *)&nughud.patches[0].x,     NULL, {0},              {0,319},  number },
   { "nughud_patch1_y",      (config_t *)&nughud.patches[0].y,     NULL, {0},              {0,199},  number },
@@ -236,8 +236,6 @@ boolean M_NughudParseOption(const char *p, boolean wad)
   }
   else if (dp->type == number) {
     if (sscanf(strparm, "%i", &parm) != 1) { return 1; } // Not A Number
-
-    if (!strncmp(name, "key_", 4)) { parm = I_ScanCode2DoomCode(parm); } // killough
 
     //jff 3/4/98 range check numeric parameters
     if ((dp->limit.min == UL || dp->limit.min <= parm)
