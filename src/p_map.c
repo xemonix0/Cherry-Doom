@@ -1669,7 +1669,8 @@ static boolean PTR_ShootTraverse(intercept_t *in)
         if ((demo_compatibility && !casual_play) || li->backsector->ceilingheight < z)
         { return false; }
 	}
-      // [Nugget] Taken from Crispy Doom - check if the bullet puff's z-coordinate is below or above
+      // [Nugget - rrPKrr] Taken from Crispy Doom:
+      // check if the bullet puff's z-coordinate is below or above
       // its spawning sector's floor or ceiling, respectively, and move its
       // coordinates to the point where the trajectory hits the plane
       if (casual_play) {
@@ -2037,9 +2038,11 @@ boolean PIT_ChangeSector(mobj_t *thing)
     {
       P_SetMobjState(thing, S_GIBS);
       // [Nugget] No gibs if the thing doesn't bleed to begin with
-      if (STRICTMODE(nugget_comp[comp_nonbleeders])
-          && thing->flags & MF_NOBLOOD)
-        { thing->sprite = SPR_TNT1; thing->frame = 0; }
+      if (STRICTMODE(nugget_comp[comp_nonbleeders]) && thing->flags & MF_NOBLOOD)
+      {
+        thing->sprite = SPR_TNT1;
+        thing->frame = 0;
+      }
       thing->flags &= ~MF_SOLID;
       thing->height = thing->radius = 0;
       if (thing->info->bloodcolor)
@@ -2083,11 +2086,11 @@ boolean PIT_ChangeSector(mobj_t *thing)
 			thing->z + thing->height/2,
 			// [Nugget]
 			(STRICTMODE(nugget_comp[comp_nonbleeders])
-       && thing->flags & MF_NOBLOOD) ? MT_PUFF : MT_BLOOD);
+			 && thing->flags & MF_NOBLOOD) ? MT_PUFF : MT_BLOOD);
 
-			// [Nugget] Fuzzy blood if applicable
-			if (nugget_comp[comp_fuzzyblood] && thing->flags & MF_SHADOW)
-        { mo->flags |= MF_SHADOW; }
+      // [Nugget] Fuzzy blood if applicable
+      if (nugget_comp[comp_fuzzyblood] && thing->flags & MF_SHADOW)
+      { mo->flags |= MF_SHADOW; }
 
       if (thing->info->bloodcolor)
       {
