@@ -62,8 +62,6 @@ typedef struct nughud_s {
 extern nughud_t nughud;
 
 void M_NughudLoadDefaults(void);
-struct default_s *M_NughudLookupDefault(const char *name);
-boolean M_NughudParseOption(const char *name, boolean wad);
 void M_NughudLoadOptions(void);
 
 #endif

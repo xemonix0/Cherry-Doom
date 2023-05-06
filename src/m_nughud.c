@@ -171,7 +171,7 @@ static unsigned nughud_default_hash(const char *name)
 }
 
 
-default_t *M_NughudLookupDefault(const char *name)
+static default_t *M_NughudLookupDefault(const char *name)
 {
   static int hash_init;
   register default_t *dp;
@@ -194,7 +194,7 @@ default_t *M_NughudLookupDefault(const char *name)
 }
 
 
-boolean M_NughudParseOption(const char *p, boolean wad)
+static boolean M_NughudParseOption(const char *p, boolean wad)
 {
   char name[80], strparm[1024];
   default_t *dp;
@@ -208,7 +208,7 @@ boolean M_NughudParseOption(const char *p, boolean wad)
   if (sscanf(p, "%79s %1023[^\n]", name, strparm) != 2 || !isalnum(*name)
       || !(dp = M_NughudLookupDefault(name))
       || (*strparm == '"') == (dp->type != string))
-    { return 1; }
+  { return 1; }
 
   if (dp->type == string)     // get a string default
   {
@@ -224,8 +224,7 @@ boolean M_NughudParseOption(const char *p, boolean wad)
       dp->modified = 1;                     // Mark it as modified
       dp->orig_default.s = dp->location->s; // Save original default
     }
-    else
-      { free(dp->location->s); } // Free old value
+    else { free(dp->location->s); } // Free old value
 
     dp->location->s = strdup(strparm+1); // Change default value
 
@@ -247,7 +246,7 @@ boolean M_NughudParseOption(const char *p, boolean wad)
           dp->orig_default.i = dp->location->i; // Save original default
         }
         if (dp->current) // Change current value
-          { dp->current->i = parm; }
+        { dp->current->i = parm; }
       }
       dp->location->i = parm;          // Change default
     }
@@ -272,7 +271,7 @@ void M_NughudLoadOptions(void)
       int len = 0;
       while (len < size && p[len++] && p[len-1] != '\n');
       if (len >= buflen)
-        buf = I_Realloc(buf, buflen = len+1);
+      { buf = I_Realloc(buf, buflen = len+1); }
       strncpy(buf, p, len)[len] = 0;
       p += len;
       size -= len;
@@ -290,7 +289,7 @@ void M_NughudLoadDefaults (void)
 
   for (dp = nughud_defaults; dp->name; dp++)
     if (dp->type == string && dp->defaultvalue.s)
-      { dp->location->s = strdup(dp->defaultvalue.s); }
+    { dp->location->s = strdup(dp->defaultvalue.s); }
     else if (dp->type == number)
-      { dp->location->i = dp->defaultvalue.i; }
+    { dp->location->i = dp->defaultvalue.i; }
 }
