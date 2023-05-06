@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: doomtype.h,v 1.3 1998/05/03 23:24:33 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Simple basic typedefs, isolated here to make it easier
@@ -98,7 +89,7 @@ typedef unsigned char byte;
 #define inline __inline
 #endif
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
  #define PRINTF_ATTR(fmt, first) __attribute__((format(printf, fmt, first)))
  #define PRINTF_ARG_ATTR(x) __attribute__((format_arg(x)))
  #define NORETURN __attribute__((noreturn))

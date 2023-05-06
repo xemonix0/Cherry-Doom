@@ -11,11 +11,6 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
-//
 // DESCRIPTION:
 //      Custom input
 
@@ -90,6 +85,7 @@ enum
   input_zoomin,
   input_zoomout,
   input_screenshot,
+  input_clean_screenshot,
   input_setup,
   input_pause,
   input_spy,
@@ -123,6 +119,24 @@ enum
   input_chat_dest3,
   input_chat_backspace,
   input_chat_enter,
+
+  input_iddqd,
+  input_idkfa,
+  input_idfa,
+  input_idclip,
+  input_idbeholdh,
+  input_idbeholdm,
+  input_idbeholdv,
+  input_idbeholds,
+  input_idbeholdi,
+  input_idbeholdr,
+  input_idbeholda,
+  input_idbeholdl,
+  input_idrate,
+  input_iddt,
+  input_notarget,
+  input_freeze,
+  input_avj,
 
   NUM_INPUT_ID
 };

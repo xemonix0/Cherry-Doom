@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: p_mobj.c,v 1.26 1998/05/16 00:24:12 phares Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Moving object handling. Spawn functions.
@@ -98,7 +89,7 @@ boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
   while (!mobj->tics && !seenstate[state]);   // killough 4/9/98
 
   if (ret && !mobj->tics)  // killough 4/9/98: detect state cycles
-    doomprintf("Warning: State Cycle Detected");
+    doomprintf(MESSAGES_NONE, "Warning: State Cycle Detected");
 
   if (!--recursion)
     for (;(state=seenstate[i]);i=state-1)
@@ -525,31 +516,37 @@ floater:
       }
 
       if (mo->momz < 0)
-        {
-          // killough 11/98: touchy objects explode on impact
-          if (mo->flags & MF_TOUCHY && mo->intflags & MIF_ARMED &&
-              mo->health > 0)
-            P_DamageMobj(mo, NULL, NULL, mo->health);
-          else
-            if (mo->player && // killough 5/12/98: exclude voodoo dolls
-                mo->player->mo == mo &&
-                mo->momz < -GRAVITY*8)
-              {
-                // Squat down.
-                // Decrease viewheight for a moment
-                // after hitting the ground (hard),
-                // and utter appropriate sound.
+	{
+	  // killough 11/98: touchy objects explode on impact
+	  if (mo->flags & MF_TOUCHY && mo->intflags & MIF_ARMED &&
+	      mo->health > 0)
+	    P_DamageMobj(mo, NULL, NULL, mo->health);
+	  else
+	    if (mo->player && // killough 5/12/98: exclude voodoo dolls
+		mo->player->mo == mo)
+	    {
+		int oof = 0;
+		if (mo->momz < -GRAVITY*8)
+	      {
+		// Squat down.
+		// Decrease viewheight for a moment
+		// after hitting the ground (hard),
+		// and utter appropriate sound.
 
-                mo->player->deltaviewheight = mo->momz>>3;
-                // [Nugget]: [crispy] squat down weapon sprite as well
-                if (STRICTMODE(weaponsquat))
-                { mo->player->psprites[ps_weapon].dy = ((-mo->momz>>1) > 24*FRACUNIT) ? (24*FRACUNIT) : (-mo->momz>>1); }
-                // [Nugget]: [crispy] dead men don't say "oof"
-                if (mo->health > 0 || NOTSTRICTMODE(nugget_comp[comp_deadoof]))
-                { S_StartSound (mo, sfx_oof); }
-              }
-          mo->momz = 0;
-        }
+		mo->player->deltaviewheight = mo->momz>>3;
+
+		// [Nugget]: [crispy] squat down weapon sprite as well
+		if (STRICTMODE(weaponsquat))
+		{ mo->player->psprites[ps_weapon].dy = ((-mo->momz>>1) > 24*FRACUNIT) ? (24*FRACUNIT) : (-mo->momz>>1); }
+
+		// [Nugget]: [crispy] dead men don't say "oof"
+		if (mo->health > 0 || NOTSTRICTMODE(nugget_comp[comp_deadoof]))
+		  oof = 1;
+	      }
+	    P_HitFloor(mo, oof); // [FG] play sound when hitting animated floor
+	    }
+	  mo->momz = 0;
+	}
 
       mo->z = mo->floorz;
 
@@ -715,7 +712,6 @@ static inline void MusInfoThinker (mobj_t *thing)
 void P_MobjThinker (mobj_t* mobj)
 {
   extern boolean cheese; // [Nugget] cheese :)
-  extern int freeze; // [Nugget]
 
   // [crispy] support MUSINFO lump (dynamic music changing)
   if (mobj->type == MT_MUSICSOURCE)
@@ -734,12 +730,6 @@ void P_MobjThinker (mobj_t* mobj)
   {
     mobj->health = mobj->info->spawnhealth;
     P_SetMobjState(mobj, mobj->info->spawnstate);
-  }
-  
-  // [Nugget]
-  if ((freeze == 1) && !mobj->player) {
-    mobj->interp = -1;
-    return;
   }
 
   // [FG] suppress interpolation of player missiles for the first tic
@@ -917,7 +907,10 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   // [crispy] randomly flip corpse, blood and death animation sprites
   if (mobj->flags2 & MF2_FLIPPABLE && !(mobj->flags & MF_SHOOTABLE))
   {
-    mobj->health = (mobj->health & (int)~1) - (Woof_Random() & 1);
+    if (Woof_Random() & 1)
+      mobj->intflags |= MIF_FLIP;
+    else
+      mobj->intflags &= ~MIF_FLIP;
   }
 
   P_AddThinker(&mobj->thinker);
@@ -1126,7 +1119,7 @@ void P_SpawnPlayer (mapthing_t* mthing)
   p->playerstate   = PST_LIVE;
   p->refire        = 0;
   p->message       = NULL;
-  p->centermessage = NULL;
+  p->secretmessage = NULL;
   p->damagecount   = 0;
   p->bonuscount    = 0;
   p->extralight    = 0;
@@ -1282,8 +1275,8 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   if (i == num_mobj_types)
     {
-      doomprintf("Unknown Thing type %i at (%i, %i)",
-              mthing->type, mthing->x, mthing->y);
+      printf("P_SpawnMapThing: Unknown Thing type %i at (%i, %i)\n",
+	      mthing->type, mthing->x, mthing->y);
       return;
     }
 
@@ -1365,6 +1358,9 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
 
   if (attackrange == MELEERANGE)
     P_SetMobjState (th, S_PUFF3);
+
+  // [crispy] suppress interpolation for the first tic
+  th->interp = -1;
 }
 
 

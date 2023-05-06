@@ -1,6 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
 //
@@ -14,11 +11,6 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
-//
 // DESCRIPTION:  Head up display
 //
 //-----------------------------------------------------------------------------
@@ -27,6 +19,7 @@
 #define __HU_STUFF_H__
 
 #include "d_event.h"
+#include "r_defs.h"
 
 //
 // Globally visible constants.
@@ -36,6 +29,8 @@
 
 // Calculate # of glyphs in font.
 #define HU_FONTSIZE     (HU_FONTEND - HU_FONTSTART + 1)
+
+extern patch_t **hu_font;
 
 #define HU_BROADCAST    5
 
@@ -47,14 +42,12 @@
 
 #define HU_MSGTIMEOUT   (4*TICRATE)
 
-// [Nugget] Macro brought over from hu_stuff.h
-#define HU_GAPY 8
-
 //
 // Heads up text
 //
 void HU_Init(void);
 void HU_Start(void);
+void HU_disableAllWidgets (void);
 
 boolean HU_Responder(event_t* ev);
 
@@ -82,27 +75,23 @@ extern int hud_msg_scrollup;// killough 11/98: whether message list scrolls up
 extern int message_list;    // killough 11/98: whether message list is active
 extern int message_timer;   // killough 11/98: timer used for normal messages
 extern int chat_msg_timer;  // killough 11/98: timer used for chat messages
-extern int hud_distributed; // whether hud is all in lower left or distributed
 //jff 2/23/98 hud is currently displayed
 extern int hud_displayed;   // hud is displayed
 //jff 2/18/98 hud/status control
 extern int hud_active;      // hud mode 0=off, 1=small, 2=full
-extern int hud_nosecrets;   // status does not list secrets/items/kills
 
 // [Nugget]
 typedef enum { secretmessage_off, secretmessage_on, secretmessage_count, } secretmessage_t;
 extern secretmessage_t hud_secret_message; // "A secret is revealed!" message
 
 extern int map_player_coords, map_level_stats, map_level_time; // [FG] level stats and level time widgets
-extern int hud_timests; // Time/STS above status bar
+extern int hud_level_stats, hud_level_time;
+extern int hud_widget_font;
 extern boolean message_centered; // center messages
 extern boolean message_colorized; // colorize player messages
 
 extern int playback_tic, playback_totaltics;
 
-extern int crispy_hud;
-
-void HU_InitCrosshair(void); // [Nugget] Not static anymore
 extern boolean hud_crosshair_on; // [Nugget] Keep the variable below just for the type
 extern int hud_crosshair;
 extern int hud_crosshair_shaded; // [Nugget] Shaded crosshairs

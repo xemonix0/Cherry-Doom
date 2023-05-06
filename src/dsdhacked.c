@@ -11,11 +11,6 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
-//
 // DESCRIPTION:
 //      DSDHacked support
 
@@ -159,6 +154,13 @@ static void EnsureSpritesCapacity(int limit)
 
 static void FreeSprites(void)
 {
+  int i;
+
+  for (i = 0; i < num_sprites; i++)
+  {
+    if (deh_spritenames[i])
+      free(deh_spritenames[i]);
+  }
   free(deh_spritenames);
   free(sprnames_state);
 }
@@ -231,6 +233,13 @@ static void InitSFX(void)
 
 static void FreeSFX(void)
 {
+  int i;
+
+  for (i = 0; i < num_sfx; i++)
+  {
+    if (deh_soundnames[i])
+      free(deh_soundnames[i]);
+  }
   free(deh_soundnames);
   free(sfx_state);
 }

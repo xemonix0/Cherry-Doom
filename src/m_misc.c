@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: m_misc.c,v 1.60 1998/06/03 20:32:12 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -61,7 +57,6 @@
 // DEFAULTS
 //
 
-static char* config_version;
 static int config_help;         //jff 3/3/98
 // [FG] double click acts as "use"
 extern int dclick_use;
@@ -82,14 +77,17 @@ extern boolean analog_controls;
 extern int realtic_clock_rate;         // killough 4/13/98: adjustable timer
 extern int tran_filter_pct;            // killough 2/21/98
 extern int showMessages;
+extern int show_toggle_messages;
+extern int show_pickup_messages;
 
 extern int forceFlipPan;
+extern int window_width, window_height;
+extern int window_position_x, window_position_y;
 extern int grabmouse;
-extern int fullscreen; // [FG] save fullscren mode
 extern boolean flipcorpses; // [crispy] randomly flip corpse, blood and death animation sprites
 extern boolean ghost_monsters; // [crispy] resurrected pools of gore ("ghost monsters") are translucent
 extern int mouse_acceleration;
-extern int mouse_threshold;
+extern int mouse_acceleration_threshold;
 extern int show_endoom;
 #if defined(HAVE_FLUIDSYNTH)
 extern char *soundfont_path;
@@ -107,6 +105,7 @@ extern int winmm_chorus_level;
 #endif
 extern int opl_gain;
 extern int midi_player_menu;
+extern char *snd_resampler;
 extern boolean demobar;
 extern boolean smoothlight;
 extern boolean brightmaps;
@@ -129,12 +128,6 @@ extern char *net_player_name;
 // from wads, and to consolidate with menu code
 
 default_t defaults[] = {
-  {
-    "config_version",
-    (config_t *) &config_version, NULL,
-    {.s = "Woof 5.1.0"}, {0}, string, ss_none, wad_no,
-    "current config version"
-  },
 
   { //jff 3/3/98
     "config_help",
@@ -143,45 +136,142 @@ default_t defaults[] = {
     "1 to show help strings about each variable in config file"
   },
 
-  { // jff 3/24/98 allow default skill setting
-    "default_skill",
-    (config_t *) &defaultskill, NULL,
-    {4}, {1,5}, number, ss_gen, wad_no,
-    "selects default skill 1=TYTD 2=NTR 3=HMP 4=UV 5=NM"
-  },
+  //
+  // Video
+  //
 
   { // killough 11/98: hires
-    "hires", (config_t *) &hires, NULL,
-    {1}, {0,1}, number, ss_gen, wad_no,
+    "hires", (config_t *) &default_hires, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
     "1 to enable 640x400 resolution for rendering scenes"
   },
 
-  { // killough 8/15/98: page flipping option
-    "page_flip",
-    (config_t *) &page_flip, NULL,
-    {1}, {0,1}, number, ss_gen, wad_no,
-    "1 to enable page flipping to avoid display tearing"
+  {
+    "correct_aspect_ratio",
+    (config_t *) &useaspect, NULL,
+    {1}, {0, 1}, number, ss_none, wad_no,
+    "1 to perform aspect ratio correction"
+  },
+
+  { // [Nugget]
+    "stretch_to_fit",
+    (config_t *) &stretch_to_fit, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to stretch viewport to fit window"
+  },
+
+  // [FG] save fullscren mode
+  {
+    "fullscreen",
+    (config_t *) &fullscreen, NULL,
+    {1}, {0, 1}, number, ss_none, wad_no,
+    "1 to enable fullscreen mode"
+  },
+
+  {
+    "exclusive_fullscreen",
+    (config_t *) &exclusive_fullscreen, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to enable exclusive fullscreen mode"
   },
 
   {
     "use_vsync",
     (config_t *) &use_vsync, NULL,
-    {1}, {0,1}, number, ss_gen, wad_no,
+    {1}, {0,1}, number, ss_none, wad_no,
     "1 to enable wait for vsync to avoid display tearing"
   },
 
+  // [FG] uncapped rendering frame rate
   {
-    "strictmode",
-    (config_t *) &default_strictmode, (config_t *) &strictmode,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to enable strict mode"
+    "uncapped",
+    (config_t *) &uncapped, NULL,
+    {1}, {0, 1}, number, ss_gen, wad_no,
+    "1 to enable uncapped rendering frame rate"
+  },
+
+  // framerate limit
+  {
+    "fpslimit",
+    (config_t *) &fpslimit, NULL,
+    {0}, {0, 500}, number, ss_gen, wad_no,
+    "framerate limit in frames per second (< 35 = disable)"
+  },
+
+  // [FG] force integer scales
+  {
+    "integer_scaling",
+    (config_t *) &integer_scaling, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to force integer scales"
+  },
+
+  // widescreen mode
+  {
+    "widescreen",
+    (config_t *) &widescreen, NULL,
+    {RATIO_ORIG}, {RATIO_ORIG, NUM_RATIOS-1}, number, ss_none, wad_no,
+    "widescreen mode (0 = disable, 1 = match screen, 2 = 16:10, 3 = 16:9, 4 = 21:9)"
+  },
+
+  // display index
+  {
+    "video_display",
+    (config_t *) &video_display, NULL,
+    {0}, {0, UL}, number, ss_none, wad_no,
+    "current video display index"
+  },
+
+  // window position
+  {
+    "window_position_x",
+    (config_t *) &window_position_x, NULL,
+    {0}, {UL, UL}, number, ss_none, wad_no,
+    "window position x"
   },
 
   {
-    "realtic_clock_rate",
-    (config_t *) &realtic_clock_rate, NULL,
-    {100}, {10,1000}, number, ss_gen, wad_no,
-    "Percentage of normal speed (35 fps) realtic clock runs at"
+    "window_position_y",
+    (config_t *) &window_position_y, NULL,
+    {0}, {UL, UL}, number, ss_none, wad_no,
+    "window position y"
+  },
+
+  // window width
+  {
+    "window_width",
+    (config_t *) &window_width, NULL,
+    {800}, {0, UL}, number, ss_none, wad_no,
+    "window width"
+  },
+
+  // window height
+  {
+    "window_height",
+    (config_t *) &window_height, NULL,
+    {600}, {0, UL}, number, ss_none, wad_no,
+    "window height"
+  },
+
+  {
+    "gamma2",
+    (config_t *) &gamma2, NULL,
+    {9}, {0,GAMMA2MAX}, number, ss_gen, wad_no, // [Nugget] Use macro
+    "custom gamma level (0 = 0.5, 9 = 1.0, 17 = 2.0)" // [Nugget] Different values
+  },
+
+  {
+    "smooth_scaling",
+    (config_t *) &smooth_scaling, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "enable smooth pixel scaling"
+  },
+
+  {
+    "vga_porch_flash",
+    (config_t *) &vga_porch_flash, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to emulate VGA \"porch\" behaviour"
   },
 
   { // killough 10/98
@@ -195,7 +285,7 @@ default_t defaults[] = {
     "show_endoom",
     (config_t *) &show_endoom, NULL,
     {0}, {0,2}, number, ss_gen, wad_no,
-    "show ENDOOM 0=off, 1=on, 2=PWAD only"
+    "show ENDOOM screen (0 = off, 1 = on, 2 = PWAD only)"
   },
 
   {
@@ -210,27 +300,6 @@ default_t defaults[] = {
     (config_t *) &linearsky, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
     "1 for linear horizontal sky scrolling "
-  },
-
-  {
-    "demobar",
-    (config_t *) &demobar, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to enable demo progress bar"
-  },
-
-  { // killough 2/21/98
-    "pitched_sounds",
-    (config_t *) &pitched_sounds, NULL,
-    {0}, {0,1}, number, ss_gen, wad_yes,
-    "1 to enable variable pitch in sound effects (from id's original code)"
-  },
-
-  {
-    "pitch_bend_range",
-    (config_t *) &pitch_bend_range, NULL,
-    {200}, {100,300}, number, ss_none, wad_yes,
-    "variable pitch bend range (100 none, 120 original, 200 Woof default)"
   },
 
   { // phares
@@ -275,18 +344,235 @@ default_t defaults[] = {
     "1 for solid color status bar background in widescreen mode"
   },
 
-  {
-    "gamma2",
-    (config_t *) &gamma2, NULL,
-    {9}, {0,GAMMA2MAX}, number, ss_gen, wad_no, // [Nugget] Use macros
-    "custom gamma level (0 = 0.5, 9 = 1.0, 17 = 2.0)"
-  },
+  // [Nugget] Moved "extra_level_brightness" further below
 
   {
     "menu_background",
     (config_t *) &menu_background, NULL,
     {background_on}, {background_on,background_dark}, number, ss_gen, wad_no,
     "draw menu background (0 = on, 1 = off, 2 = dark)"
+  },
+
+  { // killough 10/98
+    "flashing_hom",
+    (config_t *) &flashing_hom, NULL,
+    {1}, {0,1}, number, ss_gen, wad_yes,
+    "1 to enable flashing HOM indicator"
+  },
+
+  { // killough 2/21/98: default to 10
+    "screenblocks",
+    (config_t *) &screenblocks, NULL,
+    {10}, {3,13}, number, ss_none, wad_no, // [Nugget] Increase max to 13 to accommodate Nugget HUD
+    "initial play screen size"
+  },
+
+  //
+  // Sound and music
+  //
+
+  {
+    "sfx_volume",
+    (config_t *) &snd_SfxVolume, NULL,
+    {8}, {0,15}, number, ss_none, wad_no,
+    "adjust sound effects volume"
+  },
+
+  {
+    "music_volume",
+    (config_t *) &snd_MusicVolume, NULL,
+    {8}, {0,15}, number, ss_none, wad_no,
+    "adjust music volume"
+  },
+
+  { // killough 2/21/98
+    "pitched_sounds",
+    (config_t *) &pitched_sounds, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to enable variable pitch in sound effects (from id's original code)"
+  },
+
+  {
+    "pitch_bend_range",
+    (config_t *) &pitch_bend_range, NULL,
+    {120}, {100,300}, number, ss_none, wad_yes,
+    "variable pitch bend range (100 none, 120 default)"
+  },
+
+  // [FG] play sounds in full length
+  {
+    "full_sounds",
+    (config_t *) &full_sounds, NULL,
+    {0}, {0, 1}, number, ss_gen, wad_no,
+    "1 to play sounds in full length"
+  },
+
+  {
+    "force_flip_pan",
+    (config_t *) &forceFlipPan, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to force reversal of stereo audio channels"
+  },
+
+  { // killough
+    "snd_channels",
+    (config_t *) &default_numChannels, NULL,
+    {MAX_CHANNELS}, {1, MAX_CHANNELS}, 0, ss_gen, wad_no,
+    "number of sound effects handled simultaneously"
+  },
+
+  {
+    "snd_resampler",
+    (config_t *) &snd_resampler, NULL,
+    {.s = "linear"}, {0}, string, ss_gen, wad_no,
+    "OpenAL resampler (\"nearest\", \"linear\" (default), \"cubic\")"
+  },
+
+  // [FG] music backend
+  {
+    "midi_player",
+    (config_t *) &midi_player, NULL,
+    {0}, {0, 2},
+    number, ss_gen, wad_no,
+#if defined(_WIN32)
+    "0 for Native (default), "
+#else
+    "0 for SDL2 (default), "
+#endif
+#if defined(HAVE_FLUIDSYNTH)
+    "1 for FluidSynth, 2 for OPL Emulation"
+#else
+    "1 for OPL Emulation"
+#endif
+  },
+
+  {
+    "midi_player_menu",
+    (config_t *) &midi_player_menu, NULL,
+    {0}, {0, MAX_MIDI_PLAYER_MENU_ITEMS}, number, ss_gen, wad_no,
+    "MIDI Player menu index"
+  },
+
+#if defined(HAVE_FLUIDSYNTH)
+  {
+    "soundfont_dir",
+    (config_t *) &soundfont_dir, NULL,
+#if defined(_WIN32)
+    {.s = "soundfonts"},
+#else
+    /* RedHat/Fedora/Arch */
+    {.s = "/usr/share/soundfonts:"
+    /* Debian/Ubuntu/OpenSUSE */
+    "/usr/share/sounds/sf2:"
+    "/usr/share/sounds/sf3"},
+#endif
+    {0}, string, ss_none, wad_no,
+    "FluidSynth soundfont directories"
+  },
+
+  {
+    "soundfont_path",
+    (config_t *) &soundfont_path, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "FluidSynth current soundfont path"
+  },
+
+  {
+    "mus_chorus",
+    (config_t *) &mus_chorus, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to enable FluidSynth chorus"
+  },
+
+  {
+    "mus_reverb",
+    (config_t *) &mus_reverb, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to enable FluidSynth reverb"
+  },
+
+  {
+    "mus_gain",
+    (config_t *) &mus_gain, NULL,
+    {100}, {10, 1000}, number, ss_none, wad_no,
+    "fine tune FluidSynth output level (default 100%)"
+  },
+#endif
+
+  {
+    "opl_gain",
+    (config_t *) &opl_gain, NULL,
+    {200}, {100, 1000}, number, ss_none, wad_no,
+    "fine tune OPL emulation output level (default 200%)"
+  },
+
+#if defined(_WIN32)
+  {
+    "winmm_device",
+    (config_t *) &winmm_device, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "Native MIDI device"
+  },
+
+  {
+    "winmm_reset_type",
+    (config_t *) &winmm_reset_type, NULL,
+    {-1}, {-1, 4}, number, ss_none, wad_no,
+    "SysEx reset for native MIDI (-1 = Default, 0 = None, 1 = GS, 2 = GM, 3 = GM2, 4 = XG)"
+  },
+
+  {
+    "winmm_reset_delay",
+    (config_t *) &winmm_reset_delay, NULL,
+    {0}, {0, 2000}, number, ss_none, wad_no,
+    "Delay after reset for native MIDI (milliseconds)"
+  },
+
+  {
+    "winmm_reverb_level",
+    (config_t *) &winmm_reverb_level, NULL,
+    {-1}, {-1, 127}, number, ss_none, wad_no,
+    "Reverb send level for native MIDI (-1 = Default, 0 = Off, 127 = Max)"
+  },
+
+  {
+    "winmm_chorus_level",
+    (config_t *) &winmm_chorus_level, NULL,
+    {-1}, {-1, 127}, number, ss_none, wad_no,
+    "Chorus send level for native MIDI (-1 = Default, 0 = Off, 127 = Max)"
+  },
+#endif
+
+  //
+  // QOL features
+  //
+
+  { // jff 3/24/98 allow default skill setting
+    "default_skill",
+    (config_t *) &defaultskill, NULL,
+    {4}, {1,5}, number, ss_gen, wad_no,
+    "selects default skill (1 = ITYTD, 2 = HNTR, 3 = HMP, 4 = UV, 5 = NM)"
+  },
+
+  { // killough 3/6/98: preserve autorun across games
+    "autorun",
+    (config_t *) &autorun, NULL,
+    {0}, {0,1}, number, ss_none, wad_no,
+    "1 to enable autorun"
+  },
+
+  {
+    "strictmode",
+    (config_t *) &default_strictmode, (config_t *) &strictmode,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to enable strict mode"
+  },
+
+  {
+    "realtic_clock_rate",
+    (config_t *) &realtic_clock_rate, NULL,
+    {100}, {10,1000}, number, ss_gen, wad_no,
+    "Percentage of normal speed (35 fps) realtic clock runs at"
   },
 
   { // killough 2/8/98
@@ -303,6 +589,15 @@ default_t defaults[] = {
     "\"use\" button action on death (0 = default, 1 = load save, 2 = nothing)"
   },
 
+  {
+    "demobar",
+    (config_t *) &demobar, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to enable demo progress bar"
+  },
+
+  // [Nugget] Moved "palette_changes" further below
+
   { // [Nugget] Replace screen melt toggle
     "wipe_type",
     (config_t *) &wipe_type, NULL,
@@ -310,146 +605,16 @@ default_t defaults[] = {
     "Screen wipe type (0 = None, 1 = Melt, 2 = ColorXForm, 3 = Fade)"
   },
 
-  { // killough 10/98
-    "flashing_hom",
-    (config_t *) &flashing_hom, NULL,
-    {1}, {0,1}, number, ss_gen, wad_yes,
-    "1 to enable flashing HOM indicator"
-  },
-
-  { // phares
-    "weapon_recoil",
-    (config_t *) &default_weapon_recoil, (config_t *) &weapon_recoil,
-    {0}, {0,1}, number, ss_weap, wad_yes,
-    "1 to enable recoil from weapon fire"
-  },
-
   {
-    "weapon_recoilpitch",
-    (config_t *) &weapon_recoilpitch, NULL,
-    {0}, {0,1}, number, ss_weap, wad_yes,
-    "1 to enable recoil pitch from weapon fire"
+    "net_player_name",
+    (config_t *) &net_player_name, NULL,
+    {.s = "none"}, {0}, string, ss_gen, wad_no,
+    "network setup player name"
   },
 
-  { // killough 7/19/98
-    "classic_bfg",
-    (config_t *) &default_classic_bfg, (config_t *) &classic_bfg,
-    {0}, {0,1}, number, ss_weap, wad_yes,
-    "1 to enable pre-beta BFG2704"
-  },
-
-  { // killough 10/98
-    "doom_weapon_toggles",
-    (config_t *) &doom_weapon_toggles, NULL,
-    {1}, {0,1}, number, ss_weap, wad_no,
-    "1 to toggle between SG/SSG and Fist/Chainsaw"
-  },
-
-  { // phares 2/25/98
-    "player_bobbing",
-    (config_t *) &default_player_bobbing, (config_t *) &player_bobbing,
-    {1}, {0,1}, number, ss_weap, wad_no,
-    "1 to enable player bobbing (view moving up/down slightly)"
-  },
-
-  // [FG] centered or bobbing weapon sprite
-  {
-    "center_weapon",
-    (config_t *) &center_weapon, NULL,
-    {0}, {0,2}, number, ss_weap, wad_no,
-    "1 to center the weapon sprite during attack, 2 to keep it bobbing"
-  },
-
-  { // killough 3/1/98
-    "monsters_remember",
-    (config_t *) &default_monsters_remember, (config_t *) &monsters_remember,
-    {1}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable monsters remembering enemies after killing others"
-  },
-
-  { // killough 7/19/98
-    "monster_infighting",
-    (config_t *) &default_monster_infighting, (config_t *) &monster_infighting,
-    {1}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable monsters fighting against each other when provoked"
-  },
-
-  { // killough 9/8/98
-    "monster_backing",
-    (config_t *) &default_monster_backing, (config_t *) &monster_backing,
-    {0}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable monsters backing away from targets"
-  },
-
-  { //killough 9/9/98:
-    "monster_avoid_hazards",
-    (config_t *) &default_monster_avoid_hazards, (config_t *) &monster_avoid_hazards,
-    {1}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable monsters to intelligently avoid hazards"
-  },
-
-  {
-    "monkeys",
-    (config_t *) &default_monkeys, (config_t *) &monkeys,
-    {0}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable monsters to move up/down steep stairs"
-  },
-
-  { //killough 9/9/98:
-    "monster_friction",
-    (config_t *) &default_monster_friction, (config_t *) &monster_friction,
-    {1}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable monsters to be affected by friction"
-  },
-
-  { //killough 9/9/98:
-    "help_friends",
-    (config_t *) &default_help_friends, (config_t *) &help_friends,
-    {0}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable monsters to help dying friends"
-  },
-
-  { // killough 7/19/98
-    "player_helpers",
-    (config_t *) &default_dogs, (config_t *) &dogs,
-    {0}, {0,3}, number, ss_enem, wad_yes,
-    "number of single-player helpers"
-  },
-
-  { // killough 8/8/98
-    "friend_distance",
-    (config_t *) &default_distfriend, (config_t *) &distfriend,
-    {128}, {0,999}, number, ss_enem, wad_yes,
-    "distance friends stay away"
-  },
-
-  { // killough 10/98
-    "dog_jumping",
-    (config_t *) &default_dog_jumping, (config_t *) &dog_jumping,
-    {1}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable dogs to jump"
-  },
-
-  {
-    "colored_blood",
-    (config_t *) &colored_blood, NULL,
-    {0}, {0,1}, number, ss_enem, wad_no,
-    "1 to enable colored blood"
-  },
-
-  {
-    "flipcorpses",
-    (config_t *) &flipcorpses, NULL,
-    {0}, {0,1}, number, ss_enem, wad_no,
-    "1 to enable randomly mirrored death animations"
-  },
-
-  {
-    "ghost_monsters",
-    (config_t *) &ghost_monsters, NULL,
-    {1}, {0,1}, number, ss_enem, wad_no,
-    "1 to enable \"ghost monsters\" (resurrected pools of gore are translucent)"
-  },
+  //
+  // Compatibility breaking features
+  //
 
   {
     "hangsolid",
@@ -472,35 +637,7 @@ default_t defaults[] = {
     "1 to enable pistol start"
   },
 
-  { // no color changes on status bar
-    "sts_always_red",
-    (config_t *) &sts_always_red, NULL,
-    {1}, {0,1}, number, ss_stat, wad_yes,
-    "1 to disable use of color on status bar"
-  },
-
-  {
-    "sts_pct_always_gray",
-    (config_t *) &sts_pct_always_gray, NULL,
-    {0}, {0,1}, number, ss_stat, wad_yes,
-    "1 to make percent signs on status bar always gray"
-  },
-
-  { // killough 2/28/98
-    "sts_traditional_keys",
-    (config_t *) &sts_traditional_keys, NULL,
-    {0}, {0,1}, number, ss_stat, wad_yes,
-    "1 to disable doubled card and skull key display on status bar"
-  },
-
-  { // killough 4/17/98
-    "traditional_menu",
-    (config_t *) &traditional_menu, NULL,
-    {1}, {0,1}, number, ss_none, wad_yes,
-    "1 to use Doom's main menu ordering"
-  },
-
-  // [Nugget] ----------------------------------------
+  // [Nugget] General options --------------------------------------------
 
   {
     "no_menu_tint",
@@ -637,7 +774,7 @@ default_t defaults[] = {
   },
 #endif
 
-  {
+  { // Brought here
     "extra_level_brightness",
     (config_t *) &extra_level_brightness, NULL,
     {0}, {-8,8}, number, ss_gen, wad_no, // [Nugget] Broader light level range
@@ -658,7 +795,7 @@ default_t defaults[] = {
     "0 to disable weapon muzzleflash rendering"
   },
 
-  {
+  { // Brought here
     "palette_changes",
     (config_t *) &palette_changes, NULL,
     {1}, {0,1}, number, ss_gen, wad_no,
@@ -671,6 +808,67 @@ default_t defaults[] = {
     {1}, {0,1}, number, ss_gen, wad_no,
     "0 to disable the Invulnerability colormap"
   },
+
+  // [Nugget] End --------------------------------------------------------
+
+  //
+  // Weapons options
+  //
+
+  { // phares
+    "weapon_recoil",
+    (config_t *) &default_weapon_recoil, (config_t *) &weapon_recoil,
+    {0}, {0,1}, number, ss_weap, wad_yes,
+    "1 to enable recoil from weapon fire"
+  },
+
+  {
+    "weapon_recoilpitch",
+    (config_t *) &weapon_recoilpitch, NULL,
+    {0}, {0,1}, number, ss_weap, wad_yes,
+    "1 to enable recoil pitch from weapon fire"
+  },
+
+  { // killough 7/19/98
+    "classic_bfg",
+    (config_t *) &default_classic_bfg, (config_t *) &classic_bfg,
+    {0}, {0,1}, number, ss_weap, wad_yes,
+    "1 to enable pre-beta BFG2704"
+  },
+
+  { // killough 10/98
+    "doom_weapon_toggles",
+    (config_t *) &doom_weapon_toggles, NULL,
+    {1}, {0,1}, number, ss_weap, wad_no,
+    "1 to toggle between SG/SSG and Fist/Chainsaw"
+  },
+
+  { // phares 2/25/98
+    "player_bobbing",
+    (config_t *) &default_player_bobbing, (config_t *) &player_bobbing,
+    {1}, {0,1}, number, ss_weap, wad_no,
+    "1 to enable player bobbing (view moving up/down slightly)"
+  },
+
+  // [Nugget] Got rid of "cosmetic_bobbing";
+  // replaced by "view_bobbing_percentage" and "weapon_bobbing_percentage"
+  
+  {
+    "hide_weapon",
+    (config_t *) &hide_weapon, NULL,
+    {0}, {0,1}, number, ss_weap, wad_no,
+    "1 to hide weapon"
+  },
+
+  // [FG] centered or bobbing weapon sprite
+  {
+    "center_weapon",
+    (config_t *) &center_weapon, NULL,
+    {0}, {0,2}, number, ss_weap, wad_no,
+    "1 to center the weapon sprite during attack, 2 to keep it bobbing"
+  },
+
+  // [Nugget] ------------------------------------------------------------
 
   {
     "no_hor_autoaim",
@@ -715,25 +913,152 @@ default_t defaults[] = {
   },
 
   {
-    "alt_arms",
-    (config_t *) &alt_arms, NULL,
-    {0}, {0,1}, number, ss_stat, wad_yes,
-    "1 to enable alternative Arms widget display"
+    "sx_fix",
+    (config_t *) &sx_fix, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to correct first person sprite centering"
+  },
+
+  // [Nugget] End --------------------------------------------------------
+
+  {  // killough 2/8/98: weapon preferences set by user:
+    "weapon_choice_1",
+    (config_t *) &weapon_preferences[0][0], NULL,
+    {6}, {1,9}, number, ss_weap, wad_yes,
+    "first choice for weapon (best)"
   },
 
   {
-    "smarttotals",
-    (config_t *) &smarttotals, NULL,
-    {0}, {0,1}, number, ss_stat, wad_no,
-    "1 to enable Smart Totals"
+    "weapon_choice_2",
+    (config_t *) &weapon_preferences[0][1], NULL,
+    {9}, {1,9}, number, ss_weap, wad_yes,
+    "second choice for weapon"
   },
 
   {
-    "smooth_counts",
-    (config_t *) &smooth_counts, NULL,
-    {0}, {0,1}, number, ss_stat, wad_yes,
-    "1 to enable smooth health/armor counts"
+    "weapon_choice_3",
+    (config_t *) &weapon_preferences[0][2], NULL,
+    {4}, {1,9}, number, ss_weap, wad_yes,
+    "third choice for weapon"
   },
+
+  {
+    "weapon_choice_4",
+    (config_t *) &weapon_preferences[0][3], NULL,
+    {3}, {1,9}, number, ss_weap, wad_yes,
+    "fourth choice for weapon"
+  },
+
+  {
+    "weapon_choice_5",
+    (config_t *) &weapon_preferences[0][4], NULL,
+    {2}, {1,9}, number, ss_weap, wad_yes,
+    "fifth choice for weapon"
+  },
+
+  {
+    "weapon_choice_6",
+    (config_t *) &weapon_preferences[0][5], NULL,
+    {8}, {1,9}, number, ss_weap, wad_yes,
+    "sixth choice for weapon"
+  },
+
+  {
+    "weapon_choice_7",
+    (config_t *) &weapon_preferences[0][6], NULL,
+    {5}, {1,9}, number, ss_weap, wad_yes,
+    "seventh choice for weapon "
+  },
+
+  {
+    "weapon_choice_8",
+    (config_t *) &weapon_preferences[0][7], NULL,
+    {7}, {1,9}, number, ss_weap, wad_yes,
+    "eighth choice for weapon"
+  },
+
+  {
+    "weapon_choice_9",
+    (config_t *) &weapon_preferences[0][8], NULL,
+    {1}, {1,9}, number, ss_weap, wad_yes,
+    "ninth choice for weapon (worst)"
+  },
+
+  //
+  // Enemies
+  //
+
+  { // killough 3/1/98
+    "monsters_remember",
+    (config_t *) &default_monsters_remember, (config_t *) &monsters_remember,
+    {1}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable monsters remembering enemies after killing others"
+  },
+
+  { // killough 7/19/98
+    "monster_infighting",
+    (config_t *) &default_monster_infighting, (config_t *) &monster_infighting,
+    {1}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable monsters fighting against each other when provoked"
+  },
+
+  { // killough 9/8/98
+    "monster_backing",
+    (config_t *) &default_monster_backing, (config_t *) &monster_backing,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable monsters backing away from targets"
+  },
+
+  { //killough 9/9/98:
+    "monster_avoid_hazards",
+    (config_t *) &default_monster_avoid_hazards, (config_t *) &monster_avoid_hazards,
+    {1}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable monsters to intelligently avoid hazards"
+  },
+
+  {
+    "monkeys",
+    (config_t *) &default_monkeys, (config_t *) &monkeys,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable monsters to move up/down steep stairs"
+  },
+
+  { //killough 9/9/98:
+    "monster_friction",
+    (config_t *) &default_monster_friction, (config_t *) &monster_friction,
+    {1}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable monsters to be affected by friction"
+  },
+
+  { //killough 9/9/98:
+    "help_friends",
+    (config_t *) &default_help_friends, (config_t *) &help_friends,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable monsters to help dying friends"
+  },
+
+  { // killough 7/19/98
+    "player_helpers",
+    (config_t *) &default_dogs, (config_t *) &dogs,
+    {0}, {0,3}, number, ss_enem, wad_yes,
+    "number of single-player helpers"
+  },
+
+  { // killough 8/8/98
+    "friend_distance",
+    (config_t *) &default_distfriend, (config_t *) &distfriend,
+    {128}, {0,999}, number, ss_enem, wad_yes,
+    "distance friends stay away"
+  },
+
+  { // killough 10/98
+    "dog_jumping",
+    (config_t *) &default_dog_jumping, (config_t *) &dog_jumping,
+    {1}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable dogs to jump"
+  },
+
+  // [Nugget] ------------------------------------------------------------
 
   {
     "extra_gibbing",
@@ -756,128 +1081,47 @@ default_t defaults[] = {
     "1 to enable ZDoom-like item drops for dying enemies"
   },
 
-  {
-    "sp_chat",
-    (config_t *) &sp_chat, NULL,
-    {0}, {0,1}, number, ss_none, wad_no,
-    "1 to enable multiplayer chat in singleplayer"
-  },
+  // [Nugget] End --------------------------------------------------------
 
   {
-    "gammacycle",
-    (config_t *) &gammacycle, NULL,
-    {0}, {0,1}, number, ss_none, wad_no,
-    "1 to make gamma key cycle through extended gamma levels"
+    "colored_blood",
+    (config_t *) &colored_blood, NULL,
+    {0}, {0,1}, number, ss_enem, wad_no,
+    "1 to enable colored blood"
   },
 
   {
-    "sx_fix",
-    (config_t *) &sx_fix, NULL,
-    {1}, {0,1}, number, ss_none, wad_yes,
-    "1 to correct first person sprite centering"
-  },
-
-  // [Nugget] End -------------------------------------
-
-  { //jff 4/3/98 allow unlimited sensitivity
-    "mouse_sensitivity_horiz",
-    (config_t *) &mouseSensitivity_horiz, NULL,
-    {10}, {0,UL}, number, ss_none, wad_no,
-    "adjust horizontal (x) mouse sensitivity for turning"
-  },
-
-  { //jff 4/3/98 allow unlimited sensitivity
-    "mouse_sensitivity_vert",
-    (config_t *) &mouseSensitivity_vert, NULL,
-    {0}, {0,UL}, number, ss_none, wad_no,
-    "adjust vertical (y) mouse sensitivity for moving"
+    "flipcorpses",
+    (config_t *) &flipcorpses, NULL,
+    {0}, {0,1}, number, ss_enem, wad_no,
+    "1 to enable randomly mirrored death animations"
   },
 
   {
-    "mouse_sensitivity_horiz_strafe",
-    (config_t *) &mouseSensitivity_horiz2, NULL,
-    {0}, {0,UL}, number, ss_none, wad_no,
-    "adjust horizontal (x) mouse sensitivity for strafing"
+    "ghost_monsters",
+    (config_t *) &ghost_monsters, NULL,
+    {1}, {0,1}, number, ss_enem, wad_no,
+    "1 to enable \"ghost monsters\" (resurrected pools of gore are translucent)"
   },
 
+  // [FG] spectre drawing mode
   {
-    "mouse_sensitivity_vert_look",
-    (config_t *) &mouseSensitivity_vert2, NULL,
-    {10}, {0,UL}, number, ss_none, wad_no,
-    "adjust vertical (y) mouse sensitivity for looking"
+    "fuzzcolumn_mode",
+    (config_t *) &fuzzcolumn_mode, NULL,
+    {0}, {0,1}, number, ss_enem, wad_no,
+    "0 original, 1 blocky (hires)"
   },
 
-  {
-    "cfg_mouse_acceleration",
-    (config_t *) &mouse_acceleration, NULL,
-    {100}, {100,UL}, number, ss_none, wad_no,
-    "adjust mouse acceleration (100% - no acceleration)"
+  { // [Nugget - ceski] Selective fuzz darkening
+    "fuzzdark_mode",
+    (config_t *) &fuzzdark_mode, NULL,
+    {0}, {0,1}, number, ss_enem, wad_no,
+    "0 original, 1 selective darkening"
   },
 
-  {
-    "mouse_threshold",
-    (config_t *) &mouse_threshold, NULL,
-    {0}, {0,UL}, number, ss_none, wad_no,
-    "adjust mouse acceleration threshold"
-  },
-
-  {
-    "sfx_volume",
-    (config_t *) &snd_SfxVolume, NULL,
-    {8}, {0,15}, number, ss_none, wad_no,
-    "adjust sound effects volume"
-  },
-
-  {
-    "music_volume",
-    (config_t *) &snd_MusicVolume, NULL,
-    {8}, {0,15}, number, ss_none, wad_no,
-    "adjust music volume"
-  },
-
-  {
-    "show_messages",
-    (config_t *) &showMessages, NULL,
-    {1}, {0,1}, number, ss_none, wad_no,
-    "1 to enable message display"
-  },
-
-  { // killough 3/6/98: preserve autorun across games
-    "autorun",
-    (config_t *) &autorun, NULL,
-    {0}, {0,1}, number, ss_none, wad_no,
-    "1 to enable autorun"
-  },
-
-  {
-    "novert",
-    (config_t *) &novert, NULL,
-    {1}, {0,1}, number, ss_none, wad_no,
-    "1 to disable vertical mouse movement"
-  },
-
-  {
-    "mouselook",
-    (config_t *) &mouselook, NULL,
-    {0}, {0,1}, number, ss_none, wad_no,
-    "1 to enable mouselook"
-  },
-
-  { // killough 2/21/98: default to 10
-    // [Nugget] Add more room for Crispy HUD
-    "screenblocks",
-    (config_t *) &screenblocks, NULL,
-    {10}, {3,11+2}, number, ss_none, wad_no,
-    "initial play screen size"
-  },
-
-  { //jff 3/6/98 fix erroneous upper limit in range
-    "usegamma",
-    (config_t *) &usegamma, NULL,
-    {0}, {0,4}, number, ss_none, wad_no,
-    "screen brightness (gamma correction)"
-  },
-
+  //
+  // Compatibility
+  //
 
   // killough 10/98: compatibility vector:
 
@@ -1079,7 +1323,14 @@ default_t defaults[] = {
     "1 to enable missed backside emulation"
   },
 
-  // [Nugget] ------------------------------
+  {
+    "emu_donut",
+    (config_t *) &overflow[emu_donut].enabled, NULL,
+    {1}, {0,1}, number, ss_comp, wad_no,
+    "1 to enable donut overrun emulation"
+  },
+
+  // [Nugget] ------------------------------------------------------------
 
   {
     "comp_lscollision",
@@ -1201,15 +1452,27 @@ default_t defaults[] = {
     "Key pickup resets palette"
   },
 
-  // [Nugget] End --------------------------
+  // [Nugget] End --------------------------------------------------------
 
-  // For key bindings, the values stored in the key_* variables       // phares
-  // are the internal Doom Codes. The values stored in the default.cfg
-  // file are the keyboard codes. I_ScanCode2DoomCode converts from
-  // keyboard codes to Doom Codes. I_DoomCode2ScanCode converts from
-  // Doom Codes to keyboard codes, and is only used when writing back
-  // to default.cfg. For the printable keys (i.e. alphas, numbers)
-  // the Doom Code is the ascii code.
+  // default compatibility
+  {
+    "default_complevel",
+    (config_t *) &default_complevel, NULL,
+    {3}, {0,3}, number, ss_comp, wad_no,
+    "0 Vanilla, 1 Boom, 2 MBF, 3 MBF21"
+  },
+
+
+  { // killough 4/17/98
+    "traditional_menu",
+    (config_t *) &traditional_menu, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to use Doom's main menu ordering"
+  },
+
+  //
+  // Controls
+  //
 
   {
     "input_turnright",
@@ -1443,45 +1706,6 @@ default_t defaults[] = {
     input_speed, { {input_type_key, KEY_RSHIFT} }
   },
 
-  { // [Nugget]
-    "input_jump",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to jump",
-    input_jump, { {input_type_key, KEY_RALT} }
-  },
-
-  { // [Nugget]
-    "input_crouch",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to crouch/duck",
-    input_crouch, { {input_type_key, 'c'} }
-  },
-
-  { // [Nugget]
-    "input_crosshair",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to toggle crosshair",
-    input_crosshair, { {0, 0} }
-  },
-
-  { // [Nugget]
-    "input_zoom",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to toggle zoom",
-    input_zoom, { {0, 0} }
-  },
-
-  {
-    "zoom_fov",
-    (config_t *) &zoom_fov, NULL,
-    {MINFOV}, {MINFOV,MAXFOV}, number, ss_keys, wad_no,
-    "Field of View when zoom is enabled"
-  },
-
   {
     "input_savegame",
     NULL, NULL,
@@ -1560,6 +1784,13 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to adjust screen brightness (gamma correction)",
     input_gamma, { {input_type_key, KEY_F11} }
+  },
+
+  {
+    "gammacycle",
+    (config_t *) &gammacycle, NULL,
+    {0}, {0,1}, number, ss_none, wad_no,
+    "1 to make gamma key cycle through extended gamma levels"
   },
 
   {
@@ -1710,14 +1941,6 @@ default_t defaults[] = {
     input_map_clear, { {input_type_key, 'c'} }
   },
 
-  { // [Nugget]
-    "input_map_blink",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to make automap markers blink",
-    input_map_blink, { {input_type_key, 'b'} }
-  },
-
   {
     "input_map_grid",
     NULL, NULL,
@@ -1764,6 +1987,142 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to reduce display",
     input_zoomout,  { {input_type_key, '-'} }
+  },
+
+  {
+    "input_iddqd",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle god mode",
+    input_iddqd, { {0, 0} }
+  },
+
+  {
+    "input_idkfa",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give ammo/keys",
+    input_idkfa, { {0, 0} }
+  },
+
+  {
+    "input_idfa",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give ammo",
+    input_idkfa, { {0, 0} }
+  },
+
+  {
+    "input_idclip",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle no clipping mode",
+    input_idclip, { {0, 0} }
+  },
+
+  {
+    "input_idbeholdh",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give health",
+    input_idbeholdv, { {0, 0} }
+  },
+
+  {
+    "input_idbeholdm",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give mega armor",
+    input_idbeholdm, { {0, 0} }
+  },
+
+  {
+    "input_idbeholdv",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give invulnerability",
+    input_idbeholdv, { {0, 0} }
+  },
+
+  {
+    "input_idbeholds",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give berserk",
+    input_idbeholds, { {0, 0} }
+  },
+
+  {
+    "input_idbeholdv",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give invulnerability",
+    input_idbeholdv, { {0, 0} }
+  },
+
+  {
+    "input_idbeholdi",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give partial invisibility",
+    input_idbeholdi, { {0, 0} }
+  },
+
+  {
+    "input_idbeholdr",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give radiation suit",
+    input_idbeholdr, { {0, 0} }
+  },
+
+  {
+    "input_idbeholda",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give computer area map",
+    input_idbeholda, { {0, 0} }
+  },
+
+  {
+    "input_idbeholdl",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give light amplification",
+    input_idbeholdl, { {0, 0} }
+  },
+
+  {
+    "input_iddt",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to reveal map",
+    input_iddt, { {0, 0} }
+  },
+
+  {
+    "input_notarget",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to enable no target mode",
+    input_notarget, { {0, 0} }
+  },
+
+  {
+    "input_freeze",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to enable freeze mode",
+    input_freeze, { {0, 0} }
+  },
+
+  {
+    "input_avj",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to perform Fake Archvile Jump",
+    input_avj, { {0, 0} }
   },
 
   {
@@ -1905,6 +2264,14 @@ default_t defaults[] = {
     input_screenshot, { {input_type_key, KEY_PRTSCR} }
   },
 
+  {
+    "input_clean_screenshot",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to take a clean screenshot",
+    input_clean_screenshot, { {0, 0} }
+  },
+
   { // HOME key  // killough 10/98: shortcut to setup menu
     "input_setup",
     NULL, NULL,
@@ -1913,12 +2280,196 @@ default_t defaults[] = {
     input_setup, { {input_type_key, 199} }
   },
 
-  // [FG] double click acts as "use"
   {
-    "dclick_use",
-    (config_t *) &dclick_use, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "double click acts as \"use\""
+    "axis_forward",
+    (config_t *) &axis_forward, NULL,
+    {AXIS_LEFTY}, {0,4}, number, ss_keys, wad_no,
+    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
+  },
+
+  {
+    "axis_strafe",
+    (config_t *) &axis_strafe, NULL,
+    {AXIS_LEFTX}, {0,4}, number, ss_keys, wad_no,
+    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
+  },
+
+  {
+    "axis_turn",
+    (config_t *) &axis_turn, NULL,
+    {AXIS_RIGHTX}, {0,4}, number, ss_keys, wad_no,
+    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
+  },
+
+  {
+    "axis_look",
+    (config_t *) &axis_look, NULL,
+    {AXIS_RIGHTY}, {0,4}, number, ss_keys, wad_no,
+    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
+  },
+
+  {
+    "axis_move_sens",
+    (config_t *) &axis_move_sens, NULL,
+    {10}, {0,UL}, number, ss_none, wad_no,
+    "game controller movement sensitivity"
+  },
+
+  {
+    "axis_turn_sens",
+    (config_t *) &axis_turn_sens, NULL,
+    {10}, {0,UL}, number, ss_none, wad_no,
+    "game controller turning sensitivity"
+  },
+
+  {
+    "axis_look_sens",
+    (config_t *) &axis_look_sens, NULL,
+    {10}, {0,UL}, number, ss_none, wad_no,
+    "game controller looking sensitivity"
+  },
+
+  {
+    "analog_controls",
+    (config_t *) &analog_controls, NULL,
+    {1}, {0, 1}, number, ss_keys, wad_no,
+    "1 to enable analog controls"
+  },
+
+  {
+    "padlook",
+    (config_t *) &padlook, NULL,
+    {0}, {0, 1}, number, ss_keys, wad_no,
+    "1 to enable padlook"
+  },
+
+  {
+    "input_padlook",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle padlook",
+    input_padlook, { {0, 0} }
+  },
+
+  {
+    "invert_turn",
+    (config_t *) &invert_turn, NULL,
+    {0}, {0, 1}, number, ss_keys, wad_no,
+    "1 to invert gamepad turning axis"
+  },
+
+  {
+    "invert_forward",
+    (config_t *) &invert_forward, NULL,
+    {0}, {0, 1}, number, ss_keys, wad_no,
+    "1 to invert gamepad forward axis"
+  },
+
+  {
+    "invert_strafe",
+    (config_t *) &invert_strafe, NULL,
+    {0}, {0, 1}, number, ss_keys, wad_no,
+    "1 to invert gamepad strafe axis"
+  },
+
+  {
+    "invert_look",
+    (config_t *) &invert_look, NULL,
+    {0}, {0, 1}, number, ss_keys, wad_no,
+    "1 to invert gamepad look axis"
+  },
+
+  // [Nugget] --------------------------------------------------
+
+  {
+    "input_jump",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to jump",
+    input_jump, { {input_type_key, KEY_RALT} }
+  },
+
+  {
+    "input_crouch",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to crouch/duck",
+    input_crouch, { {input_type_key, 'c'} }
+  },
+
+  {
+    "input_crosshair",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle crosshair",
+    input_crosshair, { {0, 0} }
+  },
+
+  {
+    "input_zoom",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle zoom",
+    input_zoom, { {0, 0} }
+  },
+
+  {
+    "zoom_fov",
+    (config_t *) &zoom_fov, NULL,
+    {MINFOV}, {MINFOV,MAXFOV}, number, ss_keys, wad_no,
+    "Field of View when zoom is enabled"
+  },
+
+  {
+    "input_map_blink",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to make automap markers blink",
+    input_map_blink, { {input_type_key, 'b'} }
+  },
+
+  // [Nugget] End ----------------------------------------------
+
+  { //jff 4/3/98 allow unlimited sensitivity
+    "mouse_sensitivity",
+    (config_t *) &mouseSensitivity_horiz, NULL,
+    {5}, {0,UL}, number, ss_none, wad_no,
+    "adjust horizontal (x) mouse sensitivity for turning"
+  },
+
+  { //jff 4/3/98 allow unlimited sensitivity
+    "mouse_sensitivity_y",
+    (config_t *) &mouseSensitivity_vert, NULL,
+    {5}, {0,UL}, number, ss_none, wad_no,
+    "adjust vertical (y) mouse sensitivity for moving"
+  },
+
+  {
+    "mouse_sensitivity_strafe",
+    (config_t *) &mouseSensitivity_horiz_strafe, NULL,
+    {5}, {0,UL}, number, ss_none, wad_no,
+    "adjust horizontal (x) mouse sensitivity for strafing"
+  },
+
+  {
+    "mouse_sensitivity_y_look",
+    (config_t *) &mouseSensitivity_vert_look, NULL,
+    {5}, {0,UL}, number, ss_none, wad_no,
+    "adjust vertical (y) mouse sensitivity for looking"
+  },
+
+  {
+    "mouse_acceleration",
+    (config_t *) &mouse_acceleration, NULL,
+    {10}, {0,40}, number, ss_none, wad_no,
+    "adjust mouse acceleration (0 = 1.0, 40 = 5.0)"
+  },
+
+  {
+    "mouse_acceleration_threshold",
+    (config_t *) &mouse_acceleration_threshold, NULL,
+    {10}, {0,32}, number, ss_none, wad_no,
+    "adjust mouse acceleration threshold"
   },
 
   // [FG] invert vertical axis
@@ -1929,19 +2480,38 @@ default_t defaults[] = {
     "invert vertical axis"
   },
 
-  { // killough
-    "snd_channels",
-    (config_t *) &default_numChannels, NULL,
-    {MAX_CHANNELS}, {1, MAX_CHANNELS}, 0, ss_gen, wad_no,
-    "number of sound effects handled simultaneously"
+  {
+    "novert",
+    (config_t *) &novert, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to disable vertical mouse movement"
   },
 
   {
-    "net_player_name",
-    (config_t *) &net_player_name, NULL,
-    {.s = "none"}, {0}, string, ss_gen, wad_no,
-    "network setup player name"
+    "mouselook",
+    (config_t *) &mouselook, NULL,
+    {0}, {0,1}, number, ss_none, wad_no,
+    "1 to enable mouselook"
   },
+
+  // [FG] double click acts as "use"
+  {
+    "dclick_use",
+    (config_t *) &dclick_use, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "double click acts as \"use\""
+  },
+
+  {
+    "grabmouse",
+    (config_t *) &grabmouse, NULL,
+    {1}, {0, 1}, number, ss_none, wad_no,
+    "1 to grab mouse during play"
+  },
+
+  //
+  // Chat macro
+  //
 
   {
     "chatmacro0",
@@ -2012,6 +2582,10 @@ default_t defaults[] = {
     {.s = HUSTR_CHATMACRO9}, {0}, string, ss_chat, wad_yes,
     "chat string associated with 9 key"
   },
+
+  //
+  // Automap
+  //
 
   //jff 1/7/98 defaults for automap colors
   //jff 4/3/98 remove -1 in lower range, 0 now disables new map features
@@ -2258,7 +2832,7 @@ default_t defaults[] = {
     "1 to enable automap follow player mode"
   },
 
-  { // [Nugget] Accommodate for dark automap overlay
+  {
     "automapoverlay",
     (config_t *) &automapoverlay, NULL,
     {overlay_off}, {overlay_off,overlay_dark}, number, ss_auto, wad_no,
@@ -2279,28 +2853,61 @@ default_t defaults[] = {
   { // gold range
     "hudcolor_titl",
     (config_t *) &hudcolor_titl, NULL,
-    {5}, {0,9}, number, ss_auto, wad_yes,
+    {CR_GOLD}, {CR_BRICK,CR_NONE}, number, ss_auto, wad_yes,
     "color range used for automap level title"
   },
 
   { // green range
     "hudcolor_xyco",
     (config_t *) &hudcolor_xyco, NULL,
-    {3}, {0,9}, number, ss_auto, wad_yes,
+    {CR_GREEN}, {CR_BRICK,CR_NONE}, number, ss_auto, wad_yes,
     "color range used for automap coordinates"
+  },
+
+  //
+  // Messages
+  //
+
+  {
+    "show_messages",
+    (config_t *) &showMessages, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to enable message display"
+  },
+
+  {
+    "show_toggle_messages",
+    (config_t *) &show_toggle_messages, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to enable toggle messages"
+  },
+
+  {
+    "show_pickup_messages",
+    (config_t *) &show_pickup_messages, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to enable pickup messages"
+  },
+
+  // "A secret is revealed!" message
+  {
+    "hud_secret_message",
+    (config_t *) &hud_secret_message, NULL,
+    {0}, {0,2}, number, ss_mess, wad_no, // [Nugget]
+    "\"A secret is revealed!\" message"
   },
 
   { // red range
     "hudcolor_mesg",
     (config_t *) &hudcolor_mesg, NULL,
-    {6}, {0,9}, number, ss_mess, wad_yes,
+    {CR_NONE}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
     "color range used for messages during play"
   },
 
   { // gold range
     "hudcolor_chat",
     (config_t *) &hudcolor_chat, NULL,
-    {5}, {0,9}, number, ss_mess, wad_yes,
+    {CR_GOLD}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
     "color range used for chat messages and entry"
   },
 
@@ -2353,11 +2960,50 @@ default_t defaults[] = {
     "Duration of normal Doom messages (ms)"
   },
 
-  { // hud broken up into 3 displays //jff 3/4/98
-    "hud_distributed",
-    (config_t *) &hud_distributed, NULL,
+  {
+    "sp_chat",
+    (config_t *) &sp_chat, NULL,
+    {0}, {0,1}, number, ss_none, wad_no,
+    "1 to enable multiplayer chat in singleplayer"
+  },
+
+  //
+  // HUD
+  //
+
+  { // no color changes on status bar
+    "sts_always_red",
+    (config_t *) &sts_always_red, NULL,
+    {1}, {0,1}, number, ss_stat, wad_yes,
+    "1 to disable use of color on status bar"
+  },
+
+  {
+    "sts_pct_always_gray",
+    (config_t *) &sts_pct_always_gray, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to make percent signs on status bar always gray"
+  },
+
+  { // killough 2/28/98
+    "sts_traditional_keys",
+    (config_t *) &sts_traditional_keys, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to disable doubled card and skull key display on status bar"
+  },
+
+  { // [Nugget]
+    "alt_arms",
+    (config_t *) &alt_arms, NULL,
     {0}, {0,1}, number, ss_none, wad_yes,
-    "1 splits HUD into three 2 line displays"
+    "1 to enable alternative Arms widget display"
+  },
+
+  { // [Alaux]
+    "smooth_counts",
+    (config_t *) &smooth_counts, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to enable smooth health/armor counts"
   },
 
   { // below is red
@@ -2431,11 +3077,27 @@ default_t defaults[] = {
   },
 
   { // no secrets/items/kills HUD line
-    "hud_nosecrets",
-    (config_t *) &hud_nosecrets, NULL,
-    {1}, {0,1}, number, ss_stat, wad_yes,
-    "1 to disable display of kills/items/secrets on HUD"
+    "hud_level_stats",
+    (config_t *) &hud_level_stats, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to show kills/items/secrets on HUD"
   },
+
+  {
+    "smarttotals",
+    (config_t *) &smarttotals, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to enable Smart Totals"
+  },
+
+  { // no secrets/items/kills HUD line
+    "hud_level_time",
+    (config_t *) &hud_level_time, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to show level time on HUD"
+  },
+
+  // [Nugget] Got rid of "crispy_hud"
 
   // backpack changes thresholds
   {
@@ -2453,33 +3115,24 @@ default_t defaults[] = {
     "color of armor depends on type"
   },
 
-  // "A secret is revealed!" message
   {
-    "hud_secret_message",
-    (config_t *) &hud_secret_message, NULL,
-    {0}, {0,2}, number, ss_mess, wad_no, // [Nugget]
-    "\"A secret is revealed!\" message"
+    "hud_widget_font",
+    (config_t *) &hud_widget_font, NULL,
+    {0}, {0,2}, number, ss_stat, wad_no,
+    "use standard Doom font for widgets (1 = on Automap, 2 = always)"
   },
 
-  // Time/STS above status bar
-  {
-    "hud_timests",
-    (config_t *) &hud_timests, NULL,
-    {0}, {0,3}, number, ss_stat, wad_no,
-    "0 for off, 1 for time, 2 for stats, 3 for both"
-  },
-
-  { // [Nugget]
+  { // [Nugget] Crosshair toggle
     "hud_crosshair_on",
     (config_t *) &hud_crosshair_on, NULL,
     {0}, {0,1}, number, ss_stat, wad_no,
     "enable crosshair"
   },
 
-  { // [Nugget] Change minimum to 1
+  { // [Nugget] Crosshair type
     "hud_crosshair",
     (config_t *) &hud_crosshair, NULL,
-    {1}, {1,HU_CROSSHAIRS-1}, number, ss_stat, wad_no,
+    {0}, {1,HU_CROSSHAIRS-1}, number, ss_stat, wad_no,
     "crosshair type"
   },
 
@@ -2493,8 +3146,8 @@ default_t defaults[] = {
   {
     "hud_crosshair_health",
     (config_t *) &hud_crosshair_health, NULL,
-    {0}, {0,2}, number, ss_stat, wad_no,
-    "Change crosshair color by health (1 = Player health, 2 = Target health)"
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to change crosshair color by player health"
   },
 
   {
@@ -2507,8 +3160,8 @@ default_t defaults[] = {
   {
     "hud_crosshair_lockon",
     (config_t *) &hud_crosshair_lockon, NULL,
-    {0}, {0,2}, number, ss_stat, wad_no,
-    "Lock crosshair on target (1 = Vertical only, 2 = Full)"
+    {0}, {0,2}, number, ss_stat, wad_no, // [Nugget]
+    "Lock crosshair on target (1 = Vertically, 2 = Fully)" // [Nugget]
   },
 
   { // [Nugget]
@@ -2528,461 +3181,15 @@ default_t defaults[] = {
   {
     "hud_crosshair_color",
     (config_t *) &hud_crosshair_color, NULL,
-    {CR_GRAY}, {0,9}, number, ss_stat, wad_no,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_no,
     "default crosshair color"
   },
 
   {
     "hud_crosshair_target_color",
     (config_t *) &hud_crosshair_target_color, NULL,
-    {CR_YELLOW}, {0,9}, number, ss_stat, wad_no,
+    {CR_YELLOW}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_no,
     "target crosshair color"
-  },
-
-  {  // killough 2/8/98: weapon preferences set by user:
-    "weapon_choice_1",
-    (config_t *) &weapon_preferences[0][0], NULL,
-    {6}, {1,9}, number, ss_weap, wad_yes,
-    "first choice for weapon (best)"
-  },
-
-  {
-    "weapon_choice_2",
-    (config_t *) &weapon_preferences[0][1], NULL,
-    {9}, {1,9}, number, ss_weap, wad_yes,
-    "second choice for weapon"
-  },
-
-  {
-    "weapon_choice_3",
-    (config_t *) &weapon_preferences[0][2], NULL,
-    {4}, {1,9}, number, ss_weap, wad_yes,
-    "third choice for weapon"
-  },
-
-  {
-    "weapon_choice_4",
-    (config_t *) &weapon_preferences[0][3], NULL,
-    {3}, {1,9}, number, ss_weap, wad_yes,
-    "fourth choice for weapon"
-  },
-
-  {
-    "weapon_choice_5",
-    (config_t *) &weapon_preferences[0][4], NULL,
-    {2}, {1,9}, number, ss_weap, wad_yes,
-    "fifth choice for weapon"
-  },
-
-  {
-    "weapon_choice_6",
-    (config_t *) &weapon_preferences[0][5], NULL,
-    {8}, {1,9}, number, ss_weap, wad_yes,
-    "sixth choice for weapon"
-  },
-
-  {
-    "weapon_choice_7",
-    (config_t *) &weapon_preferences[0][6], NULL,
-    {5}, {1,9}, number, ss_weap, wad_yes,
-    "seventh choice for weapon "
-  },
-
-  {
-    "weapon_choice_8",
-    (config_t *) &weapon_preferences[0][7], NULL,
-    {7}, {1,9}, number, ss_weap, wad_yes,
-    "eighth choice for weapon"
-  },
-
-  {
-    "weapon_choice_9",
-    (config_t *) &weapon_preferences[0][8], NULL,
-    {1}, {1,9}, number, ss_weap, wad_yes,
-    "ninth choice for weapon (worst)"
-  },
-
-  {
-    "axis_forward",
-    (config_t *) &axis_forward, NULL,
-    {AXIS_LEFTY}, {0,4}, number, ss_keys, wad_no,
-    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
-  },
-
-  {
-    "axis_strafe",
-    (config_t *) &axis_strafe, NULL,
-    {AXIS_LEFTX}, {0,4}, number, ss_keys, wad_no,
-    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
-  },
-
-  {
-    "axis_turn",
-    (config_t *) &axis_turn, NULL,
-    {AXIS_RIGHTX}, {0,4}, number, ss_keys, wad_no,
-    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
-  },
-
-  {
-    "axis_look",
-    (config_t *) &axis_look, NULL,
-    {AXIS_RIGHTY}, {0,4}, number, ss_keys, wad_no,
-    "0 axis left x, 1 axis left y, 2 axis right x, 3 axis right y, 4 none"
-  },
-
-  {
-    "axis_move_sens",
-    (config_t *) &axis_move_sens, NULL,
-    {10}, {0,UL}, number, ss_none, wad_no,
-    "game controller movement sensitivity"
-  },
-
-  {
-    "axis_turn_sens",
-    (config_t *) &axis_turn_sens, NULL,
-    {10}, {0,UL}, number, ss_none, wad_no,
-    "game controller turning sensitivity"
-  },
-
-  {
-    "axis_look_sens",
-    (config_t *) &axis_look_sens, NULL,
-    {10}, {0,UL}, number, ss_none, wad_no,
-    "game controller looking sensitivity"
-  },
-
-  {
-    "analog_controls",
-    (config_t *) &analog_controls, NULL,
-    {1}, {0, 1}, number, ss_keys, wad_no,
-    "1 to enable analog controls"
-  },
-
-  {
-    "padlook",
-    (config_t *) &padlook, NULL,
-    {0}, {0, 1}, number, ss_keys, wad_no,
-    "1 to enable padlook"
-  },
-
-  {
-    "input_padlook",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to toggle padlook",
-    input_padlook, { {0, 0} }
-  },
-
-  {
-    "invert_turn",
-    (config_t *) &invert_turn, NULL,
-    {0}, {0, 1}, number, ss_keys, wad_no,
-    "1 to invert gamepad turning axis"
-  },
-
-  {
-    "invert_forward",
-    (config_t *) &invert_forward, NULL,
-    {0}, {0, 1}, number, ss_keys, wad_no,
-    "1 to invert gamepad forward axis"
-  },
-
-  {
-    "invert_strafe",
-    (config_t *) &invert_strafe, NULL,
-    {0}, {0, 1}, number, ss_keys, wad_no,
-    "1 to invert gamepad strafe axis"
-  },
-
-  {
-    "invert_look",
-    (config_t *) &invert_look, NULL,
-    {0}, {0, 1}, number, ss_keys, wad_no,
-    "1 to invert gamepad look axis"
-  },
-
-  {
-    "force_flip_pan",
-    (config_t *) &forceFlipPan, NULL,
-    {0}, {0, 1}, number, ss_none, wad_no,
-    "1 to force reversal of stereo audio channels"
-  },
-
-  {
-    "grabmouse",
-    (config_t *) &grabmouse, NULL,
-    {1}, {0, 1}, number, ss_none, wad_no,
-    "1 to grab mouse during play"
-  },
-
-  {
-    "correct_aspect_ratio",
-    (config_t *) &useaspect, NULL,
-    {1}, {0, 1}, number, ss_none, wad_no,
-    "1 to perform aspect ratio correction"
-  },
-
-  { // [Nugget]
-    "stretch_to_fit",
-    (config_t *) &stretch_to_fit, NULL,
-    {0}, {0, 1}, number, ss_none, wad_no,
-    "1 to stretch viewport to fit window"
-  },
-
-  // [FG] save fullscren mode
-  {
-    "fullscreen",
-    (config_t *) &fullscreen, NULL,
-    {1}, {0, 1}, number, ss_none, wad_no,
-    "1 to enable fullscreen mode"
-  },
-
-  // [FG] precache all sound effects
-  {
-    "precache_sounds",
-    (config_t *) &precache_sounds, NULL,
-    {1}, {0, 1}, number, ss_gen, wad_no,
-    "1 to precache all sound effects"
-  },
-
-  // [FG] optional low-pass filter
-  {
-    "lowpass_filter",
-    (config_t *) &lowpass_filter, NULL,
-    {0}, {0, 1}, number, ss_none, wad_no,
-    "1 to apply low-pass filtering to all sounds effects"
-  },
-
-  // [FG] play sounds in full length
-  {
-    "full_sounds",
-    (config_t *) &full_sounds, NULL,
-    {0}, {0, 1}, number, ss_gen, wad_no,
-    "1 to play sounds in full length"
-  },
-
-  {
-    "parallel_sfx_limit",
-    (config_t *) &parallel_sfx_limit, NULL,
-    {4}, {1, MAX_CHANNELS}, number, ss_none, wad_no,
-    "parallel same-sound limit (MAX_CHANNELS = disable)"
-  },
-
-  // [FG] music backend
-  {
-    "midi_player",
-    (config_t *) &midi_player, NULL,
-    {0}, {0, 2},
-    number, ss_gen, wad_no,
-#if defined(_WIN32)
-    "0 for Native (default), "
-#else
-    "0 for SDL2 (default), "
-#endif
-#if defined(HAVE_FLUIDSYNTH)
-    "1 for FluidSynth, 2 for OPL Emulation"
-#else
-    "1 for OPL Emulation"
-#endif
-  },
-
-  {
-    "midi_player_menu",
-    (config_t *) &midi_player_menu, NULL,
-    {0}, {0, MAX_MIDI_PLAYER_MENU_ITEMS}, number, ss_gen, wad_no,
-    "MIDI Player menu index"
-  },
-
-#if defined(HAVE_FLUIDSYNTH)
-  {
-    "soundfont_dir",
-    (config_t *) &soundfont_dir, NULL,
-#if defined(_WIN32)
-    {.s = "soundfonts"},
-#else
-    /* RedHat/Fedora/Arch */
-    {.s = "/usr/share/soundfonts:"
-    /* Debian/Ubuntu/OpenSUSE */
-    "/usr/share/sounds/sf2:"
-    "/usr/share/sounds/sf3"},
-#endif
-    {0}, string, ss_none, wad_no,
-    "FluidSynth soundfont directories"
-  },
-
-  {
-    "soundfont_path",
-    (config_t *) &soundfont_path, NULL,
-    {.s = ""}, {0}, string, ss_none, wad_no,
-    "FluidSynth current soundfont path"
-  },
-
-  {
-    "mus_chorus",
-    (config_t *) &mus_chorus, NULL,
-    {0}, {0, 1}, number, ss_none, wad_no,
-    "1 to enable FluidSynth chorus"
-  },
-
-  {
-    "mus_reverb",
-    (config_t *) &mus_reverb, NULL,
-    {0}, {0, 1}, number, ss_none, wad_no,
-    "1 to enable FluidSynth reverb"
-  },
-
-  {
-    "mus_gain",
-    (config_t *) &mus_gain, NULL,
-    {100}, {10, 1000}, number, ss_none, wad_no,
-    "fine tune FluidSynth output level (default 100%)"
-  },
-#endif
-
-  {
-    "opl_gain",
-    (config_t *) &opl_gain, NULL,
-    {200}, {100, 1000}, number, ss_none, wad_no,
-    "fine tune OPL emulation output level (default 200%)"
-  },
-
-#if defined(_WIN32)
-  {
-    "winmm_device",
-    (config_t *) &winmm_device, NULL,
-    {.s = ""}, {0}, string, ss_none, wad_no,
-    "Native MIDI device"
-  },
-
-  {
-    "winmm_reset_type",
-    (config_t *) &winmm_reset_type, NULL,
-    {-1}, {-1, 4}, number, ss_none, wad_no,
-    "SysEx reset for native MIDI (-1 = Default, 0 = None, 1 = GS, 2 = GM, 3 = GM2, 4 = XG)"
-  },
-
-  {
-    "winmm_reset_delay",
-    (config_t *) &winmm_reset_delay, NULL,
-    {0}, {0, 2000}, number, ss_none, wad_no,
-    "Delay after reset for native MIDI (milliseconds)"
-  },
-
-  {
-    "winmm_reverb_level",
-    (config_t *) &winmm_reverb_level, NULL,
-    {-1}, {-1, 127}, number, ss_none, wad_no,
-    "Reverb send level for native MIDI (-1 = Default, 0 = Off, 127 = Max)"
-  },
-
-  {
-    "winmm_chorus_level",
-    (config_t *) &winmm_chorus_level, NULL,
-    {-1}, {-1, 127}, number, ss_none, wad_no,
-    "Chorus send level for native MIDI (-1 = Default, 0 = Off, 127 = Max)"
-  },
-#endif
-
-  // [FG] uncapped rendering frame rate
-  {
-    "uncapped",
-    (config_t *) &uncapped, NULL,
-    {1}, {0, 1}, number, ss_gen, wad_no,
-    "1 to enable uncapped rendering frame rate"
-  },
-
-  // [FG] force integer scales
-  {
-    "integer_scaling",
-    (config_t *) &integer_scaling, NULL,
-    {0}, {0, 1}, number, ss_none, wad_no,
-    "1 to force integer scales"
-  },
-
-  {
-    "vga_porch_flash",
-    (config_t *) &vga_porch_flash, NULL,
-    {0}, {0, 1}, number, ss_none, wad_no,
-    "1 to emulate VGA \"porch\" behaviour"
-  },
-
-  // widescreen mode
-  {
-    "widescreen",
-    (config_t *) &widescreen, NULL,
-    {RATIO_ORIG}, {RATIO_ORIG, NUM_RATIOS-1}, number, ss_none, wad_no,
-    "widescreen mode (0 = disable, 1 = match screen, 2 = 16:10, 3 = 16:9, 4 = 21:9)"
-  },
-
-  // display index
-  {
-    "video_display",
-    (config_t *) &video_display, NULL,
-    {0}, {0, UL}, number, ss_none, wad_no,
-    "current video display index"
-  },
-
-  // window position
-  {
-    "window_position",
-    (config_t *) &window_position, NULL,
-    {.s = "center"}, {0}, string, ss_none, wad_no,
-    "window position \"x,y\""
-  },
-
-  // window width
-  {
-    "window_width",
-    (config_t *) &window_width, NULL,
-    {640}, {0, UL}, number, ss_none, wad_no,
-    "window width"
-  },
-
-  // window height
-  {
-    "window_height",
-    (config_t *) &window_height, NULL,
-    {480}, {0, UL}, number, ss_none, wad_no,
-    "window height"
-  },
-
-  // [FG] exclusive fullscreen width
-  {
-    "fullscreen_width",
-    (config_t *) &fullscreen_width, NULL,
-    {0}, {0, UL}, number, ss_none, wad_no,
-    "exclusive fullscreen width"
-  },
-
-  // [FG] exclusive fullscreen height
-  {
-    "fullscreen_height",
-    (config_t *) &fullscreen_height, NULL,
-    {0}, {0, UL}, number, ss_none, wad_no,
-    "exclusive fullscreen height"
-  },
-
-  // default compatibility
-  {
-    "default_complevel",
-    (config_t *) &default_complevel, NULL,
-    {3}, {0,3}, number, ss_comp, wad_no,
-    "0 Vanilla, 1 Boom, 2 MBF, 3 MBF21"
-  },
-
-  // [FG] spectre drawing mode
-  {
-    "fuzzcolumn_mode",
-    (config_t *) &fuzzcolumn_mode, NULL,
-    {0}, {0,1}, number, ss_enem, wad_no,
-    "0 original, 1 blocky (hires)"
-  },
-
-  { // [Nugget - ceski] Selective fuzz darkening
-    "fuzzdark_mode",
-    (config_t *) &fuzzdark_mode, NULL,
-    {0}, {0,1}, number, ss_enem, wad_no,
-    "0 original, 1 selective darkening"
   },
 
   {NULL}         // last entry
@@ -2990,11 +3197,6 @@ default_t defaults[] = {
 
 static char *defaultfile;
 static boolean defaults_loaded = false;      // killough 10/98
-
-// killough 10/98: keep track of comments in .cfg files
-static struct { char *text; int line; } *comments;
-static size_t comment, comment_alloc;
-static int config_help_header;  // killough 10/98
 
 #define NUMDEFAULTS ((unsigned)(sizeof defaults / sizeof *defaults - 1))
 
@@ -3036,7 +3238,6 @@ void M_SaveDefaults (void)
 {
   char *tmpfile;
   register default_t *dp;
-  int line, blanks;
   FILE *f;
   int maxlen = 0;
 
@@ -3066,36 +3267,23 @@ void M_SaveDefaults (void)
   // 3/3/98 explain format of file
   // killough 10/98: use executable's name
 
-  if (config_help && !config_help_header &&
+  if (config_help &&
       fprintf(f,";%s.cfg format:\n"
 	      ";[min-max(default)] description of variable\n"
 	      ";* at end indicates variable is settable in wads\n"
-	      ";variable   value\n\n", D_DoomExeName()) == EOF)
+	      ";variable   value\n", D_DoomExeName()) == EOF)
     goto error;
 
   // killough 10/98: output comment lines which were read in during input
 
-  for (blanks = 1, line = 0, dp = defaults; ; dp++, blanks = 0)
+  for (dp = defaults; ; dp++)
     {
       config_t value = {0};
-
-      for (;line < comment && comments[line].line <= dp-defaults; line++)
-        if (*comments[line].text != '[')  // Skip help string
-
-	    // If we haven't seen any blank lines
-	    // yet, and this one isn't blank,
-	    // output a blank line for separation
-
-            if ((!blanks && (blanks = 1,
-			     *comments[line].text != '\n' &&
-			     putc('\n',f) == EOF)) ||
-		fputs(comments[line].text, f) == EOF)
-	      goto error;
 
       // If we still haven't seen any blanks,
       // Output a blank line for separation
 
-      if (!blanks && putc('\n',f) == EOF)
+      if (putc('\n',f) == EOF)
 	goto error;
 
       if (!dp->name)      // If we're at end of defaults table, exit loop
@@ -3138,11 +3326,10 @@ void M_SaveDefaults (void)
 
       if (dp->type != input)
       {
-      if (dp->type == number ? fprintf(f, "%-*s %i\n", maxlen, dp->name,
-			       strncmp(dp->name, "key_", 4) ? value.i :
-			       I_DoomCode2ScanCode(value.i)) == EOF :
-	  fprintf(f,"%-*s \"%s\"\n", maxlen, dp->name, (char *) value.s) == EOF)
-	goto error;
+      if (dp->type == number ?
+          fprintf(f, "%-*s %i\n", maxlen, dp->name, value.i) == EOF :
+          fprintf(f,"%-*s \"%s\"\n", maxlen, dp->name, (char *) value.s) == EOF)
+        goto error;
       }
 
       if (dp->type == input)
@@ -3277,9 +3464,6 @@ boolean M_ParseOption(const char *p, boolean wad)
     {
       if (sscanf(strparm, "%i", &parm) != 1)
 	return 1;                       // Not A Number
-
-      if (!strncmp(name, "key_", 4))    // killough
-	parm = I_ScanCode2DoomCode(parm);
 
       //jff 3/4/98 range check numeric parameters
       if ((dp->limit.min == UL || dp->limit.min <= parm) &&
@@ -3484,52 +3668,11 @@ void M_LoadDefaults (void)
     printf("Warning: Cannot read %s -- using built-in defaults\n",defaultfile);
   else
     {
-      int skipblanks = 1, line = comment = config_help_header = 0;
       char s[256];
 
       while (fgets(s, sizeof s, f))
-        if (!M_ParseOption(s, false))
-          line++;       // Line numbers
-        else
-          {             // Remember comment lines
-            const char *p = s;
-
-            while (isspace(*p))  // killough 10/98: skip leading whitespace
-              p++;
-
-            if (*p)                // If this is not a blank line,
-              {
-                skipblanks = 0;    // stop skipping blanks.
-                if (strstr(p, ".cfg format:"))
-                  config_help_header = 1;
-              }
-            else
-              if (skipblanks)      // If we are skipping blanks, skip line
-                continue;
-              else            // Skip multiple blanks, but remember this one
-                skipblanks = 1, p = "\n";
-
-            if (comment >= comment_alloc)
-              comments = I_Realloc(comments, sizeof *comments *
-                                 (comment_alloc = comment_alloc ?
-                                  comment_alloc * 2 : 10));
-            comments[comment].line = line;
-            comments[comment++].text = strdup(p);
-          }
+        M_ParseOption(s, false);
       fclose (f);
-    }
-
-  // Change defaults for new config version
-  if (strcmp(config_version, "Woof 5.1.0") == 0)
-    {
-      strcpy(config_version, "Woof 6.0.0");
-
-      default_help_friends = 0;
-      default_comp[comp_stairs] = 0;
-      default_comp[comp_zombie] = 1;
-      default_comp[comp_pursuit] = 1;
-      if (default_complevel == 2)
-        default_complevel = 3;
     }
 
   defaults_loaded = true;            // killough 10/98
@@ -3542,8 +3685,6 @@ void M_LoadDefaults (void)
 // Returns the final X coordinate
 // HU_Init must have been called to init the font
 //
-
-extern patch_t* hu_font[HU_FONTSIZE];
 
 int M_DrawText(int x,int y,boolean direct,char* string)
 {
@@ -3671,7 +3812,7 @@ void M_ScreenShot (void)
         screenshotname = M_StringJoin(screenshotdir, DIR_SEPARATOR_S,
                                       lbmname, NULL);
       }
-      while (!access(screenshotname,0) && --tries);
+      while (!M_access(screenshotname,0) && --tries);
 
       if (tries)
         {
@@ -3692,7 +3833,7 @@ void M_ScreenShot (void)
   // players[consoleplayer].message = "screen shot"
 
   // killough 10/98: print error message and change sound effect if error
-  S_StartSound(NULL, !success ? doomprintf("%s", errno ? strerror(errno) :
+  S_StartSound(NULL, !success ? doomprintf(MESSAGES_NONE, "%s", errno ? strerror(errno) :
 					"Could not take screenshot"), sfx_oof :
                gamemode==commercial ? sfx_radio : sfx_tink);
 

@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: doomstat.h,v 1.13 1998/05/12 12:47:28 phares Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //   All the global variables that store the internal state.
@@ -91,6 +82,7 @@ enum {
   emu_reject,
   emu_intercepts,
   emu_missedbackside,
+  emu_donut,
 
   EMU_TOTAL
 };
@@ -227,17 +219,6 @@ extern boolean coop_spawns;
 extern int snd_SfxVolume;      // maximum volume for sound
 extern int snd_MusicVolume;    // maximum volume for music
 
-// Current music/sfx card - index useless
-//  w/o a reference LUT in a sound module.
-// Ideally, this would use indices found
-//  in: /usr/include/linux/soundcard.h
-extern int snd_MusicDevice;
-extern int snd_SfxDevice;
-// Config file? Same disclaimer as above.
-extern int snd_DesiredMusicDevice;
-extern int snd_DesiredSfxDevice;
-
-
 // -------------------------
 // Status flags for refresh.
 //
@@ -270,6 +251,8 @@ extern  boolean nodrawers;
 extern  boolean noblit;
 extern  boolean nosfxparm;
 extern  boolean nomusicparm;
+
+extern  boolean clean_screenshot;
 
 // This one is related to the 3-screen display mode.
 // ANG90 = left side, ANG270 = right
@@ -323,6 +306,8 @@ extern  boolean   playback_nextlevel;
 extern  int       playback_skiptics;
 
 #define PLAYBACK_SKIP (playback_warp >= 0 || playback_skiptics || playback_nextlevel)
+
+extern  boolean   frozen_mode;
 
 extern  boolean   strictmode, default_strictmode;
 
@@ -385,8 +370,8 @@ extern  gamestate_t     wipegamestate;
 
 extern  int             mouseSensitivity_horiz; // killough
 extern  int             mouseSensitivity_vert;
-extern  int             mouseSensitivity_horiz2; // [FG] strafe
-extern  int             mouseSensitivity_vert2; // [FG] look
+extern  int             mouseSensitivity_horiz_strafe; // [FG] strafe
+extern  int             mouseSensitivity_vert_look; // [FG] look
 
 // debug flag to cancel adaptiveness
 extern  boolean         singletics;
@@ -452,6 +437,8 @@ extern int flashing_hom; // killough 10/98
 
 extern int doom_weapon_toggles;   // killough 10/98
 
+extern boolean hide_weapon;
+
 // [FG] centered weapon sprite
 extern int center_weapon;
 
@@ -498,7 +485,6 @@ extern int weaponsquat;
 // Status Bar/HUD
 extern int alt_arms;
 extern int smarttotals;
-extern int smooth_counts;
 // Enemies
 extern int extra_gibbing;
 extern int bloodier_gibbing;

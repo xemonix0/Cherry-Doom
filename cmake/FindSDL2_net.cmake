@@ -100,24 +100,10 @@ find_package_handle_standard_args(SDL2_net
 
 if(SDL2_NET_FOUND)
     # Imported target.
-    add_library(SDL2::net UNKNOWN IMPORTED)
-    set_target_properties(SDL2::net PROPERTIES
+    add_library(SDL2_net::SDL2_net UNKNOWN IMPORTED)
+    set_target_properties(SDL2_net::SDL2_net PROPERTIES
                           INTERFACE_COMPILE_OPTIONS "${PC_SDL2_NET_CFLAGS_OTHER}"
                           INTERFACE_INCLUDE_DIRECTORIES "${SDL2_NET_INCLUDE_DIR}"
                           INTERFACE_LINK_LIBRARIES SDL2::SDL2
                           IMPORTED_LOCATION "${SDL2_NET_LIBRARY}")
-
-    if(WIN32)
-        # On Windows, we need to figure out the location of our library files
-        # so we can copy and package them.
-        get_filename_component(SDL2_NET_DLL_DIR "${SDL2_NET_LIBRARY}" DIRECTORY)
-        if(EXISTS "${SDL2_NET_DLL_DIR}/SDL2_net.dll")
-            set(SDL2_NET_DLL_DIR "${SDL2_NET_DLL_DIR}" CACHE INTERNAL "")
-        elseif(EXISTS "${SDL2_NET_DLL_DIR}/../bin/SDL2_net.dll")
-            get_filename_component(SDL2_NET_DLL_DIR "${SDL2_NET_DLL_DIR}/../bin" REALPATH)
-            set(SDL2_NET_DLL_DIR "${SDL2_NET_DLL_DIR}" CACHE INTERNAL "")
-        else()
-            message(ERROR "Can't find SDL2_net dynamic library directory.")
-        endif()
-    endif()
 endif()

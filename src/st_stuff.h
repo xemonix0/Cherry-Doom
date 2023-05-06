@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: st_stuff.h,v 1.4 1998/05/03 22:50:55 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Status bar code.
@@ -164,6 +155,11 @@ typedef enum
 } st_chatstateenum_t;
 
 // killough 5/2/98: moved from m_misc.c:
+
+// [Alaux]
+extern int smooth_counts;
+extern int st_health;
+extern int st_armor;
 
 extern int health_red;    // health amount less than which status is red
 extern int health_yellow; // health amount less than which status is yellow

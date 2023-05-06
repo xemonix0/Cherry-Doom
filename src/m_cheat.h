@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id: m_cheat.h,v 1.5 1998/05/03 22:10:56 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -16,11 +12,6 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
-//
 // DESCRIPTION:
 //      Cheat code checking.
 //
@@ -30,6 +21,7 @@
 #define __M_CHEAT__
 
 #include "doomtype.h"
+#include "d_event.h"
 
 typedef void (*cheatf_v)();
 typedef void (*cheatf_i)(int i);
@@ -44,26 +36,28 @@ typedef union
 
 // killough 4/16/98: Cheat table structure
 
+typedef enum {
+  always   = 0,
+  not_dm   = 1,
+  not_coop = 2,
+  not_demo = 4, 
+  not_menu = 8,
+  not_deh  = 16,
+  beta_only = 32,                  // killough 7/24/98
+  not_net = not_dm | not_coop
+} cheat_when_t;
+
 extern struct cheat_s {
   const char *cheat; // [FG] char!
   const char *const deh_cheat;
-  enum { 
-    always   = 0,
-    not_dm   = 1,
-    not_coop = 2,
-    not_demo = 4, 
-    not_menu = 8,
-    not_deh  = 16,
-    beta_only = 32,                  // killough 7/24/98
-    not_net = not_dm | not_coop
-  } const when;
+  const cheat_when_t when;
   const cheatf_t func;
   const int arg;
   uint64_t code, mask;
   boolean deh_modified;                // killough 9/12/98
 } cheat[];
 
-boolean M_FindCheats(int key);
+boolean M_CheatResponder(event_t *ev);
 
 #endif
 

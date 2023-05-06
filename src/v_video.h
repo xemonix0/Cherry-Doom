@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: v_video.h,v 1.9 1998/05/06 11:12:54 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //  Gamma correction LUT.
@@ -69,11 +60,11 @@ extern char *cr_dark;
 
 // array of pointers to color translation tables
 extern char *colrngs[];
+extern char *red2col[];
 
 // symbolic indices into color translation table pointer array
 typedef enum
 {
-  CR_NONE = -1,
   CR_BRICK,   //0
   CR_TAN,     //1
   CR_GRAY,    //2
@@ -81,18 +72,17 @@ typedef enum
   CR_BROWN,   //4
   CR_GOLD,    //5
   CR_RED,     //6
-  CR_BLUE,    //7
+  CR_BLUE1,   //7
   CR_ORANGE,  //8
   CR_YELLOW,  //9
   CR_BLUE2,   //10
   CR_BLACK,   //11
   CR_PURPLE,  //12
   CR_WHITE,   //13
-  CR_LIMIT    //14 //jff 2/27/98 added for range check
+  CR_NONE,    //14 // [FG] dummy
+  CR_LIMIT    //15 //jff 2/27/98 added for range check
 } crange_idx_e;
 //jff 1/16/98 end palette color range additions
-
-#define CR_DEFAULT CR_RED   /* default value for out of range colors */
 
 extern byte *screens[5];
 extern int  dirtybox[4];

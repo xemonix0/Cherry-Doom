@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: am_map.c,v 1.24 1998/05/10 12:05:24 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -16,12 +12,7 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
-//
-// DESCRIPTION:
+// DESCRIPTION:  
 //   the automap code
 //
 //-----------------------------------------------------------------------------
@@ -114,11 +105,11 @@ static int viewshade;
 #define M2_ZOOMOUTFAST  ((int) (FRACUNIT/1.5))
 
 // [crispy] toggleable pan/zoom speed
-static int f_paninc;
-static int m_zoomin_kbd;
-static int m_zoomout_kbd;
-static int m_zoomin_mouse;
-static int m_zoomout_mouse;
+static int f_paninc = F_PANINC;
+static int m_zoomin_kbd = M_ZOOMIN;
+static int m_zoomout_kbd = M_ZOOMOUT;
+static int m_zoomin_mouse = M2_ZOOMIN;
+static int m_zoomout_mouse = M2_ZOOMOUT;
 static boolean mousewheelzoom;
 
 // translates between frame-buffer and map distances
@@ -265,7 +256,6 @@ static int  f_h;
 
 static int  lightlev;        // used for funky strobing effect
 static byte*  fb;            // pseudo-frame buffer
-static int  amclock;
 
 static mpoint_t m_paninc;    // how far the window pans each tic (map coords)
 static fixed_t mtof_zoommul; // how far the window zooms each tic (map coords)
@@ -455,9 +445,8 @@ void AM_addMark(void)
                             markpointnum_max*2 : 16) * sizeof(*markpoints),
                            PU_STATIC, 0);
 
-  // [crispy] keep the map static in overlay mode
-  // if not following the player
-  if (!followplayer && automapoverlay)
+  // [crispy] keep the map static if not following the player
+  if (!followplayer)
   {
     markpoints[markpointnum].x = plr->mo->x >> FRACTOMAPBITS;
     markpoints[markpointnum].y = plr->mo->y >> FRACTOMAPBITS;
@@ -512,6 +501,14 @@ void AM_findMinMaxBoundaries(void)
 
   min_scale_mtof = a < b ? a : b;
   max_scale_mtof = FixedDiv(f_h<<FRACBITS, 2*MAPPLAYERRADIUS);
+}
+
+void AM_SetMapCenter(fixed_t x, fixed_t y)
+{
+  m_x = (x >> FRACTOMAPBITS) - m_w / 2;
+  m_y = (y >> FRACTOMAPBITS) - m_h / 2;
+  m_x2 = m_x + m_w;
+  m_y2 = m_y + m_h;
 }
 
 //
@@ -579,7 +576,6 @@ void AM_initVariables(void)
   automapactive = true;
   fb = screens[0];
 
-  amclock = 0;
   lightlev = 0;
 
   m_paninc.x = m_paninc.y = 0;
@@ -692,7 +688,10 @@ void AM_LevelInit(void)
   // killough 11/98: ... finally add hires support :)
 
   f_w = (SCREENWIDTH) << hires;
-  f_h = (SCREENHEIGHT-ST_HEIGHT) << hires;
+  if (automapoverlay && scaledviewheight == SCREENHEIGHT)
+    f_h = (SCREENHEIGHT) << hires;
+  else
+    f_h = (SCREENHEIGHT-ST_HEIGHT) << hires;
 
   AM_enableSmoothLines();
 
@@ -761,16 +760,17 @@ void AM_Stop (void)
 //
 void AM_Start()
 {
-  static int lastlevel = -1, lastepisode = -1, last_hires = -1, last_widescreen = -1;
+  static int lastlevel = -1, lastepisode = -1, last_hires = -1, last_widescreen = -1, last_viewheight = -1;
 
   if (!stopped)
     AM_Stop();
   stopped = false;
   if (lastlevel != gamemap || lastepisode != gameepisode || hires!=last_hires
-    || widescreen != last_widescreen)
+    || widescreen != last_widescreen || viewheight != last_viewheight)
   {
     last_hires = hires;          // killough 11/98
     last_widescreen = widescreen;
+    last_viewheight = viewheight;
     AM_LevelInit();
     lastlevel = gamemap;
     lastepisode = gameepisode;
@@ -807,6 +807,19 @@ void AM_maxOutWindowScale(void)
   AM_activateNewScale();
 }
 
+enum
+{
+  PAN_UP,
+  PAN_DOWN,
+  PAN_LEFT,
+  PAN_RIGHT,
+  ZOOM_IN,
+  ZOOM_OUT,
+  STATE_NUM
+};
+
+static int buttons_state[STATE_NUM] = { 0 };
+
 //
 // AM_Responder()
 //
@@ -819,9 +832,8 @@ boolean AM_Responder
 {
   int rc;
   static int bigstate=0;
-  static char buffer[20];
 
-  if (M_InputGameActive(input_speed))
+  if (M_InputActivated(input_speed))
   {
     f_paninc = F2_PANINC;
     m_zoomin_kbd = M2_ZOOMIN;
@@ -829,7 +841,7 @@ boolean AM_Responder
     m_zoomin_mouse = M2_ZOOMINFAST;
     m_zoomout_mouse = M2_ZOOMOUTFAST;
   }
-  else
+  else if (M_InputDeactivated(input_speed))
   {
     f_paninc = F_PANINC;
     m_zoomin_kbd = M_ZOOMIN;
@@ -857,24 +869,24 @@ boolean AM_Responder
                                                                 // phares
     if (M_InputActivated(input_map_right))                      //    |
       if (!followplayer)                                        //    V
-        m_paninc.x = FTOM(f_paninc);
+        buttons_state[PAN_RIGHT] = 1;
       else
         rc = false;
     else if (M_InputActivated(input_map_left))
       if (!followplayer)
-          m_paninc.x = -FTOM(f_paninc);
+        buttons_state[PAN_LEFT] = 1;
       else
-          rc = false;
+        rc = false;
     else if (M_InputActivated(input_map_up))
       if (!followplayer)
-          m_paninc.y = FTOM(f_paninc);
+        buttons_state[PAN_UP] = 1;
       else
-          rc = false;
+        rc = false;
     else if (M_InputActivated(input_map_down))
       if (!followplayer)
-          m_paninc.y = -FTOM(f_paninc);
+        buttons_state[PAN_DOWN] = 1;
       else
-          rc = false;
+        rc = false;
     else if (M_InputActivated(input_map_zoomout))
     {
       if (ev->type == ev_mouseb_down && M_IsMouseWheel(ev->data1))
@@ -884,10 +896,7 @@ boolean AM_Responder
         ftom_zoommul = m_zoomin_mouse;
       }
       else
-      {
-        mtof_zoommul = m_zoomout_kbd;
-        ftom_zoommul = m_zoomin_kbd;
-      }
+        buttons_state[ZOOM_OUT] = 1;
     }
     else if (M_InputActivated(input_map_zoomin))
     {
@@ -898,10 +907,7 @@ boolean AM_Responder
         ftom_zoommul = m_zoomout_mouse;
       }
       else
-      {
-        mtof_zoommul = m_zoomin_kbd;
-        ftom_zoommul = m_zoomout_kbd;
-      }
+        buttons_state[ZOOM_IN] = 1;
     }
     else if (M_InputActivated(input_map))
     {
@@ -923,32 +929,30 @@ boolean AM_Responder
     else if (M_InputActivated(input_map_follow))
     {
       followplayer = !followplayer;
-      m_paninc.x = 0;
-      m_paninc.y = 0;
+      memset(buttons_state, 0, sizeof(buttons_state));
       // Ty 03/27/98 - externalized
-      plr->message = followplayer ? s_AMSTR_FOLLOWON : s_AMSTR_FOLLOWOFF;
+      doomprintf(MESSAGES_NONE, "%s", followplayer ? s_AMSTR_FOLLOWON : s_AMSTR_FOLLOWOFF);  
     }
     else if (M_InputActivated(input_map_grid))
     {
       automap_grid = !automap_grid;      // killough 2/28/98
       // Ty 03/27/98 - *not* externalized
-      plr->message = automap_grid ? s_AMSTR_GRIDON : s_AMSTR_GRIDOFF;
+      doomprintf(MESSAGES_NONE, "%s", automap_grid ? s_AMSTR_GRIDON : s_AMSTR_GRIDOFF);  
     }
     else if (M_InputActivated(input_map_mark))
     {
-      // Ty 03/27/98 - *not* externalized
-      sprintf(buffer, "%s %d", s_AMSTR_MARKEDSPOT, markpointnum);
-      plr->message = buffer;
+      // Ty 03/27/98 - *not* externalized     
+      doomprintf(MESSAGES_NONE, "%s %d", s_AMSTR_MARKEDSPOT, markpointnum);  
       AM_addMark();
     }
     else if (M_InputActivated(input_map_clear))
     {
       // [Alaux] Clear just the last mark
       if (!markpointnum)
-        plr->message = s_AMSTR_MARKSCLEARED;
+        doomprintf(MESSAGES_NONE, "%s", s_AMSTR_MARKSCLEARED);
       else {
         AM_clearLastMark();
-        doomprintf("Cleared spot %d", markpointnum);
+        doomprintf(MESSAGES_NONE, "Cleared spot %d", markpointnum);
       }
     }
     // [Nugget] Blink marks
@@ -965,18 +969,23 @@ boolean AM_Responder
 
       switch (automapoverlay)
       {
-        case 2:  plr->message = "Dark Overlay On";  break;
-        case 1:  plr->message = s_AMSTR_OVERLAYON;  break;
-        default: plr->message = s_AMSTR_OVERLAYOFF; break;
+        case 2:  doomprintf(MESSAGES_NONE, "Dark Overlay On");        break;
+        case 1:  doomprintf(MESSAGES_NONE, "%s", s_AMSTR_OVERLAYON);  break;
+        default: doomprintf(MESSAGES_NONE, "%s", s_AMSTR_OVERLAYOFF); break;
       }
+
+      if (automapoverlay && scaledviewheight == SCREENHEIGHT)
+        f_h = (SCREENHEIGHT) << hires;
+      else
+        f_h = (SCREENHEIGHT-ST_HEIGHT) << hires;
     }
     else if (M_InputActivated(input_map_rotate))
     {
       automaprotate = !automaprotate;
       if (automaprotate)
-        plr->message = s_AMSTR_ROTATEON;
+        doomprintf(MESSAGES_NONE, "%s", s_AMSTR_ROTATEON);
       else
-        plr->message = s_AMSTR_ROTATEOFF;
+        doomprintf(MESSAGES_NONE, "%s", s_AMSTR_ROTATEOFF);
     }
     else
     {
@@ -992,33 +1001,66 @@ boolean AM_Responder
     if (M_InputDeactivated(input_map_right))
     {
       if (!followplayer)
-          m_paninc.x = 0;
+        buttons_state[PAN_RIGHT] = 0;
     }
     else if (M_InputDeactivated(input_map_left))
     {
       if (!followplayer)
-          m_paninc.x = 0;
+        buttons_state[PAN_LEFT] = 0;
     }
     else if (M_InputDeactivated(input_map_up))
     {
       if (!followplayer)
-          m_paninc.y = 0;
+        buttons_state[PAN_UP] = 0;
     }
     else if (M_InputDeactivated(input_map_down))
     {
       if (!followplayer)
-          m_paninc.y = 0;
+        buttons_state[PAN_DOWN] = 0;
     }
-    else if (M_InputDeactivated(input_map_zoomout) ||
-             M_InputDeactivated(input_map_zoomin))
+    else if (M_InputDeactivated(input_map_zoomout))
     {
-      if (!mousewheelzoom)
-      {
-        mtof_zoommul = FRACUNIT;
-        ftom_zoommul = FRACUNIT;
-      }
+      buttons_state[ZOOM_OUT] = 0;
+    }
+    else if (M_InputDeactivated(input_map_zoomin))
+    {
+      buttons_state[ZOOM_IN] = 0;
     }
   }
+
+  m_paninc.x = 0;
+  m_paninc.y = 0;
+
+  if (!followplayer)
+  {
+    if (buttons_state[PAN_RIGHT])
+      m_paninc.x += FTOM(f_paninc << hires);
+    if (buttons_state[PAN_LEFT])
+      m_paninc.x += -FTOM(f_paninc << hires);
+
+    if (buttons_state[PAN_UP])
+      m_paninc.y += FTOM(f_paninc << hires);
+    if (buttons_state[PAN_DOWN])
+      m_paninc.y += -FTOM(f_paninc << hires);
+  }
+
+  if (!mousewheelzoom)
+  {
+    mtof_zoommul = FRACUNIT;
+    ftom_zoommul = FRACUNIT;
+
+    if (buttons_state[ZOOM_OUT] && !buttons_state[ZOOM_IN])
+    {
+      mtof_zoommul = m_zoomout_kbd;
+      ftom_zoommul = m_zoomin_kbd;
+    }
+    else if (buttons_state[ZOOM_IN] && !buttons_state[ZOOM_OUT])
+    {
+      mtof_zoommul = m_zoomin_kbd;
+      ftom_zoommul = m_zoomout_kbd;
+    }
+  }
+
   return rc;
 }
 
@@ -1095,8 +1137,6 @@ void AM_Ticker (void)
 
   // [Nugget] Blink marks
   if (markblinktimer) { markblinktimer--; }
-
-  amclock++;
 
   // Change the zoom if necessary.
   if (ftom_zoommul != FRACUNIT)
@@ -1859,13 +1899,15 @@ void AM_rotate
 {
   int64_t tmpx;
 
+  a >>= ANGLETOFINESHIFT;
+
   tmpx =
-    FixedMul(*x,finecosine[a>>ANGLETOFINESHIFT])
-      - FixedMul(*y,finesine[a>>ANGLETOFINESHIFT]);
+    FixedMul(*x,finecosine[a])
+      - FixedMul(*y,finesine[a]);
 
   *y   =
-    FixedMul(*x,finesine[a>>ANGLETOFINESHIFT])
-      + FixedMul(*y,finecosine[a>>ANGLETOFINESHIFT]);
+    FixedMul(*x,finesine[a])
+      + FixedMul(*y,finecosine[a]);
 
   *x = tmpx;
 }
@@ -1876,17 +1918,19 @@ static void AM_rotatePoint(mpoint_t *pt)
 {
   int64_t tmpx;
   // [crispy] smooth automap rotation
-  const angle_t smoothangle = (followplayer || !automapoverlay) ? ANG90 - viewangle : mapangle;
+  angle_t smoothangle = followplayer ? ANG90 - viewangle : mapangle;
 
   pt->x -= mapcenter.x;
   pt->y -= mapcenter.y;
 
-  tmpx = (int64_t)FixedMul(pt->x, finecosine[smoothangle>>ANGLETOFINESHIFT])
-       - (int64_t)FixedMul(pt->y, finesine[smoothangle>>ANGLETOFINESHIFT])
+  smoothangle >>= ANGLETOFINESHIFT;
+
+  tmpx = (int64_t)FixedMul(pt->x, finecosine[smoothangle])
+       - (int64_t)FixedMul(pt->y, finesine[smoothangle])
        + mapcenter.x;
 
-  pt->y = (int64_t)FixedMul(pt->x, finesine[smoothangle>>ANGLETOFINESHIFT])
-        + (int64_t)FixedMul(pt->y, finecosine[smoothangle>>ANGLETOFINESHIFT])
+  pt->y = (int64_t)FixedMul(pt->x, finesine[smoothangle])
+        + (int64_t)FixedMul(pt->y, finecosine[smoothangle])
         + mapcenter.y;
 
   pt->x = tmpx;
@@ -2318,9 +2362,8 @@ void AM_Drawer (void)
   {
     mapcenter.x = m_x + m_w / 2;
     mapcenter.y = m_y + m_h / 2;
-    // [crispy] keep the map static in overlay mode
-    // if not following the player
-    if (followplayer || !automapoverlay)
+    // [crispy] keep the map static if not following the player
+    if (followplayer)
     {
       mapangle = ANG90 - plr->mo->angle;
     }

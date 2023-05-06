@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id: w_wad.h,v 1.10 1998/05/06 11:32:05 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -16,11 +12,6 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
-//
 // DESCRIPTION:
 //      WAD I/O functions.
 //
@@ -28,6 +19,8 @@
 
 #ifndef __W_WAD__
 #define __W_WAD__
+
+#include "z_zone.h"
 
 //
 // TYPES
@@ -106,7 +99,7 @@ int     (W_CheckNumForName)(const char* name, int);   // killough 4/17/98
 int     W_GetNumForName (const char* name);
 int     W_LumpLength (int lump);
 void    W_ReadLump (int lump, void *dest);
-void*   W_CacheLumpNum (int lump, int tag);
+void*   W_CacheLumpNum (int lump, pu_tag tag);
 
 #define W_CacheLumpName(name,tag) W_CacheLumpNum (W_GetNumForName(name),(tag))
 
@@ -121,6 +114,8 @@ extern void WritePredefinedLumpWad(const char *filename); // jff 5/6/98
 // [FG] name of the WAD file that contains the lump
 const char *W_WadNameForLump (const int lump);
 boolean W_IsIWADLump (const int lump);
+// check if lump is from WAD
+boolean W_IsWADLump (const int lump);
 void W_DemoLumpNameCollision(char **name);
 
 void W_CloseFileDescriptors(void);

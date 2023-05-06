@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: i_video.h,v 1.4 1998/05/03 22:40:58 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -16,11 +12,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      System specific interface stuff.
@@ -67,27 +58,29 @@ void I_FinishUpdate (void);
 
 void I_ReadScreen (byte* scr);
 
-int I_DoomCode2ScanCode(int);   // killough
-int I_ScanCode2DoomCode(int);   // killough
-
 void I_ResetScreen(void);   // killough 10/98
-void I_ToggleToggleFullScreen(void); // [FG] fullscreen mode menu toggle
+void I_ToggleFullScreen(void); // [FG] fullscreen mode menu toggle
+void I_ToggleExclusiveFullScreen(void);
+void I_ToggleVsync(void); // [JN] Calls native SDL vsync toggle
 
 extern int use_vsync;  // killough 2/8/98: controls whether vsync is called
-extern int page_flip;  // killough 8/15/98: enables page flipping (320x200)
 extern int disk_icon;  // killough 10/98
-extern int hires;      // killough 11/98
+extern int hires, default_hires;      // killough 11/98
 
 extern int useaspect;
 extern int stretch_to_fit; // [Nugget]
 extern int uncapped; // [FG] uncapped rendering frame rate
+
+extern boolean fullscreen;
+extern boolean exclusive_fullscreen;
+extern int fpslimit; // when uncapped, limit framerate to this value
 extern int integer_scaling; // [FG] force integer scales
 extern int vga_porch_flash; // emulate VGA "porch" behaviour
 extern int widescreen; // widescreen mode
 extern int video_display; // display index
-extern int window_width, window_height;
-extern char *window_position;
-extern int fullscreen_width, fullscreen_height; // [FG] exclusive fullscreen
+extern boolean screenvisible;
+extern boolean reset_screen;
+extern boolean smooth_scaling;
 
 // [Nugget]
 #define GAMMA2MAX 30

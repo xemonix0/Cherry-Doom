@@ -1,12 +1,16 @@
 include(CheckLibraryExists)
 include(CheckIncludeFile)
 include(CheckSymbolExists)
-include(ExternalProject)
 
 # Adds the cmake directory to the CMake include path.
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-cmake_minimum_required(VERSION 3.6)
+# X_VCPKG_APPLOCAL_DEPS_INSTALL automatically installs dependencies. CMP0077
+# supress some arcane CMake warning.
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+set(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)
+
+cmake_minimum_required(VERSION 3.9)
 
 project("Nugget Doom"
     VERSION 1.13.0
@@ -32,21 +36,9 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     message(FATAL_ERROR "In-tree builds are not supported.")
 endif()
 
-execute_process(COMMAND uname OUTPUT_VARIABLE uname)
-if (NOT MSVC AND (uname MATCHES "^MSYS" OR uname MATCHES "^MINGW"))
-    set(MSYS ON)
-else()
-    set(MSYS OFF)
-endif()
-
-if(MSYS)
-    # 3.16 is needed for GET_RUNTIME_DEPENDENCIES.
-    cmake_minimum_required(VERSION 3.16)
-endif()
-
 # Hardcoded defines added to configure and resource files.
 set(PROJECT_COMPANY "Alaux and contributors")
-set(PROJECT_COPYRIGHT "Copyright (C) 1993-2022")
+set(PROJECT_COPYRIGHT "Copyright (C) 1993-2023")
 set(PROJECT_LICENSE "GNU General Public License, version 2")
 set(PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
 set(PROJECT_SHORTNAME "nugget-doom")
@@ -59,122 +51,38 @@ if(NOT WIN32)
 endif()
 
 # Toggle-able defines added at compile-time.
-option("${PROJECT_NAME}_RANGECHECK" "Enable bounds-checking of performance-sensitive functions" ON)
-option("${PROJECT_NAME}_STRICT" "Prefer original MBF code paths over demo compatiblity with PrBoom+" OFF)
+option(NUGGETDOOM_RANGECHECK "Enable bounds-checking of performance-sensitive functions" ON)
+option(NUGGETDOOM_STRICT "Prefer original MBF code paths over demo compatiblity with PrBoom+" OFF)
 
 # Compiler environment requirements.
-check_library_exists(m pow "" m_FOUND)
+check_library_exists(m pow "" HAVE_LIBM)
 check_include_file("dirent.h" HAVE_DIRENT_H)
-check_symbol_exists(strsignal "string.h" HAVE_STRSIGNAL)
 check_symbol_exists(strcasecmp "strings.h" HAVE_DECL_STRCASECMP)
 check_symbol_exists(strncasecmp "strings.h" HAVE_DECL_STRNCASECMP)
 
+option(CMAKE_FIND_PACKAGE_PREFER_CONFIG
+       "Lookup package config files before using find modules" ON)
+
 # Library requirements.
-#
-# In some instances, we can do useful things if a library can't be found.
+find_package(SDL2 2.0.18 REQUIRED)
+find_package(SDL2_net REQUIRED)
+find_package(OpenAL REQUIRED)
+find_package(SndFile 1.0.29 REQUIRED)
 
-# SDL2.  On Windows, we use the official development library.
-if(NOT SDL2_DIR)
-    if(WIN32 AND NOT MSYS)
-        message(STATUS "Downloading SDL2 Development Library...")
-        set(pkgver "2.26.1")
-        if(MSVC)
-            file(DOWNLOAD
-                "https://github.com/libsdl-org/SDL/releases/download/release-${pkgver}/SDL2-devel-${pkgver}-VC.zip"
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2-VC.zip"
-                EXPECTED_HASH SHA256=256a8b46e4a278b7b2b649368bc38a400d943de5b3ef8c14e1b907725cd70072)
-            execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2-VC.zip"
-                WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-        else()
-            file(DOWNLOAD
-                "https://github.com/libsdl-org/SDL/releases/download/release-${pkgver}/SDL2-devel-${pkgver}-mingw.tar.gz"
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2-mingw.tar.gz"
-                EXPECTED_HASH SHA256=aa43e1531a89551f9f9e14b27953a81d4ac946a9e574b5813cd0f2b36e83cc1c)
-            execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2-mingw.tar.gz"
-                WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-        endif()
-        set(SDL2_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2-${pkgver}")
-    endif()
+if(SndFile_VERSION VERSION_GREATER_EQUAL "1.1.0")
+   set(HAVE_SNDFILE_MPEG TRUE)
 endif()
-find_package(SDL2 2.0.7)
 
-# SDL2_mixer.  On Windows, we use the official development library.
-if(NOT SDL2_MIXER_DIR)
-    if(WIN32 AND NOT MSYS)
-        message(STATUS "Downloading SDL2_mixer Development Library...")
-        set(pkgver "2.6.2")
-        if(MSVC)
-            file(DOWNLOAD
-                "https://github.com/libsdl-org/SDL_mixer/releases/download/release-${pkgver}/SDL2_mixer-devel-${pkgver}-VC.zip"
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-VC.zip"
-                EXPECTED_HASH SHA256=7f050663ccc7911bb9c57b11e32ca79578b712490186b8645ddbbe4e7d2fe1c9)
-            execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-VC.zip"
-                WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-        else()
-            file(DOWNLOAD
-                "https://github.com/libsdl-org/SDL_mixer/releases/download/release-${pkgver}/SDL2_mixer-devel-${pkgver}-mingw.tar.gz"
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-mingw.tar.gz"
-                EXPECTED_HASH SHA256=6c414d05a3b867e0d59e0f9b28ea7e5e64527e612ccf961735dc2478391315b3)
-            execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-mingw.tar.gz"
-                WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-        endif()
-        set(SDL2_MIXER_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2_mixer-${pkgver}")
-    endif()
-endif()
-find_package(SDL2_mixer 2.0.2)
+find_package(FluidSynth)
+find_package(libxmp)
 
-# SDL2_net.  On Windows, we use the official development library.
-if(NOT SDL2_NET_DIR)
-    if(WIN32 AND NOT MSYS)
-        message(STATUS "Downloading SDL2_net Development Library...")
-        set(pkgver "2.2.0")
-        if(MSVC)
-            file(DOWNLOAD
-                "https://github.com/libsdl-org/SDL_net/releases/download/release-${pkgver}/SDL2_net-devel-${pkgver}-VC.zip"
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2_net-VC.zip"
-                EXPECTED_HASH SHA256=f364e55babb44e47b41d039a43c640aa1f76615b726855591b555321c7d870dd)
-            execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2_net-VC.zip"
-                WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-        else()
-            file(DOWNLOAD
-                "https://github.com/libsdl-org/SDL_net/releases/download/release-${pkgver}/SDL2_net-devel-${pkgver}-mingw.tar.gz"
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2_net-mingw.tar.gz"
-                EXPECTED_HASH SHA256=369829e06c509d5e001fabdcbe006ff3efa934f3825dc0ae1b076f5ce9c183c4)
-            execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf
-                "${CMAKE_CURRENT_BINARY_DIR}/SDL2_net-mingw.tar.gz"
-                WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-        endif()
-        set(SDL2_NET_DIR "${CMAKE_CURRENT_BINARY_DIR}/SDL2_net-${pkgver}")
-    endif()
+if(FluidSynth_FOUND)
+    set(HAVE_FLUIDSYNTH TRUE)
 endif()
-find_package(SDL2_net)
 
-# FluidSynth backend
-if (NOT FluidSynth_DIR)
-    if (WIN32 AND MSVC AND CMAKE_SIZEOF_VOID_P STREQUAL 4)
-        message(STATUS "Downloading FluidSynth Development Library...")
-        set(pkgver "2.3.0")
-        file(DOWNLOAD
-            "https://github.com/FluidSynth/fluidsynth/releases/download/v${pkgver}/fluidsynth-${pkgver}-winXP-x86.zip"
-            "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-x86.zip"
-            EXPECTED_HASH SHA256=ea84ee14b9c9f394085bbbe6651df7a119879b5e19ebed47d7fd096b18b56c09)
-        execute_process(
-            COMMAND "${CMAKE_COMMAND}" -E make_directory
-            "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-${pkgver}")
-        execute_process(
-            COMMAND "${CMAKE_COMMAND}" -E tar xf
-            "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-x86.zip"
-            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-${pkgver}")
-        set(FluidSynth_DIR "${CMAKE_CURRENT_BINARY_DIR}/fluidsynth-${pkgver}")
-    endif()
+if(libxmp_FOUND)
+    set(HAVE_LIBXMP TRUE)
 endif()
-# 2.2.0 for unicode fopen on Windows
-find_package(FluidSynth 2.2.0)
 
 # Python 3
 find_package(Python3 COMPONENTS Interpreter)
@@ -182,9 +90,8 @@ find_package(Python3 COMPONENTS Interpreter)
 configure_file(config.h.in config.h)
 
 if(WIN32)
-    install(FILES COPYING DESTINATION .)
+    install(FILES COPYING DESTINATION . RENAME COPYING.txt)
     install(FILES README.md DESTINATION .)
-    install(DIRECTORY docs/ DESTINATION docs)
     install(DIRECTORY examples/ DESTINATION docs/examples)
     install(DIRECTORY autoload/ DESTINATION autoload)
     if(FluidSynth_FOUND)
@@ -194,9 +101,6 @@ else()
     install(FILES COPYING DESTINATION "share/doc/${PROJECT_SHORTNAME}")
     install(FILES README.md DESTINATION "share/doc/${PROJECT_SHORTNAME}")
     install(DIRECTORY autoload/ DESTINATION "share/${PROJECT_SHORTNAME}/autoload")
-    if(EXISTS "${CMAKE_SOURCE_DIR}/docs")
-        install(DIRECTORY docs/ DESTINATION "share/doc/${PROJECT_SHORTNAME}")
-    endif()
     if(EXISTS "${CMAKE_SOURCE_DIR}/examples")
         install(DIRECTORY examples/ DESTINATION "share/doc/${PROJECT_SHORTNAME}/examples")
     endif()
@@ -224,4 +128,5 @@ add_subdirectory(textscreen)
 add_subdirectory(src)
 add_subdirectory(toolsrc)
 add_subdirectory(setup)
+add_subdirectory(docs)
 add_subdirectory(man)

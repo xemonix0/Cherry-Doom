@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id: p_ceilng.c,v 1.14 1998/05/09 10:58:10 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
 //
 // DESCRIPTION:  
 //   Ceiling aninmation (lowering, crushing, raising)
@@ -84,7 +75,7 @@ void T_MoveCeiling (ceiling_t* ceiling)
           case genSilentCrusher:
             break;
           default:
-            S_LoopSound((mobj_t *)&ceiling->sector->soundorg, sfx_stnmov, 8);
+            S_StartSound((mobj_t *)&ceiling->sector->soundorg, sfx_stnmov);
             break;
         }
       }
@@ -148,7 +139,7 @@ void T_MoveCeiling (ceiling_t* ceiling)
           case genSilentCrusher:
             break;
           default:
-            S_LoopSound((mobj_t *)&ceiling->sector->soundorg, sfx_stnmov, 8);
+            S_StartSound((mobj_t *)&ceiling->sector->soundorg, sfx_stnmov);
         }
       }
 

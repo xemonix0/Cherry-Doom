@@ -1,5 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -13,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Put all global state variables here.
@@ -62,7 +55,8 @@ overflow_t overflow[EMU_TOTAL] = {
   { true, false, "spechits_overflow"},
   { true, false, "reject_overflow"},
   { true, false, "intercepts_overflow"},
-  { true, false, "missedbackside_overflow"}
+  { true, false, "missedbackside_overflow"},
+  { true, false, "donut_overflow"}
 };
 
 int demo_version;           // killough 7/19/98: Boom version of demo
@@ -119,6 +113,8 @@ int flashing_hom;     // killough 10/98
 int doom_weapon_toggles; // killough 10/98
 
 int monkeys, default_monkeys;
+
+boolean hide_weapon;
 
 // [FG] centered weapon sprite
 int center_weapon;
@@ -177,7 +173,6 @@ int weaponsquat;
 // Status Bar/HUD
 int alt_arms;
 int smarttotals;
-int smooth_counts;
 // Enemies
 int extra_gibbing;
 int bloodier_gibbing;

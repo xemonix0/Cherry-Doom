@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: p_doors.c,v 1.13 1998/05/09 12:16:29 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //   Door animation code (opening/closing)
@@ -266,8 +257,8 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
     case 133:
       if (!p->cards[it_bluecard] && !p->cards[it_blueskull])
         {
-          p->message = s_PD_BLUEO;             // Ty 03/27/98 - externalized
-          S_StartSound(p->mo,sfx_oof);         // killough 3/20/98
+          doomprintf(MESSAGES_NONE, "%s", s_PD_BLUEO);  // Ty 03/27/98 - externalized
+          S_StartSound(p->mo,sfx_oof);                  // killough 3/20/98
           return 0;
         }
       break;
@@ -276,8 +267,8 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
     case 135:
       if (!p->cards[it_redcard] && !p->cards[it_redskull])
         {
-          p->message = s_PD_REDO;              // Ty 03/27/98 - externalized
-          S_StartSound(p->mo,sfx_oof);         // killough 3/20/98
+          doomprintf(MESSAGES_NONE, "%s", s_PD_REDO); // Ty 03/27/98 - externalized
+          S_StartSound(p->mo,sfx_oof);                // killough 3/20/98
           return 0;
         }
       break;
@@ -286,8 +277,8 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
     case 137:
       if (!p->cards[it_yellowcard] && !p->cards[it_yellowskull])
         {
-          p->message = s_PD_YELLOWO;           // Ty 03/27/98 - externalized
-          S_StartSound(p->mo,sfx_oof);         // killough 3/20/98
+          doomprintf(MESSAGES_NONE, "%s", s_PD_YELLOWO);  // Ty 03/27/98 - externalized
+          S_StartSound(p->mo,sfx_oof);                    // killough 3/20/98
           return 0;
         }
       break;
@@ -413,8 +404,8 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
         return 0;
       if (!player->cards[it_bluecard] && !player->cards[it_blueskull])
         {
-          player->message = s_PD_BLUEK;         // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);     // killough 3/20/98
+          doomprintf(MESSAGES_NONE, "%s", s_PD_BLUEK);  // Ty 03/27/98 - externalized
+          S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
           return 0;
         }
       break;
@@ -425,8 +416,8 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
         return 0;
       if (!player->cards[it_yellowcard] && !player->cards[it_yellowskull])
         {
-          player->message = s_PD_YELLOWK;       // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);     // killough 3/20/98
+          doomprintf(MESSAGES_NONE, "%s", s_PD_YELLOWK);  // Ty 03/27/98 - externalized
+          S_StartSound(player->mo,sfx_oof);               // killough 3/20/98
           return 0;
         }
       break;
@@ -437,8 +428,8 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
         return 0;
       if (!player->cards[it_redcard] && !player->cards[it_redskull])
         {
-          player->message = s_PD_REDK;          // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);     // killough 3/20/98
+          doomprintf(MESSAGES_NONE, "%s", s_PD_REDK); // Ty 03/27/98 - externalized
+          S_StartSound(player->mo,sfx_oof);           // killough 3/20/98
           return 0;
         }
       break;

@@ -1,6 +1,7 @@
 # Add nugget settings to a target.
 
 include(CheckCCompilerFlag)
+include(CheckLinkerFlag)
 
 # Ninja can suppress colored output, toggle this to enable it again.
 option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." FALSE)
@@ -17,6 +18,17 @@ function(_checked_add_compile_option FLAG)
     endif()
 endfunction()
 
+function(_checked_add_link_option FLAG)
+    # Turn flag into suitable internal cache variable.
+    string(REGEX REPLACE "-(.*)" "LDFLAG_\\1" FLAG_FOUND ${FLAG})
+    string(REGEX REPLACE "[,=-]+" "_" FLAG_FOUND "${FLAG_FOUND}")
+
+    check_linker_flag(C ${FLAG} ${FLAG_FOUND})
+    if(${FLAG_FOUND})
+        set(COMMON_LINK_OPTIONS ${COMMON_LINK_OPTIONS} ${FLAG} PARENT_SCOPE)
+    endif()
+endfunction()
+
 # Parameters we want to check for on all compilers.
 #
 # Note that we want to check for these, even on MSVC, because some compilers
@@ -24,9 +36,13 @@ endfunction()
 # same time, like clang-cl.exe.
 
 _checked_add_compile_option(-Wdeclaration-after-statement)
+_checked_add_compile_option(-Werror=array-bounds)
+_checked_add_compile_option(-Werror=clobbered)
+_checked_add_compile_option(-Werror=format-security)
 _checked_add_compile_option(-Werror=implicit-function-declaration)
 _checked_add_compile_option(-Werror=incompatible-pointer-types)
 _checked_add_compile_option(-Werror=int-conversion)
+_checked_add_compile_option(-Werror=volatile-register-var)
 _checked_add_compile_option(-Wformat=2)
 _checked_add_compile_option(-Wnull-dereference)
 _checked_add_compile_option(-Wredundant-decls)
@@ -69,6 +85,26 @@ if(ENABLE_WERROR)
   endif()
 endif()
 
+option(ENABLE_ASAN "Enable ASan" OFF)
+if(ENABLE_ASAN)
+    _checked_add_compile_option(-fsanitize=address)
+    _checked_add_compile_option(-fno-omit-frame-pointer)
+    _checked_add_link_option(-fsanitize=address)
+endif()
+
+option(ENABLE_HARDENING "Enable hardening flags" OFF)
+if(ENABLE_HARDENING)
+    _checked_add_compile_option(-fstack-protector-strong)
+    _checked_add_compile_option(-D_FORTIFY_SOURCE=2)
+    _checked_add_link_option(-Wl,-z,relro)
+endif()
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT HAVE_LTO)
+
+include(CMakeDependentOption)
+cmake_dependent_option(ENABLE_LTO "Enable link time optimization" OFF "HAVE_LTO" OFF)
+
 if(${FORCE_COLORED_OUTPUT})
     _checked_add_compile_option(-fdiagnostics-color=always F_DIAG_COLOR)
     if (NOT F_DIAG_COLOR)
@@ -79,5 +115,7 @@ endif()
 function(target_nuggetdoom_settings)
     foreach(target ${ARGN})
         target_compile_options(${target} PRIVATE ${COMMON_COMPILE_OPTIONS})
+        target_link_options(${target} PRIVATE ${COMMON_LINK_OPTIONS})
+        set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ${ENABLE_LTO})
     endforeach()
 endfunction()

@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id: z_zone.h,v 1.7 1998/05/08 20:32:12 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Zone Memory Allocation, perhaps NeXT ObjectiveC inspired.
@@ -47,25 +38,32 @@
 // ZONE MEMORY
 // PU - purge tags.
 
-enum {
+typedef enum {
   PU_STATIC,
   PU_LEVEL,
   PU_CACHE,
   /* Must always be last -- killough */
   PU_MAX
-};
+} pu_tag;
 
 #define PU_LEVSPEC PU_LEVEL
 
-void *Z_Malloc(size_t size, int tag, void **ptr);
+void *Z_Malloc(size_t size, pu_tag tag, void **ptr);
 void Z_Free(void *ptr);
-void Z_FreeTag(int tag);
-void Z_ChangeTag(void *ptr, int tag);
-void *Z_Calloc(size_t n, size_t n2, int tag, void **user);
-void *Z_Realloc(void *p, size_t n, int tag, void **user);
+void Z_FreeTag(pu_tag tag);
+void Z_ChangeTag(void *ptr, pu_tag tag);
+void *Z_Calloc(size_t n, size_t n2, pu_tag tag, void **user);
+void *Z_Realloc(void *p, size_t n, pu_tag tag, void **user);
 
 // Doom-style printf
-void doomprintf(const char *, ...) PRINTF_ATTR(1, 2);
+
+enum {
+  MESSAGES_NONE,
+  MESSAGES_TOGGLE,
+  MESSAGES_PICKUP,
+};
+
+void doomprintf(int category, const char *, ...) PRINTF_ATTR(2, 3);
 
 #endif
 

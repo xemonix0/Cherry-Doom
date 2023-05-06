@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: st_stuff.c,v 1.46 1998/05/06 16:05:40 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 //
 // DESCRIPTION:
@@ -35,7 +26,7 @@
 #include "i_video.h"
 #include "w_wad.h"
 #include "st_stuff.h"
-#include "hu_stuff.h" // [FG] hud_displayed, hud_distributed
+#include "hu_stuff.h" // [FG] hud_displayed
 #include "st_lib.h"
 #include "r_main.h"
 #include "am_map.h"
@@ -177,6 +168,9 @@ static boolean st_fragson;
 // main bar left
 static patch_t *sbar;
 
+// main bar right, for doom 1.0
+static patch_t *sbarr;
+
 // 0-9, tall numbers
 static patch_t *tallnum[10];
 
@@ -206,6 +200,11 @@ static patch_t *arms[8][2];
 
 // ready-weapon widget
 static st_number_t w_ready;
+
+// [Alaux]
+int smooth_counts;
+int st_health = 100;
+int st_armor = 0;
 
 //jff 2/16/98 status color change levels
 int ammo_red;      // ammo percent less than which status is red
@@ -268,12 +267,6 @@ static int      keyboxes[3];
 static int      st_randomnumber;
 
 extern char     *mapnames[];
-
-// [Nugget] Smooth counts;
-// These are default values, which should go unused if
-// the variables are correctly updated elsewhere
-int STHealth = 100;
-int STArmor = 0;
 
 //
 // STATUS BAR CODE
@@ -396,6 +389,10 @@ void ST_refreshBackground(boolean force)
       // [crispy] center unity rerelease wide status bar
       V_DrawPatch(st_x, 0, BG, sbar);
 
+      // draw right side of bar if needed (Doom 1.0)
+      if (sbarr)
+        V_DrawPatch(ST_ARMSBGX, 0, BG, sbarr);
+
       if (st_notdeathmatch)
         V_DrawPatch(ST_ARMSBGX, 0, BG, armsbg);
 
@@ -442,8 +439,7 @@ boolean ST_Responder(event_t *ev)
         }
     }
   else  // if a user keypress...
-    if (ev->type == ev_keydown)       // Try cheat responder in m_cheat.c
-      return M_FindCheats(ev->data1); // killough 4/17/98, 5/2/98
+    M_CheatResponder(ev);       // Try cheat responder in m_cheat.c
   return false;
 }
 
@@ -724,32 +720,47 @@ void ST_updateWidgets(void)
 
 }
 
-static int NuggetSmoothCount(int shownval, int realval)
+// [Alaux]
+static int SmoothCount(int shownval, int realval)
 {
   int step = realval - shownval;
 
-  if (NOTSTRICTMODE(!smooth_counts || !step)) { return realval; }
-  else {
+  // [Nugget] Disallowed in Strict Mode
+  if (NOTSTRICTMODE(!smooth_counts || !step))
+  {
+    return realval;
+  }
+  else
+  {
     int sign = step / abs(step);
     step = BETWEEN(1, 7, abs(step) / 20);
     shownval += (step+1)*sign;
+  
     if (  (sign > 0 && shownval > realval)
         ||(sign < 0 && shownval < realval))
-      { shownval = realval; }
+    {
+      shownval = realval;
+    }
 
     return shownval;
   }
 }
 
+boolean st_invul;
+
 void ST_Ticker(void)
 {
-  STHealth = NuggetSmoothCount(STHealth, plyr->health);
-  STArmor  = NuggetSmoothCount(STArmor, plyr->armorpoints);
-
+  st_health = SmoothCount(st_health, plyr->health);
+  st_armor  = SmoothCount(st_armor, plyr->armorpoints);
+  
   st_clock++;
   st_randomnumber = M_Random();
   ST_updateWidgets();
   st_oldhealth = plyr->health;
+
+  st_invul = (plyr->powers[pw_invulnerability] > 4*32 ||
+              plyr->powers[pw_invulnerability] & 8) ||
+              plyr->cheats & CF_GODMODE;
 }
 
 static int st_palette = 0;
@@ -831,13 +842,9 @@ void ST_drawWidgets(void)
   
   const int delta = st_widecrispyhud ? WIDESCREENDELTA : 0; // [Nugget]
   
-  // [Nugget] Used to color health and armor counts based on
+  // [Alaux] Used to color health and armor counts based on
   // the real values, only ever relevant when using smooth counts
-  const int health = plyr->health, armor = plyr->armorpoints;
-
-  boolean st_invul = (plyr->powers[pw_invulnerability] > 4*32 ||
-                      plyr->powers[pw_invulnerability] & 8) ||
-                      plyr->cheats & CF_GODMODE;
+  const int health = plyr->health,  armor = plyr->armorpoints;
 
   // clear area
   if (!st_crispyhud && st_statusbaron)
@@ -924,37 +931,50 @@ void ST_drawWidgets(void)
     }
 
   if (!st_crispyhud || nughud.health.x > -1) { // [Nugget] Nugget HUD
-    //jff 2/16/98 make color of health depend on amount
-    // [Nugget] Use the player's health value instead of the percent's value
     // [Alaux] Make color of health gray when invulnerable
-    if (st_invul)                     { STlib_updatePercent(&w_health, cr_gray); }
-    else if (health<health_red)       { STlib_updatePercent(&w_health, cr_red); }
-    else if (health<health_yellow)    { STlib_updatePercent(&w_health, cr_gold); }
-    else if (health<=health_green)    { STlib_updatePercent(&w_health, cr_green); }
-    else                              { STlib_updatePercent(&w_health, cr_blue2); } //killough 2/28/98
+    if (st_invul)
+      STlib_updatePercent(&w_health, cr_gray);
+    else
+    //jff 2/16/98 make color of health depend on amount
+    if (health<health_red)
+      STlib_updatePercent(&w_health, cr_red);
+    else if (health<health_yellow)
+      STlib_updatePercent(&w_health, cr_gold);
+    else if (health<=health_green)
+      STlib_updatePercent(&w_health, cr_green);
+    else
+      STlib_updatePercent(&w_health, cr_blue2); //killough 2/28/98
   }
 
   if (!st_crispyhud || nughud.armor.x > -1) { // [Nugget] Nugget HUD
     // color of armor depends on type
-    // [Nugget] Use code from our implementation,
-    // differently formatted to save space, and check for God Mode
-    if (hud_armor_type && !(plyr->cheats & CF_GODMODE))
+    if (hud_armor_type)
     {
-      STlib_updatePercent(&w_armor, (!plyr->armortype)
-                                    ? cr_red
-                                    : (plyr->armortype == 1)
-                                      ? cr_green
-                                      : cr_blue2);
+      // [Nugget] Make it gray ONLY if the player is in God Mode
+      if (plyr->cheats & CF_GODMODE)
+        STlib_updatePercent(&w_armor, cr_gray);
+      else if (!plyr->armortype)
+        STlib_updatePercent(&w_armor, cr_red);
+      else if (plyr->armortype == 1)
+        STlib_updatePercent(&w_armor, cr_green);
+      else
+        STlib_updatePercent(&w_armor, cr_blue2);
     }
-    else {
-      //jff 2/16/98 make color of armor depend on amount
-      // [Nugget] Use the player's armor value instead of the percent's value
-      // [Nugget] Make it gray if the player's in God Mode
-      if (plyr->cheats & CF_GODMODE)  { STlib_updatePercent(&w_armor, cr_gray); }
-      else if (armor<armor_red)       { STlib_updatePercent(&w_armor, cr_red); }
-      else if (armor<armor_yellow)    { STlib_updatePercent(&w_armor, cr_gold); }
-      else if (armor<=armor_green)    { STlib_updatePercent(&w_armor, cr_green); }
-      else                            { STlib_updatePercent(&w_armor, cr_blue2); } //killough 2/28/98
+    else
+    {
+    // [Nugget] Make it gray ONLY if the player is in God Mode
+    if (plyr->cheats & CF_GODMODE)
+      STlib_updatePercent(&w_armor, cr_gray);
+    else
+    //jff 2/16/98 make color of armor depend on amount
+    if (armor<armor_red)
+      STlib_updatePercent(&w_armor, cr_red);
+    else if (armor<armor_yellow)
+      STlib_updatePercent(&w_armor, cr_gold);
+    else if (armor<=armor_green)
+      STlib_updatePercent(&w_armor, cr_green);
+    else
+      STlib_updatePercent(&w_armor, cr_blue2); //killough 2/28/98
     }
   }
 
@@ -1093,7 +1113,16 @@ void ST_loadGraphics(void)
     }
 
   // status bar background bits
-  sbar = (patch_t *) W_CacheLumpName("STBAR", PU_STATIC);
+  if (W_CheckNumForName("STBAR") >= 0)
+  {
+    sbar  = (patch_t *) W_CacheLumpName("STBAR", PU_STATIC);
+    sbarr = NULL;
+  }
+  else
+  {
+    sbar  = (patch_t *) W_CacheLumpName("STMBARL", PU_STATIC);
+    sbarr = (patch_t *) W_CacheLumpName("STMBARR", PU_STATIC);
+  }
 
   // face states
   facenum = 0;
@@ -1164,6 +1193,8 @@ void ST_unloadGraphics(void)
     Z_ChangeTag(keys[i], PU_CACHE);
 
   Z_ChangeTag(sbar, PU_CACHE);
+  if (sbarr)
+    Z_ChangeTag(sbarr, PU_CACHE);
 
   // killough 3/7/98: free each face background color
   for (i=0;i<MAXPLAYERS;i++)
@@ -1235,7 +1266,7 @@ void ST_createWidgets(void)
                     (st_crispyhud ? nughud.health.x : ST_HEALTHX) + (delta*nughud.health.wide),
                     (st_crispyhud ? nughud.health.y : ST_HEALTHY),
                     tallnum,
-                    &STHealth, // [Nugget] Smooth counts
+                    &st_health,
                     &st_statusbaron,
                     tallpercent);
 
@@ -1283,7 +1314,7 @@ void ST_createWidgets(void)
                     (st_crispyhud ? nughud.armor.x : ST_ARMORX) + (delta*nughud.armor.wide),
                     (st_crispyhud ? nughud.armor.y : ST_ARMORY),
                     tallnum,
-                    &STArmor, // [Nugget] Smooth counts
+                    &st_armor,
                     &st_statusbaron, tallpercent);
 
   // keyboxes 0-2
@@ -1374,6 +1405,8 @@ void ST_createWidgets(void)
                 &st_statusbaron,
                 ST_MAXAMMO3WIDTH);
 }
+
+// [Nugget] Removed ST_MoveHud(), as we don't need it
 
 static boolean st_stopped = true;
 

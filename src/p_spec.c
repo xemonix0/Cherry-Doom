@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: p_spec.c,v 1.56 1998/05/25 10:40:30 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //   -Loads and initializes texture and flat animation sequences
@@ -57,14 +48,22 @@
 #include "r_sky.h"   // R_GetSkyColor
 #include "m_swap.h"
 #include "i_video.h" // [FG] uncapped
-// [Nugget]
-#include "hu_stuff.h" // hud_secret_message
-#include "m_misc2.h" // M_snprintf()
+#include "m_misc2.h"
+#include "hu_stuff.h" // [Nugget] hud_secret_message
 
 //
 // Animating textures and planes
 // There is another anim_t used in wi_stuff, unrelated.
 //
+
+typedef enum
+{
+  terrain_solid,
+  terrain_water,
+  terrain_slime,
+  terrain_lava
+} terrain_t;
+
 typedef struct
 {
   boolean     istexture;
@@ -162,6 +161,33 @@ void P_InitPicAnims (void)
 
           lastanim->picnum = R_FlatNumForName (animdefs[i].endname);
           lastanim->basepic = R_FlatNumForName (animdefs[i].startname);
+
+          if (lastanim->picnum >= lastanim->basepic)
+          {
+            char *startname;
+            terrain_t terrain;
+            int j;
+
+            startname = M_StringDuplicate(animdefs[i].startname);
+            M_ForceUppercase(startname);
+
+            // [FG] play sound when hitting animated floor
+            if (strstr(startname, "WATER") || strstr(startname, "BLOOD"))
+              terrain = terrain_water;
+            else if (strstr(startname, "NUKAGE") || strstr(startname, "SLIME"))
+              terrain = terrain_slime;
+            else if (strstr(startname, "LAVA"))
+              terrain = terrain_lava;
+            else
+              terrain = terrain_solid;
+
+            free(startname);
+
+            for (j = lastanim->basepic; j <= lastanim->picnum; j++)
+            {
+              flatterrain[j] = terrain;
+            }
+          }
         }
 
       lastanim->istexture = animdefs[i].istexture;
@@ -180,6 +206,22 @@ void P_InitPicAnims (void)
       lastanim++;
     }
   Z_ChangeTag (animdefs,PU_CACHE); //jff 3/23/98 allow table to be freed
+}
+
+// [FG] play sound when hitting animated floor
+void P_HitFloor (mobj_t *mo, int oof)
+{
+  const short floorpic = mo->subsector->sector->floorpic;
+  terrain_t terrain = flatterrain[floorpic];
+
+  int hitsound[][2] = {
+    {sfx_None,   sfx_oof},    // terrain_solid
+    {sfx_splsml, sfx_splash}, // terrain_water
+    {sfx_plosml, sfx_ploosh}, // terrain_slime
+    {sfx_lavsml, sfx_lvsiz}   // terrain_lava
+  };
+
+  S_StartSound(mo, hitsound[terrain][oof]);
 }
 
 ///////////////////////////////////////////////////////////////
@@ -759,7 +801,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           !player->cards[it_yellowcard] &&
           !player->cards[it_yellowskull])
         {
-          player->message = s_PD_ANY; // Ty 03/27/98 - externalized
+          doomprintf(MESSAGES_NONE, "%s", s_PD_ANY); // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
           return false;
         }
@@ -768,7 +810,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
       if (!player->cards[it_redcard] &&
           (!skulliscard || !player->cards[it_redskull]))
         {
-          player->message = skulliscard? s_PD_REDK : s_PD_REDC; // Ty 03/27/98 - externalized
+          doomprintf(MESSAGES_NONE, "%s", skulliscard? s_PD_REDK : s_PD_REDC); // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
           return false;
         }
@@ -777,7 +819,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
       if (!player->cards[it_bluecard] &&
           (!skulliscard || !player->cards[it_blueskull]))
         {
-          player->message = skulliscard? s_PD_BLUEK : s_PD_BLUEC; // Ty 03/27/98 - externalized
+          doomprintf(MESSAGES_NONE, "%s", skulliscard? s_PD_BLUEK : s_PD_BLUEC); // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
           return false;
         }
@@ -786,7 +828,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
       if (!player->cards[it_yellowcard] &&
           (!skulliscard || !player->cards[it_yellowskull]))
         {
-          player->message = skulliscard? s_PD_YELLOWK : s_PD_YELLOWC; // Ty 03/27/98 - externalized
+          doomprintf(MESSAGES_NONE, "%s", skulliscard? s_PD_YELLOWK : s_PD_YELLOWC); // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
           return false;
         }
@@ -795,7 +837,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
       if (!player->cards[it_redskull] &&
           (!skulliscard || !player->cards[it_redcard]))
         {
-          player->message = skulliscard? s_PD_REDK : s_PD_REDS; // Ty 03/27/98 - externalized
+          doomprintf(MESSAGES_NONE, "%s", skulliscard? s_PD_REDK : s_PD_REDS); // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
           return false;
         }
@@ -804,7 +846,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
       if (!player->cards[it_blueskull] &&
           (!skulliscard || !player->cards[it_bluecard]))
         {
-          player->message = skulliscard? s_PD_BLUEK : s_PD_BLUES; // Ty 03/27/98 - externalized
+          doomprintf(MESSAGES_NONE, "%s", skulliscard? s_PD_BLUEK : s_PD_BLUES); // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
           return false;
         }
@@ -813,7 +855,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
       if (!player->cards[it_yellowskull] &&
           (!skulliscard || !player->cards[it_yellowcard]))
         {
-          player->message = skulliscard? s_PD_YELLOWK : s_PD_YELLOWS; // Ty 03/27/98 - externalized
+          doomprintf(MESSAGES_NONE, "%s", skulliscard? s_PD_YELLOWK : s_PD_YELLOWS); // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
           return false;
         }
@@ -827,7 +869,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
            !player->cards[it_yellowcard] ||
            !player->cards[it_yellowskull]))
         {
-          player->message = s_PD_ALL6; // Ty 03/27/98 - externalized
+          doomprintf(MESSAGES_NONE, "%s", s_PD_ALL6); // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
           return false;
         }
@@ -838,7 +880,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
            // http://prboom.sourceforge.net/mbf-bugs.html
            !(player->cards[it_yellowcard] | (demo_version == 203 ? !player->cards[it_yellowskull] : player->cards[it_yellowskull]))))
         {
-          player->message = s_PD_ALL3; // Ty 03/27/98 - externalized
+          doomprintf(MESSAGES_NONE, "%s", s_PD_ALL3); // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
           return false;
         }
@@ -2093,22 +2135,13 @@ static void P_SecretRevealed(player_t *player)
 {
   if (hud_secret_message && player == &players[consoleplayer])
   {
-    static int sfx_id = -1;
     static char str_count[32]; // [Nugget]
 
     // [Nugget] Secret count in secret revealed message, from Crispy Doom
     M_snprintf(str_count, sizeof(str_count), "Secret %d of %d revealed!", player->secretcount, totalsecret);
-    player->centermessage = (hud_secret_message == secretmessage_count) ? str_count : s_HUSTR_SECRETFOUND;
-
-    if (sfx_id == -1)
-    {
-      sfx_id = I_GetSfxLumpNum(&S_sfx[sfx_secret]) != -1 ? sfx_secret :
-               I_GetSfxLumpNum(&S_sfx[sfx_itmbk])  != -1 ? sfx_itmbk  :
-               -2;
-    }
-
-    if (sfx_id >= 0)
-      S_StartSound(NULL, sfx_id);
+    player->secretmessage = (hud_secret_message == secretmessage_count) ? str_count : s_HUSTR_SECRETFOUND;
+    
+    S_StartSound(NULL, sfx_secret);
   }
 }
 
@@ -2676,9 +2709,7 @@ void P_FreeScrollers (void)
 
 void R_InterpolateTextureOffsets (void)
 {
-  extern int freeze; // [Nugget]
-  
-  if (uncapped && leveltime > oldleveltime && freeze != 2) // [Nugget] Freeze scrollers
+  if (uncapped && leveltime > oldleveltime && !frozen_mode)
   {
     int i;
 

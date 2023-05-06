@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id: d_french.h,v 1.3 1998/05/04 21:34:04 thldrmn Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //  Printed strings, french translation.
@@ -44,7 +35,25 @@
 //
 #define PRESSKEY    "APPUYEZ SUR UNE TOUCHE."
 #define PRESSYN     "APPUYEZ SUR Y OU N"
+// Only one quit message was translated (the first in the list here),
+// and the French version of doom2.exe always shows the same message.
+// This is done through a tweak in the source code.  Here, this is
+// simulated by translating every message to the same message. (Simon Howard)
 #define QUITMSG     "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG1    "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG2    "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG3    "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG4    "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG5    "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG6    "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG7    "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG8    "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG9    "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG10   "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG11   "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG12   "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG13   "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
+#define QUITMSG14   "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?"
 #define LOADNET     "VOUS NE POUVEZ PAS CHARGER\nUN JEU EN RESEAU!\n\n"PRESSKEY
 #define QLOADNET    "CHARGEMENT RAPIDE INTERDIT EN RESEAU!\n\n"PRESSKEY
 #define QSAVESPOT   "VOUS N'AVEZ PAS CHOISI UN EMPLACEMENT!\n\n"PRESSKEY

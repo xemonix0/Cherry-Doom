@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: i_video.c,v 1.12 1998/05/03 22:40:35 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -16,11 +12,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      DOOM graphics stuff
@@ -52,10 +43,6 @@
 
 #include "icon.c"
 
-#ifdef _WIN32
-#include "../win32/win_version.h"
-#endif
-
 int SCREENWIDTH, SCREENHEIGHT;
 int NONWIDEWIDTH; // [crispy] non-widescreen SCREENWIDTH
 int WIDESCREENDELTA; // [crispy] horizontal widescreen offset
@@ -68,13 +55,16 @@ static SDL_Window *screen;
 static SDL_Renderer *renderer;
 static SDL_Surface *argbbuffer;
 static SDL_Texture *texture;
+static SDL_Texture *texture_upscaled;
 static SDL_Rect blit_rect = {0};
 
 int window_width, window_height;
+int window_position_x, window_position_y;
 static int window_x, window_y;
-char *window_position;
 int video_display = 0;
-int fullscreen_width = 0, fullscreen_height = 0; // [FG] exclusive fullscreen
+static int fullscreen_width, fullscreen_height; // [FG] exclusive fullscreen
+boolean reset_screen;
+boolean smooth_scaling;
 
 void *I_GetSDLWindow(void)
 {
@@ -289,9 +279,10 @@ int grabmouse = 1;
 
 // Flag indicating whether the screen is currently visible:
 // when the screen isnt visible, don't render the screen
-boolean screenvisible;
+boolean screenvisible = true;
 static boolean window_focused = true;
 boolean fullscreen;
+boolean exclusive_fullscreen;
 
 //
 // MouseShouldBeGrabbed
@@ -410,21 +401,6 @@ static int TranslateKey(SDL_Keysym *sym)
                 return 0;
             }
     }
-}
-
-int I_ScanCode2DoomCode (int a)
-{
-   // haleyjd
-   return a;
-}
-
-// Automatic caching inverter, so you don't need to maintain two tables.
-// By Lee Killough
-
-int I_DoomCode2ScanCode (int a)
-{
-   // haleyjd
-   return a;
 }
 
 // [FG] mouse button and movement handling from Chocolate Doom 3.0
@@ -659,17 +635,9 @@ static boolean ToggleFullScreenKeyShortcut(SDL_Keysym *sym)
             sym->scancode == SDL_SCANCODE_KP_ENTER) && (sym->mod & flags) != 0;
 }
 
-static void I_ToggleFullScreen(void)
+void I_ToggleFullScreen(void)
 {
     unsigned int flags = 0;
-
-    // [FG] exclusive fullscreen
-    if (fullscreen_width != 0 || fullscreen_height != 0)
-    {
-        return;
-    }
-
-    fullscreen = !fullscreen;
 
     if (fullscreen)
     {
@@ -679,6 +647,9 @@ static void I_ToggleFullScreen(void)
     }
 
     SDL_SetWindowFullscreen(screen, flags);
+#ifdef _WIN32
+    I_InitWindowIcon();
+#endif
 
     if (!fullscreen)
     {
@@ -687,20 +658,27 @@ static void I_ToggleFullScreen(void)
     }
 }
 
-// [FG] the fullscreen variable gets toggled once by the menu code, so we
-// toggle it back here, it is then toggled again in I_ToggleFullScreen()
-
-void I_ToggleToggleFullScreen(void)
+void I_ToggleExclusiveFullScreen(void)
 {
-    // [FG] exclusive fullscreen
-    if (fullscreen_width != 0 || fullscreen_height != 0)
+    if (!fullscreen)
     {
         return;
     }
 
-    fullscreen = !fullscreen;
+    if (exclusive_fullscreen)
+    {
+        SDL_SetWindowSize(screen, fullscreen_width, fullscreen_height);
+        SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN);
+    }
+    else
+    {
+        SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    }
+}
 
-    I_ToggleFullScreen();
+void I_ToggleVsync(void)
+{
+    SDL_RenderSetVSync(renderer, use_vsync);
 }
 
 // killough 3/22/98: rewritten to use interrupt-driven keyboard queue
@@ -718,8 +696,12 @@ void I_GetEvent(void)
             case SDL_KEYDOWN:
                 if (ToggleFullScreenKeyShortcut(&sdlevent.key.keysym))
                 {
-                    I_ToggleFullScreen();
-                    break;
+                    if (!exclusive_fullscreen)
+                    {
+                        fullscreen = !fullscreen;
+                        M_ToggleFullScreen();
+                        break;
+                    }
                 }
                 // deliberate fall-though
 
@@ -777,17 +759,21 @@ void I_GetEvent(void)
 // This is to combine all mouse movement for a tic into one mouse
 // motion event.
 
+// The mouse input values are input directly to the game, but when
+// the values exceed the value of mouse_threshold, they are multiplied
+// by mouse_acceleration to increase the speed.
+
 int mouse_acceleration;
-int mouse_threshold; // 10;
+int mouse_acceleration_threshold;
 
 static int AccelerateMouse(int val)
 {
     if (val < 0)
         return -AccelerateMouse(-val);
 
-    if (val > mouse_threshold)
+    if (val > mouse_acceleration_threshold)
     {
-        return (val - mouse_threshold) * mouse_acceleration / 100 + mouse_threshold;
+        return (val - mouse_acceleration_threshold) * (mouse_acceleration + 10) / 10 + mouse_acceleration_threshold;
     }
     else
     {
@@ -868,8 +854,7 @@ void I_StartTic (void)
 }
 
 int use_vsync;     // killough 2/8/98: controls whether vsync is called
-int page_flip;     // killough 8/15/98: enables page flipping
-int hires;
+int hires, default_hires;
 
 static int in_graphics_mode;
 
@@ -886,10 +871,38 @@ int stretch_to_fit; // [Nugget]
 static int actualheight;
 
 int uncapped; // [FG] uncapped rendering frame rate
+int fpslimit; // when uncapped, limit framerate to this value
 int integer_scaling; // [FG] force integer scales
 int vga_porch_flash; // emulate VGA "porch" behaviour
 int fps; // [FG] FPS counter widget
 int widescreen; // widescreen mode
+
+static inline void I_UpdateRender (void)
+{
+    SDL_LowerBlit(sdlscreen, &blit_rect, argbbuffer, &blit_rect);
+    SDL_UpdateTexture(texture, NULL, argbbuffer->pixels, argbbuffer->pitch);
+    SDL_RenderClear(renderer);
+
+    if (smooth_scaling)
+    {
+        // Render this intermediate texture into the upscaled texture
+        // using "nearest" integer scaling.
+
+        SDL_SetRenderTarget(renderer, texture_upscaled);
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
+
+        // Finally, render this upscaled texture to screen using linear scaling.
+
+        SDL_SetRenderTarget(renderer, NULL);
+        SDL_RenderCopy(renderer, texture_upscaled, NULL, NULL);
+    }
+    else
+    {
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
+    }
+
+    SDL_RenderPresent(renderer);
+}
 
 void I_FinishUpdate(void)
 {
@@ -899,6 +912,12 @@ void I_FinishUpdate(void)
    // haleyjd 10/08/05: from Chocolate DOOM:
 
    UpdateGrab();
+
+   if (reset_screen)
+   {
+      I_ResetScreen();
+      reset_screen = false;
+   }
 
    // draws little dots on the bottom of the screen
    if (devparm)
@@ -957,17 +976,35 @@ void I_FinishUpdate(void)
 
    I_DrawDiskIcon();
 
-   SDL_LowerBlit(sdlscreen, &blit_rect, argbbuffer, &blit_rect);
+   I_UpdateRender();
 
-   SDL_UpdateTexture(texture, NULL, argbbuffer->pixels, argbbuffer->pitch);
-
-   SDL_RenderClear(renderer);
-   SDL_RenderCopy(renderer, texture, NULL, NULL);
-   SDL_RenderPresent(renderer);
-
-   // [AM] Figure out how far into the current tic we're in as a fixed_t.
    if (uncapped)
    {
+        if (fpslimit >= TICRATE)
+        {
+            uint64_t target_time = 1000000ull / fpslimit;
+            static uint64_t start_time;
+
+            while (1)
+            {
+                uint64_t current_time = I_GetTimeUS();
+                uint64_t elapsed_time = current_time - start_time;
+                uint64_t remaining_time = 0;
+
+                if (elapsed_time >= target_time)
+                {
+                    start_time = current_time;
+                    break;
+                }
+
+                remaining_time = target_time - elapsed_time;
+
+                if (remaining_time > 1000)
+                    I_Sleep((remaining_time - 1000) / 1000);
+            }
+        }
+
+        // [AM] Figure out how far into the current tic we're in as a fixed_t.
         fractionaltic = I_GetFracTime();
    }
 
@@ -1163,19 +1200,7 @@ void I_ShutdownGraphics(void)
 {
    if (in_graphics_mode)  // killough 10/98
    {
-      char buf[16];
-      int buflen;
-
-      // Store the (x, y) coordinates of the window
-      // in the "window_position" config parameter
-      SDL_GetWindowPosition(screen, &window_x, &window_y);
-      M_snprintf(buf, sizeof(buf), "%i,%i", window_x, window_y);
-      buflen = strlen(buf) + 1;
-      if (strlen(window_position) < buflen)
-      {
-          window_position = I_Realloc(window_position, buflen);
-      }
-      M_StringCopy(window_position, buf, buflen);
+      SDL_GetWindowPosition(screen, &window_position_x, &window_position_y);
 
       UpdateGrab();
       in_graphics_mode = false;
@@ -1194,6 +1219,8 @@ boolean I_WritePNGfile(char *filename)
   // [FG] native PNG pixel format
   const uint32_t png_format = SDL_PIXELFORMAT_RGB24;
   format = SDL_AllocFormat(png_format);
+
+  I_UpdateRender();
 
   // [FG] adjust cropping rectangle if necessary
   SDL_GetRendererOutputSize(renderer, &rect.w, &rect.h);
@@ -1253,6 +1280,7 @@ boolean I_WritePNGfile(char *filename)
         if (fwrite(png, 1, size, file) == size)
         {
           ret = true;
+          printf("I_WritePNGfile: %s\n", filename);
         }
         fclose(file);
       }
@@ -1299,6 +1327,13 @@ static void CenterWindow(int *x, int *y, int w, int h)
 
     *x = bounds.x + SDL_max((bounds.w - w) / 2, 0);
     *y = bounds.y + SDL_max((bounds.h - h) / 2, 0);
+
+    // Fix exclusive fullscreen mode.
+    if (*x == 0 && *y == 0)
+    {
+        *x = SDL_WINDOWPOS_CENTERED;
+        *y = SDL_WINDOWPOS_CENTERED;
+    }
 }
 
 static void I_GetWindowPosition(int *x, int *y, int w, int h)
@@ -1323,25 +1358,18 @@ static void I_GetWindowPosition(int *x, int *y, int w, int h)
         return;
     }
 
-    // in windowed mode, the desired window position can be specified
-    // in the configuration file.
-
-    if (window_position == NULL || !strcmp(window_position, ""))
+    // center
+    if (window_position_x == 0 && window_position_y == 0)
     {
-        *x = *y = SDL_WINDOWPOS_UNDEFINED;
-    }
-    else if (!strcmp(window_position, "center"))
-    {
-        // Note: SDL has a SDL_WINDOWPOS_CENTER, but this is useless for our
+        // Note: SDL has a SDL_WINDOWPOS_CENTERED, but this is useless for our
         // purposes, since we also want to control which display we appear on.
         // So we have to do this ourselves.
         CenterWindow(x, y, w, h);
     }
-    else if (sscanf(window_position, "%i,%i", x, y) != 2)
+    else
     {
-        // invalid format: revert to default
-        fprintf(stderr, "I_GetWindowPosition: invalid window_position setting\n");
-        *x = *y = SDL_WINDOWPOS_UNDEFINED;
+        *x = window_position_x;
+        *y = window_position_y;
     }
 }
 
@@ -1408,6 +1436,64 @@ void I_GetScreenDimensions(void)
    WIDESCREENDELTA = (SCREENWIDTH - NONWIDEWIDTH) / 2;
 }
 
+static void CreateUpscaledTexture(int v_w, int v_h)
+{
+    SDL_RendererInfo info;
+    SDL_DisplayMode mode;
+    int w_upscale, h_upscale;
+
+    SDL_GetRendererInfo(renderer, &info);
+
+    if (info.flags & SDL_RENDERER_SOFTWARE)
+    {
+        return;
+    }
+
+    SDL_GetDesktopDisplayMode(video_display, &mode);
+
+    // Pick texture size the next integer multiple of the screen dimensions.
+    // If one screen dimension matches an integer multiple of the original
+    // resolution, there is no need to overscale in this direction.
+
+    w_upscale = (mode.w + v_w - 1) / v_w;
+    h_upscale = (mode.h + v_h - 1) / v_h;
+
+    while (w_upscale * v_w > info.max_texture_width)
+    {
+      --w_upscale;
+    }
+    while (h_upscale * v_h > info.max_texture_height)
+    {
+      --h_upscale;
+    }
+
+    if (w_upscale < 1)
+    {
+        w_upscale = 1;
+    }
+    if (h_upscale < 1)
+    {
+        h_upscale = 1;
+    }
+
+    if (texture_upscaled != NULL)
+    {
+        SDL_DestroyTexture(texture_upscaled);
+    }
+
+    // Set the scaling quality for rendering the upscaled texture
+    // to "linear", which looks much softer and smoother than "nearest"
+    // but does a better job at downscaling from the upscaled texture to
+    // screen.
+
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+
+    texture_upscaled = SDL_CreateTexture(renderer,
+                                        SDL_GetWindowPixelFormat(screen),
+                                        SDL_TEXTUREACCESS_TARGET,
+                                        w_upscale* v_w, h_upscale * v_h);
+}
+
 //
 // killough 11/98: New routine, for setting hires and page flipping
 //
@@ -1428,6 +1514,7 @@ static void I_InitGraphicsMode(void)
 
    v_w = window_width;
    v_h = window_height;
+   hires = default_hires;
 
    if (firsttime)
    {
@@ -1516,8 +1603,7 @@ static void I_InitGraphicsMode(void)
       // Run in fullscreen mode.
       //
 
-      else if (M_CheckParm("-fullscreen") || fullscreen ||
-               fullscreen_width != 0 || fullscreen_height != 0)
+      else if (M_CheckParm("-fullscreen"))
       {
          fullscreen = true;
       }
@@ -1527,37 +1613,42 @@ static void I_InitGraphicsMode(void)
    flags |= SDL_WINDOW_RESIZABLE;
    flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 
+   if (SDL_GetCurrentDisplayMode(video_display, &mode) != 0)
+   {
+      I_Error("Could not get display mode for video display #%d: %s",
+              video_display, SDL_GetError());
+   }
+
+   fullscreen_width = mode.w;
+   fullscreen_height = mode.h;
+
    if (fullscreen)
    {
-       if (fullscreen_width == 0 && fullscreen_height == 0)
-       {
-           flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-       }
-       else
-       {
-           v_w = fullscreen_width;
-           v_h = fullscreen_height;
-           // [FG] exclusive fullscreen
-           flags |= SDL_WINDOW_FULLSCREEN;
-       }
+      if (exclusive_fullscreen)
+      {
+         v_w = fullscreen_width;
+         v_h = fullscreen_height;
+         // [FG] exclusive fullscreen
+         flags |= SDL_WINDOW_FULLSCREEN;
+      }
+      else
+      {
+         flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+      }
+   }
+
+   // Exclusive fullscreen only works in fullscreen mode.
+   if (exclusive_fullscreen && !fullscreen)
+   {
+      exclusive_fullscreen = false;
    }
 
    if (M_CheckParm("-borderless"))
    {
-       flags |= SDL_WINDOW_BORDERLESS;
+      flags |= SDL_WINDOW_BORDERLESS;
    }
 
    I_GetWindowPosition(&window_x, &window_y, v_w, v_h);
-
-#ifdef _WIN32
-   // [JN] Windows 11 idiocy. Indicate that window using OpenGL mode (while it's
-   // a Direct3D in fact), so SDL texture will not be freezed upon vsync
-   // toggling.
-   if (I_CheckWindows11())
-   {
-      flags |= SDL_WINDOW_OPENGL;
-   }
-#endif
 
    // [FG] create rendering window
    if (screen == NULL)
@@ -1636,37 +1727,20 @@ static void I_InitGraphicsMode(void)
    // [FG] renderer flags
    flags = 0;
 
-   if (SDL_GetCurrentDisplayMode(video_display, &mode) != 0)
-   {
-      I_Error("Could not get display mode for video display #%d: %s",
-              video_display, SDL_GetError());
-   }
-
-   if (page_flip && use_vsync && !timingdemo && mode.refresh_rate > 0)
+   if (use_vsync && !timingdemo && mode.refresh_rate > 0)
    {
       flags |= SDL_RENDERER_PRESENTVSYNC;
    }
 
-   // [FG] page_flip = !force_software_renderer
-   if (!page_flip)
-   {
-      flags |= SDL_RENDERER_SOFTWARE;
-      flags &= ~SDL_RENDERER_PRESENTVSYNC;
-      use_vsync = false;
-   }
-
    // [FG] create renderer
 
-   if (renderer != NULL)
+   if (renderer == NULL)
    {
-      SDL_DestroyRenderer(renderer);
-      texture = NULL;
+      renderer = SDL_CreateRenderer(screen, -1, flags);
    }
 
-   renderer = SDL_CreateRenderer(screen, -1, flags);
-
    // [FG] try again without hardware acceleration
-   if (renderer == NULL && page_flip)
+   if (renderer == NULL)
    {
       flags |= SDL_RENDERER_SOFTWARE;
       flags &= ~SDL_RENDERER_PRESENTVSYNC;
@@ -1676,7 +1750,7 @@ static void I_InitGraphicsMode(void)
       if (renderer != NULL)
       {
          // remove any special flags
-         use_vsync = page_flip = false;
+         use_vsync = false;
       }
    }
 
@@ -1698,6 +1772,8 @@ static void I_InitGraphicsMode(void)
    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
    SDL_RenderClear(renderer);
    SDL_RenderPresent(renderer);
+
+   V_Init();
 
    // [FG] create paletted frame buffer
 
@@ -1754,19 +1830,10 @@ static void I_InitGraphicsMode(void)
                                SDL_TEXTUREACCESS_STREAMING,
                                v_w, v_h);
 
-   // Workaround for SDL 2.0.14 (and 2.0.16) alt-tab bug (taken from Doom Retro)
-#if defined(_WIN32)
+   if (smooth_scaling)
    {
-      SDL_version ver;
-      SDL_GetVersion(&ver);
-      if (ver.major == 2 && ver.minor == 0 && (ver.patch == 14 || ver.patch == 16))
-      {
-         SDL_SetHintWithPriority(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "1", SDL_HINT_OVERRIDE);
-      }
+      CreateUpscaledTexture(v_w, v_h);
    }
-#endif
-
-   V_Init();
 
    UpdateGrab();
 
@@ -1779,13 +1846,6 @@ static void I_InitGraphicsMode(void)
 
 void I_ResetScreen(void)
 {
-   if (!in_graphics_mode)
-   {
-      setsizeneeded = true;
-      V_Init();
-      return;
-   }
-
    I_ShutdownGraphics();     // Switch out of old graphics mode
 
    I_InitGraphicsMode();     // Switch to new graphics mode

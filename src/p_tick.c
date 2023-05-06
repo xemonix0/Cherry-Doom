@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: p_tick.c,v 1.7 1998/05/15 00:37:56 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Thinker, Ticker.
@@ -52,6 +43,8 @@ thinker_t thinkercap;
 
 thinker_t thinkerclasscap[NUMTHCLASS];
 
+int init_thinkers_count = 0;
+
 //
 // P_InitThinkers
 //
@@ -64,6 +57,8 @@ void P_InitThinkers(void)
     thinkerclasscap[i].cprev = thinkerclasscap[i].cnext = &thinkerclasscap[i];
 
   thinkercap.prev = thinkercap.next  = &thinkercap;
+
+  init_thinkers_count++;
 }
 
 //
@@ -244,8 +239,7 @@ static void P_RunThinkers (void)
   T_MusInfo();
 }
 
-// [Nugget] From DSDA-Doom
-static void P_FrozenTicker(void)
+static void P_FrozenTicker (void)
 {
   int i;
 
@@ -272,9 +266,7 @@ static void P_FrozenTicker(void)
         if (mo->player && mo->player == &players[displayplayer])
           continue;
 
-        mo->oldx = mo->x;
-        mo->oldy = mo->y;
-        mo->oldz = mo->z;
+        mo->interp = 0;
       }
   }
 
@@ -288,7 +280,6 @@ static void P_FrozenTicker(void)
 void P_Ticker (void)
 {
   int i;
-  extern int freeze;
 
   // pause if in menu and at least one tic has been run
   //
@@ -302,24 +293,26 @@ void P_Ticker (void)
                  players[consoleplayer].viewz != 1))
     return;
 
-  // [Nugget]
-  if (freeze == 2)
-  { P_FrozenTicker(); }
-  else {
-    P_MapStart();
-    if (gamestate == GS_LEVEL)
-    {
-    for (i=0; i<MAXPLAYERS; i++)
-      if (playeringame[i])
-        P_PlayerThink(&players[i]);
-    }
-
-    P_RunThinkers();
-    P_UpdateSpecials();
-    P_RespawnSpecials();
-    P_MapEnd();
+  if (frozen_mode)
+  {
+    P_FrozenTicker();
   }
-  
+  else
+  {
+  P_MapStart();
+  if (gamestate == GS_LEVEL)
+  {
+  for (i=0; i<MAXPLAYERS; i++)
+    if (playeringame[i])
+      P_PlayerThink(&players[i]);
+  }
+
+  P_RunThinkers();
+  P_UpdateSpecials();
+  P_RespawnSpecials();
+  P_MapEnd();
+  }
+
   leveltime++;                       // for par times
 }
 

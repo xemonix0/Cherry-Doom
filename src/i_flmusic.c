@@ -14,8 +14,6 @@
 // DESCRIPTION:
 //      FluidSynth backend
 
-#if defined(HAVE_FLUIDSYNTH)
-
 #include "fluidsynth.h"
 
 #if (FLUIDSYNTH_VERSION_MAJOR < 2 || (FLUIDSYNTH_VERSION_MAJOR == 2 && FLUIDSYNTH_VERSION_MINOR < 2))
@@ -26,7 +24,7 @@
 #endif
 
 #include "SDL.h"
-#include "SDL_mixer.h"
+#include "i_oalmusic.h"
 
 #include "doomtype.h"
 #include "i_system.h"
@@ -52,16 +50,18 @@ static fluid_player_t *player = NULL;
 static char **soundfonts;
 static int soundfonts_num;
 
-static void FL_Mix_Callback(void *udata, Uint8 *stream, int len)
+static uint32_t FL_Callback(uint8_t *buffer, uint32_t buffer_samples)
 {
     int result;
 
-    result = fluid_synth_write_s16(synth, len / 4, stream, 0, 2, stream, 1, 2);
+    result = fluid_synth_write_s16(synth, buffer_samples, buffer, 0, 2, buffer, 1, 2);
 
     if (result != FLUID_OK)
     {
-        fprintf(stderr, "Error generating FluidSynth audio");
+        fprintf(stderr, "FL_Callback: Error generating FluidSynth audio\n");
     }
+
+    return buffer_samples;
 }
 
 // Load SNDFONT lump
@@ -178,6 +178,22 @@ static void GetSoundFonts(void)
     free(dup_path);
 }
 
+static void FreeSynthAndSettings(void)
+{
+    // deleting the synth also deletes sfloader
+    if (synth)
+    {
+        delete_fluid_synth(synth);
+        synth = NULL;
+    }
+
+    if (settings)
+    {
+        delete_fluid_settings(settings);
+        settings = NULL;
+    }
+}
+
 static boolean I_FL_InitMusic(int device)
 {
     int sf_id;
@@ -185,7 +201,7 @@ static boolean I_FL_InitMusic(int device)
 
     settings = new_fluid_settings();
 
-    fluid_settings_setnum(settings, "synth.sample-rate", snd_samplerate);
+    fluid_settings_setnum(settings, "synth.sample-rate", SND_SAMPLERATE);
 
     fluid_settings_setint(settings, "synth.chorus.active", mus_chorus);
     fluid_settings_setint(settings, "synth.reverb.active", mus_reverb);
@@ -257,14 +273,12 @@ static boolean I_FL_InitMusic(int device)
     if (sf_id == FLUID_FAILED)
     {
         char *errmsg;
-        // deleting the synth also deletes sfloader
-        delete_fluid_synth(synth);
-        delete_fluid_settings(settings);
         errmsg = M_StringJoin("Error loading FluidSynth soundfont: ",
             lumpnum >= 0 ? "SNDFONT lump" : soundfont_path, NULL);
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, PROJECT_STRING,
             errmsg, NULL);
         free(errmsg);
+        FreeSynthAndSettings();
         return false;
     }
 
@@ -307,7 +321,7 @@ static void I_FL_StopSong(void *handle)
 
 static void *I_FL_RegisterSong(void *data, int len)
 {
-    int result = 0;
+    int result = FLUID_FAILED;
 
     player = new_fluid_player(synth);
 
@@ -338,11 +352,11 @@ static void *I_FL_RegisterSong(void *data, int len)
 
     if (result != FLUID_OK)
     {
-        fprintf(stderr, "FluidSynth failed to load in-memory song");
+        fprintf(stderr, "FluidSynth failed to load in-memory song\n");
         return NULL;
     }
 
-    Mix_HookMusic(FL_Mix_Callback, NULL);
+    I_OAL_HookMusic(FL_Callback);
 
     return (void *)1;
 }
@@ -354,7 +368,7 @@ static void I_FL_UnRegisterSong(void *handle)
         fluid_synth_program_reset(synth);
         fluid_synth_system_reset(synth);
 
-        Mix_HookMusic(NULL, NULL);
+        I_OAL_HookMusic(NULL);
 
         delete_fluid_player(player);
         player = NULL;
@@ -366,17 +380,7 @@ static void I_FL_ShutdownMusic(void)
     I_FL_StopSong(NULL);
     I_FL_UnRegisterSong(NULL);
 
-    if (synth)
-    {
-        delete_fluid_synth(synth);
-        synth = NULL;
-    }
-
-    if (settings)
-    {
-        delete_fluid_settings(settings);
-        settings = NULL;
-    }
+    FreeSynthAndSettings();
 }
 
 #define NAME_MAX_LENGTH 25
@@ -432,5 +436,3 @@ music_module_t music_fl_module =
     I_FL_UnRegisterSong,
     I_FL_DeviceList,
 };
-
-#endif

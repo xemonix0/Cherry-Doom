@@ -1,10 +1,7 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: hu_lib.c,v 1.13 1998/05/11 10:13:26 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+//  Copyright (C) 2023 Fabian Greffrath
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -15,11 +12,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:  heads-up text and input code
 //
@@ -37,6 +29,21 @@
 
 // boolean : whether the screen is always erased
 #define noterased viewwindowx
+
+static int align_offset[num_aligns];
+
+void HUlib_resetAlignOffsets (void)
+{
+  int bottom = 199;
+
+  if (scaledviewheight < SCREENHEIGHT || automap_on)
+    bottom -= 32;
+
+  align_offset[align_topleft] = 0;
+  align_offset[align_topright] = 0;
+  align_offset[align_bottomleft] = bottom;
+  align_offset[align_bottomright] = bottom;
+}
 
 //
 // not used currently
@@ -65,6 +72,8 @@ void HUlib_clearTextLine(hu_textline_t* t)
   t->len = 0;
   t->l[0] = 0;
   t->needsupdate = true;
+  t->width = 0;
+  t->visible = false;
 }
 
 //
@@ -77,14 +86,15 @@ void HUlib_clearTextLine(hu_textline_t* t)
 // Returns nothing
 //
 
-void HUlib_initTextLine(hu_textline_t *t, int x, int y, patch_t **f, int sc,
-                        char *cr) //jff 2/16/98 add color range parameter
+void HUlib_initTextLine(hu_textline_t *t, int x, int y, patch_t ***f, int sc,
+                        char *cr, void (*builder)(void)) //jff 2/16/98 add color range parameter
 {
   t->x = x;
   t->y = y;
   t->f = f;
   t->sc = sc;
   t->cr = cr;
+  t->builder = builder;
   HUlib_clearTextLine(t);
 }
 
@@ -114,6 +124,40 @@ boolean HUlib_addCharToTextLine(hu_textline_t *t, char ch)
     }
 }
 
+void HUlib_addStringToTextLine(hu_textline_t *l, char *s)
+{
+  int w = 0;
+  unsigned char c;
+  patch_t *const *const f = *l->f;
+
+  if (!*s)
+    return;
+
+  while (*s)
+  {
+    c = toupper(*s++);
+
+    if (c == '\x1b')
+    {
+      HUlib_addCharToTextLine(l, c);
+      HUlib_addCharToTextLine(l, *s++);
+      continue;
+    }
+    else if (c != ' ' && c >= l->sc && c <= HU_FONTEND + 6)
+      w += SHORT(f[c - l->sc]->width);
+    else
+      w += 4;
+
+    HUlib_addCharToTextLine(l, c);
+  }
+
+  while (*--s == ' ')
+    w -= 4;
+
+  l->width = w;
+  l->visible = true;
+}
+
 //
 // HUlib_delCharFromTextLine()
 //
@@ -123,7 +167,7 @@ boolean HUlib_addCharToTextLine(hu_textline_t *t, char ch)
 // Returns false if already empty, true if the character deleted
 //
 
-boolean HUlib_delCharFromTextLine(hu_textline_t* t)
+static boolean HUlib_delCharFromTextLine(hu_textline_t* t)
 {
   return t->len ? t->l[--t->len] = 0, t->needsupdate = 4, true : false;
 }
@@ -137,11 +181,47 @@ boolean HUlib_delCharFromTextLine(hu_textline_t* t)
 // Returns nothing
 //
 
-void HUlib_drawTextLine(hu_textline_t *l, boolean drawcursor)
+#define HU_GAPX 2
+#define HU_GAPX_L (HU_GAPX - WIDESCREENDELTA)
+#define HU_GAPX_R (ORIGWIDTH - HU_GAPX_L)
+
+static void HUlib_alignWidget(hu_textline_t *l, align_t align)
+{
+  patch_t *const *const f = *l->f;
+  const int font_height = SHORT(f['A'-HU_FONTSTART]->height) + 1;
+
+  if (align == align_topleft)
+  {
+    l->x = HU_GAPX_L;
+    l->y = align_offset[align];
+    align_offset[align] += font_height;
+  }
+  else if (align == align_topright)
+  {
+    l->x = HU_GAPX_R - l->width;
+    l->y = align_offset[align];
+    align_offset[align] += font_height;
+  }
+  else if (align == align_bottomleft)
+  {
+    align_offset[align] -= font_height;
+    l->x = HU_GAPX_L;
+    l->y = align_offset[align];
+  }
+  else if (align == align_bottomright)
+  {
+    align_offset[align] -= font_height;
+    l->x = HU_GAPX_R - l->width;
+    l->y = align_offset[align];
+  }
+}
+
+static void HUlib_drawTextLineAligned(hu_textline_t *l, boolean drawcursor)
 {
   int i, x = l->x, y = l->y;  // killough 1/18/98 -- support multiple lines
   unsigned char c;
   char *oc = l->cr;       //jff 2/17/98 remember default color
+  patch_t *const *const f = *l->f;
 
   // draw the new stuff
   for (i = 0; i < l->len; i++)
@@ -158,20 +238,20 @@ void HUlib_drawTextLine(hu_textline_t *l, boolean drawcursor)
             {               //jff 3/26/98 changed to actual escape char
               if (++i < l->len)
               {
-                if (l->l[i] >= '0' && l->l[i] <= '9')
+                if (l->l[i] >= '0' && l->l[i] <= '0'+CR_NONE)
                   l->cr = colrngs[l->l[i]-'0'];
-                else if (l->l[i] == '0'+CR_NONE) // [FG] reset to original color
+                else if (l->l[i] == '0'+CR_ORIG) // [FG] reset to original color
                   l->cr = oc;
               }
             }
           else
-            if (c != ' ' && c >= l->sc && c <= 127)
+            if (c != ' ' && c >= l->sc && c <= HU_FONTEND + 6)
               {
-                int w = SHORT(l->f[c - l->sc]->width);
+                int w = SHORT(f[c - l->sc]->width);
                 if (x+w > SCREENWIDTH)
                   break;
                 // killough 1/18/98 -- support multiple lines:
-                V_DrawPatchTranslated(x, y, FG, l->f[c - l->sc], l->cr);
+                V_DrawPatchTranslated(x, y, FG, f[c - l->sc], l->cr);
                 x += w;
               }
             else
@@ -183,8 +263,14 @@ void HUlib_drawTextLine(hu_textline_t *l, boolean drawcursor)
 
   // draw the cursor if requested
   // killough 1/18/98 -- support multiple lines
-  if (drawcursor && x + SHORT(l->f['_' - l->sc]->width) <= SCREENWIDTH)
-    V_DrawPatchDirect(x, y, FG, l->f['_' - l->sc]);
+  if (drawcursor && x + SHORT(f['_' - l->sc]->width) <= SCREENWIDTH)
+    V_DrawPatchDirect(x, y, FG, f['_' - l->sc]);
+}
+
+void HUlib_drawTextLine(hu_textline_t *l, align_t align, boolean drawcursor)
+{
+  HUlib_alignWidget(l, align);
+  HUlib_drawTextLineAligned(l, drawcursor);
 }
 
 //
@@ -202,6 +288,7 @@ void HUlib_eraseTextLine(hu_textline_t* l)
   // killough 11/98: trick to shadow variables
   int x = viewwindowx, y = viewwindowy;
   int viewwindowx = x >> hires, viewwindowy = y >> hires;  // killough 11/98
+  patch_t *const *const f = *l->f;
 
   // Only erases when NOT in automap and the screen is reduced,
   // and the text must either need updating or refreshing
@@ -209,7 +296,7 @@ void HUlib_eraseTextLine(hu_textline_t* l)
 
   if (!automapactive && viewwindowx && l->needsupdate)
     {
-      int yoffset, lh = SHORT(l->f['A'-HU_FONTSTART]->height) + 1;
+      int yoffset, lh = SHORT(f['A'-HU_FONTSTART]->height) + 1;
       for (y=l->y,yoffset=y*SCREENWIDTH ; y<l->y+lh ; y++,yoffset+=SCREENWIDTH)
         if (y < viewwindowy || y >= viewwindowy + scaledviewheight) // killough 11/98:
           R_VideoErase(yoffset, SCREENWIDTH); // erase entire line
@@ -243,7 +330,7 @@ void HUlib_eraseTextLine(hu_textline_t* l)
 //
 //jff 2/16/98 add color range parameter
 
-void HUlib_initSText(hu_stext_t *s, int x, int y, int h, patch_t **font,
+void HUlib_initSText(hu_stext_t *s, int x, int y, int h, patch_t ***font,
                      int startchar, char *cr, boolean *on)
 {
   int i;
@@ -253,8 +340,8 @@ void HUlib_initSText(hu_stext_t *s, int x, int y, int h, patch_t **font,
   s->laston = true;
   s->cl = 0;
   for (i=0;i<h;i++)
-    HUlib_initTextLine(s->l+i, x, y - i*(SHORT(font[0]->height)+1),
-                       font, startchar, cr);
+    HUlib_initTextLine(s->l+i, x, y - i*(SHORT((*font[0])->height)+1),
+                       font, startchar, cr, NULL);
 }
 
 //
@@ -266,7 +353,7 @@ void HUlib_initSText(hu_stext_t *s, int x, int y, int h, patch_t **font,
 // Returns nothing
 //
 
-void HUlib_addLineToSText(hu_stext_t* s)
+static void HUlib_addLineToSText(hu_stext_t* s)
 {
   int i;
   if (++s->cl >= s->h)                  // add a clear line
@@ -289,10 +376,8 @@ void HUlib_addMessageToSText(hu_stext_t *s, char *prefix, char *msg)
 {
   HUlib_addLineToSText(s);
   if (prefix)
-    while (*prefix)
-      HUlib_addCharToTextLine(&s->l[s->cl], *prefix++);
-  while (*msg)
-    HUlib_addCharToTextLine(&s->l[s->cl], *msg++);
+    HUlib_addStringToTextLine(&s->l[s->cl], prefix);
+  HUlib_addStringToTextLine(&s->l[s->cl], msg);
 }
 
 //
@@ -304,7 +389,7 @@ void HUlib_addMessageToSText(hu_stext_t *s, char *prefix, char *msg)
 // Returns nothing
 //
 
-void HUlib_drawSText(hu_stext_t* s)
+void HUlib_drawSText(hu_stext_t* s, align_t align)
 {
   int i;
   if (*s->on)
@@ -314,7 +399,7 @@ void HUlib_drawSText(hu_stext_t* s)
 	if (idx < 0)
 	  idx += s->h; // handle queue of lines
 	// need a decision made here on whether to skip the draw
-	HUlib_drawTextLine(&s->l[idx], false); // no cursor, please
+	HUlib_drawTextLine(&s->l[idx], align, false); // no cursor, please
       }
 }
 
@@ -359,7 +444,7 @@ void HUlib_eraseSText(hu_stext_t* s)
 // Returns nothing
 //
 
-void HUlib_initMText(hu_mtext_t *m, int x, int y, patch_t **font,
+void HUlib_initMText(hu_mtext_t *m, int x, int y, patch_t ***font,
                      int startchar, char *cr, boolean *on)
 {
   int i;
@@ -374,7 +459,7 @@ void HUlib_initMText(hu_mtext_t *m, int x, int y, patch_t **font,
 
   y += HU_REFRESHSPACING * hud_msg_lines;
   for (i=0; i<hud_msg_lines; i++, y -= HU_REFRESHSPACING)
-    HUlib_initTextLine(&m->l[i], x, y, font, startchar, cr);
+    HUlib_initTextLine(&m->l[i], x, y, font, startchar, cr, NULL);
 }
 
 //
@@ -386,7 +471,7 @@ void HUlib_initMText(hu_mtext_t *m, int x, int y, patch_t **font,
 // Returns nothing
 //
 
-void HUlib_addLineToMText(hu_mtext_t *m)
+static void HUlib_addLineToMText(hu_mtext_t *m)
 {
   // add a clear line
   if (++m->cl >= hud_msg_lines)
@@ -417,11 +502,9 @@ void HUlib_addMessageToMText(hu_mtext_t *m, char *prefix, char *msg)
   HUlib_addLineToMText(m);
 
   if (prefix)
-    while (*prefix)
-      HUlib_addCharToTextLine(&m->l[m->cl], *prefix++);
+    HUlib_addStringToTextLine(&m->l[m->cl], prefix);
 
-  while (*msg)
-    HUlib_addCharToTextLine(&m->l[m->cl], *msg++);
+  HUlib_addStringToTextLine(&m->l[m->cl], msg);
 }
 
 //
@@ -434,7 +517,7 @@ void HUlib_addMessageToMText(hu_mtext_t *m, char *prefix, char *msg)
 //
 // killough 11/98: Simplified, allowed text to scroll in either direction
 
-void HUlib_drawMText(hu_mtext_t* m)
+void HUlib_drawMText(hu_mtext_t* m, align_t align)
 {
   int i;
 
@@ -451,7 +534,7 @@ void HUlib_drawMText(hu_mtext_t* m)
       // [Nugget] Restore message scroll direction toggle
       m->l[idx].y = (hud_msg_scrollup ? m->nl-1-i : i) * HU_REFRESHSPACING;
 
-      HUlib_drawTextLine(&m->l[idx], false); // no cursor, please
+      HUlib_drawTextLine(&m->l[idx], align, false); // no cursor, please
     }
 }
 
@@ -492,13 +575,13 @@ void HUlib_eraseMText(hu_mtext_t *m)
 //
 //jff 2/16/98 add color range parameter
 
-void HUlib_initIText(hu_itext_t *it, int x, int y, patch_t **font,
+void HUlib_initIText(hu_itext_t *it, int x, int y, patch_t ***font,
                      int startchar, char *cr, boolean *on)
 {
   it->lm = 0; // default left margin is start of text
   it->on = on;
   it->laston = true;
-  HUlib_initTextLine(&it->l, x, y, font, startchar, cr);
+  HUlib_initTextLine(&it->l, x, y, font, startchar, cr, NULL);
 }
 
 // The following deletion routines adhere to the left margin restriction
@@ -512,24 +595,9 @@ void HUlib_initIText(hu_itext_t *it, int x, int y, patch_t **font,
 // Returns nothing
 //
 
-void HUlib_delCharFromIText(hu_itext_t *it)
+static void HUlib_delCharFromIText(hu_itext_t *it)
 {
   if (it->l.len != it->lm)
-    HUlib_delCharFromTextLine(&it->l);
-}
-
-//
-// HUlib_eraseLineFromIText()
-//
-// Deletes all characters from a hu_itext_t widget
-//
-// Passed the hu_itext_t
-// Returns nothing
-//
-
-void HUlib_eraseLineFromIText(hu_itext_t *it)
-{
-  while (it->lm != it->l.len)
     HUlib_delCharFromTextLine(&it->l);
 }
 
@@ -547,23 +615,6 @@ void HUlib_resetIText(hu_itext_t *it)
 {
   it->lm = 0;
   HUlib_clearTextLine(&it->l);
-}
-
-//
-// HUlib_addPrefixToIText()
-//
-// Adds a prefix string passed to a hu_itext_t widget
-// Sets left margin to length of string added
-//
-// Passed the hu_itext_t and the prefix string
-// Returns nothing
-//
-
-void HUlib_addPrefixToIText(hu_itext_t *it, char *str)
-{
-  while (*str)
-    HUlib_addCharToTextLine(&it->l, *str++);
-  it->lm = it->l.len;
 }
 
 //
@@ -597,11 +648,11 @@ boolean HUlib_keyInIText(hu_itext_t *it, unsigned char ch)
 // Returns nothing
 //
 
-void HUlib_drawIText(hu_itext_t *it)
+void HUlib_drawIText(hu_itext_t *it, align_t align)
 {
   hu_textline_t *l = &it->l;
-  if (*it->on)
-    HUlib_drawTextLine(l, true); // draw the line w/ cursor
+  if ((l->visible = *it->on))
+    HUlib_drawTextLine(l, align, true); // draw the line w/ cursor
 }
 
 //

@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: w_wad.c,v 1.20 1998/05/06 11:32:00 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Handles WAD file header, directory, lump I/O.
@@ -104,6 +95,7 @@ static void W_AddFile(const char *name) // killough 1/31/98: static, const
   int         startlump;
   filelump_t  *fileinfo, *fileinfo2free=NULL; //killough
   filelump_t  singleinfo;
+  boolean     is_single = false;
   char        *filename = strcpy(malloc(strlen(name)+5), name);
 
   NormalizeSlashes(AddDefaultExtension(filename, ".wad"));  // killough 11/98
@@ -135,6 +127,7 @@ static void W_AddFile(const char *name) // killough 1/31/98: static, const
       singleinfo.size = LONG(W_FileLength(handle));
       ExtractFileBase(filename, singleinfo.name);
       numlumps++;
+      is_single = true;
     }
   else
     {
@@ -173,9 +166,9 @@ static void W_AddFile(const char *name) // killough 1/31/98: static, const
         lump_p->size = LONG(fileinfo->size);
         lump_p->data = NULL;                        // killough 1/31/98
         lump_p->namespace = ns_global;              // killough 4/17/98
-        strncpy (lump_p->name, fileinfo->name, 8);
+        M_CopyLumpName(lump_p->name, fileinfo->name);
         // [FG] WAD file that contains the lump
-        lump_p->wad_file = name;
+        lump_p->wad_file = (is_single ? NULL : name);
       }
 
     free(fileinfo2free);      // killough
@@ -209,7 +202,7 @@ static void W_CoalesceMarkedResource(const char *start_marker,
       { // If this is the first start marker, add start marker to marked lumps
         if (!num_marked)
           {
-            memcpy(marked->name, start_marker, 8);
+            M_CopyLumpName(marked->name, start_marker);
             marked->size = 0;  // killough 3/20/98: force size to be 0
             marked->namespace = ns_global;        // killough 4/17/98
             num_marked = 1;
@@ -249,7 +242,7 @@ static void W_CoalesceMarkedResource(const char *start_marker,
     {
       lumpinfo[numlumps].size = 0;  // killough 3/20/98: force size to be 0
       lumpinfo[numlumps].namespace = ns_global;   // killough 4/17/98
-      memcpy(lumpinfo[numlumps++].name, end_marker, 8);
+      M_CopyLumpName(lumpinfo[numlumps++].name, end_marker);
     }
 }
 
@@ -457,7 +450,7 @@ void W_ReadLump(int lump, void *dest)
 //
 // killough 4/25/98: simplified
 
-void *W_CacheLumpNum(int lump, int tag)
+void *W_CacheLumpNum(int lump, pu_tag tag)
 {
 #ifdef RANGECHECK
   if ((unsigned)lump >= numlumps)
@@ -518,7 +511,7 @@ void WritePredefinedLumpWad(const char *filename)
          
          fileinfo.filepos = LONG(filepos);
          fileinfo.size    = LONG(predefined_lumps[i].size);         
-         memcpy(fileinfo.name, predefined_lumps[i].name, 8);
+         M_CopyLumpName(fileinfo.name, predefined_lumps[i].name);
          
          fwrite(&fileinfo, 1, sizeof(fileinfo), file);
 
@@ -539,16 +532,29 @@ void WritePredefinedLumpWad(const char *filename)
 // [FG] name of the WAD file that contains the lump
 const char *W_WadNameForLump (const int lump)
 {
-	return (lump >= 0 && lump < numlumps) ?
-	       (lumpinfo[lump].wad_file ?
-	       M_BaseName(lumpinfo[lump].wad_file) :
-	       "predefined") : "invalid";
+  if (lump < 0 || lump >= numlumps)
+    return "invalid";
+  else
+  {
+    const char *wad_file = lumpinfo[lump].wad_file;
+
+    if (wad_file)
+      return M_BaseName(wad_file);
+    else
+      return "lump";
+  }
 }
 
 boolean W_IsIWADLump (const int lump)
 {
 	return lump >= 0 && lump < numlumps &&
 	       lumpinfo[lump].wad_file == wadfiles[0];
+}
+
+// check if lump is from WAD
+boolean W_IsWADLump (const int lump)
+{
+	return lump >= 0 && lump < numlumps && lumpinfo[lump].wad_file;
 }
 
 // [FG] avoid demo lump name collisions

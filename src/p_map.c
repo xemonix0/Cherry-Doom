@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: p_map.c,v 1.35 1998/05/12 12:47:16 phares Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //  Movement, collision handling.
@@ -506,19 +497,22 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
   // killough 11/98: add touchy things
   if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE|MF_TOUCHY)))
-    { return true; }
+    return true;
 
   blockdist = thing->radius + tmthing->radius;
 
   if (abs(thing->x - tmx) >= blockdist || abs(thing->y - tmy) >= blockdist)
-    { return true; } // didn't hit it
+    return true; // didn't hit it
 
   // killough 11/98:
   //
   // This test has less information content (it's almost always false), so it
   // should not be moved up to first, as it adds more overhead than it removes.
+
   // don't clip against self
-  if (thing == tmthing) { return true; }
+
+  if (thing == tmthing)
+    return true;
 
   // killough 11/98:
   //
@@ -526,121 +520,141 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   // If a solid object of a different type comes in contact with a touchy
   // thing, and the touchy thing is not the sole one moving relative to fixed
   // surroundings such as walls, then the touchy thing dies immediately.
-  if (thing->flags & MF_TOUCHY                    // touchy object
-      && tmthing->flags & MF_SOLID                // solid object touches it
-      && thing->health > 0                        // touchy object is alive
-      && (thing->intflags & MIF_ARMED             // Thing is an armed mine
-          || sentient(thing))                     // ... or a sentient thing
-      && (thing->type != tmthing->type            // only different species
-          || thing->type == MT_PLAYER)            // ... or different players
-      && thing->z + thing->height >= tmthing->z   // touches vertically
-      && tmthing->z + tmthing->height >= thing->z
-      && (thing->type ^ MT_PAIN)                  // PEs and lost souls
-         | (tmthing->type ^ MT_SKULL)             // are considered same
-      && (thing->type ^ MT_SKULL)                 // (but Barons & Knights
-         | (tmthing->type ^ MT_PAIN))             // are intentionally not)
-  {
-    P_DamageMobj(thing, NULL, NULL, thing->health);  // kill object
-    return true;
-  }
 
-  // check for skulls slamming into things
-  if (tmthing->flags & MF_SKULLFLY) {
-    // A flying skull is smacking something.
-    // Determine damage amount, and the skull comes to a dead stop.
-    int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
-
-    // [Nugget]: [crispy] check if attacking skull flies over/under thing
-    if (casual_play && over_under) {
-      if (tmthing->z > thing->z + thing->height)        { return true; } // over
-      else if (tmthing->z + tmthing->height < thing->z) { return true; } // under
+  if (thing->flags & MF_TOUCHY &&                  // touchy object
+      tmthing->flags & MF_SOLID &&                 // solid object touches it
+      thing->health > 0 &&                         // touchy object is alive
+      (thing->intflags & MIF_ARMED ||              // Thing is an armed mine
+       sentient(thing)) &&                         // ... or a sentient thing
+      (thing->type != tmthing->type ||             // only different species
+       thing->type == MT_PLAYER) &&                // ... or different players
+      thing->z + thing->height >= tmthing->z &&    // touches vertically
+      tmthing->z + tmthing->height >= thing->z &&
+      (thing->type ^ MT_PAIN) |                    // PEs and lost souls
+      (tmthing->type ^ MT_SKULL) &&                // are considered same
+      (thing->type ^ MT_SKULL) |                   // (but Barons & Knights
+      (tmthing->type ^ MT_PAIN))                   // are intentionally not)
+    {
+      P_DamageMobj(thing, NULL, NULL, thing->health);  // kill object
+      return true;
     }
 
-    // [Nugget] Fix lost soul collision
-    if (casual_play && nugget_comp[comp_lscollision]
-        && !(thing->flags & MF_SHOOTABLE))
-    { return !(thing->flags & MF_SOLID); }
+  // check for skulls slamming into things
 
-    P_DamageMobj (thing, tmthing, tmthing, damage);
+  if (tmthing->flags & MF_SKULLFLY)
+    {
+      // A flying skull is smacking something.
+      // Determine damage amount, and the skull comes to a dead stop.
 
-    tmthing->flags &= ~MF_SKULLFLY;
-    tmthing->momx = tmthing->momy = tmthing->momz = 0;
+      int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
 
-    // [Nugget] Fix forgetful lost soul
-    if (casual_play && !nugget_comp[comp_lsamnesia])
-    { P_SetMobjState(tmthing, tmthing->info->seestate); }
-    else
-    { P_SetMobjState(tmthing, tmthing->info->spawnstate); }
+      // [Nugget]: [crispy] check if attacking skull flies over/under thing
+      if (casual_play && over_under) {
+        if (tmthing->z > thing->z + thing->height)
+        { return true; } // over
+        else if (tmthing->z + tmthing->height < thing->z)
+        { return true; } // under
+      }
 
-    return false;   // stop moving
-  }
+      // [Nugget] Fix lost soul collision
+      if (casual_play && nugget_comp[comp_lscollision]
+          && !(thing->flags & MF_SHOOTABLE))
+      { return !(thing->flags & MF_SOLID); }
+
+      P_DamageMobj (thing, tmthing, tmthing, damage);
+
+      tmthing->flags &= ~MF_SKULLFLY;
+      tmthing->momx = tmthing->momy = tmthing->momz = 0;
+
+      // [Nugget] Fix forgetful lost soul
+      if (casual_play && !nugget_comp[comp_lsamnesia])
+      { P_SetMobjState(tmthing, tmthing->info->seestate); }
+      else
+        P_SetMobjState (tmthing, tmthing->info->spawnstate);
+
+      return false;   // stop moving
+    }
 
   // missiles can hit other things
   // killough 8/10/98: bouncing non-solid things can hit other things too
-  if (tmthing->flags & MF_MISSILE
-      || (tmthing->flags & MF_BOUNCES
-          && !(tmthing->flags & MF_SOLID)))
-  {
-    // see if it went over / under
-    if (tmthing->z > thing->z + thing->height) { return true; } // overhead
-    if (tmthing->z+tmthing->height < thing->z) { return true; } // underneath
 
-    if (tmthing->target && P_ProjectileImmune(thing, tmthing->target))
+  if (tmthing->flags & MF_MISSILE || (tmthing->flags & MF_BOUNCES &&
+				      !(tmthing->flags & MF_SOLID)))
     {
-      if (thing == tmthing->target)
-        { return true; }  // Don't hit same species as originator.
-      else if (thing->type != MT_PLAYER) // Explode, but do no damage.
-        { return false; } // Let players missile other players.
-    }
+      // see if it went over / under
 
-    // killough 8/10/98: if moving thing is not a missile, no damage
-    // is inflicted, and momentum is reduced if object hit is solid.
-    if (!(tmthing->flags & MF_MISSILE)) {
-      if (!(thing->flags & MF_SOLID)) { return true; }
-      else {
-        tmthing->momx = -tmthing->momx;
-        tmthing->momy = -tmthing->momy;
-        if (!(tmthing->flags & MF_NOGRAVITY))
-        {
-          tmthing->momx >>= 2;
-          tmthing->momy >>= 2;
-        }
-        return false;
+      if (tmthing->z > thing->z + thing->height)
+	return true;    // overhead
+
+      if (tmthing->z+tmthing->height < thing->z)
+	return true;    // underneath
+
+      if (tmthing->target && P_ProjectileImmune(thing, tmthing->target))
+      {
+	if (thing == tmthing->target)
+	  return true;                // Don't hit same species as originator.
+	else
+	  // Dehacked support - monsters infight
+	  if (thing->type != MT_PLAYER && !deh_species_infighting) // Explode, but do no damage.
+	    return false;	        // Let players missile other players.
       }
+      
+      // killough 8/10/98: if moving thing is not a missile, no damage
+      // is inflicted, and momentum is reduced if object hit is solid.
+
+      if (!(tmthing->flags & MF_MISSILE))
+      {
+	if (!(thing->flags & MF_SOLID))
+	  return true;
+	else
+	  {
+	    tmthing->momx = -tmthing->momx;
+	    tmthing->momy = -tmthing->momy;
+	    if (!(tmthing->flags & MF_NOGRAVITY))
+	      {
+		tmthing->momx >>= 2;
+		tmthing->momy >>= 2;
+	      }
+	    return false;
+	  }
+      }
+
+      if (!(thing->flags & MF_SHOOTABLE))
+	return !(thing->flags & MF_SOLID); // didn't do any damage
+
+      // mbf21: ripper projectile
+      if (tmthing->flags2 & MF2_RIP)
+      {
+        damage = ((P_Random(pr_mbf21) & 3) + 2) * tmthing->info->damage;
+        if (!(thing->flags & MF_NOBLOOD))
+          P_SpawnBlood(tmthing->x, tmthing->y, tmthing->z, damage, thing);
+        if (tmthing->info->ripsound)
+          S_StartSound(tmthing, tmthing->info->ripsound);
+
+        P_DamageMobj(thing, tmthing, tmthing->target, damage);
+
+        numspechit = 0;
+        return (true);
+      }
+
+      // damage / explode
+
+      damage = ((P_Random(pr_damage)%8)+1)*tmthing->info->damage;
+      P_DamageMobj (thing, tmthing, tmthing->target, damage);
+
+      // don't traverse any more
+      return false;
     }
-
-    if (!(thing->flags & MF_SHOOTABLE))
-      { return !(thing->flags & MF_SOLID); } // didn't do any damage
-
-    // mbf21: ripper projectile
-    if (tmthing->flags2 & MF2_RIP) {
-      damage = ((P_Random(pr_mbf21) & 3) + 2) * tmthing->info->damage;
-      if (!(thing->flags & MF_NOBLOOD))
-        { P_SpawnBlood(tmthing->x, tmthing->y, tmthing->z, damage, thing); }
-      if (tmthing->info->ripsound)
-        { S_StartSound(tmthing, tmthing->info->ripsound); }
-
-      P_DamageMobj(thing, tmthing, tmthing->target, damage);
-
-      numspechit = 0;
-      return (true);
-    }
-
-    // damage / explode
-    damage = ((P_Random(pr_damage)%8)+1)*tmthing->info->damage;
-    P_DamageMobj (thing, tmthing, tmthing->target, damage);
-
-    // don't traverse any more
-    return false;
-  }
 
   // check for special pickup
-  if (thing->flags & MF_SPECIAL) {
-    int solid = thing->flags & MF_SOLID;
-    if (tmflags & MF_PICKUP)
-      { P_TouchSpecialThing(thing, tmthing); } // can remove thing
-    return !solid;
-  }
+
+  if (thing->flags & MF_SPECIAL)
+    {
+      int solid = thing->flags & MF_SOLID;
+      if (tmflags & MF_PICKUP)
+	P_TouchSpecialThing(thing, tmthing); // can remove thing
+      return !solid;
+    }
 
   // [Nugget] Allow things to move over/under solid things
   if (casual_play && over_under && (thing->flags & MF_SOLID))
@@ -650,9 +664,9 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       tmthing->intflags |= MIF_OVERUNDER;
 
       if (tmfloorz < thing->z + thing->height)
-        { tmfloorz = thing->z + thing->height; }
+      { tmfloorz = thing->z + thing->height; }
       if (thing->ceilingz > tmthing->z)
-        { thing->ceilingz = tmthing->z; }
+      { thing->ceilingz = tmthing->z; }
 
       return true;
     }
@@ -661,9 +675,9 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       tmthing->intflags |= MIF_OVERUNDER;
 
       if (tmceilingz > thing->z)
-        { tmceilingz = thing->z; }
+      { tmceilingz = thing->z; }
       if (thing->floorz < tmthing->z + tmthing->height)
-        { thing->floorz = tmthing->z + tmthing->height; }
+      { thing->floorz = tmthing->z + tmthing->height; }
 
       return true;
     }

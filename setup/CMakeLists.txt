@@ -1,9 +1,9 @@
 include(NuggetDoomSettings)
 
 add_library(setup STATIC
+            execute.c           execute.h
             mainmenu.c
-            multiplayer.c       multiplayer.h
-            execute.c           execute.h)
+            multiplayer.c       multiplayer.h)
 
 target_nuggetdoom_settings(setup)
 

@@ -27,6 +27,7 @@
 #include "i_system.h"
 #include "m_misc2.h"
 #include "u_scanner.h"
+#include "w_wad.h"
 
 #include "u_mapinfo.h"
 
@@ -303,6 +304,7 @@ static void FreeMap(mapentry_t *mape)
   if (mape->label) free(mape->label);
   if (mape->intertext) free(mape->intertext);
   if (mape->intertextsecret) free(mape->intertextsecret);
+  if (mape->author) free(mape->author);
   mape->mapname = NULL;
 }
 
@@ -325,6 +327,10 @@ static void UpdateMapEntry(mapentry_t *mape, mapentry_t *newe)
   if (newe->label)
   {
     ReplaceString(&mape->label, newe->label);
+  }
+  if (newe->author)
+  {
+    strcpy(mape->author, newe->author);
   }
   if (newe->intertext)
   {
@@ -490,6 +496,11 @@ static int ParseStandardProperty(u_scanner_t* s, mapentry_t *mape)
     }
     else if (U_MustGetToken(s, TK_StringConst))
       ReplaceString(&mape->label, s->string);
+  }
+  else if (!strcasecmp(pname, "author"))
+  {
+    if (U_MustGetToken(s, TK_StringConst))
+      ReplaceString(&mape->author, s->string);
   }
   else if (!strcasecmp(pname, "episode"))
   {
@@ -727,10 +738,11 @@ static boolean UpdateDefaultMapEntry(mapentry_t *val, int num)
   return false;
 }
 
-void U_ParseMapInfo(boolean is_default, const char *buffer, size_t length)
+void U_ParseMapDefInfo(int lumpnum)
 {
-  unsigned int i;
-  u_scanner_t scanner = U_ScanOpen(buffer, length, "UMAPINFO");
+  const char *buffer = W_CacheLumpNum(lumpnum, PU_CACHE);
+  size_t length = W_LumpLength(lumpnum);
+  u_scanner_t scanner = U_ScanOpen(buffer, length, "UMAPDEF");
 
   while (U_HasTokensLeft(&scanner))
   {
@@ -741,11 +753,26 @@ void U_ParseMapInfo(boolean is_default, const char *buffer, size_t length)
       continue;
     }
 
-    if (is_default)
+    default_mapinfo.mapcount++;
+    default_mapinfo.maps = (mapentry_t*)realloc(default_mapinfo.maps, sizeof(mapentry_t)*default_mapinfo.mapcount);
+    default_mapinfo.maps[default_mapinfo.mapcount-1] = parsed;
+  }
+  U_ScanClose(&scanner);
+}
+
+void U_ParseMapInfo(int lumpnum)
+{
+  unsigned int i;
+  const char *buffer = W_CacheLumpNum(lumpnum, PU_CACHE);
+  size_t length = W_LumpLength(lumpnum);
+  u_scanner_t scanner = U_ScanOpen(buffer, length, "UMAPINFO");
+
+  while (U_HasTokensLeft(&scanner))
+  {
+    mapentry_t parsed = { 0 };
+    if (!ParseMapEntry(&scanner, &parsed))
     {
-      default_mapinfo.mapcount++;
-      default_mapinfo.maps = (mapentry_t*)realloc(default_mapinfo.maps, sizeof(mapentry_t)*default_mapinfo.mapcount);
-      default_mapinfo.maps[default_mapinfo.mapcount-1] = parsed;
+      U_Error(&scanner, "Skipping entry: %s", scanner.string);
       continue;
     }
 

@@ -1,11 +1,7 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: i_sound.c,v 1.15 1998/05/03 22:32:33 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
-//  Copyright(C) 2020-2021 Fabian Greffrath
+//  Copyright(C) 2020-2023 Fabian Greffrath
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -17,41 +13,26 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
-//
 // DESCRIPTION:
 //      System interface for sound.
 //
 //-----------------------------------------------------------------------------
 
-// haleyjd
-#include "SDL.h"
-#include "SDL_mixer.h"
 #include <math.h>
 
+#include "al.h"
+#include "alc.h"
+#include "alext.h"
+
 #include "doomstat.h"
+#include "i_sndfile.h"
 #include "i_sound.h"
 #include "w_wad.h"
-#include "d_main.h"
-
-#ifndef M_PI
-#define M_PI 3.14
-#endif
-
-// [FG] precache all sound effects
-boolean precache_sounds;
-// [FG] optional low-pass filter
-boolean lowpass_filter;
-// [FG] variable pitch bend range
-int pitch_bend_range;
 
 // Music modules
 extern music_module_t music_win_module;
 extern music_module_t music_fl_module;
-extern music_module_t music_sdl_module;
+extern music_module_t music_oal_module;
 extern music_module_t music_opl_module;
 
 typedef struct
@@ -64,8 +45,6 @@ static music_modules_t music_modules[] =
 {
 #if defined(_WIN32)
     { &music_win_module, 1 },
-#else
-    { &music_sdl_module, 1 },
 #endif
 #if defined(HAVE_FLUIDSYNTH)
     { &music_fl_module, 1 },
@@ -78,391 +57,206 @@ static music_module_t *active_module = NULL;
 
 // haleyjd: safety variables to keep changes to *_card from making
 // these routines think that sound has been initialized when it hasn't
-boolean snd_init = false;
+static boolean snd_init = false;
 
-// haleyjd 10/28/05: updated for Julian's music code, need full quality now
-int snd_samplerate = 44100;
+static ALuint *openal_sources;
 
 typedef struct {
   // SFX id of the playing sound effect.
   // Used to catch duplicates (like chainsaw).
-  sfxinfo_t *id;
-  // The channel data pointer.
-  unsigned char* data;
-  // [FG] let SDL_Mixer do the actual sound mixing
-  Mix_Chunk chunk;
+  sfxinfo_t *sfx;
+
+  boolean enabled;
   // haleyjd 06/16/08: unique id number
   int idnum;
 } channel_info_t;
 
 channel_info_t channelinfo[MAX_CHANNELS];
 
-// Pitch to stepping lookup, unused.
-int steptable[256];
+// Pitch to stepping lookup.
+float steptable[256];
 
 //
-// stopchan
+// StopChannel
 //
 // cph 
 // Stops a sound, unlocks the data 
 //
-static void stopchan(int handle)
+static void StopChannel(int channel)
 {
-   int cnum;
-
 #ifdef RANGECHECK
-   // haleyjd 02/18/05: bounds checking
-    if(handle < 0 || handle >= MAX_CHANNELS)
-       return;
+  // haleyjd 02/18/05: bounds checking
+  if (channel < 0 || channel >= MAX_CHANNELS)
+    return;
 #endif
 
-   if(channelinfo[handle].data)
-   {
-      Mix_HaltChannel(handle);
-      // [FG] immediately free samples not connected to a sound SFX
-      if (channelinfo[handle].id == NULL)
-      {
-         Z_Free(channelinfo[handle].data);
-      }
-      channelinfo[handle].data = NULL;
+  if (channelinfo[channel].enabled)
+  {
+    alSourceStop(openal_sources[channel]);
 
-      if(channelinfo[handle].id)
-      {
-         // haleyjd 06/03/06: see if we can free the sound
-         for(cnum = 0; cnum < MAX_CHANNELS; ++cnum)
-         {
-            if(cnum == handle)
-               continue;
-            if(channelinfo[cnum].id &&
-               channelinfo[cnum].id->data == channelinfo[handle].id->data)
-               return; // still being used by some channel
-         }
-         
-         // set sample to PU_CACHE level
-         if (!precache_sounds)
-         {
-         Z_ChangeTag(channelinfo[handle].id->data, PU_CACHE);
-         }
-      }
-   }
-
-   channelinfo[handle].id = NULL;
+    channelinfo[channel].enabled = false;
+  }
 }
 
-static int SOUNDHDRSIZE = 8;
+#define SOUNDHDRSIZE 8
 
 //
-// addsfx
-//
-// This function adds a sound to the
-//  list of currently active sounds,
-//  which is maintained as a given number
-//  (eight, usually) of internal channels.
-// Returns a handle.
+// CacheSound
 //
 // haleyjd: needs to take a sfxinfo_t ptr, not a sound id num
 // haleyjd 06/03/06: changed to return boolean for failure or success
 //
-static boolean addsfx(sfxinfo_t *sfx, int channel, int pitch)
+static boolean CacheSound(sfxinfo_t *sfx, int channel)
 {
-   size_t lumplen;
-   int lump;
-   // [FG] do not connect pitch-shifted samples to a sound SFX
-   unsigned int sfx_alen;
-   unsigned int bits;
-   void *sfx_data;
+  int lumpnum, lumplen;
+  byte *lumpdata = NULL, *wavdata = NULL;
 
 #ifdef RANGECHECK
-   if(channel < 0 || channel >= MAX_CHANNELS)
-      I_Error("addsfx: channel out of range!\n");
+  if (channel < 0 || channel >= MAX_CHANNELS)
+  {
+    I_Error("CacheSound: channel out of range!\n");
+  }
 #endif
 
-   // haleyjd 02/18/05: null ptr check
-   if(!snd_init || !sfx)
-      return false;
+  // haleyjd 02/18/05: null ptr check
+  if (!snd_init || !sfx)
+  {
+    return false;
+  }
 
-   stopchan(channel);
-   
-   // We will handle the new SFX.
-   // Set pointer to raw data.
+  StopChannel(channel);
 
-   // haleyjd: Eternity sfxinfo_t does not have a lumpnum field
-   lump = I_GetSfxLumpNum(sfx);
-   
-   // replace missing sounds with a reasonable default
-   if(lump == -1)
-      lump = W_GetNumForName("DSPISTOL");
-   
-   lumplen = W_LumpLength(lump);
-   
-   // haleyjd 10/08/04: do not play zero-length sound lumps
-   if(lumplen <= SOUNDHDRSIZE)
-      return false;
+  lumpnum = I_GetSfxLumpNum(sfx);
 
-   // haleyjd 06/03/06: rewrote again to make sound data properly freeable
-   if(sfx->data == NULL || pitch != NORM_PITCH)
-   {   
-      byte *data;
-      Uint32 samplerate, samplelen, samplecount;
-      Uint8 *wav_buffer = NULL;
+  if (lumpnum < 0)
+  {
+    return false;
+  }
 
-      // haleyjd: this should always be called (if lump is already loaded,
-      // W_CacheLumpNum handles that for us).
-      data = (byte *)W_CacheLumpNum(lump, PU_STATIC);
+  lumplen = W_LumpLength(lumpnum);
 
-      // [crispy] Check if this is a valid RIFF wav file
-      if (lumplen > 44 && memcmp(data, "RIFF", 4) == 0 && memcmp(data + 8, "WAVEfmt ", 8) == 0)
-      {
-        SDL_RWops *RWops;
-        SDL_AudioSpec wav_spec;
+  // haleyjd 10/08/04: do not play zero-length sound lumps
+  if (lumplen <= SOUNDHDRSIZE)
+  {
+    return false;
+  }
 
-        RWops = SDL_RWFromMem(data, lumplen);
+  // haleyjd 06/03/06: rewrote again to make sound data properly freeable
+  while (sfx->cached == false)
+  {
+    byte *sampledata;
+    ALsizei size, freq;
+    ALenum format;
+    ALuint buffer;
 
-        Z_ChangeTag(data, PU_CACHE);
+    // haleyjd: this should always be called (if lump is already loaded,
+    // W_CacheLumpNum handles that for us).
+    lumpdata = (byte *)W_CacheLumpNum(lumpnum, PU_STATIC);
 
-        if (SDL_LoadWAV_RW(RWops, 1, &wav_spec, &wav_buffer, &samplelen) == NULL)
-        {
-          fprintf(stderr, "Could not open wav file: %s\n", SDL_GetError());
-          return false;
-        }
-
-        if (wav_spec.channels != 1)
-        {
-          fprintf(stderr, "Only mono WAV file is supported");
-          SDL_FreeWAV(wav_buffer);
-          return false;
-        }
-
-        if (!SDL_AUDIO_ISINT(wav_spec.format))
-        {
-          SDL_FreeWAV(wav_buffer);
-          return false;
-        }
-
-        bits = SDL_AUDIO_BITSIZE(wav_spec.format);
-        if (bits != 8 && bits != 16)
-        {
-          fprintf(stderr, "Only 8 or 16 bit WAV files are supported");
-          SDL_FreeWAV(wav_buffer);
-          return false;
-        }
-
-        samplerate = wav_spec.freq;
-        data = wav_buffer;
-        SOUNDHDRSIZE = 0;
-      }
-      // Check the header, and ensure this is a valid sound
-      else if(data[0] == 0x03 && data[1] == 0x00)
-      {
-         samplerate = (data[3] << 8) | data[2];
-         samplelen  = (data[7] << 24) | (data[6] << 16) | (data[5] << 8) | data[4];
-
-         // All Doom sounds are 8-bit
-         bits = 8;
-
-         SOUNDHDRSIZE = 8;
-      }
-      else
-      {
-         Z_ChangeTag(data, PU_CACHE);
-         return false;
-      }
+    // Check the header, and ensure this is a valid sound
+    if (lumpdata[0] == 0x03 && lumpdata[1] == 0x00)
+    {
+      freq = (lumpdata[3] <<  8) |  lumpdata[2];
+      size = (lumpdata[7] << 24) | (lumpdata[6] << 16) |
+             (lumpdata[5] <<  8) |  lumpdata[4];
 
       // don't play sounds that think they're longer than they really are
-      if(samplelen > lumplen - SOUNDHDRSIZE)
+      if (size > lumplen - SOUNDHDRSIZE)
       {
-         Z_ChangeTag(data, PU_CACHE);
-         return false;
+        break;
       }
 
-      samplecount = samplelen / (bits / 8);
+      sampledata = lumpdata + SOUNDHDRSIZE;
 
-      // [FG] do not connect pitch-shifted samples to a sound SFX
-      if (pitch == NORM_PITCH)
+      // All Doom sounds are 8-bit
+      format = AL_FORMAT_MONO8;
+    }
+    else
+    {
+      size = lumplen;
+
+      if (I_SND_LoadFile(lumpdata, &format, &wavdata, &size, &freq) == false)
       {
-         sfx_alen = (Uint32)(((uint64_t)samplecount * snd_samplerate) / samplerate);
-         // [FG] double up twice: 8 -> 16 bit and mono -> stereo
-         sfx->alen = 4 * sfx_alen;
-         sfx->data = precache_sounds ? malloc(sfx->alen) : Z_Malloc(sfx->alen, PU_STATIC, &sfx->data);
-         sfx_data = sfx->data;
-      }
-      else
-      {
-         // [FG] spoof sound samplerate if using randomly pitched sounds
-         samplerate = (Uint32)(((uint64_t)samplerate * steptable[pitch]) >> 16);
-         sfx_alen = (Uint32)(((uint64_t)samplecount * snd_samplerate) / samplerate);
-         // [FG] double up twice: 8 -> 16 bit and mono -> stereo
-         channelinfo[channel].data = Z_Malloc(4 * sfx_alen, PU_STATIC, (void **)&channelinfo[channel].data);
-         sfx_data = channelinfo[channel].data;
+        break;
       }
 
-      // haleyjd 04/23/08: Convert sound to target samplerate
-      {  
-         unsigned int i;
-         Sint16 sample = 0;
-         Sint16 *dest = (Sint16 *)sfx_data;
-         byte *src  = data + SOUNDHDRSIZE;
-         
-         unsigned int step = (samplerate << 16) / snd_samplerate;
-         unsigned int stepremainder = 0, j = 0;
+      sampledata = wavdata;
+    }
 
-         // do linear filtering operation
-         for(i = 0; i < sfx_alen && j < samplelen - 1; ++i)
-         {
-            int d;
+    alGenBuffers(1, &buffer);
+    alBufferData(buffer, format, sampledata, size, freq);
+    if (alGetError() != AL_NO_ERROR)
+    {
+        fprintf(stderr, "CacheSound: Error buffering data.\n");
+        break;
+    }
+    sfx->buffer = buffer;
+    sfx->cached = true;
+  }
 
-            if (bits == 16)
-            {
-               d = ((Sint16)(src[j  ] | (src[j+1] << 8)) * (0x10000 - stepremainder) +
-                    (Sint16)(src[j+2] | (src[j+3] << 8)) * stepremainder) >> 16;
+  // don't need original lump data any more
+  if (lumpdata)
+  {
+    Z_Free(lumpdata);
+  }
+  if (wavdata)
+  {
+    free(wavdata);
+  }
 
-               sample = d;
-            }
-            else
-            {
-               d = (((unsigned int)src[j  ] * (0x10000 - stepremainder)) +
-                    ((unsigned int)src[j+1] * stepremainder)) >> 8;
+  if (sfx->cached == false)
+  {
+    sfx->lumpnum = -2; // [FG] don't try again
+    return false;
+  }
 
-               // [FG] interpolate sfx in a 16-bit int domain, convert to signed
-               sample = d - (1<<15);
-            }
+  // Preserve sound SFX id
+  channelinfo[channel].sfx = sfx;
 
-            dest[2*i] = dest[2*i+1] = sample;
+  channelinfo[channel].enabled = true;
 
-            stepremainder += step;
-            if (bits == 16)
-               j += (stepremainder >> 16) * 2;
-            else
-               j += (stepremainder >> 16);
-
-            stepremainder &= 0xffff;
-         }
-         // fill remainder (if any) with final sample byte
-         for(; i < sfx_alen; ++i)
-            dest[2*i] = dest[2*i+1] = sample;
-
-        // Perform a low-pass filter on the upscaled sound to filter
-        // out high-frequency noise from the conversion process.
-
-        if (lowpass_filter)
-        {
-            float rc, dt, alpha;
-
-            // Low-pass filter for cutoff frequency f:
-            //
-            // For sampling rate r, dt = 1 / r
-            // rc = 1 / 2*pi*f
-            // alpha = dt / (rc + dt)
-
-            // Filter to the half sample rate of the original sound effect
-            // (maximum frequency, by nyquist)
-
-            dt = 1.0f / snd_samplerate;
-            rc = 1.0f / (M_PI * samplerate);
-            alpha = dt / (rc + dt);
-
-            // Both channels are processed in parallel, hence [i-2]:
-
-            for (i = 2; i < sfx_alen * 2; ++i)
-            {
-                dest[i] = (Sint16) (alpha * dest[i]
-                                      + (1.0f - alpha) * dest[i-2]);
-            }
-        }
-      }
-      // [FG] double up twice: 8 -> 16 bit and mono -> stereo
-      sfx_alen *= 4;
-
-      if (wav_buffer)
-        SDL_FreeWAV(wav_buffer);
-      else
-      // haleyjd 06/03/06: don't need original lump data any more
-      Z_ChangeTag(data, PU_CACHE);
-   }
-   else
-   if (!precache_sounds)
-      Z_ChangeTag(sfx->data, PU_STATIC); // reset to static cache level
-
-   // [FG] let SDL_Mixer do the actual sound mixing
-   channelinfo[channel].chunk.allocated = 1;
-   channelinfo[channel].chunk.volume = MIX_MAX_VOLUME;
-
-   // [FG] do not connect pitch-shifted samples to a sound SFX
-   if (pitch == NORM_PITCH)
-   {
-      channelinfo[channel].data = sfx->data;
-
-      channelinfo[channel].chunk.abuf = sfx->data;
-      channelinfo[channel].chunk.alen = sfx->alen;
-
-      // Preserve sound SFX id
-      channelinfo[channel].id = sfx;
-   }
-   else
-   {
-      channelinfo[channel].chunk.abuf = sfx_data;
-      channelinfo[channel].chunk.alen = sfx_alen;
-
-      channelinfo[channel].id = NULL;
-   }
-
-   return true;
+  return true;
 }
 
 int forceFlipPan;
 
 //
-// updateSoundParams
+// I_UpdateSoundParams
 //
 // Changes sound parameters in response to stereo panning and relative location
 // change.
 //
-static void updateSoundParams(int handle, int volume, int separation, int pitch)
+void I_UpdateSoundParams(int channel, int volume, int separation)
 {
-   int rightvol;
-   int leftvol;
-   
-   if(!snd_init)
-      return;
+  ALfloat pan;
+  ALuint source;
+
+  if (!snd_init)
+    return;
 
 #ifdef RANGECHECK
-   if(handle < 0 || handle >= MAX_CHANNELS)
-      I_Error("I_UpdateSoundParams: handle out of range");
+  if (channel < 0 || channel >= MAX_CHANNELS)
+    I_Error("I_UpdateSoundParams: channel out of range");
 #endif
 
-   // SoM 7/1/02: forceFlipPan accounted for here
-   if(forceFlipPan)
-      separation = 254 - separation;
+  // SoM 7/1/02: forceFlipPan accounted for here
+  if (forceFlipPan)
+    separation = 254 - separation;
 
-   // [FG] linear stereo volume separation
-   leftvol = ((254 - separation) * volume) / 127;
-   rightvol = ((separation) * volume) / 127;
+  source = openal_sources[channel];
 
-   if (leftvol < 0) leftvol = 0;
-   else if (leftvol > 255) leftvol = 255;
-   if (rightvol < 0) rightvol = 0;
-   else if (rightvol > 255) rightvol = 255;
+  alSourcef(source, AL_GAIN, (ALfloat)volume / 127.0f);
 
-   Mix_SetPanning(handle, leftvol, rightvol);
+  // Create a panning effect by moving the source in an arc around the listener.
+  // https://github.com/kcat/openal-soft/issues/194
+  pan = (ALfloat)separation / 255.0f - 0.5f;
+  alSourcef(source, AL_ROLLOFF_FACTOR, 0.0f);
+  alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+  alSource3f(source, AL_POSITION, pan, 0.0f, -sqrtf(1.0f - pan * pan));
 }
 
-//
-// SFX API
-//
-
-//
-// I_UpdateSoundParams
-//
-// Update the sound parameters. Used to control volume,
-// pan, and pitch changes such as when a player turns.
-//
-void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
-{
-   if(!snd_init)
-      return;
-
-   updateSoundParams(handle, vol, sep, pitch);
-}
+// [FG] variable pitch bend range
+int pitch_bend_range;
 
 //
 // I_SetChannels
@@ -473,22 +267,20 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
 //
 void I_SetChannels(void)
 {
-   int i;
-   
-   int *steptablemid = steptable + 128;
-   const double base = pitch_bend_range / 100.0;
-   
-   // Okay, reset internal mixing channels to zero.
-   for(i = 0; i < MAX_CHANNELS; ++i)
-   {
-      memset(&channelinfo[i], 0, sizeof(channel_info_t));
-   }
-   
-   // This table provides step widths for pitch parameters.
-   for(i=-128 ; i<128 ; i++)
-   {
-      steptablemid[i] = (int)(pow(base, (double)i / 64.0) * 65536.0); // [FG] variable pitch bend range
-   }
+  int i;
+  const double base = pitch_bend_range / 100.0;
+
+  // Okay, reset internal mixing channels to zero.
+  for (i = 0; i < MAX_CHANNELS; i++)
+  {
+    memset(&channelinfo[i], 0, sizeof(channel_info_t));
+  }
+
+  // This table provides step widths for pitch parameters.
+  for (i = 0; i < arrlen(steptable); i++)
+  {
+    steptable[i] = pow(base, (double)(2 * (i - NORM_PITCH)) / NORM_PITCH); // [FG] variable pitch bend range
+  }
 }
 
 //
@@ -501,8 +293,8 @@ void I_SetSfxVolume(int volume)
   //  the menu/config file setting
   //  to the state variable used in
   //  the mixing.
-  
-   snd_SfxVolume = volume;
+
+  snd_SfxVolume = volume;
 }
 
 // jff 1/21/98 moved music volume down into MUSIC API with the rest
@@ -515,14 +307,19 @@ void I_SetSfxVolume(int volume)
 //
 int I_GetSfxLumpNum(sfxinfo_t *sfx)
 {
-   char namebuf[16];
+  if (sfx->lumpnum == -1)
+  {
+    char namebuf[16];
 
-   memset(namebuf, 0, sizeof(namebuf));
+    memset(namebuf, 0, sizeof(namebuf));
 
-   strcpy(namebuf, "DS");
-   strcpy(namebuf+2, sfx->name);
+    strcpy(namebuf, "DS");
+    strcpy(namebuf+2, sfx->name);
 
-   return W_CheckNumForName(namebuf);
+    sfx->lumpnum = W_CheckNumForName(namebuf);
+  }
+
+  return sfx->lumpnum;
 }
 
 // Almost all of the sound code from this point on was
@@ -534,45 +331,52 @@ int I_GetSfxLumpNum(sfxinfo_t *sfx)
 //
 // This function adds a sound to the list of currently
 // active sounds, which is maintained as a given number
-// of internal channels. Returns a handle.
+// of internal channels. Returns a free channel.
 //
-int I_StartSound(sfxinfo_t *sound, int cnum, int vol, int sep, int pitch, int pri, boolean loop)
+int I_StartSound(sfxinfo_t *sound, int vol, int sep, int pitch)
 {
-   static unsigned int id = 0;
-   int handle;
-   
-   if(!snd_init)
-      return -1;
+  static unsigned int id = 0;
+  int channel;
 
-   // haleyjd: turns out this is too simplistic. see below.
-   /*
-   // SoM: reimplement hardware channel wrap-around
-   if(++handle >= MAX_CHANNELS)
-      handle = 0;
-   */
+  if (!snd_init)
+    return -1;
 
-   // haleyjd 06/03/06: look for an unused hardware channel
-   for(handle = 0; handle < MAX_CHANNELS; ++handle)
-   {
-      if(channelinfo[handle].data == NULL)
-         break;
-   }
+  // haleyjd 06/03/06: look for an unused hardware channel
+  for (channel = 0; channel < MAX_CHANNELS; channel++)
+  {
+    if (channelinfo[channel].enabled == false)
+      break;
+  }
 
-   // all used? don't play the sound. It's preferable to miss a sound
-   // than it is to cut off one already playing, which sounds weird.
-   if(handle == MAX_CHANNELS)
-      return -1;
+  // all used? don't play the sound. It's preferable to miss a sound
+  // than it is to cut off one already playing, which sounds weird.
+  if (channel == MAX_CHANNELS)
+    return -1;
 
-   if(addsfx(sound, handle, pitch))
-   {
-      channelinfo[handle].idnum = id++; // give the sound a unique id
-      Mix_PlayChannelTimed(handle, &channelinfo[handle].chunk, loop ? -1 : 0, -1);
-      updateSoundParams(handle, vol, sep, pitch);
-   }
-   else
-      handle = -1;
-   
-   return handle;
+  if (CacheSound(sound, channel))
+  {
+    ALuint source = openal_sources[channel];
+    ALuint buffer = channelinfo[channel].sfx->buffer;
+
+    channelinfo[channel].idnum = id++; // give the sound a unique id
+    I_UpdateSoundParams(channel, vol, sep);
+
+    alSourcei(source, AL_BUFFER, buffer);
+    if (pitch != NORM_PITCH)
+    {
+      alSourcef(source, AL_PITCH, steptable[pitch]);
+    }
+
+    alSourcePlay(source);
+    if (alGetError() != AL_NO_ERROR)
+    {
+      fprintf(stderr, "I_StartSound: Error playing sfx.\n");
+    }
+  }
+  else
+    channel = -1;
+
+  return channel;
 }
 
 //
@@ -581,17 +385,17 @@ int I_StartSound(sfxinfo_t *sound, int cnum, int vol, int sep, int pitch, int pr
 // Stop the sound. Necessary to prevent runaway chainsaw,
 // and to stop rocket launches when an explosion occurs.
 //
-void I_StopSound(int handle)
+void I_StopSound(int channel)
 {
-   if(!snd_init)
-      return;
+  if (!snd_init)
+    return;
 
 #ifdef RANGECHECK
-   if(handle < 0 || handle >= MAX_CHANNELS)
-      I_Error("I_StopSound: handle out of range");
+  if (channel < 0 || channel >= MAX_CHANNELS)
+    I_Error("I_StopSound: channel out of range");
 #endif
-   
-   stopchan(handle);
+
+  StopChannel(channel);
 }
 
 //
@@ -599,17 +403,20 @@ void I_StopSound(int handle)
 //
 // haleyjd: wow, this can actually do something in the Windows version :P
 //
-int I_SoundIsPlaying(int handle)
+int I_SoundIsPlaying(int channel)
 {
-   if(!snd_init)
-      return false;
+  ALint value;
+
+  if (!snd_init)
+    return false;
 
 #ifdef RANGECHECK
-   if(handle < 0 || handle >= MAX_CHANNELS)
-      I_Error("I_SoundIsPlaying: handle out of range");
+  if (channel < 0 || channel >= MAX_CHANNELS)
+    I_Error("I_SoundIsPlaying: channel out of range");
 #endif
- 
-   return Mix_Playing(handle);
+
+  alGetSourcei(openal_sources[channel], AL_SOURCE_STATE, &value);
+  return (value == AL_PLAYING);
 }
 
 //
@@ -620,17 +427,17 @@ int I_SoundIsPlaying(int handle)
 // that the higher-level sound code doesn't start updating sounds that have
 // been displaced without it noticing.
 //
-int I_SoundID(int handle)
+int I_SoundID(int channel)
 {
-   if(!snd_init)
-      return 0;
+  if (!snd_init)
+    return 0;
 
 #ifdef RANGECHECK
-   if(handle < 0 || handle >= MAX_CHANNELS)
-      I_Error("I_SoundID: handle out of range\n");
+  if (channel < 0 || channel >= MAX_CHANNELS)
+    I_Error("I_SoundID: channel out of range\n");
 #endif
 
-   return channelinfo[handle].idnum;
+  return channelinfo[channel].idnum;
 }
 
 // This function loops all active (internal) sound
@@ -647,32 +454,20 @@ int I_SoundID(int handle)
 
 void I_UpdateSound(void)
 {
-    int i;
+  int i;
 
-    // Check all channels to see if a sound has finished
+  // Check all channels to see if a sound has finished
 
-    for (i=0; i<MAX_CHANNELS; ++i)
+  for (i = 0; i < MAX_CHANNELS; i++)
+  {
+    if (channelinfo[i].enabled && !I_SoundIsPlaying(i))
     {
-        if (channelinfo[i].data && !I_SoundIsPlaying(i))
-        {
-            // Sound has finished playing on this channel,
-            // but sound data has not been released to cache
+      // Sound has finished playing on this channel,
+      // but sound data has not been released to cache
 
-            stopchan(i);
-        }
+      StopChannel(i);
     }
-}
-
-
-// This would be used to write out the mixbuffer
-//  during each game loop update.
-// Updates sound buffer and audio device at runtime.
-// It is called during Timer interrupt with SNDINTR.
-
-void I_SubmitSound(void)
-{
-  //this should no longer be necessary because
-  //allegro is doing all the sound mixing now
+  }
 }
 
 //
@@ -682,115 +477,243 @@ void I_SubmitSound(void)
 //
 void I_ShutdownSound(void)
 {
-   if(snd_init)
-   {
-      Mix_CloseAudio();
-      snd_init = 0;
-   }
-}
+    int i;
+    ALCcontext *context;
+    ALCdevice *device;
 
-// Calculate slice size, the result must be a power of two.
-
-static int GetSliceSize(void)
-{
-    int limit;
-    int n;
-
-    limit = snd_samplerate / TICRATE;
-
-    // Try all powers of two, not exceeding the limit.
-
-    for (n=0;; ++n)
+    if (!snd_init)
     {
-        // 2^n <= limit < 2^n+1 ?
-
-        if ((1 << (n + 1)) > limit)
-        {
-            return (1 << n);
-        }
+        return;
     }
 
-    // Should never happen?
+    context = alcGetCurrentContext();
 
-    return 1024;
+    if (!context)
+    {
+       return;
+    }
+
+    device = alcGetContextsDevice(context);
+
+    alDeleteSources(MAX_CHANNELS, openal_sources);
+    for (i = 0; i < num_sfx; ++i)
+    {
+        if (S_sfx[i].cached)
+        {
+            alDeleteBuffers(1, &S_sfx[i].buffer);
+            S_sfx[i].cached = false;
+        }
+    }
+    if (alGetError() != AL_NO_ERROR)
+    {
+        fprintf(stderr, "I_ShutdownSound: Failed to delete object IDs.\n");
+    }
+
+    alcMakeContextCurrent(NULL);
+    alcDestroyContext(context);
+    alcCloseDevice(device);
+
+    if (openal_sources)
+    {
+        free(openal_sources);
+        openal_sources = NULL;
+    }
+
+    snd_init = false;
 }
+
+// C doesn't allow casting between function and non-function pointer types, so
+// with C99 we need to use a union to reinterpret the pointer type. Pre-C99
+// still needs to use a normal cast and live with the warning (C++ is fine with
+// a regular reinterpret_cast).
+#if __STDC_VERSION__ >= 199901L
+#define FUNCTION_CAST(T, ptr) (union{void *p; T f;}){ptr}.f
+#else
+#define FUNCTION_CAST(T, ptr) (T)(ptr)
+#endif
+
+char *snd_resampler;
+
+static void SetResampler(void)
+{
+    LPALGETSTRINGISOFT alGetStringiSOFT = NULL;
+    ALint i, num_resamplers, def_resampler;
+
+    if (!alIsExtensionPresent("AL_SOFT_source_resampler"))
+    {
+        printf(" Resampler info not available!\n");
+        return;
+    }
+
+    alGetStringiSOFT = FUNCTION_CAST(LPALGETSTRINGISOFT, alGetProcAddress("alGetStringiSOFT"));
+
+    if (!alGetStringiSOFT)
+    {
+        fprintf(stderr, "I_SetResampler: alGetStringiSOFT() is not avaible.\n");
+        return;
+    }
+
+    num_resamplers = alGetInteger(AL_NUM_RESAMPLERS_SOFT);
+    def_resampler = alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
+
+    if (!num_resamplers)
+    {
+        printf(" No resamplers found!\n");
+        return;
+    }
+
+    for (i = 0; i < num_resamplers; ++i)
+    {
+        if (!strcasecmp(snd_resampler, alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, i)))
+        {
+            def_resampler = i;
+            break;
+        }
+    }
+    if (i == num_resamplers)
+    {
+        printf(" Failed to find resampler: '%s'.\n", snd_resampler);
+        return;
+    }
+
+    for (i = 0; i < MAX_CHANNELS; ++i)
+    {
+        alSourcei(openal_sources[i], AL_SOURCE_RESAMPLER_SOFT, def_resampler);
+    }
+
+    printf(" Using '%s' resampler.\n",
+           alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, def_resampler));
+}
+
+// [FG] add links for likely missing sounds
+
+struct {
+  const int from, to;
+} static const sfx_subst[] = {
+  {sfx_secret, sfx_itmbk},
+  {sfx_itmbk,  sfx_getpow},
+  {sfx_getpow, sfx_itemup},
+  {sfx_itemup, sfx_None},
+
+  {sfx_splash, sfx_oof},
+  {sfx_ploosh, sfx_oof},
+  {sfx_lvsiz,  sfx_oof},
+  {sfx_splsml, sfx_None},
+  {sfx_plosml, sfx_None},
+  {sfx_lavsml, sfx_None},
+};
 
 //
 // I_InitSound
 //
-// SoM 9/14/02: Rewrite. code taken from prboom to use SDL_Mixer
-//
+
 void I_InitSound(void)
-{   
-   if(!nosfxparm || !nomusicparm)
-   {
-      Uint16 mix_format;
-      int mix_channels;
+{
+    const ALCchar *name;
+    ALCdevice *device;
+    ALCcontext *context;
+    ALCint srate = -1;
 
-      printf("I_InitSound: ");
+    ALCint attribs[] = { // zero terminated list of integer pairs
+        ALC_HRTF_SOFT, ALC_FALSE,
+        0
+    };
 
-      // haleyjd: the docs say we should do this
-      // In SDL2, SDL_InitSubSystem() and SDL_Init() are interchangeable.
-      if (SDL_Init(SDL_INIT_AUDIO) < 0)
+    if (nosfxparm && nomusicparm)
+    {
+        return;
+    }
+
+    printf("I_InitSound: ");
+
+    device = alcOpenDevice(NULL);
+    if (device)
+    {
+        if (alcIsExtensionPresent(device, "ALC_ENUMERATE_ALL_EXT") != AL_FALSE)
+            name = alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
+        else
+            name = alcGetString(device, ALC_DEVICE_SPECIFIER);
+    }
+    else
+    {
+        printf("Could not open a device.\n");
+        return;
+    }
+
+    if (alcIsExtensionPresent(device, "ALC_SOFT_HRTF") == AL_FALSE)
+    {
+        attribs[0] = 0;
+    }
+
+    context = alcCreateContext(device, &attribs[0]);
+    if (!context || alcMakeContextCurrent(context) == ALC_FALSE)
+    {
+        fprintf(stderr, "I_InitSound: Error making context.\n");
+        return;
+    }
+
+    alcGetIntegerv(device, ALC_FREQUENCY, 1, &srate);
+
+    printf("Using '%s' @ %d Hz.\n", name, srate);
+
+    openal_sources = malloc(MAX_CHANNELS * sizeof(*openal_sources));
+    alGenSources(MAX_CHANNELS, openal_sources);
+
+    SetResampler();
+
+    I_AtExit(I_ShutdownSound, true);
+
+    snd_init = true;
+
+    // [FG] precache all sound effects
+    if (!nosfxparm)
+    {
+      int i;
+
+      printf(" Precaching all sound effects... ");
+      for (i = 1; i < num_sfx; i++)
       {
-         printf("Couldn't initialize SDL audio: %s\n", SDL_GetError());
-         return;
+        // DEHEXTRA has turned S_sfx into a sparse array
+        if (!S_sfx[i].name)
+          continue;
+
+        CacheSound(&S_sfx[i], 0);
       }
-  
-      if (Mix_OpenAudioDevice(snd_samplerate, AUDIO_S16SYS, 2, GetSliceSize(), NULL,
-                              SDL_AUDIO_ALLOW_FREQUENCY_CHANGE) < 0)
+      StopChannel(0);
+      printf("done.\n");
+
+      // [FG] add links for likely missing sounds
+      for (i = 0; i < arrlen(sfx_subst); i++)
       {
-         printf("Couldn't open audio with desired format.\n");
-         return;
+        sfxinfo_t *from = &S_sfx[sfx_subst[i].from],
+                    *to = &S_sfx[sfx_subst[i].to];
+
+        if (from->lumpnum == -1)
+        {
+          from->link = to;
+          from->pitch = NORM_PITCH;
+          from->volume = 0;
+        }
       }
-
-      // [FG] feed actual sample frequency back into config variable
-      Mix_QuerySpec(&snd_samplerate, &mix_format, &mix_channels);
-      printf("Configured audio device with %.1f kHz (%s%d%s), %d channels.\n",
-             (float)snd_samplerate / 1000,
-             SDL_AUDIO_ISFLOAT(mix_format) ? "F" : SDL_AUDIO_ISSIGNED(mix_format) ? "S" : "U",
-             (int)SDL_AUDIO_BITSIZE(mix_format),
-             SDL_AUDIO_BITSIZE(mix_format) > 8 ? (SDL_AUDIO_ISBIGENDIAN(mix_format) ? "MSB" : "LSB") : "",
-             mix_channels);
-
-      // [FG] let SDL_Mixer do the actual sound mixing
-      Mix_AllocateChannels(MAX_CHANNELS);
-
-      I_AtExit(I_ShutdownSound, true);
-
-      snd_init = true;
-
-      // [FG] precache all sound effects
-      if (!nosfxparm && precache_sounds)
-      {
-         int i;
-
-         printf("Precaching all sound effects...");
-         for (i = 1; i < num_sfx; i++)
-         {
-            // DEHEXTRA has turned S_sfx into a sparse array
-            if (!S_sfx[i].name)
-              continue;
-
-            addsfx(&S_sfx[i], 0, NORM_PITCH);
-         }
-         stopchan(0);
-         printf("done.\n");
-      }
-   }
+    }
 }
 
 int midi_player; // current music module
+
+static void MidiPlayerFallback(void)
+{
+    // Fall back to module 0 device 0.
+    midi_player = 0;
+    midi_player_module = music_modules[0].module;
+    midi_player_module->I_InitMusic(0);
+    active_module = midi_player_module;
+}
 
 void I_SetMidiPlayer(int device)
 {
     int i, accum;
 
-    if (midi_player_module)
-    {
-        midi_player_module->I_ShutdownMusic();
-        midi_player_module = NULL;
-    }
+    midi_player_module->I_ShutdownMusic();
 
     for (i = 0, accum = 0; i < arrlen(music_modules); ++i)
     {
@@ -807,28 +730,26 @@ void I_SetMidiPlayer(int device)
         accum += num_devices;
     }
 
-    if (!midi_player_module->I_InitMusic(device))
+    if (midi_player_module->I_InitMusic(device))
     {
-        midi_player_module = music_modules[0].module;
-        if (midi_player_module != &music_sdl_module)
-        {
-            midi_player_module->I_InitMusic(0);
-        }
+        active_module = midi_player_module;
+        return;
     }
-    active_module = midi_player_module;
+
+    MidiPlayerFallback();
 }
 
 boolean I_InitMusic(void)
 {
-    // haleyjd 04/11/03: don't use music if sfx aren't init'd
-    // (may be dependent, docs are unclear)
     if (nomusicparm)
     {
         return false;
     }
 
-    // always initilize SDL music
-    music_sdl_module.I_InitMusic(0);
+    // Always initialize the OpenAL module, it is used for software synth and
+    // non-MIDI music streaming.
+
+    music_oal_module.I_InitMusic(0);
 
     I_AtExit(I_ShutdownMusic, true);
 
@@ -842,34 +763,20 @@ boolean I_InitMusic(void)
         }
     }
 
-    // Fall back to module 0 device 0.
-    midi_player = 0;
-    midi_player_module = music_modules[0].module;
-    if (midi_player_module != &music_sdl_module)
-    {
-       midi_player_module->I_InitMusic(0);
-    }
-    active_module = midi_player_module;
+    MidiPlayerFallback();
 
     return true;
 }
 
 void I_ShutdownMusic(void)
 {
-    music_sdl_module.I_ShutdownMusic();
-
-    if (midi_player_module && midi_player_module != &music_sdl_module)
-    {
-        midi_player_module->I_ShutdownMusic();
-    }
+    music_oal_module.I_ShutdownMusic();
+    midi_player_module->I_ShutdownMusic();
 }
 
 void I_SetMusicVolume(int volume)
 {
-    if (active_module)
-    {
-        active_module->I_SetMusicVolume(volume);
-    }
+    active_module->I_SetMusicVolume(volume);
 }
 
 void I_PauseSong(void *handle)
@@ -896,19 +803,24 @@ void *I_RegisterSong(void *data, int size)
 {
     if (IsMus(data, size) || IsMid(data, size))
     {
-        if (midi_player_module)
-        {
-            active_module = midi_player_module;
-            return active_module->I_RegisterSong(data, size);
-        }
+        active_module = midi_player_module;
     }
-
-    if (midi_player_module == &music_opl_module)
+    else
     {
-        midi_player_module->I_ShutdownMusic();
+        // Not a MIDI file. We have to shutdown the OPL module due to
+        // implementation details.
+
+        if (midi_player_module == &music_opl_module)
+        {
+            midi_player_module->I_ShutdownMusic();
+        }
+
+        // Try to open file with SndFile or XMP.
+
+        active_module = &music_oal_module;
     }
 
-    active_module = &music_sdl_module;
+    active_module->I_SetMusicVolume(snd_MusicVolume);
     return active_module->I_RegisterSong(data, size);
 }
 

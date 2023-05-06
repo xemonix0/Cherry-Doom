@@ -1,5 +1,5 @@
 //
-// Copyright(C) 2022 Roman Fomin
+// Copyright(C) 2023 Roman Fomin
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -12,16 +12,21 @@
 // GNU General Public License for more details.
 //
 // DESCRIPTION:
-//      Check Windows version
 //
 
-#ifndef __WIN_WIN_VERSION__
-#define __WIN_WIN_VERSION__
+#ifndef __I_OALSTREAM__
+#define __I_OALSTREAM__
 
-#ifdef _WIN32
+#include "doomtype.h"
+#include "al.h"
 
-int I_CheckWindows11(void);
-
-#endif
+typedef struct
+{
+    boolean (*I_OpenStream)(void *data, ALsizei size, ALenum *format,
+                            ALsizei *freq, ALsizei *frame_size);
+    uint32_t (*I_FillStream)(byte *data, uint32_t frames);
+    void (*I_RestartStream)(void);
+    void (*I_CloseStream)(void);
+} stream_module_t;
 
 #endif

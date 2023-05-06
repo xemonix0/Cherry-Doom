@@ -107,7 +107,7 @@ static wchar_t *ConvertUtf8ToWide(const char *str)
     return ConvertMultiByteToWide(str, CP_UTF8);
 }
 
-static char *ConvertWideToUtf8(const wchar_t *wstr)
+char *ConvertWideToUtf8(const wchar_t *wstr)
 {
     return ConvertWideToMultiByte(wstr, CP_UTF8);
 }
@@ -212,7 +212,7 @@ int M_remove(const char *path)
 
     if (!wpath)
     {
-        return 0;
+        return -1;
     }
 
     ret = _wremove(wpath);

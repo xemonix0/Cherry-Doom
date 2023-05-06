@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: wi_stuff.c,v 1.11 1998/05/04 21:36:02 thldrmn Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 //
 // DESCRIPTION:
@@ -420,8 +411,6 @@ boolean WI_Responder(event_t* ev)
   return false;
 }
 
-extern patch_t *hu_font[HU_FONTSIZE];
-
 static void WI_DrawString(int y, const char* str)
 {
   extern void M_DrawString(int x, int y, int color, const char* str);
@@ -447,6 +436,13 @@ static void WI_drawLF(void)
     WI_DrawString(y, wbs->lastmapinfo->levelname);
 
     y += (5 * SHORT(hu_font['A' - HU_FONTSTART]->height) / 4);
+
+    if (wbs->lastmapinfo->author)
+    {
+      WI_DrawString(y, wbs->lastmapinfo->author);
+
+      y += (5 * SHORT(hu_font['A' - HU_FONTSTART]->height) / 4);
+    }
   }
   else if (wbs->lastmapinfo && wbs->lastmapinfo->levelpic[0])
   {
@@ -494,6 +490,13 @@ static void WI_drawEL(void)
     y += (5 * SHORT(entering->height)) / 4;
 
     WI_DrawString(y, wbs->nextmapinfo->levelname);
+
+    if (wbs->nextmapinfo->author)
+    {
+      y += (5 * SHORT(hu_font['A' - HU_FONTSTART]->height) / 4);
+
+      WI_DrawString(y, wbs->nextmapinfo->author);
+    }
   }
   else if (wbs->nextmapinfo && wbs->nextmapinfo->levelpic[0])
   {

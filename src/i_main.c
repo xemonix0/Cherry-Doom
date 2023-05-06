@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: i_main.c,v 1.8 1998/05/15 00:34:03 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -16,84 +12,18 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
-//
 // DESCRIPTION:
 //      Main program, simply calls D_DoomMain high level loop.
 //
 //-----------------------------------------------------------------------------
 
 #include <stdio.h>
-#include <signal.h>
 #include "config.h"
 
 #include "SDL.h" // haleyjd
 
 #include "m_argv.h"
-#include "i_system.h"
-#include "m_misc2.h"
-
-// Descriptions taken from MSDN
-static const struct {
-    int sig;
-    const char *description;
-} sigs[] = {
-    { SIGABRT, "Abnormal termination" },
-    { SIGFPE,  "Floating-point error" },
-    { SIGILL,  "Illegal instruction" },
-    { SIGINT,  "CTRL+C signal" },
-    { SIGSEGV, "Illegal storage access" },
-#ifdef SIGBUS
-    { SIGBUS,  "Access to an invalid address" },
-#endif
-    { SIGTERM, "Termination request" },
-};
-
-static void I_SignalHandler(int sig)
-{
-    char buf[64];
-    const char *str = NULL;
-
-    // Ignore future instances of this signal.
-    signal(sig, SIG_IGN);
-
-#ifdef HAVE_STRSIGNAL
-    str = strsignal(sig);
-
-    if (str == NULL)
-#endif
-    {
-        int i;
-        for (i = 0; i < arrlen(sigs); ++i)
-        {
-            if (sigs[i].sig == sig)
-            {
-               str = sigs[i].description;
-               break;
-            }
-        }
-    }
-
-    if (str)
-        M_snprintf(buf, sizeof(buf), "%s (Signal %d)", str, sig);
-    else
-        M_snprintf(buf, sizeof(buf), "Signal %d", sig);
-
-    I_Error("I_SignalHandler: Exit on %s", buf);
-}
-
-static void I_Signal(void)
-{
-    int i;
-
-    for (i = 0; i < arrlen(sigs); i++)
-    {
-        signal(sigs[i].sig, I_SignalHandler);
-    }
-}
+#include "version.h"
 
 //
 // D_DoomMain()
@@ -123,7 +53,7 @@ int main(int argc, char **argv)
       exit(0);
    }
 
-   I_Signal();
+   printf("%s (built on %s)\n\n", PROJECT_STRING, version_date);
 
    D_DoomMain();
 

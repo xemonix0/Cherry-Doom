@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: p_setup.c,v 1.16 1998/05/07 00:56:49 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //  Do all the WAD I/O, get map description,
@@ -211,6 +202,14 @@ void P_LoadSegs (int lump)
       ldef = &lines[linedef];
       li->linedef = ldef;
       side = SHORT(ml->side);
+
+      // Andrey Budko: check for wrong indexes
+      if ((unsigned)ldef->sidenum[side] >= (unsigned)numsides)
+      {
+        I_Error("P_LoadSegs: linedef %d for seg %d references a non-existent sidedef %d",
+                linedef, i, (unsigned)ldef->sidenum[side]);
+      }
+
       li->sidedef = &sides[ldef->sidenum[side]];
       li->frontsector = sides[ldef->sidenum[side]].sector;
       // [FG] recalculate
@@ -1542,8 +1541,14 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     playback_nextlevel = false;
   }
 
+  // [crispy] don't load map's default music if loaded from a savegame with
+  // MUSINFO data
+  if (!musinfo.from_savegame)
+  {
   // Make sure all sounds are stopped before Z_FreeTags.
   S_Start();
+  }
+  musinfo.from_savegame = false;
 
   Z_FreeTag(PU_LEVEL);
   Z_FreeTag(PU_CACHE);

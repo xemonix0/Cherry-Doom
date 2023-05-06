@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: s_sound.c,v 1.11 1998/05/03 22:57:06 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 //
 // DESCRIPTION:  Platform-independent sound code
@@ -73,8 +64,6 @@ typedef struct channel_s
   int priority;            // current priority value
   int singularity;         // haleyjd 09/27/06: stored singularity value
   int idnum;               // haleyjd 09/30/06: unique id num for sound event
-  boolean loop;
-  int loop_timeout;
 } channel_t;
 
 // the set of channels available
@@ -129,20 +118,6 @@ static void S_StopChannel(int cnum)
       // haleyjd 09/27/06: clear the entire channel
       memset(&channels[cnum], 0, sizeof(channel_t));
    }
-}
-
-void S_StopLoopSounds (void)
-{
-  int cnum;
-
-  if (!nosfxparm)
-  {
-    for (cnum = 0; cnum < numChannels; ++cnum)
-    {
-      if (channels[cnum].sfxinfo && channels[cnum].loop)
-        S_StopChannel(cnum);
-    }
-  }
 }
 
 //
@@ -230,28 +205,6 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
 }
 
 //
-// S_CompareChannels
-//
-// A comparison function that determines which sound channel should
-// take priority. Can be used with std::sort.
-//
-// Returns true if the first channel should precede the second.
-//
-static int S_CompareChannels(const void *arg_a, const void *arg_b)
-{
-  const channel_t *a = (const channel_t *) arg_a;
-  const channel_t *b = (const channel_t *) arg_b;
-
-  // Note that a higher priority number means lower priority!
-  const int ret = a->priority - b->priority;
-
-  return ret ? ret : (b->idnum - a->idnum);
-}
-
-// How many instances of the same sfx can be playing concurrently
-int parallel_sfx_limit;
-
-//
 // S_getChannel :
 //
 //   If none available, return -1.  Otherwise channel #.
@@ -259,93 +212,80 @@ int parallel_sfx_limit;
 //   Note that a higher priority number means lower priority!
 //
 static int S_getChannel(const mobj_t *origin, sfxinfo_t *sfxinfo,
-                        int priority, int singularity,
-                        boolean loop, int loop_timeout)
+                        int priority, int singularity)
 {
-   // channel number to use
-   int cnum;
-   int instances = 0;
+  // channel number to use
+  int cnum;
+  int lowestpriority = -1; // haleyjd
+  int lpcnum = -1;
 
-   // Sort the sound channels by descending priority levels
-   qsort(channels, numChannels, sizeof(channel_t), S_CompareChannels);
+  // haleyjd 09/28/06: moved this here. If we kill a sound already
+  // being played, we can use that channel. There is no need to
+  // search for a free one again because we already know of one.
 
-   // haleyjd 09/28/06: moved this here. If we kill a sound already
-   // being played, we can use that channel. There is no need to
-   // search for a free one again because we already know of one.
+  // kill old sound
+  // killough 12/98: replace is_pickup hack with singularity flag
+  // haleyjd 06/12/08: only if subchannel matches
+  for (cnum = 0; cnum < numChannels; cnum++)
+  {
+    if (channels[cnum].sfxinfo &&
+        channels[cnum].singularity == singularity &&
+        channels[cnum].origin == origin)
+    {
+      S_StopChannel(cnum);
+      break;
+    }
+  }
 
-   // kill old sound
-   // killough 12/98: replace is_pickup hack with singularity flag
-   // haleyjd 06/12/08: only if subchannel matches
-   for (cnum = 0; cnum < numChannels; ++cnum)
-   {
-     if (!channels[cnum].sfxinfo)
-       continue;
+  // Find an open channel
+  if (cnum == numChannels)
+  {
+    // haleyjd 09/28/06: it isn't necessary to look for playing sounds in
+    // the same singularity class again, as we just did that above. Here
+    // we are looking for an open channel. We will also keep track of the
+    // channel found with the lowest sound priority while doing this.
+    for (cnum = 0; cnum < numChannels && channels[cnum].sfxinfo; cnum++)
+    {
+      if (channels[cnum].priority > lowestpriority)
+      {
+        lowestpriority = channels[cnum].priority;
+        lpcnum = cnum;
+      }
+    }
+  }
 
-     // [FG] looping sounds don't interrupt each other
-     if (channels[cnum].sfxinfo == sfxinfo &&
-         channels[cnum].origin == origin &&
-         channels[cnum].loop && loop)
-     {
-       channels[cnum].loop_timeout = loop_timeout;
-       return -1;
-     }
+  // None available?
+  if (cnum == numChannels)
+  {
+    // Look for lower priority
+    // haleyjd: we have stored the channel found with the lowest priority
+    // in the loop above
+    if (priority > lowestpriority)
+    {
+      return -1;                  // No lower priority.  Sorry, Charlie.
+    }
+    else
+    {
+      S_StopChannel(lpcnum);      // Otherwise, kick out lowest priority.
+      cnum = lpcnum;
+    }
+  }
 
-     if (channels[cnum].singularity == singularity &&
-         channels[cnum].origin == origin)
-     {
-       S_StopChannel(cnum);
-       return cnum;
-     }
+#ifdef RANGECHECK
+  if (cnum >= numChannels)
+    I_Error("S_getChannel: handle %d out of range\n", cnum);
+#endif
 
-     // Limit the number of identical sounds playing at once
-     if (channels[cnum].sfxinfo == sfxinfo)
-     {
-       if (++instances >= parallel_sfx_limit)
-       {
-         if (priority < channels[cnum].priority)
-         {
-           S_StopChannel(cnum);
-           return cnum;
-         }
-         else
-         {
-           return -1;
-         }
-       }
-     }
-   }
-
-   // Find an open channel
-   for (cnum = 0; cnum < numChannels; ++cnum)
-   {
-     if (!channels[cnum].sfxinfo)
-       return cnum;
-   }
-
-   // None available?
-   for (cnum = numChannels - 1; cnum >= 0; --cnum)
-   {
-     // Look for lower priority
-     if (priority < channels[cnum].priority)
-     {
-       S_StopChannel(cnum);
-       return cnum;
-     }
-   }
-
-   return -1;
+  return cnum;
 }
 
 
-static void S_StartSoundEx(const mobj_t *origin, int sfx_id, int loop_timeout)
+void S_StartSound(const mobj_t *origin, int sfx_id)
 {
    int sep, pitch, o_priority, priority, singularity, cnum, handle;
    int volumeScale = 127;
    int volume = snd_SfxVolume;
    sfxinfo_t *sfx;
-   const boolean loop = loop_timeout > 0;
-
-   loop_timeout += gametic;
 
    //jff 1/22/98 return if sound is not enabled
    if(nosfxparm)
@@ -422,7 +362,7 @@ static void S_StartSoundEx(const mobj_t *origin, int sfx_id, int loop_timeout)
    }
 
    // try to find a channel
-   if((cnum = S_getChannel(origin, sfx, priority, singularity, loop, loop_timeout)) < 0)
+   if((cnum = S_getChannel(origin, sfx, priority, singularity)) < 0)
       return;
 
 #ifdef RANGECHECK
@@ -439,7 +379,7 @@ static void S_StartSoundEx(const mobj_t *origin, int sfx_id, int loop_timeout)
    { sfx = sfx->link; } // sf: skip thru link(s)
 
    // Assigns the handle to one of the channels in the mix/output buffer.
-   handle = I_StartSound(sfx, cnum, volume, sep, pitch, priority, loop);
+   handle = I_StartSound(sfx, volume, sep, pitch);
 
    // haleyjd: check to see if the sound was started
    if(handle >= 0)
@@ -455,21 +395,9 @@ static void S_StartSoundEx(const mobj_t *origin, int sfx_id, int loop_timeout)
       channels[cnum].priority    = priority;    // scaled priority
       channels[cnum].singularity = singularity;
       channels[cnum].idnum       = I_SoundID(handle); // unique instance id
-      channels[cnum].loop        = loop;
-      channels[cnum].loop_timeout = loop_timeout;
    }
    else // haleyjd: the sound didn't start, so clear the channel info
       memset(&channels[cnum], 0, sizeof(channel_t));
-}
-
-void S_StartSound(const mobj_t *origin, int sfx_id)
-{
-  S_StartSoundEx(origin, sfx_id, 0);
-}
-
-void S_LoopSound(const mobj_t *origin, int sfx_id, int timeout)
-{
-  S_StartSoundEx(origin, sfx_id, timeout);
 }
 
 //
@@ -569,11 +497,7 @@ void S_UpdateSounds(const mobj_t *listener)
 
       if(sfx)
       {
-         if (c->loop && gametic > c->loop_timeout)
-         {
-           S_StopChannel(cnum);
-         }
-         else if (I_SoundIsPlaying(c->handle))
+         if (I_SoundIsPlaying(c->handle))
          {
             // initialize parameters
             int volume = snd_SfxVolume;
@@ -596,7 +520,7 @@ void S_UpdateSounds(const mobj_t *listener)
                   S_StopChannel(cnum);
                else
                {
-                  I_UpdateSoundParams(c->handle, volume, sep, pitch);
+                  I_UpdateSoundParams(c->handle, volume, sep);
                   c->priority = pri; // haleyjd
                }
             }

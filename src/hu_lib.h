@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: hu_lib.h,v 1.9 1998/05/11 10:13:31 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -16,11 +12,6 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
-//
 // DESCRIPTION:  none
 //
 //-----------------------------------------------------------------------------
@@ -32,6 +23,7 @@
 #include "r_defs.h"
 #include "v_video.h"  //jff 2/16/52 include color range defs
 
+#define CR_ORIG (-1) // [FG] reset to original color
 
 // background and foreground screen numbers
 // different from other modules.
@@ -59,7 +51,7 @@ typedef struct
   int   x;
   int   y;
 
-  patch_t** f;                          // font
+  patch_t ***f;                         // font
   int   sc;                             // start character
   char *cr;                         //jff 2/16/52 output color range
 
@@ -73,8 +65,26 @@ typedef struct
   // whether this line needs to be udpated
   int   needsupdate;
 
+  int width;
+  boolean visible;
+  void (*builder) (void);
+
 } hu_textline_t;
 
+typedef enum {
+  align_topleft,
+  align_topright,
+  align_bottomleft,
+  align_bottomright,
+  align_direct,
+  num_aligns,
+} align_t;
+
+typedef struct {
+  hu_textline_t *line;
+  align_t align;
+  int x, y;
+} widget_t;
 
 
 // Scrolling Text window widget
@@ -144,19 +154,19 @@ void HUlib_initTextLine
   hu_textline_t *t,
   int x,
   int y,
-  patch_t **f,
+  patch_t ***f,
   int sc,
-  char *cr    //jff 2/16/98 add color range parameter
+  char *cr,    //jff 2/16/98 add color range parameter
+  void (*builder)(void)
 );
 
 // returns success
 boolean HUlib_addCharToTextLine(hu_textline_t *t, char ch);
-
-// returns success
-boolean HUlib_delCharFromTextLine(hu_textline_t *t);
+void HUlib_addStringToTextLine(hu_textline_t *t, char *s);
 
 // draws tline
-void HUlib_drawTextLine(hu_textline_t *l, boolean drawcursor);
+void HUlib_drawTextLine(hu_textline_t *l, align_t align, boolean drawcursor);
+void HUlib_resetAlignOffsets();
 
 // erases text line
 void HUlib_eraseTextLine(hu_textline_t *l);
@@ -172,13 +182,10 @@ void HUlib_initSText
   int   x,
   int   y,
   int   h,
-  patch_t** font,
+  patch_t ***font,
   int   startchar,
   char *cr,   //jff 2/16/98 add color range parameter
   boolean*  on );
-
-// add a new line
-void HUlib_addLineToSText(hu_stext_t* s);
 
 // add a text message to an stext widget
 void HUlib_addMessageToSText
@@ -187,7 +194,7 @@ void HUlib_addMessageToSText
   char*   msg );
 
 // draws stext
-void HUlib_drawSText(hu_stext_t* s);
+void HUlib_drawSText(hu_stext_t* s, align_t align);
 
 // erases all stext lines
 void HUlib_eraseSText(hu_stext_t* s);
@@ -198,16 +205,11 @@ void HUlib_initMText
 ( hu_mtext_t *m,
   int x,
   int y,
-  patch_t** font,
+  patch_t ***font,
   int startchar,
   char *cr,
   boolean *on
 );
-
-//jff 2/26/98 message refresh widget
-// add a text line to refresh text widget
-void HUlib_addLineToMText
-( hu_mtext_t* m );
 
 //jff 2/26/98 message refresh widget
 // add a text message to refresh text widget
@@ -216,19 +218,9 @@ void HUlib_addMessageToMText
   char*   prefix,
   char*   msg );
 
-//jff 2/26/98 new routine to display a background on which
-// the list of last hud_msg_lines are displayed
-void HUlib_drawMBg
-( int x,
-  int y,
-  int w,
-  int h,
-  patch_t** bgp
-);
-
 //jff 2/26/98 message refresh widget
 // draws mtext
-void HUlib_drawMText(hu_mtext_t* m);
+void HUlib_drawMText(hu_mtext_t* m, align_t align);
 
 //jff 4/28/98 erases behind message list
 void HUlib_eraseMText(hu_mtext_t* m);
@@ -238,31 +230,20 @@ void HUlib_initIText
 ( hu_itext_t* it,
   int   x,
   int   y,
-  patch_t** font,
+  patch_t ***font,
   int   startchar,
   char *cr,   //jff 2/16/98 add color range parameter
   boolean*  on );
 
-// enforces left margin
-void HUlib_delCharFromIText(hu_itext_t* it);
-
-// enforces left margin
-void HUlib_eraseLineFromIText(hu_itext_t* it);
-
 // resets line and left margin
 void HUlib_resetIText(hu_itext_t* it);
-
-// left of left-margin
-void HUlib_addPrefixToIText
-( hu_itext_t* it,
-  char*   str );
 
 // whether eaten
 boolean HUlib_keyInIText
 ( hu_itext_t* it,
   unsigned char ch );
 
-void HUlib_drawIText(hu_itext_t* it);
+void HUlib_drawIText(hu_itext_t* it, align_t align);
 
 // erases all itext lines
 void HUlib_eraseIText(hu_itext_t* it);

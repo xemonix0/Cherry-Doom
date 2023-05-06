@@ -62,7 +62,6 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - **SSG is accounted for on the Arms widget** [p.f. Crispy Doom]
 - _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
 - _**Smart Totals**_ setting [p.f. So Doom]
-- _**Smooth Health/Armor Count**_ setting, to progressively increase and decrease said displayed values [i.b. Heretic]
 - **Crosshair:**
   - 5 new types;
   - Shaded variants for all types;
@@ -134,6 +133,14 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
 
+# Releases
+
+Source code and Windows binaries (MSVC builds for Windows 7 and newer) for the latest release can be found on the [Release](https://github.com/MrAlaux/Nugget-Doom/releases/latest) page.
+
+The most recent list of changes can be found in the [Changelog](https://github.com/MrAlaux/Nugget-Doom/blob/master/CHANGELOG.md).
+
+A complete history of changes and releases can be found on the [Releases](https://github.com/MrAlaux/Nugget-Doom/releases) page.
+
 ## Versioning
 
 Nugget Doom follows a fairly simple (albeit arbitrary) **X.Y.Z** versioning system:
@@ -143,20 +150,29 @@ Nugget Doom follows a fairly simple (albeit arbitrary) **X.Y.Z** versioning syst
 
 Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
 
-# Building
+# Compiling
 
 As a Woof! fork, its build instructions should also apply here:
 
-The source code is available at GitHub: https://github.com/MrAlaux/Nugget-Doom.
+The Nugget Doom source code is available at GitHub: <https://github.com/MrAlaux/Nugget-Doom>.
 
 ## Linux, and Windows with MSYS2
 
-On Linux, you will need to install the SDL2, SDL2_mixer and SDL2_net libraries.  Usually your distribution should have the corresponding packages in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
+The following libraries need to be installed:
+
+ * [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
+ * [SDL2_net](https://github.com/libsdl-org/SDL_net)
+ * [openal-soft](https://github.com/kcat/openal-soft)
+ * [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
+ * [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
+ * [libxmp](https://github.com/libxmp/libxmp) (optional)
+ 
+Usually your distribution should have the corresponding packages in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
 
 Once installed, compilation should be as simple as:
 
 ```
- cd nugget
+ cd nugget-doom
  mkdir build; cd build
  cmake ..
  make
@@ -164,28 +180,21 @@ Once installed, compilation should be as simple as:
 
 After successful compilation the resulting binary can be found in the `src/` directory.
 
-## Windows
+## Windows with Visual Studio
 
-Visual Studio 2019 comes with built-in support for CMake by opening the source tree as a folder.  Otherwise, you should probably use the GUI tool included with CMake to set up the project and generate build files for your tool or IDE of choice.
+Visual Studio 2019 and [VSCode](https://code.visualstudio.com/) comes with built-in support for CMake by opening the source tree as a folder.
 
-It's worth noting that you do not need to download any dependencies.  The build system will automatically download them for you.
-
-## Cross-compiling
-
-You may want to cross-compile from Linux to Windows.  First, make sure you have a reasonably recent version of the [Mingw-w64](https://www.mingw-w64.org/) package installed.  From there, cross-compiling should be as easy as:
-
+Install vcpkg <https://github.com/Microsoft/vcpkg#quick-start-windows>. Integrate it into CMake or use toolchain file:
 ```
- cd nugget
- mkdir build; cd build
- cmake -DCMAKE_TOOLCHAIN_FILE=../CrossToWin64.cmake ..
- make
+ cd nugget-doom
+ cmake -B build -DCMAKE_TOOLCHAIN_FILE="[path to vcpkg]/scripts/buildsystems/vcpkg.cmake"
+ cmake --build build
 ```
-
-Much like a native Windows build, you do not need to download any dependencies.
+CMake will automatically download and build all dependencies for you.
 
 # Contact
 
-The homepage for Nugget Doom is https://github.com/MrAlaux/Nugget-Doom.
+The homepage for Nugget Doom is <https://github.com/MrAlaux/Nugget-Doom>.
 
 Please report any bugs, glitches or crashes that you encounter to the GitHub [Issue Tracker](https://github.com/MrAlaux/Nugget-Doom/issues).
 
@@ -206,11 +215,13 @@ Copyright:
  © 2017 Christoph Oelckers;  
  © 2019 Fernando Carmona Varo;  
  © 2019 Jonathan Dowland;  
- © 2020-2022 Fabian Greffrath;  
  © 2020 Alex Mayfield;  
- © 2020-2022 Roman Fomin;  
+ © 2021 Ryan Krafnick;  
  © 2022 ceski;  
- © 2021-2023 Alaux.  
+ © 2023 liPillON;  
+ © 2020-2023 Fabian Greffrath;  
+ © 2020-2023 Roman Fomin;
+ © 2021-2023 Alaux.    
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/beta.h`
@@ -230,12 +241,8 @@ Copyright:
  © 2019 Fernando Carmona Varo.
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `cmake/FindFluidSynth.cmake`
-Copyright: © 2018 Christophe Giboudeaux.
-License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
-
-Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_mixer.cmake, cmake/FindSDL2_net.cmake`
-Copyright: © 2018 Alex Mayfield.
+Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
+Copyright: © 2018 Alex Mayfield.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `data/nugget-doom.ico, data/nugget-doom.png, data/nugget-doom8.ico, src/icon.c, data/setup.ico, data/setup8.ico, setup/setup_icon.c, data/nugget-doom-setup.png`
@@ -264,12 +271,11 @@ Copyright:
  © 2010 David Bolton.
 License: [GPL-2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `textscreen/*`
-Copyright:
- © 1993-1996 Id Software, Inc.;
- © 1999 Thomas A. Fine;
- © 2002-2004 The DOSBox Team;
- © 2005-2017 Simon Howard.
+Files: `textscreen/*`  
+Copyright:  
+ © 1993-1996 Id Software, Inc.;  
+ © 2002-2004 The DOSBox Team;  
+ © 2005-2017 Simon Howard.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `win32/win_opendir.*`

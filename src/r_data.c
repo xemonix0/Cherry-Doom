@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: r_data.c,v 1.23 1998/05/23 08:05:57 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Preparation of data for rendering,
@@ -122,6 +113,7 @@ unsigned  **texturecolumnofs2;
 byte      **texturecomposite;
 byte      **texturecomposite2;
 int       *flattranslation;             // for global animation
+int       *flatterrain;
 int       *texturetranslation;
 const byte **texturebrightmap; // [crispy] brightmaps
 
@@ -349,7 +341,8 @@ static void R_GenerateLookup(int texnum, int *const errors)
 		if (magic[0] == 0x89 &&
 		    magic[1] == 'P' && magic[2] == 'N' && magic[3] == 'G')
 		{
-			I_Error("Patch in PNG format detected: %.8s", lumpinfo[pat].name);
+			fprintf(stderr, "\nPatch in PNG format detected: %.8s", lumpinfo[pat].name);
+			continue;
 		}
 	}
 
@@ -780,8 +773,14 @@ void R_InitFlats(void)
   flattranslation =
     Z_Malloc((numflats+1)*sizeof(*flattranslation), PU_STATIC, 0);
 
+  flatterrain =
+    Z_Malloc((numflats+1)*sizeof(*flatterrain), PU_STATIC, 0);
+
   for (i=0 ; i<numflats ; i++)
+  {
     flattranslation[i] = i;
+    flatterrain[i] = 0; // terrain_solid
+  }
 }
 
 //
@@ -873,6 +872,11 @@ int tran_filter_pct = 66;       // filter percent
 void R_InitTranMap(int progress)
 {
   int lump = W_CheckNumForName("TRANMAP");
+  //!
+  // @category mod
+  //
+  // Forces a (re-)building of the translucency and color translation tables.
+  //
   int force_rebuild = M_CheckParm("-tranmap");
 
   // If a tranlucency filter map lump is present, use it
@@ -967,7 +971,7 @@ void R_InitTranMap(int progress)
                   }
               }
           }
-          if (cachefp)        // write out the cached translucency map
+          if (cachefp && !force_rebuild) // write out the cached translucency map
             {
               cache.pct = tran_filter_pct;
               memcpy(cache.playpal, playpal, sizeof cache.playpal); // [FG] a palette has 256 colors saved as byte triples
@@ -999,11 +1003,10 @@ void R_InitData(void)
 {
   // [crispy] Moved R_InitFlats() to the top, because it sets firstflat/lastflat
   // which are required by R_InitTextures() to prevent flat lumps from being
-  // mistaken as patches and by R_InitBrightmaps() to set brightmaps for flats.
-  // R_InitBrightmaps() comes next, because it sets R_BrightmapForTexName()
-  // to initialize brightmaps depending on gameversion in R_InitTextures().
+  // mistaken as patches and by R_InitFlatBrightmaps() to set brightmaps for
+  // flats.
   R_InitFlats();
-  R_InitBrightmaps();
+  R_InitFlatBrightmaps();
   R_InitTextures();
   R_InitSpriteLumps();
     R_InitTranMap(1);                   // killough 2/21/98, 3/6/98

@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: p_user.c,v 1.14 1998/05/12 12:47:25 phares Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Player related stuff.
@@ -777,7 +768,7 @@ void P_PlayerThink (player_t* player)
       P_AimLineAttack(player->mo, player->mo->angle, 16*64*FRACUNIT, 0);
 
     if (linetarget) // Give some info on the thing
-      doomprintf("Type: %i - Health: %i/%i", linetarget->type,
+      doomprintf(MESSAGES_NONE, "Type: %i - Health: %i/%i", linetarget->type,
                  linetarget->health, linetarget->info->spawnhealth);
 
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;

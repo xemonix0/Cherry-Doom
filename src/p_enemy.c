@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: p_enemy.c,v 1.22 1998/05/12 12:47:10 phares Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Enemy thinking, AI.
@@ -1869,6 +1860,11 @@ void A_VileTarget(mobj_t *actor)
 // A_VileAttack
 //
 
+void A_VileJump(mobj_t *mo)
+{
+  mo->momz = 1000*FRACUNIT/mo->info->mass;
+}
+
 void A_VileAttack(mobj_t *actor)
 {
   mobj_t *fire;
@@ -1884,7 +1880,7 @@ void A_VileAttack(mobj_t *actor)
 
   S_StartSound(actor, sfx_barexp);
   P_DamageMobj(actor->target, actor, actor, 20);
-  actor->target->momz = 1000*FRACUNIT/actor->target->info->mass;
+  A_VileJump(actor->target);
 
   an = actor->angle >> ANGLETOFINESHIFT;
 

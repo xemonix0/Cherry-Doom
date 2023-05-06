@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id: p_floor.c,v 1.23 1998/05/23 10:23:16 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -16,11 +12,6 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
-//
 // DESCRIPTION:
 //  General plane mover and floor mover action routines
 //  Floor motion, pure changer types, raising stairs. donuts, elevators
@@ -34,6 +25,7 @@
 #include "p_tick.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "i_system.h" // [FG] I_GetMemoryValue()
 
 ///////////////////////////////////////////////////////////////////////
 // 
@@ -254,7 +246,7 @@ void T_MoveFloor(floormove_t* floor)
   );
   
   if (!(leveltime&7))     // make the floormove sound
-    S_LoopSound((mobj_t *)&floor->sector->soundorg, sfx_stnmov, 8);
+    S_StartSound((mobj_t *)&floor->sector->soundorg, sfx_stnmov);
     
   if (res == pastdest)    // if destination height is reached
   {
@@ -401,7 +393,7 @@ void T_MoveElevator(elevator_t* elevator)
 
   // make floor move sound
   if (!(leveltime&7))
-    S_LoopSound((mobj_t *)&elevator->sector->soundorg, sfx_stnmov, 8);
+    S_StartSound((mobj_t *)&elevator->sector->soundorg, sfx_stnmov);
     
   if (res == pastdest)            // if destination height acheived
   {
@@ -883,6 +875,41 @@ int EV_BuildStairs
 }
 
 //
+// Donut overrun emulation
+//
+// Derived from the code from PrBoom+.  Thanks go to Andrey Budko (entryway)
+// as usual :-)
+//
+
+#define DONUT_FLOORPIC_DEFAULT 0x16
+
+static boolean DonutOverrun(fixed_t *pfloorheight, short *pfloorpic)
+{
+  extern int numflats;
+
+  if (demo_compatibility && overflow[emu_donut].enabled)
+  {
+    overflow[emu_donut].triggered = true;
+
+    if (pfloorheight && pfloorpic)
+    {
+      I_GetMemoryValue(0, pfloorheight, 4);
+      I_GetMemoryValue(8, pfloorpic, 2);
+
+      // bounds-check floorpic
+      if ((*pfloorpic) <= 0 || (*pfloorpic) >= numflats)
+      {
+        *pfloorpic = MIN(numflats - 1, DONUT_FLOORPIC_DEFAULT);
+      }
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
+//
 // EV_DoDonut()
 //
 // Handle donut function: lower pillar, raise surrounding pool, both to height,
@@ -900,6 +927,9 @@ int EV_DoDonut(line_t*  line)
   int       rtn;
   int       i;
   floormove_t* floor;
+
+  fixed_t s3_floorheight;
+  short s3_floorpic;
 
   secnum = -1;
   rtn = 0;
@@ -926,7 +956,10 @@ int EV_DoDonut(line_t*  line)
       //jff 3/29/98 use true two-sidedness, not the flag
       if (comp[comp_model])
       {
-        if ((!(s2->lines[i]->flags & ML_TWOSIDED)) ||
+        // original code:   !s2->lines[i]->flags & ML_TWOSIDED
+        // equivalent to:   (!s2->lines[i]->flags) & ML_TWOSIDED , i.e. 0
+        // should be:       !(s2->lines[i]->flags & ML_TWOSIDED)
+        if (((!s2->lines[i]->flags) & ML_TWOSIDED) ||
             (s2->lines[i]->backsector == s1))
           continue;
       }
@@ -936,7 +969,30 @@ int EV_DoDonut(line_t*  line)
       rtn = 1; //jff 1/26/98 no donut action - no switch change on return
 
       s3 = s2->lines[i]->backsector;      // s3 is model sector for changes
-        
+
+      if (s3 == NULL)
+      {
+          // Andrey Budko
+          // s3 is NULL, so
+          // s3->floorheight is an int at 0000:0000
+          // s3->floorpic is a short at 0000:0008
+          // Trying to emulate
+
+          fprintf(stderr,
+                 "EV_DoDonut: Access violation at linedef %ld, sector %ld.\n",
+                 (long) (line - lines), (long) (s1 - sectors));
+
+          if (!DonutOverrun(&s3_floorheight, &s3_floorpic))
+          {
+              break;
+          }
+      }
+      else
+      {
+          s3_floorheight = s3->floorheight;
+          s3_floorpic = s3->floorpic;
+      }
+
       //  Spawn rising slime
       floor = Z_Malloc (sizeof(*floor), PU_LEVSPEC, 0);
       P_AddThinker (&floor->thinker);
@@ -947,9 +1003,9 @@ int EV_DoDonut(line_t*  line)
       floor->direction = 1;
       floor->sector = s2;
       floor->speed = FLOORSPEED / 2;
-      floor->texture = s3->floorpic;
+      floor->texture = s3_floorpic;
       floor->newspecial = 0;
-      floor->floordestheight = s3->floorheight;
+      floor->floordestheight = s3_floorheight;
         
       //  Spawn lowering donut-hole pillar
       floor = Z_Malloc (sizeof(*floor), PU_LEVSPEC, 0);
@@ -961,7 +1017,7 @@ int EV_DoDonut(line_t*  line)
       floor->direction = -1;
       floor->sector = s1;
       floor->speed = FLOORSPEED / 2;
-      floor->floordestheight = s3->floorheight;
+      floor->floordestheight = s3_floorheight;
       break;
     }
   }

@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: r_things.c,v 1.22 1998/05/03 22:46:41 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 //
 // DESCRIPTION:
@@ -403,7 +394,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     if (vis->mobjflags2 & MF2_COLOREDBLOOD)
       {
         colfunc = R_DrawTranslatedColumn;
-        dc_translation = (byte *)colrngs[vis->color];
+        dc_translation = (byte *)red2col[vis->color];
       }
   else
     if (vis->mobjflags & MF_TRANSLATION)
@@ -546,7 +537,7 @@ void R_ProjectSprite (mobj_t* thing)
   if (STRICTMODE(flipcorpses) &&
       (thing->flags2 & MF2_FLIPPABLE) &&
       !(thing->flags & MF_SHOOTABLE) &&
-      (thing->health & 1))
+      (thing->intflags & MIF_FLIP))
     {
       flip = !flip;
     }
@@ -830,6 +821,7 @@ void R_DrawPSprite (pspdef_t *psp)
       int deltax = vis->x2 - vis->x1;
       vis->x1 = oldx1 + FixedMul(vis->x1 - oldx1, fractionaltic);
       vis->x2 = vis->x1 + deltax;
+      vis->x2 = vis->x2 >= viewwidth ? viewwidth - 1 : vis->x2;
       vis->texturemid = oldtexturemid + FixedMul(vis->texturemid - oldtexturemid, fractionaltic);
     }
     else
@@ -843,6 +835,9 @@ void R_DrawPSprite (pspdef_t *psp)
 
   // [crispy] free look
   vis->texturemid += (centery - viewheight/2) * pspriteiscale;
+
+  if (STRICTMODE(hide_weapon))
+    return;
 
   R_DrawVisSprite(vis, vis->x1, vis->x2);
 }

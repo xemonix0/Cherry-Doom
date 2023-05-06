@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: g_game.c,v 1.59 1998/06/03 20:23:10 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:  none
 //
@@ -413,9 +404,9 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   // turn 180 degrees in one keystroke?                           // phares
                                                                   //    |
-  if (M_InputGameActive(input_reverse))                           //    V
+  if (STRICTMODE(M_InputGameActive(input_reverse)))               //    V
     {
-      cmd->angleturn += (short)QUICKREVERSE;                             //    ^
+      cmd->angleturn += (short)QUICKREVERSE;                      //    ^
       M_InputGameDeactivate(input_reverse);                       //    |
     }                                                             // phares
 
@@ -779,7 +770,6 @@ static void G_DoLoadLevel(void)
    }
 
   critical = (gameaction == ga_playdemo || demorecording || demoplayback || D_CheckNetConnect());
-  M_UpdateCriticalItems();
 
   // [crispy] pistol start
   if (CRITICAL(pistolstart))
@@ -789,9 +779,9 @@ static void G_DoLoadLevel(void)
 
   P_SetupLevel (gameepisode, gamemap, 0, gameskill);
   displayplayer = consoleplayer;    // view the guy you are playing
-  // [Nugget] Update smooth count values
-  STHealth = players[displayplayer].health;
-  STArmor = players[displayplayer].armorpoints;
+  // [Alaux] Update smooth count values
+  st_health = players[displayplayer].health;
+  st_armor  = players[displayplayer].armorpoints;
   gameaction = ga_nothing;
 
   // clear cmd building stuff
@@ -965,6 +955,7 @@ boolean G_Responder(event_t* ev)
 	((ev->type == ev_keydown) ||
 	 (ev->type == ev_mouseb_down) ||
 	 (ev->type == ev_joyb_down)) ?
+	(!menuactive ? S_StartSound(NULL,sfx_swtchn) : true),
 	M_StartControlPanel(), true : false;
     }
 
@@ -1028,12 +1019,12 @@ boolean G_Responder(event_t* ev)
     case ev_mouse:
       if (mouseSensitivity_horiz) // [FG] turn
         mousex = ev->data2*(mouseSensitivity_horiz+5)/10;
-      if (mouseSensitivity_horiz2) // [FG] strafe
-        mousex2 = ev->data2*(mouseSensitivity_horiz2+5)/10;
+      if (mouseSensitivity_horiz_strafe) // [FG] strafe
+        mousex2 = ev->data2*(mouseSensitivity_horiz_strafe+5)/10;
       if (mouseSensitivity_vert) // [FG] move
         mousey = ev->data3*(mouseSensitivity_vert+5)/10;
-      if (mouseSensitivity_vert2) // [FG] look
-        mousey2 = ev->data3*(mouseSensitivity_vert2+5)/10;
+      if (mouseSensitivity_vert_look) // [FG] look
+        mousey2 = ev->data3*(mouseSensitivity_vert_look+5)/10;
       return true;    // eat events
 
     case ev_joyb_down:
@@ -1112,7 +1103,7 @@ static void G_JoinDemo(void)
   // clear progress demo bar
   ST_Start();
 
-  doomprintf("Demo recording: %s", demoname);
+  doomprintf(MESSAGES_NONE, "Demo recording: %s", demoname);
 }
 
 static void G_ReadDemoTiccmd(ticcmd_t *cmd)
@@ -1144,7 +1135,7 @@ static void G_ReadDemoTiccmd(ticcmd_t *cmd)
 	  cmd->buttons & BTS_SAVEGAME)
 	{
 	  cmd->buttons &= ~BT_SPECIALMASK;
-	  players[consoleplayer].message = "Game Saved (Suppressed)";
+	  doomprintf(MESSAGES_NONE, "Game Saved (Suppressed)");
 	}
     }
 }
@@ -1975,8 +1966,9 @@ static void G_DoSaveGame(void)
     char **w = wadfiles;
     for (*save_p = 0; *w; w++)
       {
-        CheckSaveGame(strlen(*w)+2);
-        strcat(strcat((char *) save_p, *w), "\n");
+        const char *basename = M_BaseName(*w);
+        CheckSaveGame(strlen(basename)+2);
+        strcat(strcat((char *) save_p, basename), "\n");
       }
     save_p += strlen((char *) save_p)+1;
   }
@@ -2036,9 +2028,9 @@ static void G_DoSaveGame(void)
   length = save_p - savebuffer;
 
   if (!M_WriteFile(name, savebuffer, length))
-    doomprintf("%s", errno ? strerror(errno) : "Could not save game: Error unknown");
+    doomprintf(MESSAGES_NONE, "%s", errno ? strerror(errno) : "Could not save game: Error unknown");
   else
-    players[consoleplayer].message = s_GGSAVED;  // Ty 03/27/98 - externalized
+    doomprintf(MESSAGES_NONE, "%s", s_GGSAVED);  // Ty 03/27/98 - externalized
 
   Z_Free(savebuffer);  // killough
   savebuffer = save_p = NULL;
@@ -2221,16 +2213,16 @@ static void G_DoLoadGame(void)
   // done
   Z_Free(savebuffer);
 
+  // [Alaux] Update smooth count values;
+  // the same procedure is done in G_LoadLevel, but we have to repeat it here
+  st_health = players[displayplayer].health;
+  st_armor  = players[displayplayer].armorpoints;
+
   if (setsizeneeded)
     R_ExecuteSetViewSize();
 
   // draw the pattern into the back screen
   R_FillBackScreen();
-
-  // [Nugget] Update smooth count values;
-  // the same procedure is done in G_LoadLevel, but we have to repeat it here
-  STHealth = players[displayplayer].health;
-  STArmor = players[displayplayer].armorpoints;
 
   // killough 12/98: support -recordfrom and -loadgame -playdemo
   if (!command_loadgame)
@@ -2253,6 +2245,23 @@ static void G_DoLoadGame(void)
     fprintf(stderr, "G_DoLoadGame: Slot %d, %.8s (%s)\n",
       10*savepage+savegameslot, maplump, W_WadNameForLump(maplumpnum));
   }
+}
+
+boolean clean_screenshot;
+
+void G_CleanScreenshot(void)
+{
+  int old_screenblocks;
+  boolean old_hide_weapon;
+
+  old_screenblocks = screenblocks;
+  old_hide_weapon = hide_weapon;
+  hide_weapon = true;
+  R_SetViewSize(11);
+  R_ExecuteSetViewSize();
+  R_RenderPlayerView(&players[displayplayer]);
+  R_SetViewSize(old_screenblocks);
+  hide_weapon = old_hide_weapon;
 }
 
 //
@@ -2300,6 +2309,11 @@ void G_Ticker(void)
 	G_DoWorldDone();
 	break;
       case ga_screenshot:
+	if (clean_screenshot)
+	{
+	  G_CleanScreenshot();
+	  clean_screenshot = false;
+	}
 	M_ScreenShot();
 	gameaction = ga_nothing;
 	break;
@@ -2373,8 +2387,8 @@ void G_Ticker(void)
 		  cmd->forwardmove > TURBOTHRESHOLD &&
 		  !(gametic&31) && ((gametic>>5)&3) == i )
 		{
-		  extern char *player_names[];
-		  doomprintf("%s is turbo!", player_names[i]); // killough 9/29/98
+		  extern char **player_names[];
+		  doomprintf(MESSAGES_NONE, "%s is turbo!", *player_names[i]); // killough 9/29/98
 		}
 
 	      if (netgame && !netdemo && !(gametic%ticdup) )
@@ -2438,10 +2452,6 @@ void G_Ticker(void)
       gamestate == GS_INTERMISSION ? WI_Ticker() :
 	gamestate == GS_FINALE ? F_Ticker() :
 	  gamestate == GS_DEMOSCREEN ? D_PageTicker() : (void) 0;
-
-  // [FG] stop looping sounds if P_Ticker() didn't run through
-  if (leveltime == oldleveltime)
-    S_StopLoopSounds();
 }
 
 //
@@ -2822,7 +2832,7 @@ static int G_GetHelpers(void)
     //
 
     j = M_CheckParm ("-dogs");
-  return j ? j+1 < myargc ? M_ParmArgToInt(j) : 1 : default_dogs;
+  return j ? (j+1 < myargc && myargv[j+1][0] != '-') ? M_ParmArgToInt(j) : 1 : default_dogs;
 }
 
 // [FG] support named complevels on the command line, e.g. "-complevel boom",
@@ -3134,6 +3144,9 @@ void G_ReloadDefaults(boolean keep_demover)
 
   if (beta_emulation && demo_version != 203)
     I_Error("G_ReloadDefaults: Beta emulation requires complevel MBF.");
+
+  if ((M_CheckParm("-dog") || M_CheckParm("-dogs")) && demo_version < 203)
+    I_Error("G_ReloadDefaults: Helper dogs require complevel MBF or MBF21.");
 
   if (demo_version < 203)
   {
@@ -3814,7 +3827,7 @@ void G_BeginRecording(void)
       *demo_p++ = playeringame[i];
   }
 
-  doomprintf("Demo Recording: %s", M_BaseName(demoname));
+  doomprintf(MESSAGES_NONE, "Demo Recording: %s", M_BaseName(demoname));
 }
 
 //
@@ -3841,27 +3854,35 @@ void G_DeferedPlayDemo(char* name)
 }
 
 #define DEMO_FOOTER_SEPARATOR "\n"
+#define NUM_DEMO_FOOTER_LUMPS 4
 extern char **dehfiles;
 
-static void G_AddDemoFooter(void)
+static size_t WriteCmdLineLump(MEMFILE *stream)
 {
-  char *tmp = NULL;
-  size_t len = 0;
   int i;
+  char *tmp;
+  boolean has_files = false;
 
-  MEMFILE *stream = mem_fopen_write();
+  long pos = mem_ftell(stream);
 
-  tmp = M_StringJoin(PROJECT_STRING, DEMO_FOOTER_SEPARATOR,
-                     "-iwad \"", M_BaseName(wadfiles[0]), "\"", NULL);
+  tmp = M_StringJoin("-iwad \"", M_BaseName(wadfiles[0]), "\"", NULL);
   mem_fputs(tmp, stream);
   free(tmp);
 
   for (i = 1; wadfiles[i]; i++)
   {
-    if (i == 1)
-      mem_fputs(" -file", stream);
+    const char *basename = M_BaseName(wadfiles[i]);
 
-    tmp = M_StringJoin(" \"", M_BaseName(wadfiles[i]), "\"", NULL);
+    if (!strcasecmp("brghtmps.lmp", basename))
+      continue;
+
+    if (!has_files)
+    {
+      mem_fputs(" -file", stream);
+      has_files = true;
+    }
+
+    tmp = M_StringJoin(" \"", basename, "\"", NULL);
     mem_fputs(tmp, stream);
     free(tmp);
   }
@@ -3879,10 +3900,15 @@ static void G_AddDemoFooter(void)
 
   if (demo_compatibility)
   {
-    mem_fputs(" -complevel vanilla", stream);
-    tmp = M_StringJoin(" -gameversion ", gameversions[gameversion].cmdline, NULL);
-    mem_fputs(tmp, stream);
-    free(tmp);
+    if (gameversion == exe_doom_1_9)
+    {
+      if (gamemode == commercial)
+        mem_fputs(" -complevel 2", stream);
+      else
+        mem_fputs(" -complevel 3", stream);
+    }
+    else if (gameversion == exe_final)
+      mem_fputs(" -complevel 4", stream);
   }
 
   if (coop_spawns)
@@ -3899,22 +3925,62 @@ static void G_AddDemoFooter(void)
   {
      if (overflow[i].triggered)
      {
-        tmp = M_StringJoin(" -", overflow[i].str, NULL);
-        mem_fputs(tmp, stream);
-        free(tmp);
-
-        overflow[i].triggered = false;
+        mem_fputs(" -", stream);
+        mem_fputs(overflow[i].str, stream);
      }
   }
 
+  return mem_ftell(stream) - pos;
+}
+
+static void WriteFileInfo(const char *name, size_t size, MEMFILE *stream)
+{
+  filelump_t fileinfo = { 0 };
+  static long filepos = sizeof(wadinfo_t);
+
+  fileinfo.filepos = LONG(filepos);
+  fileinfo.size = LONG(size);
+
+  if (name)
+    M_CopyLumpName(fileinfo.name, name);
+
+  mem_fwrite(&fileinfo, 1, sizeof(fileinfo), stream);
+
+  filepos += size;
+}
+
+static void G_AddDemoFooter(void)
+{
+  byte *data;
+  size_t size;
+
+  MEMFILE *stream = mem_fopen_write();
+
+  wadinfo_t header = { "PWAD" };
+  header.numlumps = LONG(NUM_DEMO_FOOTER_LUMPS);
+  mem_fwrite(&header, 1, sizeof(header), stream);
+
+  mem_fputs(PROJECT_STRING, stream);
+  mem_fputs(DEMO_FOOTER_SEPARATOR, stream);
+  size = WriteCmdLineLump(stream);
   mem_fputs(DEMO_FOOTER_SEPARATOR, stream);
 
-  mem_get_buf(stream, (void **)&tmp, &len);
+  header.infotableofs = LONG(mem_ftell(stream));
+  mem_fseek(stream, 0, MEM_SEEK_SET);
+  mem_fwrite(&header, 1, sizeof(header), stream);
+  mem_fseek(stream, 0, MEM_SEEK_END);
 
-  CheckDemoBuffer(len);
+  WriteFileInfo("PORTNAME", strlen(PROJECT_STRING), stream);
+  WriteFileInfo(NULL, strlen(DEMO_FOOTER_SEPARATOR), stream);
+  WriteFileInfo("CMDLINE", size, stream);
+  WriteFileInfo(NULL, strlen(DEMO_FOOTER_SEPARATOR), stream);
 
-  memcpy(demo_p, tmp, len);
-  demo_p += len;
+  mem_get_buf(stream, (void **)&data, &size);
+
+  CheckDemoBuffer(size);
+
+  memcpy(demo_p, data, size);
+  demo_p += size;
 
   mem_fclose(stream);
 }
@@ -3961,7 +4027,7 @@ boolean G_CheckDemoStatus(void)
           cmd->buttons |= BT_JOIN;
         }
 
-        doomprintf("Demo Recording: %s", M_BaseName(demoname));
+        doomprintf(MESSAGES_NONE, "Demo Recording: %s", M_BaseName(demoname));
 
         return true;
       }
@@ -4019,10 +4085,16 @@ boolean G_CheckDemoStatus(void)
 
 #define MAX_MESSAGE_SIZE 1024
 
-void doomprintf(const char *s, ...)
+void doomprintf(int category, const char *s, ...)
 {
   static char msg[MAX_MESSAGE_SIZE];
   va_list v;
+  extern int show_toggle_messages, show_pickup_messages;
+
+  if ((category == MESSAGES_TOGGLE && !show_toggle_messages) ||
+      (category == MESSAGES_PICKUP && !show_pickup_messages))
+    return;
+
   va_start(v,s);
   vsprintf(msg,s,v);                  // print message in buffer
   va_end(v);

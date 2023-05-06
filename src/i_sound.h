@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: i_sound.h,v 1.4 1998/05/03 22:31:58 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -16,11 +12,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
 //
 //
 // DESCRIPTION:
@@ -44,12 +35,8 @@
 #define NORM_SEP 128
 #define S_STEREO_SWING (96<<FRACBITS)
 
-extern int snd_samplerate;
+#define SND_SAMPLERATE 44100
 
-// [FG] precache all sound SFX
-extern boolean precache_sounds;
-// [FG] optional low-pass filter
-extern boolean lowpass_filter;
 // [FG] variable pitch bend range
 extern int pitch_bend_range;
 
@@ -58,7 +45,6 @@ void I_InitSound(void);
 
 // ... update sound buffer and audio device at runtime...
 void I_UpdateSound(void);
-void I_SubmitSound(void);
 
 // ... shut down and relase at program termination.
 void I_ShutdownSound(void);
@@ -74,8 +60,7 @@ void I_SetChannels(void);
 int I_GetSfxLumpNum(sfxinfo_t *sfxinfo);
 
 // Starts a sound in a particular sound channel.
-int I_StartSound(sfxinfo_t *sound, int cnum, int vol, int sep, int pitch, 
-                 int pri, boolean loop);
+int I_StartSound(sfxinfo_t *sound, int vol, int sep, int pitch);
 
 // Stops a sound channel.
 void I_StopSound(int handle);
@@ -87,7 +72,7 @@ int I_SoundIsPlaying(int handle);
 
 // Updates the volume, separation,
 //  and pitch of a sound channel.
-void I_UpdateSoundParams(int handle, int vol, int sep, int pitch);
+void I_UpdateSoundParams(int handle, int vol, int sep);
 
 // haleyjd
 int I_SoundID(int handle);

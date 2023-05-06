@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: st_lib.c,v 1.8 1998/05/11 10:44:42 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 //
 // DESCRIPTION:
@@ -211,17 +202,17 @@ void STlib_updatePercent
   // in automap overlay mode.
   if (*per->n.on) // killough 2/21/98: fix percents not updated;
   {
-    if (!sts_always_red)     // also support gray-only percents
-      V_DrawPatchTranslated
-      (
-        per->n.x,
-        per->n.y,
-        FG,
-        per->p,
-        sts_pct_always_gray ? cr_gray : outrng
-      );
-    else   //jff 2/18/98 allow use of faster draw routine from config
-      V_DrawPatch(per->n.x, per->n.y, FG, per->p);
+    V_DrawPatchTranslated
+    (
+      per->n.x,
+      per->n.y,
+      FG,
+      per->p,
+      // [FG] fix always gray percent / always red mismatch
+      sts_pct_always_gray ? cr_gray :
+      sts_always_red ? NULL :
+      outrng
+    );
   }
 
   STlib_updateNum(&per->n, outrng);

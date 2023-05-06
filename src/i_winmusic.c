@@ -28,6 +28,7 @@
 #include "i_sound.h"
 #include "i_system.h"
 #include "m_misc2.h"
+#include "m_io.h"
 #include "memio.h"
 #include "mus2mid.h"
 #include "midifile.h"
@@ -154,19 +155,19 @@ static buffer_t buffer;
 
 static boolean initial_playback = false;
 
-// Message box for midiStream errors.
+// Check for midiStream errors.
 
 static void MidiError(const char *prefix, DWORD dwError)
 {
-    char szErrorBuf[MAXERRORLENGTH];
+    wchar_t werror[MAXERRORLENGTH];
     MMRESULT mmr;
 
-    mmr = midiOutGetErrorText(dwError, (LPSTR) szErrorBuf, MAXERRORLENGTH);
+    mmr = midiOutGetErrorTextW(dwError, (LPWSTR)werror, MAXERRORLENGTH);
     if (mmr == MMSYSERR_NOERROR)
     {
-        char *msg = M_StringJoin(prefix, ": ", szErrorBuf, NULL);
-        MessageBox(NULL, msg, "midiStream Error", MB_ICONEXCLAMATION);
-        free(msg);
+        char *error = ConvertWideToUtf8(werror);
+        fprintf(stderr, "%s: %s.\n", prefix, error);
+        free(error);
     }
     else
     {
@@ -504,6 +505,31 @@ static void ResetDevice(void)
     }
 }
 
+static boolean IsPartLevel(const byte *msg, int length)
+{
+    if (length == 10 &&
+        msg[0] == 0x41 && // Roland
+        msg[2] == 0x42 && // GS
+        msg[3] == 0x12 && // DT1
+        msg[4] == 0x40 && // Address MSB
+        msg[5] >= 0x10 && // Address
+        msg[5] <= 0x1F && // Address
+        msg[6] == 0x19 && // Address LSB
+        msg[9] == 0xF7)   // SysEx EOX
+    {
+        const byte checksum = 128 - ((int)msg[4] + msg[5] + msg[6] + msg[7]) % 128;
+
+        if (msg[8] == checksum)
+        {
+            // GS Part Level (aka Channel Volume)
+            // 41 <dev> 42 12 40 <ch> 19 <vol> <sum> F7
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static boolean IsSysExReset(const byte *msg, int length)
 {
     if (length < 5)
@@ -714,8 +740,33 @@ static boolean AddToBuffer(unsigned int delta_time, midi_event_t *event,
     switch ((int)event->event_type)
     {
         case MIDI_EVENT_SYSEX:
-            SendSysExMsg(delta_time, event->data.sysex.data,
-                         event->data.sysex.length);
+            if (IsPartLevel(event->data.sysex.data, event->data.sysex.length))
+            {
+                const byte *data = event->data.sysex.data;
+                byte channel;
+
+                // Convert "block number" to a channel number.
+                if (data[5] == 0x10) // Channel 10
+                {
+                    channel = 9;
+                }
+                else if (data[5] < 0x1A) // Channels 1-9
+                {
+                    channel = (data[5] & 0x0F) - 1;
+                }
+                else // Channels 11-16
+                {
+                    channel = data[5] & 0x0F;
+                }
+
+                // Replace SysEx part level message with channel volume message.
+                SendVolumeMsg(delta_time, channel, data[7]);
+            }
+            else
+            {
+                SendSysExMsg(delta_time, event->data.sysex.data,
+                             event->data.sysex.length);
+            }
             return false;
 
         case MIDI_EVENT_META:
@@ -909,6 +960,20 @@ static boolean AddToBuffer(unsigned int delta_time, midi_event_t *event,
                     SendNOPMsg(delta_time);
                     break;
 
+                case MIDI_CONTROLLER_RESET_ALL_CTRLS:
+                    SendShortMsg(delta_time, MIDI_EVENT_CONTROLLER,
+                                 event->data.channel.channel,
+                                 MIDI_CONTROLLER_RESET_ALL_CTRLS, 0);
+
+                    // MS GS Wavetable Synth resets the channel volume after a
+                    // "reset all controllers" event, so reapply the volume
+                    if (MidiDevice == ms_gs_synth)
+                    {
+                        i = event->data.channel.channel;
+                        SendVolumeMsg(0, i, channel_volume[i]);
+                    }
+                    break;
+
                 default:
                     SendShortMsg(delta_time, MIDI_EVENT_CONTROLLER,
                                  event->data.channel.channel,
@@ -1082,6 +1147,21 @@ static void FillBuffer(void)
                 }
                 else if (song.looping)
                 {
+                    for (i = 0; i < MIDI_CHANNELS_PER_TRACK; ++i)
+                    {
+                        SendShortMsg(0, MIDI_EVENT_CONTROLLER, i, MIDI_CONTROLLER_RESET_ALL_CTRLS, 0);
+                    }
+
+                    // MS GS Wavetable Synth resets the channel volume after a
+                    // "reset all controllers" event, so reapply the volume
+                    if (MidiDevice == ms_gs_synth)
+                    {
+                        for (i = 0; i < MIDI_CHANNELS_PER_TRACK; ++i)
+                        {
+                            SendVolumeMsg(0, i, channel_volume[i]);
+                        }
+                    }
+
                     RestartTracks();
                     continue;
                 }
@@ -1398,8 +1478,8 @@ static void I_WIN_UnRegisterSong(void *handle)
 {
     if (song.tracks)
     {
-        int i;
-        for (i = 0; i < MIDI_NumTracks(song.file); ++i)
+        unsigned int i;
+        for (i = 0; i < song.num_tracks; ++i)
         {
             MIDI_FreeIterator(song.tracks[i].iter);
             song.tracks[i].iter = NULL;

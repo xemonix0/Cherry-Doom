@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: r_main.c,v 1.13 1998/05/07 00:47:52 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Rendering main loop and setup functions,
@@ -38,6 +29,7 @@
 #include "r_sky.h"
 #include "v_video.h"
 #include "st_stuff.h"
+#include "hu_stuff.h"
 
 // [Nugget]
 #ifndef M_PI
@@ -658,6 +650,8 @@ void R_ExecuteSetViewSize (void)
         }
     }
 
+    HU_disableAllWidgets();
+
     // [crispy] forcefully initialize the status bar backing screen
     ST_refreshBackground(true);
 
@@ -833,7 +827,7 @@ int rendered_visplanes, rendered_segs, rendered_vissprites;
 void R_ShowRenderingStats(void)
 {
   extern int fps;
-  doomprintf("Segs %d, Visplanes %d, Sprites %d, FPS %d",
+  doomprintf(MESSAGES_NONE, "Segs %d, Visplanes %d, Sprites %d, FPS %d",
           rendered_segs, rendered_visplanes, rendered_vissprites, fps);
 }
 

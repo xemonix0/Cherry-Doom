@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: sounds.h,v 1.3 1998/05/03 22:44:30 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //      Created by the sound utility written by Dave Taylor.
@@ -65,22 +56,15 @@ typedef struct sfxinfo_struct {
   // volume if a link
   int volume;
 
-  // sound data
-  void *data;
-
-  // this is checked every second to see if sound
-  // can be thrown out (if 0, then decrement, if -1,
-  // then throw out, if > 0, then it is in use)
-  int usefulness;
+  // OpenAL buffer id
+  uint32_t buffer;
 
   // lump number of sfx
   int lumpnum;
 
-  // haleyjd 04/23/08: additional caching data
-  unsigned int alen;   // length of converted sound pointed to by data
-} sfxinfo_t;
+  boolean cached;
 
-extern int parallel_sfx_limit;
+} sfxinfo_t;
 
 //
 // MusicInfo struct.
@@ -316,6 +300,14 @@ typedef enum {
 
   // [crispy] play DSSECRET if available
   sfx_secret,
+
+  // [FG] play sound when hitting animated floor
+  sfx_splash,
+  sfx_ploosh,
+  sfx_lvsiz,
+  sfx_splsml,
+  sfx_plosml,
+  sfx_lavsml,
 
   sfx_fre000 = 500,
   sfx_fre001,

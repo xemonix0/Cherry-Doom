@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id: p_spec.h,v 1.30 1998/05/04 02:22:23 jim Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 
-//  02111-1307, USA.
 //
 // DESCRIPTION:  definitions, declarations and prototypes for specials
 //
@@ -1008,6 +999,8 @@ void P_AddActiveCeiling(ceiling_t *c);
 int P_ActivateInStasisCeiling(line_t *line); 
 
 mobj_t *P_GetPushThing(int);                                // phares 3/23/98
+
+void P_HitFloor (mobj_t *mo, int oof); // [FG] play sound when hitting animated floor
 
 #endif
 

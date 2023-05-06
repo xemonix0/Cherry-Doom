@@ -23,13 +23,6 @@
 
 #include "doomtype.h"
 
-#ifndef TRUE
-  #define TRUE true
-#endif
-#ifndef FALSE
-  #define FALSE false
-#endif
-
 #ifdef _MSC_VER
   #include <direct.h>
   #include <io.h>
@@ -55,6 +48,10 @@ int M_open(const char *filename, int oflag);
 int M_access(const char *path, int mode);
 void M_MakeDirectory(const char *dir);
 char *M_getenv(const char *name);
+
+#ifdef _WIN32
+char *ConvertWideToUtf8(const wchar_t *wstr);
+#endif
 
 char *M_ConvertSysNativeMBToUtf8(const char *str);
 char *M_ConvertUtf8ToSysNativeMB(const char *str);

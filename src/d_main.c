@@ -1,7 +1,3 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: d_main.c,v 1.47 1998/05/16 09:16:51 killough Exp $
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
@@ -15,11 +11,6 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
 //
 // DESCRIPTION:
 //  DOOM main program (D_DoomMain) and game loop, plus functions to
@@ -75,6 +66,7 @@
 #include "p_map.h" // MELEERANGE
 #include "i_endoom.h"
 #include "d_quit.h"
+#include "r_bmaps.h"
 
 #include "dsdhacked.h"
 
@@ -115,6 +107,11 @@ static char *D_dehout(void)
       s = p && ++p < myargc ? myargv[p] : "";
     }
   return s;
+}
+
+static void ProcessDehLump(int lumpnum)
+{
+  ProcessDehFile(NULL, D_dehout(), lumpnum);
 }
 
 char **wadfiles;
@@ -581,9 +578,6 @@ void D_StartTitle (void)
   D_AdvanceDemo();
 }
 
-// print title for every printed line
-static char title[128];
-
 char **tempdirs = NULL;
 
 static void AutoLoadWADs(const char *path);
@@ -592,7 +586,7 @@ static boolean D_AddZipFile(const char *file)
 {
   int i;
   mz_zip_archive zip_archive;
-  char *str, *tempdir;
+  char *str, *tempdir, counter[8];
   static int idx = 0;
 
   if (!M_StringCaseEndsWith(file, ".zip"))
@@ -607,7 +601,8 @@ static boolean D_AddZipFile(const char *file)
     return false;
   }
 
-  str = M_StringJoin("_", PROJECT_SHORTNAME, "_", M_BaseName(file), NULL);
+  M_snprintf(counter, sizeof(counter), "%04d", idx);
+  str = M_StringJoin("_", counter, "_", PROJECT_SHORTNAME, "_", M_BaseName(file), NULL);
   tempdir = M_TempFile(str);
   free(str);
   M_MakeDirectory(tempdir);
@@ -1057,6 +1052,7 @@ void IdentifyVersion (void)
         puts("Unknown Game Version, may not work");  // killough 8/8/98
 
       D_AddFile(iwad);
+      putchar('\n');
     }
   else
     I_Error("IWAD not found\n");
@@ -1233,14 +1229,91 @@ enum
     FILETYPE_IWAD =    0x2,
     FILETYPE_PWAD =    0x4,
     FILETYPE_DEH =     0x8,
+    FILETYPE_DEMO =    0x10,
 };
+
+static boolean FileIsDemoLump(const char *filename)
+{
+    FILE *handle;
+    int count, ver;
+    byte buf[32], *p = buf;
+
+    handle = M_fopen(filename, "rb");
+
+    if (handle == NULL)
+    {
+        return false;
+    }
+
+    count = fread(buf, 1, sizeof(buf), handle);
+    fclose(handle);
+
+    if (count != sizeof(buf))
+    {
+        return false;
+    }
+
+    ver = *p++;
+
+    if (ver == 255) // skip UMAPINFO demo header
+    {
+        p += 26;
+        ver = *p++;
+    }
+
+    if (ver >= 0 && ver <= 4) // v1.0/v1.1/v1.2
+    {
+        p--;
+    }
+    else
+    {
+        switch (ver)
+        {
+            case 104: // v1.4
+            case 105: // v1.5
+            case 106: // v1.6/v1.666
+            case 107: // v1.7/v1.7a
+            case 108: // v1.8
+            case 109: // v1.9
+            case 111: // v1.91 hack
+                break;
+            case 200: // Boom
+            case 201:
+            case 202:
+            case 203: // MBF
+                p += 7; // skip signature and compatibility flag
+                break;
+            case 221: // MBF21
+                p += 6; // skip signature
+                break;
+            default:
+                return false;
+                break;
+        }
+    }
+
+    if (*p++ > 5) // skill
+    {
+        return false;
+    }
+    if (*p++ > 9) // episode
+    {
+        return false;
+    }
+    if (*p++ > 99) // map
+    {
+        return false;
+    }
+
+    return true;
+}
 
 static int GuessFileType(const char *name)
 {
     int ret = FILETYPE_UNKNOWN;
     const char *base;
     char *lower;
-    static boolean iwad_found = false;
+    static boolean iwad_found = false, demo_found = false;
 
     base = M_BaseName(name);
     lower = M_StringDuplicate(base);
@@ -1254,10 +1327,23 @@ static int GuessFileType(const char *name)
         iwad_found = true;
     }
     else if (M_StringEndsWith(lower, ".wad") ||
-             M_StringEndsWith(lower, ".lmp") ||
              M_StringEndsWith(lower, ".zip"))
     {
         ret = FILETYPE_PWAD;
+    }
+    else if (M_StringEndsWith(lower, ".lmp"))
+    {
+        // only ever add one argument to the -playdemo parameter
+
+        if (demo_found == false && FileIsDemoLump(name))
+        {
+            ret = FILETYPE_DEMO;
+            demo_found = true;
+        }
+        else
+        {
+            ret = FILETYPE_PWAD;
+        }
     }
     else if (M_StringEndsWith(lower, ".deh") ||
              M_StringEndsWith(lower, ".bex"))
@@ -1297,10 +1383,11 @@ static void M_AddLooseFiles(void)
         return;
     }
 
-    // allocate space for up to three additional regular parameters
+    // allocate space for up to four additional regular parameters
+    // (-iwad, -merge, -deh, -playdemo)
 
-    arguments = malloc((myargc + 3) * sizeof(*arguments));
-    memset(arguments, 0, (myargc + 3) * sizeof(*arguments));
+    arguments = malloc((myargc + 4) * sizeof(*arguments));
+    memset(arguments, 0, (myargc + 4) * sizeof(*arguments));
 
     // check the command line and make sure it does not already
     // contain any regular parameters or response files
@@ -1348,6 +1435,12 @@ static void M_AddLooseFiles(void)
     {
         arguments[myargc].str = M_StringDuplicate("-deh");
         arguments[myargc].type = FILETYPE_DEH - 1;
+        myargc++;
+    }
+    if (types & FILETYPE_DEMO)
+    {
+        arguments[myargc].str = M_StringDuplicate("-playdemo");
+        arguments[myargc].type = FILETYPE_DEMO - 1;
         myargc++;
     }
 
@@ -1578,70 +1671,27 @@ static void D_AutoloadPWadDehDir()
 // ProcessDehFile() indicates that the data comes from the lump number
 // indicated by the third argument, instead of from a file.
 
-static void D_ProcessDehInWad(int i, boolean in_iwad)
+static void D_ProcessInWad(int i, const char *name, void (*Process)(int lumpnum),
+                           boolean iwad)
 {
-  //!
-  // @category mod
-  //
-  // Avoid loading DEHACKED lumps embedded into WAD files.
-  //
-
-  if (M_CheckParm("-nodehlump"))
+  if (i >= 0)
   {
-    return;
+    D_ProcessInWad(lumpinfo[i].next, name, Process, iwad);
+    if (!strncasecmp(lumpinfo[i].name, name, 8) &&
+        lumpinfo[i].namespace == ns_global &&
+        (iwad ? W_IsIWADLump(i) : !W_IsIWADLump(i)))
+    {
+      Process(i);
+    }
   }
-
-  if (i >= 0)
-    {
-      D_ProcessDehInWad(lumpinfo[i].next, in_iwad);
-      if (!strncasecmp(lumpinfo[i].name, "dehacked", 8) &&
-          lumpinfo[i].namespace == ns_global &&
-          (in_iwad ? W_IsIWADLump(i) : !W_IsIWADLump(i)))
-        ProcessDehFile(NULL, D_dehout(), i);
-    }
 }
 
-#define D_ProcessDehInWads() D_ProcessDehInWad(lumpinfo[W_LumpNameHash \
-                                                       ("dehacked") % (unsigned) numlumps].index, false);
-
-#define D_ProcessDehInIWad() D_ProcessDehInWad(lumpinfo[W_LumpNameHash \
-                                                       ("dehacked") % (unsigned) numlumps].index, true);
-
-// Process multiple UMAPINFO files
-
-static void D_ProcessUMInWad(int i)
+static void D_ProcessInWads(const char *name, void (*Process)(int lumpnum),
+                            boolean iwad)
 {
-  if (i >= 0)
-    {
-      D_ProcessUMInWad(lumpinfo[i].next);
-      if (!strncasecmp(lumpinfo[i].name, "umapinfo", 8) &&
-          lumpinfo[i].namespace == ns_global)
-        {
-          U_ParseMapInfo(false, (const char *)W_CacheLumpNum(i, PU_CACHE), W_LumpLength(i));
-        }
-    }
+  D_ProcessInWad(lumpinfo[W_LumpNameHash(name) % (unsigned)numlumps].index,
+                 name, Process, iwad);
 }
-
-#define D_ProcessUMInWads() D_ProcessUMInWad(lumpinfo[W_LumpNameHash \
-                                                       ("umapinfo") % (unsigned) numlumps].index);
-
-// Process multiple UMAPDEF files
-
-static void D_ProcessDefaultsInWad(int i)
-{
-  if (i >= 0)
-    {
-      D_ProcessDefaultsInWad(lumpinfo[i].next);
-      if (!strncasecmp(lumpinfo[i].name, "umapdef", 7) &&
-          lumpinfo[i].namespace == ns_global)
-        {
-          U_ParseMapInfo(true, (const char *)W_CacheLumpNum(i, PU_CACHE), W_LumpLength(i));
-        }
-    }
-}
-
-#define D_ProcessDefaultsInWads() D_ProcessDefaultsInWad(lumpinfo[W_LumpNameHash \
-                                                       ("umapdef") % (unsigned) numlumps].index);
 
 // mbf21: don't want to reorganize info.c structure for a few tweaks...
 
@@ -1784,27 +1834,30 @@ void D_SetPredefinedTranslucency(void)
 
 int show_endoom;
 
+// Don't show ENDOOM if we have it disabled.
+boolean D_CheckEndDoom(void)
+{
+  int lumpnum = W_CheckNumForName("ENDOOM");
+
+  return (show_endoom == 1 || (show_endoom == 2 && !W_IsIWADLump(lumpnum)));
+}
+
+static void D_ShowEndDoom(void)
+{
+  int lumpnum = W_CheckNumForName("ENDOOM");
+  byte *endoom = W_CacheLumpNum(lumpnum, PU_STATIC);
+
+  I_Endoom(endoom);
+}
+
 static void D_EndDoom(void)
 {
-    int lumpnum;
-    byte *endoom;
+  if (!main_loop_started || !D_CheckEndDoom())
+  {
+    return;
+  }
 
-    // Don't show ENDOOM if we have it disabled.
-
-    if (!show_endoom || !main_loop_started)
-    {
-        return;
-    }
-
-    lumpnum = W_CheckNumForName("ENDOOM");
-    if (show_endoom == 2 && W_IsIWADLump(lumpnum))
-    {
-        return;
-    }
-
-    endoom = W_CacheLumpNum(lumpnum, PU_STATIC);
-
-    I_Endoom(endoom);
+  D_ShowEndDoom();
 }
 
 // [FG] fast-forward demo to the desired map
@@ -2012,75 +2065,6 @@ void D_DoomMain(void)
 
   if (M_CheckParm ("-dm3"))
     deathmatch = 3;
-
-  switch ( gamemode )
-    {
-    case retail:
-      sprintf (title,
-               "                         "
-               "The Ultimate DOOM Startup v%i.%02i"
-               "                           ",
-               MBFVERSION/100,MBFVERSION%100);
-      break;
-    case shareware:
-      sprintf (title,
-               "                            "
-               "DOOM Shareware Startup v%i.%02i"
-               "                           ",
-               MBFVERSION/100,MBFVERSION%100);
-      break;
-
-    case registered:
-      sprintf (title,
-               "                            "
-               "DOOM Registered Startup v%i.%02i"
-               "                           ",
-               MBFVERSION/100,MBFVERSION%100);
-      break;
-
-    case commercial:
-      switch (gamemission)      // joel 10/16/98 Final DOOM fix
-        {
-        case pack_plut:
-          sprintf (title,
-                   "                   "
-                   "DOOM 2: Plutonia Experiment v%i.%02i"
-                   "                           ",
-                   MBFVERSION/100,MBFVERSION%100);
-          break;
-
-        case pack_tnt:
-          sprintf (title,
-                   "                     "
-                   "DOOM 2: TNT - Evilution v%i.%02i"
-                   "                           ",
-                   MBFVERSION/100,MBFVERSION%100);
-          break;
-
-        case doom2:
-        default:
-
-          sprintf (title,
-                   "                         "
-                   "DOOM 2: Hell on Earth v%i.%02i"
-                   "                           ",
-                   MBFVERSION/100,MBFVERSION%100);
-
-          break;
-        }
-      break;
-      // joel 10/16/98 end Final DOOM fix
-
-    default:
-      sprintf (title,
-               "                     "
-               "Public DOOM - v%i.%i"
-               "                           ",
-               MBFVERSION/100,MBFVERSION%100);
-      break;
-    }
-
-  printf("%s\nBuilt on %s\n", title, version_date);    // killough 2/1/98
 
   if (devparm)
     printf(D_DEVSTR);
@@ -2405,6 +2389,7 @@ void D_DoomMain(void)
 
   //!
   // @category mod
+  // @arg <wad>
   //
   // Allow writing predefined lumps out as a WAD.
   //
@@ -2430,26 +2415,40 @@ void D_DoomMain(void)
   // Check for wolf levels
   haswolflevels = (W_CheckNumForName("map31") >= 0);
 
-  putchar('\n');     // killough 3/6/98: add a newline, by popular demand :)
-
   // process deh in IWAD
-  D_ProcessDehInIWad();
+
+  //!
+  // @category mod
+  //
+  // Avoid loading DEHACKED lumps embedded into WAD files.
+  //
+
+  if (!M_ParmExists("-nodehlump"))
+  {
+    D_ProcessInWads("DEHACKED", ProcessDehLump, true);
+  }
 
   // process .deh files specified on the command line with -deh or -bex.
   D_ProcessDehCommandLine();
 
   // process deh in wads and .deh files from autoload directory
   // before deh in wads from -file parameter
-
   D_AutoloadDehDir();
 
-  D_ProcessDehInWads();      // killough 10/98: now process all deh in wads
+  // killough 10/98: now process all deh in wads
+  if (!M_ParmExists("-nodehlump"))
+  {
+    D_ProcessInWads("DEHACKED", ProcessDehLump, false);
+  }
 
   // process .deh files from PWADs autoload directories
-
   D_AutoloadPWadDehDir();
 
   PostProcessDeh();
+
+  D_ProcessInWads("BRGHTMPS", R_ParseBrightmaps, false);
+
+  putchar('\n');     // killough 3/6/98: add a newline, by popular demand :)
 
   // Moved after WAD initialization because we are checking the COMPLVL lump
   G_ReloadDefaults(false); // killough 3/4/98: set defaults just loaded.
@@ -2478,7 +2477,7 @@ void D_DoomMain(void)
             I_Error("\nThis is not the registered version.");
     }
 
-  D_ProcessDefaultsInWads();
+  D_ProcessInWads("UMAPDEF", U_ParseMapDefInfo, false);
 
   //!
   // @category mod
@@ -2486,9 +2485,9 @@ void D_DoomMain(void)
   // Disable UMAPINFO loading.
   //
 
-  if (!M_CheckParm("-nomapinfo"))
+  if (!M_ParmExists("-nomapinfo"))
   {
-    D_ProcessUMInWads();
+    D_ProcessInWads("UMAPINFO", U_ParseMapInfo, false);
   }
 
   V_InitColorTranslation(); //jff 4/24/98 load color translation lumps
@@ -2555,9 +2554,12 @@ void D_DoomMain(void)
 
   puts("HU_Init: Setting up heads up display.");
   HU_Init();
+  M_SetMenuFontSpacing();
 
   puts("ST_Init: Init status bar.");
   ST_Init();
+
+  putchar('\n');
 
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
@@ -2754,14 +2756,11 @@ void D_DoomMain(void)
       S_UpdateSounds(players[displayplayer].mo);// move positional sounds
 
       // Update display, next frame, with current state.
-      D_Display();
+      if (screenvisible)
+        D_Display();
 
       // Sound mixing for the buffer is snychronous.
       I_UpdateSound();
-
-      // Synchronous sound output is explicitly called.
-      // Update sound output.
-      I_SubmitSound();
     }
 }
 
