@@ -106,46 +106,46 @@ Toggle the display of rendering stats, including frame rate and the current numb
 
 Most of them were taken from or inspired by other ports - see `README.md` for credits.
 
-`FULLCLIP`
+`FULLCLIP`  
 Toggle infinite ammo.
 
-`VALIANT`
+`VALIANT`  
 Toggle fast weapons.
     
-`BOBBERS`
+`BOBBERS`  
 Shortcut to toggle the two cheats mentioned above, and IDFA.
         
-`GIBBERS`
+`GIBBERS`  
 Force gibbing on dying enemies, independently of damage dealt.
     
-`IDFLY`
+`IDFLY`  
 Toggle Fly Mode (uses jumping/crouching keys).
     
-`SUMMON`
+`SUMMON`  
 Spawn a hostile or friendly actor based on its mobjtype index.
     
-`RESURRECT` / `IDRES`
+`RESURRECT` / `IDRES`  
 Resurrect the player without toggling IDDQD.
     
-`LINETARGET`
+`LINETARGET`  
 Toggle Linetarget Query Mode, which gives some info on the player's linetarget.
     
-`MDK`
+`MDK`  
 Perform a hitscan attack with 1 million damage.
     
-`SAITAMA`
+`SAITAMA`  
 Toggle MDK Fist (replaces A_Punch's melee attack with the MDK attack, featuring an alternate multishot attack when holding down Strafe On).
     
-`NEXTMAP`
+`NEXTMAP`  
 Exit the level.
     
-`NEXTSECRET`
+`NEXTSECRET`  
 Exit the level as if using a secret exit.
     
-`TURBO`
+`TURBO`  
 Change the player speed in-game.
 
-`NOMOMENTUM`
+`NOMOMENTUM`  
 Toggle No Momentum mode; reenabled debugging cheat.
     
 ## Beta cheats
