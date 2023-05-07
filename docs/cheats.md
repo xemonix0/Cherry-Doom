@@ -18,6 +18,10 @@ Typing IDBEHOLD will bring up a small menu where you can choose to enable one of
 
 `IDKFA` and `IDFA` now includes backpack.
 
+`IDCLEV00` now restarts the current map.
+
+`IDCLIP` now allows mid-air control.
+    
 ## Boom and MBF cheats
 
 In Boom, many of them had a TNT prefix, which was removed in MBF.
@@ -25,7 +29,7 @@ In Boom, many of them had a TNT prefix, which was removed in MBF.
 `COMPx`  
 Show current [complevel](https://doomwiki.org/wiki/Woof!#Compatibility_modes). If you type a number, the engine will switch to this complevel. Not safe, for full compatibility set complevel in the menu and restart the level.
 
-`KILLEM`  
+`KILLEM` / `TNTEM`  
 This cheat kills all monsters on the map. If there are no enemy monsters on the map and you type this, it will kill all friends on the map (not including the player, of course).
 
 `FAST`  
@@ -98,6 +102,52 @@ Toggle printing the FPS in the upper right corner.
 `RATE`  
 Toggle the display of rendering stats, including frame rate and the current number of segs, visplanes, and sprites.
 
+## New Nugget Doom cheats
+
+Most of them were taken from or inspired by other ports - see `README.md` for credits.
+
+`FULLCLIP`
+Toggle infinite ammo.
+
+`VALIANT`
+Toggle fast weapons.
+    
+`BOBBERS`
+Shortcut to toggle the two cheats mentioned above, and IDFA.
+        
+`GIBBERS`
+Force gibbing on dying enemies, independently of damage dealt.
+    
+`IDFLY`
+Toggle Fly Mode (uses jumping/crouching keys).
+    
+`SUMMON`
+Spawn a hostile or friendly actor based on its mobjtype index.
+    
+`RESURRECT` / `IDRES`
+Resurrect the player without toggling IDDQD.
+    
+`LINETARGET`
+Toggle Linetarget Query Mode, which gives some info on the player's linetarget.
+    
+`MDK`
+Perform a hitscan attack with 1 million damage.
+    
+`SAITAMA`
+Toggle MDK Fist (replaces A_Punch's melee attack with the MDK attack, featuring an alternate multishot attack when holding down Strafe On).
+    
+`NEXTMAP`
+Exit the level.
+    
+`NEXTSECRET`
+Exit the level as if using a secret exit.
+    
+`TURBO`
+Change the player speed in-game.
+
+`NOMOMENTUM`
+Toggle No Momentum mode; reenabled debugging cheat.
+    
 ## Beta cheats
 
 These cheats only work in MBF `-beta` emulation mode.
