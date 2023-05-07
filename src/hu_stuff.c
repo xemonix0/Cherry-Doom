@@ -1170,7 +1170,8 @@ static void HU_widget_build_sttime(void)
     const int   mins = plr->event_time / (60 * TICRATE);
     const float secs = (float)(plr->event_time % (60 * TICRATE)) / TICRATE;
 
-    if (!plr->event_tics--) { plr->event_type = plr->event_time = 0; }
+    if (!plr->event_tics-- || gameaction == ga_completed)
+    { plr->event_tics = plr->event_type = plr->event_time = 0; }
 
     offset += sprintf(hud_timestr, "\x1b%c%c %02i:%05.02f ",
                       '0'+CR_GOLD,
@@ -1199,6 +1200,11 @@ static void HU_widget_build_sttime(void)
 
   HUlib_clearTextLine(&w_sttime);
   HUlib_addStringToTextLine(&w_sttime, hud_timestr);
+}
+
+void HU_widget_rebuild_sttime(void) // [Nugget]
+{
+  HU_widget_build_sttime();
 }
 
 static void HU_widget_build_coord (void)

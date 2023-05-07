@@ -1304,6 +1304,10 @@ boolean um_pars = false;
 static void G_DoCompleted(void)
 {
   int i;
+  // [Nugget] Rebuild the Time widget to get rid of event timers
+  extern void HU_widget_rebuild_sttime(void);
+  
+  HU_widget_rebuild_sttime();
 
   //!
   // @category demo
