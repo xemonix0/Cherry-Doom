@@ -8,16 +8,22 @@
 
 ## Changes
 
+- **Merged Woof 11.0.0's changes**, therefore:
+  - _'FREEZE'_ cheat now has only one mode
+  - Changed default positions for _Time_ and _Stats_ displays in NUGHUD
 - **FOV is now changed gradually** in most cases
 - **Reduced turning/freelook sensitivity when zoomed in**
 - **Weapons are now lowered when zooming in**
+- **The _Level Name_, _Coordinates_ and _FPS_ displays can now be relocated with NUGHUD**
 - **Automap position isn't reset to player position when opening it with Follow Mode off**
 - **Adjusted _"Seizure"_ screen wipe's speed** to match _"Melt"_ and _"Fade"_
 - **FOV changes are now disabled in Strict Mode only**
 - **Viewheight changes are now disabled in Strict Mode only**
+- **Removed menu item for _"Alternative Arms Display"_**
 - **Alternative `A_FireCGun()` and `A_CPosAttack()` sounds are only looked up once**
-- **The "Nugget Settings" category is now split** across pages 4 and 5
+- **The "Nugget Settings" category is now split** across pages 5 and 6
 - **Renamed _"Imitate player's breathing"_ to _"Subtle Idle Bobbing/Breathing"_**
+- **Forced `comp_choppers` OFF outside of Casual Play**
 - **Strict Mode update:**
   - Disabled usage of `gamma2`
   - Forced `no_menu_tint` OFF

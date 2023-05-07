@@ -50,6 +50,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - Restored _**Weapon Recoil**_ menu item
 - _**Disable Horizontal Autoaim**_ setting
 - **Freeaim** (Vertical Aiming) [p.f. Crispy Doom]
+- **Weapon Bobbing is permanently updated every tic** (fixes choppy Chainsaw bobbing)
 - _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Bobbing Styles**_ selection [p.f. Zandronum]
 - Setting to **Draw Berserk in place of Ammo count when the Fist is equipped** [p.f. Crispy Doom]
@@ -58,9 +59,9 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ### Status Bar/HUD
 
-- **NUGHUD lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.txt`)
+- **NUGHUD lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.md`)
 - **SSG is accounted for on the Arms widget** [p.f. Crispy Doom]
-- _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
+- _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol (CFG-Only: `alt_arms`)
 - _**Smart Totals**_ setting [p.f. So Doom]
 - **Crosshair:**
   - 5 new types;
@@ -112,7 +113,6 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
   - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA
 - _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt
 - _**'IDFLY'**_ to fly (uses jumping/crouching keys) [i.b. PrBoom+, ZDoom]
-- _**'FREEZE'**_ to freeze gameplay [p.f. DSDA-Doom; i.b. ZDoom]
 - _**'SUMMON'**_ to spawn a hostile or friendly actor based on its mobjtype index [i.b. ZDoom]
 - _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD [i.b. ZDoom]
 - _**'LINETARGET'**_ to give some info on the player's linetarget [i.b. ZDoom]
