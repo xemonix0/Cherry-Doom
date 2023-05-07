@@ -6,7 +6,8 @@ set(NUGGETDOOM_DOCS
     mbf.txt
     mbfedit.txt
     mbffaq.txt
-    nughud.txt
+    nughud.lmp
+    nughud.md
     options.txt
     woofhud.lmp
     woofhud.md)
