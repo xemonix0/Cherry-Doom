@@ -1498,9 +1498,9 @@ void HU_Drawer(void)
       // [Nugget] Special treatment for some widgets in Nugget HUD
       if (st_crispyhud) {
         nughud_widget_t *nw = NULL;
-        const int delta = st_widecrispyhud ? WIDESCREENDELTA : 0;
-        const int left = 2 - WIDESCREENDELTA, right = 318 + WIDESCREENDELTA;
         int alignment = 0; // Used as the default if x == -1
+        const int left = 2 - WIDESCREENDELTA, right = 318 + WIDESCREENDELTA;
+        const int delta = st_widecrispyhud ? WIDESCREENDELTA : 0;
 
         if      (w->line == &w_sttime) { nw = &nughud.time;  alignment = left;  }
         else if (w->line == &w_monsec) { nw = &nughud.sts;   alignment = left;  }
@@ -1509,10 +1509,18 @@ void HU_Drawer(void)
         else if (w->line == &w_fps)    { nw = &nughud.fps;   alignment = right; }
 
         if (nw) {
-          w->line->x = (nw->x > -1) ? nw->x + (delta*nw->wide) : alignment;
-          if (alignment == right)
-          { w->line->x -= w->line->width; }
-          w->line->y = nw->y;
+          if (nw == &nughud.time && nughud.time_sts
+              && !hud_level_stats && (!automapactive || !map_level_stats))
+          {
+            w->line->x = (nughud.sts.x > -1) ? nughud.sts.x + (delta*nughud.sts.wide) : alignment;
+            w->line->y = nughud.sts.y;
+          }
+          else {
+            w->line->x = (nw->x > -1) ? nw->x + (delta*nw->wide) : alignment;
+            if (alignment == right)
+            { w->line->x -= w->line->width; }
+            w->line->y = nw->y;
+          }
           HUlib_drawTextLine(w->line, align_direct, false);
         }
       }
