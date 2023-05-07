@@ -104,15 +104,19 @@ int extra_level_brightness;               // level brightness feature
 
 // [Nugget] FOV from Doom Retro
 
-int fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
+int fovfx[NUMFOVFX];   // FOV effects (recoil, teleport)
 static int zoomed = 0; // Current zoom state
 
 boolean fovchange = true;
-static int bfov = ORIGFOV; // Base FOV
-static int rfov = ORIGFOV; // Rendered (currently applied) FOV, with effects added to it
+static int bfov;      // Base FOV
+static int rfov;      // Rendered (currently applied) FOV, with effects added to it
+static float fovdiff; // Used for some corrections
 
 static fixed_t fovscale;
 static int WIDEFOVDELTA;
+
+static int lookdirmin;
+static int lookdirmax;
 
 
 void (*colfunc)(void) = R_DrawColumn;     // current column draw function
@@ -462,7 +466,7 @@ void R_SetZoom(int state)
   
   if (zoomed != state) { fovchange = true; }
   
-  if (!strictmode && (zoom_fov - bfov))
+  if (STRICTMODE(zoom_fov - bfov))
   { zoomed = state; }
   else
   { zoomed = ZOOM_OFF; }
@@ -574,6 +578,9 @@ void R_ExecuteSetViewSize (void)
     { fx += fovfx[i]; }
     
     rfov = bfov + fx;
+    fovdiff = (float) ORIGFOV / rfov;
+    lookdirmin = LOOKDIRMIN * fovdiff;
+    lookdirmax = LOOKDIRMAX * fovdiff;
   }
   
   // [Nugget] FOV from Doom Retro
@@ -610,11 +617,11 @@ void R_ExecuteSetViewSize (void)
       {
         // [crispy] re-generate lookup-table for yslope[] whenever "viewheight" or "hires" change
         // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
-        fixed_t dy = abs(((i-viewheight/2-(j-(LOOKDIRMIN * ORIGFOV/rfov))*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
+        fixed_t dy = abs(((i-viewheight/2-(j-lookdirmin)*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
         yslopes[j][i] = FixedDiv(num, dy);
       }
     }
-  yslope = yslopes[(LOOKDIRMIN * ORIGFOV/rfov)]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
+  yslope = yslopes[lookdirmin]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
 
   for (i=0 ; i<viewwidth ; i++)
     {
@@ -757,9 +764,9 @@ void R_SetupFrame (player_t *player)
   // [crispy] pitch is actual lookdir and weapon pitch
   pitch = player->lookdir / MLOOKUNIT + player->recoilpitch;
   }
+  
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
-  // by reducing the rendered pitch
-  pitch = pitch * ORIGFOV/rfov;
+  pitch *= fovdiff;
 
   // [Nugget]: [crispy] A11Y
   if (NOTSTRICTMODE(a11y_weapon_flash))
@@ -770,10 +777,10 @@ void R_SetupFrame (player_t *player)
   extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness); // level brightness feature
 
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
-  if (pitch > (LOOKDIRMAX * ORIGFOV/rfov))
-  { pitch = LOOKDIRMAX * ORIGFOV/rfov; }
-  else if (pitch < (-LOOKDIRMIN * ORIGFOV/rfov))
-  { pitch = -LOOKDIRMIN * ORIGFOV/rfov; }
+  if (pitch > lookdirmax)
+  { pitch = lookdirmax; }
+  else if (pitch < -lookdirmin)
+  { pitch = -lookdirmin; }
 
   // apply new yslope[] whenever "lookdir", "viewheight" or "hires" change
   tempCentery = viewheight/2 + pitch * viewblocks / 10;
@@ -781,7 +788,7 @@ void R_SetupFrame (player_t *player)
   {
       centery = tempCentery;
       centeryfrac = centery << FRACBITS;
-      yslope = yslopes[(LOOKDIRMIN * ORIGFOV/rfov) + pitch]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
+      yslope = yslopes[lookdirmin + pitch]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   }
 
   viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
