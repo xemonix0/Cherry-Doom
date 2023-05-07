@@ -1905,15 +1905,15 @@ void D_NuggetUpdateCasual()
 {
   static int old_casual = -1;
   
-  casual_play = !(demorecording||demoplayback||timingdemo||netgame||fauxdemo||strictmode);
+  casual_play = !(demorecording||demoplayback||netgame||fauxdemo||strictmode);
   
   if (old_casual == -1) { old_casual = casual_play; }
 
   if (old_casual != casual_play) {
     old_casual = casual_play;
     
-    I_SetPalette(W_CacheLumpName("PLAYPAL",PU_CACHE)), // Gamma
-    R_SetZoom(ZOOM_RESET); // This also resets FOV in general, regardless of zoom
+    I_SetPalette(W_CacheLumpName("PLAYPAL",PU_CACHE)), // Reset Gamma
+    R_SetZoom(ZOOM_RESET); // Reset FOV
     
     M_ResetSetupMenu();
   }

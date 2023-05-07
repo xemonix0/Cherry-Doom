@@ -134,8 +134,8 @@ char *MAPNAME(int e, int m)
 
 //----- Nugget ---------------------------------------------------------------
 
-boolean fauxdemo;
-boolean casual_play;
+boolean fauxdemo;    // Checked for in `casual_play`, for debugging
+boolean casual_play; // Like `critical`, with different checks and functionality
 
 // General
   // Page 4
