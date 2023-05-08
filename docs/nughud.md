@@ -19,9 +19,9 @@ names and values, optionally separated by blank or comment lines.
 
 ## NUGHUD elements
 
-In practice, **there are two types of elements in the Nugget HUD**. Both types use the following variables for each element:
+In practice, **there are three types of elements in the Nugget HUD**. The following variables are shared across all types:
 
-- `_x`: **An integer for X position**. Can be any number between 0 and 320 (inclusive).
+- `_x`: **An integer for X position**. Can be any number between 0 and 320 (inclusive), and also -1 in some cases.
 - `_y`: **An integer for Y position**. Can be any number between 0 and 200 (inclusive).
 - `_wide`: **An integer to shift the element's X position when using the widescreen Nugget HUD**. Can be any number between -1 and 1, where a value of -1 will shift the element left, a value of 1 will shift it right, and a value of 0 won't shift it at all.
 
@@ -39,22 +39,11 @@ nughud_armor ---- Armor count
 nughud_key# ----- Key display, where # is a number between 0 and 2 (in order: Blue Key; Yellow Key; Red Key)
 nughud_ammo# ---- Ammo count for each type, where # is a number between 0 and 3 (in order: Bullets; Shells; Cells; Rockets)
 nughud_maxammo# - Same as the above, but for Max Ammo
-nughud_time ----- Time display, only shown if enabled by the user
-nughud_sts ------ Stats (Kills/Items/Secrets) display, only shown if enabled by the user
-nughud_title ---- Level Name display, only shown on the Automap
-nughud_coord ---- Coordinates display, only shown if enabled by the user
-nughud_fps ------ FPS display, only shown when the FPS cheat is activated
 ```
 
-Widgets just use the variables listed above, with some exceptions:
+**Widgets support an X position value of -1 to disable the widget.**
 
-- A boolean (value of 0 or 1) is used to toggle the _Face_ background, whose position is linked to that of the _Face_ itself;
-- Another boolean is used to make the _Time_ display be relocated to the position of the _Stats_ display, in case the latter is inactive.
-
-Additionally, **widgets also support an X position value of -1**.
-For most widgets, said value will disable the widget. However, for the _Time_, _Stats_, _Level Name_, _Coordinates_ and _FPS_ displays, said value will instead make them be forcefully drawn at their default positions. Most of these widgets can still be disabled by in-game means.
-
-**The _Coordinates_ and _FPS_ displays specifically are drawn aligned to the right** (i.e. they'll be drawn to the left of the specified X position value).
+Aside from the shared variables, there is an additional boolean variable (value of 0 or 1), `nughud_face_bg`, used to toggle the _Face_ background, whose position is linked to that of the _Face_ itself.
 
 **Widgets example:**
 
@@ -71,12 +60,30 @@ nughud_frags_y 155
 nughud_frags_wide 1
 ```
 
+### Text Lines
+
+The following text lines are available:
+
+```
+nughud_time -- Time display, only shown if enabled by the user
+nughud_sts --- Stats (Kills/Items/Secrets) display, only shown if enabled by the user
+nughud_title - Level Name display, only shown on the Automap
+nughud_coord - Coordinates display, only shown if enabled by the user
+nughud_fps --- FPS display, only shown when the FPS cheat is activated
+```
+
+**Text lines support an X position value of -1 to forcefully draw the text line at its default X position.** Most of these widgets can be disabled by in-game means.
+
+Aside from the shared variables, there is an additional boolean variable, `nughud_time_sts`, used to make the _Time_ display be relocated to the position of the _Stats_ display, in case the latter is inactive.
+
+**The _Coordinates_ and _FPS_ displays specifically are drawn aligned to the right** (i.e. they'll be drawn to the left of the specified X position value).
+
 ### Patches
 
 **Patches are static graphics that can be drawn anywhere on the screen**, behind the widgets.
 Up to 8 patches can be drawn. They are drawn in increasing order (i.e. `patch1` is drawn below `patch2`, which is drawn below `patch3`, and so on).
 
-**They make use of an additional string variable, `_name`, that determines the name of the graphic lump to be used**, which can either be a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`). The name used in the `NUGHUD` lump MUST be enclosed between quotation marks.
+Aside from the shared variables, **there is an additional string variable, `_name`, that determines the name of the graphic lump to be used**, which can either be a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`). The name used in the `NUGHUD` lump MUST be enclosed between quotation marks.
 
 Patches do NOT support an X position value of -1. They can be disabled simply by not providing any graphic.
 
