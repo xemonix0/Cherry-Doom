@@ -21,8 +21,8 @@ names and values, optionally separated by blank or comment lines.
 
 In practice, **there are two types of elements in the Nugget HUD**. Both types use the following variables for each element:
 
-- `_x`: **An integer for X position**. Can be any number between 0 and 319 (inclusive).
-- `_y`: **An integer for Y position**. Can be any number between 0 and 199 (inclusive).
+- `_x`: **An integer for X position**. Can be any number between 0 and 320 (inclusive).
+- `_y`: **An integer for Y position**. Can be any number between 0 and 200 (inclusive).
 - `_wide`: **An integer to shift the element's X position when using the widescreen Nugget HUD**. Can be any number between -1 and 1, where a value of -1 will shift the element left, a value of 1 will shift it right, and a value of 0 won't shift it at all.
 
 ### Widgets

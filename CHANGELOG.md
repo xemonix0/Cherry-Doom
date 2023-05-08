@@ -15,6 +15,7 @@
 - **Reduced turning/freelook sensitivity when zoomed in**
 - **Weapons are now lowered when zooming in**
 - **The _Level Name_, _Coordinates_ and _FPS_ displays can now be relocated with NUGHUD**
+- **Reverted NUGHUD X and Y position maximums back to 320 and 200 respectively, and maximum weapon height back to 200**
 - **Automap position isn't reset to player position when opening it with Follow Mode off**
 - **Adjusted _"Seizure"_ screen wipe's speed** to match _"Melt"_ and _"Fade"_
 - **FOV changes are now disabled in Strict Mode only**
