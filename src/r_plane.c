@@ -384,6 +384,11 @@ static void do_draw_plane(visplane_t *pl)
         dc_texheight = textureheight[texture]>>FRACBITS; // killough
         dc_iscale = pspriteiscale;
 
+        { // [Nugget]
+          extern float fovdiff;
+          dc_iscale = dc_iscale / fovdiff;
+        }
+
         // [FG] stretch short skies
         if (stretchsky && dc_texheight < 200)
         {

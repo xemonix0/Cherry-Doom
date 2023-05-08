@@ -110,7 +110,7 @@ static int zoomed = 0; // Current zoom state
 boolean fovchange = true;
 static int bfov;      // Base FOV
 static int rfov;      // Rendered (currently applied) FOV, with effects added to it
-static float fovdiff; // Used for some corrections
+float fovdiff;        // Used for some corrections
 
 static fixed_t fovscale;
 static int WIDEFOVDELTA;
@@ -312,7 +312,7 @@ static void R_InitTextureMapping (void)
         ;
       xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
       // [FG] linear horizontal sky scrolling
-      linearskyangle[x] = ((viewwidth/2-x)*((SCREENWIDTH<<6)/viewwidth))*(ANG90/(NONWIDEWIDTH<<6));
+      linearskyangle[x] = ((viewwidth/2-x)*((SCREENWIDTH<<6)/viewwidth))*(ANG90/(NONWIDEWIDTH<<6)) / fovdiff; // [Nugget]
     }
 
   // Take out the fencepost cases from viewangletox.
