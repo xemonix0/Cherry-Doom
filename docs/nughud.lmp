@@ -5,7 +5,7 @@
 nughud_ammo_x 44
 ; Y position
 nughud_ammo_y 171
-; Apply widescreen delta
+; Apply widescreen shifting
 nughud_ammo_wide -1
 
 ; Health count
@@ -129,7 +129,7 @@ nughud_maxammo3_wide 1
 nughud_time_x -1
 nughud_time_y 151
 nughud_time_wide -1
-; Relocate Time widget to position of STS widget if the latter is disabled
+; Relocate Time display to position of Stats display if the latter is disabled
 nughud_time_sts 1
 
 ; Stats display
