@@ -43,7 +43,7 @@ nughud_maxammo# - Same as the above, but for Max Ammo
 
 **Widgets support an X position value of -1 to disable the widget.**
 
-Aside from the shared variables, there is an additional boolean variable (value of 0 or 1), `nughud_face_bg`, used to toggle the _Face_ background, whose position is linked to that of the _Face_ itself.
+Aside from the shared variables, there is an additional boolean variable (value of 0 or 1), `nughud_face_bg`, that toggles the _Face_ background, whose position is linked to that of the _Face_ itself.
 
 **Widgets example:**
 
@@ -55,8 +55,8 @@ nughud_face_x 143
 
 ; Move the Frags widget elsewhere, since in the default NUGHUD distribution,
 ; it is drawn right where the Face is drawn in the traditional Status Bar.
-nughud_frags_x 314
-nughud_frags_y 155
+nughud_frags_x    314
+nughud_frags_y    155
 nughud_frags_wide 1
 ```
 
@@ -74,16 +74,26 @@ nughud_fps --- FPS display, only shown when the FPS cheat is activated
 
 **Text lines support an X position value of -1 to forcefully draw the text line at its default X position.** Most of these widgets can be disabled by in-game means.
 
-Aside from the shared variables, there is an additional boolean variable, `nughud_time_sts`, used to make the _Time_ display be relocated to the position of the _Stats_ display, in case the latter is inactive.
+Aside from the shared variables, **text lines have an additional integer variable, `_align`, that sets the text line's alignment**: -1 will align it left, 0 will center it and 1 will align it right.
+There is also an additional boolean variable, `nughud_time_sts`, that makes the _Time_ display be relocated to the position of the _Stats_ display, in case the latter is inactive.
 
-**The _Coordinates_ and _FPS_ displays specifically are drawn aligned to the right** (i.e. they'll be drawn to the left of the specified X position value).
+**Text lines example:**
+
+```
+; Loading a NUGHUD lump with these contents will draw the Level Name display centered.
+
+nughud_title_x     160
+nughud_title_wide  0
+nughud_title_align 0
+```
 
 ### Patches
 
 **Patches are static graphics that can be drawn anywhere on the screen**, behind the widgets.
 Up to 8 patches can be drawn. They are drawn in increasing order (i.e. `patch1` is drawn below `patch2`, which is drawn below `patch3`, and so on).
 
-Aside from the shared variables, **there is an additional string variable, `_name`, that determines the name of the graphic lump to be used**, which can either be a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`). The name used in the `NUGHUD` lump MUST be enclosed between quotation marks.
+Aside from the shared variables, **patches have an additional string variable, `_name`, that determines the name of the graphic lump to be used**, which can either be a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`).
+The names used in the `NUGHUD` lump MUST be enclosed between quotation marks.
 
 Patches do NOT support an X position value of -1. They can be disabled simply by not providing any graphic.
 

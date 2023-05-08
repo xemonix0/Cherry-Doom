@@ -40,10 +40,11 @@ nughud_t nughud; // Behold!!!
 #define WIDGETYMIN 0
 #define WIDGETYMAX 200
 
-#define WIDGET_X(n, m, v) { n, (config_t *)&(m).x,    NULL, { v }, { WIDGETXMIN, WIDGETXMAX }, number }
-#define WIDGET_Y(n, m, v) { n, (config_t *)&(m).y,    NULL, { v }, { WIDGETYMIN, WIDGETYMAX }, number }
-#define WIDGET_W(n, m, v) { n, (config_t *)&(m).wide, NULL, { v }, { -1,         1          }, number }
-#define WIDGET_T(n, m, v) { n, (config_t *)&(m),      NULL, { v }, { 0,          1          }, number }
+#define WIDGET_X(n, m, v) { n, (config_t *)&(m).x,     NULL, { v }, { WIDGETXMIN, WIDGETXMAX }, number }
+#define WIDGET_Y(n, m, v) { n, (config_t *)&(m).y,     NULL, { v }, { WIDGETYMIN, WIDGETYMAX }, number }
+#define WIDGET_W(n, m, v) { n, (config_t *)&(m).wide,  NULL, { v }, { -1,         1          }, number }
+#define WIDGET_A(n, m, v) { n, (config_t *)&(m).align, NULL, { v }, { -1,         1          }, number }
+#define WIDGET_T(n, m, v) { n, (config_t *)&(m),       NULL, { v }, { 0,          1          }, number }
 
 #define PATCHXMIN 0
 #define PATCHXMAX 320
@@ -132,19 +133,24 @@ default_t nughud_defaults[] = {
   WIDGET_X( "nughud_time_x",        nughud.time,             -1             ),
   WIDGET_Y( "nughud_time_y",        nughud.time,             151            ),
   WIDGET_W( "nughud_time_wide",     nughud.time,             -1             ),
+  WIDGET_A( "nughud_time_align",    nughud.time,             -1             ),
   WIDGET_T( "nughud_time_sts",      nughud.time_sts,         1              ),
   WIDGET_X( "nughud_sts_x",         nughud.sts,              -1             ),
   WIDGET_Y( "nughud_sts_y",         nughud.sts,              159            ),
   WIDGET_W( "nughud_sts_wide",      nughud.sts,              -1             ),
+  WIDGET_A( "nughud_sts_align",     nughud.sts,              -1             ),
   WIDGET_X( "nughud_title_x",       nughud.title,            -1             ),
   WIDGET_Y( "nughud_title_y",       nughud.title,            143            ),
   WIDGET_W( "nughud_title_wide",    nughud.title,            -1             ),
+  WIDGET_A( "nughud_title_align",   nughud.title,            -1             ),
   WIDGET_X( "nughud_coord_x",       nughud.coord,            -1             ),
   WIDGET_Y( "nughud_coord_y",       nughud.coord,            0              ),
   WIDGET_W( "nughud_coord_wide",    nughud.coord,            1              ),
+  WIDGET_A( "nughud_coord_align",   nughud.coord,            1              ),
   WIDGET_X( "nughud_fps_x",         nughud.fps,              -1             ),
   WIDGET_Y( "nughud_fps_y",         nughud.fps,              8              ),
   WIDGET_W( "nughud_fps_wide",      nughud.fps,              1              ),
+  WIDGET_A( "nughud_fps_align",     nughud.fps,              1              ),
   PATCH_X(  "nughud_patch1_x",      nughud.patches[0]                       ),
   PATCH_Y(  "nughud_patch1_y",      nughud.patches[0]                       ),
   PATCH_W(  "nughud_patch1_wide",   nughud.patches[0]                       ),

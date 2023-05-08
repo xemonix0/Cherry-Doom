@@ -23,12 +23,18 @@
 #include "m_fixed.h"
 
 typedef struct nughud_widget_s {
-  int x,y;
+  int x, y;
   int wide;
 } nughud_widget_t;
 
+typedef struct nughud_textline_s {
+  int x, y;
+  int wide;
+  int align;
+} nughud_textline_t;
+
 typedef struct nughud_patch_s {
-  int x,y;
+  int x, y;
   int wide;
   char *name;
 } nughud_patch_t;
@@ -36,24 +42,24 @@ typedef struct nughud_patch_s {
 #define NUMNUGHUDPATCHES 8
 
 typedef struct nughud_s {
-  nughud_widget_t ammo;
-  nughud_widget_t health;
-  nughud_widget_t arms[8];
-  nughud_widget_t frags;
-  nughud_widget_t face;
-  boolean         face_bg;
-  nughud_widget_t armor;
-  nughud_widget_t keys[3];
-  nughud_widget_t ammos[4];
-  nughud_widget_t maxammos[4];
-  nughud_widget_t time;
-  boolean         time_sts;
-  nughud_widget_t sts;
-  nughud_widget_t title;
-  nughud_widget_t coord;
-  nughud_widget_t fps;
-  nughud_patch_t  patches[NUMNUGHUDPATCHES];
-  fixed_t         weapheight;
+  nughud_widget_t   ammo;
+  nughud_widget_t   health;
+  nughud_widget_t   arms[8];
+  nughud_widget_t   frags;
+  nughud_widget_t   face;
+  boolean           face_bg;
+  nughud_widget_t   armor;
+  nughud_widget_t   keys[3];
+  nughud_widget_t   ammos[4];
+  nughud_widget_t   maxammos[4];
+  nughud_textline_t time;
+  boolean           time_sts;
+  nughud_textline_t sts;
+  nughud_textline_t title;
+  nughud_textline_t coord;
+  nughud_textline_t fps;
+  nughud_patch_t    patches[NUMNUGHUDPATCHES];
+  fixed_t           weapheight;
 } nughud_t;
 
 extern nughud_t nughud;
