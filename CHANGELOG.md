@@ -5,6 +5,11 @@
 - _**"Use" Button Timer**_ setting
 - _**Teleport Timer**_ setting
 - _**Key Pickup Timer**_ setting
+- **NUGHUD:**
+  - Now support custom fonts for numbered Status Bar widgets
+  - Now allows to relocate the _Level Name_, _Coordinates_ and _FPS_ text lines
+  - Now allows to specify an alignment for supported text lines
+  - Reverted X and Y position maximums back to 320 and 200 respectively, and maximum weapon height back to 200
 
 ## Changes
 
@@ -14,9 +19,6 @@
 - **FOV is now changed gradually** in most cases
 - **Reduced turning/freelook sensitivity when zoomed in**
 - **Weapons are now lowered when zooming in**
-- **The _Level Name_, _Coordinates_ and _FPS_ displays can now be relocated with NUGHUD**
-- **Text lines supported by NUGHUD can now be given a specific alignment**
-- **Reverted NUGHUD X and Y position maximums back to 320 and 200 respectively, and maximum weapon height back to 200**
 - **Automap position isn't reset to player position when opening it with Follow Mode off**
 - **Adjusted _"Seizure"_ screen wipe's speed** to match _"Melt"_ and _"Fade"_
 - **FOV changes are now disabled in Strict Mode only**

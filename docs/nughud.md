@@ -32,7 +32,7 @@ The following widgets are available:
 ```
 nughud_ammo ----- Ammo count for the currently-equipped weapon
 nughud_health --- Health count
-nughud_arms# ---- Arms number, where # is a number between 2 and 9 (inclusive)
+nughud_arms# ---- Arms (weapon) number, where # is a number between 2 and 9 (inclusive)
 nughud_frags ---- Frags count, only shown during Deathmatch games
 nughud_face ----- Face (Mugshot)
 nughud_armor ---- Armor count
@@ -58,6 +58,28 @@ nughud_face_x 143
 nughud_frags_x    314
 nughud_frags_y    155
 nughud_frags_wide 1
+```
+
+**`NUGHUD` supports custom fonts for all numbered widgets.**
+Graphics for all characters of a given font must be provided for the font to be used, else the Vanilla font will be used.
+
+The following fonts are available:
+
+```
+Tall Numbers, used for the Health, Armor and current-weapon Ammo counts:
+
+  NHTNUM# -- Number, where # is a number between 0 and 9 (inclusive)
+  NHTMINUS - Minus sign
+  NHTPRCNT - Percent sign
+
+Ammo Numbers, used for the Ammo and Max Ammo counts:
+
+  NHAMNUM# - Number, where # is a number between 0 and 9 (inclusive)
+
+Arms Numbers, used for the weapon numbers:
+
+  NHW0NUM# - Weapon unavailable, where # is a number between 1 and 9 (inclusive)
+  NHW1NUM# - Weapon available, where # is a number between 1 and 9 (inclusive)
 ```
 
 ### Text Lines
