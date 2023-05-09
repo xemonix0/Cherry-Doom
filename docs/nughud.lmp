@@ -1,6 +1,6 @@
 ; Default Nugget HUD distribution
 
-; Widgets
+; - Widgets -
 
 ; Ammo count
 ; X position
@@ -14,6 +14,11 @@ nughud_ammo_wide -1
 nughud_health_x    90
 nughud_health_y    171
 nughud_health_wide -1
+
+; Arms number 1
+nughud_arms1_x    -1
+nughud_arms1_y    0
+nughud_arms1_wide 0
 
 ; Arms number 2
 nughud_arms2_x    111
@@ -127,7 +132,7 @@ nughud_maxammo3_x    314
 nughud_maxammo3_y    185
 nughud_maxammo3_wide 1
 
-; Text Lines
+; - Text Lines -
 
 ; Time display
 nughud_time_x     -1
@@ -149,19 +154,19 @@ nughud_title_y     143
 nughud_title_wide  -1
 nughud_title_align -1
 
-; Coordinates display (aligned right)
+; Coordinates display
 nughud_coord_x     -1
 nughud_coord_y     0
 nughud_coord_wide  1
 nughud_coord_align 1
 
-; FPS display (aligned right)
+; FPS display
 nughud_fps_x     -1
 nughud_fps_y     8
 nughud_fps_wide  1
 nughud_fps_align 1
 
-; Patches
+; - Patches -
 
 nughud_patch1_x    0
 nughud_patch1_y    0

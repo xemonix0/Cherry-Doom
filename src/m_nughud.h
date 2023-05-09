@@ -44,7 +44,7 @@ typedef struct nughud_patch_s {
 typedef struct nughud_s {
   nughud_widget_t   ammo;
   nughud_widget_t   health;
-  nughud_widget_t   arms[8];
+  nughud_widget_t   arms[9];
   nughud_widget_t   frags;
   nughud_widget_t   face;
   boolean           face_bg;

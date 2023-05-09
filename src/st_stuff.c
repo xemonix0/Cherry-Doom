@@ -195,8 +195,7 @@ static patch_t *faceback[MAXPLAYERS]; // killough 3/7/98: make array
 static patch_t *armsbg;
 
 // weapon ownership patches
-// [Nugget] Increase the range for Alternative Arms display
-static patch_t *arms[8][2];
+static patch_t *arms[6+3][2]; // [Nugget] Increase array size for 9 numbers
 
 // [Nugget] NUGHUD fonts
 static patch_t *nughud_tallnum[10];   // NHTNUM#, from 0 to 9
@@ -233,7 +232,7 @@ static st_number_t w_frags;
 static st_percent_t w_health;
 
 // weapon ownership widgets
-static st_multicon_t w_arms[6+2]; // [Nugget] Increase range for NUGHUD
+static st_multicon_t w_arms[6+3]; // [Nugget] Increase array size for 9 numbers
 // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
 static int st_shotguns;
 
@@ -989,12 +988,13 @@ void ST_drawWidgets(void)
   st_shotguns = plyr->weaponowned[wp_shotgun] | plyr->weaponowned[wp_supershotgun];
 
   if (st_crispyhud) { // [Nugget] Nugget HUD
-    for (i=0; i<8; i++)
-      if (nughud.arms[i].x > -1) { STlib_updateMultIcon(&w_arms[i]); }
+    for (i = 0;  i < 9;  i++)
+      if (nughud.arms[i].x > -1)
+      { STlib_updateMultIcon(&w_arms[i]); }
   }
   else
     for (i=0; i<6; i++)
-    { STlib_updateMultIcon(&w_arms[i]); }
+    { STlib_updateMultIcon(&w_arms[i+1]); } // [Nugget]
 
   // [Nugget] This probably shouldn't go here, but it works
   if (st_crispyhud && (nughud.face.x > -1) && nughud.face_bg)
@@ -1094,16 +1094,16 @@ void ST_loadGraphics(void)
   armsbg = (patch_t *) W_CacheLumpName("STARMS", PU_STATIC);
 
   // arms ownership widgets
-  // [Nugget] Increase the range for Alternative Arms display and Nugget HUD
-  for (i=0;i<8;i++)
+  // [Nugget] Increase the range to include all 9 numbers
+  for (i=0;i<6+3;i++)
     {
-      sprintf(namebuf, "STGNUM%d", i+2);
+      sprintf(namebuf, "STGNUM%d", i+1);
 
       // gray #
       arms[i][0] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
 
       // yellow #
-      arms[i][1] = shortnum[i+2];
+      arms[i][1] = shortnum[i+1];
     }
 
   // face backgrounds for different color players
@@ -1244,7 +1244,8 @@ void ST_unloadGraphics(void)
   Z_ChangeTag(armsbg, PU_CACHE);
 
   // unload gray #'s
-  for (i=0;i<6;i++)
+  // [Nugget] Increase the range to include all 9 numbers
+  for (i=0;i<6+3;i++)
     Z_ChangeTag(arms[i][0], PU_CACHE);
 
   // unload the key cards
@@ -1346,22 +1347,22 @@ void ST_createWidgets(void)
 
   // weapons owned
   if (st_crispyhud) {
-    for (i = 0;  i < 8;  i++)
+    for (i = 0;  i < 9;  i++)
       STlib_initMultIcon(&w_arms[i],
                          nughud.arms[i].x + (delta*nughud.arms[i].wide),
                          nughud.arms[i].y,
-                         (nughud.nhwpnum ? nughud_armsnum[i+1] : arms[i]),
-                         (int *) &plyr->weaponowned[i+1],
+                         (nughud.nhwpnum ? nughud_armsnum[i] : arms[i]),
+                         (int *) &plyr->weaponowned[i],
                          &st_armson);
   }
   else {
     for(i=0;i<6;i++) {
       // [Nugget] Alternative Arms display (Saw/SSG instead of Pistol)
-      int alt = alt_arms ? ((i==5 && gamemode==commercial) ? 2 : 1) : 0;
-      STlib_initMultIcon(&w_arms[i],
+      int alt = (alt_arms ? ((i==5 && gamemode==commercial) ? 2 : 1) : 0);
+      STlib_initMultIcon(&w_arms[i+1],
                          ST_ARMSX+(i%3)*ST_ARMSXSPACE,
                          ST_ARMSY+(i/3)*ST_ARMSYSPACE,
-                         arms[i+alt], (int *) &plyr->weaponowned[i+1+alt],
+                         arms[i+1+alt], (int *) &plyr->weaponowned[i+1+alt],
                          &st_armson);
     }
     // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget

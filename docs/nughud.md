@@ -32,7 +32,7 @@ The following widgets are available:
 ```
 nughud_ammo ----- Ammo count for the currently-equipped weapon
 nughud_health --- Health count
-nughud_arms# ---- Arms (weapon) number, where # is a number between 2 and 9 (inclusive)
+nughud_arms# ---- Arms (weapon) number, where # is a number between 1 and 9 (inclusive)
 nughud_frags ---- Frags count, only shown during Deathmatch games
 nughud_face ----- Face (Mugshot)
 nughud_armor ---- Armor count
@@ -147,8 +147,8 @@ It can be any value between 0 and 200 (inclusive).
 
 ---
 
-By default and compared to the original Crispy HUD, the Nugget HUD hides the face widget and shows 8 Arms numbers instead of 6.
+By default and compared to the original Crispy HUD, the Nugget HUD hides the face widget and shows Arms numbers 2-9 instead of 2-7.
 
-**The default distribution for the Nugget HUD**, as defined in the executable, **is available in the form of `nughud.lmp`**, found in the `docs/` folder. Comments were added to it for clarity. Feel free to use it as a base to make new distributions.
+**The default distribution for the Nugget HUD**, as defined in the executable, **is available in text format as `nughud.lmp`**, found in the `docs/` folder. Comments were added to it for clarity. Feel free to use it as a base to make new distributions.
 
 It is advised that you do not include values for variables that you do not wish to modify, as to avoid issues if the handling of any of them is altered in the future.

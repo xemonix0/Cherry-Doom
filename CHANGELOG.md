@@ -9,6 +9,7 @@
   - Now support custom fonts for numbered Status Bar widgets
   - Now allows to relocate the _Level Name_, _Coordinates_ and _FPS_ text lines
   - Now allows to specify an alignment for supported text lines
+  - Now supports Arms number 1
   - Reverted X and Y position maximums back to 320 and 200 respectively, and maximum weapon height back to 200
 
 ## Changes
