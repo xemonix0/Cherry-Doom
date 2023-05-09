@@ -1,6 +1,6 @@
 # WOOFHUD
 
-Woof! supports the WOOFHUD lump to customize the appearance of the extended Boom HUD.
+As a Woof! fork, Nugget Doom supports the WOOFHUD lump to customize the appearance of the extended Boom HUD.
 
 ## Description
 
@@ -96,5 +96,5 @@ The "title" widget is only visible if the Automap is enabled. The "monsec", "stt
 
 HUD modes without a paragraph remain unchanged. Widgets which are not mentioned in a paragraph will *never* be visible in the respective HUD mode. So, it is a good idea to *always* include the five widgets which make up the `hud 0` paragraph in the example above in *any* other paragraph.
 
-It is currently impossible to use the WOOFHUD lump to modify the appearance of the Status Bar or the Crispy HUD. However, when using the Crispy HUD or the Automap, the visible widgets will align corresponding to the last active HUD mode.
+When using the Nugget HUD, its own widget positioning will be used instead. When using the Automap with Overlay Mode Off, the visible widgets will align corresponding to the last active HUD mode.
 
