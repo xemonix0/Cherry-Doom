@@ -199,7 +199,7 @@ static patch_t *arms[6+3][2]; // [Nugget] Increase array size for 9 numbers
 
 // [Nugget] NUGHUD fonts
 static patch_t *nughud_tallnum[10];   // NHTNUM#, from 0 to 9
-static patch_t *nughud_tallminus;     // NHTMINUS
+       patch_t *nughud_tallminus;     // NHTMINUS
 static patch_t *nughud_tallpercent;   // NHTPRCNT
 static patch_t *nughud_ammonum[10];   // NHAMNUM#, from 0 to 9
 static patch_t *nughud_armsnum[9][2]; // NHW0NUM# and NHW1NUM#, from 1 to 9
@@ -1321,6 +1321,9 @@ void ST_createWidgets(void)
   int i;
   // [Nugget] Widescreen Crispy HUD
   const int delta = st_widecrispyhud ? WIDESCREENDELTA : 0;
+  
+  // [Nugget] Reload minus sign
+  STlib_init();
 
   // [Nugget] Nugget HUD
 

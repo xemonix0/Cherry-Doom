@@ -26,6 +26,7 @@
 #include "st_lib.h"
 #include "r_main.h"
 #include "m_swap.h"
+#include "m_nughud.h" // [Nugget]
 
 int sts_always_red;      //jff 2/18/98 control to disable status color changes
 int sts_pct_always_gray; // killough 2/21/98: always gray %'s? bug or feature?
@@ -41,6 +42,12 @@ patch_t*    sttminus;
 //
 void STlib_init(void)
 {
+  // [Nugget]
+  extern patch_t *nughud_tallminus;
+  
+  if (st_crispyhud && nughud.nhtnum)
+  { sttminus = nughud_tallminus; }
+  else
   // [FG] allow playing with the Doom v1.2 IWAD which is missing the STTMINUS lump
   if (W_CheckNumForName("STTMINUS") >= 0)
     sttminus = (patch_t *) W_CacheLumpName("STTMINUS", PU_STATIC);

@@ -66,7 +66,7 @@ Graphics for all characters of a given font must be provided for the font to be 
 The following fonts are available:
 
 ```
-Tall Numbers, used for the Health, Armor and current-weapon Ammo counts:
+Tall Numbers, used for the Health, Armor, current-weapon Ammo and Frags counts:
 
   NHTNUM# -- Number, where # is a number between 0 and 9 (inclusive)
   NHTMINUS - Minus sign
