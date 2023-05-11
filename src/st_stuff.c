@@ -198,11 +198,12 @@ static patch_t *armsbg;
 static patch_t *arms[6+3][2]; // [Nugget] Increase array size for 9 numbers
 
 // [Nugget] NUGHUD fonts
-static patch_t *nughud_tallnum[10];   // NHTNUM#, from 0 to 9
-       patch_t *nughud_tallminus;     // NHTMINUS
-static patch_t *nughud_tallpercent;   // NHTPRCNT
-static patch_t *nughud_ammonum[10];   // NHAMNUM#, from 0 to 9
-static patch_t *nughud_armsnum[9][2]; // NHW0NUM# and NHW1NUM#, from 1 to 9
+static patch_t *nughud_tallnum[10];      // NHTNUM#, from 0 to 9
+       patch_t *nughud_tallminus;        // NHTMINUS
+static patch_t *nughud_tallpercent;      // NHTPRCNT
+static patch_t *nughud_ammonum[10];      // NHAMNUM#, from 0 to 9
+static patch_t *nughud_armsnum[9][2];    // NHW0NUM# and NHW1NUM#, from 1 to 9
+static patch_t *nughud_keys[NUMCARDS+3]; // NHKEYS
 
 // ready-weapon widget
 static st_number_t w_ready;
@@ -1164,7 +1165,7 @@ void ST_loadGraphics(void)
   { // [Nugget] NUGHUD fonts
     int lump;
     
-    nughud.nhtnum = nughud.nhamnum = nughud.nhwpnum = true;
+    nughud.nhtnum = nughud.nhamnum = nughud.nhwpnum = nughud.nhkeys = true;
     
     for (i = 0;  i < 10;  i++) { // Load NHTNUM0 to NHTNUM9
       sprintf(namebuf, "NHTNUM%d", i);
@@ -1212,6 +1213,17 @@ void ST_loadGraphics(void)
       { nughud_armsnum[i][1] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
       else {
         nughud.nhwpnum = false;
+        break;
+      }
+    }
+    
+    // Load NHKEYS
+    for (i = 0;  i < NUMCARDS+3;  i++) {
+      sprintf(namebuf, "NHKEYS%d", i);
+      if ((lump = (W_CheckNumForName)(namebuf, ns_global)) > -1)
+      { nughud_keys[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+      else {
+        nughud.nhkeys = false;
         break;
       }
     }
@@ -1275,6 +1287,9 @@ void ST_unloadGraphics(void)
     Z_ChangeTag(nughud_armsnum[i][0], PU_CACHE);
     Z_ChangeTag(nughud_armsnum[i][1], PU_CACHE);
   }
+  
+  for (i = 0;  i < NUMCARDS+3;  i++)
+  { Z_ChangeTag(nughud_keys[i], PU_CACHE); }
   
   Z_ChangeTag(nughud_tallminus, PU_CACHE);
   Z_ChangeTag(nughud_tallpercent, PU_CACHE);
@@ -1398,21 +1413,21 @@ void ST_createWidgets(void)
   STlib_initMultIcon(&w_keyboxes[0],
                      (st_crispyhud ? nughud.keys[0].x : ST_KEY0X) + DELTA(nughud.keys[0].wide),
                      (st_crispyhud ? nughud.keys[0].y : ST_KEY0Y),
-                     keys,
+                     ((st_crispyhud && nughud.nhkeys) ? nughud_keys : keys),
                      &keyboxes[0],
                      &st_statusbaron);
 
   STlib_initMultIcon(&w_keyboxes[1],
                      (st_crispyhud ? nughud.keys[1].x : ST_KEY1X) + DELTA(nughud.keys[1].wide),
                      (st_crispyhud ? nughud.keys[1].y : ST_KEY1Y),
-                     keys,
+                     ((st_crispyhud && nughud.nhkeys) ? nughud_keys : keys),
                      &keyboxes[1],
                      &st_statusbaron);
 
   STlib_initMultIcon(&w_keyboxes[2],
                      (st_crispyhud ? nughud.keys[2].x : ST_KEY2X) + DELTA(nughud.keys[2].wide),
                      (st_crispyhud ? nughud.keys[2].y : ST_KEY2Y),
-                     keys,
+                     ((st_crispyhud && nughud.nhkeys) ? nughud_keys : keys),
                      &keyboxes[2],
                      &st_statusbaron);
 

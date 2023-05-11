@@ -65,8 +65,8 @@ nughud_frags_y    155
 nughud_frags_wide 1
 ```
 
-**`NUGHUD` supports custom fonts for all numbered widgets.**
-Graphics for all characters of a given font must be provided for the font to be used, else the Vanilla font will be used.
+**`NUGHUD` supports custom fonts for most widgets.**
+Graphics for all characters of a given font must be provided for the font to be used, else the Vanilla font will be used instead.
 
 The following fonts are available:
 
@@ -85,6 +85,10 @@ Arms Numbers, used for the weapon numbers:
 
   NHW0NUM# - Weapon unavailable, where # is a number between 1 and 9 (inclusive)
   NHW1NUM# - Weapon available, where # is a number between 1 and 9 (inclusive)
+
+Keys:
+
+  NHKEYS# -- Key, where # is a number between 0 and 8 (inclusive)
 ```
 
 ### Text Lines
