@@ -135,35 +135,35 @@ nughud_maxammo3_wide 1
 ; - Text Lines -
 
 ; Time display
-nughud_time_x     -1
+nughud_time_x     2
 nughud_time_y     151
-nughud_time_wide  -1
+nughud_time_wide  -2
 nughud_time_align -1
 ; Relocate Time display to position of Stats display if the latter is disabled
 nughud_time_sts   1
 
 ; Stats display
-nughud_sts_x     -1
+nughud_sts_x     2
 nughud_sts_y     159
-nughud_sts_wide  -1
+nughud_sts_wide  -2
 nughud_sts_align -1
 
 ; Level Name display
-nughud_title_x     -1
+nughud_title_x     2
 nughud_title_y     143
-nughud_title_wide  -1
+nughud_title_wide  -2
 nughud_title_align -1
 
 ; Coordinates display
-nughud_coord_x     -1
+nughud_coord_x     318
 nughud_coord_y     0
-nughud_coord_wide  1
+nughud_coord_wide  2
 nughud_coord_align 1
 
 ; FPS display
-nughud_fps_x     -1
+nughud_fps_x     318
 nughud_fps_y     8
-nughud_fps_wide  1
+nughud_fps_wide  2
 nughud_fps_align 1
 
 ; - Patches -

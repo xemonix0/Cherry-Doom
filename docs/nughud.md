@@ -21,9 +21,14 @@ names and values, optionally separated by blank or comment lines.
 
 In practice, **there are three types of elements in the Nugget HUD**. The following variables are shared across all types:
 
-- `_x`: **An integer for X position**. Can be any number between 0 and 320 (inclusive), and also -1 in some cases.
-- `_y`: **An integer for Y position**. Can be any number between 0 and 200 (inclusive).
-- `_wide`: **An integer to shift the element's X position when using the widescreen Nugget HUD**. Can be any number between -1 and 1, where a value of -1 will shift the element left, a value of 1 will shift it right, and a value of 0 won't shift it at all.
+- `_x`: **An integer for X position**, which can be any number between 0 and 320 (inclusive), and also -1 in some cases.
+- `_y`: **An integer for Y position**, which can be any number between 0 and 200 (inclusive).
+- `_wide`: **An integer to shift the element's X position based on widescreen**, with the following possible values:
+  - A value of -2 will shift the element left forcefully;
+  - A value of -1 will shift the element left only when using the widescreen Nugget HUD;
+  - A value of 0 will keep the element in place regardless of widescreen;
+  - A value of 1 will shift the element right only when using the widescreen Nugget HUD;
+  - A value of 2 will shift the element right forcefully.
 
 ### Widgets
 
@@ -93,8 +98,6 @@ nughud_title - Level Name display, only shown on the Automap
 nughud_coord - Coordinates display, only shown if enabled by the user
 nughud_fps --- FPS display, only shown when the FPS cheat is activated
 ```
-
-**Text lines support an X position value of -1 to forcefully draw the text line at its default X position.** Most of these widgets can be disabled by in-game means.
 
 Aside from the shared variables, **text lines have an additional integer variable, `_align`, that sets the text line's alignment**: -1 will align it left, 0 will center it and 1 will align it right.
 There is also an additional boolean variable, `nughud_time_sts`, that makes the _Time_ display be relocated to the position of the _Stats_ display, in case the latter is inactive.

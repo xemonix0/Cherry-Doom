@@ -1504,27 +1504,24 @@ void HU_Drawer(void)
       // [Nugget] Special treatment for some widgets in Nugget HUD
       if (st_crispyhud) {
         nughud_textline_t *ntl = NULL;
-        int defaultx = 0;
-        const int left = 2 - WIDESCREENDELTA, right = 318 + WIDESCREENDELTA;
-        const int delta = st_widecrispyhud ? WIDESCREENDELTA : 0;
 
-        if      (w->line == &w_sttime) { ntl = &nughud.time;  defaultx = left;  }
-        else if (w->line == &w_monsec) { ntl = &nughud.sts;   defaultx = left;  }
-        else if (w->line == &w_title)  { ntl = &nughud.title; defaultx = left;  }
-        else if (w->line == &w_coord)  { ntl = &nughud.coord; defaultx = right; }
-        else if (w->line == &w_fps)    { ntl = &nughud.fps;   defaultx = right; }
+        if      (w->line == &w_sttime) { ntl = &nughud.time;  }
+        else if (w->line == &w_monsec) { ntl = &nughud.sts;   }
+        else if (w->line == &w_title)  { ntl = &nughud.title; }
+        else if (w->line == &w_coord)  { ntl = &nughud.coord; }
+        else if (w->line == &w_fps)    { ntl = &nughud.fps;   }
 
         if (ntl) {
           if (ntl == &nughud.time && nughud.time_sts
               && !hud_level_stats && (!automapactive || !map_level_stats))
           { // Relocate Time text line to position of Stats text line
-            w->line->x = (nughud.sts.x > -1) ? nughud.sts.x + (delta*nughud.sts.wide) : defaultx;
+            w->line->x = nughud.sts.x + DELTA(nughud.sts.wide);
             w->line->x -= ((nughud.sts.align == 1) ? w->line->width   :
                            (!nughud.sts.align)     ? w->line->width/2 : 0);
             w->line->y = nughud.sts.y;
           }
           else {
-            w->line->x = (ntl->x > -1) ? ntl->x + (delta*ntl->wide) : defaultx;
+            w->line->x = ntl->x + DELTA(ntl->wide);
             w->line->x -= ((ntl->align == 1) ? w->line->width   : 
                            (!ntl->align)     ? w->line->width/2 : 0);
             w->line->y = ntl->y;

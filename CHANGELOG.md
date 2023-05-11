@@ -6,9 +6,10 @@
 - _**Teleport Timer**_ setting
 - _**Key Pickup Timer**_ setting
 - **NUGHUD:**
-  - Now support custom fonts for numbered Status Bar widgets
+  - Now supports custom fonts for numbered Status Bar widgets
   - Now allows to relocate the _Level Name_, _Coordinates_ and _FPS_ text lines
   - Now allows to specify an alignment for supported text lines
+  - Now supports widescreen shifting values to force said shift
   - Now supports Arms number 1
   - Reverted X and Y position maximums back to 320 and 200 respectively, and maximum weapon height back to 200
 

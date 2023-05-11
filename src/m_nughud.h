@@ -22,6 +22,9 @@
 
 #include "m_fixed.h"
 
+#define DELTA(x) ((abs(x) == 2) ? WIDESCREENDELTA*(x)/2                :  \
+                  (abs(x) == 1) ? WIDESCREENDELTA*(x)*st_widecrispyhud : 0)
+
 typedef struct nughud_widget_s {
   int x, y;
   int wide;
