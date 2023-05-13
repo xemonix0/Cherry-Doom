@@ -1487,19 +1487,36 @@ void HU_Drawer(void)
 
   if (message_list)
     HUlib_drawMText(&w_rtext, align_text);
-  else
-    HUlib_drawSText(&w_message, align_text);
+  else {
+    // [Nugget] Nugget HUD
+    if (st_crispyhud) {
+      if (nughud.message.x == -1)
+      { w_message.l->x = (message_centered ? (ORIGWIDTH - w_message.l->width)/2 : 2 - WIDESCREENDELTA); }
+      else {
+        w_message.l->x = nughud.message.x + DELTA(nughud.message.wide);
+        w_message.l->x -= ((nughud.message.align == 1) ? w_message.l->width   :
+                           (!nughud.message.align)     ? w_message.l->width/2 : 0);
+      }
+      w_message.l->y = nughud.message.y;
+      
+      HUlib_drawSText(&w_message, align_direct);
+    }
+    else {
+      w_message.l->y = HU_MSGY;
+      HUlib_drawSText(&w_message, align_text);
+    }
+  }
 
-  // [Nugget]
+  // [Nugget] Nugget HUD
   if (st_crispyhud) {
-    w_secret.l[0].x = nughud.secret.x + DELTA(nughud.secret.wide);
-    w_secret.l[0].x -= ((nughud.secret.align == 1) ? w_secret.l[0].width   : 
-                        (!nughud.secret.align)     ? w_secret.l[0].width/2 : 0);
-    w_secret.l[0].y = nughud.secret.y;
+    w_secret.l->x = nughud.secret.x + DELTA(nughud.secret.wide);
+    w_secret.l->x -= ((nughud.secret.align == 1) ? w_secret.l->width   :
+                        (!nughud.secret.align)   ? w_secret.l->width/2 : 0);
+    w_secret.l->y = nughud.secret.y;
   }
   else {
-    w_secret.l[0].x = ORIGWIDTH/2 - w_secret.l[0].width/2;
-    w_secret.l[0].y = 100 - 2*SHORT(hu_font[0]->height);
+    w_secret.l->x = ORIGWIDTH/2 - w_secret.l->width/2;
+    w_secret.l->y = 100 - 2*SHORT(hu_font[0]->height);
   }
 
   HUlib_drawSText(&w_secret, align_direct);
@@ -1534,7 +1551,7 @@ void HU_Drawer(void)
           }
           else {
             w->line->x = ntl->x + DELTA(ntl->wide);
-            w->line->x -= ((ntl->align == 1) ? w->line->width   : 
+            w->line->x -= ((ntl->align == 1) ? w->line->width   :
                            (!ntl->align)     ? w->line->width/2 : 0);
             w->line->y = ntl->y;
           }

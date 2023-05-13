@@ -149,6 +149,10 @@ default_t nughud_defaults[] = {
   TEXTLINE_Y( "nughud_fps_y",         nughud.fps,              8              ),
   TEXTLINE_W( "nughud_fps_wide",      nughud.fps,              2              ),
   TEXTLINE_A( "nughud_fps_align",     nughud.fps,              1              ),
+  {           "nughud_message_x", (config_t *)&nughud.message.x, NULL, { -1 }, { -1, 320 }, number },
+  TEXTLINE_Y( "nughud_message_y",     nughud.message,          0              ),
+  TEXTLINE_W( "nughud_message_wide",  nughud.message,          -2             ),
+  TEXTLINE_A( "nughud_message_align", nughud.message,          -1             ),
   TEXTLINE_X( "nughud_secret_x",      nughud.secret,           160            ),
   TEXTLINE_Y( "nughud_secret_y",      nughud.secret,           86             ),
   TEXTLINE_W( "nughud_secret_wide",   nughud.secret,           0              ),
@@ -185,7 +189,7 @@ default_t nughud_defaults[] = {
   PATCH_Y(    "nughud_patch8_y",      nughud.patches[7]                       ),
   PATCH_W(    "nughud_patch8_wide",   nughud.patches[7]                       ),
   PATCH_N(    "nughud_patch8_name",   nughud.patches[7]                       ),
-  { "nughud_weapheight", (config_t *)&nughud.weapheight, NULL, { 0 }, { 0, 200 }, number },
+  {           "nughud_weapheight", (config_t *)&nughud.weapheight, NULL, { 0 }, { 0, 200 }, number },
 
   { NULL }         // last entry
 };

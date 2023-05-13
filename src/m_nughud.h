@@ -61,6 +61,7 @@ typedef struct nughud_s {
   nughud_textline_t title;
   nughud_textline_t coord;
   nughud_textline_t fps;
+  nughud_textline_t message;
   nughud_textline_t secret;
   nughud_patch_t    patches[NUMNUGHUDPATCHES];
   fixed_t           weapheight;
