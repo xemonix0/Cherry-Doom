@@ -166,6 +166,12 @@ nughud_fps_y     8
 nughud_fps_wide  2
 nughud_fps_align 1
 
+; Secret Message display
+nughud_secret_x     160
+nughud_secret_y     86
+nughud_secret_wide  0
+nughud_secret_align 0
+
 ; - Patches -
 
 nughud_patch1_x    0

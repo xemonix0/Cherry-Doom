@@ -96,11 +96,12 @@ Keys:
 The following text lines are available:
 
 ```
-nughud_time -- Time display, only shown if enabled by the user
-nughud_sts --- Stats (Kills/Items/Secrets) display, only shown if enabled by the user
-nughud_title - Level Name display, only shown on the Automap
-nughud_coord - Coordinates display, only shown if enabled by the user
-nughud_fps --- FPS display, only shown when the FPS cheat is activated
+nughud_time --- Time display, only shown if enabled by the user
+nughud_sts ---- Stats (Kills/Items/Secrets) display, only shown if enabled by the user
+nughud_title -- Level Name display, only shown on the Automap
+nughud_coord -- Coordinates display, only shown if enabled by the user
+nughud_fps ---- FPS display, only shown when the FPS cheat is activated
+nughud_secret - Secret Message display
 ```
 
 Aside from the shared variables, **text lines have an additional integer variable, `_align`, that sets the text line's alignment**: -1 will align it left, 0 will center it and 1 will align it right.

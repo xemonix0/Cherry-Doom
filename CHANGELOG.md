@@ -7,7 +7,7 @@
 - _**Key Pickup Timer**_ setting
 - **NUGHUD:**
   - Now supports custom fonts for most Status Bar widgets
-  - Now allows to relocate the _Level Name_, _Coordinates_ and _FPS_ text lines
+  - Now allows to relocate the _Level Name_, _Coordinates_, _FPS_ and _Secret Message_ text lines
   - Now allows to specify an alignment for supported text lines
   - Now supports widescreen shifting values to force said shift
   - Now supports Arms number 1

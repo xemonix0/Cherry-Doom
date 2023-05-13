@@ -1490,6 +1490,18 @@ void HU_Drawer(void)
   else
     HUlib_drawSText(&w_message, align_text);
 
+  // [Nugget]
+  if (st_crispyhud) {
+    w_secret.l[0].x = nughud.secret.x + DELTA(nughud.secret.wide);
+    w_secret.l[0].x -= ((nughud.secret.align == 1) ? w_secret.l[0].width   : 
+                        (!nughud.secret.align)     ? w_secret.l[0].width/2 : 0);
+    w_secret.l[0].y = nughud.secret.y;
+  }
+  else {
+    w_secret.l[0].x = ORIGWIDTH/2 - w_secret.l[0].width/2;
+    w_secret.l[0].y = 100 - 2*SHORT(hu_font[0]->height);
+  }
+
   HUlib_drawSText(&w_secret, align_direct);
 
   // display the interactive buffer for chat entry
@@ -1639,7 +1651,7 @@ void HU_Ticker(void)
   // [Woof!] "A secret is revealed!" message
   if (plr->secretmessage)
   {
-    w_secret.l[0].x = ORIGWIDTH/2 - M_StringWidth(plr->secretmessage)/2;
+    // [Nugget] X position is now set elsewhere
 
     HUlib_addMessageToSText(&w_secret, 0, plr->secretmessage);
     plr->secretmessage = NULL;
