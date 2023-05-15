@@ -558,11 +558,14 @@ static boolean GetMobjType(char *buf)
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
-  // Don't spawn things beyond the Music Source dummy (inclusive);
-  // Worth noting that this approach isn't quite compatible with
-  // DEHEXTRA and DSDHacked's capabilities.
-  if (type < 0 || type > MT_BIBLE) {
-    doomprintf(MESSAGES_NONE, "Summon: Invalid mobjtype %i", type);
+  // Sanity checks
+  if (   (type < 0)                                // In case it somehow happens
+      || (type == MT_MUSICSOURCE)                  // May cause issues once spawned
+      || ((MT_SCEPTRE == type || type == MT_BIBLE) // May be missing assets
+          && (W_CheckNumForName)(sprnames[states[mobjinfo[type].spawnstate].sprite], ns_sprites) == -1)
+      || num_mobj_types <= type)                   // May be uninitialized
+  {
+    doomprintf(MESSAGES_NONE, "Summon: Cannot summon mobjtype %i", type);
     return false;
   }
 

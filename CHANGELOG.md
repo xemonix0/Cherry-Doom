@@ -25,6 +25,7 @@
 - **Adjusted _"Seizure"_ screen wipe's speed** to match _"Melt"_ and _"Fade"_
 - **FOV changes are now disabled in Strict Mode only**
 - **Viewheight changes are now disabled in Strict Mode only**
+- **Extended functionality for the _'SUMMON'_ cheat**
 - **Removed menu item for _"Alternative Arms Display"_**
 - **Alternative `A_FireCGun()` and `A_CPosAttack()` sounds are only looked up once**
 - **The "Nugget Settings" category is now split** across pages 5 and 6
