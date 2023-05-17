@@ -14,19 +14,23 @@
 // DESCRIPTION:
 //
 
-#ifndef __I_OALSTREAM__
-#define __I_OALSTREAM__
+#ifndef __I_INPUT__
+#define __I_INPUT__
+
+#include "SDL.h"
 
 #include "doomtype.h"
-#include "al.h"
+#include "d_event.h"
 
-typedef struct
-{
-    boolean (*I_OpenStream)(void *data, ALsizei size, ALenum *format,
-                            ALsizei *freq, ALsizei *frame_size);
-    uint32_t (*I_FillStream)(byte *data, uint32_t frames);
-    void (*I_PlayStream)(boolean looping);
-    void (*I_CloseStream)(void);
-} stream_module_t;
+void I_OpenController(int which);
+void I_CloseController(int which);
+
+void I_ReadMouse(void);
+void I_UpdateJoystick(void);
+
+void I_DelayEvent(void);
+void I_HandleJoystickEvent(SDL_Event *sdlevent);
+void I_HandleKeyboardEvent(SDL_Event *sdlevent);
+void I_HandleMouseEvent(SDL_Event *sdlevent);
 
 #endif

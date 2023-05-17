@@ -334,18 +334,6 @@ static void R_GenerateLookup(int texnum, int *const errors)
       int x, x1 = patch++->originx, x2 = x1 + SHORT(realpatch->width);
       const int *cofs = realpatch->columnofs - x1;
       
-	// [crispy] detect patches in PNG format... and fail
-	{
-		const unsigned char *magic = (const unsigned char *) realpatch;
-
-		if (magic[0] == 0x89 &&
-		    magic[1] == 'P' && magic[2] == 'N' && magic[3] == 'G')
-		{
-			fprintf(stderr, "\nPatch in PNG format detected: %.8s", lumpinfo[pat].name);
-			continue;
-		}
-	}
-
       if (x2 > texture->width)
 	x2 = texture->width;
       if (x1 < 0)
@@ -384,14 +372,6 @@ static void R_GenerateLookup(int texnum, int *const errors)
 	  int x, x1 = patch++->originx, x2 = x1 + SHORT(realpatch->width);
 	  const int *cofs = realpatch->columnofs - x1;
 	  
-	  if (!R_IsPatchLump(pat))
-	  {
-	    fprintf(stderr, "\nR_GenerateLookup: Texture %.8s"
-	                    " patch num %d (%.8s) is not valid",
-	                    texture->name, i, lumpinfo[pat].name);
-	    continue;
-	  }
-
 	  if (x2 > texture->width)
 	    x2 = texture->width;
 	  if (x1 < 0)
@@ -575,6 +555,13 @@ void R_InitTextures (void)
           if (patchlookup[i] == -1 && devparm)	    // killough 8/8/98
             printf("\nWarning: patch %.8s, index %d does not exist",name,i);
         }
+
+      if (patchlookup[i] != -1 && !R_IsPatchLump(patchlookup[i]))
+        {
+          fprintf(stderr, "\nR_InitTextures: patch %.8s, index %d is invalid", name, i);
+          patchlookup[i] = (W_CheckNumForName)("TNT1A0", ns_sprites);
+        }
+
     }
   Z_Free(names);
 
@@ -1165,7 +1152,7 @@ boolean R_IsPatchLump (const int lump)
 {
   int size;
   int width, height;
-  const patch_t * patch;
+  const patch_t *patch;
   boolean result;
 
   size = W_LumpLength(lump);
@@ -1175,6 +1162,10 @@ boolean R_IsPatchLump (const int lump)
     return false;
 
   patch = (const patch_t *)W_CacheLumpNum(lump, PU_CACHE);
+
+  // [FG] detect patches in PNG format early
+  if (!memcmp(patch, "\211PNG\r\n\032\n", 8))
+    return false;
 
   width = SHORT(patch->width);
   height = SHORT(patch->height);

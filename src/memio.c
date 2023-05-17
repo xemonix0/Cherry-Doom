@@ -16,7 +16,6 @@
 // memory.
 //
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -34,6 +33,8 @@ struct _MEMFILE {
 	size_t buflen;
 	size_t alloced;
 	unsigned int position;
+	boolean read_eof;
+	boolean eof;
 	memfile_mode_t mode;
 };
 
@@ -48,6 +49,7 @@ MEMFILE *mem_fopen_read(void *buf, size_t buflen)
 	file->buf = (unsigned char *) buf;
 	file->buflen = buflen;
 	file->position = 0;
+	file->eof = false;
 	file->mode = MODE_READ;
 
 	return file;
@@ -61,8 +63,17 @@ size_t mem_fread(void *buf, size_t size, size_t nmemb, MEMFILE *stream)
 
 	if (stream->mode != MODE_READ)
 	{
-		printf("not a read stream\n");
 		return -1;
+	}
+
+	if (size == 0 || nmemb == 0)
+	{
+		return 0;
+	}
+
+	if (stream->read_eof)
+	{
+		stream->eof = true;
 	}
 
 	// Trying to read more bytes than we have left?
@@ -73,7 +84,9 @@ size_t mem_fread(void *buf, size_t size, size_t nmemb, MEMFILE *stream)
 	{
 		items = (stream->buflen - stream->position) / size;
 	}
-	
+
+	stream->read_eof = (items > 0 ? false : true);
+
 	// Copy bytes to buffer
 	
 	memcpy(buf, stream->buf + stream->position, items * size);
@@ -97,6 +110,7 @@ MEMFILE *mem_fopen_write(void)
 	file->buf = Z_Malloc(file->alloced, PU_STATIC, 0);
 	file->buflen = 0;
 	file->position = 0;
+	file->eof = false;
 	file->mode = MODE_WRITE;
 
 	return file;
@@ -150,6 +164,54 @@ int mem_fputs(const char *str, MEMFILE *stream)
 	return mem_fwrite(str, sizeof(char), strlen(str), stream);
 }
 
+char *mem_fgets(char *str, int count, MEMFILE *stream)
+{
+	int i;
+
+	if (str == NULL || count < 0)
+		return NULL;
+
+	for (i = 0; i < count - 1; ++i)
+	{
+		byte ch;
+
+		if (mem_fread(&ch, 1, 1, stream) != 1)
+		{
+			if (mem_feof(stream))
+				return NULL;
+			break;
+		}
+
+		str[i] = ch;
+
+		if (ch == '\0')
+		{
+			return str;
+		}
+
+		if (ch == '\n')
+		{
+			++i;
+			break;
+		}
+	}
+
+	str[i] = '\0';
+	return str;
+}
+
+int mem_fgetc(MEMFILE *stream)
+{
+	byte ch;
+
+	if (mem_fread(&ch, 1, 1, stream) == 1)
+	{
+		return (int)ch;
+	}
+
+	return -1; // EOF
+}
+
 void mem_get_buf(MEMFILE *stream, void **buf, size_t *buflen)
 {
 	*buf = stream->buf;
@@ -198,13 +260,22 @@ int mem_fseek(MEMFILE *stream, signed long position, mem_rel_t whence)
 	if (newpos <= stream->buflen)
 	{
 		stream->position = newpos;
+		stream->read_eof = false;
+		stream->eof = false;
 		return 0;
 	}
 	else
 	{
-		printf("Error seeking to %u\n", newpos);
 		return -1;
 	}
 }
 
+int mem_feof(MEMFILE *stream)
+{
+	if (stream->eof)
+	{
+		return 1;
+	}
 
+	return 0;
+}

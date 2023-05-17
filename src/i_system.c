@@ -38,49 +38,8 @@ ticcmd_t *I_BaseTiccmd(void)
   return &emptycmd;
 }
 
-// pointer to current joystick device information
-SDL_GameController *controller = NULL;
-static int controller_index = -1;
-
-void I_OpenController(int which)
-{
-    if (controller)
-    {
-        return;
-    }
-
-    if (SDL_IsGameController(which))
-    {
-        controller = SDL_GameControllerOpen(which);
-        if (controller)
-        {
-            controller_index = which;
-            printf("I_OpenController: Found a valid game controller, named: %s\n",
-                    SDL_GameControllerName(controller));
-        }
-    }
-
-    if (controller == NULL)
-    {
-        printf("I_OpenController: Could not open game controller %i: %s\n",
-                which, SDL_GetError());
-    }
-}
-
-void I_CloseController(int which)
-{
-    if (controller != NULL && controller_index == which)
-    {
-        SDL_GameControllerClose(controller);
-        controller = NULL;
-        controller_index = -1;
-    }
-}
-
 static void I_ShutdownJoystick(void)
 {
-    I_CloseController(controller_index);
-
     SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER);
 }
 
@@ -105,7 +64,6 @@ void I_InitJoystick(void)
 static boolean I_ConsoleStdout(void)
 {
 #ifdef _WIN32
-    // SDL "helpfully" always redirects stdout to a file.
     return _isatty(_fileno(stdout));
 #else
     return isatty(fileno(stdout));
@@ -117,8 +75,9 @@ static boolean I_ConsoleStdout(void)
 //
 
 static char errmsg[2048];    // buffer of error message -- killough
+static int exit_code;
 
-void I_Error(const char *error, ...) // killough 3/20/98: add const
+void I_ErrorOrSuccess(int err_code, const char *error, ...) // killough 3/20/98: add const
 {
     size_t len = sizeof(errmsg) - strlen(errmsg) - 1; // [FG] for '\n'
     char *dest = errmsg + strlen(errmsg);
@@ -131,7 +90,10 @@ void I_Error(const char *error, ...) // killough 3/20/98: add const
 
     fputs(dest, stderr);
 
-    I_SafeExit(-1);
+    if (exit_code == 0 && err_code != 0)
+        exit_code = err_code;
+
+    I_SafeExit(exit_code);
 }
 
 void I_ErrorMsg()
@@ -144,7 +106,9 @@ void I_ErrorMsg()
 
     if (*errmsg && !M_CheckParm("-nogui") && !I_ConsoleStdout())
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+        SDL_ShowSimpleMessageBox(exit_code == 0 ?
+                                 SDL_MESSAGEBOX_INFORMATION :
+                                 SDL_MESSAGEBOX_ERROR,
                                  PROJECT_STRING, errmsg, NULL);
     }
 }

@@ -32,6 +32,7 @@ set(NUGGETDOOM_SOURCES
     hu_stuff.c             hu_stuff.h
     i_endoom.c             i_endoom.h
     i_glob.c               i_glob.h
+    i_input.c              i_input.h
     i_main.c
     i_oalmusic.c           i_oalmusic.h
                            i_oalstream.h
@@ -124,33 +125,6 @@ set(NUGGETDOOM_SOURCES
     z_zone.c               z_zone.h
     ../miniz/miniz.c       ../miniz/miniz.h)
 
-# Some platforms require standard libraries to be linked against.
-if(HAVE_LIBM)
-    list(APPEND NUGGETDOOM_LIBRARIES m)
-endif()
-
-if(WIN32)
-    list(APPEND NUGGETDOOM_SOURCES i_winmusic.c)
-    list(APPEND NUGGETDOOM_LIBRARIES winmm)
-    if(MSVC)
-        list(APPEND NUGGETDOOM_SOURCES
-            ../win32/win_opendir.c ../win32/win_opendir.h)
-    endif()
-endif()
-
-if(FluidSynth_FOUND)
-    list(APPEND NUGGETDOOM_SOURCES i_flmusic.c)
-    list(APPEND NUGGETDOOM_LIBRARIES FluidSynth::libfluidsynth)
-endif()
-
-if(libxmp_FOUND)
-    list(APPEND NUGGETDOOM_SOURCES i_xmp.c)
-    list(APPEND NUGGETDOOM_LIBRARIES
-        $<IF:$<TARGET_EXISTS:libxmp::xmp>,libxmp::xmp,
-            $<IF:$<TARGET_EXISTS:libxmp::xmp_shared>,libxmp::xmp_shared,
-                libxmp::xmp_static>>)
-endif()
-
 # Standard target definition
 if(WIN32)
     add_library(nugget-doom SHARED EXCLUDE_FROM_ALL ${NUGGETDOOM_SOURCES})
@@ -188,8 +162,7 @@ endif()
 target_nuggetdoom_settings(nugget-doom)
 target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 
-list(APPEND SDL2_LIBRARIES
-    $<IF:$<TARGET_EXISTS:SDL2_net::SDL2_net>,SDL2_net::SDL2_net,SDL2_net::SDL2_net-static>)
+list(APPEND SDL2_LIBRARIES SDL2_net::SDL2_net)
 
 target_link_libraries(nugget-doom PRIVATE ${NUGGETDOOM_LIBRARIES}
     ${SDL2_LIBRARIES}
@@ -197,6 +170,36 @@ target_link_libraries(nugget-doom PRIVATE ${NUGGETDOOM_LIBRARIES}
     SndFile::sndfile
     opl
     textscreen)
+
+# Some platforms require standard libraries to be linked against.
+if(HAVE_LIBM)
+    target_link_libraries(nugget-doom PRIVATE m)
+endif()
+
+if(WIN32)
+    target_sources(nugget-doom PRIVATE i_winmusic.c)
+    target_link_libraries(nugget-doom PRIVATE winmm)
+    if(MSVC)
+        target_sources(nugget-doom PRIVATE
+            ../win32/win_opendir.c ../win32/win_opendir.h)
+    endif()
+endif()
+
+if(APPLE)
+    target_sources(nugget-doom PRIVATE i_macmusic.c)
+    target_link_libraries(nugget-doom PRIVATE
+        -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,CoreServices)
+endif()
+
+if(FluidSynth_FOUND)
+    target_sources(nugget-doom PRIVATE i_flmusic.c)
+    target_link_libraries(nugget-doom PRIVATE FluidSynth::libfluidsynth)
+endif()
+
+if(libxmp_FOUND)
+    target_sources(nugget-doom PRIVATE i_xmp.c)
+    target_link_libraries(nugget-doom PRIVATE libxmp::xmp)
+endif()
 
 # Optional features.
 #

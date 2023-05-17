@@ -15,7 +15,7 @@
 
 ## Changes
 
-- **Merged Woof 11.0.0's changes**, therefore:
+- **Merged Woof 11.0.0 and 11.1.0's changes**, therefore:
   - _'FREEZE'_ cheat now has only one mode
   - Changed default positions for _Time_ and _Stats_ displays in NUGHUD
 - **FOV is now changed gradually** in most cases

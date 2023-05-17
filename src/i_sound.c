@@ -31,6 +31,7 @@
 
 // Music modules
 extern music_module_t music_win_module;
+extern music_module_t music_mac_module;
 extern music_module_t music_fl_module;
 extern music_module_t music_oal_module;
 extern music_module_t music_opl_module;
@@ -45,6 +46,8 @@ static music_modules_t music_modules[] =
 {
 #if defined(_WIN32)
     { &music_win_module, 1 },
+#elif defined(__APPLE__)
+    { &music_mac_module, 1 },
 #endif
 #if defined(HAVE_FLUIDSYNTH)
     { &music_fl_module, 1 },
@@ -702,16 +705,31 @@ int midi_player; // current music module
 
 static void MidiPlayerFallback(void)
 {
-    // Fall back to module 0 device 0.
-    midi_player = 0;
-    midi_player_module = music_modules[0].module;
-    midi_player_module->I_InitMusic(0);
-    active_module = midi_player_module;
+    // Fall back the the first module that initializes, device 0.
+    int i;
+
+    for (i = 0; i < arrlen(music_modules); i++)
+    {
+        if (music_modules[i].module->I_InitMusic(0))
+        {
+            midi_player = i;
+            midi_player_module = music_modules[midi_player].module;
+            active_module = midi_player_module;
+            return;
+        }
+    }
+
+    I_Error("MidiPlayerFallback: No music module could be initialized");
 }
 
 void I_SetMidiPlayer(int device)
 {
     int i, accum;
+
+    if (nomusicparm)
+    {
+        return;
+    }
 
     midi_player_module->I_ShutdownMusic();
 

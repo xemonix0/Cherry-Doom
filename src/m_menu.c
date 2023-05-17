@@ -2643,7 +2643,7 @@ void M_DrawInstructions()
   { // killough 11/98: reformatted
     const char *s = "";
     int color = CR_HILITE,x = setup_select ? color = CR_SELECT,
-      flags & S_INPUT  ? (s = "Press key or button for this action", 49)     :
+      flags & S_INPUT  ? (s = "Press key or button to bind/unbind", 50)      :
       flags & S_YESNO  ? (s = "Press ENTER key to toggle", 78)               :
       // [FG] selection of choices
       flags & (S_CHOICE|S_CRITEM|S_THERMO)
@@ -4095,7 +4095,7 @@ static void M_CoerceFPSLimit(void)
 
 static void M_ResetScreen(void)
 {
-  reset_screen = true;
+  need_reset = true;
 }
 
 setup_menu_t gen_settings1[] = { // General Settings screen1
@@ -6400,6 +6400,14 @@ boolean M_Responder (event_t* ev)
 		group  = ptr1->m_group;
 		if ((ch = ev->data1) == -1)
 		  return true;
+
+		if (M_InputMatchJoyB(s_input, ch))
+		  {
+		    M_InputRemoveJoyB(s_input, ch);
+		    M_SelectDone(ptr1);
+		    return true;
+		  }
+
 		for (i = 0 ; keys_settings[i] && search ; i++)
 		  for (ptr2 = keys_settings[i] ; !(ptr2->m_flags & S_END) ; ptr2++)
 		    if (ptr2->m_group == group && ptr1 != ptr2)
@@ -6434,6 +6442,14 @@ boolean M_Responder (event_t* ev)
 		group  = ptr1->m_group;
 		if ((ch = ev->data1) == -1)
 		  return true;
+
+		if (M_InputMatchMouseB(s_input, ch))
+		  {
+		    M_InputRemoveMouseB(s_input, ch);
+		    M_SelectDone(ptr1);
+		    return true;
+		  }
+
 		// Don't bind movement and turning to mouse wheel. It needs to
 		// be impossible to input a one-frame of movement automatically
 		// in speedrunning.
@@ -6472,6 +6488,13 @@ boolean M_Responder (event_t* ev)
 		// that has S_KEEP set, you can't bind ch; it's already
 		// bound to that S_KEEP action, and that action has to
 		// keep that key.
+
+		if (M_InputMatchKey(s_input, ch))
+		  {
+		    M_InputRemoveKey(s_input, ch);
+		    M_SelectDone(ptr1);
+		    return true;
+		  }
 
 		group  = ptr1->m_group;
 		for (i = 0 ; keys_settings[i] && search ; i++)
@@ -7600,7 +7623,7 @@ void M_ResetSetupMenuVideo(void)
 {
   DISABLE_ITEM(!hires, enem_settings2[enem2_fuzz]); // [Nugget] Now in page 2
   // [Nugget] Since we allow widescreen with correction disabled, disable this check
-  /*DISABLE_ITEM(!useaspect, gen_settings1[gen1_widescreen]);*/
+  /*DISABLE_ITEM(!use_aspect, gen_settings1[gen1_widescreen]);*/
 }
 
 //

@@ -1,4 +1,4 @@
-name: update wiki
+name: Update Wiki
 
 on:
   push:
@@ -17,11 +17,13 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: code
+
       - name: Checkout wiki
         uses: actions/checkout@v3
         with:
           repository: ${{github.repository}}.wiki
           path: wiki
+
       - name: Generate files
         run: |
           python3 "./code/man/docgen" -M "./code/man/CMDLINE.template.md" \
@@ -29,6 +31,7 @@ jobs:
           cp -af "./code/docs/woofhud.md" "./wiki/Woof-HUD.md"
           cp -af "./code/docs/cheats.md" "./wiki/Cheats.md"
           cp -af "./code/docs/nughud.md" "./wiki/Nugget-HUD.md"
+
       - name: Push to wiki
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
