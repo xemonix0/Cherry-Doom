@@ -792,8 +792,11 @@ void ST_doPaletteStuff(void)
 
   // [Nugget] Disable palette tint in menus
   if (STRICTMODE(!palette_changes || (no_menu_tint && menuactive)))
-  { palette = 0; }
-  else if (cnt)
+  {
+    palette = 0;
+  }
+  else
+  if (cnt)
   {
     // In Chex Quest, the player never sees red. Instead, the radiation suit
     // palette is used to tint the screen green, as though the player is being
@@ -844,7 +847,6 @@ void ST_doPaletteStuff(void)
 void ST_drawWidgets(void)
 {
   int i;
-  int ammopct = *w_ready.num*100;
   int maxammo = plyr->maxammo[weaponinfo[w_ready.data].ammo];
   
   // [Alaux] Used to color health and armor counts based on
@@ -888,12 +890,19 @@ void ST_drawWidgets(void)
 
   if (!st_crispyhud || nughud.ammo.x > -1) { // [Nugget] Nugget HUD
     //jff 2/16/98 make color of ammo depend on amount
-    // [Nugget] Make it gray if the player has infinite ammo
-    if (plyr->cheats & CF_INFAMMO)           { STlib_updateNum(&w_ready, cr_gray); }
-    else if (ammopct < ammo_red*maxammo)     { STlib_updateNum(&w_ready, cr_red); }
-    else if (ammopct < ammo_yellow*maxammo)  { STlib_updateNum(&w_ready, cr_gold); }
-    else if (ammopct > maxammo)              { STlib_updateNum(&w_ready, cr_blue2); }
-    else                                     { STlib_updateNum(&w_ready, cr_green); }
+    if (plyr->cheats & CF_INFAMMO) // [Nugget] Make it gray if the player has infinite ammo
+    { STlib_updateNum(&w_ready, cr_gray); }
+    else
+    if (*w_ready.num*100 < ammo_red*maxammo)
+      STlib_updateNum(&w_ready, cr_red);
+    else
+      if (*w_ready.num*100 <
+          ammo_yellow*maxammo)
+        STlib_updateNum(&w_ready, cr_gold);
+      else if (*w_ready.num > maxammo)
+        STlib_updateNum(&w_ready, cr_blue2);
+      else
+        STlib_updateNum(&w_ready, cr_green);
   }
 
   // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
@@ -930,7 +939,8 @@ void ST_drawWidgets(void)
     }
   }
   else
-    for (i=0;i<4;i++) {
+    for (i=0;i<4;i++)
+    {
       STlib_updateNum(&w_ammo[i], NULL); //jff 2/16/98 no xlation
       STlib_updateNum(&w_maxammo[i], NULL);
     }

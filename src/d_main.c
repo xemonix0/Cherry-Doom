@@ -23,6 +23,7 @@
 #include "m_io.h" // haleyjd
 #include "SDL_filesystem.h" // [FG] SDL_GetPrefPath()
 #include <stdlib.h> // [FG] qsort()
+#include <time.h> // [Nugget]
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2748,6 +2749,16 @@ void D_DoomMain(void)
 
   // [Nugget]
   D_NuggetUpdateCasual();
+
+  // [Nugget] cheese :)
+  if (casual_play) {
+    time_t curtime = time(NULL);
+    struct tm *curtm = localtime(&curtime);
+    extern boolean cheese;
+    
+    if (curtm && curtm->tm_mon == 3 && curtm->tm_mday == 1)
+    { cheese = true; }
+  }
 
   for (;;)
     {

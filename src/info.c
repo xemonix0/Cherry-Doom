@@ -7489,7 +7489,7 @@ static const unsigned char cr_white[] =
 
 // [Nugget] cheese :)
 // Copyright (C) 2022 Korp (CC BY-NC-SA 4.0)
-static const char bon1e0[] = {
+static const char cheese_sprite[] = {
   21,0,13,0,11,0,12,0,92,0,0,0,102,0,0,0,
   114,0,0,0,128,0,0,0,144,0,0,0,160,0,0,0,
   176,0,0,0,192,0,0,0,209,0,0,0,226,0,0,0,
@@ -7625,7 +7625,7 @@ const lumpinfo_t predefined_lumps[]={
   { "TNT1A0",   sizeof invis_sprite, invis_sprite },            // invis sprite
 
   // [Nugget] cheese :)
-  { "BON1E0",   sizeof bon1e0,   bon1e0   },
+  { "TNT1B0", sizeof cheese_sprite, cheese_sprite },
 
   // killough 7/19/98: Marine's best friend :)
   {"DOGSA1", sizeof dogsa1, dogsa1},

@@ -721,15 +721,20 @@ void P_MobjThinker (mobj_t* mobj)
   }
 
   // [Nugget] cheese :)
-  if (cheese && mobj->type == MT_MISC2 && mobj->health != 2997)
+  if (casual_play && mobj->type == MT_MISC2)
   {
-    mobj->health = 2997;      mobj->tics = -1;
-    mobj->sprite = SPR_BON1;  mobj->frame = 4;
-  }
-  else if (!cheese && mobj->health == 2997)
-  {
-    mobj->health = mobj->info->spawnhealth;
-    P_SetMobjState(mobj, mobj->info->spawnstate);
+    if (cheese && !(mobj->intflags & MIF_CHEESE))
+    {
+      mobj->intflags |= MIF_CHEESE;
+      mobj->tics = -1;
+      mobj->sprite = SPR_TNT1;
+      mobj->frame = 1;
+    }
+    else if (!cheese && (mobj->intflags & MIF_CHEESE))
+    {
+      mobj->intflags &= ~MIF_CHEESE;
+      P_SetMobjState(mobj, mobj->info->spawnstate);
+    }
   }
 
   // [FG] suppress interpolation of player missiles for the first tic

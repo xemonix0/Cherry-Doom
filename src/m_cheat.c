@@ -666,7 +666,9 @@ static void cheat_saitama() {
 
 // [Nugget] cheese :)
 static void cheat_cheese() {
-  cheese = !cheese;
+  if (casual_play) { cheese = !cheese; }
+  else             { cheese = false; }
+  
   doomprintf(MESSAGES_NONE, "%s", cheese ? "cheese :)" : "no cheese :(");
 }
 

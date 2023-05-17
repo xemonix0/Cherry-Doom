@@ -880,7 +880,8 @@ static void HU_widget_build_armor (void)
   if (hud_armor_type)
   {
     w_armor.cr =
-      st_invul ? colrngs[CR_GRAY] :
+      // [Nugget] Make it gray ONLY if the player is in God Mode
+      (plr->cheats & CF_GODMODE) ? colrngs[CR_GRAY] :
       (plr->armortype == 0) ? colrngs[CR_RED] :
       (plr->armortype == 1) ? colrngs[CR_GREEN] :
       colrngs[CR_BLUE];
@@ -1377,9 +1378,9 @@ static void HU_UpdateCrosshair(void)
       const int spawnhealth = linetarget->info->spawnhealth;
       const int health = linetarget->health;
 
-      if      (health < spawnhealth*0.25) { crosshair.cr = colrngs[CR_RED]; }
+      if      (health < spawnhealth*0.25) { crosshair.cr = colrngs[CR_RED];   }
       else if (health < spawnhealth*0.50) { crosshair.cr = colrngs[CR_BRICK]; }
-      else if (health < spawnhealth*0.75) { crosshair.cr = colrngs[CR_GOLD]; }
+      else if (health < spawnhealth*0.75) { crosshair.cr = colrngs[CR_GOLD];  }
       else                                { crosshair.cr = colrngs[CR_GREEN]; }
     }
     else
@@ -1389,9 +1390,9 @@ static void HU_UpdateCrosshair(void)
   }
   else
   if (hud_crosshair_health)
-    { crosshair.cr = ColorByHealth(plr->health, 100, st_invul); }
+    crosshair.cr = ColorByHealth(plr->health, 100, st_invul);
   else
-    { crosshair.cr = colrngs[hud_crosshair_color]; }
+    crosshair.cr = colrngs[hud_crosshair_color];
 }
 
 void HU_UpdateCrosshairLock(int x, int y)

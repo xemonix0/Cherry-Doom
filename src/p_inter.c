@@ -342,6 +342,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       break;
 
       // bonus items
+    // [Nugget] cheese :)
+    case SPR_TNT1:
+      if (!cheese) { return; }
     case SPR_BON1:
 
       if (beta_emulation)
