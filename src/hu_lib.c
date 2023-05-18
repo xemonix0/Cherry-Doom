@@ -26,6 +26,7 @@
 #include "hu_stuff.h"
 #include "r_main.h"
 #include "r_draw.h"
+#include "m_nughud.h" // [Nugget]
 
 // boolean : whether the screen is always erased
 #define noterased viewwindowx
@@ -520,6 +521,7 @@ void HUlib_addMessageToMText(hu_mtext_t *m, char *prefix, char *msg)
 void HUlib_drawMText(hu_mtext_t* m, align_t align)
 {
   int i;
+  extern boolean st_crispyhud; // [Nugget]
 
   if (!*m->on)
     return; // if not on, don't draw
@@ -533,6 +535,9 @@ void HUlib_drawMText(hu_mtext_t* m, align_t align)
 
       // [Nugget] Restore message scroll direction toggle
       m->l[idx].y = (hud_msg_scrollup ? m->nl-1-i : i) * HU_REFRESHSPACING;
+      // [Nugget] Nugget HUD
+      if (st_crispyhud)
+      { m->l[idx].y += nughud.message.y; }
 
       HUlib_drawTextLine(&m->l[idx], align, false); // no cursor, please
     }

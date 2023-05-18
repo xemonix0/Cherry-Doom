@@ -1486,8 +1486,30 @@ void HU_Drawer(void)
     HU_Erase();
   }
 
-  if (message_list)
-    HUlib_drawMText(&w_rtext, align_text);
+  if (message_list) {
+    int i;
+  
+    // [Nugget] Nugget HUD
+    if (st_crispyhud) {
+      for (i = 0;  i < w_rtext.nl; i++) {
+        if (nughud.message.x == -1)
+        { w_rtext.l[i].x = (message_centered ? (ORIGWIDTH - w_rtext.l[i].width)/2 : 2 - WIDESCREENDELTA); }
+        else {
+          w_rtext.l[i].x = nughud.message.x + DELTA(nughud.message.wide);
+          w_rtext.l[i].x -= ((nughud.message.align == 1) ? w_rtext.l[i].width   :
+                             (!nughud.message.align)     ? w_rtext.l[i].width/2 : 0);
+        }
+      }
+      
+      HUlib_drawMText(&w_rtext, align_direct);
+    }
+    else {
+      for (i = 0;  i < w_rtext.nl; i++)
+      { w_rtext.l[i].x = (message_centered ? (ORIGWIDTH - w_rtext.l[i].width)/2 : 2 - WIDESCREENDELTA); }
+      
+      HUlib_drawMText(&w_rtext, align_direct); // [Nugget] Always `align_direct`, so `hud_msg_scrollup` actually works
+    }
+  }
   else {
     // [Nugget] Nugget HUD
     if (st_crispyhud) {
@@ -1523,7 +1545,7 @@ void HU_Drawer(void)
   HUlib_drawSText(&w_secret, align_direct);
 
   // display the interactive buffer for chat entry
-  HUlib_drawIText(&w_chat, align_topleft);
+  HUlib_drawIText(&w_chat, align_direct); // [Nugget] Change to `align_direct`
 
   // [Nugget] Removed "draw_crispy_hud" check
 
@@ -1651,6 +1673,10 @@ void HU_Ticker(void)
     w_chat.l.y = HU_MSGY + HU_REFRESHSPACING * hud_msg_lines;
   else
     w_chat.l.y = HU_INPUTY;
+
+  // [Nugget] Nugget HUD
+  if (st_crispyhud)
+  { w_chat.l.y += nughud.message.y; }
 
   // wait a few tics before sending a backspace character
   if (bsdown && bscounter++ > 9)
