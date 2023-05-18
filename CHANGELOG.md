@@ -58,6 +58,7 @@
 
 ## Bug Fixes
 
+- **Fixed a demo desync**
 - **Fixed some FOV-related sky rendering issues**
 - **Made _"Seizure"_ screen wipe's speed consistent** in low and high resolution
 - **Fixed some cheat activation messages**
