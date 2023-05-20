@@ -204,6 +204,7 @@ static patch_t *nughud_tallpercent;      // NHTPRCNT
 static patch_t *nughud_ammonum[10];      // NHAMNUM#, from 0 to 9
 static patch_t *nughud_armsnum[9][2];    // NHW0NUM# and NHW1NUM#, from 1 to 9
 static patch_t *nughud_keys[NUMCARDS+3]; // NHKEYS
+static patch_t *nughud_berserk;          // NHBERSRK
 
 // ready-weapon widget
 static st_number_t w_ready;
@@ -911,24 +912,28 @@ void ST_drawWidgets(void)
       && weaponinfo[plyr->readyweapon].ammo == am_noammo // [Nugget] Check for unlimited ammo type
       && plyr->powers[pw_strength])
   {
-    static int lump = -2;
-    patch_t *patch;
-
-    if (lump == -2) {
-      lump = (W_CheckNumForName)("PSTRA0", ns_sprites);
-      if (lump == -1)
-      { lump = (W_CheckNumForName)("MEDIA0", ns_sprites); }
-    }
+    if (st_crispyhud && nughud.nhbersrk)
+    { V_DrawPatch(nughud.ammo.x + DELTA(nughud.ammo.wide), nughud.ammo.y, FG, nughud_berserk); }
+    else {
+      static int lump = -2;
+      patch_t *patch;
     
-    if (lump >= 0) {
-      patch = W_CacheLumpNum(lump, PU_CACHE);
+      if (lump == -2) {
+        lump = (W_CheckNumForName)("PSTRA0", ns_sprites);
+        if (lump == -1)
+        { lump = (W_CheckNumForName)("MEDIA0", ns_sprites); }
+      }
       
-      // [crispy] (23,179) is the center of the Ammo widget
-      // [Nugget] Nugget HUD
-      V_DrawPatch((st_crispyhud ? nughud.ammo.x : ST_AMMOX) - 21 - SHORT(patch->width)/2 + SHORT(patch->leftoffset)
-                  + DELTA(nughud.ammo.wide),
-                  (st_crispyhud ? nughud.ammo.y : ST_AMMOY) + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
-                  FG, patch);
+      if (lump >= 0) {
+        patch = W_CacheLumpNum(lump, PU_CACHE);
+        
+        // [crispy] (23,179) is the center of the Ammo widget
+        // [Nugget] Nugget HUD
+        V_DrawPatch((st_crispyhud ? nughud.ammo.x : ST_AMMOX) - 21 - SHORT(patch->width)/2 + SHORT(patch->leftoffset)
+                    + DELTA(nughud.ammo.wide),
+                    (st_crispyhud ? nughud.ammo.y : ST_AMMOY) + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
+                    FG, patch);
+      }
     }
   }
 
@@ -1175,7 +1180,9 @@ void ST_loadGraphics(void)
   { // [Nugget] NUGHUD fonts
     int lump;
     
-    nughud.nhtnum = nughud.nhamnum = nughud.nhwpnum = nughud.nhkeys = true;
+    // Tall Numbers
+    
+    nughud.nhtnum   = true;
     
     for (i = 0;  i < 10;  i++) { // Load NHTNUM0 to NHTNUM9
       sprintf(namebuf, "NHTNUM%d", i);
@@ -1199,6 +1206,10 @@ void ST_loadGraphics(void)
     else
     { nughud.nhtnum = false; }
     
+    // Ammo numbers
+    
+    nughud.nhamnum  = true;
+    
     for (i = 0;  i < 10;  i++) { // Load NHAMNUM0 to NHAMNUM9
       M_snprintf(namebuf, sizeof(namebuf), "NHAMNUM%d", i);
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) > -1)
@@ -1208,6 +1219,10 @@ void ST_loadGraphics(void)
         break;
       }
     }
+    
+    // Arms numbers
+    
+    nughud.nhwpnum  = true;
     
     for (i = 0;  i < 9;  i++) {
       sprintf(namebuf, "NHW0NUM%d", i+1); // Load NHW0NUM1 to NHW0NUM9
@@ -1227,6 +1242,10 @@ void ST_loadGraphics(void)
       }
     }
     
+    // Keys
+    
+    nughud.nhkeys   = true;
+    
     // Load NHKEYS
     for (i = 0;  i < NUMCARDS+3;  i++) {
       sprintf(namebuf, "NHKEYS%d", i);
@@ -1237,6 +1256,16 @@ void ST_loadGraphics(void)
         break;
       }
     }
+    
+    // Berserk
+    
+    nughud.nhbersrk = true;
+    
+    // Load NHBERSRK
+    if ((lump = (W_CheckNumForName)("NHBERSRK", ns_global)) > -1)
+    { nughud_berserk = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+    else
+    { nughud.nhbersrk = false; }
   }
 }
 
@@ -1303,6 +1332,7 @@ void ST_unloadGraphics(void)
   
   Z_ChangeTag(nughud_tallminus, PU_CACHE);
   Z_ChangeTag(nughud_tallpercent, PU_CACHE);
+  Z_ChangeTag(nughud_berserk, PU_CACHE);
 }
 
 void ST_unloadData(void)

@@ -89,6 +89,10 @@ Arms Numbers, used for the weapon numbers:
 Keys:
 
   NHKEYS# -- Key, where # is a number between 0 and 8 (inclusive)
+
+Berserk, drawn in place of the Ammo count when using the Berserk Fist:
+
+  NHBERSRK - Berserk graphic
 ```
 
 ### Text Lines
