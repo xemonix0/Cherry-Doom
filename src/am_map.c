@@ -2302,10 +2302,10 @@ void AM_drawMarks(void)
 	      fx += 1<<hires;
 
 	    if (fx >= f_x && fx < f_w - w && fy >= f_y && fy < f_h - h)
-          // [Nugget] Blink marks
-          V_DrawPatchTranslated((fx >> hires) - WIDESCREENDELTA,
-                                fy >> hires, FB, marknums[d],
-                                (markblinktimer & 8) ? cr_dark : cr_red);
+	      // [Nugget] Blink marks
+	      V_DrawPatchTranslated((fx >> hires) - WIDESCREENDELTA,
+	                            fy >> hires, FB, marknums[d],
+	                            (markblinktimer & 8) ? cr_dark : NULL);
 
 	    fx -= w - (1<<hires);     // killough 2/22/98: 1 space backwards
 
