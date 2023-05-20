@@ -1507,7 +1507,7 @@ void HU_Drawer(void)
       for (i = 0;  i < w_rtext.nl; i++)
       { w_rtext.l[i].x = (message_centered ? (ORIGWIDTH - w_rtext.l[i].width)/2 : 2 - WIDESCREENDELTA); }
       
-      HUlib_drawMText(&w_rtext, align_direct); // [Nugget] Always `align_direct`, so `hud_msg_scrollup` actually works
+      HUlib_drawMText(&w_rtext, align_text);
     }
   }
   else {
@@ -1545,7 +1545,7 @@ void HU_Drawer(void)
   HUlib_drawSText(&w_secret, align_direct);
 
   // display the interactive buffer for chat entry
-  HUlib_drawIText(&w_chat, align_direct); // [Nugget] Change to `align_direct`
+  HUlib_drawIText(&w_chat, align_topleft);
 
   // [Nugget] Removed "draw_crispy_hud" check
 

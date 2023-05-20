@@ -215,6 +215,10 @@ static void HUlib_alignWidget(hu_textline_t *l, align_t align)
     l->x = HU_GAPX_R - l->width;
     l->y = align_offset[align];
   }
+  
+  // [Nugget]
+  if ((align == align_topleft || align == align_topright) && message_centered)
+  { l->y += HU_REFRESHSPACING * (message_list ? hud_msg_lines : 1); }
 }
 
 static void HUlib_drawTextLineAligned(hu_textline_t *l, boolean drawcursor)
@@ -528,13 +532,13 @@ void HUlib_drawMText(hu_mtext_t* m, align_t align)
 
   for (i=0 ; i<m->nl ; i++)
     {
-      int idx = m->cl - i;
+      // [Nugget] Restore message scroll direction toggle
+      int idx = m->cl - (hud_msg_scrollup ? m->nl-1-i : i);
 
       if (idx < 0)
 	idx += m->nl; // handle queue of lines
 
-      // [Nugget] Restore message scroll direction toggle
-      m->l[idx].y = (hud_msg_scrollup ? m->nl-1-i : i) * HU_REFRESHSPACING;
+      m->l[idx].y = i * HU_REFRESHSPACING;
       // [Nugget] Nugget HUD
       if (st_crispyhud)
       { m->l[idx].y += nughud.message.y; }
