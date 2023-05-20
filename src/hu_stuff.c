@@ -1181,7 +1181,8 @@ static void HU_widget_build_sttime(void)
   }
 
   // [Nugget] Print the rest of text only if the widget is enabled
-  if (hud_level_time) {
+  if (hud_level_time || (map_level_time && automapactive))
+  {
     if (time_scale != 100)
     {
       offset += sprintf(hud_timestr + offset, "\x1b%c%d%% ",
@@ -1803,7 +1804,7 @@ void HU_Ticker(void)
     HU_enableWidget(&w_title, true);
 
     HU_enableWidget(&w_monsec, map_level_stats);
-    HU_enableWidget(&w_sttime, map_level_time);
+    HU_enableWidget(&w_sttime, map_level_time || plr->event_tics); // [Nugget] Event timers
     HU_enableWidget(&w_coord, STRICTMODE(map_player_coords));
   }
   else
