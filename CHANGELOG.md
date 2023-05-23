@@ -18,6 +18,7 @@
 - **Merged Woof 11.0.0 to 11.1.1's changes**, therefore:
   - _'FREEZE'_ cheat now has only one mode
   - Changed default positions for _Time_ and _Stats_ displays in NUGHUD
+- **Changed FOV default from 81 to 90**
 - **FOV is now changed gradually** in most cases
 - **Reduced turning/freelook sensitivity when zoomed in**
 - **Weapons are now lowered when zooming in**
@@ -59,6 +60,7 @@
 ## Bug Fixes
 
 - **Fixed a demo desync**
+- **Fixed FOV calculations**; Doom Retro's FOV behavior is now matched
 - **Fixed some FOV-related sky rendering issues**
 - **Made _"Seizure"_ screen wipe's speed consistent** in low and high resolution
 - **Fixed some cheat activation messages**

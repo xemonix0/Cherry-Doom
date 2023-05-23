@@ -584,8 +584,12 @@ void R_ExecuteSetViewSize (void)
   }
   
   // [Nugget] FOV from Doom Retro
-  // fov * 0.82 is vertical FOV for 4:3 aspect ratio
-  WIDEFOVDELTA = (int)(atan(SCREENWIDTH / (SCREENHEIGHT / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov - 2;
+  if (widescreen) {
+    // fov * 0.82 is vertical FOV for 4:3 aspect ratio
+    WIDEFOVDELTA = (int)(atan(SCREENWIDTH / ((SCREENHEIGHT+40) / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov - 2;
+  }
+  else
+  { WIDEFOVDELTA = 0; }
 
   centery = viewheight/2;
   centerx = viewwidth/2;

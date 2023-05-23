@@ -25,7 +25,7 @@
 #include "r_state.h"
 
 // [Nugget]
-#define ORIGFOV 81
+#define ORIGFOV 90
 #define MINFOV  20
 #define MAXFOV  160
 
