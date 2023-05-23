@@ -60,7 +60,7 @@
 ## Bug Fixes
 
 - **Fixed a demo desync**
-- **Fixed FOV calculations**; Doom Retro's FOV behavior is now matched
+- **Fixed FOV calculations**; Doom Retro's FOV behavior is now matched (FOV value corresponds to FOV in degrees)
 - **Fixed some FOV-related sky rendering issues**
 - **Made _"Seizure"_ screen wipe's speed consistent** in low and high resolution
 - **Fixed some cheat activation messages**
