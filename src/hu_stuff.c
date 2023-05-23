@@ -1474,7 +1474,7 @@ int hud_level_stats, hud_level_time;
 void HU_Drawer(void)
 {
   widget_t *w = widget;
-  align_t align_text = message_centered ? align_direct : align_topleft;
+  align_t align_text = message_centered ? align_topcenter : align_topleft_exclusive;
 
   HUlib_resetAlignOffsets();
 
@@ -1533,20 +1533,24 @@ void HU_Drawer(void)
 
   // [Nugget] Nugget HUD
   if (st_crispyhud) {
-    w_secret.l->x = nughud.secret.x + DELTA(nughud.secret.wide);
-    w_secret.l->x -= ((nughud.secret.align == 1) ? w_secret.l->width   :
-                        (!nughud.secret.align)   ? w_secret.l->width/2 : 0);
+    w_chat.l.y = nughud.message.y + HU_REFRESHSPACING * (message_list ? hud_msg_lines : 1);
+
+    w_secret.l->x = nughud.secret.x + DELTA(nughud.secret.wide)
+                    - ((nughud.secret.align == 1) ? w_secret.l->width   :
+                       (!nughud.secret.align)     ? w_secret.l->width/2 : 0);
     w_secret.l->y = nughud.secret.y;
   }
   else {
+    w_chat.l.y = HU_INPUTY;
+    
     w_secret.l->x = ORIGWIDTH/2 - w_secret.l->width/2;
     w_secret.l->y = 100 - 2*SHORT(hu_font[0]->height);
   }
 
-  HUlib_drawSText(&w_secret, align_direct);
-
   // display the interactive buffer for chat entry
-  HUlib_drawIText(&w_chat, align_topleft);
+  HUlib_drawIText(&w_chat, st_crispyhud ? align_direct : align_topleft_exclusive); // [Nugget] Nugget HUD
+
+  HUlib_drawSText(&w_secret, align_direct);
 
   // [Nugget] Removed "draw_crispy_hud" check
 
@@ -1670,15 +1674,6 @@ void HU_Ticker(void)
   if (message_list_counter && !--message_list_counter)
     message_list_on = false;
 
-  if (message_list)
-    w_chat.l.y = HU_MSGY + HU_REFRESHSPACING * hud_msg_lines;
-  else
-    w_chat.l.y = HU_INPUTY;
-
-  // [Nugget] Nugget HUD
-  if (st_crispyhud)
-  { w_chat.l.y += nughud.message.y; }
-
   // wait a few tics before sending a backspace character
   if (bsdown && bscounter++ > 9)
   {
@@ -1711,13 +1706,6 @@ void HU_Ticker(void)
   if ((showMessages || message_dontfuckwithme) && plr->message &&
       (!message_nottobefuckedwith || message_dontfuckwithme))
   {
-    if (message_centered)
-    {
-      const int msg_x = ORIGWIDTH / 2 - M_StringWidth(plr->message) / 2;
-      w_message.l->x = msg_x;
-      w_rtext.x = msg_x;
-    }
-
     //post the message to the message widget
     HUlib_addMessageToSText(&w_message, 0, plr->message);
 
@@ -2172,6 +2160,10 @@ static boolean HU_AddHUDAlignment (char *name, int hud, char *alignstr)
   {
     return HU_AddToWidgets(widget, hud, align_topright, 0, 0);
   }
+  else if (!strcasecmp(alignstr, "topcenter")   || !strcasecmp(alignstr, "uppercenter"))
+  {
+    return HU_AddToWidgets(widget, hud, align_topcenter, 0, 0);
+  }
   else if (!strcasecmp(alignstr, "bottomleft")  || !strcasecmp(alignstr, "lowerleft"))
   {
     return HU_AddToWidgets(widget, hud, align_bottomleft, 0, 0);
@@ -2179,6 +2171,10 @@ static boolean HU_AddHUDAlignment (char *name, int hud, char *alignstr)
   else if (!strcasecmp(alignstr, "bottomright") || !strcasecmp(alignstr, "lowerright"))
   {
     return HU_AddToWidgets(widget, hud, align_bottomright, 0, 0);
+  }
+  else if (!strcasecmp(alignstr, "bottomcenter")|| !strcasecmp(alignstr, "lowercenter"))
+  {
+    return HU_AddToWidgets(widget, hud, align_bottomcenter, 0, 0);
   }
 
   return false;

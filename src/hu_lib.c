@@ -42,8 +42,10 @@ void HUlib_resetAlignOffsets (void)
 
   align_offset[align_topleft] = 0;
   align_offset[align_topright] = 0;
+  align_offset[align_topcenter] = 0;
   align_offset[align_bottomleft] = bottom;
   align_offset[align_bottomright] = bottom;
+  align_offset[align_bottomcenter] = bottom;
 }
 
 //
@@ -191,29 +193,48 @@ static void HUlib_alignWidget(hu_textline_t *l, align_t align)
   patch_t *const *const f = *l->f;
   const int font_height = SHORT(f['A'-HU_FONTSTART]->height) + 1;
 
-  if (align == align_topleft)
+  switch (align)
   {
-    l->x = HU_GAPX_L;
-    l->y = align_offset[align];
-    align_offset[align] += font_height;
-  }
-  else if (align == align_topright)
-  {
-    l->x = HU_GAPX_R - l->width;
-    l->y = align_offset[align];
-    align_offset[align] += font_height;
-  }
-  else if (align == align_bottomleft)
-  {
-    align_offset[align] -= font_height;
-    l->x = HU_GAPX_L;
-    l->y = align_offset[align];
-  }
-  else if (align == align_bottomright)
-  {
-    align_offset[align] -= font_height;
-    l->x = HU_GAPX_R - l->width;
-    l->y = align_offset[align];
+    case align_topleft:
+    case align_topleft_exclusive:
+      l->x = HU_GAPX_L;
+      l->y = align_offset[align_topleft];
+      align_offset[align_topleft] += font_height;
+      if (align == align_topleft_exclusive)
+        align_offset[align_topright] = align_offset[align_topleft];
+      break;
+    case align_topright:
+      l->x = HU_GAPX_R - l->width;
+      l->y = align_offset[align_topright];
+      align_offset[align_topright] += font_height;
+      break;
+    case align_bottomleft:
+      align_offset[align_bottomleft] -= font_height;
+      l->x = HU_GAPX_L;
+      l->y = align_offset[align_bottomleft];
+      break;
+    case align_bottomright:
+      align_offset[align_bottomright] -= font_height;
+      l->x = HU_GAPX_R - l->width;
+      l->y = align_offset[align_bottomright];
+      break;
+    case align_topcenter:
+      l->x = ORIGWIDTH / 2 - l->width / 2;
+      align_offset[align_topcenter] = MAX(align_offset[align_topleft], align_offset[align_topright]);
+      l->y = align_offset[align_topcenter];
+      align_offset[align_topcenter] += font_height;
+      align_offset[align_topleft] = align_offset[align_topright] = align_offset[align_topcenter];
+      break;
+    case align_bottomcenter:
+      l->x = ORIGWIDTH / 2 - l->width / 2;
+      align_offset[align_bottomcenter] = MIN(align_offset[align_bottomleft], align_offset[align_bottomright]);
+      align_offset[align_bottomcenter] -= font_height;
+      l->y = align_offset[align_bottomcenter];
+      align_offset[align_bottomleft] = align_offset[align_bottomright] = align_offset[align_bottomcenter];
+      break;
+    default:
+    case align_direct:
+      break;
   }
   
   // [Nugget]
@@ -269,7 +290,7 @@ static void HUlib_drawTextLineAligned(hu_textline_t *l, boolean drawcursor)
   // draw the cursor if requested
   // killough 1/18/98 -- support multiple lines
   if (drawcursor && x + SHORT(f['_' - l->sc]->width) <= SCREENWIDTH)
-    V_DrawPatchDirect(x, y, FG, f['_' - l->sc]);
+    V_DrawPatchTranslated(x, y, FG, f['_' - l->sc], l->cr);
 }
 
 void HUlib_drawTextLine(hu_textline_t *l, align_t align, boolean drawcursor)

@@ -1222,13 +1222,14 @@ void P_MovePsprites(player_t *player)
   winfo = &weaponinfo[player->readyweapon];
   state = psp->state - states;
 
+#define LOWERING (psp->state->action.p2 == (actionf_p2)A_Lower || \
+                  state == winfo->downstate)
+#define RAISING  (psp->state->action.p2 == (actionf_p2)A_Raise || \
+                  state == winfo->upstate)
+
   // [Nugget] Calculate sx2 and sy2 separately from sx and sy
   if ((!player->attackdown || center_weapon == WEAPON_BOBBING) // [FG] not attacking means idle
-      && psp->state
-      && !psp->state->misc1
-      && psp->state->action.p2 != (actionf_p2)A_Lower
-      && psp->state->action.p2 != (actionf_p2)A_Raise
-      && state != winfo->downstate && state != winfo->upstate)
+      && psp->state && !psp->state->misc1 && !LOWERING && !RAISING)
   { P_NuggetBobbing(player); }
 
   if (psp->state && !weapon_bobbing_percentage)
@@ -1237,16 +1238,12 @@ void P_MovePsprites(player_t *player)
 
    psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first person sprite centering
 
-    if (!psp->state->misc1 &&
-        psp->state->action.p2 != (actionf_p2)A_Lower &&
-        psp->state->action.p2 != (actionf_p2)A_Raise &&
-        state != winfo->downstate && state != winfo->upstate)
+    if (!psp->state->misc1 && !LOWERING && !RAISING)
     {
       last_sy = psp->sy2;
       psp->sy2 = WEAPONTOP + abs(psp->dy); // [Nugget] Squat weapon down on impact
     }
-    else if (psp->state->action.p2 == (actionf_p2)A_Lower ||
-             state == winfo->downstate)
+    else if (LOWERING)
     {
       // We want to move smoothly from where we were
       psp->sy2 -= (last_sy - WEAPONTOP);
@@ -1255,10 +1252,7 @@ void P_MovePsprites(player_t *player)
   else if (psp->state && center_weapon) // [Nugget] Removed some checks
   {
     // [FG] don't center during lowering and raising states
-    if (psp->state->misc1 ||
-        psp->state->action.p2 == (actionf_p2)A_Lower ||
-        psp->state->action.p2 == (actionf_p2)A_Raise ||
-        state == winfo->downstate || state == winfo->upstate)
+    if (psp->state->misc1 || LOWERING || RAISING)
     {
     }
     // [FG] center the weapon sprite horizontally and push up vertically
@@ -1268,6 +1262,9 @@ void P_MovePsprites(player_t *player)
       psp->sy2 = WEAPONTOP;
     }
   }
+
+#undef LOWERING
+#undef RAISING
 
   // [Nugget]: [crispy] squat down weapon sprite a bit after hitting the ground
   if (psp->dy) {

@@ -978,6 +978,8 @@ boolean AM_Responder
         f_h = (SCREENHEIGHT) << hires;
       else
         f_h = (SCREENHEIGHT-ST_HEIGHT) << hires;
+
+      AM_activateNewScale();
     }
     else if (M_InputActivated(input_map_rotate))
     {

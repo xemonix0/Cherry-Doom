@@ -130,22 +130,18 @@ if(WIN32)
     add_library(nugget-doom SHARED EXCLUDE_FROM_ALL ${NUGGETDOOM_SOURCES})
     target_compile_definitions(nugget-doom PRIVATE WIN_LAUNCHER)
 
-    set(WIN_LAUNCHER_LIBS
-        ${SDL2_LIBRARIES}
-        nugget-doom)
-
     # Stamp out and compile resource file on Windows.
     configure_file(resource.rc.in "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
 
     add_executable(nugget-doom-com WIN32 ../win32/win_launcher.c
         "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
     target_nuggetdoom_settings(nugget-doom-com)
-    target_link_libraries(nugget-doom-com PRIVATE ${WIN_LAUNCHER_LIBS})
+    target_link_libraries(nugget-doom-com PRIVATE ${SDL2_LIBRARIES} nugget-doom)
 
     add_executable(nugget-doom-exe WIN32 ../win32/win_launcher.c
         "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
     target_nuggetdoom_settings(nugget-doom-exe)
-    target_link_libraries(nugget-doom-exe PRIVATE ${WIN_LAUNCHER_LIBS})
+    target_link_libraries(nugget-doom-exe PRIVATE ${SDL2_LIBRARIES} nugget-doom)
 
     # MSVC tries to supply a default manifest and complains when it finds ours
     # unless we specifically tell it not to.
@@ -162,10 +158,9 @@ endif()
 target_nuggetdoom_settings(nugget-doom)
 target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 
-list(APPEND SDL2_LIBRARIES SDL2_net::SDL2_net)
-
-target_link_libraries(nugget-doom PRIVATE ${NUGGETDOOM_LIBRARIES}
+target_link_libraries(nugget-doom PRIVATE
     ${SDL2_LIBRARIES}
+    SDL2_net::SDL2_net
     OpenAL::OpenAL
     SndFile::sndfile
     opl
@@ -242,6 +237,7 @@ target_nuggetdoom_settings(nugget-doom-setup)
 target_include_directories(nugget-doom-setup PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 target_link_libraries(nugget-doom-setup PRIVATE
     ${SDL2_LIBRARIES}
+    SDL2_net::SDL2_net
     textscreen
     setup)
 
