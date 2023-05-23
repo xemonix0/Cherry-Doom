@@ -7488,7 +7488,7 @@ static const unsigned char cr_white[] =
 #include "cross.h"
 
 // [Nugget] cheese :)
-// Copyright (C) 2022 Korp (CC BY-NC-SA 4.0)
+// Copyright (C) 2023 Korp (CC BY-NC-SA 4.0)
 static const char cheese_sprite[] = {
   21,0,13,0,11,0,12,0,92,0,0,0,100,0,0,0,
   110,0,0,0,122,0,0,0,136,0,0,0,151,0,0,0,
