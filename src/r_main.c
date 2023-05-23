@@ -108,9 +108,9 @@ int fovfx[NUMFOVFX];   // FOV effects (recoil, teleport)
 static int zoomed = 0; // Current zoom state
 
 boolean fovchange = true;
-static int bfov;      // Base FOV
-static int rfov;      // Rendered (currently applied) FOV, with effects added to it
-float fovdiff;        // Used for some corrections
+static int bfov; // Base FOV
+static int rfov; // Rendered (currently applied) FOV, with effects added to it
+float fovdiff;   // Used for some corrections
 
 static fixed_t fovscale;
 static int WIDEFOVDELTA;
@@ -586,7 +586,7 @@ void R_ExecuteSetViewSize (void)
   // [Nugget] FOV from Doom Retro
   if (widescreen) {
     // fov * 0.82 is vertical FOV for 4:3 aspect ratio
-    WIDEFOVDELTA = (int)(atan(SCREENWIDTH / ((SCREENHEIGHT+40) / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov - 2;
+    WIDEFOVDELTA = (int)(atan(SCREENWIDTH / ((SCREENHEIGHT+40) / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov;
   }
   else
   { WIDEFOVDELTA = 0; }
