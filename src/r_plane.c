@@ -393,7 +393,7 @@ static void do_draw_plane(visplane_t *pl)
         if (stretchsky && dc_texheight < 200)
         {
           // [Nugget] Adjust sky stretching based on FOV
-          int skystretch_height = SKYSTRETCH_HEIGHT + (87 * BETWEEN(0, MAXFOV-ORIGFOV, fov-ORIGFOV) / (MAXFOV-ORIGFOV));
+          int skystretch_height = SKYSTRETCH_HEIGHT + (67 * BETWEEN(0, MAXFOV-ORIGFOV, fov-ORIGFOV) / (MAXFOV-ORIGFOV));
           
           dc_iscale = dc_iscale * dc_texheight / skystretch_height;
           dc_texturemid = dc_texturemid * dc_texheight / skystretch_height;
