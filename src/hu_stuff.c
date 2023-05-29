@@ -1464,6 +1464,14 @@ boolean HU_DemoProgressBar(boolean force)
 int map_player_coords, map_level_stats, map_level_time;
 int hud_level_stats, hud_level_time;
 
+// [Nugget]
+static void NughudAlignWidgetX(nughud_textline_t aligner, hu_textline_t* alignee)
+{
+  alignee->x = aligner.x + DELTA(aligner.wide);
+  alignee->x -= ((aligner.align == 1) ? alignee->width   :
+                 (aligner.align == 0) ? alignee->width/2 : 0);
+}
+
 //
 // HU_Drawer()
 //
@@ -1495,11 +1503,8 @@ void HU_Drawer(void)
       for (i = 0;  i < w_rtext.nl; i++) {
         if (nughud.message.x == -1)
         { w_rtext.l[i].x = (message_centered ? (ORIGWIDTH - w_rtext.l[i].width)/2 : 2 - WIDESCREENDELTA); }
-        else {
-          w_rtext.l[i].x = nughud.message.x + DELTA(nughud.message.wide);
-          w_rtext.l[i].x -= ((nughud.message.align == 1) ? w_rtext.l[i].width   :
-                             (!nughud.message.align)     ? w_rtext.l[i].width/2 : 0);
-        }
+        else
+        { NughudAlignWidgetX(nughud.message, &w_rtext.l[i]); }
       }
       
       HUlib_drawMText(&w_rtext, align_direct);
@@ -1516,17 +1521,15 @@ void HU_Drawer(void)
     if (st_crispyhud) {
       if (nughud.message.x == -1)
       { w_message.l->x = (message_centered ? (ORIGWIDTH - w_message.l->width)/2 : 2 - WIDESCREENDELTA); }
-      else {
-        w_message.l->x = nughud.message.x + DELTA(nughud.message.wide);
-        w_message.l->x -= ((nughud.message.align == 1) ? w_message.l->width   :
-                           (!nughud.message.align)     ? w_message.l->width/2 : 0);
-      }
-      w_message.l->y = nughud.message.y;
+      else
+      { NughudAlignWidgetX(nughud.message, &w_message.l[0]); }
+      
+      w_message.l[0].y = nughud.message.y;
       
       HUlib_drawSText(&w_message, align_direct);
     }
     else {
-      w_message.l->y = HU_MSGY;
+      w_message.l[0].y = HU_MSGY;
       HUlib_drawSText(&w_message, align_text);
     }
   }
@@ -1535,16 +1538,14 @@ void HU_Drawer(void)
   if (st_crispyhud) {
     w_chat.l.y = nughud.message.y + HU_REFRESHSPACING * (message_list ? hud_msg_lines : 1);
 
-    w_secret.l->x = nughud.secret.x + DELTA(nughud.secret.wide)
-                    - ((nughud.secret.align == 1) ? w_secret.l->width   :
-                       (!nughud.secret.align)     ? w_secret.l->width/2 : 0);
-    w_secret.l->y = nughud.secret.y;
+    NughudAlignWidgetX(nughud.secret, &w_secret.l[0]);
+    w_secret.l[0].y = nughud.secret.y;
   }
   else {
     w_chat.l.y = HU_INPUTY;
     
-    w_secret.l->x = ORIGWIDTH/2 - w_secret.l->width/2;
-    w_secret.l->y = 100 - 2*SHORT(hu_font[0]->height);
+    w_secret.l[0].x = ORIGWIDTH/2 - w_secret.l[0].width/2;
+    w_secret.l[0].y = 100 - 2*SHORT(hu_font[0]->height);
   }
 
   // display the interactive buffer for chat entry
@@ -1572,15 +1573,11 @@ void HU_Drawer(void)
           if (ntl == &nughud.time && nughud.time_sts
               && !hud_level_stats && (!automapactive || !map_level_stats))
           { // Relocate Time text line to position of Stats text line
-            w->line->x = nughud.sts.x + DELTA(nughud.sts.wide);
-            w->line->x -= ((nughud.sts.align == 1) ? w->line->width   :
-                           (!nughud.sts.align)     ? w->line->width/2 : 0);
+            NughudAlignWidgetX(nughud.sts, w->line);
             w->line->y = nughud.sts.y;
           }
           else {
-            w->line->x = ntl->x + DELTA(ntl->wide);
-            w->line->x -= ((ntl->align == 1) ? w->line->width   :
-                           (!ntl->align)     ? w->line->width/2 : 0);
+            NughudAlignWidgetX(*ntl, w->line);
             w->line->y = ntl->y;
           }
           HUlib_drawTextLine(w->line, align_direct, false);
