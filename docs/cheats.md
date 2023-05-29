@@ -20,8 +20,6 @@ Typing IDBEHOLD will bring up a small menu where you can choose to enable one of
 
 `IDKFA` and `IDFA` now includes backpack.
 
-`IDCLEV00` now restarts the current map.
-
 `IDCLIP` now allows mid-air control.
     
 ## Boom and MBF cheats
