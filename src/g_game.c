@@ -2044,6 +2044,8 @@ static void G_DoSaveGame(void)
   savedescription[0] = 0;
 
   if (name) free(name);
+
+  M_SetQuickSaveSlot(savegameslot);
 }
 
 static void G_DoLoadGame(void)
@@ -2250,6 +2252,8 @@ static void G_DoLoadGame(void)
     fprintf(stderr, "G_DoLoadGame: Slot %d, %.8s (%s)\n",
       10*savepage+savegameslot, maplump, W_WadNameForLump(maplumpnum));
   }
+
+  M_SetQuickSaveSlot(savegameslot);
 }
 
 boolean clean_screenshot;

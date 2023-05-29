@@ -94,7 +94,7 @@ int screenblocks;    // has default
 
 int screenSize;      // temp for screenblocks (0-9)
 
-int quickSaveSlot;   // -1 = no quicksave slot picked!
+static int quickSaveSlot;   // -1 = no quicksave slot picked!
 
 int messageToPrint;  // 1 = message to be printed
 
@@ -933,10 +933,6 @@ void M_LoadSelect(int choice)
   M_ClearMenus ();
   if (name) free(name);
 
-  // [crispy] allow quickload before quicksave
-  if (quickSaveSlot == -2)
-    quickSaveSlot = choice;
-
   // [crispy] save the last game you loaded
   SaveDef.lastOn = choice;
 }
@@ -1101,8 +1097,10 @@ void M_DoSave(int slot)
 {
   G_SaveGame (slot,savegamestrings[slot]);
   M_ClearMenus ();
+}
 
-  // PICK QUICKSAVE SLOT YET?
+void M_SetQuickSaveSlot (int slot)
+{
   if (quickSaveSlot == -2)
     quickSaveSlot = slot;
 }

@@ -1051,13 +1051,14 @@ static void cheat_clev(char *buf)
 
     if (W_CheckNumForName(next) == -1)
     {
-      // [Nugget] Restart map with IDCLEV00
+      // [Alaux] Restart map with IDCLEV00
       if ((epsd == 0 && map == 0) || (gamemode == commercial && map == 0))
       {
         epsd = gameepisode;
         map = gamemap;
       }
-      else {
+      else
+      {
         doomprintf(MESSAGES_NONE, "IDCLEV target not found: %s", next);
         return;
       }
