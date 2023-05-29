@@ -92,25 +92,41 @@ static void cheat_reveal_item();
 static void cheat_autoaim();      // killough 7/19/98
 static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
-// [Nugget] (All of the following)
+
+// [Nugget] All of the following
+
 static void cheat_nomomentum();
 static void cheat_fauxdemo();   // Emulates demo/net play state, for debugging
 static void cheat_infammo();    // Infinite ammo cheat
 static void cheat_fastweaps();  // Fast weapons cheat
 static void cheat_bobbers();    // Shortcut to the two cheats above
+
 boolean GIBBERS;                // Used for 'GIBBERS'
 static void cheat_gibbers();    // Everything gibs
+
 static void cheat_resurrect();
 static void cheat_fly();
 static void cheat_nextmap();    // Emulate level exit
 static void cheat_nextsecret(); // Emulate secret level exit
 static void cheat_turbo();
-static int spawneetype = -1; static boolean spawneefriend; // Used for 'SUMMONR'
-// Summon a mobj:           Enemy            Friend           Repeat last spawn
-static void cheat_summon(), cheat_summone(), cheat_summonf(), cheat_summonr();
+
+// Summon a mobj
+static void cheat_summon();
+// Enemy
+static void cheat_summone0();
+static void cheat_summone();
+// Friend
+static void cheat_summonf0();
+static void cheat_summonf();
+// Repeat last
+static void cheat_summonr();
+static int spawneetype = -1;
+static boolean spawneefriend;
+
 static void cheat_linetarget(); // Give info on the current linetarget
 static void cheat_mdk();        // Inspired by ZDoom's console command
 static void cheat_saitama();    // MDK Fist
+
 boolean cheese;
 static void cheat_cheese();     // cheese :)
 
@@ -375,7 +391,13 @@ struct cheat_s cheat[] = {
    {cheat_summon} }, // Summon "Menu"
 
   {"summone", NULL, not_net|not_demo,
+   {cheat_summone0} }, // Summon Enemy "Menu"
+
+  {"summone", NULL, not_net|not_demo,
    {cheat_summone}, -3 }, // Summon a hostile mobj
+
+  {"summonf", NULL, not_net|not_demo,
+   {cheat_summonf0} }, // Summon Friend "Menu"
 
   {"summonf", NULL, not_net|not_demo,
    {cheat_summonf}, -3 }, // Summon a friendly mobj
@@ -541,7 +563,10 @@ static void cheat_turbo(char *buf)
 // [Nugget]
 static void cheat_summon()
 {
-  doomprintf(MESSAGES_NONE, "Summon: Enemy, Friend or Repeat Last?");
+  if (spawneetype == -1)
+  { doomprintf(MESSAGES_NONE, "Summon: Enemy, Friend or Repeat last?"); }
+  else
+  { doomprintf(MESSAGES_NONE, "Summon: Enemy, Friend or Repeat last (%i)?", spawneetype); }
 }
 
 // [Nugget] Auxiliary functions for the summon cheats
@@ -565,7 +590,7 @@ static boolean GetMobjType(char *buf)
           && (W_CheckNumForName)(sprnames[states[mobjinfo[type].spawnstate].sprite], ns_sprites) == -1)
       || num_mobj_types <= type)                   // May be uninitialized
   {
-    doomprintf(MESSAGES_NONE, "Summon: Cannot summon mobjtype %i", type);
+    doomprintf(MESSAGES_NONE, "Summon: Cannot summon mobj %i", type);
     return false;
   }
 
@@ -612,10 +637,21 @@ static void SummonMobj(boolean friendly)
              spawneefriend ? "Friend" : "Enemy", spawneetype);
 }
 
+
+static void cheat_summone0()
+{
+  doomprintf(MESSAGES_NONE, "Summon Enemy: Enter mobj index");
+}
+
 // [Nugget] Summon a hostile mobj
 static void cheat_summone(char *buf)
 {
   if (GetMobjType(buf)) { SummonMobj(false); }
+}
+
+static void cheat_summonf0()
+{
+  doomprintf(MESSAGES_NONE, "Summon Friend: Enter mobj index");
 }
 
 // [Nugget] Summon a friendly mobj
