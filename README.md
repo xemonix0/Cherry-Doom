@@ -15,7 +15,6 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 ### General
 
 - **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
-- Allowed **usage of widescreen without aspect ratio correction**
 - Toggle to **stretch viewport to fit window** (CFG-Only: `stretch-to-fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
 - **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**
 - Toggle for **Gamma Correction key cycling**, through either original or extended gamma levels (CFG-Only: `gammacycle`)
@@ -121,7 +120,6 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**'NEXTMAP'**_ to exit the level [i.b. ZDoom]
 - _**'NEXTSECRET'**_ to exit the level as if using a secret exit [i.b. ZDoom]
 - _**'TURBO'**_ to change the player speed in-game
-- **IDCLEV00 restarts current map** [p.f. Crispy Doom]
 - **Mid-air control while on noclipping mode** [p.f. Crispy Doom]
 - Reenabled _**'NOMOMENTUM'**_ cheat [p.f. Crispy Doom]
 
@@ -129,7 +127,6 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
 - **Zoom key**
-- **Automap position isn't reset to player position when opening it with Follow Mode off**
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
 
