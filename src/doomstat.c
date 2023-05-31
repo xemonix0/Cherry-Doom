@@ -138,7 +138,6 @@ boolean fauxdemo;    // Checked for in `casual_play`, for debugging
 boolean casual_play; // Like `critical`, with different checks and functionality
 
 // General
-  // Page 4
 int wipe_type;
 int no_menu_tint;
 int fov;
@@ -152,7 +151,6 @@ int viewheight_value;
 int breathing;
 int teleporter_zoom;
 int s_clipping_dist_x2;
-  // Page 5
 int timer_use;
 int timer_teleport;
 int timer_key_pickup;
@@ -163,6 +161,7 @@ int quick_quitgame;
 int a11y_weapon_flash;
 int a11y_weapon_pspr;
 int a11y_invul_colormap;
+
 // Weapons
 int no_hor_autoaim;
 int freeaim;
@@ -170,17 +169,21 @@ int weapon_bobbing_percentage;
 int bobbing_style;
 int show_berserk;
 int weaponsquat;
+
 // Status Bar/HUD
 int alt_arms;
 int smarttotals;
+
 // Enemies
 int extra_gibbing;
 int bloodier_gibbing;
 int zdoom_item_drops;
+
 // CFG only
 int sp_chat;
 int gammacycle;
 int sx_fix;
+
 // Misc
 int zoom_fov;
 

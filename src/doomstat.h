@@ -447,7 +447,6 @@ extern boolean fauxdemo;
 extern boolean casual_play;
 
 // General
-  // Page 4
 extern int wipe_type;
 extern int no_menu_tint;
 extern int fov;
@@ -461,7 +460,6 @@ extern int viewheight_value;
 extern int breathing;
 extern int teleporter_zoom;
 extern int s_clipping_dist_x2;
-  // Page 5
 enum { TIMER_USE = 1, TIMER_TELEPORT, TIMER_KEYPICKUP, };
 extern int timer_use;
 extern int timer_teleport;
@@ -473,25 +471,46 @@ extern int quick_quitgame;
 extern int a11y_weapon_flash;
 extern int a11y_weapon_pspr;
 extern int a11y_invul_colormap;
+
 // Weapons
 extern int no_hor_autoaim;
-extern int freeaim;
-enum { freeaim_off, freeaim_direct, freeaim_autoaim };
+enum {
+  freeaim_off,
+  freeaim_direct,
+  freeaim_autoaim,
+}; extern int freeaim;
 extern int weapon_bobbing_percentage;
-extern int bobbing_style;
-extern int show_berserk;
+enum {
+  bob_Vanilla,
+  bob_InvVanilla,
+  bob_Alpha,
+  bob_InvAlpha,
+  bob_Smooth,
+  bob_InvSmooth,
+  bob_Quake,
+}; extern int bobbing_style;
+enum {
+  showberserk_None,
+  showberserk_Ammo,
+  showberserk_Arms,
+  showberserk_Both,
+}; extern int show_berserk;
 extern int weaponsquat;
+
 // Status Bar/HUD
 extern int alt_arms;
 extern int smarttotals;
+
 // Enemies
 extern int extra_gibbing;
 extern int bloodier_gibbing;
 extern int zdoom_item_drops;
+
 // CFG only
 extern int sp_chat;
 extern int gammacycle;
 extern int sx_fix;
+
 // Misc
 extern int zoom_fov;
 
@@ -516,16 +535,6 @@ enum {
 };
 
 extern int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
-
-enum { // Bobbing Styles
-  bob_Vanilla,
-  bob_InvVanilla,
-  bob_Alpha,
-  bob_InvAlpha,
-  bob_Smooth,
-  bob_InvSmooth,
-  bob_Quake
-};
 
 #endif
 

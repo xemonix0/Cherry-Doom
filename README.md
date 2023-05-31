@@ -52,7 +52,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - **Weapon Bobbing is permanently updated every tic** (fixes choppy Chainsaw bobbing)
 - _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Bobbing Styles**_ selection [p.f. Zandronum]
-- Setting to **Draw Berserk in place of Ammo count when the Fist is equipped** [p.f. Crispy Doom]
+- **Show Berserk availability** setting [partially p.f. Crispy Doom]
 - _**Squat Weapon Down On Impact**_ setting [p.f. Crispy Doom]
 - **"Correct" first person sprite centering** setting, to toggle the 1px first person sprite misalignment (CFG-Only: `sx_fix`)
 

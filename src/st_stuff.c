@@ -872,7 +872,8 @@ void ST_drawWidgets(void)
 
   // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
   if ((screenblocks < CRISPY_HUD || (st_crispyhud && nughud.ammo.x > -1)) // [Nugget] Nugget HUD
-      && show_berserk && plyr->readyweapon == wp_fist
+      && (show_berserk & showberserk_Ammo)
+      && plyr->readyweapon == wp_fist
       && weaponinfo[plyr->readyweapon].ammo == am_noammo // [Nugget] Check for unlimited ammo type
       && plyr->powers[pw_strength])
   {
@@ -967,8 +968,16 @@ void ST_drawWidgets(void)
 
   if (st_crispyhud) { // [Nugget] Nugget HUD
     for (i = 0;  i < 9;  i++)
-      if (nughud.arms[i].x > -1)
-      { STlib_updateMultIcon(&w_arms[i]); }
+      if (nughud.arms[i].x > -1) {
+        // Draw Arms number 1 colored red if the player has Berserk
+        if (i == 0) {
+          if ((show_berserk & showberserk_Arms) && plyr->powers[pw_strength])
+          { w_arms[i].data = 1; }
+          else
+          { w_arms[i].data = 0; }
+        }
+        STlib_updateMultIcon(&w_arms[i]);
+      }
   }
   else
     for (i=0; i<6; i++)

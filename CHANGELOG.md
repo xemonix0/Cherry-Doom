@@ -1,6 +1,6 @@
 ## New Features
 
-None.
+- **Arms number 1 can now be colored red if Berserk is available**
 
 ## Changes
 
