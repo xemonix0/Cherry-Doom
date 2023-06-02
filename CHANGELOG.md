@@ -10,4 +10,4 @@
 
 ## Bug Fixes
 
-None.
+- **Fixed flickering of the Ammo count when changing screen sizes with weapons with no ammo**

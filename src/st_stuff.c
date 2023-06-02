@@ -1019,11 +1019,16 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
   st_statusbarface = st_classicstatusbar || (st_crispyhud && nughud.face.x > -1);
 
-  oldwide = st_widecrispyhud; // [Nugget]
+  // [Nugget]
+  oldwide = st_widecrispyhud;
   st_widecrispyhud = (screenblocks == CRISPY_HUD_WIDE) && (!automapactive || automapoverlay);
 
-  if (oldcrispy != st_crispyhud || oldwide != st_widecrispyhud) // [Nugget]
-  { ST_createWidgets(); }
+  // [Nugget]
+  if (oldcrispy != st_crispyhud || oldwide != st_widecrispyhud)
+  {
+    ST_createWidgets();
+    ST_updateWidgets();
+  }
 
   ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
 
