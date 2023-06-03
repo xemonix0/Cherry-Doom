@@ -623,6 +623,8 @@ static void SummonMobj(boolean friendly)
 
   spawnee = P_SpawnMobj(x, y, z, spawneetype);
   
+  spawnee->angle = plyr->mo->angle;
+  
   if (spawneefriend)
   { spawnee->flags |= MF_FRIEND; }
   else {
