@@ -14,6 +14,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ### General
 
+- **Experimental support for higher resolutions:** 4X (800p) and 8X (1600p)
 - **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
 - Toggle to **stretch viewport to fit window** (CFG-Only: `stretch-to-fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
 - **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**

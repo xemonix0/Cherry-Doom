@@ -4102,14 +4102,14 @@ static void M_ResetScreen(void)
 }
 
 static const char *hires_strings[] = {
-  "1x", "2x", "4x", NULL
+  "1X (200p)", "2X (400p)", "4X (800p)", "8X (1600p)", NULL
 };
 
 setup_menu_t gen_settings1[] = { // General Settings screen1
 
   {"Video"       ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
 
-  {"High Resolution", S_CHOICE, m_null, M_X, M_Y+ gen1_hires*M_SPC,
+  {"Renderer Resolution", S_CHOICE, m_null, M_X, M_Y+ gen1_hires*M_SPC,
    {"hires"}, 0, M_ResetScreen, hires_strings},
 
   // [FG] fullscreen mode menu toggle

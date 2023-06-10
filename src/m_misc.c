@@ -142,7 +142,7 @@ default_t defaults[] = {
   { // killough 11/98: hires
     "hires", (config_t *) &default_hires, NULL,
     {1}, {0,MAX_HIRES}, number, ss_none, wad_no,
-    "High resolution (0 = 1x, 1 = 2x, 2 = 4x)"
+    "Renderer resolution (0 = 200p, 1 = 400p, 2 = 800p, 3 = 1600p)"
   },
 
   {
