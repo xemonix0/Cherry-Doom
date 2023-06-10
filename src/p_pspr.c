@@ -1225,7 +1225,7 @@ void P_MovePsprites(player_t *player)
 
   // [Nugget] Calculate sx2 and sy2 separately from sx and sy
   if ((!player->attackdown || center_weapon == WEAPON_BOBBING) // [FG] not attacking means idle
-      && psp->state && !psp->state->misc1 && !switching)
+      && psp->state && !psp->state->misc1 && !player->switching)
   { P_NuggetBobbing(player); }
 
   if (psp->state && !weapon_bobbing_percentage)
