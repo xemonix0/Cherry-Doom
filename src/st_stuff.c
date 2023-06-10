@@ -986,7 +986,7 @@ void ST_drawWidgets(void)
   }
   else
     for (i=0; i<6; i++)
-    { STlib_updateMultIcon(&w_arms[i+1]); } // [Nugget]
+    { STlib_updateMultIcon(&w_arms[i]); }
 
   // [Nugget] This probably shouldn't go here, but it works
   if (st_crispyhud && (nughud.face.x > -1) && nughud.face_bg)
@@ -1310,8 +1310,8 @@ void ST_createWidgets(void)
   else {
     for(i=0;i<6;i++) {
       // [Nugget] Alternative Arms display (Saw/SSG instead of Pistol)
-      int alt = (alt_arms ? ((i==5 && gamemode==commercial) ? 2 : 1) : 0);
-      STlib_initMultIcon(&w_arms[i+1],
+      int alt = (alt_arms ? ((i==5 && have_ssg) ? 2 : 1) : 0);
+      STlib_initMultIcon(&w_arms[i],
                          ST_ARMSX+(i%3)*ST_ARMSXSPACE,
                          ST_ARMSY+(i/3)*ST_ARMSYSPACE,
                          arms[i+1+alt], (int *) &plyr->weaponowned[i+1+alt],

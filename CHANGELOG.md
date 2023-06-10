@@ -9,8 +9,10 @@
 - **_'SUMMON'_ now reports the last summoned mobj's type**
 - **_'SUMMONE'_ and _'SUMMONF'_ now print a message requesting the mobj index**
 - **Mobjs summoned with _'SUMMON'_ now inherit the player's angle**
+- **Alt. Arms Display now accounts for SSG in Doom 1**
 
 ## Bug Fixes
 
+- **Fixed Pistol being marked as unavailable in the Status Bar**
 - **Fixed flickering of the Ammo count when changing screen sizes with weapons with no ammo**
 - **Fixed screen melt inconsistency across resolutions**
