@@ -143,9 +143,10 @@ A complete history of changes and releases can be found on the [Releases](https:
 ## Versioning
 
 Nugget Doom follows a fairly simple (albeit arbitrary) **X.Y.Z** versioning system:
-  - **X** is increased in the event of at least one major implementation, such as a new spec like _UMAPINFO_;
-  - **Y** is increased in the event of at least one minor implementation, such as a new cheat;
-  - **Z** is increased in the event of at least one bug fix, text/code reformatting, or merging of _Woof!_ updates, even if the changes to the latter are considered minor or major.
+
+- **X** is increased in the event of at least one major implementation, such as a new spec like _UMAPINFO_;
+- **Y** is increased in the event of at least one minor implementation, such as a new cheat;
+- **Z** is increased in the event of at least one bug fix, text/code reformatting, or merging of _Woof!_ updates, even if the changes to the latter are considered minor or major.
 
 Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
 
@@ -199,7 +200,16 @@ Please report any bugs, glitches or crashes that you encounter to the GitHub [Is
 
 ## Acknowledgement
 
-Help was provided by [_Ryan Krafnick_ (a.k.a. _kraflab_)](https://github.com/kraflab), [_melak47_](https://github.com/melak47), [_atsb_ (a.k.a. _Gibbon_)](https://github.com/atsb), [_Roman Fomin_ (a.k.a. _rfomin_)](https://github.com/rfomin) and [_Fabian Greffrath_](https://github.com/fabiangreffrath) himself.
+Help was provided by:
+
+- [_atsb_ (a.k.a. _Gibbon_)](https://github.com/atsb);
+- [_ceski_](https://github.com/ceski-1);
+- [_melak47_](https://github.com/melak47);
+- [_Fabian Greffrath_](https://github.com/fabiangreffrath);
+- [_Roman Fomin_ (a.k.a. _rfomin_)](https://github.com/rfomin);
+- [_Ryan Krafnick_ (a.k.a. _kraflab_)](https://github.com/kraflab).
+
+Thanks to all of you!
 
 # Legalese
 
@@ -219,8 +229,8 @@ Copyright:
  © 2022 ceski;  
  © 2023 liPillON;  
  © 2020-2023 Fabian Greffrath;  
- © 2020-2023 Roman Fomin;
- © 2021-2023 Alaux.    
+ © 2020-2023 Roman Fomin;  
+ © 2021-2023 Alaux.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/beta.h`
