@@ -203,6 +203,7 @@ Please report any bugs, glitches or crashes that you encounter to the GitHub [Is
 Help was provided by:
 
 - [_atsb_ (a.k.a. _Gibbon_)](https://github.com/atsb);
+- [_Brad Harding_](https://github.com/bradharding);
 - [_ceski_](https://github.com/ceski-1);
 - [_melak47_](https://github.com/melak47);
 - [_Fabian Greffrath_](https://github.com/fabiangreffrath);
@@ -233,51 +234,51 @@ Copyright:
  © 2021-2023 Alaux.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `src/beta.h`
-Copyright: © 2001-2019 Contributors to the Freedoom project.
+Files: `src/beta.h`  
+Copyright: © 2001-2019 Contributors to the Freedoom project.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `src/dogs.h`
-Copyright:
- © 2017 Nash Muhandes;
- © apolloaiello;
- © TobiasKosmos.
+Files: `src/dogs.h`  
+Copyright:  
+ © 2017 Nash Muhandes;  
+ © apolloaiello;  
+ © TobiasKosmos.  
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
-Files: `src/u_scanner.*`
-Copyright:
- © 2010 Braden "Blzut3" Obrzut;
- © 2019 Fernando Carmona Varo.
+Files: `src/u_scanner.*`  
+Copyright:  
+ © 2010 Braden "Blzut3" Obrzut;  
+ © 2019 Fernando Carmona Varo.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
 Copyright: © 2018 Alex Mayfield.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `data/nugget-doom.ico, data/nugget-doom.png, data/nugget-doom8.ico, src/icon.c, data/setup.ico, data/setup8.ico, setup/setup_icon.c, data/nugget-doom-setup.png`
-Copyright: © 2022 Korp.
+Files: `data/nugget-doom.ico, data/nugget-doom.png, data/nugget-doom8.ico, src/icon.c, data/setup.ico, data/setup8.ico, setup/setup_icon.c, data/nugget-doom-setup.png`  
+Copyright: © 2022 Korp.  
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-Files: `src/thermo.h`
-Copyright: © 2020-2022 Julia Nechaevskaya.
+Files: `src/thermo.h`  
+Copyright: © 2020-2022 Julia Nechaevskaya.  
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
-Files: `miniz/*`
-Copyright:
- © 2010-2014 Rich Geldreich and Tenacious Software LLC;
- © 2013-2014 RAD Game Tools and Valve Software.
+Files: `miniz/*`  
+Copyright:  
+ © 2010-2014 Rich Geldreich and Tenacious Software LLC;  
+ © 2013-2014 RAD Game Tools and Valve Software.  
 License: [MIT](https://opensource.org/licenses/MIT)
 
-Files: `opl/*`
-Copyright:
- © 2005-2014 Simon Howard;
- © 2013-2018 Alexey Khokholov (Nuke.YKT).
+Files: `opl/*`  
+Copyright:  
+ © 2005-2014 Simon Howard;  
+ © 2013-2018 Alexey Khokholov (Nuke.YKT).  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `soundfonts/TimGM6mb.sf2`
-Copyright:
- © 2004 Tim Brechbill;
- © 2010 David Bolton.
+Files: `soundfonts/TimGM6mb.sf2`  
+Copyright:  
+ © 2004 Tim Brechbill;  
+ © 2010 David Bolton.  
 License: [GPL-2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `textscreen/*`  
@@ -287,5 +288,5 @@ Copyright:
  © 2005-2017 Simon Howard.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `win32/win_opendir.*`
+Files: `win32/win_opendir.*`  
 License: public-domain
