@@ -13,3 +13,4 @@
 ## Bug Fixes
 
 - **Fixed flickering of the Ammo count when changing screen sizes with weapons with no ammo**
+- **Fixed screen melt inconsistency across resolutions**

@@ -22,6 +22,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**Screen Wipe Style**_ selection:
   - _"Seizure"_ (**Warning**: this one might legitimately be seizure-inducing, use with caution);
   - _"Fade"_.
+- **Fixed screen melt inconsistency across resolutions**
 - _**Disable palette tint in menus**_ setting [i.b. Crispy Doom]
 - _**Field of View**_ setting [p.f. Doom Retro]
 - _**Things move over/under things**_ setting [p.f. Crispy Doom]
