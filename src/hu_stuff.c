@@ -955,7 +955,7 @@ static void HU_widget_build_weapon (void)
     // display each weapon number in a color related to the ammo for it
     hud_weapstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
     if (weaponinfo[w].ammo == am_noammo) //jff 3/14/98 show berserk on HUD
-      // [Nugget] Only affect the Fist; make green the default
+      // [Nugget] Draw Arms number 1 colored red if the player has Berserk; make green the default
       hud_weapstr[i++] = (w == wp_fist && plr->powers[pw_strength]) ? '0'+CR_RED : '0'+CR_GREEN;
     else if (ammopct < ammo_red)
       hud_weapstr[i++] = '0'+CR_RED;

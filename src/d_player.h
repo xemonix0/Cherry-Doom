@@ -78,6 +78,13 @@ typedef enum
 } cheat_t;
 
 
+typedef enum
+{
+  weapswitch_none,
+  weapswitch_lowering,
+  weapswitch_raising,
+} weapswitch_t;
+
 //
 // Extended player object info: player_t
 //
@@ -194,6 +201,8 @@ typedef struct player_s
   
   // Momentarily display the time at which an event occurred
   int event_type, event_time, event_tics;
+
+  weapswitch_t switching;
 
 } player_t;
 

@@ -59,8 +59,6 @@ void I_FinishUpdate (void);
 void I_ReadScreen (byte* scr);
 
 void I_ResetScreen(void);   // killough 10/98
-void I_ToggleFullScreen(void); // [FG] fullscreen mode menu toggle
-void I_ToggleExclusiveFullScreen(void);
 void I_ToggleVsync(void); // [JN] Calls native SDL vsync toggle
 
 extern boolean use_vsync;  // killough 2/8/98: controls whether vsync is called
@@ -81,6 +79,8 @@ extern int video_display; // display index
 extern boolean screenvisible;
 extern boolean need_reset;
 extern boolean smooth_scaling;
+extern boolean toggle_fullscreen;
+extern boolean toggle_exclusive_fullscreen;
 
 // [Nugget]
 #define GAMMA2MAX 30

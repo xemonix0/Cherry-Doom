@@ -3044,13 +3044,13 @@ setup_menu_t keys_settings7[] =
   {"Ammo & Keys"       ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 3*M_SPC,{0},input_idkfa},
   {"Ammo"              ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 4*M_SPC,{0},input_idfa},
   {"No Clipping"       ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 5*M_SPC,{0},input_idclip},
+  {"Reveal Map"        ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+12*M_SPC,{0},input_iddt},
   {"Health"            ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 6*M_SPC,{0},input_idbeholdh},
   {"Armor"             ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 7*M_SPC,{0},input_idbeholdm},
   {"Invulnerability"   ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 8*M_SPC,{0},input_idbeholdv},
   {"Berserk"           ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 9*M_SPC,{0},input_idbeholds},
   {"Partial Invisibility",S_INPUT,m_scrn,CHEAT_X,M_Y+10*M_SPC,{0},input_idbeholdi},
   {"Radiation Suit"    ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+11*M_SPC,{0},input_idbeholdr},
-  {"Computer Area Map" ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+12*M_SPC,{0},input_idbeholda},
   {"Light Amplification",S_INPUT,m_scrn ,CHEAT_X,M_Y+13*M_SPC,{0},input_idbeholdl},
   {"No Target"         ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+14*M_SPC,{0},input_notarget},
   {"Freeze"            ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+15*M_SPC,{0},input_freeze},
@@ -4076,18 +4076,14 @@ static void M_EnableDisableFPSLimit(void)
   }
 }
 
-void M_ToggleFullScreen(void)
+static void M_ToggleFullScreen(void)
 {
-  DISABLE_ITEM(!fullscreen, gen_settings1[gen1_exclusive_fullscreen]);
-
-  I_ToggleFullScreen();
+  toggle_fullscreen = true;
 }
 
 static void M_ToggleExclusiveFullScreen(void)
 {
-  DISABLE_ITEM(exclusive_fullscreen, gen_settings1[gen1_fullscreen]);
-
-  I_ToggleExclusiveFullScreen();
+  toggle_exclusive_fullscreen = true;
 }
 
 static void M_CoerceFPSLimit(void)
@@ -7578,16 +7574,6 @@ void M_ResetMenu(void)
 void M_ResetSetupMenu(void)
 {
   extern boolean deh_set_blood_color;
-
-  // [FG] exclusive fullscreen
-  if (!fullscreen)
-  {
-    gen_settings1[gen1_exclusive_fullscreen].m_flags |= S_DISABLE;
-  }
-  if (fullscreen && exclusive_fullscreen)
-  {
-    gen_settings1[gen1_fullscreen].m_flags |= S_DISABLE;
-  }
 
   if (M_ParmExists("-strict"))
   {
