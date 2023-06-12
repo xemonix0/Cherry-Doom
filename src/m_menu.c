@@ -3104,6 +3104,7 @@ setup_menu_t keys_settings9[] =  // Key Binding screen strings
   {"TOGGLE CROSSHAIR",S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+12*M_SPC,{0},input_crosshair},
   {"TOGGLE ZOOM"     ,S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+13*M_SPC,{0},input_zoom},
   {"ZOOM FOV"        ,S_NUM  |S_STRICT,           m_null,KB_X,M_Y+14*M_SPC,{"zoom_fov"}, 0, M_SetFOV},
+  {"CYCLE CHASECAM",  S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+15*M_SPC,{0},input_chasecam},
 
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings8}},
 
@@ -4468,14 +4469,17 @@ enum { // [Nugget]
   gen5_idlebobbing,
   gen5_telezoom,
   gen5_sclipdist,
+  gen5_chasecam,
+  gen5_chasedist,
+  gen5_chaseheight,
 };
 
 static const char *s_clipping_dists[] = {
   "1200", "2400", NULL
 };
 
-static const char *page_ticking_conds[] = {
-  "Always", "Not On Menus", "Never", NULL
+static const char *chasecam_modes[] = {
+  "Off", "Back", "Front", NULL
 };
 
 setup_menu_t gen_settings5[] = { // [Nugget]
@@ -4493,6 +4497,9 @@ setup_menu_t gen_settings5[] = { // [Nugget]
     {"Subtle Idle Bobbing/Breathing",   S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_idlebobbing * M_SPC, {"breathing"}},
     {"Teleporter Zoom",                 S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_telezoom    * M_SPC, {"teleporter_zoom"}},
     {"Sound Clipping Distance",         S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_sclipdist   * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
+    {"Chasecam",                        S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_chasecam    * M_SPC, {"chasecam_mode"}, 0, NULL, chasecam_modes},
+    {"Chasecam distance",               S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chasedist   * M_SPC, {"chasecam_distance"}},
+    {"Chasecam height",                 S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chaseheight * M_SPC, {"chasecam_height"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings4}},
   {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings6}},
@@ -4524,6 +4531,10 @@ enum { // [Nugget]
 
 static const char *timer_strings[] = {
   "Off", "In Demos", "Always", NULL
+};
+
+static const char *page_ticking_conds[] = {
+  "Always", "Not On Menus", "Never", NULL
 };
 
 setup_menu_t gen_settings6[] = { // [Nugget]
@@ -5858,13 +5869,22 @@ boolean M_Responder (event_t* ev)
 
       // [Nugget]
       if (M_InputActivated(input_crosshair))
-    {
-      extern void HU_StartCrosshair(void);
-      
-      if ((hud_crosshair_on = !hud_crosshair_on)) { HU_StartCrosshair(); }
-      M_UpdateCrosshairItems();
-      doomprintf(MESSAGES_TOGGLE, "Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
-    }
+	{
+	  extern void HU_StartCrosshair(void);
+	  
+	  if ((hud_crosshair_on = !hud_crosshair_on)) { HU_StartCrosshair(); }
+	  M_UpdateCrosshairItems();
+	  doomprintf(MESSAGES_TOGGLE, "Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
+	}
+
+      // [Nugget]
+      if (STRICTMODE(M_InputActivated(input_chasecam)))
+	{
+	  if (++chasecam_mode > chasecamMode_Front) { chasecam_mode = chasecamMode_Off; }
+	  doomprintf(MESSAGES_TOGGLE, "Chasecam: %s",
+	             (chasecam_mode == chasecamMode_Front) ? "Front" :
+	             (chasecam_mode == chasecamMode_Back)  ? "Back"  : "Off");
+	}
 
       if (M_InputActivated(input_autorun)) // Autorun         //  V
 	{

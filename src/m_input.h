@@ -47,6 +47,7 @@ enum
   input_padlook,
   input_crosshair, // [Nugget]
   input_zoom, // [Nugget]
+  input_chasecam, // [Nugget]
 
   input_weapon1,
   input_weapon2,

@@ -1042,8 +1042,8 @@ static void AM_changeWindowScale(void)
 //
 static void AM_doFollowPlayer(void)
 {
-  m_x = (viewx >> FRACTOMAPBITS) - m_w/2;
-  m_y = (viewy >> FRACTOMAPBITS) - m_h/2;
+  m_x = ((viewx - chasexofs) >> FRACTOMAPBITS) - m_w/2; // [Nugget]
+  m_y = ((viewy - chaseyofs) >> FRACTOMAPBITS) - m_h/2; // [Nugget]
   m_x2 = m_x + m_w;
   m_y2 = m_y + m_h;
 }
@@ -1951,13 +1951,13 @@ static void AM_drawPlayers(void)
   if (!netgame)
   {
     // [crispy] smooth player arrow rotation
-    const angle_t smoothangle = automaprotate ? plr->mo->angle : viewangle;
+    const angle_t smoothangle = (automaprotate ? plr->mo->angle : viewangle) - chaseaofs; // [Nugget]
 
     // interpolate player arrow
     if (uncapped && leveltime > oldleveltime)
     {
-        pt.x = viewx >> FRACTOMAPBITS;
-        pt.y = viewy >> FRACTOMAPBITS;
+        pt.x = (viewx - chasexofs) >> FRACTOMAPBITS; // [Nugget]
+        pt.y = (viewy - chaseyofs) >> FRACTOMAPBITS; // [Nugget]
     }
     else
     {

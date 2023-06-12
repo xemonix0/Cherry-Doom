@@ -460,6 +460,13 @@ extern int viewheight_value;
 extern int breathing;
 extern int teleporter_zoom;
 extern int s_clipping_dist_x2;
+enum {
+  chasecamMode_Off,
+  chasecamMode_Back,
+  chasecamMode_Front,
+}; extern int chasecam_mode;
+extern int chasecam_distance;
+extern int chasecam_height;
 enum { TIMER_USE = 1, TIMER_TELEPORT, TIMER_KEYPICKUP, };
 extern int timer_use;
 extern int timer_teleport;

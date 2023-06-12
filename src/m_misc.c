@@ -716,6 +716,27 @@ default_t defaults[] = {
   },
 
   {
+    "chasecam_mode",
+    (config_t *) &chasecam_mode, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Chasecam mode (0 = Off, 1 = Back, 2 = Front)"
+  },
+
+  {
+    "chasecam_distance",
+    (config_t *) &chasecam_distance, NULL,
+    {80}, {1,128}, number, ss_gen, wad_no,
+    "Chasecam distance"
+  },
+
+  {
+    "chasecam_height",
+    (config_t *) &chasecam_height, NULL,
+    {48}, {1,64}, number, ss_gen, wad_no,
+    "Chasecam height"
+  },
+
+  {
     "timer_use",
     (config_t *) &timer_use, NULL,
     {0}, {0,2}, number, ss_gen, wad_no,
@@ -2395,6 +2416,14 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to toggle zoom",
     input_zoom, { {0, 0} }
+  },
+
+  {
+    "input_chasecam",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to cycle through chasecam modes",
+    input_chasecam, { {0, 0} }
   },
 
   {
