@@ -252,11 +252,11 @@ default_t defaults[] = {
     "window height"
   },
 
-  {
+  { // [Nugget] Changed values
     "gamma2",
     (config_t *) &gamma2, NULL,
-    {9}, {0,GAMMA2MAX}, number, ss_gen, wad_no, // [Nugget] Use macro
-    "custom gamma level (0 = 0.5, 9 = 1.0, 17 = 2.0)" // [Nugget] Different values
+    {10}, {0,GAMMA2MAX}, number, ss_gen, wad_no,
+    "custom gamma level (0 = 0.5, 10 = 1.0, 30 = 2.0)"
   },
 
   {
