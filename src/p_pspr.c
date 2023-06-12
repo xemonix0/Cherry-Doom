@@ -673,11 +673,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
       for (int i=0; i<21; i++) {
         angle = player->mo->angle + ANG20 - (ANG2*i);
 
-        if (mouselook && freeaim == freeaim_direct)
+        if (mouselook && freeaim == FREEAIM_DIRECT)
         { slope = PLAYER_SLOPE(player); }
         else {
           slope = P_AimLineAttack(player->mo, angle, 32*64*FRACUNIT, 0);
-          if (!linetarget && mouselook && freeaim == freeaim_autoaim)
+          if (!linetarget && mouselook && freeaim == FREEAIM_AUTOAIM)
           { slope = PLAYER_SLOPE(player); }
         }
 
@@ -687,11 +687,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
     else { // Just one bullet
       angle = player->mo->angle;
 
-      if (mouselook && freeaim == freeaim_direct)
+      if (mouselook && freeaim == FREEAIM_DIRECT)
       { slope = PLAYER_SLOPE(player); }
       else {
         slope = P_AimLineAttack(player->mo, angle, 32*64*FRACUNIT, 0);
-        if (!linetarget && mouselook && freeaim == freeaim_autoaim)
+        if (!linetarget && mouselook && freeaim == FREEAIM_AUTOAIM)
         { slope = PLAYER_SLOPE(player); }
       }
 
@@ -840,7 +840,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
     fixed_t slope; // [Nugget] Moved here
 
     // [Nugget] Freeaim
-    if (mouselook && freeaim == freeaim_direct && casual_play)
+    if (mouselook && freeaim == FREEAIM_DIRECT && casual_play)
     {
       an1 += an - mo->angle;
       slope = PLAYER_SLOPE(player);
@@ -865,7 +865,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
             slope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
         if (!linetarget)
           an = mo->angle,
-          slope = (freeaim == freeaim_autoaim && casual_play)
+          slope = (freeaim == FREEAIM_AUTOAIM && casual_play)
                   ? PLAYER_SLOPE(player) : 0;
       }
       while (mask && (mask=0, !linetarget));     // killough 8/2/98
@@ -919,7 +919,7 @@ fixed_t bulletslope;
 static void P_BulletSlope(mobj_t *mo)
 {
   // [Nugget] Crispy freeaim
-  if (mouselook && freeaim == freeaim_direct && casual_play)
+  if (mouselook && freeaim == FREEAIM_DIRECT && casual_play)
   { bulletslope = PLAYER_SLOPE(mo->player); }
   else {
     angle_t an = mo->angle;    // see which target is to be aimed at
@@ -934,7 +934,7 @@ static void P_BulletSlope(mobj_t *mo)
       if (!linetarget)
         bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
       // [Nugget] Crispy freeaim
-      if (!linetarget && freeaim == freeaim_autoaim && casual_play)
+      if (!linetarget && freeaim == FREEAIM_AUTOAIM && casual_play)
         bulletslope = PLAYER_SLOPE(mo->player);
     } while (mask && (mask=0, !linetarget));  // killough 8/2/98
   }
@@ -1163,33 +1163,33 @@ static void P_NuggetBobbing(player_t* player)
 
   // Bobbing Styles, ported from Zandronum
   switch (style) {
-    case bob_Vanilla:
+    case BOBSTYLE_VANILLA:
       psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;
 
-    case bob_InvVanilla:
+    case BOBSTYLE_INVVANILLA:
       psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;
 
-    case bob_Alpha:
+    case BOBSTYLE_ALPHA:
       psp->sx2 = FixedMul(bob, finesine[angle]);
       psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;
 
-    case bob_InvAlpha:
+    case BOBSTYLE_INVALPHA:
       psp->sx2 = FixedMul(bob, finesine[angle]);
       psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;
 
-    case bob_Smooth:
+    case BOBSTYLE_SMOOTH:
       psp->sy2 += (bob - FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
       break;
 
-    case bob_InvSmooth:
+    case BOBSTYLE_INVSMOOTH:
       psp->sy2 += (FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)]) + bob) / 2;
       break;
 
-    case bob_Quake:
+    case BOBSTYLE_QUAKE:
       psp->sx2 = 0;
       psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
       break;

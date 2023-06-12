@@ -3481,16 +3481,16 @@ static void M_UpdateCrosshairItems (void)
   DISABLE_ITEM(!STRICTMODE(hud_crosshair_on),
                stat_settings3[stat3_xhairtarget]);
   
-  DISABLE_ITEM(!STRICTMODE(hud_crosshair_on && !(mouselook && freeaim == freeaim_direct)),
+  DISABLE_ITEM(!STRICTMODE(hud_crosshair_on && !(mouselook && freeaim == FREEAIM_DIRECT)),
                stat_settings3[stat3_xhairlockon]);
                                                 
   DISABLE_ITEM(!STRICTMODE(hud_crosshair_on
                            && (hud_crosshair_target || hud_crosshair_lockon)
-                           && !(mouselook && freeaim == freeaim_direct)),
+                           && !(mouselook && freeaim == FREEAIM_DIRECT)),
               stat_settings3[stat3_xhairindicators]);
               
   DISABLE_ITEM(!STRICTMODE(hud_crosshair_on
-                           && ((hud_crosshair_lockon && !(mouselook && freeaim == freeaim_direct))
+                           && ((hud_crosshair_lockon && !(mouselook && freeaim == FREEAIM_DIRECT))
                                || hud_crosshair_target)),
                stat_settings3[stat3_xhairfuzzy]);
                
@@ -5880,7 +5880,7 @@ boolean M_Responder (event_t* ev)
       // [Nugget]
       if (STRICTMODE(M_InputActivated(input_chasecam)))
 	{
-	  if (++chasecam_mode > chasecamMode_Front) { chasecam_mode = chasecamMode_Off; }
+	  if (++chasecam_mode > CHASECAMMODE_FRONT) { chasecam_mode = CHASECAMMODE_OFF; }
 	}
 
       if (M_InputActivated(input_autorun)) // Autorun         //  V

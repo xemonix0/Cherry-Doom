@@ -461,13 +461,17 @@ extern int breathing;
 extern int teleporter_zoom;
 extern int s_clipping_dist_x2;
 enum {
-  chasecamMode_Off,
-  chasecamMode_Back,
-  chasecamMode_Front,
+  CHASECAMMODE_OFF,
+  CHASECAMMODE_BACK,
+  CHASECAMMODE_FRONT,
 }; extern int chasecam_mode;
 extern int chasecam_distance;
 extern int chasecam_height;
-enum { TIMER_USE = 1, TIMER_TELEPORT, TIMER_KEYPICKUP, };
+enum {
+  TIMER_USE = 1,
+  TIMER_TELEPORT,
+  TIMER_KEYPICKUP,
+};
 extern int timer_use;
 extern int timer_teleport;
 extern int timer_key_pickup;
@@ -482,25 +486,25 @@ extern int a11y_invul_colormap;
 // Weapons
 extern int no_hor_autoaim;
 enum {
-  freeaim_off,
-  freeaim_direct,
-  freeaim_autoaim,
+  FREEAIM_OFF,
+  FREEAIM_DIRECT,
+  FREEAIM_AUTOAIM,
 }; extern int freeaim;
 extern int weapon_bobbing_percentage;
 enum {
-  bob_Vanilla,
-  bob_InvVanilla,
-  bob_Alpha,
-  bob_InvAlpha,
-  bob_Smooth,
-  bob_InvSmooth,
-  bob_Quake,
+  BOBSTYLE_VANILLA,
+  BOBSTYLE_INVVANILLA,
+  BOBSTYLE_ALPHA,
+  BOBSTYLE_INVALPHA,
+  BOBSTYLE_SMOOTH,
+  BOBSTYLE_INVSMOOTH,
+  BOBSTYLE_QUAKE,
 }; extern int bobbing_style;
 enum {
-  showberserk_None,
-  showberserk_Ammo,
-  showberserk_Arms,
-  showberserk_Both,
+  SHOWBERSERK_NONE,
+  SHOWBERSERK_AMMO,
+  SHOWBERSERK_ARMS,
+  SHOWBERSERK_BOTH,
 }; extern int show_berserk;
 extern int weaponsquat;
 

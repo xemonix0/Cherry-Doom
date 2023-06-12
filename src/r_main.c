@@ -790,7 +790,7 @@ void R_SetupFrame (player_t *player)
     const fixed_t oldviewx = viewx, oldviewy = viewy;
     const angle_t oldviewangle = viewangle;
   
-    if (chasecam_mode == chasecamMode_Front)
+    if (chasecam_mode == CHASECAMMODE_FRONT)
     {
       viewangle += ANG180;
       lookdir    = -lookdir;

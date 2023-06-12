@@ -1346,7 +1346,7 @@ static void HU_UpdateCrosshair(void)
     crosshair_target = linetarget = NULL;
 
     overflow[emu_intercepts].enabled = false;
-    if (mouselook && freeaim == freeaim_direct && casual_play)
+    if (mouselook && freeaim == FREEAIM_DIRECT && casual_play)
       P_AimSlopedLineAttack(plr->mo, an, range, PLAYER_SLOPE(plr),
                             (demo_version < 203) ? 0 : MF_FRIEND);
     else {

@@ -45,12 +45,6 @@ boolean onground; // whether player is on ground or in air
 // [Nugget]
 #define CROUCHUNITS 3*FRACUNIT
 
-// [Nugget]: [JN] Player's breathing imitation.
-static fixed_t breathing_val;
-static boolean breathing_dir;
-#define BREATHING_STEP 32
-#define BREATHING_MAX  1408
-
 //
 // P_Thrust
 // Moves the given origin along a given angle.
@@ -159,14 +153,16 @@ void P_CalcHeight (player_t* player)
       // [Nugget]: [JN] Imitate player's breathing.
       if (STRICTMODE(breathing))
       {
-        if (breathing_dir)
-        { // Inhale (camera up)
+        static fixed_t breathing_val = 0;
+        static boolean breathing_dir = 0;
+        const fixed_t BREATHING_STEP = 32, BREATHING_MAX = 1408;
+
+        if (breathing_dir) { // Inhale (camera up)
           breathing_val += BREATHING_STEP;
           if (breathing_val >= BREATHING_MAX)
           { breathing_dir = false; }
         }
-        else
-        { // Exhale (camera down)
+        else { // Exhale (camera down)
           breathing_val -= BREATHING_STEP;
           if (breathing_val <= -BREATHING_MAX)
           { breathing_dir = true; }
@@ -221,8 +217,7 @@ void P_MovePlayer (player_t* player)
   mo->angle += cmd->angleturn << 16;
   onground = mo->z <= mo->floorz;
   // [Nugget] Allow mid-air control with noclip or fly enabled
-  onground |= ((player->mo->flags & MF_NOCLIP)
-               || (player->cheats & CF_FLY));
+  onground |= ((player->mo->flags & MF_NOCLIP) || (player->cheats & CF_FLY));
 
   // [Nugget]
   if (player->cheats & CF_FLY)
@@ -760,7 +755,7 @@ void P_PlayerThink (player_t* player)
     overflow[emu_intercepts].enabled = false;
 
     // Check if the player is aiming at a thing directly
-    if (mouselook && freeaim == freeaim_direct)
+    if (mouselook && freeaim == FREEAIM_DIRECT)
       P_AimSlopedLineAttack(player->mo, player->mo->angle,
                             16*64*FRACUNIT, PLAYER_SLOPE(player),
                             (demo_version < 203) ? 0 : MF_FRIEND);

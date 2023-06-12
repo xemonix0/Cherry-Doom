@@ -647,7 +647,7 @@ void R_ProjectSprite (mobj_t* thing)
   if (STRICTMODE(hud_crosshair_lockon) && thing == crosshair_target
       // [Nugget]
       && (!(crosshair_target->flags & MF_SHADOW) || hud_crosshair_fuzzy)
-      && !(mouselook && freeaim == freeaim_direct))
+      && !(mouselook && freeaim == FREEAIM_DIRECT))
   {
     HU_UpdateCrosshairLock
     (
