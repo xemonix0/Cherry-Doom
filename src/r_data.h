@@ -29,10 +29,11 @@
 #define MINFOV  20
 #define MAXFOV  160
 
-#define LOOKDIRMIN	110 // [crispy] -110, actually
-#define LOOKDIRMAX	90
-// [crispy] lookdir range: -110..0..90
-// [Nugget] Increase range to accommodate for higher FOV values
+// [Nugget] Change both to 100
+#define LOOKDIRMIN	100 // [Nugget] -100, actually
+#define LOOKDIRMAX	100
+// [Nugget] Base lookdir range: -100..0..100,
+// increased to accommodate higher FOV values
 #define LOOKDIRS	((LOOKDIRMIN+1+LOOKDIRMAX)*ORIGFOV/MINFOV)
 #define MLOOKUNIT	8
 

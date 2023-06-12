@@ -46,6 +46,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - Toggling of _**Weapon Flash Lighting**_ [p.f. Crispy Doom]
 - Toggling of _**Weapon Flash Sprite**_ [p.f. Crispy Doom]
 - Toggling of _**Invulnerability Colormap**_ [p.f. Crispy Doom]
+- **Changed mouselook range to [-100, 100]**
 
 ### Weapons
 
