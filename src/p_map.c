@@ -1995,18 +1995,22 @@ static boolean PTR_ChasecamTraverse(intercept_t *in)
 void P_PositionChasecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle, fixed_t slope)
 {
   fixed_t x2, y2;
+  const int dist = MISSILERANGE*2; // Trace a long line to mitigate clipping through planes
+  const boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
 
   playerx = x;
   playery = y;
   angle >>= ANGLETOFINESHIFT;
-  x2 = x + (MISSILERANGE>>FRACBITS)*finecosine[angle];
-  y2 = y + (MISSILERANGE>>FRACBITS)*finesine[angle];
+  x2 = x + (dist>>FRACBITS)*finecosine[angle];
+  y2 = y + (dist>>FRACBITS)*finesine[angle];
   shootz = z + (chasecam_height*FRACUNIT);
-  attackrange = MISSILERANGE; // Trace a long line to mitigate clipping through planes
+  attackrange = dist;
   aimslope = slope;
   chasecam.hit = false;
 
+  overflow[emu_intercepts].enabled = false;
   P_PathTraverse(x, y, x2, y2, PT_ADDLINES, PTR_ChasecamTraverse);
+  overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 }
 
 // [Nugget] End of chasecam stuff ------------------

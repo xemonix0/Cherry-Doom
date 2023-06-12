@@ -33,6 +33,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**View Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV [i.b. Brutal Doom]
 - _**Subtle Idle Bobbing/Breathing**_ setting [p.f. International Doom]
+- **Chasecam** [i.b. ZDoom]
 - _**Teleporter Zoom**_ setting [i.b. ZDoom]
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
 - **Event Timers:**

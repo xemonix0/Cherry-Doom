@@ -799,7 +799,7 @@ void R_SetupFrame (player_t *player)
     
     P_PositionChasecam(viewx, viewy, playerz,
                        viewangle + ANG180,
-                       -(lookdir * FRACUNIT) / SLOPEDIVISOR);
+                       (-(lookdir * FRACUNIT) / SLOPEDIVISOR) / fovdiff);
 
     if (chasecam.hit) {
       viewx = chasecam.x;

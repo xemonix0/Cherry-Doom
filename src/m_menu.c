@@ -4467,11 +4467,11 @@ enum { // [Nugget]
   gen5_viewbobbing,
   gen5_viewheight,
   gen5_idlebobbing,
-  gen5_telezoom,
-  gen5_sclipdist,
   gen5_chasecam,
   gen5_chasedist,
   gen5_chaseheight,
+  gen5_telezoom,
+  gen5_sclipdist,
 };
 
 static const char *s_clipping_dists[] = {
@@ -4495,11 +4495,11 @@ setup_menu_t gen_settings5[] = { // [Nugget]
     {"View Bobbing Percentage",         S_NUM,                        m_null, M_X, M_Y + gen5_viewbobbing * M_SPC, {"view_bobbing_percentage"}},
     {"View Height (Default = 41)",      S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_viewheight  * M_SPC, {"viewheight_value"}},
     {"Subtle Idle Bobbing/Breathing",   S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_idlebobbing * M_SPC, {"breathing"}},
-    {"Teleporter Zoom",                 S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_telezoom    * M_SPC, {"teleporter_zoom"}},
-    {"Sound Clipping Distance",         S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_sclipdist   * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
     {"Chasecam",                        S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_chasecam    * M_SPC, {"chasecam_mode"}, 0, NULL, chasecam_modes},
     {"Chasecam distance",               S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chasedist   * M_SPC, {"chasecam_distance"}},
     {"Chasecam height",                 S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chaseheight * M_SPC, {"chasecam_height"}},
+    {"Teleporter Zoom",                 S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_telezoom    * M_SPC, {"teleporter_zoom"}},
+    {"Sound Clipping Distance",         S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_sclipdist   * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings4}},
   {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings6}},
@@ -5881,9 +5881,6 @@ boolean M_Responder (event_t* ev)
       if (STRICTMODE(M_InputActivated(input_chasecam)))
 	{
 	  if (++chasecam_mode > chasecamMode_Front) { chasecam_mode = chasecamMode_Off; }
-	  doomprintf(MESSAGES_TOGGLE, "Chasecam: %s",
-	             (chasecam_mode == chasecamMode_Front) ? "Front" :
-	             (chasecam_mode == chasecamMode_Back)  ? "Back"  : "Off");
 	}
 
       if (M_InputActivated(input_autorun)) // Autorun         //  V
