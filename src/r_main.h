@@ -41,6 +41,13 @@ extern int      linecount;
 extern int      loopcount;
 extern fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
 
+// [Nugget]
+typedef struct chasecam_s {
+  fixed_t x, y, z;
+  boolean hit;
+} chasecam_t;
+extern chasecam_t chasecam;
+
 //
 // Rendering stats
 //

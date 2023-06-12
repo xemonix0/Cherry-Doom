@@ -30,6 +30,7 @@
 #include "v_video.h"
 #include "st_stuff.h"
 #include "hu_stuff.h"
+#include "p_map.h" // [Nugget]
 
 // [Nugget]
 #ifndef M_PI
@@ -54,6 +55,12 @@ fixed_t  viewcos, viewsin;
 player_t *viewplayer;
 extern lighttable_t **walllights;
 fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
+
+// [Nugget] For Automap
+fixed_t  chasexofs, chaseyofs;
+angle_t  chaseaofs;
+
+chasecam_t chasecam; // [Nugget]
 
 //
 // precalculated math tables
@@ -737,6 +744,7 @@ void R_SetupFrame (player_t *player)
 {
   int i, cm;
   int tempCentery, pitch;
+  int playerz, lookdir; // [Nugget]
 
   viewplayer = player;
   // [AM] Interpolate the player camera if the feature is enabled.
@@ -754,24 +762,64 @@ void R_SetupFrame (player_t *player)
     viewx = player->mo->oldx + FixedMul(player->mo->x - player->mo->oldx, fractionaltic);
     viewy = player->mo->oldy + FixedMul(player->mo->y - player->mo->oldy, fractionaltic);
     viewz = player->oldviewz + FixedMul(player->viewz - player->oldviewz, fractionaltic);
+    playerz = player->mo->oldz + FixedMul(player->mo->z - player->mo->oldz, fractionaltic); // [Nugget]
     viewangle = R_InterpolateAngle(player->mo->oldangle, player->mo->angle, fractionaltic) + viewangleoffset;
     // [crispy] pitch is actual lookdir and weapon pitch
-    pitch = (player->oldlookdir + (player->lookdir - player->oldlookdir) * FIXED2DOUBLE(fractionaltic)) / MLOOKUNIT
-                + (player->oldrecoilpitch + FixedMul(player->recoilpitch - player->oldrecoilpitch, fractionaltic));
+    lookdir = (player->oldlookdir + (player->lookdir - player->oldlookdir) * FIXED2DOUBLE(fractionaltic)) / MLOOKUNIT;
+    pitch = lookdir + (player->oldrecoilpitch + FixedMul(player->recoilpitch - player->oldrecoilpitch, fractionaltic));
   }
   else
   {
   viewx = player->mo->x;
   viewy = player->mo->y;
   viewz = player->viewz; // [FG] moved here
+  playerz = player->mo->z; // [Nugget]
   viewangle = player->mo->angle + viewangleoffset;
   // [crispy] pitch is actual lookdir and weapon pitch
-  pitch = player->lookdir / MLOOKUNIT + player->recoilpitch;
+  lookdir = player->lookdir / MLOOKUNIT;
+  pitch = lookdir + player->recoilpitch;
   }
-  
+
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   pitch *= fovdiff;
+  
+  // [Nugget]
+  if (STRICTMODE(chasecam_mode))
+  {
+    const int dist = chasecam_distance*FRACUNIT;
+    const fixed_t oldviewx = viewx, oldviewy = viewy;
+    const angle_t oldviewangle = viewangle;
+  
+    if (chasecam_mode == chasecamMode_Front)
+    {
+      viewangle += ANG180;
+      lookdir    = -lookdir;
+      pitch      = -pitch;
+    }
+    
+    P_PositionChasecam(viewx, viewy, playerz,
+                       viewangle + ANG180,
+                       -(lookdir * FRACUNIT) / SLOPEDIVISOR);
 
+    if (chasecam.hit) {
+      viewx = chasecam.x;
+      viewy = chasecam.y;
+      viewz = chasecam.z;
+    }
+    else {
+      viewx -= FixedMul(dist, finecosine[viewangle >> ANGLETOFINESHIFT]);
+      viewy -= FixedMul(dist,   finesine[viewangle >> ANGLETOFINESHIFT]);
+      viewz  = playerz + (chasecam_height*FRACUNIT) - ((lookdir*FRACUNIT * chasecam_distance/SLOPEDIVISOR) / fovdiff);
+    }
+    
+    chasexofs = viewx - oldviewx;
+    chaseyofs = viewy - oldviewy;
+    chaseaofs = viewangle - oldviewangle;
+  }
+  else {
+    chasexofs = chaseyofs = chaseaofs = 0;
+  }
+  
   // [Nugget]: [crispy] A11Y
   if (NOTSTRICTMODE(a11y_weapon_flash))
   { extralight = player->extralight; }

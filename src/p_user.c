@@ -301,7 +301,7 @@ void P_MovePlayer (player_t* player)
 
   // [Nugget] Forcefully stand up under certain conditions
   if ((player->mo->intflags & MIF_CROUCHING)
-      && (!jump_crouch || player->cheats & CF_FLY))
+      && (!jump_crouch || player->cheats & CF_FLY || chasecam_mode))
   { player->mo->intflags &= ~MIF_CROUCHING; }
 
   // [Nugget] Smooth crouching

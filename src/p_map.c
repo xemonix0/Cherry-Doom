@@ -1603,7 +1603,7 @@ static boolean PTR_AimSlopedTraverse(intercept_t *in)
   if (thingtopslope > topslope) { thingtopslope = topslope; }
   if (thingbottomslope < bottomslope) { thingbottomslope = bottomslope; }
 
-  linetarget = th; // [Nugget] Finally!
+  linetarget = th;
 
   // don't go any farther
   return false;
@@ -1665,10 +1665,11 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 	  // it's a sky hack wall
 	  // fix bullet-eaters -- killough:
 	  if  (li->backsector && li->backsector->ceilingpic == skyflatnum)
-        // [Nugget] freeaim - fix disappearing bullet puffs when outside
-        if ((demo_compatibility && !casual_play) || li->backsector->ceilingheight < z)
-        { return false; }
+	    // [Nugget] freeaim - fix disappearing bullet puffs when outside
+	    if ((demo_compatibility && !casual_play) || li->backsector->ceilingheight < z)
+	    { return false; }
 	}
+
       // [Nugget - rrPKrr] Taken from Crispy Doom:
       // check if the bullet puff's z-coordinate is below or above
       // its spawning sector's floor or ceiling, respectively, and move its
@@ -1927,6 +1928,88 @@ static boolean P_SplashImmune(mobj_t *target, mobj_t *spot)
     mobjinfo[target->type].splash_group != SG_DEFAULT &&
     mobjinfo[target->type].splash_group == mobjinfo[spot->type].splash_group;
 }
+
+// [Nugget] Chasecam stuff -------------------------
+
+static fixed_t playerx, playery;
+
+static boolean PTR_ChasecamTraverse(intercept_t *in)
+{
+  if (in->isaline) {
+    line_t *li = in->d.line;
+    const int bit = FRACUNIT;
+    fixed_t dist, frac;
+    int lineside, side;
+
+    if (li->flags & ML_TWOSIDED) {
+      P_LineOpening(li);
+      dist = FixedMul(attackrange, in->frac);
+
+      if (li->backsector == NULL) {
+        if (FixedDiv(openbottom+bit - shootz, dist) <= aimslope
+            && FixedDiv(opentop-bit - shootz, dist) >= aimslope)
+        { return true; }
+      }
+      else
+      if ((li->frontsector->floorheight == li->backsector->floorheight
+           || FixedDiv(openbottom+bit - shootz, dist) <= aimslope)
+          && (li->frontsector->ceilingheight == li->backsector->ceilingheight
+              || FixedDiv(opentop-bit - shootz, dist) >= aimslope))
+      { return true; }
+    }
+
+    // Hit line
+    
+    // Position a bit closer
+    frac = in->frac - FixedDiv(bit, attackrange);
+    chasecam.x = trace.x + FixedMul(trace.dx, frac);
+    chasecam.y = trace.y + FixedMul(trace.dy, frac);
+    chasecam.z = shootz + FixedMul(aimslope, FixedMul(frac, attackrange));
+    
+    lineside = P_PointOnLineSide(chasecam.x, chasecam.y, li);
+
+    if ((side = li->sidenum[lineside]) != NO_INDEX)
+    {
+      const sector_t* const sector = sides[side].sector;
+      const fixed_t floorz   = sector->floorheight   + bit,
+                    ceilingz = sector->ceilingheight - bit;
+
+      if (chasecam.z < floorz || ceilingz < chasecam.z)
+      {
+        chasecam.z = BETWEEN(floorz, ceilingz, chasecam.z);
+        frac = FixedDiv(chasecam.z - shootz, FixedMul(aimslope, attackrange));
+        chasecam.x = trace.x + FixedMul(trace.dx, frac);
+        chasecam.y = trace.y + FixedMul(trace.dy, frac);
+      }
+    }
+    
+    // Since P_AproxDistance() is, precisely, an approximation, we increase the distance a bit to avoid clipping through walls
+    if (P_AproxDistance(chasecam.x - playerx, chasecam.y - playery) <= (chasecam_distance + ((float) 7 * chasecam_distance / 64))*FRACUNIT)
+    { chasecam.hit = true; }
+  }
+
+  // Don't go any further
+  return false;
+}
+
+void P_PositionChasecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle, fixed_t slope)
+{
+  fixed_t x2, y2;
+
+  playerx = x;
+  playery = y;
+  angle >>= ANGLETOFINESHIFT;
+  x2 = x + (MISSILERANGE>>FRACBITS)*finecosine[angle];
+  y2 = y + (MISSILERANGE>>FRACBITS)*finesine[angle];
+  shootz = z + (chasecam_height*FRACUNIT);
+  attackrange = MISSILERANGE; // Trace a long line to mitigate clipping through planes
+  aimslope = slope;
+  chasecam.hit = false;
+
+  P_PathTraverse(x, y, x2, y2, PT_ADDLINES, PTR_ChasecamTraverse);
+}
+
+// [Nugget] End of chasecam stuff ------------------
 
 boolean PIT_RadiusAttack(mobj_t *thing)
 {
