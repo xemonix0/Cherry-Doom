@@ -1703,9 +1703,9 @@ void M_ChangeMessages(int choice)
   showMessages = 1 - showMessages;
 
   if (!showMessages)
-    doomprintf(MESSAGES_NONE, "%s", s_MSGOFF); // Ty 03/27/98 - externalized
+    displaymsg("%s", s_MSGOFF); // Ty 03/27/98 - externalized
   else
-    doomprintf(MESSAGES_NONE, "%s", s_MSGON); // Ty 03/27/98 - externalized
+    displaymsg("%s", s_MSGON); // Ty 03/27/98 - externalized
 
   message_dontfuckwithme = true;
 }
@@ -2752,7 +2752,7 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
     char *name = MAPNAME(epsd, map);
 
     if (W_CheckNumForName(name) == -1)
-      doomprintf(MESSAGES_NONE, "Next level not found: %s", name);
+      displaymsg("Next level not found: %s", name);
     else
     {
       G_DeferedInitNew(gameskill, epsd, map);
@@ -3044,13 +3044,13 @@ setup_menu_t keys_settings7[] =
   {"Ammo & Keys"       ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 3*M_SPC,{0},input_idkfa},
   {"Ammo"              ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 4*M_SPC,{0},input_idfa},
   {"No Clipping"       ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 5*M_SPC,{0},input_idclip},
-  {"Reveal Map"        ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+12*M_SPC,{0},input_iddt},
   {"Health"            ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 6*M_SPC,{0},input_idbeholdh},
   {"Armor"             ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 7*M_SPC,{0},input_idbeholdm},
   {"Invulnerability"   ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 8*M_SPC,{0},input_idbeholdv},
   {"Berserk"           ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+ 9*M_SPC,{0},input_idbeholds},
   {"Partial Invisibility",S_INPUT,m_scrn,CHEAT_X,M_Y+10*M_SPC,{0},input_idbeholdi},
   {"Radiation Suit"    ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+11*M_SPC,{0},input_idbeholdr},
+  {"Reveal Map"        ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+12*M_SPC,{0},input_iddt},
   {"Light Amplification",S_INPUT,m_scrn ,CHEAT_X,M_Y+13*M_SPC,{0},input_idbeholdl},
   {"No Target"         ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+14*M_SPC,{0},input_notarget},
   {"Freeze"            ,S_INPUT ,m_scrn ,CHEAT_X,M_Y+15*M_SPC,{0},input_freeze},
@@ -5874,7 +5874,7 @@ boolean M_Responder (event_t* ev)
 	  
 	  if ((hud_crosshair_on = !hud_crosshair_on)) { HU_StartCrosshair(); }
 	  M_UpdateCrosshairItems();
-	  doomprintf(MESSAGES_TOGGLE, "Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
+	  togglemsg("Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
 	}
 
       // [Nugget]
@@ -5886,21 +5886,21 @@ boolean M_Responder (event_t* ev)
       if (M_InputActivated(input_autorun)) // Autorun         //  V
 	{
 	  autorun = !autorun;
-	  doomprintf(MESSAGES_TOGGLE, "Always Run %s", autorun ? "On" : "Off");
+	  togglemsg("Always Run %s", autorun ? "On" : "Off");
 	  // return true; // [FG] don't let toggles eat keys
 	}
 
       if (M_InputActivated(input_novert))
 	{
 	  novert = !novert;
-	  doomprintf(MESSAGES_TOGGLE, "Vertical Mouse %s", !novert ? "On" : "Off");
+	  togglemsg("Vertical Mouse %s", !novert ? "On" : "Off");
 	  // return true; // [FG] don't let toggles eat keys
 	}
 
       if (M_InputActivated(input_mouselook))
 	{
 	  mouselook = !mouselook;
-	  doomprintf(MESSAGES_TOGGLE, "Mouselook %s", mouselook ? "On" : "Off");
+	  togglemsg("Mouselook %s", mouselook ? "On" : "Off");
 	  M_UpdateMouseLook();
 	  // return true; // [FG] don't let toggles eat keys
 	}
@@ -5908,7 +5908,7 @@ boolean M_Responder (event_t* ev)
       if (M_InputActivated(input_padlook))
 	{
 	  padlook = !padlook;
-	  doomprintf(MESSAGES_TOGGLE, "Padlook %s", padlook ? "On" : "Off");
+	  togglemsg("Padlook %s", padlook ? "On" : "Off");
 	  M_UpdateMouseLook();
 	  // return true; // [FG] don't let toggles eat keys
 	}
@@ -5990,7 +5990,7 @@ boolean M_Responder (event_t* ev)
           {
             gamma2 += 5;
             if (gamma2 > GAMMA2MAX) { gamma2 -= GAMMA2MAX; }
-            doomprintf(MESSAGES_TOGGLE, "Gamma Correction Level %0.2f", gammalevels[gamma2]);
+            togglemsg("Gamma Correction Level %0.2f", gammalevels[gamma2]);
             M_ResetGamma();
           }
           else {
@@ -6003,7 +6003,7 @@ boolean M_Responder (event_t* ev)
               usegamma == 2 ? s_GAMMALVL2 :
               usegamma == 3 ? s_GAMMALVL3 :
               s_GAMMALVL4;
-            doomprintf(MESSAGES_TOGGLE, "%s",
+            togglemsg("%s",
                        usegamma == 0 ? s_GAMMALVL0 :
                        usegamma == 1 ? s_GAMMALVL1 :
                        usegamma == 2 ? s_GAMMALVL2 :
@@ -6089,7 +6089,7 @@ boolean M_Responder (event_t* ev)
         {
           realtic_clock_rate += 10;
           realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
-          doomprintf(MESSAGES_NONE, "Game Speed: %d", realtic_clock_rate);
+          displaymsg("Game Speed: %d", realtic_clock_rate);
           I_SetTimeScale(realtic_clock_rate);
         }
 
@@ -6098,7 +6098,7 @@ boolean M_Responder (event_t* ev)
         {
           realtic_clock_rate -= 10;
           realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
-          doomprintf(MESSAGES_NONE, "Game Speed: %d", realtic_clock_rate);
+          displaymsg("Game Speed: %d", realtic_clock_rate);
           I_SetTimeScale(realtic_clock_rate);
         }
 
@@ -6106,7 +6106,7 @@ boolean M_Responder (event_t* ev)
             && !strictmode)
         {
           realtic_clock_rate = 100;
-          doomprintf(MESSAGES_NONE, "Game Speed: %d", realtic_clock_rate);
+          displaymsg("Game Speed: %d", realtic_clock_rate);
           I_SetTimeScale(realtic_clock_rate);
         }
     }

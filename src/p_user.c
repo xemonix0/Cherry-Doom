@@ -763,7 +763,7 @@ void P_PlayerThink (player_t* player)
       P_AimLineAttack(player->mo, player->mo->angle, 16*64*FRACUNIT, 0);
 
     if (linetarget) // Give some info on the thing
-      doomprintf(MESSAGES_NONE, "Type: %i - Health: %i/%i", linetarget->type,
+      displaymsg("Type: %i - Health: %i/%i", linetarget->type,
                  linetarget->health, linetarget->info->spawnhealth);
 
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;

@@ -6,7 +6,7 @@
 
 ## Changes
 
-- **Merged some changes from Woof post-11.1.4**
+- **Merged changes from Woof 11.2.0**
 - **Changed mouselook range to [-100, 100]**
 - **_'SUMMON'_ now reports the last summoned mobj's type**
 - **_'SUMMONE'_ and _'SUMMONF'_ now print a message requesting the mobj index**
