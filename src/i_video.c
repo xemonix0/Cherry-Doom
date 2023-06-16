@@ -87,6 +87,7 @@ static int window_x, window_y;
 static int actualheight;
 
 static boolean need_resize;
+static boolean need_downscaling;
 
 // haleyjd 10/08/05: Chocolate DOOM application focus state code added
 
@@ -254,6 +255,62 @@ static boolean ToggleFullScreenKeyShortcut(SDL_Keysym *sym)
             sym->scancode == SDL_SCANCODE_KP_ENTER) && (sym->mod & flags) != 0;
 }
 
+static boolean WindowOutOfBounds(void)
+{
+    SDL_Rect bounds;
+
+    if (SDL_GetDisplayBounds(video_display, &bounds) != 0)
+    {
+        I_Error("Could not get display bounds for video display #%d: %s",
+                video_display, SDL_GetError());
+        return false;
+    }
+
+    return ((window_x + window_width > bounds.x + bounds.w) || window_x < bounds.x ||
+            (window_y + window_height > bounds.y + bounds.h) || window_y < bounds.y);
+}
+
+static boolean FindMinWindowSize(const int desired_width, const int desired_height,
+                                 int *width, int *height)
+{
+    SDL_DisplayMode mode;
+
+    if (SDL_GetCurrentDisplayMode(video_display, &mode) != 0)
+    {
+        I_Error("Could not get display mode for video display #%d: %s",
+                video_display, SDL_GetError());
+        return false;
+    }
+
+    *width = desired_width;
+    *height = desired_height;
+
+    do
+    {
+        const int aspect_height = use_aspect ? (6 * (*height) / 5) : *height;
+        if (*width < mode.w && aspect_height < mode.h)
+        {
+            break;
+        }
+        *width >>= 1;
+        *height >>= 1;
+    } while (*width && *height);
+
+    if (*width < SCREENWIDTH || *height < SCREENHEIGHT)
+    {
+        *width = SCREENWIDTH;
+        *height = SCREENHEIGHT;
+    }
+
+    if (use_aspect)
+    {
+        *height = 6 * (*height) / 5;
+    }
+
+    return true;
+}
+
+static void CenterWindow(int *x, int *y, int w, int h);
 static void I_ReinitGraphicsMode(void);
 
 static void I_ToggleFullScreen(void)
@@ -280,6 +337,17 @@ static void I_ToggleFullScreen(void)
 
     if (!fullscreen)
     {
+        if (WindowOutOfBounds())
+        {
+            const int w = SCREENWIDTH << hires;
+            const int h = SCREENHEIGHT << hires;
+            if (!FindMinWindowSize(w, h, &window_width, &window_height))
+            {
+                window_width = w;
+                window_height = actualheight;
+            }
+            CenterWindow(&window_x, &window_y, window_width, window_height);
+        }
         SDL_SetWindowSize(screen, window_width, window_height);
         SDL_SetWindowPosition(screen, window_x, window_y);
     }
@@ -398,7 +466,7 @@ static inline void I_UpdateRender (void)
     SDL_UpdateTexture(texture, NULL, argbbuffer->pixels, argbbuffer->pitch);
     SDL_RenderClear(renderer);
 
-    if (smooth_scaling)
+    if (smooth_scaling && !need_downscaling)
     {
         // Render this intermediate texture into the upscaled texture
         // using "nearest" integer scaling.
@@ -1061,10 +1129,45 @@ static void CreateUpscaledTexture(boolean force)
                                         h_upscale * screen_height);
 }
 
+static boolean NeedDownscaling(void)
+{
+    SDL_RendererInfo info;
+    int w, h;
+
+    const int screen_width = SCREENWIDTH << hires;
+
+    SDL_GetRendererInfo(renderer, &info);
+    if (info.flags & SDL_RENDERER_SOFTWARE)
+    {
+        return false;
+    }
+
+    if (SDL_GetRendererOutputSize(renderer, &w, &h) != 0)
+    {
+        I_Error("Failed to get renderer output size: %s", SDL_GetError());
+        return false;
+    }
+
+    if (w * actualheight < h * screen_width)
+    {
+        // Tall window.
+        h = w * actualheight / screen_width;
+    }
+    else
+    {
+        // Wide window.
+        w = h * screen_width / actualheight;
+    }
+
+    return screen_width > w || actualheight > h;
+}
+
 static int scalefactor;
 
 static void I_ResetGraphicsMode(void)
 {
+    SDL_DisplayMode mode;
+    int min_width, min_height;
     int w, h;
     static int old_w, old_h;
 
@@ -1080,7 +1183,12 @@ static void I_ResetGraphicsMode(void)
 
     actualheight = use_aspect ? (6 * h / 5) : h;
 
-    SDL_SetWindowMinimumSize(screen, w, actualheight);
+    if (!FindMinWindowSize(w, h, &min_width, &min_height))
+    {
+        min_width = w;
+        min_height = actualheight;
+    }
+    SDL_SetWindowMinimumSize(screen, min_width, min_height);
     if (!fullscreen)
     {
         SDL_GetWindowSize(screen, &window_width, &window_height);
@@ -1110,6 +1218,13 @@ static void I_ResetGraphicsMode(void)
 
     if (!fullscreen)
     {
+        if (WindowOutOfBounds())
+        {
+            window_width = min_width;
+            window_height = min_height;
+            CenterWindow(&window_x, &window_y, window_width, window_height);
+            SDL_SetWindowPosition(screen, window_x, window_y);
+        }
         SDL_SetWindowSize(screen, window_width, window_height);
     }
 
@@ -1120,7 +1235,11 @@ static void I_ResetGraphicsMode(void)
       SDL_RenderSetLogicalSize(renderer, w, actualheight);
 
     // [FG] force integer scales
-    SDL_RenderSetIntegerScale(renderer, integer_scaling ? SDL_TRUE : SDL_FALSE);
+    if (SDL_GetCurrentDisplayMode(video_display, &mode) == 0)
+    {
+        const boolean use_scale = integer_scaling && w <= mode.w && actualheight <= mode.h;
+        SDL_RenderSetIntegerScale(renderer, use_scale ? SDL_TRUE : SDL_FALSE);
+    }
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
@@ -1173,14 +1292,17 @@ static void I_ResetGraphicsMode(void)
         SDL_DestroyTexture(texture);
     }
 
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+    need_downscaling = NeedDownscaling();
+
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,
+                smooth_scaling && need_downscaling ? "linear" : "nearest");
 
     texture = SDL_CreateTexture(renderer,
                                 pixel_format,
                                 SDL_TEXTUREACCESS_STREAMING,
                                 w, h);
 
-    if (smooth_scaling)
+    if (smooth_scaling && !need_downscaling)
     {
         CreateUpscaledTexture(true);
     }
