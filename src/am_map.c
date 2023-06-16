@@ -1267,7 +1267,10 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
   }
 #endif
 
-#define PUTDOT(xx,yy,cc) fb[(yy)*f_w+(xx)]=(cc)
+#define PUTDOT(xx,yy,cc)                                \
+  for (int i = 0;  i < MAX(1, 2 << (hires - 2));  i++)  \
+    for (int j = 0;  j < MAX(1, 2 << (hires - 2)); j++) \
+      fb[(yy+j)*f_w+(xx+i)]=(cc)
 
   dx = fl->b.x - fl->a.x;
   ax = 2 * (dx<0 ? -dx : dx);
