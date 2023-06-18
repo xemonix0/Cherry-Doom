@@ -55,7 +55,7 @@ fixed_t P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance,int mask);
 fixed_t P_AimSlopedLineAttack(mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope, int mask);
 void    P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
                      fixed_t slope, int damage );
-void    P_PositionChasecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle, fixed_t slope); // [Nugget]
+void    P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope); // [Nugget]
 void    P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance);
 boolean P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y);
 

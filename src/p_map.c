@@ -1869,12 +1869,11 @@ static boolean PTR_AimSlopedTraverse(intercept_t *in)
   { return true; }
 
   dist = FixedMul(attackrange, in->frac);
-  thingtopslope = FixedDiv(th->z + th->height - shootz, dist);
-  if (thingtopslope < aimslope) { return true; }
-  thingbottomslope = FixedDiv (th->z - shootz, dist);
-  if (thingbottomslope > aimslope) { return true; }
+  if (  (thingtopslope    = FixedDiv(th->z + th->height - shootz, dist)) < aimslope
+      ||(thingbottomslope = FixedDiv(th->z              - shootz, dist)) > aimslope)
+  { return true; }
 
-  if (thingtopslope    > topslope)    { thingtopslope    = topslope;    }
+  if (thingtopslope    > topslope)    { thingtopslope    = topslope; }
   if (thingbottomslope < bottomslope) { thingbottomslope = bottomslope; }
 
   linetarget = th;
@@ -1899,92 +1898,76 @@ fixed_t P_AimSlopedLineAttack(mobj_t *t1, angle_t angle, fixed_t distance, fixed
   linetarget = NULL;
   aim_flags_mask = mask;
 
-  P_PathTraverse(t1->x,t1->y,x2,y2,PT_ADDLINES|PT_ADDTHINGS,PTR_AimSlopedTraverse);
+  P_PathTraverse(t1->x, t1->y, x2, y2, PT_ADDLINES|PT_ADDTHINGS, PTR_AimSlopedTraverse);
 
   if (linetarget) { return aimslope; }
-
-  return 0;
+  else            { return 0; }
 }
-
-static fixed_t playerx, playery;
 
 static boolean PTR_ChasecamTraverse(intercept_t *in)
 {
   if (in->isaline) {
     line_t *li = in->d.line;
-    const int bit = FRACUNIT;
     fixed_t dist, frac;
-    int lineside, side;
+    sector_t *sec;
 
     if (li->flags & ML_TWOSIDED) {
       P_LineOpening(li);
       dist = FixedMul(attackrange, in->frac);
 
       if (li->backsector == NULL) {
-        if (FixedDiv(openbottom+bit - shootz, dist) <= aimslope
-            && FixedDiv(opentop-bit - shootz, dist) >= aimslope)
+        if (FixedDiv(openbottom+FRACUNIT - shootz, dist) <= aimslope
+            && FixedDiv(opentop-FRACUNIT - shootz, dist) >= aimslope)
         { return true; }
       }
       else
       if ((li->frontsector->floorheight == li->backsector->floorheight
-           || FixedDiv(openbottom+bit - shootz, dist) <= aimslope)
+           || FixedDiv(openbottom+FRACUNIT - shootz, dist) <= aimslope)
           && (li->frontsector->ceilingheight == li->backsector->ceilingheight
-              || FixedDiv(opentop-bit - shootz, dist) >= aimslope))
+              || FixedDiv(opentop-FRACUNIT - shootz, dist) >= aimslope))
       { return true; }
     }
 
     // Hit line
+    chasecam.hit = true;
     
     // Position a bit closer
-    frac = in->frac - FixedDiv(bit, attackrange);
+    frac = in->frac - FixedDiv(FRACUNIT, attackrange);
     chasecam.x = trace.x + FixedMul(trace.dx, frac);
     chasecam.y = trace.y + FixedMul(trace.dy, frac);
     chasecam.z = shootz + FixedMul(aimslope, FixedMul(frac, attackrange));
     
-    lineside = P_PointOnLineSide(chasecam.x, chasecam.y, li);
+    sec = R_PointInSubsector(chasecam.x, chasecam.y)->sector;
 
-    if ((side = li->sidenum[lineside]) != NO_INDEX)
+    if (chasecam.z < sec->floorheight+FRACUNIT || sec->ceilingheight-FRACUNIT < chasecam.z)
     {
-      const sector_t* const sector = sides[side].sector;
-      const fixed_t floorz   = sector->floorheight   + bit,
-                    ceilingz = sector->ceilingheight - bit;
-
-      if (chasecam.z < floorz || ceilingz < chasecam.z)
-      {
-        chasecam.z = BETWEEN(floorz, ceilingz, chasecam.z);
-        frac = FixedDiv(chasecam.z - shootz, FixedMul(aimslope, attackrange));
-        chasecam.x = trace.x + FixedMul(trace.dx, frac);
-        chasecam.y = trace.y + FixedMul(trace.dy, frac);
-      }
+      chasecam.z = BETWEEN(sec->floorheight+FRACUNIT, sec->ceilingheight-FRACUNIT, chasecam.z);
+      frac = FixedDiv(chasecam.z - shootz, FixedMul(aimslope, attackrange));
+      chasecam.x = trace.x + FixedMul(trace.dx, frac);
+      chasecam.y = trace.y + FixedMul(trace.dy, frac);
     }
-    
-    // Since P_AproxDistance() is, precisely, an approximation, we increase the distance a bit to avoid clipping through walls
-    if (P_AproxDistance(chasecam.x - playerx, chasecam.y - playery) <= (chasecam_distance + ((float) 7 * chasecam_distance / 64))*FRACUNIT)
-    { chasecam.hit = true; }
   }
 
   // Don't go any further
   return false;
 }
 
-void P_PositionChasecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle, fixed_t slope)
+void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope)
 {
+  const angle_t angle = (viewangle + ANG180) >> ANGLETOFINESHIFT;
   fixed_t x2, y2;
-  const int dist = MISSILERANGE*2; // Trace a long line to mitigate clipping through planes
   const boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
 
-  playerx = x;
-  playery = y;
-  angle >>= ANGLETOFINESHIFT;
-  x2 = x + (dist>>FRACBITS)*finecosine[angle];
-  y2 = y + (dist>>FRACBITS)*finesine[angle];
-  shootz = z + (chasecam_height*FRACUNIT);
+  dist += FRACUNIT;
+  x2 = viewx + (dist >> FRACBITS) * finecosine[angle];
+  y2 = viewy + (dist >> FRACBITS) * finesine[angle];
+  shootz = z;
   attackrange = dist;
   aimslope = slope;
   chasecam.hit = false;
 
   overflow[emu_intercepts].enabled = false;
-  P_PathTraverse(x, y, x2, y2, PT_ADDLINES, PTR_ChasecamTraverse);
+  P_PathTraverse(viewx, viewy, x2, y2, PT_ADDLINES, PTR_ChasecamTraverse);
   overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 }
 

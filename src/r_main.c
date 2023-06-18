@@ -786,7 +786,9 @@ void R_SetupFrame (player_t *player)
   // [Nugget]
   if (STRICTMODE(chasecam_mode))
   {
-    const int dist = chasecam_distance*FRACUNIT;
+    const fixed_t z = playerz + (chasecam_height*FRACUNIT);
+    fixed_t slope;
+    fixed_t dist = chasecam_distance*FRACUNIT;
     const fixed_t oldviewx = viewx, oldviewy = viewy;
     const angle_t oldviewangle = viewangle;
   
@@ -797,9 +799,10 @@ void R_SetupFrame (player_t *player)
       pitch      = -pitch;
     }
     
-    P_PositionChasecam(viewx, viewy, playerz,
-                       viewangle + ANG180,
-                       (-(lookdir * FRACUNIT) / SLOPEDIVISOR) / fovdiff);
+    dist +=   FixedMul(player->mo->momx, finecosine[viewangle >> ANGLETOFINESHIFT])
+            + FixedMul(player->mo->momy,   finesine[viewangle >> ANGLETOFINESHIFT]);
+    
+    P_PositionChasecam(z, dist, slope = ((-(lookdir * FRACUNIT) / SLOPEDIVISOR) / fovdiff));
 
     if (chasecam.hit) {
       viewx = chasecam.x;
@@ -807,18 +810,32 @@ void R_SetupFrame (player_t *player)
       viewz = chasecam.z;
     }
     else {
-      viewx -= FixedMul(dist, finecosine[viewangle >> ANGLETOFINESHIFT]);
-      viewy -= FixedMul(dist,   finesine[viewangle >> ANGLETOFINESHIFT]);
-      viewz  = playerz + (chasecam_height*FRACUNIT) - ((lookdir*FRACUNIT * chasecam_distance/SLOPEDIVISOR) / fovdiff);
+      const fixed_t dx = FixedMul(dist, finecosine[viewangle >> ANGLETOFINESHIFT]);
+      const fixed_t dy = FixedMul(dist,   finesine[viewangle >> ANGLETOFINESHIFT]);
+      const sector_t *sec = R_PointInSubsector(viewx-dx, viewy-dy)->sector;
+    
+      viewz = z + (slope * chasecam_distance);
+
+      if (viewz < sec->floorheight+FRACUNIT || sec->ceilingheight-FRACUNIT < viewz)
+      {
+        fixed_t frac;
+        viewz  = BETWEEN(sec->floorheight+FRACUNIT, sec->ceilingheight-FRACUNIT, viewz);
+        frac   = FixedDiv(viewz - z, FixedMul(slope, dist));
+        viewx -= FixedMul(dx, frac);
+        viewy -= FixedMul(dy, frac);
+      }
+      else {
+        viewx -= dx;
+        viewy -= dy;
+      }
     }
     
     chasexofs = viewx - oldviewx;
     chaseyofs = viewy - oldviewy;
     chaseaofs = viewangle - oldviewangle;
   }
-  else {
-    chasexofs = chaseyofs = chaseaofs = 0;
-  }
+  else
+  { chasexofs = chaseyofs = chaseaofs = 0; }
   
   // [Nugget]: [crispy] A11Y
   if (NOTSTRICTMODE(a11y_weapon_flash))
