@@ -111,7 +111,7 @@ int extra_level_brightness;               // level brightness feature
 
 // [Nugget] FOV from Doom Retro
 
-int fovfx[NUMFOVFX];   // FOV effects (recoil, teleport)
+fovfx_t fovfx[NUMFOVFX];   // FOV effects (recoil, teleport)
 static int zoomed = 0; // Current zoom state
 
 boolean fovchange = true;
@@ -532,57 +532,67 @@ void R_ExecuteSetViewSize (void)
   if (fovchange) {
     static int oldtic = -1;
     int fx = 0;
-    int zoomtarget = 0;
+    int zoomtarget;
 
     bfov = (!strictmode ? fov : ORIGFOV);
     fovchange = false;
 
     if (strictmode || zoomed == ZOOM_RESET) { // Force zoom reset
-      zoomtarget = fovfx[FOVFX_ZOOM] = 0;
+      zoomtarget = 0;
+      fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
       zoomed = ZOOM_OFF;
     }
     else {
       zoomtarget = (zoomed ? zoom_fov - bfov : 0);
       // In case bfov changes while zoomed in...
-      if (zoomed && abs(fovfx[FOVFX_ZOOM]) > abs(zoomtarget))
-      { fovfx[FOVFX_ZOOM] = zoomtarget; }
+      if (zoomed && abs(fovfx[FOVFX_ZOOM].target) > abs(zoomtarget))
+      { fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = zoomtarget, .current = zoomtarget, .old = zoomtarget }; }
     }
 
     if (!strictmode) {
-      if (fovfx[FOVFX_ZOOM] != zoomtarget)
+      if (fovfx[FOVFX_ZOOM].target != zoomtarget)
       { fovchange = true; }
       else for (i = 0;  i < NUMFOVFX;  i++)
-        if (fovfx[i]) { fovchange = true; }
+        if (fovfx[i].target || fovfx[i].current) { fovchange = true; }
     }
   
-    if (fovchange && gametic != oldtic)
-    {
-      fovchange = false;
-      
-      if (zoomtarget || fovfx[FOVFX_ZOOM]) { // Special handling for zoom
-        int step = zoomtarget - fovfx[FOVFX_ZOOM];
-        int sign = ((step > 0) ? 1 : -1);
-        step = BETWEEN(2, 16, abs(step) / 4);
-        fovfx[FOVFX_ZOOM] += step*sign;
-        if (  (sign > 0 && fovfx[FOVFX_ZOOM] > zoomtarget)
-            ||(sign < 0 && fovfx[FOVFX_ZOOM] < zoomtarget))
-        { fovfx[FOVFX_ZOOM] = zoomtarget; }
-        else
-        { fovchange = true; }
+    if (fovchange) {
+      if (gametic != oldtic)
+      {
+        fovchange = false;
+        
+        fovfx[FOVFX_ZOOM].old = fovfx[FOVFX_ZOOM].current = fovfx[FOVFX_ZOOM].target;
+        if (zoomtarget || fovfx[FOVFX_ZOOM].target) { // Special handling for zoom
+          int step = zoomtarget - fovfx[FOVFX_ZOOM].target;
+          int sign = ((step > 0) ? 1 : -1);
+          step = BETWEEN(2, 16, abs(step) / 4);
+          fovfx[FOVFX_ZOOM].target += step*sign;
+          if (  (sign > 0 && fovfx[FOVFX_ZOOM].target > zoomtarget)
+              ||(sign < 0 && fovfx[FOVFX_ZOOM].target < zoomtarget))
+          { fovfx[FOVFX_ZOOM].target = zoomtarget; }
+          
+          if (fovfx[FOVFX_ZOOM].current != fovfx[FOVFX_ZOOM].target)
+          { fovchange = true; }
+        }
+        
+        fovfx[FOVFX_TELEPORT].old = fovfx[FOVFX_TELEPORT].current = fovfx[FOVFX_TELEPORT].target;
+        if (fovfx[FOVFX_TELEPORT].target)
+        {
+          if ((fovfx[FOVFX_TELEPORT].target -= 5) < 0)
+          { fovfx[FOVFX_TELEPORT].target = 0; }
+          else
+          { fovchange = true; }
+        }
       }
-      
-      if (fovfx[FOVFX_TELEPORT]) {
-        if ((fovfx[FOVFX_TELEPORT] -= 5) <= 0)
-        { fovfx[FOVFX_TELEPORT] = 0; }
-        else
-        { fovchange = true; }
-      }
+      else if (uncapped)
+        for (i = 0;  i < NUMFOVFX;  i++)
+        { fovfx[i].current = fovfx[i].old + ((fovfx[i].target - fovfx[i].old) * ((float) fractionaltic/FRACUNIT)); }
     }
     
     oldtic = gametic;
 
     for (i = 0;  i < NUMFOVFX;  i++)
-    { fx += fovfx[i]; }
+    { fx += fovfx[i].current; }
     
     rfov = bfov + fx;
     fovdiff = (float) ORIGFOV / rfov;

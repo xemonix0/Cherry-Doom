@@ -117,13 +117,16 @@ void R_Init(void);                           // Called by startup code.
 void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // [Nugget]
+typedef struct fovfx_s {
+  int old, current, target;
+} fovfx_t;
 enum {
   FOVFX_ZOOM,
   FOVFX_TELEPORT,
   
   NUMFOVFX
 };
-extern int fovfx[NUMFOVFX];
+extern fovfx_t fovfx[NUMFOVFX];
 extern boolean fovchange;
 enum {
   ZOOM_RESET = -1,

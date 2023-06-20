@@ -85,7 +85,8 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
             
             // [Nugget] Teleporter zoom
             if (STRICTMODE(teleporter_zoom)) {
-              fovfx[FOVFX_TELEPORT] = 55; // Actually, 50 is applied
+              R_SetZoom(ZOOM_RESET);
+              fovfx[FOVFX_TELEPORT].target = 50;
               fovchange = true;
             }
           }

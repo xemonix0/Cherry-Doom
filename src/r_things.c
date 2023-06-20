@@ -763,7 +763,8 @@ void R_DrawPSprite (pspdef_t *psp)
                     // [Nugget]
                     + (STRICTMODE(st_crispyhud && screenblocks < 13)
                        ? nughud.weapheight*FRACUNIT : 0) // Nugget HUD
-                    + ((fovfx[FOVFX_ZOOM] < 0) ? fovfx[FOVFX_ZOOM]*FRACUNIT*1/2 : 0); // Lower weapon based on zoom
+                    + ((fovfx[FOVFX_ZOOM].current < 0)
+                       ? fovfx[FOVFX_ZOOM].current*FRACUNIT/2 : 0); // Lower weapon based on zoom
 
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
