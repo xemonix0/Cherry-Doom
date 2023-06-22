@@ -8,6 +8,8 @@
 
 - **Merged changes from Woof 11.2.0**
 - **Changed mouselook range to [-100, 100]**
+- **FOV changes are now interpolated**
+- **Zoom is now reset upon teleporting**
 - **_'SUMMON'_ now reports the last summoned mobj's type**
 - **_'SUMMONE'_ and _'SUMMONF'_ now print a message requesting the mobj index**
 - **Mobjs summoned with _'SUMMON'_ now inherit the player's angle**
@@ -19,3 +21,4 @@
 - **Fixed Pistol being marked as unavailable in the Status Bar**
 - **Fixed flickering of the Ammo count when changing screen sizes with weapons with no ammo**
 - **Fixed screen melt inconsistency across resolutions**
+- **Fixed potential crash when changing FOV while zoomed in**
