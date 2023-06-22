@@ -1267,9 +1267,10 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
   }
 #endif
 
-#define PUTDOT(xx,yy,cc)                                \
-  for (int i = 0;  i < MAX(1, 2 << (hires - 2));  i++)  \
-    for (int j = 0;  j < MAX(1, 2 << (hires - 2)); j++) \
+// [Nugget] Modified to avoid disappearing lines when downscaling the window
+#define PUTDOT(xx,yy,cc) \
+  for (int i=0; i<MAX(1,2<<(hires-2)) && xx+i<(SCREENWIDTH<<hires); i++) \
+    for (int j=0; j<MAX(1,2<<(hires-2)) && yy+j<(SCREENHEIGHT<<hires); j++) \
       fb[(yy+j)*f_w+(xx+i)]=(cc)
 
   dx = fl->b.x - fl->a.x;
