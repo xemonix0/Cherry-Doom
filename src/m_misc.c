@@ -928,7 +928,7 @@ default_t defaults[] = {
   {
     "sx_fix",
     (config_t *) &sx_fix, NULL,
-    {1}, {0,1}, number, ss_none, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "1 to correct first person sprite centering"
   },
 

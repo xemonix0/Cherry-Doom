@@ -15,6 +15,7 @@
 - **Mobjs summoned with _'SUMMON'_ now inherit the player's angle**
 - **Alt. Arms Display now accounts for SSG in Doom 1**
 - **Changed `gamma2` default to 10 (matches Woof)**
+- **Changed `sx_fix` default to 0**
 
 ## Bug Fixes
 
