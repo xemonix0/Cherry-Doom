@@ -87,7 +87,7 @@ static int window_x, window_y;
 static int actualheight;
 
 static boolean need_resize;
-static boolean need_downscaling;
+boolean need_downscaling;
 
 // haleyjd 10/08/05: Chocolate DOOM application focus state code added
 
