@@ -236,10 +236,6 @@ static void HUlib_alignWidget(hu_textline_t *l, align_t align)
     case align_direct:
       break;
   }
-  
-  // [Nugget]
-  if ((align == align_topleft || align == align_topright) && message_centered)
-  { l->y += HU_REFRESHSPACING * (message_list ? hud_msg_lines : 1); }
 }
 
 static void HUlib_drawTextLineAligned(hu_textline_t *l, boolean drawcursor)
