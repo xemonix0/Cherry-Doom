@@ -74,6 +74,8 @@ static int64_t  bottomfrac; // [FG] 64-bit integer math
 static fixed_t  bottomstep;
 static int    *maskedtexturecol; // [FG] 32-bit integer math
 
+extern float fovdiff; // [Nugget]
+
 //
 // R_RenderMaskedSegRange
 //
@@ -156,8 +158,9 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     if (maskedtexturecol[dc_x] != D_MAXINT) // [FG] 32-bit integer math
       {
         if (!fixedcolormap)      // calculate lighting
-          {                             // killough 11/98:
-            unsigned index = spryscale>>(LIGHTSCALESHIFT+hires);
+          {
+            unsigned index = (int) (spryscale/fovdiff)  // [Nugget]
+                             >>(LIGHTSCALESHIFT+hires); // killough 11/98
 
             if (index >=  MAXLIGHTSCALE )
               index = MAXLIGHTSCALE-1;
@@ -374,7 +377,8 @@ static void R_RenderSegLoop (void)
           texturecolumn >>= FRACBITS;
 
           // calculate lighting
-          index = rw_scale>>(LIGHTSCALESHIFT+hires);  // killough 11/98
+          index = (int) (rw_scale/fovdiff)   // [Nugget]
+                  >>(LIGHTSCALESHIFT+hires); // killough 11/98
 
           if (index >=  MAXLIGHTSCALE )
             index = MAXLIGHTSCALE-1;

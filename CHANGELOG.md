@@ -20,6 +20,7 @@
 ## Bug Fixes
 
 - **Fixed Pistol being marked as unavailable in the Status Bar**
+- **Fixed wall/sprite lighting being affected by FOV**
 - **Fixed flickering of the Ammo count when changing screen sizes with weapons with no ammo**
 - **Fixed screen melt inconsistency across resolutions**
 - **Fixed potential crash when changing FOV while zoomed in**
