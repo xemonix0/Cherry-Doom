@@ -1226,7 +1226,7 @@ static void HU_widget_build_powers(void)
   int offset = 0;
 
   if (plr->powers[pw_invisibility] > 0) {
-    offset += sprintf(hud_powerstr, "\x1b%cINVIS %iS ", '0'+CR_BRICK,
+    offset += sprintf(hud_powerstr, "\x1b%cINVIS %iS ", '0'+CR_RED,
                       MIN(INVISTICS/TICRATE, 1 + (plr->powers[pw_invisibility] / TICRATE)));
   }
   if (plr->powers[pw_invulnerability] > 0) {
@@ -1234,7 +1234,7 @@ static void HU_widget_build_powers(void)
                       MIN(INVULNTICS/TICRATE, 1 + (plr->powers[pw_invulnerability] / TICRATE)));
   }
   if (plr->powers[pw_infrared] > 0) {
-    offset += sprintf(hud_powerstr + offset, "\x1b%cLIGHT %iS ", '0'+CR_RED,
+    offset += sprintf(hud_powerstr + offset, "\x1b%cLIGHT %iS ", '0'+CR_BRICK,
                       MIN(INFRATICS/TICRATE, 1 + (plr->powers[pw_infrared] / TICRATE)));
   }
   if (plr->powers[pw_ironfeet] > 0) {
