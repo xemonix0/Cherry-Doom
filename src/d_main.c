@@ -2760,8 +2760,7 @@ void D_DoomMain(void)
 
   D_StartGameLoop();
 
-  // [Nugget]
-  D_NuggetUpdateCasual();
+  D_NuggetUpdateCasual(); // [Nugget]
 
   // [Nugget] cheese :)
   if (casual_play) {

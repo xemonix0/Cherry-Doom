@@ -619,7 +619,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   
   // [Nugget] Decrease the intensity of some movements if zoomed in
   if (!strictmode && fovfx[FOVFX_ZOOM].current) {
-    float divisor = fov / MAX(fov + fovfx[FOVFX_ZOOM].current, 1);
+    float divisor = fov / MAX(1, fov + fovfx[FOVFX_ZOOM].current);
     if (divisor > 1) {
       cmd->angleturn /= divisor;
       cmd->lookdir /= divisor;
@@ -1213,7 +1213,7 @@ static void G_PlayerFinishLevel(int player)
   p->oldlookdir = p->lookdir = 0;
   p->centering = false;
   p->recoilpitch = p->oldrecoilpitch = 0;
-  // [Nugget] Do the same here
+  // [Nugget] Reset more additional player properties
   p->mo->height = p->mo->info->height;
   p->mo->intflags &= ~MIF_CROUCHING;
   p->jumpTics = p->crouchOffset = 0;
@@ -1796,8 +1796,7 @@ static void G_DoPlayDemo(void)
   fprintf(stderr, "G_DoPlayDemo: Playing demo with %s (%d) compatibility.\n",
     G_GetCurrentComplevelName(), demover);
 
-  // [Nugget]
-  D_NuggetUpdateCasual();
+  D_NuggetUpdateCasual(); // [Nugget]
 
 }
 
@@ -3385,8 +3384,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   G_DoLoadLevel();
 
-  // [Nugget]
-  D_NuggetUpdateCasual();
+  D_NuggetUpdateCasual(); // [Nugget]
 }
 
 //

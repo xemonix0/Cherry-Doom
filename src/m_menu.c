@@ -3262,6 +3262,7 @@ static const char *show_berserk_strings[] = {
 setup_menu_t weap_settings2[] =
 {
   // [Nugget] These three
+
   {"Enable Recoil", S_YESNO, m_null, M_X,
    M_Y + weap2_recoil*M_SPC, {"weapon_recoil"}}, // Restore Weapon Recoil menu item
    
@@ -4267,8 +4268,8 @@ void M_ResetTimeScale(void)
   }
 }
 
-
-static void M_UpdateFreeaimItem(void) // [Nugget]
+// [Nugget]
+static void M_UpdateFreeaimItem(void)
 {
   DISABLE_ITEM(!mouselook, weap_settings2[weap2_freeaim]);
 }
@@ -4384,7 +4385,7 @@ setup_menu_t gen_settings3[] = { // General Settings screen3
   {"Show demo progress bar", S_YESNO, m_null, M_X,
    M_Y + gen3_demobar*M_SPC, {"demobar"}},
 
-  // [Nugget] Moved Palette Changes toggle to Accessibility page (page 5),
+  // [Nugget] Moved Palette Changes item to Accessibility page (page 5),
 
   // [Nugget] Moved Level Brightness item to Accessibility page (page 5),
 
@@ -6037,7 +6038,7 @@ boolean M_Responder (event_t* ev)
 	{                    
 	  if (automap_on)    // jff 2/22/98
 	    return false;                  // HUD mode control
-	  // [Nugget] Increase to accommodate for Crispy HUD
+	  // [Nugget] Increase to accommodate Crispy HUD
 	  if (screenSize<8+2)              // function on default F5
 	    while (screenSize<8+2 || !hud_displayed) // make hud visible
 	      M_SizeDisplay(1);            // when configuring it

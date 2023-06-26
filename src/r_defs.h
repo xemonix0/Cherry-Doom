@@ -219,8 +219,7 @@ typedef struct line_s
   void *specialdata;     // thinker_t for reversable actions
   int tranlump;          // killough 4/11/98: translucency filter, -1 == none
   int firsttag,nexttag;  // killough 4/17/98: improves searches for tags.
-  // [Nugget] Add this
-  // [crispy] calculate sound origin of line to be its midpoint
+  // [Nugget]: [crispy] calculate sound origin of line to be its midpoint
   degenmobj_t	soundorg;
 } line_t;
 

@@ -68,7 +68,9 @@ typedef enum
   CF_BUDDHA           = 8,
   // NOTARGET cheat
   CF_NOTARGET         = 16,
+  
   // [Nugget] All of the following:
+  
   CF_INFAMMO          = 32,   // Infinite ammo
   CF_FASTWEAPS        = 64,   // Fast Weapons
   CF_FLY              = 128,
@@ -192,17 +194,17 @@ typedef struct player_s
   fixed_t             recoilpitch, oldrecoilpitch;
 
   // [Nugget] Removed member for "variable player view bob",
-  // as view and weapon bobbing have been separated
-
-  // [Nugget]
-  
-  int jumpTics; // Jumping delay
-  fixed_t crouchOffset; // Viewheight offset, for crouching
-  
-  // Momentarily display the time at which an event occurred
-  int event_type, event_time, event_tics;
+  // as bobbing is now percentage-based
 
   weapswitch_t switching;
+
+  // [Nugget] All of the following:
+  
+  int                 jumpTics; // Jumping delay
+  fixed_t             crouchOffset; // How many units the player is crouched
+  
+  // Momentarily display the time at which an event occurred
+  int                 event_type, event_time, event_tics;
 
 } player_t;
 

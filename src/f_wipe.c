@@ -186,7 +186,7 @@ static int wipe_doFade(int width, int height, int ticks)
 
   memcpy(wipe_scr, fadeIn ? wipe_scr_end : wipe_scr_start, width*height);
 
-  for (y = 0; y < (SCREENWIDTH << hires) * (SCREENHEIGHT << hires); y++)
+  for (y = 0; y < width * height; y++)
   { wipe_scr[y] = colormaps[0][screenshade * 256 + wipe_scr[y]]; }
 
   if (!fadeIn) { // Fade out to black
@@ -227,7 +227,7 @@ int wipe_EndScreen(int x, int y, int width, int height)
   return 0;
 }
 
-// [Nugget] Rearrange for convenience
+// [Nugget] Rearranged for convenience
 static int (*const wipes[])(int, int, int) = {
   0, 0, 0, // [Nugget]
   wipe_initMelt,
@@ -236,14 +236,13 @@ static int (*const wipes[])(int, int, int) = {
   wipe_initColorXForm,
   wipe_doColorXForm,
   wipe_exitColorXForm,
-  // [Nugget]
+  // [Nugget] All of the following:
   wipe_initFade,
   wipe_doFade,
   wipe_exitFade
 };
 
-// [Nugget]
-extern int wipe_type;
+extern int wipe_type; // [Nugget]
 
 // killough 3/5/98: reformatted and cleaned up
 int wipe_ScreenWipe(int wipeno, int x, int y, int width, int height, int ticks)

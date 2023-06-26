@@ -93,7 +93,7 @@ static void cheat_autoaim();      // killough 7/19/98
 static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
 
-// [Nugget] All of the following
+// [Nugget] All of the following:
 
 static void cheat_nomomentum();
 static void cheat_fauxdemo();   // Emulates demo/net play state, for debugging
@@ -349,7 +349,7 @@ struct cheat_s cheat[] = {
   {"fps",    NULL,                always,
    {cheat_showfps} },
 
-// [Nugget] (All of the following)
+// [Nugget] All of the following:
 
   {"nomomentum", NULL, not_net|not_demo,
    {cheat_nomomentum} },
