@@ -35,6 +35,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**Subtle Idle Bobbing/Breathing**_ setting [p.f. International Doom]
 - **Chasecam** [i.b. ZDoom]
 - _**Teleporter Zoom**_ setting [i.b. ZDoom]
+- _**Fake Contrast**_ setting
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
 - **Event Timers:**
   - _"Use" Button Timer_ [p.f. Crispy Doom]; 

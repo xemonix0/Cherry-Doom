@@ -702,20 +702,6 @@ default_t defaults[] = {
   },
 
   {
-    "teleporter_zoom",
-    (config_t *) &teleporter_zoom, NULL,
-    {0}, {0,1}, number, ss_gen, wad_yes,
-    "1 to apply a zoom effect when teleporting"
-  },
-
-  {
-    "s_clipping_dist_x2",
-    (config_t *) &s_clipping_dist_x2, NULL,
-    {0}, {0,1}, number, ss_gen, wad_yes,
-    "1 to double the sound clipping distance"
-  },
-
-  {
     "chasecam_mode",
     (config_t *) &chasecam_mode, NULL,
     {0}, {0,2}, number, ss_gen, wad_no,
@@ -734,6 +720,27 @@ default_t defaults[] = {
     (config_t *) &chasecam_height, NULL,
     {48}, {1,64}, number, ss_gen, wad_no,
     "Chasecam height"
+  },
+
+  {
+    "teleporter_zoom",
+    (config_t *) &teleporter_zoom, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to apply a zoom effect when teleporting"
+  },
+
+  {
+    "fake_contrast",
+    (config_t *) &fake_contrast, NULL,
+    {1}, {0,1}, number, ss_gen, wad_yes,
+    "1 to apply fake contrast to walls"
+  },
+
+  {
+    "s_clipping_dist_x2",
+    (config_t *) &s_clipping_dist_x2, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to double the sound clipping distance"
   },
 
   {

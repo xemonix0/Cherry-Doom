@@ -4472,7 +4472,7 @@ enum { // [Nugget]
   gen5_chasedist,
   gen5_chaseheight,
   gen5_telezoom,
-  gen5_sclipdist,
+  gen5_fakecontrast,
 };
 
 static const char *s_clipping_dists[] = {
@@ -4486,21 +4486,21 @@ static const char *chasecam_modes[] = {
 setup_menu_t gen_settings5[] = { // [Nugget]
 
   {"Nugget Settings", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen5_title1 * M_SPC},
-    {"Disable palette tint in menus",   S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_menutint    * M_SPC, {"no_menu_tint"}},
-    {"Field of View",                   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_fov         * M_SPC, {"fov"}, 0, M_SetFOV},
-    {"Things Move Over/Under Things",   S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen5_overunder   * M_SPC, {"over_under"}},
-    {"Allow Jump/Crouch",               S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen5_jump_crouch * M_SPC, {"jump_crouch"}},
-    {"Damage Tint Cap (Default = 100)", S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_dmgcountcap * M_SPC, {"damagecount_cap"}},
-    {"Bonus Tint Cap (Default = -1)",   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_boncountcap * M_SPC, {"bonuscount_cap"}},
-    {"Disable Berserk Tint",            S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_berserktint * M_SPC, {"no_berserk_tint"}},
-    {"View Bobbing Percentage",         S_NUM,                        m_null, M_X, M_Y + gen5_viewbobbing * M_SPC, {"view_bobbing_percentage"}},
-    {"View Height (Default = 41)",      S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_viewheight  * M_SPC, {"viewheight_value"}},
-    {"Subtle Idle Bobbing/Breathing",   S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_idlebobbing * M_SPC, {"breathing"}},
-    {"Chasecam",                        S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_chasecam    * M_SPC, {"chasecam_mode"}, 0, NULL, chasecam_modes},
-    {"Chasecam distance",               S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chasedist   * M_SPC, {"chasecam_distance"}},
-    {"Chasecam height",                 S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chaseheight * M_SPC, {"chasecam_height"}},
-    {"Teleporter Zoom",                 S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_telezoom    * M_SPC, {"teleporter_zoom"}},
-    {"Sound Clipping Distance",         S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_sclipdist   * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
+    {"Disable palette tint in menus",   S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_menutint     * M_SPC, {"no_menu_tint"}},
+    {"Field of View",                   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_fov          * M_SPC, {"fov"}, 0, M_SetFOV},
+    {"Things Move Over/Under Things",   S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen5_overunder    * M_SPC, {"over_under"}},
+    {"Allow Jump/Crouch",               S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen5_jump_crouch  * M_SPC, {"jump_crouch"}},
+    {"Damage Tint Cap (Default = 100)", S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_dmgcountcap  * M_SPC, {"damagecount_cap"}},
+    {"Bonus Tint Cap (Default = -1)",   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_boncountcap  * M_SPC, {"bonuscount_cap"}},
+    {"Disable Berserk Tint",            S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_berserktint  * M_SPC, {"no_berserk_tint"}},
+    {"View Bobbing Percentage",         S_NUM,                        m_null, M_X, M_Y + gen5_viewbobbing  * M_SPC, {"view_bobbing_percentage"}},
+    {"View Height (Default = 41)",      S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_viewheight   * M_SPC, {"viewheight_value"}},
+    {"Subtle Idle Bobbing/Breathing",   S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_idlebobbing  * M_SPC, {"breathing"}},
+    {"Chasecam",                        S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_chasecam     * M_SPC, {"chasecam_mode"}, 0, NULL, chasecam_modes},
+    {"Chasecam distance",               S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chasedist    * M_SPC, {"chasecam_distance"}},
+    {"Chasecam height",                 S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chaseheight  * M_SPC, {"chasecam_height"}},
+    {"Teleporter Zoom",                 S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_telezoom     * M_SPC, {"teleporter_zoom"}},
+    {"Fake Contrast",                   S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_fakecontrast * M_SPC, {"fake_contrast"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings4}},
   {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings6}},
@@ -4512,6 +4512,7 @@ setup_menu_t gen_settings5[] = { // [Nugget]
 
 enum { // [Nugget]
   gen6_title1,
+  gen6_sclipdist,
   gen6_timeruse,
   gen6_timertelept,
   gen6_timerkey,
@@ -4541,6 +4542,7 @@ static const char *page_ticking_conds[] = {
 setup_menu_t gen_settings6[] = { // [Nugget]
 
   {"Nugget Settings", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title1 * M_SPC},
+    {"Sound Clipping Distance",         S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
     {"\"Use\" Button Timer",            S_CHOICE,          m_null, M_X, M_Y + gen6_timeruse      * M_SPC, {"timer_use"},        0, NULL, timer_strings},
     {"Teleport Timer",                  S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_timertelept   * M_SPC, {"timer_teleport"},   0, NULL, timer_strings},
     {"Key Pickup Timer",                S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_timerkey      * M_SPC, {"timer_key_pickup"}, 0, NULL, timer_strings},

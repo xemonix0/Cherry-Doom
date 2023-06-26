@@ -115,7 +115,8 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
               ->lightlevel >> LIGHTSEGSHIFT)+extralight;
 
   // [crispy] smoother fake contrast
-  lightnum += curline->fakecontrast;
+  if (NOTSTRICTMODE(fake_contrast)) // [Nugget]
+  { lightnum += curline->fakecontrast; }
 #if 0
   if (curline->v1->y == curline->v2->y)
     lightnum--;
@@ -777,7 +778,8 @@ void R_StoreWallRange(const int start, const int stop)
           int lightnum = (frontsector->lightlevel >> LIGHTSEGSHIFT)+extralight;
 
           // [crispy] smoother fake contrast
-          lightnum += curline->fakecontrast;
+          if (NOTSTRICTMODE(fake_contrast)) // [Nugget]
+          { lightnum += curline->fakecontrast; }
 #if 0
           if (curline->v1->y == curline->v2->y)
             lightnum--;

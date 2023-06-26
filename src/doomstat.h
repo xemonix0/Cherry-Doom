@@ -458,8 +458,6 @@ extern int no_berserk_tint;
 extern int view_bobbing_percentage;
 extern int viewheight_value;
 extern int breathing;
-extern int teleporter_zoom;
-extern int s_clipping_dist_x2;
 enum {
   CHASECAMMODE_OFF,
   CHASECAMMODE_BACK,
@@ -467,6 +465,9 @@ enum {
 }; extern int chasecam_mode;
 extern int chasecam_distance;
 extern int chasecam_height;
+extern int teleporter_zoom;
+extern int fake_contrast;
+extern int s_clipping_dist_x2;
 enum {
   TIMER_USE = 1,
   TIMER_TELEPORT,
