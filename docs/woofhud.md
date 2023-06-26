@@ -24,6 +24,7 @@ Possible values for the HUD widget names:
  * "keys"
  * "monsec" or "stats"
  * "sttime" or "time"
+ * "powers"
  * "coord" or "coords"
  * "fps" or "rate"
 
@@ -49,6 +50,7 @@ hud 0
 title bottomleft
 monsec bottomleft
 sttime bottomleft
+powers topright
 coord topright
 fps topright
 
@@ -61,6 +63,7 @@ weapon bottomleft
 keys bottomleft
 monsec bottomleft
 sttime bottomleft
+powers topright
 coord topright
 fps topright
 
@@ -73,6 +76,7 @@ weapon bottomright
 keys bottomleft
 monsec bottomleft
 sttime bottomleft
+powers topright
 coord topright
 fps topright
 ```
@@ -89,17 +93,18 @@ weapon 200 -16
 keys 2 -8
 monsec 2 8
 sttime 2 16
+powers 2 24
 coord 200 8
 fps 224 16
 ```
 
 ## Remarks
 
-The "title" widget is only visible if the Automap is enabled. The "monsec", "sttime" and "coord" widgets are only visible if they are explicitly enabled in the Options menu (separately for Automap and HUD). The "fps" widget is only visible if the SHOWFPS cheat is enabled.
+The "title" widget is only visible if the Automap is enabled. The "monsec", "sttime", "powers" and "coord" widgets are only visible if they are explicitly enabled in the Options menu (separately for Automap and HUD). The "fps" widget is only visible if the SHOWFPS cheat is enabled.
 
 A centered widget does not allow for any other left or right aligned widget on the same line.
 
-HUD modes without a paragraph remain unchanged. Widgets which are not mentioned in a paragraph will *never* be visible in the respective HUD mode. So, it is a good idea to *always* include the five widgets which make up the `hud 0` paragraph in the example above in *any* other paragraph.
+HUD modes without a paragraph remain unchanged. Widgets which are not mentioned in a paragraph will *never* be visible in the respective HUD mode. So, it is a good idea to *always* include the six widgets which make up the `hud 0` paragraph in the example above in *any* other paragraph.
 
 When using the Nugget HUD, its own widget positioning will be used instead. When using the Automap with Overlay Mode Off, the visible widgets will align corresponding to the last active HUD mode.
 

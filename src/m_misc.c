@@ -2845,6 +2845,13 @@ default_t defaults[] = {
     "1 to show level time widget"
   },
 
+  { // [Nugget] Powerup timers
+    "map_power_timers",
+    (config_t *) &map_power_timers, NULL,
+    {0}, {0,2}, number, ss_auto, wad_yes,
+    "1 to show powerup timers widget"
+  },
+
   {
     "followplayer",
     (config_t *) &followplayer, NULL,
@@ -3103,7 +3110,7 @@ default_t defaults[] = {
     "1 to show kills/items/secrets on HUD"
   },
 
-  {
+  { // [Nugget] Smart Totals from So Doom
     "smarttotals",
     (config_t *) &smarttotals, NULL,
     {0}, {0,1}, number, ss_stat, wad_no,
@@ -3115,6 +3122,13 @@ default_t defaults[] = {
     (config_t *) &hud_level_time, NULL,
     {0}, {0,1}, number, ss_stat, wad_yes,
     "1 to show level time on HUD"
+  },
+
+  { // [Nugget] Powerup timers
+    "hud_power_timers",
+    (config_t *) &hud_power_timers, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to powerup timers on HUD"
   },
 
   // [Nugget] Got rid of "crispy_hud"

@@ -103,6 +103,7 @@ The following text lines are available:
 nughud_time ---- Time display, only shown if enabled by the user
 nughud_sts ----- Stats (Kills/Items/Secrets) display, only shown if enabled by the user
 nughud_title --- Level Name display, only shown on the Automap
+nughud_powers -- Powerup timers, only shown if enabled by the user
 nughud_coord --- Coordinates display, only shown if enabled by the user
 nughud_fps ----- FPS display, only shown when the FPS cheat is activated
 nughud_message - Message display

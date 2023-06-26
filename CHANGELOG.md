@@ -3,6 +3,7 @@
 - **Implemented experimental 4X (800p) and 8X (1600p) resolutions**
 - **Implemented chasecam**
 - **Implemented fake contrast toggle**
+- **Implemented powerup timers**
 - **Arms number 1 can now be colored red if Berserk is available**
 
 ## Changes

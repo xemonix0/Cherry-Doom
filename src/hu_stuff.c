@@ -116,6 +116,7 @@ static hu_textline_t  w_monsec; //jff 2/16/98 new kill/secret widget for hud
 static hu_mtext_t     w_rtext;  //jff 2/26/98 text message refresh widget
 static hu_stext_t     w_secret; // [crispy] secret message widget
 static hu_textline_t  w_sttime; // time above status bar
+static hu_textline_t  w_powers; // [Nugget] Powerup timers
 
 #define MAX_HUDS 3
 #define MAX_WIDGETS 12
@@ -126,6 +127,7 @@ static widget_t widgets[MAX_HUDS][MAX_WIDGETS] = {
 
     {&w_monsec, align_bottomleft},
     {&w_sttime, align_bottomleft},
+    {&w_powers, align_topright}, // [Nugget] Powerup timers
     {&w_coord,  align_topright},
     {&w_fps,    align_topright},
     {NULL}
@@ -140,6 +142,7 @@ static widget_t widgets[MAX_HUDS][MAX_WIDGETS] = {
 
     {&w_monsec, align_bottomleft},
     {&w_sttime, align_bottomleft},
+    {&w_powers, align_topright}, // [Nugget] Powerup timers
     {&w_coord,  align_topright},
     {&w_fps,    align_topright},
     {NULL}
@@ -154,6 +157,7 @@ static widget_t widgets[MAX_HUDS][MAX_WIDGETS] = {
 
     {&w_monsec, align_bottomleft},
     {&w_sttime, align_bottomleft},
+    {&w_powers, align_topright}, // [Nugget] Powerup timers
     {&w_coord , align_topright},
     {&w_fps,    align_topright},
     {NULL}
@@ -213,6 +217,7 @@ static char hud_weapstr[80];
 static char hud_keysstr[80];
 static char hud_monsecstr[80];
 static char hud_timestr[48]; // time above status bar
+static char hud_powerstr[48]; // [Nugget] Powerup timers
 
 //
 // Builtin map names.
@@ -554,6 +559,7 @@ static void HU_widget_build_weapon (void);
 static void HU_widget_build_armor (void);
 static void HU_widget_build_health (void);
 static void HU_widget_build_ammo (void);
+static void HU_widget_build_powers(void); // [Nugget] Powerup timers
 
 void HU_Start(void)
 {
@@ -634,6 +640,9 @@ void HU_Start(void)
   HUlib_initTextLine(&w_monsec, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GRAY], HU_widget_build_monsec);
 
   HUlib_initTextLine(&w_sttime, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GRAY], HU_widget_build_sttime);
+
+  // [Nugget] Powerup timers
+  HUlib_initTextLine(&w_powers, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GRAY], HU_widget_build_powers);
 
   // create the automaps coordinate widget
   HUlib_initTextLine(&w_coord, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_xyco], HU_widget_build_coord);
@@ -1205,9 +1214,37 @@ static void HU_widget_build_sttime(void)
   HUlib_addStringToTextLine(&w_sttime, hud_timestr);
 }
 
-void HU_widget_rebuild_sttime(void) // [Nugget]
+// [Nugget]
+void HU_widget_rebuild_sttime(void)
 {
   HU_widget_build_sttime();
+}
+
+// [Nugget] Powerup timers
+static void HU_widget_build_powers(void)
+{
+  int offset = 0;
+
+  if (plr->powers[pw_invisibility] > 0) {
+    offset += sprintf(hud_powerstr, "\x1b%cINVIS %iS ", '0'+CR_BRICK,
+                      MIN(INVISTICS/TICRATE, 1 + (plr->powers[pw_invisibility] / TICRATE)));
+  }
+  if (plr->powers[pw_invulnerability] > 0) {
+    offset += sprintf(hud_powerstr + offset, "\x1b%cINVUL %iS ", '0'+CR_GREEN,
+                      MIN(INVULNTICS/TICRATE, 1 + (plr->powers[pw_invulnerability] / TICRATE)));
+  }
+  if (plr->powers[pw_infrared] > 0) {
+    offset += sprintf(hud_powerstr + offset, "\x1b%cLIGHT %iS ", '0'+CR_RED,
+                      MIN(INFRATICS/TICRATE, 1 + (plr->powers[pw_infrared] / TICRATE)));
+  }
+  if (plr->powers[pw_ironfeet] > 0) {
+    offset += sprintf(hud_powerstr + offset, "\x1b%cSUIT %iS ", '0'+CR_GRAY,
+                      MIN(IRONTICS/TICRATE, 1 + (plr->powers[pw_ironfeet] / TICRATE)));
+  }
+
+  HUlib_clearTextLine(&w_powers);
+  if (offset)
+  { HUlib_addStringToTextLine(&w_powers, hud_powerstr); }
 }
 
 static void HU_widget_build_coord (void)
@@ -1464,6 +1501,7 @@ boolean HU_DemoProgressBar(boolean force)
 // [FG] level stats and level time widgets
 int map_player_coords, map_level_stats, map_level_time;
 int hud_level_stats, hud_level_time;
+int map_power_timers, hud_power_timers; // [Nugget] Powerup timers
 
 // [Nugget]
 static void NughudAlignWidgetX(nughud_textline_t aligner, hu_textline_t* alignee)
@@ -1564,11 +1602,12 @@ void HU_Drawer(void)
       if (st_crispyhud) {
         nughud_textline_t *ntl = NULL;
 
-        if      (w->line == &w_sttime) { ntl = &nughud.time;  }
-        else if (w->line == &w_monsec) { ntl = &nughud.sts;   }
-        else if (w->line == &w_title)  { ntl = &nughud.title; }
-        else if (w->line == &w_coord)  { ntl = &nughud.coord; }
-        else if (w->line == &w_fps)    { ntl = &nughud.fps;   }
+        if      (w->line == &w_sttime) { ntl = &nughud.time;   }
+        else if (w->line == &w_monsec) { ntl = &nughud.sts;    }
+        else if (w->line == &w_title)  { ntl = &nughud.title;  }
+        else if (w->line == &w_powers) { ntl = &nughud.powers; }
+        else if (w->line == &w_coord)  { ntl = &nughud.coord;  }
+        else if (w->line == &w_fps)    { ntl = &nughud.fps;    }
 
         if (ntl) {
           if (ntl == &nughud.time && nughud.time_sts
@@ -1633,6 +1672,7 @@ void HU_Erase(void)
   HUlib_eraseTextLine(&w_fps);
 
   HUlib_eraseTextLine(&w_monsec);
+  HUlib_eraseTextLine(&w_powers); // [Nugget] Powerup timers
   HUlib_eraseTextLine(&w_sttime);
 }
 
@@ -1790,6 +1830,7 @@ void HU_Ticker(void)
     HU_enableWidget(&w_title, true);
 
     HU_enableWidget(&w_monsec, map_level_stats);
+    HU_enableWidget(&w_powers, map_power_timers); // [Nugget] Powerup timers
     HU_enableWidget(&w_sttime, map_level_time || plr->event_tics); // [Nugget] Event timers
     HU_enableWidget(&w_coord, STRICTMODE(map_player_coords));
   }
@@ -1813,6 +1854,7 @@ void HU_Ticker(void)
     HU_enableWidget(&w_keys, true);
 
     HU_enableWidget(&w_monsec, hud_level_stats);
+    HU_enableWidget(&w_powers, hud_power_timers); // [Nugget] Powerup timers
     HU_enableWidget(&w_sttime, hud_level_time || plr->event_tics); // [Nugget] Event timers
   }
   else if (scaledviewheight &&
@@ -1820,6 +1862,7 @@ void HU_Ticker(void)
            automap_off)
   {
     HU_enableWidget(&w_monsec, hud_level_stats);
+    HU_enableWidget(&w_powers, hud_power_timers); // [Nugget] Powerup timers
     HU_enableWidget(&w_sttime, hud_level_time || plr->event_tics); // [Nugget] Event timers
   }
 
@@ -2061,6 +2104,7 @@ static const struct {
   {"weapon", "weapons",   &w_weapon},
   {"keys",    NULL,       &w_keys},
   {"monsec", "stats",     &w_monsec},
+  {"powers",  NULL,       &w_powers},
   {"sttime", "time",      &w_sttime},
   {"coord",  "coords",    &w_coord},
   {"fps",    "rate",      &w_fps},

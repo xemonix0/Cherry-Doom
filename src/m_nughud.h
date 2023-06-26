@@ -59,6 +59,7 @@ typedef struct nughud_s {
   boolean           time_sts;
   nughud_textline_t sts;
   nughud_textline_t title;
+  nughud_textline_t powers;
   nughud_textline_t coord;
   nughud_textline_t fps;
   nughud_textline_t message;

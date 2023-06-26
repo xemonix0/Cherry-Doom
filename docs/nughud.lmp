@@ -154,15 +154,21 @@ nughud_title_y     143
 nughud_title_wide  -2
 nughud_title_align -1
 
+; Powerup timers display
+nughud_powers_x     318
+nughud_powers_y     8
+nughud_powers_wide  2
+nughud_powers_align 1
+
 ; Coordinates display
 nughud_coord_x     318
-nughud_coord_y     0
+nughud_coord_y     16
 nughud_coord_wide  2
 nughud_coord_align 1
 
 ; FPS display
 nughud_fps_x     318
-nughud_fps_y     8
+nughud_fps_y     24
 nughud_fps_wide  2
 nughud_fps_align 1
 

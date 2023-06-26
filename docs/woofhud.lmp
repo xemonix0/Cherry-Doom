@@ -3,6 +3,7 @@
 
 hud 0
 title topleft
+powers topright
 coords topright
 fps topright
 stats bottomright
@@ -10,6 +11,7 @@ time bottomright
 
 hud 1
 title topleft
+powers topright
 coords topright
 fps topright
 armor bottomleft
@@ -24,6 +26,7 @@ hud 2
 title topleft
 stats topright
 time topright
+powers topright
 coords topright
 fps topright
 keys bottomleft
