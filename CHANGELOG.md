@@ -16,7 +16,8 @@
 - **_'SUMMONE'_ and _'SUMMONF'_ now print a message requesting the mobj index**
 - **Mobjs summoned with _'SUMMON'_ now inherit the player's angle**
 - **Alt. Arms Display now accounts for SSG in Doom 1**
-- **Changed `gamma2` default to 10 (matches Woof)**
+- **Bloodier Gibbing now spawns a minimum of 20 blood splats** (previous minimum was 21)
+- **Changed `gamma2` default to 10** (matches Woof)
 - **Changed `sx_fix` default to 0**
 
 ## Bug Fixes

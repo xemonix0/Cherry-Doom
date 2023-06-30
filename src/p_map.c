@@ -2095,6 +2095,7 @@ static boolean crushchange, nofit;
 boolean PIT_ChangeSector(mobj_t *thing)
 {
   mobj_t *mo;
+  extern boolean idgaf; // [Nugget]
 
   if (P_ThingHeightClip(thing))
     return true; // keep checking
@@ -2112,7 +2113,7 @@ boolean PIT_ChangeSector(mobj_t *thing)
       }
       thing->flags &= ~MF_SOLID;
       thing->height = thing->radius = 0;
-      if (thing->info->bloodcolor)
+      if (thing->info->bloodcolor || idgaf)
       {
         thing->flags2 |= MF2_COLOREDBLOOD;
         thing->bloodcolor = V_BloodColor(thing->info->bloodcolor);
@@ -2159,7 +2160,7 @@ boolean PIT_ChangeSector(mobj_t *thing)
       if (nugget_comp[comp_fuzzyblood] && thing->flags & MF_SHADOW)
       { mo->flags |= MF_SHADOW; }
 
-      if (thing->info->bloodcolor)
+      if (thing->info->bloodcolor || idgaf)
       {
         mo->flags2 |= MF2_COLOREDBLOOD;
         mo->bloodcolor = V_BloodColor(thing->info->bloodcolor);

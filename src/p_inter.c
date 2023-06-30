@@ -29,6 +29,8 @@
 
 #include "p_inter.h"
 
+#include "v_video.h" // [Nugget]
+
 // [Nugget] cheese :)
 extern boolean cheese;
 
@@ -688,50 +690,48 @@ static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
               < ((128*FRACUNIT) + target->info->radius)))
       )
      )
-    { return true; }
+  { return true; }
   else
-    { return false; }
+  { return false; }
 }
 
 // [Nugget] Bloodier Gibbing
 static void P_NuggetGib(mobj_t *mo)
 {
-  extern int V_BloodColor();
-  int q = 20 + (Woof_Random()%20+1); // Spawn 20-40 blood splats
+  int quantity;
+  extern boolean idgaf;
 
   if (!casual_play || !bloodier_gibbing)
   { return; }
+  
+  quantity = 20 + (Woof_Random() % 21); // Spawn 20-40 blood splats
 
-  for (int i = 0; i < q; i++)
+  for (int i = 0; i < quantity; i++)
   {
-    mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + mo->height/1.5,
+    mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + (mo->height / 1.5),
                                 (nugget_comp[comp_nonbleeders]
                                  && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
-    // Set these flags, wipe the default ones
     splat->flags = (MF_NOBLOCKMAP|MF_DROPOFF|MF_TELEPORT);
 
-    // Fuzzy blood if applicable
     if (nugget_comp[comp_fuzzyblood] && mo->flags & MF_SHADOW)
     { splat->flags |= MF_SHADOW; }
 
-    if (colored_blood) {
+    if (mo->info->bloodcolor || idgaf) {
       splat->flags2 |= MF2_COLOREDBLOOD;
       splat->bloodcolor = V_BloodColor(mo->info->bloodcolor);
     }
 
-    // Apply random momentum in all directions
-    splat->momx = (Woof_Random() - Woof_Random())<<12;
-    splat->momy = (Woof_Random() - Woof_Random())<<12;
-    splat->momz = Woof_Random()<<12;
+    splat->momx = (Woof_Random() - Woof_Random()) << 12;
+    splat->momy = (Woof_Random() - Woof_Random()) << 12;
+    splat->momz = Woof_Random() << 12;
 
     // Physics differ between versions (complevels),
     // so this is done to get rather decent behavior in Vanilla
     if (demo_version < 200) { splat->flags |= MF_NOCLIP; }
 
-    // Randomize duration of the first frame
-    splat->tics += (Woof_Random()&3) - (Woof_Random()&3);
+    splat->tics += (Woof_Random() & 3) - (Woof_Random() & 3);
     if (splat->tics < 1) { splat->tics = 1; }
   }
 }
@@ -741,12 +741,11 @@ static void P_NuggetGib(mobj_t *mo)
 //
 // killough 11/98: make static
 
-extern boolean GIBBERS; // [Nugget] GIBBERS cheat
-
 static void P_KillMobj(mobj_t *source, mobj_t *target)
 {
   mobjtype_t item;
   mobj_t     *mo;
+  extern boolean GIBBERS; // [Nugget] GIBBERS cheat
 
   target->flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
 

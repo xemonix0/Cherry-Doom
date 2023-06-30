@@ -130,6 +130,9 @@ static void cheat_saitama();    // MDK Fist
 boolean cheese;
 static void cheat_cheese();     // cheese :)
 
+boolean idgaf;
+static void cheat_idgaf();
+
 //-----------------------------------------------------------------------------
 //
 // List of cheat codes, functions, and special argument indicators.
@@ -416,6 +419,9 @@ struct cheat_s cheat[] = {
 
   {"cheese", NULL, not_net|not_demo,
    {cheat_cheese} }, // cheese :)
+
+  {"idgaf", NULL, not_net|not_demo,
+   {cheat_idgaf} },
 
   {NULL}                 // end-of-list marker
 };
@@ -705,6 +711,14 @@ static void cheat_cheese() {
   else             { cheese = false; }
   
   displaymsg("%s", cheese ? "cheese :)" : "no cheese :(");
+}
+
+// [Nugget] idgaf
+static void cheat_idgaf() {
+  if (casual_play) { idgaf = !idgaf; }
+  else             { idgaf = false; }
+  
+  displaymsg("I %s.", idgaf ? "don't" : "do");
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode

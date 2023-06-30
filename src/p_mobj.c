@@ -1375,6 +1375,7 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
 void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
 {
   mobj_t* th;
+  extern boolean idgaf; // [Nugget]
   // killough 5/5/98: remove dependence on order of evaluation:
   int t = P_Random(pr_spawnblood);
   z += (t - P_Random(pr_spawnblood))<<10;
@@ -1386,7 +1387,7 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
   if (nugget_comp[comp_fuzzyblood] && bleeder->flags & MF_SHADOW)
   { th->flags |= MF_SHADOW; }
 
-  if (bleeder->info->bloodcolor)
+  if (bleeder->info->bloodcolor || idgaf)
   {
     th->flags2 |= MF2_COLOREDBLOOD;
     th->bloodcolor = V_BloodColor(bleeder->info->bloodcolor);

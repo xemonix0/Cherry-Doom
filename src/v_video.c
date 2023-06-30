@@ -201,7 +201,8 @@ static const int bloodcolor[] = {
 
 int V_BloodColor(int blood)
 {
-  return bloodcolor[blood];
+  extern boolean idgaf; // [Nugget]
+  return (idgaf ? CR_WHITE : bloodcolor[blood]);
 }
 
 // killough 5/2/98: tiny engine driven by table above
