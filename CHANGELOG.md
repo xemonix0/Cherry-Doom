@@ -18,6 +18,7 @@
 - **Mobjs summoned with _'SUMMON'_ now inherit the player's angle**
 - **Alt. Arms Display now accounts for SSG in Doom 1**
 - **Bloodier Gibbing now spawns a minimum of 20 blood splats** (previous minimum was 21)
+- **Renamed _Advance Internal Demos_ to _Play Internal Demos_**
 - **Changed `gamma2` default to 10** (matches Woof)
 - **Changed `sx_fix` default to 0**
 

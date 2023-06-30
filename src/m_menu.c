@@ -4552,7 +4552,7 @@ setup_menu_t gen_settings6[] = { // [Nugget]
     {"Teleport Timer",                  S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_timertelept   * M_SPC, {"timer_teleport"},   0, NULL, timer_strings},
     {"Key Pickup Timer",                S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_timerkey      * M_SPC, {"timer_key_pickup"}, 0, NULL, timer_strings},
     {"One-Key Quick Save/Load",         S_YESNO,           m_null, M_X, M_Y + gen6_quicksaveload * M_SPC, {"one_key_saveload"}},
-    {"Advance Internal Demos",          S_CHOICE,          m_null, M_X, M_Y + gen6_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
+    {"Play Internal Demos",             S_CHOICE,          m_null, M_X, M_Y + gen6_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
     {"Quick \"Quit Game\"",             S_YESNO,           m_null, M_X, M_Y + gen6_quickexit     * M_SPC, {"quick_quitgame"}},
     
   {"", S_SKIP, m_null, M_X, M_Y + gen6_stub1*M_SPC},

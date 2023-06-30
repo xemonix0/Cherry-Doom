@@ -42,7 +42,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
   - _Teleport Timer_ [i.b. the above];
   - _Key Pickup Timer_ [same as above].
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
-- Setting of condition to _**Advance Internal Demos**_
+- _**Play Internal Demos**_ setting
 - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt [p.f. Crispy Doom]
 - Toggling of _**Weapon Flash Lighting**_ [p.f. Crispy Doom]
 - Toggling of _**Weapon Flash Sprite**_ [p.f. Crispy Doom]
