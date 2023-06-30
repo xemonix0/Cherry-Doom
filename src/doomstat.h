@@ -501,13 +501,14 @@ enum {
   BOBSTYLE_INVSMOOTH,
   BOBSTYLE_QUAKE,
 }; extern int bobbing_style;
+extern int weaponsquat;
+extern int translucent_pspr;
 enum {
   SHOWBERSERK_NONE,
   SHOWBERSERK_AMMO,
   SHOWBERSERK_ARMS,
   SHOWBERSERK_BOTH,
 }; extern int show_berserk;
-extern int weaponsquat;
 
 // Status Bar/HUD
 extern int alt_arms;

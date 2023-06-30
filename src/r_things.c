@@ -704,7 +704,7 @@ void R_AddSprites(sector_t* sec, int lightlevel)
 
 boolean pspr_interp = true; // weapon bobbing interpolation
 
-void R_DrawPSprite (pspdef_t *psp)
+void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent flashes
 {
   fixed_t       tx;
   int           x1, x2;
@@ -756,7 +756,7 @@ void R_DrawPSprite (pspdef_t *psp)
 
   // store information in a vissprite
   vis = &avis;
-  vis->mobjflags = 0;
+  vis->mobjflags = (translucent ? MF_TRANSLUCENT : 0); // [Nugget] Translucent flashes
   vis->mobjflags2 = 0;
 
   // killough 12/98: fix psprite positioning problem
@@ -888,11 +888,10 @@ void R_DrawPlayerSprites(void)
   // add all active psprites
   for (i=0, psp=viewplayer->psprites;
        // [Nugget]: [crispy] A11Y number of player (first person) sprites to draw
-       i < (NOTSTRICTMODE(a11y_weapon_pspr) ? NUMPSPRITES : (NUMPSPRITES-1));
+       i < (NOTSTRICTMODE(a11y_weapon_pspr) ? NUMPSPRITES : ps_flash);
        i++,psp++)
-  {
-    if (psp->state) { R_DrawPSprite (psp); }
-  }
+    if (psp->state)
+      R_DrawPSprite (psp, (i == ps_flash) ? STRICTMODE(translucent_pspr) : false); // [Nugget] Translucent flashes
 }
 
 //

@@ -57,15 +57,16 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - **Weapon Bobbing is permanently updated every tic** (fixes choppy Chainsaw bobbing)
 - _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Bobbing Styles**_ selection [p.f. Zandronum]
-- **Show Berserk availability** setting [partially p.f. Crispy Doom]
 - _**Squat Weapon Down On Impact**_ setting [p.f. Crispy Doom]
+- _**Translucent Flashes**_ setting [i.b. Crispy Doom]
+- **Show Berserk availability** setting [partially p.f. Crispy Doom]
 - **"Correct" first person sprite centering** setting, to toggle the 1px first person sprite misalignment (CFG-Only: `sx_fix`)
 
 ### Status Bar/HUD
 
 - **NUGHUD lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.md`)
 - **SSG is accounted for on the Arms widget** [p.f. Crispy Doom]
-- **Powerup timers** setting
+- **Show Powerup Timers** setting
 - _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol (CFG-Only: `alt_arms`)
 - _**Smart Totals**_ setting [p.f. So Doom]
 - **Crosshair:**

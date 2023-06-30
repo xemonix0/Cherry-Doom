@@ -171,8 +171,9 @@ int no_hor_autoaim;
 int freeaim;
 int weapon_bobbing_percentage;
 int bobbing_style;
-int show_berserk;
 int weaponsquat;
+int translucent_pspr;
+int show_berserk;
 
 // Status Bar/HUD
 int alt_arms;

@@ -3187,9 +3187,10 @@ enum {
   weap2_center, // [FG] centered weapon sprite
   weap2_bobbing,
   weap2_bobstyle,
+  weap2_squat,
+  weap2_transpspr,
   weap2_recoilpitch,
   weap2_berserk,
-  weap2_squat,
 };
 
 setup_menu_t weap_settings1[];
@@ -3289,15 +3290,18 @@ setup_menu_t weap_settings2[] =
   {"Bobbing Style", S_CHOICE|S_STRICT, m_null, M_X, // [Nugget]
    M_Y + weap2_bobstyle*M_SPC, {"bobbing_style"}, 0, NULL, bobbing_styles},
 
+  {"Squat Weapon Down On Impact", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
+   M_Y + weap2_squat*M_SPC, {"weaponsquat"}},
+
+  {"Translucent Flashes", S_YESNO, m_null, M_X, // [Nugget]
+   M_Y + weap2_transpspr*M_SPC, {"translucent_pspr"}},
+   
   {"Enable Recoil Pitch", S_YESNO, m_null, M_X,
    M_Y + weap2_recoilpitch*M_SPC, {"weapon_recoilpitch"}},
    
   {"Show Berserk availability in", S_CHOICE, m_null, M_X, // [Nugget]
    M_Y + weap2_berserk*M_SPC, {"show_berserk"}, 0, NULL, show_berserk_strings},
      
-  {"Squat Weapon Down On Impact", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
-   M_Y + weap2_squat*M_SPC, {"weaponsquat"}},
-
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {weap_settings1}},
 
   // Final entry

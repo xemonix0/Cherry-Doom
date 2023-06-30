@@ -919,17 +919,24 @@ default_t defaults[] = {
   },
 
   {
-    "show_berserk",
-    (config_t *) &show_berserk, NULL,
-    {3}, {0,3}, number, ss_weap, wad_yes,
-    "Show Berserk availability (0 = None, 1 = Ammo, 2 = Arms, 3 = Both)"
-  },
-
-  {
     "weaponsquat",
     (config_t *) &weaponsquat, NULL,
     {0}, {0,1}, number, ss_weap, wad_yes,
     "1 to squat weapon down on impact"
+  },
+
+  {
+    "translucent_pspr",
+    (config_t *) &translucent_pspr, NULL,
+    {0}, {0,1}, number, ss_weap, wad_yes,
+    "1 to enable translucency for weapon flash sprites"
+  },
+
+  {
+    "show_berserk",
+    (config_t *) &show_berserk, NULL,
+    {3}, {0,3}, number, ss_weap, wad_yes,
+    "Show Berserk availability (0 = None, 1 = Ammo, 2 = Arms, 3 = Both)"
   },
 
   {
