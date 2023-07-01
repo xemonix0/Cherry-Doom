@@ -793,7 +793,7 @@ void R_SetupFrame (player_t *player)
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   pitch *= fovdiff;
   
-  // [Nugget]
+  // [Nugget] Chasecam
   if (STRICTMODE(chasecam_mode))
   {
     const fixed_t z = playerz + (chasecam_height*FRACUNIT);
@@ -824,7 +824,7 @@ void R_SetupFrame (player_t *player)
       const fixed_t dy = FixedMul(dist,   finesine[viewangle >> ANGLETOFINESHIFT]);
       const sector_t *sec = R_PointInSubsector(viewx-dx, viewy-dy)->sector;
     
-      viewz = z + (slope * chasecam_distance);
+      viewz = z + (slope * (dist / FRACUNIT));
 
       if (viewz < sec->floorheight+FRACUNIT || sec->ceilingheight-FRACUNIT < viewz)
       {
