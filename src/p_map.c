@@ -659,25 +659,21 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   // [Nugget] Allow things to move over/under solid things
   if (casual_play && over_under && (thing->flags & MF_SOLID))
   {
-    if (tmthing->z >= thing->z + thing->height) { // over
+    if (tmthing->z >= thing->z + thing->height) { // Over
       thing->intflags   |= MIF_OVERUNDER;
       tmthing->intflags |= MIF_OVERUNDER;
 
-      if (tmfloorz < thing->z + thing->height)
-      { tmfloorz = thing->z + thing->height; }
-      if (thing->ceilingz > tmthing->z)
-      { thing->ceilingz = tmthing->z; }
+      tmfloorz = MAX(thing->z + thing->height, tmfloorz);
+      thing->ceilingz = MIN(tmthing->z, thing->ceilingz);
 
       return true;
     }
-    else if (tmthing->z + tmthing->height <= thing->z) { // under
+    else if (tmthing->z + tmthing->height <= thing->z) { // Under
       thing->intflags   |= MIF_OVERUNDER;
       tmthing->intflags |= MIF_OVERUNDER;
 
-      if (tmceilingz > thing->z)
-      { tmceilingz = thing->z; }
-      if (thing->floorz < tmthing->z + tmthing->height)
-      { thing->floorz = tmthing->z + tmthing->height; }
+      tmceilingz = MIN(thing->z, tmceilingz);
+      thing->floorz = MAX(tmthing->z + tmthing->height, thing->floorz);
 
       return true;
     }
@@ -1553,6 +1549,20 @@ static boolean PTR_AimTraverse (intercept_t *in)
   return false;   // don't go any farther
 }
 
+// [Nugget] Explosive hitscan cheat
+boolean boomshot = false;
+static void P_SpawnExplosion(fixed_t x, fixed_t y, fixed_t z)
+{
+  mobj_t *mo = P_SpawnMobj(x, y, z, MT_ROCKET);
+  extern void P_SetTarget();
+  
+  mo->angle = shootthing->angle;
+  P_SetTarget(&mo->target, shootthing);
+  P_ExplodeMissile(mo);
+  
+  boomshot = false;
+}
+
 //
 // PTR_ShootTraverse
 //
@@ -1636,6 +1646,11 @@ static boolean PTR_ShootTraverse(intercept_t *in)
         }
       }
 
+      // [Nugget] Explosive hitscan cheat
+      if (boomshot)
+      { P_SpawnExplosion(x, y, z); }
+      else
+    
       // Spawn bullet puffs.
 
       P_SpawnPuff (x,y,z);
@@ -1676,6 +1691,10 @@ static boolean PTR_ShootTraverse(intercept_t *in)
   y = trace.y + FixedMul (trace.dy, frac);
   z = shootz + FixedMul (aimslope, FixedMul(frac, attackrange));
 
+  // [Nugget] Explosive hitscan cheat
+  if (boomshot)
+  { P_SpawnExplosion(x, y, z); }
+  else
   // Spawn bullet puffs or blod spots,
   // depending on target type.
   if (in->d.thing->flags & MF_NOBLOOD)

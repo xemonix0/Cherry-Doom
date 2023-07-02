@@ -124,6 +124,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**'LINETARGET'**_ to give some info on the player's linetarget [i.b. ZDoom]
 - _**'MDK'**_ [i.b. ZDoom]
 - _**'SAITAMA'**_ to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, featuring an alternate multishot attack when holding down Strafe On)
+- _**'BOOMCAN'**_ for explosive hitscan attacks
 - _**'NEXTMAP'**_ to exit the level [i.b. ZDoom]
 - _**'NEXTSECRET'**_ to exit the level as if using a secret exit [i.b. ZDoom]
 - _**'TURBO'**_ to change the player speed in-game

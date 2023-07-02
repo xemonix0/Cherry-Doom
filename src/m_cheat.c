@@ -127,6 +127,9 @@ static void cheat_linetarget(); // Give info on the current linetarget
 static void cheat_mdk();        // Inspired by ZDoom's console command
 static void cheat_saitama();    // MDK Fist
 
+boolean boomcan;
+static void cheat_boomcan();    // Explosive hitscan
+
 boolean cheese;
 static void cheat_cheese();     // cheese :)
 
@@ -417,6 +420,9 @@ struct cheat_s cheat[] = {
   {"saitama", NULL, not_net|not_demo,
    {cheat_saitama} }, // MDK Fist
 
+  {"boomcan", NULL, not_net|not_demo,
+   {cheat_boomcan} }, // Explosive hitscan
+
   {"cheese", NULL, not_net|not_demo,
    {cheat_cheese} }, // cheese :)
 
@@ -560,15 +566,15 @@ static void cheat_turbo(char *buf)
   displaymsg("Turbo Scale: %i%%", scale);
   forwardmove[0] = 25 * scale / 100;
   forwardmove[1] = 50 * scale / 100;
-  sidemove[0]    = 20 * scale / 100;
-  sidemove[1]    = 40 * scale / 100;
+     sidemove[0] = 20 * scale / 100;
+     sidemove[1] = 40 * scale / 100;
 }
 
 // [Nugget]
 static void cheat_summon()
 {
   if (spawneetype == -1)
-  { displaymsg("Summon: Enemy, Friend or Repeat last?"); }
+  { displaymsg("Summon: Enemy or Friend?"); }
   else
   { displaymsg("Summon: Enemy, Friend or Repeat last (%i)?", spawneetype); }
 }
@@ -705,19 +711,21 @@ static void cheat_saitama() {
   displaymsg("MDK Fist %s", (plyr->cheats & CF_SAITAMA) ? "ON" : "OFF");
 }
 
+// [Nugget] Explosive hitscan
+static void cheat_boomcan() {
+  boomcan = !boomcan;
+  displaymsg("Explosive Hitscan %s", boomcan ? "ON" : "OFF");
+}
+
 // [Nugget] cheese :)
 static void cheat_cheese() {
-  if (casual_play) { cheese = !cheese; }
-  else             { cheese = false; }
-  
+  cheese = !cheese;
   displaymsg("%s", cheese ? "cheese :)" : "no cheese :(");
 }
 
 // [Nugget] idgaf
 static void cheat_idgaf() {
-  if (casual_play) { idgaf = !idgaf; }
-  else             { idgaf = false; }
-  
+  idgaf = !idgaf;
   displaymsg("I %s.", idgaf ? "don't" : "do");
 }
 

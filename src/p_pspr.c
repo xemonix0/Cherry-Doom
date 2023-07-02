@@ -940,6 +940,8 @@ static void P_BulletSlope(mobj_t *mo)
   }
 }
 
+extern boolean boomcan; // [Nugget] Explosive hitscan cheat
+
 //
 // P_GunShot
 //
@@ -954,6 +956,10 @@ void P_GunShot(mobj_t *mo, boolean accurate)
       int t = P_Random(pr_misfire);
       angle += (t - P_Random(pr_misfire))<<18;
     }
+
+  // [Nugget] Explosive hitscan cheat
+  if (boomcan)
+  { boomshot = true; }
 
   P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
 }
@@ -1022,6 +1028,11 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
       int t = P_Random(pr_shotgun);
       angle += (t - P_Random(pr_shotgun))<<19;
       t = P_Random(pr_shotgun);
+
+      // [Nugget] Explosive hitscan cheat
+      if (boomcan)
+      { boomshot = true; }
+
       P_LineAttack(player->mo, angle, MISSILERANGE, bulletslope +
                    ((t - P_Random(pr_shotgun))<<5), damage);
     }
@@ -1358,6 +1369,10 @@ void A_WeaponBulletAttack(player_t *player, pspdef_t *psp)
     damage = (P_Random(pr_mbf21) % damagemod + 1) * damagebase;
     angle = (int)player->mo->angle + P_RandomHitscanAngle(pr_mbf21, hspread);
     slope = bulletslope + P_RandomHitscanSlope(pr_mbf21, vspread);
+
+    // [Nugget] Explosive hitscan cheat
+    if (boomcan)
+    { boomshot = true; }
 
     P_LineAttack(player->mo, angle, MISSILERANGE, slope, damage);
   }

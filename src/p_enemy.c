@@ -127,12 +127,12 @@ static boolean P_NuggetCheckMeleeHeight(mobj_t *actor)
   const mobj_t *pl = actor->target;
 
   if (!casual_play || !over_under)
-    { return true; }
+  { return true; }
   else if (pl->z > actor->z + actor->height
            || actor->z > pl->z + pl->height)
-    { return false; }
+  { return false; }
   else
-    { return true; }
+  { return true; }
 }
 
 //

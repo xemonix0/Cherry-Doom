@@ -5,6 +5,7 @@
 - **_Fake Contrast_ toggle**
 - **_Powerup Timers_**
 - **_Translucent [Weapon] Flashes_ toggle**
+- **_'BOOMCAN'_ cheat, for explosive hitscan attacks**
 - **Arms number 1 can now be colored red if Berserk is available**
 
 ## Changes

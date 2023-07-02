@@ -84,6 +84,8 @@ extern msecnode_t *sector_list;                             // phares 3/16/98
 extern fixed_t tmbbox[4];         // phares 3/20/98
 extern line_t *blockline;   // killough 8/11/98
 
+extern boolean boomshot; // [Nugget] Explosive hitscan cheat
+
 #endif // __P_MAP__
 
 //----------------------------------------------------------------------------
