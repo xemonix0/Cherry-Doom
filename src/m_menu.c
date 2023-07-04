@@ -4608,8 +4608,6 @@ void M_Trans(void) // To reset translucency after setting it in menu
     R_InitTranMap(0);
 
     D_SetPredefinedTranslucency();
-    
-    DISABLE_ITEM(STRICTMODE(!translucency), weap_settings2[weap2_transpspr]); // [Nugget]
 }
 
 // Setting up for the General screen. Turn on flags, set pointers,

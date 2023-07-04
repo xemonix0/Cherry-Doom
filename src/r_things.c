@@ -891,7 +891,7 @@ void R_DrawPlayerSprites(void)
        i < (NOTSTRICTMODE(a11y_weapon_pspr) ? NUMPSPRITES : ps_flash);
        i++,psp++)
     if (psp->state)
-      R_DrawPSprite (psp, (i == ps_flash) ? STRICTMODE(translucent_pspr) : false); // [Nugget] Translucent flashes
+      R_DrawPSprite (psp, i == ps_flash && STRICTMODE(translucent_pspr)); // [Nugget] Translucent flashes
 }
 
 //

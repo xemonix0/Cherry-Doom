@@ -1559,8 +1559,6 @@ static void P_SpawnExplosion(fixed_t x, fixed_t y, fixed_t z)
   mo->angle = shootthing->angle;
   P_SetTarget(&mo->target, shootthing);
   P_ExplodeMissile(mo);
-  
-  boomshot = false;
 }
 
 //
@@ -1767,6 +1765,7 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
   attackrange = distance;
   aimslope = slope;
   P_PathTraverse(t1->x,t1->y,x2,y2,PT_ADDLINES|PT_ADDTHINGS,PTR_ShootTraverse);
+  boomshot = false; // [Nugget] Explosive hitscan cheat
 }
 
 //
