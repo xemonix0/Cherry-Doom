@@ -136,6 +136,9 @@ Perform a hitscan attack with 1 million damage.
 `SAITAMA`  
 Toggle MDK Fist (replaces A_Punch's melee attack with the MDK attack, featuring an alternate multishot attack when holding down Strafe On).
     
+`BOOMCAN`
+Toggle explosive hitscan attacks for the player's ranged hitscan weapons
+    
 `NEXTMAP`  
 Exit the level.
     
