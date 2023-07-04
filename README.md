@@ -10,7 +10,7 @@ Although the new code has been written with the intention of not breaking demo c
 
 Most of Nugget Doom's features come from other sources, like source ports and mods; the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them. These acknowledgements are included in the feature lists below; be aware that some might be inaccurate or outright missing.
 
-A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`. For these settings, their internal variable names are provided alongside the _CFG-Only_ label as guidance.
+A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`. For these settings, their config variable names are provided alongside the _CFG-Only_ label as guidance.
 
 ### General
 
@@ -23,24 +23,20 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
   - _"Seizure"_ (**Warning**: this one might legitimately be seizure-inducing, use with caution);
   - _"Fade"_.
 - **Fixed screen melt inconsistency across resolutions**
-- _**Disable palette tint in menus**_ setting [i.b. Crispy Doom]
-- _**Field of View**_ setting [p.f. Doom Retro]
 - _**Things move over/under things**_ setting [p.f. Crispy Doom]
 - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first) [p.f. Crispy Doom]
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first) [i.b. ZDoom]
-- _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tint
-- _**Disable Berserk Tint**_ setting
-- _**View Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
+- _**Field of View**_ setting [p.f. Doom Retro]
 - _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV [i.b. Brutal Doom]
+- _**View Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Subtle Idle Bobbing/Breathing**_ setting [p.f. International Doom]
-- **Chasecam** [i.b. ZDoom]
 - _**Teleporter Zoom**_ setting [i.b. ZDoom]
+- _**Chasecam**_ [i.b. ZDoom]
+- _**Disable palette tint in menus**_ setting [i.b. Crispy Doom]
+- _**Disable Berserk Tint**_ setting
+- _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tints
 - _**Fake Contrast**_ setting
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
-- **Event Timers:**
-  - _"Use" Button Timer_ [p.f. Crispy Doom]; 
-  - _Teleport Timer_ [i.b. the above];
-  - _Key Pickup Timer_ [same as above].
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
 - _**Play Internal Demos**_ setting
 - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt [p.f. Crispy Doom]
@@ -69,6 +65,10 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - **Show Powerup Timers** setting
 - _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol (CFG-Only: `alt_arms`)
 - _**Smart Totals**_ setting [p.f. So Doom]
+- **Event Timers:**
+  - _"Use" Button Timer_ [p.f. Crispy Doom]; 
+  - _Teleport Timer_ [i.b. the above];
+  - _Key Pickup Timer_ [same as above].
 - **Crosshair:**
   - 5 new types;
   - Shaded variants for all types;
@@ -133,8 +133,9 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ### Miscellaneous
 
-- **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
 - **Zoom key**
+- **Allowed mouselook while dead**
+- **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
 

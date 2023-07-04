@@ -3101,7 +3101,7 @@ setup_menu_t keys_settings9[] =  // Key Binding screen strings
   {"NUGGET",S_SKIP|S_TITLE,m_null,KB_X,M_Y+9*M_SPC},
   {"JUMP/FLY UP"     ,S_INPUT|S_STRICT|S_CRITICAL,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_jump},
   {"CROUCH/FLY DOWN" ,S_INPUT|S_STRICT|S_CRITICAL,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_crouch},
-  {"TOGGLE CROSSHAIR",S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+12*M_SPC,{0},input_crosshair},
+  {"TOGGLE CROSSHAIR",S_INPUT,                    m_scrn,KB_X,M_Y+12*M_SPC,{0},input_crosshair},
   {"TOGGLE ZOOM"     ,S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+13*M_SPC,{0},input_zoom},
   {"ZOOM FOV"        ,S_NUM  |S_STRICT,           m_null,KB_X,M_Y+14*M_SPC,{"zoom_fov"}, 0, M_SetFOV},
   {"CYCLE CHASECAM",  S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+15*M_SPC,{0},input_chasecam},
@@ -3257,7 +3257,7 @@ static const char *bobbing_styles[] = {
 
 // [Nugget]
 static const char *show_berserk_strings[] = {
-  "None", "Ammo count", "Arms", "Both", NULL
+  "None", "Ammo count", "Arms widget", "Both", NULL
 };
 
 setup_menu_t weap_settings2[] =
@@ -3293,7 +3293,7 @@ setup_menu_t weap_settings2[] =
   {"Squat Weapon Down On Impact", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
    M_Y + weap2_squat*M_SPC, {"weaponsquat"}},
 
-  {"Translucent Flashes", S_YESNO, m_null, M_X, // [Nugget]
+  {"Translucent Flashes", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
    M_Y + weap2_transpspr*M_SPC, {"translucent_pspr"}},
    
   {"Enable Recoil Pitch", S_YESNO, m_null, M_X,
@@ -3426,10 +3426,20 @@ enum {
   stat2_title2,
   stat2_smart,
   stat2_hudfont,
+  stat2_stub2,
+  stat2_title3,
+  stat2_timeruse,
+  stat2_timertelept,
+  stat2_timerkey,
 };
 
 static const char *show_widgets_strings[] = {
     "OFF", "ON AUTOMAP", "ALWAYS", NULL
+};
+
+// [Nugget]
+static const char *timer_strings[] = {
+  "Off", "In Demos", "Always", NULL
 };
 
 setup_menu_t stat_settings2[] =
@@ -3438,7 +3448,7 @@ setup_menu_t stat_settings2[] =
 
   {"BACKPACK CHANGES THRESHOLDS"    ,S_YESNO,m_null,M_X,M_Y+stat2_backpack*M_SPC,  {"hud_backpack_thresholds"}},
   {"COLOR OF ARMOR DEPENDS ON TYPE" ,S_YESNO,m_null,M_X,M_Y+stat2_armortype*M_SPC, {"hud_armor_type"}},
-  // [Nugget] Disallowed on Strict Mode
+  // [Nugget] Disallowed in Strict Mode
   {"SMOOTH HEALTH/ARMOR COUNT"      ,S_YESNO|S_STRICT,m_null,M_X,M_Y+stat2_smooth*M_SPC, {"smooth_counts"}},
 
   {"",S_SKIP,m_null,M_X,M_Y+stat2_stub1*M_SPC},
@@ -3447,6 +3457,16 @@ setup_menu_t stat_settings2[] =
 
   {"SMART TOTALS"                      , S_YESNO ,m_null,M_X,M_Y+stat2_smart*M_SPC,   {"smarttotals"}}, // [Nugget]
   {"USE STANDARD DOOM FONT FOR WIDGETS", S_CHOICE,m_null,M_X,M_Y+stat2_hudfont*M_SPC, {"hud_widget_font"}, 0, NULL, show_widgets_strings},
+
+  // [Nugget]
+
+  {"",S_SKIP,m_null,M_X,M_Y+stat2_stub2*M_SPC},
+
+  {"Event Timers",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title3*M_SPC },
+
+  {"\"Use\" Button Timer", S_CHOICE,          m_null, M_X, M_Y + stat2_timeruse    * M_SPC, {"timer_use"},        0, NULL, timer_strings},
+  {"Teleport Timer",       S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat2_timertelept * M_SPC, {"timer_teleport"},   0, NULL, timer_strings},
+  {"Key Pickup Timer",     S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat2_timerkey    * M_SPC, {"timer_key_pickup"}, 0, NULL, timer_strings},
 
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {stat_settings1}},
   {"NEXT ->" ,S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {stat_settings3}}, // [Nugget]
@@ -3982,7 +4002,7 @@ extern int usejoystick, usemouse;
 extern int realtic_clock_rate, tran_filter_pct;
 
 setup_menu_t gen_settings1[], gen_settings2[], gen_settings3[], gen_settings4[],
-             gen_settings5[], gen_settings6[]; // [Nugget]
+             gen_settings5[], gen_settings6[], gen_settings7[]; // [Nugget]
 
 setup_menu_t* gen_settings[] =
 {
@@ -3993,6 +4013,7 @@ setup_menu_t* gen_settings[] =
   // [Nugget]
   gen_settings5,
   gen_settings6,
+  gen_settings7,
   NULL
 };
 
@@ -4195,6 +4216,8 @@ enum {
   gen3_screen_wipe, // [Nugget]
   gen3_death_action,
   gen3_demobar,
+  gen3_palette_changes,
+  gen3_level_brightness,
   gen3_end1,
 
   gen3_title2,
@@ -4390,9 +4413,11 @@ setup_menu_t gen_settings3[] = { // General Settings screen3
   {"Show demo progress bar", S_YESNO, m_null, M_X,
    M_Y + gen3_demobar*M_SPC, {"demobar"}},
 
-  // [Nugget] Moved Palette Changes item to Accessibility page (page 5),
+  {"Pain/pickup/powerup flashes", S_YESNO|S_STRICT, m_null, M_X,
+   M_Y + gen3_palette_changes*M_SPC, {"palette_changes"}},
 
-  // [Nugget] Moved Level Brightness item to Accessibility page (page 5),
+  {"Level Brightness", S_THERMO|S_STRICT, m_null, M_X_THRM,
+   M_Y + gen3_level_brightness*M_SPC, {"extra_level_brightness"}},
 
   {"", S_SKIP, m_null, M_X, M_Y + gen3_end1*M_SPC},
 
@@ -4463,25 +4488,18 @@ setup_menu_t gen_settings4[] = { // General Settings screen4
 
 enum { // [Nugget]
   gen5_title1,
-  gen5_menutint,
-  gen5_fov,
   gen5_overunder,
   gen5_jump_crouch,
-  gen5_dmgcountcap,
-  gen5_boncountcap,
-  gen5_berserktint,
-  gen5_viewbobbing,
+  gen5_stub1,
+  gen5_title2,
+  gen5_fov,
   gen5_viewheight,
+  gen5_viewbobbing,
   gen5_idlebobbing,
+  gen5_telezoom,
   gen5_chasecam,
   gen5_chasedist,
   gen5_chaseheight,
-  gen5_telezoom,
-  gen5_fakecontrast,
-};
-
-static const char *s_clipping_dists[] = {
-  "1200", "2400", NULL
 };
 
 static const char *chasecam_modes[] = {
@@ -4490,22 +4508,19 @@ static const char *chasecam_modes[] = {
 
 setup_menu_t gen_settings5[] = { // [Nugget]
 
-  {"Nugget Settings", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen5_title1 * M_SPC},
-    {"Disable palette tint in menus",   S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_menutint     * M_SPC, {"no_menu_tint"}},
-    {"Field of View",                   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_fov          * M_SPC, {"fov"}, 0, M_SetFOV},
-    {"Things Move Over/Under Things",   S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen5_overunder    * M_SPC, {"over_under"}},
-    {"Allow Jump/Crouch",               S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen5_jump_crouch  * M_SPC, {"jump_crouch"}},
-    {"Damage Tint Cap (Default = 100)", S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_dmgcountcap  * M_SPC, {"damagecount_cap"}},
-    {"Bonus Tint Cap (Default = -1)",   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_boncountcap  * M_SPC, {"bonuscount_cap"}},
-    {"Disable Berserk Tint",            S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_berserktint  * M_SPC, {"no_berserk_tint"}},
-    {"View Bobbing Percentage",         S_NUM,                        m_null, M_X, M_Y + gen5_viewbobbing  * M_SPC, {"view_bobbing_percentage"}},
-    {"View Height (Default = 41)",      S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_viewheight   * M_SPC, {"viewheight_value"}},
-    {"Subtle Idle Bobbing/Breathing",   S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_idlebobbing  * M_SPC, {"breathing"}},
-    {"Chasecam",                        S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_chasecam     * M_SPC, {"chasecam_mode"}, 0, NULL, chasecam_modes},
-    {"Chasecam distance",               S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chasedist    * M_SPC, {"chasecam_distance"}},
-    {"Chasecam height",                 S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chaseheight  * M_SPC, {"chasecam_height"}},
-    {"Teleporter Zoom",                 S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_telezoom     * M_SPC, {"teleporter_zoom"}},
-    {"Fake Contrast",                   S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_fakecontrast * M_SPC, {"fake_contrast"}},
+  {"Nugget - Gameplay", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen5_title1 * M_SPC},
+    {"Things Move Over/Under Things", S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen5_overunder   * M_SPC, {"over_under"}},
+    {"Allow Jump/Crouch",             S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen5_jump_crouch * M_SPC, {"jump_crouch"}},
+  {"", S_SKIP, m_null, M_X, M_Y + gen5_stub1*M_SPC},
+  {"Nugget - View", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen5_title2 * M_SPC},
+    {"Field of View",                 S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_fov         * M_SPC, {"fov"}, 0, M_SetFOV},
+    {"View Height",                   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_viewheight  * M_SPC, {"viewheight_value"}},
+    {"View Bobbing Percentage",       S_NUM,                        m_null, M_X, M_Y + gen5_viewbobbing * M_SPC, {"view_bobbing_percentage"}},
+    {"Subtle Idle Bobbing/Breathing", S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_idlebobbing * M_SPC, {"breathing"}},
+    {"Teleporter Zoom",               S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_telezoom    * M_SPC, {"teleporter_zoom"}},
+    {"Chasecam",                      S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_chasecam    * M_SPC, {"chasecam_mode"}, 0, NULL, chasecam_modes},
+    {"Chasecam distance",             S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chasedist   * M_SPC, {"chasecam_distance"}},
+    {"Chasecam height",               S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_chaseheight * M_SPC, {"chasecam_height"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings4}},
   {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings6}},
@@ -4517,56 +4532,71 @@ setup_menu_t gen_settings5[] = { // [Nugget]
 
 enum { // [Nugget]
   gen6_title1,
+  gen6_menutint,
+  gen6_berserktint,
+  gen6_dmgcountcap,
+  gen6_boncountcap,
+  gen6_fakecontrast,
+  gen6_stub1,
+  gen6_title2,
   gen6_sclipdist,
-  gen6_timeruse,
-  gen6_timertelept,
-  gen6_timerkey,
   gen6_quicksaveload,
   gen6_nopagetic,
   gen6_quickexit,
-  gen6_stub1,
-  gen6_title2,
-#if 0 // [Nugget] For future use, hopefully
-  gen6_a11y_seclight,
-#endif
-  gen6_level_brightness,
-  gen6_a11y_flash,
-  gen6_a11y_pspr,
-  gen6_palette_changes,
-  gen6_a11y_invul,
 };
 
-static const char *timer_strings[] = {
-  "Off", "In Demos", "Always", NULL
+static const char *s_clipping_dists[] = {
+  "1200", "2400", NULL
 };
 
 static const char *page_ticking_conds[] = {
-  "Always", "Not On Menus", "Never", NULL
+  "Always", "Not In Menus", "Never", NULL
 };
 
 setup_menu_t gen_settings6[] = { // [Nugget]
 
-  {"Nugget Settings", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title1 * M_SPC},
-    {"Sound Clipping Distance",         S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
-    {"\"Use\" Button Timer",            S_CHOICE,          m_null, M_X, M_Y + gen6_timeruse      * M_SPC, {"timer_use"},        0, NULL, timer_strings},
-    {"Teleport Timer",                  S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_timertelept   * M_SPC, {"timer_teleport"},   0, NULL, timer_strings},
-    {"Key Pickup Timer",                S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_timerkey      * M_SPC, {"timer_key_pickup"}, 0, NULL, timer_strings},
-    {"One-Key Quick Save/Load",         S_YESNO,           m_null, M_X, M_Y + gen6_quicksaveload * M_SPC, {"one_key_saveload"}},
-    {"Play Internal Demos",             S_CHOICE,          m_null, M_X, M_Y + gen6_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
-    {"Quick \"Quit Game\"",             S_YESNO,           m_null, M_X, M_Y + gen6_quickexit     * M_SPC, {"quick_quitgame"}},
-    
+  {"Nugget - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title1 * M_SPC},
+    {"Disable palette tint in menus", S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_menutint      * M_SPC, {"no_menu_tint"}},
+    {"Disable Berserk Tint",          S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_berserktint   * M_SPC, {"no_berserk_tint"}},
+    {"Damage Tint Cap",               S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_dmgcountcap   * M_SPC, {"damagecount_cap"}},
+    {"Bonus Tint Cap",                S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_boncountcap   * M_SPC, {"bonuscount_cap"}},
+    {"Fake Contrast",                 S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_fakecontrast  * M_SPC, {"fake_contrast"}},
   {"", S_SKIP, m_null, M_X, M_Y + gen6_stub1*M_SPC},
-  {"Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
-#if 0 // [Nugget] For future use, hopefully
-    {"Flickering Sector Lighting",  S_YESNO,  m_null, M_X,      M_Y+gen6_a11y_seclight   *M_SPC, {"a11y_sector_lighting"}},
-#endif
-    {"Level Brightness",            S_THERMO|S_STRICT, m_null, M_X_THRM, M_Y + gen6_level_brightness * M_SPC, {"extra_level_brightness"}},
-    {"Weapon Flash Lighting",       S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen6_a11y_flash       * M_SPC, {"a11y_weapon_flash"}},
-    {"Weapon Flash Sprite",         S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen6_a11y_pspr        * M_SPC, {"a11y_weapon_pspr"}},
-    {"Pain/pickup/powerup flashes", S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen6_palette_changes  * M_SPC, {"palette_changes"}},
-    {"Invulnerability Colormap",    S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen6_a11y_invul       * M_SPC, {"a11y_invul_colormap"}},
+  {"Nugget - Miscellaneous", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
+    {"Sound Hearing Distance",        S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
+    {"One-Key Quick Save/Load",       S_YESNO,           m_null, M_X, M_Y + gen6_quicksaveload * M_SPC, {"one_key_saveload"}},
+    {"Play Internal Demos",           S_CHOICE,          m_null, M_X, M_Y + gen6_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
+    {"Quick \"Quit Game\"",           S_YESNO,           m_null, M_X, M_Y + gen6_quickexit     * M_SPC, {"quick_quitgame"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings5}},
+  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings7}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
+
+enum { // [Nugget]
+  gen7_title1,
+#if 0 // [Nugget] For future use, hopefully
+  gen7_a11y_seclight,
+#endif
+  gen7_a11y_flash,
+  gen7_a11y_pspr,
+  gen7_a11y_invul,
+};
+
+setup_menu_t gen_settings7[] = { // [Nugget]
+
+  {"Nugget - Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title1 * M_SPC},
+#if 0 // [Nugget] For future use, hopefully
+    {"Flickering Sector Lighting",  S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen7_a11y_seclight    * M_SPC, {"a11y_sector_lighting"}},
+#endif
+    {"Weapon Flash Lighting",       S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen7_a11y_flash       * M_SPC, {"a11y_weapon_flash"}},
+    {"Weapon Flash Sprite",         S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen7_a11y_pspr        * M_SPC, {"a11y_weapon_pspr"}},
+    {"Invulnerability Colormap",    S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen7_a11y_invul       * M_SPC, {"a11y_invul_colormap"}},
+
+  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings6}},
 
   // Final entry
 
@@ -4578,6 +4608,8 @@ void M_Trans(void) // To reset translucency after setting it in menu
     R_InitTranMap(0);
 
     D_SetPredefinedTranslucency();
+    
+    DISABLE_ITEM(STRICTMODE(!translucency), weap_settings2[weap2_transpspr]); // [Nugget]
 }
 
 // Setting up for the General screen. Turn on flags, set pointers,

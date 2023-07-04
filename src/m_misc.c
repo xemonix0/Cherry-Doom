@@ -343,7 +343,12 @@ default_t defaults[] = {
     "1 for solid color status bar background in widescreen mode"
   },
 
-  // [Nugget] Moved "extra_level_brightness" further below
+  {
+    "extra_level_brightness",
+    (config_t *) &extra_level_brightness, NULL,
+    {0}, {-8,8}, number, ss_gen, wad_no, // [Nugget] Broader light level range
+    "level brightness"
+  },
 
   {
     "menu_background",
@@ -588,7 +593,12 @@ default_t defaults[] = {
     "1 to enable demo progress bar"
   },
 
-  // [Nugget] Moved "palette_changes" further below
+  {
+    "palette_changes",
+    (config_t *) &palette_changes, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "0 to disable palette tint changes"
+  },
 
   { // [Nugget] Replace screen melt toggle
     "wipe_type",
@@ -632,20 +642,6 @@ default_t defaults[] = {
   // [Nugget] General options --------------------------------------------
 
   {
-    "no_menu_tint",
-    (config_t *) &no_menu_tint, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to disable palette tint in menus"
-  },
-
-  {
-    "fov",
-    (config_t *) &fov, NULL,
-    {ORIGFOV}, {MINFOV,MAXFOV}, number, ss_gen, wad_no,
-    "Field of View"
-  },
-
-  {
     "over_under",
     (config_t *) &over_under, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,
@@ -660,31 +656,10 @@ default_t defaults[] = {
   },
 
   {
-    "damagecount_cap",
-    (config_t *) &damagecount_cap, NULL,
-    {100}, {0,100}, number, ss_gen, wad_no,
-    "Player damage tint cap"
-  },
-
-  {
-    "bonuscount_cap",
-    (config_t *) &bonuscount_cap, NULL,
-    {-1}, {-1,100}, number, ss_gen, wad_no,
-    "Player bonus tint cap"
-  },
-
-  {
-    "no_berserk_tint",
-    (config_t *) &no_berserk_tint, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to disable Berserk tint"
-  },
-
-  {
-    "view_bobbing_percentage",
-    (config_t *) &view_bobbing_percentage, NULL,
-    {100}, {0,100}, number, ss_gen, wad_no,
-    "Percentage of view bobbing intensity"
+    "fov",
+    (config_t *) &fov, NULL,
+    {ORIGFOV}, {MINFOV,MAXFOV}, number, ss_gen, wad_no,
+    "Field of View"
   },
 
   {
@@ -695,10 +670,24 @@ default_t defaults[] = {
   },
 
   {
+    "view_bobbing_percentage",
+    (config_t *) &view_bobbing_percentage, NULL,
+    {100}, {0,100}, number, ss_gen, wad_no,
+    "Percentage of view bobbing intensity"
+  },
+
+  {
     "breathing",
     (config_t *) &breathing, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,
     "1 to imitate player's breathing (subtle idle bobbing)"
+  },
+
+  {
+    "teleporter_zoom",
+    (config_t *) &teleporter_zoom, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to apply a zoom effect when teleporting"
   },
 
   {
@@ -723,10 +712,31 @@ default_t defaults[] = {
   },
 
   {
-    "teleporter_zoom",
-    (config_t *) &teleporter_zoom, NULL,
-    {0}, {0,1}, number, ss_gen, wad_yes,
-    "1 to apply a zoom effect when teleporting"
+    "no_menu_tint",
+    (config_t *) &no_menu_tint, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to disable palette tint in menus"
+  },
+
+  {
+    "no_berserk_tint",
+    (config_t *) &no_berserk_tint, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to disable Berserk tint"
+  },
+
+  {
+    "damagecount_cap",
+    (config_t *) &damagecount_cap, NULL,
+    {100}, {0,100}, number, ss_gen, wad_no,
+    "Player damage tint cap"
+  },
+
+  {
+    "bonuscount_cap",
+    (config_t *) &bonuscount_cap, NULL,
+    {-1}, {-1,100}, number, ss_gen, wad_no,
+    "Player bonus tint cap"
   },
 
   {
@@ -744,27 +754,6 @@ default_t defaults[] = {
   },
 
   {
-    "timer_use",
-    (config_t *) &timer_use, NULL,
-    {0}, {0,2}, number, ss_gen, wad_no,
-    "Show time at which Use was pressed (0 = Off, 1 = In Demos, 2 = Always)"
-  },
-
-  {
-    "timer_teleport",
-    (config_t *) &timer_teleport, NULL,
-    {0}, {0,2}, number, ss_gen, wad_no,
-    "Show time at which a teleporter was used (0 = Off, 1 = In Demos, 2 = Always)"
-  },
-
-  {
-    "timer_key_pickup",
-    (config_t *) &timer_key_pickup, NULL,
-    {0}, {0,2}, number, ss_gen, wad_no,
-    "Show time at which a key was picked up (0 = Off, 1 = In Demos, 2 = Always)"
-  },
-
-  {
     "one_key_saveload",
     (config_t *) &one_key_saveload, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
@@ -775,7 +764,7 @@ default_t defaults[] = {
     "no_page_ticking",
     (config_t *) &no_page_ticking, NULL,
     {0}, {0,2}, number, ss_gen, wad_no,
-    "Play internal demos (0 = Always, 1 = Not on menus, 2 = Never)"
+    "Play internal demos (0 = Always, 1 = Not in menus, 2 = Never)"
   },
 
   {
@@ -794,13 +783,6 @@ default_t defaults[] = {
   },
 #endif
 
-  { // Brought here
-    "extra_level_brightness",
-    (config_t *) &extra_level_brightness, NULL,
-    {0}, {-8,8}, number, ss_gen, wad_no, // [Nugget] Broader light level range
-    "level brightness"
-  },
-
   {
     "a11y_weapon_flash",
     (config_t *) &a11y_weapon_flash, NULL,
@@ -813,13 +795,6 @@ default_t defaults[] = {
     (config_t *) &a11y_weapon_pspr, NULL,
     {1}, {0,1}, number, ss_gen, wad_no,
     "0 to disable weapon muzzleflash rendering"
-  },
-
-  { // Brought here
-    "palette_changes",
-    (config_t *) &palette_changes, NULL,
-    {1}, {0,1}, number, ss_gen, wad_no,
-    "0 to disable palette tint changes"
   },
 
   {
@@ -3137,6 +3112,31 @@ default_t defaults[] = {
     {0}, {0,1}, number, ss_stat, wad_yes,
     "1 to powerup timers on HUD"
   },
+
+  // [Nugget] Event timers -------------------------------------
+
+  {
+    "timer_use",
+    (config_t *) &timer_use, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Show time at which Use was pressed (0 = Off, 1 = In Demos, 2 = Always)"
+  },
+
+  {
+    "timer_teleport",
+    (config_t *) &timer_teleport, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Show time at which a teleporter was used (0 = Off, 1 = In Demos, 2 = Always)"
+  },
+
+  {
+    "timer_key_pickup",
+    (config_t *) &timer_key_pickup, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Show time at which a key was picked up (0 = Off, 1 = In Demos, 2 = Always)"
+  },
+
+  // [Nugget] End ----------------------------------------------
 
   // [Nugget] Got rid of "crispy_hud"
 

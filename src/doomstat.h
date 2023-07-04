@@ -448,16 +448,13 @@ extern boolean casual_play;
 
 // General
 extern int wipe_type;
-extern int no_menu_tint;
-extern int fov;
 extern int over_under;
 extern int jump_crouch;
-extern int damagecount_cap;
-extern int bonuscount_cap;
-extern int no_berserk_tint;
-extern int view_bobbing_percentage;
+extern int fov;
 extern int viewheight_value;
+extern int view_bobbing_percentage;
 extern int breathing;
+extern int teleporter_zoom;
 enum {
   CHASECAMMODE_OFF,
   CHASECAMMODE_BACK,
@@ -465,17 +462,12 @@ enum {
 }; extern int chasecam_mode;
 extern int chasecam_distance;
 extern int chasecam_height;
-extern int teleporter_zoom;
+extern int no_menu_tint;
+extern int no_berserk_tint;
+extern int damagecount_cap;
+extern int bonuscount_cap;
 extern int fake_contrast;
 extern int s_clipping_dist_x2;
-enum {
-  TIMER_USE = 1,
-  TIMER_TELEPORT,
-  TIMER_KEYPICKUP,
-};
-extern int timer_use;
-extern int timer_teleport;
-extern int timer_key_pickup;
 extern int one_key_saveload;
 extern int no_page_ticking;
 extern int quick_quitgame;
@@ -513,6 +505,14 @@ enum {
 // Status Bar/HUD
 extern int alt_arms;
 extern int smarttotals;
+enum {
+  TIMER_USE = 1,
+  TIMER_TELEPORT,
+  TIMER_KEYPICKUP,
+};
+extern int timer_use;
+extern int timer_teleport;
+extern int timer_key_pickup;
 
 // Enemies
 extern int extra_gibbing;

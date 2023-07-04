@@ -139,25 +139,22 @@ boolean casual_play; // Like `critical`, with different checks and functionality
 
 // General
 int wipe_type;
-int no_menu_tint;
-int fov;
 int over_under;
 int jump_crouch;
-int damagecount_cap;
-int bonuscount_cap;
-int no_berserk_tint;
-int view_bobbing_percentage;
+int fov;
 int viewheight_value;
+int view_bobbing_percentage;
 int breathing;
+int teleporter_zoom;
 int chasecam_mode;
 int chasecam_distance;
 int chasecam_height;
-int teleporter_zoom;
+int no_menu_tint;
+int no_berserk_tint;
+int damagecount_cap;
+int bonuscount_cap;
 int fake_contrast;
 int s_clipping_dist_x2;
-int timer_use;
-int timer_teleport;
-int timer_key_pickup;
 int one_key_saveload;
 int no_page_ticking;
 int quick_quitgame;
@@ -178,6 +175,9 @@ int show_berserk;
 // Status Bar/HUD
 int alt_arms;
 int smarttotals;
+int timer_use;
+int timer_teleport;
+int timer_key_pickup;
 
 // Enemies
 int extra_gibbing;

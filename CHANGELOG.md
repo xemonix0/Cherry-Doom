@@ -22,6 +22,7 @@
 - **Renamed _Advance Internal Demos_ to _Play Internal Demos_**
 - **Changed `gamma2` default to 10** (matches Woof)
 - **Changed `sx_fix` default to 0**
+- **Rearranged Nugget's General settings pages, improved wording**
 
 ## Bug Fixes
 
