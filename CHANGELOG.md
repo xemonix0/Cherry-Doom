@@ -6,7 +6,7 @@
 - **_Powerup Timers_**
 - **_Translucent [Weapon] Flashes_ toggle**
 - **_'BOOMCAN'_ cheat, for explosive hitscan attacks**
-- **Arms number 1 can now be colored red if Berserk is available**
+- **Arms number 1 is now highlighted only when the player has Berserk**
 
 ## Changes
 

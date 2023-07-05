@@ -249,7 +249,6 @@ void STlib_initMultIcon
   i->inum = inum;
   i->on = on;
   i->p  = il;
-  i->data = 0; // [Nugget]
 }
 
 //
@@ -268,9 +267,7 @@ void STlib_updateMultIcon
   if (*mi->on)
   {
     if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
-      // [Nugget] Draw Arms number 1 colored red if the player has Berserk
-      V_DrawPatchTranslated(mi->x, mi->y, FG, mi->p[*mi->inum],
-                            mi->data ? cr_red : NULL);
+      V_DrawPatch(mi->x, mi->y, FG, mi->p[*mi->inum]);
   }
 }
 

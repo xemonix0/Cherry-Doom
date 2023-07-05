@@ -211,8 +211,8 @@ static st_percent_t w_health;
 
 // weapon ownership widgets
 static st_multicon_t w_arms[6+3]; // [Nugget] Increase array size for 9 numbers
-// [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
-static int st_shotguns;
+static int st_berserk; // [Nugget] Highlight Arms #1 if the player has Berserk
+static int st_shotguns; // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
 
 // face status widget
 static st_multicon_t w_faces;
@@ -877,7 +877,7 @@ void ST_drawWidgets(void)
 
   // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
   if ((screenblocks < CRISPY_HUD || (st_crispyhud && nughud.ammo.x > -1)) // [Nugget] Nugget HUD
-      && (show_berserk & SHOWBERSERK_AMMO)
+      && show_berserk
       && plyr->readyweapon == wp_fist
       && weaponinfo[plyr->readyweapon].ammo == am_noammo // [Nugget] Check for unlimited ammo type
       && plyr->powers[pw_strength])
@@ -968,21 +968,15 @@ void ST_drawWidgets(void)
     }
   }
 
+  // [Nugget] Highlight Arms #1 only if the player has Berserk
+  st_berserk = plyr->powers[pw_strength] ? true : false;
   // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
   st_shotguns = plyr->weaponowned[wp_shotgun] | plyr->weaponowned[wp_supershotgun];
 
   if (st_crispyhud) { // [Nugget] Nugget HUD
     for (i = 0;  i < 9;  i++)
-      if (nughud.arms[i].x > -1) {
-        // Draw Arms number 1 colored red if the player has Berserk
-        if (i == 0) {
-          if ((show_berserk & SHOWBERSERK_ARMS) && plyr->powers[pw_strength])
-          { w_arms[i].data = 1; }
-          else
-          { w_arms[i].data = 0; }
-        }
-        STlib_updateMultIcon(&w_arms[i]);
-      }
+      if (nughud.arms[i].x > -1)
+      { STlib_updateMultIcon(&w_arms[i]); }
   }
   else
     for (i=0; i<6; i++)
@@ -1304,7 +1298,8 @@ void ST_createWidgets(void)
                          nughud.arms[i].x + DELTA(nughud.arms[i].wide),
                          nughud.arms[i].y,
                          (nughud.nhwpnum ? nughud_armsnum[i] : arms[i]),
-                         (int *) &plyr->weaponowned[i],
+                         // [Nugget] Highlight Arms #1 only if the player has Berserk
+                         ((i == wp_fist) ? &st_berserk : (int *) &plyr->weaponowned[i]),
                          &st_armson);
   }
   else {

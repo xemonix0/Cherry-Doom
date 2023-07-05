@@ -3255,11 +3255,6 @@ static const char *bobbing_styles[] = {
   "Vanilla", "Inv. Vanilla", "Alpha", "Inv. Alpha", "Smooth", "Inv. Smooth", "Quake", NULL
 };
 
-// [Nugget]
-static const char *show_berserk_strings[] = {
-  "None", "Ammo count", "Arms widget", "Both", NULL
-};
-
 setup_menu_t weap_settings2[] =
 {
   // [Nugget] These three
@@ -3299,8 +3294,8 @@ setup_menu_t weap_settings2[] =
   {"Enable Recoil Pitch", S_YESNO, m_null, M_X,
    M_Y + weap2_recoilpitch*M_SPC, {"weapon_recoilpitch"}},
    
-  {"Show Berserk availability in", S_CHOICE, m_null, M_X, // [Nugget]
-   M_Y + weap2_berserk*M_SPC, {"show_berserk"}, 0, NULL, show_berserk_strings},
+  {"Show Berserk when using Fist", S_YESNO, m_null, M_X, // [Nugget]
+   M_Y + weap2_berserk*M_SPC, {"show_berserk"}},
      
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {weap_settings1}},
 

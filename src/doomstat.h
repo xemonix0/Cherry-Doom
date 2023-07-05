@@ -495,12 +495,7 @@ enum {
 }; extern int bobbing_style;
 extern int weaponsquat;
 extern int translucent_pspr;
-enum {
-  SHOWBERSERK_NONE,
-  SHOWBERSERK_AMMO,
-  SHOWBERSERK_ARMS,
-  SHOWBERSERK_BOTH,
-}; extern int show_berserk;
+extern int show_berserk;
 
 // Status Bar/HUD
 extern int alt_arms;
