@@ -17,6 +17,7 @@ jobs:
       run:
         shell: ${{ matrix.config.shell }}
     strategy:
+      fail-fast: false
       matrix:
         config:
           - {
@@ -59,7 +60,6 @@ jobs:
         env:
           HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
         run: |
-          brew update
           brew install \
             ninja \
             sdl2 \

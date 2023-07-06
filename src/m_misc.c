@@ -184,7 +184,7 @@ default_t defaults[] = {
   // [FG] uncapped rendering frame rate
   {
     "uncapped",
-    (config_t *) &uncapped, NULL,
+    (config_t *) &default_uncapped, (config_t *) &uncapped,
     {1}, {0, 1}, number, ss_gen, wad_no,
     "1 to enable uncapped rendering frame rate"
   },
@@ -630,6 +630,13 @@ default_t defaults[] = {
     (config_t *) &blockmapfix, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
     "1 to enable blockmap bug fix"
+  },
+
+  {
+    "direct_vertical_aiming",
+    (config_t *) &direct_vertical_aiming, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to enable direct vertical aiming"
   },
 
   {

@@ -30,8 +30,10 @@
 #include "d_event.h"
 #include "p_tick.h"
 #include "i_video.h" // uncapped
-#include "w_wad.h" // [Nugget] W_CheckNumForName
-#include "m_input.h" // [Nugget]
+// [Nugget]
+#include "g_game.h"
+#include "m_input.h"
+#include "w_wad.h" // W_CheckNumForName
 
 #include "p_action.h"
 
@@ -43,7 +45,6 @@
 #define BFGCELLS bfgcells        /* Ty 03/09/98 externalized in p_inter.c */
 
 extern void P_Thrust(player_t *, angle_t, fixed_t);
-extern boolean mouselook; // [Nugget]
 
 // The following array holds the recoil values         // phares
 static struct
@@ -673,11 +674,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
       for (int i=0; i<21; i++) {
         angle = player->mo->angle + ANG20 - (ANG2*i);
 
-        if (mouselook && freeaim == FREEAIM_DIRECT)
+        if ((mouselook || padlook) && vertical_aiming == VERTAIM_DIRECT)
         { slope = PLAYER_SLOPE(player); }
         else {
           slope = P_AimLineAttack(player->mo, angle, 32*64*FRACUNIT, 0);
-          if (!linetarget && mouselook && freeaim == FREEAIM_AUTOAIM)
+          if (!linetarget && (mouselook || padlook) && vertical_aiming == VERTAIM_DIRECTAUTO)
           { slope = PLAYER_SLOPE(player); }
         }
 
@@ -687,11 +688,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
     else { // Just one bullet
       angle = player->mo->angle;
 
-      if (mouselook && freeaim == FREEAIM_DIRECT)
+      if ((mouselook || padlook) && vertical_aiming == VERTAIM_DIRECT)
       { slope = PLAYER_SLOPE(player); }
       else {
         slope = P_AimLineAttack(player->mo, angle, 32*64*FRACUNIT, 0);
-        if (!linetarget && mouselook && freeaim == FREEAIM_AUTOAIM)
+        if (!linetarget && (mouselook || padlook) && vertical_aiming == VERTAIM_DIRECTAUTO)
         { slope = PLAYER_SLOPE(player); }
       }
 
@@ -831,44 +832,43 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
 
   player->extralight = 2;
 
-  do {
-    mobj_t *th, *mo = player->mo;
-    angle_t an = mo->angle;
-    angle_t an1 = ((P_Random(pr_bfg)&127) - 64) * (ANG90/768) + an;
-    angle_t an2 = ((P_Random(pr_bfg)&127) - 64) * (ANG90/640) + ANG90;
-    extern int autoaim;
-    fixed_t slope; // [Nugget] Moved here
+  do
+    {
+      mobj_t *th, *mo = player->mo;
+      angle_t an = mo->angle;
+      angle_t an1 = ((P_Random(pr_bfg)&127) - 64) * (ANG90/768) + an;
+      angle_t an2 = ((P_Random(pr_bfg)&127) - 64) * (ANG90/640) + ANG90;
+      extern int autoaim;
+      fixed_t slope = 0;
 
-    // [Nugget] Freeaim
-    if (mouselook && freeaim == FREEAIM_DIRECT && casual_play)
-    {
-      an1 += an - mo->angle;
-      slope = PLAYER_SLOPE(player);
-      if (slope < 0)
-        an2 -= tantoangle[-slope >> DBITS];
-      else
-        an2 += tantoangle[slope >> DBITS];
-    }
-    else if (autoaim || !beta_emulation)
-    {
-      // killough 8/2/98: make autoaiming prefer enemies
-      int mask = MF_FRIEND;
-      do {
-        slope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
-        if (!linetarget)
-          // [Nugget] Disable horizontal autoaim
-          if (!casual_play || !no_hor_autoaim)
-            slope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
-        if (!linetarget)
-          // [Nugget] Disable horizontal autoaim
-          if (!casual_play || !no_hor_autoaim)
-            slope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
-        if (!linetarget)
-          an = mo->angle,
-          slope = (freeaim == FREEAIM_AUTOAIM && casual_play)
-                  ? PLAYER_SLOPE(player) : 0;
+      // [Nugget] Vertical aiming;
+      // Taken outside of code block after this one
+      // to allow direct vertical aiming in Beta
+      if ((mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECT))
+      {
+        slope = PLAYER_SLOPE(mo->player);
       }
-      while (mask && (mask=0, !linetarget));     // killough 8/2/98
+      else
+      if (autoaim || !beta_emulation)
+	{
+	  // killough 8/2/98: make autoaiming prefer enemies
+	  int mask = MF_FRIEND;
+	  do
+	    {
+	      slope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
+	      if (!linetarget)
+		slope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
+	      if (!linetarget)
+		slope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
+	      if (!linetarget)
+		an = mo->angle,
+		// [Nugget] Vertical aiming
+		slope = ((mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECTAUTO))
+		        ? PLAYER_SLOPE(player) : 0;
+	    }
+	  while (mask && (mask=0, !linetarget));     // killough 8/2/98
+	}
+
       an1 += an - mo->angle;
       // sf: despite killough's infinite wisdom.. even
       // he is prone to mistakes. seems negative numbers
@@ -877,20 +877,19 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
         an2 -= tantoangle[-slope >> DBITS];
       else
         an2 += tantoangle[slope >> DBITS];
-    }
 
-    th = P_SpawnMobj(mo->x, mo->y,
-         mo->z + 62*FRACUNIT - player->psprites[ps_weapon].sy - player->crouchOffset, // [Nugget]
-         type);
-    P_SetTarget(&th->target, mo);
-    th->angle = an1;
-    th->momx = finecosine[an1>>ANGLETOFINESHIFT] * 25;
-    th->momy = finesine[an1>>ANGLETOFINESHIFT] * 25;
-    th->momz = finetangent[an2>>ANGLETOFINESHIFT] * 25;
-    // [FG] suppress interpolation of player missiles for the first tic
-    th->interp = -1;
-    P_CheckMissileSpawn(th);
-  }
+      th = P_SpawnMobj(mo->x, mo->y,
+		       mo->z + 62*FRACUNIT - player->psprites[ps_weapon].sy,
+		       type);
+      P_SetTarget(&th->target, mo);
+      th->angle = an1;
+      th->momx = finecosine[an1>>ANGLETOFINESHIFT] * 25;
+      th->momy = finesine[an1>>ANGLETOFINESHIFT] * 25;
+      th->momz = finetangent[an2>>ANGLETOFINESHIFT] * 25;
+      // [FG] suppress interpolation of player missiles for the first tic
+      th->interp = -1;
+      P_CheckMissileSpawn(th);
+    }
   while ((type != MT_PLASMA2) && (type = MT_PLASMA2)); //killough: obfuscated!
 }
 
@@ -918,26 +917,28 @@ fixed_t bulletslope;
 
 static void P_BulletSlope(mobj_t *mo)
 {
-  // [Nugget] Crispy freeaim
-  if (mouselook && freeaim == FREEAIM_DIRECT && casual_play)
-  { bulletslope = PLAYER_SLOPE(mo->player); }
-  else {
-    angle_t an = mo->angle;    // see which target is to be aimed at
+  angle_t an = mo->angle;    // see which target is to be aimed at
 
-    // killough 8/2/98: make autoaiming prefer enemies
-    int mask = demo_version < 203 ? 0 : MF_FRIEND;
+  // killough 8/2/98: make autoaiming prefer enemies
+  int mask = demo_version < 203 ? 0 : MF_FRIEND;
 
-    do {
+  if ((mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECT)) // [Nugget] Vertical aiming
+  {
+    bulletslope = PLAYER_SLOPE(mo->player);
+  }
+  else
+  do
+    {
       bulletslope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
       if (!linetarget)
         bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
       if (!linetarget)
         bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
-      // [Nugget] Crispy freeaim
-      if (!linetarget && freeaim == FREEAIM_AUTOAIM && casual_play)
+      // [Nugget] Vertical aiming
+      if (!linetarget && (mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECTAUTO))
         bulletslope = PLAYER_SLOPE(mo->player);
-    } while (mask && (mask=0, !linetarget));  // killough 8/2/98
-  }
+    }
+  while (mask && (mask=0, !linetarget));  // killough 8/2/98
 }
 
 extern boolean boomcan; // [Nugget] Explosive hitscan cheat
@@ -1218,6 +1219,7 @@ static void P_NuggetBobbing(player_t* player)
 void P_MovePsprites(player_t *player)
 {
   pspdef_t *psp = player->psprites;
+  const int center_weapon_strict = STRICTMODE(center_weapon);
   int i;
 
   // a null state means not active
@@ -1235,38 +1237,41 @@ void P_MovePsprites(player_t *player)
   psp = &player->psprites[ps_weapon];
 
   // [Nugget] Calculate sx2 and sy2 separately from sx and sy
-  if ((!player->attackdown || center_weapon == WEAPON_BOBBING) // [FG] not attacking means idle
+  if ((!player->attackdown || center_weapon_strict == WEAPON_BOBBING) // [FG] not attacking means idle
       && psp->state && !psp->state->misc1 && !player->switching)
   { P_NuggetBobbing(player); }
 
-  if (psp->state && !weapon_bobbing_percentage)
+  if (psp->state)
   {
-    static fixed_t last_sy = WEAPONTOP;
+    if (!weapon_bobbing_percentage)
+    {
+      static fixed_t last_sy = WEAPONTOP;
 
-   psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first person sprite centering
-
-    if (!psp->state->misc1 && !player->switching)
-    {
-      last_sy = psp->sy2;
-      psp->sy2 = WEAPONTOP + abs(psp->dy); // [Nugget] Squat weapon down on impact
-    }
-    else if (player->switching == weapswitch_lowering)
-    {
-      // We want to move smoothly from where we were
-      psp->sy2 -= (last_sy - WEAPONTOP);
-    }
-  }
-  else if (psp->state && center_weapon) // [Nugget] Removed some checks
-  {
-    // [FG] don't center during lowering and raising states
-    if (psp->state->misc1 || player->switching)
-    {
-    }
-    // [FG] center the weapon sprite horizontally and push up vertically
-    else if (player->attackdown && center_weapon == WEAPON_CENTERED)
-    {
       psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first person sprite centering
-      psp->sy2 = WEAPONTOP;
+
+      if (!psp->state->misc1 && !player->switching)
+      {
+        last_sy = psp->sy2;
+        psp->sy2 = WEAPONTOP + abs(psp->dy); // [Nugget] Squat weapon down on impact
+      }
+      else if (player->switching == weapswitch_lowering)
+      {
+        // We want to move smoothly from where we were
+        psp->sy2 -= (last_sy - WEAPONTOP);
+      }
+    }
+    else if (center_weapon_strict) // [Nugget] Removed some checks
+    {
+      // [FG] don't center during lowering and raising states
+      if (psp->state->misc1 || player->switching)
+      {
+      }
+      // [FG] center the weapon sprite horizontally and push up vertically
+      else if (player->attackdown && center_weapon_strict == WEAPON_CENTERED)
+      {
+        psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first person sprite centering
+        psp->sy2 = WEAPONTOP;
+      }
     }
   }
 

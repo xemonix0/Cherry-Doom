@@ -3180,7 +3180,6 @@ enum {           // killough 10/98: enum for y-offset info
 enum {
   weap2_recoil,
   weap2_autoaim,
-  weap2_freeaim,
   weap2_stub1,
   weap2_title1,
   weap2_hide_weapon,
@@ -3246,11 +3245,6 @@ setup_menu_t weap_settings1[] =  // Weapons Settings screen
 };
 
 // [Nugget]
-static const char *freeaim_types[] = {
-  "Off", "Direct", "Autoaim", NULL
-};
-
-// [Nugget]
 static const char *bobbing_styles[] = {
   "Vanilla", "Inv. Vanilla", "Alpha", "Inv. Alpha", "Smooth", "Inv. Smooth", "Quake", NULL
 };
@@ -3265,9 +3259,6 @@ setup_menu_t weap_settings2[] =
   {"Disable Horizontal Autoaim", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X,
    M_Y + weap2_autoaim*M_SPC, {"no_hor_autoaim"}},
    
-  {"Freeaim", S_CHOICE|S_STRICT|S_CRITICAL, m_null, M_X,
-   M_Y + weap2_freeaim*M_SPC, {"freeaim"}, 0, NULL, freeaim_types},
-  
   {"", S_SKIP, m_null, M_X, M_Y + weap2_stub1*M_SPC},
 
   {"Cosmetic",S_SKIP|S_TITLE,m_null,M_X,M_Y+weap2_title1*M_SPC},
@@ -3500,17 +3491,15 @@ static void M_UpdateCrosshairItems (void)
   DISABLE_ITEM(!STRICTMODE(hud_crosshair_on),
                stat_settings3[stat3_xhairtarget]);
   
-  DISABLE_ITEM(!STRICTMODE(hud_crosshair_on && !(mouselook && freeaim == FREEAIM_DIRECT)),
+  DISABLE_ITEM(!STRICTMODE(hud_crosshair_on),
                stat_settings3[stat3_xhairlockon]);
                                                 
   DISABLE_ITEM(!STRICTMODE(hud_crosshair_on
                            && (hud_crosshair_target || hud_crosshair_lockon)
-                           && !(mouselook && freeaim == FREEAIM_DIRECT)),
+                           && !(mouselook && vertical_aiming == VERTAIM_DIRECT)),
               stat_settings3[stat3_xhairindicators]);
               
-  DISABLE_ITEM(!STRICTMODE(hud_crosshair_on
-                           && ((hud_crosshair_lockon && !(mouselook && freeaim == FREEAIM_DIRECT))
-                               || hud_crosshair_target)),
+  DISABLE_ITEM(!STRICTMODE(hud_crosshair_on && (hud_crosshair_lockon || hud_crosshair_target)),
                stat_settings3[stat3_xhairfuzzy]);
                
   DISABLE_ITEM(!hud_crosshair_on,
@@ -4089,14 +4078,7 @@ static void M_SetMidiPlayer(void)
 
 static void M_EnableDisableFPSLimit(void)
 {
-  if (!uncapped)
-  {
-    gen_settings1[gen1_fpslimit].m_flags |= S_DISABLE;
-  }
-  else
-  {
-    gen_settings1[gen1_fpslimit].m_flags &= ~S_DISABLE;
-  }
+  DISABLE_ITEM(!uncapped, gen_settings1[gen1_fpslimit]);
 }
 
 static void M_ToggleFullScreen(void)
@@ -4218,6 +4200,7 @@ enum {
   gen3_title2,
   gen3_hangsolid,
   gen3_blockmapfix,
+  gen3_verticalaim,
   gen3_pistolstart,
   gen3_end2,
 };
@@ -4292,9 +4275,9 @@ void M_ResetTimeScale(void)
 }
 
 // [Nugget]
-static void M_UpdateFreeaimItem(void)
+static void M_UpdateVertaimItem(void)
 {
-  DISABLE_ITEM(!mouselook, weap_settings2[weap2_freeaim]);
+  DISABLE_ITEM(!mouselook, gen_settings3[gen3_verticalaim]);
 }
 
 static void M_UpdateMouseLook(void)
@@ -4308,7 +4291,7 @@ static void M_UpdateMouseLook(void)
   }
 
   // [Nugget]
-  M_UpdateFreeaimItem();
+  M_UpdateVertaimItem();
   M_UpdateCrosshairItems();
 }
 
@@ -4336,6 +4319,11 @@ static const char *menu_background_strings[] = {
 // [Nugget]
 static const char *wipe_types[] = {
   "None", "Melt", "Seizure", "Fade", NULL
+};
+
+// [Nugget]
+static const char *vertaim_types[] = {
+  "Auto", "Direct", "Direct+Auto", NULL
 };
 
 setup_menu_t gen_settings2[] = { // General Settings screen2
@@ -4424,6 +4412,10 @@ setup_menu_t gen_settings3[] = { // General Settings screen3
 
   {"Improved Hit Detection", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X,
    M_Y + gen3_blockmapfix*M_SPC, {"blockmapfix"}},
+
+  // [Nugget] Replaces `direct_vertical_aiming`
+  {"Vertical Aiming", S_CHOICE|S_STRICT|S_CRITICAL, m_null, M_X,
+   M_Y + gen3_verticalaim*M_SPC, {"vertical_aiming"}, 0, NULL, vertaim_types},
 
   {"Pistol Start", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X,
    M_Y + gen3_pistolstart*M_SPC, {"pistolstart"}},
@@ -7640,6 +7632,11 @@ void M_ResetSetupMenu(void)
     gen_settings3[gen3_pistolstart].m_flags |= S_DISABLE;
   }
 
+  if (M_ParmExists("-uncapped") || M_ParmExists("-nouncapped"))
+  {
+    gen_settings1[gen1_uncapped].m_flags |= S_DISABLE;
+  }
+
   if (deh_set_blood_color)
   {
     enem_settings2[enem2_colored_blood].m_flags |= S_DISABLE; // [Nugget] Now in page 2
@@ -7653,18 +7650,18 @@ void M_ResetSetupMenu(void)
   DISABLE_ITEM(!comp[comp_vile], enem_settings2[enem2_ghost]); // [Nugget] Now in page 2
 
   M_CoerceFPSLimit();
-  M_EnableDisableFPSLimit();
   M_UpdateCrosshairItems();
   M_UpdateCenteredWeaponItem();
   M_UpdateMultiLineMsgItem();
   M_UpdateCriticalItems();
   // [Nugget]
-  M_UpdateFreeaimItem();
+  M_UpdateVertaimItem();
 }
 
 void M_ResetSetupMenuVideo(void)
 {
   DISABLE_ITEM(!hires, enem_settings2[enem2_fuzz]); // [Nugget] Now in page 2
+  M_EnableDisableFPSLimit();
 }
 
 //

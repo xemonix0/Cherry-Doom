@@ -422,6 +422,15 @@ extern int iquetail;
 // [FG] colored blood and gibs
 extern boolean colored_blood;
 
+// The value `160` is used for the denominator because in Vanilla Doom
+// the horizontal FOV is 90° and spans 320 px, so the height of the
+// resulting triangle is 160.
+// Heretic/Hexen used value `173` presumably because Raven assumed an
+// equilateral triangle (i.e. 60°) for the vertical FOV which spans
+// 200 px, so the height of that triangle would be 100*sqrt(3) = 173.
+#define PLAYER_SLOPE(a)	((((a)->lookdir / MLOOKUNIT) << FRACBITS) / 160)
+extern boolean direct_vertical_aiming;
+
 mobj_t *P_SubstNullMobj(mobj_t *mobj);
 void    P_RespawnSpecials(void);
 mobj_t  *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);

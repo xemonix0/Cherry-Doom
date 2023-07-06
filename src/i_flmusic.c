@@ -222,6 +222,13 @@ static boolean I_FL_InitMusic(int device)
 
     synth = new_fluid_synth(settings);
 
+    if (synth == NULL)
+    {
+        fprintf(stderr,
+                "I_FL_InitMusic: FluidSynth failed to initialize synth.\n");
+        return false;
+    }
+
     lumpnum = W_CheckNumForName("SNDFONT");
     if (lumpnum >= 0)
     {
@@ -302,7 +309,7 @@ static void I_FL_PauseSong(void *handle)
 {
     if (player)
     {
-        fluid_player_stop(player);
+        I_OAL_HookMusic(NULL);
     }
 }
 
@@ -310,7 +317,7 @@ static void I_FL_ResumeSong(void *handle)
 {
     if (player)
     {
-        fluid_player_play(player);
+        I_OAL_HookMusic(FL_Callback);
     }
 }
 
@@ -336,6 +343,13 @@ static void *I_FL_RegisterSong(void *data, int len)
     int result = FLUID_FAILED;
 
     player = new_fluid_player(synth);
+
+    if (player == NULL)
+    {
+        fprintf(stderr,
+                "I_FL_InitMusic: FluidSynth failed to initialize player.\n");
+        return NULL;
+    }
 
     if (IsMid(data, len))
     {

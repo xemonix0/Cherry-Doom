@@ -29,12 +29,10 @@
 #define MINFOV  20
 #define MAXFOV  160
 
-// [Nugget] Change both to 100
-#define LOOKDIRMIN	100 // [Nugget] -100, actually
 #define LOOKDIRMAX	100
-// [Nugget] Base lookdir range: -100..0..100,
-// increased to accommodate higher FOV values
-#define LOOKDIRS	((LOOKDIRMIN+1+LOOKDIRMAX)*ORIGFOV/MINFOV)
+// [crispy] lookdir range: -100..100
+// [Nugget] Increased to accommodate higher FOV values
+#define LOOKDIRS	((2*LOOKDIRMAX+1)*ORIGFOV/MINFOV)
 #define MLOOKUNIT	8
 
 // Retrieve column data for span blitting.

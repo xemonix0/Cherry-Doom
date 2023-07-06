@@ -30,7 +30,9 @@
 #include "v_video.h"
 #include "st_stuff.h"
 #include "hu_stuff.h"
-#include "p_map.h" // [Nugget]
+// [Nugget]
+#include "p_map.h"
+#include "p_mobj.h"
 
 // [Nugget]
 #ifndef M_PI
@@ -122,7 +124,6 @@ float fovdiff;   // Used for some corrections
 static fixed_t fovscale;
 static int WIDEFOVDELTA;
 
-static int lookdirmin;
 static int lookdirmax;
 
 
@@ -596,7 +597,6 @@ void R_ExecuteSetViewSize (void)
     
     rfov = bfov + fx;
     fovdiff = (float) ORIGFOV / rfov;
-    lookdirmin = LOOKDIRMIN * fovdiff;
     lookdirmax = LOOKDIRMAX * fovdiff;
   }
   
@@ -638,11 +638,11 @@ void R_ExecuteSetViewSize (void)
       {
         // [crispy] re-generate lookup-table for yslope[] whenever "viewheight" or "hires" change
         // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
-        fixed_t dy = abs(((i-viewheight/2-(j-lookdirmin)*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
+        fixed_t dy = abs(((i-viewheight/2-(j-lookdirmax)*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
         yslopes[j][i] = FixedDiv(num, dy);
       }
     }
-  yslope = yslopes[lookdirmin]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
+  yslope = yslopes[lookdirmax]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
 
   for (i=0 ; i<viewwidth ; i++)
     {
@@ -812,7 +812,7 @@ void R_SetupFrame (player_t *player)
     dist +=   FixedMul(player->mo->momx, finecosine[viewangle >> ANGLETOFINESHIFT])
             + FixedMul(player->mo->momy,   finesine[viewangle >> ANGLETOFINESHIFT]);
     
-    P_PositionChasecam(z, dist, slope = ((-(lookdir * FRACUNIT) / SLOPEDIVISOR) / fovdiff));
+    P_PositionChasecam(z, dist, slope = ((-(lookdir * FRACUNIT) / PLAYER_SLOPE_DENOM) / fovdiff));
 
     if (chasecam.hit) {
       viewx = chasecam.x;
@@ -857,9 +857,9 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   if (pitch > lookdirmax)
-  { pitch = lookdirmax; }
-  else if (pitch < -lookdirmin)
-  { pitch = -lookdirmin; }
+    pitch = lookdirmax;
+  else if (pitch < -lookdirmax)
+    pitch = -lookdirmax;
 
   // apply new yslope[] whenever "lookdir", "viewheight" or "hires" change
   tempCentery = viewheight/2 + pitch * viewblocks / 10;
@@ -867,7 +867,7 @@ void R_SetupFrame (player_t *player)
   {
       centery = tempCentery;
       centeryfrac = centery << FRACBITS;
-      yslope = yslopes[lookdirmin + pitch]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
+      yslope = yslopes[lookdirmax + pitch]; // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   }
 
   viewsin = finesine[viewangle>>ANGLETOFINESHIFT];

@@ -683,6 +683,9 @@ void R_AddSprites(sector_t* sec, int lightlevel)
   // Well, now it will be done.
   sec->validcount = validcount;
 
+  if (demo_version <= 202)
+    lightlevel = sec->lightlevel;
+
   lightnum = (lightlevel >> LIGHTSEGSHIFT)+extralight;
 
   if (lightnum < 0)
@@ -826,10 +829,11 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
         // [Nugget]
         && (st_crispyhud == oldcrispy || STRICTMODE(!nughud.weapheight)))
     {
-      int deltax = vis->x2 - vis->x1;
+      int deltax = x2 - vis->x1;
       vis->x1 = oldx1 + FixedMul(vis->x1 - oldx1, fractionaltic);
       vis->x2 = vis->x1 + deltax;
-      vis->x2 = vis->x2 >= viewwidth ? viewwidth - 1 : vis->x2;
+      if (vis->x2 >= viewwidth)
+        vis->x2 = viewwidth - 1;
       vis->texturemid = oldtexturemid + FixedMul(vis->texturemid - oldtexturemid, fractionaltic);
     }
     else

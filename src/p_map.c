@@ -581,6 +581,8 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   if (tmthing->flags & MF_MISSILE || (tmthing->flags & MF_BOUNCES &&
 				      !(tmthing->flags & MF_SOLID)))
     {
+      // [Nugget] Removed `actualheight`
+
       // see if it went over / under
 
       if (tmthing->z > thing->z + thing->height)
@@ -1617,29 +1619,30 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 	  // it's a sky hack wall
 	  // fix bullet-eaters -- killough:
 	  if  (li->backsector && li->backsector->ceilingpic == skyflatnum)
-	    // [Nugget] freeaim - fix disappearing bullet puffs when outside
+	    // [Nugget- rrPKrr] Fix disappearing bullet puffs when outside
 	    if ((demo_compatibility && !casual_play) || li->backsector->ceilingheight < z)
 	    { return false; }
 	}
 
-      // [Nugget - rrPKrr] Taken from Crispy Doom:
-      // check if the bullet puff's z-coordinate is below or above
+      // [crispy] check if the pullet puff's z-coordinate is below or above
       // its spawning sector's floor or ceiling, respectively, and move its
       // coordinates to the point where the trajectory hits the plane
-      if (casual_play) {
+      if (casual_play && aimslope) // [Nugget] Always applied during casual play
+      {
         const int lineside = P_PointOnLineSide(x, y, li);
         int side;
 
         if ((side = li->sidenum[lineside]) != NO_INDEX)
         {
-          const sector_t* const sector = sides[side].sector;
+          const sector_t *const sector = sides[side].sector;
 
-          if (z < sector->floorheight || (z > sector->ceilingheight && sector->ceilingpic != skyflatnum))
+          if (z < sector->floorheight ||
+             (z > sector->ceilingheight && sector->ceilingpic != skyflatnum))
           {
             z = BETWEEN(sector->floorheight, sector->ceilingheight, z);
             frac = FixedDiv(z - shootz, FixedMul(aimslope, attackrange));
-            x = trace.x + FixedMul(trace.dx, frac);
-            y = trace.y + FixedMul(trace.dy, frac);
+            x = trace.x + FixedMul (trace.dx, frac);
+            y = trace.y + FixedMul (trace.dy, frac);
           }
         }
       }
@@ -1670,6 +1673,7 @@ static boolean PTR_ShootTraverse(intercept_t *in)
   // check angles to see if the thing can be aimed at
 
   dist = FixedMul (attackrange, in->frac);
+  // [Nugget] Removed `actualheight`
   thingtopslope = FixedDiv (th->z+th->height - shootz , dist);
 
   if (thingtopslope < aimslope)
@@ -1716,6 +1720,7 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 {
   fixed_t x2, y2;
+  extern boolean mouselook, padlook; // [Nugget]
 
   t1 = P_SubstNullMobj(t1);
 
@@ -1728,8 +1733,15 @@ fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 
   // can't shoot outside view angles
 
+  if (t1->player && (mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECT)) // [Nugget] Vertical aiming
+  {
+    bottomslope = (topslope = PLAYER_SLOPE(t1->player) + 1) - 2;
+  }
+  else
+  {
   topslope = 100*FRACUNIT/160;
   bottomslope = -100*FRACUNIT/160;
+  }
 
   attackrange = distance;
   linetarget = NULL;
@@ -1846,81 +1858,7 @@ void P_UseLines(player_t *player)
       S_StartSound (usething, sfx_noway);
 }
 
-// [Nugget] New stuff -----------------------
-
-static boolean PTR_AimSlopedTraverse(intercept_t *in)
-{
-  fixed_t dist, thingtopslope, thingbottomslope;
-  mobj_t *th;
-
-  if (in->isaline) {
-    line_t *li = in->d.line;
-
-    if (li->flags & ML_TWOSIDED) {
-      P_LineOpening(li);
-      dist = FixedMul(attackrange, in->frac);
-
-      if (li->backsector == NULL) {
-        if (FixedDiv(openbottom - shootz, dist) <= aimslope
-            && FixedDiv(opentop - shootz, dist) >= aimslope)
-        { return true; }
-      }
-      else
-      if ((li->frontsector->floorheight == li->backsector->floorheight
-           || FixedDiv(openbottom - shootz, dist) <= aimslope)
-          && (li->frontsector->ceilingheight == li->backsector->ceilingheight
-              || FixedDiv (opentop - shootz, dist) >= aimslope))
-      { return true; }
-    }
-
-    // Hit line
-    return false;
-  }
-
-  // Hit a thing
-
-  th = in->d.thing;
-  
-  if (   th == shootthing
-      || !(th->flags & MF_SHOOTABLE)
-      || (th->flags & shootthing->flags & aim_flags_mask && !th->player))
-  { return true; }
-
-  dist = FixedMul(attackrange, in->frac);
-  if (  (thingtopslope    = FixedDiv(th->z + th->height - shootz, dist)) < aimslope
-      ||(thingbottomslope = FixedDiv(th->z              - shootz, dist)) > aimslope)
-  { return true; }
-
-  if (thingtopslope    > topslope)    { thingtopslope    = topslope; }
-  if (thingbottomslope < bottomslope) { thingbottomslope = bottomslope; }
-
-  linetarget = th;
-
-  // Don't go any further
-  return false;
-}
-
-// [Nugget] Used for direct freeaim
-fixed_t P_AimSlopedLineAttack(mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope, int mask)
-{
-  fixed_t x2, y2;
-
-  t1 = P_SubstNullMobj(t1);
-  angle >>= ANGLETOFINESHIFT;
-  shootthing = t1;
-  x2 = t1->x + (distance>>FRACBITS)*finecosine[angle];
-  y2 = t1->y + (distance>>FRACBITS)*finesine[angle];
-  shootz = t1->z + (t1->height>>1) + 8*FRACUNIT;
-  aimslope = slope;
-  attackrange = distance;
-  linetarget = NULL;
-  aim_flags_mask = mask;
-
-  P_PathTraverse(t1->x, t1->y, x2, y2, PT_ADDLINES|PT_ADDTHINGS, PTR_AimSlopedTraverse);
-
-  if (linetarget) { return aimslope; }
-  else            { return 0; }
-}
+// [Nugget] Chasecam stuff ------------------
 
 static boolean PTR_ChasecamTraverse(intercept_t *in)
 {
@@ -1989,7 +1927,7 @@ void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope)
   overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 }
 
-// [Nugget] End of new stuff -----------------------
+// [Nugget] End of chasecam stuff ------------------
 
 //
 // RADIUS ATTACK

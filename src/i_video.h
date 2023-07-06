@@ -67,7 +67,7 @@ extern int hires, default_hires;      // killough 11/98
 
 extern boolean use_aspect;
 extern boolean stretch_to_fit; // [Nugget]
-extern boolean uncapped; // [FG] uncapped rendering frame rate
+extern boolean uncapped, default_uncapped; // [FG] uncapped rendering frame rate
 
 extern boolean fullscreen;
 extern boolean exclusive_fullscreen;

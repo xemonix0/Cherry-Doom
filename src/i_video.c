@@ -49,7 +49,7 @@ boolean use_vsync;  // killough 2/8/98: controls whether vsync is called
 int hires, default_hires;      // killough 11/98
 boolean use_aspect;
 boolean stretch_to_fit; // [Nugget]
-boolean uncapped; // [FG] uncapped rendering frame rate
+boolean uncapped, default_uncapped; // [FG] uncapped rendering frame rate
 int fpslimit; // when uncapped, limit framerate to this value
 boolean fullscreen;
 boolean exclusive_fullscreen;
@@ -1324,24 +1324,25 @@ static void I_InitVideoParms(void)
 
     I_ResetInvalidDisplayIndex();
     hires = default_hires;
+    uncapped = default_uncapped;
 
     //!
     // @category video
     //
-    // Enables 640x400 resolution for internal video buffer.
+    // Enables uncapped framerate.
     //
 
-    if (M_CheckParm("-hires"))
-        hires = 1;
+    if (M_CheckParm("-uncapped"))
+        uncapped = true;
 
     //!
     // @category video
     //
-    // Enables original 320x200 resolution for internal video buffer.
+    // Disables uncapped framerate.
     //
 
-    else if (M_CheckParm("-nohires"))
-        hires = 0;
+    else if (M_CheckParm("-nouncapped"))
+        uncapped = false;
 
     if (M_CheckParm("-grabmouse"))
         grabmouse = true;
