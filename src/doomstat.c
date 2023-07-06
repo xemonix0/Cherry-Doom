@@ -165,7 +165,6 @@ int a11y_invul_colormap;
 
 // Weapons
 int no_hor_autoaim;
-int freeaim;
 int weapon_bobbing_percentage;
 int bobbing_style;
 int weaponsquat;

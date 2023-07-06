@@ -27,10 +27,6 @@
 #define MELEERANGE      (64*FRACUNIT)
 #define MISSILERANGE    (32*64*FRACUNIT)
 
-// [Nugget] Crispy freeaim
-#define SLOPEDIVISOR 160 // [Nugget] Was 173 originally, but this is more accurate
-#define PLAYER_SLOPE(a)	((((a)->lookdir / MLOOKUNIT) << FRACBITS) / SLOPEDIVISOR)
-
 // mbf21: a couple of explicit constants for non-melee things that used to use MELEERANGE
 #define WAKEUPRANGE     (64*FRACUNIT)
 #define SNEAKRANGE      (128*FRACUNIT)
@@ -51,8 +47,6 @@ void    P_UseLines(player_t *player);
 
 // killough 8/2/98: add 'mask' argument to prevent friends autoaiming at others
 fixed_t P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance,int mask);
-// [Nugget] Used for direct freeaim
-fixed_t P_AimSlopedLineAttack(mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope, int mask);
 void    P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
                      fixed_t slope, int damage );
 void    P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope); // [Nugget]

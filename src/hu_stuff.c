@@ -1366,8 +1366,6 @@ mobj_t *crosshair_target; // [Alaux] Lock crosshair on target
 
 static void HU_UpdateCrosshair(void)
 {
-  extern boolean mouselook; // [Nugget]
-
   crosshair.x = ORIGWIDTH/2;
   crosshair.y = (screenblocks <= 10) ? (ORIGHEIGHT-ST_HEIGHT)/2 : ORIGHEIGHT/2;
   crosshair.side = 0;
@@ -1382,22 +1380,17 @@ static void HU_UpdateCrosshair(void)
     crosshair_target = linetarget = NULL;
 
     overflow[emu_intercepts].enabled = false;
-    if (mouselook && freeaim == FREEAIM_DIRECT && casual_play)
-      P_AimSlopedLineAttack(plr->mo, an, range, PLAYER_SLOPE(plr),
-                            (demo_version < 203) ? 0 : MF_FRIEND);
-    else {
-      P_AimLineAttack(plr->mo, an, range, 0);
-      if ((ammo == am_misl || ammo == am_cell)
-          && (!no_hor_autoaim || !casual_play))
-      {
-        if (!linetarget) {
-          P_AimLineAttack(plr->mo, an += 1<<26, range, 0);
-          if (linetarget && hud_crosshair_indicators) { crosshair.side = -1; }
-        }
-        if (!linetarget) {
-          P_AimLineAttack(plr->mo, an -= 2<<26, range, 0);
-          if (linetarget && hud_crosshair_indicators) { crosshair.side = 1; }
-        }
+    P_AimLineAttack(plr->mo, an, range, 0);
+    if ((ammo == am_misl || ammo == am_cell)
+        && (!no_hor_autoaim || !casual_play)) // [Nugget]
+    {
+      if (!linetarget) {
+        P_AimLineAttack(plr->mo, an += 1<<26, range, 0);
+        if (linetarget && hud_crosshair_indicators) { crosshair.side = -1; } // [Nugget]
+      }
+      if (!linetarget) {
+        P_AimLineAttack(plr->mo, an -= 2<<26, range, 0);
+        if (linetarget && hud_crosshair_indicators) { crosshair.side = 1; } // [Nugget]
       }
     }
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;

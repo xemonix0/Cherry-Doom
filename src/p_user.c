@@ -498,7 +498,7 @@ void P_DeathThink (player_t* player)
   // [Nugget] Allow some freelook while dead
   if ((player->viewheight == 6*FRACUNIT) && !menuactive && !demoplayback)
   {
-    player->lookdir = BETWEEN(-LOOKDIRMIN * MLOOKUNIT / 2,
+    player->lookdir = BETWEEN(-LOOKDIRMAX * MLOOKUNIT / 2,
                                LOOKDIRMAX * MLOOKUNIT / 2,
                                player->lookdir + player->cmd.lookdir);
   }
@@ -753,20 +753,12 @@ void P_PlayerThink (player_t* player)
     boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
 
     overflow[emu_intercepts].enabled = false;
-
-    // Check if the player is aiming at a thing directly
-    if (mouselook && freeaim == FREEAIM_DIRECT)
-      P_AimSlopedLineAttack(player->mo, player->mo->angle,
-                            16*64*FRACUNIT, PLAYER_SLOPE(player),
-                            (demo_version < 203) ? 0 : MF_FRIEND);
-    else
-      P_AimLineAttack(player->mo, player->mo->angle, 16*64*FRACUNIT, 0);
+    P_AimLineAttack(player->mo, player->mo->angle, 16*64*FRACUNIT, 0);
+    overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 
     if (linetarget) // Give some info on the thing
       displaymsg("Type: %i - Health: %i/%i", linetarget->type,
                  linetarget->health, linetarget->info->spawnhealth);
-
-    overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
   }
 
   if (player->powers[pw_renderstats])

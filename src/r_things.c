@@ -460,7 +460,6 @@ void R_ProjectSprite (mobj_t* thing)
   vissprite_t *vis;
   fixed_t   iscale;
   int heightsec;      // killough 3/27/98
-  extern boolean mouselook; // [Nugget]
 
   // [FG] moved declarations here
   fixed_t tr_x, tr_y, gxt, gyt, tz;
@@ -648,8 +647,7 @@ void R_ProjectSprite (mobj_t* thing)
   // [Alaux] Lock crosshair on target
   if (STRICTMODE(hud_crosshair_lockon) && thing == crosshair_target
       // [Nugget]
-      && (!(crosshair_target->flags & MF_SHADOW) || hud_crosshair_fuzzy)
-      && !(mouselook && freeaim == FREEAIM_DIRECT))
+      && (!(crosshair_target->flags & MF_SHADOW) || hud_crosshair_fuzzy))
   {
     HU_UpdateCrosshairLock
     (

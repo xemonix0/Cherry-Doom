@@ -23,6 +23,8 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
   - _"Seizure"_ (**Warning**: this one might legitimately be seizure-inducing, use with caution);
   - _"Fade"_.
 - **Fixed screen melt inconsistency across resolutions**
+- **Extended _Level Brightness_ range:** [-8, 8]
+- **_"Direct + Auto"_ mode for Vertical Aiming**
 - _**Things move over/under things**_ setting [p.f. Crispy Doom]
 - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first) [p.f. Crispy Doom]
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first) [i.b. ZDoom]
@@ -43,13 +45,11 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - Toggling of _**Weapon Flash Lighting**_ [p.f. Crispy Doom]
 - Toggling of _**Weapon Flash Sprite**_ [p.f. Crispy Doom]
 - Toggling of _**Invulnerability Colormap**_ [p.f. Crispy Doom]
-- **Changed mouselook range to [-100, 100]**
 
 ### Weapons
 
 - Restored _**Weapon Recoil**_ menu item
 - _**Disable Horizontal Autoaim**_ setting
-- **Freeaim** (Vertical Aiming) [p.f. Crispy Doom]
 - **Weapon Bobbing is permanently updated every tic** (fixes choppy Chainsaw bobbing)
 - _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Bobbing Styles**_ selection [p.f. Zandronum]

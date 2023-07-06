@@ -690,11 +690,11 @@ static void cheat_mdk() {
 
   P_MapStart();
 
-  if (mouselook && freeaim == FREEAIM_DIRECT)
+  if ((mouselook || padlook) && vertical_aiming == VERTAIM_DIRECT)
   { slope = PLAYER_SLOPE(plyr); }
   else {
     slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, 0);
-    if (!linetarget && mouselook && freeaim == FREEAIM_AUTOAIM)
+    if (!linetarget && (mouselook || padlook) && vertical_aiming == VERTAIM_DIRECTAUTO)
     { slope = PLAYER_SLOPE(plyr); }
   }
 

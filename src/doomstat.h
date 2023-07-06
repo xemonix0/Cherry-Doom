@@ -478,11 +478,6 @@ extern int a11y_invul_colormap;
 
 // Weapons
 extern int no_hor_autoaim;
-enum {
-  FREEAIM_OFF,
-  FREEAIM_DIRECT,
-  FREEAIM_AUTOAIM,
-}; extern int freeaim;
 extern int weapon_bobbing_percentage;
 enum {
   BOBSTYLE_VANILLA,

@@ -632,11 +632,11 @@ default_t defaults[] = {
     "1 to enable blockmap bug fix"
   },
 
-  {
-    "direct_vertical_aiming",
-    (config_t *) &direct_vertical_aiming, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to enable direct vertical aiming"
+  { // [Nugget] Replaces `direct_vertical_aiming`
+    "vertical_aiming",
+    (config_t *) &vertical_aiming, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Vertical aiming (0 = Auto, 1 = Direct, 2 = Direct + Auto)"
   },
 
   {
@@ -877,13 +877,6 @@ default_t defaults[] = {
     (config_t *) &no_hor_autoaim, NULL,
     {0}, {0,1}, number, ss_weap, wad_yes,
     "1 to disable horizontal projectile autoaim"
-  },
-
-  {
-    "freeaim",
-    (config_t *) &freeaim, NULL,
-    {0}, {0,2}, number, ss_weap, wad_yes,
-    "Weapon freeaim (1 = Direct, 2 = Direct + Autoaim)"
   },
 
   {
