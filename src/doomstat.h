@@ -455,6 +455,7 @@ extern int viewheight_value;
 extern int view_bobbing_percentage;
 extern int breathing;
 extern int teleporter_zoom;
+extern int death_camera;
 enum {
   CHASECAMMODE_OFF,
   CHASECAMMODE_BACK,

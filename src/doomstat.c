@@ -146,6 +146,7 @@ int viewheight_value;
 int view_bobbing_percentage;
 int breathing;
 int teleporter_zoom;
+int death_camera;
 int chasecam_mode;
 int chasecam_distance;
 int chasecam_height;

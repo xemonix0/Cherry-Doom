@@ -58,11 +58,12 @@ player_t *viewplayer;
 extern lighttable_t **walllights;
 fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
 
-// [Nugget] For Automap
+// [Nugget] Chasecam
+chasecam_t chasecam;
+boolean chasecam_on;
+// For Automap
 fixed_t  chasexofs, chaseyofs;
 angle_t  chaseaofs;
-
-chasecam_t chasecam; // [Nugget]
 
 //
 // precalculated math tables
@@ -794,9 +795,11 @@ void R_SetupFrame (player_t *player)
   pitch *= fovdiff;
   
   // [Nugget] Chasecam
-  if (STRICTMODE(chasecam_mode))
+  chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health < 0 && player->playerstate == PST_DEAD));
+  if (chasecam_on)
   {
-    const fixed_t z = playerz + (chasecam_height*FRACUNIT);
+    const fixed_t z = MIN(playerz + (((player->mo->health < 0 && player->playerstate == PST_DEAD) ? 6 : chasecam_height) * FRACUNIT),
+                          player->mo->ceilingz - FRACUNIT);
     fixed_t slope;
     fixed_t dist = chasecam_distance*FRACUNIT;
     const fixed_t oldviewx = viewx, oldviewy = viewy;

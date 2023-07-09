@@ -33,6 +33,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**View Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Subtle Idle Bobbing/Breathing**_ setting [p.f. International Doom]
 - _**Teleporter Zoom**_ setting [i.b. ZDoom]
+- _**Death Camera**_ setting [i.b. ZDoom]
 - _**Chasecam**_ [i.b. ZDoom]
 - _**Disable palette tint in menus**_ setting [i.b. Crispy Doom]
 - _**Disable Berserk Tint**_ setting

@@ -47,6 +47,7 @@ typedef struct chasecam_s {
   boolean hit;
 } chasecam_t;
 extern chasecam_t chasecam;
+extern boolean chasecam_on;
 
 //
 // Rendering stats

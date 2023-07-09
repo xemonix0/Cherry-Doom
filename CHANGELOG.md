@@ -2,6 +2,7 @@
 
 - **Experimental 4X (800p) and 8X (1600p) resolutions**
 - **_Chasecam_**
+- **_Death Camera_ toggle**
 - **_Fake Contrast_ toggle**
 - **_Powerup Timers_**
 - **_Translucent [Weapon] Flashes_ toggle**

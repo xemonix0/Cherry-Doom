@@ -698,6 +698,13 @@ default_t defaults[] = {
   },
 
   {
+    "death_camera",
+    (config_t *) &death_camera, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to force third person perspective upon death"
+  },
+
+  {
     "chasecam_mode",
     (config_t *) &chasecam_mode, NULL,
     {0}, {0,2}, number, ss_gen, wad_no,
