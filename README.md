@@ -31,6 +31,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**Field of View**_ setting [p.f. Doom Retro]
 - _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV [i.b. Brutal Doom]
 - _**View Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
+- _**Impact Pitch**_ setting, to flinch upon hitting a floor and/or taking damage
 - _**Subtle Idle Bobbing/Breathing**_ setting [p.f. International Doom]
 - _**Teleporter Zoom**_ setting [i.b. ZDoom]
 - _**Death Camera**_ setting [i.b. ZDoom]
@@ -39,6 +40,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**Disable Berserk Tint**_ setting
 - _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tints
 - _**Fake Contrast**_ setting
+- _**Screen Wipe speed percentage**_ setting
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
 - _**Play Internal Demos**_ setting

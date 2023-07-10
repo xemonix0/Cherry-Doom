@@ -202,6 +202,8 @@ typedef struct player_s
   
   int                 jumpTics; // Jumping delay
   fixed_t             crouchOffset; // How many units the player is crouched
+
+  fixed_t             impactpitch, oldimpactpitch; // Pitch view down on impact
   
   // Momentarily display the time at which an event occurred
   int                 event_type, event_time, event_tics;

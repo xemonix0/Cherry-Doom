@@ -953,47 +953,51 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
   }
 
   // player specific
-  if (player) {
-    // end of game hell hack
-    if (target->subsector->sector->special == 11 && damage >= target->health)
-      damage = target->health - 1;
+  if (player)
+    {
+      // end of game hell hack
+      if (target->subsector->sector->special == 11 && damage >= target->health)
+        damage = target->health - 1;
 
-    // Below certain threshold,
-    // ignore damage in GOD mode, or with INVUL power.
-    // killough 3/26/98: make god mode 100% god mode in non-compat mode
-    if ((damage < 1000 || (!comp[comp_god] && player->cheats&CF_GODMODE)) &&
-        (player->cheats&CF_GODMODE || player->powers[pw_invulnerability]))
-      return;
+      // Below certain threshold,
+      // ignore damage in GOD mode, or with INVUL power.
+      // killough 3/26/98: make god mode 100% god mode in non-compat mode
 
-    if (player->armortype) {
-      int saved = player->armortype == 1 ? damage/3 : damage/2;
+      if ((damage < 1000 || (!comp[comp_god] && player->cheats&CF_GODMODE)) &&
+          (player->cheats&CF_GODMODE || player->powers[pw_invulnerability]))
+        return;
 
-      if (player->armorpoints <= saved) {
-        // armor is used up
-        saved = player->armorpoints;
-        player->armortype = 0;
-      }
-      player->armorpoints -= saved;
-      damage -= saved;
-    }
+      if (player->armortype)
+        {
+          int saved = player->armortype == 1 ? damage/3 : damage/2;
+          if (player->armorpoints <= saved)
+            {
+              // armor is used up
+              saved = player->armorpoints;
+              player->armortype = 0;
+            }
+          player->armorpoints -= saved;
+          damage -= saved;
+        }
 
-    player->health -= damage;       // mirror mobj health here for Dave
-    // BUDDHA cheat
-    if (player->cheats & CF_BUDDHA &&
-        player->health < 1)
-      player->health = 1;
-    else if (player->health < 0)
-      player->health = 0;
+      player->health -= damage;       // mirror mobj health here for Dave
+      // BUDDHA cheat
+      if (player->cheats & CF_BUDDHA &&
+          player->health < 1)
+        player->health = 1;
+      else
+      if (player->health < 0)
+        player->health = 0;
 
-    player->attacker = source;
-    player->damagecount += damage;  // add damage after armor / invuln
+      player->attacker = source;
+      player->damagecount += damage;  // add damage after armor / invuln
 
-    // [Nugget] Custom red tint cap
-    if (STRICTMODE(player->damagecount > damagecount_cap))
-    { player->damagecount = damagecount_cap; }
-    else
-    if (player->damagecount > 100)
-      player->damagecount = 100;  // teleport stomp does 10k points...
+      // [Nugget] Custom red tint cap
+      if (STRICTMODE(player->damagecount > damagecount_cap))
+        player->damagecount = damagecount_cap;
+      else
+      if (player->damagecount > 100)
+        player->damagecount = 100;  // teleport stomp does 10k points...
 
 #if 0
       // killough 11/98:
@@ -1009,6 +1013,9 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       }
 #endif
 
+      // [Nugget] Impact pitch
+      if (STRICTMODE(impact_pitch & IMPACTPITCH_DAMAGE))
+      { PLAYER_IMPACTPITCH(player, MAX(0, damage / 2)); }
     }
 
   // do the damage

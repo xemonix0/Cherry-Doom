@@ -552,6 +552,7 @@ void P_PlayerThink (player_t* player)
   player->oldviewz = player->viewz;
   player->oldlookdir = player->lookdir;
   player->oldrecoilpitch = player->recoilpitch;
+  player->oldimpactpitch = player->impactpitch; // [Nugget] Impact pitch
 
   // killough 2/8/98, 3/21/98:
   // (this code is necessary despite questions raised elsewhere in a comment)
@@ -601,6 +602,12 @@ void P_PlayerThink (player_t* player)
     {
       player->recoilpitch += 1;
     }
+  }
+
+  // [Nugget] Impact pitch
+  if (player->impactpitch) {
+         if (player->impactpitch > 0) { player->impactpitch--; }
+    else if (player->impactpitch < 0) { player->impactpitch++; }
   }
 
   if (player->playerstate == PST_DEAD)

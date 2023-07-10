@@ -1217,6 +1217,7 @@ static void G_PlayerFinishLevel(int player)
   p->mo->height = p->mo->info->height;
   p->mo->intflags &= ~MIF_CROUCHING;
   p->jumpTics = p->crouchOffset = 0;
+  p->oldimpactpitch = p->impactpitch = 0;
 }
 
 // [crispy] format time for level statistics

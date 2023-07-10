@@ -4482,12 +4482,17 @@ enum { // [Nugget]
   gen5_fov,
   gen5_viewheight,
   gen5_viewbobbing,
+  gen5_impactpitch,
   gen5_idlebobbing,
   gen5_telezoom,
   gen5_deathcam,
   gen5_chasecam,
   gen5_chasedist,
   gen5_chaseheight,
+};
+
+static const char *impact_pitch_str[] = {
+  "Off", "Fall", "Damage", "Both", NULL
 };
 
 static const char *chasecam_modes[] = {
@@ -4504,6 +4509,7 @@ setup_menu_t gen_settings5[] = { // [Nugget]
     {"Field of View",                 S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_fov         * M_SPC, {"fov"}, 0, M_SetFOV},
     {"View Height",                   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen5_viewheight  * M_SPC, {"viewheight_value"}},
     {"View Bobbing Percentage",       S_NUM,                        m_null, M_X, M_Y + gen5_viewbobbing * M_SPC, {"view_bobbing_percentage"}},
+    {"Impact Pitch",                  S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen5_impactpitch * M_SPC, {"impact_pitch"}, 0, NULL, impact_pitch_str},
     {"Subtle Idle Bobbing/Breathing", S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_idlebobbing * M_SPC, {"breathing"}},
     {"Teleporter Zoom",               S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_telezoom    * M_SPC, {"teleporter_zoom"}},
     {"Death Camera",                  S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen5_deathcam    * M_SPC, {"death_camera"}},

@@ -684,6 +684,13 @@ default_t defaults[] = {
   },
 
   {
+    "impact_pitch",
+    (config_t *) &impact_pitch, NULL,
+    {0}, {0,3}, number, ss_gen, wad_yes,
+    "Flinch player view on impact (0 = Off, 1 = Fall, 2 = Damage, 3 = Both)"
+  },
+
+  {
     "breathing",
     (config_t *) &breathing, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,

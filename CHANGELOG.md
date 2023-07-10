@@ -3,7 +3,9 @@
 - **Experimental 4X (800p) and 8X (1600p) resolutions**
 - **_Chasecam_**
 - **_Death Camera_ toggle**
+- **_Impact Pitch_ setting**
 - **_Fake Contrast_ toggle**
+- **_Screen Wipe speed percentage_ setting**
 - **_Powerup Timers_**
 - **_Translucent [Weapon] Flashes_ toggle**
 - **_'BOOMCAN'_ cheat, for explosive hitscan attacks**

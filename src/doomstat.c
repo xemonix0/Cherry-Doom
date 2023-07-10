@@ -144,6 +144,7 @@ int jump_crouch;
 int fov;
 int viewheight_value;
 int view_bobbing_percentage;
+int impact_pitch;
 int breathing;
 int teleporter_zoom;
 int death_camera;

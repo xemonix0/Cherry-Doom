@@ -541,6 +541,10 @@ floater:
 		if (STRICTMODE(weaponsquat))
 		{ mo->player->psprites[ps_weapon].dy = ((-mo->momz>>1) > 24*FRACUNIT) ? (24*FRACUNIT) : (-mo->momz>>1); }
 
+		// [Nugget] Pitch view down on impact
+		if (STRICTMODE(impact_pitch & IMPACTPITCH_FALL))
+		{ PLAYER_IMPACTPITCH(mo->player, -((-mo->momz) >> FRACBITS)); }
+
 		// [Nugget]: [crispy] dead men don't say "oof"
 		if (mo->health > 0 || NOTSTRICTMODE(nugget_comp[comp_deadoof]))
 		  oof = 1;

@@ -777,7 +777,8 @@ void R_SetupFrame (player_t *player)
     viewangle = R_InterpolateAngle(player->mo->oldangle, player->mo->angle, fractionaltic) + viewangleoffset;
     // [crispy] pitch is actual lookdir and weapon pitch
     lookdir = (player->oldlookdir + (player->lookdir - player->oldlookdir) * FIXED2DOUBLE(fractionaltic)) / MLOOKUNIT;
-    pitch = lookdir + (player->oldrecoilpitch + FixedMul(player->recoilpitch - player->oldrecoilpitch, fractionaltic));
+    pitch = lookdir + (player->oldrecoilpitch + FixedMul(player->recoilpitch - player->oldrecoilpitch, fractionaltic))
+                    + (player->oldimpactpitch + FixedMul(player->impactpitch - player->oldimpactpitch, fractionaltic)); // [Nugget]
   }
   else
   {
@@ -788,7 +789,7 @@ void R_SetupFrame (player_t *player)
   viewangle = player->mo->angle + viewangleoffset;
   // [crispy] pitch is actual lookdir and weapon pitch
   lookdir = player->lookdir / MLOOKUNIT;
-  pitch = lookdir + player->recoilpitch;
+  pitch = lookdir + player->recoilpitch + player->impactpitch; // [Nugget]
   }
 
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
