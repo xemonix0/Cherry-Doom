@@ -754,6 +754,13 @@ default_t defaults[] = {
   },
 
   {
+    "wipe_speed_percentage",
+    (config_t *) &wipe_speed_percentage, NULL,
+    {100}, {50,200}, number, ss_gen, wad_yes,
+    "Screen Wipe speed percentage"
+  },
+
+  {
     "fake_contrast",
     (config_t *) &fake_contrast, NULL,
     {1}, {0,1}, number, ss_gen, wad_yes,

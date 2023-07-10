@@ -4526,6 +4526,7 @@ enum { // [Nugget]
   gen6_dmgcountcap,
   gen6_boncountcap,
   gen6_fakecontrast,
+  gen6_wipespeed,
   gen6_stub1,
   gen6_title2,
   gen6_sclipdist,
@@ -4545,11 +4546,12 @@ static const char *page_ticking_conds[] = {
 setup_menu_t gen_settings6[] = { // [Nugget]
 
   {"Nugget - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title1 * M_SPC},
-    {"Disable palette tint in menus", S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_menutint      * M_SPC, {"no_menu_tint"}},
+    {"Disable Palette Tint in Menus", S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_menutint      * M_SPC, {"no_menu_tint"}},
     {"Disable Berserk Tint",          S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_berserktint   * M_SPC, {"no_berserk_tint"}},
     {"Damage Tint Cap",               S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_dmgcountcap   * M_SPC, {"damagecount_cap"}},
     {"Bonus Tint Cap",                S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_boncountcap   * M_SPC, {"bonuscount_cap"}},
     {"Fake Contrast",                 S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_fakecontrast  * M_SPC, {"fake_contrast"}},
+    {"Screen Wipe Speed Percentage",  S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_wipespeed     * M_SPC, {"wipe_speed_percentage"}},
   {"", S_SKIP, m_null, M_X, M_Y + gen6_stub1*M_SPC},
   {"Nugget - Miscellaneous", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
     {"Sound Hearing Distance",        S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},

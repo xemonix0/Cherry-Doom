@@ -155,6 +155,7 @@ int no_berserk_tint;
 int damagecount_cap;
 int bonuscount_cap;
 int fake_contrast;
+int wipe_speed_percentage;
 int s_clipping_dist_x2;
 int one_key_saveload;
 int no_page_ticking;

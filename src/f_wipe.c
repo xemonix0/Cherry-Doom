@@ -22,6 +22,7 @@
 #include "v_video.h"
 #include "m_random.h"
 #include "f_wipe.h"
+#include "doomstat.h" // [Nugget]
 
 //
 // SCREEN WIPE PACKAGE
@@ -174,7 +175,6 @@ static int wipe_initFade(int width, int height, int ticks)
 
 static int wipe_doFade(int width, int height, int ticks)
 {
-  boolean done = false;
   int y;
   static int screenshade = 1;
   static const int targshade = 31;
@@ -184,7 +184,7 @@ static int wipe_doFade(int width, int height, int ticks)
   ticks >>= hires;
   ticks = MAX(1, ticks);
 
-  memcpy(wipe_scr, fadeIn ? wipe_scr_end : wipe_scr_start, width*height);
+  memcpy(wipe_scr, fadeIn ? wipe_scr_end : wipe_scr_start, width * height);
 
   for (y = 0; y < width * height; y++)
   { wipe_scr[y] = colormaps[0][screenshade * 256 + wipe_scr[y]]; }
@@ -202,11 +202,11 @@ static int wipe_doFade(int width, int height, int ticks)
 
     if (screenshade < 1) {
       screenshade = 1;
-      done = true;
+      return true;
     }
   }
   
-  return done;
+  return false;
 }
 
 static int wipe_exitFade(int width, int height, int ticks)
@@ -242,8 +242,6 @@ static int (*const wipes[])(int, int, int) = {
   wipe_exitFade
 };
 
-extern int wipe_type; // [Nugget]
-
 // killough 3/5/98: reformatted and cleaned up
 int wipe_ScreenWipe(int wipeno, int x, int y, int width, int height, int ticks)
 {
@@ -251,6 +249,10 @@ int wipe_ScreenWipe(int wipeno, int x, int y, int width, int height, int ticks)
 
   if (hires)     // killough 11/98: hires support
     width <<= hires, height <<= hires, ticks <<= hires;
+
+  // [Nugget] Screen Wipe speed
+  if (!strictmode && wipe_speed_percentage != 100)
+  { ticks = MAX(1, ticks * wipe_speed_percentage / 100); }
 
   if (!go)                                         // initial stuff
     {
