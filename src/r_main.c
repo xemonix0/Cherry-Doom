@@ -799,7 +799,7 @@ void R_SetupFrame (player_t *player)
   if (chasecam_on)
   {
     const fixed_t z = MIN(playerz + (((player->mo->health < 0 && player->playerstate == PST_DEAD) ? 6 : chasecam_height) * FRACUNIT),
-                          player->mo->ceilingz - FRACUNIT);
+                          player->mo->ceilingz - (2*FRACUNIT));
     fixed_t slope;
     fixed_t dist = chasecam_distance*FRACUNIT;
     const fixed_t oldviewx = viewx, oldviewy = viewy;
@@ -851,10 +851,10 @@ void R_SetupFrame (player_t *player)
   { chasexofs = chaseyofs = chaseaofs = 0; }
   
   // [Nugget]: [crispy] A11Y
-  if (NOTSTRICTMODE(a11y_weapon_flash))
-  { extralight = player->extralight; }
+  if (!NOTSTRICTMODE(a11y_weapon_flash))
+    extralight = 0;
   else
-  { extralight = 0; }
+    extralight = player->extralight;
 
   extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness); // level brightness feature
 
