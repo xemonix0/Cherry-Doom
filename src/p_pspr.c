@@ -160,6 +160,10 @@ static void P_BringUpWeapon(player_t *player)
   // [Nugget]: [crispy] squat down weapon sprite
   player->psprites[ps_weapon].dy = 0;
 
+  // [Nugget] Reset offsets for weapon inertia.
+  player->psprites[ps_weapon].wix = 0;
+  player->psprites[ps_weapon].wiy = 0;
+
   P_SetPsprite(player, ps_weapon, newstate);
   player->switching = weapswitch_raising;
 }
@@ -1208,6 +1212,97 @@ static void P_NuggetBobbing(player_t* player)
   }
 }
 
+#define MAX_DELTA (ORIGWIDTH << FRACBITS)
+
+static void WeaponInertiaHorizontal(player_t* player, pspdef_t *psp)
+{
+  angle_t angle;
+  boolean clockwise;
+
+  if (player->mo->oldangle > player->mo->angle)
+  {
+    angle = player->mo->oldangle - player->mo->angle;
+    clockwise = (angle <= ANG180);
+    if (!clockwise)
+      angle = ANGLE_MAX - angle;
+  }
+  else
+  {
+    angle = player->mo->angle - player->mo->oldangle;
+    clockwise = (angle > ANG180);
+    if (clockwise)
+      angle = ANGLE_MAX - angle;
+  }
+
+  angle >>= ANGLETOFINESHIFT;
+  if (angle > 0)
+  {
+    const fixed_t scale = FRACUNIT - FixedDiv(angle << FRACBITS, FINEANGLES << FRACBITS);
+    const fixed_t delta = MAX_DELTA - FixedMul(MAX_DELTA, FixedMul(scale, scale));
+    psp->wix += clockwise ? -delta : delta;
+  }
+
+  if (psp->wix != 0)
+  {
+    psp->wix >>= 1;
+    if (abs(psp->wix) < FRACUNIT)
+      psp->wix = 0;
+  }
+}
+
+static void WeaponInertiaVertical(player_t* player, pspdef_t *psp)
+{
+  const fixed_t lookdir = (player->lookdir - player->oldlookdir) << FRACBITS;
+
+  if (lookdir != 0)
+  {
+    const fixed_t scale = FRACUNIT - FixedDiv(abs(lookdir), FINEANGLES << FRACBITS);
+    const fixed_t delta = MAX_DELTA - FixedMul(MAX_DELTA, FixedMul(scale, scale));
+    psp->wiy += lookdir < 0 ? -delta : delta;
+  }
+
+  if (psp->wiy != 0)
+  {
+    psp->wiy >>= 1;
+    if (abs(psp->wiy) < FRACUNIT)
+      psp->wiy = 0;
+  }
+
+  if (psp->wiy != 0)
+  {
+    const fixed_t min = WEAPONTOP - (screenblocks < 11 ? (WEAPONTOP >> 1) : 0);
+    if (psp->sy2 + psp->wiy < min)
+      psp->wiy = min - psp->sy2;
+  }
+}
+
+static void P_NuggetWeaponInertia(player_t *player, pspdef_t *psp)
+{
+  if (STRICTMODE(weapon_inertia))
+  {
+    if (player->attackdown || !psp->state || psp->state->misc1 || player->switching)
+    {
+      psp->wix = 0;
+      psp->wiy = 0;
+      return;
+    }
+
+    WeaponInertiaHorizontal(player, psp);
+
+    if (mouselook || padlook)
+      WeaponInertiaVertical(player, psp);
+  }
+}
+
+void P_NuggetResetWeaponInertia(void)
+{
+  if (gamestate == GS_LEVEL && playeringame[displayplayer])
+  {
+    pspdef_t *psp = &players[displayplayer].psprites[ps_weapon];
+    psp->wix = psp->wiy = 0;
+  }
+}
+
 //
 // P_MovePsprites
 // Called every tic by player thinking routine.
@@ -1284,6 +1379,8 @@ void P_MovePsprites(player_t *player)
 
     if (psp->dy < 0) { psp->dy = 0; }
   }
+
+  P_NuggetWeaponInertia(player, psp);
 
   player->psprites[ps_flash].dy = player->psprites[ps_weapon].dy;
   player->psprites[ps_flash].sx2 = player->psprites[ps_weapon].sx2;

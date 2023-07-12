@@ -60,6 +60,9 @@ typedef struct pspdef_s
   // [FG] centered weapon sprite
   fixed_t sx2;
   fixed_t sy2;
+  // [Nugget] Offsets for weapon inertia.
+  fixed_t wix;
+  fixed_t wiy;
 } pspdef_t;
 
 extern int weapon_preferences[2][NUMWEAPONS+1];      // killough 5/2/98
@@ -76,6 +79,8 @@ void P_DropWeapon(struct player_s *player);
 // mbf21
 void P_SubtractAmmo(struct player_s *player, int compat_amt);
 void P_SetPspritePtr(struct player_s *player, pspdef_t *psp, statenum_t stnum);
+
+void P_NuggetResetWeaponInertia(void);
 
 #endif
 
