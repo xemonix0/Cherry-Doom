@@ -496,8 +496,8 @@ enum {
   BOBSTYLE_INVSMOOTH,
   BOBSTYLE_QUAKE,
 }; extern int bobbing_style;
-extern int weaponsquat;
 extern int weapon_inertia;
+extern int weaponsquat;
 extern int translucent_pspr;
 extern int show_berserk;
 
@@ -521,6 +521,7 @@ extern int zdoom_item_drops;
 // CFG only
 extern int sp_chat;
 extern int gammacycle;
+extern int weapon_inertia_scale;
 extern int sx_fix;
 
 // Misc

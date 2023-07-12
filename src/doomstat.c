@@ -170,8 +170,8 @@ int a11y_invul_colormap;
 int no_hor_autoaim;
 int weapon_bobbing_percentage;
 int bobbing_style;
-int weaponsquat;
 int weapon_inertia;
+int weaponsquat;
 int translucent_pspr;
 int show_berserk;
 
@@ -190,6 +190,7 @@ int zdoom_item_drops;
 // CFG only
 int sp_chat;
 int gammacycle;
+int weapon_inertia_scale;
 int sx_fix;
 
 // Misc

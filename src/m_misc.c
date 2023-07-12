@@ -915,17 +915,24 @@ default_t defaults[] = {
   },
 
   {
+    "weapon_inertia",
+    (config_t *) &weapon_inertia, NULL,
+    {0}, {0,1}, number, ss_weap, wad_yes,
+    "1 to enable weapon inertia"
+  },
+
+  {
+    "weapon_inertia_scale",
+    (config_t *) &weapon_inertia_scale, NULL,
+    {FRACUNIT}, {FRACUNIT/2,FRACUNIT*2}, number, ss_weap, wad_yes,
+    "Weapon inertia scale percentage, in fixed-point (65536 = 100%)"
+  },
+
+  {
     "weaponsquat",
     (config_t *) &weaponsquat, NULL,
     {0}, {0,1}, number, ss_weap, wad_yes,
     "1 to squat weapon down on impact"
-  },
-
-  {
-    "weapon_inertia",
-    (config_t *) &weapon_inertia, NULL,
-    {0}, {0,1}, number, ss_weap, wad_no,
-    "1 to enable weapon inertia"
   },
 
   {

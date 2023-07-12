@@ -7,6 +7,7 @@
 - **_Fake Contrast_ toggle**
 - **_Screen Wipe speed percentage_ setting**
 - **_Powerup Timers_**
+- **_Weapon Inertia_ setting** (by @ceski-1)
 - **_Translucent [Weapon] Flashes_ toggle**
 - **_'BOOMCAN'_ cheat, for explosive hitscan attacks**
 - **Arms number 1 is now highlighted only when the player has Berserk**

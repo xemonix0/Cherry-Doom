@@ -3186,8 +3186,8 @@ enum {
   weap2_center, // [FG] centered weapon sprite
   weap2_bobbing,
   weap2_bobstyle,
-  weap2_squat,
   weap2_inertia,
+  weap2_squat,
   weap2_transpspr,
   weap2_recoilpitch,
   weap2_berserk,
@@ -3282,11 +3282,11 @@ setup_menu_t weap_settings2[] =
   {"Bobbing Style", S_CHOICE|S_STRICT, m_null, M_X, // [Nugget]
    M_Y + weap2_bobstyle*M_SPC, {"bobbing_style"}, 0, NULL, bobbing_styles},
 
-  {"Squat Weapon Down On Impact", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
-   M_Y + weap2_squat*M_SPC, {"weaponsquat"}},
-
   {"Weapon Inertia", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
    M_Y + weap2_inertia*M_SPC, {"weapon_inertia"}, 0, M_NuggetResetWeaponInertia},
+
+  {"Squat Weapon Down On Impact", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
+   M_Y + weap2_squat*M_SPC, {"weaponsquat"}},
 
   {"Translucent Flashes", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
    M_Y + weap2_transpspr*M_SPC, {"translucent_pspr"}},

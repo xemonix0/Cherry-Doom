@@ -740,7 +740,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   // calculate edges of the shape
   tx = psp->sx2-160*FRACUNIT; // [FG] centered weapon sprite
-  tx += STRICTMODE(weapon_inertia) ? psp->wix : 0; // [Nugget]
+  tx += (STRICTMODE(weapon_inertia) ? psp->wix : 0); // [Nugget] Weapon inertia
 
   tx -= spriteoffset[lump];
   x1 = (centerxfrac + FixedMul (tx,pspritescale))>>FRACBITS;
@@ -765,7 +765,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->texturemid = (BASEYCENTER<<FRACBITS) /* + FRACUNIT/2 */ -
                     (psp->sy2-spritetopoffset[lump]) // [FG] centered weapon sprite
                     // [Nugget]
-                    - (STRICTMODE(weapon_inertia) ? psp->wiy : 0)
+                    - (STRICTMODE(weapon_inertia) ? psp->wiy : 0) // Weapon inertia
                     + (STRICTMODE(st_crispyhud && screenblocks < 13)
                        ? nughud.weapheight*FRACUNIT : 0) // Nugget HUD
                     + ((fovfx[FOVFX_ZOOM].current < 0)
