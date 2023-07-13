@@ -15,8 +15,8 @@
 ## Changes
 
 - **Merged changes from the following Woof releases:**
-  - [11.2.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_11.2.0);
-  - [11.3.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_11.3.0), therefore:
+  - [**11.2.0**](https://github.com/fabiangreffrath/woof/releases/tag/woof_11.2.0);
+  - [**11.3.0**](https://github.com/fabiangreffrath/woof/releases/tag/woof_11.3.0), therefore:
     - Replaced `freeaim` with `vertical_aiming`;
     - Crosshair lock-on now works with direct vertical aiming.
 - **FOV changes are now interpolated**
