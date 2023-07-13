@@ -1,6 +1,6 @@
 ## New Features
 
-- **Experimental 4X (800p) and 8X (1600p) resolutions** (by @ceski-1)
+- **4X (800p) and 8X (1600p) resolution support** (by @ceski-1)
 - **_Chasecam_**
 - **_Death Camera_ toggle**
 - **_Impact Pitch_ setting**
