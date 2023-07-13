@@ -69,6 +69,9 @@ extern int weapon_preferences[2][NUMWEAPONS+1];      // killough 5/2/98
 int P_WeaponPreferred(int w1, int w2);
 
 extern boolean weapon_recoilpitch;
+// [Nugget]
+#define ORIG_WEAPON_INERTIA_SCALE 60000
+extern fixed_t weapon_inertia_scale;
 
 struct player_s;
 int P_SwitchWeapon(struct player_s *player);

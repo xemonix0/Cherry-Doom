@@ -190,7 +190,7 @@ int zdoom_item_drops;
 // CFG only
 int sp_chat;
 int gammacycle;
-int weapon_inertia_scale;
+int weapon_inertia_scale_pct;
 int sx_fix;
 
 // Misc

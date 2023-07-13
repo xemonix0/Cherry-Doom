@@ -1215,6 +1215,8 @@ static void P_NuggetBobbing(player_t* player)
 #define EASE_OUT(x, y) ((x) - FixedMul((x), FixedMul((y), (y))))
 #define MAX_DELTA (ORIGWIDTH << FRACBITS)
 
+fixed_t weapon_inertia_scale;
+
 static void WeaponInertiaHorizontal(player_t* player, pspdef_t *psp)
 {
   angle_t angle;
@@ -1239,7 +1241,7 @@ static void WeaponInertiaHorizontal(player_t* player, pspdef_t *psp)
   if (angle > 0)
   {
     const fixed_t scale = EASE_SCALE(angle, FINEANGLES);
-    const fixed_t delta = EASE_OUT(MAX_DELTA, scale);
+    const fixed_t delta = MIN(MAX_DELTA, EASE_OUT(MAX_DELTA, scale));
     psp->wix += clockwise ? -delta : delta;
   }
 
@@ -1258,7 +1260,7 @@ static void WeaponInertiaVertical(player_t* player, pspdef_t *psp)
   if (lookdir != 0)
   {
     const fixed_t scale = EASE_SCALE(abs(lookdir), FINEANGLES);
-    const fixed_t delta = EASE_OUT(MAX_DELTA, scale);
+    const fixed_t delta = MIN(MAX_DELTA, EASE_OUT(MAX_DELTA, scale));
     psp->wiy += lookdir < 0 ? -delta : delta;
   }
 

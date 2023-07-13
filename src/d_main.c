@@ -2779,6 +2779,8 @@ void D_DoomMain(void)
 
   D_NuggetUpdateCasual(); // [Nugget]
 
+  weapon_inertia_scale = weapon_inertia_scale_pct * ORIG_WEAPON_INERTIA_SCALE / 100; // [Nugget] Weapon inertia
+
   // [Nugget] cheese :)
   if (casual_play) {
     time_t curtime = time(NULL);

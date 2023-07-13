@@ -922,10 +922,10 @@ default_t defaults[] = {
   },
 
   {
-    "weapon_inertia_scale",
-    (config_t *) &weapon_inertia_scale, NULL,
-    {58982}, {FRACUNIT/2,FRACUNIT*2}, number, ss_weap, wad_yes,
-    "Weapon inertia scale percentage, in fixed-point (65536 = 100%)"
+    "weapon_inertia_scale_pct",
+    (config_t *) &weapon_inertia_scale_pct, NULL,
+    {100}, {50,200}, number, ss_weap, wad_yes,
+    "Weapon inertia scale percentage"
   },
 
   {

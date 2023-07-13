@@ -521,7 +521,7 @@ extern int zdoom_item_drops;
 // CFG only
 extern int sp_chat;
 extern int gammacycle;
-extern int weapon_inertia_scale;
+extern int weapon_inertia_scale_pct;
 extern int sx_fix;
 
 // Misc
