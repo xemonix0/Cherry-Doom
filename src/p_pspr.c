@@ -1241,7 +1241,8 @@ static void WeaponInertiaHorizontal(player_t* player, pspdef_t *psp)
   if (angle > 0)
   {
     const fixed_t scale = EASE_SCALE(angle, FINEANGLES);
-    const fixed_t delta = MIN(MAX_DELTA, EASE_OUT(MAX_DELTA, scale));
+    fixed_t delta = EASE_OUT(MAX_DELTA, scale);
+    delta = MIN(delta, MAX_DELTA);
     psp->wix += clockwise ? -delta : delta;
   }
 
@@ -1260,7 +1261,8 @@ static void WeaponInertiaVertical(player_t* player, pspdef_t *psp)
   if (lookdir != 0)
   {
     const fixed_t scale = EASE_SCALE(abs(lookdir), FINEANGLES);
-    const fixed_t delta = MIN(MAX_DELTA, EASE_OUT(MAX_DELTA, scale));
+    fixed_t delta = EASE_OUT(MAX_DELTA, scale);
+    delta = MIN(delta, MAX_DELTA);
     psp->wiy += lookdir < 0 ? -delta : delta;
   }
 
