@@ -321,7 +321,7 @@ static void R_InitTextureMapping (void)
         ;
       xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
       // [FG] linear horizontal sky scrolling
-      linearskyangle[x] = ((viewwidth/2-x)*((SCREENWIDTH<<6)/viewwidth))*(ANG90/(NONWIDEWIDTH<<6)) / fovdiff; // [Nugget]
+      linearskyangle[x] = (int) (((viewwidth/2-x)*((SCREENWIDTH<<6)/viewwidth))*(ANG90/(NONWIDEWIDTH<<6))) / fovdiff; // [Nugget]
     }
 
   // Take out the fencepost cases from viewangletox.
