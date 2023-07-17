@@ -7571,6 +7571,7 @@ const lumpinfo_t predefined_lumps[]={
   { "DIGX",     sizeof digx, digx },
   { "DIGY",     sizeof digy, digy },
   { "DIGZ",     sizeof digz, digz },
+  { "DIG34",    sizeof dig34, dig34 }, // [Nugget]
   { "DIG37",    sizeof dig37, dig37 },
   { "DIG43",    sizeof dig43, dig43 },
   { "DIG45",    sizeof dig45, dig45 },        //jff 3/3/98 add minus sign

@@ -420,6 +420,11 @@ void HU_Init(void)
       sprintf(buffer, "STCFN%.3d", j);
       hu_font[i]  = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
     }
+    else if (j == '"') // [Nugget]
+    {
+      hu_fontB[i] = (patch_t *) W_CacheLumpName("DIG34", PU_STATIC);
+      hu_font[i]  = (patch_t *) W_CacheLumpName("STCFN034", PU_STATIC);
+    }
     else if (j == '%')
     {
       hu_fontB[i] = (patch_t *) W_CacheLumpName("DIG37", PU_STATIC);
@@ -1225,19 +1230,19 @@ static void HU_widget_build_powers(void)
   int offset = 0;
 
   if (plr->powers[pw_invisibility] > 0) {
-    offset += sprintf(hud_powerstr, "\x1b%cINVIS %iS ", '0'+CR_RED,
+    offset += sprintf(hud_powerstr, "\x1b%cINVIS %i\" ", '0'+CR_RED,
                       MIN(INVISTICS/TICRATE, 1 + (plr->powers[pw_invisibility] / TICRATE)));
   }
   if (plr->powers[pw_invulnerability] > 0) {
-    offset += sprintf(hud_powerstr + offset, "\x1b%cINVUL %iS ", '0'+CR_GREEN,
+    offset += sprintf(hud_powerstr + offset, "\x1b%cINVUL %i\" ", '0'+CR_GREEN,
                       MIN(INVULNTICS/TICRATE, 1 + (plr->powers[pw_invulnerability] / TICRATE)));
   }
   if (plr->powers[pw_infrared] > 0) {
-    offset += sprintf(hud_powerstr + offset, "\x1b%cLIGHT %iS ", '0'+CR_BRICK,
+    offset += sprintf(hud_powerstr + offset, "\x1b%cLIGHT %i\" ", '0'+CR_BRICK,
                       MIN(INFRATICS/TICRATE, 1 + (plr->powers[pw_infrared] / TICRATE)));
   }
   if (plr->powers[pw_ironfeet] > 0) {
-    offset += sprintf(hud_powerstr + offset, "\x1b%cSUIT %iS ", '0'+CR_GRAY,
+    offset += sprintf(hud_powerstr + offset, "\x1b%cSUIT %i\"", '0'+CR_GRAY,
                       MIN(IRONTICS/TICRATE, 1 + (plr->powers[pw_ironfeet] / TICRATE)));
   }
 
