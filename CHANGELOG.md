@@ -1,6 +1,6 @@
 ## New Features
 
-None.
+- **Horizontal Weapon Centering**
 
 ## Changes
 

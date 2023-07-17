@@ -887,8 +887,8 @@ default_t defaults[] = {
   {
     "center_weapon",
     (config_t *) &center_weapon, NULL,
-    {0}, {0,2}, number, ss_weap, wad_no,
-    "1 to center the weapon sprite during attack, 2 to keep it bobbing"
+    {0}, {0,3}, number, ss_weap, wad_no, // [Nugget] Horizontal weapon centering
+    "1 to center the weapon sprite during attack, 2 to keep it bobbing, 3 to center it horizontally"
   },
 
   // [Nugget] ------------------------------------------------------------

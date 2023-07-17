@@ -53,6 +53,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 - Restored _**Weapon Recoil**_ menu item
 - _**Disable Horizontal Autoaim**_ setting
+- **_Horizontal_ Weapon Centering** setting [i.b. DSDA-Doom]
 - **Weapon Bobbing is permanently updated every tic** (fixes choppy Chainsaw bobbing)
 - _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Bobbing Styles**_ selection [p.f. Zandronum]

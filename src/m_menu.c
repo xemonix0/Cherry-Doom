@@ -3205,7 +3205,7 @@ setup_menu_t* weap_settings[] =
 
 // [FG] centered or bobbing weapon sprite
 static const char *weapon_attack_alignment_strings[] = {
-  "OFF", "CENTERED", "BOBBING", NULL
+  "OFF", "CENTERED", "BOBBING", "HORIZONTAL", NULL // [Nugget] Horizontal weapon centering
 };
 
 static void M_UpdateCenteredWeaponItem(void)

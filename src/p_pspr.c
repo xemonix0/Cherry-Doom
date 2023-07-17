@@ -1316,6 +1316,7 @@ void P_NuggetResetWeaponInertia(void)
 
 #define WEAPON_CENTERED 1
 #define WEAPON_BOBBING 2
+#define WEAPON_HORIZONTAL 3 // [Nugget]
 
 void P_MovePsprites(player_t *player)
 {
@@ -1368,10 +1369,11 @@ void P_MovePsprites(player_t *player)
       {
       }
       // [FG] center the weapon sprite horizontally and push up vertically
-      else if (player->attackdown && center_weapon_strict == WEAPON_CENTERED)
+      else if (player->attackdown && center_weapon_strict & WEAPON_CENTERED) // [Nugget] Horizontal weapon centering
       {
         psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first person sprite centering
-        psp->sy2 = WEAPONTOP;
+        if (center_weapon_strict == WEAPON_CENTERED) // [Nugget] Horizontal weapon centering
+          psp->sy2 = WEAPONTOP;
       }
     }
   }
