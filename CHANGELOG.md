@@ -8,4 +8,4 @@ None.
 
 ## Bug Fixes
 
-None.
+- **Fixed weapon lowering when running out of ammo** in complevels below Boom with `weapon_center` enabled
