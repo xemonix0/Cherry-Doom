@@ -24,6 +24,7 @@
 
 #include "doomtype.h"
 #include "d_event.h"
+#include "d_player.h" // [Nugget]
 
 // Size of statusbar.
 // Now sensitive for scaling.
@@ -157,6 +158,11 @@ extern int ammo_yellow;   // ammo percent less is yellow more green
 extern int sts_always_red;// status numbers do not change colors
 extern int sts_pct_always_gray;// status percents do not change colors
 extern int sts_traditional_keys;  // display keys the traditional way
+
+// [Nugget]: [crispy] blinking key or skull in the status bar
+#define KEYBLINKMASK 0x8
+#define KEYBLINKTICS (7*KEYBLINKMASK)
+extern void ST_blinkKeys(player_t* player, int blue, int yellow, int red);
 
 extern boolean st_crispyhud, oldcrispy, st_widecrispyhud; // [Nugget]
 

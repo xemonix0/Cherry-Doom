@@ -25,6 +25,7 @@
 #include "r_main.h"
 #include "dstrings.h"
 #include "d_deh.h"  // Ty 03/27/98 - externalized
+#include "st_stuff.h" // [Nugget]
 
 ///////////////////////////////////////////////////////////////
 //
@@ -259,6 +260,8 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
         {
           displaymsg("%s", s_PD_BLUEO);  // Ty 03/27/98 - externalized
           S_StartSound(p->mo,sfx_oof);                  // killough 3/20/98
+          // [Nugget]: [crispy] blinking key or skull in the status bar
+          ST_blinkKeys(p, KEYBLINK_EITHER, KEYBLINK_NONE, KEYBLINK_NONE);
           return 0;
         }
       break;
@@ -269,6 +272,8 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
         {
           displaymsg("%s", s_PD_REDO); // Ty 03/27/98 - externalized
           S_StartSound(p->mo,sfx_oof);                // killough 3/20/98
+          // [Nugget]: [crispy] blinking key or skull in the status bar
+          ST_blinkKeys(p, KEYBLINK_NONE, KEYBLINK_NONE, KEYBLINK_EITHER);
           return 0;
         }
       break;
@@ -279,6 +284,8 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
         {
           displaymsg("%s", s_PD_YELLOWO);  // Ty 03/27/98 - externalized
           S_StartSound(p->mo,sfx_oof);                    // killough 3/20/98
+          // [Nugget]: [crispy] blinking key or skull in the status bar
+          ST_blinkKeys(p, KEYBLINK_NONE, KEYBLINK_EITHER, KEYBLINK_NONE);
           return 0;
         }
       break;
@@ -406,6 +413,8 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
         {
           displaymsg("%s", s_PD_BLUEK);  // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
+          // [Nugget]: [crispy] blinking key or skull in the status bar
+          ST_blinkKeys(player, KEYBLINK_EITHER, KEYBLINK_NONE, KEYBLINK_NONE);
           return 0;
         }
       break;
@@ -418,6 +427,8 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
         {
           displaymsg("%s", s_PD_YELLOWK);  // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);               // killough 3/20/98
+          // [Nugget]: [crispy] blinking key or skull in the status bar
+          ST_blinkKeys(player, KEYBLINK_NONE, KEYBLINK_EITHER, KEYBLINK_NONE);
           return 0;
         }
       break;
@@ -430,6 +441,8 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
         {
           displaymsg("%s", s_PD_REDK); // Ty 03/27/98 - externalized
           S_StartSound(player->mo,sfx_oof);           // killough 3/20/98
+          // [Nugget]: [crispy] blinking key or skull in the status bar
+          ST_blinkKeys(player, KEYBLINK_NONE, KEYBLINK_NONE, KEYBLINK_EITHER);
           return 0;
         }
       break;

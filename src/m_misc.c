@@ -3037,6 +3037,13 @@ default_t defaults[] = {
   },
 
   { // [Nugget]
+    "blink_keys",
+    (config_t *) &blink_keys, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to make missing keys blink when trying to open locked doors"
+  },
+
+  { // [Nugget]
     "alt_arms",
     (config_t *) &alt_arms, NULL,
     {0}, {0,1}, number, ss_none, wad_yes,

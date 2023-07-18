@@ -192,6 +192,7 @@ int sp_chat;
 int gammacycle;
 int weapon_inertia_scale_pct;
 int sx_fix;
+int blink_keys;
 
 // Misc
 int zoom_fov;

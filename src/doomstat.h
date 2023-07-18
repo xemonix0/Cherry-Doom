@@ -523,6 +523,7 @@ extern int sp_chat;
 extern int gammacycle;
 extern int weapon_inertia_scale_pct;
 extern int sx_fix;
+extern int blink_keys;
 
 // Misc
 extern int zoom_fov;

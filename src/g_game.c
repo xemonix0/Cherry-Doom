@@ -1204,6 +1204,7 @@ static void G_PlayerFinishLevel(int player)
   player_t *p = &players[player];
   memset(p->powers, 0, sizeof p->powers);
   memset(p->cards, 0, sizeof p->cards);
+  memset(p->keyblinkkeys, 0, sizeof (p->keyblinkkeys)); // [Nugget]: [crispy] blinking key or skull in the status bar
   p->mo->flags &= ~MF_SHADOW;   // cancel invisibility
   p->extralight = 0;      // cancel gun flashes
   p->fixedcolormap = 0;   // cancel ir gogles

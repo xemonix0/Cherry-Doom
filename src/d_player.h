@@ -87,6 +87,17 @@ typedef enum
   weapswitch_raising,
 } weapswitch_t;
 
+
+// [Nugget]: [crispy] blinking key or skull in the status bar
+typedef enum
+{
+  KEYBLINK_NONE,
+  KEYBLINK_EITHER,
+  KEYBLINK_CARD,
+  KEYBLINK_SKULL,
+  KEYBLINK_BOTH,
+} keyblink_t;
+
 //
 // Extended player object info: player_t
 //
@@ -205,6 +216,9 @@ typedef struct player_s
 
   fixed_t             impactpitch, oldimpactpitch; // Pitch view down on impact
   
+  // [crispy] blinking key or skull in the status bar
+  int                 keyblinkkeys[3], keyblinktics;
+
   // Momentarily display the time at which an event occurred
   int                 event_type, event_time, event_tics;
 

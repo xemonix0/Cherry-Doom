@@ -1,6 +1,7 @@
 ## New Features
 
-- **Horizontal Weapon Centering**
+- **Horizontal Weapon Centering** setting
+- **Blink Missing Keys** setting
 
 ## Changes
 
