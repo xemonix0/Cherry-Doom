@@ -598,7 +598,7 @@ void R_ExecuteSetViewSize (void)
     
     rfov = bfov + fx;
     fovdiff = (float) ORIGFOV / rfov;
-    lookdirmax = LOOKDIRMAX * fovdiff;
+    lookdirmax = LOOKDIRMAX2 * fovdiff;
   }
   
   // [Nugget] FOV from Doom Retro
