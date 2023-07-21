@@ -178,9 +178,7 @@ int show_berserk;
 // Status Bar/HUD
 int alt_arms;
 int smarttotals;
-int timer_use;
-int timer_teleport;
-int timer_key_pickup;
+int event_timers[NUMTIMERS];
 
 // Enemies
 int extra_gibbing;

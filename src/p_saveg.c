@@ -964,10 +964,10 @@ static void saveg_read_player_t(player_t *str)
     }
 
     // [Nugget]
-    // int jumpTics;
-    str->jumpTics = saveg_read32();
-    // fixed_t crouchOffset;
-    str->crouchOffset = saveg_read32();
+    // int jumptics;
+    str->jumptics = saveg_read32();
+    // fixed_t crouchoffset;
+    str->crouchoffset = saveg_read32();
 }
 
 static void saveg_write_player_t(player_t *str)
@@ -1110,10 +1110,10 @@ static void saveg_write_player_t(player_t *str)
     saveg_write32(str->oldviewz);
 
     // [Nugget]
-    // int jumpTics;
-    saveg_write32(str->jumpTics);
-    // fixed_t crouchOffset;
-    saveg_write32(str->crouchOffset);
+    // int jumptics;
+    saveg_write32(str->jumptics);
+    // fixed_t crouchoffset;
+    saveg_write32(str->crouchoffset);
 }
 
 

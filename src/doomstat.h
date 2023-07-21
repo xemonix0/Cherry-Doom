@@ -504,14 +504,14 @@ extern int show_berserk;
 // Status Bar/HUD
 extern int alt_arms;
 extern int smarttotals;
-enum {
-  TIMER_USE = 1,
+typedef enum {
+  TIMER_USE,
   TIMER_TELEPORT,
   TIMER_KEYPICKUP,
-};
-extern int timer_use;
-extern int timer_teleport;
-extern int timer_key_pickup;
+  
+  NUMTIMERS
+} eventtimer_t;
+extern int event_timers[];
 
 // Enemies
 extern int extra_gibbing;

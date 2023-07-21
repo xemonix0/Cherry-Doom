@@ -125,7 +125,7 @@ void P_CalcHeight (player_t* player)
   if (!onground || player->cheats & CF_NOMOMENTUM)
     {
       // [Nugget] Account for crouching
-      player->viewz = player->mo->z + view - player->crouchOffset;
+      player->viewz = player->mo->z + view - player->crouchoffset;
 
       if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
         player->viewz = player->mo->ceilingz-4*FRACUNIT;
@@ -142,7 +142,10 @@ void P_CalcHeight (player_t* player)
 
   angle = (FINEANGLES/20*leveltime)&FINEMASK;
   // [Nugget] View bobbing percentage setting
-  bob = FixedMul((player->bob * view_bobbing_percentage / 100) / 2, finesine[angle]);
+  bob = player->bob;
+  if (view_bobbing_percentage != 100)
+  { bob = FixedDiv(FixedMul(bob, view_bobbing_percentage), 100); }
+  bob = FixedMul(bob / 2, finesine[angle]);
 
   // move viewheight
 
@@ -193,7 +196,7 @@ void P_CalcHeight (player_t* player)
     }
 
   // [Nugget] Account for crouching
-  player->viewz = player->mo->z + player->viewheight + bob - player->crouchOffset;
+  player->viewz = player->mo->z + player->viewheight + bob - player->crouchoffset;
   
   if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
     player->viewz = player->mo->ceilingz-4*FRACUNIT;
@@ -225,10 +228,7 @@ void P_MovePlayer (player_t* player)
     if (!(player->mo->flags & MF_NOGRAVITY))
     { player->mo->flags |= MF_NOGRAVITY; }
 
-    if (!(M_InputGameActive(input_jump)
-          || M_InputGameActive(input_crouch))
-        || (M_InputGameActive(input_jump)
-            && M_InputGameActive(input_crouch)))
+    if (!(M_InputGameActive(input_jump) ^ M_InputGameActive(input_crouch)))
     { // Stop moving...
       if (player->cheats & CF_NOMOMENTUM)
       { player->mo->momz = 0; } // ... instantly
@@ -248,25 +248,24 @@ void P_MovePlayer (player_t* player)
   }
 
   // [Nugget] Jumping delay
-  if (player->jumpTics) { player->jumpTics--; }
+  if (player->jumptics) { player->jumptics--; }
 
   // [Nugget] Jump/Fly Up
   if (casual_play && M_InputGameActive(input_jump))
   {
     if (player->cheats & CF_FLY) {
-      player->mo->momz += ((autorun ^ M_InputGameActive(input_speed)) == 1)
-                          ? 2*FRACUNIT : 1*FRACUNIT;
+      player->mo->momz += (1 + (autorun ^ M_InputGameActive(input_speed))) * FRACUNIT;
       if (player->mo->momz > 8*FRACUNIT) { player->mo->momz = 8*FRACUNIT; }
     }
     else if (jump_crouch) {
       if (player->mo->intflags & MIF_CROUCHING) // Stand up first
       { player->mo->intflags &= ~MIF_CROUCHING; }
-      else if (onground && !(player->jumpTics)
+      else if (onground && !(player->jumptics)
                && (player->mo->height == player->mo->info->height)
                && ((player->mo->ceilingz - player->mo->floorz) > player->mo->height))
       { // Jump
         player->mo->momz = 8*FRACUNIT;
-        player->jumpTics = 20;
+        player->jumptics = 20;
         // [Nugget]: [crispy] squat down weapon sprite a bit
         if (STRICTMODE(weaponsquat))
         { player->psprites[ps_weapon].dy = player->mo->momz>>1; }
@@ -279,18 +278,13 @@ void P_MovePlayer (player_t* player)
   else if (casual_play)
   {
     if (player->cheats & CF_FLY) {
-      player->mo->momz -= ((autorun ^ M_InputGameActive(input_speed)) == 1)
-                          ? 2*FRACUNIT : 1*FRACUNIT;
+      player->mo->momz -= (1 + (autorun ^ M_InputGameActive(input_speed))) * FRACUNIT;
       if (player->mo->momz < -8*FRACUNIT) { player->mo->momz = -8*FRACUNIT; }
     }
     else if (jump_crouch && crouchKeyDown == false)
     {
       crouchKeyDown = true;
-
-      if (player->mo->intflags & MIF_CROUCHING)
-      { player->mo->intflags &= ~MIF_CROUCHING; } // Stand up
-      else
-      { player->mo->intflags |= MIF_CROUCHING; } // Crouch
+      player->mo->intflags ^= MIF_CROUCHING;
     }
   }
 
@@ -300,60 +294,47 @@ void P_MovePlayer (player_t* player)
   { player->mo->intflags &= ~MIF_CROUCHING; }
 
   // [Nugget] Smooth crouching
-  if ((player->mo->intflags & MIF_CROUCHING)
-      && (player->mo->height > player->mo->info->height/2))
-  { // Crouching
-    int step = onground ? CROUCHUNITS : CROUCHUNITS*2;
-
-    player->mo->height -= step;
-    // Have 'crouchOffset' take as many steps as 'height' to reach its target
-    player->crouchOffset += ((float)(viewheight_value/2)*FRACUNIT)
-                            / ((float)(player->mo->info->height/2)/step);
-    if (!onground) // Crouch jumping!
-    { player->mo->z += step; }
-
-    if (player->mo->height <= player->mo->info->height/2)
-    { // Done crouching
-      if (!onground) // Take away any extra height increase
-      { player->mo->z -= (player->mo->info->height/2) - player->mo->height; }
-      player->mo->height = player->mo->info->height/2;
-      player->crouchOffset = (viewheight_value/2)*FRACUNIT;
-    }
-
-    if (player->crouchOffset > (viewheight_value/2)*FRACUNIT)
-    { player->crouchOffset = (viewheight_value/2)*FRACUNIT; }
-  }
-  else if (!(player->mo->intflags & MIF_CROUCHING)
-           && (player->mo->height < (player->mo->ceilingz - player->mo->floorz))
-           && (player->mo->height < player->mo->info->height))
-  { // Standing up
-    int step = onground ? CROUCHUNITS : CROUCHUNITS*2;
+  if (   ((player->mo->intflags & MIF_CROUCHING)
+          && (player->mo->height > player->mo->info->height/2))
+      || (!(player->mo->intflags & MIF_CROUCHING)
+          && (player->mo->height < (player->mo->ceilingz - player->mo->floorz))
+          && (player->mo->height < player->mo->info->height)))
+  {
+    const int sign = ((player->mo->intflags & MIF_CROUCHING)
+                      && (player->mo->height > player->mo->info->height/2)) ? -1 : 1;
+    const fixed_t step = (onground ? CROUCHUNITS : CROUCHUNITS*2) * sign;
+    const fixed_t heighttarget = player->mo->info->height / ((sign > 0) ? 1 : 2),
+                  offsettarget = (sign > 0) ? 0 : viewheight_value * FRACUNIT / 2;
 
     player->mo->height += step;
-    // As above; as many steps as 'height'
-    player->crouchOffset -= ((float)(viewheight_value/2)*FRACUNIT)
-                            / ((float)(player->mo->info->height/2)/step);
-    if (!onground) { // Inverse crouch jumping
+
+    // Make `crouchoffset` take as many steps as `height` to reach its target
+    player->crouchoffset -= (viewheight_value * FRACUNIT / 2)
+                            / ((float) (player->mo->info->height / 2) / step);
+
+    if (!onground) { // Crouch jumping!
       player->mo->z -= step;
       if (player->mo->z < player->mo->floorz)
       { player->mo->z = player->mo->floorz; }
     }
 
     if (player->mo->height > (player->mo->ceilingz - player->mo->floorz))
-    { // Cap the player's height at ceiling level
-      player->crouchOffset += player->mo->height // Return the appropriate offset
+    {
+      player->crouchoffset += player->mo->height
                               - (player->mo->ceilingz - player->mo->floorz);
       player->mo->height = player->mo->ceilingz - player->mo->floorz;
     }
 
-    if (player->mo->height >= player->mo->info->height)
-    { // Done standing up
-      player->mo->height = player->mo->info->height;
-      player->crouchOffset = 0;
+    if ((player->mo->height * sign) >= (heighttarget * sign))
+    { // Done crouching
+      if (!onground && (sign < 0)) // Take away excess Z shifting
+      { player->mo->z -= heighttarget - player->mo->height; }
+      player->mo->height = heighttarget;
+      player->crouchoffset = offsettarget;
     }
 
-    if (player->crouchOffset < 0)
-    { player->crouchOffset = 0; }
+    if ((player->crouchoffset * (-sign)) > (offsettarget * (-sign)))
+    { player->crouchoffset = offsettarget; }
   }
 
   // killough 10/98:
@@ -454,12 +435,12 @@ void P_DeathThink (player_t* player)
 
   // [Nugget] Gradually decrease the crouching offset;
   // should give a nice arching POV effect, appropriate for the context
-  if (player->crouchOffset) {
-    int step = player->crouchOffset/4;
+  if (player->crouchoffset) {
+    int step = player->crouchoffset/4;
     if (step < FRACUNIT) { step = FRACUNIT; }
 
-    player->crouchOffset -= step;
-    if (player->crouchOffset < 0) { player->crouchOffset = 0; }
+    player->crouchoffset -= step;
+    if (player->crouchoffset < 0) { player->crouchoffset = 0; }
   }
 
   player->deltaviewheight = 0;
@@ -527,6 +508,17 @@ void P_DeathThink (player_t* player)
         break;
     }
   }
+}
+
+// [Nugget] Event Timers
+void P_SetPlayerEvent(player_t* player, eventtimer_t type)
+{
+  if (!STRICTMODE(event_timers[type] == 2 || (event_timers[type] && (demorecording||demoplayback))))
+  { return; }
+
+  player->eventtype = type;
+  player->eventtime = leveltime;
+  player->eventtics = 5*TICRATE/2; // [crispy] 2.5 seconds
 }
 
 //
@@ -709,13 +701,7 @@ void P_PlayerThink (player_t* player)
           P_UseLines (player);
           player->usedown = true;
           
-          // [Nugget] Key pickup timer
-          if (timer_use == 2 || (timer_use && (demorecording||demoplayback)))
-          {
-            player->event_type = TIMER_USE;
-            player->event_time = leveltime;
-            player->event_tics = 5*TICRATE/2; // [crispy] 2.5 seconds
-          }
+          P_SetPlayerEvent(player, TIMER_USE); // [Nugget] "Use" button timer
         }
     }
   else

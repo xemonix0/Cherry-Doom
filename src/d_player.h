@@ -211,8 +211,8 @@ typedef struct player_s
 
   // [Nugget] All of the following:
   
-  int                 jumpTics; // Jumping delay
-  fixed_t             crouchOffset; // How many units the player is crouched
+  int                 jumptics; // Jumping delay
+  fixed_t             crouchoffset; // How many units the player is crouched
 
   fixed_t             impactpitch, oldimpactpitch; // Pitch view down on impact
   
@@ -220,7 +220,7 @@ typedef struct player_s
   int                 keyblinkkeys[3], keyblinktics;
 
   // Momentarily display the time at which an event occurred
-  int                 event_type, event_time, event_tics;
+  int                 eventtype, eventtime, eventtics;
 
 } player_t;
 

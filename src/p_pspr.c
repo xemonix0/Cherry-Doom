@@ -1168,10 +1168,13 @@ void P_SetupPsprites(player_t *player)
 static void P_NuggetBobbing(player_t* player)
 {
   pspdef_t *psp = player->psprites;
-  // [Nugget] Weapon bobbing percentage setting
-  const fixed_t bob = player->bob * weapon_bobbing_percentage / 100;
+  fixed_t bob = player->bob;
   const int angle = (128*leveltime) & FINEMASK;
-  int style = STRICTMODE(bobbing_style);
+  const int style = STRICTMODE(bobbing_style);
+
+  // [Nugget] Weapon bobbing percentage setting
+  if (weapon_bobbing_percentage != 100)
+  { bob = FixedDiv(FixedMul(bob, weapon_bobbing_percentage), 100); }
 
   // sx - Default, differs in a few styles
   psp->sx2 = ((1 - STRICTMODE(sx_fix))*FRACUNIT) + FixedMul(bob, finecosine[angle]);

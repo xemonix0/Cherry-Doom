@@ -1180,13 +1180,13 @@ static void HU_widget_build_sttime(void)
   extern int time_scale;
 
   // [Nugget] Event timer
-  if (plr->event_tics) {
-    const int   type = plr->event_type;
-    const int   mins = plr->event_time / (60 * TICRATE);
-    const float secs = (float)(plr->event_time % (60 * TICRATE)) / TICRATE;
+  if (plr->eventtics) {
+    const int   type = plr->eventtype;
+    const int   mins = plr->eventtime / (60 * TICRATE);
+    const float secs = (float)(plr->eventtime % (60 * TICRATE)) / TICRATE;
 
-    if (!plr->event_tics-- || gameaction == ga_completed)
-    { plr->event_tics = plr->event_type = plr->event_time = 0; }
+    if (!plr->eventtics-- || gameaction == ga_completed)
+    { plr->eventtics = plr->eventtype = plr->eventtime = 0; }
 
     offset += sprintf(hud_timestr, "\x1b%c%c %02i:%05.02f ",
                       '0'+CR_GOLD,
@@ -1828,7 +1828,7 @@ void HU_Ticker(void)
 
     HU_enableWidget(&w_monsec, map_level_stats);
     HU_enableWidget(&w_powers, map_power_timers); // [Nugget] Powerup timers
-    HU_enableWidget(&w_sttime, map_level_time || plr->event_tics); // [Nugget] Event timers
+    HU_enableWidget(&w_sttime, map_level_time || plr->eventtics); // [Nugget] Event timers
     HU_enableWidget(&w_coord, STRICTMODE(map_player_coords));
   }
   else
@@ -1852,7 +1852,7 @@ void HU_Ticker(void)
 
     HU_enableWidget(&w_monsec, hud_level_stats);
     HU_enableWidget(&w_powers, hud_power_timers); // [Nugget] Powerup timers
-    HU_enableWidget(&w_sttime, hud_level_time || plr->event_tics); // [Nugget] Event timers
+    HU_enableWidget(&w_sttime, hud_level_time || plr->eventtics); // [Nugget] Event timers
   }
   else if (scaledviewheight &&
            (scaledviewheight < SCREENHEIGHT || screenblocks < 13) && // [Nugget] Allow Time/STS in Crispy HUD
@@ -1860,7 +1860,7 @@ void HU_Ticker(void)
   {
     HU_enableWidget(&w_monsec, hud_level_stats);
     HU_enableWidget(&w_powers, hud_power_timers); // [Nugget] Powerup timers
-    HU_enableWidget(&w_sttime, hud_level_time || plr->event_tics); // [Nugget] Event timers
+    HU_enableWidget(&w_sttime, hud_level_time || plr->eventtics); // [Nugget] Event timers
   }
 
   while (w->line)

@@ -1217,7 +1217,7 @@ static void G_PlayerFinishLevel(int player)
   // [Nugget] Reset more additional player properties
   p->mo->height = p->mo->info->height;
   p->mo->intflags &= ~MIF_CROUCHING;
-  p->jumpTics = p->crouchOffset = 0;
+  p->jumptics = p->crouchoffset = 0;
   p->oldimpactpitch = p->impactpitch = 0;
 }
 

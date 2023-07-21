@@ -29,7 +29,9 @@
 
 #include "p_inter.h"
 
-#include "v_video.h" // [Nugget]
+// [Nugget]
+#include "p_user.h"
+#include "v_video.h"
 
 // [Nugget] cheese :)
 extern boolean cheese;
@@ -262,13 +264,7 @@ void P_GiveCard(player_t *player, card_t card)
   
   player->cards[card] = 1;
   
-  // [Nugget] Key pickup timer
-  if (STRICTMODE(timer_key_pickup == 2 || (timer_key_pickup && (demorecording||demoplayback))))
-  {
-    player->event_type = TIMER_KEYPICKUP;
-    player->event_time = leveltime;
-    player->event_tics = 5*TICRATE/2; // [crispy] 2.5 seconds
-  }
+  P_SetPlayerEvent(player, TIMER_KEYPICKUP); // [Nugget] Key pickup timer
 }
 
 //
