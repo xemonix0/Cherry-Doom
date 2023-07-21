@@ -186,6 +186,7 @@ int bloodier_gibbing;
 int zdoom_item_drops;
 
 // CFG only
+int chasecam_crosshair;
 int sp_chat;
 int gammacycle;
 int weapon_inertia_scale_pct;

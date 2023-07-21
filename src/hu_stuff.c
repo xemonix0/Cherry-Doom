@@ -1449,10 +1449,12 @@ void HU_DrawCrosshair(void)
   // [Nugget] Skip some conditions
   if (plr->playerstate != PST_LIVE
       || automapactive
-      //|| menuactive
-      //|| paused
-      //|| secret_on
-      || !crosshair.cr // [Nugget]
+  /* || menuactive
+      || paused
+      || secret_on */
+      // [Nugget]
+      || !crosshair.cr
+      || (chasecam_mode && !chasecam_crosshair)
      )
   {
     return;

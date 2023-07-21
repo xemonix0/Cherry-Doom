@@ -519,6 +519,7 @@ extern int bloodier_gibbing;
 extern int zdoom_item_drops;
 
 // CFG only
+extern int chasecam_crosshair;
 extern int sp_chat;
 extern int gammacycle;
 extern int weapon_inertia_scale_pct;

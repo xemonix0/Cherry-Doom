@@ -7,6 +7,7 @@
 
 - **Powerup Timers now display '"' instead of 'S'**
 - **Extended Mouselook range**; pitch effects are now applied even when looking all the way up and down
+- **Disabled crosshair when using Chasecam**; now configurable through the `chasecam_crosshair` CVAR
 
 ## Bug Fixes
 

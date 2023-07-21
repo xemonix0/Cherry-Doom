@@ -733,6 +733,13 @@ default_t defaults[] = {
   },
 
   {
+    "chasecam_crosshair",
+    (config_t *) &chasecam_crosshair, NULL,
+    {0}, {0,1}, number, ss_none, wad_no,
+    "1 to allow crosshair when using Chasecam"
+  },
+
+  {
     "no_menu_tint",
     (config_t *) &no_menu_tint, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
