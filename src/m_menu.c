@@ -3180,6 +3180,7 @@ enum {           // killough 10/98: enum for y-offset info
 enum {
   weap2_recoil,
   weap2_autoaim,
+  weap2_autoswitch,
   weap2_stub1,
   weap2_title1,
   weap2_hide_weapon,
@@ -3257,14 +3258,15 @@ static void M_NuggetResetWeaponInertia(void)
 
 setup_menu_t weap_settings2[] =
 {
-  // [Nugget] These three
+  {"Enable Recoil", S_YESNO, m_null, M_X, // [Nugget] Restored Weapon Recoil menu item
+   M_Y + weap2_recoil*M_SPC, {"weapon_recoil"}},
 
-  {"Enable Recoil", S_YESNO, m_null, M_X,
-   M_Y + weap2_recoil*M_SPC, {"weapon_recoil"}}, // Restore Weapon Recoil menu item
-   
-  {"Disable Horizontal Autoaim", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X,
+  {"Disable Horizontal Autoaim", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, // [Nugget]
    M_Y + weap2_autoaim*M_SPC, {"no_hor_autoaim"}},
-   
+
+  {"Switch on Pickup", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, // [Nugget]
+   M_Y + weap2_autoswitch*M_SPC, {"switch_on_pickup"}},
+
   {"", S_SKIP, m_null, M_X, M_Y + weap2_stub1*M_SPC},
 
   {"Cosmetic",S_SKIP|S_TITLE,m_null,M_X,M_Y+weap2_title1*M_SPC},

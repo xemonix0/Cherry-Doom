@@ -908,6 +908,13 @@ default_t defaults[] = {
   },
 
   {
+    "switch_on_pickup",
+    (config_t *) &switch_on_pickup, NULL,
+    {1}, {0,1}, number, ss_weap, wad_no,
+    "1 to switch weapons when acquiring new ones or ammo for them"
+  },
+
+  {
     "weapon_bobbing_percentage",
     (config_t *) &weapon_bobbing_percentage, NULL,
     {100}, {0,100}, number, ss_weap, wad_no,

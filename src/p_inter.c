@@ -72,6 +72,15 @@ int clipammo[NUMAMMO] = { 10,  4,  20,  1};
 // GET STUFF
 //
 
+// [Nugget]
+static boolean P_AutoswitchWeapon(void)
+{
+  if (!casual_play || switch_on_pickup)
+  { return true; }
+  
+  return false; // !switch_on_pickup
+}
+
 //
 // P_GiveAmmo
 // Num is the number of clip loads,
@@ -97,6 +106,7 @@ static boolean P_GiveAmmoAutoSwitch(player_t *player, ammotype_t ammo, int oldam
         weaponinfo[i].ammo == ammo &&
         weaponinfo[i].ammopershot > oldammo &&
         weaponinfo[i].ammopershot <= player->ammo[ammo]
+        && P_AutoswitchWeapon() // [Nugget]
       )
       {
         player->pendingweapon = i;
@@ -140,7 +150,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     return P_GiveAmmoAutoSwitch(player, ammo, oldammo);
 
   // If non zero ammo, don't change up weapons, player was lower on purpose.
-  if (oldammo)
+  if (oldammo || P_AutoswitchWeapon()) // [Nugget]
     return true;
 
   // We were down to zero, so select a new weapon.
@@ -211,8 +221,11 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
   gaveammo = weaponinfo[weapon].ammo != am_noammo &&
     P_GiveAmmo(player, weaponinfo[weapon].ammo, dropped ? 1 : 2);
 
-  return !player->weaponowned[weapon] ?
-    player->weaponowned[player->pendingweapon = weapon] = true : gaveammo;
+  // [Nugget]
+  if (!player->weaponowned[weapon] && P_AutoswitchWeapon())
+  { player->pendingweapon = weapon; }
+
+  return !player->weaponowned[weapon] ? player->weaponowned[weapon] = true : gaveammo;
 }
 
 //

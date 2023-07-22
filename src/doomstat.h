@@ -486,6 +486,7 @@ extern int a11y_invul_colormap;
 
 // Weapons
 extern int no_hor_autoaim;
+extern int switch_on_pickup;
 extern int weapon_bobbing_percentage;
 enum {
   BOBSTYLE_VANILLA,
