@@ -400,6 +400,22 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
       memset(&channels[cnum], 0, sizeof(channel_t));
 }
 
+// [Nugget]: [NS] Try to play an optional sound.
+void S_StartSoundOptional(const mobj_t *origin, int sfx_id, int old_sfx_id)
+{
+  static int lump[(sfx_intdms - sfx_pljump) + 1] = { -2 };
+  int i;
+
+  if (lump[0] == -2) // [Nugget] Get lump nums only once
+    for (i = sfx_pljump;  i <= sfx_intdms;  i++)
+    { lump[i - sfx_pljump] = I_GetSfxLumpNum(&S_sfx[i]); }
+
+  if (lump[sfx_id - sfx_pljump] >= 0)
+  { S_StartSound(origin, sfx_id); }
+  else if (old_sfx_id >= 0) // Play a fallback
+  { S_StartSound(origin, old_sfx_id); }
+}
+
 //
 // S_StopSound
 //

@@ -1194,7 +1194,7 @@ static void WI_updateDeathmatchStats(void)
         }
 
 
-      S_StartSound(0, sfx_barexp);  // bang
+      S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
       dm_state = 4;  // we're done with all 4 (or all we have to do)
     }
 
@@ -1202,7 +1202,7 @@ static void WI_updateDeathmatchStats(void)
   if (dm_state == 2)
     {
       if (!(bcnt&3))
-        S_StartSound(0, sfx_pistol);  // noise while counting
+        S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
       stillticking = false;
 
@@ -1241,7 +1241,7 @@ static void WI_updateDeathmatchStats(void)
 
       if (!stillticking)
         {
-          S_StartSound(0, sfx_barexp);
+          S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
           dm_state++;
         }
     }
@@ -1250,7 +1250,7 @@ static void WI_updateDeathmatchStats(void)
       {
         if (acceleratestage)
           {
-            S_StartSound(0, sfx_slop);
+            S_StartSoundOptional(0, sfx_intdms, sfx_slop); // [Nugget]: [NS] Optional inter sounds.
 
             if ( gamemode == commercial)
               WI_initNoState();
@@ -1440,14 +1440,14 @@ static void WI_updateNetgameStats(void)
           if (dofrags)
             cnt_frags[i] = WI_fragSum(i);  // we had frags
         }
-      S_StartSound(0, sfx_barexp);  // bang
+      S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
       ng_state = 10;
     }
 
   if (ng_state == 2)
     {
       if (!(bcnt&3))
-        S_StartSound(0, sfx_pistol);  // pop
+        S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
       stillticking = false;
 
@@ -1466,7 +1466,7 @@ static void WI_updateNetgameStats(void)
 
       if (!stillticking)
         {
-          S_StartSound(0, sfx_barexp);
+          S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
           ng_state++;
         }
     }
@@ -1474,7 +1474,7 @@ static void WI_updateNetgameStats(void)
     if (ng_state == 4)
       {
         if (!(bcnt&3))
-          S_StartSound(0, sfx_pistol);
+          S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
         stillticking = false;
 
@@ -1492,7 +1492,7 @@ static void WI_updateNetgameStats(void)
 
         if (!stillticking)
           {
-            S_StartSound(0, sfx_barexp);
+            S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
             ng_state++;
           }
       }
@@ -1500,7 +1500,7 @@ static void WI_updateNetgameStats(void)
       if (ng_state == 6)
         {
           if (!(bcnt&3))
-            S_StartSound(0, sfx_pistol);
+            S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
           stillticking = false;
 
@@ -1523,7 +1523,7 @@ static void WI_updateNetgameStats(void)
 
           if (!stillticking)
             {
-              S_StartSound(0, sfx_barexp);
+              S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
               ng_state += 1 + 2*!dofrags;
             }
         }
@@ -1531,7 +1531,7 @@ static void WI_updateNetgameStats(void)
         if (ng_state == 8)
           {
             if (!(bcnt&3))
-              S_StartSound(0, sfx_pistol);
+              S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
             stillticking = false;
 
@@ -1550,7 +1550,7 @@ static void WI_updateNetgameStats(void)
 
             if (!stillticking)
               {
-                S_StartSound(0, sfx_pldeth);
+                S_StartSoundOptional(0, sfx_intnet, sfx_pldeth); // [Nugget]: [NS] Optional inter sounds.
                 ng_state++;
               }
           }
@@ -1559,7 +1559,7 @@ static void WI_updateNetgameStats(void)
             {
               if (acceleratestage)
                 {
-                  S_StartSound(0, sfx_sgcock);
+                  S_StartSoundOptional(0, sfx_intnex, sfx_sgcock); // [Nugget]: [NS] Optional inter sounds.
                   if ( gamemode == commercial )
                     WI_initNoState();
                   else
@@ -1683,7 +1683,7 @@ static void WI_updateStats(void)
       cnt_total_time = wbs->totaltimes / TICRATE;
       cnt_time = plrs[me].stime / TICRATE;
       cnt_par = wbs->partime / TICRATE;
-      S_StartSound(0, sfx_barexp);
+      S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
       sp_state = 10;
     }
 
@@ -1692,12 +1692,12 @@ static void WI_updateStats(void)
       cnt_kills[0] += 2;
 
       if (!(bcnt&3))
-        S_StartSound(0, sfx_pistol);
+        S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
       if (cnt_kills[0] >= (plrs[me].skills * 100) / wbs->maxkills)
         {
           cnt_kills[0] = (plrs[me].skills * 100) / wbs->maxkills;
-          S_StartSound(0, sfx_barexp);
+          S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
           sp_state++;
         }
     }
@@ -1707,12 +1707,12 @@ static void WI_updateStats(void)
         cnt_items[0] += 2;
 
         if (!(bcnt&3))
-          S_StartSound(0, sfx_pistol);
+          S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
         if (cnt_items[0] >= (plrs[me].sitems * 100) / wbs->maxitems)
           {
             cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxitems;
-            S_StartSound(0, sfx_barexp);
+            S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
             sp_state++;
           }
       }
@@ -1722,7 +1722,7 @@ static void WI_updateStats(void)
           cnt_secret[0] += 2;
 
           if (!(bcnt&3))
-            S_StartSound(0, sfx_pistol);
+            S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
           // killough 2/22/98: Make secrets = 100% if maxsecret = 0:
           // [FG] Intermission screen secrets desync
@@ -1733,7 +1733,7 @@ static void WI_updateStats(void)
             {
               cnt_secret[0] = (wbs->maxsecret ?
                                (plrs[me].ssecret * 100) / wbs->maxsecret : 100);
-              S_StartSound(0, sfx_barexp);
+              S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
               sp_state++;
             }
         }
@@ -1741,7 +1741,7 @@ static void WI_updateStats(void)
         if (sp_state == 8)
           {
             if (!(bcnt&3))
-              S_StartSound(0, sfx_pistol);
+              S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
             cnt_time += 3;
 
@@ -1766,7 +1766,7 @@ static void WI_updateStats(void)
                   {
                     if (demo_version < 203)
                       cnt_total_time = wbs->totaltimes / TICRATE;
-                    S_StartSound(0, sfx_barexp);
+                    S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
                     sp_state++;
                   }
               }
@@ -1776,7 +1776,7 @@ static void WI_updateStats(void)
             {
               if (acceleratestage)
                 {
-                  S_StartSound(0, sfx_sgcock);
+                  S_StartSoundOptional(0, sfx_intnex, sfx_sgcock); // [Nugget]: [NS] Optional inter sounds.
 
                   if (gamemode == commercial)
                     WI_initNoState();

@@ -42,6 +42,9 @@ void S_Start(void);
 //
 void S_StartSound(const mobj_t *origin, int sound_id);
 
+// [Nugget]: [NS] Try to play an optional sound.
+void S_StartSoundOptional(const mobj_t *origin, int sfx_id, int old_sfx_id);
+
 // Stop sound for thing at <origin>
 void S_StopSound(const mobj_t *origin);
 

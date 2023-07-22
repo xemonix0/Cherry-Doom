@@ -3,6 +3,7 @@
 - **Horizontal Weapon Centering** setting
 - **Switch [Weapon] on Pickup** setting
 - **Blink Missing Keys** setting
+- **Support for Crispy Doom's optional sounds**
 
 ## Changes
 

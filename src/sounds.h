@@ -310,6 +310,26 @@ typedef enum {
   sfx_splsml,
   sfx_plosml,
   sfx_lavsml,
+  
+  // [Nugget]
+  // [NS] New optional sounds.
+  sfx_pljump,
+  sfx_plland,
+  sfx_locked,
+  sfx_keyup,
+  // [NS] Optional menu/intermission sounds.
+  sfx_mnuopn,
+  sfx_mnucls,
+  sfx_mnuact,
+  sfx_mnubak,
+  sfx_mnumov,
+  sfx_mnusli,
+  sfx_mnuerr,
+  sfx_inttic,
+  sfx_inttot,
+  sfx_intnex,
+  sfx_intnet,
+  sfx_intdms,
 
   sfx_fre000 = 500,
   sfx_fre001,

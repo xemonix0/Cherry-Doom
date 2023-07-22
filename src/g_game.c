@@ -955,7 +955,8 @@ boolean G_Responder(event_t* ev)
 	((ev->type == ev_keydown) ||
 	 (ev->type == ev_mouseb_down) ||
 	 (ev->type == ev_joyb_down)) ?
-	(!menuactive ? S_StartSound(NULL,sfx_swtchn) : true),
+	(!menuactive ? S_StartSoundOptional(NULL, sfx_mnuopn, sfx_swtchn) // [Nugget]: [NS] Optional menu sounds.
+	             : true),
 	M_StartControlPanel(), true : false;
     }
 

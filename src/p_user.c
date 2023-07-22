@@ -26,7 +26,10 @@
 #include "p_spec.h"
 #include "p_user.h"
 #include "g_game.h"
-#include "m_input.h" // [Nugget]
+// [Nugget]
+#include "m_input.h"
+#include "s_sound.h"
+#include "sounds.h"
 
 // Index of the special effects (INVUL inverse) map.
 
@@ -266,7 +269,9 @@ void P_MovePlayer (player_t* player)
       { // Jump
         player->mo->momz = 8*FRACUNIT;
         player->jumptics = 20;
-        // [Nugget]: [crispy] squat down weapon sprite a bit
+        // [NS] Jump sound.
+        S_StartSoundOptional(player->mo, sfx_pljump, -1);
+        // [crispy] squat down weapon sprite a bit
         if (STRICTMODE(weaponsquat))
         { player->psprites[ps_weapon].dy = player->mo->momz>>1; }
       }

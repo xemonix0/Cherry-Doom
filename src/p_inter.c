@@ -421,6 +421,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (!player->cards[it_bluecard])
         pickupmsg(player, "%s", s_GOTBLUECARD); // Ty 03/22/98 - externalized
       P_GiveCard (player, it_bluecard);
+      sound = sfx_keyup; // [Nugget]: [NS] Optional key pickup sound.
       if (!netgame)
         break;
       return;
@@ -429,6 +430,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (!player->cards[it_yellowcard])
         pickupmsg(player, "%s", s_GOTYELWCARD); // Ty 03/22/98 - externalized
       P_GiveCard (player, it_yellowcard);
+      sound = sfx_keyup; // [Nugget]: [NS] Optional key pickup sound.
       if (!netgame)
         break;
       return;
@@ -437,6 +439,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (!player->cards[it_redcard])
         pickupmsg(player, "%s", s_GOTREDCARD); // Ty 03/22/98 - externalized
       P_GiveCard (player, it_redcard);
+      sound = sfx_keyup; // [Nugget]: [NS] Optional key pickup sound.
       if (!netgame)
         break;
       return;
@@ -445,6 +448,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (!player->cards[it_blueskull])
         pickupmsg(player, "%s", s_GOTBLUESKUL); // Ty 03/22/98 - externalized
       P_GiveCard (player, it_blueskull);
+      sound = sfx_keyup; // [Nugget]: [NS] Optional key pickup sound.
       if (!netgame)
         break;
       return;
@@ -453,6 +457,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (!player->cards[it_yellowskull])
         pickupmsg(player, "%s", s_GOTYELWSKUL); // Ty 03/22/98 - externalized
       P_GiveCard (player, it_yellowskull);
+      sound = sfx_keyup; // [Nugget]: [NS] Optional key pickup sound.
       if (!netgame)
         break;
       return;
@@ -461,6 +466,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (!player->cards[it_redskull])
         pickupmsg(player, "%s", s_GOTREDSKULL); // Ty 03/22/98 - externalized
       P_GiveCard (player, it_redskull);
+      sound = sfx_keyup; // [Nugget]: [NS] Optional key pickup sound.
       if (!netgame)
         break;
       return;
@@ -676,7 +682,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   if (STRICTMODE(bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap))
   { player->bonuscount = bonuscount_cap; }
 
-  S_StartSound(player->mo, sound);   // killough 4/25/98, 12/98
+  S_StartSoundOptional(player->mo, sound, sfx_itemup); // [Nugget]: [NS] Fallback to itemup.
 }
 
 // [Nugget] Check for Extra Gibbing

@@ -143,6 +143,11 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - **Zoom key**
 - **Allowed mouselook while dead**
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
+- **Support for Crispy Doom's optional sounds:**
+  - `DSPLJUMP`, `DSPLLAND`;
+  - `DSLOCKED`, `DSKEYUP`;
+  - `DSMNUOPN`, `DSMNUCLS`, `DSMNUACT`, `DSMNUBAK`, `DSMNUMOV`, `DSMNUSLI`, `DSMNUERR`;
+  - `DSINTTIC`, `DSINTTOT`, `DSINTNEX`, `DSINTNET`, `DSINTDMS`.
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
 

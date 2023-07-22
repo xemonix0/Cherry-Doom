@@ -260,6 +260,26 @@ sfxinfo_t original_S_sfx[NUMSFX] = {
   SOUND("plosml", sg_oof,    96),
   SOUND("lavsml", sg_oof,    96),
 
+  // [Nugget]:
+  // [NS] New optional sounds.
+  SOUND("pljump", sg_oof,    78),
+  SOUND("plland", sg_oof,    78),
+  SOUND("locked", sg_oof,    78),
+  SOUND("keyup",  sg_itemup, 78),
+  // [NS] Optional menu/intermission sounds.
+  SOUND("mnuopn", sg_none,   60),
+  SOUND("mnucls", sg_none,   60),
+  SOUND("mnuact", sg_none,   60),
+  SOUND("mnubak", sg_none,   60),
+  SOUND("mnumov", sg_none,   60),
+  SOUND("mnusli", sg_none,   60),
+  SOUND("mnuerr", sg_none,   60),
+  SOUND("inttic", sg_none,   60),
+  SOUND("inttot", sg_none,   60),
+  SOUND("intnex", sg_none,   60),
+  SOUND("intnet", sg_none,   60),
+  SOUND("intdms", sg_none,   60),
+
   [500] = SOUND("fre000", sg_none, 127),
   [501] = SOUND("fre001", sg_none, 127),
   [502] = SOUND("fre002", sg_none, 127),

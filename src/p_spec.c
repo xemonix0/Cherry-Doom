@@ -223,7 +223,11 @@ void P_HitFloor (mobj_t *mo, int oof)
     {sfx_lavsml, sfx_lvsiz}   // terrain_lava
   };
 
-  S_StartSound(mo, hitsound[terrain][oof]);
+  // [Nugget]: [NS] Landing sound for longer falls. (Hexen's calculation.)
+  if ((hitsound[terrain][oof] == sfx_oof) && (mo->momz < -GRAVITY * 12))
+    S_StartSoundOptional(mo, sfx_plland, sfx_oof);
+  else
+    S_StartSound(mo, hitsound[terrain][oof]);
 }
 
 ///////////////////////////////////////////////////////////////
@@ -804,7 +808,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           !player->cards[it_yellowskull])
         {
           displaymsg("%s", s_PD_ANY); // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
+          S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
           // [Nugget]: [crispy] blinking key or skull in the status bar
           ST_blinkKeys(player, KEYBLINK_EITHER, KEYBLINK_EITHER, KEYBLINK_EITHER);
           return false;
@@ -815,7 +819,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           (!skulliscard || !player->cards[it_redskull]))
         {
           displaymsg("%s", skulliscard? s_PD_REDK : s_PD_REDC); // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
+          S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
           // [Nugget]: [crispy] blinking key or skull in the status bar
           ST_blinkKeys(player, KEYBLINK_NONE, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD);
           return false;
@@ -826,7 +830,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           (!skulliscard || !player->cards[it_blueskull]))
         {
           displaymsg("%s", skulliscard? s_PD_BLUEK : s_PD_BLUEC); // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
+          S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
           // [Nugget]: [crispy] blinking key or skull in the status bar
           ST_blinkKeys(player, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD, KEYBLINK_NONE, KEYBLINK_NONE);
           return false;
@@ -837,7 +841,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           (!skulliscard || !player->cards[it_yellowskull]))
         {
           displaymsg("%s", skulliscard? s_PD_YELLOWK : s_PD_YELLOWC); // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
+          S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
           // [Nugget]: [crispy] blinking key or skull in the status bar
           ST_blinkKeys(player, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD, KEYBLINK_NONE);
           return false;
@@ -848,7 +852,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           (!skulliscard || !player->cards[it_redcard]))
         {
           displaymsg("%s", skulliscard? s_PD_REDK : s_PD_REDS); // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
+          S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
           // [Nugget]: [crispy] blinking key or skull in the status bar
           ST_blinkKeys(player, KEYBLINK_NONE, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL);
           return false;
@@ -859,7 +863,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           (!skulliscard || !player->cards[it_bluecard]))
         {
           displaymsg("%s", skulliscard? s_PD_BLUEK : s_PD_BLUES); // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
+          S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
           // [Nugget]: [crispy] blinking key or skull in the status bar
           ST_blinkKeys(player, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL, KEYBLINK_NONE, KEYBLINK_NONE);
           return false;
@@ -870,7 +874,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           (!skulliscard || !player->cards[it_yellowcard]))
         {
           displaymsg("%s", skulliscard? s_PD_YELLOWK : s_PD_YELLOWS); // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
+          S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
           // [Nugget]: [crispy] blinking key or skull in the status bar
           ST_blinkKeys(player, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL, KEYBLINK_NONE);
           return false;
@@ -886,7 +890,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
            !player->cards[it_yellowskull]))
         {
           displaymsg("%s", s_PD_ALL6); // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
+          S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
           // [Nugget]: [crispy] blinking key or skull in the status bar
           ST_blinkKeys(player, KEYBLINK_BOTH, KEYBLINK_BOTH, KEYBLINK_BOTH);
           return false;
@@ -899,7 +903,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
            !(player->cards[it_yellowcard] | (demo_version == 203 ? !player->cards[it_yellowskull] : player->cards[it_yellowskull]))))
         {
           displaymsg("%s", s_PD_ALL3); // Ty 03/27/98 - externalized
-          S_StartSound(player->mo,sfx_oof);             // killough 3/20/98
+          S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
           // [Nugget]: [crispy] blinking key or skull in the status bar
           ST_blinkKeys(player, KEYBLINK_EITHER, KEYBLINK_EITHER, KEYBLINK_EITHER);
           return false;
