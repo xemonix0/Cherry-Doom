@@ -55,7 +55,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**Disable Horizontal Autoaim**_ setting
 - _**Switch [Weapon] on Pickup**_ setting
 - **_Horizontal_ Weapon Centering** setting [i.b. DSDA-Doom]
-- **Weapon Bobbing is permanently updated every tic** (fixes choppy Chainsaw bobbing)
+- **Always Bob** setting (CFG-Only: `always_bob`)
 - _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Bobbing Styles**_ selection [p.f. Zandronum]
 - _**Weapon Inertia**_ setting (scale determined by the CFG-Only variable `weapon_inertia_scale_pct`)

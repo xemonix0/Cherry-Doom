@@ -467,6 +467,67 @@ static void P_ApplyBobbing(int *sx, int *sy, fixed_t bob)
   *sy = WEAPONTOP + FixedMul(bob, finesine[angle]);
 }
 
+// [Nugget] Moved here
+#define WEAPON_CENTERED 1
+#define WEAPON_BOBBING 2
+#define WEAPON_HORIZONTAL 3 // [Nugget]
+
+// [Nugget] Bob weapon based on selected style
+static void P_NuggetBobbing(player_t* player)
+{
+  pspdef_t *psp = player->psprites;
+  fixed_t bob = player->bob;
+  const int angle = (128*leveltime) & FINEMASK;
+  const int style = STRICTMODE(bobbing_style);
+
+  if ((player->attackdown && STRICTMODE(center_weapon) != WEAPON_BOBBING) // [FG] not attacking means idle
+      || !psp->state || psp->state->misc1 || player->switching)
+  { return; }
+
+  // [Nugget] Weapon bobbing percentage setting
+  if (weapon_bobbing_percentage != 100)
+  { bob = FixedDiv(FixedMul(bob, weapon_bobbing_percentage), 100); }
+
+  // sx - Default, differs in a few styles
+  psp->sx2 = ((1 - STRICTMODE(sx_fix))*FRACUNIT) + FixedMul(bob, finecosine[angle]);
+  // sy - Used for all styles, their specific values are added to this one right after
+  psp->sy2 = WEAPONTOP + abs(psp->dy); // Squat weapon down on impact
+
+  // Bobbing Styles, ported from Zandronum
+  switch (style) {
+    case BOBSTYLE_VANILLA:
+      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+
+    case BOBSTYLE_INVVANILLA:
+      psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+
+    case BOBSTYLE_ALPHA:
+      psp->sx2 = FixedMul(bob, finesine[angle]);
+      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+
+    case BOBSTYLE_INVALPHA:
+      psp->sx2 = FixedMul(bob, finesine[angle]);
+      psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+
+    case BOBSTYLE_SMOOTH:
+      psp->sy2 += (bob - FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
+      break;
+
+    case BOBSTYLE_INVSMOOTH:
+      psp->sy2 += (FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)]) + bob) / 2;
+      break;
+
+    case BOBSTYLE_QUAKE:
+      psp->sx2 = 0;
+      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
+      break;
+  }
+}
+
 //
 // A_WeaponReady
 // The player can fire the weapon
@@ -515,6 +576,9 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
     player->attackdown = false;
 
   P_ApplyBobbing(&psp->sx, &psp->sy, player->bob);
+  
+  // [Nugget] Calculate sx2 and sy2 alongside sx and sy
+  if (!always_bob) { P_NuggetBobbing(player); }
 }
 
 //
@@ -1164,58 +1228,6 @@ void P_SetupPsprites(player_t *player)
   P_BringUpWeapon(player);
 }
 
-// [Nugget] Bob weapon based on selected style
-static void P_NuggetBobbing(player_t* player)
-{
-  pspdef_t *psp = player->psprites;
-  fixed_t bob = player->bob;
-  const int angle = (128*leveltime) & FINEMASK;
-  const int style = STRICTMODE(bobbing_style);
-
-  // [Nugget] Weapon bobbing percentage setting
-  if (weapon_bobbing_percentage != 100)
-  { bob = FixedDiv(FixedMul(bob, weapon_bobbing_percentage), 100); }
-
-  // sx - Default, differs in a few styles
-  psp->sx2 = ((1 - STRICTMODE(sx_fix))*FRACUNIT) + FixedMul(bob, finecosine[angle]);
-  // sy - Used for all styles, their specific values are added to this one right after
-  psp->sy2 = WEAPONTOP + abs(psp->dy); // Squat weapon down on impact
-
-  // Bobbing Styles, ported from Zandronum
-  switch (style) {
-    case BOBSTYLE_VANILLA:
-      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
-      break;
-
-    case BOBSTYLE_INVVANILLA:
-      psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
-      break;
-
-    case BOBSTYLE_ALPHA:
-      psp->sx2 = FixedMul(bob, finesine[angle]);
-      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
-      break;
-
-    case BOBSTYLE_INVALPHA:
-      psp->sx2 = FixedMul(bob, finesine[angle]);
-      psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
-      break;
-
-    case BOBSTYLE_SMOOTH:
-      psp->sy2 += (bob - FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
-      break;
-
-    case BOBSTYLE_INVSMOOTH:
-      psp->sy2 += (FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)]) + bob) / 2;
-      break;
-
-    case BOBSTYLE_QUAKE:
-      psp->sx2 = 0;
-      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
-      break;
-  }
-}
-
 #define EASE_SCALE(x, y) (FRACUNIT - (FixedDiv(FixedMul(FixedDiv((x) << FRACBITS, (y) << FRACBITS), (fixed_t) weapon_inertia_scale), FRACUNIT)))
 #define EASE_OUT(x, y) ((x) - FixedMul((x), FixedMul((y), (y))))
 #define MAX_DELTA (ORIGWIDTH << FRACBITS)
@@ -1318,10 +1330,6 @@ void P_NuggetResetWeaponInertia(void)
 // Called every tic by player thinking routine.
 //
 
-#define WEAPON_CENTERED 1
-#define WEAPON_BOBBING 2
-#define WEAPON_HORIZONTAL 3 // [Nugget]
-
 void P_MovePsprites(player_t *player)
 {
   pspdef_t *psp = player->psprites;
@@ -1343,8 +1351,7 @@ void P_MovePsprites(player_t *player)
   psp = &player->psprites[ps_weapon];
 
   // [Nugget] Calculate sx2 and sy2 separately from sx and sy
-  if ((!player->attackdown || center_weapon_strict == WEAPON_BOBBING) // [FG] not attacking means idle
-      && psp->state && !psp->state->misc1 && !player->switching)
+  if (always_bob || (player->attackdown && center_weapon_strict == WEAPON_BOBBING))
   { P_NuggetBobbing(player); }
 
   if (psp->state)

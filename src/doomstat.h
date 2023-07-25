@@ -523,6 +523,7 @@ extern int zdoom_item_drops;
 extern int chasecam_crosshair;
 extern int sp_chat;
 extern int gammacycle;
+extern int always_bob;
 extern int weapon_inertia_scale_pct;
 extern int sx_fix;
 extern int blink_keys;

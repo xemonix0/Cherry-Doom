@@ -915,6 +915,13 @@ default_t defaults[] = {
   },
 
   {
+    "always_bob",
+    (config_t *) &always_bob, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to always bob weapon every tic (fixes choppy Chainsaw bobbing)"
+  },
+
+  {
     "weapon_bobbing_percentage",
     (config_t *) &weapon_bobbing_percentage, NULL,
     {100}, {0,100}, number, ss_weap, wad_no,

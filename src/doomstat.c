@@ -190,6 +190,7 @@ int zdoom_item_drops;
 int chasecam_crosshair;
 int sp_chat;
 int gammacycle;
+int always_bob;
 int weapon_inertia_scale_pct;
 int sx_fix;
 int blink_keys;
