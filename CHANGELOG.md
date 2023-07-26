@@ -16,3 +16,4 @@
 
 - **Fixed weapon lowering under certain conditions**
 - **Fixed caching of certain NUGHUD patches** (fixed some crashes when using e.g. Status Bar graphics)
+- **Fixed vertical weapon inertia reset** when disabling mouselook/padlook

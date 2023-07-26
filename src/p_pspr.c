@@ -1311,7 +1311,7 @@ static void P_NuggetWeaponInertia(player_t *player, pspdef_t *psp)
 
     WeaponInertiaHorizontal(player, psp);
 
-    if (mouselook || padlook)
+    if (mouselook || padlook || player->lookdir || psp->wiy)
       WeaponInertiaVertical(player, psp);
   }
 }
