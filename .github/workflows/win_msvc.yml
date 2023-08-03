@@ -16,7 +16,7 @@ env:
 
 jobs:
   build:
-    if: ${{ github.repository == 'MrAlaux/Nugget-Doom' }}
+    if: ${{ github.repository == 'xemonix0/Cherry-Doom' }}
     name: MSVC ${{ matrix.config.arch }}
     runs-on: windows-latest
 

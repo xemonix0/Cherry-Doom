@@ -1,179 +1,40 @@
-﻿# Nugget Doom
+﻿# Cherry Doom
 
-Nugget Doom (formerly known as IRamm, originally a [Crispy Doom](https://www.chocolate-doom.org/wiki/index.php/Crispy_Doom) fork) is a fork of [Woof!](https://github.com/fabiangreffrath/woof), simply intended to implement additional features.
+Cherry Doom if a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) intended to add even more features.
 
 ### DISCLAIMER
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
 **RECORD DEMOS AT YOUR OWN RISK!**
 
-## Features
-
-Most of Nugget Doom's features come from other sources, like source ports and mods; the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them. These acknowledgements are included in the feature lists below; be aware that some might be inaccurate or outright missing.
-
-A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`. For these settings, their config variable names are provided alongside the _CFG-Only_ label as guidance.
-
-### General
-
-- **Support for higher resolutions:** 4X (800p) and 8X (1600p)
-- **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
-- Toggle to **stretch viewport to fit window** (CFG-Only: `stretch-to-fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
-- **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**
-- Toggle for **Gamma Correction key cycling**, through either original or extended gamma levels (CFG-Only: `gammacycle`)
-- _**Screen Wipe Style**_ selection:
-  - _"Seizure"_ (**Warning**: this one might legitimately be seizure-inducing, use with caution);
-  - _"Fade"_.
-- **Fixed screen melt inconsistency across resolutions**
-- **Extended _Level Brightness_ range:** [-8, 8]
-- **_"Direct + Auto"_ mode for Vertical Aiming**
-- _**Things move over/under things**_ setting [p.f. Crispy Doom]
-- **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first) [p.f. Crispy Doom]
-- **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first) [i.b. ZDoom]
-- _**Field of View**_ setting [p.f. Doom Retro]
-- _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV [i.b. Brutal Doom]
-- _**View Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
-- _**Impact Pitch**_ setting, to flinch upon hitting a floor and/or taking damage
-- _**Subtle Idle Bobbing/Breathing**_ setting [p.f. International Doom]
-- _**Teleporter Zoom**_ setting [i.b. ZDoom]
-- _**Death Camera**_ setting [i.b. ZDoom]
-- _**Chasecam**_ [i.b. ZDoom]
-- _**Disable palette tint in menus**_ setting [i.b. Crispy Doom]
-- _**Disable Berserk Tint**_ setting
-- _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tints
-- _**Fake Contrast**_ setting
-- _**Screen Wipe speed percentage**_ setting
-- _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
-- _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
-- _**Play Internal Demos**_ setting
-- _**Quick "Quit Game"**_ setting, to skip the confirmation prompt [p.f. Crispy Doom]
-- Toggling of _**Weapon Flash Lighting**_ [p.f. Crispy Doom]
-- Toggling of _**Weapon Flash Sprite**_ [p.f. Crispy Doom]
-- Toggling of _**Invulnerability Colormap**_ [p.f. Crispy Doom]
-
-### Weapons
-
-- Restored _**Weapon Recoil**_ menu item
-- _**Disable Horizontal Autoaim**_ setting
-- _**Switch [Weapon] on Pickup**_ setting
-- **_Horizontal_ Weapon Centering** setting [i.b. DSDA-Doom]
-- **Always Bob** setting (CFG-Only: `always_bob`)
-- _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
-- _**Bobbing Styles**_ selection [p.f. Zandronum]
-- _**Weapon Inertia**_ setting (scale determined by the CFG-Only variable `weapon_inertia_scale_pct`)
-- _**Squat Weapon Down On Impact**_ setting [p.f. Crispy Doom]
-- _**Translucent Flashes**_ setting [i.b. Crispy Doom]
-- **Show Berserk availability** setting [partially p.f. Crispy Doom]
-- **"Correct" first person sprite centering** setting, to toggle the 1px first person sprite misalignment (CFG-Only: `sx_fix`)
-
-### Status Bar/HUD
-
-- **NUGHUD lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.md`)
-- **SSG is accounted for on the Arms widget** [p.f. Crispy Doom]
-- **Blink Missing Keys** setting (CFG-Only: `blink_keys`) [partially p.f. Crispy Doom]
-- **Show Powerup Timers** setting
-- _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol (CFG-Only: `alt_arms`)
-- _**Smart Totals**_ setting [p.f. So Doom]
-- **Event Timers:**
-  - _"Use" Button Timer_ [p.f. Crispy Doom]; 
-  - _Teleport Timer_ [i.b. the above];
-  - _Key Pickup Timer_ [same as above].
-- **Crosshair:**
-  - 5 new types;
-  - Shaded variants for all types;
-  - Vertical-only target lock-on;
-  - Horizontal autoaim indicators;
-  - Option to account for fuzzy targets [i.b. From Doom With Love];
-  - Dedicated toggle key.
-
-### Automap
-
-- **Automap color for unrevealed secret sectors**
-- _**Blink [Automap] Marks**_ key (default: <kbd>B</kbd>)
-
-### Enemies
-
-- _**Extra Gibbing**_ setting, to force Berserk Fist, Chainsaw and SSG gibbing [i.b. Smooth Doom]
-- _**Bloodier Gibbing**_ setting [i.b. Smooth Doom]
-- _**ZDoom-like item drops**_ setting [of course, i.b. ZDoom]
-- _**Selective Fuzz Darkening**_ setting
-
-### Messages
-
-- **Secret count in "secret revealed" message** [p.f. Crispy Doom]
-- Restored _**Message Listing Scrolls Upwards**_ setting, and enabled it by default
-
-### Doom Compatibility
-
-- Fix Lost Soul colliding with items
-- Lost Soul forgets target upon impact
-- Fuzzy things bleed fuzzy blood [i.b. Crispy Doom]
-- Non-bleeders don't bleed when crushed [i.b. Crispy Doom]
-- Bruiser attack (A_BruisAttack) doesn't face target
-- Fix lopsided Icon of Sin explosions
-- Permanent IDCHOPPERS invulnerability
-- Blazing doors reopen with wrong sound [p.f. Crispy Doom]
-- Manually reactivated moving doors are silent [p.f. Crispy Doom]
-- Corrected switch sound source [p.f. Crispy Doom]
-- Chaingun makes two sounds with one bullet
-- Chaingunner uses pistol/chaingun sound
-- Arch-Vile fire plays flame start sound [p.f. Crispy Doom]
-- Dead players can still play "oof" sound [p.f. Crispy Doom]
-- Key pickup resets palette
-
-### Cheats
-
-- _**'FULLCLIP'**_ for infinite ammo
-- _**'VALIANT'**_ for fast weapons [i.b. ZDoom]
-  - _**'BOBBERS'**_ serves as a shortcut to toggle the two cheats mentioned above, plus IDFA
-- _**'GIBBERS'**_ to force gibbing on dying enemies, independently of damage dealt
-- _**'IDFLY'**_ to fly (uses jumping/crouching keys) [i.b. PrBoom+, ZDoom]
-- _**'SUMMON'**_ to spawn a hostile or friendly actor based on its mobjtype index [i.b. ZDoom]
-- _**'RESURRECT' / 'IDRES'**_ to resurrect the player without toggling IDDQD [i.b. ZDoom]
-- _**'LINETARGET'**_ to give some info on the player's linetarget [i.b. ZDoom]
-- _**'MDK'**_ [i.b. ZDoom]
-- _**'SAITAMA'**_ to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, featuring an alternate multishot attack when holding down Strafe On)
-- _**'BOOMCAN'**_ for explosive hitscan attacks
-- _**'NEXTMAP'**_ to exit the level [i.b. ZDoom]
-- _**'NEXTSECRET'**_ to exit the level as if using a secret exit [i.b. ZDoom]
-- _**'TURBO'**_ to change the player speed in-game
-- **Mid-air control while on noclipping mode** [p.f. Crispy Doom]
-- Reenabled _**'NOMOMENTUM'**_ cheat [p.f. Crispy Doom]
-
-### Miscellaneous
-
-- **Zoom key**
-- **Allowed mouselook while dead**
-- **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
-- **Support for Crispy Doom's optional sounds:**
-  - `DSPLJUMP`, `DSPLLAND`;
-  - `DSLOCKED`, `DSKEYUP`;
-  - `DSMNUOPN`, `DSMNUCLS`, `DSMNUACT`, `DSMNUBAK`, `DSMNUMOV`, `DSMNUSLI`, `DSMNUERR`;
-  - `DSINTTIC`, `DSINTTOT`, `DSINTNEX`, `DSINTNET`, `DSINTDMS`.
-- Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
-- The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
-
 # Releases
 
 Source code and Windows binaries (MSVC builds for Windows 7 and newer) for the latest release can be found on the [Release](https://github.com/MrAlaux/Nugget-Doom/releases/latest) page.
 
-The most recent list of changes can be found in the [Changelog](https://github.com/MrAlaux/Nugget-Doom/blob/master/CHANGELOG.md).
+The most recent list of changes can be found in the [Changelog](https://github.com/xemonix0/Cherry-Doom/blob/master/CHANGELOG.md).
 
-A complete history of changes and releases can be found on the [Releases](https://github.com/MrAlaux/Nugget-Doom/releases) page.
+A complete history of changes and releases can be found on the [Releases](https://github.com/xemonix0/Cherry-Doom/releases) page.
 
 ## Versioning
 
-Nugget Doom follows a fairly simple (albeit arbitrary) **X.Y.Z** versioning system:
+Cherry Doom follows exactly the same versioning system as Nugget Doom, which is fairly simple:
 
 - **X** is increased in the event of at least one major implementation, such as a new spec like _UMAPINFO_;
 - **Y** is increased in the event of at least one minor implementation, such as a new cheat;
-- **Z** is increased in the event of at least one bug fix, text/code reformatting, or merging of _Woof!_ updates, even if the changes to the latter are considered minor or major.
+- **Z** is increased in the event of at least one bug fix, text/code reformatting, or merging of _Nugget Doom_ updates, even if the changes to the latter are considered minor or major.
 
 Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
 
 # Compiling
 
-As a Woof! fork, its build instructions should also apply here:
+As a Nugget Doom fork, its build instructions should also apply here:
 
-The Nugget Doom source code is available at GitHub: <https://github.com/MrAlaux/Nugget-Doom>.
+The Cherry Doom source code is available at GitHub: <https://github.com/xemonix0/Cherry-Doom>.
+
+It can be cloned via
+
+```
+ git clone https://github.com/xemonix0/Cherry-Doom.git
+```
 
 ## Linux, and Windows with MSYS2
 
@@ -191,7 +52,7 @@ Usually your distribution should have the corresponding packages in its reposito
 Once installed, compilation should be as simple as:
 
 ```
- cd nugget-doom
+ cd cherry-doom
  mkdir build; cd build
  cmake ..
  make
@@ -213,23 +74,9 @@ CMake will automatically download and build all dependencies for you.
 
 # Contact
 
-The homepage for Nugget Doom is <https://github.com/MrAlaux/Nugget-Doom>.
+The homepage for Cherry Doom is <https://github.com/xemonix0/Cherry-Doom>.
 
-Please report any bugs, glitches or crashes that you encounter to the GitHub [Issue Tracker](https://github.com/MrAlaux/Nugget-Doom/issues).
-
-## Acknowledgement
-
-Help was provided by:
-
-- [_atsb_ (a.k.a. _Gibbon_)](https://github.com/atsb);
-- [_Brad Harding_](https://github.com/bradharding);
-- [_ceski_](https://github.com/ceski-1);
-- [_melak47_](https://github.com/melak47);
-- [_Fabian Greffrath_](https://github.com/fabiangreffrath);
-- [_Roman Fomin_ (a.k.a. _rfomin_)](https://github.com/rfomin);
-- [_Ryan Krafnick_ (a.k.a. _kraflab_)](https://github.com/kraflab).
-
-Thanks to all of you!
+Please report any bugs, glitches or crashes that you encounter to the GitHub [Issue Tracker](https://github.com/xemonix0/Cherry-Doom/issues).
 
 # Legalese
 
@@ -250,7 +97,8 @@ Copyright:
  © 2023 liPillON;  
  © 2020-2023 Fabian Greffrath;  
  © 2020-2023 Roman Fomin;  
- © 2021-2023 Alaux.  
+ © 2021-2023 Alaux;  
+ © 2023 Xemonix.   
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/beta.h`  

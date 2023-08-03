@@ -26,7 +26,7 @@
 #include "v_video.h"
 #include "r_main.h"
 
-static const char snapshot_str[] = "NUGGETDOOM_SNAPSHOT";
+static const char snapshot_str[] = "CHERRYDOOM_SNAPSHOT";
 static const int snapshot_len = arrlen(snapshot_str);
 static const int snapshot_size = ORIGWIDTH * ORIGHEIGHT;
 

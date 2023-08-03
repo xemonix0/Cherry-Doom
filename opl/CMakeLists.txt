@@ -1,4 +1,4 @@
-include(NuggetDoomSettings)
+include(CherryDoomSettings)
 
 add_library(opl STATIC
             opl.c           opl.h
@@ -7,7 +7,7 @@ add_library(opl STATIC
             opl_sdl.c
             opl3.c          opl3.h)
 
-target_nuggetdoom_settings(opl)
+target_cherrydoom_settings(opl)
 
 target_include_directories(opl
                            INTERFACE "."

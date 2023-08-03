@@ -1,11 +1,11 @@
-include(NuggetDoomSettings)
+include(CherryDoomSettings)
 
 add_library(setup STATIC
             execute.c           execute.h
             mainmenu.c
             multiplayer.c       multiplayer.h)
 
-target_nuggetdoom_settings(setup)
+target_cherrydoom_settings(setup)
 
 target_include_directories(setup
                            INTERFACE "."

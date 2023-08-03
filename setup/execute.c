@@ -117,7 +117,7 @@ execute_context_t *NewExecuteContext(void)
 
     result = malloc(sizeof(execute_context_t));
 
-    result->response_file = TempFile("nugget-doom.rsp");
+    result->response_file = TempFile("cherry-doom.rsp");
     result->stream = M_fopen(result->response_file, "w");
 
     if (result->stream == NULL)
@@ -352,9 +352,9 @@ static int ExecuteCommand(const char *program, const char *arg)
 static const char *GetExecutableName(void)
 {
 #ifdef _WIN32
-    return "nugget-doom.exe";
+    return "cherry-doom.exe";
 #else
-    return "nugget-doom";
+    return "cherry-doom";
 #endif
 }
 

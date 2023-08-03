@@ -131,6 +131,7 @@ boolean inhelpscreens; // indicates we are in or just left a help screen
 
 boolean menuactive;    // The menus are up
 
+int draw_menu_background;
 background_t menu_background;
 
 #define SKULLXOFF  -32
@@ -284,6 +285,7 @@ void M_DrawOptions(void);
 void M_DrawSound(void);
 void M_DrawLoad(void);
 void M_DrawSave(void);
+void M_DrawBackground(char *patchname, byte *back_dest);
 void M_DrawSetup(void);                                     // phares 3/21/98
 void M_DrawHelp (void);                                     // phares 5/04/98
 
@@ -398,6 +400,9 @@ void M_DrawMainMenu(void)
 {
   // [crispy] force status bar refresh
   inhelpscreens = true;
+
+  if (draw_menu_background == 2)
+      M_DrawBackground("FLOOR4_6", screens[0]);
 
   V_DrawPatchDirect (94,2,0,W_CacheLumpName("M_DOOM",PU_CACHE));
 }
@@ -629,6 +634,9 @@ void M_DrawEpisode(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
+  if (draw_menu_background == 2)
+      M_DrawBackground("FLOOR4_6", screens[0]);
+
   M_DrawTitle(54,EpiDef.y - 25,"M_EPISOD","WHICH EPISODE?");
 }
 
@@ -698,6 +706,9 @@ void M_DrawNewGame(void)
 {
   // [crispy] force status bar refresh
   inhelpscreens = true;
+
+  if (draw_menu_background == 2)
+      M_DrawBackground("FLOOR4_6", screens[0]);
 
   V_DrawPatchDirect (96,14,0,W_CacheLumpName("M_NEWG",PU_CACHE));
   V_DrawPatchDirect (54,38,0,W_CacheLumpName("M_SKILL",PU_CACHE));
@@ -876,6 +887,9 @@ void M_DrawSaveLoadBottomLine(void)
 void M_DrawLoad(void)
 {
   int i;
+
+  if (draw_menu_background == 2)
+      M_DrawBackground("FLOOR4_6", screens[0]);
 
   //jff 3/15/98 use symbolic load position
   V_DrawPatchDirect (72,LOADGRAPHIC_Y,0,W_CacheLumpName("M_LOADG",PU_CACHE));
@@ -1071,6 +1085,9 @@ void M_DrawSave(void)
 {
   int i;
 
+  if (draw_menu_background == 2)
+      M_DrawBackground("FLOOR4_6", screens[0]);
+
   //jff 3/15/98 use symbolic load position
   V_DrawPatchDirect (72,LOADGRAPHIC_Y,0,W_CacheLumpName("M_SAVEG",PU_CACHE));
   for (i = 0 ; i < load_end ; i++)
@@ -1251,6 +1268,11 @@ char msgNames[2][9]  = {"M_MSGOFF","M_MSGON"};
 
 void M_DrawOptions(void)
 {
+  inhelpscreens = true; // [Cherry] this wasn't here before
+
+  if (draw_menu_background == 2)
+      M_DrawBackground("FLOOR4_6", screens[0]);
+
   V_DrawPatchDirect (108,15,0,W_CacheLumpName("M_OPTTTL",PU_CACHE));
 
   /*  obsolete -- killough
@@ -1389,6 +1411,9 @@ menu_t SoundDef =
 
 void M_DrawSound(void)
 {
+  if (draw_menu_background == 2)
+    M_DrawBackground("FLOOR4_6", screens[0]);
+
   V_DrawPatchDirect (60,38,0,W_CacheLumpName("M_SVOL",PU_CACHE));
 
   M_DrawThermo(SoundDef.x,SoundDef.y+LINEHEIGHT*(sfx_vol+1),16,snd_SfxVolume);
@@ -1495,6 +1520,9 @@ extern int axis_turn_sens;
 void M_DrawMouse(void)
 {
   int mhmx,mvmx,mhmx2,mvmx2; //jff 4/3/98 clamp drawn position to 23 max
+
+  if (draw_menu_background == 2)
+    M_DrawBackground("FLOOR4_6", screens[0]);
 
   V_DrawPatchDirect (60,LOADGRAPHIC_Y,0,W_CacheLumpName("M_MSENS",PU_CACHE));
 
@@ -2024,7 +2052,7 @@ menu_t CompatDef =                                           // killough 10/98
 
 void M_DrawBackground(char *patchname, byte *back_dest)
 {
-  if (setup_active && menu_background != background_on)
+  if (draw_menu_background == 0 || M_MenuIsShaded() || (!setup_active && draw_menu_background == 1))
     return;
 
   R_DrawBackground(patchname, back_dest);
@@ -2033,9 +2061,13 @@ void M_DrawBackground(char *patchname, byte *back_dest)
 /////////////////////////////
 //
 // Draws the Title for the main Setup screen
+// [Cherry] Also the background if needed
 
 void M_DrawSetup(void)
 {
+  if (draw_menu_background == 2)
+    M_DrawBackground("FLOOR4_6", screens[0]);
+
   M_DrawTitle(124,15,"M_SETUP","SETUP");
 }
 
@@ -4190,11 +4222,17 @@ enum {
   gen2_brightmaps,
   gen2_stub2,
   gen2_solidbackground,
+  gen2_draw_menu_background,
   gen2_menu_background,
   gen2_diskicon,
   gen2_endoom,
   gen2_end1,
 };
+
+static void M_ToggleMenuBackground(void)
+{
+  DISABLE_ITEM(!draw_menu_background, gen_settings2[gen2_menu_background]);
+}
 
 // Page 3
 
@@ -4323,8 +4361,12 @@ static const char *death_use_action_strings[] = {
   "default", "last save", "nothing", NULL
 };
 
+static const char *draw_menu_background_strings[] = {
+  "No", "In Setup", "All Menus", NULL
+};
+
 static const char *menu_background_strings[] = {
-  "on", "off", "dark", NULL
+  "Solid", "Dark", "Darker", NULL
 };
 
 // [Nugget]
@@ -4374,6 +4416,9 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
    M_Y + gen2_solidbackground*M_SPC, {"st_solidbackground"}},
 
   {"Draw Menu Background", S_CHOICE, m_null, M_X,
+   M_Y + gen2_draw_menu_background*M_SPC, {"draw_menu_background"}, 0, M_ToggleMenuBackground, draw_menu_background_strings},
+
+  {"Menu Background", S_CHOICE, m_null, M_X,
    M_Y + gen2_menu_background*M_SPC, {"menu_background"}, 0, NULL, menu_background_strings},
 
   {"Flash Icon During Disk IO", S_YESNO, m_null, M_X,
@@ -5619,6 +5664,7 @@ enum {
   musicsfx, /*musicsfx_stub,*/
   woof, // [FG] shamelessly add myself to the Credits page ;)
   nugget, // duh
+  cherry, // hi
   adcr, adcr_stub,
   special, special_stub, special_stub2,
 };
@@ -5631,6 +5677,7 @@ enum {
   cr_musicsfx,
   cr_woof, // [FG] shamelessly add myself to the Credits page ;)
   cr_nugget, // yikes
+  cr_cherry, // hello
   cr_adcr,
   cr_special,
 };
@@ -5668,6 +5715,10 @@ setup_menu_t cred_settings[]={
   // [Nugget] [insert moyai here]
   {"Nugget Doom by",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*nugget + CR_SH*cr_nugget},
   {"Alaux",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*nugget + CR_SH*cr_nugget},
+
+  // [Cherry] :wave:
+  {"Cherry Doom by",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*cherry + CR_SH*cr_cherry},
+  {"Xemonix",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*cherry + CR_SH*cr_cherry},
 
   {"Additional Credit To",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*adcr + CR_SH*cr_adcr},
   {"id Software",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*adcr+CR_SH*cr_adcr},
@@ -7153,7 +7204,11 @@ void M_StartControlPanel (void)
 
 boolean M_MenuIsShaded(void)
 {
-  return setup_active && menu_background == background_dark;
+
+  if (draw_menu_background == 0)
+    return false;
+  return (draw_menu_background == 1 ? setup_active : menuactive)
+      && (menu_background != background_solid);
 }
 
 void M_Drawer (void)
@@ -7161,12 +7216,12 @@ void M_Drawer (void)
    if (M_MenuIsShaded())
       V_ShadeScreen();
 
-   inhelpscreens = false;
-
    // Horiz. & Vertically center string and print it.
    // killough 9/29/98: simplified code, removed 40-character width limit
    if(messageToPrint)
    {
+      if (draw_menu_background == 2)
+        M_DrawBackground("FLOOR4_6", screens[0]);
       // haleyjd 11/11/04: must strdup message, cannot write into
       // string constants!
       char *d = strdup(messageString);

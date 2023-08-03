@@ -752,8 +752,8 @@ static struct {
     char *(*func)(void);
     boolean createdir;
 } autoload_basedirs[] = {
-#ifdef NUGGETDOOMDATADIR
-    {NUGGETDOOMDATADIR, NULL, false},
+#ifdef CHERRYDOOMDATADIR
+    {CHERRYDOOMDATADIR, NULL, false},
 #endif
     {NULL, D_DoomPrefDir, true},
 #if !defined(_WIN32) || defined(_WIN32_WCE)

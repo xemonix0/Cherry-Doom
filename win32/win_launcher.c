@@ -14,9 +14,9 @@
 
 #include "SDL.h"
 
-__declspec(dllexport) extern int NuggetDoom_Main(int argc, char **argv);
+__declspec(dllexport) extern int CherryDoom_Main(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
-    return NuggetDoom_Main(argc, argv);
+    return CherryDoom_Main(argc, argv);
 }

@@ -12,10 +12,10 @@ set(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)
 
 cmake_minimum_required(VERSION 3.9)
 
-project("Nugget Doom"
-    VERSION 2.0.0
-    DESCRIPTION "Nugget Doom 2.0.0"
-    HOMEPAGE_URL "https://github.com/MrAlaux/Nugget-Doom"
+project("Cherry Doom"
+    VERSION 1.0.0
+    DESCRIPTION "Cherry Doom 1.0.0"
+    HOMEPAGE_URL "https://github.com/xemonix0/Cherry-Doom"
     LANGUAGES C)
 
 set(CMAKE_C_STANDARD 99)
@@ -37,22 +37,22 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 endif()
 
 # Hardcoded defines added to configure and resource files.
-set(PROJECT_COMPANY "Alaux and contributors")
+set(PROJECT_COMPANY "Xemonix and contributors")
 set(PROJECT_COPYRIGHT "Copyright (C) 1993-2023")
 set(PROJECT_LICENSE "GNU General Public License, version 2")
 set(PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
-set(PROJECT_SHORTNAME "nugget-doom")
+set(PROJECT_SHORTNAME "cherry-doom")
 set(NUGGETDOOM_ICON "nugget-doom.ico")
 set(SETUP_ICON "setup.ico")
 set(PROJECT_VERSION_RC "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0") # ${PROJECT_VERSION_TWEAK}
 
 if(NOT WIN32)
-    set(NUGGETDOOMDATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_SHORTNAME}" CACHE PATH "Path to install supplemental files")
+    set(CHERRYDOOMDATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_SHORTNAME}" CACHE PATH "Path to install supplemental files")
 endif()
 
 # Toggle-able defines added at compile-time.
-option(NUGGETDOOM_RANGECHECK "Enable bounds-checking of performance-sensitive functions" ON)
-option(NUGGETDOOM_STRICT "Prefer original MBF code paths over demo compatiblity with PrBoom+" OFF)
+option(CHERRYDOOM_RANGECHECK "Enable bounds-checking of performance-sensitive functions" ON)
+option(CHERRYDOOM_STRICT "Prefer original MBF code paths over demo compatiblity with PrBoom+" OFF)
 
 # Compiler environment requirements.
 check_library_exists(m pow "" HAVE_LIBM)
@@ -123,7 +123,7 @@ else()
 endif()
 
 # Generate distribution packages with CPack.
-set(CPACK_PACKAGE_NAME "Nugget-Doom")
+set(CPACK_PACKAGE_NAME "Cherry-Doom")
 if(WIN32)
     set(CPACK_GENERATOR ZIP)
 else()

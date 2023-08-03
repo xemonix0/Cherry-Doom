@@ -1,7 +1,7 @@
 include(GNUInstallDirs)
 
-configure_file(NuggetDoomInstall.cmake.in NuggetDoomInstall.cmake ESCAPE_QUOTES @ONLY)
-install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/NuggetDoomInstall.cmake")
+configure_file(CherryDoomInstall.cmake.in CherryDoomInstall.cmake ESCAPE_QUOTES @ONLY)
+install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/CherryDoomInstall.cmake")
 
 if(WIN32)
     install(FILES CMDLINE.txt DESTINATION .)

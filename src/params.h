@@ -92,7 +92,7 @@ static const char *params_with_args[] = {
 "-statdump",
 };
 
-#define HELP_STRING "Usage: nugget-doom [options] \n\
+#define HELP_STRING "Usage: cherry-doom [options] \n\
 \n\
 General options: \n\
   -file <files>  Load the specified PWAD files.\n\

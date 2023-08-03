@@ -1,6 +1,6 @@
 .TH @PROJECT_SHORTNAME@-setup 6
 .SH NAME
-@PROJECT_SHORTNAME@-setup \- configuration tool for Nugget Doom
+@PROJECT_SHORTNAME@-setup \- configuration tool for Cherry Doom
 .SH SYNOPSIS
 .B @PROJECT_SHORTNAME@-setup
 [OPTIONS]
@@ -10,8 +10,8 @@
  provides a menu\-based interface to start and join network games.
 .PP
 .SH AUTHOR
-Nugget Doom is written and maintained by Alaux.  It is based on the Woof!
-source code, released by Fabian Greffrath.
+Cherry Doom is written and maintained by Xemonix.  It is based on the Nugget
+Doom source code, released by Alaux.
 .SH COPYRIGHT
 Copyright \(co id Software Inc;
 Copyright \(co 1999 id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;
@@ -19,6 +19,8 @@ Copyright \(co 2004 James Haley;
 Copyright \(co 2005-2016 Simon Howard;
 Copyright \(co 2020-2022 Fabian Greffrath;
 Copyright \(co 2020-2022 Roman Fomin.
+Copyright \(co 2021-2023 Alaux;
+Copyright \(co 2023 Xemonix.
 .br
 This is free software.  You may redistribute copies of it under the terms of
 the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.

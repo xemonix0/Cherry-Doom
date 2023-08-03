@@ -351,10 +351,17 @@ default_t defaults[] = {
   },
 
   {
+    "draw_menu_background",
+    (config_t *) &draw_menu_background, NULL,
+    {1}, {0,2}, number, ss_gen, wad_no,
+    "whether to draw menu background (0 = no, 1 = only in setup screens, 2 = in all menus)"
+  },
+
+  {
     "menu_background",
     (config_t *) &menu_background, NULL,
-    {background_on}, {background_on,background_dark}, number, ss_gen, wad_no,
-    "draw menu background (0 = on, 1 = off, 2 = dark)"
+    {background_solid}, {background_solid,background_darker}, number, ss_gen, wad_no,
+    "menu background (0 = solid, 1 = dark, 2 = darker)"
   },
 
   { // killough 10/98

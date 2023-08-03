@@ -31,6 +31,7 @@
 #include "m_argv.h"
 #include "m_swap.h"
 #include "m_misc2.h"
+#include "m_menu.h"
 
 // Each screen is [SCREENWIDTH*SCREENHEIGHT];
 byte *screens[5];
@@ -885,9 +886,23 @@ void V_ShadeScreen(void)
 {
   int y;
   byte *dest = screens[0];
-  const int targshade = 20, step = 2;
+  const int step = 2;
+  int targshade = 20;
   static int oldtic = -1;
   static int screenshade;
+
+  if (M_MenuIsShaded())
+  {
+    switch (menu_background)
+    {
+    case background_dark:
+      targshade = 10;
+      break;
+    case background_darker:
+      targshade = 20;
+      break;
+    }
+  }
 
   // [FG] start a new sequence
   if (gametic - oldtic > targshade / step)
@@ -900,11 +915,12 @@ void V_ShadeScreen(void)
     dest[y] = colormaps[0][screenshade * 256 + dest[y]];
   }
 
-  if (screenshade < targshade && gametic != oldtic)
+  boolean darken = screenshade < targshade;
+  if (screenshade != targshade && gametic != oldtic)
   {
-    screenshade += step;
+    screenshade += (darken ? step : -step);
 
-    if (screenshade > targshade)
+    if ((darken && screenshade > targshade) || (!darken && screenshade < targshade))
       screenshade = targshade;
   }
   

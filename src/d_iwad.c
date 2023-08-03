@@ -561,9 +561,9 @@ void BuildIWADDirList(void)
         AddIWADDir(env);
     }
 
-#ifdef NUGGETDOOMDATADIR
+#ifdef CHERRYDOOMDATADIR
     // [FG] Add a build-time configurable data directory
-    AddIWADDir(NUGGETDOOMDATADIR);
+    AddIWADDir(CHERRYDOOMDATADIR);
 #endif
 
 #ifdef _WIN32

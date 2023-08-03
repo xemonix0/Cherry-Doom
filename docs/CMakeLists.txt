@@ -1,4 +1,4 @@
-set(NUGGETDOOM_DOCS
+set(CHERRYDOOM_DOCS
     boom.txt
     boomdeh.txt
     boomref.txt
@@ -13,7 +13,7 @@ set(NUGGETDOOM_DOCS
     woofhud.md)
 
 if(WIN32)
-    install(FILES ${NUGGETDOOM_DOCS} DESTINATION docs)
+    install(FILES ${CHERRYDOOM_DOCS} DESTINATION docs)
 else()
-    install(FILES ${NUGGETDOOM_DOCS} DESTINATION "share/doc/${PROJECT_SHORTNAME}")
+    install(FILES ${CHERRYDOOM_DOCS} DESTINATION "share/doc/${PROJECT_SHORTNAME}")
 endif()

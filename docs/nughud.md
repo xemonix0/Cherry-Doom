@@ -1,5 +1,7 @@
 # Nugget Doom's NUGHUD guide
 
+As a Nugget Doom fork, Cherry Doom supports the NUGHUD lump, that is used to customize the Crispy HUD.
+
 **The `NUGHUD` lump** is a variant of MBF's `OPTIONS` lump, **used specifically by Nugget Doom to customize the Crispy HUD**, which we will refer to as _Nugget HUD_ from now on.
 
 As implied, `NUGHUD` uses the same format as `OPTIONS`. Excerpt from `mbfedit.txt`:

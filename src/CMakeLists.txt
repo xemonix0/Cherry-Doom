@@ -1,6 +1,6 @@
-include(NuggetDoomSettings)
+include(CherryDoomSettings)
 
-set(NUGGETDOOM_SOURCES
+set(CHERRYDOOM_SOURCES
     am_map.c               am_map.h
                            beta.h
                            cross.h
@@ -127,38 +127,38 @@ set(NUGGETDOOM_SOURCES
 
 # Standard target definition
 if(WIN32)
-    add_library(nugget-doom SHARED EXCLUDE_FROM_ALL ${NUGGETDOOM_SOURCES})
-    target_compile_definitions(nugget-doom PRIVATE WIN_LAUNCHER)
+    add_library(cherry-doom SHARED EXCLUDE_FROM_ALL ${CHERRYDOOM_SOURCES})
+    target_compile_definitions(cherry-doom PRIVATE WIN_LAUNCHER)
 
     # Stamp out and compile resource file on Windows.
     configure_file(resource.rc.in "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
 
-    add_executable(nugget-doom-com WIN32 ../win32/win_launcher.c
+    add_executable(cherry-doom-com WIN32 ../win32/win_launcher.c
         "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
-    target_nuggetdoom_settings(nugget-doom-com)
-    target_link_libraries(nugget-doom-com PRIVATE ${SDL2_LIBRARIES} nugget-doom)
+    target_cherrydoom_settings(cherry-doom-com)
+    target_link_libraries(cherry-doom-com PRIVATE ${SDL2_LIBRARIES} cherry-doom)
 
-    add_executable(nugget-doom-exe WIN32 ../win32/win_launcher.c
+    add_executable(cherry-doom-exe WIN32 ../win32/win_launcher.c
         "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
-    target_nuggetdoom_settings(nugget-doom-exe)
-    target_link_libraries(nugget-doom-exe PRIVATE ${SDL2_LIBRARIES} nugget-doom)
+    target_cherrydoom_settings(cherry-doom-exe)
+    target_link_libraries(cherry-doom-exe PRIVATE ${SDL2_LIBRARIES} cherry-doom)
 
     # MSVC tries to supply a default manifest and complains when it finds ours
     # unless we specifically tell it not to.
     if(MSVC)
-        target_link_options(nugget-doom-com PRIVATE "/MANIFEST:NO" "/SUBSYSTEM:CONSOLE")
-        target_link_options(nugget-doom-exe PRIVATE "/MANIFEST:NO")
+        target_link_options(cherry-doom-com PRIVATE "/MANIFEST:NO" "/SUBSYSTEM:CONSOLE")
+        target_link_options(cherry-doom-exe PRIVATE "/MANIFEST:NO")
     else()
-        target_link_options(nugget-doom-com PRIVATE "-mconsole")
+        target_link_options(cherry-doom-com PRIVATE "-mconsole")
     endif()
 else()
-    add_executable(nugget-doom ${NUGGETDOOM_SOURCES})
+    add_executable(cherry-doom ${CHERRYDOOM_SOURCES})
 endif()
 
-target_nuggetdoom_settings(nugget-doom)
-target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
+target_cherrydoom_settings(cherry-doom)
+target_include_directories(cherry-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 
-target_link_libraries(nugget-doom PRIVATE
+target_link_libraries(cherry-doom PRIVATE
     ${SDL2_LIBRARIES}
     SDL2_net::SDL2_net
     OpenAL::OpenAL
@@ -168,46 +168,46 @@ target_link_libraries(nugget-doom PRIVATE
 
 # Some platforms require standard libraries to be linked against.
 if(HAVE_LIBM)
-    target_link_libraries(nugget-doom PRIVATE m)
+    target_link_libraries(cherry-doom PRIVATE m)
 endif()
 
 if(WIN32)
-    target_sources(nugget-doom PRIVATE i_winmusic.c)
-    target_link_libraries(nugget-doom PRIVATE winmm)
+    target_sources(cherry-doom PRIVATE i_winmusic.c)
+    target_link_libraries(cherry-doom PRIVATE winmm)
     if(MSVC)
-        target_sources(nugget-doom PRIVATE
+        target_sources(cherry-doom PRIVATE
             ../win32/win_opendir.c ../win32/win_opendir.h)
     endif()
 endif()
 
 if(APPLE)
-    target_sources(nugget-doom PRIVATE i_macmusic.c)
-    target_link_libraries(nugget-doom PRIVATE
+    target_sources(cherry-doom PRIVATE i_macmusic.c)
+    target_link_libraries(cherry-doom PRIVATE
         -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,CoreServices)
 endif()
 
 if(FluidSynth_FOUND)
-    target_sources(nugget-doom PRIVATE i_flmusic.c)
-    target_link_libraries(nugget-doom PRIVATE FluidSynth::libfluidsynth)
+    target_sources(cherry-doom PRIVATE i_flmusic.c)
+    target_link_libraries(cherry-doom PRIVATE FluidSynth::libfluidsynth)
 endif()
 
 if(libxmp_FOUND)
-    target_sources(nugget-doom PRIVATE i_xmp.c)
-    target_link_libraries(nugget-doom PRIVATE libxmp::xmp)
+    target_sources(cherry-doom PRIVATE i_xmp.c)
+    target_link_libraries(cherry-doom PRIVATE libxmp::xmp)
 endif()
 
 # Optional features.
 #
 # Our defines are not namespaced, so we pass them at compile-time instead of
 # using config.h.
-if(NUGGETDOOM_RANGECHECK)
-    target_compile_definitions(nugget-doom PRIVATE RANGECHECK)
+if(CHERRYDOOM_RANGECHECK)
+    target_compile_definitions(cherry-doom PRIVATE RANGECHECK)
 endif()
-if(NUGGETDOOM_STRICT)
-    target_compile_definitions(nugget-doom PRIVATE MBF_STRICT)
+if(CHERRYDOOM_STRICT)
+    target_compile_definitions(cherry-doom PRIVATE MBF_STRICT)
 endif()
 
-target_compile_definitions(nugget-doom PRIVATE MINIZ_NO_TIME)
+target_compile_definitions(cherry-doom PRIVATE MINIZ_NO_TIME)
 
 set(SETUP_SOURCES
     d_iwad.c                d_iwad.h
@@ -231,56 +231,56 @@ if(WIN32)
     list(APPEND SETUP_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/setup-res.rc")
 endif()
 
-add_executable(nugget-doom-setup WIN32 ${SETUP_SOURCES})
-target_nuggetdoom_settings(nugget-doom-setup)
+add_executable(cherry-doom-setup WIN32 ${SETUP_SOURCES})
+target_cherrydoom_settings(cherry-doom-setup)
 
-target_include_directories(nugget-doom-setup PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
-target_link_libraries(nugget-doom-setup PRIVATE
+target_include_directories(cherry-doom-setup PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
+target_link_libraries(cherry-doom-setup PRIVATE
     ${SDL2_LIBRARIES}
     SDL2_net::SDL2_net
     textscreen
     setup)
 
 if(MSVC)
-    target_link_options(nugget-doom-setup PRIVATE "/MANIFEST:NO")
+    target_link_options(cherry-doom-setup PRIVATE "/MANIFEST:NO")
 endif()
 
 # Install
 #
-# Rename nugget-doom-com and nugget-doom-exe executables.
+# Rename cherry-doom-com and cherry-doom-exe executables.
 if (WIN32)
-    add_custom_command(TARGET nugget-doom-com POST_BUILD
+    add_custom_command(TARGET cherry-doom-com POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        "$<TARGET_FILE_DIR:nugget-doom-com>/$<TARGET_FILE_NAME:nugget-doom-com>"
-        "$<TARGET_FILE_DIR:nugget-doom-com>/nugget-doom.com")
-    add_custom_command(TARGET nugget-doom-exe POST_BUILD
+        "$<TARGET_FILE_DIR:cherry-doom-com>/$<TARGET_FILE_NAME:cherry-doom-com>"
+        "$<TARGET_FILE_DIR:cherry-doom-com>/cherry-doom.com")
+    add_custom_command(TARGET cherry-doom-exe POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        "$<TARGET_FILE_DIR:nugget-doom-exe>/$<TARGET_FILE_NAME:nugget-doom-exe>"
-        "$<TARGET_FILE_DIR:nugget-doom-exe>/nugget-doom.exe")
+        "$<TARGET_FILE_DIR:cherry-doom-exe>/$<TARGET_FILE_NAME:cherry-doom-exe>"
+        "$<TARGET_FILE_DIR:cherry-doom-exe>/cherry-doom.exe")
 endif()
 
 # Files to package in our distribution.
 if(WIN32)
     if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.21 AND NOT VCPKG_TOOLCHAIN)
-        install(TARGETS nugget-doom nugget-doom-setup
+        install(TARGETS cherry-doom cherry-doom-setup
                 RUNTIME_DEPENDENCIES 
                     PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
                     POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-                    DIRECTORIES $<TARGET_FILE_DIR:nugget-doom> $ENV{PATH}
+                    DIRECTORIES $<TARGET_FILE_DIR:cherry-doom> $ENV{PATH}
                 RUNTIME DESTINATION .)
     else()
-        install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION .)
+        install(TARGETS cherry-doom cherry-doom-setup RUNTIME DESTINATION .)
     endif()
-    install(FILES "$<TARGET_FILE_DIR:nugget-doom-com>/nugget-doom.com" DESTINATION .)
-    install(FILES "$<TARGET_FILE_DIR:nugget-doom-exe>/nugget-doom.exe" DESTINATION .)
+    install(FILES "$<TARGET_FILE_DIR:cherry-doom-com>/cherry-doom.com" DESTINATION .)
+    install(FILES "$<TARGET_FILE_DIR:cherry-doom-exe>/cherry-doom.exe" DESTINATION .)
 else()
-    install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(TARGETS cherry-doom cherry-doom-setup RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
 # Copy autoload directory content to target directory.
-add_custom_command(TARGET nugget-doom POST_BUILD
+add_custom_command(TARGET cherry-doom POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
-    "$<TARGET_FILE_DIR:nugget-doom>/autoload"
+    "$<TARGET_FILE_DIR:cherry-doom>/autoload"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     "${CMAKE_SOURCE_DIR}/autoload"
-    "$<TARGET_FILE_DIR:nugget-doom>/autoload" VERBATIM)
+    "$<TARGET_FILE_DIR:cherry-doom>/autoload" VERBATIM)

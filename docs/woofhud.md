@@ -1,6 +1,6 @@
 # WOOFHUD
 
-As a Woof! fork, Nugget Doom supports the WOOFHUD lump to customize the appearance of the extended Boom HUD.
+As a Nugget Doom fork, Cherry Doom also supports the WOOFHUD lump to customize the appearance of the extended Boom HUD.
 
 ## Description
 
