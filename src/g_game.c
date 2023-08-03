@@ -203,6 +203,10 @@ int    bodyqueslot, bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
 
 static int next_weapon = 0;
 
+// [Cherry] last weapon handling
+
+static boolean last_weapon = false;
+
 static const struct
 {
     weapontype_t weapon;
@@ -514,6 +518,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       // [FG] prev/next weapon keys and buttons
       if (gamestate == GS_LEVEL && next_weapon != 0)
         newweapon = G_NextWeapon(next_weapon);
+      else if (gamestate == GS_LEVEL && last_weapon)
+        newweapon = players[consoleplayer].lastweapon;
       else
       newweapon =
         M_InputGameActive(input_weapon1) ? wp_fist :    // killough 5/2/98: reformatted
@@ -549,25 +555,31 @@ void G_BuildTiccmd(ticcmd_t* cmd)
           // not already in use, and the player prefers it or
           // the fist is already in use, or the player does not
           // have the berserker strength.
+          // [Cherry] and if the player isn't switching to the
+          // last used weapon if it is the fist
 
           if (newweapon==wp_fist && player->weaponowned[wp_chainsaw] &&
               player->readyweapon!=wp_chainsaw &&
               (player->readyweapon==wp_fist ||
                !player->powers[pw_strength] ||
-               P_WeaponPreferred(wp_chainsaw, wp_fist)))
+               P_WeaponPreferred(wp_chainsaw, wp_fist)) &&
+              (!last_weapon || player->lastweapon != wp_fist)) // [Cherry]
             newweapon = wp_chainsaw;
 
           // Select SSG from '3' only if it's owned and the player
           // does not have a shotgun, or if the shotgun is already
           // in use, or if the SSG is not already in use and the
           // player prefers it.
+          // [Cherry] and if the player isn't switching to the
+          // last used weapon if it is the shotgun
 
           if (newweapon == wp_shotgun && have_ssg &&
               player->weaponowned[wp_supershotgun] &&
               (!player->weaponowned[wp_shotgun] ||
                player->readyweapon == wp_shotgun ||
                (player->readyweapon != wp_supershotgun &&
-                P_WeaponPreferred(wp_supershotgun, wp_shotgun))))
+                P_WeaponPreferred(wp_supershotgun, wp_shotgun))) &&
+              (!last_weapon || player->lastweapon != wp_shotgun)) // [Cherry]
             newweapon = wp_supershotgun;
         }
       // killough 2/8/98, 3/22/98 -- end of weapon selection changes
@@ -581,6 +593,9 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
     // [FG] prev/next weapon keys and buttons
     next_weapon = 0;
+
+    // [Cherry] last weapon key
+    last_weapon = false;
 
   // [FG] double click acts as "use"
   if (dclick)
@@ -974,6 +989,11 @@ boolean G_Responder(event_t* ev)
   else if (M_InputActivated(input_nextweapon))
   {
       next_weapon = 1;
+  }
+
+  if (M_InputActivated(input_weaponlastused))
+  {
+    last_weapon = true;
   }
 
   if (dclick_use && ev->type == ev_mouseb_down &&
@@ -2507,7 +2527,7 @@ void G_PlayerReborn(int player)
   p->usedown = p->attackdown = true;  // don't do anything immediately
   p->playerstate = PST_LIVE;
   p->health = initial_health;  // Ty 03/12/98 - use dehacked values
-  p->readyweapon = p->pendingweapon = wp_pistol;
+  p->lastweapon = p->readyweapon = p->pendingweapon = wp_pistol; // [Cherry] initialize last weapon to pistol
   p->weaponowned[wp_fist] = true;
   p->weaponowned[wp_pistol] = true;
   p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values

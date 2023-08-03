@@ -2222,6 +2222,15 @@ default_t defaults[] = {
     input_weapontoggle, { {input_type_key, '0'} }
   },
 
+  // [Cherry]
+  {
+    "input_weaponlastused",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to switch to the last used weapon",
+    input_weaponlastused, { {input_type_key, 'q'} }
+  },
+
   // [FG] prev/next weapon keys and buttons
   {
     "input_prevweapon",

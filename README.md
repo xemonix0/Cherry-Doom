@@ -1,10 +1,21 @@
 ﻿# Cherry Doom
 
-Cherry Doom if a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) intended to add even more features.
+Cherry Doom is a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) intended to add even more features.
 
 ### DISCLAIMER
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
 **RECORD DEMOS AT YOUR OWN RISK!**
+
+# Features
+Just like with Nugget Doom, most of Cherry Doom's features come from other sources, like source ports, mods or games. The initial implementations for some are **ported from (p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
+
+### General
+
+- **More menu background choices:** Solid, Dark, Darker; background can also be enabled for all menus
+
+### Weapons
+
+- **Last used weapon** key [i.b. Half-Life]
 
 # Releases
 

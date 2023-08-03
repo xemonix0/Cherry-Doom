@@ -694,7 +694,10 @@ void P_PlayerThink (player_t* player)
 
         if ((newweapon != wp_plasma && newweapon != wp_bfg)
             || (gamemode != shareware) )
+        {
+          player->lastweapon = player->readyweapon; // [Cherry]
           player->pendingweapon = newweapon;
+        }
     }
 
   // check for use

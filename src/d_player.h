@@ -143,6 +143,9 @@ typedef struct player_s
   // Is wp_nochange if not changing.
   weapontype_t        pendingweapon;
 
+  // [Cherry] Last used weapon
+  weapontype_t        lastweapon;
+
   boolean             weaponowned[NUMWEAPONS];
   int                 ammo[NUMAMMO];
   int                 maxammo[NUMAMMO];
