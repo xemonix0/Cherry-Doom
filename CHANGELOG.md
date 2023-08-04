@@ -4,6 +4,7 @@
 - **Switch [Weapon] on Pickup** setting
 - **Blink Missing Keys** setting
 - **Support for Crispy Doom's optional sounds**
+- **NUGHUD armor icon**
 
 ## Changes
 

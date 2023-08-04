@@ -52,6 +52,8 @@ typedef struct nughud_s {
   nughud_widget_t   face;
   boolean           face_bg;
   nughud_widget_t   armor;
+  nughud_widget_t   armoricon;
+  boolean           nharmor;
   nughud_widget_t   keys[3];
   nughud_widget_t   ammos[4];
   nughud_widget_t   maxammos[4];

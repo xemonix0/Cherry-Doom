@@ -77,6 +77,11 @@ nughud_armor_x    221
 nughud_armor_y    171
 nughud_armor_wide 1
 
+; Armor icon (requires NHARMOR# font)
+nughud_armoricon_x    0
+nughud_armoricon_y    0
+nughud_armoricon_wide 0
+
 ; Blue Key
 nughud_key0_x    239
 nughud_key0_y    171

@@ -177,6 +177,7 @@ static patch_t *arms[6+3][2]; // [Nugget] Increase array size for 9 numbers
 static patch_t *nughud_tallnum[10];      // NHTNUM#, from 0 to 9
        patch_t *nughud_tallminus;        // NHTMINUS
 static patch_t *nughud_tallpercent;      // NHTPRCNT
+static patch_t *nughud_armoricon[3];     // NHARMOR#, from 0 to 2
 static patch_t *nughud_ammonum[10];      // NHAMNUM#, from 0 to 9
 static patch_t *nughud_armsnum[9][2];    // NHW0NUM# and NHW1NUM#, from 1 to 9
 static patch_t *nughud_keys[NUMCARDS+3]; // NHKEYS
@@ -881,7 +882,13 @@ void ST_drawWidgets(void)
   }
 
   // [Nugget] Draw Nugget HUD patches
-  if (st_crispyhud)
+  if (st_crispyhud) {
+    if (nughud.armoricon.x > -1 && nughud.nharmor) {
+      V_DrawPatch(nughud.armoricon.x + DELTA(nughud.armoricon.wide),
+                  nughud.armoricon.y, FG,
+                  nughud_armoricon[BETWEEN(0, 2, plyr->armortype)]);
+    }
+    
     for (i=0; i<NUMNUGHUDPATCHES; i++)
       if (nughud.patches[i].name != NULL)
       {
@@ -897,6 +904,7 @@ void ST_drawWidgets(void)
         { V_DrawPatch(nughud.patches[i].x + DELTA(nughud.patches[i].wide),
                       nughud.patches[i].y, FG, W_CacheLumpNum(lump[i], PU_STATIC)); }
       }
+  }
 
   // used by w_arms[] widgets
   // [Nugget] Draw both Arms and Frags in Nugget HUD
@@ -1194,9 +1202,9 @@ void ST_loadGraphics(void)
   { // [Nugget] NUGHUD fonts
     int lump;
     
-    // Tall Numbers
+    // Tall Numbers -------------------
     
-    nughud.nhtnum   = true;
+    nughud.nhtnum = true;
     
     for (i = 0;  i < 10;  i++) { // Load NHTNUM0 to NHTNUM9
       sprintf(namebuf, "NHTNUM%d", i);
@@ -1220,9 +1228,23 @@ void ST_loadGraphics(void)
     else
     { nughud.nhtnum = false; }
     
-    // Ammo numbers
+    // Armor icons --------------------
     
-    nughud.nhamnum  = true;
+    nughud.nharmor = true;
+    
+    for (i = 0;  i < 3;  i++) { // Load NHARMOR0 to NHARMOR2
+      sprintf(namebuf, "NHARMOR%d", i);
+      if ((lump = (W_CheckNumForName)(namebuf, ns_global)) > -1)
+      { nughud_armoricon[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+      else {
+        nughud.nharmor = false;
+        break;
+      }
+    }
+    
+    // Ammo numbers -------------------
+    
+    nughud.nhamnum = true;
     
     for (i = 0;  i < 10;  i++) { // Load NHAMNUM0 to NHAMNUM9
       M_snprintf(namebuf, sizeof(namebuf), "NHAMNUM%d", i);
@@ -1234,9 +1256,9 @@ void ST_loadGraphics(void)
       }
     }
     
-    // Arms numbers
+    // Arms numbers -------------------
     
-    nughud.nhwpnum  = true;
+    nughud.nhwpnum = true;
     
     for (i = 0;  i < 9;  i++) {
       sprintf(namebuf, "NHW0NUM%d", i+1); // Load NHW0NUM1 to NHW0NUM9
@@ -1256,9 +1278,9 @@ void ST_loadGraphics(void)
       }
     }
     
-    // Keys
+    // Keys ---------------------------
     
-    nughud.nhkeys   = true;
+    nughud.nhkeys = true;
     
     // Load NHKEYS
     for (i = 0;  i < NUMCARDS+3;  i++) {
@@ -1271,7 +1293,7 @@ void ST_loadGraphics(void)
       }
     }
     
-    // Berserk
+    // Berserk ------------------------
     
     nughud.nhbersrk = true;
     

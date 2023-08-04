@@ -35,15 +35,16 @@ In practice, **there are three types of elements in the Nugget HUD**. The follow
 The following widgets are available:
 
 ```
-nughud_ammo ----- Ammo count for the currently-equipped weapon
-nughud_health --- Health count
-nughud_arms# ---- Arms (weapon) number, where # is a number between 1 and 9 (inclusive)
-nughud_frags ---- Frags count, only shown during Deathmatch games
-nughud_face ----- Face (Mugshot)
-nughud_armor ---- Armor count
-nughud_key# ----- Key display, where # is a number between 0 and 2 (in order: Blue Key; Yellow Key; Red Key)
-nughud_ammo# ---- Ammo count for each type, where # is a number between 0 and 3 (in order: Bullets; Shells; Cells; Rockets)
-nughud_maxammo# - Same as the above, but for Max Ammo
+nughud_ammo ------ Ammo count for the currently-equipped weapon
+nughud_health ---- Health count
+nughud_arms# ----- Arms (weapon) number, where # is a number between 1 and 9 (inclusive)
+nughud_frags ----- Frags count, only shown during Deathmatch games
+nughud_face ------ Face (Mugshot)
+nughud_armor ----- Armor count
+nughud_armoricon - Armor icon, which changes depending on armor type (requires NHARMOR font - see below)
+nughud_key# ------ Key display, where # is a number between 0 and 2 (in order: Blue Key; Yellow Key; Red Key)
+nughud_ammo# ----- Ammo count for each type, where # is a number between 0 and 3 (in order: Bullets; Shells; Cells; Rockets)
+nughud_maxammo# -- Same as the above, but for Max Ammo
 ```
 
 **Widgets support an X position value of -1 to disable the widget.**
@@ -76,6 +77,10 @@ Tall Numbers, used for the Health, Armor, current-weapon Ammo and Frags counts:
   NHTNUM# -- Number, where # is a number between 0 and 9 (inclusive)
   NHTMINUS - Minus sign
   NHTPRCNT - Percent sign
+
+Armor graphics, used for the Armor icon widget:
+
+  NHARMOR# - Graphic, where # is either 0 (no armor), 1 (green armor) or 2 (blue armor)
 
 Ammo Numbers, used for the Ammo and Max Ammo counts:
 
