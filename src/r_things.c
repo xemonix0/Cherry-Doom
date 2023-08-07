@@ -634,8 +634,6 @@ void R_ProjectSprite (mobj_t* thing)
     vis->colormap[0] = vis->colormap[1] = fullcolormap;       // full bright  // killough 3/20/98
   else
     {      // diminished light
-      extern float fovdiff; // [Nugget]
-      
       int index = (int) (xscale/fovdiff)>>(LIGHTSCALESHIFT+hires);  // killough 11/98
       if (index >= MAXLIGHTSCALE)
         index = MAXLIGHTSCALE-1;

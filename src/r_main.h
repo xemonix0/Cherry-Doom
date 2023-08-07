@@ -117,18 +117,21 @@ void R_RenderPlayerView(player_t *player);   // Called by G_Drawer.
 void R_Init(void);                           // Called by startup code.
 void R_SetViewSize(int blocks);              // Called by M_Responder.
 
-// [Nugget]
+// [Nugget] FOV from Doom Retro -------
+
 typedef struct fovfx_s {
   int old, current, target;
 } fovfx_t;
+
 enum {
   FOVFX_ZOOM,
   FOVFX_TELEPORT,
   
   NUMFOVFX
 };
+
 extern fovfx_t fovfx[NUMFOVFX];
-extern boolean fovchange;
+
 enum {
   ZOOM_RESET = -1,
   ZOOM_OFF   =  0,
@@ -136,6 +139,12 @@ enum {
 };
 extern int  R_GetZoom(void);
 extern void R_SetZoom(int state);
+
+extern boolean fovchange;
+extern int     bfov;
+extern float   fovdiff;
+
+// [Nugget] ---------------------------
 
 void R_InitLightTables(void);                // killough 8/9/98
 

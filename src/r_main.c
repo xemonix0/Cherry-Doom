@@ -112,13 +112,13 @@ lighttable_t **colormaps;
 int extralight;                           // bumped light from gun blasts
 int extra_level_brightness;               // level brightness feature
 
-// [Nugget] FOV from Doom Retro
+// [Nugget] FOV from Doom Retro -------
 
-fovfx_t fovfx[NUMFOVFX];   // FOV effects (recoil, teleport)
-static int zoomed = 0; // Current zoom state
+fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
+static int zoomed = 0;   // Current zoom state
 
 boolean fovchange = true;
-int bfov;        // Base FOV
+       int bfov; // Base FOV
 static int rfov; // Rendered (currently applied) FOV, with effects added to it
 float fovdiff;   // Used for some corrections
 
@@ -126,6 +126,8 @@ static fixed_t fovscale;
 static int WIDEFOVDELTA;
 
 static int lookdirmax;
+
+// [Nugget] ---------------------------
 
 
 void (*colfunc)(void) = R_DrawColumn;     // current column draw function

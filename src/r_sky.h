@@ -28,8 +28,7 @@
 // The sky map is 256*128*4 maps.
 #define ANGLETOSKYSHIFT         22
 
-// [FG] stretch short skies
-#define SKYSTRETCH_HEIGHT 228
+// [Nugget] Removed unnecessary `SKYSTRETCH_HEIGHT` macro
 extern boolean stretchsky;
 
 // [FG] linear horizontal sky scrolling

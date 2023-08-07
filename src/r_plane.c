@@ -338,7 +338,6 @@ static void do_draw_plane(visplane_t *pl)
       {
 	int texture;
 	angle_t an, flip;
-	extern int bfov;
 	int skyheight_target; // [Nugget] Adjust sky stretching based on FOV
 
 	// killough 10/98: allow skies to come from sidedefs.
@@ -394,16 +393,11 @@ static void do_draw_plane(visplane_t *pl)
 	  dc_colormap[0] = dc_colormap[1] = fullcolormap;          // killough 3/20/98
 
         dc_texheight = textureheight[texture]>>FRACBITS; // killough
-        dc_iscale = pspriteiscale;
-
-        { // [Nugget]
-          extern float fovdiff;
-          dc_iscale = dc_iscale / fovdiff;
-        }
+        dc_iscale = pspriteiscale / fovdiff; // [Nugget] FOV from Doom Retro
 
         // [FG] stretch short skies
         skyheight_target = (200 - (dc_texturemid >> FRACBITS)) + (((bfov - ORIGFOV) > 0) ? (bfov - ORIGFOV) * (1.0 + (1.0 / 9.0)) : 0);
-        if (stretchsky && dc_texheight < skyheight_target) // [Nugget]
+        if (stretchsky && dc_texheight < skyheight_target)
         {
           dc_iscale = dc_iscale * dc_texheight / skyheight_target;
           dc_texturemid = dc_texturemid * dc_texheight / skyheight_target;
