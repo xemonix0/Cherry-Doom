@@ -883,12 +883,6 @@ void ST_drawWidgets(void)
 
   // [Nugget] Draw Nugget HUD patches
   if (st_crispyhud) {
-    if (nughud.armoricon.x > -1 && nughud.nharmor) {
-      V_DrawPatch(nughud.armoricon.x + DELTA(nughud.armoricon.wide),
-                  nughud.armoricon.y, FG,
-                  nughud_armoricon[BETWEEN(0, 2, plyr->armortype)]);
-    }
-    
     for (i=0; i<NUMNUGHUDPATCHES; i++)
       if (nughud.patches[i].name != NULL)
       {
@@ -904,6 +898,12 @@ void ST_drawWidgets(void)
         { V_DrawPatch(nughud.patches[i].x + DELTA(nughud.patches[i].wide),
                       nughud.patches[i].y, FG, W_CacheLumpNum(lump[i], PU_STATIC)); }
       }
+
+    if (nughud.armoricon.x > -1 && nughud.nharmor) {
+      V_DrawPatch(nughud.armoricon.x + DELTA(nughud.armoricon.wide),
+                  nughud.armoricon.y, FG,
+                  nughud_armoricon[BETWEEN(0, 2, plyr->armortype)]);
+    }
   }
 
   // used by w_arms[] widgets
