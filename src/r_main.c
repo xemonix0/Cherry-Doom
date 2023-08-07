@@ -118,7 +118,7 @@ fovfx_t fovfx[NUMFOVFX];   // FOV effects (recoil, teleport)
 static int zoomed = 0; // Current zoom state
 
 boolean fovchange = true;
-static int bfov; // Base FOV
+int bfov;        // Base FOV
 static int rfov; // Rendered (currently applied) FOV, with effects added to it
 float fovdiff;   // Used for some corrections
 

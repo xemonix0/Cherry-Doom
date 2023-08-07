@@ -19,6 +19,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - Toggle to **stretch viewport to fit window** (CFG-Only: `stretch-to-fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
 - **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**
 - Toggle for **Gamma Correction key cycling**, through either original or extended gamma levels (CFG-Only: `gammacycle`)
+- **Tweaked _Stretch Short Skies_ algorithm**
 - _**Screen Wipe Style**_ selection:
   - _"Seizure"_ (**Warning**: this one might legitimately be seizure-inducing, use with caution);
   - _"Fade"_.

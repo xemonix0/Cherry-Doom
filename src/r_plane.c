@@ -338,6 +338,8 @@ static void do_draw_plane(visplane_t *pl)
       {
 	int texture;
 	angle_t an, flip;
+	extern int bfov;
+	int skyheight_target; // [Nugget] Adjust sky stretching based on FOV
 
 	// killough 10/98: allow skies to come from sidedefs.
 	// Allows scrolling and/or animated skies, as well as
@@ -400,13 +402,11 @@ static void do_draw_plane(visplane_t *pl)
         }
 
         // [FG] stretch short skies
-        if (stretchsky && dc_texheight < 200)
+        skyheight_target = (200 - (dc_texturemid >> FRACBITS)) + (((bfov - ORIGFOV) > 0) ? (bfov - ORIGFOV) * (1.0 + (1.0 / 9.0)) : 0);
+        if (stretchsky && dc_texheight < skyheight_target) // [Nugget]
         {
-          // [Nugget] Adjust sky stretching based on FOV
-          int skystretch_height = SKYSTRETCH_HEIGHT + (84 * BETWEEN(0, MAXFOV-ORIGFOV, fov-ORIGFOV) / (MAXFOV-ORIGFOV));
-          
-          dc_iscale = dc_iscale * dc_texheight / skystretch_height;
-          dc_texturemid = dc_texturemid * dc_texheight / skystretch_height;
+          dc_iscale = dc_iscale * dc_texheight / skyheight_target;
+          dc_texturemid = dc_texturemid * dc_texheight / skyheight_target;
           colfunc = R_DrawColumn;
         }
         else
