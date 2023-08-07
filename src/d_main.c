@@ -68,6 +68,7 @@
 #include "i_endoom.h"
 #include "d_quit.h"
 #include "r_bmaps.h"
+#include "ws_wadstats.h" // [Cherry]
 
 #include "dsdhacked.h"
 
@@ -116,7 +117,8 @@ static void ProcessDehLump(int lumpnum)
   ProcessDehFile(NULL, D_dehout(), lumpnum);
 }
 
-char **wadfiles;
+int numwadfiles; // [Cherry] moved to the global scope
+wadfile_info_t *wadfiles; // [Cherry] changed the type from char**
 
 boolean devparm;        // started game with -devparm
 
@@ -586,9 +588,9 @@ void D_StartTitle (void)
 
 char **tempdirs = NULL;
 
-static void AutoLoadWADs(const char *path);
+static void AutoLoadWADs(const char *path, wad_source_t source);
 
-static boolean D_AddZipFile(const char *file)
+static boolean D_AddZipFile(const char *file, wad_source_t source)
 {
   int i;
   mz_zip_archive zip_archive;
@@ -643,7 +645,7 @@ static boolean D_AddZipFile(const char *file)
 
   mz_zip_reader_end(&zip_archive);
 
-  AutoLoadWADs(tempdir);
+  AutoLoadWADs(tempdir, source);
 
   tempdirs = I_Realloc(tempdirs, (idx + 2) * sizeof(*tempdirs));
   tempdirs[idx++] = tempdir;
@@ -658,23 +660,33 @@ static boolean D_AddZipFile(const char *file)
 // Rewritten by Lee Killough
 //
 // killough 11/98: remove limit on number of files
+// 
+// [Cherry] rewritten to use wad_source_t
 //
 
-void D_AddFile(const char *file)
+void D_AddFile(const char *file, wad_source_t source)
 {
-  static int numwadfiles, numwadfiles_alloc;
+  if (source == source_iwad)
+  {
+    int i;
+
+    for (i = 0; i < numwadfiles; ++i)
+      if (wadfiles[i].src == source_iwad)
+        wadfiles[i].src = source_skip;
+  }
 
   char *path = D_TryFindWADByName(file);
 
-  if (D_AddZipFile(path))
+  if (D_AddZipFile(path, source))
     return;
 
-  if (numwadfiles >= numwadfiles_alloc)
-    wadfiles = I_Realloc(wadfiles, (numwadfiles_alloc = numwadfiles_alloc ?
-                                  numwadfiles_alloc * 2 : 8)*sizeof*wadfiles);
+  wadfiles = numwadfiles ? I_Realloc(wadfiles, (numwadfiles+2) * sizeof*wadfiles) : malloc(sizeof*wadfiles);
+  
   // [FG] search for PWADs by their filename
-  wadfiles[numwadfiles++] = path;
-  wadfiles[numwadfiles] = NULL;
+  wadfiles[numwadfiles].name = strcpy(malloc(strlen(path) + 1), path);
+  wadfiles[numwadfiles].src = source;
+
+  wadfiles[++numwadfiles].name = NULL;
 }
 
 // Return the path where the executable lies -- Lee Killough
@@ -1057,7 +1069,7 @@ void IdentifyVersion (void)
       if (gamemode == indetermined)
         puts("Unknown Game Version, may not work");  // killough 8/8/98
 
-      D_AddFile(iwad);
+      D_AddFile(iwad, source_iwad);
       putchar('\n');
     }
   else
@@ -1540,7 +1552,7 @@ static void D_ProcessDehCommandLine(void)
 
 // Load all WAD files from the given directory.
 
-static void AutoLoadWADs(const char *path)
+static void AutoLoadWADs(const char *path, wad_source_t source)
 {
     glob_t *glob;
     const char *filename;
@@ -1554,7 +1566,7 @@ static void AutoLoadWADs(const char *path)
         {
             break;
         }
-        D_AddFile(filename);
+        D_AddFile(filename, source);
     }
 
     I_EndGlob(glob);
@@ -1572,13 +1584,13 @@ static void D_AutoloadIWadDir()
     if (gamemission < pack_chex)
     {
       autoload_dir = GetAutoloadDir(*base, "doom-all", true);
-      AutoLoadWADs(autoload_dir);
+      AutoLoadWADs(autoload_dir, source_auto_load);
       free(autoload_dir);
     }
 
     // auto-loaded files per IWAD
-    autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[0]), true);
-    AutoLoadWADs(autoload_dir);
+    autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[0].name), true);
+    AutoLoadWADs(autoload_dir, source_auto_load);
     free(autoload_dir);
   }
 }
@@ -1587,15 +1599,15 @@ static void D_AutoloadPWadDir()
 {
   int i;
 
-  for (i = 1; wadfiles[i]; ++i)
+  for (i = 1; wadfiles[i].name; ++i)
   {
     char **base;
 
     for (base = autoload_paths; base && *base; base++)
     {
       char *autoload_dir;
-      autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[i]), false);
-      AutoLoadWADs(autoload_dir);
+      autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[i].name), false);
+      AutoLoadWADs(autoload_dir, source_auto_load);
       free(autoload_dir);
     }
   }
@@ -1642,7 +1654,7 @@ static void D_AutoloadDehDir()
     }
 
     // auto-loaded files per IWAD
-    autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[0]), true);
+    autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[0].name), true);
     AutoLoadPatches(autoload_dir);
     free(autoload_dir);
   }
@@ -1652,14 +1664,14 @@ static void D_AutoloadPWadDehDir()
 {
   int i;
 
-  for (i = 1; wadfiles[i]; ++i)
+  for (i = 1; wadfiles[i].name; ++i)
   {
     char **base;
 
     for (base = autoload_paths; base && *base; base++)
     {
       char *autoload_dir;
-      autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[i]), false);
+      autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[i].name), false);
       AutoLoadPatches(autoload_dir);
       free(autoload_dir);
     }
@@ -2150,7 +2162,7 @@ void D_DoomMain(void)
                 "You can find it in the 'mbf.zip' archive at "
                 "https://www.doomworld.com/idgames/source/mbf");
       }
-      D_AddFile("betagrph.wad");
+      D_AddFile("betagrph.wad", source_beta);
     }
 
   // add wad files from autoload IWAD directories before wads from -file parameter
@@ -2183,7 +2195,7 @@ void D_DoomMain(void)
           file = !strcasecmp(myargv[p],"-file");
         else
           if (file)
-            D_AddFile(myargv[p]);
+            D_AddFile(myargv[p], source_pwad);
     }
 
   // add wad files from autoload PWAD directories
@@ -2234,7 +2246,7 @@ void D_DoomMain(void)
       char *file = malloc(strlen(myargv[p+1]) + 5);
       strcpy(file,myargv[p+1]);
       AddDefaultExtension(file,".lmp");     // killough
-      D_AddFile(file);
+      D_AddFile(file, source_demo);
       printf("Playing demo %s\n",file);
       free(file);
     }
@@ -2543,6 +2555,10 @@ void D_DoomMain(void)
     // Not loading a game
     startloadgame = -1;
   }
+
+  // [Cherry]
+  puts("WS_InitWadStats: Setting up wad stats.");
+  WS_InitWadStats();
 
   puts("M_Init: Init miscellaneous info.");
   M_Init();

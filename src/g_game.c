@@ -59,6 +59,7 @@
 #include "memio.h"
 #include "m_snapshot.h"
 #include "m_swap.h" // [FG] LONG
+#include "ws_wadstats.h"
 
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
@@ -111,6 +112,7 @@ int             totalkills, totalitems, totalsecret;    // for intermission
 int             extraspawns;   // [Nugget]: [crispy] count spawned monsters
 int             extrakills;    // [Nugget]: [So Doom] count deaths of resurrected and (re)spawned monsters
 int             totalleveltimes; // [FG] total time for all completed levels
+int             levelscompleted;
 boolean         demorecording;
 boolean         longtics;             // cph's doom 1.91 longtics hack
 boolean         lowres_turn;          // low resolution turning for longtics
@@ -1343,6 +1345,7 @@ static void G_DoCompleted(void)
   {
       G_WriteLevelStat();
   }
+  ++levelscompleted;
 
   gameaction = ga_nothing;
 
@@ -1352,6 +1355,31 @@ static void G_DoCompleted(void)
 
   if (automapactive)
     AM_Stop();
+
+  {
+    thinker_t *th;
+    mobj_t *mobj;
+    int missed_monsters = 0;
+
+    for (th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+      if (th->function.p1 != (actionf_p1)P_MobjThinker) continue;
+
+      mobj = (mobj_t *)th;
+
+      // max rules: everything dead that affects kill counter except icon spawns
+      if (
+        !((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)) \
+        && !(mobj->intflags & MIF_EXTRASPAWNED) \
+        && mobj->health > 0
+        )
+      {
+        ++missed_monsters;
+      }
+    }
+
+    WS_WadStatsExitMap(missed_monsters);
+  }
 
   wminfo.nextep = wminfo.epsd = gameepisode -1;
   wminfo.last = gamemap -1;
@@ -1990,10 +2018,10 @@ static void G_DoSaveGame(void)
 
   // killough 3/16/98: store pwad filenames in savegame
   {
-    char **w = wadfiles;
-    for (*save_p = 0; *w; w++)
+    wadfile_info_t *w = wadfiles;
+    for (*save_p = 0; w->name; w++)
       {
-        const char *basename = M_BaseName(*w);
+        const char *basename = M_BaseName(w->name);
         CheckSaveGame(strlen(basename)+2);
         strcat(strcat((char *) save_p, basename), "\n");
       }
@@ -2014,6 +2042,7 @@ static void G_DoSaveGame(void)
 
   // [FG] fix copy size and pointer progression
   saveg_write32(leveltime); //killough 11/98: save entire word
+  saveg_write32(levelscompleted);
 
   // killough 11/98: save revenant tracer state
   *save_p++ = (gametic-basetic) & 255;
@@ -2092,7 +2121,7 @@ static void G_DoLoadGame(void)
 
   gameaction = ga_nothing;
 
-  length = M_ReadFile(savename, &savebuffer);
+  length = M_ReadFile(savename, &savebuffer, true);
   save_p = savebuffer + SAVESTRINGSIZE;
 
   // skip the description field
@@ -2183,6 +2212,7 @@ static void G_DoLoadGame(void)
   // killough 11/98: save entire word
   // [FG] fix copy size and pointer progression
   leveltime = saveg_read32();
+  levelscompleted = saveg_read32();
 
   // killough 11/98: load revenant tracer state
   basetic = gametic - (int) *save_p++;
@@ -2534,6 +2564,8 @@ void G_PlayerReborn(int player)
 
   for (i=0 ; i<NUMAMMO ; i++)
     p->maxammo[i] = maxammo[i];
+
+  levelscompleted = 0;
 }
 
 //
@@ -3393,6 +3425,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   // [FG] total time for all completed levels
   totalleveltimes = 0;
+  levelscompleted = 0;
   playback_tic = 0;
 
   //jff 4/16/98 force marks on automap cleared every new level start
@@ -3895,13 +3928,13 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
 
   long pos = mem_ftell(stream);
 
-  tmp = M_StringJoin("-iwad \"", M_BaseName(wadfiles[0]), "\"", NULL);
+  tmp = M_StringJoin("-iwad \"", M_BaseName(wadfiles[0].name), "\"", NULL);
   mem_fputs(tmp, stream);
   free(tmp);
 
-  for (i = 1; wadfiles[i]; i++)
+  for (i = 1; wadfiles[i].name; i++)
   {
-    const char *basename = M_BaseName(wadfiles[i]);
+    const char *basename = M_BaseName(wadfiles[i].name);
 
     if (!strcasecmp("brghtmps.lmp", basename))
       continue;

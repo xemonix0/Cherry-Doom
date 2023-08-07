@@ -277,6 +277,7 @@ extern  int basetic;    // killough 9/29/98: levelstarttic, adjusted
 extern  int leveltime;  // tics in game play for par
 extern  int oldleveltime;
 extern  int totalleveltimes; // [FG] total time for all completed levels
+extern  int levelscompleted; // [Cherry] total amount of completed levels
 // --------------------------------------
 // DEMO playback/recording related stuff.
 

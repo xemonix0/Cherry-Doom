@@ -33,6 +33,8 @@
 #include "p_user.h"
 #include "v_video.h"
 
+#include "ws_wadstats.h" // [Cherry]
+
 // [Nugget] cheese :)
 extern boolean cheese;
 
@@ -783,6 +785,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
           // [Nugget]: [So Doom] count deaths of resurrected/Nightmare-respawned/Icon of Sin-spawned monsters
           if (target->intflags & MIF_EXTRASPAWNED)
             extrakills++;
+          WS_WadStatsKill(); // [Cherry]
         }
       if (target->player)
         source->player->frags[target->player-players]++;
@@ -798,6 +801,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
             // [Nugget]: [So Doom] count deaths of resurrected/Nightmare-respawned/Icon of Sin-spawned monsters
             if (target->intflags & MIF_EXTRASPAWNED)
               extrakills++;
+            WS_WadStatsKill(); // [Cherry]
           }
         }
 #ifndef MBF_STRICT
@@ -809,6 +813,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
               target->lastenemy->player)
           {
               target->lastenemy->player->killcount++;
+              WS_WadStatsKill(); // [Cherry]
           }
           else
           {
@@ -817,7 +822,9 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
             for (i = 0, playerscount = 0; i < MAXPLAYERS; ++i)
             {
               if (playeringame[i])
+              {
                 ++playerscount;
+              }
             }
 
             if (playerscount)
@@ -828,6 +835,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
                 i = Woof_Random() % playerscount;
 
               players[i].killcount++;
+              WS_WadStatsKill(); // [Cherry]
             }
           }
         }

@@ -35,6 +35,7 @@
 #include "s_musinfo.h" // [crispy] S_ParseMusInfo()
 #include "m_misc2.h" // [FG] M_StringJoin()
 #include "m_swap.h"
+#include "ws_wadstats.h" // [Cherry]
 
 // [FG] support maps with NODES in compressed or uncompressed ZDBSP format or DeePBSP format
 #include "p_extnodes.h"
@@ -1649,6 +1650,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
   // set up world state
   P_SpawnSpecials();
+  // [Cherry] track map stats
+  WS_WadStatsEnterMap();
   P_MapEnd();
 
   // preload graphics
