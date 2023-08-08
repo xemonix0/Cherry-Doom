@@ -895,12 +895,12 @@ void ST_drawWidgets(void)
         }
 
         if (lump[i] >= 0)
-        { V_DrawPatch(nughud.patches[i].x + DELTA(nughud.patches[i].wide),
+        { V_DrawPatch(nughud.patches[i].x + NUGHUDWIDESHIFT(nughud.patches[i].wide),
                       nughud.patches[i].y, FG, W_CacheLumpNum(lump[i], PU_STATIC)); }
       }
 
     if (nughud.armoricon.x > -1 && nughud.nharmor) {
-      V_DrawPatch(nughud.armoricon.x + DELTA(nughud.armoricon.wide),
+      V_DrawPatch(nughud.armoricon.x + NUGHUDWIDESHIFT(nughud.armoricon.wide),
                   nughud.armoricon.y, FG,
                   nughud_armoricon[BETWEEN(0, 2, plyr->armortype)]);
     }
@@ -942,7 +942,7 @@ void ST_drawWidgets(void)
       && plyr->powers[pw_strength])
   {
     if (st_crispyhud && nughud.nhbersrk)
-    { V_DrawPatch(nughud.ammo.x + DELTA(nughud.ammo.wide), nughud.ammo.y, FG, nughud_berserk); }
+    { V_DrawPatch(nughud.ammo.x + NUGHUDWIDESHIFT(nughud.ammo.wide), nughud.ammo.y, FG, nughud_berserk); }
     else {
       static int lump = -2;
       patch_t *patch;
@@ -959,7 +959,7 @@ void ST_drawWidgets(void)
         // [crispy] (23,179) is the center of the Ammo widget
         // [Nugget] Nugget HUD
         V_DrawPatch((st_crispyhud ? nughud.ammo.x : ST_AMMOX) - 21 - SHORT(patch->width)/2 + SHORT(patch->leftoffset)
-                    + DELTA(nughud.ammo.wide),
+                    + NUGHUDWIDESHIFT(nughud.ammo.wide),
                     (st_crispyhud ? nughud.ammo.y : ST_AMMOY) + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
                     FG, patch);
       }
@@ -1045,7 +1045,7 @@ void ST_drawWidgets(void)
   if (st_crispyhud && (nughud.face.x > -1) && nughud.face_bg)
   {
     // [Nugget] Nugget HUD
-    V_DrawPatch(nughud.face.x + DELTA(nughud.face.wide), nughud.face.y+1,
+    V_DrawPatch(nughud.face.x + NUGHUDWIDESHIFT(nughud.face.wide), nughud.face.y+1,
                 FG, faceback[netgame ? displayplayer : 1]);
   }
 
@@ -1345,7 +1345,7 @@ void ST_createWidgets(void)
 
   // ready weapon ammo
   STlib_initNum(&w_ready,
-                (st_crispyhud ? nughud.ammo.x : ST_AMMOX) + DELTA(nughud.ammo.wide),
+                (st_crispyhud ? nughud.ammo.x : ST_AMMOX) + NUGHUDWIDESHIFT(nughud.ammo.wide),
                 (st_crispyhud ? nughud.ammo.y : ST_AMMOY),
                 ((st_crispyhud && nughud.nhtnum) ? nughud_tallnum : tallnum),
                 &plyr->ammo[weaponinfo[plyr->readyweapon].ammo],
@@ -1357,7 +1357,7 @@ void ST_createWidgets(void)
 
   // health percentage
   STlib_initPercent(&w_health,
-                    (st_crispyhud ? nughud.health.x : ST_HEALTHX) + DELTA(nughud.health.wide),
+                    (st_crispyhud ? nughud.health.x : ST_HEALTHX) + NUGHUDWIDESHIFT(nughud.health.wide),
                     (st_crispyhud ? nughud.health.y : ST_HEALTHY),
                     ((st_crispyhud && nughud.nhtnum) ? nughud_tallnum : tallnum),
                     &st_health,
@@ -1368,7 +1368,7 @@ void ST_createWidgets(void)
   if (st_crispyhud) {
     for (i = 0;  i < 9;  i++)
       STlib_initMultIcon(&w_arms[i],
-                         nughud.arms[i].x + DELTA(nughud.arms[i].wide),
+                         nughud.arms[i].x + NUGHUDWIDESHIFT(nughud.arms[i].wide),
                          nughud.arms[i].y,
                          (nughud.nhwpnum ? nughud_armsnum[i] : arms[i]),
                          // [Nugget] Highlight Arms #1 only if the player has Berserk
@@ -1391,7 +1391,7 @@ void ST_createWidgets(void)
 
   // frags sum
   STlib_initNum(&w_frags,
-                (st_crispyhud ? nughud.frags.x : ST_FRAGSX) + DELTA(nughud.frags.wide),
+                (st_crispyhud ? nughud.frags.x : ST_FRAGSX) + NUGHUDWIDESHIFT(nughud.frags.wide),
                 (st_crispyhud ? nughud.frags.y : ST_FRAGSY),
                 ((st_crispyhud && nughud.nhtnum) ? nughud_tallnum : tallnum),
                 &st_fragscount,
@@ -1400,7 +1400,7 @@ void ST_createWidgets(void)
 
   // faces
   STlib_initMultIcon(&w_faces,
-                     (st_crispyhud ? nughud.face.x : ST_FACESX) + DELTA(nughud.face.wide),
+                     (st_crispyhud ? nughud.face.x : ST_FACESX) + NUGHUDWIDESHIFT(nughud.face.wide),
                      (st_crispyhud ? nughud.face.y : ST_FACESY),
                      faces,
                      &st_faceindex,
@@ -1408,7 +1408,7 @@ void ST_createWidgets(void)
 
   // armor percentage - should be colored later
   STlib_initPercent(&w_armor,
-                    (st_crispyhud ? nughud.armor.x : ST_ARMORX) + DELTA(nughud.armor.wide),
+                    (st_crispyhud ? nughud.armor.x : ST_ARMORX) + NUGHUDWIDESHIFT(nughud.armor.wide),
                     (st_crispyhud ? nughud.armor.y : ST_ARMORY),
                     ((st_crispyhud && nughud.nhtnum) ? nughud_tallnum : tallnum),
                     &st_armor,
@@ -1417,21 +1417,21 @@ void ST_createWidgets(void)
 
   // keyboxes 0-2
   STlib_initMultIcon(&w_keyboxes[0],
-                     (st_crispyhud ? nughud.keys[0].x : ST_KEY0X) + DELTA(nughud.keys[0].wide),
+                     (st_crispyhud ? nughud.keys[0].x : ST_KEY0X) + NUGHUDWIDESHIFT(nughud.keys[0].wide),
                      (st_crispyhud ? nughud.keys[0].y : ST_KEY0Y),
                      ((st_crispyhud && nughud.nhkeys) ? nughud_keys : keys),
                      &keyboxes[0],
                      &st_statusbaron);
 
   STlib_initMultIcon(&w_keyboxes[1],
-                     (st_crispyhud ? nughud.keys[1].x : ST_KEY1X) + DELTA(nughud.keys[1].wide),
+                     (st_crispyhud ? nughud.keys[1].x : ST_KEY1X) + NUGHUDWIDESHIFT(nughud.keys[1].wide),
                      (st_crispyhud ? nughud.keys[1].y : ST_KEY1Y),
                      ((st_crispyhud && nughud.nhkeys) ? nughud_keys : keys),
                      &keyboxes[1],
                      &st_statusbaron);
 
   STlib_initMultIcon(&w_keyboxes[2],
-                     (st_crispyhud ? nughud.keys[2].x : ST_KEY2X) + DELTA(nughud.keys[2].wide),
+                     (st_crispyhud ? nughud.keys[2].x : ST_KEY2X) + NUGHUDWIDESHIFT(nughud.keys[2].wide),
                      (st_crispyhud ? nughud.keys[2].y : ST_KEY2Y),
                      ((st_crispyhud && nughud.nhkeys) ? nughud_keys : keys),
                      &keyboxes[2],
@@ -1439,7 +1439,7 @@ void ST_createWidgets(void)
 
   // ammo count (all four kinds)
   STlib_initNum(&w_ammo[0],
-                (st_crispyhud ? nughud.ammos[0].x : ST_AMMO0X) + DELTA(nughud.ammos[0].wide),
+                (st_crispyhud ? nughud.ammos[0].x : ST_AMMO0X) + NUGHUDWIDESHIFT(nughud.ammos[0].wide),
                 (st_crispyhud ? nughud.ammos[0].y : ST_AMMO0Y),
                 ((st_crispyhud && nughud.nhamnum) ? nughud_ammonum : shortnum),
                 &plyr->ammo[0],
@@ -1447,7 +1447,7 @@ void ST_createWidgets(void)
                 ST_AMMO0WIDTH);
 
   STlib_initNum(&w_ammo[1],
-                (st_crispyhud ? nughud.ammos[1].x : ST_AMMO1X) + DELTA(nughud.ammos[1].wide),
+                (st_crispyhud ? nughud.ammos[1].x : ST_AMMO1X) + NUGHUDWIDESHIFT(nughud.ammos[1].wide),
                 (st_crispyhud ? nughud.ammos[1].y : ST_AMMO1Y),
                 ((st_crispyhud && nughud.nhamnum) ? nughud_ammonum : shortnum),
                 &plyr->ammo[1],
@@ -1455,7 +1455,7 @@ void ST_createWidgets(void)
                 ST_AMMO1WIDTH);
 
   STlib_initNum(&w_ammo[2],
-                (st_crispyhud ? nughud.ammos[2].x : ST_AMMO2X) + DELTA(nughud.ammos[2].wide),
+                (st_crispyhud ? nughud.ammos[2].x : ST_AMMO2X) + NUGHUDWIDESHIFT(nughud.ammos[2].wide),
                 (st_crispyhud ? nughud.ammos[2].y : ST_AMMO2Y),
                 ((st_crispyhud && nughud.nhamnum) ? nughud_ammonum : shortnum),
                 &plyr->ammo[2],
@@ -1463,7 +1463,7 @@ void ST_createWidgets(void)
                 ST_AMMO2WIDTH);
 
   STlib_initNum(&w_ammo[3],
-                (st_crispyhud ? nughud.ammos[3].x : ST_AMMO3X) + DELTA(nughud.ammos[3].wide),
+                (st_crispyhud ? nughud.ammos[3].x : ST_AMMO3X) + NUGHUDWIDESHIFT(nughud.ammos[3].wide),
                 (st_crispyhud ? nughud.ammos[3].y : ST_AMMO3Y),
                 ((st_crispyhud && nughud.nhamnum) ? nughud_ammonum : shortnum),
                 &plyr->ammo[3],
@@ -1472,7 +1472,7 @@ void ST_createWidgets(void)
 
   // max ammo count (all four kinds)
   STlib_initNum(&w_maxammo[0],
-                (st_crispyhud ? nughud.maxammos[0].x : ST_MAXAMMO0X) + DELTA(nughud.maxammos[0].wide),
+                (st_crispyhud ? nughud.maxammos[0].x : ST_MAXAMMO0X) + NUGHUDWIDESHIFT(nughud.maxammos[0].wide),
                 (st_crispyhud ? nughud.maxammos[0].y : ST_MAXAMMO0Y),
                 ((st_crispyhud && nughud.nhamnum) ? nughud_ammonum : shortnum),
                 &plyr->maxammo[0],
@@ -1480,7 +1480,7 @@ void ST_createWidgets(void)
                 ST_MAXAMMO0WIDTH);
 
   STlib_initNum(&w_maxammo[1],
-                (st_crispyhud ? nughud.maxammos[1].x : ST_MAXAMMO1X) + DELTA(nughud.maxammos[1].wide),
+                (st_crispyhud ? nughud.maxammos[1].x : ST_MAXAMMO1X) + NUGHUDWIDESHIFT(nughud.maxammos[1].wide),
                 (st_crispyhud ? nughud.maxammos[1].y : ST_MAXAMMO1Y),
                 ((st_crispyhud && nughud.nhamnum) ? nughud_ammonum : shortnum),
                 &plyr->maxammo[1],
@@ -1488,7 +1488,7 @@ void ST_createWidgets(void)
                 ST_MAXAMMO1WIDTH);
 
   STlib_initNum(&w_maxammo[2],
-                (st_crispyhud ? nughud.maxammos[2].x : ST_MAXAMMO2X) + DELTA(nughud.maxammos[2].wide),
+                (st_crispyhud ? nughud.maxammos[2].x : ST_MAXAMMO2X) + NUGHUDWIDESHIFT(nughud.maxammos[2].wide),
                 (st_crispyhud ? nughud.maxammos[2].y : ST_MAXAMMO2Y),
                 ((st_crispyhud && nughud.nhamnum) ? nughud_ammonum : shortnum),
                 &plyr->maxammo[2],
@@ -1496,7 +1496,7 @@ void ST_createWidgets(void)
                 ST_MAXAMMO2WIDTH);
 
   STlib_initNum(&w_maxammo[3],
-                (st_crispyhud ? nughud.maxammos[3].x : ST_MAXAMMO3X) + DELTA(nughud.maxammos[3].wide),
+                (st_crispyhud ? nughud.maxammos[3].x : ST_MAXAMMO3X) + NUGHUDWIDESHIFT(nughud.maxammos[3].wide),
                 (st_crispyhud ? nughud.maxammos[3].y : ST_MAXAMMO3Y),
                 ((st_crispyhud && nughud.nhamnum) ? nughud_ammonum : shortnum),
                 &plyr->maxammo[3],

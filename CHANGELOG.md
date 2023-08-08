@@ -15,7 +15,8 @@
 
 ## Bug Fixes
 
-- **Fixed FOV-related sky stretching issues**
-- **Fixed weapon lowering under certain conditions**
-- **Fixed caching of certain NUGHUD patches** (fixed some crashes when using e.g. Status Bar graphics)
-- **Fixed vertical weapon inertia reset** when disabling mouselook/padlook
+- **FOV-related sky stretching issues**
+- **Weapon lowering under certain conditions**
+- **Caching of certain NUGHUD patches** (fixed some crashes when using e.g. Status Bar graphics)
+- **Vertical weapon inertia reset** when disabling mouselook/padlook
+- **NUGHUD forced widescreen shifting being applied in all screen sizes**

@@ -1505,7 +1505,7 @@ int map_power_timers, hud_power_timers; // [Nugget] Powerup timers
 // [Nugget]
 static void NughudAlignWidgetX(nughud_textline_t aligner, hu_textline_t* alignee)
 {
-  alignee->x = aligner.x + DELTA(aligner.wide);
+  alignee->x = aligner.x + NUGHUDWIDESHIFT(aligner.wide);
   alignee->x -= ((aligner.align == 1) ? alignee->width   :
                  (aligner.align == 0) ? alignee->width/2 : 0);
 }
