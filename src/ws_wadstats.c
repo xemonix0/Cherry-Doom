@@ -105,11 +105,7 @@ static void InitWadDataDir(void) {
   for (i = 0; i < DATA_DIR_LIMIT; ++i)
     if (data_dir_strings[i])
     {
-      const char* format = "/%s";
-
-      size_t length = snprintf(NULL, 0, format, data_dir_strings[i]);
-      str = Z_Realloc(str, strlen(str) + length + 1, PU_STATIC, NULL);
-      snprintf(str + strlen(str), length + 1, format, data_dir_strings[i]);
+      M_StringCatF(&str, "/%s", data_dir_strings[i]);
       NormalizeSlashes(str);
 
       M_MakeDirectory(str);
@@ -147,11 +143,7 @@ static const char* WS_WadStatsPath(void) {
   if (!path)
   {
     const char* data_dir = DataDir();
-    const char* format = "%s/%s";
-
-    size_t length = snprintf(NULL, 0, format, data_dir, filename);
-    path = Z_Malloc(length + 1, PU_STATIC, NULL);
-    snprintf(path, length + 1, format, data_dir, filename);
+    M_StringPrintF(&path, "%s/%s", data_dir, filename);
     NormalizeSlashes(path);
   }
 
@@ -194,12 +186,12 @@ static void WS_CreateWadStats(void) {
 
   for (i = numlumps - 1; i > 0; --i)
   {
-    // if (any_pwad_map && lumpinfo[i].source == source_iwad)
-    //   break;
+    if (any_pwad_map && lumpinfo[i].source == source_iwad)
+      break;
 
-    // if (lumpinfo[i].source != source_iwad &&
-    //     lumpinfo[i].source != source_pwad)
-    //   continue;
+    if (lumpinfo[i].source != source_iwad &&
+        lumpinfo[i].source != source_pwad)
+      continue;
 
     if (strncasecmp(lumpinfo[i].name, "THINGS", 8) &&
         strncasecmp(lumpinfo[i].name, "TEXTMAP", 8))
@@ -207,46 +199,43 @@ static void WS_CreateWadStats(void) {
 
     map_name = lumpinfo[i - 1].name;
     if (WS_MapStatsExist(map_name))
-    //  continue;
-      break;
+      continue;
 
-    //if (lumpinfo[i - 1].source == source_pwad)
-    //  any_pwad_map = true;
+    if (lumpinfo[i - 1].source == source_pwad)
+      any_pwad_map = true;
 
+    int episode, map;
+    map_stats_t* ms;
+
+    map_count += 1;
+    WS_EnsureMapCount(map_count);
+    ms = &wad_stats.maps[map_count - 1];
+    memset(ms, 0, sizeof(*wad_stats.maps));
+
+    strcpy(ms->lump, map_name);
+
+    if (sscanf(map_name, "MAP%d", &map) == 1)
     {
-      int episode, map;
-      map_stats_t* ms;
-
-      map_count += 1;
-      WS_EnsureMapCount(map_count);
-      ms = &wad_stats.maps[map_count - 1];
-      memset(ms, 0, sizeof(*wad_stats.maps));
-
-      strcpy(ms->lump, map_name);
-
-      if (sscanf(map_name, "MAP%d", &map) == 1)
-      {
-        ms->episode = 1;
-        ms->map = map;
-      }
-      else if (sscanf(map_name, "E%dM%d", &episode, &map) == 2)
-      {
-        ms->episode = episode;
-        ms->map = map;
-      }
-      else
-      {
-        ms->episode = -1;
-        ms->map = -1;
-      }
-
-      ms->best_time = -1;
-      ms->best_max_time = -1;
-      ms->best_sk5_time = -1;
-      ms->max_kills = -1;
-      ms->max_items = -1;
-      ms->max_secrets = -1;
+      ms->episode = 1;
+      ms->map = map;
     }
+    else if (sscanf(map_name, "E%dM%d", &episode, &map) == 2)
+    {
+      ms->episode = episode;
+      ms->map = map;
+    }
+    else
+    {
+      ms->episode = -1;
+      ms->map = -1;
+    }
+
+    ms->best_time = -1;
+    ms->best_max_time = -1;
+    ms->best_sk5_time = -1;
+    ms->max_kills = -1;
+    ms->max_items = -1;
+    ms->max_secrets = -1;
   }
 
   qsort(wad_stats.maps, wad_stats.map_count, sizeof(*wad_stats.maps), dicmp_map_stats);

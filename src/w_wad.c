@@ -176,6 +176,8 @@ static void W_AddFile(wadfile_info_t *wadfile) // killough 1/31/98: static, cons
         M_CopyLumpName(lump_p->name, fileinfo->name);
         // [FG] WAD file that contains the lump
         lump_p->wad_file = (is_single ? NULL : wadfile->name);
+        // [Cherry] Where the lump came from
+        lump_p->source = wadfile->src;
       }
 
     free(fileinfo2free);      // killough

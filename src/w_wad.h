@@ -102,6 +102,8 @@ typedef struct
 
   // [FG] WAD file that contains the lump
   const char *wad_file;
+  // [Cherry] Where the lump came from
+  wad_source_t source;
 } lumpinfo_t;
 
 // killough 1/31/98: predefined lumps

@@ -26,6 +26,7 @@
 #include "m_misc2.h"
 #include "i_system.h"
 #include "m_io.h"
+#include "z_zone.h"
 
 // Check if a file exists
 
@@ -351,6 +352,44 @@ boolean M_StringConcat(char *dest, const char *src, size_t dest_size)
     }
 
     return M_StringCopy(dest + offset, src, dest_size - offset);
+}
+
+// [Cherry]
+
+void M_StringCatF(char **dest, const char *format, ...)
+{
+  size_t length;
+  va_list v;
+
+  va_start(v, format);
+  length = vsnprintf(NULL, 0, format, v);
+  va_end(v);
+
+  *dest = Z_Realloc(*dest, strlen(*dest) + length + 1, PU_STATIC, NULL);
+
+  va_start(v, format);
+  vsnprintf(*dest + strlen(*dest), length + 1, format, v);
+  va_end(v);
+}
+
+// [Cherry]
+
+void M_StringPrintF(char **dest, const char *format, ...)
+{
+  size_t length;
+  va_list v;
+
+  *dest = NULL;
+
+  va_start(v, format);
+  length = vsnprintf(NULL, 0, format, v);
+  va_end(v);
+
+  *dest = Z_Malloc(length + 1, PU_STATIC, NULL);
+
+  va_start(v, format);
+  vsnprintf(*dest, length + 1, format, v);
+  va_end(v);
 }
 
 // Returns true if 's' ends with the specified suffix.
