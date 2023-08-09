@@ -404,8 +404,7 @@ void M_DrawMainMenu(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (94,2,0,W_CacheLumpName("M_DOOM",PU_CACHE));
 }
@@ -637,8 +636,7 @@ void M_DrawEpisode(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   M_DrawTitle(54,EpiDef.y - 25,"M_EPISOD","WHICH EPISODE?");
 }
@@ -710,8 +708,7 @@ void M_DrawNewGame(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (96,14,0,W_CacheLumpName("M_NEWG",PU_CACHE));
   V_DrawPatchDirect (54,38,0,W_CacheLumpName("M_SKILL",PU_CACHE));
@@ -891,8 +888,7 @@ void M_DrawLoad(void)
 {
   int i;
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   //jff 3/15/98 use symbolic load position
   V_DrawPatchDirect (72,LOADGRAPHIC_Y,0,W_CacheLumpName("M_LOADG",PU_CACHE));
@@ -1088,8 +1084,7 @@ void M_DrawSave(void)
 {
   int i;
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   //jff 3/15/98 use symbolic load position
   V_DrawPatchDirect (72,LOADGRAPHIC_Y,0,W_CacheLumpName("M_SAVEG",PU_CACHE));
@@ -1275,8 +1270,7 @@ void M_DrawOptions(void)
 {
   inhelpscreens = true; // [Cherry] this wasn't here before
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (108,15,0,W_CacheLumpName("M_OPTTTL",PU_CACHE));
 
@@ -1416,8 +1410,7 @@ menu_t SoundDef =
 
 void M_DrawSound(void)
 {
-  if (draw_menu_background == 2)
-    M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (60,38,0,W_CacheLumpName("M_SVOL",PU_CACHE));
 
@@ -1526,8 +1519,7 @@ void M_DrawMouse(void)
 {
   int mhmx,mvmx,mhmx2,mvmx2; //jff 4/3/98 clamp drawn position to 23 max
 
-  if (draw_menu_background == 2)
-    M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (60,LOADGRAPHIC_Y,0,W_CacheLumpName("M_MSENS",PU_CACHE));
 
@@ -2067,9 +2059,10 @@ menu_t LevelTableDef =                                       // [Cherry]
 //
 // killough 11/98: rewritten to support hires
 
-void M_DrawBackground(char *patchname, byte *back_dest)
+void M_DrawBackground(char *patchname, byte *back_dest, boolean required)
 {
-  if (draw_menu_background == 0 || M_MenuIsShaded() || (!setup_active && draw_menu_background == 1))
+  if (!required && (draw_menu_background == 0 ||
+                    M_MenuIsShaded() || (!setup_active && draw_menu_background == 1)))
     return;
 
   R_DrawBackground(patchname, back_dest);
@@ -2082,8 +2075,7 @@ void M_DrawBackground(char *patchname, byte *back_dest)
 
 void M_DrawSetup(void)
 {
-  if (draw_menu_background == 2)
-    M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   M_DrawTitle(124,15,"M_SETUP","SETUP");
 }
@@ -2695,7 +2687,13 @@ void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
     if (skip_entry)
       continue;
 
-    M_DrawItem(src, -offset);
+    // See if we're to draw the item description (left-hand part)
+    if (src->m_flags & S_SHOWDESC)
+      M_DrawItem(src, -offset);
+
+    // See if we're to draw the setting (right-hand part)
+    if (src->m_flags & S_SHOWSET)
+      M_DrawSetting(src, -offset);
   }
 }
 
@@ -3278,7 +3276,7 @@ void M_DrawKeybnd(void)
 
   // Set up the Key Binding screen
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(84,2,"M_KEYBND","KEY BINDINGS");
   M_DrawInstructions();
@@ -3467,7 +3465,7 @@ void M_DrawWeapons(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(109,2,"M_WEAP","WEAPONS");
   M_DrawInstructions();
@@ -3714,7 +3712,7 @@ void M_DrawStatusHUD(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(59,2,"M_STAT","STATUS BAR / HUD");
   M_DrawInstructions();
@@ -3950,7 +3948,7 @@ void M_DrawAutoMap(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(109,2,"M_AUTO","AUTOMAP");
   M_DrawInstructions();
@@ -4110,7 +4108,7 @@ void M_DrawEnemy(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(114,2,"M_ENEM","ENEMIES");
   M_DrawInstructions();
@@ -4795,7 +4793,7 @@ void M_DrawGeneral(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(114,2,"M_GENERL","GENERAL");
   M_DrawInstructions();
@@ -5076,7 +5074,7 @@ void M_DrawCompat(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(52,2,"M_COMPAT","DOOM COMPATIBILITY");
   M_DrawInstructions();
@@ -5211,7 +5209,7 @@ void M_DrawMessages(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(103,2,"M_MESS","MESSAGES");
   M_DrawInstructions();
@@ -5281,7 +5279,7 @@ void M_DrawChatStrings(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(83,2,"M_CHAT","CHAT STRINGS");
   M_DrawInstructions();
@@ -5841,7 +5839,7 @@ void M_DrawLevelTable(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(114, 2, "M_LVLTBL", "LEVEL TABLE");
   if (current_setup_menu != level_table_page[wad_stats_summary_page])
@@ -6311,7 +6309,7 @@ void M_DrawHelp (void)
   inhelpscreens = true;                        // killough 10/98
   if (helplump < 0 || W_IsIWADLump(helplump))
   {
-  M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
   M_DrawScreenItems(helpstrings);
   }
   else
@@ -6407,7 +6405,7 @@ void M_DrawCredits(void)     // killough 10/98: credit screen
   sprintf(mbftext_s, PROJECT_STRING);
   inhelpscreens = true;
 
-  M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0]);
+  M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0], true);
   M_DrawTitle(42,9,"MBFTEXT",mbftext_s);
   M_DrawScreenItems(cred_settings);
 }
@@ -7921,8 +7919,7 @@ void M_Drawer (void)
    // killough 9/29/98: simplified code, removed 40-character width limit
    if(messageToPrint)
    {
-      if (draw_menu_background == 2)
-        M_DrawBackground("FLOOR4_6", screens[0]);
+      M_DrawBackground("FLOOR4_6", screens[0], false);
       // haleyjd 11/11/04: must strdup message, cannot write into
       // string constants!
       char *d = strdup(messageString);
