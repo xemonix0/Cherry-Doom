@@ -6453,6 +6453,26 @@ enum
   MENU_CLEAR
 };
 
+void M_LeaveSetupMenu()
+{
+  setup_active = false;
+  set_keybnd_active = false;
+  set_weapon_active = false;
+  set_status_active = false;
+  set_auto_active = false;
+  set_enemy_active = false;
+  set_mess_active = false;
+  set_chat_active = false;
+  set_ltbl_active = false;
+  colorbox_active = false;
+  default_verify = false;       // phares 4/19/98
+  set_general_active = false;    // killough 10/98
+  set_compat_active = false;    // killough 10/98
+  print_warning_about_changes = false; // [FG] reset
+  HU_Start();    // catch any message changes // phares 4/19/98
+  S_StartSoundOptional(NULL, sfx_mnubak, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
+}
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // M_Responder
@@ -7513,21 +7533,7 @@ boolean M_Responder (event_t* ev)
 
           M_ClearMenus();
           ptr1->m_flags &= ~(S_HILITE|S_SELECT);// phares 4/19/98
-          setup_active = false;
-          set_keybnd_active = false;
-          set_weapon_active = false;
-          set_status_active = false;
-          set_auto_active = false;
-          set_enemy_active = false;
-          set_mess_active = false;
-          set_chat_active = false;
-          set_ltbl_active = false;
-          colorbox_active = false;
-          default_verify = false;       // phares 4/19/98
-          set_general_active = false;    // killough 10/98
-          set_compat_active = false;    // killough 10/98
-          print_warning_about_changes = false; // [FG] reset
-          S_StartSoundOptional(NULL, sfx_mnubak, sfx_swtchx);
+          M_LeaveSetupMenu();
 
           return true;
         }
@@ -7666,22 +7672,7 @@ boolean M_Responder (event_t* ev)
 		S_StartSoundOptional(NULL, sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
 	      }
 	  ptr1->m_flags &= ~(S_HILITE|S_SELECT);// phares 4/19/98
-	  setup_active = false;
-	  set_keybnd_active = false;
-	  set_weapon_active = false;
-	  set_status_active = false;
-	  set_auto_active = false;
-	  set_enemy_active = false;
-	  set_mess_active = false;
-	  set_chat_active = false;
-      set_ltbl_active = false;
-	  colorbox_active = false;
-	  default_verify = false;       // phares 4/19/98
-	  set_general_active = false;    // killough 10/98
-          set_compat_active = false;    // killough 10/98
-	  print_warning_about_changes = false; // [FG] reset
-	  HU_Start();    // catch any message changes // phares 4/19/98
-	  S_StartSoundOptional(NULL, sfx_mnubak, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
+      M_LeaveSetupMenu();
 	  return true;
 	}
 
