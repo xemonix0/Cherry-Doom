@@ -112,7 +112,7 @@ int             totalkills, totalitems, totalsecret;    // for intermission
 int             extraspawns;   // [Nugget]: [crispy] count spawned monsters
 int             extrakills;    // [Nugget]: [So Doom] count deaths of resurrected and (re)spawned monsters
 int             totalleveltimes; // [FG] total time for all completed levels
-int             levelscompleted;
+int             levelscompleted; // [Cherry] amount of levels completed
 boolean         demorecording;
 boolean         longtics;             // cph's doom 1.91 longtics hack
 boolean         lowres_turn;          // low resolution turning for longtics
@@ -1856,7 +1856,7 @@ static void G_DoPlayDemo(void)
 // killough 2/22/98: version id string format for savegames
 #define VERSIONID "MBF %d"
 
-#define CURRENT_SAVE_VERSION "Woof 6.0.0"
+#define CURRENT_SAVE_VERSION "Cherry 1.0.0"
 
 static char *savename = NULL;
 
@@ -2042,7 +2042,10 @@ static void G_DoSaveGame(void)
 
   // [FG] fix copy size and pointer progression
   saveg_write32(leveltime); //killough 11/98: save entire word
-  saveg_write32(levelscompleted);
+
+  // [Cherry] save the amount of levels completed
+  if (saveg_compat > saveg_woof600)
+    saveg_write32(levelscompleted);
 
   // killough 11/98: save revenant tracer state
   *save_p++ = (gametic-basetic) & 255;
@@ -2212,7 +2215,12 @@ static void G_DoLoadGame(void)
   // killough 11/98: save entire word
   // [FG] fix copy size and pointer progression
   leveltime = saveg_read32();
-  levelscompleted = saveg_read32();
+
+  // [Cherry] save the amount of levels completed
+  if (saveg_compat > saveg_woof600)
+    levelscompleted = saveg_read32();
+  else
+    levelscompleted = 0;
 
   // killough 11/98: load revenant tracer state
   basetic = gametic - (int) *save_p++;
