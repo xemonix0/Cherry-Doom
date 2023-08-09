@@ -331,7 +331,7 @@ void M_Compat(int);       // killough 10/98
 void M_General(int);      // killough 10/98
 void M_DrawCompat(void);  // killough 10/98
 void M_DrawGeneral(void); // killough 10/98
-void M_LevelTable(void);     // [Cherry]
+void M_LevelTable(int);     // [Cherry]
 void M_DrawLevelTable(void); // [Cherry]
 // cph 2006/08/06 - M_DrawString() is the old M_DrawMenuString, except that it is not tied to menu_buffer
 void M_DrawString(int,int,int,const char*);
@@ -2620,7 +2620,6 @@ void M_DrawScreenItems(setup_menu_t* src)
 //
 // [Cherry] Same as above, but supports scrolling
 // Used only for the Level Table
-// TODO: merge with M_DrawScreenItems
 
 void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
 {
@@ -2632,7 +2631,7 @@ void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
   int limit_i = 0;
   int buffer_i = 0;
   int end_y;
-  const setup_menu_t* src;
+  setup_menu_t* src;
 
   i = 0;
   for (src = base_src; !(src->m_flags & S_END); src++)
@@ -2668,27 +2667,6 @@ void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
     while (current_i - scroll_i > limit_i - buffer_i)
       ++scroll_i;
 
-  if (print_warning_about_changes > 0)   // killough 8/15/98: print warning
-  {
-    int x_warn;
-
-    if (warning_about_changes & S_BADVAL)
-    {
-      strcpy(menu_buffer, "Value out of Range");
-    }
-    else if (warning_about_changes & S_PRGWARN)
-    {
-      strcpy(menu_buffer, "Warning: Program must be restarted to see changes");
-    }
-    else
-    {
-      strcpy(menu_buffer, "Warning: Changes are pending until next game");
-    }
-
-    x_warn = ORIGWIDTH/2 - M_GetPixelWidth(menu_buffer)/2;
-    M_DrawMenuString(x_warn, M_Y_WARN, CR_RED);
-  }
-
   i = 0;
   for (src = base_src; !(src->m_flags & S_END); src++)
   {
@@ -2717,13 +2695,7 @@ void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
     if (skip_entry)
       continue;
 
-    // See if we're to draw the item description (left-hand part)
-    if (src->m_flags & S_SHOWDESC)
-      M_DrawItem(src, -offset);
-
-    // See if we're to draw the setting (right-hand part)
-    if (src->m_flags & S_SHOWSET)
-      M_DrawSetting(src, -offset);
+    M_DrawItem(src, -offset);
   }
 }
 
