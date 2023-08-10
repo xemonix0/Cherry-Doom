@@ -318,25 +318,10 @@ static void WS_LoadWadStats(void) {
   }
 }
 
-static boolean forget_wad_stats;
-
-void M_ForgetWadStats(void)
-{
-  forget_wad_stats = true;
-}
-
-void M_RememberWadStats(void)
-{
-  forget_wad_stats = false;
-}
-
 void WS_SaveWadStats(void) {
   const char* path;
   FILE* file;
   int i;
-
-  if (forget_wad_stats)
-    return;
 
   if (!wad_stats.map_count)
     return;
