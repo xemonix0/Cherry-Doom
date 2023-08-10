@@ -31,7 +31,8 @@
 //
 
 boolean M_WriteFile(const char *name, void *source, int length);
-int M_ReadFile(const char *name, byte **buffer);
+int M_ReadFile(const char *name, byte **buffer, boolean require);
+int M_ReadFileToString(char const *name, char **buffer, boolean require);  // [Cherry]: [p.f. DSDA-Doom]
 void M_ScreenShot(void);
 void M_LoadDefaults(void);
 void M_SaveDefaults(void);

@@ -27,6 +27,7 @@
 #include "m_io.h"
 #include "w_wad.h"
 #include "i_glob.h"
+#include "ws_wadstats.h" // [Cherry]
 
 //
 // I_Quit
@@ -87,6 +88,8 @@ void I_QuitFirst(void)
     {
         G_CheckDemoStatus();
     }
+
+    WS_SaveWadStats(); // [Cherry]
 }
 
 void I_QuitLast(void)

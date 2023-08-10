@@ -57,6 +57,7 @@
 #include "i_sound.h"
 #include "r_bmaps.h"
 #include "st_stuff.h" // [Nugget]
+#include "ws_wadstats.h" // [Cherry]
 
 // [crispy] remove DOS reference from the game quit confirmation dialogs
 #include "SDL_platform.h"
@@ -285,7 +286,7 @@ void M_DrawOptions(void);
 void M_DrawSound(void);
 void M_DrawLoad(void);
 void M_DrawSave(void);
-void M_DrawBackground(char *patchname, byte *back_dest);
+void M_DrawBackground(char *patchname, byte *back_dest, boolean required);
 void M_DrawSetup(void);                                     // phares 3/21/98
 void M_DrawHelp (void);                                     // phares 5/04/98
 
@@ -330,6 +331,8 @@ void M_Compat(int);       // killough 10/98
 void M_General(int);      // killough 10/98
 void M_DrawCompat(void);  // killough 10/98
 void M_DrawGeneral(void); // killough 10/98
+void M_LevelTable(int);     // [Cherry]
+void M_DrawLevelTable(void); // [Cherry]
 // cph 2006/08/06 - M_DrawString() is the old M_DrawMenuString, except that it is not tied to menu_buffer
 void M_DrawString(int,int,int,const char*);
 
@@ -401,8 +404,7 @@ void M_DrawMainMenu(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (94,2,0,W_CacheLumpName("M_DOOM",PU_CACHE));
 }
@@ -634,8 +636,7 @@ void M_DrawEpisode(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   M_DrawTitle(54,EpiDef.y - 25,"M_EPISOD","WHICH EPISODE?");
 }
@@ -707,8 +708,7 @@ void M_DrawNewGame(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (96,14,0,W_CacheLumpName("M_NEWG",PU_CACHE));
   V_DrawPatchDirect (54,38,0,W_CacheLumpName("M_SKILL",PU_CACHE));
@@ -888,8 +888,7 @@ void M_DrawLoad(void)
 {
   int i;
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   //jff 3/15/98 use symbolic load position
   V_DrawPatchDirect (72,LOADGRAPHIC_Y,0,W_CacheLumpName("M_LOADG",PU_CACHE));
@@ -933,7 +932,7 @@ void M_LoadSelect(int choice)
 
   name = G_SaveGameName(choice);
 
-  saveg_compat = saveg_woof510;
+  saveg_compat = saveg_woof600;
 
   if (M_access(name, F_OK) != 0)
   {
@@ -1085,8 +1084,7 @@ void M_DrawSave(void)
 {
   int i;
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   //jff 3/15/98 use symbolic load position
   V_DrawPatchDirect (72,LOADGRAPHIC_Y,0,W_CacheLumpName("M_SAVEG",PU_CACHE));
@@ -1228,6 +1226,7 @@ enum
   mousesens,
   /* option_empty2, submenu now -- killough */
   soundvol,
+  level_table,
   opt_end
 } options_e;
 
@@ -1246,7 +1245,8 @@ menuitem_t OptionsMenu[]=
   {-1,"",0},
   {1,"M_MSENS",  M_ChangeSensitivity,'m', "MOUSE SENSITIVITY"},
   /* {-1,"",0},  replaced with submenu -- killough */
-  {1,"M_SVOL",   M_Sound,'s', "SOUND VOLUME"}
+  {1,"M_SVOL",   M_Sound,'s', "SOUND VOLUME"},
+  {1,"M_LVLTBL", M_LevelTable, 'l', "LEVEL TABLE"}, // [Cherry]
 };
 
 menu_t OptionsDef =
@@ -1270,8 +1270,7 @@ void M_DrawOptions(void)
 {
   inhelpscreens = true; // [Cherry] this wasn't here before
 
-  if (draw_menu_background == 2)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (108,15,0,W_CacheLumpName("M_OPTTTL",PU_CACHE));
 
@@ -1411,8 +1410,7 @@ menu_t SoundDef =
 
 void M_DrawSound(void)
 {
-  if (draw_menu_background == 2)
-    M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (60,38,0,W_CacheLumpName("M_SVOL",PU_CACHE));
 
@@ -1521,8 +1519,7 @@ void M_DrawMouse(void)
 {
   int mhmx,mvmx,mhmx2,mvmx2; //jff 4/3/98 clamp drawn position to 23 max
 
-  if (draw_menu_background == 2)
-    M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (60,LOADGRAPHIC_Y,0,W_CacheLumpName("M_MSENS",PU_CACHE));
 
@@ -1789,6 +1786,7 @@ void M_SizeDisplay(int choice)
 //    Chat Strings
 //
 // killough 10/98: added Compatibility and General menus
+// [Cherry] Added level table, adapted from DSDA-Doom
 //
 
 /////////////////////////////
@@ -1806,6 +1804,7 @@ boolean set_auto_active   = false; // in automap setup screen
 boolean set_enemy_active  = false; // in enemies setup screen
 boolean set_mess_active   = false; // in messages setup screen
 boolean set_chat_active   = false; // in chat string setup screen
+boolean set_ltbl_active   = false; // in level table setup screen
 boolean setup_select      = false; // changing an item
 boolean setup_gather      = false; // gathering keys for value
 boolean colorbox_active   = false; // color palette being shown
@@ -2043,6 +2042,16 @@ menu_t CompatDef =                                           // killough 10/98
   0
 };
 
+menu_t LevelTableDef =                                       // [Cherry]
+{
+  generic_setup_end,
+  &OptionsDef,
+  Generic_Setup,
+  M_DrawLevelTable,
+  34,5,      // skull drawn here
+  0
+};
+
 /////////////////////////////
 //
 // M_DrawBackground tiles a 64x64 patch over the entire screen, providing the
@@ -2050,9 +2059,10 @@ menu_t CompatDef =                                           // killough 10/98
 //
 // killough 11/98: rewritten to support hires
 
-void M_DrawBackground(char *patchname, byte *back_dest)
+void M_DrawBackground(char *patchname, byte *back_dest, boolean required)
 {
-  if (draw_menu_background == 0 || M_MenuIsShaded() || (!setup_active && draw_menu_background == 1))
+  if (!required && (draw_menu_background == 0 ||
+                    M_MenuIsShaded() || (!setup_active && draw_menu_background == 1)))
     return;
 
   R_DrawBackground(patchname, back_dest);
@@ -2065,8 +2075,7 @@ void M_DrawBackground(char *patchname, byte *back_dest)
 
 void M_DrawSetup(void)
 {
-  if (draw_menu_background == 2)
-    M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   M_DrawTitle(124,15,"M_SETUP","SETUP");
 }
@@ -2135,6 +2144,7 @@ char ResetButtonName[2][8] = {"M_BUTT1","M_BUTT2"};
 // part). A different color is used for the text depending on whether the
 // item is selected or not, or whether it's about to change.
 
+static void M_DrawStringEx(int flags, int x, int y, int color, const char *ch);
 static void M_DrawMenuStringEx(int flags, int x, int y, int color);
 
 static boolean ItemDisabled(int flags)
@@ -2174,11 +2184,11 @@ static boolean NextItemAvailable (setup_menu_t *s)
          (!s->selectstrings || s->selectstrings[value + 1]));
 }
 
-void M_DrawItem(setup_menu_t* s)
+void M_DrawItem(setup_menu_t* s, int y_offset)
 {
   int x = s->m_x;
-  int y = s->m_y;
-  int flags = s->m_flags;
+  int y = s->m_y + y_offset; // [Cherry] add Y offset
+  int flags = s->m_flags, flags2 = s->m_flags2;
   if (flags & S_RESET)
 
     // This item is the reset button
@@ -2193,7 +2203,7 @@ void M_DrawItem(setup_menu_t* s)
       char *p, *t;
       int w = 0;
       int color =
-	flags & S_SELECT ? CR_SELECT :
+	flags & S_SELECT || flags2 & S2_SEL_COL ? CR_SELECT :
 	flags & S_HILITE ? CR_HILITE :
 	flags & (S_TITLE|S_NEXT|S_PREV) ? CR_TITLE : CR_ITEM; // killough 10/98
 
@@ -2204,22 +2214,23 @@ void M_DrawItem(setup_menu_t* s)
       for (p = t = strdup(s->m_text); (p = strtok(p,"\n")); y += 8, p = NULL)
 	{
 	  menu_buffer[0] = '\0';
-	  // [FG] print a blinking "arrow" next to the currently highlighted menu item
-	  if (!(flags & S_NEXT_LINE) && ItemSelected(s))
-	  {
-	    if ((flags & (S_CHOICE|S_CRITEM|S_THERMO)) && setup_select)
-	    {
-	      if (PrevItemAvailable(s))
-	        strcpy(menu_buffer, "< ");
-	    }
-	    else
-	      strcpy(menu_buffer, "> ");
-	  }
 	  // killough 10/98: support left-justification:
 	  strcat(menu_buffer, p);
 	  if (!(flags & S_LEFTJUST))
 	    w = M_GetPixelWidth(menu_buffer) + 4;
 	  M_DrawMenuStringEx(flags, x - w, y, color);
+      // [FG] print a blinking "arrow" next to the currently highlighted menu item
+      // [Cherry] draw the arrow separately from the item
+      if (!(flags & S_NEXT_LINE) && ItemSelected(s) && !(flags2 & S2_NOSELECT))
+      {
+        if ((flags & (S_CHOICE|S_CRITEM|S_THERMO)) && setup_select)
+        {
+          if (PrevItemAvailable(s))
+            M_DrawStringEx(flags, x - w - 8, y, color, "<");
+        }
+        else
+          M_DrawStringEx(flags, x - w - 8, y, color, ">");
+      }
 	}
       free(t);
     }
@@ -2268,9 +2279,10 @@ static void M_DrawMiniThermo(int x, int y, int size, int dot, char *color)
                         W_CacheLumpName("M_MTHRMO", PU_CACHE), color);
 }
 
-void M_DrawSetting(setup_menu_t* s)
+void M_DrawSetting(setup_menu_t* s, int y_offset)
 {
-  int x = s->m_x, y = s->m_y, flags = s->m_flags, color;
+  // [Cherry] add Y offset
+  int x = s->m_x, y = s->m_y + y_offset, flags = s->m_flags, flags2 = s->m_flags2, color;
 
   // Determine color of the text. This may or may not be used
   // later, depending on whether the item is a text string or not.
@@ -2582,18 +2594,109 @@ void M_DrawScreenItems(setup_menu_t* src)
   }
 
   while (!(src->m_flags & S_END))
+  {
+    // See if we're to draw the item description (left-hand part)
+
+    if (src->m_flags & S_SHOWDESC ||
+        src->m_flags2 & S2_SHOWDESC)
+      M_DrawItem(src, 0);
+
+    // See if we're to draw the setting (right-hand part)
+
+    if (src->m_flags & S_SHOWSET)
+      M_DrawSetting(src, 0);
+    src++;
+  }
+}
+
+/////////////////////////////
+//
+// [Cherry] Same as above, but supports scrolling
+// Used only for the Level Table
+
+void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
+{
+  int i = 0;
+  int scroll_i = 0;
+  int current_i = 0;
+  int max_i = 0;
+  int excess_i = 0;
+  int limit_i = 0;
+  int buffer_i = 0;
+  int end_y;
+  setup_menu_t* src;
+
+  i = 0;
+  for (src = base_src; !(src->m_flags & S_END); src++)
+  {
+    if (src == &current_setup_menu[set_menu_itemon])
+      current_i = i;
+
+    if (src->m_flags & (S_NEXT | S_PREV))
     {
-      // See if we're to draw the item description (left-hand part)
-
-      if (src->m_flags & S_SHOWDESC)
-	M_DrawItem(src);
-
-      // See if we're to draw the setting (right-hand part)
-
-      if (src->m_flags & S_SHOWSET)
-	M_DrawSetting(src);
-      src++;
+      // nothing
     }
+    else if (src->m_flags & S_RESET_Y)
+    {
+      i = 0;
+    }
+    else
+    {
+      if (i > max_i)
+        max_i = i;
+
+      ++i;
+    }
+  }
+
+  end_y = base_y + (max_i + 1) * M_SPC;
+  if (end_y > ORIGHEIGHT)
+    excess_i = (end_y - ORIGHEIGHT + M_SPC - 1) / M_SPC;
+
+  limit_i = max_i - excess_i;
+  buffer_i = (max_i - current_i > 3 ? 3 : max_i - current_i);
+
+  if (excess_i)
+    while (current_i - scroll_i > limit_i - buffer_i)
+      ++scroll_i;
+
+  i = 0;
+  for (src = base_src; !(src->m_flags & S_END); src++)
+  {
+    int offset = 0;
+    boolean skip_entry = false;
+
+    if (src->m_flags & (S_NEXT | S_PREV))
+    {
+      // nothing
+    }
+    else if (src->m_flags & S_RESET_Y)
+    {
+      skip_entry = true;
+      i = 0;
+    }
+    else
+    {
+      offset = scroll_i * M_SPC;
+
+      if (i - scroll_i < 0 || i - scroll_i > limit_i)
+        skip_entry = true;
+
+      ++i;
+    }
+
+    if (skip_entry)
+      continue;
+
+    // See if we're to draw the item description (left-hand part)
+    if (src->m_flags & S_SHOWDESC ||
+        src->m_flags2 & S2_SHOWDESC)
+      M_DrawItem(src, -offset);
+
+    // See if we're to draw the setting (right-hand part)
+    if (src->m_flags & S_SHOWSET)
+      M_DrawSetting(src, -offset);
+  }
 }
 
 /////////////////////////////
@@ -3175,7 +3278,7 @@ void M_DrawKeybnd(void)
 
   // Set up the Key Binding screen
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(84,2,"M_KEYBND","KEY BINDINGS");
   M_DrawInstructions();
@@ -3364,7 +3467,7 @@ void M_DrawWeapons(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(109,2,"M_WEAP","WEAPONS");
   M_DrawInstructions();
@@ -3611,7 +3714,7 @@ void M_DrawStatusHUD(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(59,2,"M_STAT","STATUS BAR / HUD");
   M_DrawInstructions();
@@ -3847,7 +3950,7 @@ void M_DrawAutoMap(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(109,2,"M_AUTO","AUTOMAP");
   M_DrawInstructions();
@@ -4007,7 +4110,7 @@ void M_DrawEnemy(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(114,2,"M_ENEM","ENEMIES");
   M_DrawInstructions();
@@ -4692,7 +4795,7 @@ void M_DrawGeneral(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(114,2,"M_GENERL","GENERAL");
   M_DrawInstructions();
@@ -4973,7 +5076,7 @@ void M_DrawCompat(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(52,2,"M_COMPAT","DOOM COMPATIBILITY");
   M_DrawInstructions();
@@ -5108,7 +5211,7 @@ void M_DrawMessages(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(103,2,"M_MESS","MESSAGES");
   M_DrawInstructions();
@@ -5178,7 +5281,7 @@ void M_DrawChatStrings(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(83,2,"M_CHAT","CHAT STRINGS");
   M_DrawInstructions();
@@ -5191,6 +5294,590 @@ void M_DrawChatStrings(void)
     M_DrawDefVerify();
 }
 
+/////////////////////////////
+//
+// [Cherry] The level table.
+// Adapted from DSDA-Doom.
+//
+
+#define LEVEL_TABLE_PAGES 3
+
+static setup_menu_t *level_table_page[LEVEL_TABLE_PAGES];
+static setup_menu_t prev_page_template = { "<-",S_SKIP | S_PREV, m_null, 3, M_Y_PREVNEXT };
+static setup_menu_t next_page_template = { "->",S_SKIP | S_NEXT, m_null, 318, M_Y_PREVNEXT };
+static setup_menu_t final_entry_template = { 0, S_SKIP | S_END, m_null };
+static setup_menu_t new_column_template = { 0, S_SKIP | S_RESET_Y, m_null };
+static setup_menu_t empty_line_template = { 0, S_SKIP, m_null };
+
+#define LOOP_LEVEL_TABLE_COLUMN { \
+  for (i = 0; i < wad_stats.map_count; ++i) { \
+    map = &wad_stats.maps[i]; \
+    if (map->episode == -1) \
+      continue; \
+    entry = &level_table_page[page][base_i + i];
+
+#define END_LOOP_LEVEL_TABLE_COLUMN } \
+  base_i += i; \
+}
+
+#define LT_Y M_Y + (i + 1) * M_SPC
+
+#define INSERT_NEW_LEVEL_TABLE_COLUMN(heading, x) { \
+  level_table_page[page][base_i] = new_column_template; \
+  ++base_i; \
+  ++col; \
+  level_table_page[page][base_i] = empty_line_template; \
+  level_table_page[page][base_i].m_flags |= S_TITLE; \
+  level_table_page[page][base_i].m_text = Z_Strdup(heading, PU_STATIC, NULL); \
+  level_table_page[page][base_i].m_x = x; \
+  level_table_page[page][base_i].m_y = M_Y; \
+  ++base_i; \
+}
+
+#define INSERT_FINAL_LEVEL_TABLE_ENTRY { \
+  level_table_page[page][base_i] = final_entry_template; \
+}
+
+#define INSERT_LEVEL_TABLE_EMPTY_LINE { \
+  level_table_page[page][base_i] = empty_line_template; \
+  ++base_i; \
+}
+
+#define INSERT_LEVEL_TABLE_NEXT_PAGE { \
+  level_table_page[page][base_i] = next_page_template; \
+  level_table_page[page][base_i].var.menu = level_table_page[page + 1]; \
+  ++base_i; \
+}
+
+#define INSERT_LEVEL_TABLE_PREV_PAGE { \
+  level_table_page[page][base_i] = prev_page_template; \
+  level_table_page[page][base_i].var.menu = level_table_page[page - 1]; \
+  ++base_i; \
+}
+
+#define START_LEVEL_TABLE_PAGE(page_number) { \
+  page = page_number; \
+  base_i = 0; \
+  column_x = 16; \
+  INSERT_LEVEL_TABLE_EMPTY_LINE \
+}
+
+static void M_FreeMText(const char *m_text)
+{
+  union { const char *c; char *s; } str;
+
+  str.c = m_text;
+  Z_Free(str.s);
+}
+
+typedef struct
+{
+  int completed_count;
+  int timed_count;
+  int max_timed_count;
+  int sk5_timed_count;
+  int best_skill;
+  int best_kills;
+  int best_items;
+  int best_secrets;
+  int max_kills;
+  int max_items;
+  int max_secrets;
+  int best_time;
+  int best_max_time;
+  int best_sk5_time;
+} wad_stats_summary_t;
+
+static wad_stats_summary_t wad_stats_summary;
+
+static void M_CalculateWadStatsSummary(void)
+{
+  int i;
+  map_stats_t *map;
+
+  memset(&wad_stats_summary, 0, sizeof(wad_stats_summary));
+
+  wad_stats_summary.best_skill = 6;
+
+  for (i = 0; i < wad_stats.map_count; ++i)
+  {
+    map = &wad_stats.maps[i];
+    if (map->episode == -1 || !map->best_skill)
+      continue;
+
+    if (map->best_skill < wad_stats_summary.best_skill)
+      wad_stats_summary.best_skill = map->best_skill;
+
+    ++wad_stats_summary.completed_count;
+    wad_stats_summary.best_kills += map->best_kills;
+    wad_stats_summary.best_items += map->best_items;
+    wad_stats_summary.best_secrets += map->best_secrets;
+    wad_stats_summary.max_kills += map->max_kills;
+    wad_stats_summary.max_items += map->max_items;
+    wad_stats_summary.max_secrets += map->max_secrets;
+
+    if (map->best_time >= 0)
+    {
+      ++wad_stats_summary.timed_count;
+      wad_stats_summary.best_time += map->best_time;
+    }
+
+    if (map->best_max_time >= 0)
+    {
+      ++wad_stats_summary.max_timed_count;
+      wad_stats_summary.best_max_time += map->best_max_time;
+    }
+
+    if (map->best_sk5_time >= 0)
+    {
+      ++wad_stats_summary.sk5_timed_count;
+      wad_stats_summary.best_sk5_time += map->best_sk5_time;
+    }
+  }
+}
+
+static void M_ResetLevelTable(void)
+{
+  int i, page;
+  const int page_count[LEVEL_TABLE_PAGES] = {
+    wad_stats.map_count * 5 + 16,
+    wad_stats.map_count * 4 + 16,
+    40,
+  };
+
+  for (page = 0; page < LEVEL_TABLE_PAGES; ++page)
+  {
+    if (!level_table_page[page])
+      level_table_page[page] = Z_Calloc(page_count[page], sizeof(*level_table_page[page]), PU_STATIC, NULL);
+    else
+    {
+      for (i = 0; !(level_table_page[page][i].m_flags & S_END); ++i)
+      {
+        if (level_table_page[page][i].m_text &&
+            !(level_table_page[page][i].m_flags & (S_NEXT | S_PREV)))
+          M_FreeMText(level_table_page[page][i].m_text);
+      }
+
+      memset(level_table_page[page], 0, page_count[page] * sizeof(*level_table_page[page]));
+    }
+  }
+}
+
+static void M_PrintTime(char** m_text, int tics)
+{
+  M_StringPrintF(m_text, "%d:%05.2f", tics / 35 / 60,
+                 (float)(tics % (60 * 35)) / 35);
+}
+
+static int wad_stats_summary_page;
+
+static void M_BuildLevelTable(void)
+{
+  int i;
+  int page;
+  int base_i;
+  int column_x;
+  setup_menu_t *entry;
+  map_stats_t *map;
+  char *m_text;
+  int col = 0;
+
+  M_ResetLevelTable();
+
+  START_LEVEL_TABLE_PAGE(0)
+
+  LOOP_LEVEL_TABLE_COLUMN
+    M_StringPrintF(&m_text, "%s", map->lump);
+
+    entry->m_text = m_text;
+    entry->m_flags = S_TITLE | S_LEFTJUST;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+  END_LOOP_LEVEL_TABLE_COLUMN
+
+  column_x += 112;
+  INSERT_NEW_LEVEL_TABLE_COLUMN("SKILL", column_x);
+
+  LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
+    if (map->best_skill) {
+      M_StringPrintF(&m_text, "%d", map->best_skill);
+      entry->m_text = m_text;
+      if (map->best_skill == 5)
+        entry->m_flags2 |= S2_SEL_COL;
+    }
+    else {
+      entry->m_text = Z_Strdup("-", PU_STATIC, NULL);
+    }
+  END_LOOP_LEVEL_TABLE_COLUMN
+
+  column_x += 64;
+  INSERT_NEW_LEVEL_TABLE_COLUMN("K", column_x);
+
+  LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
+    if (map->best_skill)
+    {
+      M_StringPrintF(&m_text, "%d/%d", map->best_kills, map->max_kills);
+      entry->m_text = m_text;
+      if (map->best_kills == map->max_kills)
+        entry->m_flags2 |= S2_SEL_COL;
+    }
+    else
+    {
+      entry->m_text = Z_Strdup("-", PU_STATIC, NULL);
+    }
+  END_LOOP_LEVEL_TABLE_COLUMN
+
+  column_x += 48;
+  INSERT_NEW_LEVEL_TABLE_COLUMN("I", column_x);
+
+  LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
+    if (map->best_skill)
+    {
+      M_StringPrintF(&m_text, "%d/%d", map->best_items, map->max_items);
+      entry->m_text = m_text;
+      if (map->best_items == map->max_items)
+        entry->m_flags2 |= S2_SEL_COL;
+    }
+    else
+    {
+      entry->m_text = Z_Strdup("-", PU_STATIC, NULL);
+    }
+  END_LOOP_LEVEL_TABLE_COLUMN
+
+  column_x += 48;
+  INSERT_NEW_LEVEL_TABLE_COLUMN("S", column_x);
+
+  LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
+    if (map->best_skill)
+    {
+      M_StringPrintF(&m_text, "%d/%d", map->best_secrets, map->max_secrets);
+      entry->m_text = m_text;
+      if (map->best_secrets == map->max_secrets)
+        entry->m_flags2 |= S2_SEL_COL;
+    }
+    else
+    {
+      entry->m_text = Z_Strdup("-", PU_STATIC, NULL);
+    }
+  END_LOOP_LEVEL_TABLE_COLUMN
+
+  INSERT_LEVEL_TABLE_NEXT_PAGE
+  INSERT_FINAL_LEVEL_TABLE_ENTRY
+
+  START_LEVEL_TABLE_PAGE(1)
+
+  LOOP_LEVEL_TABLE_COLUMN
+    M_StringPrintF(&m_text, "%s", map->lump);
+
+    entry->m_text = m_text;
+    entry->m_flags = S_TITLE | S_LEFTJUST;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+  END_LOOP_LEVEL_TABLE_COLUMN
+
+  column_x += 120;
+  INSERT_NEW_LEVEL_TABLE_COLUMN("TIME", column_x);
+
+  LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
+    if (map->best_time >= 0) {
+      M_PrintTime(&m_text, map->best_time);
+      entry->m_text = m_text;
+      entry->m_flags2 |= S2_SEL_COL;
+    }
+    else {
+      entry->m_text = Z_Strdup("- : --", PU_STATIC, NULL);
+    }
+  END_LOOP_LEVEL_TABLE_COLUMN
+
+  column_x += 80;
+  INSERT_NEW_LEVEL_TABLE_COLUMN("MAX TIME", column_x);
+
+  LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
+    if (map->best_max_time >= 0)
+    {
+      M_PrintTime(&m_text, map->best_max_time);
+      entry->m_text = m_text;
+      entry->m_flags2 |= S2_SEL_COL;
+    }
+    else
+    {
+      entry->m_text = Z_Strdup("- : --", PU_STATIC, NULL);
+    }
+  END_LOOP_LEVEL_TABLE_COLUMN
+
+  column_x += 80;
+  INSERT_NEW_LEVEL_TABLE_COLUMN("SK 5 TIME", column_x);
+
+  LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
+    if (map->best_sk5_time >= 0)
+    {
+      M_PrintTime(&m_text, map->best_sk5_time);
+      entry->m_text = m_text;
+      entry->m_flags2 |= S2_SEL_COL;
+    }
+    else
+    {
+      entry->m_text = Z_Strdup("- : --", PU_STATIC, NULL);
+    }
+  END_LOOP_LEVEL_TABLE_COLUMN
+
+  INSERT_LEVEL_TABLE_PREV_PAGE
+  INSERT_LEVEL_TABLE_NEXT_PAGE
+  INSERT_FINAL_LEVEL_TABLE_ENTRY
+
+  M_CalculateWadStatsSummary();
+
+  ++page;
+  base_i = 0;
+  wad_stats_summary_page = page;
+
+  level_table_page[page][base_i].m_text = Z_Strdup("Summary", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_flags = S_TITLE | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_NOSELECT;
+  level_table_page[page][base_i].m_x = 132;
+  level_table_page[page][base_i].m_y = M_Y;
+  ++base_i;
+
+  INSERT_LEVEL_TABLE_EMPTY_LINE
+
+  level_table_page[page][base_i].m_text = Z_Strdup("Maps", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 2 * M_SPC;
+  ++base_i;
+
+  level_table_page[page][base_i].m_text = Z_Strdup("Skill", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 3 * M_SPC;
+  ++base_i;
+
+  INSERT_LEVEL_TABLE_EMPTY_LINE
+
+  level_table_page[page][base_i].m_text = Z_Strdup("Kill Completion", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 5 * M_SPC;
+  ++base_i;
+
+  INSERT_LEVEL_TABLE_EMPTY_LINE
+
+  level_table_page[page][base_i].m_text = Z_Strdup("Item Completion", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 6 * M_SPC;
+  ++base_i;
+
+  INSERT_LEVEL_TABLE_EMPTY_LINE
+
+  level_table_page[page][base_i].m_text = Z_Strdup("Secret Completion", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 7 * M_SPC;
+  ++base_i;
+
+  INSERT_LEVEL_TABLE_EMPTY_LINE
+
+  level_table_page[page][base_i].m_text = Z_Strdup("Time", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 8 * M_SPC;
+  ++base_i;
+
+  INSERT_LEVEL_TABLE_EMPTY_LINE
+
+  level_table_page[page][base_i].m_text = Z_Strdup("Max Time", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 9 * M_SPC;
+  ++base_i;
+
+  INSERT_LEVEL_TABLE_EMPTY_LINE
+
+  level_table_page[page][base_i].m_text = Z_Strdup("Sk 5 Time", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 10 * M_SPC;
+  ++base_i;
+
+  level_table_page[page][base_i] = new_column_template;
+  ++base_i;
+
+  INSERT_LEVEL_TABLE_EMPTY_LINE
+  INSERT_LEVEL_TABLE_EMPTY_LINE
+
+  M_StringPrintF(&m_text, "%d / %d",
+                 wad_stats_summary.completed_count, wad_stats.map_count);
+  level_table_page[page][base_i].m_text = m_text;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 2 * M_SPC;
+  ++base_i;
+
+  if (wad_stats_summary.completed_count == wad_stats.map_count)
+    M_StringPrintF(&m_text, "%d", wad_stats_summary.best_skill);
+  else
+    m_text = Z_Strdup("-", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_text = m_text;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 3 * M_SPC;
+  ++base_i;
+
+  M_StringPrintF(&m_text, "%d / ", wad_stats_summary.best_kills);
+  if (wad_stats_summary.completed_count == wad_stats.map_count)
+    M_StringCatF(&m_text, "%d", wad_stats_summary.max_kills);
+  else
+  {
+    m_text = Z_Realloc(m_text, strlen(m_text) + 2, PU_STATIC, NULL);
+    strcat(m_text, "-");
+  }
+  level_table_page[page][base_i].m_text = m_text;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 5 * M_SPC;
+  ++base_i;
+
+  M_StringPrintF(&m_text, "%d / ", wad_stats_summary.best_items);
+  if (wad_stats_summary.completed_count == wad_stats.map_count)
+    M_StringCatF(&m_text, "%d", wad_stats_summary.max_items);
+  else
+  {
+    m_text = Z_Realloc(m_text, strlen(m_text) + 2, PU_STATIC, NULL);
+    strcat(m_text, "-");
+  }
+  level_table_page[page][base_i].m_text = m_text;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 6 * M_SPC;
+  ++base_i;
+
+  M_StringPrintF(&m_text, "%d / ", wad_stats_summary.best_secrets);
+  if (wad_stats_summary.completed_count == wad_stats.map_count)
+    M_StringCatF(&m_text, "%d", wad_stats_summary.max_secrets);
+  else
+  {
+    m_text = Z_Realloc(m_text, strlen(m_text) + 2, PU_STATIC, NULL);
+    strcat(m_text, "-");
+  }
+  level_table_page[page][base_i].m_text = m_text;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 7 * M_SPC;
+  ++base_i;
+
+  if (wad_stats_summary.timed_count == wad_stats.map_count)
+    M_PrintTime(&m_text, wad_stats_summary.best_time);
+  else
+    m_text = Z_Strdup("- : --", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_text = m_text;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 8 * M_SPC;
+  ++base_i;
+
+  if (wad_stats_summary.max_timed_count == wad_stats.map_count)
+    M_PrintTime(&m_text, wad_stats_summary.best_max_time);
+  else
+    m_text = Z_Strdup("- : --", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_text = m_text;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 9 * M_SPC;
+  ++base_i;
+
+  if (wad_stats_summary.sk5_timed_count == wad_stats.map_count)
+    M_PrintTime(&m_text, wad_stats_summary.best_sk5_time);
+  else
+    m_text = Z_Strdup("- : --", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_text = m_text;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 10 * M_SPC;
+  ++base_i;
+
+  level_table_page[page][base_i] = new_column_template;
+  ++base_i;
+
+  INSERT_LEVEL_TABLE_PREV_PAGE
+  INSERT_FINAL_LEVEL_TABLE_ENTRY
+}
+
+void M_LevelTable(int choice)
+{
+  M_BuildLevelTable();
+  M_SetupNextMenu(&LevelTableDef);
+
+  setup_active = true;
+  setup_screen = ss_ltbl;
+  set_ltbl_active = true;
+  setup_select = false;
+  default_verify = false;
+  setup_gather = false;
+  mult_screens_index = 0;
+  current_setup_menu = level_table_page[0];
+  set_menu_itemon = M_GetSetupMenuItemOn();
+  while (current_setup_menu[set_menu_itemon++].m_flags & S_SKIP);
+  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+}
+
+void M_DrawLevelTable(void)
+{
+  inhelpscreens = true;
+
+  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
+
+  M_DrawTitle(114, 2, "M_LVLTBL", "LEVEL TABLE");
+  if (current_setup_menu != level_table_page[wad_stats_summary_page])
+  {
+    strcpy(menu_buffer, "Press ENTER key to warp");
+    M_DrawMenuString(77, 20, CR_HILITE);
+  }
+  M_DrawLevelTableItems(current_setup_menu, M_Y);
+}
 
 /////////////////////////////
 //
@@ -5587,6 +6274,14 @@ void M_DrawString(int cx, int cy, int color, const char *ch)
   M_DrawStringCR(cx, cy, colrngs[color], ch);
 }
 
+static void M_DrawStringEx(int flags, int x, int y, int color, const char *ch)
+{
+  if (ItemDisabled(flags))
+    M_DrawStringCR(x, y, cr_dark, ch);
+  else
+    M_DrawString(x, y, color, ch);
+}
+
 // cph 2006/08/06 - M_DrawString() is the old M_DrawMenuString, except that it is not tied to menu_buffer
 
 void M_DrawMenuString(int cx, int cy, int color)
@@ -5643,7 +6338,7 @@ void M_DrawHelp (void)
   inhelpscreens = true;                        // killough 10/98
   if (helplump < 0 || W_IsIWADLump(helplump))
   {
-  M_DrawBackground("FLOOR4_6", screens[0]);
+  M_DrawBackground("FLOOR4_6", screens[0], false);
   M_DrawScreenItems(helpstrings);
   }
   else
@@ -5739,7 +6434,7 @@ void M_DrawCredits(void)     // killough 10/98: credit screen
   sprintf(mbftext_s, PROJECT_STRING);
   inhelpscreens = true;
 
-  M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0]);
+  M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0], true);
   M_DrawTitle(42,9,"MBFTEXT",mbftext_s);
   M_DrawScreenItems(cred_settings);
 }
@@ -5756,6 +6451,26 @@ enum
   MENU_ESCAPE,
   MENU_CLEAR
 };
+
+void M_LeaveSetupMenu()
+{
+  setup_active = false;
+  set_keybnd_active = false;
+  set_weapon_active = false;
+  set_status_active = false;
+  set_auto_active = false;
+  set_enemy_active = false;
+  set_mess_active = false;
+  set_chat_active = false;
+  set_ltbl_active = false;
+  colorbox_active = false;
+  default_verify = false;       // phares 4/19/98
+  set_general_active = false;    // killough 10/98
+  set_compat_active = false;    // killough 10/98
+  print_warning_about_changes = false; // [FG] reset
+  HU_Start();    // catch any message changes // phares 4/19/98
+  S_StartSoundOptional(NULL, sfx_mnubak, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
+}
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -6797,11 +7512,39 @@ boolean M_Responder (event_t* ev)
 	  return true;
 	}
 
+      if (set_ltbl_active) // [Nugget] on the level table
+      {
+        if (action == MENU_ENTER)
+        {
+          int skill;
+          int map_index;
+          map_stats_t *map;
+
+          if (current_setup_menu == level_table_page[wad_stats_summary_page])
+            return true;
+
+          map_index = set_menu_itemon - 1;
+          map = &wad_stats.maps[map_index];
+
+          skill = gamestate == GS_LEVEL ? gameskill : startskill;
+
+          G_DeferedInitNew(skill, map->episode, map->map);
+
+          M_ClearMenus();
+          ptr1->m_flags &= ~(S_HILITE|S_SELECT);// phares 4/19/98
+          M_LeaveSetupMenu();
+
+          return true;
+        }
+      }
+
       // Not changing any items on the Setup screens. See if we're
       // navigating the Setup menus or selecting an item to change.
 
       if (action == MENU_DOWN)
 	{
+      if (ptr1->m_flags2 & S2_NOSELECT)
+        return true;
 	  ptr1->m_flags &= ~S_HILITE;     // phares 4/17/98
 	  do
 	    if (ptr1->m_flags & S_END)
@@ -6821,6 +7564,8 @@ boolean M_Responder (event_t* ev)
 
       if (action == MENU_UP)
 	{
+      if (ptr1->m_flags2 & S2_NOSELECT)
+        return true;
 	  ptr1->m_flags &= ~S_HILITE;     // phares 4/17/98
 	  do
 	    {
@@ -6930,21 +7675,7 @@ boolean M_Responder (event_t* ev)
 		S_StartSoundOptional(NULL, sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
 	      }
 	  ptr1->m_flags &= ~(S_HILITE|S_SELECT);// phares 4/19/98
-	  setup_active = false;
-	  set_keybnd_active = false;
-	  set_weapon_active = false;
-	  set_status_active = false;
-	  set_auto_active = false;
-	  set_enemy_active = false;
-	  set_mess_active = false;
-	  set_chat_active = false;
-	  colorbox_active = false;
-	  default_verify = false;       // phares 4/19/98
-	  set_general_active = false;    // killough 10/98
-          set_compat_active = false;    // killough 10/98
-	  print_warning_about_changes = false; // [FG] reset
-	  HU_Start();    // catch any message changes // phares 4/19/98
-	  S_StartSoundOptional(NULL, sfx_mnubak, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
+      M_LeaveSetupMenu();
 	  return true;
 	}
 
@@ -6969,8 +7700,11 @@ boolean M_Responder (event_t* ev)
 		  current_setup_menu = ptr2->var.menu;
 		  set_menu_itemon = M_GetSetupMenuItemOn();
 		  print_warning_about_changes = false; // killough 10/98
-		  while (current_setup_menu[set_menu_itemon++].m_flags&S_SKIP);
-		  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+          if (!(current_setup_menu[set_menu_itemon].m_flags2 & S2_NOSELECT))
+          {
+		    while (current_setup_menu[set_menu_itemon++].m_flags&S_SKIP);
+		    current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+          }
 		  S_StartSoundOptional(NULL, sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
 		  return true;
 		}
@@ -6992,8 +7726,11 @@ boolean M_Responder (event_t* ev)
 		  current_setup_menu = ptr2->var.menu;
 		  set_menu_itemon = M_GetSetupMenuItemOn();
 		  print_warning_about_changes = false; // killough 10/98
-		  while (current_setup_menu[set_menu_itemon++].m_flags&S_SKIP);
-		  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+          if (!(current_setup_menu[set_menu_itemon].m_flags2 & S2_NOSELECT))
+          {
+            while (current_setup_menu[set_menu_itemon++].m_flags&S_SKIP);
+            current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+          }
 		  S_StartSoundOptional(NULL, sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
 		  return true;
 		}
@@ -7221,8 +7958,7 @@ void M_Drawer (void)
    // killough 9/29/98: simplified code, removed 40-character width limit
    if(messageToPrint)
    {
-      if (draw_menu_background == 2)
-        M_DrawBackground("FLOOR4_6", screens[0]);
+      M_DrawBackground("FLOOR4_6", screens[0], false);
       // haleyjd 11/11/04: must strdup message, cannot write into
       // string constants!
       char *d = strdup(messageString);

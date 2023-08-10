@@ -17,6 +17,10 @@ Just like with Nugget Doom, most of Cherry Doom's features come from other sourc
 
 - **Last used weapon** key [i.b. Half-Life]
 
+### Miscellaneous
+
+- **Level table** and WAD stats tracking [p.f. DSDA-Doom]
+
 # Releases
 
 Source code and Windows binaries (MSVC builds for Windows 7 and newer) for the latest release can be found on the [Release](https://github.com/MrAlaux/Nugget-Doom/releases/latest) page.

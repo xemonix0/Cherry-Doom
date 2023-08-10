@@ -85,7 +85,7 @@ void ExtractFileBase(const char *path, char *dest)
 static int *handles;
 static int num_handles;
 
-static void W_AddFile(const char *name) // killough 1/31/98: static, const
+static void W_AddFile(wadfile_info_t *wadfile) // killough 1/31/98: static, const
 {
   wadinfo_t   header;
   lumpinfo_t* lump_p;
@@ -96,23 +96,30 @@ static void W_AddFile(const char *name) // killough 1/31/98: static, const
   filelump_t  *fileinfo, *fileinfo2free=NULL; //killough
   filelump_t  singleinfo;
   boolean     is_single = false;
-  char        *filename = strcpy(malloc(strlen(name)+5), name);
 
-  NormalizeSlashes(AddDefaultExtension(filename, ".wad"));  // killough 11/98
+  // [Cherry]: [p.f. DSDA-Doom]
+  if (wadfile->src == source_skip)
+  {
+    return;
+  }
+
+  char *filename = strcpy(malloc(strlen(wadfile->name)+1), wadfile->name);
+
+  NormalizeSlashes(filename);  // killough 11/98
 
   // open the file and add to directory
 
   if ((handle = M_open(filename,O_RDONLY | O_BINARY)) == -1)
     {
-      if (strlen(name) > 4 && !strcasecmp(name+strlen(name)-4 , ".lmp" ))
+      if (strlen(wadfile->name) > 4 && !strcasecmp(wadfile->name+strlen(wadfile->name)-4 , ".lmp" ))
 	{
 	  free(filename);
 	  return;
 	}
       // killough 11/98: allow .lmp extension if none existed before
-      NormalizeSlashes(AddDefaultExtension(strcpy(filename, name), ".lmp"));
+      NormalizeSlashes(AddDefaultExtension(strcpy(filename, wadfile->name), ".lmp"));
       if ((handle = M_open(filename,O_RDONLY | O_BINARY)) == -1)
-	I_Error("Error: couldn't open %s\n",name);  // killough
+	I_Error("Error: couldn't open %s\n", wadfile->name);  // killough
     }
 
   printf(" adding %s\n",filename);   // killough 8/8/98
@@ -168,7 +175,9 @@ static void W_AddFile(const char *name) // killough 1/31/98: static, const
         lump_p->namespace = ns_global;              // killough 4/17/98
         M_CopyLumpName(lump_p->name, fileinfo->name);
         // [FG] WAD file that contains the lump
-        lump_p->wad_file = (is_single ? NULL : name);
+        lump_p->wad_file = (is_single ? NULL : wadfile->name);
+        // [Cherry] Where the lump came from
+        lump_p->source = wadfile->src;
       }
 
     free(fileinfo2free);      // killough
@@ -359,7 +368,7 @@ int W_GetNumForName (const char* name)     // killough -- const added
 //  does override all earlier ones.
 //
 
-void W_InitMultipleFiles(char *const *filenames)
+void W_InitMultipleFiles(wadfile_info_t *files)
 {
   // killough 1/31/98: add predefined lumps first
 
@@ -371,8 +380,8 @@ void W_InitMultipleFiles(char *const *filenames)
   memcpy(lumpinfo, predefined_lumps, numlumps*sizeof(*lumpinfo));
 
   // open all the files, load headers, and count lumps
-  while (*filenames)
-    W_AddFile(*filenames++);
+  while (files->name)
+    W_AddFile(files++);
 
   if (!numlumps)
     I_Error ("W_InitFiles: no files found");
@@ -553,7 +562,7 @@ const char *W_WadNameForLump (const int lump)
 boolean W_IsIWADLump (const int lump)
 {
 	return lump >= 0 && lump < numlumps &&
-	       lumpinfo[lump].wad_file == wadfiles[0];
+	       lumpinfo[lump].wad_file == wadfiles[0].name;
 }
 
 // check if lump is from WAD

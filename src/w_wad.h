@@ -54,6 +54,29 @@ typedef PACKED_PREFIX struct
 // WADFILE I/O related stuff.
 //
 
+// [Cherry]: [p.f. DSDA-Doom]
+typedef enum
+{
+  source_skip = -1,
+  source_iwad=0,    // iwad file load
+  //source_pre,       // predefined lump
+  source_auto_load, // lump auto-loaded by config file
+  source_pwad,      // pwad file load
+  //source_lmp,       // lmp file load
+  //source_net,       // CPhipps
+  source_beta,      // [Cherry]
+  source_demo,      // [Cherry]
+  //source_deh,
+  source_err
+
+} wad_source_t;
+
+typedef struct
+{
+  char* name;
+  wad_source_t src;
+} wadfile_info_t;
+
 typedef struct
 {
   // WARNING: order of some fields important (see info.c).
@@ -79,6 +102,8 @@ typedef struct
 
   // [FG] WAD file that contains the lump
   const char *wad_file;
+  // [Cherry] Where the lump came from
+  wad_source_t source;
 } lumpinfo_t;
 
 // killough 1/31/98: predefined lumps
@@ -89,7 +114,7 @@ extern void       **lumpcache;
 extern lumpinfo_t *lumpinfo;
 extern int        numlumps;
 
-void W_InitMultipleFiles(char *const*filenames);
+void W_InitMultipleFiles(wadfile_info_t *files);
 
 // killough 4/17/98: if W_CheckNumForName() called with only
 // one argument, pass ns_global as the default namespace

@@ -3867,8 +3867,9 @@ boolean M_WriteFile(char const *name, void *source, int length)
 // M_ReadFile
 //
 // killough 9/98: rewritten to use stdio and to flash disk icon
+// [Cherry] require parameter for consistency with M_ReadFileToString
 
-int M_ReadFile(char const *name, byte **buffer)
+int M_ReadFile(char const *name, byte **buffer, boolean require)
 {
   FILE *fp;
 
@@ -3892,10 +3893,46 @@ int M_ReadFile(char const *name, byte **buffer)
       fclose(fp);
     }
 
-  I_Error("Couldn't read file %s: %s", name,
-	  errno ? strerror(errno) : "(Unknown Error)");
+  if (require)
+    I_Error("Couldn't read file %s: %s", name,
+            errno ? strerror(errno) : "(Unknown Error)");
 
-  return 0;
+  return -1;
+}
+
+// [Cherry]: [p.f. DSDA-Doom]
+// Same as above, but add null terminator
+int M_ReadFileToString(char const *name, char **buffer, boolean require) {
+  FILE *fp;
+
+  errno = 0;
+
+  if ((fp = M_fopen(name, "rb")))
+  {
+    size_t length;
+
+    I_BeginRead(DISK_ICON_THRESHOLD);
+    fseek(fp, 0, SEEK_END);
+    length = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    *buffer = Z_Malloc(length + 1, PU_STATIC, NULL);
+    if (fread(*buffer, 1, length, fp) == length)
+    {
+      fclose(fp);
+      I_EndRead();
+      (*buffer)[length] = '\0';
+      return length;
+    }
+    Z_Free(*buffer);
+    *buffer = NULL;
+    fclose(fp);
+  }
+
+  if (require)
+    I_Error("Couldn't read file %s: %s", name,
+            errno ? strerror(errno) : "(Unknown Error)");
+
+  return -1;
 }
 
 //

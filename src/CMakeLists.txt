@@ -122,6 +122,7 @@ set(CHERRYDOOM_SOURCES
     version.c              version.h
     w_wad.c                w_wad.h
     wi_stuff.c             wi_stuff.h
+    ws_wadstats.c          ws_wadstats.h
     z_zone.c               z_zone.h
     ../miniz/miniz.c       ../miniz/miniz.h)
 

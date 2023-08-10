@@ -1,5 +1,6 @@
 ## New Features
 - **Last used weapon** key, inspired by Half-Life
+- **Level table**, ported from DSDA-Doom
 
 ## Changes
 

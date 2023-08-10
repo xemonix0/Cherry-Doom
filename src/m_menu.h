@@ -114,15 +114,21 @@ extern int warning_about_changes, print_warning_about_changes;
 #define S_BOOM         0x10000000 // Disable if complevel < boom
 #define S_VANILLA      0x20000000 // Disable if complevel != vanilla
 #define S_CRITICAL     0x40000000 // Disable when recording/playing a demo and in netgame
+#define S_RESET_Y      0x80000000 // [Cherry] Reset Y
+// [Cherry]
+#define S2_LABEL       0x00000001 // Plain text
+#define S2_SEL_COL     0x00000002 // Plain text in CR_SELECT
+#define S2_NOSELECT    0x00000004 // The menu contains no selectable items
 
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
 // S_STRING    = the set of items whose settings are strings -- killough 10/98:
 // S_HASDEFPTR = the set of items whose var field points to default array
 
-#define S_SHOWDESC (S_TITLE|S_YESNO|S_CRITEM|S_COLOR|S_STRING|S_RESET|S_PREV|S_NEXT|S_INPUT|S_WEAP|S_NUM|S_CREDIT|S_CHOICE|S_THERMO)
+#define S_SHOWDESC  (S_TITLE|S_YESNO|S_CRITEM|S_COLOR|S_STRING|S_RESET|S_PREV|S_NEXT|S_INPUT|S_WEAP|S_NUM|S_CREDIT|S_CHOICE|S_THERMO)
+#define S2_SHOWDESC (S2_LABEL|S2_SEL_COL|S2_NOSELECT)
 
-#define S_SHOWSET  (S_YESNO|S_CRITEM|S_COLOR|S_STRING|S_INPUT|S_WEAP|S_NUM|S_CHOICE|S_THERMO)
+#define S_SHOWSET   (S_YESNO|S_CRITEM|S_COLOR|S_STRING|S_INPUT|S_WEAP|S_NUM|S_CHOICE|S_THERMO)
 
 #define S_HASDEFPTR (S_STRING|S_YESNO|S_NUM|S_WEAP|S_COLOR|S_CRITEM|S_CHOICE|S_THERMO)
 
@@ -174,6 +180,7 @@ typedef struct setup_menu_s
   int ident; // composite input
   void (*action)(void); // killough 10/98: function to call after changing
   const char **selectstrings; // [FG] selection of choices
+  int m_flags2; // [Cherry] S2_* flag bits
 } setup_menu_t;
 
 typedef enum
