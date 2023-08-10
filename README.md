@@ -81,7 +81,7 @@ Visual Studio 2019 and [VSCode](https://code.visualstudio.com/) comes with built
 
 Install vcpkg <https://github.com/Microsoft/vcpkg#quick-start-windows>. Integrate it into CMake or use toolchain file:
 ```
- cd nugget-doom
+ cd cherry-doom
  cmake -B build -DCMAKE_TOOLCHAIN_FILE="[path to vcpkg]/scripts/buildsystems/vcpkg.cmake"
  cmake --build build
 ```
