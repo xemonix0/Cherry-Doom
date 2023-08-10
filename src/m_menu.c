@@ -286,7 +286,7 @@ void M_DrawOptions(void);
 void M_DrawSound(void);
 void M_DrawLoad(void);
 void M_DrawSave(void);
-void M_DrawBackground(char *patchname, byte *back_dest);
+void M_DrawBackground(char *patchname, byte *back_dest, boolean required);
 void M_DrawSetup(void);                                     // phares 3/21/98
 void M_DrawHelp (void);                                     // phares 5/04/98
 
@@ -5598,7 +5598,7 @@ static void M_BuildLevelTable(void)
     entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
 
-  column_x += 96;
+  column_x += 80;
   INSERT_NEW_LEVEL_TABLE_COLUMN("MAX TIME", column_x);
 
   LOOP_LEVEL_TABLE_COLUMN
