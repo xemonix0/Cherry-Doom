@@ -187,6 +187,7 @@ int bloodier_gibbing;
 int zdoom_item_drops;
 
 // CFG only
+int menu_background_darkening;
 int chasecam_crosshair;
 int sp_chat;
 int gammacycle;
@@ -194,6 +195,7 @@ int always_bob;
 int weapon_inertia_scale_pct;
 int sx_fix;
 int blink_keys;
+int automap_overlay_darkening;
 
 // Misc
 int zoom_fov;

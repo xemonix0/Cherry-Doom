@@ -7159,7 +7159,7 @@ boolean M_MenuIsShaded(void)
 void M_Drawer (void)
 {
    if (M_MenuIsShaded())
-      V_ShadeScreen();
+      V_ShadeScreen(menu_background_darkening); // [Nugget] Parameterized
 
    inhelpscreens = false;
 

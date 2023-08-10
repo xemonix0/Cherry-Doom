@@ -149,6 +149,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
   - `DSLOCKED`, `DSKEYUP`;
   - `DSMNUOPN`, `DSMNUCLS`, `DSMNUACT`, `DSMNUBAK`, `DSMNUMOV`, `DSMNUSLI`, `DSMNUERR`;
   - `DSINTTIC`, `DSINTTOT`, `DSINTNEX`, `DSINTNET`, `DSINTDMS`.
+- **Customizable darkening level for dark menu background and Automap overlay** (CFG-Only: `menu_background_darkening` and `automap_overlay_darkening`) [i.b. Cherry Doom]
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
 

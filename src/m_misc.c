@@ -357,6 +357,13 @@ default_t defaults[] = {
     "draw menu background (0 = on, 1 = off, 2 = dark)"
   },
 
+  { // [Nugget]
+    "menu_background_darkening",
+    (config_t *) &menu_background_darkening, NULL,
+    {20}, {0,31}, number, ss_none, wad_no,
+    "Dark menu background darkening level"
+  },
+
   { // killough 10/98
     "flashing_hom",
     (config_t *) &flashing_hom, NULL,
@@ -2902,6 +2909,13 @@ default_t defaults[] = {
     (config_t *) &automapoverlay, NULL,
     {overlay_off}, {overlay_off,overlay_dark}, number, ss_auto, wad_no,
     "automap overlay mode (1 = on, 2 = dark)"
+  },
+
+  { // [Nugget]
+    "automap_overlay_darkening",
+    (config_t *) &automap_overlay_darkening, NULL,
+    {20}, {0,31}, number, ss_none, wad_no,
+    "Dark Automap overlay darkening level"
   },
 
   {

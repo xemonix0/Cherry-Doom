@@ -5,6 +5,7 @@
 - **Blink Missing Keys** setting
 - **Support for Crispy Doom's optional sounds**
 - **NUGHUD armor icon**
+- **Customizable dark menu background/dark Automap overlay darkening**
 
 ## Changes
 

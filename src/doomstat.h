@@ -520,6 +520,7 @@ extern int bloodier_gibbing;
 extern int zdoom_item_drops;
 
 // CFG only
+extern int menu_background_darkening;
 extern int chasecam_crosshair;
 extern int sp_chat;
 extern int gammacycle;
@@ -527,6 +528,7 @@ extern int always_bob;
 extern int weapon_inertia_scale_pct;
 extern int sx_fix;
 extern int blink_keys;
+extern int automap_overlay_darkening;
 
 // Misc
 extern int zoom_fov;

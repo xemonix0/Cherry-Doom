@@ -2318,7 +2318,7 @@ void AM_Drawer (void)
   }
   // [Alaux] Dark automap overlay
   else if (automapoverlay == overlay_dark && !M_MenuIsShaded())
-    V_ShadeScreen();
+    V_ShadeScreen(automap_overlay_darkening); // [Nugget] Parameterized
 
   if (automap_grid)                  // killough 2/28/98: change var name
     AM_drawGrid(mapcolor_grid);      //jff 1/7/98 grid default color
