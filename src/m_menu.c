@@ -2188,7 +2188,7 @@ void M_DrawItem(setup_menu_t* s, int y_offset)
 {
   int x = s->m_x;
   int y = s->m_y + y_offset; // [Cherry] add Y offset
-  int flags = s->m_flags;
+  int flags = s->m_flags, flags2 = s->m_flags2;
   if (flags & S_RESET)
 
     // This item is the reset button
@@ -2203,7 +2203,7 @@ void M_DrawItem(setup_menu_t* s, int y_offset)
       char *p, *t;
       int w = 0;
       int color =
-	flags & S_SELECT ? CR_SELECT :
+	flags & S_SELECT || flags2 & S2_SEL_COL ? CR_SELECT :
 	flags & S_HILITE ? CR_HILITE :
 	flags & (S_TITLE|S_NEXT|S_PREV) ? CR_TITLE : CR_ITEM; // killough 10/98
 
@@ -2221,7 +2221,7 @@ void M_DrawItem(setup_menu_t* s, int y_offset)
 	  M_DrawMenuStringEx(flags, x - w, y, color);
       // [FG] print a blinking "arrow" next to the currently highlighted menu item
       // [Cherry] draw the arrow separately from the item
-      if (!(flags & S_NEXT_LINE) && ItemSelected(s))
+      if (!(flags & S_NEXT_LINE) && ItemSelected(s) && !(flags2 & S2_NOSELECT))
       {
         if ((flags & (S_CHOICE|S_CRITEM|S_THERMO)) && setup_select)
         {
@@ -2282,7 +2282,7 @@ static void M_DrawMiniThermo(int x, int y, int size, int dot, char *color)
 void M_DrawSetting(setup_menu_t* s, int y_offset)
 {
   // [Cherry] add Y offset
-  int x = s->m_x, y = s->m_y + y_offset, flags = s->m_flags, color;
+  int x = s->m_x, y = s->m_y + y_offset, flags = s->m_flags, flags2 = s->m_flags2, color;
 
   // Determine color of the text. This may or may not be used
   // later, depending on whether the item is a text string or not.
@@ -2597,7 +2597,8 @@ void M_DrawScreenItems(setup_menu_t* src)
   {
     // See if we're to draw the item description (left-hand part)
 
-    if (src->m_flags & S_SHOWDESC)
+    if (src->m_flags & S_SHOWDESC ||
+        src->m_flags2 & S2_SHOWDESC)
       M_DrawItem(src, 0);
 
     // See if we're to draw the setting (right-hand part)
@@ -2688,7 +2689,8 @@ void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
       continue;
 
     // See if we're to draw the item description (left-hand part)
-    if (src->m_flags & S_SHOWDESC)
+    if (src->m_flags & S_SHOWDESC ||
+        src->m_flags2 & S2_SHOWDESC)
       M_DrawItem(src, -offset);
 
     // See if we're to draw the setting (right-hand part)
@@ -5497,74 +5499,86 @@ static void M_BuildLevelTable(void)
   INSERT_NEW_LEVEL_TABLE_COLUMN("SKILL", column_x);
 
   LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
     if (map->best_skill) {
       M_StringPrintF(&m_text, "%d", map->best_skill);
       entry->m_text = m_text;
+      if (map->best_skill == 5)
+        entry->m_flags2 |= S2_SEL_COL;
     }
     else {
       entry->m_text = Z_Strdup("-", PU_STATIC, NULL);
     }
-
-    entry->m_flags = S_CREDIT | S_SKIP;
-    entry->m_x = column_x;
-    entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
 
   column_x += 64;
   INSERT_NEW_LEVEL_TABLE_COLUMN("K", column_x);
 
   LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
     if (map->best_skill)
     {
       M_StringPrintF(&m_text, "%d/%d", map->best_kills, map->max_kills);
       entry->m_text = m_text;
+      if (map->best_kills == map->max_kills)
+        entry->m_flags2 |= S2_SEL_COL;
     }
     else
     {
       entry->m_text = Z_Strdup("-", PU_STATIC, NULL);
     }
-
-    entry->m_flags = S_CREDIT | S_SKIP;
-    entry->m_x = column_x;
-    entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
 
   column_x += 48;
   INSERT_NEW_LEVEL_TABLE_COLUMN("I", column_x);
 
   LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
     if (map->best_skill)
     {
       M_StringPrintF(&m_text, "%d/%d", map->best_items, map->max_items);
       entry->m_text = m_text;
+      if (map->best_items == map->max_items)
+        entry->m_flags2 |= S2_SEL_COL;
     }
     else
     {
       entry->m_text = Z_Strdup("-", PU_STATIC, NULL);
     }
-
-    entry->m_flags = S_CREDIT | S_SKIP;
-    entry->m_x = column_x;
-    entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
 
   column_x += 48;
   INSERT_NEW_LEVEL_TABLE_COLUMN("S", column_x);
 
   LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
     if (map->best_skill)
     {
       M_StringPrintF(&m_text, "%d/%d", map->best_secrets, map->max_secrets);
       entry->m_text = m_text;
+      if (map->best_secrets == map->max_secrets)
+        entry->m_flags2 |= S2_SEL_COL;
     }
     else
     {
       entry->m_text = Z_Strdup("-", PU_STATIC, NULL);
     }
-
-    entry->m_flags = S_CREDIT | S_SKIP;
-    entry->m_x = column_x;
-    entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
 
   INSERT_LEVEL_TABLE_NEXT_PAGE
@@ -5585,55 +5599,61 @@ static void M_BuildLevelTable(void)
   INSERT_NEW_LEVEL_TABLE_COLUMN("TIME", column_x);
 
   LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
     if (map->best_time >= 0) {
       M_PrintTime(&m_text, map->best_time);
       entry->m_text = m_text;
+      entry->m_flags2 |= S2_SEL_COL;
     }
     else {
       entry->m_text = Z_Strdup("- : --", PU_STATIC, NULL);
     }
-
-    entry->m_flags = S_CREDIT | S_SKIP;
-    entry->m_x = column_x;
-    entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
 
   column_x += 80;
   INSERT_NEW_LEVEL_TABLE_COLUMN("MAX TIME", column_x);
 
   LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
     if (map->best_max_time >= 0)
     {
       M_PrintTime(&m_text, map->best_max_time);
       entry->m_text = m_text;
+      entry->m_flags2 |= S2_SEL_COL;
     }
     else
     {
       entry->m_text = Z_Strdup("- : --", PU_STATIC, NULL);
     }
-
-    entry->m_flags = S_CREDIT | S_SKIP;
-    entry->m_x = column_x;
-    entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
 
   column_x += 80;
   INSERT_NEW_LEVEL_TABLE_COLUMN("SK 5 TIME", column_x);
 
   LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
     if (map->best_sk5_time >= 0)
     {
       M_PrintTime(&m_text, map->best_sk5_time);
       entry->m_text = m_text;
+      entry->m_flags2 |= S2_SEL_COL;
     }
     else
     {
       entry->m_text = Z_Strdup("- : --", PU_STATIC, NULL);
     }
-
-    entry->m_flags = S_CREDIT | S_SKIP;
-    entry->m_x = column_x;
-    entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
 
   INSERT_LEVEL_TABLE_PREV_PAGE
@@ -5648,6 +5668,7 @@ static void M_BuildLevelTable(void)
 
   level_table_page[page][base_i].m_text = Z_Strdup("Summary", PU_STATIC, NULL);
   level_table_page[page][base_i].m_flags = S_TITLE | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_NOSELECT;
   level_table_page[page][base_i].m_x = 132;
   level_table_page[page][base_i].m_y = M_Y;
   ++base_i;
@@ -5723,7 +5744,8 @@ static void M_BuildLevelTable(void)
   M_StringPrintF(&m_text, "%d / %d",
                  wad_stats_summary.completed_count, wad_stats.map_count);
   level_table_page[page][base_i].m_text = m_text;
-  level_table_page[page][base_i].m_flags = S_CREDIT | S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 2 * M_SPC;
   ++base_i;
@@ -5733,7 +5755,8 @@ static void M_BuildLevelTable(void)
   else
     m_text = Z_Strdup("-", PU_STATIC, NULL);
   level_table_page[page][base_i].m_text = m_text;
-  level_table_page[page][base_i].m_flags = S_CREDIT | S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 3 * M_SPC;
   ++base_i;
@@ -5747,7 +5770,8 @@ static void M_BuildLevelTable(void)
     strcat(m_text, "-");
   }
   level_table_page[page][base_i].m_text = m_text;
-  level_table_page[page][base_i].m_flags = S_CREDIT | S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 5 * M_SPC;
   ++base_i;
@@ -5761,7 +5785,8 @@ static void M_BuildLevelTable(void)
     strcat(m_text, "-");
   }
   level_table_page[page][base_i].m_text = m_text;
-  level_table_page[page][base_i].m_flags = S_CREDIT | S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 6 * M_SPC;
   ++base_i;
@@ -5775,7 +5800,8 @@ static void M_BuildLevelTable(void)
     strcat(m_text, "-");
   }
   level_table_page[page][base_i].m_text = m_text;
-  level_table_page[page][base_i].m_flags = S_CREDIT | S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 7 * M_SPC;
   ++base_i;
@@ -5785,7 +5811,8 @@ static void M_BuildLevelTable(void)
   else
     m_text = Z_Strdup("- : --", PU_STATIC, NULL);
   level_table_page[page][base_i].m_text = m_text;
-  level_table_page[page][base_i].m_flags = S_CREDIT | S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 8 * M_SPC;
   ++base_i;
@@ -5795,7 +5822,8 @@ static void M_BuildLevelTable(void)
   else
     m_text = Z_Strdup("- : --", PU_STATIC, NULL);
   level_table_page[page][base_i].m_text = m_text;
-  level_table_page[page][base_i].m_flags = S_CREDIT | S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 9 * M_SPC;
   ++base_i;
@@ -5805,7 +5833,8 @@ static void M_BuildLevelTable(void)
   else
     m_text = Z_Strdup("- : --", PU_STATIC, NULL);
   level_table_page[page][base_i].m_text = m_text;
-  level_table_page[page][base_i].m_flags = S_CREDIT | S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 10 * M_SPC;
   ++base_i;
@@ -7514,6 +7543,8 @@ boolean M_Responder (event_t* ev)
 
       if (action == MENU_DOWN)
 	{
+      if (ptr1->m_flags2 & S2_NOSELECT)
+        return true;
 	  ptr1->m_flags &= ~S_HILITE;     // phares 4/17/98
 	  do
 	    if (ptr1->m_flags & S_END)
@@ -7533,6 +7564,8 @@ boolean M_Responder (event_t* ev)
 
       if (action == MENU_UP)
 	{
+      if (ptr1->m_flags2 & S2_NOSELECT)
+        return true;
 	  ptr1->m_flags &= ~S_HILITE;     // phares 4/17/98
 	  do
 	    {
@@ -7667,8 +7700,11 @@ boolean M_Responder (event_t* ev)
 		  current_setup_menu = ptr2->var.menu;
 		  set_menu_itemon = M_GetSetupMenuItemOn();
 		  print_warning_about_changes = false; // killough 10/98
-		  while (current_setup_menu[set_menu_itemon++].m_flags&S_SKIP);
-		  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+          if (!(current_setup_menu[set_menu_itemon].m_flags2 & S2_NOSELECT))
+          {
+		    while (current_setup_menu[set_menu_itemon++].m_flags&S_SKIP);
+		    current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+          }
 		  S_StartSoundOptional(NULL, sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
 		  return true;
 		}
@@ -7690,8 +7726,11 @@ boolean M_Responder (event_t* ev)
 		  current_setup_menu = ptr2->var.menu;
 		  set_menu_itemon = M_GetSetupMenuItemOn();
 		  print_warning_about_changes = false; // killough 10/98
-		  while (current_setup_menu[set_menu_itemon++].m_flags&S_SKIP);
-		  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+          if (!(current_setup_menu[set_menu_itemon].m_flags2 & S2_NOSELECT))
+          {
+            while (current_setup_menu[set_menu_itemon++].m_flags&S_SKIP);
+            current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
+          }
 		  S_StartSoundOptional(NULL, sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
 		  return true;
 		}
