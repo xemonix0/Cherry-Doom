@@ -89,7 +89,7 @@ static void InitWadDataDir(void) {
     parent_directory = M_getenv("DOOMDATADIR");
 
     if (!parent_directory)
-      parent_directory = D_DoomExeDir();
+      parent_directory = D_DoomPrefDir();
 
     size_t length = snprintf(NULL, 0, format, parent_directory, cherry_data_root);
     base_data_dir = Z_Malloc(length + 1, PU_STATIC, NULL);
