@@ -505,6 +505,8 @@ extern int show_berserk;
 // Status Bar/HUD
 extern int alt_arms;
 extern int smarttotals;
+extern int hudcolor_ms_incomp;
+extern int hudcolor_ms_comp;
 typedef enum {
   TIMER_USE,
   TIMER_TELEPORT,

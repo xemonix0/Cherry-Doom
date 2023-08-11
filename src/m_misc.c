@@ -3176,6 +3176,20 @@ default_t defaults[] = {
     "1 to enable Smart Totals"
   },
 
+  { // [Nugget] Incomplete milestone color
+    "hudcolor_ms_incomp",
+    (config_t *) &hudcolor_ms_incomp, NULL,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "Color used for incomplete milestones in Stats display"
+  },
+
+  { // [Nugget] Complete milestone color
+    "hudcolor_ms_comp",
+    (config_t *) &hudcolor_ms_comp, NULL,
+    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "Color used for complete milestones in Stats display"
+  },
+
   { // no secrets/items/kills HUD line
     "hud_level_time",
     (config_t *) &hud_level_time, NULL,

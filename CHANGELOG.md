@@ -7,6 +7,7 @@
 - **Blink Missing Keys** setting
 - **Support for Crispy Doom's optional sounds**
 - **NUGHUD armor icon**
+- **Customizable Stats text colors**
 - **Customizable dark menu background/dark Automap overlay darkening**
 - **Woof savegame compatibility**
 

@@ -3422,12 +3422,20 @@ enum {
   stat2_stub1,
   stat2_title2,
   stat2_smart,
+  stat2_msincomp,
+  stat2_mscomp,
   stat2_hudfont,
   stat2_stub2,
   stat2_title3,
   stat2_timeruse,
   stat2_timertelept,
   stat2_timerkey,
+};
+
+// [Nugget] Moved here
+static const char *hudcolor_str[] = {
+    "BRICK", "TAN", "GRAY", "GREEN", "BROWN", "GOLD", "RED", "BLUE", "ORANGE",
+    "YELLOW", "BLUE2", "BLACK", "PURPLE", "WHITE", "NONE", NULL
 };
 
 static const char *show_widgets_strings[] = {
@@ -3453,6 +3461,8 @@ setup_menu_t stat_settings2[] =
   {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title2*M_SPC },
 
   {"SMART TOTALS"                      , S_YESNO ,m_null,M_X,M_Y+stat2_smart*M_SPC,   {"smarttotals"}}, // [Nugget]
+  {"INCOMPLETE MILESTONE COLOR"        , S_CRITEM,m_null,M_X,M_Y+stat2_msincomp*M_SPC,{"hudcolor_ms_incomp"}, 0, NULL, hudcolor_str}, // [Nugget]
+  {"COMPLETE MILESTONE COLOR"          , S_CRITEM,m_null,M_X,M_Y+stat2_mscomp*M_SPC,  {"hudcolor_ms_comp"}, 0, NULL, hudcolor_str}, // [Nugget]
   {"USE STANDARD DOOM FONT FOR WIDGETS", S_CHOICE,m_null,M_X,M_Y+stat2_hudfont*M_SPC, {"hud_widget_font"}, 0, NULL, show_widgets_strings},
 
   // [Nugget]
@@ -3527,10 +3537,7 @@ static const char *crosshair_lockon_modes[] = {
   "Off", "Vertically", "Fully", NULL
 };
 
-static const char *hudcolor_str[] = {
-    "BRICK", "TAN", "GRAY", "GREEN", "BROWN", "GOLD", "RED", "BLUE", "ORANGE",
-    "YELLOW", "BLUE2", "BLACK", "PURPLE", "WHITE", "NONE", NULL
-};
+// [Nugget] Moved `hudcolor_str` above
 
 setup_menu_t stat_settings3[] =
 {
