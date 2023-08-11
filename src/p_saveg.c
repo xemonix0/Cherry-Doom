@@ -30,7 +30,7 @@
 
 byte *save_p;
 
-saveg_compat_t saveg_compat = saveg_woof510;
+saveg_compat_t saveg_compat = saveg_woof600;
 
 // Endian-safe integer read/write functions
 
@@ -753,24 +753,19 @@ static void saveg_read_pspdef_t(pspdef_t *str)
 
     // [Woof!]: fixed_t sy2;
     str->sy2 = saveg_read32();
-
-    // [Nugget] fixed_t dy;
-    str->dy = saveg_read32();
-
-    // [Nugget] fixed_t wix;
-    str->wix = saveg_read32();
-
-    // [Nugget] fixed_t wiy;
-    str->wiy = saveg_read32();
     }
     else
     {
         str->sx2 = str->sx;
         str->sy2 = str->sy;
-        str->dy = 0; // [Nugget]
-        str->wix = 0; // [Nugget]
-        str->wiy = 0; // [Nugget]
     }
+
+    // [Nugget]
+    if (saveg_compat > saveg_woof600) {
+      str->dy  = saveg_read32(); // fixed_t dy;
+      str->wix = saveg_read32(); // fixed_t wix;
+      str->wiy = saveg_read32(); // fixed_t wiy;
+    } else { str->dy = str->wix = str->wiy = 0; }
 }
 
 static void saveg_write_pspdef_t(pspdef_t *str)
@@ -800,14 +795,10 @@ static void saveg_write_pspdef_t(pspdef_t *str)
     // [Woof!]: fixed_t sy2;
     saveg_write32(str->sy2);
 
-    // [Nugget] fixed_t dy;
-    saveg_write32(str->dy);
-
-    // [Nugget] fixed_t wix;
-    saveg_write32(str->wix);
-
-    // [Nugget] fixed_t wiy;
-    saveg_write32(str->wiy);
+    // [Nugget]
+    saveg_write32(str->dy);  // fixed_t dy;
+    saveg_write32(str->wix); // fixed_t wix;
+    saveg_write32(str->wiy); // fixed_t wiy;
 }
 
 //
@@ -964,10 +955,10 @@ static void saveg_read_player_t(player_t *str)
     }
 
     // [Nugget]
-    // int jumptics;
-    str->jumptics = saveg_read32();
-    // fixed_t crouchoffset;
-    str->crouchoffset = saveg_read32();
+    if (saveg_compat > saveg_woof600) {
+      str->jumptics     = saveg_read32(); // int jumptics;
+      str->crouchoffset = saveg_read32(); // fixed_t crouchoffset;
+    } else { str->jumptics = str->crouchoffset = 0; }
 }
 
 static void saveg_write_player_t(player_t *str)
@@ -1110,10 +1101,8 @@ static void saveg_write_player_t(player_t *str)
     saveg_write32(str->oldviewz);
 
     // [Nugget]
-    // int jumptics;
-    saveg_write32(str->jumptics);
-    // fixed_t crouchoffset;
-    saveg_write32(str->crouchoffset);
+    saveg_write32(str->jumptics); // int jumptics;
+    saveg_write32(str->crouchoffset); // fixed_t crouchoffset;
 }
 
 

@@ -55,6 +55,9 @@ typedef enum saveg_compat_e
 {
   saveg_mbf,
   saveg_woof510,
+  // [Nugget]
+  saveg_woof600,
+  
   saveg_current,
 } saveg_compat_t;
 

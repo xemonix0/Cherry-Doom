@@ -1,3 +1,5 @@
+**WARNING:** Saves from previous versions are incompatible with this release.
+
 ## New Features
 
 - **Horizontal Weapon Centering** setting
@@ -6,10 +8,11 @@
 - **Support for Crispy Doom's optional sounds**
 - **NUGHUD armor icon**
 - **Customizable dark menu background/dark Automap overlay darkening**
+- **Woof savegame compatibility**
 
 ## Changes
 
-- **Powerup Timers now display '"' instead of 'S'**
+- **Powerup Timers now display `"` instead of `S`**
 - **Extended Mouselook range**; pitch effects are now applied even when looking all the way up and down
 - **Disabled crosshair when using Chasecam**; now configurable through the `chasecam_crosshair` CVAR
 - **Permanent Weapon Bobbing can now be toggled** through the `always_bob` CVAR
