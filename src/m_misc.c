@@ -2976,6 +2976,13 @@ default_t defaults[] = {
     "\"A secret is revealed!\" message"
   },
 
+  { // [Nugget] Announce milestone completion
+    "announce_milestones",
+    (config_t *) &announce_milestones, NULL,
+    {0}, {0,1}, number, ss_mess, wad_no,
+    "1 to announce completion of milestones"
+  },
+
   { // red range
     "hudcolor_mesg",
     (config_t *) &hudcolor_mesg, NULL,

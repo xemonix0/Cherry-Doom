@@ -271,6 +271,10 @@ extern  int extrakills; // [Nugget]: [So Doom] count kills of resurrected and (r
 extern  int totalitems;
 extern  int totalsecret;
 
+// [Nugget]
+typedef enum { MILESTONE_KILLS = 0x1, MILESTONE_ITEMS = 0x2, MILESTONE_SECRETS = 0x4, } milestone_t;
+extern milestone_t complete_milestones;
+
 // Timer, for scores.
 extern  int levelstarttic;  // gametic at level start
 extern  int basetic;    // killough 9/29/98: levelstarttic, adjusted
@@ -534,6 +538,7 @@ extern int automap_overlay_darkening;
 
 // Misc
 extern int zoom_fov;
+extern int announce_milestones;
 
 enum {
   comp_blazing2,

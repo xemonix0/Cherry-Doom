@@ -4956,6 +4956,7 @@ void M_DrawCompat(void)
 
 enum {
   mess_secret,
+  mess_milestones, // [Nugget]
   mess_showtoggle,
   mess_showpickup,
   mess_stub1,
@@ -4994,6 +4995,10 @@ setup_menu_t mess_settings1[] =  // Messages screen
 {
   {"\"A Secret is Revealed!\" Message", S_CHOICE, m_null, M_X, 
    M_Y + mess_secret*M_SPC, {"hud_secret_message"}, 0, NULL, secretmessage_str}, // [Nugget]
+
+  // [Nugget]
+  {"Announce Milestone Completion", S_YESNO, m_null, M_X, 
+   M_Y + mess_milestones*M_SPC, {"announce_milestones"}},
 
   {"Show Toggle Messages", S_YESNO, m_null, M_X, 
    M_Y + mess_showtoggle*M_SPC, {"show_toggle_messages"}},

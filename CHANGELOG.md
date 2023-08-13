@@ -3,11 +3,12 @@
 ## New Features
 
 - **Horizontal Weapon Centering** setting
-- **Switch [Weapon] on Pickup** setting
-- **Blink Missing Keys** setting
+- **_Switch [Weapon] on Pickup_** setting
+- **_Blink Missing Keys_** setting
 - **Support for Crispy Doom's optional sounds**
 - **NUGHUD armor icon**
 - **Customizable Stats text colors**
+- **_Announce Milestone Completion_** setting
 - **Customizable dark menu background/dark Automap overlay darkening**
 - **Woof savegame compatibility**
 

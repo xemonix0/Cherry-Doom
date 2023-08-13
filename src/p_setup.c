@@ -428,6 +428,12 @@ void P_LoadThings (int lump)
       P_SpawnMapThing (mt);
     }
 
+  // [Nugget] Reset milestones
+  if (totalkills) { complete_milestones &= ~MILESTONE_KILLS; }
+  else            { complete_milestones |=  MILESTONE_KILLS; }
+  if (totalitems) { complete_milestones &= ~MILESTONE_ITEMS; }
+  else            { complete_milestones |=  MILESTONE_ITEMS; }
+
   Z_Free (data);
 }
 

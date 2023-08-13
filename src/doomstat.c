@@ -201,6 +201,7 @@ int automap_overlay_darkening;
 
 // Misc
 int zoom_fov;
+int announce_milestones;
 
 int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
 
