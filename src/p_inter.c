@@ -78,7 +78,7 @@ static boolean P_AutoswitchWeapon(void)
   if (!casual_play || switch_on_pickup)
   { return true; }
   
-  return false; // !switch_on_pickup
+  return false;
 }
 
 //
@@ -503,8 +503,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         return;
       pickupmsg(player, "%s", s_GOTBERSERK); // Ty 03/22/98 - externalized
       if (player->readyweapon != wp_fist)
-	if (!beta_emulation // killough 10/98: don't switch as much in -beta
-	    || player->readyweapon == wp_pistol)
+	if ((!beta_emulation // killough 10/98: don't switch as much in -beta
+	     || player->readyweapon == wp_pistol)
+	    && P_AutoswitchWeapon()) // [Nugget]
 	  player->pendingweapon = wp_fist;
       sound = sfx_getpow;
       break;
