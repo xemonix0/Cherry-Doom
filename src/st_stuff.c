@@ -700,7 +700,7 @@ void ST_updateWidgets(void)
   if (plyr->keyblinktics)
   {
     if (!(plyr->keyblinktics & ((2*KEYBLINKMASK) - 1)))
-    { S_StartSound(NULL, sfx_itemup); }
+    { S_StartSoundOptional(NULL, sfx_keybnk, sfx_itemup); }
 
     if (st_classicstatusbar && !(plyr->keyblinktics & (KEYBLINKMASK-1)))
     { st_firsttime = true; }

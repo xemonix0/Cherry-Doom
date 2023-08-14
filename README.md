@@ -146,9 +146,9 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - **Zoom key**
 - **Allowed mouselook while dead**
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
-- **Support for Crispy Doom's optional sounds:**
+- **Support for optional sounds:** [p.f. Crispy Doom]
   - `DSPLJUMP`, `DSPLLAND`;
-  - `DSLOCKED`, `DSKEYUP`;
+  - `DSLOCKED`, `DSKEYUP `, `DSKEYBNK`;
   - `DSMNUOPN`, `DSMNUCLS`, `DSMNUACT`, `DSMNUBAK`, `DSMNUMOV`, `DSMNUSLI`, `DSMNUERR`;
   - `DSINTTIC`, `DSINTTOT`, `DSINTNEX`, `DSINTNET`, `DSINTDMS`.
 - **Customizable darkening level for dark menu background and Automap overlay** (CFG-Only: `menu_background_darkening` and `automap_overlay_darkening`) [i.b. Cherry Doom]

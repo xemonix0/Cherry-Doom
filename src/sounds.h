@@ -317,6 +317,7 @@ typedef enum {
   sfx_plland,
   sfx_locked,
   sfx_keyup,
+  sfx_keybnk, // [Nugget]
   // [NS] Optional menu/intermission sounds.
   sfx_mnuopn,
   sfx_mnucls,

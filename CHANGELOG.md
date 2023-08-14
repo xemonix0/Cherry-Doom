@@ -5,7 +5,7 @@
 - **Horizontal Weapon Centering** setting
 - **_Switch [Weapon] on Pickup_** setting
 - **_Blink Missing Keys_** setting
-- **Support for Crispy Doom's optional sounds**
+- **Support for optional sounds** (Crispy Doom's and more)
 - **NUGHUD armor icon**
 - **Customizable Stats text colors**
 - **_Announce Milestone Completion_** setting
