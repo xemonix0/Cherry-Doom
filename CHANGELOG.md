@@ -7,7 +7,7 @@
 - **_Blink Missing Keys_** setting
 - **Support for optional sounds** (Crispy Doom's and more)
 - **NUGHUD armor icon**
-- **Customizable Stats text colors**
+- **(In)Complete Milestone Color** choices
 - **_Announce Milestone Completion_** setting
 - **Customizable dark menu background/dark Automap overlay darkening**
 - **Woof savegame compatibility**
