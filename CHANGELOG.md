@@ -9,6 +9,7 @@
 - **NUGHUD:**
   - Armor icon;
   - Infinity icon;
+  - Ammo count font;
   - Toggle to draw percentage signs.
 - **(In)Complete Milestone Color** choices
 - **_Announce Milestone Completion_** setting

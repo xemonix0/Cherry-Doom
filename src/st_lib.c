@@ -43,8 +43,6 @@ patch_t*    sttminus;
 void STlib_init(void)
 {
   // [Nugget]
-  extern patch_t *nughud_tallminus;
-  
   if (st_crispyhud && nughud.nhtnum)
   { sttminus = nughud_tallminus; }
   else
@@ -102,6 +100,8 @@ void STlib_drawNum
   int   x = n->x;
 
   int   neg;
+  
+  patch_t *minus = (n->data ? nughud_readyminus : sttminus); // [Nugget]
 
   n->oldnum = *n->num;
 
@@ -145,13 +145,13 @@ void STlib_drawNum
 
   // draw a minus sign if necessary
   //jff 2/16/98 add color translation to digit output
-  if (neg && sttminus)
+  if (neg && minus)
   {
-    w = SHORT(sttminus->width);
+    w = SHORT(minus->width);
     if (outrng && !sts_always_red)
-      V_DrawPatchTranslated(x - w, n->y, FG, sttminus,outrng);
+      V_DrawPatchTranslated(x - w, n->y, FG, minus,outrng);
     else //jff 2/18/98 allow use of faster draw routine from config
-      V_DrawPatch(x - w, n->y, FG, sttminus);
+      V_DrawPatch(x - w, n->y, FG, minus);
   }
 }
 

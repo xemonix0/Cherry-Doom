@@ -69,7 +69,8 @@ typedef struct nughud_s {
   boolean           percents;
   fixed_t           weapheight;
   // These determine whether or not a given NUGHUD font/patch should be used
-  boolean           nhtnum, nhamnum, nhwpnum, nhkeys, nhbersrk, nharmor, nhinfnty;
+  boolean           nhtnum,   nhrnum,   nhamnum,  nhwpnum,  nhkeys,   nhbersrk,
+                    nharmor,  nhinfnty;
 } nughud_t;
 
 extern nughud_t nughud;

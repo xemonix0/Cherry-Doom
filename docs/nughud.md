@@ -81,9 +81,10 @@ Tall Numbers, used for the Health, Armor, current-weapon Ammo and Frags counts:
   NHTMINUS - Minus sign
   NHTPRCNT - Percent sign
 
-Armor graphics, used for the Armor icon widget:
+Current-weapon Ammo Numbers, used exclusively for the current-weapon Ammo count, taking precedence over the Tall Numbers:
 
-  NHARMOR# - Graphic, where # is either 0 (no armor), 1 (green armor) or 2 (blue armor)
+  NHRNUM# -- Number, where # is a number between 0 and 9 (inclusive)
+  NHRMINUS - Minus sign
 
 Ammo Numbers, used for the Ammo and Max Ammo counts:
 
@@ -101,6 +102,10 @@ Keys:
 Berserk, drawn in place of the Ammo count when using the Berserk Fist:
 
   NHBERSRK - Berserk graphic
+
+Armor graphics, used for the Armor icon widget:
+
+  NHARMOR# - Graphic, where # is either 0 (no armor), 1 (green armor) or 2 (blue armor)
 
 Infinity, drawn in place of the Ammo count when using weapons with no ammo type (e.g. Fist/Chainsaw):
 

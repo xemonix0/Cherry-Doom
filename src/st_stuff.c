@@ -177,6 +177,8 @@ static patch_t *arms[6+3][2]; // [Nugget] Increase array size for 9 numbers
 static patch_t *nughud_tallnum[10];      // NHTNUM#, from 0 to 9
        patch_t *nughud_tallminus;        // NHTMINUS
 static patch_t *nughud_tallpercent;      // NHTPRCNT
+static patch_t *nughud_readynum[10];     // NHRNUM#, from 0 to 9
+       patch_t *nughud_readyminus;       // NHRMINUS
 static patch_t *nughud_ammonum[10];      // NHAMNUM#, from 0 to 9
 static patch_t *nughud_armsnum[9][2];    // NHW0NUM# and NHW1NUM#, from 1 to 9
 static patch_t *nughud_keys[NUMCARDS+3]; // NHKEYS
@@ -1232,6 +1234,26 @@ void ST_loadGraphics(void)
     else
     { nughud.nhtnum = false; }
     
+    // Ready Ammo Numbers -------------
+    
+    nughud.nhrnum = true;
+    
+    for (i = 0;  i < 10;  i++) { // Load NHRNUM0 to NHRNUM9
+      sprintf(namebuf, "NHRNUM%d", i);
+      if ((lump = (W_CheckNumForName)(namebuf, ns_global)) > -1)
+      { nughud_readynum[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+      else {
+        nughud.nhrnum = false;
+        break;
+      }
+    }
+    
+     // Load NHRMINUS
+    if (nughud.nhrnum && (lump = (W_CheckNumForName)("NHRMINUS", ns_global)) > -1)
+    { nughud_readyminus = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+    else
+    { nughud.nhrnum = false; }
+    
     // Ammo numbers -------------------
     
     nughud.nhamnum = true;
@@ -1361,13 +1383,18 @@ void ST_createWidgets(void)
   STlib_initNum(&w_ready,
                 (st_crispyhud ? nughud.ammo.x : ST_AMMOX) + NUGHUDWIDESHIFT(nughud.ammo.wide),
                 (st_crispyhud ? nughud.ammo.y : ST_AMMOY),
-                ((st_crispyhud && nughud.nhtnum) ? nughud_tallnum : tallnum),
+                (st_crispyhud ? (nughud.nhrnum ? nughud_readynum :
+                                 nughud.nhtnum ? nughud_tallnum  : tallnum) : tallnum),
                 &plyr->ammo[weaponinfo[plyr->readyweapon].ammo],
                 &st_statusbaron,
                 ST_AMMOWIDTH );
 
+  // [Nugget] Actual use for the `data` member
+  w_ready.data = (st_crispyhud && nughud.nhrnum);
+  /*
   // the last weapon type
   w_ready.data = plyr->readyweapon;
+  */
 
   // health percentage
   STlib_initPercent(&w_health,
