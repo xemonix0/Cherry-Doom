@@ -177,11 +177,12 @@ static patch_t *arms[6+3][2]; // [Nugget] Increase array size for 9 numbers
 static patch_t *nughud_tallnum[10];      // NHTNUM#, from 0 to 9
        patch_t *nughud_tallminus;        // NHTMINUS
 static patch_t *nughud_tallpercent;      // NHTPRCNT
-static patch_t *nughud_armoricon[3];     // NHARMOR#, from 0 to 2
 static patch_t *nughud_ammonum[10];      // NHAMNUM#, from 0 to 9
 static patch_t *nughud_armsnum[9][2];    // NHW0NUM# and NHW1NUM#, from 1 to 9
 static patch_t *nughud_keys[NUMCARDS+3]; // NHKEYS
 static patch_t *nughud_berserk;          // NHBERSRK
+static patch_t *nughud_armoricon[3];     // NHARMOR#, from 0 to 2
+static patch_t *nughud_infinity;         // NHINFNTY
 
 // ready-weapon widget
 static st_number_t w_ready;
@@ -934,36 +935,39 @@ void ST_drawWidgets(void)
         STlib_updateNum(&w_ready, cr_green);
   }
 
-  // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
-  if ((screenblocks < CRISPY_HUD || (st_crispyhud && nughud.ammo.x > -1)) // [Nugget] Nugget HUD
-      && show_berserk
-      && plyr->readyweapon == wp_fist
-      && weaponinfo[plyr->readyweapon].ammo == am_noammo // [Nugget] Check for unlimited ammo type
-      && plyr->powers[pw_strength])
+  // [Nugget] In case of `am_noammo`
+  if ((screenblocks < CRISPY_HUD || (st_crispyhud && nughud.ammo.x > -1))
+      && weaponinfo[plyr->readyweapon].ammo == am_noammo)
   {
-    if (st_crispyhud && nughud.nhbersrk)
-    { V_DrawPatch(nughud.ammo.x + NUGHUDWIDESHIFT(nughud.ammo.wide), nughud.ammo.y, FG, nughud_berserk); }
-    else {
-      static int lump = -2;
-      patch_t *patch;
-    
-      if (lump == -2) {
-        lump = (W_CheckNumForName)("PSTRA0", ns_sprites);
-        if (lump == -1)
-        { lump = (W_CheckNumForName)("MEDIA0", ns_sprites); }
-      }
+    // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
+    if (show_berserk && plyr->readyweapon == wp_fist && plyr->powers[pw_strength])
+    {
+      if (st_crispyhud && nughud.nhbersrk)
+      { V_DrawPatch(nughud.ammo.x + NUGHUDWIDESHIFT(nughud.ammo.wide), nughud.ammo.y, FG, nughud_berserk); }
+      else {
+        static int lump = -2;
+        patch_t *patch;
       
-      if (lump >= 0) {
-        patch = W_CacheLumpNum(lump, PU_STATIC);
+        if (lump == -2) {
+          lump = (W_CheckNumForName)("PSTRA0", ns_sprites);
+          if (lump == -1)
+          { lump = (W_CheckNumForName)("MEDIA0", ns_sprites); }
+        }
         
-        // [crispy] (23,179) is the center of the Ammo widget
-        // [Nugget] Nugget HUD
-        V_DrawPatch((st_crispyhud ? nughud.ammo.x : ST_AMMOX) - 21 - SHORT(patch->width)/2 + SHORT(patch->leftoffset)
-                    + NUGHUDWIDESHIFT(nughud.ammo.wide),
-                    (st_crispyhud ? nughud.ammo.y : ST_AMMOY) + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
-                    FG, patch);
+        if (lump >= 0) {
+          patch = W_CacheLumpNum(lump, PU_STATIC);
+          
+          // [crispy] (23,179) is the center of the Ammo widget
+          // [Nugget] Nugget HUD
+          V_DrawPatch((st_crispyhud ? nughud.ammo.x : ST_AMMOX) - 21 - SHORT(patch->width)/2 + SHORT(patch->leftoffset)
+                      + NUGHUDWIDESHIFT(nughud.ammo.wide),
+                      (st_crispyhud ? nughud.ammo.y : ST_AMMOY) + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
+                      FG, patch);
+        }
       }
     }
+    else if (st_crispyhud && nughud.nhinfnty)
+    { V_DrawPatch(nughud.ammo.x + NUGHUDWIDESHIFT(nughud.ammo.wide), nughud.ammo.y, FG, nughud_infinity); }
   }
 
   if (st_crispyhud) { // [Nugget] Nugget HUD
@@ -1228,20 +1232,6 @@ void ST_loadGraphics(void)
     else
     { nughud.nhtnum = false; }
     
-    // Armor icons --------------------
-    
-    nughud.nharmor = true;
-    
-    for (i = 0;  i < 3;  i++) { // Load NHARMOR0 to NHARMOR2
-      sprintf(namebuf, "NHARMOR%d", i);
-      if ((lump = (W_CheckNumForName)(namebuf, ns_global)) > -1)
-      { nughud_armoricon[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
-      else {
-        nughud.nharmor = false;
-        break;
-      }
-    }
-    
     // Ammo numbers -------------------
     
     nughud.nhamnum = true;
@@ -1302,6 +1292,30 @@ void ST_loadGraphics(void)
     { nughud_berserk = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
     else
     { nughud.nhbersrk = false; }
+    
+    // Armor icons --------------------
+    
+    nughud.nharmor = true;
+    
+    for (i = 0;  i < 3;  i++) { // Load NHARMOR0 to NHARMOR2
+      sprintf(namebuf, "NHARMOR%d", i);
+      if ((lump = (W_CheckNumForName)(namebuf, ns_global)) > -1)
+      { nughud_armoricon[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+      else {
+        nughud.nharmor = false;
+        break;
+      }
+    }
+    
+    // Infinity -----------------------
+    
+    nughud.nhinfnty = true;
+    
+    // Load NHINFNTY
+    if ((lump = (W_CheckNumForName)("NHINFNTY", ns_global)) > -1)
+    { nughud_infinity = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+    else
+    { nughud.nhinfnty = false; }
   }
 }
 

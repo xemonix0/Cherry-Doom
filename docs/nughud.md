@@ -101,6 +101,10 @@ Keys:
 Berserk, drawn in place of the Ammo count when using the Berserk Fist:
 
   NHBERSRK - Berserk graphic
+
+Infinity, drawn in place of the Ammo count when using weapons with no ammo type (e.g. Fist/Chainsaw):
+
+  NHINFNTY - Infinity graphic
 ```
 
 ### Text Lines

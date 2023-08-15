@@ -8,6 +8,7 @@
 - **Support for optional sounds** (Crispy Doom's and more)
 - **NUGHUD:**
   - Armor icon;
+  - Infinity icon;
   - Toggle to draw percentage signs.
 - **(In)Complete Milestone Color** choices
 - **_Announce Milestone Completion_** setting

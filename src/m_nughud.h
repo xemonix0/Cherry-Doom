@@ -53,7 +53,6 @@ typedef struct nughud_s {
   boolean           face_bg;
   nughud_widget_t   armor;
   nughud_widget_t   armoricon;
-  boolean           nharmor;
   nughud_widget_t   keys[3];
   nughud_widget_t   ammos[4];
   nughud_widget_t   maxammos[4];
@@ -69,8 +68,8 @@ typedef struct nughud_s {
   nughud_patch_t    patches[NUMNUGHUDPATCHES];
   boolean           percents;
   fixed_t           weapheight;
-  // These determine whether or not a given NUGHUD font should be used
-  boolean           nhtnum, nhamnum, nhwpnum, nhkeys, nhbersrk;
+  // These determine whether or not a given NUGHUD font/patch should be used
+  boolean           nhtnum, nhamnum, nhwpnum, nhkeys, nhbersrk, nharmor, nhinfnty;
 } nughud_t;
 
 extern nughud_t nughud;
