@@ -49,7 +49,10 @@ nughud_maxammo# -- Same as the above, but for Max Ammo
 
 **Widgets support an X position value of -1 to disable the widget.**
 
-Aside from the shared variables, there is an additional boolean variable (value of 0 or 1), `nughud_face_bg`, that toggles the _Face_ background, whose position is linked to that of the _Face_ itself.
+Aside from the shared variables, there are some additional boolean variables (value of 0 or 1):
+
+- `nughud_face_bg`, to toggle the _Face_ background, whose position is linked to that of the _Face_ itself;
+- `nughud_percents`, to toggle drawing of percentage signs for the Health and Armor counts.
 
 **Widgets example:**
 

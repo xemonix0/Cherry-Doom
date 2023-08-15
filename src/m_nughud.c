@@ -196,6 +196,7 @@ default_t nughud_defaults[] = {
   PATCH_Y(    "nughud_patch8_y",      nughud.patches[7]                       ),
   PATCH_W(    "nughud_patch8_wide",   nughud.patches[7]                       ),
   PATCH_N(    "nughud_patch8_name",   nughud.patches[7]                       ),
+  TOGGLE(     "nughud_percents",      nughud.percents,         1              ),
   {           "nughud_weapheight", (config_t *)&nughud.weapheight, NULL, { 0 }, { 0, 200 }, number },
 
   { NULL }         // last entry

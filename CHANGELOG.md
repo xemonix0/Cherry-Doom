@@ -6,7 +6,9 @@
 - **_Switch [Weapon] on Pickup_** setting
 - **_Blink Missing Keys_** setting
 - **Support for optional sounds** (Crispy Doom's and more)
-- **NUGHUD armor icon**
+- **NUGHUD:**
+  - Armor icon;
+  - Toggle to draw percentage signs.
 - **(In)Complete Milestone Color** choices
 - **_Announce Milestone Completion_** setting
 - **Customizable dark menu background/dark Automap overlay darkening**

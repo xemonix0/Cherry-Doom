@@ -207,7 +207,8 @@ void STlib_updatePercent
 {
   // Remove the check for 'refresh' because this causes percent symbols to always appear
   // in automap overlay mode.
-  if (*per->n.on) // killough 2/21/98: fix percents not updated;
+  if (*per->n.on  // killough 2/21/98: fix percents not updated;
+      && (!st_crispyhud || nughud.percents)) // [Nugget]
   {
     V_DrawPatchTranslated
     (

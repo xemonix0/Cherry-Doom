@@ -232,5 +232,8 @@ nughud_patch8_y    0
 nughud_patch8_wide 0
 nughud_patch8_name ""
 
+; Draw percentage signs
+nughud_percents 1
+
 ; Upwards offset to apply to weapon sprites
 nughud_weapheight 0

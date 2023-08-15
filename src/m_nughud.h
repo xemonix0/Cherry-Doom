@@ -67,6 +67,7 @@ typedef struct nughud_s {
   nughud_textline_t message;
   nughud_textline_t secret;
   nughud_patch_t    patches[NUMNUGHUDPATCHES];
+  boolean           percents;
   fixed_t           weapheight;
   // These determine whether or not a given NUGHUD font should be used
   boolean           nhtnum, nhamnum, nhwpnum, nhkeys, nhbersrk;
