@@ -149,10 +149,7 @@ static void saveg_writep(const void *p)
     saveg_write32((intptr_t) p);
 }
 
-// Enum values are 32-bit integers.
-
-#define saveg_read_enum saveg_read32
-#define saveg_write_enum saveg_write32
+// [Nugget] Moved enum macros to header
 
 // [crispy] enumerate all thinker pointers
 static int P_ThinkerToIndex(thinker_t* thinker)
@@ -955,10 +952,22 @@ static void saveg_read_player_t(player_t *str)
     }
 
     // [Nugget]
+
     if (saveg_compat > saveg_woof600) {
       str->jumptics     = saveg_read32(); // int jumptics;
       str->crouchoffset = saveg_read32(); // fixed_t crouchoffset;
-    } else { str->jumptics = str->crouchoffset = 0; }
+    }
+    else {
+      str->jumptics = str->crouchoffset = 0;
+      return;
+    }
+
+    if (saveg_compat > saveg_nugget200)
+    { str->lastweapon = saveg_read_enum(); } // weapontype_t lastweapon;
+    else {
+      str->lastweapon = wp_nochange;
+      return;
+    }
 }
 
 static void saveg_write_player_t(player_t *str)
@@ -1103,6 +1112,7 @@ static void saveg_write_player_t(player_t *str)
     // [Nugget]
     saveg_write32(str->jumptics); // int jumptics;
     saveg_write32(str->crouchoffset); // fixed_t crouchoffset;
+    saveg_write_enum(str->lastweapon); // weapontype_t lastweapon;
 }
 
 

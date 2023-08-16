@@ -1815,7 +1815,7 @@ static void G_DoPlayDemo(void)
 // killough 2/22/98: version id string format for savegames
 #define VERSIONID "MBF %d"
 
-#define CURRENT_SAVE_VERSION "Nugget 2.0.0" // [Nugget]
+#define CURRENT_SAVE_VERSION "Nugget 2.1.0" // [Nugget]
 
 static char *savename = NULL;
 
@@ -2034,6 +2034,10 @@ static void G_DoSaveGame(void)
   CheckSaveGame(sizeof extrakills);
   saveg_write32(extrakills);
 
+  // [Nugget] Save milestones
+  CheckSaveGame(sizeof complete_milestones);
+  saveg_write_enum(complete_milestones);
+
   // [FG] save snapshot
   CheckSaveGame(M_SnapshotDataSize());
   M_WriteSnapshot(save_p);
@@ -2092,10 +2096,10 @@ static void G_DoLoadGame(void)
     saveg_compat = saveg_current;
   }
   // [Nugget]
-  else if (strncmp((char *) save_p, "Woof 6.0.0", strlen(CURRENT_SAVE_VERSION)) == 0)
-  {
-    saveg_compat = saveg_woof600;
-  }
+  #define SAVEIS(str) (strncmp((char *) save_p, str, strlen(CURRENT_SAVE_VERSION)) == 0)
+  else if (SAVEIS("Nugget 2.0.0")) { saveg_compat = saveg_nugget200; }
+  else if (SAVEIS("Woof 6.0.0"))   { saveg_compat = saveg_woof600; }
+  #undef SAVEIS
 
   // killough 2/22/98: Friendly savegame version difference message
   if (!forced_loadgame && strncmp((char *) save_p, vcheck, VERSIONSIZE) &&
@@ -2219,14 +2223,22 @@ static void G_DoLoadGame(void)
     save_p += 8;
   }
 
-  // [Nugget] Restore extraspawns
+  // [Nugget] -------------------------
+  
+  // Restore extraspawns
   if (save_p - savebuffer <= length - sizeof extraspawns)
   { extraspawns = saveg_read32(); }
   
-  // [Nugget] Restore extrakills
+  // Restore extrakills
   if (saveg_compat > saveg_woof600 && save_p - savebuffer <= length - sizeof extrakills)
   { extrakills = saveg_read32(); }
 
+  // Restore milestones
+  if (saveg_compat > saveg_nugget200 && save_p - savebuffer <= length - sizeof complete_milestones)
+  { complete_milestones = saveg_read_enum(); }
+
+  // ----------------------------------
+  
   // done
   Z_Free(savebuffer);
 

@@ -919,7 +919,7 @@ void M_LoadSelect(int choice)
 
   name = G_SaveGameName(choice);
 
-  saveg_compat = saveg_woof600; // [Nugget]
+  saveg_compat = saveg_nugget200; // [Nugget]
 
   if (M_access(name, F_OK) != 0)
   {
