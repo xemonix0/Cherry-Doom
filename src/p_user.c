@@ -534,8 +534,7 @@ void P_PlayerThink (player_t* player)
 {
   ticcmd_t*    cmd;
   weapontype_t newweapon;
-  // [Nugget]
-  static boolean zoomKeyDown = false;
+  static boolean zoomKeyDown = false; // [Nugget]
 
   // [AM] Assume we can interpolate at the beginning
   //      of the tic.
@@ -660,13 +659,22 @@ void P_PlayerThink (player_t* player)
   if (cmd->buttons & BT_SPECIAL)
     cmd->buttons = 0;
 
-  if (cmd->buttons & BT_CHANGE)
+  if (cmd->buttons & BT_CHANGE
+      || (casual_play && M_InputGameActive(input_lastweapon))) // [Nugget] Last weapon key
     {
+      // [Nugget] Last weapon key
+      const weapontype_t lastweapon = ((casual_play && M_InputGameActive(input_lastweapon))
+                                       ? player->lastweapon : wp_nochange);
+
       // The actual changing of the weapon is done
       //  when the weapon psprite can do it
       //  (read: not in the middle of an attack).
 
-      newweapon = (cmd->buttons & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
+      // [Nugget]
+      if (lastweapon != wp_nochange)
+        newweapon = lastweapon;
+      else
+        newweapon = (cmd->buttons & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
 
       // killough 3/22/98: For demo compatibility we must perform the fist
       // and SSG weapons switches here, rather than in G_BuildTiccmd(). For
@@ -676,12 +684,14 @@ void P_PlayerThink (player_t* player)
         { // compatibility mode -- required for old demos -- killough
           if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
               (player->readyweapon != wp_chainsaw ||
-               !player->powers[pw_strength]))
+               !player->powers[pw_strength] ||
+               newweapon != lastweapon)) // [Nugget]
             newweapon = wp_chainsaw;
           if (have_ssg &&
               newweapon == wp_shotgun &&
               player->weaponowned[wp_supershotgun] &&
-              player->readyweapon != wp_supershotgun)
+              player->readyweapon != wp_supershotgun &&
+              newweapon != lastweapon) // [Nugget]
             newweapon = wp_supershotgun;
         }
 

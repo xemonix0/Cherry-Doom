@@ -526,6 +526,12 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         M_InputGameActive(input_weapon7) && gamemode != shareware ? wp_bfg :
         M_InputGameActive(input_weapon8) ? wp_chainsaw :
         M_InputGameActive(input_weapon9) && have_ssg ? wp_supershotgun :
+
+        // [Nugget] Last weapon key
+        M_InputGameActive(input_lastweapon) && casual_play &&
+        WeaponSelectable(players[consoleplayer].lastweapon)
+        ? players[consoleplayer].lastweapon :
+
         wp_nochange;
 
       // killough 3/22/98: For network and demo consistency with the
@@ -620,7 +626,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   
   // [Nugget] Decrease the intensity of some movements if zoomed in
   if (!strictmode && fovfx[FOVFX_ZOOM].current) {
-    float divisor = fov / MAX(1, fov + fovfx[FOVFX_ZOOM].current);
+    const float divisor = fov / MAX(1, fov + fovfx[FOVFX_ZOOM].current);
     if (divisor > 1) {
       cmd->angleturn /= divisor;
       cmd->lookdir /= divisor;
@@ -2510,6 +2516,7 @@ void G_PlayerReborn(int player)
   p->playerstate = PST_LIVE;
   p->health = initial_health;  // Ty 03/12/98 - use dehacked values
   p->readyweapon = p->pendingweapon = wp_pistol;
+  p->lastweapon = wp_fist; // [Nugget] Initialize last weapon to Fist
   p->weaponowned[wp_fist] = true;
   p->weaponowned[wp_pistol] = true;
   p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values

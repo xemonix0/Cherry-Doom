@@ -4,6 +4,7 @@
 
 - **Horizontal Weapon Centering** setting
 - **_Switch [Weapon] on Pickup_** setting
+- **Last weapon key**
 - **_Blink Missing Keys_** setting
 - **Support for optional sounds** (Crispy Doom's and more)
 - **NUGHUD:**

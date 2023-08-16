@@ -143,6 +143,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ### Miscellaneous
 
+- **Last weapon key** [i.b. Cherry Doom]
 - **Zoom key**
 - **Allowed mouselook while dead**
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]

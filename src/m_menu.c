@@ -2892,9 +2892,10 @@ setup_menu_t keys_settings2[] =  // Key Binding screen strings
     {"CHAINSAW",S_INPUT     ,m_scrn,KB_X,M_Y+8*M_SPC,{0},input_weapon8},
     {"SSG"     ,S_INPUT     ,m_scrn,KB_X,M_Y+9*M_SPC,{0},input_weapon9},
     {"BEST"    ,S_INPUT     ,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_weapontoggle},
+    {"LAST"    ,S_INPUT     ,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_lastweapon}, // [Nugget] Last weapon key
     // [FG] prev/next weapon keys and buttons
-    {"PREV"    ,S_INPUT     ,m_scrn,KB_X,M_Y+12*M_SPC,{0},input_prevweapon},
-    {"NEXT"    ,S_INPUT     ,m_scrn,KB_X,M_Y+13*M_SPC,{0},input_nextweapon},
+    {"PREV"    ,S_INPUT     ,m_scrn,KB_X,M_Y+13*M_SPC,{0},input_prevweapon},
+    {"NEXT"    ,S_INPUT     ,m_scrn,KB_X,M_Y+14*M_SPC,{0},input_nextweapon},
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings1}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings3}},

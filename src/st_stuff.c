@@ -1373,9 +1373,8 @@ void ST_initData(void)
 void ST_createWidgets(void)
 {
   int i;
-  
-  // [Nugget] Reload minus sign
-  STlib_init();
+
+  STlib_init(); // [Nugget] Reload minus sign
 
   // [Nugget] Nugget HUD
 

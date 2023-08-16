@@ -42,6 +42,7 @@ enum
   input_fire,
   input_prevweapon,
   input_nextweapon,
+  input_lastweapon, // [Nugget]
 
   input_mouselook,
   input_padlook,
