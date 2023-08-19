@@ -4,6 +4,7 @@
 - **Level table**, ported from DSDA-Doom
 - **Screen shake effect on damage**, ported from Doom Retro
 - **Motion blur**, ported from Doom Retro
+- **Blood splats**, ported from Doom Retro
 
 ## Changes
 

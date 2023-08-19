@@ -1193,6 +1193,20 @@ state_t original_states[NUMSTATES] = {
   {SPR_SKUL,15,5,{A_Fall},S_BSKUL_DIE8},   // S_BSKUL_DIE7
   {SPR_SKUL,16,5,{A_Stop},S_BSKUL_DIE8},   // S_BSKUL_DIE8
 
+  // [Cherry] Blood splats from Doom Retro (MT_BLOODSPLAT)
+  {SPR_BLD2,0,-1,NULL,S_NULL},// S_BLOODSPLAT
+  {SPR_BLD2,1,-1,NULL,S_NULL},// S_BLOODSPLAT2
+  {SPR_BLD2,2,-1,NULL,S_NULL},// S_BLOODSPLAT3
+  {SPR_BLD2,3,-1,NULL,S_NULL},// S_BLOODSPLAT4
+  {SPR_BLD2,4,-1,NULL,S_NULL},// S_BLOODSPLAT5
+  {SPR_BLD2,5,-1,NULL,S_NULL},// S_BLOODSPLAT6
+  {SPR_BLD2,6,-1,NULL,S_NULL},// S_BLOODSPLAT7
+  {SPR_BLD2,7,-1,NULL,S_NULL},// S_BLOODSPLAT8
+  {SPR_BLD2,8,-1,NULL,S_NULL},// S_BLOODSPLAT9
+  {SPR_BLD2,9,-1,NULL,S_NULL},// S_BLOODSPLAT10
+  {SPR_BLD2,10,-1,NULL,S_NULL},// S_BLOODSPLAT11
+  {SPR_BLD2,11,-1,NULL,S_NULL},// S_BLOODSPLAT12
+
   // killough 10/98: mushroom effect
   {SPR_MISL,1|FF_FULLBRIGHT,8,{A_Mushroom},S_EXPLODE2},  // S_MUSHROOM
 };
@@ -4973,6 +4987,33 @@ mobjinfo_t original_mobjinfo[NUMMOBJTYPES] = {
     S_NULL    // raisestate
   },
 
+  // [Cherry] Blood splats from Doom Retro
+  {   // MT_BLOODSPLAT
+    -1,   // doomednum
+    S_BLOODSPLAT,   // spawnstate
+    1000,   // spawnhealth
+    S_NULL,   // seestate
+    sfx_None,   // seesound
+    8,    // reactiontime
+    sfx_None,   // attacksound
+    S_NULL,   // painstate
+    0,    // painchance
+    sfx_None,   // painsound
+    S_NULL,   // meleestate
+    S_NULL,   // missilestate
+    S_NULL,   // deathstate
+    S_NULL,   // xdeathstate
+    sfx_None,   // deathsound
+    0,    // speed
+    0,    // radius
+    0,    // height
+    100,    // mass
+    0,    // damage
+    sfx_None,   // activesound
+    S_NULL,    // flags
+    S_NULL    // raisestate
+  },
+
   // [crispy] support MUSINFO lump (dynamic music changing)
   {   // MT_MUSICSOURCE
     14164,   // doomednum
@@ -6728,6 +6769,88 @@ static const unsigned char m_vbox[] =
   105,105,105,105,105,  0,255,
 };
 
+// [Cherry] Blood splats from Doom Retro
+static const unsigned char bld2a0[] =
+{
+  2,0,1,0,0,0,0,0,16,0,0,0,22,0,0,0,0,1,186,186,186,255,0,1,186,186,186,255,
+};
+
+static const unsigned char bld2b0[] =
+{
+  3,0,1,0,0,0,0,0,20,0,0,0,26,0,0,0,32,0,0,0,0,1,186,186,186,255,0,1,186,186,
+  186,255,0,1,186,186,186,255,
+};
+
+static const unsigned char bld2c0[] =
+{
+  5,0,1,0,0,0,0,0,28,0,0,0,34,0,0,0,40,0,0,0,46,0,0,0,52,0,0,0,0,1,186,186,
+  186,255,0,1,186,186,186,255,0,1,186,186,186,255,0,1,186,186,186,255,0,1,
+  186,186,186,255,
+};
+
+static const unsigned char bld2d0[] =
+{
+  6,0,2,0,0,0,0,0,32,0,0,0,38,0,0,0,45,0,0,0,52,0,0,0,59,0,0,0,66,0,0,0,0,1,
+  186,186,186,255,0,2,186,186,186,186,255,0,2,186,186,186,186,255,0,2,186,
+  186,186,186,255,0,2,186,186,186,186,255,1,1,186,186,186,255,
+};
+
+static const unsigned char bld2e0[] =
+{
+  7,0,2,0,0,0,0,0,36,0,0,0,42,0,0,0,49,0,0,0,56,0,0,0,62,0,0,0,68,0,0,0,69,0,
+  0,0,1,1,186,186,186,255,0,2,186,186,186,186,255,0,2,186,186,186,186,255,1,
+  1,186,186,186,255,1,1,186,186,186,255,255,1,1,186,186,186,255,
+};
+
+static const unsigned char bld2f0[] =
+{
+  7,0,2,0,0,0,0,0,36,0,0,0,42,0,0,0,43,0,0,0,49,0,0,0,55,0,0,0,62,0,0,0,69,0,
+  0,0,0,1,186,186,186,255,255,0,1,186,186,186,255,0,1,186,186,186,255,0,2,
+  186,186,186,186,255,0,2,186,186,186,186,255,1,1,186,186,186,255,
+};
+
+static const unsigned char bld2g0[] =
+{
+  5,0,2,0,0,0,0,0,28,0,0,0,34,0,0,0,41,0,0,0,48,0,0,0,55,0,0,0,1,1,186,186,
+  186,255,0,2,186,186,186,186,255,0,2,186,186,186,186,255,0,2,186,186,186,
+  186,255,1,1,186,186,186,255,
+};
+
+static const unsigned char bld2h0[] =
+{
+  6,0,2,0,0,0,0,0,32,0,0,0,38,0,0,0,39,0,0,0,45,0,0,0,52,0,0,0,59,0,0,0,1,
+  1,186,186,186,255,255,1,1,186,186,186,255,0,2,186,186,186,186,255,0,2,
+  186,186,186,186,255,0,1,186,186,186,255,
+};
+
+static const unsigned char bld2i0[] =
+{
+  6,0,2,0,0,0,0,0,32,0,0,0,38,0,0,0,45,0,0,0,52,0,0,0,59,0,0,0,66,0,0,0,1,
+  1,186,186,186,255,0,2,186,186,186,186,255,0,2,186,186,186,186,255,0,2,
+  186,186,186,186,255,0,2,186,186,186,186,255,0,1,186,186,186,255,
+};
+
+static const unsigned char bld2j0[] =
+{
+  7,0,2,0,0,0,0,0,36,0,0,0,42,0,0,0,43,0,0,0,49,0,0,0,55,0,0,0,62,0,0,0,69,
+  0,0,0,1,1,186,186,186,255,255,1,1,186,186,186,255,1,1,186,186,186,255,0,
+  2,186,186,186,186,255,0,2,186,186,186,186,255,1,1,186,186,186,255,
+};
+
+static const unsigned char bld2k0[] =
+{
+  7,0,2,0,0,0,0,0,36,0,0,0,42,0,0,0,49,0,0,0,56,0,0,0,62,0,0,0,68,0,0,0,69,
+  0,0,0,1,1,186,186,186,255,0,2,186,186,186,186,255,0,2,186,186,186,186,255,
+  0,1,186,186,186,255,0,1,186,186,186,255,255,0,1,186,186,186,255,
+};
+
+static const unsigned char bld2l0[] =
+{
+  6,0,2,0,0,0,0,0,32,0,0,0,38,0,0,0,45,0,0,0,52,0,0,0,58,0,0,0,59,0,0,0,0,1,
+  186,186,186,255,0,2,186,186,186,186,255,0,2,186,186,186,186,255,1,1,186,
+  186,186,255,255,1,1,186,186,186,255,
+};
+
 // Animated textures definition lump -- see SWANTBLS.EXE docs
 static const unsigned char animated[]=
 {
@@ -7712,6 +7835,20 @@ const lumpinfo_t predefined_lumps[]={
   {"PLS2C0", sizeof pls2c0, pls2c0},
   {"PLS2D0", sizeof pls2d0, pls2d0},
   {"PLS2E0", sizeof pls2e0, pls2e0},
+
+  // [Cherry] Blood splats from Doom Retro
+  {"BLD2A0", sizeof bld2a0, bld2a0},
+  {"BLD2B0", sizeof bld2b0, bld2b0},
+  {"BLD2C0", sizeof bld2c0, bld2c0},
+  {"BLD2D0", sizeof bld2d0, bld2d0},
+  {"BLD2E0", sizeof bld2e0, bld2e0},
+  {"BLD2F0", sizeof bld2f0, bld2f0},
+  {"BLD2G0", sizeof bld2g0, bld2g0},
+  {"BLD2H0", sizeof bld2h0, bld2h0},
+  {"BLD2I0", sizeof bld2i0, bld2i0},
+  {"BLD2J0", sizeof bld2j0, bld2j0},
+  {"BLD2K0", sizeof bld2k0, bld2k0},
+  {"BLD2L0", sizeof bld2l0, bld2l0},
 
   // end of sprites
   { "S_END"},                          // phares 3/9/98    killough 3/21/98

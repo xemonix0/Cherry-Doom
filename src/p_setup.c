@@ -1623,6 +1623,9 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
   bodyqueslot = 0;
   deathmatch_p = deathmatchstarts;
+  // [Cherry] Blood splats from Doom Retro
+  bloodSplatQueueSlot = 0;
+  memset(bloodSplatQueue, 0, sizeof(mobj_t *) * BLOODSPLATQUEUESIZE);
   P_MapStart();
   P_LoadThings(lumpnum+ML_THINGS);
 
@@ -1679,6 +1682,7 @@ void P_Init (void)
 {
   P_InitSwitchList();
   P_InitPicAnims();
+  P_InitLiquids(); // [Cherry]
   R_InitSprites(sprnames);
 }
 

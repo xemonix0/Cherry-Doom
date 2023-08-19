@@ -290,6 +290,29 @@ void P_XYMovement (mobj_t* mo)
       || (!(player && player->cheats & CF_FLY) && (mo->z > mo->floorz)))
     return;
 
+  // [Cherry] Blood splats from Doom Retro
+  if (casual_play && blood_splats && (mo->flags & MF_CORPSE)
+      && mo->type != MT_BARREL && (mo->momx || mo->momy) && mo->bloodsplats)
+  {
+    const int max = MIN((abs(mo->momx) + abs(mo->momy)) >> (FRACBITS - 2), 8);
+
+    if (max) {
+      extern boolean idgaf;
+
+      const int color = V_BloodColor(mo->info->bloodcolor);
+      const int radius = (spritewidth[sprites[mo->sprite].spriteframes[mo->frame & FF_FRAMEMASK].lump[0]] >> FRACBITS) >> 1;
+      const int floorz = mo->floorz;
+
+      const int flags = (nugget_comp[comp_fuzzyblood] && mo->flags & MF_SHADOW) ? MF_SHADOW : 0;
+      const int flags2 = (color || idgaf) ? MF2_COLOREDBLOOD : 0;
+
+      for (int i = 0; i < max; ++i)
+        P_SpawnBloodSplat(mo->x + ((Woof_Random() % (radius*2) - radius) << FRACBITS),
+                          mo->y + ((Woof_Random() % (radius*2) - radius) << FRACBITS),
+                          flags, flags2, 0, color);
+    }
+  }
+
   // killough 8/11/98: add bouncers
   // killough 9/15/98: add objects falling off ledges
   // killough 11/98: only include bouncers hanging off ledges
@@ -935,6 +958,13 @@ mapthing_t itemrespawnque[ITEMQUESIZE];
 int itemrespawntime[ITEMQUESIZE];
 int iquehead, iquetail;
 
+// [Cherry] Blood splats from Doom Retro
+mobj_t *bloodSplatQueue[BLOODSPLATQUEUESIZE];
+int bloodSplatQueueSlot;
+
+// [Cherry]
+extern int *isliquid;
+
 //
 // P_RemoveMobj
 //
@@ -949,6 +979,15 @@ void P_RemoveMobj (mobj_t *mobj)
       if ((iquehead &= ITEMQUESIZE-1) == iquetail)   // lose one off the end?
         iquetail = (iquetail+1)&(ITEMQUESIZE-1);
     }
+
+  // [Cherry] Blood splats from Doom Retro
+  if (casual_play && blood_splats && mobj->type == MT_BLOOD
+      && !isliquid[mobj->subsector->sector->floorpic])
+  {
+    const int n = MAX(Woof_Random() % 3, 1);
+    for (int i = 0; i < n; ++i)
+      P_SpawnBloodSplat(mobj->x, mobj->y, mobj->flags, mobj->flags2, mobj->intflags, mobj->bloodcolor);
+  }
 
   // unlink from sector and block lists
 
@@ -1411,6 +1450,35 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
       P_SetMobjState(th,S_BLOOD3);
 }
 
+//
+// [Cherry]
+// P_SpawnBloodSplat
+//
+void P_SpawnBloodSplat(fixed_t x, fixed_t y, int flags1, int flags2, int intflags, int bloodcolor)
+{
+  mobj_t *newsplat;
+
+  x += (Woof_Random() % 16 - 5) << FRACBITS;
+  y += (Woof_Random() % 16 - 5) << FRACBITS;
+
+  newsplat = P_SpawnMobj(x, y, ONFLOORZ, MT_BLOODSPLAT);
+
+  newsplat->flags |= (mobjflag_t)flags1;
+  newsplat->flags2 |= (mobjflag2_t)flags2;
+  newsplat->intflags |= intflags;
+  newsplat->bloodcolor = bloodcolor;
+  P_SetMobjState(newsplat, (statenum_t)(S_BLOODSPLAT + Woof_Random() % 12));
+
+  if (bloodSplatQueueSlot > BLOODSPLATQUEUESIZE)
+  {
+    mobj_t *oldsplat = bloodSplatQueue[bloodSplatQueueSlot % BLOODSPLATQUEUESIZE];
+
+    if (oldsplat)
+      P_RemoveMobj(oldsplat);
+  }
+
+  bloodSplatQueue[bloodSplatQueueSlot++ % BLOODSPLATQUEUESIZE] = newsplat;
+}
 
 //
 // P_CheckMissileSpawn

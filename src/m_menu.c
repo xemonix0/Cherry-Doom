@@ -4001,6 +4001,8 @@ enum {
   enem1_extra_gibbing,
   enem1_bloodier_gibbing,
   enem1_zdoom_drops,
+  // [Cherry]
+  enem1_blood_splats,
 
   enem1_end
 };
@@ -4037,6 +4039,8 @@ setup_menu_t enem_settings1[] =  // Enemy Settings screen
   {"Extra Gibbing",         S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + enem1_extra_gibbing    * M_SPC, {"extra_gibbing"}},
   {"Bloodier Gibbing",      S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + enem1_bloodier_gibbing * M_SPC, {"bloodier_gibbing"}},
   {"ZDoom-like item drops", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + enem1_zdoom_drops      * M_SPC, {"zdoom_item_drops"}},
+  // [Cherry]
+  {"Blood Splats",          S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + enem1_blood_splats     * M_SPC, {"blood_splats"}},
 
   {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {enem_settings2}},
 

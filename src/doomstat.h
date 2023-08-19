@@ -523,6 +523,7 @@ extern int event_timers[];
 extern int extra_gibbing;
 extern int bloodier_gibbing;
 extern int zdoom_item_drops;
+extern int blood_splats; // [Cherry]
 
 // CFG only
 extern int chasecam_crosshair;

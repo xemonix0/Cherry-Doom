@@ -19,6 +19,10 @@ Just like with Nugget Doom, most of Cherry Doom's features come from other sourc
 
 - **Last used weapon** key [i.b. Half-Life]
 
+### Enemies
+
+- **Blood splats** [p.f. Doom Retro]
+
 ### Miscellaneous
 
 - **Level table** and WAD stats tracking [p.f. DSDA-Doom]

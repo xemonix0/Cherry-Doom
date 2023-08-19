@@ -945,6 +945,9 @@ int EV_DoGenLockedDoor(line_t *line);
 // at game start
 void P_InitPicAnims(void);
 
+// [Cherry]
+void P_InitLiquids(void);
+
 void P_InitSwitchList(void);
 
 // at map load

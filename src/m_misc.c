@@ -1166,6 +1166,14 @@ default_t defaults[] = {
 
   // [Nugget] End --------------------------------------------------------
 
+  // [Cherry] Blood splats from Doom Retro
+  {
+    "blood_splats",
+    (config_t *) &blood_splats, NULL,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable blood splats from Doom Retro"
+  },
+
   {
     "colored_blood",
     (config_t *) &colored_blood, NULL,
