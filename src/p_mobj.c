@@ -983,11 +983,7 @@ void P_RemoveMobj (mobj_t *mobj)
   // [Cherry] Blood splats from Doom Retro
   if (casual_play && blood_splats && mobj->type == MT_BLOOD
       && !isliquid[mobj->subsector->sector->floorpic])
-  {
-    const int n = MAX(Woof_Random() % 3, 1);
-    for (int i = 0; i < n; ++i)
-      P_SpawnBloodSplat(mobj->x, mobj->y, mobj->flags, mobj->flags2, mobj->intflags, mobj->bloodcolor);
-  }
+    P_SpawnBloodSplat(mobj->x, mobj->y, mobj->flags, mobj->flags2, mobj->intflags, mobj->bloodcolor);
 
   // unlink from sector and block lists
 
