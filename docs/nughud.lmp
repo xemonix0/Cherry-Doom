@@ -3,17 +3,16 @@
 ; - Widgets -
 
 ; Ammo count
-; X position
-nughud_ammo_x    44
-; Y position
-nughud_ammo_y    171
-; Apply widescreen shifting
-nughud_ammo_wide -1
+nughud_ammo_x     44
+nughud_ammo_y     171
+nughud_ammo_wide  -1
+nughud_ammo_align 1
 
 ; Health count
-nughud_health_x    90
-nughud_health_y    171
-nughud_health_wide -1
+nughud_health_x     90
+nughud_health_y     171
+nughud_health_wide  -1
+nughud_health_align 1
 
 ; Arms number 1
 nughud_arms1_x    -1
@@ -61,21 +60,22 @@ nughud_arms9_y    182
 nughud_arms9_wide -1
 
 ; Frags count
-nughud_frags_x    174
-nughud_frags_y    171
-nughud_frags_wide 0
+nughud_frags_x     174
+nughud_frags_y     171
+nughud_frags_wide  0
+nughud_frags_align 1
 
 ; Face
 nughud_face_x    -1
 nughud_face_y    168
 nughud_face_wide 0
-; Draw Face background
 nughud_face_bg   1
 
 ; Armor count
-nughud_armor_x    221
-nughud_armor_y    171
-nughud_armor_wide 1
+nughud_armor_x     221
+nughud_armor_y     171
+nughud_armor_wide  1
+nughud_armor_align 1
 
 ; Armor icon (requires NHARMOR# font)
 nughud_armoricon_x    0
@@ -98,44 +98,52 @@ nughud_key2_y    191
 nughud_key2_wide 1
 
 ; Bullets count
-nughud_ammo0_x    288
-nughud_ammo0_y    173
-nughud_ammo0_wide 1
+nughud_ammo0_x     288
+nughud_ammo0_y     173
+nughud_ammo0_wide  1
+nughud_ammo0_align 1
 
 ; Shells count
-nughud_ammo1_x    288
-nughud_ammo1_y    179
-nughud_ammo1_wide 1
+nughud_ammo1_x     288
+nughud_ammo1_y     179
+nughud_ammo1_wide  1
+nughud_ammo1_align 1
 
 ; Cells count
-nughud_ammo2_x    288
-nughud_ammo2_y    191
-nughud_ammo2_wide 1
+nughud_ammo2_x     288
+nughud_ammo2_y     191
+nughud_ammo2_wide  1
+nughud_ammo2_align 1
 
 ; Rockets count
-nughud_ammo3_x    288
-nughud_ammo3_y    185
-nughud_ammo3_wide 1
+nughud_ammo3_x     288
+nughud_ammo3_y     185
+nughud_ammo3_wide  1
+nughud_ammo3_align 1
 
 ; Max Bullets count
-nughud_maxammo0_x    314
-nughud_maxammo0_y    173
-nughud_maxammo0_wide 1
+nughud_maxammo0_x     314
+nughud_maxammo0_y     173
+nughud_maxammo0_wide  1
+nughud_maxammo0_align 1
 
 ; Max Shells count
-nughud_maxammo1_x    314
-nughud_maxammo1_y    179
-nughud_maxammo1_wide 1
+nughud_maxammo1_x     314
+nughud_maxammo1_y     179
+nughud_maxammo1_wide  1
+nughud_maxammo1_align 1
 
 ; Max Cells count
-nughud_maxammo2_x    314
-nughud_maxammo2_y    191
-nughud_maxammo2_wide 1
+nughud_maxammo2_x     314
+nughud_maxammo2_y     191
+nughud_maxammo2_wide  1
+nughud_maxammo2_align 1
 
 ; Max Rockets count
-nughud_maxammo3_x    314
-nughud_maxammo3_y    185
-nughud_maxammo3_wide 1
+nughud_maxammo3_x     314
+nughud_maxammo3_y     185
+nughud_maxammo3_wide  1
+nughud_maxammo3_align 1
 
 ; - Text Lines -
 
@@ -144,7 +152,6 @@ nughud_time_x     2
 nughud_time_y     151
 nughud_time_wide  -2
 nughud_time_align -1
-; Relocate Time display to position of Stats display if the latter is disabled
 nughud_time_sts   1
 
 ; Stats display
@@ -191,46 +198,53 @@ nughud_secret_align 0
 
 ; - Patches -
 
-nughud_patch1_x    0
-nughud_patch1_y    0
-nughud_patch1_wide 0
-; Name of Patch
-nughud_patch1_name ""
+nughud_patch1_x     0
+nughud_patch1_y     0
+nughud_patch1_wide  0
+nughud_patch1_align -1
+nughud_patch1_name  ""
 
-nughud_patch2_x    0
-nughud_patch2_y    0
-nughud_patch2_wide 0
-nughud_patch2_name ""
+nughud_patch2_x     0
+nughud_patch2_y     0
+nughud_patch2_wide  0
+nughud_patch2_align -1
+nughud_patch2_name  ""
 
-nughud_patch3_x    0
-nughud_patch3_y    0
-nughud_patch3_wide 0
-nughud_patch3_name ""
+nughud_patch3_x     0
+nughud_patch3_y     0
+nughud_patch3_wide  0
+nughud_patch3_align -1
+nughud_patch3_name  ""
 
-nughud_patch4_x    0
-nughud_patch4_y    0
-nughud_patch4_wide 0
-nughud_patch4_name ""
+nughud_patch4_x     0
+nughud_patch4_y     0
+nughud_patch4_wide  0
+nughud_patch4_align -1
+nughud_patch4_name  ""
 
-nughud_patch5_x    0
-nughud_patch5_y    0
-nughud_patch5_wide 0
-nughud_patch5_name ""
+nughud_patch5_x     0
+nughud_patch5_y     0
+nughud_patch5_wide  0
+nughud_patch5_align -1
+nughud_patch5_name  ""
 
-nughud_patch6_x    0
-nughud_patch6_y    0
-nughud_patch6_wide 0
-nughud_patch6_name ""
+nughud_patch6_x     0
+nughud_patch6_y     0
+nughud_patch6_wide  0
+nughud_patch6_align -1
+nughud_patch6_name  ""
 
-nughud_patch7_x    0
-nughud_patch7_y    0
-nughud_patch7_wide 0
-nughud_patch7_name ""
+nughud_patch7_x     0
+nughud_patch7_y     0
+nughud_patch7_wide  0
+nughud_patch7_align -1
+nughud_patch7_name  ""
 
-nughud_patch8_x    0
-nughud_patch8_y    0
-nughud_patch8_wide 0
-nughud_patch8_name ""
+nughud_patch8_x     0
+nughud_patch8_y     0
+nughud_patch8_wide  0
+nughud_patch8_align -1
+nughud_patch8_name  ""
 
 ; Draw percentage signs
 nughud_percents 1

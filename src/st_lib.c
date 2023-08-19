@@ -69,7 +69,8 @@ void STlib_initNum
   patch_t** pl,
   int* num,
   boolean* on,
-  int     width )
+  int     width,
+  int     align ) // [Nugget]
 {
   n->x  = x;
   n->y  = y;
@@ -78,6 +79,9 @@ void STlib_initNum
   n->num  = num;
   n->on = on;
   n->p  = pl;
+  // [Nugget]
+  n->align = align;
+  n->haspercent = false;
 }
 
 //
@@ -120,6 +124,19 @@ void STlib_drawNum
   // if non-number, do not draw it
   if (num == 1994)
     return;
+
+  // [Nugget] Custom alignment
+  if (n->align != 1) {
+    int tnum = num, tnumdigits = 0;
+    const int tw = (!n->align ? w/2 : w);
+
+    do {
+      tnum /= 10;
+      tnumdigits++;
+    } while (tnum);
+
+    x += tw * (tnumdigits - (!n->align && n->haspercent));
+  }
 
   //jff 2/16/98 add color translation to digit output
   // in the special case of 0, you draw 0
@@ -187,9 +204,10 @@ void STlib_initPercent
   patch_t** pl,
   int* num,
   boolean* on,
-  patch_t* percent )
+  patch_t* percent,
+  int      align ) // [Nugget]
 {
-  STlib_initNum(&p->n, x, y, pl, num, on, 3);
+  STlib_initNum(&p->n, x, y, pl, num, on, 3, align); // [Nugget]
   p->p = percent;
 }
 
@@ -210,9 +228,25 @@ void STlib_updatePercent
   if (*per->n.on  // killough 2/21/98: fix percents not updated;
       && (!st_crispyhud || nughud.percents)) // [Nugget]
   {
+    // [Nugget] Custom alignment
+
+    int tx = per->n.x;
+
+    if (per->n.align != 1) {
+      int tnum = *(per->n.num), tnumdigits = 0;
+      const int tw = (!per->n.align ? SHORT(per->n.p[0]->width)/2 : SHORT(per->n.p[0]->width));
+
+      do {
+        tnum /= 10;
+        tnumdigits++;
+      } while (tnum);
+
+      tx += tw * (tnumdigits - !per->n.align);
+    }
+
     V_DrawPatchTranslated
     (
-      per->n.x,
+      tx,
       per->n.y,
       FG,
       per->p,
@@ -221,7 +255,10 @@ void STlib_updatePercent
       sts_always_red ? NULL :
       outrng
     );
+    
+    per->n.haspercent = true;
   }
+  else { per->n.haspercent = false; }
 
   STlib_updateNum(&per->n, outrng);
 }

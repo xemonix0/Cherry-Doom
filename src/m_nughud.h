@@ -30,47 +30,48 @@ typedef struct nughud_widget_s {
   int wide;
 } nughud_widget_t;
 
-typedef struct nughud_textline_s {
+typedef struct nughud_alignable_s {
   int x, y;
   int wide;
   int align;
-} nughud_textline_t;
+} nughud_alignable_t;
 
 typedef struct nughud_patch_s {
   int x, y;
   int wide;
+  int align;
   char *name;
 } nughud_patch_t;
 
 #define NUMNUGHUDPATCHES 8
 
 typedef struct nughud_s {
-  nughud_widget_t   ammo;
-  nughud_widget_t   health;
-  nughud_widget_t   arms[9];
-  nughud_widget_t   frags;
-  nughud_widget_t   face;
-  boolean           face_bg;
-  nughud_widget_t   armor;
-  nughud_widget_t   armoricon;
-  nughud_widget_t   keys[3];
-  nughud_widget_t   ammos[4];
-  nughud_widget_t   maxammos[4];
-  nughud_textline_t time;
-  boolean           time_sts;
-  nughud_textline_t sts;
-  nughud_textline_t title;
-  nughud_textline_t powers;
-  nughud_textline_t coord;
-  nughud_textline_t fps;
-  nughud_textline_t message;
-  nughud_textline_t secret;
-  nughud_patch_t    patches[NUMNUGHUDPATCHES];
-  boolean           percents;
-  fixed_t           weapheight;
+  nughud_alignable_t ammo;
+  nughud_alignable_t health;
+  nughud_widget_t    arms[9];
+  nughud_alignable_t frags;
+  nughud_widget_t    face;
+  boolean            face_bg;
+  nughud_alignable_t armor;
+  nughud_widget_t    armoricon;
+  nughud_widget_t    keys[3];
+  nughud_alignable_t ammos[4];
+  nughud_alignable_t maxammos[4];
+  nughud_alignable_t time;
+  boolean            time_sts;
+  nughud_alignable_t sts;
+  nughud_alignable_t title;
+  nughud_alignable_t powers;
+  nughud_alignable_t coord;
+  nughud_alignable_t fps;
+  nughud_alignable_t message;
+  nughud_alignable_t secret;
+  nughud_patch_t     patches[NUMNUGHUDPATCHES];
+  boolean            percents;
+  fixed_t            weapheight;
   // These determine whether or not a given NUGHUD font/patch should be used
-  boolean           nhtnum,   nhrnum,   nhamnum,  nhwpnum,  nhkeys,   nhbersrk,
-                    nharmor,  nhinfnty;
+  boolean            nhtnum,   nhrnum,   nhamnum,  nhwpnum,  nhkeys,   nhbersrk,
+                     nharmor,  nhinfnty;
 } nughud_t;
 
 extern nughud_t nughud;

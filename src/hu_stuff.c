@@ -1505,7 +1505,7 @@ int hud_level_stats, hud_level_time;
 int map_power_timers, hud_power_timers; // [Nugget] Powerup timers
 
 // [Nugget]
-static void NughudAlignWidgetX(nughud_textline_t aligner, hu_textline_t* alignee)
+static void NughudAlignWidgetX(nughud_alignable_t aligner, hu_textline_t* alignee)
 {
   alignee->x = aligner.x + NUGHUDWIDESHIFT(aligner.wide);
   alignee->x -= ((aligner.align == 1) ? alignee->width   :
@@ -1601,25 +1601,25 @@ void HU_Drawer(void)
     {
       // [Nugget] Special treatment for some widgets in Nugget HUD
       if (st_crispyhud) {
-        nughud_textline_t *ntl = NULL;
+        nughud_alignable_t *na = NULL;
 
-        if      (w->line == &w_sttime) { ntl = &nughud.time;   }
-        else if (w->line == &w_monsec) { ntl = &nughud.sts;    }
-        else if (w->line == &w_title)  { ntl = &nughud.title;  }
-        else if (w->line == &w_powers) { ntl = &nughud.powers; }
-        else if (w->line == &w_coord)  { ntl = &nughud.coord;  }
-        else if (w->line == &w_fps)    { ntl = &nughud.fps;    }
+        if      (w->line == &w_sttime) { na = &nughud.time;   }
+        else if (w->line == &w_monsec) { na = &nughud.sts;    }
+        else if (w->line == &w_title)  { na = &nughud.title;  }
+        else if (w->line == &w_powers) { na = &nughud.powers; }
+        else if (w->line == &w_coord)  { na = &nughud.coord;  }
+        else if (w->line == &w_fps)    { na = &nughud.fps;    }
 
-        if (ntl) {
-          if (ntl == &nughud.time && nughud.time_sts
+        if (na) {
+          if (na == &nughud.time && nughud.time_sts
               && !hud_level_stats && (!automapactive || !map_level_stats))
           { // Relocate Time text line to position of Stats text line
             NughudAlignWidgetX(nughud.sts, w->line);
             w->line->y = nughud.sts.y;
           }
           else {
-            NughudAlignWidgetX(*ntl, w->line);
-            w->line->y = ntl->y;
+            NughudAlignWidgetX(*na, w->line);
+            w->line->y = na->y;
           }
           HUlib_drawTextLine(w->line, align_direct, false);
         }

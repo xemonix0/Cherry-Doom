@@ -1,4 +1,4 @@
-**WARNING:** Saves from previous versions are incompatible with this release.
+**WARNING:** Saves from previous versions are incompatible with this version.
 
 ## New Features
 
@@ -8,6 +8,7 @@
 - **_Blink Missing Keys_** setting
 - **Support for optional sounds** (Crispy Doom's and more)
 - **NUGHUD:**
+  - Made patches and some Status Bar widgets alignable;
   - Armor icon;
   - Infinity icon;
   - Ammo count font;
