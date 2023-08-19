@@ -404,6 +404,10 @@ void M_DrawMainMenu(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
+  // [Cherry] stop motion blur
+  if (motion_blur)
+    I_SetMotionBlur(0);
+
   M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (94,2,0,W_CacheLumpName("M_DOOM",PU_CACHE));
@@ -4696,6 +4700,7 @@ enum { // [Nugget]
   gen6_stub1,
   gen6_title2,
   gen6_damageshake,
+  gen6_motionblur,
   gen6_stub2,
   gen6_title3,
   gen6_sclipdist,
@@ -4724,6 +4729,7 @@ setup_menu_t gen_settings6[] = { // [Nugget]
   {"", S_SKIP, m_null, M_X, M_Y + gen6_stub1*M_SPC},
   {"Cherry - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
     {"Damage Screen Shake Percentage",S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_damageshake   * M_SPC, {"damage_shake"}},
+    {"Motion Blur Percentage",        S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_motionblur    * M_SPC, {"motion_blur"}},
   {"", S_SKIP, m_null, M_X, M_Y + gen6_stub2*M_SPC},
   {"Nugget - Miscellaneous", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title3 * M_SPC},
     {"Sound Hearing Distance",        S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},

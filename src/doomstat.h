@@ -476,7 +476,10 @@ extern int damagecount_cap;
 extern int bonuscount_cap;
 extern int fake_contrast;
 extern int wipe_speed_percentage;
-extern int damage_shake; // [Cherry]
+// [Cherry] General ------------------------------------------------------
+extern int damage_shake;
+extern int motion_blur;
+// [Cherry] End ----------------------------------------------------------
 extern int s_clipping_dist_x2;
 extern int one_key_saveload;
 extern int no_page_ticking;

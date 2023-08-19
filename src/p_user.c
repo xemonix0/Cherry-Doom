@@ -30,6 +30,8 @@
 #include "m_input.h"
 #include "s_sound.h"
 #include "sounds.h"
+// [Cherry] motion blur
+#include "i_video.h"
 
 // Index of the special effects (INVUL inverse) map.
 
@@ -536,6 +538,8 @@ void P_PlayerThink (player_t* player)
   weapontype_t newweapon;
   // [Nugget]
   static boolean zoomKeyDown = false;
+  // [Cherry] motion blur
+  static int   motionblur;
 
   // [AM] Assume we can interpolate at the beginning
   //      of the tic.
@@ -586,6 +590,27 @@ void P_PlayerThink (player_t* player)
       player->lookdir = 0;
       player->centering = false;
     }
+  }
+
+  // [Cherry] motion blur
+  if (motion_blur)
+  {
+    motionblur = 0;
+
+    if (!automapactive)
+    {
+      if (player->damagecount)
+        motionblur = MAX(motionblur, 100);
+      else if (cmd->angleturn)
+        motionblur = MIN(abs(cmd->angleturn) * 100 / 960, 150);
+    }
+
+    I_SetMotionBlur(motionblur * motion_blur / 100);
+  }
+  else if (motionblur)
+  {
+    motionblur = 0;
+    I_SetMotionBlur(0);
   }
 
   // [crispy] weapon recoil pitch

@@ -910,6 +910,21 @@ boolean I_WritePNGfile(char *filename)
   return ret;
 }
 
+// [Cherry] motion blur
+void I_SetMotionBlur(const int percent)
+{
+  if (percent)
+  {
+    SDL_SetSurfaceAlphaMod(sdlscreen, SDL_ALPHA_OPAQUE - 128 * percent / 100);
+    SDL_SetSurfaceBlendMode(sdlscreen, SDL_BLENDMODE_BLEND);
+  }
+  else 
+  {
+    SDL_SetSurfaceAlphaMod(sdlscreen, SDL_ALPHA_OPAQUE);
+    SDL_SetSurfaceBlendMode(sdlscreen, SDL_BLENDMODE_NONE);
+  }
+}
+
 // Set the application icon
 
 void I_InitWindowIcon(void)

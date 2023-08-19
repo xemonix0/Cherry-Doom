@@ -13,6 +13,7 @@ Just like with Nugget Doom, most of Cherry Doom's features come from other sourc
 
 - **More menu background choices:** Solid, Dark, Darker; background can also be enabled for all menus
 - **Screen shake effect on damage** [p.f. Doom Retro]
+- **Motion blur** [p.f. Doom Retro]
 
 ### Weapons
 

@@ -790,6 +790,13 @@ default_t defaults[] = {
     "View shake percentage when receiving damage"
   },
 
+  {
+    "motion_blur",
+    (config_t *) &motion_blur, NULL,
+    {0}, {0,100}, number, ss_gen, wad_no,
+    "Motion blur percentage"
+  },
+
   // [Cherry] End --------------------------------------------------------
 
   {

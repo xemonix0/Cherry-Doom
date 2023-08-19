@@ -157,7 +157,10 @@ int damagecount_cap;
 int bonuscount_cap;
 int fake_contrast;
 int wipe_speed_percentage;
-int damage_shake; // [Cherry]
+// [Cherry] General ------------------------------------------------------
+int damage_shake;
+int motion_blur;
+// [Cherry] End ----------------------------------------------------------
 int s_clipping_dist_x2;
 int one_key_saveload;
 int no_page_ticking;

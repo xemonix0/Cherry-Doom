@@ -1011,6 +1011,11 @@ boolean G_Responder(event_t* ev)
   if (M_InputActivated(input_pause))
   {
     sendpause = true;
+
+    // [Cherry] stop motion blur
+    if (motion_blur)
+      I_SetMotionBlur(0);
+
     return true;
   }
 
