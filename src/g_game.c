@@ -1013,7 +1013,7 @@ boolean G_Responder(event_t* ev)
     sendpause = true;
 
     // [Cherry] stop motion blur
-    if (motion_blur)
+    if (STRICTMODE(motion_blur))
       I_SetMotionBlur(0);
 
     return true;

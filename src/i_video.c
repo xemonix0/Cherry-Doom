@@ -476,7 +476,7 @@ static inline void I_UpdateRender (boolean shaking)
 
         SDL_SetRenderTarget(renderer, texture_upscaled);
         // [Cherry] damage shake
-        if (shaking)
+        if (STRICTMODE(shaking))
         {
             SDL_RenderCopyEx(renderer, texture, NULL, NULL, SHAKEANGLE, NULL, SDL_FLIP_NONE);
         }
@@ -493,7 +493,7 @@ static inline void I_UpdateRender (boolean shaking)
     else
     {
         // [Cherry] damage shake
-        if (shaking)
+        if (STRICTMODE(shaking))
         {
             SDL_RenderCopyEx(renderer, texture, NULL, NULL, SHAKEANGLE, NULL, SDL_FLIP_NONE);
         }

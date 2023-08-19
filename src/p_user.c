@@ -593,7 +593,7 @@ void P_PlayerThink (player_t* player)
   }
 
   // [Cherry] motion blur
-  if (motion_blur)
+  if (STRICTMODE(motion_blur))
   {
     motionblur = 0;
 

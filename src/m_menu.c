@@ -405,7 +405,7 @@ void M_DrawMainMenu(void)
   inhelpscreens = true;
 
   // [Cherry] stop motion blur
-  if (motion_blur)
+  if (STRICTMODE(motion_blur))
     I_SetMotionBlur(0);
 
   M_DrawBackground("FLOOR4_6", screens[0], false);
