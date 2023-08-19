@@ -781,6 +781,17 @@ default_t defaults[] = {
     "Screen Wipe speed percentage"
   },
 
+  // [Cherry] General Display options ------------------------------------
+
+  {
+    "damage_shake",
+    (config_t *) &damage_shake, NULL,
+    {0}, {0,100}, number, ss_gen, wad_no,
+    "View shake percentage when receiving damage"
+  },
+
+  // [Cherry] End --------------------------------------------------------
+
   {
     "fake_contrast",
     (config_t *) &fake_contrast, NULL,

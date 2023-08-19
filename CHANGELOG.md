@@ -1,6 +1,8 @@
 ## New Features
+
 - **Last used weapon** key, inspired by Half-Life
 - **Level table**, ported from DSDA-Doom
+- **Screen shake effect on damage**, ported from Doom Retro
 
 ## Changes
 

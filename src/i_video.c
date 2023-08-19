@@ -41,6 +41,10 @@
 
 #include "icon.c"
 
+// [Cherry] damage shake
+#include "m_random.h"
+#define SHAKEANGLE ((double)(Woof_Random() * 128 % 1501) * damage_shake / 100000.0)
+
 int SCREENWIDTH, SCREENHEIGHT;
 int NONWIDEWIDTH; // [crispy] non-widescreen SCREENWIDTH
 int WIDESCREENDELTA; // [crispy] horizontal widescreen offset
@@ -460,11 +464,10 @@ void I_StartFrame(void)
 
 }
 
-static inline void I_UpdateRender (void)
+static inline void I_UpdateRender (boolean shaking)
 {
     SDL_LowerBlit(sdlscreen, &blit_rect, argbbuffer, &blit_rect);
     SDL_UpdateTexture(texture, NULL, argbbuffer->pixels, argbbuffer->pitch);
-    SDL_RenderClear(renderer);
 
     if (smooth_scaling && !need_downscaling)
     {
@@ -472,7 +475,15 @@ static inline void I_UpdateRender (void)
         // using "nearest" integer scaling.
 
         SDL_SetRenderTarget(renderer, texture_upscaled);
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
+        // [Cherry] damage shake
+        if (shaking)
+        {
+            SDL_RenderCopyEx(renderer, texture, NULL, NULL, SHAKEANGLE, NULL, SDL_FLIP_NONE);
+        }
+        else
+        {
+            SDL_RenderCopy(renderer, texture, NULL, NULL);
+        }
 
         // Finally, render this upscaled texture to screen using linear scaling.
 
@@ -481,7 +492,15 @@ static inline void I_UpdateRender (void)
     }
     else
     {
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
+        // [Cherry] damage shake
+        if (shaking)
+        {
+            SDL_RenderCopyEx(renderer, texture, NULL, NULL, SHAKEANGLE, NULL, SDL_FLIP_NONE);
+        }
+        else
+        {
+            SDL_RenderCopy(renderer, texture, NULL, NULL);
+        }
     }
 }
 
@@ -490,7 +509,7 @@ static unsigned int disk_to_draw, disk_to_restore;
 
 static void CreateUpscaledTexture(boolean force);
 
-void I_FinishUpdate(void)
+void I_FinishUpdate(boolean shaking)
 {
     if (noblit)
         return;
@@ -589,7 +608,7 @@ void I_FinishUpdate(void)
 
     I_DrawDiskIcon();
 
-    I_UpdateRender();
+    I_UpdateRender(shaking);
 
     SDL_RenderPresent(renderer);
 
@@ -821,7 +840,7 @@ boolean I_WritePNGfile(char *filename)
   const uint32_t png_format = SDL_PIXELFORMAT_RGB24;
   format = SDL_AllocFormat(png_format);
 
-  I_UpdateRender();
+  I_UpdateRender(false);
 
   // [FG] adjust cropping rectangle if necessary
   SDL_GetRendererOutputSize(renderer, &rect.w, &rect.h);
