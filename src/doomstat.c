@@ -189,7 +189,6 @@ int event_timers[NUMTIMERS];
 int extra_gibbing;
 int bloodier_gibbing;
 int zdoom_item_drops;
-int blood_splats; // [Cherry]
 
 // CFG only
 int chasecam_crosshair;

@@ -502,10 +502,6 @@ void R_ProjectSprite (mobj_t* thing)
 
   xscale = FixedDiv(projection, tz);
 
-  // [Cherry] Don't render far away blood splats
-  if (thing->type == MT_BLOODSPLAT && xscale < FRACUNIT / 3)
-    return;
-
   gxt = -FixedMul(tr_x,viewsin);
   gyt = FixedMul(tr_y,viewcos);
   tx = -(gyt+gxt);

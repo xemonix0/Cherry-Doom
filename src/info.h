@@ -1246,20 +1246,6 @@ typedef enum
   S_BSKUL_DIE7,
   S_BSKUL_DIE8,
 
-  // [Cherry] Blood splats from Doom Retro
-  S_BLOODSPLAT,
-  S_BLOODSPLAT2,
-  S_BLOODSPLAT3,
-  S_BLOODSPLAT4,
-  S_BLOODSPLAT5,
-  S_BLOODSPLAT6,
-  S_BLOODSPLAT7,
-  S_BLOODSPLAT8,
-  S_BLOODSPLAT9,
-  S_BLOODSPLAT10,
-  S_BLOODSPLAT11,
-  S_BLOODSPLAT12,
-
   S_MUSHROOM,  // killough 10/98: mushroom explosion effect
 
   NUMSTATES  // Counter of how many there are
@@ -1448,8 +1434,6 @@ typedef enum {
   MT_PLASMA2, // killough 7/11/98: second of alternating beta plasma fireballs
   MT_SCEPTRE, // killough 7/11/98: evil sceptre in beta version
   MT_BIBLE,   // killough 7/11/98: unholy bible in beta version
-
-  MT_BLOODSPLAT, // [Cherry] Blood splats from Doom Retro
 
   MT_MUSICSOURCE, // [crispy] support MUSINFO lump (dynamic music changing)
 

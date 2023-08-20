@@ -99,63 +99,6 @@ typedef PACKED_PREFIX struct
 static anim_t *lastanim, *anims;      // new structure w/o limits -- killough
 static size_t maxanims;
 
-// [Cherry]
-int *isliquid;
-char *liquids[] =
-{
-  { "NUKAGE1" },
-  { "NUKAGE2" },
-  { "NUKAGE3" },
-  { "FWATER1" },
-  { "FWATER2" },
-  { "FWATER3" },
-  { "FWATER4" },
-  { "SWATER1" },
-  { "SWATER2" },
-  { "SWATER3" },
-  { "SWATER4" },
-  { "LAVA1"   },
-  { "LAVA2"   },
-  { "LAVA3"   },
-  { "LAVA4"   },
-  { "BLOOD1"  },
-  { "BLOOD2"  },
-  { "BLOOD3"  },
-  { "RROCK05" },
-  { "RROCK06" },
-  { "RROCK07" },
-  { "RROCK08" },
-  { "SLIME01" },
-  { "SLIME02" },
-  { "SLIME03" },
-  { "SLIME04" },
-  { "SLIME05" },
-  { "SLIME09" },
-  { "SLIME06" },
-  { "SLIME07" },
-  { "SLIME08" },
-  { ""        }
-};
-
-extern int numflats;
-
-void P_InitLiquids(void)
-{
-  int i;
-  int lump;
-  int size;
-
-  size = (numflats + 1) * sizeof(int);
-  isliquid = (int *)Z_Malloc(size, PU_STATIC, 0);
-  memset(isliquid, 0, size);
-  for (i = 0; liquids[i][0]; i++)
-  {
-    lump = (W_CheckNumForName)(liquids[i], ns_flats);
-    if (lump != -1)
-      isliquid[lump - firstflat] = true;
-  }
-}
-
 // killough 3/7/98: Initialize generalized scrolling
 static void P_SpawnScrollers(void);
 static void P_SpawnFriction(void);    // phares 3/16/98

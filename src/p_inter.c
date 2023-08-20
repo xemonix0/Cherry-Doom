@@ -772,10 +772,6 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
   target->flags |= MF_CORPSE|MF_DROPOFF;
   target->height >>= 2;
 
-  // [Cherry] Set initial blood splats counter for corpses
-  if (target->type != MT_BARREL)
-    target->bloodsplats = CORPSEBLOODSPLATS;
-
   // killough 8/29/98: remove from threaded list
   P_UpdateThinker(&target->thinker);
 

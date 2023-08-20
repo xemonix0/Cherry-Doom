@@ -36,9 +36,6 @@
 // Needs precompiled tables/data structures.
 #include "info.h"
 
-// [Cherry] Blood splats from Doom Retro
-#define CORPSEBLOODSPLATS 1024
-
 //
 // NOTES: mobj_t
 //
@@ -387,9 +384,6 @@ typedef struct mobj_s
 
     // [FG] colored blood and gibs
     int bloodcolor;
-
-    // [Cherry] Blood splats from Doom Retro
-    int bloodsplats;
 } mobj_t;
 
 // External declarations (fomerly in p_local.h) -- killough 5/2/98
@@ -425,12 +419,6 @@ extern int itemrespawntime[];
 extern int iquehead;
 extern int iquetail;
 
-// [Cherry] Blood splats from Doom Retro
-#define BLOODSPLATQUEUESIZE 1048576
-
-extern mobj_t *bloodSplatQueue[BLOODSPLATQUEUESIZE];
-extern int bloodSplatQueueSlot;
-
 // [FG] colored blood and gibs
 extern boolean colored_blood;
 
@@ -456,10 +444,8 @@ mobj_t  *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
 void    P_RemoveMobj(mobj_t *th);
 boolean P_SetMobjState(mobj_t *mobj, statenum_t state);
 void    P_MobjThinker(mobj_t *mobj);
-void    P_BloodSplatThinker(mobj_t *splat);
 void    P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
 void    P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage, mobj_t *bleeder);
-void P_SpawnBloodSplat(fixed_t x, fixed_t y, int flags1, int flags2, int intflags, int bloodcolor); // [Cherry] Blood splats from Doom Retro
 mobj_t  *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
 mobj_t  *P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
 void    P_SpawnMapThing (mapthing_t*  mthing);
