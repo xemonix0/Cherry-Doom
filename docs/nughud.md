@@ -42,49 +42,26 @@ The following types of widgets support special behavior:
 
 The following widgets are available:
 
-```
-nughud_ammo ------ Ammo count for the currently-equipped weapon
-nughud_health ---- Health count
-nughud_arms# ----- Arms (weapon) number, where # is a number between 1 and 9 (inclusive)
-nughud_frags ----- Frags count, only shown during Deathmatch games
-nughud_face ------ Face (Mugshot)
-nughud_armor ----- Armor count
-nughud_armoricon - Armor icon, which changes depending on armor type (requires NHARMOR font - see below)
-nughud_key# ------ Key display, where # is a number between 0 and 2 (in order: Blue Key; Yellow Key; Red Key)
-nughud_ammo# ----- Ammo count for each type, where # is a number between 0 and 3 (in order: Bullets; Shells; Cells; Rockets)
-nughud_maxammo# -- Same as the above, but for Max Ammo
-nughud_time ------ Time display, only shown if enabled by the user
-nughud_sts ------- Stats (Kills/Items/Secrets) display, only shown if enabled by the user
-nughud_title ----- Level Name display, only shown on the Automap
-nughud_powers ---- Powerup timers, only shown if enabled by the user
-nughud_coord ----- Coordinates display, only shown if enabled by the user
-nughud_fps ------- FPS display, only shown when the FPS cheat is activated
-nughud_message --- Message display
-nughud_secret ---- Secret Message display
-```
-
-Their properties are as follows:
-
-| Widget           | Disableable | Alignable |
-| :--------------: | :---------: | :-------: |
-| nughud_ammo      | Yes         | Yes       |
-| nughud_health    | Yes         | Yes       |
-| nughud_arms#     | Yes         | No        |
-| nughud_frags     | Yes         | Yes       |
-| nughud_face      | Yes         | No        |
-| nughud_armor     | Yes         | Yes       |
-| nughud_armoricon | Yes         | No        |
-| nughud_key#      | Yes         | No        |
-| nughud_ammo#     | Yes         | Yes       |
-| nughud_maxammo#  | Yes         | Yes       |
-| nughud_time      | No          | Yes       |
-| nughud_sts       | No          | Yes       |
-| nughud_title     | No          | Yes       |
-| nughud_powers    | No          | Yes       |
-| nughud_coord     | No          | Yes       |
-| nughud_fps       | No          | Yes       |
-| nughud_message   | No          | Yes       |
-| nughud_secret    | No          | Yes       |
+| Widget(s)          | Disableable | Alignable | Description |
+| :----------------: | :---------: | :-------: | :---------- |
+| `nughud_ammo`      | Yes         | Yes       | Ammo count for the currently-equipped weapon |
+| `nughud_health`    | Yes         | Yes       | Health count |
+| `nughud_arms#`     | Yes         | No        | Arms (weapon) number, where # is a number between 1 and 9 (inclusive) |
+| `nughud_frags`     | Yes         | Yes       | Frags count, only shown during Deathmatch games |
+| `nughud_face`      | Yes         | No        | Face (Mugshot) |
+| `nughud_armor`     | Yes         | Yes       | Armor count |
+| `nughud_armoricon` | Yes         | No        | Armor icon, which changes depending on armor type (requires NHARMOR font - see below) |
+| `nughud_key#`      | Yes         | No        | Key display, where # is a number between 0 and 2 (in order: Blue Key; Yellow Key; Red Key) |
+| `nughud_ammo#`     | Yes         | Yes       | Ammo count for each type, where # is a number between 0 and 3 (in order: Bullets; Shells; Cells; Rockets) |
+| `nughud_maxammo#`  | Yes         | Yes       | Same as the above, but for Max Ammo |
+| `nughud_time`      | No          | Yes       | Time display, only shown if enabled by the user |
+| `nughud_sts`       | No          | Yes       | Stats (Kills/Items/Secrets) display, only shown if enabled by the user |
+| `nughud_title`     | No          | Yes       | Level Name display, only shown on the Automap |
+| `nughud_powers`    | No          | Yes       | Powerup Timers, only shown if enabled by the user |
+| `nughud_coord`     | No          | Yes       | Coordinates display, only shown if enabled by the user |
+| `nughud_fps`       | No          | Yes       | FPS display, only shown when the FPS cheat is activated |
+| `nughud_message`   | No          | Yes       | Message display |
+| `nughud_secret`    | No          | Yes       | Secret Message display |
 
 There are some additional boolean properties (value of 0 or 1) for some specific widgets:
 

@@ -14,47 +14,40 @@ nughud_health_y     171
 nughud_health_wide  -1
 nughud_health_align 1
 
-; Arms number 1
+; Arms numbers
+
 nughud_arms1_x    -1
 nughud_arms1_y    0
 nughud_arms1_wide 0
 
-; Arms number 2
 nughud_arms2_x    111
 nughud_arms2_y    172
 nughud_arms2_wide -1
 
-; Arms number 3
 nughud_arms3_x    119
 nughud_arms3_y    172
 nughud_arms3_wide -1
 
-; Arms number 4
 nughud_arms4_x    127
 nughud_arms4_y    172
 nughud_arms4_wide -1
 
-; Arms number 5
 nughud_arms5_x    135
 nughud_arms5_y    172
 nughud_arms5_wide -1
 
-; Arms number 6
 nughud_arms6_x    111
 nughud_arms6_y    182
 nughud_arms6_wide -1
 
-; Arms number 7
 nughud_arms7_x    119
 nughud_arms7_y    182
 nughud_arms7_wide -1
 
-; Arms number 8
 nughud_arms8_x    127
 nughud_arms8_y    182
 nughud_arms8_wide -1
 
-; Arms number 9
 nughud_arms9_x    135
 nughud_arms9_y    182
 nughud_arms9_wide -1
@@ -145,8 +138,6 @@ nughud_maxammo3_y     185
 nughud_maxammo3_wide  1
 nughud_maxammo3_align 1
 
-; - Text Lines -
-
 ; Time display
 nughud_time_x     2
 nughud_time_y     151
@@ -166,7 +157,7 @@ nughud_title_y     143
 nughud_title_wide  -2
 nughud_title_align -1
 
-; Powerup timers display
+; Powerup Timers display
 nughud_powers_x     318
 nughud_powers_y     8
 nughud_powers_wide  2
@@ -190,7 +181,7 @@ nughud_message_y     0
 nughud_message_wide  -2
 nughud_message_align -1
 
-; Secret Message display
+; Secret Message/Milestone Completion display
 nughud_secret_x     160
 nughud_secret_y     86
 nughud_secret_wide  0
