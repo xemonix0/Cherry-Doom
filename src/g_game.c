@@ -520,8 +520,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       // [FG] prev/next weapon keys and buttons
       if (gamestate == GS_LEVEL && next_weapon != 0)
         newweapon = G_NextWeapon(next_weapon);
-      else if (gamestate == GS_LEVEL && last_weapon)
-        newweapon = players[consoleplayer].lastweapon;
       else
       newweapon =
         M_InputGameActive(input_weapon1) ? wp_fist :    // killough 5/2/98: reformatted
@@ -533,7 +531,9 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         M_InputGameActive(input_weapon7) && gamemode != shareware ? wp_bfg :
         M_InputGameActive(input_weapon8) ? wp_chainsaw :
         M_InputGameActive(input_weapon9) && have_ssg ? wp_supershotgun :
-        wp_nochange;
+        M_InputGameActive(input_weaponlastused) && casual_play &&
+        WeaponSelectable(players[consoleplayer].lastweapon)
+        ? players[consoleplayer].lastweapon : wp_nochange;
 
       // killough 3/22/98: For network and demo consistency with the
       // new weapons preferences, we must do the weapons switches here
@@ -557,15 +557,12 @@ void G_BuildTiccmd(ticcmd_t* cmd)
           // not already in use, and the player prefers it or
           // the fist is already in use, or the player does not
           // have the berserker strength.
-          // [Cherry] and if the player isn't switching to the
-          // last used weapon if it is the fist
 
           if (newweapon==wp_fist && player->weaponowned[wp_chainsaw] &&
               player->readyweapon!=wp_chainsaw &&
               (player->readyweapon==wp_fist ||
                !player->powers[pw_strength] ||
-               P_WeaponPreferred(wp_chainsaw, wp_fist)) &&
-              (!last_weapon || player->lastweapon != wp_fist)) // [Cherry]
+               P_WeaponPreferred(wp_chainsaw, wp_fist)))
             newweapon = wp_chainsaw;
 
           // Select SSG from '3' only if it's owned and the player
@@ -580,8 +577,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
               (!player->weaponowned[wp_shotgun] ||
                player->readyweapon == wp_shotgun ||
                (player->readyweapon != wp_supershotgun &&
-                P_WeaponPreferred(wp_supershotgun, wp_shotgun))) &&
-              (!last_weapon || player->lastweapon != wp_shotgun)) // [Cherry]
+                P_WeaponPreferred(wp_supershotgun, wp_shotgun))))
             newweapon = wp_supershotgun;
         }
       // killough 2/8/98, 3/22/98 -- end of weapon selection changes

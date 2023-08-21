@@ -685,13 +685,21 @@ void P_PlayerThink (player_t* player)
   if (cmd->buttons & BT_SPECIAL)
     cmd->buttons = 0;
 
-  if (cmd->buttons & BT_CHANGE)
+  if (cmd->buttons & BT_CHANGE
+      || (casual_play && M_InputGameActive(input_weaponlastused)))
     {
+      // [Cherry] Last used
+      const weapontype_t lastweapon = ((casual_play && M_InputGameActive(input_weaponlastused))
+                                       ? player->lastweapon : wp_nochange);
       // The actual changing of the weapon is done
       //  when the weapon psprite can do it
       //  (read: not in the middle of an attack).
-
-      newweapon = (cmd->buttons & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
+      
+      // [Cherry]
+      if (lastweapon != wp_nochange)
+        newweapon = lastweapon;
+      else
+        newweapon = (cmd->buttons & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
 
       // killough 3/22/98: For demo compatibility we must perform the fist
       // and SSG weapons switches here, rather than in G_BuildTiccmd(). For
@@ -701,12 +709,14 @@ void P_PlayerThink (player_t* player)
         { // compatibility mode -- required for old demos -- killough
           if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
               (player->readyweapon != wp_chainsaw ||
-               !player->powers[pw_strength]))
+               !player->powers[pw_strength] ||
+               newweapon != lastweapon)) // [Cherry]
             newweapon = wp_chainsaw;
           if (have_ssg &&
               newweapon == wp_shotgun &&
               player->weaponowned[wp_supershotgun] &&
-              player->readyweapon != wp_supershotgun)
+              player->readyweapon != wp_supershotgun &&
+              newweapon != lastweapon)
             newweapon = wp_supershotgun;
         }
 
@@ -720,7 +730,6 @@ void P_PlayerThink (player_t* player)
         if ((newweapon != wp_plasma && newweapon != wp_bfg)
             || (gamemode != shareware) )
         {
-          player->lastweapon = player->readyweapon; // [Cherry]
           player->pendingweapon = newweapon;
         }
     }

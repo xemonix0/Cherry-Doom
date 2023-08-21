@@ -59,7 +59,7 @@ enum
   input_weapon8,
   input_weapon9,
   input_weapontoggle,
-  input_weaponlastused,
+  input_weaponlastused, // [Cherry]
 
   input_menu_up,
   input_menu_down,
