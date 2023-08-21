@@ -4705,12 +4705,6 @@ enum { // [Nugget]
   gen6_title2,
   gen6_damageshake,
   gen6_motionblur,
-  gen6_stub2,
-  gen6_title3,
-  gen6_sclipdist,
-  gen6_quicksaveload,
-  gen6_nopagetic,
-  gen6_quickexit,
 };
 
 static const char *s_clipping_dists[] = {
@@ -4734,12 +4728,6 @@ setup_menu_t gen_settings6[] = { // [Nugget]
   {"Cherry - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
     {"Damage Screen Shake Percentage",S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_damageshake   * M_SPC, {"damage_shake"}},
     {"Motion Blur Percentage",        S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_motionblur    * M_SPC, {"motion_blur"}},
-  {"", S_SKIP, m_null, M_X, M_Y + gen6_stub2*M_SPC},
-  {"Nugget - Miscellaneous", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title3 * M_SPC},
-    {"Sound Hearing Distance",        S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
-    {"One-Key Quick Save/Load",       S_YESNO,           m_null, M_X, M_Y + gen6_quicksaveload * M_SPC, {"one_key_saveload"}},
-    {"Play Internal Demos",           S_CHOICE,          m_null, M_X, M_Y + gen6_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
-    {"Quick \"Quit Game\"",           S_YESNO,           m_null, M_X, M_Y + gen6_quickexit     * M_SPC, {"quick_quitgame"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings5}},
   {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings7}},
@@ -4757,11 +4745,23 @@ enum { // [Nugget]
   gen7_a11y_flash,
   gen7_a11y_pspr,
   gen7_a11y_invul,
+  gen7_stub1,
+  gen7_title2,
+  gen7_sclipdist,
+  gen7_quicksaveload,
+  gen7_nopagetic,
+  gen7_quickexit,
 };
 
 setup_menu_t gen_settings7[] = { // [Nugget]
-
-  {"Nugget - Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title1 * M_SPC},
+  // [Cherry] move this section from page 6
+  {"Nugget - Miscellaneous", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title1 * M_SPC},
+    {"Sound Hearing Distance",        S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, NULL, s_clipping_dists},
+    {"One-Key Quick Save/Load",       S_YESNO,           m_null, M_X, M_Y + gen7_quicksaveload * M_SPC, {"one_key_saveload"}},
+    {"Play Internal Demos",           S_CHOICE,          m_null, M_X, M_Y + gen7_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
+    {"Quick \"Quit Game\"",           S_YESNO,           m_null, M_X, M_Y + gen7_quickexit     * M_SPC, {"quick_quitgame"}},
+  {"", S_SKIP, m_null, M_X, M_Y + gen7_stub1*M_SPC},
+  {"Nugget - Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title2 * M_SPC},
 #if 0 // [Nugget] For future use, hopefully
     {"Flickering Sector Lighting",  S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen7_a11y_seclight    * M_SPC, {"a11y_sector_lighting"}},
 #endif
