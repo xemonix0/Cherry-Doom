@@ -44,6 +44,7 @@ int hud_active;       //jff 2/17/98 controls heads-up display mode
 int hud_displayed;    //jff 2/23/98 turns heads-up display on/off
 secretmessage_t hud_secret_message; // "A secret is revealed!" message
 int hud_widget_font;
+int hud_widget_bars; // [Cherry] Bars toggle
 
 extern int screenSize; // [Nugget]
 
@@ -736,7 +737,7 @@ void HU_Start(void)
 // do the hud ammo display
 static void HU_widget_build_ammo (void)
 {
-  int i;
+  int i = 4;
 
   // clear the widgets internal line
   HUlib_clearTextLine(&w_ammo);
@@ -746,7 +747,11 @@ static void HU_widget_build_ammo (void)
   // special case for weapon with no ammo selected - blank bargraph + N/A
   if (weaponinfo[plr->readyweapon].ammo == am_noammo)
   {
-    strcat(hud_ammostr, "\x7f\x7f\x7f\x7f\x7f\x7f\x7f N/A");
+    if (hud_widget_bars) // [Cherry]
+    {
+      strcat(hud_ammostr, "\x7f\x7f\x7f\x7f\x7f\x7f\x7f ");
+    }
+    strcat(hud_ammostr, "N/A");
     w_ammo.cr = colrngs[CR_GRAY];
   }
   else
@@ -754,33 +759,37 @@ static void HU_widget_build_ammo (void)
     int ammo = plr->ammo[weaponinfo[plr->readyweapon].ammo];
     int fullammo = plr->maxammo[weaponinfo[plr->readyweapon].ammo];
     int ammopct = (100 * ammo) / fullammo;
-    int ammobars = ammopct / 4;
+    int ammobars;
 
-    // build the bargraph string
-    // full bargraph chars
-    for (i = 4; i < 4 + ammobars / 4;)
-      hud_ammostr[i++] = 123;
-
-    // plus one last character with 0, 1, 2, 3 bars
-    switch (ammobars % 4)
+    if (hud_widget_bars) // [Cherry]
     {
-      case 0:
-        break;
-      case 1:
-        hud_ammostr[i++] = 126;
-        break;
-      case 2:
-        hud_ammostr[i++] = 125;
-        break;
-      case 3:
-        hud_ammostr[i++] = 124;
-        break;
-    }
+      ammobars = ammopct / 4;
+      // build the bargraph string
+      // full bargraph chars
+      for (; i < 4 + ammobars / 4;)
+        hud_ammostr[i++] = 123;
 
-    // pad string with blank bar characters
-    while (i < 4 + 7)
-      hud_ammostr[i++] = 127;
-    hud_ammostr[i] = '\0';
+      // plus one last character with 0, 1, 2, 3 bars
+      switch (ammobars % 4)
+      {
+        case 0:
+          break;
+        case 1:
+          hud_ammostr[i++] = 126;
+          break;
+        case 2:
+          hud_ammostr[i++] = 125;
+          break;
+        case 3:
+          hud_ammostr[i++] = 124;
+          break;
+      }
+
+      // pad string with blank bar characters
+      while (i < 4 + 7)
+        hud_ammostr[i++] = 127;
+      hud_ammostr[i] = '\0';
+    }
 
     // build the numeric amount init string
     sprintf(hud_ammostr + i, "%d/%d", ammo, fullammo);
@@ -810,40 +819,45 @@ static void HU_widget_build_ammo (void)
 // do the hud health display
 static void HU_widget_build_health (void)
 {
-  int i;
-  int healthbars = (st_health > 100) ? 25 : (st_health / 4);
+  int i = 4;
+  int healthbars;
 
   // clear the widgets internal line
   HUlib_clearTextLine(&w_health);
-
-  // build the bargraph string
-  // full bargraph chars
-  for (i = 4; i < 4 + healthbars / 4;)
-    hud_healthstr[i++] = 123;
-
-  // plus one last character with 0, 1, 2, 3 bars
-  switch (healthbars % 4)
+  
+  if (hud_widget_bars) // [Cherry]
   {
-    case 0:
-      break;
-    case 1:
-      hud_healthstr[i++] = 126;
-      break;
-    case 2:
-      hud_healthstr[i++] = 125;
-      break;
-    case 3:
-      hud_healthstr[i++] = 124;
-      break;
+    healthbars = (st_health > 100) ? 25 : (st_health / 4);
+
+    // build the bargraph string
+    // full bargraph chars
+    for (; i < 4 + healthbars / 4;)
+      hud_healthstr[i++] = 123;
+
+    // plus one last character with 0, 1, 2, 3 bars
+    switch (healthbars % 4)
+    {
+      case 0:
+        break;
+      case 1:
+        hud_healthstr[i++] = 126;
+        break;
+      case 2:
+        hud_healthstr[i++] = 125;
+        break;
+      case 3:
+        hud_healthstr[i++] = 124;
+        break;
+    }
+
+    // pad string with blank bar characters
+    while (i < 4 + 7)
+      hud_healthstr[i++] = 127;
+    hud_healthstr[i] = '\0';
   }
 
-  // pad string with blank bar characters
-  while (i < 4 + 7)
-    hud_healthstr[i++] = 127;
-  hud_healthstr[i] = '\0';
-
   // build the numeric amount init string
-  sprintf(hud_healthstr + i, "%3d", st_health);
+  sprintf(hud_healthstr + i, "%3d%%", st_health);
 
   // set the display color from the amount of health posessed
   w_health.cr = ColorByHealth(plr->health, 100, st_invul);
@@ -855,20 +869,24 @@ static void HU_widget_build_health (void)
 // do the hud armor display
 static void HU_widget_build_armor (void)
 {
-  int i;
-  int armorbars = (st_armor > 100) ? 25 : (st_armor / 4);
+  int i = 4;
+  int armorbars;
 
   // clear the widgets internal line
   HUlib_clearTextLine(&w_armor);
 
-  // build the bargraph string
-  // full bargraph chars
-  for (i = 4; i < 4 + armorbars / 4;)
-    hud_armorstr[i++] = 123;
-
-  // plus one last character with 0, 1, 2, 3 bars
-  switch (armorbars % 4)
+  if (hud_widget_bars) // [Cherry]
   {
+    armorbars = (st_armor > 100) ? 25 : (st_armor / 4);
+
+    // build the bargraph string
+    // full bargraph chars
+    for (; i < 4 + armorbars / 4;)
+      hud_armorstr[i++] = 123;
+
+    // plus one last character with 0, 1, 2, 3 bars
+    switch (armorbars % 4)
+    {
     case 0:
       break;
     case 1:
@@ -880,15 +898,16 @@ static void HU_widget_build_armor (void)
     case 3:
       hud_armorstr[i++] = 124;
       break;
+    }
+
+    // pad string with blank bar characters
+    while (i < 4 + 7)
+      hud_armorstr[i++] = 127;
+    hud_armorstr[i] = '\0';
   }
 
-  // pad string with blank bar characters
-  while (i < 4 + 7)
-    hud_armorstr[i++] = 127;
-  hud_armorstr[i] = '\0';
-
   // build the numeric amount init string
-  sprintf(hud_armorstr + i, "%3d", st_armor);
+  sprintf(hud_armorstr + i, "%3d%%", st_armor);
 
   // color of armor depends on type
   if (hud_armor_type)

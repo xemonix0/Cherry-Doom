@@ -3260,6 +3260,13 @@ default_t defaults[] = {
     "use standard Doom font for widgets (1 = on Automap, 2 = always)"
   },
 
+  { // [Cherry] Bars toggle
+    "hud_widget_bars",
+    (config_t *)&hud_widget_bars, NULL,
+    {1}, {0,1}, number, ss_stat, wad_no,
+    "1 to draw bars for widgets"
+  },
+
   { // [Nugget] Crosshair toggle
     "hud_crosshair_on",
     (config_t *) &hud_crosshair_on, NULL,
