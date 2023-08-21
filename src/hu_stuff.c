@@ -819,13 +819,15 @@ static void HU_widget_build_ammo (void)
 // do the hud health display
 static void HU_widget_build_health (void)
 {
+  const boolean inter = gamestate == GS_INTERMISSION; // [Cherry]
+
   int i = 4;
   int healthbars;
 
   // clear the widgets internal line
   HUlib_clearTextLine(&w_health);
   
-  if (hud_widget_bars) // [Cherry]
+  if (!inter && hud_widget_bars) // [Cherry]
   {
     healthbars = (st_health > 100) ? 25 : (st_health / 4);
 
@@ -857,7 +859,8 @@ static void HU_widget_build_health (void)
   }
 
   // build the numeric amount init string
-  sprintf(hud_healthstr + i, "%3d%%", st_health);
+  // [Cherry] don't pad with spaces on intermission screen
+  sprintf(hud_healthstr + i, inter ? "%d%%" : "%3d%%", st_health);
 
   // set the display color from the amount of health posessed
   w_health.cr = ColorByHealth(plr->health, 100, st_invul);
@@ -869,13 +872,15 @@ static void HU_widget_build_health (void)
 // do the hud armor display
 static void HU_widget_build_armor (void)
 {
+  const boolean inter = gamestate == GS_INTERMISSION; // [Cherry]
+
   int i = 4;
   int armorbars;
 
   // clear the widgets internal line
   HUlib_clearTextLine(&w_armor);
 
-  if (hud_widget_bars) // [Cherry]
+  if (!inter && hud_widget_bars) // [Cherry]
   {
     armorbars = (st_armor > 100) ? 25 : (st_armor / 4);
 
@@ -907,7 +912,8 @@ static void HU_widget_build_armor (void)
   }
 
   // build the numeric amount init string
-  sprintf(hud_armorstr + i, "%3d%%", st_armor);
+  // [Cherry] don't pad with spaces on intermission screen
+  sprintf(hud_armorstr + i, inter ? "%d%%" : "%3d%%", st_armor);
 
   // color of armor depends on type
   if (hud_armor_type)
@@ -940,12 +946,14 @@ static void HU_widget_build_armor (void)
 // do the hud weapon display
 static void HU_widget_build_weapon (void)
 {
+  const boolean inter = gamestate == GS_INTERMISSION; // [Cherry]
   int i, w, ammo, fullammo, ammopct;
 
   // clear the widgets internal line
   HUlib_clearTextLine(&w_weapon);
 
-  i = 4; hud_weapstr[i] = '\0'; //jff 3/7/98 make sure ammo goes away
+  // [Cherry] overwrite WEA if on intermission screen
+  i = inter ? 0 : 4; hud_weapstr[i] = '\0'; //jff 3/7/98 make sure ammo goes away
 
   // do each weapon that exists in current gamemode
   for (w = 0; w <= wp_supershotgun; w++) //jff 3/4/98 show fists too, why not?
@@ -999,7 +1007,8 @@ static void HU_widget_build_weapon (void)
       hud_weapstr[i++] = '0'+CR_GREEN;
 
     hud_weapstr[i++] = '0'+w+1;
-    hud_weapstr[i++] = ' ';
+    // [Cherry] new line each 3 weapons if on intermission screen
+    hud_weapstr[i++] = (inter && !((i+1)%12)) ? '\n' : ' ';
     hud_weapstr[i] = '\0';
   }
 
@@ -1222,7 +1231,9 @@ static void HU_widget_build_sttime(void)
               '0'+CR_BLUE, time_scale);
     }
 
-    if (totalleveltimes)
+    // [Cherry] don't print the total time if only one level was completed
+    //          (for intermission screen)
+    if (totalleveltimes && totalleveltimes != (leveltime - leveltime % TICRATE))
     {
       const int time = (totalleveltimes + leveltime) / TICRATE;
 
@@ -1529,6 +1540,23 @@ static void NughudAlignWidgetX(nughud_textline_t aligner, hu_textline_t* alignee
                  (aligner.align == 0) ? alignee->width/2 : 0);
 }
 
+// [Cherry]
+// HU_UpdateWidgetFont
+//
+void HU_UpdateWidgetFont(void)
+{
+  if ((automapactive && hud_widget_font == 1) || hud_widget_font == 2)
+  {
+    hu_font2 = hu_font;
+    CR_BLUE = CR_BLUE2;
+  }
+  else
+  {
+    hu_font2 = hu_fontB;
+    CR_BLUE = CR_BLUE1;
+  }
+}
+
 //
 // HU_Drawer()
 //
@@ -1653,12 +1681,24 @@ void WI_DrawTimeWidget(void)
 {
   if (hud_level_time)
   {
-    w_sttime.x = HU_HUDX;
-    w_sttime.y = 0;
     // leveltime is already added to totalleveltimes before WI_Start()
-    //HU_widget_build_sttime();
-    HUlib_drawTextLine(&w_sttime, align_direct, false);
+    // [Cherry] allowed the font to change during intermission so an update is necessary
+    HU_widget_build_sttime();
+    // [Cherry] align to top left because align offsets are reset in WI_Drawer
+    HUlib_drawTextLine(&w_sttime, align_topleft, false);
   }
+}
+
+// [Cherry] Draw health and armor on intermission screen
+void WI_DrawMoreWidgets(void)
+{
+  // no bars on intermission screen
+  HU_widget_build_health();
+  HU_widget_build_armor();
+  HU_widget_build_weapon();
+  HUlib_drawTextLine(&w_health, align_topleft, false);
+  HUlib_drawTextLine(&w_armor, align_topleft, false);
+  HUlib_drawTextLine(&w_weapon, align_topleft, false);
 }
 
 //
@@ -1715,16 +1755,7 @@ void HU_Ticker(void)
   HU_disableAllWidgets();
   // [Nugget] Removed "draw_crispy_hud" code
 
-  if ((automapactive && hud_widget_font == 1) || hud_widget_font == 2)
-  {
-    hu_font2 = hu_font;
-    CR_BLUE = CR_BLUE2;
-  }
-  else
-  {
-    hu_font2 = hu_fontB;
-    CR_BLUE = CR_BLUE1;
-  }
+  HU_UpdateWidgetFont();
 
   // killough 11/98: support counter for message list as well as regular msg
   if (message_list_counter && !--message_list_counter)

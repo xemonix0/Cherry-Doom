@@ -251,7 +251,7 @@ static void HUlib_drawTextLineAligned(hu_textline_t *l, boolean drawcursor)
       c = toupper(l->l[i]); //jff insure were not getting a cheap toupper conv.
 
       if (c=='\n')         // killough 1/18/98 -- support multiple lines
-        x = 0, y += 8;
+        x = HU_GAPX_L, y += 8; // [Cherry] changed 0 to the actual left side of the screen
       else
         if (c=='\t')    // killough 1/23/98 -- support tab stops
           x = x - (x - l->x)%12 + 12;

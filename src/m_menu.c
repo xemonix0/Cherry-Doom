@@ -3564,6 +3564,7 @@ enum {
   stat2_smart,
   stat2_hudfont,
   stat2_bars,
+  stat2_wimorewidgets,
   stat2_stub2,
   stat2_title3,
   stat2_timeruse,
@@ -3593,9 +3594,10 @@ setup_menu_t stat_settings2[] =
 
   {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title2*M_SPC },
 
-  {"SMART TOTALS"                      , S_YESNO ,m_null,M_X,M_Y+stat2_smart*M_SPC,   {"smarttotals"}}, // [Nugget]
-  {"USE STANDARD DOOM FONT FOR WIDGETS", S_CHOICE,m_null,M_X,M_Y+stat2_hudfont*M_SPC, {"hud_widget_font"}, 0, NULL, show_widgets_strings},
-  {"DRAW BARS",                          S_YESNO ,m_null,M_X,M_Y+stat2_bars*M_SPC,    {"hud_widget_bars"}}, // [Cherry]
+  {"SMART TOTALS"                      , S_YESNO ,m_null,M_X,M_Y+stat2_smart*M_SPC,        {"smarttotals"}}, // [Nugget]
+  {"USE STANDARD DOOM FONT FOR WIDGETS", S_CHOICE,m_null,M_X,M_Y+stat2_hudfont*M_SPC,      {"hud_widget_font"}, 0, NULL, show_widgets_strings},
+  {"DRAW BARS",                          S_YESNO ,m_null,M_X,M_Y+stat2_bars*M_SPC,         {"hud_widget_bars"}}, // [Cherry]
+  {"MORE WIDGETS ON INTERMISSION SCREEN",S_YESNO ,m_null,M_X,M_Y+stat2_wimorewidgets*M_SPC,{"wi_more_widgets"}}, // [Cherry]
 
   // [Nugget]
 

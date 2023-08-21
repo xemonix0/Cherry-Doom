@@ -49,6 +49,7 @@
 #include "r_draw.h" // [FG] fuzzcolumn_mode
 #include "r_sky.h" // [FG] stretchsky
 #include "hu_lib.h" // HU_MAXMESSAGES
+#include "wi_stuff.h" // [Cherry] ws_more_widgets
 
 #include "m_io.h"
 #include <errno.h>
@@ -3260,11 +3261,18 @@ default_t defaults[] = {
     "use standard Doom font for widgets (1 = on Automap, 2 = always)"
   },
 
-  { // [Cherry] Bars toggle
+  { // [Cherry]
     "hud_widget_bars",
     (config_t *)&hud_widget_bars, NULL,
     {1}, {0,1}, number, ss_stat, wad_no,
     "1 to draw bars for widgets"
+  },
+
+  { // [Cherry]
+    "wi_more_widgets",
+    (config_t *)&wi_more_widgets, NULL,
+    {1}, {0,1}, number, ss_stat, wad_no,
+    "1 to show health, armor and weapons widgets on intermission screen"
   },
 
   { // [Nugget] Crosshair toggle

@@ -5,6 +5,7 @@
 - **Screen shake effect on damage**
 - **Motion blur**
 - **Widget bars** setting
+- **More widgets on intermission screen** (health, armor, weapons)
 
 ## Changes
 

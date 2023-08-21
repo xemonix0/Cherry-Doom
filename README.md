@@ -22,6 +22,7 @@ Just like with Nugget Doom, most of Cherry Doom's features come from other sourc
 ### Status Bar/HUD
 
 - Toggling of **extended HUD bars**
+- **More widgets on intermission screen** (health, armor, weapons)
 
 ### Miscellaneous
 

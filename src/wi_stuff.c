@@ -111,6 +111,7 @@ typedef struct
   int   y;
 } point_t;
 
+int wi_more_widgets; // [Cherry]
 
 //
 // Animation.
@@ -2140,7 +2141,14 @@ void WI_loadData(void)
 //
 void WI_Drawer (void)
 {
+  extern void HU_UpdateWidgetFont(void); // [Cherry]
+  extern void HUlib_resetAlignOffsets(void); // [Cherry]
   extern void WI_DrawTimeWidget(void);
+  extern void WI_DrawMoreWidgets(void); // [Cherry]
+
+  HU_UpdateWidgetFont();
+  HUlib_resetAlignOffsets();
+
   switch (state)
     {
     case StatCount:
@@ -2153,6 +2161,11 @@ void WI_Drawer (void)
           WI_drawStats();
       // [FG] draw Time widget on intermission screen
       WI_DrawTimeWidget();
+      // [Cherry] draw health, armor and weapons on intermission screen
+      if (wi_more_widgets)
+      {
+        WI_DrawMoreWidgets();
+      }
       break;
 
     case ShowNextLoc:
