@@ -478,6 +478,8 @@ extern int fake_contrast;
 extern int wipe_speed_percentage;
 // [Cherry] General ------------------------------------------------------
 extern int damage_shake;
+extern int explosion_shake;
+extern int shake_percentage;
 extern int motion_blur;
 // [Cherry] End ----------------------------------------------------------
 extern int s_clipping_dist_x2;

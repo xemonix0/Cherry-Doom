@@ -227,7 +227,7 @@ void D_Display (void)
   {
     if (HU_DemoProgressBar(false))
     {
-      I_FinishUpdate(0);
+      I_FinishUpdate();
       return;
     }
   }
@@ -363,7 +363,7 @@ void D_Display (void)
   // normal update
   if (!wipe || STRICTMODE(!wipe_type)) // [Nugget]
     {
-      I_FinishUpdate (menuactivestate ? 0 : players[consoleplayer].damagecount); // page flip or blit buffer
+      I_FinishUpdate (); // page flip or blit buffer
       return;
     }
 
@@ -385,7 +385,7 @@ void D_Display (void)
       // [Nugget] Support more wipe types
       done = wipe_ScreenWipe(NOTSTRICTMODE(wipe_type),0,0,SCREENWIDTH,SCREENHEIGHT,tics);
       M_Drawer();                   // menu is drawn even on top of wipes
-      I_FinishUpdate(0); // page flip or blit buffer
+      I_FinishUpdate(); // page flip or blit buffer
     }
   while (!done);
 }

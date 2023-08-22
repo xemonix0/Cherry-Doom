@@ -2023,6 +2023,35 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
   bombdamage = damage;
   bombdistance = distance;
 
+  // [Cherry] explosion shake
+  if (STRICTMODE(explosion_shake) && shake_percentage)
+  {
+    fixed_t dx, dy, dist2;
+    dx = abs(viewplayer->mo->x - bombspot->x);
+    dy = abs(viewplayer->mo->y - bombspot->y);
+
+    dist2 = dx > dy ? dx : dy;
+    dist2 = (dist2 - viewplayer->mo->radius) >> FRACBITS;
+
+    int strength;
+
+    if (dist2 < 800)
+    {
+      strength = 30 * pow(0.9991, dist2);
+    }
+    else
+    {
+      strength = 5;
+    }
+
+    viewplayer->screenshake = MAX(viewplayer->screenshake, strength);
+
+    if (viewplayer->screenshake > 100)
+    {
+      viewplayer->screenshake = 100;
+    }
+  }
+
   for (y=yl ; y<=yh ; y++)
     for (x=xl ; x<=xh ; x++)
       P_BlockThingsIterator(x, y, PIT_RadiusAttack);

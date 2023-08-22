@@ -1243,6 +1243,8 @@ static void G_PlayerFinishLevel(int player)
   p->mo->intflags &= ~MIF_CROUCHING;
   p->jumptics = p->crouchoffset = 0;
   p->oldimpactpitch = p->impactpitch = 0;
+  // [Cherry] Reset even more additional player properties
+  p->screenshake = 0;
 }
 
 // [crispy] format time for level statistics

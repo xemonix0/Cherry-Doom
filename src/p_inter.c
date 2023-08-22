@@ -1022,6 +1022,15 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       if (player->damagecount > 100)
         player->damagecount = 100;  // teleport stomp does 10k points...
 
+      // [Cherry] Screen shake
+      if (STRICTMODE(damage_shake) && shake_percentage)
+      {
+        player->screenshake += damage;
+        if (damage_shake > 100)
+        {
+          player->screenshake = 100;
+        }
+      }
 #if 0
       // killough 11/98:
       // This is unused -- perhaps it was designed for

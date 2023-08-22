@@ -4341,7 +4341,7 @@ enum {
   gen2_end1,
 };
 
-static void M_ToggleMenuBackground(void)
+static void M_UpdateMenuBackgroundItem(void)
 {
   DISABLE_ITEM(!draw_menu_background, gen_settings2[gen2_menu_background]);
 }
@@ -4528,7 +4528,7 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
    M_Y + gen2_solidbackground*M_SPC, {"st_solidbackground"}},
 
   {"Draw Menu Background", S_CHOICE, m_null, M_X,
-   M_Y + gen2_draw_menu_background*M_SPC, {"draw_menu_background"}, 0, M_ToggleMenuBackground, draw_menu_background_strings},
+   M_Y + gen2_draw_menu_background*M_SPC, {"draw_menu_background"}, 0, M_UpdateMenuBackgroundItem, draw_menu_background_strings},
 
   {"Menu Background", S_CHOICE, m_null, M_X,
    M_Y + gen2_menu_background*M_SPC, {"menu_background"}, 0, NULL, menu_background_strings},
@@ -4693,6 +4693,8 @@ setup_menu_t gen_settings5[] = { // [Nugget]
   {0,S_SKIP|S_END,m_null}
 };
 
+void M_UpdateScreenShakeItem(void); // [Cherry]
+
 enum { // [Nugget]
   gen6_title1,
   gen6_menutint,
@@ -4704,6 +4706,9 @@ enum { // [Nugget]
   gen6_stub1,
   gen6_title2,
   gen6_damageshake,
+  gen6_explosionshake,
+  gen6_shakepercentage,
+  gen6_stub2,
   gen6_motionblur,
 };
 
@@ -4718,16 +4723,19 @@ static const char *page_ticking_conds[] = {
 setup_menu_t gen_settings6[] = { // [Nugget]
 
   {"Nugget - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title1 * M_SPC},
-    {"Disable Palette Tint in Menus", S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_menutint      * M_SPC, {"no_menu_tint"}},
-    {"Disable Berserk Tint",          S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_berserktint   * M_SPC, {"no_berserk_tint"}},
-    {"Damage Tint Cap",               S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_dmgcountcap   * M_SPC, {"damagecount_cap"}},
-    {"Bonus Tint Cap",                S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_boncountcap   * M_SPC, {"bonuscount_cap"}},
-    {"Fake Contrast",                 S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_fakecontrast  * M_SPC, {"fake_contrast"}},
-    {"Screen Wipe Speed Percentage",  S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_wipespeed     * M_SPC, {"wipe_speed_percentage"}},
+    {"Disable Palette Tint in Menus", S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_menutint        * M_SPC, {"no_menu_tint"}},
+    {"Disable Berserk Tint",          S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_berserktint     * M_SPC, {"no_berserk_tint"}},
+    {"Damage Tint Cap",               S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_dmgcountcap     * M_SPC, {"damagecount_cap"}},
+    {"Bonus Tint Cap",                S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_boncountcap     * M_SPC, {"bonuscount_cap"}},
+    {"Fake Contrast",                 S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_fakecontrast    * M_SPC, {"fake_contrast"}},
+    {"Screen Wipe Speed Percentage",  S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_wipespeed       * M_SPC, {"wipe_speed_percentage"}},
   {"", S_SKIP, m_null, M_X, M_Y + gen6_stub1*M_SPC},
   {"Cherry - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
-    {"Damage Screen Shake Percentage",S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_damageshake   * M_SPC, {"damage_shake"}},
-    {"Motion Blur Percentage",        S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_motionblur    * M_SPC, {"motion_blur"}},
+    {"Damage Screen Shake",           S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_damageshake     * M_SPC, {"damage_shake"}, 0, M_UpdateScreenShakeItem},
+    {"Explosion Screen Shake",        S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_explosionshake  * M_SPC, {"explosion_shake"}, 0, M_UpdateScreenShakeItem},
+    {"Screen Shake Percentage",       S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_shakepercentage * M_SPC, {"shake_percentage"}},
+    {"", S_SKIP, m_null, M_X, M_Y + gen6_stub2*M_SPC},
+    {"Motion Blur Percentage",        S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_motionblur      * M_SPC, {"motion_blur"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings5}},
   {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings7}},
@@ -4736,6 +4744,12 @@ setup_menu_t gen_settings6[] = { // [Nugget]
 
   {0,S_SKIP|S_END,m_null}
 };
+
+// [Cherry]
+void M_UpdateScreenShakeItem(void)
+{
+  DISABLE_ITEM(!(damage_shake || explosion_shake), gen_settings6[gen6_shakepercentage]);
+}
 
 enum { // [Nugget]
   gen7_title1,
@@ -8485,6 +8499,9 @@ void M_ResetSetupMenu(void)
   M_UpdateCriticalItems();
   // [Nugget]
   M_UpdateVertaimItem();
+  // [Cherry]
+  M_UpdateMenuBackgroundItem();
+  M_UpdateScreenShakeItem();
 }
 
 void M_ResetSetupMenuVideo(void)

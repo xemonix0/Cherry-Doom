@@ -977,6 +977,9 @@ static void saveg_read_player_t(player_t *str)
       // [Cherry]
       // weapontype_t lastweapon;
       str->lastweapon = saveg_read32();
+      // [Cherry]
+      // int screenshake;
+      str->screenshake = saveg_read32();
     }
     else
     {
@@ -1133,6 +1136,10 @@ static void saveg_write_player_t(player_t *str)
     // [Cherry]
     // weapontype_t lastweapon;
     saveg_write32(str->lastweapon);
+
+    // [Cherry]
+    // int screenshake;
+    saveg_write32(str->screenshake);
 }
 
 

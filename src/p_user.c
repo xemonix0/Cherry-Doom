@@ -472,6 +472,9 @@ void P_DeathThink (player_t* player)
 
           if (player->damagecount)
             player->damagecount--;
+
+          if (player->screenshake) // [Cherry]
+            player->screenshake--;
         }
       else
         if (delta < ANG180)
@@ -480,8 +483,13 @@ void P_DeathThink (player_t* player)
           player->mo->angle -= ANG5;
     }
   else
+  {
     if (player->damagecount)
       player->damagecount--;
+
+    if (player->screenshake) // [Cherry]
+      player->screenshake--;
+  }
 
   // [Nugget] Allow some freelook while dead
   if ((player->viewheight == 6*FRACUNIT) && !menuactive && !demoplayback)
@@ -599,7 +607,7 @@ void P_PlayerThink (player_t* player)
 
     if (!automapactive)
     {
-      if (player->damagecount)
+      if (player->screenshake)
         motionblur = MAX(motionblur, 100);
       else if (cmd->angleturn)
         motionblur = MIN(abs(cmd->angleturn) * 100 / 960, 150);
@@ -813,6 +821,9 @@ void P_PlayerThink (player_t* player)
 
   if (player->bonuscount)
     player->bonuscount--;
+
+  if (player->screenshake) // [Cherry]
+    player->screenshake--;
 
   // Handling colormaps.
   // killough 3/20/98: reformat to terse C syntax

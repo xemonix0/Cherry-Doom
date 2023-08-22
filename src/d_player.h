@@ -225,6 +225,8 @@ typedef struct player_s
   // Momentarily display the time at which an event occurred
   int                 eventtype, eventtime, eventtics;
 
+  // [Cherry] Screen shaking
+  int                 screenshake;
 } player_t;
 
 

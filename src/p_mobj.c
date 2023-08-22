@@ -1138,6 +1138,8 @@ void P_SpawnPlayer (mapthing_t* mthing)
   p->fixedcolormap = 0;
   // [Nugget] Adjustable viewheight
   p->viewheight = (!strictmode ? viewheight_value*FRACUNIT : VIEWHEIGHT);
+  // [Cherry] Screen shake
+  p->screenshake   = 0;
 
   p->momx = p->momy = 0;   // killough 10/98: initialize bobbing to 0.
 

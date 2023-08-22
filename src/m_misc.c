@@ -351,14 +351,14 @@ default_t defaults[] = {
     "level brightness"
   },
 
-  {
+  { // [Cherry]
     "draw_menu_background",
     (config_t *) &draw_menu_background, NULL,
     {1}, {0,2}, number, ss_gen, wad_no,
     "whether to draw menu background (0 = no, 1 = only in setup screens, 2 = in all menus)"
   },
 
-  {
+  { // [Cherry]
     "menu_background",
     (config_t *) &menu_background, NULL,
     {background_solid}, {background_solid,background_darker}, number, ss_gen, wad_no,
@@ -787,8 +787,22 @@ default_t defaults[] = {
   {
     "damage_shake",
     (config_t *) &damage_shake, NULL,
-    {0}, {0,100}, number, ss_gen, wad_no,
-    "View shake percentage when receiving damage"
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to shake view when receiving damage"
+  },
+
+  {
+    "explosion_shake",
+    (config_t *) &explosion_shake, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to shake view during explosions"
+  },
+
+  {
+    "shake_percentage",
+    (config_t *) &shake_percentage, NULL,
+    {50}, {0,100}, number, ss_gen, wad_no,
+    "View shake percentage"
   },
 
   {
