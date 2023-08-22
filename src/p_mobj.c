@@ -120,6 +120,34 @@ void P_ExplodeMissile (mobj_t* mo)
 
   mo->flags &= ~MF_MISSILE;
 
+  if (STRICTMODE(explosion_shake) && shake_percentage && mo->type == MT_BFG)
+  {
+    fixed_t dx, dy, dist;
+    dx = abs(viewplayer->mo->x - mo->x);
+    dy = abs(viewplayer->mo->y - mo->y);
+
+    dist = dx > dy ? dx : dy;
+    dist = (dist - viewplayer->mo->radius) >> FRACBITS;
+
+    int strength;
+
+    if (dist < 800)
+    {
+      strength = 50 * pow(0.9991, dist);
+    }
+    else
+    {
+      strength = 10;
+    }
+
+    viewplayer->screenshake = MAX(viewplayer->screenshake, strength);
+
+    if (viewplayer->screenshake > 100)
+    {
+      viewplayer->screenshake = 100;
+    }
+  }
+
   if (mo->info->deathsound)
     S_StartSound (mo, mo->info->deathsound);
 }
