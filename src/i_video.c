@@ -41,9 +41,9 @@
 
 #include "icon.c"
 
-// [Cherry] damage shake
+// [Cherry] screen shake
 #include "m_random.h"
-#define SHAKEANGLE ((double)(Woof_Random() * 128 % 1501) * damage_shake / 100000.0)
+#define SHAKEANGLE(shake) ((double)(Woof_Random() - 128) * shake * damage_shake * 0.00001)
 
 int SCREENWIDTH, SCREENHEIGHT;
 int NONWIDEWIDTH; // [crispy] non-widescreen SCREENWIDTH
@@ -464,7 +464,7 @@ void I_StartFrame(void)
 
 }
 
-static inline void I_UpdateRender (boolean shaking)
+static inline void I_UpdateRender (int shake)
 {
     SDL_LowerBlit(sdlscreen, &blit_rect, argbbuffer, &blit_rect);
     SDL_UpdateTexture(texture, NULL, argbbuffer->pixels, argbbuffer->pitch);
@@ -476,9 +476,9 @@ static inline void I_UpdateRender (boolean shaking)
 
         SDL_SetRenderTarget(renderer, texture_upscaled);
         // [Cherry] damage shake
-        if (STRICTMODE(shaking))
+        if (STRICTMODE(shake))
         {
-            SDL_RenderCopyEx(renderer, texture, NULL, NULL, SHAKEANGLE, NULL, SDL_FLIP_NONE);
+            SDL_RenderCopyEx(renderer, texture, NULL, NULL, SHAKEANGLE(shake), NULL, SDL_FLIP_NONE);
         }
         else
         {
@@ -493,9 +493,9 @@ static inline void I_UpdateRender (boolean shaking)
     else
     {
         // [Cherry] damage shake
-        if (STRICTMODE(shaking))
+        if (STRICTMODE(shake))
         {
-            SDL_RenderCopyEx(renderer, texture, NULL, NULL, SHAKEANGLE, NULL, SDL_FLIP_NONE);
+            SDL_RenderCopyEx(renderer, texture, NULL, NULL, SHAKEANGLE(shake), NULL, SDL_FLIP_NONE);
         }
         else
         {
@@ -509,7 +509,7 @@ static unsigned int disk_to_draw, disk_to_restore;
 
 static void CreateUpscaledTexture(boolean force);
 
-void I_FinishUpdate(boolean shaking)
+void I_FinishUpdate(int shake)
 {
     if (noblit)
         return;
@@ -608,7 +608,7 @@ void I_FinishUpdate(boolean shaking)
 
     I_DrawDiskIcon();
 
-    I_UpdateRender(shaking);
+    I_UpdateRender(shake);
 
     SDL_RenderPresent(renderer);
 

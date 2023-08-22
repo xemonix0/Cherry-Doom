@@ -54,7 +54,7 @@ void I_ShutdownGraphics(void);
 // Takes full 8 bit values.
 void I_SetPalette (byte* palette);
 
-void I_FinishUpdate (boolean shaking);
+void I_FinishUpdate (int shake);
 
 void I_ReadScreen (byte* scr);
 
