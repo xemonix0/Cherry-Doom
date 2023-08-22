@@ -2179,7 +2179,20 @@ void A_Scream(mobj_t *actor)
 
   // Check for bosses.
   if (actor->flags2 & (MF2_BOSS | MF2_FULLVOLSOUNDS))
+  {
+    if (STRICTMODE(boss_shake) && shake_percentage)
+    {
+      // [Cherry] shake screen
+      viewplayer->screenshake = MAX(viewplayer->screenshake, 80);
+
+      if (viewplayer->screenshake > 100)
+      {
+        viewplayer->screenshake = 100;
+      }
+    }
+
     S_StartSound(NULL, sound); // full volume
+  }
   else
     S_StartSound(actor, sound);
 }

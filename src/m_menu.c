@@ -4707,6 +4707,7 @@ enum { // [Nugget]
   gen6_title2,
   gen6_damageshake,
   gen6_explosionshake,
+  gen6_bossshake,
   gen6_shakepercentage,
   gen6_stub2,
   gen6_motionblur,
@@ -4733,6 +4734,7 @@ setup_menu_t gen_settings6[] = { // [Nugget]
   {"Cherry - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
     {"Damage Screen Shake",           S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_damageshake     * M_SPC, {"damage_shake"}, 0, M_UpdateScreenShakeItem},
     {"Explosion Screen Shake",        S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_explosionshake  * M_SPC, {"explosion_shake"}, 0, M_UpdateScreenShakeItem},
+    {"Boss Death Screen Shake",       S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_bossshake       * M_SPC, {"boss_shake"}, 0, M_UpdateScreenShakeItem},
     {"Screen Shake Percentage",       S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_shakepercentage * M_SPC, {"shake_percentage"}},
     {"", S_SKIP, m_null, M_X, M_Y + gen6_stub2*M_SPC},
     {"Motion Blur Percentage",        S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_motionblur      * M_SPC, {"motion_blur"}},
@@ -4748,7 +4750,7 @@ setup_menu_t gen_settings6[] = { // [Nugget]
 // [Cherry]
 void M_UpdateScreenShakeItem(void)
 {
-  DISABLE_ITEM(!(damage_shake || explosion_shake), gen_settings6[gen6_shakepercentage]);
+  DISABLE_ITEM(!(damage_shake || explosion_shake || boss_shake), gen_settings6[gen6_shakepercentage]);
 }
 
 enum { // [Nugget]

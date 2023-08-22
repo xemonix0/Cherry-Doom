@@ -799,6 +799,13 @@ default_t defaults[] = {
   },
 
   {
+    "boss_shake",
+    (config_t *) &boss_shake, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to shake view when a boss dies"
+  },
+
+  {
     "shake_percentage",
     (config_t *) &shake_percentage, NULL,
     {50}, {0,100}, number, ss_gen, wad_no,

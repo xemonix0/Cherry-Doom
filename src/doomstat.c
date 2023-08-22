@@ -160,6 +160,7 @@ int wipe_speed_percentage;
 // [Cherry] General ------------------------------------------------------
 int damage_shake;
 int explosion_shake;
+int boss_shake;
 int shake_percentage;
 int motion_blur;
 // [Cherry] End ----------------------------------------------------------

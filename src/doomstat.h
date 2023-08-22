@@ -479,6 +479,7 @@ extern int wipe_speed_percentage;
 // [Cherry] General ------------------------------------------------------
 extern int damage_shake;
 extern int explosion_shake;
+extern int boss_shake;
 extern int shake_percentage;
 extern int motion_blur;
 // [Cherry] End ----------------------------------------------------------

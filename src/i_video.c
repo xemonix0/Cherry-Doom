@@ -839,7 +839,7 @@ boolean I_WritePNGfile(char *filename)
   const uint32_t png_format = SDL_PIXELFORMAT_RGB24;
   format = SDL_AllocFormat(png_format);
 
-  I_UpdateRender(false);
+  I_UpdateRender();
 
   // [FG] adjust cropping rectangle if necessary
   SDL_GetRendererOutputSize(renderer, &rect.w, &rect.h);

@@ -2,7 +2,7 @@
 
 - **Last used weapon** key
 - **Level table**
-- **Screen shake effect** on damage and explosions
+- **Screen shake effect** on damage, explosions and boss deaths
 - **Motion blur**
 - **Widget bars** setting
 - **More widgets on intermission screen** (health, armor, weapons)
