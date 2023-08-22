@@ -126,6 +126,41 @@ endif()
 set(CPACK_PACKAGE_NAME "Nugget-Doom")
 if(WIN32)
     set(CPACK_GENERATOR ZIP)
+elseif(LINUX)
+    set(CPACK_GENERATOR External)
+    set(CPACK_EXTERNAL_ENABLE_STAGING YES)
+    set(CPACK_EXTERNAL_PACKAGE_SCRIPT "${PROJECT_BINARY_DIR}/appimage-generate.cmake")
+
+    file(GENERATE
+        OUTPUT "${PROJECT_BINARY_DIR}/appimage-generate.cmake"
+        CONTENT [[
+            find_program(LINUXDEPLOY_EXECUTABLE
+                NAMES linuxdeploy linuxdeploy-x86_64.AppImage
+                PATHS ${CPACK_PACKAGE_DIRECTORY}/linuxdeploy)
+
+            if(NOT LINUXDEPLOY_EXECUTABLE)
+                message(STATUS "Downloading linuxdeploy")
+                set(LINUXDEPLOY_EXECUTABLE ${CPACK_PACKAGE_DIRECTORY}/linuxdeploy/linuxdeploy)
+                file(DOWNLOAD
+                    https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+                    ${LINUXDEPLOY_EXECUTABLE}
+                    INACTIVITY_TIMEOUT 10)
+                execute_process(COMMAND
+                    chmod +x ${LINUXDEPLOY_EXECUTABLE} COMMAND_ECHO STDOUT)
+            endif()
+
+            execute_process(COMMAND
+                ${CMAKE_COMMAND} -E env
+                OUTPUT=${CPACK_PACKAGE_FILE_NAME}.appimage
+                VERSION=$<IF:$<BOOL:${CPACK_PACKAGE_VERSION}>,${CPACK_PACKAGE_VERSION},0.1.0>
+                ${LINUXDEPLOY_EXECUTABLE}
+                --appimage-extract-and-run
+                --appdir=${CPACK_TEMPORARY_DIRECTORY}
+                --executable=$<TARGET_FILE:nugget-doom>
+                --desktop-file=${CPACK_TEMPORARY_DIRECTORY}/share/applications/nugget-doom.desktop
+                --icon-file=${CPACK_TEMPORARY_DIRECTORY}/share/icons/hicolor/128x128/apps/nugget-doom.png
+                --output=appimage)
+            ]])
 else()
     set(CPACK_GENERATOR TGZ)
 endif()
