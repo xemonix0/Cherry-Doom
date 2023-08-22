@@ -936,7 +936,7 @@ void M_LoadSelect(int choice)
 
   name = G_SaveGameName(choice);
 
-  saveg_compat = saveg_woof600;
+  saveg_compat = saveg_woof600; // [Cherry]
 
   if (M_access(name, F_OK) != 0)
   {

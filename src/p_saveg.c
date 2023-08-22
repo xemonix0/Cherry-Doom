@@ -30,7 +30,7 @@
 
 byte *save_p;
 
-saveg_compat_t saveg_compat = saveg_woof510;
+saveg_compat_t saveg_compat = saveg_woof600;
 
 // Endian-safe integer read/write functions
 
@@ -753,15 +753,6 @@ static void saveg_read_pspdef_t(pspdef_t *str)
 
     // [Woof!]: fixed_t sy2;
     str->sy2 = saveg_read32();
-
-    // [Nugget] fixed_t dy;
-    str->dy = saveg_read32();
-
-    // [Nugget] fixed_t wix;
-    str->wix = saveg_read32();
-
-    // [Nugget] fixed_t wiy;
-    str->wiy = saveg_read32();
     }
     else
     {
@@ -770,6 +761,19 @@ static void saveg_read_pspdef_t(pspdef_t *str)
         str->dy = 0; // [Nugget]
         str->wix = 0; // [Nugget]
         str->wiy = 0; // [Nugget]
+    }
+
+    // [Cherry]
+    if (saveg_compat > saveg_woof600)
+    {
+      // [Nugget] fixed_t dy;
+      str->dy = saveg_read32();
+
+      // [Nugget] fixed_t wix;
+      str->wix = saveg_read32();
+
+      // [Nugget] fixed_t wiy;
+      str->wiy = saveg_read32();
     }
 }
 
@@ -964,10 +968,21 @@ static void saveg_read_player_t(player_t *str)
     }
 
     // [Nugget]
-    // int jumptics;
-    str->jumptics = saveg_read32();
-    // fixed_t crouchoffset;
-    str->crouchoffset = saveg_read32();
+    if (saveg_compat > saveg_woof600) // [Cherry]
+    {
+      // int jumptics;
+      str->jumptics = saveg_read32();
+      // fixed_t crouchoffset;
+      str->crouchoffset = saveg_read32();
+      // [Cherry]
+      // weapontype_t lastweapon;
+      str->lastweapon = saveg_read32();
+    }
+    else
+    {
+      str->jumptics = str->crouchoffset = 0;
+      return;
+    }
 }
 
 static void saveg_write_player_t(player_t *str)
@@ -1114,6 +1129,10 @@ static void saveg_write_player_t(player_t *str)
     saveg_write32(str->jumptics);
     // fixed_t crouchoffset;
     saveg_write32(str->crouchoffset);
+
+    // [Cherry]
+    // weapontype_t lastweapon;
+    saveg_write32(str->lastweapon);
 }
 
 

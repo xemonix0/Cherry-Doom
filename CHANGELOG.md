@@ -6,6 +6,7 @@
 - **Motion blur**
 - **Widget bars** setting
 - **More widgets on intermission screen** (health, armor, weapons)
+- **Woof! savegame compatibility**
 
 ## Changes
 

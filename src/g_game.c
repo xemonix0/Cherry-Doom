@@ -2137,6 +2137,11 @@ static void G_DoLoadGame(void)
   {
     saveg_compat = saveg_current;
   }
+  // [Cherry]
+  else if (strncmp((char *)save_p, "Woof 6.0.0", strlen(CURRENT_SAVE_VERSION)) == 0)
+  {
+    saveg_compat = saveg_woof600;
+  }
 
   // killough 2/22/98: Friendly savegame version difference message
   if (!forced_loadgame && strncmp((char *) save_p, vcheck, VERSIONSIZE) &&
@@ -2272,8 +2277,8 @@ static void G_DoLoadGame(void)
     extraspawns = saveg_read32();
   }
 
-  // restore extrakills
-  if (save_p - savebuffer <= length - sizeof extrakills)
+  // [Nugget] Restore extrakills
+  if (saveg_compat > saveg_woof600 && save_p - savebuffer <= length - sizeof extrakills)
   {
     extrakills = saveg_read32();
   }
