@@ -683,15 +683,15 @@ void P_PlayerThink (player_t* player)
       if (demo_compatibility)
         { // compatibility mode -- required for old demos -- killough
           if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
-              (player->readyweapon != wp_chainsaw ||
-               !player->powers[pw_strength] ||
-               newweapon != lastweapon)) // [Nugget]
+              ((player->readyweapon != wp_chainsaw
+                && lastweapon != wp_fist) || // [Nugget]
+               !player->powers[pw_strength]))
             newweapon = wp_chainsaw;
           if (have_ssg &&
               newweapon == wp_shotgun &&
               player->weaponowned[wp_supershotgun] &&
               player->readyweapon != wp_supershotgun &&
-              newweapon != lastweapon) // [Nugget]
+              lastweapon != wp_shotgun) // [Nugget]
             newweapon = wp_supershotgun;
         }
 
