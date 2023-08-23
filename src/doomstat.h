@@ -279,6 +279,7 @@ extern  int oldleveltime;
 extern  int totalleveltimes; // [FG] total time for all completed levels
 extern  int levelscompleted; // [Cherry] total amount of completed levels
 extern  int sessionattempts; // [Cherry] attempts on the current map in this session
+extern  int bestattempts; // [Cherry] attempts on the current map in this session
 extern  int totalattempts; // [Cherry] attempts on the current map
 // --------------------------------------
 // DEMO playback/recording related stuff.

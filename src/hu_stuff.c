@@ -223,7 +223,7 @@ static char hud_keysstr[80];
 static char hud_monsecstr[80];
 static char hud_timestr[48]; // time above status bar
 static char hud_powerstr[48]; // [Nugget] Powerup timers
-static char hud_attemptstr[48]; // [Cherry] Attempt counter
+static char hud_attemptstr[80]; // [Cherry] Attempt counter
 
 //
 // Builtin map names.
@@ -1293,10 +1293,18 @@ static void HU_widget_build_powers(void)
 // [Cherry] Attempt counter
 static void HU_widget_build_attempts(void)
 {
+  const boolean inter = gamestate == GS_INTERMISSION;
+
   int offset = 0;
 
   if (sessionattempts != -1)
-    offset += sprintf(hud_attemptstr, "ATT \x1b%c%d/%d", '0'+CR_GRAY, sessionattempts, totalattempts);
+  {
+    offset += sprintf(hud_attemptstr, "ATT \x1b%c%d", '0'+CR_GRAY, sessionattempts);
+    if (!inter)
+    {
+      offset += sprintf(hud_attemptstr + offset, "/%d", totalattempts);
+    }
+  }
 
   HUlib_clearTextLine(&w_attempts);
   if (offset)
@@ -1735,10 +1743,12 @@ void WI_DrawTimeWidget(void)
 // [Cherry] Draw health and armor on intermission screen
 void WI_DrawMoreWidgets(void)
 {
+  HU_widget_build_attempts();
   // no bars on intermission screen
   HU_widget_build_health();
   HU_widget_build_armor();
   HU_widget_build_weapon();
+  HUlib_drawTextLine(&w_attempts, align_topleft, false);
   HUlib_drawTextLine(&w_health, align_topleft, false);
   HUlib_drawTextLine(&w_armor, align_topleft, false);
   HUlib_drawTextLine(&w_weapon, align_topleft, false);

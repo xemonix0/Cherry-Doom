@@ -113,6 +113,9 @@ int             extraspawns;   // [Nugget]: [crispy] count spawned monsters
 int             extrakills;    // [Nugget]: [So Doom] count deaths of resurrected and (re)spawned monsters
 int             totalleveltimes; // [FG] total time for all completed levels
 int             levelscompleted; // [Cherry] amount of levels completed
+int             sessionattempts = -1; // [Cherry] attempts on the current map in this session
+int             bestattempts = -1; // [Cherry] best attempts on the current map
+int             totalattempts = -1;   // [Cherry] attempts on the current map
 boolean         demorecording;
 boolean         longtics;             // cph's doom 1.91 longtics hack
 boolean         lowres_turn;          // low resolution turning for longtics

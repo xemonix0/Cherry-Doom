@@ -378,12 +378,21 @@ void WS_WadStatsEnterMap(void) {
   {
     current_map_stats = WS_MapStats(gameepisode, gamemap);
     
-    sessionattempts   = ++current_map_stats->session_attempts;
-    totalattempts     = ++current_map_stats->total_attempts;
+    if (current_map_stats->best_attempts)
+    {
+      bestattempts  = current_map_stats->best_attempts;
+    }
+    else
+    {
+      bestattempts  = -1;
+    }
+    sessionattempts = ++current_map_stats->session_attempts;
+    totalattempts   = ++current_map_stats->total_attempts;
   }
   else
   {
     sessionattempts = -1;
+    bestattempts    = -1;
     totalattempts   = -1;
   }
 }
@@ -418,7 +427,7 @@ void WS_WadStatsExitMap(int missed_monsters) {
         if (current_map_stats->best_sk5_time == -1 || current_map_stats->best_sk5_time > leveltime)
           current_map_stats->best_sk5_time = leveltime;
 
-      if (current_map_stats->best_attempts == 0 ||
+      if (!current_map_stats->best_attempts ||
           current_map_stats->session_attempts < current_map_stats->best_attempts)
         current_map_stats->best_attempts = current_map_stats->session_attempts;
       current_map_stats->session_attempts = 0;
