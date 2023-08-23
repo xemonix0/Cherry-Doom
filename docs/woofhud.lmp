@@ -8,6 +8,7 @@ coords topright
 fps topright
 stats bottomright
 time bottomright
+attempts bottomright
 
 hud 1
 title topleft
@@ -21,11 +22,13 @@ weapons bottomleft
 keys bottomleft
 stats bottomright
 time bottomright
+attempts bottomright
 
 hud 2
 title topleft
 stats topright
 time topright
+attempts topright
 powers topright
 coords topright
 fps topright

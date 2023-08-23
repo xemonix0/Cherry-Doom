@@ -25,6 +25,7 @@ Possible values for the HUD widget names:
  * "monsec" or "stats"
  * "sttime" or "time"
  * "powers"
+ * "attempts"
  * "coord" or "coords"
  * "fps" or "rate"
 
@@ -50,6 +51,7 @@ hud 0
 title bottomleft
 monsec bottomleft
 sttime bottomleft
+attempts bottomleft
 powers topright
 coord topright
 fps topright
@@ -63,6 +65,7 @@ weapon bottomleft
 keys bottomleft
 monsec bottomleft
 sttime bottomleft
+attempts bottomleft
 powers topright
 coord topright
 fps topright
@@ -76,6 +79,7 @@ weapon bottomright
 keys bottomleft
 monsec bottomleft
 sttime bottomleft
+attempts bottomleft
 powers topright
 coord topright
 fps topright
@@ -93,7 +97,8 @@ weapon 200 -16
 keys 2 -8
 monsec 2 8
 sttime 2 16
-powers 2 24
+attempts 2 24
+powers 2 32
 coord 200 8
 fps 224 16
 ```

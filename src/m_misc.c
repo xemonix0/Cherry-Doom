@@ -2946,6 +2946,13 @@ default_t defaults[] = {
     "1 to show powerup timers widget"
   },
 
+  { // [Cherry] Attempt counter
+    "map_attempt_counter",
+    (config_t *) &map_attempt_counter, NULL,
+    {0}, {0,2}, number, ss_auto, wad_yes,
+    "1 to show attempt counter widget"
+  },
+
   {
     "followplayer",
     (config_t *) &followplayer, NULL,
@@ -3230,6 +3237,13 @@ default_t defaults[] = {
     (config_t *) &hud_power_timers, NULL,
     {0}, {0,1}, number, ss_stat, wad_yes,
     "1 to powerup timers on HUD"
+  },
+
+  { // [Cherry] Attempt counter
+    "hud_attempt_counter",
+    (config_t *)&hud_attempt_counter, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to show attempt counter on HUD"
   },
 
   // [Nugget] Event timers -------------------------------------

@@ -32,6 +32,9 @@ typedef struct
   int max_kills;
   int max_items;
   int max_secrets;
+  int session_attempts;
+  int best_attempts;
+  int total_attempts;
 } map_stats_t;
 
 typedef struct

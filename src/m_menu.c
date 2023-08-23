@@ -3512,6 +3512,7 @@ enum {
   stat1_stats,
   stat1_time,
   stat1_powers, // [Nugget] Powerup timers
+  stat1_attcount, // [Cherry] Attempt counter
   stat1_healthr,
   stat1_healthy,
   stat1_healthg,
@@ -3536,6 +3537,7 @@ setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
   {"SHOW LEVEL STATS"  ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_stats*M_SPC, {"hud_level_stats"}},
   {"SHOW LEVEL TIME"   ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_time*M_SPC,  {"hud_level_time"}},
   {"SHOW POWERUP TIMERS",S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_powers*M_SPC,{"hud_power_timers"}}, // [Nugget]
+  {"SHOW ATTEMPT COUNTER",S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_attcount*M_SPC,{"hud_attempt_counter"}}, // [Cherry]
   {"HEALTH LOW/OK"     ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthr*M_SPC, {"health_red"}},
   {"HEALTH OK/GOOD"    ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthy*M_SPC, {"health_yellow"}},
   {"HEALTH GOOD/EXTRA" ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthg*M_SPC, {"health_green"}},
@@ -3764,6 +3766,7 @@ enum {
   auto1_stats,
   auto1_time,
   auto1_powers,
+  auto1_attempts,
   auto1_stub2,
   auto1_title3,
   auto1_smooth,
@@ -3793,6 +3796,7 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
   {"Show level stats"     ,S_YESNO ,m_null,M_X,M_Y+auto1_stats*M_SPC,   {"map_level_stats"}},
   {"Show level time"      ,S_YESNO ,m_null,M_X,M_Y+auto1_time*M_SPC,    {"map_level_time"}},
   {"Show powerup timers"  ,S_YESNO ,m_null,M_X,M_Y+auto1_powers*M_SPC,  {"map_power_timers"}}, // [Nugget]
+  {"Show attempt counter" ,S_YESNO ,m_null,M_X,M_Y+auto1_attempts*M_SPC,{"map_attempt_counter"}}, // [Cherry]
 
   {"",S_SKIP,m_null,M_X,M_Y+auto1_stub2*M_SPC},
 
@@ -5418,6 +5422,8 @@ typedef struct
   int best_time;
   int best_max_time;
   int best_sk5_time;
+  int best_attempts;
+  int total_attempts;
 } wad_stats_summary_t;
 
 static wad_stats_summary_t wad_stats_summary;
@@ -5434,6 +5440,9 @@ static void M_CalculateWadStatsSummary(void)
   for (i = 0; i < wad_stats.map_count; ++i)
   {
     map = &wad_stats.maps[i];
+    
+    wad_stats_summary.total_attempts += map->total_attempts;
+
     if (map->episode == -1 || !map->best_skill)
       continue;
 
@@ -5447,6 +5456,7 @@ static void M_CalculateWadStatsSummary(void)
     wad_stats_summary.max_kills += map->max_kills;
     wad_stats_summary.max_items += map->max_items;
     wad_stats_summary.max_secrets += map->max_secrets;
+    wad_stats_summary.best_attempts += map->best_attempts;
 
     if (map->best_time >= 0)
     {
@@ -5472,7 +5482,7 @@ static void M_ResetLevelTable(void)
 {
   int i, page;
   const int page_count[LEVEL_TABLE_PAGES] = {
-    wad_stats.map_count * 5 + 16,
+    wad_stats.map_count * 6 + 16,
     wad_stats.map_count * 4 + 16,
     40,
   };
@@ -5527,7 +5537,7 @@ static void M_BuildLevelTable(void)
     entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
 
-  column_x += 112;
+  column_x += 76;
   INSERT_NEW_LEVEL_TABLE_COLUMN("SKILL", column_x);
 
   LOOP_LEVEL_TABLE_COLUMN
@@ -5591,7 +5601,7 @@ static void M_BuildLevelTable(void)
     }
   END_LOOP_LEVEL_TABLE_COLUMN
 
-  column_x += 48;
+  column_x += 36;
   INSERT_NEW_LEVEL_TABLE_COLUMN("S", column_x);
 
   LOOP_LEVEL_TABLE_COLUMN
@@ -5606,6 +5616,33 @@ static void M_BuildLevelTable(void)
       entry->m_text = m_text;
       if (map->best_secrets == map->max_secrets)
         entry->m_flags2 |= S2_SEL_COL;
+    }
+    else
+    {
+      entry->m_text = Z_Strdup("-", PU_STATIC, NULL);
+    }
+  END_LOOP_LEVEL_TABLE_COLUMN
+
+  column_x += 48;
+  INSERT_NEW_LEVEL_TABLE_COLUMN("ATT", column_x);
+
+  LOOP_LEVEL_TABLE_COLUMN
+    entry->m_flags = S_SKIP;
+    entry->m_flags2 = S2_LABEL;
+    entry->m_x = column_x;
+    entry->m_y = LT_Y;
+
+    if (map->best_skill)
+    {
+      M_StringPrintF(&m_text, "%d/%d", map->best_attempts, map->total_attempts);
+      entry->m_text = m_text;
+      if (map->best_attempts == 1u)
+        entry->m_flags2 |= S2_SEL_COL;
+    }
+    else if (map->total_attempts)
+    {
+      M_StringPrintF(&m_text, "-/%d", map->total_attempts);
+      entry->m_text = m_text;
     }
     else
     {
@@ -5745,7 +5782,7 @@ static void M_BuildLevelTable(void)
 
   INSERT_LEVEL_TABLE_EMPTY_LINE
 
-  level_table_page[page][base_i].m_text = Z_Strdup("Time", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_text = Z_Strdup("Total attempts", PU_STATIC, NULL);
   level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 8 * M_SPC;
@@ -5753,7 +5790,7 @@ static void M_BuildLevelTable(void)
 
   INSERT_LEVEL_TABLE_EMPTY_LINE
 
-  level_table_page[page][base_i].m_text = Z_Strdup("Max Time", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_text = Z_Strdup("Time", PU_STATIC, NULL);
   level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 9 * M_SPC;
@@ -5761,10 +5798,18 @@ static void M_BuildLevelTable(void)
 
   INSERT_LEVEL_TABLE_EMPTY_LINE
 
-  level_table_page[page][base_i].m_text = Z_Strdup("Sk 5 Time", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_text = Z_Strdup("Max Time", PU_STATIC, NULL);
   level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
   level_table_page[page][base_i].m_x = 162;
   level_table_page[page][base_i].m_y = M_Y + 10 * M_SPC;
+  ++base_i;
+
+  INSERT_LEVEL_TABLE_EMPTY_LINE
+
+  level_table_page[page][base_i].m_text = Z_Strdup("Sk 5 Time", PU_STATIC, NULL);
+  level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 11 * M_SPC;
   ++base_i;
 
   level_table_page[page][base_i] = new_column_template;
@@ -5838,6 +5883,17 @@ static void M_BuildLevelTable(void)
   level_table_page[page][base_i].m_y = M_Y + 7 * M_SPC;
   ++base_i;
 
+  if (wad_stats_summary.completed_count == wad_stats.map_count)
+    M_StringCatF(&m_text, "%d / %d", wad_stats_summary.best_attempts, wad_stats_summary.total_attempts);
+  else
+    M_StringPrintF(&m_text, "- / %d", wad_stats_summary.total_attempts);
+  level_table_page[page][base_i].m_text = m_text;
+  level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
+  level_table_page[page][base_i].m_flags2 = S2_LABEL;
+  level_table_page[page][base_i].m_x = 162;
+  level_table_page[page][base_i].m_y = M_Y + 8 * M_SPC;
+  ++base_i;
+
   if (wad_stats_summary.timed_count == wad_stats.map_count)
     M_PrintTime(&m_text, wad_stats_summary.best_time);
   else
@@ -5846,7 +5902,7 @@ static void M_BuildLevelTable(void)
   level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
   level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
-  level_table_page[page][base_i].m_y = M_Y + 8 * M_SPC;
+  level_table_page[page][base_i].m_y = M_Y + 9 * M_SPC;
   ++base_i;
 
   if (wad_stats_summary.max_timed_count == wad_stats.map_count)
@@ -5857,7 +5913,7 @@ static void M_BuildLevelTable(void)
   level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
   level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
-  level_table_page[page][base_i].m_y = M_Y + 9 * M_SPC;
+  level_table_page[page][base_i].m_y = M_Y + 10 * M_SPC;
   ++base_i;
 
   if (wad_stats_summary.sk5_timed_count == wad_stats.map_count)
@@ -5868,7 +5924,7 @@ static void M_BuildLevelTable(void)
   level_table_page[page][base_i].m_flags = S_SKIP | S_LEFTJUST;
   level_table_page[page][base_i].m_flags2 = S2_LABEL;
   level_table_page[page][base_i].m_x = 162;
-  level_table_page[page][base_i].m_y = M_Y + 10 * M_SPC;
+  level_table_page[page][base_i].m_y = M_Y + 11 * M_SPC;
   ++base_i;
 
   level_table_page[page][base_i] = new_column_template;

@@ -34,7 +34,7 @@ static char* base_data_dir;
 static char* wad_data_dir;
 
 static const char* filename = "stats.txt";
-static const int current_version = 1;
+static const int current_version = 2;
 static map_stats_t* current_map_stats;
 
 wad_stats_t wad_stats;
@@ -294,17 +294,25 @@ static void WS_LoadWadStats(void) {
       {
         map_stats_t ms;
 
-        if (
-          sscanf(
-            lines[i], "%8s %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-            ms.lump, &ms.episode, &ms.map,
-            &ms.best_skill, &ms.best_time, &ms.best_max_time, &ms.best_sk5_time,
-            &ms.total_exits, &ms.total_kills,
-            &ms.best_kills, &ms.best_items, &ms.best_secrets,
-            &ms.max_kills, &ms.max_items, &ms.max_secrets
-          ) == 15
-          )
+        int values = sscanf(
+          lines[i], "%8s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+          ms.lump, &ms.episode, &ms.map,
+          &ms.best_skill, &ms.best_time, &ms.best_max_time, &ms.best_sk5_time,
+          &ms.total_exits, &ms.total_kills,
+          &ms.best_kills, &ms.best_items, &ms.best_secrets,
+          &ms.max_kills, &ms.max_items, &ms.max_secrets,
+          &ms.best_attempts, &ms.total_attempts
+        );
+
+        if (values == 15 || values == 17)
         {
+          if (values == 15)
+          {
+            ms.best_attempts = 0;
+            ms.total_attempts = 0;
+          }
+
+          ms.session_attempts = 0;
           map_count += 1;
           WS_EnsureMapCount(map_count);
           wad_stats.maps[map_count - 1] = ms;
@@ -343,12 +351,13 @@ void WS_SaveWadStats(void) {
     map_stats_t* ms;
 
     ms = &wad_stats.maps[i];
-    fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+    fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
             ms->lump, ms->episode, ms->map,
             ms->best_skill, ms->best_time, ms->best_max_time, ms->best_sk5_time,
             ms->total_exits, ms->total_kills,
             ms->best_kills, ms->best_items, ms->best_secrets,
-            ms->max_kills, ms->max_items, ms->max_secrets);
+            ms->max_kills, ms->max_items, ms->max_secrets,
+            ms->best_attempts, ms->total_attempts);
   }
 
   fclose(file);
@@ -365,7 +374,18 @@ static map_stats_t* WS_MapStats(int episode, int map) {
 }
 
 void WS_WadStatsEnterMap(void) {
-  current_map_stats = WS_MapStats(gameepisode, gamemap);
+  if (gameaction != ga_playdemo)
+  {
+    current_map_stats = WS_MapStats(gameepisode, gamemap);
+    
+    sessionattempts   = ++current_map_stats->session_attempts;
+    totalattempts     = ++current_map_stats->total_attempts;
+  }
+  else
+  {
+    sessionattempts = -1;
+    totalattempts   = -1;
+  }
 }
 
 void WS_WadStatsExitMap(int missed_monsters) {
@@ -397,6 +417,11 @@ void WS_WadStatsExitMap(int missed_monsters) {
       if (levelscompleted == 1 && skill == 5)
         if (current_map_stats->best_sk5_time == -1 || current_map_stats->best_sk5_time > leveltime)
           current_map_stats->best_sk5_time = leveltime;
+
+      if (current_map_stats->best_attempts == 0 ||
+          current_map_stats->session_attempts < current_map_stats->best_attempts)
+        current_map_stats->best_attempts = current_map_stats->session_attempts;
+      current_map_stats->session_attempts = 0;
 
       current_map_stats->max_kills = totalkills;
       current_map_stats->max_items = totalitems;
