@@ -129,6 +129,7 @@ if(WIN32)
 elseif(LINUX)
     set(CPACK_GENERATOR External)
     set(CPACK_EXTERNAL_ENABLE_STAGING YES)
+    set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     set(CPACK_EXTERNAL_PACKAGE_SCRIPT "${PROJECT_BINARY_DIR}/appimage-generate.cmake")
 
     file(GENERATE
@@ -157,8 +158,8 @@ elseif(LINUX)
                 --appimage-extract-and-run
                 --appdir=${CPACK_TEMPORARY_DIRECTORY}
                 --executable=$<TARGET_FILE:nugget-doom>
-                --desktop-file=${CPACK_TEMPORARY_DIRECTORY}/share/applications/nugget-doom.desktop
-                --icon-file=${CPACK_TEMPORARY_DIRECTORY}/share/icons/hicolor/128x128/apps/nugget-doom.png
+                --desktop-file=${CPACK_TEMPORARY_DIRECTORY}/usr/share/applications/nugget-doom.desktop
+                --icon-file=${CPACK_TEMPORARY_DIRECTORY}/usr/share/icons/hicolor/128x128/apps/nugget-doom.png
                 --output=appimage)
             ]])
 else()
