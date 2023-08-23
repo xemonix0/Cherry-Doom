@@ -397,6 +397,13 @@ void WS_WadStatsEnterMap(void) {
   }
 }
 
+void WS_WadStatsLoadGame(void)
+{
+  current_map_stats->session_attempts = sessionattempts;
+  // Prevent total attempts from incrementing
+  totalattempts = --current_map_stats->total_attempts;
+}
+
 void WS_WadStatsExitMap(int missed_monsters) {
   int skill;
 

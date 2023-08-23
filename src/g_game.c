@@ -2049,9 +2049,14 @@ static void G_DoSaveGame(void)
   // [FG] fix copy size and pointer progression
   saveg_write32(leveltime); //killough 11/98: save entire word
 
-  // [Cherry] save the amount of levels completed
+  // [Cherry]
   if (saveg_compat > saveg_woof600)
+  {
+    // levels completed
     saveg_write32(levelscompleted);
+    // session attempts
+    saveg_write32(sessionattempts);
+  }
 
   // killough 11/98: save revenant tracer state
   *save_p++ = (gametic-basetic) & 255;
@@ -2227,11 +2232,20 @@ static void G_DoLoadGame(void)
   // [FG] fix copy size and pointer progression
   leveltime = saveg_read32();
 
-  // [Cherry] save the amount of levels completed
+  // [Cherry]
   if (saveg_compat > saveg_woof600)
+  {
+    // levels completed
     levelscompleted = saveg_read32();
+    // sesion attempts
+    sessionattempts = saveg_read32();
+  }
   else
+  {
     levelscompleted = 0;
+    sessionattempts = 1;
+  }
+  WS_WadStatsLoadGame();
 
   // killough 11/98: load revenant tracer state
   basetic = gametic - (int) *save_p++;

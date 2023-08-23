@@ -48,6 +48,7 @@ typedef struct
 extern wad_stats_t wad_stats;
 
 void WS_WadStatsEnterMap(void);
+void WS_WadStatsLoadGame(void);
 void WS_WadStatsExitMap(int missed_monsters);
 void WS_WadStatsKill(void);
 void WS_SaveWadStats(void);
