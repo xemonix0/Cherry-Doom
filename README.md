@@ -6,6 +6,11 @@ Cherry Doom is a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) i
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
 **RECORD DEMOS AT YOUR OWN RISK!**
 
+### SAVE FILE COMPATIBILITY NOTICE
+In the course of development, changes to the save file structure, such as adding, moving, or removing values, might be introduced in some commits. **The save version is not updated after every single change,** rather only after the first one leading to the next release.
+
+This means that if you saved your game before a breaking change to save file structure was introduced, updating to the latest commit might not trigger the incompatibility warning when trying to load the save, and as a result that might lead to unexpected behavior or a crash.
+
 # Features
 Just like with Nugget Doom, most of Cherry Doom's features come from other sources, like source ports, mods or games. The initial implementations for some are **ported from (p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
 
@@ -23,10 +28,12 @@ Just like with Nugget Doom, most of Cherry Doom's features come from other sourc
 
 - Toggling of **extended HUD bars**
 - **More widgets on intermission screen** (health, armor, weapons)
+- **Attempt counter widget** for the extended HUD, WOOFHUD and NUGHUD
 
 ### Miscellaneous
 
-- **Level table** and WAD stats tracking [p.f. DSDA-Doom]
+- **Level table** and WAD stats tracking [p.f. DSDA-Doom, with the following additions]
+	- **Attempts** column and WAD summary entry
 
 # Releases
 

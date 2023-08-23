@@ -1,3 +1,5 @@
+**Save version has been changed to `Cherry 1.0.0`**
+
 ## New Features
 
 - **Last used weapon** key
@@ -7,6 +9,7 @@
 - **Widget bars** setting
 - **More widgets on intermission screen** (health, armor, weapons)
 - **Woof! savegame compatibility**
+- **Attempt counter** (in the forms of a widget, a Level Table column and a WAD Summary entry)
 
 ## Changes
 
