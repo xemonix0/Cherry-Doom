@@ -374,10 +374,15 @@ static map_stats_t* WS_MapStats(int episode, int map) {
 }
 
 void WS_WadStatsEnterMap(void) {
-  if (gameaction != ga_playdemo)
+  if (demoplayback)
   {
-    current_map_stats = WS_MapStats(gameepisode, gamemap);
+    return;
+  }
+
+  current_map_stats = WS_MapStats(gameepisode, gamemap);
     
+  if (current_map_stats)
+  {
     if (current_map_stats->best_attempts)
     {
       bestattempts  = current_map_stats->best_attempts;
@@ -388,13 +393,12 @@ void WS_WadStatsEnterMap(void) {
     }
     sessionattempts = ++current_map_stats->session_attempts;
     totalattempts   = ++current_map_stats->total_attempts;
+    return;
   }
-  else
-  {
-    sessionattempts = -1;
-    bestattempts    = -1;
-    totalattempts   = -1;
-  }
+
+  sessionattempts = -1;
+  bestattempts    = -1;
+  totalattempts   = -1;
 }
 
 void WS_WadStatsLoadGame(void)
