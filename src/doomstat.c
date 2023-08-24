@@ -186,6 +186,8 @@ int show_berserk;
 // Status Bar/HUD
 int alt_arms;
 int smarttotals;
+int hudcolor_ms_incomp;
+int hudcolor_ms_comp;
 int event_timers[NUMTIMERS];
 
 // Enemies

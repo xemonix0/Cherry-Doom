@@ -1171,13 +1171,15 @@ static void HU_widget_build_monsec(void)
     }
   }
 
+  // [Nugget] Customizable stat colors
+
   // [Nugget] Smart Totals from So Doom
-  kills_color = (kills - (smarttotals ? extrakills : extraspawns) >= totalkills) ? '0'+CR_BLUE : '0'+CR_GRAY;
-  kills_percent_color = (kills - (smarttotals ? extrakills : 0) >= totalkills) ? '0'+CR_BLUE : '0'+CR_GRAY;
+  kills_color = (kills - (smarttotals ? extrakills : extraspawns) >= totalkills) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
+  kills_percent_color = (kills - (smarttotals ? extrakills : 0) >= totalkills) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
   kills_percent = (totalkills == 0) ? 100 : ((kills - (smarttotals ? extrakills : 0)) * 100 / totalkills);
   
-  items_color = (items >= totalitems) ? '0'+CR_BLUE : '0'+CR_GRAY;
-  secrets_color = (secrets >= totalsecret) ? '0'+CR_BLUE : '0'+CR_GRAY;
+  items_color = (items >= totalitems) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
+  secrets_color = (secrets >= totalsecret) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
 
   if (playerscount > 1)
   {
