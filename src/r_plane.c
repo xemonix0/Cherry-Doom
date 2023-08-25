@@ -396,7 +396,12 @@ static void do_draw_plane(visplane_t *pl)
         dc_iscale = pspriteiscale / fovdiff; // [Nugget] FOV from Doom Retro
 
         // [FG] stretch short skies
-        skyheight_target = (200 - (dc_texturemid >> FRACBITS)) + (((bfov - ORIGFOV) > 0) ? (bfov - ORIGFOV) * (1.0 + (1.0 / 9.0)) : 0);
+        
+        { // [Nugget] Stretch sky just as much as necessary
+          const int bfov = R_GetBFOV();
+          skyheight_target = (200 - (dc_texturemid >> FRACBITS)) + (((bfov - ORIGFOV) > 0) ? (bfov - ORIGFOV) * (1.0 + (1.0 / 9.0)) : 0);
+        }
+        
         if (stretchsky && dc_texheight < skyheight_target)
         {
           dc_iscale = dc_iscale * dc_texheight / skyheight_target;

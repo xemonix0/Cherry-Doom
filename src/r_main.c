@@ -114,18 +114,43 @@ int extra_level_brightness;               // level brightness feature
 
 // [Nugget] FOV from Doom Retro -------
 
-fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
-static int zoomed = 0;   // Current zoom state
-
 boolean fovchange = true;
-       int bfov; // Base FOV
+static int bfov; // Base FOV
 static int rfov; // Rendered (currently applied) FOV, with effects added to it
 float fovdiff;   // Used for some corrections
 
 static fixed_t fovscale;
-static int WIDEFOVDELTA;
-
 static int lookdirmax;
+
+fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
+static int zoomed = 0;   // Current zoom state
+
+int R_GetBFOV(void)
+{
+  return bfov;
+}
+
+int R_GetZoom(void)
+{
+  return zoomed;
+}
+
+void R_SetZoom(const int state)
+{
+  if (state == ZOOM_RESET || zoomed == ZOOM_RESET)
+  {
+    zoomed = ZOOM_RESET;
+    fovchange = true;
+    return;
+  }
+  
+  if (zoomed != state) { fovchange = true; }
+  
+  if (STRICTMODE(zoom_fov - bfov))
+  { zoomed = state; }
+  else
+  { zoomed = ZOOM_OFF; }
+}
 
 // [Nugget] ---------------------------
 
@@ -459,30 +484,6 @@ void R_SetViewSize(int blocks)
   setblocks = blocks;
 }
 
-// [Nugget]
-
-int R_GetZoom(void)
-{
-  return zoomed;
-}
-
-void R_SetZoom(int state)
-{
-  if (state == ZOOM_RESET || zoomed == ZOOM_RESET)
-  {
-    zoomed = ZOOM_RESET;
-    fovchange = true;
-    return;
-  }
-  
-  if (zoomed != state) { fovchange = true; }
-  
-  if (STRICTMODE(zoom_fov - bfov))
-  { zoomed = state; }
-  else
-  { zoomed = ZOOM_OFF; }
-}
-
 //
 // R_ExecuteSetViewSize
 //
@@ -490,7 +491,9 @@ void R_SetZoom(int state)
 void R_ExecuteSetViewSize (void)
 {
   int i, j;
-  fixed_t num; // [Nugget] FOV from Doom Retro
+  // [Nugget] FOV from Doom Retro
+  int WIDEFOVDELTA;
+  fixed_t num;
 
   setsizeneeded = false;
 
@@ -796,28 +799,39 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   pitch *= fovdiff;
-  
+
   // [Nugget] Chasecam
   chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health < 0 && player->playerstate == PST_DEAD));
   if (chasecam_on)
   {
+    static fixed_t extradist = 0;
     const fixed_t z = MIN(playerz + (((player->mo->health < 0 && player->playerstate == PST_DEAD) ? 6 : chasecam_height) * FRACUNIT),
                           player->mo->ceilingz - (2*FRACUNIT));
     fixed_t slope;
     fixed_t dist = chasecam_distance*FRACUNIT;
     const fixed_t oldviewx = viewx, oldviewy = viewy;
     const angle_t oldviewangle = viewangle;
-  
+
     if (chasecam_mode == CHASECAMMODE_FRONT)
     {
       viewangle += ANG180;
       lookdir    = -lookdir;
       pitch      = -pitch;
     }
-    
-    dist +=   FixedMul(player->mo->momx, finecosine[viewangle >> ANGLETOFINESHIFT])
-            + FixedMul(player->mo->momy,   finesine[viewangle >> ANGLETOFINESHIFT]);
-    
+
+    dist += extradist;
+
+    { // `extradist` is applied on the next tic
+      static int oldtic = -1;
+
+      if (gametic != oldtic) {
+        extradist = FixedMul(player->mo->momx, finecosine[viewangle >> ANGLETOFINESHIFT])
+                  + FixedMul(player->mo->momy,   finesine[viewangle >> ANGLETOFINESHIFT]);
+      }
+      
+      oldtic = gametic;
+    }
+
     P_PositionChasecam(z, dist, slope = ((-(lookdir * FRACUNIT) / PLAYER_SLOPE_DENOM) / fovdiff));
 
     if (chasecam.hit) {
@@ -828,8 +842,8 @@ void R_SetupFrame (player_t *player)
     else {
       const fixed_t dx = FixedMul(dist, finecosine[viewangle >> ANGLETOFINESHIFT]);
       const fixed_t dy = FixedMul(dist,   finesine[viewangle >> ANGLETOFINESHIFT]);
-      const sector_t *sec = R_PointInSubsector(viewx-dx, viewy-dy)->sector;
-    
+      const sector_t *const sec = R_PointInSubsector(viewx-dx, viewy-dy)->sector;
+
       viewz = z + (slope * (dist / FRACUNIT));
 
       if (viewz < sec->floorheight+FRACUNIT || sec->ceilingheight-FRACUNIT < viewz)
@@ -845,14 +859,14 @@ void R_SetupFrame (player_t *player)
         viewy -= dy;
       }
     }
-    
+
     chasexofs = viewx - oldviewx;
     chaseyofs = viewy - oldviewy;
     chaseaofs = viewangle - oldviewangle;
   }
   else
   { chasexofs = chaseyofs = chaseaofs = 0; }
-  
+
   // [Nugget]: [crispy] A11Y
   if (!NOTSTRICTMODE(a11y_weapon_flash))
     extralight = 0;

@@ -74,6 +74,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol (CFG-Only: `alt_arms`)
 - _**Smart Totals**_ setting [p.f. So Doom]
 - _**(In)Complete Milestone Color**_ choices, to customize the Stats text's colors
+- **Armor count is colored gray when in God Mode**
 - **Event Timers:**
   - _"Use" Button Timer_ [p.f. Crispy Doom]; 
   - _Teleport Timer_ [i.b. the above];

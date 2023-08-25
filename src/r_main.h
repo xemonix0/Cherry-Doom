@@ -119,6 +119,9 @@ void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // [Nugget] FOV from Doom Retro -------
 
+extern boolean fovchange;
+extern float   fovdiff;
+
 typedef struct fovfx_s {
   int old, current, target;
 } fovfx_t;
@@ -137,12 +140,10 @@ enum {
   ZOOM_OFF   =  0,
   ZOOM_ON    =  1,
 };
+
+extern int  R_GetBFOV(void);
 extern int  R_GetZoom(void);
 extern void R_SetZoom(int state);
-
-extern boolean fovchange;
-extern int     bfov;
-extern float   fovdiff;
 
 // [Nugget] ---------------------------
 

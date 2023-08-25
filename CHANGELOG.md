@@ -32,3 +32,4 @@
 - **Caching of certain NUGHUD patches** (fixed some crashes when using e.g. Status Bar graphics)
 - **Vertical weapon inertia reset** when disabling mouselook/padlook
 - **NUGHUD forced widescreen shifting being applied in all screen sizes**
+- **Delayed Chasecam speed effect** to mitigate stutter
