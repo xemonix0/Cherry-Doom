@@ -3494,12 +3494,14 @@ void M_DrawWeapons(void)
 setup_menu_t stat_settings1[];
 setup_menu_t stat_settings2[];
 setup_menu_t stat_settings3[]; // [Nugget]
+setup_menu_t stat_settings4[]; // [Cherry]
 
 setup_menu_t* stat_settings[] =
 {
   stat_settings1,
   stat_settings2,
   stat_settings3, // [Nugget]
+  stat_settings4, // [Cherry]
   NULL
 };
 
@@ -3508,75 +3510,104 @@ enum {
   stat1_rednum,
   stat1_graypcnt,
   stat1_keys,
+  stat1_stub1,
   stat1_title2,
   stat1_stats,
   stat1_time,
   stat1_powers, // [Nugget] Powerup timers
   stat1_attcount, // [Cherry] Attempt counter
-  stat1_healthr,
-  stat1_healthy,
-  stat1_healthg,
-  stat1_armorr,
-  stat1_armory,
-  stat1_armorg,
-  stat1_ammor,
-  stat1_ammoy,
-  stat1_stub2,
+  // [Cherry] Moved thresholds to page 2
 };
 
 setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
 {
-  {"STATUS BAR"        ,S_SKIP|S_TITLE,m_null,M_X,M_Y},
+  {"STATUS BAR",S_SKIP|S_TITLE,m_null,M_X,M_Y},
+    {"USE STANDARD COLORS",  S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_rednum   * M_SPC, {"sts_always_red"}},
+    {"GRAY %",               S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_graypcnt * M_SPC, {"sts_pct_always_gray"}},
+    {"SINGLE KEY DISPLAY",   S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_keys     * M_SPC, {"sts_traditional_keys"}},
 
-  {"USE STANDARD COLORS",S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_rednum*M_SPC,   {"sts_always_red"}},
-  {"GRAY %"            ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_graypcnt*M_SPC, {"sts_pct_always_gray"}},
-  {"SINGLE KEY DISPLAY",S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_keys*M_SPC,     {"sts_traditional_keys"}},
+  {"",S_SKIP,m_null,M_X,M_Y+stat1_stub1*M_SPC},
 
-  {"HEADS-UP DISPLAY"  ,S_SKIP|S_TITLE,m_null,M_X,M_Y+stat1_title2*M_SPC},
+  {"HEADS-UP DISPLAY",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat1_title2*M_SPC},
+    {"SHOW LEVEL STATS",     S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_stats    * M_SPC, {"hud_level_stats"}},
+    {"SHOW LEVEL TIME",      S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_time     * M_SPC, {"hud_level_time"}},
+    {"SHOW POWERUP TIMERS",  S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_powers   * M_SPC, {"hud_power_timers"}}, // [Nugget]
+    {"SHOW ATTEMPT COUNTER", S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_attcount * M_SPC, {"hud_attempt_counter"}}, // [Cherry]
 
-  {"SHOW LEVEL STATS"  ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_stats*M_SPC, {"hud_level_stats"}},
-  {"SHOW LEVEL TIME"   ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_time*M_SPC,  {"hud_level_time"}},
-  {"SHOW POWERUP TIMERS",S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_powers*M_SPC,{"hud_power_timers"}}, // [Nugget]
-  {"SHOW ATTEMPT COUNTER",S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_attcount*M_SPC,{"hud_attempt_counter"}}, // [Cherry]
-  {"HEALTH LOW/OK"     ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthr*M_SPC, {"health_red"}},
-  {"HEALTH OK/GOOD"    ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthy*M_SPC, {"health_yellow"}},
-  {"HEALTH GOOD/EXTRA" ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthg*M_SPC, {"health_green"}},
-  {"ARMOR LOW/OK"      ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_armorr*M_SPC,  {"armor_red"}},
-  {"ARMOR OK/GOOD"     ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_armory*M_SPC,  {"armor_yellow"}},
-  {"ARMOR GOOD/EXTRA"  ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_armorg*M_SPC,  {"armor_green"}},
-  {"AMMO LOW/OK"       ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_ammor*M_SPC,   {"ammo_red"}},
-  {"AMMO OK/GOOD"      ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_ammoy*M_SPC,   {"ammo_yellow"}},
-                        
+  // [Cherry] Moved thresholds to page 2
+ 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
 
-  {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {stat_settings2}},
+  {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT,{stat_settings2}},
 
   // Final entry
   {0,S_SKIP|S_END,m_null}
 };
 
 enum {
+  // [Cherry] Moved thresholds here
   stat2_title1,
+  stat2_healthr,
+  stat2_healthy,
+  stat2_healthg,
+  stat2_armorr,
+  stat2_armory,
+  stat2_armorg,
+  stat2_ammor,
+  stat2_ammoy,
+  stat2_stub1,
   stat2_backpack,
   stat2_armortype,
   stat2_smooth,
-  stat2_stub1,
-  stat2_title2,
-  stat2_smart,
-  stat2_msincomp,
-  stat2_mscomp,
-  stat2_hudfont,
-  stat2_bars,
-  stat2_wimorewidgets,
-  stat2_stub2,
-  stat2_title3,
-  stat2_timeruse,
-  stat2_timertelept,
-  stat2_timerkey,
+  // [Cherry] Moved Extended HUD and Event Timers to page 3
 };
 
-// [Nugget] Moved here
+setup_menu_t stat_settings2[] =
+{
+  // [Cherry] Moved thresholds here
+  {"WIDGET APPEARANCE",S_SKIP|S_TITLE,m_null,M_X,M_Y},
+    {"HEALTH LOW/OK",                  S_NUM  |S_COSMETIC, m_null, M_X, M_Y + stat2_healthr   * M_SPC, {"health_red"}},
+    {"HEALTH OK/GOOD",                 S_NUM  |S_COSMETIC, m_null, M_X, M_Y + stat2_healthy   * M_SPC, {"health_yellow"}},
+    {"HEALTH GOOD/EXTRA",              S_NUM  |S_COSMETIC, m_null, M_X, M_Y + stat2_healthg   * M_SPC, {"health_green"}},
+    {"ARMOR LOW/OK",                   S_NUM  |S_COSMETIC, m_null, M_X, M_Y + stat2_armorr    * M_SPC, {"armor_red"}},
+    {"ARMOR OK/GOOD",                  S_NUM  |S_COSMETIC, m_null, M_X, M_Y + stat2_armory    * M_SPC, {"armor_yellow"}},
+    {"ARMOR GOOD/EXTRA",               S_NUM  |S_COSMETIC, m_null, M_X, M_Y + stat2_armorg    * M_SPC, {"armor_green"}},
+    {"AMMO LOW/OK",                    S_NUM  |S_COSMETIC, m_null, M_X, M_Y + stat2_ammor     * M_SPC, {"ammo_red"}},
+    {"AMMO OK/GOOD",                   S_NUM  |S_COSMETIC, m_null, M_X, M_Y + stat2_ammoy     * M_SPC, {"ammo_yellow"}},
+  {"",S_SKIP,m_null,M_X,M_Y+stat2_stub1*M_SPC},
+    {"BACKPACK CHANGES THRESHOLDS",    S_YESNO,            m_null, M_X, M_Y + stat2_backpack  * M_SPC, {"hud_backpack_thresholds"}},
+    {"COLOR OF ARMOR DEPENDS ON TYPE", S_YESNO,            m_null, M_X, M_Y + stat2_armortype * M_SPC, {"hud_armor_type"}},
+    // [Nugget] Disallowed in Strict Mode
+    {"SMOOTH HEALTH/ARMOR COUNT",      S_YESNO|S_STRICT,   m_null, M_X, M_Y + stat2_smooth    * M_SPC, {"smooth_counts"}},
+
+  // [Cherry] Moved Extended HUD and Event Timers to page 3
+
+  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT,{stat_settings1}},
+  {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT,{stat_settings3}}, // [Nugget]
+
+  // Final entry
+  {0,S_SKIP|S_END,m_null}
+};
+
+// [Nugget]
+enum {
+  // [Cherry] Moved Extended HUD and Event Timers here
+  stat3_title1,
+  stat3_smart,
+  stat3_msincomp,
+  stat3_mscomp,
+  stat3_hudfont,
+  stat3_bars,
+  stat3_wimorewidgets,
+  stat3_stub1,
+  stat3_title2,
+  stat3_timeruse,
+  stat3_timertelept,
+  stat3_timerkey,
+  // [Cherry] Moved crosshair customization to page 4
+};
+
 static const char *hudcolor_str[] = {
     "BRICK", "TAN", "GRAY", "GREEN", "BROWN", "GOLD", "RED", "BLUE", "ORANGE",
     "YELLOW", "BLUE2", "BLACK", "PURPLE", "WHITE", "NONE", NULL
@@ -3591,115 +3622,107 @@ static const char *timer_strings[] = {
   "Off", "In Demos", "Always", NULL
 };
 
-setup_menu_t stat_settings2[] =
+setup_menu_t stat_settings3[] =
 {
-  {"WIDGET APPEARANCE",S_SKIP|S_TITLE,m_null,M_X,M_Y},
-
-  {"BACKPACK CHANGES THRESHOLDS"    ,S_YESNO,m_null,M_X,M_Y+stat2_backpack*M_SPC,  {"hud_backpack_thresholds"}},
-  {"COLOR OF ARMOR DEPENDS ON TYPE" ,S_YESNO,m_null,M_X,M_Y+stat2_armortype*M_SPC, {"hud_armor_type"}},
-  // [Nugget] Disallowed in Strict Mode
-  {"SMOOTH HEALTH/ARMOR COUNT"      ,S_YESNO|S_STRICT,m_null,M_X,M_Y+stat2_smooth*M_SPC, {"smooth_counts"}},
-
-  {"",S_SKIP,m_null,M_X,M_Y+stat2_stub1*M_SPC},
-
-  {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title2*M_SPC },
-
-  {"SMART TOTALS"                       , S_YESNO ,m_null,M_X,M_Y+stat2_smart*M_SPC,        {"smarttotals"}}, // [Nugget]
-  {"INCOMPLETE MILESTONE COLOR"         , S_CRITEM,m_null,M_X,M_Y+stat2_msincomp*M_SPC,     {"hudcolor_ms_incomp"}, 0, NULL, hudcolor_str}, // [Nugget]
-  {"COMPLETE MILESTONE COLOR"           , S_CRITEM,m_null,M_X,M_Y+stat2_mscomp*M_SPC,       {"hudcolor_ms_comp"}, 0, NULL, hudcolor_str}, // [Nugget]
-  {"USE STANDARD DOOM FONT FOR WIDGETS" , S_CHOICE,m_null,M_X,M_Y+stat2_hudfont*M_SPC,      {"hud_widget_font"}, 0, NULL, show_widgets_strings},
-  {"DRAW BARS"                          , S_YESNO ,m_null,M_X,M_Y+stat2_bars*M_SPC,         {"hud_widget_bars"}}, // [Cherry]
-  {"MORE WIDGETS ON INTERMISSION SCREEN", S_YESNO ,m_null,M_X,M_Y+stat2_wimorewidgets*M_SPC,{"wi_more_widgets"}}, // [Cherry]
+  // [Cherry] Moved Extended HUD and Event Timers here
+  {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y},
+    {"SMART TOTALS",                        S_YESNO,           m_null, M_X, M_Y + stat3_smart         * M_SPC, {"smarttotals"}}, // [Nugget]
+    {"INCOMPLETE MILESTONE COLOR",          S_CRITEM,          m_null, M_X, M_Y + stat3_msincomp      * M_SPC, {"hudcolor_ms_incomp"}, 0, NULL, hudcolor_str}, // [Nugget]
+    {"COMPLETE MILESTONE COLOR",            S_CRITEM,          m_null, M_X, M_Y + stat3_mscomp        * M_SPC, {"hudcolor_ms_comp"},   0, NULL, hudcolor_str}, // [Nugget]
+    {"USE STANDARD DOOM FONT FOR WIDGETS",  S_CHOICE,          m_null, M_X, M_Y + stat3_hudfont       * M_SPC, {"hud_widget_font"},    0, NULL, show_widgets_strings},
+    {"DRAW BARS",                           S_YESNO,           m_null, M_X, M_Y + stat3_bars          * M_SPC, {"hud_widget_bars"}}, // [Cherry]
+    {"MORE WIDGETS ON INTERMISSION SCREEN", S_YESNO,           m_null, M_X, M_Y + stat3_wimorewidgets * M_SPC, {"wi_more_widgets"}}, // [Cherry]
 
   // [Nugget]
 
-  {"",S_SKIP,m_null,M_X,M_Y+stat2_stub2*M_SPC},
+  {"",S_SKIP,m_null,M_X,M_Y+stat3_stub1*M_SPC},
 
-  {"Event Timers",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title3*M_SPC },
+  {"Event Timers",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat3_title2*M_SPC},
+    {"\"Use\" Button Timer",                S_CHOICE,          m_null, M_X, M_Y + stat3_timeruse      * M_SPC, {"timer_use"},          0, NULL, timer_strings},
+    {"Teleport Timer",                      S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat3_timertelept   * M_SPC, {"timer_teleport"},     0, NULL, timer_strings},
+    {"Key Pickup Timer",                    S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat3_timerkey      * M_SPC, {"timer_key_pickup"},   0, NULL, timer_strings},
 
-  {"\"Use\" Button Timer", S_CHOICE,          m_null, M_X, M_Y + stat2_timeruse    * M_SPC, {"timer_use"},        0, NULL, timer_strings},
-  {"Teleport Timer",       S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat2_timertelept * M_SPC, {"timer_teleport"},   0, NULL, timer_strings},
-  {"Key Pickup Timer",     S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat2_timerkey    * M_SPC, {"timer_key_pickup"}, 0, NULL, timer_strings},
+  // [Cherry] Moved crosshair customization to page 4
 
-  {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {stat_settings1}},
-  {"NEXT ->" ,S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {stat_settings3}}, // [Nugget]
+  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT,{stat_settings2}},
+  {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT,{stat_settings4}}, // [Cherry]
 
   // Final entry
   {0,S_SKIP|S_END,m_null}
 };
 
-// [Nugget]
+// [Cherry]
 enum {
-  stat3_title1,
-  stat3_xhair,
-  stat3_xhairtype,
-  stat3_xhairsh,
-  stat3_xhairhealth,
-  stat3_xhairtarget,
-  stat3_xhairlockon,
-  stat3_xhairindicators,
-  stat3_xhairfuzzy,
-  stat3_xhaircolor,
-  stat3_xhairtcolor,
+  // [Cherry] Moved crosshair customization here
+  stat4_title1,
+  stat4_xhair,
+  stat4_xhairtype,
+  stat4_xhairsh,
+  stat4_xhairhealth,
+  stat4_xhairtarget,
+  stat4_xhairlockon,
+  stat4_xhairindicators,
+  stat4_xhairfuzzy,
+  stat4_xhaircolor,
+  stat4_xhairtcolor,
 };
 
 static void M_UpdateCrosshairItems (void)
 {
   // [Nugget] Check for toggle instead of type
   DISABLE_ITEM(!hud_crosshair_on,
-               stat_settings3[stat3_xhairtype]);
+               stat_settings4[stat4_xhairtype]);
   
   DISABLE_ITEM(!hud_crosshair_on,
-               stat_settings3[stat3_xhairsh]);
+               stat_settings4[stat4_xhairsh]);
   
   DISABLE_ITEM(!hud_crosshair_on,
-               stat_settings3[stat3_xhairhealth]);
+               stat_settings4[stat4_xhairhealth]);
   
   DISABLE_ITEM(!STRICTMODE(hud_crosshair_on),
-               stat_settings3[stat3_xhairtarget]);
+               stat_settings4[stat4_xhairtarget]);
   
   DISABLE_ITEM(!STRICTMODE(hud_crosshair_on),
-               stat_settings3[stat3_xhairlockon]);
+               stat_settings4[stat4_xhairlockon]);
                                                 
   DISABLE_ITEM(!STRICTMODE(hud_crosshair_on
                            && (hud_crosshair_target || hud_crosshair_lockon)
                            && !(mouselook && vertical_aiming == VERTAIM_DIRECT)),
-              stat_settings3[stat3_xhairindicators]);
+               stat_settings4[stat4_xhairindicators]);
               
   DISABLE_ITEM(!STRICTMODE(hud_crosshair_on && (hud_crosshair_lockon || hud_crosshair_target)),
-               stat_settings3[stat3_xhairfuzzy]);
+               stat_settings4[stat4_xhairfuzzy]);
                
   DISABLE_ITEM(!hud_crosshair_on,
-               stat_settings3[stat3_xhaircolor]);
+               stat_settings4[stat4_xhaircolor]);
   
   DISABLE_ITEM(!STRICTMODE(hud_crosshair_on && hud_crosshair_target),
-               stat_settings3[stat3_xhairtcolor]);
+               stat_settings4[stat4_xhairtcolor]);
 }
 
 static const char *crosshair_target_str[] = {
-    "OFF", "HIGHLIGHT", "HEALTH", NULL
+  "OFF", "HIGHLIGHT", "HEALTH", NULL
 };
 static const char *crosshair_lockon_modes[] = {
   "Off", "Vertically", "Fully", NULL
 };
 
-// [Nugget] Moved `hudcolor_str` above
-
-setup_menu_t stat_settings3[] =
+setup_menu_t stat_settings4[] =
 {
-  {"CROSSHAIR",S_SKIP|S_TITLE,m_null,M_X,M_Y+ stat3_title1*M_SPC },
-    {"ENABLE CROSSHAIR",              S_YESNO,           m_null,M_X,M_Y+stat3_xhair*M_SPC,           {"hud_crosshair_on"}, 0, M_UpdateCrosshairItems},
-    {"CROSSHAIR TYPE",                S_CHOICE,          m_null,M_X,M_Y+stat3_xhairtype*M_SPC,       {"hud_crosshair"}, 0, 0, crosshair_str},
-    {"SHADED CROSSHAIR",              S_YESNO,           m_null,M_X,M_Y+stat3_xhairsh*M_SPC,         {"hud_crosshair_shaded"}},
-    {"COLOR BY HEALTH",               S_YESNO,           m_null,M_X,M_Y+stat3_xhairhealth*M_SPC,     {"hud_crosshair_health"}},
-    {"COLOR BY TARGET",               S_CHOICE|S_STRICT, m_null,M_X,M_Y+stat3_xhairtarget*M_SPC,     {"hud_crosshair_target"}, 0, M_UpdateCrosshairItems, crosshair_target_str},
-    {"LOCK ON TARGET",                S_CHOICE|S_STRICT, m_null,M_X,M_Y+stat3_xhairlockon*M_SPC,     {"hud_crosshair_lockon"}, 0, M_UpdateCrosshairItems, crosshair_lockon_modes},
-    {"HORIZONTAL AUTOAIM INDICATORS", S_YESNO |S_STRICT, m_null,M_X,M_Y+stat3_xhairindicators*M_SPC, {"hud_crosshair_indicators"}},
-    {"ACCOUNT FOR FUZZY TARGETS",     S_YESNO |S_STRICT, m_null,M_X,M_Y+stat3_xhairfuzzy*M_SPC,      {"hud_crosshair_fuzzy"}},
-    {"DEFAULT COLOR",                 S_CRITEM,          m_null,M_X,M_Y+stat3_xhaircolor*M_SPC,      {"hud_crosshair_color"}, 0, NULL, hudcolor_str},
-    {"HIGHLIGHT COLOR",               S_CRITEM|S_STRICT, m_null,M_X,M_Y+stat3_xhairtcolor*M_SPC,     {"hud_crosshair_target_color"}, 0, NULL, hudcolor_str},
+  // [Cherry] Moved crosshair customization here
+  {"CROSSHAIR",                       S_SKIP  |S_TITLE,  m_null, M_X, M_Y},
+    {"ENABLE CROSSHAIR",              S_YESNO,           m_null, M_X, M_Y + stat4_xhair           * M_SPC, {"hud_crosshair_on"},           0, M_UpdateCrosshairItems},
+    {"CROSSHAIR TYPE",                S_CHOICE,          m_null, M_X, M_Y + stat4_xhairtype       * M_SPC, {"hud_crosshair"},              0, NULL,                   crosshair_str},
+    {"SHADED CROSSHAIR",              S_YESNO,           m_null, M_X, M_Y + stat4_xhairsh         * M_SPC, {"hud_crosshair_shaded"}},
+    {"COLOR BY HEALTH",               S_YESNO,           m_null, M_X, M_Y + stat4_xhairhealth     * M_SPC, {"hud_crosshair_health"}},
+    {"COLOR BY TARGET",               S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat4_xhairtarget     * M_SPC, {"hud_crosshair_target"},       0, M_UpdateCrosshairItems, crosshair_target_str},
+    {"LOCK ON TARGET",                S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat4_xhairlockon     * M_SPC, {"hud_crosshair_lockon"},       0, M_UpdateCrosshairItems, crosshair_lockon_modes},
+    {"HORIZONTAL AUTOAIM INDICATORS", S_YESNO |S_STRICT, m_null, M_X, M_Y + stat4_xhairindicators * M_SPC, {"hud_crosshair_indicators"}},
+    {"ACCOUNT FOR FUZZY TARGETS",     S_YESNO |S_STRICT, m_null, M_X, M_Y + stat4_xhairfuzzy      * M_SPC, {"hud_crosshair_fuzzy"}},
+    {"DEFAULT COLOR",                 S_CRITEM,          m_null, M_X, M_Y + stat4_xhaircolor      * M_SPC, {"hud_crosshair_color"},        0, NULL,                   hudcolor_str},
+    {"HIGHLIGHT COLOR",               S_CRITEM|S_STRICT, m_null, M_X, M_Y + stat4_xhairtcolor     * M_SPC, {"hud_crosshair_target_color"}, 0, NULL,                   hudcolor_str},
 
-  {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {stat_settings2}},
+  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT,{stat_settings3}},
 
   // Final entry
   {0,S_SKIP|S_END,m_null}
