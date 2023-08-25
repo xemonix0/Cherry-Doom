@@ -186,6 +186,10 @@ int show_berserk;
 // Status Bar/HUD
 int alt_arms;
 int smarttotals;
+int hudcolor_wg_name; // [Cherry]
+int hudcolor_wg_name_cons; // [Cherry]
+int hudcolor_plain; // [Cherry]
+int hudcolor_totaltime; // [Cherry]
 int hudcolor_ms_incomp;
 int hudcolor_ms_comp;
 int event_timers[NUMTIMERS];

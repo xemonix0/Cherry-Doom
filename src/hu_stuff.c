@@ -367,21 +367,22 @@ void HU_ResetMessageColors(void)
 
 extern boolean st_invul;
 
-static char* ColorByHealth(int health, int maxhealth, boolean invul)
+static int ColorByHealth(int health, int maxhealth, boolean invul)
 {
+  // [Cherry] return CR_* values instead of colrngs[CR_*]
   if (invul)
-    return colrngs[CR_GRAY];
+    return CR_GRAY;
 
   health = 100 * health / maxhealth;
 
   if (health < health_red)
-    return colrngs[CR_RED];
+    return CR_RED;
   else if (health < health_yellow)
-    return colrngs[CR_GOLD];
+    return CR_GOLD;
   else if (health <= health_green)
-    return colrngs[CR_GREEN];
+    return CR_GREEN;
   else
-    return colrngs[CR_BLUE];
+    return CR_BLUE;
 }
 
 static int lightest_color, darkest_color;
@@ -634,30 +635,30 @@ void HU_Start(void)
                      HU_FONTSTART, colrngs[hudcolor_titl], NULL);
 
   // create the hud health widget
-  HUlib_initTextLine(&w_health, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GREEN], HU_widget_build_health);
+  HUlib_initTextLine(&w_health, 0, 0, &hu_font2, HU_FONTSTART, hudcolor_wg_name_cons ? colrngs[hudcolor_wg_name] : colrngs[CR_GREEN], HU_widget_build_health);
 
   // create the hud armor widget
-  HUlib_initTextLine(&w_armor, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GREEN], HU_widget_build_armor);
+  HUlib_initTextLine(&w_armor, 0, 0, &hu_font2, HU_FONTSTART, hudcolor_wg_name_cons ? colrngs[hudcolor_wg_name] : colrngs[CR_GREEN], HU_widget_build_armor);
 
   // create the hud ammo widget
-  HUlib_initTextLine(&w_ammo, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GOLD], HU_widget_build_ammo);
+  HUlib_initTextLine(&w_ammo, 0, 0, &hu_font2, HU_FONTSTART, hudcolor_wg_name_cons ? colrngs[hudcolor_wg_name] : colrngs[CR_GOLD], HU_widget_build_ammo);
 
   // create the hud weapons widget
-  HUlib_initTextLine(&w_weapon, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GRAY], HU_widget_build_weapon);
+  HUlib_initTextLine(&w_weapon, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_wg_name], HU_widget_build_weapon);
 
   // create the hud keys widget
-  HUlib_initTextLine(&w_keys, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GRAY], HU_widget_build_keys);
+  HUlib_initTextLine(&w_keys, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_wg_name], HU_widget_build_keys);
 
   // create the hud monster/secret widget
-  HUlib_initTextLine(&w_monsec, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GRAY], HU_widget_build_monsec);
+  HUlib_initTextLine(&w_monsec, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_wg_name], HU_widget_build_monsec);
 
-  HUlib_initTextLine(&w_sttime, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GRAY], HU_widget_build_sttime);
+  HUlib_initTextLine(&w_sttime, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_wg_name], HU_widget_build_sttime);
 
   // [Nugget] Powerup timers
-  HUlib_initTextLine(&w_powers, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_GRAY], HU_widget_build_powers);
+  HUlib_initTextLine(&w_powers, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_plain], HU_widget_build_powers);
 
   // [Cherry] Attempt counter
-  HUlib_initTextLine(&w_attempts, 0, 0, &hu_font2, HU_FONTSTART, colrngs[CR_RED], HU_widget_build_attempts);
+  HUlib_initTextLine(&w_attempts, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_wg_name], HU_widget_build_attempts);
 
   // create the automaps coordinate widget
   HUlib_initTextLine(&w_coord, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_xyco], HU_widget_build_coord);
@@ -726,6 +727,14 @@ void HU_Start(void)
   sprintf(hud_weapstr, "WEA ");
   HUlib_addStringToTextLine(&w_weapon, hud_weapstr);
 
+  // [Cherry] initialize time widget
+  sprintf(hud_timestr, "TIME ");
+  HUlib_addStringToTextLine(&w_sttime, hud_timestr);
+
+  // [Cherry] initialize attempts widget
+  sprintf(hud_attemptstr, "ATT ");
+  HUlib_addStringToTextLine(&w_attempts, hud_attemptstr);
+
   //jff 2/17/98 initialize keys widget
   if (deathmatch)
     sprintf(hud_keysstr, "FRG %c%c", '\x1b', '0'+CR_ORIG);
@@ -747,21 +756,31 @@ void HU_Start(void)
 static void HU_widget_build_ammo (void)
 {
   int i = 4;
+  int oldi; // [Cherry]
 
   // clear the widgets internal line
   HUlib_clearTextLine(&w_ammo);
 
   hud_ammostr[4] = '\0';
 
+  // [Cherry] Consistent widget name colors
+  if (hudcolor_wg_name_cons)
+    w_ammo.cr = colrngs[hudcolor_wg_name];
+
   // special case for weapon with no ammo selected - blank bargraph + N/A
   if (weaponinfo[plr->readyweapon].ammo == am_noammo)
   {
     if (hud_widget_bars) // [Cherry]
     {
-      strcat(hud_ammostr, "\x7f\x7f\x7f\x7f\x7f\x7f\x7f ");
+      i += sprintf(hud_ammostr + i, "\x7f\x7f\x7f\x7f\x7f\x7f\x7f ");
     }
-    strcat(hud_ammostr, "N/A");
-    w_ammo.cr = colrngs[CR_GRAY];
+
+    // [Cherry] Consistent widget name colors
+    if (hudcolor_wg_name_cons)
+      i += sprintf(hud_ammostr + i, "\x1b%c", '0'+CR_GRAY);
+    else
+      w_ammo.cr = colrngs[CR_GRAY];
+    i += sprintf(hud_ammostr + i, "N/A");
   }
   else
   {
@@ -769,13 +788,39 @@ static void HU_widget_build_ammo (void)
     int fullammo = plr->maxammo[weaponinfo[plr->readyweapon].ammo];
     int ammopct = (100 * ammo) / fullammo;
     int ammobars;
+    int color; // [Cherry]
+
+    // [Cherry] move color setting here
+
+    // backpack changes thresholds (ammo widget)
+    if (plr->backpack && !hud_backpack_thresholds && fullammo)
+      ammopct = (100 * ammo) / (fullammo / 2);
+
+    // set the display color from the percentage of total ammo held
+    if (plr->cheats & CF_INFAMMO) // [Nugget] Make it gray if the player has infinite ammo
+      color = CR_GRAY;
+    else
+      if (ammopct < ammo_red)
+        color = CR_RED;
+      else if (ammopct < ammo_yellow)
+        color = CR_GOLD;
+      else if (ammopct > 100) // more than max threshold w/o backpack
+        color = CR_BLUE;
+      else
+        color = CR_GREEN;
+    if (hudcolor_wg_name_cons)
+      i += sprintf(hud_ammostr + i, "\x1b%c", '0'+color);
+    else
+      w_ammo.cr = colrngs[color];
+
+    ammopct = (100 * ammo) / fullammo;
 
     if (hud_widget_bars) // [Cherry]
     {
       ammobars = ammopct / 4;
       // build the bargraph string
-      // full bargraph chars
-      for (; i < 4 + ammobars / 4;)
+      // full bargraph charsu
+      for (oldi = i; i < oldi + ammobars / 4;)
         hud_ammostr[i++] = 123;
 
       // plus one last character with 0, 1, 2, 3 bars
@@ -795,7 +840,7 @@ static void HU_widget_build_ammo (void)
       }
 
       // pad string with blank bar characters
-      while (i < 4 + 7)
+      while (i < oldi + 7)
         hud_ammostr[i++] = 127;
       hud_ammostr[i] = '\0';
     }
@@ -803,22 +848,7 @@ static void HU_widget_build_ammo (void)
     // build the numeric amount init string
     sprintf(hud_ammostr + i, "%d/%d", ammo, fullammo);
 
-    // backpack changes thresholds (ammo widget)
-    if (plr->backpack && !hud_backpack_thresholds && fullammo)
-      ammopct = (100 * ammo) / (fullammo / 2);
-
-    // set the display color from the percentage of total ammo held
-    if (plr->cheats & CF_INFAMMO) // [Nugget] Make it gray if the player has infinite ammo
-      w_ammo.cr = colrngs[CR_GRAY];
-    else
-    if (ammopct < ammo_red)
-      w_ammo.cr = colrngs[CR_RED];
-    else if (ammopct < ammo_yellow)
-      w_ammo.cr = colrngs[CR_GOLD];
-    else if (ammopct > 100) // more than max threshold w/o backpack
-      w_ammo.cr = colrngs[CR_BLUE];
-    else
-      w_ammo.cr = colrngs[CR_GREEN];
+    // [Cherry] move color setting to the top
   }
 
   // transfer the init string to the widget
@@ -831,10 +861,23 @@ static void HU_widget_build_health (void)
   const boolean inter = gamestate == GS_INTERMISSION; // [Cherry]
 
   int i = 4;
+  int oldi; // [Cherry]
   int healthbars;
 
   // clear the widgets internal line
   HUlib_clearTextLine(&w_health);
+
+  // [Cherry] move color setting here
+
+  // [Cherry] Consistent widget name colors
+  if (hudcolor_wg_name_cons)
+  {
+    w_health.cr = colrngs[hudcolor_wg_name];
+    // set the display color from the amount of health posessed
+    i += sprintf(hud_healthstr + i, "\x1b%c", '0'+ColorByHealth(plr->health, 100, st_invul));
+  }
+  else
+    w_health.cr = colrngs[ColorByHealth(plr->health, 100, st_invul)];
   
   if (!inter && hud_widget_bars) // [Cherry]
   {
@@ -842,7 +885,7 @@ static void HU_widget_build_health (void)
 
     // build the bargraph string
     // full bargraph chars
-    for (; i < 4 + healthbars / 4;)
+    for (oldi = i; i < oldi + healthbars / 4;)
       hud_healthstr[i++] = 123;
 
     // plus one last character with 0, 1, 2, 3 bars
@@ -862,17 +905,16 @@ static void HU_widget_build_health (void)
     }
 
     // pad string with blank bar characters
-    while (i < 4 + 7)
+    while (i < oldi + 7)
       hud_healthstr[i++] = 127;
     hud_healthstr[i] = '\0';
   }
 
-  // build the numeric amount init string
   // [Cherry] don't pad with spaces on intermission screen
+  // build the numeric amount init string
   sprintf(hud_healthstr + i, inter ? "%d%%" : "%3d%%", st_health);
 
-  // set the display color from the amount of health posessed
-  w_health.cr = ColorByHealth(plr->health, 100, st_invul);
+  // [Cherry] move color setting to the top
 
   // transfer the init string to the widget
   HUlib_addStringToTextLine(&w_health, hud_healthstr);
@@ -884,10 +926,47 @@ static void HU_widget_build_armor (void)
   const boolean inter = gamestate == GS_INTERMISSION; // [Cherry]
 
   int i = 4;
+  int oldi; // [Cherry]
   int armorbars;
+  int color; // [Cherry]
 
   // clear the widgets internal line
   HUlib_clearTextLine(&w_armor);
+
+  // [Cherry] move color setting here
+  // color of armor depends on type
+  if (hud_armor_type)
+  {
+    color =
+      // [Nugget] Make it gray ONLY if the player is in God Mode
+      (plr->cheats & CF_GODMODE) ? CR_GRAY :
+      (plr->armortype == 0) ? CR_RED :
+      (plr->armortype == 1) ? CR_GREEN :
+      CR_BLUE;
+  }
+  else
+  {
+    int armor = plr->armorpoints;
+
+    // set the display color from the amount of armor posessed
+    color =
+      // [Nugget] Make it gray ONLY if the player is in God Mode
+      (plr->cheats & CF_GODMODE) ? CR_GRAY :
+      (armor < armor_red) ? CR_RED :
+      (armor < armor_yellow) ? CR_GOLD :
+      (armor <= armor_green) ? CR_GREEN :
+      CR_BLUE;
+  }
+
+  // [Cherry] Consistent widget name colors
+  if (hudcolor_wg_name_cons)
+  {
+    w_armor.cr = colrngs[hudcolor_wg_name];
+    // set the display color from the amount of health posessed
+    i += sprintf(hud_armorstr + i, "\x1b%c", '0'+color);
+  }
+  else
+    w_armor.cr = colrngs[color];
 
   if (!inter && hud_widget_bars) // [Cherry]
   {
@@ -895,7 +974,7 @@ static void HU_widget_build_armor (void)
 
     // build the bargraph string
     // full bargraph chars
-    for (; i < 4 + armorbars / 4;)
+    for (oldi = i; i < oldi + armorbars / 4;)
       hud_armorstr[i++] = 123;
 
     // plus one last character with 0, 1, 2, 3 bars
@@ -915,7 +994,7 @@ static void HU_widget_build_armor (void)
     }
 
     // pad string with blank bar characters
-    while (i < 4 + 7)
+    while (i < oldi + 7)
       hud_armorstr[i++] = 127;
     hud_armorstr[i] = '\0';
   }
@@ -924,29 +1003,7 @@ static void HU_widget_build_armor (void)
   // [Cherry] don't pad with spaces on intermission screen
   sprintf(hud_armorstr + i, inter ? "%d%%" : "%3d%%", st_armor);
 
-  // color of armor depends on type
-  if (hud_armor_type)
-  {
-    w_armor.cr =
-      // [Nugget] Make it gray ONLY if the player is in God Mode
-      (plr->cheats & CF_GODMODE) ? colrngs[CR_GRAY] :
-      (plr->armortype == 0) ? colrngs[CR_RED] :
-      (plr->armortype == 1) ? colrngs[CR_GREEN] :
-      colrngs[CR_BLUE];
-  }
-  else
-  {
-    int armor = plr->armorpoints;
-    
-    // set the display color from the amount of armor posessed
-    w_armor.cr =
-      // [Nugget] Make it gray ONLY if the player is in God Mode
-      (plr->cheats & CF_GODMODE) ? colrngs[CR_GRAY] :
-      (armor < armor_red) ? colrngs[CR_RED] :
-      (armor < armor_yellow) ? colrngs[CR_GOLD] :
-      (armor <= armor_green) ? colrngs[CR_GREEN] :
-      colrngs[CR_BLUE];
-  }
+  // [Cherry] move color setting to the top
 
   // transfer the init string to the widget
   HUlib_addStringToTextLine(&w_armor, hud_armorstr);
@@ -1215,7 +1272,8 @@ static void HU_widget_build_monsec(void)
 
 static void HU_widget_build_sttime(void)
 {
-  int offset = 0;
+  const boolean inter = gamestate == GS_INTERMISSION; // [Cherry]
+  int offset = 5;
   extern int time_scale;
 
   // [Nugget] Event timer
@@ -1227,7 +1285,7 @@ static void HU_widget_build_sttime(void)
     if (!plr->eventtics-- || gameaction == ga_completed)
     { plr->eventtics = plr->eventtype = plr->eventtime = 0; }
 
-    offset += sprintf(hud_timestr, "\x1b%c%c %02i:%05.02f ",
+    offset += sprintf(hud_timestr + offset, "\x1b%c%c %02i:%05.02f ",
                       '0'+CR_GOLD,
                       type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
                       mins, secs);
@@ -1249,14 +1307,15 @@ static void HU_widget_build_sttime(void)
       const int time = (totalleveltimes + leveltime) / TICRATE;
 
       offset += sprintf(hud_timestr + offset, "\x1b%c%d:%02d ",
-              '0'+CR_GREEN, time/60, time%60);
+              '0'+hudcolor_totaltime, time/60, time%60);
     }
     sprintf(hud_timestr + offset, "\x1b%c%d:%05.2f",
-      '0'+CR_GRAY, leveltime/TICRATE/60, (float)(leveltime%(60*TICRATE))/TICRATE);
+      '0'+hudcolor_plain, leveltime/TICRATE/60, (float)(leveltime%(60*TICRATE))/TICRATE);
   }
 
   HUlib_clearTextLine(&w_sttime);
-  HUlib_addStringToTextLine(&w_sttime, hud_timestr);
+  // [Cherry] don't print "TIME " on intermission screen
+  HUlib_addStringToTextLine(&w_sttime, inter ? hud_timestr+5 : hud_timestr);
 }
 
 // [Nugget]
@@ -1297,11 +1356,11 @@ static void HU_widget_build_attempts(void)
 {
   const boolean inter = gamestate == GS_INTERMISSION;
 
-  int offset = 0;
+  int offset = 4;
 
   if (sessionattempts != -1)
   {
-    offset += sprintf(hud_attemptstr, "ATT \x1b%c%d", '0'+CR_GRAY, sessionattempts);
+    offset += sprintf(hud_attemptstr + offset, "\x1b%c%d", '0'+hudcolor_plain, sessionattempts);
     if (!inter)
     {
       offset += sprintf(hud_attemptstr + offset, "/%d", totalattempts);
@@ -1309,7 +1368,7 @@ static void HU_widget_build_attempts(void)
   }
 
   HUlib_clearTextLine(&w_attempts);
-  if (offset)
+  if (offset > 4)
   {
     HUlib_addStringToTextLine(&w_attempts, hud_attemptstr);
   }
@@ -1490,7 +1549,7 @@ static void HU_UpdateCrosshair(void)
   }
   else
   if (hud_crosshair_health)
-    crosshair.cr = ColorByHealth(plr->health, 100, st_invul);
+    crosshair.cr = colrngs[ColorByHealth(plr->health, 100, st_invul)];
   else
     crosshair.cr = colrngs[hud_crosshair_color];
 }

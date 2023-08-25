@@ -3225,6 +3225,34 @@ default_t defaults[] = {
     "1 to enable Smart Totals"
   },
 
+  { // [Cherry] Widget title text color
+    "hudcolor_wg_name",
+    (config_t *)&hudcolor_wg_name, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "Color used for widget names"
+  },
+
+  { // [Cherry] Consistent widget title text color
+    "hudcolor_wg_name_cons",
+    (config_t *)&hudcolor_wg_name_cons, NULL,
+    {0}, {0,1}, number, ss_mess, wad_yes,
+    "1 to make colors of all widget names consistent"
+  },
+
+  { // [Cherry] Plain text color
+    "hudcolor_plain",
+    (config_t *)&hudcolor_plain, NULL,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "Color used for plain text in widgets"
+  },
+
+  { // [Cherry] Total time color
+    "hudcolor_totaltime",
+    (config_t *)&hudcolor_totaltime, NULL,
+    {CR_GREEN}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "Color used for total time in Time widget"
+  },
+
   { // [Nugget] Incomplete milestone color
     "hudcolor_ms_incomp",
     (config_t *)&hudcolor_ms_incomp, NULL,

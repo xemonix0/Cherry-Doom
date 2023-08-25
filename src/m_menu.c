@@ -3595,6 +3595,10 @@ enum {
   // [Cherry] Moved Extended HUD and Event Timers here
   stat3_title1,
   stat3_smart,
+  stat3_titlecol,
+  stat3_consttlcol,
+  stat3_plaincol,
+  stat3_ttimecol,
   stat3_msincomp,
   stat3_mscomp,
   stat3_hudfont,
@@ -3627,6 +3631,10 @@ setup_menu_t stat_settings3[] =
   // [Cherry] Moved Extended HUD and Event Timers here
   {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y},
     {"SMART TOTALS",                        S_YESNO,           m_null, M_X, M_Y + stat3_smart         * M_SPC, {"smarttotals"}}, // [Nugget]
+    {"WIDGET NAME COLOR",                   S_CRITEM,          m_null, M_X, M_Y + stat3_titlecol      * M_SPC, {"hudcolor_wg_name"},   0, NULL, hudcolor_str}, // [Cherry]
+    {"CONSISTENT WIDGET NAME COLOR",        S_YESNO,           m_null, M_X, M_Y + stat3_consttlcol    * M_SPC, {"hudcolor_wg_name_cons"}}, // [Cherry]
+    {"PLAIN TEXT COLOR",                    S_CRITEM,          m_null, M_X, M_Y + stat3_plaincol      * M_SPC, {"hudcolor_plain"},     0, NULL, hudcolor_str}, // [Cherry]
+    {"TOTAL TIME COLOR",                    S_CRITEM,          m_null, M_X, M_Y + stat3_ttimecol      * M_SPC, {"hudcolor_totaltime"}, 0, NULL, hudcolor_str}, // [Cherry]
     {"INCOMPLETE MILESTONE COLOR",          S_CRITEM,          m_null, M_X, M_Y + stat3_msincomp      * M_SPC, {"hudcolor_ms_incomp"}, 0, NULL, hudcolor_str}, // [Nugget]
     {"COMPLETE MILESTONE COLOR",            S_CRITEM,          m_null, M_X, M_Y + stat3_mscomp        * M_SPC, {"hudcolor_ms_comp"},   0, NULL, hudcolor_str}, // [Nugget]
     {"USE STANDARD DOOM FONT FOR WIDGETS",  S_CHOICE,          m_null, M_X, M_Y + stat3_hudfont       * M_SPC, {"hud_widget_font"},    0, NULL, show_widgets_strings},

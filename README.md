@@ -28,7 +28,8 @@ Just like with Nugget Doom, most of Cherry Doom's features come from other sourc
 
 - Toggling of **extended HUD bars**
 - **More widgets on intermission screen** (health, armor, weapons)
-- **Attempt counter widget** for the extended HUD, WOOFHUD and NUGHUD
+- **Attempt counter widget** for WOOFHUD and NUGHUD
+- Ability to **customize almost all HUD colors** [i.b. PrBoom+ and DSDA-Doom]
 
 ### Miscellaneous
 
