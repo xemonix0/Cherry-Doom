@@ -158,8 +158,8 @@ elseif(LINUX)
                 --appimage-extract-and-run
                 --appdir=${CPACK_TEMPORARY_DIRECTORY}
                 --executable=$<TARGET_FILE:nugget-doom>
-                --desktop-file=${CPACK_TEMPORARY_DIRECTORY}/usr/share/applications/nugget-doom.desktop
-                --icon-file=${CPACK_TEMPORARY_DIRECTORY}/usr/share/icons/hicolor/128x128/apps/nugget-doom.png
+                --desktop-file=${CPACK_TEMPORARY_DIRECTORY}/${CPACK_PACKAGING_INSTALL_PREFIX}/share/applications/nugget-doom.desktop
+                --icon-file=${CPACK_TEMPORARY_DIRECTORY}/${CPACK_PACKAGING_INSTALL_PREFIX}/share/icons/hicolor/128x128/apps/nugget-doom.png
                 --output=appimage)
             ]])
 else()
