@@ -5922,7 +5922,7 @@ static void M_BuildLevelTable(void)
   ++base_i;
 
   if (wad_stats_summary.completed_count == wad_stats.map_count)
-    M_StringCatF(&m_text, "%d / %d", wad_stats_summary.best_attempts, wad_stats_summary.total_attempts);
+    M_StringPrintF(&m_text, "%d / %d", wad_stats_summary.best_attempts, wad_stats_summary.total_attempts);
   else
     M_StringPrintF(&m_text, "- / %d", wad_stats_summary.total_attempts);
   level_table_page[page][base_i].m_text = m_text;
