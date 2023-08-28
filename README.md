@@ -1,5 +1,12 @@
 ﻿# Cherry Doom
 
+[![Top Language](https://img.shields.io/github/languages/top/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom)
+[![Code Size](https://img.shields.io/github/languages/code-size/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom)
+[![License](https://img.shields.io/github/license/xemonix0/Cherry-Doom.svg?logo=gnu)](https://github.com/xemonix0/Cherry-Doom/blob/master/COPYING)
+[![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/w/xemonix0/Cherry-Doom)](https://github.com/xemonix0/Cherry-Doom/commits/master)
+[![Last Commit](https://img.shields.io/github/last-commit/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/commits/master)
+[![Build Status](https://github.com/xemonix0/Cherry-Doom/actions/workflows/main.yml/badge.svg)](https://github.com/xemonix0/Cherry-Doom/actions/workflows/main.yml)
+
 Cherry Doom is a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) intended to add even more features.
 
 ### DISCLAIMER
