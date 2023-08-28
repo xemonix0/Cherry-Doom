@@ -1323,9 +1323,9 @@ static void HU_widget_build_sttime(void)
 
     // [Cherry] don't print the total time if only one level was completed
     //          (for intermission screen)
-    if (totalleveltimes && totalleveltimes != (leveltime - leveltime % TICRATE))
+    if (totalleveltimes && (!inter || totalleveltimes != (leveltime - leveltime % TICRATE)))
     {
-      const int time = (totalleveltimes + leveltime) / TICRATE;
+      const int time = (totalleveltimes + (inter ? 0 : leveltime)) / TICRATE;
 
       offset += sprintf(hud_timestr + offset, "\x1b%c%d:%02d ",
               '0'+hudcolor_totaltime, time/60, time%60);
