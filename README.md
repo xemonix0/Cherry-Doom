@@ -139,6 +139,8 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**'NEXTMAP'**_ to exit the level [i.b. ZDoom]
 - _**'NEXTSECRET'**_ to exit the level as if using a secret exit [i.b. ZDoom]
 - _**'TURBO'**_ to change the player speed in-game
+- _**'TNTEM'**_ as an alternative to _'KILLEM'_
+- _**'FPS'**_ as a replacement for _'SHOWFPS'_
 - **Mid-air control while on noclipping mode** [p.f. Crispy Doom]
 - Reenabled _**'NOMOMENTUM'**_ cheat [p.f. Crispy Doom]
 

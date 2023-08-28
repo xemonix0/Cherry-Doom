@@ -6047,6 +6047,7 @@ boolean M_Responder (event_t* ev)
         {
           if (STRICTMODE(gammacycle))
           {
+            // [Nugget] Note: this logic can't set `gamma2` to 0.50
             gamma2 += 5;
             if (gamma2 > GAMMA2MAX) { gamma2 -= GAMMA2MAX; }
             togglemsg("Gamma Correction Level %0.2f", gammalevels[gamma2]);

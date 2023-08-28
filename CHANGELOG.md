@@ -13,8 +13,8 @@
   - Infinity icon;
   - Ammo count font;
   - Toggle to draw percentage signs.
-- **(In)Complete Milestone Color** choices
 - **_Announce Milestone Completion_** setting
+- **(In)Complete Milestone Color** choices
 - **Customizable dark menu background/dark Automap overlay darkening**
 - **Woof savegame compatibility**
 
@@ -32,4 +32,5 @@
 - **Caching of certain NUGHUD patches** (fixed some crashes when using e.g. Status Bar graphics)
 - **Vertical weapon inertia reset** when disabling mouselook/padlook
 - **NUGHUD forced widescreen shifting being applied in all screen sizes**
+- **Death Camera health check**; it wouldn't work if the player's health were exactly 0
 - **Delayed Chasecam speed effect** to mitigate stutter

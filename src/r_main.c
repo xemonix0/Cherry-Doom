@@ -801,11 +801,11 @@ void R_SetupFrame (player_t *player)
   pitch *= fovdiff;
 
   // [Nugget] Chasecam
-  chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health < 0 && player->playerstate == PST_DEAD));
+  chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD));
   if (chasecam_on)
   {
     static fixed_t extradist = 0;
-    const fixed_t z = MIN(playerz + (((player->mo->health < 0 && player->playerstate == PST_DEAD) ? 6 : chasecam_height) * FRACUNIT),
+    const fixed_t z = MIN(playerz + (((player->mo->health <= 0 && player->playerstate == PST_DEAD) ? 6 : chasecam_height) * FRACUNIT),
                           player->mo->ceilingz - (2*FRACUNIT));
     fixed_t slope;
     fixed_t dist = chasecam_distance*FRACUNIT;
