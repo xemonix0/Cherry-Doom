@@ -96,14 +96,15 @@ static void W_AddFile(wadfile_info_t *wadfile) // killough 1/31/98: static, cons
   filelump_t  *fileinfo, *fileinfo2free=NULL; //killough
   filelump_t  singleinfo;
   boolean     is_single = false;
+  char        *filename;
 
-  // [Cherry]: [p.f. DSDA-Doom]
+  // [Cherry]
   if (wadfile->src == source_skip)
   {
     return;
   }
 
-  char *filename = strcpy(malloc(strlen(wadfile->name)+1), wadfile->name);
+  filename = strcpy(malloc(strlen(wadfile->name)+1), wadfile->name);
 
   NormalizeSlashes(filename);  // killough 11/98
 

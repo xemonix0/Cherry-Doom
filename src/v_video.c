@@ -887,22 +887,12 @@ void V_ShadeScreen(void)
   int y;
   byte *dest = screens[0];
   const int step = 2;
-  int targshade = 20;
+  int targshade;
   static int oldtic = -1;
   static int screenshade;
+  boolean darken;
 
-  if (M_MenuIsShaded())
-  {
-    switch (menu_background)
-    {
-    case background_dark:
-      targshade = 10;
-      break;
-    case background_darker:
-      targshade = 20;
-      break;
-    }
-  }
+  targshade = M_MenuIsShaded() && menu_background == background_dark ? 10 : 20;
 
   // [FG] start a new sequence
   if (gametic - oldtic > targshade / step)
@@ -915,7 +905,7 @@ void V_ShadeScreen(void)
     dest[y] = colormaps[0][screenshade * 256 + dest[y]];
   }
 
-  boolean darken = screenshade < targshade;
+  darken = screenshade < targshade;
   if (screenshade != targshade && gametic != oldtic)
   {
     screenshade += (darken ? step : -step);

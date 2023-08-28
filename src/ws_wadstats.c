@@ -91,9 +91,7 @@ static void InitWadDataDir(void) {
     if (!parent_directory)
       parent_directory = D_DoomPrefDir();
 
-    size_t length = snprintf(NULL, 0, format, parent_directory, cherry_data_root);
-    base_data_dir = Z_Malloc(length + 1, PU_STATIC, NULL);
-    snprintf(base_data_dir, length + 1, format, parent_directory, cherry_data_root);
+    M_StringPrintF(&base_data_dir, format, parent_directory, cherry_data_root);
     NormalizeSlashes(base_data_dir);
 
     M_MakeDirectory(base_data_dir);
