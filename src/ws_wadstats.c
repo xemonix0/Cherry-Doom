@@ -83,15 +83,12 @@ static void InitWadDataDir(void) {
 
   if (!base_data_dir)
   {
-    const char* parent_directory;
-    const char* format = "%s/%s";
-
-    parent_directory = M_getenv("DOOMDATADIR");
+    const char* parent_directory = M_getenv("DOOMDATADIR");
 
     if (!parent_directory)
       parent_directory = D_DoomPrefDir();
 
-    M_StringPrintF(&base_data_dir, format, parent_directory, cherry_data_root);
+    M_StringPrintF(&base_data_dir, "%s/%s", parent_directory, cherry_data_root);
     NormalizeSlashes(base_data_dir);
 
     M_MakeDirectory(base_data_dir);
@@ -184,6 +181,9 @@ static void WS_CreateWadStats(void) {
 
   for (i = numlumps - 1; i > 0; --i)
   {
+    int episode, map;
+    map_stats_t* ms;
+
     if (any_pwad_map && lumpinfo[i].source == source_iwad)
       break;
 
@@ -201,9 +201,6 @@ static void WS_CreateWadStats(void) {
 
     if (lumpinfo[i - 1].source == source_pwad)
       any_pwad_map = true;
-
-    int episode, map;
-    map_stats_t* ms;
 
     map_count += 1;
     WS_EnsureMapCount(map_count);
