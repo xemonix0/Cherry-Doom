@@ -356,7 +356,7 @@ boolean M_StringConcat(char *dest, const char *src, size_t dest_size)
 
 // [Cherry]
 
-void M_StringCatF(char **dest, const char *format, ...)
+void PRINTF_ATTR(2, 0) M_StringCatF(char **dest, const char *format, ...)
 {
   size_t length;
   va_list v;
@@ -374,7 +374,7 @@ void M_StringCatF(char **dest, const char *format, ...)
 
 // [Cherry]
 
-void M_StringPrintF(char **dest, const char *format, ...)
+void PRINTF_ATTR(2, 0) M_StringPrintF(char **dest, const char *format, ...)
 {
   size_t length;
   va_list v;

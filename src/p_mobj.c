@@ -123,13 +123,13 @@ void P_ExplodeMissile (mobj_t* mo)
   if (STRICTMODE(explosion_shake) && shake_percentage && mo->type == MT_BFG)
   {
     fixed_t dx, dy, dist;
+    int strength;
+
     dx = abs(viewplayer->mo->x - mo->x);
     dy = abs(viewplayer->mo->y - mo->y);
 
     dist = dx > dy ? dx : dy;
     dist = (dist - viewplayer->mo->radius) >> FRACBITS;
-
-    int strength;
 
     if (dist < 800)
     {

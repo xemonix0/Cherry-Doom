@@ -2027,13 +2027,13 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
   if (STRICTMODE(explosion_shake) && shake_percentage)
   {
     fixed_t dx, dy, dist2;
+    int strength;
+
     dx = abs(viewplayer->mo->x - bombspot->x);
     dy = abs(viewplayer->mo->y - bombspot->y);
 
     dist2 = dx > dy ? dx : dy;
     dist2 = (dist2 - viewplayer->mo->radius) >> FRACBITS;
-
-    int strength;
 
     if (dist2 < 800)
     {
