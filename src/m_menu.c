@@ -3785,12 +3785,14 @@ void M_DrawStatusHUD(void)
 setup_menu_t auto_settings1[];
 setup_menu_t auto_settings2[];
 setup_menu_t auto_settings3[];
+setup_menu_t auto_settings4[];
 
 setup_menu_t* auto_settings[] =
 {
   auto_settings1,
   auto_settings2,
   auto_settings3,
+  auto_settings4,
   NULL
 };
 
@@ -3808,11 +3810,7 @@ enum {
   auto1_powers,
   auto1_attempts,
   auto1_movement,
-  auto1_stub2,
-  auto1_title3,
-  auto1_smooth,
-  auto1_secrets,
-  auto1_flash,
+  // [Cherry] Moved miscellaneous to page 2
 };
 
 static const char *overlay_strings[] = {
@@ -3840,13 +3838,8 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
   {"Show attempt counter" ,S_YESNO ,m_null,M_X,M_Y+auto1_attempts*M_SPC,{"map_attempt_counter"}}, // [Cherry]
   {"Show player movement" ,S_YESNO ,m_null,M_X,M_Y+auto1_movement*M_SPC,{"map_movement"}}, // [Cherry]
 
-  {"",S_SKIP,m_null,M_X,M_Y+auto1_stub2*M_SPC},
-
-  {"Miscellaneous",S_SKIP|S_TITLE,m_null,M_X,M_Y+auto1_title3*M_SPC},
-  {"Smooth automap lines"            ,S_YESNO,m_null,M_X,M_Y+auto1_smooth*M_SPC,  {"map_smooth_lines"},0,AM_enableSmoothLines},
-  {"Show Secrets only after entering",S_YESNO,m_null,M_X,M_Y+auto1_secrets*M_SPC, {"map_secret_after"}},
-  {"Keyed doors are flashing"        ,S_YESNO,m_null,M_X,M_Y+auto1_flash*M_SPC,   {"map_keyed_door_flash"}},
-
+  // [Cherry] Moved miscellaneous to page 2
+ 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
 
@@ -3858,42 +3851,23 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
 };
 
 enum {
-  auto2_col_back,
-  auto2_col_grid,
-  auto2_col_wall,
-  auto2_col_fchg,
-  auto2_col_cchg,
-  auto2_col_clsd,
-  auto2_col_rkey,
-  auto2_col_bkey,
-  auto2_col_ykey,
-  auto2_col_rdor,
-  auto2_col_bdor,
-  auto2_col_ydor,
-  auto2_stub1,
-  auto2_col_titl,
-  auto2_col_xyco,
+  // [Cherry] Moved miscellaneous here
+  auto2_title1,
+  auto2_smooth,
+  auto2_secrets,
+  auto2_flash,
+  // [Cherry] Moved colors to page 3
 };
 
 setup_menu_t auto_settings2[] =  // 2nd AutoMap Settings screen
 {
-  {"background"                         ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y,                      {"mapcolor_back"}},
-  {"grid lines"                         ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_grid*M_SPC, {"mapcolor_grid"}},
-  {"normal 1s wall"                     ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_wall*M_SPC, {"mapcolor_wall"}},
-  {"line at floor height change"        ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_fchg*M_SPC, {"mapcolor_fchg"}},
-  {"line at ceiling height change"      ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_cchg*M_SPC, {"mapcolor_cchg"}},
-  {"line at sector with floor = ceiling",S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_clsd*M_SPC, {"mapcolor_clsd"}},
-  {"red key"                            ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_rkey*M_SPC, {"mapcolor_rkey"}},
-  {"blue key"                           ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_bkey*M_SPC, {"mapcolor_bkey"}},
-  {"yellow key"                         ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_ykey*M_SPC, {"mapcolor_ykey"}},
-  {"red door"                           ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_rdor*M_SPC, {"mapcolor_rdor"}},
-  {"blue door"                          ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_bdor*M_SPC, {"mapcolor_bdor"}},
-  {"yellow door"                        ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_ydor*M_SPC, {"mapcolor_ydor"}},
+  // [Cherry] Moved miscellaneous here
+  {"Miscellaneous",S_SKIP|S_TITLE,m_null,M_X,M_Y},
+  {"Smooth automap lines"            ,S_YESNO,m_null,M_X,M_Y+auto2_smooth*M_SPC,  {"map_smooth_lines"},0,AM_enableSmoothLines},
+  {"Show Secrets only after entering",S_YESNO,m_null,M_X,M_Y+auto2_secrets*M_SPC, {"map_secret_after"}},
+  {"Keyed doors are flashing"        ,S_YESNO,m_null,M_X,M_Y+auto2_flash*M_SPC,   {"map_keyed_door_flash"}},
 
-  {"",S_SKIP,m_null,M_X,M_Y+auto2_stub1*M_SPC},
-
-  {"AUTOMAP LEVEL TITLE COLOR",S_CRITEM|S_COSMETIC,m_null,M_X,M_Y+auto2_col_titl*M_SPC, {"hudcolor_titl"}, 0, NULL, hudcolor_str},
-  {"AUTOMAP COORDINATES COLOR",S_CRITEM|S_COSMETIC,m_null,M_X,M_Y+auto2_col_xyco*M_SPC, {"hudcolor_xyco"}, 0, NULL, hudcolor_str},
+  // [Cherry] Moved colors to page 3
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {auto_settings1}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {auto_settings3}},
@@ -3905,50 +3879,102 @@ setup_menu_t auto_settings2[] =  // 2nd AutoMap Settings screen
 };
 
 enum {
-  auto3_col_tele,
-  auto3_col_secr,
-  auto3_col_uscr,
-  auto3_col_exit,
-  auto3_col_unsn,
-  auto3_col_flat,
-  auto3_col_sprt,
-  auto3_col_hair,
-  auto3_col_sngl,
-  auto3_col_ply1,
-  auto3_col_ply2,
-  auto3_col_ply3,
-  auto3_col_ply4,
+  // [Cherry] Moved colors here
+  auto3_col_back,
+  auto3_col_grid,
+  auto3_col_wall,
+  auto3_col_fchg,
+  auto3_col_cchg,
+  auto3_col_clsd,
+  auto3_col_rkey,
+  auto3_col_bkey,
+  auto3_col_ykey,
+  auto3_col_rdor,
+  auto3_col_bdor,
+  auto3_col_ydor,
   auto3_stub1,
-  auto3_col_frnd,
+  auto3_col_titl,
+  auto3_col_xyco,
+  // [Cherry] Moved former page 3 to page 4
 };
 
 setup_menu_t auto_settings3[] =  // 3rd AutoMap Settings screen
 {
-  {"teleporter line"                ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y,                      {"mapcolor_tele"}},
-  {"secret sector boundary"         ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_secr*M_SPC, {"mapcolor_secr"}},
-  {"unrevealed secret sector boundary",S_COLOR|S_COSMETIC|S_STRICT,m_null,M_X,M_Y+auto3_col_uscr*M_SPC, {"mapcolor_uscr"}}, // [Nugget]
-  //jff 4/23/98 add exit line to automap
-  {"exit line"                      ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_exit*M_SPC, {"mapcolor_exit"}},
-  {"computer map unseen line"       ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_unsn*M_SPC, {"mapcolor_unsn"}},
-  {"line w/no floor/ceiling changes",S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_flat*M_SPC, {"mapcolor_flat"}},
-  {"general sprite"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_sprt*M_SPC, {"mapcolor_sprt"}},
-  {"crosshair"                      ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_hair*M_SPC, {"mapcolor_hair"}},
-  {"single player arrow"            ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_sngl*M_SPC, {"mapcolor_sngl"}},
-  {"player 1 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_ply1*M_SPC, {"mapcolor_ply1"}},
-  {"player 2 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_ply2*M_SPC, {"mapcolor_ply2"}},
-  {"player 3 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_ply3*M_SPC, {"mapcolor_ply3"}},
-  {"player 4 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_ply4*M_SPC, {"mapcolor_ply4"}},
+  {"background"                         ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y,                      {"mapcolor_back"}},
+  {"grid lines"                         ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_grid*M_SPC, {"mapcolor_grid"}},
+  {"normal 1s wall"                     ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_wall*M_SPC, {"mapcolor_wall"}},
+  {"line at floor height change"        ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_fchg*M_SPC, {"mapcolor_fchg"}},
+  {"line at ceiling height change"      ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_cchg*M_SPC, {"mapcolor_cchg"}},
+  {"line at sector with floor = ceiling",S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_clsd*M_SPC, {"mapcolor_clsd"}},
+  {"red key"                            ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_rkey*M_SPC, {"mapcolor_rkey"}},
+  {"blue key"                           ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_bkey*M_SPC, {"mapcolor_bkey"}},
+  {"yellow key"                         ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_ykey*M_SPC, {"mapcolor_ykey"}},
+  {"red door"                           ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_rdor*M_SPC, {"mapcolor_rdor"}},
+  {"blue door"                          ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_bdor*M_SPC, {"mapcolor_bdor"}},
+  {"yellow door"                        ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto3_col_ydor*M_SPC, {"mapcolor_ydor"}},
 
   {"",S_SKIP,m_null,M_X,M_Y+auto3_stub1*M_SPC},
 
-  {"friends"                        ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_frnd*M_SPC, {"mapcolor_frnd"}}, // killough 8/8/98
+  {"AUTOMAP LEVEL TITLE COLOR",S_CRITEM|S_COSMETIC,m_null,M_X,M_Y+auto3_col_titl*M_SPC, {"hudcolor_titl"}, 0, NULL, hudcolor_str},
+  {"AUTOMAP COORDINATES COLOR",S_CRITEM|S_COSMETIC,m_null,M_X,M_Y+auto3_col_xyco*M_SPC, {"hudcolor_xyco"}, 0, NULL, hudcolor_str},
+
+  // [Cherry] Moved former page 3 to page 4
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {auto_settings2}},
+  {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {auto_settings4}},
 
   // Final entry
 
   {0,S_SKIP|S_END,m_null}
 
+};
+
+enum {
+  // [Cherry] Moved former page 3 here
+  auto4_col_tele,
+  auto4_col_secr,
+  auto4_col_uscr,
+  auto4_col_exit,
+  auto4_col_unsn,
+  auto4_col_flat,
+  auto4_col_sprt,
+  auto4_col_hair,
+  auto4_col_sngl,
+  auto4_col_ply1,
+  auto4_col_ply2,
+  auto4_col_ply3,
+  auto4_col_ply4,
+  auto4_stub1,
+  auto4_col_frnd,
+};
+
+setup_menu_t auto_settings4[] =
+{
+  // [Cherry] Moved former page 3 here
+  {"teleporter line"                ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y,                      {"mapcolor_tele"}},
+  {"secret sector boundary"         ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_secr*M_SPC, {"mapcolor_secr"}},
+  {"unrevealed secret sector boundary",S_COLOR|S_COSMETIC|S_STRICT,m_null,M_X,M_Y+auto4_col_uscr*M_SPC, {"mapcolor_uscr"}}, // [Nugget]
+  //jff 4/23/98 add exit line to automap
+  {"exit line"                      ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_exit*M_SPC, {"mapcolor_exit"}},
+  {"computer map unseen line"       ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_unsn*M_SPC, {"mapcolor_unsn"}},
+  {"line w/no floor/ceiling changes",S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_flat*M_SPC, {"mapcolor_flat"}},
+  {"general sprite"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_sprt*M_SPC, {"mapcolor_sprt"}},
+  {"crosshair"                      ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_hair*M_SPC, {"mapcolor_hair"}},
+  {"single player arrow"            ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_sngl*M_SPC, {"mapcolor_sngl"}},
+  {"player 1 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_ply1*M_SPC, {"mapcolor_ply1"}},
+  {"player 2 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_ply2*M_SPC, {"mapcolor_ply2"}},
+  {"player 3 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_ply3*M_SPC, {"mapcolor_ply3"}},
+  {"player 4 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_ply4*M_SPC, {"mapcolor_ply4"}},
+
+  {"",S_SKIP,m_null,M_X,M_Y+auto4_stub1*M_SPC},
+
+  {"friends"                        ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_frnd*M_SPC, {"mapcolor_frnd"}}, // killough 8/8/98
+
+  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {auto_settings3}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
 };
 
 // Setting up for the Automap screen. Turn on flags, set pointers,
