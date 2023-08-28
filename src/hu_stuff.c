@@ -744,6 +744,10 @@ void HU_Start(void)
   sprintf(hud_attemptstr, "ATT ");
   HUlib_addStringToTextLine(&w_attempts, hud_attemptstr);
 
+  // [Cherry] initialize movement widget
+  sprintf(hud_movestr, "MOVE ");
+  HUlib_addStringToTextLine(&w_move, hud_movestr);
+
   //jff 2/17/98 initialize keys widget
   if (deathmatch)
     sprintf(hud_keysstr, "FRG %c%c", '\x1b', '0'+CR_ORIG);
@@ -1027,6 +1031,8 @@ static void HU_widget_build_weapon (void)
   // clear the widgets internal line
   HUlib_clearTextLine(&w_weapon);
 
+  w_weapon.cr = colrngs[hudcolor_wg_name];
+
   // [Cherry] overwrite WEA if on intermission screen
   i = inter ? 0 : 4; hud_weapstr[i] = '\0'; //jff 3/7/98 make sure ammo goes away
 
@@ -1114,6 +1120,8 @@ static void HU_widget_build_keys (void)
   int i, k;
 
   HUlib_clearTextLine(&w_keys); // clear the widget strings
+
+  w_keys.cr = colrngs[hudcolor_wg_name];
 
   i = 6; hud_keysstr[i] = '\0'; //jff 3/7/98 make sure deleted keys go away
 
@@ -1214,6 +1222,8 @@ static void HU_widget_build_monsec(void)
   int items = 0, items_color;
   int secrets = 0, secrets_color;
 
+  w_monsec.cr = colrngs[hudcolor_wg_name];
+
   for (i = 0, playerscount = 0; i < MAXPLAYERS; ++i)
   {
     int color = (i == displayplayer) ? '0'+CR_GRAY : '0'+CR_GREEN;
@@ -1284,6 +1294,8 @@ static void HU_widget_build_sttime(void)
   const boolean inter = gamestate == GS_INTERMISSION; // [Cherry]
   int offset = 5;
   extern int time_scale;
+
+  w_sttime.cr = colrngs[hudcolor_wg_name];
 
   // [Nugget] Event timer
   if (plr->eventtics) {
@@ -1367,6 +1379,8 @@ static void HU_widget_build_attempts(void)
 
   int offset = 4;
 
+  w_attempts.cr = colrngs[hudcolor_wg_name];
+
   if (sessionattempts != -1)
   {
     offset += sprintf(hud_attemptstr + offset, "\x1b%c%d", '0'+hudcolor_plain, sessionattempts);
@@ -1386,9 +1400,9 @@ static void HU_widget_build_attempts(void)
 // [Cherry] Movement widget
 static void HU_widget_build_move(void)
 {
-  int offset;
+  int offset = 5;
 
-  offset = sprintf(hud_movestr, "\x1b%cMOVE ", '0'+hudcolor_wg_name);
+  w_move.cr = colrngs[hudcolor_wg_name];
 
   sprintf(hud_movestr + offset, "\x1b%c0", '0'+CR_RED);
 
