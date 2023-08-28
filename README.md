@@ -29,7 +29,11 @@ Just like with Nugget Doom, most of Cherry Doom's features come from other sourc
 - Toggling of **extended HUD bars**
 - **More widgets on intermission screen** (health, armor, weapons)
 - **Attempt counter widget** for WOOFHUD and NUGHUD
-- Ability to **customize almost all HUD colors** [i.b. PrBoom+ and DSDA-Doom]
+- **Improved HUD color customization** [i.b. PrBoom+ and DSDA-Doom]: disabling of the bars in Boom HUD, ability to choose colors for things like:
+	- *Widget names*
+	- *Plain text*
+	- *Total level time*
+	- *Low/Ok/Good/Extra thresholds* for Health, Armor and Ammo widgets
 - **Movement widget** which shows the current player's movement (e.g. "MF40 SR50")
 
 ### Miscellaneous

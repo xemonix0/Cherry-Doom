@@ -3260,6 +3260,34 @@ default_t defaults[] = {
     "Color used for total time in Time widget"
   },
 
+  { // [Cherry] Low threshold color
+    "hudcolor_th_low",
+    (config_t *)&hudcolor_th_low, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "Color used for values below the ok threshold in Health, Armor and Ammo widgets"
+  },
+
+  { // [Cherry] Ok threshold color
+    "hudcolor_th_ok",
+    (config_t *)&hudcolor_th_ok, NULL,
+    {CR_GOLD}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "Color used for values between the ok and good thresholds in Health, Armor and Ammo widgets"
+  },
+
+  { // [Cherry] Good threshold color
+    "hudcolor_th_good",
+    (config_t *)&hudcolor_th_good, NULL,
+    {CR_GREEN}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "Color used for values between the good and extra thresholds in Health, Armor and Ammo widgets"
+  },
+
+  { // [Cherry] Good threshold color
+    "hudcolor_th_extra",
+    (config_t *)&hudcolor_th_extra, NULL,
+    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "Color used for values above the extra threshold in Health, Armor and Ammo widgets"
+  },
+
   { // [Nugget] Incomplete milestone color
     "hudcolor_ms_incomp",
     (config_t *)&hudcolor_ms_incomp, NULL,

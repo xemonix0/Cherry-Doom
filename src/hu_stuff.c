@@ -381,13 +381,13 @@ static int ColorByHealth(int health, int maxhealth, boolean invul)
   health = 100 * health / maxhealth;
 
   if (health < health_red)
-    return CR_RED;
+    return hudcolor_th_low;
   else if (health < health_yellow)
-    return CR_GOLD;
+    return hudcolor_th_ok;
   else if (health <= health_green)
-    return CR_GREEN;
+    return hudcolor_th_good;
   else
-    return CR_BLUE;
+    return hudcolor_th_extra;
 }
 
 static int lightest_color, darkest_color;
@@ -961,10 +961,10 @@ static void HU_widget_build_armor (void)
     color =
       // [Nugget] Make it gray ONLY if the player is in God Mode
       (plr->cheats & CF_GODMODE) ? CR_GRAY :
-      (armor < armor_red) ? CR_RED :
-      (armor < armor_yellow) ? CR_GOLD :
-      (armor <= armor_green) ? CR_GREEN :
-      CR_BLUE;
+      (armor < armor_red) ? hudcolor_th_low :
+      (armor < armor_yellow) ? hudcolor_th_ok :
+      (armor <= armor_green) ? hudcolor_th_good :
+      hudcolor_th_extra;
   }
 
   // [Cherry] Consistent widget name colors
@@ -1071,15 +1071,15 @@ static void HU_widget_build_weapon (void)
     // display each weapon number in a color related to the ammo for it
     hud_weapstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
     if (weaponinfo[w].ammo == am_noammo) //jff 3/14/98 show berserk on HUD
-      hud_weapstr[i++] = (w == wp_fist && !plr->powers[pw_strength]) ? '0'+CR_GRAY : '0'+CR_GREEN;
+      hud_weapstr[i++] = (w == wp_fist && !plr->powers[pw_strength]) ? '0'+CR_GRAY : '0'+hudcolor_th_good;
     else if (ammopct < ammo_red)
-      hud_weapstr[i++] = '0'+CR_RED;
+      hud_weapstr[i++] = '0'+hudcolor_th_low;
     else if (ammopct < ammo_yellow)
-      hud_weapstr[i++] = '0'+CR_GOLD;
+      hud_weapstr[i++] = '0'+hudcolor_th_ok;
     else if (ammopct > 100) // more than max threshold w/o backpack
-      hud_weapstr[i++] = '0'+CR_BLUE;
+      hud_weapstr[i++] = '0'+hudcolor_th_extra;
     else
-      hud_weapstr[i++] = '0'+CR_GREEN;
+      hud_weapstr[i++] = '0'+hudcolor_th_good;
 
     hud_weapstr[i++] = '0'+w+1;
     // [Cherry] new line each 3 weapons if on intermission screen
@@ -1396,8 +1396,8 @@ static void HU_widget_build_move(void)
   {
     const int move = plr->cmd.forwardmove;
     offset += sprintf(hud_movestr + offset, "\x1b%c",
-                      '0'+(abs(move) < 26 ? CR_GOLD :
-                           abs(move) < 50 ? CR_GREEN : CR_BLUE));
+                      '0'+(abs(move) < 26 ? hudcolor_th_ok :
+                           abs(move) < 50 ? hudcolor_th_good : hudcolor_th_extra));
 
     hud_movestr[offset++] = 'M';
     hud_movestr[offset++] = move > 0 ? 'F' : 'B';
@@ -1408,8 +1408,8 @@ static void HU_widget_build_move(void)
   {
     const int move = plr->cmd.sidemove;
     offset += sprintf(hud_movestr + offset, "\x1b%c",
-                      '0'+(abs(move) < 25 ? CR_GOLD :
-                           abs(move) < 50 ? CR_GREEN : CR_BLUE1));
+                      '0'+(abs(move) < 25 ? hudcolor_th_ok :
+                           abs(move) < 50 ? hudcolor_th_good : hudcolor_th_extra));
 
     hud_movestr[offset++] = 'S';
     hud_movestr[offset++] = move > 0 ? 'R' : 'L';

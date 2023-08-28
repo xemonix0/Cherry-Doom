@@ -516,10 +516,16 @@ extern int show_berserk;
 // Status Bar/HUD
 extern int alt_arms;
 extern int smarttotals;
-extern int hudcolor_wg_name; // [Cherry]
-extern int hudcolor_wg_name_cons; // [Cherry]
-extern int hudcolor_plain; // [Cherry]
-extern int hudcolor_totaltime; // [Cherry]
+// [Cherry] --------------------------------------------------------------
+extern int hudcolor_wg_name;
+extern int hudcolor_wg_name_cons;
+extern int hudcolor_plain;
+extern int hudcolor_totaltime;
+extern int hudcolor_th_low;
+extern int hudcolor_th_ok;
+extern int hudcolor_th_good;
+extern int hudcolor_th_extra;
+// [Cherry] End ----------------------------------------------------------
 extern int hudcolor_ms_incomp;
 extern int hudcolor_ms_comp;
 typedef enum {

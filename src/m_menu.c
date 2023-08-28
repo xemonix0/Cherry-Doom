@@ -3603,10 +3603,16 @@ enum {
   stat3_ttimecol,
   stat3_msincomp,
   stat3_mscomp,
+  stat3_stub1,
+  stat3_lowcol,
+  stat3_okcol,
+  stat3_goodcol,
+  stat3_extracol,
+  stat3_stub2,
   stat3_hudfont,
   stat3_bars,
   stat3_wimorewidgets,
-  stat3_stub1,
+  stat3_stub3,
   stat3_title2,
   stat3_timeruse,
   stat3_timertelept,
@@ -3634,18 +3640,24 @@ setup_menu_t stat_settings3[] =
   {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y},
     {"SMART TOTALS",                        S_YESNO,           m_null, M_X, M_Y + stat3_smart         * M_SPC, {"smarttotals"}}, // [Nugget]
     {"WIDGET NAME COLOR",                   S_CRITEM,          m_null, M_X, M_Y + stat3_titlecol      * M_SPC, {"hudcolor_wg_name"},   0, NULL, hudcolor_str}, // [Cherry]
-    {"CONSISTENT WIDGET NAME COLOR",        S_YESNO,           m_null, M_X, M_Y + stat3_consttlcol    * M_SPC, {"hudcolor_wg_name_cons"}}, // [Cherry]
+    {"CONSISTENT WIDGET NAME COLOR",        S_YESNO,           m_null, M_X, M_Y + stat3_consttlcol    * M_SPC, {"hudcolor_wg_name_cons"}},                     // [Cherry]
     {"PLAIN TEXT COLOR",                    S_CRITEM,          m_null, M_X, M_Y + stat3_plaincol      * M_SPC, {"hudcolor_plain"},     0, NULL, hudcolor_str}, // [Cherry]
     {"TOTAL TIME COLOR",                    S_CRITEM,          m_null, M_X, M_Y + stat3_ttimecol      * M_SPC, {"hudcolor_totaltime"}, 0, NULL, hudcolor_str}, // [Cherry]
     {"INCOMPLETE MILESTONE COLOR",          S_CRITEM,          m_null, M_X, M_Y + stat3_msincomp      * M_SPC, {"hudcolor_ms_incomp"}, 0, NULL, hudcolor_str}, // [Nugget]
     {"COMPLETE MILESTONE COLOR",            S_CRITEM,          m_null, M_X, M_Y + stat3_mscomp        * M_SPC, {"hudcolor_ms_comp"},   0, NULL, hudcolor_str}, // [Nugget]
+  {"",S_SKIP,m_null,M_X,M_Y+stat3_stub1*M_SPC},
+    {"LOW VALUE COLOR",                     S_CRITEM,          m_null, M_X, M_Y + stat3_lowcol        * M_SPC, {"hudcolor_th_low"},    0, NULL, hudcolor_str}, // [Cherry]
+    {"OK VALUE COLOR",                      S_CRITEM,          m_null, M_X, M_Y + stat3_okcol         * M_SPC, {"hudcolor_th_ok"},     0, NULL, hudcolor_str}, // [Cherry]
+    {"GOOD VALUE COLOR",                    S_CRITEM,          m_null, M_X, M_Y + stat3_goodcol       * M_SPC, {"hudcolor_th_good"},   0, NULL, hudcolor_str}, // [Cherry]
+    {"EXTRA VALUE COLOR",                   S_CRITEM,          m_null, M_X, M_Y + stat3_extracol      * M_SPC, {"hudcolor_th_extra"},  0, NULL, hudcolor_str}, // [Cherry]
+  {"",S_SKIP,m_null,M_X,M_Y+stat3_stub2*M_SPC},
     {"USE STANDARD DOOM FONT FOR WIDGETS",  S_CHOICE,          m_null, M_X, M_Y + stat3_hudfont       * M_SPC, {"hud_widget_font"},    0, NULL, show_widgets_strings},
-    {"DRAW BARS",                           S_YESNO,           m_null, M_X, M_Y + stat3_bars          * M_SPC, {"hud_widget_bars"}}, // [Cherry]
-    {"MORE WIDGETS ON INTERMISSION SCREEN", S_YESNO,           m_null, M_X, M_Y + stat3_wimorewidgets * M_SPC, {"wi_more_widgets"}}, // [Cherry]
+    {"DRAW BARS",                           S_YESNO,           m_null, M_X, M_Y + stat3_bars          * M_SPC, {"hud_widget_bars"}},                           // [Cherry]
+    {"MORE WIDGETS ON INTERMISSION SCREEN", S_YESNO,           m_null, M_X, M_Y + stat3_wimorewidgets * M_SPC, {"wi_more_widgets"}},                           // [Cherry]
 
   // [Nugget]
 
-  {"",S_SKIP,m_null,M_X,M_Y+stat3_stub1*M_SPC},
+  {"",S_SKIP,m_null,M_X,M_Y+stat3_stub3*M_SPC},
 
   {"Event Timers",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat3_title2*M_SPC},
     {"\"Use\" Button Timer",                S_CHOICE,          m_null, M_X, M_Y + stat3_timeruse      * M_SPC, {"timer_use"},          0, NULL, timer_strings},
