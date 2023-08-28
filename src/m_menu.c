@@ -2792,6 +2792,7 @@ setup_menu_t keys_settings6[];
 setup_menu_t keys_settings7[];
 setup_menu_t keys_settings8[];
 setup_menu_t keys_settings9[];
+setup_menu_t keys_settings10[]; // [Nugget]
 
 // The table which gets you from one screen table to the next.
 setup_menu_t* keys_settings[] =
@@ -2805,6 +2806,7 @@ setup_menu_t* keys_settings[] =
   keys_settings7,
   keys_settings8,
   keys_settings9,
+  keys_settings10, // [Nugget]
   NULL
 };
 
@@ -3098,22 +3100,58 @@ setup_menu_t keys_settings9[] =  // Key Binding screen strings
   {"BACKSPACE"  ,S_INPUT     ,m_scrn,KB_X,M_Y+6*M_SPC,{0},input_chat_backspace},
   {"ENTER"      ,S_INPUT     ,m_scrn,KB_X,M_Y+7*M_SPC,{0},input_chat_enter},
   
-  // [Nugget]
-  {"NUGGET",S_SKIP|S_TITLE,m_null,KB_X,M_Y+9*M_SPC},
-  {"JUMP/FLY UP"     ,S_INPUT|S_STRICT|S_CRITICAL,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_jump},
-  {"CROUCH/FLY DOWN" ,S_INPUT|S_STRICT|S_CRITICAL,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_crouch},
-  {"TOGGLE CROSSHAIR",S_INPUT,                    m_scrn,KB_X,M_Y+12*M_SPC,{0},input_crosshair},
-  {"TOGGLE ZOOM"     ,S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+13*M_SPC,{0},input_zoom},
-  {"ZOOM FOV"        ,S_NUM  |S_STRICT,           m_null,KB_X,M_Y+14*M_SPC,{"zoom_fov"}, 0, M_SetFOV},
-  {"CYCLE CHASECAM",  S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+15*M_SPC,{0},input_chasecam},
-
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings8}},
+  {"NEXT ->" ,S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings10}},
 
   // Final entry
 
   {0,S_SKIP|S_END,m_null}
 
 };
+
+// [Nugget] ---------------------------
+
+enum {
+  keys10_title1,
+  keys10_jump,
+  keys10_crouch,
+  keys10_stub1,
+  keys10_xhair,
+  keys10_stub2,
+  keys10_zoom,
+  keys10_zoomfov,
+  keys10_stub3,
+  keys10_chasecam,
+  keys10_stub4,
+  keys10_tpointer,
+  keys10_stub5,
+};
+
+setup_menu_t keys_settings10[] =
+{
+  {"NUGGET", S_SKIP|S_TITLE, m_null, KB_X, M_Y},
+    {"JUMP/FLY UP",      S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_jump     * M_SPC, {0}, input_jump},
+    {"CROUCH/FLY DOWN",  S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_crouch   * M_SPC, {0}, input_crouch},
+    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub1    * M_SPC},
+    {"TOGGLE CROSSHAIR", S_INPUT,                     m_scrn, KB_X, M_Y + keys10_xhair    * M_SPC, {0}, input_crosshair},
+    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub2    * M_SPC},
+    {"TOGGLE ZOOM",      S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_zoom     * M_SPC, {0}, input_zoom},
+    {"ZOOM FOV",         S_NUM  |S_STRICT,            m_null, KB_X, M_Y + keys10_zoomfov  * M_SPC, {"zoom_fov"}, 0, M_SetFOV},
+    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub3    * M_SPC},
+    {"CYCLE CHASECAM",   S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_chasecam * M_SPC, {0}, input_chasecam},
+    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub4    * M_SPC},
+    {"TELEPORT TO\n"
+     "AUTOMAP POINTER",  S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_tpointer * M_SPC, {0}, input_map_teleport},
+
+  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings9}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+
+};
+
+// ------------------------------------
 
 // Setting up for the Key Binding screen. Turn on flags, set pointers,
 // locate the first item on the screen where the cursor is allowed to

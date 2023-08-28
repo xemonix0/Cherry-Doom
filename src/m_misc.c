@@ -2501,6 +2501,14 @@ default_t defaults[] = {
     input_map_blink, { {input_type_key, 'b'} }
   },
 
+  {
+    "input_map_teleport",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to teleport to automap pointer",
+    input_map_teleport, { {0, 0} }
+  },
+
   // [Nugget] End ----------------------------------------------
 
   { //jff 4/3/98 allow unlimited sensitivity

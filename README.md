@@ -55,6 +55,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - Restored _**Weapon Recoil**_ menu item
 - _**Disable Horizontal Autoaim**_ setting
 - _**Switch [Weapon] on Pickup**_ setting
+- Key to **equip last used weapon** [i.b. Cherry Doom]
 - **_Horizontal_ Weapon Centering** setting [i.b. DSDA-Doom]
 - **Always Bob** setting (CFG-Only: `always_bob`)
 - _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
@@ -90,7 +91,8 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 ### Automap
 
 - **Automap color for unrevealed secret sectors**
-- _**Blink [Automap] Marks**_ key (default: <kbd>B</kbd>)
+- Key to _**Blink [Automap] Marks**_ (default: <kbd>B</kbd>)
+- Key to _**Teleport to Automap pointer**_
 
 ### Enemies
 
@@ -146,8 +148,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ### Miscellaneous
 
-- **Last weapon key** [i.b. Cherry Doom]
-- **Zoom key**
+- Key to **toggle zoom**
 - **Allowed mouselook while dead**
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
 - **Support for optional sounds:** [p.f. Crispy Doom]

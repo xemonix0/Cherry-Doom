@@ -109,6 +109,7 @@ enum
   input_map_mark,
   input_map_clear,
   input_map_blink, // [Nugget] Blink marks
+  input_map_teleport, // [Nugget] Teleport to Automap pointer
   input_map_gobig,
   input_map_grid,
   input_map_overlay,

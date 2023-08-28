@@ -32,6 +32,7 @@
 #include "d_deh.h"    // Ty 03/27/98 - externalizations
 #include "m_input.h"
 #include "m_menu.h"
+#include "p_map.h" // [Nugget]
 
 //jff 1/7/98 default automap colors added
 int mapcolor_back;    // map background
@@ -898,6 +899,16 @@ boolean AM_Responder
     {
       markblinktimer = 4*TICRATE;
       plr->message = "Blinking marks...";
+    }
+    // [Nugget] Teleport to Automap pointer
+    else if (M_InputActivated(input_map_teleport) && !followplayer)
+    {
+      P_MapStart();
+      P_TeleportMove(plr->mo, (m_x+m_w/2)<<FRACTOMAPBITS, (m_y+m_h/2)<<FRACTOMAPBITS, false);
+      P_MapEnd();
+
+      plr->mo->z = plr->mo->floorz;
+      plr->viewz = plr->mo->z + plr->viewheight;
     }
     else
     if (M_InputActivated(input_map_overlay))

@@ -4,7 +4,8 @@
 
 - **Horizontal Weapon Centering** setting
 - **_Switch [Weapon] on Pickup_** setting
-- **Last weapon key**
+- **Key to equip last used weapon**
+- **Key to teleport to Automap pointer**
 - **_Blink Missing Keys_** setting
 - **Support for optional sounds** (Crispy Doom's and more)
 - **NUGHUD:**
@@ -24,6 +25,7 @@
 - **Extended Mouselook range**; pitch effects are now applied even when looking all the way up and down
 - **Disabled crosshair when using Chasecam**; now configurable through the `chasecam_crosshair` CVAR
 - **Permanent Weapon Bobbing can now be toggled** through the `always_bob` CVAR
+- **Moved Nugget key bindings to Key Bindings page 10**
 
 ## Bug Fixes
 
