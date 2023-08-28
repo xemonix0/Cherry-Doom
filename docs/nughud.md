@@ -107,6 +107,7 @@ nughud_sts ------ Stats (Kills/Items/Secrets) display, only shown if enabled by 
 nughud_title ---- Level Name display, only shown on the Automap
 nughud_powers --- Powerup timers, only shown if enabled by the user
 nughud_attempts - Attempt counter, only shown if enabled by the user
+nughud_movement - Player's movement display, only shown if enabled by the user
 nughud_coord ---- Coordinates display, only shown if enabled by the user
 nughud_fps ------ FPS display, only shown when the FPS cheat is activated
 nughud_message -- Message display
@@ -114,16 +115,7 @@ nughud_secret --- Secret Message display
 ```
 
 Aside from the shared variables, **text lines have an additional integer variable, `_align`, that sets the text line's alignment**: -1 will align it left, 0 will center it and 1 will align it right.
-There are also additional boolean variables: 
-```
-nughud_time_sts - Make Time display be relocated to the position of the Stats display, in case the latter is inactive.
-nughud_attempts_time - Make Attempt counter be relocated to the position of the Time display, in case:
-  A) the Time display is inactive and the Stats display is active
-  B) the Time display is active and is relocated to the position of the inactive Stats display
-nughud_attempts_sts - Make Attempt counter be relocated to the position of the Stats display, in case
-                      the Stats display is inactive and the Time display is either also inactive or active
-                      but with nughud_time_sts set to 0
-```
+There is also an additional boolean variable, `nughud_time_sts`, that makes the _Time_ display be relocated to the position of the _Stats_ display, in case the latter is inactive.
 
 The _Message_ display supports an X position value of -1 to forcefully draw it at its original X position, where it'll be affected by the Centered Messages setting.
 

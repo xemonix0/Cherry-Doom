@@ -119,9 +119,10 @@ static hu_stext_t     w_secret; // [crispy] secret message widget
 static hu_textline_t  w_sttime; // time above status bar
 static hu_textline_t  w_powers; // [Nugget] Powerup timers
 static hu_textline_t  w_attempts; // [Cherry] Attempt counter
+static hu_textline_t  w_move; // [Cherry] Movement widget
 
 #define MAX_HUDS 3
-#define MAX_WIDGETS 13
+#define MAX_WIDGETS 14
 
 static widget_t widgets[MAX_HUDS][MAX_WIDGETS] = {
   {
@@ -130,6 +131,7 @@ static widget_t widgets[MAX_HUDS][MAX_WIDGETS] = {
     {&w_monsec,   align_bottomleft},
     {&w_sttime,   align_bottomleft},
     {&w_attempts, align_bottomleft}, // [Cherry] Attempt counter
+    {&w_move,     align_bottomleft}, // [Cherry] Movement widget
     {&w_powers,   align_topright}, // [Nugget] Powerup timers
     {&w_coord,    align_topright},
     {&w_fps,      align_topright},
@@ -146,6 +148,7 @@ static widget_t widgets[MAX_HUDS][MAX_WIDGETS] = {
     {&w_monsec,   align_bottomleft},
     {&w_sttime,   align_bottomleft},
     {&w_attempts, align_bottomleft}, // [Cherry] Attempt counter
+    {&w_move,     align_bottomleft}, // [Cherry] Movement widget
     {&w_powers,   align_topright}, // [Nugget] Powerup timers
     {&w_coord,    align_topright},
     {&w_fps,      align_topright},
@@ -162,6 +165,7 @@ static widget_t widgets[MAX_HUDS][MAX_WIDGETS] = {
     {&w_monsec,   align_bottomleft},
     {&w_sttime,   align_bottomleft},
     {&w_attempts, align_bottomleft}, // [Cherry] Attempt counter
+    {&w_move,     align_bottomleft}, // [Cherry] Movement widget
     {&w_powers,   align_topright}, // [Nugget] Powerup timers
     {&w_coord ,   align_topright},
     {&w_fps,      align_topright},
@@ -224,6 +228,7 @@ static char hud_monsecstr[80];
 static char hud_timestr[48]; // time above status bar
 static char hud_powerstr[48]; // [Nugget] Powerup timers
 static char hud_attemptstr[80]; // [Cherry] Attempt counter
+static char hud_movestr[80]; // [Cherry] Movement widget
 
 //
 // Builtin map names.
@@ -573,6 +578,7 @@ static void HU_widget_build_health (void);
 static void HU_widget_build_ammo (void);
 static void HU_widget_build_powers(void); // [Nugget] Powerup timers
 static void HU_widget_build_attempts(void); // [Cherry] Attempt counter
+static void HU_widget_build_move(void); // [Cherry] Movement widget
 
 void HU_Start(void)
 {
@@ -659,6 +665,9 @@ void HU_Start(void)
 
   // [Cherry] Attempt counter
   HUlib_initTextLine(&w_attempts, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_wg_name], HU_widget_build_attempts);
+
+  // [Cherry] Movement widget
+  HUlib_initTextLine(&w_move, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_wg_name], HU_widget_build_move);
 
   // create the automaps coordinate widget
   HUlib_initTextLine(&w_coord, 0, 0, &hu_font2, HU_FONTSTART, colrngs[hudcolor_xyco], HU_widget_build_coord);
@@ -1374,6 +1383,43 @@ static void HU_widget_build_attempts(void)
   }
 }
 
+// [Cherry] Movement widget
+static void HU_widget_build_move(void)
+{
+  int offset;
+
+  offset = sprintf(hud_movestr, "\x1b%cMOVE ", '0'+hudcolor_wg_name);
+
+  sprintf(hud_movestr + offset, "\x1b%c0", '0'+CR_RED);
+
+  if (plr->cmd.forwardmove)
+  {
+    const int move = plr->cmd.forwardmove;
+    offset += sprintf(hud_movestr + offset, "\x1b%c",
+                      '0'+(abs(move) < 26 ? CR_GOLD :
+                           abs(move) < 50 ? CR_GREEN : CR_BLUE));
+
+    hud_movestr[offset++] = 'M';
+    hud_movestr[offset++] = move > 0 ? 'F' : 'B';
+    offset += sprintf(hud_movestr + offset, "%d ", abs(move));
+  }
+
+  if (plr->cmd.sidemove)
+  {
+    const int move = plr->cmd.sidemove;
+    offset += sprintf(hud_movestr + offset, "\x1b%c",
+                      '0'+(abs(move) < 25 ? CR_GOLD :
+                           abs(move) < 50 ? CR_GREEN : CR_BLUE1));
+
+    hud_movestr[offset++] = 'S';
+    hud_movestr[offset++] = move > 0 ? 'R' : 'L';
+    offset += sprintf(hud_movestr + offset, "%d", abs(move));
+  }
+
+  HUlib_clearTextLine(&w_move);
+  HUlib_addStringToTextLine(&w_move, hud_movestr);
+}
+
 static void HU_widget_build_coord (void)
 {
   fixed_t x,y,z; // killough 10/98:
@@ -1625,6 +1671,7 @@ int map_player_coords, map_level_stats, map_level_time;
 int hud_level_stats, hud_level_time;
 int map_power_timers, hud_power_timers; // [Nugget] Powerup timers
 int hud_attempt_counter, map_attempt_counter; // [Cherry] Attempt counter
+int hud_movement, map_movement; // [Cherry] Movement widget
 
 // [Nugget]
 static void NughudAlignWidgetX(nughud_textline_t aligner, hu_textline_t* alignee)
@@ -1747,6 +1794,7 @@ void HU_Drawer(void)
         else if (w->line == &w_title)    { ntl = &nughud.title;    }
         else if (w->line == &w_powers)   { ntl = &nughud.powers;   }
         else if (w->line == &w_attempts) { ntl = &nughud.attempts; } // [Cherry] Attempt counter
+        else if (w->line == &w_move)     { ntl = &nughud.movement; } // [Cherry] Movement widget
         else if (w->line == &w_coord)    { ntl = &nughud.coord;    }
         else if (w->line == &w_fps)      { ntl = &nughud.fps;      }
 
@@ -1754,27 +1802,13 @@ void HU_Drawer(void)
           const boolean no_sts  = !hud_level_stats && (!automapactive || !map_level_stats);
           const boolean no_time = !hud_level_time  && (!automapactive || !map_level_time);
 
-          const boolean time_sts      = nughud.time_sts && no_sts;
-          const boolean attempts_time = nughud.attempts_time  // [Cherry]
-            && (!no_sts && (no_time || time_sts) || no_sts && (!no_time && time_sts));
-          const boolean attempts_sts  = nughud.attempts_sts   // [Cherry]
-            && (no_sts && (no_time || !time_sts));
+          const boolean time_sts = nughud.time_sts && no_sts;
           if (ntl == &nughud.time && time_sts)
           { // Relocate Time text line to position of Stats text line
             NughudAlignWidgetX(nughud.sts, w->line);
             w->line->y = nughud.sts.y;
-          }
-          else if (ntl == &nughud.attempts && attempts_time)
-          { // [Cherry] Relocate Attempt counter text line to position of Time text line
-            NughudAlignWidgetX(nughud.time, w->line);
-            w->line->y = nughud.time.y;
-          }
-          else if (ntl == &nughud.attempts && attempts_sts)
-          { // [Cherry] Relocate Attempt counter text line to position of Stats text line
-            NughudAlignWidgetX(nughud.sts, w->line);
-            w->line->y = nughud.sts.y;
-          }
-          else {
+          } else
+          {
             NughudAlignWidgetX(*ntl, w->line);
             w->line->y = ntl->y;
           }
@@ -1846,6 +1880,7 @@ void HU_Erase(void)
   HUlib_eraseTextLine(&w_monsec);
   HUlib_eraseTextLine(&w_powers); // [Nugget] Powerup timers
   HUlib_eraseTextLine(&w_attempts); // [Cherry] Attempt counter
+  HUlib_eraseTextLine(&w_move); // [Cherry] Movement widget
   HUlib_eraseTextLine(&w_sttime);
 }
 
@@ -1997,6 +2032,7 @@ void HU_Ticker(void)
     HU_enableWidget(&w_powers, map_power_timers); // [Nugget] Powerup timers
     HU_enableWidget(&w_sttime, map_level_time || plr->eventtics); // [Nugget] Event timers
     HU_enableWidget(&w_attempts, map_attempt_counter); // [Cherry] Attempt counter
+    HU_enableWidget(&w_move, map_movement); // [Cherry] Movement widget
     HU_enableWidget(&w_coord, STRICTMODE(map_player_coords));
   }
   else
@@ -2021,6 +2057,7 @@ void HU_Ticker(void)
     HU_enableWidget(&w_monsec, hud_level_stats);
     HU_enableWidget(&w_powers, hud_power_timers); // [Nugget] Powerup timers
     HU_enableWidget(&w_attempts, hud_attempt_counter); // [Cherry] Attempt counter
+    HU_enableWidget(&w_move, hud_movement); // [Cherry] Movement widget
     HU_enableWidget(&w_sttime, hud_level_time || plr->eventtics); // [Nugget] Event timers
   }
   else if (scaledviewheight &&
@@ -2030,6 +2067,7 @@ void HU_Ticker(void)
     HU_enableWidget(&w_monsec, hud_level_stats);
     HU_enableWidget(&w_powers, hud_power_timers); // [Nugget] Powerup timers
     HU_enableWidget(&w_attempts, hud_attempt_counter); // [Cherry] Attempt counter
+    HU_enableWidget(&w_move, hud_movement); // [Cherry] Movement widgetu
     HU_enableWidget(&w_sttime, hud_level_time || plr->eventtics); // [Nugget] Event timers
   }
 
@@ -2273,6 +2311,7 @@ static const struct {
   {"monsec",  "stats",     &w_monsec},
   {"powers",   NULL,       &w_powers},
   {"attempts", NULL,       &w_attempts}, // [Cherry] Attempt counter
+  {"movement","move",      &w_move}, // [Cherry] Movement widget
   {"sttime",  "time",      &w_sttime},
   {"coord",   "coords",    &w_coord},
   {"fps",     "rate",      &w_fps},

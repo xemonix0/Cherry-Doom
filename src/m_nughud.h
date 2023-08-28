@@ -61,8 +61,7 @@ typedef struct nughud_s {
   nughud_textline_t title;
   nughud_textline_t powers;
   nughud_textline_t attempts; // [Cherry]
-  boolean           attempts_time; // [Cherry]
-  boolean           attempts_sts; // [Cherry]
+  nughud_textline_t movement; // [Cherry]
   nughud_textline_t coord;
   nughud_textline_t fps;
   nughud_textline_t message;

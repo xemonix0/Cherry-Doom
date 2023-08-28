@@ -138,21 +138,23 @@ default_t nughud_defaults[] = {
   TEXTLINE_W( "nughud_sts_wide",      nughud.sts,              -2             ),
   TEXTLINE_A( "nughud_sts_align",     nughud.sts,              -1             ),
   TEXTLINE_X( "nughud_title_x",       nughud.title,            2              ),
-  TEXTLINE_Y( "nughud_title_y",       nughud.title,            135            ),
+  TEXTLINE_Y( "nughud_title_y",       nughud.title,            127            ),
   TEXTLINE_W( "nughud_title_wide",    nughud.title,            -2             ),
   TEXTLINE_A( "nughud_title_align",   nughud.title,            -1             ),
   TEXTLINE_X( "nughud_powers_x",      nughud.powers,           318            ),
   TEXTLINE_Y( "nughud_powers_y",      nughud.powers,           8              ),
   TEXTLINE_W( "nughud_powers_wide",   nughud.powers,           2              ),
   TEXTLINE_A( "nughud_powers_align",  nughud.powers,           1              ),
-  // [Cherry] Attempt counter --------------------------------------------------
+  // [Cherry] ------------------------------------------------------------------
   TEXTLINE_X( "nughud_attempts_x",    nughud.attempts,         2              ),
   TEXTLINE_Y( "nughud_attempts_y",    nughud.attempts,         143            ),
   TEXTLINE_W( "nughud_attempts_wide", nughud.attempts,         -2             ),
   TEXTLINE_A( "nughud_attempts_align",nughud.attempts,         -1             ),
-  TOGGLE(     "nughud_attempts_time", nughud.attempts_time,    1              ),
-  TOGGLE(     "nughud_attempts_sts",  nughud.attempts_sts,     1              ),
-  // [Cherry] ------------------------------------------------------------------
+  TEXTLINE_X( "nughud_movement_x",    nughud.movement,         2              ),
+  TEXTLINE_Y( "nughud_movement_y",    nughud.movement,         135            ),
+  TEXTLINE_W( "nughud_movement_wide", nughud.movement,         -2             ),
+  TEXTLINE_A( "nughud_movement_align",nughud.movement,         -1             ),
+  // [Cherry] End --------------------------------------------------------------
   TEXTLINE_X( "nughud_coord_x",       nughud.coord,            318            ),
   TEXTLINE_Y( "nughud_coord_y",       nughud.coord,            16             ),
   TEXTLINE_W( "nughud_coord_wide",    nughud.coord,            2              ),

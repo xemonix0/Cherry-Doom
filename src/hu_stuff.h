@@ -88,6 +88,7 @@ extern int map_player_coords, map_level_stats, map_level_time; // [FG] level sta
 extern int hud_level_stats, hud_level_time;
 extern int map_power_timers, hud_power_timers; // [Nugget] Powerup timers
 extern int hud_attempt_counter, map_attempt_counter; // [Cherry] Attempt counter
+extern int hud_movement, map_movement; // [Cherry] Movement widget
 extern int hud_widget_font;
 extern int hud_widget_bars; // [Cherry] Bars toggle
 extern boolean message_centered; // center messages

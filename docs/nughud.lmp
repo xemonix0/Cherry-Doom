@@ -150,7 +150,7 @@ nughud_sts_align -1
 
 ; Level Name display
 nughud_title_x     2
-nughud_title_y     135
+nughud_title_y     127
 nughud_title_wide  -2
 nughud_title_align -1
 
@@ -165,8 +165,12 @@ nughud_attempts_x     2
 nughud_attempts_y     143
 nughud_attempts_wide  -2
 nughud_attempts_align -1
-nughud_attempts_time  1
-nughud_attempts_sts   1
+
+; Movement display
+nughud_movement_x     2
+nughud_movement_y     135
+nughud_movement_wide  -2
+nughud_movement_align -1
 
 ; Coordinates display
 nughud_coord_x     318

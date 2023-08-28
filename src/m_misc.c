@@ -2953,6 +2953,13 @@ default_t defaults[] = {
     "1 to show attempt counter widget"
   },
 
+  { // [Cherry] Movement widget
+    "map_movement",
+    (config_t *)&map_movement, NULL,
+    {0}, {0,2}, number, ss_auto, wad_yes,
+    "1 to show current player movement widget"
+  },
+
   {
     "followplayer",
     (config_t *) &followplayer, NULL,
@@ -3286,6 +3293,13 @@ default_t defaults[] = {
     (config_t *)&hud_attempt_counter, NULL,
     {0}, {0,1}, number, ss_stat, wad_yes,
     "1 to show attempt counter on HUD"
+  },
+
+  { // [Cherry] Movement widget
+    "hud_movement",
+    (config_t *)&hud_movement, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to show current player movement on HUD"
   },
 
   // [Nugget] Event timers -------------------------------------

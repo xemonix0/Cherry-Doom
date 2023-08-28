@@ -10,6 +10,7 @@
 - **More widgets on intermission screen** (health, armor, weapons)
 - **Woof! savegame compatibility**
 - **Attempt counter** (in the forms of a widget, a Level Table column and a WAD Summary entry)
+- **Movement widget** which shows the current player's movement (e.g. "MF40 SR50")
 
 ## Changes
 

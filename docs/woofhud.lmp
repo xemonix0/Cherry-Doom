@@ -9,6 +9,7 @@ fps topright
 stats bottomright
 time bottomright
 attempts bottomright
+movement bottomright
 
 hud 1
 title topleft
@@ -23,12 +24,14 @@ keys bottomleft
 stats bottomright
 time bottomright
 attempts bottomright
+movement bottomright
 
 hud 2
 title topleft
 stats topright
 time topright
 attempts topright
+movement topright
 powers topright
 coords topright
 fps topright

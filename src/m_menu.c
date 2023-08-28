@@ -3516,6 +3516,7 @@ enum {
   stat1_time,
   stat1_powers, // [Nugget] Powerup timers
   stat1_attcount, // [Cherry] Attempt counter
+  stat1_movement, // [Cherry] Movement widget
   // [Cherry] Moved thresholds to page 2
 };
 
@@ -3533,6 +3534,7 @@ setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
     {"SHOW LEVEL TIME",      S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_time     * M_SPC, {"hud_level_time"}},
     {"SHOW POWERUP TIMERS",  S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_powers   * M_SPC, {"hud_power_timers"}}, // [Nugget]
     {"SHOW ATTEMPT COUNTER", S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_attcount * M_SPC, {"hud_attempt_counter"}}, // [Cherry]
+    {"SHOW PLAYER MOVEMENT", S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_movement * M_SPC, {"hud_movement"}}, // [Cherry]
 
   // [Cherry] Moved thresholds to page 2
  
@@ -3805,6 +3807,7 @@ enum {
   auto1_time,
   auto1_powers,
   auto1_attempts,
+  auto1_movement,
   auto1_stub2,
   auto1_title3,
   auto1_smooth,
@@ -3835,6 +3838,7 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
   {"Show level time"      ,S_YESNO ,m_null,M_X,M_Y+auto1_time*M_SPC,    {"map_level_time"}},
   {"Show powerup timers"  ,S_YESNO ,m_null,M_X,M_Y+auto1_powers*M_SPC,  {"map_power_timers"}}, // [Nugget]
   {"Show attempt counter" ,S_YESNO ,m_null,M_X,M_Y+auto1_attempts*M_SPC,{"map_attempt_counter"}}, // [Cherry]
+  {"Show player movement" ,S_YESNO ,m_null,M_X,M_Y+auto1_movement*M_SPC,{"map_movement"}}, // [Cherry]
 
   {"",S_SKIP,m_null,M_X,M_Y+auto1_stub2*M_SPC},
 
