@@ -208,10 +208,6 @@ int    bodyqueslot, bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
 
 static int next_weapon = 0;
 
-// [Cherry] last weapon handling
-
-static boolean last_weapon = false;
-
 static const struct
 {
     weapontype_t weapon;
@@ -534,9 +530,13 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         M_InputGameActive(input_weapon7) && gamemode != shareware ? wp_bfg :
         M_InputGameActive(input_weapon8) ? wp_chainsaw :
         M_InputGameActive(input_weapon9) && have_ssg ? wp_supershotgun :
+
+        // [Nugget] Last weapon key
         M_InputGameActive(input_weaponlastused) && casual_play &&
         WeaponSelectable(players[consoleplayer].lastweapon)
-        ? players[consoleplayer].lastweapon : wp_nochange;
+        ? players[consoleplayer].lastweapon :
+        
+        wp_nochange;
 
       // killough 3/22/98: For network and demo consistency with the
       // new weapons preferences, we must do the weapons switches here
@@ -594,9 +594,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
     // [FG] prev/next weapon keys and buttons
     next_weapon = 0;
-
-    // [Cherry] last weapon key
-    last_weapon = false;
 
   // [FG] double click acts as "use"
   if (dclick)
@@ -990,11 +987,6 @@ boolean G_Responder(event_t* ev)
   else if (M_InputActivated(input_nextweapon))
   {
       next_weapon = 1;
-  }
-
-  if (M_InputActivated(input_weaponlastused))
-  {
-    last_weapon = true;
   }
 
   if (dclick_use && ev->type == ev_mouseb_down &&
@@ -2590,7 +2582,8 @@ void G_PlayerReborn(int player)
   p->usedown = p->attackdown = true;  // don't do anything immediately
   p->playerstate = PST_LIVE;
   p->health = initial_health;  // Ty 03/12/98 - use dehacked values
-  p->lastweapon = p->readyweapon = p->pendingweapon = wp_pistol; // [Cherry] initialize last weapon to pistol
+  p->readyweapon = p->pendingweapon = wp_pistol;
+  p->lastweapon = wp_fist; // [Nugget] initialize last weapon to pistol
   p->weaponowned[wp_fist] = true;
   p->weaponowned[wp_pistol] = true;
   p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values

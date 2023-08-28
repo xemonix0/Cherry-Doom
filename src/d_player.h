@@ -143,9 +143,6 @@ typedef struct player_s
   // Is wp_nochange if not changing.
   weapontype_t        pendingweapon;
 
-  // [Cherry] Last used weapon
-  weapontype_t        lastweapon;
-
   boolean             weaponowned[NUMWEAPONS];
   int                 ammo[NUMAMMO];
   int                 maxammo[NUMAMMO];
@@ -213,6 +210,8 @@ typedef struct player_s
   weapswitch_t switching;
 
   // [Nugget] All of the following:
+
+  weapontype_t        lastweapon;
   
   int                 jumptics; // Jumping delay
   fixed_t             crouchoffset; // How many units the player is crouched

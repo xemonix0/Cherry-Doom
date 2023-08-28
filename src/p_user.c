@@ -696,14 +696,14 @@ void P_PlayerThink (player_t* player)
   if (cmd->buttons & BT_CHANGE
       || (casual_play && M_InputGameActive(input_weaponlastused)))
     {
-      // [Cherry] Last used
+      // [Nugget] Last used
       const weapontype_t lastweapon = ((casual_play && M_InputGameActive(input_weaponlastused))
                                        ? player->lastweapon : wp_nochange);
       // The actual changing of the weapon is done
       //  when the weapon psprite can do it
       //  (read: not in the middle of an attack).
       
-      // [Cherry]
+      // [Nugget]
       if (lastweapon != wp_nochange)
         newweapon = lastweapon;
       else
@@ -716,15 +716,15 @@ void P_PlayerThink (player_t* player)
       if (demo_compatibility)
         { // compatibility mode -- required for old demos -- killough
           if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
-              (player->readyweapon != wp_chainsaw ||
-               !player->powers[pw_strength] ||
-               newweapon != lastweapon)) // [Cherry]
+              ((player->readyweapon != wp_chainsaw
+                && lastweapon != wp_fist) || // [Nugget]
+               !player->powers[pw_strength]))
             newweapon = wp_chainsaw;
           if (have_ssg &&
               newweapon == wp_shotgun &&
               player->weaponowned[wp_supershotgun] &&
               player->readyweapon != wp_supershotgun &&
-              newweapon != lastweapon)
+              lastweapon != wp_shotgun) // [Nugget]
             newweapon = wp_supershotgun;
         }
 
