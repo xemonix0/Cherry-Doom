@@ -2286,7 +2286,7 @@ static void M_DrawMiniThermo(int x, int y, int size, int dot, char *color)
 void M_DrawSetting(setup_menu_t* s, int y_offset)
 {
   // [Cherry] add Y offset
-  int x = s->m_x, y = s->m_y + y_offset, flags = s->m_flags, flags2 = s->m_flags2, color;
+  int x = s->m_x, y = s->m_y + y_offset, flags = s->m_flags, color;
 
   // Determine color of the text. This may or may not be used
   // later, depending on whether the item is a text string or not.
@@ -8126,12 +8126,13 @@ void M_Drawer (void)
    // killough 9/29/98: simplified code, removed 40-character width limit
    if(messageToPrint)
    {
-      M_DrawBackground("FLOOR4_6", screens[0], false);
       // haleyjd 11/11/04: must strdup message, cannot write into
       // string constants!
       char *d = strdup(messageString);
       char *p;
       int y = 100 - M_StringHeight(messageString)/2;
+
+      M_DrawBackground("FLOOR4_6", screens[0], false);
 
       p = d;
 
