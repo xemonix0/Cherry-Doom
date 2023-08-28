@@ -1039,6 +1039,7 @@ static void HU_widget_build_weapon (void)
   // do each weapon that exists in current gamemode
   for (w = 0; w <= wp_supershotgun; w++) //jff 3/4/98 show fists too, why not?
   {
+    boolean newline;
     int ok = 1;
 
     //jff avoid executing for weapons that do not exist
@@ -1089,7 +1090,8 @@ static void HU_widget_build_weapon (void)
 
     hud_weapstr[i++] = '0'+w+1;
     // [Cherry] new line each 3 weapons if on intermission screen
-    hud_weapstr[i++] = (inter && !((i+1)%12)) ? '\n' : ' ';
+    newline = inter && !((i+1)%12);
+    hud_weapstr[i++] = newline ? '\n' : ' ';
     hud_weapstr[i] = '\0';
   }
 
@@ -1813,11 +1815,8 @@ void HU_Drawer(void)
         else if (w->line == &w_fps)      { ntl = &nughud.fps;      }
 
         if (ntl) {
-          const boolean no_sts  = !hud_level_stats && (!automapactive || !map_level_stats);
-          const boolean no_time = !hud_level_time  && (!automapactive || !map_level_time);
-
-          const boolean time_sts = nughud.time_sts && no_sts;
-          if (ntl == &nughud.time && time_sts)
+          if (ntl == &nughud.time && nughud.time_sts &&
+              !hud_level_stats && (!automapactive || !map_level_stats))
           { // Relocate Time text line to position of Stats text line
             NughudAlignWidgetX(nughud.sts, w->line);
             w->line->y = nughud.sts.y;

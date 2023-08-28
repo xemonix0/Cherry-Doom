@@ -666,6 +666,8 @@ static boolean D_AddZipFile(const char *file, wad_source_t source)
 
 void D_AddFile(const char *file, wad_source_t source)
 {
+  char *path = D_TryFindWADByName(file);
+
   if (source == source_iwad)
   {
     int i;
@@ -674,8 +676,6 @@ void D_AddFile(const char *file, wad_source_t source)
       if (wadfiles[i].src == source_iwad)
         wadfiles[i].src = source_skip;
   }
-
-  char *path = D_TryFindWADByName(file);
 
   if (D_AddZipFile(path, source))
     return;
