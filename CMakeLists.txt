@@ -159,7 +159,7 @@ elseif(LINUX)
                 --appdir=${CPACK_TEMPORARY_DIRECTORY}
                 --executable=$<TARGET_FILE:cherry-doom>
                 --desktop-file=${CPACK_TEMPORARY_DIRECTORY}/${CPACK_PACKAGING_INSTALL_PREFIX}/share/applications/cherry-doom.desktop
-                --icon-file=${CPACK_TEMPORARY_DIRECTORY}/${CPACK_PACKAGING_INSTALL_PREFIX}/share/icons/hicolor/128x128/apps/cherry-doom.png
+                --icon-file=${CPACK_TEMPORARY_DIRECTORY}/${CPACK_PACKAGING_INSTALL_PREFIX}/share/icons/hicolor/128x128/apps/nugget-doom.png
                 --output=appimage)
             ]])
 else()
