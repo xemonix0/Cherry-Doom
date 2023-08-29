@@ -29,7 +29,7 @@ Just like with Nugget Doom, most of Cherry Doom's features come from other sourc
 
 ### Weapons
 
-- **Last used weapon** key [i.b. Half-Life]
+- **Last used weapon** key (default key: <kbd>q</kbd>) [i.b. Half-Life]
 
 ### Status Bar/HUD
 
@@ -41,7 +41,11 @@ Just like with Nugget Doom, most of Cherry Doom's features come from other sourc
 	- *Plain text*
 	- *Total level time*
 	- *Low/Ok/Good/Extra thresholds* for Health, Armor and Ammo widgets
-- **Movement widget** which shows the current player's movement (e.g. "MF40 SR50")
+- **Movement widget:** shows the current player's movement (e.g. "MF40 SR50")
+
+### Automap
+
+- **Tag finder:** pressing the key while in nofollow will highlight the sector or line under the crosshair and show the activating line/sector if any (default key: <kbd>x</kbd>) [i.b. & p.p.f PrBoomX]
 
 ### Miscellaneous
 

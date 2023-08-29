@@ -93,6 +93,15 @@ extern int mapcolor_hair;     // crosshair color
 extern int mapcolor_sngl;     // single player arrow color
 extern int mapcolor_plyr[4];  // colors for player arrows in multiplayer
 extern int mapcolor_frnd;     // killough 8/8/98: colors for friends
+// [Cherry] Tag finder colors
+extern int mapcolor_tf_tsc1;  // Tagged sector color 1
+extern int mapcolor_tf_tsc2;  // Tagged sector color 2
+extern int mapcolor_tf_usc1;  // Untagged sector color 1
+extern int mapcolor_tf_usc2;  // Untagged sector color 2
+extern int mapcolor_tf_lin1;  // Line color 1
+extern int mapcolor_tf_lin2;  // Line color 2
+extern int mapcolor_tf_secx;  // Sector cross marks color
+extern int mapcolor_tf_linx;  // Line cross marks color
 //jff 3/9/98
 extern int map_secret_after;  // secrets do not appear til after bagged
 

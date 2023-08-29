@@ -2070,6 +2070,14 @@ default_t defaults[] = {
     input_map_rotate, { {input_type_key, 'r'} }
   },
 
+  { // [Cherry]
+    "input_map_tagfind",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to find line/sector with the same tag as the line/sector under the crosshair",
+    input_map_tagfind, { {input_type_key, 'x'} }
+  },
+
   {
     "input_reverse",
     NULL, NULL,
@@ -2884,6 +2892,64 @@ default_t defaults[] = {
     {252}, {0,255}, number, ss_auto, wad_yes,
     "color used for friends"
   },
+  
+  // [Cherry] Tag finder colors ------------------------------------------
+  {
+    "mapcolor_tf_tsc1",
+    (config_t *) &mapcolor_tf_tsc1, NULL,
+    {176}, {0,255}, number, ss_auto, wad_yes,
+    "color 1 for tagged sectors when using tag finder"
+  },
+
+  {
+    "mapcolor_tf_tsc2",
+    (config_t *)&mapcolor_tf_tsc2, NULL,
+    {188}, {0,255}, number, ss_auto, wad_yes,
+    "color 2 for tagged sectors when using tag finder"
+  },
+
+  {
+    "mapcolor_tf_usc1",
+    (config_t *)&mapcolor_tf_usc1, NULL,
+    {80}, {0,255}, number, ss_auto, wad_yes,
+    "color 1 for untagged sectors when using tag finder"
+  },
+
+  {
+    "mapcolor_tf_usc2",
+    (config_t *)&mapcolor_tf_usc2, NULL,
+    {92}, {0,255}, number, ss_auto, wad_yes,
+    "color 2 for untagged sectors when using tag finder"
+  },
+
+  {
+    "mapcolor_tf_lin1",
+    (config_t *)&mapcolor_tf_lin1, NULL,
+    {112}, {0,255}, number, ss_auto, wad_yes,
+    "color 1 for lines when using tag finder"
+  },
+
+  {
+    "mapcolor_tf_lin2",
+    (config_t *)&mapcolor_tf_lin2, NULL,
+    {124}, {0,255}, number, ss_auto, wad_yes,
+    "color 2 for lines when using tag finder"
+  },
+
+  {
+    "mapcolor_tf_secx",
+    (config_t *)&mapcolor_tf_secx, NULL,
+    {229}, {0,255}, number, ss_auto, wad_yes,
+    "color for cross marks on sector vertices when using tag finder"
+  },
+
+  {
+    "mapcolor_tf_linx",
+    (config_t *)&mapcolor_tf_linx, NULL,
+    {251}, {0,255}, number, ss_auto, wad_yes,
+    "color for cross marks on line vertices when using tag finder"
+  },
+  // [Cherry] End --------------------------------------------------------
 
   {
     "map_point_coord",

@@ -230,6 +230,16 @@ extern int mapcolor_plyr[4];// colors for player arrows in multiplayer
 
 extern int mapcolor_frnd;  // friends colors  // killough 8/8/98
 
+// [Cherry] Tag finder colors
+extern int mapcolor_tf_tsc1;  // Tagged sector color 1
+extern int mapcolor_tf_tsc2;  // Tagged sector color 2
+extern int mapcolor_tf_usc1;  // Untagged sector color 1
+extern int mapcolor_tf_usc2;  // Untagged sector color 2
+extern int mapcolor_tf_lin1;  // Line color 1
+extern int mapcolor_tf_lin2;  // Line color 2
+extern int mapcolor_tf_secx;  // Sector cross marks color
+extern int mapcolor_tf_linx;  // Line cross marks color
+
 extern int map_point_coordinates; // killough 10/98
 
 extern char *chat_macros[];  // chat macros
@@ -3151,18 +3161,18 @@ setup_menu_t keys_settings6[] =  // Key Binding screen strings
   {"FOLLOW"     ,S_INPUT     ,m_map ,KB_X,M_Y+ 2*M_SPC,{0},input_map_follow},
   {"OVERLAY"    ,S_INPUT     ,m_map ,KB_X,M_Y+ 3*M_SPC,{0},input_map_overlay},
   {"ROTATE"     ,S_INPUT     ,m_map ,KB_X,M_Y+ 4*M_SPC,{0},input_map_rotate},
-
-  {"ZOOM IN"    ,S_INPUT     ,m_map ,KB_X,M_Y+ 6*M_SPC,{0},input_map_zoomin},
-  {"ZOOM OUT"   ,S_INPUT     ,m_map ,KB_X,M_Y+ 7*M_SPC,{0},input_map_zoomout},
-  {"SHIFT UP"   ,S_INPUT     ,m_map ,KB_X,M_Y+ 8*M_SPC,{0},input_map_up},
-  {"SHIFT DOWN" ,S_INPUT     ,m_map ,KB_X,M_Y+ 9*M_SPC,{0},input_map_down},
-  {"SHIFT LEFT" ,S_INPUT     ,m_map ,KB_X,M_Y+10*M_SPC,{0},input_map_left},
-  {"SHIFT RIGHT",S_INPUT     ,m_map ,KB_X,M_Y+11*M_SPC,{0},input_map_right},
-  {"MARK PLACE" ,S_INPUT     ,m_map ,KB_X,M_Y+12*M_SPC,{0},input_map_mark},
-  {"CLEAR LAST MARK",S_INPUT ,m_map ,KB_X,M_Y+13*M_SPC,{0},input_map_clear},
-  {"BLINK MARKS",S_INPUT     ,m_map ,KB_X,M_Y+14*M_SPC,{0},input_map_blink}, // [Nugget]
-  {"FULL/ZOOM"  ,S_INPUT     ,m_map ,KB_X,M_Y+15*M_SPC,{0},input_map_gobig},
-  {"GRID"       ,S_INPUT     ,m_map ,KB_X,M_Y+16*M_SPC,{0},input_map_grid},
+  {"ZOOM IN"    ,S_INPUT     ,m_map ,KB_X,M_Y+ 5*M_SPC,{0},input_map_zoomin},
+  {"ZOOM OUT"   ,S_INPUT     ,m_map ,KB_X,M_Y+ 6*M_SPC,{0},input_map_zoomout},
+  {"SHIFT UP"   ,S_INPUT     ,m_map ,KB_X,M_Y+ 7*M_SPC,{0},input_map_up},
+  {"SHIFT DOWN" ,S_INPUT     ,m_map ,KB_X,M_Y+ 8*M_SPC,{0},input_map_down},
+  {"SHIFT LEFT" ,S_INPUT     ,m_map ,KB_X,M_Y+ 9*M_SPC,{0},input_map_left},
+  {"SHIFT RIGHT",S_INPUT     ,m_map ,KB_X,M_Y+10*M_SPC,{0},input_map_right},
+  {"MARK PLACE" ,S_INPUT     ,m_map ,KB_X,M_Y+11*M_SPC,{0},input_map_mark},
+  {"CLEAR LAST MARK",S_INPUT ,m_map ,KB_X,M_Y+12*M_SPC,{0},input_map_clear},
+  {"BLINK MARKS",S_INPUT     ,m_map ,KB_X,M_Y+13*M_SPC,{0},input_map_blink}, // [Nugget]
+  {"FULL/ZOOM"  ,S_INPUT     ,m_map ,KB_X,M_Y+14*M_SPC,{0},input_map_gobig},
+  {"GRID"       ,S_INPUT     ,m_map ,KB_X,M_Y+15*M_SPC,{0},input_map_grid},
+  {"TAG FINDER" ,S_INPUT     ,m_map ,KB_X,M_Y+16*M_SPC,{0},input_map_tagfind}, // [Cherry]
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings5}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings7}},
@@ -3798,6 +3808,7 @@ setup_menu_t auto_settings1[];
 setup_menu_t auto_settings2[];
 setup_menu_t auto_settings3[];
 setup_menu_t auto_settings4[];
+setup_menu_t auto_settings5[];
 
 setup_menu_t* auto_settings[] =
 {
@@ -3805,6 +3816,7 @@ setup_menu_t* auto_settings[] =
   auto_settings2,
   auto_settings3,
   auto_settings4,
+  auto_settings5,
   NULL
 };
 
@@ -3983,6 +3995,41 @@ setup_menu_t auto_settings4[] =
   {"friends"                        ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto4_col_frnd*M_SPC, {"mapcolor_frnd"}}, // killough 8/8/98
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {auto_settings3}},
+  {"<- NEXT",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {auto_settings5}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
+
+// [Cherry]
+enum
+{
+  auto5_title1,
+  auto5_col_tsc1,
+  auto5_col_tsc2,
+  auto5_col_usc1,
+  auto5_col_usc2,
+  auto5_col_lin1,
+  auto5_col_lin2,
+  auto5_col_secx,
+  auto5_col_linx,
+};
+
+// [Cherry]
+setup_menu_t auto_settings5[] =
+{
+  {"Tag finder",S_SKIP|S_TITLE,m_null,M_X,M_Y},
+  {"Tagged sector color 1",   S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto5_col_tsc1*M_SPC, {"mapcolor_tf_tsc1"}},
+  {"Tagged sector color 2",   S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto5_col_tsc2*M_SPC, {"mapcolor_tf_tsc2"}},
+  {"Untagged sector color 1", S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto5_col_usc1*M_SPC, {"mapcolor_tf_usc1"}},
+  {"Untagged sector color 2", S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto5_col_usc2*M_SPC, {"mapcolor_tf_usc2"}},
+  {"Line color 1",            S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto5_col_lin1*M_SPC, {"mapcolor_tf_lin1"}},
+  {"Line color 2",            S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto5_col_lin2*M_SPC, {"mapcolor_tf_lin2"}},
+  {"Sector cross marks color",S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto5_col_secx*M_SPC, {"mapcolor_tf_secx"}},
+  {"Line cross marks color",  S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto5_col_linx*M_SPC, {"mapcolor_tf_linx"}},
+
+  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {auto_settings4}},
 
   // Final entry
 

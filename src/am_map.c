@@ -57,6 +57,15 @@ int mapcolor_hair;    // crosshair color
 int mapcolor_sngl;    // single player arrow color
 int mapcolor_plyr[4]; // colors for player arrows in multiplayer
 int mapcolor_frnd;    // colors for friends of player
+// [Cherry] Tag finder colors
+int mapcolor_tf_tsc1;  // Tagged sector color 1
+int mapcolor_tf_tsc2;  // Tagged sector color 2
+int mapcolor_tf_usc1;  // Untagged sector color 1
+int mapcolor_tf_usc2;  // Untagged sector color 2
+int mapcolor_tf_lin1;  // Line color 1
+int mapcolor_tf_lin2;  // Line color 2
+int mapcolor_tf_secx;  // Sector cross marks color
+int mapcolor_tf_linx;  // Line cross marks color
 
 //jff 3/9/98 add option to not show secret sectors until entered
 int map_secret_after;
@@ -64,6 +73,10 @@ int map_secret_after;
 int map_keyed_door_flash; // keyed doors are flashing
 
 int map_smooth_lines;
+
+// [Cherry]
+sector_t *magic_sector;
+short magic_tag;
 
 // [Woof!] FRACTOMAPBITS: overflow-safe coordinate system.
 // Written by Andrey Budko (entryway), adapted from prboom-plus/src/am_map.*
@@ -202,6 +215,9 @@ static mline_t thintriangle_guy[] =
 #define REDS (256-5*16)
 #define GRAYS (6*16)
 #define YELLOWS (256-32+7)
+
+// [Cherry] Radius around the crosshair in which tag finder searches for tagged lines
+#define TAGFINDER_RADIUS 16 << MAPBITS
 
 int ddt_cheating = 0;         // killough 2/7/98: make global, rename to ddt_*
 
@@ -684,6 +700,9 @@ void AM_Stop (void)
   automapactive = false;
   ST_Responder(&st_notify);
   stopped = true;
+  // [Cherry] Reset tag finder
+  magic_sector = NULL;
+  magic_tag = 0;
 }
 
 //
@@ -757,6 +776,8 @@ enum
 };
 
 static int buttons_state[STATE_NUM] = { 0 };
+
+static boolean selecting_magic_sector = false; // [Cherry]
 
 //
 // AM_Responder()
@@ -847,6 +868,11 @@ boolean AM_Responder
       else
         buttons_state[ZOOM_IN] = 1;
     }
+    else if (M_InputActivated(input_map_tagfind)) // [Cherry]
+      if (!followplayer)
+        selecting_magic_sector = casual_play;
+      else
+        rc = false;
     else if (M_InputActivated(input_map))
     {
       bigstate = 0;
@@ -965,6 +991,10 @@ boolean AM_Responder
     else if (M_InputDeactivated(input_map_zoomin))
     {
       buttons_state[ZOOM_IN] = 0;
+    }
+    else if (M_InputDeactivated(input_map_tagfind)) // [Cherry]
+    {
+      selecting_magic_sector = false;
     }
   }
 
@@ -1625,12 +1655,23 @@ static int AM_DoorColor(int type)
 // jff 4/3/98 changed mapcolor_xxxx=0 as control to disable feature
 // jff 4/3/98 changed mapcolor_xxxx=-1 to disable drawing line completely
 //
+
+static void AM_drawLineCharacter
+(mline_t*  lineguy,
+ int   lineguylines,
+ fixed_t scale,
+ angle_t angle,
+ int   color,
+ fixed_t x,
+ fixed_t y);
+
 static void AM_drawWalls(void)
 {
   int i;
   static mline_t l;
 
   const boolean keyed_door_flash = map_keyed_door_flash && (leveltime & 16);
+  const boolean tagfind_flash = leveltime & 4; // [Cherry]
 
   // draw the unclipped visible portions of all lines
   for (i=0;i<numlines;i++)
@@ -1820,6 +1861,37 @@ static void AM_drawWalls(void)
           != lines[i].frontsector->ceilingheight
         )
           AM_drawMline(&l, mapcolor_unsn);
+      }
+    }
+
+    // [Cherry] Highlight connected lines and sectors by flashing and drawing additional lines
+    if (magic_sector || magic_tag)
+    {
+      const int sec_color = (magic_tag || (magic_sector && magic_sector->tag))
+        ? (tagfind_flash ? mapcolor_tf_tsc1 : mapcolor_tf_tsc2)
+        : (tagfind_flash ? mapcolor_tf_usc1 : mapcolor_tf_usc2);
+      const int line_color = tagfind_flash ? mapcolor_tf_lin2 : mapcolor_tf_lin1;
+
+      if (lines[i].tag > 0 && (lines[i].tag == magic_tag || (magic_sector && (lines[i].tag == magic_sector->tag))))
+      {
+        AM_drawMline(&l, line_color);
+
+        if (tagfind_flash)
+        {
+          AM_drawLineCharacter(cross_mark, NUMCROSSMARKLINES,
+                               24 << MAPBITS, 0, mapcolor_tf_linx, l.a.x, l.a.y);
+        }
+      }
+      else if ((lines[i].frontsector && ((magic_sector && magic_sector == lines[i].frontsector) || ((magic_tag > 0) && lines[i].frontsector->tag == magic_tag))) ||
+          (lines[i].backsector && ((magic_sector && magic_sector == lines[i].backsector) || ((magic_tag > 0) && lines[i].backsector->tag == magic_tag))))
+      {
+        AM_drawMline(&l, sec_color);
+
+        if (tagfind_flash)
+        {
+          AM_drawLineCharacter(cross_mark, NUMCROSSMARKLINES,
+                               16 << MAPBITS, 0, mapcolor_tf_secx, l.a.x, l.a.y);
+        }
       }
     }
   }
@@ -2326,6 +2398,56 @@ void AM_Drawer (void)
   AM_drawPlayers();
   if (ddt_cheating==2)
     AM_drawThings(mapcolor_sprt, 0); //jff 1/5/98 default double IDDT sprite
+
+  // [Cherry] Find a sector or a tagged line under the crosshair
+  if (selecting_magic_sector && (ddt_cheating || players[consoleplayer].powers[pw_allmap]))
+  {
+    fixed_t tmapx = (m_x + m_w/2);
+    fixed_t tmapy = (m_y + m_h/2);
+
+    subsector_t *s = R_PointInSubsector(tmapx << FRACTOMAPBITS, tmapy << FRACTOMAPBITS);
+
+    if (s && s->sector)
+    {
+      int i;
+      fixed_t min_distance = TAGFINDER_RADIUS;
+      short min_tag = 0;
+
+      for (i = 0; i < s->sector->linecount; ++i)
+      {
+        line_t *l = s->sector->lines[i];
+        if (l && l->tag > 0 &&
+            l->v1 && l->v2)
+        {
+          const float x1 = (l->v1->x >> FRACTOMAPBITS);
+          const float x2 = (l->v2->x >> FRACTOMAPBITS);
+          const float y1 = (l->v1->y >> FRACTOMAPBITS);
+          const float y2 = (l->v2->y >> FRACTOMAPBITS);
+
+          const float dist = fabs((y2-y1)*tmapx - (x2-x1)*tmapy + x2*y1 - y2*x1) /
+            sqrtf(powf(y2-y1, 2) + powf(x2-x1, 2));
+
+          if (dist < min_distance)
+          {
+            min_distance = dist;
+            min_tag = l->tag;
+          }
+        }
+      }
+
+      if (min_tag > 0)
+      {
+        magic_tag = min_tag;
+        magic_sector = NULL;
+      }
+      else
+      {
+        magic_tag = 0;
+        magic_sector = s->sector;
+      }
+    }
+  }
+
   AM_drawCrosshair(mapcolor_hair);   //jff 1/7/98 default crosshair color
 
   AM_drawMarks();

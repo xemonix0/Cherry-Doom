@@ -10,7 +10,8 @@
 - **More widgets on intermission screen** (health, armor, weapons)
 - **Woof! savegame compatibility**
 - **Attempt counter** (in the forms of a widget, a Level Table column and a WAD Summary entry)
-- **Movement widget** which shows the current player's movement (e.g. "MF40 SR50")
+- **Movement widget:** shows the current player's movement (e.g. "MF40 SR50")
+- **Tag finder:** pressing the key while in nofollow will highlight the sector or line under the crosshair and show the activating line/sector if any
 
 ## Changes
 
