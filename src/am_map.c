@@ -909,9 +909,8 @@ boolean AM_Responder
       mobj_t *const mo = plr->mo;
     
       P_MapStart();
-      P_TeleportMove(mo, (m_x+m_w/2)<<FRACTOMAPBITS, (m_y+m_h/2)<<FRACTOMAPBITS, false);
-      P_MapEnd();
 
+      P_TeleportMove(mo, (m_x+m_w/2)<<FRACTOMAPBITS, (m_y+m_h/2)<<FRACTOMAPBITS, false);
       mo->z = mo->floorz;
       plr->viewz = mo->z + plr->viewheight;
 
@@ -922,6 +921,8 @@ boolean AM_Responder
                                  mo->z, MT_TFOG),
                      sfx_telept);
       }
+
+      P_MapEnd();
     }
     else
     if (M_InputActivated(input_map_overlay))
