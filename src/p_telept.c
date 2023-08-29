@@ -76,13 +76,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
             player->centering = true;
             
             P_SetPlayerEvent(player, TIMER_TELEPORT); // [Nugget] Teleport timer
-            
-            // [Nugget] Teleporter zoom
-            if (STRICTMODE(teleporter_zoom)) {
-              R_SetZoom(ZOOM_RESET);
-              fovfx[FOVFX_TELEPORT].target = 50;
-              fovchange = true;
-            }
+            R_SetFOVFX(FOVFX_TELEPORT); // [Nugget] Teleporter zoom
           }
 
           // spawn teleport fog and emit sound at source

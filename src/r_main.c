@@ -112,7 +112,7 @@ lighttable_t **colormaps;
 int extralight;                           // bumped light from gun blasts
 int extra_level_brightness;               // level brightness feature
 
-// [Nugget] FOV from Doom Retro -------
+// [Nugget] FOV from Doom Retro /------
 
 boolean fovchange = true;
 static int bfov; // Base FOV
@@ -122,12 +122,35 @@ float fovdiff;   // Used for some corrections
 static fixed_t fovscale;
 static int lookdirmax;
 
-fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
-static int zoomed = 0;   // Current zoom state
+static fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
+static int     zoomed = 0;      // Current zoom state
 
 int R_GetBFOV(void)
 {
   return bfov;
+}
+
+int R_GetFOVFX(int fx)
+{
+  return fovfx[fx].current;
+}
+
+void R_SetFOVFX(int fx)
+{
+  if (strictmode) { return; }
+
+  switch (fx) {
+    case FOVFX_ZOOM:
+      // Handled by R_Get/SetZoom
+      break;
+
+    case FOVFX_TELEPORT:
+      if (!teleporter_zoom) { break; }
+      R_SetZoom(ZOOM_RESET);
+      fovfx[FOVFX_TELEPORT].target = 50;
+      fovchange = true;
+      break;
+  }
 }
 
 int R_GetZoom(void)
@@ -152,7 +175,7 @@ void R_SetZoom(const int state)
   { zoomed = ZOOM_OFF; }
 }
 
-// [Nugget] ---------------------------
+// [Nugget] --------------------------/
 
 
 void (*colfunc)(void) = R_DrawColumn;     // current column draw function

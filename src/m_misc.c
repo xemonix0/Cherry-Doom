@@ -2509,6 +2509,13 @@ default_t defaults[] = {
     input_map_teleport, { {0, 0} }
   },
 
+  {
+    "fancy_teleport",
+    (config_t *) &fancy_teleport, NULL,
+    {1}, {0,1}, number, ss_keys, wad_no,
+    "Use effects when teleporting to pointer (fog, sound and zoom)"
+  },
+
   // [Nugget] End ----------------------------------------------
 
   { //jff 4/3/98 allow unlimited sensitivity

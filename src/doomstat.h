@@ -445,7 +445,7 @@ extern boolean hide_weapon;
 // [FG] centered weapon sprite
 extern int center_weapon;
 
-//----- Nugget ---------------------------------------------------------------
+// [Nugget] /--------------------------
 
 extern boolean fauxdemo;
 extern boolean casual_play;
@@ -525,6 +525,13 @@ extern int extra_gibbing;
 extern int bloodier_gibbing;
 extern int zdoom_item_drops;
 
+// Messages
+extern int announce_milestones;
+
+// Key Bindings
+extern int zoom_fov;
+extern int fancy_teleport;
+
 // CFG only
 extern int menu_background_darkening;
 extern int chasecam_crosshair;
@@ -536,10 +543,7 @@ extern int sx_fix;
 extern int blink_keys;
 extern int automap_overlay_darkening;
 
-// Misc
-extern int zoom_fov;
-extern int announce_milestones;
-
+// Doom Compatibility
 enum {
   comp_blazing2,
   comp_manualdoor,
@@ -559,8 +563,9 @@ enum {
 
   NUGGET_COMP_TOTAL
 };
-
 extern int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
+
+// [Nugget] --------------------------/
 
 // Doom-style printf
 

@@ -625,11 +625,15 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   mousex = mousex2 = mousey = mousey2 = 0;
   
   // [Nugget] Decrease the intensity of some movements if zoomed in
-  if (!strictmode && fovfx[FOVFX_ZOOM].current) {
-    const float divisor = fov / MAX(1, fov + fovfx[FOVFX_ZOOM].current);
-    if (divisor > 1) {
-      cmd->angleturn /= divisor;
-      cmd->lookdir /= divisor;
+  if (!strictmode) {
+    const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+  
+    if (zoom) {
+      const float divisor = fov / MAX(1, fov + zoom);
+      if (divisor > 1) {
+        cmd->angleturn /= divisor;
+        cmd->lookdir /= divisor;
+      }
     }
   }
 

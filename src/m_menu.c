@@ -3109,7 +3109,7 @@ setup_menu_t keys_settings9[] =  // Key Binding screen strings
 
 };
 
-// [Nugget] ---------------------------
+// [Nugget] /--------------------------
 
 enum {
   keys10_title1,
@@ -3125,6 +3125,7 @@ enum {
   keys10_stub4,
   keys10_tpointer,
   keys10_stub5,
+  keys10_fancytp,
 };
 
 setup_menu_t keys_settings10[] =
@@ -3142,6 +3143,7 @@ setup_menu_t keys_settings10[] =
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub4    * M_SPC},
     {"TELEPORT TO\n"
      "AUTOMAP POINTER",  S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_tpointer * M_SPC, {0}, input_map_teleport},
+    {"FANCY TELEPORT",   S_YESNO|S_STRICT|S_CRITICAL, m_null, KB_X, M_Y + keys10_fancytp  * M_SPC, {"fancy_teleport"}},
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings9}},
 
@@ -3151,7 +3153,7 @@ setup_menu_t keys_settings10[] =
 
 };
 
-// ------------------------------------
+// [Nugget] --------------------------/
 
 // Setting up for the Key Binding screen. Turn on flags, set pointers,
 // locate the first item on the screen where the cursor is allowed to
