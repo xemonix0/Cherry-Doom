@@ -5,6 +5,7 @@
 - **Horizontal Weapon Centering** setting
 - **_Switch [Weapon] on Pickup_** setting
 - **Key to equip last used weapon**
+- **_Tag Finder_** from PrBoomX
 - **Key to teleport to Automap pointer**
 - **_Blink Missing Keys_** setting
 - **Support for optional sounds** (Crispy Doom's and more)

@@ -2502,6 +2502,14 @@ default_t defaults[] = {
   },
 
   {
+    "input_map_tagfinder",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to find associated sectors and lines",
+    input_map_tagfinder, { {0, 0} }
+  },
+
+  {
     "input_map_teleport",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,

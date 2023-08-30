@@ -16,7 +16,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 - **Support for higher resolutions:** 4X (800p) and 8X (1600p)
 - **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
-- Toggle to **stretch viewport to fit window** (CFG-Only: `stretch-to-fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
+- Toggle to **stretch viewport to fit window** (CFG-Only: `stretch_to_fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
 - **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**
 - Toggle for **Gamma Correction key cycling**, through either original or extended gamma levels (CFG-Only: `gammacycle`)
 - **Tweaked _Stretch Short Skies_ algorithm**
@@ -92,6 +92,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 - **Automap color for unrevealed secret sectors**
 - Key to _**Blink [Automap] Marks**_ (default: <kbd>B</kbd>)
+- _**Tag Finder**_ [p.f. PrBoomX]
 - Key to _**Teleport to Automap pointer**_
 
 ### Enemies

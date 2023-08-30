@@ -37,6 +37,22 @@
 #include "s_sound.h"
 #include "sounds.h"
 
+// [Nugget] Tag Finder from PrBoomX /------------
+
+static boolean findtag;
+
+#define MAGIC_SECTOR_COLOR_MIN 168
+#define MAGIC_SECTOR_COLOR_MAX 180
+#define MAGIC_LINE_COLOR_MIN 112
+#define MAGIC_LINE_COLOR_MAX 124
+static int magic_sector_color_pos = MAGIC_SECTOR_COLOR_MIN;
+static int magic_line_color_pos = MAGIC_LINE_COLOR_MIN;
+
+static sector_t* magic_sector;
+static short     magic_tag = -1;
+
+// [Nugget] Tag Finder from PrBoomX ------------/
+
 //jff 1/7/98 default automap colors added
 int mapcolor_back;    // map background
 int mapcolor_grid;    // grid lines color
@@ -688,6 +704,11 @@ void AM_Stop (void)
   automapactive = false;
   ST_Responder(&st_notify);
   stopped = true;
+
+  // [Nugget] Tag Finder from PrBoomX
+  findtag = false;
+  magic_sector = NULL;
+  magic_tag = -1;
 }
 
 //
@@ -897,33 +918,6 @@ boolean AM_Responder
         displaymsg("Cleared spot %d", markpointnum);
       }
     }
-    // [Nugget] Blink marks
-    else if (M_InputActivated(input_map_blink) && markpointnum)
-    {
-      markblinktimer = 4*TICRATE;
-      plr->message = "Blinking marks...";
-    }
-    // [Nugget] Teleport to Automap pointer
-    else if (M_InputActivated(input_map_teleport) && !followplayer)
-    {
-      mobj_t *const mo = plr->mo;
-    
-      P_MapStart();
-
-      P_TeleportMove(mo, (m_x+m_w/2)<<FRACTOMAPBITS, (m_y+m_h/2)<<FRACTOMAPBITS, false);
-      mo->z = mo->floorz;
-      plr->viewz = mo->z + plr->viewheight;
-
-      if (fancy_teleport) {
-        R_SetFOVFX(FOVFX_TELEPORT); // Teleporter zoom
-        S_StartSound(P_SpawnMobj(mo->x + 20 * finecosine[mo->angle>>ANGLETOFINESHIFT],
-                                 mo->y + 20 *   finesine[mo->angle>>ANGLETOFINESHIFT],
-                                 mo->z, MT_TFOG),
-                     sfx_telept);
-      }
-
-      P_MapEnd();
-    }
     else
     if (M_InputActivated(input_map_overlay))
     {
@@ -952,6 +946,44 @@ boolean AM_Responder
       else
         displaymsg("%s", s_AMSTR_ROTATEOFF);
     }
+
+    // [Nugget] /----------------------
+
+    // Blink marks
+    else if (M_InputActivated(input_map_blink) && markpointnum)
+    {
+      markblinktimer = 4*TICRATE;
+      plr->message = "Blinking marks...";
+    }
+    // Tag Finder from PrBoomX
+    else if (M_InputActivated(input_map_tagfinder))
+    {
+      findtag = !strictmode;
+    }
+    // Teleport to Automap pointer
+    else if (M_InputActivated(input_map_teleport) && !followplayer)
+    {
+      mobj_t *const mo = plr->mo;
+    
+      P_MapStart();
+
+      P_TeleportMove(mo, (m_x+m_w/2)<<FRACTOMAPBITS, (m_y+m_h/2)<<FRACTOMAPBITS, false);
+      mo->z = mo->floorz;
+      plr->viewz = mo->z + plr->viewheight;
+
+      if (fancy_teleport) {
+        R_SetFOVFX(FOVFX_TELEPORT); // Teleporter zoom
+        S_StartSound(P_SpawnMobj(mo->x + 20 * finecosine[mo->angle>>ANGLETOFINESHIFT],
+                                 mo->y + 20 *   finesine[mo->angle>>ANGLETOFINESHIFT],
+                                 mo->z, MT_TFOG),
+                     sfx_telept);
+      }
+
+      P_MapEnd();
+    }
+
+    // [Nugget] ----------------------/
+
     else
     {
       rc = false;
@@ -990,6 +1022,11 @@ boolean AM_Responder
     else if (M_InputDeactivated(input_map_zoomin))
     {
       buttons_state[ZOOM_IN] = 0;
+    }
+    // [Nugget] Tag Finder from PrBoomX
+    else if (M_InputDeactivated(input_map_tagfinder))
+    {
+      findtag = false;
     }
   }
 
@@ -1097,6 +1134,63 @@ void AM_Ticker (void)
 {
   // [Nugget] Blink marks
   if (markblinktimer) { markblinktimer--; }
+
+  // [Nugget] Tag Finder from PrBoomX /----------
+
+  if (findtag)
+  {
+    const fixed_t tmapx = (m_x + m_w/2);
+    const fixed_t tmapy = (m_y + m_h/2);
+    const subsector_t *const subsec = R_PointInSubsector(tmapx<<FRACTOMAPBITS,
+                                                         tmapy<<FRACTOMAPBITS);
+
+    if (subsec && subsec->sector)
+    {
+      // if we are close to a tagged line in the sector, choose it instead
+      float min_distance = 24 << MAPBITS;
+      short int min_tag = 0;
+
+      magic_sector = (subsec->sector->tag > 0) ? subsec->sector : NULL;
+      magic_tag = -1;
+
+      for (int i = 0;  i < subsec->sector->linecount;  i++)
+      {
+        line_t* l = subsec->sector->lines[i];
+        if (l && (l->tag > 0)) {
+          if (l->v1 && l->v2) {
+            const float
+              x1 = (l->v1->x >> FRACTOMAPBITS),
+              x2 = (l->v2->x >> FRACTOMAPBITS),
+              y1 = (l->v1->y >> FRACTOMAPBITS),
+              y2 = (l->v2->y >> FRACTOMAPBITS),
+              dist = fabs((y2 - y1) * tmapx - (x2 - x1) * tmapy + x2*y1 - y2*x1)
+                   / sqrtf(powf(y2 - y1, 2) + powf(x2 - x1, 2));
+
+            if (dist < min_distance) {
+              min_distance = dist;
+              min_tag = l->tag;
+            }
+          }
+        }
+      }
+      // only pick the line if the crosshair is "close" to it
+      if (min_tag > 0) {
+        magic_tag = min_tag;
+        magic_sector = NULL;
+      }
+    }
+  }
+
+  if (magic_sector || magic_tag > 0)
+  {
+    if (++magic_sector_color_pos >= MAGIC_SECTOR_COLOR_MAX)
+    { magic_sector_color_pos = MAGIC_SECTOR_COLOR_MIN; }
+    
+    if (++magic_line_color_pos >= MAGIC_LINE_COLOR_MAX)
+    { magic_line_color_pos = MAGIC_LINE_COLOR_MIN; }
+  }
+
+  // [Nugget] Tag Finder from PrBoomX ----------/
 
   // Change the zoom if necessary.
   if (ftom_zoommul != FRACUNIT)
@@ -1650,6 +1744,10 @@ static int AM_DoorColor(int type)
 // jff 4/3/98 changed mapcolor_xxxx=0 as control to disable feature
 // jff 4/3/98 changed mapcolor_xxxx=-1 to disable drawing line completely
 //
+
+// [Nugget] Tag Finder from PrBoomX: Prototype this function
+static void AM_drawLineCharacter();
+
 static void AM_drawWalls(void)
 {
   int i;
@@ -1672,7 +1770,8 @@ static void AM_drawWalls(void)
     // if line has been seen or IDDT has been used
     if (ddt_cheating || (lines[i].flags & ML_MAPPED))
     {
-      if ((lines[i].flags & ML_DONTDRAW) && !ddt_cheating)
+      if ((lines[i].flags & ML_DONTDRAW) && !ddt_cheating
+          && lines[i].tag != magic_tag) // [Nugget] Tag Finder from PrBoomX
         continue;
       if (!lines[i].backsector)
       {
@@ -1845,6 +1944,36 @@ static void AM_drawWalls(void)
           != lines[i].frontsector->ceilingheight
         )
           AM_drawMline(&l, mapcolor_unsn);
+      }
+    }
+
+    // [Nugget] Tag Finder from PrBoomX: Highlight sectors and lines
+    if (magic_sector || magic_tag > 0)
+    {
+      if (   (lines[i].frontsector && ((magic_sector && lines[i].frontsector->tag == magic_sector->tag)
+                                        || ((magic_tag > 0) && lines[i].frontsector->tag == magic_tag)))
+          || (lines[i].backsector  && ((magic_sector && lines[i].backsector->tag  == magic_sector->tag)
+                                        || ((magic_tag > 0) && lines[i].backsector->tag  == magic_tag))))
+      {
+        AM_drawMline(&l, magic_sector_color_pos);
+
+        if (magic_sector_color_pos <= MAGIC_SECTOR_COLOR_MIN+1)
+        {
+          AM_drawLineCharacter(cross_mark, NUMCROSSMARKLINES,
+                               128<<MAPBITS, 0, 229, l.a.x, l.a.y);
+        }
+      }
+      
+      if (   (lines[i].tag > 0)
+          && (lines[i].tag == magic_tag || (magic_sector && (lines[i].tag == magic_sector->tag))))
+      {
+        AM_drawMline(&l, magic_line_color_pos);
+
+        if (magic_line_color_pos <= MAGIC_LINE_COLOR_MIN+1)
+        {
+          AM_drawLineCharacter(cross_mark, NUMCROSSMARKLINES,
+                               128<<MAPBITS, 0, 251, l.a.x, l.a.y);
+        }
       }
     }
   }

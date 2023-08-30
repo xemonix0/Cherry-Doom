@@ -3123,8 +3123,10 @@ enum {
   keys10_stub3,
   keys10_chasecam,
   keys10_stub4,
-  keys10_tpointer,
+  keys10_tagfind,
   keys10_stub5,
+  keys10_tpointer,
+  keys10_stub6,
   keys10_fancytp,
 };
 
@@ -3141,6 +3143,8 @@ setup_menu_t keys_settings10[] =
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub3    * M_SPC},
     {"CYCLE CHASECAM",   S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_chasecam * M_SPC, {0}, input_chasecam},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub4    * M_SPC},
+    {"TAG FINDER",       S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_tagfind  * M_SPC, {0}, input_map_tagfinder},
+    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub5    * M_SPC},
     {"TELEPORT TO\n"
      "AUTOMAP POINTER",  S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_tpointer * M_SPC, {0}, input_map_teleport},
     {"FANCY TELEPORT",   S_YESNO|S_STRICT|S_CRITICAL, m_null, KB_X, M_Y + keys10_fancytp  * M_SPC, {"fancy_teleport"}},
