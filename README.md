@@ -92,7 +92,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 - **Automap color for unrevealed secret sectors**
 - Key to _**Blink [Automap] Marks**_ (default: <kbd>B</kbd>)
-- _**Tag Finder**_ [p.f. PrBoomX]
+- _**Tag Finder**_: Position the Automap pointer over a sector and press the _Tag Finder_ key to highlight its activator line(s), and vice versa [p.f. PrBoomX]
 - Key to _**Teleport to Automap pointer**_
 
 ### Enemies
