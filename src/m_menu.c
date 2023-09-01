@@ -3865,6 +3865,7 @@ enum {
   auto1_follow,
   auto1_rotate,
   auto1_overlay,
+  auto1_overlaydarkening,
   auto1_stub1,
   auto1_title2,
   auto1_coords,
@@ -3881,6 +3882,11 @@ static const char *overlay_strings[] = {
   "Off", "On", "Dark", NULL
 };
 
+void M_ChangeAutomapOverlay(void)
+{
+  DISABLE_ITEM(!(automapoverlay == overlay_dark), auto_settings1[auto1_overlaydarkening]);
+}
+
 extern void AM_enableSmoothLines(void);
 
 setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
@@ -3888,7 +3894,8 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
   {"Modes",S_SKIP|S_TITLE,m_null,M_X,M_Y},
   {"Follow Player"        ,S_YESNO ,m_null,M_X,M_Y+auto1_follow*M_SPC,  {"followplayer"}},
   {"Rotate Automap"       ,S_YESNO ,m_null,M_X,M_Y+auto1_rotate*M_SPC,  {"automaprotate"}},
-  {"Overlay Automap"      ,S_CHOICE,m_null,M_X,M_Y+auto1_overlay*M_SPC, {"automapoverlay"}, 0, NULL, overlay_strings},
+  {"Overlay Automap"      ,S_CHOICE,m_null,M_X,M_Y+auto1_overlay*M_SPC, {"automapoverlay"}, 0, M_ChangeAutomapOverlay, overlay_strings},
+  {"Overlay Darkening"    ,S_THERMO,m_null,M_X_THRM,M_Y+auto1_overlaydarkening*M_SPC, {"automap_overlay_darkening"}},
 
   {"",S_SKIP,m_null,M_X,M_Y+auto1_stub1*M_SPC},
 
@@ -4507,6 +4514,7 @@ enum {
   gen2_solidbackground,
   gen2_draw_menu_background,
   gen2_menu_background,
+  gen2_menu_background_darkening,
   gen2_diskicon,
   gen2_endoom,
   gen2_end1,
@@ -4515,6 +4523,11 @@ enum {
 static void M_UpdateMenuBackgroundItem(void)
 {
   DISABLE_ITEM(!draw_menu_background, gen_settings2[gen2_menu_background]);
+}
+
+void M_ChangeMenuBackgroundDarkening(void)
+{
+  DISABLE_ITEM(!(menu_background == background_dark), gen_settings2[gen2_menu_background_darkening]);
 }
 
 // Page 3
@@ -4702,7 +4715,10 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
    M_Y + gen2_draw_menu_background*M_SPC, {"draw_menu_background"}, 0, M_UpdateMenuBackgroundItem, draw_menu_background_strings},
 
   {"Menu Background", S_CHOICE, m_null, M_X,
-   M_Y + gen2_menu_background*M_SPC, {"menu_background"}, 0, NULL, menu_background_strings},
+   M_Y + gen2_menu_background*M_SPC, {"menu_background"}, 0, M_ChangeMenuBackgroundDarkening, menu_background_strings},
+
+  {"Background Darkening", S_THERMO, m_null, M_X_THRM,
+   M_Y + gen2_menu_background_darkening*M_SPC, {"menu_background_darkening"}},
 
   {"Flash Icon During Disk IO", S_YESNO, m_null, M_X,
    M_Y + gen2_diskicon*M_SPC, {"disk_icon"}},
