@@ -1,4 +1,5 @@
 ﻿# Cherry Doom
+[![Cherry-Doom Icon](https://raw.githubusercontent.com/xemonix0/Cherry-Doom/master/data/cherry-doom.png)](https://github.com/xemonix0/Cherry-Doom)
 
 [![Top Language](https://img.shields.io/github/languages/top/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom)
 [![Code Size](https://img.shields.io/github/languages/code-size/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom)

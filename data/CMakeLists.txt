@@ -1,6 +1,6 @@
 if(UNIX AND NOT APPLE)
     install(FILES cherry-doom.desktop DESTINATION share/applications)
-    install(FILES nugget-doom.png DESTINATION share/icons/hicolor/128x128/apps)
+    install(FILES cherry-doom.png DESTINATION share/icons/hicolor/128x128/apps)
     install(FILES cherry-doom-setup.desktop DESTINATION share/applications)
-    install(FILES nugget-doom-setup.png DESTINATION share/icons/hicolor/128x128/apps)
+    install(FILES cherry-doom-setup.png DESTINATION share/icons/hicolor/128x128/apps)
 endif()

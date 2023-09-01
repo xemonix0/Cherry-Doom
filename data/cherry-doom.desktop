@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Cherry Doom
 Exec=cherry-doom
-Icon=nugget-doom
+Icon=cherry-doom
 Type=Application
 Comment=Cherry Doom is a fork of Nugget Doom with a few additions.
 Categories=Game;ActionGame;

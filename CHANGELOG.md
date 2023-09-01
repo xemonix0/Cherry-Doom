@@ -15,6 +15,7 @@
 
 ## Changes
 
+- **New icon**
 - **Merged changes from [*Nugget Doom 2.1.0*](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.1.0)**, therefore:
 	- Horizontal Weapon Centering setting;
 	- Blink Missing Keys setting;
