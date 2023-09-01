@@ -20,33 +20,34 @@ In the course of development, changes to the save file structure, such as adding
 This means that if you saved your game before a breaking change to save file structure was introduced, updating to the latest commit might not trigger the incompatibility warning when trying to load the save, and as a result that might lead to unexpected behavior or a crash.
 
 # Features
-Just like with Nugget Doom, most of Cherry Doom's features come from other sources, like source ports, mods or games. The initial implementations for some are **ported from (p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
+Just like with Nugget Doom, most of Cherry Doom's features come from other sources, like source ports, mods or games. The initial implementations for some are **(partially) ported from ((p.)p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
 
 ### General
 
-- **More menu background choices:** Solid, Dark, Darker; background can also be enabled for all menus
-- **Screen shake effect** on damage, explosions and boss deaths [i.b. and partially p.f. Doom Retro]
+- **Menu background can now be enabled in all menus**
+- **Screen shake effect** on damage, explosions and boss deaths [i.b. & p.p.f. Doom Retro]
 - **Motion blur** [p.f. Doom Retro]
 
 ### Weapons
 
-- **Last used weapon** key (default key: <kbd>q</kbd>) [i.b. Half-Life]
+- Key to **equip last used weapon** (default: <kbd>q</kbd>) [i.b. Half-Life]
 
 ### Status Bar/HUD
 
-- Toggling of **extended HUD bars**
-- **More widgets on intermission screen** (health, armor, weapons)
+- Toggling of **bars in Boom HUD widgets**
+- **More widgets on intermission screen** (health, armor, weapons, attempts)
 - **Attempt counter widget** for WOOFHUD and NUGHUD
-- **Improved HUD color customization** [i.b. PrBoom+ and DSDA-Doom]: disabling of the bars in Boom HUD, ability to choose colors for things like:
-	- *Widget names*
-	- *Plain text*
-	- *Total level time*
-	- *Low/Ok/Good/Extra thresholds* for Health, Armor and Ammo widgets
-- **Movement widget:** shows the current player's movement (e.g. "MF40 SR50")
+- **Improved HUD color customization:** ability to choose colors for things like:
+	- Widget names
+	- Plain text
+	- Total level time
+	- Low/Ok/Good/Extra thresholds for Health, Armor and Ammo widgets
+- **Movement widget:** shows the current movement inputs (e.g. "MF40 SR50")
 
 ### Automap
 
-- **Tag finder:** pressing the key while in nofollow will highlight the sector or line under the crosshair and show the activating line/sector if any (default key: <kbd>x</kbd>) [i.b. & p.p.f PrBoomX]
+- **Tag finder** [i.b. & p.p.f PrBoomX]		
+    - Pressing the key (default: <kbd>x</kbd>) while in nofollow mode on automap will highlight the sector or line under the crosshair and show the activating line/sector, if any.
 
 ### Miscellaneous
 
@@ -55,7 +56,7 @@ Just like with Nugget Doom, most of Cherry Doom's features come from other sourc
 
 # Releases
 
-Source code and Windows binaries (MSVC builds for Windows 7 and newer) for the latest release can be found on the [Release](https://github.com/MrAlaux/Nugget-Doom/releases/latest) page.
+Source code, Windows binaries (MSVC builds for Windows 7 and newer) and Linux AppImages for the latest release can be found on the [Release](https://github.com/xemonix0/Cherry-Doom/releases/latest) page.
 
 The most recent list of changes can be found in the [Changelog](https://github.com/xemonix0/Cherry-Doom/blob/master/CHANGELOG.md).
 
@@ -65,9 +66,9 @@ A complete history of changes and releases can be found on the [Releases](https:
 
 Cherry Doom follows exactly the same versioning system as Nugget Doom, which is fairly simple:
 
-- **X** is increased in the event of at least one major implementation, such as a new spec like _UMAPINFO_;
+- **X** is increased in the event of at least one major implementation, such as a new specification like UMAPINFO;
 - **Y** is increased in the event of at least one minor implementation, such as a new cheat;
-- **Z** is increased in the event of at least one bug fix, text/code reformatting, or merging of _Nugget Doom_ updates, even if the changes to the latter are considered minor or major.
+- **Z** is increased in the event of at least one bug fix, text/code reformatting, tiny tweak or merging of Nugget Doom updates, even if the changes to the latter are considered minor or major.
 
 Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
 
@@ -109,7 +110,7 @@ After successful compilation the resulting binary can be found in the `src/` dir
 
 ## Windows with Visual Studio
 
-Visual Studio 2019 and [VSCode](https://code.visualstudio.com/) comes with built-in support for CMake by opening the source tree as a folder.
+[Visual Studio 2019](https://visualstudio.microsoft.com/) and [Visual Studio Code](https://code.visualstudio.com/) come with built-in support for CMake by opening the source tree as a folder.
 
 Install vcpkg <https://github.com/Microsoft/vcpkg#quick-start-windows>. Integrate it into CMake or use toolchain file:
 ```
@@ -165,11 +166,15 @@ Copyright:
  © 2019 Fernando Carmona Varo.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
+Files: `src/ws_wadstats.*`
+Copyright: © 2023 Ryan Krafnick.
+License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+
 Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
 Copyright: © 2018 Alex Mayfield.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `data/nugget-doom.ico, data/nugget-doom.png, data/nugget-doom8.ico, src/icon.c, data/setup.ico, data/setup8.ico, setup/setup_icon.c, data/nugget-doom-setup.png`  
+Files: `src/icon.c, setup/setup_icon.c`  
 Copyright: © 2022 Korp.  
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
