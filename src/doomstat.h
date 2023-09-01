@@ -521,7 +521,7 @@ typedef enum {
 extern int event_timers[];
 
 // Enemies
-extern int extra_gibbing;
+extern int extra_gibbing_on;
 extern int bloodier_gibbing;
 extern int zdoom_item_drops;
 
@@ -542,6 +542,14 @@ extern int weapon_inertia_scale_pct;
 extern int sx_fix;
 extern int blink_keys;
 extern int automap_overlay_darkening;
+typedef enum {
+  EXGIB_FIST,
+  EXGIB_CSAW,
+  EXGIB_SSG,
+  
+  NUMEXGIBS
+} extragibbing_t;
+extern int extra_gibbing[];
 
 // Doom Compatibility
 enum {

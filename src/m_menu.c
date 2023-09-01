@@ -1271,7 +1271,7 @@ void M_DrawOptions(void)
   /* M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(mousesens+1),
      10,mouseSensitivity);   killough */
 
-  // [Nugget] Increase size to accommodate for extra screen sizes
+  // [Nugget] Increase size to accommodate extra screen sizes
   M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(scrnsize+1),
               9+2,screenSize);
 }
@@ -7733,7 +7733,12 @@ void M_ResetSetupMenu(void)
   M_UpdateCenteredWeaponItem();
   M_UpdateMultiLineMsgItem();
   M_UpdateCriticalItems();
-  // [Nugget]
+
+  // [Nugget] ---------------
+  
+  if (!(extra_gibbing[EXGIB_FIST] || extra_gibbing[EXGIB_CSAW] || extra_gibbing[EXGIB_SSG]))
+  { enem_settings1[enem1_extra_gibbing].m_flags |= S_DISABLE; }
+
   M_UpdateVertaimItem();
 }
 

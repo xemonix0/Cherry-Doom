@@ -10,7 +10,7 @@ Although the new code has been written with the intention of not breaking demo c
 
 Most of Nugget Doom's features come from other sources, like source ports and mods; the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them. These acknowledgements are included in the feature lists below; be aware that some might be inaccurate or outright missing.
 
-A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`. For these settings, their config variable names are provided alongside the _CFG-Only_ label as guidance.
+A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`. For these settings, their CVAR names are provided alongside the _CFG-Only_ label as guidance.
 
 ### General
 
@@ -60,7 +60,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - **Always Bob** setting (CFG-Only: `always_bob`)
 - _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Bobbing Styles**_ selection [p.f. Zandronum]
-- _**Weapon Inertia**_ setting (scale determined by the CFG-Only variable `weapon_inertia_scale_pct`)
+- _**Weapon Inertia**_ setting (scale determined by the CFG-Only `weapon_inertia_scale_pct` CVAR)
 - _**Squat Weapon Down On Impact**_ setting [p.f. Crispy Doom]
 - _**Translucent Flashes**_ setting [i.b. Crispy Doom]
 - **Show Berserk availability** setting [partially p.f. Crispy Doom]
@@ -97,7 +97,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ### Enemies
 
-- _**Extra Gibbing**_ setting, to force Berserk Fist, Chainsaw and SSG gibbing [i.b. Smooth Doom]
+- _**Extra Gibbing**_ setting, to force Berserk Fist/Chainsaw/SSG gibbing (configurable through the CFG-Only `extra_gibbing_#` CVARs) [i.b. Smooth Doom]
 - _**Bloodier Gibbing**_ setting [i.b. Smooth Doom]
 - _**ZDoom-like item drops**_ setting [of course, i.b. ZDoom]
 - _**Selective Fuzz Darkening**_ setting
@@ -144,7 +144,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**'TURBO'**_ to change the player speed in-game
 - _**'TNTEM'**_ as an alternative to _'KILLEM'_
 - _**'FPS'**_ as a replacement for _'SHOWFPS'_
-- **Mid-air control while on noclipping mode** [p.f. Crispy Doom]
+- **Mid-air control while in noclipping mode** [p.f. Crispy Doom]
 - Reenabled _**'NOMOMENTUM'**_ cheat [p.f. Crispy Doom]
 
 ### Miscellaneous

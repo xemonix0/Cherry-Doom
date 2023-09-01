@@ -1127,9 +1127,30 @@ default_t defaults[] = {
 
   {
     "extra_gibbing",
-    (config_t *) &extra_gibbing, NULL,
+    (config_t *) &extra_gibbing_on, NULL,
     {0}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable extra gibbing"
+    "1 to enable extra gibbing in general (affected by CVARs below)"
+  },
+
+  {
+    "extra_gibbing_fist",
+    (config_t *) &extra_gibbing[EXGIB_FIST], NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to enable extra gibbing for Berserk Fist"
+  },
+
+  {
+    "extra_gibbing_csaw",
+    (config_t *) &extra_gibbing[EXGIB_CSAW], NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to enable extra gibbing for Chainsaw"
+  },
+
+  {
+    "extra_gibbing_ssg",
+    (config_t *) &extra_gibbing[EXGIB_SSG], NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to enable extra gibbing for SSG"
   },
 
   {

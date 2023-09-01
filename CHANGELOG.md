@@ -26,6 +26,7 @@
 - **Extended Mouselook range**; pitch effects are now applied even when looking all the way up and down
 - **Disabled crosshair when using Chasecam**; now configurable through the `chasecam_crosshair` CVAR
 - **Permanent Weapon Bobbing can now be toggled** through the `always_bob` CVAR
+- **Made Extra Gibbing configurable** through the `extra_gibbing_#` CVARs
 - **Moved Nugget key bindings to Key Bindings page 10**
 
 ## Bug Fixes
