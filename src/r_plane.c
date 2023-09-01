@@ -338,6 +338,7 @@ static void do_draw_plane(visplane_t *pl)
       {
 	int texture;
 	angle_t an, flip;
+	int skyheight_target; // [Nugget] Adjust sky stretching based on FOV
 
 	// killough 10/98: allow skies to come from sidedefs.
 	// Allows scrolling and/or animated skies, as well as
@@ -392,21 +393,19 @@ static void do_draw_plane(visplane_t *pl)
 	  dc_colormap[0] = dc_colormap[1] = fullcolormap;          // killough 3/20/98
 
         dc_texheight = textureheight[texture]>>FRACBITS; // killough
-        dc_iscale = pspriteiscale;
-
-        { // [Nugget]
-          extern float fovdiff;
-          dc_iscale = dc_iscale / fovdiff;
-        }
+        dc_iscale = pspriteiscale / fovdiff; // [Nugget] FOV from Doom Retro
 
         // [FG] stretch short skies
-        if (stretchsky && dc_texheight < 200)
+        
+        { // [Nugget] Stretch sky just as much as necessary
+          const int bfov = R_GetBFOV();
+          skyheight_target = (200 - (dc_texturemid >> FRACBITS)) + (((bfov - ORIGFOV) > 0) ? (bfov - ORIGFOV) * (1.0 + (1.0 / 9.0)) : 0);
+        }
+        
+        if (stretchsky && dc_texheight < skyheight_target)
         {
-          // [Nugget] Adjust sky stretching based on FOV
-          int skystretch_height = SKYSTRETCH_HEIGHT + (84 * BETWEEN(0, MAXFOV-ORIGFOV, fov-ORIGFOV) / (MAXFOV-ORIGFOV));
-          
-          dc_iscale = dc_iscale * dc_texheight / skystretch_height;
-          dc_texturemid = dc_texturemid * dc_texheight / skystretch_height;
+          dc_iscale = dc_iscale * dc_texheight / skyheight_target;
+          dc_texturemid = dc_texturemid * dc_texheight / skyheight_target;
           colfunc = R_DrawColumn;
         }
         else

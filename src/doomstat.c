@@ -132,7 +132,7 @@ char *MAPNAME(int e, int m)
 }
 
 
-//----- Nugget ---------------------------------------------------------------
+// [Nugget] /--------------------------
 
 boolean fauxdemo;    // Checked for in `casual_play`, for debugging
 boolean casual_play; // Like `critical`, with different checks and functionality
@@ -201,11 +201,19 @@ int hudcolor_ms_comp;
 int event_timers[NUMTIMERS];
 
 // Enemies
-int extra_gibbing;
+int extra_gibbing_on;
 int bloodier_gibbing;
 int zdoom_item_drops;
 
+// Messages
+int announce_milestones;
+
+// Key Bindings
+int zoom_fov;
+int fancy_teleport;
+
 // CFG only
+int menu_background_darkening;
 int chasecam_crosshair;
 int sp_chat;
 int gammacycle;
@@ -213,11 +221,12 @@ int always_bob;
 int weapon_inertia_scale_pct;
 int sx_fix;
 int blink_keys;
-
-// Misc
-int zoom_fov;
+int automap_overlay_darkening;
+int extra_gibbing[NUMEXGIBS];
 
 int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
+
+// [Nugget] --------------------------/
 
 
 //----------------------------------------------------------------------------

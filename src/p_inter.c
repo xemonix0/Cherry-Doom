@@ -80,7 +80,7 @@ static boolean P_AutoswitchWeapon(void)
   if (!casual_play || switch_on_pickup)
   { return true; }
   
-  return false; // !switch_on_pickup
+  return false;
 }
 
 //
@@ -505,8 +505,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         return;
       pickupmsg(player, "%s", s_GOTBERSERK); // Ty 03/22/98 - externalized
       if (player->readyweapon != wp_fist)
-	if (!beta_emulation // killough 10/98: don't switch as much in -beta
-	    || player->readyweapon == wp_pistol)
+	if ((!beta_emulation // killough 10/98: don't switch as much in -beta
+	     || player->readyweapon == wp_pistol)
+	    && P_AutoswitchWeapon()) // [Nugget]
 	  player->pendingweapon = wp_fist;
       sound = sfx_getpow;
       break;
@@ -676,8 +677,19 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       return;      // killough 12/98: suppress error message
     }
 
-  if (special->flags & MF_COUNTITEM)
+  if (special->flags & MF_COUNTITEM) {
     player->itemcount++;
+    // [Nugget] Announce milestone completion
+    if (!(complete_milestones & MILESTONE_ITEMS)
+        && (player->itemcount >= totalitems))
+    {
+      complete_milestones |= MILESTONE_ITEMS;
+      if (announce_milestones) {
+        player->secretmessage = "All items acquired!";
+        S_StartSound(NULL, sfx_secret);
+      }
+    }
+  }
   P_RemoveMobj (special);
   player->bonuscount += BONUSADD;
   // [Nugget] Bonuscount cap
@@ -693,18 +705,23 @@ static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
   extern fixed_t P_AproxDistance();
   extern void A_Punch(), A_Saw(), A_FireShotgun2();
 
-  if (casual_play && extra_gibbing && source && source->player
-      &&
-      (  (source->player->psprites->state->action.p2 == (actionf_p2)A_Punch
-          && source->player->powers[pw_strength]
-          && (P_AproxDistance(target->x - source->x, target->y - source->y)
-              < ((64*FRACUNIT) + target->info->radius)))
-       ||(source->player->psprites->state->action.p2 == (actionf_p2)A_Saw
-          && (P_AproxDistance(target->x - source->x, target->y - source->y)
-              < ((65*FRACUNIT) + target->info->radius)))
-       ||(source->player->psprites->state->action.p2 == (actionf_p2)A_FireShotgun2
-          && (P_AproxDistance(target->x - source->x, target->y - source->y)
-              < ((128*FRACUNIT) + target->info->radius)))
+  if (casual_play && extra_gibbing_on && source && source->player
+      && (
+          (extra_gibbing[EXGIB_FIST]
+           && source->player->psprites->state->action.p2 == (actionf_p2)A_Punch
+           && source->player->powers[pw_strength]
+           && (P_AproxDistance(target->x - source->x, target->y - source->y)
+               < ((64*FRACUNIT) + target->info->radius)))
+
+       || (extra_gibbing[EXGIB_CSAW]
+           && source->player->psprites->state->action.p2 == (actionf_p2)A_Saw
+           && (P_AproxDistance(target->x - source->x, target->y - source->y)
+               < ((65*FRACUNIT) + target->info->radius)))
+
+       || (extra_gibbing[EXGIB_SSG]
+           && source->player->psprites->state->action.p2 == (actionf_p2)A_FireShotgun2
+           && (P_AproxDistance(target->x - source->x, target->y - source->y)
+               < ((128*FRACUNIT) + target->info->radius)))
       )
      )
   { return true; }
@@ -840,6 +857,17 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
           }
         }
 #endif
+
+  // [Nugget] Announce milestone completion
+  if (!(complete_milestones & MILESTONE_KILLS)
+      && (players->killcount - (smarttotals ? extrakills : extraspawns) >= totalkills))
+  {
+    complete_milestones |= MILESTONE_KILLS;
+    if (announce_milestones) {
+      players->secretmessage = "All enemies killed!";
+      S_StartSound(NULL, sfx_secret);
+    }
+  }
 
   if (target->player)
     {

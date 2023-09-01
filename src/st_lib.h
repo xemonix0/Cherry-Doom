@@ -61,6 +61,10 @@ typedef struct
 
   // user data
   int data;
+  
+  // [Nugget]
+  int align;
+  boolean haspercent;
 } st_number_t;
 
 // Percent widget ("child" of number widget,
@@ -118,7 +122,8 @@ void STlib_initNum
   patch_t** pl,
   int* num,
   boolean* on,
-  int width );
+  int width,
+  int align ); // [Nugget]
 
 void STlib_updateNum
 ( st_number_t* n,
@@ -133,7 +138,8 @@ void STlib_initPercent
   patch_t** pl,
   int* num,
   boolean* on,
-  patch_t* percent );
+  patch_t* percent,
+  int align ); // [Nugget]
 
 void STlib_updatePercent
 ( st_percent_t* per,

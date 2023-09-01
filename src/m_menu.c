@@ -1306,7 +1306,7 @@ void M_DrawOptions(void)
   /* M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(mousesens+1),
      10,mouseSensitivity);   killough */
 
-  // [Nugget] Increase size to accommodate for extra screen sizes
+  // [Nugget] Increase size to accommodate extra screen sizes
   M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(scrnsize+1),
               9+2,screenSize);
 }
@@ -2941,6 +2941,7 @@ setup_menu_t keys_settings6[];
 setup_menu_t keys_settings7[];
 setup_menu_t keys_settings8[];
 setup_menu_t keys_settings9[];
+setup_menu_t keys_settings10[]; // [Nugget]
 
 // The table which gets you from one screen table to the next.
 setup_menu_t* keys_settings[] =
@@ -2954,6 +2955,7 @@ setup_menu_t* keys_settings[] =
   keys_settings7,
   keys_settings8,
   keys_settings9,
+  keys_settings10, // [Nugget]
   NULL
 };
 
@@ -3041,7 +3043,7 @@ setup_menu_t keys_settings2[] =  // Key Binding screen strings
     {"CHAINSAW" ,S_INPUT     ,m_scrn,KB_X,M_Y+8*M_SPC,{0},input_weapon8},
     {"SSG"      ,S_INPUT     ,m_scrn,KB_X,M_Y+9*M_SPC,{0},input_weapon9},
     {"BEST"     ,S_INPUT     ,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_weapontoggle},
-    {"LAST USED",S_INPUT     ,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_weaponlastused}, // [Cherry]
+    {"LAST USED",S_INPUT     ,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_lastweapon}, // [Cherry]
     // [FG] prev/next weapon keys and buttons
     {"PREV"    ,S_INPUT     ,m_scrn,KB_X,M_Y+13*M_SPC,{0},input_prevweapon},
     {"NEXT"    ,S_INPUT     ,m_scrn,KB_X,M_Y+14*M_SPC,{0},input_nextweapon},
@@ -3247,22 +3249,60 @@ setup_menu_t keys_settings9[] =  // Key Binding screen strings
   {"BACKSPACE"  ,S_INPUT     ,m_scrn,KB_X,M_Y+6*M_SPC,{0},input_chat_backspace},
   {"ENTER"      ,S_INPUT     ,m_scrn,KB_X,M_Y+7*M_SPC,{0},input_chat_enter},
   
-  // [Nugget]
-  {"NUGGET",S_SKIP|S_TITLE,m_null,KB_X,M_Y+9*M_SPC},
-  {"JUMP/FLY UP"     ,S_INPUT|S_STRICT|S_CRITICAL,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_jump},
-  {"CROUCH/FLY DOWN" ,S_INPUT|S_STRICT|S_CRITICAL,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_crouch},
-  {"TOGGLE CROSSHAIR",S_INPUT,                    m_scrn,KB_X,M_Y+12*M_SPC,{0},input_crosshair},
-  {"TOGGLE ZOOM"     ,S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+13*M_SPC,{0},input_zoom},
-  {"ZOOM FOV"        ,S_NUM  |S_STRICT,           m_null,KB_X,M_Y+14*M_SPC,{"zoom_fov"}, 0, M_SetFOV},
-  {"CYCLE CHASECAM",  S_INPUT|S_STRICT,           m_scrn,KB_X,M_Y+15*M_SPC,{0},input_chasecam},
-
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings8}},
+  {"NEXT ->" ,S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings10}},
 
   // Final entry
 
   {0,S_SKIP|S_END,m_null}
 
 };
+
+// [Nugget] /--------------------------
+
+enum {
+  keys10_title1,
+  keys10_jump,
+  keys10_crouch,
+  keys10_stub1,
+  keys10_xhair,
+  keys10_stub2,
+  keys10_zoom,
+  keys10_zoomfov,
+  keys10_stub3,
+  keys10_chasecam,
+  keys10_stub4,
+  keys10_tpointer,
+  keys10_stub6,
+  keys10_fancytp,
+};
+
+setup_menu_t keys_settings10[] =
+{
+  {"NUGGET", S_SKIP|S_TITLE, m_null, KB_X, M_Y},
+    {"JUMP/FLY UP",      S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_jump     * M_SPC, {0}, input_jump},
+    {"CROUCH/FLY DOWN",  S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_crouch   * M_SPC, {0}, input_crouch},
+    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub1    * M_SPC},
+    {"TOGGLE CROSSHAIR", S_INPUT,                     m_scrn, KB_X, M_Y + keys10_xhair    * M_SPC, {0}, input_crosshair},
+    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub2    * M_SPC},
+    {"TOGGLE ZOOM",      S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_zoom     * M_SPC, {0}, input_zoom},
+    {"ZOOM FOV",         S_NUM  |S_STRICT,            m_null, KB_X, M_Y + keys10_zoomfov  * M_SPC, {"zoom_fov"}, 0, M_SetFOV},
+    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub3    * M_SPC},
+    {"CYCLE CHASECAM",   S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_chasecam * M_SPC, {0}, input_chasecam},
+    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub4    * M_SPC},
+    {"TELEPORT TO\n"
+     "AUTOMAP POINTER",  S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_tpointer * M_SPC, {0}, input_map_teleport},
+    {"FANCY TELEPORT",   S_YESNO|S_STRICT|S_CRITICAL, m_null, KB_X, M_Y + keys10_fancytp  * M_SPC, {"fancy_teleport"}},
+
+  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings9}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+
+};
+
+// [Nugget] --------------------------/
 
 // Setting up for the Key Binding screen. Turn on flags, set pointers,
 // locate the first item on the screen where the cursor is allowed to
@@ -4609,7 +4649,7 @@ static const char *draw_menu_background_strings[] = {
 };
 
 static const char *menu_background_strings[] = {
-  "Solid", "Dark", "Darker", NULL
+  "Solid", "Dark", NULL
 };
 
 // [Nugget]
@@ -5261,6 +5301,7 @@ void M_DrawCompat(void)
 
 enum {
   mess_secret,
+  mess_milestones, // [Nugget]
   mess_showtoggle,
   mess_showpickup,
   mess_stub1,
@@ -5299,6 +5340,10 @@ setup_menu_t mess_settings1[] =  // Messages screen
 {
   {"\"A Secret is Revealed!\" Message", S_CHOICE, m_null, M_X, 
    M_Y + mess_secret*M_SPC, {"hud_secret_message"}, 0, NULL, secretmessage_str}, // [Nugget]
+
+  // [Nugget]
+  {"Announce Milestone Completion", S_YESNO, m_null, M_X, 
+   M_Y + mess_milestones*M_SPC, {"announce_milestones"}},
 
   {"Show Toggle Messages", S_YESNO, m_null, M_X, 
    M_Y + mess_showtoggle*M_SPC, {"show_toggle_messages"}},
@@ -7016,6 +7061,7 @@ boolean M_Responder (event_t* ev)
         {
           if (STRICTMODE(gammacycle))
           {
+            // [Nugget] Note: this logic can't set `gamma2` to 0.50
             gamma2 += 5;
             if (gamma2 > GAMMA2MAX) { gamma2 -= GAMMA2MAX; }
             togglemsg("Gamma Correction Level %0.2f", gammalevels[gamma2]);
@@ -8167,7 +8213,7 @@ boolean M_MenuIsShaded(void)
 void M_Drawer (void)
 {
    if (M_MenuIsShaded())
-      V_ShadeScreen();
+      V_ShadeScreen(menu_background_darkening); // [Nugget] Parameterized
 
    // Horiz. & Vertically center string and print it.
    // killough 9/29/98: simplified code, removed 40-character width limit
@@ -8683,7 +8729,12 @@ void M_ResetSetupMenu(void)
   M_UpdateCenteredWeaponItem();
   M_UpdateMultiLineMsgItem();
   M_UpdateCriticalItems();
-  // [Nugget]
+
+  // [Nugget] ---------------
+  
+  if (!(extra_gibbing[EXGIB_FIST] || extra_gibbing[EXGIB_CSAW] || extra_gibbing[EXGIB_SSG]))
+  { enem_settings1[enem1_extra_gibbing].m_flags |= S_DISABLE; }
+
   M_UpdateVertaimItem();
   // [Cherry]
   M_UpdateMenuBackgroundItem();

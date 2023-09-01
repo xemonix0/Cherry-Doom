@@ -149,10 +149,7 @@ static void saveg_writep(const void *p)
     saveg_write32((intptr_t) p);
 }
 
-// Enum values are 32-bit integers.
-
-#define saveg_read_enum saveg_read32
-#define saveg_write_enum saveg_write32
+// [Nugget] Moved enum macros to header
 
 // [crispy] enumerate all thinker pointers
 static int P_ThinkerToIndex(thinker_t* thinker)
@@ -758,23 +755,14 @@ static void saveg_read_pspdef_t(pspdef_t *str)
     {
         str->sx2 = str->sx;
         str->sy2 = str->sy;
-        str->dy = 0; // [Nugget]
-        str->wix = 0; // [Nugget]
-        str->wiy = 0; // [Nugget]
     }
 
-    // [Cherry]
-    if (saveg_compat > saveg_woof600)
-    {
-      // [Nugget] fixed_t dy;
-      str->dy = saveg_read32();
-
-      // [Nugget] fixed_t wix;
-      str->wix = saveg_read32();
-
-      // [Nugget] fixed_t wiy;
-      str->wiy = saveg_read32();
-    }
+    // [Nugget]
+    if (saveg_compat > saveg_woof600) {
+      str->dy  = saveg_read32(); // fixed_t dy;
+      str->wix = saveg_read32(); // fixed_t wix;
+      str->wiy = saveg_read32(); // fixed_t wiy;
+    } else { str->dy = str->wix = str->wiy = 0; }
 }
 
 static void saveg_write_pspdef_t(pspdef_t *str)
@@ -804,14 +792,10 @@ static void saveg_write_pspdef_t(pspdef_t *str)
     // [Woof!]: fixed_t sy2;
     saveg_write32(str->sy2);
 
-    // [Nugget] fixed_t dy;
-    saveg_write32(str->dy);
-
-    // [Nugget] fixed_t wix;
-    saveg_write32(str->wix);
-
-    // [Nugget] fixed_t wiy;
-    saveg_write32(str->wiy);
+    // [Nugget]
+    saveg_write32(str->dy);  // fixed_t dy;
+    saveg_write32(str->wix); // fixed_t wix;
+    saveg_write32(str->wiy); // fixed_t wiy;
 }
 
 //
@@ -968,23 +952,25 @@ static void saveg_read_player_t(player_t *str)
     }
 
     // [Nugget]
-    if (saveg_compat > saveg_woof600) // [Cherry]
+
+    if (saveg_compat > saveg_woof600) {
+      str->jumptics     = saveg_read32();    // int jumptics;
+      str->crouchoffset = saveg_read32();    // fixed_t crouchoffset;
+      str->lastweapon   = saveg_read_enum(); // weapontype_t lastweapon;
+    }
+    else {
+      str->jumptics = str->crouchoffset = 0;
+      str->lastweapon = wp_nochange;
+      return;
+    }
+
+    if (saveg_compat > saveg_nugget210)
     {
-      // int jumptics;
-      str->jumptics = saveg_read32();
-      // fixed_t crouchoffset;
-      str->crouchoffset = saveg_read32();
-      // [Cherry]
-      // weapontype_t lastweapon;
-      str->lastweapon = saveg_read32();
-      // [Cherry]
-      // int screenshake;
-      str->screenshake = saveg_read32();
+      str->screenshake = saveg_read32(); // int screenshake;
     }
     else
     {
-      str->jumptics = str->crouchoffset = 0;
-      return;
+      str->screenshake = 0;
     }
 }
 
@@ -1128,18 +1114,12 @@ static void saveg_write_player_t(player_t *str)
     saveg_write32(str->oldviewz);
 
     // [Nugget]
-    // int jumptics;
-    saveg_write32(str->jumptics);
-    // fixed_t crouchoffset;
-    saveg_write32(str->crouchoffset);
+    saveg_write32(str->jumptics); // int jumptics;
+    saveg_write32(str->crouchoffset); // fixed_t crouchoffset;
+    saveg_write_enum(str->lastweapon); // weapontype_t lastweapon;
 
     // [Cherry]
-    // weapontype_t lastweapon;
-    saveg_write32(str->lastweapon);
-
-    // [Cherry]
-    // int screenshake;
-    saveg_write32(str->screenshake);
+    saveg_write32(str->screenshake); // int screenshake;
 }
 
 

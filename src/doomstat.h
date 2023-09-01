@@ -271,6 +271,10 @@ extern  int extrakills; // [Nugget]: [So Doom] count kills of resurrected and (r
 extern  int totalitems;
 extern  int totalsecret;
 
+// [Nugget]
+typedef enum { MILESTONE_KILLS = 0x1, MILESTONE_ITEMS = 0x2, MILESTONE_SECRETS = 0x4, } milestone_t;
+extern milestone_t complete_milestones;
+
 // Timer, for scores.
 extern  int levelstarttic;  // gametic at level start
 extern  int basetic;    // killough 9/29/98: levelstarttic, adjusted
@@ -445,7 +449,7 @@ extern boolean hide_weapon;
 // [FG] centered weapon sprite
 extern int center_weapon;
 
-//----- Nugget ---------------------------------------------------------------
+// [Nugget] /--------------------------
 
 extern boolean fauxdemo;
 extern boolean casual_play;
@@ -538,11 +542,19 @@ typedef enum {
 extern int event_timers[];
 
 // Enemies
-extern int extra_gibbing;
+extern int extra_gibbing_on;
 extern int bloodier_gibbing;
 extern int zdoom_item_drops;
 
+// Messages
+extern int announce_milestones;
+
+// Key Bindings
+extern int zoom_fov;
+extern int fancy_teleport;
+
 // CFG only
+extern int menu_background_darkening;
 extern int chasecam_crosshair;
 extern int sp_chat;
 extern int gammacycle;
@@ -550,10 +562,17 @@ extern int always_bob;
 extern int weapon_inertia_scale_pct;
 extern int sx_fix;
 extern int blink_keys;
+extern int automap_overlay_darkening;
+typedef enum {
+  EXGIB_FIST,
+  EXGIB_CSAW,
+  EXGIB_SSG,
+  
+  NUMEXGIBS
+} extragibbing_t;
+extern int extra_gibbing[];
 
-// Misc
-extern int zoom_fov;
-
+// Doom Compatibility
 enum {
   comp_blazing2,
   comp_manualdoor,
@@ -573,8 +592,9 @@ enum {
 
   NUGGET_COMP_TOTAL
 };
-
 extern int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
+
+// [Nugget] --------------------------/
 
 // Doom-style printf
 

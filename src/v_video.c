@@ -882,17 +882,13 @@ void V_DrawHorizLine(int x, int y, int scrn, int width, byte color)
   }
 }
 
-void V_ShadeScreen(void)
+void V_ShadeScreen(const int targshade) // [Nugget] Parameterized
 {
   int y;
   byte *dest = screens[0];
   const int step = 2;
-  int targshade;
   static int oldtic = -1;
   static int screenshade;
-  boolean darken;
-
-  targshade = M_MenuIsShaded() && menu_background == background_dark ? 10 : 20;
 
   // [FG] start a new sequence
   if (gametic - oldtic > targshade / step)
@@ -905,12 +901,14 @@ void V_ShadeScreen(void)
     dest[y] = colormaps[0][screenshade * 256 + dest[y]];
   }
 
-  darken = screenshade < targshade;
+  // [Nugget] Also decrease shading gradually
   if (screenshade != targshade && gametic != oldtic)
   {
-    screenshade += (darken ? step : -step);
+    const int sign = ((screenshade - targshade) < 0) ? 1 : -1;
 
-    if ((darken && screenshade > targshade) || (!darken && screenshade < targshade))
+    screenshade += step*sign;
+
+    if (screenshade*sign > targshade*sign)
       screenshade = targshade;
   }
   

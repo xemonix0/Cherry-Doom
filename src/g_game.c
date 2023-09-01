@@ -111,6 +111,7 @@ int             basetic;       // killough 9/29/98: for demo sync
 int             totalkills, totalitems, totalsecret;    // for intermission
 int             extraspawns;   // [Nugget]: [crispy] count spawned monsters
 int             extrakills;    // [Nugget]: [So Doom] count deaths of resurrected and (re)spawned monsters
+milestone_t     complete_milestones; // [Nugget]
 int             totalleveltimes; // [FG] total time for all completed levels
 int             levelscompleted; // [Cherry] amount of levels completed
 int             sessionattempts = -1; // [Cherry] attempts on the current map in this session
@@ -532,10 +533,10 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         M_InputGameActive(input_weapon9) && have_ssg ? wp_supershotgun :
 
         // [Nugget] Last weapon key
-        M_InputGameActive(input_weaponlastused) && casual_play &&
+        M_InputGameActive(input_lastweapon) && casual_play &&
         WeaponSelectable(players[consoleplayer].lastweapon)
         ? players[consoleplayer].lastweapon :
-        
+
         wp_nochange;
 
       // killough 3/22/98: For network and demo consistency with the
@@ -572,8 +573,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
           // does not have a shotgun, or if the shotgun is already
           // in use, or if the SSG is not already in use and the
           // player prefers it.
-          // [Cherry] and if the player isn't switching to the
-          // last used weapon if it is the shotgun
 
           if (newweapon == wp_shotgun && have_ssg &&
               player->weaponowned[wp_supershotgun] &&
@@ -631,11 +630,15 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   mousex = mousex2 = mousey = mousey2 = 0;
   
   // [Nugget] Decrease the intensity of some movements if zoomed in
-  if (!strictmode && fovfx[FOVFX_ZOOM].current) {
-    float divisor = fov / MAX(1, fov + fovfx[FOVFX_ZOOM].current);
-    if (divisor > 1) {
-      cmd->angleturn /= divisor;
-      cmd->lookdir /= divisor;
+  if (!strictmode) {
+    const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+  
+    if (zoom) {
+      const float divisor = fov / MAX(1, fov + zoom);
+      if (divisor > 1) {
+        cmd->angleturn /= divisor;
+        cmd->lookdir /= divisor;
+      }
     }
   }
 
@@ -2082,6 +2085,10 @@ static void G_DoSaveGame(void)
   CheckSaveGame(sizeof extrakills);
   saveg_write32(extrakills);
 
+  // [Nugget] Save milestones
+  CheckSaveGame(sizeof complete_milestones);
+  saveg_write_enum(complete_milestones);
+
   // [FG] save snapshot
   CheckSaveGame(M_SnapshotDataSize());
   M_WriteSnapshot(save_p);
@@ -2140,10 +2147,10 @@ static void G_DoLoadGame(void)
     saveg_compat = saveg_current;
   }
   // [Cherry]
-  else if (strncmp((char *)save_p, "Woof 6.0.0", strlen(CURRENT_SAVE_VERSION)) == 0)
-  {
-    saveg_compat = saveg_woof600;
-  }
+  #define SAVEIS(str) (strncmp((char *) save_p, str, strlen(CURRENT_SAVE_VERSION)) == 0)
+  else if (SAVEIS("Nugget 2.1.0")) { saveg_compat = saveg_nugget210; }
+  else if (SAVEIS("Woof 6.0.0")) { saveg_compat = saveg_woof600; }
+  #undef SAVEIS
 
   // killough 2/22/98: Friendly savegame version difference message
   if (!forced_loadgame && strncmp((char *) save_p, vcheck, VERSIONSIZE) &&
@@ -2225,7 +2232,7 @@ static void G_DoLoadGame(void)
   leveltime = saveg_read32();
 
   // [Cherry]
-  if (saveg_compat > saveg_woof600)
+  if (saveg_compat > saveg_nugget210)
   {
     // levels completed
     levelscompleted = saveg_read32();
@@ -2282,18 +2289,25 @@ static void G_DoLoadGame(void)
     save_p += 8;
   }
 
-  // [Nugget] Restore extraspawns
+  // [Nugget] -------------------------
+  
+  // Restore extraspawns
   if (save_p - savebuffer <= length - sizeof extraspawns)
+  { extraspawns = saveg_read32(); }
+  
+  if (saveg_compat > saveg_woof600)
   {
-    extraspawns = saveg_read32();
+    // Restore extrakills
+    if (save_p - savebuffer <= length - sizeof extrakills)
+    { extrakills = saveg_read32(); }
+
+    // Restore milestones
+    if (save_p - savebuffer <= length - sizeof complete_milestones)
+    { complete_milestones = saveg_read_enum(); }
   }
 
-  // [Nugget] Restore extrakills
-  if (saveg_compat > saveg_woof600 && save_p - savebuffer <= length - sizeof extrakills)
-  {
-    extrakills = saveg_read32();
-  }
-
+  // ----------------------------------
+  
   // done
   Z_Free(savebuffer);
 
@@ -2583,7 +2597,7 @@ void G_PlayerReborn(int player)
   p->playerstate = PST_LIVE;
   p->health = initial_health;  // Ty 03/12/98 - use dehacked values
   p->readyweapon = p->pendingweapon = wp_pistol;
-  p->lastweapon = wp_fist; // [Nugget] initialize last weapon to pistol
+  p->lastweapon = wp_fist; // [Nugget] Initialize last weapon to Fist
   p->weaponowned[wp_fist] = true;
   p->weaponowned[wp_pistol] = true;
   p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values

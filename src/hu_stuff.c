@@ -1690,9 +1690,9 @@ int hud_attempt_counter, map_attempt_counter; // [Cherry] Attempt counter
 int hud_movement, map_movement; // [Cherry] Movement widget
 
 // [Nugget]
-static void NughudAlignWidgetX(nughud_textline_t aligner, hu_textline_t* alignee)
+static void NughudAlignWidgetX(nughud_alignable_t aligner, hu_textline_t* alignee)
 {
-  alignee->x = aligner.x + DELTA(aligner.wide);
+  alignee->x = aligner.x + NUGHUDWIDESHIFT(aligner.wide);
   alignee->x -= ((aligner.align == 1) ? alignee->width   :
                  (aligner.align == 0) ? alignee->width/2 : 0);
 }
@@ -1803,27 +1803,27 @@ void HU_Drawer(void)
     {
       // [Nugget] Special treatment for some widgets in Nugget HUD
       if (st_crispyhud) {
-        nughud_textline_t *ntl = NULL;
+        nughud_alignable_t *na = NULL;
 
-        if      (w->line == &w_sttime)   { ntl = &nughud.time;     }
-        else if (w->line == &w_monsec)   { ntl = &nughud.sts;      }
-        else if (w->line == &w_title)    { ntl = &nughud.title;    }
-        else if (w->line == &w_powers)   { ntl = &nughud.powers;   }
-        else if (w->line == &w_attempts) { ntl = &nughud.attempts; } // [Cherry] Attempt counter
-        else if (w->line == &w_move)     { ntl = &nughud.movement; } // [Cherry] Movement widget
-        else if (w->line == &w_coord)    { ntl = &nughud.coord;    }
-        else if (w->line == &w_fps)      { ntl = &nughud.fps;      }
+        if      (w->line == &w_sttime)   { na = &nughud.time;     }
+        else if (w->line == &w_monsec)   { na = &nughud.sts;      }
+        else if (w->line == &w_title)    { na = &nughud.title;    }
+        else if (w->line == &w_powers)   { na = &nughud.powers;   }
+        else if (w->line == &w_attempts) { na = &nughud.attempts; } // [Cherry] Attempt counter
+        else if (w->line == &w_move)     { na = &nughud.movement; } // [Cherry] Movement widget
+        else if (w->line == &w_coord)    { na = &nughud.coord;    }
+        else if (w->line == &w_fps)      { na = &nughud.fps;      }
 
-        if (ntl) {
-          if (ntl == &nughud.time && nughud.time_sts &&
-              !hud_level_stats && (!automapactive || !map_level_stats))
+        if (na) {
+          if (na == &nughud.time && nughud.time_sts
+              && !hud_level_stats && (!automapactive || !map_level_stats))
           { // Relocate Time text line to position of Stats text line
             NughudAlignWidgetX(nughud.sts, w->line);
             w->line->y = nughud.sts.y;
-          } else
-          {
-            NughudAlignWidgetX(*ntl, w->line);
-            w->line->y = ntl->y;
+          }
+          else {
+            NughudAlignWidgetX(*na, w->line);
+            w->line->y = na->y;
           }
           HUlib_drawTextLine(w->line, align_direct, false);
         }

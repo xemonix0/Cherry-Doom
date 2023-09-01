@@ -634,8 +634,6 @@ void R_ProjectSprite (mobj_t* thing)
     vis->colormap[0] = vis->colormap[1] = fullcolormap;       // full bright  // killough 3/20/98
   else
     {      // diminished light
-      extern float fovdiff; // [Nugget]
-      
       int index = (int) (xscale/fovdiff)>>(LIGHTSCALESHIFT+hires);  // killough 11/98
       if (index >= MAXLIGHTSCALE)
         index = MAXLIGHTSCALE-1;
@@ -768,8 +766,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
                     - (STRICTMODE(weapon_inertia) ? psp->wiy : 0) // Weapon inertia
                     + (STRICTMODE(st_crispyhud && screenblocks < 13)
                        ? nughud.weapheight*FRACUNIT : 0) // Nugget HUD
-                    + ((fovfx[FOVFX_ZOOM].current < 0)
-                       ? fovfx[FOVFX_ZOOM].current*FRACUNIT/2 : 0); // Lower weapon based on zoom
+                    + MIN(0, R_GetFOVFX(FOVFX_ZOOM)*FRACUNIT/2); // Lower weapon based on zoom
 
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;

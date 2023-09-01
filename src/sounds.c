@@ -266,6 +266,7 @@ sfxinfo_t original_S_sfx[NUMSFX] = {
   SOUND("plland", sg_oof,    78),
   SOUND("locked", sg_oof,    78),
   SOUND("keyup",  sg_itemup, 78),
+  SOUND("keybnk", sg_oof,    78), // [Nugget]
   // [NS] Optional menu/intermission sounds.
   SOUND("mnuopn", sg_none,   60),
   SOUND("mnucls", sg_none,   60),

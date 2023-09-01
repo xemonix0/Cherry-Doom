@@ -15,8 +15,18 @@
 
 ## Changes
 
+- **Merged changes from [*Nugget Doom 2.1.0*](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.1.0)**, therefore:
+	- Horizontal Weapon Centering setting;
+	- Blink Missing Keys setting;
+	- Support for optional sounds;
+	- Various changes to NUGHUD;
+	- (In)complete Milestone Completion color;
+    - Customizable dark menu background/dark Automap overlay darkening;
+	- Extended Mouselook range;
+	- Extra Gibbing configuration;
+	- Bug fixes;
+	- *Nugget Doom 2.1.0 savegame compatibility was introduced.*
 - **Menu background can now be enabled in all menus** instead of just in setup screens
-- **More menu background choices:** Solid (formerly "on"), Dark, Darker
 - **Improved HUD color customization:** disabling of the bars in Boom HUD, ability to choose colors for things like:
 	- *Widget names*
 	- *Plain text*

@@ -2157,15 +2157,28 @@ int disable_nuke;  // killough 12/98: nukage disabling cheat
 
 static void P_SecretRevealed(player_t *player)
 {
-  if (hud_secret_message && player == &players[consoleplayer])
+  if (player == &players[consoleplayer])
   {
-    static char str_count[32]; // [Nugget]
+    // [Nugget] Announce milestone completion
+    if (!(complete_milestones & MILESTONE_SECRETS)
+        && player->secretcount >= totalsecret)
+    {
+      complete_milestones |= MILESTONE_SECRETS;
+      if (announce_milestones) {
+        player->secretmessage = "All secrets revealed!";
+        S_StartSound(NULL, sfx_secret);
+        return; // Skip the normal "Secret revealed" message
+      }
+    }
 
-    // [Nugget] Secret count in secret revealed message, from Crispy Doom
-    M_snprintf(str_count, sizeof(str_count), "Secret %d of %d revealed!", player->secretcount, totalsecret);
-    player->secretmessage = (hud_secret_message == secretmessage_count) ? str_count : s_HUSTR_SECRETFOUND;
-    
-    S_StartSound(NULL, sfx_secret);
+    if (hud_secret_message) {
+      // [Nugget] Secret count in secret revealed message, from Crispy Doom
+      static char str_count[32];
+      M_snprintf(str_count, sizeof(str_count), "Secret %d of %d revealed!", player->secretcount, totalsecret);
+
+      player->secretmessage = (hud_secret_message == secretmessage_count) ? str_count : s_HUSTR_SECRETFOUND;
+      S_StartSound(NULL, sfx_secret);
+    }
   }
 }
 
@@ -2531,6 +2544,10 @@ void P_SpawnSpecials (void)
           break;
         }
     }
+
+  // [Nugget] Reset milestones
+  if (totalsecret) { complete_milestones &= ~MILESTONE_SECRETS; }
+  else             { complete_milestones |=  MILESTONE_SECRETS; }
 
   P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
 

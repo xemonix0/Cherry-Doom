@@ -42,6 +42,7 @@ enum
   input_fire,
   input_prevweapon,
   input_nextweapon,
+  input_lastweapon, // [Nugget]
 
   input_mouselook,
   input_padlook,
@@ -59,7 +60,6 @@ enum
   input_weapon8,
   input_weapon9,
   input_weapontoggle,
-  input_weaponlastused, // [Nugget]
 
   input_menu_up,
   input_menu_down,
@@ -109,6 +109,7 @@ enum
   input_map_mark,
   input_map_clear,
   input_map_blink, // [Nugget] Blink marks
+  input_map_teleport, // [Nugget] Teleport to Automap pointer
   input_map_gobig,
   input_map_grid,
   input_map_overlay,

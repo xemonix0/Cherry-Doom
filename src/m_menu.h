@@ -187,7 +187,6 @@ typedef enum
 {
   background_solid,
   background_dark,
-  background_darker,
 } background_t;
 
 

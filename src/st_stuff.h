@@ -24,7 +24,9 @@
 
 #include "doomtype.h"
 #include "d_event.h"
-#include "d_player.h" // [Nugget]
+// [Nugget]
+#include "d_player.h"
+#include "r_defs.h"
 
 // Size of statusbar.
 // Now sensitive for scaling.
@@ -114,10 +116,6 @@
 #define ST_MAXAMMO3Y            185
 
 
-// [Nugget] Smooth counts
-extern int STHealth;
-extern int STArmor;
-
 //
 // STATUS BAR
 //
@@ -170,6 +168,9 @@ extern int hud_backpack_thresholds; // backpack changes thresholds
 extern int hud_armor_type; // color of armor depends on type
 
 extern int st_solidbackground;
+
+// [Nugget]
+extern patch_t *nughud_tallminus, *nughud_readyminus;
 
 #endif
 

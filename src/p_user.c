@@ -544,10 +544,8 @@ void P_PlayerThink (player_t* player)
 {
   ticcmd_t*    cmd;
   weapontype_t newweapon;
-  // [Nugget]
-  static boolean zoomKeyDown = false;
-  // [Cherry] motion blur
-  static int   motionblur;
+  static boolean zoomKeyDown = false; // [Nugget]
+  static int   motionblur; // [Cherry]
 
   // [AM] Assume we can interpolate at the beginning
   //      of the tic.
@@ -694,15 +692,16 @@ void P_PlayerThink (player_t* player)
     cmd->buttons = 0;
 
   if (cmd->buttons & BT_CHANGE
-      || (casual_play && M_InputGameActive(input_weaponlastused)))
+      || (casual_play && M_InputGameActive(input_lastweapon))) // [Nugget] Last weapon key
     {
-      // [Nugget] Last used
-      const weapontype_t lastweapon = ((casual_play && M_InputGameActive(input_weaponlastused))
+      // [Nugget] Last weapon key
+      const weapontype_t lastweapon = ((casual_play && M_InputGameActive(input_lastweapon))
                                        ? player->lastweapon : wp_nochange);
+
       // The actual changing of the weapon is done
       //  when the weapon psprite can do it
       //  (read: not in the middle of an attack).
-      
+
       // [Nugget]
       if (lastweapon != wp_nochange)
         newweapon = lastweapon;
@@ -737,9 +736,7 @@ void P_PlayerThink (player_t* player)
 
         if ((newweapon != wp_plasma && newweapon != wp_bfg)
             || (gamemode != shareware) )
-        {
           player->pendingweapon = newweapon;
-        }
     }
 
   // check for use

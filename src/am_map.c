@@ -32,6 +32,10 @@
 #include "d_deh.h"    // Ty 03/27/98 - externalizations
 #include "m_input.h"
 #include "m_menu.h"
+// [Nugget]
+#include "p_map.h"
+#include "s_sound.h"
+#include "sounds.h"
 
 //jff 1/7/98 default automap colors added
 int mapcolor_back;    // map background
@@ -919,12 +923,6 @@ boolean AM_Responder
         displaymsg("Cleared spot %d", markpointnum);
       }
     }
-    // [Nugget] Blink marks
-    else if (M_InputActivated(input_map_blink) && markpointnum)
-    {
-      markblinktimer = 4*TICRATE;
-      plr->message = "Blinking marks...";
-    }
     else
     if (M_InputActivated(input_map_overlay))
     {
@@ -953,6 +951,39 @@ boolean AM_Responder
       else
         displaymsg("%s", s_AMSTR_ROTATEOFF);
     }
+
+    // [Nugget] /----------------------
+
+    // Blink marks
+    else if (M_InputActivated(input_map_blink) && markpointnum)
+    {
+      markblinktimer = 4*TICRATE;
+      plr->message = "Blinking marks...";
+    }
+    // Teleport to Automap pointer
+    else if (M_InputActivated(input_map_teleport) && !followplayer)
+    {
+      mobj_t *const mo = plr->mo;
+    
+      P_MapStart();
+
+      P_TeleportMove(mo, (m_x+m_w/2)<<FRACTOMAPBITS, (m_y+m_h/2)<<FRACTOMAPBITS, false);
+      mo->z = mo->floorz;
+      plr->viewz = mo->z + plr->viewheight;
+
+      if (fancy_teleport) {
+        R_SetFOVFX(FOVFX_TELEPORT); // Teleporter zoom
+        S_StartSound(P_SpawnMobj(mo->x + 20 * finecosine[mo->angle>>ANGLETOFINESHIFT],
+                                 mo->y + 20 *   finesine[mo->angle>>ANGLETOFINESHIFT],
+                                 mo->z, MT_TFOG),
+                     sfx_telept);
+      }
+
+      P_MapEnd();
+    }
+
+    // [Nugget] ----------------------/
+
     else
     {
       rc = false;
@@ -1656,14 +1687,7 @@ static int AM_DoorColor(int type)
 // jff 4/3/98 changed mapcolor_xxxx=-1 to disable drawing line completely
 //
 
-static void AM_drawLineCharacter
-(mline_t*  lineguy,
- int   lineguylines,
- fixed_t scale,
- angle_t angle,
- int   color,
- fixed_t x,
- fixed_t y);
+static void AM_drawLineCharacter(); // [Cherry]
 
 static void AM_drawWalls(void)
 {
@@ -1688,7 +1712,8 @@ static void AM_drawWalls(void)
     // if line has been seen or IDDT has been used
     if (ddt_cheating || (lines[i].flags & ML_MAPPED))
     {
-      if ((lines[i].flags & ML_DONTDRAW) && !ddt_cheating)
+      if ((lines[i].flags & ML_DONTDRAW) && !ddt_cheating
+          && lines[i].tag != magic_tag) // [Cherry]
         continue;
       if (!lines[i].backsector)
       {
@@ -1864,8 +1889,8 @@ static void AM_drawWalls(void)
       }
     }
 
-    // [Cherry] Highlight connected lines and sectors by flashing and drawing additional lines
-    if (magic_sector || magic_tag)
+    // [Cherry] Highlight connected lines and sectors
+    if (magic_sector || magic_tag > 0)
     {
       const int sec_color = (magic_tag || (magic_sector && magic_sector->tag))
         ? (tagfind_flash ? mapcolor_tf_tsc1 : mapcolor_tf_tsc2)
@@ -2390,7 +2415,7 @@ void AM_Drawer (void)
   }
   // [Alaux] Dark automap overlay
   else if (automapoverlay == overlay_dark && !M_MenuIsShaded())
-    V_ShadeScreen();
+    V_ShadeScreen(automap_overlay_darkening); // [Nugget] Parameterized
 
   if (automap_grid)                  // killough 2/28/98: change var name
     AM_drawGrid(mapcolor_grid);      //jff 1/7/98 grid default color

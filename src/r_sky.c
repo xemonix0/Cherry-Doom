@@ -56,12 +56,17 @@ void R_InitSkyMap (void)
   // [FG] stretch short skies
   skyheight = textureheight[skytexture]>>FRACBITS;
 
+  // [Nugget] Different calculation
+  #if 0
   if (stretchsky && skyheight < 200)
     skytexturemid = -28*FRACUNIT;
   else if (skyheight >= 200)
     skytexturemid = 200*FRACUNIT;
   else
   skytexturemid = 100*FRACUNIT;
+  #endif
+
+  skytexturemid = ((skyheight < 200 ? 100 : 200) - skyheight) * FRACUNIT;
 }
 
 static byte R_SkyBlendColor(int tex)

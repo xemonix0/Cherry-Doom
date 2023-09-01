@@ -361,8 +361,15 @@ default_t defaults[] = {
   { // [Cherry]
     "menu_background",
     (config_t *) &menu_background, NULL,
-    {background_solid}, {background_solid,background_darker}, number, ss_gen, wad_no,
-    "menu background (0 = solid, 1 = dark, 2 = darker)"
+    {background_solid}, {background_solid,background_dark}, number, ss_gen, wad_no,
+    "menu background (0 = solid, 1 = dark)"
+  },
+
+  { // [Nugget]
+    "menu_background_darkening",
+    (config_t *) &menu_background_darkening, NULL,
+    {20}, {0,31}, number, ss_none, wad_no,
+    "Dark menu background darkening level"
   },
 
   { // killough 10/98
@@ -1167,9 +1174,30 @@ default_t defaults[] = {
 
   {
     "extra_gibbing",
-    (config_t *) &extra_gibbing, NULL,
+    (config_t *) &extra_gibbing_on, NULL,
     {0}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable extra gibbing"
+    "1 to enable extra gibbing in general (affected by CVARs below)"
+  },
+
+  {
+    "extra_gibbing_fist",
+    (config_t *) &extra_gibbing[EXGIB_FIST], NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to enable extra gibbing for Berserk Fist"
+  },
+
+  {
+    "extra_gibbing_csaw",
+    (config_t *) &extra_gibbing[EXGIB_CSAW], NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to enable extra gibbing for Chainsaw"
+  },
+
+  {
+    "extra_gibbing_ssg",
+    (config_t *) &extra_gibbing[EXGIB_SSG], NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to enable extra gibbing for SSG"
   },
 
   {
@@ -2272,11 +2300,11 @@ default_t defaults[] = {
 
   // [Cherry]
   {
-    "input_weaponlastused",
+    "input_lastweapon",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to switch to the last used weapon",
-    input_weaponlastused, { {input_type_key, 'q'} }
+    input_lastweapon, { {input_type_key, 'q'} }
   },
 
   // [FG] prev/next weapon keys and buttons
@@ -2296,6 +2324,14 @@ default_t defaults[] = {
     "key to cycle to the next weapon",
     input_nextweapon, { {input_type_mouseb, MOUSE_BUTTON_WHEELUP},
                         {input_type_joyb, CONTROLLER_RIGHT_SHOULDER} }
+  },
+
+  { // [Nugget] Last weapon key
+    "input_lastweapon",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to switch to the last used weapon",
+    input_lastweapon, { {0, 0} }
   },
 
   {
@@ -2548,6 +2584,21 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to make automap markers blink",
     input_map_blink, { {input_type_key, 'b'} }
+  },
+
+  {
+    "input_map_teleport",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to teleport to automap pointer",
+    input_map_teleport, { {0, 0} }
+  },
+
+  {
+    "fancy_teleport",
+    (config_t *) &fancy_teleport, NULL,
+    {1}, {0,1}, number, ss_keys, wad_no,
+    "Use effects when teleporting to pointer (fog, sound and zoom)"
   },
 
   // [Nugget] End ----------------------------------------------
@@ -3040,6 +3091,13 @@ default_t defaults[] = {
     "automap overlay mode (1 = on, 2 = dark)"
   },
 
+  { // [Nugget]
+    "automap_overlay_darkening",
+    (config_t *) &automap_overlay_darkening, NULL,
+    {20}, {0,31}, number, ss_none, wad_no,
+    "Dark Automap overlay darkening level"
+  },
+
   {
     "automaprotate",
     (config_t *) &automaprotate, NULL,
@@ -3096,6 +3154,13 @@ default_t defaults[] = {
     (config_t *) &hud_secret_message, NULL,
     {0}, {0,2}, number, ss_mess, wad_no, // [Nugget]
     "\"A secret is revealed!\" message"
+  },
+
+  { // [Nugget] Announce milestone completion
+    "announce_milestones",
+    (config_t *) &announce_milestones, NULL,
+    {0}, {0,1}, number, ss_mess, wad_no,
+    "1 to announce completion of milestones"
   },
 
   { // red range
@@ -3356,14 +3421,14 @@ default_t defaults[] = {
 
   { // [Nugget] Incomplete milestone color
     "hudcolor_ms_incomp",
-    (config_t *)&hudcolor_ms_incomp, NULL,
+    (config_t *) &hudcolor_ms_incomp, NULL,
     {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
     "Color used for incomplete milestones in Stats display"
   },
 
   { // [Nugget] Complete milestone color
     "hudcolor_ms_comp",
-    (config_t *)&hudcolor_ms_comp, NULL,
+    (config_t *) &hudcolor_ms_comp, NULL,
     {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
     "Color used for complete milestones in Stats display"
   },

@@ -216,7 +216,7 @@ typedef struct player_s
   int                 jumptics; // Jumping delay
   fixed_t             crouchoffset; // How many units the player is crouched
 
-  fixed_t             impactpitch, oldimpactpitch; // Pitch view down on impact
+  fixed_t             impactpitch, oldimpactpitch; // Pitch view on impact
   
   // [crispy] blinking key or skull in the status bar
   int                 keyblinkkeys[3], keyblinktics;
