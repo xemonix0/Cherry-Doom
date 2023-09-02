@@ -110,11 +110,12 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ### Doom Compatibility
 
+- Bruiser attack (A_BruisAttack) doesn't face target
+- Double Autoaim range
 - Fix Lost Soul colliding with items
 - Lost Soul forgets target upon impact
 - Fuzzy things bleed fuzzy blood [i.b. Crispy Doom]
 - Non-bleeders don't bleed when crushed [i.b. Crispy Doom]
-- Bruiser attack (A_BruisAttack) doesn't face target
 - Fix lopsided Icon of Sin explosions
 - Permanent IDCHOPPERS invulnerability
 - Blazing doors reopen with wrong sound [p.f. Crispy Doom]

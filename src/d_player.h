@@ -75,7 +75,8 @@ typedef enum
   CF_FASTWEAPS        = 64,   // Fast Weapons
   CF_FLY              = 128,
   CF_LINETARGET       = 256,  // Give info on the current linetarget
-  CF_SAITAMA          = 512   // MDK Fist
+  CF_SAITAMA          = 512,  // MDK Fist
+  CF_BOOMCAN          = 1024  // Explosive Hitscan
 
 } cheat_t;
 

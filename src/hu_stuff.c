@@ -1381,7 +1381,9 @@ static void HU_UpdateCrosshair(void)
   {
     angle_t an = plr->mo->angle;
     const ammotype_t ammo = weaponinfo[plr->readyweapon].ammo;
-    const fixed_t range = (ammo == am_noammo) ? MELEERANGE : 16*64*FRACUNIT;
+    const fixed_t range = (ammo == am_noammo
+                           && !(plr->readyweapon == wp_fist && plr->cheats & CF_SAITAMA))
+                          ? MELEERANGE : 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1);
     boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
 
     crosshair_target = linetarget = NULL;

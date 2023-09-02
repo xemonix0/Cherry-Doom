@@ -4891,11 +4891,12 @@ setup_menu_t comp_settings3[] =  // Compatibility Settings screen #3
 
 enum { // [Nugget]
   comp4_title1,
+  comp4_bruistarget,
+  comp4_longautoaim,
   comp4_lscollision,
   comp4_lsamnesia,
   comp4_fuzzyblood,
   comp4_nonbleeders,
-  comp4_bruistarget,
   comp4_iosdeath,
   comp4_choppers,
 };
@@ -4903,11 +4904,12 @@ enum { // [Nugget]
 setup_menu_t comp_settings4[] =  // [Nugget]
 {
   {"Nugget - Additional Settings", S_SKIP|S_TITLE, m_null, C_X, M_Y + comp4_title1 * COMP_SPC},
+    {"Bruiser attack doesn't face target",    S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_bruistarget * COMP_SPC, {"comp_bruistarget"}},
+    {"Double Autoaim range",                  S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_longautoaim * COMP_SPC, {"comp_longautoaim"}},
     {"Fix Lost Soul colliding with items",    S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_lscollision * COMP_SPC, {"comp_lscollision"}},
     {"Lost Soul forgets target upon impact",  S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_lsamnesia   * COMP_SPC, {"comp_lsamnesia"}},
     {"Fuzzy things bleed fuzzy blood",        S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_fuzzyblood  * COMP_SPC, {"comp_fuzzyblood"}},
     {"Non-bleeders don't bleed when crushed", S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_nonbleeders * COMP_SPC, {"comp_nonbleeders"}},
-    {"Bruiser attack doesn't face target",    S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_bruistarget * COMP_SPC, {"comp_bruistarget"}},
     {"Fix lopsided Icon of Sin explosions",   S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_iosdeath    * COMP_SPC, {"comp_iosdeath"}},
     {"Permanent IDCHOPPERS invulnerability",  S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_choppers    * COMP_SPC, {"comp_choppers"}},
 

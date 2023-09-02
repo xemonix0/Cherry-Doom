@@ -653,7 +653,7 @@ default_t defaults[] = {
     "1 to enable pistol start"
   },
 
-  // [Nugget] General options --------------------------------------------
+  // [Nugget] /-----------------------------------------------------------
 
   {
     "over_under",
@@ -846,7 +846,7 @@ default_t defaults[] = {
     "0 to disable the Invulnerability colormap"
   },
 
-  // [Nugget] End --------------------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   //
   // Weapons options
@@ -905,7 +905,7 @@ default_t defaults[] = {
     "1 to center the weapon sprite during attack, 2 to keep it bobbing, 3 to center it horizontally"
   },
 
-  // [Nugget] ------------------------------------------------------------
+  // [Nugget] /-----------------------------------------------------------
 
   {
     "no_hor_autoaim",
@@ -984,7 +984,7 @@ default_t defaults[] = {
     "1 to correct first person sprite centering"
   },
 
-  // [Nugget] End --------------------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   {  // killough 2/8/98: weapon preferences set by user:
     "weapon_choice_1",
@@ -1123,7 +1123,7 @@ default_t defaults[] = {
     "1 to enable dogs to jump"
   },
 
-  // [Nugget] ------------------------------------------------------------
+  // [Nugget] /-----------------------------------------------------------
 
   {
     "extra_gibbing",
@@ -1167,7 +1167,7 @@ default_t defaults[] = {
     "1 to enable ZDoom-like item drops for dying enemies"
   },
 
-  // [Nugget] End --------------------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   {
     "colored_blood",
@@ -1416,7 +1416,21 @@ default_t defaults[] = {
     "1 to enable donut overrun emulation"
   },
 
-  // [Nugget] ------------------------------------------------------------
+  // [Nugget] /-----------------------------------------------------------
+
+  {
+    "comp_bruistarget",
+    (config_t *) &comp_bruistarget, NULL,
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Bruiser attack doesn't face target"
+  },
+
+  {
+    "comp_longautoaim",
+    (config_t *) &comp_longautoaim, NULL,
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Double Autoaim range"
+  },
 
   {
     "comp_lscollision",
@@ -1444,13 +1458,6 @@ default_t defaults[] = {
     (config_t *) &comp_nonbleeders, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Non-bleeders don't bleed when crushed"
-  },
-
-  {
-    "comp_bruistarget",
-    (config_t *) &comp_bruistarget, NULL,
-    {1}, {0,1}, number, ss_comp, wad_yes,
-    "Bruiser attack doesn't face target"
   },
 
   {
@@ -1523,7 +1530,7 @@ default_t defaults[] = {
     "Key pickup resets palette"
   },
 
-  // [Nugget] End --------------------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   // default compatibility
   {
@@ -2450,7 +2457,7 @@ default_t defaults[] = {
     "1 to invert gamepad look axis"
   },
 
-  // [Nugget] --------------------------------------------------
+  // [Nugget] /-----------------------------------------------------------
 
   {
     "input_jump",
@@ -2530,7 +2537,7 @@ default_t defaults[] = {
     "Use effects when teleporting to pointer (fog, sound and zoom)"
   },
 
-  // [Nugget] End ----------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity",
@@ -3248,7 +3255,7 @@ default_t defaults[] = {
     "1 to powerup timers on HUD"
   },
 
-  // [Nugget] Event timers -------------------------------------
+  // [Nugget] Event timers /----------------------------------------------
 
   {
     "timer_use",
@@ -3271,7 +3278,7 @@ default_t defaults[] = {
     "Show time at which a key was picked up (0 = Off, 1 = In Demos, 2 = Always)"
   },
 
-  // [Nugget] End ----------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   // [Nugget] Got rid of "crispy_hud"
 

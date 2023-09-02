@@ -137,7 +137,8 @@ char *MAPNAME(int e, int m)
 boolean fauxdemo;    // Checked for in `casual_play`, for debugging
 boolean casual_play; // Like `critical`, with different checks and functionality
 
-// General
+// General ------------------
+
 int wipe_type;
 int over_under;
 int jump_crouch;
@@ -148,9 +149,11 @@ int impact_pitch;
 int breathing;
 int teleporter_zoom;
 int death_camera;
+
 int chasecam_mode;
 int chasecam_distance;
 int chasecam_height;
+
 int no_menu_tint;
 int no_berserk_tint;
 int damagecount_cap;
@@ -166,7 +169,8 @@ int a11y_weapon_flash;
 int a11y_weapon_pspr;
 int a11y_invul_colormap;
 
-// Weapons
+// Weapons ------------------
+
 int no_hor_autoaim;
 int switch_on_pickup;
 int weapon_bobbing_percentage;
@@ -176,26 +180,31 @@ int weaponsquat;
 int translucent_pspr;
 int show_berserk;
 
-// Status Bar/HUD
+// Status Bar/HUD -----------
+
 int alt_arms;
 int smarttotals;
 int hudcolor_ms_incomp;
 int hudcolor_ms_comp;
 int event_timers[NUMTIMERS];
 
-// Enemies
+// Enemies ------------------
+
 int extra_gibbing_on;
 int bloodier_gibbing;
 int zdoom_item_drops;
 
-// Messages
+// Messages -----------------
+
 int announce_milestones;
 
-// Key Bindings
+// Key Bindings -------------
+
 int zoom_fov;
 int fancy_teleport;
 
-// CFG only
+// CFG only -----------------
+
 int menu_background_darkening;
 int chasecam_crosshair;
 int sp_chat;
@@ -207,22 +216,25 @@ int blink_keys;
 int automap_overlay_darkening;
 int extra_gibbing[NUMEXGIBS];
 
-// Doom Compatibility
-int comp_blazing2;
-int comp_manualdoor;
-int comp_switchsource;
+// Doom Compatibility -------
+
 int comp_bruistarget;
-int comp_cgundblsnd;
+int comp_longautoaim;
 int comp_lscollision;
 int comp_lsamnesia;
 int comp_fuzzyblood;
 int comp_nonbleeders;
+int comp_iosdeath;
+int comp_choppers;
+
+int comp_blazing2;
+int comp_manualdoor;
+int comp_switchsource;
+int comp_cgundblsnd;
 int comp_cgunnersfx;
 int comp_flamst;
 int comp_deadoof;
-int comp_iosdeath;
 int comp_keypal;
-int comp_choppers;
 
 // [Nugget] --------------------------/
 

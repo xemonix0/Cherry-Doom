@@ -739,7 +739,7 @@ void A_Punch(player_t *player, pspdef_t *psp)
   // [Nugget] MDK Fist, basically an absurdly high damage sniper
   if (player->cheats & CF_SAITAMA)
   {
-    // Alt Fire, more like an overpowered BFG
+    // Alt Fire, basically an overpowered BFG
     if (M_InputGameActive(input_strafe)) {
       for (int i=0; i<21; i++) {
         angle = player->mo->angle + ANG20 - (ANG2*i);
@@ -747,10 +747,13 @@ void A_Punch(player_t *player, pspdef_t *psp)
         if ((mouselook || padlook) && vertical_aiming == VERTAIM_DIRECT)
         { slope = PLAYER_SLOPE(player); }
         else {
-          slope = P_AimLineAttack(player->mo, angle, 32*64*FRACUNIT, 0);
+          slope = P_AimLineAttack(player->mo, angle, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
           if (!linetarget && (mouselook || padlook) && vertical_aiming == VERTAIM_DIRECTAUTO)
           { slope = PLAYER_SLOPE(player); }
         }
+
+        if (player->cheats & CF_BOOMCAN)
+        { boomshot = true; }
 
         P_LineAttack(player->mo, angle, MISSILERANGE, slope, 1000000);
       }
@@ -761,10 +764,13 @@ void A_Punch(player_t *player, pspdef_t *psp)
       if ((mouselook || padlook) && vertical_aiming == VERTAIM_DIRECT)
       { slope = PLAYER_SLOPE(player); }
       else {
-        slope = P_AimLineAttack(player->mo, angle, 32*64*FRACUNIT, 0);
+        slope = P_AimLineAttack(player->mo, angle, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
         if (!linetarget && (mouselook || padlook) && vertical_aiming == VERTAIM_DIRECTAUTO)
         { slope = PLAYER_SLOPE(player); }
       }
+
+      if (player->cheats & CF_BOOMCAN)
+      { boomshot = true; }
 
       P_LineAttack(player->mo, angle, MISSILERANGE, slope, 1000000);
     }
@@ -925,11 +931,12 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
 	  int mask = MF_FRIEND;
 	  do
 	    {
-	      slope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
+	      // [Nugget] Double Autoaim range
+	      slope = P_AimLineAttack(mo, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
 	      if (!linetarget)
-		slope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
+		slope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
 	      if (!linetarget)
-		slope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
+		slope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
 	      if (!linetarget)
 		an = mo->angle,
 		// [Nugget] Vertical aiming
@@ -999,19 +1006,18 @@ static void P_BulletSlope(mobj_t *mo)
   else
   do
     {
-      bulletslope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
+      // [Nugget] Double Autoaim range
+      bulletslope = P_AimLineAttack(mo, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
       if (!linetarget)
-        bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
+        bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
       if (!linetarget)
-        bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
+        bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
       // [Nugget] Vertical aiming
       if (!linetarget && (mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECTAUTO))
         bulletslope = PLAYER_SLOPE(mo->player);
     }
   while (mask && (mask=0, !linetarget));  // killough 8/2/98
 }
-
-extern boolean boomcan; // [Nugget] Explosive hitscan cheat
 
 //
 // P_GunShot
@@ -1029,7 +1035,7 @@ void P_GunShot(mobj_t *mo, boolean accurate)
     }
 
   // [Nugget] Explosive hitscan cheat
-  if (boomcan)
+  if (mo->player && mo->player->cheats & CF_BOOMCAN)
   { boomshot = true; }
 
   P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
@@ -1101,7 +1107,7 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
       t = P_Random(pr_shotgun);
 
       // [Nugget] Explosive hitscan cheat
-      if (boomcan)
+      if (player->cheats & CF_BOOMCAN)
       { boomshot = true; }
 
       P_LineAttack(player->mo, angle, MISSILERANGE, bulletslope +
@@ -1184,10 +1190,11 @@ void A_BFGSpray(mobj_t *mo)
       // mo->target is the originator (player) of the missile
 
       // killough 8/2/98: make autoaiming prefer enemies
+      // [Nugget] Double Autoaim range
       if (demo_version < 203 ||
-          (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, MF_FRIEND),
+          (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), MF_FRIEND),
            !linetarget))
-        P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, 0);
+        P_AimLineAttack(mo->target, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
 
       if (!linetarget)
         continue;
@@ -1495,7 +1502,7 @@ void A_WeaponBulletAttack(player_t *player, pspdef_t *psp)
     slope = bulletslope + P_RandomHitscanSlope(pr_mbf21, vspread);
 
     // [Nugget] Explosive hitscan cheat
-    if (boomcan)
+    if (player->cheats & CF_BOOMCAN)
     { boomshot = true; }
 
     P_LineAttack(player->mo, angle, MISSILERANGE, slope, damage);

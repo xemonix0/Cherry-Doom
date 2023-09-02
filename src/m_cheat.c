@@ -127,7 +127,6 @@ static void cheat_linetarget(); // Give info on the current linetarget
 static void cheat_mdk();        // Inspired by ZDoom's console command
 static void cheat_saitama();    // MDK Fist
 
-boolean boomcan;
 static void cheat_boomcan();    // Explosive hitscan
 
 boolean cheese;
@@ -693,7 +692,7 @@ static void cheat_mdk() {
   if ((mouselook || padlook) && vertical_aiming == VERTAIM_DIRECT)
   { slope = PLAYER_SLOPE(plyr); }
   else {
-    slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, 0);
+    slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 16*64*FRACUNIT * (comp_longautoaim+1), 0);
     if (!linetarget && (mouselook || padlook) && vertical_aiming == VERTAIM_DIRECTAUTO)
     { slope = PLAYER_SLOPE(plyr); }
   }
@@ -713,8 +712,8 @@ static void cheat_saitama() {
 
 // [Nugget] Explosive hitscan
 static void cheat_boomcan() {
-  boomcan = !boomcan;
-  displaymsg("Explosive Hitscan %s", boomcan ? "ON" : "OFF");
+  plyr->cheats ^= CF_BOOMCAN;
+  displaymsg("Explosive Hitscan %s", (plyr->cheats & CF_BOOMCAN) ? "ON" : "OFF");
 }
 
 // [Nugget] cheese :)
