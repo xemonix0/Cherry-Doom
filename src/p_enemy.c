@@ -1324,7 +1324,7 @@ void A_CPosAttack(mobj_t *actor)
     return;
 
   // [Nugget]
-  if (STRICTMODE(nugget_comp[comp_cgunnersfx]))
+  if (STRICTMODE(comp_cgunnersfx))
     S_StartSound (actor, sound);
   else
     S_StartSound (actor, sfx_shotgn);
@@ -1450,7 +1450,7 @@ void A_BruisAttack(mobj_t *actor)
     return;
 
   // [Nugget] Fix A_BruisAttack not calling A_FaceTarget
-  if (casual_play && !nugget_comp[comp_bruistarget])
+  if (casual_play && !comp_bruistarget)
   { A_FaceTarget(actor); }
 
   if (P_CheckMeleeRange(actor))
@@ -1851,7 +1851,7 @@ void A_VileTarget(mobj_t *actor)
   P_SetTarget(&fog->target, actor);
   P_SetTarget(&fog->tracer, actor->target);
   // [Nugget]: [crispy] play DSFLAMST sound when Arch-Vile spawns fire attack
-  if (STRICTMODE(nugget_comp[comp_flamst]))
+  if (STRICTMODE(comp_flamst))
   { S_StartSound(fog, sfx_flamst); }
   A_Fire(fog);
 }
@@ -2548,7 +2548,7 @@ void A_BrainScream(mobj_t *mo)
   int x;
   int x1, x2; // [Nugget] Fix lopsided IoS death explosions
 
-  if (casual_play && nugget_comp[comp_iosdeath])
+  if (casual_play && comp_iosdeath)
   { x1 = x2 = 280; }
   else
   { x1 = 196; x2 = 320; }

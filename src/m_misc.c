@@ -1420,120 +1420,105 @@ default_t defaults[] = {
 
   {
     "comp_lscollision",
-    (config_t *) &default_nugget_comp[comp_lscollision],
-    (config_t *) &nugget_comp[comp_lscollision],
+    (config_t *) &comp_lscollision, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Fix Lost Soul colliding with items"
   },
 
   {
     "comp_lsamnesia",
-    (config_t *) &default_nugget_comp[comp_lsamnesia],
-    (config_t *) &nugget_comp[comp_lsamnesia],
+    (config_t *) &comp_lsamnesia, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Lost Soul forgets target upon impact"
   },
 
   {
     "comp_fuzzyblood",
-    (config_t *) &default_nugget_comp[comp_fuzzyblood],
-    (config_t *) &nugget_comp[comp_fuzzyblood],
+    (config_t *) &comp_fuzzyblood, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Fuzzy things bleed fuzzy blood"
   },
 
   {
     "comp_nonbleeders",
-    (config_t *) &default_nugget_comp[comp_nonbleeders],
-    (config_t *) &nugget_comp[comp_nonbleeders],
+    (config_t *) &comp_nonbleeders, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Non-bleeders don't bleed when crushed"
   },
 
   {
     "comp_bruistarget",
-    (config_t *) &default_nugget_comp[comp_bruistarget],
-    (config_t *) &nugget_comp[comp_bruistarget],
+    (config_t *) &comp_bruistarget, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Bruiser attack doesn't face target"
   },
 
   {
     "comp_iosdeath",
-    (config_t *) &default_nugget_comp[comp_iosdeath],
-    (config_t *) &nugget_comp[comp_iosdeath],
+    (config_t *) &comp_iosdeath, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Fix lopsided Icon of Sin explosions"
   },
 
   {
     "comp_choppers",
-    (config_t *) &default_nugget_comp[comp_choppers],
-    (config_t *) &nugget_comp[comp_choppers],
+    (config_t *) &comp_choppers, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Permanent IDCHOPPERS invulnerability"
   },
 
   {
     "comp_blazing2",
-    (config_t *) &default_nugget_comp[comp_blazing2],
-    (config_t *) &nugget_comp[comp_blazing2],
+    (config_t *) &comp_blazing2, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Blazing doors reopen with wrong sound"
   },
 
   {
     "comp_manualdoor",
-    (config_t *) &default_nugget_comp[comp_manualdoor],
-    (config_t *) &nugget_comp[comp_manualdoor],
+    (config_t *) &comp_manualdoor, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Manually reactivated moving doors are silent"
   },
 
   {
     "comp_switchsource",
-    (config_t *) &default_nugget_comp[comp_switchsource],
-    (config_t *) &nugget_comp[comp_switchsource],
+    (config_t *) &comp_switchsource, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Corrected switch sound source"
   },
 
   {
     "comp_cgundblsnd",
-    (config_t *) &default_nugget_comp[comp_cgundblsnd],
-    (config_t *) &nugget_comp[comp_cgundblsnd],
+    (config_t *) &comp_cgundblsnd, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Chaingun makes two sounds with one bullet"
   },
 
   {
     "comp_cgunnersfx",
-    (config_t *) &default_nugget_comp[comp_cgunnersfx],
-    (config_t *) &nugget_comp[comp_cgunnersfx],
+    (config_t *) &comp_cgunnersfx, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Chaingunner uses pistol/chaingun sound"
   },
 
   {
     "comp_flamst",
-    (config_t *) &default_nugget_comp[comp_flamst],
-    (config_t *) &nugget_comp[comp_flamst],
+    (config_t *) &comp_flamst, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Arch-Vile fire plays flame start sound"
   },
 
   {
     "comp_deadoof",
-    (config_t *) &default_nugget_comp[comp_deadoof],
-    (config_t *) &nugget_comp[comp_deadoof],
+    (config_t *) &comp_deadoof, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Dead players can still play oof sound"
   },
 
   {
     "comp_keypal",
-    (config_t *) &default_nugget_comp[comp_keypal],
-    (config_t *) &nugget_comp[comp_keypal],
+    (config_t *) &comp_keypal, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Key pickup resets palette"
   },

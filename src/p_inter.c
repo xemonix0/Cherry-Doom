@@ -270,7 +270,7 @@ void P_GiveCard(player_t *player, card_t card)
     return;
     
   // [Nugget] Fix for "key pickup resets palette"
-  if (STRICTMODE(!nugget_comp[comp_keypal]))
+  if (STRICTMODE(!comp_keypal))
   { player->bonuscount += BONUSADD; }
   else
   { player->bonuscount = BONUSADD; }
@@ -741,13 +741,12 @@ static void P_NuggetGib(mobj_t *mo)
   for (int i = 0; i < quantity; i++)
   {
     mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + (mo->height / 1.5),
-                                (nugget_comp[comp_nonbleeders]
-                                 && mo->flags & MF_NOBLOOD)
+                                (comp_nonbleeders && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
     splat->flags = (MF_NOBLOCKMAP|MF_DROPOFF|MF_TELEPORT);
 
-    if (nugget_comp[comp_fuzzyblood] && mo->flags & MF_SHADOW)
+    if (comp_fuzzyblood && mo->flags & MF_SHADOW)
     { splat->flags |= MF_SHADOW; }
 
     if (mo->info->bloodcolor || idgaf) {

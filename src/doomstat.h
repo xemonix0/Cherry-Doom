@@ -552,26 +552,21 @@ typedef enum {
 extern int extra_gibbing[];
 
 // Doom Compatibility
-enum {
-  comp_blazing2,
-  comp_manualdoor,
-  comp_switchsource,
-  comp_bruistarget,
-  comp_cgundblsnd,
-  comp_lscollision,
-  comp_lsamnesia,
-  comp_fuzzyblood,
-  comp_nonbleeders,
-  comp_cgunnersfx,
-  comp_flamst,
-  comp_deadoof,
-  comp_iosdeath,
-  comp_keypal,
-  comp_choppers,
-
-  NUGGET_COMP_TOTAL
-};
-extern int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
+extern int comp_blazing2;
+extern int comp_manualdoor;
+extern int comp_switchsource;
+extern int comp_bruistarget;
+extern int comp_cgundblsnd;
+extern int comp_lscollision;
+extern int comp_lsamnesia;
+extern int comp_fuzzyblood;
+extern int comp_nonbleeders;
+extern int comp_cgunnersfx;
+extern int comp_flamst;
+extern int comp_deadoof;
+extern int comp_iosdeath;
+extern int comp_keypal;
+extern int comp_choppers;
 
 // [Nugget] --------------------------/
 

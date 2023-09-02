@@ -149,7 +149,7 @@ void P_XYMovement (mobj_t* mo)
         mo->momz = 0;
 
         // [Nugget] Fix forgetful lost soul
-        if (casual_play && !nugget_comp[comp_lsamnesia])
+        if (casual_play && !comp_lsamnesia)
         { P_SetMobjState(mo, mo->info->seestate); }
         else
         { P_SetMobjState(mo, mo->info->spawnstate); }
@@ -546,7 +546,7 @@ floater:
 		{ PLAYER_IMPACTPITCH(mo->player, -((-mo->momz) >> FRACBITS)); }
 
 		// [Nugget]: [crispy] dead men don't say "oof"
-		if (mo->health > 0 || NOTSTRICTMODE(nugget_comp[comp_deadoof]))
+		if (mo->health > 0 || NOTSTRICTMODE(comp_deadoof))
 		  oof = 1;
 	      }
 	    P_HitFloor(mo, oof); // [FG] play sound when hitting animated floor
@@ -1392,7 +1392,7 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
   th->tics -= P_Random(pr_spawnblood)&3;
 
   // [Nugget] Fuzzy blood for fuzzy things
-  if (nugget_comp[comp_fuzzyblood] && bleeder->flags & MF_SHADOW)
+  if (comp_fuzzyblood && bleeder->flags & MF_SHADOW)
   { th->flags |= MF_SHADOW; }
 
   if (bleeder->info->bloodcolor || idgaf)

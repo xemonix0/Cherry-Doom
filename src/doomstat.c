@@ -207,7 +207,22 @@ int blink_keys;
 int automap_overlay_darkening;
 int extra_gibbing[NUMEXGIBS];
 
-int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
+// Doom Compatibility
+int comp_blazing2;
+int comp_manualdoor;
+int comp_switchsource;
+int comp_bruistarget;
+int comp_cgundblsnd;
+int comp_lscollision;
+int comp_lsamnesia;
+int comp_fuzzyblood;
+int comp_nonbleeders;
+int comp_cgunnersfx;
+int comp_flamst;
+int comp_deadoof;
+int comp_iosdeath;
+int comp_keypal;
+int comp_choppers;
 
 // [Nugget] --------------------------/
 

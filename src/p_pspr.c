@@ -1121,14 +1121,14 @@ void A_FireCGun(player_t *player, pspdef_t *psp)
   { sound = (W_CheckNumForName("dschgun") > -1 ? sfx_chgun : sfx_pistol); }
   
   // [Nugget] Fix "Chaingun sound without ammo" bug
-  if (STRICTMODE(!nugget_comp[comp_cgundblsnd]))
+  if (STRICTMODE(!comp_cgundblsnd))
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
     { return; }
 
   S_StartSound(player->mo, !strictmode ? sound : sfx_pistol); // [Nugget]
 
   // [Nugget] Fix "Chaingun sound without ammo" bug
-  if (NOTSTRICTMODE(nugget_comp[comp_cgundblsnd]))
+  if (NOTSTRICTMODE(comp_cgundblsnd))
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
     { return; }
 

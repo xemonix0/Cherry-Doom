@@ -557,8 +557,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       }
 
       // [Nugget] Fix lost soul collision
-      if (casual_play && nugget_comp[comp_lscollision]
-          && !(thing->flags & MF_SHOOTABLE))
+      if (casual_play && comp_lscollision && !(thing->flags & MF_SHOOTABLE))
       { return !(thing->flags & MF_SOLID); }
 
       P_DamageMobj (thing, tmthing, tmthing, damage);
@@ -567,7 +566,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       tmthing->momx = tmthing->momy = tmthing->momz = 0;
 
       // [Nugget] Fix forgetful lost soul
-      if (casual_play && !nugget_comp[comp_lsamnesia])
+      if (casual_play && comp_lsamnesia)
       { P_SetMobjState(tmthing, tmthing->info->seestate); }
       else
         P_SetMobjState (tmthing, tmthing->info->spawnstate);
@@ -2062,7 +2061,7 @@ boolean PIT_ChangeSector(mobj_t *thing)
     {
       P_SetMobjState(thing, S_GIBS);
       // [Nugget] No gibs if the thing doesn't bleed to begin with
-      if (STRICTMODE(nugget_comp[comp_nonbleeders]) && thing->flags & MF_NOBLOOD)
+      if (STRICTMODE(comp_nonbleeders) && thing->flags & MF_NOBLOOD)
       {
         thing->sprite = SPR_TNT1;
         thing->frame = 0;
@@ -2109,11 +2108,11 @@ boolean PIT_ChangeSector(mobj_t *thing)
 			thing->y,
 			thing->z + thing->height/2,
 			// [Nugget]
-			(STRICTMODE(nugget_comp[comp_nonbleeders])
-			 && thing->flags & MF_NOBLOOD) ? MT_PUFF : MT_BLOOD);
+			(STRICTMODE(comp_nonbleeders) && thing->flags & MF_NOBLOOD)
+                        ? MT_PUFF : MT_BLOOD);
 
       // [Nugget] Fuzzy blood if applicable
-      if (nugget_comp[comp_fuzzyblood] && thing->flags & MF_SHADOW)
+      if (comp_fuzzyblood && thing->flags & MF_SHADOW)
       { mo->flags |= MF_SHADOW; }
 
       if (thing->info->bloodcolor || idgaf)

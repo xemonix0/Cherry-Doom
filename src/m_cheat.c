@@ -805,7 +805,7 @@ static void cheat_choppers()
   plyr->weaponowned[wp_chainsaw] = true;
   
   // [Nugget]
-  if (casual_play && nugget_comp[comp_choppers])
+  if (casual_play && comp_choppers)
   { P_GivePower(plyr, pw_invulnerability); }
   else
   { plyr->powers[pw_invulnerability] = true; }

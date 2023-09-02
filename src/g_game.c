@@ -3095,8 +3095,6 @@ void G_ReloadDefaults(boolean keep_demover)
 
   compatibility = false;     // killough 10/98: replaced by comp[] vector
   memcpy(comp, default_comp, sizeof comp);
-  // [Nugget] Do the same for our comp settings
-  memcpy(nugget_comp, default_nugget_comp, sizeof nugget_comp);
 
   if (!keep_demover)
   {
