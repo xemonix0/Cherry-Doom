@@ -162,7 +162,7 @@ extern int sts_traditional_keys;  // display keys the traditional way
 #define KEYBLINKTICS (7*KEYBLINKMASK)
 extern void ST_blinkKeys(player_t* player, int blue, int yellow, int red);
 
-extern boolean st_crispyhud, oldcrispy, st_widecrispyhud; // [Nugget]
+extern boolean st_crispyhud, oldcrispy, st_crispyhudwide; // [Nugget]
 
 extern int hud_backpack_thresholds; // backpack changes thresholds
 extern int hud_armor_type; // color of armor depends on type

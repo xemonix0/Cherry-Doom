@@ -23,7 +23,7 @@
 #include "m_fixed.h"
 
 #define NUGHUDWIDESHIFT(x) ((abs(x) == 2) ? WIDESCREENDELTA * st_crispyhud * (2 / (x)) :  \
-                            (abs(x) == 1) ? WIDESCREENDELTA * st_widecrispyhud *  (x)  : 0)
+                            (abs(x) == 1) ? WIDESCREENDELTA * st_crispyhudwide *  (x)  : 0)
 
 typedef struct nughud_widget_s {
   int x, y;
