@@ -143,7 +143,7 @@ extern int  R_GetBFOV(void);
 extern int  R_GetFOVFX(int fx);
 extern void R_SetFOVFX(int fx);
 extern int  R_GetZoom(void);
-extern void R_SetZoom(int state);
+extern void R_SetZoom(const int state);
 
 // [Nugget] --------------------------/
 

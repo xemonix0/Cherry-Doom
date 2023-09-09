@@ -167,9 +167,8 @@ void R_SetZoom(const int state)
     fovchange = true;
     return;
   }
-  
-  if (zoomed != state) { fovchange = true; }
-  
+  else if (zoomed != state) { fovchange = true; }
+
   if (STRICTMODE(zoom_fov - bfov))
   { zoomed = state; }
   else
@@ -185,7 +184,11 @@ static fixed_t shake;
 
 void R_SetShake(int value)
 {
-  if (!explosion_shake || strictmode) { return; }
+  if (NOTSTRICTMODE(!explosion_shake || value == -1))
+  {
+    shake = 0;
+    return;
+  }
 
   shake = BETWEEN(shake, MAXSHAKE, value);
 }
@@ -197,7 +200,7 @@ void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
   const mobj_t *const player = players[displayplayer].mo;
   fixed_t dx, dy, dist;
 
-  if (!explosion_shake || strictmode) { return; }
+  if (NOTSTRICTMODE(!explosion_shake)) { return; }
 
   range *= SHAKERANGEMULT;
   force *= SHAKERANGEMULT;
@@ -627,7 +630,7 @@ void R_ExecuteSetViewSize (void)
     }
   
     if (fovchange) {
-      if (gametic != oldtic)
+      if (oldtic != gametic)
       {
         fovchange = false;
         

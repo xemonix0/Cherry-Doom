@@ -3391,8 +3391,9 @@ void G_InitNew(skill_t skill, int episode, int map)
   gameskill = skill;
   gamemapinfo = G_LookupMapinfo(gameepisode, gamemap);
 
-  // [Nugget] Force zoom reset
-  if (R_GetZoom() == 1) { R_SetZoom(ZOOM_RESET); }
+  // [Nugget] Reset some stuff
+  if (R_GetZoom() == 1) { R_SetZoom(ZOOM_RESET); } // Only if necessary
+  R_SetShake(-1);
 
   // [FG] total time for all completed levels
   totalleveltimes = 0;
