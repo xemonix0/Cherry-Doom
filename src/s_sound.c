@@ -410,9 +410,12 @@ void S_StartSoundOptional(const mobj_t *origin, int sfx_id, int old_sfx_id)
     for (i = sfx_pljump;  i <= sfx_intdms;  i++)
     { lump[i - sfx_pljump] = I_GetSfxLumpNum(&S_sfx[i]); }
 
-  if (lump[sfx_id - sfx_pljump] >= 0)
+  // If `sfx_id` corresponds to a non-optional sound, play it without checking,
+  // otherwise play the optional sound if present
+  if (!(sfx_pljump <= sfx_id && sfx_id <= sfx_intdms) || lump[sfx_id - sfx_pljump] >= 0)
   { S_StartSound(origin, sfx_id); }
-  else if (old_sfx_id >= 0) // Play a fallback
+  else // Play the fallback
+  if (old_sfx_id >= 0)
   { S_StartSound(origin, old_sfx_id); }
 }
 
