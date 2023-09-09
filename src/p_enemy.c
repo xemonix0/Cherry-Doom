@@ -124,7 +124,7 @@ void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 // [Nugget]: [crispy] height check for melee attacks
 static boolean P_NuggetCheckMeleeHeight(mobj_t *actor)
 {
-  const mobj_t *pl = actor->target;
+  const mobj_t *const pl = actor->target;
 
   if (!casual_play || !over_under)
   { return true; }
@@ -2565,6 +2565,8 @@ void A_BrainScream(mobj_t *mo)
         th->tics = 1;
     }
   S_StartSound(NULL,sfx_bosdth);
+
+  R_ExplosionShake(mo->x, mo->y, 2048, 2048); // [Nugget] Explosion shake effect
 }
 
 void A_BrainExplode(mobj_t *mo)

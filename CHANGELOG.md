@@ -1,5 +1,6 @@
 ## New Features
 
+- **_Explosion Shake Effect_** setting
 - **_Double Autoaim range_** setting
 
 ## Changes

@@ -1181,6 +1181,7 @@ void A_Light2 (player_t *player, pspdef_t *psp)
 void A_BFGSpray(mobj_t *mo)
 {
   int i;
+  int shake = 0; // [Nugget] Explosion shake effect
 
   for (i=0 ; i<40 ; i++)  // offset angles from its attack angle
     {
@@ -1206,7 +1207,11 @@ void A_BFGSpray(mobj_t *mo)
         damage += (P_Random(pr_bfg)&7) + 1;
 
       P_DamageMobj(linetarget, mo->target, mo->target, damage);
+
+      shake++; // [Nugget] Explosion shake effect
     }
+
+  R_ExplosionShake(mo->target->x, mo->target->y, 2*shake, 16*64); // [Nugget] Explosion shake effect
 }
 
 //

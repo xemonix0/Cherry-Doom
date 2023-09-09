@@ -37,6 +37,8 @@
 #include "s_sound.h"
 #include "sounds.h"
 
+extern int need_downscaling; // [Nugget]
+
 // [Nugget] Tag Finder from PrBoomX /------------
 
 static boolean findtag;
@@ -1351,8 +1353,6 @@ static boolean AM_clipMline
 }
 #undef DOOUTCODE
 
-extern int need_downscaling; // [Nugget]
-
 //
 // AM_drawFline()
 //
@@ -1388,7 +1388,7 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
   }
 #endif
 
-// [Nugget] Modified to avoid disappearing lines when downscaling the window
+// [Nugget] Modified to prevent potentially-disappearing lines when downscaling the window
 #define PUTDOT(xx,yy,cc)                                                      \
   if (need_downscaling && !smooth_scaling) {                                  \
     for (int i=0; i<MAX(1,2<<(hires-2)) && xx+i<(SCREENWIDTH<<hires); i++)    \

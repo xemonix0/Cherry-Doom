@@ -469,6 +469,7 @@ enum {
   IMPACTPITCH_BOTH,
 }; extern int impact_pitch;
 
+extern int explosion_shake;
 extern int breathing;
 extern int teleporter_zoom;
 extern int death_camera;

@@ -33,6 +33,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 - _**View Height**_ setting, which allows to enter a custom height value between 32 and 56 for the player's POV [i.b. Brutal Doom]
 - _**View Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Impact Pitch**_ setting, to flinch upon hitting a floor and/or taking damage
+- _**Explosion Shake Effect**_ setting [i.b. Doom Retro]
 - _**Subtle Idle Bobbing/Breathing**_ setting [p.f. International Doom]
 - _**Teleporter Zoom**_ setting [i.b. ZDoom]
 - _**Death Camera**_ setting [i.b. ZDoom]

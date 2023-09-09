@@ -33,6 +33,7 @@
 #include "v_video.h"
 #include "m_argv.h"
 #include "m_misc2.h"
+#include "r_main.h" // [Nugget]
 
 static mobj_t    *tmthing;
 static int       tmflags;
@@ -2021,6 +2022,8 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
   bombsource = source;
   bombdamage = damage;
   bombdistance = distance;
+
+  R_ExplosionShake(bombspot->x, bombspot->y, bombdamage, bombdistance); // [Nugget] Explosion shake effect
 
   for (y=yl ; y<=yh ; y++)
     for (x=xl ; x<=xh ; x++)
