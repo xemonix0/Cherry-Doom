@@ -781,7 +781,9 @@ static void HU_widget_build_ammo (void)
     w_ammo.cr = colrngs[hudcolor_wg_name];
 
   // special case for weapon with no ammo selected - blank bargraph + N/A
-  if (weaponinfo[plr->readyweapon].ammo == am_noammo)
+  // [Cherry] also if max ammo is 0
+  if (weaponinfo[plr->readyweapon].ammo == am_noammo
+      || plr->maxammo[weaponinfo[plr->readyweapon].ammo] == 0)
   {
     if (hud_widget_bars) // [Cherry]
     {
@@ -1073,11 +1075,12 @@ static void HU_widget_build_weapon (void)
     if (plr->backpack && !hud_backpack_thresholds)
       fullammo /= 2;
 
-    ammopct = fullammo ? (100 * ammo) / fullammo : 100;
+    ammopct = fullammo ? (100 * ammo) / fullammo : 0;
 
     // display each weapon number in a color related to the ammo for it
     hud_weapstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-    if (weaponinfo[w].ammo == am_noammo) //jff 3/14/98 show berserk on HUD
+    if (weaponinfo[w].ammo == am_noammo //jff 3/14/98 show berserk on HUD
+        || plr->maxammo[weaponinfo[w].ammo] == 0) // [Cherry]
       hud_weapstr[i++] = (w == wp_fist && !plr->powers[pw_strength]) ? '0'+CR_GRAY : '0'+hudcolor_th_good;
     else if (ammopct < ammo_red)
       hud_weapstr[i++] = '0'+hudcolor_th_low;
