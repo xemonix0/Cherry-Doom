@@ -2470,6 +2470,8 @@ void D_DoomMain(void)
 
   D_ProcessInWads("BRGHTMPS", R_ParseBrightmaps, false);
 
+  M_NughudLoadOptions(); // [Nugget]
+
   putchar('\n');     // killough 3/6/98: add a newline, by popular demand :)
 
   // Moved after WAD initialization because we are checking the COMPLVL lump

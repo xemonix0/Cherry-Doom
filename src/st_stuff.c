@@ -1208,9 +1208,18 @@ void ST_loadGraphics(void)
   if (berserklump == -1)
   { berserklump = (W_CheckNumForName)("MEDIA0", ns_sprites); }
 
-  // `nughud.patches[i].name` aren't set yet, so we'll
-  // delegate finding of NUGHUD patches to `ST_initData()`
-  nughud_patchlump[0] = -2;
+  // Find NUGHUD patches
+  for (i = 0;  i < NUMNUGHUDPATCHES;  i++)
+  {
+    if (nughud.patches[i].name != NULL)
+    {
+      nughud_patchlump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_sprites);
+      if (nughud_patchlump[i] == -1)
+      { nughud_patchlump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_global); }
+    }
+    else
+    { nughud_patchlump[i] = -1; }
+  }
 
   { // Load NUGHUD fonts
     int lump;
@@ -1375,22 +1384,6 @@ void ST_initData(void)
     keyboxes[i] = -1;
 
   STlib_init();
-
-  // [Nugget] Find NUGHUD patches here
-  if (nughud_patchlump[0] == -2)
-  {
-    for (i = 0;  i < NUMNUGHUDPATCHES;  i++)
-    {
-      if (nughud.patches[i].name != NULL)
-      {
-        nughud_patchlump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_sprites);
-        if (nughud_patchlump[i] == -1)
-        { nughud_patchlump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_global); }
-      }
-      else
-      { nughud_patchlump[i] = -1; }
-    }
-  }
 }
 
 void ST_createWidgets(void)

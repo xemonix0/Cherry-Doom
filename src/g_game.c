@@ -27,7 +27,6 @@
 #include "f_finale.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "m_nughud.h" // [Nugget]
 #include "m_menu.h"
 #include "m_random.h"
 #include "p_setup.h"
@@ -3406,8 +3405,6 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   if (demo_version == 203)
     G_MBFComp();
-
-  M_NughudLoadOptions(); // [Nugget]
 
   G_DoLoadLevel();
 
