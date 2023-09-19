@@ -8,9 +8,16 @@ Although the new code has been written with the intention of not breaking demo c
 
 ## Features
 
-Most of Nugget Doom's features come from other sources, like source ports and mods; the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them. These acknowledgements are included in the feature lists below; be aware that some might be inaccurate or outright missing.
+Note that this feature list is relative to [Woof!'s](https://github.com/fabiangreffrath/woof/blob/master/README.md#key-features);
+read the latter for more details.
+Some features were first introduced in Nugget Doom and later merged into Woof!, and so they're not listed here anymore.
 
-A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`. For these settings, their CVAR names are provided alongside the _CFG-Only_ label as guidance.
+Most of Nugget Doom's features come from other sources, like source ports and mods;
+the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them.
+These acknowledgements are included in the feature lists below; be aware that some might be inaccurate or outright missing.
+
+A few settings are labeled as _**CFG-Only**_: they can only be toggled by editing `nugget-doom.cfg`.
+For these settings, their CVAR names are provided alongside the _CFG-Only_ label as guidance.
 
 ### General
 

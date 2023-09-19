@@ -729,7 +729,7 @@ default_t defaults[] = {
     "explosion_shake",
     (config_t *) &explosion_shake, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,
-    "1 to make explosions shake the screen"
+    "1 to make explosions shake the view"
   },
 
   {
