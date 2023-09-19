@@ -83,6 +83,10 @@ typedef struct {
 
 channel_info_t channelinfo[MAX_CHANNELS];
 
+// [Nugget] Now variable
+int S_CLIPPING_DIST;
+int S_ATTENUATOR;
+
 // Pitch to stepping lookup.
 float steptable[256];
 
@@ -119,6 +123,10 @@ boolean I_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
 {
   if (!snd_init)
     return false;
+
+  // [Nugget] Initialize these here
+  S_CLIPPING_DIST = (1200 << FRACBITS) * (STRICTMODE(s_clipping_dist_x2) + 1); // Double sound clipping distance
+  S_ATTENUATOR = (S_CLIPPING_DIST - S_CLOSE_DIST) >> FRACBITS;
 
   return sound_module->AdjustSoundParams(listener, source, chanvol, vol, sep, pri);
 }

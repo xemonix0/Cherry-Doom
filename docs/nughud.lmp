@@ -150,6 +150,7 @@ nughud_sts_x     2
 nughud_sts_y     159
 nughud_sts_wide  -2
 nughud_sts_align -1
+nughud_sts_ml    0
 
 ; Level Name display
 nughud_title_x     2
@@ -168,6 +169,7 @@ nughud_coord_x     318
 nughud_coord_y     16
 nughud_coord_wide  2
 nughud_coord_align 1
+nughud_coord_ml    0
 
 ; FPS display
 nughud_fps_x     318

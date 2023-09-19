@@ -177,7 +177,7 @@ if(HAVE_LIBM)
 endif()
 
 if(HAVE_AL_BUFFER_CALLBACK)
-    target_sources(woof PRIVATE i_pcsound.c)
+    target_sources(nugget-doom PRIVATE i_pcsound.c)
 endif()
 
 if(WIN32)

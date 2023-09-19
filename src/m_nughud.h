@@ -60,9 +60,11 @@ typedef struct nughud_s {
   nughud_alignable_t time;
   boolean            time_sts;
   nughud_alignable_t sts;
+  boolean            sts_ml;
   nughud_alignable_t title;
   nughud_alignable_t powers;
   nughud_alignable_t coord;
+  boolean            coord_ml;
   nughud_alignable_t fps;
   nughud_alignable_t message;
   nughud_alignable_t secret;

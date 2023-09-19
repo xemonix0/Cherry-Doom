@@ -1088,6 +1088,7 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   {
     ST_createWidgets();
     ST_updateWidgets();
+    HU_Start();
   }
 
   ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items

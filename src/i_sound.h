@@ -29,7 +29,8 @@
 
 // when to clip out sounds
 // Does not fit the large outdoor areas.
-#define S_CLIPPING_DIST (1200 << FRACBITS)
+// [Nugget] Now variable; initialized in `I_AdjustSoundParams()`
+extern int S_CLIPPING_DIST;
 
 // Distance to origin when sounds should be maxed out.
 // This should relate to movement clipping resolution
@@ -41,7 +42,8 @@
 
 #define S_CLOSE_DIST (200 << FRACBITS)
 
-#define S_ATTENUATOR ((S_CLIPPING_DIST - S_CLOSE_DIST) >> FRACBITS)
+// [Nugget] Now variable; initialized in `I_AdjustSoundParams()`
+extern int S_ATTENUATOR;
 
 // Adjustable by menu.
 // [FG] moved here from i_sound.c

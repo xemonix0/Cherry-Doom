@@ -48,6 +48,7 @@ static const char *params[] = {
 "-longtics",
 "-shorttics",
 "-strict",
+"-cdrom", // [Nugged] Restored `-cdrom` parm
 "-nogui",
 };
 
