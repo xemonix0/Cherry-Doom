@@ -23,6 +23,7 @@
 #include <stdlib.h> // [FG] qsort()
 
 #include "doomstat.h"
+#include "i_printf.h"
 #include "s_sound.h"
 #include "s_musinfo.h" // [crispy] struct musinfo
 #include "i_sound.h"
@@ -30,26 +31,6 @@
 #include "m_random.h"
 #include "m_misc2.h"
 #include "w_wad.h"
-
-// when to clip out sounds
-// Does not fit the large outdoor areas.
-#define S_CLIPPING_DIST (1200<<FRACBITS)
-
-// Distance to origin when sounds should be maxed out.
-// This should relate to movement clipping resolution
-// (see BLOCKMAP handling).
-// Originally: (200*0x10000).
-//
-// killough 12/98: restore original
-// #define S_CLOSE_DIST (160<<FRACBITS)
-
-#define S_CLOSE_DIST (200<<FRACBITS)
-
-// [Nugget] Unused, calculated directly in S_AdjustSoundParams
-// since S_CLIPPING_DIST might be doubled
-#if 0
-  #define S_ATTENUATOR ((S_CLIPPING_DIST-S_CLOSE_DIST)>>FRACBITS)
-#endif
 
 //jff end sound enabling variables readable here
 
@@ -69,7 +50,7 @@ typedef struct channel_s
 // the set of channels available
 static channel_t channels[MAX_CHANNELS];
 // [FG] removed map objects may finish their sounds
-static degenmobj_t sobjs[MAX_CHANNELS];
+static mobj_t sobjs[MAX_CHANNELS];
 
 // These are not used, but should be (menu).
 // Maximum volume of a sound effect.
@@ -112,8 +93,7 @@ static void S_StopChannel(int cnum)
 
    if(channels[cnum].sfxinfo)
    {
-      if(I_SoundIsPlaying(channels[cnum].handle))
-         I_StopSound(channels[cnum].handle);      // stop the sound playing
+      I_StopSound(channels[cnum].handle);      // stop the sound playing
 
       // haleyjd 09/27/06: clear the entire channel
       memset(&channels[cnum], 0, sizeof(channel_t));
@@ -133,75 +113,7 @@ static int S_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
                                int chanvol, int *vol, int *sep, int *pitch,
                                int *pri)
 {
-   fixed_t adx, ady, dist;
-   angle_t angle;
-   int basevolume;            // haleyjd
-   // [Nugget] Double sound clipping distance
-   const int clippingdist = S_CLIPPING_DIST * (STRICTMODE(s_clipping_dist_x2) + 1);
-   const int attenuator = (clippingdist-S_CLOSE_DIST)>>FRACBITS;
-
-   // haleyjd 08/12/04: we cannot adjust a sound for a NULL listener.
-   if(!listener)
-      return 1;
-
-   // haleyjd 05/29/06: this function isn't supposed to be called for NULL sources
-#ifdef RANGECHECK
-   if(!source)
-      I_Error("S_AdjustSoundParams: NULL source\n");
-#endif
-
-   // calculate the distance to sound origin
-   //  and clip it if necessary
-   //
-   // killough 11/98: scale coordinates down before calculations start
-   // killough 12/98: use exact distance formula instead of approximation
-
-   adx = abs((listener->x >> FRACBITS) - (source->x >> FRACBITS));
-   ady = abs((listener->y >> FRACBITS) - (source->y >> FRACBITS));
-
-   if(ady > adx)
-      dist = adx, adx = ady, ady = dist;
-
-   dist = adx ? FixedDiv(adx, finesine[(tantoangle[FixedDiv(ady,adx) >> DBITS]
-                                        + ANG90) >> ANGLETOFINESHIFT]) : 0;
-
-   // haleyjd 05/29/06: allow per-channel volume scaling
-   basevolume = (snd_SfxVolume * chanvol) / 15;
-
-   if(!dist)  // killough 11/98: handle zero-distance as special case
-   {
-      *sep = NORM_SEP;
-      *vol = basevolume;
-      return *vol > 0;
-   }
-
-   if(dist > clippingdist >> FRACBITS) // [Nugget] Double sound clipping distance
-      return 0;
-
-   // angle of source to listener
-   angle = R_PointToAngle2(listener->x, listener->y, source->x, source->y);
-
-   if(angle <= listener->angle)
-      angle += 0xffffffff;
-   angle -= listener->angle;
-   angle >>= ANGLETOFINESHIFT;
-
-   // stereo separation
-   *sep = NORM_SEP - FixedMul(S_STEREO_SWING>>FRACBITS,finesine[angle]);
-
-   // volume calculation
-   // [Nugget] Variable sound clipping distance
-   *vol = dist < S_CLOSE_DIST >> FRACBITS
-          ? basevolume
-          : basevolume * ((clippingdist>>FRACBITS)-dist) / attenuator;
-
-   // haleyjd 09/27/06: decrease priority with volume attenuation
-   *pri = *pri + (127 - *vol);
-
-   if(*pri > 255) // cap to 255
-      *pri = 255;
-
-  return *vol > 0;
+   return I_AdjustSoundParams(listener, source, chanvol, vol, sep, pri);
 }
 
 //
@@ -327,24 +239,11 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
    // Check to see if it is audible, modify the params
    // killough 3/7/98, 4/25/98: code rearranged slightly
 
-   if(!origin || origin == players[displayplayer].mo)
+   if (!S_AdjustSoundParams(players[displayplayer].mo, origin, volumeScale,
+                            &volume, &sep, &pitch, &priority))
    {
-      sep = NORM_SEP;
-      volume = (volume * volumeScale) / 15; // haleyjd 05/29/06: scale volume
-      if(volume < 1)
-         return;
-      if(volume > 127)
-         volume = 127;
+      return;
    }
-   else
-   {
-      if(!S_AdjustSoundParams(players[displayplayer].mo, origin, volumeScale,
-                              &volume, &sep, &pitch, &priority))
-         return;
-      else if(origin->x == players[displayplayer].mo->x &&
-              origin->y == players[displayplayer].mo->y)
-         sep = NORM_SEP;
-  }
 
    if(pitched_sounds)
    {
@@ -456,11 +355,12 @@ void S_UnlinkSound(mobj_t *origin)
         {
             if (channels[cnum].sfxinfo && channels[cnum].origin == origin)
             {
-                degenmobj_t *const sobj = &sobjs[cnum];
+                mobj_t *const sobj = &sobjs[cnum];
                 sobj->x = origin->x;
                 sobj->y = origin->y;
                 sobj->z = origin->z;
-                channels[cnum].origin = (mobj_t *) sobj;
+                sobj->info = origin->info;
+                channels[cnum].origin = sobj;
                 break;
             }
         }
@@ -493,6 +393,16 @@ void S_ResumeSound(void)
 // Updates music & sounds
 //
 
+void S_InitListener(const mobj_t *listener)
+{
+    if (nosfxparm)
+        return;
+
+    I_DeferSoundUpdates();
+    I_UpdateListenerParams(listener);
+    I_ProcessSoundUpdates();
+}
+
 void S_UpdateSounds(const mobj_t *listener)
 {
    int cnum;
@@ -500,6 +410,8 @@ void S_UpdateSounds(const mobj_t *listener)
    //jff 1/22/98 return if sound is not enabled
    if(nosfxparm)
       return;
+
+   I_DeferSoundUpdates();
 
    for(cnum = 0; cnum < numChannels; ++cnum)
    {
@@ -548,6 +460,9 @@ void S_UpdateSounds(const mobj_t *listener)
             S_StopChannel(cnum);
         }
     }
+
+   I_UpdateListenerParams(listener);
+   I_ProcessSoundUpdates();
 }
 
 void S_SetMusicVolume(int volume)
@@ -623,7 +538,7 @@ void S_ChangeMusic(int musicnum, int looping)
    I_PlaySong((void *)music->handle, looping);
 
   // [crispy] log played music
-  fprintf(stderr, "S_ChangeMusic: %.8s (%s)\n",
+  I_Printf(VB_INFO, "S_ChangeMusic: %.8s (%s)",
           lumpinfo[music->lumpnum].name,
           W_WadNameForLump(music->lumpnum));
 
@@ -672,7 +587,7 @@ void S_ChangeMusInfoMusic (int lumpnum, int looping)
    I_PlaySong((void *)music->handle, looping);
 
   // [crispy] log played music
-  fprintf(stderr, "S_ChangeMusInfoMusic: %.8s (%s)\n",
+  I_Printf(VB_INFO, "S_ChangeMusInfoMusic: %.8s (%s)",
           lumpinfo[music->lumpnum].name,
           W_WadNameForLump(music->lumpnum));
 
@@ -749,6 +664,14 @@ void S_Start(void)
          if(channels[cnum].sfxinfo)
             S_StopChannel(cnum);
       }
+   }
+
+   // [crispy] don't load map's default music if loaded from a savegame with
+   // MUSINFO data
+   if (musinfo.from_savegame)
+   {
+       musinfo.from_savegame = false;
+       return;
    }
 
    // start new music for the level

@@ -557,6 +557,7 @@ void R_SetViewSize(int blocks)
 void R_ExecuteSetViewSize (void)
 {
   int i, j;
+  extern void AM_Start(void);
   // [Nugget] FOV from Doom Retro
   int WIDEFOVDELTA;
   fixed_t num;
@@ -752,10 +753,14 @@ void R_ExecuteSetViewSize (void)
 
     // [Nugget] Don't call this, as it would make
     // the HUD widgets disappear during FOV changes
-    /*HU_disableAllWidgets();*/
+    /*HU_disable_all_widgets();*/
 
     // [crispy] forcefully initialize the status bar backing screen
     ST_refreshBackground(true);
+
+    // [FG] reinitialize Automap
+    if (automapactive)
+        AM_Start();
 
     // [FG] spectre drawing mode
     R_SetFuzzColumnMode();

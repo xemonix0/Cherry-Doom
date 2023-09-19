@@ -403,6 +403,7 @@ void P_MovePlayer (player_t* player)
     player->lookdir = BETWEEN(-LOOKDIRMAX * MLOOKUNIT,
                                LOOKDIRMAX * MLOOKUNIT,
                                player->lookdir + cmd->lookdir);
+    player->slope = PLAYER_SLOPE(player);
   }
 }
 
@@ -610,7 +611,8 @@ void P_PlayerThink (player_t* player)
     {
       // [Nugget] Disable zoom upon death
       if (R_GetZoom() == 1) { R_SetZoom(ZOOM_OFF); }
-      
+
+      player->slope = PLAYER_SLOPE(player); // For 3D audio pitch angle.
       P_DeathThink (player);
       return;
     }
@@ -769,13 +771,13 @@ void P_PlayerThink (player_t* player)
                  linetarget->health, linetarget->info->spawnhealth);
   }
 
-  if (player->powers[pw_renderstats])
+  if (player->cheats & CF_RENDERSTATS)
   {
     extern void R_ShowRenderingStats();
     R_ShowRenderingStats();
   }
 
-  if (player->powers[pw_mapcoords])
+  if (player->cheats & CF_MAPCOORDS)
   {
     extern void cheat_mypos_print();
     cheat_mypos_print();

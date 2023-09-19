@@ -81,6 +81,16 @@ void A_Recoil(player_t* player)
 static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 {
   P_SetPspritePtr(player, &player->psprites[position], stnum);
+
+  if (position == ps_weapon)
+  {
+    const weaponinfo_t wp = weaponinfo[player->readyweapon];
+
+    if (stnum == wp.upstate)
+      player->switching = weapswitch_raising;
+    else if (stnum == wp.downstate)
+      player->switching = weapswitch_lowering;
+  }
 }
 
 //
@@ -164,7 +174,6 @@ static void P_BringUpWeapon(player_t *player)
   player->psprites[ps_weapon].wiy = 0;
 
   P_SetPsprite(player, ps_weapon, newstate);
-  player->switching = weapswitch_raising;
 }
 
 // The first set is where the weapon preferences from             // killough,
@@ -451,7 +460,6 @@ static void P_FireWeapon(player_t *player)
 void P_DropWeapon(player_t *player)
 {
   P_SetPsprite(player, ps_weapon, weaponinfo[player->readyweapon].downstate);
-  player->switching = weapswitch_lowering;
 }
 
 //
@@ -554,7 +562,6 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
       // change weapon (pending weapon should already be validated)
       statenum_t newstate = weaponinfo[player->readyweapon].downstate;
       P_SetPsprite(player, ps_weapon, newstate);
-      player->switching = weapswitch_lowering;
       return;
     }
   else
@@ -744,11 +751,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
       for (int i=0; i<21; i++) {
         angle = player->mo->angle + ANG20 - (ANG2*i);
 
-        if ((mouselook || padlook) && vertical_aiming == VERTAIM_DIRECT)
+        if (vertical_aiming == VERTAIM_DIRECT)
         { slope = PLAYER_SLOPE(player); }
         else {
           slope = P_AimLineAttack(player->mo, angle, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
-          if (!linetarget && (mouselook || padlook) && vertical_aiming == VERTAIM_DIRECTAUTO)
+          if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
           { slope = PLAYER_SLOPE(player); }
         }
 
@@ -761,11 +768,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
     else { // Just one bullet
       angle = player->mo->angle;
 
-      if ((mouselook || padlook) && vertical_aiming == VERTAIM_DIRECT)
+      if (vertical_aiming == VERTAIM_DIRECT)
       { slope = PLAYER_SLOPE(player); }
       else {
         slope = P_AimLineAttack(player->mo, angle, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
-        if (!linetarget && (mouselook || padlook) && vertical_aiming == VERTAIM_DIRECTAUTO)
+        if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
         { slope = PLAYER_SLOPE(player); }
       }
 
@@ -920,15 +927,14 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
       // [Nugget] Vertical aiming;
       // Taken outside of code block after this one
       // to allow direct vertical aiming in Beta
-      if ((mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECT))
-      {
-        slope = PLAYER_SLOPE(mo->player);
-      }
+      if (vertical_aiming == VERTAIM_DIRECT)
+      { slope = PLAYER_SLOPE(mo->player); }
       else
       if (autoaim || !beta_emulation)
 	{
 	  // killough 8/2/98: make autoaiming prefer enemies
 	  int mask = MF_FRIEND;
+	  // [Nugget] Moved vertical aiming code above
 	  do
 	    {
 	      // [Nugget] Double Autoaim range
@@ -940,8 +946,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
 	      if (!linetarget)
 		an = mo->angle,
 		// [Nugget] Vertical aiming
-		slope = ((mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECTAUTO))
-		        ? PLAYER_SLOPE(player) : 0;
+		slope = (vertical_aiming == VERTAIM_DIRECTAUTO) ? PLAYER_SLOPE(player) : 0;
 	    }
 	  while (mask && (mask=0, !linetarget));     // killough 8/2/98
 	}
@@ -999,10 +1004,8 @@ static void P_BulletSlope(mobj_t *mo)
   // killough 8/2/98: make autoaiming prefer enemies
   int mask = demo_version < 203 ? 0 : MF_FRIEND;
 
-  if ((mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECT)) // [Nugget] Vertical aiming
-  {
-    bulletslope = PLAYER_SLOPE(mo->player);
-  }
+  if (vertical_aiming == VERTAIM_DIRECT) // [Nugget] Vertical aiming
+  { bulletslope = mo->player->slope; }
   else
   do
     {
@@ -1013,7 +1016,7 @@ static void P_BulletSlope(mobj_t *mo)
       if (!linetarget)
         bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
       // [Nugget] Vertical aiming
-      if (!linetarget && (mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECTAUTO))
+      if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
         bulletslope = PLAYER_SLOPE(mo->player);
     }
   while (mask && (mask=0, !linetarget));  // killough 8/2/98

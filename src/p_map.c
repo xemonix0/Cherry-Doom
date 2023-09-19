@@ -19,6 +19,7 @@
 //-----------------------------------------------------------------------------
 
 #include "doomstat.h"
+#include "i_printf.h"
 #include "r_main.h"
 #include "p_mobj.h"
 #include "p_maputl.h"
@@ -110,7 +111,7 @@ static boolean PIT_StompThing (mobj_t *thing)
   if (!telefrag)  // killough 8/9/98: make consistent across all levels
     return false;
 
-  P_DamageMobj (thing, tmthing, tmthing, 10000); // Stomp!
+  P_DamageMobjBy (thing, tmthing, tmthing, 10000, MOD_Telefrag); // Stomp!
 
   return true;
 }
@@ -456,7 +457,7 @@ static boolean PIT_CheckLine(line_t *ld) // killough 3/26/98: make static
 	  if (numspechit == MAXSPECIALCROSS_ORIGINAL + 1)
 	  {
 	    overflow[emu_spechits].triggered = true;
-	    fprintf(stderr, "PIT_CheckLine: Triggered SPECHITS overflow!\n");
+	    I_Printf(VB_WARNING, "PIT_CheckLine: Triggered SPECHITS overflow!");
 	  }
 	  SpechitOverrun(ld);
 	}
@@ -985,6 +986,7 @@ boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
 static boolean PIT_ApplyTorque(line_t *ld)
 {
   if (ld->backsector &&       // If thing touches two-sided pivot linedef
+      (ld->dx || ld->dy) && // Torque is undefined if the line has no length
       tmbbox[BOXRIGHT]  > ld->bbox[BOXLEFT]  &&
       tmbbox[BOXLEFT]   < ld->bbox[BOXRIGHT] &&
       tmbbox[BOXTOP]    > ld->bbox[BOXBOTTOM] &&
@@ -1720,7 +1722,6 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 {
   fixed_t x2, y2;
-  extern boolean mouselook, padlook; // [Nugget]
 
   t1 = P_SubstNullMobj(t1);
 
@@ -1733,9 +1734,9 @@ fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 
   // can't shoot outside view angles
 
-  if (t1->player && (mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECT)) // [Nugget] Vertical aiming
+  if (t1->player && vertical_aiming == VERTAIM_DIRECT) // [Nugget] Vertical aiming
   {
-    bottomslope = (topslope = PLAYER_SLOPE(t1->player) + 1) - 2;
+    bottomslope = (topslope = t1->player->slope + 1) - 2;
   }
   else
   {
@@ -2104,7 +2105,7 @@ boolean PIT_ChangeSector(mobj_t *thing)
     {
       int t;         // killough 8/10/98
 
-      P_DamageMobj(thing,NULL,NULL,10);
+      P_DamageMobjBy(thing,NULL,NULL,10,MOD_Crush);
 
       // spray blood in a random direction
       mo = P_SpawnMobj (thing->x,
@@ -2532,9 +2533,9 @@ static void SpechitOverrun(line_t *ld)
             nofit = addr;
             break;
         default:
-            fprintf(stderr, "SpechitOverrun: Warning: unable to emulate"
-                            "an overrun where numspechit=%i\n",
-                            numspechit);
+            I_Printf(VB_DEBUG, "SpechitOverrun: Warning: unable to emulate"
+                               "an overrun where numspechit=%i",
+                               numspechit);
             break;
     }
 }

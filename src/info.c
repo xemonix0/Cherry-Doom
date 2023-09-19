@@ -7589,29 +7589,15 @@ const lumpinfo_t predefined_lumps[]={
   { "CROSS01",   sizeof cross01, cross01 },
   { "CROSS02",   sizeof cross02, cross02 },
   { "CROSS03",   sizeof cross03, cross03 },
-  // [Nugget] Add more crosshairs
   { "CROSS04",   sizeof cross04, cross04 },
   { "CROSS05",   sizeof cross05, cross05 },
   { "CROSS06",   sizeof cross06, cross06 },
   { "CROSS07",   sizeof cross07, cross07 },
   { "CROSS08",   sizeof cross08, cross08 },
 
-  // [Nugget] Shaded crosshairs
-  { "CROSS00S", sizeof cross00s, cross00s },
-  { "CROSS01S", sizeof cross01s, cross01s },
-  // Skip the dot
-  { "CROSS03S", sizeof cross03s, cross03s },
-  { "CROSS04S", sizeof cross04s, cross04s },
-  { "CROSS05S", sizeof cross05s, cross05s },
-  { "CROSS06S", sizeof cross06s, cross06s },
-  { "CROSS07S", sizeof cross07s, cross07s },
-  { "CROSS08S", sizeof cross08s, cross08s },
-
   // [Nugget] Horizontal autoaim indicators
   { "CROSSIL", sizeof crossil, crossil },
   { "CROSSIR", sizeof crossir, crossir },
-  { "CROSSILS", sizeof crossils, crossils },
-  { "CROSSIRS", sizeof crossirs, crossirs },
 
   // mini-thermo patches
   { "M_MTHRML",  sizeof therml, therml },

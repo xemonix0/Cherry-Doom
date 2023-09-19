@@ -201,7 +201,7 @@ extern boolean D_CheckNetConnect(void);
 
 // Flag: true only if started as net deathmatch.
 // An enum might handle altdeath/cooperative better.
-extern  boolean deathmatch;
+extern int deathmatch;
 
 extern boolean coop_spawns;
 
@@ -244,7 +244,7 @@ extern  boolean automaprotate;
 #define automap_off (!automapactive || automapoverlay)
 
 extern  boolean menuactive;    // Menu overlayed?
-extern  boolean paused;        // Game Pause?
+extern  int     paused;        // Game Pause?
 extern  boolean viewactive;
 extern  boolean nodrawers;
 extern  boolean noblit;
@@ -598,6 +598,7 @@ typedef enum {
   MESSAGES_NONE,
   MESSAGES_TOGGLE,
   MESSAGES_PICKUP,
+  MESSAGES_OBITUARY
 } msg_category_t;
 
 void doomprintf(player_t *player, msg_category_t category,

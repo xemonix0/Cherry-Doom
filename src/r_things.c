@@ -19,6 +19,7 @@
 //-----------------------------------------------------------------------------
 
 #include "doomstat.h"
+#include "i_printf.h"
 #include "i_video.h"
 #include "v_video.h"
 #include "w_wad.h"
@@ -169,7 +170,7 @@ void R_InitSpriteDefs(char **namelist)
   if (!numentries || !*namelist)
     return;
 
-  sprites = Z_Malloc(num_sprites *sizeof(*sprites), PU_STATIC, NULL);
+  sprites = Z_Calloc(num_sprites, sizeof(*sprites), PU_STATIC, NULL);
 
   // Create hash table based on just the first four letters of each sprite
   // killough 1/31/98
@@ -238,8 +239,8 @@ void R_InitSpriteDefs(char **namelist)
                   case -1:
                     // no rotations were found for that frame at all
                     // [FG] make non-fatal
-                    fprintf (stderr, "R_InitSprites: No patches found "
-                             "for %.8s frame %c\n", namelist[i], frame+'A');
+                    I_Printf (VB_WARNING, "R_InitSprites: No patches found "
+                             "for %.8s frame %c", namelist[i], frame+'A');
                     break;
 
                   case 0:
@@ -916,7 +917,7 @@ static void msort(vissprite_t **s, vissprite_t **t, int n)
       msort(s1, t, n1);
       msort(s2, t, n2);
 
-      while ((*s1)->scale > (*s2)->scale ?
+      while ((*s1)->scale >= (*s2)->scale ?
              (*d++ = *s1++, --n1) : (*d++ = *s2++, --n2));
 
       if (n2)
@@ -959,8 +960,12 @@ void R_SortVisSprites (void)
                                   * sizeof *vissprite_ptrs, PU_STATIC, 0);
         }
 
+      // Sprites of equal distance need to be sorted in inverse order.
+      // This is most easily achieved by filling the sort array
+      // backwards before the sort.
+
       while (--i>=0)
-        vissprite_ptrs[i] = vissprites+i;
+        vissprite_ptrs[num_vissprite-i-1] = vissprites+i;
 
       // killough 9/22/98: replace qsort with merge sort, since the keys
       // are roughly in order to begin with, due to BSP rendering.

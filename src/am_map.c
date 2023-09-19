@@ -404,17 +404,8 @@ static void AM_addMark(void)
                             markpointnum_max*2 : 16) * sizeof(*markpoints),
                            PU_STATIC, 0);
 
-  // [crispy] keep the map static if not following the player
-  if (!followplayer)
-  {
-    markpoints[markpointnum].x = plr->mo->x >> FRACTOMAPBITS;
-    markpoints[markpointnum].y = plr->mo->y >> FRACTOMAPBITS;
-  }
-  else
-  {
   markpoints[markpointnum].x = m_x + m_w/2;
   markpoints[markpointnum].y = m_y + m_h/2;
-  }
   markpointnum++;
 }
 
@@ -878,6 +869,7 @@ boolean AM_Responder
     {
       bigstate = 0;
       viewactive = true;
+      memset(buttons_state, 0, sizeof(buttons_state));
       AM_Stop ();
     }
     else if (M_InputActivated(input_map_gobig))
@@ -896,13 +888,13 @@ boolean AM_Responder
       followplayer = !followplayer;
       memset(buttons_state, 0, sizeof(buttons_state));
       // Ty 03/27/98 - externalized
-      displaymsg("%s", followplayer ? s_AMSTR_FOLLOWON : s_AMSTR_FOLLOWOFF);
+      togglemsg("%s", followplayer ? s_AMSTR_FOLLOWON : s_AMSTR_FOLLOWOFF);
     }
     else if (M_InputActivated(input_map_grid))
     {
       automap_grid = !automap_grid;      // killough 2/28/98
       // Ty 03/27/98 - *not* externalized
-      displaymsg("%s", automap_grid ? s_AMSTR_GRIDON : s_AMSTR_GRIDOFF);
+      togglemsg("%s", automap_grid ? s_AMSTR_GRIDON : s_AMSTR_GRIDOFF);
     }
     else if (M_InputActivated(input_map_mark))
     {
@@ -928,9 +920,9 @@ boolean AM_Responder
 
       switch (automapoverlay)
       {
-        case 2:  displaymsg("Dark Overlay On");        break;
-        case 1:  displaymsg("%s", s_AMSTR_OVERLAYON);  break;
-        default: displaymsg("%s", s_AMSTR_OVERLAYOFF); break;
+        case 2:  togglemsg("Dark Overlay On");        break;
+        case 1:  togglemsg("%s", s_AMSTR_OVERLAYON);  break;
+        default: togglemsg("%s", s_AMSTR_OVERLAYOFF); break;
       }
 
       if (automapoverlay && scaledviewheight == SCREENHEIGHT)
@@ -943,10 +935,7 @@ boolean AM_Responder
     else if (M_InputActivated(input_map_rotate))
     {
       automaprotate = !automaprotate;
-      if (automaprotate)
-        displaymsg("%s", s_AMSTR_ROTATEON);
-      else
-        displaymsg("%s", s_AMSTR_ROTATEOFF);
+      togglemsg("%s", automaprotate ? s_AMSTR_ROTATEON : s_AMSTR_ROTATEOFF);
     }
 
     // [Nugget] /----------------------

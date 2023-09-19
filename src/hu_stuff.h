@@ -1,5 +1,6 @@
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+//  Copyright (C) 2023 Fabian Greffrath
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -20,17 +21,7 @@
 
 #include "d_event.h"
 #include "r_defs.h"
-
-//
-// Globally visible constants.
-//
-#define HU_FONTSTART    '!'     /* the first font characters */
-#define HU_FONTEND      (0x7f) /*jff 2/16/98 '_' the last font characters */
-
-// Calculate # of glyphs in font.
-#define HU_FONTSIZE     (HU_FONTEND - HU_FONTSTART + 1)
-
-extern patch_t **hu_font;
+#include "hu_lib.h"
 
 #define HU_BROADCAST    5
 
@@ -47,7 +38,7 @@ extern patch_t **hu_font;
 //
 void HU_Init(void);
 void HU_Start(void);
-void HU_disableAllWidgets (void);
+void HU_disable_all_widgets (void);
 
 boolean HU_Responder(event_t* ev);
 
@@ -88,6 +79,9 @@ extern int map_player_coords, map_level_stats, map_level_time; // [FG] level sta
 extern int hud_level_stats, hud_level_time;
 extern int map_power_timers, hud_power_timers; // [Nugget] Powerup timers
 extern int hud_widget_font;
+extern int hud_widescreen_widgets;
+extern int hud_draw_bargraphs;
+extern int hud_threelined_widgets;
 extern boolean message_centered; // center messages
 extern boolean message_colorized; // colorize player messages
 
@@ -95,7 +89,6 @@ extern int playback_tic, playback_totaltics;
 
 extern boolean hud_crosshair_on; // [Nugget] Keep the variable below just for the type
 extern int hud_crosshair;
-extern int hud_crosshair_shaded; // [Nugget] Shaded crosshairs
 extern boolean hud_crosshair_health;
 
 typedef enum
@@ -124,9 +117,8 @@ void HU_DrawCrosshair(void);
 extern int hud_crosshair_color;
 extern int hud_crosshair_target_color;
 
-#define HU_CROSSHAIRS 5+5 // [Nugget] Add more crosshairs
+#define HU_CROSSHAIRS 10
 extern const char *crosshair_nam[HU_CROSSHAIRS];
-extern const char *crosshair_sh_nam[HU_CROSSHAIRS]; // [Nugget] Shaded crosshairs
 extern const char *crosshair_str[HU_CROSSHAIRS+1];
 
 #endif

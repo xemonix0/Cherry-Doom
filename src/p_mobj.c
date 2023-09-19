@@ -19,6 +19,7 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "i_printf.h"
 #include "m_random.h"
 #include "r_main.h"
 #include "r_things.h"
@@ -39,7 +40,13 @@
 
 // [FG] colored blood and gibs
 boolean colored_blood;
-int vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
+int vertical_aiming, default_vertical_aiming; // [Nugget] Replace `direct_vertical_aiming`
+
+void P_UpdateDirectVerticalAiming(void)
+{
+  // [Nugget]
+  vertical_aiming = CRITICAL(mouselook || padlook) ? default_vertical_aiming : 0;
+}
 
 //
 // P_SetMobjState
@@ -1288,7 +1295,7 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   if (i == num_mobj_types)
     {
-      printf("P_SpawnMapThing: Unknown Thing type %i at (%i, %i)\n",
+      I_Printf(VB_WARNING, "P_SpawnMapThing: Unknown Thing type %i at (%i, %i)",
 	      mthing->type, mthing->x, mthing->y);
       return;
     }
@@ -1509,16 +1516,15 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   // [Nugget] Vertical aiming;
   // Taken outside of code block after this one
   // to allow direct vertical aiming in Beta
-  if ((mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECT))
-  {
-    slope = PLAYER_SLOPE(source->player);
-  }
+  if (vertical_aiming == VERTAIM_DIRECT)
+  { slope = PLAYER_SLOPE(source->player); }
   else
   // killough 7/19/98: autoaiming was not in original beta
   if (!beta_emulation || autoaim)
     {
       // killough 8/2/98: prefer autoaiming at enemies
       int mask = demo_version < 203 ? 0 : MF_FRIEND;
+      // [Nugget] Moved vertical aiming code above
       do
         {
           // [Nugget] Double Autoaim range
@@ -1534,8 +1540,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
           if (!linetarget)
             an = source->angle,
             // [Nugget] Vertical aiming
-            slope = ((mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECTAUTO))
-                    ? PLAYER_SLOPE(source->player) : 0;
+            slope = (vertical_aiming == VERTAIM_DIRECTAUTO) ? PLAYER_SLOPE(source->player) : 0;
         }
       while (mask && (mask=0, !linetarget));  // killough 8/2/98
     }

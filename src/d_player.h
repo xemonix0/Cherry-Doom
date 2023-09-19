@@ -68,16 +68,20 @@ typedef enum
   CF_BUDDHA           = 8,
   // NOTARGET cheat
   CF_NOTARGET         = 16,
-  
-  // [Nugget] All of the following:
-  
-  CF_INFAMMO          = 32,   // Infinite ammo
-  CF_FASTWEAPS        = 64,   // Fast Weapons
-  CF_FLY              = 128,
-  CF_LINETARGET       = 256,  // Give info on the current linetarget
-  CF_SAITAMA          = 512,  // MDK Fist
-  CF_BOOMCAN          = 1024  // Explosive Hitscan
 
+  CF_MAPCOORDS        = 32,
+  CF_RENDERSTATS      = 64,
+  CF_SHOWFPS          = 128,
+
+  // [Nugget] All of the following:
+
+  CF_INFAMMO          = 0x00010000, // Infinite ammo
+  CF_FASTWEAPS        = 0x00020000, // Fast Weapons
+  CF_FLY              = 0x00040000,
+  CF_LINETARGET       = 0x00080000, // Give info on the current linetarget
+  CF_SAITAMA          = 0x00100000, // MDK Fist
+  CF_BOOMCAN          = 0x00200000, // Explosive Hitscan
+  
 } cheat_t;
 
 
@@ -201,6 +205,7 @@ typedef struct player_s
   // [crispy] free look / mouse look
   int                 lookdir, oldlookdir;
   boolean             centering;
+  fixed_t             slope;
 
   // [crispy] weapon recoil pitch
   fixed_t             recoilpitch, oldrecoilpitch;

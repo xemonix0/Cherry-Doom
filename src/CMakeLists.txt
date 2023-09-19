@@ -29,14 +29,19 @@ set(NUGGETDOOM_SOURCES
                            font.h
     g_game.c               g_game.h
     hu_lib.c               hu_lib.h
+    hu_obituary.c          hu_obituary.h
     hu_stuff.c             hu_stuff.h
+    i_3dsound.c
     i_endoom.c             i_endoom.h
     i_glob.c               i_glob.h
     i_input.c              i_input.h
     i_main.c
+    i_mbfsound.c
     i_oalmusic.c           i_oalmusic.h
+    i_oalsound.c           i_oalsound.h
                            i_oalstream.h
     i_oplmusic.c
+    i_printf.c             i_printf.h
     i_sndfile.c            i_sndfile.h
     i_sound.c              i_sound.h
     i_system.c             i_system.h
@@ -171,6 +176,10 @@ if(HAVE_LIBM)
     target_link_libraries(nugget-doom PRIVATE m)
 endif()
 
+if(HAVE_AL_BUFFER_CALLBACK)
+    target_sources(woof PRIVATE i_pcsound.c)
+endif()
+
 if(WIN32)
     target_sources(nugget-doom PRIVATE i_winmusic.c)
     target_link_libraries(nugget-doom PRIVATE winmm)
@@ -212,6 +221,7 @@ target_compile_definitions(nugget-doom PRIVATE MINIZ_NO_TIME)
 set(SETUP_SOURCES
     d_iwad.c                d_iwad.h
     i_main.c
+    i_printf.c              i_printf.h
     i_system.c              i_system.h
     i_timer.c               i_timer.h
     m_argv.c                m_argv.h

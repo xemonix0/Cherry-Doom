@@ -69,7 +69,7 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
 
 ### Status Bar/HUD
 
-- **NUGHUD lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.md`)
+- **`NUGHUD` lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.md`)
 - **SSG is accounted for on the Arms widget** [p.f. Crispy Doom]
 - **Blink Missing Keys** setting (CFG-Only: `blink_keys`) [partially p.f. Crispy Doom]
 - **Show Powerup Timers** setting
@@ -82,8 +82,6 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
   - _Teleport Timer_ [i.b. the above];
   - _Key Pickup Timer_ [same as above].
 - **Crosshair:**
-  - 5 new types;
-  - Shaded variants for all types;
   - Vertical-only target lock-on;
   - Horizontal autoaim indicators;
   - Option to account for fuzzy targets [i.b. From Doom With Love];
@@ -160,8 +158,9 @@ A few settings are labeled as _**CFG-Only**_: they can only be toggled by editin
   - `DSMNUOPN`, `DSMNUCLS`, `DSMNUACT`, `DSMNUBAK`, `DSMNUMOV`, `DSMNUSLI`, `DSMNUERR`;
   - `DSINTTIC`, `DSINTTOT`, `DSINTNEX`, `DSINTNET`, `DSINTDMS`.
 - **Customizable darkening level for dark menu background and Automap overlay** (CFG-Only: `menu_background_darkening` and `automap_overlay_darkening`) [i.b. Cherry Doom]
-- Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
+- Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
+- Restored `-cdrom` command-line parameter
 
 # Releases
 
@@ -193,7 +192,7 @@ The following libraries need to be installed:
 
  * [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
  * [SDL2_net](https://github.com/libsdl-org/SDL_net)
- * [openal-soft](https://github.com/kcat/openal-soft)
+ * [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
  * [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
  * [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
  * [libxmp](https://github.com/libxmp/libxmp) (optional)
@@ -258,7 +257,7 @@ Copyright:
  © 2019 Jonathan Dowland;  
  © 2020 Alex Mayfield;  
  © 2021 Ryan Krafnick;  
- © 2022 ceski;  
+ © 2022-2023 ceski;  
  © 2023 liPillON;  
  © 2020-2023 Fabian Greffrath;  
  © 2020-2023 Roman Fomin;  

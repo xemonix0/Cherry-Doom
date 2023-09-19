@@ -33,10 +33,12 @@
 #include "m_menu.h"
 #include "am_map.h"
 #include "w_wad.h"
+#include "i_printf.h"
 #include "i_system.h"
 #include "i_sound.h"
 #include "i_video.h"
 #include "v_video.h"
+#include "hu_obituary.h"
 #include "hu_stuff.h"
 #include "st_stuff.h"
 #include "dstrings.h"
@@ -80,7 +82,6 @@ extern int showMessages;
 extern int show_toggle_messages;
 extern int show_pickup_messages;
 
-extern int forceFlipPan;
 extern int window_width, window_height;
 extern int window_position_x, window_position_y;
 extern boolean grabmouse;
@@ -104,7 +105,6 @@ extern int winmm_reset_delay;
 #endif
 extern int opl_gain;
 extern int midi_player_menu;
-extern char *snd_resampler;
 extern boolean demobar;
 extern boolean smoothlight;
 extern boolean brightmaps;
@@ -435,8 +435,36 @@ default_t defaults[] = {
   {
     "snd_resampler",
     (config_t *) &snd_resampler, NULL,
-    {.s = "linear"}, {0}, string, ss_gen, wad_no,
-    "OpenAL resampler (\"nearest\", \"linear\" (default), \"cubic\")"
+    {1}, {0, 2}, number, ss_none, wad_no,
+    "OpenAL resampler (0 = Nearest, 1 = Linear, 2 = Cubic)"
+  },
+
+  {
+    "snd_module",
+    (config_t *) &snd_module, NULL,
+    {SND_MODULE_MBF}, {0, NUM_SND_MODULES - 1}, number, ss_none, wad_no,
+    "Sound module (0 = Standard, 1 = OpenAL 3D, 2 = PC Speaker Sound)"
+  },
+
+  {
+    "snd_hrtf",
+    (config_t *) &snd_hrtf, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "[OpenAL 3D] Headphones mode (0 = No, 1 = Yes)"
+  },
+
+  {
+    "snd_absorption",
+    (config_t *) &snd_absorption, NULL,
+    {0}, {0, 10}, number, ss_none, wad_no,
+    "[OpenAL 3D] Air absorption effect (0 = Off, 10 = Max)"
+  },
+
+  {
+    "snd_doppler",
+    (config_t *) &snd_doppler, NULL,
+    {0}, {0, 10}, number, ss_none, wad_no,
+    "[OpenAL 3D] Doppler effect (0 = Off, 10 = Max)"
   },
 
   // [FG] music backend
@@ -641,7 +669,7 @@ default_t defaults[] = {
 
   { // [Nugget] Replaces `direct_vertical_aiming`
     "vertical_aiming",
-    (config_t *) &vertical_aiming, NULL,
+    (config_t *) &default_vertical_aiming, (config_t *) &vertical_aiming,
     {0}, {0,2}, number, ss_gen, wad_no,
     "Vertical aiming (0 = Auto, 1 = Direct, 2 = Direct + Auto)"
   },
@@ -2362,7 +2390,7 @@ default_t defaults[] = {
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "shortcut key to enter setup menu",
-    input_setup, { {input_type_key, 199} }
+    input_setup, { {input_type_key, KEY_HOME} }
   },
 
   {
@@ -3019,6 +3047,13 @@ default_t defaults[] = {
     "1 to enable pickup messages"
   },
 
+  {
+    "show_obituary_messages",
+    (config_t *) &show_obituary_messages, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to enable obituaries"
+  },
+
   // "A secret is revealed!" message
   {
     "hud_secret_message",
@@ -3046,6 +3081,13 @@ default_t defaults[] = {
     (config_t *) &hudcolor_chat, NULL,
     {CR_GOLD}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
     "color range used for chat messages and entry"
+  },
+
+  {
+    "hudcolor_obituary",
+    (config_t *) &hudcolor_obituary, NULL,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "color range used for obituaries"
   },
 
   { // killough 11/98
@@ -3097,11 +3139,18 @@ default_t defaults[] = {
     "Duration of normal Doom messages (ms)"
   },
 
-  {
+  { // [Nugget]
     "sp_chat",
     (config_t *) &sp_chat, NULL,
     {0}, {0,1}, number, ss_none, wad_no,
     "1 to enable multiplayer chat in singleplayer"
+  },
+
+  {
+    "default_verbosity",
+    (config_t *) &cfg_verbosity, NULL,
+    {VB_INFO}, {VB_ERROR, VB_MAX - 1}, number, ss_none, wad_no,
+    "verbosity level (1 = errors only, 2 = warnings, 3 = info, 4 = debug)"
   },
 
   //
@@ -3287,7 +3336,7 @@ default_t defaults[] = {
 
   // [Nugget] -----------------------------------------------------------/
 
-  // [Nugget] Got rid of "crispy_hud"
+  // [Nugget] Removed `crispy_hud` code
 
   // backpack changes thresholds
   {
@@ -3312,6 +3361,27 @@ default_t defaults[] = {
     "use standard Doom font for widgets (1 = on Automap, 2 = always)"
   },
 
+  {
+    "hud_widescreen_widgets",
+    (config_t *) &hud_widescreen_widgets, NULL,
+    {1}, {0,1}, number, ss_stat, wad_no,
+    "arrange widgets on widescreen edges"
+  },
+
+  {
+    "hud_draw_bargraphs",
+    (config_t *) &hud_draw_bargraphs, NULL,
+    {1}, {0,1}, number, ss_stat, wad_no,
+    "draw bar graphs in Boom widgets"
+  },
+
+  {
+    "hud_threelined_widgets",
+    (config_t *) &hud_threelined_widgets, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "draw three-lined coords and stats widgets"
+  },
+
   { // [Nugget] Crosshair toggle
     "hud_crosshair_on",
     (config_t *) &hud_crosshair_on, NULL,
@@ -3324,13 +3394,6 @@ default_t defaults[] = {
     (config_t *) &hud_crosshair, NULL,
     {0}, {1,HU_CROSSHAIRS-1}, number, ss_stat, wad_no,
     "crosshair type"
-  },
-
-  { // [Nugget]
-    "hud_crosshair_shaded",
-    (config_t *) &hud_crosshair_shaded, NULL,
-    {0}, {0,HU_CROSSHAIRS-1}, number, ss_none, wad_no,
-    "use shaded crosshairs"
   },
 
   {
@@ -3538,6 +3601,8 @@ void M_SaveDefaults (void)
 
           switch (v->type)
           {
+            const char *s;
+
             case input_type_key:
               if (v->value >= 33 && v->value <= 126)
               {
@@ -3555,13 +3620,25 @@ void M_SaveDefaults (void)
                 fprintf(f, "%c", c);
               }
               else
-                fprintf(f, "%s", M_GetNameForKey(v->value));
+              {
+                s = M_GetNameForKey(v->value);
+                if (s)
+                  fprintf(f, "%s", s);
+              }
               break;
             case input_type_mouseb:
-              fprintf(f, "%s", M_GetNameForMouseB(v->value));
+              {
+                s = M_GetNameForMouseB(v->value);
+                if (s)
+                  fprintf(f, "%s", s);
+              }
               break;
             case input_type_joyb:
-              fprintf(f, "%s", M_GetNameForJoyB(v->value));
+              {
+                s = M_GetNameForJoyB(v->value);
+                if (s)
+                  fprintf(f, "%s", s);
+              }
               break;
             default:
               break;
@@ -3848,24 +3925,38 @@ void M_LoadDefaults (void)
   }
 
   NormalizeSlashes(defaultfile);
-  printf(" default file: %s\n", defaultfile);
 
   // read the file in, overriding any set defaults
   //
   // killough 9/21/98: Print warning if file missing, and use fgets for reading
 
-  if (!(f = M_fopen(defaultfile, "r")))
-    printf("Warning: Cannot read %s -- using built-in defaults\n",defaultfile);
-  else
-    {
-      char s[256];
+  if ((f = M_fopen(defaultfile, "r")))
+  {
+    char s[256];
 
-      while (fgets(s, sizeof s, f))
-        M_ParseOption(s, false);
-      fclose (f);
-    }
+    while (fgets(s, sizeof s, f))
+      M_ParseOption(s, false);
+  }
 
   defaults_loaded = true;            // killough 10/98
+
+  // [FG] initialize logging verbosity early to decide
+  //      if the following lines will get printed or not
+
+  I_InitPrintf();
+
+  I_Printf(VB_INFO, "M_LoadDefaults: Load system defaults.");
+
+  if (f)
+  {
+    I_Printf(VB_INFO, " default file: %s\n", defaultfile);
+    fclose(f);
+  }
+  else
+  {
+    I_Printf(VB_WARNING, " Warning: Cannot read %s -- using built-in defaults\n",
+                         defaultfile);
+  }
 
   //jff 3/4/98 redundant range checks for hud deleted here
 }

@@ -434,7 +434,8 @@ enum {
   VERTAIM_AUTO,
   VERTAIM_DIRECT,
   VERTAIM_DIRECTAUTO,
-}; extern int vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
+}; extern int vertical_aiming, default_vertical_aiming; // [Nugget] Replace `direct_vertical_aiming`
+void P_UpdateDirectVerticalAiming(void);
 
 #define PLAYER_IMPACTPITCH(player,pitch) ((player)->impactpitch = BETWEEN(-24, 24, (player)->impactpitch + (pitch))) // [Nugget]
 

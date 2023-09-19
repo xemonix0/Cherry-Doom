@@ -2205,20 +2205,35 @@ void P_PlayerInSpecialSector (player_t *player)
 	}
       else
 	if (!disable_nuke)  // killough 12/98: nukage disabling cheat
+	{
+	  method_t mod = MOD_None;
+
+	  switch (flatterrain[sector->floorpic])
+	  {
+	      case terrain_lava:
+	          mod = MOD_Lava;
+	          break;
+	      case terrain_slime:
+	          mod = MOD_Slime;
+	          break;
+	      default:
+	          break;
+	  }
+
 	  switch (sector->special)
 	    {
 	    case 5:
 	      // 5/10 unit damage per 31 ticks
 	      if (!player->powers[pw_ironfeet])
 		if (!(leveltime&0x1f))
-		  P_DamageMobj (player->mo, NULL, NULL, 10);
+		  P_DamageMobjBy (player->mo, NULL, NULL, 10, mod);
 	      break;
 
 	    case 7:
 	      // 2/5 unit damage per 31 ticks
 	      if (!player->powers[pw_ironfeet])
 		if (!(leveltime&0x1f))
-		  P_DamageMobj (player->mo, NULL, NULL, 5);
+		  P_DamageMobjBy (player->mo, NULL, NULL, 5, mod);
 	      break;
 
 	    case 16:
@@ -2229,7 +2244,7 @@ void P_PlayerInSpecialSector (player_t *player)
 		  || (P_Random(pr_slimehurt)<5) ) // even with suit, take damage
 		{
 		  if (!(leveltime&0x1f))
-		    P_DamageMobj (player->mo, NULL, NULL, 20);
+		    P_DamageMobjBy (player->mo, NULL, NULL, 20, mod);
 		}
 	      break;
 
@@ -2239,7 +2254,7 @@ void P_PlayerInSpecialSector (player_t *player)
 		player->cheats &= ~CF_GODMODE; // on godmode cheat clearing
 	      // does not affect invulnerability
 	      if (!(leveltime&0x1f))
-		P_DamageMobj (player->mo, NULL, NULL, 20);
+		P_DamageMobjBy (player->mo, NULL, NULL, 20, mod);
 
 	      if (player->health <= 10)
 		G_ExitLevel();
@@ -2249,6 +2264,7 @@ void P_PlayerInSpecialSector (player_t *player)
 	      //jff 1/24/98 Don't exit as DOOM2 did, just ignore
 	      break;
 	    }
+	}
     }
   else //jff 3/14/98 handle extended sector types for secrets and damage
     {
@@ -2338,7 +2354,7 @@ int             levelTimeCount;
 boolean         levelFragLimit;      // Ty 03/18/98 Added -frags support
 int             levelFragLimitCount; // Ty 03/18/98 Added -frags support
 
-int             r_swirl;
+boolean         r_swirl;
 
 void P_UpdateSpecials (void)
 {
