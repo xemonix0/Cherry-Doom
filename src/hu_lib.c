@@ -237,7 +237,7 @@ static int horz_align_widget(const hu_widget_t *const w, const hu_line_t *const 
   if (st_crispyhud) {
     // Messages hack
     if (w->x == 1994)
-    { return x - ((h_align == align_left) ? WIDESCREENDELTA : 0); }
+    { return x - ((h_align == align_left && !hud_widescreen_widgets) ? WIDESCREENDELTA : 0); }
 
     switch (h_align) {
       case align_left:    x += w->x - left_margin;   break;
