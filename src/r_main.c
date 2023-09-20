@@ -190,7 +190,7 @@ void R_SetShake(int value)
     return;
   }
 
-  shake = BETWEEN(shake, MAXSHAKE, value);
+  shake = MIN(shake + value, MAXSHAKE);
 }
 
 void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
