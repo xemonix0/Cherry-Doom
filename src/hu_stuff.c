@@ -125,6 +125,7 @@ static hu_multiline_t w_powers; // Powerup timers
 
 #define MAX_HUDS 3
 #define MAX_WIDGETS (10+1) // [Nugget] Support more widgets
+#define NUGHUDSLOT 3 // [Nugget] NUGHUD
 
 // [Nugget] Extra slot for NUGHUD
 static hu_widget_t doom_widgets[MAX_HUDS+1][MAX_WIDGETS] = {
@@ -146,7 +147,7 @@ static hu_widget_t doom_widgets[MAX_HUDS+1][MAX_WIDGETS] = {
     {&w_chat,    align_left,   align_top},
     {&w_secret,  align_center, align_direct, 0, 84},
     {NULL}
-  }, { // [Nugget] NUGHUD
+  }, { // [Nugget] NUGHUD slot
     {&w_title,   align_left, align_top},
     {&w_message, align_left, align_top},
     {&w_chat,    align_left, align_top},
@@ -190,7 +191,7 @@ static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS] = {
     {&w_coord , align_right, align_top},
     {&w_fps,    align_right, align_top},
     {NULL}
-  }, { // [Nugget] NUGHUD
+  }, { // [Nugget] NUGHUD slot
     {&w_monsec, align_left, align_top},
     {&w_sttime, align_left, align_top},
     {&w_powers, align_left, align_top}, // [Nugget] Powerup timers
@@ -580,6 +581,52 @@ static void HU_widget_build_sttime(void);
 static void HU_widget_build_title (void);
 static void HU_widget_build_weapon (void);
 
+// [Nugget] /-----------------------------------------------------------------
+
+static void NughudAlignWidget(nughud_alignable_t *aligner, hu_widget_t *alignee)
+{
+  alignee->y = aligner->y;
+
+  // Messages hack
+  if (aligner->x == -1) {
+    alignee->h_align = message_centered ? align_center : align_left;
+    alignee->x = 1994;
+    return;
+  }
+  
+  switch (aligner->align) {
+    case -1:  alignee->h_align = align_left;    break;
+    case  0:  alignee->h_align = align_center;  break;
+    case  1:  alignee->h_align = align_right;   break;
+    default:                                    break;
+  }
+
+  alignee->x = aligner->x + NUGHUDWIDESHIFT(aligner->wide);
+}
+
+void HU_NughudAlignTime(void)
+{
+  hu_widget_t *w = boom_widgets[NUGHUDSLOT];
+
+  while (w->multiline) {
+    if (w->multiline == &w_sttime)
+    {
+      if (nughud.time_sts && !hud_level_stats && (!automapactive || !map_level_stats))
+      {
+        // Relocate Time text line to position of Stats text line
+        NughudAlignWidget(&nughud.sts, w);
+      }
+      else
+      { NughudAlignWidget(&nughud.time, w); }
+
+      break;
+    }
+    else { w++; }
+  }
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 void HU_Start(void)
 {
   int i;
@@ -690,6 +737,50 @@ void HU_Start(void)
                        NULL, HU_widget_build_fps);
 
   HU_set_centered_message();
+
+  // [Nugget] NUGHUD
+  if (st_crispyhud) {
+    hu_widget_t    *w;
+    hu_multiline_t *m;
+    nughud_alignable_t *na;
+
+    w = doom_widgets[NUGHUDSLOT];
+    while ((m = w->multiline)) {
+      na = NULL;
+      if      (m == &w_title)   { na = &nughud.title;   } 
+      else if (m == &w_message) { na = &nughud.message; }
+      else if (m == &w_chat)    { na = &nughud.message; }
+      else if (m == &w_secret)  { na = &nughud.secret;  }
+
+      if (na) {
+        if (m == &w_chat) {
+          w->x = 2 - WIDESCREENDELTA;
+          w->y = na->y + ((*m->font)->line_height * (message_list ? hud_msg_lines : 1));
+        }
+        else
+        { NughudAlignWidget(na, w); }
+      }
+
+      w++;
+    }
+
+    w = boom_widgets[NUGHUDSLOT];
+    while ((m = w->multiline)) {
+      na = NULL;
+      if      (m == &w_sttime) { na = &nughud.time;   }
+      else if (m == &w_monsec) { na = &nughud.sts;    }
+      else if (m == &w_powers) { na = &nughud.powers; }
+      else if (m == &w_coord)  { na = &nughud.coord;  }
+      else if (m == &w_fps)    { na = &nughud.fps;    }
+
+      if (na) {
+        if (na == &nughud.time) { HU_NughudAlignTime(); }
+        else                    { NughudAlignWidget(na, w); }
+      }
+
+      w++;
+    }
+  }
 
   HU_disable_all_widgets();
   HUlib_set_margins();
@@ -1642,32 +1733,10 @@ static int bscounter;
 
 int M_StringWidth(char *string);
 
-// [Nugget]
-static void NughudAlignWidget(nughud_alignable_t *aligner, hu_widget_t *alignee)
-{
-  alignee->y = aligner->y;
-
-  // Messages hack
-  if (aligner->x == -1) {
-    alignee->h_align = message_centered ? align_center : align_left;
-    alignee->x = 1994;
-    return;
-  }
-  
-  switch (aligner->align) {
-    case -1:  alignee->h_align = align_left;    break;
-    case  0:  alignee->h_align = align_center;  break;
-    case  1:  alignee->h_align = align_right;   break;
-    default:                                    break;
-  }
-
-  alignee->x = aligner->x + NUGHUDWIDESHIFT(aligner->wide);
-}
-
 void HU_Ticker(void)
 {
-  doom_widget = doom_widgets[st_crispyhud ? 3 : hud_active]; // [Nugget] NUGHUD
-  boom_widget = boom_widgets[st_crispyhud ? 3 : hud_active]; // [Nugget] NUGHUD
+  doom_widget = doom_widgets[st_crispyhud ? NUGHUDSLOT : hud_active]; // [Nugget] NUGHUD
+  boom_widget = boom_widgets[st_crispyhud ? NUGHUDSLOT : hud_active]; // [Nugget] NUGHUD
   plr = &players[displayplayer];         // killough 3/7/98
 
   HU_disable_all_widgets();
@@ -1824,55 +1893,6 @@ void HU_Ticker(void)
     HU_cond_build_widget(&w_monsec, hud_level_stats);
     HU_cond_build_widget(&w_sttime, hud_level_time || plr->eventtics); // [Nugget] Event timers
     HU_cond_build_widget(&w_powers, hud_power_timers); // [Nugget] Powerup timers
-  }
-
-  // [Nugget] NUGHUD
-  if (st_crispyhud) {
-    hu_widget_t    *w;
-    hu_multiline_t *m;
-    nughud_alignable_t *na = NULL;
-
-    w = doom_widgets[3];
-    while ((m = w->multiline)) {
-      na = NULL;
-      if      (m == &w_title)   { na = &nughud.title;   } 
-      else if (m == &w_message) { na = &nughud.message; }
-      else if (m == &w_chat)    { na = &nughud.message; }
-      else if (m == &w_secret)  { na = &nughud.secret;  }
-
-      if (na) {
-        if (m == &w_chat) {
-          w->x = 2 - WIDESCREENDELTA;
-          w->y = na->y + (*m->font)->line_height * (message_list ? hud_msg_lines : 1);
-        }
-        else
-        { NughudAlignWidget(na, w); }
-      }
-
-      w++;
-    }
-
-    w = boom_widgets[3];
-    while ((m = w->multiline)) {
-      na = NULL;
-      if      (m == &w_sttime) { na = &nughud.time;   }
-      else if (m == &w_monsec) { na = &nughud.sts;    }
-      else if (m == &w_powers) { na = &nughud.powers; }
-      else if (m == &w_coord)  { na = &nughud.coord;  }
-      else if (m == &w_fps)    { na = &nughud.fps;    }
-
-      if (na) {
-        if (na == &nughud.time && nughud.time_sts
-            && !hud_level_stats && (!automapactive || !map_level_stats))
-        {
-          // Relocate Time text line to position of Stats text line
-          NughudAlignWidget(&nughud.sts, w);
-        }
-        else { NughudAlignWidget(na, w); }
-      }
-
-      w++;
-    }
   }
 
   // update crosshair properties

@@ -33,6 +33,7 @@
 #include "m_input.h"
 #include "m_menu.h"
 // [Nugget]
+#include "hu_stuff.h"
 #include "p_map.h"
 #include "s_sound.h"
 #include "sounds.h"
@@ -733,6 +734,7 @@ void AM_Start()
   }
   AM_initVariables();
   AM_loadPics();
+  HU_NughudAlignTime(); // [Nugget] NUGHUD
 }
 
 //
