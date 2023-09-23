@@ -71,7 +71,8 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
 
           if (player)
           {
-            player->viewz = thing->z + player->viewheight;
+            // [Nugget] Account for crouching
+            player->viewz = thing->z + player->viewheight - player->crouchoffset;
             // [crispy] center view after teleporting
             player->centering = true;
             

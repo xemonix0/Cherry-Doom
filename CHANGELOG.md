@@ -24,3 +24,4 @@
 - **Powerup sound not playing sometimes**
 - **Explosive Hitscan cheat not being saved in savegames**
 - **MDK Fist not being accounted for by crosshair target highlighting**
+- **View jittering when teleporting while crouching**
