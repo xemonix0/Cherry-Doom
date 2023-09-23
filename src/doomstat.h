@@ -484,6 +484,7 @@ extern int chasecam_height;
 
 extern int no_menu_tint;
 extern int no_berserk_tint;
+extern int no_radsuit_tint;
 extern int damagecount_cap;
 extern int bonuscount_cap;
 extern int fake_contrast;

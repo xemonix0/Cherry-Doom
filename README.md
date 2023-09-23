@@ -48,6 +48,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - _**Chasecam**_ [i.b. ZDoom]
 - _**Disable palette tint in menus**_ setting [i.b. Crispy Doom]
 - _**Disable Berserk Tint**_ setting
+- _**Disable Radiation Suit Tint**_ setting
 - _**Damage Tint Cap**_ and _**Bonus Tint Cap**_, to attenuate or disable the red and yellow screen tints
 - _**Fake Contrast**_ setting
 - _**Screen Wipe speed percentage**_ setting

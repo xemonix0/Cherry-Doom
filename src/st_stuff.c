@@ -862,7 +862,8 @@ void ST_doPaletteStuff(void)
       if (beta_emulation)
         palette = 0;
       else
-      if (plyr->powers[pw_ironfeet] > 4*32 || plyr->powers[pw_ironfeet] & 8)
+      if ((plyr->powers[pw_ironfeet] > 4*32 || plyr->powers[pw_ironfeet] & 8)
+          && !STRICTMODE(no_radsuit_tint)) // [Nugget]
         palette = RADIATIONPAL;
       else
         palette = 0;

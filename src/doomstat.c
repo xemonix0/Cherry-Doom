@@ -157,6 +157,7 @@ int chasecam_height;
 
 int no_menu_tint;
 int no_berserk_tint;
+int no_radsuit_tint;
 int damagecount_cap;
 int bonuscount_cap;
 int fake_contrast;

@@ -796,6 +796,13 @@ default_t defaults[] = {
   },
 
   {
+    "no_radsuit_tint",
+    (config_t *) &no_radsuit_tint, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to disable Radiation Suit tint"
+  },
+
+  {
     "damagecount_cap",
     (config_t *) &damagecount_cap, NULL,
     {100}, {0,100}, number, ss_gen, wad_no,

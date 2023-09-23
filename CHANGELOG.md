@@ -1,6 +1,7 @@
 ## New Features
 
 - **_Explosion Shake Effect_** setting
+- **_Disable Radiation Suit Tint_** setting
 - **_Double Autoaim range_** setting
 - **Keep palette changes in screenshots** setting
 
