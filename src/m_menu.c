@@ -3295,6 +3295,7 @@ static const char *weapon_attack_alignment_strings[] = {
 
 static void M_UpdateCenteredWeaponItem(void)
 {
+  // [Nugget] Check for weapon bobbing percentage instead
   DISABLE_ITEM(!weapon_bobbing_percentage, weap_settings2[weap2_center]);
 }
 
@@ -4427,6 +4428,56 @@ enum {
   gen5_end2,
 };
 
+// [Nugget] /-----------------------------------------------------------------
+
+enum {
+  gen6_title1,
+  gen6_overunder,
+  gen6_jump_crouch,
+  gen6_stub1,
+  gen6_title2,
+  gen6_fov,
+  gen6_viewheight,
+  gen6_viewbobbing,
+  gen6_impactpitch,
+  gen6_expshake,
+  gen6_idlebobbing,
+  gen6_telezoom,
+  gen6_deathcam,
+  gen6_chasecam,
+  gen6_chasedist,
+  gen6_chaseheight,
+};
+
+enum {
+  gen7_title1,
+  gen7_menutint,
+  gen7_berserktint,
+  gen7_radsuittint,
+  gen7_dmgcountcap,
+  gen7_boncountcap,
+  gen7_fakecontrast,
+  gen7_wipespeed,
+  gen7_stub1,
+  gen7_title2,
+  gen7_sclipdist,
+  gen7_quicksaveload,
+  gen7_nopagetic,
+  gen7_quickexit,
+};
+
+enum {
+  gen8_title1,
+#if 0 // For future use, hopefully
+  gen8_a11y_seclight,
+#endif
+  gen8_a11y_flash,
+  gen8_a11y_pspr,
+  gen8_a11y_invul,
+};
+
+// [Nugget] -----------------------------------------------------------------/
+
 #define MOUSE_ACCEL_STRINGS_SIZE (40 + 2)
 
 static const char *mouse_accel_strings[MOUSE_ACCEL_STRINGS_SIZE];
@@ -4444,6 +4495,19 @@ static void M_InitMouseAccel(void)
   }
 
   mouse_accel_strings[i] = NULL;
+}
+
+// [Nugget]
+static void M_UpdatePaletteItems(void)
+{
+  extern boolean palette_changes;
+
+  DISABLE_ITEM(!palette_changes, gen_settings7[gen7_menutint]);
+  DISABLE_ITEM(!palette_changes, gen_settings7[gen7_berserktint]);
+  DISABLE_ITEM(!palette_changes, gen_settings7[gen7_radsuittint]);
+  DISABLE_ITEM(!palette_changes, gen_settings7[gen7_dmgcountcap]);
+  DISABLE_ITEM(!palette_changes, gen_settings7[gen7_boncountcap]);
+  DISABLE_ITEM(!palette_changes, gen_settings8[gen8_a11y_invul]);
 }
 
 void M_ResetTimeScale(void)
@@ -4600,7 +4664,7 @@ setup_menu_t gen_settings4[] = { // General Settings screen4
    M_Y + gen4_demobar*M_SPC, {"demobar"}},
 
   {"Pain/pickup/powerup flashes", S_YESNO|S_STRICT, m_null, M_X,
-   M_Y + gen4_palette_changes*M_SPC, {"palette_changes"}},
+   M_Y + gen4_palette_changes*M_SPC, {"palette_changes"}, 0, M_UpdatePaletteItems}, // [Nugget]
 
   {"Level Brightness", S_THERMO|S_STRICT, m_null, M_X_THRM,
    M_Y + gen4_level_brightness*M_SPC, {"extra_level_brightness"}},
@@ -4676,25 +4740,6 @@ setup_menu_t gen_settings5[] = { // General Settings screen5
   {0,S_SKIP|S_END,m_null}
 };
 
-enum { // [Nugget]
-  gen6_title1,
-  gen6_overunder,
-  gen6_jump_crouch,
-  gen6_stub1,
-  gen6_title2,
-  gen6_fov,
-  gen6_viewheight,
-  gen6_viewbobbing,
-  gen6_impactpitch,
-  gen6_expshake,
-  gen6_idlebobbing,
-  gen6_telezoom,
-  gen6_deathcam,
-  gen6_chasecam,
-  gen6_chasedist,
-  gen6_chaseheight,
-};
-
 static const char *impact_pitch_str[] = {
   "Off", "Fall", "Damage", "Both", NULL
 };
@@ -4730,23 +4775,6 @@ setup_menu_t gen_settings6[] = { // [Nugget]
   {0,S_SKIP|S_END,m_null}
 };
 
-enum { // [Nugget]
-  gen7_title1,
-  gen7_menutint,
-  gen7_berserktint,
-  gen7_radsuittint,
-  gen7_dmgcountcap,
-  gen7_boncountcap,
-  gen7_fakecontrast,
-  gen7_wipespeed,
-  gen7_stub1,
-  gen7_title2,
-  gen7_sclipdist,
-  gen7_quicksaveload,
-  gen7_nopagetic,
-  gen7_quickexit,
-};
-
 static const char *s_clipping_dists[] = {
   "1200", "2400", NULL
 };
@@ -4778,16 +4806,6 @@ setup_menu_t gen_settings7[] = { // [Nugget]
   // Final entry
 
   {0,S_SKIP|S_END,m_null}
-};
-
-enum { // [Nugget]
-  gen8_title1,
-#if 0 // [Nugget] For future use, hopefully
-  gen8_a11y_seclight,
-#endif
-  gen8_a11y_flash,
-  gen8_a11y_pspr,
-  gen8_a11y_invul,
 };
 
 setup_menu_t gen_settings8[] = { // [Nugget]
@@ -7926,6 +7944,8 @@ void M_ResetSetupMenu(void)
   
   if (!(extra_gibbing[EXGIB_FIST] || extra_gibbing[EXGIB_CSAW] || extra_gibbing[EXGIB_SSG]))
   { enem_settings1[enem1_extra_gibbing].m_flags |= S_DISABLE; }
+
+  M_UpdatePaletteItems();
 }
 
 void M_ResetSetupMenuVideo(void)
