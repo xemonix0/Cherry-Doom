@@ -2,6 +2,7 @@
 
 - **_Explosion Shake Effect_** setting
 - **_Double Autoaim range_** setting
+- **Keep palette changes in screenshots** setting
 
 ## Changes
 

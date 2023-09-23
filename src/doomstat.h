@@ -551,10 +551,9 @@ extern int fancy_teleport;
 
 // CFG only -----------------
 
+extern int gammacycle;
 extern int menu_background_darkening;
 extern int chasecam_crosshair;
-extern int sp_chat;
-extern int gammacycle;
 extern int always_bob;
 extern int weapon_inertia_scale_pct;
 extern int sx_fix;
@@ -569,6 +568,15 @@ typedef enum {
   NUMEXGIBS
 } extragibbing_t;
 extern int extra_gibbing[];
+
+extern int sp_chat;
+
+enum {
+  SHOTPAL_NONE,
+  SHOTPAL_NORMAL,
+  SHOTPAL_CLEAN,
+  SHOTPAL_BOTH,
+}; extern int screenshot_palette;
 
 // Doom Compatibility -------
 

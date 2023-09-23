@@ -374,7 +374,7 @@ default_t defaults[] = {
   { // killough 2/21/98: default to 10
     "screenblocks",
     (config_t *) &screenblocks, NULL,
-    {10}, {3,13}, number, ss_none, wad_no, // [Nugget] Increase max to 13 to accommodate Nugget HUD
+    {10}, {3,13}, number, ss_none, wad_no, // [Nugget] Increased max to 13 to accommodate NUGHUD
     "initial play screen size"
   },
 
@@ -2383,6 +2383,13 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to take a clean screenshot",
     input_clean_screenshot, { {0, 0} }
+  },
+
+  { // [Nugget]
+    "screenshot_palette",
+    (config_t *) &screenshot_palette, NULL,
+    {1}, {0,3}, number, ss_none, wad_no,
+    "Keep palette changes in screenshots (0 = None, 1 = Normal, 2 = Clean, 3 = Both)"
   },
 
   { // HOME key  // killough 10/98: shortcut to setup menu

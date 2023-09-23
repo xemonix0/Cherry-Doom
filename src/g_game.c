@@ -2290,14 +2290,16 @@ static void G_DoLoadGame(void)
 }
 
 boolean clean_screenshot;
+extern void ST_ResetPalette(void); // [Nugget] Taken out of `G_CleanScreenshot()`
 
 void G_CleanScreenshot(void)
 {
   int old_screenblocks;
   boolean old_hide_weapon;
-  extern void ST_ResetPalette(void);
+  // [Nugget] Took `extern ST_ResetPalette()` out
 
-  ST_ResetPalette();
+  if (!(screenshot_palette & SHOTPAL_CLEAN)) // [Nugget]
+    ST_ResetPalette();
 
   old_screenblocks = screenblocks;
   old_hide_weapon = hide_weapon;
@@ -2359,6 +2361,12 @@ void G_Ticker(void)
 	  G_CleanScreenshot();
 	  clean_screenshot = false;
 	}
+	// [Nugget]
+	else if (!(screenshot_palette & SHOTPAL_NORMAL))
+	{
+	  ST_ResetPalette();
+	}
+
 	M_ScreenShot();
 	gameaction = ga_nothing;
 	break;

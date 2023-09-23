@@ -206,16 +206,17 @@ int fancy_teleport;
 
 // CFG only -----------------
 
+int gammacycle;
 int menu_background_darkening;
 int chasecam_crosshair;
-int sp_chat;
-int gammacycle;
 int always_bob;
 int weapon_inertia_scale_pct;
 int sx_fix;
 int blink_keys;
 int automap_overlay_darkening;
 int extra_gibbing[NUMEXGIBS];
+int sp_chat;
+int screenshot_palette;
 
 // Doom Compatibility -------
 
