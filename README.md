@@ -60,6 +60,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - Toggling of _**Weapon Flash Sprite**_ [p.f. Crispy Doom]
 - Toggling of _**Invulnerability Colormap**_ [p.f. Crispy Doom]
 - **Keep palette changes in screenshots** setting (CFG-Only: `screenshot_palette`)
+- **Setting of savegame and screenshot paths in config file**
 
 ### Weapons
 

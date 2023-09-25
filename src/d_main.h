@@ -33,6 +33,10 @@ extern char *basesavegame;     // killough 2/16/98: savegame path
 extern char *screenshotdir; // [FG] screenshot path
 char *D_DoomPrefDir(void); // [FG] default configuration dir
 
+// [Nugget]
+extern char *savegame_path;
+extern char *screenshot_path;
+
 //jff 1/24/98 make command line copies of play modes available
 extern boolean clnomonsters; // checkparm of -nomonsters
 extern boolean clrespawnparm;  // checkparm of -respawn

@@ -135,6 +135,24 @@ default_t defaults[] = {
     "1 to show help strings about each variable in config file"
   },
 
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "savegame_path",
+    (config_t *) &savegame_path, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "Path where savegames are stored"
+  },
+
+  {
+    "screenshot_path",
+    (config_t *) &screenshot_path, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "Path where screenshots are stored"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
+
   //
   // Video
   //
@@ -3902,7 +3920,7 @@ void M_LoadDefaults (void)
   // edit these strings (i.e. chat macros in the Chat Strings Setup screen).
 
   for (dp = defaults; dp->name; dp++)
-    if (dp->type == string)
+    if (dp->type == string && dp->defaultvalue.s) // [Nugget] Check for empty strings
       dp->location->s = strdup(dp->defaultvalue.s);
     else if (dp->type == number)
       dp->location->i = dp->defaultvalue.i;

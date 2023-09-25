@@ -152,6 +152,10 @@ char    *basedefault = NULL;   // default file
 char    *basesavegame = NULL;  // killough 2/16/98: savegame directory
 char    *screenshotdir = NULL; // [FG] screenshot directory
 
+// [Nugget]
+char *savegame_path = NULL;
+char *screenshot_path = NULL;
+
 // If true, the main game loop has started.
 boolean main_loop_started = false;
 
@@ -945,13 +949,34 @@ static void CheckIWAD(const char *iwadname)
 
 void IdentifyVersion (void)
 {
-  int         i;    //jff 3/24/98 index of args on commandline
   char *iwad;
 
   // get config file from same directory as executable
   // killough 10/98
   if (basedefault) free(basedefault);
   basedefault = M_StringJoin(D_DoomPrefDir(), DIR_SEPARATOR_S, D_DoomExeName(), ".cfg", NULL);
+
+  // [Nugget] Saves and screenshots paths are now set elsewhere
+
+  // locate the IWAD and determine game mode from it
+
+  iwad = D_FindIWADFile(&gamemode, &gamemission);
+
+  if (iwad && *iwad)
+    {
+      if (gamemode == indetermined)
+        CheckIWAD(iwad);
+
+      D_AddFile(iwad);
+    }
+  else
+    I_Error("IWAD not found");
+}
+
+// [Nugget]
+void SetSavesAndShotsPaths(void)
+{
+  int i; //jff 3/24/98 index of args on commandline
 
   // set save path to -save parm or current dir
 
@@ -980,6 +1005,20 @@ void IdentifyVersion (void)
       free(screenshotdir);
     screenshotdir = M_StringDuplicate(basesavegame);
   }
+  // [Nugget] Set to path determined by config file
+  else if (savegame_path && strcmp(savegame_path, ""))
+  {
+    if (basesavegame)
+      free(basesavegame);
+    basesavegame = M_StringDuplicate(savegame_path);
+
+    M_MakeDirectory(basesavegame);
+
+    // [Nugget] Fall back to `savegame_path`
+    if (screenshotdir)
+      free(screenshotdir);
+    screenshotdir = M_StringDuplicate(basesavegame);
+  }
 
   //!
   // @arg <directory>
@@ -997,20 +1036,15 @@ void IdentifyVersion (void)
 
     M_MakeDirectory(screenshotdir);
   }
+  // [Nugget] Set to path determined by config file
+  else if (screenshot_path && strcmp(screenshot_path, ""))
+  {
+    if (screenshotdir)
+      free(screenshotdir);
+    screenshotdir = M_StringDuplicate(screenshot_path);
 
-  // locate the IWAD and determine game mode from it
-
-  iwad = D_FindIWADFile(&gamemode, &gamemission);
-
-  if (iwad && *iwad)
-    {
-      if (gamemode == indetermined)
-        CheckIWAD(iwad);
-
-      D_AddFile(iwad);
-    }
-  else
-    I_Error("IWAD not found");
+    M_MakeDirectory(screenshotdir);
+  }
 }
 
 static void PrintVersion(void)
@@ -2437,6 +2471,8 @@ void D_DoomMain(void)
 
   M_LoadDefaults();  // load before initing other systems
   M_NughudLoadDefaults(); // [Nugget]
+
+  SetSavesAndShotsPaths(); // [Nugget] May be set by config file
 
   PrintVersion();
 

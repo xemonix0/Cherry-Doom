@@ -1,5 +1,6 @@
 ## New Features
 
+- **Setting of savegame and screenshot paths in config file**
 - **_Explosion Shake Effect_** setting
 - **_Disable Radiation Suit Tint_** setting
 - **_Double Autoaim range_** setting
