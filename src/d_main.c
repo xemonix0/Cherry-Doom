@@ -152,9 +152,11 @@ char    *basedefault = NULL;   // default file
 char    *basesavegame = NULL;  // killough 2/16/98: savegame directory
 char    *screenshotdir = NULL; // [FG] screenshot directory
 
-// [Nugget]
+// [Nugget] /-----------------------------------------------------------------
 char *savegame_path = NULL;
 char *screenshot_path = NULL;
+int organize_saves;
+// [Nugget] -----------------------------------------------------------------/
 
 // If true, the main game loop has started.
 boolean main_loop_started = false;
@@ -929,7 +931,7 @@ static void CheckIWAD(const char *iwadname)
 //
 // IdentifyVersion
 //
-// Set the location of the defaults file and the savegame root
+// Set the location of the defaults file
 // Locate and validate an IWAD file
 // Determine gamemode from the IWAD
 //
@@ -956,7 +958,7 @@ void IdentifyVersion (void)
   if (basedefault) free(basedefault);
   basedefault = M_StringJoin(D_DoomPrefDir(), DIR_SEPARATOR_S, D_DoomExeName(), ".cfg", NULL);
 
-  // [Nugget] Saves and screenshots paths are now set elsewhere
+  // [Nugget] Save and screenshot paths are now set elsewhere
 
   // locate the IWAD and determine game mode from it
 
@@ -974,7 +976,7 @@ void IdentifyVersion (void)
 }
 
 // [Nugget]
-void SetSavesAndShotsPaths(void)
+static void SetSavesAndShotsPaths(void)
 {
   int i; //jff 3/24/98 index of args on commandline
 
@@ -1005,19 +1007,41 @@ void SetSavesAndShotsPaths(void)
       free(screenshotdir);
     screenshotdir = M_StringDuplicate(basesavegame);
   }
-  // [Nugget] Set to path determined by config file
-  else if (savegame_path && strcmp(savegame_path, ""))
-  {
-    if (basesavegame)
-      free(basesavegame);
-    basesavegame = M_StringDuplicate(savegame_path);
+  else { // [Nugget]
+    // Set to path determined by config file
+    if (savegame_path && strcmp(savegame_path, ""))
+    {
+      if (basesavegame)
+        free(basesavegame);
+      basesavegame = M_StringDuplicate(savegame_path);
 
-    M_MakeDirectory(basesavegame);
+      M_MakeDirectory(basesavegame);
 
-    // [Nugget] Fall back to `savegame_path`
-    if (screenshotdir)
-      free(screenshotdir);
-    screenshotdir = M_StringDuplicate(basesavegame);
+      // Fall back to `savegame_path`
+      if (screenshotdir)
+        free(screenshotdir);
+      screenshotdir = M_StringDuplicate(savegame_path);
+    }
+
+    // Organize saves by IWAD
+    if (organize_saves)
+    {
+      char *lower;
+
+      // If using default save path, default to a "savegames" directory
+      if (!savegame_path || !strcmp(savegame_path, ""))
+      {
+        basesavegame = M_StringJoin(basesavegame, "savegames", NULL);
+        M_MakeDirectory(basesavegame);
+      }
+
+      lower = M_StringDuplicate(M_BaseName(wadfiles[0]));
+      M_ForceLowercase(lower);
+      basesavegame = M_StringJoin(basesavegame, DIR_SEPARATOR_S, lower, NULL);
+      free(lower);
+
+      M_MakeDirectory(basesavegame);
+    }
   }
 
   //!

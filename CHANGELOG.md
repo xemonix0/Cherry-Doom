@@ -1,5 +1,6 @@
 ## New Features
 
+- **_Organize Saves by IWAD_** setting
 - **Setting of savegame and screenshot paths in config file**
 - **_Explosion Shake Effect_** setting
 - **_Disable Radiation Suit Tint_** setting

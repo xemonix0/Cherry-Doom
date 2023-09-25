@@ -138,6 +138,13 @@ default_t defaults[] = {
   // [Nugget] /---------------------------------------------------------------
 
   {
+    "organize_saves",
+    (config_t *) &organize_saves, NULL,
+    {0}, {0, 1}, number, ss_gen, wad_no,
+    "1 to organize savegames by IWAD"
+  },
+
+  {
     "savegame_path",
     (config_t *) &savegame_path, NULL,
     {.s = ""}, {0}, string, ss_none, wad_no,
