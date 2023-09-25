@@ -174,7 +174,10 @@ static patch_t *arms[6+3][2]; // [Nugget] Extend array to accomodate 9 numbers
 
 // [Nugget] /----------------
 
-static int berserklump;
+static patch_t *stbersrk;
+static int lu_berserk;
+
+static patch_t *stinfnty;
 
 static int nughud_patchlump[NUMNUGHUDPATCHES];
 
@@ -927,7 +930,8 @@ void ST_drawWidgets(void)
 
   if (!st_crispyhud || nughud.ammo.x > -1) { // [Nugget] NUGHUD
     //jff 2/16/98 make color of ammo depend on amount
-    if (plyr->cheats & CF_INFAMMO) // [Nugget] Make it gray if the player has infinite ammo
+    // [Nugget] Make it gray if the player has infinite ammo
+    if (plyr->cheats & CF_INFAMMO)
     { STlib_updateNum(&w_ready, cr_gray); }
     else
     if (*w_ready.num*100 < ammo_red*maxammo)
@@ -946,25 +950,34 @@ void ST_drawWidgets(void)
   if ((screenblocks < CRISPY_HUD || (st_crispyhud && nughud.ammo.x > -1))
       && weaponinfo[plyr->readyweapon].ammo == am_noammo)
   {
+    const int ammox = (st_crispyhud ? nughud.ammo.x : ST_AMMOX) + NUGHUDWIDESHIFT(nughud.ammo.wide),
+              ammoy = (st_crispyhud ? nughud.ammo.y : ST_AMMOY);
+
     // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
     if (show_berserk && plyr->readyweapon == wp_fist && plyr->powers[pw_strength])
     {
       // NUGHUD Berserk
       if (st_crispyhud && nughud.nhbersrk)
-      { V_DrawPatch(nughud.ammo.x + NUGHUDWIDESHIFT(nughud.ammo.wide), nughud.ammo.y, FG, nughud_berserk); }
-      // Normal Berserk
-      else if (berserklump >= 0) {
-        patch_t *const patch = W_CacheLumpNum(berserklump, PU_STATIC);
+      { V_DrawPatch(ammox, ammoy, FG, nughud_berserk); }
+      // Status Bar Berserk
+      else if (stbersrk)
+      { V_DrawPatch(ammox, ammoy, FG, stbersrk); }
+      // Berserk or Medkit sprite
+      else if (lu_berserk >= 0) {
+        patch_t *const patch = W_CacheLumpNum(lu_berserk, PU_STATIC);
         
         // [crispy] (23,179) is the center of the Ammo widget
-        V_DrawPatch((st_crispyhud ? nughud.ammo.x : ST_AMMOX) - 21 - SHORT(patch->width)/2 + SHORT(patch->leftoffset)
-                    + NUGHUDWIDESHIFT(nughud.ammo.wide),
-                    (st_crispyhud ? nughud.ammo.y : ST_AMMOY) + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
+        V_DrawPatch(ammox - 21 - SHORT(patch->width)/2 + SHORT(patch->leftoffset),
+                    ammoy + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
                     FG, patch);
       }
     }
+    // NUGHUD Infinity
     else if (st_crispyhud && nughud.nhinfnty)
-    { V_DrawPatch(nughud.ammo.x + NUGHUDWIDESHIFT(nughud.ammo.wide), nughud.ammo.y, FG, nughud_infinity); }
+    { V_DrawPatch(ammox, ammoy, FG, nughud_infinity); }
+    // Status Bar Infinity
+    else if (stinfnty)
+    { V_DrawPatch(ammox, ammoy, FG, stinfnty); }
   }
 
   // [Nugget] NUGHUD
@@ -1203,33 +1216,45 @@ void ST_loadGraphics(void)
   }
   have_xdthfaces = i;
 
-  // [Nugget] ---------------------------------------------
-
-  // Find normal Berserk patch
-  berserklump = (W_CheckNumForName)("PSTRA0", ns_sprites);
-  if (berserklump == -1)
-  { berserklump = (W_CheckNumForName)("MEDIA0", ns_sprites); }
-
-  // Find NUGHUD patches
-  for (i = 0;  i < NUMNUGHUDPATCHES;  i++)
-  {
-    if (nughud.patches[i].name != NULL)
-    {
-      nughud_patchlump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_sprites);
-      if (nughud_patchlump[i] == -1)
-      { nughud_patchlump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_global); }
-    }
-    else
-    { nughud_patchlump[i] = -1; }
-  }
-
-  { // Load NUGHUD fonts
+  { // [Nugget] --------------------------------------------------------------
     int lump;
-    
+
+    // Find Status Bar Berserk patch
+    if ((lump = (W_CheckNumForName)("STBERSRK", ns_global)) >= 0)
+    { stbersrk = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+    else {
+      stbersrk = NULL;
+
+      lu_berserk = (W_CheckNumForName)("PSTRA0", ns_sprites);
+      if (lu_berserk == -1)
+      { lu_berserk = (W_CheckNumForName)("MEDIA0", ns_sprites); }
+    }
+
+    // Find Status Bar Infinity patch
+    if ((lump = (W_CheckNumForName)("STINFNTY", ns_global)) >= 0)
+    { stinfnty = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+    else
+    { stinfnty = NULL; }
+
+    // Find NUGHUD patches
+    for (i = 0;  i < NUMNUGHUDPATCHES;  i++)
+    {
+      if (nughud.patches[i].name != NULL)
+      {
+        nughud_patchlump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_sprites);
+        if (nughud_patchlump[i] == -1)
+        { nughud_patchlump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_global); }
+      }
+      else
+      { nughud_patchlump[i] = -1; }
+    }
+
+    // Load NUGHUD fonts -----------------------------------------------------
+
     // Tall Numbers -------------------
-    
+
     nughud.nhtnum = true;
-    
+
     for (i = 0;  i < 10;  i++) { // Load NHTNUM0 to NHTNUM9
       sprintf(namebuf, "NHTNUM%d", i);
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
@@ -1239,23 +1264,23 @@ void ST_loadGraphics(void)
         break;
       }
     }
-    
-     // Load NHTMINUS
+
+    // Load NHTMINUS
     if (nughud.nhtnum && (lump = (W_CheckNumForName)("NHTMINUS", ns_global)) >= 0)
     { nughud_tallminus = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
     else
     { nughud.nhtnum = false; }
-    
-     // Load NHTPRCNT
+
+    // Load NHTPRCNT
     if (nughud.nhtnum && (lump = (W_CheckNumForName)("NHTPRCNT", ns_global)) >= 0)
     { nughud_tallpercent = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
     else
     { nughud.nhtnum = false; }
-    
+
     // Ready Ammo Numbers -------------
-    
+
     nughud.nhrnum = true;
-    
+
     for (i = 0;  i < 10;  i++) { // Load NHRNUM0 to NHRNUM9
       sprintf(namebuf, "NHRNUM%d", i);
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
@@ -1265,17 +1290,17 @@ void ST_loadGraphics(void)
         break;
       }
     }
-    
-     // Load NHRMINUS
+
+    // Load NHRMINUS
     if (nughud.nhrnum && (lump = (W_CheckNumForName)("NHRMINUS", ns_global)) >= 0)
     { nughud_readyminus = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
     else
     { nughud.nhrnum = false; }
-    
+
     // Ammo numbers -------------------
-    
+
     nughud.nhamnum = true;
-    
+
     for (i = 0;  i < 10;  i++) { // Load NHAMNUM0 to NHAMNUM9
       M_snprintf(namebuf, sizeof(namebuf), "NHAMNUM%d", i);
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
@@ -1285,11 +1310,11 @@ void ST_loadGraphics(void)
         break;
       }
     }
-    
+
     // Arms numbers -------------------
-    
+
     nughud.nhwpnum = true;
-    
+
     for (i = 0;  i < 9;  i++) {
       sprintf(namebuf, "NHW0NUM%d", i+1); // Load NHW0NUM1 to NHW0NUM9
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
@@ -1298,7 +1323,7 @@ void ST_loadGraphics(void)
         nughud.nhwpnum = false;
         break;
       }
-      
+
       sprintf(namebuf, "NHW1NUM%d", i+1); // Load NHW1NUM1 to NHW1NUM9
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       { nughud_armsnum[i][1] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
@@ -1307,11 +1332,11 @@ void ST_loadGraphics(void)
         break;
       }
     }
-    
+
     // Keys ---------------------------
-    
+
     nughud.nhkeys = true;
-    
+
     // Load NHKEYS
     for (i = 0;  i < NUMCARDS+3;  i++) {
       sprintf(namebuf, "NHKEYS%d", i);
@@ -1322,21 +1347,21 @@ void ST_loadGraphics(void)
         break;
       }
     }
-    
+
     // Berserk ------------------------
-    
+
     nughud.nhbersrk = true;
-    
+
     // Load NHBERSRK
     if ((lump = (W_CheckNumForName)("NHBERSRK", ns_global)) >= 0)
     { nughud_berserk = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
     else
     { nughud.nhbersrk = false; }
-    
+
     // Armor icons --------------------
-    
+
     nughud.nharmor = true;
-    
+
     for (i = 0;  i < 3;  i++) { // Load NHARMOR0 to NHARMOR2
       sprintf(namebuf, "NHARMOR%d", i);
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
@@ -1346,11 +1371,11 @@ void ST_loadGraphics(void)
         break;
       }
     }
-    
+
     // Infinity -----------------------
-    
+
     nughud.nhinfnty = true;
-    
+
     // Load NHINFNTY
     if ((lump = (W_CheckNumForName)("NHINFNTY", ns_global)) >= 0)
     { nughud_infinity = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }

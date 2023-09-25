@@ -87,6 +87,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - _**Smart Totals**_ setting [p.f. So Doom]
 - _**(In)Complete Milestone Color**_ choices, to customize the Stats text's colors
 - **Armor count is colored gray when in God Mode**
+- **Support for Berserk (`STBERSRK`) and Infinite Ammo (`STINFNTY`) icons**
 - **Event Timers:**
   - _"Use" Button Timer_ [p.f. Crispy Doom]; 
   - _Teleport Timer_ [i.b. the above];
