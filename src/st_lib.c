@@ -43,8 +43,8 @@ patch_t*    sttminus;
 void STlib_init(void)
 {
   // [Nugget]
-  if (st_crispyhud && nughud.nhtnum)
-  { sttminus = nughud_tallminus; }
+  if (st_crispyhud && nhtminus)
+  { sttminus = nhtminus; }
   else
   // [FG] allow playing with the Doom v1.2 IWAD which is missing the STTMINUS lump
   if (W_CheckNumForName("STTMINUS") >= 0)
@@ -105,7 +105,7 @@ void STlib_drawNum
 
   int   neg;
   
-  patch_t *minus = (n->data ? nughud_readyminus : sttminus); // [Nugget]
+  patch_t *minus = (n->data ? nhrminus : sttminus); // [Nugget]
 
   n->oldnum = *n->num;
 

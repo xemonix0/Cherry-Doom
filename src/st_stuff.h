@@ -170,7 +170,7 @@ extern int hud_armor_type; // color of armor depends on type
 extern int st_solidbackground;
 
 // [Nugget]
-extern patch_t *nughud_tallminus, *nughud_readyminus;
+extern patch_t *nhtminus, *nhrminus;
 
 #endif
 
