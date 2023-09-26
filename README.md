@@ -54,14 +54,12 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - _**Screen Wipe speed percentage**_ setting
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
 - **_Organize Saves by IWAD_** setting
-- **Setting of savegame and screenshot paths in config file**
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
 - _**Play Internal Demos**_ setting
 - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt [p.f. Crispy Doom]
 - Toggling of _**Weapon Flash Lighting**_ [p.f. Crispy Doom]
 - Toggling of _**Weapon Flash Sprite**_ [p.f. Crispy Doom]
 - Toggling of _**Invulnerability Colormap**_ [p.f. Crispy Doom]
-- **Keep palette changes in screenshots** setting (CFG-Only: `screenshot_palette`)
 
 ### Weapons
 
@@ -163,6 +161,9 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 ### Miscellaneous
 
 - Key to **toggle zoom**
+- **Autoload folder for all games** (`autoload/all`)
+- **Setting of savegame and screenshot paths in config file** (CFG-Only: `savegame_path` and `screenshot_path`)
+- **Keep palette changes in screenshots** setting (CFG-Only: `screenshot_palette`)
 - **Allowed mouselook while dead**
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
 - **Support for optional sounds:** [p.f. Crispy Doom]

@@ -1641,6 +1641,11 @@ static void D_AutoloadIWadDir()
   {
     char *autoload_dir;
 
+    // [Nugget] Auto-loaded files for all games
+    autoload_dir = GetAutoloadDir(*base, "all", true);
+    AutoLoadWADs(autoload_dir);
+    free(autoload_dir);
+
     // common auto-loaded files for all Doom flavors
     if (gamemission < pack_chex)
     {
@@ -1705,6 +1710,11 @@ static void D_AutoloadDehDir()
   for (base = autoload_paths; base && *base; base++)
   {
     char *autoload_dir;
+
+    // [Nugget] Auto-loaded files for all games
+    autoload_dir = GetAutoloadDir(*base, "all", true);
+    AutoLoadWADs(autoload_dir);
+    free(autoload_dir);
 
     // common auto-loaded files for all Doom flavors
     if (gamemission < pack_chex)
