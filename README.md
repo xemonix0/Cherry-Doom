@@ -162,7 +162,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 - Key to **toggle zoom**
 - **Autoload folder for all games** (`autoload/all`)
-- **Setting of savegame and screenshot paths in config file** (CFG-Only: `savegame_path` and `screenshot_path`)
+- **Setting of savegame and screenshot paths in config file** (CFG-Only: `savegame_dir` and `screenshot_dir`)
 - **Keep palette changes in screenshots** setting (CFG-Only: `screenshot_palette`)
 - **Allowed mouselook while dead**
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
