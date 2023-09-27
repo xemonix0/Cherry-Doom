@@ -34,8 +34,8 @@ extern char *screenshotdir; // [FG] screenshot path
 char *D_DoomPrefDir(void); // [FG] default configuration dir
 
 // [Nugget] /-----------------------------------------------------------------
-extern char *savegame_path;
-extern char *screenshot_path;
+extern char *savegame_dir;
+extern char *screenshot_dir;
 extern int organize_saves;
 // [Nugget] -----------------------------------------------------------------/
 

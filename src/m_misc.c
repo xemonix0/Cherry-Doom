@@ -145,15 +145,15 @@ default_t defaults[] = {
   },
 
   {
-    "savegame_path",
-    (config_t *) &savegame_path, NULL,
+    "savegame_dir",
+    (config_t *) &savegame_dir, NULL,
     {.s = ""}, {0}, string, ss_none, wad_no,
     "Path where savegames are stored"
   },
 
   {
-    "screenshot_path",
-    (config_t *) &screenshot_path, NULL,
+    "screenshot_dir",
+    (config_t *) &screenshot_dir, NULL,
     {.s = ""}, {0}, string, ss_none, wad_no,
     "Path where screenshots are stored"
   },

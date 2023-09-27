@@ -153,8 +153,8 @@ char    *basesavegame = NULL;  // killough 2/16/98: savegame directory
 char    *screenshotdir = NULL; // [FG] screenshot directory
 
 // [Nugget] /-----------------------------------------------------------------
-char *savegame_path = NULL;
-char *screenshot_path = NULL;
+char *savegame_dir = NULL;
+char *screenshot_dir = NULL;
 int organize_saves;
 // [Nugget] -----------------------------------------------------------------/
 
@@ -1009,18 +1009,18 @@ static void SetSavesAndShotsPaths(void)
   }
   else { // [Nugget]
     // Set to path determined by config file
-    if (savegame_path && strcmp(savegame_path, ""))
+    if (savegame_dir && strcmp(savegame_dir, ""))
     {
       if (basesavegame)
         free(basesavegame);
-      basesavegame = M_StringDuplicate(savegame_path);
+      basesavegame = M_StringDuplicate(savegame_dir);
 
       M_MakeDirectory(basesavegame);
 
-      // Fall back to `savegame_path`
+      // Fall back to `savegame_dir`
       if (screenshotdir)
         free(screenshotdir);
-      screenshotdir = M_StringDuplicate(savegame_path);
+      screenshotdir = M_StringDuplicate(savegame_dir);
     }
 
     // Organize saves by IWAD
@@ -1029,7 +1029,7 @@ static void SetSavesAndShotsPaths(void)
       char *lower;
 
       // If using default save path, default to a "savegames" directory
-      if (!savegame_path || !strcmp(savegame_path, ""))
+      if (!savegame_dir || !strcmp(savegame_dir, ""))
       {
         basesavegame = M_StringJoin(basesavegame, "savegames", NULL);
         M_MakeDirectory(basesavegame);
@@ -1061,11 +1061,11 @@ static void SetSavesAndShotsPaths(void)
     M_MakeDirectory(screenshotdir);
   }
   // [Nugget] Set to path determined by config file
-  else if (screenshot_path && strcmp(screenshot_path, ""))
+  else if (screenshot_dir && strcmp(screenshot_dir, ""))
   {
     if (screenshotdir)
       free(screenshotdir);
-    screenshotdir = M_StringDuplicate(screenshot_path);
+    screenshotdir = M_StringDuplicate(screenshot_dir);
 
     M_MakeDirectory(screenshotdir);
   }
