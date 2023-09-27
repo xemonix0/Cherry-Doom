@@ -65,6 +65,7 @@ typedef struct
   // [Nugget]
   int align;
   boolean haspercent;
+  boolean isready;
 } st_number_t;
 
 // Percent widget ("child" of number widget,
