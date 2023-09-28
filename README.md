@@ -2,6 +2,10 @@
 
 Nugget Doom is a fork of [Woof!](https://github.com/fabiangreffrath/woof), simply intended to implement additional features.
 
+**Note:** this README and the rest of documentation are updated on a per-commit basis,
+meaning that they may not correspond to the latest release of Nugget Doom.
+If you're seeking information on the version you're using, please refer to the README included with it.
+
 ### DISCLAIMER
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
 **RECORD DEMOS AT YOUR OWN RISK!**
