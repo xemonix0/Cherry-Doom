@@ -7,6 +7,7 @@
 - **Support for Berserk and Infinity icons in Status Bar**
 - **Autoload folder for all games**
 - **Setting of savegame and screenshot paths in config file**
+- **_Use unused pain/bonus palettes_** setting
 - **Keep palette changes in screenshots** setting
 
 ## Changes

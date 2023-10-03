@@ -845,11 +845,11 @@ void ST_doPaletteStuff(void)
     {
       palette = (cnt+7)>>3;
       if (palette >= NUMREDPALS)
-        palette = NUMREDPALS-1;
+        palette = NUMREDPALS-1 + STRICTMODE(comp_unusedpals); // [Nugget]
       // [crispy] tune down a bit so the menu remains legible
       if (menuactive || paused)
         palette >>= 1;
-      palette += STARTREDPALS;
+      palette += STARTREDPALS - STRICTMODE(comp_unusedpals); // [Nugget]
     }
   }
   else
@@ -857,8 +857,8 @@ void ST_doPaletteStuff(void)
       {
         palette = (plyr->bonuscount+7)>>3;
         if (palette >= NUMBONUSPALS)
-          palette = NUMBONUSPALS-1;
-        palette += STARTBONUSPALS;
+          palette = NUMBONUSPALS-1 + STRICTMODE(comp_unusedpals); // [Nugget]
+        palette += STARTBONUSPALS - STRICTMODE(comp_unusedpals); // [Nugget]
       }
     else
       // killough 7/14/98: beta version did not cause green palette

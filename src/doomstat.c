@@ -237,6 +237,7 @@ int comp_cgundblsnd;
 int comp_cgunnersfx;
 int comp_flamst;
 int comp_deadoof;
+int comp_unusedpals;
 int comp_keypal;
 
 // [Nugget] --------------------------/

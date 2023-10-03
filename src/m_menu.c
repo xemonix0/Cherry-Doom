@@ -5094,6 +5094,7 @@ enum { // [Nugget]
   comp5_cgunnersfx,
   comp5_flamst,
   comp5_deadoof,
+  comp5_unusedpals,
   comp5_keypal,
 };
 
@@ -5107,6 +5108,7 @@ setup_menu_t comp_settings5[] =  // [Nugget]
     {"Chaingunner uses pistol/chaingun sound",       S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_cgunnersfx   * COMP_SPC, {"comp_cgunnersfx"}},
     {"Arch-Vile fire plays flame start sound",       S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_flamst       * COMP_SPC, {"comp_flamst"}},
     {"Dead players can still play oof sound",        S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_deadoof      * COMP_SPC, {"comp_deadoof"}},
+    {"Use unused pain/bonus palettes",               S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_unusedpals   * COMP_SPC, {"comp_unusedpals"}},
     {"Key pickup resets palette",                    S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_keypal       * COMP_SPC, {"comp_keypal"}},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings4}},

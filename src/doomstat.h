@@ -597,6 +597,7 @@ extern int comp_cgundblsnd;
 extern int comp_cgunnersfx;
 extern int comp_flamst;
 extern int comp_deadoof;
+extern int comp_unusedpals;
 extern int comp_keypal;
 
 // [Nugget] --------------------------/

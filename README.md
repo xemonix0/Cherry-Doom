@@ -4,7 +4,7 @@ Nugget Doom is a fork of [Woof!](https://github.com/fabiangreffrath/woof), simpl
 
 **Note:** this README and the rest of documentation are updated on a per-commit basis,
 meaning that they may not correspond to the latest release of Nugget Doom.
-If you're seeking information on the version you're using, please refer to the README included with it.
+If you're seeking information on the version you're using, please refer to the documentation included with it.
 
 ### DISCLAIMER
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
@@ -139,6 +139,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - Chaingunner uses pistol/chaingun sound
 - Arch-Vile fire plays flame start sound [p.f. Crispy Doom]
 - Dead players can still play "oof" sound [p.f. Crispy Doom]
+- Use unused pain/bonus palettes
 - Key pickup resets palette
 
 ### Cheats

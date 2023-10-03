@@ -1591,6 +1591,13 @@ default_t defaults[] = {
   },
 
   {
+    "comp_unusedpals",
+    (config_t *) &comp_unusedpals, NULL,
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Use unused pain/bonus palettes"
+  },
+
+  {
     "comp_keypal",
     (config_t *) &comp_keypal, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
