@@ -25,6 +25,7 @@
 #include "r_main.h"
 #include "v_video.h"
 #include "m_menu.h"
+#include "m_random.h" // Woof_Random()
 
 #define MAXWIDTH  MAX_SCREENWIDTH          /* kilough 2/8/98 */
 #define MAXHEIGHT MAX_SCREENHEIGHT
@@ -404,10 +405,11 @@ void R_DrawSkyColumn(void)
 
 // [Nugget - ceski] Selective fuzz darkening, credit: Linguica (https://www.doomworld.com/forum/post/1335769)
 int fuzzdark_mode;
-#define FUZZDARK    ((NOTSTRICTMODE(!fuzzdark_mode) || (fuzzoffset[fuzzpos] && (count != first_count))) ? 6*256 : 0)
-#define FUZZDARKCUT ((NOTSTRICTMODE(!fuzzdark_mode) || !fuzzoffset[fuzzpos]) ? 6*256 : 0)
-#define FUZZLINE    (linesize * (fuzzoffset[fuzzpos] ? 1 : -1))
-#define FUZZLINECUT (linesize * fuzzoffset[fuzzpos])
+#define FUZZMAP (6*256)
+#define FUZZNOISE (256 * (Woof_Random() < 32 ? (Woof_Random() & 1 ? 4 : 8) : 6))
+#define FUZZTOP (STRICTMODE(fuzzdark_mode) ? FUZZNOISE : FUZZMAP)
+#define FUZZDARK (STRICTMODE(fuzzdark_mode) ? (fuzzoffset[fuzzpos] ? 0 : FUZZNOISE) : FUZZMAP)
+#define FUZZLINE(a, b) (linesize * (fuzzoffset[fuzzpos] ? (a) : (b)))
 
 #define FUZZTABLE 50 
 
@@ -451,23 +453,22 @@ void R_SetFuzzPosDraw(void)
 //  i.e. spectres and invisible players.
 //
 
+static void DrawFuzzPixel(int dark, byte **dest, int a, int b)
+{
+  **dest = fullcolormap[dark + (*dest)[FUZZLINE(a, b)]];
+  *dest += linesize;             // killough 11/98
+
+  // Clamp table lookup index.
+  fuzzpos = (fuzzpos + 1) % FUZZTABLE;
+}
+
 static void R_DrawFuzzColumn_orig(void)
 { 
-  int      count, first_count;
+  int      count; 
   byte     *dest; 
-  boolean  cutoff = false;
+  const boolean cutoff_yl = (dc_yl == 0);
+  const boolean cutoff_yh = (dc_yh == viewheight - 1);
 
-  // Adjust borders. Low... 
-  if (!dc_yl) 
-    dc_yl = 1;
-
-  // .. and high.
-  if (dc_yh == viewheight-1) 
-  {
-    dc_yh = viewheight - 2; 
-    cutoff = true;
-  }
-                 
   count = dc_yh - dc_yl; 
 
   // Zero length.
@@ -492,9 +493,19 @@ static void R_DrawFuzzColumn_orig(void)
   // using the colormap #6 (of 0-31, a bit brighter than average).
 
   count++;        // killough 1/99: minor tuning
-  first_count = count;
 
-  do 
+  // Pixel at the bottom edge. Reduce count and process later.
+  if (cutoff_yh)
+    count--;
+
+  // First pixel in the column or pixel at the top edge.
+  if (count > 0)
+  {
+    DrawFuzzPixel(FUZZTOP, &dest, cutoff_yl ? 0 : -1, 1);
+    count--;
+  }
+
+  while (count-- > 0)
     {
       // Lookup framebuffer, and retrieve
       // a pixel that is either one row
@@ -506,20 +517,14 @@ static void R_DrawFuzzColumn_orig(void)
       // fraggle 1/8/2000: fix with the bugfix from lees
       // why_i_left_doom.html
 
-      *dest = fullcolormap[FUZZDARK + dest[FUZZLINE]];
-      dest += linesize;             // killough 11/98
-
-      // Clamp table lookup index.
-      fuzzpos++;
-      fuzzpos &= (fuzzpos - FUZZTABLE) >> (8*sizeof fuzzpos-1); //killough 1/99
+      DrawFuzzPixel(FUZZDARK, &dest, -1, 1);
     } 
-  while (--count);
 
   // [crispy] if the line at the bottom had to be cut off,
   // draw one extra line using only pixels of that line and the one above
-  if (cutoff)
+  if (cutoff_yh)
   {
-    *dest = fullcolormap[FUZZDARKCUT + dest[FUZZLINECUT]];
+    DrawFuzzPixel(FUZZDARK, &dest, -1, 0);
   }
 }
 
@@ -528,11 +533,25 @@ static void R_DrawFuzzColumn_orig(void)
 //      draw only even pixels as 2x2 squares
 //      using the same fuzzoffset value
 
+static void DrawFuzzBlock(int dark, byte **dest, int size, int a, int b)
+{
+  int i;
+  const byte fuzz = fullcolormap[dark + (*dest)[size * FUZZLINE(a, b)]];
+
+  for (i = 0; i < size; i++)
+  {
+    memset(*dest, fuzz, size);
+    *dest += linesize;
+  }
+
+  fuzzpos = (fuzzpos + 1) % FUZZTABLE;
+}
+
 static void R_DrawFuzzColumn_block(void)
 {
-  int i, count, first_count;
+  int count;
   byte *dest;
-  boolean cutoff = false;
+  boolean cutoff_yl, cutoff_yh;
   const int hires_size = 1 << hires;
   const int hires_mult = hires_size - 1;
 
@@ -541,22 +560,16 @@ static void R_DrawFuzzColumn_block(void)
     return;
 
   // [FG] draw only even pixels
-  dc_yl &= (int)~hires_mult;
+  dc_yl = (dc_yl + hires_mult) & ~hires_mult;
   dc_yh &= (int)~hires_mult;
-
-  if (!dc_yl)
-    dc_yl = hires_size;
-
-  if (dc_yh == viewheight - hires_size)
-  {
-    dc_yh = viewheight - 2 * hires_size;
-    cutoff = true;
-  }
 
   count = dc_yh - dc_yl;
 
   if (count < 0)
     return;
+
+  cutoff_yl = (dc_yl == 0);
+  cutoff_yh = (dc_yh == viewheight - hires_size);
 
 #ifdef RANGECHECK
   if ((unsigned) dc_x >= MAX_SCREENWIDTH
@@ -568,36 +581,28 @@ static void R_DrawFuzzColumn_block(void)
 
   dest = ylookup[dc_yl] + columnofs[dc_x];
 
-  count += hires_size;
   count >>= hires;
-  first_count = count;
+  count++;
 
-  do
+  if (cutoff_yh)
+    count--;
+
+  if (count > 0)
+  {
+    DrawFuzzBlock(FUZZTOP, &dest, hires_size, cutoff_yl ? 0 : -1, 1);
+    count--;
+  }
+
+  while (count-- > 0)
     {
       // [FG] draw only even pixels as 2x2 squares
       //      using the same fuzzoffset value
-      const byte fuzz = fullcolormap[FUZZDARK + dest[hires_size * FUZZLINE]];
-
-      for (i = 0; i < hires_size; i++)
-      {
-        memset(dest, fuzz, hires_size);
-        dest += linesize;
-      }
-
-      fuzzpos++;
-      fuzzpos &= (fuzzpos - FUZZTABLE) >> (8*sizeof fuzzpos-1);
+      DrawFuzzBlock(FUZZDARK, &dest, hires_size, -1, 1);
     }
-  while (--count);
 
-  if (cutoff)
+  if (cutoff_yh)
     {
-      const byte fuzz = fullcolormap[FUZZDARKCUT + dest[hires_size * FUZZLINECUT]];
-
-      for (i = 0; i < hires_size; i++)
-      {
-        memset(dest, fuzz, hires_size);
-        dest += linesize;
-      }
+      DrawFuzzBlock(FUZZDARK, &dest, hires_size, -1, 0);
     }
 }
 
