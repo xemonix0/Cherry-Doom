@@ -13,7 +13,7 @@
 
 ## Changes
 
-- **Merged changes from [Woof! 12.0.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_12.0.0]**, note:
+- **Merged changes from [Woof! 12.0.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_12.0.0)**, note:
   - Removed solid-color crosshairs;
   - Added three-lined widget toggles to NUGHUD;
   - Changed internal values of Nugget's player cheats;
