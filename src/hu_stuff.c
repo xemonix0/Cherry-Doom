@@ -1315,22 +1315,7 @@ static void HU_widget_build_sttime(void)
   int offset = 0;
   extern int time_scale;
 
-  // [Nugget] Event timer
-  if (plr->eventtics) {
-    const int   type = plr->eventtype;
-    const int   mins = plr->eventtime / (60 * TICRATE);
-    const float secs = (float)(plr->eventtime % (60 * TICRATE)) / TICRATE;
-
-    if (!plr->eventtics-- || gameaction == ga_completed)
-    { plr->eventtics = plr->eventtype = plr->eventtime = 0; }
-
-    offset += sprintf(hud_timestr, "\x1b%c%c %02i:%05.02f ",
-                      '0'+CR_GOLD,
-                      type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
-                      mins, secs);
-  }
-
-  // [Nugget] Print the rest of text only if the widget is enabled
+  // [Nugget] Add conditions; function may've been called due to event timers
   if (hud_level_time || (map_level_time && automapactive))
   {
     if (time_scale != 100)
@@ -1346,9 +1331,30 @@ static void HU_widget_build_sttime(void)
       offset += sprintf(hud_timestr + offset, "\x1b%c%d:%02d ",
               '0'+CR_GREEN, time/60, time%60);
     }
-    sprintf(hud_timestr + offset, "\x1b%c%d:%05.2f\t",
+    // [Nugget] Add to `offset`; delete tab, it'll be added later
+    offset += sprintf(hud_timestr + offset, "\x1b%c%d:%05.2f",
       '0'+CR_GRAY, leveltime/TICRATE/60, (float)(leveltime%(60*TICRATE))/TICRATE);
+
+    // [Nugget] If event timers are enabled, add a space
+    if (plr->eventtics) { offset += sprintf(hud_timestr + offset, " "); }
   }
+
+  // [Nugget] Event timer
+  if (plr->eventtics) {
+    const int   type = plr->eventtype;
+    const int   mins = plr->eventtime / (60 * TICRATE);
+    const float secs = (float)(plr->eventtime % (60 * TICRATE)) / TICRATE;
+
+    if (!plr->eventtics || gameaction == ga_completed)
+    { plr->eventtics = plr->eventtype = plr->eventtime = 0; }
+
+    offset += sprintf(hud_timestr + offset, "\x1b%c%c %02i:%05.02f",
+                      '0'+CR_GOLD,
+                      type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
+                      mins, secs);
+  }
+
+  offset += sprintf(hud_timestr + offset, "\t"); // [Nugget] Add tab here
 
   HUlib_add_string_to_cur_line(&w_sttime, hud_timestr);
 }
@@ -1901,6 +1907,9 @@ void HU_Ticker(void)
     HU_cond_build_widget(&w_sttime, hud_level_time || plr->eventtics); // [Nugget] Event timers
     HU_cond_build_widget(&w_powers, hud_power_timers); // [Nugget] Powerup timers
   }
+
+  // [Nugget] Event timers
+  if (plr->eventtics) { plr->eventtics--; }
 
   // update crosshair properties
   if (hud_crosshair)

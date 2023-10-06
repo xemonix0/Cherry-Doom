@@ -21,6 +21,7 @@
   - Added menu items for _Air Absorption_ and _Doppler Effect_, and set both to 5 by default.
 - **Made Powerup Timers flash when running out**
 - **Disabled Powerup Timers in Strict Mode**
+- **Moved Event Timer within Time widget**; it is now displayed after everything else
 - **Added Explosive Hitscan support to MDK Fist**
 - **Lowered MDK (Fist) attack's autoaim range** from 2048 to 1024 units
 - **Moved `comp_bruistarget` menu item to the top of its list**
@@ -30,5 +31,6 @@
 - **Powerup sound not playing sometimes**
 - **Incorrect Status Bar/NUGHUD minus sign handling**
 - **Explosive Hitscan cheat not being saved in savegames**
+- **Event Timer disappearing early with Automap enabled**
 - **MDK Fist not being accounted for by crosshair target highlighting**
 - **View jittering when teleporting while crouching**
