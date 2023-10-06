@@ -703,6 +703,8 @@ void AM_Stop (void)
   findtag = false;
   magic_sector = NULL;
   magic_tag = -1;
+
+  HU_NughudAlignTime(); // [Nugget] NUGHUD
 }
 
 //
