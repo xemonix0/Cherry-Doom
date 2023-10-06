@@ -29,6 +29,7 @@
 ## Bug Fixes
 
 - **Powerup sound not playing sometimes**
+- **Buggy Health/Ammo cheats key bindings**
 - **Incorrect Status Bar/NUGHUD minus sign handling**
 - **Explosive Hitscan cheat not being saved in savegames**
 - **Event Timer disappearing early with Automap enabled**
