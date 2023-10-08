@@ -254,15 +254,8 @@ void D_Display (void)
   if ((wipe = gamestate != wipegamestate) && NOTSTRICTMODE(wipe_type))
     wipe_StartScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
 
-  if (gamestate == GS_LEVEL && gametic) {
+  if (gamestate == GS_LEVEL && gametic)
     HU_Erase();
-
-    // [Nugget]:
-    // [crispy] distinguish classic status bar with background and player face from Crispy HUD
-    st_crispyhud = automap_off ? (CRISPY_HUD <= screenblocks && screenblocks <= CRISPY_HUD_WIDE)
-                                 + (screenblocks == CRISPY_HUD_WIDE)
-                               : 0;
-  }
 
   switch (gamestate)                // do buffered drawing
     {
