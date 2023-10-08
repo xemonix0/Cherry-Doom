@@ -559,7 +559,7 @@ void R_ExecuteSetViewSize (void)
   int i, j;
   extern void AM_Start(void);
   // [Nugget] FOV from Doom Retro
-  int WIDEFOVDELTA;
+  double WIDEFOVDELTA;
   fixed_t num;
 
   setsizeneeded = false;
@@ -676,7 +676,7 @@ void R_ExecuteSetViewSize (void)
   // [Nugget] FOV from Doom Retro
   if (widescreen) {
     // fov * 0.82 is vertical FOV for 4:3 aspect ratio
-    WIDEFOVDELTA = (int)(atan(SCREENWIDTH / ((SCREENHEIGHT+40) / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov;
+    WIDEFOVDELTA = (atan(SCREENWIDTH / ((SCREENHEIGHT * 1.2) / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov;
   }
   else
   { WIDEFOVDELTA = 0; }
@@ -686,7 +686,7 @@ void R_ExecuteSetViewSize (void)
   centerxfrac = centerx<<FRACBITS;
   centeryfrac = centery<<FRACBITS;
   centerxfrac_nonwide = (viewwidth_nonwide/2)<<FRACBITS;
-  fovscale = finetangent[FINEANGLES / 4 + (rfov + WIDEFOVDELTA) * FINEANGLES / 360 / 2]; // [Nugget] FOV from Doom Retro
+  fovscale = finetangent[(int)(FINEANGLES / 4 + (rfov + WIDEFOVDELTA) * FINEANGLES / 360 / 2)]; // [Nugget] FOV from Doom Retro
   projection = FixedDiv(centerxfrac, fovscale); // [Nugget] FOV from Doom Retro
   viewheightfrac = viewheight<<(FRACBITS+1); // [FG] sprite clipping optimizations
 

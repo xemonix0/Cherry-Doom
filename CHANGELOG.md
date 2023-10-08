@@ -34,5 +34,7 @@
 - **Explosive Hitscan cheat not being saved in savegames**
 - **Event Timer disappearing early with Automap enabled**
 - **MDK Fist not being accounted for by crosshair target highlighting**
+- **Zoom effect stutter** when not looking straight with widescreen enabled
 - **View jittering when teleporting while crouching**
 - **Delayed weapon position update when toggling a NUGHUD which changes weapon height**
+- **Minor FOV discrepancy between widescreen and non-widescreen with default FOV*
