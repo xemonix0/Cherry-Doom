@@ -1081,7 +1081,7 @@ void ST_drawWidgets(void)
 
 void ST_Drawer(boolean fullscreen, boolean refresh)
 {
-  static boolean oldcrispy = -1; // [Nugget] NUGHUD
+  static boolean oldcrispy = 0; // [Nugget] NUGHUD
 
   st_statusbaron = !fullscreen || automap_on;
   // [crispy] immediately redraw status bar after help screens have been shown
@@ -1092,8 +1092,6 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
 
   // [Nugget] NUGHUD /--------------------------------------------------------
 
-  if (oldcrispy == -1) { oldcrispy = st_crispyhud; }
-  
   if (oldcrispy != st_crispyhud)
   {
     ST_createWidgets();
