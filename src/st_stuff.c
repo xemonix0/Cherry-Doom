@@ -123,13 +123,12 @@ static int lu_palette;
 // whether left-side main status bar is active
 static boolean st_statusbaron;
 
-// [Nugget]:
 // [crispy] distinguish classic status bar with background and player face from Crispy HUD
-       boolean st_crispyhud;
+int st_crispyhud; // [Nugget] Now an int
 static boolean st_classicstatusbar;
-static boolean st_statusbarface;
-       boolean st_crispyhudwide; // [Nugget] Widescreen Crispy HUD
-void ST_createWidgets(); // Prototype this
+static boolean st_statusbarface; // [Nugget] Face may still be drawn in NUGHUD
+
+void ST_createWidgets(); // [Nugget] Prototype this
 
 // !deathmatch
 static boolean st_notdeathmatch;
@@ -1080,12 +1079,10 @@ void ST_drawWidgets(void)
   { STlib_updateNum(&w_frags, NULL); }
 }
 
-boolean oldcrispy; // [Nugget]
-
 void ST_Drawer(boolean fullscreen, boolean refresh)
 {
-  static boolean oldwide; // [Nugget]
-  
+  static boolean oldcrispy = -1; // [Nugget] NUGHUD
+
   st_statusbaron = !fullscreen || automap_on;
   // [crispy] immediately redraw status bar after help screens have been shown
   st_firsttime = st_firsttime || refresh || inhelpscreens;
@@ -1093,17 +1090,20 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
   st_statusbarface = st_classicstatusbar || (st_crispyhud && nughud.face.x > -1);
 
-  // [Nugget]
-  oldwide = st_crispyhudwide;
-  st_crispyhudwide = (screenblocks == CRISPY_HUD_WIDE) && (!automapactive || automapoverlay);
+  // [Nugget] NUGHUD /--------------------------------------------------------
 
-  // [Nugget]
-  if (oldcrispy != st_crispyhud || oldwide != st_crispyhudwide)
+  if (oldcrispy == -1) { oldcrispy = st_crispyhud; }
+  
+  if (oldcrispy != st_crispyhud)
   {
     ST_createWidgets();
     ST_updateWidgets();
     HU_Start();
   }
+  
+  oldcrispy = st_crispyhud;
+
+  // [Nugget] ---------------------------------------------------------------/
 
   ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
 

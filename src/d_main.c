@@ -254,8 +254,15 @@ void D_Display (void)
   if ((wipe = gamestate != wipegamestate) && NOTSTRICTMODE(wipe_type))
     wipe_StartScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
 
-  if (gamestate == GS_LEVEL && gametic)
+  if (gamestate == GS_LEVEL && gametic) {
     HU_Erase();
+
+    // [Nugget]:
+    // [crispy] distinguish classic status bar with background and player face from Crispy HUD
+    st_crispyhud = automap_off ? (CRISPY_HUD <= screenblocks && screenblocks <= CRISPY_HUD_WIDE)
+                                 + (screenblocks == CRISPY_HUD_WIDE)
+                               : 0;
+  }
 
   switch (gamestate)                // do buffered drawing
     {
@@ -267,7 +274,7 @@ void D_Display (void)
           || (inhelpscreensstate && !inhelpscreens))
         redrawsbar = true;              // just put away the help screen
       // [Nugget] Moved ST_Drawer() call below,
-      // to ensure it is called AFTER AM_Drawer()
+      // to ensure it is called *after* AM_Drawer()
       fullscreen = scaledviewheight == 200;               // killough 11/98
       break;
     case GS_INTERMISSION:
@@ -287,7 +294,7 @@ void D_Display (void)
     R_RenderPlayerView (&players[displayplayer]);
 
   // [Nugget] Moved HU_Drawer() call below,
-  // to ensure it is called AFTER AM_Drawer() and ST_Drawer()
+  // to ensure it is called *after* AM_Drawer() and ST_Drawer()
 
   // clean up border stuff
   if (gamestate != oldgamestate && gamestate != GS_LEVEL)
@@ -329,19 +336,14 @@ void D_Display (void)
       inhelpscreensstate = true;
     }
 
-  // [Nugget] Moved here, as to be called after AM_Drawer()
+  // [Nugget] Moved here, as to be run *after* AM_Drawer()
   if (gamestate == GS_LEVEL && gametic)
   {
-    // [Nugget]:
-    // [crispy] distinguish classic status bar with background and player face from Crispy HUD
-    oldcrispy = st_crispyhud; // [Nugget]
-    st_crispyhud = (CRISPY_HUD <= screenblocks && screenblocks <= CRISPY_HUD_WIDE) && automap_off;
-
-    ST_Drawer(scaledviewheight == 200 && !st_crispyhud, // [Nugget]
+    ST_Drawer(scaledviewheight == 200 && !st_crispyhud, // [Nugget] NUGHUD
               redrawsbar);
 
-    // Moved here too, as to be called
-    // after AM_Drawer() and ST_Drawer()
+    // Moved here too, as to be run
+    // *after* AM_Drawer() and ST_Drawer()
     HU_Drawer();
   }
 

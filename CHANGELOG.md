@@ -16,7 +16,7 @@
 - **Merged changes from [Woof! 12.0.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_12.0.0)**, note:
   - Removed solid-color crosshairs;
   - Added three-lined widget toggles to NUGHUD;
-  - Changed internal values of Nugget's player cheats;
+  - Changed internal values of Nugget's player cheats (may affect existing saves);
   - Maintained `-cdrom` command-line parameter;
   - Added menu items for _Air Absorption_ and _Doppler Effect_, and set both to 5 by default.
 - **Made Powerup Timers flash when running out**
@@ -35,3 +35,4 @@
 - **Event Timer disappearing early with Automap enabled**
 - **MDK Fist not being accounted for by crosshair target highlighting**
 - **View jittering when teleporting while crouching**
+- **Delayed weapon position update when toggling a NUGHUD which changes weapon height**

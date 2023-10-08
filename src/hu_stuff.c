@@ -1603,7 +1603,7 @@ void HU_UpdateCrosshairLock(int x, int y)
 
 void HU_DrawCrosshair(void)
 {
-  // [Nugget] Skip some conditions
+  // [Nugget] Change conditions
   if (plr->playerstate != PST_LIVE
       || automapactive
   /* || menuactive
