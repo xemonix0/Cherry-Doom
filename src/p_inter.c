@@ -30,6 +30,7 @@
 #include "p_inter.h"
 
 // [Nugget]
+#include "p_maputl.h"
 #include "p_user.h"
 #include "v_video.h"
 
@@ -700,7 +701,6 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 // [Nugget] Check for Extra Gibbing
 static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
 {
-  extern fixed_t P_AproxDistance();
   extern void A_Punch(), A_Saw(), A_FireShotgun2();
 
   if (casual_play && extra_gibbing_on && source && source->player

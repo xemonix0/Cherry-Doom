@@ -34,7 +34,9 @@
 #include "v_video.h"
 #include "m_argv.h"
 #include "m_misc2.h"
-#include "r_main.h" // [Nugget]
+// [Nugget]
+#include "p_tick.h"
+#include "r_main.h"
 
 static mobj_t    *tmthing;
 static int       tmflags;
@@ -1558,7 +1560,6 @@ boolean boomshot = false;
 static void P_SpawnExplosion(fixed_t x, fixed_t y, fixed_t z)
 {
   mobj_t *mo = P_SpawnMobj(x, y, z, MT_ROCKET);
-  extern void P_SetTarget();
   
   mo->angle = shootthing->angle;
   P_SetTarget(&mo->target, shootthing);

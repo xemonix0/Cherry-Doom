@@ -108,16 +108,16 @@ static void cheat_resurrect();
 static void cheat_fly();
 static void cheat_nextmap();    // Emulate level exit
 static void cheat_nextsecret(); // Emulate secret level exit
-static void cheat_turbo();
+static void cheat_turbo(char *buf);
 
 // Summon a mobj
 static void cheat_summon();
 // Enemy
 static void cheat_summone0();
-static void cheat_summone();
+static void cheat_summone(char *buf);
 // Friend
 static void cheat_summonf0();
-static void cheat_summonf();
+static void cheat_summonf(char *buf);
 // Repeat last
 static void cheat_summonr();
 static int spawneetype = -1;

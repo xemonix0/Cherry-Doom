@@ -1739,7 +1739,7 @@ static int AM_DoorColor(int type)
 //
 
 // [Nugget] Tag Finder from PrBoomX: Prototype this function
-static void AM_drawLineCharacter();
+static void AM_drawLineCharacter(mline_t*, int, fixed_t, angle_t, int, fixed_t, fixed_t);
 
 static void AM_drawWalls(void)
 {
