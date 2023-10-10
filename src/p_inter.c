@@ -744,7 +744,7 @@ static void P_NuggetGib(mobj_t *mo)
                                 (comp_nonbleeders && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
-    splat->flags = (MF_NOBLOCKMAP|MF_DROPOFF|MF_TELEPORT);
+    splat->flags |= MF_DROPOFF|MF_TELEPORT;
 
     if (comp_fuzzyblood && mo->flags & MF_SHADOW)
     { splat->flags |= MF_SHADOW; }

@@ -30,6 +30,7 @@
 
 - **Powerup sound not playing sometimes**
 - **Buggy Health/Ammo cheats key bindings**
+- **Arbitrary flag setting for _Bloodier Gibbing_ splats** (fixes crashes in `ANTA_REQ.wad`)
 - **Incorrect Status Bar/NUGHUD minus sign handling**
 - **Explosive Hitscan cheat not being saved in savegames**
 - **Event Timer disappearing early with Automap enabled**
@@ -37,4 +38,4 @@
 - **Zoom effect stutter** when not looking straight with widescreen enabled
 - **View jittering when teleporting while crouching**
 - **Delayed weapon position update when toggling a NUGHUD which changes weapon height**
-- **Minor FOV discrepancy between widescreen and non-widescreen with default FOV*
+- **Minor FOV discrepancy between widescreen and non-widescreen with default FOV**
