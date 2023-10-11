@@ -1860,7 +1860,7 @@ void P_UseLines(player_t *player)
       S_StartSound (usething, sfx_noway);
 }
 
-// [Nugget] Chasecam stuff ------------------
+// [Nugget] Chasecam stuff /--------------------------------------------------
 
 static boolean PTR_ChasecamTraverse(intercept_t *in)
 {
@@ -1929,7 +1929,7 @@ void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope)
   overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 }
 
-// [Nugget] End of chasecam stuff ------------------
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // RADIUS ATTACK
