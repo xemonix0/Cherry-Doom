@@ -25,7 +25,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 ### General
 
-- **Support for higher resolutions:** 4X (800p) and 8X (1600p)
+- **Support for higher resolutions:** 4X (800p) and 8X (1600p) [by _ceski_]
 - **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
 - Toggle to **stretch viewport to fit window** (CFG-Only: `stretch_to_fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
 - **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**
@@ -75,7 +75,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **Always Bob** setting (CFG-Only: `always_bob`)
 - _**Weapon Bobbing Percentage**_ setting [i.b. Crispy Doom, ZDoom]
 - _**Bobbing Styles**_ selection [p.f. Zandronum]
-- _**Weapon Inertia**_ setting (scale determined by the CFG-Only `weapon_inertia_scale_pct` CVAR)
+- _**Weapon Inertia**_ setting (scale determined by the CFG-Only `weapon_inertia_scale_pct` CVAR) [by _ceski_]
 - _**Squat Weapon Down On Impact**_ setting [p.f. Crispy Doom]
 - _**Translucent Flashes**_ setting [i.b. Crispy Doom]
 - **Show Berserk availability** setting [partially p.f. Crispy Doom]
@@ -114,8 +114,8 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - _**Extra Gibbing**_ setting, to force Berserk Fist/Chainsaw/SSG gibbing (configurable through the CFG-Only `extra_gibbing_#` CVARs) [i.b. Smooth Doom]
 - _**Bloodier Gibbing**_ setting [i.b. Smooth Doom]
 - _**ZDoom-like item drops**_ setting [of course, i.b. ZDoom]
-- **Improved vanilla fuzz effect**
-- _**Selective Fuzz Darkening**_ setting
+- **Improved vanilla fuzz effect** [by _ceski_]
+- _**Selective Fuzz Darkening**_ setting [by _ceski_]
 
 ### Messages
 
@@ -255,8 +255,8 @@ Help was provided by:
 - [_atsb_ (a.k.a. _Gibbon_)](https://github.com/atsb);
 - [_Brad Harding_](https://github.com/bradharding);
 - [_ceski_](https://github.com/ceski-1);
-- [_melak47_](https://github.com/melak47);
 - [_Fabian Greffrath_](https://github.com/fabiangreffrath);
+- [_melak47_](https://github.com/melak47);
 - [_Roman Fomin_ (a.k.a. _rfomin_)](https://github.com/rfomin);
 - [_Ryan Krafnick_ (a.k.a. _kraflab_)](https://github.com/kraflab).
 
