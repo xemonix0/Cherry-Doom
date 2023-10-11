@@ -24,6 +24,9 @@
 - **Moved Event Timer within Time widget**; it is now displayed after everything else
 - **Added Explosive Hitscan support to MDK Fist**
 - **Lowered MDK (Fist) attack's autoaim range** from 2048 to 1024 units
+- **Added toggle for SSG availability display in Arms widget**
+- **SSG availability display now applies to NUGHUD** if prudent
+- **`blink_keys` can now be changed by WADs**
 - **Moved `comp_bruistarget` menu item to the top of its list**
 
 ## Bug Fixes

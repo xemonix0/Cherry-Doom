@@ -184,7 +184,6 @@ int show_berserk;
 
 // Status Bar/HUD -----------
 
-int alt_arms;
 int smarttotals;
 int hudcolor_ms_incomp;
 int hudcolor_ms_comp;
@@ -214,6 +213,8 @@ int always_bob;
 int weapon_inertia_scale_pct;
 int sx_fix;
 int blink_keys;
+int show_ssg;
+int alt_arms;
 int automap_overlay_darkening;
 int extra_gibbing[NUMEXGIBS];
 int sp_chat;

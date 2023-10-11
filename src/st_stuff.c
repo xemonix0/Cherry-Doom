@@ -1448,6 +1448,9 @@ void ST_createWidgets(void)
                          // [Nugget] Highlight Arms #1 only if the player has Berserk
                          ((i == wp_fist) ? &st_berserk : (int *) &plyr->weaponowned[i]),
                          &st_armson);
+
+    // [crispy] show SSG availability in the Shotgun slot of the arms widget
+    if (show_ssg && !(nughud.arms[8].x > -1)) { w_arms[2].inum = &st_shotguns; }
   }
   else {
     for(i=0;i<6;i++) {
@@ -1460,7 +1463,7 @@ void ST_createWidgets(void)
                          &st_armson);
     }
     // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
-    if (!alt_arms) { w_arms[1].inum = &st_shotguns; }
+    if (show_ssg && !alt_arms) { w_arms[1].inum = &st_shotguns; }
   }
 
   // frags sum

@@ -521,7 +521,6 @@ extern int show_berserk;
 
 // Status Bar/HUD -----------
 
-extern int alt_arms;
 extern int smarttotals;
 extern int hudcolor_ms_incomp;
 extern int hudcolor_ms_comp;
@@ -559,6 +558,8 @@ extern int always_bob;
 extern int weapon_inertia_scale_pct;
 extern int sx_fix;
 extern int blink_keys;
+extern int show_ssg;
+extern int alt_arms;
 extern int automap_overlay_darkening;
 
 typedef enum {

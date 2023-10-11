@@ -84,7 +84,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 ### Status Bar/HUD
 
 - **`NUGHUD` lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.md`)
-- **SSG is accounted for on the Arms widget** [p.f. Crispy Doom]
+- **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-Only: `show_ssg`) [p.f. Crispy Doom]
 - **Blink Missing Keys** setting (CFG-Only: `blink_keys`) [partially p.f. Crispy Doom]
 - **Show Powerup Timers** setting
 - _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol (CFG-Only: `alt_arms`)

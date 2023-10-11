@@ -3227,8 +3227,15 @@ default_t defaults[] = {
   { // [Nugget]
     "blink_keys",
     (config_t *) &blink_keys, NULL,
-    {1}, {0,1}, number, ss_none, wad_no,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "1 to make missing keys blink when trying to open locked doors"
+  },
+
+  { // [Nugget]
+    "show_ssg",
+    (config_t *) &show_ssg, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to show SSG availability in the Shotgun slot of the arms widget"
   },
 
   { // [Nugget]
