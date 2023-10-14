@@ -2141,7 +2141,6 @@ void WI_loadData(void)
 void WI_Drawer (void)
 {
   extern void HU_UpdateWidgetFont(void); // [Cherry]
-  extern void HUlib_reset_align_offsets(void); // [Cherry]
   extern void WI_DrawTimeWidget(void);
   extern void WI_DrawMoreWidgets(void); // [Cherry]
 
