@@ -838,7 +838,9 @@ void R_SetupFrame (player_t *player)
 {
   int i, cm;
   int tempCentery, pitch;
-  int playerz, lookdir; // [Nugget]
+  // [Nugget]
+  int playerz, lookdir;
+  static fixed_t chasecamheight;
 
   viewplayer = player;
   // [AM] Interpolate the player camera if the feature is enabled.
@@ -878,12 +880,39 @@ void R_SetupFrame (player_t *player)
   // [Nugget] Mitigate PLAYER_SLOPE() and 'lookdir' misalignment
   pitch *= fovdiff;
 
+  // [Nugget] Explosion shake effect
+  chasecamheight = chasecam_height * FRACUNIT;
+  if (shake > 0)
+  {
+    static fixed_t xofs=0, yofs=0, zofs=0;
+
+    if (!(menuactive || paused))
+    {
+      static int oldtime = -1;
+      
+      #define CALCSHAKE (((Woof_Random() - 128) % 3) * FRACUNIT) * shake / max_shake
+      xofs = CALCSHAKE;
+      yofs = CALCSHAKE;
+      zofs = CALCSHAKE;
+      #undef CALCSHAKE
+
+      if (oldtime != leveltime) { shake--; }
+
+      oldtime = leveltime;
+    }
+
+    viewx += xofs;
+    viewy += yofs;
+    viewz += zofs;
+    chasecamheight += zofs;
+  }
+
   // [Nugget] Chasecam
   chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD));
   if (chasecam_on)
   {
     static fixed_t extradist = 0;
-    const fixed_t z = MIN(playerz + (((player->mo->health <= 0 && player->playerstate == PST_DEAD) ? 6 : chasecam_height) * FRACUNIT),
+    const fixed_t z = MIN(playerz + ((player->mo->health <= 0 && player->playerstate == PST_DEAD) ? 6*FRACUNIT : chasecamheight),
                           player->mo->ceilingz - (2*FRACUNIT));
     fixed_t slope;
     fixed_t dist = chasecam_distance*FRACUNIT;
@@ -944,31 +973,6 @@ void R_SetupFrame (player_t *player)
   }
   else
   { chasexofs = chaseyofs = chaseaofs = 0; }
-
-  // [Nugget] Explosion shake effect
-  if (shake > 0)
-  {
-    static fixed_t xofs=0, yofs=0, zofs=0;
-
-    if (!(menuactive || paused))
-    {
-      static int oldtime = -1;
-      
-      #define CALCSHAKE (((Woof_Random() - 128) % 3) * FRACUNIT) * shake / max_shake
-      xofs = CALCSHAKE;
-      yofs = CALCSHAKE;
-      zofs = CALCSHAKE;
-      #undef CALCSHAKE
-
-      if (oldtime != leveltime) { shake -= 2; }
-
-      oldtime = leveltime;
-    }
-
-    viewx += xofs;
-    viewy += yofs;
-    viewz += zofs;
-  }
 
   // [Nugget]: [crispy] A11Y
   if (!NOTSTRICTMODE(a11y_weapon_flash))
