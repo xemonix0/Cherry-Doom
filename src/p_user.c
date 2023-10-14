@@ -405,6 +405,7 @@ void P_MovePlayer (player_t* player)
     player->lookdir = BETWEEN(-LOOKDIRMAX * MLOOKUNIT,
                                LOOKDIRMAX * MLOOKUNIT,
                                player->lookdir + cmd->lookdir);
+    player->slope = PLAYER_SLOPE(player);
   }
 }
 
@@ -472,9 +473,6 @@ void P_DeathThink (player_t* player)
 
           if (player->damagecount)
             player->damagecount--;
-
-          if (player->screenshake) // [Cherry]
-            player->screenshake--;
         }
       else
         if (delta < ANG180)
@@ -486,9 +484,6 @@ void P_DeathThink (player_t* player)
   {
     if (player->damagecount)
       player->damagecount--;
-
-    if (player->screenshake) // [Cherry]
-      player->screenshake--;
   }
 
   // [Nugget] Allow some freelook while dead
@@ -605,9 +600,7 @@ void P_PlayerThink (player_t* player)
 
     if (!automapactive)
     {
-      if (player->screenshake)
-        motionblur = MAX(motionblur, 100);
-      else if (cmd->angleturn)
+      if (cmd->angleturn)
         motionblur = MIN(abs(cmd->angleturn) * 100 / 960, 150);
     }
 
@@ -642,7 +635,8 @@ void P_PlayerThink (player_t* player)
     {
       // [Nugget] Disable zoom upon death
       if (R_GetZoom() == 1) { R_SetZoom(ZOOM_OFF); }
-      
+
+      player->slope = PLAYER_SLOPE(player); // For 3D audio pitch angle.
       P_DeathThink (player);
       return;
     }
@@ -793,7 +787,7 @@ void P_PlayerThink (player_t* player)
     boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
 
     overflow[emu_intercepts].enabled = false;
-    P_AimLineAttack(player->mo, player->mo->angle, 16*64*FRACUNIT, 0);
+    P_AimLineAttack(player->mo, player->mo->angle, 16*64*FRACUNIT * (comp_longautoaim+1), 0);
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 
     if (linetarget) // Give some info on the thing
@@ -801,13 +795,13 @@ void P_PlayerThink (player_t* player)
                  linetarget->health, linetarget->info->spawnhealth);
   }
 
-  if (player->powers[pw_renderstats])
+  if (player->cheats & CF_RENDERSTATS)
   {
     extern void R_ShowRenderingStats();
     R_ShowRenderingStats();
   }
 
-  if (player->powers[pw_mapcoords])
+  if (player->cheats & CF_MAPCOORDS)
   {
     extern void cheat_mypos_print();
     cheat_mypos_print();
@@ -818,9 +812,6 @@ void P_PlayerThink (player_t* player)
 
   if (player->bonuscount)
     player->bonuscount--;
-
-  if (player->screenshake) // [Cherry]
-    player->screenshake--;
 
   // Handling colormaps.
   // killough 3/20/98: reformat to terse C syntax

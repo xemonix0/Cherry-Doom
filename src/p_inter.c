@@ -30,6 +30,7 @@
 #include "p_inter.h"
 
 // [Nugget]
+#include "p_maputl.h"
 #include "p_user.h"
 #include "v_video.h"
 
@@ -272,7 +273,7 @@ void P_GiveCard(player_t *player, card_t card)
     return;
     
   // [Nugget] Fix for "key pickup resets palette"
-  if (STRICTMODE(!nugget_comp[comp_keypal]))
+  if (STRICTMODE(!comp_keypal))
   { player->bonuscount += BONUSADD; }
   else
   { player->bonuscount = BONUSADD; }
@@ -702,7 +703,6 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 // [Nugget] Check for Extra Gibbing
 static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
 {
-  extern fixed_t P_AproxDistance();
   extern void A_Punch(), A_Saw(), A_FireShotgun2();
 
   if (casual_play && extra_gibbing_on && source && source->player
@@ -743,13 +743,12 @@ static void P_NuggetGib(mobj_t *mo)
   for (int i = 0; i < quantity; i++)
   {
     mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + (mo->height / 1.5),
-                                (nugget_comp[comp_nonbleeders]
-                                 && mo->flags & MF_NOBLOOD)
+                                (comp_nonbleeders && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
-    splat->flags = (MF_NOBLOCKMAP|MF_DROPOFF|MF_TELEPORT);
+    splat->flags |= MF_DROPOFF|MF_TELEPORT;
 
-    if (nugget_comp[comp_fuzzyblood] && mo->flags & MF_SHADOW)
+    if (comp_fuzzyblood && mo->flags & MF_SHADOW)
     { splat->flags |= MF_SHADOW; }
 
     if (mo->info->bloodcolor || idgaf) {
@@ -775,7 +774,7 @@ static void P_NuggetGib(mobj_t *mo)
 //
 // killough 11/98: make static
 
-static void P_KillMobj(mobj_t *source, mobj_t *target)
+static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
 {
   mobjtype_t item;
   mobj_t     *mo;
@@ -882,8 +881,10 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
       target->player->centering = true;
 
       if (target->player == &players[consoleplayer] && automapactive)
-        if (!demoplayback) // killough 11/98: don't switch out in demos, though
-          AM_Stop();    // don't die in auto map; switch view prior to dying
+	if (!demoplayback) // killough 11/98: don't switch out in demos, though
+	  AM_Stop();    // don't die in auto map; switch view prior to dying
+
+      HU_Obituary(target, source, mod);
     }
 
   // [Nugget] Extra Gibbing/GIBBERS cheat
@@ -953,7 +954,7 @@ static boolean P_InfightingImmune(mobj_t *target, mobj_t *source)
     mobjinfo[target->type].infighting_group == mobjinfo[source->type].infighting_group;
 }
 
-void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
+void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage, method_t mod)
 {
   player_t *player;
   boolean justhit;          // killough 11/98
@@ -1050,15 +1051,9 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
       if (player->damagecount > 100)
         player->damagecount = 100;  // teleport stomp does 10k points...
 
-      // [Cherry] Screen shake
-      if (STRICTMODE(damage_shake) && shake_percentage)
-      {
-        player->screenshake += damage;
-        if (damage_shake > 100)
-        {
-          player->screenshake = 100;
-        }
-      }
+      // [Cherry] Damage shake effect
+      if (&players[displayplayer] == player)
+        R_DamageShake(player->damagecount);
 #if 0
       // killough 11/98:
       // This is unused -- perhaps it was designed for
@@ -1103,7 +1098,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
   else
   if (target->health <= 0)
     {
-      P_KillMobj(source, target);
+      P_KillMobj(source, target, mod);
       return;
     }
 

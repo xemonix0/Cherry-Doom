@@ -383,6 +383,11 @@ static void R_AddLine (seg_t *line)
   //      should already be interpolated.
   R_MaybeInterpolateSector(backsector);
 
+  if (backsector->heightsec != -1)
+  {
+    R_MaybeInterpolateSector(&sectors[backsector->heightsec]);
+  }
+
   // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
   backsector = R_FakeFlat(backsector, &tempsec, NULL, NULL, true);
 
@@ -614,7 +619,11 @@ static void R_Subsector(int num)
   R_AddSprites(sub->sector, (floorlightlevel+ceilinglightlevel)/2);
 
   while (count--)
-    R_AddLine (line++);
+  {
+    if (line->linedef)
+      R_AddLine(line);
+    line++;
+  }
 }
 
 //

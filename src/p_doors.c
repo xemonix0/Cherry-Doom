@@ -168,7 +168,7 @@ void T_VerticalDoor (vldoor_t *door)
 
             // [Nugget]: [crispy] fix "fast doors reopening with wrong sound"
             case blazeRaise:
-                if (STRICTMODE(!nugget_comp[comp_blazing2]))
+                if (STRICTMODE(!comp_blazing2))
                 {
                     door->direction = 1;
                     S_StartSound((mobj_t *)&door->sector->soundorg, sfx_bdopn);
@@ -484,7 +484,7 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
           if (door->direction == -1) {
             door->direction = 1;  // go back up
             // [Nugget]: [crispy] play sound effect when the door is opened again while going down
-            if (STRICTMODE(!nugget_comp[comp_manualdoor])) {
+            if (STRICTMODE(!comp_manualdoor)) {
               S_StartSound((mobj_t *)&door->sector->soundorg,
                             line->special == 117 ? sfx_bdopn : sfx_doropn);
             }
@@ -510,7 +510,7 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing)
                 door->direction = -1;
               }
               // [Nugget]: [crispy] play sound effect when the door is closed manually
-              if (STRICTMODE(!nugget_comp[comp_manualdoor])) {
+              if (STRICTMODE(!comp_manualdoor)) {
                 S_StartSound((mobj_t *)&door->sector->soundorg,
                              line->special == 117 ? sfx_bdcls : sfx_dorcls);
               }

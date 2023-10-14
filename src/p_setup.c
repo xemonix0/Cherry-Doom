@@ -19,6 +19,7 @@
 //-----------------------------------------------------------------------------
 
 #include "doomstat.h"
+#include "i_printf.h"
 #include "m_bbox.h"
 #include "m_argv.h"
 #include "g_game.h"
@@ -37,7 +38,7 @@
 #include "m_swap.h"
 #include "ws_wadstats.h" // [Cherry]
 
-// [FG] support maps with NODES in compressed or uncompressed ZDBSP format or DeePBSP format
+// [FG] support maps with NODES in uncompressed XNOD/XGLN or compressed ZNOD/ZGLN formats, or DeePBSP format
 #include "p_extnodes.h"
 
 //
@@ -505,6 +506,7 @@ void P_LoadLineDefs (int lump)
       // [crispy] calculate sound origin of line to be its midpoint
 	  ld->soundorg.x = ld->bbox[BOXLEFT] / 2 + ld->bbox[BOXRIGHT] / 2;
 	  ld->soundorg.y = ld->bbox[BOXTOP] / 2 + ld->bbox[BOXBOTTOM] / 2;
+	  ld->soundorg.thinker.function.v = (actionf_v)P_DegenMobjThinker;
 
       ld->sidenum[0] = SHORT(mld->sidenum[0]);
       ld->sidenum[1] = SHORT(mld->sidenum[1]);
@@ -1221,6 +1223,11 @@ static void AddLineToSector(sector_t *s, line_t *l)
   *s->lines++ = l;
 }
 
+void P_DegenMobjThinker(void)
+{
+  // no-op
+}
+
 int P_GroupLines (void)
 {
   int i, total;
@@ -1274,6 +1281,8 @@ int P_GroupLines (void)
 			    sector->blockbox[BOXLEFT])/2;
       sector->soundorg.y = (sector->blockbox[BOXTOP] +
 			    sector->blockbox[BOXBOTTOM])/2;
+
+      sector->soundorg.thinker.function.v = (actionf_v)P_DegenMobjThinker;
 
       // adjust bounding box to map blocks
       block = (sector->blockbox[BOXTOP]-bmaporgy+MAXRADIUS)>>MAPBLOCKSHIFT;
@@ -1348,6 +1357,10 @@ void P_RemoveSlimeTrails(void)                // killough 10/98
   for (i=0; i<numsegs; i++)                   // Go through each seg
     {
       const line_t *l = segs[i].linedef;      // The parent linedef
+
+      if (!segs[i].linedef)
+        break; // Andrey Budko: probably 'continue;'?
+
       if (l->dx && l->dy)                     // We can ignore orthogonal lines
 	{
 	  vertex_t *v = segs[i].v1;
@@ -1557,14 +1570,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     playback_nextlevel = false;
   }
 
-  // [crispy] don't load map's default music if loaded from a savegame with
-  // MUSINFO data
-  if (!musinfo.from_savegame)
-  {
   // Make sure all sounds are stopped before Z_FreeTags.
   S_Start();
-  }
-  musinfo.from_savegame = false;
 
   Z_FreeTag(PU_LEVEL);
   Z_FreeTag(PU_CACHE);
@@ -1598,16 +1605,20 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);             //       |
   P_LoadLineDefs2 (lumpnum+ML_LINEDEFS);             // killough 4/4/98
   gen_blockmap = P_LoadBlockMap  (lumpnum+ML_BLOCKMAP);             // killough 3/1/98
-  // [FG] support maps with NODES in compressed or uncompressed ZDBSP format or DeePBSP format
-  if (mapformat == MFMT_ZDBSPX || mapformat == MFMT_ZDBSPZ)
+  // [FG] support maps with NODES in uncompressed XNOD/XGLN or compressed ZNOD/ZGLN formats, or DeePBSP format
+  if (mapformat == MFMT_XGLN || mapformat == MFMT_ZGLN)
   {
-    P_LoadNodes_ZDBSP (lumpnum+ML_NODES, mapformat == MFMT_ZDBSPZ);
+    P_LoadNodes_XNOD (lumpnum+ML_SSECTORS, mapformat == MFMT_ZGLN, true);
   }
-  else if (mapformat == MFMT_DEEPBSP)
+  else if (mapformat == MFMT_XNOD || mapformat == MFMT_ZNOD)
   {
-    P_LoadSubsectors_DeePBSP (lumpnum+ML_SSECTORS);
-    P_LoadNodes_DeePBSP (lumpnum+ML_NODES);
-    P_LoadSegs_DeePBSP (lumpnum+ML_SEGS);
+    P_LoadNodes_XNOD (lumpnum+ML_NODES, mapformat == MFMT_ZNOD, false);
+  }
+  else if (mapformat == MFMT_DEEP)
+  {
+    P_LoadSubsectors_DEEP (lumpnum+ML_SSECTORS);
+    P_LoadNodes_DEEP (lumpnum+ML_NODES);
+    P_LoadSegs_DEEP (lumpnum+ML_SEGS);
   }
   else
   {
@@ -1666,14 +1677,16 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
   // [FG] log level setup
   {
-    fprintf(stderr, "P_SetupLevel: %.8s (%s), %s%s%s, %s compatibility\n",
+    I_Printf(VB_INFO, "P_SetupLevel: %.8s (%s), %s%s%s, %s complevel",
       lumpname, W_WadNameForLump(lumpnum),
-      mapformat == MFMT_ZDBSPX ? "ZDBSP nodes" :
-      mapformat == MFMT_ZDBSPZ ? "compressed ZDBSP nodes" :
-      mapformat == MFMT_DEEPBSP ? "DeepBSP nodes" :
+      mapformat == MFMT_XNOD ? "XNOD nodes" :
+      mapformat == MFMT_ZNOD ? "ZNOD nodes" :
+      mapformat == MFMT_XGLN ? "XGLN nodes" :
+      mapformat == MFMT_ZGLN ? "ZGLN nodes" :
+      mapformat == MFMT_DEEP ? "DeepBSP nodes" :
       "Doom nodes",
-      gen_blockmap ? " + generated Blockmap" : "",
-      pad_reject ? " + padded Reject table" : "",
+      gen_blockmap ? " + Blockmap" : "",
+      pad_reject ? " + Reject" : "",
       G_GetCurrentComplevelName());
   }
 }

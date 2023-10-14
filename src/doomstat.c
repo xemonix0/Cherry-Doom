@@ -137,7 +137,8 @@ char *MAPNAME(int e, int m)
 boolean fauxdemo;    // Checked for in `casual_play`, for debugging
 boolean casual_play; // Like `critical`, with different checks and functionality
 
-// General
+// General ------------------
+
 int wipe_type;
 int over_under;
 int jump_crouch;
@@ -145,23 +146,25 @@ int fov;
 int viewheight_value;
 int view_bobbing_percentage;
 int impact_pitch;
+int explosion_shake;
+int damage_shake; // [Cherry]
+int max_shake; // [Cherry]
 int breathing;
 int teleporter_zoom;
 int death_camera;
+
 int chasecam_mode;
 int chasecam_distance;
 int chasecam_height;
+
 int no_menu_tint;
 int no_berserk_tint;
+int no_radsuit_tint;
 int damagecount_cap;
 int bonuscount_cap;
 int fake_contrast;
 int wipe_speed_percentage;
 // [Cherry] General ------------------------------------------------------
-int damage_shake;
-int explosion_shake;
-int boss_shake;
-int shake_percentage;
 int motion_blur;
 // [Cherry] End ----------------------------------------------------------
 int s_clipping_dist_x2;
@@ -173,7 +176,8 @@ int a11y_weapon_flash;
 int a11y_weapon_pspr;
 int a11y_invul_colormap;
 
-// Weapons
+// Weapons ------------------
+
 int no_hor_autoaim;
 int switch_on_pickup;
 int weapon_bobbing_percentage;
@@ -183,12 +187,11 @@ int weaponsquat;
 int translucent_pspr;
 int show_berserk;
 
-// Status Bar/HUD
-int alt_arms;
+// Status Bar/HUD -----------
+
 int smarttotals;
 // [Cherry] --------------------------------------------------------------
 int hudcolor_wg_name;
-int hudcolor_wg_name_cons;
 int hudcolor_plain;
 int hudcolor_totaltime;
 int hudcolor_th_low;
@@ -200,31 +203,57 @@ int hudcolor_ms_incomp;
 int hudcolor_ms_comp;
 int event_timers[NUMTIMERS];
 
-// Enemies
+// Enemies ------------------
+
 int extra_gibbing_on;
 int bloodier_gibbing;
 int zdoom_item_drops;
 
-// Messages
+// Messages -----------------
+
 int announce_milestones;
 
-// Key Bindings
+// Key Bindings -------------
+
 int zoom_fov;
 int fancy_teleport;
 
-// CFG only
+// CFG only -----------------
+
+int gammacycle;
 int menu_background_darkening;
 int chasecam_crosshair;
-int sp_chat;
-int gammacycle;
 int always_bob;
 int weapon_inertia_scale_pct;
 int sx_fix;
 int blink_keys;
+int show_ssg;
+int alt_arms;
 int automap_overlay_darkening;
 int extra_gibbing[NUMEXGIBS];
+int sp_chat;
+int screenshot_palette;
 
-int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
+// Doom Compatibility -------
+
+int comp_bruistarget;
+int comp_longautoaim;
+int comp_lscollision;
+int comp_lsamnesia;
+int comp_fuzzyblood;
+int comp_nonbleeders;
+int comp_iosdeath;
+int comp_choppers;
+
+int comp_blazing2;
+int comp_manualdoor;
+int comp_switchsource;
+int comp_cgundblsnd;
+int comp_cgunnersfx;
+int comp_flamst;
+int comp_deadoof;
+int comp_unusedpals;
+int comp_keypal;
 
 // [Nugget] --------------------------/
 

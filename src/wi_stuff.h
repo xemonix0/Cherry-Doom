@@ -34,8 +34,6 @@ typedef enum
   ShowNextLoc
 } stateenum_t;
 
-extern int wi_more_widgets; // [Cherry]
-
 // Called by main loop, animate the intermission.
 void WI_Ticker (void);
 

@@ -72,6 +72,8 @@ There are some additional boolean properties (value of 0 or 1) for some specific
 - `nughud_face_bg`: Toggle the _Face_ background, whose position is linked to that of the _Face_ itself.
 - `nughud_percents`: Toggle drawing of percentage signs for the Health and Armor counts.
 - `nughud_time_sts`: Toggle relocation of the _Time_ widget to the position of the _Stats_ widget when the latter is inactive.
+- `nughud_sts_ml`: Toggle three-lined _Stats_ widget.
+- `nughud_coord_ml`: Toggle three-lined _Coordinates_ widget.
 
 Lastly, the _Message_ widget supports an X position value of -1 to forcefully draw it at its original X position, where it'll be affected by the Centered Messages setting.
 

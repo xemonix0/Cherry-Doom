@@ -19,6 +19,7 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "i_printf.h"
 #include "m_random.h"
 #include "r_main.h"
 #include "r_things.h"
@@ -39,7 +40,13 @@
 
 // [FG] colored blood and gibs
 boolean colored_blood;
-int vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
+int vertical_aiming, default_vertical_aiming; // [Nugget] Replace `direct_vertical_aiming`
+
+void P_UpdateDirectVerticalAiming(void)
+{
+  // [Nugget]
+  vertical_aiming = CRITICAL(mouselook || padlook) ? default_vertical_aiming : 0;
+}
 
 //
 // P_SetMobjState
@@ -120,34 +127,6 @@ void P_ExplodeMissile (mobj_t* mo)
 
   mo->flags &= ~MF_MISSILE;
 
-  if (STRICTMODE(explosion_shake) && shake_percentage && mo->type == MT_BFG)
-  {
-    fixed_t dx, dy, dist;
-    int strength;
-
-    dx = abs(viewplayer->mo->x - mo->x);
-    dy = abs(viewplayer->mo->y - mo->y);
-
-    dist = dx > dy ? dx : dy;
-    dist = (dist - viewplayer->mo->radius) >> FRACBITS;
-
-    if (dist < 800)
-    {
-      strength = 50 * pow(0.9991, dist);
-    }
-    else
-    {
-      strength = 10;
-    }
-
-    viewplayer->screenshake = MAX(viewplayer->screenshake, strength);
-
-    if (viewplayer->screenshake > 100)
-    {
-      viewplayer->screenshake = 100;
-    }
-  }
-
   if (mo->info->deathsound)
     S_StartSound (mo, mo->info->deathsound);
 }
@@ -177,7 +156,7 @@ void P_XYMovement (mobj_t* mo)
         mo->momz = 0;
 
         // [Nugget] Fix forgetful lost soul
-        if (casual_play && !nugget_comp[comp_lsamnesia])
+        if (casual_play && !comp_lsamnesia)
         { P_SetMobjState(mo, mo->info->seestate); }
         else
         { P_SetMobjState(mo, mo->info->spawnstate); }
@@ -574,7 +553,7 @@ floater:
 		{ PLAYER_IMPACTPITCH(mo->player, -((-mo->momz) >> FRACBITS)); }
 
 		// [Nugget]: [crispy] dead men don't say "oof"
-		if (mo->health > 0 || NOTSTRICTMODE(nugget_comp[comp_deadoof]))
+		if (mo->health > 0 || NOTSTRICTMODE(comp_deadoof))
 		  oof = 1;
 	      }
 	    P_HitFloor(mo, oof); // [FG] play sound when hitting animated floor
@@ -1166,8 +1145,6 @@ void P_SpawnPlayer (mapthing_t* mthing)
   p->fixedcolormap = 0;
   // [Nugget] Adjustable viewheight
   p->viewheight = (!strictmode ? viewheight_value*FRACUNIT : VIEWHEIGHT);
-  // [Cherry] Screen shake
-  p->screenshake   = 0;
 
   p->momx = p->momy = 0;   // killough 10/98: initialize bobbing to 0.
 
@@ -1317,7 +1294,7 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   if (i == num_mobj_types)
     {
-      printf("P_SpawnMapThing: Unknown Thing type %i at (%i, %i)\n",
+      I_Printf(VB_WARNING, "P_SpawnMapThing: Unknown Thing type %i at (%i, %i)",
 	      mthing->type, mthing->x, mthing->y);
       return;
     }
@@ -1421,7 +1398,7 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
   th->tics -= P_Random(pr_spawnblood)&3;
 
   // [Nugget] Fuzzy blood for fuzzy things
-  if (nugget_comp[comp_fuzzyblood] && bleeder->flags & MF_SHADOW)
+  if (comp_fuzzyblood && bleeder->flags & MF_SHADOW)
   { th->flags |= MF_SHADOW; }
 
   if (bleeder->info->bloodcolor || idgaf)
@@ -1538,32 +1515,31 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   // [Nugget] Vertical aiming;
   // Taken outside of code block after this one
   // to allow direct vertical aiming in Beta
-  if ((mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECT))
-  {
-    slope = PLAYER_SLOPE(source->player);
-  }
+  if (vertical_aiming == VERTAIM_DIRECT)
+  { slope = PLAYER_SLOPE(source->player); }
   else
   // killough 7/19/98: autoaiming was not in original beta
   if (!beta_emulation || autoaim)
     {
       // killough 8/2/98: prefer autoaiming at enemies
       int mask = demo_version < 203 ? 0 : MF_FRIEND;
+      // [Nugget] Moved vertical aiming code above
       do
         {
-          slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
+          // [Nugget] Double Autoaim range
+          slope = P_AimLineAttack(source, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
           if (!linetarget)
             // [Nugget] Disable horizontal autoaim
             if (!casual_play || !no_hor_autoaim)
-              slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
+              slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
           if (!linetarget)
             // [Nugget] Disable horizontal autoaim
             if (!casual_play || !no_hor_autoaim)
-              slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
+              slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
           if (!linetarget)
             an = source->angle,
             // [Nugget] Vertical aiming
-            slope = ((mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECTAUTO))
-                    ? PLAYER_SLOPE(source->player) : 0;
+            slope = (vertical_aiming == VERTAIM_DIRECTAUTO) ? PLAYER_SLOPE(source->player) : 0;
         }
       while (mask && (mask=0, !linetarget));  // killough 8/2/98
     }

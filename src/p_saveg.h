@@ -64,6 +64,7 @@ typedef enum saveg_compat_e
   // [Cherry]
   saveg_woof600,
   saveg_nugget210,
+  saveg_cherry100,
   saveg_current,
 } saveg_compat_t;
 

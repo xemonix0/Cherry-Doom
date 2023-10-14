@@ -31,6 +31,7 @@
 #include "st_stuff.h"
 #include "hu_stuff.h"
 // [Nugget]
+#include "m_random.h"
 #include "p_map.h"
 #include "p_mobj.h"
 
@@ -166,9 +167,8 @@ void R_SetZoom(const int state)
     fovchange = true;
     return;
   }
-  
-  if (zoomed != state) { fovchange = true; }
-  
+  else if (zoomed != state) { fovchange = true; }
+
   if (STRICTMODE(zoom_fov - bfov))
   { zoomed = state; }
   else
@@ -177,6 +177,56 @@ void R_SetZoom(const int state)
 
 // [Nugget] --------------------------/
 
+// [Nugget] Explosion shake effect /---------------------------------
+
+static fixed_t shake;
+
+void R_SetShake(int value)
+{
+  if (NOTSTRICTMODE(value == -1))
+  {
+    shake = 0;
+    return;
+  }
+
+  shake = MIN(shake + value, max_shake);
+}
+
+// [Cherry]
+void R_DamageShake(int damage)
+{
+  if (NOTSTRICTMODE(!damage_shake)) { return; }
+
+  R_SetShake(damage);
+}
+
+void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
+{
+  #define SHAKERANGEMULT 5
+
+  const mobj_t *const player = players[displayplayer].mo;
+  fixed_t dx, dy, dist;
+
+  if (NOTSTRICTMODE(!explosion_shake)) { return; }
+
+  range *= SHAKERANGEMULT;
+  force *= SHAKERANGEMULT;
+
+  dx = abs(player->x - bombx);
+  dy = abs(player->y - bomby);
+
+  dist = MAX(dx, dy);
+  dist = (dist - player->radius) >> FRACBITS;
+  dist = MAX(0, dist);
+
+  if (dist >= range) { return; }
+
+  R_SetShake((force * (range - dist) / range) / ((128 / max_shake) * SHAKERANGEMULT));
+
+  #undef SHAKERANGEMULT
+}
+
+// [Nugget] --------------------------------------------------------/
 
 void (*colfunc)(void) = R_DrawColumn;     // current column draw function
 
@@ -514,8 +564,9 @@ void R_SetViewSize(int blocks)
 void R_ExecuteSetViewSize (void)
 {
   int i, j;
+  extern void AM_Start(void);
   // [Nugget] FOV from Doom Retro
-  int WIDEFOVDELTA;
+  double WIDEFOVDELTA;
   fixed_t num;
 
   setsizeneeded = false;
@@ -587,7 +638,7 @@ void R_ExecuteSetViewSize (void)
     }
   
     if (fovchange) {
-      if (gametic != oldtic)
+      if (oldtic != gametic)
       {
         fovchange = false;
         
@@ -632,7 +683,7 @@ void R_ExecuteSetViewSize (void)
   // [Nugget] FOV from Doom Retro
   if (widescreen) {
     // fov * 0.82 is vertical FOV for 4:3 aspect ratio
-    WIDEFOVDELTA = (int)(atan(SCREENWIDTH / ((SCREENHEIGHT+40) / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov;
+    WIDEFOVDELTA = (atan(SCREENWIDTH / ((SCREENHEIGHT * 1.2) / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov;
   }
   else
   { WIDEFOVDELTA = 0; }
@@ -642,7 +693,7 @@ void R_ExecuteSetViewSize (void)
   centerxfrac = centerx<<FRACBITS;
   centeryfrac = centery<<FRACBITS;
   centerxfrac_nonwide = (viewwidth_nonwide/2)<<FRACBITS;
-  fovscale = finetangent[FINEANGLES / 4 + (rfov + WIDEFOVDELTA) * FINEANGLES / 360 / 2]; // [Nugget] FOV from Doom Retro
+  fovscale = finetangent[(int)(FINEANGLES / 4 + (rfov + WIDEFOVDELTA) * FINEANGLES / 360 / 2)]; // [Nugget] FOV from Doom Retro
   projection = FixedDiv(centerxfrac, fovscale); // [Nugget] FOV from Doom Retro
   viewheightfrac = viewheight<<(FRACBITS+1); // [FG] sprite clipping optimizations
 
@@ -709,10 +760,14 @@ void R_ExecuteSetViewSize (void)
 
     // [Nugget] Don't call this, as it would make
     // the HUD widgets disappear during FOV changes
-    /*HU_disableAllWidgets();*/
+    /*HU_disable_all_widgets();*/
 
     // [crispy] forcefully initialize the status bar backing screen
     ST_refreshBackground(true);
+
+    // [FG] reinitialize Automap
+    if (automapactive)
+        AM_Start();
 
     // [FG] spectre drawing mode
     R_SetFuzzColumnMode();
@@ -889,6 +944,31 @@ void R_SetupFrame (player_t *player)
   }
   else
   { chasexofs = chaseyofs = chaseaofs = 0; }
+
+  // [Nugget] Explosion shake effect
+  if (shake > 0)
+  {
+    static fixed_t xofs=0, yofs=0, zofs=0;
+
+    if (!(menuactive || paused))
+    {
+      static int oldtime = -1;
+      
+      #define CALCSHAKE (((Woof_Random() - 128) % 3) * FRACUNIT) * shake / max_shake
+      xofs = CALCSHAKE;
+      yofs = CALCSHAKE;
+      zofs = CALCSHAKE;
+      #undef CALCSHAKE
+
+      if (oldtime != leveltime) { shake -= 2; }
+
+      oldtime = leveltime;
+    }
+
+    viewx += xofs;
+    viewy += yofs;
+    viewz += zofs;
+  }
 
   // [Nugget]: [crispy] A11Y
   if (!NOTSTRICTMODE(a11y_weapon_flash))

@@ -22,7 +22,28 @@
 #ifndef __I_SOUND__
 #define __I_SOUND__
 
+#include "al.h"
+
+#include "p_mobj.h"
 #include "sounds.h"
+
+// when to clip out sounds
+// Does not fit the large outdoor areas.
+// [Nugget] Now variable; initialized in `I_AdjustSoundParams()`
+extern int S_CLIPPING_DIST;
+
+// Distance to origin when sounds should be maxed out.
+// This should relate to movement clipping resolution
+// (see BLOCKMAP handling).
+// Originally: (200*0x10000).
+//
+// killough 12/98: restore original
+// #define S_CLOSE_DIST (160<<FRACBITS)
+
+#define S_CLOSE_DIST (200 << FRACBITS)
+
+// [Nugget] Now variable; initialized in `I_AdjustSoundParams()`
+extern int S_ATTENUATOR;
 
 // Adjustable by menu.
 // [FG] moved here from i_sound.c
@@ -38,11 +59,11 @@
 // [FG] variable pitch bend range
 extern int pitch_bend_range;
 
+// Pitch to stepping lookup.
+extern float steptable[256];
+
 // Init at program start...
 void I_InitSound(void);
-
-// ... update sound buffer and audio device at runtime...
-void I_UpdateSound(void);
 
 // ... shut down and relase at program termination.
 void I_ShutdownSound(void);
@@ -50,6 +71,51 @@ void I_ShutdownSound(void);
 //
 //  SFX I/O
 //
+
+extern int forceFlipPan;
+extern int snd_resampler;
+extern int snd_module;
+extern boolean snd_hrtf;
+extern int snd_absorption;
+extern int snd_doppler;
+
+typedef struct sound_module_s
+{
+    boolean (*InitSound)(void);
+    boolean (*ReinitSound)(void);
+    boolean (*AllowReinitSound)(void);
+    void (*UpdateUserSoundSettings)(void);
+    boolean (*CacheSound)(sfxinfo_t *sfx);
+    boolean (*AdjustSoundParams)(const mobj_t *listener, const mobj_t *source,
+                                 int chanvol, int *vol, int *sep, int *pri);
+    void (*UpdateSoundParams)(int channel, int vol, int sep);
+    void (*UpdateListenerParams)(const mobj_t *listener);
+    boolean (*StartSound)(int channel, sfxinfo_t *sfx, int pitch);
+    void (*StopSound)(int channel);
+    boolean (*SoundIsPlaying)(int channel);
+    void (*ShutdownSound)(void);
+    void (*ShutdownModule)(void);
+    void (*DeferUpdates)(void);
+    void (*ProcessUpdates)(void);
+} sound_module_t;
+
+extern const sound_module_t sound_mbf_module;
+extern const sound_module_t sound_3d_module;
+extern const sound_module_t sound_pcs_module;
+
+typedef enum snd_module_e
+{
+    SND_MODULE_MBF,
+    SND_MODULE_3D,
+#if defined(HAVE_AL_BUFFER_CALLBACK)
+    SND_MODULE_PCS,
+#endif
+    NUM_SND_MODULES
+} snd_module_t;
+
+void I_UpdateUserSoundSettings(void);
+boolean I_AllowReinitSound(void);
+void I_SetSoundModule(int device);
 
 // Initialize channels?
 void I_SetChannels(void);
@@ -66,11 +132,19 @@ void I_StopSound(int handle);
 // Called by S_*() functions
 //  to see if a channel is still playing.
 // Returns 0 if no longer playing, 1 if playing.
-int I_SoundIsPlaying(int handle);
+boolean I_SoundIsPlaying(int handle);
+
+// Outputs adjusted volume, separation, and priority from the sound module.
+// Returns false if no sound should be played.
+boolean I_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
+                            int chanvol, int *vol, int *sep, int *pri);
 
 // Updates the volume, separation,
 //  and pitch of a sound channel.
 void I_UpdateSoundParams(int handle, int vol, int sep);
+void I_UpdateListenerParams(const mobj_t *listener);
+void I_DeferSoundUpdates(void);
+void I_ProcessSoundUpdates(void);
 
 // haleyjd
 int I_SoundID(int handle);

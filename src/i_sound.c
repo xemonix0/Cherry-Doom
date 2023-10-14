@@ -20,14 +20,23 @@
 
 #include <math.h>
 
-#include "al.h"
-#include "alc.h"
-#include "alext.h"
-
 #include "doomstat.h"
-#include "i_sndfile.h"
+#include "i_printf.h"
 #include "i_sound.h"
 #include "w_wad.h"
+
+int snd_module;
+
+static const sound_module_t *sound_modules[] =
+{
+    &sound_mbf_module,
+    &sound_3d_module,
+#if defined(HAVE_AL_BUFFER_CALLBACK)
+    &sound_pcs_module,
+#endif
+};
+
+static const sound_module_t *sound_module;
 
 // Music modules
 extern music_module_t music_win_module;
@@ -62,8 +71,6 @@ static music_module_t *active_module = NULL;
 // these routines think that sound has been initialized when it hasn't
 static boolean snd_init = false;
 
-static ALuint *openal_sources;
-
 typedef struct {
   // SFX id of the playing sound effect.
   // Used to catch duplicates (like chainsaw).
@@ -75,6 +82,10 @@ typedef struct {
 } channel_info_t;
 
 channel_info_t channelinfo[MAX_CHANNELS];
+
+// [Nugget] Now variable
+int S_CLIPPING_DIST;
+int S_ATTENUATOR;
 
 // Pitch to stepping lookup.
 float steptable[256];
@@ -95,133 +106,26 @@ static void StopChannel(int channel)
 
   if (channelinfo[channel].enabled)
   {
-    alSourceStop(openal_sources[channel]);
+    sound_module->StopSound(channel);
 
     channelinfo[channel].enabled = false;
   }
 }
 
-#define SOUNDHDRSIZE 8
-
 //
-// CacheSound
+// I_AdjustSoundParams
 //
-// haleyjd: needs to take a sfxinfo_t ptr, not a sound id num
-// haleyjd 06/03/06: changed to return boolean for failure or success
+// Outputs adjusted volume, separation, and priority from the sound module.
+// Returns false if no sound should be played.
 //
-static boolean CacheSound(sfxinfo_t *sfx, int channel)
+boolean I_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
+                            int chanvol, int *vol, int *sep, int *pri)
 {
-  int lumpnum, lumplen;
-  byte *lumpdata = NULL, *wavdata = NULL;
-
-#ifdef RANGECHECK
-  if (channel < 0 || channel >= MAX_CHANNELS)
-  {
-    I_Error("CacheSound: channel out of range!\n");
-  }
-#endif
-
-  // haleyjd 02/18/05: null ptr check
-  if (!snd_init || !sfx)
-  {
+  if (!snd_init)
     return false;
-  }
 
-  StopChannel(channel);
-
-  lumpnum = I_GetSfxLumpNum(sfx);
-
-  if (lumpnum < 0)
-  {
-    return false;
-  }
-
-  lumplen = W_LumpLength(lumpnum);
-
-  // haleyjd 10/08/04: do not play zero-length sound lumps
-  if (lumplen <= SOUNDHDRSIZE)
-  {
-    return false;
-  }
-
-  // haleyjd 06/03/06: rewrote again to make sound data properly freeable
-  while (sfx->cached == false)
-  {
-    byte *sampledata;
-    ALsizei size, freq;
-    ALenum format;
-    ALuint buffer;
-
-    // haleyjd: this should always be called (if lump is already loaded,
-    // W_CacheLumpNum handles that for us).
-    lumpdata = (byte *)W_CacheLumpNum(lumpnum, PU_STATIC);
-
-    // Check the header, and ensure this is a valid sound
-    if (lumpdata[0] == 0x03 && lumpdata[1] == 0x00)
-    {
-      freq = (lumpdata[3] <<  8) |  lumpdata[2];
-      size = (lumpdata[7] << 24) | (lumpdata[6] << 16) |
-             (lumpdata[5] <<  8) |  lumpdata[4];
-
-      // don't play sounds that think they're longer than they really are
-      if (size > lumplen - SOUNDHDRSIZE)
-      {
-        break;
-      }
-
-      sampledata = lumpdata + SOUNDHDRSIZE;
-
-      // All Doom sounds are 8-bit
-      format = AL_FORMAT_MONO8;
-    }
-    else
-    {
-      size = lumplen;
-
-      if (I_SND_LoadFile(lumpdata, &format, &wavdata, &size, &freq) == false)
-      {
-        break;
-      }
-
-      sampledata = wavdata;
-    }
-
-    alGenBuffers(1, &buffer);
-    alBufferData(buffer, format, sampledata, size, freq);
-    if (alGetError() != AL_NO_ERROR)
-    {
-        fprintf(stderr, "CacheSound: Error buffering data.\n");
-        break;
-    }
-    sfx->buffer = buffer;
-    sfx->cached = true;
-  }
-
-  // don't need original lump data any more
-  if (lumpdata)
-  {
-    Z_Free(lumpdata);
-  }
-  if (wavdata)
-  {
-    free(wavdata);
-  }
-
-  if (sfx->cached == false)
-  {
-    sfx->lumpnum = -2; // [FG] don't try again
-    return false;
-  }
-
-  // Preserve sound SFX id
-  channelinfo[channel].sfx = sfx;
-
-  channelinfo[channel].enabled = true;
-
-  return true;
+  return sound_module->AdjustSoundParams(listener, source, chanvol, vol, sep, pri);
 }
-
-int forceFlipPan;
 
 //
 // I_UpdateSoundParams
@@ -231,9 +135,6 @@ int forceFlipPan;
 //
 void I_UpdateSoundParams(int channel, int volume, int separation)
 {
-  ALfloat pan;
-  ALuint source;
-
   if (!snd_init)
     return;
 
@@ -242,20 +143,31 @@ void I_UpdateSoundParams(int channel, int volume, int separation)
     I_Error("I_UpdateSoundParams: channel out of range");
 #endif
 
-  // SoM 7/1/02: forceFlipPan accounted for here
-  if (forceFlipPan)
-    separation = 254 - separation;
+  sound_module->UpdateSoundParams(channel, volume, separation);
+}
 
-  source = openal_sources[channel];
+void I_UpdateListenerParams(const mobj_t *listener)
+{
+    if (!snd_init || !sound_module->UpdateListenerParams)
+        return;
 
-  alSourcef(source, AL_GAIN, (ALfloat)volume / 127.0f);
+    sound_module->UpdateListenerParams(listener);
+}
 
-  // Create a panning effect by moving the source in an arc around the listener.
-  // https://github.com/kcat/openal-soft/issues/194
-  pan = (ALfloat)separation / 255.0f - 0.5f;
-  alSourcef(source, AL_ROLLOFF_FACTOR, 0.0f);
-  alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
-  alSource3f(source, AL_POSITION, pan, 0.0f, -sqrtf(1.0f - pan * pan));
+void I_DeferSoundUpdates(void)
+{
+    if (!snd_init)
+        return;
+
+    sound_module->DeferUpdates();
+}
+
+void I_ProcessSoundUpdates(void)
+{
+    if (!snd_init)
+        return;
+
+    sound_module->ProcessUpdates();
 }
 
 // [FG] variable pitch bend range
@@ -336,7 +248,7 @@ int I_GetSfxLumpNum(sfxinfo_t *sfx)
 // active sounds, which is maintained as a given number
 // of internal channels. Returns a free channel.
 //
-int I_StartSound(sfxinfo_t *sound, int vol, int sep, int pitch)
+int I_StartSound(sfxinfo_t *sfx, int vol, int sep, int pitch)
 {
   static unsigned int id = 0;
   int channel;
@@ -356,28 +268,23 @@ int I_StartSound(sfxinfo_t *sound, int vol, int sep, int pitch)
   if (channel == MAX_CHANNELS)
     return -1;
 
-  if (CacheSound(sound, channel))
+  StopChannel(channel);
+
+  if (sound_module->CacheSound(sfx) == false)
+    return -1;
+
+  channelinfo[channel].sfx = sfx;
+  channelinfo[channel].enabled = true;
+  channelinfo[channel].idnum = id++; // give the sound a unique id
+
+  I_UpdateSoundParams(channel, vol, sep);
+
+  if (sound_module->StartSound(channel, sfx, pitch) == false)
   {
-    ALuint source = openal_sources[channel];
-    ALuint buffer = channelinfo[channel].sfx->buffer;
-
-    channelinfo[channel].idnum = id++; // give the sound a unique id
-    I_UpdateSoundParams(channel, vol, sep);
-
-    alSourcei(source, AL_BUFFER, buffer);
-    if (pitch != NORM_PITCH)
-    {
-      alSourcef(source, AL_PITCH, steptable[pitch]);
-    }
-
-    alSourcePlay(source);
-    if (alGetError() != AL_NO_ERROR)
-    {
-      fprintf(stderr, "I_StartSound: Error playing sfx.\n");
-    }
+    I_Printf(VB_WARNING, "I_StartSound: Error playing sfx.");
+    StopChannel(channel);
+    return -1;
   }
-  else
-    channel = -1;
 
   return channel;
 }
@@ -406,10 +313,8 @@ void I_StopSound(int channel)
 //
 // haleyjd: wow, this can actually do something in the Windows version :P
 //
-int I_SoundIsPlaying(int channel)
+boolean I_SoundIsPlaying(int channel)
 {
-  ALint value;
-
   if (!snd_init)
     return false;
 
@@ -418,8 +323,7 @@ int I_SoundIsPlaying(int channel)
     I_Error("I_SoundIsPlaying: channel out of range");
 #endif
 
-  alGetSourcei(openal_sources[channel], AL_SOURCE_STATE, &value);
-  return (value == AL_PLAYING);
+  return sound_module->SoundIsPlaying(channel);
 }
 
 //
@@ -443,36 +347,6 @@ int I_SoundID(int channel)
   return channelinfo[channel].idnum;
 }
 
-// This function loops all active (internal) sound
-//  channels, retrieves a given number of samples
-//  from the raw sound data, modifies it according
-//  to the current (internal) channel parameters,
-//  mixes the per channel samples into the global
-//  mixbuffer, clamping it to the allowed range,
-//  and sets up everything for transferring the
-//  contents of the mixbuffer to the (two)
-//  hardware channels (left and right, that is).
-//
-//  allegro does this now
-
-void I_UpdateSound(void)
-{
-  int i;
-
-  // Check all channels to see if a sound has finished
-
-  for (i = 0; i < MAX_CHANNELS; i++)
-  {
-    if (channelinfo[i].enabled && !I_SoundIsPlaying(i))
-    {
-      // Sound has finished playing on this channel,
-      // but sound data has not been released to cache
-
-      StopChannel(i);
-    }
-  }
-}
-
 //
 // I_ShutdownSound
 //
@@ -480,112 +354,14 @@ void I_UpdateSound(void)
 //
 void I_ShutdownSound(void)
 {
-    int i;
-    ALCcontext *context;
-    ALCdevice *device;
-
     if (!snd_init)
     {
         return;
     }
 
-    context = alcGetCurrentContext();
-
-    if (!context)
-    {
-       return;
-    }
-
-    device = alcGetContextsDevice(context);
-
-    alDeleteSources(MAX_CHANNELS, openal_sources);
-    for (i = 0; i < num_sfx; ++i)
-    {
-        if (S_sfx[i].cached)
-        {
-            alDeleteBuffers(1, &S_sfx[i].buffer);
-            S_sfx[i].cached = false;
-        }
-    }
-    if (alGetError() != AL_NO_ERROR)
-    {
-        fprintf(stderr, "I_ShutdownSound: Failed to delete object IDs.\n");
-    }
-
-    alcMakeContextCurrent(NULL);
-    alcDestroyContext(context);
-    alcCloseDevice(device);
-
-    if (openal_sources)
-    {
-        free(openal_sources);
-        openal_sources = NULL;
-    }
+    sound_module->ShutdownSound();
 
     snd_init = false;
-}
-
-// C doesn't allow casting between function and non-function pointer types, so
-// with C99 we need to use a union to reinterpret the pointer type. Pre-C99
-// still needs to use a normal cast and live with the warning (C++ is fine with
-// a regular reinterpret_cast).
-#if __STDC_VERSION__ >= 199901L
-#define FUNCTION_CAST(T, ptr) (union{void *p; T f;}){ptr}.f
-#else
-#define FUNCTION_CAST(T, ptr) (T)(ptr)
-#endif
-
-char *snd_resampler;
-
-static void SetResampler(void)
-{
-    LPALGETSTRINGISOFT alGetStringiSOFT = NULL;
-    ALint i, num_resamplers, def_resampler;
-
-    if (!alIsExtensionPresent("AL_SOFT_source_resampler"))
-    {
-        printf(" Resampler info not available!\n");
-        return;
-    }
-
-    alGetStringiSOFT = FUNCTION_CAST(LPALGETSTRINGISOFT, alGetProcAddress("alGetStringiSOFT"));
-
-    if (!alGetStringiSOFT)
-    {
-        fprintf(stderr, "I_SetResampler: alGetStringiSOFT() is not available.\n");
-        return;
-    }
-
-    num_resamplers = alGetInteger(AL_NUM_RESAMPLERS_SOFT);
-    def_resampler = alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
-
-    if (!num_resamplers)
-    {
-        printf(" No resamplers found!\n");
-        return;
-    }
-
-    for (i = 0; i < num_resamplers; ++i)
-    {
-        if (!strcasecmp(snd_resampler, alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, i)))
-        {
-            def_resampler = i;
-            break;
-        }
-    }
-    if (i == num_resamplers)
-    {
-        printf(" Failed to find resampler: '%s'.\n", snd_resampler);
-        return;
-    }
-
-    for (i = 0; i < MAX_CHANNELS; ++i)
-    {
-        alSourcei(openal_sources[i], AL_SOURCE_RESAMPLER_SOFT, def_resampler);
-    }
-
-    printf(" Using '%s' resampler.\n",
-           alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, def_resampler));
 }
 
 // [FG] add links for likely missing sounds
@@ -612,57 +388,20 @@ struct {
 
 void I_InitSound(void)
 {
-    const ALCchar *name;
-    ALCdevice *device;
-    ALCcontext *context;
-    ALCint srate = -1;
-
-    ALCint attribs[] = { // zero terminated list of integer pairs
-        ALC_HRTF_SOFT, ALC_FALSE,
-        0
-    };
-
     if (nosfxparm && nomusicparm)
     {
         return;
     }
 
-    printf("I_InitSound: ");
+    I_Printf(VB_INFO, "I_InitSound:");
 
-    device = alcOpenDevice(NULL);
-    if (device)
+    sound_module = sound_modules[snd_module];
+
+    if (!sound_module->InitSound())
     {
-        if (alcIsExtensionPresent(device, "ALC_ENUMERATE_ALL_EXT") != AL_FALSE)
-            name = alcGetString(device, ALC_ALL_DEVICES_SPECIFIER);
-        else
-            name = alcGetString(device, ALC_DEVICE_SPECIFIER);
-    }
-    else
-    {
-        printf("Could not open a device.\n");
+        I_Printf(VB_ERROR, "I_InitSound: Failed to initialize sound.");
         return;
     }
-
-    if (alcIsExtensionPresent(device, "ALC_SOFT_HRTF") == AL_FALSE)
-    {
-        attribs[0] = 0;
-    }
-
-    context = alcCreateContext(device, &attribs[0]);
-    if (!context || alcMakeContextCurrent(context) == ALC_FALSE)
-    {
-        fprintf(stderr, "I_InitSound: Error making context.\n");
-        return;
-    }
-
-    alcGetIntegerv(device, ALC_FREQUENCY, 1, &srate);
-
-    printf("Using '%s' @ %d Hz.\n", name, srate);
-
-    openal_sources = malloc(MAX_CHANNELS * sizeof(*openal_sources));
-    alGenSources(MAX_CHANNELS, openal_sources);
-
-    SetResampler();
 
     I_AtExit(I_ShutdownSound, true);
 
@@ -673,17 +412,16 @@ void I_InitSound(void)
     {
       int i;
 
-      printf(" Precaching all sound effects... ");
+      I_Printf(VB_INFO, " Precaching all sound effects... ");
       for (i = 1; i < num_sfx; i++)
       {
         // DEHEXTRA has turned S_sfx into a sparse array
         if (!S_sfx[i].name)
           continue;
 
-        CacheSound(&S_sfx[i], 0);
+        sound_module->CacheSound(&S_sfx[i]);
       }
-      StopChannel(0);
-      printf("done.\n");
+      I_Printf(VB_INFO, "done.");
 
       // [FG] add links for likely missing sounds
       for (i = 0; i < arrlen(sfx_subst); i++)
@@ -698,6 +436,58 @@ void I_InitSound(void)
           from->volume = 0;
         }
       }
+    }
+}
+
+void I_UpdateUserSoundSettings(void)
+{
+    if (!snd_init)
+    {
+        return;
+    }
+
+    sound_module->UpdateUserSoundSettings();
+}
+
+boolean I_AllowReinitSound(void)
+{
+    if (!snd_init)
+    {
+        I_Printf(VB_WARNING, "I_AllowReinitSound: Sound was never initialized.");
+        return false;
+    }
+
+    return sound_module->AllowReinitSound();
+}
+
+void I_SetSoundModule(int device)
+{
+    int i;
+
+    if (!snd_init)
+    {
+        I_Printf(VB_WARNING, "I_SetSoundModule: Sound was never initialized.");
+        return;
+    }
+
+    if (device < 0 || device >= arrlen(sound_modules))
+    {
+        I_Printf(VB_WARNING, "I_SetSoundModule: Invalid choice.");
+        return;
+    }
+
+    for (i = 0; i < MAX_CHANNELS; i++)
+    {
+        StopChannel(i);
+    }
+
+    sound_module->ShutdownModule();
+
+    sound_module = sound_modules[device];
+
+    if (!sound_module->ReinitSound())
+    {
+        I_Printf(VB_WARNING, "I_SetSoundModule: Failed to reinitialize sound.");
     }
 }
 

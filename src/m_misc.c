@@ -33,10 +33,12 @@
 #include "m_menu.h"
 #include "am_map.h"
 #include "w_wad.h"
+#include "i_printf.h"
 #include "i_system.h"
 #include "i_sound.h"
 #include "i_video.h"
 #include "v_video.h"
+#include "hu_obituary.h"
 #include "hu_stuff.h"
 #include "st_stuff.h"
 #include "dstrings.h"
@@ -81,7 +83,6 @@ extern int showMessages;
 extern int show_toggle_messages;
 extern int show_pickup_messages;
 
-extern int forceFlipPan;
 extern int window_width, window_height;
 extern int window_position_x, window_position_y;
 extern boolean grabmouse;
@@ -105,7 +106,6 @@ extern int winmm_reset_delay;
 #endif
 extern int opl_gain;
 extern int midi_player_menu;
-extern char *snd_resampler;
 extern boolean demobar;
 extern boolean smoothlight;
 extern boolean brightmaps;
@@ -135,6 +135,31 @@ default_t defaults[] = {
     {1}, {0,1}, number, ss_none, wad_no,
     "1 to show help strings about each variable in config file"
   },
+
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "organize_saves",
+    (config_t *) &organize_saves, NULL,
+    {0}, {0, 1}, number, ss_gen, wad_no,
+    "1 to organize savegames by IWAD"
+  },
+
+  {
+    "savegame_dir",
+    (config_t *) &savegame_dir, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "Path where savegames are stored"
+  },
+
+  {
+    "screenshot_dir",
+    (config_t *) &screenshot_dir, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "Path where screenshots are stored"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   //
   // Video
@@ -382,7 +407,7 @@ default_t defaults[] = {
   { // killough 2/21/98: default to 10
     "screenblocks",
     (config_t *) &screenblocks, NULL,
-    {10}, {3,13}, number, ss_none, wad_no, // [Nugget] Increase max to 13 to accommodate Nugget HUD
+    {10}, {3,13}, number, ss_none, wad_no, // [Nugget] Increased max to 13 to accommodate NUGHUD
     "initial play screen size"
   },
 
@@ -443,8 +468,36 @@ default_t defaults[] = {
   {
     "snd_resampler",
     (config_t *) &snd_resampler, NULL,
-    {.s = "linear"}, {0}, string, ss_gen, wad_no,
-    "OpenAL resampler (\"nearest\", \"linear\" (default), \"cubic\")"
+    {1}, {0, 2}, number, ss_none, wad_no,
+    "OpenAL resampler (0 = Nearest, 1 = Linear, 2 = Cubic)"
+  },
+
+  {
+    "snd_module",
+    (config_t *) &snd_module, NULL,
+    {SND_MODULE_MBF}, {0, NUM_SND_MODULES - 1}, number, ss_none, wad_no,
+    "Sound module (0 = Standard, 1 = OpenAL 3D, 2 = PC Speaker Sound)"
+  },
+
+  {
+    "snd_hrtf",
+    (config_t *) &snd_hrtf, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "[OpenAL 3D] Headphones mode (0 = No, 1 = Yes)"
+  },
+
+  {
+    "snd_absorption",
+    (config_t *) &snd_absorption, NULL,
+    {5}, {0, 10}, number, ss_none, wad_no, // [Nugget] Enabled by default
+    "[OpenAL 3D] Air absorption effect (0 = Off, 10 = Max)"
+  },
+
+  {
+    "snd_doppler",
+    (config_t *) &snd_doppler, NULL,
+    {5}, {0, 10}, number, ss_none, wad_no, // [Nugget] Enabled by default
+    "[OpenAL 3D] Doppler effect (0 = Off, 10 = Max)"
   },
 
   // [FG] music backend
@@ -649,7 +702,7 @@ default_t defaults[] = {
 
   { // [Nugget] Replaces `direct_vertical_aiming`
     "vertical_aiming",
-    (config_t *) &vertical_aiming, NULL,
+    (config_t *) &default_vertical_aiming, (config_t *) &vertical_aiming,
     {0}, {0,2}, number, ss_gen, wad_no,
     "Vertical aiming (0 = Auto, 1 = Direct, 2 = Direct + Auto)"
   },
@@ -661,7 +714,7 @@ default_t defaults[] = {
     "1 to enable pistol start"
   },
 
-  // [Nugget] General options --------------------------------------------
+  // [Nugget] /-----------------------------------------------------------
 
   {
     "over_under",
@@ -703,6 +756,27 @@ default_t defaults[] = {
     (config_t *) &impact_pitch, NULL,
     {0}, {0,3}, number, ss_gen, wad_yes,
     "Flinch player view on impact (0 = Off, 1 = Fall, 2 = Damage, 3 = Both)"
+  },
+
+  {
+    "explosion_shake",
+    (config_t *) &explosion_shake, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to make explosions shake the view"
+  },
+
+  {
+    "damage_shake",
+    (config_t *) &damage_shake, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to shake the view when taking damage"
+  },
+
+  {
+    "max_shake",
+    (config_t *) &max_shake, NULL,
+    {50}, {0,100}, number, ss_gen, wad_no,
+    "Max shake effect intensity"
   },
 
   {
@@ -769,6 +843,13 @@ default_t defaults[] = {
   },
 
   {
+    "no_radsuit_tint",
+    (config_t *) &no_radsuit_tint, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to disable Radiation Suit tint"
+  },
+
+  {
     "damagecount_cap",
     (config_t *) &damagecount_cap, NULL,
     {100}, {0,100}, number, ss_gen, wad_no,
@@ -792,38 +873,10 @@ default_t defaults[] = {
   // [Cherry] General Display options ------------------------------------
 
   {
-    "damage_shake",
-    (config_t *) &damage_shake, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to shake view when receiving damage"
-  },
-
-  {
-    "explosion_shake",
-    (config_t *) &explosion_shake, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to shake view during explosions"
-  },
-
-  {
-    "boss_shake",
-    (config_t *) &boss_shake, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to shake view when a boss dies"
-  },
-
-  {
-    "shake_percentage",
-    (config_t *) &shake_percentage, NULL,
-    {50}, {0,100}, number, ss_gen, wad_no,
-    "View shake percentage"
-  },
-
-  {
     "motion_blur",
     (config_t *) &motion_blur, NULL,
     {0}, {0,100}, number, ss_gen, wad_no,
-    "Motion blur percentage"
+    "Motion blur intensity"
   },
 
   // [Cherry] End --------------------------------------------------------
@@ -893,7 +946,7 @@ default_t defaults[] = {
     "0 to disable the Invulnerability colormap"
   },
 
-  // [Nugget] End --------------------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   //
   // Weapons options
@@ -952,7 +1005,7 @@ default_t defaults[] = {
     "1 to center the weapon sprite during attack, 2 to keep it bobbing, 3 to center it horizontally"
   },
 
-  // [Nugget] ------------------------------------------------------------
+  // [Nugget] /-----------------------------------------------------------
 
   {
     "no_hor_autoaim",
@@ -1031,7 +1084,7 @@ default_t defaults[] = {
     "1 to correct first person sprite centering"
   },
 
-  // [Nugget] End --------------------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   {  // killough 2/8/98: weapon preferences set by user:
     "weapon_choice_1",
@@ -1170,7 +1223,7 @@ default_t defaults[] = {
     "1 to enable dogs to jump"
   },
 
-  // [Nugget] ------------------------------------------------------------
+  // [Nugget] /-----------------------------------------------------------
 
   {
     "extra_gibbing",
@@ -1214,7 +1267,7 @@ default_t defaults[] = {
     "1 to enable ZDoom-like item drops for dying enemies"
   },
 
-  // [Nugget] End --------------------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   {
     "colored_blood",
@@ -1463,129 +1516,128 @@ default_t defaults[] = {
     "1 to enable donut overrun emulation"
   },
 
-  // [Nugget] ------------------------------------------------------------
+  // [Nugget] /-----------------------------------------------------------
+
+  {
+    "comp_bruistarget",
+    (config_t *) &comp_bruistarget, NULL,
+    {1}, {0,1}, number, ss_comp, wad_yes,
+    "Bruiser attack doesn't face target"
+  },
+
+  {
+    "comp_longautoaim",
+    (config_t *) &comp_longautoaim, NULL,
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Double Autoaim range"
+  },
 
   {
     "comp_lscollision",
-    (config_t *) &default_nugget_comp[comp_lscollision],
-    (config_t *) &nugget_comp[comp_lscollision],
+    (config_t *) &comp_lscollision, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Fix Lost Soul colliding with items"
   },
 
   {
     "comp_lsamnesia",
-    (config_t *) &default_nugget_comp[comp_lsamnesia],
-    (config_t *) &nugget_comp[comp_lsamnesia],
+    (config_t *) &comp_lsamnesia, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Lost Soul forgets target upon impact"
   },
 
   {
     "comp_fuzzyblood",
-    (config_t *) &default_nugget_comp[comp_fuzzyblood],
-    (config_t *) &nugget_comp[comp_fuzzyblood],
+    (config_t *) &comp_fuzzyblood, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Fuzzy things bleed fuzzy blood"
   },
 
   {
     "comp_nonbleeders",
-    (config_t *) &default_nugget_comp[comp_nonbleeders],
-    (config_t *) &nugget_comp[comp_nonbleeders],
+    (config_t *) &comp_nonbleeders, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Non-bleeders don't bleed when crushed"
   },
 
   {
-    "comp_bruistarget",
-    (config_t *) &default_nugget_comp[comp_bruistarget],
-    (config_t *) &nugget_comp[comp_bruistarget],
-    {1}, {0,1}, number, ss_comp, wad_yes,
-    "Bruiser attack doesn't face target"
-  },
-
-  {
     "comp_iosdeath",
-    (config_t *) &default_nugget_comp[comp_iosdeath],
-    (config_t *) &nugget_comp[comp_iosdeath],
+    (config_t *) &comp_iosdeath, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Fix lopsided Icon of Sin explosions"
   },
 
   {
     "comp_choppers",
-    (config_t *) &default_nugget_comp[comp_choppers],
-    (config_t *) &nugget_comp[comp_choppers],
+    (config_t *) &comp_choppers, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Permanent IDCHOPPERS invulnerability"
   },
 
   {
     "comp_blazing2",
-    (config_t *) &default_nugget_comp[comp_blazing2],
-    (config_t *) &nugget_comp[comp_blazing2],
+    (config_t *) &comp_blazing2, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Blazing doors reopen with wrong sound"
   },
 
   {
     "comp_manualdoor",
-    (config_t *) &default_nugget_comp[comp_manualdoor],
-    (config_t *) &nugget_comp[comp_manualdoor],
+    (config_t *) &comp_manualdoor, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Manually reactivated moving doors are silent"
   },
 
   {
     "comp_switchsource",
-    (config_t *) &default_nugget_comp[comp_switchsource],
-    (config_t *) &nugget_comp[comp_switchsource],
+    (config_t *) &comp_switchsource, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Corrected switch sound source"
   },
 
   {
     "comp_cgundblsnd",
-    (config_t *) &default_nugget_comp[comp_cgundblsnd],
-    (config_t *) &nugget_comp[comp_cgundblsnd],
+    (config_t *) &comp_cgundblsnd, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Chaingun makes two sounds with one bullet"
   },
 
   {
     "comp_cgunnersfx",
-    (config_t *) &default_nugget_comp[comp_cgunnersfx],
-    (config_t *) &nugget_comp[comp_cgunnersfx],
+    (config_t *) &comp_cgunnersfx, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Chaingunner uses pistol/chaingun sound"
   },
 
   {
     "comp_flamst",
-    (config_t *) &default_nugget_comp[comp_flamst],
-    (config_t *) &nugget_comp[comp_flamst],
+    (config_t *) &comp_flamst, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Arch-Vile fire plays flame start sound"
   },
 
   {
     "comp_deadoof",
-    (config_t *) &default_nugget_comp[comp_deadoof],
-    (config_t *) &nugget_comp[comp_deadoof],
+    (config_t *) &comp_deadoof, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Dead players can still play oof sound"
   },
 
   {
+    "comp_unusedpals",
+    (config_t *) &comp_unusedpals, NULL,
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Use unused pain/bonus palettes"
+  },
+
+  {
     "comp_keypal",
-    (config_t *) &default_nugget_comp[comp_keypal],
-    (config_t *) &nugget_comp[comp_keypal],
+    (config_t *) &comp_keypal, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Key pickup resets palette"
   },
 
-  // [Nugget] End --------------------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   // default compatibility
   {
@@ -2098,14 +2150,6 @@ default_t defaults[] = {
     input_map_rotate, { {input_type_key, 'r'} }
   },
 
-  { // [Cherry]
-    "input_map_tagfind",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to find line/sector with the same tag as the line/sector under the crosshair",
-    input_map_tagfind, { {input_type_key, 'x'} }
-  },
-
   {
     "input_reverse",
     NULL, NULL,
@@ -2151,7 +2195,7 @@ default_t defaults[] = {
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to give ammo",
-    input_idkfa, { {0, 0} }
+    input_idfa, { {0, 0} }
   },
 
   {
@@ -2167,7 +2211,7 @@ default_t defaults[] = {
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to give health",
-    input_idbeholdv, { {0, 0} }
+    input_idbeholdh, { {0, 0} }
   },
 
   {
@@ -2298,15 +2342,6 @@ default_t defaults[] = {
     input_weapontoggle, { {input_type_key, '0'} }
   },
 
-  // [Cherry]
-  {
-    "input_lastweapon",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to switch to the last used weapon",
-    input_lastweapon, { {input_type_key, 'q'} }
-  },
-
   // [FG] prev/next weapon keys and buttons
   {
     "input_prevweapon",
@@ -2422,12 +2457,19 @@ default_t defaults[] = {
     input_clean_screenshot, { {0, 0} }
   },
 
+  { // [Nugget]
+    "screenshot_palette",
+    (config_t *) &screenshot_palette, NULL,
+    {1}, {0,3}, number, ss_none, wad_no,
+    "Keep palette changes in screenshots (0 = None, 1 = Normal, 2 = Clean, 3 = Both)"
+  },
+
   { // HOME key  // killough 10/98: shortcut to setup menu
     "input_setup",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "shortcut key to enter setup menu",
-    input_setup, { {input_type_key, 199} }
+    input_setup, { {input_type_key, KEY_HOME} }
   },
 
   {
@@ -2529,7 +2571,7 @@ default_t defaults[] = {
     "1 to invert gamepad look axis"
   },
 
-  // [Nugget] --------------------------------------------------
+  // [Nugget] /-----------------------------------------------------------
 
   {
     "input_jump",
@@ -2587,6 +2629,14 @@ default_t defaults[] = {
   },
 
   {
+    "input_map_tagfinder",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to find associated sectors and lines",
+    input_map_tagfinder, { {0, 0} }
+  },
+
+  {
     "input_map_teleport",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
@@ -2601,7 +2651,7 @@ default_t defaults[] = {
     "Use effects when teleporting to pointer (fog, sound and zoom)"
   },
 
-  // [Nugget] End ----------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity",
@@ -3148,6 +3198,13 @@ default_t defaults[] = {
     "1 to enable pickup messages"
   },
 
+  {
+    "show_obituary_messages",
+    (config_t *) &show_obituary_messages, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to enable obituaries"
+  },
+
   // "A secret is revealed!" message
   {
     "hud_secret_message",
@@ -3175,6 +3232,13 @@ default_t defaults[] = {
     (config_t *) &hudcolor_chat, NULL,
     {CR_GOLD}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
     "color range used for chat messages and entry"
+  },
+
+  {
+    "hudcolor_obituary",
+    (config_t *) &hudcolor_obituary, NULL,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    "color range used for obituaries"
   },
 
   { // killough 11/98
@@ -3226,11 +3290,18 @@ default_t defaults[] = {
     "Duration of normal Doom messages (ms)"
   },
 
-  {
+  { // [Nugget]
     "sp_chat",
     (config_t *) &sp_chat, NULL,
     {0}, {0,1}, number, ss_none, wad_no,
     "1 to enable multiplayer chat in singleplayer"
+  },
+
+  {
+    "default_verbosity",
+    (config_t *) &cfg_verbosity, NULL,
+    {VB_INFO}, {VB_ERROR, VB_MAX - 1}, number, ss_none, wad_no,
+    "verbosity level (1 = errors only, 2 = warnings, 3 = info, 4 = debug)"
   },
 
   //
@@ -3261,8 +3332,15 @@ default_t defaults[] = {
   { // [Nugget]
     "blink_keys",
     (config_t *) &blink_keys, NULL,
-    {1}, {0,1}, number, ss_none, wad_no,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "1 to make missing keys blink when trying to open locked doors"
+  },
+
+  { // [Nugget]
+    "show_ssg",
+    (config_t *) &show_ssg, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to show SSG availability in the Shotgun slot of the arms widget"
   },
 
   { // [Nugget]
@@ -3368,14 +3446,7 @@ default_t defaults[] = {
     (config_t *)&hudcolor_wg_name, NULL,
     {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
     "Color used for widget names"
-  },
-
-  { // [Cherry] Consistent widget title text color
-    "hudcolor_wg_name_cons",
-    (config_t *)&hudcolor_wg_name_cons, NULL,
-    {0}, {0,1}, number, ss_mess, wad_yes,
-    "1 to make colors of all widget names consistent"
-  },
+  },  
 
   { // [Cherry] Plain text color
     "hudcolor_plain",
@@ -3484,9 +3555,9 @@ default_t defaults[] = {
     "Show time at which a key was picked up (0 = Off, 1 = In Demos, 2 = Always)"
   },
 
-  // [Nugget] End ----------------------------------------------
+  // [Nugget] -----------------------------------------------------------/
 
-  // [Nugget] Got rid of "crispy_hud"
+  // [Nugget] Removed `crispy_hud` code
 
   // backpack changes thresholds
   {
@@ -3511,11 +3582,25 @@ default_t defaults[] = {
     "use standard Doom font for widgets (1 = on Automap, 2 = always)"
   },
 
-  { // [Cherry]
-    "hud_widget_bars",
-    (config_t *)&hud_widget_bars, NULL,
+  {
+    "hud_widescreen_widgets",
+    (config_t *) &hud_widescreen_widgets, NULL,
     {1}, {0,1}, number, ss_stat, wad_no,
-    "1 to draw bars for widgets"
+    "arrange widgets on widescreen edges"
+  },
+
+  {
+    "hud_draw_bargraphs",
+    (config_t *) &hud_draw_bargraphs, NULL,
+    {1}, {0,1}, number, ss_stat, wad_no,
+    "draw bar graphs in Boom widgets"
+  },
+
+  {
+    "hud_threelined_widgets",
+    (config_t *) &hud_threelined_widgets, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "draw three-lined coords and stats widgets"
   },
 
   { // [Cherry]
@@ -3537,13 +3622,6 @@ default_t defaults[] = {
     (config_t *) &hud_crosshair, NULL,
     {0}, {1,HU_CROSSHAIRS-1}, number, ss_stat, wad_no,
     "crosshair type"
-  },
-
-  { // [Nugget]
-    "hud_crosshair_shaded",
-    (config_t *) &hud_crosshair_shaded, NULL,
-    {0}, {0,HU_CROSSHAIRS-1}, number, ss_none, wad_no,
-    "use shaded crosshairs"
   },
 
   {
@@ -3751,6 +3829,8 @@ void M_SaveDefaults (void)
 
           switch (v->type)
           {
+            const char *s;
+
             case input_type_key:
               if (v->value >= 33 && v->value <= 126)
               {
@@ -3768,13 +3848,25 @@ void M_SaveDefaults (void)
                 fprintf(f, "%c", c);
               }
               else
-                fprintf(f, "%s", M_GetNameForKey(v->value));
+              {
+                s = M_GetNameForKey(v->value);
+                if (s)
+                  fprintf(f, "%s", s);
+              }
               break;
             case input_type_mouseb:
-              fprintf(f, "%s", M_GetNameForMouseB(v->value));
+              {
+                s = M_GetNameForMouseB(v->value);
+                if (s)
+                  fprintf(f, "%s", s);
+              }
               break;
             case input_type_joyb:
-              fprintf(f, "%s", M_GetNameForJoyB(v->value));
+              {
+                s = M_GetNameForJoyB(v->value);
+                if (s)
+                  fprintf(f, "%s", s);
+              }
               break;
             default:
               break;
@@ -4024,7 +4116,7 @@ void M_LoadDefaults (void)
   // edit these strings (i.e. chat macros in the Chat Strings Setup screen).
 
   for (dp = defaults; dp->name; dp++)
-    if (dp->type == string)
+    if (dp->type == string && dp->defaultvalue.s) // [Nugget] Check for empty strings
       dp->location->s = strdup(dp->defaultvalue.s);
     else if (dp->type == number)
       dp->location->i = dp->defaultvalue.i;
@@ -4061,24 +4153,38 @@ void M_LoadDefaults (void)
   }
 
   NormalizeSlashes(defaultfile);
-  printf(" default file: %s\n", defaultfile);
 
   // read the file in, overriding any set defaults
   //
   // killough 9/21/98: Print warning if file missing, and use fgets for reading
 
-  if (!(f = M_fopen(defaultfile, "r")))
-    printf("Warning: Cannot read %s -- using built-in defaults\n",defaultfile);
-  else
-    {
-      char s[256];
+  if ((f = M_fopen(defaultfile, "r")))
+  {
+    char s[256];
 
-      while (fgets(s, sizeof s, f))
-        M_ParseOption(s, false);
-      fclose (f);
-    }
+    while (fgets(s, sizeof s, f))
+      M_ParseOption(s, false);
+  }
 
   defaults_loaded = true;            // killough 10/98
+
+  // [FG] initialize logging verbosity early to decide
+  //      if the following lines will get printed or not
+
+  I_InitPrintf();
+
+  I_Printf(VB_INFO, "M_LoadDefaults: Load system defaults.");
+
+  if (f)
+  {
+    I_Printf(VB_INFO, " default file: %s\n", defaultfile);
+    fclose(f);
+  }
+  else
+  {
+    I_Printf(VB_WARNING, " Warning: Cannot read %s -- using built-in defaults\n",
+                         defaultfile);
+  }
 
   //jff 3/4/98 redundant range checks for hud deleted here
 }

@@ -109,12 +109,12 @@ enum
   input_map_mark,
   input_map_clear,
   input_map_blink, // [Nugget] Blink marks
+  input_map_tagfinder, // [Nugget] Tag Finder from PrBoomX
   input_map_teleport, // [Nugget] Teleport to Automap pointer
   input_map_gobig,
   input_map_grid,
   input_map_overlay,
   input_map_rotate,
-  input_map_tagfind, // [Cherry]
 
   input_chat,
   input_chat_dest0,

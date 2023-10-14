@@ -201,7 +201,7 @@ extern boolean D_CheckNetConnect(void);
 
 // Flag: true only if started as net deathmatch.
 // An enum might handle altdeath/cooperative better.
-extern  boolean deathmatch;
+extern int deathmatch;
 
 extern boolean coop_spawns;
 
@@ -244,7 +244,7 @@ extern  boolean automaprotate;
 #define automap_off (!automapactive || automapoverlay)
 
 extern  boolean menuactive;    // Menu overlayed?
-extern  boolean paused;        // Game Pause?
+extern  int     paused;        // Game Pause?
 extern  boolean viewactive;
 extern  boolean nodrawers;
 extern  boolean noblit;
@@ -454,22 +454,32 @@ extern int center_weapon;
 extern boolean fauxdemo;
 extern boolean casual_play;
 
-// General
+#define    CASUALPLAY(x) (casual_play ? (x) : 0)
+#define NOTCASUALPLAY(x) (casual_play ? (x) : 1)
+
+// General ------------------
+
 extern int wipe_type;
 extern int over_under;
 extern int jump_crouch;
 extern int fov;
 extern int viewheight_value;
 extern int view_bobbing_percentage;
+
 enum {
   IMPACTPITCH_OFF,
   IMPACTPITCH_FALL,
   IMPACTPITCH_DAMAGE,
   IMPACTPITCH_BOTH,
 }; extern int impact_pitch;
+
+extern int explosion_shake;
+extern int damage_shake;
+extern int max_shake;
 extern int breathing;
 extern int teleporter_zoom;
 extern int death_camera;
+
 enum {
   CHASECAMMODE_OFF,
   CHASECAMMODE_BACK,
@@ -477,17 +487,15 @@ enum {
 }; extern int chasecam_mode;
 extern int chasecam_distance;
 extern int chasecam_height;
+
 extern int no_menu_tint;
 extern int no_berserk_tint;
+extern int no_radsuit_tint;
 extern int damagecount_cap;
 extern int bonuscount_cap;
 extern int fake_contrast;
 extern int wipe_speed_percentage;
 // [Cherry] General ------------------------------------------------------
-extern int damage_shake;
-extern int explosion_shake;
-extern int boss_shake;
-extern int shake_percentage;
 extern int motion_blur;
 // [Cherry] End ----------------------------------------------------------
 extern int s_clipping_dist_x2;
@@ -499,10 +507,12 @@ extern int a11y_weapon_flash;
 extern int a11y_weapon_pspr;
 extern int a11y_invul_colormap;
 
-// Weapons
+// Weapons ------------------
+
 extern int no_hor_autoaim;
 extern int switch_on_pickup;
 extern int weapon_bobbing_percentage;
+
 enum {
   BOBSTYLE_VANILLA,
   BOBSTYLE_INVVANILLA,
@@ -512,17 +522,17 @@ enum {
   BOBSTYLE_INVSMOOTH,
   BOBSTYLE_QUAKE,
 }; extern int bobbing_style;
+
 extern int weapon_inertia;
 extern int weaponsquat;
 extern int translucent_pspr;
 extern int show_berserk;
 
-// Status Bar/HUD
-extern int alt_arms;
+// Status Bar/HUD -----------
+
 extern int smarttotals;
 // [Cherry] --------------------------------------------------------------
 extern int hudcolor_wg_name;
-extern int hudcolor_wg_name_cons;
 extern int hudcolor_plain;
 extern int hudcolor_totaltime;
 extern int hudcolor_th_low;
@@ -532,6 +542,7 @@ extern int hudcolor_th_extra;
 // [Cherry] End ----------------------------------------------------------
 extern int hudcolor_ms_incomp;
 extern int hudcolor_ms_comp;
+
 typedef enum {
   TIMER_USE,
   TIMER_TELEPORT,
@@ -541,28 +552,34 @@ typedef enum {
 } eventtimer_t;
 extern int event_timers[];
 
-// Enemies
+// Enemies ------------------
+
 extern int extra_gibbing_on;
 extern int bloodier_gibbing;
 extern int zdoom_item_drops;
 
-// Messages
+// Messages -----------------
+
 extern int announce_milestones;
 
-// Key Bindings
+// Key Bindings -------------
+
 extern int zoom_fov;
 extern int fancy_teleport;
 
-// CFG only
+// CFG only -----------------
+
+extern int gammacycle;
 extern int menu_background_darkening;
 extern int chasecam_crosshair;
-extern int sp_chat;
-extern int gammacycle;
 extern int always_bob;
 extern int weapon_inertia_scale_pct;
 extern int sx_fix;
 extern int blink_keys;
+extern int show_ssg;
+extern int alt_arms;
 extern int automap_overlay_darkening;
+
 typedef enum {
   EXGIB_FIST,
   EXGIB_CSAW,
@@ -572,27 +589,35 @@ typedef enum {
 } extragibbing_t;
 extern int extra_gibbing[];
 
-// Doom Compatibility
-enum {
-  comp_blazing2,
-  comp_manualdoor,
-  comp_switchsource,
-  comp_bruistarget,
-  comp_cgundblsnd,
-  comp_lscollision,
-  comp_lsamnesia,
-  comp_fuzzyblood,
-  comp_nonbleeders,
-  comp_cgunnersfx,
-  comp_flamst,
-  comp_deadoof,
-  comp_iosdeath,
-  comp_keypal,
-  comp_choppers,
+extern int sp_chat;
 
-  NUGGET_COMP_TOTAL
-};
-extern int nugget_comp[NUGGET_COMP_TOTAL], default_nugget_comp[NUGGET_COMP_TOTAL];
+enum {
+  SHOTPAL_NONE,
+  SHOTPAL_NORMAL,
+  SHOTPAL_CLEAN,
+  SHOTPAL_BOTH,
+}; extern int screenshot_palette;
+
+// Doom Compatibility -------
+
+extern int comp_bruistarget;
+extern int comp_longautoaim;
+extern int comp_lscollision;
+extern int comp_lsamnesia;
+extern int comp_fuzzyblood;
+extern int comp_nonbleeders;
+extern int comp_iosdeath;
+extern int comp_choppers;
+
+extern int comp_blazing2;
+extern int comp_manualdoor;
+extern int comp_switchsource;
+extern int comp_cgundblsnd;
+extern int comp_cgunnersfx;
+extern int comp_flamst;
+extern int comp_deadoof;
+extern int comp_unusedpals;
+extern int comp_keypal;
 
 // [Nugget] --------------------------/
 
@@ -602,6 +627,7 @@ typedef enum {
   MESSAGES_NONE,
   MESSAGES_TOGGLE,
   MESSAGES_PICKUP,
+  MESSAGES_OBITUARY
 } msg_category_t;
 
 void doomprintf(player_t *player, msg_category_t category,

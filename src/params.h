@@ -5,6 +5,7 @@ static const char *params[] = {
 "-nomusic",
 "-nosfx",
 "-nosound",
+"-verbose",
 "-version",
 "-beta",
 "-coop_spawns",
@@ -36,6 +37,7 @@ static const char *params[] = {
 "-server",
 "-solo-net",
 "-blockmap",
+"-force_old_zdoom_nodes",
 "-noautoload",
 "-nocheats",
 "-nodeh",
@@ -46,7 +48,7 @@ static const char *params[] = {
 "-longtics",
 "-shorttics",
 "-strict",
-"-cdrom",
+"-cdrom", // [Nugged] Restored `-cdrom` parm
 "-nogui",
 };
 

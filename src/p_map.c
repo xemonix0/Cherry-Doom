@@ -19,6 +19,7 @@
 //-----------------------------------------------------------------------------
 
 #include "doomstat.h"
+#include "i_printf.h"
 #include "r_main.h"
 #include "p_mobj.h"
 #include "p_maputl.h"
@@ -33,6 +34,9 @@
 #include "v_video.h"
 #include "m_argv.h"
 #include "m_misc2.h"
+// [Nugget]
+#include "p_tick.h"
+#include "r_main.h"
 
 static mobj_t    *tmthing;
 static int       tmflags;
@@ -109,7 +113,7 @@ static boolean PIT_StompThing (mobj_t *thing)
   if (!telefrag)  // killough 8/9/98: make consistent across all levels
     return false;
 
-  P_DamageMobj (thing, tmthing, tmthing, 10000); // Stomp!
+  P_DamageMobjBy (thing, tmthing, tmthing, 10000, MOD_Telefrag); // Stomp!
 
   return true;
 }
@@ -455,7 +459,7 @@ static boolean PIT_CheckLine(line_t *ld) // killough 3/26/98: make static
 	  if (numspechit == MAXSPECIALCROSS_ORIGINAL + 1)
 	  {
 	    overflow[emu_spechits].triggered = true;
-	    fprintf(stderr, "PIT_CheckLine: Triggered SPECHITS overflow!\n");
+	    I_Printf(VB_WARNING, "PIT_CheckLine: Triggered SPECHITS overflow!");
 	  }
 	  SpechitOverrun(ld);
 	}
@@ -557,8 +561,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       }
 
       // [Nugget] Fix lost soul collision
-      if (casual_play && nugget_comp[comp_lscollision]
-          && !(thing->flags & MF_SHOOTABLE))
+      if (casual_play && comp_lscollision && !(thing->flags & MF_SHOOTABLE))
       { return !(thing->flags & MF_SOLID); }
 
       P_DamageMobj (thing, tmthing, tmthing, damage);
@@ -567,7 +570,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       tmthing->momx = tmthing->momy = tmthing->momz = 0;
 
       // [Nugget] Fix forgetful lost soul
-      if (casual_play && !nugget_comp[comp_lsamnesia])
+      if (casual_play && comp_lsamnesia)
       { P_SetMobjState(tmthing, tmthing->info->seestate); }
       else
         P_SetMobjState (tmthing, tmthing->info->spawnstate);
@@ -985,6 +988,7 @@ boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
 static boolean PIT_ApplyTorque(line_t *ld)
 {
   if (ld->backsector &&       // If thing touches two-sided pivot linedef
+      (ld->dx || ld->dy) && // Torque is undefined if the line has no length
       tmbbox[BOXRIGHT]  > ld->bbox[BOXLEFT]  &&
       tmbbox[BOXLEFT]   < ld->bbox[BOXRIGHT] &&
       tmbbox[BOXTOP]    > ld->bbox[BOXBOTTOM] &&
@@ -1556,7 +1560,6 @@ boolean boomshot = false;
 static void P_SpawnExplosion(fixed_t x, fixed_t y, fixed_t z)
 {
   mobj_t *mo = P_SpawnMobj(x, y, z, MT_ROCKET);
-  extern void P_SetTarget();
   
   mo->angle = shootthing->angle;
   P_SetTarget(&mo->target, shootthing);
@@ -1720,7 +1723,6 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 {
   fixed_t x2, y2;
-  extern boolean mouselook, padlook; // [Nugget]
 
   t1 = P_SubstNullMobj(t1);
 
@@ -1733,9 +1735,9 @@ fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 
   // can't shoot outside view angles
 
-  if (t1->player && (mouselook || padlook) && CRITICAL(vertical_aiming == VERTAIM_DIRECT)) // [Nugget] Vertical aiming
+  if (t1->player && vertical_aiming == VERTAIM_DIRECT) // [Nugget] Vertical aiming
   {
-    bottomslope = (topslope = PLAYER_SLOPE(t1->player) + 1) - 2;
+    bottomslope = (topslope = t1->player->slope + 1) - 2;
   }
   else
   {
@@ -2023,34 +2025,7 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
   bombdamage = damage;
   bombdistance = distance;
 
-  // [Cherry] explosion shake
-  if (STRICTMODE(explosion_shake) && shake_percentage)
-  {
-    fixed_t dx, dy, dist2;
-    int strength;
-
-    dx = abs(viewplayer->mo->x - bombspot->x);
-    dy = abs(viewplayer->mo->y - bombspot->y);
-
-    dist2 = dx > dy ? dx : dy;
-    dist2 = (dist2 - viewplayer->mo->radius) >> FRACBITS;
-
-    if (dist2 < 800)
-    {
-      strength = 30 * pow(0.9991, dist2);
-    }
-    else
-    {
-      strength = 5;
-    }
-
-    viewplayer->screenshake = MAX(viewplayer->screenshake, strength);
-
-    if (viewplayer->screenshake > 100)
-    {
-      viewplayer->screenshake = 100;
-    }
-  }
+  R_ExplosionShake(bombspot->x, bombspot->y, bombdamage, bombdistance); // [Nugget] Explosion shake effect
 
   for (y=yl ; y<=yh ; y++)
     for (x=xl ; x<=xh ; x++)
@@ -2091,7 +2066,7 @@ boolean PIT_ChangeSector(mobj_t *thing)
     {
       P_SetMobjState(thing, S_GIBS);
       // [Nugget] No gibs if the thing doesn't bleed to begin with
-      if (STRICTMODE(nugget_comp[comp_nonbleeders]) && thing->flags & MF_NOBLOOD)
+      if (STRICTMODE(comp_nonbleeders) && thing->flags & MF_NOBLOOD)
       {
         thing->sprite = SPR_TNT1;
         thing->frame = 0;
@@ -2131,18 +2106,18 @@ boolean PIT_ChangeSector(mobj_t *thing)
     {
       int t;         // killough 8/10/98
 
-      P_DamageMobj(thing,NULL,NULL,10);
+      P_DamageMobjBy(thing,NULL,NULL,10,MOD_Crush);
 
       // spray blood in a random direction
       mo = P_SpawnMobj (thing->x,
 			thing->y,
 			thing->z + thing->height/2,
 			// [Nugget]
-			(STRICTMODE(nugget_comp[comp_nonbleeders])
-			 && thing->flags & MF_NOBLOOD) ? MT_PUFF : MT_BLOOD);
+			(STRICTMODE(comp_nonbleeders) && thing->flags & MF_NOBLOOD)
+                        ? MT_PUFF : MT_BLOOD);
 
       // [Nugget] Fuzzy blood if applicable
-      if (nugget_comp[comp_fuzzyblood] && thing->flags & MF_SHADOW)
+      if (comp_fuzzyblood && thing->flags & MF_SHADOW)
       { mo->flags |= MF_SHADOW; }
 
       if (thing->info->bloodcolor || idgaf)
@@ -2559,9 +2534,9 @@ static void SpechitOverrun(line_t *ld)
             nofit = addr;
             break;
         default:
-            fprintf(stderr, "SpechitOverrun: Warning: unable to emulate"
-                            "an overrun where numspechit=%i\n",
-                            numspechit);
+            I_Printf(VB_DEBUG, "SpechitOverrun: Warning: unable to emulate"
+                               "an overrun where numspechit=%i",
+                               numspechit);
             break;
     }
 }

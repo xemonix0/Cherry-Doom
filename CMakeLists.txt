@@ -71,6 +71,10 @@ find_package(SDL2_net REQUIRED)
 find_package(OpenAL REQUIRED)
 find_package(SndFile 1.0.29 REQUIRED)
 
+if(OPENAL_VERSION_STRING VERSION_GREATER_EQUAL "1.22.0")
+    set(HAVE_AL_BUFFER_CALLBACK TRUE)
+endif()
+
 if(NOT TARGET SDL2_net::SDL2_net)
     add_library(SDL2_net::SDL2_net ALIAS SDL2_net::SDL2_net-static)
 endif()
@@ -158,7 +162,7 @@ elseif(LINUX)
                 --appimage-extract-and-run
                 --appdir=${CPACK_TEMPORARY_DIRECTORY}
                 --executable=$<TARGET_FILE:cherry-doom>
-                --desktop-file=${CPACK_TEMPORARY_DIRECTORY}/${CPACK_PACKAGING_INSTALL_PREFIX}/share/applications/cherry-doom.desktop
+                --desktop-file=${CPACK_TEMPORARY_DIRECTORY}/${CPACK_PACKAGING_INSTALL_PREFIX}/share/applications/io.github.xemonix0.Cherry-Doom.desktop
                 --icon-file=${CPACK_TEMPORARY_DIRECTORY}/${CPACK_PACKAGING_INSTALL_PREFIX}/share/icons/hicolor/128x128/apps/cherry-doom.png
                 --output=appimage)
             ]])

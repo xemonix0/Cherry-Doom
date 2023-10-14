@@ -43,8 +43,8 @@ patch_t*    sttminus;
 void STlib_init(void)
 {
   // [Nugget]
-  if (st_crispyhud && nughud.nhtnum)
-  { sttminus = nughud_tallminus; }
+  if (st_crispyhud && nhtminus)
+  { sttminus = nhtminus; }
   else
   // [FG] allow playing with the Doom v1.2 IWAD which is missing the STTMINUS lump
   if (W_CheckNumForName("STTMINUS") >= 0)
@@ -79,9 +79,11 @@ void STlib_initNum
   n->num  = num;
   n->on = on;
   n->p  = pl;
-  // [Nugget]
+
+  // [Nugget] NUGHUD
   n->align = align;
   n->haspercent = false;
+  n->isready = false;
 }
 
 //
@@ -104,8 +106,9 @@ void STlib_drawNum
   int   x = n->x;
 
   int   neg;
-  
-  patch_t *minus = (n->data ? nughud_readyminus : sttminus); // [Nugget]
+
+  // [Nugget] NUGHUD
+  patch_t *minus = ((st_crispyhud && nhrminus && n->isready) ? nhrminus : sttminus);
 
   n->oldnum = *n->num;
 
@@ -125,17 +128,16 @@ void STlib_drawNum
   if (num == 1994)
     return;
 
-  // [Nugget] Custom alignment
+  // [Nugget] NUGHUD: Custom alignment
   if (n->align != 1) {
     int tnum = num, tnumdigits = 0;
-    const int tw = (!n->align ? w/2 : w);
 
     do {
       tnum /= 10;
       tnumdigits++;
     } while (tnum);
 
-    x += tw * (tnumdigits - (!n->align && n->haspercent));
+    x += (!n->align ? w/2 : w) * (tnumdigits + neg - (!n->align && n->haspercent));
   }
 
   //jff 2/16/98 add color translation to digit output

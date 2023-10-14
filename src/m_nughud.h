@@ -22,8 +22,8 @@
 
 #include "m_fixed.h"
 
-#define NUGHUDWIDESHIFT(x) ((abs(x) == 2) ? WIDESCREENDELTA * st_crispyhud * (2 / (x)) :  \
-                            (abs(x) == 1) ? WIDESCREENDELTA * st_widecrispyhud *  (x)  : 0)
+#define NUGHUDWIDESHIFT(x) ((abs(x) == 2) ? WIDESCREENDELTA * (st_crispyhud != 0) * (2 / (x)) :  \
+                            (abs(x) == 1) ? WIDESCREENDELTA * (st_crispyhud == 2) *      (x)  : 0)
 
 typedef struct nughud_widget_s {
   int x, y;
@@ -60,20 +60,19 @@ typedef struct nughud_s {
   nughud_alignable_t time;
   boolean            time_sts;
   nughud_alignable_t sts;
+  boolean            sts_ml;
   nughud_alignable_t title;
   nughud_alignable_t powers;
   nughud_alignable_t attempts; // [Cherry]
   nughud_alignable_t movement; // [Cherry]
   nughud_alignable_t coord;
+  boolean            coord_ml;
   nughud_alignable_t fps;
   nughud_alignable_t message;
   nughud_alignable_t secret;
   nughud_patch_t     patches[NUMNUGHUDPATCHES];
   boolean            percents;
   fixed_t            weapheight;
-  // These determine whether or not a given NUGHUD font/patch should be used
-  boolean            nhtnum,   nhrnum,   nhamnum,  nhwpnum,  nhkeys,   nhbersrk,
-                     nharmor,  nhinfnty;
 } nughud_t;
 
 extern nughud_t nughud;

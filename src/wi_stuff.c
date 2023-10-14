@@ -19,6 +19,7 @@
 //-----------------------------------------------------------------------------
 
 #include "doomstat.h"
+#include "i_printf.h"
 #include "m_random.h"
 #include "w_wad.h"
 #include "g_game.h"
@@ -110,8 +111,6 @@ typedef struct
   int   x;       // x/y coordinate pair structure
   int   y;
 } point_t;
-
-int wi_more_widgets; // [Cherry]
 
 //
 // Animation.
@@ -570,7 +569,7 @@ WI_drawOnLnode  // draw stuff at a location by episode/map#
   else
     {
       // DEBUG
-      printf("Could not place patch on level %d", n+1);
+      I_Printf(VB_WARNING, "Could not place patch on level %d", n+1);
     }
 }
 
@@ -2142,12 +2141,12 @@ void WI_loadData(void)
 void WI_Drawer (void)
 {
   extern void HU_UpdateWidgetFont(void); // [Cherry]
-  extern void HUlib_resetAlignOffsets(void); // [Cherry]
+  extern void HUlib_reset_align_offsets(void); // [Cherry]
   extern void WI_DrawTimeWidget(void);
   extern void WI_DrawMoreWidgets(void); // [Cherry]
 
   HU_UpdateWidgetFont();
-  HUlib_resetAlignOffsets();
+  HUlib_reset_align_offsets();
 
   switch (state)
     {
@@ -2162,10 +2161,7 @@ void WI_Drawer (void)
       // [FG] draw Time widget on intermission screen
       WI_DrawTimeWidget();
       // [Cherry] draw health, armor and weapons on intermission screen
-      if (wi_more_widgets)
-      {
-        WI_DrawMoreWidgets();
-      }
+      WI_DrawMoreWidgets();
       break;
 
     case ShowNextLoc:

@@ -20,6 +20,7 @@
 //-----------------------------------------------------------------------------
 
 #include "doomstat.h"
+#include "i_printf.h"
 #include "m_random.h"
 #include "r_main.h"
 #include "p_maputl.h"
@@ -124,7 +125,7 @@ void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 // [Nugget]: [crispy] height check for melee attacks
 static boolean P_NuggetCheckMeleeHeight(mobj_t *actor)
 {
-  const mobj_t *pl = actor->target;
+  const mobj_t *const pl = actor->target;
 
   if (!casual_play || !over_under)
   { return true; }
@@ -1324,7 +1325,7 @@ void A_CPosAttack(mobj_t *actor)
     return;
 
   // [Nugget]
-  if (STRICTMODE(nugget_comp[comp_cgunnersfx]))
+  if (STRICTMODE(comp_cgunnersfx))
     S_StartSound (actor, sound);
   else
     S_StartSound (actor, sfx_shotgn);
@@ -1404,7 +1405,7 @@ void A_TroopAttack(mobj_t *actor)
       int damage;
       S_StartSound(actor, sfx_claw);
       damage = (P_Random(pr_troopattack)%8+1)*3;
-      P_DamageMobj(actor->target, actor, actor, damage);
+      P_DamageMobjBy(actor->target, actor, actor, damage, MOD_Melee);
       return;
     }
   P_SpawnMissile(actor, actor->target, MT_TROOPSHOT);  // launch a missile
@@ -1418,7 +1419,7 @@ void A_SargAttack(mobj_t *actor)
   if (P_CheckMeleeRange(actor))
     {
       int damage = ((P_Random(pr_sargattack)%10)+1)*4;
-      P_DamageMobj(actor->target, actor, actor, damage);
+      P_DamageMobjBy(actor->target, actor, actor, damage, MOD_Melee);
     }
 }
 
@@ -1430,7 +1431,7 @@ void A_HeadAttack(mobj_t *actor)
   if (P_CheckMeleeRange(actor))
     {
       int damage = (P_Random(pr_headattack)%6+1)*10;
-      P_DamageMobj(actor->target, actor, actor, damage);
+      P_DamageMobjBy(actor->target, actor, actor, damage, MOD_Melee);
       return;
     }
   P_SpawnMissile(actor, actor->target, MT_HEADSHOT);  // launch a missile
@@ -1450,7 +1451,7 @@ void A_BruisAttack(mobj_t *actor)
     return;
 
   // [Nugget] Fix A_BruisAttack not calling A_FaceTarget
-  if (casual_play && !nugget_comp[comp_bruistarget])
+  if (casual_play && !comp_bruistarget)
   { A_FaceTarget(actor); }
 
   if (P_CheckMeleeRange(actor))
@@ -1458,7 +1459,7 @@ void A_BruisAttack(mobj_t *actor)
       int damage;
       S_StartSound(actor, sfx_claw);
       damage = (P_Random(pr_bruisattack)%8+1)*10;
-      P_DamageMobj(actor->target, actor, actor, damage);
+      P_DamageMobjBy(actor->target, actor, actor, damage, MOD_Melee);
       return;
     }
   P_SpawnMissile(actor, actor->target, MT_BRUISERSHOT);  // launch a missile
@@ -1590,7 +1591,7 @@ void A_SkelFist(mobj_t *actor)
     {
       int damage = ((P_Random(pr_skelfist)%10)+1)*6;
       S_StartSound(actor, sfx_skepch);
-      P_DamageMobj(actor->target, actor, actor, damage);
+      P_DamageMobjBy(actor->target, actor, actor, damage, MOD_Melee);
     }
 }
 
@@ -1680,90 +1681,90 @@ static boolean P_HealCorpse(mobj_t* actor, int radius, statenum_t healstate, sfx
   int bx, by;
 
   if (actor->movedir != DI_NODIR)
-  {
-    // check for corpses to raise
-    viletryx =
-      actor->x + actor->info->speed*xspeed[actor->movedir];
-    viletryy =
-      actor->y + actor->info->speed*yspeed[actor->movedir];
-
-    xl = (viletryx - bmaporgx - MAXRADIUS*2)>>MAPBLOCKSHIFT;
-    xh = (viletryx - bmaporgx + MAXRADIUS*2)>>MAPBLOCKSHIFT;
-    yl = (viletryy - bmaporgy - MAXRADIUS*2)>>MAPBLOCKSHIFT;
-    yh = (viletryy - bmaporgy + MAXRADIUS*2)>>MAPBLOCKSHIFT;
-
-    vileobj = actor;
-    viletryradius = radius;
-    for (bx=xl ; bx<=xh ; bx++)
     {
-      for (by=yl ; by<=yh ; by++)
-      {
-        // Call PIT_VileCheck to check
-        // whether object is a corpse
-        // that canbe raised.
-        if (!P_BlockThingsIterator(bx,by,PIT_VileCheck))
+      // check for corpses to raise
+      viletryx =
+        actor->x + actor->info->speed*xspeed[actor->movedir];
+      viletryy =
+        actor->y + actor->info->speed*yspeed[actor->movedir];
+
+      xl = (viletryx - bmaporgx - MAXRADIUS*2)>>MAPBLOCKSHIFT;
+      xh = (viletryx - bmaporgx + MAXRADIUS*2)>>MAPBLOCKSHIFT;
+      yl = (viletryy - bmaporgy - MAXRADIUS*2)>>MAPBLOCKSHIFT;
+      yh = (viletryy - bmaporgy + MAXRADIUS*2)>>MAPBLOCKSHIFT;
+
+      vileobj = actor;
+      viletryradius = radius;
+      for (bx=xl ; bx<=xh ; bx++)
         {
-          mobjinfo_t *info;
+          for (by=yl ; by<=yh ; by++)
+            {
+              // Call PIT_VileCheck to check
+              // whether object is a corpse
+              // that canbe raised.
+              if (!P_BlockThingsIterator(bx,by,PIT_VileCheck))
+                {
+		  mobjinfo_t *info;
 
-          // got one!
-          mobj_t *temp = actor->target;
-          actor->target = corpsehit;
-          A_FaceTarget(actor);
-          actor->target = temp;
+                  // got one!
+                  mobj_t *temp = actor->target;
+                  actor->target = corpsehit;
+                  A_FaceTarget(actor);
+                  actor->target = temp;
 
-          P_SetMobjState(actor, healstate);
-          S_StartSound(corpsehit, healsound);
-          info = corpsehit->info;
+                  P_SetMobjState(actor, healstate);
+                  S_StartSound(corpsehit, healsound);
+                  info = corpsehit->info;
 
-          P_SetMobjState(corpsehit,info->raisestate);
+                  P_SetMobjState(corpsehit,info->raisestate);
 
-          if (comp[comp_vile])
-            corpsehit->height <<= 2;                        // phares
-          else                                              //   V
-          {
-            corpsehit->height = info->height; // fix Ghost bug
-            corpsehit->radius = info->radius; // fix Ghost bug
-          }                                               // phares
+                  if (comp[comp_vile])
+                    corpsehit->height <<= 2;                        // phares
+                  else                                              //   V
+                    {
+                      corpsehit->height = info->height; // fix Ghost bug
+                      corpsehit->radius = info->radius; // fix Ghost bug
+                    }                                               // phares
 
-          // killough 7/18/98:
-          // friendliness is transferred from AV to raised corpse
-          corpsehit->flags =
-          (info->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
+		  // killough 7/18/98: 
+		  // friendliness is transferred from AV to raised corpse
+		  corpsehit->flags = 
+		    (info->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
 
-          // [crispy] resurrected pools of gore ("ghost monsters") are translucent
-          if (STRICTMODE(ghost_monsters) && corpsehit->height == 0
-              && corpsehit->radius == 0)
-          {
-            corpsehit->flags |= MF_TRANSLUCENT;
-            fprintf(stderr, "A_VileChase: Resurrected ghost monster (%d) at (%d/%d)!\n",
-                    corpsehit->type, corpsehit->x>>FRACBITS, corpsehit->y>>FRACBITS);
-          }
+		  // [crispy] resurrected pools of gore ("ghost monsters") are translucent
+		  if (STRICTMODE(ghost_monsters) && corpsehit->height == 0
+		      && corpsehit->radius == 0)
+		  {
+		      corpsehit->flags |= MF_TRANSLUCENT;
+		      I_Printf(VB_WARNING, "A_VileChase: Resurrected ghost monster (%d) at (%d/%d)!",
+		              corpsehit->type, corpsehit->x>>FRACBITS, corpsehit->y>>FRACBITS);
+		  }
+		  
+                  corpsehit->health = info->spawnhealth;
+		  P_SetTarget(&corpsehit->target, NULL);  // killough 11/98
 
-          corpsehit->health = info->spawnhealth;
-          P_SetTarget(&corpsehit->target, NULL);  // killough 11/98
+		  if (demo_version >= 203)
+		    {         // kilough 9/9/98
+		      P_SetTarget(&corpsehit->lastenemy, NULL);
+		      corpsehit->flags &= ~MF_JUSTHIT;
+		    }
 
-          if (demo_version >= 203)
-          {         // kilough 9/9/98
-            P_SetTarget(&corpsehit->lastenemy, NULL);
-            corpsehit->flags &= ~MF_JUSTHIT;
-          }
+		  // killough 8/29/98: add to appropriate thread
+		  P_UpdateThinker(&corpsehit->thinker);
 
-          // killough 8/29/98: add to appropriate thread
-          P_UpdateThinker(&corpsehit->thinker);
+                  // [Nugget]: [So Doom]
+                  corpsehit->intflags |= MIF_EXTRASPAWNED;
 
-          // [Nugget]: [So Doom]
-          corpsehit->intflags |= MIF_EXTRASPAWNED;
+                  // [crispy] count resurrected monsters
+                  // [Nugget] Only if counted towards killcount
+                  if ((corpsehit->flags & MF_COUNTKILL) && !(corpsehit->flags & MF_FRIEND))
+                    extraspawns++; // [Nugget] Smart Totals from So Doom
 
-          // [crispy] count resurrected monsters
-          // [Nugget] Only if counted towards killcount
-          if ((corpsehit->flags & MF_COUNTKILL) && !(corpsehit->flags & MF_FRIEND))
-            extraspawns++; // [Nugget] Smart Totals from So Doom
-
-          return true;
+                  return true;
+                }
+            }
         }
-      }
     }
-  }
   return false;
 }
 
@@ -1851,7 +1852,7 @@ void A_VileTarget(mobj_t *actor)
   P_SetTarget(&fog->target, actor);
   P_SetTarget(&fog->tracer, actor->target);
   // [Nugget]: [crispy] play DSFLAMST sound when Arch-Vile spawns fire attack
-  if (STRICTMODE(nugget_comp[comp_flamst]))
+  if (STRICTMODE(comp_flamst))
   { S_StartSound(fog, sfx_flamst); }
   A_Fire(fog);
 }
@@ -2180,18 +2181,8 @@ void A_Scream(mobj_t *actor)
   // Check for bosses.
   if (actor->flags2 & (MF2_BOSS | MF2_FULLVOLSOUNDS))
   {
-    if (STRICTMODE(boss_shake) && shake_percentage)
-    {
-      // [Cherry] shake screen
-      viewplayer->screenshake = MAX(viewplayer->screenshake, 80);
-
-      if (viewplayer->screenshake > 100)
-      {
-        viewplayer->screenshake = 100;
-      }
-    }
-
     S_StartSound(NULL, sound); // full volume
+    R_ExplosionShake(actor->x, actor->y, 2048, 2048); // [Cherry] Explosion shake effect
   }
   else
     S_StartSound(actor, sound);
@@ -2561,7 +2552,7 @@ void A_BrainScream(mobj_t *mo)
   int x;
   int x1, x2; // [Nugget] Fix lopsided IoS death explosions
 
-  if (casual_play && nugget_comp[comp_iosdeath])
+  if (casual_play && comp_iosdeath)
   { x1 = x2 = 280; }
   else
   { x1 = 196; x2 = 320; }
@@ -2578,6 +2569,8 @@ void A_BrainScream(mobj_t *mo)
         th->tics = 1;
     }
   S_StartSound(NULL,sfx_bosdth);
+
+  R_ExplosionShake(mo->x, mo->y, 2048, 2048); // [Nugget] Explosion shake effect
 }
 
 void A_BrainExplode(mobj_t *mo)
@@ -2786,7 +2779,7 @@ void A_Scratch(mobj_t *mo)
     return;
   mo->target && (A_FaceTarget(mo), P_CheckMeleeRange(mo)) ?
     mo->state->misc2 ? S_StartSound(mo, mo->state->misc2) : (void) 0,
-    P_DamageMobj(mo->target, mo, mo, mo->state->misc1) : (void) 0;
+    P_DamageMobjBy(mo->target, mo, mo, mo->state->misc1, MOD_Melee) : (void) 0;
 }
 
 void A_PlaySound(mobj_t *mo)

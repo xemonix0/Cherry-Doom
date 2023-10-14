@@ -21,10 +21,10 @@
 #include <string.h>
 
 #include "SDL.h"
-#include "al.h"
-#include "alc.h"
+#include "alext.h"
 
 #include "doomtype.h"
+#include "i_printf.h"
 #include "i_sndfile.h"
 #include "i_sound.h"
 
@@ -80,7 +80,7 @@ static boolean UpdatePlayer(void)
     alGetSourcei(player.source, AL_BUFFERS_PROCESSED, &processed);
     if (alGetError() != AL_NO_ERROR)
     {
-        fprintf(stderr, "UpdatePlayer: Error checking source state\n");
+        I_Printf(VB_ERROR, "UpdatePlayer: Error checking source state");
         return false;
     }
 
@@ -113,7 +113,7 @@ static boolean UpdatePlayer(void)
         }
         if (alGetError() != AL_NO_ERROR)
         {
-            fprintf(stderr, "UpdatePlayer: Error buffering data\n");
+            I_Printf(VB_ERROR, "UpdatePlayer: Error buffering data");
             return false;
         }
     }
@@ -133,7 +133,7 @@ static boolean UpdatePlayer(void)
         alSourcePlay(player.source);
         if (alGetError() != AL_NO_ERROR)
         {
-            fprintf(stderr, "UpdatePlayer: Error restarting playback\n");
+            I_Printf(VB_ERROR, "UpdatePlayer: Error restarting playback");
             return false;
         }
     }
@@ -182,7 +182,7 @@ static boolean StartPlayer(void)
     }
     if (alGetError() != AL_NO_ERROR)
     {
-        fprintf(stderr, "StartPlayer: Error buffering for playback.\n");
+        I_Printf(VB_ERROR, "StartPlayer: Error buffering for playback.");
         return false;
     }
 
@@ -223,6 +223,18 @@ static boolean I_OAL_InitMusic(int device)
     alSourcei(player.source, AL_SOURCE_RELATIVE, AL_TRUE);
     alSourcei(player.source, AL_ROLLOFF_FACTOR, 0);
 
+    // Bypass speaker virtualization for music.
+    if (alIsExtensionPresent("AL_SOFT_direct_channels"))
+    {
+        alSourcei(player.source, AL_DIRECT_CHANNELS_SOFT, AL_TRUE);
+    }
+
+    // Bypass speaker virtualization for music.
+    if (alIsExtensionPresent("AL_SOFT_source_spatialize"))
+    {
+        alSourcei(player.source, AL_SOURCE_SPATIALIZE_SOFT, AL_FALSE);
+    }
+
     music_initialized = true;
 
     return true;
@@ -262,7 +274,7 @@ static void I_OAL_PlaySong(void *handle, boolean looping)
     alSourcePlay(player.source);
     if (alGetError() != AL_NO_ERROR)
     {
-        fprintf(stderr, "I_OAL_PlaySong: Error starting playback.\n");
+        I_Printf(VB_ERROR, "I_OAL_PlaySong: Error starting playback.");
         return;
     }
 
@@ -313,7 +325,7 @@ static void I_OAL_ShutdownMusic(void)
     alDeleteBuffers(NUM_BUFFERS, player.buffers);
     if (alGetError() != AL_NO_ERROR)
     {
-        fprintf(stderr, "I_OAL_ShutdownMusic: Failed to delete object IDs.\n");
+        I_Printf(VB_ERROR, "I_OAL_ShutdownMusic: Failed to delete object IDs.");
     }
 
     memset(&player, 0, sizeof(stream_player_t));

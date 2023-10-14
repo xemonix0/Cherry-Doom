@@ -1,5 +1,5 @@
 ﻿# Cherry Doom
-[![Cherry-Doom Icon](https://raw.githubusercontent.com/xemonix0/Cherry-Doom/master/data/cherry-doom.png)](https://github.com/xemonix0/Cherry-Doom)
+[![Cherry Doom Icon](https://raw.githubusercontent.com/xemonix0/Cherry-Doom/master/data/cherry-doom.png)](https://github.com/xemonix0/Cherry-Doom)
 
 [![Top Language](https://img.shields.io/github/languages/top/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom)
 [![Code Size](https://img.shields.io/github/languages/code-size/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom)
@@ -12,6 +12,10 @@
 
 Cherry Doom is a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) intended to add even more features.
 
+**Note**: this README and the rest of documentation are updated on a per-commit basis,
+meaning that they may not correspond to the latest release of Cherry Doom.
+If you're seeking information on the version you're using, please refer to the documentation included with it.
+
 ### DISCLAIMER
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
 **RECORD DEMOS AT YOUR OWN RISK!**
@@ -21,40 +25,37 @@ In the course of development, changes to the save file structure, such as adding
 
 This means that if you saved your game before a breaking change to save file structure was introduced, updating to the latest commit might not trigger the incompatibility warning when trying to load the save, and as a result that might lead to unexpected behavior or a crash.
 
-# Features
-Just like with Nugget Doom, most of Cherry Doom's features come from other sources, like source ports, mods or games. The initial implementations for some are **(partially) ported from ((p.)p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
+Saves made in older releases of Cherry Doom or in Nugget Doom or Woof! should all remain compatible with the newest Cherry Doom release, unless it is stated otherwise in the changelog.
+
+## Features
+
+Note that this feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features); read the latter for more details.
+Some features were first introduced in Cherry Doom and later merged into Nugget Doom, and so they're not listed here anymore.
+
+Some of Cherry Doom's features come from other sources, like other source ports, mods or games. The initial implementations for some are **(partially) ported from ((p.)p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
 
 ### General
 
-- **Menu background can now be enabled in all menus**
-- **Screen shake effect** on damage, explosions and boss deaths [i.b. & p.p.f. Doom Retro]
-- **Motion blur** [p.f. Doom Retro]
-
-### Weapons
-
-- Key to **equip last used weapon** (default: <kbd>q</kbd>) [i.b. Half-Life]
+- **Menu background can now be enabled in all menus**.
+- **Damage view shake effect**.
+- **Max shake intensity customization**.
+- **Motion blur**. [p.f. Doom Retro]
 
 ### Status Bar/HUD
 
-- Toggling of **bars in Boom HUD widgets**
-- **More widgets on intermission screen** (health, armor, weapons, attempts)
-- **Attempt counter widget** for WOOFHUD and NUGHUD
-- **Improved HUD color customization:** ability to choose colors for things like:
-	- Widget names
-	- Plain text
-	- Total level time
-	- Low/Ok/Good/Extra thresholds for Health, Armor and Ammo widgets
-- **Movement widget:** shows the current movement inputs (e.g. "MF40 SR50")
+- **More widgets on intermission screen** (attempts, health, armor, weapons).
+- **Attempts widget**: shows the current session attempts and the total attempts across all sessions. The session attempts reset when the map is beaten or when the game is quit, and they are preserved in saved games.
+- **More HUD color customization**: pick colors for widget names, health/armor/ammo threshold colors and plain text.
+- **Movement widget**: shows the current player movement speeds.
 
 ### Automap
 
-- **Tag finder** [i.b. & p.p.f PrBoomX]		
-    - Pressing the key (default: <kbd>x</kbd>) while in nofollow mode on automap will highlight the sector or line under the crosshair and show the activating line/sector, if any.
+- **Color customization for Tag Finder from PrBoomX**.
 
 ### Miscellaneous
 
-- **Level table** and WAD stats tracking [p.f. DSDA-Doom, with the following additions]
-	- **Attempts** column and WAD summary entry
+- **Level table**, with the following additions: [p.f. DSDA-Doom]
+	- **Attempts** level table entry.
 
 # Releases
 
@@ -68,9 +69,9 @@ A complete history of changes and releases can be found on the [Releases](https:
 
 Cherry Doom follows exactly the same versioning system as Nugget Doom, which is fairly simple:
 
-- **X** is increased in the event of at least one major implementation, such as a new specification like UMAPINFO;
+- **X** is increased in the event of at least one major implementation, such as a new specification like _UMAPINFO_;
 - **Y** is increased in the event of at least one minor implementation, such as a new cheat;
-- **Z** is increased in the event of at least one bug fix, text/code reformatting, tiny tweak or merging of Nugget Doom updates, even if the changes to the latter are considered minor or major.
+- **Z** is increased in the event of at least one bug fix, text/code reformatting, tiny tweak or merging of _Nugget Doom_ updates, even if the changes to the latter are considered minor or major.
 
 Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
 
@@ -90,12 +91,12 @@ It can be cloned via
 
 The following libraries need to be installed:
 
- * [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
- * [SDL2_net](https://github.com/libsdl-org/SDL_net)
- * [openal-soft](https://github.com/kcat/openal-soft)
- * [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
- * [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
- * [libxmp](https://github.com/libxmp/libxmp) (optional)
+- [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
+- [SDL2_net](https://github.com/libsdl-org/SDL_net)
+- [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
+- [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
+- [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
+- [libxmp](https://github.com/libxmp/libxmp) (optional)
  
 Usually your distribution should have the corresponding packages in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
 
@@ -143,7 +144,7 @@ Copyright:
  © 2019 Jonathan Dowland;  
  © 2020 Alex Mayfield;  
  © 2021 Ryan Krafnick;  
- © 2022 ceski;  
+ © 2022-2023 ceski;  
  © 2023 liPillON;  
  © 2020-2023 Fabian Greffrath;  
  © 2020-2023 Roman Fomin;  

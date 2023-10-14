@@ -23,11 +23,11 @@
 #include "m_io.h" // haleyjd
 
 #include "doomstat.h"
+#include "i_printf.h"
 #include "doomkeys.h"
 #include "f_finale.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "m_nughud.h" // [Nugget]
 #include "m_menu.h"
 #include "m_random.h"
 #include "p_setup.h"
@@ -87,7 +87,7 @@ mapentry_t*     gamemapinfo;
 // If non-zero, exit the level after this number of minutes.
 int             timelimit;
 
-boolean         paused;
+int             paused;
 boolean         sendpause;     // send a pause event next tic
 boolean         sendsave;      // send a save event next tic
 boolean         sendreload;    // send a reload level event next tic
@@ -99,7 +99,7 @@ boolean         nodrawers;     // for comparative timing purposes
 boolean         noblit;        // for comparative timing purposes
 int             starttime;     // for comparative timing purposes
 boolean         viewactive;
-boolean         deathmatch;    // only if started as net death
+int             deathmatch;    // only if started as net death
 boolean         netgame;       // only true if packets are broadcast
 boolean         playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
@@ -787,6 +787,8 @@ static void G_DoLoadLevel(void)
 
   critical = (gameaction == ga_playdemo || demorecording || demoplayback || D_CheckNetConnect());
 
+  P_UpdateDirectVerticalAiming();
+
   // [crispy] pistol start
   if (CRITICAL(pistolstart))
   {
@@ -799,6 +801,9 @@ static void G_DoLoadLevel(void)
   st_health = players[displayplayer].health;
   st_armor  = players[displayplayer].armorpoints;
   gameaction = ga_nothing;
+
+  // Set the initial listener parameters using the player's initial state.
+  S_InitListener(players[displayplayer].mo);
 
   // clear cmd building stuff
   memset (gamekeydown, 0, sizeof(gamekeydown));
@@ -1235,14 +1240,13 @@ static void G_PlayerFinishLevel(int player)
   // [crispy] reset additional player properties
   p->oldlookdir = p->lookdir = 0;
   p->centering = false;
+  p->slope = 0;
   p->recoilpitch = p->oldrecoilpitch = 0;
   // [Nugget] Reset more additional player properties
   p->mo->height = p->mo->info->height;
   p->mo->intflags &= ~MIF_CROUCHING;
   p->jumptics = p->crouchoffset = 0;
   p->oldimpactpitch = p->impactpitch = 0;
-  // [Cherry] Reset even more additional player properties
-  p->screenshake = 0;
 }
 
 // [crispy] format time for level statistics
@@ -1288,7 +1292,7 @@ static void G_WriteLevelStat(void)
 
         if (fstream == NULL)
         {
-            fprintf(stderr, "G_WriteLevelStat: Unable to open levelstat.txt for writing!\n");
+            I_Printf(VB_ERROR, "G_WriteLevelStat: Unable to open levelstat.txt for writing!");
             return;
         }
     }
@@ -1330,9 +1334,8 @@ boolean um_pars = false;
 static void G_DoCompleted(void)
 {
   int i;
+
   // [Nugget] Rebuild the Time widget to get rid of event timers
-  extern void HU_widget_rebuild_sttime(void);
-  
   HU_widget_rebuild_sttime();
 
   //!
@@ -1587,7 +1590,7 @@ static void G_DoWorldDone(void)
 #define INVALID_DEMO(a, b) \
    do \
    { \
-     fprintf(stderr, "G_DoPlayDemo: " a, b); \
+     I_Printf(VB_WARNING, "G_DoPlayDemo: " a, b); \
      gameaction = ga_nothing; \
      demoplayback = true; \
      G_CheckDemoStatus(); \
@@ -1623,7 +1626,7 @@ static void G_DoPlayDemo(void)
   // [FG] ignore too short demo lumps
   if (lumplength < 0xd)
   {
-    INVALID_DEMO("Short demo lump %s.\n", basename);
+    INVALID_DEMO("Short demo lump %s.", basename);
   }
 
   demover = *demo_p++;
@@ -1635,7 +1638,7 @@ static void G_DoPlayDemo(void)
     // Eternity Engine also uses 255 demover, with other signatures.
     if (strncmp((const char *)demo_p, "PR+UM", 5) != 0)
     {
-      INVALID_DEMO("Extended demo format %d found, but \"PR+UM\" string not found.\n", demover);
+      INVALID_DEMO("Extended demo format %d found, but \"PR+UM\" string not found.", demover);
     }
 
     demo_p += 6;
@@ -1679,7 +1682,7 @@ static void G_DoPlayDemo(void)
   // [FG] PrBoom's own demo format starts with demo version 210
   if (demover >= 210 && !mbf21)
   {
-    INVALID_DEMO("Unknown demo format %d.\n", demover);
+    INVALID_DEMO("Unknown demo format %d.", demover);
   }
 
   longtics = false;
@@ -1845,7 +1848,7 @@ static void G_DoPlayDemo(void)
   }
 
   // [FG] report compatibility mode
-  fprintf(stderr, "G_DoPlayDemo: Playing demo with %s (%d) compatibility.\n",
+  I_Printf(VB_INFO, "G_DoPlayDemo: Playing demo with %s (%d) compatibility.",
     G_GetCurrentComplevelName(), demover);
 
   D_NuggetUpdateCasual(); // [Nugget]
@@ -1857,7 +1860,7 @@ static void G_DoPlayDemo(void)
 // killough 2/22/98: version id string format for savegames
 #define VERSIONID "MBF %d"
 
-#define CURRENT_SAVE_VERSION "Cherry 1.0.0"
+#define CURRENT_SAVE_VERSION "Cherry 1.0.1"
 
 static char *savename = NULL;
 
@@ -1938,12 +1941,13 @@ char* G_SaveGameName(int slot)
   char buf[16] = {0};
   sprintf(buf, "%.7s%d.dsg", savegamename, 10*savepage+slot);
 
+// [Nugget] Restored `-cdrom` parm
 #ifdef _WIN32
   if (M_CheckParm("-cdrom"))
     return M_StringJoin("c:\\doomdata\\", buf, NULL);
   else
 #endif
-    return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf, NULL);
+  return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf, NULL);
 }
 
 char* G_MBFSaveGameName(int slot)
@@ -2150,6 +2154,7 @@ static void G_DoLoadGame(void)
   #define SAVEIS(str) (strncmp((char *) save_p, str, strlen(CURRENT_SAVE_VERSION)) == 0)
   else if (SAVEIS("Nugget 2.1.0")) { saveg_compat = saveg_nugget210; }
   else if (SAVEIS("Woof 6.0.0")) { saveg_compat = saveg_woof600; }
+  else if (SAVEIS("Cherry 1.0.0")) { saveg_compat = saveg_cherry100; }
   #undef SAVEIS
 
   // killough 2/22/98: Friendly savegame version difference message
@@ -2340,7 +2345,7 @@ static void G_DoLoadGame(void)
     char *maplump = MAPNAME(gameepisode, gamemap);
     int maplumpnum = W_CheckNumForName(maplump);
 
-    fprintf(stderr, "G_DoLoadGame: Slot %d, %.8s (%s)\n",
+    I_Printf(VB_INFO, "G_DoLoadGame: Slot %d, %.8s (%s)",
       10*savepage+savegameslot, maplump, W_WadNameForLump(maplumpnum));
   }
 
@@ -2348,11 +2353,16 @@ static void G_DoLoadGame(void)
 }
 
 boolean clean_screenshot;
+extern void ST_ResetPalette(void); // [Nugget] Taken out of `G_CleanScreenshot()`
 
 void G_CleanScreenshot(void)
 {
   int old_screenblocks;
   boolean old_hide_weapon;
+  // [Nugget] Took `extern ST_ResetPalette()` out
+
+  if (!(screenshot_palette & SHOTPAL_CLEAN)) // [Nugget]
+    ST_ResetPalette();
 
   old_screenblocks = screenblocks;
   old_hide_weapon = hide_weapon;
@@ -2414,6 +2424,12 @@ void G_Ticker(void)
 	  G_CleanScreenshot();
 	  clean_screenshot = false;
 	}
+	// [Nugget]
+	else if (!(screenshot_palette & SHOTPAL_NORMAL))
+	{
+	  ST_ResetPalette();
+	}
+
 	M_ScreenShot();
 	gameaction = ga_nothing;
 	break;
@@ -2541,6 +2557,12 @@ void G_Ticker(void)
     }
 
   oldleveltime = leveltime;
+
+  // [Nugget]:
+  // [crispy] distinguish classic status bar with background and player face from Crispy HUD
+  st_crispyhud = automap_off ? (CRISPY_HUD <= screenblocks && screenblocks <= CRISPY_HUD_WIDE)
+                               + (screenblocks == CRISPY_HUD_WIDE)
+                             : 0;
 
   // do main actions
 
@@ -3162,8 +3184,6 @@ void G_ReloadDefaults(boolean keep_demover)
 
   compatibility = false;     // killough 10/98: replaced by comp[] vector
   memcpy(comp, default_comp, sizeof comp);
-  // [Nugget] Do the same for our comp settings
-  memcpy(nugget_comp, default_nugget_comp, sizeof nugget_comp);
 
   if (!keep_demover)
   {
@@ -3208,6 +3228,8 @@ void G_ReloadDefaults(boolean keep_demover)
 
   if (M_CheckParm("-strict"))
     strictmode = true;
+
+  P_UpdateDirectVerticalAiming();
 
   pistolstart = default_pistolstart;
 
@@ -3460,8 +3482,9 @@ void G_InitNew(skill_t skill, int episode, int map)
   gameskill = skill;
   gamemapinfo = G_LookupMapinfo(gameepisode, gamemap);
 
-  // [Nugget] Force zoom reset
-  if (R_GetZoom() == 1) { R_SetZoom(ZOOM_RESET); }
+  // [Nugget] Reset some stuff
+  if (R_GetZoom() == 1) { R_SetZoom(ZOOM_RESET); } // Only if necessary
+  R_SetShake(-1);
 
   // [FG] total time for all completed levels
   totalleveltimes = 0;
@@ -3475,8 +3498,6 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   if (demo_version == 203)
     G_MBFComp();
-
-  M_NughudLoadOptions(); // [Nugget]
 
   G_DoLoadLevel();
 
@@ -4165,7 +4186,7 @@ boolean G_CheckDemoStatus(void)
 
       Z_Free(demobuffer);
       demobuffer = NULL;  // killough
-      fprintf(stderr, "Demo %s recorded\n", demoname);
+      I_Printf(VB_ALWAYS, "Demo %s recorded", demoname);
       // [crispy] if a new game is started during demo recording, start a new demo
       if (gameaction != ga_newgame && gameaction != ga_reloadlevel)
       {
@@ -4193,7 +4214,8 @@ void doomprintf(player_t *player, msg_category_t category, const char *s, ...)
   va_list v;
 
   if ((category == MESSAGES_TOGGLE && !show_toggle_messages) ||
-      (category == MESSAGES_PICKUP && !show_pickup_messages))
+      (category == MESSAGES_PICKUP && !show_pickup_messages) ||
+      (category == MESSAGES_OBITUARY && !show_obituary_messages))
     return;
 
   va_start(v,s);

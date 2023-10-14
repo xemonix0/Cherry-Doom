@@ -47,6 +47,7 @@
 #include "m_nughud.h" // [Nugget]
 #include "m_menu.h"
 #include "m_swap.h"
+#include "i_printf.h"
 #include "i_system.h"
 #include "i_sound.h"
 #include "i_video.h"
@@ -152,6 +153,12 @@ boolean advancedemo;
 char    *basedefault = NULL;   // default file
 char    *basesavegame = NULL;  // killough 2/16/98: savegame directory
 char    *screenshotdir = NULL; // [FG] screenshot directory
+
+// [Nugget] /-----------------------------------------------------------------
+char *savegame_dir = NULL;
+char *screenshot_dir = NULL;
+int organize_saves;
+// [Nugget] -----------------------------------------------------------------/
 
 // If true, the main game loop has started.
 boolean main_loop_started = false;
@@ -262,7 +269,7 @@ void D_Display (void)
           || (inhelpscreensstate && !inhelpscreens))
         redrawsbar = true;              // just put away the help screen
       // [Nugget] Moved ST_Drawer() call below,
-      // to ensure it is called AFTER AM_Drawer()
+      // to ensure it is called *after* AM_Drawer()
       fullscreen = scaledviewheight == 200;               // killough 11/98
       break;
     case GS_INTERMISSION:
@@ -282,7 +289,7 @@ void D_Display (void)
     R_RenderPlayerView (&players[displayplayer]);
 
   // [Nugget] Moved HU_Drawer() call below,
-  // to ensure it is called AFTER AM_Drawer() and ST_Drawer()
+  // to ensure it is called *after* AM_Drawer() and ST_Drawer()
 
   // clean up border stuff
   if (gamestate != oldgamestate && gamestate != GS_LEVEL)
@@ -324,19 +331,14 @@ void D_Display (void)
       inhelpscreensstate = true;
     }
 
-  // [Nugget] Moved here, as to be called after AM_Drawer()
+  // [Nugget] Moved here, as to be run *after* AM_Drawer()
   if (gamestate == GS_LEVEL && gametic)
   {
-    // [Nugget]:
-    // [crispy] distinguish classic status bar with background and player face from Crispy HUD
-    oldcrispy = st_crispyhud; // [Nugget]
-    st_crispyhud = (CRISPY_HUD <= screenblocks && screenblocks <= CRISPY_HUD_WIDE) && automap_off;
-
-    ST_Drawer(scaledviewheight == 200 && !st_crispyhud, // [Nugget]
+    ST_Drawer(scaledviewheight == 200 && !st_crispyhud, // [Nugget] NUGHUD
               redrawsbar);
 
-    // Moved here too, as to be called
-    // after AM_Drawer() and ST_Drawer()
+    // Moved here too, as to be run
+    // *after* AM_Drawer() and ST_Drawer()
     HU_Drawer();
   }
 
@@ -363,7 +365,7 @@ void D_Display (void)
   // normal update
   if (!wipe || STRICTMODE(!wipe_type)) // [Nugget]
     {
-      I_FinishUpdate (); // page flip or blit buffer
+      I_FinishUpdate ();              // page flip or blit buffer
       return;
     }
 
@@ -385,7 +387,7 @@ void D_Display (void)
       // [Nugget] Support more wipe types
       done = wipe_ScreenWipe(NOTSTRICTMODE(wipe_type),0,0,SCREENWIDTH,SCREENHEIGHT,tics);
       M_Drawer();                   // menu is drawn even on top of wipes
-      I_FinishUpdate(); // page flip or blit buffer
+      I_FinishUpdate();             // page flip or blit buffer
     }
   while (!done);
 }
@@ -530,7 +532,10 @@ static struct
     {
       {NULL},
       {NULL},
-      {NULL},
+      // Andrey Budko
+      // Both Plutonia and TNT are commercial like Doom2,
+      // but in difference from Doom2, they have demo4 in demo cycle.
+      {G_DeferedPlayDemo, "demo4"},
       {D_SetPageName, "CREDIT"},
     },
 
@@ -566,13 +571,23 @@ void D_DoAdvanceDemo(void)
 
   if (!demostates[++demosequence][gamemode].func)
     demosequence = 0;
-  // [FG] the BFG Edition IWADs have no TITLEPIC lump, use DMENUPIC instead
+
   name = demostates[demosequence][gamemode].name;
-  if (name && !strcasecmp(name, "TITLEPIC"))
+  if (name && W_CheckNumForName(name) < 0)
   {
-    if (W_CheckNumForName("TITLEPIC") < 0)
+    // [FG] the BFG Edition IWADs have no TITLEPIC lump, use DMENUPIC instead
+    if (!strcasecmp(name, "TITLEPIC"))
+    {
       name = "DMENUPIC";
+    }
+    // [FG] do not even attempt to play DEMO4 if it is not available
+    else if (!strcasecmp(name, "demo4"))
+    {
+      demosequence = 0;
+      name = demostates[demosequence][gamemode].name;
+    }
   }
+
   demostates[demosequence][gamemode].func(name);
 }
 
@@ -605,7 +620,7 @@ static boolean D_AddZipFile(const char *file, wad_source_t source)
   memset(&zip_archive, 0, sizeof(zip_archive));
   if (!mz_zip_reader_init_file(&zip_archive, file, MZ_ZIP_FLAG_DO_NOT_SORT_CENTRAL_DIRECTORY))
   {
-    I_Error("D_AddZipFile: Failed to open %s\n", file);
+    I_Error("D_AddZipFile: Failed to open %s", file);
     return false;
   }
 
@@ -627,6 +642,10 @@ static boolean D_AddZipFile(const char *file, wad_source_t source)
 
     name = M_BaseName(file_stat.m_filename);
 
+    // [FG] skip "hidden" files
+    if (name[0] == '.')
+      continue;
+
     if (M_StringCaseEndsWith(name, ".wad") || M_StringCaseEndsWith(name, ".lmp") ||
         M_StringCaseEndsWith(name, ".ogg") || M_StringCaseEndsWith(name, ".flac") ||
         M_StringCaseEndsWith(name, ".mp3"))
@@ -635,7 +654,7 @@ static boolean D_AddZipFile(const char *file, wad_source_t source)
 
       if (!mz_zip_reader_extract_to_file(&zip_archive, i, dest, 0))
       {
-        printf("D_AddZipFile: Failed to extract %s to %s\n",
+        I_Printf(VB_ERROR, "D_AddZipFile: Failed to extract %s to %s",
                 file_stat.m_filename, tempdir);
       }
 
@@ -687,19 +706,6 @@ void D_AddFile(const char *file, wad_source_t source)
   wadfiles[numwadfiles].src = source;
 
   wadfiles[++numwadfiles].name = NULL;
-}
-
-// Return the path where the executable lies -- Lee Killough
-char *D_DoomExeDir(void)
-{
-  static char *base;
-
-  if (!base) // cache multiple requests
-  {
-    base = M_DirName(myargv[0]);
-  }
-
-  return base;
 }
 
 // killough 10/98: return the name of the program the exe was invoked as
@@ -764,8 +770,8 @@ static struct {
     char *(*func)(void);
     boolean createdir;
 } autoload_basedirs[] = {
-#ifdef CHERRYDOOMDATADIR
-    {CHERRYDOOMDATADIR, NULL, false},
+#ifndef WIN32
+    {"../share/" PROJECT_SHORTNAME, D_DoomExeDir, false},
 #endif
     {NULL, D_DoomPrefDir, true},
 #if !defined(_WIN32) || defined(_WIN32_WCE)
@@ -814,7 +820,12 @@ static void PrepareAutoloadPaths (void)
     {
         autoload_paths = I_Realloc(autoload_paths, (i + 1) * sizeof(*autoload_paths));
 
-        if (autoload_basedirs[i].dir)
+        if (autoload_basedirs[i].dir && autoload_basedirs[i].func)
+        {
+            autoload_paths[i] = M_StringJoin(autoload_basedirs[i].func(), DIR_SEPARATOR_S,
+                                             autoload_basedirs[i].dir, DIR_SEPARATOR_S, "autoload", NULL);
+        }
+        else if (autoload_basedirs[i].dir)
         {
             autoload_paths[i] = M_StringJoin(autoload_basedirs[i].dir, DIR_SEPARATOR_S, "autoload", NULL);
         }
@@ -863,7 +874,7 @@ static void CheckIWAD(const char *iwadname)
 
     if (strncmp(header.identification, "IWAD", 4))
     {
-        printf("CheckIWAD: IWAD tag not present %s\n", iwadname);
+        I_Printf(VB_WARNING, "CheckIWAD: IWAD tag not present %s", iwadname);
     }
 
     // read IWAD directory
@@ -927,7 +938,7 @@ static void CheckIWAD(const char *iwadname)
 //
 // IdentifyVersion
 //
-// Set the location of the defaults file and the savegame root
+// Set the location of the defaults file
 // Locate and validate an IWAD file
 // Determine gamemode from the IWAD
 //
@@ -947,13 +958,34 @@ static void CheckIWAD(const char *iwadname)
 
 void IdentifyVersion (void)
 {
-  int         i;    //jff 3/24/98 index of args on commandline
   char *iwad;
 
   // get config file from same directory as executable
   // killough 10/98
   if (basedefault) free(basedefault);
   basedefault = M_StringJoin(D_DoomPrefDir(), DIR_SEPARATOR_S, D_DoomExeName(), ".cfg", NULL);
+
+  // [Nugget] Save and screenshot paths are now set elsewhere
+
+  // locate the IWAD and determine game mode from it
+
+  iwad = D_FindIWADFile(&gamemode, &gamemission);
+
+  if (iwad && *iwad)
+    {
+      if (gamemode == indetermined)
+        CheckIWAD(iwad);
+
+      D_AddFile(iwad, source_iwad);
+    }
+  else
+    I_Error("IWAD not found");
+}
+
+// [Nugget]
+static void SetSavesAndShotsPaths(void)
+{
+  int i; //jff 3/24/98 index of args on commandline
 
   // set save path to -save parm or current dir
 
@@ -982,6 +1014,42 @@ void IdentifyVersion (void)
       free(screenshotdir);
     screenshotdir = M_StringDuplicate(basesavegame);
   }
+  else { // [Nugget]
+    // Set to path determined by config file
+    if (savegame_dir && strcmp(savegame_dir, ""))
+    {
+      if (basesavegame)
+        free(basesavegame);
+      basesavegame = M_StringDuplicate(savegame_dir);
+
+      M_MakeDirectory(basesavegame);
+
+      // Fall back to `savegame_dir`
+      if (screenshotdir)
+        free(screenshotdir);
+      screenshotdir = M_StringDuplicate(savegame_dir);
+    }
+
+    // Organize saves by IWAD
+    if (organize_saves)
+    {
+      char *lower;
+
+      // If using default save path, default to a "savegames" directory
+      if (!savegame_dir || !strcmp(savegame_dir, ""))
+      {
+        basesavegame = M_StringJoin(basesavegame, "savegames", NULL);
+        M_MakeDirectory(basesavegame);
+      }
+
+      lower = M_StringDuplicate(M_BaseName(wadfiles[0].name));
+      M_ForceLowercase(lower);
+      basesavegame = M_StringJoin(basesavegame, DIR_SEPARATOR_S, lower, NULL);
+      free(lower);
+
+      M_MakeDirectory(basesavegame);
+    }
+  }
 
   //!
   // @arg <directory>
@@ -999,81 +1067,81 @@ void IdentifyVersion (void)
 
     M_MakeDirectory(screenshotdir);
   }
+  // [Nugget] Set to path determined by config file
+  else if (screenshot_dir && strcmp(screenshot_dir, ""))
+  {
+    if (screenshotdir)
+      free(screenshotdir);
+    screenshotdir = M_StringDuplicate(screenshot_dir);
 
-  // locate the IWAD and determine game mode from it
+    M_MakeDirectory(screenshotdir);
+  }
+}
 
-  iwad = D_FindIWADFile(&gamemode, &gamemission);
+static void PrintVersion(void)
+{
+  int i;
+  char *iwad = wadfiles[0].name;
 
-  if (iwad && *iwad)
-    {
-      printf("IWAD found: %s\n",iwad); //jff 4/20/98 print only if found
+  I_Printf(VB_INFO, "IWAD found: %s",iwad); //jff 4/20/98 print only if found
 
-      if (gamemode == indetermined)
-        CheckIWAD(iwad);
+  switch(gamemode)
+  {
+    case retail:
+      if (gamemission == pack_chex)
+        I_Printf(VB_INFO, "Chex(R) Quest\n");
+      else if (gamemission == pack_rekkr)
+        I_Printf(VB_INFO, "REKKR\n");
+      else
+      I_Printf(VB_INFO, "Ultimate DOOM version\n");  // killough 8/8/98
+      break;
 
-      switch(gamemode)
-        {
-        case retail:
-          if (gamemission == pack_chex)
-            puts("Chex(R) Quest");
-          else if (gamemission == pack_rekkr)
-            puts("REKKR");
-          else
-          puts("Ultimate DOOM version");  // killough 8/8/98
+    case registered:
+      I_Printf(VB_INFO, "DOOM Registered version\n");
+      break;
+
+    case shareware:
+      I_Printf(VB_INFO, "DOOM Shareware version\n");
+      break;
+
+    case commercial:
+
+      // joel 10/16/98 Final DOOM fix
+      switch (gamemission)
+      {
+        case pack_hacx:
+          I_Printf(VB_INFO, "HACX: Twitch n' Kill\n");
           break;
 
-        case registered:
-          puts("DOOM Registered version");
+        case pack_tnt:
+          I_Printf(VB_INFO, "Final DOOM: TNT - Evilution version\n");
           break;
 
-        case shareware:
-          puts("DOOM Shareware version");
+        case pack_plut:
+          I_Printf(VB_INFO, "Final DOOM: The Plutonia Experiment version\n");
           break;
 
-        case commercial:
-
-          // joel 10/16/98 Final DOOM fix
-          switch (gamemission)
-            {
-            case pack_hacx:
-              puts ("HACX: Twitch n' Kill");
-              break;
-
-            case pack_tnt:
-              puts ("Final DOOM: TNT - Evilution version");
-              break;
-
-            case pack_plut:
-              puts ("Final DOOM: The Plutonia Experiment version");
-              break;
-
-            case doom2:
-            default:
-
-              i = strlen(iwad);
-              if (i>=10 && !strncasecmp(iwad+i-10,"doom2f.wad",10))
-                {
-                  language=french;
-                  puts("DOOM II version, French language");  // killough 8/8/98
-                }
-              else
-                puts("DOOM II version");
-              break;
-            }
-          // joel 10/16/88 end Final DOOM fix
-
+        case doom2:
         default:
+
+          i = strlen(iwad);
+          if (i>=10 && !strncasecmp(iwad+i-10,"doom2f.wad",10))
+            {
+              language=french;
+              I_Printf(VB_INFO, "DOOM II version, French language\n");  // killough 8/8/98
+            }
+          else
+            I_Printf(VB_INFO, "DOOM II version\n");
           break;
-        }
+      }
+      // joel 10/16/88 end Final DOOM fix
 
-      if (gamemode == indetermined)
-        puts("Unknown Game Version, may not work");  // killough 8/8/98
+    default:
+      break;
+  }
 
-      D_AddFile(iwad, source_iwad);
-      putchar('\n');
-    }
-  else
-    I_Error("IWAD not found\n");
+  if (gamemode == indetermined)
+    I_Printf(VB_WARNING, "Unknown Game Version, may not work\n");  // killough 8/8/98
 }
 
 // [FG] emulate a specific version of Doom
@@ -1105,12 +1173,12 @@ static void InitGameVersion(void)
 
         if (gameversions[i].description == NULL)
         {
-            printf("Supported game versions:\n");
+            I_Printf(VB_ERROR, "Supported game versions:");
 
             for (i=0; gameversions[i].description != NULL; ++i)
             {
-                printf("\t%s (%s)\n", gameversions[i].cmdline,
-                        gameversions[i].description);
+                I_Printf(VB_ERROR, "\t%s (%s)", gameversions[i].cmdline,
+                         gameversions[i].description);
             }
 
             I_Error("Unknown game version '%s'", myargv[p+1]);
@@ -1185,7 +1253,7 @@ void FindResponseFile (void)
         if (!handle)
           I_Error("No such response file!");          // killough 10/98
 
-        printf("Found response file %s!\n",filename);
+        I_Printf(VB_INFO, "Found response file %s!",filename);
         free(filename);
 
         fseek(handle,0,SEEK_END);
@@ -1230,9 +1298,9 @@ void FindResponseFile (void)
         myargc = indexinfile;
 
         // DISPLAY ARGS
-        printf("%d command-line args:\n",myargc-1); // killough 10/98
+        I_Printf(VB_INFO, "%d command-line args:",myargc-1); // killough 10/98
         for (k=1;k<myargc;k++)
-          printf("%s\n",myargv[k]);
+          I_Printf(VB_INFO, "%s",myargv[k]);
         break;
       }
 }
@@ -1580,6 +1648,11 @@ static void D_AutoloadIWadDir()
   {
     char *autoload_dir;
 
+    // [Nugget] Auto-loaded files for all games
+    autoload_dir = GetAutoloadDir(*base, "all", true);
+    AutoLoadWADs(autoload_dir, source_auto_load);
+    free(autoload_dir);
+
     // common auto-loaded files for all Doom flavors
     if (gamemission < pack_chex)
     {
@@ -1644,6 +1717,11 @@ static void D_AutoloadDehDir()
   for (base = autoload_paths; base && *base; base++)
   {
     char *autoload_dir;
+
+    // [Nugget] Auto-loaded files for all games
+    autoload_dir = GetAutoloadDir(*base, "all", true);
+    AutoLoadWADs(autoload_dir, source_auto_load);
+    free(autoload_dir);
 
     // common auto-loaded files for all Doom flavors
     if (gamemission < pack_chex)
@@ -1983,7 +2061,7 @@ void D_DoomMain(void)
 
   if (M_CheckParm("-dedicated") > 0)
   {
-          printf("Dedicated server mode.\n");
+          I_Printf(VB_INFO, "Dedicated server mode.");
           I_InitTimer();
           NET_DedicatedServer();
 
@@ -2101,8 +2179,9 @@ void D_DoomMain(void)
     deathmatch = 3;
 
   if (devparm)
-    printf(D_DEVSTR);
+    I_Printf(VB_INFO, "%s", D_DEVSTR);
 
+// [Nugget] Restored `-cdrom` parm
 #ifdef _WIN32
 
   //!
@@ -2146,7 +2225,7 @@ void D_DoomMain(void)
         scale = 10;
       if (scale > 400)
         scale = 400;
-      printf ("turbo scale: %i%%\n",scale);
+      I_Printf(VB_INFO, "turbo scale: %i%%",scale);
       forwardmove[0] = forwardmove[0]*scale/100;
       forwardmove[1] = forwardmove[1]*scale/100;
       sidemove[0] = sidemove[0]*scale/100;
@@ -2247,7 +2326,7 @@ void D_DoomMain(void)
       strcpy(file,myargv[p+1]);
       AddDefaultExtension(file,".lmp");     // killough
       D_AddFile(file, source_demo);
-      printf("Playing demo %s\n",file);
+      I_Printf(VB_INFO, "Playing demo %s",file);
       free(file);
     }
 
@@ -2318,7 +2397,7 @@ void D_DoomMain(void)
   if ((p = M_CheckParm ("-timer")) && p < myargc-1 && deathmatch)
     {
       timelimit = M_ParmArgToInt(p);
-      printf("Levels will end after %d minute%s.\n", timelimit, timelimit>1 ? "s" : "");
+      I_Printf(VB_INFO, "Levels will end after %d minute%s.", timelimit, timelimit>1 ? "s" : "");
     }
 
   //!
@@ -2331,7 +2410,7 @@ void D_DoomMain(void)
   if ((p = M_CheckParm ("-avg")) && p < myargc-1 && deathmatch)
     {
     timelimit = 20;
-    puts("Austin Virtual Gaming: Levels will end after 20 minutes");
+    I_Printf(VB_INFO, "Austin Virtual Gaming: Levels will end after 20 minutes.");
     }
 
   //!
@@ -2431,19 +2510,22 @@ void D_DoomMain(void)
   if ((p = M_CheckParm("-dumplumps")) && p < myargc-1)
     WritePredefinedLumpWad(myargv[p+1]);
 
-  puts("M_LoadDefaults: Load system defaults.");
-  M_LoadDefaults();              // load before initing other systems
+  M_LoadDefaults();  // load before initing other systems
   M_NughudLoadDefaults(); // [Nugget]
+
+  SetSavesAndShotsPaths(); // [Nugget] May be set by config file
+
+  PrintVersion();
 
   bodyquesize = default_bodyquesize; // killough 10/98
 
   // 1/18/98 killough: Z_Init call moved to i_main.c
 
   // init subsystems
-  puts("V_Init: allocate screens.");    // killough 11/98: moved down to here
+  I_Printf(VB_INFO, "V_Init: allocate screens.");    // killough 11/98: moved down to here
   V_Init();
 
-  puts("W_Init: Init WADfiles.");
+  I_Printf(VB_INFO, "W_Init: Init WADfiles.");
   W_InitMultipleFiles(wadfiles);
 
   // Check for wolf levels
@@ -2482,7 +2564,9 @@ void D_DoomMain(void)
 
   D_ProcessInWads("BRGHTMPS", R_ParseBrightmaps, false);
 
-  putchar('\n');     // killough 3/6/98: add a newline, by popular demand :)
+  M_NughudLoadOptions(); // [Nugget]
+
+  I_PutChar(VB_INFO, '\n');     // killough 3/6/98: add a newline, by popular demand :)
 
   // Moved after WAD initialization because we are checking the COMPLVL lump
   G_ReloadDefaults(false); // killough 3/4/98: set defaults just loaded.
@@ -2530,11 +2614,11 @@ void D_DoomMain(void)
 
   // Ty 04/08/98 - Add 5 lines of misc. data, only if nonblank
   // The expectation is that these will be set in a .bex file
-  if (*startup1) puts(startup1);
-  if (*startup2) puts(startup2);
-  if (*startup3) puts(startup3);
-  if (*startup4) puts(startup4);
-  if (*startup5) puts(startup5);
+  if (*startup1) I_Printf(VB_INFO, "%s", startup1);
+  if (*startup2) I_Printf(VB_INFO, "%s", startup2);
+  if (*startup3) I_Printf(VB_INFO, "%s", startup3);
+  if (*startup4) I_Printf(VB_INFO, "%s", startup4);
+  if (*startup5) I_Printf(VB_INFO, "%s", startup5);
   // End new startup strings
 
   //!
@@ -2557,13 +2641,13 @@ void D_DoomMain(void)
   }
 
   // [Cherry]
-  puts("WS_InitWadStats: Setting up wad stats.");
+  I_Printf(VB_INFO, "WS_InitWadStats: Setting up wad stats.");
   WS_InitWadStats();
 
-  puts("M_Init: Init miscellaneous info.");
+  I_Printf(VB_INFO, "M_Init: Init miscellaneous info.");
   M_Init();
 
-  printf("R_Init: Init DOOM refresh daemon - ");
+  I_Printf(VB_INFO, "R_Init: Init DOOM refresh daemon - ");
   R_Init();
 
   //!
@@ -2575,42 +2659,41 @@ void D_DoomMain(void)
 
   if ((p = M_CheckParm("-dumptables")) && p < myargc-1)
   {
-    puts("\n");
     WriteGeneratedLumpWad(myargv[p+1]);
   }
 
-  puts("\nP_Init: Init Playloop state.");
+  I_Printf(VB_INFO, "P_Init: Init Playloop state.");
   P_Init();
 
-  puts("I_Init: Setting up machine state.");
+  I_Printf(VB_INFO, "I_Init: Setting up machine state.");
   I_InitTimer();
   I_InitJoystick();
   I_InitSound();
   I_InitMusic();
   M_GetMidiDevices();
 
-  puts("NET_Init: Init network subsystem.");
+  I_Printf(VB_INFO, "NET_Init: Init network subsystem.");
   NET_Init();
 
   // Initial netgame startup. Connect to server etc.
   D_ConnectNetGame();
 
-  puts("D_CheckNetGame: Checking network game status.");
+  I_Printf(VB_INFO, "D_CheckNetGame: Checking network game status.");
   D_CheckNetGame();
 
   M_ResetTimeScale();
 
-  puts("S_Init: Setting up sound.");
+  I_Printf(VB_INFO, "S_Init: Setting up sound.");
   S_Init(snd_SfxVolume /* *8 */, snd_MusicVolume /* *8*/ );
 
-  puts("HU_Init: Setting up heads up display.");
+  I_Printf(VB_INFO, "HU_Init: Setting up heads up display.");
   HU_Init();
   M_SetMenuFontSpacing();
 
-  puts("ST_Init: Init status bar.");
+  I_Printf(VB_INFO, "ST_Init: Init status bar.");
   ST_Init();
 
-  putchar('\n');
+  I_PutChar(VB_INFO, '\n');
 
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
@@ -2619,7 +2702,7 @@ void D_DoomMain(void)
   if ((p = M_CheckParm ("-statdump")) && p<myargc-1)
     {
       I_AtExit(StatDump, true);
-      puts("External statistics registered.");
+      I_Printf(VB_INFO, "External statistics registered.");
     }
 
   // [FG] check for SSG assets
@@ -2814,15 +2897,9 @@ void D_DoomMain(void)
 
       TryRunTics (); // will run at least one tic
 
-      // killough 3/16/98: change consoleplayer to displayplayer
-      S_UpdateSounds(players[displayplayer].mo);// move positional sounds
-
       // Update display, next frame, with current state.
       if (screenvisible)
         D_Display();
-
-      // Sound mixing for the buffer is snychronous.
-      I_UpdateSound();
     }
 }
 

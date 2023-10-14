@@ -19,6 +19,7 @@
 //-----------------------------------------------------------------------------
 
 #include "doomstat.h"
+#include "i_printf.h"
 #include "i_video.h"
 #include "v_video.h"
 #include "w_wad.h"
@@ -30,7 +31,9 @@
 #include "r_bmaps.h" // [crispy] R_BrightmapForTexName()
 #include "m_swap.h"
 #include "hu_stuff.h" // [Alaux] Lock crosshair on target
-#include "m_nughud.h" // [Nugget]
+// [Nugget]
+#include "m_nughud.h"
+#include "st_stuff.h"
 
 #define MINZ        (FRACUNIT*4)
 #define BASEYCENTER 100
@@ -169,7 +172,7 @@ void R_InitSpriteDefs(char **namelist)
   if (!numentries || !*namelist)
     return;
 
-  sprites = Z_Malloc(num_sprites *sizeof(*sprites), PU_STATIC, NULL);
+  sprites = Z_Calloc(num_sprites, sizeof(*sprites), PU_STATIC, NULL);
 
   // Create hash table based on just the first four letters of each sprite
   // killough 1/31/98
@@ -238,8 +241,8 @@ void R_InitSpriteDefs(char **namelist)
                   case -1:
                     // no rotations were found for that frame at all
                     // [FG] make non-fatal
-                    fprintf (stderr, "R_InitSprites: No patches found "
-                             "for %.8s frame %c\n", namelist[i], frame+'A');
+                    I_Printf (VB_WARNING, "R_InitSprites: No patches found "
+                             "for %.8s frame %c", namelist[i], frame+'A');
                     break;
 
                   case 0:
@@ -713,7 +716,6 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   boolean       flip;
   vissprite_t   *vis;
   vissprite_t   avis;
-  extern boolean st_crispyhud, oldcrispy; // [Nugget]
 
   // decide which patch to use
 
@@ -764,9 +766,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
                     (psp->sy2-spritetopoffset[lump]) // [FG] centered weapon sprite
                     // [Nugget]
                     - (STRICTMODE(weapon_inertia) ? psp->wiy : 0) // Weapon inertia
-                    + (STRICTMODE(st_crispyhud && screenblocks < 13)
-                       ? nughud.weapheight*FRACUNIT : 0) // Nugget HUD
-                    + MIN(0, R_GetFOVFX(FOVFX_ZOOM)*FRACUNIT/2); // Lower weapon based on zoom
+                    + MIN(0, R_GetFOVFX(FOVFX_ZOOM) * FRACUNIT/2); // Lower weapon based on zoom
 
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
@@ -822,9 +822,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
     x1_saved = vis->x1;
     texturemid_saved = vis->texturemid;
 
-    if (lump == oldlump && pspr_interp
-        // [Nugget]
-        && (st_crispyhud == oldcrispy || STRICTMODE(!nughud.weapheight)))
+    if (lump == oldlump && pspr_interp)
     {
       int deltax = x2 - vis->x1;
       vis->x1 = oldx1 + FixedMul(vis->x1 - oldx1, fractionaltic);
@@ -843,7 +841,8 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   }
 
   // [crispy] free look
-  vis->texturemid += (centery - viewheight/2) * pspriteiscale;
+  vis->texturemid += (centery - viewheight/2) * pspriteiscale
+                     + (STRICTMODE(st_crispyhud) ? nughud.weapheight*FRACUNIT : 0); // [Nugget] NUGHUD
 
   if (STRICTMODE(hide_weapon || chasecam_on)) // [Nugget] Chasecam
     return;
@@ -916,7 +915,7 @@ static void msort(vissprite_t **s, vissprite_t **t, int n)
       msort(s1, t, n1);
       msort(s2, t, n2);
 
-      while ((*s1)->scale > (*s2)->scale ?
+      while ((*s1)->scale >= (*s2)->scale ?
              (*d++ = *s1++, --n1) : (*d++ = *s2++, --n2));
 
       if (n2)
@@ -959,8 +958,12 @@ void R_SortVisSprites (void)
                                   * sizeof *vissprite_ptrs, PU_STATIC, 0);
         }
 
+      // Sprites of equal distance need to be sorted in inverse order.
+      // This is most easily achieved by filling the sort array
+      // backwards before the sort.
+
       while (--i>=0)
-        vissprite_ptrs[i] = vissprites+i;
+        vissprite_ptrs[num_vissprite-i-1] = vissprites+i;
 
       // killough 9/22/98: replace qsort with merge sort, since the keys
       // are roughly in order to begin with, due to BSP rendering.

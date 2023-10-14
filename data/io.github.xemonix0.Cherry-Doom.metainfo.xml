@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<component type="desktop">
+  <id>io.github.xemonix0.Cherry-Doom</id>
+  <name>Cherry Doom</name>
+  <summary>Fork of Nugget Doom with more additional features</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0+</project_license>
+  <developer_name>Xemonix</developer_name>
+  <url type="homepage">https://github.com/xemonix0/Cherry-Doom</url>
+  <url type="bugtracker">https://github.com/xemonix0/Cherry-Doom/issues</url>
+  <description>
+    <p>
+      Cherry Doom is a fork of Nugget Doom intended to add even more features.
+    </p>
+  </description>
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-fantasy">intense</content_attribute>
+    <content_attribute id="violence-realistic">intense</content_attribute>
+    <content_attribute id="violence-bloodshed">intense</content_attribute>
+    <content_attribute id="violence-desecration">intense</content_attribute>
+    <content_attribute id="social-chat">intense</content_attribute>
+  </content_rating>
+  <releases>
+    <release version="1.0.0" date="2023-09-01"/>
+  </releases>
+</component>

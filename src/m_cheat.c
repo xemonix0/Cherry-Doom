@@ -108,16 +108,16 @@ static void cheat_resurrect();
 static void cheat_fly();
 static void cheat_nextmap();    // Emulate level exit
 static void cheat_nextsecret(); // Emulate secret level exit
-static void cheat_turbo();
+static void cheat_turbo(char *buf);
 
 // Summon a mobj
 static void cheat_summon();
 // Enemy
 static void cheat_summone0();
-static void cheat_summone();
+static void cheat_summone(char *buf);
 // Friend
 static void cheat_summonf0();
-static void cheat_summonf();
+static void cheat_summonf(char *buf);
 // Repeat last
 static void cheat_summonr();
 static int spawneetype = -1;
@@ -127,7 +127,6 @@ static void cheat_linetarget(); // Give info on the current linetarget
 static void cheat_mdk();        // Inspired by ZDoom's console command
 static void cheat_saitama();    // MDK Fist
 
-boolean boomcan;
 static void cheat_boomcan();    // Explosive hitscan
 
 boolean cheese;
@@ -437,7 +436,7 @@ struct cheat_s cheat[] = {
 // [FG] FPS counter widget
 static void cheat_showfps()
 {
-  plyr->powers[pw_showfps] ^= 1;
+  plyr->cheats ^= CF_SHOWFPS;
 }
 
 // [Nugget]
@@ -690,11 +689,11 @@ static void cheat_mdk() {
 
   P_MapStart();
 
-  if ((mouselook || padlook) && vertical_aiming == VERTAIM_DIRECT)
+  if (vertical_aiming == VERTAIM_DIRECT)
   { slope = PLAYER_SLOPE(plyr); }
   else {
-    slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, 0);
-    if (!linetarget && (mouselook || padlook) && vertical_aiming == VERTAIM_DIRECTAUTO)
+    slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 16*64*FRACUNIT * (comp_longautoaim+1), 0);
+    if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
     { slope = PLAYER_SLOPE(plyr); }
   }
 
@@ -713,8 +712,8 @@ static void cheat_saitama() {
 
 // [Nugget] Explosive hitscan
 static void cheat_boomcan() {
-  boomcan = !boomcan;
-  displaymsg("Explosive Hitscan %s", boomcan ? "ON" : "OFF");
+  plyr->cheats ^= CF_BOOMCAN;
+  displaymsg("Explosive Hitscan %s", (plyr->cheats & CF_BOOMCAN) ? "ON" : "OFF");
 }
 
 // [Nugget] cheese :)
@@ -805,7 +804,7 @@ static void cheat_choppers()
   plyr->weaponowned[wp_chainsaw] = true;
   
   // [Nugget]
-  if (casual_play && nugget_comp[comp_choppers])
+  if (casual_play && comp_choppers)
   { P_GivePower(plyr, pw_invulnerability); }
   else
   { plyr->powers[pw_invulnerability] = true; }
@@ -1099,8 +1098,9 @@ static void cheat_clev(char *buf)
 // killough 2/7/98: simplified using dprintf and made output more user-friendly
 static void cheat_mypos()
 {
-  plyr->powers[pw_renderstats] = 0;
-  if (!(plyr->powers[pw_mapcoords] ^= 1))
+  plyr->cheats &= ~CF_RENDERSTATS;
+  plyr->cheats ^= CF_MAPCOORDS;
+  if ((plyr->cheats & CF_MAPCOORDS) == 0)
     plyr->message = "";
 }
 
@@ -1608,8 +1608,9 @@ static void cheat_nuke()
 
 static void cheat_rate()
 {
-  plyr->powers[pw_mapcoords] = 0;
-  if (!(plyr->powers[pw_renderstats] ^= 1))
+  plyr->cheats &= ~CF_MAPCOORDS;
+  plyr->cheats ^= CF_RENDERSTATS;
+  if ((plyr->cheats & CF_RENDERSTATS) == 0)
     plyr->message = "";
 }
 
