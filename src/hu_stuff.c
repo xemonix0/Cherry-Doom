@@ -1081,7 +1081,6 @@ static void HU_widget_build_weapon (void)
   // do each weapon that exists in current gamemode
   for (w = 0; w <= wp_supershotgun; w++) //jff 3/4/98 show fists too, why not?
   {
-    boolean newline;
     int ok = 1;
 
     //jff avoid executing for weapons that do not exist
