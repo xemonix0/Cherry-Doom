@@ -2236,12 +2236,18 @@ static void WI_initVariables(wbstartstruct_t* wbstartstruct)
 //
 void WI_Start(wbstartstruct_t* wbstartstruct)
 {
+  extern void WI_BuildMoreWidgets(void); // [Cherry]
+
   WI_initVariables(wbstartstruct);
 
   exitpic = (wbs->lastmapinfo && wbs->lastmapinfo->exitpic[0]) ? wbs->lastmapinfo->exitpic : NULL;
   enterpic = (wbs->nextmapinfo && wbs->nextmapinfo->enterpic[0]) ? wbs->nextmapinfo->enterpic : NULL;
 
   WI_loadData();
+
+  // [Cherry] Update weapons widget line number
+  HU_Start();
+  WI_BuildMoreWidgets();
 
   if (deathmatch)
     WI_initDeathmatchStats();

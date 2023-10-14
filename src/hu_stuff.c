@@ -642,6 +642,7 @@ void HU_NughudAlignTime(void)
 
 void HU_Start(void)
 {
+  const boolean inter = gamestate == GS_INTERMISSION; // [Cherry]
   int i;
 
   if (headsupactive)                    // stop before starting
@@ -709,7 +710,7 @@ void HU_Start(void)
                        NULL, HU_widget_build_ammo);
 
   // create the hud weapons widget
-  HUlib_init_multiline(&w_weapon, 1,
+  HUlib_init_multiline(&w_weapon, inter ? 3 : 1,
                        &boom_font, colrngs[hudcolor_wg_name],
                        NULL, HU_widget_build_weapon);
 
@@ -1075,6 +1076,7 @@ static void HU_widget_build_weapon (void)
   const boolean inter = gamestate == GS_INTERMISSION; // [Cherry]
   char hud_weapstr[HU_MAXLINELENGTH] = "WEA ";
   int i = inter ? 0 : 4, w, ammo, fullammo, ammopct;
+  boolean newlined = false;
 
   // do each weapon that exists in current gamemode
   for (w = 0; w <= wp_supershotgun; w++) //jff 3/4/98 show fists too, why not?
@@ -1130,13 +1132,22 @@ static void HU_widget_build_weapon (void)
 
     hud_weapstr[i++] = '0'+w+1;
     // [Cherry] new line each 3 weapons if on intermission screen
-    newline = inter && !((i+1)%12);
-    hud_weapstr[i++] = newline ? '\n' : ' ';
-    hud_weapstr[i] = '\0';
+    if (inter && !((i + 1) % 12)) {
+      hud_weapstr[i] = '\0';
+      HUlib_add_string_to_cur_line(&w_weapon, hud_weapstr);
+      i = 0;
+      newlined = true;
+    }
+    else {
+      hud_weapstr[i++] = ' ';
+      hud_weapstr[i] = '\0';
+      newlined = false;
+    }
   }
 
   // transfer the init string to the widget
-  HUlib_add_string_to_cur_line(&w_weapon, hud_weapstr);
+  if (!newlined)
+    HUlib_add_string_to_cur_line(&w_weapon, hud_weapstr);
 }
 
 static void HU_widget_build_keys (void)
@@ -1842,17 +1853,20 @@ void WI_DrawMoreWidgets(void)
 
   if (wi_more_widgets)
   {
-    HU_widget_build_attempts();
-    // no bargraphs on intermission screen
-    HU_widget_build_health();
-    HU_widget_build_armor();
-    HU_widget_build_weapon();
-
     HUlib_draw_widget(&w1);
     HUlib_draw_widget(&w2);
     HUlib_draw_widget(&w3);
     HUlib_draw_widget(&w4);
   }
+}
+
+// [Cherry]
+void WI_BuildMoreWidgets(void)
+{
+  HU_widget_build_attempts();
+  HU_widget_build_health();
+  HU_widget_build_armor();
+  HU_widget_build_weapon();
 }
 
 //
