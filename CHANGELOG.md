@@ -1,10 +1,11 @@
-**Save version has been changed to `Cherry 1.0.1`**
+## New Features
 
-### Changes
-- **Merged changes from [Nugget Doom 2.2.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.2.0)**, note:
-	- Removed Cherry's shake effect implementation in favor of Nugget's;
-	- Removed the "Boss Death Shake Effect" setting;
-	- Replaced the "Screen Shake Percentage" setting with "Max Shake Intensity";
-	- Made the view shake effect wear off faster.
-- **Removed "Consistent widget name color" setting**.
-- **Removed the "TIME" label from the time widget**.
+None.
+
+## Changes
+
+None.
+
+## Bug Fixes
+
+- **Merged changes from [Nugget Doom 2.2.1](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.2.1)**, therefore fixed **buggy caching of Status Bar bezel graphic**
