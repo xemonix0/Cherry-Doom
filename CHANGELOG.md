@@ -4,8 +4,8 @@ None.
 
 ## Changes
 
-None.
+- **Bumped `NUGHUD` version to `2`** (see details in `docs/nughud.md`)
 
 ## Bug Fixes
 
-- **Buggy caching of Status Bar bezel graphic** [thanks to @ceski-1]
+None.

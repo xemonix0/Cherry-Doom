@@ -1,4 +1,7 @@
-; Default Nugget HUD distribution
+; Default NUGHUD
+
+; NUGHUD version
+nughud_version    2
 
 ; - Widgets -
 

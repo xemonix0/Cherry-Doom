@@ -46,6 +46,8 @@ typedef struct nughud_patch_s {
 #define NUMNUGHUDPATCHES 8
 
 typedef struct nughud_s {
+  int                version;
+
   nughud_alignable_t ammo;
   nughud_alignable_t health;
   nughud_widget_t    arms[9];
@@ -69,6 +71,7 @@ typedef struct nughud_s {
   nughud_alignable_t message;
   nughud_alignable_t secret;
   nughud_patch_t     patches[NUMNUGHUDPATCHES];
+
   boolean            percents;
   fixed_t            weapheight;
 } nughud_t;

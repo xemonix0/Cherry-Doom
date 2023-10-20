@@ -898,22 +898,40 @@ void ST_drawWidgets(void)
 
   // [Nugget] Draw NUGHUD patches and Armor icon
   if (st_crispyhud) {
+    patch_t *patch;
+    int x, y;
+
     for (i = 0;  i < NUMNUGHUDPATCHES;  i++)
     {
       if (nughud_patchlump[i] >= 0) {
-        patch_t *const patch = W_CacheLumpNum(nughud_patchlump[i], PU_STATIC);
+        patch = W_CacheLumpNum(nughud_patchlump[i], PU_STATIC);
 
-        V_DrawPatch(nughud.patches[i].x + NUGHUDWIDESHIFT(nughud.patches[i].wide)
-                    - ((nughud.patches[i].align == 1) ? SHORT(patch->width)   :
-                       (nughud.patches[i].align == 0) ? SHORT(patch->width)/2 : 0),
-                    nughud.patches[i].y, FG, patch);
+        x = nughud.patches[i].x + NUGHUDWIDESHIFT(nughud.patches[i].wide)
+            - ((nughud.patches[i].align == 1) ? SHORT(patch->width)   :
+               (nughud.patches[i].align == 0) ? SHORT(patch->width)/2 : 0);
+
+        y = nughud.patches[i].y;
+
+        if (nughud.version >= 2) {
+          x += SHORT(patch->leftoffset);
+          y += SHORT(patch->topoffset);
+        }
+
+        V_DrawPatch(x, y, FG, patch);
       }
     }
 
     if (nughud.armoricon.x > -1 && nharmor[0]) {
-      V_DrawPatch(nughud.armoricon.x + NUGHUDWIDESHIFT(nughud.armoricon.wide),
-                  nughud.armoricon.y, FG,
-                  nharmor[BETWEEN(0, 2, plyr->armortype)]);
+      patch = nharmor[BETWEEN(0, 2, plyr->armortype)];
+      x = nughud.armoricon.x + NUGHUDWIDESHIFT(nughud.armoricon.wide);
+      y = nughud.armoricon.y;
+
+      if (nughud.version >= 2) {
+        x += SHORT(patch->leftoffset);
+        y += SHORT(patch->topoffset);
+      }
+
+      V_DrawPatch(x, y, FG, patch);
     }
   }
 

@@ -17,17 +17,21 @@
 //  Variant of m_misc.c specifically for declaration and loading of NUGHUD
 //  variables
 
-#include "m_menu.h"
-#include "w_wad.h"
-#include "i_video.h"
-#include "p_mobj.h"
+#include <errno.h>
+
 #include "hu_stuff.h"
-#include "st_stuff.h"
+#include "i_printf.h"
+#include "i_video.h"
+#include "m_menu.h"
 #include "m_misc.h"
 #include "m_nughud.h"
+#include "p_mobj.h"
+#include "st_stuff.h"
+#include "w_wad.h"
 
 #include "m_io.h"
-#include <errno.h>
+
+#define CURRENTVERSION 2
 
 nughud_t nughud; // Behold!!!
 
@@ -60,6 +64,8 @@ nughud_t nughud; // Behold!!!
 #define TOGGLE(n, m, v) { n, (config_t *)&(m), NULL, { v }, { 0, 1 }, number }
 
 default_t nughud_defaults[] = {
+ { "nughud_version", (config_t *)&nughud.version, NULL, { 1 }, { 1, CURRENTVERSION }, number },
+
   WIDGET2(   "nughud_ammo",        nughud.ammo,         ST_AMMOX,     ST_AMMOY,     -1,  1 ),
   WIDGET2(   "nughud_health",      nughud.health,       ST_HEALTHX,   ST_HEALTHY,   -1,  1 ),
   WIDGET(    "nughud_arms1",       nughud.arms[0],     -1,            0,             0     ),
@@ -193,17 +199,21 @@ static boolean M_NughudParseOption(const char *p, boolean wad)
     if (sscanf(strparm, "%i", &parm) != 1) { return 1; } // Not A Number
 
     //jff 3/4/98 range check numeric parameters
-    if ((dp->limit.min == UL || dp->limit.min <= parm)
-        && (dp->limit.max == UL || dp->limit.max >= parm))
+    if (!strcmp(name, "nughud_version") // [Nugget] Unless it's the lump version
+        || (   (dp->limit.min == UL || dp->limit.min <= parm)
+            && (dp->limit.max == UL || dp->limit.max >= parm)))
     {
-      if (wad) {
+      if (wad)
+      {
         if (!dp->modified) { // First time it's modified by wad
           dp->modified = 1;                     // Mark it as modified
           dp->orig_default.i = dp->location->i; // Save original default
         }
+
         if (dp->current) // Change current value
         { dp->current->i = parm; }
       }
+
       dp->location->i = parm;          // Change default
     }
   }
@@ -222,19 +232,33 @@ void M_NughudLoadOptions(void)
   {
     int size = W_LumpLength(lump), buflen = 0;
     char *buf = NULL, *p, *options = p = W_CacheLumpNum(lump, PU_STATIC);
+
     while (size > 0)
     {
       int len = 0;
+      
       while (len < size && p[len++] && p[len-1] != '\n');
-      if (len >= buflen)
-      { buf = I_Realloc(buf, buflen = len+1); }
+
+      if (len >= buflen) { buf = I_Realloc(buf, buflen = len+1); }
+      
       strncpy(buf, p, len)[len] = 0;
       p += len;
       size -= len;
+
       M_NughudParseOption(buf, true);
     }
+    
     free(buf);
     Z_ChangeTag(options, PU_CACHE);
+
+    if (!(1 <= nughud.version && nughud.version <= CURRENTVERSION))
+    {
+      I_Printf(VB_WARNING, "NUGHUD: Unsupported version '%i' detected.\n"
+                           "        Defaulting to latest version '%i'.\n",
+                           nughud.version, CURRENTVERSION);
+
+      nughud.version = CURRENTVERSION;
+    }
   }
 }
 

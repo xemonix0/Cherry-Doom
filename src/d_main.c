@@ -44,7 +44,6 @@
 #include "m_argv.h"
 #include "m_misc.h"
 #include "m_misc2.h" // [FG] M_StringDuplicate()
-#include "m_nughud.h" // [Nugget]
 #include "m_menu.h"
 #include "m_swap.h"
 #include "i_printf.h"
@@ -69,6 +68,7 @@
 #include "i_endoom.h"
 #include "d_quit.h"
 #include "r_bmaps.h"
+#include "m_nughud.h" // [Nugget]
 
 #include "dsdhacked.h"
 
@@ -2552,9 +2552,9 @@ void D_DoomMain(void)
 
   D_ProcessInWads("BRGHTMPS", R_ParseBrightmaps, false);
 
-  M_NughudLoadOptions(); // [Nugget]
-
   I_PutChar(VB_INFO, '\n');     // killough 3/6/98: add a newline, by popular demand :)
+
+  M_NughudLoadOptions(); // [Nugget]
 
   // Moved after WAD initialization because we are checking the COMPLVL lump
   G_ReloadDefaults(false); // killough 3/4/98: set defaults just loaded.

@@ -19,26 +19,26 @@ names and values, optionally separated by blank or comment lines.
 
 ## NUGHUD widgets
 
-**The Nugget HUD is composed of widgets**, whose behavior is determined by a set of properties.
+**`NUGHUD` is composed of widgets**, whose behavior is determined by a set of properties.
 
 The following properties are shared across all widgets:
 
-- `_x`: **X position**, which can be any number between 0 and 320 (inclusive).
-- `_y`: **Y position**, which can be any number between 0 and 200 (inclusive).
+- `_x`: **X position**, which can be any number between `0` and `320` (inclusive).
+- `_y`: **Y position**, which can be any number between `0` and `200` (inclusive).
 - `_wide`: **Widescreen shift**, with the following possible values:
-  - -2 to shift the element left forcefully;
-  - -1 to shift the element left only when using the widescreen Nugget HUD;
-  - 0 to keep the element in place regardless of widescreen;
-  - 1 to shift the element right only when using the widescreen Nugget HUD;
-  - 2 to shift the element right forcefully.
+  - `-2` to shift the element left forcefully;
+  - `-1` to shift the element left only when in widescreen mode;
+  - ` 0` to keep the element in place regardless of widescreen mode;
+  - ` 1` to shift the element right only when in widescreen mode;
+  - ` 2` to shift the element right forcefully.
 
 The following types of widgets support special behavior:
 
-- **Disableables**: Can be disabled by setting `_x` to -1.
+- **Disableables**: Can be disabled by setting `_x` to `-1`.
 - **Alignables**: Can be aligned by means of the `_align` property, with the following possible values:
-  - -1 for left alignment;
-  - 0 for centered alignment;
-  - 1 for right alignment.
+  - `-1` for left alignment;
+  - ` 0` for centered alignment;
+  - ` 1` for right alignment.
 
 The following widgets are available:
 
@@ -46,13 +46,13 @@ The following widgets are available:
 | :----------------: | :---------: | :-------: | :---------- |
 | `nughud_ammo`      | Yes         | Yes       | Ammo count for the currently-equipped weapon |
 | `nughud_health`    | Yes         | Yes       | Health count |
-| `nughud_arms#`     | Yes         | No        | Arms (weapon) number, where # is a number between 1 and 9 (inclusive) |
+| `nughud_arms#`     | Yes         | No        | Arms (weapon) number, where # is a number between `1` and `9` (inclusive) |
 | `nughud_frags`     | Yes         | Yes       | Frags count, only shown during Deathmatch games |
 | `nughud_face`      | Yes         | No        | Face (Mugshot) |
 | `nughud_armor`     | Yes         | Yes       | Armor count |
 | `nughud_armoricon` | Yes         | No        | Armor icon, which changes depending on armor type (requires NHARMOR font - see below) |
-| `nughud_key#`      | Yes         | No        | Key display, where # is a number between 0 and 2 (in order: Blue Key; Yellow Key; Red Key) |
-| `nughud_ammo#`     | Yes         | Yes       | Ammo count for each type, where # is a number between 0 and 3 (in order: Bullets; Shells; Cells; Rockets) |
+| `nughud_key#`      | Yes         | No        | Key display, where # is a number between `0` and `2` (in order: Blue Key; Yellow Key; Red Key) |
+| `nughud_ammo#`     | Yes         | Yes       | Ammo count for each type, where # is a number between `0` and `3` (in order: Bullets; Shells; Cells; Rockets) |
 | `nughud_maxammo#`  | Yes         | Yes       | Same as the above, but for Max Ammo |
 | `nughud_time`      | No          | Yes       | Time display, only shown if enabled by the user |
 | `nughud_sts`       | No          | Yes       | Stats (Kills/Items/Secrets) display, only shown if enabled by the user |
@@ -63,7 +63,7 @@ The following widgets are available:
 | `nughud_message`   | No          | Yes       | Message display |
 | `nughud_secret`    | No          | Yes       | Secret Message display |
 
-There are some additional boolean properties (value of 0 or 1) for some specific widgets:
+There are some additional boolean properties (value of `0` or `1`) for some specific widgets:
 
 - `nughud_face_bg`: Toggle the _Face_ background, whose position is linked to that of the _Face_ itself.
 - `nughud_percents`: Toggle drawing of percentage signs for the Health and Armor counts.
@@ -71,7 +71,7 @@ There are some additional boolean properties (value of 0 or 1) for some specific
 - `nughud_sts_ml`: Toggle three-lined _Stats_ widget.
 - `nughud_coord_ml`: Toggle three-lined _Coordinates_ widget.
 
-Lastly, the _Message_ widget supports an X position value of -1 to forcefully draw it at its original X position, where it'll be affected by the Centered Messages setting.
+Lastly, the _Message_ widget supports an X position value of `-1` to forcefully draw it at its original X position, where it'll be affected by the Centered Messages setting.
 
 #### Examples
 
@@ -106,39 +106,39 @@ The following fonts are available:
 ```
 Tall Numbers, used for the Health, Armor, current-weapon Ammo and Frags counts:
 
-  NHTNUM# -- Number, where # is a number between 0 and 9 (inclusive)
-  NHTMINUS - Minus sign
-  NHTPRCNT - Percent sign
+- NHTNUM# -- Number, where # is a number between 0 and 9 (inclusive)
+- NHTMINUS - Minus sign
+- NHTPRCNT - Percent sign
 
 Current-weapon Ammo Numbers, used exclusively for the current-weapon Ammo count, taking precedence over the Tall Numbers:
 
-  NHRNUM# -- Number, where # is a number between 0 and 9 (inclusive)
-  NHRMINUS - Minus sign
+- NHRNUM# -- Number, where # is a number between 0 and 9 (inclusive)
+- NHRMINUS - Minus sign
 
 Ammo Numbers, used for the Ammo and Max Ammo counts:
 
-  NHAMNUM# - Number, where # is a number between 0 and 9 (inclusive)
+- NHAMNUM# - Number, where # is a number between 0 and 9 (inclusive)
 
 Arms Numbers, used for the weapon numbers:
 
-  NHW0NUM# - Weapon unavailable, where # is a number between 1 and 9 (inclusive)
-  NHW1NUM# - Weapon available, where # is a number between 1 and 9 (inclusive)
+- NHW0NUM# - Weapon unavailable, where # is a number between 1 and 9 (inclusive)
+- NHW1NUM# - Weapon available, where # is a number between 1 and 9 (inclusive)
 
 Keys:
 
-  NHKEYS# -- Key, where # is a number between 0 and 8 (inclusive)
+- NHKEYS# -- Key, where # is a number between 0 and 8 (inclusive)
 
 Berserk, drawn in place of the Ammo count when using the Berserk Fist:
 
-  NHBERSRK - Berserk graphic
+- NHBERSRK - Berserk graphic
 
 Armor graphics, used for the Armor icon widget:
 
-  NHARMOR# - Graphic, where # is either 0 (no armor), 1 (green armor) or 2 (blue armor)
+- NHARMOR# - Graphic, where # is either 0 (no armor), 1 (green armor) or 2 (blue armor)
 
 Infinity, drawn in place of the Ammo count when using weapons with no ammo type (e.g. Fist/Chainsaw):
 
-  NHINFNTY - Infinity graphic
+- NHINFNTY - Infinity graphic
 ```
 
 ### Patches
@@ -173,12 +173,31 @@ nughud_patch2_name "STARMS"
 ### Miscellaneous
 
 **There is an additional fixed-point property, `nughud_weapheight`, to increase the height at which weapon sprites are drawn**.
-It can be any value between 0 and 200 (inclusive).
+It can be any value between `0` and `200` (inclusive).
+
+### Version
+
+Some changes in the handling of the `NUGHUD` lump would result in old lumps not displaying correctly.
+To work around this, starting with Nugget Doom 2.3.0, `NUGHUD` supports a version value which determines how certain details are handled.
+
+Since `NUGHUD` was not originally conceived with a version system in place, HUDs made for Nugget Doom versions prior to 2.3.0 did not specify a version.
+Due to this, if no version is specified by a HUD, it will be treated as a version 1 HUD to maintain compatibility.
+
+If the version specified by the HUD is lesser than 1 or greater than the current version, it will be treated as a latest-version HUD to improve support of newer HUDs in older Nugget Doom releases.
+
+The current `NUGHUD` version is `2`.
+The version differences are listed below:
+
+```
+Version 2:
+
+- Patches and Armor Icon graphics ignore the graphics' offsets
+```
 
 ---
 
-By default and compared to the original Crispy HUD, the Nugget HUD hides the face widget and shows Arms numbers 2-9 instead of 2-7.
+By default and compared to the original Crispy HUD, `NUGHUD` hides the face widget and shows Arms numbers `2-9` instead of `2-7`.
 
-**The default distribution for the Nugget HUD**, as defined in the executable, **is available in text format as `nughud.lmp`**, found in the `docs/` folder. Comments were added to it for clarity. Feel free to use it as a base to make new distributions.
+**The default `NUGHUD`**, as defined in the executable, **is available in text format as `nughud.lmp`**, found in the `docs/` folder. Comments were added to it for clarity. Feel free to use it as a base to make new HUDs.
 
 It is advised that you do not include values for variables that you do not wish to modify, as to avoid issues if the handling of any of them is altered in the future.
