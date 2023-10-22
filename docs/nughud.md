@@ -177,27 +177,10 @@ nughud_patch2_name "STARMS"
 
 ### Miscellaneous
 
+**There is an additional toggle, `nughud_ignore_offsets`, to ignore patch offsets when drawing Patches and *Ammo*/*Armor* icon graphics.**
+
 **There is an additional fixed-point property, `nughud_weapheight`, to increase the height at which weapon sprites are drawn**.
 It can be any value between `0` and `200` (inclusive).
-
-### Version
-
-Some changes in the handling of the `NUGHUD` lump would result in old lumps not displaying correctly.
-To work around this, starting with Nugget Doom 2.3.0, `NUGHUD` supports a version value which determines how certain details are handled.
-
-Since `NUGHUD` was not originally conceived with a version system in place, HUDs made for Nugget Doom versions prior to 2.3.0 did not specify a version.
-Due to this, if no version is specified by a HUD, it will be treated as a version 1 HUD to maintain compatibility.
-
-If the version specified by the HUD is lesser than 1 or greater than the current version, it will be treated as a latest-version HUD to improve support of newer HUDs in older Nugget Doom versions.
-
-The current `NUGHUD` version is `2`.
-The version differences are listed below:
-
-```
-Version 2:
-
-- Patches and Armor Icon graphics ignore the graphics' offsets
-```
 
 ---
 

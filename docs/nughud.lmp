@@ -1,8 +1,5 @@
 ; Default NUGHUD
 
-; NUGHUD version
-nughud_version    2
-
 ; - Widgets -
 
 ; Ammo count
@@ -244,6 +241,9 @@ nughud_patch8_name  ""
 
 ; Draw percentage signs
 nughud_percents 1
+
+; Ignore offsets when drawing patches
+nughud_ignore_offsets 1
 
 ; Upwards offset to apply to weapon sprites
 nughud_weapheight 0

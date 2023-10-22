@@ -914,7 +914,7 @@ void ST_drawWidgets(void)
 
         y = nughud.patches[i].y;
 
-        if (nughud.version >= 2) {
+        if (nughud.ignore_offsets) {
           x += SHORT(patch->leftoffset);
           y += SHORT(patch->topoffset);
         }
@@ -930,7 +930,7 @@ void ST_drawWidgets(void)
       x = nughud.ammoicon.x + NUGHUDWIDESHIFT(nughud.ammoicon.wide);
       y = nughud.ammoicon.y;
 
-      if (nughud.version >= 2) {
+      if (nughud.ignore_offsets) {
         x += SHORT(patch->leftoffset);
         y += SHORT(patch->topoffset);
       }
@@ -944,7 +944,7 @@ void ST_drawWidgets(void)
       x = nughud.armoricon.x + NUGHUDWIDESHIFT(nughud.armoricon.wide);
       y = nughud.armoricon.y;
 
-      if (nughud.version >= 2) {
+      if (nughud.ignore_offsets) {
         x += SHORT(patch->leftoffset);
         y += SHORT(patch->topoffset);
       }

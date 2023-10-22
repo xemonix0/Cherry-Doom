@@ -20,7 +20,6 @@
 #include <errno.h>
 
 #include "hu_stuff.h"
-#include "i_printf.h"
 #include "i_video.h"
 #include "m_menu.h"
 #include "m_misc.h"
@@ -30,8 +29,6 @@
 #include "w_wad.h"
 
 #include "m_io.h"
-
-#define CURRENTVERSION 2
 
 nughud_t nughud; // Behold!!!
 
@@ -64,8 +61,6 @@ nughud_t nughud; // Behold!!!
 #define TOGGLE(n, m, v) { n, (config_t *)&(m), NULL, { v }, { 0, 1 }, number }
 
 default_t nughud_defaults[] = {
- { "nughud_version", (config_t *)&nughud.version, NULL, { 1 }, { 1, CURRENTVERSION }, number },
-
   WIDGET2(   "nughud_ammo",        nughud.ammo,         ST_AMMOX,     ST_AMMOY,     -1,  1 ),
   WIDGET(    "nughud_ammoicon",    nughud.ammoicon,     0,            0,             0     ),
   WIDGET2(   "nughud_health",      nughud.health,       ST_HEALTHX,   ST_HEALTHY,   -1,  1 ),
@@ -104,7 +99,7 @@ default_t nughud_defaults[] = {
   TOGGLE(    "nughud_coord_ml",    nughud.coord_ml,     0                                  ),
   TEXTLINE(  "nughud_fps",         nughud.fps,          318,          24,            2,  1 ),
   {          "nughud_message_x",     (config_t *)&nughud.message.x,     NULL, { -1 }, { -1, 320 }, number },
-  {          "nughud_message_y",     (config_t *)&nughud.message.y,     NULL, {  0 }, { 0, 200 },  number },
+  {          "nughud_message_y",     (config_t *)&nughud.message.y,     NULL, {  0 }, {  0, 200 }, number },
   {          "nughud_message_wide",  (config_t *)&nughud.message.wide,  NULL, { -2 }, { -2, 2 },   number },
   {          "nughud_message_align", (config_t *)&nughud.message.align, NULL, { -1 }, { -1, 1 },   number },
   TEXTLINE(  "nughud_secret",      nughud.secret,       160,          86,            0,  0 ),
@@ -116,8 +111,10 @@ default_t nughud_defaults[] = {
   PATCH(     "nughud_patch6",      nughud.patches[5]                                       ),
   PATCH(     "nughud_patch7",      nughud.patches[6]                                       ),
   PATCH(     "nughud_patch8",      nughud.patches[7]                                       ),
-  TOGGLE(    "nughud_percents",    nughud.percents,     1                                  ),
-  {          "nughud_weapheight", (config_t *)&nughud.weapheight, NULL, { 0 }, { 0, 200 }, number },
+
+  TOGGLE(    "nughud_percents",       nughud.percents,       1                             ),
+  TOGGLE(    "nughud_ignore_offsets", nughud.ignore_offsets, 0                             ),
+  {          "nughud_weapheight",     (config_t *)&nughud.weapheight, NULL, { 0 }, { 0, 200 }, number },
 
   { NULL }         // last entry
 };
@@ -200,9 +197,8 @@ static boolean M_NughudParseOption(const char *p, boolean wad)
     if (sscanf(strparm, "%i", &parm) != 1) { return 1; } // Not A Number
 
     //jff 3/4/98 range check numeric parameters
-    if (!strcmp(name, "nughud_version") // [Nugget] Unless it's the lump version
-        || (   (dp->limit.min == UL || dp->limit.min <= parm)
-            && (dp->limit.max == UL || dp->limit.max >= parm)))
+    if (   (dp->limit.min == UL || dp->limit.min <= parm)
+        && (dp->limit.max == UL || dp->limit.max >= parm))
     {
       if (wad)
       {
@@ -251,15 +247,6 @@ void M_NughudLoadOptions(void)
     
     free(buf);
     Z_ChangeTag(options, PU_CACHE);
-
-    if (!(1 <= nughud.version && nughud.version <= CURRENTVERSION))
-    {
-      I_Printf(VB_WARNING, "NUGHUD: Unsupported version '%i' detected.\n"
-                           "        Defaulting to latest version '%i'.\n",
-                           nughud.version, CURRENTVERSION);
-
-      nughud.version = CURRENTVERSION;
-    }
   }
 }
 

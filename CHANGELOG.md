@@ -1,10 +1,12 @@
 ## New Features
 
-- **NUGHUD Ammo icon**
+- **NUGHUD:**
+  - Ammo icon;
+  - Toggle to ignore patch offsets.
 
 ## Changes
 
-- **Bumped `NUGHUD` version to `2`** (see details in `docs/nughud.md`)
+None.
 
 ## Bug Fixes
 
