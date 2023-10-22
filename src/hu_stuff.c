@@ -1311,7 +1311,7 @@ static void HU_widget_build_monsec(void)
   {
     offset = sprintf(hud_monsecstr,
       "\x1b%cK %s \x1b%c%d/%d",
-      '0'+CR_RED, kills_str, kills_color,
+      '0'+hudcolor_wg_name, kills_str, kills_color,
       kills - (smarttotals ? extrakills : 0), // [Nugget] Smart Totals from So Doom
       totalkills);
   }
@@ -1319,7 +1319,7 @@ static void HU_widget_build_monsec(void)
   {
     offset = sprintf(hud_monsecstr,
       "\x1b%cK \x1b%c%d/%d",
-      '0'+CR_RED, kills_color,
+      '0'+hudcolor_wg_name, kills_color,
       plr->killcount - (smarttotals ? extrakills : 0), // [Nugget] Smart Totals from So Doom
       totalkills);
   }
@@ -1334,10 +1334,10 @@ static void HU_widget_build_monsec(void)
     sprintf(hud_monsecstr + offset, " \x1b%c%d%%", kills_percent_color, kills_percent);
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
 
-    sprintf(hud_monsecstr, "\x1b%cI \x1b%c%d/%d", ('0'+CR_RED), items_color, items, totalitems);
+    sprintf(hud_monsecstr, "\x1b%cI \x1b%c%d/%d", ('0'+hudcolor_wg_name), items_color, items, totalitems);
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
 
-    sprintf(hud_monsecstr, "\x1b%cS \x1b%c%d/%d", ('0'+CR_RED), secrets_color, secrets, totalsecret);
+    sprintf(hud_monsecstr, "\x1b%cS \x1b%c%d/%d", ('0'+hudcolor_wg_name), secrets_color, secrets, totalsecret);
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
   }
   else
@@ -1345,8 +1345,8 @@ static void HU_widget_build_monsec(void)
     sprintf(hud_monsecstr + offset,
       " \x1b%c%d%% \x1b%cI \x1b%c%d/%d \x1b%cS \x1b%c%d/%d",
       kills_percent_color, kills_percent,
-      '0'+CR_RED, items_color, items, totalitems,
-      '0'+CR_RED, secrets_color, secrets, totalsecret);
+      '0'+hudcolor_wg_name, items_color, items, totalitems,
+      '0'+hudcolor_wg_name, secrets_color, secrets, totalsecret);
 
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
   }
