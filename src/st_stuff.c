@@ -191,6 +191,7 @@ static patch_t *nhamnum[10];        // NHAMNUM#, from 0 to 9
 static patch_t *nhwpnum[9][2];      // NHW0NUM# and NHW1NUM#, from 1 to 9
 static patch_t *nhkeys[NUMCARDS+3]; // NHKEYS
 static patch_t *nhbersrk;           // NHBERSRK
+static patch_t *nhammo[4];          // NHAMMO#, from 0 to 3
 static patch_t *nharmor[3];         // NHARMOR#, from 0 to 2
 static patch_t *nhinfnty;           // NHINFNTY
 
@@ -896,14 +897,15 @@ void ST_drawWidgets(void)
     V_CopyRect(WIDESCREENDELTA, 0, BG, ST_WIDTH, ST_HEIGHT, WIDESCREENDELTA, ST_Y, FG);
   }
 
-  // [Nugget] Draw NUGHUD patches and Armor icon
+  // [Nugget] Draw some NUGHUD graphics
   if (st_crispyhud) {
     patch_t *patch;
     int x, y;
 
     for (i = 0;  i < NUMNUGHUDPATCHES;  i++)
     {
-      if (nughud_patchlump[i] >= 0) {
+      if (nughud_patchlump[i] >= 0)
+      {
         patch = W_CacheLumpNum(nughud_patchlump[i], PU_STATIC);
 
         x = nughud.patches[i].x + NUGHUDWIDESHIFT(nughud.patches[i].wide)
@@ -921,7 +923,23 @@ void ST_drawWidgets(void)
       }
     }
 
-    if (nughud.armoricon.x > -1 && nharmor[0]) {
+    if (nughud.ammoicon.x > -1 && nhammo[0]
+        && weaponinfo[w_ready.data].ammo != am_noammo)
+    {
+      patch = nhammo[BETWEEN(0, 3, weaponinfo[w_ready.data].ammo)];
+      x = nughud.ammoicon.x + NUGHUDWIDESHIFT(nughud.ammoicon.wide);
+      y = nughud.ammoicon.y;
+
+      if (nughud.version >= 2) {
+        x += SHORT(patch->leftoffset);
+        y += SHORT(patch->topoffset);
+      }
+
+      V_DrawPatch(x, y, FG, patch);
+    }
+
+    if (nughud.armoricon.x > -1 && nharmor[0])
+    {
       patch = nharmor[BETWEEN(0, 2, plyr->armortype)];
       x = nughud.armoricon.x + NUGHUDWIDESHIFT(nughud.armoricon.wide);
       y = nughud.armoricon.y;
@@ -1367,6 +1385,19 @@ void ST_loadGraphics(void)
     { nhbersrk = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
     else
     { nhbersrk = NULL; }
+
+    // Ammo icons ---------------------
+
+    // Load NHAMMO0 to NHAMMO3
+    for (i = 0;  i < 4;  i++) {
+      sprintf(namebuf, "NHAMMO%d", i);
+      if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
+      { nhammo[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+      else {
+        nhammo[0] = NULL;
+        break;
+      }
+    }
 
     // Armor icons --------------------
 

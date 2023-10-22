@@ -49,6 +49,7 @@ typedef struct nughud_s {
   int                version;
 
   nughud_alignable_t ammo;
+  nughud_widget_t    ammoicon;
   nughud_alignable_t health;
   nughud_widget_t    arms[9];
   nughud_alignable_t frags;

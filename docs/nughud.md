@@ -1,6 +1,6 @@
 # Nugget Doom's NUGHUD guide
 
-**The `NUGHUD` lump** is a variant of MBF's `OPTIONS` lump, **used specifically by Nugget Doom to customize the Crispy HUD**, which we will refer to as _Nugget HUD_ from now on.
+**The `NUGHUD` lump** is a variant of MBF's `OPTIONS` lump, **used specifically by Nugget Doom to customize the Crispy HUD**.
 
 As implied, `NUGHUD` uses the same format as `OPTIONS`. Excerpt from `mbfedit.txt`:
 
@@ -45,12 +45,13 @@ The following widgets are available:
 | Widget(s)          | Disableable | Alignable | Description |
 | :----------------: | :---------: | :-------: | :---------- |
 | `nughud_ammo`      | Yes         | Yes       | Ammo count for the currently-equipped weapon |
+| `nughud_ammoicon`  | Yes         | No        | Ammo icon, which changes depending on ammo type of current weapon (requires `NHAMMO` font - see below) |
 | `nughud_health`    | Yes         | Yes       | Health count |
 | `nughud_arms#`     | Yes         | No        | Arms (weapon) number, where # is a number between `1` and `9` (inclusive) |
 | `nughud_frags`     | Yes         | Yes       | Frags count, only shown during Deathmatch games |
 | `nughud_face`      | Yes         | No        | Face (Mugshot) |
 | `nughud_armor`     | Yes         | Yes       | Armor count |
-| `nughud_armoricon` | Yes         | No        | Armor icon, which changes depending on armor type (requires NHARMOR font - see below) |
+| `nughud_armoricon` | Yes         | No        | Armor icon, which changes depending on current armor type (requires `NHARMOR` font - see below) |
 | `nughud_key#`      | Yes         | No        | Key display, where # is a number between `0` and `2` (in order: Blue Key; Yellow Key; Red Key) |
 | `nughud_ammo#`     | Yes         | Yes       | Ammo count for each type, where # is a number between `0` and `3` (in order: Bullets; Shells; Cells; Rockets) |
 | `nughud_maxammo#`  | Yes         | Yes       | Same as the above, but for Max Ammo |
@@ -66,7 +67,7 @@ The following widgets are available:
 There are some additional boolean properties (value of `0` or `1`) for some specific widgets:
 
 - `nughud_face_bg`: Toggle the _Face_ background, whose position is linked to that of the _Face_ itself.
-- `nughud_percents`: Toggle drawing of percentage signs for the Health and Armor counts.
+- `nughud_percents`: Toggle drawing of percentage signs for the _Health_ and _Armor_ counts.
 - `nughud_time_sts`: Toggle relocation of the _Time_ widget to the position of the _Stats_ widget when the latter is inactive.
 - `nughud_sts_ml`: Toggle three-lined _Stats_ widget.
 - `nughud_coord_ml`: Toggle three-lined _Coordinates_ widget.
@@ -132,9 +133,13 @@ Berserk, drawn in place of the Ammo count when using the Berserk Fist:
 
 - NHBERSRK - Berserk graphic
 
+Ammo graphics, used for the Ammo icon widget:
+
+- NHAMMO# - Graphic, where # is a number between 0 and 3 (in order: Bullets; Shells; Cells; Rockets)
+
 Armor graphics, used for the Armor icon widget:
 
-- NHARMOR# - Graphic, where # is either 0 (no armor), 1 (green armor) or 2 (blue armor)
+- NHARMOR# - Graphic, where # is a number between 0 and 2 (in order: no Armor; Green Armor; Blue Armor)
 
 Infinity, drawn in place of the Ammo count when using weapons with no ammo type (e.g. Fist/Chainsaw):
 
@@ -183,7 +188,7 @@ To work around this, starting with Nugget Doom 2.3.0, `NUGHUD` supports a versio
 Since `NUGHUD` was not originally conceived with a version system in place, HUDs made for Nugget Doom versions prior to 2.3.0 did not specify a version.
 Due to this, if no version is specified by a HUD, it will be treated as a version 1 HUD to maintain compatibility.
 
-If the version specified by the HUD is lesser than 1 or greater than the current version, it will be treated as a latest-version HUD to improve support of newer HUDs in older Nugget Doom releases.
+If the version specified by the HUD is lesser than 1 or greater than the current version, it will be treated as a latest-version HUD to improve support of newer HUDs in older Nugget Doom versions.
 
 The current `NUGHUD` version is `2`.
 The version differences are listed below:

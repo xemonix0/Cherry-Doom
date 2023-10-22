@@ -1,6 +1,6 @@
 ## New Features
 
-None.
+- **NUGHUD Ammo icon**
 
 ## Changes
 

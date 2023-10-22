@@ -67,6 +67,7 @@ default_t nughud_defaults[] = {
  { "nughud_version", (config_t *)&nughud.version, NULL, { 1 }, { 1, CURRENTVERSION }, number },
 
   WIDGET2(   "nughud_ammo",        nughud.ammo,         ST_AMMOX,     ST_AMMOY,     -1,  1 ),
+  WIDGET(    "nughud_ammoicon",    nughud.ammoicon,     0,            0,             0     ),
   WIDGET2(   "nughud_health",      nughud.health,       ST_HEALTHX,   ST_HEALTHY,   -1,  1 ),
   WIDGET(    "nughud_arms1",       nughud.arms[0],     -1,            0,             0     ),
   WIDGET(    "nughud_arms2",       nughud.arms[1],      111,          172,          -1     ),
