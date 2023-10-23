@@ -45,13 +45,13 @@ The following widgets are available:
 | Widget(s)          | Disableable | Alignable | Description |
 | :----------------: | :---------: | :-------: | :---------- |
 | `nughud_ammo`      | Yes         | Yes       | Ammo count for the currently-equipped weapon |
-| `nughud_ammoicon`  | Yes         | No        | Ammo icon, which changes depending on ammo type of current weapon (requires `NHAMMO` font - see below) |
+| `nughud_ammoicon`  | Yes         | Yes       | Ammo icon, which changes depending on ammo type of current weapon (requires `NHAMMO` font - see below) |
 | `nughud_health`    | Yes         | Yes       | Health count |
 | `nughud_arms#`     | Yes         | No        | Arms (weapon) number, where # is a number between `1` and `9` (inclusive) |
 | `nughud_frags`     | Yes         | Yes       | Frags count, only shown during Deathmatch games |
 | `nughud_face`      | Yes         | No        | Face (Mugshot) |
 | `nughud_armor`     | Yes         | Yes       | Armor count |
-| `nughud_armoricon` | Yes         | No        | Armor icon, which changes depending on current armor type (requires `NHARMOR` font - see below) |
+| `nughud_armoricon` | Yes         | Yes       | Armor icon, which changes depending on current armor type (requires `NHARMOR` font - see below) |
 | `nughud_key#`      | Yes         | No        | Key display, where # is a number between `0` and `2` (in order: Blue Key; Yellow Key; Red Key) |
 | `nughud_ammo#`     | Yes         | Yes       | Ammo count for each type, where # is a number between `0` and `3` (in order: Bullets; Shells; Cells; Rockets) |
 | `nughud_maxammo#`  | Yes         | Yes       | Same as the above, but for Max Ammo |

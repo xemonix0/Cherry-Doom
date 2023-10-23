@@ -51,18 +51,18 @@ nughud_t nughud; // Behold!!!
  { n"_wide",  (config_t *)&(m).wide,  NULL, { vw }, { -2, 2   }, number }, \
  { n"_align", (config_t *)&(m).align, NULL, { va }, { -1, 1   }, number }
 
-#define PATCH(n, m)                                                               \
- { n"_x",     (config_t *)&(m).x,     NULL, {  0        }, {  0, 320 }, number }, \
- { n"_y",     (config_t *)&(m).y,     NULL, {  0        }, {  0, 200 }, number }, \
- { n"_wide",  (config_t *)&(m).wide,  NULL, {  0        }, { -2, 2   }, number }, \
- { n"_align", (config_t *)&(m).align, NULL, { -1        }, { -1, 1   }, number }, \
- { n"_name",  (config_t *)&(m).name,  NULL, { .s = NULL }, {  0      }, string }
+#define PATCH(n, i)                                                                             \
+ { n"_x",     (config_t *)&nughud.patches[i].x,     NULL, {  0        }, {  0, 320 }, number }, \
+ { n"_y",     (config_t *)&nughud.patches[i].y,     NULL, {  0        }, {  0, 200 }, number }, \
+ { n"_wide",  (config_t *)&nughud.patches[i].wide,  NULL, {  0        }, { -2, 2   }, number }, \
+ { n"_align", (config_t *)&nughud.patches[i].align, NULL, { -1        }, { -1, 1   }, number }, \
+ { n"_name",  (config_t *)&nughud.patchnames[i],    NULL, { .s = NULL }, {  0      }, string }
 
 #define TOGGLE(n, m, v) { n, (config_t *)&(m), NULL, { v }, { 0, 1 }, number }
 
 default_t nughud_defaults[] = {
   WIDGET2(   "nughud_ammo",        nughud.ammo,         ST_AMMOX,     ST_AMMOY,     -1,  1 ),
-  WIDGET(    "nughud_ammoicon",    nughud.ammoicon,     0,            0,             0     ),
+  WIDGET2(   "nughud_ammoicon",    nughud.ammoicon,     0,            0,             0, -1 ),
   WIDGET2(   "nughud_health",      nughud.health,       ST_HEALTHX,   ST_HEALTHY,   -1,  1 ),
   WIDGET(    "nughud_arms1",       nughud.arms[0],     -1,            0,             0     ),
   WIDGET(    "nughud_arms2",       nughud.arms[1],      111,          172,          -1     ),
@@ -77,7 +77,7 @@ default_t nughud_defaults[] = {
   WIDGET(    "nughud_face",        nughud.face,        -1,            ST_FACESY,     0     ),
   TOGGLE(    "nughud_face_bg",     nughud.face_bg,      1                                  ),
   WIDGET2(   "nughud_armor",       nughud.armor,        ST_ARMORX,    ST_ARMORY,     1,  1 ),
-  WIDGET(    "nughud_armoricon",   nughud.armoricon,    0,            0,             0     ),
+  WIDGET2(   "nughud_armoricon",   nughud.armoricon,    0,            0,             0, -1 ),
   WIDGET(    "nughud_key0",        nughud.keys[0],      ST_KEY0X,     ST_KEY0Y,      1     ),
   WIDGET(    "nughud_key1",        nughud.keys[1],      ST_KEY1X,     ST_KEY1Y,      1     ),
   WIDGET(    "nughud_key2",        nughud.keys[2],      ST_KEY2X,     ST_KEY2Y,      1     ),
@@ -103,14 +103,14 @@ default_t nughud_defaults[] = {
   {          "nughud_message_wide",  (config_t *)&nughud.message.wide,  NULL, { -2 }, { -2, 2 },   number },
   {          "nughud_message_align", (config_t *)&nughud.message.align, NULL, { -1 }, { -1, 1 },   number },
   TEXTLINE(  "nughud_secret",      nughud.secret,       160,          86,            0,  0 ),
-  PATCH(     "nughud_patch1",      nughud.patches[0]                                       ),
-  PATCH(     "nughud_patch2",      nughud.patches[1]                                       ),
-  PATCH(     "nughud_patch3",      nughud.patches[2]                                       ),
-  PATCH(     "nughud_patch4",      nughud.patches[3]                                       ),
-  PATCH(     "nughud_patch5",      nughud.patches[4]                                       ),
-  PATCH(     "nughud_patch6",      nughud.patches[5]                                       ),
-  PATCH(     "nughud_patch7",      nughud.patches[6]                                       ),
-  PATCH(     "nughud_patch8",      nughud.patches[7]                                       ),
+  PATCH(     "nughud_patch1",      0                                                       ),
+  PATCH(     "nughud_patch2",      1                                                       ),
+  PATCH(     "nughud_patch3",      2                                                       ),
+  PATCH(     "nughud_patch4",      3                                                       ),
+  PATCH(     "nughud_patch5",      4                                                       ),
+  PATCH(     "nughud_patch6",      5                                                       ),
+  PATCH(     "nughud_patch7",      6                                                       ),
+  PATCH(     "nughud_patch8",      7                                                       ),
 
   TOGGLE(    "nughud_percents",       nughud.percents,       1                             ),
   TOGGLE(    "nughud_ignore_offsets", nughud.ignore_offsets, 0                             ),

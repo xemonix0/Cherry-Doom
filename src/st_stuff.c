@@ -882,6 +882,25 @@ void ST_doPaletteStuff(void)
     }
 }
 
+// [Nugget] NUGHUD
+static void NughudDrawPatch(nughud_alignable_t *widget, patch_t *patch)
+{
+  int x, y;
+
+  x = widget->x + NUGHUDWIDESHIFT(widget->wide)
+      - ((widget->align == 1) ? SHORT(patch->width)   :
+         (widget->align == 0) ? SHORT(patch->width)/2 : 0);
+
+  y = widget->y;
+
+  if (nughud.ignore_offsets) {
+    x += SHORT(patch->leftoffset);
+    y += SHORT(patch->topoffset);
+  }
+
+  V_DrawPatch(x, y, FG, patch);
+}
+
 void ST_drawWidgets(void)
 {
   int i;
@@ -898,58 +917,25 @@ void ST_drawWidgets(void)
   }
 
   // [Nugget] Draw some NUGHUD graphics
-  if (st_crispyhud) {
-    patch_t *patch;
-    int x, y;
-
+  if (st_crispyhud)
+  {
     for (i = 0;  i < NUMNUGHUDPATCHES;  i++)
     {
       if (nughud_patchlump[i] >= 0)
       {
-        patch = W_CacheLumpNum(nughud_patchlump[i], PU_STATIC);
-
-        x = nughud.patches[i].x + NUGHUDWIDESHIFT(nughud.patches[i].wide)
-            - ((nughud.patches[i].align == 1) ? SHORT(patch->width)   :
-               (nughud.patches[i].align == 0) ? SHORT(patch->width)/2 : 0);
-
-        y = nughud.patches[i].y;
-
-        if (nughud.ignore_offsets) {
-          x += SHORT(patch->leftoffset);
-          y += SHORT(patch->topoffset);
-        }
-
-        V_DrawPatch(x, y, FG, patch);
+        NughudDrawPatch(&nughud.patches[i], W_CacheLumpNum(nughud_patchlump[i], PU_STATIC));
       }
     }
 
     if (nughud.ammoicon.x > -1 && nhammo[0]
         && weaponinfo[w_ready.data].ammo != am_noammo)
     {
-      patch = nhammo[BETWEEN(0, 3, weaponinfo[w_ready.data].ammo)];
-      x = nughud.ammoicon.x + NUGHUDWIDESHIFT(nughud.ammoicon.wide);
-      y = nughud.ammoicon.y;
-
-      if (nughud.ignore_offsets) {
-        x += SHORT(patch->leftoffset);
-        y += SHORT(patch->topoffset);
-      }
-
-      V_DrawPatch(x, y, FG, patch);
+      NughudDrawPatch(&nughud.ammoicon, nhammo[BETWEEN(0, 3, weaponinfo[w_ready.data].ammo)]);
     }
 
     if (nughud.armoricon.x > -1 && nharmor[0])
     {
-      patch = nharmor[BETWEEN(0, 2, plyr->armortype)];
-      x = nughud.armoricon.x + NUGHUDWIDESHIFT(nughud.armoricon.wide);
-      y = nughud.armoricon.y;
-
-      if (nughud.ignore_offsets) {
-        x += SHORT(patch->leftoffset);
-        y += SHORT(patch->topoffset);
-      }
-
-      V_DrawPatch(x, y, FG, patch);
+      NughudDrawPatch(&nughud.armoricon, nharmor[BETWEEN(0, 2, plyr->armortype)]);
     }
   }
 
@@ -1274,11 +1260,11 @@ void ST_loadGraphics(void)
     // Find NUGHUD patches
     for (i = 0;  i < NUMNUGHUDPATCHES;  i++)
     {
-      if (nughud.patches[i].name != NULL)
+      if (nughud.patchnames[i] != NULL)
       {
-        nughud_patchlump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_sprites);
+        nughud_patchlump[i] = (W_CheckNumForName)(nughud.patchnames[i], ns_sprites);
         if (nughud_patchlump[i] == -1)
-        { nughud_patchlump[i] = (W_CheckNumForName)(nughud.patches[i].name, ns_global); }
+        { nughud_patchlump[i] = (W_CheckNumForName)(nughud.patchnames[i], ns_global); }
       }
       else
       { nughud_patchlump[i] = -1; }
@@ -1459,7 +1445,7 @@ void ST_createWidgets(void)
 
   // [Nugget] NUGHUD
 
-  #define NUGHUDALIGN(a) (st_crispyhud ? a : 1)
+  #define NUGHUDALIGN(a) (st_crispyhud ? (a) : 1)
 
   // ready weapon ammo
   STlib_initNum(&w_ready,
