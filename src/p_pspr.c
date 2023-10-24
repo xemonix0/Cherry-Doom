@@ -746,41 +746,30 @@ void A_Punch(player_t *player, pspdef_t *psp)
   // [Nugget] MDK Fist, basically an absurdly high damage sniper
   if (player->cheats & CF_SAITAMA)
   {
+    int i = 10;
+    boolean once = true;
+
     // Alt Fire, basically an overpowered BFG
-    if (M_InputGameActive(input_strafe)) {
-      for (int i=0; i<21; i++) {
-        angle = player->mo->angle + ANG20 - (ANG2*i);
+    if (M_InputGameActive(input_strafe)) { i = once = 0; }
 
-        if (vertical_aiming == VERTAIM_DIRECT)
-        { slope = player->slope; }
-        else {
-          slope = P_AimLineAttack(player->mo, angle, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
-          if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
-          { slope = player->slope; }
-        }
-
-        if (player->cheats & CF_BOOMCAN)
-        { boomshot = true; }
-
-        P_LineAttack(player->mo, angle, MISSILERANGE, slope, 1000000);
-      }
-    }
-    else { // Just one bullet
-      angle = player->mo->angle;
+    do {
+      // killough 8/2/98: make autoaiming prefer enemies
+      const int mask = demo_version < 203 ? 0 : MF_FRIEND;
+      angle = player->mo->angle + ANG20 - (ANG2*i);
 
       if (vertical_aiming == VERTAIM_DIRECT)
       { slope = player->slope; }
       else {
-        slope = P_AimLineAttack(player->mo, angle, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
+        slope = P_AimLineAttack(player->mo, angle, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
+
         if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
         { slope = player->slope; }
       }
 
-      if (player->cheats & CF_BOOMCAN)
-      { boomshot = true; }
+      if (player->cheats & CF_BOOMCAN) { boomshot = true; }
 
       P_LineAttack(player->mo, angle, MISSILERANGE, slope, 1000000);
-    }
+    } while (++i < 21 && !once);
 
     return;
   }
@@ -796,11 +785,21 @@ void A_Punch(player_t *player, pspdef_t *psp)
 
   range = (mbf21 ? player->mo->info->meleerange : MELEERANGE);
 
-  // killough 8/2/98: make autoaiming prefer enemies
-  if (demo_version<203 ||
-      (slope = P_AimLineAttack(player->mo, angle, range, MF_FRIEND),
-       !linetarget))
-    slope = P_AimLineAttack(player->mo, angle, range, 0);
+  // [Nugget] Direct Vertical Aiming for melee
+  if (vertical_aiming == VERTAIM_DIRECT)
+  { slope = player->slope; }
+  else {
+    // killough 8/2/98: make autoaiming prefer enemies
+    if (demo_version<203 ||
+        (slope = P_AimLineAttack(player->mo, angle, range, MF_FRIEND),
+         !linetarget))
+    {
+      slope = P_AimLineAttack(player->mo, angle, range, 0);
+
+      if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
+      { slope = player->slope; }
+    }
+  }
 
   P_LineAttack(player->mo, angle, range, slope, damage);
 
@@ -833,11 +832,21 @@ void A_Saw(player_t *player, pspdef_t *psp)
   // Use meleerange + 1 so that the puff doesn't skip the flash
   range = (mbf21 ? player->mo->info->meleerange : MELEERANGE) + 1;
 
-  // killough 8/2/98: make autoaiming prefer enemies
-  if (demo_version<203 ||
-      (slope = P_AimLineAttack(player->mo, angle, range, MF_FRIEND),
-       !linetarget))
-    slope = P_AimLineAttack(player->mo, angle, range, 0);
+  // [Nugget] Direct Vertical Aiming for melee
+  if (vertical_aiming == VERTAIM_DIRECT)
+  { slope = player->slope; }
+  else {
+    // killough 8/2/98: make autoaiming prefer enemies
+    if (demo_version<203 ||
+        (slope = P_AimLineAttack(player->mo, angle, range, MF_FRIEND),
+         !linetarget))
+    {
+      slope = P_AimLineAttack(player->mo, angle, range, 0);
+
+      if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
+      { slope = player->slope; }
+    }
+  }
 
   P_LineAttack(player->mo, angle, range, slope, damage);
 
@@ -1556,10 +1565,20 @@ void A_WeaponMeleeAttack(player_t *player, pspdef_t *psp)
   t = P_Random(pr_mbf21);
   angle += (t - P_Random(pr_mbf21))<<18;
 
-  // make autoaim prefer enemies
-  slope = P_AimLineAttack(player->mo, angle, range, MF_FRIEND);
-  if (!linetarget)
-    slope = P_AimLineAttack(player->mo, angle, range, 0);
+  // [Nugget] Direct Vertical Aiming for melee
+  if (vertical_aiming == VERTAIM_DIRECT)
+  { slope = player->slope; }
+  else {
+    // make autoaim prefer enemies
+    slope = P_AimLineAttack(player->mo, angle, range, MF_FRIEND);
+    if (!linetarget)
+    {
+      slope = P_AimLineAttack(player->mo, angle, range, 0);
+
+      if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
+      { slope = player->slope; }
+    }
+  }
 
   // attack, dammit!
   P_LineAttack(player->mo, angle, range, slope, damage);
