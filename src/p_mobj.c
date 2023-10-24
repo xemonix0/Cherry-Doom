@@ -1517,7 +1517,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   // Taken outside of code block after this one
   // to allow direct vertical aiming in Beta
   if (vertical_aiming == VERTAIM_DIRECT)
-  { slope = PLAYER_SLOPE(source->player); }
+  { slope = source->player->slope; }
   else
   // killough 7/19/98: autoaiming was not in original beta
   if (!beta_emulation || autoaim)
@@ -1540,7 +1540,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
           if (!linetarget)
             an = source->angle,
             // [Nugget] Vertical aiming
-            slope = (vertical_aiming == VERTAIM_DIRECTAUTO) ? PLAYER_SLOPE(source->player) : 0;
+            slope = (vertical_aiming == VERTAIM_DIRECTAUTO) ? source->player->slope : 0;
         }
       while (mask && (mask=0, !linetarget));  // killough 8/2/98
     }

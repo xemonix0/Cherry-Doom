@@ -690,11 +690,11 @@ static void cheat_mdk() {
   P_MapStart();
 
   if (vertical_aiming == VERTAIM_DIRECT)
-  { slope = PLAYER_SLOPE(plyr); }
+  { slope = plyr->slope; }
   else {
     slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 16*64*FRACUNIT * (comp_longautoaim+1), 0);
     if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
-    { slope = PLAYER_SLOPE(plyr); }
+    { slope = plyr->slope; }
   }
 
   P_LineAttack(plyr->mo, plyr->mo->angle, 32*64*FRACUNIT, slope, 1000000);

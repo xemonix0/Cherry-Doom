@@ -752,11 +752,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
         angle = player->mo->angle + ANG20 - (ANG2*i);
 
         if (vertical_aiming == VERTAIM_DIRECT)
-        { slope = PLAYER_SLOPE(player); }
+        { slope = player->slope; }
         else {
           slope = P_AimLineAttack(player->mo, angle, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
           if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
-          { slope = PLAYER_SLOPE(player); }
+          { slope = player->slope; }
         }
 
         if (player->cheats & CF_BOOMCAN)
@@ -769,11 +769,11 @@ void A_Punch(player_t *player, pspdef_t *psp)
       angle = player->mo->angle;
 
       if (vertical_aiming == VERTAIM_DIRECT)
-      { slope = PLAYER_SLOPE(player); }
+      { slope = player->slope; }
       else {
         slope = P_AimLineAttack(player->mo, angle, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
         if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
-        { slope = PLAYER_SLOPE(player); }
+        { slope = player->slope; }
       }
 
       if (player->cheats & CF_BOOMCAN)
@@ -928,7 +928,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
       // Taken outside of code block after this one
       // to allow direct vertical aiming in Beta
       if (vertical_aiming == VERTAIM_DIRECT)
-      { slope = PLAYER_SLOPE(mo->player); }
+      { slope = player->slope; }
       else
       if (autoaim || !beta_emulation)
 	{
@@ -946,7 +946,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
 	      if (!linetarget)
 		an = mo->angle,
 		// [Nugget] Vertical aiming
-		slope = (vertical_aiming == VERTAIM_DIRECTAUTO) ? PLAYER_SLOPE(player) : 0;
+		slope = (vertical_aiming == VERTAIM_DIRECTAUTO) ? player->slope : 0;
 	    }
 	  while (mask && (mask=0, !linetarget));     // killough 8/2/98
 	}
@@ -1017,7 +1017,7 @@ static void P_BulletSlope(mobj_t *mo)
         bulletslope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
       // [Nugget] Vertical aiming
       if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
-        bulletslope = PLAYER_SLOPE(mo->player);
+        bulletslope = mo->player->slope;
     }
   while (mask && (mask=0, !linetarget));  // killough 8/2/98
 }
@@ -1124,7 +1124,7 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
 
 void A_FireCGun(player_t *player, pspdef_t *psp)
 {
-  // [Nugget] use DSCHGUN if available
+  // [Nugget] Use DSCHGUN if available
   static int sound = -1;
   if (sound == -1)
   { sound = (W_CheckNumForName("dschgun") > -1 ? sfx_chgun : sfx_pistol); }
