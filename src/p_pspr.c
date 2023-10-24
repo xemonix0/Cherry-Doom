@@ -809,9 +809,12 @@ void A_Punch(player_t *player, pspdef_t *psp)
   S_StartSound(player->mo, sfx_punch);
 
   // turn to face target
-
-  player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y,
-                                      linetarget->x, linetarget->y);
+  // [Nugget]
+  if (NOTSTRICTMODE(!comp_nomeleesnap))
+  {
+    player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y,
+                                        linetarget->x, linetarget->y);
+  }
 }
 
 //
@@ -861,21 +864,25 @@ void A_Saw(player_t *player, pspdef_t *psp)
   S_StartSound(player->mo, sfx_sawhit);
 
   // turn to face target
-  angle = R_PointToAngle2(player->mo->x, player->mo->y,
-                          linetarget->x, linetarget->y);
+  // [Nugget]
+  if (NOTSTRICTMODE(!comp_nomeleesnap))
+  {
+    angle = R_PointToAngle2(player->mo->x, player->mo->y,
+                            linetarget->x, linetarget->y);
 
-  if (angle - player->mo->angle > ANG180)
-    if ((signed int) (angle - player->mo->angle) < -ANG90/20)
-      player->mo->angle = angle + ANG90/21;
+    if (angle - player->mo->angle > ANG180)
+      if ((signed int) (angle - player->mo->angle) < -ANG90/20)
+        player->mo->angle = angle + ANG90/21;
+      else
+        player->mo->angle -= ANG90/20;
     else
-      player->mo->angle -= ANG90/20;
-  else
-    if (angle - player->mo->angle > ANG90/20)
-      player->mo->angle = angle - ANG90/21;
-    else
-      player->mo->angle += ANG90/20;
+      if (angle - player->mo->angle > ANG90/20)
+        player->mo->angle = angle - ANG90/21;
+      else
+        player->mo->angle += ANG90/20;
 
-  player->mo->flags |= MF_JUSTATTACKED;
+    player->mo->flags |= MF_JUSTATTACKED;
+  }
 }
 
 //
@@ -1593,7 +1600,11 @@ void A_WeaponMeleeAttack(player_t *player, pspdef_t *psp)
   S_StartSound(player->mo, hitsound);
 
   // turn to face target
-  player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y, linetarget->x, linetarget->y);
+  // [Nugget]
+  if (NOTSTRICTMODE(!comp_nomeleesnap))
+  {
+    player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y, linetarget->x, linetarget->y);
+  }
 }
 
 //

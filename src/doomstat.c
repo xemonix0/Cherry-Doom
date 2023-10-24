@@ -223,6 +223,7 @@ int screenshot_palette;
 // Doom Compatibility -------
 
 int comp_bruistarget;
+int comp_nomeleesnap;
 int comp_longautoaim;
 int comp_lscollision;
 int comp_lsamnesia;

@@ -1493,6 +1493,13 @@ default_t defaults[] = {
   },
 
   {
+    "comp_nomeleesnap",
+    (config_t *) &comp_nomeleesnap, NULL,
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Disable snapping to target when using melee"
+  },
+
+  {
     "comp_longautoaim",
     (config_t *) &comp_longautoaim, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,

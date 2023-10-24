@@ -5,6 +5,7 @@
   - Made Armor icon alignable;
   - Toggle to ignore patch offsets.
 - **_Direct Vertical Aiming_ for melee attacks**
+- **_Disable Melee Snapping_ setting**
 
 ## Changes
 

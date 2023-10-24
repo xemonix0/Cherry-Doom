@@ -583,6 +583,7 @@ enum {
 // Doom Compatibility -------
 
 extern int comp_bruistarget;
+extern int comp_nomeleesnap;
 extern int comp_longautoaim;
 extern int comp_lscollision;
 extern int comp_lsamnesia;

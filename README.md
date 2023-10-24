@@ -124,9 +124,10 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - _**Announce Milestone Completion**_ setting, to report completion of milestones (e.g. all items acquired)
 - Restored _**Message Listing Scrolls Upwards**_ setting, and enabled it by default
 
-### Doom Compatibility
+### Doom Compatibility settings
 
 - Bruiser attack (A_BruisAttack) doesn't face target
+- Disable Melee Snapping
 - Double Autoaim range
 - Fix Lost Soul colliding with items
 - Lost Soul forgets target upon impact
