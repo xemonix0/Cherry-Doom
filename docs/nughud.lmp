@@ -9,7 +9,7 @@ nughud_ammo_wide  -1
 nughud_ammo_align 1
 
 ; Ammo icon
-nughud_ammoicon_x     0
+nughud_ammoicon_x     -1
 nughud_ammoicon_y     0
 nughud_ammoicon_wide  0
 nughud_ammoicon_align -1
@@ -79,7 +79,7 @@ nughud_armor_wide  1
 nughud_armor_align 1
 
 ; Armor icon
-nughud_armoricon_x     0
+nughud_armoricon_x     -1
 nughud_armoricon_y     0
 nughud_armoricon_wide  0
 nughud_armoricon_align -1
