@@ -883,7 +883,7 @@ void ST_doPaletteStuff(void)
 }
 
 // [Nugget] NUGHUD
-static void NughudDrawPatch(nughud_alignable_t *widget, patch_t *patch)
+static void NughudDrawPatch(nughud_vlignable_t *widget, patch_t *patch)
 {
   int x, y;
 
@@ -891,7 +891,9 @@ static void NughudDrawPatch(nughud_alignable_t *widget, patch_t *patch)
       - ((widget->align == 1) ? SHORT(patch->width)   :
          (widget->align == 0) ? SHORT(patch->width)/2 : 0);
 
-  y = widget->y;
+  y = widget->y
+      - ((widget->vlign == -1) ? SHORT(patch->height)   :
+         (widget->vlign ==  0) ? SHORT(patch->height)/2 : 0);
 
   if (nughud.ignore_offsets) {
     x += SHORT(patch->leftoffset);

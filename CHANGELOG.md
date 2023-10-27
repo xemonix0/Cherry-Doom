@@ -10,7 +10,7 @@
 
 - **NUGHUD:**
   - Let Ammo and Armor icons fall back to vanilla sprites;
-  - Made Armor icon alignable.
+  - Made Patches and Ammo and Armor icons alignable horizontally and vertically.
 - **MDK Fist attacks now prioritize enemies over friends**
 
 ## Bug Fixes

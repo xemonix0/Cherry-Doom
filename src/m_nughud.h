@@ -36,11 +36,18 @@ typedef struct nughud_alignable_s {
   int align;
 } nughud_alignable_t;
 
+typedef struct nughud_vlignable_s {
+  int x, y;
+  int wide;
+  int align;
+  int vlign;
+} nughud_vlignable_t;
+
 #define NUMNUGHUDPATCHES 8
 
 typedef struct nughud_s {
   nughud_alignable_t ammo;
-  nughud_alignable_t ammoicon;
+  nughud_vlignable_t ammoicon;
   boolean            ammoicon_big;
   nughud_alignable_t health;
   nughud_widget_t    arms[9];
@@ -48,7 +55,7 @@ typedef struct nughud_s {
   nughud_widget_t    face;
   boolean            face_bg;
   nughud_alignable_t armor;
-  nughud_alignable_t armoricon;
+  nughud_vlignable_t armoricon;
   nughud_widget_t    keys[3];
   nughud_alignable_t ammos[4];
   nughud_alignable_t maxammos[4];
@@ -63,7 +70,7 @@ typedef struct nughud_s {
   nughud_alignable_t fps;
   nughud_alignable_t message;
   nughud_alignable_t secret;
-  nughud_alignable_t patches[NUMNUGHUDPATCHES];
+  nughud_vlignable_t patches[NUMNUGHUDPATCHES];
   char               *patchnames[NUMNUGHUDPATCHES];
 
   boolean            percents;

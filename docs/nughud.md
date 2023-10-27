@@ -35,9 +35,9 @@ The following properties are shared across all widgets:
 The following types of widgets support special behavior:
 
 - **Disableables**: Can be disabled by setting `_x` to `-1`.
-- **Alignables**: Can be aligned by means of the `_align` property, with the following possible values:
+- **Alignables**: Can be aligned horizontally by means of the `_align` property, with the following possible values:
   - `-1` for left alignment;
-  - ` 0` for centered alignment;
+  - ` 0` for center alignment;
   - ` 1` for right alignment.
 
 The following widgets are available:
@@ -63,6 +63,11 @@ The following widgets are available:
 | `nughud_fps`       | No          | Yes       | FPS display, only shown when the FPS cheat is activated |
 | `nughud_message`   | No          | Yes       | Message display |
 | `nughud_secret`    | No          | Yes       | Secret Message display |
+
+**The _Ammo_ and _Armor icons_ can also be aligned vertically** by means of the `_vlign` property, with the following possible values:
+  - `-1` for top alignment;
+  - ` 0` for center alignment;
+  - ` 1` for bottom alignment.
 
 There are some additional boolean properties (value of `0` or `1`) for some specific widgets:
 
@@ -155,7 +160,7 @@ Up to 8 patches can be drawn. They are drawn in increasing order; `patch1` is dr
 Aside from the shared properties, **patches make use of an additional property, `_name`, that determines the name of the graphic lump to be used**, which can either be a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`).
 **Custom lumps CAN be used** (for example, a graphic called `NEWPATCH`). The names used in the `NUGHUD` lump MUST be enclosed between quotation marks.
 
-Patches are alignable, and can be disabled by simply not providing any graphic.
+Patches are alignable, both horizontally and vertically, and can be disabled by simply not providing any graphic.
 
 #### Example
 

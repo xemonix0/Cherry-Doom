@@ -13,6 +13,7 @@ nughud_ammoicon_x     0
 nughud_ammoicon_y     0
 nughud_ammoicon_wide  0
 nughud_ammoicon_align -1
+nughud_ammoicon_vlign 1
 nughud_ammoicon_big   0
 
 ; Health count
@@ -82,6 +83,7 @@ nughud_armoricon_x     0
 nughud_armoricon_y     0
 nughud_armoricon_wide  0
 nughud_armoricon_align -1
+nughud_armoricon_vlign 1
 
 ; Blue Key
 nughud_key0_x    239
@@ -197,55 +199,14 @@ nughud_secret_y     86
 nughud_secret_wide  0
 nughud_secret_align 0
 
-; - Patches -
-
+; Example Patch
+; (All other patches up to and including patch8 have the same properties)
 nughud_patch1_x     0
 nughud_patch1_y     0
 nughud_patch1_wide  0
 nughud_patch1_align -1
+nughud_patch1_vlign 1
 nughud_patch1_name  ""
-
-nughud_patch2_x     0
-nughud_patch2_y     0
-nughud_patch2_wide  0
-nughud_patch2_align -1
-nughud_patch2_name  ""
-
-nughud_patch3_x     0
-nughud_patch3_y     0
-nughud_patch3_wide  0
-nughud_patch3_align -1
-nughud_patch3_name  ""
-
-nughud_patch4_x     0
-nughud_patch4_y     0
-nughud_patch4_wide  0
-nughud_patch4_align -1
-nughud_patch4_name  ""
-
-nughud_patch5_x     0
-nughud_patch5_y     0
-nughud_patch5_wide  0
-nughud_patch5_align -1
-nughud_patch5_name  ""
-
-nughud_patch6_x     0
-nughud_patch6_y     0
-nughud_patch6_wide  0
-nughud_patch6_align -1
-nughud_patch6_name  ""
-
-nughud_patch7_x     0
-nughud_patch7_y     0
-nughud_patch7_wide  0
-nughud_patch7_align -1
-nughud_patch7_name  ""
-
-nughud_patch8_x     0
-nughud_patch8_y     0
-nughud_patch8_wide  0
-nughud_patch8_align -1
-nughud_patch8_name  ""
 
 ; Draw percentage signs
 nughud_percents 1
