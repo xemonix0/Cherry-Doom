@@ -45,13 +45,13 @@ The following widgets are available:
 | Widget(s)          | Disableable | Alignable | Description |
 | :----------------: | :---------: | :-------: | :---------- |
 | `nughud_ammo`      | Yes         | Yes       | Ammo count for the currently-equipped weapon |
-| `nughud_ammoicon`  | Yes         | Yes       | Ammo icon, which changes depending on ammo type of current weapon (requires `NHAMMO` font - see below) |
+| `nughud_ammoicon`  | Yes         | Yes       | Ammo icon, which changes depending on ammo type of current weapon |
 | `nughud_health`    | Yes         | Yes       | Health count |
 | `nughud_arms#`     | Yes         | No        | Arms (weapon) number, where # is a number between `1` and `9` (inclusive) |
 | `nughud_frags`     | Yes         | Yes       | Frags count, only shown during Deathmatch games |
 | `nughud_face`      | Yes         | No        | Face (Mugshot) |
 | `nughud_armor`     | Yes         | Yes       | Armor count |
-| `nughud_armoricon` | Yes         | Yes       | Armor icon, which changes depending on current armor type (requires `NHARMOR` font - see below) |
+| `nughud_armoricon` | Yes         | Yes       | Armor icon, which changes depending on current armor type |
 | `nughud_key#`      | Yes         | No        | Key display, where # is a number between `0` and `2` (in order: Blue Key; Yellow Key; Red Key) |
 | `nughud_ammo#`     | Yes         | Yes       | Ammo count for each type, where # is a number between `0` and `3` (in order: Bullets; Shells; Cells; Rockets) |
 | `nughud_maxammo#`  | Yes         | Yes       | Same as the above, but for Max Ammo |
@@ -66,8 +66,9 @@ The following widgets are available:
 
 There are some additional boolean properties (value of `0` or `1`) for some specific widgets:
 
-- `nughud_face_bg`: Toggle the _Face_ background, whose position is linked to that of the _Face_ itself.
 - `nughud_percents`: Toggle drawing of percentage signs for the _Health_ and _Armor_ counts.
+- `nughud_ammoicon_big`: Toggle usage of big ammo pickup sprites for the _Armor icon_.
+- `nughud_face_bg`: Toggle the _Face_ background, whose position is linked to that of the _Face_ itself.
 - `nughud_time_sts`: Toggle relocation of the _Time_ widget to the position of the _Stats_ widget when the latter is inactive.
 - `nughud_sts_ml`: Toggle three-lined _Stats_ widget.
 - `nughud_coord_ml`: Toggle three-lined _Coordinates_ widget.
@@ -99,8 +100,8 @@ nughud_title_align 0
 
 ### Custom fonts
 
-**`NUGHUD` supports custom fonts for certain widgets.**
-Graphics for all characters of a given font must be provided for the font to be used, otherwise the Vanilla font will be used instead.
+**Certain widgets support custom fonts.**
+Graphics for all characters of a given font must be provided for the font to be used, otherwise the default font will be used instead.
 
 The following fonts are available:
 
@@ -111,7 +112,7 @@ Tall Numbers, used for the Health, Armor, current-weapon Ammo and Frags counts:
 - NHTMINUS - Minus sign
 - NHTPRCNT - Percent sign
 
-Current-weapon Ammo Numbers, used exclusively for the current-weapon Ammo count, taking precedence over the Tall Numbers:
+Current-weapon Ammo Numbers, which take precedence over Tall Numbers for the Current-weapon Ammo count:
 
 - NHRNUM# -- Number, where # is a number between 0 and 9 (inclusive)
 - NHRMINUS - Minus sign

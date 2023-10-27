@@ -41,6 +41,7 @@ typedef struct nughud_alignable_s {
 typedef struct nughud_s {
   nughud_alignable_t ammo;
   nughud_alignable_t ammoicon;
+  boolean            ammoicon_big;
   nughud_alignable_t health;
   nughud_widget_t    arms[9];
   nughud_alignable_t frags;

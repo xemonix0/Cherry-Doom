@@ -927,15 +927,58 @@ void ST_drawWidgets(void)
       }
     }
 
-    if (nughud.ammoicon.x > -1 && nhammo[0]
-        && weaponinfo[w_ready.data].ammo != am_noammo)
+    if (nughud.ammoicon.x > -1 && weaponinfo[w_ready.data].ammo != am_noammo)
     {
-      NughudDrawPatch(&nughud.ammoicon, nhammo[BETWEEN(0, 3, weaponinfo[w_ready.data].ammo)]);
+      patch_t *patch;
+      int lump;
+
+      if (nhammo[0])
+      { patch = nhammo[BETWEEN(0, 3, weaponinfo[w_ready.data].ammo)]; }
+      else {
+        char namebuf[32];
+        boolean big = nughud.ammoicon_big;
+
+        switch (BETWEEN(0, 3, weaponinfo[w_ready.data].ammo))
+        {
+          case 0: sprintf(namebuf, big ? "AMMOA0" : "CLIPA0"); break;
+          case 1: sprintf(namebuf, big ? "SBOXA0" : "SHELA0"); break;
+          case 2: sprintf(namebuf, big ? "CELPA0" : "CELLA0"); break;
+          case 3: sprintf(namebuf, big ? "BROKA0" : "ROCKA0"); break;
+        }
+
+        if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
+        { patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+        else
+        { patch = NULL; }
+      }
+
+      if (patch) { NughudDrawPatch(&nughud.ammoicon, patch); }
     }
 
-    if (nughud.armoricon.x > -1 && nharmor[0])
+    if (nughud.armoricon.x > -1)
     {
-      NughudDrawPatch(&nughud.armoricon, nharmor[BETWEEN(0, 2, plyr->armortype)]);
+      patch_t *patch;
+      int lump;
+
+      if (nharmor[0])
+      { patch = nharmor[BETWEEN(0, 2, plyr->armortype)]; }
+      else {
+        char namebuf[32];
+
+        switch (BETWEEN(0, 2, plyr->armortype))
+        {
+          case 0: sprintf(namebuf, "BON2A0"); break;
+          case 1: sprintf(namebuf, "ARM1A0"); break;
+          case 2: sprintf(namebuf, "ARM2A0"); break;
+        }
+
+        if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
+        { patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+        else
+        { patch = NULL; }
+      }
+
+      if (patch) { NughudDrawPatch(&nughud.armoricon, patch); }
     }
   }
 
@@ -1277,6 +1320,7 @@ void ST_loadGraphics(void)
     // Load NHTNUM0 to NHTNUM9
     for (i = 0;  i < 10;  i++) {
       sprintf(namebuf, "NHTNUM%d", i);
+
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       { nhtnum[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
       else {
@@ -1302,6 +1346,7 @@ void ST_loadGraphics(void)
     // Load NHRNUM0 to NHRNUM9
     for (i = 0;  i < 10;  i++) {
       sprintf(namebuf, "NHRNUM%d", i);
+
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       { nhrnum[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
       else {
@@ -1320,7 +1365,8 @@ void ST_loadGraphics(void)
 
     // Load NHAMNUM0 to NHAMNUM9
     for (i = 0;  i < 10;  i++) {
-      M_snprintf(namebuf, sizeof(namebuf), "NHAMNUM%d", i);
+      sprintf(namebuf, "NHAMNUM%d", i);
+
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       { nhamnum[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
       else {
@@ -1331,9 +1377,10 @@ void ST_loadGraphics(void)
 
     // Arms numbers -------------------
 
-    // Load NHW0NUM1 to NHW0NUM9
     for (i = 0;  i < 9;  i++) {
+      // Load NHW0NUM1 to NHW0NUM9
       sprintf(namebuf, "NHW0NUM%d", i+1);
+
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       { nhwpnum[i][0] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
       else {
@@ -1343,6 +1390,7 @@ void ST_loadGraphics(void)
 
       // Load NHW1NUM1 to NHW1NUM9
       sprintf(namebuf, "NHW1NUM%d", i+1);
+
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       { nhwpnum[i][1] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
       else {
@@ -1356,6 +1404,7 @@ void ST_loadGraphics(void)
     // Load NHKEYS
     for (i = 0;  i < NUMCARDS+3;  i++) {
       sprintf(namebuf, "NHKEYS%d", i);
+
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       { nhkeys[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
       else {
@@ -1374,9 +1423,10 @@ void ST_loadGraphics(void)
 
     // Ammo icons ---------------------
 
-    // Load NHAMMO0 to NHAMMO3
+    // Load NHAMMO0 to NHAMMO3 if available
     for (i = 0;  i < 4;  i++) {
       sprintf(namebuf, "NHAMMO%d", i);
+
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       { nhammo[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
       else {
@@ -1387,9 +1437,10 @@ void ST_loadGraphics(void)
 
     // Armor icons --------------------
 
-    // Load NHARMOR0 to NHARMOR2
+    // Load NHARMOR0 to NHARMOR2 if available
     for (i = 0;  i < 3;  i++) {
       sprintf(namebuf, "NHARMOR%d", i);
+
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       { nharmor[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
       else {
