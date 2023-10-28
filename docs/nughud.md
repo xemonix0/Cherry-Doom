@@ -65,11 +65,12 @@ The following widgets are available:
 | `nughud_secret`    | No          | Yes       | Secret Message display |
 
 **The _Ammo_ and _Armor icons_ can also be aligned vertically** by means of the `_vlign` property, with the following possible values:
-  - `-1` for top alignment;
+  - ` 1` for top alignment;
   - ` 0` for center alignment;
-  - ` 1` for bottom alignment.
+  - `-1` for bottom alignment.
+Additionally, **the offsets of the graphics used by these icons will be ignored, unless a custom font is being used** (see details below).
 
-There are some additional boolean properties (value of `0` or `1`) for some specific widgets:
+There are some additional toggles (value of `0` or `1`) for some specific widgets:
 
 - `nughud_percents`: Toggle drawing of percentage signs for the _Health_ and _Armor_ counts.
 - `nughud_ammoicon_big`: Toggle usage of big ammo pickup sprites for the _Armor icon_.
@@ -160,7 +161,11 @@ Up to 8 patches can be drawn. They are drawn in increasing order; `patch1` is dr
 Aside from the shared properties, **patches make use of an additional property, `_name`, that determines the name of the graphic lump to be used**, which can either be a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`).
 **Custom lumps CAN be used** (for example, a graphic called `NEWPATCH`). The names used in the `NUGHUD` lump MUST be enclosed between quotation marks.
 
-Patches are alignable, both horizontally and vertically, and can be disabled by simply not providing any graphic.
+**Patches are alignable**, both horizontally and vertically, and can be disabled by simply not providing any graphic.
+
+**There is an additional toggle, `nughud_patch_offsets`, that determines whether or not to apply graphic offsets when drawing Patches.**
+Disabling this is useful when using non-exclusive graphics (e.g. ammo pickup sprites), whose offsets may differ across PWADs.
+Otherwise, enabling it is useful when using exclusive graphics, whose offsets are determined by the HUD maker, to allow precise positioning.
 
 #### Example
 
@@ -182,8 +187,6 @@ nughud_patch2_name "STARMS"
 ```
 
 ### Miscellaneous
-
-**There is an additional toggle, `nughud_ignore_offsets`, to ignore patch offsets when drawing Patches and *Ammo*/*Armor* icon graphics.**
 
 **There is an additional fixed-point property, `nughud_weapheight`, to increase the height at which weapon sprites are drawn**.
 It can be any value between `0` and `200` (inclusive).

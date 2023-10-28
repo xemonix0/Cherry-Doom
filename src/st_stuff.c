@@ -883,7 +883,7 @@ void ST_doPaletteStuff(void)
 }
 
 // [Nugget] NUGHUD
-static void NughudDrawPatch(nughud_vlignable_t *widget, patch_t *patch)
+static void NughudDrawPatch(nughud_vlignable_t *widget, patch_t *patch, boolean no_offsets)
 {
   int x, y;
 
@@ -895,7 +895,7 @@ static void NughudDrawPatch(nughud_vlignable_t *widget, patch_t *patch)
       - ((widget->vlign == -1) ? SHORT(patch->height)   :
          (widget->vlign ==  0) ? SHORT(patch->height)/2 : 0);
 
-  if (nughud.ignore_offsets) {
+  if (no_offsets) {
     x += SHORT(patch->leftoffset);
     y += SHORT(patch->topoffset);
   }
@@ -925,7 +925,11 @@ void ST_drawWidgets(void)
     {
       if (nughud_patchlump[i] >= 0)
       {
-        NughudDrawPatch(&nughud.patches[i], W_CacheLumpNum(nughud_patchlump[i], PU_STATIC));
+        NughudDrawPatch(
+          &nughud.patches[i],
+          W_CacheLumpNum(nughud_patchlump[i], PU_STATIC),
+          !nughud.patch_offsets
+        );
       }
     }
 
@@ -933,12 +937,15 @@ void ST_drawWidgets(void)
     {
       patch_t *patch;
       int lump;
+      boolean no_offsets = false;
 
       if (nhammo[0])
       { patch = nhammo[BETWEEN(0, 3, weaponinfo[w_ready.data].ammo)]; }
       else {
         char namebuf[32];
         boolean big = nughud.ammoicon_big;
+
+        no_offsets = true;
 
         switch (BETWEEN(0, 3, weaponinfo[w_ready.data].ammo))
         {
@@ -954,18 +961,21 @@ void ST_drawWidgets(void)
         { patch = NULL; }
       }
 
-      if (patch) { NughudDrawPatch(&nughud.ammoicon, patch); }
+      if (patch) { NughudDrawPatch(&nughud.ammoicon, patch, no_offsets); }
     }
 
     if (nughud.armoricon.x > -1)
     {
       patch_t *patch;
       int lump;
+      boolean no_offsets = false;
 
       if (nharmor[0])
       { patch = nharmor[BETWEEN(0, 2, plyr->armortype)]; }
       else {
         char namebuf[32];
+
+        no_offsets = true;
 
         switch (BETWEEN(0, 2, plyr->armortype))
         {
@@ -980,7 +990,7 @@ void ST_drawWidgets(void)
         { patch = NULL; }
       }
 
-      if (patch) { NughudDrawPatch(&nughud.armoricon, patch); }
+      if (patch) { NughudDrawPatch(&nughud.armoricon, patch, no_offsets); }
     }
   }
 

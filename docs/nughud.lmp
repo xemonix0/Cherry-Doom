@@ -1,7 +1,5 @@
 ; Default NUGHUD
 
-; - Widgets -
-
 ; Ammo count
 nughud_ammo_x     44
 nughud_ammo_y     171
@@ -200,7 +198,7 @@ nughud_secret_wide  0
 nughud_secret_align 0
 
 ; Example Patch
-; (All other patches up to and including patch8 have the same properties)
+; (All other Patches up to and including patch8 have the same properties)
 nughud_patch1_x     0
 nughud_patch1_y     0
 nughud_patch1_wide  0
@@ -211,8 +209,8 @@ nughud_patch1_name  ""
 ; Draw percentage signs
 nughud_percents 1
 
-; Ignore offsets when drawing patches
-nughud_ignore_offsets 1
+; Apply graphic offsets when drawing Patches
+nughud_patch_offsets 1
 
 ; Upwards offset to apply to weapon sprites
 nughud_weapheight 0

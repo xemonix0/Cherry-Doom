@@ -72,9 +72,9 @@ typedef struct nughud_s {
   nughud_alignable_t secret;
   nughud_vlignable_t patches[NUMNUGHUDPATCHES];
   char               *patchnames[NUMNUGHUDPATCHES];
+  boolean            patch_offsets;
 
   boolean            percents;
-  boolean            ignore_offsets;
   fixed_t            weapheight;
 } nughud_t;
 
