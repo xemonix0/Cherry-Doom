@@ -16,4 +16,4 @@
 
 ## Bug Fixes
 
-None.
+- **Disabled teleport-to-Automap-pointer during non-Casual Play**

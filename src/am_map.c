@@ -942,7 +942,7 @@ boolean AM_Responder
       togglemsg("%s", automaprotate ? s_AMSTR_ROTATEON : s_AMSTR_ROTATEOFF);
     }
 
-    // [Nugget] /----------------------
+    // [Nugget] /-------------------------------------------------------------
 
     // Blink marks
     else if (M_InputActivated(input_map_blink) && markpointnum)
@@ -956,7 +956,7 @@ boolean AM_Responder
       findtag = !strictmode;
     }
     // Teleport to Automap pointer
-    else if (M_InputActivated(input_map_teleport) && !followplayer)
+    else if (M_InputActivated(input_map_teleport) && !followplayer && casual_play)
     {
       mobj_t *const mo = plr->mo;
     
@@ -977,7 +977,7 @@ boolean AM_Responder
       P_MapEnd();
     }
 
-    // [Nugget] ----------------------/
+    // [Nugget] -------------------------------------------------------------/
 
     else
     {
