@@ -900,13 +900,16 @@ static boolean G_StrictModeSkipEvent(event_t *ev)
 
 boolean G_Responder(event_t* ev)
 {
+  extern boolean chat_on; // [Nugget]
+
   // allow spy mode changes even during the demo
   // killough 2/22/98: even during DM demo
   //
   // killough 11/98: don't autorepeat spy mode switch
 
   if (M_InputActivated(input_spy) && netgame && (demoplayback || !deathmatch) &&
-      gamestate == GS_LEVEL)
+      gamestate == GS_LEVEL
+      && !chat_on) // [Nugget]
     {
 	  do                                          // spy mode
 	    if (++displayplayer >= MAXPLAYERS)
@@ -924,7 +927,8 @@ boolean G_Responder(event_t* ev)
 
   if (M_InputActivated(input_menu_reloadlevel) &&
       (gamestate == GS_LEVEL || gamestate == GS_INTERMISSION) &&
-      !menuactive)
+      !menuactive
+      && !chat_on) // [Nugget]
   {
     sendreload = true;
     return true;

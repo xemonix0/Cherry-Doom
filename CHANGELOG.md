@@ -14,6 +14,7 @@
   - Disabled Armor icon by default.
 - **Implemented Teleporter Zoom for multiplayer respawning**
 - **MDK Fist attacks now prioritize enemies over friends**
+- **Disabled `input_spy` and `input_menu_reloadlevel` when typing in Chat**
 
 ## Bug Fixes
 
