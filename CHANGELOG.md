@@ -17,4 +17,5 @@
 ## Bug Fixes
 
 - **Disabled teleport-to-Automap-pointer during non-Casual Play**
+- **Teleporter Zoom affecting all players in multiplayer**
 - **Tweaked dark menu background and Automap overlay algorithm** (fixes very low values)
