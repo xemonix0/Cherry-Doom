@@ -180,6 +180,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
   - `DSMNUOPN`, `DSMNUCLS`, `DSMNUACT`, `DSMNUBAK`, `DSMNUMOV`, `DSMNUSLI`, `DSMNUERR`;
   - `DSINTTIC`, `DSINTTOT`, `DSINTNEX`, `DSINTNET`, `DSINTDMS`.
 - **Customizable darkening level for dark menu background and Automap overlay** (CFG-Only: `menu_background_darkening` and `automap_overlay_darkening`) [i.b. Cherry Doom]
+- **Tweaked dark menu background and Automap overlay algorithm**
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - Restored `-cdrom` command-line parameter

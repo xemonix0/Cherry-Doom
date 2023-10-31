@@ -17,3 +17,4 @@
 ## Bug Fixes
 
 - **Disabled teleport-to-Automap-pointer during non-Casual Play**
+- **Tweaked dark menu background and Automap overlay algorithm** (fixes very low values)
