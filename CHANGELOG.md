@@ -12,6 +12,7 @@
   - Let Ammo and Armor icons fall back to vanilla sprites;
   - Made Patches and Ammo and Armor icons alignable horizontally and vertically;
   - Disabled Armor icon by default.
+- **Implemented Teleporter Zoom for multiplayer respawning**
 - **MDK Fist attacks now prioritize enemies over friends**
 
 ## Bug Fixes

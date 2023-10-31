@@ -2697,6 +2697,10 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
                      ss->sector->floorheight, MT_TFOG);
   }
 
+  // [Nugget] Teleporter zoom
+  if (&players[playernum] == &players[displayplayer])
+  { R_SetFOVFX(FOVFX_TELEPORT); }
+
   if (players[consoleplayer].viewz != 1)
     S_StartSound(mo, sfx_telept);  // don't start sound on first frame
 
