@@ -1,7 +1,7 @@
 ## New Features
 
 - **NUGHUD:**
-  - Ammo icon;
+  - Ammo and Health icons;
   - Toggle to apply patch offsets.
 - **_Direct Vertical Aiming_ for melee attacks**
 - **_Disable Melee Snapping_ setting**
@@ -9,8 +9,8 @@
 ## Changes
 
 - **NUGHUD:**
-  - Let Ammo and Armor icons fall back to vanilla sprites;
-  - Made Patches and Ammo and Armor icons alignable horizontally and vertically;
+  - Let Ammo, Health and Armor icons fall back to vanilla sprites;
+  - Made Patches and icons alignable horizontally and vertically;
   - Disabled Armor icon by default.
 - **Implemented Teleporter Zoom for multiplayer respawning**
 - **MDK Fist attacks now prioritize enemies over friends**

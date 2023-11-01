@@ -192,6 +192,7 @@ static patch_t *nhwpnum[9][2];      // NHW0NUM# and NHW1NUM#, from 1 to 9
 static patch_t *nhkeys[NUMCARDS+3]; // NHKEYS
 static patch_t *nhbersrk;           // NHBERSRK
 static patch_t *nhammo[4];          // NHAMMO#, from 0 to 3
+static patch_t *nhealth[2];         // NHEALTH#, from 0 to 1
 static patch_t *nharmor[3];         // NHARMOR#, from 0 to 2
 static patch_t *nhinfnty;           // NHINFNTY
 
@@ -964,6 +965,34 @@ void ST_drawWidgets(void)
       if (patch) { NughudDrawPatch(&nughud.ammoicon, patch, no_offsets); }
     }
 
+    if (nughud.healthicon.x > -1)
+    {
+      patch_t *patch;
+      int lump;
+      boolean no_offsets = false;
+
+      if (nhealth[0])
+      { patch = nhealth[plyr->powers[pw_strength] ? 1 : 0]; }
+      else {
+        char namebuf[32];
+
+        no_offsets = true;
+
+        switch (plyr->powers[pw_strength] ? 1 : 0)
+        {
+          case 0: sprintf(namebuf, "MEDIA0"); break;
+          case 1: sprintf(namebuf, "PSTRA0"); break;
+        }
+
+        if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
+        { patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+        else
+        { patch = NULL; }
+      }
+
+      if (patch) { NughudDrawPatch(&nughud.healthicon, patch, no_offsets); }
+    }
+
     if (nughud.armoricon.x > -1)
     {
       patch_t *patch;
@@ -1443,6 +1472,20 @@ void ST_loadGraphics(void)
       { nhammo[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
       else {
         nhammo[0] = NULL;
+        break;
+      }
+    }
+
+    // Health icons -------------------
+
+    // Load NHEALTH0 to NHEALTH1 if available
+    for (i = 0;  i < 2;  i++) {
+      sprintf(namebuf, "NHEALTH%d", i);
+
+      if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
+      { nhealth[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
+      else {
+        nhealth[0] = NULL;
         break;
       }
     }

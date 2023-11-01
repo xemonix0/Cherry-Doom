@@ -42,29 +42,30 @@ The following types of widgets support special behavior:
 
 The following widgets are available:
 
-| Widget(s)          | Disableable | Alignable | Description |
-| :----------------: | :---------: | :-------: | :---------- |
-| `nughud_ammo`      | Yes         | Yes       | Ammo count for the currently-equipped weapon |
-| `nughud_ammoicon`  | Yes         | Yes       | Ammo icon, which changes depending on ammo type of current weapon |
-| `nughud_health`    | Yes         | Yes       | Health count |
-| `nughud_arms#`     | Yes         | No        | Arms (weapon) number, where # is a number between `1` and `9` (inclusive) |
-| `nughud_frags`     | Yes         | Yes       | Frags count, only shown during Deathmatch games |
-| `nughud_face`      | Yes         | No        | Face (Mugshot) |
-| `nughud_armor`     | Yes         | Yes       | Armor count |
-| `nughud_armoricon` | Yes         | Yes       | Armor icon, which changes depending on current armor type |
-| `nughud_key#`      | Yes         | No        | Key display, where # is a number between `0` and `2` (in order: Blue Key; Yellow Key; Red Key) |
-| `nughud_ammo#`     | Yes         | Yes       | Ammo count for each type, where # is a number between `0` and `3` (in order: Bullets; Shells; Cells; Rockets) |
-| `nughud_maxammo#`  | Yes         | Yes       | Same as the above, but for Max Ammo |
-| `nughud_time`      | No          | Yes       | Time display, only shown if enabled by the user |
-| `nughud_sts`       | No          | Yes       | Stats (Kills/Items/Secrets) display, only shown if enabled by the user |
-| `nughud_title`     | No          | Yes       | Level Name display, only shown on the Automap |
-| `nughud_powers`    | No          | Yes       | Powerup Timers, only shown if enabled by the user |
-| `nughud_coord`     | No          | Yes       | Coordinates display, only shown if enabled by the user |
-| `nughud_fps`       | No          | Yes       | FPS display, only shown when the FPS cheat is activated |
-| `nughud_message`   | No          | Yes       | Message display |
-| `nughud_secret`    | No          | Yes       | Secret Message display |
+| Widget(s)           | Disableable | Alignable | Description |
+| :-----------------: | :---------: | :-------: | :---------- |
+| `nughud_ammo`       | Yes         | Yes       | Ammo count for the currently-equipped weapon |
+| `nughud_ammoicon`   | Yes         | Yes       | Ammo icon, which changes depending on ammo type of current weapon |
+| `nughud_health`     | Yes         | Yes       | Health count |
+| `nughud_healthicon` | Yes         | Yes       | Health icon, which changes depending on whether the player has Berserk |
+| `nughud_arms#`      | Yes         | No        | Arms (weapon) number, where # is a number between `1` and `9` (inclusive) |
+| `nughud_frags`      | Yes         | Yes       | Frags count, only shown during Deathmatch games |
+| `nughud_face`       | Yes         | No        | Face (Mugshot) |
+| `nughud_armor`      | Yes         | Yes       | Armor count |
+| `nughud_armoricon`  | Yes         | Yes       | Armor icon, which changes depending on current armor type |
+| `nughud_key#`       | Yes         | No        | Key display, where # is a number between `0` and `2` (in order: Blue Key; Yellow Key; Red Key) |
+| `nughud_ammo#`      | Yes         | Yes       | Ammo count for each type, where # is a number between `0` and `3` (in order: Bullets; Shells; Cells; Rockets) |
+| `nughud_maxammo#`   | Yes         | Yes       | Same as the above, but for Max Ammo |
+| `nughud_time`       | No          | Yes       | Time display, only shown if enabled by the user |
+| `nughud_sts`        | No          | Yes       | Stats (Kills/Items/Secrets) display, only shown if enabled by the user |
+| `nughud_title`      | No          | Yes       | Level Name display, only shown on the Automap |
+| `nughud_powers`     | No          | Yes       | Powerup Timers, only shown if enabled by the user |
+| `nughud_coord`      | No          | Yes       | Coordinates display, only shown if enabled by the user |
+| `nughud_fps`        | No          | Yes       | FPS display, only shown when the FPS cheat is activated |
+| `nughud_message`    | No          | Yes       | Message display |
+| `nughud_secret`     | No          | Yes       | Secret Message display |
 
-**The _Ammo_ and _Armor icons_ can also be aligned vertically** by means of the `_vlign` property, with the following possible values:
+**The _Ammo_, _Health_ and _Armor icons_ can also be aligned vertically** by means of the `_vlign` property, with the following possible values:
   - ` 1` for top alignment;
   - ` 0` for center alignment;
   - `-1` for bottom alignment.
@@ -143,6 +144,10 @@ Berserk, drawn in place of the Ammo count when using the Berserk Fist:
 Ammo graphics, used for the Ammo icon widget:
 
 - NHAMMO# - Graphic, where # is a number between 0 and 3 (in order: Bullets; Shells; Cells; Rockets)
+
+Health graphics, used for the Health icon widget:
+
+- NHEALTH# - Graphic, where # is a number between 0 and 1 (respectively, no Berserk and Berserk)
 
 Armor graphics, used for the Armor icon widget:
 
