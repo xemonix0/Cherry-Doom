@@ -71,6 +71,8 @@ The following widgets are available:
   - `-1` for bottom alignment.
 Additionally, **the offsets of the graphics used by these icons will be ignored, unless a custom font is being used** (see details below).
 
+**Arms number 1 is lit up when the player has Berserk.**
+
 There are some additional toggles (value of `0` or `1`) for some specific widgets:
 
 - `nughud_percents`: Toggle drawing of percentage signs for the _Health_ and _Armor_ counts.
@@ -119,39 +121,48 @@ Tall Numbers, used for the Health, Armor, current-weapon Ammo and Frags counts:
 - NHTMINUS - Minus sign
 - NHTPRCNT - Percent sign
 
+
 Current-weapon Ammo Numbers, which take precedence over Tall Numbers for the Current-weapon Ammo count:
 
 - NHRNUM# -- Number, where # is a number between 0 and 9 (inclusive)
 - NHRMINUS - Minus sign
 
+
 Ammo Numbers, used for the Ammo and Max Ammo counts:
 
 - NHAMNUM# - Number, where # is a number between 0 and 9 (inclusive)
+
 
 Arms Numbers, used for the weapon numbers:
 
 - NHW0NUM# - Weapon unavailable, where # is a number between 1 and 9 (inclusive)
 - NHW1NUM# - Weapon available, where # is a number between 1 and 9 (inclusive)
 
+
 Keys:
 
 - NHKEYS# -- Key, where # is a number between 0 and 8 (inclusive)
+
 
 Berserk, drawn in place of the Ammo count when using the Berserk Fist:
 
 - NHBERSRK - Berserk graphic
 
+
 Ammo graphics, used for the Ammo icon widget:
 
 - NHAMMO# - Graphic, where # is a number between 0 and 3 (in order: Bullets; Shells; Cells; Rockets)
+
 
 Health graphics, used for the Health icon widget:
 
 - NHEALTH# - Graphic, where # is a number between 0 and 1 (respectively, no Berserk and Berserk)
 
+
 Armor graphics, used for the Armor icon widget:
 
 - NHARMOR# - Graphic, where # is a number between 0 and 2 (in order: no Armor; Green Armor; Blue Armor)
+
 
 Infinity, drawn in place of the Ammo count when using weapons with no ammo type (e.g. Fist/Chainsaw):
 
