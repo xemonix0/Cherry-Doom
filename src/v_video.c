@@ -890,7 +890,7 @@ void V_ShadeScreen(const int targshade) // [Nugget] Parameterized
   static int screenshade;
 
   // [FG] start a new sequence
-  if (gametic - oldtic > 1) // [Nugget] Changed condition
+  if (gametic - oldtic > 4) // [Nugget] Changed condition
   {
     screenshade = 0;
   }
