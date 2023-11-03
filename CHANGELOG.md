@@ -1,5 +1,6 @@
 ## New Features
 
+- **Minimap mode for Automap**
 - **NUGHUD:**
   - Ammo and Health icons;
   - Toggle to apply patch offsets.

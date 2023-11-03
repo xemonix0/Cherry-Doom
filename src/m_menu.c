@@ -57,7 +57,9 @@
 #include "m_snapshot.h"
 #include "i_sound.h"
 #include "r_bmaps.h"
-#include "st_stuff.h" // [Nugget]
+// [Nugget]
+#include "am_map.h"
+#include "st_stuff.h"
 
 // [crispy] remove DOS reference from the game quit confirmation dialogs
 #include "SDL_platform.h"
@@ -204,36 +206,12 @@ menu_t* currentMenu; // current menudef
 // externs added for setup menus
 // [FG] double click acts as "use"
 extern int dclick_use;
-// [Nugget] Removed a bunch of extern declarations, since we included st_stuff.h
-extern int mapcolor_back; // map background
-extern int mapcolor_grid; // grid lines color
-extern int mapcolor_wall; // normal 1s wall color
-extern int mapcolor_fchg; // line at floor height change color
-extern int mapcolor_cchg; // line at ceiling height change color
-extern int mapcolor_clsd; // line at sector with floor=ceiling color
-extern int mapcolor_rkey; // red key color
-extern int mapcolor_bkey; // blue key color
-extern int mapcolor_ykey; // yellow key color
-extern int mapcolor_rdor; // red door color  (diff from keys to allow option)
-extern int mapcolor_bdor; // blue door color (of enabling one but not other )
-extern int mapcolor_ydor; // yellow door color
-extern int mapcolor_tele; // teleporter line color
-extern int mapcolor_secr; // secret sector boundary color
-extern int mapcolor_exit; // jff 4/23/98 exit line
-extern int mapcolor_unsn; // computer map unseen line color
-extern int mapcolor_flat; // line with no floor/ceiling changes
-extern int mapcolor_sprt; // general sprite color
-extern int mapcolor_hair; // crosshair color
-extern int mapcolor_sngl; // single player arrow color
-extern int mapcolor_plyr[4];// colors for player arrows in multiplayer
 
-extern int mapcolor_frnd;  // friends colors  // killough 8/8/98
-
-extern int map_point_coordinates; // killough 10/98
+// [Nugget] Removed a bunch of extern declarations,
+// since we include `am_map.h` and `st_stuff.h`
 
 extern char *chat_macros[];  // chat macros
 extern const char shiftxform[];
-extern int map_secret_after; //secrets do not appear til after bagged
 extern default_t defaults[];
 
 // end of externs added for setup menus
@@ -3162,10 +3140,10 @@ enum {
   keys10_stub3,
   keys10_chasecam,
   keys10_stub4,
+  keys10_minimap,
   keys10_tagfind,
-  keys10_stub5,
   keys10_tpointer,
-  keys10_stub6,
+  keys10_stub5,
   keys10_fancytp,
 };
 
@@ -3182,8 +3160,8 @@ setup_menu_t keys_settings10[] =
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub3    * M_SPC},
     {"CYCLE CHASECAM",   S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_chasecam * M_SPC, {0}, input_chasecam},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub4    * M_SPC},
+    {"MINIMAP",          S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_minimap  * M_SPC, {0}, input_map_mini},
     {"TAG FINDER",       S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_tagfind  * M_SPC, {0}, input_map_tagfinder},
-    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub5    * M_SPC},
     {"TELEPORT TO\n"
      "AUTOMAP POINTER",  S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_tpointer * M_SPC, {0}, input_map_teleport},
     {"FANCY TELEPORT",   S_YESNO|S_STRICT|S_CRITICAL, m_null, KB_X, M_Y + keys10_fancytp  * M_SPC, {"fancy_teleport"}},
@@ -6300,7 +6278,7 @@ boolean M_Responder (event_t* ev)
 
       if (M_InputActivated(input_zoomout))     // zoom out
 	{
-	  if (automapactive)
+	  if (automapactive == AM_FULL)
 	    return false;
 	  M_SizeDisplay(0);
 	  S_StartSoundOptional(NULL, sfx_mnusli, sfx_stnmov); // [Nugget]: [NS] Optional menu sounds.
@@ -6309,7 +6287,7 @@ boolean M_Responder (event_t* ev)
 
       if (M_InputActivated(input_zoomin))               // zoom in
 	{                                 // jff 2/23/98
-	  if (automapactive)                // allow
+	  if (automapactive == AM_FULL)     // allow
 	    return false;                   // key_hud==key_zoomin
 	  M_SizeDisplay(1);
 	  S_StartSoundOptional(NULL, sfx_mnusli, sfx_stnmov); // [Nugget]: [NS] Optional menu sounds.

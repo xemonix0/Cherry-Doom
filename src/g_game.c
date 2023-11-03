@@ -135,6 +135,8 @@ boolean         pistolstart, default_pistolstart;
 boolean         strictmode, default_strictmode;
 boolean         critical;
 
+boolean         minimap_was_on = false; // [Nugget] Minimap: keep it when advancing through levels
+
 // [crispy] store last cmd to track joins
 static ticcmd_t* last_cmd = NULL;
 
@@ -826,6 +828,12 @@ static void G_DoLoadLevel(void)
           first=0;
         }
     }
+
+  // [Nugget] Minimap
+  if (minimap_was_on) {
+    AM_ChangeMode(AM_MINI);
+    minimap_was_on = false;
+  }
 }
 
 extern int ddt_cheating;
@@ -971,7 +979,7 @@ boolean G_Responder(event_t* ev)
       // Don't suck up keys, which may be cheats
 
       return gamestate == GS_DEMOSCREEN &&
-	!(paused & 2) && !automapactive &&
+	!(paused & 2) && automapactive != AM_FULL &&
 	((ev->type == ev_keydown) ||
 	 (ev->type == ev_mouseb_down) ||
 	 (ev->type == ev_joyb_down)) ?
@@ -1350,8 +1358,10 @@ static void G_DoCompleted(void)
     if (playeringame[i])
       G_PlayerFinishLevel(i);        // take away cards and stuff
 
-  if (automapactive)
-    AM_Stop();
+  if (automapactive) {
+    if (automapactive == AM_MINI) { minimap_was_on = true; }
+    AM_ChangeMode(AM_OFF);
+  }
 
   wminfo.nextep = wminfo.epsd = gameepisode -1;
   wminfo.last = gamemap -1;

@@ -37,7 +37,9 @@
 #include "m_swap.h"
 #include "r_main.h"
 #include "u_scanner.h"
-#include "m_nughud.h" // [Nugget]
+// [Nugget]
+#include "am_map.h"
+#include "m_nughud.h"
 
 // global heads up display controls
 
@@ -611,7 +613,7 @@ void HU_NughudAlignTime(void)
   while (w->multiline) {
     if (w->multiline == &w_sttime)
     {
-      if (nughud.time_sts && !hud_level_stats && (!automapactive || !map_level_stats))
+      if (nughud.time_sts && !hud_level_stats && (automapactive != AM_FULL || !map_level_stats))
       {
         // Relocate Time text line to position of Stats text line
         NughudAlignWidget(&nughud.sts, w);
@@ -626,6 +628,8 @@ void HU_NughudAlignTime(void)
 }
 
 // [Nugget] -----------------------------------------------------------------/
+
+boolean hud_automap;  // [Nugget] Condition used for level title
 
 void HU_Start(void)
 {
@@ -676,7 +680,7 @@ void HU_Start(void)
   // create the map title widget
   HUlib_init_multiline(&w_title, 1,
                        &doom_font, colrngs[hudcolor_titl],
-                       &automapactive, HU_widget_build_title);
+                       &hud_automap, HU_widget_build_title);
   // [FG] built only once right here
   w_title.builder();
 
@@ -791,6 +795,10 @@ void HU_Start(void)
 
   // now allow the heads-up display to run
   headsupactive = true;
+
+  // [Nugget] Minimap: height of Messages widget may've changed,
+  // so relocate the minimap if prudent
+  if (automapactive == AM_MINI) { AM_Start(); }
 }
 
 static void HU_widget_build_title (void)
@@ -1316,7 +1324,7 @@ static void HU_widget_build_sttime(void)
   extern int time_scale;
 
   // [Nugget] Add conditions; function may've been called due to event timers
-  if (hud_level_time || (map_level_time && automapactive))
+  if (hud_level_time || (map_level_time && automapactive == AM_FULL))
   {
     if (time_scale != 100)
     {
@@ -1605,7 +1613,7 @@ void HU_DrawCrosshair(void)
 {
   // [Nugget] Change conditions
   if (plr->playerstate != PST_LIVE
-      || automapactive
+      || automapactive == AM_FULL
   /* || menuactive
       || paused
       || secret_on */
@@ -1729,7 +1737,7 @@ void WI_DrawTimeWidget(void)
 void HU_Erase(void)
 {
   // [FG] TODO optimize!
-  if (!automapactive && viewwindowx)
+  if (automapactive != AM_FULL && viewwindowx)
     R_DrawViewBorder();
 }
 
@@ -1752,10 +1760,12 @@ void HU_Ticker(void)
   boom_widget = boom_widgets[st_crispyhud ? NUGHUDSLOT : hud_active]; // [Nugget] NUGHUD
   plr = &players[displayplayer];         // killough 3/7/98
 
+  hud_automap = (automapactive == AM_FULL);
+
   HU_disable_all_widgets();
   // [Nugget] Removed "draw_crispy_hud" code
 
-  if ((automapactive && hud_widget_font == 1) || hud_widget_font == 2)
+  if ((automapactive == AM_FULL && hud_widget_font == 1) || hud_widget_font == 2)
   {
     boom_font = &big_font;
     CR_BLUE = CR_BLUE2;
@@ -1868,7 +1878,7 @@ void HU_Ticker(void)
 
   // draw the automap widgets if automap is displayed
 
-  if (automapactive)
+  if (automapactive == AM_FULL)
   {
     HU_cond_build_widget(&w_monsec, map_level_stats);
     HU_cond_build_widget(&w_sttime, map_level_time || plr->eventtics); // [Nugget] Event timers

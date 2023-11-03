@@ -1394,7 +1394,7 @@ static void cheat_reveal_secret()
 {
   static int last_secret = -1;
 
-  if (automapactive)
+  if (automapactive == AM_FULL)
   {
     int i, start_i;
 
@@ -1469,7 +1469,7 @@ static void cheat_cycle_mobj(mobj_t **last_mobj, int *last_count,
 
 static void cheat_reveal_kill()
 {
-  if (automapactive)
+  if (automapactive == AM_FULL)
   {
     static int last_count;
     static mobj_t *last_mobj;
@@ -1480,7 +1480,7 @@ static void cheat_reveal_kill()
 
 static void cheat_reveal_item()
 {
-  if (automapactive)
+  if (automapactive == AM_FULL)
   {
     static int last_count;
     static mobj_t *last_mobj;

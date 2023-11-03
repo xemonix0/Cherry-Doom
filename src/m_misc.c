@@ -2595,6 +2595,14 @@ default_t defaults[] = {
   },
 
   {
+    "input_map_mini",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to activate minimap mode",
+    input_map_mini, { {0, 0} }
+  },
+
+  {
     "input_map_blink",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,

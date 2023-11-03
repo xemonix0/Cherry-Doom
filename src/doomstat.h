@@ -228,7 +228,7 @@ extern int snd_MusicVolume;    // maximum volume for music
 //  status bar explicitely.
 extern  boolean statusbaractive;
 
-extern  boolean automapactive; // In AutoMap mode?
+extern  int automapactive; // In AutoMap mode? // [Nugget] Minimap: now an int
 
 typedef enum
 {
@@ -240,8 +240,9 @@ typedef enum
 extern  overlay_t automapoverlay;
 extern  boolean automaprotate;
 
-#define automap_on (automapactive && !automapoverlay)
-#define automap_off (!automapactive || automapoverlay)
+// [Nugget] Minimap support (1 == AM_FULL)
+#define automap_on (automapactive == 1 && !automapoverlay)
+#define automap_off (automapactive != 1 || automapoverlay)
 
 extern  boolean menuactive;    // Menu overlayed?
 extern  int     paused;        // Game Pause?
