@@ -20,5 +20,6 @@
 ## Bug Fixes
 
 - **Disabled teleport-to-Automap-pointer during non-Casual Play**
+- **Excess speed when airborne with noclip enabled** [thanks @kitchen-ace]
 - **Teleporter Zoom affecting all players in multiplayer**
 - **Tweaked dark menu background and Automap overlay algorithm** (fixes very low values)

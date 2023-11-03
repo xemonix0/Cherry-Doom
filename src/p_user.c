@@ -222,8 +222,9 @@ void P_MovePlayer (player_t* player)
 
   mo->angle += cmd->angleturn << 16;
   onground = mo->z <= mo->floorz;
-  // [Nugget] Allow mid-air control with noclip or fly enabled
-  onground |= ((player->mo->flags & MF_NOCLIP) || (player->cheats & CF_FLY));
+  // [Nugget] Allow mid-air control with noclip or flight cheat enabled
+  if (casual_play)
+  { onground |= ((player->mo->flags & MF_NOCLIP) || (player->cheats & CF_FLY)); }
 
   // [Nugget]
   if (player->cheats & CF_FLY)
