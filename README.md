@@ -51,6 +51,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - _**Teleporter Zoom**_ setting [i.b. ZDoom]
 - _**Death Camera**_ setting [i.b. ZDoom]
 - _**Chasecam**_ [i.b. ZDoom]
+- _**Background for all menus**_ setting
 - _**Disable palette tint in menus**_ setting [i.b. Crispy Doom]
 - _**Disable Berserk Tint**_ setting
 - _**Disable Radiation Suit Tint**_ setting

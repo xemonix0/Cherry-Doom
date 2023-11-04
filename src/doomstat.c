@@ -155,6 +155,7 @@ int chasecam_mode;
 int chasecam_distance;
 int chasecam_height;
 
+int menu_background_all;
 int no_menu_tint;
 int no_berserk_tint;
 int no_radsuit_tint;
@@ -166,6 +167,7 @@ int s_clipping_dist_x2;
 int one_key_saveload;
 int no_page_ticking;
 int quick_quitgame;
+
 //int a11y_sector_lighting;
 int a11y_weapon_flash;
 int a11y_weapon_pspr;

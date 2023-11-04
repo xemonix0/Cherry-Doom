@@ -483,6 +483,7 @@ enum {
 extern int chasecam_distance;
 extern int chasecam_height;
 
+extern int menu_background_all;
 extern int no_menu_tint;
 extern int no_berserk_tint;
 extern int no_radsuit_tint;
@@ -494,6 +495,7 @@ extern int s_clipping_dist_x2;
 extern int one_key_saveload;
 extern int no_page_ticking;
 extern int quick_quitgame;
+
 //extern int a11y_sector_lighting;
 extern int a11y_weapon_flash;
 extern int a11y_weapon_pspr;

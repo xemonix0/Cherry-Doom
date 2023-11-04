@@ -4429,6 +4429,7 @@ enum {
 
 enum {
   gen7_title1,
+  gen7_menubgall,
   gen7_menutint,
   gen7_berserktint,
   gen7_radsuittint,
@@ -4765,6 +4766,7 @@ static const char *page_ticking_conds[] = {
 setup_menu_t gen_settings7[] = { // [Nugget]
 
   {"Nugget - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title1 * M_SPC},
+    {"Background For All Menus",      S_YESNO          , m_null, M_X, M_Y + gen7_menubgall     * M_SPC, {"menu_background_all"}},
     {"Disable Palette Tint in Menus", S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_menutint      * M_SPC, {"no_menu_tint"}},
     {"Disable Berserk Tint",          S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_berserktint   * M_SPC, {"no_berserk_tint"}},
     {"Disable Radiation Suit Tint",   S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_radsuittint   * M_SPC, {"no_radsuit_tint"}},
@@ -5878,7 +5880,7 @@ setup_menu_t cred_settings[]={
   {"Woof! by",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*woof + CR_SH*cr_woof},
   {"Fabian Greffrath",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*woof + CR_SH*cr_woof},
 
-  // [Nugget] [insert moyai here]
+  // [Nugget] :moyai:
   {"Nugget Doom by",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*nugget + CR_SH*cr_nugget},
   {"Alaux",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*nugget + CR_SH*cr_nugget},
 
@@ -7394,15 +7396,19 @@ void M_StartControlPanel (void)
 
 boolean M_MenuIsShaded(void)
 {
-  return setup_active && menu_background == background_dark;
+  return (setup_active || (menuactive && menu_background_all)) // [Nugget]
+         && menu_background == background_dark;
 }
 
 void M_Drawer (void)
 {
    if (M_MenuIsShaded())
       V_ShadeScreen(menu_background_darkening); // [Nugget] Parameterized
+   // [Nugget]
+   else if (!setup_active && menu_background_all && menu_background == background_on)
+      M_DrawBackground("FLOOR4_6", screens[0]);
 
-   inhelpscreens = false;
+   inhelpscreens = true; // [Nugget] Force Status Bar redraw in all menus
 
    // Horiz. & Vertically center string and print it.
    // killough 9/29/98: simplified code, removed 40-character width limit

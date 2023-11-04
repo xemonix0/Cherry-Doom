@@ -379,7 +379,7 @@ default_t defaults[] = {
     "menu_background",
     (config_t *) &menu_background, NULL,
     {background_on}, {background_on,background_dark}, number, ss_gen, wad_no,
-    "draw menu background (0 = on, 1 = off, 2 = dark)"
+    "menu background type (0 = solid, 1 = off, 2 = dark)" // [Nugget] Changed description
   },
 
   { // [Nugget]
@@ -804,6 +804,13 @@ default_t defaults[] = {
     (config_t *) &chasecam_crosshair, NULL,
     {0}, {0,1}, number, ss_none, wad_no,
     "1 to allow crosshair when using Chasecam"
+  },
+
+  {
+    "menu_background_all",
+    (config_t *) &menu_background_all, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to draw background for all menus"
   },
 
   {

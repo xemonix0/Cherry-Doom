@@ -1,5 +1,6 @@
 ## New Features
 
+- **_Background for all menus_** setting
 - **Minimap mode for Automap**
 - **NUGHUD:**
   - Ammo and Health icons;
