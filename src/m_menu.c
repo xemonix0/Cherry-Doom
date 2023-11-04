@@ -4560,7 +4560,7 @@ static const char *death_use_action_strings[] = {
 };
 
 static const char *menu_background_strings[] = {
-  "on", "off", "dark", NULL
+  "solid", "none", "dark", NULL // [Nugget] Changed descriptions
 };
 
 setup_menu_t gen_settings3[] = { // General Settings screen3
@@ -4599,7 +4599,7 @@ setup_menu_t gen_settings3[] = { // General Settings screen3
   {"Solid Status Bar Background", S_YESNO, m_null, M_X,
    M_Y + gen3_solidbackground*M_SPC, {"st_solidbackground"}},
 
-  {"Draw Menu Background", S_CHOICE, m_null, M_X,
+  {"Menu Background Style", S_CHOICE, m_null, M_X, // [Nugget] Changed description
    M_Y + gen3_menu_background*M_SPC, {"menu_background"}, 0, NULL, menu_background_strings},
 
   {"Flash Icon During Disk IO", S_YESNO, m_null, M_X,
@@ -7405,7 +7405,8 @@ void M_Drawer (void)
    if (M_MenuIsShaded())
       V_ShadeScreen(menu_background_darkening); // [Nugget] Parameterized
    // [Nugget]
-   else if (!setup_active && menu_background_all && menu_background == background_on)
+   else if (!setup_active && menuactive && menu_background_all
+            && menu_background == background_on)
       M_DrawBackground("FLOOR4_6", screens[0]);
 
    inhelpscreens = true; // [Nugget] Force Status Bar redraw in all menus

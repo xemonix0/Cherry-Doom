@@ -379,7 +379,7 @@ default_t defaults[] = {
     "menu_background",
     (config_t *) &menu_background, NULL,
     {background_on}, {background_on,background_dark}, number, ss_gen, wad_no,
-    "menu background type (0 = solid, 1 = off, 2 = dark)" // [Nugget] Changed description
+    "menu background style (0 = solid, 1 = none, 2 = dark)" // [Nugget] Changed description
   },
 
   { // [Nugget]
@@ -664,7 +664,7 @@ default_t defaults[] = {
     "wipe_type",
     (config_t *) &wipe_type, NULL,
     {1}, {0,3}, number, ss_gen, wad_yes,
-    "Screen wipe type (0 = None, 1 = Melt, 2 = ColorXForm, 3 = Fade)"
+    "Screen wipe style (0 = None, 1 = Melt, 2 = Seizure (ColorXForm), 3 = Fade)"
   },
 
   {
