@@ -184,6 +184,13 @@ default_t defaults[] = {
     "1 to stretch viewport to fit window"
   },
 
+  { // [Nugget]
+    "no_downscaling",
+    (config_t *) &no_downscaling, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to prevent auto-downscaling of window if it exceeds the display boundaries"
+  },
+
   // [FG] save fullscren mode
   {
     "fullscreen",
@@ -481,14 +488,14 @@ default_t defaults[] = {
   {
     "snd_absorption",
     (config_t *) &snd_absorption, NULL,
-    {5}, {0, 10}, number, ss_none, wad_no, // [Nugget] Enabled by default
+    {5}, {0, 10}, number, ss_gen, wad_no, // [Nugget] Enabled by default
     "[OpenAL 3D] Air absorption effect (0 = Off, 10 = Max)"
   },
 
   {
     "snd_doppler",
     (config_t *) &snd_doppler, NULL,
-    {5}, {0, 10}, number, ss_none, wad_no, // [Nugget] Enabled by default
+    {5}, {0, 10}, number, ss_gen, wad_no, // [Nugget] Enabled by default
     "[OpenAL 3D] Doppler effect (0 = Off, 10 = Max)"
   },
 
@@ -660,7 +667,7 @@ default_t defaults[] = {
     "0 to disable palette tint changes"
   },
 
-  { // [Nugget] Replace screen melt toggle
+  { // [Nugget] Replaces screen melt toggle
     "wipe_type",
     (config_t *) &wipe_type, NULL,
     {1}, {0,3}, number, ss_gen, wad_yes,
@@ -706,7 +713,7 @@ default_t defaults[] = {
     "1 to enable pistol start"
   },
 
-  // [Nugget] /-----------------------------------------------------------
+  // [Nugget] /---------------------------------------------------------------
 
   {
     "over_under",
@@ -920,7 +927,7 @@ default_t defaults[] = {
     "0 to disable the Invulnerability colormap"
   },
 
-  // [Nugget] -----------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   //
   // Weapons options
@@ -979,7 +986,7 @@ default_t defaults[] = {
     "1 to center the weapon sprite during attack, 2 to keep it bobbing, 3 to center it horizontally"
   },
 
-  // [Nugget] /-----------------------------------------------------------
+  // [Nugget] /---------------------------------------------------------------
 
   {
     "no_hor_autoaim",
@@ -1058,7 +1065,7 @@ default_t defaults[] = {
     "1 to correct first person sprite centering"
   },
 
-  // [Nugget] -----------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   {  // killough 2/8/98: weapon preferences set by user:
     "weapon_choice_1",
@@ -1197,7 +1204,7 @@ default_t defaults[] = {
     "1 to enable dogs to jump"
   },
 
-  // [Nugget] /-----------------------------------------------------------
+  // [Nugget] /---------------------------------------------------------------
 
   {
     "extra_gibbing",
@@ -1241,7 +1248,7 @@ default_t defaults[] = {
     "1 to enable ZDoom-like item drops for dying enemies"
   },
 
-  // [Nugget] -----------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   {
     "colored_blood",
@@ -1490,7 +1497,7 @@ default_t defaults[] = {
     "1 to enable donut overrun emulation"
   },
 
-  // [Nugget] /-----------------------------------------------------------
+  // [Nugget] /---------------------------------------------------------------
 
   {
     "comp_bruistarget",
@@ -1618,7 +1625,7 @@ default_t defaults[] = {
     "Key pickup resets palette"
   },
 
-  // [Nugget] -----------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   // default compatibility
   {
@@ -2552,7 +2559,7 @@ default_t defaults[] = {
     "1 to invert gamepad look axis"
   },
 
-  // [Nugget] /-----------------------------------------------------------
+  // [Nugget] /---------------------------------------------------------------
 
   {
     "input_jump",
@@ -2640,7 +2647,7 @@ default_t defaults[] = {
     "Use effects when teleporting to pointer (fog, sound and zoom)"
   },
 
-  // [Nugget] -----------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity",
@@ -3126,7 +3133,7 @@ default_t defaults[] = {
   {
     "hud_secret_message",
     (config_t *) &hud_secret_message, NULL,
-    {0}, {0,2}, number, ss_mess, wad_no, // [Nugget]
+    {0}, {0,2}, number, ss_mess, wad_no, // [Nugget] "Count" mode from Crispy
     "\"A secret is revealed!\" message"
   },
 
@@ -3361,14 +3368,14 @@ default_t defaults[] = {
   { // [Nugget] Incomplete milestone color
     "hudcolor_ms_incomp",
     (config_t *) &hudcolor_ms_incomp, NULL,
-    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
     "Color used for incomplete milestones in Stats display"
   },
 
   { // [Nugget] Complete milestone color
     "hudcolor_ms_comp",
     (config_t *) &hudcolor_ms_comp, NULL,
-    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
     "Color used for complete milestones in Stats display"
   },
 
