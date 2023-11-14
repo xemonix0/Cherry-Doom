@@ -278,10 +278,14 @@ Copyright:
  © 2005-2018 Simon Howard;  
  © 2006 Ben Ryves;  
  © 2017 Christoph Oelckers;  
+ © 2017-2022 Brad Harding;  
  © 2019 Fernando Carmona Varo;  
  © 2019 Jonathan Dowland;  
  © 2020 Alex Mayfield;  
+ © 2020 JadingTsunami;  
  © 2021 Ryan Krafnick;  
+ © 2022 Julia Nechaevskaya;  
+ © 2022 Vladislav Melnichuk;  
  © 2022-2023 ceski;  
  © 2023 liPillON;  
  © 2020-2023 Fabian Greffrath;  
