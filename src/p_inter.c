@@ -151,7 +151,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     return P_GiveAmmoAutoSwitch(player, ammo, oldammo);
 
   // If non zero ammo, don't change up weapons, player was lower on purpose.
-  if (oldammo || P_AutoswitchWeapon()) // [Nugget]
+  if (oldammo || !P_AutoswitchWeapon()) // [Nugget]
     return true;
 
   // We were down to zero, so select a new weapon.
