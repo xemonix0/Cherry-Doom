@@ -86,23 +86,23 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 ### Status Bar/HUD
 
 - **`NUGHUD` lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.md`)
-- **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-Only: `show_ssg`) [p.f. Crispy Doom]
-- **Blink Missing Keys** setting (CFG-Only: `blink_keys`) [partially p.f. Crispy Doom]
-- **Show Powerup Timers** setting
-- _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol (CFG-Only: `alt_arms`)
-- _**Smart Totals**_ setting [p.f. So Doom]
-- _**(In)Complete Milestone Color**_ choices, to customize the Stats text's colors
-- **Armor count is colored gray when in God Mode**
-- **Support for Berserk (`STBERSRK`) and Infinite Ammo (`STINFNTY`) icons**
-- **Event Timers:**
-  - _"Use" Button Timer_ [p.f. Crispy Doom]; 
-  - _Teleport Timer_ [i.b. the above];
-  - _Key Pickup Timer_ [same as above].
 - **Crosshair:**
   - Vertical-only target lock-on;
   - Horizontal autoaim indicators;
   - Option to account for fuzzy targets [i.b. From Doom With Love];
   - Dedicated toggle key.
+- _**Show Powerup Timers**_ setting
+- **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-Only: `show_ssg`) [p.f. Crispy Doom]
+- _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
+- **Blink Missing Keys** setting (CFG-Only: `blink_keys`) [partially p.f. Crispy Doom]
+- _**Smart Totals**_ setting [p.f. So Doom]
+- **Event Timers:**
+  - _"Use" Button Timer_ [p.f. Crispy Doom]; 
+  - _Teleport Timer_ [i.b. the above];
+  - _Key Pickup Timer_ [same as above].
+- **Extended HUD color customization**
+- **Armor count is colored gray when in God Mode**
+- **Support for Berserk (`STBERSRK`) and Infinite Ammo (`STINFNTY`) icons**
 
 ### Automap
 

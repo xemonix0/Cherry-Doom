@@ -5,6 +5,7 @@
 - **NUGHUD:**
   - Ammo and Health icons;
   - Toggle to apply patch offsets.
+- **Further Extended HUD color customization**
 - **_Direct Vertical Aiming_ for melee attacks**
 - **_Disable Melee Snapping_ setting**
 

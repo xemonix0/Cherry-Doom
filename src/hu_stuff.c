@@ -1262,7 +1262,7 @@ static void HU_widget_build_monsec(void)
     }
   }
 
-  // [Nugget] Customizable stat colors
+  // [Nugget] Customizable Stats colors
 
   // [Nugget] Smart Totals from So Doom
   kills_color = (kills - (smarttotals ? extrakills : extraspawns) >= totalkills) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
@@ -1284,7 +1284,7 @@ static void HU_widget_build_monsec(void)
   {
     offset = sprintf(hud_monsecstr,
       "\x1b%cK \x1b%c%d/%d",
-      '0'+CR_RED, kills_color,
+      '0'+hudcolor_kills, kills_color,
       plr->killcount - (smarttotals ? extrakills : 0), // [Nugget] Smart Totals from So Doom
       totalkills);
   }
@@ -1299,10 +1299,10 @@ static void HU_widget_build_monsec(void)
     sprintf(hud_monsecstr + offset, " \x1b%c%d%%", kills_percent_color, kills_percent);
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
 
-    sprintf(hud_monsecstr, "\x1b%cI \x1b%c%d/%d", ('0'+CR_RED), items_color, items, totalitems);
+    sprintf(hud_monsecstr, "\x1b%cI \x1b%c%d/%d", ('0'+hudcolor_items), items_color, items, totalitems);
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
 
-    sprintf(hud_monsecstr, "\x1b%cS \x1b%c%d/%d", ('0'+CR_RED), secrets_color, secrets, totalsecret);
+    sprintf(hud_monsecstr, "\x1b%cS \x1b%c%d/%d", ('0'+hudcolor_secrets), secrets_color, secrets, totalsecret);
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
   }
   else
@@ -1310,8 +1310,8 @@ static void HU_widget_build_monsec(void)
     sprintf(hud_monsecstr + offset,
       " \x1b%c%d%% \x1b%cI \x1b%c%d/%d \x1b%cS \x1b%c%d/%d",
       kills_percent_color, kills_percent,
-      '0'+CR_RED, items_color, items, totalitems,
-      '0'+CR_RED, secrets_color, secrets, totalsecret);
+      '0'+hudcolor_items, items_color, items, totalitems,
+      '0'+hudcolor_secrets, secrets_color, secrets, totalsecret);
 
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
   }
@@ -1323,13 +1323,15 @@ static void HU_widget_build_sttime(void)
   int offset = 0;
   extern int time_scale;
 
+  // [Nugget] Customizable Time colors
+
   // [Nugget] Add conditions; function may've been called due to event timers
   if (hud_level_time || (map_level_time && automapactive == AM_FULL))
   {
     if (time_scale != 100)
     {
       offset += sprintf(hud_timestr + offset, "\x1b%c%d%% ",
-              '0'+CR_BLUE, time_scale);
+              '0'+hudcolor_time_scale, time_scale);
     }
 
     if (totalleveltimes)
@@ -1337,11 +1339,11 @@ static void HU_widget_build_sttime(void)
       const int time = (totalleveltimes + leveltime) / TICRATE;
 
       offset += sprintf(hud_timestr + offset, "\x1b%c%d:%02d ",
-              '0'+CR_GREEN, time/60, time%60);
+              '0'+hudcolor_total_time, time/60, time%60);
     }
     // [Nugget] Add to `offset`; delete tab, it'll be added later
     offset += sprintf(hud_timestr + offset, "\x1b%c%d:%05.2f",
-      '0'+CR_GRAY, leveltime/TICRATE/60, (float)(leveltime%(60*TICRATE))/TICRATE);
+      '0'+hudcolor_time, leveltime/TICRATE/60, (float)(leveltime%(60*TICRATE))/TICRATE);
 
     // [Nugget] If event timers are enabled, add a space
     if (plr->eventtics) { offset += sprintf(hud_timestr + offset, " "); }
@@ -1357,7 +1359,7 @@ static void HU_widget_build_sttime(void)
     { plr->eventtics = plr->eventtype = plr->eventtime = 0; }
 
     offset += sprintf(hud_timestr + offset, "\x1b%c%c %02i:%05.02f",
-                      '0'+CR_GOLD,
+                      '0'+hudcolor_event_timer,
                       type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
                       mins, secs);
   }
