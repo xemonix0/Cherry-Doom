@@ -195,6 +195,7 @@ int show_ssg; // CFG-Only
 int alt_arms;
 int blink_keys; // CFG-Only
 int smarttotals;
+int hud_kills_percentage;
 int event_timers[NUMTIMERS];
 
 int hudcolor_time_scale;

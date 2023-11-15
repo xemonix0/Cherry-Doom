@@ -3365,6 +3365,13 @@ default_t defaults[] = {
     "1 to enable Smart Totals"
   },
 
+  { // [Nugget]
+    "hud_kills_percentage",
+    (config_t *) &hud_kills_percentage, NULL,
+    {1}, {0,1}, number, ss_stat, wad_no,
+    "1 to show Kills percentage in Stats display"
+  },
+
   // [Nugget] Extended HUD colors /-------------------------------------------
 
   {

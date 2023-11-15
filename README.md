@@ -96,6 +96,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
 - **Blink Missing Keys** setting (CFG-Only: `blink_keys`) [partially p.f. Crispy Doom]
 - _**Smart Totals**_ setting [p.f. So Doom]
+- _**Show Kills Percentage [in Stats display]**_ setting
 - **Event Timers:**
   - _"Use" Button Timer_ [p.f. Crispy Doom]; 
   - _Teleport Timer_ [i.b. the above];

@@ -3659,6 +3659,7 @@ enum {
   stat4_powers,
   stat4_altarms,
   stat4_smart,
+  stat4_killspct,
   stat4_stub2,
   stat4_title2,
   stat4_timeruse,
@@ -3670,9 +3671,10 @@ setup_menu_t stat_settings4[] =
 {
   {"Nugget - Extended HUD", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat4_title1 * M_SPC},
 
-    {"Show Powerup Timers",      S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat4_powers  * M_SPC, {"hud_power_timers"}},
-    {"Alternative Arms Display", S_YESNO,            m_null, M_X, M_Y + stat4_altarms * M_SPC, {"alt_arms"}},
-    {"Smart Totals",             S_YESNO,            m_null, M_X, M_Y + stat4_smart   * M_SPC, {"smarttotals"}},
+    {"Show Powerup Timers",      S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat4_powers   * M_SPC, {"hud_power_timers"}},
+    {"Alternative Arms Display", S_YESNO,            m_null, M_X, M_Y + stat4_altarms  * M_SPC, {"alt_arms"}},
+    {"Smart Totals",             S_YESNO,            m_null, M_X, M_Y + stat4_smart    * M_SPC, {"smarttotals"}},
+    {"Show Kills Percentage",    S_YESNO,            m_null, M_X, M_Y + stat4_killspct * M_SPC, {"hud_kills_percentage"}},
 
   {"",                      S_SKIP,         m_null, M_X, M_Y + stat4_stub2  * M_SPC},
   {"Nugget - Event Timers", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat4_title2 * M_SPC},

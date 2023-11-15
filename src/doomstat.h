@@ -533,6 +533,7 @@ extern int show_ssg; // CFG-Only
 extern int alt_arms;
 extern int blink_keys; // CFG-Only
 extern int smarttotals;
+extern int hud_kills_percentage;
 
 typedef enum {
   TIMER_USE,
