@@ -1233,7 +1233,9 @@ void A_BFGSpray(mobj_t *mo)
       shake++; // [Nugget] Explosion shake effect
     }
 
-  R_ExplosionShake(mo->target->x, mo->target->y, 2*shake, 16*64); // [Nugget] Explosion shake effect
+  // [Nugget] Explosion shake effect
+  if (mo->target->player == &players[displayplayer])
+  { R_ExplosionShake(mo->target->x, mo->target->y, 2*shake, 16*64); }
 }
 
 //
