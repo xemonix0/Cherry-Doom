@@ -491,7 +491,9 @@ static void P_NuggetBobbing(player_t* player)
 
   if ((player->attackdown && STRICTMODE(center_weapon) != WEAPON_BOBBING) // [FG] not attacking means idle
       || !psp->state || psp->state->misc1 || player->switching)
-  { return; }
+  {
+    return;
+  }
 
   // [Nugget] Weapon bobbing percentage setting
   if (weapon_bobbing_percentage != 100)
@@ -525,16 +527,16 @@ static void P_NuggetBobbing(player_t* player)
       break;
 
     case BOBSTYLE_SMOOTH:
-      psp->sy2 += (bob - FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
+      psp->sy2 += (bob - FixedMul(bob, finecosine[angle*2 & (FINEANGLES - 1)])) / 2;
       break;
 
     case BOBSTYLE_INVSMOOTH:
-      psp->sy2 += (bob + FixedMul(bob, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
+      psp->sy2 += (bob + FixedMul(bob, finecosine[angle*2 & (FINEANGLES - 1)])) / 2;
       break;
 
     case BOBSTYLE_QUAKE:
       psp->sx2 = 0;
-      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2-1)]);
+      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
       break;
   }
 }
