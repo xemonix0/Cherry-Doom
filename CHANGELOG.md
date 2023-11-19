@@ -6,9 +6,10 @@
   - Ammo and Health icons;
   - Toggle to apply patch offsets.
 - **Further Extended HUD color customization**
-- **_Show Kills Percentage [in Stats display]_ setting**
+- **_Show Kills Percentage [in Stats display]_** setting
+- **Show Save Messages** setting
 - **_Direct Vertical Aiming_ for melee attacks**
-- **_Disable Melee Snapping_ setting**
+- **_Disable Melee Snapping_** setting
 
 ## Changes
 
