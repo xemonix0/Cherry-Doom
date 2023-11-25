@@ -2670,8 +2670,8 @@ void A_SpawnFly(mobj_t *mo)
   // killough 7/18/98: brain friendliness is transferred
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
 
-	// [Nugget]: [So Doom]
-	newmobj->intflags |= MIF_EXTRASPAWNED;
+  // [Nugget]: [So Doom]
+  newmobj->intflags |= MIF_EXTRASPAWNED;
 
   // [crispy] count spawned monsters
   // [Nugget] Only if counted towards killcount
