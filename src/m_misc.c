@@ -866,8 +866,8 @@ default_t defaults[] = {
   {
     "fake_contrast",
     (config_t *) &fake_contrast, NULL,
-    {1}, {0,1}, number, ss_gen, wad_yes,
-    "1 to apply fake contrast to walls"
+    {1}, {0,2}, number, ss_gen, wad_yes,
+    "Fake contrast for walls (0 = Off, 1 = Smooth, 2 = Vanilla)"
   },
 
   {

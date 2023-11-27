@@ -4878,6 +4878,10 @@ setup_menu_t gen_settings6[] = {
   {0,S_SKIP|S_END,m_null}
 };
 
+static const char *fake_contrast_styles[] = {
+  "Off", "Smooth", "Vanilla", NULL
+};
+
 static const char *s_clipping_dists[] = {
   "1200", "2400", NULL
 };
@@ -4890,14 +4894,14 @@ setup_menu_t gen_settings7[] = {
 
   {"Nugget - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title1 * M_SPC},
 
-    {"Background For All Menus",      S_YESNO,          m_null, M_X, M_Y + gen7_menubgall    * M_SPC, {"menu_background_all"}},
-    {"Disable Palette Tint in Menus", S_YESNO|S_STRICT, m_null, M_X, M_Y + gen7_menutint     * M_SPC, {"no_menu_tint"}},
-    {"Disable Berserk Tint",          S_YESNO|S_STRICT, m_null, M_X, M_Y + gen7_berserktint  * M_SPC, {"no_berserk_tint"}},
-    {"Disable Radiation Suit Tint",   S_YESNO|S_STRICT, m_null, M_X, M_Y + gen7_radsuittint  * M_SPC, {"no_radsuit_tint"}},
-    {"Damage Tint Cap",               S_NUM  |S_STRICT, m_null, M_X, M_Y + gen7_dmgcountcap  * M_SPC, {"damagecount_cap"}},
-    {"Bonus Tint Cap",                S_NUM  |S_STRICT, m_null, M_X, M_Y + gen7_boncountcap  * M_SPC, {"bonuscount_cap"}},
-    {"Fake Contrast",                 S_YESNO|S_STRICT, m_null, M_X, M_Y + gen7_fakecontrast * M_SPC, {"fake_contrast"}},
-    {"Screen Wipe Speed Percentage",  S_NUM  |S_STRICT, m_null, M_X, M_Y + gen7_wipespeed    * M_SPC, {"wipe_speed_percentage"}},
+    {"Background For All Menus",      S_YESNO,           m_null, M_X, M_Y + gen7_menubgall    * M_SPC, {"menu_background_all"}},
+    {"Disable Palette Tint in Menus", S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_menutint     * M_SPC, {"no_menu_tint"}},
+    {"Disable Berserk Tint",          S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_berserktint  * M_SPC, {"no_berserk_tint"}},
+    {"Disable Radiation Suit Tint",   S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_radsuittint  * M_SPC, {"no_radsuit_tint"}},
+    {"Damage Tint Cap",               S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_dmgcountcap  * M_SPC, {"damagecount_cap"}},
+    {"Bonus Tint Cap",                S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_boncountcap  * M_SPC, {"bonuscount_cap"}},
+    {"Fake Contrast",                 S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_fakecontrast * M_SPC, {"fake_contrast"}, 0, NULL, fake_contrast_styles},
+    {"Screen Wipe Speed Percentage",  S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_wipespeed    * M_SPC, {"wipe_speed_percentage"}},
 
   {"",                       S_SKIP,         m_null, M_X, M_Y + gen7_stub1  * M_SPC},
   {"Nugget - Miscellaneous", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title2 * M_SPC},
