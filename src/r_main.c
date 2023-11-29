@@ -629,7 +629,11 @@ void R_ExecuteSetViewSize (void)
       if (fovfx[FOVFX_ZOOM].target != zoomtarget)
       { fovchange = true; }
       else for (i = 0;  i < NUMFOVFX;  i++)
-        if (fovfx[i].target || fovfx[i].current) { fovchange = true; }
+        if (fovfx[i].target || fovfx[i].current)
+        {
+          fovchange = true;
+          break;
+        }
     }
 
     if (fovchange)
@@ -639,6 +643,7 @@ void R_ExecuteSetViewSize (void)
         fovchange = false;
 
         fovfx[FOVFX_ZOOM].old = fovfx[FOVFX_ZOOM].current = fovfx[FOVFX_ZOOM].target;
+
         if (zoomtarget || fovfx[FOVFX_ZOOM].target)
         {
           // Special handling for zoom
@@ -650,13 +655,16 @@ void R_ExecuteSetViewSize (void)
 
           if (   (sign > 0 && fovfx[FOVFX_ZOOM].target > zoomtarget)
               || (sign < 0 && fovfx[FOVFX_ZOOM].target < zoomtarget))
-          { fovfx[FOVFX_ZOOM].target = zoomtarget; }
+          {
+            fovfx[FOVFX_ZOOM].target = zoomtarget;
+          }
 
           if (fovfx[FOVFX_ZOOM].current != fovfx[FOVFX_ZOOM].target)
           { fovchange = true; }
         }
 
         fovfx[FOVFX_TELEPORT].old = fovfx[FOVFX_TELEPORT].current = fovfx[FOVFX_TELEPORT].target;
+
         if (fovfx[FOVFX_TELEPORT].target)
         {
           if ((fovfx[FOVFX_TELEPORT].target -= 5) < 0)
@@ -884,7 +892,7 @@ void R_SetupFrame (player_t *player)
   {
     static fixed_t xofs=0, yofs=0, zofs=0;
 
-    if (!(menuactive || paused))
+    if (!((menuactive && !demoplayback && !netgame) || paused))
     {
       static int oldtime = -1;
 
@@ -909,7 +917,7 @@ void R_SetupFrame (player_t *player)
   chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD));
   if (chasecam_on)
   {
-    static fixed_t extradist = 0;
+    static fixed_t oldextradist = 0, extradist = 0;
     const fixed_t z = MIN(playerz + ((player->mo->health <= 0 && player->playerstate == PST_DEAD) ? 6*FRACUNIT : chasecamheight),
                           player->mo->ceilingz - (2*FRACUNIT));
     fixed_t slope;
@@ -924,18 +932,23 @@ void R_SetupFrame (player_t *player)
       pitch      = -pitch;
     }
 
-    dist += extradist;
-
-    { // `extradist` is applied on the next tic
+    {
       static int oldtic = -1;
 
-      if (gametic != oldtic) {
+      if (oldtic != gametic) {
+        oldextradist = extradist;
         extradist = FixedMul(player->mo->momx, finecosine[viewangle >> ANGLETOFINESHIFT])
                   + FixedMul(player->mo->momy,   finesine[viewangle >> ANGLETOFINESHIFT]);
       }
-      
+
       oldtic = gametic;
     }
+
+    if (uncapped && leveltime > 1 && player->mo->interp == true && leveltime > oldleveltime)
+    {
+      dist += oldextradist + FixedMul(extradist - oldextradist, fractionaltic);
+    }
+    else { dist += extradist; }
 
     P_PositionChasecam(z, dist, slope = (-(lookdir * FRACUNIT) / PLAYER_SLOPE_DENOM));
 

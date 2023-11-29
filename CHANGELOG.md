@@ -31,6 +31,7 @@
   - Disabled Armor icon by default.
 - **Speed of non-Melt wipes is now independent of resolution**
 - **Implemented Teleporter Zoom for multiplayer respawning**
+- **Applied interpolation for Chasecam speed effect**
 - **MDK Fist attacks now prioritize enemies over friends**
 - **Current resolution is now reported by some video-related menu items**
 - **Disabled `input_spy` and `input_menu_reloadlevel` when typing in Chat**
@@ -42,5 +43,6 @@
 - **Excess speed when airborne with noclip enabled** [thanks @kitchen-ace]
 - **Blazing door sound fix not applying to Boom doors**
 - **Teleporter Zoom and BFG "explosion" shake affecting all players in multiplayer**
+- **Explosion shake being stopped by the menu during demo playback and netgames**
 - **Fixed a demo desync** caused by a failed weapon autoswitch when picking up ammo
 - **Tweaked dark menu background and Automap overlay algorithm** (fixes very low values)
