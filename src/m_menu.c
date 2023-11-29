@@ -2821,7 +2821,10 @@ setup_menu_t keys_settings6[];
 setup_menu_t keys_settings7[];
 setup_menu_t keys_settings8[];
 setup_menu_t keys_settings9[];
-setup_menu_t keys_settings10[], keys_settings11[]; // [Nugget]
+// [Nugget]
+setup_menu_t keys_settings10[];
+setup_menu_t keys_settings11[];
+setup_menu_t keys_settings12[];
 
 // The table which gets you from one screen table to the next.
 setup_menu_t* keys_settings[] =
@@ -2838,6 +2841,7 @@ setup_menu_t* keys_settings[] =
   // [Nugget]
   keys_settings10,
   keys_settings11,
+  keys_settings12,
   NULL
 };
 
@@ -3208,6 +3212,42 @@ setup_menu_t keys_settings11[] =
     {"Fancy Teleport",  S_YESNO|S_STRICT|S_CRITICAL, m_null, KB_X, M_Y + keys11_fancytp  * M_SPC, {"fancy_teleport"}},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {keys_settings10}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {keys_settings12}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+
+};
+
+enum {
+  keys12_title1,
+  keys12_infammo,
+  keys12_fastweaps,
+  keys12_resurrect,
+  keys12_fly,
+  keys12_summonr,
+  keys12_linetarg,
+  keys12_mdk,
+  keys12_saitama,
+  keys12_boomcan,
+};
+
+setup_menu_t keys_settings12[] =
+{
+  {"Nugget - Cheats", S_SKIP|S_TITLE, m_null, CHEAT_X, M_Y + keys12_title1 * M_SPC},
+
+  {"Infinite Ammo",      S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_infammo   * M_SPC, {0}, input_infammo},
+  {"Fast Weapons",       S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_fastweaps * M_SPC, {0}, input_fastweaps},
+  {"Resurrect",          S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_resurrect * M_SPC, {0}, input_resurrect},
+  {"Flight Mode",        S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_fly       * M_SPC, {0}, input_fly},
+  {"Repeat Last Summon", S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_summonr   * M_SPC, {0}, input_summonr},
+  {"Linetarget Query",   S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_linetarg  * M_SPC, {0}, input_linetarget},
+  {"MDK Attack",         S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_mdk       * M_SPC, {0}, input_mdk},
+  {"MDK Fist",           S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_saitama   * M_SPC, {0}, input_saitama},
+  {"Explosive Hitscan",  S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_boomcan   * M_SPC, {0}, input_boomcan},
+
+  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings11}},
 
   // Final entry
 

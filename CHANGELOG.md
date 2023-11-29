@@ -9,6 +9,16 @@
   - Toggle to apply patch offsets.
 - **Further Extended HUD color customization**
 - **_Show Kills Percentage [in Stats display]_** setting
+- **Made the following cheats bindable to keys:**
+  - Infinite Ammo;
+  - Fast Weapons;
+  - Resurrect;
+  - Flight Mode;
+  - Repeat Last Summon;
+  - Linetarget Query;
+  - MDK Attack;
+  - MDK Fist;
+  - Explosive Hitscan.
 - **Show Save Messages** setting
 - **_Direct Vertical Aiming_ for melee attacks**
 - **_Disable Melee Snapping_** setting
