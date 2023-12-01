@@ -129,8 +129,6 @@ int st_crispyhud; // [Nugget] Now an int
 static boolean st_classicstatusbar;
 static boolean st_statusbarface; // [Nugget] Face may still be drawn in NUGHUD
 
-void ST_createWidgets(); // [Nugget] Prototype this
-
 // !deathmatch
 static boolean st_notdeathmatch;
 

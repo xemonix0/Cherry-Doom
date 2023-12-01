@@ -3712,7 +3712,7 @@ setup_menu_t stat_settings4[] =
   {"Nugget - Extended HUD", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat4_title1 * M_SPC},
 
     {"Show Powerup Timers",      S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat4_powers   * M_SPC, {"hud_power_timers"}},
-    {"Alternative Arms Display", S_YESNO,            m_null, M_X, M_Y + stat4_altarms  * M_SPC, {"alt_arms"}},
+    {"Alternative Arms Display", S_YESNO,            m_null, M_X, M_Y + stat4_altarms  * M_SPC, {"alt_arms"}, 0, ST_createWidgets},
     {"Smart Totals",             S_YESNO,            m_null, M_X, M_Y + stat4_smart    * M_SPC, {"smarttotals"}},
     {"Show Kills Percentage",    S_YESNO,            m_null, M_X, M_Y + stat4_killspct * M_SPC, {"hud_kills_percentage"}},
 
