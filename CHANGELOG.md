@@ -31,6 +31,7 @@
   - Made Patches and icons alignable horizontally and vertically;
   - Disabled Armor icon by default;
   - Changed `weapheight` range from [0, 200] to [-32, 32].
+  - Changed `secret_y` default to 84, to match Woof!.
 - **Speed of non-Melt wipes is now independent of resolution**
 - **Implemented Teleporter Zoom for multiplayer respawning**
 - **Applied interpolation for Chasecam speed effect**
