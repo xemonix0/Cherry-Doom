@@ -4880,6 +4880,17 @@ setup_menu_t gen_settings5[] = { // General Settings screen5
 
 // [Nugget] /-----------------------------------------------------------------
 
+static void M_ChangeViewHeight(void)
+{
+  static int oldviewheight = 0;
+  
+  for (int i = 0;  i < MAXPLAYERS;  i++)
+    if (playeringame[i] && players[i].playerstate == PST_LIVE)
+    { players[i].viewheight += (viewheight_value - oldviewheight) * FRACUNIT; }
+
+  oldviewheight = viewheight_value;
+}
+
 static const char *impact_pitch_str[] = {
   "Off", "Fall", "Damage", "Both", NULL
 };
@@ -4899,7 +4910,7 @@ setup_menu_t gen_settings6[] = {
   {"Nugget - View", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
 
     {"Field of View",                 S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_fov         * M_SPC, {"fov"}, 0, M_SetFOV},
-    {"View Height",                   S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_viewheight  * M_SPC, {"viewheight_value"}},
+    {"View Height",                   S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_viewheight  * M_SPC, {"viewheight_value"}, 0, M_ChangeViewHeight},
     {"View Bobbing Percentage",       S_NUM,             m_null, M_X, M_Y + gen6_viewbobbing * M_SPC, {"view_bobbing_percentage"}},
     {"Impact Pitch",                  S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_impactpitch * M_SPC, {"impact_pitch"}, 0, NULL, impact_pitch_str},
     {"Explosion Shake Effect",        S_YESNO |S_STRICT, m_null, M_X, M_Y + gen6_expshake    * M_SPC, {"explosion_shake"}},

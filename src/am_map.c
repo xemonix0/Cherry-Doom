@@ -999,7 +999,7 @@ boolean AM_Responder
 
       P_TeleportMove(mo, (m_x+m_w/2)<<FRACTOMAPBITS, (m_y+m_h/2)<<FRACTOMAPBITS, false);
       mo->z = mo->floorz;
-      plr->viewz = mo->z + plr->viewheight;
+      plr->viewz = mo->z + plr->viewheight - plr->crouchoffset;
 
       if (fancy_teleport) {
         R_SetFOVFX(FOVFX_TELEPORT); // Teleporter zoom

@@ -41,11 +41,13 @@
 
 ## Bug Fixes
 
+- **_View Height_ increments not being applied immediately**
 - **Further corrected view pitch as FOV changes**
 - **Disabled teleport-to-Automap-pointer during non-Casual Play**
 - **Excess speed when airborne with noclip enabled** [thanks @kitchen-ace]
 - **Blazing door sound fix not applying to Boom doors**
 - **Teleporter Zoom and BFG "explosion" shake affecting all players in multiplayer**
 - **Explosion shake being stopped by the menu during demo playback and netgames**
+- **View snapping when teleporting to Automap pointer while crouching**
 - **Fixed a demo desync** caused by a failed weapon autoswitch when picking up ammo
 - **Tweaked dark menu background and Automap overlay algorithm** (fixes very low values)
