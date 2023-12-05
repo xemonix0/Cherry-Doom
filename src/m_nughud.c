@@ -121,7 +121,8 @@ default_t nughud_defaults[] = {
 
   TOGGLE(    "nughud_percents",       nughud.percents,       1                                 ),
   TOGGLE(    "nughud_patch_offsets",  nughud.patch_offsets,  1                                 ),
-  {          "nughud_weapheight",     (config_t *)&nughud.weapheight, NULL, { 0 }, { 0, 200 }, number },
+  {          "nughud_weapheight",     (config_t *)&nughud.weapheight, NULL, {  0 }, { -32, 32 }, number },
+  {          "nughud_viewoffset",     (config_t *)&nughud.viewoffset, NULL, {  0 }, { -16, 16 }, number },
 
   { NULL }         // last entry
 };

@@ -31,6 +31,7 @@
 #include "st_stuff.h"
 #include "hu_stuff.h"
 // [Nugget]
+#include "m_nughud.h"
 #include "m_random.h"
 #include "p_map.h"
 #include "p_mobj.h"
@@ -885,6 +886,8 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget] Mitigate `PLAYER_SLOPE()` and `lookdir` misalignment
   pitch *= FOVDIFF2;
+
+  if (STRICTMODE(st_crispyhud)) { pitch += nughud.viewoffset; } // [Nugget] NUGHUD
 
   // [Nugget] Explosion shake effect
   chasecamheight = chasecam_height * FRACUNIT;

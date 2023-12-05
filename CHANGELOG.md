@@ -6,7 +6,8 @@
 - **Minimap mode for Automap**
 - **NUGHUD:**
   - Ammo and Health icons;
-  - Toggle to apply patch offsets.
+  - Toggle to apply patch offsets;
+  - Vertical view offset setting.
 - **Further Extended HUD color customization**
 - **_Show Kills Percentage [in Stats display]_** setting
 - **Made the following cheats bindable to keys:**
@@ -28,7 +29,8 @@
 - **NUGHUD:**
   - Let Ammo, Health and Armor icons fall back to vanilla sprites;
   - Made Patches and icons alignable horizontally and vertically;
-  - Disabled Armor icon by default.
+  - Disabled Armor icon by default;
+  - Changed `weapheight` range from [0, 200] to [-32, 32].
 - **Speed of non-Melt wipes is now independent of resolution**
 - **Implemented Teleporter Zoom for multiplayer respawning**
 - **Applied interpolation for Chasecam speed effect**
