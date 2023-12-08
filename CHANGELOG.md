@@ -3,6 +3,7 @@
 - **Support for intermediate resolutions** (e.g. 3X, 5X) **and 9X (1800p)**
 - **_Background for all menus_** setting
 - **_Vanilla Fake Contrast_** setting
+- Toggle for **Diminished Lighting**
 - **Minimap mode for Automap**
 - **NUGHUD:**
   - Ammo and Health icons;

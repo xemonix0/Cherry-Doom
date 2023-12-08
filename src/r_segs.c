@@ -168,6 +168,8 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
             if (index >=  MAXLIGHTSCALE )
               index = MAXLIGHTSCALE-1;
 
+            if (STRICTMODE(!diminished_lighting)) { index = 0; } // [Nugget]
+
             dc_colormap[0] = dc_colormap[1] = walllights[index];
           }
 
@@ -385,6 +387,9 @@ static void R_RenderSegLoop (void)
 
           if (index >=  MAXLIGHTSCALE )
             index = MAXLIGHTSCALE-1;
+
+          if (STRICTMODE(!diminished_lighting)) { index = 0; } // [Nugget]
+
           dc_colormap[0] = walllights[index];
           dc_colormap[1] = (!fixedcolormap && STRICTMODE(brightmaps)) ?
                            fullcolormap : dc_colormap[0];

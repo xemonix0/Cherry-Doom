@@ -871,6 +871,13 @@ default_t defaults[] = {
   },
 
   {
+    "diminished_lighting",
+    (config_t *) &diminished_lighting, NULL,
+    {1}, {0,1}, number, ss_gen, wad_yes,
+    "1 to enable diminished lighting (light emitted by player)"
+  },
+
+  {
     "s_clipping_dist_x2",
     (config_t *) &s_clipping_dist_x2, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,
