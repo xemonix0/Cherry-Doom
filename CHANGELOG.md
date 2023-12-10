@@ -35,6 +35,7 @@
   - Changed `secret_y` default to 84, to match Woof!.
 - **Speed of non-Melt wipes is now independent of resolution**
 - **Implemented Teleporter Zoom for multiplayer respawning**
+- **_Blink [Automap] Marks_ message now includes number of marks**
 - **Applied interpolation for Chasecam speed effect**
 - **MDK Fist attacks now prioritize enemies over friends**
 - **Current resolution is now reported by some video-related menu items**
@@ -42,7 +43,6 @@
 
 ## Bug Fixes
 
-- **_View Height_ increments not being applied immediately**
 - **Further corrected view pitch as FOV changes**
 - **Disabled teleport-to-Automap-pointer during non-Casual Play**
 - **Excess speed when airborne with noclip enabled** [thanks @kitchen-ace]
@@ -51,4 +51,5 @@
 - **Explosion shake being stopped by the menu during demo playback and netgames**
 - **View snapping when teleporting to Automap pointer while crouching**
 - **Fixed a demo desync** caused by a failed weapon autoswitch when picking up ammo
+- **_View Height_ increments not being applied immediately**
 - **Tweaked dark menu background and Automap overlay algorithm** (fixes very low values)

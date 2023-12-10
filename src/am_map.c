@@ -978,7 +978,7 @@ boolean AM_Responder
     else if (M_InputActivated(input_map_blink) && markpointnum)
     {
       markblinktimer = 4*TICRATE;
-      plr->message = "Blinking marks...";
+      displaymsg("Blinking %i mark%s...", markpointnum, (1 < markpointnum) ? "s" : "");
     }
     // Minimap
     else if (M_InputActivated(input_map_mini))
