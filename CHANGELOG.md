@@ -50,6 +50,7 @@
 - **Teleporter Zoom and BFG "explosion" shake affecting all players in multiplayer**
 - **Explosion shake being stopped by the menu during demo playback and netgames**
 - **View snapping when teleporting to Automap pointer while crouching**
+- **View clipping through floor when landing while crouching**
 - **Fixed a demo desync** caused by a failed weapon autoswitch when picking up ammo
 - **_View Height_ increments not being applied immediately**
 - **Tweaked dark menu background and Automap overlay algorithm** (fixes very low values)

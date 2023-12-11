@@ -179,7 +179,7 @@ void P_CalcHeight (player_t* player)
 
         player->viewheight += breathing_val;
       }
-            
+
       if (player->viewheight > view)
         {
           player->viewheight = view;
@@ -201,9 +201,20 @@ void P_CalcHeight (player_t* player)
         }
     }
 
-  // [Nugget] Account for crouching
-  player->viewz = player->mo->z + player->viewheight + bob - player->crouchoffset;
-  
+  player->viewz = player->mo->z + player->viewheight + bob;
+
+  // [Nugget] Account for crouching, but don't clip view through the floor
+  if (player->crouchoffset)
+  {
+    fixed_t crouchoffset = player->crouchoffset;
+
+    if ((player->viewz - crouchoffset) < (player->mo->floorz + FRACUNIT))
+    { crouchoffset = player->viewz - (player->mo->floorz + FRACUNIT); }
+
+    // Do clip view through the floor if not because of crouching
+    player->viewz -= MAX(0, crouchoffset);
+  }
+
   if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
     player->viewz = player->mo->ceilingz-4*FRACUNIT;
 }
