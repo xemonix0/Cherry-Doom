@@ -924,8 +924,8 @@ void R_SetupFrame (player_t *player)
     const fixed_t z = MIN(playerz + ((player->mo->health <= 0 && player->playerstate == PST_DEAD) ? 6*FRACUNIT : chasecamheight),
                           player->mo->ceilingz - (2*FRACUNIT));
     fixed_t slope;
-    fixed_t dist = chasecam_distance*FRACUNIT;
-    const fixed_t oldviewx = viewx, oldviewy = viewy;
+    fixed_t dist = chasecam_distance * FRACUNIT;
+    const fixed_t oldviewx = viewx,  oldviewy = viewy;
     const angle_t oldviewangle = viewangle;
 
     if (chasecam_mode == CHASECAMMODE_FRONT)
@@ -961,15 +961,17 @@ void R_SetupFrame (player_t *player)
       viewz = chasecam.z;
     }
     else {
-      const fixed_t dx = FixedMul(dist, finecosine[viewangle >> ANGLETOFINESHIFT]);
-      const fixed_t dy = FixedMul(dist,   finesine[viewangle >> ANGLETOFINESHIFT]);
+      const fixed_t dx = FixedMul(dist, finecosine[viewangle >> ANGLETOFINESHIFT]),
+                    dy = FixedMul(dist,   finesine[viewangle >> ANGLETOFINESHIFT]);
+
       const sector_t *const sec = R_PointInSubsector(viewx-dx, viewy-dy)->sector;
 
-      viewz = z + (slope * (dist / FRACUNIT));
+      viewz = z + FixedMul(slope, dist);
 
       if (viewz < sec->floorheight+FRACUNIT || sec->ceilingheight-FRACUNIT < viewz)
       {
         fixed_t frac;
+
         viewz  = BETWEEN(sec->floorheight+FRACUNIT, sec->ceilingheight-FRACUNIT, viewz);
         frac   = FixedDiv(viewz - z, FixedMul(slope, dist));
         viewx -= FixedMul(dx, frac);

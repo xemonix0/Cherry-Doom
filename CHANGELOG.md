@@ -49,6 +49,7 @@
 - **Blazing door sound fix not applying to Boom doors**
 - **Teleporter Zoom and BFG "explosion" shake affecting all players in multiplayer**
 - **Explosion shake being stopped by the menu during demo playback and netgames**
+- **Choppy Chasecam speed effect when looking up or down**
 - **View snapping when teleporting to Automap pointer while crouching**
 - **View clipping through floor when landing while crouching**
 - **Fixed a demo desync** caused by a failed weapon autoswitch when picking up ammo
