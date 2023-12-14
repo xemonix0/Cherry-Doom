@@ -46,6 +46,7 @@
 
 - **Further corrected view pitch as FOV changes**
 - **Disabled teleport-to-Automap-pointer during non-Casual Play**
+- **Corrupted screenshots with integer scaling enabled**
 - **Excess speed when airborne with noclip enabled** [thanks @kitchen-ace]
 - **Blazing door sound fix not applying to Boom doors**
 - **Teleporter Zoom and BFG "explosion" shake affecting all players in multiplayer**
