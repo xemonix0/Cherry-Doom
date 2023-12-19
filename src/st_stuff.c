@@ -291,7 +291,7 @@ void ST_refreshBackground(boolean force)
         {
           // [FG] calculate average color of the 16px left and right of the status bar
           const int vstep[][2] = {{0, 1}, {1, 2}, {2, ST_HEIGHT}};
-          const int hstep = SCREENWIDTH * hires*hires;
+          const int hstep = hires ? (4 * SCREENWIDTH) : SCREENWIDTH;
           const int lo = MAX(st_x + WIDESCREENDELTA - SHORT(sbar->leftoffset), 0);
           const int w = MIN(SHORT(sbar->width), SCREENWIDTH);
           const int depth = 16;
@@ -312,12 +312,12 @@ void ST_refreshBackground(boolean force)
             {
               for (x = 0; x < depth; x++)
               {
-                byte *c = dest + y * hstep + ((x + lo) * hires);
+                byte *c = dest + y * hstep + ((x + lo) << hires);
                 r += pal[3 * c[0] + 0];
                 g += pal[3 * c[0] + 1];
                 b += pal[3 * c[0] + 2];
 
-                c += (w - 2 * x - 1) * hires;
+                c += (w - 2 * x - 1) << hires;
                 r += pal[3 * c[0] + 0];
                 g += pal[3 * c[0] + 1];
                 b += pal[3 * c[0] + 2];
@@ -332,9 +332,9 @@ void ST_refreshBackground(boolean force)
             col = I_GetPaletteIndex(pal, r/2, g/2, b/2);
 
             // [FG] fill background buffer with average status bar color
-            for (y = (v0 * hires); y < (v1 * hires); y++)
+            for (y = (v0 << hires); y < (v1 << hires); y++)
             {
-              memset(dest + y * (SCREENWIDTH * hires), col, (SCREENWIDTH * hires));
+              memset(dest + y * (SCREENWIDTH << hires), col, (SCREENWIDTH << hires));
             }
           }
 
@@ -350,20 +350,16 @@ void ST_refreshBackground(boolean force)
 
           src = W_CacheLumpNum(firstflat + R_FlatNumForName(name), PU_CACHE);
 
-          if (hires > 1)
+          if (hires)
           {
-            int i;
-            for (y = ((SCREENHEIGHT - ST_HEIGHT) * hires); y < (SCREENHEIGHT * hires); y++)
-            {
-              for (x = 0; x < (SCREENWIDTH * hires); x += hires)
-              {
-                const byte dot = src[(((y / hires) & 63) << 6) + ((x / hires) & 63)];
-                for (i = 0; i < hires; i++)
+            for (y = (SCREENHEIGHT-ST_HEIGHT)<<1; y < SCREENHEIGHT<<1; y++)
+                for (x = 0; x < SCREENWIDTH<<1; x += 2)
                 {
-                  *dest++ = dot;
+                    const byte dot = src[(((y>>1)&63)<<6) + ((x>>1)&63)];
+
+                    *dest++ = dot;
+                    *dest++ = dot;
                 }
-              }
-            }
           }
           else
           {
@@ -1764,46 +1760,11 @@ void ST_Stop(void)
   st_stopped = true;
 }
 
-static int StatusBarBufferHeight(void)
-{
-  int i;
-  int st_height = ST_HEIGHT;
-  patch_t *const patch = W_CacheLumpName("brdr_b", PU_CACHE);
-
-  if (patch && patch->height > st_height)
-    st_height = patch->height;
-
-  if (sbar && sbar->height > st_height)
-    st_height = sbar->height;
-
-  if (armsbg && armsbg->height > st_height)
-    st_height = armsbg->height;
-
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (faceback[i] && faceback[i]->height > st_height)
-      st_height = faceback[i]->height;
-  }
-
-  return st_height;
-}
-
 void ST_Init(void)
 {
-  int st_height, size;
-
   ST_loadData();
-
-  st_height = StatusBarBufferHeight();
-  size = SCREENWIDTH * (st_height * hires*hires);
-
-  if (screens[4])
-  {
-    Z_Free(screens[4]);
-  }
-
   // killough 11/98: allocate enough for hires
-  screens[4] = Z_Malloc(size, PU_STATIC, 0);
+  screens[4] = Z_Malloc(MAX_SCREENWIDTH*ST_HEIGHT*4, PU_STATIC, 0);
 }
 
 void ST_Warnings(void)

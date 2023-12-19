@@ -97,16 +97,16 @@ static int wipe_initMelt(int width, int height, int ticks)
 
   // setup initial column positions (y<0 => not ready to scroll yet)
   y = (int *) Z_Malloc(width*sizeof(int), PU_STATIC, 0);
-  y[0] = -(M_Random()%16) * hires;
+  y[0] = -(M_Random()%16) << hires;
   for (i=1;i<width;i++)
     {
-      int r = ((M_Random()%3) - 1) * hires;
+      int r = ((M_Random()%3) - 1) << hires;
       y[i] = y[i-1] + r;
       if (y[i] > 0)
         y[i] = 0;
       else
-        if (y[i] == -16 * hires)
-          y[i] = -15 * hires;
+        if (y[i] == -16 << hires)
+          y[i] = -15 << hires;
     }
   return 0;
 }
@@ -118,7 +118,7 @@ static int wipe_doMelt(int width, int height, int ticks)
 
   width /= 2;
 
-  ticks *= hires; // [Nugget] Hires support: brought from `wipe_ScreenWipe()`
+  ticks <<= hires; // [Nugget] Hires support: brought from `wipe_ScreenWipe()`
 
   // [Nugget] Screen Wipe speed
   if (!strictmode && wipe_speed_percentage != 100)
@@ -265,7 +265,7 @@ int wipe_ScreenWipe(int wipeno, int x, int y, int width, int height, int ticks)
   // killough 11/98: hires support
   // [Nugget] `ticks` is now calculated in `wipe_doMelt()`,
   // since that's the only wipe style where it matters
-  width *= hires, height *= hires;
+  width <<= hires, height <<= hires;
 
   if (!go)                                         // initial stuff
     {

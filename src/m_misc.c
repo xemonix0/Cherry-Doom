@@ -165,10 +165,9 @@ default_t defaults[] = {
   //
 
   { // killough 11/98: hires
-    // [Nugget] Now a multiplier
     "hires", (config_t *) &default_hires, NULL,
-    {2}, {1,MAX_HIRES}, number, ss_none, wad_no,
-    "Renderer resolution multiplier (1 = 200p, 2 = 400p, 3 = 600p...)"
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to enable 640x400 resolution for rendering scenes"
   },
 
   {
@@ -183,13 +182,6 @@ default_t defaults[] = {
     (config_t *) &stretch_to_fit, NULL,
     {0}, {0, 1}, number, ss_none, wad_no,
     "1 to stretch viewport to fit window"
-  },
-
-  { // [Nugget]
-    "no_downscaling",
-    (config_t *) &no_downscaling, NULL,
-    {0}, {0, 1}, number, ss_none, wad_no,
-    "1 to prevent auto-downscaling of window if it exceeds the display boundaries"
   },
 
   // [FG] save fullscren mode

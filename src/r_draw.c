@@ -554,13 +554,12 @@ static void R_DrawFuzzColumn_block(void)
   boolean cutoff_yl, cutoff_yh;
 
   // [FG] draw only even columns
-  if (dc_x % hires)
+  if (dc_x & 1)
     return;
 
   // [FG] draw only even pixels
-  dc_yl += hires;
-  dc_yl -= dc_yl % hires;
-  dc_yh -= dc_yh % hires;
+  dc_yl &= (int)~1;
+  dc_yh &= (int)~1;
 
   count = dc_yh - dc_yl;
 
@@ -568,7 +567,7 @@ static void R_DrawFuzzColumn_block(void)
     return;
 
   cutoff_yl = (dc_yl == 0);
-  cutoff_yh = (dc_yh == viewheight - hires);
+  cutoff_yh = (dc_yh == viewheight - 2);
 
 #ifdef RANGECHECK
   if ((unsigned) dc_x >= MAX_SCREENWIDTH
@@ -580,7 +579,7 @@ static void R_DrawFuzzColumn_block(void)
 
   dest = ylookup[dc_yl] + columnofs[dc_x];
 
-  count /= hires;
+  count >>= 1;
   count++;
 
   if (cutoff_yh)
@@ -588,7 +587,7 @@ static void R_DrawFuzzColumn_block(void)
 
   if (count > 0)
   {
-    DrawFuzzBlock(FUZZTOP, &dest, hires, cutoff_yl ? 0 : -1, 1);
+    DrawFuzzBlock(FUZZTOP, &dest, 2, cutoff_yl ? 0 : -1, 1);
     count--;
   }
 
@@ -596,12 +595,12 @@ static void R_DrawFuzzColumn_block(void)
     {
       // [FG] draw only even pixels as 2x2 squares
       //      using the same fuzzoffset value
-      DrawFuzzBlock(FUZZDARK, &dest, hires, -1, 1);
+      DrawFuzzBlock(FUZZDARK, &dest, 2, -1, 1);
     }
 
   if (cutoff_yh)
     {
-      DrawFuzzBlock(FUZZDARK, &dest, hires, -1, 0);
+      DrawFuzzBlock(FUZZDARK, &dest, 2, -1, 0);
     }
 }
 
@@ -611,7 +610,7 @@ int fuzzcolumn_mode;
 void (*R_DrawFuzzColumn) (void) = R_DrawFuzzColumn_orig;
 void R_SetFuzzColumnMode (void)
 {
-  if (fuzzcolumn_mode && hires > 1)
+  if (fuzzcolumn_mode && hires)
     R_DrawFuzzColumn = R_DrawFuzzColumn_block;
   else
     R_DrawFuzzColumn = R_DrawFuzzColumn_orig;
@@ -815,30 +814,28 @@ void R_InitBuffer(int width, int height)
 { 
   int i; 
 
-  linesize = (SCREENWIDTH * hires);    // killough 11/98
+  linesize = SCREENWIDTH << hires;    // killough 11/98
 
   // Handle resize,
   //  e.g. smaller view windows
   //  with border and/or status bar.
 
-//viewwindowx = (SCREENWIDTH-width) >> !hires;  // killough 11/98
-  viewwindowx = (SCREENWIDTH - width) >> 1;
-  viewwindowx *= hires;
+  viewwindowx = (SCREENWIDTH-width) >> !hires;  // killough 11/98
 
   // Column offset. For windows.
 
-  for (i = width * hires ; i--; )   // killough 11/98
+  for (i = width << hires ; i--; )   // killough 11/98
     columnofs[i] = viewwindowx + i;
     
   // Same with base row offset.
 
   viewwindowy = width==SCREENWIDTH ? 0 : (SCREENHEIGHT-SBARHEIGHT-height)>>1; 
 
-  viewwindowy *= hires;   // killough 11/98
+  viewwindowy <<= hires;   // killough 11/98
 
   // Preclaculate all row offsets.
 
-  for (i = height * hires; i--; )
+  for (i = height << hires; i--; )
     ylookup[i] = screens[0] + (i+viewwindowy)*linesize; // killough 11/98
 } 
 
@@ -854,20 +851,16 @@ void R_DrawBackground(char *patchname, byte *back_dest)
   int x, y;
   byte *src = W_CacheLumpNum(firstflat + R_FlatNumForName(patchname), PU_CACHE);
 
-  if (hires > 1)       // killough 11/98: hires support
+  if (hires)       // killough 11/98: hires support
   {
-    int i;
-    for (y = 0; y < (SCREENHEIGHT * hires); y++)
-    {
-      for (x = 0; x < (SCREENWIDTH * hires); x += hires)
+    for (y = 0; y < SCREENHEIGHT<<1; y++)
+      for (x = 0; x < SCREENWIDTH<<1; x += 2)
       {
-        const byte dot = src[(((y / hires) & 63) << 6) + ((x / hires) & 63)];
-        for (i = 0; i < hires; i++)
-        {
-          *back_dest++ = dot;
-        }
+        const byte dot = src[(((y>>1)&63)<<6) + ((x>>1)&63)];
+
+        *back_dest++ = dot;
+        *back_dest++ = dot;
       }
-    }
   }
   else
   {
@@ -926,7 +919,7 @@ void R_FillBackScreen (void)
   // killough 11/98: use the function in m_menu.c
   R_DrawBackground(gamemode==commercial ? "GRNROCK" : "FLOOR7_2", screens[1]);
 
-  R_DrawBorder(viewwindowx / hires, viewwindowy / hires, scaledviewwidth, scaledviewheight, 1);
+  R_DrawBorder(viewwindowx >> hires, viewwindowy >> hires, scaledviewwidth, scaledviewheight, 1);
 }
 
 //
@@ -935,18 +928,11 @@ void R_FillBackScreen (void)
 
 void R_VideoErase(unsigned ofs, int count)
 { 
-  if (hires > 1)     // killough 11/98: hires support
+  if (hires)     // killough 11/98: hires support
     {
-      int i;
-      const int pos = ofs % SCREENWIDTH;
-      ofs = (((ofs - pos) * hires) + pos) * hires;   // recompose offset
-      count *= hires;
-      for (i = 0; i < hires; i++)
-      {
-        memcpy(screens[0]+ofs, screens[1]+ofs, count);   // LFB copy.
-        ofs += (SCREENWIDTH * hires);
-      }
-      return;
+      ofs = ofs*4 - (ofs % SCREENWIDTH)*2;   // recompose offset
+      memcpy(screens[0]+ofs, screens[1]+ofs, count*=2);   // LFB copy.
+      ofs += SCREENWIDTH*2;
     }
   memcpy(screens[0]+ofs, screens[1]+ofs, count);   // LFB copy.
 } 
@@ -969,11 +955,11 @@ void R_DrawViewBorder(void)
     return;
 
   // copy top
-  for (ofs = 0, i = viewwindowy / hires; i--; ofs += SCREENWIDTH)
+  for (ofs = 0, i = viewwindowy >> hires; i--; ofs += SCREENWIDTH)
     R_VideoErase(ofs, SCREENWIDTH); 
 
   // copy sides
-  for (side = viewwindowx / hires, i = scaledviewheight; i--;)
+  for (side = viewwindowx >> hires, i = scaledviewheight; i--;)
     { 
       R_VideoErase(ofs, side); 
       ofs += SCREENWIDTH;
@@ -981,7 +967,7 @@ void R_DrawViewBorder(void)
     } 
 
   // copy bottom 
-  for (i = viewwindowy / hires; i--; ofs += SCREENWIDTH)
+  for (i = viewwindowy >> hires; i--; ofs += SCREENWIDTH)
     R_VideoErase(ofs, SCREENWIDTH); 
 } 
 

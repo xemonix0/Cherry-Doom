@@ -585,7 +585,7 @@ void R_ExecuteSetViewSize (void)
       scaledviewheight = (setblocks*168/10) & ~7;        // killough 11/98
       if (widescreen)
       {
-        const int widescreen_edge_aligner = 7;
+        const int widescreen_edge_aligner = (8 << hires) - 1;
 
         scaledviewwidth = scaledviewheight*SCREENWIDTH/(SCREENHEIGHT-ST_HEIGHT);
         // [crispy] make sure scaledviewwidth is an integer multiple of the bezel patch width
@@ -598,11 +598,11 @@ void R_ExecuteSetViewSize (void)
       }
     }
 
-  viewwidth = scaledviewwidth * hires;                  // killough 11/98
-  viewheight = scaledviewheight * hires;                // killough 11/98
-  viewwidth_nonwide = scaledviewwidth_nonwide * hires;
+  viewwidth = scaledviewwidth << hires;                  // killough 11/98
+  viewheight = scaledviewheight << hires;                // killough 11/98
+  viewwidth_nonwide = scaledviewwidth_nonwide << hires;
 
-  viewblocks = MIN(setblocks, 10) * hires;
+  viewblocks = MIN(setblocks, 10) << hires;
 
   // [Nugget] FOV changes
   if (fovchange)
@@ -1151,8 +1151,8 @@ void R_RenderPlayerView (player_t* player)
           c[i] = t=='/' ? color : t;
         }
       if (gametic-lastshottic < TICRATE*2 && gametic-lastshottic > TICRATE/8)
-        V_DrawBlock(((viewwindowx +  viewwidth/2) / hires) - 24,
-                    ((viewwindowy + viewheight/2) / hires) - 24, 0, 47, 47, c);
+        V_DrawBlock((viewwindowx +  viewwidth/2 - 24)>>hires,
+                    (viewwindowy + viewheight/2 - 24)>>hires, 0, 47, 47, c);
       R_DrawViewBorder();
     }
 

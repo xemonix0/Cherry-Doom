@@ -56,11 +56,8 @@ boolean fullscreen;
 boolean exclusive_fullscreen;
 int widescreen; // widescreen mode
 boolean integer_scaling; // [FG] force integer scales
-static boolean use_scale; // [Nugget]
 boolean vga_porch_flash; // emulate VGA "porch" behaviour
 boolean smooth_scaling;
-
-boolean no_downscaling; // [Nugget]
 
 boolean need_reset;
 boolean toggle_fullscreen;
@@ -91,7 +88,6 @@ static int window_x, window_y;
 static int actualheight;
 
 static boolean need_resize;
-boolean need_downscaling;
 
 // haleyjd 10/08/05: Chocolate DOOM application focus state code added
 
@@ -259,65 +255,6 @@ static boolean ToggleFullScreenKeyShortcut(SDL_Keysym *sym)
             sym->scancode == SDL_SCANCODE_KP_ENTER) && (sym->mod & flags) != 0;
 }
 
-static boolean WindowOutOfBounds(void)
-{
-    SDL_Rect bounds;
-
-    if (SDL_GetDisplayBounds(video_display, &bounds) != 0)
-    {
-        I_Error("Could not get display bounds for video display #%d: %s",
-                video_display, SDL_GetError());
-        return false;
-    }
-
-    return ((window_x + window_width > bounds.x + bounds.w) || window_x < bounds.x ||
-            (window_y + window_height > bounds.y + bounds.h) || window_y < bounds.y);
-}
-
-static boolean FindMinWindowSize(const int desired_width, const int desired_height,
-                                 int *width, int *height)
-{
-    SDL_DisplayMode mode;
-
-    if (SDL_GetCurrentDisplayMode(video_display, &mode) != 0)
-    {
-        I_Error("Could not get display mode for video display #%d: %s",
-                video_display, SDL_GetError());
-        return false;
-    }
-
-    *width = desired_width;
-    *height = desired_height;
-
-    if (!no_downscaling)
-    {
-      do
-      {
-          const int aspect_height = use_aspect ? (6 * (*height) / 5) : *height;
-          if (*width < mode.w && aspect_height < mode.h)
-          {
-              break;
-          }
-          *width >>= 1;
-          *height >>= 1;
-      } while (*width && *height);
-    }
-
-    if (*width < SCREENWIDTH || *height < SCREENHEIGHT)
-    {
-        *width = SCREENWIDTH;
-        *height = SCREENHEIGHT;
-    }
-
-    if (use_aspect)
-    {
-        *height = 6 * (*height) / 5;
-    }
-
-    return true;
-}
-
-static void CenterWindow(int *x, int *y, int w, int h);
 static void I_ReinitGraphicsMode(void);
 
 static void I_ToggleFullScreen(void)
@@ -344,17 +281,6 @@ static void I_ToggleFullScreen(void)
 
     if (!fullscreen)
     {
-        if (WindowOutOfBounds())
-        {
-            const int w = (SCREENWIDTH * hires);
-            const int h = (SCREENHEIGHT * hires);
-            if (!FindMinWindowSize(w, h, &window_width, &window_height))
-            {
-                window_width = w;
-                window_height = actualheight;
-            }
-            CenterWindow(&window_x, &window_y, window_width, window_height);
-        }
         SDL_SetWindowSize(screen, window_width, window_height);
         SDL_SetWindowPosition(screen, window_x, window_y);
     }
@@ -473,7 +399,7 @@ static inline void I_UpdateRender (void)
     SDL_UpdateTexture(texture, NULL, argbbuffer->pixels, argbbuffer->pitch);
     SDL_RenderClear(renderer);
 
-    if (smooth_scaling && !need_downscaling)
+    if (smooth_scaling)
     {
         // Render this intermediate texture into the upscaled texture
         // using "nearest" integer scaling.
@@ -539,30 +465,20 @@ void I_FinishUpdate(void)
       lasttic = i;
       if (tics > 20)
         tics = 20;
-      if (hires > 1)    // killough 11/98: hires support
+      if (hires)    // killough 11/98: hires support
         {
-          int j;
-          const int pos0 = ((SCREENHEIGHT - 1) * hires) * (SCREENWIDTH * hires);
-          for (i = 0; i < tics * 2; i += 2)
-          {
-            const int pos1 = pos0 + (i * hires);
-            int pos2 = 0;
-            for (j = 0; j < hires; j++)
-            {
-              memset(&s[pos1 + pos2], 0xFF, hires);
-              pos2 += (SCREENWIDTH * hires);
-            }
-          }
-          for ( ; i < 20 * 2; i += 2)
-          {
-            const int pos1 = pos0 + (i * hires);
-            int pos2 = 0;
-            for (j = 0; j < hires; j++)
-            {
-              memset(&s[pos1 + pos2], 0x0, hires);
-              pos2 += (SCREENWIDTH * hires);
-            }
-          }
+          for (i=0 ; i<tics*2 ; i+=2)
+            s[(SCREENHEIGHT-1)*SCREENWIDTH*4+i] =
+              s[(SCREENHEIGHT-1)*SCREENWIDTH*4+i+1] =
+              s[(SCREENHEIGHT-1)*SCREENWIDTH*4+i+SCREENWIDTH*2] =
+              s[(SCREENHEIGHT-1)*SCREENWIDTH*4+i+SCREENWIDTH*2+1] =
+              0xff;
+          for ( ; i<20*2 ; i+=2)
+            s[(SCREENHEIGHT-1)*SCREENWIDTH*4+i] =
+              s[(SCREENHEIGHT-1)*SCREENWIDTH*4+i+1] =
+              s[(SCREENHEIGHT-1)*SCREENWIDTH*4+i+SCREENWIDTH*2] =
+              s[(SCREENHEIGHT-1)*SCREENWIDTH*4+i+SCREENWIDTH*2+1] =
+              0x0;
         }
       else
         {
@@ -638,7 +554,7 @@ void I_FinishUpdate(void)
 
 void I_ReadScreen(byte *scr)
 {
-   const int size = SCREENWIDTH * (SCREENHEIGHT * hires*hires);
+   int size = hires ? SCREENWIDTH*SCREENHEIGHT*4 : SCREENWIDTH*SCREENHEIGHT;
 
    // haleyjd
    memcpy(scr, *screens, size);
@@ -652,7 +568,7 @@ static byte *diskflash, *old_data;
 
 static void I_InitDiskFlash(void)
 {
-  byte temp[(16 * 16) * MAX_HIRES*MAX_HIRES];
+  byte temp[32*32];
 
   if (diskflash)
     {
@@ -660,8 +576,8 @@ static void I_InitDiskFlash(void)
       Z_Free(old_data);
     }
 
-  diskflash = Z_Malloc((16*hires) * (16*hires) * sizeof(*diskflash), PU_STATIC, 0);
-  old_data = Z_Malloc((16*hires) * (16*hires) * sizeof(*old_data), PU_STATIC, 0);
+  diskflash = Z_Malloc((16<<hires) * (16<<hires) * sizeof(*diskflash), PU_STATIC, 0);
+  old_data = Z_Malloc((16<<hires) * (16<<hires) * sizeof(*old_data), PU_STATIC, 0);
 
   V_GetBlock(0, 0, 0, 16, 16, temp);
   V_DrawPatchDirect(0-WIDESCREENDELTA, 0, 0, W_CacheLumpName("STDISK", PU_CACHE));
@@ -761,7 +677,6 @@ void I_SetPalette(byte *palette)
   else
   { gamma = gamma2table[gamma2]; }
 
-
   for(i = 0; i < 256; ++i)
   {
     colors[i].r = gamma[*palette++];
@@ -817,7 +732,7 @@ boolean I_WritePNGfile(char *filename)
 {
   SDL_Rect rect = {0};
   SDL_PixelFormat *format;
-  const int screen_width = (SCREENWIDTH * hires);
+  const int screen_width = (SCREENWIDTH << hires);
   int pitch;
   byte *pixels;
   boolean ret = false;
@@ -831,9 +746,9 @@ boolean I_WritePNGfile(char *filename)
   // [FG] adjust cropping rectangle if necessary
   SDL_GetRendererOutputSize(renderer, &rect.w, &rect.h);
   // [Nugget] Check for stretch-to-fit
-  if (!stretch_to_fit || use_scale)
+  if (!stretch_to_fit || integer_scaling)
   {
-    if (use_scale)
+    if (integer_scaling)
     {
       int temp1, temp2, scale;
       temp1 = rect.w;
@@ -1023,17 +938,16 @@ void I_GetScreenDimensions(void)
 
         SCREENWIDTH = w * ah / h;
         // [crispy] make sure SCREENWIDTH is an integer multiple of 4 ...
-        if (hires > 1)
+        if (hires)
         {
-            // [Nugget] Since we have uneven resolution multipliers, mask it twice
-            SCREENWIDTH = (((SCREENWIDTH * hires) & (int)~3) / hires + 3) & (int)~3;
+            SCREENWIDTH = ((2 * SCREENWIDTH) & (int)~3) / 2;
         }
         else
         {
             SCREENWIDTH = (SCREENWIDTH + 3) & (int)~3;
         }
         // [crispy] ... but never exceeds MAX_SCREENWIDTH (array size!)
-        SCREENWIDTH = MIN(SCREENWIDTH, MAX_SCREENWIDTH / MAX_HIRES);
+        SCREENWIDTH = MIN(SCREENWIDTH, MAX_SCREENWIDTH / 2);
     }
 
     WIDESCREENDELTA = (SCREENWIDTH - NONWIDEWIDTH) / 2;
@@ -1045,8 +959,8 @@ static void CreateUpscaledTexture(boolean force)
     int w, h, w_upscale, h_upscale;
     static int h_upscale_old, w_upscale_old;
 
-    const int screen_width  = (SCREENWIDTH * hires);
-    const int screen_height = (SCREENHEIGHT * hires);
+    const int screen_width = (SCREENWIDTH << hires);
+    const int screen_height = (SCREENHEIGHT << hires);
 
     SDL_GetRendererInfo(renderer, &info);
 
@@ -1135,45 +1049,10 @@ static void CreateUpscaledTexture(boolean force)
                                         h_upscale * screen_height);
 }
 
-static boolean NeedDownscaling(void)
-{
-    SDL_RendererInfo info;
-    int w, h;
-
-    const int screen_width = (SCREENWIDTH * hires);
-
-    SDL_GetRendererInfo(renderer, &info);
-    if (info.flags & SDL_RENDERER_SOFTWARE)
-    {
-        return false;
-    }
-
-    if (SDL_GetRendererOutputSize(renderer, &w, &h) != 0)
-    {
-        I_Error("Failed to get renderer output size: %s", SDL_GetError());
-        return false;
-    }
-
-    if (w * actualheight < h * screen_width)
-    {
-        // Tall window.
-        h = w * actualheight / screen_width;
-    }
-    else
-    {
-        // Wide window.
-        w = h * screen_width / actualheight;
-    }
-
-    return screen_width > w || actualheight > h;
-}
-
 static int scalefactor;
 
 static void I_ResetGraphicsMode(void)
 {
-    SDL_DisplayMode mode;
-    int min_width, min_height;
     int w, h;
     static int old_w, old_h;
 
@@ -1181,20 +1060,15 @@ static void I_ResetGraphicsMode(void)
 
     I_GetScreenDimensions();
 
-    w = (SCREENWIDTH * hires);
-    h = (SCREENHEIGHT * hires);
+    w = (SCREENWIDTH << hires);
+    h = (SCREENHEIGHT << hires);
 
     blit_rect.w = w;
     blit_rect.h = h;
 
     actualheight = use_aspect ? (6 * h / 5) : h;
 
-    if (!FindMinWindowSize(w, h, &min_width, &min_height))
-    {
-        min_width = w;
-        min_height = actualheight;
-    }
-    SDL_SetWindowMinimumSize(screen, min_width, min_height);
+    SDL_SetWindowMinimumSize(screen, w, actualheight);
     if (!fullscreen)
     {
         SDL_GetWindowSize(screen, &window_width, &window_height);
@@ -1224,13 +1098,6 @@ static void I_ResetGraphicsMode(void)
 
     if (!fullscreen)
     {
-        if (WindowOutOfBounds())
-        {
-            window_width = min_width;
-            window_height = min_height;
-            CenterWindow(&window_x, &window_y, window_width, window_height);
-            SDL_SetWindowPosition(screen, window_x, window_y);
-        }
         SDL_SetWindowSize(screen, window_width, window_height);
     }
 
@@ -1241,18 +1108,13 @@ static void I_ResetGraphicsMode(void)
       SDL_RenderSetLogicalSize(renderer, w, actualheight);
 
     // [FG] force integer scales
-    if (SDL_GetCurrentDisplayMode(video_display, &mode) == 0)
-    {
-        use_scale = integer_scaling && w <= mode.w && actualheight <= mode.h;
-        SDL_RenderSetIntegerScale(renderer, use_scale ? SDL_TRUE : SDL_FALSE);
-    }
+    SDL_RenderSetIntegerScale(renderer, integer_scaling ? SDL_TRUE : SDL_FALSE);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 
     V_Init();
-    ST_Init();
 
     // [FG] create paletted frame buffer
 
@@ -1298,17 +1160,14 @@ static void I_ResetGraphicsMode(void)
         SDL_DestroyTexture(texture);
     }
 
-    need_downscaling = NeedDownscaling();
-
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,
-                smooth_scaling && need_downscaling ? "linear" : "nearest");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
 
     texture = SDL_CreateTexture(renderer,
                                 pixel_format,
                                 SDL_TEXTUREACCESS_STREAMING,
                                 w, h);
 
-    if (smooth_scaling && !need_downscaling)
+    if (smooth_scaling)
     {
         CreateUpscaledTexture(true);
     }

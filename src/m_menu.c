@@ -2674,19 +2674,6 @@ void M_DrawInstructions()
     strcpy(menu_buffer, s);
     M_DrawMenuString(x,20,color);
   }
-
-  // [Nugget] Report current resolution
-  if (flags & S_RESOLUTION)
-  {
-    char str[48];
-
-    M_snprintf(str, sizeof(str), "Current Resolution: %ix%i",
-               (SCREENWIDTH * hires),
-               (use_aspect ? (6 * SCREENHEIGHT / 5) : SCREENHEIGHT) * hires);
-
-    M_DrawString((ORIGWIDTH / 2) - (M_GetPixelWidth(str) / 2),
-                 M_Y + (14 * M_SPC), CR_GOLD, str);
-  }
 }
 
 // [FG] reload current level / go to next level
@@ -4396,25 +4383,14 @@ static void M_ResetScreen(void)
   need_reset = true;
 }
 
-static const char *hires_strings[] = {
-  NULL,
-  "1X (200p)",  "2X (400p)",  "3X (600p)",
-  "4X (800p)",  "5X (1000p)", "6X (1200p)",
-  "7X (1400p)", "8X (1600p)", "9X (1800p)",
-  NULL
-};
-
 setup_menu_t gen_settings1[] = { // General Settings screen1
 
   {"Video"       ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
 
-  // [Nugget] These first two items now report
-  // the current resolution when sitting on them
+  {"High Resolution", S_YESNO, m_null, M_X, M_Y+ gen1_hires*M_SPC,
+   {"hires"}, 0, M_ResetScreen},
 
-  {"Renderer Resolution", S_CHOICE|S_RESOLUTION, m_null, M_X, M_Y+ gen1_hires*M_SPC,
-   {"hires"}, 0, M_ResetScreen, hires_strings},
-
-  {"Widescreen Rendering", S_CHOICE|S_RESOLUTION, m_null, M_X, M_Y+ gen1_widescreen*M_SPC,
+  {"Widescreen Rendering", S_CHOICE, m_null, M_X, M_Y+ gen1_widescreen*M_SPC,
    {"widescreen"}, 0, M_ResetScreen, widescreen_ratios}, // [Nugget] Widescreen ratios
 
   {"", S_SKIP, m_null, M_X, M_Y + gen1_gap1*M_SPC},
@@ -8126,7 +8102,7 @@ void M_ResetSetupMenu(void)
 
 void M_ResetSetupMenuVideo(void)
 {
-  DISABLE_ITEM(hires == 1, enem_settings1[enem1_fuzz]);
+  DISABLE_ITEM(!hires, enem_settings1[enem1_fuzz]);
   M_EnableDisableFPSLimit();
 }
 

@@ -38,8 +38,6 @@
 #include "s_sound.h"
 #include "sounds.h"
 
-extern int need_downscaling; // [Nugget]
-
 // [Nugget] Tag Finder from PrBoomX /-----------------------------------------
 
 static boolean findtag;
@@ -643,16 +641,16 @@ static void AM_LevelInit(void)
   // [Nugget] Minimap
   if (automapactive == AM_MINI)
   {
-    f_x = 8 * hires;
-    f_y = (((message_list ? hud_msg_lines : 1) + 1) * 8 + 1) * hires;
-    f_w = f_h = 80 * hires;
+    f_x = 8 << hires;
+    f_y = (((message_list ? hud_msg_lines : 1) + 1) * 8 + 1) << hires;
+    f_w = f_h = 80 << hires;
   }
   else {
-    f_w = (SCREENWIDTH * hires);
+    f_w = (SCREENWIDTH) << hires;
     if (automapoverlay && scaledviewheight == SCREENHEIGHT)
-      f_h = (SCREENHEIGHT * hires);
+      f_h = (SCREENHEIGHT) << hires;
     else
-      f_h = (SCREENHEIGHT-ST_HEIGHT) * hires;
+      f_h = (SCREENHEIGHT-ST_HEIGHT) << hires;
   }
 
   AM_enableSmoothLines();
@@ -960,9 +958,9 @@ boolean AM_Responder
       }
 
       if (automapoverlay && scaledviewheight == SCREENHEIGHT)
-        f_h = (SCREENHEIGHT * hires);
+        f_h = (SCREENHEIGHT) << hires;
       else
-        f_h = (SCREENHEIGHT-ST_HEIGHT) * hires;
+        f_h = (SCREENHEIGHT-ST_HEIGHT) << hires;
 
       AM_activateNewScale();
     }
@@ -1066,14 +1064,14 @@ boolean AM_Responder
   if (!followplayer)
   {
     if (buttons_state[PAN_RIGHT])
-      m_paninc.x += FTOM(f_paninc * hires);
+      m_paninc.x += FTOM(f_paninc << hires);
     if (buttons_state[PAN_LEFT])
-      m_paninc.x += -FTOM(f_paninc * hires);
+      m_paninc.x += -FTOM(f_paninc << hires);
 
     if (buttons_state[PAN_UP])
-      m_paninc.y += FTOM(f_paninc * hires);
+      m_paninc.y += FTOM(f_paninc << hires);
     if (buttons_state[PAN_DOWN])
-      m_paninc.y += -FTOM(f_paninc * hires);
+      m_paninc.y += -FTOM(f_paninc << hires);
   }
 
   if (!mousewheelzoom)
@@ -1243,7 +1241,7 @@ static void AM_clearFB(int color)
 
   for (x = f_x;  x < f_x+f_w;  x++)
     for (y = f_y;  y < f_y+f_h;  y++)
-      fb[y * (SCREENWIDTH * hires) + x] = color;
+      fb[y * (SCREENWIDTH << hires) + x] = color;
 }
 
 //
@@ -1387,22 +1385,6 @@ static boolean AM_clipMline
 }
 #undef DOOUTCODE
 
-// [Nugget] Prevent potentially-disappearing lines when downscaling the window;
-//          Minimap: take `f_x` and `f_y` into account
-void PUTDOT(int x, int y, int color)
-{
-  if (need_downscaling && !smooth_scaling)
-  {
-    int i, j, pixels = MAX(1, hires / 2);
-
-    for (i = 0;  i < pixels && (f_x <= x+i && x+i < f_x+f_w);  i++)
-      for (j = 0;  j < pixels && (f_y <= y+j && y+j < f_y+f_h);  j++)
-        fb[(y + j) * (SCREENWIDTH * hires) + (x + i)] = color;
-  }
-  else if ((f_x <= x && x < f_x+f_w) && (f_y <= y && y < f_y+f_h))
-    fb[y * (SCREENWIDTH * hires) + x] = color;
-}
-
 //
 // AM_drawFline()
 //
@@ -1438,6 +1420,11 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
     return;
   }
 #endif
+
+// [Nugget] Minimap: take `f_x` and `f_y` into account
+#define PUTDOT(xx,yy,cc)                                          \
+  if ((f_x <= xx && xx < f_x+f_w) && (f_y <= yy && yy < f_y+f_h)) \
+    fb[(yy) * (SCREENWIDTH << hires) + (xx)] = (cc)
 
   dx = fl->b.x - fl->a.x;
   ax = 2 * (dx<0 ? -dx : dx);
@@ -2415,8 +2402,8 @@ static void AM_drawMarks(void)
   for (i=0;i<markpointnum;i++) // killough 2/22/98: remove automap mark limit
     if (markpoints[i].x != -1)
       {
-	int w = 5 * hires;
-	int h = 6 * hires;
+	int w = 5 << hires;
+	int h = 6 << hires;
 	int fx;
 	int fy;
 	int j = i;
@@ -2436,16 +2423,15 @@ static void AM_drawMarks(void)
 	    int d = j % 10;
 
 	    if (d==1)           // killough 2/22/98: less spacing for '1'
-	      fx += hires;
+	      fx += 1<<hires;
 
 	    // [Nugget] Minimap: take `f_x` and `f_y` into account
 	    if (fx >= f_x && fx < f_x+f_w - w && fy >= f_y && fy < f_y+f_h - h)
 	      // [Nugget] Blink marks
-	      V_DrawPatchTranslated((fx / hires) - WIDESCREENDELTA,
-	                            fy / hires, FB, marknums[d],
+	      V_DrawPatchTranslated((fx >> hires) - WIDESCREENDELTA, fy >> hires, FB, marknums[d],
 	                            (markblinktimer & 8) ? cr_dark : NULL);
 
-	    fx -= w - hires;     // killough 2/22/98: 1 space backwards
+	    fx -= w - (1<<hires);     // killough 2/22/98: 1 space backwards
 
 	    j /= 10;
 	  }
@@ -2480,7 +2466,7 @@ void AM_shadeScreen(void)
 
     for (x = f_x;  x < f_x+f_w;  x++)
       for (y = f_y;  y < f_y+f_h;  y++) {
-        pixel = y * (SCREENWIDTH * hires) + x;
+        pixel = y * (SCREENWIDTH << hires) + x;
         fb[pixel] = colormaps[0][automap_overlay_darkening * 256 + fb[pixel]];
       }
   }
