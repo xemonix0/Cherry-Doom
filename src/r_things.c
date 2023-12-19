@@ -637,9 +637,12 @@ void R_ProjectSprite (mobj_t* thing)
     vis->colormap[0] = vis->colormap[1] = fullcolormap;       // full bright  // killough 3/20/98
   else
     {      // diminished light
-      int index = (int) (xscale/fovdiff)>>(LIGHTSCALESHIFT+hires);  // killough 11/98
+      int index = (int) (xscale/fovdiff) / ((1 << LIGHTSCALESHIFT) * hires);  // killough 11/98
       if (index >= MAXLIGHTSCALE)
         index = MAXLIGHTSCALE-1;
+
+      if (STRICTMODE(!diminished_lighting)) { index = 0; } // [Nugget]
+
       vis->colormap[0] = spritelights[index];
       vis->colormap[1] = fullcolormap;
     }
@@ -799,7 +802,10 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
     vis->colormap[0] = vis->colormap[1] = fullcolormap;            // full bright // killough 3/20/98
   else
   {
-    vis->colormap[0] = spritelights[MAXLIGHTSCALE-1];  // local light
+    // [Nugget]
+    const int index = (STRICTMODE(!diminished_lighting)) ? 0 : MAXLIGHTSCALE-1;
+
+    vis->colormap[0] = spritelights[index];  // local light
     vis->colormap[1] = fullcolormap;
   }
   vis->brightmap = R_BrightmapForState(psp->state - states);
@@ -842,7 +848,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   // [crispy] free look
   vis->texturemid += (centery - viewheight/2) * pspriteiscale
-                     + (STRICTMODE(st_crispyhud) ? nughud.weapheight*FRACUNIT : 0); // [Nugget] NUGHUD
+                     - (STRICTMODE(st_crispyhud) ? nughud.weapheight*FRACUNIT : 0); // [Nugget] NUGHUD
 
   if (STRICTMODE(hide_weapon || chasecam_on)) // [Nugget] Chasecam
     return;

@@ -82,6 +82,8 @@ extern boolean smooth_scaling;
 extern boolean toggle_fullscreen;
 extern boolean toggle_exclusive_fullscreen;
 
+extern boolean no_downscaling; // [Nugget]
+
 // [Cherry] motion blur
 void I_SetMotionBlur(const int percent);
 

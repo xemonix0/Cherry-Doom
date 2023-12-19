@@ -44,7 +44,6 @@
 #include "m_argv.h"
 #include "m_misc.h"
 #include "m_misc2.h" // [FG] M_StringDuplicate()
-#include "m_nughud.h" // [Nugget]
 #include "m_menu.h"
 #include "m_swap.h"
 #include "i_printf.h"
@@ -69,6 +68,7 @@
 #include "i_endoom.h"
 #include "d_quit.h"
 #include "r_bmaps.h"
+#include "m_nughud.h" // [Nugget]
 #include "ws_wadstats.h" // [Cherry]
 
 #include "dsdhacked.h"
@@ -346,11 +346,11 @@ void D_Display (void)
   if (paused)
     {
       int y = 4;
-      int x = (viewwindowx>>hires);
+      int x = (viewwindowx/hires);
       patch_t *patch = W_CacheLumpName("M_PAUSE", PU_CACHE);
 
       if (!automapactive)
-        y += (viewwindowy>>hires);
+        y += (viewwindowy/hires);
       V_DrawPatchDirect(x + (scaledviewwidth - SHORT(patch->width)) / 2 - WIDESCREENDELTA,
                         y, 0, patch);
     }
@@ -2564,9 +2564,9 @@ void D_DoomMain(void)
 
   D_ProcessInWads("BRGHTMPS", R_ParseBrightmaps, false);
 
-  M_NughudLoadOptions(); // [Nugget]
-
   I_PutChar(VB_INFO, '\n');     // killough 3/6/98: add a newline, by popular demand :)
+
+  M_NughudLoadOptions(); // [Nugget]
 
   // Moved after WAD initialization because we are checking the COMPLVL lump
   G_ReloadDefaults(false); // killough 3/4/98: set defaults just loaded.

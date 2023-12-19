@@ -228,7 +228,7 @@ extern int snd_MusicVolume;    // maximum volume for music
 //  status bar explicitely.
 extern  boolean statusbaractive;
 
-extern  boolean automapactive; // In AutoMap mode?
+extern  int automapactive; // In AutoMap mode? // [Nugget] Minimap: now an int
 
 typedef enum
 {
@@ -240,8 +240,9 @@ typedef enum
 extern  overlay_t automapoverlay;
 extern  boolean automaprotate;
 
-#define automap_on (automapactive && !automapoverlay)
-#define automap_off (!automapactive || automapoverlay)
+// [Nugget] Minimap support (1 == AM_FULL)
+#define automap_on (automapactive == 1 && !automapoverlay)
+#define automap_off (automapactive != 1 || automapoverlay)
 
 extern  boolean menuactive;    // Menu overlayed?
 extern  int     paused;        // Game Pause?
@@ -449,7 +450,7 @@ extern boolean hide_weapon;
 // [FG] centered weapon sprite
 extern int center_weapon;
 
-// [Nugget] /--------------------------
+// [Nugget] /-----------------------------------------------------------------
 
 extern boolean fauxdemo;
 extern boolean casual_play;
@@ -457,8 +458,9 @@ extern boolean casual_play;
 #define    CASUALPLAY(x) (casual_play ? (x) : 0)
 #define NOTCASUALPLAY(x) (casual_play ? (x) : 1)
 
-// General ------------------
+// General ----------------------------
 
+extern int gammacycle; // CFG-Only
 extern int wipe_type;
 extern int over_under;
 extern int jump_crouch;
@@ -487,13 +489,16 @@ enum {
 }; extern int chasecam_mode;
 extern int chasecam_distance;
 extern int chasecam_height;
+extern int chasecam_crosshair; // CFG-Only
 
+extern int menu_background_all;
 extern int no_menu_tint;
 extern int no_berserk_tint;
 extern int no_radsuit_tint;
 extern int damagecount_cap;
 extern int bonuscount_cap;
 extern int fake_contrast;
+extern int diminished_lighting; // CFG-Only
 extern int wipe_speed_percentage;
 // [Cherry] General ------------------------------------------------------
 extern int motion_blur;
@@ -502,15 +507,17 @@ extern int s_clipping_dist_x2;
 extern int one_key_saveload;
 extern int no_page_ticking;
 extern int quick_quitgame;
+
 //extern int a11y_sector_lighting;
 extern int a11y_weapon_flash;
 extern int a11y_weapon_pspr;
 extern int a11y_invul_colormap;
 
-// Weapons ------------------
+// Weapons ----------------------------
 
 extern int no_hor_autoaim;
 extern int switch_on_pickup;
+extern int always_bob; // CFG-Only
 extern int weapon_bobbing_percentage;
 
 enum {
@@ -524,24 +531,19 @@ enum {
 }; extern int bobbing_style;
 
 extern int weapon_inertia;
+extern int weapon_inertia_scale_pct; // CFG-Only
 extern int weaponsquat;
 extern int translucent_pspr;
 extern int show_berserk;
+extern int sx_fix; // CFG-Only
 
-// Status Bar/HUD -----------
+// Status Bar/HUD ---------------------
 
+extern int show_ssg; // CFG-Only
+extern int alt_arms;
+extern int blink_keys; // CFG-Only
 extern int smarttotals;
-// [Cherry] --------------------------------------------------------------
-extern int hudcolor_wg_name;
-extern int hudcolor_plain;
-extern int hudcolor_totaltime;
-extern int hudcolor_th_low;
-extern int hudcolor_th_ok;
-extern int hudcolor_th_good;
-extern int hudcolor_th_extra;
-// [Cherry] End ----------------------------------------------------------
-extern int hudcolor_ms_incomp;
-extern int hudcolor_ms_comp;
+extern int hud_kills_percentage;
 
 typedef enum {
   TIMER_USE,
@@ -552,34 +554,31 @@ typedef enum {
 } eventtimer_t;
 extern int event_timers[];
 
-// Enemies ------------------
+extern int hudcolor_time_scale;
+extern int hudcolor_total_time;
+extern int hudcolor_time;
+extern int hudcolor_event_timer;
+extern int hudcolor_kills;
+extern int hudcolor_items;
+extern int hudcolor_secrets;
+extern int hudcolor_attempts; // [Cherry]
+extern int hudcolor_attempts_count; // [Cherry]
+extern int hudcolor_movement; // [Cherry]
+extern int hudcolor_weapons; // [Cherry]
+extern int hudcolor_keys; // [Cherry]
+extern int hudcolor_frag; // [Cherry]
+extern int hudcolor_ms_incomp;
+extern int hudcolor_ms_comp;
+// [Cherry] --------------------------------------------------------------
+extern int hudcolor_th_low;
+extern int hudcolor_th_ok;
+extern int hudcolor_th_good;
+extern int hudcolor_th_extra;
+// [Cherry] End ----------------------------------------------------------
 
-extern int extra_gibbing_on;
-extern int bloodier_gibbing;
-extern int zdoom_item_drops;
+// Enemies ----------------------------
 
-// Messages -----------------
-
-extern int announce_milestones;
-
-// Key Bindings -------------
-
-extern int zoom_fov;
-extern int fancy_teleport;
-
-// CFG only -----------------
-
-extern int gammacycle;
-extern int menu_background_darkening;
-extern int chasecam_crosshair;
-extern int always_bob;
-extern int weapon_inertia_scale_pct;
-extern int sx_fix;
-extern int blink_keys;
-extern int show_ssg;
-extern int alt_arms;
-extern int automap_overlay_darkening;
-
+extern int extra_gibbing_on; // CFG-Only
 typedef enum {
   EXGIB_FIST,
   EXGIB_CSAW,
@@ -589,7 +588,20 @@ typedef enum {
 } extragibbing_t;
 extern int extra_gibbing[];
 
-extern int sp_chat;
+extern int bloodier_gibbing;
+extern int zdoom_item_drops;
+
+// Messages ---------------------------
+
+extern int show_save_messages; // CFG-Only
+extern int announce_milestones;
+
+// Key Bindings -----------------------
+
+extern int zoom_fov;
+extern int fancy_teleport;
+
+// Miscellaneous (CFG-Only) -----------
 
 enum {
   SHOTPAL_NONE,
@@ -598,9 +610,14 @@ enum {
   SHOTPAL_BOTH,
 }; extern int screenshot_palette;
 
-// Doom Compatibility -------
+extern int menu_background_darkening;
+extern int automap_overlay_darkening;
+extern int sp_chat;
+
+// Doom Compatibility -----------------
 
 extern int comp_bruistarget;
+extern int comp_nomeleesnap;
 extern int comp_longautoaim;
 extern int comp_lscollision;
 extern int comp_lsamnesia;
@@ -619,7 +636,7 @@ extern int comp_deadoof;
 extern int comp_unusedpals;
 extern int comp_keypal;
 
-// [Nugget] --------------------------/
+// [Nugget] -----------------------------------------------------------------/
 
 // Doom-style printf
 

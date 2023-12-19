@@ -57,7 +57,9 @@
 #include "m_snapshot.h"
 #include "i_sound.h"
 #include "r_bmaps.h"
-#include "st_stuff.h" // [Nugget]
+// [Nugget]
+#include "am_map.h"
+#include "st_stuff.h"
 #include "ws_wadstats.h" // [Cherry]
 
 // [crispy] remove DOS reference from the game quit confirmation dialogs
@@ -133,7 +135,6 @@ boolean inhelpscreens; // indicates we are in or just left a help screen
 
 boolean menuactive;    // The menus are up
 
-int draw_menu_background;
 background_t menu_background;
 
 #define SKULLXOFF  -32
@@ -206,30 +207,9 @@ menu_t* currentMenu; // current menudef
 // externs added for setup menus
 // [FG] double click acts as "use"
 extern int dclick_use;
-// [Nugget] Removed a bunch of extern declarations, since we included st_stuff.h
-extern int mapcolor_back; // map background
-extern int mapcolor_grid; // grid lines color
-extern int mapcolor_wall; // normal 1s wall color
-extern int mapcolor_fchg; // line at floor height change color
-extern int mapcolor_cchg; // line at ceiling height change color
-extern int mapcolor_clsd; // line at sector with floor=ceiling color
-extern int mapcolor_rkey; // red key color
-extern int mapcolor_bkey; // blue key color
-extern int mapcolor_ykey; // yellow key color
-extern int mapcolor_rdor; // red door color  (diff from keys to allow option)
-extern int mapcolor_bdor; // blue door color (of enabling one but not other )
-extern int mapcolor_ydor; // yellow door color
-extern int mapcolor_tele; // teleporter line color
-extern int mapcolor_secr; // secret sector boundary color
-extern int mapcolor_exit; // jff 4/23/98 exit line
-extern int mapcolor_unsn; // computer map unseen line color
-extern int mapcolor_flat; // line with no floor/ceiling changes
-extern int mapcolor_sprt; // general sprite color
-extern int mapcolor_hair; // crosshair color
-extern int mapcolor_sngl; // single player arrow color
-extern int mapcolor_plyr[4];// colors for player arrows in multiplayer
 
-extern int mapcolor_frnd;  // friends colors  // killough 8/8/98
+// [Nugget] Removed a bunch of extern declarations,
+// since we include `am_map.h` and `st_stuff.h`
 
 // [Cherry] Tag finder colors
 extern int mapcolor_tf_tsc1;  // Tagged sector color 1
@@ -241,11 +221,8 @@ extern int mapcolor_tf_lin2;  // Line color 2
 extern int mapcolor_tf_secx;  // Sector cross marks color
 extern int mapcolor_tf_linx;  // Line cross marks color
 
-extern int map_point_coordinates; // killough 10/98
-
 extern char *chat_macros[];  // chat macros
 extern const char shiftxform[];
-extern int map_secret_after; //secrets do not appear til after bagged
 extern default_t defaults[];
 
 // end of externs added for setup menus
@@ -297,7 +274,6 @@ void M_DrawOptions(void);
 void M_DrawSound(void);
 void M_DrawLoad(void);
 void M_DrawSave(void);
-void M_DrawBackground(char *patchname, byte *back_dest, boolean required);
 void M_DrawSetup(void);                                     // phares 3/21/98
 void M_DrawHelp (void);                                     // phares 5/04/98
 
@@ -418,8 +394,6 @@ void M_DrawMainMenu(void)
   // [Cherry] stop motion blur
   if (STRICTMODE(motion_blur))
     I_SetMotionBlur(0);
-
-  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (94,2,0,W_CacheLumpName("M_DOOM",PU_CACHE));
 }
@@ -651,8 +625,6 @@ void M_DrawEpisode(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0], false);
-
   M_DrawTitle(54,EpiDef.y - 25,"M_EPISOD","WHICH EPISODE?");
 }
 
@@ -722,8 +694,6 @@ void M_DrawNewGame(void)
 {
   // [crispy] force status bar refresh
   inhelpscreens = true;
-
-  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (96,14,0,W_CacheLumpName("M_NEWG",PU_CACHE));
   V_DrawPatchDirect (54,38,0,W_CacheLumpName("M_SKILL",PU_CACHE));
@@ -902,8 +872,6 @@ void M_DrawSaveLoadBottomLine(void)
 void M_DrawLoad(void)
 {
   int i;
-
-  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   //jff 3/15/98 use symbolic load position
   V_DrawPatchDirect (72,LOADGRAPHIC_Y,0,W_CacheLumpName("M_LOADG",PU_CACHE));
@@ -1099,8 +1067,6 @@ void M_DrawSave(void)
 {
   int i;
 
-  M_DrawBackground("FLOOR4_6", screens[0], false);
-
   //jff 3/15/98 use symbolic load position
   V_DrawPatchDirect (72,LOADGRAPHIC_Y,0,W_CacheLumpName("M_SAVEG",PU_CACHE));
   for (i = 0 ; i < load_end ; i++)
@@ -1283,10 +1249,6 @@ char msgNames[2][9]  = {"M_MSGOFF","M_MSGON"};
 
 void M_DrawOptions(void)
 {
-  inhelpscreens = true; // [Cherry] this wasn't here before
-
-  M_DrawBackground("FLOOR4_6", screens[0], false);
-
   V_DrawPatchDirect (108,15,0,W_CacheLumpName("M_OPTTTL",PU_CACHE));
 
   /*  obsolete -- killough
@@ -1353,7 +1315,7 @@ void M_QuitResponse(int ch)
   if (D_CheckEndDoom() && // play quit sound only if showing ENDOOM
       (!netgame || demoplayback) && // killough 12/98
       !nosfxparm && // avoid delay if no sound card
-      !M_InputGameActive(input_speed)) // [Nugget] Quick exit if Run key is held down
+      !M_InputGameActive(input_speed)) // [Nugget] Skip sound if Run key is held down
     {
       if (gamemode == commercial)
 	S_StartSound(NULL,quitsounds2[(gametic>>2)&7]);
@@ -1368,8 +1330,7 @@ void M_QuitDOOM(int choice)
 {
   static char endstring[160];
 
-  // [Nugget] Quick exit
-  if (quick_quitgame) { I_SafeExit(0); }
+  if (quick_quitgame) { I_SafeExit(0); } // [Nugget]
 
   // We pick index 0 which is language sensitive,
   // or one at random, between 1 and maximum number.
@@ -1425,8 +1386,6 @@ menu_t SoundDef =
 
 void M_DrawSound(void)
 {
-  M_DrawBackground("FLOOR4_6", screens[0], false);
-
   V_DrawPatchDirect (60,38,0,W_CacheLumpName("M_SVOL",PU_CACHE));
 
   M_DrawThermo(SoundDef.x,SoundDef.y+LINEHEIGHT*(sfx_vol+1),16,snd_SfxVolume);
@@ -1533,8 +1492,6 @@ extern int axis_turn_sens;
 void M_DrawMouse(void)
 {
   int mhmx,mvmx,mhmx2,mvmx2; //jff 4/3/98 clamp drawn position to 23 max
-
-  M_DrawBackground("FLOOR4_6", screens[0], false);
 
   V_DrawPatchDirect (60,LOADGRAPHIC_Y,0,W_CacheLumpName("M_MSENS",PU_CACHE));
 
@@ -1770,7 +1727,7 @@ void M_SizeDisplay(int choice)
       }
       break;
     case 1:
-      if (screenSize < 8+2) { // [Nugget] Increase to accommodate for Crispy HUD
+      if (screenSize < 8+2) { // [Nugget] Increase to accommodate Crispy HUD
         screenblocks++;
         screenSize++;
       }
@@ -2112,10 +2069,9 @@ menu_t LevelTableDef =                                       // [Cherry]
 //
 // killough 11/98: rewritten to support hires
 
-void M_DrawBackground(char *patchname, byte *back_dest, boolean required)
+void M_DrawBackground(char *patchname, byte *back_dest)
 {
-  if (!required && (draw_menu_background == 0 ||
-                    M_MenuIsShaded() || (!setup_active && draw_menu_background == 1)))
+  if (setup_active && menu_background != background_on)
     return;
 
   R_DrawBackground(patchname, back_dest);
@@ -2124,12 +2080,9 @@ void M_DrawBackground(char *patchname, byte *back_dest, boolean required)
 /////////////////////////////
 //
 // Draws the Title for the main Setup screen
-// [Cherry] Also the background if needed
 
 void M_DrawSetup(void)
 {
-  M_DrawBackground("FLOOR4_6", screens[0], false);
-
   M_DrawTitle(124,15,"M_SETUP","SETUP");
 }
 
@@ -2580,7 +2533,7 @@ void M_DrawSetting(setup_menu_t* s, int y_offset)
 
   if (flags & S_THERMO)
     {
-      const int min = s->var.def->limit.min; // [Nugget]
+      const int min = s->var.def->limit.min; // [Nugget] Support negative values
       const int value = s->var.def->location->i;
       const int max = s->var.def->limit.max;
       const int size =   (min == UL ? M_THRM_SIZE * 2 : abs(min)) // [Nugget]
@@ -2689,7 +2642,7 @@ void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
     {
       // nothing
     }
-    else if (src->m_flags & S_RESET_Y)
+    else if (src->m_flags2 & S2_RESET_Y)
     {
       i = 0;
     }
@@ -2723,7 +2676,7 @@ void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
     {
       // nothing
     }
-    else if (src->m_flags & S_RESET_Y)
+    else if (src->m_flags2 & S2_RESET_Y)
     {
       skip_entry = true;
       i = 0;
@@ -2845,6 +2798,19 @@ void M_DrawInstructions()
       (s = "Press Enter to Change", 91);
     strcpy(menu_buffer, s);
     M_DrawMenuString(x,20,color);
+  }
+
+  // [Nugget] Report current resolution
+  if (flags & S_RESOLUTION)
+  {
+    char str[48];
+
+    M_snprintf(str, sizeof(str), "Current Resolution: %ix%i",
+               (SCREENWIDTH * hires),
+               (use_aspect ? (6 * SCREENHEIGHT / 5) : SCREENHEIGHT) * hires);
+
+    M_DrawString((ORIGWIDTH / 2) - (M_GetPixelWidth(str) / 2),
+                 M_Y + (14 * M_SPC), CR_GOLD, str);
   }
 }
 
@@ -2980,7 +2946,10 @@ setup_menu_t keys_settings6[];
 setup_menu_t keys_settings7[];
 setup_menu_t keys_settings8[];
 setup_menu_t keys_settings9[];
-setup_menu_t keys_settings10[]; // [Nugget]
+// [Nugget]
+setup_menu_t keys_settings10[];
+setup_menu_t keys_settings11[];
+setup_menu_t keys_settings12[];
 
 // The table which gets you from one screen table to the next.
 setup_menu_t* keys_settings[] =
@@ -2994,7 +2963,10 @@ setup_menu_t* keys_settings[] =
   keys_settings7,
   keys_settings8,
   keys_settings9,
-  keys_settings10, // [Nugget]
+  // [Nugget]
+  keys_settings10,
+  keys_settings11,
+  keys_settings12,
   NULL
 };
 
@@ -3039,7 +3011,7 @@ static const char *controller_axes_strings[] = {
   "Left Stick X", "Left Stick Y", "Right Stick X", "Right Stick Y", "None", NULL
 };
 
-setup_menu_t keys_settings1[] =  // Key Binding screen strings
+setup_menu_t keys_settings1[] =  // Key Binding screen strings       
 {
   {"ACTION"    ,S_SKIP|S_TITLE,m_null,KB_X,M_Y},
   {"FIRE"        ,S_INPUT     ,m_scrn,KB_X,M_Y+1*M_SPC,{0},input_fire},
@@ -3055,9 +3027,9 @@ setup_menu_t keys_settings1[] =  // Key Binding screen strings
   {"180 TURN"    ,S_INPUT|S_STRICT,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_reverse},
 
   {"TOGGLES"     ,S_SKIP|S_TITLE,m_null,KB_X,M_Y+13*M_SPC},
-    {"AUTORUN"     ,S_INPUT     ,m_scrn,KB_X,M_Y+14*M_SPC,{0},input_autorun},
-    {"MOUSELOOK"   ,S_INPUT     ,m_scrn,KB_X,M_Y+15*M_SPC,{0},input_mouselook},
-    {"VERTMOUSE"   ,S_INPUT     ,m_scrn,KB_X,M_Y+16*M_SPC,{0},input_novert},
+  {"AUTORUN"     ,S_INPUT     ,m_scrn,KB_X,M_Y+14*M_SPC,{0},input_autorun},
+  {"MOUSELOOK"   ,S_INPUT     ,m_scrn,KB_X,M_Y+15*M_SPC,{0},input_mouselook},
+  {"VERTMOUSE"   ,S_INPUT     ,m_scrn,KB_X,M_Y+16*M_SPC,{0},input_novert},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
@@ -3069,23 +3041,22 @@ setup_menu_t keys_settings1[] =  // Key Binding screen strings
 
 };
 
-setup_menu_t keys_settings2[] =  // Key Binding screen strings
+setup_menu_t keys_settings2[] =  // Key Binding screen strings       
 {
   {"WEAPONS" ,S_SKIP|S_TITLE,m_null,KB_X,M_Y},
-    {"FIST"    ,S_INPUT     ,m_scrn,KB_X,M_Y+1*M_SPC,{0},input_weapon1},
-    {"PISTOL"  ,S_INPUT     ,m_scrn,KB_X,M_Y+2*M_SPC,{0},input_weapon2},
-    {"SHOTGUN" ,S_INPUT     ,m_scrn,KB_X,M_Y+3*M_SPC,{0},input_weapon3},
-    {"CHAINGUN",S_INPUT     ,m_scrn,KB_X,M_Y+4*M_SPC,{0},input_weapon4},
-    {"ROCKET"  ,S_INPUT     ,m_scrn,KB_X,M_Y+5*M_SPC,{0},input_weapon5},
-    {"PLASMA"  ,S_INPUT     ,m_scrn,KB_X,M_Y+6*M_SPC,{0},input_weapon6},
-    {"BFG",     S_INPUT     ,m_scrn,KB_X,M_Y+7*M_SPC,{0},input_weapon7},
-    {"CHAINSAW",S_INPUT     ,m_scrn,KB_X,M_Y+8*M_SPC,{0},input_weapon8},
-    {"SSG"     ,S_INPUT     ,m_scrn,KB_X,M_Y+9*M_SPC,{0},input_weapon9},
-    {"BEST"    ,S_INPUT     ,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_weapontoggle},
-    {"LAST"    ,S_INPUT     ,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_lastweapon}, // [Nugget] Last weapon key
-    // [FG] prev/next weapon keys and buttons
-    {"PREV"    ,S_INPUT     ,m_scrn,KB_X,M_Y+13*M_SPC,{0},input_prevweapon},
-    {"NEXT"    ,S_INPUT     ,m_scrn,KB_X,M_Y+14*M_SPC,{0},input_nextweapon},
+  {"FIST"    ,S_INPUT     ,m_scrn,KB_X,M_Y+1*M_SPC,{0},input_weapon1},
+  {"PISTOL"  ,S_INPUT     ,m_scrn,KB_X,M_Y+2*M_SPC,{0},input_weapon2},
+  {"SHOTGUN" ,S_INPUT     ,m_scrn,KB_X,M_Y+3*M_SPC,{0},input_weapon3},
+  {"CHAINGUN",S_INPUT     ,m_scrn,KB_X,M_Y+4*M_SPC,{0},input_weapon4},
+  {"ROCKET"  ,S_INPUT     ,m_scrn,KB_X,M_Y+5*M_SPC,{0},input_weapon5},
+  {"PLASMA"  ,S_INPUT     ,m_scrn,KB_X,M_Y+6*M_SPC,{0},input_weapon6},
+  {"BFG",     S_INPUT     ,m_scrn,KB_X,M_Y+7*M_SPC,{0},input_weapon7},
+  {"CHAINSAW",S_INPUT     ,m_scrn,KB_X,M_Y+8*M_SPC,{0},input_weapon8},
+  {"SSG"     ,S_INPUT     ,m_scrn,KB_X,M_Y+9*M_SPC,{0},input_weapon9},
+  {"BEST"    ,S_INPUT     ,m_scrn,KB_X,M_Y+10*M_SPC,{0},input_weapontoggle},
+  // [FG] prev/next weapon keys and buttons
+  {"PREV"    ,S_INPUT     ,m_scrn,KB_X,M_Y+12*M_SPC,{0},input_prevweapon},
+  {"NEXT"    ,S_INPUT     ,m_scrn,KB_X,M_Y+13*M_SPC,{0},input_nextweapon},
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings1}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings3}},
@@ -3129,7 +3100,7 @@ setup_menu_t keys_settings3[] =
   {0,S_SKIP|S_END,m_null}
 };
 
-setup_menu_t keys_settings4[] =  // Key Binding screen strings
+setup_menu_t keys_settings4[] =  // Key Binding screen strings       
 {
   {"GAME SPEED",S_SKIP|S_TITLE,m_null,KB_X,M_Y},
   {"INCREASE"     ,S_INPUT,m_scrn,KB_X,M_Y+1*M_SPC,{0},input_speed_up},
@@ -3154,7 +3125,7 @@ setup_menu_t keys_settings4[] =  // Key Binding screen strings
   {0,S_SKIP|S_END,m_null}
 };
 
-setup_menu_t keys_settings5[] =  // Key Binding screen strings
+setup_menu_t keys_settings5[] =  // Key Binding screen strings       
 {
   {"SHORTCUTS"      ,S_SKIP|S_TITLE,m_null,KB_X,M_Y},
 
@@ -3195,7 +3166,7 @@ setup_menu_t keys_settings5[] =  // Key Binding screen strings
   {0,S_SKIP|S_END,m_null}
 };
 
-setup_menu_t keys_settings6[] =  // Key Binding screen strings
+setup_menu_t keys_settings6[] =  // Key Binding screen strings       
 {
   {"AUTOMAP"    ,S_SKIP|S_TITLE,m_null,KB_X,M_Y},
   {"TOGGLE AUTOMAP",S_INPUT  ,m_map ,KB_X,M_Y+ 1*M_SPC,{0},input_map},
@@ -3211,9 +3182,8 @@ setup_menu_t keys_settings6[] =  // Key Binding screen strings
   {"SHIFT RIGHT",S_INPUT     ,m_map ,KB_X,M_Y+11*M_SPC,{0},input_map_right},
   {"MARK PLACE" ,S_INPUT     ,m_map ,KB_X,M_Y+12*M_SPC,{0},input_map_mark},
   {"CLEAR LAST MARK",S_INPUT ,m_map ,KB_X,M_Y+13*M_SPC,{0},input_map_clear},
-  {"BLINK MARKS",S_INPUT     ,m_map ,KB_X,M_Y+14*M_SPC,{0},input_map_blink}, // [Nugget]
-  {"FULL/ZOOM"  ,S_INPUT     ,m_map ,KB_X,M_Y+15*M_SPC,{0},input_map_gobig},
-  {"GRID"       ,S_INPUT     ,m_map ,KB_X,M_Y+16*M_SPC,{0},input_map_grid},
+  {"FULL/ZOOM"  ,S_INPUT     ,m_map ,KB_X,M_Y+14*M_SPC,{0},input_map_gobig},
+  {"GRID"       ,S_INPUT     ,m_map ,KB_X,M_Y+15*M_SPC,{0},input_map_grid},
 
   {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings5}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings7}},
@@ -3287,9 +3257,9 @@ setup_menu_t keys_settings9[] =  // Key Binding screen strings
   {"PLAYER 4"   ,S_INPUT     ,m_scrn,KB_X,M_Y+5*M_SPC,{0},input_chat_dest3},
   {"BACKSPACE"  ,S_INPUT     ,m_scrn,KB_X,M_Y+6*M_SPC,{0},input_chat_backspace},
   {"ENTER"      ,S_INPUT     ,m_scrn,KB_X,M_Y+7*M_SPC,{0},input_chat_enter},
-  
+
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings8}},
-  {"NEXT ->" ,S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings10}},
+  {"NEXT ->" ,S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings10}}, // [Nugget]
 
   // Final entry
 
@@ -3297,47 +3267,41 @@ setup_menu_t keys_settings9[] =  // Key Binding screen strings
 
 };
 
-// [Nugget] /--------------------------
+// [Nugget] /-----------------------------------------------------------------
 
 enum {
   keys10_title1,
   keys10_jump,
   keys10_crouch,
   keys10_stub1,
-  keys10_xhair,
+  keys10_chasecam,
   keys10_stub2,
   keys10_zoom,
   keys10_zoomfov,
   keys10_stub3,
-  keys10_chasecam,
+  keys10_xhair,
   keys10_stub4,
-  keys10_tagfind,
-  keys10_stub5,
-  keys10_tpointer,
-  keys10_stub6,
-  keys10_fancytp,
+  keys10_lastweap,
 };
 
 setup_menu_t keys_settings10[] =
 {
-  {"NUGGET", S_SKIP|S_TITLE, m_null, KB_X, M_Y},
-    {"JUMP/FLY UP",      S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_jump     * M_SPC, {0}, input_jump},
-    {"CROUCH/FLY DOWN",  S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_crouch   * M_SPC, {0}, input_crouch},
+  {"Nugget - General", S_SKIP|S_TITLE, m_null, KB_X, M_Y + keys10_title1 * M_SPC},
+  
+    {"Jump/Fly Up",      S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_jump     * M_SPC, {0}, input_jump},
+    {"Crouch/Fly Down",  S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_crouch   * M_SPC, {0}, input_crouch},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub1    * M_SPC},
-    {"TOGGLE CROSSHAIR", S_INPUT,                     m_scrn, KB_X, M_Y + keys10_xhair    * M_SPC, {0}, input_crosshair},
+    {"Cycle Chasecam",   S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_chasecam * M_SPC, {0}, input_chasecam},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub2    * M_SPC},
-    {"TOGGLE ZOOM",      S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_zoom     * M_SPC, {0}, input_zoom},
-    {"ZOOM FOV",         S_NUM  |S_STRICT,            m_null, KB_X, M_Y + keys10_zoomfov  * M_SPC, {"zoom_fov"}, 0, M_SetFOV},
+    {"Toggle Zoom",      S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_zoom     * M_SPC, {0}, input_zoom},
+    {"Zoom FOV",         S_NUM  |S_STRICT,            m_null, KB_X, M_Y + keys10_zoomfov  * M_SPC, {"zoom_fov"}, 0, M_SetFOV},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub3    * M_SPC},
-    {"CYCLE CHASECAM",   S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_chasecam * M_SPC, {0}, input_chasecam},
+    {"Toggle Crosshair", S_INPUT,                     m_scrn, KB_X, M_Y + keys10_xhair    * M_SPC, {0}, input_crosshair},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub4    * M_SPC},
-    {"TAG FINDER",       S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_tagfind  * M_SPC, {0}, input_map_tagfinder},
-    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub5    * M_SPC},
-    {"TELEPORT TO\n"
-     "AUTOMAP POINTER",  S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_tpointer * M_SPC, {0}, input_map_teleport},
-    {"FANCY TELEPORT",   S_YESNO|S_STRICT|S_CRITICAL, m_null, KB_X, M_Y + keys10_fancytp  * M_SPC, {"fancy_teleport"}},
+    {"Last Used Weapon", S_INPUT,                     m_scrn, KB_X ,M_Y + keys10_lastweap * M_SPC, {0}, input_lastweapon},
 
-  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings9}},
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {keys_settings9}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {keys_settings11}},
 
   // Final entry
 
@@ -3345,7 +3309,78 @@ setup_menu_t keys_settings10[] =
 
 };
 
-// [Nugget] --------------------------/
+enum {
+  keys11_title1,
+  keys11_minimap,
+  keys11_stub1,
+  keys11_tagfind,
+  keys11_stub2,
+  keys11_blink,
+  keys11_stub3,
+  keys11_tpointer,
+  keys11_stub4,
+  keys11_fancytp,
+};
+
+setup_menu_t keys_settings11[] =
+{
+  {"Nugget - Automap", S_SKIP|S_TITLE, m_null, KB_X, M_Y + keys11_title1 * M_SPC},
+  
+    {"Minimap",         S_INPUT|S_STRICT,            m_map,  KB_X, M_Y + keys11_minimap  * M_SPC, {0}, input_map_mini},
+    {"",                S_SKIP,                      m_null, KB_X, M_Y + keys11_stub1    * M_SPC},
+    {"Tag Finder",      S_INPUT|S_STRICT,            m_map,  KB_X, M_Y + keys11_tagfind  * M_SPC, {0}, input_map_tagfinder},
+    {"",                S_SKIP,                      m_null, KB_X, M_Y + keys11_stub2    * M_SPC},
+    {"Blink Marks",     S_INPUT|S_STRICT,            m_map,  KB_X, M_Y + keys11_blink    * M_SPC, {0}, input_map_blink},
+    {"",                S_SKIP,                      m_null, KB_X, M_Y + keys11_stub3    * M_SPC},
+    {"Teleport to\n"
+     "Automap Pointer", S_INPUT|S_STRICT|S_CRITICAL, m_map,  KB_X, M_Y + keys11_tpointer * M_SPC, {0}, input_map_teleport},
+    {"Fancy Teleport",  S_YESNO|S_STRICT|S_CRITICAL, m_null, KB_X, M_Y + keys11_fancytp  * M_SPC, {"fancy_teleport"}},
+
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {keys_settings10}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {keys_settings12}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+
+};
+
+enum {
+  keys12_title1,
+  keys12_infammo,
+  keys12_fastweaps,
+  keys12_resurrect,
+  keys12_fly,
+  keys12_summonr,
+  keys12_linetarg,
+  keys12_mdk,
+  keys12_saitama,
+  keys12_boomcan,
+};
+
+setup_menu_t keys_settings12[] =
+{
+  {"Nugget - Cheats", S_SKIP|S_TITLE, m_null, CHEAT_X, M_Y + keys12_title1 * M_SPC},
+
+  {"Infinite Ammo",      S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_infammo   * M_SPC, {0}, input_infammo},
+  {"Fast Weapons",       S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_fastweaps * M_SPC, {0}, input_fastweaps},
+  {"Resurrect",          S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_resurrect * M_SPC, {0}, input_resurrect},
+  {"Flight Mode",        S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_fly       * M_SPC, {0}, input_fly},
+  {"Repeat Last Summon", S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_summonr   * M_SPC, {0}, input_summonr},
+  {"Linetarget Query",   S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_linetarg  * M_SPC, {0}, input_linetarget},
+  {"MDK Attack",         S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_mdk       * M_SPC, {0}, input_mdk},
+  {"MDK Fist",           S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_saitama   * M_SPC, {0}, input_saitama},
+  {"Explosive Hitscan",  S_INPUT, m_scrn, CHEAT_X, M_Y + keys12_boomcan   * M_SPC, {0}, input_boomcan},
+
+  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings11}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+
+};
+
+// [Nugget] -----------------------------------------------------------------/
 
 // Setting up for the Key Binding screen. Turn on flags, set pointers,
 // locate the first item on the screen where the cursor is allowed to
@@ -3375,7 +3410,7 @@ void M_DrawKeybnd(void)
 
   // Set up the Key Binding screen
 
-  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(84,2,"M_KEYBND","KEY BINDINGS");
   M_DrawInstructions();
@@ -3411,29 +3446,22 @@ enum {           // killough 10/98: enum for y-offset info
 };
 
 enum {
-  weap2_recoil,
-  weap2_autoaim,
-  weap2_autoswitch,
-  weap2_stub1,
   weap2_title1,
   weap2_hide_weapon,
   weap2_center, // [FG] centered weapon sprite
   weap2_bobbing,
-  weap2_bobstyle,
-  weap2_inertia,
-  weap2_squat,
-  weap2_transpspr,
   weap2_recoilpitch,
-  weap2_berserk,
 };
 
 setup_menu_t weap_settings1[];
 setup_menu_t weap_settings2[];
+setup_menu_t weap_settings3[]; // [Nugget]
 
 setup_menu_t* weap_settings[] =
 {
   weap_settings1,
   weap_settings2,
+  weap_settings3, // [Nugget]
   NULL
 };
 
@@ -3480,29 +3508,8 @@ setup_menu_t weap_settings1[] =  // Weapons Settings screen
 
 };
 
-// [Nugget]
-static const char *bobbing_styles[] = {
-  "Vanilla", "Inv. Vanilla", "Alpha", "Inv. Alpha", "Smooth", "Inv. Smooth", "Quake", NULL
-};
-
-static void M_NuggetResetWeaponInertia(void)
-{
-  P_NuggetResetWeaponInertia();
-}
-
 setup_menu_t weap_settings2[] =
 {
-  {"Enable Recoil", S_YESNO, m_null, M_X, // [Nugget] Restored Weapon Recoil menu item
-   M_Y + weap2_recoil*M_SPC, {"weapon_recoil"}},
-
-  {"Disable Horizontal Autoaim", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, // [Nugget]
-   M_Y + weap2_autoaim*M_SPC, {"no_hor_autoaim"}},
-
-  {"Switch on Pickup", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, // [Nugget]
-   M_Y + weap2_autoswitch*M_SPC, {"switch_on_pickup"}},
-
-  {"", S_SKIP, m_null, M_X, M_Y + weap2_stub1*M_SPC},
-
   {"Cosmetic",S_SKIP|S_TITLE,m_null,M_X,M_Y+weap2_title1*M_SPC},
 
   {"Hide Weapon", S_YESNO|S_STRICT, m_null, M_X,
@@ -3512,32 +3519,69 @@ setup_menu_t weap_settings2[] =
   {"Weapon Attack Alignment", S_CHOICE|S_STRICT, m_null, M_X,
    M_Y + weap2_center * M_SPC, {"center_weapon"}, 0, NULL, weapon_attack_alignment_strings},
 
-  {"Weapon Bobbing Percentage", S_NUM, m_null, M_X, // [Nugget]
+  // [Nugget] Replaces Woof's setting
+  {"Weapon Bobbing Percentage", S_NUM, m_null, M_X,
    M_Y + weap2_bobbing*M_SPC, {"weapon_bobbing_percentage"}, 0, M_UpdateCenteredWeaponItem},
-   
-  {"Bobbing Style", S_CHOICE|S_STRICT, m_null, M_X, // [Nugget]
-   M_Y + weap2_bobstyle*M_SPC, {"bobbing_style"}, 0, NULL, bobbing_styles},
 
-  {"Weapon Inertia", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
-   M_Y + weap2_inertia*M_SPC, {"weapon_inertia"}, 0, M_NuggetResetWeaponInertia},
-
-  {"Squat Weapon Down On Impact", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
-   M_Y + weap2_squat*M_SPC, {"weaponsquat"}},
-
-  {"Translucent Flashes", S_YESNO|S_STRICT, m_null, M_X, // [Nugget]
-   M_Y + weap2_transpspr*M_SPC, {"translucent_pspr"}},
-   
   {"Enable Recoil Pitch", S_YESNO, m_null, M_X,
    M_Y + weap2_recoilpitch*M_SPC, {"weapon_recoilpitch"}},
-   
-  {"Show Berserk when using Fist", S_YESNO, m_null, M_X, // [Nugget]
-   M_Y + weap2_berserk*M_SPC, {"show_berserk"}},
-     
+
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {weap_settings1}},
+  {"NEXT ->" ,S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {weap_settings3}}, // [Nugget]
 
   // Final entry
   {0,S_SKIP|S_END,m_null}
 };
+
+// [Nugget] /-----------------------------------------------------------------
+
+enum {
+  weap3_title1,
+  weap3_recoil,
+  weap3_autoaim,
+  weap3_autoswitch,
+  weap3_stub1,
+  weap3_title2,
+  weap3_bobstyle,
+  weap3_inertia,
+  weap3_squat,
+  weap3_transpspr,
+  weap3_berserk,
+};
+
+static const char *bobbing_styles[] = {
+  "Vanilla", "Inv. Vanilla", "Alpha", "Inv. Alpha", "Smooth", "Inv. Smooth", "Quake", NULL
+};
+
+static void M_NuggetResetWeaponInertia(void)
+{
+  P_NuggetResetWeaponInertia();
+}
+
+setup_menu_t weap_settings3[] =
+{
+  {"Nugget - Gameplay", S_SKIP|S_TITLE, m_null, M_X, M_Y + weap3_title1 * M_SPC},
+
+    {"Enable Recoil",              S_YESNO,                      m_null, M_X, M_Y + weap3_recoil     * M_SPC, {"weapon_recoil"}}, // Restored Weapon Recoil menu item
+    {"Disable Horizontal Autoaim", S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + weap3_autoaim    * M_SPC, {"no_hor_autoaim"}},
+    {"Switch on Pickup",           S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + weap3_autoswitch * M_SPC, {"switch_on_pickup"}},
+
+  {"",                  S_SKIP,         m_null, M_X, M_Y + weap3_stub1  * M_SPC},
+  {"Nugget - Cosmetic", S_SKIP|S_TITLE, m_null, M_X, M_Y + weap3_title2 * M_SPC},
+
+    {"Bobbing Style",                S_CHOICE|S_STRICT, m_null, M_X, M_Y + weap3_bobstyle  * M_SPC, {"bobbing_style"}, 0, NULL, bobbing_styles},
+    {"Weapon Inertia",               S_YESNO |S_STRICT, m_null, M_X, M_Y + weap3_inertia   * M_SPC, {"weapon_inertia"}, 0, M_NuggetResetWeaponInertia},
+    {"Squat Weapon Down On Impact",  S_YESNO |S_STRICT, m_null, M_X, M_Y + weap3_squat     * M_SPC, {"weaponsquat"}},
+    {"Translucent Flashes",          S_YESNO |S_STRICT, m_null, M_X, M_Y + weap3_transpspr * M_SPC, {"translucent_pspr"}},
+    {"Show Berserk when using Fist", S_YESNO,           m_null, M_X, M_Y + weap3_berserk   * M_SPC, {"show_berserk"}},
+     
+  {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {weap_settings2}},
+
+  // Final entry
+  {0,S_SKIP|S_END,m_null}
+};
+
+// [Nugget] -----------------------------------------------------------------/
 
 // Setting up for the Weapons screen. Turn on flags, set pointers,
 // locate the first item on the screen where the cursor is allowed to
@@ -3565,7 +3609,7 @@ void M_DrawWeapons(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(109,2,"M_WEAP","WEAPONS");
   M_DrawInstructions();
@@ -3586,15 +3630,18 @@ void M_DrawWeapons(void)
 // Screen table definitions
 
 setup_menu_t stat_settings1[], stat_settings2[], stat_settings3[],
-             stat_settings4[], stat_settings5[];
+             stat_settings4[], stat_settings5[], // [Nugget]
+             stat_settings6[]; // [Cherry]
 
 setup_menu_t* stat_settings[] =
 {
   stat_settings1,
   stat_settings2,
   stat_settings3,
-  stat_settings4, // [Cherry]
-  stat_settings5, // [Cherry]
+  // [Nugget]
+  stat_settings4,
+  stat_settings5,
+  stat_settings6,
   NULL
 };
 
@@ -3607,27 +3654,39 @@ enum {
   stat1_title2,
   stat1_stats,
   stat1_time,
-  stat1_powers, // [Nugget] Powerup timers
-  stat1_attcount, // [Cherry] Attempt counter
-  stat1_movement, // [Cherry] Movement widget
+  stat1_healthr,
+  stat1_healthy,
+  stat1_healthg,
+  stat1_armorr,
+  stat1_armory,
+  stat1_armorg,
+  stat1_ammor,
+  stat1_ammoy,
 };
 
 setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen       
 {
-  {"STATUS BAR",S_SKIP|S_TITLE,m_null,M_X,M_Y},
-    {"USE STANDARD COLORS",  S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_rednum   * M_SPC, {"sts_always_red"}},
-    {"GRAY %",               S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_graypcnt * M_SPC, {"sts_pct_always_gray"}},
-    {"SINGLE KEY DISPLAY",   S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_keys     * M_SPC, {"sts_traditional_keys"}},
+  {"STATUS BAR"        ,S_SKIP|S_TITLE,m_null,M_X,M_Y},
+
+  {"USE STANDARD COLORS",S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_rednum*M_SPC,   {"sts_always_red"}},
+  {"GRAY %"            ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_graypcnt*M_SPC, {"sts_pct_always_gray"}},
+  {"SINGLE KEY DISPLAY",S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_keys*M_SPC,     {"sts_traditional_keys"}},
 
   {"",S_SKIP,m_null,M_X,M_Y+stat1_stub1*M_SPC},
 
-  {"HEADS-UP DISPLAY",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat1_title2*M_SPC},
-    {"SHOW LEVEL STATS",     S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_stats    * M_SPC, {"hud_level_stats"}},
-    {"SHOW LEVEL TIME",      S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_time     * M_SPC, {"hud_level_time"}},
-    {"SHOW POWERUP TIMERS",  S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_powers   * M_SPC, {"hud_power_timers"}}, // [Nugget]
-    {"SHOW ATTEMPT COUNTER", S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_attcount * M_SPC, {"hud_attempt_counter"}}, // [Cherry]
-    {"SHOW PLAYER MOVEMENT", S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat1_movement * M_SPC, {"hud_movement"}}, // [Cherry]
- 
+  {"HEADS-UP DISPLAY"  ,S_SKIP|S_TITLE,m_null,M_X,M_Y+stat1_title2*M_SPC},
+
+  {"SHOW LEVEL STATS"  ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_stats*M_SPC, {"hud_level_stats"}},
+  {"SHOW LEVEL TIME"   ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_time*M_SPC,  {"hud_level_time"}},
+  {"HEALTH LOW/OK"     ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthr*M_SPC, {"health_red"}},
+  {"HEALTH OK/GOOD"    ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthy*M_SPC, {"health_yellow"}},
+  {"HEALTH GOOD/EXTRA" ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthg*M_SPC, {"health_green"}},
+  {"ARMOR LOW/OK"      ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_armorr*M_SPC,  {"armor_red"}},
+  {"ARMOR OK/GOOD"     ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_armory*M_SPC,  {"armor_yellow"}},
+  {"ARMOR GOOD/EXTRA"  ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_armorg*M_SPC,  {"armor_green"}},
+  {"AMMO LOW/OK"       ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_ammor*M_SPC,   {"ammo_red"}},
+  {"AMMO OK/GOOD"      ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_ammoy*M_SPC,   {"ammo_yellow"}},
+                                                                        
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
 
@@ -3639,93 +3698,53 @@ setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
 
 enum {
   stat2_title1,
-  stat2_healthr,
-  stat2_healthy,
-  stat2_healthg,
-  stat2_armorr,
-  stat2_armory,
-  stat2_armorg,
-  stat2_ammor,
-  stat2_ammoy,
-  stat2_stub1,
   stat2_backpack,
   stat2_armortype,
   stat2_smooth,
-  stat2_stub2,
+  stat2_stub1,
   stat2_title2,
-  stat2_smart,
+  // [Nugget] Removed `crispy_hud`
+  stat2_hudfont,
+  stat2_widescreen,
+  stat2_threelined,
+  stat2_bargraphs,
 };
 
 enum {
   stat3_title1,
-  stat3_titlecol,
-  stat3_consttlcol,
-  stat3_plaincol,
-  stat3_ttimecol,
-  stat3_msincomp,
-  stat3_mscomp,
-  stat3_stub1,
-  stat3_lowcol,
-  stat3_okcol,
-  stat3_goodcol,
-  stat3_extracol,
-  stat3_stub2,
-};
-
-// [Cherry]
-enum {
-  stat4_title1,
-  stat4_hudfont,
-  stat4_widescreen,
-  stat4_threelined,
-  stat4_bargraphs,
-  stat4_wimorewidgets,
-  // [Nugget] /----
-  stat4_stub1,
-  stat4_title2,
-  stat4_timeruse,
-  stat4_timertelept,
-  stat4_timerkey,
-  // [Nugget] ----/
-};
-
-// [Cherry]
-enum {
-  stat5_title1,
-  stat5_xhair,
-  stat5_xhairtype,
-  stat5_xhairsh,
-  stat5_xhairhealth,
-  stat5_xhairtarget,
-  stat5_xhairlockon,
-  stat5_xhairindicators,
-  stat5_xhairfuzzy,
-  stat5_xhaircolor,
-  stat5_xhairtcolor,
+  stat3_xhair,
+  stat3_xhairtype, // [Nugget]
+  stat3_xhairhealth,
+  stat3_xhairtarget,
+  stat3_xhairlockon,
+  stat3_xhairindicators, // [Nugget]
+  stat3_xhairfuzzy, // [Nugget]
+  stat3_xhaircolor,
+  stat3_xhairtcolor,
 };
 
 static void M_UpdateCrosshairItems (void)
 {
     // [Nugget] Check for toggle instead of type
 
-    DISABLE_ITEM(!hud_crosshair_on, stat_settings5[stat5_xhairhealth]);
-    DISABLE_ITEM(!hud_crosshair_on, stat_settings5[stat5_xhairtarget]);
-    DISABLE_ITEM(!hud_crosshair_on, stat_settings5[stat5_xhairlockon]);
-    DISABLE_ITEM(!hud_crosshair_on, stat_settings5[stat5_xhaircolor]);
+    DISABLE_ITEM(!hud_crosshair_on, stat_settings3[stat3_xhairhealth]);
+    DISABLE_ITEM(!hud_crosshair_on, stat_settings3[stat3_xhairtarget]);
+    DISABLE_ITEM(!hud_crosshair_on, stat_settings3[stat3_xhairlockon]);
+    DISABLE_ITEM(!hud_crosshair_on, stat_settings3[stat3_xhaircolor]);
     DISABLE_ITEM(!(hud_crosshair_on && hud_crosshair_target == crosstarget_highlight),
-      stat_settings5[stat5_xhairtcolor]);
+        stat_settings3[stat3_xhairtcolor]);
 
     // [Nugget] /-------------------------------------------------------------
 
-    DISABLE_ITEM(!hud_crosshair_on, stat_settings5[stat5_xhairtype]);
+    DISABLE_ITEM(!hud_crosshair_on, stat_settings3[stat3_xhairtype]);
 
     DISABLE_ITEM(!(hud_crosshair_on
                    && (hud_crosshair_target || hud_crosshair_lockon)
                    && !(mouselook && vertical_aiming == VERTAIM_DIRECT)),
-        stat_settings5[stat5_xhairindicators]);
+        stat_settings3[stat3_xhairindicators]);
 
     DISABLE_ITEM(!(hud_crosshair_on && (hud_crosshair_lockon || hud_crosshair_target)),
-        stat_settings5[stat5_xhairfuzzy]);
+        stat_settings3[stat3_xhairfuzzy]);
 
     // [Nugget] -------------------------------------------------------------/
 }
@@ -3740,7 +3759,7 @@ static const char *crosshair_target_str[] = {
 
 // [Nugget]
 static const char *crosshair_lockon_modes[] = {
-  "Off", "Vertically", "Fully", NULL
+  "OFF", "VERTICALLY", "FULLY", NULL
 };
 
 static const char *hudcolor_str[] = {
@@ -3751,22 +3770,21 @@ static const char *hudcolor_str[] = {
 setup_menu_t stat_settings2[] =
 {
   {"WIDGET APPEARANCE",S_SKIP|S_TITLE,m_null,M_X,M_Y},
-    {"HEALTH LOW/OK",                  S_NUM | S_COSMETIC, m_null, M_X, M_Y + stat2_healthr * M_SPC, {"health_red"}},
-    {"HEALTH OK/GOOD",                 S_NUM | S_COSMETIC, m_null, M_X, M_Y + stat2_healthy * M_SPC, {"health_yellow"}},
-    {"HEALTH GOOD/EXTRA",              S_NUM | S_COSMETIC, m_null, M_X, M_Y + stat2_healthg * M_SPC, {"health_green"}},
-    {"ARMOR LOW/OK",                   S_NUM | S_COSMETIC, m_null, M_X, M_Y + stat2_armorr * M_SPC, {"armor_red"}},
-    {"ARMOR OK/GOOD",                  S_NUM | S_COSMETIC, m_null, M_X, M_Y + stat2_armory * M_SPC, {"armor_yellow"}},
-    {"ARMOR GOOD/EXTRA",               S_NUM | S_COSMETIC, m_null, M_X, M_Y + stat2_armorg * M_SPC, {"armor_green"}},
-    {"AMMO LOW/OK",                    S_NUM | S_COSMETIC, m_null, M_X, M_Y + stat2_ammor * M_SPC, {"ammo_red"}},
-    {"AMMO OK/GOOD",                   S_NUM | S_COSMETIC, m_null, M_X, M_Y + stat2_ammoy * M_SPC, {"ammo_yellow"}},
-  {"",S_SKIP,m_null,M_X,M_Y + stat2_stub1 * M_SPC},
-    {"BACKPACK CHANGES THRESHOLDS",    S_YESNO,            m_null, M_X, M_Y + stat2_backpack * M_SPC, {"hud_backpack_thresholds"}},
-    {"COLOR OF ARMOR DEPENDS ON TYPE", S_YESNO,            m_null, M_X, M_Y + stat2_armortype * M_SPC, {"hud_armor_type"}},
-    // [Nugget] Disallowed in Strict Mode
-    {"SMOOTH HEALTH/ARMOR COUNT",      S_YESNO | S_STRICT, m_null, M_X, M_Y + stat2_smooth * M_SPC, {"smooth_counts"}},
-  {"",S_SKIP,m_null,M_X,M_Y + stat2_stub2 * M_SPC},
-  {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title2*M_SPC},
-    {"SMART TOTALS",                   S_YESNO,            m_null, M_X, M_Y + stat2_smart * M_SPC, {"smarttotals"}}, // [Nugget]
+
+  {"BACKPACK CHANGES THRESHOLDS"    ,S_YESNO,m_null,M_X,M_Y+stat2_backpack*M_SPC,  {"hud_backpack_thresholds"}},
+  {"COLOR OF ARMOR DEPENDS ON TYPE" ,S_YESNO,m_null,M_X,M_Y+stat2_armortype*M_SPC, {"hud_armor_type"}},
+  // [Nugget] Disallowed in Strict Mode
+  {"SMOOTH HEALTH/ARMOR COUNT"      ,S_YESNO|S_STRICT,m_null,M_X,M_Y+stat2_smooth*M_SPC, {"smooth_counts"}},
+
+  {"",S_SKIP,m_null,M_X,M_Y+stat2_stub1*M_SPC},
+
+  {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title2*M_SPC },
+
+  // [Nugget] Removed `crispy_hud` code
+  {"USE STANDARD DOOM FONT FOR WIDGETS", S_CHOICE,m_null,M_X,M_Y+stat2_hudfont*M_SPC, {"hud_widget_font"}, 0, NULL, show_widgets_strings},
+  {"WIDESCREEN WIDGET ARRANGEMENT", S_YESNO,m_null,M_X,M_Y+stat2_widescreen*M_SPC, {"hud_widescreen_widgets"}},
+  {"3-LINED COORDS/STATS WIDGETS", S_YESNO,m_null,M_X,M_Y+stat2_threelined*M_SPC, {"hud_threelined_widgets"}},
+  {"DRAW BAR GRAPHS IN WIDGETS", S_YESNO,m_null,M_X,M_Y+stat2_bargraphs*M_SPC, {"hud_draw_bargraphs"}},
 
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {stat_settings1}},
   {"NEXT ->", S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {stat_settings3}},
@@ -3775,77 +3793,160 @@ setup_menu_t stat_settings2[] =
   {0,S_SKIP|S_END,m_null}
 };
 
+// [Nugget]
+static const char *timer_strings[] = {
+  "Off", "In Demos", "Always", NULL
+};
+
 setup_menu_t stat_settings3[] =
 {
-  {"EXTENDED HUD COLORS",S_SKIP | S_TITLE,m_null,M_X,M_Y},
-    {"WIDGET NAME COLOR",                   S_CRITEM,          m_null, M_X, M_Y + stat3_titlecol * M_SPC, {"hudcolor_wg_name"},   0, NULL, hudcolor_str}, // [Cherry]
-    {"PLAIN TEXT COLOR",                    S_CRITEM,          m_null, M_X, M_Y + stat3_plaincol * M_SPC, {"hudcolor_plain"},     0, NULL, hudcolor_str}, // [Cherry]
-    {"TOTAL TIME COLOR",                    S_CRITEM,          m_null, M_X, M_Y + stat3_ttimecol * M_SPC, {"hudcolor_totaltime"}, 0, NULL, hudcolor_str}, // [Cherry]
-    {"INCOMPLETE MILESTONE COLOR",          S_CRITEM,          m_null, M_X, M_Y + stat3_msincomp * M_SPC, {"hudcolor_ms_incomp"}, 0, NULL, hudcolor_str}, // [Nugget]
-    {"COMPLETE MILESTONE COLOR",            S_CRITEM,          m_null, M_X, M_Y + stat3_mscomp * M_SPC, {"hudcolor_ms_comp"},   0, NULL, hudcolor_str}, // [Nugget]
-  {"",S_SKIP,m_null,M_X,M_Y + stat3_stub1 * M_SPC},
-    {"LOW VALUE COLOR",                     S_CRITEM,          m_null, M_X, M_Y + stat3_lowcol * M_SPC, {"hudcolor_th_low"},    0, NULL, hudcolor_str}, // [Cherry]
-    {"OK VALUE COLOR",                      S_CRITEM,          m_null, M_X, M_Y + stat3_okcol * M_SPC, {"hudcolor_th_ok"},     0, NULL, hudcolor_str}, // [Cherry]
-    {"GOOD VALUE COLOR",                    S_CRITEM,          m_null, M_X, M_Y + stat3_goodcol * M_SPC, {"hudcolor_th_good"},   0, NULL, hudcolor_str}, // [Cherry]
-    {"EXTRA VALUE COLOR",                   S_CRITEM,          m_null, M_X, M_Y + stat3_extracol * M_SPC, {"hudcolor_th_extra"},  0, NULL, hudcolor_str}, // [Cherry]
+  {"CROSSHAIR",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat3_title1*M_SPC },
+
+  {"ENABLE CROSSHAIR",      S_YESNO,m_null,M_X,M_Y+stat3_xhair*M_SPC,       {"hud_crosshair_on"}, 0, M_UpdateCrosshairItems}, // [Nugget] Toggle instead of type
+  {"CROSSHAIR TYPE",        S_CHOICE,m_null,M_X,M_Y+stat3_xhairtype*M_SPC,   {"hud_crosshair"}, 0, 0, crosshair_str}, // [Nugget] Actual type
+  {"COLOR BY PLAYER HEALTH",S_YESNO|S_STRICT,m_null,M_X,M_Y+stat3_xhairhealth*M_SPC, {"hud_crosshair_health"}},
+  {"COLOR BY TARGET",       S_CHOICE|S_STRICT,m_null,M_X,M_Y+stat3_xhairtarget*M_SPC, {"hud_crosshair_target"}, 0, M_UpdateCrosshairItems, crosshair_target_str},
+  {"LOCK ON TARGET",        S_CHOICE|S_STRICT,m_null,M_X,M_Y+stat3_xhairlockon*M_SPC, {"hud_crosshair_lockon"}, 0, M_UpdateCrosshairItems, crosshair_lockon_modes}, // [Nugget]
+  {"HORIZONTAL AUTOAIM INDICATORS", S_YESNO|S_STRICT,m_null,M_X,M_Y+stat3_xhairindicators*M_SPC, {"hud_crosshair_indicators"}}, // [Nugget]
+  {"ACCOUNT FOR FUZZY TARGETS",     S_YESNO|S_STRICT,m_null,M_X,M_Y+stat3_xhairfuzzy*M_SPC,      {"hud_crosshair_fuzzy"}}, // [Nugget]
+  {"DEFAULT COLOR",         S_CRITEM,m_null,M_X,M_Y+stat3_xhaircolor*M_SPC,  {"hud_crosshair_color"}, 0, NULL, hudcolor_str},
+  {"HIGHLIGHT COLOR",       S_CRITEM|S_STRICT,m_null,M_X,M_Y+stat3_xhairtcolor*M_SPC, {"hud_crosshair_target_color"}, 0, NULL, hudcolor_str},
 
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {stat_settings2}},
-  {"NEXT ->",S_SKIP | S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT,{stat_settings4}}, // [Cherry]
+  {"NEXT ->", S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {stat_settings4}}, // [Nugget]
 
   // Final entry
   {0,S_SKIP|S_END,m_null}
 };
 
-// [Nugget]
-static const char* timer_strings[] = {
-  "Off", "In Demos", "Always", NULL
+// [Nugget] /-----------------------------------------------------------------
+
+enum {
+  stat4_title1,
+  stat4_powers,
+  stat4_altarms,
+  stat4_smart,
+  stat4_killspct,
+  stat4_stub1,
+  stat4_title2,
+  // [Cherry] /---------------------------------------------------------------
+  stat4_attcount,
+  stat4_movement,
+  stat4_wimorewidgets,
+  // [Cherry] ---------------------------------------------------------------/
+  stat4_stub2,
+  stat4_title3,
+  stat4_timeruse,
+  stat4_timertelept,
+  stat4_timerkey,
 };
 
-// [Cherry]
 setup_menu_t stat_settings4[] =
 {
-  {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y},
-    {"USE STANDARD DOOM FONT FOR WIDGETS",  S_CHOICE,          m_null, M_X, M_Y + stat4_hudfont * M_SPC, {"hud_widget_font"}, 0, NULL, show_widgets_strings},
-    {"WIDESCREEN WIDGET ARRANGEMENT",       S_YESNO,           m_null, M_X, M_Y + stat4_widescreen * M_SPC, {"hud_widescreen_widgets"}},
-    {"3-LINED COORDS/STATS WIDGETS",        S_YESNO,           m_null, M_X, M_Y + stat4_threelined * M_SPC, {"hud_threelined_widgets"}},
-    {"DRAW BAR GRAPHS IN WIDGETS",          S_YESNO,           m_null, M_X, M_Y + stat4_bargraphs * M_SPC, {"hud_draw_bargraphs"}},
-    {"MORE WIDGETS ON INTERMISSION SCREEN", S_YESNO,           m_null, M_X, M_Y + stat4_wimorewidgets * M_SPC, {"wi_more_widgets"}}, // [Cherry]
+  {"Nugget - Extended HUD", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat4_title1 * M_SPC},
 
-  // [Nugget]
+    {"Show Powerup Timers",      S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat4_powers   * M_SPC, {"hud_power_timers"}},
+    {"Alternative Arms Display", S_YESNO,            m_null, M_X, M_Y + stat4_altarms  * M_SPC, {"alt_arms"}, 0, ST_createWidgets},
+    {"Smart Totals",             S_YESNO,            m_null, M_X, M_Y + stat4_smart    * M_SPC, {"smarttotals"}},
+    {"Show Kills Percentage",    S_YESNO,            m_null, M_X, M_Y + stat4_killspct * M_SPC, {"hud_kills_percentage"}},
 
-  {"",S_SKIP,m_null,M_X,M_Y+stat4_stub1*M_SPC},
+  {"",                      S_SKIP,         m_null, M_X, M_Y + stat4_stub1  * M_SPC},
+  // [Cherry] /---------------------------------------------------------------
+  {"Cherry - Extended HUD", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat4_title2 * M_SPC},
+  
+    {"Show Attempt Counter", S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat4_attcount * M_SPC, {"hud_attempt_counter"}},
+    {"Show Player Movement", S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat4_movement * M_SPC, {"hud_movement"}},
+    {"More Widgets On Intermission Screen", S_YESNO, m_null, M_X, M_Y+stat4_wimorewidgets * M_SPC, {"wi_more_widgets"}},
+  // [Cherry] ---------------------------------------------------------------/
 
-  {"Event Timers",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat4_title2*M_SPC},
-    {"\"Use\" Button Timer",                S_CHOICE,          m_null, M_X, M_Y + stat4_timeruse      * M_SPC, {"timer_use"},          0, NULL, timer_strings},
-    {"Teleport Timer",                      S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat4_timertelept   * M_SPC, {"timer_teleport"},     0, NULL, timer_strings},
-    {"Key Pickup Timer",                    S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat4_timerkey      * M_SPC, {"timer_key_pickup"},   0, NULL, timer_strings},
+  {"",                      S_SKIP,         m_null, M_X, M_Y + stat4_stub2  * M_SPC},
+  {"Nugget - Event Timers", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat4_title3 * M_SPC},
 
-  {"<- PREV",S_SKIP | S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT,{stat_settings3}},
-  {"NEXT ->",S_SKIP | S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT,{stat_settings5}}, // [Cherry]
+    {"\"Use\" Button Timer", S_CHOICE,          m_null, M_X, M_Y + stat4_timeruse    * M_SPC, {"timer_use"},        0, NULL, timer_strings},
+    {"Teleport Timer",       S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat4_timertelept * M_SPC, {"timer_teleport"},   0, NULL, timer_strings},
+    {"Key Pickup Timer",     S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat4_timerkey    * M_SPC, {"timer_key_pickup"}, 0, NULL, timer_strings},
+
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {stat_settings3}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {stat_settings5}},
 
   // Final entry
   {0,S_SKIP | S_END,m_null}
 };
 
-// [Cherry]
+enum {
+  stat5_title1,
+  stat5_timescale,
+  stat5_totaltime,
+  stat5_time,
+  stat5_eventtimer,
+  stat5_stub1,
+  stat5_kills,
+  stat5_items,
+  stat5_secrets,
+  stat5_msincomp,
+  stat5_mscomp,
+};
+
 setup_menu_t stat_settings5[] =
 {
-  {"CROSSHAIR",                       S_SKIP | S_TITLE,  m_null, M_X, M_Y},
-    {"ENABLE CROSSHAIR",              S_YESNO,           m_null, M_X, M_Y + stat5_xhair * M_SPC, {"hud_crosshair_on"},           0, M_UpdateCrosshairItems},
-    {"CROSSHAIR TYPE",                S_CHOICE,          m_null, M_X, M_Y + stat5_xhairtype * M_SPC, {"hud_crosshair"},              0, NULL,                   crosshair_str},
-    {"COLOR BY PLAYER HEALTH",        S_YESNO,           m_null, M_X, M_Y + stat5_xhairhealth * M_SPC, {"hud_crosshair_health"}},
-    {"COLOR BY TARGET",               S_CHOICE | S_STRICT, m_null, M_X, M_Y + stat5_xhairtarget * M_SPC, {"hud_crosshair_target"},       0, M_UpdateCrosshairItems, crosshair_target_str},
-    {"LOCK ON TARGET",                S_CHOICE | S_STRICT, m_null, M_X, M_Y + stat5_xhairlockon * M_SPC, {"hud_crosshair_lockon"},       0, M_UpdateCrosshairItems, crosshair_lockon_modes},
-    {"HORIZONTAL AUTOAIM INDICATORS", S_YESNO | S_STRICT, m_null, M_X, M_Y + stat5_xhairindicators * M_SPC, {"hud_crosshair_indicators"}},
-    {"ACCOUNT FOR FUZZY TARGETS",     S_YESNO | S_STRICT, m_null, M_X, M_Y + stat5_xhairfuzzy * M_SPC, {"hud_crosshair_fuzzy"}},
-    {"DEFAULT COLOR",                 S_CRITEM,          m_null, M_X, M_Y + stat5_xhaircolor * M_SPC, {"hud_crosshair_color"},        0, NULL,                   hudcolor_str},
-    {"HIGHLIGHT COLOR",               S_CRITEM | S_STRICT, m_null, M_X, M_Y + stat5_xhairtcolor * M_SPC, {"hud_crosshair_target_color"}, 0, NULL,                   hudcolor_str},
+  {"Nugget - Extended HUD Colors", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat5_title1 * M_SPC},
 
-  {"<- PREV",S_SKIP | S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT,{stat_settings4}},
+    {"Time Scale (Game Speed %)", S_CRITEM, m_null, M_X, M_Y + stat5_timescale  * M_SPC, {"hudcolor_time_scale"}, 0, NULL, hudcolor_str},
+    {"Total Level Time",          S_CRITEM, m_null, M_X, M_Y + stat5_totaltime  * M_SPC, {"hudcolor_total_time"}, 0, NULL, hudcolor_str},
+    {"Level Time",                S_CRITEM, m_null, M_X, M_Y + stat5_time       * M_SPC, {"hudcolor_time"}, 0, NULL, hudcolor_str},
+    {"Event Timer",               S_CRITEM, m_null, M_X, M_Y + stat5_eventtimer * M_SPC, {"hudcolor_event_timer"}, 0, NULL, hudcolor_str},
+    {"",                          S_SKIP,   m_null, M_X, M_Y + stat5_stub1      * M_SPC},
+    {"Kills label",               S_CRITEM, m_null, M_X, M_Y + stat5_kills      * M_SPC, {"hudcolor_kills"}, 0, NULL, hudcolor_str},
+    {"Items label",               S_CRITEM, m_null, M_X, M_Y + stat5_items      * M_SPC, {"hudcolor_items"}, 0, NULL, hudcolor_str},
+    {"Secrets label",             S_CRITEM, m_null, M_X, M_Y + stat5_secrets    * M_SPC, {"hudcolor_secrets"}, 0, NULL, hudcolor_str},
+    {"Incomplete Milestone",      S_CRITEM, m_null, M_X, M_Y + stat5_msincomp   * M_SPC, {"hudcolor_ms_incomp"}, 0, NULL, hudcolor_str},
+    {"Complete Milestone",        S_CRITEM, m_null, M_X, M_Y + stat5_mscomp     * M_SPC, {"hudcolor_ms_comp"}, 0, NULL, hudcolor_str},
+
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {stat_settings4}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {stat_settings6}},
 
   // Final entry
-  {0,S_SKIP | S_END,m_null}
+  {0,S_SKIP|S_END,m_null}
 };
+
+enum {
+  stat6_title1,
+  stat6_att,
+  stat6_att_count,
+  stat6_movement,
+  stat6_weapons,
+  stat6_keys,
+  stat6_frags,
+  stat6_stub1,
+  stat6_lowcol,
+  stat6_okcol,
+  stat6_goodcol,
+  stat6_extracol,
+};
+
+setup_menu_t stat_settings6[] =
+{
+  {"Cherry - Extended HUD Colors", S_SKIP | S_TITLE, m_null, M_X, M_Y + stat6_title1 * M_SPC},
+
+    {"Attempts label",             S_CRITEM, m_null, M_X, M_Y + stat6_att * M_SPC, {"hudcolor_attempts"}, 0, NULL, hudcolor_str},
+    {"Attempts count",             S_CRITEM, m_null, M_X, M_Y + stat6_att_count * M_SPC, {"hudcolor_attempts_count"}, 0, NULL, hudcolor_str},
+    {"Movement label",             S_CRITEM, m_null, M_X, M_Y + stat6_movement * M_SPC, {"hudcolor_movement"}, 0, NULL, hudcolor_str},
+    {"Weapons label",              S_CRITEM, m_null, M_X, M_Y + stat6_weapons * M_SPC, {"hudcolor_weapons"}, 0, NULL, hudcolor_str},
+    {"Keys label",                 S_CRITEM, m_null, M_X, M_Y + stat6_keys * M_SPC, {"hudcolor_keys"}, 0, NULL, hudcolor_str},
+    {"Frags label",                S_CRITEM, m_null, M_X, M_Y + stat6_frags * M_SPC, {"hudcolor_frag"}, 0, NULL, hudcolor_str},
+    {"",                           S_SKIP,   m_null, M_X, M_Y + stat6_stub1 * M_SPC},
+    {"Low value",                  S_CRITEM, m_null, M_X, M_Y + stat6_lowcol * M_SPC, {"hudcolor_th_low"},    0, NULL, hudcolor_str},
+    {"Ok value",                   S_CRITEM, m_null, M_X, M_Y + stat6_okcol * M_SPC, {"hudcolor_th_ok"},     0, NULL, hudcolor_str},
+    {"Good value",                 S_CRITEM, m_null, M_X, M_Y + stat6_goodcol * M_SPC, {"hudcolor_th_good"},   0, NULL, hudcolor_str},
+    {"Extra value",                S_CRITEM, m_null, M_X, M_Y + stat6_extracol * M_SPC, {"hudcolor_th_extra"},  0, NULL, hudcolor_str},
+
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {stat_settings5}},
+
+  // Final entry
+  {0,S_SKIP|S_END,m_null}
+};
+
+// [Nugget] -----------------------------------------------------------------/
 
 // Setting up for the Status Bar / HUD screen. Turn on flags, set pointers,
 // locate the first item on the screen where the cursor is allowed to
@@ -3873,7 +3974,7 @@ void M_DrawStatusHUD(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(59,2,"M_STAT","STATUS BAR / HUD");
   M_DrawInstructions();
@@ -4183,7 +4284,7 @@ void M_DrawAutoMap(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(109,2,"M_AUTO","AUTOMAP");
   M_DrawInstructions();
@@ -4206,7 +4307,8 @@ void M_DrawAutoMap(void)
 //
 // The Enemies table.
 
-setup_menu_t enem_settings1[], enem_settings2[];
+setup_menu_t enem_settings1[],
+             enem_settings2[]; // [Nugget]
 
 setup_menu_t* enem_settings[] =
 {
@@ -4217,24 +4319,32 @@ setup_menu_t* enem_settings[] =
 
 enum {
   enem1_infighting,
-  enem1_remember,
+
+  enem1_remember = 1,
+
   enem1_backing,
   enem1_monkeys,
   enem1_avoid_hazards,
   enem1_friction,
   enem1_help_friends,
+
   enem1_helpers,
+
   enem1_distfriend,
+
   enem1_dog_jumping,
-  // [Nugget]
-  enem1_extra_gibbing,
-  enem1_bloodier_gibbing,
-  enem1_zdoom_drops,
+
+  enem1_stub1,
+  enem1_title1,
+  enem1_colored_blood,
+  enem1_flipcorpses,
+  enem1_ghost,
+  enem1_fuzz,
 
   enem1_end
 };
 
-setup_menu_t enem_settings1[] =  // Enemy Settings screen
+setup_menu_t enem_settings1[] =  // Enemy Settings screen       
 {
   // killough 7/19/98
   {"Monster Infighting When Provoked",S_YESNO|S_MBF,m_null,M_X,M_Y+ enem1_infighting*M_SPC, {"monster_infighting"}},
@@ -4261,13 +4371,24 @@ setup_menu_t enem_settings1[] =  // Enemy Settings screen
   {"Distance Friends Stay Away",S_NUM|S_MBF,m_null,M_X,M_Y+ enem1_distfriend*M_SPC, {"friend_distance"}},
 
   {"Allow dogs to jump down",S_YESNO|S_MBF,m_null,M_X,M_Y+ enem1_dog_jumping*M_SPC, {"dog_jumping"}},
-  
-  // [Nugget]
-  {"Extra Gibbing",         S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + enem1_extra_gibbing    * M_SPC, {"extra_gibbing"}},
-  {"Bloodier Gibbing",      S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + enem1_bloodier_gibbing * M_SPC, {"bloodier_gibbing"}},
-  {"ZDoom-like item drops", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + enem1_zdoom_drops      * M_SPC, {"zdoom_item_drops"}},
 
-  {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {enem_settings2}},
+  {"", S_SKIP, m_null, M_X , M_Y + enem1_stub1*M_SPC},
+
+  {"Cosmetic",S_SKIP|S_TITLE,m_null,M_X,M_Y+ enem1_title1*M_SPC},
+
+  // [FG] colored blood and gibs
+  {"Colored Blood",S_YESNO|S_STRICT,m_null,M_X,M_Y+ enem1_colored_blood*M_SPC, {"colored_blood"}, 0, D_SetBloodColor},
+
+  // [crispy] randomly flip corpse, blood and death animation sprites
+  {"Randomly Mirrored Corpses",S_YESNO|S_STRICT,m_null,M_X,M_Y+ enem1_flipcorpses*M_SPC, {"flipcorpses"}},
+
+  // [crispy] resurrected pools of gore ("ghost monsters") are translucent
+  {"Translucent Ghost Monsters",S_YESNO|S_STRICT,m_null,M_X,M_Y+ enem1_ghost*M_SPC, {"ghost_monsters"}},
+
+  // [FG] spectre drawing mode
+  {"Blocky Spectre Drawing",S_YESNO,m_null,M_X,M_Y+ enem1_fuzz*M_SPC, {"fuzzcolumn_mode"}, 0, R_SetFuzzColumnMode},
+
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {enem_settings2}}, // [Nugget]
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
@@ -4277,43 +4398,35 @@ setup_menu_t enem_settings1[] =  // Enemy Settings screen
 
 };
 
-// [Nugget]
+// [Nugget] /-----------------------------------------------------------------
+
 enum {
   enem2_title1,
-  enem2_colored_blood,
-  enem2_flipcorpses,
-  enem2_ghost,
-  enem2_fuzz,
+  enem2_extra_gibbing,
+  enem2_bloodier_gibbing,
+  enem2_zdoom_drops,
+  enem2_stub1,
   enem2_fuzzdark,
-
-  enem2_end
 };
 
 setup_menu_t enem_settings2[] =  // Enemy Settings screen 2
 {
-  {"Cosmetic",S_SKIP|S_TITLE,m_null,M_X,M_Y+ enem2_title1*M_SPC},
+  {"Nugget", S_SKIP|S_TITLE, m_null, M_X, M_Y + enem2_title1 * M_SPC},
 
-  // [FG] colored blood and gibs
-  {"Colored Blood",S_YESNO|S_STRICT,m_null,M_X,M_Y+ enem2_colored_blood*M_SPC, {"colored_blood"}, 0, D_SetBloodColor},
+    {"Extra Gibbing",            S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + enem2_extra_gibbing    * M_SPC, {"extra_gibbing"}},
+    {"Bloodier Gibbing",         S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + enem2_bloodier_gibbing * M_SPC, {"bloodier_gibbing"}},
+    {"ZDoom-like Item Drops",    S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + enem2_zdoom_drops      * M_SPC, {"zdoom_item_drops"}},
+    {"",                         S_SKIP,                      m_null, M_X, M_Y + enem2_stub1            * M_SPC},
+    {"Selective Fuzz Darkening", S_YESNO|S_STRICT,            m_null, M_X, M_Y + enem2_fuzzdark         * M_SPC, {"fuzzdark_mode"}}, // [Nugget - ceski] Selective fuzz darkening
 
-  // [crispy] randomly flip corpse, blood and death animation sprites
-  {"Randomly Mirrored Corpses",S_YESNO|S_STRICT,m_null,M_X,M_Y+ enem2_flipcorpses*M_SPC, {"flipcorpses"}},
-
-  // [crispy] resurrected pools of gore ("ghost monsters") are translucent
-  {"Translucent Ghost Monsters",S_YESNO|S_STRICT,m_null,M_X,M_Y+ enem2_ghost*M_SPC, {"ghost_monsters"}},
-
-  // [FG] spectre drawing mode
-  {"Blocky Spectre Drawing",S_YESNO,m_null,M_X,M_Y+ enem2_fuzz*M_SPC, {"fuzzcolumn_mode"}, 0, R_SetFuzzColumnMode},
-    
-  // [Nugget - ceski] Selective fuzz darkening
-  {"Selective Fuzz Darkening",S_YESNO|S_STRICT,m_null,M_X,M_Y+ enem2_fuzzdark*M_SPC, {"fuzzdark_mode"}},
-
-  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {enem_settings1}},
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {enem_settings1}},
 
   // Final entry
   {0,S_SKIP|S_END,m_null}
 
 };
+
+// [Nugget] -----------------------------------------------------------------/
 
 /////////////////////////////
 
@@ -4343,7 +4456,7 @@ void M_DrawEnemy(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(114,2,"M_ENEM","ENEMIES");
   M_DrawInstructions();
@@ -4539,17 +4652,24 @@ static void M_ResetScreen(void)
 }
 
 static const char *hires_strings[] = {
-  "1X (200p)", "2X (400p)", "4X (800p)", "8X (1600p)", NULL
+  NULL,
+  "1X (200p)",  "2X (400p)",  "3X (600p)",
+  "4X (800p)",  "5X (1000p)", "6X (1200p)",
+  "7X (1400p)", "8X (1600p)", "9X (1800p)",
+  NULL
 };
 
 setup_menu_t gen_settings1[] = { // General Settings screen1
 
   {"Video"       ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
 
-  {"Renderer Resolution", S_CHOICE, m_null, M_X, M_Y+ gen1_hires*M_SPC,
+  // [Nugget] These first two items now report
+  // the current resolution when sitting on them
+
+  {"Renderer Resolution", S_CHOICE|S_RESOLUTION, m_null, M_X, M_Y+ gen1_hires*M_SPC,
    {"hires"}, 0, M_ResetScreen, hires_strings},
 
-  {"Widescreen Rendering", S_CHOICE, m_null, M_X, M_Y+ gen1_widescreen*M_SPC,
+  {"Widescreen Rendering", S_CHOICE|S_RESOLUTION, m_null, M_X, M_Y+ gen1_widescreen*M_SPC,
    {"widescreen"}, 0, M_ResetScreen, widescreen_ratios}, // [Nugget] Widescreen ratios
 
   {"", S_SKIP, m_null, M_X, M_Y + gen1_gap1*M_SPC},
@@ -4654,7 +4774,6 @@ enum {
   gen3_brightmaps,
   gen3_stub2,
   gen3_solidbackground,
-  gen3_draw_menu_background,
   gen3_menu_background,
   gen3_menu_background_darkening,
   gen3_diskicon,
@@ -4728,6 +4847,7 @@ enum {
   gen7_chaseheight,
   gen7_stub1,
   gen7_title2,
+  gen7_menubgall,
   gen7_menutint,
   gen7_berserktint,
   gen7_radsuittint,
@@ -4843,11 +4963,6 @@ static void M_UpdateMouseLook(void)
   M_UpdateCrosshairItems(); // [Nugget]
 }
 
-static void M_UpdateMenuBackgroundItem(void)
-{
-  DISABLE_ITEM(!draw_menu_background, gen_settings3[gen3_menu_background]);
-}
-
 void M_ChangeMenuBackgroundDarkening(void)
 {
   DISABLE_ITEM(!(menu_background == background_dark), gen_settings3[gen3_menu_background_darkening]);
@@ -4870,12 +4985,8 @@ static const char *death_use_action_strings[] = {
   "default", "last save", "nothing", NULL
 };
 
-static const char *draw_menu_background_strings[] = {
-  "No", "In Setup", "All Menus", NULL
-};
-
 static const char *menu_background_strings[] = {
-  "Solid", "Dark", NULL
+  "solid", "none", "dark", NULL // [Nugget] Changed descriptions
 };
 
 setup_menu_t gen_settings3[] = { // General Settings screen3
@@ -4914,11 +5025,8 @@ setup_menu_t gen_settings3[] = { // General Settings screen3
   {"Solid Status Bar Background", S_YESNO, m_null, M_X,
    M_Y + gen3_solidbackground*M_SPC, {"st_solidbackground"}},
 
-  {"Draw Menu Background", S_CHOICE, m_null, M_X,
-   M_Y + gen3_draw_menu_background*M_SPC, {"draw_menu_background"}, 0, M_UpdateMenuBackgroundItem, draw_menu_background_strings},
-
-  {"Menu Background", S_CHOICE, m_null, M_X,
-   M_Y + gen3_menu_background*M_SPC, {"menu_background"}, 0, M_ChangeMenuBackgroundDarkening, menu_background_strings},
+  {"Menu Background Style", S_CHOICE, m_null, M_X, // [Nugget] Changed description
+   M_Y + gen3_menu_background*M_SPC, {"menu_background"}, 0, NULL, menu_background_strings},
 
   {"Background Darkening", S_THERMO, m_null, M_X_THRM,
    M_Y + gen3_menu_background_darkening*M_SPC, {"menu_background_darkening"}},
@@ -5041,6 +5149,19 @@ setup_menu_t gen_settings5[] = { // General Settings screen5
   {0,S_SKIP|S_END,m_null}
 };
 
+// [Nugget] /-----------------------------------------------------------------
+
+static void M_ChangeViewHeight(void)
+{
+  static int oldviewheight = 0;
+  
+  for (int i = 0;  i < MAXPLAYERS;  i++)
+    if (playeringame[i] && players[i].playerstate == PST_LIVE)
+    { players[i].viewheight += (viewheight_value - oldviewheight) * FRACUNIT; }
+
+  oldviewheight = viewheight_value;
+}
+
 // [Cherry]
 void M_UpdateScreenShakeItem(void) {
   DISABLE_ITEM(!(damage_shake || explosion_shake), gen_settings6[gen6_maxshake]);
@@ -5054,11 +5175,11 @@ static const char *chasecam_modes[] = {
   "Off", "Back", "Front", NULL
 };
 
-setup_menu_t gen_settings6[] = { // [Nugget]
+setup_menu_t gen_settings6[] = {
 
   {"Nugget - Gameplay", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title1 * M_SPC},
     {"Things Move Over/Under Things", S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen6_overunder   * M_SPC, {"over_under"}},
-    {"Allow Jump/Crouch",             S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen6_jump_crouch * M_SPC, {"jump_crouch"}},
+    {"Allow Jumping/Crouching",       S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen6_jump_crouch * M_SPC, {"jump_crouch"}},
   {"", S_SKIP, m_null, M_X, M_Y + gen6_stub1*M_SPC},
   {"Nugget - View (1)", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
     {"Field of View",                 S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen6_fov         * M_SPC, {"fov"}, 0, M_SetFOV},
@@ -5080,6 +5201,10 @@ setup_menu_t gen_settings6[] = { // [Nugget]
   {0,S_SKIP|S_END,m_null}
 };
 
+static const char *fake_contrast_styles[] = {
+  "Off", "Smooth", "Vanilla", NULL
+};
+
 static const char *s_clipping_dists[] = {
   "1200", "2400", NULL
 };
@@ -5091,24 +5216,27 @@ static const char *page_ticking_conds[] = {
 setup_menu_t gen_settings7[] = { // [Nugget]
   
   {"Nugget - View (2)", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title1 * M_SPC},
-    {"Chasecam",                      S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_chasecam    * M_SPC, {"chasecam_mode"}, 0, NULL, chasecam_modes},
-    {"Chasecam distance",             S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_chasedist   * M_SPC, {"chasecam_distance"}},
-    {"Chasecam height",               S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_chaseheight * M_SPC, {"chasecam_height"}},
+  
+    {"Chasecam",                      S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_chasecam     * M_SPC, {"chasecam_mode"}, 0, NULL, chasecam_modes},
+    {"Chasecam Distance",             S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_chasedist    * M_SPC, {"chasecam_distance"}},
+    {"Chasecam Height",               S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_chaseheight  * M_SPC, {"chasecam_height"}},
   {"", S_SKIP, m_null, M_X, M_Y + gen7_stub1*M_SPC},
   {"Nugget - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title2 * M_SPC},
-    {"Disable Palette Tint in Menus", S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_menutint      * M_SPC, {"no_menu_tint"}},
-    {"Disable Berserk Tint",          S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_berserktint   * M_SPC, {"no_berserk_tint"}},
-    {"Disable Radiation Suit Tint",   S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_radsuittint   * M_SPC, {"no_radsuit_tint"}},
-    {"Damage Tint Cap",               S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_dmgcountcap   * M_SPC, {"damagecount_cap"}},
-    {"Bonus Tint Cap",                S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_boncountcap   * M_SPC, {"bonuscount_cap"}},
-    {"Fake Contrast",                 S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_fakecontrast  * M_SPC, {"fake_contrast"}},
-    {"Screen Wipe Speed Percentage",  S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_wipespeed     * M_SPC, {"wipe_speed_percentage"}},
+
+    {"Background For All Menus",      S_YESNO,           m_null, M_X, M_Y + gen7_menubgall    * M_SPC, {"menu_background_all"}},
+    {"Disable Palette Tint in Menus", S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_menutint     * M_SPC, {"no_menu_tint"}},
+    {"Disable Berserk Tint",          S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_berserktint  * M_SPC, {"no_berserk_tint"}},
+    {"Disable Radiation Suit Tint",   S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_radsuittint  * M_SPC, {"no_radsuit_tint"}},
+    {"Damage Tint Cap",               S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_dmgcountcap  * M_SPC, {"damagecount_cap"}},
+    {"Bonus Tint Cap",                S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_boncountcap  * M_SPC, {"bonuscount_cap"}},
+    {"Fake Contrast",                 S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_fakecontrast * M_SPC, {"fake_contrast"}, 0, NULL, fake_contrast_styles},
+    {"Screen Wipe Speed Percentage",  S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_wipespeed    * M_SPC, {"wipe_speed_percentage"}},
   {"", S_SKIP, m_null, M_X, M_Y + gen7_stub2*M_SPC},
   {"Cherry - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title3 * M_SPC},
-    {"Motion Blur Percentage",        S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_motionblur    * M_SPC, {"motion_blur"}},
+    {"Motion Blur Percentage",        S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_motionblur   * M_SPC, {"motion_blur"}},
 
-  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings6}},
-  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings8}},
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings6}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings8}},
 
   // Final entry
 
@@ -5125,18 +5253,20 @@ setup_menu_t gen_settings8[] = { // [Nugget]
   {"", S_SKIP, m_null, M_X, M_Y + gen8_stub1*M_SPC},
   {"Nugget - Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen8_title2 * M_SPC},
 #if 0 // [Nugget] For future use, hopefully
-    {"Flickering Sector Lighting",  S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen8_a11y_seclight    * M_SPC, {"a11y_sector_lighting"}},
+    {"Flickering Sector Lighting", S_YESNO|S_STRICT, m_null, M_X, M_Y + gen8_a11y_seclight * M_SPC, {"a11y_sector_lighting"}},
 #endif
-    {"Weapon Flash Lighting",       S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen8_a11y_flash       * M_SPC, {"a11y_weapon_flash"}},
-    {"Weapon Flash Sprite",         S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen8_a11y_pspr        * M_SPC, {"a11y_weapon_pspr"}},
-    {"Invulnerability Colormap",    S_YESNO |S_STRICT, m_null, M_X,      M_Y + gen8_a11y_invul       * M_SPC, {"a11y_invul_colormap"}},
+    {"Weapon Flash Lighting",      S_YESNO|S_STRICT, m_null, M_X, M_Y + gen8_a11y_flash    * M_SPC, {"a11y_weapon_flash"}},
+    {"Weapon Flash Sprite",        S_YESNO|S_STRICT, m_null, M_X, M_Y + gen8_a11y_pspr     * M_SPC, {"a11y_weapon_pspr"}},
+    {"Invulnerability Colormap",   S_YESNO|S_STRICT, m_null, M_X, M_Y + gen8_a11y_invul    * M_SPC, {"a11y_invul_colormap"}},
 
-  {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings7}},
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings7}},
 
   // Final entry
 
   {0,S_SKIP|S_END,m_null}
 };
+
+// [Nugget] -----------------------------------------------------------------/
 
 void M_Trans(void) // To reset translucency after setting it in menu
 {
@@ -5173,7 +5303,7 @@ void M_DrawGeneral(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(114,2,"M_GENERL","GENERAL");
   M_DrawInstructions();
@@ -5367,6 +5497,7 @@ setup_menu_t comp_settings3[] =  // Compatibility Settings screen #3
 enum { // [Nugget]
   comp4_title1,
   comp4_bruistarget,
+  comp4_nomeleesnap,
   comp4_longautoaim,
   comp4_lscollision,
   comp4_lsamnesia,
@@ -5378,8 +5509,10 @@ enum { // [Nugget]
 
 setup_menu_t comp_settings4[] =  // [Nugget]
 {
-  {"Nugget - Additional Settings", S_SKIP|S_TITLE, m_null, C_X, M_Y + comp4_title1 * COMP_SPC},
+  {"Nugget - Gameplay", S_SKIP|S_TITLE, m_null, C_X, M_Y + comp4_title1 * COMP_SPC},
+
     {"Bruiser attack doesn't face target",    S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_bruistarget * COMP_SPC, {"comp_bruistarget"}},
+    {"Disable Melee Snapping",                S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_nomeleesnap * COMP_SPC, {"comp_nomeleesnap"}},
     {"Double Autoaim range",                  S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_longautoaim * COMP_SPC, {"comp_longautoaim"}},
     {"Fix Lost Soul colliding with items",    S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_lscollision * COMP_SPC, {"comp_lscollision"}},
     {"Lost Soul forgets target upon impact",  S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_lsamnesia   * COMP_SPC, {"comp_lsamnesia"}},
@@ -5411,7 +5544,8 @@ enum { // [Nugget]
 
 setup_menu_t comp_settings5[] =  // [Nugget]
 {
-  {"Nugget - Additional Cosmetic Settings", S_SKIP|S_TITLE, m_null, C_X, M_Y + comp5_title1 * COMP_SPC},
+  {"Nugget - Cosmetic", S_SKIP|S_TITLE, m_null, C_X, M_Y + comp5_title1 * COMP_SPC},
+
     {"Blazing doors reopen with wrong sound",        S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_blazing2     * COMP_SPC, {"comp_blazing2"}},
     {"Manually reactivated moving doors are silent", S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_manualdoor   * COMP_SPC, {"comp_manualdoor"}},
     {"Corrected switch sound source",                S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_switchsource * COMP_SPC, {"comp_switchsource"}},
@@ -5458,7 +5592,7 @@ void M_DrawCompat(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(52,2,"M_COMPAT","DOOM COMPATIBILITY");
   M_DrawInstructions();
@@ -5492,7 +5626,7 @@ enum {
   mess_color_chat,
   mess_chat_timer,
   mess_color_obituary,
-  mess_stub2,
+  // [Nugget] Removed stub
   mess_list,
   mess_lines,
   mess_scrollup // [Nugget] Restore message scroll direction toggle
@@ -5558,7 +5692,7 @@ setup_menu_t mess_settings1[] =  // Messages screen
   {"Obituary Color", S_CRITEM|S_COSMETIC, m_null, M_X,
    M_Y + mess_color_obituary*M_SPC, {"hudcolor_obituary"}, 0, NULL, hudcolor_str},
 
-  {"", S_SKIP, m_null, M_X, M_Y + mess_stub2*M_SPC},
+  // [Nugget] Removed stub
 
   {"Multi-Line Messages", S_YESNO, m_null, M_X,
    M_Y + mess_list*M_SPC, {"message_list"}, 0, M_UpdateMultiLineMsgItem},
@@ -5606,7 +5740,7 @@ void M_DrawMessages(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(103,2,"M_MESS","MESSAGES");
   M_DrawInstructions();
@@ -5676,7 +5810,7 @@ void M_DrawChatStrings(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
+  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
 
   M_DrawTitle(83,2,"M_CHAT","CHAT STRINGS");
   M_DrawInstructions();
@@ -5701,7 +5835,7 @@ static setup_menu_t *level_table_page[LEVEL_TABLE_PAGES];
 static setup_menu_t prev_page_template = { "<-",S_SKIP | S_PREV, m_null, 3, M_Y_PREVNEXT };
 static setup_menu_t next_page_template = { "->",S_SKIP | S_NEXT, m_null, 318, M_Y_PREVNEXT };
 static setup_menu_t final_entry_template = { 0, S_SKIP | S_END, m_null };
-static setup_menu_t new_column_template = { 0, S_SKIP | S_RESET_Y, m_null };
+static setup_menu_t new_column_template = { 0, S_SKIP, m_null, .m_flags2 = S2_RESET_Y };
 static setup_menu_t empty_line_template = { 0, S_SKIP, m_null };
 
 #define LOOP_LEVEL_TABLE_COLUMN { \
@@ -6313,9 +6447,6 @@ void M_LevelTable(int choice)
 
 void M_DrawLevelTable(void)
 {
-  inhelpscreens = true;
-
-  M_DrawBackground("FLOOR4_6", screens[0], false); // Draw background
 
   M_DrawTitle(114, 2, "M_LVLTBL", "LEVEL TABLE");
   if (current_setup_menu != level_table_page[wad_stats_summary_page])
@@ -6785,7 +6916,7 @@ void M_DrawHelp (void)
   inhelpscreens = true;                        // killough 10/98
   if (helplump < 0 || W_IsIWADLump(helplump))
   {
-  M_DrawBackground("FLOOR4_6", screens[0], false);
+  M_DrawBackground("FLOOR4_6", screens[0]);
   M_DrawScreenItems(helpstrings);
   }
   else
@@ -6855,7 +6986,7 @@ setup_menu_t cred_settings[]={
   {"Woof! by",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*woof + CR_SH*cr_woof},
   {"Fabian Greffrath",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*woof + CR_SH*cr_woof},
 
-  // [Nugget] [insert moyai here]
+  // [Nugget] :moyai:
   {"Nugget Doom by",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*nugget + CR_SH*cr_nugget},
   {"Alaux",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*nugget + CR_SH*cr_nugget},
 
@@ -6881,7 +7012,7 @@ void M_DrawCredits(void)     // killough 10/98: credit screen
   sprintf(mbftext_s, PROJECT_STRING);
   inhelpscreens = true;
 
-  M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0], true);
+  M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0]);
   M_DrawTitle(42,9,"MBFTEXT",mbftext_s);
   M_DrawScreenItems(cred_settings);
 }
@@ -7279,7 +7410,7 @@ boolean M_Responder (event_t* ev)
 
       if (M_InputActivated(input_zoomout))     // zoom out
 	{
-	  if (automapactive)
+	  if (automapactive == AM_FULL)
 	    return false;
 	  M_SizeDisplay(0);
 	  S_StartSoundOptional(NULL, sfx_mnusli, sfx_stnmov); // [Nugget]: [NS] Optional menu sounds.
@@ -7288,7 +7419,7 @@ boolean M_Responder (event_t* ev)
 
       if (M_InputActivated(input_zoomin))               // zoom in
 	{                                 // jff 2/23/98
-	  if (automapactive)                // allow
+	  if (automapactive == AM_FULL)     // allow
 	    return false;                   // key_hud==key_zoomin
 	  M_SizeDisplay(1);
 	  S_StartSoundOptional(NULL, sfx_mnusli, sfx_stnmov); // [Nugget]: [NS] Optional menu sounds.
@@ -8417,17 +8548,20 @@ void M_StartControlPanel (void)
 
 boolean M_MenuIsShaded(void)
 {
-
-  if (draw_menu_background == 0)
-    return false;
-  return (draw_menu_background == 1 ? setup_active : menuactive)
-      && (menu_background != background_solid);
+  return (setup_active || (menuactive && menu_background_all)) // [Nugget]
+         && menu_background == background_dark;
 }
 
 void M_Drawer (void)
 {
    if (M_MenuIsShaded())
       V_ShadeScreen(menu_background_darkening); // [Nugget] Parameterized
+   // [Nugget]
+   else if (!setup_active && menuactive && menu_background_all
+            && menu_background == background_on)
+      M_DrawBackground("FLOOR4_6", screens[0]);
+
+   inhelpscreens = true; // [Nugget] Force Status Bar redraw in all menus
 
    // Horiz. & Vertically center string and print it.
    // killough 9/29/98: simplified code, removed 40-character width limit
@@ -8438,8 +8572,6 @@ void M_Drawer (void)
       char *d = strdup(messageString);
       char *p;
       int y = 100 - M_StringHeight(messageString)/2;
-
-      M_DrawBackground("FLOOR4_6", screens[0], false);
 
       p = d;
 
@@ -8933,7 +9065,7 @@ void M_ResetSetupMenu(void)
 
   if (deh_set_blood_color)
   {
-    enem_settings2[enem2_colored_blood].m_flags |= S_DISABLE; // [Nugget] Now in page 2
+    enem_settings1[enem1_colored_blood].m_flags |= S_DISABLE;
   }
 
   if (!brightmaps_found || force_brightmaps)
@@ -8941,7 +9073,7 @@ void M_ResetSetupMenu(void)
     gen_settings3[gen3_brightmaps].m_flags |= S_DISABLE;
   }
 
-  DISABLE_ITEM(!comp[comp_vile], enem_settings2[enem2_ghost]); // [Nugget] Now in page 2
+  DISABLE_ITEM(!comp[comp_vile], enem_settings1[enem1_ghost]);
 
   M_CoerceFPSLimit();
   M_UpdateCrosshairItems();
@@ -8954,17 +9086,15 @@ void M_ResetSetupMenu(void)
   // [Nugget] ----------------------------------------------------------------
   
   if (!(extra_gibbing[EXGIB_FIST] || extra_gibbing[EXGIB_CSAW] || extra_gibbing[EXGIB_SSG]))
-  { enem_settings1[enem1_extra_gibbing].m_flags |= S_DISABLE; }
+  { enem_settings2[enem2_extra_gibbing].m_flags |= S_DISABLE; }
 
   M_UpdatePaletteItems();
-  // [Cherry]
-  M_UpdateMenuBackgroundItem();
-  M_UpdateScreenShakeItem();
+  M_UpdateScreenShakeItem(); // [Cherry]
 }
 
 void M_ResetSetupMenuVideo(void)
 {
-  DISABLE_ITEM(!hires, enem_settings2[enem2_fuzz]); // [Nugget] Now in page 2
+  DISABLE_ITEM(hires == 1, enem_settings1[enem1_fuzz]);
   M_EnableDisableFPSLimit();
 }
 

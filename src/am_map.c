@@ -40,14 +40,14 @@
 
 extern int need_downscaling; // [Nugget]
 
-// [Nugget] Tag Finder from PrBoomX /------------
+// [Nugget] Tag Finder from PrBoomX /-----------------------------------------
 
 static boolean findtag;
 
 static sector_t* magic_sector;
 static short     magic_tag = -1;
 
-// [Nugget] Tag Finder from PrBoomX ------------/
+// [Nugget] Tag Finder from PrBoomX -----------------------------------------/
 
 //jff 1/7/98 default automap colors added
 int mapcolor_back;    // map background
@@ -232,7 +232,7 @@ int ddt_cheating = 0;         // killough 2/7/98: make global, rename to ddt_*
 
 int automap_grid = 0;
 
-boolean automapactive = false;
+int automapactive = false; // [Nugget] Minimap: now an int
 static boolean automapfirststart = true;
 
 overlay_t automapoverlay = overlay_off;
@@ -299,6 +299,8 @@ int markpointnum = 0; // next point to be assigned (also number of points now)
 int markpointnum_max = 0;       // killough 2/22/98
 static int markblinktimer; // [Nugget] Blink marks
 int followplayer = 1; // specifies whether to follow the player around
+
+#define FOLLOW (followplayer || automapactive == AM_MINI) // [Nugget] Minimap
 
 static boolean stopped = true;
 
@@ -370,7 +372,7 @@ static void AM_restoreScaleAndLoc(void)
 {
   m_w = old_m_w;
   m_h = old_m_h;
-  if (!followplayer)
+  if (!FOLLOW)
   {
     m_x = old_m_x;
     m_y = old_m_y;
@@ -526,7 +528,6 @@ void AM_initVariables(void)
 {
   static event_t st_notify = { ev_keyup, AM_MSGENTERED };
 
-  automapactive = true;
   fb = screens[0];
 
   m_paninc.x = m_paninc.y = 0;
@@ -539,7 +540,7 @@ void AM_initVariables(void)
 
   plr = &players[displayplayer];
   // [Alaux] Don't always snap back to player when reopening the Automap
-  if (followplayer || automapfirststart)
+  if (FOLLOW || automapfirststart)
   {
     m_x = (plr->mo->x >> FRACTOMAPBITS) - m_w/2;
     m_y = (plr->mo->y >> FRACTOMAPBITS) - m_h/2;
@@ -641,11 +642,20 @@ static void AM_LevelInit(void)
   //
   // killough 11/98: ... finally add hires support :)
 
-  f_w = (SCREENWIDTH) << hires;
-  if (automapoverlay && scaledviewheight == SCREENHEIGHT)
-    f_h = (SCREENHEIGHT) << hires;
-  else
-    f_h = (SCREENHEIGHT-ST_HEIGHT) << hires;
+  // [Nugget] Minimap
+  if (automapactive == AM_MINI)
+  {
+    f_x = 8 * hires;
+    f_y = (((message_list ? hud_msg_lines : 1) + 1) * 8 + 1) * hires;
+    f_w = f_h = 80 * hires;
+  }
+  else {
+    f_w = (SCREENWIDTH * hires);
+    if (automapoverlay && scaledviewheight == SCREENHEIGHT)
+      f_h = (SCREENHEIGHT * hires);
+    else
+      f_h = (SCREENHEIGHT-ST_HEIGHT) * hires;
+  }
 
   AM_enableSmoothLines();
 
@@ -697,7 +707,7 @@ void AM_Stop (void)
   static event_t st_notify = { 0, ev_keyup, AM_MSGEXITED };
 
   AM_unloadPics();
-  automapactive = false;
+
   ST_Responder(&st_notify);
   stopped = true;
 
@@ -721,17 +731,23 @@ void AM_Stop (void)
 //
 void AM_Start()
 {
-  static int lastlevel = -1, lastepisode = -1, last_hires = -1, last_widescreen = -1, last_viewheight = -1;
+  static int lastlevel = -1, lastepisode = -1, last_hires = -1, last_widescreen = -1, last_viewheight = -1,
+             last_automap = -1, last_messages = -1; // [Nugget] Minimap
+
+  int messages_height = message_list ? hud_msg_lines : 1; // [Nugget]
 
   if (!stopped)
     AM_Stop();
   stopped = false;
   if (lastlevel != gamemap || lastepisode != gameepisode || hires!=last_hires
-    || widescreen != last_widescreen || viewheight != last_viewheight)
+    || widescreen != last_widescreen || viewheight != last_viewheight
+    || automapactive != last_automap || messages_height != last_messages)
   {
     last_hires = hires;          // killough 11/98
     last_widescreen = widescreen;
     last_viewheight = viewheight;
+    last_automap = automapactive;
+    last_messages = messages_height;
     AM_LevelInit();
     lastlevel = gamemap;
     lastepisode = gameepisode;
@@ -782,6 +798,20 @@ enum
 
 static int buttons_state[STATE_NUM] = { 0 };
 
+// [Nugget]
+void AM_ChangeMode(automapmode_t mode)
+{
+  automapactive = mode;
+
+  if (automapactive == AM_MINI)
+  { memset(buttons_state, 0, sizeof(buttons_state)); }
+
+  if (!automapactive)
+    AM_Stop();
+  else
+    AM_Start();
+}
+
 //
 // AM_Responder()
 //
@@ -814,11 +844,11 @@ boolean AM_Responder
 
   rc = false;
 
-  if (!automapactive)
+  if (automapactive != AM_FULL)
   {
     if (M_InputActivated(input_map))
     {
-      AM_Start ();
+      AM_ChangeMode(AM_FULL);
       viewactive = false;
       rc = true;
     }
@@ -876,7 +906,7 @@ boolean AM_Responder
       bigstate = 0;
       viewactive = true;
       memset(buttons_state, 0, sizeof(buttons_state));
-      AM_Stop ();
+      AM_ChangeMode(AM_OFF);
     }
     else if (M_InputActivated(input_map_gobig))
     {
@@ -932,9 +962,9 @@ boolean AM_Responder
       }
 
       if (automapoverlay && scaledviewheight == SCREENHEIGHT)
-        f_h = (SCREENHEIGHT) << hires;
+        f_h = (SCREENHEIGHT * hires);
       else
-        f_h = (SCREENHEIGHT-ST_HEIGHT) << hires;
+        f_h = (SCREENHEIGHT-ST_HEIGHT) * hires;
 
       AM_activateNewScale();
     }
@@ -944,13 +974,18 @@ boolean AM_Responder
       togglemsg("%s", automaprotate ? s_AMSTR_ROTATEON : s_AMSTR_ROTATEOFF);
     }
 
-    // [Nugget] /----------------------
+    // [Nugget] /-------------------------------------------------------------
 
     // Blink marks
     else if (M_InputActivated(input_map_blink) && markpointnum)
     {
       markblinktimer = 4*TICRATE;
-      plr->message = "Blinking marks...";
+      displaymsg("Blinking %i mark%s...", markpointnum, (1 < markpointnum) ? "s" : "");
+    }
+    // Minimap
+    else if (M_InputActivated(input_map_mini))
+    {
+      AM_ChangeMode(AM_MINI);
     }
     // Tag Finder from PrBoomX
     else if (M_InputActivated(input_map_tagfinder))
@@ -958,7 +993,7 @@ boolean AM_Responder
       findtag = !strictmode;
     }
     // Teleport to Automap pointer
-    else if (M_InputActivated(input_map_teleport) && !followplayer)
+    else if (M_InputActivated(input_map_teleport) && !followplayer && casual_play)
     {
       mobj_t *const mo = plr->mo;
     
@@ -966,7 +1001,7 @@ boolean AM_Responder
 
       P_TeleportMove(mo, (m_x+m_w/2)<<FRACTOMAPBITS, (m_y+m_h/2)<<FRACTOMAPBITS, false);
       mo->z = mo->floorz;
-      plr->viewz = mo->z + plr->viewheight;
+      plr->viewz = mo->z + plr->viewheight - plr->crouchoffset;
 
       if (fancy_teleport) {
         R_SetFOVFX(FOVFX_TELEPORT); // Teleporter zoom
@@ -979,7 +1014,7 @@ boolean AM_Responder
       P_MapEnd();
     }
 
-    // [Nugget] ----------------------/
+    // [Nugget] -------------------------------------------------------------/
 
     else
     {
@@ -1033,14 +1068,14 @@ boolean AM_Responder
   if (!followplayer)
   {
     if (buttons_state[PAN_RIGHT])
-      m_paninc.x += FTOM(f_paninc << hires);
+      m_paninc.x += FTOM(f_paninc * hires);
     if (buttons_state[PAN_LEFT])
-      m_paninc.x += -FTOM(f_paninc << hires);
+      m_paninc.x += -FTOM(f_paninc * hires);
 
     if (buttons_state[PAN_UP])
-      m_paninc.y += FTOM(f_paninc << hires);
+      m_paninc.y += FTOM(f_paninc * hires);
     if (buttons_state[PAN_DOWN])
-      m_paninc.y += -FTOM(f_paninc << hires);
+      m_paninc.y += -FTOM(f_paninc * hires);
   }
 
   if (!mousewheelzoom)
@@ -1101,8 +1136,9 @@ static void AM_changeWindowScale(void)
 //
 static void AM_doFollowPlayer(void)
 {
-  m_x = ((viewx - chasexofs) >> FRACTOMAPBITS) - m_w/2; // [Nugget]
-  m_y = ((viewy - chaseyofs) >> FRACTOMAPBITS) - m_h/2; // [Nugget]
+  // [Nugget] Prevent Chasecam from shifting the map view
+  m_x = ((viewx - chasexofs) >> FRACTOMAPBITS) - m_w/2;
+  m_y = ((viewy - chaseyofs) >> FRACTOMAPBITS) - m_h/2;
   m_x2 = m_x + m_w;
   m_y2 = m_y + m_h;
 }
@@ -1116,7 +1152,7 @@ int map_point_coordinates;
 
 void AM_Coordinates(const mobj_t *mo, fixed_t *x, fixed_t *y, fixed_t *z)
 {
-  *z = followplayer || !map_point_coordinates || !automapactive ? *x = mo->x, *y = mo->y, mo->z :
+  *z = FOLLOW || !map_point_coordinates || !automapactive ? *x = mo->x, *y = mo->y, mo->z :
     R_PointInSubsector(*x = (m_x+m_w/2) << FRACTOMAPBITS, *y = (m_y+m_h/2) << FRACTOMAPBITS)->sector->floorheight;
 }
 
@@ -1129,10 +1165,9 @@ void AM_Coordinates(const mobj_t *mo, fixed_t *x, fixed_t *y, fixed_t *z)
 //
 void AM_Ticker (void)
 {
-  // [Nugget] Blink marks
-  if (markblinktimer) { markblinktimer--; }
+  if (markblinktimer) { markblinktimer--; } // [Nugget] Blink marks
 
-  // [Nugget] Tag Finder from PrBoomX /----------
+  // [Nugget] Tag Finder from PrBoomX /---------------------------------------
 
   if (findtag)
   {
@@ -1178,7 +1213,7 @@ void AM_Ticker (void)
     }
   }
 
-  // [Nugget] Tag Finder from PrBoomX ----------/
+  // [Nugget] ---------------------------------------------------------------/
 
   // Change the zoom if necessary.
   if (ftom_zoommul != FRACUNIT)
@@ -1196,7 +1231,12 @@ void AM_Ticker (void)
 //
 static void AM_clearFB(int color)
 {
-  memset(fb, color, f_w*f_h);
+  // [Nugget] Minimap: take `f_x` and `f_y` into account
+  int x, y;
+
+  for (x = f_x;  x < f_x+f_w;  x++)
+    for (y = f_y;  y < f_y+f_h;  y++)
+      fb[y * (SCREENWIDTH * hires) + x] = color;
 }
 
 //
@@ -1233,12 +1273,13 @@ static boolean AM_clipMline
   int   dy;
 
 
+// [Nugget] Minimap: take `f_x` and `f_y` into account
 #define DOOUTCODE(oc, mx, my) \
   (oc) = 0; \
   if ((my) < 0) (oc) |= TOP; \
-  else if ((my) >= f_h) (oc) |= BOTTOM; \
+  else if ((my) >= f_y+f_h) (oc) |= BOTTOM; \
   if ((mx) < 0) (oc) |= LEFT; \
-  else if ((mx) >= f_w) (oc) |= RIGHT;
+  else if ((mx) >= f_x+f_w) (oc) |= RIGHT;
 
 
   // do trivial rejects and outcodes
@@ -1296,28 +1337,28 @@ static boolean AM_clipMline
       dx = fl->b.x - fl->a.x;
       // [Woof!] 'int64_t' math to avoid overflows on long lines.
       tmp.x = fl->a.x + (fixed_t)(((int64_t)dx*(fl->a.y-f_y))/dy);
-      tmp.y = 0;
+      tmp.y = f_y; // [Nugget] Minimap: take `f_y` into account
     }
     else if (outside & BOTTOM)
     {
       dy = fl->a.y - fl->b.y;
       dx = fl->b.x - fl->a.x;
       tmp.x = fl->a.x + (fixed_t)(((int64_t)dx*(fl->a.y-(f_y+f_h)))/dy);
-      tmp.y = f_h-1;
+      tmp.y = f_y+f_h-1; // [Nugget] Minimap: take `f_y` into account
     }
     else if (outside & RIGHT)
     {
       dy = fl->b.y - fl->a.y;
       dx = fl->b.x - fl->a.x;
       tmp.y = fl->a.y + (fixed_t)(((int64_t)dy*(f_x+f_w-1 - fl->a.x))/dx);
-      tmp.x = f_w-1;
+      tmp.x = f_x+f_w-1; // [Nugget] Minimap: take `f_x` into account
     }
     else if (outside & LEFT)
     {
       dy = fl->b.y - fl->a.y;
       dx = fl->b.x - fl->a.x;
       tmp.y = fl->a.y + (fixed_t)(((int64_t)dy*(f_x-fl->a.x))/dx);
-      tmp.x = 0;
+      tmp.x = f_x; // [Nugget] Minimap: take `f_x` into account
     }
 
     if (outside == outcode1)
@@ -1338,6 +1379,22 @@ static boolean AM_clipMline
   return true;
 }
 #undef DOOUTCODE
+
+// [Nugget] Prevent potentially-disappearing lines when downscaling the window;
+//          Minimap: take `f_x` and `f_y` into account
+void PUTDOT(int x, int y, int color)
+{
+  if (need_downscaling && !smooth_scaling)
+  {
+    int i, j, pixels = MAX(1, hires / 2);
+
+    for (i = 0;  i < pixels && (f_x <= x+i && x+i < f_x+f_w);  i++)
+      for (j = 0;  j < pixels && (f_y <= y+j && y+j < f_y+f_h);  j++)
+        fb[(y + j) * (SCREENWIDTH * hires) + (x + i)] = color;
+  }
+  else if ((f_x <= x && x < f_x+f_w) && (f_y <= y && y < f_y+f_h))
+    fb[y * (SCREENWIDTH * hires) + x] = color;
+}
 
 //
 // AM_drawFline()
@@ -1364,25 +1421,16 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
   // For debugging only
   if
   (
-       fl->a.x < 0 || fl->a.x >= f_w
-    || fl->a.y < 0 || fl->a.y >= f_h
-    || fl->b.x < 0 || fl->b.x >= f_w
-    || fl->b.y < 0 || fl->b.y >= f_h
+    // [Nugget] Minimap: take `f_x` and `f_y` into account
+       fl->a.x < 0 || fl->a.x >= f_x+f_w
+    || fl->a.y < 0 || fl->a.y >= f_y+f_h
+    || fl->b.x < 0 || fl->b.x >= f_x+f_w
+    || fl->b.y < 0 || fl->b.y >= f_y+f_h
   )
   {
     return;
   }
 #endif
-
-// [Nugget] Modified to prevent potentially-disappearing lines when downscaling the window
-#define PUTDOT(xx,yy,cc)                                                      \
-  if (need_downscaling && !smooth_scaling) {                                  \
-    for (int i=0; i<MAX(1,2<<(hires-2)) && xx+i<(SCREENWIDTH<<hires); i++)    \
-      for (int j=0; j<MAX(1,2<<(hires-2)) && yy+j<(SCREENHEIGHT<<hires); j++) \
-        fb[(yy + j) * f_w + (xx + i)] = (cc);                                 \
-  }                                                                           \
-  else                                                                        \
-    fb[(yy)*f_w+(xx)]=(cc)
 
   dx = fl->b.x - fl->a.x;
   ax = 2 * (dx<0 ? -dx : dx);
@@ -2006,7 +2054,7 @@ static void AM_rotatePoint(mpoint_t *pt)
 {
   int64_t tmpx;
   // [crispy] smooth automap rotation
-  angle_t smoothangle = followplayer ? ANG90 - viewangle : mapangle;
+  angle_t smoothangle = FOLLOW ? ANG90 - viewangle : mapangle;
 
   pt->x -= mapcenter.x;
   pt->y -= mapcenter.y;
@@ -2366,8 +2414,8 @@ static void AM_drawMarks(void)
   for (i=0;i<markpointnum;i++) // killough 2/22/98: remove automap mark limit
     if (markpoints[i].x != -1)
       {
-	int w = 5 << hires;
-	int h = 6 << hires;
+	int w = 5 * hires;
+	int h = 6 * hires;
 	int fx;
 	int fy;
 	int j = i;
@@ -2387,15 +2435,16 @@ static void AM_drawMarks(void)
 	    int d = j % 10;
 
 	    if (d==1)           // killough 2/22/98: less spacing for '1'
-	      fx += 1<<hires;
+	      fx += hires;
 
-	    if (fx >= f_x && fx < f_w - w && fy >= f_y && fy < f_h - h)
+	    // [Nugget] Minimap: take `f_x` and `f_y` into account
+	    if (fx >= f_x && fx < f_x+f_w - w && fy >= f_y && fy < f_y+f_h - h)
 	      // [Nugget] Blink marks
-	      V_DrawPatchTranslated((fx >> hires) - WIDESCREENDELTA,
-	                            fy >> hires, FB, marknums[d],
+	      V_DrawPatchTranslated((fx / hires) - WIDESCREENDELTA,
+	                            fy / hires, FB, marknums[d],
 	                            (markblinktimer & 8) ? cr_dark : NULL);
 
-	    fx -= w - (1<<hires);     // killough 2/22/98: 1 space backwards
+	    fx -= w - hires;     // killough 2/22/98: 1 space backwards
 
 	    j /= 10;
 	  }
@@ -2414,10 +2463,28 @@ static void AM_drawMarks(void)
 static void AM_drawCrosshair(int color)
 {
   // [crispy] do not draw the useless dot on the player arrow
-  if (!followplayer)
+  if (!FOLLOW)
   {
   fb[(f_w*(f_h+1))/2] = color; // single point for now
   }
+}
+
+// [Nugget]
+void AM_shadeScreen(void)
+{
+  // Minimap
+  if (automapactive == AM_MINI)
+  {
+    int x, y, pixel;
+
+    for (x = f_x;  x < f_x+f_w;  x++)
+      for (y = f_y;  y < f_y+f_h;  y++) {
+        pixel = y * (SCREENWIDTH * hires) + x;
+        fb[pixel] = colormaps[0][automap_overlay_darkening * 256 + fb[pixel]];
+      }
+  }
+  else
+    V_ShadeScreen(automap_overlay_darkening); // [Nugget] Parameterized
 }
 
 //
@@ -2434,7 +2501,7 @@ void AM_Drawer (void)
   // move AM_doFollowPlayer and AM_changeWindowLoc from AM_Ticker for
   // interpolation
 
-  if (followplayer)
+  if (FOLLOW)
   {
     AM_doFollowPlayer();
   }
@@ -2451,7 +2518,7 @@ void AM_Drawer (void)
     mapcenter.x = m_x + m_w / 2;
     mapcenter.y = m_y + m_h / 2;
     // [crispy] keep the map static if not following the player
-    if (followplayer)
+    if (FOLLOW)
     {
       mapangle = ANG90 - plr->mo->angle;
     }
@@ -2460,11 +2527,13 @@ void AM_Drawer (void)
   if (!automapoverlay)
   {
     AM_clearFB(mapcolor_back);       //jff 1/5/98 background default color
-    pspr_interp = false;
+    if (automapactive == AM_MINI) // [Nugget] Minimap
+      pspr_interp = false;
   }
   // [Alaux] Dark automap overlay
-  else if (automapoverlay == overlay_dark && !M_MenuIsShaded())
-    V_ShadeScreen(automap_overlay_darkening); // [Nugget] Parameterized
+  else if (automapoverlay == overlay_dark && (!M_MenuIsShaded()
+                                              || automapactive == AM_MINI)) // [Nugget] Minimap
+    AM_shadeScreen();
 
   if (automap_grid)                  // killough 2/28/98: change var name
     AM_drawGrid(mapcolor_grid);      //jff 1/7/98 grid default color

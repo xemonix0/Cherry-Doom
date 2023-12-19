@@ -166,9 +166,10 @@ default_t defaults[] = {
   //
 
   { // killough 11/98: hires
+    // [Nugget] Now a multiplier
     "hires", (config_t *) &default_hires, NULL,
-    {1}, {0,MAX_HIRES}, number, ss_none, wad_no,
-    "Renderer resolution (0 = 200p, 1 = 400p, 2 = 800p, 3 = 1600p)"
+    {2}, {1,MAX_HIRES}, number, ss_none, wad_no,
+    "Renderer resolution multiplier (1 = 200p, 2 = 400p, 3 = 600p...)"
   },
 
   {
@@ -183,6 +184,13 @@ default_t defaults[] = {
     (config_t *) &stretch_to_fit, NULL,
     {0}, {0, 1}, number, ss_none, wad_no,
     "1 to stretch viewport to fit window"
+  },
+
+  { // [Nugget]
+    "no_downscaling",
+    (config_t *) &no_downscaling, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to prevent auto-downscaling of window if it exceeds the display boundaries"
   },
 
   // [FG] save fullscren mode
@@ -376,18 +384,11 @@ default_t defaults[] = {
     "level brightness"
   },
 
-  { // [Cherry]
-    "draw_menu_background",
-    (config_t *) &draw_menu_background, NULL,
-    {1}, {0,2}, number, ss_gen, wad_no,
-    "whether to draw menu background (0 = no, 1 = only in setup screens, 2 = in all menus)"
-  },
-
-  { // [Cherry]
+  {
     "menu_background",
     (config_t *) &menu_background, NULL,
-    {background_solid}, {background_solid,background_dark}, number, ss_gen, wad_no,
-    "menu background (0 = solid, 1 = dark)"
+    {background_on}, {background_on,background_dark}, number, ss_gen, wad_no,
+    "menu background style (0 = solid, 1 = none, 2 = dark)" // [Nugget] Changed description
   },
 
   { // [Nugget]
@@ -489,14 +490,14 @@ default_t defaults[] = {
   {
     "snd_absorption",
     (config_t *) &snd_absorption, NULL,
-    {5}, {0, 10}, number, ss_none, wad_no, // [Nugget] Enabled by default
+    {5}, {0, 10}, number, ss_gen, wad_no, // [Nugget] Enabled by default
     "[OpenAL 3D] Air absorption effect (0 = Off, 10 = Max)"
   },
 
   {
     "snd_doppler",
     (config_t *) &snd_doppler, NULL,
-    {5}, {0, 10}, number, ss_none, wad_no, // [Nugget] Enabled by default
+    {5}, {0, 10}, number, ss_gen, wad_no, // [Nugget] Enabled by default
     "[OpenAL 3D] Doppler effect (0 = Off, 10 = Max)"
   },
 
@@ -536,7 +537,9 @@ default_t defaults[] = {
     {.s = "/usr/share/soundfonts:"
     /* Debian/Ubuntu/OpenSUSE */
     "/usr/share/sounds/sf2:"
-    "/usr/share/sounds/sf3"},
+    "/usr/share/sounds/sf3:"
+    /* AppImage */
+    "../share/" PROJECT_SHORTNAME "/soundfonts"},
 #endif
     {0}, string, ss_none, wad_no,
     "FluidSynth soundfont directories"
@@ -668,11 +671,11 @@ default_t defaults[] = {
     "0 to disable palette tint changes"
   },
 
-  { // [Nugget] Replace screen melt toggle
+  { // [Nugget] Replaces screen melt toggle
     "wipe_type",
     (config_t *) &wipe_type, NULL,
     {1}, {0,3}, number, ss_gen, wad_yes,
-    "Screen wipe type (0 = None, 1 = Melt, 2 = ColorXForm, 3 = Fade)"
+    "Screen wipe style (0 = None, 1 = Melt, 2 = Seizure (ColorXForm), 3 = Fade)"
   },
 
   {
@@ -714,7 +717,7 @@ default_t defaults[] = {
     "1 to enable pistol start"
   },
 
-  // [Nugget] /-----------------------------------------------------------
+  // [Nugget] /---------------------------------------------------------------
 
   {
     "over_under",
@@ -829,6 +832,13 @@ default_t defaults[] = {
   },
 
   {
+    "menu_background_all",
+    (config_t *) &menu_background_all, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to draw background for all menus"
+  },
+
+  {
     "no_menu_tint",
     (config_t *) &no_menu_tint, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
@@ -884,8 +894,15 @@ default_t defaults[] = {
   {
     "fake_contrast",
     (config_t *) &fake_contrast, NULL,
+    {1}, {0,2}, number, ss_gen, wad_yes,
+    "Fake contrast for walls (0 = Off, 1 = Smooth, 2 = Vanilla)"
+  },
+
+  {
+    "diminished_lighting",
+    (config_t *) &diminished_lighting, NULL,
     {1}, {0,1}, number, ss_gen, wad_yes,
-    "1 to apply fake contrast to walls"
+    "1 to enable diminished lighting (light emitted by player)"
   },
 
   {
@@ -946,7 +963,7 @@ default_t defaults[] = {
     "0 to disable the Invulnerability colormap"
   },
 
-  // [Nugget] -----------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   //
   // Weapons options
@@ -1005,7 +1022,7 @@ default_t defaults[] = {
     "1 to center the weapon sprite during attack, 2 to keep it bobbing, 3 to center it horizontally"
   },
 
-  // [Nugget] /-----------------------------------------------------------
+  // [Nugget] /---------------------------------------------------------------
 
   {
     "no_hor_autoaim",
@@ -1084,7 +1101,7 @@ default_t defaults[] = {
     "1 to correct first person sprite centering"
   },
 
-  // [Nugget] -----------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   {  // killough 2/8/98: weapon preferences set by user:
     "weapon_choice_1",
@@ -1223,7 +1240,7 @@ default_t defaults[] = {
     "1 to enable dogs to jump"
   },
 
-  // [Nugget] /-----------------------------------------------------------
+  // [Nugget] /---------------------------------------------------------------
 
   {
     "extra_gibbing",
@@ -1267,7 +1284,7 @@ default_t defaults[] = {
     "1 to enable ZDoom-like item drops for dying enemies"
   },
 
-  // [Nugget] -----------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   {
     "colored_blood",
@@ -1516,13 +1533,20 @@ default_t defaults[] = {
     "1 to enable donut overrun emulation"
   },
 
-  // [Nugget] /-----------------------------------------------------------
+  // [Nugget] /---------------------------------------------------------------
 
   {
     "comp_bruistarget",
     (config_t *) &comp_bruistarget, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
     "Bruiser attack doesn't face target"
+  },
+
+  {
+    "comp_nomeleesnap",
+    (config_t *) &comp_nomeleesnap, NULL,
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Disable snapping to target when using melee"
   },
 
   {
@@ -1637,7 +1661,7 @@ default_t defaults[] = {
     "Key pickup resets palette"
   },
 
-  // [Nugget] -----------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   // default compatibility
   {
@@ -1697,6 +1721,37 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to toggle mouselook",
     input_mouselook, { {0, 0} }
+  },
+
+  { // [Nugget] 
+    "input_crosshair",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle crosshair",
+    input_crosshair, { {0, 0} }
+  },
+
+  { // [Nugget] 
+    "input_zoom",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle zoom",
+    input_zoom, { {0, 0} }
+  },
+
+  { // [Nugget] 
+    "zoom_fov",
+    (config_t *) &zoom_fov, NULL,
+    {MINFOV}, {MINFOV,MAXFOV}, number, ss_keys, wad_no,
+    "Field of View when zoom is enabled"
+  },
+
+  { // [Nugget] 
+    "input_chasecam",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to cycle through chasecam modes",
+    input_chasecam, { {0, 0} }
   },
 
   { // phares 3/7/98
@@ -1889,6 +1944,22 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to run (move fast)",
     input_speed, { {input_type_key, KEY_RSHIFT} }
+  },
+
+  { // [Nugget] 
+    "input_jump",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to jump",
+    input_jump, { {input_type_key, KEY_RALT} }
+  },
+
+  { // [Nugget] 
+    "input_crouch",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to crouch/duck",
+    input_crouch, { {input_type_key, 'c'} }
   },
 
   {
@@ -2094,6 +2165,14 @@ default_t defaults[] = {
                          {input_type_mouseb, MOUSE_BUTTON_WHEELDOWN} }
   },
 
+  { // [Nugget] 
+    "input_map_mini",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to activate minimap mode",
+    input_map_mini, { {0, 0} }
+  },
+
   {
     "input_map_gobig",
     NULL, NULL,
@@ -2124,6 +2203,37 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to clear all markers on automap",
     input_map_clear, { {input_type_key, 'c'} }
+  },
+
+  { // [Nugget] 
+    "input_map_blink",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to make automap markers blink",
+    input_map_blink, { {input_type_key, 'b'} }
+  },
+
+  { // [Nugget] 
+    "input_map_tagfinder",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to find associated sectors and lines",
+    input_map_tagfinder, { {0, 0} }
+  },
+
+  { // [Nugget] 
+    "input_map_teleport",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to teleport to automap pointer",
+    input_map_teleport, { {0, 0} }
+  },
+
+  { // [Nugget] 
+    "fancy_teleport",
+    (config_t *) &fancy_teleport, NULL,
+    {1}, {0,1}, number, ss_keys, wad_no,
+    "Use effects when teleporting to pointer (fog, sound and zoom)"
   },
 
   {
@@ -2301,6 +2411,82 @@ default_t defaults[] = {
     "key to perform Fake Archvile Jump",
     input_avj, { {0, 0} }
   },
+
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "input_infammo",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle infinite ammo",
+    input_infammo, { {0, 0} }
+  },
+
+  {
+    "input_fastweaps",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle fast weapons",
+    input_fastweaps, { {0, 0} }
+  },
+
+  {
+    "input_resurrect",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to resurrect",
+    input_resurrect, { {0, 0} }
+  },
+
+  {
+    "input_fly",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle fly mode",
+    input_fly, { {0, 0} }
+  },
+
+  {
+    "input_summonr",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to summon last summoned mobj",
+    input_summonr, { {0, 0} }
+  },
+
+  {
+    "input_linetarget",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle linetarget query mode",
+    input_linetarget, { {0, 0} }
+  },
+
+  {
+    "input_mdk",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to perform MDK attack",
+    input_mdk, { {0, 0} }
+  },
+
+  {
+    "input_saitama",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle MDK Fist",
+    input_saitama, { {0, 0} }
+  },
+
+  {
+    "input_boomcan",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle explosive hitscan attacks",
+    input_boomcan, { {0, 0} }
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   {
     "input_chat_dest0",
@@ -2570,88 +2756,6 @@ default_t defaults[] = {
     {0}, {0, 1}, number, ss_keys, wad_no,
     "1 to invert gamepad look axis"
   },
-
-  // [Nugget] /-----------------------------------------------------------
-
-  {
-    "input_jump",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to jump",
-    input_jump, { {input_type_key, KEY_RALT} }
-  },
-
-  {
-    "input_crouch",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to crouch/duck",
-    input_crouch, { {input_type_key, 'c'} }
-  },
-
-  {
-    "input_crosshair",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to toggle crosshair",
-    input_crosshair, { {0, 0} }
-  },
-
-  {
-    "input_zoom",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to toggle zoom",
-    input_zoom, { {0, 0} }
-  },
-
-  {
-    "input_chasecam",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to cycle through chasecam modes",
-    input_chasecam, { {0, 0} }
-  },
-
-  {
-    "zoom_fov",
-    (config_t *) &zoom_fov, NULL,
-    {MINFOV}, {MINFOV,MAXFOV}, number, ss_keys, wad_no,
-    "Field of View when zoom is enabled"
-  },
-
-  {
-    "input_map_blink",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to make automap markers blink",
-    input_map_blink, { {input_type_key, 'b'} }
-  },
-
-  {
-    "input_map_tagfinder",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to find associated sectors and lines",
-    input_map_tagfinder, { {0, 0} }
-  },
-
-  {
-    "input_map_teleport",
-    NULL, NULL,
-    {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to teleport to automap pointer",
-    input_map_teleport, { {0, 0} }
-  },
-
-  {
-    "fancy_teleport",
-    (config_t *) &fancy_teleport, NULL,
-    {1}, {0,1}, number, ss_keys, wad_no,
-    "Use effects when teleporting to pointer (fog, sound and zoom)"
-  },
-
-  // [Nugget] -----------------------------------------------------------/
 
   { //jff 4/3/98 allow unlimited sensitivity
     "mouse_sensitivity",
@@ -3205,11 +3309,18 @@ default_t defaults[] = {
     "1 to enable obituaries"
   },
 
+  { // [Nugget]
+    "show_save_messages",
+    (config_t *) &show_save_messages, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to enable save messages"
+  },
+
   // "A secret is revealed!" message
   {
     "hud_secret_message",
     (config_t *) &hud_secret_message, NULL,
-    {0}, {0,2}, number, ss_mess, wad_no, // [Nugget]
+    {0}, {0,2}, number, ss_mess, wad_no, // [Nugget] "Count" mode from Crispy
     "\"A secret is revealed!\" message"
   },
 
@@ -3441,68 +3552,149 @@ default_t defaults[] = {
     "1 to enable Smart Totals"
   },
 
-  { // [Cherry] Widget title text color
-    "hudcolor_wg_name",
-    (config_t *)&hudcolor_wg_name, NULL,
-    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
-    "Color used for widget names"
-  },  
-
-  { // [Cherry] Plain text color
-    "hudcolor_plain",
-    (config_t *)&hudcolor_plain, NULL,
-    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
-    "Color used for plain text in widgets"
+  { // [Nugget]
+    "hud_kills_percentage",
+    (config_t *) &hud_kills_percentage, NULL,
+    {1}, {0,1}, number, ss_stat, wad_no,
+    "1 to show Kills percentage in Stats display"
   },
 
-  { // [Cherry] Total time color
-    "hudcolor_totaltime",
-    (config_t *)&hudcolor_totaltime, NULL,
-    {CR_GREEN}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
-    "Color used for total time in Time widget"
+  // [Nugget] Extended HUD colors /-------------------------------------------
+
+  {
+    "hudcolor_time_scale",
+    (config_t *) &hudcolor_time_scale, NULL,
+    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for time scale (game speed percentage) in Time display"
   },
 
-  { // [Cherry] Low threshold color
+  {
+    "hudcolor_total_time",
+    (config_t *) &hudcolor_total_time, NULL,
+    {CR_GREEN}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for total level time in Time display"
+  },
+
+  {
+    "hudcolor_time",
+    (config_t *) &hudcolor_time, NULL,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for level time in Time display"
+  },
+
+  {
+    "hudcolor_event_timer",
+    (config_t *) &hudcolor_event_timer, NULL,
+    {CR_GOLD}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for event timer in Time display"
+  },
+
+  {
+    "hudcolor_kills",
+    (config_t *) &hudcolor_kills, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Kills label in Stats display"
+  },
+
+  {
+    "hudcolor_items",
+    (config_t *) &hudcolor_items, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Items label in Stats display"
+  },
+
+  {
+    "hudcolor_secrets",
+    (config_t *) &hudcolor_secrets, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Secrets label in Stats display"
+  },
+
+  { // [Cherry]
+    "hudcolor_weapons",
+    (config_t *)&hudcolor_weapons, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Weapons label in Weapons widget"
+  },
+
+  { // [Cherry]
+    "hudcolor_keys",
+    (config_t *)&hudcolor_keys, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Keys label in Keys widget"
+  },
+
+  { // [Cherry]
+    "hudcolor_frag",
+    (config_t *)&hudcolor_frag, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Frags label in Frags widget"
+  },
+
+  { // [Cherry]
+    "hudcolor_attempts",
+    (config_t *)&hudcolor_attempts, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Attempts label in Attempts widget"
+  },
+
+  { // [Cherry]
+    "hudcolor_attempts_count",
+    (config_t *)&hudcolor_attempts_count, NULL,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Attempts count in Attempts widget"
+  },
+
+  { // [Cherry]
+    "hudcolor_movement",
+    (config_t *)&hudcolor_movement, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Movement label in Movement widget"
+  },
+
+  { // [Cherry]
     "hudcolor_th_low",
-    (config_t *)&hudcolor_th_low, NULL,
-    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    (config_t*)&hudcolor_th_low, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
     "Color used for values below the ok threshold in Health, Armor and Ammo widgets"
   },
 
-  { // [Cherry] Ok threshold color
+  { // [Cherry]
     "hudcolor_th_ok",
-    (config_t *)&hudcolor_th_ok, NULL,
-    {CR_GOLD}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    (config_t*)&hudcolor_th_ok, NULL,
+    {CR_GOLD}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
     "Color used for values between the ok and good thresholds in Health, Armor and Ammo widgets"
   },
 
-  { // [Cherry] Good threshold color
+  { // [Cherry]
     "hudcolor_th_good",
-    (config_t *)&hudcolor_th_good, NULL,
-    {CR_GREEN}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    (config_t*)&hudcolor_th_good, NULL,
+    {CR_GREEN}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
     "Color used for values between the good and extra thresholds in Health, Armor and Ammo widgets"
   },
 
-  { // [Cherry] Good threshold color
+  { // [Cherry]
     "hudcolor_th_extra",
     (config_t *)&hudcolor_th_extra, NULL,
-    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
     "Color used for values above the extra threshold in Health, Armor and Ammo widgets"
   },
 
-  { // [Nugget] Incomplete milestone color
+  {
     "hudcolor_ms_incomp",
     (config_t *) &hudcolor_ms_incomp, NULL,
-    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
     "Color used for incomplete milestones in Stats display"
   },
 
-  { // [Nugget] Complete milestone color
+  {
     "hudcolor_ms_comp",
     (config_t *) &hudcolor_ms_comp, NULL,
-    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_mess, wad_yes,
+    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
     "Color used for complete milestones in Stats display"
   },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   { // no secrets/items/kills HUD line
     "hud_level_time",
@@ -3620,7 +3812,7 @@ default_t defaults[] = {
   { // [Nugget] Crosshair type
     "hud_crosshair",
     (config_t *) &hud_crosshair, NULL,
-    {0}, {1,HU_CROSSHAIRS-1}, number, ss_stat, wad_no,
+    {1}, {1,HU_CROSSHAIRS-1}, number, ss_stat, wad_no,
     "crosshair type"
   },
 

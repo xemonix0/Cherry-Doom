@@ -36,21 +36,19 @@ Some of Cherry Doom's features come from other sources, like other source ports,
 
 ### General
 
-- **Menu background can now be enabled in all menus**.
 - **Damage view shake effect**.
-- **Max shake intensity customization**.
+- **View shake intensity customization**.
 - **Motion blur**. [p.f. Doom Retro]
 
 ### Status Bar/HUD
 
 - **More widgets on intermission screen** (attempts, health, armor, weapons).
 - **Attempts widget**: shows the current session attempts and the total attempts across all sessions. The session attempts reset when the map is beaten or when the game is quit, and they are preserved in saved games.
-- **More HUD color customization**: pick colors for widget names, health/armor/ammo threshold colors and plain text.
 - **Movement widget**: shows the current player movement speeds.
 
 ### Automap
 
-- **Color customization for Tag Finder from PrBoomX**.
+- **Color customization for the Tag Finder**.
 
 ### Miscellaneous
 
@@ -140,10 +138,14 @@ Copyright:
  © 2005-2018 Simon Howard;  
  © 2006 Ben Ryves;  
  © 2017 Christoph Oelckers;  
+ © 2017-2022 Brad Harding;  
  © 2019 Fernando Carmona Varo;  
  © 2019 Jonathan Dowland;  
  © 2020 Alex Mayfield;  
+ © 2020 JadingTsunami;  
  © 2021 Ryan Krafnick;  
+ © 2022 Julia Nechaevskaya;  
+ © 2022 Vladislav Melnichuk;  
  © 2022-2023 ceski;  
  © 2023 liPillON;  
  © 2020-2023 Fabian Greffrath;  

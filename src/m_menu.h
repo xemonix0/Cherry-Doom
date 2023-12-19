@@ -114,11 +114,12 @@ extern int warning_about_changes, print_warning_about_changes;
 #define S_BOOM         0x10000000 // Disable if complevel < boom
 #define S_VANILLA      0x20000000 // Disable if complevel != vanilla
 #define S_CRITICAL     0x40000000 // Disable when recording/playing a demo and in netgame
-#define S_RESET_Y      0x80000000 // [Cherry] Reset Y
+#define S_RESOLUTION   0x80000000 // [Nugget] Report current resolution
 // [Cherry]
 #define S2_LABEL       0x00000001 // Plain text
 #define S2_SEL_COL     0x00000002 // Plain text in CR_SELECT
 #define S2_NOSELECT    0x00000004 // The menu contains no selectable items
+#define S2_RESET_Y     0x00000008 // Reset Y
 
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
@@ -185,12 +186,11 @@ typedef struct setup_menu_s
 
 typedef enum
 {
-  background_solid,
+  background_on,
+  background_off,
   background_dark,
 } background_t;
 
-
-extern int draw_menu_background;
 extern background_t menu_background;
 extern boolean M_MenuIsShaded(void);
 

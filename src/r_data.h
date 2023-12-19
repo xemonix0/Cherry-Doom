@@ -30,15 +30,16 @@
 #define MAXFOV  160
 
 #define LOOKDIRMAX	100
-#define LOOKDIRMAX2	(LOOKDIRMAX+24) // [Nugget]
+#define   PITCHMAX	(LOOKDIRMAX+24) // [Nugget] Accommodate pitch effects (e.g. recoil)
 // [crispy] lookdir range: -100..100
 // [Nugget] Increased to accommodate variable FOV
-#define LOOKDIRS	((2*LOOKDIRMAX2+1)*ORIGFOV/MINFOV)
+#define LOOKDIRS	((2*PITCHMAX+1) * ORIGFOV / (MINFOV-2))
 #define MLOOKUNIT	8
 
 // Retrieve column data for span blitting.
 byte *R_GetColumn(int tex, int col);
 byte *R_GetColumnMod(int tex, int col);
+byte *R_GetColumnMod2(int tex, int col);
 
 // I/O, setting up the stuff.
 void R_InitData (void);

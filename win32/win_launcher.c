@@ -13,10 +13,25 @@
 //
 
 #include "SDL.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 __declspec(dllexport) extern int CherryDoom_Main(int argc, char **argv);
+__declspec(dllexport) extern void CherryDoom_Exit(void);
+
+BOOL CtrlHandler(DWORD event)
+{
+    if (event == CTRL_CLOSE_EVENT)
+    {
+        CherryDoom_Exit();
+        return TRUE;
+    }
+    return FALSE;
+}
 
 int main(int argc, char **argv)
 {
+    SetConsoleCtrlHandler((PHANDLER_ROUTINE)(CtrlHandler), TRUE);
+
     return CherryDoom_Main(argc, argv);
 }
