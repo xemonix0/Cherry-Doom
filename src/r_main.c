@@ -715,6 +715,9 @@ void R_ExecuteSetViewSize (void)
   }
   else { WIDEFOVDELTA = 0; }
 
+  // [Nugget]
+  video.fov = FixedToAngle((fixed_t) ((rfov + WIDEFOVDELTA) * FRACUNIT));
+
   centery = viewheight/2;
   centerx = viewwidth/2;
   centerxfrac = centerx<<FRACBITS;
