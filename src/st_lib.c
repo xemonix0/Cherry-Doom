@@ -145,9 +145,9 @@ void STlib_drawNum
   if (!num)
   {
     if (outrng && !sts_always_red)
-      V_DrawPatchTranslated(x - w, n->y, FG, n->p[ 0 ],outrng);
+      V_DrawPatchTranslated(x - w, n->y, n->p[ 0 ],outrng);
     else //jff 2/18/98 allow use of faster draw routine from config
-      V_DrawPatch(x - w, n->y, FG, n->p[ 0 ]);
+      V_DrawPatch(x - w, n->y, n->p[ 0 ]);
   }
 
   // draw the new number
@@ -156,9 +156,9 @@ void STlib_drawNum
   {
     x -= w;
     if (outrng && !sts_always_red)
-      V_DrawPatchTranslated(x, n->y, FG, n->p[ num % 10 ],outrng);
+      V_DrawPatchTranslated(x, n->y, n->p[ num % 10 ],outrng);
     else //jff 2/18/98 allow use of faster draw routine from config
-      V_DrawPatch(x, n->y, FG, n->p[ num % 10 ]);
+      V_DrawPatch(x, n->y, n->p[ num % 10 ]);
     num /= 10;
   }
 
@@ -168,9 +168,9 @@ void STlib_drawNum
   {
     w = SHORT(minus->width);
     if (outrng && !sts_always_red)
-      V_DrawPatchTranslated(x - w, n->y, FG, minus,outrng);
+      V_DrawPatchTranslated(x - w, n->y, minus,outrng);
     else //jff 2/18/98 allow use of faster draw routine from config
-      V_DrawPatch(x - w, n->y, FG, minus);
+      V_DrawPatch(x - w, n->y, minus);
   }
 }
 
@@ -250,7 +250,6 @@ void STlib_updatePercent
     (
       tx,
       per->n.y,
-      FG,
       per->p,
       // [FG] fix always gray percent / always red mismatch
       sts_pct_always_gray ? cr_gray :
@@ -307,7 +306,7 @@ void STlib_updateMultIcon
   if (*mi->on)
   {
     if (*mi->inum != -1)  // killough 2/16/98: redraw only if != -1
-      V_DrawPatch(mi->x, mi->y, FG, mi->p[*mi->inum]);
+      V_DrawPatch(mi->x, mi->y, mi->p[*mi->inum]);
   }
 }
 

@@ -257,7 +257,7 @@ static float Get_TextSpeed(void)
 
 static void FMI_Ticker()
 {
-  if (U_CheckField(gamemapinfo->endpic) && !secretexit)
+  if (U_CheckField(gamemapinfo->endpic))
   {
     if (!strcasecmp(gamemapinfo->endpic, "$CAST"))
     {
@@ -382,14 +382,14 @@ void F_TextWrite (void)
   if (gamemapinfo && W_CheckNumForName(finaleflat) != -1 &&
       (W_CheckNumForName)(finaleflat, ns_flats) == -1)
   {
-    V_DrawPatchFullScreen(0, W_CacheLumpName(finaleflat, PU_LEVEL));
+    V_DrawPatchFullScreen(W_CacheLumpName(finaleflat, PU_LEVEL));
   }
   else
   {
-  // erase the entire screen to a tiled background
+    // erase the entire screen to a tiled background
 
-  // killough 11/98: the background-filling code was already in m_menu.c
-  R_DrawBackground(finaleflat, screens[0]);
+    // killough 11/98: the background-filling code was already in m_menu.c
+    V_DrawBackground(finaleflat);
   }
 
   // draw some of the text onto the screen
@@ -432,7 +432,7 @@ void F_TextWrite (void)
     // [cispy] prevent text from being drawn off-screen vertically
     if (cy + SHORT(hu_font[c]->height) > SCREENHEIGHT)
       break;
-    V_DrawPatch(cx, cy, 0, hu_font[c]);
+    V_DrawPatch(cx, cy, hu_font[c]);
     cx+=w;
   }
 }
@@ -843,7 +843,7 @@ void F_CastPrint (char* text)
     }
               
     w = SHORT (hu_font[c]->width);
-    V_DrawPatch(cx, 180, 0, hu_font[c]);
+    V_DrawPatch(cx, 180, hu_font[c]);
     cx+=w;
   }
 }
@@ -862,8 +862,7 @@ void F_CastDrawer (void)
   patch_t*            patch;
     
   // erase the entire screen to a background
-  //V_DrawPatch (0,0,0, W_CacheLumpName (bgcastcall, PU_CACHE)); // Ty 03/30/98 bg texture extern
-  V_DrawPatchFullScreen(0, W_CacheLumpName (bgcastcall, PU_CACHE));
+  V_DrawPatchFullScreen (W_CacheLumpName (bgcastcall, PU_CACHE)); // Ty 03/30/98 bg texture extern
 
   F_CastPrint (castorder[castnum].name);
     
@@ -880,48 +879,10 @@ void F_CastDrawer (void)
                         
   patch = W_CacheLumpNum (lump+firstspritelump, PU_CACHE);
   if (flip)
-    V_DrawPatchFlipped (160,170,0,patch);
+    V_DrawPatchFlipped (160, 170, patch);
   else
-    V_DrawPatch (160,170,0,patch);
+    V_DrawPatch (160, 170, patch);
 }
-
-
-//
-// F_DrawPatchCol
-//
-// killough 11/98: reformatted and added hires support
-
-static void F_DrawPatchCol(int x, patch_t *patch, int col)
-{
-  const column_t *column = 
-    (const column_t *)((byte *) patch + LONG(patch->columnofs[col]));
-
-  // step through the posts in a column
-  if (hires)
-    while (column->topdelta != 0xff)
-      {
-	byte *desttop = screens[0] + x*2;
-	const byte *source = (byte *) column + 3;
-	byte *dest = desttop + column->topdelta*SCREENWIDTH*4;
-	int count = column->length;
-	for (;count--; dest += SCREENWIDTH*4)
-	  dest[0] = dest[SCREENWIDTH*2] = dest[1] = dest[SCREENWIDTH*2+1] = 
-	    *source++;
-	column = (column_t *)(source+1);
-      }
-  else
-    while (column->topdelta != 0xff)
-      {
-	byte *desttop = screens[0] + x;
-	const byte *source = (byte *) column + 3;
-	byte *dest = desttop + column->topdelta*SCREENWIDTH;
-	int count = column->length;
-	for (;count--; dest += SCREENWIDTH)
-	  *dest = *source++;
-	column = (column_t *)(source+1);
-      }
-}
-
 
 //
 // F_BunnyScroll
@@ -929,14 +890,13 @@ static void F_DrawPatchCol(int x, patch_t *patch, int col)
 void F_BunnyScroll (void)
 {
   int         scrolled;
-  int         x;
   patch_t*    p1;
   patch_t*    p2;
   char        name[16];
   int         stage;
   static int  laststage;
-  int         p2offset, p1offset, pillar_width;
-              
+  int         offset;
+
   p1 = W_CacheLumpName ("PFUB2", PU_LEVEL);
   p2 = W_CacheLumpName ("PFUB1", PU_LEVEL);
 
@@ -946,50 +906,30 @@ void F_BunnyScroll (void)
   if (scrolled < 0)
       scrolled = 0;
 
-  pillar_width = (SCREENWIDTH - SHORT(p1->width)) / 2;
-
-  if (pillar_width > 0)
+  offset = 0;
+  if (SHORT(p2->width) != SCREENWIDTH)
   {
-    // [crispy] fill pillarboxes in widescreen mode
-    memset(screens[0], 0, (SCREENWIDTH<<hires) * (SCREENHEIGHT<<hires));
-  }
-  else
-  {
-    pillar_width = 0;
+    offset = video.deltaw;
   }
 
-  // Calculate the portion of PFUB2 that would be offscreen at original res.
-  p1offset = (ORIGWIDTH - SHORT(p1->width)) / 2;
+  if (scrolled > 0)
+    V_DrawPatch(320 - scrolled - offset, 0, p2);
+  if (scrolled < 320)
+    V_DrawPatch(-scrolled - offset, 0, p1);
 
-  if (SHORT(p2->width) == ORIGWIDTH)
+  if (SHORT(p2->width) == SCREENWIDTH)
   {
-    // Unity or original PFUBs.
-    // PFUB1 only contains the pixels that scroll off.
-    p2offset = ORIGWIDTH - p1offset;
-  }
-  else
-  {
-    // Widescreen mod PFUBs.
-    // Right side of PFUB2 and left side of PFUB1 are identical.
-    p2offset = ORIGWIDTH + p1offset;
+    V_FillRect(0, 0, video.deltaw, SCREENHEIGHT, v_darkest_color);
+    V_FillRect(video.unscaledw - video.deltaw, 0,
+               video.deltaw, SCREENHEIGHT, v_darkest_color);
   }
 
-  for (x = pillar_width; x < SCREENWIDTH - pillar_width; x++)
-  {
-    int x2 = x - WIDESCREENDELTA + scrolled;
-
-    if (x2 < p2offset)
-      F_DrawPatchCol (x, p1, x2 - p1offset);
-    else
-      F_DrawPatchCol (x, p2, x2 - p2offset);
-  }
-      
   if (finalecount < 1130)
     return;
   if (finalecount < 1180)
   {
-    V_DrawPatch ((ORIGWIDTH-13*8)/2,
-                 (ORIGHEIGHT-8*8)/2,0,
+    V_DrawPatch ((SCREENWIDTH-13*8)/2,
+                 (SCREENHEIGHT-8*8)/2,
                  W_CacheLumpName ("END0",PU_CACHE));
     laststage = 0;
     return;
@@ -1005,8 +945,8 @@ void F_BunnyScroll (void)
   }
       
   sprintf (name,"END%i",stage);
-  V_DrawPatch ((ORIGWIDTH-13*8)/2,
-               (ORIGHEIGHT-8*8)/2,0,
+  V_DrawPatch ((SCREENWIDTH-13*8)/2,
+               (SCREENHEIGHT-8*8)/2,
                W_CacheLumpName (name,PU_CACHE));
 }
 
@@ -1028,7 +968,7 @@ void F_Drawer (void)
     }
     else
     {
-      V_DrawPatchFullScreen(0, W_CacheLumpName(gamemapinfo->endpic, PU_CACHE));
+      V_DrawPatchFullScreen(W_CacheLumpName(gamemapinfo->endpic, PU_CACHE));
     }
     return;
   }
@@ -1047,22 +987,18 @@ void F_Drawer (void)
     {
       case 1:
            if ( gamemode == retail || gamemode == commercial )
-             V_DrawPatchFullScreen (0,
-               W_CacheLumpName("CREDIT",PU_CACHE));
+             V_DrawPatchFullScreen (W_CacheLumpName("CREDIT",PU_CACHE));
            else
-             V_DrawPatchFullScreen (0,
-               W_CacheLumpName("HELP2",PU_CACHE));
+             V_DrawPatchFullScreen (W_CacheLumpName("HELP2",PU_CACHE));
            break;
       case 2:
-           V_DrawPatchFullScreen (0,
-             W_CacheLumpName("VICTORY2",PU_CACHE));
+           V_DrawPatchFullScreen (W_CacheLumpName("VICTORY2",PU_CACHE));
            break;
       case 3:
            F_BunnyScroll ();
            break;
       case 4:
-           V_DrawPatchFullScreen (0,
-             W_CacheLumpName("ENDPIC",PU_CACHE));
+           V_DrawPatchFullScreen (W_CacheLumpName("ENDPIC",PU_CACHE));
            break;
     }
   }

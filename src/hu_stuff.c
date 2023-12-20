@@ -35,7 +35,9 @@
 #include "p_map.h" // crosshair (linetarget)
 #include "m_misc2.h"
 #include "m_swap.h"
+#include "i_video.h" // fps
 #include "r_main.h"
+#include "r_voxel.h"
 #include "u_scanner.h"
 // [Nugget]
 #include "am_map.h"
@@ -121,32 +123,34 @@ static hu_multiline_t w_monsec; //jff 2/16/98 new kill/secret widget for hud
 static hu_multiline_t w_sttime; // time above status bar
 static hu_multiline_t w_coord;
 static hu_multiline_t w_fps;
+static hu_multiline_t w_rate;
 
 // [Nugget] 
 static hu_multiline_t w_powers; // Powerup timers
 
 #define MAX_HUDS 3
-#define MAX_WIDGETS (10+1) // [Nugget] Support more widgets
+#define MAX_WIDGETS_D 5
+#define MAX_WIDGETS_B (12+1) // [Nugget] Support more widgets
 #define NUGHUDSLOT 3 // [Nugget] NUGHUD
 
 // [Nugget] Extra slot for NUGHUD
-static hu_widget_t doom_widgets[MAX_HUDS+1][MAX_WIDGETS] = {
+static hu_widget_t doom_widgets[MAX_HUDS+1][MAX_WIDGETS_D] = {
   {
-    {&w_title,   align_left,   align_bottom},
-    {&w_message, align_left,   align_top},
-    {&w_chat,    align_left,   align_top},
+    {&w_title,   align_direct, align_bottom, 0},
+    {&w_message, align_direct, align_top,    0},
+    {&w_chat,    align_direct, align_top,    0},
     {&w_secret,  align_center, align_direct, 0, 84},
     {NULL}
   }, {
-    {&w_title,   align_left,   align_bottom},
-    {&w_message, align_left,   align_top},
-    {&w_chat,    align_left,   align_top},
+    {&w_title,   align_direct, align_bottom, 0},
+    {&w_message, align_direct, align_top,    0},
+    {&w_chat,    align_direct, align_top,    0},
     {&w_secret,  align_center, align_direct, 0, 84},
     {NULL}
   }, {
-    {&w_title,   align_left,   align_bottom},
-    {&w_message, align_left,   align_top},
-    {&w_chat,    align_left,   align_top},
+    {&w_title,   align_direct, align_bottom, 0},
+    {&w_message, align_direct, align_top,    0},
+    {&w_chat,    align_direct, align_top,    0},
     {&w_secret,  align_center, align_direct, 0, 84},
     {NULL}
   }, { // [Nugget] NUGHUD slot
@@ -159,13 +163,14 @@ static hu_widget_t doom_widgets[MAX_HUDS+1][MAX_WIDGETS] = {
 };
 
 // [Nugget] Extra slot for NUGHUD
-static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS] = {
+static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS_B] = {
   {
     {&w_monsec, align_left,  align_top},
     {&w_sttime, align_left,  align_top},
     {&w_powers, align_right, align_top}, // [Nugget] Powerup timers
     {&w_coord,  align_right, align_top},
     {&w_fps,    align_right, align_top},
+    {&w_rate,   align_left,  align_top},
     {NULL}
   }, {
     {&w_armor,  align_left,  align_bottom},
@@ -179,6 +184,7 @@ static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS] = {
     {&w_powers, align_right, align_top}, // [Nugget] Powerup timers
     {&w_coord,  align_right, align_top},
     {&w_fps,    align_right, align_top},
+    {&w_rate,   align_left,  align_top},
     {NULL}
   }, {
     {&w_health, align_right, align_top},
@@ -192,6 +198,7 @@ static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS] = {
     {&w_powers, align_right, align_top}, // [Nugget] Powerup timers
     {&w_coord , align_right, align_top},
     {&w_fps,    align_right, align_top},
+    {&w_rate,   align_left,  align_top},
     {NULL}
   }, { // [Nugget] NUGHUD slot
     {&w_monsec, align_left, align_top},
@@ -207,6 +214,7 @@ static hu_widget_t *doom_widget = doom_widgets[0],
                    *boom_widget = boom_widgets[0];
 
 static void HU_ParseHUD (void);
+static void HU_set_centered_message (boolean);
 
 static char       chat_dest[MAXPLAYERS];
 boolean           chat_on;
@@ -401,16 +409,6 @@ static char* ColorByHealth(int health, int maxhealth, boolean invul)
     return colrngs[CR_BLUE];
 }
 
-static int lightest_color, darkest_color;
-
-static void HU_InitDemoProgressBar (void)
-{
-  byte *playpal = W_CacheLumpName("PLAYPAL", PU_STATIC);
-
-  lightest_color = I_GetPaletteIndex(playpal, 0xFF, 0xFF, 0xFF);
-  darkest_color  = I_GetPaletteIndex(playpal, 0x00, 0x00, 0x00);
-}
-
 //
 // HU_Init()
 //
@@ -485,10 +483,10 @@ void HU_Init(void)
   // [FG] support crosshair patches from extras.wad
   HU_InitCrosshair();
 
-  HU_InitDemoProgressBar();
-
   HU_InitObituaries();
+
   HU_ParseHUD();
+  HU_set_centered_message(true);
 
   // [Woof!] prepare player messages for colorization
   for (i = 0; i < arrlen(colorize_strings); i++)
@@ -501,7 +499,7 @@ void HU_Init(void)
 
 // [FG] support centered player messages
 
-static void HU_set_centered_message()
+static void HU_set_centered_message(boolean init)
 {
   int i, j;
 
@@ -513,14 +511,13 @@ static void HU_set_centered_message()
     {
       if (d_w[j].multiline == &w_message)
       {
-        if (d_w[j].h_align == align_direct)
-          continue;
+        // [FG] save original alignment
+        if (init)
+        {
+          d_w[j].h_align_orig = d_w[j].h_align;
+        }
 
-        // [FG] save original alignment in the unused x coordinate
-        if (d_w[j].x == 0)
-          d_w[j].x = d_w[j].h_align;
-
-        d_w[j].h_align = message_centered ? align_center : d_w[j].x;
+        d_w[j].h_align = message_centered ? align_center : d_w[j].h_align_orig;
       }
     }
   }
@@ -575,6 +572,7 @@ static void HU_widget_build_armor (void);
 static void HU_widget_build_powers(void); // [Nugget] Powerup timers
 static void HU_widget_build_coord (void);
 static void HU_widget_build_fps (void);
+static void HU_widget_build_rate (void);
 static void HU_widget_build_health (void);
 static void HU_widget_build_keys (void);
 static void HU_widget_build_frag (void);
@@ -613,7 +611,9 @@ void HU_NughudAlignTime(void)
   while (w->multiline) {
     if (w->multiline == &w_sttime)
     {
-      if (nughud.time_sts && !hud_level_stats && (automapactive != AM_FULL || !map_level_stats))
+      if (nughud.time_sts
+          && !(hud_level_stats & HUD_WIDGET_HUD)
+          && (automapactive != AM_FULL || !(hud_level_stats & HUD_WIDGET_AUTOMAP)))
       {
         // Relocate Time text line to position of Stats text line
         NughudAlignWidget(&nughud.sts, w);
@@ -649,9 +649,6 @@ void HU_Start(void)
   message_counter = 0;
   message_count = (message_timer  * TICRATE) / 1000 + 1;
   chat_count    = (chat_msg_timer * TICRATE) / 1000 + 1;
-
-  // [crispy] re-calculate WIDESCREENDELTA
-  I_GetScreenDimensions();
 
   // create the message widget
   HUlib_init_multiline(&w_message, message_list ? hud_msg_lines : 1,
@@ -740,7 +737,11 @@ void HU_Start(void)
                        &boom_font, colrngs[hudcolor_xyco],
                        NULL, HU_widget_build_fps);
 
-  HU_set_centered_message();
+  HUlib_init_multiline(&w_rate, (voxels_found ? 2 : 1),
+                       &boom_font, colrngs[hudcolor_xyco],
+                       NULL, HU_widget_build_rate);
+
+  HU_set_centered_message(false);
 
   // [Nugget] NUGHUD
   if (st_crispyhud) {
@@ -758,7 +759,7 @@ void HU_Start(void)
 
       if (na) {
         if (m == &w_chat) {
-          w->x = 2 - WIDESCREENDELTA;
+          w->x = 2 - video.deltaw;
           w->y = na->y + ((*m->font)->line_height * (message_list ? hud_msg_lines : 1));
         }
         else
@@ -1232,10 +1233,10 @@ static void HU_widget_build_monsec(void)
 {
   char hud_monsecstr[HU_MAXLINELENGTH];
   int i, playerscount;
-  char kills_str[60];
+  char kills_str[HU_MAXLINELENGTH];
   int offset = 0;
 
-  int kills = 0, kills_color, kills_percent, kills_percent_color;
+  int kills = 0, kills_color;
   int items = 0, items_color;
   int secrets = 0, secrets_color;
 
@@ -1246,12 +1247,12 @@ static void HU_widget_build_monsec(void)
     {
       if (playerscount == 0)
       {
-        offset = sprintf(kills_str,
+        offset = M_snprintf(kills_str, sizeof(kills_str),
           "\x1b%c%d", color, players[i].killcount);
       }
       else
       {
-        offset += sprintf(kills_str + offset,
+        offset += M_snprintf(kills_str + offset, sizeof(kills_str) - offset,
           "\x1b%c+\x1b%c%d", '0'+CR_GREEN, color, players[i].killcount);
       }
 
@@ -1266,15 +1267,12 @@ static void HU_widget_build_monsec(void)
 
   // [Nugget] Smart Totals from So Doom
   kills_color = (kills - (smarttotals ? extrakills : extraspawns) >= totalkills) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
-  kills_percent_color = (kills - (smarttotals ? extrakills : 0) >= totalkills) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
-  kills_percent = (totalkills == 0) ? 100 : ((kills - (smarttotals ? extrakills : 0)) * 100 / totalkills);
-  
   items_color = (items >= totalitems) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
   secrets_color = (secrets >= totalsecret) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
 
   if (playerscount > 1)
   {
-    offset = sprintf(hud_monsecstr,
+    offset = M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
       "\x1b%cK %s \x1b%c%d/%d",
       '0'+CR_RED, kills_str, kills_color,
       kills - (smarttotals ? extrakills : 0), // [Nugget] Smart Totals from So Doom
@@ -1282,7 +1280,7 @@ static void HU_widget_build_monsec(void)
   }
   else
   {
-    offset = sprintf(hud_monsecstr,
+    offset = M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
       "\x1b%cK \x1b%c%d/%d",
       '0'+hudcolor_kills, kills_color,
       plr->killcount - (smarttotals ? extrakills : 0), // [Nugget] Smart Totals from So Doom
@@ -1291,30 +1289,25 @@ static void HU_widget_build_monsec(void)
 
   if (extraspawns && !smarttotals) // [Nugget] Smart Totals from So Doom
   {
-    offset += sprintf(hud_monsecstr + offset, "+%d", extraspawns);
+    offset += M_snprintf(hud_monsecstr + offset, sizeof(hud_monsecstr) - offset,
+      "+%d", extraspawns);
   }
 
   if ((hud_threelined_widgets && !st_crispyhud) || (st_crispyhud && nughud.sts_ml)) // [Nugget] NUGHUD
   {
-    // [Nugget]
-    if (hud_kills_percentage)
-    { sprintf(hud_monsecstr + offset, " \x1b%c%d%%", kills_percent_color, kills_percent); }
-
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
 
-    sprintf(hud_monsecstr, "\x1b%cI \x1b%c%d/%d", ('0'+hudcolor_items), items_color, items, totalitems);
+    M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
+      "\x1b%cI \x1b%c%d/%d", ('0'+hudcolor_items), items_color, items, totalitems);
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
 
-    sprintf(hud_monsecstr, "\x1b%cS \x1b%c%d/%d", ('0'+hudcolor_secrets), secrets_color, secrets, totalsecret);
+    M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
+      "\x1b%cS \x1b%c%d/%d", ('0'+hudcolor_secrets), secrets_color, secrets, totalsecret);
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
   }
   else
   {
-    // [Nugget]
-    if (hud_kills_percentage)
-    { offset += sprintf(hud_monsecstr + offset, " \x1b%c%d%%", kills_percent_color, kills_percent); }
-
-    sprintf(hud_monsecstr + offset,
+    M_snprintf(hud_monsecstr + offset, sizeof(hud_monsecstr) - offset,
       " \x1b%cI \x1b%c%d/%d \x1b%cS \x1b%c%d/%d",
       '0'+hudcolor_items, items_color, items, totalitems,
       '0'+hudcolor_secrets, secrets_color, secrets, totalsecret);
@@ -1332,7 +1325,8 @@ static void HU_widget_build_sttime(void)
   // [Nugget] Customizable Time colors
 
   // [Nugget] Add conditions; function may've been called due to event timers
-  if (hud_level_time || (map_level_time && automapactive == AM_FULL))
+  if (    (hud_level_time & HUD_WIDGET_HUD)
+      || ((hud_level_time & HUD_WIDGET_AUTOMAP) && automapactive == AM_FULL))
   {
     if (time_scale != 100)
     {
@@ -1453,10 +1447,24 @@ static void HU_widget_build_coord (void)
 static void HU_widget_build_fps (void)
 {
   char hud_fpsstr[HU_MAXLINELENGTH/4];
-  extern int fps;
 
   sprintf(hud_fpsstr,"\x1b%c%d \x1b%cFPS", '0'+CR_GRAY, fps, '0'+CR_ORIG);
   HUlib_add_string_to_cur_line(&w_fps, hud_fpsstr);
+}
+
+static void HU_widget_build_rate (void)
+{
+  char hud_ratestr[HU_MAXLINELENGTH];
+
+  sprintf(hud_ratestr, "Sprites %4d Segs %4d Visplanes %4d FPS %3d %dx%d",
+          rendered_vissprites, rendered_segs, rendered_visplanes, fps, video.width, video.height);
+  HUlib_add_string_to_cur_line(&w_rate, hud_ratestr);
+
+  if (voxels_found)
+  {
+    sprintf(hud_ratestr, " Voxels %4d", rendered_voxels);
+    HUlib_add_string_to_cur_line(&w_rate, hud_ratestr);
+  }
 }
 
 // Crosshair
@@ -1542,8 +1550,8 @@ mobj_t *crosshair_target; // [Alaux] Lock crosshair on target
 
 static void HU_UpdateCrosshair(void)
 {
-  crosshair.x = ORIGWIDTH/2;
-  crosshair.y = (screenblocks <= 10) ? (ORIGHEIGHT-ST_HEIGHT)/2 : ORIGHEIGHT/2;
+  crosshair.x = SCREENWIDTH/2;
+  crosshair.y = (screenblocks <= 10) ? (SCREENHEIGHT-ST_HEIGHT)/2 : SCREENHEIGHT/2;
 
   // [Nugget]
   crosshair.y += STRICTMODE(st_crispyhud) ? nughud.viewoffset : 0;
@@ -1561,16 +1569,16 @@ static void HU_UpdateCrosshair(void)
     crosshair_target = linetarget = NULL;
 
     overflow[emu_intercepts].enabled = false;
-    P_AimLineAttack(plr->mo, an, range, 0);
-    if ((ammo == am_misl || ammo == am_cell)
+    P_AimLineAttack(plr->mo, an, range, CROSSHAIR_AIM);
+    if (!vertical_aiming && (ammo == am_misl || ammo == am_cell)
         && (!no_hor_autoaim || !casual_play)) // [Nugget]
     {
       if (!linetarget) {
-        P_AimLineAttack(plr->mo, an += 1<<26, range, 0);
+        P_AimLineAttack(plr->mo, an += 1<<26, range, CROSSHAIR_AIM);
         if (linetarget && hud_crosshair_indicators) { crosshair.side = -1; } // [Nugget]
       }
       if (!linetarget) {
-        P_AimLineAttack(plr->mo, an -= 2<<26, range, 0);
+        P_AimLineAttack(plr->mo, an -= 2<<26, range, CROSSHAIR_AIM);
         if (linetarget && hud_crosshair_indicators) { crosshair.side = 1; } // [Nugget]
       }
     }
@@ -1609,15 +1617,16 @@ static void HU_UpdateCrosshair(void)
 
 void HU_UpdateCrosshairLock(int x, int y)
 {
-  int w = (crosshair.w << hires);
-  int h = (crosshair.h << hires);
+  int w = (crosshair.w * video.xscale) >> FRACBITS;
+  int h = (crosshair.h * video.yscale) >> FRACBITS;
 
   x = viewwindowx + BETWEEN(w, viewwidth  - w - 1, x);
   y = viewwindowy + BETWEEN(h, viewheight - h - 1, y);
 
   if (hud_crosshair_lockon == crosslockon_full) // [Nugget]
-  { crosshair.x = (x >> hires) - WIDESCREENDELTA; }
-  crosshair.y = (y >> hires);
+    crosshair.x = (x << FRACBITS) / video.xscale - video.deltaw;
+
+  crosshair.y = (y << FRACBITS) / video.yscale;
 }
 
 void HU_DrawCrosshair(void)
@@ -1639,23 +1648,27 @@ void HU_DrawCrosshair(void)
   if (crosshair.patch)
     V_DrawPatchTranslated(crosshair.x - crosshair.w,
                           crosshair.y - crosshair.h,
-                          0, crosshair.patch, crosshair.cr);
+                          crosshair.patch, crosshair.cr);
 
   // [Nugget] Horizontal autoaim indicators
   if (crosshair.side == -1)
+  {
     V_DrawPatchTranslated(crosshair.x - crosshair.w - crosshair.lw,
                           crosshair.y - crosshair.lh,
-                          0, crosshair.patchl, crosshair.cr);
+                          crosshair.patchl, crosshair.cr);
+  }
   else if (crosshair.side == 1)
+  {
     V_DrawPatchTranslated(crosshair.x + crosshair.w,
                           crosshair.y - crosshair.rh,
-                          0, crosshair.patchr, crosshair.cr);
+                          crosshair.patchr, crosshair.cr);
+  }
 }
 
 // [crispy] print a bar indicating demo progress at the bottom of the screen
 boolean HU_DemoProgressBar(boolean force)
 {
-  const int progress = SCREENWIDTH * playback_tic / playback_totaltics;
+  const int progress = video.unscaledw * playback_tic / playback_totaltics;
   static int old_progress = 0;
 
   if (old_progress < progress)
@@ -1667,16 +1680,14 @@ boolean HU_DemoProgressBar(boolean force)
     return false;
   }
 
-  V_DrawHorizLine(0, SCREENHEIGHT - 2, 0, progress, darkest_color);
-  V_DrawHorizLine(0, SCREENHEIGHT - 1, 0, progress, lightest_color);
+  V_FillRect(0, SCREENHEIGHT - 2, progress, 1, v_darkest_color);
+  V_FillRect(0, SCREENHEIGHT - 1, progress, 1, v_lightest_color);
 
   return true;
 }
 
-// [FG] level stats and level time widgets
-int map_player_coords, map_level_stats, map_level_time;
-int hud_level_stats, hud_level_time;
-int map_power_timers, hud_power_timers; // [Nugget] Powerup timers
+int hud_player_coords, hud_level_stats, hud_level_time;
+int hud_power_timers; // [Nugget] Powerup timers
 
 //
 // HU_Drawer()
@@ -1726,9 +1737,9 @@ void HU_Drawer(void)
 // [FG] draw Time widget on intermission screen
 void WI_DrawTimeWidget(void)
 {
-  hu_widget_t w = {&w_sttime, align_left, align_top};
+  const hu_widget_t w = {&w_sttime, align_left, align_top};
 
-  if (hud_level_time)
+  if (hud_level_time & HUD_WIDGET_HUD)
   {
     HUlib_reset_align_offsets();
     // leveltime is already added to totalleveltimes before WI_Start()
@@ -1891,17 +1902,21 @@ void HU_Ticker(void)
 
   if (automapactive == AM_FULL)
   {
-    HU_cond_build_widget(&w_monsec, map_level_stats);
-    HU_cond_build_widget(&w_sttime, map_level_time || plr->eventtics); // [Nugget] Event timers
-    HU_cond_build_widget(&w_powers, STRICTMODE(map_power_timers)); // [Nugget] Powerup timers
-    HU_cond_build_widget(&w_coord, STRICTMODE(map_player_coords));
+    HU_cond_build_widget(&w_monsec, hud_level_stats & HUD_WIDGET_AUTOMAP);
+    HU_cond_build_widget(&w_sttime, (hud_level_time & HUD_WIDGET_AUTOMAP) || plr->eventtics); // [Nugget] Event timers
+    HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_AUTOMAP); // [Nugget] Powerup timers
+    HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_AUTOMAP);
   }
   else
   {
-    HU_cond_build_widget(&w_coord, STRICTMODE(map_player_coords) == 2);
+    HU_cond_build_widget(&w_monsec, hud_level_stats & HUD_WIDGET_HUD);
+    HU_cond_build_widget(&w_sttime, (hud_level_time & HUD_WIDGET_HUD) || plr->eventtics); // [Nugget] Event timers
+    HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_HUD); // [Nugget] Powerup timers
+    HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_HUD);
   }
 
   HU_cond_build_widget(&w_fps, plr->cheats & CF_SHOWFPS);
+  HU_cond_build_widget(&w_rate, plr->cheats & CF_RENDERSTATS);
 
   if (hud_displayed &&
       scaledviewheight == SCREENHEIGHT &&
@@ -1915,18 +1930,6 @@ void HU_Ticker(void)
       HU_cond_build_widget(&w_ammo, true);
       HU_cond_build_widget(&w_keys, true);
     }
-
-    HU_cond_build_widget(&w_monsec, hud_level_stats);
-    HU_cond_build_widget(&w_sttime, hud_level_time || plr->eventtics); // [Nugget] Event timers
-    HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers)); // [Nugget] Powerup timers
-  }
-  else if (scaledviewheight &&
-           (scaledviewheight < SCREENHEIGHT || screenblocks < 13) && // [Nugget] Allow in NUGHUD
-           automap_off)
-  {
-    HU_cond_build_widget(&w_monsec, hud_level_stats);
-    HU_cond_build_widget(&w_sttime, hud_level_time || plr->eventtics); // [Nugget] Event timers
-    HU_cond_build_widget(&w_powers, hud_power_timers); // [Nugget] Powerup timers
   }
 
   // [Nugget] Event timers
@@ -2165,7 +2168,8 @@ static const multiline_names_t
     {"sttime", "time",    &w_sttime},
     {"powers",  NULL,     &w_powers}, // [Nugget] Powerup Timers
     {"coord",  "coords",  &w_coord},
-    {"fps",    "rate",    &w_fps},
+    {"fps",     NULL,     &w_fps},
+    {"rate",    NULL,     &w_rate},
     {NULL},
 };
 
@@ -2178,7 +2182,7 @@ static boolean HU_ReplaceInDoomWidgets (hu_multiline_t *multiline, int hud, alig
     return false;
   }
 
-  for (i = 0; i < MAX_WIDGETS - 1; i++)
+  for (i = 0; i < MAX_WIDGETS_D - 1; i++)
   {
     if (doom_widgets[hud][i].multiline == multiline)
     {
@@ -2203,7 +2207,7 @@ static boolean HU_AddToBoomWidgets (hu_multiline_t *multiline, int hud, align_t 
     return false;
   }
 
-  for (i = 0; i < MAX_WIDGETS - 1; i++)
+  for (i = 0; i < MAX_WIDGETS_B - 1; i++)
   {
     if (boom_widgets[hud][i].multiline == NULL)
     {
@@ -2211,7 +2215,7 @@ static boolean HU_AddToBoomWidgets (hu_multiline_t *multiline, int hud, align_t 
     }
   }
 
-  if (i + 1 >= MAX_WIDGETS)
+  if (i + 1 >= MAX_WIDGETS_B)
   {
     return false;
   }
@@ -2276,14 +2280,14 @@ static boolean HU_AddHUDCoords (char *name, int hud, int x, int y)
   // [FG] relative alignment to the edges
   if (x < 0)
   {
-    x += ORIGWIDTH;
+    x += SCREENWIDTH;
   }
   if (y < 0)
   {
-    y += ORIGHEIGHT;
+    y += SCREENHEIGHT;
   }
 
-  if (x < 0 || x >= ORIGWIDTH || y < 0 || y >= ORIGHEIGHT)
+  if (x < 0 || x >= SCREENWIDTH || y < 0 || y >= SCREENHEIGHT)
   {
     return false;
   }

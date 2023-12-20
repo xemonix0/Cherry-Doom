@@ -196,6 +196,7 @@ extern  boolean         respawnmonsters;
 
 // Netgame? Only true if >1 player.
 extern  boolean netgame;
+extern  boolean solonet;
 
 extern boolean D_CheckNetConnect(void);
 
@@ -364,6 +365,7 @@ extern wbstartstruct_t wminfo;
 
 // File handling stuff.
 extern  char   *basedefault;
+extern  boolean organize_savefiles;
 
 // if true, load all graphics at level load
 extern  boolean precache;
@@ -371,6 +373,8 @@ extern  boolean precache;
 // wipegamestate can be set to -1
 //  to force a wipe on the next draw
 extern  gamestate_t     wipegamestate;
+
+extern  boolean         enable_drs;
 
 extern  int             mouseSensitivity_horiz; // killough
 extern  int             mouseSensitivity_vert;

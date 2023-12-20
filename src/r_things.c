@@ -29,6 +29,7 @@
 #include "r_draw.h"
 #include "r_things.h"
 #include "r_bmaps.h" // [crispy] R_BrightmapForTexName()
+#include "r_voxel.h"
 #include "m_swap.h"
 #include "hu_stuff.h" // [Alaux] Lock crosshair on target
 // [Nugget]
@@ -57,7 +58,7 @@ typedef struct {
 fixed_t pspritescale;
 fixed_t pspriteiscale;
 
-static lighttable_t **spritelights;        // killough 1/25/98 made static
+lighttable_t **spritelights;        // killough 1/25/98 made static
 
 // [Woof!] optimization for drawing huge amount of drawsegs.
 // adapted from prboom-plus/src/r_things.c
@@ -80,12 +81,16 @@ static drawseg_xrange_item_t *drawsegs_xrange;
 static unsigned int drawsegs_xrange_size = 0;
 static int drawsegs_xrange_count = 0;
 
+// [FG] 32-bit integer math
+static int *clipbot = NULL; // killough 2/8/98: // dropoff overflow
+static int *cliptop = NULL; // change to MAX_*  // dropoff overflow
+
 // constant arrays
 //  used for psprite clipping and initializing clipping
 
 // [FG] 32-bit integer math
-int negonearray[MAX_SCREENWIDTH];        // killough 2/8/98:
-int screenheightarray[MAX_SCREENWIDTH];  // change to MAX_*
+int *negonearray = NULL;        // killough 2/8/98:
+int *screenheightarray = NULL;  // change to MAX_*
 
 //
 // INITIALIZATION FUNCTIONS
@@ -99,6 +104,24 @@ spritedef_t *sprites;
 
 static spriteframe_t sprtemp[MAX_SPRITE_FRAMES];
 static int maxframe;
+
+void R_InitSpritesRes(void)
+{
+  if (xtoviewangle) Z_Free(xtoviewangle);
+  if (linearskyangle) Z_Free(linearskyangle);
+  if (negonearray) Z_Free(negonearray);
+  if (screenheightarray) Z_Free(screenheightarray);
+
+  xtoviewangle = Z_Calloc(1, (video.width + 1) * sizeof(*xtoviewangle), PU_STATIC, NULL);
+  linearskyangle = Z_Calloc(1, (video.width + 1) * sizeof(*linearskyangle), PU_STATIC, NULL);
+  negonearray = Z_Calloc(1, video.width * sizeof(*negonearray), PU_STATIC, NULL);
+  screenheightarray = Z_Calloc(1, video.width * sizeof(*screenheightarray), PU_STATIC, NULL);
+
+  if (clipbot) Z_Free(clipbot);
+
+  clipbot = Z_Calloc(1, 2 * video.width * sizeof(*clipbot), PU_STATIC, NULL);
+  cliptop = clipbot + video.width;
+}
 
 //
 // R_InstallSpriteLump
@@ -287,7 +310,7 @@ static size_t num_vissprite, num_vissprite_alloc, num_vissprite_ptrs;
 void R_InitSprites(char **namelist)
 {
   int i;
-  for (i=0; i<MAX_SCREENWIDTH; i++)    // killough 2/8/98
+  for (i = 0; i < video.width; i++)    // killough 2/8/98
     negonearray[i] = -1;
   R_InitSpriteDefs(namelist);
 }
@@ -299,6 +322,7 @@ void R_InitSprites(char **namelist)
 
 void R_ClearSprites (void)
 {
+  rendered_vissprites = num_vissprite;
   num_vissprite = 0;            // killough
 }
 
@@ -468,6 +492,10 @@ void R_ProjectSprite (mobj_t* thing)
   fixed_t tr_x, tr_y, gxt, gyt, tz;
   fixed_t interpx, interpy, interpz, interpangle;
 
+  // andrewj: voxel support
+  if (VX_ProjectVoxel (thing))
+      return;
+
   // [AM] Interpolate between current and last position,
   //      if prudent.
   if (uncapped &&
@@ -510,7 +538,7 @@ void R_ProjectSprite (mobj_t* thing)
   tx = -(gyt+gxt);
 
   // too far off the side?
-  if (abs(tx)>(tz<<2))
+  if (abs(tx)>((int64_t) tz<<2))
     return;
 
     // decide which patch to use for sprite relative to player
@@ -600,6 +628,8 @@ void R_ProjectSprite (mobj_t* thing)
   // killough 3/27/98: save sector for special clipping later
   vis->heightsec = heightsec;
 
+  vis->voxel_index = -1;
+
   vis->mobjflags = thing->flags;
   vis->mobjflags2 = thing->flags2;
   vis->scale = xscale;
@@ -637,7 +667,8 @@ void R_ProjectSprite (mobj_t* thing)
     vis->colormap[0] = vis->colormap[1] = fullcolormap;       // full bright  // killough 3/20/98
   else
     {      // diminished light
-      int index = (int) (xscale/fovdiff)>>(LIGHTSCALESHIFT+hires);  // killough 11/98
+      int index = FixedDiv(xscale / fovdiff, // [Nugget]
+                           video.xscale) >> LIGHTSCALESHIFT;  // killough 11/98
       if (index >= MAXLIGHTSCALE)
         index = MAXLIGHTSCALE-1;
 
@@ -656,6 +687,7 @@ void R_ProjectSprite (mobj_t* thing)
     HU_UpdateCrosshairLock
     (
       BETWEEN(0, viewwidth  - 1, (centerxfrac + FixedMul(txc, xscale)) >> FRACBITS),
+      // [Nugget] Removed `actualheight`
       BETWEEN(0, viewheight - 1, (centeryfrac + FixedMul(viewz - interpz - crosshair_target->height/2, xscale)) >> FRACBITS)
     );
 
@@ -985,9 +1017,6 @@ void R_SortVisSprites (void)
 void R_DrawSprite (vissprite_t* spr)
 {
   drawseg_t *ds;
-  // [FG] 32-bit integer math
-  int   clipbot[MAX_SCREENWIDTH];       // killough 2/8/98:
-  int   cliptop[MAX_SCREENWIDTH];       // change to MAX_*
   int     x;
   int     r1;
   int     r2;
@@ -1119,7 +1148,12 @@ void R_DrawSprite (vissprite_t* spr)
 
   mfloorclip = clipbot;
   mceilingclip = cliptop;
-  R_DrawVisSprite (spr, spr->x1, spr->x2);
+
+  // andrewj: voxel support
+  if (spr->voxel_index >= 0)
+    VX_DrawVoxel (spr);
+  else
+    R_DrawVisSprite (spr, spr->x1, spr->x2);
 }
 
 //
@@ -1179,8 +1213,6 @@ void R_DrawMasked(void)
       }
     }
   }
-
-  rendered_vissprites = num_vissprite;
 
   // draw all vissprites back to front
 

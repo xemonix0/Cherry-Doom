@@ -1524,7 +1524,6 @@ typedef struct
     int bloodcolor;   // [FG] colored blood and gibs
     // DEHEXTRA
     mobjtype_t droppeditem; // mobj to drop after death
-    // [Nugget] Removed `actualheight`
 } mobjinfo_t;
 
 #define NO_ALTSPEED -1

@@ -514,6 +514,8 @@ void P_DeathThink (player_t* player)
     player->lookdir = BETWEEN(-LOOKDIRMAX * MLOOKUNIT / 2,
                                LOOKDIRMAX * MLOOKUNIT / 2,
                                player->lookdir + player->cmd.lookdir);
+
+    player->slope = PLAYER_SLOPE(player);
   }
 
   if (player->cmd.buttons & BT_USE)
@@ -615,6 +617,8 @@ void P_PlayerThink (player_t* player)
       player->lookdir = 0;
       player->centering = false;
     }
+
+    player->slope = PLAYER_SLOPE(player);
   }
 
   // [crispy] weapon recoil pitch
@@ -641,7 +645,6 @@ void P_PlayerThink (player_t* player)
       // [Nugget] Disable zoom upon death
       if (R_GetZoom() == 1) { R_SetZoom(ZOOM_OFF); }
 
-      player->slope = PLAYER_SLOPE(player); // For 3D audio pitch angle.
       P_DeathThink (player);
       return;
     }
@@ -807,12 +810,6 @@ void P_PlayerThink (player_t* player)
       displaymsg("Type: %i - Health: %i/%i", linetarget->type,
                  linetarget->health, linetarget->info->spawnhealth);
     }
-  }
-
-  if (player->cheats & CF_RENDERSTATS)
-  {
-    extern void R_ShowRenderingStats();
-    R_ShowRenderingStats();
   }
 
   if (player->cheats & CF_MAPCOORDS)

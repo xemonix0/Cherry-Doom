@@ -51,6 +51,7 @@
 #include "r_draw.h" // [FG] fuzzcolumn_mode
 #include "r_sky.h" // [FG] stretchsky
 #include "hu_lib.h" // HU_MAXMESSAGES
+#include "net_client.h" // net_player_name
 
 #include "m_io.h"
 #include <errno.h>
@@ -84,7 +85,6 @@ extern int show_pickup_messages;
 
 extern int window_width, window_height;
 extern int window_position_x, window_position_y;
-extern boolean grabmouse;
 extern boolean flipcorpses; // [crispy] randomly flip corpse, blood and death animation sprites
 extern boolean ghost_monsters; // [crispy] resurrected pools of gore ("ghost monsters") are translucent
 extern int mouse_acceleration;
@@ -118,8 +118,6 @@ extern int extra_level_brightness;
 
 extern char *chat_macros[];  // killough 10/98
 
-extern char *net_player_name;
-
 //jff 3/3/98 added min, max, and help string to all entries
 //jff 4/10/98 added isstr field to specify whether value is string or int
 //
@@ -136,13 +134,6 @@ default_t defaults[] = {
   },
 
   // [Nugget] /---------------------------------------------------------------
-
-  {
-    "organize_saves",
-    (config_t *) &organize_saves, NULL,
-    {0}, {0, 1}, number, ss_gen, wad_no,
-    "1 to organize savegames by IWAD"
-  },
 
   {
     "savegame_dir",
@@ -165,9 +156,9 @@ default_t defaults[] = {
   //
 
   { // killough 11/98: hires
-    "hires", (config_t *) &default_hires, NULL,
-    {1}, {0,1}, number, ss_none, wad_no,
-    "1 to enable 640x400 resolution for rendering scenes"
+    "resolution_mode", (config_t *) &default_resolution_mode, NULL,
+    {RES_DRS}, {RES_ORIGINAL, NUM_RES - 1}, number, ss_none, wad_no,
+    "0 - original 200p, 1 - double 400p, 2 - triple 600p, 4 - native (dynamic)"
   },
 
   {
@@ -222,19 +213,11 @@ default_t defaults[] = {
     "framerate limit in frames per second (< 35 = disable)"
   },
 
-  // [FG] force integer scales
-  {
-    "integer_scaling",
-    (config_t *) &integer_scaling, NULL,
-    {0}, {0, 1}, number, ss_none, wad_no,
-    "1 to force integer scales"
-  },
-
   // widescreen mode
   {
     "widescreen",
-    (config_t *) &widescreen, NULL,
-    {RATIO_ORIG}, {RATIO_ORIG, NUM_RATIOS-1}, number, ss_none, wad_no,
+    (config_t *) &default_widescreen, NULL,
+    {RATIO_MATCH_SCREEN}, {RATIO_ORIG, NUM_RATIOS-1}, number, ss_none, wad_no,
     "widescreen mode (0 = disable, 1 = match screen, 2 = 16:10, 3 = 16:9, 4 = 21:9)"
   },
 
@@ -616,7 +599,7 @@ default_t defaults[] = {
   { // killough 3/6/98: preserve autorun across games
     "autorun",
     (config_t *) &autorun, NULL,
-    {0}, {0,1}, number, ss_none, wad_no,
+    {1}, {0,1}, number, ss_none, wad_no,
     "1 to enable autorun"
   },
 
@@ -641,7 +624,7 @@ default_t defaults[] = {
     "number of dead bodies in view supported (negative value = no limit)"
   },
 
-  { // killough 2/8/98
+  {
     "death_use_action",
     (config_t *) &death_use_action, NULL,
     {0}, {0,2}, number, ss_gen, wad_no,
@@ -670,9 +653,16 @@ default_t defaults[] = {
   },
 
   {
+    "organize_savefiles",
+    (config_t *) &organize_savefiles, NULL,
+    {-1}, {-1,1}, number, ss_gen, wad_no,
+    "1 to organize save files"
+  },
+
+  {
     "net_player_name",
     (config_t *) &net_player_name, NULL,
-    {.s = "none"}, {0}, string, ss_gen, wad_no,
+    {.s = DEFAULT_PLAYER_NAME}, {0}, string, ss_gen, wad_no,
     "network setup player name"
   },
 
@@ -1277,7 +1267,7 @@ default_t defaults[] = {
   {
     "fuzzcolumn_mode",
     (config_t *) &fuzzcolumn_mode, NULL,
-    {0}, {0,1}, number, ss_enem, wad_no,
+    {1}, {0,1}, number, ss_enem, wad_no,
     "0 original, 1 blocky (hires)"
   },
 
@@ -1297,168 +1287,168 @@ default_t defaults[] = {
   {
     "comp_zombie",
     (config_t *) &default_comp[comp_zombie], (config_t *) &comp[comp_zombie],
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "Zombie players can exit levels"
   },
 
   {
     "comp_infcheat",
     (config_t *) &default_comp[comp_infcheat], (config_t *) &comp[comp_infcheat],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Powerup cheats are not infinite duration"
   },
 
   {
     "comp_stairs",
     (config_t *) &default_comp[comp_stairs], (config_t *) &comp[comp_stairs],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Build stairs exactly the same way that Doom does"
   },
 
   {
     "comp_telefrag",
     (config_t *) &default_comp[comp_telefrag], (config_t *) &comp[comp_telefrag],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Monsters can telefrag on MAP30"
   },
 
   {
     "comp_dropoff",
     (config_t *) &default_comp[comp_dropoff], (config_t *) &comp[comp_dropoff],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Some objects never move over tall ledges"
   },
 
   {
     "comp_falloff",
     (config_t *) &default_comp[comp_falloff], (config_t *) &comp[comp_falloff],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Objects don't fall off ledges under their own weight"
   },
 
   {
     "comp_staylift",
     (config_t *) &default_comp[comp_staylift], (config_t *) &comp[comp_staylift],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Monsters randomly walk off of moving lifts"
   },
 
   {
     "comp_doorstuck",
     (config_t *) &default_comp[comp_doorstuck], (config_t *) &comp[comp_doorstuck],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Monsters get stuck on doortracks"
   },
 
   {
     "comp_pursuit",
     (config_t *) &default_comp[comp_pursuit], (config_t *) &comp[comp_pursuit],
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "Monsters don't give up pursuit of targets"
   },
 
   {
     "comp_vile",
     (config_t *) &default_comp[comp_vile], (config_t *) &comp[comp_vile],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Arch-Vile resurrects invincible ghosts"
   },
 
   {
     "comp_pain",
     (config_t *) &default_comp[comp_pain], (config_t *) &comp[comp_pain],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Pain Elemental limited to 20 lost souls"
   },
 
   {
     "comp_skull",
     (config_t *) &default_comp[comp_skull], (config_t *) &comp[comp_skull],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Lost souls get stuck behind walls"
   },
 
   {
     "comp_blazing",
     (config_t *) &default_comp[comp_blazing], (config_t *) &comp[comp_blazing],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Blazing doors make double closing sounds"
   },
 
   {
     "comp_doorlight",
     (config_t *) &default_comp[comp_doorlight], (config_t *) &comp[comp_doorlight],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Tagged doors don't trigger special lighting"
   },
 
   {
     "comp_god",
     (config_t *) &default_comp[comp_god], (config_t *) &comp[comp_god],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "God mode isn't absolute"
   },
 
   {
     "comp_skymap",
     (config_t *) &default_comp[comp_skymap], (config_t *) &comp[comp_skymap],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Sky is unaffected by invulnerability"
   },
 
   {
     "comp_floors",
     (config_t *) &default_comp[comp_floors], (config_t *) &comp[comp_floors],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Use exactly Doom's floor motion behavior"
   },
 
   {
     "comp_model",
     (config_t *) &default_comp[comp_model], (config_t *) &comp[comp_model],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Use exactly Doom's linedef trigger model"
   },
 
   {
     "comp_zerotags",
     (config_t *) &default_comp[comp_zerotags], (config_t *) &comp[comp_zerotags],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Linedef effects work with sector tag = 0"
   },
 
   {
     "comp_respawn",
     (config_t *) &default_comp[comp_respawn], (config_t *) &comp[comp_respawn],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Creatures with no spawnpoint respawn at (0,0)"
   },
 
   {
     "comp_ledgeblock",
     (config_t *) &default_comp[comp_ledgeblock], (config_t *) &comp[comp_ledgeblock],
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "Ledges block ground enemies"
   },
 
   {
     "comp_friendlyspawn",
     (config_t *) &default_comp[comp_friendlyspawn], (config_t *) &comp[comp_friendlyspawn],
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "A_Spawn new thing inherits friendliness"
   },
 
   {
     "comp_voodooscroller",
     (config_t *) &default_comp[comp_voodooscroller], (config_t *) &comp[comp_voodooscroller],
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Voodoo dolls on slow scrollers move too slowly"
   },
 
   {
     "comp_reservedlineflag",
     (config_t *) &default_comp[comp_reservedlineflag], (config_t *) &comp[comp_reservedlineflag],
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "ML_RESERVED clears extended flags"
   },
 
@@ -1467,35 +1457,35 @@ default_t defaults[] = {
   {
     "emu_spechits",
     (config_t *) &overflow[emu_spechits].enabled, NULL,
-    {1}, {0,1}, number, ss_comp, wad_no,
+    {1}, {0,1}, number, ss_none, wad_no,
     "1 to enable SPECHITS overflow emulation"
   },
 
   {
     "emu_reject",
     (config_t *) &overflow[emu_reject].enabled, NULL,
-    {1}, {0,1}, number, ss_comp, wad_no,
+    {1}, {0,1}, number, ss_none, wad_no,
     "1 to enable REJECT overflow emulation"
   },
 
   {
     "emu_intercepts",
     (config_t *) &overflow[emu_intercepts].enabled, NULL,
-    {1}, {0,1}, number, ss_comp, wad_no,
+    {1}, {0,1}, number, ss_none, wad_no,
     "1 to enable INTERCEPTS overflow emulation"
   },
 
   {
     "emu_missedbackside",
     (config_t *) &overflow[emu_missedbackside].enabled, NULL,
-    {0}, {0,1}, number, ss_comp, wad_no,
+    {0}, {0,1}, number, ss_none, wad_no,
     "1 to enable missed backside emulation"
   },
 
   {
     "emu_donut",
     (config_t *) &overflow[emu_donut].enabled, NULL,
-    {1}, {0,1}, number, ss_comp, wad_no,
+    {1}, {0,1}, number, ss_none, wad_no,
     "1 to enable donut overrun emulation"
   },
 
@@ -1504,126 +1494,126 @@ default_t defaults[] = {
   {
     "comp_bruistarget",
     (config_t *) &comp_bruistarget, NULL,
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "Bruiser attack doesn't face target"
   },
 
   {
     "comp_nomeleesnap",
     (config_t *) &comp_nomeleesnap, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Disable snapping to target when using melee"
   },
 
   {
     "comp_longautoaim",
     (config_t *) &comp_longautoaim, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Double Autoaim range"
   },
 
   {
     "comp_lscollision",
     (config_t *) &comp_lscollision, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Fix Lost Soul colliding with items"
   },
 
   {
     "comp_lsamnesia",
     (config_t *) &comp_lsamnesia, NULL,
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "Lost Soul forgets target upon impact"
   },
 
   {
     "comp_fuzzyblood",
     (config_t *) &comp_fuzzyblood, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Fuzzy things bleed fuzzy blood"
   },
 
   {
     "comp_nonbleeders",
     (config_t *) &comp_nonbleeders, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Non-bleeders don't bleed when crushed"
   },
 
   {
     "comp_iosdeath",
     (config_t *) &comp_iosdeath, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Fix lopsided Icon of Sin explosions"
   },
 
   {
     "comp_choppers",
     (config_t *) &comp_choppers, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Permanent IDCHOPPERS invulnerability"
   },
 
   {
     "comp_blazing2",
     (config_t *) &comp_blazing2, NULL,
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "Blazing doors reopen with wrong sound"
   },
 
   {
     "comp_manualdoor",
     (config_t *) &comp_manualdoor, NULL,
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "Manually reactivated moving doors are silent"
   },
 
   {
     "comp_switchsource",
     (config_t *) &comp_switchsource, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Corrected switch sound source"
   },
 
   {
     "comp_cgundblsnd",
     (config_t *) &comp_cgundblsnd, NULL,
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "Chaingun makes two sounds with one bullet"
   },
 
   {
     "comp_cgunnersfx",
     (config_t *) &comp_cgunnersfx, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Chaingunner uses pistol/chaingun sound"
   },
 
   {
     "comp_flamst",
     (config_t *) &comp_flamst, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Arch-Vile fire plays flame start sound"
   },
 
   {
     "comp_deadoof",
     (config_t *) &comp_deadoof, NULL,
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "Dead players can still play oof sound"
   },
 
   {
     "comp_unusedpals",
     (config_t *) &comp_unusedpals, NULL,
-    {0}, {0,1}, number, ss_comp, wad_yes,
+    {0}, {0,1}, number, ss_none, wad_yes,
     "Use unused pain/bonus palettes"
   },
 
   {
     "comp_keypal",
     (config_t *) &comp_keypal, NULL,
-    {1}, {0,1}, number, ss_comp, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "Key pickup resets palette"
   },
 
@@ -1633,7 +1623,7 @@ default_t defaults[] = {
   {
     "default_complevel",
     (config_t *) &default_complevel, NULL,
-    {3}, {0,3}, number, ss_comp, wad_no,
+    {3}, {0,3}, number, ss_gen, wad_no,
     "0 Vanilla, 1 Boom, 2 MBF, 3 MBF21"
   },
 
@@ -1810,6 +1800,14 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to go to next level",
     input_menu_nextlevel, { {0, 0} }
+  },
+
+  {
+    "input_hud_timestats",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to show level stats and time",
+    input_hud_timestats, { {0, 0} }
   },
 
   {
@@ -2797,7 +2795,7 @@ default_t defaults[] = {
 
   {
     "grabmouse",
-    (config_t *) &grabmouse, NULL,
+    (config_t *) &default_grabmouse, NULL,
     {1}, {0, 1}, number, ss_none, wad_no,
     "1 to grab mouse during play"
   },
@@ -2809,70 +2807,70 @@ default_t defaults[] = {
   {
     "chatmacro0",
     (config_t *) &chat_macros[0], NULL,
-    {.s = HUSTR_CHATMACRO0}, {0}, string, ss_chat, wad_yes,
+    {.s = HUSTR_CHATMACRO0}, {0}, string, ss_none, wad_yes,
     "chat string associated with 0 key"
   },
 
   {
     "chatmacro1",
     (config_t *) &chat_macros[1], NULL,
-    {.s = HUSTR_CHATMACRO1}, {0}, string, ss_chat, wad_yes,
+    {.s = HUSTR_CHATMACRO1}, {0}, string, ss_none, wad_yes,
     "chat string associated with 1 key"
   },
 
   {
     "chatmacro2",
     (config_t *) &chat_macros[2], NULL,
-    {.s = HUSTR_CHATMACRO2}, {0}, string, ss_chat, wad_yes,
+    {.s = HUSTR_CHATMACRO2}, {0}, string, ss_none, wad_yes,
     "chat string associated with 2 key"
   },
 
   {
     "chatmacro3",
     (config_t *) &chat_macros[3], NULL,
-    {.s = HUSTR_CHATMACRO3}, {0}, string, ss_chat, wad_yes,
+    {.s = HUSTR_CHATMACRO3}, {0}, string, ss_none, wad_yes,
     "chat string associated with 3 key"
   },
 
   {
     "chatmacro4",
     (config_t *) &chat_macros[4], NULL,
-    {.s = HUSTR_CHATMACRO4}, {0}, string, ss_chat, wad_yes,
+    {.s = HUSTR_CHATMACRO4}, {0}, string, ss_none, wad_yes,
     "chat string associated with 4 key"
   },
 
   {
     "chatmacro5",
     (config_t *) &chat_macros[5], NULL,
-    {.s = HUSTR_CHATMACRO5}, {0}, string, ss_chat, wad_yes,
+    {.s = HUSTR_CHATMACRO5}, {0}, string, ss_none, wad_yes,
     "chat string associated with 5 key"
   },
 
   {
     "chatmacro6",
     (config_t *) &chat_macros[6], NULL,
-    {.s = HUSTR_CHATMACRO6}, {0}, string, ss_chat, wad_yes,
+    {.s = HUSTR_CHATMACRO6}, {0}, string, ss_none, wad_yes,
     "chat string associated with 6 key"
   },
 
   {
     "chatmacro7",
     (config_t *) &chat_macros[7], NULL,
-    {.s = HUSTR_CHATMACRO7}, {0}, string, ss_chat, wad_yes,
+    {.s = HUSTR_CHATMACRO7}, {0}, string, ss_none, wad_yes,
     "chat string associated with 7 key"
   },
 
   {
     "chatmacro8",
     (config_t *) &chat_macros[8], NULL,
-    {.s = HUSTR_CHATMACRO8}, {0}, string, ss_chat, wad_yes,
+    {.s = HUSTR_CHATMACRO8}, {0}, string, ss_none, wad_yes,
     "chat string associated with 8 key"
   },
 
   {
     "chatmacro9",
     (config_t *) &chat_macros[9], NULL,
-    {.s = HUSTR_CHATMACRO9}, {0}, string, ss_chat, wad_yes,
+    {.s = HUSTR_CHATMACRO9}, {0}, string, ss_none, wad_yes,
     "chat string associated with 9 key"
   },
 
@@ -3065,6 +3063,13 @@ default_t defaults[] = {
   },
 
   {
+    "mapcolor_preset",
+    (config_t *) &mapcolor_preset, NULL,
+    {0}, {0,2}, number, ss_auto, wad_no,
+    "automap color preset (0 = Boom (default), 1 = Vanilla Doom, 2 = ZDoom)"
+  },
+
+  {
     "map_point_coord",
     (config_t *) &map_point_coordinates, NULL,
     {1}, {0,1}, number, ss_auto, wad_yes,
@@ -3076,7 +3081,7 @@ default_t defaults[] = {
   { // show secret after gotten
     "map_secret_after",
     (config_t *) &map_secret_after, NULL,
-    {1}, {0,1}, number, ss_auto, wad_yes,
+    {0}, {0,1}, number, ss_auto, wad_yes,
     "1 to not show secret sectors till after entered"
   },
 
@@ -3092,37 +3097,6 @@ default_t defaults[] = {
     (config_t *) &map_smooth_lines, NULL,
     {0}, {0,1}, number, ss_auto, wad_no,
     "1 to enable smooth automap lines"
-  },
-
-  // [FG] player coords widget
-  {
-    "map_player_coords",
-    (config_t *) &map_player_coords, NULL,
-    {1}, {0,2}, number, ss_auto, wad_yes,
-    "1 to show player coords widget"
-  },
-
-  // [FG] level stats widget
-  {
-    "map_level_stats",
-    (config_t *) &map_level_stats, NULL,
-    {0}, {0,2}, number, ss_auto, wad_yes,
-    "1 to show level stats (kill, items and secrets) widget"
-  },
-
-  // [FG] level time widget
-  {
-    "map_level_time",
-    (config_t *) &map_level_time, NULL,
-    {0}, {0,2}, number, ss_auto, wad_yes,
-    "1 to show level time widget"
-  },
-
-  { // [Nugget] Powerup timers
-    "map_power_timers",
-    (config_t *) &map_power_timers, NULL,
-    {0}, {0,2}, number, ss_auto, wad_yes,
-    "1 to show powerup timers widget"
   },
 
   {
@@ -3214,7 +3188,7 @@ default_t defaults[] = {
   {
     "hud_secret_message",
     (config_t *) &hud_secret_message, NULL,
-    {0}, {0,2}, number, ss_mess, wad_no, // [Nugget] "Count" mode from Crispy
+    {1}, {0,2}, number, ss_mess, wad_no, // [Nugget] "Count" mode from Crispy
     "\"A secret is revealed!\" message"
   },
 
@@ -3432,11 +3406,20 @@ default_t defaults[] = {
     "1 to enable display of HUD"
   },
 
-  { // no secrets/items/kills HUD line
+  // [FG] player coords widget
+  {
+    "hud_player_coords",
+    (config_t *) &hud_player_coords, NULL,
+    {HUD_WIDGET_AUTOMAP}, {HUD_WIDGET_OFF,HUD_WIDGET_ALWAYS}, number, ss_stat, wad_no,
+    "show player coords widget (1 = on Automap, 2 = on HUD, 3 = always)"
+  },
+
+  // [FG] level stats widget
+  {
     "hud_level_stats",
     (config_t *) &hud_level_stats, NULL,
-    {0}, {0,1}, number, ss_stat, wad_yes,
-    "1 to show kills/items/secrets on HUD"
+    {HUD_WIDGET_OFF}, {HUD_WIDGET_OFF,HUD_WIDGET_ALWAYS}, number, ss_stat, wad_no,
+    "show level stats (kill, items and secrets) widget (1 = on Automap, 2 = on HUD, 3 = always)"
   },
 
   { // [Nugget] Smart Totals from So Doom
@@ -3446,11 +3429,19 @@ default_t defaults[] = {
     "1 to enable Smart Totals"
   },
 
-  { // [Nugget]
-    "hud_kills_percentage",
-    (config_t *) &hud_kills_percentage, NULL,
-    {1}, {0,1}, number, ss_stat, wad_no,
-    "1 to show Kills percentage in Stats display"
+  // [FG] level time widget
+  {
+    "hud_level_time",
+    (config_t *) &hud_level_time, NULL,
+    {HUD_WIDGET_OFF}, {HUD_WIDGET_OFF,HUD_WIDGET_ALWAYS}, number, ss_stat, wad_no,
+    "show level time widget (1 = on Automap, 2 = on HUD, 3 = always)"
+  },
+
+  { // [Nugget] Powerup timers
+    "hud_power_timers",
+    (config_t *) &hud_power_timers, NULL,
+    {HUD_WIDGET_OFF}, {HUD_WIDGET_OFF,HUD_WIDGET_ALWAYS}, number, ss_stat, wad_no,
+    "show powerup timers (1 = on Automap, 2 = on HUD, 3 = always)"
   },
 
   // [Nugget] Extended HUD colors /-------------------------------------------
@@ -3520,21 +3511,7 @@ default_t defaults[] = {
 
   // [Nugget] ---------------------------------------------------------------/
 
-  { // no secrets/items/kills HUD line
-    "hud_level_time",
-    (config_t *) &hud_level_time, NULL,
-    {0}, {0,1}, number, ss_stat, wad_yes,
-    "1 to show level time on HUD"
-  },
-
-  { // [Nugget] Powerup timers
-    "hud_power_timers",
-    (config_t *) &hud_power_timers, NULL,
-    {0}, {0,1}, number, ss_stat, wad_yes,
-    "1 to powerup timers on HUD"
-  },
-
-  // [Nugget] Event timers /----------------------------------------------
+  // [Nugget] Event timers /--------------------------------------------------
 
   {
     "timer_use",
@@ -3557,7 +3534,7 @@ default_t defaults[] = {
     "Show time at which a key was picked up (0 = Off, 1 = In Demos, 2 = Always)"
   },
 
-  // [Nugget] -----------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   // [Nugget] Removed `crispy_hud` code
 
@@ -3918,6 +3895,13 @@ boolean M_ParseOption(const char *p, boolean wad)
       (wad && !dp->wad_allowed))
     return 1;
 
+  // [FG] bind mapcolor options to the mapcolor preset menu item
+  if (strncmp(name, "mapcolor_", 9) == 0)
+  {
+    default_t *dp_preset = M_LookupDefault("mapcolor_preset");
+    dp->setup_menu = dp_preset->setup_menu;
+  }
+
   if (demo_version < 203 && dp->setup_menu &&
       !(dp->setup_menu->m_flags & S_COSMETIC))
     return 1;
@@ -4209,12 +4193,7 @@ int M_DrawText(int x,int y,boolean direct,char* string)
       if (x+w > SCREENWIDTH)
         break;
 
-//  killough 11/98: makes no difference anymore:
-//      if (direct)
-//        V_DrawPatchDirect(x, y, 0, hu_font[c]);
-//      else
-
-        V_DrawPatch(x, y, 0, hu_font[c]);
+      V_DrawPatch(x, y, hu_font[c]);
       x+=w;
     }
 

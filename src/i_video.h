@@ -24,21 +24,24 @@
 
 #include "doomtype.h"
 
-extern int SCREENWIDTH;
-extern int SCREENHEIGHT;
-extern int NONWIDEWIDTH; // [crispy] non-widescreen SCREENWIDTH
-extern int WIDESCREENDELTA; // [crispy] horizontal widescreen offset
-void I_GetScreenDimensions (void); // [crispy] re-calculate WIDESCREENDELTA
-
-enum
+typedef enum
 {
-  RATIO_ORIG,
-  RATIO_MATCH_SCREEN,
-  RATIO_16_10,
-  RATIO_16_9,
-  RATIO_21_9,
-  NUM_RATIOS
-};
+    RATIO_ORIG,
+    RATIO_MATCH_SCREEN,
+    RATIO_16_10,
+    RATIO_16_9,
+    RATIO_21_9,
+    NUM_RATIOS
+} aspect_ratio_mode_t;
+
+typedef enum
+{
+    RES_ORIGINAL,
+    RES_DOUBLE,
+    RES_TRIPLE,
+    RES_DRS,
+    NUM_RES
+} resolution_mode_t;
 
 // [FG] support more joystick and mouse buttons
 #define MAX_JSB NUM_CONTROLLER_BUTTONS
@@ -59,11 +62,12 @@ void I_FinishUpdate (void);
 void I_ReadScreen (byte* scr);
 
 void I_ResetScreen(void);   // killough 10/98
+void I_ResetTargetRefresh(void);
 void I_ToggleVsync(void); // [JN] Calls native SDL vsync toggle
 
 extern boolean use_vsync;  // killough 2/8/98: controls whether vsync is called
 extern boolean disk_icon;  // killough 10/98
-extern int hires, default_hires;      // killough 11/98
+extern resolution_mode_t resolution_mode, default_resolution_mode;
 
 extern boolean use_aspect;
 extern boolean stretch_to_fit; // [Nugget]
@@ -72,15 +76,17 @@ extern boolean uncapped, default_uncapped; // [FG] uncapped rendering frame rate
 extern boolean fullscreen;
 extern boolean exclusive_fullscreen;
 extern int fpslimit; // when uncapped, limit framerate to this value
-extern boolean integer_scaling; // [FG] force integer scales
+extern int fps;
 extern boolean vga_porch_flash; // emulate VGA "porch" behaviour
-extern int widescreen; // widescreen mode
+extern aspect_ratio_mode_t widescreen, default_widescreen; // widescreen mode
 extern int video_display; // display index
 extern boolean screenvisible;
+extern boolean window_focused;
 extern boolean need_reset;
 extern boolean smooth_scaling;
 extern boolean toggle_fullscreen;
 extern boolean toggle_exclusive_fullscreen;
+extern boolean default_grabmouse;
 
 // [Nugget]
 #define GAMMA2MAX 30

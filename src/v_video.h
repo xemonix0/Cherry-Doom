@@ -25,7 +25,6 @@
 
 #include "doomtype.h"
 #include "doomdef.h"
-#include "i_video.h"
 // Needed because we are refering to patches.
 #include "r_data.h"
 
@@ -35,8 +34,7 @@
 
 #define CENTERY     (SCREENHEIGHT/2)
 
-// Screen 0 is the screen updated by I_Update screen.
-// Screen 1 is an extra buffer.
+extern int v_lightest_color, v_darkest_color;
 
 //jff 2/16/98 palette color ranges for translation
 //jff 2/18/98 conversion to palette lookups for speed
@@ -84,49 +82,99 @@ typedef enum
 } crange_idx_e;
 //jff 1/16/98 end palette color range additions
 
-extern byte *screens[5];
-extern int  dirtybox[4];
+extern pixel_t *I_VideoBuffer;
+
 extern byte gammatable[5][256];
 extern int  usegamma;        // killough 11/98
 
 //jff 4/24/98 loads color translation lumps
 void V_InitColorTranslation(void);
 
+typedef struct
+{
+    int width;
+    int height;
+    int unscaledw;  // unscaled width with correction for widecreen
+    int deltaw;     // widescreen delta
+
+    fixed_t xscale; // x-axis scaling multiplier
+    fixed_t yscale; // y-axis scaling multiplier
+    fixed_t xstep;  // x-axis scaling step
+    fixed_t ystep;  // y-axis scaling step
+
+    angle_t fov;    // widescreen FOV
+} video_t;
+
+extern video_t video;
+
+typedef struct
+{
+    int x;   // original x coordinate for upper left corner
+    int y;   // original y coordinate for upper left corner
+    int w;   // original width
+    int h;   // original height
+
+    int cx1; // clipped x coordinate for left edge
+    int cx2; // clipped x coordinate for right edge
+    int cy1; // clipped y coordinate for upper edge
+    int cy2; // clipped y coordinate for lower edge
+    int cw;  // clipped width
+    int ch;  // clipped height
+
+    int sx;  // scaled x
+    int sy;  // scaled y
+    int sw;  // scaled width
+    int sh;  // scaled height
+} vrect_t;
+
+void V_ScaleRect(vrect_t *rect);
+int  V_ScaleX(int x);
+int  V_ScaleY(int y);
+
 // Allocates buffer screens, call before R_Init.
 void V_Init (void);
 
-void V_CopyRect(int srcx,  int srcy,  int srcscrn, int width, int height,
-		int destx, int desty, int destscrn);
+void V_UseBuffer(pixel_t *buffer);
+
+void V_RestoreBuffer(void);
+
+void V_CopyRect(int srcx, int srcy, pixel_t *source,
+                int width, int height,
+                int destx, int desty);
 
 // killough 11/98: Consolidated V_DrawPatch and V_DrawPatchFlipped
 
-void V_DrawPatchGeneral(int x, int y, int scrn, patch_t *patch,
-                          boolean flipped);
+void V_DrawPatchGeneral(int x, int y, patch_t *patch, boolean flipped);
 
-#define V_DrawPatch(x,y,s,p)          V_DrawPatchGeneral(x,y,s,p,false)
-#define V_DrawPatchFlipped(x,y,s,p)   V_DrawPatchGeneral(x,y,s,p,true)
+#define V_DrawPatch(x, y, p)        V_DrawPatchGeneral(x, y, p, false)
+
+#define V_DrawPatchFlipped(x, y, p) V_DrawPatchGeneral(x, y, p, true)
 
 #define V_DrawPatchDirect V_DrawPatch       /* killough 5/2/98 */
 
-void V_DrawPatchTranslated(int x, int y, int scrn, patch_t *patch, char *outr);
+void V_DrawPatchTranslated(int x, int y, patch_t *patch, char *outr);
 
-void V_DrawPatchFullScreen(int scrn, patch_t *patch);
+void V_DrawPatchFullScreen(patch_t *patch);
 
 // Draw a linear block of pixels into the view buffer.
 
-void V_DrawBlock(int x, int y, int scrn, int width, int height, byte *src);
+void V_DrawBlock(int x, int y, int width, int height, pixel_t *src);
 
 // Reads a linear block of pixels into the view buffer.
 
-void V_GetBlock(int x, int y, int scrn, int width, int height, byte *dest);
+void V_GetBlock(int x, int y, int width, int height, pixel_t *dest);
 
 // [FG] non hires-scaling variant of V_DrawBlock, used in disk icon drawing
 
-void V_PutBlock(int x, int y, int scrn, int width, int height, byte *src);
+void V_PutBlock(int x, int y, int width, int height, pixel_t *src);
 
-void V_DrawHorizLine(int x, int y, int scrn, int width, byte color);
+void V_FillRect(int x, int y, int width, int height, byte color);
 
 void V_ShadeScreen(const int targshade); // [Nugget] Parameterized
+
+void V_TileBlock64(int line, int width, int height, const byte *src);
+
+void V_DrawBackground(const char *patchname);
 
 // [FG] colored blood and gibs
 

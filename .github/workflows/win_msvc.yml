@@ -33,15 +33,12 @@ jobs:
             }
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup vcpkg and NuGet
         shell: bash
         run: |
           set -euo pipefail
-
-          cd "${{ env.VCPKG_ROOT }}"
-          git pull
 
           NUGET=$(vcpkg fetch nuget | tail -n 1)
           GH_PACKAGES_URL="https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
@@ -68,6 +65,13 @@ jobs:
 
       - name: Build
         run: cmake --build build --config "Release"
+
+      - name: Test
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          cd demotest
+          pip install pyyaml joblib
+          python demotest --jobs 4 --port "../build/src/Release/woof.com"
 
       - name: Package
         run: |

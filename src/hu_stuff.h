@@ -25,12 +25,6 @@
 
 #define HU_BROADCAST    5
 
-//#define HU_MSGREFRESH   KEY_ENTER                                // phares
-#define HU_MSGX         (0 - WIDESCREENDELTA)
-#define HU_MSGY         0
-#define HU_MSGWIDTH     64      /* in characters */
-#define HU_MSGHEIGHT    1       /* in lines */
-
 #define HU_MSGTIMEOUT   (4*TICRATE)
 
 //
@@ -82,9 +76,8 @@ extern int hud_active;      // hud mode 0=off, 1=small, 2=full
 typedef enum { secretmessage_off, secretmessage_on, secretmessage_count, } secretmessage_t;
 extern secretmessage_t hud_secret_message; // "A secret is revealed!" message
 
-extern int map_player_coords, map_level_stats, map_level_time; // [FG] level stats and level time widgets
-extern int hud_level_stats, hud_level_time;
-extern int map_power_timers, hud_power_timers; // [Nugget] Powerup timers
+extern int hud_player_coords, hud_level_stats, hud_level_time;
+extern int hud_power_timers; // [Nugget] Powerup timers
 extern int hud_widget_font;
 extern int hud_widescreen_widgets;
 extern int hud_draw_bargraphs;
@@ -97,6 +90,14 @@ extern int playback_tic, playback_totaltics;
 extern boolean hud_crosshair_on; // [Nugget] Keep the variable below just for the type
 extern int hud_crosshair;
 extern boolean hud_crosshair_health;
+
+enum
+{
+  HUD_WIDGET_OFF,
+  HUD_WIDGET_AUTOMAP,
+  HUD_WIDGET_HUD,
+  HUD_WIDGET_ALWAYS,
+};
 
 typedef enum
 {

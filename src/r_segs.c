@@ -21,7 +21,7 @@
 
 #include "doomstat.h"
 #include "i_video.h"
-#include "p_tick.h"
+#include "v_video.h"
 #include "r_main.h"
 #include "r_bsp.h"
 #include "r_plane.h"
@@ -161,16 +161,19 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
     if (maskedtexturecol[dc_x] != D_MAXINT) // [FG] 32-bit integer math
       {
         if (!fixedcolormap)      // calculate lighting
-          {
-            unsigned index = (int) (spryscale/fovdiff)  // [Nugget]
-                             >>(LIGHTSCALESHIFT+hires); // killough 11/98
+          {                             // killough 11/98:
+            unsigned index = FixedDiv(spryscale / fovdiff, // [Nugget]
+                                      video.xscale) >> LIGHTSCALESHIFT;
 
             if (index >=  MAXLIGHTSCALE )
               index = MAXLIGHTSCALE-1;
 
             if (STRICTMODE(!diminished_lighting)) { index = 0; } // [Nugget]
 
-            dc_colormap[0] = dc_colormap[1] = walllights[index];
+            // [crispy] brightmaps for two sided mid-textures
+            dc_brightmap = texturebrightmap[texnum];
+            dc_colormap[0] = walllights[index];
+            dc_colormap[1] = STRICTMODE(brightmaps) ? fullcolormap : dc_colormap[0];
           }
 
         // killough 3/2/98:
@@ -187,7 +190,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
           int64_t t = ((int64_t) centeryfrac << FRACBITS) -
             (int64_t) dc_texturemid * spryscale;
           if (t + (int64_t) textureheight[texnum] * spryscale < 0 ||
-              t > (int64_t) MAX_SCREENHEIGHT << FRACBITS*2)
+              t > (int64_t) video.height << FRACBITS*2)
             continue;        // skip if the texture is out of screen's range
           sprtopscreen = (int64_t)(t >> FRACBITS); // [FG] 64-bit integer math
         }
@@ -382,8 +385,8 @@ static void R_RenderSegLoop (void)
           texturecolumn >>= FRACBITS;
 
           // calculate lighting
-          index = (int) (rw_scale/fovdiff)   // [Nugget]
-                  >>(LIGHTSCALESHIFT+hires); // killough 11/98
+          index = FixedDiv(rw_scale / fovdiff, // [Nugget]
+                           video.xscale) >> LIGHTSCALESHIFT;  // killough 11/98
 
           if (index >=  MAXLIGHTSCALE )
             index = MAXLIGHTSCALE-1;

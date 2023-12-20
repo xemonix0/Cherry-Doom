@@ -47,6 +47,7 @@ extern boolean cheese;
 int initial_health = 100;
 int initial_bullets = 50;
 int maxhealth = 100; // was MAXHEALTH as a #define, used only in this module
+int maxhealthbonus = 200;
 int max_armor = 200;
 int green_armor_class = 1;  // these are involved with armortype below
 int blue_armor_class = 2;
@@ -366,8 +367,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 	}
 
       player->health++;               // can go over 100%
-      if (player->health > (maxhealth * 2))
-        player->health = (maxhealth * 2);
+      if (player->health > maxhealthbonus)
+        player->health = maxhealthbonus;
       player->mo->health = player->health;
       // [Nugget] cheese :)
       pickupmsg(player, "%s", cheese ? "Picked up a cheese." : s_GOTHTHBONUS); // Ty 03/22/98 - externalized

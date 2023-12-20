@@ -73,7 +73,6 @@ set(NUGGETDOOM_SOURCES
     net_io.c               net_io.h
     net_loop.c             net_loop.h
     net_packet.c           net_packet.h
-    net_petname.c          net_petname.h
     net_query.c            net_query.h
     net_sdl.c              net_sdl.h
     net_server.c           net_server.h
@@ -112,6 +111,7 @@ set(NUGGETDOOM_SOURCES
                            r_state.h
     r_swirl.c              r_swirl.h
     r_things.c             r_things.h
+    r_voxel.c              r_voxel.h
     s_musinfo.c            s_musinfo.h
     s_sound.c              s_sound.h
     sounds.c               sounds.h

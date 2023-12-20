@@ -38,10 +38,10 @@ void HUlib_set_margins (void)
 
   if (hud_widescreen_widgets)
   {
-    left_margin -= WIDESCREENDELTA;
+    left_margin -= video.deltaw;
   }
 
-  right_margin = ORIGWIDTH - left_margin;
+  right_margin = SCREENWIDTH - left_margin;
 }
 
 // [FG] vertical alignment
@@ -60,7 +60,7 @@ static int align_offset[num_offsets];
 
 void HUlib_reset_align_offsets (void)
 {
-  int bottom = ORIGHEIGHT - 1;
+  int bottom = SCREENHEIGHT - 1;
 
   if (scaledviewheight < SCREENHEIGHT ||
       // [Nugget] Removed `crispy_hud` code
@@ -103,7 +103,7 @@ void HUlib_clear_all_lines (hu_multiline_t *const m)
 
 static boolean add_char_to_line(hu_line_t *const t, const char ch)
 {
-  if (t->len == HU_MAXLINELENGTH)
+  if (t->len == HU_MAXLINELENGTH - 1)
     return false;
   else
   {
@@ -229,19 +229,36 @@ static int horz_align_widget(const hu_widget_t *const w, const hu_line_t *const 
   }
   else if (h_align == align_center)
   {
-    x = ORIGWIDTH/2 - l->width/2;
+    x = SCREENWIDTH/2 - l->width/2;
   }
-  else { x = w->x; } // [Nugget]: [FG] align_direct
+  else // [Nugget]
+  {
+    // [FG] align_direct
+
+    x = w->x;
+
+    if (hud_widescreen_widgets)
+    {
+      if (w->x < SCREENWIDTH/2)
+      {
+        x -= video.deltaw;
+      }
+      else
+      {
+        x += video.deltaw;
+      }
+    }
+  }
 
   // [Nugget] NUGHUD
   if (st_crispyhud) {
     // Messages hack
     if (w->x == 1994)
-    { return x - ((h_align == align_left && !hud_widescreen_widgets) ? WIDESCREENDELTA : 0); }
+    { return x - ((h_align == align_left && !hud_widescreen_widgets) ? video.deltaw : 0); }
 
     switch (h_align) {
       case align_left:    x += w->x - left_margin;   break;
-      case align_center:  x += w->x - ORIGWIDTH/2;   break;
+      case align_center:  x += w->x - SCREENWIDTH/2; break;
       case align_right:   x += w->x - right_margin;  break;
       default:                                       break;
     }
@@ -358,7 +375,7 @@ static void draw_line_aligned (const hu_multiline_t *m, const hu_line_t *l, cons
         break;
 
       // killough 1/18/98 -- support multiple lines:
-      V_DrawPatchTranslated(x, y, 0, p[c-HU_FONTSTART], cr);
+      V_DrawPatchTranslated(x, y, p[c-HU_FONTSTART], cr);
       x += w;
     }
     else if ((x += f->space_width) >= right_margin && !st_crispyhud) // [Nugget] NUGHUD
@@ -372,7 +389,7 @@ static void draw_line_aligned (const hu_multiline_t *m, const hu_line_t *l, cons
       leveltime & 16)
   {
     cr = m->cr; //jff 2/17/98 restore original color
-    V_DrawPatchTranslated(x, y, 0, p['_' - HU_FONTSTART], cr);
+    V_DrawPatchTranslated(x, y, p['_' - HU_FONTSTART], cr);
   }
 }
 

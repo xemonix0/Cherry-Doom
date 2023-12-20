@@ -494,6 +494,12 @@ static boolean P_ProjectileImmune(mobj_t *target, mobj_t *source)
     );
 }
 
+// [FG] mobj or actual sprite height
+static const inline fixed_t thingheight (const mobj_t *const thing, const mobj_t *const cond)
+{
+  return thing->height; // [Nugget] Removed `actualheight`
+}
+
 static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 {
   fixed_t blockdist;
@@ -585,11 +591,9 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   if (tmthing->flags & MF_MISSILE || (tmthing->flags & MF_BOUNCES &&
 				      !(tmthing->flags & MF_SOLID)))
     {
-      // [Nugget] Removed `actualheight`
-
       // see if it went over / under
 
-      if (tmthing->z > thing->z + thing->height)
+      if (tmthing->z > thing->z + thingheight(thing, tmthing->target))
 	return true;    // overhead
 
       if (tmthing->z+tmthing->height < thing->z)
@@ -1536,7 +1540,7 @@ static boolean PTR_AimTraverse (intercept_t *in)
   // check angles to see if the thing can be aimed at
 
   dist = FixedMul(attackrange, in->frac);
-  thingtopslope = FixedDiv(th->z+th->height - shootz , dist);
+  thingtopslope = FixedDiv(th->z+thingheight(th, shootthing) - shootz , dist);
 
   if (thingtopslope < bottomslope)
     return true;    // shot over the thing
@@ -1685,8 +1689,7 @@ static boolean PTR_ShootTraverse(intercept_t *in)
   // check angles to see if the thing can be aimed at
 
   dist = FixedMul (attackrange, in->frac);
-  // [Nugget] Removed `actualheight`
-  thingtopslope = FixedDiv (th->z+th->height - shootz , dist);
+  thingtopslope = FixedDiv (th->z+thingheight(th, shootthing) - shootz , dist);
 
   if (thingtopslope < aimslope)
     return true;  // shot over the thing
@@ -1744,7 +1747,7 @@ fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 
   // can't shoot outside view angles
 
-  if (t1->player && vertical_aiming == VERTAIM_DIRECT) // [Nugget] Vertical aiming
+  if (t1->player && (vertical_aiming == VERTAIM_DIRECT) && (mask & CROSSHAIR_AIM)) // [Nugget] Vertical aiming
   {
     bottomslope = (topslope = t1->player->slope + 1) - 2;
   }
@@ -1758,7 +1761,7 @@ fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
   linetarget = NULL;
 
   // killough 8/2/98: prevent friends from aiming at friends
-  aim_flags_mask = mask;
+  aim_flags_mask = mask & MF_FRIEND;
 
   P_PathTraverse(t1->x,t1->y,x2,y2,PT_ADDLINES|PT_ADDTHINGS,PTR_AimTraverse);
 

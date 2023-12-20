@@ -802,6 +802,11 @@ static void cheat_god()
     P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
     S_StartSound(plyr->mo, sfx_slop);
     P_MapEnd();
+
+    // Fix reviving as "zombie" if god mode was already enabled
+    if (plyr->mo)
+      plyr->mo->health = god_health;  // Ty 03/09/98 - deh
+    plyr->health = god_health;
   }
 
   plyr->cheats ^= CF_GODMODE;
@@ -1068,7 +1073,6 @@ static void cheat_clev(char *buf)
 // killough 2/7/98: simplified using dprintf and made output more user-friendly
 static void cheat_mypos()
 {
-  plyr->cheats &= ~CF_RENDERSTATS;
   plyr->cheats ^= CF_MAPCOORDS;
   if ((plyr->cheats & CF_MAPCOORDS) == 0)
     plyr->message = "";
@@ -1578,10 +1582,7 @@ static void cheat_nuke()
 
 static void cheat_rate()
 {
-  plyr->cheats &= ~CF_MAPCOORDS;
   plyr->cheats ^= CF_RENDERSTATS;
-  if ((plyr->cheats & CF_RENDERSTATS) == 0)
-    plyr->message = "";
 }
 
 //-----------------------------------------------------------------------------
@@ -1711,9 +1712,6 @@ static const struct {
 boolean M_CheatResponder(event_t *ev)
 {
   int i;
-
-  if (strictmode)
-    return false;
 
   if (ev->type == ev_keydown && M_FindCheats(ev->data1))
     return true;

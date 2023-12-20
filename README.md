@@ -25,7 +25,6 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 ### General
 
-- **Support for higher resolutions:** 3X (600p), 4X (800p)... up to 9X (1800p) [by _ceski_]
 - **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
 - **Stretch viewport to fit window** setting (CFG-Only: `stretch_to_fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
 - **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**
@@ -60,7 +59,6 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - Toggle for **Diminished Lighting** (CFG-Only: `diminished_lighting`)
 - _**Screen Wipe speed percentage**_ setting
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
-- **_Organize Saves by IWAD_** setting
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt
 - _**Play Internal Demos**_ setting
 - _**Quick "Quit Game"**_ setting, to skip the confirmation prompt [p.f. Crispy Doom]
@@ -97,7 +95,6 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - _**Alternative Arms Display**_ setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
 - **Blink Missing Keys** setting (CFG-Only: `blink_keys`) [partially p.f. Crispy Doom]
 - _**Smart Totals**_ setting [p.f. So Doom]
-- _**Show Kills Percentage [in Stats display]**_ setting
 - **Event Timers:**
   - _"Use" Button Timer_ [p.f. Crispy Doom]; 
   - _Teleport Timer_ [i.b. the above];
@@ -131,24 +128,26 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 ### Doom Compatibility settings
 
-- Bruiser attack (A_BruisAttack) doesn't face target
-- Disable Melee Snapping
-- Double Autoaim range
-- Fix Lost Soul colliding with items
-- Lost Soul forgets target upon impact
-- Fuzzy things bleed fuzzy blood [i.b. Crispy Doom]
-- Non-bleeders don't bleed when crushed [i.b. Crispy Doom]
-- Fix lopsided Icon of Sin explosions
-- Permanent IDCHOPPERS invulnerability
-- Blazing doors reopen with wrong sound [p.f. Crispy Doom]
-- Manually reactivated moving doors are silent [p.f. Crispy Doom]
-- Corrected switch sound source [p.f. Crispy Doom]
-- Chaingun makes two sounds with one bullet
-- Chaingunner uses pistol/chaingun sound
-- Arch-Vile fire plays flame start sound [p.f. Crispy Doom]
-- Dead players can still play "oof" sound [p.f. Crispy Doom]
-- Use unused pain/bonus palettes
-- Key pickup resets palette
+All of these are CFG-Only, so their CVAR names are included.
+
+- Bruiser attack (A_BruisAttack) doesn't face target (`comp_bruistarget`)
+- Disable Melee Snapping (`comp_nomeleesnap`)
+- Double Autoaim range (`comp_longautoaim`)
+- Fix Lost Soul colliding with items (`comp_lscollision`)
+- Lost Soul forgets target upon impact (`comp_lsamnesia`)
+- Fuzzy things bleed fuzzy blood (`comp_fuzzyblood`) [i.b. Crispy Doom]
+- Non-bleeders don't bleed when crushed (`comp_nonbleeders`) [i.b. Crispy Doom]
+- Fix lopsided Icon of Sin explosions (`comp_iosdeath`)
+- Permanent IDCHOPPERS invulnerability (`comp_choppers`)
+- Blazing doors reopen with wrong sound (`comp_blazing2`) [p.f. Crispy Doom]
+- Manually reactivated moving doors are silent (`comp_manualdoor`) [p.f. Crispy Doom]
+- Corrected switch sound source (`comp_switchsource`) [p.f. Crispy Doom]
+- Chaingun makes two sounds with one bullet (`comp_cgundblsnd`)
+- Chaingunner uses pistol/chaingun sound (`comp_cgunnersfx`)
+- Arch-Vile fire plays flame start sound (`comp_flamst`) [p.f. Crispy Doom]
+- Dead players can still play "oof" sound (`comp_deadoof`) [p.f. Crispy Doom]
+- Use unused pain/bonus palettes (`comp_unusedpals`)
+- Key pickup resets palette (`comp_keypal`)
 
 ### Cheats
 
@@ -277,7 +276,9 @@ Copyright:
  © 1993-1996 Id Software, Inc.;  
  © 1993-2008 Raven Software;  
  © 1999 by id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;  
+ © 1999-2004 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze;  
  © 2004 James Haley;  
+ © 2005-2006 by Florian Schulze, Colin Phipps, Neil Stevens, Andrey Budko;  
  © 2005-2018 Simon Howard;  
  © 2006 Ben Ryves;  
  © 2017 Christoph Oelckers;  
@@ -286,14 +287,15 @@ Copyright:
  © 2019 Jonathan Dowland;  
  © 2020 Alex Mayfield;  
  © 2020 JadingTsunami;  
+ © 2020-2023 Fabian Greffrath;  
+ © 2020-2023 Roman Fomin;  
  © 2021 Ryan Krafnick;  
+ © 2021-2023 Alaux;  
  © 2022 Julia Nechaevskaya;  
  © 2022 Vladislav Melnichuk;  
  © 2022-2023 ceski;  
- © 2023 liPillON;  
- © 2020-2023 Fabian Greffrath;  
- © 2020-2023 Roman Fomin;  
- © 2021-2023 Alaux.  
+ © 2023 Andrew Apted;  
+ © 2023 liPillON.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/beta.h`  

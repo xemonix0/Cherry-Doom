@@ -210,7 +210,6 @@ extern int dclick_use;
 // [Nugget] Removed a bunch of extern declarations,
 // since we include `am_map.h` and `st_stuff.h`
 
-extern char *chat_macros[];  // chat macros
 extern const char shiftxform[];
 extern default_t defaults[];
 
@@ -289,7 +288,6 @@ void M_StatusBar(int);
 void M_Automap(int);
 void M_Enemy(int);
 void M_Messages(int);
-void M_ChatStrings(int);
 void M_InitExtendedHelp(void);
 void M_ExtHelpNextScreen(int);
 void M_ExtHelp(int);
@@ -302,16 +300,13 @@ void M_DrawExtHelp(void);
 void M_DrawAutoMap(void);
 void M_DrawEnemy(void);
 void M_DrawMessages(void);
-void M_DrawChatStrings(void);
-void M_Compat(int);       // killough 10/98
 void M_General(int);      // killough 10/98
-void M_DrawCompat(void);  // killough 10/98
 void M_DrawGeneral(void); // killough 10/98
 // cph 2006/08/06 - M_DrawString() is the old M_DrawMenuString, except that it is not tied to menu_buffer
 void M_DrawString(int,int,int,const char*);
 
 // [FG] alternative text for missing menu graphics lumps
-void M_DrawTitle(int x, int y, const char *patch, const char *alttext);
+void M_DrawTitle(int x, int y, const char *patch, const char *alttext, int pages);
 
 menu_t NewDef;                                              // phares 5/04/98
 
@@ -378,7 +373,7 @@ void M_DrawMainMenu(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
-  V_DrawPatchDirect (94,2,0,W_CacheLumpName("M_DOOM",PU_CACHE));
+  V_DrawPatchDirect (94,2,W_CacheLumpName("M_DOOM",PU_CACHE));
 }
 
 /////////////////////////////
@@ -490,7 +485,7 @@ void M_DrawReadThis1(void)
 {
   inhelpscreens = true;
   if (gamemode == shareware)
-    V_DrawPatchFullScreen (0,W_CacheLumpName("HELP2",PU_CACHE));
+    V_DrawPatchFullScreen (W_CacheLumpName("HELP2",PU_CACHE));
   else
     M_DrawCredits();
 }
@@ -506,7 +501,7 @@ void M_DrawReadThis2(void)
   if (gamemode == shareware)
     M_DrawCredits();
   else
-    V_DrawPatchFullScreen (0,W_CacheLumpName("CREDIT",PU_CACHE));
+    V_DrawPatchFullScreen (W_CacheLumpName("CREDIT",PU_CACHE));
 }
 
 /////////////////////////////
@@ -608,7 +603,7 @@ void M_DrawEpisode(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
-  M_DrawTitle(54,EpiDef.y - 25,"M_EPISOD","WHICH EPISODE?");
+  M_DrawTitle(54, EpiDef.y - 25, "M_EPISOD", "WHICH EPISODE?", 0);
 }
 
 void M_Episode(int choice)
@@ -678,8 +673,8 @@ void M_DrawNewGame(void)
   // [crispy] force status bar refresh
   inhelpscreens = true;
 
-  V_DrawPatchDirect (96,14,0,W_CacheLumpName("M_NEWG",PU_CACHE));
-  V_DrawPatchDirect (54,38,0,W_CacheLumpName("M_SKILL",PU_CACHE));
+  V_DrawPatchDirect (96,14,W_CacheLumpName("M_NEWG",PU_CACHE));
+  V_DrawPatchDirect (54,38,W_CacheLumpName("M_SKILL",PU_CACHE));
 }
 
 void M_NewGame(int choice)
@@ -786,27 +781,27 @@ static void M_DrawBorderedSnapshot (int n)
 {
   const char *txt = "n/a";
 
-  const int snapshot_x = MAX((WIDESCREENDELTA + SaveDef.x + SKULLXOFF - snapshot_width) / 2, 8);
+  const int snapshot_x = MAX((video.deltaw + SaveDef.x + SKULLXOFF - snapshot_width) / 2, 8);
   const int snapshot_y = LoadDef.y + MAX((load_end * LINEHEIGHT - snapshot_height) * n / load_end, 0);
 
   // [FG] a snapshot window smaller than 80*48 px is considered too small
-  if (snapshot_width < ORIGWIDTH/4)
+  if (snapshot_width < SCREENWIDTH/4)
     return;
 
   if (!M_DrawSnapshot(n, snapshot_x, snapshot_y, snapshot_width, snapshot_height))
   {
-    M_WriteText(snapshot_x + snapshot_width/2 - M_StringWidth(txt)/2 - WIDESCREENDELTA,
+    M_WriteText(snapshot_x + snapshot_width/2 - M_StringWidth(txt)/2 - video.deltaw,
                 snapshot_y + snapshot_height/2 - M_StringHeight(txt)/2,
                 txt);
   }
 
   txt = M_GetSavegameTime(n);
-  M_DrawString(snapshot_x + snapshot_width/2 - M_GetPixelWidth(txt)/2 - WIDESCREENDELTA,
+  M_DrawString(snapshot_x + snapshot_width/2 - M_GetPixelWidth(txt)/2 - video.deltaw,
                snapshot_y + snapshot_height + M_StringHeight(txt),
                CR_GOLD, txt);
 
   // [FG] draw the view border around the snapshot
-  R_DrawBorder(snapshot_x, snapshot_y, snapshot_width, snapshot_height, 0);
+  R_DrawBorder(snapshot_x, snapshot_y, snapshot_width, snapshot_height);
 }
 
 // [FG] delete a savegame
@@ -857,7 +852,7 @@ void M_DrawLoad(void)
   int i;
 
   //jff 3/15/98 use symbolic load position
-  V_DrawPatchDirect (72,LOADGRAPHIC_Y,0,W_CacheLumpName("M_LOADG",PU_CACHE));
+  V_DrawPatchDirect (72,LOADGRAPHIC_Y,W_CacheLumpName("M_LOADG",PU_CACHE));
   for (i = 0 ; i < load_end ; i++)
     {
       M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
@@ -876,16 +871,16 @@ void M_DrawLoad(void)
 void M_DrawSaveLoadBorder(int x,int y)
 {
   int i;
-
-  V_DrawPatchDirect (x-8,y+7,0,W_CacheLumpName("M_LSLEFT",PU_CACHE));
-
+  
+  V_DrawPatchDirect (x-8,y+7,W_CacheLumpName("M_LSLEFT",PU_CACHE));
+  
   for (i = 0 ; i < 24 ; i++)
     {
-      V_DrawPatchDirect (x,y+7,0,W_CacheLumpName("M_LSCNTR",PU_CACHE));
+      V_DrawPatchDirect (x,y+7,W_CacheLumpName("M_LSCNTR",PU_CACHE));
       x += 8;
     }
 
-  V_DrawPatchDirect (x,y+7,0,W_CacheLumpName("M_LSRGHT",PU_CACHE));
+  V_DrawPatchDirect (x,y+7,W_CacheLumpName("M_LSRGHT",PU_CACHE));
 }
 
 //
@@ -998,11 +993,11 @@ void M_ReadSaveStrings(void)
 
   // [FG] shift savegame descriptions a bit to the right
   //      to make room for the snapshots on the left
-  SaveDef.x = LoadDef.x = M_X_LOADSAVE + MIN(M_LOADSAVE_WIDTH/2, WIDESCREENDELTA);
+  SaveDef.x = LoadDef.x = M_X_LOADSAVE + MIN(M_LOADSAVE_WIDTH/2, video.deltaw);
 
   // [FG] fit the snapshots into the resulting space
-  snapshot_width = MIN((WIDESCREENDELTA + SaveDef.x + 2 * SKULLXOFF) & ~7, ORIGWIDTH/2); // [FG] multiple of 8
-  snapshot_height = MIN((snapshot_width * ORIGHEIGHT / ORIGWIDTH) & ~7, ORIGHEIGHT/2);
+  snapshot_width = MIN((video.deltaw + SaveDef.x + 2 * SKULLXOFF) & ~7, SCREENWIDTH/2); // [FG] multiple of 8
+  snapshot_height = MIN((snapshot_width * SCREENHEIGHT / SCREENWIDTH) & ~7, SCREENHEIGHT/2);
 
   for (i = 0 ; i < load_end ; i++)
     {
@@ -1032,6 +1027,7 @@ void M_ReadSaveStrings(void)
 	{
 	  strcpy(&savegamestrings[i][0],s_EMPTYSTRING);
 	  LoadMenu[i].status = 0;
+	  fclose(fp);
 	  continue;
 	}
 
@@ -1051,7 +1047,7 @@ void M_DrawSave(void)
   int i;
 
   //jff 3/15/98 use symbolic load position
-  V_DrawPatchDirect (72,LOADGRAPHIC_Y,0,W_CacheLumpName("M_SAVEG",PU_CACHE));
+  V_DrawPatchDirect (72,LOADGRAPHIC_Y,W_CacheLumpName("M_SAVEG",PU_CACHE));
   for (i = 0 ; i < load_end ; i++)
     {
       M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
@@ -1089,36 +1085,47 @@ static void SetDefaultSaveName (int slot)
 {
     char *maplump = MAPNAME(gameepisode, gamemap);
     int maplumpnum = W_CheckNumForName(maplump);
-    char *wadname = M_StringDuplicate(W_WadNameForLump(maplumpnum));
-    char *ext = strrchr(wadname, '.');
 
-    if (ext != NULL)
+    if (!organize_savefiles)
     {
-        *ext = '\0';
-    }
+        char *wadname = M_StringDuplicate(W_WadNameForLump(maplumpnum));
+        char *ext = strrchr(wadname, '.');
 
-    M_snprintf(savegamestrings[slot], SAVESTRINGSIZE,
-               "%s (%s)", maplump, wadname);
-    free(wadname);
+        if (ext != NULL)
+        {
+            *ext = '\0';
+        }
+
+        M_snprintf(savegamestrings[slot], SAVESTRINGSIZE,
+                  "%s (%s)", maplump, wadname);
+        free(wadname);
+    }
+    else
+    {
+        M_snprintf(savegamestrings[slot], SAVESTRINGSIZE, "%s", maplump);
+    }
 
     M_ForceUppercase(savegamestrings[slot]);
 }
 
 // [FG] override savegame name if it already starts with a map identifier
-static boolean StartsWithMapIdentifier (char *str)
+boolean StartsWithMapIdentifier (char *str)
 {
-    M_ForceUppercase(str);
-
-    if (strlen(str) >= 4 &&
-        str[0] == 'E' && isdigit(str[1]) &&
-        str[2] == 'M' && isdigit(str[3]))
+    if (strnlen(str, 8) >= 4 &&
+        toupper(str[0]) == 'E' &&
+        isdigit(str[1]) &&
+        toupper(str[2]) == 'M' &&
+        isdigit(str[3]))
     {
         return true;
     }
 
-    if (strlen(str) >= 5 &&
-        str[0] == 'M' && str[1] == 'A' && str[2] == 'P' &&
-        isdigit(str[3]) && isdigit(str[4]))
+    if (strnlen(str, 8) >= 5 &&
+        toupper(str[0]) == 'M' &&
+        toupper(str[1]) == 'A' &&
+        toupper(str[2]) == 'P' &&
+        isdigit(str[3]) &&
+        isdigit(str[4]))
     {
         return true;
     }
@@ -1179,7 +1186,6 @@ void M_SaveGame (int choice)
 
 enum
 {
-  general, // killough 10/98
   // killough 4/6/98: move setup to be a sub-menu of OPTIONs
   setup,                                                    // phares 3/21/98
   endgame,
@@ -1199,7 +1205,6 @@ menuitem_t OptionsMenu[]=
 {
   // killough 4/6/98: move setup to be a sub-menu of OPTIONs
   // [FG] alternative text for missing menu graphics lumps
-  {1,"M_GENERL", M_General, 'g', "GENERAL"},      // killough 10/98
   {1,"M_SETUP",  M_Setup,   's', "SETUP"},                          // phares 3/21/98
   {1,"M_ENDGAM", M_EndGame,'e', "END GAME"},
   {1,"M_MESSG",  M_ChangeMessages,'m', "MESSAGES:"},
@@ -1230,7 +1235,7 @@ char msgNames[2][9]  = {"M_MSGOFF","M_MSGON"};
 
 void M_DrawOptions(void)
 {
-  V_DrawPatchDirect (108,15,0,W_CacheLumpName("M_OPTTTL",PU_CACHE));
+  V_DrawPatchDirect (108, 15, W_CacheLumpName("M_OPTTTL", PU_CACHE));
 
   /*  obsolete -- killough
       V_DrawPatchDirect (OptionsDef.x + 175,OptionsDef.y+LINEHEIGHT*detail,0,
@@ -1244,8 +1249,8 @@ void M_DrawOptions(void)
                 showMessages ? "ON" : "OFF");
   else
   if (OptionsDef.lumps_missing == -1)
-  V_DrawPatchDirect (OptionsDef.x + 120,OptionsDef.y+LINEHEIGHT*messages,0,
-		     W_CacheLumpName(msgNames[showMessages],PU_CACHE));
+    V_DrawPatchDirect (OptionsDef.x + 120, OptionsDef.y + LINEHEIGHT * messages,
+		       W_CacheLumpName(msgNames[showMessages], PU_CACHE));
 
   /* M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(mousesens+1),
      10,mouseSensitivity);   killough */
@@ -1367,7 +1372,7 @@ menu_t SoundDef =
 
 void M_DrawSound(void)
 {
-  V_DrawPatchDirect (60,38,0,W_CacheLumpName("M_SVOL",PU_CACHE));
+  V_DrawPatchDirect (60, 38, W_CacheLumpName("M_SVOL", PU_CACHE));
 
   M_DrawThermo(SoundDef.x,SoundDef.y+LINEHEIGHT*(sfx_vol+1),16,snd_SfxVolume);
 
@@ -1474,7 +1479,7 @@ void M_DrawMouse(void)
 {
   int mhmx,mvmx,mhmx2,mvmx2; //jff 4/3/98 clamp drawn position to 23 max
 
-  V_DrawPatchDirect (60,LOADGRAPHIC_Y,0,W_CacheLumpName("M_MSENS",PU_CACHE));
+  V_DrawPatchDirect (60,LOADGRAPHIC_Y,W_CacheLumpName("M_MSENS",PU_CACHE));
 
   //jff 4/3/98 clamp horizontal sensitivity display
   mhmx = mouseSensitivity_horiz; // >23? 23 : mouseSensitivity_horiz;
@@ -1755,13 +1760,10 @@ boolean set_status_active = false; // in status bar/hud setup screen
 boolean set_auto_active   = false; // in automap setup screen
 boolean set_enemy_active  = false; // in enemies setup screen
 boolean set_mess_active   = false; // in messages setup screen
-boolean set_chat_active   = false; // in chat string setup screen
 boolean setup_select      = false; // changing an item
 boolean setup_gather      = false; // gathering keys for value
-boolean colorbox_active   = false; // color palette being shown
 boolean default_verify    = false; // verify reset defaults decision
 boolean set_general_active = false;
-boolean set_compat_active = false;
 
 /////////////////////////////
 //
@@ -1854,14 +1856,13 @@ static char menu_buffer[66];
 
 enum
 {
-  set_compat,
-  set_key_bindings,
-  set_weapons,
-  set_statbar,
+  set_general, // killough 10/98
+  set_key_bindings,                                     
+  set_weapons,                                           
+  set_statbar,                                           
   set_automap,
   set_enemy,
   set_messages,
-  set_chatstrings,
   set_setup_end
 } setup_e;
 
@@ -1878,14 +1879,13 @@ int setup_screen; // the current setup screen. takes values from setup_e
 menuitem_t SetupMenu[]=
 {
   // [FG] alternative text for missing menu graphics lumps
-  {1,"M_COMPAT",M_Compat,     'p', "DOOM COMPATIBILITY"},
+  {1,"M_GENERL",M_General,    'g', "GENERAL"},      // killough 10/98
   {1,"M_KEYBND",M_KeyBindings,'k', "KEY BINDINGS"},
   {1,"M_WEAP"  ,M_Weapons,    'w', "WEAPONS"},
   {1,"M_STAT"  ,M_StatusBar,  's', "STATUS BAR / HUD"},
   {1,"M_AUTO"  ,M_Automap,    'a', "AUTOMAP"},
   {1,"M_ENEM"  ,M_Enemy,      'e', "ENEMIES"},
   {1,"M_MESS"  ,M_Messages,   'm', "MESSAGES"},
-  {1,"M_CHAT"  ,M_ChatStrings,'c', "CHAT STRINGS"},
 };
 
 /////////////////////////////
@@ -2001,32 +2001,12 @@ menu_t MessageDef =                                         // phares 4/08/98
   0
 };
 
-menu_t ChatStrDef =                                         // phares 4/10/98
-{
-  generic_setup_end,
-  &SetupDef,
-  Generic_Setup,
-  M_DrawChatStrings,
-  34,5,      // skull drawn here
-  0
-};
-
 menu_t GeneralDef =                                           // killough 10/98
 {
   generic_setup_end,
-  &OptionsDef,
-  Generic_Setup,
-  M_DrawGeneral,
-  34,5,      // skull drawn here
-  0
-};
-
-menu_t CompatDef =                                           // killough 10/98
-{
-  generic_setup_end,
   &SetupDef,
   Generic_Setup,
-  M_DrawCompat,
+  M_DrawGeneral,
   34,5,      // skull drawn here
   0
 };
@@ -2038,12 +2018,12 @@ menu_t CompatDef =                                           // killough 10/98
 //
 // killough 11/98: rewritten to support hires
 
-void M_DrawBackground(char *patchname, byte *back_dest)
+void M_DrawBackground(char *patchname)
 {
   if (setup_active && menu_background != background_on)
     return;
 
-  R_DrawBackground(patchname, back_dest);
+  V_DrawBackground(patchname);
 }
 
 /////////////////////////////
@@ -2052,7 +2032,7 @@ void M_DrawBackground(char *patchname, byte *back_dest)
 
 void M_DrawSetup(void)
 {
-  M_DrawTitle(124,15,"M_SETUP","SETUP");
+  M_DrawTitle(124, 15, "M_SETUP", "SETUP", 0);
 }
 
 /////////////////////////////
@@ -2081,10 +2061,6 @@ void M_Setup(int choice)
 
 #define CHIP_SIZE 7 // size of color block for colored items
 
-#define COLORPALXORIG ((320 - 16*(CHIP_SIZE+1))/2)
-#define COLORPALYORIG ((200 - 16*(CHIP_SIZE+1))/2)
-
-#define PAL_BLACK   0
 #define PAL_WHITE   4
 
 static byte colorblock[(CHIP_SIZE+4)*(CHIP_SIZE+4)];
@@ -2126,9 +2102,7 @@ static boolean ItemDisabled(int flags)
   if ((flags & S_DISABLE) ||
       (flags & S_STRICT && strictmode) ||
       (flags & S_CRITICAL && critical) ||
-      (flags & S_MBF && demo_version < 203) ||
-      (flags & S_BOOM && demo_version < 202) ||
-      (flags & S_VANILLA && !demo_compatibility))
+      (flags & S_BOOM && demo_version < 202))
   {
     return true;
   }
@@ -2169,7 +2143,7 @@ void M_DrawItem(setup_menu_t* s)
     // Draw the 'off' version if this isn't the current menu item
     // Draw the blinking version in tune with the blinking skull otherwise
 
-    V_DrawPatchDirect(x,y,0,W_CacheLumpName(ResetButtonName
+    V_DrawPatchDirect(x, y, W_CacheLumpName(ResetButtonName
 					    [flags & (S_HILITE|S_SELECT) ?
 					    whichSkull : 0], PU_CACHE));
   else  // Draw the item string
@@ -2235,20 +2209,20 @@ static void M_DrawMiniThermo(int x, int y, int size, int dot, char *color)
   const int step = M_THRM_STEP * M_THRM_SIZE * FRACUNIT / size;
 
   xx = x;
-  V_DrawPatch(xx, y, 0, W_CacheLumpName("M_MTHRML", PU_CACHE));
+  V_DrawPatch(xx, y, W_CacheLumpName("M_MTHRML", PU_CACHE));
   xx += M_THRM_STEP;
   for (i = 0; i < M_THRM_SIZE; i++)
   {
-    V_DrawPatch(xx, y, 0, W_CacheLumpName("M_MTHRMM", PU_CACHE));
+    V_DrawPatch(xx, y, W_CacheLumpName("M_MTHRMM", PU_CACHE));
     xx += M_THRM_STEP;
   }
-  V_DrawPatch(xx, y, 0, W_CacheLumpName("M_MTHRMR", PU_CACHE));
+  V_DrawPatch(xx, y, W_CacheLumpName("M_MTHRMR", PU_CACHE));
 
   // [FG] do not crash anymore if value exceeds thermometer range
   if (dot > size)
       dot = size;
 
-  V_DrawPatchTranslated(x + M_THRM_STEP / 2 + dot * step / FRACUNIT, y, 0,
+  V_DrawPatchTranslated(x + M_THRM_STEP / 2 + dot * step / FRACUNIT, y,
                         W_CacheLumpName("M_MTHRMO", PU_CACHE), color);
 }
 
@@ -2361,37 +2335,6 @@ void M_DrawSetting(setup_menu_t* s)
       return;
     }
 
-  // Is the item a paint chip?
-
-  if (flags & S_COLOR) // Automap paint chip
-    {
-      int i, ch;
-      byte *ptr = colorblock;
-
-      // draw the border of the paint chip
-
-      for (i = 0 ; i < (CHIP_SIZE+2)*(CHIP_SIZE+2) ; i++)
-	*ptr++ = PAL_BLACK;
-      V_DrawBlock(x+WIDESCREENDELTA,y-1,0,CHIP_SIZE+2,CHIP_SIZE+2,colorblock);
-
-      // draw the paint chip
-
-      ch = s->var.def->location->i;
-      if (!ch) // don't show this item in automap mode
-	V_DrawPatchDirect (x+1,y,0,W_CacheLumpName("M_PALNO",PU_CACHE));
-      else
-	{
-	  ptr = colorblock;
-	  for (i = 0 ; i < CHIP_SIZE*CHIP_SIZE ; i++)
-	    *ptr++ = ch;
-	  V_DrawBlock(x+1+WIDESCREENDELTA,y,0,CHIP_SIZE,CHIP_SIZE,colorblock);
-	}
-      // [FG] print a blinking "arrow" next to the currently highlighted menu item
-      if (!setup_select && ItemSelected(s))
-        M_DrawString(x + CHIP_SIZE, y, color, " <");
-      return;
-    }
-
   // Is the item a chat string?
   // killough 10/98: or a filename?
 
@@ -2436,8 +2379,8 @@ void M_DrawSetting(setup_menu_t* s)
 
 	  for (i = 0 ; i < char_width ; i++)
 	    colorblock[i] = PAL_WHITE;
-	  if (x+cursor_start-1+WIDESCREENDELTA+char_width < SCREENWIDTH)
-	    V_DrawBlock(x+cursor_start-1+WIDESCREENDELTA,y+7,0,char_width,1,colorblock);
+	  if (x+cursor_start-1+video.deltaw+char_width < video.unscaledw)
+	    V_DrawBlock(x+cursor_start-1+video.deltaw,y+7,char_width,1,colorblock);
 	}
 
       // Draw the setting for the item
@@ -2561,7 +2504,7 @@ void M_DrawScreenItems(setup_menu_t* src)
       strcpy(menu_buffer, "Warning: Changes are pending until next game");
     }
 
-    x_warn = ORIGWIDTH/2 - M_GetPixelWidth(menu_buffer)/2;
+    x_warn = SCREENWIDTH/2 - M_GetPixelWidth(menu_buffer)/2;
     M_DrawMenuString(x_warn, M_Y_WARN, CR_RED);
   }
 
@@ -2590,7 +2533,7 @@ void M_DrawScreenItems(setup_menu_t* src)
 
 void M_DrawDefVerify()
 {
-  V_DrawPatch(VERIFYBOXXORG, VERIFYBOXYORG, 0, W_CacheLumpName("M_VBOX", PU_CACHE));
+  V_DrawPatch(VERIFYBOXXORG, VERIFYBOXYORG, W_CacheLumpName("M_VBOX", PU_CACHE));
 
   // The blinking messages is keyed off of the blinking of the
   // cursor skull.
@@ -2606,7 +2549,7 @@ void M_DrawDefVerify()
 
 static void M_DrawDelVerify(void)
 {
-  V_DrawPatch(VERIFYBOXXORG, VERIFYBOXYORG, 0, W_CacheLumpName("M_VBOX", PU_CACHE));
+  V_DrawPatch(VERIFYBOXXORG, VERIFYBOXYORG, W_CacheLumpName("M_VBOX", PU_CACHE));
 
   if (whichSkull) {
     strcpy(menu_buffer,"Delete savegame? (Y or N)");
@@ -2664,7 +2607,6 @@ void M_DrawInstructions()
                        ? (s = "Press left or right to choose", 70)           :
       flags & S_WEAP   ? (s = "Enter weapon number", 97)                     :
       flags & S_NUM    ? (s = "Enter value. Press ENTER when finished.", 37) :
-      flags & S_COLOR  ? (s = "Select color and press enter", 70)            :
       flags & S_STRING ? (s = "Type/edit and Press ENTER", 78)               :
       flags & S_RESET  ? 43 : 0  /* when you're changing something */        :
       flags & S_RESET  ? (s = "Press ENTER key to reset to defaults", 43)    :
@@ -2974,10 +2916,11 @@ setup_menu_t keys_settings4[] =  // Key Binding screen strings
   {"FINISH DEMO"  ,S_INPUT,m_scrn,KB_X,M_Y+7*M_SPC,{0},input_demo_quit},
   {"JOIN DEMO"    ,S_INPUT,m_scrn,KB_X,M_Y+8*M_SPC,{0},input_demo_join},
 
-  // [FG] reload current level / go to next level
   {"MISCELLANEOUS",S_SKIP|S_TITLE,m_null,KB_X,M_Y+10*M_SPC},
+  // [FG] reload current level / go to next level
   {"RELOAD MAP/DEMO",S_INPUT,m_scrn,KB_X,M_Y+11*M_SPC,{0},input_menu_reloadlevel},
   {"NEXT MAP"     ,S_INPUT,m_scrn,KB_X,M_Y+12*M_SPC,{0},input_menu_nextlevel},
+  {"SHOW STATS/TIME",S_INPUT,m_scrn,KB_X,M_Y+13*M_SPC,{0},input_hud_timestats},
 
   {"<- PREV", S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {keys_settings3}},
   {"NEXT ->", S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {keys_settings5}},
@@ -3272,9 +3215,8 @@ void M_DrawKeybnd(void)
 
   // Set up the Key Binding screen
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
-
-  M_DrawTitle(84,2,"M_KEYBND","KEY BINDINGS");
+  M_DrawBackground("FLOOR4_6"); // Draw background
+  M_DrawTitle(84, 2, "M_KEYBND", "KEY BINDINGS", arrlen(keys_settings));
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
 
@@ -3471,9 +3413,8 @@ void M_DrawWeapons(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
-
-  M_DrawTitle(109,2,"M_WEAP","WEAPONS");
+  M_DrawBackground("FLOOR4_6"); // Draw background
+  M_DrawTitle(109, 2, "M_WEAP", "WEAPONS", arrlen(weap_settings));
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
 
@@ -3491,17 +3432,16 @@ void M_DrawWeapons(void)
 
 // Screen table definitions
 
-setup_menu_t stat_settings1[], stat_settings2[], stat_settings3[],
-             stat_settings4[], stat_settings5[]; // [Nugget]
+setup_menu_t stat_settings1[], stat_settings2[],
+             stat_settings3[], stat_settings4[]; // [Nugget]
 
 setup_menu_t* stat_settings[] =
 {
   stat_settings1,
   stat_settings2,
-  stat_settings3,
   // [Nugget]
+  stat_settings3,
   stat_settings4,
-  stat_settings5,
   NULL
 };
 
@@ -3509,44 +3449,45 @@ enum {
   stat1_title1,
   stat1_rednum,
   stat1_graypcnt,
-  stat1_keys,
   stat1_stub1,
   stat1_title2,
+  stat1_coords,
   stat1_stats,
   stat1_time,
-  stat1_healthr,
-  stat1_healthy,
-  stat1_healthg,
-  stat1_armorr,
-  stat1_armory,
-  stat1_armorg,
-  stat1_ammor,
-  stat1_ammoy,
+  stat1_stub2,
+  stat1_title3,
+  stat1_backpack,
+  stat1_armortype,
+  stat1_smooth,
 };
 
-setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen       
+static const char *show_widgets_strings[] = {
+    "OFF", "ON AUTOMAP", "ON HUD", "ALWAYS", NULL
+};
+
+setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
 {
-  {"STATUS BAR"        ,S_SKIP|S_TITLE,m_null,M_X,M_Y},
+  {"STATUS BAR"        ,S_SKIP|S_TITLE,m_null,M_X,M_Y+stat1_title1*M_SPC},
 
   {"USE STANDARD COLORS",S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_rednum*M_SPC,   {"sts_always_red"}},
   {"GRAY %"            ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_graypcnt*M_SPC, {"sts_pct_always_gray"}},
-  {"SINGLE KEY DISPLAY",S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_keys*M_SPC,     {"sts_traditional_keys"}},
 
   {"",S_SKIP,m_null,M_X,M_Y+stat1_stub1*M_SPC},
 
   {"HEADS-UP DISPLAY"  ,S_SKIP|S_TITLE,m_null,M_X,M_Y+stat1_title2*M_SPC},
 
-  {"SHOW LEVEL STATS"  ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_stats*M_SPC, {"hud_level_stats"}},
-  {"SHOW LEVEL TIME"   ,S_YESNO|S_COSMETIC,m_null,M_X,M_Y+stat1_time*M_SPC,  {"hud_level_time"}},
-  {"HEALTH LOW/OK"     ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthr*M_SPC, {"health_red"}},
-  {"HEALTH OK/GOOD"    ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthy*M_SPC, {"health_yellow"}},
-  {"HEALTH GOOD/EXTRA" ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_healthg*M_SPC, {"health_green"}},
-  {"ARMOR LOW/OK"      ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_armorr*M_SPC,  {"armor_red"}},
-  {"ARMOR OK/GOOD"     ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_armory*M_SPC,  {"armor_yellow"}},
-  {"ARMOR GOOD/EXTRA"  ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_armorg*M_SPC,  {"armor_green"}},
-  {"AMMO LOW/OK"       ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_ammor*M_SPC,   {"ammo_red"}},
-  {"AMMO OK/GOOD"      ,S_NUM|S_COSMETIC,m_null,M_X,M_Y+stat1_ammoy*M_SPC,   {"ammo_yellow"}},
-                                                                        
+  {"SHOW PLAYER COORDS",S_CHOICE|S_STRICT,m_null,M_X,M_Y+stat1_coords*M_SPC,  {"hud_player_coords"},0,NULL,show_widgets_strings},
+  {"SHOW LEVEL STATS"  ,S_CHOICE,m_null,M_X,M_Y+stat1_stats*M_SPC, {"hud_level_stats"},0,NULL,show_widgets_strings},
+  {"SHOW LEVEL TIME"   ,S_CHOICE,m_null,M_X,M_Y+stat1_time*M_SPC,  {"hud_level_time"},0,NULL,show_widgets_strings},
+
+  {"",S_SKIP,m_null,M_X,M_Y+stat1_stub2*M_SPC},
+
+  {"WIDGET APPEARANCE",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat1_title3*M_SPC},
+
+  {"BACKPACK SHIFTS AMMO COLORS"    ,S_YESNO,m_null,M_X,M_Y+stat1_backpack*M_SPC,  {"hud_backpack_thresholds"}},
+  {"ARMOR COLOR DEPENDS ON TYPE" ,S_YESNO,m_null,M_X,M_Y+stat1_armortype*M_SPC, {"hud_armor_type"}},
+  {"SMOOTH HEALTH/ARMOR COUNT"      ,S_YESNO,m_null,M_X,M_Y+stat1_smooth*M_SPC,    {"smooth_counts"}},
+
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
 
@@ -3558,60 +3499,49 @@ setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
 
 enum {
   stat2_title1,
-  stat2_backpack,
-  stat2_armortype,
-  stat2_smooth,
-  stat2_stub1,
-  stat2_title2,
   // [Nugget] Removed `crispy_hud`
   stat2_hudfont,
   stat2_widescreen,
   stat2_threelined,
   stat2_bargraphs,
-};
-
-enum {
-  stat3_title1,
-  stat3_xhair,
-  stat3_xhairtype, // [Nugget]
-  stat3_xhairhealth,
-  stat3_xhairtarget,
-  stat3_xhairlockon,
-  stat3_xhairindicators, // [Nugget]
-  stat3_xhairfuzzy, // [Nugget]
-  stat3_xhaircolor,
-  stat3_xhairtcolor,
+  stat2_stub1,
+  stat2_title2,
+  stat2_xhair,
+  stat2_xhairtype, // [Nugget]
+  stat2_xhairhealth,
+  stat2_xhairtarget,
+  stat2_xhairlockon,
+  stat2_xhairindicators, // [Nugget]
+  stat2_xhairfuzzy, // [Nugget]
+  stat2_xhaircolor,
+  stat2_xhairtcolor,
 };
 
 static void M_UpdateCrosshairItems (void)
 {
     // [Nugget] Check for toggle instead of type
 
-    DISABLE_ITEM(!hud_crosshair_on, stat_settings3[stat3_xhairhealth]);
-    DISABLE_ITEM(!hud_crosshair_on, stat_settings3[stat3_xhairtarget]);
-    DISABLE_ITEM(!hud_crosshair_on, stat_settings3[stat3_xhairlockon]);
-    DISABLE_ITEM(!hud_crosshair_on, stat_settings3[stat3_xhaircolor]);
+    DISABLE_ITEM(!hud_crosshair_on, stat_settings2[stat2_xhairhealth]);
+    DISABLE_ITEM(!hud_crosshair_on, stat_settings2[stat2_xhairtarget]);
+    DISABLE_ITEM(!hud_crosshair_on, stat_settings2[stat2_xhairlockon]);
+    DISABLE_ITEM(!hud_crosshair_on, stat_settings2[stat2_xhaircolor]);
     DISABLE_ITEM(!(hud_crosshair_on && hud_crosshair_target == crosstarget_highlight),
-        stat_settings3[stat3_xhairtcolor]);
+        stat_settings2[stat2_xhairtcolor]);
 
     // [Nugget] /-------------------------------------------------------------
 
-    DISABLE_ITEM(!hud_crosshair_on, stat_settings3[stat3_xhairtype]);
+    DISABLE_ITEM(!hud_crosshair_on, stat_settings2[stat2_xhairtype]);
 
     DISABLE_ITEM(!(hud_crosshair_on
                    && (hud_crosshair_target || hud_crosshair_lockon)
                    && !(mouselook && vertical_aiming == VERTAIM_DIRECT)),
-        stat_settings3[stat3_xhairindicators]);
+        stat_settings2[stat2_xhairindicators]);
 
     DISABLE_ITEM(!(hud_crosshair_on && (hud_crosshair_lockon || hud_crosshair_target)),
-        stat_settings3[stat3_xhairfuzzy]);
+        stat_settings2[stat2_xhairfuzzy]);
 
     // [Nugget] -------------------------------------------------------------/
 }
-
-static const char *show_widgets_strings[] = {
-    "OFF", "ON AUTOMAP", "ALWAYS", NULL
-};
 
 static const char *crosshair_target_str[] = {
     "OFF", "HIGHLIGHT", "HEALTH", NULL
@@ -3629,22 +3559,27 @@ static const char *hudcolor_str[] = {
 
 setup_menu_t stat_settings2[] =
 {
-  {"WIDGET APPEARANCE",S_SKIP|S_TITLE,m_null,M_X,M_Y},
-
-  {"BACKPACK CHANGES THRESHOLDS"    ,S_YESNO,m_null,M_X,M_Y+stat2_backpack*M_SPC,  {"hud_backpack_thresholds"}},
-  {"COLOR OF ARMOR DEPENDS ON TYPE" ,S_YESNO,m_null,M_X,M_Y+stat2_armortype*M_SPC, {"hud_armor_type"}},
-  // [Nugget] Disallowed in Strict Mode
-  {"SMOOTH HEALTH/ARMOR COUNT"      ,S_YESNO|S_STRICT,m_null,M_X,M_Y+stat2_smooth*M_SPC, {"smooth_counts"}},
-
-  {"",S_SKIP,m_null,M_X,M_Y+stat2_stub1*M_SPC},
-
-  {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title2*M_SPC },
+  {"EXTENDED HUD",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title1*M_SPC },
 
   // [Nugget] Removed `crispy_hud` code
   {"USE STANDARD DOOM FONT FOR WIDGETS", S_CHOICE,m_null,M_X,M_Y+stat2_hudfont*M_SPC, {"hud_widget_font"}, 0, NULL, show_widgets_strings},
   {"WIDESCREEN WIDGET ARRANGEMENT", S_YESNO,m_null,M_X,M_Y+stat2_widescreen*M_SPC, {"hud_widescreen_widgets"}},
   {"3-LINED COORDS/STATS WIDGETS", S_YESNO,m_null,M_X,M_Y+stat2_threelined*M_SPC, {"hud_threelined_widgets"}},
   {"DRAW BAR GRAPHS IN WIDGETS", S_YESNO,m_null,M_X,M_Y+stat2_bargraphs*M_SPC, {"hud_draw_bargraphs"}},
+
+  {"",S_SKIP,m_null,M_X,M_Y+stat2_stub1*M_SPC},
+
+  {"CROSSHAIR",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat2_title2*M_SPC },
+
+  {"ENABLE CROSSHAIR",      S_YESNO,m_null,M_X,M_Y+stat2_xhair*M_SPC,       {"hud_crosshair_on"}, 0, M_UpdateCrosshairItems}, // [Nugget] Toggle instead of type
+  {"CROSSHAIR TYPE",        S_CHOICE,m_null,M_X,M_Y+stat2_xhairtype*M_SPC,   {"hud_crosshair"}, 0, 0, crosshair_str}, // [Nugget] Actual type
+  {"COLOR BY PLAYER HEALTH",S_YESNO|S_STRICT,m_null,M_X,M_Y+stat2_xhairhealth*M_SPC, {"hud_crosshair_health"}},
+  {"COLOR BY TARGET",       S_CHOICE|S_STRICT,m_null,M_X,M_Y+stat2_xhairtarget*M_SPC, {"hud_crosshair_target"}, 0, M_UpdateCrosshairItems, crosshair_target_str},
+  {"LOCK ON TARGET",        S_CHOICE|S_STRICT,m_null,M_X,M_Y+stat2_xhairlockon*M_SPC, {"hud_crosshair_lockon"}, 0, M_UpdateCrosshairItems, crosshair_lockon_modes}, // [Nugget]
+  {"HORIZONTAL AUTOAIM INDICATORS", S_YESNO|S_STRICT,m_null,M_X,M_Y+stat2_xhairindicators*M_SPC, {"hud_crosshair_indicators"}}, // [Nugget]
+  {"ACCOUNT FOR FUZZY TARGETS",     S_YESNO|S_STRICT,m_null,M_X,M_Y+stat2_xhairfuzzy*M_SPC,      {"hud_crosshair_fuzzy"}}, // [Nugget]
+  {"DEFAULT COLOR",         S_CRITEM,m_null,M_X,M_Y+stat2_xhaircolor*M_SPC,  {"hud_crosshair_color"}, 0, NULL, hudcolor_str},
+  {"HIGHLIGHT COLOR",       S_CRITEM|S_STRICT,m_null,M_X,M_Y+stat2_xhairtcolor*M_SPC, {"hud_crosshair_target_color"}, 0, NULL, hudcolor_str},
 
   {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {stat_settings1}},
   {"NEXT ->", S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {stat_settings3}},
@@ -3658,95 +3593,72 @@ static const char *timer_strings[] = {
   "Off", "In Demos", "Always", NULL
 };
 
+// [Nugget] /-----------------------------------------------------------------
+
+enum {
+  stat3_title1,
+  stat3_powers,
+  stat3_altarms,
+  stat3_smart,
+  stat3_stub2,
+  stat3_title2,
+  stat3_timeruse,
+  stat3_timertelept,
+  stat3_timerkey,
+};
+
 setup_menu_t stat_settings3[] =
 {
-  {"CROSSHAIR",S_SKIP|S_TITLE,m_null,M_X,M_Y+stat3_title1*M_SPC },
+  {"Nugget - Extended HUD", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat3_title1 * M_SPC},
 
-  {"ENABLE CROSSHAIR",      S_YESNO,m_null,M_X,M_Y+stat3_xhair*M_SPC,       {"hud_crosshair_on"}, 0, M_UpdateCrosshairItems}, // [Nugget] Toggle instead of type
-  {"CROSSHAIR TYPE",        S_CHOICE,m_null,M_X,M_Y+stat3_xhairtype*M_SPC,   {"hud_crosshair"}, 0, 0, crosshair_str}, // [Nugget] Actual type
-  {"COLOR BY PLAYER HEALTH",S_YESNO|S_STRICT,m_null,M_X,M_Y+stat3_xhairhealth*M_SPC, {"hud_crosshair_health"}},
-  {"COLOR BY TARGET",       S_CHOICE|S_STRICT,m_null,M_X,M_Y+stat3_xhairtarget*M_SPC, {"hud_crosshair_target"}, 0, M_UpdateCrosshairItems, crosshair_target_str},
-  {"LOCK ON TARGET",        S_CHOICE|S_STRICT,m_null,M_X,M_Y+stat3_xhairlockon*M_SPC, {"hud_crosshair_lockon"}, 0, M_UpdateCrosshairItems, crosshair_lockon_modes}, // [Nugget]
-  {"HORIZONTAL AUTOAIM INDICATORS", S_YESNO|S_STRICT,m_null,M_X,M_Y+stat3_xhairindicators*M_SPC, {"hud_crosshair_indicators"}}, // [Nugget]
-  {"ACCOUNT FOR FUZZY TARGETS",     S_YESNO|S_STRICT,m_null,M_X,M_Y+stat3_xhairfuzzy*M_SPC,      {"hud_crosshair_fuzzy"}}, // [Nugget]
-  {"DEFAULT COLOR",         S_CRITEM,m_null,M_X,M_Y+stat3_xhaircolor*M_SPC,  {"hud_crosshair_color"}, 0, NULL, hudcolor_str},
-  {"HIGHLIGHT COLOR",       S_CRITEM|S_STRICT,m_null,M_X,M_Y+stat3_xhairtcolor*M_SPC, {"hud_crosshair_target_color"}, 0, NULL, hudcolor_str},
+    {"Show Powerup Timers",      S_CHOICE|S_COSMETIC, m_null, M_X, M_Y + stat3_powers   * M_SPC, {"hud_power_timers"}, 0, NULL, show_widgets_strings},
+    {"Alternative Arms Display", S_YESNO,             m_null, M_X, M_Y + stat3_altarms  * M_SPC, {"alt_arms"}, 0, ST_createWidgets},
+    {"Smart Totals",             S_YESNO,             m_null, M_X, M_Y + stat3_smart    * M_SPC, {"smarttotals"}},
 
-  {"<- PREV" ,S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {stat_settings2}},
-  {"NEXT ->", S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {stat_settings4}}, // [Nugget]
+  {"",                      S_SKIP,         m_null, M_X, M_Y + stat3_stub2  * M_SPC},
+  {"Nugget - Event Timers", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat3_title2 * M_SPC},
+
+    {"\"Use\" Button Timer", S_CHOICE,          m_null, M_X, M_Y + stat3_timeruse    * M_SPC, {"timer_use"},        0, NULL, timer_strings},
+    {"Teleport Timer",       S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat3_timertelept * M_SPC, {"timer_teleport"},   0, NULL, timer_strings},
+    {"Key Pickup Timer",     S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat3_timerkey    * M_SPC, {"timer_key_pickup"}, 0, NULL, timer_strings},
+
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {stat_settings2}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {stat_settings4}},
 
   // Final entry
   {0,S_SKIP|S_END,m_null}
 };
 
-// [Nugget] /-----------------------------------------------------------------
-
 enum {
   stat4_title1,
-  stat4_powers,
-  stat4_altarms,
-  stat4_smart,
-  stat4_killspct,
-  stat4_stub2,
-  stat4_title2,
-  stat4_timeruse,
-  stat4_timertelept,
-  stat4_timerkey,
+  stat4_timescale,
+  stat4_totaltime,
+  stat4_time,
+  stat4_eventtimer,
+  stat4_stub1,
+  stat4_kills,
+  stat4_items,
+  stat4_secrets,
+  stat4_msincomp,
+  stat4_mscomp,
 };
 
 setup_menu_t stat_settings4[] =
 {
-  {"Nugget - Extended HUD", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat4_title1 * M_SPC},
+  {"Nugget - Extended HUD Colors", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat4_title1 * M_SPC},
 
-    {"Show Powerup Timers",      S_YESNO|S_COSMETIC, m_null, M_X, M_Y + stat4_powers   * M_SPC, {"hud_power_timers"}},
-    {"Alternative Arms Display", S_YESNO,            m_null, M_X, M_Y + stat4_altarms  * M_SPC, {"alt_arms"}, 0, ST_createWidgets},
-    {"Smart Totals",             S_YESNO,            m_null, M_X, M_Y + stat4_smart    * M_SPC, {"smarttotals"}},
-    {"Show Kills Percentage",    S_YESNO,            m_null, M_X, M_Y + stat4_killspct * M_SPC, {"hud_kills_percentage"}},
-
-  {"",                      S_SKIP,         m_null, M_X, M_Y + stat4_stub2  * M_SPC},
-  {"Nugget - Event Timers", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat4_title2 * M_SPC},
-
-    {"\"Use\" Button Timer", S_CHOICE,          m_null, M_X, M_Y + stat4_timeruse    * M_SPC, {"timer_use"},        0, NULL, timer_strings},
-    {"Teleport Timer",       S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat4_timertelept * M_SPC, {"timer_teleport"},   0, NULL, timer_strings},
-    {"Key Pickup Timer",     S_CHOICE|S_STRICT, m_null, M_X, M_Y + stat4_timerkey    * M_SPC, {"timer_key_pickup"}, 0, NULL, timer_strings},
+    {"Time Scale (Game Speed %)", S_CRITEM, m_null, M_X, M_Y + stat4_timescale  * M_SPC, {"hudcolor_time_scale"}, 0, NULL, hudcolor_str},
+    {"Total Level Time",          S_CRITEM, m_null, M_X, M_Y + stat4_totaltime  * M_SPC, {"hudcolor_total_time"}, 0, NULL, hudcolor_str},
+    {"Level Time",                S_CRITEM, m_null, M_X, M_Y + stat4_time       * M_SPC, {"hudcolor_time"}, 0, NULL, hudcolor_str},
+    {"Event Timer",               S_CRITEM, m_null, M_X, M_Y + stat4_eventtimer * M_SPC, {"hudcolor_event_timer"}, 0, NULL, hudcolor_str},
+    {"",                          S_SKIP,   m_null, M_X, M_Y + stat4_stub1      * M_SPC},
+    {"Kills label",               S_CRITEM, m_null, M_X, M_Y + stat4_kills      * M_SPC, {"hudcolor_kills"}, 0, NULL, hudcolor_str},
+    {"Items label",               S_CRITEM, m_null, M_X, M_Y + stat4_items      * M_SPC, {"hudcolor_items"}, 0, NULL, hudcolor_str},
+    {"Secrets label",             S_CRITEM, m_null, M_X, M_Y + stat4_secrets    * M_SPC, {"hudcolor_secrets"}, 0, NULL, hudcolor_str},
+    {"Incomplete Milestone",      S_CRITEM, m_null, M_X, M_Y + stat4_msincomp   * M_SPC, {"hudcolor_ms_incomp"}, 0, NULL, hudcolor_str},
+    {"Complete Milestone",        S_CRITEM, m_null, M_X, M_Y + stat4_mscomp     * M_SPC, {"hudcolor_ms_comp"}, 0, NULL, hudcolor_str},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {stat_settings3}},
-  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {stat_settings5}},
-
-  // Final entry
-  {0,S_SKIP|S_END,m_null}
-};
-
-enum {
-  stat5_title1,
-  stat5_timescale,
-  stat5_totaltime,
-  stat5_time,
-  stat5_eventtimer,
-  stat5_stub1,
-  stat5_kills,
-  stat5_items,
-  stat5_secrets,
-  stat5_msincomp,
-  stat5_mscomp,
-};
-
-setup_menu_t stat_settings5[] =
-{
-  {"Nugget - Extended HUD Colors", S_SKIP|S_TITLE, m_null, M_X, M_Y + stat5_title1 * M_SPC},
-
-    {"Time Scale (Game Speed %)", S_CRITEM, m_null, M_X, M_Y + stat5_timescale  * M_SPC, {"hudcolor_time_scale"}, 0, NULL, hudcolor_str},
-    {"Total Level Time",          S_CRITEM, m_null, M_X, M_Y + stat5_totaltime  * M_SPC, {"hudcolor_total_time"}, 0, NULL, hudcolor_str},
-    {"Level Time",                S_CRITEM, m_null, M_X, M_Y + stat5_time       * M_SPC, {"hudcolor_time"}, 0, NULL, hudcolor_str},
-    {"Event Timer",               S_CRITEM, m_null, M_X, M_Y + stat5_eventtimer * M_SPC, {"hudcolor_event_timer"}, 0, NULL, hudcolor_str},
-    {"",                          S_SKIP,   m_null, M_X, M_Y + stat5_stub1      * M_SPC},
-    {"Kills label",               S_CRITEM, m_null, M_X, M_Y + stat5_kills      * M_SPC, {"hudcolor_kills"}, 0, NULL, hudcolor_str},
-    {"Items label",               S_CRITEM, m_null, M_X, M_Y + stat5_items      * M_SPC, {"hudcolor_items"}, 0, NULL, hudcolor_str},
-    {"Secrets label",             S_CRITEM, m_null, M_X, M_Y + stat5_secrets    * M_SPC, {"hudcolor_secrets"}, 0, NULL, hudcolor_str},
-    {"Incomplete Milestone",      S_CRITEM, m_null, M_X, M_Y + stat5_msincomp   * M_SPC, {"hudcolor_ms_incomp"}, 0, NULL, hudcolor_str},
-    {"Complete Milestone",        S_CRITEM, m_null, M_X, M_Y + stat5_mscomp     * M_SPC, {"hudcolor_ms_comp"}, 0, NULL, hudcolor_str},
-
-  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {stat_settings4}},
 
   // Final entry
   {0,S_SKIP|S_END,m_null}
@@ -3780,9 +3692,8 @@ void M_DrawStatusHUD(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
-
-  M_DrawTitle(59,2,"M_STAT","STATUS BAR / HUD");
+  M_DrawBackground("FLOOR4_6"); // Draw background
+  M_DrawTitle(59, 2, "M_STAT", "STATUS BAR / HUD", arrlen(stat_settings));
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
 
@@ -3799,31 +3710,22 @@ void M_DrawStatusHUD(void)
 // The Automap tables.
 
 setup_menu_t auto_settings1[];
-setup_menu_t auto_settings2[];
-setup_menu_t auto_settings3[];
 
 setup_menu_t* auto_settings[] =
 {
   auto_settings1,
-  auto_settings2,
-  auto_settings3,
   NULL
 };
 
 enum {
   auto1_title1,
+  auto1_preset,
   auto1_follow,
   auto1_rotate,
   auto1_overlay,
+  auto1_pointer,
   auto1_stub1,
   auto1_title2,
-  auto1_coords,
-  auto1_pointer,
-  auto1_stats,
-  auto1_time,
-  auto1_powers, // [Nugget]
-  auto1_stub2,
-  auto1_title3,
   auto1_smooth,
   auto1_secrets,
   auto1_flash,
@@ -3833,28 +3735,25 @@ static const char *overlay_strings[] = {
   "Off", "On", "Dark", NULL
 };
 
+static const char *automap_preset_strings[] = {
+    "Boom", "Vanilla", "ZDoom", NULL
+};
+
 extern void AM_enableSmoothLines(void);
+extern void AM_ColorPreset(void);
 
 setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
 {
-  {"Modes",S_SKIP|S_TITLE,m_null,M_X,M_Y},
+  {"Modes",S_SKIP|S_TITLE,m_null,M_X,M_Y+auto1_title1*M_SPC},
+  {"Automap Color Preset", S_CHOICE|S_COSMETIC, m_null, M_X, M_Y+auto1_preset*M_SPC, {"mapcolor_preset"}, 0, AM_ColorPreset, automap_preset_strings},
   {"Follow Player"        ,S_YESNO ,m_null,M_X,M_Y+auto1_follow*M_SPC,  {"followplayer"}},
   {"Rotate Automap"       ,S_YESNO ,m_null,M_X,M_Y+auto1_rotate*M_SPC,  {"automaprotate"}},
   {"Overlay Automap"      ,S_CHOICE,m_null,M_X,M_Y+auto1_overlay*M_SPC, {"automapoverlay"}, 0, NULL, overlay_strings},
+  {"Coords follow pointer",S_YESNO ,m_null,M_X,M_Y+auto1_pointer*M_SPC, {"map_point_coord"}},  // killough 10/98
 
   {"",S_SKIP,m_null,M_X,M_Y+auto1_stub1*M_SPC},
 
-  {"Widgets",S_SKIP|S_TITLE,m_null,M_X,M_Y+auto1_title2*M_SPC},
-  // [FG] show level statistics and level time widgets
-  {"Show player coords"   ,S_CHOICE|S_STRICT,m_null,M_X,M_Y+auto1_coords*M_SPC,  {"map_player_coords"},0,NULL,show_widgets_strings},
-  {"Coords follow pointer",S_YESNO ,m_null,M_X,M_Y+auto1_pointer*M_SPC, {"map_point_coord"}},  // killough 10/98
-  {"Show level stats"     ,S_YESNO ,m_null,M_X,M_Y+auto1_stats*M_SPC,   {"map_level_stats"}},
-  {"Show level time"      ,S_YESNO ,m_null,M_X,M_Y+auto1_time*M_SPC,    {"map_level_time"}},
-  {"Show powerup timers"  ,S_YESNO ,m_null,M_X,M_Y+auto1_powers*M_SPC,  {"map_power_timers"}}, // [Nugget]
-
-  {"",S_SKIP,m_null,M_X,M_Y+auto1_stub2*M_SPC},
-
-  {"Miscellaneous",S_SKIP|S_TITLE,m_null,M_X,M_Y+auto1_title3*M_SPC},
+  {"Miscellaneous",S_SKIP|S_TITLE,m_null,M_X,M_Y+auto1_title2*M_SPC},
   {"Smooth automap lines"            ,S_YESNO,m_null,M_X,M_Y+auto1_smooth*M_SPC,  {"map_smooth_lines"},0,AM_enableSmoothLines},
   {"Show Secrets only after entering",S_YESNO,m_null,M_X,M_Y+auto1_secrets*M_SPC, {"map_secret_after"}},
   {"Keyed doors are flashing"        ,S_YESNO,m_null,M_X,M_Y+auto1_flash*M_SPC,   {"map_keyed_door_flash"}},
@@ -3862,103 +3761,7 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
 
-  {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {auto_settings2}},
-
   // Final entry
-  {0,S_SKIP|S_END,m_null}
-
-};
-
-enum {
-  auto2_col_back,
-  auto2_col_grid,
-  auto2_col_wall,
-  auto2_col_fchg,
-  auto2_col_cchg,
-  auto2_col_clsd,
-  auto2_col_rkey,
-  auto2_col_bkey,
-  auto2_col_ykey,
-  auto2_col_rdor,
-  auto2_col_bdor,
-  auto2_col_ydor,
-  auto2_stub1,
-  auto2_col_titl,
-  auto2_col_xyco,
-};
-
-setup_menu_t auto_settings2[] =  // 2nd AutoMap Settings screen
-{
-  {"background"                         ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y,                      {"mapcolor_back"}},
-  {"grid lines"                         ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_grid*M_SPC, {"mapcolor_grid"}},
-  {"normal 1s wall"                     ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_wall*M_SPC, {"mapcolor_wall"}},
-  {"line at floor height change"        ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_fchg*M_SPC, {"mapcolor_fchg"}},
-  {"line at ceiling height change"      ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_cchg*M_SPC, {"mapcolor_cchg"}},
-  {"line at sector with floor = ceiling",S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_clsd*M_SPC, {"mapcolor_clsd"}},
-  {"red key"                            ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_rkey*M_SPC, {"mapcolor_rkey"}},
-  {"blue key"                           ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_bkey*M_SPC, {"mapcolor_bkey"}},
-  {"yellow key"                         ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_ykey*M_SPC, {"mapcolor_ykey"}},
-  {"red door"                           ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_rdor*M_SPC, {"mapcolor_rdor"}},
-  {"blue door"                          ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_bdor*M_SPC, {"mapcolor_bdor"}},
-  {"yellow door"                        ,S_COLOR|S_COSMETIC,m_null,M_X,M_Y+auto2_col_ydor*M_SPC, {"mapcolor_ydor"}},
-
-  {"",S_SKIP,m_null,M_X,M_Y+auto2_stub1*M_SPC},
-
-  {"AUTOMAP LEVEL TITLE COLOR",S_CRITEM|S_COSMETIC,m_null,M_X,M_Y+auto2_col_titl*M_SPC, {"hudcolor_titl"}, 0, NULL, hudcolor_str},
-  {"AUTOMAP COORDINATES COLOR",S_CRITEM|S_COSMETIC,m_null,M_X,M_Y+auto2_col_xyco*M_SPC, {"hudcolor_xyco"}, 0, NULL, hudcolor_str},
-
-  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {auto_settings1}},
-  {"NEXT ->",S_SKIP|S_NEXT,m_null,M_X_NEXT,M_Y_PREVNEXT, {auto_settings3}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-
-};
-
-enum {
-  auto3_col_tele,
-  auto3_col_secr,
-  auto3_col_uscr, // [Nugget]
-  auto3_col_exit,
-  auto3_col_unsn,
-  auto3_col_flat,
-  auto3_col_sprt,
-  auto3_col_hair,
-  auto3_col_sngl,
-  auto3_col_ply1,
-  auto3_col_ply2,
-  auto3_col_ply3,
-  auto3_col_ply4,
-  auto3_stub1,
-  auto3_col_frnd,
-};
-
-setup_menu_t auto_settings3[] =  // 3rd AutoMap Settings screen
-{
-  {"teleporter line"                ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y,                      {"mapcolor_tele"}},
-  {"secret sector boundary"         ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_secr*M_SPC, {"mapcolor_secr"}},
-  {"unrevealed secret sector boundary",S_COLOR|S_COSMETIC|S_STRICT,m_null,M_X,M_Y+auto3_col_uscr*M_SPC, {"mapcolor_uscr"}}, // [Nugget]
-  //jff 4/23/98 add exit line to automap
-  {"exit line"                      ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_exit*M_SPC, {"mapcolor_exit"}},
-  {"computer map unseen line"       ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_unsn*M_SPC, {"mapcolor_unsn"}},
-  {"line w/no floor/ceiling changes",S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_flat*M_SPC, {"mapcolor_flat"}},
-  {"general sprite"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_sprt*M_SPC, {"mapcolor_sprt"}},
-  {"crosshair"                      ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_hair*M_SPC, {"mapcolor_hair"}},
-  {"single player arrow"            ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_sngl*M_SPC, {"mapcolor_sngl"}},
-  {"player 1 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_ply1*M_SPC, {"mapcolor_ply1"}},
-  {"player 2 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_ply2*M_SPC, {"mapcolor_ply2"}},
-  {"player 3 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_ply3*M_SPC, {"mapcolor_ply3"}},
-  {"player 4 arrow"                 ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_ply4*M_SPC, {"mapcolor_ply4"}},
-
-  {"",S_SKIP,m_null,M_X,M_Y+auto3_stub1*M_SPC},
-
-  {"friends"                        ,S_COLOR|S_COSMETIC ,m_null,M_X,M_Y+auto3_col_frnd*M_SPC, {"mapcolor_frnd"}}, // killough 8/8/98
-
-  {"<- PREV",S_SKIP|S_PREV,m_null,M_X_PREV,M_Y_PREVNEXT, {auto_settings2}},
-
-  // Final entry
-
   {0,S_SKIP|S_END,m_null}
 
 };
@@ -3974,7 +3777,6 @@ void M_Automap(int choice)
   setup_screen = ss_auto;
   set_auto_active = true;
   setup_select = false;
-  colorbox_active = false;
   default_verify = false;
   setup_gather = false;
   mult_screens_index = M_GetMultScreenIndex(auto_settings);
@@ -3984,53 +3786,21 @@ void M_Automap(int choice)
   current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
 }
 
-// Data used by the color palette that is displayed for the player to
-// select colors.
-int color_palette_x; // X position of the cursor on the color palette
-int color_palette_y; // Y position of the cursor on the color palette
-byte palette_background[16*(CHIP_SIZE+1)+8];
-
-// M_DrawColPal() draws the color palette when the user needs to select a
-// color.
-// phares 4/1/98: now uses a single lump for the palette instead of
-// building the image out of individual paint chips.
-void M_DrawColPal()
-{
-  int cpx, cpy;
-
-  // Draw a background, border, and paint chips
-
-  V_DrawPatchDirect (COLORPALXORIG-5,COLORPALYORIG-5,0,W_CacheLumpName("M_COLORS",PU_CACHE));
-
-  // Draw the cursor around the paint chip
-  // (cpx,cpy) is the upper left-hand corner of the paint chip
-
-  cpx = COLORPALXORIG + color_palette_x * (CHIP_SIZE + 1) - 1;
-  cpy = COLORPALYORIG + color_palette_y * (CHIP_SIZE + 1) - 1;
-  V_DrawPatch(cpx, cpy, 0, W_CacheLumpName("M_PALSEL", PU_CACHE));
-}
-
 // The drawing part of the Automap Setup initialization. Draw the
 // background, title, instruction line, and items.
 void M_DrawAutoMap(void)
 {
   inhelpscreens = true;    // killough 4/6/98: Force status bar redraw
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
-
-  M_DrawTitle(109,2,"M_AUTO","AUTOMAP");
+  M_DrawBackground("FLOOR4_6"); // Draw background
+  M_DrawTitle(109, 2, "M_AUTO", "AUTOMAP", arrlen(auto_settings));
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
-
-  // If a color is being selected, need to show color paint chips
-
-  if (colorbox_active)
-    M_DrawColPal();
 
   // If the Reset Button has been selected, an "Are you sure?" message
   // is overlayed across everything else.
 
-  else if (default_verify)
+  if (default_verify)
     M_DrawDefVerify();
 }
 
@@ -4050,23 +3820,6 @@ setup_menu_t* enem_settings[] =
 };
 
 enum {
-  enem1_infighting,
-
-  enem1_remember = 1,
-
-  enem1_backing,
-  enem1_monkeys,
-  enem1_avoid_hazards,
-  enem1_friction,
-  enem1_help_friends,
-
-  enem1_helpers,
-
-  enem1_distfriend,
-
-  enem1_dog_jumping,
-
-  enem1_stub1,
   enem1_title1,
   enem1_colored_blood,
   enem1_flipcorpses,
@@ -4078,34 +3831,6 @@ enum {
 
 setup_menu_t enem_settings1[] =  // Enemy Settings screen       
 {
-  // killough 7/19/98
-  {"Monster Infighting When Provoked",S_YESNO|S_MBF,m_null,M_X,M_Y+ enem1_infighting*M_SPC, {"monster_infighting"}},
-
-  {"Remember Previous Enemy",S_YESNO|S_BOOM,m_null,M_X,M_Y+ enem1_remember*M_SPC, {"monsters_remember"}},
-
-  // killough 9/8/98
-  {"Monster Backing Out",S_YESNO|S_MBF,m_null,M_X,M_Y+ enem1_backing*M_SPC, {"monster_backing"}},
-
-  {"Climb Steep Stairs", S_YESNO|S_MBF,m_null,M_X,M_Y+ enem1_monkeys*M_SPC, {"monkeys"}},
-
-  // killough 9/9/98
-  {"Intelligently Avoid Hazards",S_YESNO|S_MBF,m_null,M_X,M_Y+ enem1_avoid_hazards*M_SPC, {"monster_avoid_hazards"}},
-
-  // killough 10/98
-  {"Affected by Friction",S_YESNO|S_MBF,m_null,M_X,M_Y+ enem1_friction*M_SPC, {"monster_friction"}},
-
-  {"Rescue Dying Friends",S_YESNO|S_MBF,m_null,M_X,M_Y+ enem1_help_friends*M_SPC, {"help_friends"}},
-
-  // killough 7/19/98
-  {"Number Of Single-Player Helper Dogs",S_NUM|S_LEVWARN|S_MBF,m_null,M_X,M_Y+ enem1_helpers*M_SPC, {"player_helpers"}},
-
-  // killough 8/8/98
-  {"Distance Friends Stay Away",S_NUM|S_MBF,m_null,M_X,M_Y+ enem1_distfriend*M_SPC, {"friend_distance"}},
-
-  {"Allow dogs to jump down",S_YESNO|S_MBF,m_null,M_X,M_Y+ enem1_dog_jumping*M_SPC, {"dog_jumping"}},
-
-  {"", S_SKIP, m_null, M_X , M_Y + enem1_stub1*M_SPC},
-
   {"Cosmetic",S_SKIP|S_TITLE,m_null,M_X,M_Y+ enem1_title1*M_SPC},
 
   // [FG] colored blood and gibs
@@ -4188,9 +3913,8 @@ void M_DrawEnemy(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
-
-  M_DrawTitle(114,2,"M_ENEM","ENEMIES");
+  M_DrawBackground("FLOOR4_6"); // Draw background
+  M_DrawTitle(114, 2, "M_ENEM", "ENEMIES", arrlen(enem_settings));
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
 
@@ -4268,6 +3992,10 @@ enum {
   gen2_gap3,
   gen2_gap4, // music backend spans two lines
   gen2_end1,
+};
+
+static const char *resolution_mode_strings[] = {
+  "original", "double", "triple", "high", NULL
 };
 
 // [Nugget]
@@ -4357,9 +4085,10 @@ static void M_SetMidiPlayer(void)
   S_RestartMusic();
 }
 
-static void M_EnableDisableFPSLimit(void)
+static void M_ToggleUncapped(void)
 {
   DISABLE_ITEM(!uncapped, gen_settings1[gen1_fpslimit]);
+  I_ResetTargetRefresh();
 }
 
 static void M_ToggleFullScreen(void)
@@ -4376,6 +4105,7 @@ static void M_CoerceFPSLimit(void)
 {
   if (fpslimit < TICRATE)
     fpslimit = 0;
+  I_ResetTargetRefresh();
 }
 
 static void M_ResetScreen(void)
@@ -4387,8 +4117,8 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
 
   {"Video"       ,S_SKIP|S_TITLE, m_null, M_X, M_Y},
 
-  {"High Resolution", S_YESNO, m_null, M_X, M_Y+ gen1_hires*M_SPC,
-   {"hires"}, 0, M_ResetScreen},
+  {"Resolution Mode", S_CHOICE, m_null, M_X, M_Y+ gen1_hires*M_SPC,
+   {"resolution_mode"}, 0, M_ResetScreen, resolution_mode_strings},
 
   {"Widescreen Rendering", S_CHOICE, m_null, M_X, M_Y+ gen1_widescreen*M_SPC,
    {"widescreen"}, 0, M_ResetScreen, widescreen_ratios}, // [Nugget] Widescreen ratios
@@ -4404,7 +4134,7 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
   {"", S_SKIP, m_null, M_X, M_Y + gen1_gap2*M_SPC},
 
   {"Uncapped Frame Rate", S_YESNO, m_null, M_X, M_Y+ gen1_uncapped*M_SPC,
-   {"uncapped"}, 0, M_EnableDisableFPSLimit},
+   {"uncapped"}, 0, M_ToggleUncapped},
 
   {"Frame Rate Limit", S_NUM, m_null, M_X,
    M_Y + gen1_fpslimit*M_SPC, {"fpslimit"}, 0, M_CoerceFPSLimit},
@@ -4511,6 +4241,7 @@ enum {
   gen4_demobar,
   gen4_palette_changes,
   gen4_level_brightness,
+  gen4_organize_savefiles,
   gen4_end1,
 
   gen4_title2,
@@ -4574,7 +4305,6 @@ enum {
   gen7_stub1,
   gen7_title2,
   gen7_sclipdist,
-  gen7_organizesaves,
   gen7_quicksaveload,
   gen7_nopagetic,
   gen7_quickexit,
@@ -4783,6 +4513,9 @@ setup_menu_t gen_settings4[] = { // General Settings screen4
   {"Level Brightness", S_THERMO|S_STRICT, m_null, M_X_THRM,
    M_Y + gen4_level_brightness*M_SPC, {"extra_level_brightness"}},
 
+  {"Organize save files", S_YESNO|S_PRGWARN, m_null, M_X,
+   M_Y + gen4_organize_savefiles*M_SPC, {"organize_savefiles"}},
+
   {"", S_SKIP, m_null, M_X, M_Y + gen4_end1*M_SPC},
 
   {"Compatibility-breaking Features"  ,S_SKIP|S_TITLE, m_null, M_X,
@@ -4934,7 +4667,6 @@ setup_menu_t gen_settings7[] = {
   {"Nugget - Miscellaneous", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title2 * M_SPC},
 
     {"Sound Hearing Distance",  S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, M_SetSoundModule, s_clipping_dists},
-    {"Organize Saves by IWAD",  S_YESNO|S_PRGWARN, m_null, M_X, M_Y + gen7_organizesaves * M_SPC, {"organize_saves"}},
     {"One-Key Quick Save/Load", S_YESNO,           m_null, M_X, M_Y + gen7_quicksaveload * M_SPC, {"one_key_saveload"}},
     {"Play Internal Demos",     S_CHOICE,          m_null, M_X, M_Y + gen7_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
     {"Quick \"Quit Game\"",     S_YESNO,           m_null, M_X, M_Y + gen7_quickexit     * M_SPC, {"quick_quitgame"}},
@@ -5001,9 +4733,8 @@ void M_DrawGeneral(void)
 {
   inhelpscreens = true;
 
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
-
-  M_DrawTitle(114,2,"M_GENERL","GENERAL");
+  M_DrawBackground("FLOOR4_6"); // Draw background
+  M_DrawTitle(114, 2, "M_GENERL", "GENERAL", arrlen(gen_settings));
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
 
@@ -5013,296 +4744,12 @@ void M_DrawGeneral(void)
   if (default_verify)
     M_DrawDefVerify();
 }
-
-
-/////////////////////////////
-//
-// The Compatibility table.
-// killough 10/10/98
-
-#define C_X  284
-#define COMP_SPC 12
-
-setup_menu_t comp_settings1[], comp_settings2[], comp_settings3[], comp_settings4[], comp_settings5[];
-
-setup_menu_t* comp_settings[] =
-{
-  comp_settings1,
-  comp_settings2,
-  comp_settings3,
-  // [Nugget]
-  comp_settings4,
-  comp_settings5,
-  NULL
-};
-
-enum
-{
-  comp1_telefrag,
-  comp1_dropoff,
-  comp1_falloff,
-  comp1_staylift,
-  comp1_doorstuck,
-  comp1_pursuit,
-  comp1_vile,
-  comp1_pain,
-  comp1_skull,
-  comp1_god,
-};
-
-setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
-{
-  {"Any monster can telefrag on MAP30", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp1_telefrag * COMP_SPC, {"comp_telefrag"}},
-
-  {"Some objects never hang over tall ledges", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp1_dropoff * COMP_SPC, {"comp_dropoff"}},
-
-  {"Objects don't fall under their own weight", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp1_falloff * COMP_SPC, {"comp_falloff"}},
-
-  {"Monsters randomly walk off of moving lifts", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp1_staylift * COMP_SPC, {"comp_staylift"}},
-
-  {"Monsters get stuck on doortracks", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp1_doorstuck * COMP_SPC, {"comp_doorstuck"}},
-
-  {"Monsters don't give up pursuit of targets", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp1_pursuit * COMP_SPC, {"comp_pursuit"}},
-
-  {"Arch-Vile resurrects invincible ghosts", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp1_vile * COMP_SPC, {"comp_vile"}},
-
-  {"Pain Elemental limited to 20 lost souls", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp1_pain * COMP_SPC, {"comp_pain"}},
-
-  {"Lost souls get stuck behind walls", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp1_skull * COMP_SPC, {"comp_skull"}},
-
-  {"God mode isn't absolute", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp1_god * COMP_SPC, {"comp_god"}},
-
-  // Button for resetting to defaults
-  {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
-
-  {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings2}},
-
-  // Final entry
-  {0,S_SKIP|S_END,m_null}
-};
-
-enum
-{
-  comp2_infcheat,
-  comp2_zombie,
-  comp2_stairs,
-  comp2_floors,
-  comp2_model,
-  comp2_zerotags,
-  comp2_cosmetic,
-  comp2_blazing,
-  comp2_doorlight,
-  comp2_skymap,
-  comp2_menu,
-};
-
-setup_menu_t comp_settings2[] =  // Compatibility Settings screen #2
-{
-  {"Powerup cheats are not infinite duration", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp2_infcheat * COMP_SPC, {"comp_infcheat"}},
-
-  {"Zombie players can exit levels", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp2_zombie * COMP_SPC, {"comp_zombie"}},
-
-  {"Use exactly Doom's stairbuilding method", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp2_stairs * COMP_SPC, {"comp_stairs"}},
-
-  {"Use exactly Doom's floor motion behavior", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp2_floors * COMP_SPC, {"comp_floors"}},
-
-  {"Use exactly Doom's linedef trigger model", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp2_model * COMP_SPC, {"comp_model"}},
-
-  {"Linedef effects work with sector tag = 0", S_YESNO|S_MBF, m_null, C_X,
-   M_Y + comp2_zerotags * COMP_SPC, {"comp_zerotags"}},
-
-  {"Cosmetic", S_SKIP|S_TITLE, m_null, C_X,
-   M_Y + comp2_cosmetic * COMP_SPC},
-
-  {"Blazing doors make double closing sounds", S_YESNO|S_COSMETIC, m_null, C_X,
-   M_Y + comp2_blazing * COMP_SPC, {"comp_blazing"}},
-
-  {"Tagged doors don't trigger special lighting", S_YESNO|S_COSMETIC, m_null, C_X,
-   M_Y + comp2_doorlight * COMP_SPC, {"comp_doorlight"}},
-
-  {"Sky is unaffected by invulnerability", S_YESNO|S_COSMETIC, m_null, C_X,
-   M_Y + comp2_skymap * COMP_SPC, {"comp_skymap"}},
-
-  {"Use Doom's main menu ordering", S_YESNO, m_null, C_X,
-   M_Y + comp2_menu * COMP_SPC, {"traditional_menu"}, 0, M_ResetMenu},
-
-  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings1}},
-  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings3}},
-
-  // Final entry
-  {0,S_SKIP|S_END,m_null}
-};
-
-enum
-{
-  comp3_emu0,
-  comp3_emu1,
-  comp3_emu2,
-  comp3_emu3,
-  comp3_emu4,
-  comp3_emu5,
-};
 
 static void M_UpdateCriticalItems(void)
 {
   DISABLE_ITEM(demo_compatibility && overflow[emu_intercepts].enabled,
                gen_settings4[gen4_blockmapfix]);
 }
-
-setup_menu_t comp_settings3[] =  // Compatibility Settings screen #3
-{
-  {"Overflow Emulation", S_SKIP|S_TITLE, m_null, C_X,
-   M_Y + comp3_emu0 * COMP_SPC},
-
-  {"Emulate SPECHITS overflow", S_YESNO|S_VANILLA, m_null, C_X,
-   M_Y + comp3_emu1 * COMP_SPC, {"emu_spechits"}},
-
-  {"Emulate REJECT overflow", S_YESNO|S_LEVWARN|S_VANILLA, m_null, C_X,
-   M_Y + comp3_emu2 * COMP_SPC, {"emu_reject"}},
-
-  {"Emulate INTERCEPTS overflow", S_YESNO|S_VANILLA, m_null, C_X,
-   M_Y + comp3_emu3 * COMP_SPC, {"emu_intercepts"}, 0, M_UpdateCriticalItems},
-
-  {"Enable missed backside emulation", S_YESNO|S_LEVWARN|S_VANILLA, m_null, C_X,
-   M_Y + comp3_emu4 * COMP_SPC, {"emu_missedbackside"}},
-
-  {"Enable donut overrun emulation", S_YESNO|S_LEVWARN|S_VANILLA, m_null, C_X,
-   M_Y + comp3_emu5 * COMP_SPC, {"emu_donut"}},
-
-  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings2}},
-  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings4}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-};
-
-enum { // [Nugget]
-  comp4_title1,
-  comp4_bruistarget,
-  comp4_nomeleesnap,
-  comp4_longautoaim,
-  comp4_lscollision,
-  comp4_lsamnesia,
-  comp4_fuzzyblood,
-  comp4_nonbleeders,
-  comp4_iosdeath,
-  comp4_choppers,
-};
-
-setup_menu_t comp_settings4[] =  // [Nugget]
-{
-  {"Nugget - Gameplay", S_SKIP|S_TITLE, m_null, C_X, M_Y + comp4_title1 * COMP_SPC},
-
-    {"Bruiser attack doesn't face target",    S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_bruistarget * COMP_SPC, {"comp_bruistarget"}},
-    {"Disable Melee Snapping",                S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_nomeleesnap * COMP_SPC, {"comp_nomeleesnap"}},
-    {"Double Autoaim range",                  S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_longautoaim * COMP_SPC, {"comp_longautoaim"}},
-    {"Fix Lost Soul colliding with items",    S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_lscollision * COMP_SPC, {"comp_lscollision"}},
-    {"Lost Soul forgets target upon impact",  S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_lsamnesia   * COMP_SPC, {"comp_lsamnesia"}},
-    {"Fuzzy things bleed fuzzy blood",        S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_fuzzyblood  * COMP_SPC, {"comp_fuzzyblood"}},
-    {"Non-bleeders don't bleed when crushed", S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_nonbleeders * COMP_SPC, {"comp_nonbleeders"}},
-    {"Fix lopsided Icon of Sin explosions",   S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_iosdeath    * COMP_SPC, {"comp_iosdeath"}},
-    {"Permanent IDCHOPPERS invulnerability",  S_YESNO|S_STRICT|S_CRITICAL, m_null, C_X, M_Y + comp4_choppers    * COMP_SPC, {"comp_choppers"}},
-
-  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings3}},
-  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {comp_settings5}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-};
-
-enum { // [Nugget]
-  comp5_title1,
-  comp5_blazing2,
-  comp5_manualdoor,
-  comp5_switchsource,
-  comp5_cgundblsnd,
-  comp5_cgunnersfx,
-  comp5_flamst,
-  comp5_deadoof,
-  comp5_unusedpals,
-  comp5_keypal,
-};
-
-setup_menu_t comp_settings5[] =  // [Nugget]
-{
-  {"Nugget - Cosmetic", S_SKIP|S_TITLE, m_null, C_X, M_Y + comp5_title1 * COMP_SPC},
-
-    {"Blazing doors reopen with wrong sound",        S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_blazing2     * COMP_SPC, {"comp_blazing2"}},
-    {"Manually reactivated moving doors are silent", S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_manualdoor   * COMP_SPC, {"comp_manualdoor"}},
-    {"Corrected switch sound source",                S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_switchsource * COMP_SPC, {"comp_switchsource"}},
-    {"Chaingun makes two sounds with one bullet",    S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_cgundblsnd   * COMP_SPC, {"comp_cgundblsnd"}},
-    {"Chaingunner uses pistol/chaingun sound",       S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_cgunnersfx   * COMP_SPC, {"comp_cgunnersfx"}},
-    {"Arch-Vile fire plays flame start sound",       S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_flamst       * COMP_SPC, {"comp_flamst"}},
-    {"Dead players can still play oof sound",        S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_deadoof      * COMP_SPC, {"comp_deadoof"}},
-    {"Use unused pain/bonus palettes",               S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_unusedpals   * COMP_SPC, {"comp_unusedpals"}},
-    {"Key pickup resets palette",                    S_YESNO|S_STRICT|S_COSMETIC, m_null, C_X, M_Y + comp5_keypal       * COMP_SPC, {"comp_keypal"}},
-
-  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {comp_settings4}},
-
-  // Final entry
-
-  {0,S_SKIP|S_END,m_null}
-};
-
-
-// Setting up for the Compatibility screen. Turn on flags, set pointers,
-// locate the first item on the screen where the cursor is allowed to
-// land.
-
-void M_Compat(int choice)
-{
-  M_SetupNextMenu(&CompatDef);
-
-  setup_active = true;
-  setup_screen = ss_comp;
-  set_general_active = true;
-  setup_select = false;
-  default_verify = false;
-  setup_gather = false;
-  mult_screens_index = M_GetMultScreenIndex(comp_settings);
-  current_setup_menu = comp_settings[mult_screens_index];
-  set_menu_itemon = M_GetSetupMenuItemOn();
-  while (current_setup_menu[set_menu_itemon++].m_flags & S_SKIP);
-  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
-}
-
-// The drawing part of the Compatibility Setup initialization. Draw the
-// background, title, instruction line, and items.
-
-void M_DrawCompat(void)
-{
-  inhelpscreens = true;
-
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
-
-  M_DrawTitle(52,2,"M_COMPAT","DOOM COMPATIBILITY");
-  M_DrawInstructions();
-  M_DrawScreenItems(current_setup_menu);
-
-  // If the Reset Button has been selected, an "Are you sure?" message
-  // is overlayed across everything else.
-
-  if (default_verify)
-    M_DrawDefVerify();
-}
-
 
 /////////////////////////////
 //
@@ -5437,90 +4884,13 @@ void M_Messages(int choice)
 void M_DrawMessages(void)
 {
   inhelpscreens = true;
-
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
-
-  M_DrawTitle(103,2,"M_MESS","MESSAGES");
+  M_DrawBackground("FLOOR4_6"); // Draw background
+  M_DrawTitle(103, 2, "M_MESS", "MESSAGES", arrlen(mess_settings));
   M_DrawInstructions();
   M_DrawScreenItems(current_setup_menu);
   if (default_verify)
     M_DrawDefVerify();
 }
-
-
-/////////////////////////////
-//
-// The Chat Strings table.
-
-#define CS_X 20
-
-setup_menu_t chat_settings1[];
-
-setup_menu_t* chat_settings[] =
-{
-  chat_settings1,
-  NULL
-};
-
-setup_menu_t chat_settings1[] =  // Chat Strings screen       
-{
-  {"1",S_STRING|S_COSMETIC,m_null,CS_X,M_Y, {"chatmacro1"}},
-  {"2",S_STRING|S_COSMETIC,m_null,CS_X,M_Y+ 1*M_SPC, {"chatmacro2"}},
-  {"3",S_STRING|S_COSMETIC,m_null,CS_X,M_Y+ 2*M_SPC, {"chatmacro3"}},
-  {"4",S_STRING|S_COSMETIC,m_null,CS_X,M_Y+ 3*M_SPC, {"chatmacro4"}},
-  {"5",S_STRING|S_COSMETIC,m_null,CS_X,M_Y+ 4*M_SPC, {"chatmacro5"}},
-  {"6",S_STRING|S_COSMETIC,m_null,CS_X,M_Y+ 5*M_SPC, {"chatmacro6"}},
-  {"7",S_STRING|S_COSMETIC,m_null,CS_X,M_Y+ 6*M_SPC, {"chatmacro7"}},
-  {"8",S_STRING|S_COSMETIC,m_null,CS_X,M_Y+ 7*M_SPC, {"chatmacro8"}},
-  {"9",S_STRING|S_COSMETIC,m_null,CS_X,M_Y+ 8*M_SPC, {"chatmacro9"}},
-  {"0",S_STRING|S_COSMETIC,m_null,CS_X,M_Y+ 9*M_SPC, {"chatmacro0"}},
-
-  // Button for resetting to defaults
-  {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
-
-  // Final entry
-  {0,S_SKIP|S_END,m_null}
-
-};
-
-// Setting up for the Chat Strings screen. Turn on flags, set pointers,
-// locate the first item on the screen where the cursor is allowed to
-// land.
-void M_ChatStrings(int choice)
-{
-  M_SetupNextMenu(&ChatStrDef);
-  setup_active = true;
-  setup_screen = ss_chat;
-  set_chat_active = true;
-  setup_select = false;
-  default_verify = false;
-  setup_gather = false;
-  mult_screens_index = M_GetMultScreenIndex(chat_settings);
-  current_setup_menu = chat_settings[mult_screens_index];
-  set_menu_itemon = M_GetSetupMenuItemOn();
-  while (current_setup_menu[set_menu_itemon++].m_flags & S_SKIP);
-  current_setup_menu[--set_menu_itemon].m_flags |= S_HILITE;
-}
-
-// The drawing part of the Chat Strings Setup initialization. Draw the
-// background, title, instruction line, and items.
-void M_DrawChatStrings(void)
-{
-  inhelpscreens = true;
-
-  M_DrawBackground("FLOOR4_6", screens[0]); // Draw background
-
-  M_DrawTitle(83,2,"M_CHAT","CHAT STRINGS");
-  M_DrawInstructions();
-  M_DrawScreenItems(current_setup_menu);
-
-  // If the Reset Button has been selected, an "Are you sure?" message
-  // is overlayed across everything else.
-
-  if (default_verify)
-    M_DrawDefVerify();
-}
-
 
 /////////////////////////////
 //
@@ -5539,7 +4909,6 @@ void M_SelectDone(setup_menu_t* ptr)
   ptr->m_flags |= S_HILITE;
   S_StartSoundOptional(NULL, sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
   setup_select = false;
-  colorbox_active = false;
   if (print_warning_about_changes)     // killough 8/15/98
     print_warning_about_changes--;
 }
@@ -5555,9 +4924,7 @@ static setup_menu_t **setup_screens[] =
   auto_settings,
   enem_settings,
   mess_settings,
-  chat_settings,
   gen_settings,      // killough 10/98
-  comp_settings,
 };
 
 // phares 4/19/98:
@@ -5761,7 +5128,7 @@ void M_DrawExtHelp(void)
   inhelpscreens = true;              // killough 5/1/98
   namebfr[4] = extended_help_index/10 + 0x30;
   namebfr[5] = extended_help_index%10 + 0x30;
-  V_DrawPatchFullScreen(0,W_CacheLumpName(namebfr,PU_CACHE));
+  V_DrawPatchFullScreen(W_CacheLumpName(namebfr, PU_CACHE));
 }
 
 //
@@ -5903,8 +5270,8 @@ void M_DrawStringCR(int cx, int cy, char *color, const char *ch)
 
       // V_DrawpatchTranslated() will draw the string in the
       // desired color, colrngs[color]
-  
-      V_DrawPatchTranslated(cx,cy,0,hu_font[c],color);
+   
+      V_DrawPatchTranslated(cx, cy, hu_font[c],color);
 
       // The screen is cramped, so trim one unit from each
       // character so they butt up against each other.
@@ -5973,12 +5340,12 @@ void M_DrawHelp (void)
   inhelpscreens = true;                        // killough 10/98
   if (helplump < 0 || W_IsIWADLump(helplump))
   {
-  M_DrawBackground("FLOOR4_6", screens[0]);
-  M_DrawScreenItems(helpstrings);
+    M_DrawBackground("FLOOR4_6");
+    M_DrawScreenItems(helpstrings);
   }
   else
   {
-    V_DrawPatchFullScreen(0, W_CacheLumpNum(helplump, PU_CACHE));
+    V_DrawPatchFullScreen(W_CacheLumpNum(helplump, PU_CACHE));
   }
 }
 
@@ -6062,9 +5429,8 @@ void M_DrawCredits(void)     // killough 10/98: credit screen
 
   sprintf(mbftext_s, PROJECT_STRING);
   inhelpscreens = true;
-
-  M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", screens[0]);
-  M_DrawTitle(42,9,"MBFTEXT",mbftext_s);
+  M_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4");
+  M_DrawTitle(42, 9, "MBFTEXT", mbftext_s, 0);
   M_DrawScreenItems(cred_settings);
 }
 
@@ -6471,6 +5837,37 @@ boolean M_Responder (event_t* ev)
 	      hud_active = (hud_active + 1) % 3; // cycle hud_active
 	      HU_disable_all_widgets();
 	    }
+	  return true;
+	}
+
+      if (M_InputActivated(input_hud_timestats))
+	{
+	  if (automapactive)
+	  {
+	    if ((hud_level_stats | hud_level_time) & HUD_WIDGET_AUTOMAP)
+	    {
+	      hud_level_stats &= ~HUD_WIDGET_AUTOMAP;
+	      hud_level_time &= ~HUD_WIDGET_AUTOMAP;
+	    }
+	    else
+	    {
+	      hud_level_stats |= HUD_WIDGET_AUTOMAP;
+	      hud_level_time |= HUD_WIDGET_AUTOMAP;
+	    }
+	  }
+	  else
+	  {
+	    if ((hud_level_stats | hud_level_time) & HUD_WIDGET_HUD)
+	    {
+	      hud_level_stats &= ~HUD_WIDGET_HUD;
+	      hud_level_time &= ~HUD_WIDGET_HUD;
+	    }
+	    else
+	    {
+	      hud_level_stats |= HUD_WIDGET_HUD;
+	      hud_level_time |= HUD_WIDGET_HUD;
+	    }
+	  }
 	  return true;
 	}
 
@@ -7013,56 +6410,10 @@ boolean M_Responder (event_t* ev)
 	    return true;
 	  }
 
-      // Automap
-
-      if (set_auto_active) // on the automap setup screen
-	if (setup_select) // incoming key
-	  {
-	    if (action == MENU_DOWN)
-	      {
-		if (++color_palette_y == 16)
-		  color_palette_y = 0;
-		S_StartSoundOptional(NULL, sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
-		return true;
-	      }
-
-	    if (action == MENU_UP)
-	      {
-		if (--color_palette_y < 0)
-		  color_palette_y = 15;
-		S_StartSoundOptional(NULL, sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
-		return true;
-	      }
-
-	    if (action == MENU_LEFT)
-	      {
-		if (--color_palette_x < 0)
-		  color_palette_x = 15;
-		S_StartSoundOptional(NULL, sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
-		return true;
-	      }
-
-	    if (action == MENU_RIGHT)
-	      {
-		if (++color_palette_x == 16)
-		  color_palette_x = 0;
-		S_StartSoundOptional(NULL, sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
-		return true;
-	      }
-
-	    if (action == MENU_ENTER)
-	      {
-		ptr1->var.def->location->i = color_palette_x + 16*color_palette_y;
-		M_SelectDone(ptr1);                         // phares 4/17/98
-		colorbox_active = false;
-		return true;
-	      }
-	  }
-
       // killough 10/98: consolidate handling into one place:
       if (setup_select &&
-	  set_enemy_active | set_general_active | set_chat_active |
-	  set_mess_active | set_status_active | set_compat_active)
+	  set_enemy_active | set_general_active |
+	  set_mess_active | set_status_active)
 	{
 	  if (ptr1->m_flags & S_STRING) // creating/editing a string?
 	    {
@@ -7222,17 +6573,6 @@ boolean M_Responder (event_t* ev)
 	      print_warning_about_changes = false;
 	      gather_count = 0;
 	    }
-	  else if (flags & S_COLOR)
-	    {
-	      int color = ptr1->var.def->location->i;
-
-	      if (color < 0 || color > 255) // range check the value
-		color = 0;        // 'no show' if invalid
-
-	      color_palette_x = ptr1->var.def->location->i & 15;
-	      color_palette_y = ptr1->var.def->location->i >> 4;
-	      colorbox_active = true;
-	    }
 	  else if (flags & S_STRING)
 	    {
 	      // copy chat string into working buffer; trim if needed.
@@ -7289,11 +6629,8 @@ boolean M_Responder (event_t* ev)
 	  set_auto_active = false;
 	  set_enemy_active = false;
 	  set_mess_active = false;
-	  set_chat_active = false;
-	  colorbox_active = false;
 	  default_verify = false;       // phares 4/19/98
 	  set_general_active = false;    // killough 10/98
-          set_compat_active = false;    // killough 10/98
 	  print_warning_about_changes = false; // [FG] reset
 	  HU_Start();    // catch any message changes // phares 4/19/98
 	  S_StartSoundOptional(NULL, sfx_mnubak, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
@@ -7568,7 +6905,7 @@ void M_Drawer (void)
    // [Nugget]
    else if (!setup_active && menuactive && menu_background_all
             && menu_background == background_on)
-      M_DrawBackground("FLOOR4_6", screens[0]);
+      M_DrawBackground("FLOOR4_6");
 
    inhelpscreens = true; // [Nugget] Force Status Bar redraw in all menus
 
@@ -7645,17 +6982,16 @@ void M_Drawer (void)
       for (i=0;i<max;i++)
       {
          if (currentMenu->menuitems[i].name[0])
-            V_DrawPatchTranslated(x,y,0,
-            W_CacheLumpName(currentMenu->menuitems[i].name,PU_CACHE),
-            currentMenu->menuitems[i].status == 0 ? cr_dark : NULL);
+            V_DrawPatchTranslated(x, y, W_CacheLumpName(currentMenu->menuitems[i].name,PU_CACHE),
+                                  currentMenu->menuitems[i].status == 0 ? cr_dark : NULL);
          y += LINEHEIGHT;
       }
 
       // DRAW SKULL
 
       V_DrawPatchDirect(x + SKULLXOFF,
-         currentMenu->y - 5 + itemOn*LINEHEIGHT,0,
-         W_CacheLumpName(skullName[whichSkull],PU_CACHE));
+         currentMenu->y - 5 + itemOn*LINEHEIGHT,
+         W_CacheLumpName(skullName[whichSkull], PU_CACHE));
 
       if (delete_verify)
         M_DrawDelVerify();
@@ -7737,14 +7073,14 @@ void M_DrawThermo(int x,int y,int thermWidth,int thermDot )
   char num[4];
 
   xx = x;
-  V_DrawPatchDirect (xx,y,0,W_CacheLumpName("M_THERML",PU_CACHE));
+  V_DrawPatchDirect (xx,y,W_CacheLumpName("M_THERML",PU_CACHE));
   xx += 8;
   for (i=0;i<thermWidth;i++)
     {
-      V_DrawPatchDirect (xx,y,0,W_CacheLumpName("M_THERMM",PU_CACHE));
+      V_DrawPatchDirect (xx,y,W_CacheLumpName("M_THERMM",PU_CACHE));
       xx += 8;
     }
-  V_DrawPatchDirect (xx,y,0,W_CacheLumpName("M_THERMR",PU_CACHE));
+  V_DrawPatchDirect (xx,y,W_CacheLumpName("M_THERMR",PU_CACHE));
 
   // [FG] write numerical values next to thermometer
   M_snprintf(num, 4, "%3d", thermDot);
@@ -7755,7 +7091,7 @@ void M_DrawThermo(int x,int y,int thermWidth,int thermDot )
       thermDot = thermWidth - 1;
 
   V_DrawPatchDirect ((x+8) + thermDot*8,y,
-		     0,W_CacheLumpName("M_THERMO",PU_CACHE));
+		     W_CacheLumpName("M_THERMO",PU_CACHE));
 }
 
 //
@@ -7764,7 +7100,7 @@ void M_DrawThermo(int x,int y,int thermWidth,int thermDot )
 
 void M_DrawEmptyCell (menu_t* menu,int item)
 {
-  V_DrawPatchDirect (menu->x - 10,menu->y+item*LINEHEIGHT - 1, 0,
+  V_DrawPatchDirect (menu->x - 10,menu->y+item*LINEHEIGHT - 1,
 		     W_CacheLumpName("M_CELL1",PU_CACHE));
 }
 
@@ -7774,7 +7110,7 @@ void M_DrawEmptyCell (menu_t* menu,int item)
 
 void M_DrawSelCell (menu_t* menu,int item)
 {
-  V_DrawPatchDirect (menu->x - 10,menu->y+item*LINEHEIGHT - 1, 0,
+  V_DrawPatchDirect (menu->x - 10,menu->y+item*LINEHEIGHT - 1,
 		     W_CacheLumpName("M_CELL2",PU_CACHE));
 }
 
@@ -7862,24 +7198,32 @@ void M_WriteText (int x,int y,const char *string)
       w = SHORT (hu_font[c]->width);
       if (cx+w > SCREENWIDTH)
 	break;
-      V_DrawPatchDirect(cx, cy, 0, hu_font[c]);
+      V_DrawPatchDirect(cx, cy, hu_font[c]);
       cx+=w;
     }
 }
 
 // [FG] alternative text for missing menu graphics lumps
 
-void M_DrawTitle(int x, int y, const char *patch, const char *alttext)
+void M_DrawTitle(int x, int y, const char *patch, const char *alttext, int pages)
 {
   if (W_CheckNumForName(patch) >= 0)
-    V_DrawPatchDirect(x,y,0,W_CacheLumpName(patch,PU_CACHE));
+    V_DrawPatchDirect(x,y,W_CacheLumpName(patch,PU_CACHE));
   else
   {
     // patch doesn't exist, draw some text in place of it
-    strcpy(menu_buffer,alttext);
-    M_DrawMenuString(160-(M_StringWidth(alttext)/2),
-                y+8-(M_StringHeight(alttext)/2), // assumes patch height 16
-                CR_TITLE);
+    M_snprintf(menu_buffer, sizeof(menu_buffer), "%s", alttext);
+    M_DrawMenuString(SCREENWIDTH/2 - M_StringWidth(alttext)/2,
+                     y + 8 - M_StringHeight(alttext)/2, // assumes patch height 16
+                     CR_TITLE);
+  }
+
+  if (pages > 2)
+  {
+    M_snprintf(menu_buffer, sizeof(menu_buffer), "page %d/%d",
+               mult_screens_index + 1, pages - 1);
+    M_DrawMenuString(SCREENWIDTH/2 - M_StringWidth(menu_buffer)/2,
+                     M_Y_PREVNEXT, CR_TITLE);
   }
 }
 
@@ -7986,7 +7330,7 @@ void M_Init(void)
   if (W_CheckNumForName("M_GDHIGH") != -1)
   {
     patch_t *patch = W_CacheLumpName("M_GDHIGH", PU_CACHE);
-    if (OptionsDef.x + 175 + SHORT(patch->width) >= ORIGWIDTH)
+    if (OptionsDef.x + 175 + SHORT(patch->width) >= SCREENWIDTH)
     {
       if (W_CheckNumForName("M_DISP") != -1)
         strcpy(OptionsMenu[scrnsize].name, "M_DISP");
@@ -8102,8 +7446,7 @@ void M_ResetSetupMenu(void)
 
 void M_ResetSetupMenuVideo(void)
 {
-  DISABLE_ITEM(!hires, enem_settings1[enem1_fuzz]);
-  M_EnableDisableFPSLimit();
+  M_ToggleUncapped();
 }
 
 //

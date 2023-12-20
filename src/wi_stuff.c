@@ -263,12 +263,6 @@ static anim_t *anims[NUMEPISODES] =
 // GENERAL DATA
 //
 
-//
-// Locally used stuff.
-//
-#define FB 0
-
-
 // States for single-player
 #define SP_KILLS    0
 #define SP_ITEMS    2
@@ -393,10 +387,21 @@ static const char *exitpic, *enterpic;
 // Args:    none
 // Returns: void
 //
-static void WI_slamBackground(void)
+void WI_slamBackground(void)
 {
-  WI_DrawBackground();
-  V_CopyRect(0, 0, 1, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0);  // killough 11/98
+  char  name[32];
+
+  if (state != StatCount && enterpic)
+    strcpy(name, enterpic);
+  else if (exitpic)
+    strcpy(name, exitpic);
+  // with UMAPINFO it is possible that wbs->epsd > 3
+  else if (gamemode == commercial || wbs->epsd >= 3)
+    strcpy(name, "INTERPIC");
+  else
+    M_snprintf(name, sizeof(name), "WIMAP%d", wbs->epsd);
+
+  V_DrawPatchFullScreen(W_CacheLumpName(name, PU_CACHE));
 }
 
 // ====================================================================
@@ -415,9 +420,9 @@ boolean WI_Responder(event_t* ev)
 static void WI_DrawString(int y, const char* str)
 {
   extern void M_DrawString(int x, int y, int color, const char* str);
-  extern int  M_StringWidth(char* str);
+  extern int M_GetPixelWidth(const char *str);
 
-  M_DrawString(160 - (M_StringWidth((char*)str) / 2), y, CR_GRAY, str);
+  M_DrawString(160 - (M_GetPixelWidth(str) / 2), y, CR_GRAY, str);
 }
 
 
@@ -449,8 +454,8 @@ static void WI_drawLF(void)
   {
     patch_t* lpic = W_CacheLumpName(wbs->lastmapinfo->levelpic, PU_CACHE);
 
-    V_DrawPatch((ORIGWIDTH - SHORT(lpic->width))/2,
-               y, FB, lpic);
+    V_DrawPatch((SCREENWIDTH - SHORT(lpic->width))/2,
+               y, lpic);
 
     y += (5 * SHORT(lpic->height)) / 4;
   }
@@ -458,16 +463,16 @@ static void WI_drawLF(void)
   // [FG] prevent crashes for levels without name graphics
   if (wbs->last >= 0 && wbs->last < num_lnames && lnames[wbs->last] != NULL )
   {
-  // draw <LevelName>
-  V_DrawPatch((ORIGWIDTH - SHORT(lnames[wbs->last]->width))/2,
-              y, FB, lnames[wbs->last]);
+  // draw <LevelName> 
+  V_DrawPatch((SCREENWIDTH - SHORT(lnames[wbs->last]->width))/2,
+              y, lnames[wbs->last]);
 
   // draw "Finished!"
   y += (5*SHORT(lnames[wbs->last]->height))/4;
   }
-
-  V_DrawPatch((ORIGWIDTH - SHORT(finished->width))/2,
-              y, FB, finished);
+ 
+  V_DrawPatch((SCREENWIDTH - SHORT(finished->width))/2,
+              y, finished);
 }
 
 
@@ -482,8 +487,8 @@ static void WI_drawEL(void)
   int y = WI_TITLEY;
 
   // draw "Entering"
-  V_DrawPatch((ORIGWIDTH - SHORT(entering->width))/2,
-              y, FB, entering);
+  V_DrawPatch((SCREENWIDTH - SHORT(entering->width))/2,
+              y, entering);
 
   // The level defines a new name but no texture for the name
   if (wbs->nextmapinfo && wbs->nextmapinfo->levelname && wbs->nextmapinfo->levelpic[0] == 0)
@@ -505,19 +510,19 @@ static void WI_drawEL(void)
 
     y += (5 * SHORT(lpic->height)) / 4;
 
-    V_DrawPatch((ORIGWIDTH - SHORT(lpic->width))/2,
-               y, FB, lpic);
+    V_DrawPatch((SCREENWIDTH - SHORT(lpic->width))/2,
+               y, lpic);
   }
-  else
   // [FG] prevent crashes for levels without name graphics
-  if (wbs->next >= 0 && wbs->next < num_lnames && lnames[wbs->next] != NULL)
+  else if (wbs->next >= 0 && wbs->next < num_lnames && lnames[wbs->next] != NULL)
   {
   // draw level
   // haleyjd: corrected to use height of entering, not map name
-  y += (5 * SHORT(entering->height)) / 4;
+  if (SHORT(lnames[wbs->next]->height) < SCREENHEIGHT)
+    y += (5 * SHORT(entering->height)) / 4;
 
-  V_DrawPatch((ORIGWIDTH - SHORT(lnames[wbs->next]->width))/2,
-              y, FB, lnames[wbs->next]);
+  V_DrawPatch((SCREENWIDTH - SHORT(lnames[wbs->next]->width))/2,
+              y, lnames[wbs->next]);
   }
 }
 
@@ -564,8 +569,7 @@ WI_drawOnLnode  // draw stuff at a location by episode/map#
 
   if (fits && i<2)
     {
-      V_DrawPatch(lnodes[wbs->epsd][n].x, lnodes[wbs->epsd][n].y,
-                  FB, c[i]);
+      V_DrawPatch(lnodes[wbs->epsd][n].x, lnodes[wbs->epsd][n].y, c[i]);
     }
   else
     {
@@ -706,7 +710,7 @@ static void WI_drawAnimatedBack(void)
       a = &anims[wbs->epsd][i];
 
       if (a->ctr >= 0)
-        V_DrawPatch(a->loc.x, a->loc.y, FB, a->p[a->ctr]);
+        V_DrawPatch(a->loc.x, a->loc.y, a->p[a->ctr]);
     }
 }
 
@@ -764,13 +768,13 @@ WI_drawNum
   while (digits--)
     {
       x -= fontwidth;
-      V_DrawPatch(x, y, FB, num[ n % 10 ]);
+      V_DrawPatch(x, y, num[ n % 10 ]);
       n /= 10;
     }
 
   // draw a minus sign if necessary
   if (neg && wiminus)
-    V_DrawPatch(x-=8, y, FB, wiminus);
+    V_DrawPatch(x-=8, y, wiminus);
 
   return x;
 }
@@ -793,7 +797,7 @@ WI_drawPercent
   if (p < 0)
     return;
 
-  V_DrawPatch(x, y, FB, percent);
+  V_DrawPatch(x, y, percent);
   WI_drawNum(x, y, p, -1);
 }
 
@@ -833,9 +837,9 @@ WI_drawTime
 
           // draw
           if (div==60 || t / div)
-            V_DrawPatch(x, y, FB, colon);
-
-        }
+            V_DrawPatch(x, y, colon);
+      
+        } 
       while (t / div && div < 3600);
 
       // [FG] print at most in hhhh:mm:ss format
@@ -847,7 +851,7 @@ WI_drawTime
   else
     {
       // "sucks"
-      V_DrawPatch(x - SHORT(sucks->width), y, FB, sucks);
+      V_DrawPatch(x - SHORT(sucks->width), y, sucks); 
     }
 }
 
@@ -1294,11 +1298,10 @@ static void WI_drawDeathmatchStats(void)
   // draw stat titles (top line)
   V_DrawPatch(DM_TOTALSX-SHORT(total->width)/2,
               DM_MATRIXY-WI_SPACINGY+10,
-              FB,
               total);
 
-  V_DrawPatch(DM_KILLERSX, DM_KILLERSY, FB, killers);
-  V_DrawPatch(DM_VICTIMSX, DM_VICTIMSY, FB, victims);
+  V_DrawPatch(DM_KILLERSX, DM_KILLERSY, killers);
+  V_DrawPatch(DM_VICTIMSX, DM_VICTIMSY, victims);
 
   // draw P?
   x = DM_MATRIXX + DM_SPACINGX;
@@ -1310,33 +1313,29 @@ static void WI_drawDeathmatchStats(void)
         {
           V_DrawPatch(x-SHORT(p[i]->width)/2,
                       DM_MATRIXY - WI_SPACINGY,
-                      FB,
                       p[i]);
 
           V_DrawPatch(DM_MATRIXX-SHORT(p[i]->width)/2,
                       y,
-                      FB,
                       p[i]);
 
           if (i == me)
             {
               V_DrawPatch(x-SHORT(p[i]->width)/2,
                           DM_MATRIXY - WI_SPACINGY,
-                          FB,
                           bstar);
 
               V_DrawPatch(DM_MATRIXX-SHORT(p[i]->width)/2,
                           y,
-                          FB,
                           star);
             }
         }
       else
         {
           // V_DrawPatch(x-SHORT(bp[i]->width)/2,
-          //   DM_MATRIXY - WI_SPACINGY, FB, bp[i]);
+          //   DM_MATRIXY - WI_SPACINGY, bp[i]);
           // V_DrawPatch(DM_MATRIXX-SHORT(bp[i]->width)/2,
-          //   y, FB, bp[i]);
+          //   y, bp[i]);
         }
       x += DM_SPACINGX;
       y += WI_SPACINGY;
@@ -1601,17 +1600,17 @@ static void WI_drawNetgameStats(void)
 
   // draw stat titles (top line)
   V_DrawPatch(NG_STATSX+NG_SPACINGX-SHORT(kills->width),
-              NG_STATSY, FB, kills);
+              NG_STATSY, kills);
 
   V_DrawPatch(NG_STATSX+2*NG_SPACINGX-SHORT(items->width),
-              NG_STATSY, FB, items);
+              NG_STATSY, items);
 
   V_DrawPatch(NG_STATSX+3*NG_SPACINGX-SHORT(secret->width),
-              NG_STATSY, FB, secret);
-
+              NG_STATSY, secret);
+  
   if (dofrags)
     V_DrawPatch(NG_STATSX+4*NG_SPACINGX-SHORT(frags->width),
-                NG_STATSY, FB, frags);
+                NG_STATSY, frags);
 
   // draw stats
   y = NG_STATSY + SHORT(kills->height);
@@ -1622,10 +1621,10 @@ static void WI_drawNetgameStats(void)
         continue;
 
       x = NG_STATSX;
-      V_DrawPatch(x-SHORT(p[i]->width), y, FB, p[i]);
+      V_DrawPatch(x-SHORT(p[i]->width), y, p[i]);
 
       if (i == me)
-        V_DrawPatch(x-SHORT(p[i]->width), y, FB, star);
+        V_DrawPatch(x-SHORT(p[i]->width), y, star);
 
       x += NG_SPACINGX;
       WI_drawPercent(x-pwidth, y+10, cnt_kills[i]); x += NG_SPACINGX;
@@ -1817,17 +1816,17 @@ static void WI_drawStats(void)
 
   WI_drawLF();
 
-  V_DrawPatch(SP_STATSX, SP_STATSY, FB, kills);
-  WI_drawPercent(ORIGWIDTH - SP_STATSX, SP_STATSY, cnt_kills[0]);
+  V_DrawPatch(SP_STATSX, SP_STATSY, kills);
+  WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY, cnt_kills[0]);
 
-  V_DrawPatch(SP_STATSX, SP_STATSY+lh, FB, items);
-  WI_drawPercent(ORIGWIDTH - SP_STATSX, SP_STATSY+lh, cnt_items[0]);
+  V_DrawPatch(SP_STATSX, SP_STATSY+lh, items);
+  WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY+lh, cnt_items[0]);
 
-  V_DrawPatch(SP_STATSX, SP_STATSY+2*lh, FB, sp_secret);
-  WI_drawPercent(ORIGWIDTH - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0]);
+  V_DrawPatch(SP_STATSX, SP_STATSY+2*lh, sp_secret);
+  WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0]);
 
-  V_DrawPatch(SP_TIMEX, SP_TIMEY, FB, witime);
-  WI_drawTime(ORIGWIDTH/2 - SP_TIMEX, SP_TIMEY, cnt_time, true);
+  V_DrawPatch(SP_TIMEX, SP_TIMEY, witime);
+  WI_drawTime(SCREENWIDTH/2 - SP_TIMEX, SP_TIMEY, cnt_time, true);
 
   // Ty 04/11/98: redid logic: should skip only if with pwad but
   // without deh patch
@@ -1837,17 +1836,17 @@ static void WI_drawStats(void)
   if (W_IsIWADLump(maplump) || deh_pars || um_pars)
     if (wbs->epsd < 3 || um_pars)
       {
-	V_DrawPatch(ORIGWIDTH/2 + SP_TIMEX, SP_TIMEY, FB, par);
-	WI_drawTime(ORIGWIDTH - SP_TIMEX, SP_TIMEY, cnt_par, true);
+	V_DrawPatch(SCREENWIDTH/2 + SP_TIMEX, SP_TIMEY, par);
+	WI_drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cnt_par, true);
       }
 
   // [FG] draw total time alongside level time and par time
   {
-    const boolean wide = (wbs->totaltimes / TICRATE > 61*59) || (SP_TIMEX + SHORT(total->width) >= ORIGWIDTH/4);
+    const boolean wide = (wbs->totaltimes / TICRATE > 61*59) || (SP_TIMEX + SHORT(total->width) >= SCREENWIDTH/4);
 
-    V_DrawPatch(SP_TIMEX, SP_TIMEY + 16, FB, total);
+    V_DrawPatch(SP_TIMEX, SP_TIMEY + 16, total);
     // [FG] choose x-position depending on width of time string
-    WI_drawTime((wide ? ORIGWIDTH : ORIGWIDTH/2) - SP_TIMEX, SP_TIMEY + 16, cnt_total_time, false);
+    WI_drawTime((wide ? SCREENWIDTH : SCREENWIDTH/2) - SP_TIMEX, SP_TIMEY + 16, cnt_total_time, false);
   }
 }
 
@@ -1930,27 +1929,6 @@ void WI_Ticker(void)
       WI_updateNoState();
       break;
     }
-}
-
-// killough 11/98:
-// Moved to separate function so that i_video.c could call it
-
-void WI_DrawBackground(void)
-{
-  char  name[32];
-
-  if (state != StatCount && enterpic)
-    strcpy(name, enterpic);
-  else if (exitpic)
-    strcpy(name, exitpic);
-  // with UMAPINFO it is possible that wbs->epsd > 3
-  else if (gamemode == commercial || wbs->epsd >= 3)
-    strcpy(name, "INTERPIC");
-  else
-    sprintf(name, "WIMAP%d", wbs->epsd);
-
-  // background
-  V_DrawPatchFullScreen(1, W_CacheLumpName(name, PU_CACHE));
 }
 
 // ====================================================================

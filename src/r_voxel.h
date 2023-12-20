@@ -1,5 +1,5 @@
 //
-// Copyright(C) 2019 Jonathan Dowland
+// Copyright(C)      2023 Andrew Apted
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -11,8 +11,22 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
-// DESCRIPTION:
-//     Generate a randomized, private, memorable name for a Player
-//
 
-char *NET_GetRandomPetName();
+#ifndef __R_VOXEL__
+#define __R_VOXEL__
+
+void VX_Init (void);
+
+void VX_AddFile (const char *filename);
+
+void VX_ClearVoxels (void);
+
+void VX_NearbySprites (void);
+
+boolean VX_ProjectVoxel (mobj_t * thing);
+
+void VX_DrawVoxel (vissprite_t * vis);
+
+extern boolean voxels_found;
+
+#endif  /* __R_VOXEL__ */

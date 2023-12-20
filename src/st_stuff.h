@@ -32,8 +32,8 @@
 // Now sensitive for scaling.
 
 #define ST_HEIGHT 32
-#define ST_WIDTH  ORIGWIDTH
-#define ST_Y      (ORIGHEIGHT - ST_HEIGHT)
+#define ST_WIDTH  SCREENWIDTH
+#define ST_Y      (SCREENHEIGHT - ST_HEIGHT)
 
 // [Nugget] Crispy minimalistic HUD
 #define CRISPY_HUD      11
@@ -137,7 +137,9 @@ void ST_Init(void);
 void ST_Warnings(void);
 
 // [crispy] forcefully initialize the status bar backing screen
-extern void ST_refreshBackground(boolean force);
+void ST_refreshBackground(boolean force);
+
+void ST_InitRes(void);
 
 extern void ST_createWidgets(void); // [Nugget]
 

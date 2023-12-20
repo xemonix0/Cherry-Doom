@@ -50,6 +50,7 @@ static const char *params[] = {
 "-strict",
 "-cdrom", // [Nugged] Restored `-cdrom` parm
 "-nogui",
+"-quiet",
 };
 
 static const char *params_with_args[] = {

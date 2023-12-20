@@ -53,7 +53,7 @@ extern boolean chasecam_on;
 // Rendering stats
 //
 
-extern int rendered_visplanes, rendered_segs, rendered_vissprites;
+extern int rendered_visplanes, rendered_segs, rendered_vissprites, rendered_voxels;
 
 //
 // Lighting LUT.
@@ -158,6 +158,8 @@ void R_ExecuteSetViewSize(void);
 
 // [crispy] smooth texture scrolling
 void R_InterpolateTextureOffsets (void);
+
+void R_InitAnyRes(void);
 
 #endif
 

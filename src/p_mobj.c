@@ -107,6 +107,8 @@ boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
   if (tempstate)
     Z_Free(tempstate);
 
+  // [Nugget] Removed `actualheight`
+
   return ret;
 }
 

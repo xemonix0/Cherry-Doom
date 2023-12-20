@@ -20,14 +20,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "m_io.h" // haleyjd
-#include "SDL_filesystem.h" // [FG] SDL_GetPrefPath()
-#include <stdlib.h> // [FG] qsort()
 #include <time.h> // [Nugget]
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include "../miniz/miniz.h"
 
@@ -45,6 +38,7 @@
 #include "m_misc.h"
 #include "m_misc2.h" // [FG] M_StringDuplicate()
 #include "m_menu.h"
+#include "m_io.h"
 #include "m_swap.h"
 #include "i_printf.h"
 #include "i_system.h"
@@ -58,6 +52,7 @@
 #include "p_setup.h"
 #include "r_draw.h"
 #include "r_main.h"
+#include "r_voxel.h"
 #include "d_main.h"
 #include "d_iwad.h" // [FG] D_FindWADByName()
 #include "d_deh.h"  // Ty 04/08/98 - Externalizations
@@ -68,6 +63,8 @@
 #include "i_endoom.h"
 #include "d_quit.h"
 #include "r_bmaps.h"
+#include "p_inter.h" // maxhealthbonus
+#include "i_input.h"
 #include "m_nughud.h" // [Nugget]
 
 #include "dsdhacked.h"
@@ -152,14 +149,11 @@ char    *basedefault = NULL;   // default file
 char    *basesavegame = NULL;  // killough 2/16/98: savegame directory
 char    *screenshotdir = NULL; // [FG] screenshot directory
 
-// [Nugget] /-----------------------------------------------------------------
+boolean organize_savefiles;
+
+// [Nugget]
 char *savegame_dir = NULL;
 char *screenshot_dir = NULL;
-int organize_saves;
-// [Nugget] -----------------------------------------------------------------/
-
-// If true, the main game loop has started.
-boolean main_loop_started = false;
 
 boolean coop_spawns = false;
 
@@ -187,6 +181,12 @@ int eventhead, eventtail;
 //
 void D_PostEvent(event_t *ev)
 {
+  if (ev->type == ev_mouse && !menuactive && gamestate == GS_LEVEL && !paused)
+  {
+    G_MouseMovementResponder(ev);
+    return;
+  }
+
   events[eventhead++] = *ev;
   eventhead &= MAXEVENTS-1;
 }
@@ -216,6 +216,7 @@ void D_ProcessEvents (void)
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate = GS_DEMOSCREEN;
 extern int     showMessages;
+boolean        enable_drs;
 
 void D_Display (void)
 {
@@ -240,6 +241,19 @@ void D_Display (void)
   if (nodrawers)                    // for comparative timing / profiling
     return;
 
+  if (uncapped)
+  {
+    // [AM] Figure out how far into the current tic we're in as a fixed_t.
+    fractionaltic = I_GetFracTime();
+
+    if (window_focused)
+    {
+      I_ReadMouse();
+    }
+  }
+
+  enable_drs = true;
+
   redrawsbar = false;
   
   if (setsizeneeded                 // change the view size if needed
@@ -252,7 +266,10 @@ void D_Display (void)
 
   // save the current screen if about to wipe
   if ((wipe = gamestate != wipegamestate) && NOTSTRICTMODE(wipe_type))
-    wipe_StartScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
+    {
+      enable_drs = false;
+      wipe_StartScreen(0, 0, video.unscaledw, SCREENHEIGHT);
+    }
 
   if (gamestate == GS_LEVEL && gametic)
     HU_Erase();
@@ -301,7 +318,7 @@ void D_Display (void)
     }
 
   // see if the border needs to be updated to the screen
-  if (gamestate == GS_LEVEL && automap_off && scaledviewwidth != SCREENWIDTH)
+  if (gamestate == GS_LEVEL && automap_off && scaledviewwidth != video.unscaledw)
     {
       if (menuactive || menuactivestate || !viewactivestate)
         borderdrawcount = 3;
@@ -343,14 +360,16 @@ void D_Display (void)
   // draw pause pic
   if (paused)
     {
+      int x = scaledviewx;
       int y = 4;
-      int x = (viewwindowx>>hires);
       patch_t *patch = W_CacheLumpName("M_PAUSE", PU_CACHE);
 
+      x += (scaledviewwidth - SHORT(patch->width)) / 2 - video.deltaw;
+
       if (!automapactive)
-        y += (viewwindowy>>hires);
-      V_DrawPatchDirect(x + (scaledviewwidth - SHORT(patch->width)) / 2 - WIDESCREENDELTA,
-                        y, 0, patch);
+        y += scaledviewy;
+
+      V_DrawPatch(x, y, patch);
     }
 
   // menus go directly to the screen
@@ -368,7 +387,7 @@ void D_Display (void)
     }
 
   // wipe update
-  wipe_EndScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
+  wipe_EndScreen(0, 0, video.unscaledw, SCREENHEIGHT);
 
   wipestart = I_GetTime () - 1;
 
@@ -382,8 +401,7 @@ void D_Display (void)
         }
       while (!tics);
       wipestart = nowtime;
-      // [Nugget] Support more wipe types
-      done = wipe_ScreenWipe(NOTSTRICTMODE(wipe_type),0,0,SCREENWIDTH,SCREENHEIGHT,tics);
+      done = wipe_ScreenWipe(NOTSTRICTMODE(wipe_type), 0, 0, video.unscaledw, SCREENHEIGHT, tics);
       M_Drawer();                   // menu is drawn even on top of wipes
       I_FinishUpdate();             // page flip or blit buffer
     }
@@ -424,20 +442,22 @@ void D_PageTicker(void)
 
 void D_PageDrawer(void)
 {
-  if (pagename) {
-    int l = W_CheckNumForName(pagename);
-    byte *t = W_CacheLumpNum(l, PU_CACHE);
-    size_t s = W_LumpLength(l);
-    unsigned c = 0;
-
-    while (s--)
-      c = c*3 + t[s];
-    V_DrawPatchFullScreen(0, (patch_t *) t);
-    if (c==2119826587u || c==2391756584u)
-      // [FG] removed the embedded DOGOVRLY title pic overlay graphic lump
-      if (W_CheckNumForName("DOGOVRLY") > 0)
-        { V_DrawPatch(0, 0, 0, W_CacheLumpName("DOGOVRLY", PU_CACHE)); }
-  }
+  if (pagename)
+    {
+      int l = W_CheckNumForName(pagename);
+      byte *t = W_CacheLumpNum(l, PU_CACHE);
+      size_t s = W_LumpLength(l);
+      unsigned c = 0;
+      while (s--)
+	c = c*3 + t[s];
+      V_DrawPatchFullScreen((patch_t *) t);
+      if (c==2119826587u || c==2391756584u)
+        // [FG] removed the embedded DOGOVRLY title pic overlay graphic lump
+        if (W_CheckNumForName("DOGOVRLY") > 0)
+        {
+	V_DrawPatch(0, 0, W_CacheLumpName("DOGOVRLY", PU_CACHE));
+        }
+    }
   else
     M_DrawCredits();
 }
@@ -610,7 +630,7 @@ static boolean D_AddZipFile(const char *file)
   char *str, *tempdir, counter[8];
   static int idx = 0;
 
-  if (!M_StringCaseEndsWith(file, ".zip"))
+  if (!M_StringCaseEndsWith(file, ".zip") && !M_StringEndsWith(file, ".pk3"))
   {
     return false;
   }
@@ -646,7 +666,7 @@ static boolean D_AddZipFile(const char *file)
 
     if (M_StringCaseEndsWith(name, ".wad") || M_StringCaseEndsWith(name, ".lmp") ||
         M_StringCaseEndsWith(name, ".ogg") || M_StringCaseEndsWith(name, ".flac") ||
-        M_StringCaseEndsWith(name, ".mp3"))
+        M_StringCaseEndsWith(name, ".mp3") || M_StringCaseEndsWith(name, ".kvx"))
     {
       char *dest = M_StringJoin(tempdir, DIR_SEPARATOR_S, name, NULL);
 
@@ -679,11 +699,18 @@ static boolean D_AddZipFile(const char *file)
 // killough 11/98: remove limit on number of files
 //
 
+static int numwadfiles;
 void D_AddFile(const char *file)
 {
-  static int numwadfiles, numwadfiles_alloc;
+  static int numwadfiles_alloc;
 
   char *path = D_TryFindWADByName(file);
+
+  if (M_StringCaseEndsWith(path, ".kvx"))
+  {
+    VX_AddFile(path);
+    return;
+  }
 
   if (D_AddZipFile(path))
     return;
@@ -925,10 +952,67 @@ static void CheckIWAD(const char *iwadname)
     }
 }
 
+static boolean FileContainsMaps(const char *filename)
+{
+    int i;
+    FILE *file = NULL;
+    wadinfo_t header;
+    filelump_t *fileinfo = NULL;
+    boolean ret = false;
+
+    while (ret == false)
+    {
+        if (filename == NULL)
+        {
+            break;
+        }
+
+        file = M_fopen(filename, "rb");
+
+        if (file == NULL)
+        {
+            break;
+        }
+
+        if (fread(&header, sizeof(header), 1, file) != 1)
+        {
+            break;
+        }
+
+        header.numlumps = LONG(header.numlumps);
+        header.infotableofs = LONG(header.infotableofs);
+        fileinfo = malloc(header.numlumps * sizeof(filelump_t));
+
+        if (fseek(file, header.infotableofs, SEEK_SET) ||
+            fread(fileinfo, sizeof(filelump_t), header.numlumps, file) != header.numlumps)
+        {
+            break;
+        }
+
+        for (i = 0; i < header.numlumps; i++)
+        {
+            if (StartsWithMapIdentifier(fileinfo[i].name))
+            {
+                ret = true;
+                break;
+            }
+        }
+
+        break;
+    }
+
+    if (fileinfo)
+        free(fileinfo);
+    if (file)
+        fclose(file);
+
+    return ret;
+}
+
 //
 // IdentifyVersion
 //
-// Set the location of the defaults file
+// Set the location of the defaults file and the savegame root
 // Locate and validate an IWAD file
 // Determine gamemode from the IWAD
 //
@@ -948,34 +1032,13 @@ static void CheckIWAD(const char *iwadname)
 
 void IdentifyVersion (void)
 {
+  int         i;    //jff 3/24/98 index of args on commandline
   char *iwad;
 
   // get config file from same directory as executable
   // killough 10/98
   if (basedefault) free(basedefault);
   basedefault = M_StringJoin(D_DoomPrefDir(), DIR_SEPARATOR_S, D_DoomExeName(), ".cfg", NULL);
-
-  // [Nugget] Save and screenshot paths are now set elsewhere
-
-  // locate the IWAD and determine game mode from it
-
-  iwad = D_FindIWADFile(&gamemode, &gamemission);
-
-  if (iwad && *iwad)
-    {
-      if (gamemode == indetermined)
-        CheckIWAD(iwad);
-
-      D_AddFile(iwad);
-    }
-  else
-    I_Error("IWAD not found");
-}
-
-// [Nugget]
-static void SetSavesAndShotsPaths(void)
-{
-  int i; //jff 3/24/98 index of args on commandline
 
   // set save path to -save parm or current dir
 
@@ -1004,42 +1067,6 @@ static void SetSavesAndShotsPaths(void)
       free(screenshotdir);
     screenshotdir = M_StringDuplicate(basesavegame);
   }
-  else { // [Nugget]
-    // Set to path determined by config file
-    if (savegame_dir && strcmp(savegame_dir, ""))
-    {
-      if (basesavegame)
-        free(basesavegame);
-      basesavegame = M_StringDuplicate(savegame_dir);
-
-      M_MakeDirectory(basesavegame);
-
-      // Fall back to `savegame_dir`
-      if (screenshotdir)
-        free(screenshotdir);
-      screenshotdir = M_StringDuplicate(savegame_dir);
-    }
-
-    // Organize saves by IWAD
-    if (organize_saves)
-    {
-      char *lower;
-
-      // If using default save path, default to a "savegames" directory
-      if (!savegame_dir || !strcmp(savegame_dir, ""))
-      {
-        basesavegame = M_StringJoin(basesavegame, "savegames", NULL);
-        M_MakeDirectory(basesavegame);
-      }
-
-      lower = M_StringDuplicate(M_BaseName(wadfiles[0]));
-      M_ForceLowercase(lower);
-      basesavegame = M_StringJoin(basesavegame, DIR_SEPARATOR_S, lower, NULL);
-      free(lower);
-
-      M_MakeDirectory(basesavegame);
-    }
-  }
 
   //!
   // @arg <directory>
@@ -1057,15 +1084,20 @@ static void SetSavesAndShotsPaths(void)
 
     M_MakeDirectory(screenshotdir);
   }
-  // [Nugget] Set to path determined by config file
-  else if (screenshot_dir && strcmp(screenshot_dir, ""))
-  {
-    if (screenshotdir)
-      free(screenshotdir);
-    screenshotdir = M_StringDuplicate(screenshot_dir);
 
-    M_MakeDirectory(screenshotdir);
-  }
+  // locate the IWAD and determine game mode from it
+
+  iwad = D_FindIWADFile(&gamemode, &gamemission);
+
+  if (iwad && *iwad)
+    {
+      if (gamemode == indetermined)
+        CheckIWAD(iwad);
+
+      D_AddFile(iwad);
+    }
+  else
+    I_Error("IWAD not found");
 }
 
 static void PrintVersion(void)
@@ -1616,7 +1648,8 @@ static void AutoLoadWADs(const char *path)
     const char *filename;
 
     glob = I_StartMultiGlob(path, GLOB_FLAG_NOCASE|GLOB_FLAG_SORTED,
-                            "*.wad", "*.lmp", "*.zip", "*.ogg", "*.flac", "*.mp3", NULL);
+                            "*.wad", "*.lmp", "*.kvx", "*.zip", "*.pk3",
+                            "*.ogg", "*.flac", "*.mp3", NULL);
     for (;;)
     {
         filename = I_NextGlob(glob);
@@ -1624,6 +1657,7 @@ static void AutoLoadWADs(const char *path)
         {
             break;
         }
+
         D_AddFile(filename);
     }
 
@@ -1851,6 +1885,23 @@ static void D_InitTables(void)
     states[i].flags |= STATEF_SKILL5FAST;
 }
 
+void D_SetMaxHealth(void)
+{
+  extern boolean deh_set_maxhealth;
+  extern int deh_maxhealth;
+
+  if (demo_compatibility)
+  {
+    maxhealth = 100;
+    maxhealthbonus = deh_set_maxhealth ? deh_maxhealth : 200;
+  }
+  else
+  {
+    maxhealth = deh_set_maxhealth ? deh_maxhealth : 100;
+    maxhealthbonus = maxhealth * 2;
+  }
+}
+
 void D_SetBloodColor(void)
 {
   extern boolean deh_set_blood_color;
@@ -1938,12 +1989,10 @@ static void D_ShowEndDoom(void)
 
 static void D_EndDoom(void)
 {
-  if (!main_loop_started || !D_CheckEndDoom())
+  if (D_CheckEndDoom())
   {
-    return;
+    D_ShowEndDoom();
   }
-
-  D_ShowEndDoom();
 }
 
 // [FG] fast-forward demo to the desired map
@@ -2008,6 +2057,7 @@ void D_NuggetUpdateCasual()
 void D_DoomMain(void)
 {
   int p;
+  int mainwadfile = 0;
 
   setbuf(stdout,NULL);
 
@@ -2259,6 +2309,7 @@ void D_DoomMain(void)
       // killough 11/98: allow multiple -file parameters
 
       boolean file = modifiedgame = true;            // homebrew levels
+      mainwadfile = numwadfiles;
       while (++p < myargc)
         if (*myargv[p] == '-')
           file = !strcasecmp(myargv[p],"-file");
@@ -2503,17 +2554,90 @@ void D_DoomMain(void)
   M_LoadDefaults();  // load before initing other systems
   M_NughudLoadDefaults(); // [Nugget]
 
-  SetSavesAndShotsPaths(); // [Nugget] May be set by config file
-
   PrintVersion();
+
+  if (!M_CheckParm("-save"))
+  {
+    // [Nugget] Set savegame path as determined by config file
+    if (savegame_dir && strcmp(savegame_dir, ""))
+    {
+      if (basesavegame)
+        free(basesavegame);
+      basesavegame = M_StringDuplicate(savegame_dir);
+
+      M_MakeDirectory(basesavegame);
+
+      if (!M_CheckParm("-shotdir")) {
+        // Fall back to `savegame_dir`
+        if (screenshotdir)
+          free(screenshotdir);
+        screenshotdir = M_StringDuplicate(savegame_dir);
+      }
+    }
+
+    if (organize_savefiles == -1)
+    {
+      // [FG] check for at least one savegame in the old location
+      glob_t *glob = I_StartMultiGlob(basesavegame,
+                                      GLOB_FLAG_NOCASE|GLOB_FLAG_SORTED,
+                                      "*.dsg", NULL);
+
+      organize_savefiles = (I_NextGlob(glob) == NULL);
+
+      I_EndGlob(glob);
+    }
+
+    if (organize_savefiles)
+    {
+      int i;
+      char *wadname = wadfiles[0], *oldsavegame = basesavegame;
+
+      for (i = mainwadfile; i < numwadfiles; i++)
+      {
+        if (FileContainsMaps(wadfiles[i]))
+        {
+          wadname = wadfiles[i];
+          break;
+        }
+      }
+
+      // [Nugget] Don't default to a "savegames" directory if path is set by config file
+      if (!savegame_dir || !strcmp(savegame_dir, ""))
+        basesavegame = M_StringJoin(oldsavegame, DIR_SEPARATOR_S,
+                                    "savegames", NULL);
+
+      free(oldsavegame);
+
+      NormalizeSlashes(basesavegame);
+      M_MakeDirectory(basesavegame);
+
+      oldsavegame = basesavegame;
+      basesavegame = M_StringJoin(oldsavegame, DIR_SEPARATOR_S,
+                                  M_BaseName(wadname), NULL);
+      free(oldsavegame);
+
+      NormalizeSlashes(basesavegame);
+      M_MakeDirectory(basesavegame);
+    }
+  }
+
+  I_Printf(VB_INFO, "Savegame directory: %s\n", basesavegame);
+
+  // [Nugget] Set screenshot path as determined by config file
+  if (!M_CheckParm("-shotdir") && screenshot_dir && strcmp(screenshot_dir, ""))
+  {
+    if (screenshotdir)
+      free(screenshotdir);
+    screenshotdir = M_StringDuplicate(screenshot_dir);
+
+    M_MakeDirectory(screenshotdir);
+  }
 
   bodyquesize = default_bodyquesize; // killough 10/98
 
   // 1/18/98 killough: Z_Init call moved to i_main.c
 
   // init subsystems
-  I_Printf(VB_INFO, "V_Init: allocate screens.");    // killough 11/98: moved down to here
-  V_Init();
 
   I_Printf(VB_INFO, "W_Init: Init WADfiles.");
   W_InitMultipleFiles(wadfiles);
@@ -2680,6 +2804,10 @@ void D_DoomMain(void)
   ST_Init();
   ST_Warnings();
 
+  // andrewj: voxel support
+  I_Printf(VB_INFO, "VX_Init: loading voxels....");
+  VX_Init();
+
   I_PutChar(VB_INFO, '\n');
 
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank
@@ -2826,7 +2954,7 @@ void D_DoomMain(void)
     I_SetFastdemoTimer(true);
   }
 
-  // [FG] init graphics (WIDESCREENDELTA) before HUD widgets
+  // [FG] init graphics (video.widedelta) before HUD widgets
   I_InitGraphics();
 
   if (startloadgame >= 0)
@@ -2858,8 +2986,6 @@ void D_DoomMain(void)
   }
 
   TryRunTics();
-
-  main_loop_started = true;
 
   D_StartGameLoop();
 
