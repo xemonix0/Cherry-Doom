@@ -211,16 +211,6 @@ extern int dclick_use;
 // [Nugget] Removed a bunch of extern declarations,
 // since we include `am_map.h` and `st_stuff.h`
 
-// [Cherry] Tag finder colors
-extern int mapcolor_tf_tsc1;  // Tagged sector color 1
-extern int mapcolor_tf_tsc2;  // Tagged sector color 2
-extern int mapcolor_tf_usc1;  // Untagged sector color 1
-extern int mapcolor_tf_usc2;  // Untagged sector color 2
-extern int mapcolor_tf_lin1;  // Line color 1
-extern int mapcolor_tf_lin2;  // Line color 2
-extern int mapcolor_tf_secx;  // Sector cross marks color
-extern int mapcolor_tf_linx;  // Line cross marks color
-
 extern char *chat_macros[];  // chat macros
 extern const char shiftxform[];
 extern default_t defaults[];
@@ -5183,7 +5173,7 @@ setup_menu_t gen_settings6[] = {
   {"", S_SKIP, m_null, M_X, M_Y + gen6_stub1*M_SPC},
   {"Nugget - View (1)", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
     {"Field of View",                 S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen6_fov         * M_SPC, {"fov"}, 0, M_SetFOV},
-    {"View Height",                   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen6_viewheight  * M_SPC, {"viewheight_value"}},
+    {"View Height",                   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen6_viewheight  * M_SPC, {"viewheight_value"}, 0, M_ChangeViewHeight},
     {"View Bobbing Percentage",       S_NUM,                        m_null, M_X, M_Y + gen6_viewbobbing * M_SPC, {"view_bobbing_percentage"}},
     {"Impact Pitch",                  S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen6_impactpitch * M_SPC, {"impact_pitch"}, 0, NULL, impact_pitch_str},
     {"Explosion Shake Effect",        S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen6_expshake    * M_SPC, {"explosion_shake"}, 0, M_UpdateScreenShakeItem},

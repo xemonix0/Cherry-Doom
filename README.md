@@ -12,20 +12,13 @@
 
 Cherry Doom is a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) intended to add even more features.
 
-**Note**: this README and the rest of documentation are updated on a per-commit basis,
-meaning that they may not correspond to the latest release of Cherry Doom.
+**Note**: this README and the rest of documentation are updated on a per-commit basis, meaning that they may not correspond to the latest release.
+
 If you're seeking information on the version you're using, please refer to the documentation included with it.
 
-### DISCLAIMER
+## Demo Compatibility Notice
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
 **RECORD DEMOS AT YOUR OWN RISK!**
-
-### SAVE FILE COMPATIBILITY NOTICE
-In the course of development, changes to the save file structure, such as adding, moving, or removing values, might be introduced in some commits. **The save version is not updated after every single change,** rather only after the first one leading to the next release.
-
-This means that if you saved your game before a breaking change to save file structure was introduced, updating to the latest commit might not trigger the incompatibility warning when trying to load the save, and as a result that might lead to unexpected behavior or a crash.
-
-Saves made in older releases of Cherry Doom or in Nugget Doom or Woof! should all remain compatible with the newest Cherry Doom release, unless it is stated otherwise in the changelog.
 
 ## Features
 
@@ -36,24 +29,26 @@ Some of Cherry Doom's features come from other sources, like other source ports,
 
 ### General
 
-- **Damage view shake effect**.
-- **View shake intensity customization**.
-- **Motion blur**. [p.f. Doom Retro]
+- **Damage shake effect** setting [i.b. Doom Retro]
+- **View shake intensity** setting
+- **Motion blur** setting [p.f. Doom Retro]
 
 ### Status Bar/HUD
 
-- **More widgets on intermission screen** (attempts, health, armor, weapons).
-- **Attempts widget**: shows the current session attempts and the total attempts across all sessions. The session attempts reset when the map is beaten or when the game is quit, and they are preserved in saved games.
-- **Movement widget**: shows the current player movement speeds.
+- **More widgets on intermission screen** setting: shows smaller versions of _attempts_, _health_, _armor_ and _weapons_ widgets on the intermission screen
+- **Further extended HUD color customization**
+- **Attempts** widget: shows the current session attempts and the total attempts across all sessions
+    - Session attempts reset when the map is beaten or when the game is quit, and they are preserved in saved games
+- **Movement** widget: shows the current player movement speeds
 
 ### Automap
 
-- **Color customization for the Tag Finder**.
+- **Color customization for the _Tag Finder_**
 
 ### Miscellaneous
 
-- **Level table**, with the following additions: [p.f. DSDA-Doom]
-	- **Attempts** level table entry.
+- **Level table** [p.f. DSDA-Doom], with the following additions:
+	- **Attempts** level table entry
 
 # Releases
 
@@ -65,7 +60,7 @@ A complete history of changes and releases can be found on the [Releases](https:
 
 ## Versioning
 
-Cherry Doom follows exactly the same versioning system as Nugget Doom, which is fairly simple:
+Cherry Doom follows the same versioning system as Nugget Doom:
 
 - **X** is increased in the event of at least one major implementation, such as a new specification like _UMAPINFO_;
 - **Y** is increased in the event of at least one minor implementation, such as a new cheat;
@@ -75,17 +70,15 @@ Incrementing any of the first values will reset the latter (i.e. a major change 
 
 # Compiling
 
-As a Nugget Doom fork, its build instructions should also apply here:
-
 The Cherry Doom source code is available at GitHub: <https://github.com/xemonix0/Cherry-Doom>.
 
 It can be cloned via
 
-```
- git clone https://github.com/xemonix0/Cherry-Doom.git
+```shell
+git clone https://github.com/xemonix0/Cherry-Doom.git
 ```
 
-## Linux, and Windows with MSYS2
+## Linux and Windows with MSYS2
 
 The following libraries need to be installed:
 
@@ -100,11 +93,11 @@ Usually your distribution should have the corresponding packages in its reposito
 
 Once installed, compilation should be as simple as:
 
-```
- cd cherry-doom
- mkdir build; cd build
- cmake ..
- make
+```shell
+cd cherry-doom
+mkdir build; cd build
+cmake ..
+make
 ```
 
 After successful compilation the resulting binary can be found in the `src/` directory.
@@ -114,10 +107,10 @@ After successful compilation the resulting binary can be found in the `src/` dir
 [Visual Studio 2019](https://visualstudio.microsoft.com/) and [Visual Studio Code](https://code.visualstudio.com/) come with built-in support for CMake by opening the source tree as a folder.
 
 Install vcpkg <https://github.com/Microsoft/vcpkg#quick-start-windows>. Integrate it into CMake or use toolchain file:
-```
- cd cherry-doom
- cmake -B build -DCMAKE_TOOLCHAIN_FILE="[path to vcpkg]/scripts/buildsystems/vcpkg.cmake"
- cmake --build build
+```shell
+cd cherry-doom
+cmake -B build -DCMAKE_TOOLCHAIN_FILE="[path to vcpkg]/scripts/buildsystems/vcpkg.cmake"
+cmake --build build
 ```
 CMake will automatically download and build all dependencies for you.
 
