@@ -12,4 +12,4 @@ None.
 
 ## Bug Fixes
 
-None.
+- **Fixed attempts incrementing when playing demos**

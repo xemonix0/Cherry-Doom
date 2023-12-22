@@ -862,6 +862,8 @@ static void G_ReloadLevel(void)
   }
 
   G_InitNew(gameskill, gameepisode, gamemap);
+  // [Cherry] track map stats
+  WS_WadStatsEnterMap();
   gameaction = ga_nothing;
 
   if (demorecording)
@@ -1590,6 +1592,8 @@ static void G_DoWorldDone(void)
   gamemap = wminfo.next+1;
   gamemapinfo = G_LookupMapinfo(gameepisode, gamemap);
   G_DoLoadLevel();
+  // [Cherry] track map stats
+  WS_WadStatsEnterMap();
   gameaction = ga_nothing;
   viewactive = true;
   AM_clearMarks();           //jff 4/12/98 clear any marks on the automap
@@ -2239,6 +2243,8 @@ static void G_DoLoadGame(void)
 
   // load a base level
   G_InitNew(gameskill, gameepisode, gamemap);
+  // [Cherry] track map stats
+  WS_WadStatsEnterMap();
 
   // killough 3/1/98: Read game options
   // killough 11/98: move down to here
@@ -3342,6 +3348,8 @@ void G_DoNewGame (void)
   basetic = gametic;             // killough 9/29/98
 
   G_InitNew(d_skill, d_episode, d_map);
+  // [Cherry] track map stats
+  WS_WadStatsEnterMap();
   gameaction = ga_nothing;
 
   if (demorecording)

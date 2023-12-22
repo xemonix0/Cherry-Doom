@@ -2856,6 +2856,8 @@ void D_DoomMain(void)
       if (autostart || netgame)
 	{
 	  G_InitNew(startskill, startepisode, startmap);
+      // [Cherry] track map stats
+      WS_WadStatsEnterMap();
 	  // [crispy] no need to write a demo header in demo continue mode
 	  if (demorecording && gameaction != ga_playdemo)
 	    G_BeginRecording();

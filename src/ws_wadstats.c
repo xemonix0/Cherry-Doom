@@ -369,11 +369,6 @@ static map_stats_t* WS_MapStats(int episode, int map) {
 }
 
 void WS_WadStatsEnterMap(void) {
-  if (demoplayback)
-  {
-    return;
-  }
-
   current_map_stats = WS_MapStats(gameepisode, gamemap);
     
   if (current_map_stats)

@@ -1471,18 +1471,18 @@ static void HU_widget_build_attempts(void)
   char hud_attemptstr[HU_MAXLINELENGTH];
   int offset = 0;
 
-  offset += sprintf(hud_attemptstr, "\x1b%cATT ", '0' + hudcolor_attempts);
-
   if (sessionattempts != -1)
   {
-    offset += sprintf(hud_attemptstr + offset, "\x1b%c%d", '0'+hudcolor_attempts_count, sessionattempts);
+    offset += sprintf(hud_attemptstr, "\x1b%cATT \x1b%c%d",
+                      '0' + hudcolor_attempts, '0' + hudcolor_attempts_count,
+                      sessionattempts);
     if (!inter)
     {
       offset += sprintf(hud_attemptstr + offset, "/%d", totalattempts);
     }
   }
 
-  if (offset > 4)
+  if (offset)
   {
     HUlib_add_string_to_cur_line(&w_attempts, hud_attemptstr);
   }

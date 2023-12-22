@@ -1675,8 +1675,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
   // set up world state
   P_SpawnSpecials();
-  // [Cherry] track map stats
-  WS_WadStatsEnterMap();
   P_MapEnd();
 
   // preload graphics
