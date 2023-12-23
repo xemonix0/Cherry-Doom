@@ -58,16 +58,10 @@ typedef PACKED_PREFIX struct
 typedef enum
 {
   source_skip = -1,
-  source_iwad=0,    // iwad file load
-  //source_pre,       // predefined lump
-  source_auto_load, // lump auto-loaded by config file
-  source_pwad,      // pwad file load
-  //source_lmp,       // lmp file load
-  //source_net,       // CPhipps
-  source_beta,      // [Cherry]
-  source_demo,      // [Cherry]
-  //source_deh,
-  source_err
+  source_iwad = 0,
+  source_auto_load,
+  source_pwad,
+  source_other, // [Cherry]
 
 } wad_source_t;
 

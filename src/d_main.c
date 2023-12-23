@@ -2241,7 +2241,7 @@ void D_DoomMain(void)
                 "You can find it in the 'mbf.zip' archive at "
                 "https://www.doomworld.com/idgames/source/mbf");
       }
-      D_AddFile("betagrph.wad", source_beta);
+      D_AddFile("betagrph.wad", source_other);
     }
 
   // add wad files from autoload IWAD directories before wads from -file parameter
@@ -2325,7 +2325,7 @@ void D_DoomMain(void)
       char *file = malloc(strlen(myargv[p+1]) + 5);
       strcpy(file,myargv[p+1]);
       AddDefaultExtension(file,".lmp");     // killough
-      D_AddFile(file, source_demo);
+      D_AddFile(file, source_other);
       I_Printf(VB_INFO, "Playing demo %s",file);
       free(file);
     }
