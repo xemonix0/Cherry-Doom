@@ -59,6 +59,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - _**Fake Contrast**_ setting
 - Toggle for **Diminished Lighting** (CFG-Only: `diminished_lighting`)
 - _**Screen Wipe speed percentage**_ setting
+- _**Alternative Intermission Background**_ setting, to replace the intermission graphic with a darkened snapshot of the player's rear view
 - _**Sound Clipping Distance**_ selection, to optionally double the distance at which SFX become audible
 - **_Organize Saves by IWAD_** setting
 - _**One-Key Quick Save/Load**_ setting, to skip the confirmation prompt

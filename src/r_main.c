@@ -128,17 +128,37 @@ static int     pitchmax;
 static fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
 static int     zoomed = 0;      // Current zoom state
 
+void R_SetFOV(const int value)
+{
+  fov = value;
+  fovchange = true;
+}
+
 int R_GetBFOV(void)
 {
   return bfov;
 }
 
-int R_GetFOVFX(int fx)
+void R_ClearFOVFX(void)
+{
+  R_SetZoom(ZOOM_RESET);
+
+  for (int i = FOVFX_ZOOM+1;  i < NUMFOVFX;  i++)
+  {
+    // Note: the `R_SetZoom()` call above sets `fovchange = true` already,
+    // but we'll do it here anyways for future-proofing
+    if (fovfx[i].current != 0) { fovchange = true; }
+
+    fovfx[i] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
+  }
+}
+
+int R_GetFOVFX(const int fx)
 {
   return fovfx[fx].current;
 }
 
-void R_SetFOVFX(int fx)
+void R_SetFOVFX(const int fx)
 {
   if (strictmode) { return; }
 
@@ -626,9 +646,12 @@ void R_ExecuteSetViewSize (void)
       { fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = zoomtarget, .current = zoomtarget, .old = zoomtarget }; }
     }
 
-    if (!strictmode) {
+    if (!strictmode)
+    {
       if (fovfx[FOVFX_ZOOM].target != zoomtarget)
-      { fovchange = true; }
+      {
+        fovchange = true;
+      }
       else for (i = 0;  i < NUMFOVFX;  i++)
         if (fovfx[i].target || fovfx[i].current)
         {

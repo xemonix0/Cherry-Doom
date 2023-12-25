@@ -139,9 +139,11 @@ enum {
   ZOOM_ON    =  1,
 };
 
+extern void R_SetFOV(const int value);
 extern int  R_GetBFOV(void);
-extern int  R_GetFOVFX(int fx);
-extern void R_SetFOVFX(int fx);
+extern void R_ClearFOVFX(void);
+extern int  R_GetFOVFX(const int fx);
+extern void R_SetFOVFX(const int fx);
 extern int  R_GetZoom(void);
 extern void R_SetZoom(const int state);
 

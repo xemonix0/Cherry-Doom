@@ -1537,8 +1537,9 @@ void I_ResetScreen(void)
 
     if (gamestate == GS_INTERMISSION)
     {
-        WI_DrawBackground();
-        V_CopyRect(0, 0, 1, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0);
+        // [Nugget] Alt. intermission background:
+        // use `WI_slamBackground()` directly
+        WI_slamBackground();
     }
 
     M_ResetSetupMenuVideo();

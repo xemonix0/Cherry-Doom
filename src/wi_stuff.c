@@ -382,6 +382,17 @@ static int    num_lnames;
 
 static const char *exitpic, *enterpic;
 
+// [Nugget] Alt. intermission background /------------------------------------
+
+struct {
+  byte *pic; // The snapshot itself
+  int  old_hires, old_widescreen;
+} intersnapshot = { NULL, -1, -1 };
+
+#define ALTINTERPIC (STRICTMODE(alt_interpic) && intersnapshot.pic)
+
+// [Nugget] -----------------------------------------------------------------/
+
 //
 // CODE
 //
@@ -393,9 +404,29 @@ static const char *exitpic, *enterpic;
 // Args:    none
 // Returns: void
 //
-static void WI_slamBackground(void)
+// [Nugget] Not static anymore
+void WI_slamBackground(void)
 {
-  WI_DrawBackground();
+  // [Nugget] Alt. intermission background
+  if (ALTINTERPIC && (intersnapshot.old_hires == hires)
+                  && (intersnapshot.old_widescreen == widescreen))
+  {
+    memcpy(screens[1], intersnapshot.pic, (SCREENWIDTH * hires) * (SCREENHEIGHT * hires));
+  }
+  else
+    WI_DrawBackground();
+
+  if ((intersnapshot.old_hires != hires) || (intersnapshot.old_widescreen != widescreen))
+  {
+    intersnapshot.old_hires = hires;
+    intersnapshot.old_widescreen = widescreen;
+
+    if (intersnapshot.pic) {
+      Z_Free(intersnapshot.pic);
+      intersnapshot.pic = NULL;
+    }
+  }
+
   V_CopyRect(0, 0, 1, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0);  // killough 11/98
 }
 
@@ -700,6 +731,8 @@ static void WI_drawAnimatedBack(void)
 
   if (wbs->epsd > 2)
     return;
+
+  if (ALTINTERPIC) { return; } // [Nugget] Alt. intermission background
 
   for (i=0 ; i<NUMANIMS[wbs->epsd] ; i++)
     {
@@ -1054,7 +1087,8 @@ static void WI_drawShowNextLoc(void)
 
   if ( gamemode != commercial)
     {
-      if (wbs->epsd > 2)
+      if (wbs->epsd > 2
+          || ALTINTERPIC) // [Nugget] Alt. intermission background
         {
           WI_drawEL();  // "Entering..." if not E1 or E2
           return;
@@ -2130,6 +2164,53 @@ void WI_loadData(void)
       sprintf(name, "WIBP%d", i+1);
       bp[i] = W_CacheLumpName(name, PU_STATIC);
     }
+
+  { // [Nugget] Alt. intermission background
+    const size_t size = (SCREENWIDTH * hires) * (SCREENHEIGHT * hires);
+    byte *old_screen = Z_Malloc(size, PU_STATIC, NULL);
+
+    const int old_fov          = fov,
+              old_screenblocks = screenblocks,
+              old_hide_weapon  = hide_weapon,
+              old_chasecam     = chasecam_mode;
+
+    player_t *const player = &players[displayplayer];
+
+    intersnapshot.old_hires = hires;
+    intersnapshot.old_widescreen = widescreen;
+
+    if (intersnapshot.pic) { Z_Free(intersnapshot.pic); }
+    intersnapshot.pic = Z_Malloc(size, PU_STATIC, NULL);
+
+    memcpy(old_screen, screens[0], size);
+
+    R_SetFOV(MAXFOV);
+    R_ClearFOVFX();
+    R_SetViewSize(11);
+    R_ExecuteSetViewSize();
+    hide_weapon = true;
+    if (chasecam_on)
+    { chasecam_mode = (!MAX(0, chasecam_mode - 1) + 1); }
+    else
+    { player->mo->oldangle = (player->mo->angle += ANG180); }
+
+    R_RenderPlayerView(player);
+
+    memcpy(intersnapshot.pic, screens[0], size);
+
+    // Darken snapshot a bit
+    for (int y = 0;  y < size;  y++)
+    { intersnapshot.pic[y] = colormaps[0][19 * 256 + intersnapshot.pic[y]]; }
+
+    R_SetFOV(old_fov);
+    R_SetViewSize(old_screenblocks);
+    R_ExecuteSetViewSize();
+    hide_weapon = old_hide_weapon;
+    chasecam_mode = old_chasecam;
+
+    memcpy(screens[0], old_screen, size);
+    Z_Free(old_screen);
+  }
 }
 
 // ====================================================================

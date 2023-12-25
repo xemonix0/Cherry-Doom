@@ -1,6 +1,6 @@
 ## New Features
 
-None.
+- **_Alternative Intermission Background_** setting
 
 ## Changes
 
