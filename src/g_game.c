@@ -829,10 +829,19 @@ static void G_DoLoadLevel(void)
         }
     }
 
-  // [Nugget] Minimap
+  // [Nugget] ----------------------------------------------------------------
+
+  // Minimap
   if (minimap_was_on) {
     AM_ChangeMode(AM_MINI);
     minimap_was_on = false;
+  }
+
+  // Alt. intermission background
+  if (STRICTMODE(alt_interpic)) {
+    fovchange = true;
+    R_SetViewSize(screenblocks);
+    R_ExecuteSetViewSize();
   }
 }
 

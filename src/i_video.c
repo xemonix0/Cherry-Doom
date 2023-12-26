@@ -1535,11 +1535,10 @@ void I_ResetScreen(void)
 
     ST_Start();            // Reset palette
 
-    if (gamestate == GS_INTERMISSION)
+    if (gamestate == GS_INTERMISSION
+        && !STRICTMODE(alt_interpic)) // [Nugget] Alt. intermission background
     {
-        // [Nugget] Alt. intermission background:
-        // use `WI_slamBackground()` directly
-        WI_slamBackground();
+        WI_DrawBackground();
     }
 
     M_ResetSetupMenuVideo();

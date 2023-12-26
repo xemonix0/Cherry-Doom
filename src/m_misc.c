@@ -869,7 +869,7 @@ default_t defaults[] = {
     "alt_interpic",
     (config_t *) &alt_interpic, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,
-    "Alternative intermission background (darkened rear-view snapshot)"
+    "Alternative intermission background (spinning camera view)"
   },
 
   {

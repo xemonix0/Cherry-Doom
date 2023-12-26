@@ -4930,16 +4930,20 @@ setup_menu_t gen_settings6[] = {
   {0,S_SKIP|S_END,m_null}
 };
 
+void M_ToggleAltInterpic(void)
+{
+  if (gamestate == GS_INTERMISSION)
+  {
+    if (!STRICTMODE(alt_interpic))
+    { R_SetViewSize(screenblocks); }
+
+    fovchange = true;
+    R_ExecuteSetViewSize();
+  }
+}
+
 static const char *fake_contrast_styles[] = {
   "Off", "Smooth", "Vanilla", NULL
-};
-
-static const char *s_clipping_dists[] = {
-  "1200", "2400", NULL
-};
-
-static const char *page_ticking_conds[] = {
-  "Always", "Not In Menus", "Never", NULL
 };
 
 setup_menu_t gen_settings7[] = {
@@ -4954,7 +4958,7 @@ setup_menu_t gen_settings7[] = {
     {"Bonus Tint Cap",                S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_boncountcap  * M_SPC, {"bonuscount_cap"}},
     {"Fake Contrast",                 S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_fakecontrast * M_SPC, {"fake_contrast"}, 0, NULL, fake_contrast_styles},
     {"Screen Wipe Speed Percentage",  S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_wipespeed    * M_SPC, {"wipe_speed_percentage"}},
-    {"Alt. Intermission Background",  S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_altinterpic  * M_SPC, {"alt_interpic"}},
+    {"Alt. Intermission Background",  S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_altinterpic  * M_SPC, {"alt_interpic"}, 0, M_ToggleAltInterpic},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings6}},
   {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings8}},
@@ -4962,6 +4966,14 @@ setup_menu_t gen_settings7[] = {
   // Final entry
 
   {0,S_SKIP|S_END,m_null}
+};
+
+static const char *s_clipping_dists[] = {
+  "1200", "2400", NULL
+};
+
+static const char *page_ticking_conds[] = {
+  "Always", "Not In Menus", "Never", NULL
 };
 
 setup_menu_t gen_settings8[] = { // [Nugget]

@@ -48,8 +48,6 @@ void WI_checkForAccelerate(void);      // killough 11/98
 
 void WI_DrawBackground(void);          // killough 11/98
 
-void WI_slamBackground(void); // [Nugget]
-
 #endif
 
 //----------------------------------------------------------------------------

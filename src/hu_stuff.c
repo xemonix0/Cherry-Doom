@@ -1622,15 +1622,13 @@ void HU_UpdateCrosshairLock(int x, int y)
 
 void HU_DrawCrosshair(void)
 {
-  // [Nugget] Change conditions
+  // [Nugget] Removed some conditions
   if (plr->playerstate != PST_LIVE
       || automapactive == AM_FULL
-  /* || menuactive
-      || paused
-      || secret_on */
-      // [Nugget]
-      || !crosshair.cr
-      || (chasecam_mode && !chasecam_crosshair)
+      // [Nugget] New conditions
+      || !crosshair.cr // Crash fix
+      || (chasecam_mode && !chasecam_crosshair) // Chasecam
+      || (gamestate == GS_INTERMISSION) // Alt. intermission background
      )
   {
     return;

@@ -850,7 +850,10 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->texturemid += (centery - viewheight/2) * pspriteiscale
                      - (STRICTMODE(st_crispyhud) ? nughud.weapheight*FRACUNIT : 0); // [Nugget] NUGHUD
 
-  if (STRICTMODE(hide_weapon || chasecam_on)) // [Nugget] Chasecam
+  if (STRICTMODE(hide_weapon)
+      // [Nugget]
+      || chasecam_on // Chasecam
+      || (STRICTMODE(alt_interpic) && (gamestate == GS_INTERMISSION))) // Alt. intermission background
     return;
 
   R_DrawVisSprite(vis, vis->x1, vis->x2);
