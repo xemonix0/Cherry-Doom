@@ -60,12 +60,17 @@ player_t *viewplayer;
 extern lighttable_t **walllights;
 fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
 
-// [Nugget] Chasecam
+// [Nugget] Chasecam /--------------------------------------------------------
+
 chasecam_t chasecam;
+
 boolean chasecam_on;
+
 // For Automap
 fixed_t  chasexofs, chaseyofs;
 angle_t  chaseaofs;
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // precalculated math tables
