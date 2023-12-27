@@ -8,4 +8,4 @@
 
 ## Bug Fixes
 
-None.
+- **FOV effects not being cleared thoroughly upon loading levels**
