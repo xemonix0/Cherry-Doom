@@ -34,6 +34,7 @@
 // [Nugget]
 #include "m_nughud.h"
 #include "st_stuff.h"
+#include "wi_stuff.h"
 
 #define MINZ        (FRACUNIT*4)
 #define BASEYCENTER 100
@@ -853,7 +854,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   if (STRICTMODE(hide_weapon)
       // [Nugget]
       || chasecam_on // Chasecam
-      || (STRICTMODE(alt_interpic) && (gamestate == GS_INTERMISSION))) // Alt. intermission background
+      || (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))) // Alt. intermission background
     return;
 
   R_DrawVisSprite(vis, vis->x1, vis->x2);

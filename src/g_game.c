@@ -838,7 +838,7 @@ static void G_DoLoadLevel(void)
   }
 
   // Alt. intermission background
-  if (STRICTMODE(alt_interpic)) {
+  if (WI_UsingAltInterpic()) {
     fovchange = true;
     R_SetViewSize(screenblocks);
     R_ExecuteSetViewSize();

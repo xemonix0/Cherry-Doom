@@ -35,6 +35,7 @@
 #include "m_random.h"
 #include "p_map.h"
 #include "p_mobj.h"
+#include "wi_stuff.h"
 
 // [Nugget]
 #ifndef M_PI
@@ -592,7 +593,7 @@ void R_ExecuteSetViewSize (void)
   setsizeneeded = false;
 
   // [Nugget] Alt. intermission background
-  if (STRICTMODE(alt_interpic) && (gamestate == GS_INTERMISSION))
+  if (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
   { setblocks = 11; }
 
   if (setblocks >= 11) // [Nugget] Crispy minimalistic HUD
@@ -716,7 +717,7 @@ void R_ExecuteSetViewSize (void)
     for (i = 0;  i < NUMFOVFX;  i++)
     { fx += fovfx[i].current; }
 
-    rfov = (STRICTMODE(alt_interpic) && (gamestate == GS_INTERMISSION))
+    rfov = (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
            ? 150 : bfov + fx;
 
     fovdiff = (float) ORIGFOV / rfov;
@@ -921,7 +922,7 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget]
   // Alt. intermission background
-  if (STRICTMODE(alt_interpic) && (gamestate == GS_INTERMISSION))
+  if (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
   {
     static int oldtic = -1;
 
@@ -973,8 +974,8 @@ void R_SetupFrame (player_t *player)
   // [Nugget] Chasecam /------------------------------------------------------
 
   chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
-                && !(alt_interpic && (gamestate == GS_INTERMISSION));
-                
+                && !(WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION));
+
   if (chasecam_on)
   {
     static fixed_t oldextradist = 0, extradist = 0;

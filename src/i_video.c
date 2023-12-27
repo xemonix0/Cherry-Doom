@@ -1536,7 +1536,7 @@ void I_ResetScreen(void)
     ST_Start();            // Reset palette
 
     if (gamestate == GS_INTERMISSION
-        && !STRICTMODE(alt_interpic)) // [Nugget] Alt. intermission background
+        && !WI_UsingAltInterpic()) // [Nugget] Alt. intermission background
     {
         WI_DrawBackground();
     }

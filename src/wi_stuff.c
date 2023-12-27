@@ -382,6 +382,17 @@ static int    num_lnames;
 
 static const char *exitpic, *enterpic;
 
+// [Nugget] Alt. intermission background /------------------------------------
+
+static boolean alt_interpic_on, old_alt_interpic_on = 0;
+
+boolean WI_UsingAltInterpic(void)
+{
+  return alt_interpic_on;
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 //
 // CODE
 //
@@ -396,7 +407,7 @@ static const char *exitpic, *enterpic;
 static void WI_slamBackground(void)
 {
   // [Nugget] Alt. intermission background
-  if (STRICTMODE(alt_interpic))
+  if (alt_interpic_on)
   {
     const size_t size = (SCREENWIDTH * hires) * (SCREENHEIGHT * hires);
 
@@ -717,7 +728,7 @@ static void WI_drawAnimatedBack(void)
   if (wbs->epsd > 2)
     return;
 
-  if (STRICTMODE(alt_interpic)) { return; } // [Nugget] Alt. intermission background
+  if (alt_interpic_on) { return; } // [Nugget] Alt. intermission background
 
   for (i=0 ; i<NUMANIMS[wbs->epsd] ; i++)
     {
@@ -1073,7 +1084,7 @@ static void WI_drawShowNextLoc(void)
   if ( gamemode != commercial)
     {
       if (wbs->epsd > 2
-          || STRICTMODE(alt_interpic)) // [Nugget] Alt. intermission background
+          || alt_interpic_on) // [Nugget] Alt. intermission background
         {
           WI_drawEL();  // "Entering..." if not E1 or E2
           return;
@@ -1949,6 +1960,43 @@ void WI_Ticker(void)
       WI_updateNoState();
       break;
     }
+
+  { // [Nugget] Alt. intermission background
+    static boolean big_last = false;
+    boolean big;
+
+    {
+      int level = (state == StatCount) ? wbs->last : wbs->next;
+      patch_t *patch = (0 <= level && level < num_lnames) ? lnames[level] : NULL;
+
+      if (patch) {
+        big =    ((ORIGWIDTH  / 2) < SHORT(patch->width))
+              && ((ORIGHEIGHT / 2) < SHORT(patch->height));
+      }
+      else { big = false; }
+    }
+
+    // Don't use the alt. interpic if the last-level title is big,
+    // regardless of the next-level title's size
+    if (state == StatCount) { big_last = big; }
+
+    if (STRICTMODE(alt_interpic) && !big_last && !big)
+    {
+      alt_interpic_on = true;
+    }
+    else { alt_interpic_on = false; }
+
+    if (old_alt_interpic_on != alt_interpic_on)
+    {
+      old_alt_interpic_on = alt_interpic_on;
+
+      if (!alt_interpic_on)
+      { R_SetViewSize(screenblocks); }
+
+      fovchange = true;
+      R_ExecuteSetViewSize();
+    }
+  }
 }
 
 // killough 11/98:
@@ -2149,14 +2197,6 @@ void WI_loadData(void)
       sprintf(name, "WIBP%d", i+1);
       bp[i] = W_CacheLumpName(name, PU_STATIC);
     }
-
-  // [Nugget] Alt. intermission background ---------------------------------
-
-  if (STRICTMODE(alt_interpic)) {
-    fovchange = true;
-    R_ClearFOVFX();
-    R_ExecuteSetViewSize();
-  }
 }
 
 // ====================================================================
@@ -2270,6 +2310,8 @@ void WI_Start(wbstartstruct_t* wbstartstruct)
       WI_initNetgameStats();
     else
       WI_initStats();
+
+  old_alt_interpic_on = false; // [Nugget] Alt. intermission background
 }
 
 
