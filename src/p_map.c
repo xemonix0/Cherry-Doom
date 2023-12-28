@@ -494,6 +494,41 @@ static boolean P_ProjectileImmune(mobj_t *target, mobj_t *source)
     );
 }
 
+// [Nugget] Over/Under /------------------------------------------------------
+
+// Potential over/under mobjs
+static mobj_t *p_below_tmthing, *p_above_tmthing, // For `tmthing`
+              *p_below_thing_s, *p_above_thing_s, // For `thing`    ("setter")
+              *p_below_thing_g, *p_above_thing_g; // `thing` itself ("getter")
+
+static void P_SetOverUnderMobjs(mobj_t *thing)
+{
+  if (casual_play && over_under)
+  {
+    mobj_t *pbtg = p_below_thing_g ? p_below_thing_g->below_thing : NULL,
+           *pbts = p_below_thing_s,
+           *patg = p_above_thing_g ? p_above_thing_g->above_thing : NULL,
+           *pats = p_above_thing_s;
+
+    thing->below_thing = p_below_tmthing;
+    thing->above_thing = p_above_tmthing;
+
+    if (p_below_thing_g
+        && ((!pbtg) || ((pbtg->z + pbtg->height) < (pbts->z + pbts->height))))
+    {
+      p_below_thing_g->below_thing = p_below_thing_s;
+    }
+
+    if (p_above_thing_g
+        && ((!patg) || (pats->z < patg->z)))
+    {
+      p_above_thing_g->above_thing = p_above_thing_s;
+    }
+  }
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 {
   fixed_t blockdist;
@@ -543,6 +578,51 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       return true;
     }
 
+  // [Nugget]: [DSDA] check if a mobj passed over/under another object
+  if (casual_play && over_under
+      && (tmthing->flags & MF_SOLID) && !(thing->flags & MF_SPECIAL)
+      && ((over_under == 2) || tmthing->player || thing->player)) 
+  {
+    if (thing->z + thing->height <= tmthing->z)
+    {
+      // Over
+
+      if ((!p_below_tmthing)
+          || ((p_below_tmthing->z + p_below_tmthing->height) < (thing->z + thing->height)))
+      {
+        p_below_tmthing = thing;
+      }
+
+      if ((!p_above_thing_s)
+          || (tmthing->z < p_above_thing_s->z))
+      {
+        p_above_thing_s = tmthing;
+        p_above_thing_g = thing;
+      }
+
+      return true;
+    }
+    else if (tmthing->z + tmthing->height <= thing->z)
+    {
+      // Under
+
+      if ((!p_above_tmthing)
+          || (thing->z < p_above_tmthing->z))
+      {
+        p_above_tmthing = thing;
+      }
+
+      if ((!p_below_thing_s)
+          || ((p_below_thing_s->z + p_below_thing_s->height) < (tmthing->z + tmthing->height)))
+      {
+        p_below_thing_s = tmthing;
+        p_below_thing_g = thing;
+      }
+
+      return true;
+    }
+  }
+
   // check for skulls slamming into things
 
   if (tmthing->flags & MF_SKULLFLY)
@@ -551,15 +631,6 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       // Determine damage amount, and the skull comes to a dead stop.
 
       int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
-
-      // [Nugget]: [crispy] check if attacking skull flies over/under thing
-      if (casual_play && over_under)
-      {
-        if (tmthing->z > thing->z + thing->height)
-        { return true; } // over
-        else if (tmthing->z + tmthing->height < thing->z)
-        { return true; } // under
-      }
 
       // [Nugget] Fix lost soul collision
       if (casual_play && comp_lscollision && !(thing->flags & MF_SHOOTABLE))
@@ -661,37 +732,6 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 	P_TouchSpecialThing(thing, tmthing); // can remove thing
       return !solid;
     }
-
-  // [Nugget] Allow things to move over/under solid things
-  if (casual_play && over_under && (thing->flags & MF_SOLID))
-  {
-    if (tmthing->z >= thing->z + thing->height)
-    {
-      // Over
-      thing->intflags   |= MIF_OVERUNDER;
-      tmthing->intflags |= MIF_OVERUNDER;
-
-      tmfloorz = MAX(thing->z + thing->height, tmfloorz);
-      thing->ceilingz = MIN(tmthing->z, thing->ceilingz);
-
-      return true;
-    }
-    else if (tmthing->z + tmthing->height <= thing->z)
-    {
-      // Under
-      thing->intflags   |= MIF_OVERUNDER;
-      tmthing->intflags |= MIF_OVERUNDER;
-
-      tmceilingz = MIN(thing->z, tmceilingz);
-      thing->floorz = MAX(tmthing->z + tmthing->height, thing->floorz);
-
-      return true;
-    }
-    else {
-        thing->intflags &= ~MIF_OVERUNDER;
-      tmthing->intflags &= ~MIF_OVERUNDER;
-    }
-  }
 
   // RjY
   // comperr_hangsolid, an attempt to handle blocking hanging bodies
@@ -841,6 +881,10 @@ boolean P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y)
   yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
   yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
+  // [Nugget] Over/Under
+  p_below_tmthing = p_below_thing_s = p_below_thing_g =
+  p_above_tmthing = p_above_thing_s = p_above_thing_g = NULL;
+
   for (bx=xl ; bx<=xh ; bx++)
     for (by=yl ; by<=yh ; by++)
       if (!P_BlockThingsIterator(bx,by,PIT_CheckThing))
@@ -885,6 +929,17 @@ boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
 
   if (!P_CheckPosition(thing, x, y))
     return false;   // solid wall or thing
+
+  // [Nugget] Over/Under
+  if (casual_play && over_under)
+  {
+    // `tmfloorz` may have changed, so make sure the thing fits
+    if (p_above_tmthing && (p_above_tmthing->z < (tmfloorz + thing->height)))
+    { return false; }
+
+    // If move was valid, set new over/under mobjs
+    P_SetOverUnderMobjs(thing);
+  }
 
   if (!(thing->flags & MF_NOCLIP))
     {
@@ -1122,6 +1177,8 @@ static boolean P_ThingHeightClip(mobj_t *thing)
 
   P_CheckPosition(thing, thing->x, thing->y);
 
+  P_SetOverUnderMobjs(tmthing); // [Nugget] Over/Under
+
   // what about stranding a monster partially off an edge?
   // killough 11/98: Answer: see below (upset balance if hanging off ledge)
 
@@ -1131,7 +1188,41 @@ static boolean P_ThingHeightClip(mobj_t *thing)
 
   if (onfloor)  // walking monsters rise and fall with the floor
     {
+      const fixed_t oldz = thing->z; // [Nugget] Over/Under
+
       thing->z = thing->floorz;
+
+      // [Nugget] Over/Under
+      if (casual_play && over_under)
+      {
+        if (thing->z < oldz && thing->below_thing)
+        { thing->z = MAX(thing->z, thing->below_thing->z + thing->below_thing->height); }
+
+        if (oldz < thing->z)
+        {
+          mobj_t *below_thing = thing,  *above_thing;
+
+          do {
+            if ((above_thing = below_thing->above_thing))
+            {
+              above_thing->z = MAX(above_thing->z, below_thing->z + below_thing->height);
+            }
+          } while ((below_thing = below_thing->above_thing));
+        }
+        else if (thing->z < oldz)
+        {
+          mobj_t *below_thing = thing,  *above_thing;
+          const fixed_t zdiff = oldz - thing->z;
+
+          do {
+            if ((above_thing = below_thing->above_thing)
+                && ((above_thing->z - zdiff) == (below_thing->z + below_thing->height)))
+            {
+              above_thing->z = below_thing->z + below_thing->height;
+            }
+          } while ((below_thing = below_thing->above_thing));
+        }
+      }
 
       // killough 11/98: Possibly upset balance of objects hanging off ledges
       if (thing->intflags & MIF_FALLING && thing->gear >= MAXGEAR)
@@ -2493,6 +2584,185 @@ void P_MapEnd(void)
 {
   tmthing = NULL;
 }
+
+// [Nugget]: [DSDA] heretic /-------------------------------------------------
+
+static overunder_t zdir = OU_NONE;
+
+static void P_FakeZMovement(mobj_t *mo)
+{
+  const fixed_t oldz = mo->z;
+
+  // Adjust height
+  mo->z += mo->momz;
+
+  // Float down towards target if too close
+  if (!((mo->flags ^ MF_FLOAT) & (MF_FLOAT | MF_SKULLFLY | MF_INFLOAT)) && mo->target)
+  {
+    const fixed_t delta = mo->target->z + (mo->height >> 1) - mo->z;
+
+    if (P_AproxDistance(mo->x - mo->target->x, mo->y - mo->target->y) < abs(delta) * 3)
+    { mo->z += (delta < 0) ? -FLOATSPEED : FLOATSPEED; }
+  }
+
+  // Clip movement
+  if (mo->z <= mo->floorz)
+  {
+    // Hit the floor
+
+    mo->z = mo->floorz;
+
+    if (mo->momz < 0) { mo->momz = 0; }
+
+    if (mo->flags & MF_SKULLFLY)
+    { mo->momz = -mo->momz; } // The skull slammed into something
+  }
+  else if (mo->flags2 & MF2_LOGRAV)
+  {
+    if (!mo->momz) { mo->momz = -(GRAVITY >> 3) * 2; }
+    else           { mo->momz -= GRAVITY >> 3; }
+  }
+  else if (!(mo->flags & MF_NOGRAVITY))
+  {
+    if (!mo->momz) { mo->momz = -GRAVITY; }
+    else           { mo->momz -= GRAVITY; }
+  }
+
+  if (mo->z + mo->height > mo->ceilingz)
+  {
+    // Hit the ceiling
+
+    mo->z = mo->ceilingz - mo->height;
+
+    if (mo->momz > 0) { mo->momz = 0; }
+
+    if (mo->flags & MF_SKULLFLY)
+    { mo->momz = -mo->momz; } // The skull slammed into something
+  }
+
+  zdir = (oldz < mo->z) ? OU_OVER : OU_UNDER;
+}
+
+static boolean PIT_CheckOverUnderMobjZ(mobj_t *thing)
+{
+  fixed_t blockdist;
+
+  if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE)))
+  { return true; } // Can't hit thing
+
+  blockdist = thing->radius + tmthing->radius;
+  
+  if (abs(thing->x - tmx) >= blockdist || abs(thing->y - tmy) >= blockdist)
+  { return true; } // Didn't hit thing
+
+  if (thing == tmthing)
+  { return true; } // Don't clip against self
+
+  if (thing->z + thing->height <= tmthing->z)
+  {
+    // Over
+
+    if ((!p_below_tmthing)
+        || ((p_below_tmthing->z + p_below_tmthing->height) < (thing->z + thing->height)))
+    {
+      p_below_tmthing = thing;
+    }
+
+    if ((!p_above_thing_s)
+        || (tmthing->z < p_above_thing_s->z))
+    {
+      p_above_thing_s = tmthing;
+      p_above_thing_g = thing;
+    }
+
+    return true;
+  }
+  else if (tmthing->z + tmthing->height <= thing->z)
+  {
+    // Under
+
+    if ((!p_above_tmthing)
+        || (thing->z < p_above_tmthing->z))
+    {
+      p_above_tmthing = thing;
+    }
+
+    if ((!p_below_thing_s)
+        || ((p_below_thing_s->z + p_below_thing_s->height) < (tmthing->z + tmthing->height)))
+    {
+      p_below_thing_s = tmthing;
+      p_below_thing_g = thing;
+    }
+
+    return true;
+  }
+
+  return !((thing->flags & MF_SOLID && !(thing->flags & MF_NOCLIP))
+           && (tmthing->flags & MF_SOLID || demo_compatibility));
+}
+
+// Checks if the new Z position is legal
+overunder_t P_CheckOverUnderMobj(mobj_t *thing, boolean fakemove)
+{
+  int xl, xh, yl, yh, bx, by;
+  subsector_t *newsubsec;
+  const mobj_t oldmo = *thing; // Save the old mobj before the fake movement
+  overunder_t ret = OU_NONE;
+
+  if (!(casual_play && over_under)) { return ret; }
+
+  tmx = thing->x;
+  tmy = thing->y;
+  tmthing = thing;
+  tmflags = thing->flags;
+
+  tmbbox[BOXTOP]    = tmy + tmthing->radius;
+  tmbbox[BOXBOTTOM] = tmy - tmthing->radius;
+  tmbbox[BOXRIGHT]  = tmx + tmthing->radius;
+  tmbbox[BOXLEFT]   = tmx - tmthing->radius;
+
+  newsubsec = R_PointInSubsector(tmx, tmy);
+  floorline = blockline = ceilingline = NULL;
+
+  // The base floor / ceiling is from the subsector that contains the
+  // point.  Any contacted lines the step closer together will adjust them
+  tmfloorz = tmdropoffz = newsubsec->sector->floorheight;
+  tmceilingz = newsubsec->sector->ceilingheight;
+
+  validcount++;
+  numspechit = 0;
+
+  if (tmflags & MF_NOCLIP) { return ret; }
+
+  // Check things first, possibly picking things up
+  // the bounding box is extended by MAXRADIUS because mobj_ts are grouped
+  // into mapblocks based on their origin point, and can overlap into adjacent
+  // blocks by up to MAXRADIUS units
+  xl = (tmbbox[BOXLEFT]   - bmaporgx - MAXRADIUS) >> MAPBLOCKSHIFT;
+  xh = (tmbbox[BOXRIGHT]  - bmaporgx + MAXRADIUS) >> MAPBLOCKSHIFT;
+  yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS) >> MAPBLOCKSHIFT;
+  yh = (tmbbox[BOXTOP]    - bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
+
+  p_below_tmthing = p_below_thing_s = p_below_thing_g =
+  p_above_tmthing = p_above_thing_s = p_above_thing_g = NULL;
+
+  zdir = OU_NONE;
+
+  if (fakemove) { P_FakeZMovement(tmthing); }
+
+  for (bx = xl; bx <= xh; bx++)
+    for (by = yl; by <= yh; by++)
+      if (!P_BlockThingsIterator(bx, by, PIT_CheckOverUnderMobjZ))
+      {
+        P_SetOverUnderMobjs(tmthing);
+        ret = zdir;
+      }
+
+  *tmthing = oldmo;
+  return ret;
+}
+
+// [Nugget] -----------------------------------------------------------------/
 
 // [FG] SPECHITS overflow emulation from Chocolate Doom / PrBoom+
 

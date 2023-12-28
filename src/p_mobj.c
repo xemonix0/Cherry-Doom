@@ -145,8 +145,7 @@ void P_XYMovement (mobj_t* mo)
 
   fixed_t oldx,oldy; // phares 9/10/98: reducing bobbing/momentum on ice
 
-  if (!(mo->momx | mo->momy) // Any momentum?
-      && !(mo->intflags & MIF_OVERUNDER)) // [Nugget]
+  if (!(mo->momx | mo->momy)) // Any momentum?
     {
       if (mo->flags & MF_SKULLFLY)
       {
@@ -292,11 +291,23 @@ void P_XYMovement (mobj_t* mo)
   }
 
   // no friction for missiles or skulls ever, no friction when airborne
-  if (mo->flags & (MF_MISSILE | MF_SKULLFLY)
-      // [Nugget] Do apply friction if airborne with noclip or flight cheat enabled
-      || (mo->z > mo->floorz
-          && !(casual_play && player && (mo->flags & MF_NOCLIP || player->cheats & CF_FLY))))
+  if (mo->flags & (MF_MISSILE | MF_SKULLFLY))
     return;
+
+  // [Nugget] Do apply friction if airborne...
+  if (
+    (mo->z > mo->floorz)
+    && !(casual_play
+         && (   // ... using noclip or flight cheat
+                (player && player->cheats & (CF_NOCLIP|CF_FLY))
+                // ... on top of a mobj
+             || (mo->below_thing && (mo->z == (mo->below_thing->z + mo->below_thing->height)))
+         )
+    )
+  )
+  {
+    return;
+  }
 
   // killough 8/11/98: add bouncers
   // killough 9/15/98: add objects falling off ledges
@@ -729,6 +740,7 @@ static inline void MusInfoThinker (mobj_t *thing)
 void P_MobjThinker (mobj_t* mobj)
 {
   extern boolean cheese; // [Nugget] cheese :)
+  boolean oucheck = false; // [Nugget] Over/Under
 
   // [crispy] support MUSINFO lump (dynamic music changing)
   if (mobj->type == MT_MUSICSOURCE)
@@ -778,26 +790,45 @@ void P_MobjThinker (mobj_t* mobj)
   // removed old code which looked at target references
   // (we use pointer reference counting now)
 
-  // [Nugget] Things with both MF_SKULLFLY and MIF_OVERUNDER
-  // have buggy behavior, so take the latter away
-  if ((mobj->flags & MF_SKULLFLY) && (mobj->intflags & MIF_OVERUNDER))
-  { mobj->intflags &= ~MIF_OVERUNDER; }
-
   // momentum movement
-  if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY
-      || mobj->intflags & MIF_OVERUNDER) // [Nugget]
+  if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY)
     {
       P_XYMovement(mobj);
       mobj->intflags &= ~MIF_SCROLLING;
       if (mobj->thinker.function.p1 == (actionf_p1)P_RemoveThinkerDelayed) // killough
         return;       // mobj was removed
+
+      oucheck = true; // [Nugget] Over/Under
     }
 
   if (mobj->z != mobj->floorz || mobj->momz)
     {
-      P_ZMovement(mobj);
+      // [Nugget]: [DSDA]
+      if (casual_play && over_under && (mobj->flags & MF_SOLID))
+      {
+        overunder_t zdir;
+
+        if (!(zdir = P_CheckOverUnderMobj(mobj, true)))
+        {
+          P_ZMovement(mobj);
+        }
+        else
+        {
+          mobj->momz = 0;
+
+          if (mobj->below_thing && zdir == OU_UNDER)
+          { mobj->z = mobj->below_thing->z + mobj->below_thing->height; }
+          else if (mobj->above_thing) // zdir == OU_OVER
+          { mobj->z = mobj->above_thing->z - mobj->height; }
+        }
+      }
+      else
+        P_ZMovement(mobj);
+
       if (mobj->thinker.function.p1 == (actionf_p1)P_RemoveThinkerDelayed) // killough
         return;       // mobj was removed
+
+      oucheck = true; // [Nugget] Over/Under
     }
   else
     if (!(mobj->momx | mobj->momy) && !sentient(mobj))
@@ -814,6 +845,37 @@ void P_MobjThinker (mobj_t* mobj)
         else
           mobj->intflags &= ~MIF_FALLING, mobj->gear = 0;  // Reset torque
       }
+
+  // [Nugget] Over/Under: if we didn't check for over/under mobjs already,
+  // it means that this mobj is immobile, and its over/under mobjs, if any,
+  // were set by other mobj(s); check if they're still valid
+  if (casual_play && over_under && !oucheck)
+  {
+    const mobj_t *oumobj;
+    fixed_t blockdist;
+
+    if ((oumobj = mobj->below_thing))
+    {
+      blockdist = mobj->radius + oumobj->radius;
+
+      if (   (abs(mobj->x - oumobj->x) >= blockdist)
+          || (abs(mobj->y - oumobj->y) >= blockdist))
+      {
+        mobj->below_thing = NULL;
+      }
+    }
+
+    if ((oumobj = mobj->above_thing))
+    {
+      blockdist = mobj->radius + oumobj->radius;
+
+      if (   (abs(mobj->x - oumobj->x) >= blockdist)
+          || (abs(mobj->y - oumobj->y) >= blockdist))
+      {
+        mobj->above_thing = NULL;
+      }
+    }
+  }
 
   if (mbf21)
   {

@@ -78,6 +78,14 @@ extern msecnode_t *sector_list;                             // phares 3/16/98
 extern fixed_t tmbbox[4];         // phares 3/20/98
 extern line_t *blockline;   // killough 8/11/98
 
+typedef enum {
+  OU_UNDER = -1,
+  OU_NONE,
+  OU_OVER,
+} overunder_t;
+
+overunder_t P_CheckOverUnderMobj(mobj_t *thing, boolean fakemove); // [Nugget]: [DSDA]
+
 extern boolean boomshot; // [Nugget] Explosive hitscan cheat
 
 #endif // __P_MAP__
