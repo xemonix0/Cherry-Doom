@@ -233,10 +233,13 @@ enum {
   MIF_SCROLLING = 8,    // Object is affected by scroller / pusher / puller
   // cosmetic
   MIF_FLIP = 16,
-  // [Nugget]
-  MIF_CROUCHING    = 32,  // Mobj (player) is crouching
-  MIF_EXTRASPAWNED = 64,  // [So Doom] Nightmare-spawned, Icon of Sin-spawned and Archvile-resurrected monsters
-  MIF_CHEESE       = 128,
+
+  // [Nugget] ----------------------------------------------------------------
+
+  MIF_CROUCHING    = 0x00010000,  // Mobj (player) is crouching
+  MIF_EXTRASPAWNED = 0x00020000,  // [So Doom] Nightmare-spawned, Icon of Sin-spawned and Archvile-resurrected monsters
+
+  MIF_CHEESE       = 0x10000000,
 };
 
 // Map Object definition.
