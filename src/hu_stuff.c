@@ -1356,7 +1356,8 @@ static void HU_widget_build_sttime(void)
   }
 
   // [Nugget] Event timer
-  if (plr->eventtics) {
+  if (plr->eventtics)
+  {
     const int   type = plr->eventtype;
     const int   mins = plr->eventtime / (60 * TICRATE);
     const float secs = (float)(plr->eventtime % (60 * TICRATE)) / TICRATE;

@@ -683,7 +683,7 @@ void R_ExecuteSetViewSize (void)
           // Special handling for zoom
           int step = zoomtarget - fovfx[FOVFX_ZOOM].target;
           const int sign = ((step > 0) ? 1 : -1);
-          step = BETWEEN(2, 16, abs(step) / 4);
+          step = BETWEEN(1, 16, round(abs(step) / 3.0));
 
           fovfx[FOVFX_ZOOM].target += step*sign;
 

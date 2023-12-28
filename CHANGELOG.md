@@ -5,6 +5,7 @@
 ## Changes
 
 - **Improved Automap line thickening when the window is downscaled**
+- **Tweaked zooming effect**
 
 ## Bug Fixes
 
