@@ -23,25 +23,19 @@ jobs:
     strategy:
       matrix:
         config:
-          - {
-              name: x64,
-              arch: x64,
-            }
-          - {
-              name: Win32,
-              arch: x86,
-            }
+          - name: x64
+            arch: x64
+
+          - name: Win32
+            arch: x86
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup vcpkg and NuGet
         shell: bash
         run: |
           set -euo pipefail
-
-          cd "${{ env.VCPKG_ROOT }}"
-          git pull
 
           NUGET=$(vcpkg fetch nuget | tail -n 1)
           GH_PACKAGES_URL="https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
