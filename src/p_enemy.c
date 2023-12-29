@@ -2217,7 +2217,13 @@ void A_XScream(mobj_t *actor)
 void A_Pain(mobj_t *actor)
 {
   if (actor->info->painsound)
-    S_StartSound(actor, actor->info->painsound);
+  {
+    // [Nugget]
+    if (STRICTMODE(actor->info->painsound == sfx_plpain))
+      S_PlayerPainSound(actor);
+    else
+      S_StartSound(actor, actor->info->painsound);
+  }
 }
 
 void A_Fall(mobj_t *actor)

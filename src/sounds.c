@@ -282,6 +282,11 @@ sfxinfo_t original_S_sfx[NUMSFX] = {
   SOUND("intnet", sg_none,   60),
   SOUND("intdms", sg_none,   60),
 
+  SOUND("ppai25", sg_none,   96),
+  SOUND("ppai50", sg_none,   96),
+  SOUND("ppai75", sg_none,   96),
+  SOUND("ppa100", sg_none,   96),
+
   // [Nugget] ---------------------------------------------------------------/
 
   [500] = SOUND("fre000", sg_none, 127),

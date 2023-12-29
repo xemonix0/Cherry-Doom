@@ -335,6 +335,11 @@ typedef enum {
   sfx_intnet,
   sfx_intdms,
 
+  sfx_ppai25,
+  sfx_ppai50,
+  sfx_ppai75,
+  sfx_ppa100,
+
   NUG_SFX_END,
 
   // [Nugget] ---------------------------------------------------------------/

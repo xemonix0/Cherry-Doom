@@ -1,6 +1,7 @@
 ## New Features
 
 - **_Alternative Intermission Background_** setting
+- **Support for optional health-based player pain sounds**
 
 ## Changes
 

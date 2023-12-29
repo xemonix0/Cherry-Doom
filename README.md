@@ -180,11 +180,15 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **Keep palette changes in screenshots** setting (CFG-Only: `screenshot_palette`)
 - **Allowed mouselook while dead**
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
-- **Support for optional sounds:** [p.f. Crispy Doom]
-  - `DSPLJUMP`, `DSPLLAND`;
-  - `DSLOCKED`, `DSKEYUP `, `DSKEYBNK`;
-  - `DSMNUOPN`, `DSMNUCLS`, `DSMNUACT`, `DSMNUBAK`, `DSMNUMOV`, `DSMNUSLI`, `DSMNUERR`;
-  - `DSINTTIC`, `DSINTTOT`, `DSINTNEX`, `DSINTNET`, `DSINTDMS`.
+- **Support for optional sounds:** [partially p.f. Crispy Doom]
+  - Jumping: `DSPLJUMP`;
+  - Landing: `DSPLLAND`;
+  - Key-locked door: `DSLOCKED`;
+  - Key pickup: `DSKEYUP`;
+  - Key blinking on HUD: `DSKEYBNK`;
+  - Menus: `DSMNUOPN`, `DSMNUCLS`, `DSMNUACT`, `DSMNUBAK`, `DSMNUMOV`, `DSMNUSLI`, `DSMNUERR`;
+  - Intermission: `DSINTTIC`, `DSINTTOT`, `DSINTNEX`, `DSINTNET`, `DSINTDMS`;
+  - Health-based player pain sounds: `DSPPAI25`, `DSPPAI50`, `DSPPAI75`, `DSPPA100` [i.b. ZDoom].
 - **Customizable darkening level for dark menu background and Automap overlay** (CFG-Only: `menu_background_darkening` and `automap_overlay_darkening`) [i.b. Cherry Doom]
 - **Tweaked dark menu background and Automap overlay algorithm**
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump

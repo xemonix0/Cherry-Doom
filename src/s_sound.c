@@ -304,7 +304,7 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
 static int optionals[NUG_SFX_END - NUG_SFX_START];
 
 // [NS] Try to play an optional sound.
-void S_StartSoundOptional(const mobj_t *origin, int sfx_id, int old_sfx_id)
+void S_StartSoundOptional(const mobj_t *const origin, const int sfx_id, const int old_sfx_id)
 {
   // If `sfx_id` corresponds to a non-optional sound, play it without checking,
   // otherwise play the optional sound if present
@@ -317,6 +317,18 @@ void S_StartSoundOptional(const mobj_t *origin, int sfx_id, int old_sfx_id)
   {
     S_StartSound(origin, old_sfx_id);
   }
+}
+
+void S_PlayerPainSound(const mobj_t *const origin)
+{
+  int i = BETWEEN(0, 3, (origin->health - 1) / 25);
+
+  while (optionals[sfx_ppai25 + i - NUG_SFX_START] == -1) {
+    if (3 < ++i) { break; }
+  }
+
+  if (i <= 3) { S_StartSound(origin, sfx_ppai25 + i); }
+  else        { S_StartSound(origin, sfx_plpain); }
 }
 
 // [Nugget] -----------------------------------------------------------------/
