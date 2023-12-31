@@ -153,6 +153,7 @@ background_t menu_background;
 #define M_X_THRM     (M_X - M_THRM_WIDTH)
 #define M_X_LOADSAVE 80
 #define M_LOADSAVE_WIDTH (24 * 8 + 8) // [FG] c.f. M_DrawSaveLoadBorder()
+#define M_BOTTOM_MARGIN (M_SPC * 2)
 
 #define DISABLE_ITEM(condition, item) \
         ((condition) ? (item.m_flags |= S_DISABLE) : (item.m_flags &= ~S_DISABLE))
@@ -2183,7 +2184,7 @@ static boolean NextItemAvailable (setup_menu_t *s)
 void M_DrawItem(setup_menu_t* s, int y_offset)
 {
   int x = s->m_x;
-  int y = s->m_y + y_offset; // [Cherry] add Y offset
+  int y = s->m_y - y_offset; // [Cherry] add Y offset
   int flags = s->m_flags, flags2 = s->m_flags2;
   if (flags & S_RESET)
 
@@ -2278,7 +2279,7 @@ static void M_DrawMiniThermo(int x, int y, int size, int dot, char *color)
 void M_DrawSetting(setup_menu_t* s, int y_offset)
 {
   // [Cherry] add Y offset
-  int x = s->m_x, y = s->m_y + y_offset, flags = s->m_flags, color;
+  int x = s->m_x, y = s->m_y - y_offset, flags = s->m_flags, color;
 
   // Determine color of the text. This may or may not be used
   // later, depending on whether the item is a text string or not.
@@ -2565,9 +2566,23 @@ void M_DrawSetting(setup_menu_t* s, int y_offset)
 //
 // M_DrawScreenItems takes the data for each menu item and gives it to
 // the drawing routines above.
-
-void M_DrawScreenItems(setup_menu_t* src)
+// [Cherry]: [dsda] Support scrolling
+void M_DrawScreenItems(setup_menu_t* base_src)
 {
+  const int base_y = M_Y;
+  const int max_y = ORIGHEIGHT - M_BOTTOM_MARGIN;
+  const int max_buffer_i = 3;
+  int scroll_i = 0;
+  int current_i = 0;
+  int max_i = 0;
+  int excess_i = 0;
+  int limit_i = 0;
+  int buffer_i = 0;
+  boolean no_scroll = false;
+  int i;
+  int end_y;
+  setup_menu_t* src;
+
   if (print_warning_about_changes > 0)   // killough 8/15/98: print warning
   {
     int x_warn;
@@ -2589,54 +2604,23 @@ void M_DrawScreenItems(setup_menu_t* src)
     M_DrawMenuString(x_warn, M_Y_WARN, CR_RED);
   }
 
-  while (!(src->m_flags & S_END))
-  {
-    // See if we're to draw the item description (left-hand part)
-
-    if (src->m_flags & S_SHOWDESC ||
-        src->m_flags2 & S2_SHOWDESC)
-      M_DrawItem(src, 0);
-
-    // See if we're to draw the setting (right-hand part)
-
-    if (src->m_flags & S_SHOWSET)
-      M_DrawSetting(src, 0);
-    src++;
-  }
-}
-
-/////////////////////////////
-//
-// [Cherry] Same as above, but supports scrolling
-// Used only for the Level Table
-
-void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
-{
-  int i = 0;
-  int scroll_i = 0;
-  int current_i = 0;
-  int max_i = 0;
-  int excess_i = 0;
-  int limit_i = 0;
-  int buffer_i = 0;
-  int end_y;
-  setup_menu_t* src;
-
   i = 0;
-  for (src = base_src; !(src->m_flags & S_END); src++)
+  for (src = base_src; !(src->m_flags & S_END); ++src)
   {
+    if (src->m_flags2 & S2_NOSCROLL)
+    {
+      no_scroll = true;
+      break;
+    }
+
     if (src == &current_setup_menu[set_menu_itemon])
       current_i = i;
 
-    if (src->m_flags & (S_NEXT | S_PREV))
-    {
-      // nothing
-    }
-    else if (src->m_flags2 & S2_RESET_Y)
+    if (src->m_flags2 & S2_RESET_Y)
     {
       i = 0;
     }
-    else
+    else if (!(src->m_flags & S_NOTINLIST))
     {
       if (i > max_i)
         max_i = i;
@@ -2645,33 +2629,60 @@ void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
     }
   }
 
+  if (no_scroll)
+  {
+    for (src = base_src; !(src->m_flags & S_END); ++src)
+    {
+      // See if we're to draw the item description (left-hand part)
+      if (src->m_flags & S_SHOWDESC ||
+        src->m_flags2 & S2_SHOWDESC)
+        M_DrawItem(src, 0);
+
+      // See if we're to draw the setting (right-hand part)
+      if (src->m_flags & S_SHOWSET)
+        M_DrawSetting(src, 0);
+    }
+
+    return;
+  }
+
   end_y = base_y + (max_i + 1) * M_SPC;
-  if (end_y > ORIGHEIGHT)
-    excess_i = (end_y - ORIGHEIGHT + M_SPC - 1) / M_SPC;
+  if (end_y > max_y)
+    excess_i = (end_y - max_y + M_SPC - 1) / M_SPC;
 
   limit_i = max_i - excess_i;
-  buffer_i = (max_i - current_i > 3 ? 3 : max_i - current_i);
+  buffer_i = (max_i - current_i > max_buffer_i ? max_buffer_i : max_i - current_i);
 
   if (excess_i)
+  {
+    int x_scroll = ORIGWIDTH - 9;
     while (current_i - scroll_i > limit_i - buffer_i)
       ++scroll_i;
 
+    if (scroll_i < excess_i)
+    {
+      strcpy(menu_buffer, "v");
+      M_DrawMenuString(x_scroll, ORIGHEIGHT - M_SPC, CR_RED);
+    }
+
+    if (scroll_i) {
+      strcpy(menu_buffer, "^");
+      M_DrawMenuString(x_scroll, 2, CR_RED);
+    }
+  }
+
   i = 0;
-  for (src = base_src; !(src->m_flags & S_END); src++)
+  for (src = base_src; !(src->m_flags & S_END); ++src)
   {
     int offset = 0;
     boolean skip_entry = false;
 
-    if (src->m_flags & (S_NEXT | S_PREV))
-    {
-      // nothing
-    }
-    else if (src->m_flags2 & S2_RESET_Y)
+    if (src->m_flags2 & S2_RESET_Y)
     {
       skip_entry = true;
       i = 0;
     }
-    else
+    else if (!(src->m_flags & S_NOTINLIST))
     {
       offset = scroll_i * M_SPC;
 
@@ -2687,11 +2698,11 @@ void M_DrawLevelTableItems(setup_menu_t* base_src, int base_y)
     // See if we're to draw the item description (left-hand part)
     if (src->m_flags & S_SHOWDESC ||
         src->m_flags2 & S2_SHOWDESC)
-      M_DrawItem(src, -offset);
+      M_DrawItem(src, offset);
 
     // See if we're to draw the setting (right-hand part)
     if (src->m_flags & S_SHOWSET)
-      M_DrawSetting(src, -offset);
+      M_DrawSetting(src, offset);
   }
 }
 
@@ -2740,8 +2751,9 @@ void M_DrawInstructions()
 {
   default_t *def = current_setup_menu[set_menu_itemon].var.def;
   int flags = current_setup_menu[set_menu_itemon].m_flags;
+  int flags2 = current_setup_menu[set_menu_itemon].m_flags2; // [Cherry]
 
-  if (ItemDisabled(flags))
+  if (ItemDisabled(flags) || flags2 & S2_NOSELECT)
     return;
 
   // killough 8/15/98: warn when values are different
@@ -2785,6 +2797,8 @@ void M_DrawInstructions()
       flags & S_RESET  ? (s = "Press ENTER key to reset to defaults", 43)    :
       // [FG] clear key bindings with the DEL key
       flags & S_INPUT  ? (s = "Press Enter to Change, Del to Clear", 43)     :
+      // [Cherry] Level table map entry
+      flags2 & S2_MAPWARP ? (s = "Press ENTER key to warp", 77)              :
       (s = "Press Enter to Change", 91);
     strcpy(menu_buffer, s);
     M_DrawMenuString(x,20,color);
@@ -4469,7 +4483,8 @@ extern int usejoystick, usemouse;
 extern int realtic_clock_rate, tran_filter_pct;
 
 setup_menu_t gen_settings1[], gen_settings2[], gen_settings3[], gen_settings4[], gen_settings5[],
-             gen_settings6[], gen_settings7[], gen_settings8[]; // [Nugget]
+             gen_settings6[], gen_settings7[], gen_settings8[], // [Nugget]
+             gen_settings9[]; // [Cherry]
 
 setup_menu_t* gen_settings[] =
 {
@@ -4482,6 +4497,8 @@ setup_menu_t* gen_settings[] =
   gen_settings6,
   gen_settings7,
   gen_settings8,
+  // [Cherry]
+  gen_settings9,
   NULL
 };
 
@@ -4824,19 +4841,16 @@ enum {
   gen6_impactpitch,
   gen6_expshake,
   gen6_damageshake,
-  gen6_maxshake,
   gen6_idlebobbing,
   gen6_telezoom,
   gen6_deathcam,
+  gen6_chasecam,
+  gen6_chasedist,
+  gen6_chaseheight,
 };
 
 enum {
   gen7_title1,
-  gen7_chasecam,
-  gen7_chasedist,
-  gen7_chaseheight,
-  gen7_stub1,
-  gen7_title2,
   gen7_menubgall,
   gen7_menutint,
   gen7_berserktint,
@@ -4845,9 +4859,6 @@ enum {
   gen7_boncountcap,
   gen7_fakecontrast,
   gen7_wipespeed,
-  gen7_stub2,
-  gen7_title3,
-  gen7_motionblur,
 };
 
 enum {
@@ -4868,6 +4879,15 @@ enum {
 };
 
 // [Nugget] -----------------------------------------------------------------/
+
+// [Cherry]
+enum {
+  gen9_title1,
+  gen9_maxshake,
+  gen9_stub1,
+  gen9_title2,
+  gen9_motionblur,
+};
 
 #define MOUSE_ACCEL_STRINGS_SIZE (40 + 2)
 
@@ -5154,7 +5174,7 @@ static void M_ChangeViewHeight(void)
 
 // [Cherry]
 void M_UpdateScreenShakeItem(void) {
-  DISABLE_ITEM(!(damage_shake || explosion_shake), gen_settings6[gen6_maxshake]);
+  DISABLE_ITEM(!(damage_shake || explosion_shake), gen_settings9[gen9_maxshake]);
 }
 
 static const char *impact_pitch_str[] = {
@@ -5171,17 +5191,19 @@ setup_menu_t gen_settings6[] = {
     {"Things Move Over/Under Things", S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen6_overunder   * M_SPC, {"over_under"}},
     {"Allow Jumping/Crouching",       S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen6_jump_crouch * M_SPC, {"jump_crouch"}},
   {"", S_SKIP, m_null, M_X, M_Y + gen6_stub1*M_SPC},
-  {"Nugget - View (1)", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
+  {"Nugget - View", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
     {"Field of View",                 S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen6_fov         * M_SPC, {"fov"}, 0, M_SetFOV},
     {"View Height",                   S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen6_viewheight  * M_SPC, {"viewheight_value"}, 0, M_ChangeViewHeight},
     {"View Bobbing Percentage",       S_NUM,                        m_null, M_X, M_Y + gen6_viewbobbing * M_SPC, {"view_bobbing_percentage"}},
     {"Impact Pitch",                  S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen6_impactpitch * M_SPC, {"impact_pitch"}, 0, NULL, impact_pitch_str},
     {"Explosion Shake Effect",        S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen6_expshake    * M_SPC, {"explosion_shake"}, 0, M_UpdateScreenShakeItem},
     {"Damage Shake Effect",           S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen6_damageshake * M_SPC, {"damage_shake"}, 0, M_UpdateScreenShakeItem},
-    {"Max Shake Intensity",           S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen6_maxshake    * M_SPC, {"max_shake"}},
     {"Subtle Idle Bobbing/Breathing", S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen6_idlebobbing * M_SPC, {"breathing"}},
     {"Teleporter Zoom",               S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen6_telezoom    * M_SPC, {"teleporter_zoom"}},
     {"Death Camera",                  S_YESNO |S_STRICT,            m_null, M_X, M_Y + gen6_deathcam    * M_SPC, {"death_camera"}},
+    {"Chasecam",                      S_CHOICE|S_STRICT,            m_null, M_X, M_Y + gen6_chasecam    * M_SPC, {"chasecam_mode"}, 0, NULL, chasecam_modes},
+    {"Chasecam Distance",             S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen6_chasedist   * M_SPC, {"chasecam_distance"}},
+    {"Chasecam Height",               S_NUM   |S_STRICT,            m_null, M_X, M_Y + gen6_chaseheight * M_SPC, {"chasecam_height"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings5}},
   {"NEXT ->",S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings7}},
@@ -5205,14 +5227,7 @@ static const char *page_ticking_conds[] = {
 
 setup_menu_t gen_settings7[] = { // [Nugget]
   
-  {"Nugget - View (2)", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title1 * M_SPC},
-  
-    {"Chasecam",                      S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_chasecam     * M_SPC, {"chasecam_mode"}, 0, NULL, chasecam_modes},
-    {"Chasecam Distance",             S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_chasedist    * M_SPC, {"chasecam_distance"}},
-    {"Chasecam Height",               S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_chaseheight  * M_SPC, {"chasecam_height"}},
-  {"", S_SKIP, m_null, M_X, M_Y + gen7_stub1*M_SPC},
-  {"Nugget - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title2 * M_SPC},
-
+  {"Nugget - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title1 * M_SPC},
     {"Background For All Menus",      S_YESNO,           m_null, M_X, M_Y + gen7_menubgall    * M_SPC, {"menu_background_all"}},
     {"Disable Palette Tint in Menus", S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_menutint     * M_SPC, {"no_menu_tint"}},
     {"Disable Berserk Tint",          S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_berserktint  * M_SPC, {"no_berserk_tint"}},
@@ -5221,9 +5236,6 @@ setup_menu_t gen_settings7[] = { // [Nugget]
     {"Bonus Tint Cap",                S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_boncountcap  * M_SPC, {"bonuscount_cap"}},
     {"Fake Contrast",                 S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_fakecontrast * M_SPC, {"fake_contrast"}, 0, NULL, fake_contrast_styles},
     {"Screen Wipe Speed Percentage",  S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_wipespeed    * M_SPC, {"wipe_speed_percentage"}},
-  {"", S_SKIP, m_null, M_X, M_Y + gen7_stub2*M_SPC},
-  {"Cherry - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title3 * M_SPC},
-    {"Motion Blur Percentage",        S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_motionblur   * M_SPC, {"motion_blur"}},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings6}},
   {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings8}},
@@ -5250,6 +5262,7 @@ setup_menu_t gen_settings8[] = { // [Nugget]
     {"Invulnerability Colormap",   S_YESNO|S_STRICT, m_null, M_X, M_Y + gen8_a11y_invul    * M_SPC, {"a11y_invul_colormap"}},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings7}},
+  {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings9}},
 
   // Final entry
 
@@ -5257,6 +5270,20 @@ setup_menu_t gen_settings8[] = { // [Nugget]
 };
 
 // [Nugget] -----------------------------------------------------------------/
+
+setup_menu_t gen_settings9[] = { // [Cherry] 
+  {"Cherry - View", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen9_title1 * M_SPC},
+    {"Max Shake Intensity",    S_NUM|S_STRICT, m_null, M_X, M_Y + gen9_maxshake   * M_SPC, {"max_shake"}},
+  {"", S_SKIP, m_null, M_X, M_Y + gen9_stub1*M_SPC},
+  {"Cherry - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen9_title2 * M_SPC},
+    {"Motion Blur Percentage", S_NUM|S_STRICT, m_null, M_X, M_Y + gen9_motionblur * M_SPC, {"motion_blur"}},
+
+  {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings8}},
+
+  // Final entry
+
+  {0,S_SKIP|S_END,m_null}
+};
 
 void M_Trans(void) // To reset translucency after setting it in menu
 {
@@ -6016,6 +6043,7 @@ static void M_BuildLevelTable(void)
 
     entry->m_text = m_text;
     entry->m_flags = S_TITLE | S_LEFTJUST;
+    entry->m_flags2 = S2_MAPWARP;
     entry->m_x = column_x;
     entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
@@ -6143,6 +6171,7 @@ static void M_BuildLevelTable(void)
 
     entry->m_text = m_text;
     entry->m_flags = S_TITLE | S_LEFTJUST;
+    entry->m_flags2 = S2_MAPWARP;
     entry->m_x = column_x;
     entry->m_y = LT_Y;
   END_LOOP_LEVEL_TABLE_COLUMN
@@ -6220,7 +6249,7 @@ static void M_BuildLevelTable(void)
 
   level_table_page[page][base_i].m_text = Z_Strdup("Summary", PU_STATIC, NULL);
   level_table_page[page][base_i].m_flags = S_TITLE | S_LEFTJUST;
-  level_table_page[page][base_i].m_flags2 = S2_NOSELECT;
+  level_table_page[page][base_i].m_flags2 = S2_NOSELECT|S2_NOSCROLL;
   level_table_page[page][base_i].m_x = 132;
   level_table_page[page][base_i].m_y = M_Y;
   ++base_i;
@@ -6439,12 +6468,8 @@ void M_DrawLevelTable(void)
 {
 
   M_DrawTitle(114, 2, "M_LVLTBL", "LEVEL TABLE");
-  if (current_setup_menu != level_table_page[wad_stats_summary_page])
-  {
-    strcpy(menu_buffer, "Press ENTER key to warp");
-    M_DrawMenuString(77, 20, CR_HILITE);
-  }
-  M_DrawLevelTableItems(current_setup_menu, M_Y);
+  M_DrawInstructions();
+  M_DrawScreenItems(current_setup_menu);
 }
 
 /////////////////////////////
@@ -6759,7 +6784,7 @@ int M_GetKeyString(int c,int offset)
 
 setup_menu_t helpstrings[] =  // HELP screen strings
 {
-  {"MENU"        ,S_SKIP|S_INPUT,m_null,KT_X1,KT_Y0,{0},input_escape},
+  {"MENU"        ,       S_INPUT,m_null,KT_X1,KT_Y0,{0},input_escape,.m_flags2=S2_NOSCROLL},
   {"AUTOMAP"     ,S_SKIP|S_INPUT,m_null,KT_X2,KT_Y0,{0},input_map},
 
   {"ACTION"      ,S_SKIP|S_TITLE,m_null,KT_X1,KT_Y1},
@@ -6954,7 +6979,7 @@ enum {
 
 setup_menu_t cred_settings[]={
 
-  {"Programmer",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*prog + CR_SH*cr_prog},
+  {"Programmer",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*prog + CR_SH*cr_prog, .m_flags2 = S2_NOSCROLL},
   {"Lee Killough",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*prog + CR_SH*cr_prog},
 
   {"Artist",S_SKIP|S_CREDIT,m_null, CR_X, CR_Y + CR_S*art + CR_SH*cr_art},
@@ -8104,7 +8129,7 @@ boolean M_Responder (event_t* ev)
 	  return true;
 	}
 
-      if (set_ltbl_active) // [Nugget] on the level table
+      if (set_ltbl_active) // [Cherry] on the level table
       {
         if (action == MENU_ENTER)
         {

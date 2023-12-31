@@ -120,6 +120,8 @@ extern int warning_about_changes, print_warning_about_changes;
 #define S2_SEL_COL     0x00000002 // Plain text in CR_SELECT
 #define S2_NOSELECT    0x00000004 // The menu contains no selectable items
 #define S2_RESET_Y     0x00000008 // Reset Y
+#define S2_NOSCROLL    0x00000010 // The menu is not scrollable
+#define S2_MAPWARP     0x00000020 // Press enter to warp to the map
 
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
@@ -127,11 +129,15 @@ extern int warning_about_changes, print_warning_about_changes;
 // S_HASDEFPTR = the set of items whose var field points to default array
 
 #define S_SHOWDESC  (S_TITLE|S_YESNO|S_CRITEM|S_COLOR|S_STRING|S_RESET|S_PREV|S_NEXT|S_INPUT|S_WEAP|S_NUM|S_CREDIT|S_CHOICE|S_THERMO)
-#define S2_SHOWDESC (S2_LABEL|S2_SEL_COL|S2_NOSELECT)
+// [Cherry]
+#define S2_SHOWDESC (S2_LABEL|S2_SEL_COL)
 
 #define S_SHOWSET   (S_YESNO|S_CRITEM|S_COLOR|S_STRING|S_INPUT|S_WEAP|S_NUM|S_CHOICE|S_THERMO)
 
 #define S_HASDEFPTR (S_STRING|S_YESNO|S_NUM|S_WEAP|S_COLOR|S_CRITEM|S_CHOICE|S_THERMO)
+
+// [Cherry] items that don't count towards the total height of the menu
+#define S_NOTINLIST (S_RESET|S_PREV|S_NEXT|S_KEEP)
 
 /////////////////////////////
 //
