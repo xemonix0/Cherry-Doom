@@ -1534,7 +1534,7 @@ default_t defaults[] = {
     "comp_longautoaim",
     (config_t *) &comp_longautoaim, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
-    "Double Autoaim range"
+    "Double autoaim range"
   },
 
   {
@@ -1590,7 +1590,7 @@ default_t defaults[] = {
     "comp_manualdoor",
     (config_t *) &comp_manualdoor, NULL,
     {1}, {0,1}, number, ss_comp, wad_yes,
-    "Manually reactivated moving doors are silent"
+    "Manually-toggled moving doors are silent"
   },
 
   {
@@ -1619,6 +1619,13 @@ default_t defaults[] = {
     (config_t *) &comp_flamst, NULL,
     {0}, {0,1}, number, ss_comp, wad_yes,
     "Arch-Vile fire plays flame start sound"
+  },
+
+  {
+    "comp_godface",
+    (config_t *) &comp_godface, NULL,
+    {0}, {0,1}, number, ss_comp, wad_yes,
+    "Higher god-mode face priority"
   },
 
   {
