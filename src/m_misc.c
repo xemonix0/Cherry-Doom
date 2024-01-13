@@ -901,6 +901,27 @@ default_t defaults[] = {
   },
 
   {
+    "rewind_interval",
+    (config_t *) &rewind_interval, NULL,
+    {1}, {1,600}, number, ss_gen, wad_no,
+    "Interval between rewind key-frames, in seconds"
+  },
+
+  {
+    "rewind_depth",
+    (config_t *) &rewind_depth, NULL,
+    {60}, {0,600}, number, ss_gen, wad_no,
+    "Number of rewind key-frames to be stored (0 = No rewinding)"
+  },
+
+  {
+    "rewind_timeout",
+    (config_t *) &rewind_timeout, NULL,
+    {10}, {0,25}, number, ss_gen, wad_no,
+    "Max. time to store a key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)"
+  },
+
+  {
     "no_page_ticking",
     (config_t *) &no_page_ticking, NULL,
     {0}, {0,2}, number, ss_gen, wad_no,
@@ -1964,6 +1985,14 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to restore from saved games",
     input_loadgame, { {input_type_key, KEY_F3} }
+  },
+
+  { // [Nugget] 
+    "input_rewind",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to rewind",
+    input_rewind, { {0, 0} }
   },
 
   {

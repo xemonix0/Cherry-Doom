@@ -87,6 +87,14 @@ extern int  bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
 extern int pars[][10];  // hardcoded array size
 extern int cpars[];     // hardcoded array size
 
+// [Nugget] Rewind -----------------------------------------------------------
+
+extern void G_ResetRewindCountdown(void);
+extern void G_EnableRewind(void);
+extern void G_Rewind(void);
+extern void G_ClearExcessKeyFrames(void);
+extern boolean G_KeyFrameRW(void);
+
 #endif
 
 //----------------------------------------------------------------------------
