@@ -3175,9 +3175,9 @@ setup_menu_t keys_settings10[] =
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub3    * M_SPC},
     {"Toggle Crosshair", S_INPUT,                     m_scrn, KB_X, M_Y + keys10_xhair    * M_SPC, {0}, input_crosshair},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub4    * M_SPC},
-    {"Last Used Weapon", S_INPUT,                     m_scrn, KB_X ,M_Y + keys10_lastweap * M_SPC, {0}, input_lastweapon},
+    {"Last Used Weapon", S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_lastweap * M_SPC, {0}, input_lastweapon},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub5    * M_SPC},
-    {"Rewind",           S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X ,M_Y + keys10_rewind   * M_SPC, {0}, input_rewind},
+    {"Rewind",           S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_rewind   * M_SPC, {0}, input_rewind},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {keys_settings9}},
   {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {keys_settings11}},
