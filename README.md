@@ -300,7 +300,7 @@ Copyright:
  © 2023 liPillON;  
  © 2020-2023 Fabian Greffrath;  
  © 2020-2023 Roman Fomin;  
- © 2021-2023 Alaux.  
+ © 2021-2024 Alaux.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/beta.h`  
