@@ -20,4 +20,5 @@ the feature for all Things.
 
 ## Bug Fixes
 
+- **Fixed garbage lines (black outline) at the top of weapon sprites** [fix by @fabiangreffrath]
 - **FOV effects not being cleared thoroughly upon loading levels**

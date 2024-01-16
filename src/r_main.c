@@ -746,7 +746,7 @@ void R_ExecuteSetViewSize (void)
 
   // psprite scales
   pspritescale = FixedDiv(viewwidth_nonwide, ORIGWIDTH);       // killough 11/98
-  pspriteiscale= FixedDiv(ORIGWIDTH, viewwidth_nonwide);       // killough 11/98
+  pspriteiscale= FixedDiv(ORIGWIDTH, viewwidth_nonwide) + 1;   // killough 11/98
 
   // thing clipping
   for (i=0 ; i<viewwidth ; i++)
