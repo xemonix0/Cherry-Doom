@@ -49,7 +49,7 @@ The following widgets are available:
 | `nughud_ammoicon`   | Yes         | Yes       | Ammo icon, which changes depending on the ammo type of the current weapon |
 | `nughud_health`     | Yes         | Yes       | Health count |
 | `nughud_healthicon` | Yes         | Yes       | Health icon, which changes depending on whether the player has Berserk |
-| `nughud_arms#`      | Yes         | No        | Arms (weapon) number, where `#` is a number between `1` and `9` (inclusive) |
+| `nughud_arms#`      | Yes         | No        | Arms (weapon) number, where `#` is an integer in the [1-9] range |
 | `nughud_frags`      | Yes         | Yes       | Frag count, only shown during Deathmatch games |
 | `nughud_face`       | Yes         | No        | Face (mugshot) |
 | `nughud_armor`      | Yes         | Yes       | Armor count |
@@ -187,7 +187,7 @@ which can be either a sprite (i.e. a lump between `S_START` and `S_END` markers,
 **Patches are alignable**, both horizontally and vertically, and can be disabled by simply not providing any graphic.
 
 **There is an additional toggle, `nughud_patch_offsets`, that determines whether or not to apply graphic offsets when drawing Patches.**
-Disabling this is useful when using non-exclusive graphics (e.g. ammo pickup sprites), whose offsets may differ across PWADs.
+Disabling this is useful when using non-exclusive graphics (e.g. ammo-pickup sprites), whose offsets may differ across PWADs.
 Otherwise, enabling it is useful when using exclusive graphics, whose offsets are determined by the HUD maker, to allow precise positioning.
 
 #### Example
