@@ -15,7 +15,8 @@ names and values, optionally separated by blank or comment lines.
 
 - By loading WADs which contain a lump explicitly named `NUGHUD`;
 - By including a file explicitly named `nughud.lmp` (case-insensitive) in the corresponding autoload folder;
-- By using the `-file` command-line parameter to load a file explicitly named `nughud.#`, where `#` can be any extension name (`.lmp` is recommended).
+- By using the `-file` command-line parameter to load a file explicitly named `nughud.#`,
+  where `#` can be any extension name (`.lmp` is recommended).
 
 ## NUGHUD widgets
 
@@ -23,8 +24,8 @@ names and values, optionally separated by blank or comment lines.
 
 The following properties are shared across all widgets:
 
-- `_x`: **X position**, which can be any number between `0` and `320` (inclusive).
-- `_y`: **Y position**, which can be any number between `0` and `200` (inclusive).
+- `_x`: **X position**, which can be any integer in the [0-320] range.
+- `_y`: **Y position**, which can be any integer in the [0-200] range.
 - `_wide`: **Widescreen shift**, with the following possible values:
   - `-2` to shift the element left forcefully;
   - `-1` to shift the element left only when in widescreen mode;
@@ -45,44 +46,48 @@ The following widgets are available:
 | Widget(s)           | Disableable | Alignable | Description |
 | :-----------------: | :---------: | :-------: | :---------- |
 | `nughud_ammo`       | Yes         | Yes       | Ammo count for the currently-equipped weapon |
-| `nughud_ammoicon`   | Yes         | Yes       | Ammo icon, which changes depending on ammo type of current weapon |
+| `nughud_ammoicon`   | Yes         | Yes       | Ammo icon, which changes depending on the ammo type of the current weapon |
 | `nughud_health`     | Yes         | Yes       | Health count |
 | `nughud_healthicon` | Yes         | Yes       | Health icon, which changes depending on whether the player has Berserk |
-| `nughud_arms#`      | Yes         | No        | Arms (weapon) number, where # is a number between `1` and `9` (inclusive) |
-| `nughud_frags`      | Yes         | Yes       | Frags count, only shown during Deathmatch games |
-| `nughud_face`       | Yes         | No        | Face (Mugshot) |
+| `nughud_arms#`      | Yes         | No        | Arms (weapon) number, where `#` is a number between `1` and `9` (inclusive) |
+| `nughud_frags`      | Yes         | Yes       | Frag count, only shown during Deathmatch games |
+| `nughud_face`       | Yes         | No        | Face (mugshot) |
 | `nughud_armor`      | Yes         | Yes       | Armor count |
-| `nughud_armoricon`  | Yes         | Yes       | Armor icon, which changes depending on current armor type |
-| `nughud_key#`       | Yes         | No        | Key display, where # is a number between `0` and `2` (in order: Blue Key; Yellow Key; Red Key) |
-| `nughud_ammo#`      | Yes         | Yes       | Ammo count for each type, where # is a number between `0` and `3` (in order: Bullets; Shells; Cells; Rockets) |
-| `nughud_maxammo#`   | Yes         | Yes       | Same as the above, but for Max Ammo |
+| `nughud_armoricon`  | Yes         | Yes       | Armor icon, which changes depending on the current armor type |
+| `nughud_key#`       | Yes         | No        | Key display, where `#` is an integer in the [0-2] range (in order: Blue Key; Yellow Key; Red Key) |
+| `nughud_ammo#`      | Yes         | Yes       | Ammo count for each type, where `#` is an integer in the [0-3] range (in order: Bullets; Shells; Cells; Rockets) |
+| `nughud_maxammo#`   | Yes         | Yes       | Same as the above, but for Max. Ammo |
 | `nughud_time`       | No          | Yes       | Time display, only shown if enabled by the user |
 | `nughud_sts`        | No          | Yes       | Stats (Kills/Items/Secrets) display, only shown if enabled by the user |
-| `nughud_title`      | No          | Yes       | Level Name display, only shown on the Automap |
+| `nughud_title`      | No          | Yes       | Level Name display, only shown in the Automap |
 | `nughud_powers`     | No          | Yes       | Powerup Timers, only shown if enabled by the user |
 | `nughud_coord`      | No          | Yes       | Coordinates display, only shown if enabled by the user |
 | `nughud_fps`        | No          | Yes       | FPS display, only shown when the FPS cheat is activated |
 | `nughud_message`    | No          | Yes       | Message display |
-| `nughud_secret`     | No          | Yes       | Secret Message display |
+| `nughud_secret`     | No          | Yes       | "Secret Revealed" message display |
 
-**The _Ammo_, _Health_ and _Armor icons_ can also be aligned vertically** by means of the `_vlign` property, with the following possible values:
+**The _Ammo_, _Health_ and _Armor_ icons can also be aligned vertically** by means of the `_vlign` property,
+with the following possible values:
+
   - ` 1` for top alignment;
   - ` 0` for center alignment;
   - `-1` for bottom alignment.
+  
 Additionally, **the offsets of the graphics used by these icons will be ignored, unless a custom font is being used** (see details below).
 
 **Arms number 1 is lit up when the player has Berserk.**
 
 There are some additional toggles (value of `0` or `1`) for some specific widgets:
 
-- `nughud_percents`: Toggle drawing of percentage signs for the _Health_ and _Armor_ counts.
-- `nughud_ammoicon_big`: Toggle usage of big ammo pickup sprites for the _Armor icon_.
-- `nughud_face_bg`: Toggle the _Face_ background, whose position is linked to that of the _Face_ itself.
-- `nughud_time_sts`: Toggle relocation of the _Time_ widget to the position of the _Stats_ widget when the latter is inactive.
-- `nughud_sts_ml`: Toggle three-lined _Stats_ widget.
+- `nughud_percents`: Toggle drawing of percentage signs for the _Health_ and _Armor_ counts;
+- `nughud_ammoicon_big`: Toggle usage of big-ammo-pickup sprites for the _Ammo_ icon;
+- `nughud_face_bg`: Toggle the _Face_ background, whose position is linked to that of the _Face_ itself;
+- `nughud_time_sts`: Toggle relocation of the _Time_ widget to the position of the _Stats_ widget when the latter is inactive;
+- `nughud_sts_ml`: Toggle three-lined _Stats_ widget;
 - `nughud_coord_ml`: Toggle three-lined _Coordinates_ widget.
 
-Lastly, the _Message_ widget supports an X position value of `-1` to forcefully draw it at its original X position, where it'll be affected by the Centered Messages setting.
+Lastly, the _Message_ widget supports an X position value of `-1` to forcefully draw it at its original X position,
+where it'll be affected by the _Centered Messages_ setting.
 
 #### Examples
 
@@ -110,25 +115,26 @@ nughud_title_align 0
 ### Custom fonts
 
 **Certain widgets support custom fonts.**
-Graphics for all characters of a given font must be provided for the font to be used, otherwise the default font will be used instead.
+Graphics for all characters of a given font must be provided for the font to be used,
+otherwise the default font will be used instead.
 
 The following fonts are available:
 
 ```
-Tall Numbers, used for the Health, Armor, current-weapon Ammo and Frags counts:
+Tall Numbers, used for the Health, Armor, current-weapon Ammo and Frag counts:
 
 - NHTNUM# -- Number, where # is a number between 0 and 9 (inclusive)
 - NHTMINUS - Minus sign
 - NHTPRCNT - Percent sign
 
 
-Current-weapon Ammo Numbers, which take precedence over Tall Numbers for the Current-weapon Ammo count:
+Current-weapon Ammo Numbers, which take precedence over Tall Numbers for the current-weapon Ammo count:
 
 - NHRNUM# -- Number, where # is a number between 0 and 9 (inclusive)
 - NHRMINUS - Minus sign
 
 
-Ammo Numbers, used for the Ammo and Max Ammo counts:
+Ammo Numbers, used for the Ammo and Max. Ammo counts:
 
 - NHAMNUM# - Number, where # is a number between 0 and 9 (inclusive)
 
@@ -171,11 +177,12 @@ Infinity, drawn in place of the Ammo count when using weapons with no ammo type 
 
 ### Patches
 
-**Patches are static graphics that can be drawn anywhere on the screen**, behind the rest of widgets.
-Up to 8 patches can be drawn. They are drawn in increasing order; `patch1` is drawn below `patch2`, which is drawn below `patch3`, and so on.
+**Patches are static graphics that can be drawn anywhere on the screen**, behind the rest of widgets.  
+Up to 8 patches can be drawn. They are drawn back-to-front; `patch1` is drawn behind `patch2`, which is drawn behind `patch3`, and so on.
 
-Aside from the shared properties, **patches make use of an additional property, `_name`, that determines the name of the graphic lump to be used**, which can either be a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`).
-**Custom lumps CAN be used** (for example, a graphic called `NEWPATCH`). The names used in the `NUGHUD` lump MUST be enclosed between quotation marks.
+Aside from the shared properties, **patches make use of an additional property, `_name`, that determines the name of the graphic lump to be used**,
+which can be either a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`).  
+**Custom lumps can be used** (for example, a graphic called `NEWPATCH`). The names used in the `NUGHUD` lump must be enclosed between quotation marks.
 
 **Patches are alignable**, both horizontally and vertically, and can be disabled by simply not providing any graphic.
 
@@ -211,6 +218,8 @@ nughud_patch2_name "STARMS"
 
 By default and compared to the original Crispy HUD, `NUGHUD` hides the face widget and shows Arms numbers `2-9` instead of `2-7`.
 
-**The default `NUGHUD`**, as defined in the executable, **is available in text format as `nughud.lmp`**, found in the `docs/` folder. Comments were added to it for clarity. Feel free to use it as a base to make new HUDs.
+**The default `NUGHUD`**, as built into the executable, **is available in text format as `nughud.lmp`**, found in the `docs/` folder.
+Comments were added to it for clarity. Feel free to use it as a base to make new HUDs.
 
-It is advised that you do not include values for variables that you do not wish to modify, as to avoid issues if the handling of any of them is altered in the future.
+It is advised that you do not include values for variables that you do not wish to modify, 
+as to avoid issues if the handling of any of them is altered in the future.
