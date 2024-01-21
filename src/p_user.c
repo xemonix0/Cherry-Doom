@@ -551,8 +551,9 @@ void P_DeathThink (player_t* player)
 // [Nugget] Event Timers
 void P_SetPlayerEvent(player_t* player, eventtimer_t type)
 {
-  if (!STRICTMODE(event_timers[type] == 2
-                  || (event_timers[type] && (demorecording||demoplayback))))
+  if ((strictmode && type != TIMER_USE)
+      || !event_timers[type]
+      || ((event_timers[type] == 1) && !(demorecording || demoplayback)))
   {
     return;
   }

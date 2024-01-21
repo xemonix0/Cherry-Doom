@@ -22,3 +22,4 @@ the feature for all Things.
 
 - **Fixed garbage lines (black outline) at the top of weapon sprites** [fix by @fabiangreffrath]
 - **FOV effects not being cleared thoroughly upon loading levels**
+- **_"Use" Button Timer_ being disallowed in Strict Mode**
