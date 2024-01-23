@@ -416,10 +416,8 @@ void P_MovePlayer (player_t* player)
       // [Nugget] Allow minimal mid-air movement if Jumping is enabled
       else if (casual_play && !onground && jump_crouch)
       {
-        if (cmd->forwardmove)
-        { P_Thrust(player,mo->angle,cmd->forwardmove); }
-        if (cmd->sidemove)
-        { P_Thrust(player,mo->angle-ANG90,cmd->sidemove); }
+        if (cmd->forwardmove) { P_Thrust(player, mo->angle,       cmd->forwardmove); }
+        if (cmd->sidemove)    { P_Thrust(player, mo->angle-ANG90, cmd->sidemove);    }
       }
       
       // Add (cmd-> forwardmove || cmd-> sidemove) check to prevent the players

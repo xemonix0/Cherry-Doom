@@ -521,10 +521,10 @@ static void cheat_turbo(char *buf)
   scale = BETWEEN(10, 255, scale);
 
   displaymsg("Turbo Scale: %i%%", scale);
-  forwardmove[0] = 25 * scale / 100;
-  forwardmove[1] = 50 * scale / 100;
-     sidemove[0] = 20 * scale / 100;
-     sidemove[1] = 40 * scale / 100;
+  forwardmove[0] = 0x19 * scale / 100;
+  forwardmove[1] = 0x32 * scale / 100;
+     sidemove[0] = 0x18 * scale / 100;
+     sidemove[1] = 0x28 * scale / 100;
 }
 
 static void cheat_summon()
