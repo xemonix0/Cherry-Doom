@@ -20,7 +20,8 @@ the feature for all Things.
 
 ## Bug Fixes
 
-- **Fixed garbage lines (black outline) at the top of weapon sprites** [fix by @fabiangreffrath]
+- **Garbage lines (black outline) at the top of weapon sprites** [fix taken from Woof!]
+- **FOV difference between widescreen modes**
 - **FOV effects not being cleared thoroughly upon loading levels**
 - **_"Use" Button Timer_ being disallowed in Strict Mode**
 - **Turbo cheat setting incorrect walk-strafing speed**
