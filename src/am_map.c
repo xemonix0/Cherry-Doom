@@ -68,7 +68,7 @@ int mapcolor_bdor;    // blue door color (of enabling one but not other )
 int mapcolor_ydor;    // yellow door color
 int mapcolor_tele;    // teleporter line color
 int mapcolor_secr;    // secret sector boundary color
-int mapcolor_uscr;    // [Nugget] Unrevealed secret sector boundary color
+int mapcolor_revsecr; // revealed secret sector boundary color
 int mapcolor_exit;    // jff 4/23/98 add exit line color
 int mapcolor_unsn;    // computer map unseen line color
 int mapcolor_flat;    // line with no floor/ceiling changes
@@ -77,6 +77,8 @@ int mapcolor_hair;    // crosshair color
 int mapcolor_sngl;    // single player arrow color
 int mapcolor_plyr[4]; // colors for player arrows in multiplayer
 int mapcolor_frnd;    // colors for friends of player
+int mapcolor_item;    // item sprite color
+int mapcolor_enemy;   // enemy sprite color
 
 //jff 3/9/98 add option to not show secret sectors until entered
 int map_secret_after;
@@ -193,12 +195,6 @@ static mline_t cross_mark[] =
   { { -R, 0 }, { R, 0} },
   { { 0, -R }, { 0, R } },
 };
-static mline_t square_mark[] = {
-  { { -R,  0 }, {  0,  R } },
-  { {  0,  R }, {  R,  0 } },
-  { {  R,  0 }, {  0, -R } },
-  { {  0, -R }, { -R,  0 } },
-};
 #undef R
 #define NUMCROSSMARKLINES (sizeof(cross_mark)/sizeof(mline_t))
 //jff 1/5/98 end of new symbol
@@ -216,10 +212,6 @@ static mline_t thintriangle_guy[] =
 };
 #undef R
 #define NUMTHINTRIANGLEGUYLINES (sizeof(thintriangle_guy)/sizeof(mline_t))
-
-#define REDS (256-5*16)
-#define GRAYS (6*16)
-#define YELLOWS (256-32+7)
 
 int ddt_cheating = 0;         // killough 2/7/98: make global, rename to ddt_*
 
@@ -612,6 +604,39 @@ void AM_enableSmoothLines(void)
   AM_drawFline = map_smooth_lines ? AM_drawFline_Smooth : AM_drawFline_Vanilla;
 }
 
+static void AM_initScreenSize(void)
+{
+  // killough 2/7/98: get rid of finit_ vars
+  // to allow runtime setting of width/height
+  //
+  // killough 11/98: ... finally add hires support :)
+
+  // [Nugget] Minimap
+  if (automapactive == AM_MINI)
+  {
+    f_x = (8 * video.yscale) >> FRACBITS;
+    f_y = ((((message_list ? hud_msg_lines : 1) + 1) * 8 + 1) * video.yscale) >> FRACBITS;
+    f_w = f_h = (80 * video.yscale) >> FRACBITS;
+
+    return;
+  }
+
+  f_w = video.width;
+  if (automapoverlay && scaledviewheight == SCREENHEIGHT)
+    f_h = video.height;
+  else
+    f_h = video.height - ((ST_HEIGHT * video.yscale) >> FRACBITS);
+}
+
+void AM_ResetScreenSize(void)
+{
+  AM_saveScaleAndLoc();
+
+  AM_initScreenSize();
+
+  AM_restoreScaleAndLoc();
+}
+
 //
 // AM_LevelInit()
 //
@@ -627,28 +652,10 @@ static void AM_LevelInit(void)
   static int precalc_once;
 
   automapfirststart = true;
-  
+
   f_x = f_y = 0;
 
-  // killough 2/7/98: get rid of finit_ vars
-  // to allow runtime setting of width/height
-  //
-  // killough 11/98: ... finally add hires support :)
-
-  // [Nugget] Minimap
-  if (automapactive == AM_MINI)
-  {
-    f_x = (8 * video.yscale) >> FRACBITS;
-    f_y = ((((message_list ? hud_msg_lines : 1) + 1) * 8 + 1) * video.yscale) >> FRACBITS;
-    f_w = f_h = (80 * video.yscale) >> FRACBITS;
-  }
-  else {
-    f_w = video.width;
-    if (automapoverlay && scaledviewheight == SCREENHEIGHT)
-      f_h = video.height;
-    else
-      f_h = video.height - ((ST_HEIGHT * video.yscale) >> FRACBITS);
-  }
+  AM_initScreenSize();
 
   AM_enableSmoothLines();
 
@@ -959,11 +966,7 @@ boolean AM_Responder
         default: togglemsg("%s", s_AMSTR_OVERLAYOFF); break;
       }
 
-      if (automapoverlay && scaledviewheight == SCREENHEIGHT)
-        f_h = video.height;
-      else
-        f_h = video.height - ((ST_HEIGHT * video.yscale) >> FRACBITS);
-
+      AM_initScreenSize();
       AM_activateNewScale();
     }
     else if (M_InputActivated(input_map_rotate))
@@ -1241,11 +1244,13 @@ void AM_Ticker (void)
 static void AM_clearFB(int color)
 {
   // [Nugget] Minimap: take `f_x` and `f_y` into account
-  int x, y;
-
-  for (x = f_x;  x < f_x+f_w;  x++)
-    for (y = f_y;  y < f_y+f_h;  y++)
-      fb[y * video.width + x] = color;
+  int h = f_h + f_y;
+  byte *src = fb + f_x;
+  while (h--)
+  {
+    memset(src, color, f_w);
+    src += video.pitch;
+  }
 }
 
 //
@@ -1428,7 +1433,7 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
 // [Nugget] Minimap: take `f_x` and `f_y` into account
 #define PUTDOT(xx,yy,cc)                                          \
   if ((f_x <= xx && xx < f_x+f_w) && (f_y <= yy && yy < f_y+f_h)) \
-    fb[(yy) * video.width + (xx)] = (cc)
+    fb[(yy) * video.pitch + (xx)] = (cc)
 
   dx = fl->b.x - fl->a.x;
   ax = 2 * (dx<0 ? -dx : dx);
@@ -1863,14 +1868,19 @@ static void AM_drawWalls(void)
       {
         // jff 1/10/98 add new color for 1S secret sector boundary
         if (mapcolor_secr && //jff 4/3/98 0 is disable
-            P_WasSecret(lines[i].frontsector) &&
-            !P_IsSecret(lines[i].frontsector)
-           )
+            (
+             !map_secret_after &&
+             P_IsSecret(lines[i].frontsector)
+            )
+          )
           AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
-        // [Nugget] Unrevealed secret sector boundary
-        else if ((!strictmode ? mapcolor_uscr : mapcolor_secr)
-                 && !map_secret_after && P_IsSecret(lines[i].frontsector))
-          AM_drawMline(&l, (!strictmode ? mapcolor_uscr : mapcolor_secr));
+        else if (mapcolor_revsecr &&
+            (
+             P_WasSecret(lines[i].frontsector) &&
+             !P_IsSecret(lines[i].frontsector)
+            )
+          )
+          AM_drawMline(&l, mapcolor_revsecr); // line bounding revealed secret sector
         else                               //jff 2/16/98 fixed bug
           AM_drawMline(&l, mapcolor_wall); // special was cleared
       }
@@ -1892,7 +1902,7 @@ static void AM_drawWalls(void)
         }
         else if
         (
-            mapcolor_clsd &&
+            mapcolor_clsd &&  
             !(lines[i].flags & ML_SECRET) &&    // non-secret closed door
             ((lines[i].backsector->floorheight==lines[i].backsector->ceilingheight) ||
             (lines[i].frontsector->floorheight==lines[i].frontsector->ceilingheight))
@@ -1903,24 +1913,29 @@ static void AM_drawWalls(void)
         else if
         (
             mapcolor_secr && //jff 2/16/98 fixed bug
-            (
-             (P_WasSecret(lines[i].frontsector)
-              && !P_IsSecret(lines[i].frontsector)) ||
-             (P_WasSecret(lines[i].backsector)
-              && !P_IsSecret(lines[i].backsector))
+            (                    // special was cleared after getting it
+              !map_secret_after &&
+               (
+                P_IsSecret(lines[i].frontsector) ||
+                P_IsSecret(lines[i].backsector)
+               )
             )
         )
         {
           AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
         } //jff 1/6/98 end secret sector line change
-        // [Nugget] Unrevealed secret sector 2S lines
-        else if ((!strictmode ? mapcolor_uscr : mapcolor_secr)
-                 && !map_secret_after
-                 && (P_IsSecret(lines[i].frontsector)
-                     || P_IsSecret(lines[i].backsector))
-                )
+        else if
+        (
+            mapcolor_revsecr &&
+            (
+              (P_WasSecret(lines[i].frontsector)
+               && !P_IsSecret(lines[i].frontsector)) ||
+              (P_WasSecret(lines[i].backsector)
+               && !P_IsSecret(lines[i].backsector))
+            )
+        )
         {
-          AM_drawMline(&l, (!strictmode ? mapcolor_uscr : mapcolor_secr));
+          AM_drawMline(&l, mapcolor_revsecr); // line bounding revealed secret sector
         }
         else if (lines[i].backsector->floorheight !=
                   lines[i].frontsector->floorheight)
@@ -1933,8 +1948,8 @@ static void AM_drawWalls(void)
           AM_drawMline(&l, mapcolor_cchg); // ceiling level change
         }
         else if (mapcolor_flat && ddt_cheating)
-        {
-          AM_drawMline(&l, mapcolor_flat); //2S lines that appear only in IDDT
+        { 
+          AM_drawMline(&l, mapcolor_flat); //2S lines that appear only in IDDT  
         }
       }
     } // now draw the lines only visible because the player has computermap
@@ -2317,36 +2332,6 @@ static void AM_drawThings
         }
       }
       //jff 1/5/98 end added code for keys
-      // [crispy] draw blood splats and puffs as small squares
-      if (t->type == MT_BLOOD || t->type == MT_PUFF)
-      {
-        AM_drawLineCharacter
-        (
-          square_mark,
-          arrlen(square_mark),
-          (t->radius / 4) >> FRACTOMAPBITS,
-          t->angle,
-          (t->type == MT_BLOOD) ? REDS : GRAYS,
-          pt.x,
-          pt.y
-        );
-      }
-      else
-      {
-      const int color =
-        // killough 8/8/98: mark friends specially
-        ((t->flags & MF_FRIEND) && !t->player) ? mapcolor_frnd :
-        // [crispy] show countable kills in red ...
-        ((t->flags & (MF_COUNTKILL | MF_CORPSE)) == MF_COUNTKILL) ? REDS :
-        // [crispy] ... show Lost Souls and missiles in orange ...
-        (t->flags & (MF_FLOAT | MF_MISSILE)) ? 216 :
-        // [crispy] ... show other shootable items in dark gold ...
-        (t->flags & MF_SHOOTABLE) ? 164 :
-        // [crispy] ... corpses in gray ...
-        (t->flags & MF_CORPSE) ? GRAYS :
-        // [crispy] ... and countable items in yellow
-        (t->flags & MF_COUNTITEM) ? YELLOWS :
-        mapcolor_sprt;
 
       //jff previously entire code
       AM_drawLineCharacter
@@ -2355,11 +2340,16 @@ static void AM_drawThings
         NUMTHINTRIANGLEGUYLINES,
         t->radius >> FRACTOMAPBITS, // [crispy] triangle size represents actual thing size
         t->angle,
-        color,
+        // killough 8/8/98: mark friends specially
+        ((t->flags & MF_FRIEND) && !t->player) ? mapcolor_frnd :
+        /* cph 2006/07/30 - Show count-as-kills in red. */
+        ((t->flags & (MF_COUNTKILL | MF_CORPSE)) == MF_COUNTKILL) ? mapcolor_enemy :
+        /* bbm 2/28/03 Show countable items in yellow. */
+        (t->flags & MF_COUNTITEM) ? mapcolor_item :
+        mapcolor_sprt,
         pt.x,
         pt.y
       );
-      }
       t = t->snext;
     }
   }
@@ -2436,7 +2426,7 @@ static void AM_drawCrosshair(int color)
   // [crispy] do not draw the useless dot on the player arrow
   if (!FOLLOW)
   {
-  fb[(f_w*(f_h+1))/2] = color; // single point for now
+    PUTDOT((f_w + 1) / 2, (f_h + 1) / 2, color); // single point for now
   }
 }
 
@@ -2527,7 +2517,7 @@ void AM_ColorPreset (void)
     int color[3]; // Boom, Vanilla Doom, ZDoom
   } mapcolors[] =
   {                                       // ZDoom CVAR name
-    {&mapcolor_back,    {247, 247, 139}}, // am_backcolor
+    {&mapcolor_back,    {247,   0, 139}}, // am_backcolor
     {&mapcolor_grid,    {104, 104,  70}}, // am_gridcolor
     {&mapcolor_wall,    { 23, 176, 239}}, // am_wallcolor
     {&mapcolor_fchg,    { 55,  64, 135}}, // am_fdwallcolor
@@ -2540,19 +2530,21 @@ void AM_ColorPreset (void)
     {&mapcolor_bdor,    {204,   0, 200}}, // P_GetMapColorForLock()
     {&mapcolor_ydor,    {231,   0, 231}}, // P_GetMapColorForLock()
     {&mapcolor_tele,    {119,   0, 200}}, // am_intralevelcolor
-    {&mapcolor_secr,    {252,   0, 251}}, // am_secretwallcolor
-    {&mapcolor_uscr,    {198,   0, 198}}, // [Nugget] Unrevealed secret sector
+    {&mapcolor_secr,    {252,   0, 251}}, // am_unexploredsecretcolor
+    {&mapcolor_revsecr, {112,   0, 251}}, // am_secretsectorcolor
     {&mapcolor_exit,    {  0,   0, 176}}, // am_interlevelcolor
     {&mapcolor_unsn,    {104,  99, 100}}, // am_notseencolor
     {&mapcolor_flat,    { 88,  97,  95}}, // am_tswallcolor
     {&mapcolor_sprt,    {112, 112,   4}}, // am_thingcolor
-    {&mapcolor_hair,    {208, 208,  97}}, // am_xhaircolor
-    {&mapcolor_sngl,    {208, 208, 209}}, // am_yourcolor
+    {&mapcolor_hair,    {208,  96,  97}}, // am_xhaircolor
+    {&mapcolor_sngl,    {208, 209, 209}}, // am_yourcolor
     {&mapcolor_plyr[0], {112, 112, 112}},
     {&mapcolor_plyr[1], { 88,  88,  88}},
     {&mapcolor_plyr[2], { 64,  64,  64}},
     {&mapcolor_plyr[3], {176, 176, 176}},
     {&mapcolor_frnd,    {252, 252,   4}}, // am_thingcolor_friend
+    {&mapcolor_enemy,   {177, 112,   4}}, // am_thingcolor_monster
+    {&mapcolor_item,    {231, 112,   4}}, // am_thingcolor_item
     {NULL,              {  0,   0,   0}},
   };
 

@@ -47,7 +47,7 @@ int  viewwindowx;
 int  viewwindowy; 
 static byte **ylookup = NULL;
 static int  *columnofs = NULL;
-static int  linesize = SCREENWIDTH;  // killough 11/98
+static int  linesize;  // killough 11/98
 
 // Color tables for different players,
 //  translate a limited part to another
@@ -827,7 +827,7 @@ void R_InitBuffer(void)
 {
   int i;
 
-  linesize = video.width;    // killough 11/98
+  linesize = video.pitch;    // killough 11/98
 
   // Handle resize,
   //  e.g. smaller view windows
@@ -899,7 +899,7 @@ void R_FillBackScreen (void)
   // Allocate the background buffer if necessary
   if (background_buffer == NULL)
   {
-    int size = video.width * video.height;
+    int size = video.pitch * video.height;
     background_buffer = Z_Malloc(size * sizeof(*background_buffer), PU_STATIC, NULL);
   }
 
@@ -916,9 +916,12 @@ void R_FillBackScreen (void)
 // Copy a screen buffer.
 //
 
-static void R_VideoErase(int x, int y, int w, int h)
+void R_VideoErase(int x, int y, int w, int h)
 {
-   V_CopyRect(x, y, background_buffer, w, h, x, y);
+  if (background_buffer == NULL)
+    return;
+
+  V_CopyRect(x, y, background_buffer, w, h, x, y);
 }
 
 //
@@ -931,23 +934,23 @@ static void R_VideoErase(int x, int y, int w, int h)
 // can scale to hires automatically in R_VideoErase().
 //
 
-void R_DrawViewBorder(void) 
+void R_DrawViewBorder(void)
 {
-   int side;
+  int side;
 
-   if (scaledviewwidth == video.unscaledw || background_buffer == NULL)
-      return;
+  if (scaledviewwidth == video.unscaledw || background_buffer == NULL)
+    return;
 
-   // copy top
-   R_VideoErase(0, 0, video.unscaledw, scaledviewy);
+  // copy top
+  R_VideoErase(0, 0, video.unscaledw, scaledviewy);
 
-   // copy sides
-   side = scaledviewx;
-   R_VideoErase(0, scaledviewy, side, scaledviewheight);
-   R_VideoErase(video.unscaledw - side, scaledviewy, side, scaledviewheight);
+  // copy sides
+  side = scaledviewx;
+  R_VideoErase(0, scaledviewy, side, scaledviewheight);
+  R_VideoErase(video.unscaledw - side, scaledviewy, side, scaledviewheight);
 
-   // copy bottom
-   R_VideoErase(0, scaledviewy + scaledviewheight, video.unscaledw, scaledviewy);
+  // copy bottom
+  R_VideoErase(0, scaledviewy + scaledviewheight, video.unscaledw, scaledviewy);
 }
 
 //----------------------------------------------------------------------------

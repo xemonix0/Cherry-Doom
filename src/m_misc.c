@@ -158,7 +158,25 @@ default_t defaults[] = {
   { // killough 11/98: hires
     "resolution_mode", (config_t *) &default_resolution_mode, NULL,
     {RES_DRS}, {RES_ORIGINAL, NUM_RES - 1}, number, ss_none, wad_no,
-    "0 - original 200p, 1 - double 400p, 2 - triple 600p, 4 - native (dynamic)"
+    "0 - original 200p, 1 - double 400p, 2 - triple 600p, 3 - native (dynamic)"
+  },
+
+  {
+    "sdl_renderdriver",
+    (config_t *) &sdl_renderdriver, NULL,
+#if defined(_WIN32)
+    {.s = "direct3d11"},
+#else
+    {.s = ""},
+#endif
+    {0}, string, ss_none, wad_no,
+    "SDL render driver, possible values are "
+#if defined(_WIN32)
+    "direct3d, direct3d11, direct3d12, "
+#elif defined(__APPLE__)
+    "metal, "
+#endif
+    "opengl, opengles2, opengles, software"
   },
 
   {
@@ -475,22 +493,11 @@ default_t defaults[] = {
     "[OpenAL 3D] Doppler effect (0 = Off, 10 = Max)"
   },
 
-  // [FG] music backend
   {
     "midi_player",
     (config_t *) &midi_player, NULL,
-    {0}, {0, 2},
-    number, ss_gen, wad_no,
-#if defined(_WIN32)
-    "0 for Native (default), "
-#else
-    "0 for SDL2 (default), "
-#endif
-#if defined(HAVE_FLUIDSYNTH)
-    "1 for FluidSynth, 2 for OPL Emulation"
-#else
-    "1 for OPL Emulation"
-#endif
+    {0}, {0, 2}, number, ss_gen, wad_no,
+    "MIDI Player backend (Native if available, FluidSynth if available, OPL Emulation)"
   },
 
   {
@@ -2763,6 +2770,13 @@ default_t defaults[] = {
     "adjust mouse acceleration threshold"
   },
 
+  {
+    "mouse_raw_input",
+    (config_t *) &mouse_raw_input, NULL,
+    {1}, {0, 1}, number, ss_none, wad_no,
+    "Raw mouse input for turning/looking (0 = Interpolate, 1 = Raw)"
+  },
+
   // [FG] invert vertical axis
   {
     "mouse_y_invert",
@@ -2978,11 +2992,11 @@ default_t defaults[] = {
     "color used for lines around secret sectors"
   },
 
-  { // [Nugget] blue
-    "mapcolor_uscr",
-    (config_t *) &mapcolor_uscr, NULL,
-    {198}, {0,255}, number, ss_auto, wad_yes,
-    "color used for lines around unrevealed secret sectors"
+  { // green
+    "mapcolor_revsecr",
+    (config_t *) &mapcolor_revsecr, NULL,
+    {112}, {0,255}, number, ss_auto, wad_yes,
+    "color used for lines around revealed secret sectors"
   },
 
   { // none
@@ -3060,6 +3074,20 @@ default_t defaults[] = {
     (config_t *) &mapcolor_frnd, NULL,
     {252}, {0,255}, number, ss_auto, wad_yes,
     "color used for friends"
+  },
+
+  {
+    "mapcolor_enemy",
+    (config_t *) &mapcolor_enemy, NULL,
+    {177}, {0,255}, number, ss_auto, wad_yes,
+    "color used for enemies"
+  },
+
+  {
+    "mapcolor_item",
+    (config_t *) &mapcolor_item, NULL,
+    {231}, {0,255}, number, ss_auto, wad_yes,
+    "color used for countable items"
   },
 
   {

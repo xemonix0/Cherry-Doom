@@ -56,7 +56,7 @@ static void wipe_shittyColMajorXform(byte *array, int width, int height)
 
 static int wipe_initColorXForm(int width, int height, int ticks)
 {
-  memcpy(wipe_scr, wipe_scr_start, width*height);
+  V_PutBlock(0, 0, width, height, wipe_scr_start);
   return 0;
 }
 
@@ -102,7 +102,7 @@ static int wipe_initMelt(int width, int height, int ticks)
   col_y = Z_Malloc(num_columns * sizeof(*col_y), PU_STATIC, NULL);
 
   // copy start screen to main screen
-  memcpy(wipe_scr, wipe_scr_start, width*height);
+  V_PutBlock(0, 0, width, height, wipe_scr_start);
 
   // makes this wipe faster (in theory)
   // to have stuff in column-major format
@@ -164,14 +164,14 @@ static int wipe_doMelt(int width, int height, int ticks)
     for (y = 0; y < scroff; ++y)
     {
       *d = *s;
-      d += width;
+      d += video.pitch;
       s++;
     }
     s = wipe_scr_start + x * height;
     for (; y < height; ++y)
     {
       *d = *s;
-      d += width;
+      d += video.pitch;
       s++;
     }
   }

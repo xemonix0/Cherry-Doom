@@ -276,7 +276,7 @@ typedef struct msecnode_s
 //
 // The LineSeg.
 //
-typedef struct
+typedef struct seg_s
 {
   vertex_t *v1, *v2;
   fixed_t offset;
@@ -295,6 +295,9 @@ typedef struct
   uint32_t r_length;
   angle_t r_angle;
   int fakecontrast;
+
+  // NanoBSP
+  struct seg_s *next;
 } seg_t;
 
 //

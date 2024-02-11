@@ -550,34 +550,36 @@ menu_t EpiDef =
 
 // This is for customized episode menus
 boolean EpiCustom;
-short EpiMenuMap[8] = { 1, 1, 1, 1, -1, -1, -1, -1 }, EpiMenuEpi[8] = { 1, 2, 3, 4, -1, -1, -1, -1 };
+static short EpiMenuMap[] = { 1, 1, 1, 1, -1, -1, -1, -1 };
+static short EpiMenuEpi[] = { 1, 2, 3, 4, -1, -1, -1, -1 };
 
 //
 //    M_Episode
 //
-int epiChoice;
+static int epiChoice;
 
 void M_ClearEpisodes(void)
 {
-  EpiDef.numitems = 0;
-  NewDef.prevMenu = &MainDef;
+    EpiDef.numitems = 0;
+    NewDef.prevMenu = &MainDef;
 }
 
 void M_AddEpisode(const char *map, const char *gfx, const char *txt, const char *alpha)
 {
-  if (!EpiCustom)
-  {
-      EpiCustom = true;
-      NewDef.prevMenu = &EpiDef;
-
-      if (gamemode == commercial)
-          EpiDef.numitems = 0;
-  }
-
-  {
     int epi, mapnum;
+
+    if (!EpiCustom)
+    {
+        EpiCustom = true;
+        NewDef.prevMenu = &EpiDef;
+
+        if (gamemode == commercial)
+            EpiDef.numitems = 0;
+    }
+
     if (EpiDef.numitems >= 8)
-      return;
+        return;
+
     G_ValidateMapName(map, &epi, &mapnum);
     EpiMenuEpi[EpiDef.numitems] = epi;
     EpiMenuMap[EpiDef.numitems] = mapnum;
@@ -586,15 +588,15 @@ void M_AddEpisode(const char *map, const char *gfx, const char *txt, const char 
     EpisodeMenu[EpiDef.numitems].alttext = txt ? strdup(txt) : NULL;
     EpisodeMenu[EpiDef.numitems].alphaKey = alpha ? *alpha : 0;
     EpiDef.numitems++;
-  }
-  if (EpiDef.numitems <= 4)
-  {
-    EpiDef.y = 63;
-  }
-  else
-  {
-    EpiDef.y = 63 - (EpiDef.numitems - 4) * (LINEHEIGHT / 2);
-  }
+
+    if (EpiDef.numitems <= 4)
+    {
+        EpiDef.y = 63;
+    }
+    else
+    {
+        EpiDef.y = 63 - (EpiDef.numitems - 4) * (LINEHEIGHT / 2);
+    }
 }
 
 
@@ -707,7 +709,11 @@ void M_VerifyNightmare(int ch)
   if (ch != 'y')
     return;
 
-  G_DeferedInitNew(nightmare,epiChoice+1,1);
+  if (!EpiCustom)
+    G_DeferedInitNew(nightmare, epiChoice + 1, 1);
+  else
+    G_DeferedInitNew(nightmare, EpiMenuEpi[epiChoice], EpiMenuMap[epiChoice]);
+
   M_ClearMenus ();
 }
 
@@ -720,9 +726,10 @@ void M_ChooseSkill(int choice)
     }
 
   if (!EpiCustom)
-  G_DeferedInitNew(choice,epiChoice+1,1);
+    G_DeferedInitNew(choice, epiChoice + 1, 1);
   else
     G_DeferedInitNew(choice, EpiMenuEpi[epiChoice], EpiMenuMap[epiChoice]);
+
   M_ClearMenus ();
 }
 
@@ -1929,7 +1936,7 @@ menu_t  SetupDef =
   &OptionsDef,   // menu to return to when BACKSPACE is hit on this menu
   SetupMenu,     // definition of items to show on the Setup Screen
   M_DrawSetup,   // program that draws the Setup Screen
-  59,37,         // x,y position of the skull (modified when the skull is
+  60,37,         // x,y position of the skull (modified when the skull is
                  // drawn). The skull is parked on the upper-left corner
                  // of the Setup screens, since it isn't needed as a cursor
   0              // last item the user was on for this menu
@@ -4261,6 +4268,7 @@ enum {
   gen5_mouse3,
   gen5_mouse_accel,
   gen5_mouse_accel_threshold,
+  gen5_mouse_raw_input,
   gen5_end1,
 
   gen5_title2,
@@ -4562,6 +4570,9 @@ setup_menu_t gen_settings5[] = { // General Settings screen5
 
   {"Mouse threshold", S_NUM, m_null, M_X,
    M_Y + gen5_mouse_accel_threshold * M_SPC, {"mouse_acceleration_threshold"}},
+
+  {"Raw mouse input", S_YESNO, m_null, M_X,
+   M_Y+ gen5_mouse_raw_input * M_SPC, {"mouse_raw_input"}},
 
   {"", S_SKIP, m_null, M_X, M_Y + gen5_end1*M_SPC},
 

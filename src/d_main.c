@@ -20,6 +20,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "SDL.h"
 #include <time.h> // [Nugget]
 
 #include "../miniz/miniz.h"
@@ -64,13 +65,13 @@
 #include "d_quit.h"
 #include "r_bmaps.h"
 #include "p_inter.h" // maxhealthbonus
-#include "i_input.h"
-#include "m_nughud.h" // [Nugget]
 
 #include "dsdhacked.h"
 
 #include "net_client.h"
 #include "net_dedicated.h"
+
+#include "m_nughud.h" // [Nugget]
 
 // DEHacked support - Ty 03/09/97
 // killough 10/98:
@@ -181,9 +182,10 @@ int eventhead, eventtail;
 //
 void D_PostEvent(event_t *ev)
 {
-  if (ev->type == ev_mouse && !menuactive && gamestate == GS_LEVEL && !paused)
+  if (ev->type == ev_mouse)
   {
     G_MouseMovementResponder(ev);
+    G_PrepTiccmd();
     return;
   }
 
@@ -216,7 +218,6 @@ void D_ProcessEvents (void)
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate = GS_DEMOSCREEN;
 extern int     showMessages;
-boolean        enable_drs;
 
 void D_Display (void)
 {
@@ -246,16 +247,20 @@ void D_Display (void)
     // [AM] Figure out how far into the current tic we're in as a fixed_t.
     fractionaltic = I_GetFracTime();
 
-    if (window_focused)
+    if (!menuactive && gamestate == GS_LEVEL && !paused && mouse_raw_input)
     {
-      I_ReadMouse();
+      I_StartDisplay();
     }
   }
 
-  enable_drs = true;
-
   redrawsbar = false;
-  
+
+  // save the current screen if about to wipe
+  if ((wipe = gamestate != wipegamestate) && NOTSTRICTMODE(wipe_type)) // [Nugget]
+    wipe_StartScreen(0, 0, video.unscaledw, SCREENHEIGHT);
+  else if (gamestate == GS_LEVEL)
+    I_DynamicResolution();
+
   if (setsizeneeded                 // change the view size if needed
       || fovchange) // [Nugget]
     {
@@ -263,16 +268,6 @@ void D_Display (void)
       oldgamestate = -1;            // force background redraw
       borderdrawcount = 3;
     }
-
-  // save the current screen if about to wipe
-  if ((wipe = gamestate != wipegamestate) && NOTSTRICTMODE(wipe_type))
-    {
-      enable_drs = false;
-      wipe_StartScreen(0, 0, video.unscaledw, SCREENHEIGHT);
-    }
-
-  if (gamestate == GS_LEVEL && gametic)
-    HU_Erase();
 
   switch (gamestate)                // do buffered drawing
     {
@@ -325,6 +320,7 @@ void D_Display (void)
       if (borderdrawcount)
         {
           R_DrawViewBorder ();    // erase old menu stuff
+          HU_Drawer ();
           borderdrawcount--;
         }
     }
@@ -406,6 +402,8 @@ void D_Display (void)
       I_FinishUpdate();             // page flip or blit buffer
     }
   while (!done);
+
+  I_ResetTargetRefresh(); // reset after wipe
 }
 
 //
@@ -889,9 +887,12 @@ static void CheckIWAD(const char *iwadname)
         return;
     }
 
-    if (strncmp(header.identification, "IWAD", 4))
+    if (strncmp(header.identification, "IWAD", 4) &&
+        strncmp(header.identification, "PWAD", 4))
     {
-        I_Printf(VB_WARNING, "CheckIWAD: IWAD tag not present %s", iwadname);
+        fclose(file);
+        I_Error("Wad file %s doesn't have IWAD or PWAD id\n", iwadname);
+        return;
     }
 
     // read IWAD directory
@@ -962,7 +963,7 @@ static boolean FileContainsMaps(const char *filename)
 
     while (ret == false)
     {
-        if (filename == NULL)
+        if (filename == NULL || M_StringCaseEndsWith(filename, ".wad") == false)
         {
             break;
         }
@@ -975,6 +976,12 @@ static boolean FileContainsMaps(const char *filename)
         }
 
         if (fread(&header, sizeof(header), 1, file) != 1)
+        {
+            break;
+        }
+
+        if (strncmp(header.identification, "IWAD", 4) &&
+            strncmp(header.identification, "PWAD", 4))
         {
             break;
         }
@@ -3013,6 +3020,8 @@ void D_DoomMain(void)
       // Update display, next frame, with current state.
       if (screenvisible)
         D_Display();
+
+      S_UpdateMusic();
     }
 }
 

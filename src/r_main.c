@@ -57,6 +57,7 @@ fixed_t  projection;
 fixed_t  viewx, viewy, viewz;
 angle_t  viewangle;
 localview_t localview;
+boolean mouse_raw_input;
 fixed_t  viewcos, viewsin;
 player_t *viewplayer;
 extern lighttable_t **walllights;
@@ -419,7 +420,7 @@ static void R_InitTextureMapping (void)
         ;
       xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
       // [FG] linear horizontal sky scrolling
-      linearskyangle[x] = ((viewwidth/2-x)*((video.unscaledw<<6)/viewwidth))*(ANG90/(NONWIDEWIDTH<<6)) / fovdiff; // [Nugget]
+      linearskyangle[x] = ((viewwidth/2-x)*((video.unscaledw<<FRACBITS)/viewwidth))*(ANG90/(NONWIDEWIDTH<<FRACBITS)) / fovdiff; // [Nugget]
     }
 
   // Take out the fencepost cases from viewangletox.
@@ -783,17 +784,8 @@ void R_ExecuteSetViewSize (void)
         }
     }
 
-    //HU_disable_all_widgets();
-
     // [crispy] forcefully initialize the status bar backing screen
     ST_refreshBackground(true);
-
-    // [FG] reinitialize Automap
-    if (automapactive)
-        AM_Start();
-
-    // [FG] spectre drawing mode
-    R_SetFuzzColumnMode();
 
     pspr_interp = false;
 }
@@ -810,6 +802,9 @@ void R_Init (void)
   R_InitLightTables();
   R_InitSkyMap();
   R_InitTranslationTables();
+
+  // [FG] spectre drawing mode
+  R_SetFuzzColumnMode();
 }
 
 //
@@ -878,10 +873,12 @@ void R_SetupFrame (player_t *player)
       leveltime > oldleveltime)
   {
     const boolean use_localview = (
+      // Don't use localview when interpolation is preferred.
+      mouse_raw_input &&
       // Don't use localview if the player is spying.
       player == &players[consoleplayer] &&
       // Don't use localview if the player is dead.
-      player->health > 0 &&
+      player->playerstate != PST_DEAD &&
       // Don't use localview if the player just teleported.
       !player->mo->reactiontime &&
       // Don't use localview if a demo is playing.
@@ -899,12 +896,16 @@ void R_SetupFrame (player_t *player)
 
     // Use localview unless the player or game is in an invalid state or if
     // mouse input was interrupted, in which case fall back to interpolation.
-    if (localview.useangle && use_localview)
-      viewangle = player->mo->angle - ((short)localview.angle << FRACBITS) + viewangleoffset;
+    if (use_localview)
+    {
+      viewangle = (player->mo->angle + localview.angle - localview.ticangle +
+                   R_InterpolateAngle(localview.oldticangle, localview.ticangle,
+                                      fractionaltic));
+    }
     else
-      viewangle = R_InterpolateAngle(player->mo->oldangle, player->mo->angle, fractionaltic) + viewangleoffset;
+      viewangle = R_InterpolateAngle(player->mo->oldangle, player->mo->angle, fractionaltic);
 
-    if (localview.usepitch && use_localview && !player->centering && player->lookdir)
+    if (localview.usepitch && use_localview && !player->centering)
       lookdir = (player->lookdir + localview.pitch) / MLOOKUNIT;
     else
       lookdir = (player->oldlookdir + (player->lookdir - player->oldlookdir) * FIXED2DOUBLE(fractionaltic)) / MLOOKUNIT;
@@ -915,22 +916,25 @@ void R_SetupFrame (player_t *player)
   }
   else
   {
-  viewx = player->mo->x;
-  viewy = player->mo->y;
-  viewz = player->viewz; // [FG] moved here
-  playerz = player->mo->z; // [Nugget]
-  viewangle = player->mo->angle + viewangleoffset;
-  // [crispy] pitch is actual lookdir and weapon pitch
-  lookdir = player->lookdir / MLOOKUNIT;
-  pitch = lookdir + player->recoilpitch + player->impactpitch; // [Nugget]
+    viewx = player->mo->x;
+    viewy = player->mo->y;
+    viewz = player->viewz; // [FG] moved here
+    viewangle = player->mo->angle;
+    // [crispy] pitch is actual lookdir and weapon pitch
+    lookdir = player->lookdir / MLOOKUNIT;
+    pitch = lookdir + player->recoilpitch + player->impactpitch; // [Nugget]
   }
 
-  // [Nugget] Mitigate `PLAYER_SLOPE()` and `lookdir` misalignment
-  pitch *= FOVDIFF2;
+  // 3-screen display mode.
+  viewangle += viewangleoffset;
 
-  if (STRICTMODE(st_crispyhud)) { pitch += nughud.viewoffset; } // [Nugget] NUGHUD
+  // [Nugget] /---------------------------------------------------------------
 
-  // [Nugget] Explosion shake effect
+  pitch *= FOVDIFF2; // Mitigate `PLAYER_SLOPE()` and `lookdir` misalignment
+
+  if (STRICTMODE(st_crispyhud)) { pitch += nughud.viewoffset; } // NUGHUD
+
+  // Explosion shake effect
   chasecamheight = chasecam_height * FRACUNIT;
   if (shake > 0)
   {
@@ -957,7 +961,7 @@ void R_SetupFrame (player_t *player)
     chasecamheight += zofs;
   }
 
-  // [Nugget] Chasecam
+  // Chasecam
   chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD));
   if (chasecam_on)
   {
@@ -1030,14 +1034,16 @@ void R_SetupFrame (player_t *player)
   }
   else { chasexofs = chaseyofs = chaseaofs = 0; }
 
+  // [Nugget] ---------------------------------------------------------------/
+
   // [Nugget]: [crispy] A11Y
   if (!NOTSTRICTMODE(a11y_weapon_flash))
     extralight = 0;
   else
     extralight = player->extralight;
 
-  extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness); // level brightness feature
-
+  extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness);
+    
   if (pitch > pitchmax)
     pitch = pitchmax;
   else if (pitch < -pitchmax)

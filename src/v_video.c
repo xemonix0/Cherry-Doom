@@ -516,7 +516,7 @@ void V_DrawPatchInt(int x, int y, patch_t *patch, boolean flipped,
     else if (-x1 - 1 < maxw)
         x1 = -x2lookup[-x1 - 1];
     else // too far off-screen
-        x1 = -(video.width * (-x1 - 1) / maxw);
+        x1 = -(((-x1 - 1) * video.xscale) >> FRACBITS);
 
     if (x2 < video.unscaledw)
         x2 = x2lookup[x2];
@@ -923,7 +923,7 @@ void V_PutBlock(int x, int y, int width, int height, byte *src)
 
 void V_ShadeScreen(const int targshade) // [Nugget] Parameterized
 {
-  int y;
+  int x, y;
   byte *dest = dest_screen;
   const int step = 2;
   static int oldtic = -1;
@@ -935,9 +935,13 @@ void V_ShadeScreen(const int targshade) // [Nugget] Parameterized
     screenshade = 0;
   }
 
-  for (y = 0; y < video.width * video.height; y++)
+  for (y = 0; y < video.height; y++)
   {
-    dest[y] = colormaps[0][screenshade * 256 + dest[y]];
+    for (x = 0; x < video.width; x++)
+    {
+      dest[x] = colormaps[0][screenshade * 256 + dest[x]];
+    }
+    dest += linesize;
   }
 
   // [Nugget] Also decrease shading gradually
@@ -976,7 +980,7 @@ void V_Init(void)
     int i;
     fixed_t frac, lastfrac;
 
-    linesize = video.width;
+    linesize = video.pitch;
 
     video.xscale = (video.width << FRACBITS) / video.unscaledw;
     video.yscale = (video.height << FRACBITS) / SCREENHEIGHT;
