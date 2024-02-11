@@ -1244,8 +1244,8 @@ void AM_Ticker (void)
 static void AM_clearFB(int color)
 {
   // [Nugget] Minimap: take `f_x` and `f_y` into account
-  int h = f_h + f_y;
-  byte *src = fb + f_x;
+  int h = f_h;
+  byte *src = fb + ((f_y * video.pitch) + f_x);
   while (h--)
   {
     memset(src, color, f_w);
@@ -2440,7 +2440,7 @@ void AM_shadeScreen(void)
 
     for (x = f_x;  x < f_x+f_w;  x++)
       for (y = f_y;  y < f_y+f_h;  y++) {
-        pixel = y * video.width + x;
+        pixel = y * video.pitch + x;
         fb[pixel] = colormaps[0][automap_overlay_darkening * 256 + fb[pixel]];
       }
   }

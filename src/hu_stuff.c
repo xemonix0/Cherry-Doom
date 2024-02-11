@@ -1799,7 +1799,7 @@ void HU_Ticker(void)
 
   HU_Erase();
   HU_disable_all_widgets();
-  draw_crispy_hud = false;
+  // [Nugget] Removed "draw_crispy_hud" code
 
   hud_automap = (automapactive == AM_FULL); // [Nugget]
 
