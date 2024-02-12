@@ -2732,7 +2732,7 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
 #if 0
 static void M_SetFOV(void)
 {
-  fovchange = true;
+  R_SetFOV(fov);
 }
 #endif
 
@@ -3096,6 +3096,8 @@ enum {
   keys10_xhair,
   keys10_stub4,
   keys10_lastweap,
+  keys10_stub5,
+  keys10_rewind,
 };
 
 setup_menu_t keys_settings10[] =
@@ -3112,7 +3114,9 @@ setup_menu_t keys_settings10[] =
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub3    * M_SPC},
     {"Toggle Crosshair", S_INPUT,                     m_scrn, KB_X, M_Y + keys10_xhair    * M_SPC, {0}, input_crosshair},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub4    * M_SPC},
-    {"Last Used Weapon", S_INPUT,                     m_scrn, KB_X ,M_Y + keys10_lastweap * M_SPC, {0}, input_lastweapon},
+    {"Last Used Weapon", S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_lastweap * M_SPC, {0}, input_lastweapon},
+    {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub5    * M_SPC},
+    {"Rewind",           S_INPUT|S_STRICT|S_CRITICAL, m_scrn, KB_X, M_Y + keys10_rewind   * M_SPC, {0}, input_rewind},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {keys_settings9}},
   {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {keys_settings11}},
@@ -4311,16 +4315,20 @@ enum {
   gen7_boncountcap,
   gen7_fakecontrast,
   gen7_wipespeed,
-  gen7_stub1,
-  gen7_title2,
-  gen7_sclipdist,
-  gen7_quicksaveload,
-  gen7_nopagetic,
-  gen7_quickexit,
+  gen7_altinterpic,
 };
 
 enum {
   gen8_title1,
+  gen8_sclipdist,
+  gen8_quicksaveload,
+  gen8_rwinterval,
+  gen8_rwdepth,
+  gen8_rwtimeout,
+  gen8_nopagetic,
+  gen8_quickexit,
+  gen8_stub1,
+  gen8_title2,
 #if 0 // For future use, hopefully
   gen8_a11y_seclight,
 #endif
@@ -4612,6 +4620,10 @@ static void M_ChangeViewHeight(void)
   oldviewheight = viewheight_value;
 }
 
+static const char *over_under_str[] = {
+  "Off", "Player Only", "All Things", NULL
+};
+
 static const char *impact_pitch_str[] = {
   "Off", "Fall", "Damage", "Both", NULL
 };
@@ -4624,8 +4636,8 @@ setup_menu_t gen_settings6[] = {
 
   {"Nugget - Gameplay", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title1 * M_SPC},
 
-    {"Things Move Over/Under Things", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen6_overunder   * M_SPC, {"over_under"}},
-    {"Allow Jumping/Crouching",       S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen6_jump_crouch * M_SPC, {"jump_crouch"}},
+    {"Move Over/Under Things",        S_CHOICE|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen6_overunder   * M_SPC, {"over_under"}, 0, NULL, over_under_str},
+    {"Allow Jumping/Crouching",       S_YESNO |S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen6_jump_crouch * M_SPC, {"jump_crouch"}},
 
   {"",              S_SKIP,         m_null, M_X, M_Y + gen6_stub1  * M_SPC},
   {"Nugget - View", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
@@ -4653,14 +4665,6 @@ static const char *fake_contrast_styles[] = {
   "Off", "Smooth", "Vanilla", NULL
 };
 
-static const char *s_clipping_dists[] = {
-  "1200", "2400", NULL
-};
-
-static const char *page_ticking_conds[] = {
-  "Always", "Not In Menus", "Never", NULL
-};
-
 setup_menu_t gen_settings7[] = {
 
   {"Nugget - Display", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title1 * M_SPC},
@@ -4673,14 +4677,7 @@ setup_menu_t gen_settings7[] = {
     {"Bonus Tint Cap",                S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_boncountcap  * M_SPC, {"bonuscount_cap"}},
     {"Fake Contrast",                 S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_fakecontrast * M_SPC, {"fake_contrast"}, 0, NULL, fake_contrast_styles},
     {"Screen Wipe Speed Percentage",  S_NUM   |S_STRICT, m_null, M_X, M_Y + gen7_wipespeed    * M_SPC, {"wipe_speed_percentage"}},
-
-  {"",                       S_SKIP,         m_null, M_X, M_Y + gen7_stub1  * M_SPC},
-  {"Nugget - Miscellaneous", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen7_title2 * M_SPC},
-
-    {"Sound Hearing Distance",  S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen7_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, M_SetSoundModule, s_clipping_dists},
-    {"One-Key Quick Save/Load", S_YESNO,           m_null, M_X, M_Y + gen7_quicksaveload * M_SPC, {"one_key_saveload"}},
-    {"Play Internal Demos",     S_CHOICE,          m_null, M_X, M_Y + gen7_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
-    {"Quick \"Quit Game\"",     S_YESNO,           m_null, M_X, M_Y + gen7_quickexit     * M_SPC, {"quick_quitgame"}},
+    {"Alt. Intermission Background",  S_YESNO |S_STRICT, m_null, M_X, M_Y + gen7_altinterpic  * M_SPC, {"alt_interpic"}},
 
   {"<- PREV", S_SKIP|S_PREV, m_null, M_X_PREV, M_Y_PREVNEXT, {gen_settings6}},
   {"NEXT ->", S_SKIP|S_NEXT, m_null, M_X_NEXT, M_Y_PREVNEXT, {gen_settings8}},
@@ -4690,10 +4687,41 @@ setup_menu_t gen_settings7[] = {
   {0,S_SKIP|S_END,m_null}
 };
 
+static void M_UpdateRewindInterval(void)
+{
+  G_EnableRewind();
+  G_ResetRewindCountdown();
+}
+
+static void M_UpdateRewindDepth(void)
+{
+  G_EnableRewind();
+  G_ClearExcessKeyFrames();
+}
+
+static const char *s_clipping_dists[] = {
+  "1200", "2400", NULL
+};
+
+static const char *page_ticking_conds[] = {
+  "Always", "Not In Menus", "Never", NULL
+};
+
 setup_menu_t gen_settings8[] = { // [Nugget]
 
-  {"Nugget - Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen8_title1 * M_SPC},
-#if 0 // [Nugget] For future use, hopefully
+  {"Nugget - Miscellaneous", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen8_title1 * M_SPC},
+
+    {"Sound Hearing Distance",  S_CHOICE|S_STRICT,         m_null, M_X, M_Y + gen8_sclipdist     * M_SPC, {"s_clipping_dist_x2"}, 0, M_SetSoundModule, s_clipping_dists},
+    {"One-Key Quick Save/Load", S_YESNO,                   m_null, M_X, M_Y + gen8_quicksaveload * M_SPC, {"one_key_saveload"}},
+    {"Rewind Interval (S)",     S_NUM|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen8_rwinterval    * M_SPC, {"rewind_interval"}, 0, M_UpdateRewindInterval},
+    {"Rewind Depth",            S_NUM|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen8_rwdepth       * M_SPC, {"rewind_depth"}, 0, M_UpdateRewindDepth},
+    {"Rewind Timeout (MS)",     S_NUM|S_STRICT|S_CRITICAL, m_null, M_X, M_Y + gen8_rwtimeout     * M_SPC, {"rewind_timeout"}, 0, G_EnableRewind},
+    {"Play Internal Demos",     S_CHOICE,                  m_null, M_X, M_Y + gen8_nopagetic     * M_SPC, {"no_page_ticking"}, 0, NULL, page_ticking_conds},
+    {"Quick \"Quit Game\"",     S_YESNO,                   m_null, M_X, M_Y + gen8_quickexit     * M_SPC, {"quick_quitgame"}},
+
+  {"",                       S_SKIP,         m_null, M_X, M_Y + gen8_stub1  * M_SPC},
+  {"Nugget - Accessibility", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen8_title2 * M_SPC},
+#if 0 // For future use, hopefully
     {"Flickering Sector Lighting", S_YESNO|S_STRICT, m_null, M_X, M_Y + gen8_a11y_seclight * M_SPC, {"a11y_sector_lighting"}},
 #endif
     {"Weapon Flash Lighting",      S_YESNO|S_STRICT, m_null, M_X, M_Y + gen8_a11y_flash    * M_SPC, {"a11y_weapon_flash"}},
@@ -5667,7 +5695,8 @@ boolean M_Responder (event_t* ev)
     {                                                         //  |
       static boolean fastdemo_timer = false;                  //  V
 
-      // [Nugget]
+      // [Nugget] /-----------------------------------------------------------
+
       if (M_InputActivated(input_crosshair))
 	{
 	  extern void HU_StartCrosshair(void);
@@ -5677,11 +5706,18 @@ boolean M_Responder (event_t* ev)
 	  togglemsg("Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
 	}
 
-      // [Nugget]
       if (STRICTMODE(M_InputActivated(input_chasecam)))
 	{
 	  if (++chasecam_mode > CHASECAMMODE_FRONT) { chasecam_mode = CHASECAMMODE_OFF; }
 	}
+
+      if (STRICTMODE(M_InputActivated(input_rewind)))
+	{
+	  G_Rewind();
+	  return true;
+	}
+
+      // [Nugget] -----------------------------------------------------------/
 
       if (M_InputActivated(input_autorun)) // Autorun         //  V
 	{

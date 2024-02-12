@@ -42,9 +42,6 @@ void S_Start(void);
 //
 void S_StartSound(const mobj_t *origin, int sound_id);
 
-// [Nugget]: [NS] Try to play an optional sound.
-void S_StartSoundOptional(const mobj_t *origin, int sfx_id, int old_sfx_id);
-
 // Stop sound for thing at <origin>
 void S_StopSound(const mobj_t *origin);
 
@@ -85,6 +82,13 @@ extern int default_numChannels;  // killough 10/98
 
 //jff 3/17/98 holds last IDMUS number, or -1
 extern int idmusnum;
+
+// [Nugget] ------------------------------------------------------------------
+
+// [NS] Try to play an optional sound.
+void S_StartSoundOptional(const mobj_t *const origin, const int sfx_id, const int old_sfx_id);
+
+void S_PlayerPainSound(const mobj_t *const origin);
 
 #endif
 

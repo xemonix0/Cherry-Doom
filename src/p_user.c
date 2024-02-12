@@ -234,9 +234,15 @@ void P_MovePlayer (player_t* player)
 
   mo->angle += cmd->angleturn << 16;
   onground = mo->z <= mo->floorz;
-  // [Nugget] Allow mid-air control with noclip or flight cheat enabled
-  if (casual_play)
-  { onground |= ((player->mo->flags & MF_NOCLIP) || (player->cheats & CF_FLY)); }
+
+  // [Nugget] Allow movement if...
+  if (casual_play) {
+    onground |= 
+         // ... using noclip or flight cheat
+         (player->cheats & (CF_NOCLIP|CF_FLY))
+         // ... on top of a mobj
+      || (mo->below_thing && (mo->z == (mo->below_thing->z + mo->below_thing->height)));
+  }
 
   // [Nugget]
   if (player->cheats & CF_FLY)
@@ -416,10 +422,8 @@ void P_MovePlayer (player_t* player)
       // [Nugget] Allow minimal mid-air movement if Jumping is enabled
       else if (casual_play && !onground && jump_crouch)
       {
-        if (cmd->forwardmove)
-        { P_Thrust(player,mo->angle,cmd->forwardmove); }
-        if (cmd->sidemove)
-        { P_Thrust(player,mo->angle-ANG90,cmd->sidemove); }
+        if (cmd->forwardmove) { P_Thrust(player, mo->angle,       cmd->forwardmove); }
+        if (cmd->sidemove)    { P_Thrust(player, mo->angle-ANG90, cmd->sidemove);    }
       }
       
       // Add (cmd-> forwardmove || cmd-> sidemove) check to prevent the players
@@ -553,8 +557,9 @@ void P_DeathThink (player_t* player)
 // [Nugget] Event Timers
 void P_SetPlayerEvent(player_t* player, eventtimer_t type)
 {
-  if (!STRICTMODE(event_timers[type] == 2
-                  || (event_timers[type] && (demorecording||demoplayback))))
+  if ((strictmode && type != TIMER_USE)
+      || !event_timers[type]
+      || ((event_timers[type] == 1) && !(demorecording || demoplayback)))
   {
     return;
   }
@@ -658,7 +663,7 @@ void P_PlayerThink (player_t* player)
   if (player->playerstate == PST_DEAD)
     {
       // [Nugget] Disable zoom upon death
-      if (R_GetZoom() == 1) { R_SetZoom(ZOOM_OFF); }
+      if (R_GetZoom() == ZOOM_ON) { R_SetZoom(ZOOM_OFF); }
 
       P_DeathThink (player);
       return;

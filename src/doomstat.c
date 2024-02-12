@@ -165,8 +165,12 @@ int bonuscount_cap;
 int fake_contrast;
 int diminished_lighting; // CFG-Only
 int wipe_speed_percentage;
+int alt_interpic;
 int s_clipping_dist_x2;
 int one_key_saveload;
+int rewind_interval;
+int rewind_depth;
+int rewind_timeout;
 int no_page_ticking;
 int quick_quitgame;
 
@@ -249,6 +253,7 @@ int comp_switchsource;
 int comp_cgundblsnd;
 int comp_cgunnersfx;
 int comp_flamst;
+int comp_godface;
 int comp_deadoof;
 int comp_unusedpals;
 int comp_keypal;

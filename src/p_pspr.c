@@ -1280,6 +1280,8 @@ void P_SetupPsprites(player_t *player)
   P_BringUpWeapon(player);
 }
 
+// [Nugget - ceski] Weapon Inertia /------------------------------------------
+
 #define EASE_SCALE(x, y) (FRACUNIT - (FixedDiv(FixedMul(FixedDiv((x) << FRACBITS, (y) << FRACBITS), (fixed_t) weapon_inertia_scale), FRACUNIT)))
 #define EASE_OUT(x, y) ((x) - FixedMul((x), FixedMul((y), (y))))
 #define MAX_DELTA (SCREENWIDTH << FRACBITS)
@@ -1376,6 +1378,8 @@ void P_NuggetResetWeaponInertia(void)
     psp->wix = psp->wiy = 0;
   }
 }
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // P_MovePsprites

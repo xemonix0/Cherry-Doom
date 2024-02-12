@@ -299,24 +299,39 @@ void S_StartSound(const mobj_t *origin, int sfx_id)
       memset(&channels[cnum], 0, sizeof(channel_t));
 }
 
-// [Nugget]: [NS] Try to play an optional sound.
-void S_StartSoundOptional(const mobj_t *origin, int sfx_id, int old_sfx_id)
+// [Nugget] /-----------------------------------------------------------------
+
+static int optionals[NUG_SFX_END - NUG_SFX_START];
+
+// [NS] Try to play an optional sound.
+void S_StartSoundOptional(const mobj_t *const origin, const int sfx_id, const int old_sfx_id)
 {
-  static int lump[(sfx_intdms - sfx_pljump) + 1] = { -2 };
-  int i;
-
-  if (lump[0] == -2) // [Nugget] Get lump nums only once
-    for (i = sfx_pljump;  i <= sfx_intdms;  i++)
-    { lump[i - sfx_pljump] = I_GetSfxLumpNum(&S_sfx[i]); }
-
   // If `sfx_id` corresponds to a non-optional sound, play it without checking,
   // otherwise play the optional sound if present
-  if (!(sfx_pljump <= sfx_id && sfx_id <= sfx_intdms) || lump[sfx_id - sfx_pljump] >= 0)
-  { S_StartSound(origin, sfx_id); }
-  else // Play the fallback
-  if (old_sfx_id >= 0)
-  { S_StartSound(origin, old_sfx_id); }
+  if (   !(NUG_SFX_START <= sfx_id && sfx_id < NUG_SFX_END)
+      ||  (optionals[sfx_id - NUG_SFX_START] >= 0))
+  {
+    S_StartSound(origin, sfx_id);
+  }
+  else if (old_sfx_id >= 0) // Play the fallback
+  {
+    S_StartSound(origin, old_sfx_id);
+  }
 }
+
+void S_PlayerPainSound(const mobj_t *const origin)
+{
+  int i = BETWEEN(0, 3, (origin->health - 1) / 25);
+
+  while (optionals[sfx_ppai25 + i - NUG_SFX_START] == -1) {
+    if (3 < ++i) { break; }
+  }
+
+  if (i <= 3) { S_StartSound(origin, sfx_ppai25 + i); }
+  else        { S_StartSound(origin, sfx_plpain); }
+}
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // S_StopSound
@@ -770,6 +785,10 @@ void S_Init(int sfxVolume, int musicVolume)
 
    if (gamemode != commercial)
      InitE4Music();
+
+  // [Nugget] Get lump nums for optional sounds
+  for (int i = NUG_SFX_START;  i < NUG_SFX_END;  i++)
+  { optionals[i - NUG_SFX_START] = I_GetSfxLumpNum(&S_sfx[i]); }
 }
 
 //----------------------------------------------------------------------------

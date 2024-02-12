@@ -710,8 +710,8 @@ default_t defaults[] = {
   {
     "over_under",
     (config_t *) &over_under, NULL,
-    {0}, {0,1}, number, ss_gen, wad_yes,
-    "1 to allow things to move over/under other things"
+    {0}, {0,2}, number, ss_gen, wad_yes,
+    "Allow movement over/under things (1 = Player only, 2 = All things)"
   },
 
   {
@@ -848,6 +848,13 @@ default_t defaults[] = {
   },
 
   {
+    "alt_interpic",
+    (config_t *) &alt_interpic, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "Alternative intermission background (spinning camera view)"
+  },
+
+  {
     "fake_contrast",
     (config_t *) &fake_contrast, NULL,
     {1}, {0,2}, number, ss_gen, wad_yes,
@@ -873,6 +880,27 @@ default_t defaults[] = {
     (config_t *) &one_key_saveload, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
     "1 for single key quick saving/loading"
+  },
+
+  {
+    "rewind_interval",
+    (config_t *) &rewind_interval, NULL,
+    {1}, {1,600}, number, ss_gen, wad_no,
+    "Interval between rewind key-frames, in seconds"
+  },
+
+  {
+    "rewind_depth",
+    (config_t *) &rewind_depth, NULL,
+    {60}, {0,600}, number, ss_gen, wad_no,
+    "Number of rewind key-frames to be stored (0 = No rewinding)"
+  },
+
+  {
+    "rewind_timeout",
+    (config_t *) &rewind_timeout, NULL,
+    {10}, {0,25}, number, ss_gen, wad_no,
+    "Max. time to store a key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)"
   },
 
   {
@@ -1509,7 +1537,7 @@ default_t defaults[] = {
     "comp_longautoaim",
     (config_t *) &comp_longautoaim, NULL,
     {0}, {0,1}, number, ss_none, wad_yes,
-    "Double Autoaim range"
+    "Double autoaim range"
   },
 
   {
@@ -1565,7 +1593,7 @@ default_t defaults[] = {
     "comp_manualdoor",
     (config_t *) &comp_manualdoor, NULL,
     {1}, {0,1}, number, ss_none, wad_yes,
-    "Manually reactivated moving doors are silent"
+    "Manually-toggled moving doors are silent"
   },
 
   {
@@ -1594,6 +1622,13 @@ default_t defaults[] = {
     (config_t *) &comp_flamst, NULL,
     {0}, {0,1}, number, ss_none, wad_yes,
     "Arch-Vile fire plays flame start sound"
+  },
+
+  {
+    "comp_godface",
+    (config_t *) &comp_godface, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Higher god-mode face priority"
   },
 
   {
@@ -1940,6 +1975,14 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to restore from saved games",
     input_loadgame, { {input_type_key, KEY_F3} }
+  },
+
+  { // [Nugget] 
+    "input_rewind",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to rewind",
+    input_rewind, { {0, 0} }
   },
 
   {

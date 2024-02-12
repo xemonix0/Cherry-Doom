@@ -407,14 +407,38 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) // killough 9/12/98
 
       if (actor->flags & MF_FLOAT && floatok)
         {
+          // [Nugget] Over/Under
+          const fixed_t oldz = actor->z;
+
           if (actor->z < tmfloorz)          // must adjust height
-            actor->z += FLOATSPEED;
+          {
+              actor->z += FLOATSPEED;
+
+              // [Nugget] Over/Under: don't ascend into other things
+              if (actor->above_thing
+                  && (actor->above_thing->z < (actor->z + actor->height)))
+              {
+                actor->z = actor->above_thing->z - actor->height;
+              }
+          }
           else
+          {
             actor->z -= FLOATSPEED;
 
-          actor->flags |= MF_INFLOAT;
+            // [Nugget] Over/Under: don't descend into other things
+            if (actor->below_thing
+                && (actor->z < (actor->below_thing->z + actor->below_thing->height)))
+            {
+              actor->z = actor->below_thing->z + actor->below_thing->height;
+            }
+          }
 
-	  return true;
+          // [Nugget] Conditions: only if we actually moved
+          if (NOTCASUALPLAY(actor->z != oldz))
+          {
+            actor->flags |= MF_INFLOAT;
+            return true;
+          }
         }
 
       if (!numspechit)
@@ -460,7 +484,13 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) // killough 9/12/98
 
   // killough 11/98: fall more slowly, under gravity, if felldown==true
   if (!(actor->flags & MF_FLOAT) && (!felldown || demo_version < 203))
+  {
     actor->z = actor->floorz;
+
+    // [Nugget] Over/Under
+    if (actor->below_thing)
+    { actor->z = MAX(actor->floorz, actor->below_thing->z + actor->below_thing->height); }
+  }
 
   return true;
 }
@@ -2187,7 +2217,13 @@ void A_XScream(mobj_t *actor)
 void A_Pain(mobj_t *actor)
 {
   if (actor->info->painsound)
-    S_StartSound(actor, actor->info->painsound);
+  {
+    // [Nugget]
+    if (STRICTMODE(actor->info->painsound == sfx_plpain))
+      S_PlayerPainSound(actor);
+    else
+      S_StartSound(actor, actor->info->painsound);
+  }
 }
 
 void A_Fall(mobj_t *actor)
