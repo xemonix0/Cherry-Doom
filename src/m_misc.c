@@ -3493,13 +3493,6 @@ default_t defaults[] = {
     "show level stats (kill, items and secrets) widget (1 = on Automap, 2 = on HUD, 3 = always)"
   },
 
-  { // [Nugget] Smart Totals from So Doom
-    "smarttotals",
-    (config_t *) &smarttotals, NULL,
-    {0}, {0,1}, number, ss_stat, wad_no,
-    "1 to enable Smart Totals"
-  },
-
   // [FG] level time widget
   {
     "hud_level_time",

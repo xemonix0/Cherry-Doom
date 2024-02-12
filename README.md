@@ -41,7 +41,6 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Move Over/Under Things_** setting [partially p.f. Crispy Doom, DSDA-Doom]
 - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first) [p.f. Crispy Doom]
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first) [i.b. ZDoom]
-- **_Field of View_** setting [p.f. Doom Retro]
 - **_View Height_** setting, which allows to enter a custom height value between 32 and 56 for the player's POV [i.b. Brutal Doom]
 - **_View Bobbing Percentage_** setting [i.b. Crispy Doom, ZDoom]
 - **_Impact Pitch_** setting, to flinch upon hitting a floor and/or taking damage
@@ -96,7 +95,6 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-Only: `show_ssg`) [p.f. Crispy Doom]
 - **_Alternative Arms Display_** setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
 - **Blink Missing Keys** setting (CFG-Only: `blink_keys`) [partially p.f. Crispy Doom]
-- **_Smart Totals_** setting [p.f. So Doom]
 - **Event Timers:**
   - _"Use" Button Timer_ [p.f. Crispy Doom]; 
   - _Teleport Timer_ [i.b. the above];
@@ -288,7 +286,6 @@ Copyright:
  © 2005-2018 Simon Howard;  
  © 2006 Ben Ryves;  
  © 2017 Christoph Oelckers;  
- © 2017-2022 Brad Harding;  
  © 2019 Fernando Carmona Varo;  
  © 2020 Alex Mayfield;  
  © 2020 JadingTsunami;  
@@ -297,7 +294,6 @@ Copyright:
  © 2021 Ryan Krafnick;  
  © 2021-2024 Alaux;  
  © 2022 Julia Nechaevskaya;  
- © 2022 Vladislav Melnichuk;  
  © 2022-2023 ceski;  
  © 2023 Andrew Apted;  
  © 2023 liPillON.   

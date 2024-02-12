@@ -9,7 +9,8 @@
 
 - **Merged changes from [Woof! post-12.0.2](link)**, note:
   - Replaced Nugget's _Organize Saves by IWAD_ feature with Woof's _Organize Save Files_, which also organizes by PWAD¹;
-  - Replaced Nugget's unrevealed-secret-sector Automap color with Woof's revealed-secret-sector color.
+  - Replaced Nugget's unrevealed-secret-sector Automap color with Woof's revealed-secret-sector color;
+  - Removed _Smart Totals_ setting.
 - **Reimplemented _Move Over/Under Things_ feature**², making it much less bug-prone
 - **Improved Automap line thickening when the window is downscaled**
 - **Tweaked zooming effect**
