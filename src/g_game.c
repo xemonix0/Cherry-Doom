@@ -131,8 +131,7 @@ int             gametic;
 int             levelstarttic; // gametic at level start
 int             basetic;       // killough 9/29/98: for demo sync
 int             totalkills, totalitems, totalsecret;    // for intermission
-int             extraspawns;   // [Nugget]: [crispy] count spawned monsters
-int             extrakills;    // [Nugget]: [So Doom] count deaths of resurrected and (re)spawned monsters
+int             max_kill_requirement; // DSDA UV Max category requirements
 milestone_t     complete_milestones; // [Nugget]
 int             totalleveltimes; // [FG] total time for all completed levels
 boolean         demorecording;
@@ -1486,16 +1485,11 @@ static void G_WriteLevelStat(void)
     {
         if (playeringame[i])
         {
-            playerKills += players[i].killcount;
+            playerKills += players[i].killcount - players[i].maxkilldiscount;
             playerItems += players[i].itemcount;
             playerSecrets += players[i].secretcount;
         }
     }
-
-    if (playerKills - extrakills >= 0)
-        playerKills -= extrakills;
-    else
-        playerKills = 0;
 
     fprintf(fstream, "%s%s - %s (%s)  K: %d/%d  I: %d/%d  S: %d/%d\n",
             levelString, (secretexit ? "s" : ""),
@@ -2018,7 +2012,7 @@ static void G_DoPlayDemo(void)
 // killough 2/22/98: version id string format for savegames
 #define VERSIONID "MBF %d"
 
-#define CURRENT_SAVE_VERSION "Nugget 2.1.0" // [Nugget]
+#define CURRENT_SAVE_VERSION "Nugget 2.5.0" // [Nugget]
 
 static char *savename = NULL;
 
@@ -2232,13 +2226,9 @@ static void G_DoSaveGame(void)
     memset(save_p, 0, 8);
   save_p += 8;
 
-  // [Nugget] Save extraspawns
-  CheckSaveGame(sizeof extraspawns);
-  saveg_write32(extraspawns);
-
-  // save extrakills
-  CheckSaveGame(sizeof extrakills);
-  saveg_write32(extrakills);
+  // save max_kill_requirement
+  CheckSaveGame(sizeof(max_kill_requirement));
+  saveg_write32(max_kill_requirement);
 
   // [Nugget] Save milestones
   CheckSaveGame(sizeof complete_milestones);
@@ -2267,6 +2257,14 @@ static void G_DoSaveGame(void)
   M_SetQuickSaveSlot(savegameslot);
 
   drs_skip_frame = true;
+}
+
+static void CheckSaveVersion(const char *str, saveg_compat_t ver)
+{
+  if (strncmp((char *) save_p, str, strlen(str)) == 0)
+  {
+    saveg_compat = ver;
+  }
 }
 
 static void G_DoLoadGame(void)
@@ -2301,19 +2299,14 @@ static void G_DoLoadGame(void)
   // killough 2/22/98: "proprietary" version string :-)
   sprintf (vcheck,VERSIONID,MBFVERSION);
 
-  if (strncmp((char *) save_p, CURRENT_SAVE_VERSION, strlen(CURRENT_SAVE_VERSION)) == 0)
-  {
-    saveg_compat = saveg_current;
-  }
-  // [Nugget]
-  #define SAVEIS(str) (strncmp((char *) save_p, str, strlen(CURRENT_SAVE_VERSION)) == 0)
-  else if (SAVEIS("Nugget 2.0.0")) { saveg_compat = saveg_nugget200; }
-  else if (SAVEIS("Woof 6.0.0"))   { saveg_compat = saveg_woof600; }
-  #undef SAVEIS
+  CheckSaveVersion(vcheck, saveg_mbf);
+  CheckSaveVersion("Woof 6.0.0", saveg_woof600);
+  CheckSaveVersion("Nugget 2.0.0", saveg_nugget200);
+  CheckSaveVersion("Nugget 2.1.0", saveg_nugget210);
+  CheckSaveVersion(CURRENT_SAVE_VERSION, saveg_current);
 
   // killough 2/22/98: Friendly savegame version difference message
-  if (!forced_loadgame && strncmp((char *) save_p, vcheck, VERSIONSIZE) &&
-                          saveg_compat != saveg_current)
+  if (!forced_loadgame && saveg_compat != saveg_mbf && saveg_compat < saveg_woof600)
     {
       G_LoadGameErr("Different Savegame Version!!!\n\nAre you sure?");
       return;
@@ -2439,15 +2432,20 @@ static void G_DoLoadGame(void)
     save_p += 8;
   }
 
+  // restore max_kill_requirement
+  max_kill_requirement = totalkills;
+  if (save_p - savebuffer <= length - sizeof(max_kill_requirement))
+  {
+    if (saveg_compat > saveg_woof600)
+    {
+      max_kill_requirement = saveg_read32();
+    }
+  }
+
   // [Nugget] -------------------------
-  
-  // Restore extraspawns
-  if (save_p - savebuffer <= length - sizeof extraspawns)
-  { extraspawns = saveg_read32(); }
-  
-  // Restore extrakills
-  if (saveg_compat > saveg_woof600 && save_p - savebuffer <= length - sizeof extrakills)
-  { extrakills = saveg_read32(); }
+
+  if (saveg_compat > saveg_nugget210)
+  { saveg_read32(); }
 
   // Restore milestones
   if (saveg_compat > saveg_nugget200 && save_p - savebuffer <= length - sizeof complete_milestones)
@@ -3075,11 +3073,13 @@ void G_PlayerReborn(int player)
   int killcount;
   int itemcount;
   int secretcount;
+  int maxkilldiscount;
 
   memcpy (frags, players[player].frags, sizeof frags);
   killcount = players[player].killcount;
   itemcount = players[player].itemcount;
   secretcount = players[player].secretcount;
+  maxkilldiscount = players[player].maxkilldiscount;
 
   p = &players[player];
 
@@ -3094,6 +3094,7 @@ void G_PlayerReborn(int player)
   players[player].killcount = killcount;
   players[player].itemcount = itemcount;
   players[player].secretcount = secretcount;
+  players[player].maxkilldiscount = maxkilldiscount;
 
   p->usedown = p->attackdown = true;  // don't do anything immediately
   p->playerstate = PST_LIVE;

@@ -989,7 +989,17 @@ static void saveg_read_player_t(player_t *str)
         str->oldviewz = 0;
     }
 
-    // [Nugget]
+    if (saveg_compat > saveg_woof600)
+    {
+        // [Woof!]: int maxkilldiscount;
+        str->maxkilldiscount = saveg_read32();
+    }
+    else
+    {
+        str->maxkilldiscount = 0;
+    }
+
+    // [Nugget] --------------------------------------------------------------
 
     if (saveg_compat > saveg_woof600) {
       str->jumptics     = saveg_read32(); // int jumptics;
@@ -1147,7 +1157,11 @@ static void saveg_write_player_t(player_t *str)
     // [Woof!]: angle_t oldviewz;
     saveg_write32(str->oldviewz);
 
-    // [Nugget]
+    // [Woof!]: int maxkilldiscount;
+    saveg_write32(str->maxkilldiscount);
+
+    // [Nugget] --------------------------------------------------------------
+
     saveg_write32(str->jumptics); // int jumptics;
     saveg_write32(str->crouchoffset); // fixed_t crouchoffset;
     saveg_write_enum(str->lastweapon); // weapontype_t lastweapon;

@@ -774,6 +774,16 @@ static void P_NuggetGib(mobj_t *mo)
 //
 // killough 11/98: make static
 
+static void WatchKill(player_t* player, mobj_t* target)
+{
+  player->killcount++;
+
+  if (target->intflags & MIF_SPAWNED_BY_ICON)
+  {
+    player->maxkilldiscount++;
+  }
+}
+
 static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
 {
   mobjtype_t item;
@@ -796,12 +806,8 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
       // count for intermission
       // killough 7/20/98: don't count friends
       if (!(target->flags & MF_FRIEND))
-        if (target->flags & MF_COUNTKILL) {
-          source->player->killcount++;
-          // [Nugget]: [So Doom] count deaths of resurrected/Nightmare-respawned/Icon of Sin-spawned monsters
-          if (target->intflags & MIF_EXTRASPAWNED)
-            extrakills++;
-        }
+	if (target->flags & MF_COUNTKILL)
+	  WatchKill(source->player, target);
       if (target->player)
         source->player->frags[target->player-players]++;
     }
@@ -810,13 +816,9 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
         {
           // count all monster deaths,
           // even those caused by other monsters
-          // killough 7/20/98: don't count friends
-          if (!(target->flags & MF_FRIEND)) {
-            players->killcount++;
-            // [Nugget]: [So Doom] count deaths of resurrected/Nightmare-respawned/Icon of Sin-spawned monsters
-            if (target->intflags & MIF_EXTRASPAWNED)
-              extrakills++;
-          }
+	  // killough 7/20/98: don't count friends
+	  if (!(target->flags & MF_FRIEND))
+	    WatchKill(players, target);
         }
 #ifndef MBF_STRICT
       // For compatibility with PrBoom+ complevel 11 netgame
@@ -826,7 +828,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
           if (target->lastenemy && target->lastenemy->health > 0 &&
               target->lastenemy->player)
           {
-              target->lastenemy->player->killcount++;
+              WatchKill(target->lastenemy->player, target);
           }
           else
           {
@@ -845,7 +847,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
               else
                 i = Woof_Random() % playerscount;
 
-              players[i].killcount++;
+              WatchKill(&players[i], target);
             }
           }
         }

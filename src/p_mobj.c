@@ -708,13 +708,6 @@ void P_NightmareRespawn(mobj_t* mobj)
   // killough 11/98: transfer friendliness from deceased
   mo->flags = (mo->flags & ~MF_FRIEND) | (mobj->flags & MF_FRIEND);
 
-  // [Nugget]: [So Doom]
-  mo->intflags |= MIF_EXTRASPAWNED;
-
-  // [crispy] count respawned monsters
-  if (!(mo->flags & MF_FRIEND))
-    extraspawns++; // [Nugget] Smart Totals from So Doom
-
   mo->reactiontime = 18;
 
   // remove the old monster,
@@ -1001,6 +994,11 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   // [Nugget] Removed `actualheight`
 
   P_AddThinker(&mobj->thinker);
+
+  if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
+  {
+    ++max_kill_requirement;
+  }
 
   return mobj;
 }

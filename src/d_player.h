@@ -215,6 +215,9 @@ typedef struct player_s
 
   weapswitch_t switching;
 
+  // DSDA UV Max category requirements
+  int maxkilldiscount;
+
   // [Nugget] ----------------------------------------------------------------
 
   weapontype_t        lastweapon;

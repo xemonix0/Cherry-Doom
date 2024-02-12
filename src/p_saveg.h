@@ -61,11 +61,11 @@ typedef enum saveg_compat_e
 {
   saveg_mbf,
   saveg_woof510,
-  // [Nugget]
   saveg_woof600,
+  // [Nugget]
   saveg_nugget200,
-  
-  saveg_current,
+  saveg_nugget210,
+  saveg_current, // saveg_nugget250
 } saveg_compat_t;
 
 extern saveg_compat_t saveg_compat;

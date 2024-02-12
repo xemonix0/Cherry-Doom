@@ -269,10 +269,9 @@ extern  int displayplayer;
 // Statistics on a given map, for intermission.
 //
 extern  int totalkills;
-extern  int extraspawns; // [Nugget]: [crispy] count resurrected and (re)spawned monsters
-extern  int extrakills; // [Nugget]: [So Doom] count kills of resurrected and (re)spawned monsters
 extern  int totalitems;
 extern  int totalsecret;
+extern  int max_kill_requirement;
 
 // [Nugget]
 typedef enum { MILESTONE_KILLS = 0x1, MILESTONE_ITEMS = 0x2, MILESTONE_SECRETS = 0x4, } milestone_t;
