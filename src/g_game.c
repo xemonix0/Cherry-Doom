@@ -633,6 +633,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   }
 
   // [Nugget] Decrease the intensity of some movements if zoomed in
+  #if 0
   if (!strictmode)
   {
     const int zoom = R_GetFOVFX(FOVFX_ZOOM);
@@ -645,6 +646,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       }
     }
   }
+  #endif
 
   if (forward > MAXPLMOVE)
     forward = MAXPLMOVE;

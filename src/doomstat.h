@@ -462,7 +462,6 @@ extern int gammacycle; // CFG-Only
 extern int wipe_type;
 extern int over_under;
 extern int jump_crouch;
-extern int fov;
 extern int viewheight_value;
 extern int view_bobbing_percentage;
 

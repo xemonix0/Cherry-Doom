@@ -667,8 +667,7 @@ void R_ProjectSprite (mobj_t* thing)
     vis->colormap[0] = vis->colormap[1] = fullcolormap;       // full bright  // killough 3/20/98
   else
     {      // diminished light
-      int index = FixedDiv(xscale / fovdiff, // [Nugget]
-                           video.xscale) >> LIGHTSCALESHIFT;  // killough 11/98
+      int index = FixedDiv(xscale, video.xscale) >> LIGHTSCALESHIFT;  // killough 11/98
       if (index >= MAXLIGHTSCALE)
         index = MAXLIGHTSCALE-1;
 

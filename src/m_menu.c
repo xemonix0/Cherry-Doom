@@ -2729,10 +2729,12 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
 }
 
 // [Nugget]
+#if 0
 static void M_SetFOV(void)
 {
   fovchange = true;
 }
+#endif
 
 /////////////////////////////
 //
@@ -3106,7 +3108,7 @@ setup_menu_t keys_settings10[] =
     {"Cycle Chasecam",   S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_chasecam * M_SPC, {0}, input_chasecam},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub2    * M_SPC},
     {"Toggle Zoom",      S_INPUT|S_STRICT,            m_scrn, KB_X, M_Y + keys10_zoom     * M_SPC, {0}, input_zoom},
-    {"Zoom FOV",         S_NUM  |S_STRICT,            m_null, KB_X, M_Y + keys10_zoomfov  * M_SPC, {"zoom_fov"}, 0, M_SetFOV},
+    {"Zoom FOV",         S_NUM  |S_STRICT,            m_null, KB_X, M_Y + keys10_zoomfov  * M_SPC, {"zoom_fov"}, 0, /*M_SetFOV*/},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub3    * M_SPC},
     {"Toggle Crosshair", S_INPUT,                     m_scrn, KB_X, M_Y + keys10_xhair    * M_SPC, {0}, input_crosshair},
     {"",                 S_SKIP,                      m_null, KB_X, M_Y + keys10_stub4    * M_SPC},
@@ -4287,7 +4289,6 @@ enum {
   gen6_jump_crouch,
   gen6_stub1,
   gen6_title2,
-  gen6_fov,
   gen6_viewheight,
   gen6_viewbobbing,
   gen6_impactpitch,
@@ -4629,7 +4630,6 @@ setup_menu_t gen_settings6[] = {
   {"",              S_SKIP,         m_null, M_X, M_Y + gen6_stub1  * M_SPC},
   {"Nugget - View", S_SKIP|S_TITLE, m_null, M_X, M_Y + gen6_title2 * M_SPC},
 
-    {"Field of View",                 S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_fov         * M_SPC, {"fov"}, 0, M_SetFOV},
     {"View Height",                   S_NUM   |S_STRICT, m_null, M_X, M_Y + gen6_viewheight  * M_SPC, {"viewheight_value"}, 0, M_ChangeViewHeight},
     {"View Bobbing Percentage",       S_NUM,             m_null, M_X, M_Y + gen6_viewbobbing * M_SPC, {"view_bobbing_percentage"}},
     {"Impact Pitch",                  S_CHOICE|S_STRICT, m_null, M_X, M_Y + gen6_impactpitch * M_SPC, {"impact_pitch"}, 0, NULL, impact_pitch_str},

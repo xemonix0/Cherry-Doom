@@ -37,12 +37,8 @@
 #include "p_map.h"
 #include "p_mobj.h"
 
-// [Nugget]
-#ifndef M_PI
-  #define M_PI 3.14159265358979323846
-#endif
-
-// [Nugget] Removed unused FIELDOFVIEW macro
+// Fineangles in the SCREENWIDTH wide window.
+#define FIELDOFVIEW 2048    
 
 // killough: viewangleoffset is a legacy from the pre-v1.2 days, when Doom
 // had Left/Mid/Right viewing. +/-ANG90 offsets were placed here on each
@@ -379,7 +375,7 @@ static void R_InitTextureMapping (void)
 {
   register int i,x;
   fixed_t focallength;
-
+    
   // Use tangent table to generate viewangletox:
   //  viewangletox will give the next greatest x
   //  after the view angle.
@@ -387,15 +383,15 @@ static void R_InitTextureMapping (void)
   // Calc focallength
   //  so FIELDOFVIEW angles covers SCREENWIDTH.
 
-  focallength = FixedDiv(centerxfrac, fovscale); // [Nugget] FOV from Doom Retro
-
+  focallength = FixedDiv(centerxfrac_nonwide, finetangent[FINEANGLES/4+FIELDOFVIEW/2]);
+        
   for (i=0 ; i<FINEANGLES/2 ; i++)
     {
       int t;
-      if (finetangent[i] > fovscale)
+      if (finetangent[i] > FRACUNIT*2)
         t = -1;
       else
-        if (finetangent[i] < -fovscale)
+        if (finetangent[i] < -FRACUNIT*2)
           t = viewwidth+1;
       else
         {
@@ -409,7 +405,7 @@ static void R_InitTextureMapping (void)
         }
       viewangletox[i] = t;
     }
-
+    
   // Scan viewangletox[] to generate xtoviewangle[]:
   //  xtoviewangle will give the smallest view angle
   //  that maps to x.
@@ -420,17 +416,17 @@ static void R_InitTextureMapping (void)
         ;
       xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
       // [FG] linear horizontal sky scrolling
-      linearskyangle[x] = ((viewwidth/2-x)*((video.unscaledw<<FRACBITS)/viewwidth))*(ANG90/(NONWIDEWIDTH<<FRACBITS)) / fovdiff; // [Nugget]
+      linearskyangle[x] = ((viewwidth/2-x)*((video.unscaledw<<FRACBITS)/viewwidth))*(ANG90/(NONWIDEWIDTH<<FRACBITS));
     }
-
+    
   // Take out the fencepost cases from viewangletox.
   for (i=0; i<FINEANGLES/2; i++)
     if (viewangletox[i] == -1)
       viewangletox[i] = 0;
-    else
+    else 
       if (viewangletox[i] == viewwidth+1)
         viewangletox[i] = viewwidth;
-
+        
   clipangle = xtoviewangle[0];
 
   vx_clipangle = clipangle - (video.fov - ANG90);
@@ -569,9 +565,6 @@ void R_ExecuteSetViewSize (void)
 {
   int i, j;
   vrect_t view;
-  // [Nugget] FOV from Doom Retro
-  double WIDEFOVDELTA;
-  fixed_t num;
 
   setsizeneeded = false;
 
@@ -625,6 +618,7 @@ void R_ExecuteSetViewSize (void)
   viewblocks = (MIN(setblocks, 10) * video.yscale) >> FRACBITS;
 
   // [Nugget] FOV changes
+  #if 0
   if (fovchange)
   {
     static int oldtic = -1;
@@ -706,26 +700,15 @@ void R_ExecuteSetViewSize (void)
 
     rfov = bfov + fx;
     fovdiff = (float) ORIGFOV / rfov;
-    pitchmax = PITCHMAX * FOVDIFF2; // Mitigate `PLAYER_SLOPE()` and `lookdir` misalignment
   }
-
-  // [Nugget] FOV from Doom Retro
-  if (widescreen) {
-    // fov * 0.82 is vertical FOV for 4:3 aspect ratio
-    WIDEFOVDELTA = (atan(video.unscaledw / ((1.2 * SCREENHEIGHT) / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov;
-  }
-  else { WIDEFOVDELTA = 0; }
-
-  // [Nugget]
-  video.fov = FixedToAngle((fixed_t) ((rfov + WIDEFOVDELTA) * FRACUNIT));
+  #endif
 
   centery = viewheight/2;
   centerx = viewwidth/2;
   centerxfrac = centerx<<FRACBITS;
   centeryfrac = centery<<FRACBITS;
   centerxfrac_nonwide = (viewwidth_nonwide/2)<<FRACBITS;
-  fovscale = finetangent[(int)(FINEANGLES / 4 + (rfov + WIDEFOVDELTA) * FINEANGLES / 360 / 2)]; // [Nugget] FOV from Doom Retro
-  projection = FixedDiv(centerxfrac, fovscale); // [Nugget] FOV from Doom Retro
+  projection = centerxfrac_nonwide;
   viewheightfrac = viewheight<<(FRACBITS+1); // [FG] sprite clipping optimizations
 
   R_InitBuffer();       // killough 11/98
@@ -741,18 +724,16 @@ void R_ExecuteSetViewSize (void)
     screenheightarray[i] = viewheight;
 
   // planes
-  num = FixedMul(FixedDiv(FRACUNIT, fovscale), viewwidth * FRACUNIT / 2); // [Nugget] FOV from Doom Retro
-
   for (i=0 ; i<viewheight ; i++)
     {   // killough 5/2/98: reformatted
       for (j = 0; j < LOOKDIRS; j++)
       {
         // [crispy] re-generate lookup-table for yslope[] whenever "viewheight" or "hires" change
-        fixed_t dy = abs(((i-viewheight/2-(j-pitchmax)*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
-        yslopes[j][i] = FixedDiv(num, dy);
+        fixed_t dy = abs(((i-viewheight/2-(j-PITCHMAX)*viewblocks/10)<<FRACBITS)+FRACUNIT/2); // [Nugget]
+        yslopes[j][i] = FixedDiv(viewwidth_nonwide*(FRACUNIT/2), dy);
       }
     }
-  yslope = yslopes[pitchmax];
+  yslope = yslopes[PITCHMAX]; // [Nugget]
 
   for (i=0 ; i<viewwidth ; i++)
     {
@@ -931,8 +912,6 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget] /---------------------------------------------------------------
 
-  pitch *= FOVDIFF2; // Mitigate `PLAYER_SLOPE()` and `lookdir` misalignment
-
   if (STRICTMODE(st_crispyhud)) { pitch += nughud.viewoffset; } // NUGHUD
 
   // Explosion shake effect
@@ -1045,10 +1024,11 @@ void R_SetupFrame (player_t *player)
 
   extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness);
     
-  if (pitch > pitchmax)
-    pitch = pitchmax;
-  else if (pitch < -pitchmax)
-    pitch = -pitchmax;
+  // [Nugget]
+  if (pitch > PITCHMAX)
+    pitch = PITCHMAX;
+  else if (pitch < -PITCHMAX)
+    pitch = -PITCHMAX;
 
   // apply new yslope[] whenever "lookdir", "viewheight" or "hires" change
   tempCentery = viewheight/2 + pitch * viewblocks / 10;
@@ -1056,7 +1036,7 @@ void R_SetupFrame (player_t *player)
   {
       centery = tempCentery;
       centeryfrac = centery << FRACBITS;
-      yslope = yslopes[pitchmax + pitch];
+      yslope = yslopes[PITCHMAX + pitch]; // [Nugget]
   }
 
   viewsin = finesine[viewangle>>ANGLETOFINESHIFT];

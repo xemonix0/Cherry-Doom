@@ -143,7 +143,6 @@ int gammacycle; // CFG-Only
 int wipe_type;
 int over_under;
 int jump_crouch;
-int fov;
 int viewheight_value;
 int view_bobbing_percentage;
 int impact_pitch;

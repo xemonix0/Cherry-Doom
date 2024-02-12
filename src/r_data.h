@@ -32,8 +32,7 @@
 #define LOOKDIRMAX	100
 #define   PITCHMAX	(LOOKDIRMAX+24) // [Nugget] Accommodate pitch effects (e.g. recoil)
 // [crispy] lookdir range: -100..100
-// [Nugget] Increased to accommodate variable FOV
-#define LOOKDIRS	((2*PITCHMAX+1) * ORIGFOV / (MINFOV-2))
+#define LOOKDIRS	(2*PITCHMAX+1)
 #define MLOOKUNIT	8
 
 // Retrieve column data for span blitting.

@@ -261,8 +261,7 @@ void D_Display (void)
   else if (gamestate == GS_LEVEL)
     I_DynamicResolution();
 
-  if (setsizeneeded                 // change the view size if needed
-      || fovchange) // [Nugget]
+  if (setsizeneeded)                // change the view size if needed
     {
       R_ExecuteSetViewSize();
       oldgamestate = -1;            // force background redraw
