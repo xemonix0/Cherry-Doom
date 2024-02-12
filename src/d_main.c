@@ -36,6 +36,7 @@
 #include "f_finale.h"
 #include "f_wipe.h"
 #include "m_argv.h"
+#include "m_array.h"
 #include "m_misc.h"
 #include "m_misc2.h" // [FG] M_StringDuplicate()
 #include "m_menu.h"
@@ -402,7 +403,7 @@ void D_Display (void)
     }
   while (!done);
 
-  I_ResetTargetRefresh(); // reset after wipe
+  drs_skip_frame = true; // skip DRS after wipe
 }
 
 //
@@ -616,6 +617,30 @@ void D_StartTitle (void)
   D_AdvanceDemo();
 }
 
+static boolean CheckExtensions(const char *filename, const char *ext, ...)
+{
+    boolean result = false;
+    va_list args;
+
+    if (M_StringCaseEndsWith(filename, ext))
+    {
+        return true;
+    }
+
+    va_start(args, ext);
+    while (true)
+    {
+        const char *arg = va_arg(args, const char *);
+        if (arg == NULL || (result = M_StringCaseEndsWith(filename, arg)))
+        {
+            break;
+        }
+    }
+    va_end(args);
+
+    return result;
+}
+
 char **tempdirs = NULL;
 
 static void AutoLoadWADs(const char *path);
@@ -625,9 +650,8 @@ static boolean D_AddZipFile(const char *file)
   int i;
   mz_zip_archive zip_archive;
   char *str, *tempdir, counter[8];
-  static int idx = 0;
 
-  if (!M_StringCaseEndsWith(file, ".zip") && !M_StringEndsWith(file, ".pk3"))
+  if (!CheckExtensions(file, ".zip", ".pk3", NULL))
   {
     return false;
   }
@@ -636,10 +660,9 @@ static boolean D_AddZipFile(const char *file)
   if (!mz_zip_reader_init_file(&zip_archive, file, MZ_ZIP_FLAG_DO_NOT_SORT_CENTRAL_DIRECTORY))
   {
     I_Error("D_AddZipFile: Failed to open %s", file);
-    return false;
   }
 
-  M_snprintf(counter, sizeof(counter), "%04d", idx);
+  M_snprintf(counter, sizeof(counter), "%04d", array_size(tempdirs));
   str = M_StringJoin("_", counter, "_", PROJECT_SHORTNAME, "_", M_BaseName(file), NULL);
   tempdir = M_TempFile(str);
   free(str);
@@ -661,9 +684,7 @@ static boolean D_AddZipFile(const char *file)
     if (name[0] == '.')
       continue;
 
-    if (M_StringCaseEndsWith(name, ".wad") || M_StringCaseEndsWith(name, ".lmp") ||
-        M_StringCaseEndsWith(name, ".ogg") || M_StringCaseEndsWith(name, ".flac") ||
-        M_StringCaseEndsWith(name, ".mp3") || M_StringCaseEndsWith(name, ".kvx"))
+    if (CheckExtensions(name, ".wad", ".lmp", ".ogg", ".flac", ".mp3", ".kvx", NULL))
     {
       char *dest = M_StringJoin(tempdir, DIR_SEPARATOR_S, name, NULL);
 
@@ -681,9 +702,7 @@ static boolean D_AddZipFile(const char *file)
 
   AutoLoadWADs(tempdir);
 
-  tempdirs = I_Realloc(tempdirs, (idx + 2) * sizeof(*tempdirs));
-  tempdirs[idx++] = tempdir;
-  tempdirs[idx] = NULL;
+  array_push(tempdirs, tempdir);
 
   return true;
 }
@@ -696,30 +715,21 @@ static boolean D_AddZipFile(const char *file)
 // killough 11/98: remove limit on number of files
 //
 
-static int numwadfiles;
 void D_AddFile(const char *file)
 {
-  static int numwadfiles_alloc;
-
+  // [FG] search for PWADs by their filename
   char *path = D_TryFindWADByName(file);
 
   if (M_StringCaseEndsWith(path, ".kvx"))
   {
-    VX_AddFile(path);
+    array_push(vxfiles, path);
     return;
   }
 
   if (D_AddZipFile(path))
     return;
 
-  if (numwadfiles == numwadfiles_alloc - 1 || !numwadfiles_alloc)
-  {
-    numwadfiles_alloc = (numwadfiles_alloc ? numwadfiles_alloc * 2 : 8);
-    wadfiles = I_Realloc(wadfiles, numwadfiles_alloc * sizeof(*wadfiles));
-  }
-  // [FG] search for PWADs by their filename
-  wadfiles[numwadfiles++] = path;
-  wadfiles[numwadfiles] = NULL;
+  array_push(wadfiles, path);
 }
 
 // killough 10/98: return the name of the program the exe was invoked as
@@ -784,7 +794,7 @@ static struct {
     char *(*func)(void);
     boolean createdir;
 } autoload_basedirs[] = {
-#ifndef WIN32
+#if !defined(WIN32)
     {"../share/" PROJECT_SHORTNAME, D_DoomExeDir, false},
 #endif
     {NULL, D_DoomPrefDir, true},
@@ -883,7 +893,6 @@ static void CheckIWAD(const char *iwadname)
     {
         fclose(file);
         I_Error("CheckIWAD: failed to read header %s", iwadname);
-        return;
     }
 
     if (strncmp(header.identification, "IWAD", 4) &&
@@ -891,7 +900,6 @@ static void CheckIWAD(const char *iwadname)
     {
         fclose(file);
         I_Error("Wad file %s doesn't have IWAD or PWAD id\n", iwadname);
-        return;
     }
 
     // read IWAD directory
@@ -905,7 +913,6 @@ static void CheckIWAD(const char *iwadname)
         free(fileinfo);
         fclose(file);
         I_Error("CheckIWAD: failed to read directory %s", iwadname);
-        return;
     }
 
     for (i = 0; i < header.numlumps; ++i)
@@ -1093,7 +1100,7 @@ void IdentifyVersion (void)
 
   // locate the IWAD and determine game mode from it
 
-  iwad = D_FindIWADFile(&gamemode, &gamemission);
+  iwad = D_FindIWADFile(&gamemode, &gamemission, &gamevariant);
 
   if (iwad && *iwad)
     {
@@ -1684,7 +1691,9 @@ static void D_AutoloadIWadDir()
     free(autoload_dir);
 
     // common auto-loaded files for all Doom flavors
-    if (gamemission < pack_chex)
+    if (gamemission < pack_chex &&
+        gamevariant != freedoom &&
+        gamevariant != miniwad)
     {
       autoload_dir = GetAutoloadDir(*base, "doom-all", true);
       AutoLoadWADs(autoload_dir);
@@ -1702,7 +1711,7 @@ static void D_AutoloadPWadDir()
 {
   int i;
 
-  for (i = 1; wadfiles[i]; ++i)
+  for (i = 1; i < array_size(wadfiles); ++i)
   {
     char **base;
 
@@ -1754,7 +1763,9 @@ static void D_AutoloadDehDir()
     free(autoload_dir);
 
     // common auto-loaded files for all Doom flavors
-    if (gamemission < pack_chex)
+    if (gamemission < pack_chex &&
+        gamevariant != freedoom &&
+        gamevariant != miniwad)
     {
       autoload_dir = GetAutoloadDir(*base, "doom-all", true);
       AutoLoadPatches(autoload_dir);
@@ -1772,7 +1783,7 @@ static void D_AutoloadPWadDehDir()
 {
   int i;
 
-  for (i = 1; wadfiles[i]; ++i)
+  for (i = 1; i < array_size(wadfiles); ++i)
   {
     char **base;
 
@@ -2315,7 +2326,7 @@ void D_DoomMain(void)
       // killough 11/98: allow multiple -file parameters
 
       boolean file = modifiedgame = true;            // homebrew levels
-      mainwadfile = numwadfiles;
+      mainwadfile = array_size(wadfiles);
       while (++p < myargc)
         if (*myargv[p] == '-')
           file = !strcasecmp(myargv[p],"-file");
@@ -2598,7 +2609,7 @@ void D_DoomMain(void)
       int i;
       char *wadname = wadfiles[0], *oldsavegame = basesavegame;
 
-      for (i = mainwadfile; i < numwadfiles; i++)
+      for (i = mainwadfile; i < array_size(wadfiles); i++)
       {
         if (FileContainsMaps(wadfiles[i]))
         {
@@ -2646,7 +2657,7 @@ void D_DoomMain(void)
   // init subsystems
 
   I_Printf(VB_INFO, "W_Init: Init WADfiles.");
-  W_InitMultipleFiles(wadfiles);
+  W_InitMultipleFiles();
 
   // Check for wolf levels
   haswolflevels = (W_CheckNumForName("map31") >= 0);

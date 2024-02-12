@@ -318,10 +318,10 @@ static int    NUMCMAPS;
 //
 
 // You Are Here graphic
-static patch_t*   yah[2];
+static patch_t*   yah[3] = {NULL, NULL, NULL};
 
 // splat
-static patch_t*   splat;
+static patch_t*   splat[2] = {NULL, NULL};
 
 // %, : graphics
 static patch_t*   percent;
@@ -595,17 +595,17 @@ WI_drawOnLnode  // draw stuff at a location by episode/map#
 	fits = true;
       else
 	i++;
-    }
-  while (!fits && i!=2);
+    } 
+  while (!fits && c[i]);
 
-  if (fits && i<2)
+  if (fits)
     {
       V_DrawPatch(lnodes[wbs->epsd][n].x, lnodes[wbs->epsd][n].y, c[i]);
     }
   else
     {
       // DEBUG
-      I_Printf(VB_WARNING, "Could not place patch on level %d", n+1);
+      I_Printf(VB_DEBUG, "Could not place patch on level %d", n+1);
     }
 }
 
@@ -916,7 +916,7 @@ static void WI_unloadData(void)
       Z_ChangeTag(yah[0], PU_CACHE);
       Z_ChangeTag(yah[1], PU_CACHE);
 
-      Z_ChangeTag(splat, PU_CACHE);
+      Z_ChangeTag(splat[0], PU_CACHE);
 
       for (i=0 ; i<NUMMAPS ; i++)
        if (lnames[i])
@@ -1102,11 +1102,11 @@ static void WI_drawShowNextLoc(void)
 
       // draw a splat on taken cities.
       for (i=0 ; i<=last ; i++)
-        WI_drawOnLnode(i, &splat);
+        WI_drawOnLnode(i, splat);
 
       // splat the secret level?
       if (wbs->didsecret)
-        WI_drawOnLnode(8, &splat);
+        WI_drawOnLnode(8, splat);
 
       // draw flashing ptr
       if (snl_pointeron)
@@ -2070,8 +2070,8 @@ void WI_loadData(void)
       yah[1] = W_CacheLumpName("WIURH1", PU_STATIC);
 
       // splat
-      splat = W_CacheLumpName("WISPLAT", PU_STATIC);
-
+      splat[0] = W_CacheLumpName("WISPLAT", PU_STATIC); 
+  
       if (wbs->epsd < 3)
         {
           for (j=0;j<NUMANIMS[wbs->epsd];j++)

@@ -27,6 +27,8 @@
 // POV related.
 //
 
+#define MAX_PITCH_ANGLE (32 * ANG1)
+
 extern fixed_t  viewcos;
 extern fixed_t  viewsin;
 extern int      viewwindowx;
@@ -40,6 +42,7 @@ extern int      validcount;
 extern int      linecount;
 extern int      loopcount;
 extern fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
+extern fixed_t  pov_slope; // For calculating projection.
 
 // [Nugget] Chasecam /--------------------------------------------------------
 

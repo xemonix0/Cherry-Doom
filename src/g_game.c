@@ -51,7 +51,6 @@
 #include "d_deh.h"              // Ty 3/27/98 deh declarations
 #include "p_inter.h"
 #include "g_game.h"
-#include "i_video.h" // [FG] MAX_JSB, MAX_MB
 #include "statdump.h" // [FG] StatCopy()
 #include "m_misc2.h"
 #include "u_mapinfo.h"
@@ -60,6 +59,8 @@
 #include "m_snapshot.h"
 #include "m_swap.h" // [FG] LONG
 #include "i_input.h"
+#include "i_video.h"
+#include "m_array.h"
 
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
@@ -182,12 +183,12 @@ fixed_t forwardmove[2] = {0x19, 0x32};
 fixed_t sidemove[2]    = {0x18, 0x28};
 fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
 
-static fixed_t lookspeed[] = {160, 320};
+#define LOOKSPEED 640
 
 boolean gamekeydown[NUMKEYS];
 int     turnheld;       // for accelerative turning
 
-boolean mousearray[MAX_MB+1]; // [FG] support more mouse buttons
+boolean mousearray[NUM_MOUSE_BUTTONS + 1]; // [FG] support more mouse buttons
 boolean *mousebuttons = &mousearray[1];    // allow [-1]
 
 // mouse values are used once
@@ -208,7 +209,7 @@ static carry_t prevcarry;
 static carry_t carry;
 static ticcmd_t basecmd;
 
-boolean joyarray[MAX_JSB+1]; // [FG] support more joystick buttons
+boolean joyarray[NUM_CONTROLLER_BUTTONS + 1]; // [FG] support more joystick buttons
 boolean *joybuttons = &joyarray[1];    // allow [-1]
 
 int axis_forward;
@@ -442,11 +443,14 @@ static double CalcMouseAngle(int mousex)
 
 static double CalcMousePitch(int mousey)
 {
+  double pitch;
+
   if (!mouseSensitivity_vert_look)
     return 0.0;
 
-  return (I_AccelerateMouse(mousey) * direction[mouse_y_invert] *
-          (mouseSensitivity_vert_look + 5) / 10);
+  pitch = I_AccelerateMouse(mousey) * (mouseSensitivity_vert_look + 5) * 8 / 10;
+
+  return pitch * FRACUNIT * direction[mouse_y_invert];
 }
 
 static double CalcMouseSide(int mousex)
@@ -484,8 +488,8 @@ void G_PrepTiccmd(void)
   if (mouselook)
   {
     const double pitch = CalcMousePitch(mousey);
-    cmd->lookdir = CarryMousePitch(pitch);
-    localview.pitch = cmd->lookdir;
+    cmd->pitch = CarryMousePitch(pitch);
+    localview.pitch = cmd->pitch;
   }
 }
 
@@ -615,7 +619,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       y = FixedMul(FixedMul(y, y), y);
 
       y = direction[invert_look] * axis_look_sens * y / 10;
-      pitch -= FixedMul(lookspeed[0], y);
+      pitch -= FixedMul(LOOKSPEED, y);
     }
   }
 
@@ -648,7 +652,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (pitch)
   {
-    cmd->lookdir = pitch;
+    cmd->pitch = pitch * FRACUNIT;
     localview.usepitch = false;
   }
 
@@ -1214,22 +1218,22 @@ boolean G_Responder(event_t* ev)
       return false;   // always let key up events filter down
 
     case ev_mouseb_down:
-      if (ev->data1 < MAX_MB)
+      if (ev->data1 < NUM_MOUSE_BUTTONS)
         mousebuttons[ev->data1] = true;
       return true;
 
     case ev_mouseb_up:
-      if (ev->data1 < MAX_MB)
+      if (ev->data1 < NUM_MOUSE_BUTTONS)
         mousebuttons[ev->data1] = false;
       return true;
 
     case ev_joyb_down:
-      if (ev->data1 < MAX_JSB)
+      if (ev->data1 < NUM_CONTROLLER_BUTTONS)
         joybuttons[ev->data1] = true;
       return true;
 
     case ev_joyb_up:
-      if (ev->data1 < MAX_JSB)
+      if (ev->data1 < NUM_CONTROLLER_BUTTONS)
         joybuttons[ev->data1] = false;
       return true;
 
@@ -1407,7 +1411,7 @@ static void G_PlayerFinishLevel(int player)
   p->damagecount = 0;     // no palette changes
   p->bonuscount = 0;
   // [crispy] reset additional player properties
-  p->oldlookdir = p->lookdir = 0;
+  p->oldpitch = p->pitch = 0;
   p->centering = false;
   p->slope = 0;
   p->recoilpitch = p->oldrecoilpitch = 0;
@@ -2179,10 +2183,10 @@ static void G_DoSaveGame(void)
 
   // killough 3/16/98: store pwad filenames in savegame
   {
-    char **w = wadfiles;
-    for (*save_p = 0; *w; w++)
+    int i;
+    for (*save_p = 0, i = 0; i < array_size(wadfiles); i++)
       {
-        const char *basename = M_BaseName(*w);
+        const char *basename = M_BaseName(wadfiles[i]);
         CheckSaveGame(strlen(basename)+2);
         strcat(strcat((char *) save_p, basename), "\n");
       }
@@ -2261,6 +2265,8 @@ static void G_DoSaveGame(void)
   if (name) free(name);
 
   M_SetQuickSaveSlot(savegameslot);
+
+  drs_skip_frame = true;
 }
 
 static void G_DoLoadGame(void)
@@ -4471,7 +4477,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
   mem_fputs(tmp, stream);
   free(tmp);
 
-  for (i = 1; wadfiles[i]; i++)
+  for (i = 1; i < array_size(wadfiles); i++)
   {
     const char *basename = M_BaseName(wadfiles[i]);
 
@@ -4492,7 +4498,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
   if (dehfiles)
   {
     mem_fputs(" -deh", stream);
-    for (i = 0; dehfiles[i]; ++i)
+    for (i = 0; i < array_size(dehfiles); ++i)
     {
       tmp = M_StringJoin(" \"", M_BaseName(dehfiles[i]), "\"", NULL);
       mem_fputs(tmp, stream);

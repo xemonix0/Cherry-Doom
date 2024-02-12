@@ -57,6 +57,8 @@
 #include "m_snapshot.h"
 #include "i_sound.h"
 #include "r_bmaps.h"
+#include "m_array.h"
+
 // [Nugget]
 #include "am_map.h"
 #include "st_stuff.h"
@@ -3629,6 +3631,7 @@ enum {
   gen1_title1,
   gen1_hires,
   gen1_widescreen,
+  gen1_fov,
   gen1_gap1,
 
   gen1_fullscreen,
@@ -3771,6 +3774,17 @@ static void M_CoerceFPSLimit(void)
   I_ResetTargetRefresh();
 }
 
+static void M_UpdateFOV(void)
+{
+  if (custom_fov < FOVMIN)
+  {
+    custom_fov = 0;
+  }
+
+  I_UpdateFOV();
+  setsizeneeded = true; // run R_ExecuteSetViewSize;
+}
+
 static void M_ResetScreen(void)
 {
   need_reset = true;
@@ -3785,6 +3799,9 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
 
   {"Widescreen Rendering", S_YESNO, m_null, M_X, M_Y+ gen1_widescreen*M_SPC,
    {"widescreen"}, 0, M_ResetScreen},
+
+  {"FOV", S_NUM, m_null, M_X, M_Y + gen1_fov*M_SPC,
+   {"fov"}, 0, M_UpdateFOV},
 
   {"", S_SKIP, m_null, M_X, M_Y + gen1_gap1*M_SPC},
 
@@ -6705,10 +6722,17 @@ void M_InitHelpScreen()
 
 void M_GetMidiDevices(void)
 {
-  int numdev = I_DeviceList(midi_player_menu_strings,
-        MAX_MIDI_PLAYER_MENU_ITEMS - 1, &midi_player_menu);
+    const char **device_list = I_DeviceList(&midi_player_menu);
 
-  midi_player_menu_strings[numdev] = NULL;
+    int size = MIN(array_size(device_list), MAX_MIDI_PLAYER_MENU_ITEMS - 1);
+
+    for (int i = 0; i < size; ++i)
+    {
+        midi_player_menu_strings[i] = device_list[i];
+    }
+    midi_player_menu_strings[size] = NULL;
+
+    array_free(device_list);
 }
 
 //

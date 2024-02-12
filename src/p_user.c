@@ -31,6 +31,21 @@
 #include "s_sound.h"
 #include "sounds.h"
 
+static fixed_t PlayerSlope(player_t *player)
+{
+  const fixed_t pitch = player->pitch;
+
+  if (pitch)
+  {
+    const fixed_t slope = -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT];
+    return (fixed_t)((int64_t)slope * SCREENHEIGHT / ACTUALHEIGHT);
+  }
+  else
+  {
+    return 0;
+  }
+}
+
 // Index of the special effects (INVUL inverse) map.
 
 #define INVERSECOLORMAP 32
@@ -435,10 +450,9 @@ void P_MovePlayer (player_t* player)
 
   if (!menuactive && !demoplayback)
   {
-    player->lookdir = BETWEEN(-LOOKDIRMAX * MLOOKUNIT,
-                               LOOKDIRMAX * MLOOKUNIT,
-                               player->lookdir + cmd->lookdir);
-    player->slope = PLAYER_SLOPE(player);
+    player->pitch += cmd->pitch;
+    player->pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, player->pitch);
+    player->slope = PlayerSlope(player);
   }
 }
 
@@ -589,7 +603,7 @@ void P_PlayerThink (player_t* player)
   player->mo->oldz = player->mo->z;
   player->mo->oldangle = player->mo->angle;
   player->oldviewz = player->viewz;
-  player->oldlookdir = player->lookdir;
+  player->oldpitch = player->pitch;
   player->oldrecoilpitch = player->recoilpitch;
   player->oldimpactpitch = player->impactpitch; // [Nugget] Impact pitch
 
@@ -618,27 +632,29 @@ void P_PlayerThink (player_t* player)
     }
 
   // [crispy] center view
+  #define CENTERING_VIEW_ANGLE (4 * ANG1)
+
   if (player->centering)
   {
-    if (player->lookdir > 0)
+    if (player->pitch > 0)
     {
-      player->lookdir -= 8 * MLOOKUNIT;
+      player->pitch -= CENTERING_VIEW_ANGLE;
     }
-    else if (player->lookdir < 0)
+    else if (player->pitch < 0)
     {
-      player->lookdir += 8 * MLOOKUNIT;
+      player->pitch += CENTERING_VIEW_ANGLE;
     }
-    if (abs(player->lookdir) < 8 * MLOOKUNIT)
+    if (abs(player->pitch) < CENTERING_VIEW_ANGLE)
     {
-      player->lookdir = 0;
+      player->pitch = 0;
 
-      if (player->oldlookdir == 0)
+      if (player->oldpitch == 0)
       {
         player->centering = false;
       }
     }
 
-    player->slope = PLAYER_SLOPE(player);
+    player->slope = PlayerSlope(player);
   }
 
   // [crispy] weapon recoil pitch
@@ -646,11 +662,11 @@ void P_PlayerThink (player_t* player)
   {
     if (player->recoilpitch > 0)
     {
-      player->recoilpitch -= 1;
+      player->recoilpitch -= ANG1;
     }
     else if (player->recoilpitch < 0)
     {
-      player->recoilpitch += 1;
+      player->recoilpitch += ANG1;
     }
   }
 

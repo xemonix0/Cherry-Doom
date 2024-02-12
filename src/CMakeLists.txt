@@ -49,6 +49,7 @@ set(NUGGETDOOM_SOURCES
     i_video.c              i_video.h
     info.c                 info.h
     m_argv.c               m_argv.h
+                           m_array.h
     m_bbox.c               m_bbox.h
     m_cheat.c              m_cheat.h
                            m_fixed.h
@@ -123,6 +124,7 @@ set(NUGGETDOOM_SOURCES
                            thermo.h
     u_mapinfo.c            u_mapinfo.h
     u_scanner.c            u_scanner.h
+    v_flextran.c           v_flextran.h
     v_trans.c              v_trans.h
     v_video.c              v_video.h
     version.c              version.h
@@ -226,6 +228,7 @@ set(SETUP_SOURCES
     i_system.c              i_system.h
     i_timer.c               i_timer.h
     m_argv.c                m_argv.h
+                            m_array.h
     m_io.c                  m_io.h
     m_misc2.c               m_misc2.h
     net_io.c                net_io.h

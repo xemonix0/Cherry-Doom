@@ -30,6 +30,7 @@
 #include "m_swap.h"
 #include "v_video.h" // cr_dark
 #include "r_bmaps.h" // [crispy] R_BrightmapForTexName()
+#include "v_flextran.h"
 
 //
 // Graphics.

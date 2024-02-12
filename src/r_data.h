@@ -24,17 +24,6 @@
 #include "r_defs.h"
 #include "r_state.h"
 
-// [Nugget]
-#define ORIGFOV 90
-#define MINFOV  20
-#define MAXFOV  160
-
-#define LOOKDIRMAX	100
-#define   PITCHMAX	(LOOKDIRMAX+24) // [Nugget] Accommodate pitch effects (e.g. recoil)
-// [crispy] lookdir range: -100..100
-#define LOOKDIRS	(2*PITCHMAX+1)
-#define MLOOKUNIT	8
-
 // Retrieve column data for span blitting.
 byte *R_GetColumn(int tex, int col);
 byte *R_GetColumnMod(int tex, int col);

@@ -1840,12 +1840,13 @@ fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 
   if (t1->player && (vertical_aiming == VERTAIM_DIRECT) && (mask & CROSSHAIR_AIM)) // [Nugget] Vertical aiming
   {
-    bottomslope = (topslope = t1->player->slope + 1) - 2;
+    topslope = t1->player->slope + 1;
+    bottomslope = t1->player->slope - 1;
   }
   else
   {
-  topslope = 100*FRACUNIT/160;
-  bottomslope = -100*FRACUNIT/160;
+    topslope = 100*FRACUNIT/160;
+    bottomslope = -100*FRACUNIT/160;
   }
 
   attackrange = distance;

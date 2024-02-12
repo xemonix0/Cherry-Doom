@@ -29,7 +29,7 @@
 #include "r_voxel.h"
 #include "i_video.h"
 #include "v_video.h"
-#include "am_map.h"
+#include "v_flextran.h"
 #include "st_stuff.h"
 // [Nugget]
 #include "m_nughud.h"
@@ -37,9 +37,6 @@
 #include "p_map.h"
 #include "p_mobj.h"
 #include "wi_stuff.h"
-
-// Fineangles in the SCREENWIDTH wide window.
-#define FIELDOFVIEW 2048    
 
 // killough: viewangleoffset is a legacy from the pre-v1.2 days, when Doom
 // had Left/Mid/Right viewing. +/-ANG90 offsets were placed here on each
@@ -59,6 +56,7 @@ fixed_t  viewcos, viewsin;
 player_t *viewplayer;
 extern lighttable_t **walllights;
 fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
+fixed_t pov_slope;
 
 // [Nugget] Chasecam /--------------------------------------------------------
 
@@ -397,11 +395,10 @@ static fixed_t centerxfrac_nonwide;
 //
 // killough 5/2/98: reformatted
 
-static void R_InitTextureMapping (void)
+static void R_InitTextureMapping(fixed_t focallength)
 {
   register int i,x;
-  fixed_t focallength;
-    
+
   // Use tangent table to generate viewangletox:
   //  viewangletox will give the next greatest x
   //  after the view angle.
@@ -409,15 +406,13 @@ static void R_InitTextureMapping (void)
   // Calc focallength
   //  so FIELDOFVIEW angles covers SCREENWIDTH.
 
-  focallength = FixedDiv(centerxfrac_nonwide, finetangent[FINEANGLES/4+FIELDOFVIEW/2]);
-        
   for (i=0 ; i<FINEANGLES/2 ; i++)
     {
       int t;
-      if (finetangent[i] > FRACUNIT*2)
+      if (finetangent[i] > pov_slope)
         t = -1;
       else
-        if (finetangent[i] < -FRACUNIT*2)
+        if (finetangent[i] < -pov_slope)
           t = viewwidth+1;
       else
         {
@@ -589,7 +584,7 @@ void R_SetViewSize(int blocks)
 
 void R_ExecuteSetViewSize (void)
 {
-  int i, j;
+  int i;
   vrect_t view;
 
   setsizeneeded = false;
@@ -738,42 +733,27 @@ void R_ExecuteSetViewSize (void)
   }
   #endif
 
-  centery = viewheight/2;
-  centerx = viewwidth/2;
-  centerxfrac = centerx<<FRACBITS;
-  centeryfrac = centery<<FRACBITS;
-  centerxfrac_nonwide = (viewwidth_nonwide/2)<<FRACBITS;
-  projection = centerxfrac_nonwide;
-  viewheightfrac = viewheight<<(FRACBITS+1); // [FG] sprite clipping optimizations
+  centerx = viewwidth / 2;
+  centerxfrac = centerx << FRACBITS;
+  centerxfrac_nonwide = (viewwidth_nonwide / 2) << FRACBITS;
+  projection = FixedDiv(centerxfrac, pov_slope);
+
+  viewheightfrac = viewheight << (FRACBITS + 1); // [FG] sprite clipping optimizations
 
   R_InitBuffer();       // killough 11/98
-        
-  R_InitTextureMapping();
+
+  R_InitTextureMapping(projection);
 
   // psprite scales
   pspritescale = FixedDiv(viewwidth_nonwide, SCREENWIDTH);       // killough 11/98
-  pspriteiscale= FixedDiv(SCREENWIDTH, viewwidth_nonwide);       // killough 11/98
-
-  // thing clipping
-  for (i=0 ; i<viewwidth ; i++)
-    screenheightarray[i] = viewheight;
-
-  // planes
-  for (i=0 ; i<viewheight ; i++)
-    {   // killough 5/2/98: reformatted
-      for (j = 0; j < LOOKDIRS; j++)
-      {
-        // [crispy] re-generate lookup-table for yslope[] whenever "viewheight" or "hires" change
-        fixed_t dy = abs(((i-viewheight/2-(j-PITCHMAX)*viewblocks/10)<<FRACBITS)+FRACUNIT/2); // [Nugget]
-        yslopes[j][i] = FixedDiv(viewwidth_nonwide*(FRACUNIT/2), dy);
-      }
-    }
-  yslope = yslopes[PITCHMAX]; // [Nugget]
+  pspriteiscale = FixedDiv(SCREENWIDTH, viewwidth_nonwide) + 1;  // killough 11/98
 
   for (i=0 ; i<viewwidth ; i++)
     {
       fixed_t cosadj = abs(finecosine[xtoviewangle[i]>>ANGLETOFINESHIFT]);
       distscale[i] = FixedDiv(FRACUNIT,cosadj);
+      // thing clipping
+      screenheightarray[i] = viewheight;
     }
 
   // Calculate the light levels to use
@@ -818,6 +798,7 @@ void R_Init (void)
   R_InitLightTables();
   R_InitSkyMap();
   R_InitTranslationTables();
+  V_InitFlexTranTable();
 
   // [FG] spectre drawing mode
   R_SetFuzzColumnMode();
@@ -864,6 +845,44 @@ angle_t R_InterpolateAngle(angle_t oangle, angle_t nangle, fixed_t scale)
     }
 }
 
+static void R_SetupMouselook(fixed_t viewpitch)
+{
+  static fixed_t old_viewpitch, old_viewheight, old_projection;
+  fixed_t dy;
+  int i;
+
+  if (viewpitch != old_viewpitch || viewheight != old_viewheight
+      || projection != old_projection)
+  {
+    old_viewpitch = viewpitch;
+    old_viewheight = viewheight;
+    old_projection = projection;
+  }
+  else
+  {
+    return;
+  }
+
+  if (viewpitch)
+  {
+    dy = FixedMul(projection, -finetangent[(ANG90 - viewpitch) >> ANGLETOFINESHIFT]);
+    dy = (fixed_t)((int64_t)dy * SCREENHEIGHT / ACTUALHEIGHT);
+  }
+  else
+  {
+    dy = 0;
+  }
+
+  centery = viewheight / 2 + (dy >> FRACBITS);
+  centeryfrac = centery << FRACBITS;
+
+  for (i = 0; i < viewheight; i++)
+  {
+    dy = abs(((i - centery) << FRACBITS) + FRACUNIT / 2);
+    yslope[i] = FixedDiv(projection, dy);
+  }
+}
+
 //
 // R_SetupFrame
 //
@@ -871,9 +890,9 @@ angle_t R_InterpolateAngle(angle_t oangle, angle_t nangle, fixed_t scale)
 void R_SetupFrame (player_t *player)
 {
   int i, cm;
-  int tempCentery, pitch;
+  fixed_t pitch;
   // [Nugget]
-  int playerz, lookdir;
+  fixed_t playerz, lookdir;
   static angle_t old_interangle, target_interangle;
   static fixed_t chasecamheight;
 
@@ -923,25 +942,36 @@ void R_SetupFrame (player_t *player)
       viewangle = R_InterpolateAngle(player->mo->oldangle, player->mo->angle, fractionaltic);
 
     if (localview.usepitch && use_localview && !player->centering)
-      lookdir = (player->lookdir + localview.pitch) / MLOOKUNIT;
+    {
+      pitch = player->pitch + localview.pitch;
+      pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, pitch);
+    }
     else
-      lookdir = (player->oldlookdir + (player->lookdir - player->oldlookdir) * FIXED2DOUBLE(fractionaltic)) / MLOOKUNIT;
+    {
+      pitch = player->oldpitch + FixedMul(player->pitch - player->oldpitch, fractionaltic);
+    }
 
     // [crispy] pitch is actual lookdir and weapon pitch
-    pitch = lookdir + (player->oldrecoilpitch + FixedMul(player->recoilpitch - player->oldrecoilpitch, fractionaltic))
-                    + (player->oldimpactpitch + FixedMul(player->impactpitch - player->oldimpactpitch, fractionaltic)); // [Nugget]
+    pitch += player->oldrecoilpitch + FixedMul(player->recoilpitch - player->oldrecoilpitch, fractionaltic);
+
+    // [Nugget] Impact Pitch
+    pitch += player->oldimpactpitch + FixedMul(player->impactpitch - player->oldimpactpitch, fractionaltic);
   }
   else
   {
     viewx = player->mo->x;
     viewy = player->mo->y;
     viewz = player->viewz; // [FG] moved here
-    playerz = player->mo->z; // [Nugget]
     viewangle = player->mo->angle;
     // [crispy] pitch is actual lookdir and weapon pitch
-    lookdir = player->lookdir / MLOOKUNIT;
-    pitch = lookdir + player->recoilpitch + player->impactpitch; // [Nugget]
+    pitch = player->pitch + player->recoilpitch;
+
+    // [Nugget]
+    playerz = player->mo->z;
+    pitch += player->impactpitch;
   }
+
+  R_SetupMouselook(pitch);
 
   // 3-screen display mode.
   viewangle += viewangleoffset;
@@ -1004,19 +1034,20 @@ void R_SetupFrame (player_t *player)
 
   if (chasecam_on)
   {
+    fixed_t playerpitch = player->pitch;
     static fixed_t oldextradist = 0, extradist = 0;
     const fixed_t z = MIN(playerz + ((player->mo->health <= 0 && player->playerstate == PST_DEAD) ? 6*FRACUNIT : chasecamheight),
                           player->mo->ceilingz - (2*FRACUNIT));
-    fixed_t slope;
     fixed_t dist = chasecam_distance * FRACUNIT;
-    const fixed_t oldviewx = viewx,  oldviewy = viewy;
+    const fixed_t oldviewx = viewx,
+                  oldviewy = viewy;
     const angle_t oldviewangle = viewangle;
 
     if (chasecam_mode == CHASECAMMODE_FRONT)
     {
-      viewangle += ANG180;
-      lookdir    = -lookdir;
-      pitch      = -pitch;
+      viewangle   += ANG180;
+      playerpitch  = -playerpitch;
+      pitch        = -pitch;
     }
 
     {
@@ -1037,7 +1068,7 @@ void R_SetupFrame (player_t *player)
     }
     else { dist += extradist; }
 
-    P_PositionChasecam(z, dist, slope = (-(lookdir * FRACUNIT) / PLAYER_SLOPE_DENOM));
+    P_PositionChasecam(z, dist, playerpitch);
 
     if (chasecam.hit) {
       viewx = chasecam.x;
@@ -1050,14 +1081,14 @@ void R_SetupFrame (player_t *player)
 
       const sector_t *const sec = R_PointInSubsector(viewx-dx, viewy-dy)->sector;
 
-      viewz = z + FixedMul(slope, dist);
+      viewz = z + FixedMul(playerpitch, dist);
 
       if (viewz < sec->floorheight+FRACUNIT || sec->ceilingheight-FRACUNIT < viewz)
       {
         fixed_t frac;
 
         viewz  = BETWEEN(sec->floorheight+FRACUNIT, sec->ceilingheight-FRACUNIT, viewz);
-        frac   = FixedDiv(viewz - z, FixedMul(slope, dist));
+        frac   = FixedDiv(viewz - z, FixedMul(playerpitch, dist));
         viewx -= FixedMul(dx, frac);
         viewy -= FixedMul(dy, frac);
       }
@@ -1082,21 +1113,6 @@ void R_SetupFrame (player_t *player)
     extralight = player->extralight;
 
   extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness);
-    
-  // [Nugget]
-  if (pitch > PITCHMAX)
-    pitch = PITCHMAX;
-  else if (pitch < -PITCHMAX)
-    pitch = -PITCHMAX;
-
-  // apply new yslope[] whenever "lookdir", "viewheight" or "hires" change
-  tempCentery = viewheight/2 + pitch * viewblocks / 10;
-  if (centery != tempCentery)
-  {
-      centery = tempCentery;
-      centeryfrac = centery << FRACBITS;
-      yslope = yslopes[PITCHMAX + pitch]; // [Nugget]
-  }
 
   viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
   viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];

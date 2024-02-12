@@ -235,8 +235,15 @@ default_t defaults[] = {
   {
     "widescreen",
     (config_t *) &default_widescreen, NULL,
-    {RATIO_MATCH_SCREEN}, {RATIO_ORIG, NUM_RATIOS-1}, number, ss_none, wad_no,
-    "widescreen mode (0 = disable, 1 = match screen, 2 = 16:10, 3 = 16:9, 4 = 21:9)"
+    {RATIO_AUTO}, {RATIO_ORIG, NUM_RATIOS-1}, number, ss_none, wad_no,
+    "Widescreen (0 = Off, 1 = Auto, 2 = 16:10, 3 = 16:9, 4 = 21:9, 5 = 32:9)"
+  },
+
+  {
+    "fov",
+    (config_t *) &custom_fov, NULL,
+    {0}, {0, FOVMAX}, number, ss_none, wad_no,
+    "Field of view in degrees (0 = Auto, 40 to 140 = Custom)"
   },
 
   // display index
@@ -3159,7 +3166,7 @@ default_t defaults[] = {
   {
     "map_smooth_lines",
     (config_t *) &map_smooth_lines, NULL,
-    {0}, {0,1}, number, ss_auto, wad_no,
+    {1}, {0,1}, number, ss_auto, wad_no,
     "1 to enable smooth automap lines"
   },
 
@@ -3960,7 +3967,8 @@ boolean M_ParseOption(const char *p, boolean wad)
     return 1;
 
   // [FG] bind mapcolor options to the mapcolor preset menu item
-  if (strncmp(name, "mapcolor_", 9) == 0)
+  if (strncmp(name, "mapcolor_", 9) == 0 ||
+      strcmp(name, "hudcolor_titl") == 0)
   {
     default_t *dp_preset = M_LookupDefault("mapcolor_preset");
     dp->setup_menu = dp_preset->setup_menu;

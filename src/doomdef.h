@@ -56,6 +56,13 @@ typedef enum {
   none
 } GameMission_t;
 
+typedef enum
+{
+    vanilla,    // Vanilla Doom
+    freedoom,   // FreeDoom: Phase 1 + 2 and FreeDM
+    miniwad     // miniwad
+} GameVariant_t;
+
 // Identify language to use, software localization.
 typedef enum {
   english,
@@ -80,6 +87,7 @@ typedef enum
 #define SCREENWIDTH  320
 #define SCREENHEIGHT 200
 #define NONWIDEWIDTH SCREENWIDTH // [crispy] non-widescreen SCREENWIDTH
+#define ACTUALHEIGHT 240
 
 // The maximum number of players, multiplayer/networking.
 #define MAXPLAYERS       4

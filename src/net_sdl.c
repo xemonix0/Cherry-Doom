@@ -172,7 +172,13 @@ static boolean NET_SDL_InitClient(void)
     if (p > 0)
         port = M_ParmArgToInt(p);
 
-    SDLNet_Init();
+    if (SDLNet_Init() < 0)
+    {
+        I_Error("NET_SDL_InitClient: Failed to initialize SDLNet: %s",
+                SDLNet_GetError());
+    }
+
+    I_AtExit(SDLNet_Quit, true);
 
     udpsocket = SDLNet_UDP_Open(0);
 
@@ -203,7 +209,13 @@ static boolean NET_SDL_InitServer(void)
     if (p > 0)
         port = atoi(myargv[p+1]);
 
-    SDLNet_Init();
+    if (SDLNet_Init() < 0)
+    {
+        I_Error("NET_SDL_InitServer: Failed to initialize SDLNet: %s",
+                SDLNet_GetError());
+    }
+
+    I_AtExit(SDLNet_Quit, true);
 
     udpsocket = SDLNet_UDP_Open(port);
 
