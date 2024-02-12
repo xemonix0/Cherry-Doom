@@ -989,7 +989,7 @@ static void saveg_read_player_t(player_t *str)
         str->oldviewz = 0;
     }
 
-    if (saveg_compat > saveg_woof600)
+    if (saveg_compat > saveg_nugget210) // [Nugget]
     {
         // [Woof!]: fixed_t pitch;
         str->pitch = saveg_read32();
