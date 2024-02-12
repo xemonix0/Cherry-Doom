@@ -42,7 +42,6 @@ extern int      validcount;
 extern int      linecount;
 extern int      loopcount;
 extern fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
-extern fixed_t  pov_slope; // For calculating projection.
 
 // [Nugget] Chasecam /--------------------------------------------------------
 
@@ -85,6 +84,9 @@ extern lighttable_t **(*zlight);
 extern int numcolormaps;    // killough 4/4/98: dynamic number of maps
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
+extern boolean setsmoothlight;
+void R_SmoothLight(void);
+
 extern int          extralight;
 extern lighttable_t *fixedcolormap;
 
@@ -92,15 +94,6 @@ extern lighttable_t *fixedcolormap;
 // There a 0-31, i.e. 32 LUT in the COLORMAP lump.
 
 #define NUMCOLORMAPS 32
-
-// [AM] Fractional part of the current tic, in the half-open
-//      range of [0.0, 1.0).  Used for interpolation.
-extern fixed_t          fractionaltic;
-
-extern boolean mouse_raw_input;
-
-// [AM] Interpolate between two angles.
-angle_t R_InterpolateAngle(angle_t oangle, angle_t nangle, fixed_t scale);
 
 //
 // Function pointer to switch refresh/drawing functions.
@@ -168,10 +161,40 @@ void R_InitLightTables(void);                // killough 8/9/98
 extern boolean setsizeneeded;
 void R_ExecuteSetViewSize(void);
 
-// [crispy] smooth texture scrolling
-void R_InterpolateTextureOffsets (void);
-
 void R_InitAnyRes(void);
+
+// [AM] Fractional part of the current tic, in the half-open
+//      range of [0.0, 1.0).  Used for interpolation.
+extern fixed_t fractionaltic;
+
+inline static fixed_t LerpFixed(fixed_t oldvalue, fixed_t newvalue)
+{
+    return (oldvalue + FixedMul(newvalue - oldvalue, fractionaltic));
+}
+
+// [AM] Interpolate between two angles.
+inline static angle_t LerpAngle(angle_t oangle, angle_t nangle)
+{
+    if (nangle == oangle)
+        return nangle;
+    else if (nangle > oangle)
+    {
+        if (nangle - oangle < ANG270)
+            return oangle + (angle_t)((nangle - oangle) * FIXED2DOUBLE(fractionaltic));
+        else // Wrapped around
+            return oangle - (angle_t)((oangle - nangle) * FIXED2DOUBLE(fractionaltic));
+    }
+    else // nangle < oangle
+    {
+        if (oangle - nangle < ANG270)
+            return oangle - (angle_t)((oangle - nangle) * FIXED2DOUBLE(fractionaltic));
+        else // Wrapped around
+            return oangle + (angle_t)((nangle - oangle) * FIXED2DOUBLE(fractionaltic));
+    }
+}
+
+extern double deltatics;
+extern boolean raw_input;
 
 #endif
 

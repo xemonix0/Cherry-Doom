@@ -18,8 +18,6 @@
 //
 //-----------------------------------------------------------------------------
 
-#include <math.h>
-
 #include "SDL.h" // haleyjd
 
 #include "../miniz/miniz.h"
@@ -37,6 +35,7 @@
 #include "m_menu.h"
 #include "wi_stuff.h"
 #include "i_input.h"
+#include "i_gamepad.h"
 #include "i_video.h"
 #include "m_io.h"
 
@@ -93,6 +92,9 @@ static int native_width;
 static int native_height;
 static int native_height_adjusted;
 static int native_refresh_rate;
+
+static boolean use_limiter;
+static int targetrefresh;
 
 static boolean need_resize;
 
@@ -345,9 +347,34 @@ static void I_ToggleExclusiveFullScreen(void)
     I_ReinitGraphicsMode();
 }
 
+static void UpdateLimiter(void)
+{
+    if (uncapped)
+    {
+        if (fpslimit >= native_refresh_rate && native_refresh_rate > 0 && use_vsync)
+        {
+            // SDL will limit framerate using vsync.
+            use_limiter = false;
+        }
+        else if (fpslimit >= TICRATE && targetrefresh > 0)
+        {
+            use_limiter = true;
+        }
+        else
+        {
+            use_limiter = false;
+        }
+    }
+    else
+    {
+        use_limiter = (targetrefresh > 0);
+    }
+}
+
 void I_ToggleVsync(void)
 {
     SDL_RenderSetVSync(renderer, use_vsync);
+    UpdateLimiter();
 }
 
 // killough 3/22/98: rewritten to use interrupt-driven keyboard queue
@@ -395,7 +422,10 @@ static void I_GetEvent(void)
             case SDL_CONTROLLERBUTTONDOWN:
             case SDL_CONTROLLERBUTTONUP:
             case SDL_CONTROLLERAXISMOTION:
-                I_HandleJoystickEvent(&sdlevent);
+                if (I_UseController())
+                {
+                    I_HandleJoystickEvent(&sdlevent);
+                }
                 break;
 
             case SDL_QUIT:
@@ -431,15 +461,24 @@ void I_StartTic (void)
         I_ReadMouse();
     }
 
-    I_UpdateJoystick();
+    if (I_UseController())
+    {
+        I_UpdateJoystick(true);
+    }
 }
 
 void I_StartDisplay(void)
 {
+    SDL_PumpEvents();
+
     if (window_focused)
     {
-        SDL_PumpEvents();
         I_ReadMouse();
+    }
+
+    if (I_UseController())
+    {
+        I_UpdateJoystick(false);
     }
 }
 
@@ -457,7 +496,7 @@ static void UpdateRender(void)
     SDL_UpdateTexture(texture, &blit_rect, argbbuffer->pixels, argbbuffer->pitch);
     SDL_RenderClear(renderer);
 
-    if (smooth_scaling)
+    if (texture_upscaled)
     {
         // Render this intermediate texture into the upscaled texture
         // using "nearest" integer scaling.
@@ -477,7 +516,6 @@ static void UpdateRender(void)
 }
 
 static uint64_t frametime_start, frametime_withoutpresent;
-static int targetrefresh;
 
 static void ResetResolution(int height);
 static void ResetLogicalSize(void);
@@ -496,6 +534,11 @@ void I_DynamicResolution(void)
     {
         frametime_start = frametime_withoutpresent = 0;
         drs_skip_frame = false;
+        return;
+    }
+
+    if (targetrefresh <= 0)
+    {
         return;
     }
 
@@ -625,7 +668,7 @@ void I_FinishUpdate(void)
         need_resize = false;
     }
 
-    if (uncapped && fpslimit >= TICRATE)
+    if (use_limiter)
     {
         uint64_t target_time = 1000000ull / targetrefresh;
 
@@ -1039,35 +1082,6 @@ static double CurrentAspectRatio(void)
     return aspect_ratio;
 }
 
-// Fineangles in the SCREENWIDTH wide window.
-#define FIELDOFVIEW 2048
-
-void I_UpdateFOV(void)
-{
-    if (custom_fov)
-    {
-        const double slope = tan(custom_fov * M_PI / 360);
-
-        video.fov = custom_fov * ANG1;
-        pov_slope = slope * FRACUNIT;
-    }
-    else
-    {
-        if (widescreen == RATIO_ORIG)
-        {
-            video.fov = ANG90;
-            pov_slope = finetangent[FINEANGLES / 4 + FIELDOFVIEW / 2];
-        }
-        else
-        {
-            const double slope = CurrentAspectRatio() * 3 / 4;
-
-            video.fov = 2 * atan(slope) / M_PI * ANG180;
-            pov_slope = slope * FRACUNIT;
-        }
-    }
-}
-
 static void ResetResolution(int height)
 {
     double aspect_ratio = CurrentAspectRatio();
@@ -1091,8 +1105,6 @@ static void ResetResolution(int height)
 
     video.deltaw = (video.unscaledw - NONWIDEWIDTH) / 2;
 
-    I_UpdateFOV();
-
     Z_FreeTag(PU_VALLOC);
 
     V_Init();
@@ -1107,6 +1119,15 @@ static void ResetResolution(int height)
     I_Printf(VB_DEBUG, "ResetResolution: %dx%d", video.width, video.height);
 
     drs_skip_frame = true;
+}
+
+static void DestroyUpscaledTexture(void)
+{
+    if (texture_upscaled)
+    {
+        SDL_DestroyTexture(texture_upscaled);
+        texture_upscaled = NULL;
+    }
 }
 
 static void CreateUpscaledTexture(boolean force)
@@ -1186,9 +1207,16 @@ static void CreateUpscaledTexture(boolean force)
     h_upscale_old = h_upscale;
     w_upscale_old = w_upscale;
 
-    if (texture_upscaled != NULL)
+    DestroyUpscaledTexture();
+
+    if (w_upscale == 1)
     {
-        SDL_DestroyTexture(texture_upscaled);
+        SDL_SetTextureScaleMode(texture, SDL_ScaleModeLinear);
+        return;
+    }
+    else
+    {
+        SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
     }
 
     // Set the scaling quality for rendering the upscaled texture
@@ -1196,13 +1224,13 @@ static void CreateUpscaledTexture(boolean force)
     // but does a better job at downscaling from the upscaled texture to
     // screen.
 
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-
     texture_upscaled = SDL_CreateTexture(renderer,
                                          SDL_GetWindowPixelFormat(screen),
                                          SDL_TEXTUREACCESS_TARGET,
                                          w_upscale * screen_width,
                                          h_upscale * screen_height);
+
+    SDL_SetTextureScaleMode(texture_upscaled, SDL_ScaleModeLinear);
 }
 
 static void ResetLogicalSize(void)
@@ -1230,18 +1258,26 @@ static void ResetLogicalSize(void)
     {
         CreateUpscaledTexture(true);
     }
+    else
+    {
+        DestroyUpscaledTexture();
+        SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
+    }
 }
 
 void I_ResetTargetRefresh(void)
 {
     if (uncapped)
     {
+        // SDL may report native refresh rate as zero.
         targetrefresh = (fpslimit >= TICRATE) ? fpslimit : native_refresh_rate;
     }
     else
     {
         targetrefresh = TICRATE;
     }
+
+    UpdateLimiter();
 }
 
 //
@@ -1260,6 +1296,7 @@ static void I_InitVideoParms(void)
 
     native_width = mode.w;
     native_height = mode.h;
+    // SDL may report native refresh rate as zero.
     native_refresh_rate = mode.refresh_rate;
 
     widescreen = default_widescreen;
@@ -1459,6 +1496,8 @@ static void I_InitGraphicsMode(void)
     {
         I_Printf(VB_DEBUG, "SDL render driver: %s", info.name);
     }
+
+    UpdateLimiter();
 }
 
 static int CurrentResolutionMode(void)
@@ -1546,12 +1585,12 @@ static void CreateSurfaces(void)
         SDL_DestroyTexture(texture);
     }
 
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-
     texture = SDL_CreateTexture(renderer,
                                 SDL_GetWindowPixelFormat(screen),
                                 SDL_TEXTUREACCESS_STREAMING,
                                 w, h);
+
+    SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
 
     widescreen = RATIO_AUTO;
 

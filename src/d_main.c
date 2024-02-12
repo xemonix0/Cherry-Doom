@@ -183,15 +183,19 @@ int eventhead, eventtail;
 //
 void D_PostEvent(event_t *ev)
 {
-  if (ev->type == ev_mouse)
+  switch (ev->type)
   {
-    G_MouseMovementResponder(ev);
-    G_PrepTiccmd();
-    return;
-  }
+    case ev_mouse:
+    case ev_joystick:
+      G_MovementResponder(ev);
+      G_PrepTiccmd();
+      break;
 
-  events[eventhead++] = *ev;
-  eventhead &= MAXEVENTS-1;
+    default:
+      events[eventhead++] = *ev;
+      eventhead &= MAXEVENTS-1;
+      break;
+  }
 }
 
 //
@@ -209,6 +213,34 @@ void D_ProcessEvents (void)
       if (!M_Responder(events+eventtail))
         G_Responder(events+eventtail);
     }
+}
+
+static boolean input_ready;
+
+void D_UpdateDeltaTics(void)
+{
+  if (uncapped && raw_input)
+  {
+    static uint64_t last_time;
+    const uint64_t current_time = I_GetTimeUS();
+
+    if (input_ready)
+    {
+      const uint64_t delta_time = current_time - last_time;
+      deltatics = (double)delta_time * TICRATE / 1000000.0;
+      deltatics = BETWEEN(0.0, 1.0, deltatics);
+    }
+    else
+    {
+      deltatics = 0.0;
+    }
+
+    last_time = current_time;
+  }
+  else
+  {
+    deltatics = 1.0;
+  }
 }
 
 //
@@ -243,12 +275,14 @@ void D_Display (void)
   if (nodrawers)                    // for comparative timing / profiling
     return;
 
+  input_ready = (!menuactive && gamestate == GS_LEVEL && !paused);
+
   if (uncapped)
   {
     // [AM] Figure out how far into the current tic we're in as a fixed_t.
     fractionaltic = I_GetFracTime();
 
-    if (!menuactive && gamestate == GS_LEVEL && !paused && mouse_raw_input)
+    if (input_ready && raw_input)
     {
       I_StartDisplay();
     }
@@ -261,6 +295,9 @@ void D_Display (void)
     wipe_StartScreen(0, 0, video.unscaledw, SCREENHEIGHT);
   else if (gamestate == GS_LEVEL)
     I_DynamicResolution();
+
+  if (setsmoothlight)
+    R_SmoothLight();
 
   if (setsizeneeded)                // change the view size if needed
     {
@@ -2273,8 +2310,6 @@ void D_DoomMain(void)
   if ((p=M_CheckParm ("-turbo")))
     {
       int scale = 200;
-      extern int forwardmove[2];
-      extern int sidemove[2];
 
       if (p < myargc - 1 && myargv[p + 1][0] != '-')
         scale = M_ParmArgToInt(p);
@@ -2287,6 +2322,12 @@ void D_DoomMain(void)
       forwardmove[1] = forwardmove[1]*scale/100;
       sidemove[0] = sidemove[0]*scale/100;
       sidemove[1] = sidemove[1]*scale/100;
+
+      // Prevent ticcmd overflow.
+      forwardmove[0] = MIN(forwardmove[0], SCHAR_MAX);
+      forwardmove[1] = MIN(forwardmove[1], SCHAR_MAX);
+      sidemove[0] = MIN(sidemove[0], SCHAR_MAX);
+      sidemove[1] = MIN(sidemove[1], SCHAR_MAX);
     }
 
   if (beta_emulation)
@@ -2807,6 +2848,8 @@ void D_DoomMain(void)
 
   I_Printf(VB_INFO, "D_CheckNetGame: Checking network game status.");
   D_CheckNetGame();
+
+  G_UpdateSideMove();
 
   M_ResetTimeScale();
 

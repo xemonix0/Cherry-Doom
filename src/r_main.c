@@ -19,6 +19,9 @@
 //
 //-----------------------------------------------------------------------------
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "doomstat.h"
 #include "r_main.h"
 #include "r_things.h"
@@ -31,12 +34,17 @@
 #include "v_video.h"
 #include "v_flextran.h"
 #include "st_stuff.h"
+#include "p_setup.h" // P_SegLengths
+
 // [Nugget]
 #include "m_nughud.h"
 #include "m_random.h"
 #include "p_map.h"
 #include "p_mobj.h"
 #include "wi_stuff.h"
+
+// Fineangles in the SCREENWIDTH wide window.
+#define FIELDOFVIEW 2048
 
 // killough: viewangleoffset is a legacy from the pre-v1.2 days, when Doom
 // had Left/Mid/Right viewing. +/-ANG90 offsets were placed here on each
@@ -51,12 +59,12 @@ fixed_t  projection;
 fixed_t  viewx, viewy, viewz;
 angle_t  viewangle;
 localview_t localview;
-boolean mouse_raw_input;
+double deltatics;
+boolean raw_input;
 fixed_t  viewcos, viewsin;
 player_t *viewplayer;
 extern lighttable_t **walllights;
 fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
-fixed_t pov_slope;
 
 // [Nugget] Chasecam /--------------------------------------------------------
 
@@ -395,9 +403,11 @@ static fixed_t centerxfrac_nonwide;
 //
 // killough 5/2/98: reformatted
 
-static void R_InitTextureMapping(fixed_t focallength)
+static void R_InitTextureMapping(void)
 {
   register int i,x;
+  fixed_t focallength, slopefrac;
+  angle_t fov;
 
   // Use tangent table to generate viewangletox:
   //  viewangletox will give the next greatest x
@@ -406,13 +416,34 @@ static void R_InitTextureMapping(fixed_t focallength)
   // Calc focallength
   //  so FIELDOFVIEW angles covers SCREENWIDTH.
 
+  if (custom_fov)
+  {
+    fov = custom_fov * FINEANGLES / 360;
+    slopefrac = finetangent[FINEANGLES / 4 + fov / 2];
+    focallength = FixedDiv(centerxfrac, slopefrac);
+    projection = centerxfrac / tan(custom_fov * M_PI / 360.0);
+  }
+  else
+  {
+    fov = FIELDOFVIEW;
+    slopefrac = finetangent[FINEANGLES / 4 + fov / 2];
+    focallength = FixedDiv(centerxfrac_nonwide, slopefrac);
+    projection = centerxfrac_nonwide;
+
+    if (widescreen != RATIO_ORIG)
+    {
+      fov = atan((double)centerxfrac / centerxfrac_nonwide) * FINEANGLES / M_PI;
+      slopefrac = finetangent[FINEANGLES / 4 + fov / 2];
+    }
+  }
+
   for (i=0 ; i<FINEANGLES/2 ; i++)
     {
       int t;
-      if (finetangent[i] > pov_slope)
+      if (finetangent[i] > slopefrac)
         t = -1;
       else
-        if (finetangent[i] < -pov_slope)
+        if (finetangent[i] < -slopefrac)
           t = viewwidth+1;
       else
         {
@@ -450,7 +481,7 @@ static void R_InitTextureMapping(fixed_t focallength)
         
   clipangle = xtoviewangle[0];
 
-  vx_clipangle = clipangle - (video.fov - ANG90);
+  vx_clipangle = clipangle - ((fov << ANGLETOFINESHIFT) - ANG90);
 }
 
 //
@@ -559,6 +590,47 @@ void R_InitLightTables (void)
         }
     }
 }
+
+boolean setsmoothlight;
+
+void R_SmoothLight(void)
+{
+  setsmoothlight = false;
+  // [crispy] re-calculate the zlight[][] array
+  R_InitLightTables();
+  // [crispy] re-calculate the scalelight[][] array
+  // R_ExecuteSetViewSize();
+  // [crispy] re-calculate fake contrast
+  P_SegLengths(true);
+}
+
+static fixed_t viewpitch;
+
+static void R_SetupMouselook(void)
+{
+  fixed_t dy;
+  int i;
+
+  if (viewpitch)
+  {
+    dy = FixedMul(projection, -finetangent[(ANG90 - viewpitch) >> ANGLETOFINESHIFT]);
+    dy = (fixed_t)((int64_t)dy * SCREENHEIGHT / ACTUALHEIGHT);
+  }
+  else
+  {
+    dy = 0;
+  }
+
+  centery = viewheight / 2 + (dy >> FRACBITS);
+  centeryfrac = centery << FRACBITS;
+
+  for (i = 0; i < viewheight; i++)
+  {
+    dy = abs(((i - centery) << FRACBITS) + FRACUNIT / 2);
+    yslope[i] = FixedDiv(projection, dy);
+  }
+}
+
 
 //
 // R_SetViewSize
@@ -736,13 +808,14 @@ void R_ExecuteSetViewSize (void)
   centerx = viewwidth / 2;
   centerxfrac = centerx << FRACBITS;
   centerxfrac_nonwide = (viewwidth_nonwide / 2) << FRACBITS;
-  projection = FixedDiv(centerxfrac, pov_slope);
 
   viewheightfrac = viewheight << (FRACBITS + 1); // [FG] sprite clipping optimizations
 
   R_InitBuffer();       // killough 11/98
 
-  R_InitTextureMapping(projection);
+  R_InitTextureMapping();
+
+  R_SetupMouselook();
 
   // psprite scales
   pspritescale = FixedDiv(viewwidth_nonwide, SCREENWIDTH);       // killough 11/98
@@ -780,10 +853,10 @@ void R_ExecuteSetViewSize (void)
         }
     }
 
-    // [crispy] forcefully initialize the status bar backing screen
-    ST_refreshBackground(true);
+  // [crispy] forcefully initialize the status bar backing screen
+  ST_refreshBackground(true);
 
-    pspr_interp = false;
+  pspr_interp = false;
 }
 
 //
@@ -824,63 +897,22 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
   return &subsectors[nodenum & ~NF_SUBSECTOR];
 }
 
-// [AM] Interpolate between two angles.
-angle_t R_InterpolateAngle(angle_t oangle, angle_t nangle, fixed_t scale)
+static inline boolean CheckLocalView(const player_t *player)
 {
-    if (nangle == oangle)
-        return nangle;
-    else if (nangle > oangle)
-    {
-        if (nangle - oangle < ANG270)
-            return oangle + (angle_t)((nangle - oangle) * FIXED2DOUBLE(scale));
-        else // Wrapped around
-            return oangle - (angle_t)((oangle - nangle) * FIXED2DOUBLE(scale));
-    }
-    else // nangle < oangle
-    {
-        if (oangle - nangle < ANG270)
-            return oangle - (angle_t)((oangle - nangle) * FIXED2DOUBLE(scale));
-        else // Wrapped around
-            return oangle + (angle_t)((nangle - oangle) * FIXED2DOUBLE(scale));
-    }
-}
-
-static void R_SetupMouselook(fixed_t viewpitch)
-{
-  static fixed_t old_viewpitch, old_viewheight, old_projection;
-  fixed_t dy;
-  int i;
-
-  if (viewpitch != old_viewpitch || viewheight != old_viewheight
-      || projection != old_projection)
-  {
-    old_viewpitch = viewpitch;
-    old_viewheight = viewheight;
-    old_projection = projection;
-  }
-  else
-  {
-    return;
-  }
-
-  if (viewpitch)
-  {
-    dy = FixedMul(projection, -finetangent[(ANG90 - viewpitch) >> ANGLETOFINESHIFT]);
-    dy = (fixed_t)((int64_t)dy * SCREENHEIGHT / ACTUALHEIGHT);
-  }
-  else
-  {
-    dy = 0;
-  }
-
-  centery = viewheight / 2 + (dy >> FRACBITS);
-  centeryfrac = centery << FRACBITS;
-
-  for (i = 0; i < viewheight; i++)
-  {
-    dy = abs(((i - centery) << FRACBITS) + FRACUNIT / 2);
-    yslope[i] = FixedDiv(projection, dy);
-  }
+  return (
+    // Don't use localview when interpolation is preferred.
+    raw_input &&
+    // Don't use localview if the player is spying.
+    player == &players[consoleplayer] &&
+    // Don't use localview if the player is dead.
+    player->playerstate != PST_DEAD &&
+    // Don't use localview if the player just teleported.
+    !player->mo->reactiontime &&
+    // Don't use localview if a demo is playing.
+    !demoplayback &&
+    // Don't use localview during a netgame (single-player or solo-net only).
+    (!netgame || solonet)
+  );
 }
 
 //
@@ -908,54 +940,42 @@ void R_SetupFrame (player_t *player)
       // Don't interpolate during a paused state
       leveltime > oldleveltime)
   {
-    const boolean use_localview = (
-      // Don't use localview when interpolation is preferred.
-      mouse_raw_input &&
-      // Don't use localview if the player is spying.
-      player == &players[consoleplayer] &&
-      // Don't use localview if the player is dead.
-      player->playerstate != PST_DEAD &&
-      // Don't use localview if the player just teleported.
-      !player->mo->reactiontime &&
-      // Don't use localview if a demo is playing.
-      !demoplayback &&
-      // Don't use localview during a netgame (single-player and solo-net only).
-      (!netgame || solonet)
-    );
+    // Use localview unless the player or game is in an invalid state, in which
+    // case fall back to interpolation.
+    const boolean use_localview = CheckLocalView(player);
 
     // Interpolate player camera from their old position to their current one.
-    viewx = player->mo->oldx + FixedMul(player->mo->x - player->mo->oldx, fractionaltic);
-    viewy = player->mo->oldy + FixedMul(player->mo->y - player->mo->oldy, fractionaltic);
-    viewz = player->oldviewz + FixedMul(player->viewz - player->oldviewz, fractionaltic);
+    viewx = LerpFixed(player->mo->oldx, player->mo->x);
+    viewy = LerpFixed(player->mo->oldy, player->mo->y);
+    viewz = LerpFixed(player->oldviewz, player->viewz);
 
-    playerz = player->mo->oldz + FixedMul(player->mo->z - player->mo->oldz, fractionaltic); // [Nugget]
+    playerz = LerpFixed(player->mo->oldz, player->mo->z); // [Nugget]
 
-    // Use localview unless the player or game is in an invalid state or if
-    // mouse input was interrupted, in which case fall back to interpolation.
     if (use_localview)
     {
       viewangle = (player->mo->angle + localview.angle - localview.ticangle +
-                   R_InterpolateAngle(localview.oldticangle, localview.ticangle,
-                                      fractionaltic));
+                   LerpAngle(localview.oldticangle, localview.ticangle));
     }
     else
-      viewangle = R_InterpolateAngle(player->mo->oldangle, player->mo->angle, fractionaltic);
+    {
+      viewangle = LerpAngle(player->mo->oldangle, player->mo->angle);
+    }
 
-    if (localview.usepitch && use_localview && !player->centering)
+    if (use_localview && !player->centering)
     {
       pitch = player->pitch + localview.pitch;
       pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, pitch);
     }
     else
     {
-      pitch = player->oldpitch + FixedMul(player->pitch - player->oldpitch, fractionaltic);
+      pitch = LerpFixed(player->oldpitch, player->pitch);
     }
 
     // [crispy] pitch is actual lookdir and weapon pitch
-    pitch += player->oldrecoilpitch + FixedMul(player->recoilpitch - player->oldrecoilpitch, fractionaltic);
+    pitch += LerpFixed(player->oldrecoilpitch, player->recoilpitch);
 
     // [Nugget] Impact Pitch
-    pitch += player->oldimpactpitch + FixedMul(player->impactpitch - player->oldimpactpitch, fractionaltic);
+    pitch += LerpFixed(player->oldimpactpitch, player->impactpitch);
   }
   else
   {
@@ -971,7 +991,11 @@ void R_SetupFrame (player_t *player)
     pitch += player->impactpitch;
   }
 
-  R_SetupMouselook(pitch);
+  if (pitch != viewpitch)
+  {
+    viewpitch = pitch;
+    R_SetupMouselook();
+  }
 
   // 3-screen display mode.
   viewangle += viewangleoffset;
@@ -988,7 +1012,7 @@ void R_SetupFrame (player_t *player)
       target_interangle += ANG1;
     }
     else if (uncapped)
-    { viewangle = R_InterpolateAngle(old_interangle, target_interangle, fractionaltic) + viewangleoffset; }
+    { viewangle = LerpAngle(old_interangle, target_interangle) + viewangleoffset; }
 
     oldtic = gametic;
 
@@ -1064,7 +1088,7 @@ void R_SetupFrame (player_t *player)
 
     if (uncapped && leveltime > 1 && player->mo->interp == true && leveltime > oldleveltime)
     {
-      dist += oldextradist + FixedMul(extradist - oldextradist, fractionaltic);
+      dist += LerpFixed(oldextradist, extradist);
     }
     else { dist += extradist; }
 
