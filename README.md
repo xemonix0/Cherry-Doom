@@ -328,13 +328,9 @@ Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`
 Copyright: © 2018 Alex Mayfield.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `data/nugget-doom.ico, data/nugget-doom.png, data/nugget-doom8.ico, src/icon.c, data/setup.ico, data/setup8.ico, setup/setup_icon.c, data/nugget-doom-setup.png`  
+Files: `data/nugget-doom.ico, data/nugget-doom.png, src/icon.c, data/setup.ico, data/nugget-doom-setup.png, setup/setup_icon.c`  
 Copyright: © 2022 Korp.  
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-
-Files: `src/thermo.h`  
-Copyright: © 2020-2022 Julia Nechaevskaya.  
-License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
 Files: `miniz/*`  
 Copyright:  

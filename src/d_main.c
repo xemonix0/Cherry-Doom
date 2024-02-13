@@ -290,11 +290,22 @@ void D_Display (void)
 
   redrawsbar = false;
 
+  wipe = false;
+
   // save the current screen if about to wipe
-  if ((wipe = gamestate != wipegamestate) && NOTSTRICTMODE(wipe_type)) // [Nugget]
-    wipe_StartScreen(0, 0, video.unscaledw, SCREENHEIGHT);
-  else if (gamestate == GS_LEVEL)
-    I_DynamicResolution();
+  if (gamestate != wipegamestate && NOTSTRICTMODE(wipe_type)) // [Nugget]
+    {
+      wipe = true;
+      wipe_StartScreen(0, 0, video.unscaledw, SCREENHEIGHT);
+    }
+
+  if (!wipe)
+    {
+      if (resetneeded)
+        I_ResetScreen();
+      else if (gamestate == GS_LEVEL)
+        I_DynamicResolution();
+    }
 
   if (setsmoothlight)
     R_SmoothLight();
@@ -382,8 +393,7 @@ void D_Display (void)
   // [Nugget] Moved here, as to be run *after* AM_Drawer()
   if (gamestate == GS_LEVEL && gametic)
   {
-    ST_Drawer(scaledviewheight == 200 && !st_crispyhud, // [Nugget] NUGHUD
-              redrawsbar);
+    ST_Drawer(scaledviewheight == 200, redrawsbar);
 
     // Moved here too, as to be run
     // *after* AM_Drawer() and ST_Drawer()
@@ -413,7 +423,7 @@ void D_Display (void)
     HU_DemoProgressBar(true);
 
   // normal update
-  if (!wipe || STRICTMODE(!wipe_type)) // [Nugget]
+  if (!wipe)
     {
       I_FinishUpdate ();              // page flip or blit buffer
       return;
@@ -2838,7 +2848,6 @@ void D_DoomMain(void)
   I_InitJoystick();
   I_InitSound();
   I_InitMusic();
-  M_GetMidiDevices();
 
   I_Printf(VB_INFO, "NET_Init: Init network subsystem.");
   NET_Init();
@@ -3016,6 +3025,8 @@ void D_DoomMain(void)
 
   // [FG] init graphics (video.widedelta) before HUD widgets
   I_InitGraphics();
+
+  M_InitMenuStrings();
 
   if (startloadgame >= 0)
   {

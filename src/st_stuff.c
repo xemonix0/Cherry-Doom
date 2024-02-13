@@ -129,7 +129,7 @@ static int lu_palette;
 static boolean st_statusbaron;
 
 // [crispy] distinguish classic status bar with background and player face from Crispy HUD
-int st_crispyhud; // [Nugget] Now an int
+boolean st_crispyhud;
 static boolean st_classicstatusbar;
 static boolean st_statusbarface; // [Nugget] Face may still be drawn in NUGHUD
 
@@ -1051,7 +1051,7 @@ void ST_drawWidgets(void)
   }
 
   // [Nugget] In case of `am_noammo`
-  if ((screenblocks < CRISPY_HUD || (st_crispyhud && nughud.ammo.x > -1))
+  if ((screenblocks < 11 || (st_crispyhud && nughud.ammo.x > -1))
       && weaponinfo[plyr->readyweapon].ammo == am_noammo)
   {
     const int ammox = (st_crispyhud ? nughud.ammo.x : ST_AMMOX) + NUGHUDWIDESHIFT(nughud.ammo.wide),
@@ -1187,24 +1187,18 @@ void ST_drawWidgets(void)
 
 void ST_Drawer(boolean fullscreen, boolean refresh)
 {
-  static boolean oldcrispy = 0; // [Nugget] NUGHUD
-
   st_statusbaron = !fullscreen || automap_on;
   // [crispy] immediately redraw status bar after help screens have been shown
   st_firsttime = st_firsttime || refresh || inhelpscreens;
 
+  // [crispy] distinguish classic status bar with background and player face from Crispy HUD
+  st_crispyhud = (hud_type == HUD_TYPE_CRISPY) && hud_displayed && automap_off;
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
-  st_statusbarface = st_classicstatusbar || (st_crispyhud && nughud.face.x > -1);
 
   // [Nugget] NUGHUD
-  if (oldcrispy != st_crispyhud)
-  {
-    ST_createWidgets();
-    ST_updateWidgets();
-    HU_Start();
+  st_statusbarface = st_classicstatusbar || (st_crispyhud && nughud.face.x > -1);
 
-    oldcrispy = st_crispyhud;
-  }
+  ST_MoveHud();
 
   if (st_firsttime)     // If just after ST_Start(), refresh all
   {
@@ -1545,6 +1539,8 @@ void ST_initData(void)
   STlib_init();
 }
 
+static int distributed_delta = 0;
+
 void ST_createWidgets(void)
 {
   int i;
@@ -1740,7 +1736,21 @@ void ST_createWidgets(void)
   #undef NUGHUDALIGN
 }
 
-// [Nugget] Removed ST_MoveHud(), since we don't need it
+static void ST_MoveHud (void)
+{
+    static int odelta = 0;
+
+    if (st_crispyhud && hud_active == 2)
+        distributed_delta = video.deltaw;
+    else
+        distributed_delta = 0;
+
+    if (distributed_delta != odelta)
+    {
+      ST_createWidgets();
+      odelta = distributed_delta;
+    }
+}
 
 static boolean st_stopped = true;
 

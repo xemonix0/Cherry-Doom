@@ -596,7 +596,7 @@ static void AM_clearLastMark(void)
     markpointnum--;
 }
 
-void AM_enableSmoothLines(void)
+void AM_EnableSmoothLines(void)
 {
   AM_drawFline = map_smooth_lines ? AM_drawFline_Smooth : AM_drawFline_Vanilla;
 }
@@ -651,7 +651,7 @@ static void AM_LevelInit(void)
 
   AM_initScreenSize();
 
-  AM_enableSmoothLines();
+  AM_EnableSmoothLines();
 
   AM_findMinMaxBoundaries();
 
@@ -2475,7 +2475,7 @@ void AM_Drawer (void)
 
 int mapcolor_preset;
 
-void AM_ColorPreset (void)
+void AM_ColorPreset(void)
 {
   struct
   {

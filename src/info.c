@@ -6236,11 +6236,7 @@ static const char cheese_sprite[] = {
   167,167,255
 };
 
-// killough 1/31/98:
-// mini-thermo patches
-#include "thermo.h"
-
-// killough 1/31/98:
+// killough 1/31/98: 
 // Table of predefined lumps, used to make up for any wad deficiencies.
 // Always overriden by iwad or pwads.
 
@@ -6315,12 +6311,6 @@ const lumpinfo_t predefined_lumps[]={
   // [Nugget] Horizontal autoaim indicators
   { "CROSSIL", sizeof crossil, crossil },
   { "CROSSIR", sizeof crossir, crossir },
-
-  // mini-thermo patches
-  { "M_MTHRML",  sizeof therml, therml },
-  { "M_MTHRMM",  sizeof thermm, thermm },
-  { "M_MTHRMR",  sizeof thermr, thermr },
-  { "M_MTHRMO",  sizeof thermo, thermo },
 
   // killough 8/98: remove ENDBOOM lump, use id's ENDOOM instead
 

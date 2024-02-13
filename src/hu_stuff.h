@@ -80,14 +80,25 @@ extern int hud_player_coords, hud_level_stats, hud_level_time;
 extern int hud_power_timers; // [Nugget] Powerup timers
 extern int hud_widget_font;
 extern int hud_widescreen_widgets;
-extern int hud_draw_bargraphs;
-extern int hud_threelined_widgets;
+extern int hud_widget_layout;
 extern boolean message_centered; // center messages
 extern boolean message_colorized; // colorize player messages
 
 extern int playback_tic, playback_totaltics;
 
-extern boolean hud_crosshair_on; // [Nugget] Keep the variable below just for the type
+enum
+{
+  HUD_TYPE_CRISPY,
+  HUD_TYPE_BOOM_NO_BARS,
+  HUD_TYPE_BOOM,
+
+  NUM_HUD_TYPES
+};
+
+extern int hud_type;
+extern boolean draw_crispy_hud;
+
+extern boolean hud_crosshair_on; // [Nugget] Keep the CVAR below just for the type
 extern int hud_crosshair;
 extern boolean hud_crosshair_health;
 
@@ -126,8 +137,8 @@ extern int hud_crosshair_color;
 extern int hud_crosshair_target_color;
 
 #define HU_CROSSHAIRS 10
-extern const char *crosshair_nam[HU_CROSSHAIRS];
-extern const char *crosshair_str[HU_CROSSHAIRS+1];
+extern const char *crosshair_lumps[HU_CROSSHAIRS];
+extern const char *crosshair_strings[HU_CROSSHAIRS];
 
 #endif
 
