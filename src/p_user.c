@@ -26,6 +26,8 @@
 #include "p_spec.h"
 #include "p_user.h"
 #include "g_game.h"
+#include "hu_stuff.h"
+
 // [Nugget]
 #include "m_input.h"
 #include "s_sound.h"
@@ -579,7 +581,8 @@ void P_SetPlayerEvent(player_t* player, eventtimer_t type)
   }
 
   player->eventtype = type;
-  player->eventtime = leveltime;
+  // to match the timer, we use the leveltime value at the end of the frame
+  player->eventtime = leveltime + 1;
   player->eventtics = 5*TICRATE/2; // [crispy] 2.5 seconds
 }
 
@@ -785,12 +788,13 @@ void P_PlayerThink (player_t* player)
   if (cmd->buttons & BT_USE)
     {
       if (!player->usedown)
-        {
-          P_UseLines (player);
-          player->usedown = true;
-          
-          P_SetPlayerEvent(player, TIMER_USE); // [Nugget] "Use" button timer
-        }
+	{
+	  P_UseLines (player);
+	  player->usedown = true;
+
+    // [Nugget] Support more event timers
+    P_SetPlayerEvent(player, TIMER_USE);
+	}
     }
   else
     player->usedown = false;

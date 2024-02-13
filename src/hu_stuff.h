@@ -33,6 +33,7 @@
 void HU_Init(void);
 void HU_Start(void);
 void HU_disable_all_widgets (void);
+void HU_widget_rebuild_sttime(void);
 
 // [Nugget] /-----------------------------------------------------------------
 
@@ -78,6 +79,7 @@ extern secretmessage_t hud_secret_message; // "A secret is revealed!" message
 
 extern int hud_player_coords, hud_level_stats, hud_level_time;
 extern int hud_power_timers; // [Nugget] Powerup timers
+extern int hud_time[NUMTIMERS]; // [Nugget] Support more event timers
 extern int hud_widget_font;
 extern int hud_widescreen_widgets;
 extern int hud_widget_layout;

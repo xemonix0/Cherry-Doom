@@ -3488,6 +3488,27 @@ default_t defaults[] = {
     "show level time widget (1 = on Automap, 2 = on HUD, 3 = always)"
   },
 
+  {
+    "hud_time_use",
+    (config_t *) &hud_time[TIMER_USE], NULL, // [Nugget]
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "show split time when pressing the use button"
+  },
+
+  { // [Nugget]
+    "hud_time_teleport",
+    (config_t *) &hud_time[TIMER_TELEPORT], NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "show split time when going through a teleporter"
+  },
+
+  { // [Nugget]
+    "hud_time_keypickup",
+    (config_t *) &hud_time[TIMER_KEYPICKUP], NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "show split time when picking up a key"
+  },
+
   { // [Nugget] Powerup timers
     "hud_power_timers",
     (config_t *) &hud_power_timers, NULL,
@@ -3566,24 +3587,6 @@ default_t defaults[] = {
     (config_t *) &hudcolor_ms_comp, NULL,
     {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
     "Color used for complete milestones in Stats display"
-  },
-
-  // [Nugget] ---------------------------------------------------------------/
-
-  // [Nugget] Event timers /--------------------------------------------------
-
-  {
-    "timer_teleport",
-    (config_t *) &event_timers[TIMER_TELEPORT], NULL,
-    {0}, {0,2}, number, ss_stat, wad_no,
-    "Show time at which a teleporter was used (0 = Off, 1 = In Demos, 2 = Always)"
-  },
-
-  {
-    "timer_key_pickup",
-    (config_t *) &event_timers[TIMER_KEYPICKUP], NULL,
-    {0}, {0,2}, number, ss_stat, wad_no,
-    "Show time at which a key was picked up (0 = Off, 1 = In Demos, 2 = Always)"
   },
 
   // [Nugget] ---------------------------------------------------------------/
