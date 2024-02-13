@@ -546,7 +546,8 @@ typedef enum {
   
   NUMTIMERS
 } eventtimer_t;
-extern int event_timers[];
+extern int hud_time_teleport;
+extern int hud_time_keypickup;
 
 extern int hudcolor_time_scale;
 extern int hudcolor_total_time;

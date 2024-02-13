@@ -232,8 +232,7 @@ typedef struct player_s
   // [crispy] blinking key or skull in the status bar
   int                 keyblinkkeys[3], keyblinktics;
 
-  // Momentarily display the time at which an event occurred
-  int                 eventtype, eventtime, eventtics;
+  int                 eventtype;
 
 } player_t;
 

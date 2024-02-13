@@ -199,7 +199,8 @@ int show_ssg; // CFG-Only
 int alt_arms;
 int blink_keys; // CFG-Only
 int smarttotals;
-int event_timers[NUMTIMERS];
+int hud_time_teleport;
+int hud_time_keypickup;
 
 int hudcolor_time_scale;
 int hudcolor_total_time;

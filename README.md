@@ -94,8 +94,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Alternative Arms Display_** setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
 - **Blink Missing Keys** setting (CFG-Only: `blink_keys`) [partially p.f. Crispy Doom]
 - **Event Timers:**
-  - _"Use" Button Timer_ [p.f. Crispy Doom]; 
-  - _Teleport Timer_ [i.b. the above];
+  - _Teleport Timer_ [i.b. Crispy Doom];
   - _Key Pickup Timer_ [same as above].
 - **Extended HUD color customization**
 - **Armor count is colored gray when in God Mode**
