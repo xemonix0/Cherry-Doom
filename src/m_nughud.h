@@ -22,8 +22,11 @@
 
 #include "m_fixed.h"
 
-#define NUGHUDWIDESHIFT(x) ((abs(x) == 2) ? video.deltaw * (st_crispyhud != 0) * (2 / (x)) :  \
-                            (abs(x) == 1) ? video.deltaw * (st_crispyhud == 2) *      (x)  : 0)
+#define NUGHUDWIDESHIFT(x) (                                       \
+  st_crispyhud ? (abs(x) == 2) ? video.deltaw      * (2 / (x)) :   \
+                 (abs(x) == 1) ? distributed_delta *      (x)  : 0 \
+               : 0                                                 \
+)
 
 typedef struct nughud_widget_s {
   int x, y;

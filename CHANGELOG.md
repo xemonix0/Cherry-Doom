@@ -9,6 +9,7 @@
 
 - **Merged changes from [Woof! post-12.0.2](link)**, note:
   - Replaced Nugget's _Organize Saves by IWAD_ feature with Woof's _Organize Save Files_, which also organizes by PWAD¹;
+  - Replaced Nugget's crosshair-coloring-by-target-health logic with Woof's;
   - Replaced Nugget's unrevealed-secret-sector Automap color with Woof's revealed-secret-sector color;
   - Removed _Smart Totals_ setting;
   - Removed extended gamma levels and `gammacycle`.

@@ -66,7 +66,7 @@ void HUlib_reset_align_offsets (void)
   int bottom = SCREENHEIGHT - 1;
 
   if (scaledviewheight < SCREENHEIGHT ||
-      // [Nugget] Removed `crispy_hud` code
+      draw_crispy_hud ||
       automap_on)
   {
     bottom -= 32; // ST_HEIGHT

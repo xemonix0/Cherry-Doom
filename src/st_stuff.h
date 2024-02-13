@@ -35,10 +35,6 @@
 #define ST_WIDTH  SCREENWIDTH
 #define ST_Y      (SCREENHEIGHT - ST_HEIGHT)
 
-// [Nugget] Crispy minimalistic HUD
-#define CRISPY_HUD      11
-#define CRISPY_HUD_WIDE (CRISPY_HUD+1)
-
 // [Nugget] Macros brought over from st_stuff.c
 
 #define ST_FACESX               143

@@ -3081,12 +3081,6 @@ void G_Ticker(void)
 
   oldleveltime = leveltime;
 
-  // [Nugget]:
-  // [crispy] distinguish classic status bar with background and player face from Crispy HUD
-  st_crispyhud = automap_off ? (CRISPY_HUD <= screenblocks && screenblocks <= CRISPY_HUD_WIDE)
-                               + (screenblocks == CRISPY_HUD_WIDE)
-                             : 0;
-
   // do main actions
 
   // killough 9/29/98: split up switch statement

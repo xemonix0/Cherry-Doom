@@ -5131,6 +5131,32 @@ static boolean M_ShortcutResponder(void)
         }
     }
 
+    // [Nugget] /-----------------------------------------------------------
+
+    if (M_InputActivated(input_crosshair))
+    {
+        extern void HU_StartCrosshair(void);
+        
+        if ((hud_crosshair_on = !hud_crosshair_on)) { HU_StartCrosshair(); }
+        M_UpdateCrosshairItems();
+        togglemsg("Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
+    }
+
+    // Chasecam
+    if (STRICTMODE(M_InputActivated(input_chasecam)))
+    {
+        if (++chasecam_mode > CHASECAMMODE_FRONT) { chasecam_mode = CHASECAMMODE_OFF; }
+    }
+
+    // Rewind
+    if (STRICTMODE(M_InputActivated(input_rewind)))
+    {
+        G_Rewind();
+        return true;
+    }
+
+    // [Nugget] -----------------------------------------------------------/
+
     return false;
 }
 

@@ -665,7 +665,7 @@ void R_ExecuteSetViewSize (void)
   if (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
   { setblocks = 11; }
 
-  if (setblocks >= 11) // [Nugget] Crispy minimalistic HUD
+  if (setblocks == 11)
     {
       scaledviewwidth_nonwide = NONWIDEWIDTH;
       scaledviewwidth = video.unscaledw;
