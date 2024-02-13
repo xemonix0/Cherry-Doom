@@ -113,6 +113,7 @@ void *I_GetSDLRenderer(void);
 void I_InitWindowIcon(void);
 
 void I_ShowMouseCursor(boolean on);
+void I_ResetRelativeMouseState(void);
 
 #endif
 

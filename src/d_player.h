@@ -93,14 +93,14 @@ typedef enum
 } weapswitch_t;
 
 
-// [Nugget]: [crispy] blinking key or skull in the status bar
+// [crispy] blinking key or skull in the status bar
 typedef enum
 {
   KEYBLINK_NONE,
-  KEYBLINK_EITHER,
   KEYBLINK_CARD,
   KEYBLINK_SKULL,
   KEYBLINK_BOTH,
+  KEYBLINK_EITHER,
 } keyblink_t;
 
 //
@@ -202,6 +202,10 @@ typedef struct player_s
   // [Woof!] show centered "A secret is revealed!" message
   char*               secretmessage;
 
+  // [crispy] blinking key or skull in the status bar
+  keyblink_t          keyblinkkeys[3];
+  int                 keyblinktics;
+
   int                 btuse, btuse_tics;
 
   // [crispy] free look / mouse look
@@ -228,9 +232,6 @@ typedef struct player_s
   fixed_t             crouchoffset; // How many units the player is crouched
 
   fixed_t             impactpitch, oldimpactpitch; // Pitch view on impact
-
-  // [crispy] blinking key or skull in the status bar
-  int                 keyblinkkeys[3], keyblinktics;
 
   int                 eventtype;
 

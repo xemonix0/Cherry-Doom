@@ -66,6 +66,7 @@
 #include "d_quit.h"
 #include "r_bmaps.h"
 #include "p_inter.h" // maxhealthbonus
+#include "i_input.h"
 
 #include "dsdhacked.h"
 
@@ -2846,7 +2847,7 @@ void D_DoomMain(void)
 
   I_Printf(VB_INFO, "I_Init: Setting up machine state.");
   I_InitTimer();
-  I_InitJoystick();
+  I_InitController();
   I_InitSound();
   I_InitMusic();
 
