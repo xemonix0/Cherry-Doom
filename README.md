@@ -27,8 +27,6 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 - **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
 - **Stretch viewport to fit window** setting (CFG-Only: `stretch_to_fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
-- **Gamma Correction slider ranging from 0.50 to 2.0 in steps of 0.05**
-- **Gamma Correction key cycling** setting, to cycle through either original or extended gamma levels (CFG-Only: `gammacycle`)
 - **Menu items for _Air Absorption_ and _Doppler Effect_**, both of which are **now set to 5 by default**
 - **Tweaked _Stretch Short Skies_ algorithm**
 - **_Screen Wipe Style_** selection:

@@ -458,7 +458,6 @@ extern boolean casual_play;
 
 // General ----------------------------
 
-extern int gammacycle; // CFG-Only
 extern int wipe_type;
 extern int over_under;
 extern int jump_crouch;

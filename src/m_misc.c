@@ -2053,13 +2053,6 @@ default_t defaults[] = {
   },
 
   {
-    "gammacycle",
-    (config_t *) &gammacycle, NULL,
-    {0}, {0,1}, number, ss_none, wad_no,
-    "1 to make gamma key cycle through extended gamma levels"
-  },
-
-  {
     "input_spy",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,

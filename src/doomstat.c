@@ -140,7 +140,6 @@ boolean casual_play; // Like `critical`, with different checks and functionality
 
 // General ----------------------------
 
-int gammacycle; // CFG-Only
 int wipe_type;
 int over_under;
 int jump_crouch;

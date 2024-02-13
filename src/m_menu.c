@@ -5241,36 +5241,14 @@ boolean M_Responder (event_t* ev)
 	}
 
       if (M_InputActivated(input_gamma))       // gamma toggle
-        {
-          if (STRICTMODE(gammacycle))
-          {
-            // [Nugget] Note: this logic can't set `gamma2` to 0.50
-            gamma2 += 5;
-            if (gamma2 > GAMMA2MAX) { gamma2 -= GAMMA2MAX; }
-            togglemsg("Gamma Correction Level %0.2f", gammalevels[gamma2]);
-            M_ResetGamma();
-          }
-          else {
-            usegamma++;
-            if (usegamma > 4)
-              usegamma = 0;
-            players[consoleplayer].message =
-              usegamma == 0 ? s_GAMMALVL0 :
-              usegamma == 1 ? s_GAMMALVL1 :
-              usegamma == 2 ? s_GAMMALVL2 :
-              usegamma == 3 ? s_GAMMALVL3 :
-              s_GAMMALVL4;
-            togglemsg("%s",
-                       usegamma == 0 ? s_GAMMALVL0 :
-                       usegamma == 1 ? s_GAMMALVL1 :
-                       usegamma == 2 ? s_GAMMALVL2 :
-                       usegamma == 3 ? s_GAMMALVL3 :
-                       s_GAMMALVL4);
-            gamma2 = 10; // 1.0f
-            I_SetPalette (W_CacheLumpName ("PLAYPAL",PU_CACHE));
-          }
-          return true;
-        }
+	{
+	  gamma2++;
+	  if (gamma2 > 17)
+	    gamma2 = 0;
+	  togglemsg("Gamma correction level %s", gamma_strings[gamma2]);
+	  M_ResetGamma();
+	  return true;                      
+	}
 
       if (M_InputActivated(input_zoomout))     // zoom out
 	{

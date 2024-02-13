@@ -2089,17 +2089,17 @@ static boolean CheckHaveSSG (void)
 void D_NuggetUpdateCasual()
 {
   static int old_casual = -1;
-  
+
   casual_play = !(demorecording||demoplayback||netgame||fauxdemo||strictmode);
-  
+
   if (old_casual == -1) { old_casual = casual_play; }
 
-  if (old_casual != casual_play) {
+  if (old_casual != casual_play)
+  {
     old_casual = casual_play;
-    
-    I_SetPalette(W_CacheLumpName("PLAYPAL",PU_CACHE)); // Reset Gamma
+
     R_SetZoom(ZOOM_RESET); // Reset FOV
-    
+
     M_ResetSetupMenu();
   }
 }
