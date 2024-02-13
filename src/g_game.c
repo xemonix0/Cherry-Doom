@@ -1469,7 +1469,6 @@ static void G_PlayerFinishLevel(int player)
   p->mo->intflags &= ~MIF_CROUCHING;
   p->jumptics = p->crouchoffset = 0;
   p->oldimpactpitch = p->impactpitch = 0;
-  memset(p->keyblinkkeys, 0, sizeof (p->keyblinkkeys)); // [crispy] blinking key or skull in the status bar
 }
 
 // [crispy] format time for level statistics
