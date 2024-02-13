@@ -44,7 +44,6 @@
 #include "dstrings.h"
 #include "m_misc.h"
 #include "m_misc2.h"
-#include "m_swap.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "d_main.h"
@@ -54,6 +53,7 @@
 #include "net_client.h" // net_player_name
 #include "i_gamepad.h"
 #include "m_array.h"
+#include "r_voxel.h"
 
 #include "m_io.h"
 #include <errno.h>
@@ -222,7 +222,7 @@ default_t defaults[] = {
   // [FG] uncapped rendering frame rate
   {
     "uncapped",
-    (config_t *) &default_uncapped, (config_t *) &uncapped,
+    (config_t *) &default_uncapped, NULL,
     {1}, {0, 1}, number, ss_gen, wad_no,
     "1 to enable uncapped rendering frame rate"
   },
@@ -240,14 +240,14 @@ default_t defaults[] = {
     "widescreen",
     (config_t *) &default_widescreen, NULL,
     {RATIO_AUTO}, {RATIO_ORIG, NUM_RATIOS-1}, number, ss_gen, wad_no,
-    "Widescreen (0 = Off, 1 = Auto, 2 = 16:10, 3 = 16:9, 4 = 21:9, 5 = 32:9)"
+    "Widescreen (0 = Off, 1 = Auto, 2 = 16:10, 3 = 16:9, 4 = 21:9)"
   },
 
   {
     "fov",
     (config_t *) &custom_fov, NULL,
-    {0}, {0, FOVMAX}, number, ss_gen, wad_no,
-    "Field of view in degrees (0 = Auto, 40 to 140 = Custom)"
+    {FOV_DEFAULT}, {FOV_MIN, FOV_MAX}, number, ss_gen, wad_no,
+    "Field of view in degrees"
   },
 
   // display index
@@ -313,7 +313,7 @@ default_t defaults[] = {
   { // killough 10/98
     "disk_icon",
     (config_t *) &disk_icon, NULL,
-    {1}, {0,1}, number, ss_gen, wad_no,
+    {0}, {0,1}, number, ss_gen, wad_no,
     "1 to enable flashing icon during disk IO"
   },
 
@@ -381,15 +381,15 @@ default_t defaults[] = {
   },
 
   {
-    "menu_background",
-    (config_t *) &menu_background, NULL,
-    {background_on}, {background_on,background_dark}, number, ss_gen, wad_no,
-    "menu background style (0 = solid, 1 = none, 2 = dark)" // [Nugget] Changed description
+    "menu_backdrop",
+    (config_t *) &menu_backdrop, NULL,
+    {MENU_BG_DARK}, {MENU_BG_OFF, MENU_BG_TEXTURE}, number, ss_gen, wad_no,
+    "draw menu backdrop (0 = off, 1 = dark (default), 2 = texture)"
   },
 
   { // [Nugget]
-    "menu_background_darkening",
-    (config_t *) &menu_background_darkening, NULL,
+    "menu_backdrop_darkening",
+    (config_t *) &menu_backdrop_darkening, NULL,
     {20}, {0,31}, number, ss_none, wad_no,
     "Dark menu background darkening level"
   },
@@ -1217,7 +1217,7 @@ default_t defaults[] = {
   { // killough 7/19/98
     "player_helpers",
     (config_t *) &default_dogs, (config_t *) &dogs,
-    {0}, {0,3}, number, ss_none, wad_yes,
+    {0}, {0,3}, number, ss_enem, wad_yes,
     "number of single-player helpers"
   },
 
@@ -1280,6 +1280,13 @@ default_t defaults[] = {
   },
 
   // [Nugget] ---------------------------------------------------------------/
+
+  {
+    "voxels_rendering",
+    (config_t *) &default_voxels_rendering, (config_t *) &voxels_rendering,
+    {1}, {0,1}, number, ss_enem, wad_no,
+    "1 to enable voxels rendering"
+  },
 
   {
     "colored_blood",
@@ -1669,7 +1676,7 @@ default_t defaults[] = {
   {
     "default_complevel",
     (config_t *) &default_complevel, NULL,
-    {3}, {0,3}, number, ss_comp, wad_no,
+    {CL_MBF21}, {CL_VANILLA, CL_MBF21}, number, ss_comp, wad_no,
     "0 Vanilla, 1 Boom, 2 MBF, 3 MBF21"
   },
 
@@ -2663,15 +2670,15 @@ default_t defaults[] = {
   {
     "joy_response_curve_movement",
     (config_t *) &joy_response_curve_movement, NULL,
-    {0}, {0, 20}, number, ss_gen, wad_no,
-    "Movement response curve (0 = Linear, 10 = Squared, 20 = Cubed)"
+    {10}, {10, 30}, number, ss_gen, wad_no,
+    "Movement response curve (10 = Linear, 20 = Squared, 30 = Cubed)"
   },
 
   {
     "joy_response_curve_camera",
     (config_t *) &joy_response_curve_camera, NULL,
-    {10}, {0, 20}, number, ss_gen, wad_no,
-    "Camera response curve (0 = Linear, 10 = Squared, 20 = Cubed)"
+    {20}, {10, 30}, number, ss_gen, wad_no,
+    "Camera response curve (10 = Linear, 20 = Squared, 30 = Cubed)"
   },
 
   {
@@ -3123,8 +3130,8 @@ default_t defaults[] = {
   {
     "mapcolor_preset",
     (config_t *) &mapcolor_preset, NULL,
-    {0}, {0,2}, number, ss_auto, wad_no,
-    "automap color preset (0 = Boom (default), 1 = Vanilla Doom, 2 = ZDoom)"
+    {1}, {0,2}, number, ss_auto, wad_no,
+    "automap color preset (0 = Vanilla Doom, 1 = Boom (default), 2 = ZDoom)"
   },
 
   {
@@ -3167,7 +3174,7 @@ default_t defaults[] = {
   {
     "automapoverlay",
     (config_t *) &automapoverlay, NULL,
-    {overlay_off}, {overlay_off,overlay_dark}, number, ss_auto, wad_no,
+    {AM_OVERLAY_OFF}, {AM_OVERLAY_OFF,AM_OVERLAY_DARK}, number, ss_auto, wad_no,
     "automap overlay mode (1 = on, 2 = dark)"
   },
 
@@ -3388,10 +3395,10 @@ default_t defaults[] = {
   },
 
   { // [Alaux]
-    "smooth_counts",
-    (config_t *) &smooth_counts, NULL,
+    "hud_animated_counts",
+    (config_t *) &hud_animated_counts, NULL,
     {0}, {0,1}, number, ss_stat, wad_yes,
-    "1 to enable smooth health/armor counts"
+    "1 to enable animated health/armor counts"
   },
 
   { // below is red

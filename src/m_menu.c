@@ -49,12 +49,14 @@
 #include "r_draw.h" // [FG] R_SetFuzzColumnMode
 #include "r_sky.h" // [FG] R_InitSkyMap()
 #include "r_plane.h" // [FG] R_InitPlanes()
+#include "r_voxel.h"
 #include "m_argv.h"
 #include "m_snapshot.h"
 #include "i_sound.h"
 #include "r_bmaps.h"
 #include "m_array.h"
 #include "am_map.h"
+#include "r_voxel.h"
 
 // [crispy] remove DOS reference from the game quit confirmation dialogs
 #ifndef _WIN32
@@ -120,7 +122,9 @@ boolean inhelpscreens; // indicates we are in or just left a help screen
 
 boolean menuactive;    // The menus are up
 
-background_t menu_background;
+static boolean options_active;
+
+backdrop_t menu_backdrop;
 
 #define SKULLXOFF  -32
 #define LINEHEIGHT  16
@@ -132,8 +136,10 @@ background_t menu_background;
 
 #define M_THRM_STEP   8
 #define M_THRM_HEIGHT 13
+#define M_THRM_SIZE4  4
 #define M_THRM_SIZE8  8
 #define M_THRM_SIZE11 11
+#define M_X_THRM4     (M_X - (M_THRM_SIZE4 + 3) * M_THRM_STEP)
 #define M_X_THRM8     (M_X - (M_THRM_SIZE8 + 3) * M_THRM_STEP)
 #define M_X_THRM11    (M_X - (M_THRM_SIZE11 + 3) * M_THRM_STEP)
 #define M_THRM_TXT_OFFSET 3
@@ -276,9 +282,9 @@ static void M_DrawSave(void);
 static void M_DrawSetup(void);                                     // phares 3/21/98
 static void M_DrawHelp (void);                                     // phares 5/04/98
 
-static void M_DrawSaveLoadBorder(int x, int y, char *cr);
+static void M_DrawSaveLoadBorder(int x, int y, byte *cr);
 static void M_SetupNextMenu(menu_t *menudef);
-static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, char *cr);
+static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, byte *cr);
 static void M_WriteText(int x, int y, const char *string);
 static int  M_StringWidth(const char *string);
 static int  M_StringHeight(const char *string);
@@ -310,7 +316,7 @@ static void M_Compat(int);       // killough 10/98
 static void M_General(int);      // killough 10/98
 static void M_DrawCompat(void);  // killough 10/98
 static void M_DrawGeneral(void); // killough 10/98
-static void M_DrawStringCR(int cx, int cy, char *cr1, char *cr2, const char *ch);
+static void M_DrawStringCR(int cx, int cy, byte *cr1, byte *cr2, const char *ch);
 // cph 2006/08/06 - M_DrawString() is the old M_DrawMenuString, except that it is not tied to menu_buffer
 void M_DrawString(int,int,int,const char*);
 
@@ -381,6 +387,8 @@ static void M_DrawMainMenu(void)
 {
   // [crispy] force status bar refresh
   inhelpscreens = true;
+
+  options_active = false;
 
   V_DrawPatchDirect (94,2,W_CacheLumpName("M_DOOM",PU_CACHE));
 }
@@ -853,7 +861,7 @@ static void M_DrawSaveLoadBottomLine(void)
   inhelpscreens = true;
 
   int flags = currentMenu->menuitems[itemOn].flags;
-  char *cr = (flags & MF_PAGE) ? cr_bright : NULL;
+  byte *cr = (flags & MF_PAGE) ? cr_bright : NULL;
 
   M_DrawSaveLoadBorder(LoadDef.x, y, cr);
 
@@ -879,7 +887,7 @@ static void M_DrawLoad(void)
     for (i = 0 ; i < load_page ; i++)
     {
         menuitem_t *item = &currentMenu->menuitems[i];
-        char *cr = (item->flags & MF_HILITE) ? cr_bright : NULL;
+        byte *cr = (item->flags & MF_HILITE) ? cr_bright : NULL;
 
         M_DrawSaveLoadBorder(LoadDef.x, LoadDef.y + LINEHEIGHT * i, cr);
         M_WriteText(LoadDef.x, LoadDef.y + LINEHEIGHT * i, savegamestrings[i]);
@@ -894,7 +902,7 @@ static void M_DrawLoad(void)
 // Draw border for the savegame description
 //
 
-static void M_DrawSaveLoadBorder(int x, int y, char *cr)
+static void M_DrawSaveLoadBorder(int x, int y, byte *cr)
 {
     int i;
 
@@ -1078,7 +1086,7 @@ static void M_DrawSave(void)
     for (i = 0 ; i < load_page ; i++)
     {
       menuitem_t *item = &currentMenu->menuitems[i];
-      char *cr = (item->flags & MF_HILITE) ? cr_bright : NULL;
+      byte *cr = (item->flags & MF_HILITE) ? cr_bright : NULL;
 
       M_DrawSaveLoadBorder(LoadDef.x, LoadDef.y + LINEHEIGHT * i, cr);
       M_WriteText(LoadDef.x, LoadDef.y + LINEHEIGHT * i, savegamestrings[i]);
@@ -1320,7 +1328,7 @@ static void M_DrawSound(void)
 
   int index = itemOn + 1;
   menuitem_t *item = &currentMenu->menuitems[index];
-  char *cr;
+  byte *cr;
 
   if (index == sfx_vol_thermo && (item->flags & MF_HILITE))
     cr = cr_bright;
@@ -1562,7 +1570,10 @@ static void M_SizeDisplay(int choice)
 	  screenSize++;
 	}
       else
-	hud_displayed = !hud_displayed;
+	{
+	  hud_displayed = !hud_displayed;
+	  HU_disable_all_widgets();
+	}
       break;
     }
   R_SetViewSize (screenblocks /*, detailLevel obsolete -- killough */);
@@ -1731,9 +1742,9 @@ static menuitem_t SetupMenu[]=
   {1,"M_GENERL",M_General,    'g', "GENERAL"},      // killough 10/98
   {1,"M_KEYBND",M_KeyBindings,'k', "KEY BINDINGS"},
   {1,"M_COMPAT",M_Compat,     'p', "DOOM COMPATIBILITY"},
-  {1,"M_WEAP"  ,M_Weapons,    'w', "WEAPONS"},
   {1,"M_STAT"  ,M_StatusBar,  's', "STATUS BAR / HUD"},
   {1,"M_AUTO"  ,M_Automap,    'a', "AUTOMAP"},
+  {1,"M_WEAP"  ,M_Weapons,    'w', "WEAPONS"},
   {1,"M_ENEM"  ,M_Enemy,      'e', "ENEMIES"},
 };
 
@@ -1869,7 +1880,7 @@ static menu_t CompatDef =                                           // killough 
 
 static void M_DrawBackground(char *patchname)
 {
-  if (setup_active && menu_background != background_on)
+  if (setup_active && menu_backdrop != MENU_BG_TEXTURE)
     return;
 
   V_DrawBackground(patchname);
@@ -1891,6 +1902,8 @@ static void M_DrawSetup(void)
 
 static void M_Setup(int choice)
 {
+  options_active = true;
+
   M_SetupNextMenu(&SetupDef);
 }
 
@@ -1950,7 +1963,6 @@ enum
 
     str_gamma,
     str_sound_module,
-    str_sound_resampler,
 
     str_mouse_accel,
 
@@ -1958,7 +1970,8 @@ enum
     str_default_complevel,
     str_endoom,
     str_death_use_action,
-    str_menu_background,
+    str_menu_backdrop,
+    str_widescreen,
 };
 
 static const char **GetStrings(int id);
@@ -1978,15 +1991,16 @@ static void M_DrawMenuStringEx(int flags, int x, int y, int color);
 
 static boolean ItemDisabled(int flags)
 {
-  if ((flags & S_DISABLE) ||
-      (flags & S_STRICT && strictmode) ||
-      (flags & S_CRITICAL && critical) ||
-      (flags & S_BOOM && demo_version < 202))
-  {
-    return true;
-  }
+    if ((flags & S_DISABLE) ||
+        (flags & S_STRICT && default_strictmode) ||
+        (flags & S_BOOM && default_complevel < CL_BOOM) ||
+        (flags & S_MBF && default_complevel < CL_MBF) ||
+        (flags & S_VANILLA && default_complevel != CL_VANILLA))
+    {
+        return true;
+    }
 
-  return false;
+    return false;
 }
 
 static boolean ItemSelected(setup_menu_t *s)
@@ -2110,7 +2124,7 @@ static void M_DrawTabs(void)
         if (i == mult_screens_index)
         {
             V_FillRect(x + video.deltaw, rect->y + M_SPC, rect->w, 1,
-                       cr_shaded[(byte)cr_gold[v_lightest_color]]);
+                       cr_gold[cr_shaded[v_lightest_color]]);
         }
 
         rect->x = x;
@@ -2203,7 +2217,7 @@ static char gather_buffer[MAXGATHER+1];  // killough 10/98: make input character
 // displays the appropriate setting value: yes/no, a key binding, a number,
 // a paint chip, etc.
 
-static void M_DrawSetupThermo(int x, int y, int width, int size, int dot, char *cr)
+static void M_DrawSetupThermo(int x, int y, int width, int size, int dot, byte *cr)
 {
   int xx;
   int  i;
@@ -2373,9 +2387,17 @@ static void M_DrawSetting(setup_menu_t *s, int accum_y)
   if (flags & S_THERMO)
     {
       int value = s->var.def->location->i;
+      int min = s->var.def->limit.min;
       int max = s->var.def->limit.max;
-      int width = (flags & S_THRM_SIZE11) ? M_THRM_SIZE11 : M_THRM_SIZE8;
       const char **strings = GetStrings(s->strings_id);
+
+      int width;
+      if (flags & S_THRM_SIZE11)
+        width = M_THRM_SIZE11;
+      else if (flags & S_THRM_SIZE4)
+        width = M_THRM_SIZE4;
+      else
+        width = M_THRM_SIZE8;
 
       if (max == UL)
       {
@@ -2385,11 +2407,13 @@ static void M_DrawSetting(setup_menu_t *s, int accum_y)
           max = M_THRM_UL_VAL;
       }
 
-      char *cr;
-      if (flags & S_HILITE)
-        cr = cr_bright;
-      else if (ItemDisabled(flags))
+      value = BETWEEN(min, max, value);
+
+      byte *cr;
+      if (ItemDisabled(flags))
         cr = cr_dark;
+      else if (flags & S_HILITE)
+        cr = cr_bright;
       else
         cr = NULL;
 
@@ -2398,7 +2422,7 @@ static void M_DrawSetting(setup_menu_t *s, int accum_y)
       rect->y = y;
       rect->w = (width + 2) * M_THRM_STEP;
       rect->h = M_THRM_HEIGHT;
-      M_DrawSetupThermo(x, y, width, max, value, cr);
+      M_DrawSetupThermo(x, y, width, max - min, value - min, cr);
 
       if (strings)
         strcpy(menu_buffer, strings[value]);
@@ -2973,6 +2997,7 @@ static void M_KeyBindings(int choice)
   default_verify = false;
   setup_gather = false;
   mult_screens_index = M_GetMultScreenIndex(keys_settings);
+  set_tab_on = mult_screens_index;
   current_setup_menu = keys_settings[mult_screens_index];
   current_setup_tabs = keys_tabs;
   set_menu_itemon = M_GetSetupMenuItemOn();
@@ -3127,6 +3152,7 @@ static void M_Weapons(int choice)
   default_verify = false;
   setup_gather = false;
   mult_screens_index = M_GetMultScreenIndex(weap_settings);
+  set_tab_on = mult_screens_index;
   current_setup_menu = weap_settings[mult_screens_index];
   current_setup_tabs = weap_tabs;
   set_menu_itemon = M_GetSetupMenuItemOn();
@@ -3204,10 +3230,14 @@ static const char *hudtype_strings[] = {
     "Crispy", "No Bars", "Boom"
 };
 
-// This matches the WOOFHUD documentation.
-static const char *hudmode_strings[] = {
-    "Minimal", "Compact", "Distributed"
-};
+static const char **M_GetHUDModeStrings(void)
+{
+    static const char *crispy_strings[] = {"Off", "Original", "Widescreen"};
+    static const char *boom_strings[] = {"Minimal", "Compact", "Distributed"};
+    return hud_type ? boom_strings : crispy_strings;
+}
+
+static void M_UpdateHUDModeStrings(void);
 
 setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
 {
@@ -3220,7 +3250,7 @@ setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
   {"", S_SKIP, m_null, M_X, M_SPC},
 
   {"Fullscreen HUD", S_SKIP|S_TITLE, m_null, M_X, M_SPC},
-  {"HUD Type", S_CHOICE, m_null, M_X, M_SPC, {"hud_type"}, 0, NULL, str_hudtype},
+  {"HUD Type", S_CHOICE, m_null, M_X, M_SPC, {"hud_type"}, 0, M_UpdateHUDModeStrings, str_hudtype},
   {"HUD Mode", S_CHOICE, m_null, M_X, M_SPC, {"hud_active"}, 0, NULL, str_hudmode},
 
   {"", S_SKIP, m_null, M_X, M_SPC},
@@ -3229,7 +3259,7 @@ setup_menu_t stat_settings1[] =  // Status Bar and HUD Settings screen
 
   {"Backpack Shifts Ammo Color", S_YESNO, m_null, M_X, M_SPC, {"hud_backpack_thresholds"}},
   {"Armor Color Matches Type", S_YESNO, m_null, M_X, M_SPC, {"hud_armor_type"}},
-  {"Smooth Health/Armor Count", S_YESNO, m_null, M_X, M_SPC, {"smooth_counts"}},
+  {"Animated Health/Armor Count", S_YESNO, m_null, M_X, M_SPC, {"hud_animated_counts"}},
 
   MI_RESET,
 
@@ -3357,6 +3387,7 @@ static void M_StatusBar(int choice)
   default_verify = false;
   setup_gather = false;
   mult_screens_index = M_GetMultScreenIndex(stat_settings);
+  set_tab_on = mult_screens_index;
   current_setup_menu = stat_settings[mult_screens_index];
   current_setup_tabs = stat_tabs;
   set_menu_itemon = M_GetSetupMenuItemOn();
@@ -3417,7 +3448,7 @@ static const char *overlay_strings[] = {
 };
 
 static const char *automap_preset_strings[] = {
-    "Boom", "Vanilla", "ZDoom"
+    "Vanilla", "Boom", "ZDoom"
 };
 
 setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen       
@@ -3458,6 +3489,7 @@ static void M_Automap(int choice)
   default_verify = false;
   setup_gather = false;
   mult_screens_index = M_GetMultScreenIndex(auto_settings);
+  set_tab_on = mult_screens_index;
   current_setup_menu = auto_settings[mult_screens_index];
   current_setup_tabs = NULL;
   set_menu_itemon = M_GetSetupMenuItemOn();
@@ -3499,18 +3531,32 @@ static setup_menu_t* enem_settings[] =
 };
 
 enum {
+  enem1_helpers,
+  enem1_gap1,
+
   enem1_title1,
   enem1_colored_blood,
   enem1_flipcorpses,
   enem1_ghost,
   enem1_fuzz,
-
-  enem1_end
 };
+
+static void M_BarkSound(void)
+{
+    if (default_dogs)
+    {
+        S_StartSound(NULL, sfx_dgact);
+    }
+}
 
 setup_menu_t enem_settings1[] =  // Enemy Settings screen
 {
-  {"Cosmetic", S_SKIP|S_TITLE, m_null, M_X, M_Y},
+  {"Helper Dogs", S_MBF|S_THERMO|S_THRM_SIZE4|S_LEVWARN|S_ACTION,
+   m_null, M_X_THRM4, M_Y, {"player_helpers"}, 0, M_BarkSound},
+
+  {"", S_SKIP, m_null, M_X, M_THRM_SPC},
+
+  {"Cosmetic", S_SKIP|S_TITLE, m_null, M_X, M_SPC},
 
   // [FG] colored blood and gibs
   {"Colored Blood", S_YESNO|S_STRICT, m_null, M_X, M_SPC,
@@ -3521,7 +3567,7 @@ setup_menu_t enem_settings1[] =  // Enemy Settings screen
    {"flipcorpses"}},
 
   // [crispy] resurrected pools of gore ("ghost monsters") are translucent
-  {"Translucent Ghost Monsters", S_YESNO|S_STRICT, m_null, M_X, M_SPC,
+  {"Translucent Ghost Monsters", S_YESNO|S_STRICT|S_VANILLA, m_null, M_X, M_SPC,
    {"ghost_monsters"}},
 
   // [FG] spectre drawing mode
@@ -3550,6 +3596,7 @@ static void M_Enemy(int choice)
   default_verify = false;
   setup_gather = false;
   mult_screens_index = M_GetMultScreenIndex(enem_settings);
+  set_tab_on = mult_screens_index;
   current_setup_menu = enem_settings[mult_screens_index];
   current_setup_tabs = NULL;
   set_menu_itemon = M_GetSetupMenuItemOn();
@@ -3610,12 +3657,6 @@ static const char *default_complevel_strings[] = {
   "Vanilla", "Boom", "MBF", "MBF21"
 };
 
-static void M_UpdateCriticalItems(void)
-{
-  DISABLE_ITEM(demo_compatibility && overflow[emu_intercepts].enabled,
-               comp_settings1[comp1_blockmapfix]);
-}
-
 setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
 {
   {"Compatibility", S_SKIP|S_TITLE, m_null, M_X, M_Y},
@@ -3629,21 +3670,21 @@ setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
 
   {"Compatibility-breaking Features", S_SKIP|S_TITLE, m_null, M_X, M_SPC},
 
-  {"Direct Vertical Aiming", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_SPC,
+  {"Direct Vertical Aiming", S_YESNO|S_STRICT, m_null, M_X, M_SPC,
    {"direct_vertical_aiming"}},
 
-  {"Auto Strafe 50", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_SPC,
+  {"Auto Strafe 50", S_YESNO|S_STRICT, m_null, M_X, M_SPC,
    {"autostrafe50"}, 0, G_UpdateSideMove},
 
-  {"Pistol Start", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_SPC,
+  {"Pistol Start", S_YESNO|S_STRICT, m_null, M_X, M_SPC,
    {"pistolstart"}},
 
   {"", S_SKIP, m_null, M_X, M_SPC},
 
-  {"Improved Hit Detection", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X, M_SPC,
-   {"blockmapfix"}},
+  {"Improved Hit Detection", S_YESNO|S_STRICT|S_BOOM, m_null, M_X,
+   M_SPC, {"blockmapfix"}},
 
-  {"Walk Under Solid Hanging Bodies", S_YESNO|S_STRICT|S_CRITICAL, m_null, M_X,
+  {"Walk Under Solid Hanging Bodies", S_YESNO|S_STRICT, m_null, M_X,
    M_SPC, {"hangsolid"}},
 
 
@@ -3666,6 +3707,7 @@ static void M_Compat(int choice)
   default_verify = false;
   setup_gather = false;
   mult_screens_index = M_GetMultScreenIndex(comp_settings);
+  set_tab_on = mult_screens_index;
   current_setup_menu = comp_settings[mult_screens_index];
   current_setup_tabs = NULL;
   set_menu_itemon = M_GetSetupMenuItemOn();
@@ -3756,15 +3798,11 @@ enum {
   gen2_music_vol,
   gen2_gap1,
 
-  gen2_sndchan,
+  gen2_sndmodule,
+  gen2_sndhrtf,
   gen2_pitch,
   gen2_fullsnd,
   gen2_gap2,
-
-  gen2_sndresampler,
-  gen2_sndmodule,
-  gen2_sndhrtf,
-  gen2_gap3,
 
   gen2_musicbackend,
 };
@@ -3839,10 +3877,20 @@ static void M_ResetVideoHeight(void)
         }
     }
 
+    if (!dynamic_resolution)
+    {
+        VX_ResetMaxDist();
+    }
+
     DISABLE_ITEM(current_video_height <= DRS_MIN_HEIGHT,
                  gen_settings1[gen1_dynamic_resolution]);
+
     resetneeded = true;
 }
+
+static const char *widescreen_strings[] = {
+    "Off", "Auto", "16:10", "16:9", "21:9"
+};
 
 int midi_player_menu;
 
@@ -3880,10 +3928,6 @@ static const char *sound_module_strings[] = {
 #endif
 };
 
-static const char *sound_resampler_strings[] = {
-    "Nearest", "Linear", "Cubic"
-};
-
 static void M_UpdateAdvancedSoundItems(void)
 {
   DISABLE_ITEM(snd_module != SND_MODULE_3D, gen_settings2[gen2_sndhrtf]);
@@ -3904,11 +3948,6 @@ static void M_SetSoundModule(void)
   I_SetSoundModule(snd_module);
 }
 
-static void M_UpdateUserSoundSettings(void)
-{
-  I_UpdateUserSoundSettings();
-}
-
 static void M_SetMidiPlayer(void)
 {
   S_StopMusic();
@@ -3919,8 +3958,8 @@ static void M_SetMidiPlayer(void)
 
 static void M_ToggleUncapped(void)
 {
-  DISABLE_ITEM(!uncapped, gen_settings1[gen1_fpslimit]);
-  I_ResetTargetRefresh();
+  DISABLE_ITEM(!default_uncapped, gen_settings1[gen1_fpslimit]);
+  setrefreshneeded = true;
 }
 
 static void M_ToggleFullScreen(void)
@@ -3937,16 +3976,11 @@ static void M_CoerceFPSLimit(void)
 {
   if (fpslimit < TICRATE)
     fpslimit = 0;
-  I_ResetTargetRefresh();
+  setrefreshneeded = true;
 }
 
 static void M_UpdateFOV(void)
 {
-  if (custom_fov < FOVMIN)
-  {
-    custom_fov = 0;
-  }
-
   setsizeneeded = true; // run R_ExecuteSetViewSize;
 }
 
@@ -3973,7 +4007,8 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
   {"Dynamic Resolution", S_YESNO, m_null, M_X, M_THRM_SPC,
    {"dynamic_resolution"}, 0, M_ResetVideoHeight},
 
-  {"Widescreen", S_YESNO, m_null, M_X, M_SPC, {"widescreen"}, 0, M_ResetScreen},
+  {"Widescreen", S_CHOICE, m_null, M_X, M_SPC,
+   {"widescreen"}, 0, M_ResetScreen, str_widescreen},
 
   {"FOV", S_THERMO, m_null, M_X_THRM8, M_SPC, {"fov"}, 0, M_UpdateFOV},
 
@@ -4013,25 +4048,17 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
   {"Music Volume", S_THERMO, m_null, M_X_THRM8, M_THRM_SPC,
    {"music_volume"}, 0, M_UpdateMusicVolume},
 
-  {"", S_SKIP, m_null, M_X, M_SPC},
-
-  {"Number of Sound Channels", S_NUM|S_PRGWARN, m_null, M_X, M_THRM_SPC,
-   {"snd_channels"}},
-
-  {"Pitch-Shifted Sounds", S_YESNO, m_null, M_X, M_SPC, {"pitched_sounds"}},
-
-  // [FG] play sounds in full length
-  {"Disable Sound Cutoffs", S_YESNO, m_null, M_X, M_SPC, {"full_sounds"}},
-
-  {"", S_SKIP, m_null, M_X, M_SPC},
-
-  {"Resampler", S_CHOICE, m_null, M_X, M_SPC,
-   {"snd_resampler"}, 0, M_UpdateUserSoundSettings, str_sound_resampler},
+  {"", S_SKIP, m_null, M_X, M_THRM_SPC},
 
   {"Sound Module", S_CHOICE, m_null, M_X, M_SPC,
    {"snd_module"}, 0, M_SetSoundModule, str_sound_module},
 
   {"Headphones Mode", S_YESNO, m_null, M_X, M_SPC, {"snd_hrtf"}, 0, M_SetSoundModule},
+
+  {"Pitch-Shifted Sounds", S_YESNO, m_null, M_X, M_SPC, {"pitched_sounds"}},
+
+  // [FG] play sounds in full length
+  {"Disable Sound Cutoffs", S_YESNO, m_null, M_X, M_SPC, {"full_sounds"}},
 
   {"", S_SKIP, m_null, M_X, M_SPC},
 
@@ -4067,6 +4094,7 @@ enum {
   gen5_transpct,
   gen5_gap1,
 
+  gen5_voxels,
   gen5_brightmaps,
   gen5_stretch_sky,
   gen5_linear_sky,
@@ -4075,7 +4103,6 @@ enum {
   gen5_gap2,
 
   gen5_menu_background,
-  gen5_diskicon,
   gen5_endoom,
 };
 
@@ -4162,6 +4189,7 @@ static const char *layout_strings[] = {
 };
 
 static const char *curve_strings[] = {
+  "", "", "", "", "", "", "", "", "", "", // Dummy values, start at 1.0.
   "Linear", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9",
   "Squared", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9",
   "Cubed"
@@ -4180,9 +4208,14 @@ static const char *death_use_action_strings[] = {
   "default", "last save", "nothing"
 };
 
-static const char *menu_background_strings[] = {
-  "on", "off", "dark"
+static const char *menu_backdrop_strings[] = {
+  "Off", "Dark", "Texture"
 };
+
+void M_DisableVoxelsRenderingItem(void)
+{
+    gen_settings5[gen5_voxels].m_flags |= S_DISABLE;
+}
 
 #define CNTR_X 162
 
@@ -4271,6 +4304,8 @@ setup_menu_t gen_settings5[] = {
 
   {"", S_SKIP, m_null, M_X, M_SPC},
 
+  {"Voxels", S_YESNO|S_STRICT, m_null, M_X, M_SPC, {"voxels_rendering"}},
+
   {"Brightmaps", S_YESNO|S_STRICT, m_null, M_X, M_SPC, {"brightmaps"}},
 
   {"Stretch Short Skies", S_YESNO, m_null, M_X, M_SPC,
@@ -4286,10 +4321,8 @@ setup_menu_t gen_settings5[] = {
 
   {"", S_SKIP, m_null, M_X, M_SPC},
 
-  {"Menu Background", S_CHOICE, m_null, M_X, M_SPC,
-   {"menu_background"}, 0, NULL, str_menu_background},
-
-  {"Disk IO Icon", S_YESNO, m_null, M_X, M_SPC, {"disk_icon"}},
+  {"Menu Backdrop", S_CHOICE, m_null, M_X, M_SPC,
+   {"menu_backdrop"}, 0, NULL, str_menu_backdrop},
 
   {"Show ENDOOM Screen", S_CHOICE, m_null, M_X, M_SPC,
    {"show_endoom"}, 0, NULL, str_endoom},
@@ -4311,7 +4344,7 @@ setup_menu_t gen_settings6[] = {
   {"Screen flashes", S_YESNO|S_STRICT, m_null, M_X, M_SPC,
    {"palette_changes"}},
 
-  {"Level Brightness", S_THERMO|S_STRICT, m_null, M_X_THRM8, M_SPC,
+  {"Level Brightness", S_THERMO|S_THRM_SIZE4|S_STRICT, m_null, M_X_THRM4, M_SPC,
    {"extra_level_brightness"}},
 
   {"Organize save files", S_YESNO|S_PRGWARN, m_null, M_X, M_THRM_SPC,
@@ -4351,6 +4384,7 @@ static void M_General(int choice)
   default_verify = false;
   setup_gather = false;
   mult_screens_index = M_GetMultScreenIndex(gen_settings);
+  set_tab_on = mult_screens_index;
   current_setup_menu = gen_settings[mult_screens_index];
   current_setup_tabs = gen_tabs;
   set_menu_itemon = M_GetSetupMenuItemOn();
@@ -4696,12 +4730,12 @@ static int menu_font_spacing = 0;
 
 // M_DrawMenuString() draws the string in menu_buffer[]
 
-static void M_DrawStringCR(int cx, int cy, char *cr1, char *cr2, const char *ch)
+static void M_DrawStringCR(int cx, int cy, byte *cr1, byte *cr2, const char *ch)
 {
     int   w;
     int   c;
 
-    char *cr = cr1;
+    byte *cr = cr1;
 
     while (*ch)
     {
@@ -5949,12 +5983,18 @@ static boolean M_MenuMouseResponder(void)
 
     setup_menu_t *current_item = current_setup_menu + set_menu_itemon;
     int flags = current_item->m_flags;
+    default_t *def = current_item->var.def;
     mrect_t *rect = &current_item->rect;
 
     if (M_InputActivated(input_menu_enter)
         && !M_PointInsideRect(rect, mouse_state_x, mouse_state_y))
     {
         return true; // eat event
+    }
+
+    if (ItemDisabled(flags))
+    {
+        return false;
     }
 
     if (flags & S_THERMO)
@@ -5967,9 +6007,21 @@ static boolean M_MenuMouseResponder(void)
         {
             active_thermo = false;
 
-            if (current_item->action)
+            if (flags & S_ACTION)
             {
-                current_item->action();
+                if (flags & (S_LEVWARN | S_PRGWARN))
+                {
+                    warn_about_changes(flags);
+                }
+                else if (def->current)
+                {
+                    def->current->i = def->location->i;
+                }
+
+                if (current_item->action)
+                {
+                    current_item->action();
+                }
             }
         }
     }
@@ -5978,7 +6030,6 @@ static boolean M_MenuMouseResponder(void)
     {
         int dot = mouse_state_x - (rect->x + M_THRM_STEP + video.deltaw);
 
-        default_t *def = current_item->var.def;
         int min = def->limit.min;
         int max = def->limit.max;
 
@@ -5992,7 +6043,7 @@ static boolean M_MenuMouseResponder(void)
         }
 
         int step = (max - min) * FRACUNIT / (rect->w - M_THRM_STEP * 2);
-        int value = dot * step / FRACUNIT;
+        int value = dot * step / FRACUNIT + min;
         value = BETWEEN(min, max, value);
 
         if (value != def->location->i)
@@ -6595,6 +6646,8 @@ void M_StartControlPanel (void)
   currentMenu = &MainDef;         // JDC
   itemOn = currentMenu->lastOn;   // JDC
   print_warning_about_changes = false;   // killough 11/98
+
+  G_ClearInput();
 }
 
 //
@@ -6607,16 +6660,11 @@ void M_StartControlPanel (void)
 
 boolean M_MenuIsShaded(void)
 {
-  return setup_active && menu_background == background_dark;
+  return options_active && menu_backdrop == MENU_BG_DARK;
 }
 
 void M_Drawer (void)
 {
-    if (M_MenuIsShaded())
-    {
-        V_ShadeScreen();
-    }
-
     inhelpscreens = false;
 
     // Horiz. & Vertically center string and print it.
@@ -6651,6 +6699,12 @@ void M_Drawer (void)
     if (!menuactive)
     {
         return;
+    }
+
+    if (M_MenuIsShaded())
+    {
+        inhelpscreens = true;
+        V_ShadeScreen();
     }
 
     if (currentMenu->routine)
@@ -6696,7 +6750,7 @@ void M_Drawer (void)
         const char *alttext = item->alttext;
         const char *name = item->name;
 
-        char *cr;
+        byte *cr;
         if (item->status == 0)
             cr = cr_dark;
         else if (item->flags & MF_HILITE)
@@ -6751,11 +6805,14 @@ void M_Drawer (void)
 static void M_ClearMenus(void)
 {
   menuactive = 0;
+  options_active = false;
   print_warning_about_changes = 0;     // killough 8/15/98
   default_verify = 0;                  // killough 10/98
 
   // if (!netgame && usergame && paused)
   //     sendpause = true;
+
+  G_ClearInput();
 }
 
 //
@@ -6805,7 +6862,7 @@ static void M_StartMessage(char *string,void (*routine)(int),boolean input)
 // M_DrawThermo draws the thermometer graphic for Mouse Sensitivity,
 // Sound Volume, etc.
 //
-static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, char *cr)
+static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, byte *cr)
 {
   int xx;
   int  i;
@@ -6946,7 +7003,7 @@ static const char **selectstrings[] = {
     center_weapon_strings,
     bobfactor_strings,
     hudtype_strings,
-    hudmode_strings,
+    NULL, // str_hudmode
     show_widgets_strings,
     crosshair_strings,
     crosshair_target_strings,
@@ -6957,13 +7014,13 @@ static const char **selectstrings[] = {
     NULL, // str_midi_player
     gamma_strings,
     sound_module_strings,
-    sound_resampler_strings,
     NULL, // str_mouse_accel
     default_skill_strings,
     default_complevel_strings,
     endoom_strings,
     death_use_action_strings,
-    menu_background_strings,
+    menu_backdrop_strings,
+    widescreen_strings,
 };
 
 static const char **GetStrings(int id)
@@ -6976,8 +7033,14 @@ static const char **GetStrings(int id)
     return NULL;
 }
 
+static void M_UpdateHUDModeStrings(void)
+{
+    selectstrings[str_hudmode] = M_GetHUDModeStrings();
+}
+
 void M_InitMenuStrings(void)
 {
+    M_UpdateHUDModeStrings();
     selectstrings[str_resolution_scale] = M_GetResolutionScaleStrings();
     selectstrings[str_midi_player] = M_GetMidiDevicesStrings();
     selectstrings[str_mouse_accel] = M_GetMouseAccelStrings();
@@ -7135,12 +7198,9 @@ void M_ResetSetupMenu(void)
     gen_settings5[gen5_brightmaps].m_flags |= S_DISABLE;
   }
 
-  DISABLE_ITEM(!comp[comp_vile], enem_settings1[enem1_ghost]);
-
   M_CoerceFPSLimit();
   M_UpdateCrosshairItems();
   M_UpdateCenteredWeaponItem();
-  M_UpdateCriticalItems();
   M_UpdateAdvancedSoundItems();
 }
 

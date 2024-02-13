@@ -72,6 +72,8 @@ void M_DrawCredits(void);    // killough 11/98
 
 void M_SetMenuFontSpacing(void);
 
+void M_DisableVoxelsRenderingItem(void);
+
 /////////////////////////////
 //
 // The following #defines are for the m_flags field of each item on every
@@ -101,10 +103,12 @@ void M_SetMenuFontSpacing(void);
 #define S_NEXT_LINE    0x00200000 // Two lines menu items
 #define S_STRICT       0x00400000 // Disable in strict mode
 #define S_BOOM         0x00800000 // Disable if complevel < boom
-#define S_CRITICAL     0x01000000 // Disable when recording/playing a demo and in netgame
+#define S_VANILLA      0x01000000 // Disable if complevel != vanilla
 #define S_ACTION       0x02000000 // Run function call only when change is complete
 #define S_THRM_SIZE11  0x04000000 // Thermo bar size 11
 #define S_ONOFF        0x08000000 // Alias for S_YESNO
+#define S_MBF          0x10000000 // Disable if complevel < mbf
+#define S_THRM_SIZE4   0x20000000 // Thermo bar size 4
 
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
@@ -179,12 +183,12 @@ typedef struct setup_menu_s
 
 typedef enum
 {
-  background_on,
-  background_off,
-  background_dark,
-} background_t;
+  MENU_BG_OFF,
+  MENU_BG_DARK,
+  MENU_BG_TEXTURE,
+} backdrop_t;
 
-extern background_t menu_background;
+extern backdrop_t menu_backdrop;
 extern boolean M_MenuIsShaded(void);
 
 extern void M_SetQuickSaveSlot (int slot);

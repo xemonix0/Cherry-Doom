@@ -204,7 +204,7 @@ static patch_t *nhinfnty;           // NHINFNTY
 static st_number_t w_ready;
 
 // [Alaux]
-int smooth_counts;
+int hud_animated_counts;
 int st_health = 100;
 int st_armor = 0;
 
@@ -765,7 +765,7 @@ static int SmoothCount(int shownval, int realval)
   int step = realval - shownval;
 
   // [Nugget] Disallowed in Strict Mode
-  if (NOTSTRICTMODE(!smooth_counts || !step))
+  if (NOTSTRICTMODE(!hud_animated_counts || !step))
   {
     return realval;
   }

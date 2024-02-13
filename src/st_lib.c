@@ -95,9 +95,9 @@ void STlib_initNum
 // Passed a st_number_t widget and a color range for output.
 // Returns nothing
 //
-void STlib_drawNum
+static void STlib_drawNum
 ( st_number_t*  n,
-  char *outrng )       //jff 2/16/98 add color translation to digit output
+  byte *outrng )       //jff 2/16/98 add color translation to digit output
 {
   int   numdigits = n->width;
   int   num = *n->num;
@@ -184,7 +184,7 @@ void STlib_drawNum
 //
 void STlib_updateNum
 ( st_number_t*    n,
-  char *outrng ) //jff 2/16/98 add color translation to digit output
+  byte *outrng ) //jff 2/16/98 add color translation to digit output
 {
   if (*n->on) STlib_drawNum(n, outrng);
 }
@@ -223,7 +223,7 @@ void STlib_initPercent
 //
 void STlib_updatePercent
 ( st_percent_t*   per,
-  char *outrng )            //jff 2/16/98 add color translation to digit output
+  byte *outrng )            //jff 2/16/98 add color translation to digit output
 {
   // Remove the check for 'refresh' because this causes percent symbols to always appear
   // in automap overlay mode.

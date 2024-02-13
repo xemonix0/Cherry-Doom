@@ -24,8 +24,9 @@
 
 #include "doomtype.h"
 
-#define FOVMIN 40
-#define FOVMAX 140 // Up to 32:9 ultrawide.
+#define FOV_DEFAULT 90
+#define FOV_MIN 60
+#define FOV_MAX 120
 #define ASPECT_RATIO_MAX 3.6 // Up to 32:9 ultrawide.
 
 typedef enum
@@ -35,7 +36,6 @@ typedef enum
     RATIO_16_10,
     RATIO_16_9,
     RATIO_21_9,
-    RATIO_32_9,
     NUM_RATIOS
 } aspect_ratio_mode_t;
 
@@ -62,7 +62,6 @@ void I_FinishUpdate(void);
 void I_ReadScreen(byte* dst);
 
 void I_ResetScreen(void);   // killough 10/98
-void I_ResetTargetRefresh(void);
 void I_ToggleVsync(void); // [JN] Calls native SDL vsync toggle
 
 void I_DynamicResolution(void);
@@ -93,6 +92,7 @@ extern int video_display; // display index
 extern boolean screenvisible;
 extern boolean window_focused;
 extern boolean resetneeded;
+extern boolean setrefreshneeded;
 extern boolean smooth_scaling;
 extern boolean toggle_fullscreen;
 extern boolean toggle_exclusive_fullscreen;

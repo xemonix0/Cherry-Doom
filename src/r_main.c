@@ -416,12 +416,14 @@ static void R_InitTextureMapping(void)
   // Calc focallength
   //  so FIELDOFVIEW angles covers SCREENWIDTH.
 
-  if (custom_fov)
+  if (custom_fov != FOV_DEFAULT)
   {
-    fov = custom_fov * FINEANGLES / 360;
+    const double slope = (tan(custom_fov * M_PI / 360.0) *
+                          centerxfrac / centerxfrac_nonwide);
+    fov = atan(slope) * FINEANGLES / M_PI;
     slopefrac = finetangent[FINEANGLES / 4 + fov / 2];
     focallength = FixedDiv(centerxfrac, slopefrac);
-    projection = centerxfrac / tan(custom_fov * M_PI / 360.0);
+    projection = centerxfrac / slope;
   }
   else
   {
@@ -642,8 +644,6 @@ static void R_SetupMouselook(void)
 boolean setsizeneeded;
 int     setblocks;
 
-static int viewblocks;
-
 void R_SetViewSize(int blocks)
 {
   setsizeneeded = true;
@@ -705,14 +705,12 @@ void R_ExecuteSetViewSize (void)
 
   V_ScaleRect(&view);
 
-  viewwidth = view.sw;
-  viewheight = view.sh;
-  viewwidth_nonwide = (scaledviewwidth_nonwide * video.xscale) >> FRACBITS;
-
   viewwindowx = view.sx;
   viewwindowy = view.sy;
+  viewwidth   = view.sw;
+  viewheight  = view.sh;
 
-  viewblocks = (MIN(setblocks, 10) * video.yscale) >> FRACBITS;
+  viewwidth_nonwide = V_ScaleX(scaledviewwidth_nonwide);
 
   // [Nugget] FOV changes
   #if 0
@@ -805,9 +803,9 @@ void R_ExecuteSetViewSize (void)
   }
   #endif
 
-  centerx = viewwidth / 2;
-  centerxfrac = centerx << FRACBITS;
-  centerxfrac_nonwide = (viewwidth_nonwide / 2) << FRACBITS;
+  centerxfrac = (viewwidth << FRACBITS) / 2;
+  centerx = (centerxfrac >> FRACBITS);
+  centerxfrac_nonwide = (viewwidth_nonwide << FRACBITS) / 2;
 
   viewheightfrac = viewheight << (FRACBITS + 1); // [FG] sprite clipping optimizations
 

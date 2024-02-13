@@ -234,9 +234,9 @@ extern  int automapactive; // In AutoMap mode? // [Nugget] Minimap: now an int
 
 typedef enum
 {
-  overlay_off,
-  overlay_on,
-  overlay_dark,
+  AM_OVERLAY_OFF,
+  AM_OVERLAY_ON,
+  AM_OVERLAY_DARK,
 } overlay_t;
 
 extern  overlay_t automapoverlay;

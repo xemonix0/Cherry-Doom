@@ -152,7 +152,7 @@ boolean         padlook = false;
 // killough 4/13/98: Make clock rate adjustable by scale factor
 int             realtic_clock_rate = 100;
 
-int             default_complevel;
+complevel_t     default_complevel;
 boolean         force_complevel;
 
 boolean         pistolstart, default_pistolstart;
@@ -448,9 +448,25 @@ static int CarryError(double value, const double *prevcarry, double *carry)
   return actual;
 }
 
-static int CarryAngle(double angle)
+static short CarryAngle_Full(double angle)
 {
   return CarryError(angle, &prevcarry.angle, &carry.angle);
+}
+
+static short CarryAngle_LowRes(double angle)
+{
+  const short desired = CarryAngle_Full(angle) + prevcarry.lowres;
+  // Round to nearest 256 for single byte turning. From Chocolate Doom.
+  const short actual = (desired + 128) & 0xFF00;
+  carry.lowres = desired - actual;
+  return actual;
+}
+
+static short (*CarryAngle)(double angle) = CarryAngle_Full;
+
+void G_UpdateCarryAngle(void)
+{
+  CarryAngle = lowres_turn ? CarryAngle_LowRes : CarryAngle_Full;
 }
 
 static int CarryPitch(double pitch)
@@ -468,15 +484,6 @@ static int CarryMouseSide(double side)
   const double desired = side + prevcarry.side;
   const int actual = RoundSide(desired);
   carry.side = desired - actual;
-  return actual;
-}
-
-static short CarryLowResAngle(short angle)
-{
-  const short desired = angle + prevcarry.lowres;
-  // Round to nearest 256 for single byte turning. From Chocolate Doom.
-  const short actual = (desired + 128) & 0xFF00;
-  carry.lowres = desired - actual;
   return actual;
 }
 
@@ -535,10 +542,6 @@ void G_PrepTiccmd(void)
     {
       localview.rawangle -= CalcControllerAngle(speed) * deltatics;
       cmd->angleturn = CarryAngle(localview.rawangle);
-      if (lowres_turn)
-      {
-        cmd->angleturn = CarryLowResAngle(cmd->angleturn);
-      }
       localview.angle = cmd->angleturn << 16;
       axes[AXIS_TURN] = 0.0f;
     }
@@ -558,10 +561,6 @@ void G_PrepTiccmd(void)
   {
     localview.rawangle -= CalcMouseAngle(mousex);
     cmd->angleturn = CarryAngle(localview.rawangle);
-    if (lowres_turn)
-    {
-      cmd->angleturn = CarryLowResAngle(cmd->angleturn);
-    }
     localview.angle = cmd->angleturn << 16;
     mousex = 0;
   }
@@ -688,13 +687,9 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (angle)
   {
-    angle = CarryAngle(localview.rawangle + angle);
-    if (lowres_turn)
-    {
-      angle = CarryLowResAngle(angle);
-    }
-    localview.ticangleturn = angle - cmd->angleturn;
-    cmd->angleturn = angle;
+    const short old_angleturn = cmd->angleturn;
+    cmd->angleturn = CarryAngle(localview.rawangle + angle);
+    localview.ticangleturn = cmd->angleturn - old_angleturn;
   }
 
   // [Nugget] Decrease the intensity of some movements if zoomed in
@@ -886,6 +881,16 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   }
 }
 
+void G_ClearInput(void)
+{
+  I_ResetControllerLevel();
+  mousex = mousey = 0;
+  memset(&localview, 0, sizeof(localview));
+  memset(&carry, 0, sizeof(carry));
+  memset(&prevcarry, 0, sizeof(prevcarry));
+  memset(&basecmd, 0, sizeof(basecmd));
+}
+
 //
 // G_DoLoadLevel
 //
@@ -996,12 +1001,7 @@ static void G_DoLoadLevel(void)
   // [Nugget] Rewind: unless we just rewound
   if (old_gameaction != ga_rewind) {
     memset (gamekeydown, 0, sizeof(gamekeydown));
-    I_ResetControllerLevel();
-    mousex = mousey = 0;
-    memset(&localview, 0, sizeof(localview));
-    memset(&carry, 0, sizeof(carry));
-    memset(&prevcarry, 0, sizeof(prevcarry));
-    memset(&basecmd, 0, sizeof(basecmd));
+    G_ClearInput();
     sendpause = sendsave = paused = false;
     // [FG] array size!
     memset (mousearray, 0, sizeof(mousearray));
@@ -3534,11 +3534,11 @@ static int G_GetDefaultComplevel()
 {
   switch (default_complevel)
   {
-    case 0:
+    case CL_VANILLA:
       return 109;
-    case 1:
+    case CL_BOOM:
       return 202;
-    case 2:
+    case CL_MBF:
       return 203;
     default:
       return 221;

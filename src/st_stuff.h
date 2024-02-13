@@ -142,7 +142,7 @@ extern void ST_createWidgets(void); // [Nugget]
 // killough 5/2/98: moved from m_misc.c:
 
 // [Alaux]
-extern int smooth_counts;
+extern int hud_animated_counts;
 extern int st_health;
 extern int st_armor;
 
