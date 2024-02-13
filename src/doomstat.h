@@ -593,7 +593,7 @@ enum {
   SHOTPAL_BOTH,
 }; extern int screenshot_palette;
 
-extern int menu_background_darkening;
+extern int menu_backdrop_darkening;
 extern int automap_overlay_darkening;
 extern int sp_chat;
 

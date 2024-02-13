@@ -232,7 +232,7 @@ int fancy_teleport;
 // Miscellaneous (CFG-Only) -----------
 
 int screenshot_palette;
-int menu_background_darkening;
+int menu_backdrop_darkening;
 int automap_overlay_darkening;
 int sp_chat;
 
