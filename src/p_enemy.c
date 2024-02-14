@@ -2158,11 +2158,6 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
   // killough 7/20/98: PEs shoot lost souls with the same friendliness
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
 
-  // [Nugget] Count towards extraspawns if for some reason
-  // the spawned mobj counts towards killcount
-  if ((newmobj->flags & MF_COUNTKILL) && !(newmobj->flags & MF_FRIEND))
-    extraspawns++;
-
   // killough 8/29/98: add to appropriate thread
   P_UpdateThinker(&newmobj->thinker);
 

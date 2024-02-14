@@ -505,8 +505,6 @@ static void cheat_secretexit()
 static void cheat_turbo(char *buf)
 {
   int scale = 200;
-  extern int forwardmove[2];
-  extern int sidemove[2];
 
   if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
   {
@@ -591,13 +589,7 @@ static void SummonMobj(boolean friendly)
   
   spawnee->angle = plyr->mo->angle;
   
-  if (spawneefriend)
-  { spawnee->flags |= MF_FRIEND; }
-  else {
-    spawnee->intflags |= MIF_EXTRASPAWNED;
-    if ((spawnee->flags & MF_COUNTKILL) && !(spawnee->flags & MF_FRIEND))
-    { extraspawns++; }
-  }
+  if (spawneefriend) { spawnee->flags |= MF_FRIEND; }
   
   P_MapEnd();
 

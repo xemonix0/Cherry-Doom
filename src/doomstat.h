@@ -537,7 +537,6 @@ extern int sx_fix; // CFG-Only
 extern int show_ssg; // CFG-Only
 extern int alt_arms;
 extern int blink_keys; // CFG-Only
-extern int smarttotals;
 
 typedef enum {
   TIMER_USE,

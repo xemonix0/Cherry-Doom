@@ -2607,13 +2607,9 @@ static void G_SaveKeyFrame(void)
     memset(save_p, 0, 8);
   save_p += 8;
 
-  // [Nugget] Save extraspawns
-  CheckSaveGame(sizeof extraspawns);
-  saveg_write32(extraspawns);
-
-  // save extrakills
-  CheckSaveGame(sizeof extrakills);
-  saveg_write32(extrakills);
+  // save max_kill_requirement
+  CheckSaveGame(sizeof(max_kill_requirement));
+  saveg_write32(max_kill_requirement);
 
   // [Nugget] Save milestones
   CheckSaveGame(sizeof complete_milestones);
@@ -2772,21 +2768,14 @@ static void G_DoRewind(void)
     save_p += 8;
   }
 
-  // [Nugget] /---------------------------------------------------------------
-  
-  // Restore extraspawns
-  if (save_p - savebuffer <= length - sizeof extraspawns)
-  { extraspawns = saveg_read32(); }
-  
-  // Restore extrakills
-  if (saveg_compat > saveg_woof600 && save_p - savebuffer <= length - sizeof extrakills)
-  { extrakills = saveg_read32(); }
+  if (save_p - savebuffer <= length - sizeof(max_kill_requirement))
+  {
+    max_kill_requirement = saveg_read32();
+  }
 
-  // Restore milestones
-  if (saveg_compat > saveg_nugget200 && save_p - savebuffer <= length - sizeof complete_milestones)
+  // [Nugget] Restore milestones
+  if (save_p - savebuffer <= length - sizeof complete_milestones)
   { complete_milestones = saveg_read_enum(); }
-
-  // [Nugget] ---------------------------------------------------------------/
 
   keyframe_rw = false;
 

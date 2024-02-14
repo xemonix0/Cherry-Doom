@@ -40,11 +40,15 @@
 #include "r_voxel.h"
 #include "u_scanner.h"
 
+// [Nugget]
+#include "am_map.h"
+#include "m_nughud.h"
+
 // global heads up display controls
 
 int hud_active;       //jff 2/17/98 controls heads-up display mode 
 int hud_displayed;    //jff 2/23/98 turns heads-up display on/off
-int hud_secret_message; // "A secret is revealed!" message
+secretmessage_t hud_secret_message; // "A secret is revealed!" message
 int hud_widget_font;
 int hud_widget_layout;
 
@@ -592,7 +596,7 @@ static void NughudAlignWidget(nughud_alignable_t *aligner, hu_widget_t *alignee)
 
 void HU_NughudAlignTime(void)
 {
-  hu_widget_t *w = boom_widgets[NUGHUDSLOT];
+  hu_widget_t *w = boom_widgets[hud_active];
 
   while (w->multiline) {
     if (w->multiline == &w_sttime)
@@ -736,7 +740,7 @@ void HU_Start(void)
     hu_multiline_t *m;
     nughud_alignable_t *na;
 
-    w = doom_widgets[NUGHUDSLOT];
+    w = doom_widgets[hud_active];
     while ((m = w->multiline)) 
     {
       na = NULL;
@@ -756,7 +760,7 @@ void HU_Start(void)
       w++;
     }
 
-    w = boom_widgets[NUGHUDSLOT];
+    w = boom_widgets[hud_active];
     while ((m = w->multiline))
     {
       na = NULL;

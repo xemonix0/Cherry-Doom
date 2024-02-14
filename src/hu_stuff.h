@@ -23,6 +23,9 @@
 #include "r_defs.h"
 #include "hu_lib.h"
 
+// [Nugget]
+#include "doomstat.h"
+
 #define HU_BROADCAST    5
 
 #define HU_MSGTIMEOUT   (4*TICRATE)
@@ -35,12 +38,7 @@ void HU_Start(void);
 void HU_disable_all_widgets (void);
 void HU_widget_rebuild_sttime(void);
 
-// [Nugget] /-----------------------------------------------------------------
-
-void HU_NughudAlignTime(void); // NUGHUD
-void HU_widget_rebuild_sttime(void);
-
-// [Nugget] -----------------------------------------------------------------/
+void HU_NughudAlignTime(void); // [Nugget] NUGHUD
 
 boolean HU_Responder(event_t* ev);
 

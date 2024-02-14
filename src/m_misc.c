@@ -1753,7 +1753,7 @@ default_t defaults[] = {
   {
     "zoom_fov",
     (config_t *) &zoom_fov, NULL,
-    {MINFOV}, {MINFOV,MAXFOV}, number, ss_keys, wad_no,
+    {FOV_MIN}, {FOV_MIN,FOV_MAX}, number, ss_keys, wad_no,
     "Field of View when zoom is enabled"
   },
 

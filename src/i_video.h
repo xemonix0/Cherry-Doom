@@ -25,8 +25,8 @@
 #include "doomtype.h"
 
 #define FOV_DEFAULT 90
-#define FOV_MIN 60
-#define FOV_MAX 120
+#define FOV_MIN 20  // [Nugget] Decreased
+#define FOV_MAX 160 // [Nugget] Increased
 #define ASPECT_RATIO_MAX 3.6 // Up to 32:9 ultrawide.
 
 typedef enum

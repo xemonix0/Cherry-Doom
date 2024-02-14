@@ -24,6 +24,7 @@
 
 #include "doomtype.h"
 #include "d_event.h"
+
 // [Nugget]
 #include "d_player.h"
 #include "r_defs.h"
@@ -35,7 +36,7 @@
 #define ST_WIDTH  SCREENWIDTH
 #define ST_Y      (SCREENHEIGHT - ST_HEIGHT)
 
-// [Nugget] Macros brought over from st_stuff.c
+// [Nugget] Macros brought over from `st_stuff.c` /---------------------------
 
 #define ST_FACESX               143
 #define ST_FACESY               168
@@ -111,6 +112,8 @@
 #define ST_MAXAMMO3X            314
 #define ST_MAXAMMO3Y            185
 
+// [Nugget] -----------------------------------------------------------------/
+
 
 //
 // STATUS BAR
@@ -171,7 +174,9 @@ extern int hud_armor_type; // color of armor depends on type
 
 extern int st_solidbackground;
 
-extern int st_crispyhud; // [Nugget] Included here; now an int
+// [Nugget] Brought from `st_stuff.c`
+extern boolean st_crispyhud;
+extern int distributed_delta;
 
 extern patch_t *nhtminus, *nhrminus; // [Nugget]
 

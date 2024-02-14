@@ -1461,6 +1461,10 @@ static void AM_putWuDot(int x, int y, int color, int weight)
    unsigned int *bg2rgb = Col2RGB8[64 - weight];
    unsigned int fg, bg;
 
+  // [Nugget] Minimap: take `f_x` and `f_y` into account
+  if (!((f_x <= x && x < f_x+f_w) && (f_y <= y && y < f_y+f_h)))
+  { return; }
+
    fg = fg2rgb[color];
    bg = bg2rgb[*dest];
    fg = (fg + bg) | 0x1f07c1f;
@@ -2404,7 +2408,7 @@ void AM_shadeScreen(void)
     for (x = f_x;  x < f_x+f_w;  x++)
       for (y = f_y;  y < f_y+f_h;  y++) {
         pixel = y * video.pitch + x;
-        fb[pixel] = colormaps[0][automap_overlay_darkening * 256 + fb[pixel]];
+        I_VideoBuffer[pixel] = colormaps[0][automap_overlay_darkening * 256 + I_VideoBuffer[pixel]];
       }
   }
   else
@@ -2451,7 +2455,7 @@ void AM_Drawer (void)
   if (!automapoverlay)
   {
     AM_clearFB(mapcolor_back);       //jff 1/5/98 background default color
-    if (automapactive == AM_MINI) // [Nugget] Minimap
+    if (automapactive == AM_FULL) // [Nugget] Minimap
       pspr_interp = false;
   }
   // [Alaux] Dark automap overlay

@@ -537,11 +537,9 @@ void P_DeathThink (player_t* player)
   // [Nugget] Allow some freelook while dead
   if ((player->viewheight == 6*FRACUNIT) && !menuactive && !demoplayback)
   {
-    player->lookdir = BETWEEN(-LOOKDIRMAX * MLOOKUNIT / 2,
-                               LOOKDIRMAX * MLOOKUNIT / 2,
-                               player->lookdir + player->cmd.lookdir);
-
-    player->slope = PLAYER_SLOPE(player);
+    player->pitch += player->cmd.pitch;
+    player->pitch = BETWEEN(-MAX_PITCH_ANGLE/2, MAX_PITCH_ANGLE/2, player->pitch);
+    player->slope = PlayerSlope(player);
   }
 
   if (player->cmd.buttons & BT_USE)
@@ -573,17 +571,15 @@ void P_DeathThink (player_t* player)
 // [Nugget] Event Timers
 void P_SetPlayerEvent(player_t* player, eventtimer_t type)
 {
-  if ((strictmode && type != TIMER_USE)
-      || !event_timers[type]
-      || ((event_timers[type] == 1) && !(demorecording || demoplayback)))
+  if (!hud_time[type] || (strictmode && type != TIMER_USE))
   {
     return;
   }
 
   player->eventtype = type;
   // to match the timer, we use the leveltime value at the end of the frame
-  player->eventtime = leveltime + 1;
-  player->eventtics = 5*TICRATE/2; // [crispy] 2.5 seconds
+  player->btuse = leveltime + 1;
+  player->btuse_tics = 5*TICRATE/2; // [crispy] 2.5 seconds
 }
 
 //

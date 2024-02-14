@@ -855,7 +855,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
 
   // [Nugget] Announce milestone completion
   if (!(complete_milestones & MILESTONE_KILLS)
-      && (players->killcount - (smarttotals ? extrakills : extraspawns) >= totalkills))
+      && (players->killcount >= max_kill_requirement))
   {
     complete_milestones |= MILESTONE_KILLS;
     if (announce_milestones) {

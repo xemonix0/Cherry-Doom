@@ -142,7 +142,7 @@ static int     zoomed = 0;      // Current zoom state
 
 void R_SetFOV(const int value)
 {
-  video.fov = value;
+  //fov = value;
   fovchange = true;
 }
 
@@ -922,7 +922,7 @@ void R_SetupFrame (player_t *player)
   int i, cm;
   fixed_t pitch;
   // [Nugget]
-  fixed_t playerz, lookdir;
+  fixed_t playerz;
   static angle_t old_interangle, target_interangle;
   static fixed_t chasecamheight;
 
@@ -989,15 +989,6 @@ void R_SetupFrame (player_t *player)
     pitch += player->impactpitch;
   }
 
-  if (pitch != viewpitch)
-  {
-    viewpitch = pitch;
-    R_SetupMouselook();
-  }
-
-  // 3-screen display mode.
-  viewangle += viewangleoffset;
-
   // [Nugget] /---------------------------------------------------------------
 
   // Alt. intermission background
@@ -1006,18 +997,18 @@ void R_SetupFrame (player_t *player)
     static int oldtic = -1;
 
     if (oldtic != gametic) {
-      old_interangle = viewangle = target_interangle + viewangleoffset;
+      old_interangle = viewangle = target_interangle;
       target_interangle += ANG1;
     }
     else if (uncapped)
-    { viewangle = LerpAngle(old_interangle, target_interangle) + viewangleoffset; }
+    { viewangle = LerpAngle(old_interangle, target_interangle); }
 
     oldtic = gametic;
 
     pitch = 0;
   }
   else {
-    target_interangle = viewangle + viewangleoffset;
+    target_interangle = viewangle;
 
     if (STRICTMODE(st_crispyhud)) { pitch += nughud.viewoffset; } // NUGHUD
   }
@@ -1056,20 +1047,24 @@ void R_SetupFrame (player_t *player)
 
   if (chasecam_on)
   {
-    fixed_t playerpitch = player->pitch;
+    fixed_t slope = pitch ? (fixed_t) ((int64_t) finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT] * SCREENHEIGHT / ACTUALHEIGHT) : 0;
+
     static fixed_t oldextradist = 0, extradist = 0;
+
     const fixed_t z = MIN(playerz + ((player->mo->health <= 0 && player->playerstate == PST_DEAD) ? 6*FRACUNIT : chasecamheight),
                           player->mo->ceilingz - (2*FRACUNIT));
+
     fixed_t dist = chasecam_distance * FRACUNIT;
+
     const fixed_t oldviewx = viewx,
                   oldviewy = viewy;
+
     const angle_t oldviewangle = viewangle;
 
-    if (chasecam_mode == CHASECAMMODE_FRONT)
-    {
-      viewangle   += ANG180;
-      playerpitch  = -playerpitch;
-      pitch        = -pitch;
+    if (chasecam_mode == CHASECAMMODE_FRONT) {
+      viewangle += ANG180;
+      slope      = -slope;
+      pitch      = -pitch;
     }
 
     {
@@ -1090,7 +1085,7 @@ void R_SetupFrame (player_t *player)
     }
     else { dist += extradist; }
 
-    P_PositionChasecam(z, dist, playerpitch);
+    P_PositionChasecam(z, dist, slope);
 
     if (chasecam.hit) {
       viewx = chasecam.x;
@@ -1103,14 +1098,14 @@ void R_SetupFrame (player_t *player)
 
       const sector_t *const sec = R_PointInSubsector(viewx-dx, viewy-dy)->sector;
 
-      viewz = z + FixedMul(playerpitch, dist);
+      viewz = z + FixedMul(slope, dist);
 
       if (viewz < sec->floorheight+FRACUNIT || sec->ceilingheight-FRACUNIT < viewz)
       {
         fixed_t frac;
 
         viewz  = BETWEEN(sec->floorheight+FRACUNIT, sec->ceilingheight-FRACUNIT, viewz);
-        frac   = FixedDiv(viewz - z, FixedMul(playerpitch, dist));
+        frac   = FixedDiv(viewz - z, FixedMul(slope, dist));
         viewx -= FixedMul(dx, frac);
         viewy -= FixedMul(dy, frac);
       }
@@ -1127,6 +1122,15 @@ void R_SetupFrame (player_t *player)
   else { chasexofs = chaseyofs = chaseaofs = 0; }
 
   // [Nugget] ---------------------------------------------------------------/
+
+  if (pitch != viewpitch)
+  {
+    viewpitch = pitch;
+    R_SetupMouselook();
+  }
+
+  // 3-screen display mode.
+  viewangle += viewangleoffset;
 
   // [Nugget]: [crispy] A11Y
   if (!NOTSTRICTMODE(a11y_weapon_flash))

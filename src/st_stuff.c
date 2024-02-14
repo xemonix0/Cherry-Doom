@@ -1235,6 +1235,8 @@ void ST_drawWidgets(void)
     STlib_updateNum(&w_frags, NULL);
 }
 
+static void ST_MoveHud (void);
+
 void ST_Drawer(boolean fullscreen, boolean refresh)
 {
   st_statusbaron = !fullscreen || automap_on;
@@ -1589,7 +1591,7 @@ void ST_initData(void)
   STlib_init();
 }
 
-static int distributed_delta = 0;
+int distributed_delta = 0; // [Nugget] Not static anymore
 
 void ST_createWidgets(void)
 {

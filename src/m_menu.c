@@ -3081,7 +3081,7 @@ static setup_tab_t weap_tabs[] =
 
 // [FG] centered or bobbing weapon sprite
 static const char *center_weapon_strings[] = {
-    "Off", "Centered", "Bobbing"
+    "Off", "Centered", "Bobbing", "Horizontal"
 };
 
 static const char *bobfactor_strings[] = {
@@ -3090,7 +3090,7 @@ static const char *bobfactor_strings[] = {
 
 static void M_UpdateCenteredWeaponItem(void)
 {
-  DISABLE_ITEM(!cosmetic_bobbing, weap_settings2[weap2_center]);
+  DISABLE_ITEM(!weapon_bobbing_percentage, weap_settings2[weap2_center]);
 }
 
 setup_menu_t weap_settings1[] =  // Weapons Settings screen
@@ -3123,10 +3123,11 @@ setup_menu_t weap_settings1[] =  // Weapons Settings screen
 
 setup_menu_t weap_settings2[] =
 {
-  {"View/Weapon Bobbing", S_CHOICE, m_null, M_X, M_Y,
-   {"cosmetic_bobbing"}, 0, M_UpdateCenteredWeaponItem, str_bobfactor},
+  // [Nugget]
+  {"Weapon Bobbing %", S_THERMO, m_null, M_X_THRM8, M_Y,
+   {"weapon_bobbing_percentage"}, 0, M_UpdateCenteredWeaponItem},
 
-  {"Hide Weapon", S_YESNO|S_STRICT, m_null, M_X, M_SPC, {"hide_weapon"}},
+  {"Hide Weapon", S_YESNO|S_STRICT, m_null, M_X, M_THRM_SPC, {"hide_weapon"}},
 
   // [FG] centered or bobbing weapon sprite
   {"Weapon Alignment", S_CHOICE|S_STRICT, m_null, M_X, M_SPC,
@@ -3671,8 +3672,9 @@ setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
 
   {"Compatibility-breaking Features", S_SKIP|S_TITLE, m_null, M_X, M_SPC},
 
-  {"Direct Vertical Aiming", S_YESNO|S_STRICT, m_null, M_X, M_SPC,
-   {"direct_vertical_aiming"}},
+  // [Nugget]
+  {"Vertical Aiming", S_YESNO|S_STRICT, m_null, M_X, M_SPC,
+   {"vertical_aiming"}},
 
   {"Auto Strafe 50", S_YESNO|S_STRICT, m_null, M_X, M_SPC,
    {"autostrafe50"}, 0, G_UpdateSideMove},
@@ -4335,7 +4337,8 @@ setup_menu_t gen_settings6[] = {
 
   {"Quality of life", S_SKIP|S_TITLE, m_null, M_X, M_Y},
 
-  {"Screen melt", S_YESNO|S_STRICT, m_null, M_X, M_SPC, {"screen_melt"}},
+  // [Nugget]
+  {"Screen melt", S_YESNO|S_STRICT, m_null, M_X, M_SPC, {"wipe_type"}},
 
   {"On death action", S_CHOICE, m_null, M_X, M_SPC,
    {"death_use_action"}, 0, NULL, str_death_use_action},
@@ -5058,7 +5061,7 @@ static boolean M_ShortcutResponder(void)
 
     if (M_InputActivated(input_zoomout))     // zoom out
     {
-        if (automapactive)
+        if (automapactive == AM_FULL)
         {
             return false;
         }
@@ -5069,7 +5072,7 @@ static boolean M_ShortcutResponder(void)
 
     if (M_InputActivated(input_zoomin))               // zoom in
     {                                   // jff 2/23/98
-        if (automapactive)                // allow
+        if (automapactive == AM_FULL)     // allow
         {                                 // key_hud==key_zoomin
             return false;
         }
@@ -5101,7 +5104,7 @@ static boolean M_ShortcutResponder(void)
 
     if (M_InputActivated(input_hud_timestats))
     {
-        if (automapactive)
+        if (automapactive == AM_FULL)
         {
             if ((hud_level_stats | hud_level_time) & HUD_WIDGET_AUTOMAP)
             {
@@ -6705,7 +6708,7 @@ void M_Drawer (void)
     if (M_MenuIsShaded())
     {
         inhelpscreens = true;
-        V_ShadeScreen();
+        V_ShadeScreen(menu_backdrop_darkening); // [Nugget] Parameterized
     }
 
     if (currentMenu->routine)

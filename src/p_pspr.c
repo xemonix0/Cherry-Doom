@@ -1327,14 +1327,14 @@ static void WeaponInertiaHorizontal(player_t* player, pspdef_t *psp)
 
 static void WeaponInertiaVertical(player_t* player, pspdef_t *psp)
 {
-  const fixed_t lookdir = player->lookdir - player->oldlookdir;
+  const fixed_t pitch = (player->pitch - player->oldpitch) >> ANGLETOFINESHIFT;
 
-  if (lookdir != 0)
+  if (pitch != 0)
   {
-    const fixed_t scale = EASE_SCALE(abs(lookdir), FINEANGLES);
+    const fixed_t scale = EASE_SCALE(abs(pitch), FINEANGLES);
     fixed_t delta = EASE_OUT(MAX_DELTA, scale);
     delta = MIN(delta, MAX_DELTA);
-    psp->wiy += lookdir < 0 ? -delta : delta;
+    psp->wiy += pitch < 0 ? -delta : delta;
   }
 
   if (psp->wiy != 0)
@@ -1365,7 +1365,7 @@ static void P_NuggetWeaponInertia(player_t *player, pspdef_t *psp)
 
     WeaponInertiaHorizontal(player, psp);
 
-    if (mouselook || padlook || player->lookdir || psp->wiy)
+    if (mouselook || padlook || player->pitch || psp->wiy)
       WeaponInertiaVertical(player, psp);
   }
 }

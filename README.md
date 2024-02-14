@@ -25,14 +25,13 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 ### General
 
-- **Selection of widescreen ratios** in the setup menu itself [i.b. Crispy Doom]
+- **Extended FOV range:** [20, 160]
 - **Stretch viewport to fit window** setting (CFG-Only: `stretch_to_fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
 - **Menu items for _Air Absorption_ and _Doppler Effect_**, both of which are **now set to 5 by default**
 - **Tweaked _Stretch Short Skies_ algorithm**
 - **_Screen Wipe Style_** selection:
   - _"Seizure"_ (**Warning**: this one might legitimately be seizure-inducing, use with caution);
   - _"Fade"_.
-- **Fixed screen melt inconsistency across resolutions**
 - **Extended _Level Brightness_ range:** [-8, 8]
 - **_"Direct + Auto"_ mode for Vertical Aiming**
 - **_Direct Vertical Aiming_ for melee attacks**
@@ -83,7 +82,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 ### Status Bar/HUD
 
-- **`NUGHUD` lump support**, making the Crispy HUD (now called Nugget HUD) customizable (see `docs/nughud.md`)
+- **`NUGHUD` lump support**, making the Crispy HUD customizable (see `docs/nughud.md`)
 - **Crosshair:**
   - Vertical-only target lock-on;
   - Horizontal autoaim indicators;
@@ -92,7 +91,6 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Show Powerup Timers_** setting
 - **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-Only: `show_ssg`) [p.f. Crispy Doom]
 - **_Alternative Arms Display_** setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
-- **Blink Missing Keys** setting (CFG-Only: `blink_keys`) [partially p.f. Crispy Doom]
 - **Event Timers:**
   - _Teleport Timer_ [i.b. Crispy Doom];
   - _Key Pickup Timer_ [same as above].
@@ -185,7 +183,6 @@ All of these are CFG-Only, so their CVAR names are included.
   - Intermission: `DSINTTIC`, `DSINTTOT`, `DSINTNEX`, `DSINTNET`, `DSINTDMS`;
   - Health-based player pain sounds: `DSPPAI25`, `DSPPAI50`, `DSPPAI75`, `DSPPA100` [i.b. ZDoom].
 - **Customizable darkening level for dark menu background and Automap overlay** (CFG-Only: `menu_background_darkening` and `automap_overlay_darkening`) [i.b. Cherry Doom]
-- **Tweaked dark menu background and Automap overlay algorithm**
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - Restored `-cdrom` command-line parameter
