@@ -126,30 +126,12 @@ lighttable_t **colormaps;
 int extralight;                           // bumped light from gun blasts
 int extra_level_brightness;               // level brightness feature
 
-// [Nugget] FOV from Doom Retro /---------------------------------------------
+// [Nugget] FOV effects /-----------------------------------------------------
 
-boolean fovchange = true;
-static int bfov; // Base FOV
-static int rfov; // Rendered (currently applied) FOV, with effects added to it
-float fovdiff;   // Used for some corrections
-#define FOVDIFF2 (fovdiff + ((fovdiff - 1.0) * ((fovdiff < 1.0) ? 0.5 : 0.22)))
-
-static fixed_t fovscale;
-static int     pitchmax;
+static int r_fov; // Rendered (currently-applied) FOV, with effects added to it
 
 static fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
 static int     zoomed = 0;      // Current zoom state
-
-void R_SetFOV(const int value)
-{
-  //fov = value;
-  fovchange = true;
-}
-
-int R_GetBFOV(void)
-{
-  return bfov;
-}
 
 void R_ClearFOVFX(void)
 {
@@ -157,9 +139,9 @@ void R_ClearFOVFX(void)
 
   for (int i = FOVFX_ZOOM+1;  i < NUMFOVFX;  i++)
   {
-    // Note: the `R_SetZoom()` call above sets `fovchange = true` already,
+    // Note: the `R_SetZoom()` call above sets `setsizeneeded = true` already,
     // but we'll do it here anyways for future-proofing
-    if (fovfx[i].current != 0) { fovchange = true; }
+    if (fovfx[i].current != 0) { setsizeneeded = true; }
 
     fovfx[i] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
   }
@@ -183,7 +165,7 @@ void R_SetFOVFX(const int fx)
       if (!teleporter_zoom) { break; }
       R_SetZoom(ZOOM_RESET);
       fovfx[FOVFX_TELEPORT].target = 50;
-      fovchange = true;
+      setsizeneeded = true;
       break;
   }
 }
@@ -198,12 +180,12 @@ void R_SetZoom(const int state)
   if (state == ZOOM_RESET || zoomed == ZOOM_RESET)
   {
     zoomed = ZOOM_RESET;
-    fovchange = true;
+    setsizeneeded = true;
     return;
   }
-  else if (zoomed != state) { fovchange = true; }
+  else if (zoomed != state) { setsizeneeded = true; }
 
-  if (STRICTMODE(zoom_fov - bfov))
+  if (STRICTMODE(zoom_fov - custom_fov))
   { zoomed = state; }
   else
   { zoomed = ZOOM_OFF; }
@@ -712,16 +694,10 @@ void R_ExecuteSetViewSize (void)
 
   viewwidth_nonwide = V_ScaleX(scaledviewwidth_nonwide);
 
-  // [Nugget] FOV changes
-  #if 0
-  if (fovchange)
-  {
+  { // [Nugget] FOV changes
     static int oldtic = -1;
     int fx = 0;
     int zoomtarget;
-
-    bfov = (!strictmode ? fov : ORIGFOV);
-    fovchange = false;
 
     if (strictmode || zoomed == ZOOM_RESET) { // Force zoom reset
       zoomtarget = 0;
@@ -729,8 +705,8 @@ void R_ExecuteSetViewSize (void)
       zoomed = ZOOM_OFF;
     }
     else {
-      zoomtarget = (zoomed ? zoom_fov - bfov : 0);
-      // In case bfov changes while zoomed in...
+      zoomtarget = (zoomed ? zoom_fov - custom_fov : 0);
+      // In case `custom_fov` changes while zoomed in...
       if (zoomed && abs(fovfx[FOVFX_ZOOM].target) > abs(zoomtarget))
       { fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = zoomtarget, .current = zoomtarget, .old = zoomtarget }; }
     }
@@ -739,21 +715,21 @@ void R_ExecuteSetViewSize (void)
     {
       if (fovfx[FOVFX_ZOOM].target != zoomtarget)
       {
-        fovchange = true;
+        setsizeneeded = true;
       }
       else for (i = 0;  i < NUMFOVFX;  i++)
         if (fovfx[i].target || fovfx[i].current)
         {
-          fovchange = true;
+          setsizeneeded = true;
           break;
         }
     }
 
-    if (fovchange)
+    if (setsizeneeded)
     {
       if (oldtic != gametic)
       {
-        fovchange = false;
+        setsizeneeded = false;
 
         fovfx[FOVFX_ZOOM].old = fovfx[FOVFX_ZOOM].current = fovfx[FOVFX_ZOOM].target;
 
@@ -773,7 +749,7 @@ void R_ExecuteSetViewSize (void)
           }
 
           if (fovfx[FOVFX_ZOOM].current != fovfx[FOVFX_ZOOM].target)
-          { fovchange = true; }
+          { setsizeneeded = true; }
         }
 
         fovfx[FOVFX_TELEPORT].old = fovfx[FOVFX_TELEPORT].current = fovfx[FOVFX_TELEPORT].target;
@@ -783,7 +759,7 @@ void R_ExecuteSetViewSize (void)
           if ((fovfx[FOVFX_TELEPORT].target -= 5) < 0)
           { fovfx[FOVFX_TELEPORT].target = 0; }
           else
-          { fovchange = true; }
+          { setsizeneeded = true; }
         }
       }
       else if (uncapped)
@@ -796,12 +772,9 @@ void R_ExecuteSetViewSize (void)
     for (i = 0;  i < NUMFOVFX;  i++)
     { fx += fovfx[i].current; }
 
-    rfov = (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
-           ? 150 : bfov + fx;
-
-    fovdiff = (float) ORIGFOV / rfov;
+    r_fov = (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
+           ? MAX(140, custom_fov) : custom_fov + fx;
   }
-  #endif
 
   centerxfrac = (viewwidth << FRACBITS) / 2;
   centerx = (centerxfrac >> FRACBITS);

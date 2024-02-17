@@ -699,10 +699,10 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     const int zoom = R_GetFOVFX(FOVFX_ZOOM);
   
     if (zoom) {
-      const float divisor = fov / MAX(1, fov + zoom);
+      const float divisor = custom_fov / MAX(1, custom_fov + zoom);
       if (divisor > 1) {
         cmd->angleturn /= divisor;
-        cmd->lookdir /= divisor;
+        cmd->pitch /= divisor;
       }
     }
   }
@@ -1036,7 +1036,6 @@ static void G_DoLoadLevel(void)
 
   // Alt. intermission background
   if (WI_UsingAltInterpic()) {
-    fovchange = true;
     R_SetViewSize(screenblocks);
     R_ExecuteSetViewSize();
   }

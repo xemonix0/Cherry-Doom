@@ -1996,7 +1996,6 @@ void WI_Ticker(void)
       if (!alt_interpic_on)
       { R_SetViewSize(screenblocks); }
 
-      fovchange = true;
       R_ExecuteSetViewSize();
     }
   }

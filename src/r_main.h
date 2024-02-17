@@ -120,10 +120,7 @@ void R_RenderPlayerView(player_t *player);   // Called by G_Drawer.
 void R_Init(void);                           // Called by startup code.
 void R_SetViewSize(int blocks);              // Called by M_Responder.
 
-// [Nugget] FOV from Doom Retro /---------------------------------------------
-
-extern boolean fovchange;
-extern float   fovdiff;
+// [Nugget] FOV effects /-----------------------------------------------------
 
 typedef struct fovfx_s {
   int old, current, target;
@@ -142,8 +139,6 @@ enum {
   ZOOM_ON    =  1,
 };
 
-extern void R_SetFOV(const int value);
-extern int  R_GetBFOV(void);
 extern void R_ClearFOVFX(void);
 extern int  R_GetFOVFX(const int fx);
 extern void R_SetFOVFX(const int fx);
