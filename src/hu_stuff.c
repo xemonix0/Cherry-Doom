@@ -132,8 +132,10 @@ static hu_multiline_t w_powers; // Powerup timers
 #define MAX_HUDS 3
 #define MAX_WIDGETS_D 5
 #define MAX_WIDGETS_B (12+1) // [Nugget] Accommodate more widgets
+#define NUGHUDSLOT 3 // [Nugget] NUGHUD
 
-static hu_widget_t doom_widgets[MAX_HUDS][MAX_WIDGETS_D] = {
+// [Nugget] Extra slot for NUGHUD
+static hu_widget_t doom_widgets[MAX_HUDS+1][MAX_WIDGETS_D] = {
   {
     {&w_title,   align_direct, align_bottom, 0},
     {&w_message, align_direct, align_top,    0},
@@ -152,10 +154,17 @@ static hu_widget_t doom_widgets[MAX_HUDS][MAX_WIDGETS_D] = {
     {&w_chat,    align_direct, align_top,    0},
     {&w_secret,  align_center, align_direct, 0, 84},
     {NULL}
+  }, { // [Nugget] NUGHUD slot
+    {&w_title,   align_left, align_top},
+    {&w_message, align_left, align_top},
+    {&w_chat,    align_left, align_top},
+    {&w_secret,  align_left, align_top},
+    {NULL}
   }
 };
 
-static hu_widget_t boom_widgets[MAX_HUDS][MAX_WIDGETS_B] = {
+// [Nugget] Extra slot for NUGHUD
+static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS_B] = {
   {
     {&w_monsec, align_left,  align_top},
     {&w_sttime, align_left,  align_top},
@@ -191,6 +200,13 @@ static hu_widget_t boom_widgets[MAX_HUDS][MAX_WIDGETS_B] = {
     {&w_coord , align_right, align_top},
     {&w_fps,    align_right, align_top},
     {&w_rate,   align_left,  align_top},
+    {NULL}
+  }, { // [Nugget] NUGHUD slot
+    {&w_monsec, align_left, align_top},
+    {&w_sttime, align_left, align_top},
+    {&w_powers, align_left, align_top}, // [Nugget] Powerup timers
+    {&w_coord , align_left, align_top},
+    {&w_fps,    align_left, align_top},
     {NULL}
   }
 };
@@ -489,7 +505,7 @@ static void HU_set_centered_message(boolean init)
 {
   int i, j;
 
-  for (i = 0; i < MAX_HUDS; i++)
+  for (i = 0; i < MAX_HUDS+1; i++) // [Nugget] Extra slot for NUGHUD
   {
     hu_widget_t *const d_w = doom_widgets[i];
 
@@ -596,7 +612,7 @@ static void NughudAlignWidget(nughud_alignable_t *aligner, hu_widget_t *alignee)
 
 void HU_NughudAlignTime(void)
 {
-  hu_widget_t *w = boom_widgets[hud_active];
+  hu_widget_t *w = boom_widgets[NUGHUDSLOT];
 
   while (w->multiline) {
     if (w->multiline == &w_sttime)
@@ -735,12 +751,12 @@ void HU_Start(void)
 
   // [Nugget] NUGHUD
   if (st_crispyhud)
- {
+  {
     hu_widget_t    *w;
     hu_multiline_t *m;
     nughud_alignable_t *na;
 
-    w = doom_widgets[hud_active];
+    w = doom_widgets[NUGHUDSLOT];
     while ((m = w->multiline)) 
     {
       na = NULL;
@@ -750,8 +766,11 @@ void HU_Start(void)
       else if (m == &w_secret)  { na = &nughud.secret;  }
 
       if (na) {
-        if (m == &w_chat) {
-          w->x = 2 - video.deltaw;
+        if (m == &w_chat)
+        {
+          w->x = (na->x == -1) ? (hud_active == 2) ? -video.deltaw : 0
+                               : -abs(NUGHUDWIDESHIFT(na->wide));
+
           w->y = na->y + ((*m->font)->line_height * (message_list ? hud_msg_lines : 1));
         }
         else { NughudAlignWidget(na, w); }
@@ -760,7 +779,7 @@ void HU_Start(void)
       w++;
     }
 
-    w = boom_widgets[hud_active];
+    w = boom_widgets[NUGHUDSLOT];
     while ((m = w->multiline))
     {
       na = NULL;
@@ -1800,8 +1819,9 @@ int M_StringWidth(char *string);
 
 void HU_Ticker(void)
 {
-  doom_widget = doom_widgets[hud_active];
-  boom_widget = boom_widgets[hud_active];
+  const int hudslot = st_crispyhud ? NUGHUDSLOT : hud_active; // [Nugget] NUGHUD
+  doom_widget = doom_widgets[hudslot];
+  boom_widget = boom_widgets[hudslot];
   plr = &players[displayplayer];         // killough 3/7/98
 
   hud_automap = (automapactive == AM_FULL); // [Nugget] Minimap

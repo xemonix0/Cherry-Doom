@@ -219,54 +219,50 @@ void HUlib_add_string_to_cur_line (hu_multiline_t *const m, const char *s)
 
 static int horz_align_widget(const hu_widget_t *const w, const hu_line_t *const l, const align_t h_align)
 {
-  int x; // [Nugget]
+  // [Nugget] NUGHUD
+  if (st_crispyhud)
+  {
+    int x = w->x;
+
+    // Messages hack
+    if (x == 1994)
+    { x = (h_align == align_center) ? SCREENWIDTH/2 : -video.deltaw * (hud_active == 2); }
+
+    switch (h_align) {
+      default:
+      case align_left:   return x;
+      case align_center: return x - l->width/2;
+      case align_right:  return x - l->width;
+    }
+  }
 
   if (h_align == align_left)
   {
-    x = left_margin;
+    return left_margin;
   }
   else if (h_align == align_right)
   {
-    x = right_margin - l->width;
+    return right_margin - l->width;
   }
   else if (h_align == align_center)
   {
-    x = SCREENWIDTH/2 - l->width/2;
+    return SCREENWIDTH/2 - l->width/2;
   }
-  else // [Nugget]
+
+  // [FG] align_direct
+  if (hud_widescreen_widgets)
   {
-    // [FG] align_direct
-
-    x = w->x;
-
-    if (hud_widescreen_widgets)
+    if (w->x < SCREENWIDTH/2)
     {
-      if (w->x < SCREENWIDTH/2)
-      {
-        x -= video.deltaw;
-      }
-      else
-      {
-        x += video.deltaw;
-      }
+      return w->x - video.deltaw;
+    }
+    else
+    {
+      return w->x + video.deltaw;
     }
   }
 
-  // [Nugget] NUGHUD
-  if (st_crispyhud) {
-    // Messages hack
-    if (w->x == 1994)
-    { return x - ((h_align == align_left && !hud_widescreen_widgets) ? video.deltaw : 0); }
-
-    switch (h_align) {
-      case align_left:    x += w->x - left_margin;   break;
-      case align_center:  x += w->x - SCREENWIDTH/2; break;
-      case align_right:   x += w->x - right_margin;  break;
-      default:                                       break;
-    }
-  }
-
-  return x;
+  return w->x;
 }
 
 static int currentline = 0; // [Nugget] NUGHUD: List hack

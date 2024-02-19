@@ -1244,7 +1244,7 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   st_firsttime = st_firsttime || refresh || inhelpscreens;
 
   // [crispy] distinguish classic status bar with background and player face from Crispy HUD
-  st_crispyhud = (hud_type == HUD_TYPE_CRISPY) && hud_displayed && automap_off;
+  // [Nugget] `st_crispyhud` is now updated in `G_Ticker()`
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
 
   // [Nugget] NUGHUD
@@ -1790,17 +1790,23 @@ void ST_createWidgets(void)
 
 static void ST_MoveHud (void)
 {
-    static int odelta = 0;
+    static int odelta = 0,
+               ocrispy = 0; // [Nugget] NUGHUD
 
     if (st_crispyhud && hud_active == 2)
         distributed_delta = video.deltaw;
     else
         distributed_delta = 0;
 
-    if (distributed_delta != odelta)
+    if (distributed_delta != odelta
+        || st_crispyhud != ocrispy)
     {
       ST_createWidgets();
       odelta = distributed_delta;
+
+      // [Nugget] NUGHUD
+      HU_Start();
+      ocrispy = st_crispyhud;
     }
 }
 

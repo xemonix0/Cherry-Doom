@@ -983,7 +983,7 @@ void R_SetupFrame (player_t *player)
   else {
     target_interangle = viewangle;
 
-    if (STRICTMODE(st_crispyhud)) { pitch += nughud.viewoffset; } // NUGHUD
+    if (STRICTMODE(st_crispyhud)) { pitch += nughud.viewoffset * ANG1/2; } // NUGHUD
   }
 
   // Explosion shake effect
