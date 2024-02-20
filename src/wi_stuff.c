@@ -403,22 +403,9 @@ void WI_slamBackground(void)
   char  name[32];
 
   // [Nugget] Alt. intermission background
-  if (alt_interpic_on)
-  {
-    byte *dest = I_VideoBuffer;
-
+  if (alt_interpic_on) {
     R_RenderPlayerView(&players[displayplayer]);
-
-    // Darken background a bit
-    for (int y = 0;  y < video.height;  y++)
-    {
-      for (int x = 0;  x < video.width;  x++)
-      {
-        dest[x] = colormaps[0][17 * 256 + dest[x]];
-      }
-      dest += video.pitch;
-    }
-
+    V_ShadeScreen(17);
     return;
   }
 
