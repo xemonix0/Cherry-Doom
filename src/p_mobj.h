@@ -433,8 +433,6 @@ enum {
 }; extern int vertical_aiming, default_vertical_aiming; // [Nugget] Replace `direct_vertical_aiming`
 void P_UpdateDirectVerticalAiming(void);
 
-#define PLAYER_IMPACTPITCH(player,pitch) ((player)->impactpitch = BETWEEN(-24, 24, (player)->impactpitch + (pitch))) // [Nugget]
-
 mobj_t *P_SubstNullMobj(mobj_t *mobj);
 void    P_RespawnSpecials(void);
 mobj_t  *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);

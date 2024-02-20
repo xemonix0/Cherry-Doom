@@ -145,7 +145,7 @@ int over_under;
 int jump_crouch;
 int viewheight_value;
 int view_bobbing_percentage;
-int impact_pitch;
+int flinching;
 int explosion_shake;
 int breathing;
 int teleporter_zoom;

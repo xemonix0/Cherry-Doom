@@ -37,6 +37,9 @@
 #include "p_inter.h"
 #include "v_video.h"
 
+// [Nugget]
+#include "p_user.h"
+
 // [FG] colored blood and gibs
 boolean colored_blood;
 int vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
@@ -564,9 +567,9 @@ floater:
 		                                       ? (24*FRACUNIT) : (-mo->momz >> 1);
 		}
 
-		// [Nugget] Pitch view down on impact
-		if (STRICTMODE(impact_pitch & IMPACTPITCH_FALL))
-		{ PLAYER_IMPACTPITCH(mo->player, -((-mo->momz) >> FRACBITS)); }
+		// [Nugget] Flinching: upon landing
+		if (STRICTMODE(flinching & FLINCH_LANDING))
+		{ P_SetFlinch(mo->player, -((-mo->momz) >> FRACBITS)); }
 
 		// [Nugget]: [crispy] dead men don't say "oof"
 		if (mo->health > 0 || NOTSTRICTMODE(comp_deadoof))

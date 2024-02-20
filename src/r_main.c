@@ -958,8 +958,8 @@ void R_SetupFrame (player_t *player)
     // [crispy] pitch is actual lookdir and weapon pitch
     pitch += LerpFixed(player->oldrecoilpitch, player->recoilpitch);
 
-    // [Nugget] Impact Pitch
-    pitch += LerpFixed(player->oldimpactpitch, player->impactpitch);
+    // [Nugget] Flinching
+    pitch += LerpFixed(player->oldflinch, player->flinch);
   }
   else
   {
@@ -972,7 +972,7 @@ void R_SetupFrame (player_t *player)
 
     // [Nugget]
     playerz = player->mo->z;
-    pitch += player->impactpitch;
+    pitch += player->flinch; // Flinching
   }
 
   // [Nugget] /---------------------------------------------------------------

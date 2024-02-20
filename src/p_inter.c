@@ -1062,21 +1062,20 @@ void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage
       }
 #endif
 
-      // [Nugget] Impact pitch
-      if (STRICTMODE(impact_pitch & IMPACTPITCH_DAMAGE))
+      // [Nugget] Flinching: upon taking damage
+      if (STRICTMODE(flinching & FLINCH_DAMAGE))
       {
         const int dmg = MAX(0, damage) / 2;
         int pitch;
 
-        if (inflictor) { // Hitscan, melee or projectile
+        if (inflictor) { // Hitscan, melee, projectile, explosion
           pitch = -(dmg+1) * finecosine[(R_PointToAngle2(inflictor->x, inflictor->y,
                                                             target->x,    target->y)
                                          - player->mo->angle) >> ANGLETOFINESHIFT] / FRACUNIT;
         }
-        else // Damaging floor
-        { pitch = dmg * ((Woof_Random() % 2) ? -1 : 1); }
+        else { pitch = dmg * ((Woof_Random() % 2) ? -1 : 1); }
 
-        PLAYER_IMPACTPITCH(player, pitch);
+        P_SetFlinch(player, pitch);
       }
     }
 

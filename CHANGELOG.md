@@ -17,6 +17,7 @@
   - Removed extended gamma levels and `gammacycle`;
   - Changed `menu_background_darkening` to `menu_backdrop_darkening` [2].
 - **Reimplemented _Move Over/Under Things_ feature** [3], making it much less bug-prone
+- **Renamed _Impact Pitch_ (`impact_pitch`) to _Flinching_ (`flinching`)** [2]
 - **Tweaked zooming effect**
 - **Changed internal values of Nugget's internal mobj flags** [4]
 
@@ -28,7 +29,7 @@
 while a value of `2` enables it for all Things. This differs from the previous implementation, wherein `1` would enable
 the feature for all Things.
 
-**[4]\.** This change may affect existing saves.
+**[4]\.** This may affect existing saves.
 
 ## Bug Fixes
 

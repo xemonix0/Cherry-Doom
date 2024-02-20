@@ -465,11 +465,11 @@ extern int viewheight_value;
 extern int view_bobbing_percentage;
 
 enum {
-  IMPACTPITCH_OFF,
-  IMPACTPITCH_FALL,
-  IMPACTPITCH_DAMAGE,
-  IMPACTPITCH_BOTH,
-}; extern int impact_pitch;
+  FLINCH_OFF,
+  FLINCH_LANDING,
+  FLINCH_DAMAGE,
+  FLINCH_BOTH,
+}; extern int flinching;
 
 extern int explosion_shake;
 extern int breathing;

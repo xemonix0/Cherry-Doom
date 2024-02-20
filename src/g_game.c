@@ -1464,10 +1464,14 @@ static void G_PlayerFinishLevel(int player)
 
   // [Nugget] Reset more additional player properties ------------------------
 
+  p->jumptics = 0; // Jumping
+
+  // Crouching
   p->mo->height = p->mo->info->height;
   p->mo->intflags &= ~MIF_CROUCHING;
-  p->jumptics = p->crouchoffset = 0;
-  p->oldimpactpitch = p->impactpitch = 0;
+  p->crouchoffset = 0;
+
+  p->oldflinch = p->flinch = 0; // Flinching
 }
 
 // [crispy] format time for level statistics

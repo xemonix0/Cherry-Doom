@@ -48,6 +48,12 @@ static fixed_t PlayerSlope(player_t *player)
   }
 }
 
+// [Nugget] Flinching
+void P_SetFlinch(player_t *const player, int pitch)
+{
+  player->flinch = BETWEEN(-12*ANG1, 12*ANG1, player->flinch + pitch*ANG1/2);
+}
+
 // Index of the special effects (INVUL inverse) map.
 
 #define INVERSECOLORMAP 32
@@ -604,7 +610,7 @@ void P_PlayerThink (player_t* player)
   player->oldviewz = player->viewz;
   player->oldpitch = player->pitch;
   player->oldrecoilpitch = player->recoilpitch;
-  player->oldimpactpitch = player->impactpitch; // [Nugget] Impact pitch
+  player->oldflinch = player->flinch; // [Nugget] Flinching
 
   if (player == &players[consoleplayer])
   {
@@ -669,10 +675,17 @@ void P_PlayerThink (player_t* player)
     }
   }
 
-  // [Nugget] Impact pitch
-  if (player->impactpitch) {
-         if (player->impactpitch > 0) { player->impactpitch--; }
-    else if (player->impactpitch < 0) { player->impactpitch++; }
+  // [Nugget] Flinching
+  if (player->flinch)
+  {
+    if (player->flinch > 0)
+    {
+      player->flinch = MAX(0, player->flinch - ANG1);
+    }
+    else if (player->flinch < 0)
+    {
+      player->flinch = MIN(0, player->flinch + ANG1);
+    }
   }
 
   if (player->playerstate == PST_DEAD)

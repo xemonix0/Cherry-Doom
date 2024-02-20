@@ -747,10 +747,10 @@ default_t defaults[] = {
   },
 
   {
-    "impact_pitch",
-    (config_t *) &impact_pitch, NULL,
+    "flinching",
+    (config_t *) &flinching, NULL,
     {0}, {0,3}, number, ss_gen, wad_yes,
-    "Flinch player view on impact (0 = Off, 1 = Fall, 2 = Damage, 3 = Both)"
+    "Flinch player view (0 = Off, 1 = Upon landing, 2 = Upon taking damage, 3 = Upon either)"
   },
 
   {
