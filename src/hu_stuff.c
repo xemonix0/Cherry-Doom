@@ -1786,10 +1786,7 @@ void HU_Erase(void)
   w = doom_widget;
   while (w->multiline)
   {
-    if (*w->multiline->on)
-    {
-      HUlib_erase_widget(w);
-    }
+    HUlib_erase_widget(w);
     w++;
   }
 
@@ -1826,7 +1823,6 @@ void HU_Ticker(void)
 
   hud_automap = (automapactive == AM_FULL); // [Nugget] Minimap
 
-  HU_Erase();
   HU_disable_all_widgets();
   draw_crispy_hud = false;
 

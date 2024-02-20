@@ -607,9 +607,9 @@ static void AM_initScreenSize(void)
   // [Nugget] Minimap
   if (automapactive == AM_MINI)
   {
-    f_x = (8 * video.yscale) >> FRACBITS;
-    f_y = ((((message_list ? hud_msg_lines : 1) + 1) * 8 + 1) * video.yscale) >> FRACBITS;
-    f_w = f_h = (80 * video.yscale) >> FRACBITS;
+    f_x = V_ScaleY(8);
+    f_y = V_ScaleY(((message_list ? hud_msg_lines : 1) + 1) * 8 + 1);
+    f_w = f_h = V_ScaleY(80);
 
     return;
   }
@@ -618,7 +618,7 @@ static void AM_initScreenSize(void)
   if (automapoverlay && scaledviewheight == SCREENHEIGHT)
     f_h = video.height;
   else
-    f_h = video.height - ((ST_HEIGHT * video.yscale) >> FRACBITS);
+    f_h = video.height - V_ScaleY(ST_HEIGHT);
 }
 
 void AM_ResetScreenSize(void)
@@ -656,7 +656,7 @@ static void AM_LevelInit(void)
   {
     fixed_t a = FixedDiv(f_w, (max_w>>MAPBITS < 2048) ? 2*(max_w>>MAPBITS) : 4096);
     fixed_t b = FixedDiv(f_h, (max_h>>MAPBITS < 2048) ? 2*(max_h>>MAPBITS) : 4096);
-    scale_mtof = FixedDiv(a < b ? a : b, (int) (0.7*MAPUNIT));
+    scale_mtof = FixedDiv((a < b ? a : b), (int) (0.7*MAPUNIT));
   }
 
   if (scale_mtof > max_scale_mtof)
@@ -704,7 +704,7 @@ void AM_Stop (void)
 //
 void AM_Start()
 {
-  static int lastlevel = -1, lastepisode = -1, last_width = -1, last_height = -1, last_viewheight = -1,
+  static int lastlevel = -1, lastepisode = -1,
              last_automap = -1, last_messages = -1; // [Nugget] Minimap
 
   int messages_height = message_list ? hud_msg_lines : 1; // [Nugget]
@@ -712,22 +712,22 @@ void AM_Start()
   if (!stopped)
     AM_Stop();
   stopped = false;
-  if (lastlevel != gamemap || lastepisode != gameepisode ||
-      last_width != video.width || last_height != video.height ||
-      viewheight != last_viewheight
-    || automapactive != last_automap || messages_height != last_messages)
+  if (lastlevel != gamemap || lastepisode != gameepisode
+      || automapactive != last_automap || messages_height != last_messages)
   {
-    last_height = video.height;
-    last_width = video.width;
-    last_viewheight = viewheight;
-    last_automap = automapactive;
-    last_messages = messages_height;
     AM_LevelInit();
     lastlevel = gamemap;
     lastepisode = gameepisode;
+    last_automap = automapactive;
+    last_messages = messages_height;
+  }
+  else
+  {
+    AM_ResetScreenSize();
   }
   AM_initVariables();
   AM_loadPics();
+
   HU_NughudAlignTime(); // [Nugget] NUGHUD
 }
 

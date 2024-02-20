@@ -318,6 +318,9 @@ void D_Display (void)
       borderdrawcount = 3;
     }
 
+  if (gamestate == GS_LEVEL && gametic)
+    HU_Erase();
+
   switch (gamestate)                // do buffered drawing
     {
     case GS_LEVEL:

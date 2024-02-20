@@ -213,8 +213,9 @@ The Nugget Doom source code is available at GitHub: <https://github.com/MrAlaux/
 
 ## Linux, and Windows with MSYS2
 
-The following libraries need to be installed:
-
+The following build system and libraries need to be installed:
+ 
+ * [CMake](https://cmake.org) (>= 3.9)
  * [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
  * [SDL2_net](https://github.com/libsdl-org/SDL_net)
  * [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
@@ -283,12 +284,12 @@ Copyright:
  © 2019 Fernando Carmona Varo;  
  © 2020 Alex Mayfield;  
  © 2020 JadingTsunami;  
- © 2020-2023 Fabian Greffrath;  
- © 2020-2023 Roman Fomin;  
+ © 2020-2024 Fabian Greffrath;  
+ © 2020-2024 Roman Fomin;  
  © 2021 Ryan Krafnick;  
  © 2021-2024 Alaux;  
  © 2022 Julia Nechaevskaya;  
- © 2022-2023 ceski;  
+ © 2022-2024 ceski;  
  © 2023 Andrew Apted;  
  © 2023 liPillON.   
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
@@ -318,6 +319,12 @@ Files: `src/v_flextran.*`
 Copyright:  
  © 2013 James Haley et al.;  
  © 1998-2012 Marisa Heit.  
+License: [GPL-3.0+](https://www.gnu.org/licenses/gpl-3.0)
+
+Files: `src/v_video.*`  
+Copyright:  
+ © 1999 by id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;  
+ © 2013 James Haley et al.  
 License: [GPL-3.0+](https://www.gnu.org/licenses/gpl-3.0)
 
 Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
