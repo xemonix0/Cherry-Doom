@@ -410,9 +410,9 @@ void WI_slamBackground(void)
     R_RenderPlayerView(&players[displayplayer]);
 
     // Darken background a bit
-    for (int y = 0; y < video.height; y++)
+    for (int y = 0;  y < video.height;  y++)
     {
-      for (int x = 0; x < video.width; x++)
+      for (int x = 0;  x < video.width;  x++)
       {
         dest[x] = colormaps[0][17 * 256 + dest[x]];
       }

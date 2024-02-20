@@ -64,9 +64,7 @@ static int wipe_initColorXForm(int width, int height, int ticks)
 static int wipe_doColorXForm(int width, int height, int ticks)
 {
   boolean unchanged = true;
-  byte *w   = wipe_scr;
-  byte *e   = wipe_scr_end;
-  byte *end = wipe_scr+width*height;
+  // [Nugget] Removed unused variables
 
   ticks *= 8; // [Nugget] Speed it up, to match "Melt" wipe speed
 
@@ -74,15 +72,25 @@ static int wipe_doColorXForm(int width, int height, int ticks)
   if (!strictmode && wipe_speed_percentage != 100)
   { ticks = MAX(1, ticks * wipe_speed_percentage / 100); }
 
-  for (;w != end; w++, e++)
-    if (*w != *e)
-      {
-        int newval;
-        unchanged = false;
-        *w = *w > *e ?
-          (newval = *w - ticks) < *e ? *e : newval :
-          (newval = *w + ticks) > *e ? *e : newval ;
-      }
+  // [Nugget] Partially-rewrote loop to make it work
+  for (int y = 0;  y < video.height;  y++)
+  {
+    for (int x = 0;  x < video.width;  x++)
+    {
+      byte *w = wipe_scr     + (y * video.pitch + x);
+      byte *e = wipe_scr_end + (y * video.width + x);
+
+      if (*w != *e)
+        {
+          int newval;
+          unchanged = false;
+          *w = *w > *e ?
+            (newval = *w - ticks) < *e ? *e : newval :
+            (newval = *w + ticks) > *e ? *e : newval ;
+        }
+    }
+  }
+
   return unchanged;
 }
 
@@ -198,7 +206,6 @@ static int wipe_initFade(int width, int height, int ticks)
 
 static int wipe_doFade(int width, int height, int ticks)
 {
-  int y;
   static int screenshade = 1;
   static const int targshade = 31;
   
@@ -208,10 +215,9 @@ static int wipe_doFade(int width, int height, int ticks)
   if (!strictmode && wipe_speed_percentage != 100)
   { ticks = MAX(1, ticks * wipe_speed_percentage / 100); }
 
-  memcpy(wipe_scr, fadeIn ? wipe_scr_end : wipe_scr_start, width * height);
+  V_PutBlock(0, 0, width, height, fadeIn ? wipe_scr_end : wipe_scr_start);
 
-  for (y = 0;  y < width * height;  y++)
-  { wipe_scr[y] = colormaps[0][(screenshade * 256) + wipe_scr[y]]; }
+  V_ShadeScreen(screenshade);
 
   if (!fadeIn)
   {
