@@ -529,6 +529,18 @@ void G_PrepTiccmd(void)
   const boolean strafe = M_InputGameActive(input_strafe);
   ticcmd_t *cmd = &basecmd;
 
+  // [Nugget] Decrease the intensity of some movements if zoomed in /---------
+
+  float zoomdiv = 1.0f;
+
+  if (!strictmode) {
+    const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+    if (zoom)
+    { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+  }
+
+  // [Nugget] ---------------------------------------------------------------/
+
   // Gamepad
 
   if (I_UseController())
@@ -540,7 +552,7 @@ void G_PrepTiccmd(void)
 
     if (axes[AXIS_TURN] && !strafe)
     {
-      localview.rawangle -= CalcControllerAngle(speed) * deltatics;
+      localview.rawangle -= CalcControllerAngle(speed) * deltatics / zoomdiv;
       cmd->angleturn = CarryAngle(localview.rawangle);
       localview.angle = cmd->angleturn << 16;
       axes[AXIS_TURN] = 0.0f;
@@ -548,7 +560,7 @@ void G_PrepTiccmd(void)
 
     if (axes[AXIS_LOOK] && padlook)
     {
-      localview.rawpitch -= CalcControllerPitch(speed) * deltatics;
+      localview.rawpitch -= CalcControllerPitch(speed) * deltatics / zoomdiv;
       cmd->pitch = CarryPitch(localview.rawpitch);
       localview.pitch = cmd->pitch;
       axes[AXIS_LOOK] = 0.0f;
@@ -559,7 +571,7 @@ void G_PrepTiccmd(void)
 
   if (mousex && !strafe)
   {
-    localview.rawangle -= CalcMouseAngle(mousex);
+    localview.rawangle -= CalcMouseAngle(mousex) / zoomdiv;
     cmd->angleturn = CarryAngle(localview.rawangle);
     localview.angle = cmd->angleturn << 16;
     mousex = 0;
@@ -567,7 +579,7 @@ void G_PrepTiccmd(void)
 
   if (mousey && mouselook)
   {
-    localview.rawpitch += CalcMousePitch(mousey);
+    localview.rawpitch += CalcMousePitch(mousey) / zoomdiv;
     cmd->pitch = CarryPitch(localview.rawpitch);
     localview.pitch = cmd->pitch;
     mousey = 0;
@@ -691,22 +703,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     cmd->angleturn = CarryAngle(localview.rawangle + angle);
     localview.ticangleturn = cmd->angleturn - old_angleturn;
   }
-
-  // [Nugget] Decrease the intensity of some movements if zoomed in
-  #if 0
-  if (!strictmode)
-  {
-    const int zoom = R_GetFOVFX(FOVFX_ZOOM);
-  
-    if (zoom) {
-      const float divisor = custom_fov / MAX(1, custom_fov + zoom);
-      if (divisor > 1) {
-        cmd->angleturn /= divisor;
-        cmd->pitch /= divisor;
-      }
-    }
-  }
-  #endif
 
   if (forward > MAXPLMOVE)
     forward = MAXPLMOVE;
