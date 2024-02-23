@@ -110,6 +110,10 @@ void M_DisableVoxelsRenderingItem(void);
 #define S_MBF          0x10000000 // Disable if complevel < mbf
 #define S_THRM_SIZE4   0x20000000 // Thermo bar size 4
 
+// [Nugget]
+#define S_CRITICAL     0x40000000 // Disable during non-casual play
+#define S_RES          0x80000000 // Report current resolution
+
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
 // S_HASDEFPTR = the set of items whose var field points to default array

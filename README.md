@@ -27,7 +27,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 - **Extended FOV range:** [20, 160]
 - **Stretch viewport to fit window** setting (CFG-Only: `stretch_to_fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
-- **Menu items for _Air Absorption_ and _Doppler Effect_**, both of which are **now set to 5 by default**
+- **Set _Air Absorption_ and _Doppler Effect_ to 5 by default**
 - **Tweaked _Stretch Short Skies_ algorithm**
 - **_Screen Wipe Style_** selection:
   - _"Seizure"_ (**Warning**: this one might legitimately be seizure-inducing, use with caution);
@@ -85,9 +85,14 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **`NUGHUD` lump support**, making the Crispy HUD customizable (see `docs/nughud.md`)
 - **Crosshair:**
   - Vertical-only target lock-on;
-  - Horizontal autoaim indicators;
+  - Horizontal-autoaim indicators;
   - Option to account for fuzzy targets [i.b. From Doom With Love];
   - Dedicated toggle key.
+- **Secret count in "secret revealed" message** [p.f. Crispy Doom]
+- **Show Save Messages** setting (CFG-Only: `show_save_messages`)
+- **_Announce Milestone Completion_** setting, to report completion of milestones (e.g. all items acquired)
+- Restored **_Message Listing Scrolls Upwards_** setting, and enabled it by default
+- **Restored various message-related menu items**
 - **_Show Powerup Timers_** setting
 - **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-Only: `show_ssg`) [p.f. Crispy Doom]
 - **_Alternative Arms Display_** setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
@@ -112,13 +117,6 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_ZDoom-like item drops_** setting [of course, i.b. ZDoom]
 - **Improved vanilla fuzz effect** [by _ceski_]
 - **_Selective Fuzz Darkening_** setting [by _ceski_]
-
-### Messages
-
-- **Secret count in "secret revealed" message** [p.f. Crispy Doom]
-- **Show Save Messages** setting (CFG-Only: `show_save_messages`)
-- **_Announce Milestone Completion_** setting, to report completion of milestones (e.g. all items acquired)
-- Restored **_Message Listing Scrolls Upwards_** setting, and enabled it by default
 
 ### Doom Compatibility settings
 

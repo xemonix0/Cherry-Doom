@@ -118,7 +118,7 @@ extern boolean inhelpscreens;
 static pixel_t *st_backing_screen = NULL;
 
 // main player in game
-static player_t *plyr;
+static player_t *plyr = NULL; // [Nugget] Initialize
 
 // ST_Start() has just been called
 static boolean st_firsttime;
@@ -1596,6 +1596,10 @@ int distributed_delta = 0; // [Nugget] Not static anymore
 void ST_createWidgets(void)
 {
   int i;
+
+  // [Nugget] Alternative Arms Display: 
+  // don't proceed if the Status Bar hasn't been started at least once
+  if (!plyr) { return; }
 
   STlib_init(); // [Nugget] Reload minus sign
 

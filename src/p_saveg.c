@@ -27,7 +27,9 @@
 #include "am_map.h"
 #include "p_enemy.h"
 #include "w_wad.h" // [FG] W_LumpLength()
-#include "g_game.h" // [Nugget]
+
+// [Nugget]
+#include "g_game.h"
 
 byte *save_p;
 
@@ -192,7 +194,7 @@ static void saveg_writep(const void *p)
     saveg_write32((intptr_t) p);
 }
 
-// [Nugget] Moved enum macros to header
+// [Nugget] Moved enum R/W macros to `p_saveg.h`
 
 // [crispy] enumerate all thinker pointers
 static int P_ThinkerToIndex(thinker_t* thinker)

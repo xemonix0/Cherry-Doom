@@ -15,7 +15,8 @@
   - Replaced Nugget's unrevealed-secret-sector Automap color with Woof's revealed-secret-sector color;
   - Removed _Smart Totals_ setting;
   - Removed extended gamma levels and `gammacycle`;
-  - Changed `menu_background_darkening` to `menu_backdrop_darkening` [2].
+  - Changed `menu_background_darkening` to `menu_backdrop_darkening` [2];
+  - Rearranged menus.
 - **Reimplemented _Move Over/Under Things_ feature** [3], making it much less bug-prone
 - **Renamed _Impact Pitch_ (`impact_pitch`) to _Flinching_ (`flinching`)** [2]
 - **Tweaked zooming effect**
@@ -35,3 +36,4 @@ the feature for all Things.
 
 - **FOV effects not being cleared thoroughly upon loading levels**
 - **Turbo cheat setting incorrect walk-strafing speed**
+- **Crash when toggling Alt. Arms Display without entering a map**
