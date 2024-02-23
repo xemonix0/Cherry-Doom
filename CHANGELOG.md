@@ -9,6 +9,7 @@
 
 - **Merged changes from [Woof! post-12.0.2](link)**, note:
   - Replaced Nugget's _Organize Saves by IWAD_ feature with Woof's _Organize Save Files_, which also organizes by PWAD [1];
+  - Temporarily removed _Selective Fuzz Darkening_;
   - Replaced Nugget's crosshair-coloring-by-target-health logic with Woof's;
   - Replaced Nugget's use-button timer with Woof's, changed the CVAR names of Nugget's other event timers accordingly [2],
     and removed the "only in demos" option;

@@ -115,8 +115,6 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Extra Gibbing_** setting, to force Berserk Fist/Chainsaw/SSG gibbing (configurable through the CFG-Only `extra_gibbing_#` CVARs) [i.b. Smooth Doom]
 - **_Bloodier Gibbing_** setting [i.b. Smooth Doom]
 - **_ZDoom-like item drops_** setting [of course, i.b. ZDoom]
-- **Improved vanilla fuzz effect** [by _ceski_]
-- **_Selective Fuzz Darkening_** setting [by _ceski_]
 
 ### Doom Compatibility settings
 

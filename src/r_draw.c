@@ -413,7 +413,7 @@ void R_DrawSkyColumn(void)
 //
 
 // [Nugget - ceski] Selective fuzz darkening, credit: Linguica (https://www.doomworld.com/forum/post/1335769)
-int fuzzdark_mode; // Declared just to allow compilation
+//int fuzzdark_mode;
 
 #define FUZZTABLE 50 
 
