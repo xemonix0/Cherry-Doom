@@ -5772,6 +5772,9 @@ static boolean M_ShortcutResponder(void)
                 hud_level_time |= HUD_WIDGET_HUD;
             }
         }
+
+        if (st_crispyhud) { HU_NughudAlignTime(); } // [Nugget] NUGHUD
+
         return true;
     }
 
