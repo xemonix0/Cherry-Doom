@@ -7,7 +7,7 @@
 
 ## Changes
 
-- **Merged changes from [Woof! post-12.0.2](link)**, note:
+- **Merged changes from [Woof! 14.0.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_14.0.0)**, note:
   - Replaced Nugget's _Organize Saves by IWAD_ feature with Woof's _Organize Save Files_, which also organizes by PWAD [1];
   - Temporarily removed _Selective Fuzz Darkening_;
   - Replaced Nugget's crosshair-coloring-by-target-health logic with Woof's;
