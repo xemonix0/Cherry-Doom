@@ -3496,6 +3496,13 @@ default_t defaults[] = {
     "show level stats (kill, items and secrets) widget (1 = on Automap, 2 = on HUD, 3 = always)"
   },
 
+  { // [Nugget] Restore kills percentage
+    "hud_kills_percentage",
+    (config_t *) &hud_kills_percentage, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to show Kills percentage in Stats display"
+  },
+
   // [FG] level time widget
   {
     "hud_level_time",

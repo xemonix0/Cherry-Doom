@@ -195,9 +195,11 @@ int sx_fix; // CFG-Only
 
 // Status Bar/HUD ---------------------
 
+int announce_milestones;
+int show_save_messages; // CFG-Only
 int show_ssg; // CFG-Only
+int hud_kills_percentage;
 int alt_arms;
-int blink_keys; // CFG-Only
 int hud_time_teleport;
 int hud_time_keypickup;
 
@@ -217,11 +219,6 @@ int extra_gibbing_on;
 int extra_gibbing[NUMEXGIBS]; // CFG-Only
 int bloodier_gibbing;
 int zdoom_item_drops;
-
-// Messages ---------------------------
-
-int show_save_messages; // CFG-Only
-int announce_milestones;
 
 // Key Bindings -----------------------
 

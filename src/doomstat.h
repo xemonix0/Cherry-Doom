@@ -534,9 +534,11 @@ extern int sx_fix; // CFG-Only
 
 // Status Bar/HUD ---------------------
 
+extern int announce_milestones;
+extern int show_save_messages; // CFG-Only
 extern int show_ssg; // CFG-Only
+extern int hud_kills_percentage;
 extern int alt_arms;
-extern int blink_keys; // CFG-Only
 
 typedef enum {
   TIMER_USE,
@@ -572,11 +574,6 @@ extern int extra_gibbing[];
 
 extern int bloodier_gibbing;
 extern int zdoom_item_drops;
-
-// Messages ---------------------------
-
-extern int show_save_messages; // CFG-Only
-extern int announce_milestones;
 
 // Key Bindings -----------------------
 

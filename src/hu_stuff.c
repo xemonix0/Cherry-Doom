@@ -1314,10 +1314,24 @@ static void HU_widget_build_monsec(void)
   secretcolor = (fullsecretcount >= totalsecret) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
   itemcolor = (fullitemcount >= totalitems) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
 
+  // [Nugget] Restore kills percentage /--------------------------------------
+
+  char kill_percent_str[16];
+
+  M_snprintf(
+    kill_percent_str, sizeof(kill_percent_str), " \x1b%c%d%%",
+    (kill_percent_count >= totalkills) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp,
+    (!totalkills) ? 100 : kill_percent_count * 100 / totalkills
+  );
+
+  // [Nugget] ---------------------------------------------------------------/
+
   if ((hud_widget_layout && !st_crispyhud) || (st_crispyhud && nughud.sts_ml)) // [Nugget] NUGHUD
   {
+    // [Nugget] Restore kills percentage
     M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
-      "\x1b%cK\t\x1b%c%d/%d", ('0'+hudcolor_kills), killcolor, fullkillcount, max_kill_requirement);
+      "\x1b%cK\t\x1b%c%d/%d%s", ('0'+hudcolor_kills), killcolor, fullkillcount, max_kill_requirement,
+      hud_kills_percentage ? kill_percent_str : "");
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
 
     M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
@@ -1330,9 +1344,11 @@ static void HU_widget_build_monsec(void)
   }
   else
   {
+    // [Nugget] Restore kills percentage
     M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
-      "\x1b%cK \x1b%c%d/%d \x1b%cI \x1b%c%d/%d \x1b%cS \x1b%c%d/%d",
+      "\x1b%cK \x1b%c%d/%d%s \x1b%cI \x1b%c%d/%d \x1b%cS \x1b%c%d/%d",
       '0'+hudcolor_kills, killcolor, fullkillcount, max_kill_requirement,
+      hud_kills_percentage ? kill_percent_str : "",
       '0'+hudcolor_items, itemcolor, fullitemcount, totalitems,
       '0'+hudcolor_secrets, secretcolor, fullsecretcount, totalsecret);
 
