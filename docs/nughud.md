@@ -24,8 +24,8 @@ names and values, optionally separated by blank or comment lines.
 
 The following properties are shared across all widgets:
 
-- `_x`: **X position**, which can be any integer in the [0-320] range.
-- `_y`: **Y position**, which can be any integer in the [0-200] range.
+- `_x`: **X position**, which can be any integer in the [0, 320] range.
+- `_y`: **Y position**, which can be any integer in the [0, 200] range.
 - `_wide`: **Widescreen shift**, with the following possible values:
   - `-2` to shift the element left forcefully;
   - `-1` to shift the element left only when in widescreen mode;
@@ -49,13 +49,13 @@ The following widgets are available:
 | `nughud_ammoicon`   | Yes         | Yes       | Ammo icon, which changes depending on the ammo type of the current weapon |
 | `nughud_health`     | Yes         | Yes       | Health count |
 | `nughud_healthicon` | Yes         | Yes       | Health icon, which changes depending on whether the player has Berserk |
-| `nughud_arms#`      | Yes         | No        | Arms (weapon) number, where `#` is an integer in the [1-9] range |
+| `nughud_arms#`      | Yes         | No        | Arms (weapon) number, where `#` is an integer in the [1, 9] range |
 | `nughud_frags`      | Yes         | Yes       | Frag count, only shown during Deathmatch games |
 | `nughud_face`       | Yes         | No        | Face (mugshot) |
 | `nughud_armor`      | Yes         | Yes       | Armor count |
 | `nughud_armoricon`  | Yes         | Yes       | Armor icon, which changes depending on the current armor type |
-| `nughud_key#`       | Yes         | No        | Key display, where `#` is an integer in the [0-2] range (in order: Blue Key; Yellow Key; Red Key) |
-| `nughud_ammo#`      | Yes         | Yes       | Ammo count for each type, where `#` is an integer in the [0-3] range (in order: Bullets; Shells; Cells; Rockets) |
+| `nughud_key#`       | Yes         | No        | Key display, where `#` is an integer in the [0, 2] range (in order: Blue Key; Yellow Key; Red Key) |
+| `nughud_ammo#`      | Yes         | Yes       | Ammo count for each type, where `#` is an integer in the [0, 3] range (in order: Bullets; Shells; Cells; Rockets) |
 | `nughud_maxammo#`   | Yes         | Yes       | Same as the above, but for Max. Ammo |
 | `nughud_time`       | No          | Yes       | Time display, only shown if enabled by the user |
 | `nughud_sts`        | No          | Yes       | Stats (Kills/Items/Secrets) display, only shown if enabled by the user |

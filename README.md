@@ -38,7 +38,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Move Over/Under Things_** setting [partially p.f. Crispy Doom, DSDA-Doom]
 - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first) [p.f. Crispy Doom]
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first) [i.b. ZDoom]
-- **_View Height_** setting, which allows to enter a custom height value between 32 and 56 for the player's POV [i.b. Brutal Doom]
+- **_View Height_** setting, which allows to enter a custom POV height value in the [32, 56] range [i.b. Brutal Doom]
 - **_View Bobbing Percentage_** setting [i.b. Crispy Doom, ZDoom]
 - **Flinching** setting, to flinch upon landing and/or taking damage
 - **_Explosion Shake Effect_** setting [i.b. Doom Retro]
@@ -50,12 +50,12 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Disable palette tint in menus_** setting [i.b. Crispy Doom]
 - **_Disable Berserk Tint_** setting
 - **_Disable Radiation Suit Tint_** setting
-- **_Damage Tint Cap_** and **_Bonus Tint Cap_**, to attenuate or disable the red and yellow screen tints
+- **_Damage Tint Cap_** and **_Bonus Tint Cap_**, to attenuate or disable said screen tinting
 - **_Fake Contrast_** setting
 - Toggle for **Diminished Lighting** (CFG-Only: `diminished_lighting`)
 - **_Screen Wipe speed percentage_** setting
 - **_Alternative Intermission Background_** setting, to replace the intermission graphic with a darkened spinning camera view
-- **_Sound Clipping Distance_** selection, to optionally double the distance at which SFX become audible
+- **_Sound Clipping Distance_** selection, to optionally double the distance at which sound effects become audible
 - **_One-Key Quick Save/Load_** setting, to skip the confirmation prompt
 - **Rewinding** [i.b. DSDA-Doom]
 - **_Play Internal Demos_** setting
@@ -78,7 +78,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Squat Weapon Down On Impact_** setting [p.f. Crispy Doom]
 - **_Translucent Flashes_** setting [i.b. Crispy Doom]
 - **Show Berserk availability** setting [partially p.f. Crispy Doom]
-- **"Correct" first person sprite centering** setting, to toggle the 1px first person sprite misalignment (CFG-Only: `sx_fix`)
+- **"Correct" first person sprite centering** setting, to toggle the 1px first-person sprite misalignment (CFG-Only: `sx_fix`)
 
 ### Status Bar/HUD
 
