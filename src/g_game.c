@@ -2061,7 +2061,7 @@ static void G_DoPlayDemo(void)
 // killough 2/22/98: version id string format for savegames
 #define VERSIONID "MBF %d"
 
-#define CURRENT_SAVE_VERSION "Nugget 2.5.0" // [Nugget]
+#define CURRENT_SAVE_VERSION "Nugget 2.4.0" // [Nugget]
 
 static char *savename = NULL;
 
@@ -2352,6 +2352,7 @@ static void G_DoLoadGame(void)
   CheckSaveVersion("Woof 6.0.0", saveg_woof600);
   CheckSaveVersion("Nugget 2.0.0", saveg_nugget200);
   CheckSaveVersion("Nugget 2.1.0", saveg_nugget210);
+  CheckSaveVersion("Nugget 2.5.0", saveg_current); // To be removed
   CheckSaveVersion(CURRENT_SAVE_VERSION, saveg_current);
 
   // killough 2/22/98: Friendly savegame version difference message
@@ -2485,22 +2486,28 @@ static void G_DoLoadGame(void)
   max_kill_requirement = totalkills;
   if (save_p - savebuffer <= length - sizeof(max_kill_requirement))
   {
-    if (saveg_compat > saveg_woof600)
+    if (saveg_compat > saveg_nugget210) // [Nugget]
     {
       max_kill_requirement = saveg_read32();
     }
+    // [Nugget]
+    else if (saveg_compat > saveg_woof510)
+    {
+      max_kill_requirement += saveg_read32();
+    }
   }
 
-  // [Nugget] -------------------------
+  // [Nugget] /---------------------------------------------------------------
 
-  if (saveg_compat > saveg_nugget210)
+  // Was `extrakills`
+  if (saveg_nugget210 >= saveg_compat && saveg_compat > saveg_woof600)
   { saveg_read32(); }
 
   // Restore milestones
   if (saveg_compat > saveg_nugget200 && save_p - savebuffer <= length - sizeof complete_milestones)
   { complete_milestones = saveg_read_enum(); }
 
-  // ----------------------------------
+  // [Nugget] ---------------------------------------------------------------/
   
   // done
   Z_Free(savebuffer);

@@ -68,7 +68,7 @@ typedef enum saveg_compat_e
   // [Nugget]
   saveg_nugget200,
   saveg_nugget210,
-  saveg_current, // saveg_nugget250
+  saveg_current, // saveg_nugget240
 } saveg_compat_t;
 
 extern saveg_compat_t saveg_compat;
