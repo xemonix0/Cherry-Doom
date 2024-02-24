@@ -155,10 +155,10 @@ static hu_widget_t doom_widgets[MAX_HUDS+1][MAX_WIDGETS_D] = {
     {&w_secret,  align_center, align_direct, 0, 84},
     {NULL}
   }, { // [Nugget] NUGHUD slot
-    {&w_title,   align_left, align_top},
-    {&w_message, align_left, align_top},
-    {&w_chat,    align_left, align_top},
-    {&w_secret,  align_left, align_top},
+    {&w_title,   align_direct, align_direct},
+    {&w_message, align_direct, align_direct},
+    {&w_chat,    align_direct, align_direct},
+    {&w_secret,  align_direct, align_direct},
     {NULL}
   }
 };
@@ -202,11 +202,12 @@ static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS_B] = {
     {&w_rate,   align_left,  align_top},
     {NULL}
   }, { // [Nugget] NUGHUD slot
-    {&w_monsec, align_left, align_top},
-    {&w_sttime, align_left, align_top},
-    {&w_powers, align_left, align_top}, // [Nugget] Powerup timers
-    {&w_coord , align_left, align_top},
-    {&w_fps,    align_left, align_top},
+    {&w_monsec, align_direct, align_direct},
+    {&w_sttime, align_direct, align_direct},
+    {&w_powers, align_direct, align_direct}, // [Nugget] Powerup timers
+    {&w_coord , align_direct, align_direct},
+    {&w_fps,    align_direct, align_direct},
+    {&w_rate,   align_direct, align_direct},
     {NULL}
   }
 };
@@ -788,6 +789,7 @@ void HU_Start(void)
       else if (m == &w_powers) { na = &nughud.powers; }
       else if (m == &w_coord)  { na = &nughud.coord;  }
       else if (m == &w_fps)    { na = &nughud.fps;    }
+      else if (m == &w_rate)   { na = &nughud.rate;    }
 
       if (na) {
         if (na == &nughud.time)

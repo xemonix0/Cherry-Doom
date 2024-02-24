@@ -72,6 +72,7 @@ typedef struct nughud_s {
   nughud_alignable_t coord;
   boolean            coord_ml;
   nughud_alignable_t fps;
+  nughud_alignable_t rate;
   nughud_alignable_t message;
   nughud_alignable_t secret;
   nughud_vlignable_t patches[NUMNUGHUDPATCHES];

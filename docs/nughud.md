@@ -62,7 +62,8 @@ The following widgets are available:
 | `nughud_title`      | No          | Yes       | Level Name display, only shown in the Automap |
 | `nughud_powers`     | No          | Yes       | Powerup Timers, only shown if enabled by the user |
 | `nughud_coord`      | No          | Yes       | Coordinates display, only shown if enabled by the user |
-| `nughud_fps`        | No          | Yes       | FPS display, only shown when the FPS cheat is activated |
+| `nughud_fps`        | No          | Yes       | FPS display, only shown when the `FPS` cheat is activated |
+| `nughud_rate`       | No          | Yes       | Rendering-statistics display, only shown when the `IDRATE` cheat is activated |
 | `nughud_message`    | No          | Yes       | Message display |
 | `nughud_secret`     | No          | Yes       | "Secret Revealed" message display |
 
