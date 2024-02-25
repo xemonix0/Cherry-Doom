@@ -755,7 +755,7 @@ void ST_updateWidgets(void)
     else
     {
       if (!(plyr->keyblinktics & (2*KEYBLINKMASK - 1)))
-        S_StartSound(NULL, sfx_itemup);
+        S_StartSoundOptional(NULL, sfx_keybnk, sfx_itemup); // [Nugget] Optional key-blink sound
 
       plyr->keyblinktics--;
 
