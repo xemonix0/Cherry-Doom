@@ -909,8 +909,9 @@ void R_SetupFrame (player_t *player)
 {
   int i, cm;
   fixed_t pitch;
+
   // [Nugget]
-  fixed_t playerz;
+  fixed_t playerz, basepitch;
   static angle_t old_interangle, target_interangle;
   static fixed_t chasecamheight;
 
@@ -949,13 +950,15 @@ void R_SetupFrame (player_t *player)
 
     if (use_localview && !player->centering)
     {
-      pitch = player->pitch + localview.pitch;
-      pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, pitch);
+      basepitch = player->pitch + localview.pitch;
+      basepitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, basepitch);
     }
     else
     {
-      pitch = LerpFixed(player->oldpitch, player->pitch);
+      basepitch = LerpFixed(player->oldpitch, player->pitch);
     }
+
+    pitch = basepitch;
 
     // [crispy] pitch is actual lookdir and weapon pitch
     pitch += LerpFixed(player->oldrecoilpitch, player->recoilpitch);
@@ -970,7 +973,8 @@ void R_SetupFrame (player_t *player)
     viewz = player->viewz; // [FG] moved here
     viewangle = player->mo->angle;
     // [crispy] pitch is actual lookdir and weapon pitch
-    pitch = player->pitch + player->recoilpitch;
+    basepitch = player->pitch;
+    pitch = basepitch + player->recoilpitch;
 
     // [Nugget]
     playerz = player->mo->z;
@@ -993,12 +997,17 @@ void R_SetupFrame (player_t *player)
 
     oldtic = gametic;
 
-    pitch = 0;
+    basepitch = pitch = 0;
   }
   else {
     target_interangle = viewangle;
 
-    if (STRICTMODE(st_crispyhud)) { pitch += nughud.viewoffset * ANG1/2; } // NUGHUD
+    // NUGHUD
+    if (STRICTMODE(st_crispyhud)) {
+      angle_t viewoffset = nughud.viewoffset * ANG1/2;
+      basepitch += viewoffset;
+          pitch += viewoffset;
+    }
   }
 
   // Explosion shake effect
@@ -1035,7 +1044,7 @@ void R_SetupFrame (player_t *player)
 
   if (chasecam_on)
   {
-    fixed_t slope = pitch ? (fixed_t) ((int64_t) finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT] * SCREENHEIGHT / ACTUALHEIGHT) : 0;
+    fixed_t slope = basepitch ? (fixed_t) ((int64_t) finetangent[(ANG90 - basepitch) >> ANGLETOFINESHIFT] * SCREENHEIGHT / ACTUALHEIGHT) : 0;
 
     static fixed_t oldextradist = 0, extradist = 0;
 
@@ -1052,7 +1061,7 @@ void R_SetupFrame (player_t *player)
     if (chasecam_mode == CHASECAMMODE_FRONT) {
       viewangle += ANG180;
       slope      = -slope;
-      pitch      = -pitch;
+      basepitch  = -basepitch;
     }
 
     {
