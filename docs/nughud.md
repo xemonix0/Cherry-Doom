@@ -1,6 +1,6 @@
-# Nugget Doom's NUGHUD guide
+# Nugget Doom's `NUGHUD` guide
 
-**The `NUGHUD` lump** is a variant of MBF's `OPTIONS` lump, **used specifically by Nugget Doom to customize the Crispy HUD**.
+**The `NUGHUD` lump** is a variant of MBF's `OPTIONS` lump, **used specifically by Nugget Doom to customize the Nugget HUD**.
 
 As implied, `NUGHUD` uses the same format as `OPTIONS`. Excerpt from `mbfedit.txt`:
 
@@ -9,7 +9,7 @@ The OPTIONS lump has the same format as mbf.cfg: A text file listing option
 names and values, optionally separated by blank or comment lines.
 ```
 
-## Loading NUGHUD lumps
+## Loading `NUGHUD` lumps
 
 **`NUGHUD` lumps can be loaded just like `OPTIONS` lumps**:
 
@@ -18,9 +18,9 @@ names and values, optionally separated by blank or comment lines.
 - By using the `-file` command-line parameter to load a file explicitly named `nughud.#`,
   where `#` can be any extension name (`.lmp` is recommended).
 
-## NUGHUD widgets
+## Nugget HUD widgets
 
-**`NUGHUD` is composed of widgets**, whose behavior is determined by a set of properties.
+**The Nugget HUD is composed of widgets**, whose behavior is determined by a set of properties.
 
 The following properties are shared across all widgets:
 
@@ -94,11 +94,11 @@ where it'll be affected by the _Centered Messages_ setting.
 
 ```
 ; This is a comment!
-; Loading a NUGHUD lump with these contents will restore the Face widget.
+; Loading a NUGHUD with these contents will restore the Face widget.
 
 nughud_face_x 143
 
-; Move the Frags widget elsewhere, since in the default NUGHUD distribution,
+; Move the Frags widget elsewhere, since in the default Nugget HUD distribution,
 ; it is drawn right where the Face is drawn in the traditional Status Bar.
 nughud_frags_x    314
 nughud_frags_y    155
@@ -106,7 +106,7 @@ nughud_frags_wide 1
 ```
 
 ```
-; Loading a NUGHUD lump with these contents will draw the Level Name display centered.
+; Loading a NUGHUD with these contents will draw the Level Name display centered.
 
 nughud_title_x     160
 nughud_title_wide  0
@@ -183,7 +183,7 @@ Up to 8 patches can be drawn. They are drawn back-to-front; `patch1` is drawn be
 
 Aside from the shared properties, **patches make use of an additional property, `_name`, that determines the name of the graphic lump to be used**,
 which can be either a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`).  
-**Custom lumps can be used** (for example, a graphic called `NEWPATCH`). The names used in the `NUGHUD` lump must be enclosed between quotation marks.
+**Custom lumps can be used** (for example, a graphic called `NEWPATCH`). The names used in `NUGHUD` must be enclosed between quotation marks.
 
 **Patches are alignable**, both horizontally and vertically, and can be disabled by simply not providing any graphic.
 
@@ -194,7 +194,7 @@ Otherwise, enabling it is useful when using exclusive graphics, whose offsets ar
 #### Example
 
 ```
-; Loading a NUGHUD lump with these contents will draw
+; Loading a NUGHUD with these contents will draw
 ; the Status Bar graphic in its traditional position.
 ; It doesn't look right, but it's just an example.
 
@@ -203,7 +203,7 @@ nughud_patch1_y 168
 nughud_patch1_wide 0
 nughud_patch1_name "STBAR"
 
-; Also draw the Arms box, which is actually a separate graphic.
+; Also draw the Arms box, which is a separate graphic.
 nughud_patch2_x 104
 nughud_patch2_y 168
 nughud_patch2_wide 0
@@ -217,10 +217,7 @@ nughud_patch2_name "STARMS"
 
 ---
 
-By default and compared to the original Crispy HUD, `NUGHUD` hides the face widget and shows Arms numbers `2-9` instead of `2-7`.
+**By default, the Nugget HUD emulates Woof's Crispy HUD**, with the exception of showing Arms numbers `2-9` instead of `2-7`.
 
-**The default `NUGHUD`**, as built into the executable, **is available in text format as `nughud.lmp`**, found in the `docs/` folder.
+**Said default HUD**, as built into the executable, **is available in text format as `nughud.lmp`**, found in the `docs/` folder.
 Comments were added to it for clarity. Feel free to use it as a base to make new HUDs.
-
-It is advised that you do not include values for variables that you do not wish to modify, 
-as to avoid issues if the handling of any of them is altered in the future.

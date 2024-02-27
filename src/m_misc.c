@@ -3544,7 +3544,7 @@ default_t defaults[] = {
     "hud_type",
     (config_t *) &hud_type, NULL,
     {HUD_TYPE_BOOM}, {HUD_TYPE_CRISPY,NUM_HUD_TYPES-1}, number, ss_stat, wad_no,
-    "Fullscreen HUD (0 = Crispy, 1 = Boom (No Bars), 2 = Boom"
+    "Fullscreen HUD (0 = Nugget, 1 = Boom (No Bars), 2 = Boom)" // [Nugget] Rename "Crispy" to "Nugget"
   },
 
   // [Nugget] Extended HUD colors /-------------------------------------------

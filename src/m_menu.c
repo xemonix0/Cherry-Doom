@@ -3458,7 +3458,7 @@ static const char *screensize_strings[] = {
 };
 
 static const char *hudtype_strings[] = {
-    "Crispy", "Boom No Bars", "Boom"
+    "Nugget", "Boom No Bars", "Boom" // [Nugget] Rename "Crispy" to "Nugget"
 };
 
 static const char **M_GetHUDModeStrings(void)

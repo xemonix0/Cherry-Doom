@@ -82,7 +82,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 ### Status Bar/HUD
 
-- **`NUGHUD` lump support**, making the Crispy HUD customizable (see `docs/nughud.md`)
+- **Nugget HUD**, highly customizable through means of the **`NUGHUD` lump** (see `docs/nughud.md`)
 - **Crosshair:**
   - Vertical-only target lock-on;
   - Horizontal-autoaim indicators;
