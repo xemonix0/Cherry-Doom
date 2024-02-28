@@ -2639,13 +2639,6 @@ void D_DoomMain(void)
       basesavegame = M_StringDuplicate(savegame_dir);
 
       M_MakeDirectory(basesavegame);
-
-      if (!M_CheckParm("-shotdir")) {
-        // Fall back to `savegame_dir`
-        if (screenshotdir)
-          free(screenshotdir);
-        screenshotdir = M_StringDuplicate(savegame_dir);
-      }
     }
 
     if (organize_savefiles == -1)
@@ -2676,10 +2669,11 @@ void D_DoomMain(void)
 
       // [Nugget] Don't default to a "savegames" directory if path is set by config file
       if (!savegame_dir || !strcmp(savegame_dir, ""))
+      {
         basesavegame = M_StringJoin(oldsavegame, DIR_SEPARATOR_S,
                                     "savegames", NULL);
-
-      free(oldsavegame);
+        free(oldsavegame);
+      }
 
       NormalizeSlashes(basesavegame);
       M_MakeDirectory(basesavegame);
@@ -2694,7 +2688,8 @@ void D_DoomMain(void)
     }
   }
 
-  I_Printf(VB_INFO, "Savegame directory: %s\n", basesavegame);
+  // [Nugget] Remove newline; now printed with "screenshot directory" below
+  I_Printf(VB_INFO, "Savegame directory: %s", basesavegame);
 
   // [Nugget] Set screenshot path as determined by config file
   if (!M_CheckParm("-shotdir") && screenshot_dir && strcmp(screenshot_dir, ""))
@@ -2705,6 +2700,9 @@ void D_DoomMain(void)
 
     M_MakeDirectory(screenshotdir);
   }
+
+  // [Nugget] Print screenshot directory too
+  I_Printf(VB_INFO, "Screenshot directory: %s\n", screenshotdir);
 
   bodyquesize = default_bodyquesize; // killough 10/98
 
