@@ -25,6 +25,7 @@
 - **Renamed _Impact Pitch_ (`impact_pitch`) to _Flinching_ (`flinching`)** [2]
 - **Tweaked zooming effect**
 - **Changed internal values of Nugget's internal mobj flags** [4]
+- **Screenshot directory doesn't default to `savegame_dir` if set anymore**
 - **Rebranded "Crispy HUD" as "Nugget HUD"**
 
 **[1]\.** This means that existing save files may require to be moved between folders for Nugget to detect them.
