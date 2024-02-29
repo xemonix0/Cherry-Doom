@@ -3,6 +3,7 @@
 - **_Alternative Intermission Background_** setting
 - **Rewinding** [thanks @rfomin]
 - **Support for optional health-based player pain sounds**
+- **_SUMMON_ cheat spawning mobjs at position of Automap pointer**
 - **_Higher god-mode face priority_** setting
 
 ## Changes

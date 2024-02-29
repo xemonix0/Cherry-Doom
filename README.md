@@ -148,11 +148,11 @@ All of these are CFG-Only, so their CVAR names are included.
   - **_'BOBBERS'_** serves as a shortcut to toggle the two cheats mentioned above, plus IDFA
 - **_'GIBBERS'_** to force gibbing on dying enemies, independently of damage dealt
 - **_'IDFLY'_** to fly (uses jumping/crouching keys) [i.b. PrBoom+, ZDoom]
-- **_'SUMMON'_** to spawn a hostile or friendly actor based on its mobjtype index [i.b. ZDoom]
+- **_'SUMMON'_** to spawn an actor based on its type index [i.b. ZDoom, PrBoomX]
 - **_'RESURRECT' / 'IDRES'_** to resurrect the player without toggling IDDQD [i.b. ZDoom]
 - **_'LINETARGET'_** to give some info on the player's linetarget [i.b. ZDoom]
-- **_'MDK'_** [i.b. ZDoom]
-- **_'SAITAMA'_** to enable the MDK Fist (replaces A_Punch's melee attack with the MDK attack, featuring an alternate multishot attack when holding down Strafe On)
+- **_'MDK'_** to perform a hitscan attack of 1-million damage [i.b. ZDoom]
+- **_'SAITAMA'_** to enable the MDK Fist
 - **_'BOOMCAN'_** for explosive hitscan attacks
 - **_'NEXTMAP'_** to exit the level [i.b. ZDoom]
 - **_'NEXTSECRET'_** to exit the level as if using a secret exit [i.b. ZDoom]
@@ -161,6 +161,8 @@ All of these are CFG-Only, so their CVAR names are included.
 - **_'FPS'_** as a replacement for _'SHOWFPS'_
 - **Mid-air control while in noclipping mode** [p.f. Crispy Doom]
 - Reenabled **_'NOMOMENTUM'_** cheat [p.f. Crispy Doom]
+
+For more details, see the _New Nugget Doom cheats_ section of `docs/cheats.md`.
 
 ### Miscellaneous
 

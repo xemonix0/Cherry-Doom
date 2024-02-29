@@ -567,30 +567,43 @@ static void SummonMobj(boolean friendly)
 {
   fixed_t x, y, z;
   mobj_t *spawnee;
-  
+
+  extern void AM_Coordinates(const mobj_t *, fixed_t *, fixed_t *, fixed_t *);
+
   if (spawneetype == -1) {
     displaymsg("You must summon a mobj first!");
     return;
   }
-  
+
   spawneefriend = friendly;
 
   P_MapStart();
-  
-  x = plyr->mo->x + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
-                             finecosine[plyr->mo->angle >> ANGLETOFINESHIFT]);
-                 
-  y = plyr->mo->y + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
-                             finesine[plyr->mo->angle >> ANGLETOFINESHIFT]);
-                 
-  z = plyr->mo->z + 32*FRACUNIT;
+
+  if (automapactive == AM_FULL && !followplayer)
+  {
+    const int oldcoords = map_point_coordinates;
+
+    map_point_coordinates = true;
+    AM_Coordinates(plyr->mo, &x, &y, &z);
+
+    map_point_coordinates = oldcoords;
+  }
+  else {
+    x = plyr->mo->x + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
+                               finecosine[plyr->mo->angle >> ANGLETOFINESHIFT]);
+
+    y = plyr->mo->y + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
+                               finesine[plyr->mo->angle >> ANGLETOFINESHIFT]);
+
+    z = plyr->mo->z + 32*FRACUNIT;
+  }
 
   spawnee = P_SpawnMobj(x, y, z, spawneetype);
-  
+
   spawnee->angle = plyr->mo->angle;
-  
+
   if (spawneefriend) { spawnee->flags |= MF_FRIEND; }
-  
+
   P_MapEnd();
 
   displaymsg("Mobj summoned! (%s - Type = %i)",
