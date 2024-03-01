@@ -3730,9 +3730,9 @@ setup_menu_t stat_settings5[] =
 {
   {"Nugget - Extended HUD", S_SKIP|S_TITLE, m_null, M_X, M_Y},
 
-    {"Show Powerup Timers",           S_YESNO|S_COSMETIC, m_null, M_X, M_SPC, {"hud_power_timers"}, 0, NULL, str_show_widgets},
-    {"Show Kills % in Stats display", S_YESNO,            m_null, M_X, M_SPC, {"hud_kills_percentage"}},
-    {"Alternative Arms Display",      S_YESNO,            m_null, M_X, M_SPC, {"alt_arms"}, 0, ST_createWidgets},
+    {"Show Powerup Timers",           S_CHOICE|S_COSMETIC, m_null, M_X, M_SPC, {"hud_power_timers"}, 0, NULL, str_show_widgets},
+    {"Show Kills % in Stats display", S_YESNO,             m_null, M_X, M_SPC, {"hud_kills_percentage"}},
+    {"Alternative Arms Display",      S_YESNO,             m_null, M_X, M_SPC, {"alt_arms"}, 0, ST_createWidgets},
 
   {"",                      S_SKIP,         m_null, M_X, M_SPC},
   {"Nugget - Event Timers", S_SKIP|S_TITLE, m_null, M_X, M_SPC},
