@@ -18,6 +18,7 @@
 //  variables
 
 #include <ctype.h>
+#include <string.h>
 
 #include "i_system.h"
 #include "m_io.h"
