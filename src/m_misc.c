@@ -3714,6 +3714,13 @@ default_t defaults[] = {
     "target crosshair color"
   },
 
+  { // [Nugget]
+    "fail_safe",
+    (config_t *) &fail_safe, NULL,
+    {0}, {0,1}, number, ss_none, wad_no,
+    "Use only when instructed"
+  },
+
   {NULL}         // last entry
 };
 

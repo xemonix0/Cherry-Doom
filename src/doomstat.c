@@ -232,7 +232,7 @@ int menu_backdrop_darkening;
 int automap_overlay_darkening;
 int sp_chat;
 
-// Doom Compatibility -----------------
+// Doom Compatibility (CFG-Only) ------
 
 int comp_bruistarget;
 int comp_nomeleesnap;
@@ -254,6 +254,8 @@ int comp_godface;
 int comp_deadoof;
 int comp_unusedpals;
 int comp_keypal;
+
+int fail_safe; // CFG-Only
 
 // [Nugget] -----------------------------------------------------------------/
 

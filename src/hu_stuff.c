@@ -615,7 +615,8 @@ void HU_NughudAlignTime(void)
 {
   hu_widget_t *w = boom_widgets[NUGHUDSLOT];
 
-  while (w->multiline) {
+  while (w->multiline)
+  {
     if (w->multiline == &w_sttime)
     {
       if (nughud.time_sts
@@ -766,7 +767,8 @@ void HU_Start(void)
       else if (m == &w_chat)    { na = &nughud.message; }
       else if (m == &w_secret)  { na = &nughud.secret;  }
 
-      if (na) {
+      if (na)
+      {
         if (m == &w_chat)
         {
           w->x = (na->x == -1) ? (hud_active == 2) ? -video.deltaw : 0
@@ -1505,7 +1507,7 @@ int hud_crosshair; // [Nugget] Crosshair type to be used
 boolean hud_crosshair_health;
 crosstarget_t hud_crosshair_target;
 crosslockon_t hud_crosshair_lockon; // [Alaux] Crosshair locks on target
-boolean hud_crosshair_indicators; // [Nugget] Horizontal autoaim indicators
+boolean hud_crosshair_indicators; // [Nugget] Horizontal-autoaim indicators
 boolean hud_crosshair_fuzzy; // [Nugget] Account for fuzzy targets
 int hud_crosshair_color;
 int hud_crosshair_target_color;
@@ -1516,7 +1518,7 @@ typedef struct
   int w, h, x, y;
   byte *cr;
 
-  // [Nugget] Horizontal autoaim indicators
+  // [Nugget] Horizontal-autoaim indicators
   patch_t *patchl, *patchr;
   int lw, lh, rw, rh;
   int side;
@@ -1562,7 +1564,7 @@ void HU_StartCrosshair(void) // [Nugget] Not static anymore
   if (crosshair.patch)
     Z_ChangeTag(crosshair.patch, PU_CACHE);
 
-  // [Nugget] Horizontal autoaim indicators
+  // [Nugget] Horizontal-autoaim indicators
   if (crosshair.patchl) { Z_ChangeTag(crosshair.patchl, PU_CACHE); }
   if (crosshair.patchr) { Z_ChangeTag(crosshair.patchr, PU_CACHE); }
 
@@ -1576,7 +1578,7 @@ void HU_StartCrosshair(void) // [Nugget] Not static anymore
   else
     crosshair.patch = NULL;
 
-  // [Nugget] Horizontal autoaim indicators ----------------------------------
+  // [Nugget] Horizontal-autoaim indicators ----------------------------------
 
   crosshair.patchl = W_CacheLumpName("CROSSIL", PU_STATIC);
   crosshair.lw = SHORT(crosshair.patchl->width);
@@ -1597,7 +1599,7 @@ static void HU_UpdateCrosshair(void)
   // [Nugget] NUGHUD
   crosshair.y += STRICTMODE(st_crispyhud) ? nughud.viewoffset : 0;
 
-  crosshair.side = 0; // [Nugget] Horizontal autoaim indicators
+  crosshair.side = 0; // [Nugget] Horizontal-autoaim indicators
 
   if (hud_crosshair_health)
     crosshair.cr = ColorByHealth(plr->health, 100, st_invul);
@@ -1684,7 +1686,8 @@ void HU_DrawCrosshair(void)
                           crosshair.y - crosshair.h,
                           crosshair.patch, crosshair.cr);
 
-  // [Nugget] Horizontal autoaim indicators
+  // [Nugget] Horizontal-autoaim indicators ----------------------------------
+
   if (crosshair.side == -1)
   {
     V_DrawPatchTranslated(crosshair.x - crosshair.w - crosshair.lw,

@@ -3068,12 +3068,16 @@ void D_DoomMain(void)
 
   weapon_inertia_scale = weapon_inertia_scale_pct * ORIG_WEAPON_INERTIA_SCALE / 100; // [Nugget] Weapon inertia
 
-  // [Nugget] cheese :)
-  if (casual_play) {
+  // [Nugget]
+  if (casual_play && !fail_safe)
+  {
     time_t curtime = time(NULL);
     struct tm *curtm = localtime(&curtime);
+
+    // cheese :)
+
     extern boolean cheese;
-    
+
     if (curtm && curtm->tm_mon == 3 && curtm->tm_mday == 1)
     { cheese = true; }
   }

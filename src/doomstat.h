@@ -593,7 +593,7 @@ extern int menu_backdrop_darkening;
 extern int automap_overlay_darkening;
 extern int sp_chat;
 
-// Doom Compatibility -----------------
+// Doom Compatibility (CFG-Only) ------
 
 extern int comp_bruistarget;
 extern int comp_nomeleesnap;
@@ -615,6 +615,8 @@ extern int comp_godface;
 extern int comp_deadoof;
 extern int comp_unusedpals;
 extern int comp_keypal;
+
+extern int fail_safe; // CFG-Only
 
 // [Nugget] -----------------------------------------------------------------/
 
