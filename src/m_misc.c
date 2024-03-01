@@ -3543,7 +3543,7 @@ default_t defaults[] = {
   {
     "hud_type",
     (config_t *) &hud_type, NULL,
-    {HUD_TYPE_BOOM}, {HUD_TYPE_CRISPY,NUM_HUD_TYPES-1}, number, ss_stat, wad_no,
+    {HUD_TYPE_CRISPY}, {HUD_TYPE_CRISPY,NUM_HUD_TYPES-1}, number, ss_stat, wad_no, // [Nugget] Make Nugget HUD the default
     "Fullscreen HUD (0 = Nugget, 1 = Boom (No Bars), 2 = Boom)" // [Nugget] Rename "Crispy" to "Nugget"
   },
 
