@@ -34,6 +34,9 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
+// [Nugget]
+#include "doomstat.h"
+
 #define OAL_ROLLOFF_FACTOR 1
 #define OAL_SPEED_OF_SOUND 343.3f
 // 128 map units per 3 meters (https://doomwiki.org/wiki/Map_unit).

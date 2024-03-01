@@ -39,7 +39,6 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **Jumping** (default key: <kbd>Alt</kbd>, must be enabled first) [p.f. Crispy Doom]
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first) [i.b. ZDoom]
 - **_View Height_** setting, which allows to enter a custom POV height value in the [32, 56] range [i.b. Brutal Doom]
-- **_View Bobbing Percentage_** setting [i.b. Crispy Doom, ZDoom]
 - **Flinching** setting, to flinch upon landing and/or taking damage
 - **_Explosion Shake Effect_** setting [i.b. Doom Retro]
 - **_Subtle Idle Bobbing/Breathing_** setting [p.f. International Doom]
@@ -66,13 +65,13 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 ### Weapons
 
+- **Extended _View/Weapon Bob_ percentages**
 - Restored **_Weapon Recoil_** menu item
 - **_Disable Horizontal Autoaim_** setting
 - **_Switch [Weapon] on Pickup_** setting
 - Key to **equip last used weapon** [i.b. Cherry Doom]
 - **_Horizontal_ Weapon Centering** setting [i.b. DSDA-Doom]
 - **Always Bob** setting (CFG-Only: `always_bob`)
-- **_Weapon Bobbing Percentage_** setting [i.b. Crispy Doom, ZDoom]
 - **_Bobbing Styles_** selection [p.f. Zandronum]
 - **_Weapon Inertia_** setting (scale determined by the CFG-Only `weapon_inertia_scale_pct` CVAR) [by _ceski_]
 - **_Squat Weapon Down On Impact_** setting [p.f. Crispy Doom]

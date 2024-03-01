@@ -17,18 +17,15 @@
 //  Variant of m_misc.c specifically for declaration and loading of NUGHUD
 //  variables
 
-#include <errno.h>
+#include <ctype.h>
 
-#include "hu_stuff.h"
-#include "i_video.h"
+#include "i_system.h"
+#include "m_io.h"
 #include "m_menu.h"
 #include "m_misc.h"
 #include "m_nughud.h"
-#include "p_mobj.h"
 #include "st_stuff.h"
 #include "w_wad.h"
-
-#include "m_io.h"
 
 nughud_t nughud; // Behold!!!
 
@@ -96,11 +93,11 @@ default_t nughud_defaults[] = {
   WIDGET2(   "nughud_maxammo1",    nughud.maxammos[1],  ST_MAXAMMO1X, ST_MAXAMMO1Y,  1,  1     ),
   WIDGET2(   "nughud_maxammo2",    nughud.maxammos[2],  ST_MAXAMMO2X, ST_MAXAMMO2Y,  1,  1     ),
   WIDGET2(   "nughud_maxammo3",    nughud.maxammos[3],  ST_MAXAMMO3X, ST_MAXAMMO3Y,  1,  1     ),
-  TEXTLINE(  "nughud_time",        nughud.time,         2,            151,          -1, -1     ),
+  TEXTLINE(  "nughud_time",        nughud.time,         2,            152,          -1, -1     ),
   TOGGLE(    "nughud_time_sts",    nughud.time_sts,     1                                      ),
-  TEXTLINE(  "nughud_sts",         nughud.sts,          2,            159,          -1, -1     ),
+  TEXTLINE(  "nughud_sts",         nughud.sts,          2,            160,          -1, -1     ),
   TOGGLE(    "nughud_sts_ml",      nughud.sts_ml,       0                                      ),
-  TEXTLINE(  "nughud_title",       nughud.title,        318,          159,           1,  1     ),
+  TEXTLINE(  "nughud_title",       nughud.title,        318,          160,           1,  1     ),
   TEXTLINE(  "nughud_powers",      nughud.powers,       318,          8,             1,  1     ),
   TEXTLINE(  "nughud_coord",       nughud.coord,        318,          16,            1,  1     ),
   TOGGLE(    "nughud_coord_ml",    nughud.coord_ml,     0                                      ),

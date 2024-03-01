@@ -732,7 +732,8 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 	else
 	{
 		// diminished light
-		const int index = R_GetLightIndex(xscale);
+    const int index = STRICTMODE(!diminished_lighting) // [Nugget]
+                      ? 0 : R_GetLightIndex(xscale);
 
 		vis->colormap[0] = spritelights[index];
 		vis->colormap[1] = fullcolormap;

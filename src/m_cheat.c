@@ -413,6 +413,8 @@ static void cheat_nomomentum()
 // Emulates demo and/or net play state, for debugging
 static void cheat_fauxdemo()
 {
+  extern void D_NuggetUpdateCasual(void);
+
   fauxdemo = !fauxdemo;
   D_NuggetUpdateCasual();
 

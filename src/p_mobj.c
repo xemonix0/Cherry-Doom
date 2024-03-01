@@ -582,7 +582,7 @@ floater:
 		{ P_SetFlinch(mo->player, -((-mo->momz) >> FRACBITS)); }
 
 		// [Nugget]: [crispy] dead men don't say "oof"
-		if (mo->health > 0 || NOTSTRICTMODE(comp_deadoof))
+		if (strictmode || mo->health > 0 || comp_deadoof)
 		  oof = 1;
 	      }
 	    P_HitFloor(mo, oof); // [FG] play sound when hitting animated floor

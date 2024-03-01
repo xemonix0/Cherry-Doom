@@ -48,6 +48,7 @@
 #include "z_zone.h"
 
 // [Nugget]
+#include <math.h>
 #include "p_map.h"
 #include "s_sound.h"
 #include "sounds.h"

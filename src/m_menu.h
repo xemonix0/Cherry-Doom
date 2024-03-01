@@ -114,7 +114,7 @@ void M_DisableVoxelsRenderingItem(void);
 #define S_PCT          0x40000000 // Show % sign
 
 // [Nugget]
-#define S_CRITICAL     0x40000000 // Disable during non-casual play
+#define S_CRITICAL     0x00000000 // Disable during non-casual play (dummy for now)
 #define S_RES          0x80000000 // Report current resolution
 
 // S_SHOWDESC  = the set of items whose description should be displayed
