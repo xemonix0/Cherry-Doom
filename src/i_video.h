@@ -21,13 +21,13 @@
 #ifndef __I_VIDEO__
 #define __I_VIDEO__
 
-
 #include "doomtype.h"
 
 #define FOV_DEFAULT 90
 #define FOV_MIN 20  // [Nugget] Decreased
 #define FOV_MAX 140 // [Nugget] Increased
-#define ASPECT_RATIO_MAX 3.6 // Up to 32:9 ultrawide.
+#define ASPECT_RATIO_MAX 2.4 // Up to 21:9. TODO: Support up to 3.6 (32:9).
+#define ASPECT_RATIO_MIN (4.0 / 3.0)
 
 typedef enum
 {
@@ -67,8 +67,6 @@ void I_ToggleVsync(void); // [JN] Calls native SDL vsync toggle
 void I_DynamicResolution(void);
 
 extern boolean drs_skip_frame;
-
-extern char *sdl_renderdriver;
 
 extern boolean use_vsync;  // killough 2/8/98: controls whether vsync is called
 extern boolean disk_icon;  // killough 10/98

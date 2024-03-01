@@ -17,22 +17,35 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomstat.h"
-#include "st_stuff.h"
-#include "r_main.h"
-#include "r_things.h"
-#include "p_setup.h"
-#include "p_maputl.h"
-#include "w_wad.h"
-#include "i_video.h"
-#include "v_video.h"
-#include "p_spec.h"
+#include <limits.h>
+#include <string.h>
+
 #include "am_map.h"
-#include "d_deh.h"    // Ty 03/27/98 - externalizations
+#include "d_deh.h"
+#include "d_event.h"
+#include "d_player.h"
+#include "doomdata.h"
+#include "doomdef.h"
+#include "doomstat.h"
+#include "hu_stuff.h"
+#include "i_video.h"
 #include "m_input.h"
 #include "m_menu.h"
-#include "hu_stuff.h"
+#include "m_misc2.h"
+#include "p_maputl.h"
+#include "p_mobj.h"
+#include "p_setup.h"
+#include "p_spec.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "r_state.h"
+#include "r_things.h"
+#include "st_stuff.h"
+#include "tables.h"
 #include "v_flextran.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "z_zone.h"
 
 // [Nugget]
 #include "p_map.h"
@@ -85,7 +98,7 @@ int mapcolor_enemy;   // enemy sprite color
 //jff 3/9/98 add option to not show secret sectors until entered
 int map_secret_after;
 
-int map_keyed_door_flash; // keyed doors are flashing
+int map_keyed_door; // keyed doors are colored or flashing
 
 int map_smooth_lines;
 
@@ -408,8 +421,8 @@ static void AM_findMinMaxBoundaries(void)
   fixed_t a;
   fixed_t b;
 
-  min_x = min_y =  D_MAXINT;
-  max_x = max_y = -D_MAXINT;
+  min_x = min_y =  INT_MAX;
+  max_x = max_y = -INT_MAX;
 
   for (i=0;i<numvertexes;i++)
   {
@@ -552,7 +565,7 @@ static void AM_loadPics(void)
 
   for (i=0;i<10;i++)
   {
-    sprintf(namebuf, "AMMNUM%d", i);
+    M_snprintf(namebuf, sizeof(namebuf), "AMMNUM%d", i);
     marknums[i] = W_CacheLumpName(namebuf, PU_STATIC);
   }
 }
@@ -623,11 +636,18 @@ static void AM_initScreenSize(void)
 
 void AM_ResetScreenSize(void)
 {
-  AM_saveScaleAndLoc();
+  int old_h = f_h;
 
   AM_initScreenSize();
 
-  AM_restoreScaleAndLoc();
+  if (f_h != old_h)
+  {
+    // Change the scaling multipliers
+    scale_mtof = FixedDiv(f_w << FRACBITS, m_w);
+    scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+  }
+
+  AM_activateNewScale();
 }
 
 //
@@ -1706,6 +1726,11 @@ static void AM_drawGrid(int color)
 //
 static int AM_DoorColor(int type)
 {
+  if (map_keyed_door == MAP_KEYED_DOOR_OFF)
+  {
+    return -1;
+  }
+
   if (GenLockedBase <= type && type< GenDoorBase)
   {
     type -= GenLockedBase;
@@ -1756,7 +1781,7 @@ static void AM_drawWalls(void)
   int i;
   static mline_t l;
 
-  const boolean keyed_door_flash = map_keyed_door_flash && (leveltime & 16);
+  const boolean keyed_door_flash = (map_keyed_door == MAP_KEYED_DOOR_FLASH) && (leveltime & 16);
 
   // draw the unclipped visible portions of all lines
   for (i=0;i<numlines;i++)

@@ -19,7 +19,7 @@ set(NUGGETDOOM_SOURCES
                            d_ticcmd.h
                            dogs.h
                            doomdata.h
-    doomdef.c              doomdef.h
+                           doomdef.h
     doomstat.c             doomstat.h
                            doomtype.h
     dsdhacked.c            dsdhacked.h
@@ -164,7 +164,8 @@ else()
 endif()
 
 target_nuggetdoom_settings(nugget-doom)
-target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
+target_include_directories(nugget-doom PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}/../" "../miniz")
 
 target_link_libraries(nugget-doom PRIVATE
     ${SDL2_LIBRARIES}
@@ -185,6 +186,7 @@ endif()
 
 if(WIN32)
     target_sources(nugget-doom PRIVATE i_winmusic.c)
+    target_include_directories(nugget-doom PRIVATE "../win32")
     target_link_libraries(nugget-doom PRIVATE winmm)
     if(MSVC)
         target_sources(nugget-doom PRIVATE

@@ -20,18 +20,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "doomdef.h"
 #include "i_printf.h"
 #include "i_system.h"
-#include "i_timer.h" // I_Sleep
-#include "m_misc2.h"
-
-#include "net_common.h"
+#include "i_timer.h" 
 #include "net_defs.h"
 #include "net_io.h"
 #include "net_packet.h"
 #include "net_query.h"
-#include "net_structrw.h"
 #include "net_sdl.h"
+#include "net_structrw.h"
 
 // DNS address of the Internet master server.
 
@@ -326,7 +324,7 @@ static void NET_Query_ParseResponse(net_addr_t *addr, net_packet_t *packet,
         target = GetTargetForAddr(addr, true);
         broadcast_target = GetTargetForAddr(NULL, false);
         target->state = QUERY_TARGET_QUERIED;
-        target->query_time = broadcast_target->query_time;
+        target->query_time = broadcast_target ? broadcast_target->query_time : 0;
     }
 
     if (target->state != QUERY_TARGET_RESPONDED)

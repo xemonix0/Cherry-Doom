@@ -19,12 +19,14 @@
 #ifndef __HU_STUFF_H__
 #define __HU_STUFF_H__
 
-#include "d_event.h"
-#include "r_defs.h"
-#include "hu_lib.h"
+#include "doomdef.h"
+#include "doomtype.h"
 
 // [Nugget]
 #include "doomstat.h"
+
+struct event_s;
+struct mobj_s;
 
 #define HU_BROADCAST    5
 
@@ -40,7 +42,7 @@ void HU_widget_rebuild_sttime(void);
 
 void HU_NughudAlignTime(void); // [Nugget] NUGHUD
 
-boolean HU_Responder(event_t* ev);
+boolean HU_Responder(struct event_s *ev);
 
 void HU_Ticker(void);
 void HU_Drawer(void);
@@ -129,7 +131,7 @@ extern crosslockon_t hud_crosshair_lockon;
 
 extern boolean hud_crosshair_indicators; // [Nugget] Horizontal autoaim indicators
 extern boolean hud_crosshair_fuzzy; // [Nugget] Account for fuzzy targets
-extern mobj_t *crosshair_target;
+extern struct mobj_s *crosshair_target;
 void HU_UpdateCrosshairLock(int x, int y);
 void HU_DrawCrosshair(void);
 

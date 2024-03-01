@@ -120,6 +120,9 @@ boolean hide_weapon;
 // [FG] centered weapon sprite
 int center_weapon;
 
+int view_bobbing_pct;
+int weapon_bobbing_pct;
+
 char *MAPNAME(int e, int m)
 {
   static char name[9];
@@ -144,7 +147,6 @@ int wipe_type;
 int over_under;
 int jump_crouch;
 int viewheight_value;
-int view_bobbing_percentage;
 int flinching;
 int explosion_shake;
 int breathing;
@@ -184,7 +186,6 @@ int a11y_invul_colormap;
 int no_hor_autoaim;
 int switch_on_pickup;
 int always_bob; // CFG-Only
-int weapon_bobbing_percentage;
 int bobbing_style;
 int weapon_inertia;
 int weapon_inertia_scale_pct; // CFG-Only

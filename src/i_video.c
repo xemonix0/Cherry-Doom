@@ -18,26 +18,42 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "SDL.h" // haleyjd
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
-#include "../miniz/miniz.h"
+#include "SDL.h"
 
-#include "doomstat.h"
-#include "i_printf.h"
-#include "r_plane.h"
-#include "v_video.h"
-#include "d_main.h"
-#include "st_stuff.h"
-#include "m_argv.h"
-#include "w_wad.h"
-#include "r_main.h"
-#include "r_draw.h"
-#include "r_voxel.h"
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "am_map.h"
-#include "m_menu.h"
+#include "config.h"
+#include "d_event.h"
+#include "d_main.h"
+#include "doomdef.h"
+#include "doomstat.h"
 #include "i_input.h"
+#include "i_printf.h"
+#include "i_system.h"
+#include "i_timer.h"
 #include "i_video.h"
+#include "m_argv.h"
+#include "m_fixed.h"
 #include "m_io.h"
+#include "m_menu.h"
+#include "r_draw.h"
+#include "r_main.h"
+#include "r_plane.h"
+#include "r_voxel.h"
+#include "st_stuff.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "z_zone.h"
+
+#include "miniz.h"
 
 // [FG] set the application icon
 
@@ -73,8 +89,6 @@ fixed_t fractionaltic;
 
 boolean disk_icon;  // killough 10/98
 int fps; // [FG] FPS counter widget
-
-char *sdl_renderdriver = "";
 
 // [FG] rendering window, renderer, intermediate ARGB frame buffer and texture
 
@@ -203,6 +217,17 @@ void I_ResetRelativeMouseState(void)
     SDL_GetRelativeMouseState(NULL, NULL);
 }
 
+static void UpdatePriority(void)
+{
+    const boolean active = (screenvisible && window_focused);
+#if defined(_WIN32)
+    SetPriorityClass(GetCurrentProcess(), active ? ABOVE_NORMAL_PRIORITY_CLASS
+                                                 : NORMAL_PRIORITY_CLASS);
+#endif
+    SDL_SetThreadPriority(active ? SDL_THREAD_PRIORITY_HIGH
+                                 : SDL_THREAD_PRIORITY_NORMAL);
+}
+
 // [FG] window event handling from Chocolate Doom 3.0
 
 static void HandleWindowEvent(SDL_WindowEvent *event)
@@ -215,11 +240,13 @@ static void HandleWindowEvent(SDL_WindowEvent *event)
 
         case SDL_WINDOWEVENT_MINIMIZED:
             screenvisible = false;
+            UpdatePriority();
             break;
 
         case SDL_WINDOWEVENT_MAXIMIZED:
         case SDL_WINDOWEVENT_RESTORED:
             screenvisible = true;
+            UpdatePriority();
             break;
 
         // Update the value of window_focused when we get a focus event
@@ -230,10 +257,12 @@ static void HandleWindowEvent(SDL_WindowEvent *event)
 
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             window_focused = true;
+            UpdatePriority();
             break;
 
         case SDL_WINDOWEVENT_FOCUS_LOST:
             window_focused = false;
+            UpdatePriority();
             break;
 
         // We want to save the user's preferred monitor to use for running the
@@ -373,7 +402,7 @@ static void UpdateLimiter(void)
     }
     else
     {
-        use_limiter = (targetrefresh > 0);
+        use_limiter = false;
     }
 }
 
@@ -476,7 +505,7 @@ void I_StartTic (void)
 
         SDL_GetMouseState(&x, &y);
 
-        SDL_GetRendererOutputSize(renderer, &w, &h);
+        SDL_GetWindowSize(screen, &w, &h);
 
         SDL_Rect rect;
         SDL_RenderGetViewport(renderer, &rect);
@@ -692,6 +721,7 @@ void I_FinishUpdate(void)
     UpdateGrab();
 
     // [FG] [AM] Real FPS counter
+    if (frametime_start)
     {
         static uint64_t last_time;
         uint64_t time;
@@ -701,8 +731,8 @@ void I_FinishUpdate(void)
 
         time = frametime_start - last_time;
 
-        // Update FPS counter every 10th of second
-        if (time >= 100000)
+        // Update FPS counter every second
+        if (time >= 1000000)
         {
             fps = (frame_counter * 1000000) / time;
             frame_counter = 0;
@@ -1109,10 +1139,7 @@ static double CurrentAspectRatio(void)
 
     double aspect_ratio = (double)w / (double)h;
 
-    if (aspect_ratio > ASPECT_RATIO_MAX)
-    {
-        aspect_ratio = ASPECT_RATIO_MAX;
-    }
+    aspect_ratio = BETWEEN(ASPECT_RATIO_MIN, ASPECT_RATIO_MAX, aspect_ratio);
 
     return aspect_ratio;
 }
@@ -1507,11 +1534,6 @@ static void I_InitGraphicsMode(void)
     if (use_vsync && !timingdemo)
     {
         flags |= SDL_RENDERER_PRESENTVSYNC;
-    }
-
-    if (*sdl_renderdriver)
-    {
-        SDL_SetHint(SDL_HINT_RENDER_DRIVER, sdl_renderdriver);
     }
 
     // [FG] create renderer

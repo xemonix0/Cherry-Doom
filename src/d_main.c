@@ -20,60 +20,76 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "SDL.h"
-#include <time.h> // [Nugget]
+#include <ctype.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "../miniz/miniz.h"
-
+#include "am_map.h"
+#include "config.h"
+#include "d_deh.h"  // Ty 04/08/98 - Externalizations
+#include "d_event.h"
+#include "d_iwad.h"
+#include "d_loop.h"
+#include "d_main.h"
+#include "d_player.h"
+#include "d_quit.h"
+#include "d_ticcmd.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "dsdhacked.h"
 #include "dstrings.h"
-#include "sounds.h"
-#include "z_zone.h"
-#include "w_wad.h"
-#include "s_sound.h"
-#include "v_video.h"
 #include "f_finale.h"
 #include "f_wipe.h"
-#include "m_argv.h"
-#include "m_array.h"
-#include "m_misc.h"
-#include "m_misc2.h" // [FG] M_StringDuplicate()
-#include "m_menu.h"
-#include "m_io.h"
-#include "m_swap.h"
-#include "i_printf.h"
-#include "i_system.h"
-#include "i_sound.h"
-#include "i_video.h"
 #include "g_game.h"
 #include "hu_stuff.h"
-#include "wi_stuff.h"
-#include "st_stuff.h"
-#include "am_map.h"
-#include "p_setup.h"
-#include "r_draw.h"
-#include "r_main.h"
-#include "r_voxel.h"
-#include "d_main.h"
-#include "d_iwad.h" // [FG] D_FindWADByName()
-#include "d_deh.h"  // Ty 04/08/98 - Externalizations
-#include "statdump.h" // [FG] StatDump()
-#include "u_mapinfo.h" // U_ParseMapInfo()
-#include "i_glob.h" // [FG] I_StartMultiGlob()
-#include "p_map.h" // MELEERANGE
 #include "i_endoom.h"
-#include "d_quit.h"
-#include "r_bmaps.h"
-#include "p_inter.h" // maxhealthbonus
+#include "i_glob.h"
 #include "i_input.h"
-
-#include "dsdhacked.h"
-
+#include "i_printf.h"
+#include "i_sound.h"
+#include "i_system.h"
+#include "i_timer.h"
+#include "i_video.h"
+#include "info.h"
+#include "m_argv.h"
+#include "m_array.h"
+#include "m_fixed.h"
+#include "m_input.h"
+#include "m_io.h"
+#include "m_menu.h"
+#include "m_misc.h"
+#include "m_misc2.h"
+#include "m_swap.h"
 #include "net_client.h"
 #include "net_dedicated.h"
+#include "p_inter.h" // maxhealthbonus
+#include "p_map.h"   // MELEERANGE
+#include "p_mobj.h"
+#include "p_setup.h"
+#include "r_bmaps.h"
+#include "r_defs.h"
+#include "r_draw.h"
+#include "r_main.h"
+#include "r_state.h"
+#include "r_voxel.h"
+#include "s_sound.h"
+#include "sounds.h"
+#include "st_stuff.h"
+#include "statdump.h"
+#include "u_mapinfo.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "wi_stuff.h"
+#include "z_zone.h"
 
-#include "m_nughud.h" // [Nugget]
+#include "miniz.h"
+
+// [Nugget]
+#include <time.h>
+#include "m_nughud.h"
 
 // DEHacked support - Ty 03/09/97
 // killough 10/98:
@@ -294,7 +310,7 @@ void D_Display (void)
   wipe = false;
 
   // save the current screen if about to wipe
-  if (gamestate != wipegamestate && NOTSTRICTMODE(wipe_type)) // [Nugget]
+  if (gamestate != wipegamestate && (strictmode || wipe_type)) // [Nugget]
     {
       wipe = true;
       wipe_StartScreen(0, 0, video.unscaledw, SCREENHEIGHT);
@@ -448,7 +464,7 @@ void D_Display (void)
         }
       while (!tics);
       wipestart = nowtime;
-      done = wipe_ScreenWipe(NOTSTRICTMODE(wipe_type), 0, 0, video.unscaledw, SCREENHEIGHT, tics);
+      done = wipe_ScreenWipe(strictmode ? wipe_Melt : wipe_type, 0, 0, video.unscaledw, SCREENHEIGHT, tics);
       M_Drawer();                   // menu is drawn even on top of wipes
       I_FinishUpdate();             // page flip or blit buffer
     }
@@ -1992,49 +2008,6 @@ void D_SetBloodColor(void)
   }
 }
 
-static const int predefined_translucency[] = {
-    // MBF
-    MT_FIRE,      MT_SMOKE,     MT_FATSHOT,  MT_BRUISERSHOT,
-    MT_SPAWNFIRE, MT_TROOPSHOT, MT_HEADSHOT, MT_PLASMA,
-    MT_BFG,       MT_ARACHPLAZ, MT_PUFF,     MT_TFOG,
-    MT_IFOG,      MT_MISC12,    MT_INV,      MT_INS,
-    MT_MEGA,
-    // [Woof!]
-    MT_PLASMA1,   MT_PLASMA2
-};
-
-static boolean deh_set_translucency[arrlen(predefined_translucency)] = {false};
-
-void D_DehChangePredefinedTranslucency(int index)
-{
-  int i;
-
-  for (i = 0; i < arrlen(predefined_translucency); ++i)
-  {
-    if (predefined_translucency[i] == index)
-    {
-      deh_set_translucency[i] = true;
-      break;
-    }
-  }
-}
-
-void D_SetPredefinedTranslucency(void)
-{
-  int i;
-
-  for (i = 0; i < arrlen(predefined_translucency); ++i)
-  {
-    if (deh_set_translucency[i])
-      continue;
-
-    if (STRICTMODE_VANILLA(translucency))
-      mobjinfo[predefined_translucency[i]].flags |= MF_TRANSLUCENT;
-    else
-      mobjinfo[predefined_translucency[i]].flags &= ~MF_TRANSLUCENT;
-  }
-}
-
 // killough 2/22/98: Add support for ENDBOOM, which is PC-specific
 // killough 8/1/98: change back to ENDOOM
 
@@ -2101,7 +2074,7 @@ static boolean CheckHaveSSG (void)
 }
 
 // [Nugget]
-void D_NuggetUpdateCasual()
+void D_NuggetUpdateCasual(void)
 {
   static int old_casual = -1;
 

@@ -18,20 +18,34 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <stdlib.h>
+#include <string.h>
+
+#include "d_player.h"
+#include "doomdef.h"
 #include "doomstat.h"
+#include "hu_stuff.h" // [Alaux] Lock crosshair on target
 #include "i_printf.h"
+#include "i_system.h"
 #include "i_video.h"
+#include "info.h"
+#include "m_swap.h"
+#include "p_mobj.h"
+#include "p_pspr.h"
+#include "r_bmaps.h" // [crispy] R_BrightmapForTexName()
+#include "r_bsp.h"
+#include "r_data.h"
+#include "r_draw.h"
+#include "r_main.h"
+#include "r_segs.h"
+#include "r_state.h"
+#include "r_things.h"
+#include "r_voxel.h"
+#include "tables.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "r_main.h"
-#include "r_bsp.h"
-#include "r_segs.h"
-#include "r_draw.h"
-#include "r_things.h"
-#include "r_bmaps.h" // [crispy] R_BrightmapForTexName()
-#include "r_voxel.h"
-#include "m_swap.h"
-#include "hu_stuff.h" // [Alaux] Lock crosshair on target
+#include "z_zone.h"
+
 // [Nugget]
 #include "m_nughud.h"
 #include "st_stuff.h"
@@ -437,7 +451,8 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
           ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
       }
     else
-      if (vis->mobjflags & MF_TRANSLUCENT) // phares
+      if (translucency && !(strictmode && demo_compatibility)
+          && vis->mobjflags & MF_TRANSLUCENT) // phares
         {
           colfunc = R_DrawTLColumn;
           tranmap = main_tranmap;       // killough 4/11/98
@@ -668,11 +683,8 @@ void R_ProjectSprite (mobj_t* thing)
     vis->colormap[0] = vis->colormap[1] = fullcolormap;       // full bright  // killough 3/20/98
   else
     {      // diminished light
-      int index = FixedDiv(xscale * 160, focallength) >> LIGHTSCALESHIFT;
-      if (index >= MAXLIGHTSCALE)
-        index = MAXLIGHTSCALE-1;
-
-      if (STRICTMODE(!diminished_lighting)) { index = 0; } // [Nugget]
+      const int index = STRICTMODE(!diminished_lighting) // [Nugget]
+                        ? 0 : R_GetLightIndex(xscale);
 
       vis->colormap[0] = spritelights[index];
       vis->colormap[1] = fullcolormap;
@@ -929,7 +941,7 @@ void R_DrawPlayerSprites(void)
   // add all active psprites
   for (i=0, psp=viewplayer->psprites;
        // [Nugget]: [crispy] A11Y number of player (first person) sprites to draw
-       i < (NOTSTRICTMODE(a11y_weapon_pspr) ? NUMPSPRITES : ps_flash);
+       i < ((strictmode || a11y_weapon_pspr) ? NUMPSPRITES : ps_flash);
        i++,psp++)
     if (psp->state)
       R_DrawPSprite (psp, i == ps_flash && STRICTMODE(translucent_pspr)); // [Nugget] Translucent flashes

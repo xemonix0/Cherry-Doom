@@ -24,19 +24,18 @@
 // of other structs: items (internal inventory),
 // animation states (closely tied to the sprites
 // used to represent them, unfortunately).
-#include "d_items.h"
 #include "p_pspr.h"
 
 // In addition, the player is just a special
 // case of the generic moving object/actor.
-#include "p_mobj.h"
+struct mobj_s;
 
 // Finally, for odd reasons, the player input
 // is buffered within the player data struct,
 // as commands per game tick.
 #include "d_ticcmd.h"
 
-#include "u_mapinfo.h"
+struct mapentry_s;
 
 //
 // Player states.
@@ -108,7 +107,7 @@ typedef enum
 //
 typedef struct player_s
 {
-  mobj_t*             mo;
+  struct mobj_s       *mo;
   playerstate_t       playerstate;
   ticcmd_t            cmd;
 
@@ -176,7 +175,7 @@ typedef struct player_s
   int                 bonuscount;
 
   // Who did damage (NULL for floors/ceilings).
-  mobj_t*             attacker;
+  struct mobj_s       *attacker;
 
   // So gun flashes light up areas.
   int                 extralight;
@@ -216,9 +215,6 @@ typedef struct player_s
   // [crispy] weapon recoil pitch
   fixed_t             recoilpitch, oldrecoilpitch;
 
-  // [Nugget] Removed member for "variable player view bob",
-  // as bobbing is now percentage-based
-
   weapswitch_t switching;
 
   // DSDA UV Max category requirements
@@ -256,7 +252,7 @@ typedef struct
 
 } wbplayerstruct_t;
 
-typedef struct
+typedef struct wbstartstruct_s
 {
   int         epsd;   // episode # (0-2)
 
@@ -267,9 +263,9 @@ typedef struct
   int         last;
   int         next;
   int         nextep;	// for when MAPINFO progression crosses into another episode.
-  mapentry_t* lastmapinfo;
-  mapentry_t* nextmapinfo;
-
+  struct mapentry_s *lastmapinfo;
+  struct mapentry_s *nextmapinfo;
+    
   int         maxkills;
   int         maxitems;
   int         maxsecret;

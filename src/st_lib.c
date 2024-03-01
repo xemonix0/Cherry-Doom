@@ -18,15 +18,17 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomdef.h"
-#include "doomstat.h"
+#include "st_lib.h"
+
+#include "m_swap.h"
+#include "r_defs.h"
 #include "v_video.h"
 #include "w_wad.h"
+#include "z_zone.h"
+
+// [Nugget]
+#include "m_nughud.h"
 #include "st_stuff.h"
-#include "st_lib.h"
-#include "r_main.h"
-#include "m_swap.h"
-#include "m_nughud.h" // [Nugget]
 
 int sts_colored_numbers; //jff 2/18/98 control to disable status color changes
 int sts_pct_always_gray; // killough 2/21/98: always gray %'s? bug or feature?

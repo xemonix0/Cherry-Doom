@@ -25,16 +25,13 @@
 #ifndef __D_STATE__
 #define __D_STATE__
 
-// We need globally shared data structures,
-//  for defining the global state variables.
-#include "doomdata.h"
-#include "d_loop.h"
-
 // We need the playr data structure as well.
 #include "d_player.h"
+#include "doomdata.h"
+#include "doomdef.h"
+#include "doomtype.h"
 
-// and mapinfo information
-#include "u_mapinfo.h"
+struct mapentry_s;
 
 // ------------------------
 // Command line parameters.
@@ -187,7 +184,7 @@ extern  boolean   autostart;
 extern  skill_t         gameskill;
 extern  int   gameepisode;
 extern  int   gamemap;
-extern  mapentry_t*     gamemapinfo;
+extern  struct mapentry_s *gamemapinfo;
 
 // If non-zero, exit the level after this number of minutes
 extern  int             timelimit;
@@ -294,6 +291,9 @@ extern  boolean demorecording;
 // recording Vanilla demos in netgames.
 extern  boolean lowres_turn;
 
+// Config key for low resolution turning.
+extern  boolean shorttics;
+
 // cph's doom 1.91 longtics hack
 extern  boolean longtics;
 
@@ -318,11 +318,7 @@ extern  boolean   strictmode, default_strictmode;
 
 #define STRICTMODE(x) (strictmode ? 0 : (x))
 
-#define NOTSTRICTMODE(x) (strictmode ? 1 : (x))
-
 #define STRICTMODE_COMP(x) (strictmode ? comp[x] : default_comp[x])
-
-#define STRICTMODE_VANILLA(x) (strictmode && demo_compatibility ? 0 : (x))
 
 extern  boolean   critical;
 
@@ -393,7 +389,7 @@ extern  int        rndindex;
 
 extern  int        maketic;
 
-extern  ticcmd_t   *netcmds;
+extern  struct ticcmd_s *netcmds;
 extern  int        ticdup;
 
 //-----------------------------------------------------------------------------
@@ -448,6 +444,9 @@ extern boolean hide_weapon;
 // [FG] centered weapon sprite
 extern int center_weapon;
 
+extern int view_bobbing_pct;
+extern int weapon_bobbing_pct;
+
 // [Nugget] /-----------------------------------------------------------------
 
 extern boolean fauxdemo;
@@ -462,7 +461,6 @@ extern int wipe_type;
 extern int over_under;
 extern int jump_crouch;
 extern int viewheight_value;
-extern int view_bobbing_percentage;
 
 enum {
   FLINCH_OFF,
@@ -513,7 +511,6 @@ extern int a11y_invul_colormap;
 extern int no_hor_autoaim;
 extern int switch_on_pickup;
 extern int always_bob; // CFG-Only
-extern int weapon_bobbing_percentage;
 
 enum {
   BOBSTYLE_VANILLA,

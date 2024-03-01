@@ -18,25 +18,29 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "d_event.h"
+#include "d_items.h"
+#include "d_player.h"
 #include "doomstat.h"
 #include "i_printf.h"
-#include "r_main.h"
-#include "p_map.h"
-#include "p_inter.h"
-#include "p_pspr.h"
-#include "p_enemy.h"
+#include "i_video.h" // uncapped
 #include "m_random.h"
+#include "p_action.h"
+#include "p_enemy.h"
+#include "p_inter.h"
+#include "p_map.h"
+#include "p_mobj.h"
+#include "p_pspr.h"
+#include "p_tick.h"
+#include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "d_event.h"
-#include "p_tick.h"
-#include "i_video.h" // uncapped
+#include "tables.h"
+
 // [Nugget]
 #include "g_game.h"
 #include "m_input.h"
 #include "w_wad.h" // W_CheckNumForName
-
-#include "p_action.h"
 
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
@@ -492,9 +496,6 @@ static void P_ApplyBobbing(int *sx, int *sy, fixed_t bob)
 static void P_NuggetBobbing(player_t* player)
 {
   pspdef_t *psp = player->psprites;
-  fixed_t bob = player->bob;
-  const int angle = (128*leveltime) & FINEMASK;
-  const int style = STRICTMODE(bobbing_style);
 
   if ((player->attackdown && STRICTMODE(center_weapon) != WEAPON_BOBBING) // [FG] not attacking means idle
       || !psp->state || psp->state->misc1 || player->switching)
@@ -502,18 +503,19 @@ static void P_NuggetBobbing(player_t* player)
     return;
   }
 
-  // [Nugget] Weapon bobbing percentage setting
-  if (weapon_bobbing_percentage != 100)
-  { bob = FixedDiv(FixedMul(bob, weapon_bobbing_percentage), 100); }
+  // Extended weapon bobbing percentage setting
+  const fixed_t bob = player->bob * weapon_bobbing_pct / 100;
 
-  // sx - Default, differs in a few styles
+  const int angle = (128*leveltime) & FINEMASK;
+
+  // `sx` - Default, differs in a few styles
   psp->sx2 = ((1 - STRICTMODE(sx_fix)) * FRACUNIT) + FixedMul(bob, finecosine[angle]);
 
-  // sy - Used for all styles, their specific values are added to this one right after
+  // `sy` - Used for all styles, their specific values are added to this one right after
   psp->sy2 = WEAPONTOP + abs(psp->dy); // Squat weapon down on impact
 
   // Bobbing Styles, ported from Zandronum
-  switch (style)
+  switch (STRICTMODE(bobbing_style))
   {
     case BOBSTYLE_VANILLA:
       psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
@@ -825,7 +827,7 @@ void A_Punch(player_t *player, pspdef_t *psp)
 
   // turn to face target
   // [Nugget]
-  if (NOTSTRICTMODE(!comp_nomeleesnap))
+  if (!STRICTMODE(comp_nomeleesnap))
   {
     player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y,
                                         linetarget->x, linetarget->y);
@@ -883,7 +885,7 @@ void A_Saw(player_t *player, pspdef_t *psp)
 
   // turn to face target
   // [Nugget]
-  if (NOTSTRICTMODE(!comp_nomeleesnap))
+  if (!STRICTMODE(comp_nomeleesnap))
   {
     angle = R_PointToAngle2(player->mo->x, player->mo->y,
                             linetarget->x, linetarget->y);
@@ -1164,16 +1166,16 @@ void A_FireCGun(player_t *player, pspdef_t *psp)
   { sound = (W_CheckNumForName("dschgun") > -1 ? sfx_chgun : sfx_pistol); }
   
   // [Nugget] Fix "Chaingun sound without ammo" bug
-  if (STRICTMODE(!comp_cgundblsnd))
+  if (!strictmode && !comp_cgundblsnd)
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
-    { return; }
+      return;
 
   S_StartSound(player->mo, !strictmode ? sound : sfx_pistol); // [Nugget]
 
   // [Nugget] Fix "Chaingun sound without ammo" bug
-  if (NOTSTRICTMODE(comp_cgundblsnd))
+  if (strictmode || comp_cgundblsnd)
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
-    { return; }
+      return;
 
   // killough 8/2/98: workaround for beta chaingun sprites missing at bottom
   // The beta did not have fullscreen, and its chaingun sprites were chopped
@@ -1386,6 +1388,8 @@ void P_NuggetResetWeaponInertia(void)
 // Called every tic by player thinking routine.
 //
 
+// [Nugget] Moved weapon-alignment macros above
+
 void P_MovePsprites(player_t *player)
 {
   pspdef_t *psp = player->psprites;
@@ -1412,7 +1416,7 @@ void P_MovePsprites(player_t *player)
 
   if (psp->state)
   {
-    if (!weapon_bobbing_percentage)
+    if (!weapon_bobbing_pct)
     {
       static fixed_t last_sy = WEAPONTOP;
 
@@ -1429,7 +1433,7 @@ void P_MovePsprites(player_t *player)
         psp->sy2 -= (last_sy - WEAPONTOP);
       }
     }
-    else if (center_weapon_strict) // [Nugget] Removed some checks
+    else if (center_weapon_strict) // [Nugget] Removed `uncapped` check
     {
       // [FG] don't center during lowering and raising states
       if (psp->state->misc1 || player->switching)
@@ -1629,7 +1633,7 @@ void A_WeaponMeleeAttack(player_t *player, pspdef_t *psp)
 
   // turn to face target
   // [Nugget]
-  if (NOTSTRICTMODE(!comp_nomeleesnap))
+  if (!STRICTMODE(comp_nomeleesnap))
   {
     player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y, linetarget->x, linetarget->y);
   }

@@ -20,8 +20,10 @@
 #ifndef __AMMAP_H__
 #define __AMMAP_H__
 
-#include "d_event.h"
+#include "doomtype.h"
 #include "m_fixed.h"
+
+struct event_s;
 
 // Used by ST StatusBar stuff.
 #define AM_MSGHEADER (('a'<<24)+('m'<<16))
@@ -29,7 +31,7 @@
 #define AM_MSGEXITED (AM_MSGHEADER | ('x'<<8))
 
 // Called by main loop.
-boolean AM_Responder (event_t* ev);
+boolean AM_Responder(struct event_s *ev);
 
 // Called by main loop.
 void AM_Ticker (void);
@@ -117,7 +119,13 @@ extern int mapcolor_preset;
 //jff 3/9/98
 extern int map_secret_after;  // secrets do not appear til after bagged
 
-extern int map_keyed_door_flash; // keyed doors are flashing
+enum {
+  MAP_KEYED_DOOR_OFF,
+  MAP_KEYED_DOOR_COLOR,
+  MAP_KEYED_DOOR_FLASH
+};
+
+extern int map_keyed_door; // keyed doors are colored or flashing
 
 extern int map_smooth_lines;
 

@@ -16,29 +16,26 @@
 //     Main loop code.
 //
 
-#include <stdlib.h>
 #include <string.h>
 
-#include "doomstat.h"
 #include "d_event.h"
 #include "d_loop.h"
 #include "d_ticcmd.h"
-
+#include "doomdef.h"
+#include "doomstat.h"
 #include "i_printf.h"
 #include "i_system.h"
+#include "i_timer.h"
 #include "i_video.h"
-
 #include "m_argv.h"
 #include "m_fixed.h"
-
 #include "net_client.h"
 #include "net_gui.h"
 #include "net_io.h"
-#include "net_query.h"
-#include "net_server.h"
-#include "net_sdl.h"
 #include "net_loop.h"
-
+#include "net_query.h"
+#include "net_sdl.h"
+#include "net_server.h"
 #include "s_sound.h"
 
 // The complete set of data for a particular tic.
@@ -729,8 +726,7 @@ void TryRunTics (void)
 
     // [AM] If we've uncapped the framerate and there are no tics
     //      to run, return early instead of waiting around.
-    // Only check counts so that I_FinishUpdate() can handle frame timing.
-    #define return_early (counts == 0)
+    #define return_early (uncapped && counts == 0)
 
     // get real tics
     entertic = I_GetTime() / ticdup;

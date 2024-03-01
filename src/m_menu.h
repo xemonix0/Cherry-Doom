@@ -21,7 +21,9 @@
 #ifndef __M_MENU__
 #define __M_MENU__
 
-#include "d_event.h"
+#include "doomtype.h"
+
+struct event_s;
 
 //
 // MENUS
@@ -32,7 +34,7 @@
 // this can resize the view and change game parameters.
 // Does all the real work of the menu interaction.
 
-boolean M_Responder (event_t *ev);
+boolean M_Responder(struct event_s *ev);
 
 // Called by main loop,
 // only used for menu (skull cursor) animation.
@@ -109,6 +111,7 @@ void M_DisableVoxelsRenderingItem(void);
 #define S_ONOFF        0x08000000 // Alias for S_YESNO
 #define S_MBF          0x10000000 // Disable if complevel < mbf
 #define S_THRM_SIZE4   0x20000000 // Thermo bar size 4
+#define S_PCT          0x40000000 // Show % sign
 
 // [Nugget]
 #define S_CRITICAL     0x40000000 // Disable during non-casual play

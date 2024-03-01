@@ -19,17 +19,28 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomstat.h"
+#include <stdlib.h>
+
 #include "d_event.h"
-#include "r_main.h"
-#include "p_map.h"
-#include "p_spec.h"
-#include "p_user.h"
+#include "d_player.h"
+#include "d_ticcmd.h"
+#include "doomdef.h"
+#include "doomstat.h"
+#include "doomtype.h"
 #include "g_game.h"
 #include "hu_stuff.h"
+#include "info.h"
+#include "m_input.h"
+#include "p_map.h"
+#include "p_mobj.h"
+#include "p_pspr.h"
+#include "p_spec.h"
+#include "p_user.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "r_state.h"
 
 // [Nugget]
-#include "m_input.h"
 #include "s_sound.h"
 #include "sounds.h"
 
@@ -168,13 +179,9 @@ void P_CalcHeight (player_t* player)
 
   angle = (FINEANGLES/20*leveltime)&FINEMASK;
 
-  bob = player->bob;
-
-  // [Nugget] View bobbing percentage setting
-  if (view_bobbing_percentage != 100)
-  { bob = FixedDiv(FixedMul(bob, view_bobbing_percentage), 100); }
-
-  bob = FixedMul(bob / 2, finesine[angle]);
+  // [Nugget] Extended view bobbing percentage setting
+  bob = player->bob * view_bobbing_pct / 100;
+  bob = FixedMul(bob/2,finesine[angle]);
 
   // move viewheight
 
@@ -563,6 +570,8 @@ void P_DeathThink (player_t* player)
           char *file = G_SaveGameName(savegameslot);
           G_LoadGame(file, savegameslot, false);
           free(file);
+          // [Woof!] prevent on-death-action reloads from activating specials
+          M_InputGameDeactivate(input_use);
         }
         else
           player->playerstate = PST_REBORN;

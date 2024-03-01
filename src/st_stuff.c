@@ -20,23 +20,35 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <stdlib.h>
+
+#include "am_map.h"
+#include "d_event.h"
+#include "d_items.h"
+#include "d_player.h"
 #include "doomdef.h"
 #include "doomstat.h"
-#include "m_random.h"
-#include "i_video.h"
-#include "v_video.h"
-#include "w_wad.h"
-#include "st_stuff.h"
 #include "hu_stuff.h" // [FG] hud_displayed
-#include "st_lib.h"
-#include "r_main.h"
-#include "am_map.h"
+#include "i_printf.h"
+#include "i_video.h"
+#include "info.h"
 #include "m_cheat.h"
 #include "m_misc2.h"
+#include "m_random.h"
 #include "m_swap.h"
-#include "i_printf.h"
+#include "p_mobj.h"
+#include "r_data.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "st_lib.h"
+#include "st_stuff.h"
+#include "tables.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "z_zone.h"
 
 // [Nugget]
 #include "m_nughud.h"
@@ -63,10 +75,6 @@ extern boolean inhelpscreens;
 
 #define ST_FX                   143
 #define ST_FY                   169
-
-// Should be set to patch width
-//  for tall numbers later on
-#define ST_TALLNUMWIDTH         (tallnum[0]->width)
 
 // Number of status faces.
 #define ST_NUMPAINFACES         5
@@ -816,7 +824,7 @@ static int SmoothCount(int shownval, int realval)
   int step = realval - shownval;
 
   // [Nugget] Disallowed in Strict Mode
-  if (NOTSTRICTMODE(!hud_animated_counts || !step))
+  if (strictmode || !hud_animated_counts || !step)
   {
     return realval;
   }
@@ -1001,10 +1009,10 @@ void ST_drawWidgets(void)
 
         switch (BETWEEN(0, 3, weaponinfo[w_ready.data].ammo))
         {
-          case 0: sprintf(namebuf, big ? "AMMOA0" : "CLIPA0"); break;
-          case 1: sprintf(namebuf, big ? "SBOXA0" : "SHELA0"); break;
-          case 2: sprintf(namebuf, big ? "CELPA0" : "CELLA0"); break;
-          case 3: sprintf(namebuf, big ? "BROKA0" : "ROCKA0"); break;
+          case 0: M_snprintf(namebuf, sizeof(namebuf), big ? "AMMOA0" : "CLIPA0"); break;
+          case 1: M_snprintf(namebuf, sizeof(namebuf), big ? "SBOXA0" : "SHELA0"); break;
+          case 2: M_snprintf(namebuf, sizeof(namebuf), big ? "CELPA0" : "CELLA0"); break;
+          case 3: M_snprintf(namebuf, sizeof(namebuf), big ? "BROKA0" : "ROCKA0"); break;
         }
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
@@ -1032,8 +1040,8 @@ void ST_drawWidgets(void)
 
         switch (plyr->powers[pw_strength] ? 1 : 0)
         {
-          case 0: sprintf(namebuf, "MEDIA0"); break;
-          case 1: sprintf(namebuf, "PSTRA0"); break;
+          case 0: M_snprintf(namebuf, sizeof(namebuf), "MEDIA0"); break;
+          case 1: M_snprintf(namebuf, sizeof(namebuf), "PSTRA0"); break;
         }
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
@@ -1060,9 +1068,9 @@ void ST_drawWidgets(void)
 
         switch (BETWEEN(0, 2, plyr->armortype))
         {
-          case 0: sprintf(namebuf, "BON2A0"); break;
-          case 1: sprintf(namebuf, "ARM1A0"); break;
-          case 2: sprintf(namebuf, "ARM2A0"); break;
+          case 0: M_snprintf(namebuf, sizeof(namebuf), "BON2A0"); break;
+          case 1: M_snprintf(namebuf, sizeof(namebuf), "ARM1A0"); break;
+          case 2: M_snprintf(namebuf, sizeof(namebuf), "ARM2A0"); break;
         }
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
@@ -1287,7 +1295,7 @@ void ST_loadGraphics(void)
   // Load the numbers, tall and short
   for (i=0;i<10;i++)
     {
-      sprintf(namebuf, "STTNUM%d", i);
+      M_snprintf(namebuf, sizeof(namebuf), "STTNUM%d", i);
       tallnum[i] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
       M_snprintf(namebuf, sizeof(namebuf), "STYSNUM%d", i);
       shortnum[i] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
@@ -1300,7 +1308,7 @@ void ST_loadGraphics(void)
   // key cards
   for (i=0;i<NUMCARDS+3;i++)  //jff 2/23/98 show both keys too
     {
-      sprintf(namebuf, "STKEYS%d", i);
+      M_snprintf(namebuf, sizeof(namebuf), "STKEYS%d", i);
       keys[i] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
     }
 
@@ -1310,7 +1318,7 @@ void ST_loadGraphics(void)
   // arms ownership widgets
   for (i=0;i<6+3;i++) // [Nugget] Load all 9 numbers
     {
-      sprintf(namebuf, "STGNUM%d", i+1);
+      M_snprintf(namebuf, sizeof(namebuf), "STGNUM%d", i+1);
 
       // gray #
       arms[i][0] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
@@ -1324,7 +1332,7 @@ void ST_loadGraphics(void)
   // player face backgrounds and using displayplayer to choose them:
   for (i=0; i<MAXPLAYERS; i++)
     {
-      sprintf(namebuf, "STFB%d", i);
+      M_snprintf(namebuf, sizeof(namebuf), "STFB%d", i);
       faceback[i] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
     }
 
@@ -1347,18 +1355,18 @@ void ST_loadGraphics(void)
       int j;
       for (j=0;j<ST_NUMSTRAIGHTFACES;j++)
         {
-          sprintf(namebuf, "STFST%d%d", i, j);
+          M_snprintf(namebuf, sizeof(namebuf), "STFST%d%d", i, j);
           faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
         }
-      sprintf(namebuf, "STFTR%d0", i);        // turn right
+      M_snprintf(namebuf, sizeof(namebuf), "STFTR%d0", i);        // turn right
       faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
-      sprintf(namebuf, "STFTL%d0", i);        // turn left
+      M_snprintf(namebuf, sizeof(namebuf), "STFTL%d0", i);        // turn left
       faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
-      sprintf(namebuf, "STFOUCH%d", i);       // ouch!
+      M_snprintf(namebuf, sizeof(namebuf), "STFOUCH%d", i);       // ouch!
       faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
-      sprintf(namebuf, "STFEVL%d", i);        // evil grin ;)
+      M_snprintf(namebuf, sizeof(namebuf), "STFEVL%d", i);        // evil grin ;)
       faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
-      sprintf(namebuf, "STFKILL%d", i);       // pissed off
+      M_snprintf(namebuf, sizeof(namebuf), "STFKILL%d", i);       // pissed off
       faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
     }
   faces[facenum++] = W_CacheLumpName("STFGOD0", PU_STATIC);
@@ -1367,7 +1375,7 @@ void ST_loadGraphics(void)
   // [FG] support face gib animations as in the 3DO/Jaguar/PSX ports
   for (i = 0; i < ST_NUMXDTHFACES; i++)
   {
-    sprintf(namebuf, "STFXDTH%d", i);
+    M_snprintf(namebuf, sizeof(namebuf), "STFXDTH%d", i);
 
     if (W_CheckNumForName(namebuf) != -1)
       faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
@@ -1418,7 +1426,7 @@ void ST_loadGraphics(void)
     // Load NHTNUM0 to NHTNUM9
     for (i = 0;  i < 10;  i++)
     {
-      sprintf(namebuf, "NHTNUM%d", i);
+      M_snprintf(namebuf, sizeof(namebuf), "NHTNUM%d", i);
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
@@ -1449,7 +1457,7 @@ void ST_loadGraphics(void)
     // Load NHRNUM0 to NHRNUM9
     for (i = 0;  i < 10;  i++)
     {
-      sprintf(namebuf, "NHRNUM%d", i);
+      M_snprintf(namebuf, sizeof(namebuf), "NHRNUM%d", i);
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
@@ -1473,7 +1481,7 @@ void ST_loadGraphics(void)
     // Load NHAMNUM0 to NHAMNUM9
     for (i = 0;  i < 10;  i++)
     {
-      sprintf(namebuf, "NHAMNUM%d", i);
+      M_snprintf(namebuf, sizeof(namebuf), "NHAMNUM%d", i);
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
@@ -1490,7 +1498,7 @@ void ST_loadGraphics(void)
     for (i = 0;  i < 9;  i++)
     {
       // Load NHW0NUM1 to NHW0NUM9
-      sprintf(namebuf, "NHW0NUM%d", i+1);
+      M_snprintf(namebuf, sizeof(namebuf), "NHW0NUM%d", i+1);
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
@@ -1502,7 +1510,7 @@ void ST_loadGraphics(void)
       }
 
       // Load NHW1NUM1 to NHW1NUM9
-      sprintf(namebuf, "NHW1NUM%d", i+1);
+      M_snprintf(namebuf, sizeof(namebuf), "NHW1NUM%d", i+1);
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
@@ -1519,7 +1527,7 @@ void ST_loadGraphics(void)
     // Load NHKEYS
     for (i = 0;  i < NUMCARDS+3;  i++)
     {
-      sprintf(namebuf, "NHKEYS%d", i);
+      M_snprintf(namebuf, sizeof(namebuf), "NHKEYS%d", i);
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
@@ -1545,7 +1553,7 @@ void ST_loadGraphics(void)
     // Load NHAMMO0 to NHAMMO3 if available
     for (i = 0;  i < 4;  i++)
     {
-      sprintf(namebuf, "NHAMMO%d", i);
+      M_snprintf(namebuf, sizeof(namebuf), "NHAMMO%d", i);
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
@@ -1562,7 +1570,7 @@ void ST_loadGraphics(void)
     // Load NHEALTH0 to NHEALTH1 if available
     for (i = 0;  i < 2;  i++)
     {
-      sprintf(namebuf, "NHEALTH%d", i);
+      M_snprintf(namebuf, sizeof(namebuf), "NHEALTH%d", i);
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
@@ -1579,7 +1587,7 @@ void ST_loadGraphics(void)
     // Load NHARMOR0 to NHARMOR2 if available
     for (i = 0;  i < 3;  i++)
     {
-      sprintf(namebuf, "NHARMOR%d", i);
+      M_snprintf(namebuf, sizeof(namebuf), "NHARMOR%d", i);
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
@@ -1881,19 +1889,19 @@ static int StatusBarBufferHeight(void)
   int st_height = ST_HEIGHT;
   patch_t *const patch = W_CacheLumpName("brdr_b", PU_CACHE);
 
-  if (patch && patch->height > st_height)
-    st_height = patch->height;
+  if (patch && SHORT(patch->height) > st_height)
+    st_height = SHORT(patch->height);
 
-  if (sbar && sbar->height > st_height)
-    st_height = sbar->height;
+  if (sbar && SHORT(sbar->height) > st_height)
+    st_height = SHORT(sbar->height);
 
-  if (armsbg && armsbg->height > st_height)
-    st_height = armsbg->height;
+  if (armsbg && SHORT(armsbg->height) > st_height)
+    st_height = SHORT(armsbg->height);
 
   for (i = 0; i < MAXPLAYERS; i++)
   {
-    if (faceback[i] && faceback[i]->height > st_height)
-      st_height = faceback[i]->height;
+    if (faceback[i] && SHORT(faceback[i]->height) > st_height)
+      st_height = SHORT(faceback[i]->height);
   }
 
   return st_height;
@@ -1922,30 +1930,30 @@ void ST_Warnings(void)
   int i;
   patch_t *const patch = W_CacheLumpName("brdr_b", PU_CACHE);
 
-  if (patch && patch->height > ST_HEIGHT)
+  if (patch && SHORT(patch->height) > ST_HEIGHT)
   {
     I_Printf(VB_WARNING, "ST_Init: Non-standard BRDR_B height of %d. "
-                         "Expected <= %d.", patch->height, ST_HEIGHT);
+                         "Expected <= %d.", SHORT(patch->height), ST_HEIGHT);
   }
 
-  if (sbar && sbar->height != ST_HEIGHT)
+  if (sbar && SHORT(sbar->height) != ST_HEIGHT)
   {
     I_Printf(VB_WARNING, "ST_Init: Non-standard STBAR height of %d. "
-                         "Expected %d.", sbar->height, ST_HEIGHT);
+                         "Expected %d.", SHORT(sbar->height), ST_HEIGHT);
   }
 
-  if (armsbg && armsbg->height > ST_HEIGHT)
+  if (armsbg && SHORT(armsbg->height) > ST_HEIGHT)
   {
     I_Printf(VB_WARNING, "ST_Init: Non-standard STARMS height of %d. "
-                         "Expected <= %d.", armsbg->height, ST_HEIGHT);
+                         "Expected <= %d.", SHORT(armsbg->height), ST_HEIGHT);
   }
 
   for (i = 0; i < MAXPLAYERS; i++)
   {
-    if (faceback[i] && faceback[i]->height > ST_HEIGHT)
+    if (faceback[i] && SHORT(faceback[i]->height) > ST_HEIGHT)
     {
       I_Printf(VB_WARNING, "ST_Init: Non-standard STFB%d height of %d. "
-                           "Expected <= %d.", i, faceback[i]->height, ST_HEIGHT);
+                           "Expected <= %d.", i, SHORT(faceback[i]->height), ST_HEIGHT);
     }
   }
 }

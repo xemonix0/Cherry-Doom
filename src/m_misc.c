@@ -26,37 +26,46 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomstat.h"
-#include "doomkeys.h"
-#include "m_argv.h"
-#include "g_game.h"
-#include "m_menu.h"
+#include <ctype.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "am_map.h"
-#include "w_wad.h"
-#include "i_printf.h"
-#include "i_system.h"
-#include "i_sound.h"
-#include "i_video.h"
-#include "v_video.h"
+#include "config.h"
+#include "d_main.h"
+#include "doomkeys.h"
+#include "doomstat.h"
+#include "dstrings.h"
+#include "g_game.h"
+#include "hu_lib.h" // HU_MAXMESSAGES
 #include "hu_obituary.h"
 #include "hu_stuff.h"
-#include "st_stuff.h"
-#include "dstrings.h"
+#include "i_gamepad.h"
+#include "i_printf.h"
+#include "i_sound.h"
+#include "i_system.h"
+#include "i_video.h"
+#include "m_argv.h"
+#include "m_array.h"
+#include "m_io.h"
+#include "m_menu.h"
 #include "m_misc.h"
 #include "m_misc2.h"
+#include "net_client.h" // net_player_name
+#include "p_mobj.h"
+#include "p_pspr.h"
+#include "r_draw.h" // [FG] fuzzcolumn_mode
+#include "r_main.h"
+#include "r_sky.h" // [FG] stretchsky
+#include "r_voxel.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "d_main.h"
-#include "r_draw.h" // [FG] fuzzcolumn_mode
-#include "r_sky.h" // [FG] stretchsky
-#include "hu_lib.h" // HU_MAXMESSAGES
-#include "net_client.h" // net_player_name
-#include "i_gamepad.h"
-#include "m_array.h"
-#include "r_voxel.h"
-
-#include "m_io.h"
-#include <errno.h>
+#include "st_stuff.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "z_zone.h"
 
 //
 // DEFAULTS
@@ -163,24 +172,6 @@ default_t defaults[] = {
     (config_t *) &dynamic_resolution, NULL,
     {1}, {0, 1}, number, ss_gen, wad_no,
     "1 to enable dynamic resolution"
-  },
-
-  {
-    "sdl_renderdriver",
-    (config_t *) &sdl_renderdriver, NULL,
-#if defined(_WIN32)
-    {.s = "direct3d11"},
-#else
-    {.s = ""},
-#endif
-    {0}, string, ss_none, wad_no,
-    "SDL render driver, possible values are "
-#if defined(_WIN32)
-    "direct3d, direct3d11, direct3d12, "
-#elif defined(__APPLE__)
-    "metal, "
-#endif
-    "opengl, opengles2, opengles, software"
   },
 
   {
@@ -740,13 +731,6 @@ default_t defaults[] = {
   },
 
   {
-    "view_bobbing_percentage",
-    (config_t *) &view_bobbing_percentage, NULL,
-    {100}, {0,100}, number, ss_gen, wad_no,
-    "Percentage of view bobbing intensity"
-  },
-
-  {
     "flinching",
     (config_t *) &flinching, NULL,
     {0}, {0,3}, number, ss_gen, wad_yes,
@@ -999,14 +983,25 @@ default_t defaults[] = {
     "1 to enable player bobbing (view moving up/down slightly)"
   },
 
-  // [Nugget] Got rid of "cosmetic_bobbing";
-  // replaced by "view_bobbing_percentage" and "weapon_bobbing_percentage"
-  
   {
     "hide_weapon",
     (config_t *) &hide_weapon, NULL,
     {0}, {0,1}, number, ss_weap, wad_no,
     "1 to hide weapon"
+  },
+
+  { // [Nugget] Changed config key, extended
+    "view_bobbing_percentage",
+    (config_t *) &view_bobbing_pct, NULL,
+    {100}, {0,100}, number, ss_weap, wad_no,
+    "Player View Bobbing percentage"
+  },
+
+  { // [Nugget] Changed config key, extended
+    "weapon_bobbing_percentage",
+    (config_t *) &weapon_bobbing_pct, NULL,
+    {100}, {0,100}, number, ss_weap, wad_no,
+    "Player Weapon Bobbing percentage"
   },
 
   // [FG] centered or bobbing weapon sprite
@@ -1038,13 +1033,6 @@ default_t defaults[] = {
     (config_t *) &always_bob, NULL,
     {1}, {0,1}, number, ss_none, wad_no,
     "1 to always bob weapon every tic (fixes choppy Chainsaw bobbing)"
-  },
-
-  {
-    "weapon_bobbing_percentage",
-    (config_t *) &weapon_bobbing_percentage, NULL,
-    {100}, {0,100}, number, ss_weap, wad_no,
-    "Percentage of weapon bobbing intensity"
   },
 
   {
@@ -1727,11 +1715,11 @@ default_t defaults[] = {
   },
 
   {
-    "input_mouselook",
+    "input_freelook",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to toggle mouselook",
-    input_mouselook, { {0, 0} }
+    "key to toggle free look",
+    input_freelook, { {0, 0} }
   },
 
   // [Nugget] /---------------------------------------------------------------
@@ -2853,6 +2841,13 @@ default_t defaults[] = {
     "Raw gamepad/mouse input for turning/looking (0 = Interpolate, 1 = Raw)"
   },
 
+  {
+    "shorttics",
+    (config_t *) &shorttics, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to use low resolution turning."
+  },
+
   //
   // Chat macro
   //
@@ -3153,10 +3148,10 @@ default_t defaults[] = {
   },
 
   {
-    "map_keyed_door_flash",
-    (config_t *) &map_keyed_door_flash, NULL,
-    {0}, {0,1}, number, ss_auto, wad_no,
-    "1 to make keyed doors flash on the automap"
+    "map_keyed_door",
+    (config_t *) &map_keyed_door, NULL,
+    {MAP_KEYED_DOOR_COLOR}, {MAP_KEYED_DOOR_OFF, MAP_KEYED_DOOR_FLASH}, number, ss_auto, wad_no,
+    "keyed doors are colored (1) or flashing (2) on the automap"
   },
 
   {

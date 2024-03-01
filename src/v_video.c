@@ -21,15 +21,23 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomstat.h"
+#include <stdlib.h>
+#include <string.h>
+
+#include "doomdef.h"
 #include "doomtype.h"
-#include "w_wad.h"   /* needed for color translation lump lookup */
-#include "v_trans.h"
-#include "v_video.h"
+#include "i_system.h"
 #include "i_video.h"
 #include "m_argv.h"
-#include "m_swap.h"
 #include "m_misc2.h"
+#include "m_swap.h"
+#include "r_data.h"
+#include "r_defs.h"
+#include "r_state.h"
+#include "v_trans.h"
+#include "v_video.h"
+#include "w_wad.h" // needed for color translation lump lookup
+#include "z_zone.h"
 
 pixel_t *I_VideoBuffer;
 
@@ -525,7 +533,7 @@ static void V_DrawPatchInt(int x, int y, patch_t *patch, boolean flipped)
             }
     #endif
 
-            column = (column_t *)((byte *)patch + patch->columnofs[texturecolumn]);
+            column = (column_t *)((byte *)patch + LONG(patch->columnofs[texturecolumn]));
             V_DrawMaskedColumn(&patchcol, ytop, column);
         }
     }
@@ -625,6 +633,35 @@ int V_ScaleY(int y)
     return y1lookup[y];
 }
 
+static void V_ClipRect(vrect_t *rect)
+{
+    // clip to left and top edges
+    rect->cx1 = rect->x >= 0 ? rect->x : 0;
+    rect->cy1 = rect->y >= 0 ? rect->y : 0;
+
+    // determine right and bottom edges
+    rect->cx2 = rect->x + rect->w - 1;
+    rect->cy2 = rect->y + rect->h - 1;
+
+    // clip right and bottom edges
+    if (rect->cx2 >= video.unscaledw)
+        rect->cx2 =  video.unscaledw - 1;
+    if (rect->cy2 >= SCREENHEIGHT)
+        rect->cy2 =  SCREENHEIGHT - 1;
+
+    // determine clipped width and height
+    rect->cw = rect->cx2 - rect->cx1 + 1;
+    rect->ch = rect->cy2 - rect->cy1 + 1;
+}
+
+static void V_ScaleClippedRect(vrect_t *rect)
+{
+    rect->sx = x1lookup[rect->cx1];
+    rect->sy = y1lookup[rect->cy1];
+    rect->sw = x2lookup[rect->cx2] - rect->sx + 1;
+    rect->sh = y2lookup[rect->cy2] - rect->sy + 1;
+}
+
 void V_FillRect(int x, int y, int width, int height, byte color)
 {
     vrect_t dstrect;
@@ -634,7 +671,13 @@ void V_FillRect(int x, int y, int width, int height, byte color)
     dstrect.w = width;
     dstrect.h = height;
 
-    V_ScaleRect(&dstrect);
+    V_ClipRect(&dstrect);
+
+    // clipped away completely?
+    if (dstrect.cw <= 0 || dstrect.ch <= 0)
+        return;
+
+    V_ScaleClippedRect(&dstrect);
 
     byte* dest = V_ADDRESS(dest_screen, dstrect.sx, dstrect.sy);
 
@@ -676,13 +719,26 @@ void V_CopyRect(int srcx, int srcy, pixel_t *source,
     srcrect.w = width;
     srcrect.h = height;
 
+    V_ClipRect(&srcrect);
+
+    // clipped away completely?
+    if (srcrect.cw <= 0 || srcrect.ch <= 0)
+        return;
+
+    V_ScaleClippedRect(&srcrect);
+
     dstrect.x = destx;
     dstrect.y = desty;
     dstrect.w = width;
     dstrect.h = height;
 
-    V_ScaleRect(&srcrect);
-    V_ScaleRect(&dstrect);
+    V_ClipRect(&dstrect);
+
+    // clipped away completely?
+    if (dstrect.cw <= 0 || dstrect.ch <= 0)
+        return;
+
+    V_ScaleClippedRect(&dstrect);
 
     // use the smaller of the two scaled rect widths / heights
     usew = (srcrect.sw < dstrect.sw ? srcrect.sw : dstrect.sw);
@@ -719,9 +775,19 @@ void V_DrawBlock(int x, int y, int width, int height, pixel_t *src)
     dstrect.w = width;
     dstrect.h = height;
 
-    V_ScaleRect(&dstrect);
+    V_ClipRect(&dstrect);
 
-    source = src + y * width + x;
+    // clipped away completely?
+    if (dstrect.cw <= 0 || dstrect.ch <= 0)
+        return;
+
+    // change in origin due to clipping
+    int dx = dstrect.cx1 - x;
+    int dy = dstrect.cy1 - y;
+
+    V_ScaleClippedRect(&dstrect);
+
+    source = src + dy * width + dx;
     dest = V_ADDRESS(dest_screen, dstrect.sx, dstrect.sy);
 
     {

@@ -12,26 +12,33 @@
 // GNU General Public License for more details.
 //
 
-#include "i_printf.h"
-#include "r_draw.h"
-#include "r_main.h"
-#include "r_things.h"
-#include "v_video.h"
+#include <stdlib.h>
+#include <string.h>
+
+#include "doomdata.h"
+#include "doomstat.h"
+#include "doomtype.h"
 #include "i_glob.h"
+#include "i_printf.h"
 #include "i_video.h"
-#include "m_bbox.h"
+#include "info.h"
 #include "m_array.h"
+#include "m_bbox.h"
+#include "m_fixed.h"
 #include "m_menu.h"
 #include "m_misc.h"
 #include "m_misc2.h"
-#include "z_zone.h"
-#include "w_wad.h"
-
+#include "p_mobj.h"
 #include "r_bmaps.h"
+#include "r_defs.h"
+#include "r_draw.h"
+#include "r_main.h"
+#include "r_state.h"
+#include "r_things.h"
+#include "tables.h"
 #include "v_video.h"
-
-#include "doomstat.h"
-
+#include "w_wad.h"
+#include "z_zone.h"
 
 static boolean voxels_found;
 boolean voxels_rendering, default_voxels_rendering;
@@ -725,10 +732,7 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 	else
 	{
 		// diminished light
-		int index = FixedDiv(xscale * 160, focallength) >> LIGHTSCALESHIFT;
-
-		if (index < 0)               index = 0;
-		if (index > MAXLIGHTSCALE-1) index = MAXLIGHTSCALE-1;
+		const int index = R_GetLightIndex(xscale);
 
 		vis->colormap[0] = spritelights[index];
 		vis->colormap[1] = fullcolormap;
@@ -1063,18 +1067,19 @@ void VX_DrawVoxel (vissprite_t * spr)
 
 	if ((spr->mobjflags2 & MF2_COLOREDBLOOD) && (spr->colormap[0] != NULL))
 	{
-		static const byte * prev_trans = NULL;
-		const byte * trans = red2col[spr->color];
+		static const byte * prev_trans = NULL, * prev_map = NULL;
+		const byte * trans = red2col[spr->color], * map = spr->colormap[0];
 
 		static byte new_colormap[256];
 
-		if (prev_trans != trans)
+		if (prev_trans != trans || prev_map != map)
 		{
 			int i;
 			for (i = 0 ; i < 256 ; i++)
-				new_colormap[i] = spr->colormap[0][trans[i]];
+				new_colormap[i] = map[trans[i]];
 
 			prev_trans = trans;
+			prev_map = map;
 		}
 
 		spr->colormap[0] = new_colormap;

@@ -17,12 +17,18 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomstat.h"
+#include <ctype.h>
+#include <stdlib.h>
+
+#include "doomdef.h"
 #include "doomkeys.h"
-#include "m_swap.h"
+#include "doomstat.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
+#include "m_swap.h"
+#include "r_defs.h"
 #include "r_draw.h"
+#include "r_state.h"
 #include "v_video.h"
 
 // [Nugget]
@@ -63,7 +69,7 @@ static int align_offset[num_offsets];
 
 void HUlib_reset_align_offsets (void)
 {
-  int bottom = SCREENHEIGHT - 1;
+  int bottom = SCREENHEIGHT;
 
   if (scaledviewheight < SCREENHEIGHT ||
       draw_crispy_hud ||

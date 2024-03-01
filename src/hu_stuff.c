@@ -19,26 +19,40 @@
 
 // killough 5/3/98: remove unnecessary headers
 
-#include "doomstat.h"
+#include <stdlib.h>
+#include <string.h>
+
+#include "d_deh.h" /* Ty 03/27/98 - externalization of mapnamesx arrays */
+#include "d_event.h"
+#include "d_items.h"
+#include "d_player.h"
 #include "doomkeys.h"
-#include "hu_stuff.h"
-#include "hu_obituary.h"
-#include "hu_lib.h"
-#include "r_state.h"
-#include "st_stuff.h" /* jff 2/16/98 need loc of status bar */
-#include "w_wad.h"
-#include "s_sound.h"
+#include "doomstat.h"
 #include "dstrings.h"
-#include "sounds.h"
-#include "d_deh.h"   /* Ty 03/27/98 - externalization of mapnamesx arrays */
+#include "hu_lib.h"
+#include "hu_obituary.h"
+#include "hu_stuff.h"
+#include "i_video.h" // fps
+#include "m_fixed.h"
 #include "m_input.h"
-#include "p_map.h" // crosshair (linetarget)
 #include "m_misc2.h"
 #include "m_swap.h"
-#include "i_video.h" // fps
+#include "p_map.h" // crosshair (linetarget)
+#include "p_mobj.h"
+#include "r_data.h"
+#include "r_defs.h"
 #include "r_main.h"
+#include "r_state.h"
 #include "r_voxel.h"
+#include "s_sound.h"
+#include "sounds.h"
+#include "st_stuff.h" /* jff 2/16/98 need loc of status bar */
+#include "tables.h"
+#include "u_mapinfo.h"
 #include "u_scanner.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "z_zone.h"
 
 // [Nugget]
 #include "am_map.h"
@@ -427,28 +441,28 @@ void HU_Init(void)
   // load the heads-up font
   for (i = 0, j = HU_FONTSTART; i < HU_FONTSIZE; i++, j++)
   {
-    sprintf(buffer, "STCFN%.3d", j);
+    M_snprintf(buffer, sizeof(buffer), "STCFN%.3d", j);
     if (W_CheckNumForName(buffer) != -1)
       big_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
 
     if ('0' <= j && j <= '9')
     {
-      sprintf(buffer, "DIG%.1d", j - 48);
+      M_snprintf(buffer, sizeof(buffer), "DIG%.1d", j - 48);
       sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
     }
     else if ('A' <= j && j <= 'Z')
     {
-      sprintf(buffer, "DIG%c", j);
+      M_snprintf(buffer, sizeof(buffer), "DIG%c", j);
       sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
     }
     else if (j > 122)
     {
-      sprintf(buffer, "STBR%.3d", j);
+      M_snprintf(buffer, sizeof(buffer), "STBR%.3d", j);
       sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
     }
     else
     {
-      sprintf(buffer, "DIG%.2d", j);
+      M_snprintf(buffer, sizeof(buffer), "DIG%.2d", j);
       if (W_CheckNumForName(buffer) != -1)
         sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
     }
@@ -474,7 +488,7 @@ void HU_Init(void)
   //jff 2/26/98 load patches for keys and double keys
   for (i = HU_FONTSIZE, j = 0; j < 6; i++, j++)
   {
-    sprintf(buffer, "STKEYS%.1d", j);
+    M_snprintf(buffer, sizeof(buffer), "STKEYS%.1d", j);
     sml_font.patches[i] =
     big_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
   }
@@ -528,7 +542,7 @@ static void HU_set_centered_message(boolean init)
 
 static inline void HU_cond_build_widget (hu_multiline_t *const multiline, boolean cond)
 {
-  if (cond)
+  if (cond && multiline->built == false)
   {
     multiline->builder();
     multiline->built = true;
@@ -587,6 +601,8 @@ static void HU_widget_build_monsec(void);
 static void HU_widget_build_sttime(void);
 static void HU_widget_build_title (void);
 static void HU_widget_build_weapon (void);
+
+static hu_multiline_t *w_stats;
 
 // [Nugget] /-----------------------------------------------------------------
 
@@ -722,6 +738,8 @@ void HU_Start(void)
                        ? 3 : 1,
                        &boom_font, colrngs[CR_GRAY],
                        NULL, HU_widget_build_monsec);
+  // [FG] in deathmatch: w_keys.builder = HU_widget_build_frag()
+  w_stats = deathmatch ? &w_keys : &w_monsec;
 
   HUlib_init_multiline(&w_sttime, 1,
                        &boom_font, colrngs[CR_GRAY],
@@ -786,12 +804,12 @@ void HU_Start(void)
     while ((m = w->multiline))
     {
       na = NULL;
-      if      (m == &w_sttime) { na = &nughud.time;   }
-      else if (m == &w_monsec) { na = &nughud.sts;    }
+      if      (m ==  w_stats)  { na = &nughud.sts;    }
+      else if (m == &w_sttime) { na = &nughud.time;   }
       else if (m == &w_powers) { na = &nughud.powers; }
       else if (m == &w_coord)  { na = &nughud.coord;  }
       else if (m == &w_fps)    { na = &nughud.fps;    }
-      else if (m == &w_rate)   { na = &nughud.rate;    }
+      else if (m == &w_rate)   { na = &nughud.rate;   }
 
       if (na) {
         if (na == &nughud.time)
@@ -929,7 +947,7 @@ static void HU_widget_build_ammo (void)
     }
 
     // build the numeric amount init string
-    sprintf(hud_ammostr + i, "%3d/%3d", ammo, fullammo);
+    M_snprintf(hud_ammostr + i, sizeof(hud_ammostr), "%3d/%3d", ammo, fullammo);
 
     // backpack changes thresholds (ammo widget)
     if (plr->backpack && !hud_backpack_thresholds && fullammo)
@@ -994,7 +1012,7 @@ static void HU_widget_build_health (void)
   }
 
   // build the numeric amount init string
-  sprintf(hud_healthstr + i, "%3d", st_health);
+  M_snprintf(hud_healthstr + i, sizeof(hud_healthstr), "%3d", st_health);
 
   // set the display color from the amount of health posessed
   w_health.cr = ColorByHealth(plr->health, 100, st_invul);
@@ -1040,7 +1058,7 @@ static void HU_widget_build_armor (void)
   }
 
   // build the numeric amount init string
-  sprintf(hud_armorstr + i, "%3d", st_armor);
+  M_snprintf(hud_armorstr + i, sizeof(hud_armorstr), "%3d", st_armor);
 
   // color of armor depends on type
   if (hud_armor_type)
@@ -1194,7 +1212,7 @@ static inline int HU_top (char *const fragstr, int i, const int idx1, const int 
   {
     char numbuf[32], *s;
 
-    sprintf(numbuf, "%5d", top1);
+    M_snprintf(numbuf, sizeof(numbuf), "%5d", top1);
     // make frag count in player's color via escape code
 
     fragstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
@@ -1369,22 +1387,24 @@ static void HU_widget_build_sttime(void)
   {
     if (time_scale != 100)
     {
-      offset += sprintf(hud_timestr, "\x1b%c%d%% ",
-              '0'+hudcolor_time_scale, time_scale);
+      offset += M_snprintf(hud_timestr, sizeof(hud_timestr), "\x1b%c%d%% ",
+                           '0'+hudcolor_time_scale, time_scale);
     }
 
     if (totalleveltimes)
     {
       const int time = (totalleveltimes + leveltime) / TICRATE;
 
-      offset += sprintf(hud_timestr + offset, "\x1b%c%d:%02d ",
-              '0'+hudcolor_total_time, time/60, time%60);
+      offset += M_snprintf(hud_timestr + offset, sizeof(hud_timestr),
+                           "\x1b%c%d:%02d ",
+                           '0'+hudcolor_total_time, time/60, time%60);
     }
 
     if (!plr->btuse_tics)
     {
-      sprintf(hud_timestr + offset, "\x1b%c%d:%05.2f\t",
-              '0'+hudcolor_time, leveltime/TICRATE/60, (float)(leveltime%(60*TICRATE))/TICRATE);
+      M_snprintf(hud_timestr + offset, sizeof(hud_timestr), "\x1b%c%d:%05.2f\t",
+                 '0'+hudcolor_time, leveltime / TICRATE / 60,
+                 (float)(leveltime % (60 * TICRATE)) / TICRATE);
     }
   }
 
@@ -1393,10 +1413,11 @@ static void HU_widget_build_sttime(void)
     const int type = plr->eventtype;
 
     // [Nugget] Support other events
-    sprintf(hud_timestr + offset, "\x1b%c%c %d:%05.2f\t",
-            '0'+hudcolor_event_timer,
-            type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
-            plr->btuse/TICRATE/60, (float)(plr->btuse%(60*TICRATE))/TICRATE);
+    M_snprintf(hud_timestr + offset, sizeof(hud_timestr), "\x1b%c%c %d:%05.2f\t",
+               '0'+hudcolor_event_timer,
+               type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
+               plr->btuse / TICRATE / 60, 
+               (float)(plr->btuse % (60 * TICRATE)) / TICRATE);
   }
 
   HUlib_add_string_to_cur_line(&w_sttime, hud_timestr);
@@ -1416,27 +1437,27 @@ static void HU_widget_build_powers(void)
   // TO-DO: Multi-lined?
 
   if (plr->powers[pw_invisibility] > 0) {
-    offset += sprintf(hud_powerstr, "\x1b%cINVIS %i\" ",
-                      '0' + ((plr->powers[pw_invisibility] > 4*32 || plr->powers[pw_invisibility] & 8) ? CR_RED : CR_BLACK),
-                      MIN(INVISTICS/TICRATE, 1 + (plr->powers[pw_invisibility] / TICRATE)));
+    offset += M_snprintf(hud_powerstr, sizeof(hud_powerstr), "\x1b%cINVIS %i\" ",
+                         '0' + ((plr->powers[pw_invisibility] > 4*32 || plr->powers[pw_invisibility] & 8) ? CR_RED : CR_BLACK),
+                         MIN(INVISTICS/TICRATE, 1 + (plr->powers[pw_invisibility] / TICRATE)));
   }
 
   if (plr->powers[pw_invulnerability] > 0) {
-    offset += sprintf(hud_powerstr + offset, "\x1b%cINVUL %i\" ",
-                      '0' + ((plr->powers[pw_invulnerability] > 4*32 || plr->powers[pw_invulnerability] & 8) ? CR_GREEN : CR_BLACK),
-                      MIN(INVULNTICS/TICRATE, 1 + (plr->powers[pw_invulnerability] / TICRATE)));
+    offset += M_snprintf(hud_powerstr + offset, sizeof(hud_powerstr), "\x1b%cINVUL %i\" ",
+                         '0' + ((plr->powers[pw_invulnerability] > 4*32 || plr->powers[pw_invulnerability] & 8) ? CR_GREEN : CR_BLACK),
+                         MIN(INVULNTICS/TICRATE, 1 + (plr->powers[pw_invulnerability] / TICRATE)));
   }
 
   if (plr->powers[pw_infrared] > 0) {
-    offset += sprintf(hud_powerstr + offset, "\x1b%cLIGHT %i\" ",
-                      '0' + ((plr->powers[pw_infrared] > 4*32 || plr->powers[pw_infrared] & 8) ? CR_BRICK : CR_BLACK),
-                      MIN(INFRATICS/TICRATE, 1 + (plr->powers[pw_infrared] / TICRATE)));
+    offset += M_snprintf(hud_powerstr + offset, sizeof(hud_powerstr), "\x1b%cLIGHT %i\" ",
+                         '0' + ((plr->powers[pw_infrared] > 4*32 || plr->powers[pw_infrared] & 8) ? CR_BRICK : CR_BLACK),
+                         MIN(INFRATICS/TICRATE, 1 + (plr->powers[pw_infrared] / TICRATE)));
   }
 
   if (plr->powers[pw_ironfeet] > 0) {
-    offset += sprintf(hud_powerstr + offset, "\x1b%cSUIT %i\"",
-                      '0' + ((plr->powers[pw_ironfeet] > 4*32 || plr->powers[pw_ironfeet] & 8) ? CR_GRAY : CR_BLACK),
-                      MIN(IRONTICS/TICRATE, 1 + (plr->powers[pw_ironfeet] / TICRATE)));
+    offset += M_snprintf(hud_powerstr + offset, sizeof(hud_powerstr), "\x1b%cSUIT %i\"",
+                         '0' + ((plr->powers[pw_ironfeet] > 4*32 || plr->powers[pw_ironfeet] & 8) ? CR_GRAY : CR_BLACK),
+                         MIN(IRONTICS/TICRATE, 1 + (plr->powers[pw_ironfeet] / TICRATE)));
   }
 
   
@@ -1456,18 +1477,18 @@ static void HU_widget_build_coord (void)
   //jff 2/16/98 output new coord display
   if ((hud_widget_layout && !st_crispyhud) || (st_crispyhud && nughud.coord_ml)) // [Nugget] NUGHUD
   {
-    sprintf(hud_coordstr, "X\t\x1b%c%d", '0'+CR_GRAY, x >> FRACBITS);
+    M_snprintf(hud_coordstr, sizeof(hud_coordstr), "X\t\x1b%c%d", '0'+CR_GRAY, x >> FRACBITS);
     HUlib_add_string_to_cur_line(&w_coord, hud_coordstr);
 
-    sprintf(hud_coordstr, "Y\t\x1b%c%d", '0'+CR_GRAY, y >> FRACBITS);
+    M_snprintf(hud_coordstr, sizeof(hud_coordstr), "Y\t\x1b%c%d", '0'+CR_GRAY, y >> FRACBITS);
     HUlib_add_string_to_cur_line(&w_coord, hud_coordstr);
 
-    sprintf(hud_coordstr, "Z\t\x1b%c%d", '0'+CR_GRAY, z >> FRACBITS);
+    M_snprintf(hud_coordstr, sizeof(hud_coordstr), "Z\t\x1b%c%d", '0'+CR_GRAY, z >> FRACBITS);
     HUlib_add_string_to_cur_line(&w_coord, hud_coordstr);
   }
   else
   {
-    sprintf(hud_coordstr, "X \x1b%c%d \x1b%cY \x1b%c%d \x1b%cZ \x1b%c%d",
+    M_snprintf(hud_coordstr, sizeof(hud_coordstr), "X \x1b%c%d \x1b%cY \x1b%c%d \x1b%cZ \x1b%c%d",
             '0'+CR_GRAY, x >> FRACBITS, '0'+hudcolor_xyco,
             '0'+CR_GRAY, y >> FRACBITS, '0'+hudcolor_xyco,
             '0'+CR_GRAY, z >> FRACBITS);
@@ -1480,7 +1501,8 @@ static void HU_widget_build_fps (void)
 {
   char hud_fpsstr[HU_MAXLINELENGTH/4];
 
-  sprintf(hud_fpsstr,"\x1b%c%d \x1b%cFPS", '0'+CR_GRAY, fps, '0'+CR_ORIG);
+  M_snprintf(hud_fpsstr, sizeof(hud_fpsstr), "\x1b%c%d \x1b%cFPS",
+             '0'+CR_GRAY, fps, '0'+CR_ORIG);
   HUlib_add_string_to_cur_line(&w_fps, hud_fpsstr);
 }
 
@@ -1488,15 +1510,15 @@ static void HU_widget_build_rate (void)
 {
   char hud_ratestr[HU_MAXLINELENGTH];
 
-  sprintf(hud_ratestr,
-          "Sprites %4d Segs %4d Visplanes %4d   \x1b%cFPS %3d %dx%d\x1b%c",
-          rendered_vissprites, rendered_segs, rendered_visplanes,
-          '0'+CR_GRAY, fps, video.width, video.height, '0'+CR_ORIG);
+  M_snprintf(hud_ratestr, sizeof(hud_ratestr),
+             "Sprites %4d Segs %4d Visplanes %4d   \x1b%cFPS %3d %dx%d\x1b%c",
+             rendered_vissprites, rendered_segs, rendered_visplanes,
+             '0'+CR_GRAY, fps, video.width, video.height, '0'+CR_ORIG);
   HUlib_add_string_to_cur_line(&w_rate, hud_ratestr);
 
   if (voxels_rendering)
   {
-    sprintf(hud_ratestr, " Voxels %4d", rendered_voxels);
+    M_snprintf(hud_ratestr, sizeof(hud_ratestr), " Voxels %4d", rendered_voxels);
     HUlib_add_string_to_cur_line(&w_rate, hud_ratestr);
   }
 }
@@ -1536,7 +1558,7 @@ const char *crosshair_lumps[HU_CROSSHAIRS] =
 
 const char *crosshair_strings[HU_CROSSHAIRS] =
 {
-  "None",
+  "Off",
   "Cross", "Angle", "Dot", "Big Cross",
   "Circle", "Big Circle", "Chevron", "Chevrons",
   "Arcs"
@@ -1965,14 +1987,14 @@ void HU_Ticker(void)
 
   if (automapactive == AM_FULL)
   {
-    HU_cond_build_widget(&w_monsec, hud_level_stats & HUD_WIDGET_AUTOMAP);
+    HU_cond_build_widget(w_stats, hud_level_stats & HUD_WIDGET_AUTOMAP);
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_AUTOMAP || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_AUTOMAP); // [Nugget] Powerup timers
     HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_AUTOMAP);
   }
   else
   {
-    HU_cond_build_widget(&w_monsec, hud_level_stats & HUD_WIDGET_HUD);
+    HU_cond_build_widget(w_stats, hud_level_stats & HUD_WIDGET_HUD);
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_HUD || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_HUD); // [Nugget] Powerup timers
     HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_HUD);
