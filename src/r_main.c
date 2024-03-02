@@ -1081,6 +1081,7 @@ void R_SetupFrame (player_t *player)
       viewangle += ANG180;
       slope      = -slope;
       basepitch  = -basepitch;
+      pitch     += basepitch * 2;
     }
 
     {
