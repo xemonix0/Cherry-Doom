@@ -216,6 +216,7 @@ static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS_B] = {
     {&w_rate,   align_left,  align_top},
     {NULL}
   }, { // [Nugget] NUGHUD slot
+    {&w_keys,   align_direct, align_direct},
     {&w_monsec, align_direct, align_direct},
     {&w_sttime, align_direct, align_direct},
     {&w_powers, align_direct, align_direct}, // [Nugget] Powerup timers

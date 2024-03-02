@@ -51,6 +51,8 @@
 
 #define plyr (players+consoleplayer)     /* the console player */
 
+//#define NUGMAGIC // [Nugget]
+
 //-----------------------------------------------------------------------------
 //
 // CHEAT SEQUENCE PACKAGE
@@ -146,6 +148,10 @@ static void cheat_cheese();     // cheese :)
 
 boolean idgaf;
 static void cheat_idgaf();
+
+#ifdef NUGMAGIC
+static void cheat_magic();
+#endif
 
 // [Nugget] -----------------------------------------------------------------/
 
@@ -395,6 +401,10 @@ struct cheat_s cheat[] = {
   {"cheese",     NULL, not_net | not_demo, {cheat_cheese}         }, // cheese :)
   {"idgaf",      NULL, not_net | not_demo, {cheat_idgaf}          },
 
+  #ifdef NUGMAGIC
+  {"ggg", NULL, 0, {cheat_magic}},
+  #endif
+
 // [Nugget] -----------------------------------------------------------------/
 
   {NULL}                 // end-of-list marker
@@ -403,6 +413,14 @@ struct cheat_s cheat[] = {
 //-----------------------------------------------------------------------------
 
 // [Nugget] /-----------------------------------------------------------------
+
+#ifdef NUGMAGIC
+static void cheat_magic()
+{
+  // For debugging
+  displaymsg("DM %s", (deathmatch = !deathmatch) ? "ON" : "OFF");
+}
+#endif
 
 static void cheat_nomomentum()
 {

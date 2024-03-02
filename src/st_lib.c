@@ -131,7 +131,8 @@ static void STlib_drawNum
     return;
 
   // [Nugget] NUGHUD: Custom alignment
-  if (n->align != 1) {
+  if (n->align != 1)
+  {
     int tnum = num, tnumdigits = 0;
 
     do {
@@ -139,7 +140,7 @@ static void STlib_drawNum
       tnumdigits++;
     } while (tnum);
 
-    x += (!n->align ? w/2 : w) * (tnumdigits + neg - (!n->align && n->haspercent));
+    x += (w / (!n->align ? 2 : 1)) * (tnumdigits + neg - (!n->align && n->haspercent));
   }
 
   //jff 2/16/98 add color translation to digit output
@@ -232,13 +233,14 @@ void STlib_updatePercent
   if (*per->n.on  // killough 2/21/98: fix percents not updated;
       && (!st_crispyhud || nughud.percents)) // [Nugget]
   {
-    // [Nugget] Custom alignment
+    // [Nugget] Custom alignment /--------------------------------------------
 
     int tx = per->n.x;
 
-    if (per->n.align != 1) {
+    if (per->n.align != 1)
+    {
       int tnum = *(per->n.num), tnumdigits = 0;
-      const int tw = (!per->n.align ? SHORT(per->n.p[0]->width)/2 : SHORT(per->n.p[0]->width));
+      const int tw = SHORT(per->n.p[0]->width) / (!per->n.align ? 2 : 1);
 
       do {
         tnum /= 10;
@@ -247,6 +249,8 @@ void STlib_updatePercent
 
       tx += tw * (tnumdigits - !per->n.align);
     }
+
+    // [Nugget] -------------------------------------------------------------/
 
     V_DrawPatchTranslated
     (

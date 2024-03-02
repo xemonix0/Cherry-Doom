@@ -802,7 +802,8 @@ void ST_updateWidgets(void)
   st_notdeathmatch = !deathmatch;
 
   // used by w_arms[] widgets
-  st_armson = st_statusbaron && !deathmatch;
+  // [Nugget] Draw both Arms and Frags in NUGHUD
+  st_armson = st_statusbaron && (!deathmatch || st_crispyhud);
 
   // used by w_frags widget
   st_fragson = deathmatch && st_statusbaron;
@@ -852,6 +853,11 @@ void ST_Ticker(void)
   st_health = SmoothCount(st_health, plyr->health);
   st_armor  = SmoothCount(st_armor, plyr->armorpoints);
   
+  // [Nugget] Update here:
+  // [crispy] distinguish classic status bar with background and player face from Crispy HUD
+  st_crispyhud = (hud_type == HUD_TYPE_CRISPY) && hud_displayed && automap_off
+                 && hud_active > 0; // [Nugget] NUGHUD
+
   st_randomnumber = M_Random();
   ST_updateWidgets();
   st_oldhealth = plyr->health;
@@ -1268,7 +1274,7 @@ void ST_Drawer(boolean fullscreen, boolean refresh)
   st_firsttime = st_firsttime || refresh || inhelpscreens;
 
   // [crispy] distinguish classic status bar with background and player face from Crispy HUD
-  // [Nugget] `st_crispyhud` is now updated in `G_Ticker()`
+  // [Nugget] `st_crispyhud` is now updated in `ST_Ticker()`
   st_classicstatusbar = st_statusbaron && !st_crispyhud;
 
   // [Nugget] NUGHUD
