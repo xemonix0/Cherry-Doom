@@ -78,7 +78,7 @@ default_t nughud_defaults[] = {
   WIDGET(    "nughud_arms7",       nughud.arms[6],      119,          182,          -1         ),
   WIDGET(    "nughud_arms8",       nughud.arms[7],      127,          182,          -1         ),
   WIDGET(    "nughud_arms9",       nughud.arms[8],      135,          182,          -1         ),
-  WIDGET2(   "nughud_frags",       nughud.frags,        174,          171,           0,  1     ),
+  WIDGET2(   "nughud_frags",       nughud.frags,        160,          171,           0,  0     ),
   WIDGET(    "nughud_face",        nughud.face,        -1,            ST_FACESY,     0         ),
   TOGGLE(    "nughud_face_bg",     nughud.face_bg,      1                                      ),
   WIDGET2(   "nughud_armor",       nughud.armor,        ST_ARMORX,    ST_ARMORY,     1,  1     ),

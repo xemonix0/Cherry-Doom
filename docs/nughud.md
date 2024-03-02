@@ -100,9 +100,10 @@ nughud_face_x 143
 
 ; Move the Frags widget elsewhere, since in the default Nugget HUD distribution,
 ; it is drawn right where the Face is drawn in the traditional Status Bar.
-nughud_frags_x    314
-nughud_frags_y    155
-nughud_frags_wide 1
+nughud_frags_x     314
+nughud_frags_y     155
+nughud_frags_wide  1
+nughud_frags_align 1
 ```
 
 ```

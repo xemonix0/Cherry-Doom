@@ -66,10 +66,10 @@ nughud_arms9_y    182
 nughud_arms9_wide -1
 
 ; Frags count
-nughud_frags_x     174
+nughud_frags_x     160
 nughud_frags_y     171
 nughud_frags_wide  0
-nughud_frags_align 1
+nughud_frags_align 0
 
 ; Face
 nughud_face_x    -1
