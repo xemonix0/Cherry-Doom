@@ -174,6 +174,19 @@ default_t defaults[] = {
     "1 to enable dynamic resolution"
   },
 
+  { // [Nugget]
+    "sdl_renderdriver",
+    (config_t *) &sdl_renderdriver, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "SDL render driver, possible values are "
+#if defined(_WIN32)
+    "direct3d, direct3d11, direct3d12, "
+#elif defined(__APPLE__)
+    "metal, "
+#endif
+    "opengl, opengles2, opengles, software"
+  },
+
   {
     "correct_aspect_ratio",
     (config_t *) &use_aspect, NULL,

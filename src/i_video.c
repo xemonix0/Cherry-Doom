@@ -90,6 +90,8 @@ fixed_t fractionaltic;
 boolean disk_icon;  // killough 10/98
 int fps; // [FG] FPS counter widget
 
+char *sdl_renderdriver = ""; // [Nugget]
+
 // [FG] rendering window, renderer, intermediate ARGB frame buffer and texture
 
 static SDL_Window *screen;
@@ -1534,6 +1536,12 @@ static void I_InitGraphicsMode(void)
     if (use_vsync && !timingdemo)
     {
         flags |= SDL_RENDERER_PRESENTVSYNC;
+    }
+
+    // [Nugget]
+    if (*sdl_renderdriver)
+    {
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, sdl_renderdriver);
     }
 
     // [FG] create renderer
