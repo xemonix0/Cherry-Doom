@@ -292,6 +292,11 @@ void D_Display (void)
   if (nodrawers)                    // for comparative timing / profiling
     return;
 
+  // [Nugget] Brought over from `ST_Drawer()`:
+  // [crispy] distinguish classic status bar with background and player face from Crispy HUD
+  st_crispyhud = (hud_type == HUD_TYPE_CRISPY) && hud_displayed && automap_off
+                 && hud_active > 0; // [Nugget] NUGHUD
+
   input_ready = (!menuactive && gamestate == GS_LEVEL && !paused);
 
   if (uncapped)
