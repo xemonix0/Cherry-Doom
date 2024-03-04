@@ -60,9 +60,12 @@ static void wipe_shittyColMajorXform(byte *array, int width, int height)
   Z_Free(dest);
 }
 
+static int colorxform_steps = 0; // [Nugget]
+
 static int wipe_initColorXForm(int width, int height, int ticks)
 {
   V_PutBlock(0, 0, width, height, wipe_scr_start);
+  colorxform_steps = 0;
   return 0;
 }
 
@@ -96,6 +99,11 @@ static int wipe_doColorXForm(int width, int height, int ticks)
         }
     }
   }
+
+  // [Nugget] If this wipe is used while the screen is being darkened,
+  // a softlock occurs. This is a fail-safe.
+  // 60 is the number of steps the wipe takes at 50% speed.
+  if (colorxform_steps++ >= 60) { unchanged = true; }
 
   return unchanged;
 }
