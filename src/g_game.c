@@ -629,6 +629,11 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   G_DemoSkipTics();
 
+  if (!uncapped || !raw_input)
+  {
+    G_PrepTiccmd();
+  }
+
   memcpy(cmd, &basecmd, sizeof(*cmd));
   memset(&basecmd, 0, sizeof(basecmd));
 
@@ -650,10 +655,13 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
     if (strafe)
     {
-      if (turnright)
-        side += sidemove[speed];
-      if (turnleft)
-        side -= sidemove[speed];
+      if (!cmd->angleturn)
+      {
+        if (turnright)
+          side += sidemove[speed];
+        if (turnleft)
+          side -= sidemove[speed];
+      }
     }
     else
     {
@@ -684,7 +692,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (I_UseController())
   {
-    if (axes[AXIS_TURN] && strafe)
+    if (axes[AXIS_TURN] && strafe && !cmd->angleturn)
     {
       side += CalcControllerSideTurn(speed);
     }
@@ -702,7 +710,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   // Mouse
 
-  if (mousex && strafe)
+  if (mousex && strafe && !cmd->angleturn)
   {
     const double mouseside = CalcMouseSide(mousex);
     side += CarryMouseSide(mouseside);
@@ -995,6 +1003,7 @@ static void G_DoLoadLevel(void)
   critical = (gameaction == ga_playdemo || demorecording || demoplayback || D_CheckNetConnect());
 
   P_UpdateDirectVerticalAiming();
+  P_UpdateCheckSight();
 
   // [crispy] pistol start
   if (CRITICAL(pistolstart))
@@ -1111,11 +1120,25 @@ static boolean G_StrictModeSkipEvent(event_t *ev)
 
     case ev_joyb_down:
     case ev_joyb_up:
-    case ev_joystick:
-        if (first_event && (ev->data1 || ev->data2 || ev->data3 || ev->data4))
+        if (first_event)
         {
           first_event = false;
           enable_controller = true;
+        }
+        return !enable_controller;
+
+    case ev_joystick:
+        if (first_event)
+        {
+          I_UpdateAxesData(ev);
+          I_CalcControllerAxes();
+          if (axes[AXIS_STRAFE] || axes[AXIS_FORWARD] || axes[AXIS_TURN] ||
+              axes[AXIS_LOOK])
+          {
+            first_event = false;
+            enable_controller = true;
+          }
+          return true; // Already "ate" the event above.
         }
         return !enable_controller;
 
@@ -1141,10 +1164,7 @@ boolean G_MovementResponder(event_t *ev)
       return true;
 
     case ev_joystick:
-      *axes_data[AXIS_LEFTX] = ev->data1;
-      *axes_data[AXIS_LEFTY] = ev->data2;
-      *axes_data[AXIS_RIGHTX] = ev->data3;
-      *axes_data[AXIS_RIGHTY] = ev->data4;
+      I_UpdateAxesData(ev);
       return true;
 
     default:
@@ -3806,6 +3826,8 @@ void G_ReloadDefaults(boolean keep_demover)
   D_SetMaxHealth();
 
   D_SetBloodColor();
+
+  R_InvulMode();
 
   if (!mbf21)
   {

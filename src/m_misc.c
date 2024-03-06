@@ -661,6 +661,13 @@ default_t defaults[] = {
   },
 
   {
+    "invul_mode",
+    (config_t *) &invul_mode, NULL,
+    {INVUL_MBF}, {INVUL_VANILLA, INVUL_GRAY}, number, ss_gen, wad_no,
+    "invulnerability effect (0 = vanilla, 1 = MBF, 2 = gray)"
+  },
+
+  {
     "organize_savefiles",
     (config_t *) &organize_savefiles, NULL,
     {-1}, {-1,1}, number, ss_gen, wad_no,
@@ -704,6 +711,13 @@ default_t defaults[] = {
     (config_t *) &blockmapfix, NULL,
     {0}, {0,1}, number, ss_comp, wad_no,
     "1 to enable blockmap bug fix"
+  },
+
+  {
+    "checksight12",
+    (config_t *) &checksight12, NULL,
+    {0}, {0,1}, number, ss_comp, wad_no,
+    "1 to enable fast blockmap-based line-of-sight calculation"
   },
 
   { // [Nugget] Replaces `direct_vertical_aiming`

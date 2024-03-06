@@ -2034,6 +2034,7 @@ enum
     str_menu_backdrop,
     str_widescreen,
     // [Nugget] Removed `str_bobbing_pct`
+    str_invul_mode,
 
     // [Nugget] --------------------------------------------------------------
 
@@ -2178,9 +2179,10 @@ static void M_DrawTabs(void)
 
     for (int i = 0; tabs[i].text; ++i)
     {
-        // [Nugget] Add conditionally
         if (i)
-          width += M_TAB_OFFSET;
+        {
+            width += M_TAB_OFFSET;
+        }
 
         mrect_t *rect = &tabs[i].rect;
         if (!rect->w)
@@ -2189,7 +2191,7 @@ static void M_DrawTabs(void)
             rect->y = M_TAB_Y;
             rect->h = M_SPC;
         }
-        width += rect->w; // [Nugget] See above
+        width += rect->w;
     }
 
     int x = (SCREENWIDTH - width) / 2;
@@ -2198,9 +2200,10 @@ static void M_DrawTabs(void)
     {
         mrect_t *rect = &tabs[i].rect;
 
-        // [Nugget] Add conditionally
         if (i)
-          x += M_TAB_OFFSET;
+        {
+            x += M_TAB_OFFSET;
+        }
 
         menu_buffer[0] = '\0';
         strcpy(menu_buffer, tabs[i].text);
@@ -3989,6 +3992,9 @@ setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
   {"Improved Hit Detection", S_ONOFF|S_STRICT|S_BOOM, m_null, M_X,
    M_SPC, {"blockmapfix"}},
 
+  {"Fast Line-of-Sight Calculation", S_ONOFF|S_STRICT, m_null, M_X,
+   M_SPC, {"checksight12"}, 0, P_UpdateCheckSight},
+
   {"Walk Under Solid Hanging Bodies", S_ONOFF|S_STRICT, m_null, M_X,
    M_SPC, {"hangsolid"}},
 
@@ -4461,6 +4467,10 @@ static const char *menu_backdrop_strings[] = {
   "Off", "Dark", "Texture"
 };
 
+static const char *invul_mode_strings[] = {
+  "Vanilla", "MBF", "Gray"
+};
+
 void M_DisableVoxelsRenderingItem(void)
 {
     DisableItem(true, gen_settings5, "voxels_rendering");
@@ -4598,6 +4608,9 @@ setup_menu_t gen_settings6[] = {
 
   {"Screen flashes", S_ONOFF|S_STRICT, m_null, M_X, M_SPC,
    {"palette_changes"}, 0, M_UpdatePaletteItems}, // [Nugget]
+
+  {"Invulnerability effect", S_CHOICE|S_STRICT, m_null, M_X, M_SPC,
+   {"invul_mode"}, 0, R_InvulMode, str_invul_mode},
 
   {"Organize save files", S_ONOFF|S_PRGWARN, m_null, M_X, M_SPC,
    {"organize_savefiles"}},
@@ -7415,6 +7428,7 @@ static const char **selectstrings[] = {
     menu_backdrop_strings,
     widescreen_strings,
     // [Nugget] Removed unused `bobbing_pct_strings`
+    invul_mode_strings,
 
     // [Nugget] --------------------------------------------------------------
 

@@ -23,8 +23,9 @@
     - Removed extended gamma levels and `gammacycle`
     - Changed `menu_background_darkening` to `menu_backdrop_darkening` [2]
     - Rearranged menus
-  - **[Woof! 14.0.1](https://github.com/fabiangreffrath/woof/releases/tag/woof_14.0.1)**, note:
+  - **[Woof! 14.1.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_14.1.0)**, note:
     - Maintained SDL render driver setting (`sdl_renderdriver`)
+  - **[Woof! 14.2.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_14.2.0)**
 - **Reimplemented _Move Over/Under Things_ feature** [3], making it much less bug-prone
 - **Renamed _Impact Pitch_ (`impact_pitch`) to _Flinching_ (`flinching`)** [2]
 - **Tweaked zooming effect**

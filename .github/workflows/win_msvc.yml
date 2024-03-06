@@ -80,7 +80,7 @@ jobs:
         run: |
           cd demotest
           pip install pyyaml joblib
-          python demotest --jobs 4 --port "../build/src/Release/nugget-doom.com"
+          python demotest --jobs 4 --port ../build/src/nugget-doom
 
       - name: Package
         run: |
