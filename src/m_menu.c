@@ -2727,7 +2727,7 @@ static void M_DrawInstructions()
                    video.width, video.height);
 
         M_DrawString((SCREENWIDTH - M_GetPixelWidth(str)) / 2,
-                     M_Y_WARN - 12, CR_GOLD, str);
+                     M_Y_WARN - 9, CR_GOLD, str);
     }
 }
 
