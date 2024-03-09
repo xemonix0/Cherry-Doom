@@ -48,4 +48,5 @@ the feature for all Things.
 - **FOV effects not being cleared thoroughly upon loading levels**
 - **Turbo cheat setting incorrect walk-strafing speed**
 - **Crash when toggling Alt. Arms Display without entering a map**
+- **_No Melee Snapping_ toggle not being forcefully disabled during non-casual play**
 - **"Seizure"-wipe softlock when using it while the screen is darkened**

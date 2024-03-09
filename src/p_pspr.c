@@ -827,7 +827,7 @@ void A_Punch(player_t *player, pspdef_t *psp)
 
   // turn to face target
   // [Nugget]
-  if (!STRICTMODE(comp_nomeleesnap))
+  if (!CASUALPLAY(comp_nomeleesnap))
   {
     player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y,
                                         linetarget->x, linetarget->y);
@@ -885,7 +885,7 @@ void A_Saw(player_t *player, pspdef_t *psp)
 
   // turn to face target
   // [Nugget]
-  if (!STRICTMODE(comp_nomeleesnap))
+  if (!CASUALPLAY(comp_nomeleesnap))
   {
     angle = R_PointToAngle2(player->mo->x, player->mo->y,
                             linetarget->x, linetarget->y);
@@ -1633,7 +1633,7 @@ void A_WeaponMeleeAttack(player_t *player, pspdef_t *psp)
 
   // turn to face target
   // [Nugget]
-  if (!STRICTMODE(comp_nomeleesnap))
+  if (!CASUALPLAY(comp_nomeleesnap))
   {
     player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y, linetarget->x, linetarget->y);
   }
