@@ -185,6 +185,7 @@ For more details, see the _New Nugget Doom cheats_ section of `docs/cheats.md`.
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
 - Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
 - Restored `-cdrom` command-line parameter
+- Decreased minimum window size to 200p (240p with aspect-ratio correction)
 
 # Releases
 

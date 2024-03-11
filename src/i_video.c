@@ -1681,8 +1681,9 @@ static void CreateSurfaces(int w, int h)
 
     I_InitDiskFlash();
 
-    SDL_SetWindowMinimumSize(screen, video.unscaledw * 2,
-                             use_aspect ? ACTUALHEIGHT * 2 : SCREENHEIGHT * 2);
+    // [Nugget] Don't double width and height
+    SDL_SetWindowMinimumSize(screen, video.unscaledw,
+                             use_aspect ? ACTUALHEIGHT : SCREENHEIGHT);
 
     if (!fullscreen)
     {
@@ -1726,8 +1727,9 @@ void I_ResetScreen(void)
     CreateSurfaces(video.pitch, video.height);
     ResetLogicalSize();
 
-    SDL_SetWindowMinimumSize(screen, video.unscaledw * 2,
-                             use_aspect ? ACTUALHEIGHT * 2 : SCREENHEIGHT * 2);
+    // [Nugget] Don't double width and height
+    SDL_SetWindowMinimumSize(screen, video.unscaledw,
+                             use_aspect ? ACTUALHEIGHT : SCREENHEIGHT);
 }
 
 void I_ShutdownGraphics(void)

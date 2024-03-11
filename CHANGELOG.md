@@ -23,6 +23,7 @@
     - Removed extended gamma levels and `gammacycle`
     - Changed `menu_background_darkening` to `menu_backdrop_darkening` [2]
     - Rearranged menus
+    - Maintained minimum window size of 200p/240p
   - **[Woof! 14.1.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_14.1.0)**, note:
     - Maintained SDL render driver setting (`sdl_renderdriver`)
   - **[Woof! 14.2.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_14.2.0)**
