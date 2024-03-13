@@ -136,6 +136,8 @@ int v_lightest_color, v_darkest_color;
 
 byte invul_gray[256];
 
+byte nightvision[256]; // [Nugget] Night-vision visor
+
 // killough 5/2/98: tiny engine driven by table above
 void V_InitColorTranslation(void)
 {
@@ -205,6 +207,21 @@ void V_InitColorTranslation(void)
 
         int gray = (red * 0.299 + green * 0.587 + blue * 0.144) * 255;
         invul_gray[i] = I_GetPaletteIndex(playpal, gray, gray, gray);
+    }
+
+    // [Nugget] Night-vision visor -------------------------------------------
+
+    palsrc = playpal;
+
+    for (int i = 0; i < 256; ++i)
+    {
+        double red   = *palsrc++ * 0.299;
+        double green = *palsrc++;
+        double blue  = *palsrc++ * 0.144;
+
+        double greatest = MAX(MAX(blue, red), green);
+        
+        nightvision[i] = I_GetPaletteIndex(playpal, 0.0, greatest, 0.0);
     }
 }
 

@@ -849,6 +849,13 @@ default_t defaults[] = {
   },
 
   {
+    "nightvision_visor",
+    (config_t *) &nightvision_visor, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to enable night-vision effect for the light amplification visor"
+  },
+
+  {
     "damagecount_cap",
     (config_t *) &damagecount_cap, NULL,
     {100}, {0,100}, number, ss_gen, wad_no,

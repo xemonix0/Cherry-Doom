@@ -496,6 +496,7 @@ extern int menu_background_all;
 extern int no_menu_tint;
 extern int no_berserk_tint;
 extern int no_radsuit_tint;
+extern int nightvision_visor;
 extern int damagecount_cap;
 extern int bonuscount_cap;
 extern int fake_contrast;

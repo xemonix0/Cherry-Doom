@@ -1,5 +1,6 @@
 ## New Features
 
+- **_Night-Vision Visor Effect_** setting
 - **_Alternative Intermission Background_** setting
 - **Rewinding** [thanks @rfomin]
 - **Support for optional health-based player pain sounds**

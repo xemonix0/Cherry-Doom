@@ -891,6 +891,12 @@ void R_InitColormaps(void)
 
   memcpy(invul_orig, &colormaps[0][256*32], 256);
   R_InvulMode();
+
+  // [Nugget] Night-vision visor
+  if (!beta_emulation) {
+    for (i = 0;  i < numcolormaps;  i++)
+    { memcpy(&colormaps[i][256*33], nightvision, 256); }
+  }
 }
 
 // killough 4/4/98: get colormap number from name

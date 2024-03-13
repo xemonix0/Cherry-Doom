@@ -58,6 +58,8 @@ extern byte *cr_bright;
 
 extern byte invul_gray[];
 
+extern byte nightvision[]; // [Nugget] Night-vision visor
+
 // array of pointers to color translation tables
 extern byte *colrngs[];
 extern byte *red2col[];

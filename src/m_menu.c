@@ -4693,6 +4693,7 @@ setup_menu_t gen_settings8[] = {
     {"Disable Palette Tint in Menus", S_YESNO |S_STRICT,       m_null, M_X, M_SPC, {"no_menu_tint"}},
     {"Disable Berserk Tint",          S_YESNO |S_STRICT,       m_null, M_X, M_SPC, {"no_berserk_tint"}},
     {"Disable Radiation Suit Tint",   S_YESNO |S_STRICT,       m_null, M_X, M_SPC, {"no_radsuit_tint"}},
+    {"Night-Vision Visor Effect",     S_ONOFF |S_STRICT,       m_null, M_X, M_SPC, {"nightvision_visor"}},
     {"Damage Tint Cap",               S_NUM   |S_STRICT,       m_null, M_X, M_SPC, {"damagecount_cap"}},
     {"Bonus Tint Cap",                S_NUM   |S_STRICT,       m_null, M_X, M_SPC, {"bonuscount_cap"}},
     {"Fake Contrast",                 S_CHOICE|S_STRICT,       m_null, M_X, M_SPC, {"fake_contrast"}, 0, NULL, str_fake_contrast},

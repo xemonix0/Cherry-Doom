@@ -49,6 +49,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Disable palette tint in menus_** setting [i.b. Crispy Doom]
 - **_Disable Berserk Tint_** setting
 - **_Disable Radiation Suit Tint_** setting
+- **_Night-Vision Visor Effect_** setting [i.b. International Doom]
 - **_Damage Tint Cap_** and **_Bonus Tint Cap_**, to attenuate or disable said screen tinting
 - **_Fake Contrast_** setting
 - Toggle for **Diminished Lighting** (CFG-Only: `diminished_lighting`)
