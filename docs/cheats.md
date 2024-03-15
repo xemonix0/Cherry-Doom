@@ -133,6 +133,10 @@ Actors are always spawned facing the same direction as the player.
 If the Automap is enabled and the Follow Mode is off, the actors will be spawned where the pointer is located.
 Otherwise, they will be spawned in front of the player.
 
+`IDDF[C][T]`  
+Find a key on the Automap.
+This cheat functions similarly to the `KEY` cheat, with `C` and `T` specifying the key color and type respectively.
+
 `RESURRECT` / `IDRES`  
 Resurrect the player without toggling IDDQD.
 

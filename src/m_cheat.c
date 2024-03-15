@@ -137,6 +137,10 @@ static void cheat_summonr();
 static int spawneetype = -1;
 static boolean spawneefriend;
 
+static void cheat_reveal_key();
+static void cheat_reveal_keyx();
+static void cheat_reveal_keyxx(int key);
+
 static void cheat_linetarget(); // Give info on the current linetarget
 static void cheat_mdk();        // Inspired by ZDoom's console command
 static void cheat_saitama();    // MDK Fist
@@ -388,12 +392,25 @@ struct cheat_s cheat[] = {
   {"nextmap",    NULL, not_net | not_demo, {cheat_normalexit}     },
   {"nextsecret", NULL, not_net | not_demo, {cheat_secretexit}     },
   {"turbo",      NULL, not_net | not_demo, {cheat_turbo},      -3 },
+
   {"summon",     NULL, not_net | not_demo, {cheat_summon}         }, // Summon "Menu"
   {"summone",    NULL, not_net | not_demo, {cheat_summone0}       }, // Summon Enemy "Menu"
   {"summone",    NULL, not_net | not_demo, {cheat_summone},    -3 }, // Summon a hostile mobj
   {"summonf",    NULL, not_net | not_demo, {cheat_summonf0}       }, // Summon Friend "Menu"
   {"summonf",    NULL, not_net | not_demo, {cheat_summonf},    -3 }, // Summon a friendly mobj
   {"summonr",    NULL, not_net | not_demo, {cheat_summonr}        }, // Repeat last summon
+
+  {"iddf",       NULL, not_net | not_demo, {cheat_reveal_key}      },
+  {"iddfb",      NULL, not_net | not_demo, {cheat_reveal_keyx}     },
+  {"iddfy",      NULL, not_net | not_demo, {cheat_reveal_keyx}     },
+  {"iddfr",      NULL, not_net | not_demo, {cheat_reveal_keyx}     },
+  {"iddfbc",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 0 },
+  {"iddfyc",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 2 },
+  {"iddfrc",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 1 },
+  {"iddfbs",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 5 },
+  {"iddfys",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 3 },
+  {"iddfrs",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 4 },
+
   {"linetarget", NULL, not_net | not_demo, {cheat_linetarget}     }, // Give info on the current linetarget
   {"mdk",        NULL, not_net | not_demo, {cheat_mdk}            },
   {"saitama",    NULL, not_net | not_demo, {cheat_saitama}        }, // MDK Fist
@@ -411,6 +428,8 @@ struct cheat_s cheat[] = {
 };
 
 //-----------------------------------------------------------------------------
+
+extern int init_thinkers_count; // [Nugget]
 
 // [Nugget] /-----------------------------------------------------------------
 
@@ -669,6 +688,66 @@ static void cheat_summonf(char *buf)
 static void cheat_summonr()
 {
   SummonMobj(spawneefriend);
+}
+
+static void cheat_reveal_key()
+{
+  if (automapactive != AM_FULL) { return; }
+
+  displaymsg("Key Finder: Red, Yellow or Blue?");
+}
+
+static void cheat_reveal_keyx()
+{
+  if (automapactive != AM_FULL) { return; }
+
+  displaymsg("Key Finder: Card or Skull?");
+}
+
+static void cheat_reveal_keyxx(int key)
+{
+  if (automapactive != AM_FULL) { return; }
+
+  static int last_count;
+  static mobj_t *last_mobj;
+
+  // If the thinkers have been wiped, addresses are invalid
+  if (last_count != init_thinkers_count)
+  {
+    last_count = init_thinkers_count;
+    last_mobj = NULL;
+  }
+
+  thinker_t *th, *start_th;
+
+  if (last_mobj)
+  { th = &(last_mobj->thinker); }
+  else
+  { th = &thinkercap; }
+
+  start_th = th;
+
+  boolean found = false;
+
+  do {
+    th = th->next;
+
+    if (th->function.p1 == (actionf_p1) P_MobjThinker)
+    {
+      mobj_t *mobj = (mobj_t *) th;
+
+      if (mobj->type == MT_MISC4 + key)
+      {
+        found = true;
+        followplayer = false;
+        AM_SetMapCenter(mobj->x, mobj->y);
+        P_SetTarget(&last_mobj, mobj);
+        break;
+      }
+    }
+  } while (th != start_th);
+
+  if (!found) { displaymsg("Key Finder: key not found"); }
 }
 
 // Give info on the current `linetarget`
@@ -1440,7 +1519,7 @@ static void cheat_reveal_secret()
 static void cheat_cycle_mobj(mobj_t **last_mobj, int *last_count,
                              int flags, int alive)
 {
-  extern int init_thinkers_count;
+  // [Nugget] Moved `extern init_thinkers_count` to global scope
   thinker_t *th, *start_th;
 
   // If the thinkers have been wiped, addresses are invalid

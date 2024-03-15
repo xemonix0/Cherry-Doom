@@ -3,6 +3,7 @@
 - **_Night-Vision Visor Effect_** setting
 - **_Alternative Intermission Background_** setting
 - **Rewinding** [thanks @rfomin]
+- **_'IDDF'_ cheat**, to find a key on the Automap
 - **Support for optional health-based player pain sounds**
 - **_SUMMON_ cheat spawning mobjs at position of Automap pointer**
 - **_Higher god-mode face priority_** setting
