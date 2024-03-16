@@ -29,9 +29,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **Stretch viewport to fit window** setting (CFG-Only: `stretch_to_fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
 - **Set _Air Absorption_ and _Doppler Effect_ to 5 by default**
 - **Tweaked _Stretch Short Skies_ algorithm**
-- **_Screen Wipe Style_** selection:
-  - _"Seizure"_ (**Warning**: this one might legitimately be seizure-inducing, use with caution);
-  - _"Fade"_.
+- **_Black Fade_ screen wipe**
 - **Extended _Level Brightness_ range:** [-8, 8]
 - **_"Direct + Auto"_ mode for Vertical Aiming**
 - **_Direct Vertical Aiming_ for melee attacks**
@@ -46,9 +44,9 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Death Camera_** setting [i.b. ZDoom]
 - **_Chasecam_** [i.b. ZDoom]
 - **_Background for all menus_** setting
-- **_Disable palette tint in menus_** setting [i.b. Crispy Doom]
-- **_Disable Berserk Tint_** setting
-- **_Disable Radiation Suit Tint_** setting
+- **_No palette tint in menus_** setting [i.b. Crispy Doom]
+- **_No Berserk Tint_** setting
+- **_No Radiation Suit Tint_** setting
 - **_Night-Vision Visor Effect_** setting [i.b. International Doom]
 - **_Damage Tint Cap_** and **_Bonus Tint Cap_**, to attenuate or disable said screen tinting
 - **_Fake Contrast_** setting
@@ -68,14 +66,14 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 - **Extended _View/Weapon Bob_ percentages**
 - Restored **_Weapon Recoil_** menu item
-- **_Disable Horizontal Autoaim_** setting
+- **_No Horizontal Autoaim_** setting
 - **_Switch [Weapon] on Pickup_** setting
 - Key to **equip last used weapon** [i.b. Cherry Doom]
 - **_Horizontal_ Weapon Centering** setting [i.b. DSDA-Doom]
 - **Always Bob** setting (CFG-Only: `always_bob`)
 - **_Bobbing Styles_** selection [p.f. Zandronum]
 - **_Weapon Inertia_** setting (scale determined by the CFG-Only `weapon_inertia_scale_pct` CVAR) [by _ceski_]
-- **_Squat Weapon Down On Impact_** setting [p.f. Crispy Doom]
+- **_Weapon Squat Upon Landing_** setting [p.f. Crispy Doom]
 - **_Translucent Flashes_** setting [i.b. Crispy Doom]
 - **Show Berserk availability** setting [partially p.f. Crispy Doom]
 - **"Correct" first person sprite centering** setting, to toggle the 1px first-person sprite misalignment (CFG-Only: `sx_fix`)
@@ -90,16 +88,16 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
   - Dedicated toggle key.
 - **Secret count in "secret revealed" message** [p.f. Crispy Doom]
 - **Show Save Messages** setting (CFG-Only: `show_save_messages`)
-- **_Announce Milestone Completion_** setting, to report completion of milestones (e.g. all items acquired)
-- Restored **_Message Listing Scrolls Upwards_** setting, and enabled it by default
+- **_Milestone Completion Announcements_** setting, to report completion of milestones (e.g. all items acquired)
+- Restored **_Upward Message Scrolling_** setting, and enabled it by default
 - **Restored various message-related menu items**
 - **_Show Powerup Timers_** setting
 - **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-Only: `show_ssg`) [p.f. Crispy Doom]
-- **_Show Kills percentage in Stats display_** setting
+- **_[Show] Kills percentage in Stats display_** setting
 - **_Alternative Arms Display_** setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
 - **Event Timers:**
   - _Teleport Timer_ [i.b. Crispy Doom];
-  - _Key Pickup Timer_ [same as above].
+  - _Key-Pickup Timer_ [same as above].
 - **Extended HUD color customization**
 - **Armor count is colored gray when in God Mode**
 - **Support for Berserk (`STBERSRK`) and Infinite Ammo (`STINFNTY`) icons**

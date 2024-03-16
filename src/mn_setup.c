@@ -51,6 +51,9 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
+// [Nugget]
+#include "st_stuff.h"
+
 static int M_GetKeyString(int c, int offset);
 static void DrawMenuString(int cx, int cy, int color);
 static void DrawMenuStringEx(int flags, int x, int y, int color);
@@ -312,9 +315,22 @@ enum
     str_death_use_action,
     str_menu_backdrop,
     str_widescreen,
-    str_bobbing_pct,
+    // [Nugget] Removed `str_bobbing_pct`
     str_screen_melt,
     str_invul_mode,
+
+    // [Nugget] --------------------------------------------------------------
+
+    str_bobbing_style,
+    str_crosshair_lockon,
+    str_secret_message,
+    str_vertical_aiming,
+    str_over_under,
+    str_flinching,
+    str_chasecam,
+    str_fake_contrast,
+    str_s_clipping_dist,
+    str_page_ticking,
 };
 
 static const char **GetStrings(int id);
@@ -325,7 +341,8 @@ static boolean ItemDisabled(int flags)
         || (flags & S_STRICT && (default_strictmode || force_strictmode))
         || (flags & S_BOOM && default_complevel < CL_BOOM)
         || (flags & S_MBF && default_complevel < CL_MBF)
-        || (flags & S_VANILLA && default_complevel != CL_VANILLA))
+        || (flags & S_VANILLA && default_complevel != CL_VANILLA) ||
+        (flags & S_CRITICAL && !casual_play)) // [Nugget]
     {
         return true;
     }
@@ -435,7 +452,7 @@ static void BlinkingArrowRight(setup_menu_t *s)
 }
 
 #define M_TAB_Y      22
-#define M_TAB_OFFSET 8
+#define M_TAB_OFFSET 7 // [Nugget] Decreased to 7
 
 static void DrawTabs(void)
 {
@@ -1022,6 +1039,19 @@ static void DrawInstructions()
 
     MN_DrawStringCR((SCREENWIDTH - MN_GetPixelWidth(s)) / 2, M_Y_WARN,
                     cr_shaded, NULL, s);
+
+    // [Nugget] Report current resolution
+    if (flags & S_RES)
+    {
+        char str[48];
+
+        M_snprintf(str, sizeof(str),
+                   "Current Resolution: %ix%i",
+                   video.width, video.height);
+
+        MN_DrawString((SCREENWIDTH - MN_GetPixelWidth(str)) / 2,
+                      M_Y_WARN - 9, CR_GOLD, str);
+    }
 }
 
 static void SetupMenu(void)
@@ -1044,12 +1074,19 @@ static void SetupMenu(void)
 #define KB_X 130
 
 static setup_tab_t keys_tabs[] = {
-    {"action"},
-    {"weapon"},
+    // [Nugget] Shortened titles
+    {"act"},
+    {"weap"},
     {"misc"},
     {"func"},
-    {"automap"},
-    {"cheats"},
+    {"map"},
+    {"cheat"},
+
+    // [Nugget]
+    {"ng1"},
+    {"ng2"},
+    {"ng3"},
+
     {NULL}
 };
 
@@ -1177,6 +1214,66 @@ static setup_menu_t keys_settings6[] = {
     MI_END
 };
 
+// [Nugget] /-----------------------------------------------------------------
+
+static void UpdateFOV(void);
+
+static setup_menu_t keys_settings7[] =
+{
+  {"Nugget - General", S_SKIP|S_TITLE, KB_X, M_SPC},
+  
+    {"Jump/Fly Up",      S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_jump},
+    {"Crouch/Fly Down",  S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_crouch},
+    MI_GAP,
+    {"Cycle Chasecam",   S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_chasecam},
+    MI_GAP,
+    {"Toggle Zoom",      S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_zoom},
+    {"Zoom FOV",         S_NUM  |S_STRICT,            KB_X, M_SPC, {"zoom_fov"}, m_null, input_null, str_empty, UpdateFOV},
+    MI_GAP,
+    {"Toggle Crosshair", S_INPUT,                     KB_X, M_SPC, {0}, m_scrn, input_crosshair},
+    MI_GAP,
+    {"Last Used Weapon", S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_lastweapon},
+    MI_GAP,
+    {"Rewind",           S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_rewind},
+
+  MI_END
+};
+
+static setup_menu_t keys_settings8[] =
+{
+  {"Nugget - Automap", S_SKIP|S_TITLE, KB_X, M_SPC},
+  
+    {"Minimap",         S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_mini},
+    MI_GAP,
+    {"Tag Finder",      S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_tagfinder},
+    MI_GAP,
+    {"Blink Marks",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_blink},
+    MI_GAP,
+    {"Warp to Pointer", S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_map,  input_map_teleport},
+    {"Fancy Teleport",  S_ONOFF|S_STRICT|S_CRITICAL, KB_X, M_SPC, {"fancy_teleport"}},
+
+  MI_END
+};
+
+static setup_menu_t keys_settings9[] =
+{
+  {"Nugget - Cheats", S_SKIP|S_TITLE, CHEAT_X, M_SPC},
+
+  {"Infinite Ammo",      S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_infammo    },
+  {"Fast Weapons",       S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_fastweaps  },
+  {"Resurrect",          S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_resurrect  },
+  {"Flight Mode",        S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_fly        },
+  {"Repeat Last Summon", S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_summonr    },
+  {"Linetarget Query",   S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_linetarget },
+  {"MDK Attack",         S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_mdk        },
+  {"MDK Fist",           S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_saitama    },
+  {"Explosive Hitscan",  S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_boomcan    },
+
+  MI_END
+};
+
+// [Nugget] -----------------------------------------------------------------/
+
 static setup_menu_t *keys_settings[] = {
     keys_settings1,
     keys_settings2,
@@ -1184,6 +1281,12 @@ static setup_menu_t *keys_settings[] = {
     keys_settings4,
     keys_settings5,
     keys_settings6,
+
+    // [Nugget]
+    keys_settings7,
+    keys_settings8,
+    keys_settings9,
+
     NULL,
 };
 
@@ -1233,24 +1336,31 @@ void MN_DrawKeybnd(void)
 static setup_tab_t weap_tabs[] = {
     {"cosmetic"},
     {"preferences"},
+
+    // [Nugget]
+    {"nugget"},
+
     {NULL}
 };
 
 // [FG] centered or bobbing weapon sprite
-static const char *center_weapon_strings[] = {"Off", "Centered", "Bobbing"};
+static const char *center_weapon_strings[] = {"Off", "Centered", "Bobbing", "Horizontal"}; // [Nugget] Horizontal weapon centering
 
 static void UpdateCenteredWeaponItem(void);
 
-static const char *bobbing_pct_strings[] = {"0%", "25%", "50%", "75%", "100%"};
+// [Nugget] Removed unused `bobbing_pct_strings`
 
 static setup_menu_t weap_settings1[] = {
 
-    {"View Bob", S_THERMO | S_THRM_SIZE4, M_X_THRM4, M_THRM_SPC,
-     {"view_bobbing_pct"}, m_null, input_null, str_bobbing_pct},
+    // [Nugget] Extended bobbing settings /-------------------------------------
 
-    {"Weapon Bob", S_THERMO | S_THRM_SIZE4, M_X_THRM4, M_THRM_SPC,
-     {"weapon_bobbing_pct"}, m_null, input_null, str_bobbing_pct,
-     UpdateCenteredWeaponItem},
+    {"View Bob", S_THERMO, M_X_THRM8, M_THRM_SPC,
+     {"view_bobbing_percentage"}},
+
+    {"Weapon Bob", S_THERMO, M_X_THRM8, M_THRM_SPC,
+     {"weapon_bobbing_percentage"}, m_null, input_null, str_empty, UpdateCenteredWeaponItem},
+
+    // [Nugget] ---------------------------------------------------------------/
 
     // [FG] centered or bobbing weapon sprite
     {"Weapon Alignment", S_CHOICE | S_STRICT, M_X, M_SPC,
@@ -1283,7 +1393,48 @@ static setup_menu_t weap_settings2[] = {
     MI_END
 };
 
-static setup_menu_t *weap_settings[] = {weap_settings1, weap_settings2, NULL};
+// [Nugget] /-----------------------------------------------------------------
+
+static const char *bobbing_style_strings[] = {
+  "Vanilla", "Inv. Vanilla", "Alpha", "Inv. Alpha", "Smooth", "Inv. Smooth", "Quake"
+};
+
+static void NuggetResetWeaponInertia(void)
+{
+  P_NuggetResetWeaponInertia();
+}
+
+static setup_menu_t weap_settings3[] =
+{
+  {"Nugget - Gameplay", S_SKIP|S_TITLE, M_X, M_SPC},
+
+    {"Physical Recoil",       S_ONOFF,                     M_X, M_SPC, {"weapon_recoil"}}, // Restored Weapon Recoil menu item
+    {"No Horizontal Autoaim", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"no_hor_autoaim"}},
+    {"Switch on Pickup",      S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"switch_on_pickup"}},
+
+  MI_GAP,
+  {"Nugget - Cosmetic", S_SKIP|S_TITLE, M_X, M_SPC},
+
+    {"Bobbing Style",                   S_CHOICE|S_STRICT, M_X, M_SPC, {"bobbing_style"}, m_null, input_null, str_bobbing_style},
+    {"Weapon Inertia",                  S_ONOFF |S_STRICT, M_X, M_SPC, {"weapon_inertia"}, m_null, input_null, str_empty, NuggetResetWeaponInertia},
+    {"Weapon Squat Upon Landing",       S_ONOFF |S_STRICT, M_X, M_SPC, {"weaponsquat"}},
+    {"Translucent Flashes",             S_ONOFF |S_STRICT, M_X, M_SPC, {"translucent_pspr"}},
+    {"Berserk display when using Fist", S_ONOFF,           M_X, M_SPC, {"show_berserk"}},
+
+  MI_END
+};
+
+// [Nugget] -----------------------------------------------------------------/
+
+static setup_menu_t *weap_settings[] = {
+    weap_settings1,
+    weap_settings2,
+
+    // [Nugget]
+    weap_settings3,
+
+    NULL
+};
 
 static void UpdateCenteredWeaponItem(void)
 {
@@ -1336,6 +1487,11 @@ static setup_tab_t stat_tabs[] = {
     {"Widgets"},
     {"Crosshair"},
     {"Messages"},
+
+    // [Nugget]
+    {"NG1"},
+    {"NG2"},
+
     {NULL}
 };
 
@@ -1368,7 +1524,7 @@ static const char *screensize_strings[] = {
     "Status Bar", "Status Bar", "Status Bar", "Fullscreen"
 };
 
-static const char *hudtype_strings[] = {"Crispy", "Boom No Bars", "Boom"};
+static const char *hudtype_strings[] = {"Nugget", "Boom No Bars", "Boom"}; // [Nugget] Rename "Crispy" to "Nugget"
 
 static const char **M_GetHUDModeStrings(void)
 {
@@ -1413,7 +1569,8 @@ static setup_menu_t stat_settings1[] = {
 
     {"Armor Color Matches Type", S_ONOFF, H_X, M_SPC, {"hud_armor_type"}},
 
-    {"Animated Health/Armor Count", S_ONOFF, H_X, M_SPC, {"hud_animated_counts"}},
+    // [Nugget] Disallowed in Strict Mode
+    {"Animated Health/Armor Count", S_ONOFF | S_STRICT, H_X, M_SPC, {"hud_animated_counts"}},
 
     {"Blink Missing Keys", S_ONOFF, H_X, M_SPC, {"hud_blink_keys"}},
 
@@ -1455,9 +1612,14 @@ static setup_menu_t stat_settings2[] = {
     MI_END
 };
 
-static void UpdateCrosshairItems(void);
+void UpdateCrosshairItems(void); // [Nugget] Global
 
 static const char *crosshair_target_strings[] = {"Off", "Highlight", "Health"};
+
+// [Nugget]
+static const char *crosshair_lockon_strings[] = {
+  "Off", "Vertically", "Fully", NULL
+};
 
 static const char *hudcolor_strings[] = {
     "BRICK",  "TAN",    "GRAY",  "GREEN", "BROWN",  "GOLD",  "RED", "BLUE",
@@ -1468,8 +1630,13 @@ static const char *hudcolor_strings[] = {
 
 static setup_menu_t stat_settings3[] = {
 
-    {"Crosshair", S_CHOICE, XH_X, M_SPC, {"hud_crosshair"},
+    // [Nugget] Toggle instead of type
+    {"Crosshair", S_ONOFF, XH_X, M_SPC, {"hud_crosshair_on"},
      m_null, input_null, str_crosshair, UpdateCrosshairItems},
+
+    // [Nugget] Actual type
+    {"Crosshair Type", S_CHOICE,XH_X, M_SPC, {"hud_crosshair"},
+     m_null, input_null, str_crosshair},
 
     {"Color By Player Health", S_ONOFF | S_STRICT, XH_X, M_SPC, {"hud_crosshair_health"}},
 
@@ -1477,7 +1644,17 @@ static setup_menu_t stat_settings3[] = {
      {"hud_crosshair_target"}, m_null, input_null, str_crosshair_target,
      UpdateCrosshairItems},
 
-    {"Lock On Target", S_ONOFF | S_STRICT, XH_X, M_SPC, {"hud_crosshair_lockon"}},
+    // [Nugget] Multiple choice
+    {"Lock On Target", S_CHOICE | S_STRICT, XH_X, M_SPC, {"hud_crosshair_lockon"},
+     m_null, input_null, str_crosshair_lockon, UpdateCrosshairItems},
+
+    // [Nugget] /-------------------------------------------------------------
+
+    {"Horizontal-Autoaim Indicators", S_ONOFF | S_STRICT, XH_X, M_SPC, {"hud_crosshair_indicators"}},
+    
+    {"Detection of Fuzzy Targets", S_ONOFF | S_STRICT, XH_X, M_SPC, {"hud_crosshair_fuzzy"}},
+
+    // [Nugget] -------------------------------------------------------------/
 
     {"Default Color", S_CRITEM, XH_X, M_SPC, {"hud_crosshair_color"},
      m_null, input_null, str_hudcolor},
@@ -1488,30 +1665,151 @@ static setup_menu_t stat_settings3[] = {
     MI_END
 };
 
+// [Nugget] /-----------------------------------------------------------------
+
+static void UpdateMultiLineMsgItem(void);
+
+static const char *secret_message_strings[] = {
+  "Off", "On", "Count", NULL
+};
+
+// [Nugget] -----------------------------------------------------------------/
+
 static setup_menu_t stat_settings4[] = {
-    {"\"A Secret is Revealed!\" Message", S_ONOFF, M_X, M_SPC,
-     {"hud_secret_message"}},
+    // [Nugget] Multiple choice
+    {"\"A Secret is Revealed!\" Message", S_CHOICE, M_X, M_SPC,
+     {"hud_secret_message"}, m_null, input_null, str_secret_message},
+
+    // [Nugget]
+    {"Milestone Completion Announcements", S_ONOFF, M_X, M_SPC,
+     {"announce_milestones"}},
+
     {"Show Toggle Messages", S_ONOFF, M_X, M_SPC, {"show_toggle_messages"}},
     {"Show Pickup Messages", S_ONOFF, M_X, M_SPC, {"show_pickup_messages"}},
     {"Show Obituaries",      S_ONOFF, M_X, M_SPC, {"show_obituary_messages"}},
+
+    MI_GAP, // [Nugget]
+
     {"Center Messages",      S_ONOFF, M_X, M_SPC, {"message_centered"}},
     {"Colorize Messages",    S_ONOFF, M_X, M_SPC, {"message_colorized"},
      m_null, input_null, str_empty, HU_ResetMessageColors},
+
+    // [Nugget] Restored menu items /-------------------------------------------
+
+    {"Message Color", S_CRITEM|S_COSMETIC, M_X, M_SPC,
+     {"hudcolor_mesg"}, m_null, input_null, str_hudcolor},
+
+    {"Message Duration (ms)", S_NUM, M_X, M_SPC,
+     {"message_timer"}},
+
+    {"Chat Message Color", S_CRITEM|S_COSMETIC, M_X, M_SPC,
+     {"hudcolor_chat"}, m_null, input_null, str_hudcolor},
+
+    {"Chat Message Duration (ms)", S_NUM|S_COSMETIC, M_X, M_SPC,
+     {"chat_msg_timer"}},
+
+    {"Obituary Color", S_CRITEM|S_COSMETIC, M_X, M_SPC,
+     {"hudcolor_obituary"}, m_null, input_null, str_hudcolor},
+
+    {"Multi-Line Messages", S_ONOFF, M_X, M_SPC,
+     {"message_list"}, m_null, input_null, str_empty, UpdateMultiLineMsgItem},
+
+    {"Number of Lines", S_NUM, M_X, M_SPC,
+     {"hud_msg_lines"}},
+
+    {"Upward Message Scrolling", S_ONOFF, M_X, M_SPC,
+     {"hud_msg_scrollup"}},
+
+    // [Nugget] ---------------------------------------------------------------/
+
     MI_END
 };
 
-static setup_menu_t *stat_settings[] = {stat_settings1, stat_settings2,
-                                        stat_settings3, stat_settings4, NULL};
+// [Nugget] /-----------------------------------------------------------------
 
-static void UpdateCrosshairItems(void)
+static setup_menu_t stat_settings5[] =
 {
-    DisableItem(!hud_crosshair, stat_settings3, "hud_crosshair_health");
-    DisableItem(!hud_crosshair, stat_settings3, "hud_crosshair_target");
-    DisableItem(!hud_crosshair, stat_settings3, "hud_crosshair_lockon");
-    DisableItem(!hud_crosshair, stat_settings3, "hud_crosshair_color");
+  {"Nugget - Extended HUD", S_SKIP|S_TITLE, M_X, M_SPC},
+
+    {"Show Powerup Timers",      S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_power_timers"}, m_null, input_null, str_show_widgets},
+    {"Kills % in Stats display", S_ONOFF,             M_X, M_SPC, {"hud_kills_percentage"}},
+    {"Alternative Arms Display", S_ONOFF,             M_X, M_SPC, {"alt_arms"}, m_null, input_null, str_empty, ST_createWidgets},
+
+  MI_GAP,
+  {"Nugget - Event Timers", S_SKIP|S_TITLE, M_X, M_SPC},
+
+    {"Teleport Timer",   S_ONOFF|S_STRICT, M_X, M_SPC, {"hud_time_teleport"}},
+    {"Key-Pickup Timer", S_ONOFF|S_STRICT, M_X, M_SPC, {"hud_time_keypickup"}},
+
+  MI_END
+};
+
+static setup_menu_t stat_settings6[] =
+{
+  {"Nugget - Extended HUD Colors", S_SKIP|S_TITLE, M_X, M_SPC},
+
+    {"Time Scale (Game Speed %)", S_CRITEM, M_X, M_SPC, {"hudcolor_time_scale"},  m_null, input_null, str_hudcolor},
+    {"Total Level Time",          S_CRITEM, M_X, M_SPC, {"hudcolor_total_time"},  m_null, input_null, str_hudcolor},
+    {"Level Time",                S_CRITEM, M_X, M_SPC, {"hudcolor_time"},        m_null, input_null, str_hudcolor},
+    {"Event Timer",               S_CRITEM, M_X, M_SPC, {"hudcolor_event_timer"}, m_null, input_null, str_hudcolor},
+    MI_GAP,
+    {"Kills label",               S_CRITEM, M_X, M_SPC, {"hudcolor_kills"},     m_null, input_null, str_hudcolor},
+    {"Items label",               S_CRITEM, M_X, M_SPC, {"hudcolor_items"},     m_null, input_null, str_hudcolor},
+    {"Secrets label",             S_CRITEM, M_X, M_SPC, {"hudcolor_secrets"},   m_null, input_null, str_hudcolor},
+    {"Incomplete Milestone",      S_CRITEM, M_X, M_SPC, {"hudcolor_ms_incomp"}, m_null, input_null, str_hudcolor},
+    {"Complete Milestone",        S_CRITEM, M_X, M_SPC, {"hudcolor_ms_comp"},   m_null, input_null, str_hudcolor},
+
+  MI_END
+};
+
+// [Nugget] -----------------------------------------------------------------/
+
+static setup_menu_t *stat_settings[] = {
+    stat_settings1,
+    stat_settings2,
+    stat_settings3,
+    stat_settings4,
+
+    // [Nugget]
+    stat_settings5,
+    stat_settings6,
+
+    NULL
+};
+
+void UpdateCrosshairItems(void) // [Nugget] Global
+{
+    // [Nugget] Check for toggle instead of type
+
+    DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair_health");
+    DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair_target");
+    DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair_lockon");
+    DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair_color");
     DisableItem(
-        !(hud_crosshair && hud_crosshair_target == crosstarget_highlight),
+        !(hud_crosshair_on && hud_crosshair_target == crosstarget_highlight),
         stat_settings3, "hud_crosshair_target_color");
+
+    // [Nugget] --------------------------------------------------------------
+
+    DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair");
+
+    DisableItem(
+        !(hud_crosshair_on
+          && (hud_crosshair_target || hud_crosshair_lockon)
+          && !(mouselook && vertical_aiming == VERTAIM_DIRECT)),
+        stat_settings3, "hud_crosshair_indicators");
+
+    DisableItem(
+        !(hud_crosshair_on && (hud_crosshair_lockon || hud_crosshair_target)),
+        stat_settings3, "hud_crosshair_fuzzy");
+}
+
+// [Nugget]
+static void UpdateMultiLineMsgItem(void)
+{
+  DisableItem(!message_list, stat_settings4, "hud_msg_lines");
+  // Restore message scroll direction toggle
+  DisableItem(!message_list, stat_settings4, "hud_msg_scrollup");
 }
 
 // Setting up for the Status Bar / HUD screen. Turn on flags, set pointers,
@@ -1547,7 +1845,7 @@ void MN_DrawStatusHUD(void)
             W_CacheLumpName(crosshair_lumps[hud_crosshair], PU_CACHE);
 
         int x = XH_X + 85 - SHORT(patch->width) / 2;
-        int y = M_Y + M_SPC / 2 - SHORT(patch->height) / 2 - 1;
+        int y = M_Y + M_SPC + M_SPC / 2 - SHORT(patch->height) / 2 - 1; // [Nugget] Adjusted
 
         V_DrawPatchTranslated(x, y, patch, colrngs[hud_crosshair_color]);
     }
@@ -1678,6 +1976,18 @@ static setup_menu_t enem_settings1[] = {
     {"Blocky Spectre Drawing", S_ONOFF, M_X, M_SPC, {"fuzzcolumn_mode"},
      m_null, input_null, str_overlay, R_SetFuzzColumnMode},
 
+    // [Nugget] /---------------------------------------------------------------
+
+    MI_GAP,
+    {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
+
+      {"Extra Gibbing",            S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"extra_gibbing"}},
+      {"Bloodier Gibbing",         S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"bloodier_gibbing"}},
+      {"ZDoom-like Item Drops",    S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"zdoom_item_drops"}},
+//      {"Selective Fuzz Darkening", S_ONOFF|S_STRICT,            M_X, M_SPC, {"fuzzdark_mode"}}, // [Nugget - ceski] Selective fuzz darkening
+
+    // [Nugget] ---------------------------------------------------------------/
+
     MI_RESET,
 
     MI_END
@@ -1731,6 +2041,11 @@ static const char *default_complevel_strings[] = {
     "Vanilla", "Boom", "MBF", "MBF21"
 };
 
+// [Nugget]
+static const char *vertical_aiming_strings[] = {
+  "Auto", "Direct", "Direct+Auto", NULL
+};
+
 setup_menu_t comp_settings1[] = {
 
     {"Default Compatibility Level", S_CHOICE | S_LEVWARN, M_X, M_SPC,
@@ -1742,8 +2057,9 @@ setup_menu_t comp_settings1[] = {
 
     {"Compatibility-breaking Features", S_SKIP | S_TITLE, M_X, M_SPC},
 
-    {"Direct Vertical Aiming", S_ONOFF | S_STRICT, M_X, M_SPC,
-     {"direct_vertical_aiming"}},
+    // [Nugget] Replaces Woof's `direct_vertical_aiming`
+    {"Vertical Aiming", S_CHOICE | S_STRICT, M_X, M_SPC,
+     {"vertical_aiming"}, m_null, input_null, str_vertical_aiming},
 
     {"Auto Strafe 50", S_ONOFF | S_STRICT, M_X, M_SPC,
      {"autostrafe50"}, m_null, input_null, str_empty, G_UpdateSideMove},
@@ -1815,9 +2131,15 @@ static setup_tab_t gen_tabs[] = {
     {"video"},
     {"audio"},
     {"mouse"},
-    {"gamepad"},
+    {"pad"}, // [Nugget] Shortened
     {"display"},
     {"misc"},
+
+    // [Nugget]
+    {"ng1"},
+    {"ng2"},
+    {"ng3"},
+
     {NULL}
 };
 
@@ -1957,14 +2279,17 @@ void MN_ResetGamma(void)
 
 static setup_menu_t gen_settings1[] = {
 
-    {"Resolution Scale", S_THERMO | S_THRM_SIZE11 | S_ACTION, M_X_THRM11,
+    // [Nugget] These first three items now report
+    // the current resolution when sitting on them
+
+    {"Resolution Scale", S_THERMO | S_THRM_SIZE11 | S_ACTION | S_RES, M_X_THRM11,
      M_THRM_SPC, {"resolution_scale"}, m_null, input_null, str_resolution_scale,
      ResetVideoHeight},
 
-    {"Dynamic Resolution", S_ONOFF, M_X, M_SPC, {"dynamic_resolution"},
+    {"Dynamic Resolution", S_ONOFF | S_RES, M_X, M_SPC, {"dynamic_resolution"},
      m_null, input_null, str_empty, ResetVideoHeight},
 
-    {"Widescreen", S_CHOICE, M_X, M_SPC, {"widescreen"}, m_null, input_null,
+    {"Widescreen", S_CHOICE | S_RES, M_X, M_SPC, {"widescreen"}, m_null, input_null,
      str_widescreen, ResetVideo},
 
     {"FOV", S_THERMO, M_X_THRM8, M_THRM_SPC, {"fov"}, m_null, input_null,
@@ -2093,6 +2418,8 @@ void MN_UpdateFreeLook(void)
             }
         }
     }
+
+    UpdateCrosshairItems(); // [Nugget]
 }
 
 #define MOUSE_ACCEL_STRINGS_SIZE (40 + 1)
@@ -2237,7 +2564,7 @@ static setup_menu_t gen_settings5[] = {
 
     MI_GAP,
 
-    {"Menu Backdrop", S_CHOICE, M_X, M_SPC, {"menu_backdrop"},
+    {"Menu Backdrop Style", S_CHOICE, M_X, M_SPC, {"menu_backdrop"}, // [Nugget] Changed description
      m_null, input_null, str_menu_backdrop},
 
     {"Show ENDOOM Screen", S_CHOICE, M_X, M_SPC, {"show_endoom"},
@@ -2254,9 +2581,11 @@ const char *default_skill_strings[] = {
 static const char *death_use_action_strings[] = {"default", "last save",
                                                  "nothing"};
 
-static const char *screen_melt_strings[] = {"Off", "Melt", "Crossfade", "Fizzle"};
+static const char *screen_melt_strings[] = {"Off", "Melt", "Crossfade", "Fizzle", "Black Fade"}; // [Nugget] More wipes
 
 static const char *invul_mode_strings[] = {"Vanilla", "MBF", "Gray"};
+
+static void UpdatePaletteItems(void); // [Nugget]
 
 void MN_ResetTimeScale(void)
 {
@@ -2303,7 +2632,8 @@ static setup_menu_t gen_settings6[] = {
 
     {"Demo progress bar", S_ONOFF, M_X, M_SPC, {"demobar"}},
 
-    {"Screen flashes", S_ONOFF | S_STRICT, M_X, M_SPC, {"palette_changes"}},
+    {"Screen flashes", S_ONOFF | S_STRICT, M_X, M_SPC, {"palette_changes"},
+     m_null, input_null, str_empty, UpdatePaletteItems}, // [Nugget]
 
     {"Invulnerability effect", S_CHOICE | S_STRICT, M_X, M_SPC, {"invul_mode"},
      m_null, input_null, str_invul_mode, R_InvulMode},
@@ -2324,9 +2654,130 @@ static setup_menu_t gen_settings6[] = {
     MI_END
 };
 
+// [Nugget] /-----------------------------------------------------------------
+
+static void ChangeViewHeight(void)
+{
+  static int oldviewheight = 0;
+  
+  for (int i = 0;  i < MAXPLAYERS;  i++)
+    if (playeringame[i] && players[i].playerstate == PST_LIVE)
+    { players[i].viewheight += (viewheight_value - oldviewheight) * FRACUNIT; }
+
+  oldviewheight = viewheight_value;
+}
+
+static const char *over_under_strings[] = {
+  "Off", "Player Only", "All Things", NULL
+};
+
+static const char *flinching_strings[] = {
+  "Nothing", "Landing", "Damage", "Both", NULL
+};
+
+static const char *chasecam_strings[] = {
+  "Off", "Back", "Front", NULL
+};
+
+setup_menu_t gen_settings7[] = {
+
+  {"Nugget - Gameplay", S_SKIP|S_TITLE, M_X, M_SPC},
+
+    {"Move Over/Under Things", S_CHOICE|S_STRICT|S_CRITICAL, M_X, M_SPC, {"over_under"}, m_null, input_null, str_over_under},
+    {"Jumping/Crouching",      S_ONOFF |S_STRICT|S_CRITICAL, M_X, M_SPC, {"jump_crouch"}},
+
+  {"",              S_SKIP,         M_X, M_SPC/2},
+  {"Nugget - View", S_SKIP|S_TITLE, M_X, M_SPC},
+
+    {"View Height",                   S_NUM   |S_STRICT, M_X,       M_SPC,      {"viewheight_value"}, m_null, input_null, str_empty, ChangeViewHeight},
+    {"Flinch upon",                   S_CHOICE|S_STRICT, M_X,       M_SPC,      {"flinching"}, m_null, input_null, str_flinching},
+    {"Explosion Shake Effect",        S_ONOFF |S_STRICT, M_X,       M_SPC,      {"explosion_shake"}},
+    {"Subtle Idle Bobbing/Breathing", S_ONOFF |S_STRICT, M_X,       M_SPC,      {"breathing"}},
+    {"Teleporter Zoom",               S_ONOFF |S_STRICT, M_X,       M_SPC,      {"teleporter_zoom"}},
+    {"Death Camera",                  S_ONOFF |S_STRICT, M_X,       M_SPC,      {"death_camera"}},
+    {"Chasecam",                      S_CHOICE|S_STRICT, M_X,       M_SPC,      {"chasecam_mode"}, m_null, input_null, str_chasecam},
+    {"Chasecam Distance",             S_THERMO|S_STRICT, M_X_THRM8, M_THRM_SPC, {"chasecam_distance"}},
+    {"Chasecam Height",               S_THERMO|S_STRICT, M_X_THRM8, M_THRM_SPC, {"chasecam_height"}},
+
+  MI_END
+};
+
+static const char *fake_contrast_strings[] = {
+  "Off", "Smooth", "Vanilla", NULL
+};
+
+setup_menu_t gen_settings8[] = {
+
+  {"Nugget - Display", S_SKIP|S_TITLE, M_X, M_SPC},
+
+    {"Background For All Menus",     S_ONOFF,                 M_X, M_SPC, {"menu_background_all"}},
+    {"No Palette Tint in Menus",     S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_menu_tint"}},
+    {"No Berserk Tint",              S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_berserk_tint"}},
+    {"No Radiation Suit Tint",       S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_radsuit_tint"}},
+    {"Night-Vision Visor Effect",    S_ONOFF |S_STRICT,       M_X, M_SPC, {"nightvision_visor"}},
+    {"Damage Tint Cap",              S_NUM   |S_STRICT,       M_X, M_SPC, {"damagecount_cap"}},
+    {"Bonus Tint Cap",               S_NUM   |S_STRICT,       M_X, M_SPC, {"bonuscount_cap"}},
+    {"Fake Contrast",                S_CHOICE|S_STRICT,       M_X, M_SPC, {"fake_contrast"}, m_null, input_null, str_fake_contrast},
+    {"Screen Wipe Speed Percentage", S_NUM   |S_STRICT|S_PCT, M_X, M_SPC, {"wipe_speed_percentage"}},
+    {"Alt. Intermission Background", S_ONOFF |S_STRICT,       M_X, M_SPC, {"alt_interpic"}},
+
+  MI_END
+};
+
+static void UpdateRewindInterval(void)
+{
+  G_EnableRewind();
+  G_ResetRewindCountdown();
+}
+
+static void UpdateRewindDepth(void)
+{
+  G_EnableRewind();
+  G_ClearExcessKeyFrames();
+}
+
+static const char *s_clipping_dist_strings[] = {
+  "Original", "Double", NULL
+};
+
+static const char *page_ticking_strings[] = {
+  "Always", "Not In Menus", "Never", NULL
+};
+
+setup_menu_t gen_settings9[] = { // [Nugget]
+
+  {"Nugget - Miscellaneous", S_SKIP|S_TITLE, M_X, M_SPC},
+
+    {"Sound Hearing Distance",  S_CHOICE|S_STRICT,            M_X, M_SPC, {"s_clipping_dist_x2"}, m_null, input_null, str_s_clipping_dist, SetSoundModule},
+    {"One-Key Quick-Save/Load", S_ONOFF,                      M_X, M_SPC, {"one_key_saveload"}},
+    {"Rewind Interval (S)",     S_NUM   |S_STRICT|S_CRITICAL, M_X, M_SPC, {"rewind_interval"}, m_null, input_null, str_empty, UpdateRewindInterval},
+    {"Rewind Depth",            S_NUM   |S_STRICT|S_CRITICAL, M_X, M_SPC, {"rewind_depth"}, m_null, input_null, str_empty, UpdateRewindDepth},
+    {"Rewind Timeout (MS)",     S_NUM   |S_STRICT|S_CRITICAL, M_X, M_SPC, {"rewind_timeout"}, m_null, input_null, str_empty, G_EnableRewind},
+    {"Play Internal Demos",     S_CHOICE,                     M_X, M_SPC, {"no_page_ticking"}, m_null, input_null, str_page_ticking},
+    {"Quick \"Quit Game\"",     S_ONOFF,                      M_X, M_SPC, {"quick_quitgame"}},
+
+  MI_GAP,
+  {"Nugget - Accessibility", S_SKIP|S_TITLE, M_X, M_SPC},
+#if 0 // For future use, hopefully
+    {"Flickering Sector Lighting", S_ONOFF|S_STRICT, M_X, M_SPC, {"a11y_sector_lighting"}},
+#endif
+    {"Weapon Flash Lighting",      S_ONOFF|S_STRICT, M_X, M_SPC, {"a11y_weapon_flash"}},
+    {"Weapon Flash Sprite",        S_ONOFF|S_STRICT, M_X, M_SPC, {"a11y_weapon_pspr"}},
+    {"Invulnerability Colormap",   S_ONOFF|S_STRICT, M_X, M_SPC, {"a11y_invul_colormap"}},
+
+  MI_END
+};
+
+// [Nugget] -----------------------------------------------------------------/
+
 static setup_menu_t *gen_settings[] = {
     gen_settings1, gen_settings2, gen_settings3, gen_settings4,
-    gen_settings5, gen_settings6, NULL
+    gen_settings5, gen_settings6,
+
+    // [Nugget]
+    gen_settings7, gen_settings8, gen_settings9,
+
+    NULL
 };
 
 static void UpdateDynamicResolutionItem(void)
@@ -2349,6 +2800,19 @@ static void ToggleUncapped(void)
 void MN_DisableVoxelsRenderingItem(void)
 {
     DisableItem(true, gen_settings5, "voxels_rendering");
+}
+
+// [Nugget]
+static void UpdatePaletteItems(void)
+{
+  extern boolean palette_changes;
+
+  DisableItem(!palette_changes, gen_settings8, "no_menu_tint");
+  DisableItem(!palette_changes, gen_settings8, "no_berserk_tint");
+  DisableItem(!palette_changes, gen_settings8, "no_radsuit_tint");
+  DisableItem(!palette_changes, gen_settings8, "damagecount_cap");
+  DisableItem(!palette_changes, gen_settings8, "bonuscount_cap");
+  DisableItem(!palette_changes, gen_settings9, "a11y_invul_colormap");
 }
 
 void MN_Trans(void) // To reset translucency after setting it in menu
@@ -2405,7 +2869,7 @@ static void SelectDone(setup_menu_t *ptr)
 {
     ptr->m_flags &= ~S_SELECT;
     ptr->m_flags |= S_HILITE;
-    S_StartSound(NULL, sfx_itemup);
+    S_StartSoundOptional(NULL, sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
     setup_select = false;
     if (print_warning_about_changes) // killough 8/15/98
     {
@@ -2772,6 +3236,7 @@ enum
     canine,
     musicsfx, /*musicsfx_stub,*/
     woof,     // [FG] shamelessly add myself to the Credits page ;)
+    nugget,   // duh
     adcr,
     adcr_stub,
     special,
@@ -2787,6 +3252,7 @@ enum
     cr_canine,
     cr_musicsfx,
     cr_woof, // [FG] shamelessly add myself to the Credits page ;)
+    cr_nugget, // yikes
     cr_adcr,
     cr_special,
 };
@@ -2830,6 +3296,10 @@ static setup_menu_t cred_settings[] = {
     {"Woof! by", S_SKIP | S_CREDIT, CR_X, CR_Y + CR_S * woof + CR_SH * cr_woof},
     {"Fabian Greffrath", S_SKIP | S_CREDIT | S_LEFTJUST, CR_X2,
      CR_Y + CR_S * woof + CR_SH * cr_woof},
+
+    // [Nugget] :moyai:
+    {"Nugget Doom by", S_SKIP | S_CREDIT, CR_X, CR_Y + CR_S * nugget + CR_SH * cr_nugget},
+    {"Alaux", S_SKIP | S_CREDIT | S_LEFTJUST, CR_X2, CR_Y + CR_S * nugget + CR_SH * cr_nugget},
 
     {"Additional Credit To", S_SKIP | S_CREDIT, CR_X,
      CR_Y + CR_S * adcr + CR_SH * cr_adcr},
@@ -2880,7 +3350,7 @@ boolean MN_SetupCursorPostion(int x, int y)
                 if (set_tab_on != i)
                 {
                     set_tab_on = i;
-                    S_StartSound(NULL, sfx_itemup);
+                    S_StartSoundOptional(NULL, sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
                 }
             }
         }
@@ -2906,7 +3376,7 @@ boolean MN_SetupCursorPostion(int x, int y)
             {
                 print_warning_about_changes = false;
                 set_item_on = i;
-                S_StartSound(NULL, sfx_itemup);
+                    S_StartSoundOptional(NULL, sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
             }
         }
     }
@@ -2964,7 +3434,7 @@ static void Choice(menu_action_t action)
 
         if (def->location->i != value)
         {
-            S_StartSound(NULL, sfx_stnmov);
+            S_StartSoundOptional(NULL, sfx_mnusli, sfx_stnmov); // [Nugget]: [NS] Optional menu sounds.
         }
         def->location->i = value;
 
@@ -2995,7 +3465,7 @@ static void Choice(menu_action_t action)
 
         if (def->location->i != value)
         {
-            S_StartSound(NULL, sfx_stnmov);
+            S_StartSoundOptional(NULL, sfx_mnusli, sfx_stnmov); // [Nugget]: [NS] Optional menu sounds.
         }
         def->location->i = value;
 
@@ -3245,7 +3715,7 @@ static boolean NextPage(int inc)
         ;
     current_menu[--set_item_on].m_flags |= S_HILITE;
 
-    S_StartSound(NULL, sfx_pstop); // killough 10/98
+    S_StartSoundOptional(NULL, sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
     return true;
 }
 
@@ -3407,7 +3877,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
 
         if (ItemDisabled(flags))
         {
-            S_StartSound(NULL, sfx_oof);
+            S_StartSoundOptional(NULL, sfx_mnuerr, sfx_oof); // [Nugget]: [NS] Optional menu sounds.
             return true;
         }
         else if (flags & S_NUM)
@@ -3423,7 +3893,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
 
         current_item->m_flags |= S_SELECT;
         setup_select = true;
-        S_StartSound(NULL, sfx_itemup);
+        S_StartSoundOptional(NULL, sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
 
@@ -3448,7 +3918,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         default_verify = false;              // phares 4/19/98
         print_warning_about_changes = false; // [FG] reset
         HU_Start(); // catch any message changes // phares 4/19/98
-        S_StartSound(NULL, sfx_swtchx);
+        S_StartSoundOptional(NULL, sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
 
@@ -3493,7 +3963,7 @@ static boolean SetupTab(void)
         ;
     set_item_on--;
 
-    S_StartSound(NULL, sfx_pstop);
+    S_StartSoundOptional(NULL, sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
     return true;
 }
 
@@ -3595,7 +4065,7 @@ boolean MN_SetupMouseResponder(int x, int y)
             {
                 active_thermo->action();
             }
-            S_StartSound(NULL, sfx_stnmov);
+            S_StartSoundOptional(NULL, sfx_mnusli, sfx_stnmov); // [Nugget]: [NS] Optional menu sounds.
         }
         return true;
     }
@@ -3608,7 +4078,7 @@ boolean MN_SetupMouseResponder(int x, int y)
     if (flags & S_ONOFF) // yes or no setting?
     {
         OnOff();
-        S_StartSound(NULL, sfx_itemup);
+        S_StartSoundOptional(NULL, sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
 
@@ -3629,7 +4099,7 @@ boolean MN_SetupMouseResponder(int x, int y)
 
         if (def->location->i != value)
         {
-            S_StartSound(NULL, sfx_stnmov);
+            S_StartSoundOptional(NULL, sfx_mnusli, sfx_stnmov); // [Nugget]: [NS] Optional menu sounds.
         }
         def->location->i = value;
 
@@ -3754,9 +4224,22 @@ static const char **selectstrings[] = {
     death_use_action_strings,
     menu_backdrop_strings,
     widescreen_strings,
-    bobbing_pct_strings,
+    // [Nugget] Removed unused `bobbing_pct_strings`
     screen_melt_strings,
     invul_mode_strings,
+
+    // [Nugget] --------------------------------------------------------------
+
+    bobbing_style_strings,
+    crosshair_lockon_strings,
+    secret_message_strings,
+    vertical_aiming_strings,
+    over_under_strings,
+    flinching_strings,
+    chasecam_strings,
+    fake_contrast_strings,
+    s_clipping_dist_strings,
+    page_ticking_strings,
 };
 
 static const char **GetStrings(int id)
@@ -3800,6 +4283,14 @@ void MN_SetupResetMenu(void)
     UpdateCrosshairItems();
     UpdateCenteredWeaponItem();
     UpdateAdvancedSoundItems();
+
+    // [Nugget] ----------------------------------------------------------------
+
+    DisableItem(!(extra_gibbing[EXGIB_FIST] || extra_gibbing[EXGIB_CSAW] || extra_gibbing[EXGIB_SSG]),
+                enem_settings1, "extra_gibbing");
+
+    UpdatePaletteItems();
+    UpdateMultiLineMsgItem();
 }
 
 void MN_SetupResetMenuVideo(void)

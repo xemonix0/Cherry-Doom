@@ -22,9 +22,9 @@
 
 #include "i_system.h"
 #include "m_io.h"
-#include "m_menu.h"
-#include "m_misc.h"
+#include "m_config.h"
 #include "m_nughud.h"
+#include "mn_setup.h"
 #include "st_stuff.h"
 #include "w_wad.h"
 

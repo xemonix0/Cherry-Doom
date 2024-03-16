@@ -131,6 +131,10 @@ extern int midi_player_menu;
 #define S_THRM_SIZE4  0x20000000 // Thermo bar size 4
 #define S_PCT         0x40000000 // Show % sign
 
+// [Nugget]
+#define S_CRITICAL    0x00000008 // Disable during non-casual play
+#define S_RES         0x80000000 // Report current resolution
+
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
 // S_HASDEFPTR = the set of items whose var field points to default array

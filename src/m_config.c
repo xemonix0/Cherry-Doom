@@ -126,6 +126,24 @@ default_t defaults[] = {
     "1 to show help strings about each variable in config file"
   },
 
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "savegame_dir",
+    (config_t *) &savegame_dir, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "Path where savegames are stored"
+  },
+
+  {
+    "screenshot_dir",
+    (config_t *) &screenshot_dir, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "Path where screenshots are stored"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
+
   //
   // Video
   //
@@ -151,11 +169,31 @@ default_t defaults[] = {
     "1 to enable dynamic resolution"
   },
 
+  { // [Nugget]
+    "sdl_renderdriver",
+    (config_t *) &sdl_renderdriver, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "SDL render driver, possible values are "
+#if defined(_WIN32)
+    "direct3d, direct3d11, direct3d12, "
+#elif defined(__APPLE__)
+    "metal, "
+#endif
+    "opengl, opengles2, opengles, software"
+  },
+
   {
     "correct_aspect_ratio",
     (config_t *) &use_aspect, NULL,
     {1}, {0, 1}, number, ss_none, wad_no,
     "1 to perform aspect ratio correction"
+  },
+
+  { // [Nugget]
+    "stretch_to_fit",
+    (config_t *) &stretch_to_fit, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to stretch viewport to fit window"
   },
 
   // [FG] save fullscren mode
@@ -337,7 +375,7 @@ default_t defaults[] = {
   {
     "extra_level_brightness",
     (config_t *) &extra_level_brightness, NULL,
-    {0}, {0,4}, number, ss_gen, wad_no,
+    {0}, {-8,8}, number, ss_gen, wad_no, // [Nugget] Broader light-level range
     "level brightness"
   },
 
@@ -346,6 +384,13 @@ default_t defaults[] = {
     (config_t *) &menu_backdrop, NULL,
     {MENU_BG_DARK}, {MENU_BG_OFF, MENU_BG_TEXTURE}, number, ss_gen, wad_no,
     "draw menu backdrop (0 = off, 1 = dark (default), 2 = texture)"
+  },
+
+  { // [Nugget]
+    "menu_backdrop_darkening",
+    (config_t *) &menu_backdrop_darkening, NULL,
+    {20}, {0,31}, number, ss_none, wad_no,
+    "Dark menu background darkening level"
   },
 
   { // killough 10/98
@@ -440,14 +485,14 @@ default_t defaults[] = {
   {
     "snd_absorption",
     (config_t *) &snd_absorption, NULL,
-    {0}, {0, 10}, number, ss_none, wad_no,
+    {5}, {0, 10}, number, ss_none, wad_no, // [Nugget] Enabled by default
     "[OpenAL 3D] Air absorption effect (0 = Off, 10 = Max)"
   },
 
   {
     "snd_doppler",
     (config_t *) &snd_doppler, NULL,
-    {0}, {0, 10}, number, ss_none, wad_no,
+    {5}, {0, 10}, number, ss_none, wad_no, // [Nugget] Enabled by default
     "[OpenAL 3D] Doppler effect (0 = Off, 10 = Max)"
   },
 
@@ -603,11 +648,11 @@ default_t defaults[] = {
     "0 to disable palette changes"
   },
 
-  {
+  { // [Nugget] More wipes
     "screen_melt",
     (config_t *) &screen_melt, NULL,
-    {wipe_Melt}, {wipe_None, wipe_Fizzle}, number, ss_gen, wad_no,
-    "screen wipe effect (0 = none, 1 = melt, 2 = crossfade, 3 = fizzlefade)"
+    {wipe_Melt}, {wipe_None, wipe_Fade}, number, ss_gen, wad_no,
+    "screen wipe effect (0 = none, 1 = melt, 2 = crossfade, 3 = fizzlefade, 4 = fade)"
   },
 
   {
@@ -670,11 +715,11 @@ default_t defaults[] = {
     "1 to enable fast blockmap-based line-of-sight calculation"
   },
 
-  {
-    "direct_vertical_aiming",
-    (config_t *) &default_direct_vertical_aiming, (config_t *) &direct_vertical_aiming,
-    {0}, {0,1}, number, ss_comp, wad_no,
-    "1 to enable direct vertical aiming"
+  { // [Nugget] Replaces `direct_vertical_aiming`
+    "vertical_aiming",
+    (config_t *) &default_vertical_aiming, (config_t *) &vertical_aiming,
+    {0}, {0,2}, number, ss_comp, wad_no,
+    "Vertical aiming (0 = Auto, 1 = Direct, 2 = Direct + Auto)"
   },
 
   {
@@ -683,6 +728,250 @@ default_t defaults[] = {
     {0}, {0,1}, number, ss_comp, wad_no,
     "1 to enable pistol start"
   },
+
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "over_under",
+    (config_t *) &over_under, NULL,
+    {0}, {0,2}, number, ss_gen, wad_yes,
+    "Allow movement over/under things (1 = Player only, 2 = All things)"
+  },
+
+  {
+    "jump_crouch",
+    (config_t *) &jump_crouch, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to enable jumping/crouching"
+  },
+
+  {
+    "viewheight_value",
+    (config_t *) &viewheight_value, NULL,
+    {41}, {32,56}, number, ss_gen, wad_yes,
+    "Player view height"
+  },
+
+  {
+    "flinching",
+    (config_t *) &flinching, NULL,
+    {0}, {0,3}, number, ss_gen, wad_yes,
+    "Flinch player view (0 = Off, 1 = Upon landing, 2 = Upon taking damage, 3 = Upon either)"
+  },
+
+  {
+    "explosion_shake",
+    (config_t *) &explosion_shake, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to make explosions shake the view"
+  },
+
+  {
+    "breathing",
+    (config_t *) &breathing, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to imitate player's breathing (subtle idle bobbing)"
+  },
+
+  {
+    "teleporter_zoom",
+    (config_t *) &teleporter_zoom, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to apply a zoom effect when teleporting"
+  },
+
+  {
+    "death_camera",
+    (config_t *) &death_camera, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to force third person perspective upon death"
+  },
+
+  {
+    "chasecam_mode",
+    (config_t *) &chasecam_mode, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Chasecam mode (0 = Off, 1 = Back, 2 = Front)"
+  },
+
+  {
+    "chasecam_distance",
+    (config_t *) &chasecam_distance, NULL,
+    {80}, {1,128}, number, ss_gen, wad_no,
+    "Chasecam distance"
+  },
+
+  {
+    "chasecam_height",
+    (config_t *) &chasecam_height, NULL,
+    {48}, {1,64}, number, ss_gen, wad_no,
+    "Chasecam height"
+  },
+
+  {
+    "chasecam_crosshair",
+    (config_t *) &chasecam_crosshair, NULL,
+    {0}, {0,1}, number, ss_none, wad_no,
+    "1 to allow crosshair when using Chasecam"
+  },
+
+  {
+    "menu_background_all",
+    (config_t *) &menu_background_all, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to draw background for all menus"
+  },
+
+  {
+    "no_menu_tint",
+    (config_t *) &no_menu_tint, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to disable palette tint in menus"
+  },
+
+  {
+    "no_berserk_tint",
+    (config_t *) &no_berserk_tint, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to disable Berserk tint"
+  },
+
+  {
+    "no_radsuit_tint",
+    (config_t *) &no_radsuit_tint, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to disable Radiation Suit tint"
+  },
+
+  {
+    "nightvision_visor",
+    (config_t *) &nightvision_visor, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to enable night-vision effect for the light amplification visor"
+  },
+
+  {
+    "damagecount_cap",
+    (config_t *) &damagecount_cap, NULL,
+    {100}, {0,100}, number, ss_gen, wad_no,
+    "Player damage tint cap"
+  },
+
+  {
+    "bonuscount_cap",
+    (config_t *) &bonuscount_cap, NULL,
+    {-1}, {-1,100}, number, ss_gen, wad_no,
+    "Player bonus tint cap"
+  },
+
+  {
+    "wipe_speed_percentage",
+    (config_t *) &wipe_speed_percentage, NULL,
+    {100}, {50,200}, number, ss_gen, wad_yes,
+    "Screen Wipe speed percentage"
+  },
+
+  {
+    "alt_interpic",
+    (config_t *) &alt_interpic, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "Alternative intermission background (spinning camera view)"
+  },
+
+  {
+    "fake_contrast",
+    (config_t *) &fake_contrast, NULL,
+    {1}, {0,2}, number, ss_gen, wad_yes,
+    "Fake contrast for walls (0 = Off, 1 = Smooth, 2 = Vanilla)"
+  },
+
+  {
+    "diminished_lighting",
+    (config_t *) &diminished_lighting, NULL,
+    {1}, {0,1}, number, ss_gen, wad_yes,
+    "1 to enable diminished lighting (light emitted by player)"
+  },
+
+  {
+    "s_clipping_dist_x2",
+    (config_t *) &s_clipping_dist_x2, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to double the sound clipping distance"
+  },
+
+  {
+    "one_key_saveload",
+    (config_t *) &one_key_saveload, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 for single key quick saving/loading"
+  },
+
+  {
+    "rewind_interval",
+    (config_t *) &rewind_interval, NULL,
+    {1}, {1,600}, number, ss_gen, wad_no,
+    "Interval between rewind key-frames, in seconds"
+  },
+
+  {
+    "rewind_depth",
+    (config_t *) &rewind_depth, NULL,
+    {60}, {0,600}, number, ss_gen, wad_no,
+    "Number of rewind key-frames to be stored (0 = No rewinding)"
+  },
+
+  {
+    "rewind_timeout",
+    (config_t *) &rewind_timeout, NULL,
+    {10}, {0,25}, number, ss_gen, wad_no,
+    "Max. time to store a key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)"
+  },
+
+  {
+    "no_page_ticking",
+    (config_t *) &no_page_ticking, NULL,
+    {0}, {0,2}, number, ss_gen, wad_no,
+    "Play internal demos (0 = Always, 1 = Not in menus, 2 = Never)"
+  },
+
+  {
+    "quick_quitgame",
+    (config_t *) &quick_quitgame, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "1 to skip prompt on Quit Game"
+  },
+
+#if 0
+  {
+    "a11y_sector_lighting",
+    (config_t *) &a11y_sector_lighting, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "0 to disable flickering lights"
+  },
+#endif
+
+  {
+    "a11y_weapon_flash",
+    (config_t *) &a11y_weapon_flash, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "0 to disable weapon light flashes"
+  },
+
+  {
+    "a11y_weapon_pspr",
+    (config_t *) &a11y_weapon_pspr, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "0 to disable weapon muzzleflash rendering"
+  },
+
+  {
+    "a11y_invul_colormap",
+    (config_t *) &a11y_invul_colormap, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "0 to disable the Invulnerability colormap"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   //
   // Weapons options
@@ -730,27 +1019,102 @@ default_t defaults[] = {
     "1 to hide weapon"
   },
 
-  {
-    "view_bobbing_pct",
+  { // [Nugget] Changed config key, extended
+    "view_bobbing_percentage",
     (config_t *) &view_bobbing_pct, NULL,
-    {4}, {0,4}, number, ss_weap, wad_no,
-    "Player View Bobbing (0 - 0%, 1 - 25% ... 4 - 100%)"
+    {100}, {0,100}, number, ss_weap, wad_no,
+    "Player View Bobbing percentage"
   },
 
-  {
-    "weapon_bobbing_pct",
+  { // [Nugget] Changed config key, extended
+    "weapon_bobbing_percentage",
     (config_t *) &weapon_bobbing_pct, NULL,
-    {4}, {0,4}, number, ss_weap, wad_no,
-    "Player Weapon Bobbing (0 - 0%, 1 - 25% ... 4 - 100%)"
+    {100}, {0,100}, number, ss_weap, wad_no,
+    "Player Weapon Bobbing percentage"
   },
 
   // [FG] centered or bobbing weapon sprite
+  // [Nugget] Horizontal weapon centering
   {
     "center_weapon",
     (config_t *) &center_weapon, NULL,
-    {0}, {0,2}, number, ss_weap, wad_no,
-    "1 to center the weapon sprite during attack, 2 to keep it bobbing"
+    {0}, {0,3}, number, ss_weap, wad_no, 
+    "1 to center the weapon sprite during attack, 2 to keep it bobbing, 3 to center it horizontally"
   },
+
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "no_hor_autoaim",
+    (config_t *) &no_hor_autoaim, NULL,
+    {0}, {0,1}, number, ss_weap, wad_yes,
+    "1 to disable horizontal projectile autoaim"
+  },
+
+  {
+    "switch_on_pickup",
+    (config_t *) &switch_on_pickup, NULL,
+    {1}, {0,1}, number, ss_weap, wad_no,
+    "1 to switch weapons when acquiring new ones or ammo for them"
+  },
+
+  {
+    "always_bob",
+    (config_t *) &always_bob, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to always bob weapon every tic (fixes choppy Chainsaw bobbing)"
+  },
+
+  {
+    "bobbing_style",
+    (config_t *) &bobbing_style, NULL,
+    {0}, {0,6}, number, ss_weap, wad_yes,
+    "Weapon Bobbing Style"
+  },
+
+  {
+    "weapon_inertia",
+    (config_t *) &weapon_inertia, NULL,
+    {0}, {0,1}, number, ss_weap, wad_yes,
+    "1 to enable weapon inertia"
+  },
+
+  {
+    "weapon_inertia_scale_pct",
+    (config_t *) &weapon_inertia_scale_pct, NULL,
+    {100}, {50,200}, number, ss_weap, wad_yes,
+    "Weapon inertia scale percentage"
+  },
+
+  {
+    "weaponsquat",
+    (config_t *) &weaponsquat, NULL,
+    {0}, {0,1}, number, ss_weap, wad_yes,
+    "1 to squat weapon down on impact"
+  },
+
+  {
+    "translucent_pspr",
+    (config_t *) &translucent_pspr, NULL,
+    {0}, {0,1}, number, ss_weap, wad_yes,
+    "1 to enable translucency for weapon flash sprites"
+  },
+
+  {
+    "show_berserk",
+    (config_t *) &show_berserk, NULL,
+    {1}, {0,1}, number, ss_weap, wad_yes,
+    "1 to display Berserk pack when using the Fist, if available"
+  },
+
+  {
+    "sx_fix",
+    (config_t *) &sx_fix, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "1 to correct first person sprite centering"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   {  // killough 2/8/98: weapon preferences set by user:
     "weapon_choice_1",
@@ -889,6 +1253,52 @@ default_t defaults[] = {
     "1 to enable dogs to jump"
   },
 
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "extra_gibbing",
+    (config_t *) &extra_gibbing_on, NULL,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable extra gibbing in general (affected by CVARs below)"
+  },
+
+  {
+    "extra_gibbing_fist",
+    (config_t *) &extra_gibbing[EXGIB_FIST], NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to enable extra gibbing for Berserk Fist"
+  },
+
+  {
+    "extra_gibbing_csaw",
+    (config_t *) &extra_gibbing[EXGIB_CSAW], NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to enable extra gibbing for Chainsaw"
+  },
+
+  {
+    "extra_gibbing_ssg",
+    (config_t *) &extra_gibbing[EXGIB_SSG], NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to enable extra gibbing for SSG"
+  },
+
+  {
+    "bloodier_gibbing",
+    (config_t *) &bloodier_gibbing, NULL,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable bloodier gibbing"
+  },
+
+  {
+    "zdoom_item_drops",
+    (config_t *) &zdoom_item_drops, NULL,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to enable ZDoom-like item drops for dying enemies"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
+
   {
     "voxels_rendering",
     (config_t *) &default_voxels_rendering, (config_t *) &voxels_rendering,
@@ -924,6 +1334,15 @@ default_t defaults[] = {
     {1}, {0,1}, number, ss_enem, wad_no,
     "0 original, 1 blocky"
   },
+
+  /*
+  { // [Nugget - ceski] Selective fuzz darkening
+    "fuzzdark_mode",
+    (config_t *) &fuzzdark_mode, NULL,
+    {0}, {0,1}, number, ss_enem, wad_no,
+    "0 original, 1 selective darkening"
+  },
+  */
 
   //
   // Compatibility
@@ -1136,6 +1555,143 @@ default_t defaults[] = {
     "1 to enable donut overrun emulation"
   },
 
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "comp_bruistarget",
+    (config_t *) &comp_bruistarget, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "Bruiser attack doesn't face target"
+  },
+
+  {
+    "comp_nomeleesnap",
+    (config_t *) &comp_nomeleesnap, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Disable snapping to target when using melee"
+  },
+
+  {
+    "comp_longautoaim",
+    (config_t *) &comp_longautoaim, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Double autoaim range"
+  },
+
+  {
+    "comp_lscollision",
+    (config_t *) &comp_lscollision, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Fix Lost Soul colliding with items"
+  },
+
+  {
+    "comp_lsamnesia",
+    (config_t *) &comp_lsamnesia, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "Lost Soul forgets target upon impact"
+  },
+
+  {
+    "comp_fuzzyblood",
+    (config_t *) &comp_fuzzyblood, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Fuzzy things bleed fuzzy blood"
+  },
+
+  {
+    "comp_nonbleeders",
+    (config_t *) &comp_nonbleeders, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Non-bleeders don't bleed when crushed"
+  },
+
+  {
+    "comp_iosdeath",
+    (config_t *) &comp_iosdeath, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Fix lopsided Icon of Sin explosions"
+  },
+
+  {
+    "comp_choppers",
+    (config_t *) &comp_choppers, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Permanent IDCHOPPERS invulnerability"
+  },
+
+  {
+    "comp_blazing2",
+    (config_t *) &comp_blazing2, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "Blazing doors reopen with wrong sound"
+  },
+
+  {
+    "comp_manualdoor",
+    (config_t *) &comp_manualdoor, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "Manually-toggled moving doors are silent"
+  },
+
+  {
+    "comp_switchsource",
+    (config_t *) &comp_switchsource, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Corrected switch sound source"
+  },
+
+  {
+    "comp_cgundblsnd",
+    (config_t *) &comp_cgundblsnd, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "Chaingun makes two sounds with one bullet"
+  },
+
+  {
+    "comp_cgunnersfx",
+    (config_t *) &comp_cgunnersfx, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Chaingunner uses pistol/chaingun sound"
+  },
+
+  {
+    "comp_flamst",
+    (config_t *) &comp_flamst, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Arch-Vile fire plays flame start sound"
+  },
+
+  {
+    "comp_godface",
+    (config_t *) &comp_godface, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Higher god-mode face priority"
+  },
+
+  {
+    "comp_deadoof",
+    (config_t *) &comp_deadoof, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "Dead players can still play oof sound"
+  },
+
+  {
+    "comp_unusedpals",
+    (config_t *) &comp_unusedpals, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Use unused pain/bonus palettes"
+  },
+
+  {
+    "comp_keypal",
+    (config_t *) &comp_keypal, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "Key pickup resets palette"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
+
   // default compatibility
   {
     "default_complevel",
@@ -1195,6 +1751,41 @@ default_t defaults[] = {
     "key to toggle free look",
     input_freelook, { {0, 0} }
   },
+
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "input_crosshair",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle crosshair",
+    input_crosshair, { {0, 0} }
+  },
+
+  {
+    "input_zoom",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle zoom",
+    input_zoom, { {0, 0} }
+  },
+
+  {
+    "zoom_fov",
+    (config_t *) &zoom_fov, NULL,
+    {FOV_MIN}, {FOV_MIN,FOV_MAX}, number, ss_keys, wad_no,
+    "Field of View when zoom is enabled"
+  },
+
+  {
+    "input_chasecam",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to cycle through chasecam modes",
+    input_chasecam, { {0, 0} }
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   // [FG] reload current level / go to next level
   {
@@ -1321,6 +1912,22 @@ default_t defaults[] = {
     input_speed, { {INPUT_KEY, KEY_RSHIFT} }
   },
 
+  { // [Nugget] 
+    "input_jump",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to jump",
+    input_jump, { {INPUT_KEY, KEY_RALT} }
+  },
+
+  { // [Nugget] 
+    "input_crouch",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to crouch/duck",
+    input_crouch, { {INPUT_KEY, 'c'} }
+  },
+
   {
     "input_savegame",
     NULL, NULL,
@@ -1335,6 +1942,14 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to restore from saved games",
     input_loadgame, { {INPUT_KEY, KEY_F3} }
+  },
+
+  { // [Nugget] 
+    "input_rewind",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to rewind",
+    input_rewind, { {0, 0} }
   },
 
   {
@@ -1517,6 +2132,14 @@ default_t defaults[] = {
                          {INPUT_MOUSEB, MOUSE_BUTTON_WHEELDOWN} }
   },
 
+  { // [Nugget] 
+    "input_map_mini",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to activate minimap mode",
+    input_map_mini, { {0, 0} }
+  },
+
   {
     "input_map_gobig",
     NULL, NULL,
@@ -1548,6 +2171,41 @@ default_t defaults[] = {
     "key to clear all markers on automap",
     input_map_clear, { {INPUT_KEY, 'c'} }
   },
+
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "input_map_blink",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to make automap markers blink",
+    input_map_blink, { {INPUT_KEY, 'b'} }
+  },
+
+  {
+    "input_map_tagfinder",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to find associated sectors and lines",
+    input_map_tagfinder, { {0, 0} }
+  },
+
+  {
+    "input_map_teleport",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to teleport to automap pointer",
+    input_map_teleport, { {0, 0} }
+  },
+
+  {
+    "fancy_teleport",
+    (config_t *) &fancy_teleport, NULL,
+    {1}, {0,1}, number, ss_keys, wad_no,
+    "Use effects when teleporting to pointer (fog, sound and zoom)"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   {
     "input_map_grid",
@@ -1725,6 +2383,82 @@ default_t defaults[] = {
     input_avj, { {0, 0} }
   },
 
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "input_infammo",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle infinite ammo",
+    input_infammo, { {0, 0} }
+  },
+
+  {
+    "input_fastweaps",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle fast weapons",
+    input_fastweaps, { {0, 0} }
+  },
+
+  {
+    "input_resurrect",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to resurrect",
+    input_resurrect, { {0, 0} }
+  },
+
+  {
+    "input_fly",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle fly mode",
+    input_fly, { {0, 0} }
+  },
+
+  {
+    "input_summonr",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to summon last summoned mobj",
+    input_summonr, { {0, 0} }
+  },
+
+  {
+    "input_linetarget",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle linetarget query mode",
+    input_linetarget, { {0, 0} }
+  },
+
+  {
+    "input_mdk",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to perform MDK attack",
+    input_mdk, { {0, 0} }
+  },
+
+  {
+    "input_saitama",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle MDK Fist",
+    input_saitama, { {0, 0} }
+  },
+
+  {
+    "input_boomcan",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle explosive hitscan attacks",
+    input_boomcan, { {0, 0} }
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
+
   {
     "input_chat_dest0",
     NULL, NULL,
@@ -1782,6 +2516,14 @@ default_t defaults[] = {
     "key to cycle to the next weapon",
     input_nextweapon, { {INPUT_MOUSEB, MOUSE_BUTTON_WHEELUP},
                         {INPUT_JOYB, CONTROLLER_RIGHT_SHOULDER} }
+  },
+
+  { // [Nugget] Last weapon key
+    "input_lastweapon",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to switch to the last used weapon",
+    input_lastweapon, { {0, 0} }
   },
 
   {
@@ -1870,6 +2612,13 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to take a clean screenshot",
     input_clean_screenshot, { {0, 0} }
+  },
+
+  { // [Nugget]
+    "screenshot_palette",
+    (config_t *) &screenshot_palette, NULL,
+    {1}, {0,3}, number, ss_none, wad_no,
+    "Keep palette changes in screenshots (0 = None, 1 = Normal, 2 = Clean, 3 = Both)"
   },
 
   {
@@ -2460,6 +3209,13 @@ default_t defaults[] = {
     "automap overlay mode (1 = on, 2 = dark)"
   },
 
+  { // [Nugget]
+    "automap_overlay_darkening",
+    (config_t *) &automap_overlay_darkening, NULL,
+    {20}, {0,31}, number, ss_none, wad_no,
+    "Dark Automap overlay darkening level"
+  },
+
   {
     "automaprotate",
     (config_t *) &automaprotate, NULL,
@@ -2517,12 +3273,26 @@ default_t defaults[] = {
     "1 to enable obituaries"
   },
 
+  { // [Nugget]
+    "show_save_messages",
+    (config_t *) &show_save_messages, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to enable save messages"
+  },
+
   // "A secret is revealed!" message
   {
     "hud_secret_message",
     (config_t *) &hud_secret_message, NULL,
-    {1}, {0,1}, number, ss_stat, wad_no,
+    {1}, {0,2}, number, ss_stat, wad_no, // [Nugget] "Count" mode from Crispy
     "\"A secret is revealed!\" message"
+  },
+
+  { // [Nugget] Announce milestone completion
+    "announce_milestones",
+    (config_t *) &announce_milestones, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to announce completion of milestones"
   },
 
   { // red range
@@ -2560,6 +3330,13 @@ default_t defaults[] = {
     "number of message lines"
   },
 
+  { // [Nugget] Restore message scroll direction toggle
+    "hud_msg_scrollup",
+    (config_t *) &hud_msg_scrollup, NULL,
+    {1}, {0,1}, number, ss_stat, wad_yes,
+    "1 enables message review list scrolling upward"
+  },
+
   {
     "message_colorized",
     (config_t *) &message_colorized, NULL,
@@ -2586,6 +3363,13 @@ default_t defaults[] = {
     (config_t *) &message_timer, NULL,
     {4000}, {0,UL}, 0, ss_none, wad_yes,
     "Duration of normal Doom messages (ms)"
+  },
+
+  { // [Nugget]
+    "sp_chat",
+    (config_t *) &sp_chat, NULL,
+    {0}, {0,1}, number, ss_none, wad_no,
+    "1 to enable multiplayer chat in singleplayer"
   },
 
   {
@@ -2632,6 +3416,20 @@ default_t defaults[] = {
     (config_t *) &st_solidbackground, NULL,
     {0}, {0,1}, number, ss_stat, wad_yes,
     "1 for solid color status bar background in widescreen mode"
+  },
+
+  { // [Nugget]
+    "show_ssg",
+    (config_t *) &show_ssg, NULL,
+    {1}, {0,1}, number, ss_none, wad_yes,
+    "1 to show SSG availability in the Shotgun slot of the arms widget"
+  },
+
+  { // [Nugget]
+    "alt_arms",
+    (config_t *) &alt_arms, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "1 to enable alternative Arms widget display"
   },
 
   { // [Alaux]
@@ -2727,6 +3525,13 @@ default_t defaults[] = {
     "show level stats (kill, items and secrets) widget (1 = on Automap, 2 = on HUD, 3 = always)"
   },
 
+  { // [Nugget] Restore kills percentage
+    "hud_kills_percentage",
+    (config_t *) &hud_kills_percentage, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to show Kills percentage in Stats display"
+  },
+
   // [FG] level time widget
   {
     "hud_level_time",
@@ -2737,18 +3542,106 @@ default_t defaults[] = {
 
   {
     "hud_time_use",
-    (config_t *) &hud_time_use, NULL,
+    (config_t *) &hud_time[TIMER_USE], NULL, // [Nugget]
     {0}, {0,1}, number, ss_stat, wad_no,
     "show split time when pressing the use button"
+  },
+
+  { // [Nugget]
+    "hud_time_teleport",
+    (config_t *) &hud_time[TIMER_TELEPORT], NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "show split time when going through a teleporter"
+  },
+
+  { // [Nugget]
+    "hud_time_keypickup",
+    (config_t *) &hud_time[TIMER_KEYPICKUP], NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "show split time when picking up a key"
+  },
+
+  { // [Nugget] Powerup timers
+    "hud_power_timers",
+    (config_t *) &hud_power_timers, NULL,
+    {HUD_WIDGET_OFF}, {HUD_WIDGET_OFF,HUD_WIDGET_ALWAYS}, number, ss_stat, wad_no,
+    "show powerup timers (1 = on Automap, 2 = on HUD, 3 = always)"
   },
 
   // prefer Crispy HUD, Boom HUD without bars, or Boom HUD with bars
   {
     "hud_type",
     (config_t *) &hud_type, NULL,
-    {HUD_TYPE_BOOM}, {HUD_TYPE_CRISPY,NUM_HUD_TYPES-1}, number, ss_stat, wad_no,
-    "Fullscreen HUD (0 = Crispy, 1 = Boom (No Bars), 2 = Boom)"
+    {HUD_TYPE_CRISPY}, {HUD_TYPE_CRISPY,NUM_HUD_TYPES-1}, number, ss_stat, wad_no, // [Nugget] Make Nugget HUD the default
+    "Fullscreen HUD (0 = Nugget, 1 = Boom (No Bars), 2 = Boom)" // [Nugget] Rename "Crispy" to "Nugget"
   },
+
+  // [Nugget] Extended HUD colors /-------------------------------------------
+
+  {
+    "hudcolor_time_scale",
+    (config_t *) &hudcolor_time_scale, NULL,
+    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for time scale (game speed percentage) in Time display"
+  },
+
+  {
+    "hudcolor_total_time",
+    (config_t *) &hudcolor_total_time, NULL,
+    {CR_GREEN}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for total level time in Time display"
+  },
+
+  {
+    "hudcolor_time",
+    (config_t *) &hudcolor_time, NULL,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for level time in Time display"
+  },
+
+  {
+    "hudcolor_event_timer",
+    (config_t *) &hudcolor_event_timer, NULL,
+    {CR_GOLD}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for event timer in Time display"
+  },
+
+  {
+    "hudcolor_kills",
+    (config_t *) &hudcolor_kills, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Kills label in Stats display"
+  },
+
+  {
+    "hudcolor_items",
+    (config_t *) &hudcolor_items, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Items label in Stats display"
+  },
+
+  {
+    "hudcolor_secrets",
+    (config_t *) &hudcolor_secrets, NULL,
+    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for Secrets label in Stats display"
+  },
+
+  {
+    "hudcolor_ms_incomp",
+    (config_t *) &hudcolor_ms_incomp, NULL,
+    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for incomplete milestones in Stats display"
+  },
+
+  {
+    "hudcolor_ms_comp",
+    (config_t *) &hudcolor_ms_comp, NULL,
+    {CR_BLUE1}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
+    "Color used for complete milestones in Stats display"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   // backpack changes thresholds
   {
@@ -2787,11 +3680,18 @@ default_t defaults[] = {
     "Widget layout (0 = Horizontal, 1 = Vertical)"
   },
 
-  {
+  { // [Nugget] Crosshair toggle
+    "hud_crosshair_on",
+    (config_t *) &hud_crosshair_on, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "enable crosshair"
+  },
+
+  { // [Nugget] Crosshair type
     "hud_crosshair",
     (config_t *) &hud_crosshair, NULL,
-    {0}, {0,HU_CROSSHAIRS-1}, number, ss_stat, wad_no,
-    "enable crosshair"
+    {1}, {1,HU_CROSSHAIRS-1}, number, ss_stat, wad_no,
+    "crosshair type"
   },
 
   {
@@ -2811,8 +3711,22 @@ default_t defaults[] = {
   {
     "hud_crosshair_lockon",
     (config_t *) &hud_crosshair_lockon, NULL,
+    {0}, {0,2}, number, ss_stat, wad_no, // [Nugget] Vertical-only
+    "Lock crosshair on target (1 = Vertically, 2 = Fully)" // [Nugget] Vertical-only
+  },
+
+  { // [Nugget] Horizontal autoaim indicators
+    "hud_crosshair_indicators",
+    (config_t *) &hud_crosshair_indicators, NULL,
     {0}, {0,1}, number, ss_stat, wad_no,
-    "1 to lock crosshair on target"
+    "1 to enable horizontal autoaim indicators for crosshair"
+  },
+
+  { // [Nugget]
+    "hud_crosshair_fuzzy",
+    (config_t *) &hud_crosshair_fuzzy, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to account for fuzzy targets when coloring and/or locking-on"
   },
 
   {
@@ -2827,6 +3741,13 @@ default_t defaults[] = {
     (config_t *) &hud_crosshair_target_color, NULL,
     {CR_YELLOW}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_no,
     "target crosshair color"
+  },
+
+  { // [Nugget]
+    "fail_safe",
+    (config_t *) &fail_safe, NULL,
+    {0}, {0,1}, number, ss_none, wad_no,
+    "Use only when instructed"
   },
 
   {NULL}         // last entry
@@ -3344,7 +4265,7 @@ void M_LoadDefaults(void)
 
     for (dp = defaults; dp->name; dp++)
     {
-        if (dp->type == string)
+        if (dp->type == string && dp->defaultvalue.s) // [Nugget] Check for empty strings
         {
             dp->location->s = strdup(dp->defaultvalue.s);
         }
