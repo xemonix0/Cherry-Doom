@@ -23,6 +23,7 @@
 #include "f_wipe.h"
 #include "i_video.h"
 #include "m_random.h"
+#include "v_flextran.h"
 #include "v_video.h"
 #include "z_zone.h"
 
@@ -60,56 +61,51 @@ static void wipe_shittyColMajorXform(byte *array, int width, int height)
   Z_Free(dest);
 }
 
-static int colorxform_steps = 0; // [Nugget]
+// [FG] cross-fading screen wipe implementation
+
+static int fade_tick;
 
 static int wipe_initColorXForm(int width, int height, int ticks)
 {
   V_PutBlock(0, 0, width, height, wipe_scr_start);
-  colorxform_steps = 0;
+  fade_tick = 0;
   return 0;
 }
 
-// killough 3/5/98: reformatted and cleaned up
 static int wipe_doColorXForm(int width, int height, int ticks)
 {
-  boolean unchanged = true;
-  // [Nugget] Removed unused variables
-
-  ticks *= 8; // [Nugget] Speed it up, to match "Melt" wipe speed
-
   // [Nugget] Screen Wipe speed
   if (!strictmode && wipe_speed_percentage != 100)
   { ticks = MAX(1, ticks * wipe_speed_percentage / 100); }
 
-  // [Nugget] Partially-rewrote loop to make it work
-  for (int y = 0;  y < video.height;  y++)
+  for (int y = 0; y < height; y++)
   {
-    for (int x = 0;  x < video.width;  x++)
-    {
-      byte *w = wipe_scr     + (y * video.pitch + x);
-      byte *e = wipe_scr_end + (y * video.width + x);
+    byte *sta = wipe_scr_start + y * width;
+    byte *end = wipe_scr_end + y * width;
+    byte *dst = wipe_scr + y * video.pitch;
 
-      if (*w != *e)
-        {
-          int newval;
-          unchanged = false;
-          *w = *w > *e ?
-            (newval = *w - ticks) < *e ? *e : newval :
-            (newval = *w + ticks) > *e ? *e : newval ;
-        }
+    for (int x = 0; x < width; x++)
+    {
+      unsigned int *fg2rgb = Col2RGB8[fade_tick];
+      unsigned int *bg2rgb = Col2RGB8[64 - fade_tick];
+      unsigned int fg, bg;
+
+      fg = fg2rgb[end[x]];
+      bg = bg2rgb[sta[x]];
+      fg = (fg + bg) | 0x1f07c1f;
+      dst[x] = RGB32k[0][0][fg & (fg >> 15)];
     }
   }
 
-  // [Nugget] If this wipe is used while the screen is being darkened,
-  // a softlock occurs. This is a fail-safe.
-  // 60 is the number of steps the wipe takes at 50% speed.
-  if (colorxform_steps++ >= 60) { unchanged = true; }
+  fade_tick += 2 * ticks;
 
-  return unchanged;
+  return (fade_tick > 64);
 }
 
-static int wipe_exitColorXForm(int width, int height, int ticks)
+static int wipe_exit(int width, int height, int ticks)
 {
+  Z_Free(wipe_scr_start);
+  Z_Free(wipe_scr_end);
   return 0;
 }
 
@@ -203,12 +199,154 @@ static int wipe_doMelt(int width, int height, int ticks)
 static int wipe_exitMelt(int width, int height, int ticks)
 {
   Z_Free(col_y);
-  Z_Free(wipe_scr_start);
-  Z_Free(wipe_scr_end);
+  wipe_exit(width, height, ticks);
   return 0;
 }
 
-// [Nugget] "Fade" wipe /-----------------------------------------------------
+int wipe_StartScreen(int x, int y, int width, int height)
+{
+  int size = video.width * video.height;
+  wipe_scr_start = Z_Malloc(size * sizeof(*wipe_scr_start), PU_STATIC, NULL);
+  I_ReadScreen(wipe_scr_start);
+  return 0;
+}
+
+int wipe_EndScreen(int x, int y, int width, int height)
+{
+  int size = video.width * video.height;
+  wipe_scr_end = Z_Malloc(size * sizeof(*wipe_scr_end), PU_STATIC, NULL);
+  I_ReadScreen(wipe_scr_end);
+  V_DrawBlock(x, y, width, height, wipe_scr_start); // restore start scr.
+  return 0;
+}
+
+static int wipe_NOP(int x, int y, int t)
+{
+  return 0;
+}
+
+/*
+// Copyright(C) 1992 Id Software, Inc.
+// Copyright(C) 2007-2011 Moritz "Ripper" Kroll
+
+===================
+=
+= FizzleFade
+=
+= It uses maximum-length Linear Feedback Shift Registers (LFSR) counters.
+= You can find a list of them with lengths from 3 to 168 at:
+= http://www.xilinx.com/support/documentation/application_notes/xapp052.pdf
+= Many thanks to Xilinx for this list!!!
+=
+===================
+*/
+
+// XOR masks for the pseudo-random number sequence starting with n=17 bits
+static const uint32_t rndmasks[] = {
+                    // n    XNOR from (starting at 1, not 0 as usual)
+    0x00012000,     // 17   17,14
+    0x00020400,     // 18   18,11
+    0x00040023,     // 19   19,6,2,1
+    0x00090000,     // 20   20,17
+    0x00140000,     // 21   21,19
+    0x00300000,     // 22   22,21
+    0x00420000,     // 23   23,18
+    0x00e10000,     // 24   24,23,22,17
+    0x01200000,     // 25   25,22      (this is enough for 8191x4095)
+};
+
+// Returns the number of bits needed to represent the given value
+static int log2_ceil(uint32_t x)
+{
+    int n = 0;
+    uint32_t v = 1;
+
+    while (v < x)
+    {
+        n++;
+        v <<= 1;
+    }
+
+    return n;
+}
+
+static unsigned int rndbits_y;
+static unsigned int rndmask;
+static unsigned int lastrndval;
+
+static int wipe_initFizzle(int width, int height, int ticks)
+{
+    int rndbits_x = log2_ceil(video.unscaledw);
+    rndbits_y = log2_ceil(COLUMN_MAX_Y);
+
+    int rndbits = rndbits_x + rndbits_y;
+    if (rndbits < 17)
+        rndbits = 17; // no problem, just a bit slower
+    else if (rndbits > 25)
+        rndbits = 25; // fizzle fade will not fill whole screen
+
+    rndmask = rndmasks[rndbits - 17];
+
+    V_PutBlock(0, 0, width, height, wipe_scr_start);
+
+    lastrndval = 0;
+
+    return 0;
+}
+
+static int wipe_doFizzle(int width, int height, int ticks)
+{
+    const int pixperframe = (video.unscaledw * COLUMN_MAX_Y) >> 5;
+    unsigned int rndval = lastrndval;
+
+    for (unsigned p = 0; p < pixperframe; p++)
+    {
+        // seperate random value into x/y pair
+
+        unsigned int x = rndval >> rndbits_y;
+        unsigned int y = rndval & ((1 << rndbits_y) - 1);
+
+        // advance to next random element
+
+        rndval = (rndval >> 1) ^ (rndval & 1 ? 0 : rndmask);
+
+        if (x >= video.unscaledw || y >= COLUMN_MAX_Y)
+        {
+            if (rndval == 0) // entire sequence has been completed
+            {
+                return true;
+            }
+
+            p--;
+            continue;
+        }
+
+        // copy one pixel
+        vrect_t rect = {x, y, 1, 1};
+        V_ScaleRect(&rect);
+
+        byte *src = wipe_scr_end + rect.sy * width + rect.sx;
+        byte *dest = wipe_scr + rect.sy * video.pitch + rect.sx;
+
+        while (rect.sh--)
+        {
+            memcpy(dest, src, rect.sw);
+            src += width;
+            dest += video.pitch;
+        }
+
+        if (rndval == 0) // entire sequence has been completed
+        {
+            return true;
+        }
+    }
+
+    lastrndval = rndval;
+
+    return false;
+}
+
+// [Nugget] "Black Fade" wipe /-----------------------------------------------
 
 static boolean fadeIn;
 
@@ -259,43 +397,25 @@ static int wipe_doFade(int width, int height, int ticks)
   return false;
 }
 
-static int wipe_exitFade(int width, int height, int ticks)
-{
-  return 0;
-}
-
 // [Nugget] -----------------------------------------------------------------/
 
-int wipe_StartScreen(int x, int y, int width, int height)
-{
-  int size = video.width * video.height;
-  wipe_scr_start = Z_Malloc(size * sizeof(*wipe_scr_start), PU_STATIC, NULL);
-  I_ReadScreen(wipe_scr_start);
-  return 0;
-}
-
-int wipe_EndScreen(int x, int y, int width, int height)
-{
-  int size = video.width * video.height;
-  wipe_scr_end = Z_Malloc(size * sizeof(*wipe_scr_end), PU_STATIC, NULL);
-  I_ReadScreen(wipe_scr_end);
-  V_DrawBlock(x, y, width, height, wipe_scr_start); // restore start scr.
-  return 0;
-}
-
-// [Nugget] Rearranged for convenience
 static int (*const wipes[])(int, int, int) = {
-  0, 0, 0, // [Nugget] Dummies for "no wipe"
+  wipe_NOP,
+  wipe_NOP,
+  wipe_exit,
   wipe_initMelt,
   wipe_doMelt,
   wipe_exitMelt,
   wipe_initColorXForm,
   wipe_doColorXForm,
-  wipe_exitColorXForm,
+  wipe_exit,
+  wipe_initFizzle,
+  wipe_doFizzle,
+  wipe_exit,
   // [Nugget] "Fade" wipe /------------
   wipe_initFade,
   wipe_doFade,
-  wipe_exitFade
+  wipe_exit
   // [Nugget] ------------------------/
 };
 

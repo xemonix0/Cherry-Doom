@@ -151,8 +151,6 @@ void V_DrawPatchGeneral(int x, int y, struct patch_s *patch, boolean flipped);
 
 #define V_DrawPatchFlipped(x, y, p) V_DrawPatchGeneral(x, y, p, true)
 
-#define V_DrawPatchDirect V_DrawPatch /* killough 5/2/98 */
-
 void V_DrawPatchTranslated(int x, int y, struct patch_s *patch, byte *outr);
 
 void V_DrawPatchTRTR(int x, int y, struct patch_s *patch, byte *outr1,
@@ -183,6 +181,11 @@ void V_DrawBackground(const char *patchname);
 // [FG] colored blood and gibs
 
 int V_BloodColor(int blood);
+
+struct patch_s *V_LinearToTransPatch(const byte *data, int width, int height,
+                                     int color_key);
+
+void V_ScreenShot(void);
 
 #endif
 

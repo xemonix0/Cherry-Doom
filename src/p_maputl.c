@@ -1333,7 +1333,32 @@ boolean P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
     if (mapx == xt2 && mapy == yt2)
       break;
 
-    if ((yintercept >> FRACBITS) == mapy)
+    // [RH] Handle corner cases properly instead of pretending they don't
+    // exist.
+    // neither xintercept nor yintercept match!
+    if ((xintercept >> FRACBITS) != mapx && (yintercept >> FRACBITS) != mapy)
+    {
+      count = 64;  // Stop traversing, because somebody screwed up.
+    }
+    // xintercept and yintercept both match
+    else if ((xintercept >> FRACBITS) == mapx && (yintercept >> FRACBITS) == mapy)
+    {
+      // The trace is exiting a block through its corner. Not only does the
+      // block being entered need to be checked (which will happen when this
+      // loop continues), but the other two blocks adjacent to the corner
+      // also need to be checked.
+
+      if (!P_SightBlockLinesIterator(mapx + mapxstep, mapy) ||
+          !P_SightBlockLinesIterator(mapx, mapy + mapystep))
+      {
+        return false;
+      }
+      xintercept += xstep;
+      yintercept += ystep;
+      mapx += mapxstep;
+      mapy += mapystep;
+    }
+    else if ((yintercept >> FRACBITS) == mapy)
     {
       yintercept += ystep;
       mapx += mapxstep;

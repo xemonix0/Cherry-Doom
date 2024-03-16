@@ -30,8 +30,8 @@
 #include "hu_stuff.h"
 #include "i_video.h"
 #include "m_input.h"
-#include "m_menu.h"
-#include "m_misc2.h"
+#include "mn_menu.h"
+#include "m_misc.h"
 #include "p_maputl.h"
 #include "p_mobj.h"
 #include "p_setup.h"
@@ -2485,7 +2485,7 @@ void AM_Drawer (void)
       pspr_interp = false;
   }
   // [Alaux] Dark automap overlay
-  else if (automapoverlay == AM_OVERLAY_DARK && (!M_MenuIsShaded()
+  else if (automapoverlay == AM_OVERLAY_DARK && (!MN_MenuIsShaded()
                                                  || automapactive == AM_MINI)) // [Nugget] Minimap
     AM_shadeScreen();
 

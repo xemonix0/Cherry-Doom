@@ -56,12 +56,12 @@
 #include "info.h"
 #include "m_argv.h"
 #include "m_array.h"
+#include "m_config.h"
 #include "m_fixed.h"
 #include "m_input.h"
 #include "m_io.h"
-#include "m_menu.h"
+#include "mn_menu.h"
 #include "m_misc.h"
-#include "m_misc2.h"
 #include "m_swap.h"
 #include "net_client.h"
 #include "net_dedicated.h"
@@ -152,9 +152,6 @@ boolean singletics = false; // debug flag to cancel adaptiveness
 //jff 1/22/98 parms for disabling music and sound
 boolean nosfxparm;
 boolean nomusicparm;
-
-//jff 4/18/98
-extern boolean inhelpscreens;
 
 skill_t startskill;
 int     startepisode;
@@ -271,6 +268,7 @@ void D_UpdateDeltaTics(void)
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate = GS_DEMOSCREEN;
+boolean        screen_melt = true;
 extern int     showMessages;
 
 void D_Display (void)
@@ -319,7 +317,7 @@ void D_Display (void)
   wipe = false;
 
   // save the current screen if about to wipe
-  if (gamestate != wipegamestate && (strictmode || wipe_type)) // [Nugget]
+  if (gamestate != wipegamestate && (strictmode || screen_melt))
     {
       wipe = true;
       wipe_StartScreen(0, 0, video.unscaledw, SCREENHEIGHT);
@@ -468,12 +466,14 @@ void D_Display (void)
       int nowtime, tics;
       do
         {
+          I_Sleep(1);
           nowtime = I_GetTime();
           tics = nowtime - wipestart;
         }
       while (!tics);
       wipestart = nowtime;
-      done = wipe_ScreenWipe(strictmode ? wipe_Melt : wipe_type, 0, 0, video.unscaledw, SCREENHEIGHT, tics);
+      done = wipe_ScreenWipe(strictmode ? wipe_Melt : screen_melt,
+                             0, 0, video.unscaledw, SCREENHEIGHT, tics);
       M_Drawer();                   // menu is drawn even on top of wipes
       I_FinishUpdate();             // page flip or blit buffer
     }
@@ -533,7 +533,7 @@ void D_PageDrawer(void)
         }
     }
   else
-    M_DrawCredits();
+    MN_DrawCredits();
 }
 
 //
@@ -693,17 +693,12 @@ void D_StartTitle (void)
   D_AdvanceDemo();
 }
 
-static boolean CheckExtensions(const char *filename, const char *ext, ...)
+static boolean CheckExtensions(const char *filename, ...)
 {
     boolean result = false;
     va_list args;
 
-    if (M_StringCaseEndsWith(filename, ext))
-    {
-        return true;
-    }
-
-    va_start(args, ext);
+    va_start(args, filename);
     while (true)
     {
         const char *arg = va_arg(args, const char *);
@@ -794,8 +789,14 @@ static boolean D_AddZipFile(const char *file)
 
 void D_AddFile(const char *file)
 {
+  char *s = M_StringDuplicate(file);
+
+  NormalizeSlashes(s);
+
   // [FG] search for PWADs by their filename
-  char *path = D_TryFindWADByName(file);
+  char *path = D_TryFindWADByName(s);
+
+  free(s);
 
   if (M_StringCaseEndsWith(path, ".kvx"))
   {
@@ -836,25 +837,22 @@ char *D_DoomPrefDir(void)
 
     if (dir == NULL)
     {
-        char *result;
-
 #if !defined(_WIN32) || defined(_WIN32_WCE)
         // Configuration settings are stored in an OS-appropriate path
         // determined by SDL.  On typical Unix systems, this might be
         // ~/.local/share/chocolate-doom.  On Windows, we behave like
         // Vanilla Doom and save in the current directory.
 
-        result = SDL_GetPrefPath("", PROJECT_SHORTNAME);
+        char *result = SDL_GetPrefPath("", PROJECT_SHORTNAME);
         if (result != NULL)
         {
-            dir = M_StringDuplicate(result);
+            dir = M_DirName(result);
             SDL_free(result);
         }
         else
 #endif /* #ifndef _WIN32 */
         {
-            result = D_DoomExeDir();
-            dir = M_StringDuplicate(result);
+            dir = D_DoomExeDir();
         }
 
         M_MakeDirectory(dir);
@@ -1081,7 +1079,7 @@ static boolean FileContainsMaps(const char *filename)
 
         for (i = 0; i < header.numlumps; i++)
         {
-            if (StartsWithMapIdentifier(fileinfo[i].name))
+            if (MN_StartsWithMapIdentifier(fileinfo[i].name))
             {
                 ret = true;
                 break;
@@ -2097,7 +2095,7 @@ void D_NuggetUpdateCasual(void)
 
     R_SetZoom(ZOOM_RESET); // Reset FOV
 
-    M_ResetSetupMenu();
+    MN_SetupResetMenu();
   }
 }
 
@@ -2845,15 +2843,16 @@ void D_DoomMain(void)
 
   G_UpdateSideMove();
   G_UpdateCarryAngle();
+  I_UpdateAccelerateMouse();
 
-  M_ResetTimeScale();
+  MN_ResetTimeScale();
 
   I_Printf(VB_INFO, "S_Init: Setting up sound.");
   S_Init(snd_SfxVolume /* *8 */, snd_MusicVolume /* *8*/ );
 
   I_Printf(VB_INFO, "HU_Init: Setting up heads up display.");
   HU_Init();
-  M_SetMenuFontSpacing();
+  MN_SetHUFontKerning();
 
   I_Printf(VB_INFO, "ST_Init: Init status bar.");
   ST_Init();
@@ -3012,7 +3011,7 @@ void D_DoomMain(void)
   // [FG] init graphics (video.widedelta) before HUD widgets
   I_InitGraphics();
 
-  M_InitMenuStrings();
+  MN_InitMenuStrings();
 
   if (startloadgame >= 0)
   {

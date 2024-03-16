@@ -35,7 +35,7 @@
 #include "i_video.h" // fps
 #include "m_fixed.h"
 #include "m_input.h"
-#include "m_misc2.h"
+#include "m_misc.h"
 #include "m_swap.h"
 #include "p_map.h" // crosshair (linetarget)
 #include "p_mobj.h"
@@ -180,14 +180,15 @@ static hu_widget_t doom_widgets[MAX_HUDS+1][MAX_WIDGETS_D] = {
 // [Nugget] Extra slot for NUGHUD
 static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS_B] = {
   {
+    {&w_rate,   align_left,  align_top},
     {&w_monsec, align_left,  align_top},
     {&w_sttime, align_left,  align_top},
     {&w_powers, align_right, align_top}, // [Nugget] Powerup timers
     {&w_coord,  align_right, align_top},
     {&w_fps,    align_right, align_top},
-    {&w_rate,   align_left,  align_top},
     {NULL}
   }, {
+    {&w_rate,   align_left,  align_top},
     {&w_armor,  align_left,  align_bottom},
     {&w_health, align_left,  align_bottom},
     {&w_ammo,   align_left,  align_bottom},
@@ -199,9 +200,9 @@ static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS_B] = {
     {&w_powers, align_right, align_top}, // [Nugget] Powerup timers
     {&w_coord,  align_right, align_top},
     {&w_fps,    align_right, align_top},
-    {&w_rate,   align_left,  align_top},
     {NULL}
   }, {
+    {&w_rate,   align_left,  align_top},
     {&w_health, align_right, align_top},
     {&w_armor,  align_right, align_top},
     {&w_ammo,   align_right, align_bottom},
@@ -213,7 +214,6 @@ static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS_B] = {
     {&w_powers, align_right, align_top}, // [Nugget] Powerup timers
     {&w_coord , align_right, align_top},
     {&w_fps,    align_right, align_top},
-    {&w_rate,   align_left,  align_top},
     {NULL}
   }, { // [Nugget] NUGHUD slot
     {&w_keys,   align_direct, align_direct},
@@ -767,6 +767,8 @@ void HU_Start(void)
   HUlib_init_multiline(&w_rate, (voxels_rendering ? 2 : 1),
                        &boom_font, colrngs[hudcolor_xyco],
                        NULL, HU_widget_build_rate);
+  // [FG] draw the IDRATE widget exclusively
+  w_rate.exclusive = true;
 
   HU_set_centered_message(false);
 
@@ -1855,8 +1857,6 @@ void HU_Erase(void)
 
 static boolean bsdown; // Is backspace down?
 static int bscounter;
-
-int M_StringWidth(char *string);
 
 void HU_Ticker(void)
 {

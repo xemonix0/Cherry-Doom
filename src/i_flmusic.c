@@ -37,7 +37,7 @@ typedef fluid_long_long_t fluid_int_t;
 #include "i_printf.h"
 #include "i_sound.h"
 #include "m_array.h"
-#include "m_misc2.h"
+#include "m_misc.h"
 #include "memio.h"
 #include "mus2mid.h"
 #include "w_wad.h"
@@ -294,8 +294,6 @@ static boolean I_FL_InitStream(int device)
         FreeSynthAndSettings();
         return false;
     }
-
-    fluid_synth_set_gain(synth, 1.0f);
 
     I_Printf(VB_INFO, "FluidSynth Init: Using '%s'.",
              lumpnum >= 0 ? "SNDFONT lump" : soundfont_path);

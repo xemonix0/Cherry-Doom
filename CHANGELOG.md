@@ -29,6 +29,10 @@
   - **[Woof! 14.1.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_14.1.0)**, note:
     - Maintained SDL render driver setting (`sdl_renderdriver`)
   - **[Woof! 14.2.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_14.2.0)**
+  - **[Woof! 14.3.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_14.3.0)**, note:
+    - Restored `screen_melt`, replacing `wipe_type` [2]
+    - Replaced "Seizure" wipe with Woof's "Crossfade"
+    - Renamed "Fade" wipe to "Black Fade", and changed its value to `4` to make room for the "Fizzle" wipe
 - **Reimplemented _Move Over/Under Things_ feature** [3], making it much less bug-prone
 - **Renamed _Impact Pitch_ (`impact_pitch`) to _Flinching_ (`flinching`)** [2]
 - **Tweaked zooming effect**
@@ -52,4 +56,3 @@ the feature for all Things.
 - **Turbo cheat setting incorrect walk-strafing speed**
 - **Crash when toggling Alt. Arms Display without entering a map**
 - **_No Melee Snapping_ toggle not being forcefully disabled during non-casual play**
-- **"Seizure"-wipe softlock when using it while the screen is darkened**

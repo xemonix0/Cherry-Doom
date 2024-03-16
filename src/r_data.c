@@ -34,7 +34,7 @@
 #include "m_argv.h" // M_CheckParm()
 #include "m_fixed.h"
 #include "m_io.h"
-#include "m_misc2.h"
+#include "m_misc.h"
 #include "m_swap.h"
 #include "p_mobj.h"
 #include "p_tick.h"
@@ -852,7 +852,7 @@ static byte invul_orig[256];
 
 void R_InvulMode(void)
 {
-  if (colormaps == NULL)
+  if (colormaps == NULL || beta_emulation)
     return;
 
   switch (STRICTMODE(invul_mode))

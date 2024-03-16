@@ -43,7 +43,7 @@
 #include "m_argv.h"
 #include "m_fixed.h"
 #include "m_io.h"
-#include "m_menu.h"
+#include "mn_menu.h"
 #include "r_draw.h"
 #include "r_main.h"
 #include "r_plane.h"
@@ -531,7 +531,7 @@ void I_StartTic(void)
         else
         {
             old_rect = rect;
-            ev.data1 = 1;
+            ev.data1 = EV_RESIZE_VIEWPORT;
         }
 
         float scalex, scaley;
@@ -1384,6 +1384,7 @@ static void I_InitVideoParms(void)
     int p, tmp_scalefactor;
     SDL_DisplayMode mode;
 
+    I_ResetInvalidDisplayIndex();
     if (SDL_GetCurrentDisplayMode(video_display, &mode))
     {
         I_Error("Error getting display mode: %s", SDL_GetError());
@@ -1406,7 +1407,6 @@ static void I_InitVideoParms(void)
     // SDL may report native refresh rate as zero.
     native_refresh_rate = mode.refresh_rate;
 
-    I_ResetInvalidDisplayIndex();
     widescreen = default_widescreen;
     uncapped = default_uncapped;
     grabmouse = default_grabmouse;
@@ -1511,7 +1511,7 @@ static void I_InitVideoParms(void)
         fullscreen = true;
     }
 
-    M_ResetSetupMenuVideo();
+    MN_SetupResetMenuVideo();
 }
 
 static void I_InitGraphicsMode(void)

@@ -287,7 +287,7 @@ static int vert_align_widget(const hu_widget_t *const w, const hu_multiline_t *c
   }
   // [FG] centered and Vanilla widgets are always exclusive,
   //      i.e. they don't allow any other widget on the same line
-  else if (h_align == align_center || m->on)
+  else if (h_align == align_center || m->exclusive)
   {
     if (v_align == align_top)
     {
@@ -539,6 +539,8 @@ void HUlib_init_multiline(hu_multiline_t *m,
 
   m->builder = builder;
   m->built = false;
+
+  m->exclusive = (m->on != NULL);
 }
 
 void HUlib_erase_widget (const hu_widget_t *const w)
