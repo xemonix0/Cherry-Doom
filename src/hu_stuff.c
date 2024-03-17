@@ -1371,7 +1371,7 @@ static void HU_widget_build_monsec(void)
 
   if (sml_font.patches[HU_FONTSIZE + 6 + 0])
   {
-    killlabel = HU_FONTEND + 7 + 0;
+    killlabel = (char) (HU_FONTEND + 7 + 0);
     killlabelcolor = '0'+CR_NONE;
   }
   else {
@@ -1381,7 +1381,7 @@ static void HU_widget_build_monsec(void)
 
   if (sml_font.patches[HU_FONTSIZE + 6 + 1])
   {
-    itemlabel = HU_FONTEND + 7 + 1;
+    itemlabel = (char) (HU_FONTEND + 7 + 1);
     itemlabelcolor = '0'+CR_NONE;
   }
   else {
@@ -1391,7 +1391,7 @@ static void HU_widget_build_monsec(void)
 
   if (sml_font.patches[HU_FONTSIZE + 6 + 2])
   {
-    secretlabel = HU_FONTEND + 7 + 2;
+    secretlabel = (char) (HU_FONTEND + 7 + 2);
     secretlabelcolor = '0'+CR_NONE;
   }
   else {
