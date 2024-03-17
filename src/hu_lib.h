@@ -34,7 +34,7 @@ struct patch_s;
 
 typedef struct
 {
-  struct patch_s *patches[HU_FONTSIZE+6];
+  struct patch_s *patches[HU_FONTSIZE+6+3]; // [Nugget] Stats icons
 
   int line_height;
 

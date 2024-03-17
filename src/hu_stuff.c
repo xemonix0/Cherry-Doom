@@ -494,6 +494,20 @@ void HU_Init(void)
     big_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
   }
 
+  // [Nugget] Load Stats icons
+  for (i = HU_FONTSIZE + 6, j = 0; j < 3; i++, j++)
+  {
+    static const char *names[] = { "HUDKILLS", "HUDITEMS", "HUDSCRTS" };
+    const char *icon = names[j];
+
+    if (W_CheckNumForName(icon) != -1)
+    {
+      sml_font.patches[i] =
+      big_font.patches[i] = (patch_t *) W_CacheLumpName(icon, PU_STATIC);
+    }
+    else { sml_font.patches[i] = big_font.patches[i] = NULL; }
+  }
+
   // [FG] calculate font height once right here
   sml_font.line_height = SHORT(sml_font.patches['A'-HU_FONTSTART]->height) + 1;
   big_font.line_height = SHORT(big_font.patches['A'-HU_FONTSTART]->height) + 1;
@@ -1333,6 +1347,8 @@ static void HU_widget_build_monsec(void)
 
   // [Nugget] Customizable Stats colors
 
+  char killlabelcolor, itemlabelcolor, secretlabelcolor;
+
   killcolor = (fullkillcount >= max_kill_requirement) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
   secretcolor = (fullsecretcount >= totalsecret) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
   itemcolor = (fullitemcount >= totalitems) ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
@@ -1349,31 +1365,70 @@ static void HU_widget_build_monsec(void)
 
   // [Nugget] ---------------------------------------------------------------/
 
+  // [Nugget] Stats icons /---------------------------------------------------
+
+  char killlabel, itemlabel, secretlabel;
+
+  if (sml_font.patches[HU_FONTSIZE + 6 + 0])
+  {
+    killlabel = HU_FONTEND + 7 + 0;
+    killlabelcolor = '0'+CR_NONE;
+  }
+  else {
+    killlabel = 'K';
+    killlabelcolor = '0'+hudcolor_kills;
+  }
+
+  if (sml_font.patches[HU_FONTSIZE + 6 + 1])
+  {
+    itemlabel = HU_FONTEND + 7 + 1;
+    itemlabelcolor = '0'+CR_NONE;
+  }
+  else {
+    itemlabel = 'K';
+    itemlabelcolor = '0'+hudcolor_items;
+  }
+
+  if (sml_font.patches[HU_FONTSIZE + 6 + 2])
+  {
+    secretlabel = HU_FONTEND + 7 + 2;
+    secretlabelcolor = '0'+CR_NONE;
+  }
+  else {
+    secretlabel = 'K';
+    secretlabelcolor = '0'+hudcolor_secrets;
+  }
+
+  // [Nugget] ---------------------------------------------------------------/
+
   if ((hud_widget_layout && !st_crispyhud) || (st_crispyhud && nughud.sts_ml)) // [Nugget] NUGHUD
   {
+    // [Nugget] Stats icons
+
     // [Nugget] Restore kills percentage
     M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
-      "\x1b%cK\t\x1b%c%d/%d%s", ('0'+hudcolor_kills), killcolor, fullkillcount, max_kill_requirement,
+      "\x1b%c%c\t\x1b%c%d/%d%s", killlabelcolor, killlabel, killcolor, fullkillcount, max_kill_requirement,
       hud_kills_percentage ? kill_percent_str : "");
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
 
     M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
-      "\x1b%cI\t\x1b%c%d/%d", ('0'+hudcolor_items), itemcolor, fullitemcount, totalitems);
+      "\x1b%c%c\t\x1b%c%d/%d", itemlabelcolor, itemlabel, itemcolor, fullitemcount, totalitems);
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
 
     M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
-      "\x1b%cS\t\x1b%c%d/%d", ('0'+hudcolor_secrets), secretcolor, fullsecretcount, totalsecret);
+      "\x1b%c%c\t\x1b%c%d/%d", secretlabelcolor, secretlabel, secretcolor, fullsecretcount, totalsecret);
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
   }
   else
   {
+    // [Nugget] Stats icons
     // [Nugget] Restore kills percentage
     M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
-      "\x1b%cK \x1b%c%d/%d%s \x1b%cI \x1b%c%d/%d \x1b%cS \x1b%c%d/%d",
-      '0'+hudcolor_kills, killcolor, fullkillcount, max_kill_requirement,
+      "\x1b%c%c \x1b%c%d/%d%s \x1b%c%c \x1b%c%d/%d \x1b%c%c \x1b%c%d/%d",
+      killlabelcolor, killlabel, killcolor, fullkillcount, max_kill_requirement,
       hud_kills_percentage ? kill_percent_str : "",
-      '0'+hudcolor_items, itemcolor, fullitemcount, totalitems,
-      '0'+hudcolor_secrets, secretcolor, fullsecretcount, totalsecret);
+      itemlabelcolor, itemlabel, itemcolor, fullitemcount, totalitems,
+      secretlabelcolor, secretlabel, secretcolor, fullsecretcount, totalsecret);
 
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
   }

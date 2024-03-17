@@ -5,6 +5,7 @@
 - **Rewinding** [thanks @rfomin]
 - **_'IDDF'_ cheat**, to find a key on the Automap
 - **Support for optional health-based player pain sounds**
+- **Support for Stats icons**
 - **_SUMMON_ cheat spawning mobjs at position of Automap pointer**
 - **_Higher god-mode face priority_** setting
 
