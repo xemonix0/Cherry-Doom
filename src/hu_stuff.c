@@ -1385,7 +1385,7 @@ static void HU_widget_build_monsec(void)
     itemlabelcolor = '0'+CR_NONE;
   }
   else {
-    itemlabel = 'K';
+    itemlabel = 'I';
     itemlabelcolor = '0'+hudcolor_items;
   }
 
@@ -1395,7 +1395,7 @@ static void HU_widget_build_monsec(void)
     secretlabelcolor = '0'+CR_NONE;
   }
   else {
-    secretlabel = 'K';
+    secretlabel = 'S';
     secretlabelcolor = '0'+hudcolor_secrets;
   }
 
