@@ -200,11 +200,13 @@ A complete history of changes and releases can be found on the [Releases](https:
 
 Nugget Doom follows a fairly simple (albeit arbitrary) **X.Y.Z** versioning system:
 
-- **X** is increased in the event of at least one major implementation, such as a new spec like _UMAPINFO_;
-- **Y** is increased in the event of at least one minor implementation, such as a new cheat;
-- **Z** is increased in the event of at least one bug fix, text/code reformatting, or merging of _Woof!_ updates, even if the changes to the latter are considered minor or major.
+- **X** is increased in the event of major implementations, as were arbitrary/dynamic resolution and voxel support;
+- **Y** is increased in the event of minor implementations, such as a new cheat;
+- **Z** is increased in the event of bug fixes or text/code reformatting.
 
 Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
+
+The merging of changes from Woof! releases may affect any of the version values, but not necessarily in the same way as Woof!'s own version (i.e. `Woof! 11.Y.Z -> 12.Y.Z` doesn't necessarily mean `Nugget 2.Y.Z -> 3.Y.Z`).
 
 # Compiling
 
