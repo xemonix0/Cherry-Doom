@@ -34,8 +34,8 @@ void M_ForceLowercase(char *text);
 char *M_StringDuplicate(const char *orig);
 boolean M_StringCopy(char *dest, const char *src, size_t dest_size);
 boolean M_StringConcat(char *dest, const char *src, size_t dest_size);
-void M_StringCatF(char **dest, const char *format, ...);
-void M_StringPrintF(char **dest, const char *format, ...);
+void M_StringCatF(char **dest, const char *format, ...) PRINTF_ATTR(2, 0);
+void M_StringPrintF(char **dest, const char *format, ...) PRINTF_ATTR(2, 0);
 char *M_StringReplace(const char *haystack, const char *needle,
                       const char *replacement);
 char *M_StringJoin(const char *s, ...);
@@ -49,7 +49,7 @@ void M_CopyLumpName(char *dest, const char *src);
 char *AddDefaultExtension(char *path, const char *ext);
 void NormalizeSlashes(char *str);
 boolean M_WriteFile(const char *name, void *source, int length);
-int M_ReadFile(char const *name, byte **buffer) PRINTF_ATTR(2, 0);
-int M_ReadFileToString(char const *name, char **buffer) PRINTF_ATTR(2, 0);
+int M_ReadFile(char const *name, byte **buffer);
+int M_ReadFileToString(char const *name, char **buffer);
 
 #endif
