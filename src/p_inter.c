@@ -17,17 +17,27 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomstat.h"
-#include "dstrings.h"
-#include "m_random.h"
+#include "p_inter.h"
+
 #include "am_map.h"
+#include "d_deh.h" // Ty 03/22/98 - externalized strings
+#include "d_items.h"
+#include "d_player.h"
+#include "d_think.h"
+#include "doomdef.h"
+#include "doomstat.h"
+#include "i_system.h"
+#include "info.h"
+#include "m_fixed.h"
+#include "m_random.h"
+#include "p_mobj.h"
+#include "p_pspr.h"
+#include "p_tick.h"
+#include "r_defs.h"
 #include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "p_tick.h"
-#include "d_deh.h"  // Ty 03/22/98 - externalized strings
-
-#include "p_inter.h"
+#include "tables.h"
 
 // [Nugget]
 #include "p_maputl.h"
@@ -49,6 +59,7 @@ extern boolean cheese;
 int initial_health = 100;
 int initial_bullets = 50;
 int maxhealth = 100; // was MAXHEALTH as a #define, used only in this module
+int maxhealthbonus = 200;
 int max_armor = 200;
 int green_armor_class = 1;  // these are involved with armortype below
 int blue_armor_class = 2;
@@ -368,8 +379,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 	}
 
       player->health++;               // can go over 100%
-      if (player->health > (maxhealth * 2))
-        player->health = (maxhealth * 2);
+      if (player->health > maxhealthbonus)
+        player->health = maxhealthbonus;
       player->mo->health = player->health;
       // [Nugget] cheese :)
       pickupmsg(player, "%s", cheese ? "Picked up a cheese." : s_GOTHTHBONUS); // Ty 03/22/98 - externalized
@@ -624,7 +635,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
     case SPR_BFUG:
       if (!P_GiveWeapon (player, wp_bfg, false) )
         return;
-      if (classic_bfg || beta_emulation)
+      if (STRICTMODE(classic_bfg) || beta_emulation)
         pickupmsg(player, "You got the BFG2704!  Oh, yes."); // killough 8/9/98: beta BFG
       else
         pickupmsg(player, "%s", s_GOTBFG9000); // Ty 03/22/98 - externalized
@@ -775,6 +786,18 @@ static void P_NuggetGib(mobj_t *mo)
 //
 // killough 11/98: make static
 
+static void WatchKill(player_t* player, mobj_t* target)
+{
+  player->killcount++;
+
+  if (target->intflags & MIF_SPAWNED_BY_ICON)
+  {
+    player->maxkilldiscount++;
+  }
+
+  WS_WadStatsKill(); // [Cherry]
+}
+
 static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
 {
   mobjtype_t item;
@@ -797,13 +820,8 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
       // count for intermission
       // killough 7/20/98: don't count friends
       if (!(target->flags & MF_FRIEND))
-        if (target->flags & MF_COUNTKILL) {
-          source->player->killcount++;
-          // [Nugget]: [So Doom] count deaths of resurrected/Nightmare-respawned/Icon of Sin-spawned monsters
-          if (target->intflags & MIF_EXTRASPAWNED)
-            extrakills++;
-          WS_WadStatsKill(); // [Cherry]
-        }
+	if (target->flags & MF_COUNTKILL)
+	  WatchKill(source->player, target);
       if (target->player)
         source->player->frags[target->player-players]++;
     }
@@ -812,14 +830,9 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
         {
           // count all monster deaths,
           // even those caused by other monsters
-          // killough 7/20/98: don't count friends
-          if (!(target->flags & MF_FRIEND)) {
-            players->killcount++;
-            // [Nugget]: [So Doom] count deaths of resurrected/Nightmare-respawned/Icon of Sin-spawned monsters
-            if (target->intflags & MIF_EXTRASPAWNED)
-              extrakills++;
-            WS_WadStatsKill(); // [Cherry]
-          }
+	  // killough 7/20/98: don't count friends
+	  if (!(target->flags & MF_FRIEND))
+	    WatchKill(players, target);
         }
 #ifndef MBF_STRICT
       // For compatibility with PrBoom+ complevel 11 netgame
@@ -829,8 +842,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
           if (target->lastenemy && target->lastenemy->health > 0 &&
               target->lastenemy->player)
           {
-              target->lastenemy->player->killcount++;
-              WS_WadStatsKill(); // [Cherry]
+              WatchKill(target->lastenemy->player, target);
           }
           else
           {
@@ -851,8 +863,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
               else
                 i = Woof_Random() % playerscount;
 
-              players[i].killcount++;
-              WS_WadStatsKill(); // [Cherry]
+              WatchKill(&players[i], target);
             }
           }
         }
@@ -860,7 +871,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
 
   // [Nugget] Announce milestone completion
   if (!(complete_milestones & MILESTONE_KILLS)
-      && (players->killcount - (smarttotals ? extrakills : extraspawns) >= totalkills))
+      && ((players->killcount - players->maxkilldiscount) >= max_kill_requirement))
   {
     complete_milestones |= MILESTONE_KILLS;
     if (announce_milestones) {
@@ -1070,21 +1081,20 @@ void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage
       }
 #endif
 
-      // [Nugget] Impact pitch
-      if (STRICTMODE(impact_pitch & IMPACTPITCH_DAMAGE))
+      // [Nugget] Flinching: upon taking damage
+      if (STRICTMODE(flinching & FLINCH_DAMAGE))
       {
         const int dmg = MAX(0, damage) / 2;
         int pitch;
 
-        if (inflictor) { // Hitscan, melee or projectile
+        if (inflictor) { // Hitscan, melee, projectile, explosion
           pitch = -(dmg+1) * finecosine[(R_PointToAngle2(inflictor->x, inflictor->y,
                                                             target->x,    target->y)
                                          - player->mo->angle) >> ANGLETOFINESHIFT] / FRACUNIT;
         }
-        else // Damaging floor
-        { pitch = dmg * ((Woof_Random() % 2) ? -1 : 1); }
+        else { pitch = dmg * ((Woof_Random() % 2) ? -1 : 1); }
 
-        PLAYER_IMPACTPITCH(player, pitch);
+        P_SetFlinch(player, pitch);
       }
     }
 

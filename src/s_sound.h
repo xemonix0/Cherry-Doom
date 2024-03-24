@@ -20,7 +20,9 @@
 #ifndef __S_SOUND__
 #define __S_SOUND__
 
-#include "p_mobj.h"
+#include "doomtype.h"
+
+struct mobj_s;
 
 //
 // Initializes sound stuff, including volume
@@ -40,18 +42,15 @@ void S_Start(void);
 // Start sound for thing at <origin>
 //  using <sound_id> from sounds.h
 //
-void S_StartSound(const mobj_t *origin, int sound_id);
-
-// [Nugget]: [NS] Try to play an optional sound.
-void S_StartSoundOptional(const mobj_t *origin, int sfx_id, int old_sfx_id);
+void S_StartSound(const struct mobj_s *origin, int sound_id);
 
 // Stop sound for thing at <origin>
-void S_StopSound(const mobj_t *origin);
+void S_StopSound(const struct mobj_s *origin);
 
 // [FG] play sounds in full length
 extern boolean full_sounds;
 // [FG] removed map objects may finish their sounds
-void S_UnlinkSound(mobj_t *origin);
+void S_UnlinkSound(struct mobj_s *origin);
 
 // Start music using <music_id> from sounds.h
 void S_StartMusic(int music_id);
@@ -69,20 +68,29 @@ void S_ResumeSound(void);
 
 void S_RestartMusic(void);
 
+void S_UpdateMusic(void);
+
 //
 // Updates music & sounds
 //
-void S_InitListener(const mobj_t *listener);
-void S_UpdateSounds(const mobj_t *listener);
+void S_InitListener(const struct mobj_s *listener);
+void S_UpdateSounds(const struct mobj_s *listener);
 void S_SetMusicVolume(int volume);
 void S_SetSfxVolume(int volume);
 
 // machine-independent sound params
 extern int numChannels;
-extern int default_numChannels;  // killough 10/98
+extern int default_numChannels; // killough 10/98
 
-//jff 3/17/98 holds last IDMUS number, or -1
+// jff 3/17/98 holds last IDMUS number, or -1
 extern int idmusnum;
+
+// [Nugget] ------------------------------------------------------------------
+
+// [NS] Try to play an optional sound.
+void S_StartSoundOptional(const struct mobj_s *const origin, const int sfx_id, const int old_sfx_id);
+
+void S_PlayerPainSound(const struct mobj_s *const origin);
 
 #endif
 

@@ -5,8 +5,7 @@ include(CheckSymbolExists)
 # Adds the cmake directory to the CMake include path.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# X_VCPKG_APPLOCAL_DEPS_INSTALL automatically installs dependencies. CMP0077
-# supress some arcane CMake warning.
+# X_VCPKG_APPLOCAL_DEPS_INSTALL automatically installs dependencies.
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)
 
@@ -38,7 +37,7 @@ endif()
 
 # Hardcoded defines added to configure and resource files.
 set(PROJECT_COMPANY "Xemonix and contributors")
-set(PROJECT_COPYRIGHT "Copyright (C) 1993-2023")
+set(PROJECT_COPYRIGHT "Copyright (C) 1993-2024")
 set(PROJECT_LICENSE "GNU General Public License, version 2")
 set(PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
 set(PROJECT_SHORTNAME "cherry-doom")

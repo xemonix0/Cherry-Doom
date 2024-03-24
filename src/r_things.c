@@ -18,22 +18,38 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <stdlib.h>
+#include <string.h>
+
+#include "d_player.h"
+#include "doomdef.h"
 #include "doomstat.h"
+#include "hu_stuff.h" // [Alaux] Lock crosshair on target
 #include "i_printf.h"
+#include "i_system.h"
 #include "i_video.h"
+#include "info.h"
+#include "m_swap.h"
+#include "p_mobj.h"
+#include "p_pspr.h"
+#include "r_bmaps.h" // [crispy] R_BrightmapForTexName()
+#include "r_bsp.h"
+#include "r_data.h"
+#include "r_draw.h"
+#include "r_main.h"
+#include "r_segs.h"
+#include "r_state.h"
+#include "r_things.h"
+#include "r_voxel.h"
+#include "tables.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "r_main.h"
-#include "r_bsp.h"
-#include "r_segs.h"
-#include "r_draw.h"
-#include "r_things.h"
-#include "r_bmaps.h" // [crispy] R_BrightmapForTexName()
-#include "m_swap.h"
-#include "hu_stuff.h" // [Alaux] Lock crosshair on target
+#include "z_zone.h"
+
 // [Nugget]
 #include "m_nughud.h"
 #include "st_stuff.h"
+#include "wi_stuff.h"
 
 #define MINZ        (FRACUNIT*4)
 #define BASEYCENTER 100
@@ -57,7 +73,7 @@ typedef struct {
 fixed_t pspritescale;
 fixed_t pspriteiscale;
 
-static lighttable_t **spritelights;        // killough 1/25/98 made static
+lighttable_t **spritelights;        // killough 1/25/98 made static
 
 // [Woof!] optimization for drawing huge amount of drawsegs.
 // adapted from prboom-plus/src/r_things.c
@@ -80,12 +96,16 @@ static drawseg_xrange_item_t *drawsegs_xrange;
 static unsigned int drawsegs_xrange_size = 0;
 static int drawsegs_xrange_count = 0;
 
+// [FG] 32-bit integer math
+static int *clipbot = NULL; // killough 2/8/98: // dropoff overflow
+static int *cliptop = NULL; // change to MAX_*  // dropoff overflow
+
 // constant arrays
 //  used for psprite clipping and initializing clipping
 
 // [FG] 32-bit integer math
-int negonearray[MAX_SCREENWIDTH];        // killough 2/8/98:
-int screenheightarray[MAX_SCREENWIDTH];  // change to MAX_*
+int *negonearray = NULL;        // killough 2/8/98:
+int *screenheightarray = NULL;  // change to MAX_*
 
 //
 // INITIALIZATION FUNCTIONS
@@ -99,6 +119,24 @@ spritedef_t *sprites;
 
 static spriteframe_t sprtemp[MAX_SPRITE_FRAMES];
 static int maxframe;
+
+void R_InitSpritesRes(void)
+{
+  if (xtoviewangle) Z_Free(xtoviewangle);
+  if (linearskyangle) Z_Free(linearskyangle);
+  if (negonearray) Z_Free(negonearray);
+  if (screenheightarray) Z_Free(screenheightarray);
+
+  xtoviewangle = Z_Calloc(1, (video.width + 1) * sizeof(*xtoviewangle), PU_STATIC, NULL);
+  linearskyangle = Z_Calloc(1, (video.width + 1) * sizeof(*linearskyangle), PU_STATIC, NULL);
+  negonearray = Z_Calloc(1, video.width * sizeof(*negonearray), PU_STATIC, NULL);
+  screenheightarray = Z_Calloc(1, video.width * sizeof(*screenheightarray), PU_STATIC, NULL);
+
+  if (clipbot) Z_Free(clipbot);
+
+  clipbot = Z_Calloc(1, 2 * video.width * sizeof(*clipbot), PU_STATIC, NULL);
+  cliptop = clipbot + video.width;
+}
 
 //
 // R_InstallSpriteLump
@@ -287,7 +325,7 @@ static size_t num_vissprite, num_vissprite_alloc, num_vissprite_ptrs;
 void R_InitSprites(char **namelist)
 {
   int i;
-  for (i=0; i<MAX_SCREENWIDTH; i++)    // killough 2/8/98
+  for (i = 0; i < video.width; i++)    // killough 2/8/98
     negonearray[i] = -1;
   R_InitSpriteDefs(namelist);
 }
@@ -299,6 +337,7 @@ void R_InitSprites(char **namelist)
 
 void R_ClearSprites (void)
 {
+  rendered_vissprites = num_vissprite;
   num_vissprite = 0;            // killough
 }
 
@@ -402,7 +441,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     if (vis->mobjflags2 & MF2_COLOREDBLOOD)
       {
         colfunc = R_DrawTranslatedColumn;
-        dc_translation = (byte *)red2col[vis->color];
+        dc_translation = red2col[vis->color];
       }
   else
     if (vis->mobjflags & MF_TRANSLATION)
@@ -412,7 +451,8 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
           ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
       }
     else
-      if (vis->mobjflags & MF_TRANSLUCENT) // phares
+      if (translucency && !(strictmode && demo_compatibility)
+          && vis->mobjflags & MF_TRANSLUCENT) // phares
         {
           colfunc = R_DrawTLColumn;
           tranmap = main_tranmap;       // killough 4/11/98
@@ -468,6 +508,10 @@ void R_ProjectSprite (mobj_t* thing)
   fixed_t tr_x, tr_y, gxt, gyt, tz;
   fixed_t interpx, interpy, interpz, interpangle;
 
+  // andrewj: voxel support
+  if (VX_ProjectVoxel (thing))
+      return;
+
   // [AM] Interpolate between current and last position,
   //      if prudent.
   if (uncapped &&
@@ -477,10 +521,10 @@ void R_ProjectSprite (mobj_t* thing)
       // Don't interpolate during a paused state.
       leveltime > oldleveltime)
   {
-      interpx = thing->oldx + FixedMul(thing->x - thing->oldx, fractionaltic);
-      interpy = thing->oldy + FixedMul(thing->y - thing->oldy, fractionaltic);
-      interpz = thing->oldz + FixedMul(thing->z - thing->oldz, fractionaltic);
-      interpangle = R_InterpolateAngle(thing->oldangle, thing->angle, fractionaltic);
+      interpx = LerpFixed(thing->oldx, thing->x);
+      interpy = LerpFixed(thing->oldy, thing->y);
+      interpz = LerpFixed(thing->oldz, thing->z);
+      interpangle = LerpAngle(thing->oldangle, thing->angle);
   }
   else
   {
@@ -510,7 +554,7 @@ void R_ProjectSprite (mobj_t* thing)
   tx = -(gyt+gxt);
 
   // too far off the side?
-  if (abs(tx)>(tz<<2))
+  if (abs(tx)>((int64_t) tz<<2))
     return;
 
     // decide which patch to use for sprite relative to player
@@ -600,6 +644,8 @@ void R_ProjectSprite (mobj_t* thing)
   // killough 3/27/98: save sector for special clipping later
   vis->heightsec = heightsec;
 
+  vis->voxel_index = -1;
+
   vis->mobjflags = thing->flags;
   vis->mobjflags2 = thing->flags2;
   vis->scale = xscale;
@@ -637,11 +683,8 @@ void R_ProjectSprite (mobj_t* thing)
     vis->colormap[0] = vis->colormap[1] = fullcolormap;       // full bright  // killough 3/20/98
   else
     {      // diminished light
-      int index = (int) (xscale/fovdiff) / ((1 << LIGHTSCALESHIFT) * hires);  // killough 11/98
-      if (index >= MAXLIGHTSCALE)
-        index = MAXLIGHTSCALE-1;
-
-      if (STRICTMODE(!diminished_lighting)) { index = 0; } // [Nugget]
+      const int index = STRICTMODE(!diminished_lighting) // [Nugget]
+                        ? 0 : R_GetLightIndex(xscale);
 
       vis->colormap[0] = spritelights[index];
       vis->colormap[1] = fullcolormap;
@@ -656,6 +699,7 @@ void R_ProjectSprite (mobj_t* thing)
     HU_UpdateCrosshairLock
     (
       BETWEEN(0, viewwidth  - 1, (centerxfrac + FixedMul(txc, xscale)) >> FRACBITS),
+      // [Nugget] Removed `actualheight`
       BETWEEN(0, viewheight - 1, (centeryfrac + FixedMul(viewz - interpz - crosshair_target->height/2, xscale)) >> FRACBITS)
     );
 
@@ -831,11 +875,11 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
     if (lump == oldlump && pspr_interp)
     {
       int deltax = x2 - vis->x1;
-      vis->x1 = oldx1 + FixedMul(vis->x1 - oldx1, fractionaltic);
+      vis->x1 = LerpFixed(oldx1, vis->x1);
       vis->x2 = vis->x1 + deltax;
       if (vis->x2 >= viewwidth)
         vis->x2 = viewwidth - 1;
-      vis->texturemid = oldtexturemid + FixedMul(vis->texturemid - oldtexturemid, fractionaltic);
+      vis->texturemid = LerpFixed(oldtexturemid, vis->texturemid);
     }
     else
     {
@@ -850,7 +894,10 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->texturemid += (centery - viewheight/2) * pspriteiscale
                      - (STRICTMODE(st_crispyhud) ? nughud.weapheight*FRACUNIT : 0); // [Nugget] NUGHUD
 
-  if (STRICTMODE(hide_weapon || chasecam_on)) // [Nugget] Chasecam
+  if (STRICTMODE(hide_weapon)
+      // [Nugget]
+      || chasecam_on // Chasecam
+      || (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))) // Alt. intermission background
     return;
 
   R_DrawVisSprite(vis, vis->x1, vis->x2);
@@ -894,7 +941,7 @@ void R_DrawPlayerSprites(void)
   // add all active psprites
   for (i=0, psp=viewplayer->psprites;
        // [Nugget]: [crispy] A11Y number of player (first person) sprites to draw
-       i < (NOTSTRICTMODE(a11y_weapon_pspr) ? NUMPSPRITES : ps_flash);
+       i < ((strictmode || a11y_weapon_pspr) ? NUMPSPRITES : ps_flash);
        i++,psp++)
     if (psp->state)
       R_DrawPSprite (psp, i == ps_flash && STRICTMODE(translucent_pspr)); // [Nugget] Translucent flashes
@@ -985,9 +1032,6 @@ void R_SortVisSprites (void)
 void R_DrawSprite (vissprite_t* spr)
 {
   drawseg_t *ds;
-  // [FG] 32-bit integer math
-  int   clipbot[MAX_SCREENWIDTH];       // killough 2/8/98:
-  int   cliptop[MAX_SCREENWIDTH];       // change to MAX_*
   int     x;
   int     r1;
   int     r2;
@@ -1119,7 +1163,12 @@ void R_DrawSprite (vissprite_t* spr)
 
   mfloorclip = clipbot;
   mceilingclip = cliptop;
-  R_DrawVisSprite (spr, spr->x1, spr->x2);
+
+  // andrewj: voxel support
+  if (spr->voxel_index >= 0)
+    VX_DrawVoxel (spr);
+  else
+    R_DrawVisSprite (spr, spr->x1, spr->x2);
 }
 
 //
@@ -1179,8 +1228,6 @@ void R_DrawMasked(void)
       }
     }
   }
-
-  rendered_vissprites = num_vissprite;
 
   // draw all vissprites back to front
 

@@ -20,15 +20,10 @@
 #ifndef __STLIB__
 #define __STLIB__
 
-// We are referring to patches.
-#include "r_defs.h"
-#include "v_video.h"  // color ranges
+#include "doomtype.h"
 
-//
-// Background and foreground screen numbers
-//
-#define BG 4
-#define FG 0
+// We are referring to patches.
+struct patch_s;
 
 //
 // Typedefs of widgets
@@ -57,7 +52,7 @@ typedef struct
   boolean*  on;
 
   // list of patches for 0-9
-  patch_t** p;
+  struct patch_s** p;
 
   // user data
   int data;
@@ -76,7 +71,7 @@ typedef struct
   st_number_t   n;
 
   // percent sign graphic
-  patch_t*    p;
+  struct patch_s*    p;
 } st_percent_t;
 
 // Multiple Icon widget
@@ -97,8 +92,8 @@ typedef struct
   boolean*    on;
 
   // list of icons
-  patch_t**   p;
-
+  struct patch_s**   p;
+  
   // user data
   int     data;
 
@@ -120,7 +115,7 @@ void STlib_initNum
 ( st_number_t* n,
   int x,
   int y,
-  patch_t** pl,
+  struct patch_s** pl,
   int* num,
   boolean* on,
   int width,
@@ -128,7 +123,7 @@ void STlib_initNum
 
 void STlib_updateNum
 ( st_number_t* n,
-  char *outrng );         //jff 1/16/98 add color translation to digit output
+  byte *outrng );         //jff 1/16/98 add color translation to digit output
 
 
 // Percent widget routines
@@ -136,15 +131,16 @@ void STlib_initPercent
 ( st_percent_t* p,
   int x,
   int y,
-  patch_t** pl,
+  struct patch_s** pl,
   int* num,
   boolean* on,
-  patch_t* percent,
+  struct patch_s* percent,
   int align ); // [Nugget]
+
 
 void STlib_updatePercent
 ( st_percent_t* per,
-  char *outrng );        //jff 1/16/98 add color translation to percent output
+  byte *outrng );        //jff 1/16/98 add color translation to percent output
 
 
 // Multiple Icon widget routines
@@ -152,7 +148,7 @@ void STlib_initMultIcon
 ( st_multicon_t* mi,
   int x,
   int y,
-  patch_t**   il,
+  struct patch_s**   il,
   int* inum,
   boolean* on );
 

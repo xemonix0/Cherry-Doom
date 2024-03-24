@@ -18,11 +18,12 @@
 //-----------------------------------------------------------------------------
 
 #include "doomstat.h"
-#include "m_misc2.h"
+#include "m_misc.h"
 
 // Game Mode - identify IWAD as shareware, retail etc.
 GameMode_t gamemode = indetermined;
-GameMission_t   gamemission = doom;
+GameMission_t gamemission = doom;
+GameVariant_t gamevariant = vanilla;
 
 // [FG] emulate a specific version of Doom
 GameVersion_t gameversion = exe_doom_1_9;
@@ -49,6 +50,8 @@ boolean have_ssg;
 int compatibility, default_compatibility;          // killough 1/31/98
 
 int comp[COMP_TOTAL], default_comp[COMP_TOTAL];    // killough 10/98
+
+invul_mode_t invul_mode;
 
 // [FG] overflow emulation
 overflow_t overflow[EMU_TOTAL] = {
@@ -119,6 +122,9 @@ boolean hide_weapon;
 // [FG] centered weapon sprite
 int center_weapon;
 
+int view_bobbing_pct;
+int weapon_bobbing_pct;
+
 char *MAPNAME(int e, int m)
 {
   static char name[9];
@@ -139,14 +145,10 @@ boolean casual_play; // Like `critical`, with different checks and functionality
 
 // General ----------------------------
 
-int gammacycle; // CFG-Only
-int wipe_type;
 int over_under;
 int jump_crouch;
-int fov;
 int viewheight_value;
-int view_bobbing_percentage;
-int impact_pitch;
+int flinching;
 int explosion_shake;
 int damage_shake; // [Cherry]
 int max_shake; // [Cherry]
@@ -163,16 +165,18 @@ int menu_background_all;
 int no_menu_tint;
 int no_berserk_tint;
 int no_radsuit_tint;
+int nightvision_visor;
 int damagecount_cap;
 int bonuscount_cap;
 int fake_contrast;
 int diminished_lighting; // CFG-Only
 int wipe_speed_percentage;
-// [Cherry] General ------------------------------------------------------
-int motion_blur;
-// [Cherry] End ----------------------------------------------------------
+int alt_interpic;
 int s_clipping_dist_x2;
 int one_key_saveload;
+int rewind_interval;
+int rewind_depth;
+int rewind_timeout;
 int no_page_ticking;
 int quick_quitgame;
 
@@ -186,7 +190,6 @@ int a11y_invul_colormap;
 int no_hor_autoaim;
 int switch_on_pickup;
 int always_bob; // CFG-Only
-int weapon_bobbing_percentage;
 int bobbing_style;
 int weapon_inertia;
 int weapon_inertia_scale_pct; // CFG-Only
@@ -197,12 +200,13 @@ int sx_fix; // CFG-Only
 
 // Status Bar/HUD ---------------------
 
+int announce_milestones;
+int show_save_messages; // CFG-Only
 int show_ssg; // CFG-Only
-int alt_arms;
-int blink_keys; // CFG-Only
-int smarttotals;
 int hud_kills_percentage;
-int event_timers[NUMTIMERS];
+int alt_arms;
+int hud_time_teleport;
+int hud_time_keypickup;
 
 int hudcolor_time_scale;
 int hudcolor_total_time;
@@ -211,12 +215,14 @@ int hudcolor_event_timer;
 int hudcolor_kills;
 int hudcolor_items;
 int hudcolor_secrets;
-int hudcolor_attempts; // [Cherry]
-int hudcolor_attempts_count; // [Cherry]
-int hudcolor_movement; // [Cherry]
-int hudcolor_weapons; // [Cherry]
-int hudcolor_keys; // [Cherry]
-int hudcolor_frag; // [Cherry]
+// [Cherry] --------------------------------------------------------------
+int hudcolor_attempts;
+int hudcolor_attempts_count;
+int hudcolor_movement;
+int hudcolor_weapons;
+int hudcolor_keys;
+int hudcolor_frag;
+// [Cherry] End ----------------------------------------------------------
 int hudcolor_ms_incomp;
 int hudcolor_ms_comp;
 // [Cherry] --------------------------------------------------------------
@@ -233,11 +239,6 @@ int extra_gibbing[NUMEXGIBS]; // CFG-Only
 int bloodier_gibbing;
 int zdoom_item_drops;
 
-// Messages ---------------------------
-
-int show_save_messages; // CFG-Only
-int announce_milestones;
-
 // Key Bindings -----------------------
 
 int zoom_fov;
@@ -246,11 +247,11 @@ int fancy_teleport;
 // Miscellaneous (CFG-Only) -----------
 
 int screenshot_palette;
-int menu_background_darkening;
+int menu_backdrop_darkening;
 int automap_overlay_darkening;
 int sp_chat;
 
-// Doom Compatibility -----------------
+// Doom Compatibility (CFG-Only) ------
 
 int comp_bruistarget;
 int comp_nomeleesnap;
@@ -268,9 +269,12 @@ int comp_switchsource;
 int comp_cgundblsnd;
 int comp_cgunnersfx;
 int comp_flamst;
+int comp_godface;
 int comp_deadoof;
 int comp_unusedpals;
 int comp_keypal;
+
+int fail_safe; // CFG-Only
 
 // [Nugget] -----------------------------------------------------------------/
 

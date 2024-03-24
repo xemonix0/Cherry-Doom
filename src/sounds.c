@@ -260,7 +260,8 @@ sfxinfo_t original_S_sfx[NUMSFX] = {
   SOUND("plosml", sg_oof,    96),
   SOUND("lavsml", sg_oof,    96),
 
-  // [Nugget]:
+  // [Nugget] /---------------------------------------------------------------
+
   // [NS] New optional sounds.
   SOUND("pljump", sg_oof,    78),
   SOUND("plland", sg_oof,    78),
@@ -280,6 +281,13 @@ sfxinfo_t original_S_sfx[NUMSFX] = {
   SOUND("intnex", sg_none,   60),
   SOUND("intnet", sg_none,   60),
   SOUND("intdms", sg_none,   60),
+
+  SOUND("ppai25", sg_none,   96),
+  SOUND("ppai50", sg_none,   96),
+  SOUND("ppai75", sg_none,   96),
+  SOUND("ppa100", sg_none,   96),
+
+  // [Nugget] ---------------------------------------------------------------/
 
   [500] = SOUND("fre000", sg_none, 127),
   [501] = SOUND("fre001", sg_none, 127),

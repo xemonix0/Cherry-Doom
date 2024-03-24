@@ -25,33 +25,46 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "d_deh.h"
+#include "d_player.h"
+#include "doomdata.h"
 #include "doomstat.h"
+#include "g_game.h"
+#include "hu_obituary.h"
+#include "i_system.h"
+#include "info.h"
+#include "m_argv.h"
+#include "m_bbox.h" // phares 3/20/98
+#include "m_misc.h"
+#include "m_random.h"
+#include "m_swap.h"
+#include "p_inter.h"
+#include "p_map.h"
+#include "p_maputl.h"
+#include "p_mobj.h"
+#include "p_setup.h"
 #include "p_spec.h"
 #include "p_tick.h"
-#include "p_setup.h"
-#include "m_random.h"
-#include "d_englsh.h"
-#include "m_argv.h"
-#include "w_wad.h"
+#include "r_data.h"
+#include "r_defs.h"
+#include "r_draw.h" // R_SetFuzzPosTic
 #include "r_main.h"
-#include "p_maputl.h"
-#include "p_map.h"
-#include "g_game.h"
-#include "p_inter.h"
+#include "r_plane.h" // killough 10/98
+#include "r_sky.h"   // R_GetSkyColor
+#include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "m_bbox.h"                                         // phares 3/20/98
-#include "d_deh.h"
-#include "r_plane.h"  // killough 10/98
-#include "i_sound.h"
-#include "r_draw.h"  // R_SetFuzzPosTic
-#include "r_sky.h"   // R_GetSkyColor
-#include "m_swap.h"
-#include "i_video.h" // [FG] uncapped
-#include "m_misc2.h"
-// [Nugget] 
-#include "hu_stuff.h" // hud_secret_message
 #include "st_stuff.h"
+#include "tables.h"
+#include "w_wad.h"
+#include "z_zone.h"
+
+// [Nugget]
+#include "hu_stuff.h" // hud_secret_message
 
 //
 // Animating textures and planes
@@ -498,7 +511,7 @@ fixed_t P_FindNextHighestCeiling(sector_t *sec, int currentheight)
 fixed_t P_FindLowestCeilingSurrounding(sector_t* sec)
 {
   const sector_t *other;
-  fixed_t height = D_MAXINT;
+  fixed_t height = INT_MAX;
   int i;
 
   if (!comp[comp_model])
@@ -561,7 +574,7 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t* sec)
 fixed_t P_FindShortestTextureAround(int secnum)
 {
   const sector_t *sec = &sectors[secnum];
-  int i, minsize = D_MAXINT;
+  int i, minsize = INT_MAX;
 #ifdef MBF_STRICT
   static const int mintex = 0;
 #else
@@ -602,7 +615,7 @@ fixed_t P_FindShortestTextureAround(int secnum)
 fixed_t P_FindShortestUpperAround(int secnum)
 {
   const sector_t *sec = &sectors[secnum];
-  int i, minsize = D_MAXINT;
+  int i, minsize = INT_MAX;
 #ifdef MBF_STRICT
   static const int mintex = 0;
 #else
@@ -809,8 +822,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
         {
           doomprintf(player, MESSAGES_NONE, "%s", s_PD_ANY); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
-          // [Nugget]: [crispy] blinking key or skull in the status bar
-          ST_blinkKeys(player, KEYBLINK_EITHER, KEYBLINK_EITHER, KEYBLINK_EITHER);
+          ST_SetKeyBlink(player, KEYBLINK_EITHER, KEYBLINK_EITHER, KEYBLINK_EITHER);
           return false;
         }
       break;
@@ -820,8 +832,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
         {
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_REDK : s_PD_REDC); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
-          // [Nugget]: [crispy] blinking key or skull in the status bar
-          ST_blinkKeys(player, KEYBLINK_NONE, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD);
+          ST_SetKeyBlink(player, KEYBLINK_NONE, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD);
           return false;
         }
       break;
@@ -831,8 +842,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
         {
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_BLUEK : s_PD_BLUEC); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
-          // [Nugget]: [crispy] blinking key or skull in the status bar
-          ST_blinkKeys(player, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD, KEYBLINK_NONE, KEYBLINK_NONE);
+          ST_SetKeyBlink(player, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD, KEYBLINK_NONE, KEYBLINK_NONE);
           return false;
         }
       break;
@@ -842,8 +852,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
         {
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_YELLOWK : s_PD_YELLOWC); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
-          // [Nugget]: [crispy] blinking key or skull in the status bar
-          ST_blinkKeys(player, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD, KEYBLINK_NONE);
+          ST_SetKeyBlink(player, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD, KEYBLINK_NONE);
           return false;
         }
       break;
@@ -853,8 +862,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
         {
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_REDK : s_PD_REDS); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
-          // [Nugget]: [crispy] blinking key or skull in the status bar
-          ST_blinkKeys(player, KEYBLINK_NONE, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL);
+          ST_SetKeyBlink(player, KEYBLINK_NONE, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL);
           return false;
         }
       break;
@@ -864,8 +872,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
         {
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_BLUEK : s_PD_BLUES); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
-          // [Nugget]: [crispy] blinking key or skull in the status bar
-          ST_blinkKeys(player, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL, KEYBLINK_NONE, KEYBLINK_NONE);
+          ST_SetKeyBlink(player, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL, KEYBLINK_NONE, KEYBLINK_NONE);
           return false;
         }
       break;
@@ -875,8 +882,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
         {
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_YELLOWK : s_PD_YELLOWS); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
-          // [Nugget]: [crispy] blinking key or skull in the status bar
-          ST_blinkKeys(player, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL, KEYBLINK_NONE);
+          ST_SetKeyBlink(player, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL, KEYBLINK_NONE);
           return false;
         }
       break;
@@ -891,8 +897,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
         {
           doomprintf(player, MESSAGES_NONE, "%s", s_PD_ALL6); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
-          // [Nugget]: [crispy] blinking key or skull in the status bar
-          ST_blinkKeys(player, KEYBLINK_BOTH, KEYBLINK_BOTH, KEYBLINK_BOTH);
+          ST_SetKeyBlink(player, KEYBLINK_BOTH, KEYBLINK_BOTH, KEYBLINK_BOTH);
           return false;
         }
       if (skulliscard &&
@@ -904,8 +909,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
         {
           doomprintf(player, MESSAGES_NONE, "%s", s_PD_ALL3); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, sfx_oof); // [Nugget] Locked door sound
-          // [Nugget]: [crispy] blinking key or skull in the status bar
-          ST_blinkKeys(player, KEYBLINK_EITHER, KEYBLINK_EITHER, KEYBLINK_EITHER);
+          ST_SetKeyBlink(player, KEYBLINK_EITHER, KEYBLINK_EITHER, KEYBLINK_EITHER);
           return false;
         }
       break;
@@ -2738,7 +2742,7 @@ void T_Scroll(scroll_t *s)
       height = sec->floorheight;
       waterheight = sec->heightsec != -1 &&
         sectors[sec->heightsec].floorheight > height ?
-        sectors[sec->heightsec].floorheight : D_MININT;
+        sectors[sec->heightsec].floorheight : INT_MIN;
 
       // Move objects only if on floor or underwater,
       // non-floating, and clipped.

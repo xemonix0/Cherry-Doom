@@ -16,7 +16,7 @@ Cherry Doom is a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) i
 
 If you're seeking information on the version you're using, please refer to the documentation included with it.
 
-## Demo Compatibility Notice
+## DISCLAIMER
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
 **RECORD DEMOS AT YOUR OWN RISK!**
 
@@ -31,19 +31,13 @@ Some of Cherry Doom's features come from other sources, like other source ports,
 
 - **Damage shake effect** setting [i.b. Doom Retro]
 - **View shake intensity** setting
-- **Motion blur** setting [p.f. Doom Retro]
 
 ### Status Bar/HUD
 
-- **More widgets on intermission screen** setting: shows smaller versions of _attempts_, _health_, _armor_ and _weapons_ widgets on the intermission screen
+- **More widgets on intermission screen** setting: shows smaller versions of _Attempts_, _Health_, _Armor_ and _Weapons_ widgets on the intermission screen
 - **Further extended HUD color customization**
-- **Attempts** widget: shows the current session attempts and the total attempts across all sessions
-    - Session attempts reset when the map is beaten or when the game is quit, and they are preserved in saved games
-- **Movement** widget: shows the current player movement speeds
-
-### Automap
-
-- **Color customization for the _Tag Finder_**
+- **Attempts display**: shows the amount of attempts spent on the current map in this session and across all sessions
+- **Movement display**: shows the current player movement and strafing speeds
 
 ### Miscellaneous
 
@@ -62,11 +56,13 @@ A complete history of changes and releases can be found on the [Releases](https:
 
 Cherry Doom follows the same versioning system as Nugget Doom:
 
-- **X** is increased in the event of at least one major implementation, such as a new specification like _UMAPINFO_;
-- **Y** is increased in the event of at least one minor implementation, such as a new cheat;
-- **Z** is increased in the event of at least one bug fix, text/code reformatting, tiny tweak or merging of _Nugget Doom_ updates, even if the changes to the latter are considered minor or major.
+- **X** is increased in the event of major implementations, as were arbitrary/dynamic resolution and voxel support;
+- **Y** is increased in the event of minor implementations, such as a new cheat;
+- **Z** is increased in the event of bug fixes or text/code reformatting.
 
 Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
+
+The merging of changes from Nugget Doom's releases may affect any of the version values, but not necessarily in the same way as Nugget Doom's own version (i.e. `Nugget Doom 2.Y.Z -> 3.Y.Z` doesn't necessarily mean `Cherry Doom 1.Y.Z -> 2.Y.Z`).
 
 # Compiling
 
@@ -78,16 +74,17 @@ It can be cloned via
 git clone https://github.com/xemonix0/Cherry-Doom.git
 ```
 
-## Linux and Windows with MSYS2
+## Linux, and Windows with MSYS2
 
-The following libraries need to be installed:
-
-- [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
-- [SDL2_net](https://github.com/libsdl-org/SDL_net)
-- [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
-- [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
-- [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
-- [libxmp](https://github.com/libxmp/libxmp) (optional)
+The following build system and libraries need to be installed:
+ 
+ * [CMake](https://cmake.org) (>= 3.9)
+ * [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
+ * [SDL2_net](https://github.com/libsdl-org/SDL_net)
+ * [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
+ * [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
+ * [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
+ * [libxmp](https://github.com/libxmp/libxmp) (optional)
  
 Usually your distribution should have the corresponding packages in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
 
@@ -127,24 +124,26 @@ Copyright:
  © 1993-1996 Id Software, Inc.;  
  © 1993-2008 Raven Software;  
  © 1999 by id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;  
+ © 1999-2004 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze;  
  © 2004 James Haley;  
+ © 2005-2006 by Florian Schulze, Colin Phipps, Neil Stevens, Andrey Budko;  
  © 2005-2018 Simon Howard;  
  © 2006 Ben Ryves;  
+ © 2007-2011 Moritz "Ripper" Kroll;  
+ © 2008-2019 Simon Judd;  
  © 2017 Christoph Oelckers;  
- © 2017-2022 Brad Harding;  
  © 2019 Fernando Carmona Varo;  
- © 2019 Jonathan Dowland;  
  © 2020 Alex Mayfield;  
  © 2020 JadingTsunami;  
+ © 2020-2024 Fabian Greffrath;  
+ © 2020-2024 Roman Fomin;  
  © 2021 Ryan Krafnick;  
+ © 2021-2024 Alaux;  
  © 2022 Julia Nechaevskaya;  
- © 2022 Vladislav Melnichuk;  
- © 2022-2023 ceski;  
- © 2023 liPillON;  
- © 2020-2023 Fabian Greffrath;  
- © 2020-2023 Roman Fomin;  
- © 2021-2023 Alaux;  
- © 2023 Xemonix.   
+ © 2022-2024 ceski;  
+ © 2023 Andrew Apted;  
+ © 2023 liPillON;
+ © 2023-2024 Xemonix.   
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/beta.h`  
@@ -158,11 +157,27 @@ Copyright:
  © TobiasKosmos.  
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
+Files: `src/nano_bsp.*`  
+Copyright: © 2023 Andrew Apted.  
+License: [MIT](https://opensource.org/licenses/MIT)
+
 Files: `src/u_scanner.*`  
 Copyright:  
  © 2010 Braden "Blzut3" Obrzut;  
  © 2019 Fernando Carmona Varo.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
+
+Files: `src/v_flextran.*`  
+Copyright:  
+ © 2013 James Haley et al.;  
+ © 1998-2012 Marisa Heit.  
+License: [GPL-3.0+](https://www.gnu.org/licenses/gpl-3.0)
+
+Files: `src/v_video.*`  
+Copyright:  
+ © 1999 by id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman;  
+ © 2013 James Haley et al.  
+License: [GPL-3.0+](https://www.gnu.org/licenses/gpl-3.0)
 
 Files: `src/ws_wadstats.*`
 Copyright: © 2023 Ryan Krafnick.
@@ -175,10 +190,6 @@ License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 Files: `src/icon.c, setup/setup_icon.c`  
 Copyright: © 2022 Korp.  
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-
-Files: `src/thermo.h`  
-Copyright: © 2020-2022 Julia Nechaevskaya.  
-License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
 Files: `miniz/*`  
 Copyright:  

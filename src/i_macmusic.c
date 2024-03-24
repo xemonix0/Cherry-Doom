@@ -37,11 +37,12 @@ misrepresented as being the original software.
 #include "doomtype.h"
 #include "i_printf.h"
 #include "i_sound.h"
+#include "m_array.h"
 #include "memio.h"
 #include "mus2mid.h"
 
-#include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioToolbox.h>
+#include <AudioUnit/AudioUnit.h>
 #include <AvailabilityMacros.h>
 
 static MusicPlayer player;
@@ -51,7 +52,11 @@ static AUGraph graph;
 static AUNode synth;
 static AUNode output;
 
+static MusicTimeStamp endtime;
+
 static boolean music_initialized;
+
+static boolean is_playing, is_looping;
 
 static boolean I_MAC_InitMusic(int device)
 {
@@ -103,9 +108,9 @@ static boolean I_MAC_InitMusic(int device)
         return false;
     }
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1050 // this is deprecated, but works back to 10.0
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1050  // this is deprecated, but works back to 10.0
     if (AUGraphGetNodeInfo(graph, output, NULL, NULL, NULL, &unit) != noErr)
-#else // not deprecated, but requires 10.5 or later
+#else  // not deprecated, but requires 10.5 or later
     if (AUGraphNodeInfo(graph, output, NULL, &unit) != noErr)
 #endif
     {
@@ -115,11 +120,13 @@ static boolean I_MAC_InitMusic(int device)
 
     if (NewMusicPlayer(&player) != noErr)
     {
-        I_Printf(VB_ERROR, "I_MAC_InitMusic: Music player creation failed using AudioToolbox.");
+        I_Printf(VB_ERROR, "I_MAC_InitMusic: Music player creation failed "
+                           "using AudioToolbox.");
         return false;
     }
 
-    I_Printf(VB_INFO, "I_MAC_InitMusic: Music playback enabled using AudioToolbox.");
+    I_Printf(VB_INFO,
+             "I_MAC_InitMusic: Music playback enabled using AudioToolbox.");
     music_initialized = true;
 
     return true;
@@ -128,21 +135,25 @@ static boolean I_MAC_InitMusic(int device)
 static void I_MAC_SetMusicVolume(int volume)
 {
     if (!music_initialized)
-        return;
-
-    if (AudioUnitSetParameter(unit,
-                              kAudioUnitParameterUnit_LinearGain,
-                              kAudioUnitScope_Output,
-                              0, (float) volume / 15, 0) != noErr)
     {
-        I_Printf(VB_ERROR, "I_MAC_SetMusicVolume: AudioUnitSetParameter failed.");
+        return;
+    }
+
+    if (AudioUnitSetParameter(unit, kAudioUnitParameterUnit_LinearGain,
+                              kAudioUnitScope_Output, 0, (float)volume / 15, 0)
+        != noErr)
+    {
+        I_Printf(VB_ERROR,
+                 "I_MAC_SetMusicVolume: AudioUnitSetParameter failed.");
     }
 }
 
 static void I_MAC_PauseSong(void *handle)
 {
     if (!music_initialized)
+    {
         return;
+    }
 
     MusicPlayerStop(player);
 }
@@ -150,7 +161,9 @@ static void I_MAC_PauseSong(void *handle)
 static void I_MAC_ResumeSong(void *handle)
 {
     if (!music_initialized)
+    {
         return;
+    }
 
     MusicPlayerStart(player);
 }
@@ -158,10 +171,11 @@ static void I_MAC_ResumeSong(void *handle)
 static void I_MAC_PlaySong(void *handle, boolean looping)
 {
     UInt32 i, ntracks;
-    MusicTimeStamp maxtime = 0;
 
     if (!music_initialized)
+    {
         return;
+    }
 
     if (MusicSequenceSetAUGraph(sequence, graph) != noErr)
     {
@@ -183,79 +197,69 @@ static void I_MAC_PlaySong(void *handle, boolean looping)
 
     if (MusicSequenceGetTrackCount(sequence, &ntracks) != noErr)
     {
-        I_Printf(VB_ERROR, "I_MAC_PlaySong: MusicSequenceGetTrackCount failed.");
+        I_Printf(VB_ERROR,
+                 "I_MAC_PlaySong: MusicSequenceGetTrackCount failed.");
         return;
     }
 
+    endtime = 0;
+
     for (i = 0; i < ntracks; i++)
     {
-        MusicTrack track;
         MusicTimeStamp time;
+        MusicTrack track;
         UInt32 size = sizeof(time);
 
         if (MusicSequenceGetIndTrack(sequence, i, &track) != noErr)
         {
-            I_Printf(VB_ERROR, "I_MAC_PlaySong: MusicSequenceGetIndTrack failed.");
+            I_Printf(VB_ERROR,
+                     "I_MAC_PlaySong: MusicSequenceGetIndTrack failed.");
             return;
         }
 
         if (MusicTrackGetProperty(track, kSequenceTrackProperty_TrackLength,
-                                  &time, &size) != noErr)
+                                  &time, &size)
+            != noErr)
         {
             I_Printf(VB_ERROR, "I_MAC_PlaySong: MusicTrackGetProperty failed.");
             return;
         }
 
-        if (time > maxtime)
+        if (time > endtime)
         {
-            maxtime = time;
+            endtime = time;
         }
     }
 
-    for (i = 0; i < ntracks; i++)
+    if (MusicPlayerSetTime(player, 0) != noErr)
     {
-        MusicTrack track;
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-        typedef struct
-        {
-            MusicTimeStamp loopDuration;
-            SInt32 numberOfLoops;
-        } MusicTrackLoopInfo;
-#endif
-        MusicTrackLoopInfo info;
-
-        if (MusicSequenceGetIndTrack(sequence, i, &track) != noErr)
-        {
-            I_Printf(VB_ERROR, "I_MAC_PlaySong: MusicSequenceGetIndTrack failed.");
-            return;
-        }
-
-        info.loopDuration = maxtime;
-        info.numberOfLoops = (looping ? 0 : 1);
-
-        if (MusicTrackSetProperty(track, kSequenceTrackProperty_LoopInfo,
-                                  &info, sizeof(info)) != noErr)
-        {
-            I_Printf(VB_ERROR, "I_MAC_PlaySong: MusicTrackSetProperty failed.");
-            return;
-        }
+        I_Printf(VB_ERROR, "I_MAC_PlaySong: MusicPlayerSetTime failed.");
+        return;
     }
 
     if (MusicPlayerStart(player) != noErr)
     {
         I_Printf(VB_ERROR, "I_MAC_PlaySong: MusicPlayerStart failed.");
+        return;
     }
+
+    is_playing = true;
+    is_looping = looping;
 }
 
 static void I_MAC_StopSong(void *handle)
 {
     if (!music_initialized)
+    {
         return;
+    }
 
     MusicPlayerStop(player);
 
     // needed to prevent error and memory leak when disposing sequence
     MusicPlayerSetSequence(player, NULL);
+
+    is_playing = false;
 }
 
 static void *I_MAC_RegisterSong(void *data, int len)
@@ -263,11 +267,14 @@ static void *I_MAC_RegisterSong(void *data, int len)
     CFDataRef data_ref = NULL;
 
     if (!music_initialized)
+    {
         return NULL;
+    }
 
     if (NewMusicSequence(&sequence) != noErr)
     {
-        I_Printf(VB_ERROR, "I_MAC_RegisterSong: Unable to create AudioUnit sequence.");
+        I_Printf(VB_ERROR,
+                 "I_MAC_RegisterSong: Unable to create AudioUnit sequence.");
         return NULL;
     }
 
@@ -304,15 +311,15 @@ static void *I_MAC_RegisterSong(void *data, int len)
     }
 
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-  // MusicSequenceLoadSMFData() (avail. in 10.2, no 64 bit) is equivalent to
-  // calling MusicSequenceLoadSMFDataWithFlags() with a flags value of 0
-  // (avail. in 10.3, avail. 64 bit). So, we use MusicSequenceLoadSMFData() for
-  // powerpc versions but the *WithFlags() on intel which require 10.4 anyway.
-  #if defined(__ppc__) || defined(__POWERPC__)
+// MusicSequenceLoadSMFData() (avail. in 10.2, no 64 bit) is equivalent to
+// calling MusicSequenceLoadSMFDataWithFlags() with a flags value of 0
+// (avail. in 10.3, avail. 64 bit). So, we use MusicSequenceLoadSMFData() for
+// powerpc versions but the *WithFlags() on intel which require 10.4 anyway.
+#  if defined(__ppc__) || defined(__POWERPC__)
     if (MusicSequenceLoadSMFData(sequence, data_ref) != noErr)
-  #else
+#  else
     if (MusicSequenceLoadSMFDataWithFlags(sequence, data_ref, 0) != noErr)
-  #endif
+#  endif
 #else // MusicSequenceFileLoadData() requires 10.5 or later.
     if (MusicSequenceFileLoadData(sequence, data_ref, 0, 0) != noErr)
 #endif
@@ -330,7 +337,9 @@ static void *I_MAC_RegisterSong(void *data, int len)
 static void I_MAC_UnRegisterSong(void *handle)
 {
     if (!music_initialized)
+    {
         return;
+    }
 
     DisposeMusicSequence(sequence);
 }
@@ -338,7 +347,9 @@ static void I_MAC_UnRegisterSong(void *handle)
 static void I_MAC_ShutdownMusic(void)
 {
     if (!music_initialized)
+    {
         return;
+    }
 
     I_MAC_StopSong(NULL);
     I_MAC_UnRegisterSong(NULL);
@@ -349,15 +360,33 @@ static void I_MAC_ShutdownMusic(void)
     music_initialized = false;
 }
 
-static int I_MAC_DeviceList(const char* devices[], int size, int *current_device)
+static const char **I_MAC_DeviceList(int *current_device)
 {
+    const char **devices = NULL;
     *current_device = 0;
-    if (size > 0)
+    array_push(devices, "Native");
+    return devices;
+}
+
+static void I_MAC_UpdateMusic(void)
+{
+    MusicTimeStamp time;
+
+    if (!music_initialized || !is_playing)
     {
-        devices[0] = "Native";
-        return 1;
+        return;
     }
-    return 0;
+
+    MusicPlayerGetTime(player, &time);
+
+    if (time < endtime)
+    {
+        return;
+    }
+    else if (is_looping)
+    {
+        MusicPlayerSetTime(player, 0);
+    }
 }
 
 music_module_t music_mac_module =
@@ -369,6 +398,7 @@ music_module_t music_mac_module =
     I_MAC_ResumeSong,
     I_MAC_RegisterSong,
     I_MAC_PlaySong,
+    I_MAC_UpdateMusic,
     I_MAC_StopSong,
     I_MAC_UnRegisterSong,
     I_MAC_DeviceList,

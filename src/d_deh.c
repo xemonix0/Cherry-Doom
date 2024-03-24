@@ -19,25 +19,35 @@
 //
 //--------------------------------------------------------------------
 
-#include "m_io.h"
+#include <ctype.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-// killough 5/2/98: fixed headers, removed rendunant external declarations:
-#include "doomdef.h"
-#include "doomstat.h"
-#include "i_printf.h"
-#include "sounds.h"
-#include "info.h"
-#include "m_argv.h" // [FG] M_CheckParm()
-#include "m_cheat.h"
-#include "m_misc2.h"
-#include "p_inter.h"
-#include "g_game.h"
+#include "d_items.h"
 #include "d_think.h"
-#include "d_main.h" // D_DehChangePredefinedTranslucency()
-#include "w_wad.h"
-#include "memio.h"
-
+#include "doomdef.h"
+#include "doomtype.h"
 #include "dsdhacked.h"
+#include "dstrings.h"
+#include "g_game.h"
+#include "i_printf.h"
+#include "i_system.h"
+#include "info.h"
+#include "m_argv.h"
+#include "m_array.h"
+#include "m_cheat.h"
+#include "m_fixed.h"
+#include "m_io.h"
+#include "m_misc.h"
+#include "memio.h"
+#include "p_action.h"
+#include "p_inter.h"
+#include "p_mobj.h"
+#include "sounds.h"
+#include "w_wad.h"
+#include "z_zone.h"
 
 static boolean bfgcells_modified = false;
 
@@ -129,6 +139,9 @@ boolean deh_pars = false; // in wi_stuff to allow pars in modified games
 
 boolean deh_set_blood_color = false;
 
+int deh_maxhealth;
+boolean deh_set_maxhealth = false;
+
 char **dehfiles = NULL;  // filenames of .deh files for demo footer
 
 // #include "d_deh.h" -- we don't do that here but we declare the
@@ -138,9 +151,6 @@ char **dehfiles = NULL;  // filenames of .deh files for demo footer
 // which are set by D_ENGLSH.H or D_FRENCH.H(etc).  BEX files are a
 // better way of changing these strings globally by language.
 
-// ====================================================================
-// Any of these can be changed using the bex extensions
-#include "dstrings.h"  // to get the initial values
 char *s_D_DEVSTR    = D_DEVSTR;
 char *s_D_CDROM     = D_CDROM;
 char *s_PRESSKEY    = PRESSKEY;
@@ -1492,8 +1502,6 @@ char *deh_misc[] =
 
 // External references to action functions scattered about the code
 
-#include "p_action.h"
-
 typedef struct {
   actionf_t cptr;  // actual pointer to the subroutine
   char *lookup;  // mnemonic lookup string to be specified in BEX
@@ -1674,17 +1682,13 @@ void ProcessDehFile(const char *filename, char *outfilename, int lumpnum)
 
   if (filename)
     {
-      static int i = 0;
-
       if (!(infile.file = M_fopen(filename,"rt")))
         {
           I_Printf(VB_WARNING, "-deh file %s not found",filename);
           return;  // should be checked up front anyway
         }
 
-      dehfiles = I_Realloc(dehfiles, (i + 2) * sizeof(*dehfiles));
-      dehfiles[i++] = strdup(filename);
-      dehfiles[i] = NULL;
+      array_push(dehfiles, M_StringDuplicate(filename));
 
       infile.lump = NULL;
     }
@@ -1997,7 +2001,6 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
                 }
 
                 mobjinfo[indexnum].flags = value;
-                D_DehChangePredefinedTranslucency(indexnum);
                 break;
 
               case DEH_MOBJINFO_INFIGHTING_GROUP:
@@ -2777,7 +2780,10 @@ void deh_procMisc(DEHFILE *fpin, FILE* fpout, char *line) // done
           initial_bullets = value;
         else
           if (!strcasecmp(key,deh_misc[2]))  // Max Health
-            maxhealth = value;
+          {
+            deh_maxhealth = value;
+            deh_set_maxhealth = true;
+          }
           else
             if (!strcasecmp(key,deh_misc[3]))  // Max Armor
               max_armor = value;
@@ -3314,7 +3320,10 @@ boolean deh_GetData(char *s, char *k, long *l, char **strval, FILE *fpout)
       if (*t == '=') break;
       buffer[i] = *t;  // copy it
     }
-  buffer[--i] = '\0';  // terminate the key before the '='
+  if (i > 0)
+    {
+      buffer[--i] = '\0';  // terminate the key before the '='
+    }
   if (!*t)  // end of string with no equal sign
     {
       okrc = false;

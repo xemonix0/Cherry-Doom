@@ -17,24 +17,19 @@
 //	all OS independend parts.
 //
 
-#include <stdlib.h>
-
-#include "i_printf.h"
-#include "d_main.h"
-#include "m_argv.h"
-#include "m_menu.h"
-#include "m_misc2.h"
-#include "i_system.h"
-#include "i_video.h"
-#include "g_game.h"
+#include "d_loop.h"
+#include "d_player.h"
+#include "d_ticcmd.h"
 #include "doomdef.h"
 #include "doomstat.h"
-//#include "w_checksum.h"
-//#include "w_wad.h"
-
-//#include "deh_main.h"
-
-#include "d_loop.h"
+#include "doomtype.h"
+#include "g_game.h"
+#include "i_printf.h"
+#include "m_argv.h"
+#include "m_misc.h"
+#include "net_defs.h"
+#include "p_mobj.h"
+#include "tables.h"
 
 ticcmd_t *netcmds;
 
@@ -175,9 +170,8 @@ static void SaveGameSettings(net_gamesettings_t *settings)
 
     longtics = (demo_compatibility && M_ParmExists("-longtics")) || mbf21;
 
-    settings->lowres_turn = (M_ParmExists("-record")
-                          && !longtics)
-                          || M_ParmExists("-shorttics");
+    settings->lowres_turn = ((M_ParmExists("-record") && !longtics) ||
+                             M_ParmExists("-shorttics") || shorttics);
 
     settings->demo_version = demo_version;
     G_WriteOptions(settings->options);
@@ -185,8 +179,6 @@ static void SaveGameSettings(net_gamesettings_t *settings)
 
 static void InitConnectData(net_connect_data_t *connect_data)
 {
-    boolean shorttics;
-
     connect_data->max_players = MAXPLAYERS;
     connect_data->drone = false;
 
@@ -230,15 +222,12 @@ static void InitConnectData(net_connect_data_t *connect_data)
     // Play with low turning resolution to emulate demo recording.
     //
 
-    shorttics = M_ParmExists("-shorttics");
-
     longtics = (demo_compatibility && M_ParmExists("-longtics")) || mbf21;
 
     // Are we recording a demo? Possibly set lowres turn mode
 
-    connect_data->lowres_turn = (M_ParmExists("-record")
-                             && !longtics)
-                              || shorttics;
+    connect_data->lowres_turn = ((M_ParmExists("-record") && !longtics) ||
+                                 M_ParmExists("-shorttics") || shorttics);
 
     // Read checksums of our WAD directory and dehacked information
 
@@ -268,6 +257,7 @@ void D_ConnectNetGame(void)
     if (M_CheckParm("-solo-net") > 0)
     {
         netgame = true;
+        solonet = true;
     }
 }
 

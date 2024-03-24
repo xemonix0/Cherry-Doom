@@ -12,15 +12,16 @@
 // GNU General Public License for more details.
 //
 
+#include <ctype.h>
 #include <stdio.h>
 
-#include "doomstat.h"
-#include "d_main.h"
 #include "d_iwad.h"
+#include "d_main.h"
+#include "doomstat.h"
 #include "i_system.h"
+#include "m_array.h"
 #include "m_io.h"
 #include "m_misc.h"
-#include "m_misc2.h"
 #include "w_wad.h"
 #include "z_zone.h"
 
@@ -45,7 +46,7 @@ static void InitWadDataDir(void) {
   int pwad_index = 1;
   char* str;
 
-  for (i = 0; i < numwadfiles; ++i)
+  for (i = 0; i < array_size(wadfiles); ++i)
   {
     const char* start;
     char* result;
@@ -246,7 +247,7 @@ static void WS_LoadWadStats(void) {
 
   path = WS_WadStatsPath();
 
-  if (M_ReadFileToString(path, &buffer, false) != -1)
+  if (M_ReadFile(path, &buffer, true, false) != -1)
   {
     const char* line_ending = "\n\r";
     int substring_count = 2;

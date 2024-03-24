@@ -22,8 +22,11 @@
 
 #include "m_fixed.h"
 
-#define NUGHUDWIDESHIFT(x) ((abs(x) == 2) ? WIDESCREENDELTA * (st_crispyhud != 0) * (2 / (x)) :  \
-                            (abs(x) == 1) ? WIDESCREENDELTA * (st_crispyhud == 2) *      (x)  : 0)
+#define NUGHUDWIDESHIFT(x) (                                       \
+  st_crispyhud ? (abs(x) == 2) ? video.deltaw      * (2 / (x)) :   \
+                 (abs(x) == 1) ? distributed_delta *      (x)  : 0 \
+               : 0                                                 \
+)
 
 typedef struct nughud_widget_s {
   int x, y;
@@ -71,6 +74,7 @@ typedef struct nughud_s {
   nughud_alignable_t coord;
   boolean            coord_ml;
   nughud_alignable_t fps;
+  nughud_alignable_t rate;
   nughud_alignable_t message;
   nughud_alignable_t secret;
   nughud_vlignable_t patches[NUMNUGHUDPATCHES];

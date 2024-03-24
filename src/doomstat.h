@@ -25,16 +25,13 @@
 #ifndef __D_STATE__
 #define __D_STATE__
 
-// We need globally shared data structures,
-//  for defining the global state variables.
-#include "doomdata.h"
-#include "d_loop.h"
-
 // We need the playr data structure as well.
 #include "d_player.h"
+#include "doomdata.h"
+#include "doomdef.h"
+#include "doomtype.h"
 
-// and mapinfo information
-#include "u_mapinfo.h"
+struct mapentry_s;
 
 // ------------------------
 // Command line parameters.
@@ -52,7 +49,8 @@ extern  int screenblocks;     // killough 11/98
 //
 
 extern GameMode_t gamemode;
-extern GameMission_t  gamemission;
+extern GameMission_t gamemission;
+extern GameVariant_t gamevariant;
 
 // [FG] emulate a specific version of Doom
 extern GameVersion_t gameversion;
@@ -164,6 +162,15 @@ enum {
 
 extern int comp[COMP_TOTAL], default_comp[COMP_TOTAL];
 
+typedef enum
+{
+  INVUL_VANILLA,
+  INVUL_MBF,
+  INVUL_GRAY,
+} invul_mode_t;
+
+extern invul_mode_t invul_mode;
+
 // -------------------------------------------
 // Language.
 extern  Language_t   language;
@@ -186,7 +193,7 @@ extern  boolean   autostart;
 extern  skill_t         gameskill;
 extern  int   gameepisode;
 extern  int   gamemap;
-extern  mapentry_t*     gamemapinfo;
+extern  struct mapentry_s *gamemapinfo;
 
 // If non-zero, exit the level after this number of minutes
 extern  int             timelimit;
@@ -196,6 +203,7 @@ extern  boolean         respawnmonsters;
 
 // Netgame? Only true if >1 player.
 extern  boolean netgame;
+extern  boolean solonet;
 
 extern boolean D_CheckNetConnect(void);
 
@@ -232,9 +240,9 @@ extern  int automapactive; // In AutoMap mode? // [Nugget] Minimap: now an int
 
 typedef enum
 {
-  overlay_off,
-  overlay_on,
-  overlay_dark,
+  AM_OVERLAY_OFF,
+  AM_OVERLAY_ON,
+  AM_OVERLAY_DARK,
 } overlay_t;
 
 extern  overlay_t automapoverlay;
@@ -267,10 +275,9 @@ extern  int displayplayer;
 // Statistics on a given map, for intermission.
 //
 extern  int totalkills;
-extern  int extraspawns; // [Nugget]: [crispy] count resurrected and (re)spawned monsters
-extern  int extrakills; // [Nugget]: [So Doom] count kills of resurrected and (re)spawned monsters
 extern  int totalitems;
 extern  int totalsecret;
+extern  int max_kill_requirement;
 
 // [Nugget]
 typedef enum { MILESTONE_KILLS = 0x1, MILESTONE_ITEMS = 0x2, MILESTONE_SECRETS = 0x4, } milestone_t;
@@ -282,10 +289,11 @@ extern  int basetic;    // killough 9/29/98: levelstarttic, adjusted
 extern  int leveltime;  // tics in game play for par
 extern  int oldleveltime;
 extern  int totalleveltimes; // [FG] total time for all completed levels
-extern  int levelscompleted; // [Cherry] total amount of completed levels
-extern  int sessionattempts; // [Cherry] attempts on the current map in this session
-extern  int bestattempts; // [Cherry] attempts on the current map in this session
-extern  int totalattempts; // [Cherry] attempts on the current map
+// [Cherry]
+extern  int levelscompleted; // total amount of completed levels
+extern  int sessionattempts; // attempts on the current map in this session
+extern  int bestattempts; // attempts on the current map in this session
+extern  int totalattempts; // attempts on the current map
 // --------------------------------------
 // DEMO playback/recording related stuff.
 
@@ -296,6 +304,9 @@ extern  boolean demorecording;
 // Round angleturn in ticcmds to the nearest 256.  This is used when
 // recording Vanilla demos in netgames.
 extern  boolean lowres_turn;
+
+// Config key for low resolution turning.
+extern  boolean shorttics;
 
 // cph's doom 1.91 longtics hack
 extern  boolean longtics;
@@ -318,14 +329,11 @@ extern  int       playback_skiptics;
 extern  boolean   frozen_mode;
 
 extern  boolean   strictmode, default_strictmode;
+extern  boolean   force_strictmode;
 
 #define STRICTMODE(x) (strictmode ? 0 : (x))
 
-#define NOTSTRICTMODE(x) (strictmode ? 1 : (x))
-
 #define STRICTMODE_COMP(x) (strictmode ? comp[x] : default_comp[x])
-
-#define STRICTMODE_VANILLA(x) (strictmode && demo_compatibility ? 0 : (x))
 
 extern  boolean   critical;
 
@@ -368,6 +376,7 @@ extern wbstartstruct_t wminfo;
 
 // File handling stuff.
 extern  char   *basedefault;
+extern  boolean organize_savefiles;
 
 // if true, load all graphics at level load
 extern  boolean precache;
@@ -395,7 +404,7 @@ extern  int        rndindex;
 
 extern  int        maketic;
 
-extern  ticcmd_t   *netcmds;
+extern  struct ticcmd_s *netcmds;
 extern  int        ticdup;
 
 //-----------------------------------------------------------------------------
@@ -450,6 +459,9 @@ extern boolean hide_weapon;
 // [FG] centered weapon sprite
 extern int center_weapon;
 
+extern int view_bobbing_pct;
+extern int weapon_bobbing_pct;
+
 // [Nugget] /-----------------------------------------------------------------
 
 extern boolean fauxdemo;
@@ -460,20 +472,16 @@ extern boolean casual_play;
 
 // General ----------------------------
 
-extern int gammacycle; // CFG-Only
-extern int wipe_type;
 extern int over_under;
 extern int jump_crouch;
-extern int fov;
 extern int viewheight_value;
-extern int view_bobbing_percentage;
 
 enum {
-  IMPACTPITCH_OFF,
-  IMPACTPITCH_FALL,
-  IMPACTPITCH_DAMAGE,
-  IMPACTPITCH_BOTH,
-}; extern int impact_pitch;
+  FLINCH_OFF,
+  FLINCH_LANDING,
+  FLINCH_DAMAGE,
+  FLINCH_BOTH,
+}; extern int flinching;
 
 extern int explosion_shake;
 extern int damage_shake;
@@ -495,16 +503,18 @@ extern int menu_background_all;
 extern int no_menu_tint;
 extern int no_berserk_tint;
 extern int no_radsuit_tint;
+extern int nightvision_visor;
 extern int damagecount_cap;
 extern int bonuscount_cap;
 extern int fake_contrast;
 extern int diminished_lighting; // CFG-Only
 extern int wipe_speed_percentage;
-// [Cherry] General ------------------------------------------------------
-extern int motion_blur;
-// [Cherry] End ----------------------------------------------------------
+extern int alt_interpic;
 extern int s_clipping_dist_x2;
 extern int one_key_saveload;
+extern int rewind_interval;
+extern int rewind_depth;
+extern int rewind_timeout;
 extern int no_page_ticking;
 extern int quick_quitgame;
 
@@ -518,7 +528,6 @@ extern int a11y_invul_colormap;
 extern int no_hor_autoaim;
 extern int switch_on_pickup;
 extern int always_bob; // CFG-Only
-extern int weapon_bobbing_percentage;
 
 enum {
   BOBSTYLE_VANILLA,
@@ -539,11 +548,11 @@ extern int sx_fix; // CFG-Only
 
 // Status Bar/HUD ---------------------
 
+extern int announce_milestones;
+extern int show_save_messages; // CFG-Only
 extern int show_ssg; // CFG-Only
-extern int alt_arms;
-extern int blink_keys; // CFG-Only
-extern int smarttotals;
 extern int hud_kills_percentage;
+extern int alt_arms;
 
 typedef enum {
   TIMER_USE,
@@ -552,7 +561,8 @@ typedef enum {
   
   NUMTIMERS
 } eventtimer_t;
-extern int event_timers[];
+extern int hud_time_teleport;
+extern int hud_time_keypickup;
 
 extern int hudcolor_time_scale;
 extern int hudcolor_total_time;
@@ -561,12 +571,14 @@ extern int hudcolor_event_timer;
 extern int hudcolor_kills;
 extern int hudcolor_items;
 extern int hudcolor_secrets;
-extern int hudcolor_attempts; // [Cherry]
-extern int hudcolor_attempts_count; // [Cherry]
-extern int hudcolor_movement; // [Cherry]
-extern int hudcolor_weapons; // [Cherry]
-extern int hudcolor_keys; // [Cherry]
-extern int hudcolor_frag; // [Cherry]
+// [Cherry] --------------------------------------------------------------
+extern int hudcolor_attempts;
+extern int hudcolor_attempts_count;
+extern int hudcolor_movement;
+extern int hudcolor_weapons;
+extern int hudcolor_keys;
+extern int hudcolor_frag;
+// [Cherry] End ----------------------------------------------------------
 extern int hudcolor_ms_incomp;
 extern int hudcolor_ms_comp;
 // [Cherry] --------------------------------------------------------------
@@ -591,11 +603,6 @@ extern int extra_gibbing[];
 extern int bloodier_gibbing;
 extern int zdoom_item_drops;
 
-// Messages ---------------------------
-
-extern int show_save_messages; // CFG-Only
-extern int announce_milestones;
-
 // Key Bindings -----------------------
 
 extern int zoom_fov;
@@ -610,11 +617,11 @@ enum {
   SHOTPAL_BOTH,
 }; extern int screenshot_palette;
 
-extern int menu_background_darkening;
+extern int menu_backdrop_darkening;
 extern int automap_overlay_darkening;
 extern int sp_chat;
 
-// Doom Compatibility -----------------
+// Doom Compatibility (CFG-Only) ------
 
 extern int comp_bruistarget;
 extern int comp_nomeleesnap;
@@ -632,9 +639,12 @@ extern int comp_switchsource;
 extern int comp_cgundblsnd;
 extern int comp_cgunnersfx;
 extern int comp_flamst;
+extern int comp_godface;
 extern int comp_deadoof;
 extern int comp_unusedpals;
 extern int comp_keypal;
+
+extern int fail_safe; // CFG-Only
 
 // [Nugget] -----------------------------------------------------------------/
 

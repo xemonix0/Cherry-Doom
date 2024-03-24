@@ -17,11 +17,19 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "doomdata.h"
 #include "doomstat.h"
-#include "r_main.h"
-#include "p_maputl.h"
-#include "p_setup.h"
+#include "doomtype.h"
+#include "i_system.h"
 #include "m_bbox.h"
+#include "m_fixed.h"
+#include "p_maputl.h"
+#include "p_mobj.h"
+#include "p_setup.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "r_state.h"
+#include "tables.h"
 
 //
 // P_CheckSight
@@ -220,7 +228,7 @@ static boolean P_CrossBSPNode(int bspnum, register los_t *los)
 //
 // killough 4/20/98: cleaned up, made to use new LOS struct
 
-boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
+static boolean P_CheckSight_MBF(mobj_t *t1, mobj_t *t2)
 {
   const sector_t *s1 = t1->subsector->sector;
   const sector_t *s2 = t2->subsector->sector;
@@ -278,6 +286,14 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
 
   // the head node is the last node output
   return P_CrossBSPNode(numnodes-1, &los);
+}
+
+boolean checksight12;
+boolean (*P_CheckSight)(mobj_t *t1, mobj_t *t2) = P_CheckSight_MBF;
+
+void P_UpdateCheckSight(void)
+{
+  P_CheckSight = CRITICAL(checksight12) ? P_CheckSight_12 : P_CheckSight_MBF;
 }
 
 //

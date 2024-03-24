@@ -21,11 +21,11 @@
 #ifndef __D_MAIN__
 #define __D_MAIN__
 
-#include "doomdef.h"
-#include "d_event.h"
+#include "doomtype.h"
 #include "w_wad.h"
 
-extern int numwadfiles;
+struct event_s;
+
 extern wadfile_info_t *wadfiles;       // killough 11/98
 
 void D_AddFile(const char *file, wad_source_t source);
@@ -35,11 +35,9 @@ extern char *basesavegame;     // killough 2/16/98: savegame path
 extern char *screenshotdir; // [FG] screenshot path
 char *D_DoomPrefDir(void); // [FG] default configuration dir
 
-// [Nugget] /-----------------------------------------------------------------
+// [Nugget]
 extern char *savegame_dir;
 extern char *screenshot_dir;
-extern int organize_saves;
-// [Nugget] -----------------------------------------------------------------/
 
 //jff 1/24/98 make command line copies of play modes available
 extern boolean clnomonsters; // checkparm of -nomonsters
@@ -47,14 +45,15 @@ extern boolean clrespawnparm;  // checkparm of -respawn
 extern boolean clfastparm; // checkparm of -fast
 //jff end of external declaration of command line playmode
 
+void D_SetMaxHealth(void);
 void D_SetBloodColor(void);
-void D_SetPredefinedTranslucency(void);
-void D_DehChangePredefinedTranslucency(int index);
 
 boolean D_CheckEndDoom(void);
 
 // Called by IO functions when input is detected.
-void D_PostEvent(event_t* ev);
+void D_PostEvent(struct event_s *ev);
+
+void D_UpdateDeltaTics(void);
 
 //
 // BASE LEVEL
@@ -64,7 +63,9 @@ void D_PageTicker(void);
 void D_PageDrawer(void);
 void D_AdvanceDemo(void);
 void D_StartTitle(void);
-void D_NuggetUpdateCasual(); // [Nugget]
+
+void D_NuggetUpdateCasual(void); // [Nugget]
+
 #endif
 
 //----------------------------------------------------------------------------

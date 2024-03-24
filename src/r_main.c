@@ -19,29 +19,43 @@
 //
 //-----------------------------------------------------------------------------
 
+#define _USE_MATH_DEFINES
+#include <limits.h>
+#include <math.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "d_loop.h"
+#include "d_player.h"
+#include "doomdata.h"
+#include "doomdef.h"
 #include "doomstat.h"
-#include "r_main.h"
-#include "r_things.h"
-#include "r_plane.h"
+#include "i_video.h"
+#include "p_mobj.h"
+#include "p_setup.h" // P_SegLengths
 #include "r_bsp.h"
+#include "r_data.h"
+#include "r_defs.h"
 #include "r_draw.h"
-#include "m_bbox.h"
+#include "r_main.h"
+#include "r_plane.h"
 #include "r_sky.h"
-#include "v_video.h"
+#include "r_state.h"
+#include "r_things.h"
+#include "r_voxel.h"
 #include "st_stuff.h"
-#include "hu_stuff.h"
+#include "v_flextran.h"
+#include "v_video.h"
+#include "z_zone.h"
+
 // [Nugget]
 #include "m_nughud.h"
 #include "m_random.h"
 #include "p_map.h"
-#include "p_mobj.h"
+#include "wi_stuff.h"
 
-// [Nugget]
-#ifndef M_PI
-  #define M_PI 3.14159265358979323846
-#endif
-
-// [Nugget] Removed unused FIELDOFVIEW macro
+// Fineangles in the SCREENWIDTH wide window.
+#define FIELDOFVIEW 2048
 
 // killough: viewangleoffset is a legacy from the pre-v1.2 days, when Doom
 // had Left/Mid/Right viewing. +/-ANG90 offsets were placed here on each
@@ -53,25 +67,37 @@ lighttable_t *fixedcolormap;
 int      centerx, centery;
 fixed_t  centerxfrac, centeryfrac;
 fixed_t  projection;
+fixed_t  skyiscale;
 fixed_t  viewx, viewy, viewz;
 angle_t  viewangle;
+localview_t localview;
+double deltatics;
+boolean raw_input;
 fixed_t  viewcos, viewsin;
 player_t *viewplayer;
 extern lighttable_t **walllights;
 fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
 
-// [Nugget] Chasecam
+static fixed_t focallength, lightfocallength;
+
+// [Nugget] Chasecam /--------------------------------------------------------
+
 chasecam_t chasecam;
+
 boolean chasecam_on;
+
 // For Automap
 fixed_t  chasexofs, chaseyofs;
 angle_t  chaseaofs;
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // precalculated math tables
 //
 
 angle_t clipangle;
+angle_t vx_clipangle;
 
 // The viewangletox[viewangle + FINEANGLES/4] lookup
 // maps the visible view angles to screen X coordinates,
@@ -84,10 +110,10 @@ int viewangletox[FINEANGLES/2];
 // to the lowest viewangle that maps back to x ranges
 // from clipangle to -clipangle.
 
-angle_t xtoviewangle[MAX_SCREENWIDTH+1];   // killough 2/8/98
+angle_t *xtoviewangle = NULL;   // killough 2/8/98
 
 // [FG] linear horizontal sky scrolling
-angle_t linearskyangle[MAX_SCREENWIDTH+1];
+angle_t *linearskyangle = NULL;
 
 int LIGHTLEVELS;
 int LIGHTSEGSHIFT;
@@ -114,31 +140,33 @@ lighttable_t **colormaps;
 int extralight;                           // bumped light from gun blasts
 int extra_level_brightness;               // level brightness feature
 
-// [Nugget] FOV from Doom Retro /---------------------------------------------
+// [Nugget] FOV effects /-----------------------------------------------------
 
-boolean fovchange = true;
-static int bfov; // Base FOV
-static int rfov; // Rendered (currently applied) FOV, with effects added to it
-float fovdiff;   // Used for some corrections
-#define FOVDIFF2 (fovdiff + ((fovdiff - 1.0) * ((fovdiff < 1.0) ? 0.5 : 0.22)))
-
-static fixed_t fovscale;
-static int     pitchmax;
+static int r_fov; // Rendered (currently-applied) FOV, with effects added to it
 
 static fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
 static int     zoomed = 0;      // Current zoom state
 
-int R_GetBFOV(void)
+void R_ClearFOVFX(void)
 {
-  return bfov;
+  R_SetZoom(ZOOM_RESET);
+
+  for (int i = FOVFX_ZOOM+1;  i < NUMFOVFX;  i++)
+  {
+    // Note: the `R_SetZoom()` call above sets `setsizeneeded = true` already,
+    // but we'll do it here anyways for future-proofing
+    if (fovfx[i].current != 0) { setsizeneeded = true; }
+
+    fovfx[i] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
+  }
 }
 
-int R_GetFOVFX(int fx)
+int R_GetFOVFX(const int fx)
 {
   return fovfx[fx].current;
 }
 
-void R_SetFOVFX(int fx)
+void R_SetFOVFX(const int fx)
 {
   if (strictmode) { return; }
 
@@ -151,7 +179,7 @@ void R_SetFOVFX(int fx)
       if (!teleporter_zoom) { break; }
       R_SetZoom(ZOOM_RESET);
       fovfx[FOVFX_TELEPORT].target = 50;
-      fovchange = true;
+      setsizeneeded = true;
       break;
   }
 }
@@ -166,12 +194,12 @@ void R_SetZoom(const int state)
   if (state == ZOOM_RESET || zoomed == ZOOM_RESET)
   {
     zoomed = ZOOM_RESET;
-    fovchange = true;
+    setsizeneeded = true;
     return;
   }
-  else if (zoomed != state) { fovchange = true; }
+  else if (zoomed != state) { setsizeneeded = true; }
 
-  if (STRICTMODE(zoom_fov - bfov))
+  if (STRICTMODE(zoom_fov - custom_fov))
   { zoomed = state; }
   else
   { zoomed = ZOOM_OFF; }
@@ -185,7 +213,7 @@ static fixed_t shake;
 
 void R_SetShake(int value)
 {
-  if (NOTSTRICTMODE(value == -1))
+  if (strictmode || value == -1)
   {
     shake = 0;
     return;
@@ -197,7 +225,7 @@ void R_SetShake(int value)
 // [Cherry]
 void R_DamageShake(int damage)
 {
-  if (NOTSTRICTMODE(!damage_shake)) { return; }
+  if (strictmode || !damage_shake) { return; }
 
   R_SetShake(damage);
 }
@@ -209,7 +237,7 @@ void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
   const mobj_t *const player = players[displayplayer].mo;
   fixed_t dx, dy, dist;
 
-  if (NOTSTRICTMODE(!explosion_shake)) { return; }
+  if (strictmode || !explosion_shake) { return; }
 
   range *= SHAKERANGEMULT;
   force *= SHAKERANGEMULT;
@@ -378,10 +406,12 @@ static fixed_t centerxfrac_nonwide;
 //
 // killough 5/2/98: reformatted
 
-static void R_InitTextureMapping (void)
+static void R_InitTextureMapping(void)
 {
   register int i,x;
-  fixed_t focallength;
+  fixed_t slopefrac;
+  angle_t fov;
+  double linearskyfactor;
 
   // Use tangent table to generate viewangletox:
   //  viewangletox will give the next greatest x
@@ -390,15 +420,39 @@ static void R_InitTextureMapping (void)
   // Calc focallength
   //  so FIELDOFVIEW angles covers SCREENWIDTH.
 
-  focallength = FixedDiv(centerxfrac, fovscale); // [Nugget] FOV from Doom Retro
+  // [Nugget] Use `r_fov` instead of `custom_fov`
+
+  if (r_fov == FOV_DEFAULT && centerxfrac == centerxfrac_nonwide)
+  {
+    fov = FIELDOFVIEW;
+    slopefrac = finetangent[FINEANGLES / 4 + fov / 2];
+    focallength = FixedDiv(centerxfrac_nonwide, slopefrac);
+    lightfocallength = centerxfrac_nonwide;
+    projection = centerxfrac_nonwide;
+  }
+  else
+  {
+    const double slope = (tan(r_fov * M_PI / 360.0) *
+                          centerxfrac / centerxfrac_nonwide);
+
+    // For correct light across FOV range. Calculated like R_InitTables().
+    const double lightangle = atan(slope) + M_PI / FINEANGLES;
+    const double lightslopefrac = tan(lightangle) * FRACUNIT;
+    lightfocallength = FixedDiv(centerxfrac, lightslopefrac);
+
+    fov = atan(slope) * FINEANGLES / M_PI;
+    slopefrac = finetangent[FINEANGLES / 4 + fov / 2];
+    focallength = FixedDiv(centerxfrac, slopefrac);
+    projection = centerxfrac / slope;
+  }
 
   for (i=0 ; i<FINEANGLES/2 ; i++)
     {
       int t;
-      if (finetangent[i] > fovscale)
+      if (finetangent[i] > slopefrac)
         t = -1;
       else
-        if (finetangent[i] < -fovscale)
+        if (finetangent[i] < -slopefrac)
           t = viewwidth+1;
       else
         {
@@ -412,10 +466,12 @@ static void R_InitTextureMapping (void)
         }
       viewangletox[i] = t;
     }
-
+    
   // Scan viewangletox[] to generate xtoviewangle[]:
   //  xtoviewangle will give the smallest view angle
   //  that maps to x.
+
+  linearskyfactor = FIXED2DOUBLE(slopefrac) * ANG90;
 
   for (x=0; x<=viewwidth; x++)
     {
@@ -423,18 +479,20 @@ static void R_InitTextureMapping (void)
         ;
       xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
       // [FG] linear horizontal sky scrolling
-      linearskyangle[x] = ((viewwidth/2-x)*((SCREENWIDTH<<6)/viewwidth))*(ANG90/(NONWIDEWIDTH<<6)) / fovdiff; // [Nugget]
+      linearskyangle[x] = (0.5 - x / (double)viewwidth) * linearskyfactor;
     }
-
+    
   // Take out the fencepost cases from viewangletox.
   for (i=0; i<FINEANGLES/2; i++)
     if (viewangletox[i] == -1)
       viewangletox[i] = 0;
-    else
+    else 
       if (viewangletox[i] == viewwidth+1)
         viewangletox[i] = viewwidth;
-
+        
   clipangle = xtoviewangle[0];
+
+  vx_clipangle = clipangle - ((fov << ANGLETOFINESHIFT) - ANG90);
 }
 
 //
@@ -520,11 +578,14 @@ void R_InitLightTables (void)
       int j, startmap = ((LIGHTLEVELS-LIGHTBRIGHT-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
 
       for (cm = 0; cm < numcolormaps; ++cm)
+      {
+        c_scalelight[cm][i] = Z_Malloc(MAXLIGHTSCALE * sizeof(***c_scalelight), PU_STATIC, 0);
         c_zlight[cm][i] = Z_Malloc(MAXLIGHTZ * sizeof(***c_zlight), PU_STATIC, 0);
+      }
 
       for (j=0; j<MAXLIGHTZ; j++)
         {
-          int scale = FixedDiv ((ORIGWIDTH/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
+          int scale = FixedDiv ((SCREENWIDTH/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
           int t, level = startmap - (scale >>= LIGHTSCALESHIFT)/DISTMAP;
 
           if (level < 0)
@@ -541,6 +602,53 @@ void R_InitLightTables (void)
     }
 }
 
+boolean setsmoothlight;
+
+void R_SmoothLight(void)
+{
+  setsmoothlight = false;
+  // [crispy] re-calculate the zlight[][] array
+  R_InitLightTables();
+  // [crispy] re-calculate the scalelight[][] array
+  // R_ExecuteSetViewSize();
+  // [crispy] re-calculate fake contrast
+  P_SegLengths(true);
+}
+
+int R_GetLightIndex(fixed_t scale)
+{
+  const int index = FixedDiv(scale * 160, lightfocallength) >> LIGHTSCALESHIFT;
+  return BETWEEN(0, MAXLIGHTSCALE - 1, index);
+}
+
+static fixed_t viewpitch;
+
+static void R_SetupFreelook(void)
+{
+  fixed_t dy;
+  int i;
+
+  if (viewpitch)
+  {
+    dy = FixedMul(projection, -finetangent[(ANG90 - viewpitch) >> ANGLETOFINESHIFT]);
+    dy = (fixed_t)((int64_t)dy * SCREENHEIGHT / ACTUALHEIGHT);
+  }
+  else
+  {
+    dy = 0;
+  }
+
+  centery = viewheight / 2 + (dy >> FRACBITS);
+  centeryfrac = centery << FRACBITS;
+
+  for (i = 0; i < viewheight; i++)
+  {
+    dy = abs(((i - centery) << FRACBITS) + FRACUNIT / 2);
+    yslope[i] = FixedDiv(projection, dy);
+  }
+}
+
+
 //
 // R_SetViewSize
 // Do not really change anything here,
@@ -550,8 +658,6 @@ void R_InitLightTables (void)
 
 boolean setsizeneeded;
 int     setblocks;
-
-static int viewblocks;
 
 void R_SetViewSize(int blocks)
 {
@@ -565,61 +671,66 @@ void R_SetViewSize(int blocks)
 
 void R_ExecuteSetViewSize (void)
 {
-  int i, j;
-  extern void AM_Start(void);
-  // [Nugget] FOV from Doom Retro
-  double WIDEFOVDELTA;
-  fixed_t num;
+  int i;
+  vrect_t view;
 
   setsizeneeded = false;
 
-  if (setblocks >= 11) // [Nugget] Crispy minimalistic HUD
+  // [Nugget] Alt. intermission background
+  if (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
+  { setblocks = 11; }
+
+  if (setblocks == 11)
     {
       scaledviewwidth_nonwide = NONWIDEWIDTH;
-      scaledviewwidth = SCREENWIDTH;
+      scaledviewwidth = video.unscaledw;
       scaledviewheight = SCREENHEIGHT;                    // killough 11/98
     }
   // [crispy] hard-code to SCREENWIDTH and SCREENHEIGHT minus status bar height
   else if (setblocks == 10)
     {
       scaledviewwidth_nonwide = NONWIDEWIDTH;
-      scaledviewwidth = SCREENWIDTH;
-      scaledviewheight = SCREENHEIGHT-ST_HEIGHT;
+      scaledviewwidth = video.unscaledw;
+      scaledviewheight = SCREENHEIGHT - ST_HEIGHT;
     }
   else
     {
-      scaledviewwidth_nonwide = setblocks*32;
-      scaledviewheight = (setblocks*168/10) & ~7;        // killough 11/98
-      if (widescreen)
-      {
-        const int widescreen_edge_aligner = 7;
+      const int st_screen = SCREENHEIGHT - ST_HEIGHT;
 
-        scaledviewwidth = scaledviewheight*SCREENWIDTH/(SCREENHEIGHT-ST_HEIGHT);
-        // [crispy] make sure scaledviewwidth is an integer multiple of the bezel patch width
-        scaledviewwidth = (scaledviewwidth + widescreen_edge_aligner) & (int)~widescreen_edge_aligner;
-        scaledviewwidth = MIN(scaledviewwidth, SCREENWIDTH);
-      }
+      scaledviewwidth_nonwide = setblocks * 32;
+      scaledviewheight = (setblocks * st_screen / 10) & ~7; // killough 11/98
+
+      if (widescreen)
+        scaledviewwidth = (scaledviewheight * video.unscaledw / st_screen) & ~7;
       else
-      {
         scaledviewwidth = scaledviewwidth_nonwide;
-      }
     }
 
-  viewwidth = scaledviewwidth * hires;                  // killough 11/98
-  viewheight = scaledviewheight * hires;                // killough 11/98
-  viewwidth_nonwide = scaledviewwidth_nonwide * hires;
+  scaledviewx = (video.unscaledw - scaledviewwidth) / 2;
 
-  viewblocks = MIN(setblocks, 10) * hires;
+  if (scaledviewwidth == video.unscaledw)
+    scaledviewy = 0;
+  else
+    scaledviewy = (SCREENHEIGHT - ST_HEIGHT - scaledviewheight) / 2;
 
-  // [Nugget] FOV changes
-  if (fovchange)
-  {
+  view.x = scaledviewx;
+  view.y = scaledviewy;
+  view.w = scaledviewwidth;
+  view.h = scaledviewheight;
+
+  V_ScaleRect(&view);
+
+  viewwindowx = view.sx;
+  viewwindowy = view.sy;
+  viewwidth   = view.sw;
+  viewheight  = view.sh;
+
+  viewwidth_nonwide = V_ScaleX(scaledviewwidth_nonwide);
+
+  { // [Nugget] FOV changes
     static int oldtic = -1;
     int fx = 0;
     int zoomtarget;
-
-    bfov = (!strictmode ? fov : ORIGFOV);
-    fovchange = false;
 
     if (strictmode || zoomed == ZOOM_RESET) { // Force zoom reset
       zoomtarget = 0;
@@ -627,28 +738,31 @@ void R_ExecuteSetViewSize (void)
       zoomed = ZOOM_OFF;
     }
     else {
-      zoomtarget = (zoomed ? zoom_fov - bfov : 0);
-      // In case bfov changes while zoomed in...
+      zoomtarget = (zoomed ? zoom_fov - custom_fov : 0);
+      // In case `custom_fov` changes while zoomed in...
       if (zoomed && abs(fovfx[FOVFX_ZOOM].target) > abs(zoomtarget))
       { fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = zoomtarget, .current = zoomtarget, .old = zoomtarget }; }
     }
 
-    if (!strictmode) {
+    if (!strictmode)
+    {
       if (fovfx[FOVFX_ZOOM].target != zoomtarget)
-      { fovchange = true; }
+      {
+        setsizeneeded = true;
+      }
       else for (i = 0;  i < NUMFOVFX;  i++)
         if (fovfx[i].target || fovfx[i].current)
         {
-          fovchange = true;
+          setsizeneeded = true;
           break;
         }
     }
 
-    if (fovchange)
+    if (setsizeneeded)
     {
       if (oldtic != gametic)
       {
-        fovchange = false;
+        setsizeneeded = false;
 
         fovfx[FOVFX_ZOOM].old = fovfx[FOVFX_ZOOM].current = fovfx[FOVFX_ZOOM].target;
 
@@ -657,7 +771,7 @@ void R_ExecuteSetViewSize (void)
           // Special handling for zoom
           int step = zoomtarget - fovfx[FOVFX_ZOOM].target;
           const int sign = ((step > 0) ? 1 : -1);
-          step = BETWEEN(2, 16, abs(step) / 4);
+          step = BETWEEN(1, 16, round(abs(step) / 3.0));
 
           fovfx[FOVFX_ZOOM].target += step*sign;
 
@@ -668,7 +782,7 @@ void R_ExecuteSetViewSize (void)
           }
 
           if (fovfx[FOVFX_ZOOM].current != fovfx[FOVFX_ZOOM].target)
-          { fovchange = true; }
+          { setsizeneeded = true; }
         }
 
         fovfx[FOVFX_TELEPORT].old = fovfx[FOVFX_TELEPORT].current = fovfx[FOVFX_TELEPORT].target;
@@ -678,7 +792,7 @@ void R_ExecuteSetViewSize (void)
           if ((fovfx[FOVFX_TELEPORT].target -= 5) < 0)
           { fovfx[FOVFX_TELEPORT].target = 0; }
           else
-          { fovchange = true; }
+          { setsizeneeded = true; }
         }
       }
       else if (uncapped)
@@ -691,57 +805,40 @@ void R_ExecuteSetViewSize (void)
     for (i = 0;  i < NUMFOVFX;  i++)
     { fx += fovfx[i].current; }
 
-    rfov = bfov + fx;
-    fovdiff = (float) ORIGFOV / rfov;
-    pitchmax = PITCHMAX * FOVDIFF2; // Mitigate `PLAYER_SLOPE()` and `lookdir` misalignment
+    r_fov = (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
+           ? MAX(140, custom_fov) : custom_fov + fx;
   }
 
-  // [Nugget] FOV from Doom Retro
-  if (widescreen) {
-    // fov * 0.82 is vertical FOV for 4:3 aspect ratio
-    WIDEFOVDELTA = (atan(SCREENWIDTH / ((SCREENHEIGHT * 1.2) / tan(rfov * 0.82 * M_PI / 360.0))) * 360.0 / M_PI) - rfov;
-  }
-  else { WIDEFOVDELTA = 0; }
+  centerxfrac = (viewwidth << FRACBITS) / 2;
+  centerx = centerxfrac >> FRACBITS;
+  centerxfrac_nonwide = (viewwidth_nonwide << FRACBITS) / 2;
 
-  centery = viewheight/2;
-  centerx = viewwidth/2;
-  centerxfrac = centerx<<FRACBITS;
-  centeryfrac = centery<<FRACBITS;
-  centerxfrac_nonwide = (viewwidth_nonwide/2)<<FRACBITS;
-  fovscale = finetangent[(int)(FINEANGLES / 4 + (rfov + WIDEFOVDELTA) * FINEANGLES / 360 / 2)]; // [Nugget] FOV from Doom Retro
-  projection = FixedDiv(centerxfrac, fovscale); // [Nugget] FOV from Doom Retro
-  viewheightfrac = viewheight<<(FRACBITS+1); // [FG] sprite clipping optimizations
+  viewheightfrac = viewheight << (FRACBITS + 1); // [FG] sprite clipping optimizations
 
-  R_InitBuffer(scaledviewwidth, scaledviewheight);       // killough 11/98
+  R_InitBuffer();       // killough 11/98
 
   R_InitTextureMapping();
 
+  R_SetupFreelook();
+
   // psprite scales
-  pspritescale = FixedDiv(viewwidth_nonwide, ORIGWIDTH);       // killough 11/98
-  pspriteiscale= FixedDiv(ORIGWIDTH, viewwidth_nonwide);       // killough 11/98
+  pspritescale = FixedDiv(viewwidth_nonwide, SCREENWIDTH);       // killough 11/98
+  pspriteiscale = FixedDiv(SCREENWIDTH, viewwidth_nonwide);      // killough 11/98
 
-  // thing clipping
-  for (i=0 ; i<viewwidth ; i++)
-    screenheightarray[i] = viewheight;
+  // [FG] make sure that the product of the weapon sprite scale factor
+  //      and its reciprocal is always at least FRACUNIT to
+  //      fix garbage lines at the top of weapon sprites
+  while (FixedMul(pspriteiscale, pspritescale) < FRACUNIT)
+    pspriteiscale++;
 
-  // planes
-  num = FixedMul(FixedDiv(FRACUNIT, fovscale), viewwidth * FRACUNIT / 2); // [Nugget] FOV from Doom Retro
-
-  for (i=0 ; i<viewheight ; i++)
-    {   // killough 5/2/98: reformatted
-      for (j = 0; j < LOOKDIRS; j++)
-      {
-        // [crispy] re-generate lookup-table for yslope[] whenever "viewheight" or "hires" change
-        fixed_t dy = abs(((i-viewheight/2-(j-pitchmax)*viewblocks/10)<<FRACBITS)+FRACUNIT/2);
-        yslopes[j][i] = FixedDiv(num, dy);
-      }
-    }
-  yslope = yslopes[pitchmax];
+  skyiscale = FixedDiv(160 << FRACBITS, focallength);
 
   for (i=0 ; i<viewwidth ; i++)
     {
       fixed_t cosadj = abs(finecosine[xtoviewangle[i]>>ANGLETOFINESHIFT]);
       distscale[i] = FixedDiv(FRACUNIT,cosadj);
+      // thing clipping
+      screenheightarray[i] = viewheight;
     }
 
   // Calculate the light levels to use
@@ -749,14 +846,10 @@ void R_ExecuteSetViewSize (void)
   for (i=0; i<LIGHTLEVELS; i++)
     {
       int j, startmap = ((LIGHTLEVELS-LIGHTBRIGHT-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
-      int cm;
-
-      for (cm = 0; cm < numcolormaps; ++cm)
-        c_scalelight[cm][i] = Z_Malloc(MAXLIGHTSCALE * sizeof(***c_scalelight), PU_STATIC, 0);
 
       for (j=0 ; j<MAXLIGHTSCALE ; j++)
         {                                       // killough 11/98:
-          int t, level = startmap - j*NONWIDEWIDTH/scaledviewwidth_nonwide/DISTMAP;
+          int t, level = startmap - j / DISTMAP;
 
           if (level < 0)
             level = 0;
@@ -772,21 +865,10 @@ void R_ExecuteSetViewSize (void)
         }
     }
 
-    // [Nugget] Don't call this, as it would make
-    // the HUD widgets disappear during FOV changes
-    /*HU_disable_all_widgets();*/
+  // [crispy] forcefully initialize the status bar backing screen
+  ST_refreshBackground(true);
 
-    // [crispy] forcefully initialize the status bar backing screen
-    ST_refreshBackground(true);
-
-    // [FG] reinitialize Automap
-    if (automapactive)
-        AM_Start();
-
-    // [FG] spectre drawing mode
-    R_SetFuzzColumnMode();
-
-    pspr_interp = false;
+  pspr_interp = false;
 }
 
 //
@@ -801,6 +883,10 @@ void R_Init (void)
   R_InitLightTables();
   R_InitSkyMap();
   R_InitTranslationTables();
+  V_InitFlexTranTable();
+
+  // [FG] spectre drawing mode
+  R_SetFuzzColumnMode();
 }
 
 //
@@ -823,25 +909,22 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
   return &subsectors[nodenum & ~NF_SUBSECTOR];
 }
 
-// [AM] Interpolate between two angles.
-angle_t R_InterpolateAngle(angle_t oangle, angle_t nangle, fixed_t scale)
+static inline boolean CheckLocalView(const player_t *player)
 {
-    if (nangle == oangle)
-        return nangle;
-    else if (nangle > oangle)
-    {
-        if (nangle - oangle < ANG270)
-            return oangle + (angle_t)((nangle - oangle) * FIXED2DOUBLE(scale));
-        else // Wrapped around
-            return oangle - (angle_t)((oangle - nangle) * FIXED2DOUBLE(scale));
-    }
-    else // nangle < oangle
-    {
-        if (oangle - nangle < ANG270)
-            return oangle - (angle_t)((oangle - nangle) * FIXED2DOUBLE(scale));
-        else // Wrapped around
-            return oangle + (angle_t)((nangle - oangle) * FIXED2DOUBLE(scale));
-    }
+  return (
+    // Don't use localview when interpolation is preferred.
+    raw_input &&
+    // Don't use localview if the player is spying.
+    player == &players[consoleplayer] &&
+    // Don't use localview if the player is dead.
+    player->playerstate != PST_DEAD &&
+    // Don't use localview if the player just teleported.
+    !player->mo->reactiontime &&
+    // Don't use localview if a demo is playing.
+    !demoplayback &&
+    // Don't use localview during a netgame (single-player or solo-net only).
+    (!netgame || solonet)
+  );
 }
 
 //
@@ -851,9 +934,11 @@ angle_t R_InterpolateAngle(angle_t oangle, angle_t nangle, fixed_t scale)
 void R_SetupFrame (player_t *player)
 {
   int i, cm;
-  int tempCentery, pitch;
+  fixed_t pitch;
+
   // [Nugget]
-  int playerz, lookdir;
+  fixed_t playerz, basepitch;
+  static angle_t old_interangle, target_interangle;
   static fixed_t chasecamheight;
 
   viewplayer = player;
@@ -868,35 +953,90 @@ void R_SetupFrame (player_t *player)
       // Don't interpolate during a paused state
       leveltime > oldleveltime)
   {
+    // Use localview unless the player or game is in an invalid state, in which
+    // case fall back to interpolation.
+    const boolean use_localview = CheckLocalView(player);
+
     // Interpolate player camera from their old position to their current one.
-    viewx = player->mo->oldx + FixedMul(player->mo->x - player->mo->oldx, fractionaltic);
-    viewy = player->mo->oldy + FixedMul(player->mo->y - player->mo->oldy, fractionaltic);
-    viewz = player->oldviewz + FixedMul(player->viewz - player->oldviewz, fractionaltic);
-    playerz = player->mo->oldz + FixedMul(player->mo->z - player->mo->oldz, fractionaltic); // [Nugget]
-    viewangle = R_InterpolateAngle(player->mo->oldangle, player->mo->angle, fractionaltic) + viewangleoffset;
+    viewx = LerpFixed(player->mo->oldx, player->mo->x);
+    viewy = LerpFixed(player->mo->oldy, player->mo->y);
+    viewz = LerpFixed(player->oldviewz, player->viewz);
+
+    playerz = LerpFixed(player->mo->oldz, player->mo->z); // [Nugget]
+
+    if (use_localview)
+    {
+      viewangle = (player->mo->angle + localview.angle - localview.ticangle +
+                   LerpAngle(localview.oldticangle, localview.ticangle));
+    }
+    else
+    {
+      viewangle = LerpAngle(player->mo->oldangle, player->mo->angle);
+    }
+
+    if (use_localview && !player->centering)
+    {
+      basepitch = player->pitch + localview.pitch;
+      basepitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, basepitch);
+    }
+    else
+    {
+      basepitch = LerpFixed(player->oldpitch, player->pitch);
+    }
+
+    pitch = basepitch;
+
     // [crispy] pitch is actual lookdir and weapon pitch
-    lookdir = (player->oldlookdir + (player->lookdir - player->oldlookdir) * FIXED2DOUBLE(fractionaltic)) / MLOOKUNIT;
-    pitch = lookdir + (player->oldrecoilpitch + FixedMul(player->recoilpitch - player->oldrecoilpitch, fractionaltic))
-                    + (player->oldimpactpitch + FixedMul(player->impactpitch - player->oldimpactpitch, fractionaltic)); // [Nugget]
+    pitch += LerpFixed(player->oldrecoilpitch, player->recoilpitch);
+
+    // [Nugget] Flinching
+    pitch += LerpFixed(player->oldflinch, player->flinch);
   }
   else
   {
-  viewx = player->mo->x;
-  viewy = player->mo->y;
-  viewz = player->viewz; // [FG] moved here
-  playerz = player->mo->z; // [Nugget]
-  viewangle = player->mo->angle + viewangleoffset;
-  // [crispy] pitch is actual lookdir and weapon pitch
-  lookdir = player->lookdir / MLOOKUNIT;
-  pitch = lookdir + player->recoilpitch + player->impactpitch; // [Nugget]
+    viewx = player->mo->x;
+    viewy = player->mo->y;
+    viewz = player->viewz; // [FG] moved here
+    viewangle = player->mo->angle;
+    // [crispy] pitch is actual lookdir and weapon pitch
+    basepitch = player->pitch;
+    pitch = basepitch + player->recoilpitch;
+
+    // [Nugget]
+    playerz = player->mo->z;
+    pitch += player->flinch; // Flinching
   }
 
-  // [Nugget] Mitigate `PLAYER_SLOPE()` and `lookdir` misalignment
-  pitch *= FOVDIFF2;
+  // [Nugget] /---------------------------------------------------------------
 
-  if (STRICTMODE(st_crispyhud)) { pitch += nughud.viewoffset; } // [Nugget] NUGHUD
+  // Alt. intermission background
+  if (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
+  {
+    static int oldtic = -1;
 
-  // [Nugget] Explosion shake effect
+    if (oldtic != gametic) {
+      old_interangle = viewangle = target_interangle;
+      target_interangle += ANG1;
+    }
+    else if (uncapped)
+    { viewangle = LerpAngle(old_interangle, target_interangle); }
+
+    oldtic = gametic;
+
+    basepitch = pitch = 0;
+  }
+  else {
+    target_interangle = viewangle;
+
+    // NUGHUD
+    if (STRICTMODE(st_crispyhud)) {
+      angle_t viewoffset = nughud.viewoffset * ANG1/2;
+      basepitch += viewoffset;
+          pitch += viewoffset;
+    }
+  }
+
+  // Explosion shake effect
   chasecamheight = chasecam_height * FRACUNIT;
   if (shake > 0)
   {
@@ -923,23 +1063,32 @@ void R_SetupFrame (player_t *player)
     chasecamheight += zofs;
   }
 
-  // [Nugget] Chasecam
-  chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD));
+  // Chasecam
+
+  chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
+                && !(WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION));
+
   if (chasecam_on)
   {
+    fixed_t slope = basepitch ? (fixed_t) ((int64_t) finetangent[(ANG90 - basepitch) >> ANGLETOFINESHIFT] * SCREENHEIGHT / ACTUALHEIGHT) : 0;
+
     static fixed_t oldextradist = 0, extradist = 0;
+
     const fixed_t z = MIN(playerz + ((player->mo->health <= 0 && player->playerstate == PST_DEAD) ? 6*FRACUNIT : chasecamheight),
                           player->mo->ceilingz - (2*FRACUNIT));
-    fixed_t slope;
+
     fixed_t dist = chasecam_distance * FRACUNIT;
-    const fixed_t oldviewx = viewx,  oldviewy = viewy;
+
+    const fixed_t oldviewx = viewx,
+                  oldviewy = viewy;
+
     const angle_t oldviewangle = viewangle;
 
-    if (chasecam_mode == CHASECAMMODE_FRONT)
-    {
+    if (chasecam_mode == CHASECAMMODE_FRONT) {
       viewangle += ANG180;
-      lookdir    = -lookdir;
-      pitch      = -pitch;
+      slope      = -slope;
+      basepitch  = -basepitch;
+      pitch     += basepitch * 2;
     }
 
     {
@@ -956,11 +1105,11 @@ void R_SetupFrame (player_t *player)
 
     if (uncapped && leveltime > 1 && player->mo->interp == true && leveltime > oldleveltime)
     {
-      dist += oldextradist + FixedMul(extradist - oldextradist, fractionaltic);
+      dist += LerpFixed(oldextradist, extradist);
     }
     else { dist += extradist; }
 
-    P_PositionChasecam(z, dist, slope = (-(lookdir * FRACUNIT) / PLAYER_SLOPE_DENOM));
+    P_PositionChasecam(z, dist, slope);
 
     if (chasecam.hit) {
       viewx = chasecam.x;
@@ -996,27 +1145,24 @@ void R_SetupFrame (player_t *player)
   }
   else { chasexofs = chaseyofs = chaseaofs = 0; }
 
+  // [Nugget] ---------------------------------------------------------------/
+
+  if (pitch != viewpitch)
+  {
+    viewpitch = pitch;
+    R_SetupFreelook();
+  }
+
+  // 3-screen display mode.
+  viewangle += viewangleoffset;
+
   // [Nugget]: [crispy] A11Y
-  if (!NOTSTRICTMODE(a11y_weapon_flash))
+  if (!(strictmode || a11y_weapon_flash))
     extralight = 0;
   else
     extralight = player->extralight;
 
-  extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness); // level brightness feature
-
-  if (pitch > pitchmax)
-    pitch = pitchmax;
-  else if (pitch < -pitchmax)
-    pitch = -pitchmax;
-
-  // apply new yslope[] whenever "lookdir", "viewheight" or "hires" change
-  tempCentery = viewheight/2 + pitch * viewblocks / 10;
-  if (centery != tempCentery)
-  {
-      centery = tempCentery;
-      centeryfrac = centery << FRACBITS;
-      yslope = yslopes[pitchmax + pitch];
-  }
+  extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness);
 
   viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
   viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
@@ -1058,20 +1204,14 @@ void R_SetupFrame (player_t *player)
 // R_ShowStats
 //
 
-int rendered_visplanes, rendered_segs, rendered_vissprites;
-
-void R_ShowRenderingStats(void)
-{
-  extern int fps;
-  displaymsg("Segs %d, Visplanes %d, Sprites %d, FPS %d",
-          rendered_segs, rendered_visplanes, rendered_vissprites, fps);
-}
+int rendered_visplanes, rendered_segs, rendered_vissprites, rendered_voxels;
 
 static void R_ClearStats(void)
 {
   rendered_visplanes = 0;
   rendered_segs = 0;
   rendered_vissprites = 0;
+  rendered_voxels = 0;
 }
 
 int autodetect_hom = 0;       // killough 2/7/98: HOM autodetection flag
@@ -1090,14 +1230,14 @@ void R_RenderPlayerView (player_t* player)
   R_ClearDrawSegs ();
   R_ClearPlanes ();
   R_ClearSprites ();
+  VX_ClearVoxels ();
 
   if (autodetect_hom)
     { // killough 2/10/98: add flashing red HOM indicators
-      byte c[47*47];
+      pixel_t c[47*47];
       extern int lastshottic;
       int i , color = !flashing_hom || (gametic % 20) < 9 ? 0xb0 : 0;
-      memset(*screens+viewwindowy*linesize,color,viewheight*linesize);
-      // [Nugget] Note: this is the code for the Killough face easter egg
+      V_FillRect(scaledviewx, scaledviewy, scaledviewwidth, scaledviewheight, color);
       for (i=0;i<47*47;i++)
         {
           char t =
@@ -1158,8 +1298,8 @@ void R_RenderPlayerView (player_t* player)
           c[i] = t=='/' ? color : t;
         }
       if (gametic-lastshottic < TICRATE*2 && gametic-lastshottic > TICRATE/8)
-        V_DrawBlock(((viewwindowx +  viewwidth/2) / hires) - 24,
-                    ((viewwindowy + viewheight/2) / hires) - 24, 0, 47, 47, c);
+        V_DrawBlock(scaledviewx +  scaledviewwidth/2 - 24,
+                    scaledviewy + scaledviewheight/2 - 24, 47, 47, c);
       R_DrawViewBorder();
     }
 
@@ -1168,6 +1308,8 @@ void R_RenderPlayerView (player_t* player)
 
   // The head node is the last node output.
   R_RenderBSPNode (numnodes-1);
+
+  VX_NearbySprites ();
 
   // [FG] update automap while playing
   if (automap_on)
@@ -1187,6 +1329,13 @@ void R_RenderPlayerView (player_t* player)
 
   // Check for new console commands.
   NetUpdate ();
+}
+
+void R_InitAnyRes(void)
+{
+  R_InitSpritesRes();
+  R_InitBufferRes();
+  R_InitPlanesRes();
 }
 
 //----------------------------------------------------------------------------

@@ -19,24 +19,44 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <stdlib.h>
+
+#include "d_items.h"
+#include "d_player.h"
+#include "d_think.h"
+#include "doomdata.h"
+#include "doomdef.h"
 #include "doomstat.h"
+#include "doomtype.h"
+#include "g_game.h"
+#include "hu_obituary.h"
 #include "i_printf.h"
+#include "i_system.h"
+#include "info.h"
+#include "m_bbox.h"
+#include "m_fixed.h"
 #include "m_random.h"
-#include "r_main.h"
-#include "p_maputl.h"
+#include "p_action.h"
+#include "p_enemy.h"
+#include "p_inter.h"
 #include "p_map.h"
+#include "p_maputl.h"
+#include "p_mobj.h"
+#include "p_pspr.h"
 #include "p_setup.h"
 #include "p_spec.h"
+#include "p_tick.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "p_inter.h"
-#include "g_game.h"
-#include "p_enemy.h"
-#include "p_tick.h"
-#include "m_bbox.h"
-#include "w_wad.h" // [Nugget] W_CheckNumForName
+#include "tables.h"
+#include "u_mapinfo.h"
+#include "z_zone.h"
 
-#include "p_action.h"
+// [Nugget]
+#include "w_wad.h" // W_CheckNumForName
 
 static mobj_t *current_actor;
 
@@ -407,14 +427,38 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) // killough 9/12/98
 
       if (actor->flags & MF_FLOAT && floatok)
         {
+          // [Nugget] Over/Under
+          const fixed_t oldz = actor->z;
+
           if (actor->z < tmfloorz)          // must adjust height
-            actor->z += FLOATSPEED;
+          {
+              actor->z += FLOATSPEED;
+
+              // [Nugget] Over/Under: don't ascend into other things
+              if (actor->above_thing
+                  && (actor->above_thing->z < (actor->z + actor->height)))
+              {
+                actor->z = actor->above_thing->z - actor->height;
+              }
+          }
           else
+          {
             actor->z -= FLOATSPEED;
 
-          actor->flags |= MF_INFLOAT;
+            // [Nugget] Over/Under: don't descend into other things
+            if (actor->below_thing
+                && (actor->z < (actor->below_thing->z + actor->below_thing->height)))
+            {
+              actor->z = actor->below_thing->z + actor->below_thing->height;
+            }
+          }
 
-	  return true;
+          // [Nugget] Conditions: only if we actually moved
+          if (NOTCASUALPLAY(actor->z != oldz))
+          {
+            actor->flags |= MF_INFLOAT;
+            return true;
+          }
         }
 
       if (!numspechit)
@@ -460,7 +504,13 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) // killough 9/12/98
 
   // killough 11/98: fall more slowly, under gravity, if felldown==true
   if (!(actor->flags & MF_FLOAT) && (!felldown || demo_version < 203))
+  {
     actor->z = actor->floorz;
+
+    // [Nugget] Over/Under
+    if (actor->below_thing)
+    { actor->z = MAX(actor->floorz, actor->below_thing->z + actor->below_thing->height); }
+  }
 
   return true;
 }
@@ -1669,6 +1719,36 @@ boolean PIT_VileCheck(mobj_t *thing)
 
 boolean ghost_monsters;
 
+static void WatchResurrection(mobj_t* target, mobj_t* raiser)
+{
+  int i;
+
+  if (raiser && (raiser->intflags & MIF_SPAWNED_BY_ICON))
+  {
+    target->intflags |= MIF_SPAWNED_BY_ICON;
+  }
+
+  if (((target->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)) ||
+      (target->intflags & MIF_SPAWNED_BY_ICON))
+  {
+    return;
+  }
+
+  for (i = 0; i < MAXPLAYERS; ++i)
+  {
+    if (!playeringame[i] || players[i].killcount == 0)
+    {
+      continue;
+    }
+
+    if (players[i].killcount > 0)
+    {
+      players[i].maxkilldiscount++;
+      return;
+    }
+  }
+}
+
 static boolean P_HealCorpse(mobj_t* actor, int radius, statenum_t healstate, sfxenum_t healsound)
 {
   int xl, xh;
@@ -1726,6 +1806,8 @@ static boolean P_HealCorpse(mobj_t* actor, int radius, statenum_t healstate, sfx
 		  corpsehit->flags = 
 		    (info->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
 
+		  WatchResurrection(corpsehit, actor);
+
 		  // [crispy] resurrected pools of gore ("ghost monsters") are translucent
 		  if (STRICTMODE(ghost_monsters) && corpsehit->height == 0
 		      && corpsehit->radius == 0)
@@ -1746,14 +1828,6 @@ static boolean P_HealCorpse(mobj_t* actor, int radius, statenum_t healstate, sfx
 
 		  // killough 8/29/98: add to appropriate thread
 		  P_UpdateThinker(&corpsehit->thinker);
-
-                  // [Nugget]: [So Doom]
-                  corpsehit->intflags |= MIF_EXTRASPAWNED;
-
-                  // [crispy] count resurrected monsters
-                  // [Nugget] Only if counted towards killcount
-                  if ((corpsehit->flags & MF_COUNTKILL) && !(corpsehit->flags & MF_FRIEND))
-                    extraspawns++; // [Nugget] Smart Totals from So Doom
 
                   return true;
                 }
@@ -2104,11 +2178,6 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
   // killough 7/20/98: PEs shoot lost souls with the same friendliness
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (actor->flags & MF_FRIEND);
 
-  // [Nugget] Count towards extraspawns if for some reason
-  // the spawned mobj counts towards killcount
-  if ((newmobj->flags & MF_COUNTKILL) && !(newmobj->flags & MF_FRIEND))
-    extraspawns++;
-
   // killough 8/29/98: add to appropriate thread
   P_UpdateThinker(&newmobj->thinker);
 
@@ -2190,7 +2259,13 @@ void A_XScream(mobj_t *actor)
 void A_Pain(mobj_t *actor)
 {
   if (actor->info->painsound)
-    S_StartSound(actor, actor->info->painsound);
+  {
+    // [Nugget]
+    if (STRICTMODE(actor->info->painsound == sfx_plpain))
+      S_PlayerPainSound(actor);
+    else
+      S_StartSound(actor, actor->info->painsound);
+  }
 }
 
 void A_Fall(mobj_t *actor)
@@ -2622,6 +2697,18 @@ void A_SpawnSound(mobj_t *mo)
   A_SpawnFly(mo);
 }
 
+static void WatchIconSpawn(mobj_t* spawned)
+{
+  spawned->intflags |= MIF_SPAWNED_BY_ICON;
+
+  // We can't know inside P_SpawnMobj what the source is
+  // This is less invasive than introducing a spawn source concept
+  if (!((spawned->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
+  {
+    --max_kill_requirement;
+  }
+}
+
 void A_SpawnFly(mobj_t *mo)
 {
   mobj_t *newmobj;  // killough 8/9/98
@@ -2673,13 +2760,7 @@ void A_SpawnFly(mobj_t *mo)
   // killough 7/18/98: brain friendliness is transferred
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
 
-  // [Nugget]: [So Doom]
-  newmobj->intflags |= MIF_EXTRASPAWNED;
-
-  // [crispy] count spawned monsters
-  // [Nugget] Only if counted towards killcount
-  if ((newmobj->flags & MF_COUNTKILL) && !(newmobj->flags & MF_FRIEND))
-    extraspawns++; // [Nugget] Smart Totals from So Doom
+  WatchIconSpawn(newmobj);
 
   // killough 8/29/98: add to appropriate thread
   P_UpdateThinker(&newmobj->thinker);

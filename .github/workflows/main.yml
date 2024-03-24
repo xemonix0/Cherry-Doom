@@ -21,26 +21,22 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {
-              name: Linux GCC,
-              os: ubuntu-latest,
-              compiler: gcc,
-              shell: bash,
-            }
-          - {
-              name: macOS Clang,
-              os: macos-latest,
-              compiler: clang,
-              shell: bash,
-            }
-          - {
-              name: MSYS2 UCRT64,
-              os: windows-latest,
-              compiler: gcc,
-              shell: 'msys2 {0}',
-              msystem: ucrt64,
-              msys-env: mingw-w64-ucrt-x86_64,
-            }
+          - name: Linux GCC
+            os: ubuntu-latest
+            compiler: gcc
+            shell: bash
+
+          - name: macOS Clang
+            os: macos-latest
+            compiler: clang
+            shell: bash
+
+          - name: MSYS2 UCRT64
+            os: windows-latest
+            compiler: gcc
+            shell: 'msys2 {0}'
+            msystem: ucrt64
+            msys-env: mingw-w64-ucrt-x86_64
 
     steps:
       - name: Install dependencies (Linux)
@@ -75,6 +71,8 @@ jobs:
           msystem: ${{ matrix.config.msystem }}
           update: false
           install: >-
+            diffutils
+            ${{ matrix.config.msys-env }}-python-pip
             ${{ matrix.config.msys-env }}-gcc
             ${{ matrix.config.msys-env }}-cmake
             ${{ matrix.config.msys-env }}-ninja
@@ -98,6 +96,13 @@ jobs:
       - name: Build
         run: cmake --build build
 
+      - name: Test
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          cd demotest
+          pip install pyyaml joblib
+          python3 demotest --jobs 4 --port ../build/src/cherry-doom
+
       - name: Install
         run: |
           cd build
@@ -105,7 +110,7 @@ jobs:
 
       - name: Upload AppImage
         if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: CherryDoom-AppImage
           path: build/*.appimage
@@ -128,4 +133,5 @@ jobs:
       - name: Run cppcheck
         shell: bash
         run: |
-          cppcheck --version ; cppcheck --error-exitcode=1 -j4 -q --force -U_WIN32 -Isrc opl src setup textscreen
+          cppcheck --version
+          cppcheck --error-exitcode=1 -j4 -q --force -D__GNUC__ -U_MSC_VER -U_WIN32 -Isrc opl src setup textscreen

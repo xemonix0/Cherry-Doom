@@ -21,12 +21,14 @@
 #ifndef __SOUNDS__
 #define __SOUNDS__
 
+#include "doomtype.h"
+
 //
 // SoundFX struct.
 //
 
-typedef struct sfxinfo_struct {
-
+typedef struct sfxinfo_s
+{
   // up to 6-character name
   char *name;
 
@@ -46,7 +48,7 @@ typedef struct sfxinfo_struct {
   int priority;
 
   // referenced sound if a link
-  struct sfxinfo_struct *link;
+  struct sfxinfo_s *link;
 
   // pitch if a link
   int pitch;
@@ -310,10 +312,13 @@ typedef enum {
   sfx_splsml,
   sfx_plosml,
   sfx_lavsml,
-  
-  // [Nugget]
+
+  // [Nugget] /---------------------------------------------------------------
+
+  NUG_SFX_START,
+
   // [NS] New optional sounds.
-  sfx_pljump,
+  sfx_pljump = NUG_SFX_START,
   sfx_plland,
   sfx_locked,
   sfx_keyup,
@@ -331,6 +336,15 @@ typedef enum {
   sfx_intnex,
   sfx_intnet,
   sfx_intdms,
+
+  sfx_ppai25,
+  sfx_ppai50,
+  sfx_ppai75,
+  sfx_ppa100,
+
+  NUG_SFX_END,
+
+  // [Nugget] ---------------------------------------------------------------/
 
   sfx_fre000 = 500,
   sfx_fre001,

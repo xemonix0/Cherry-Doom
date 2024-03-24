@@ -17,26 +17,38 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <stdlib.h>
+#include <string.h>
+
+#include "d_player.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "g_game.h"
+#include "hu_stuff.h"
 #include "i_printf.h"
+#include "info.h"
 #include "m_random.h"
-#include "r_main.h"
-#include "r_things.h"
-#include "p_maputl.h"
+#include "p_inter.h"
 #include "p_map.h"
-#include "p_tick.h"
+#include "p_maputl.h"
+#include "p_mobj.h"
+#include "p_pspr.h"
 #include "p_spec.h"
+#include "p_tick.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "r_state.h"
+#include "r_things.h"
+#include "s_musinfo.h" // [crispy] S_ParseMusInfo()
+#include "s_sound.h"
 #include "sounds.h"
 #include "st_stuff.h"
-#include "hu_stuff.h"
-#include "s_sound.h"
-#include "s_musinfo.h" // [crispy] S_ParseMusInfo()
-#include "info.h"
-#include "g_game.h"
-#include "p_inter.h"
+#include "tables.h"
 #include "v_video.h"
-// [Nugget] Removed includes required by the removed `actualheight`
+#include "z_zone.h"
+
+// [Nugget]
+#include "p_user.h"
 
 // [FG] colored blood and gibs
 boolean colored_blood;
@@ -107,6 +119,8 @@ boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
   if (tempstate)
     Z_Free(tempstate);
 
+  // [Nugget] Removed `actualheight`
+
   return ret;
 }
 
@@ -145,8 +159,7 @@ void P_XYMovement (mobj_t* mo)
 
   fixed_t oldx,oldy; // phares 9/10/98: reducing bobbing/momentum on ice
 
-  if (!(mo->momx | mo->momy) // Any momentum?
-      && !(mo->intflags & MIF_OVERUNDER)) // [Nugget]
+  if (!(mo->momx | mo->momy)) // Any momentum?
     {
       if (mo->flags & MF_SKULLFLY)
       {
@@ -292,11 +305,23 @@ void P_XYMovement (mobj_t* mo)
   }
 
   // no friction for missiles or skulls ever, no friction when airborne
-  if (mo->flags & (MF_MISSILE | MF_SKULLFLY)
-      // [Nugget] Do apply friction if airborne with noclip or flight cheat enabled
-      || (mo->z > mo->floorz
-          && !(casual_play && player && (mo->flags & MF_NOCLIP || player->cheats & CF_FLY))))
+  if (mo->flags & (MF_MISSILE | MF_SKULLFLY))
     return;
+
+  // [Nugget] Do apply friction if airborne...
+  if (
+    (mo->z > mo->floorz)
+    && !(casual_play
+         && (   // ... using noclip or flight cheat
+                (player && player->cheats & (CF_NOCLIP|CF_FLY))
+                // ... on top of a mobj
+             || (mo->below_thing && (mo->z == (mo->below_thing->z + mo->below_thing->height)))
+         )
+    )
+  )
+  {
+    return;
+  }
 
   // killough 8/11/98: add bouncers
   // killough 9/15/98: add objects falling off ledges
@@ -552,12 +577,12 @@ floater:
 		                                       ? (24*FRACUNIT) : (-mo->momz >> 1);
 		}
 
-		// [Nugget] Pitch view down on impact
-		if (STRICTMODE(impact_pitch & IMPACTPITCH_FALL))
-		{ PLAYER_IMPACTPITCH(mo->player, -((-mo->momz) >> FRACBITS)); }
+		// [Nugget] Flinching: upon landing
+		if (STRICTMODE(flinching & FLINCH_LANDING))
+		{ P_SetFlinch(mo->player, -((-mo->momz) >> FRACBITS)); }
 
 		// [Nugget]: [crispy] dead men don't say "oof"
-		if (mo->health > 0 || NOTSTRICTMODE(comp_deadoof))
+		if (strictmode || mo->health > 0 || comp_deadoof)
 		  oof = 1;
 	      }
 	    P_HitFloor(mo, oof); // [FG] play sound when hitting animated floor
@@ -696,13 +721,6 @@ void P_NightmareRespawn(mobj_t* mobj)
   // killough 11/98: transfer friendliness from deceased
   mo->flags = (mo->flags & ~MF_FRIEND) | (mobj->flags & MF_FRIEND);
 
-  // [Nugget]: [So Doom]
-  mo->intflags |= MIF_EXTRASPAWNED;
-
-  // [crispy] count respawned monsters
-  if (!(mo->flags & MF_FRIEND))
-    extraspawns++; // [Nugget] Smart Totals from So Doom
-
   mo->reactiontime = 18;
 
   // remove the old monster,
@@ -729,6 +747,7 @@ static inline void MusInfoThinker (mobj_t *thing)
 void P_MobjThinker (mobj_t* mobj)
 {
   extern boolean cheese; // [Nugget] cheese :)
+  boolean oucheck = false; // [Nugget] Over/Under
 
   // [crispy] support MUSINFO lump (dynamic music changing)
   if (mobj->type == MT_MUSICSOURCE)
@@ -778,26 +797,45 @@ void P_MobjThinker (mobj_t* mobj)
   // removed old code which looked at target references
   // (we use pointer reference counting now)
 
-  // [Nugget] Things with both MF_SKULLFLY and MIF_OVERUNDER
-  // have buggy behavior, so take the latter away
-  if ((mobj->flags & MF_SKULLFLY) && (mobj->intflags & MIF_OVERUNDER))
-  { mobj->intflags &= ~MIF_OVERUNDER; }
-
   // momentum movement
-  if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY
-      || mobj->intflags & MIF_OVERUNDER) // [Nugget]
+  if (mobj->momx | mobj->momy || mobj->flags & MF_SKULLFLY)
     {
       P_XYMovement(mobj);
       mobj->intflags &= ~MIF_SCROLLING;
       if (mobj->thinker.function.p1 == (actionf_p1)P_RemoveThinkerDelayed) // killough
         return;       // mobj was removed
+
+      oucheck = true; // [Nugget] Over/Under
     }
 
   if (mobj->z != mobj->floorz || mobj->momz)
     {
-      P_ZMovement(mobj);
+      // [Nugget]: [DSDA]
+      if (casual_play && over_under && (mobj->flags & MF_SOLID))
+      {
+        overunder_t zdir;
+
+        if (!(zdir = P_CheckOverUnderMobj(mobj, true)))
+        {
+          P_ZMovement(mobj);
+        }
+        else
+        {
+          mobj->momz = 0;
+
+          if (mobj->below_thing && zdir == OU_UNDER)
+          { mobj->z = mobj->below_thing->z + mobj->below_thing->height; }
+          else if (mobj->above_thing) // zdir == OU_OVER
+          { mobj->z = mobj->above_thing->z - mobj->height; }
+        }
+      }
+      else
+        P_ZMovement(mobj);
+
       if (mobj->thinker.function.p1 == (actionf_p1)P_RemoveThinkerDelayed) // killough
         return;       // mobj was removed
+
+      oucheck = true; // [Nugget] Over/Under
     }
   else
     if (!(mobj->momx | mobj->momy) && !sentient(mobj))
@@ -814,6 +852,37 @@ void P_MobjThinker (mobj_t* mobj)
         else
           mobj->intflags &= ~MIF_FALLING, mobj->gear = 0;  // Reset torque
       }
+
+  // [Nugget] Over/Under: if we didn't check for over/under mobjs already,
+  // it means that this mobj is immobile, and its over/under mobjs, if any,
+  // were set by other mobj(s); check if they're still valid
+  if (casual_play && over_under && !oucheck)
+  {
+    const mobj_t *oumobj;
+    fixed_t blockdist;
+
+    if ((oumobj = mobj->below_thing))
+    {
+      blockdist = mobj->radius + oumobj->radius;
+
+      if (   (abs(mobj->x - oumobj->x) >= blockdist)
+          || (abs(mobj->y - oumobj->y) >= blockdist))
+      {
+        mobj->below_thing = NULL;
+      }
+    }
+
+    if ((oumobj = mobj->above_thing))
+    {
+      blockdist = mobj->radius + oumobj->radius;
+
+      if (   (abs(mobj->x - oumobj->x) >= blockdist)
+          || (abs(mobj->y - oumobj->y) >= blockdist))
+      {
+        mobj->above_thing = NULL;
+      }
+    }
+  }
 
   if (mbf21)
   {
@@ -938,6 +1007,11 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   // [Nugget] Removed `actualheight`
 
   P_AddThinker(&mobj->thinker);
+
+  if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
+  {
+    ++max_kill_requirement;
+  }
 
   return mobj;
 }
@@ -1350,6 +1424,37 @@ spawnit:
   if (i == MT_MUSICSOURCE)
   {
       mobj->health = 1000 + musid;
+  }
+
+  // [crispy] blinking key or skull in the status bar
+  switch (mobj->sprite)
+  {
+    case SPR_BKEY:
+      st_keyorskull[it_bluecard] |= KEYBLINK_CARD;
+      break;
+
+    case SPR_BSKU:
+      st_keyorskull[it_bluecard] |= KEYBLINK_SKULL;
+      break;
+
+    case SPR_RKEY:
+      st_keyorskull[it_redcard] |= KEYBLINK_CARD;
+      break;
+
+    case SPR_RSKU:
+      st_keyorskull[it_redcard] |= KEYBLINK_SKULL;
+      break;
+
+    case SPR_YKEY:
+      st_keyorskull[it_yellowcard] |= KEYBLINK_CARD;
+      break;
+
+    case SPR_YSKU:
+      st_keyorskull[it_yellowcard] |= KEYBLINK_SKULL;
+      break;
+
+    default:
+      break;
   }
 }
 
