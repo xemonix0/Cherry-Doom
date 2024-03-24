@@ -263,7 +263,7 @@ static boolean VX_Load (int spr, int frame)
 		return false;
 
 	byte * buf;
-	int len = M_ReadFile (vxfiles[i], &buf, false, true);
+	int len = M_ReadFile (vxfiles[i], &buf);
 
 	// Note: this may return NULL
 	struct Voxel * v = VX_Decode (buf, len);

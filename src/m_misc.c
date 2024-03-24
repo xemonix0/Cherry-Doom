@@ -614,9 +614,8 @@ boolean M_WriteFile(char const *name, void *source, int length)
 // M_ReadFile
 //
 // killough 9/98: rewritten to use stdio and to flash disk icon
-// [Cherry] support reading to string, require parameter
 
-int M_ReadFile(char const *name, void **buffer, boolean string, boolean require)
+int M_ReadFile(char const *name, byte **buffer)
 {
     FILE *fp;
 
@@ -629,25 +628,46 @@ int M_ReadFile(char const *name, void **buffer, boolean string, boolean require)
         fseek(fp, 0, SEEK_END);
         length = ftell(fp);
         fseek(fp, 0, SEEK_SET);
-        *buffer = Z_Malloc(length + (string ? 1 : 0), PU_STATIC, 0);
+        *buffer = Z_Malloc(length, PU_STATIC, 0);
         if (fread(*buffer, 1, length, fp) == length)
         {
             fclose(fp);
-            if (string) // [Cherry]
-            {
-                ((char *)*buffer)[length] = '\0';
-            }
+            return length;
+        }
+        fclose(fp);
+    }
+
+    I_Error("Couldn't read file %s: %s", name,
+            errno ? strerror(errno) : "(Unknown Error)");
+
+    return 0;
+}
+
+// [Cherry] support reading to string, require parameter
+
+int M_ReadFileToString(char const *name, char **buffer)
+{
+    FILE *fp;
+
+    errno = 0;
+
+    if ((fp = M_fopen(name, "rb")))
+    {
+        size_t length;
+
+        fseek(fp, 0, SEEK_END);
+        length = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+        *buffer = Z_Malloc(length + 1, PU_STATIC, 0);
+        if (fread(*buffer, 1, length, fp) == length)
+        {
+            fclose(fp);
+            (*buffer)[length] = '\0';
             return length;
         }
         Z_Free(*buffer);
         *buffer = NULL;
         fclose(fp);
-    }
-
-    if (require)
-    {
-      I_Error("Couldn't read file %s: %s", name,
-              errno ? strerror(errno) : "(Unknown Error)");
     }
 
     return -1;

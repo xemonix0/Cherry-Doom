@@ -247,7 +247,7 @@ static void WS_LoadWadStats(void) {
 
   path = WS_WadStatsPath();
 
-  if (M_ReadFile(path, &buffer, true, false) != -1)
+  if (M_ReadFileToString(path, &buffer) != -1)
   {
     const char* line_ending = "\n\r";
     int substring_count = 2;

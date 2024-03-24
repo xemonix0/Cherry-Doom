@@ -2529,7 +2529,7 @@ static void G_DoLoadGame(void)
 
   gameaction = ga_nothing;
 
-  length = M_ReadFile(savename, &savebuffer, false, true);
+  length = M_ReadFile(savename, &savebuffer);
   save_p = savebuffer + SAVESTRINGSIZE;
 
   // skip the description field
