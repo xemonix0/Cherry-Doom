@@ -61,6 +61,7 @@
 #include "z_zone.h"
 
 // [Nugget]
+#include "am_map.h"
 #include "st_stuff.h"
 
 // [crispy] remove DOS reference from the game quit confirmation dialogs
@@ -2267,7 +2268,7 @@ static boolean ShortcutResponder(const event_t *ev)
 
     if (M_InputActivated(input_hud_timestats))
     {
-        if (automapactive)
+        if (automapactive == AM_FULL)
         {
             if ((hud_level_stats | hud_level_time) & HUD_WIDGET_AUTOMAP)
             {

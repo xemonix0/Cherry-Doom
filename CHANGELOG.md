@@ -10,4 +10,5 @@ None.
 
 ## Bug Fixes
 
+- **_Show Stats/Time_ toggle affecting Automap instead of HUD when on Minimap**
 - **_Cycle Chasecam_ and _Toggle Crosshair_ inputs eating inputs**
