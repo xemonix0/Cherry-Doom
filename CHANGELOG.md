@@ -9,4 +9,4 @@ None.
 
 ## Bug Fixes
 
-None.
+- **_Cycle Chasecam_ and _Toggle Crosshair_ inputs eating inputs**

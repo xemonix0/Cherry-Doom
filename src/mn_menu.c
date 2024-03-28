@@ -2349,8 +2349,6 @@ static boolean ShortcutResponder(const event_t *ev)
         UpdateCrosshairItems();
 
         togglemsg("Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
-
-        return true;
     }
 
     // Chasecam
@@ -2358,8 +2356,6 @@ static boolean ShortcutResponder(const event_t *ev)
     {
         if (++chasecam_mode > CHASECAMMODE_FRONT)
         { chasecam_mode = CHASECAMMODE_OFF; }
-
-        return true;
     }
 
     // Rewind
