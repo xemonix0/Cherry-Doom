@@ -847,6 +847,37 @@ boolean AM_Responder
       viewactive = false;
       rc = true;
     }
+    // [Nugget] Minimap: allow zooming
+    else if (automapactive == AM_MINI)
+    {
+      if (ev->type == ev_keydown)
+      {
+        rc = true;
+
+        if (M_InputActivated(input_map_zoomout))
+        {
+          buttons_state[ZOOM_OUT] = 1;
+        }
+        else if (M_InputActivated(input_map_zoomin))
+        {
+          buttons_state[ZOOM_IN] = 1;
+        }
+        else { rc = false; }
+      }
+      else if (ev->type == ev_keyup)
+      {
+        rc = false;
+
+        if (M_InputDeactivated(input_map_zoomout))
+        {
+          buttons_state[ZOOM_OUT] = 0;
+        }
+        else if (M_InputDeactivated(input_map_zoomin))
+        {
+          buttons_state[ZOOM_IN] = 0;
+        }
+      }
+    }
   }
   else if (ev->type == ev_keydown ||
            ev->type == ev_mouseb_down ||
