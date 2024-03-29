@@ -2161,28 +2161,36 @@ int disable_nuke;  // killough 12/98: nukage disabling cheat
 
 static void P_SecretRevealed(player_t *player)
 {
-  if (player == &players[consoleplayer])
+  // [Nugget] Announce milestone completion
+  if (!(complete_milestones & MILESTONE_SECRETS))
   {
-    // [Nugget] Announce milestone completion
-    if (!(complete_milestones & MILESTONE_SECRETS)
-        && player->secretcount >= totalsecret)
+    int secretcount = 0;
+
+    for (int pl = 0;  pl < MAXPLAYERS;  ++pl) {
+      if (playeringame[pl])
+      { secretcount += players[pl].secretcount; }
+    }
+
+    if (secretcount >= totalsecret)
     {
       complete_milestones |= MILESTONE_SECRETS;
+
       if (announce_milestones) {
-        player->secretmessage = "All secrets revealed!";
+        players[displayplayer].secretmessage = "All secrets revealed!";
         S_StartSound(NULL, sfx_secret);
         return; // Skip the normal "Secret revealed" message
       }
     }
+  }
 
-    if (hud_secret_message) {
-      // [Nugget] Secret count in secret revealed message, from Crispy Doom
-      static char str_count[32];
-      M_snprintf(str_count, sizeof(str_count), "Secret %d of %d revealed!", player->secretcount, totalsecret);
+  if (hud_secret_message && player == &players[consoleplayer])
+  {
+    // [Nugget] Secret count in secret revealed message, from Crispy Doom
+    static char str_count[32];
+    M_snprintf(str_count, sizeof(str_count), "Secret %d of %d revealed!", player->secretcount, totalsecret);
 
-      player->secretmessage = (hud_secret_message == secretmessage_count) ? str_count : s_HUSTR_SECRETFOUND;
-      S_StartSound(NULL, sfx_secret);
-    }
+    player->secretmessage = (hud_secret_message == secretmessage_count) ? str_count : s_HUSTR_SECRETFOUND;
+    S_StartSound(NULL, sfx_secret);
   }
 }
 

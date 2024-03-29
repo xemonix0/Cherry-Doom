@@ -6,7 +6,7 @@
 
 ## Changes
 
-None.
+- **Support for _Milestone Completion Announcements_ in multiplayer**
 
 ## Bug Fixes
 

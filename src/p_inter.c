@@ -687,16 +687,28 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       return;      // killough 12/98: suppress error message
     }
 
-  if (special->flags & MF_COUNTITEM) {
+  if (special->flags & MF_COUNTITEM)
+  {
     player->itemcount++;
+
     // [Nugget] Announce milestone completion
-    if (!(complete_milestones & MILESTONE_ITEMS)
-        && (player->itemcount >= totalitems))
+    if (!(complete_milestones & MILESTONE_ITEMS))
     {
-      complete_milestones |= MILESTONE_ITEMS;
-      if (announce_milestones) {
-        player->secretmessage = "All items acquired!";
-        S_StartSound(NULL, sfx_secret);
+      int itemcount = 0;
+
+      for (int pl = 0;  pl < MAXPLAYERS;  ++pl) {
+        if (playeringame[pl])
+        { itemcount += players[pl].itemcount; }
+      }
+
+      if (itemcount >= totalitems)
+      {
+        complete_milestones |= MILESTONE_ITEMS;
+
+        if (announce_milestones) {
+          players[displayplayer].secretmessage = "All items acquired!";
+          S_StartSound(NULL, sfx_secret);
+        }
       }
     }
   }
@@ -864,13 +876,23 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
 #endif
 
   // [Nugget] Announce milestone completion
-  if (!(complete_milestones & MILESTONE_KILLS)
-      && ((players->killcount - players->maxkilldiscount) >= max_kill_requirement))
+  if (!(complete_milestones & MILESTONE_KILLS))
   {
-    complete_milestones |= MILESTONE_KILLS;
-    if (announce_milestones) {
-      players->secretmessage = "All enemies killed!";
-      S_StartSound(NULL, sfx_secret);
+    int killcount = 0;
+
+    for (int pl = 0;  pl < MAXPLAYERS;  ++pl) {
+      if (playeringame[pl])
+      { killcount += players[pl].killcount - players[pl].maxkilldiscount; }
+    }
+
+    if (killcount >= max_kill_requirement)
+    {
+      complete_milestones |= MILESTONE_KILLS;
+
+      if (announce_milestones) {
+        players[displayplayer].secretmessage = "All enemies killed!";
+        S_StartSound(NULL, sfx_secret);
+      }
     }
   }
 
