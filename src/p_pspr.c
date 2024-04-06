@@ -85,8 +85,6 @@ void A_Recoil(player_t* player)
 
 static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 {
-  P_SetPspritePtr(player, &player->psprites[position], stnum);
-
   if (position == ps_weapon)
   {
     const weaponinfo_t wp = weaponinfo[player->readyweapon];
@@ -96,6 +94,8 @@ static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
     else if (stnum == wp.downstate)
       player->switching = weapswitch_lowering;
   }
+
+  P_SetPspritePtr(player, &player->psprites[position], stnum);
 }
 
 //
@@ -395,7 +395,6 @@ boolean P_CheckAmmo(player_t *player)
       player->pendingweapon = P_SwitchWeapon(player);      // phares
       // Now set appropriate weapon overlay.
       P_SetPsprite(player,ps_weapon,weaponinfo[player->readyweapon].downstate);
-      player->switching = weapswitch_lowering;
     }
 
 #if 0 /* PROBABLY UNSAFE */
@@ -639,7 +638,6 @@ void A_CheckReload(player_t *player, pspdef_t *psp)
     // for us later on.
     boom_weapon_state_injection = true;
     P_SetPsprite(player, ps_weapon, weaponinfo[player->readyweapon].downstate);
-    player->switching = weapswitch_lowering;
   }
 }
 
@@ -1442,7 +1440,7 @@ void P_MovePsprites(player_t *player)
       // [FG] center the weapon sprite horizontally and push up vertically
       else if (player->attackdown && center_weapon_strict & WEAPON_CENTERED) // [Nugget] Horizontal weapon centering
       {
-        psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first person sprite centering
+        psp->sx2 = (1 - STRICTMODE(sx_fix)) * FRACUNIT; // [Nugget] Correct first person sprite centering
         if (center_weapon_strict == WEAPON_CENTERED) // [Nugget] Horizontal weapon centering
           psp->sy2 = WEAPONTOP;
       }
