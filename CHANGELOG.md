@@ -3,6 +3,7 @@
 - **_Level Stats Format_** settings
   - Removed _Kills % in Stats display_ setting in favor of them
 - **Minimap zooming** (keyboard only)
+- Toggle to **disable the Killough-face easter egg**
 
 ## Changes
 
