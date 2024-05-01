@@ -66,6 +66,8 @@ secretmessage_t hud_secret_message; // "A secret is revealed!" message
 int hud_widget_font;
 int hud_widget_layout;
 
+int hud_slot; // [Nugget]
+
 int hud_type; // Crispy HUD or Boom variants
 boolean draw_crispy_hud;
 
@@ -144,94 +146,14 @@ static hu_multiline_t w_rate;
 static hu_multiline_t w_powers; // Powerup timers
 
 #define MAX_HUDS 3
-#define MAX_WIDGETS_D 5
-#define MAX_WIDGETS_B (12+1) // [Nugget] Accommodate more widgets
+#define MAX_WIDGETS (16 + 1) // [Nugget] Accommodate more widgets
+
 #define NUGHUDSLOT 3 // [Nugget] NUGHUD
 
 // [Nugget] Extra slot for NUGHUD
-static hu_widget_t doom_widgets[MAX_HUDS+1][MAX_WIDGETS_D] = {
-  {
-    {&w_title,   align_direct, align_bottom, 0},
-    {&w_message, align_direct, align_top,    0},
-    {&w_chat,    align_direct, align_top,    0},
-    {&w_secret,  align_center, align_direct, 0, 84},
-    {NULL}
-  }, {
-    {&w_title,   align_direct, align_bottom, 0},
-    {&w_message, align_direct, align_top,    0},
-    {&w_chat,    align_direct, align_top,    0},
-    {&w_secret,  align_center, align_direct, 0, 84},
-    {NULL}
-  }, {
-    {&w_title,   align_direct, align_bottom, 0},
-    {&w_message, align_direct, align_top,    0},
-    {&w_chat,    align_direct, align_top,    0},
-    {&w_secret,  align_center, align_direct, 0, 84},
-    {NULL}
-  }, { // [Nugget] NUGHUD slot
-    {&w_title,   align_direct, align_direct},
-    {&w_message, align_direct, align_direct},
-    {&w_chat,    align_direct, align_direct},
-    {&w_secret,  align_direct, align_direct},
-    {NULL}
-  }
-};
-
-// [Nugget] Extra slot for NUGHUD
-static hu_widget_t boom_widgets[MAX_HUDS+1][MAX_WIDGETS_B] = {
-  {
-    {&w_rate,   align_left,  align_top},
-    {&w_monsec, align_left,  align_top},
-    {&w_sttime, align_left,  align_top},
-    {&w_powers, align_right, align_top}, // [Nugget] Powerup timers
-    {&w_coord,  align_right, align_top},
-    {&w_fps,    align_right, align_top},
-    {NULL}
-  }, {
-    {&w_rate,   align_left,  align_top},
-    {&w_armor,  align_left,  align_bottom},
-    {&w_health, align_left,  align_bottom},
-    {&w_ammo,   align_left,  align_bottom},
-    {&w_weapon, align_left,  align_bottom},
-    {&w_keys,   align_left,  align_bottom},
-
-    {&w_monsec, align_left,  align_bottom},
-    {&w_sttime, align_left,  align_bottom},
-    {&w_powers, align_right, align_top}, // [Nugget] Powerup timers
-    {&w_coord,  align_right, align_top},
-    {&w_fps,    align_right, align_top},
-    {NULL}
-  }, {
-    {&w_rate,   align_left,  align_top},
-    {&w_health, align_right, align_top},
-    {&w_armor,  align_right, align_top},
-    {&w_ammo,   align_right, align_bottom},
-    {&w_weapon, align_right, align_bottom},
-    {&w_keys,   align_left,  align_bottom},
-
-    {&w_monsec, align_left,  align_bottom},
-    {&w_sttime, align_left,  align_bottom},
-    {&w_powers, align_right, align_top}, // [Nugget] Powerup timers
-    {&w_coord , align_right, align_top},
-    {&w_fps,    align_right, align_top},
-    {NULL}
-  }, { // [Nugget] NUGHUD slot
-    {&w_keys,   align_direct, align_direct},
-    {&w_monsec, align_direct, align_direct},
-    {&w_sttime, align_direct, align_direct},
-    {&w_powers, align_direct, align_direct}, // [Nugget] Powerup timers
-    {&w_coord , align_direct, align_direct},
-    {&w_fps,    align_direct, align_direct},
-    {&w_rate,   align_direct, align_direct},
-    {NULL}
-  }
-};
-
-static hu_widget_t *doom_widget = doom_widgets[0],
-                   *boom_widget = boom_widgets[0];
+static hu_widget_t widgets[MAX_HUDS+1][MAX_WIDGETS];
 
 static void HU_ParseHUD (void);
-static void HU_set_centered_message (boolean);
 
 static char       chat_dest[MAXPLAYERS];
 boolean           chat_on;
@@ -427,6 +349,26 @@ static byte* ColorByHealth(int health, int maxhealth, boolean invul)
     return colrngs[CR_BLUE];
 }
 
+// [FG] support centered player messages
+
+static void HU_set_centered_message(void)
+{
+  int i, j;
+
+  for (i = 0; i < MAX_HUDS+1; i++) // [Nugget] Extra slot for NUGHUD
+  {
+    hu_widget_t *const w = widgets[i];
+
+    for (j = 0; w[j].multiline; j++)
+    {
+      if (w[j].multiline == &w_message)
+      {
+        w[j].h_align = message_centered ? align_center : w[j].h_align_orig;
+      }
+    }
+  }
+}
+
 //
 // HU_Init()
 //
@@ -518,7 +460,7 @@ void HU_Init(void)
   HU_InitObituaries();
 
   HU_ParseHUD();
-  HU_set_centered_message(true);
+  HU_set_centered_message();
 
   // [Woof!] prepare player messages for colorization
   for (i = 0; i < arrlen(colorize_strings); i++)
@@ -527,31 +469,26 @@ void HU_Init(void)
   }
 
   HU_ResetMessageColors();
-}
 
-// [FG] support centered player messages
+  // [Nugget] ----------------------------------------------------------------
 
-static void HU_set_centered_message(boolean init)
-{
-  int i, j;
+  hu_widget_t nughud_widgets[] = {
+    {&w_title,   align_direct, align_direct},
+    {&w_message, align_direct, align_direct},
+    {&w_chat,    align_direct, align_direct},
+    {&w_secret,  align_direct, align_direct},
+    {&w_keys,    align_direct, align_direct},
+    {&w_monsec,  align_direct, align_direct},
+    {&w_sttime,  align_direct, align_direct},
+    {&w_powers,  align_direct, align_direct}, // Powerup timers
+    {&w_coord,   align_direct, align_direct},
+    {&w_fps,     align_direct, align_direct},
+    {&w_rate,    align_direct, align_direct},
+  };
 
-  for (i = 0; i < MAX_HUDS+1; i++) // [Nugget] Extra slot for NUGHUD
+  for (i = 0;  i < (sizeof(nughud_widgets) / sizeof(*nughud_widgets));  i++)
   {
-    hu_widget_t *const d_w = doom_widgets[i];
-
-    for (j = 0; d_w[j].multiline; j++)
-    {
-      if (d_w[j].multiline == &w_message)
-      {
-        // [FG] save original alignment
-        if (init)
-        {
-          d_w[j].h_align_orig = d_w[j].h_align;
-        }
-
-        d_w[j].h_align = message_centered ? align_center : d_w[j].h_align_orig;
-      }
-    }
+    widgets[NUGHUDSLOT][i] = nughud_widgets[i];
   }
 }
 
@@ -568,7 +505,7 @@ static boolean hud_pending;
 
 void HU_disable_all_widgets (void)
 {
-  hu_widget_t *w = boom_widget;
+  hu_widget_t *w = widgets[hud_slot];
 
   while (w->multiline)
   {
@@ -644,7 +581,7 @@ static void NughudAlignWidget(nughud_alignable_t *aligner, hu_widget_t *alignee)
 
 void HU_NughudAlignTime(void)
 {
-  hu_widget_t *w = boom_widgets[NUGHUDSLOT];
+  hu_widget_t *w = widgets[NUGHUDSLOT];
 
   while (w->multiline)
   {
@@ -784,23 +721,28 @@ void HU_Start(void)
   // [FG] draw the IDRATE widget exclusively
   w_rate.exclusive = true;
 
-  HU_set_centered_message(false);
+  HU_set_centered_message();
 
   // [Nugget] NUGHUD
   if (st_crispyhud)
   {
-    hu_widget_t    *w;
+    hu_widget_t    *w = widgets[NUGHUDSLOT];
     hu_multiline_t *m;
     nughud_alignable_t *na;
 
-    w = doom_widgets[NUGHUDSLOT];
     while ((m = w->multiline)) 
     {
-      na = NULL;
       if      (m == &w_title)   { na = &nughud.title;   } 
       else if (m == &w_message) { na = &nughud.message; }
       else if (m == &w_chat)    { na = &nughud.message; }
       else if (m == &w_secret)  { na = &nughud.secret;  }
+      else if (m ==  w_stats)   { na = &nughud.sts;     }
+      else if (m == &w_sttime)  { na = &nughud.time;    }
+      else if (m == &w_powers)  { na = &nughud.powers;  }
+      else if (m == &w_coord)   { na = &nughud.coord;   }
+      else if (m == &w_fps)     { na = &nughud.fps;     }
+      else if (m == &w_rate)    { na = &nughud.rate;    }
+      else                      { na = NULL;            }
 
       if (na)
       {
@@ -811,28 +753,11 @@ void HU_Start(void)
 
           w->y = na->y + ((*m->font)->line_height * (message_list ? hud_msg_lines : 1));
         }
+        else if (m == &w_sttime)
+        {
+          HU_NughudAlignTime();
+        }
         else { NughudAlignWidget(na, w); }
-      }
-
-      w++;
-    }
-
-    w = boom_widgets[NUGHUDSLOT];
-    while ((m = w->multiline))
-    {
-      na = NULL;
-      if      (m ==  w_stats)  { na = &nughud.sts;    }
-      else if (m == &w_sttime) { na = &nughud.time;   }
-      else if (m == &w_powers) { na = &nughud.powers; }
-      else if (m == &w_coord)  { na = &nughud.coord;  }
-      else if (m == &w_fps)    { na = &nughud.fps;    }
-      else if (m == &w_rate)   { na = &nughud.rate;   }
-
-      if (na) {
-        if (na == &nughud.time)
-        { HU_NughudAlignTime(); }
-        else
-        { NughudAlignWidget(na, w); }
       }
 
       w++;
@@ -1771,7 +1696,6 @@ void HU_DrawCrosshair(void)
       automapactive == AM_FULL || // [Nugget] Changed condition
       menuactive ||
       paused ||
-      /*secret_on*/ // [Nugget] Removed condition
       // [Nugget] New conditions
       !crosshair.cr || // Crash fix
       (chasecam_mode && !chasecam_crosshair) || // Chasecam
@@ -1839,17 +1763,16 @@ int hud_time[NUMTIMERS]; // [Nugget] Support more event timers
 //
 void HU_Drawer(void)
 {
-  hu_widget_t *w;
+  hu_widget_t *w = widgets[hud_slot];
 
   if (hud_pending)
     return;
 
   HUlib_reset_align_offsets();
 
-  w = doom_widget;
   while (w->multiline)
   {
-    if (*w->multiline->on)
+    if ((w->multiline->on && *w->multiline->on) || w->multiline->built)
     {
       HUlib_draw_widget(w);
     }
@@ -1859,16 +1782,6 @@ void HU_Drawer(void)
   if (draw_crispy_hud)
   {
     ST_Drawer (false, true);
-  }
-
-  w = boom_widget;
-  while (w->multiline)
-  {
-    if (w->multiline->built)
-    {
-      HUlib_draw_widget(w);
-    }
-    w++;
   }
 }
 
@@ -1896,24 +1809,16 @@ void WI_DrawTimeWidget(void)
 
 void HU_Erase(void)
 {
-  hu_widget_t *w;
+  hu_widget_t *w = widgets[hud_slot];
 
   if (automapactive || !scaledviewx)
     return;
 
   HUlib_reset_align_offsets();
 
-  w = doom_widget;
   while (w->multiline)
   {
-    HUlib_erase_widget(w);
-    w++;
-  }
-
-  w = boom_widget;
-  while (w->multiline)
-  {
-    if (w->multiline->built)
+    if (w->multiline->on || w->multiline->built)
     {
       HUlib_erase_widget(w);
     }
@@ -1934,9 +1839,8 @@ static int bscounter;
 
 void HU_Ticker(void)
 {
-  const int hudslot = st_crispyhud ? NUGHUDSLOT : hud_active; // [Nugget] NUGHUD
-  doom_widget = doom_widgets[hudslot];
-  boom_widget = boom_widgets[hudslot];
+  hud_slot = st_crispyhud ? NUGHUDSLOT : hud_active; // [Nugget] NUGHUD
+
   plr = &players[displayplayer];         // killough 3/7/98
 
   hud_automap = (automapactive == AM_FULL); // [Nugget] Minimap
@@ -2047,8 +1951,8 @@ void HU_Ticker(void)
               message_nottobefuckedwith = true;
               message_on = true;
               message_counter = chat_count; // killough 11/98
-              S_StartSound(0, gamemode == commercial ?
-                              sfx_radio : sfx_tink);
+              S_StartSoundPitch(0, gamemode == commercial ?
+                              sfx_radio : sfx_tink, PITCH_NONE);
             }
             HUlib_clear_line(&w_inputbuffer[i]);
           }
@@ -2309,22 +2213,17 @@ boolean HU_Responder(event_t *ev)
 
 // [FG] dynamic HUD alignment
 
-typedef struct {
+static const struct {
   const char *name, *altname;
   hu_multiline_t *const multiline;
-} multiline_names_t;
-
-static const multiline_names_t
-  doom_names[] = {
+} multiline_names[] = {
     {"title",   NULL,     &w_title},
     {"message", NULL,     &w_message},
 // [FG] TODO due to its variable width and the trailing cursor,
 //      the w_chat widget *must* currently remain left-aligned
 //  {"chat",    NULL,     &w_chat},
     {"secret",  NULL,     &w_secret},
-    {NULL},
-  },
-  boom_names[] = {
+
     {"ammo",    NULL,     &w_ammo},
     {"armor",   NULL,     &w_armor},
     {"health",  NULL,     &w_health},
@@ -2340,7 +2239,7 @@ static const multiline_names_t
     {NULL},
 };
 
-static boolean HU_ReplaceInDoomWidgets (hu_multiline_t *multiline, int hud, align_t h_align, align_t v_align, int x, int y)
+static boolean HU_ReplaceInWidgets (hu_multiline_t *multiline, int hud, align_t h_align, align_t v_align, int x, int y)
 {
   int i;
 
@@ -2349,14 +2248,22 @@ static boolean HU_ReplaceInDoomWidgets (hu_multiline_t *multiline, int hud, alig
     return false;
   }
 
-  for (i = 0; i < MAX_WIDGETS_D - 1; i++)
+  for (i = 0; i < MAX_WIDGETS - 1; i++)
   {
-    if (doom_widgets[hud][i].multiline == multiline)
+    if (widgets[hud][i].multiline == NULL)
     {
-      doom_widgets[hud][i].h_align = h_align;
-      doom_widgets[hud][i].v_align = v_align;
-      doom_widgets[hud][i].x = x;
-      doom_widgets[hud][i].y = y;
+      break;
+    }
+
+    if (widgets[hud][i].multiline == multiline)
+    {
+      widgets[hud][i].h_align = h_align;
+      widgets[hud][i].v_align = v_align;
+      widgets[hud][i].x = x;
+      widgets[hud][i].y = y;
+
+      // [FG] save original alignment
+      widgets[hud][i].h_align_orig = widgets[hud][i].h_align;
 
       return true;
     }
@@ -2365,7 +2272,7 @@ static boolean HU_ReplaceInDoomWidgets (hu_multiline_t *multiline, int hud, alig
   return false;
 }
 
-static boolean HU_AddToBoomWidgets (hu_multiline_t *multiline, int hud, align_t h_align, align_t v_align, int x, int y)
+static boolean HU_AppendToWidgets (hu_multiline_t *multiline, int hud, align_t h_align, align_t v_align, int x, int y)
 {
   int i;
 
@@ -2374,54 +2281,57 @@ static boolean HU_AddToBoomWidgets (hu_multiline_t *multiline, int hud, align_t 
     return false;
   }
 
-  for (i = 0; i < MAX_WIDGETS_B - 1; i++)
+  for (i = 0; i < MAX_WIDGETS - 1; i++)
   {
-    if (boom_widgets[hud][i].multiline == NULL)
+    if (widgets[hud][i].multiline == NULL)
     {
       break;
     }
   }
 
-  if (i + 1 >= MAX_WIDGETS_B)
+  if (i + 1 >= MAX_WIDGETS)
   {
     return false;
   }
 
-  boom_widgets[hud][i].multiline = multiline;
-  boom_widgets[hud][i].h_align = h_align;
-  boom_widgets[hud][i].v_align = v_align;
-  boom_widgets[hud][i].x = x;
-  boom_widgets[hud][i].y = y;
+  widgets[hud][i].multiline = multiline;
+  widgets[hud][i].h_align = h_align;
+  widgets[hud][i].v_align = v_align;
+  widgets[hud][i].x = x;
+  widgets[hud][i].y = y;
 
-  boom_widgets[hud][i + 1].multiline = NULL;
+  // [FG] save original alignment
+  widgets[hud][i].h_align_orig = widgets[hud][i].h_align;
+
+  widgets[hud][i + 1].multiline = NULL;
 
   return true;
 }
 
-static boolean HU_AddToWidgets (hu_multiline_t *multiline, const multiline_names_t *names, int hud, align_t h_align, align_t v_align, int x, int y)
+static boolean HU_AddToWidgets (hu_multiline_t *multiline, int hud, align_t h_align, align_t v_align, int x, int y)
 {
-  if (names == doom_names)
+  if (HU_ReplaceInWidgets(multiline, hud, h_align, v_align, x, y))
   {
-    return HU_ReplaceInDoomWidgets(multiline, hud, h_align, v_align, x, y);
+    return true;
   }
-  else if (names == boom_names)
+  else if (HU_AppendToWidgets(multiline, hud, h_align, v_align, x, y))
   {
-    return HU_AddToBoomWidgets(multiline, hud, h_align, v_align, x, y);
+    return true;
   }
 
   return false;
 }
 
-static hu_multiline_t *HU_MultilineByName (const char *name, const multiline_names_t *names)
+static hu_multiline_t *HU_MultilineByName (const char *name)
 {
   int i;
 
-  for (i = 0; names[i].name; i++)
+  for (i = 0; multiline_names[i].name; i++)
   {
-    if (strcasecmp(name, names[i].name) == 0 ||
-       (names[i].altname && strcasecmp(name, names[i].altname) == 0))
+    if (strcasecmp(name, multiline_names[i].name) == 0 ||
+       (multiline_names[i].altname && strcasecmp(name, multiline_names[i].altname) == 0))
     {
-      return names[i].multiline;
+      return multiline_names[i].multiline;
     }
   }
 
@@ -2430,14 +2340,7 @@ static hu_multiline_t *HU_MultilineByName (const char *name, const multiline_nam
 
 static boolean HU_AddHUDCoords (char *name, int hud, int x, int y)
 {
-  const multiline_names_t *names = doom_names;
-  hu_multiline_t *multiline = HU_MultilineByName(name, names);
-
-  if (multiline == NULL)
-  {
-    names = boom_names;
-    multiline = HU_MultilineByName(name, names);
-  }
+  hu_multiline_t *multiline = HU_MultilineByName(name);
 
   if (multiline == NULL)
   {
@@ -2459,19 +2362,12 @@ static boolean HU_AddHUDCoords (char *name, int hud, int x, int y)
     return false;
   }
 
-  return HU_AddToWidgets(multiline, names, hud, align_direct, align_direct, x, y);
+  return HU_AddToWidgets(multiline, hud, align_direct, align_direct, x, y);
 }
 
 static boolean HU_AddHUDAlignment (char *name, int hud, char *alignstr)
 {
-  const multiline_names_t *names = doom_names;
-  hu_multiline_t *multiline = HU_MultilineByName(name, names);
-
-  if (multiline == NULL)
-  {
-    names = boom_names;
-    multiline = HU_MultilineByName(name, names);
-  }
+  hu_multiline_t *multiline = HU_MultilineByName(name);
 
   if (multiline == NULL)
   {
@@ -2480,27 +2376,27 @@ static boolean HU_AddHUDAlignment (char *name, int hud, char *alignstr)
 
   if (!strcasecmp(alignstr, "topleft")          || !strcasecmp(alignstr, "upperleft"))
   {
-    return HU_AddToWidgets(multiline, names, hud, align_left, align_top, 0, 0);
+    return HU_AddToWidgets(multiline, hud, align_left, align_top, 0, 0);
   }
   else if (!strcasecmp(alignstr, "topright")    || !strcasecmp(alignstr, "upperright"))
   {
-    return HU_AddToWidgets(multiline, names, hud, align_right, align_top, 0, 0);
+    return HU_AddToWidgets(multiline, hud, align_right, align_top, 0, 0);
   }
   else if (!strcasecmp(alignstr, "topcenter")   || !strcasecmp(alignstr, "uppercenter"))
   {
-    return HU_AddToWidgets(multiline, names, hud, align_center, align_top, 0, 0);
+    return HU_AddToWidgets(multiline, hud, align_center, align_top, 0, 0);
   }
   else if (!strcasecmp(alignstr, "bottomleft")  || !strcasecmp(alignstr, "lowerleft"))
   {
-    return HU_AddToWidgets(multiline, names, hud, align_left, align_bottom, 0, 0);
+    return HU_AddToWidgets(multiline, hud, align_left, align_bottom, 0, 0);
   }
   else if (!strcasecmp(alignstr, "bottomright") || !strcasecmp(alignstr, "lowerright"))
   {
-    return HU_AddToWidgets(multiline, names, hud, align_right, align_bottom, 0, 0);
+    return HU_AddToWidgets(multiline, hud, align_right, align_bottom, 0, 0);
   }
   else if (!strcasecmp(alignstr, "bottomcenter")|| !strcasecmp(alignstr, "lowercenter"))
   {
-    return HU_AddToWidgets(multiline, names, hud, align_center, align_bottom, 0, 0);
+    return HU_AddToWidgets(multiline, hud, align_center, align_bottom, 0, 0);
   }
 
   return false;
@@ -2509,10 +2405,19 @@ static boolean HU_AddHUDAlignment (char *name, int hud, char *alignstr)
 static void HU_ParseHUD (void)
 {
   u_scanner_t *s;
-  int hud = -1;
+  int hud;
   int lumpnum;
   const char *data;
   int length;
+
+  // [FG] initialize HUDs with Vanilla Doom widgets
+  for (hud = 0; hud < MAX_HUDS; hud++)
+  {
+    HU_AddToWidgets(&w_title,   hud, align_direct, align_bottom, 0, 0);
+    HU_AddToWidgets(&w_message, hud, align_direct, align_top,    0, 0);
+    HU_AddToWidgets(&w_chat,    hud, align_direct, align_top,    0, 0);
+    HU_AddToWidgets(&w_secret , hud, align_center, align_direct, 0, (SCREENHEIGHT - ST_HEIGHT) / 4);
+  }
 
   if ((lumpnum = W_CheckNumForName("WOOFHUD")) == -1)
   {
@@ -2544,7 +2449,6 @@ static void HU_ParseHUD (void)
         U_Error(s, "HUD (%d) must be between 0 and %d", hud, MAX_HUDS - 1);
       }
 
-      memset(boom_widgets[hud], 0, sizeof(boom_widgets[hud]));
       continue;
     }
 
