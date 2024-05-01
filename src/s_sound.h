@@ -93,7 +93,10 @@ extern int idmusnum;
 // [Nugget] ------------------------------------------------------------------
 
 // [NS] Try to play an optional sound.
-void S_StartSoundOptional(const struct mobj_s *const origin, const int sfx_id, const int old_sfx_id);
+#define S_StartSoundOptional(o, p, i) S_StartSoundPitchOptional((o), (p), (i), PITCH_FULL)
+void S_StartSoundPitchOptional(const struct mobj_s *const origin,
+                               const int opt_sound_id, const int sound_id,
+                               const pitchrange_t pitch_range);
 
 void S_PlayerPainSound(const struct mobj_s *const origin);
 

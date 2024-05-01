@@ -2,6 +2,7 @@ hud 0
 rate topleft
 monsec topleft
 sttime topleft
+powers topright
 coord topright
 fps topright
 
@@ -14,6 +15,7 @@ weapon bottomleft
 keys bottomleft
 monsec bottomleft
 sttime bottomleft
+powers topright
 coord topright
 fps topright
 
@@ -26,5 +28,6 @@ weapon bottomright
 keys bottomleft
 monsec bottomleft
 sttime bottomleft
+powers topright
 coord  topright
 fps topright

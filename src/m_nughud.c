@@ -108,7 +108,7 @@ default_t nughud_defaults[] = {
   {          "nughud_message_y",     (config_t *)&nughud.message.y,     NULL, {  0 }, {  0, 200 }, number },
   {          "nughud_message_wide",  (config_t *)&nughud.message.wide,  NULL, { -1 }, { -2, 2 },   number },
   {          "nughud_message_align", (config_t *)&nughud.message.align, NULL, { -1 }, { -1, 1 },   number },
-  TEXTLINE(  "nughud_secret",      nughud.secret,       160,          84,            0,  0     ),
+  TEXTLINE(  "nughud_secret",      nughud.secret, 160, (SCREENHEIGHT - ST_HEIGHT) / 4, 0, 0    ),
   PATCH(     "nughud_patch1",      0                                                           ),
   PATCH(     "nughud_patch2",      1                                                           ),
   PATCH(     "nughud_patch3",      2                                                           ),
