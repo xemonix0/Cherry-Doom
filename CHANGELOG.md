@@ -13,6 +13,7 @@
 - **Rewind improvements:**
   - Only delete key frames when rewinding within less than 0.6 seconds since the last rewind
   - "Aligned" key-framing time
+- **Adjusted spawning height of _Bloodier Gibbing_ blood splats**
 - **Support for _Milestone Completion Announcements_ in multiplayer**
 
 ## Bug Fixes
