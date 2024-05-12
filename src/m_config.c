@@ -2379,11 +2379,19 @@ default_t defaults[] = {
     input_idbeholdl, { {0, 0} }
   },
 
+  { // [Nugget]
+    "input_idbeholda",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give computer area map",
+    input_idbeholda, { {0, 0} }
+  },
+
   {
     "input_iddt",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to reveal map",
+    "key to reveal map (IDDT)", // [Nugget] Tweaked description
     input_iddt, { {0, 0} }
   },
 

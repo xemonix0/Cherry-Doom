@@ -1205,7 +1205,8 @@ static setup_menu_t keys_settings6[] = {
     {"Berserk",              S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_idbeholds},
     {"Partial Invisibility", S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_idbeholdi},
     {"Radiation Suit",       S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_idbeholdr},
-    {"Reveal Map",           S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_iddt     },
+    {"Computer Area Map",    S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_idbeholda}, // [Nugget]
+    {"Reveal Map (IDDT)",    S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_iddt     }, // [Nugget] Tweaked description
     {"Light Amplification",  S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_idbeholdl},
     {"No Target",            S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_notarget },
     {"Freeze",               S_INPUT, CHEAT_X, M_SPC, {0}, m_scrn, input_freeze   },

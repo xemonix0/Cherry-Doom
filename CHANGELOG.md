@@ -4,6 +4,7 @@
 - **_Level Stats Format_** settings
   - Removed _Kills % in Stats display_ setting in favor of them
 - **Minimap zooming** (keyboard only)
+- **Key-binding for Computer Area Map cheat**
 - Toggle to **disable the Killough-face easter egg**
 - Toggle to **make attackers face fuzzy targets straight**
 - Toggle to **allow Level Stats icons**
