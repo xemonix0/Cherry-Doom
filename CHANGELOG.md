@@ -6,6 +6,7 @@
 - **Minimap zooming** (keyboard only)
 - Toggle to **disable the Killough-face easter egg**
 - Toggle to **make attackers face fuzzy targets straight**
+- Toggle to **allow Level Stats icons**
 
 ## Changes
 
