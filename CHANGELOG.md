@@ -23,5 +23,6 @@
 
 ## Bug Fixes
 
+- **Sky being distorted by zoom effect**
 - **_Show Stats/Time_ toggle affecting Automap instead of HUD when on Minimap**
 - **_Cycle Chasecam_ and _Toggle Crosshair_ inputs eating inputs**
