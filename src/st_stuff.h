@@ -143,6 +143,8 @@ void ST_refreshBackground(void);
 
 void ST_InitRes(void);
 
+void ST_InitChunkBar(void); // [Nugget] NUGHUD: Status-Bar chunks
+
 extern void ST_createWidgets(void); // [Nugget]
 
 // killough 5/2/98: moved from m_misc.c:
