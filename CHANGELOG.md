@@ -31,6 +31,7 @@
 - **Adjusted spawning height of _Bloodier Gibbing_ blood splats**
 - **Support for _Milestone Completion Announcements_ in multiplayer**
 - **Lengthened FOV slider**
+- **Removed temporary support for "Nugget 2.4.0" saves**
 
 ## Bug Fixes
 

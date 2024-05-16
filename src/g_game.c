@@ -2511,7 +2511,6 @@ static void G_DoLoadGame(void)
   CheckSaveVersion("Woof 6.0.0", saveg_woof600);
   CheckSaveVersion("Nugget 2.0.0", saveg_nugget200);
   CheckSaveVersion("Nugget 2.1.0", saveg_nugget210);
-  CheckSaveVersion("Nugget 2.4.0", saveg_current); // To be removed
   CheckSaveVersion(CURRENT_SAVE_VERSION, saveg_current);
 
   // killough 2/22/98: Friendly savegame version difference message
