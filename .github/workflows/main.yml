@@ -113,7 +113,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: CherryDoom-AppImage
+          name: Cherry-Doom-AppImage
           path: build/*.appimage
 
       - name: Extract Version Number
