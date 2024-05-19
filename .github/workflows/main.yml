@@ -113,7 +113,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: NuggetDoom-AppImage
+          name: Nugget-Doom-AppImage
           path: build/*.appimage
 
       - name: Extract Version Number
