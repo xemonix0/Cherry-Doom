@@ -1710,9 +1710,6 @@ static void G_DoCompleted(void)
 {
   int i;
 
-  // [Nugget] Rebuild the Time widget to get rid of event timers
-  HU_widget_rebuild_sttime();
-
   //!
   // @category demo
   // @help
