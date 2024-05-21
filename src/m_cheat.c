@@ -436,10 +436,10 @@ extern int init_thinkers_count; // [Nugget]
 // [Nugget] /-----------------------------------------------------------------
 
 #ifdef NUGMAGIC
+// For debugging
 static void cheat_magic()
 {
-  // For debugging
-  displaymsg("DM %s", (deathmatch = !deathmatch) ? "ON" : "OFF");
+  
 }
 #endif
 

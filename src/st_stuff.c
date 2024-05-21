@@ -208,7 +208,7 @@ static patch_t *nhealth[2];         // NHEALTH#, from 0 to 1
 static patch_t *nharmor[3];         // NHARMOR#, from 0 to 2
 static patch_t *nhinfnty;           // NHINFNTY
 
-// [Nugget] ------------------------------------------------------------------/
+// [Nugget] -----------------------------------------------------------------/
 
 // ready-weapon widget
 static st_number_t w_ready;
@@ -1254,11 +1254,30 @@ void ST_drawWidgets(void)
     for (i=0; i<6; i++)
       STlib_updateMultIcon(&w_arms[i]);
 
-  // [Nugget] NUGHUD: This probably shouldn't go here, but it works
-  if (st_crispyhud && (nughud.face.x > -1) && nughud.face_bg)
+  // [Nugget] NUGHUD
+  if (st_crispyhud && nughud.face.x > -1 && nughud.face_bg)
   {
-    V_DrawPatch(nughud.face.x + NUGHUDWIDESHIFT(nughud.face.wide),
-                nughud.face.y+1, faceback[netgame ? displayplayer : 1]);
+    patch_t *bg = faceback[displayplayer];
+    const int x = nughud.face.x + NUGHUDWIDESHIFT(nughud.face.wide),
+              y = nughud.face.y + ST_HEIGHT - SHORT(bg->height);
+
+    if (netgame)
+    {
+      V_DrawPatch(x, y, bg);
+    }
+    else {
+      nughud_sbchunk_t chunk; // Reuse the chunk drawing function for its bounds-checking
+
+      chunk.x = x + SHORT(bg->leftoffset);
+      chunk.y = y - SHORT(bg->topoffset);
+      chunk.wide = 0;
+      chunk.sx = ST_FX + SHORT(bg->leftoffset);
+      chunk.sy = (ST_FY - ST_Y) - SHORT(bg->topoffset);
+      chunk.sw = SHORT(bg->width);
+      chunk.sh = SHORT(bg->height);
+
+      NughudDrawSBChunk(&chunk);
+    }
   }
 
   if (!st_crispyhud || nughud.face.x > -1) // [Nugget] NUGHUD
