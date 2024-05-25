@@ -1,5 +1,6 @@
 ## New Features
 
+- **_Freecam_**
 - **_'BABYMODE'_ cheat**, to toggle ITYTD benefits
 
 ## Changes

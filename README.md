@@ -42,6 +42,12 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Subtle Idle Bobbing/Breathing_** setting [p.f. International Doom]
 - **_Teleporter Zoom_** setting [i.b. ZDoom]
 - **_Death Camera_** setting [i.b. ZDoom]
+- **_Freecam_**, which repurposes the following inputs:
+  - _Cycle Chasecam_ to toggle control between the camera and the player
+  - _Use_ to reset the camera to the player's POV
+  - _Fire_ to lock onto and let go of a sentient thing's POV
+  - _Previous/Next Weapon_ to adjust the camera's movement speed
+  - Rapid _Strafe On_ double-press to center the camera vertically
 - **_Chasecam_** [i.b. ZDoom]
 - **_Background for all menus_** setting
 - **_No palette tint in menus_** setting [i.b. Crispy Doom]

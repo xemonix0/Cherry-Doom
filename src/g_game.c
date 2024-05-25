@@ -926,7 +926,10 @@ void G_ClearInput(void)
 static void G_DoLoadLevel(void)
 {
   int i;
-  int old_gameaction = gameaction; // [Nugget]
+
+  // [Nugget]
+  int lastaction  = gameaction;
+  static int lastepisode = -1, lastmap = -1;
 
   // Set the sky map.
   // First thing, we have a dummy sky texture name,
@@ -1035,7 +1038,7 @@ static void G_DoLoadLevel(void)
 
   // clear cmd building stuff
   // [Nugget] Rewind: unless we just rewound
-  if (old_gameaction != ga_rewind) {
+  if (lastaction != ga_rewind) {
     memset (gamekeydown, 0, sizeof(gamekeydown));
     G_ClearInput();
     sendpause = sendsave = paused = false;
@@ -1077,6 +1080,15 @@ static void G_DoLoadLevel(void)
   if (WI_UsingAltInterpic()) {
     R_SetViewSize(screenblocks);
     R_ExecuteSetViewSize();
+  }
+
+  // Freecam
+  if (lastepisode != gameepisode || lastmap  != gamemap)
+  {
+    lastepisode = gameepisode;
+    lastmap     = gamemap;
+
+    R_ResetFreecam();
   }
 }
 
@@ -1364,14 +1376,16 @@ boolean G_Responder(event_t* ev)
       // of demo playback, or if automap active.
       // Don't suck up keys, which may be cheats
 
-      return gamestate == GS_DEMOSCREEN &&
-	!(paused & 2) && automapactive != AM_FULL &&
-	((ev->type == ev_keydown) ||
-	 (ev->type == ev_mouseb_down) ||
-	 (ev->type == ev_joyb_down)) ?
-	(!menuactive ? S_StartSoundOptional(NULL, sfx_mnuopn, sfx_swtchn) // [Nugget]: [NS] Optional menu sounds.
-	             : true),
-	MN_StartControlPanel(), true : false;
+      // [Nugget] Freecam
+      if (!R_GetFreecamOn())
+        return gamestate == GS_DEMOSCREEN &&
+	  !(paused & 2) && automapactive != AM_FULL &&
+	  ((ev->type == ev_keydown) ||
+	   (ev->type == ev_mouseb_down) ||
+	   (ev->type == ev_joyb_down)) ?
+	  (!menuactive ? S_StartSoundOptional(NULL, sfx_mnuopn, sfx_swtchn) // [Nugget]: [NS] Optional menu sounds.
+	               : true),
+	  MN_StartControlPanel(), true : false;
     }
 
   if (gamestate == GS_FINALE && F_Responder(ev))
@@ -3248,6 +3262,101 @@ void G_Ticker(void)
 	      break;
 	  }
     }
+
+  // [Nugget] Freecam
+  if (R_GetFreecamOn())
+  {
+    fixed_t x = 0,
+            y = 0,
+            z = 0;
+    angle_t angle = 0;
+    fixed_t pitch = 0;
+    boolean center = false,
+            lock = false;
+    
+    if (R_GetFreecamMode() == FREECAM_CAM && gamestate == GS_LEVEL && !menuactive)
+    {
+      const ticcmd_t *const cmd = &netcmds[consoleplayer];
+
+      if (casual_play)
+      { memset(&players[consoleplayer].cmd, 0, sizeof(ticcmd_t)); }
+
+      #define INPUT(input) M_InputGameActive(input)
+
+      static boolean usedown = false, firedown = false;
+
+      if (!INPUT(input_use))  {  usedown = false; }
+      if (!INPUT(input_fire)) { firedown = false; }
+
+      if (INPUT(input_use) && !usedown)
+      {
+        usedown = true;
+        R_ResetFreecam();
+      }
+      else if (INPUT(input_fire) && !firedown)
+      {
+        firedown = true;
+        lock = true;
+      }
+      else {
+        if (!R_GetFreecamMobj())
+        {
+          angle = cmd->angleturn << 16;
+
+          static fixed_t basespeed = 8*FRACUNIT;
+          const int speedchange = INPUT(input_nextweapon) - INPUT(input_prevweapon);
+
+          if (speedchange)
+          {
+            basespeed = BETWEEN(FRACUNIT, 20*FRACUNIT, basespeed + (FRACUNIT * speedchange));
+
+            const int scaledspeed = basespeed / FRACUNIT;
+            displaymsg("Freecam Speed: %i unit%s", scaledspeed, (scaledspeed == 1) ? "" : "s");
+          }
+
+          fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed)));
+
+          fixed_t forwardmove = speed * (INPUT(input_forward)     - INPUT(input_backward)),
+                  sidemove    = speed * (INPUT(input_straferight) - INPUT(input_strafeleft));
+
+          angle_t fangle = R_GetFreecamAngle() + angle;
+
+          x = FixedMul(forwardmove, finecosine[ fangle          >> ANGLETOFINESHIFT])
+            + FixedMul(sidemove,    finecosine[(fangle - ANG90) >> ANGLETOFINESHIFT]);
+
+          y = FixedMul(forwardmove, finesine[ fangle          >> ANGLETOFINESHIFT])
+            + FixedMul(sidemove,    finesine[(fangle - ANG90) >> ANGLETOFINESHIFT]);
+
+          z = speed * (INPUT(input_jump) - INPUT(input_crouch));
+        }
+
+        pitch = cmd->pitch;
+
+        static int strafetime = -10;
+        static boolean strafedown = false;
+
+        if (!INPUT(input_strafe))
+        {
+          strafedown = false;
+        }
+        else if (!strafedown)
+        {
+          strafedown = true;
+
+          if (leveltime - strafetime < 10)
+          {
+            center = true;
+          }
+
+          strafetime = leveltime;
+        }
+      }
+
+      #undef INPUT
+    }
+
+    R_UpdateFreecam(x, y, z, angle, pitch, center, lock);
+  }
 
   oldleveltime = leveltime;
 

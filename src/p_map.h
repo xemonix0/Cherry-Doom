@@ -88,6 +88,8 @@ extern struct line_s *blockline;   // killough 8/11/98
 
 // [Nugget] ------------------------------------------------------------------
 
+fixed_t P_PitchToSlope(const fixed_t pitch);
+
 void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope);
 
 typedef enum {

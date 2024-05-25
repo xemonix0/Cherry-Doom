@@ -46,17 +46,8 @@
 
 static fixed_t PlayerSlope(player_t *player)
 {
-  const fixed_t pitch = player->pitch;
-
-  if (pitch)
-  {
-    const fixed_t slope = -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT];
-    return (fixed_t)((int64_t)slope * SCREENHEIGHT / ACTUALHEIGHT);
-  }
-  else
-  {
-    return 0;
-  }
+  // [Nugget] Factored out to `p_map.c/h`
+  return P_PitchToSlope(player->pitch);
 }
 
 // [Nugget] Flinching
@@ -260,12 +251,13 @@ void P_MovePlayer (player_t* player)
 {
   ticcmd_t *cmd = &player->cmd;
   mobj_t *mo = player->mo;
-  static boolean crouchKeyDown = false; // [Nugget]
 
   mo->angle += cmd->angleturn << 16;
   onground = mo->z <= mo->floorz;
 
-  // [Nugget] Allow movement if...
+  // [Nugget] /---------------------------------------------------------------
+
+  // Allow movement if...
   if (casual_play) {
     onground |= 
          // ... using noclip or flight cheat
@@ -274,12 +266,20 @@ void P_MovePlayer (player_t* player)
       || (mo->below_thing && (mo->z == (mo->below_thing->z + mo->below_thing->height)));
   }
 
-  // [Nugget]
+  boolean jump, crouch;
+
+  if (casual_play && R_GetFreecamMode() != FREECAM_CAM)
+  {
+    jump = M_InputGameActive(input_jump);
+    crouch = M_InputGameActive(input_crouch);
+  }
+  else { jump = crouch = false; }
+
   if (player->cheats & CF_FLY)
   {
     player->mo->flags |= MF_NOGRAVITY;
 
-    if (!(M_InputGameActive(input_jump) ^ M_InputGameActive(input_crouch)))
+    if (!(jump ^ crouch))
     { // Stop moving...
       if (player->cheats & CF_NOMOMENTUM)
       { player->mo->momz = 0; } // ... instantly
@@ -298,11 +298,11 @@ void P_MovePlayer (player_t* player)
     }
   }
 
-  // [Nugget] Jumping delay
+  // Jumping delay
   if (player->jumptics) { player->jumptics--; }
 
-  // [Nugget] Jump/Fly Up
-  if (casual_play && M_InputGameActive(input_jump))
+  // Jump/Fly Up
+  if (jump)
   {
     if (player->cheats & CF_FLY) {
       player->mo->momz += (1 + (autorun ^ M_InputGameActive(input_speed))) * FRACUNIT;
@@ -330,8 +330,10 @@ void P_MovePlayer (player_t* player)
     }
   }
 
-  // [Nugget] Crouch/Fly Down
-  if (!M_InputGameActive(input_crouch))
+  static boolean crouchKeyDown = false;
+
+  // Crouch/Fly Down
+  if (!crouch)
   {
     crouchKeyDown = false;
   }
@@ -355,7 +357,7 @@ void P_MovePlayer (player_t* player)
     player->mo->intflags &= ~MIF_CROUCHING;
   }
 
-  // [Nugget] Smooth crouching
+  // Smooth crouching
   if (   ((player->mo->intflags & MIF_CROUCHING)
           && (player->mo->height > player->mo->info->height/2))
       || (!(player->mo->intflags & MIF_CROUCHING)
@@ -400,6 +402,8 @@ void P_MovePlayer (player_t* player)
     { player->crouchoffset = offsettarget; }
   }
 
+  // [Nugget] ---------------------------------------------------------------/
+
   if (player == &players[consoleplayer])
   {
     localview.ticangle += localview.ticangleturn << 16;
@@ -437,16 +441,20 @@ void P_MovePlayer (player_t* player)
 
           // [Nugget] -------------------------------------------------------/
 
+          // [Nugget] Freecam
+          const angle_t angle = (casual_play && R_GetFreecamOn() && player == &players[consoleplayer])
+                                ? R_GetFreecamAngle() : mo->angle;
+
           if (cmd->forwardmove)
             {
-              P_Bob(player,mo->angle,forwardmove*bobfactor);
-              P_Thrust(player,mo->angle,forwardmove*movefactor);
+              P_Bob(player,angle,forwardmove*bobfactor);
+              P_Thrust(player,angle,forwardmove*movefactor);
             }
 
           if (cmd->sidemove)
             {
-              P_Bob(player,mo->angle-ANG90,sidemove*bobfactor);
-              P_Thrust(player,mo->angle-ANG90,sidemove*movefactor);
+              P_Bob(player,angle-ANG90,sidemove*bobfactor);
+              P_Thrust(player,angle-ANG90,sidemove*movefactor);
             }
         }
       // [Nugget] Allow minimal mid-air movement if Jumping is enabled

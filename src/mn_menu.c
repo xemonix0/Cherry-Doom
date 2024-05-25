@@ -2361,14 +2361,26 @@ static boolean ShortcutResponder(const event_t *ev)
         togglemsg("Crosshair %s", hud_crosshair_on ? "Enabled" : "Disabled");
     }
 
-    // Chasecam
     if (STRICTMODE(M_InputActivated(input_chasecam)))
     {
-        if (++chasecam_mode > CHASECAMMODE_FRONT)
+        // Freecam
+        if (R_GetFreecamOn() && !R_GetFreecamMobj())
+        {
+          const freecammode_t mode = R_CycleFreecamMode();
+
+          togglemsg("Freecam: controlling %s",
+                    (mode == FREECAM_PLAYER) ? "player" : "camera");
+        }
+        // Chasecam
+        else if (++chasecam_mode > CHASECAMMODE_FRONT)
         { chasecam_mode = CHASECAMMODE_OFF; }
     }
 
-    // Rewind
+    if (STRICTMODE(M_InputActivated(input_freecam)))
+    {
+        R_SetFreecamOn(!R_GetFreecamOn());
+    }
+
     if (STRICTMODE(M_InputActivated(input_rewind)))
     {
         G_Rewind();
@@ -2826,7 +2838,7 @@ boolean M_Responder(event_t *ev)
 
     if (!menuactive)
     {
-        if ((demoplayback && (action == MENU_ENTER || action == MENU_BACKSPACE))
+        if ((demoplayback && (action == MENU_ENTER || action == MENU_BACKSPACE) && !R_GetFreecamOn()) // [Nugget] Freecam
             || action == MENU_ESCAPE) // phares
         {
             MN_StartControlPanel();

@@ -1813,6 +1813,14 @@ default_t defaults[] = {
     input_chasecam, { {0, 0} }
   },
 
+  {
+    "input_freecam",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "Key to toggle freecam",
+    input_freecam, { {0, 0} }
+  },
+
   // [Nugget] ---------------------------------------------------------------/
 
   // [FG] reload current level / go to next level

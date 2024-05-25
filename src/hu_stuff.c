@@ -1733,6 +1733,9 @@ static void HU_UpdateCrosshair(void)
       }
     }
   }
+
+  // [Nugget] Freecam
+  if (R_GetFreecamOn()) { crosshair.cr = colrngs[hud_crosshair_color]; }
 }
 
 void HU_UpdateCrosshairLock(int x, int y)
@@ -1756,9 +1759,14 @@ void HU_DrawCrosshair(void)
       menuactive ||
       paused ||
       // [Nugget] New conditions
-      !crosshair.cr || // Crash fix
-      (chasecam_mode && !chasecam_crosshair) || // Chasecam
-      (gamestate == GS_INTERMISSION)) // Alt. intermission background
+      // Crash fix
+      !crosshair.cr ||
+      // Chasecam
+      (chasecam_mode && !chasecam_crosshair) ||
+      // Freecam
+      (R_GetFreecamOn() && (R_GetFreecamMode() != FREECAM_CAM || R_GetFreecamMobj())) ||
+      // Alt. intermission background
+      (gamestate == GS_INTERMISSION))
   {
     return;
   }

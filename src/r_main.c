@@ -80,18 +80,6 @@ fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
 
 static fixed_t focallength, lightfocallength;
 
-// [Nugget] Chasecam /--------------------------------------------------------
-
-chasecam_t chasecam;
-
-boolean chasecam_on;
-
-// For Automap
-fixed_t  chasexofs, chaseyofs;
-angle_t  chaseaofs;
-
-// [Nugget] -----------------------------------------------------------------/
-
 //
 // precalculated math tables
 //
@@ -140,7 +128,9 @@ lighttable_t **colormaps;
 int extralight;                           // bumped light from gun blasts
 int extra_level_brightness;               // level brightness feature
 
-// [Nugget] FOV effects /-----------------------------------------------------
+// [Nugget] /-----------------------------------------------------------------
+
+// FOV effects --------------------------------------------
 
 static int r_fov; // Rendered (currently-applied) FOV, with effects added to it
 
@@ -205,9 +195,7 @@ void R_SetZoom(const int state)
   { zoomed = ZOOM_OFF; }
 }
 
-// [Nugget] -----------------------------------------------------------------/
-
-// [Nugget] Explosion shake effect /------------------------------------------
+// Explosion shake effect ---------------------------------
 
 static fixed_t shake;
 #define MAXSHAKE 50
@@ -247,6 +235,161 @@ void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
   R_SetShake((force * (range - dist) / range) / ((128 / MAXSHAKE) * SHAKERANGEMULT));
 
   #undef SHAKERANGEMULT
+}
+
+// Chasecam -----------------------------------------------
+
+chasecam_t chasecam;
+
+boolean chasecam_on = false;
+
+// For Automap
+fixed_t  chasexofs, chaseyofs;
+angle_t  chaseaofs;
+
+// Freecam ------------------------------------------------
+
+static boolean       freecam_on = false;
+static freecammode_t freecam_mode = FREECAM_OFF + 1;
+
+static struct {
+  fixed_t x, ox,
+          y, oy,
+          z, oz;
+  angle_t angle, oangle;
+  fixed_t pitch, opitch;
+
+  boolean reset, interp, centering;
+  mobj_t *mobj;
+} freecam;
+
+boolean R_GetFreecamOn(void)
+{
+  return freecam_on;
+}
+
+void R_SetFreecamOn(const boolean value)
+{
+  freecam_on = STRICTMODE(value);
+}
+
+freecammode_t R_GetFreecamMode(void)
+{
+  return freecam_on * freecam_mode;
+}
+
+freecammode_t R_CycleFreecamMode(void)
+{
+  return (++freecam_mode >= NUMFREECAMMODES) ? freecam_mode = FREECAM_OFF + 1 : freecam_mode;
+}
+
+angle_t R_GetFreecamAngle(void)
+{
+  return freecam.angle;
+}
+
+void R_ResetFreecam(void)
+{
+  freecam.reset = true;
+}
+
+static void R_UpdateFreecamMobj(mobj_t *const mobj)
+{
+  if (freecam.mobj) { freecam.mobj->thinker.references--; }
+  if         (mobj) {         mobj->thinker.references++; }
+
+  freecam.mobj = mobj;
+}
+
+const mobj_t *R_GetFreecamMobj(void)
+{
+  return freecam_on ? freecam.mobj : NULL;
+}
+
+void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
+                     fixed_t pitch, boolean center, boolean lock)
+{
+  if (freecam.reset)
+  {
+    freecam.reset = false;
+
+    const player_t *const player = &players[displayplayer];
+
+    freecam.x     = player->mo->x;
+    freecam.y     = player->mo->y;
+    freecam.z     = player->mo->z + player->viewheight;
+    freecam.angle = player->mo->angle;
+    freecam.pitch = player->pitch;
+
+    freecam.interp = false;
+    freecam.centering = false;
+    freecam.mobj = NULL;
+
+    return;
+  }
+
+  freecam.interp = true;
+
+  if (lock)
+  {
+    if (freecam.mobj) {
+      R_UpdateFreecamMobj(NULL);
+    }
+    else {
+      const boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
+      overflow[emu_intercepts].enabled = false;
+
+      player_t dummyplayer = {0};
+      dummyplayer.slope = P_PitchToSlope(freecam.pitch);
+
+      mobj_t dummymo = {0};
+      dummymo.x = freecam.x;
+      dummymo.y = freecam.y;
+      dummymo.z = freecam.z;
+      dummymo.player = &dummyplayer;
+
+      P_AimLineAttack(&dummymo, freecam.angle, 16*64*FRACUNIT * (comp_longautoaim+1), CROSSHAIR_AIM);
+
+      overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
+
+      if (linetarget && linetarget != players[consoleplayer].mo)
+      {
+        R_UpdateFreecamMobj(linetarget);
+        freecam.interp = false;
+        freecam.mobj->interp = -1;
+        freecam.pitch = 0;
+      }
+    }
+  }
+
+  freecam.ox     = freecam.x;
+  freecam.oy     = freecam.y;
+  freecam.oz     = freecam.z;
+  freecam.oangle = freecam.angle;
+  freecam.opitch = freecam.pitch;
+
+  if (freecam.mobj && freecam.mobj->health > 0)
+  {
+    freecam.x     = freecam.mobj->x;
+    freecam.y     = freecam.mobj->y;
+    freecam.z     = freecam.mobj->z + (freecam.mobj->height * 13/16);
+    freecam.angle = freecam.mobj->angle;
+  }
+  else {
+    freecam.x     += x;
+    freecam.y     += y;
+    freecam.z     += z;
+    freecam.angle += angle;
+
+    R_UpdateFreecamMobj(NULL);
+  }
+
+  if (freecam.centering |= center)
+  {
+    if (!(freecam.pitch = MAX(0, abs(freecam.pitch) - 4*ANG1) * ((freecam.pitch > 0) ? 1 : -1)))
+    { freecam.centering = false; }
+  }
+  else { freecam.pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, freecam.pitch + pitch); }
 }
 
 // [Nugget] -----------------------------------------------------------------/
@@ -948,6 +1091,25 @@ void R_SetupFrame (player_t *player)
   static fixed_t chasecamheight;
 
   viewplayer = player;
+
+  // [Nugget] Freecam /-------------------------------------------------------
+
+  player_t dummy = {0};
+
+  if (R_GetFreecamMobj())
+  {
+    dummy.mo = (mobj_t *) R_GetFreecamMobj();
+    dummy.playerstate = PST_DEAD;
+    dummy.oldviewz = freecam.oz;
+    dummy.viewz    = freecam.z;
+    dummy.oldpitch = freecam.opitch;
+    dummy.pitch    = freecam.pitch;
+
+    player = &dummy;
+  }
+
+  // [Nugget] ---------------------------------------------------------------/
+
   // [AM] Interpolate the player camera if the feature is enabled.
   if (uncapped &&
       // Don't interpolate on the first tic of a level,
@@ -1015,7 +1177,8 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget] /---------------------------------------------------------------
 
-  // Alt. intermission background
+  // Alt. intermission background -----
+
   if (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
   {
     static int oldtic = -1;
@@ -1033,11 +1196,13 @@ void R_SetupFrame (player_t *player)
   }
   else { target_interangle = viewangle; }
 
-  // Explosion shake effect
-  chasecamheight = chasecam_height * FRACUNIT;
+  // Explosion shake effect -----------
+
+  chasecamheight = R_GetFreecamMobj() ? freecam.z - R_GetFreecamMobj()->z : chasecam_height * FRACUNIT;
+
   if (shake > 0)
   {
-    static fixed_t xofs=0, yofs=0, zofs=0;
+    static fixed_t xofs = 0, yofs = 0, zofs = 0;
 
     if (!((menuactive && !demoplayback && !netgame) || paused))
     {
@@ -1060,7 +1225,7 @@ void R_SetupFrame (player_t *player)
     chasecamheight += zofs;
   }
 
-  // Chasecam
+  // Chasecam -------------------------
 
   chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
                 && !(WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION));
@@ -1141,6 +1306,30 @@ void R_SetupFrame (player_t *player)
     chaseaofs = viewangle - oldviewangle;
   }
   else { chasexofs = chaseyofs = chaseaofs = 0; }
+
+  // Freecam --------------------------
+
+  if (STRICTMODE(freecam_on) && !R_GetFreecamMobj()
+      && !(WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION)))
+  {
+    if (uncapped && freecam.interp)
+    {
+      viewx     = LerpFixed(freecam.ox,     freecam.x);
+      viewy     = LerpFixed(freecam.oy,     freecam.y);
+      viewz     = LerpFixed(freecam.oz,     freecam.z);
+      viewangle = LerpAngle(freecam.oangle, freecam.angle);
+      pitch     = LerpFixed(freecam.opitch, freecam.pitch);
+    }
+    else {
+      viewx     = freecam.x;
+      viewy     = freecam.y;
+      viewz     = freecam.z;
+      viewangle = freecam.angle;
+      pitch     = freecam.pitch;
+    }
+
+    chasexofs = chaseyofs = chaseaofs = 0;
+  }
 
   // [Nugget] ---------------------------------------------------------------/
 

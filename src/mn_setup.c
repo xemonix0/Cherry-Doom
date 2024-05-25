@@ -1225,6 +1225,7 @@ static setup_menu_t keys_settings7[] =
     {"Crouch/Fly Down",  S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_crouch},
     MI_GAP,
     {"Cycle Chasecam",   S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_chasecam},
+    {"Toggle Freecam",   S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_freecam},
     MI_GAP,
     {"Toggle Zoom",      S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_zoom},
     {"Zoom FOV",         S_NUM  |S_STRICT,            KB_X, M_SPC, {"zoom_fov"}, m_null, input_null, str_empty, UpdateFOV},
