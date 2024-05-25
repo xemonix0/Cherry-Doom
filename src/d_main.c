@@ -303,7 +303,7 @@ void D_Display (void)
   st_crispyhud = (hud_type == HUD_TYPE_CRISPY) && hud_displayed && automap_off
                  && hud_active > 0; // [Nugget] NUGHUD
 
-  input_ready = (!menuactive && ((gamestate == GS_LEVEL && !paused) || R_GetFreecamOn()));
+  input_ready = (!menuactive && ((gamestate == GS_LEVEL && !paused) || R_GetFreecamOn())); // [Nugget] Freecam
 
   if (uncapped)
   {

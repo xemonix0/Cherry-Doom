@@ -2118,23 +2118,25 @@ static boolean PTR_ChasecamTraverse(intercept_t *in)
     }
 
     // Hit line
-    chasecam.hit = true;
+    R_SetChasecamHit(true);
     
     // Position a bit closer
     frac = in->frac - FixedDiv(FRACUNIT, attackrange);
-    chasecam.x = trace.x + FixedMul(trace.dx, frac);
-    chasecam.y = trace.y + FixedMul(trace.dy, frac);
-    chasecam.z = shootz + FixedMul(aimslope, FixedMul(frac, attackrange));
+    fixed_t x = trace.x + FixedMul(trace.dx, frac);
+    fixed_t y = trace.y + FixedMul(trace.dy, frac);
+    fixed_t z = shootz + FixedMul(aimslope, FixedMul(frac, attackrange));
     
-    sec = R_PointInSubsector(chasecam.x, chasecam.y)->sector;
+    sec = R_PointInSubsector(x, y)->sector;
 
-    if (chasecam.z < sec->floorheight+FRACUNIT || sec->ceilingheight-FRACUNIT < chasecam.z)
+    if (z < sec->floorheight+FRACUNIT || sec->ceilingheight-FRACUNIT < z)
     {
-      chasecam.z = BETWEEN(sec->floorheight+FRACUNIT, sec->ceilingheight-FRACUNIT, chasecam.z);
-      frac = FixedDiv(chasecam.z - shootz, FixedMul(aimslope, attackrange));
-      chasecam.x = trace.x + FixedMul(trace.dx, frac);
-      chasecam.y = trace.y + FixedMul(trace.dy, frac);
+      z = BETWEEN(sec->floorheight+FRACUNIT, sec->ceilingheight-FRACUNIT, z);
+      frac = FixedDiv(z - shootz, FixedMul(aimslope, attackrange));
+      x = trace.x + FixedMul(trace.dx, frac);
+      y = trace.y + FixedMul(trace.dy, frac);
     }
+
+    R_UpdateChasecam(x, y, z);
   }
 
   // Don't go any further
@@ -2153,7 +2155,7 @@ void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope)
   shootz = z;
   attackrange = dist;
   aimslope = slope;
-  chasecam.hit = false;
+  R_SetChasecamHit(false);
 
   overflow[emu_intercepts].enabled = false;
   P_PathTraverse(viewx, viewy, x2, y2, PT_ADDLINES, PTR_ChasecamTraverse);

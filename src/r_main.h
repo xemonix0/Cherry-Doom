@@ -147,14 +147,9 @@ extern void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
 
 // Chasecam -----------------------------------------------
 
-typedef struct chasecam_s {
-  fixed_t x, y, z;
-  boolean hit;
-} chasecam_t;
-
-extern chasecam_t chasecam;
-
-extern boolean chasecam_on;
+extern boolean R_GetChasecamOn(void);
+extern void    R_SetChasecamHit(const boolean value);
+extern void    R_UpdateChasecam(fixed_t x, fixed_t y, fixed_t z);
 
 // Freecam ------------------------------------------------
 

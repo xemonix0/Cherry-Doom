@@ -239,13 +239,33 @@ void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
 
 // Chasecam -----------------------------------------------
 
-chasecam_t chasecam;
+static struct {
+  fixed_t x, y, z;
+  boolean hit;
+} chasecam;
 
 boolean chasecam_on = false;
 
 // For Automap
 fixed_t  chasexofs, chaseyofs;
 angle_t  chaseaofs;
+
+boolean R_GetChasecamOn(void)
+{
+  return chasecam_on;
+}
+
+void R_SetChasecamHit(const boolean value)
+{
+  chasecam.hit = value;
+}
+
+void R_UpdateChasecam(fixed_t x, fixed_t y, fixed_t z)
+{
+  chasecam.x = x;
+  chasecam.y = y;
+  chasecam.z = z;
+}
 
 // Freecam ------------------------------------------------
 
@@ -1228,6 +1248,7 @@ void R_SetupFrame (player_t *player)
   // Chasecam -------------------------
 
   chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
+                && !(freecam_on && !freecam.mobj)
                 && !(WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION));
 
   if (chasecam_on)

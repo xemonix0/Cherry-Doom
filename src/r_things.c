@@ -509,7 +509,7 @@ void R_ProjectSprite (mobj_t* thing)
   fixed_t interpx, interpy, interpz, interpangle;
 
   // [Nugget] Freecam
-  if (thing == R_GetFreecamMobj() && !chasecam_on)
+  if (thing == R_GetFreecamMobj() && !R_GetChasecamOn())
   { return; }
 
   // andrewj: voxel support
@@ -900,7 +900,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   if (STRICTMODE(hide_weapon)
       // [Nugget]
-      || chasecam_on // Chasecam
+      || R_GetChasecamOn() // Chasecam
       || R_GetFreecamOn() // Freecam
       || (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))) // Alt. intermission background
     return;

@@ -1762,7 +1762,7 @@ void HU_DrawCrosshair(void)
       // Crash fix
       !crosshair.cr ||
       // Chasecam
-      (chasecam_mode && !chasecam_crosshair) ||
+      (R_GetChasecamOn() && !chasecam_crosshair) ||
       // Freecam
       (R_GetFreecamOn() && (R_GetFreecamMode() != FREECAM_CAM || R_GetFreecamMobj())) ||
       // Alt. intermission background

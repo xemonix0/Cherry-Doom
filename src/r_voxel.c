@@ -537,7 +537,7 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 
 	// skip the player thing we are viewing from
 	// [Nugget] Unless using chasecam or freecam
-	if (thing->player == viewplayer && !(chasecam_on || R_GetFreecamOn()))
+	if (thing->player == viewplayer && !(R_GetChasecamOn() || R_GetFreecamOn()))
 		return true;
 
 	// does the voxel model exist?

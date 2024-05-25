@@ -13,4 +13,4 @@
 
 ## Bug Fixes
 
-None.
+- **Crosshair not being drawn if the chasecam mode were set** even if the chasecam itself were disabled
