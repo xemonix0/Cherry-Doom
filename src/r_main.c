@@ -384,7 +384,7 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
     R_UpdateFreecamMobj(NULL);
   }
 
-  if (freecam.centering |= center)
+  if ((freecam.centering |= center))
   {
     if (!(freecam.pitch = MAX(0, abs(freecam.pitch) - 4*ANG1) * ((freecam.pitch > 0) ? 1 : -1)))
     { freecam.centering = false; }
