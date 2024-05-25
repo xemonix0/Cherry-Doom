@@ -1250,7 +1250,7 @@ static setup_menu_t keys_settings8[] =
     {"Blink Marks",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_blink},
     MI_GAP,
     {"Warp to Pointer", S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_map,  input_map_teleport},
-    {"Fancy Teleport",  S_ONOFF|S_STRICT|S_CRITICAL, KB_X, M_SPC, {"fancy_teleport"}},
+    {"Fancy Warping",   S_ONOFF|S_STRICT|S_CRITICAL, KB_X, M_SPC, {"fancy_teleport"}},
 
   MI_END
 };

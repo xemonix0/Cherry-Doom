@@ -10,6 +10,7 @@
     instead of a multiplayer Face background
   - The vertical position of the background is now dependent on the height
     of the multiplayer Face backgrounds
+- **Changed _"Fancy Teleport [to Pointer]"_ to _"Fancy Warping"_**
 
 ## Bug Fixes
 
