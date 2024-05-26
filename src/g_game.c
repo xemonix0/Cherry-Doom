@@ -3263,7 +3263,25 @@ void G_Ticker(void)
 	  }
     }
 
-  // [Nugget] Freecam
+  // [Nugget] /---------------------------------------------------------------
+
+  // Zoom -------------------------------------------------
+
+  static boolean zoomKeyDown = false;
+
+  if (!M_InputGameActive(input_zoom)
+      || !(gamestate == GS_LEVEL || gamestate == GS_DEMOSCREEN))
+  {
+    zoomKeyDown = false;
+  }
+  else if (STRICTMODE(!zoomKeyDown))
+  {
+    zoomKeyDown = true;
+    R_SetZoom(!R_GetZoom());
+  }
+
+  // Freecam ----------------------------------------------
+
   if (R_GetFreecamOn())
   {
     fixed_t x = 0,
@@ -3357,6 +3375,8 @@ void G_Ticker(void)
 
     R_UpdateFreecam(x, y, z, angle, pitch, center, lock);
   }
+
+  // [Nugget] ---------------------------------------------------------------/
 
   oldleveltime = leveltime;
 

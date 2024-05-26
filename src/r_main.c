@@ -1253,7 +1253,7 @@ void R_SetupFrame (player_t *player)
 
   if (chasecam_on)
   {
-    fixed_t slope = basepitch ? (fixed_t) ((int64_t) finetangent[(ANG90 - basepitch) >> ANGLETOFINESHIFT] * SCREENHEIGHT / ACTUALHEIGHT) : 0;
+    fixed_t slope = -P_PitchToSlope(basepitch);
 
     static fixed_t oldextradist = 0, extradist = 0;
 

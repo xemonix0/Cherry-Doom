@@ -613,7 +613,6 @@ void P_PlayerThink (player_t* player)
 {
   ticcmd_t*    cmd;
   weapontype_t newweapon;
-  static boolean zoomKeyDown = false; // [Nugget]
 
   // [AM] Assume we can interpolate at the beginning
   //      of the tic.
@@ -708,21 +707,15 @@ void P_PlayerThink (player_t* player)
   if (player->playerstate == PST_DEAD)
     {
       // [Nugget] Disable zoom upon death
-      if (R_GetZoom() == ZOOM_ON) { R_SetZoom(ZOOM_OFF); }
+      if (player == &players[displayplayer] && R_GetZoom() == ZOOM_ON
+          && !R_GetFreecamOn())
+      {
+        R_SetZoom(ZOOM_OFF);
+      }
 
       P_DeathThink (player);
       return;
     }
-
-  if (!M_InputGameActive(input_zoom))
-  {
-    zoomKeyDown = false;
-  }
-  else if (STRICTMODE(zoomKeyDown == false))
-  {
-    zoomKeyDown = true;
-    R_SetZoom(!R_GetZoom());
-  }
 
   // Move around.
   // Reactiontime is used to prevent movement
