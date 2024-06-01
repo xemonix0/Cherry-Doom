@@ -143,10 +143,6 @@ void R_ClearFOVFX(void)
 
   for (int i = FOVFX_ZOOM+1;  i < NUMFOVFX;  i++)
   {
-    // Note: the `R_SetZoom()` call above sets `setsizeneeded = true` already,
-    // but we'll do it here anyways for future-proofing
-    if (fovfx[i].current != 0) { setsizeneeded = true; }
-
     fovfx[i] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
   }
 }
@@ -162,14 +158,13 @@ void R_SetFOVFX(const int fx)
 
   switch (fx) {
     case FOVFX_ZOOM:
-      // Handled by R_Get/SetZoom
+      // Handled by `R_Get/SetZoom()`
       break;
 
     case FOVFX_TELEPORT:
       if (!teleporter_zoom) { break; }
       R_SetZoom(ZOOM_RESET);
       fovfx[FOVFX_TELEPORT].target = 50;
-      setsizeneeded = true;
       break;
   }
 }
@@ -184,15 +179,14 @@ void R_SetZoom(const int state)
   if (state == ZOOM_RESET || zoomed == ZOOM_RESET)
   {
     zoomed = ZOOM_RESET;
-    setsizeneeded = true;
     return;
   }
-  else if (zoomed != state) { setsizeneeded = true; }
 
   if (STRICTMODE(zoom_fov - custom_fov))
-  { zoomed = state; }
-  else
-  { zoomed = ZOOM_OFF; }
+  {
+    zoomed = state;
+  }
+  else { zoomed = ZOOM_OFF; }
 }
 
 // Explosion shake effect ---------------------------------
@@ -888,88 +882,6 @@ void R_ExecuteSetViewSize (void)
 
   viewwidth_nonwide = V_ScaleX(scaledviewwidth_nonwide);
 
-  { // [Nugget] FOV changes
-    static int oldtic = -1;
-    int fx = 0;
-    int zoomtarget;
-
-    if (strictmode || zoomed == ZOOM_RESET) { // Force zoom reset
-      zoomtarget = 0;
-      fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
-      zoomed = ZOOM_OFF;
-    }
-    else {
-      zoomtarget = (zoomed ? zoom_fov - custom_fov : 0);
-      // In case `custom_fov` changes while zoomed in...
-      if (zoomed && abs(fovfx[FOVFX_ZOOM].target) > abs(zoomtarget))
-      { fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = zoomtarget, .current = zoomtarget, .old = zoomtarget }; }
-    }
-
-    if (!strictmode)
-    {
-      if (fovfx[FOVFX_ZOOM].target != zoomtarget)
-      {
-        setsizeneeded = true;
-      }
-      else for (i = 0;  i < NUMFOVFX;  i++)
-        if (fovfx[i].target || fovfx[i].current)
-        {
-          setsizeneeded = true;
-          break;
-        }
-    }
-
-    if (setsizeneeded)
-    {
-      if (oldtic != gametic)
-      {
-        setsizeneeded = false;
-
-        fovfx[FOVFX_ZOOM].old = fovfx[FOVFX_ZOOM].current = fovfx[FOVFX_ZOOM].target;
-
-        if (zoomtarget || fovfx[FOVFX_ZOOM].target)
-        {
-          // Special handling for zoom
-          int step = zoomtarget - fovfx[FOVFX_ZOOM].target;
-          const int sign = ((step > 0) ? 1 : -1);
-          step = BETWEEN(1, 16, round(abs(step) / 3.0));
-
-          fovfx[FOVFX_ZOOM].target += step*sign;
-
-          if (   (sign > 0 && fovfx[FOVFX_ZOOM].target > zoomtarget)
-              || (sign < 0 && fovfx[FOVFX_ZOOM].target < zoomtarget))
-          {
-            fovfx[FOVFX_ZOOM].target = zoomtarget;
-          }
-
-          if (fovfx[FOVFX_ZOOM].current != fovfx[FOVFX_ZOOM].target)
-          { setsizeneeded = true; }
-        }
-
-        fovfx[FOVFX_TELEPORT].old = fovfx[FOVFX_TELEPORT].current = fovfx[FOVFX_TELEPORT].target;
-
-        if (fovfx[FOVFX_TELEPORT].target)
-        {
-          if ((fovfx[FOVFX_TELEPORT].target -= 5) < 0)
-          { fovfx[FOVFX_TELEPORT].target = 0; }
-          else
-          { setsizeneeded = true; }
-        }
-      }
-      else if (uncapped)
-        for (i = 0;  i < NUMFOVFX;  i++)
-        { fovfx[i].current = fovfx[i].old + ((fovfx[i].target - fovfx[i].old) * ((float) fractionaltic/FRACUNIT)); }
-    }
-
-    oldtic = gametic;
-
-    for (i = 0;  i < NUMFOVFX;  i++)
-    { fx += fovfx[i].current; }
-
-    r_fov = (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
-            ? MAX(140, custom_fov) : custom_fov + fx;
-  }
-
   centerxfrac = (viewwidth << FRACBITS) / 2;
   centerx = centerxfrac >> FRACBITS;
   centerxfrac_nonwide = (viewwidth_nonwide << FRACBITS) / 2;
@@ -1199,7 +1111,7 @@ void R_SetupFrame (player_t *player)
 
   // Alt. intermission background -----
 
-  if (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
+  if (WI_UsingAltInterpic() && gamestate == GS_INTERMISSION)
   {
     static int oldtic = -1;
 
@@ -1249,7 +1161,7 @@ void R_SetupFrame (player_t *player)
 
   chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
                 && !(freecam_on && !freecam.mobj)
-                && !(WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION));
+                && !(WI_UsingAltInterpic() && gamestate == GS_INTERMISSION);
 
   if (chasecam_on)
   {
@@ -1331,7 +1243,7 @@ void R_SetupFrame (player_t *player)
   // Freecam --------------------------
 
   if (STRICTMODE(freecam_on) && !R_GetFreecamMobj()
-      && !(WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION)))
+      && !(WI_UsingAltInterpic() && gamestate == GS_INTERMISSION))
   {
     if (uncapped && freecam.interp)
     {
@@ -1429,6 +1341,104 @@ int autodetect_hom = 0;       // killough 2/7/98: HOM autodetection flag
 void R_RenderPlayerView (player_t* player)
 {
   R_ClearStats();
+
+  { // [Nugget] FOV effects
+    int targetfov = custom_fov;
+
+    if (WI_UsingAltInterpic() && gamestate == GS_INTERMISSION)
+    {
+      targetfov = MAX(140, targetfov);
+    }
+    else {
+      static int oldtic = -1;
+
+      int zoomtarget;
+
+      // Force zoom reset
+      if (strictmode || zoomed == ZOOM_RESET)
+      {
+        zoomtarget = 0;
+        fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
+        zoomed = ZOOM_OFF;
+      }
+      else {
+        zoomtarget = zoomed ? zoom_fov - custom_fov : 0;
+
+        // In case `custom_fov` changes while zoomed in...
+        if (zoomed && abs(fovfx[FOVFX_ZOOM].target) > abs(zoomtarget))
+        { fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = zoomtarget, .current = zoomtarget, .old = zoomtarget }; }
+      }
+
+      boolean fovchange = false;
+
+      if (!strictmode)
+      {
+        if (fovfx[FOVFX_ZOOM].target != zoomtarget)
+        {
+          fovchange = true;
+        }
+        else for (int i = 0;  i < NUMFOVFX;  i++)
+        {
+          if (fovfx[i].target || fovfx[i].current)
+          {
+            fovchange = true;
+            break;
+          }
+        }
+      }
+
+      if (fovchange)
+      {
+        if (oldtic != gametic)
+        {
+          fovchange = false;
+
+          int *target;
+
+          target = &fovfx[FOVFX_ZOOM].target;
+          fovfx[FOVFX_ZOOM].old = fovfx[FOVFX_ZOOM].current = *target;
+
+          // Special handling for zoom
+          if (zoomtarget || *target)
+          {
+            int step = zoomtarget - *target;
+            const int sign = ((step > 0) ? 1 : -1);
+
+            *target += BETWEEN(1, 16, round(abs(step) / 3.0)) * sign;
+
+            if (   (sign > 0 && *target > zoomtarget)
+                || (sign < 0 && *target < zoomtarget))
+            {
+              *target = zoomtarget;
+            }
+          }
+
+          target = &fovfx[FOVFX_TELEPORT].target;
+          fovfx[FOVFX_TELEPORT].old = fovfx[FOVFX_TELEPORT].current = *target;
+
+          if (*target) { *target = MAX(0, *target - 5); }
+        }
+        else if (uncapped)
+          for (int i = 0;  i < NUMFOVFX;  i++)
+          { fovfx[i].current = fovfx[i].old + ((fovfx[i].target - fovfx[i].old) * ((float) fractionaltic/FRACUNIT)); }
+      }
+
+      oldtic = gametic;
+
+      for (int i = 0;  i < NUMFOVFX;  i++)
+      {
+        if (FOVFX_ZOOM < i && freecam_on) { break; }
+
+        targetfov += fovfx[i].current;
+      }
+    }
+
+    if (r_fov != targetfov)
+    {
+      r_fov = targetfov;
+      R_ExecuteSetViewSize();
+    }
+  }
 
   R_SetupFrame (player);
 
