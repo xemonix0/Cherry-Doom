@@ -28,6 +28,9 @@ struct node_s;
 struct player_s;
 struct seg_s;
 
+// [Nugget]
+struct mobj_s;
+
 //
 // POV related.
 //
@@ -168,6 +171,7 @@ extern freecammode_t R_CycleFreecamMode(void);
 extern angle_t       R_GetFreecamAngle(void);
 extern void          R_ResetFreecam(void);
 
+extern void                 R_UpdateFreecamMobj(struct mobj_s *const mobj);
 extern const struct mobj_s *R_GetFreecamMobj(void);
 
 extern void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,

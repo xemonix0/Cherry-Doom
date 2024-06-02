@@ -1083,6 +1083,9 @@ static void G_DoLoadLevel(void)
   }
 
   // Freecam
+
+  R_UpdateFreecamMobj(NULL);
+
   if (lastepisode != gameepisode || lastmap  != gamemap)
   {
     lastepisode = gameepisode;

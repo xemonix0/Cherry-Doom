@@ -307,7 +307,7 @@ void R_ResetFreecam(void)
   freecam.reset = true;
 }
 
-static void R_UpdateFreecamMobj(mobj_t *const mobj)
+void R_UpdateFreecamMobj(mobj_t *const mobj)
 {
   if (freecam.mobj) { freecam.mobj->thinker.references--; }
   if         (mobj) {         mobj->thinker.references++; }
