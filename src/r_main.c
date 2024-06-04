@@ -996,7 +996,9 @@ static inline boolean CheckLocalView(const player_t *player)
     // Don't use localview when interpolation is preferred.
     raw_input &&
     // Don't use localview if the player is spying.
-    player == &players[consoleplayer] &&
+    (player == &players[consoleplayer]
+     // [Nugget] Freecam: or locked onto a mobj
+     || (freecam_on && !freecam.mobj)) &&
     // Don't use localview if the player is dead.
     player->playerstate != PST_DEAD &&
     // Don't use localview if the player just teleported.
@@ -1022,25 +1024,41 @@ void R_SetupFrame (player_t *player)
   static angle_t old_interangle, target_interangle;
   static fixed_t chasecamheight;
 
-  viewplayer = player;
-
-  // [Nugget] Freecam /-------------------------------------------------------
-
-  player_t dummy = {0};
-
-  if (R_GetFreecamMobj())
+  // [Nugget] Freecam
+  if (freecam_on && !(WI_UsingAltInterpic() && gamestate == GS_INTERMISSION))
   {
-    dummy.mo = (mobj_t *) R_GetFreecamMobj();
-    dummy.playerstate = PST_DEAD;
-    dummy.oldviewz = freecam.oz;
-    dummy.viewz    = freecam.z;
-    dummy.oldpitch = freecam.opitch;
-    dummy.pitch    = freecam.pitch;
+    static player_t dummyplayer = {0};
 
-    player = &dummy;
+    if (!(dummyplayer.mo = freecam.mobj))
+    {
+      static mobj_t dummymobj = {0};
+
+      dummymobj.oldx = freecam.ox;
+      dummymobj.x    = freecam.x;
+      dummymobj.oldy = freecam.oy;
+      dummymobj.y    = freecam.y;
+      dummymobj.oldz = freecam.oz;
+      dummymobj.z    = freecam.z;
+
+      dummymobj.oldangle = freecam.oangle;
+      dummymobj.angle    = freecam.angle;
+
+      dummymobj.interp = freecam.interp;
+
+      dummymobj.subsector = R_PointInSubsector(freecam.x, freecam.y);
+
+      dummyplayer.mo = &dummymobj;
+    }
+
+    dummyplayer.oldviewz = freecam.oz;
+    dummyplayer.viewz    = freecam.z;
+    dummyplayer.oldpitch = freecam.opitch;
+    dummyplayer.pitch    = freecam.pitch;
+
+    player = &dummyplayer;
   }
 
-  // [Nugget] ---------------------------------------------------------------/
+  viewplayer = player;
 
   // [AM] Interpolate the player camera if the feature is enabled.
   if (uncapped &&
@@ -1130,7 +1148,7 @@ void R_SetupFrame (player_t *player)
 
   // Explosion shake effect -----------
 
-  chasecamheight = R_GetFreecamMobj() ? freecam.z - R_GetFreecamMobj()->z : chasecam_height * FRACUNIT;
+  chasecamheight = R_GetFreecamMobj() ? freecam.z - freecam.mobj->z : chasecam_height * FRACUNIT;
 
   if (shake > 0)
   {
@@ -1239,30 +1257,6 @@ void R_SetupFrame (player_t *player)
     chaseaofs = viewangle - oldviewangle;
   }
   else { chasexofs = chaseyofs = chaseaofs = 0; }
-
-  // Freecam --------------------------
-
-  if (STRICTMODE(freecam_on) && !R_GetFreecamMobj()
-      && !(WI_UsingAltInterpic() && gamestate == GS_INTERMISSION))
-  {
-    if (uncapped && freecam.interp)
-    {
-      viewx     = LerpFixed(freecam.ox,     freecam.x);
-      viewy     = LerpFixed(freecam.oy,     freecam.y);
-      viewz     = LerpFixed(freecam.oz,     freecam.z);
-      viewangle = LerpAngle(freecam.oangle, freecam.angle);
-      pitch     = LerpFixed(freecam.opitch, freecam.pitch);
-    }
-    else {
-      viewx     = freecam.x;
-      viewy     = freecam.y;
-      viewz     = freecam.z;
-      viewangle = freecam.angle;
-      pitch     = freecam.pitch;
-    }
-
-    chasexofs = chaseyofs = chaseaofs = 0;
-  }
 
   // [Nugget] ---------------------------------------------------------------/
 

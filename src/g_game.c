@@ -3285,6 +3285,25 @@ void G_Ticker(void)
 
   // Freecam ----------------------------------------------
 
+  if (casual_play && R_GetFreecamMode() == FREECAM_CAM && gamestate == GS_LEVEL)
+  { memset(&players[consoleplayer].cmd, 0, sizeof(ticcmd_t)); }
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  oldleveltime = leveltime;
+
+  // do main actions
+
+  // killough 9/29/98: split up switch statement
+  // into pauseable and unpauseable parts.
+
+  gamestate == GS_LEVEL ? P_Ticker(), ST_Ticker(), AM_Ticker(), HU_Ticker() :
+    paused & 2 ? (void) 0 :
+      gamestate == GS_INTERMISSION ? WI_Ticker() :
+	gamestate == GS_FINALE ? F_Ticker() :
+	  gamestate == GS_DEMOSCREEN ? D_PageTicker() : (void) 0;
+
+  // [Nugget] Freecam
   if (R_GetFreecamOn())
   {
     fixed_t x = 0,
@@ -3298,9 +3317,6 @@ void G_Ticker(void)
     if (R_GetFreecamMode() == FREECAM_CAM && gamestate == GS_LEVEL && !menuactive)
     {
       const ticcmd_t *const cmd = &netcmds[consoleplayer];
-
-      if (casual_play)
-      { memset(&players[consoleplayer].cmd, 0, sizeof(ticcmd_t)); }
 
       #define INPUT(input) M_InputGameActive(input)
 
@@ -3378,21 +3394,6 @@ void G_Ticker(void)
 
     R_UpdateFreecam(x, y, z, angle, pitch, center, lock);
   }
-
-  // [Nugget] ---------------------------------------------------------------/
-
-  oldleveltime = leveltime;
-
-  // do main actions
-
-  // killough 9/29/98: split up switch statement
-  // into pauseable and unpauseable parts.
-
-  gamestate == GS_LEVEL ? P_Ticker(), ST_Ticker(), AM_Ticker(), HU_Ticker() :
-    paused & 2 ? (void) 0 :
-      gamestate == GS_INTERMISSION ? WI_Ticker() :
-	gamestate == GS_FINALE ? F_Ticker() :
-	  gamestate == GS_DEMOSCREEN ? D_PageTicker() : (void) 0;
 }
 
 //
