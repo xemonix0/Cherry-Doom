@@ -395,30 +395,30 @@ struct cheat_s cheat[] = {
   {"nextsecret", NULL, not_net | not_demo, {cheat_secretexit}     },
   {"turbo",      NULL, not_net | not_demo, {cheat_turbo},      -3 },
 
-  {"summon",     NULL, not_net | not_demo, {cheat_summon}         }, // Summon "Menu"
-  {"summone",    NULL, not_net | not_demo, {cheat_summone0}       }, // Summon Enemy "Menu"
-  {"summone",    NULL, not_net | not_demo, {cheat_summone},    -3 }, // Summon a hostile mobj
-  {"summonf",    NULL, not_net | not_demo, {cheat_summonf0}       }, // Summon Friend "Menu"
-  {"summonf",    NULL, not_net | not_demo, {cheat_summonf},    -3 }, // Summon a friendly mobj
-  {"summonr",    NULL, not_net | not_demo, {cheat_summonr}        }, // Repeat last summon
+  {"summon",  NULL, not_net | not_demo, {cheat_summon}      }, // Summon "Menu"
+  {"summone", NULL, not_net | not_demo, {cheat_summone0}    }, // Summon Enemy "Menu"
+  {"summone", NULL, not_net | not_demo, {cheat_summone}, -3 }, // Summon a hostile mobj
+  {"summonf", NULL, not_net | not_demo, {cheat_summonf0}    }, // Summon Friend "Menu"
+  {"summonf", NULL, not_net | not_demo, {cheat_summonf}, -3 }, // Summon a friendly mobj
+  {"summonr", NULL, not_net | not_demo, {cheat_summonr}     }, // Repeat last summon
 
-  {"iddf",       NULL, not_net | not_demo, {cheat_reveal_key}      },
-  {"iddfb",      NULL, not_net | not_demo, {cheat_reveal_keyx}     },
-  {"iddfy",      NULL, not_net | not_demo, {cheat_reveal_keyx}     },
-  {"iddfr",      NULL, not_net | not_demo, {cheat_reveal_keyx}     },
-  {"iddfbc",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 0 },
-  {"iddfyc",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 2 },
-  {"iddfrc",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 1 },
-  {"iddfbs",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 5 },
-  {"iddfys",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 3 },
-  {"iddfrs",     NULL, not_net | not_demo, {cheat_reveal_keyxx}, 4 },
+  {"iddf",   NULL, not_net | not_demo, {cheat_reveal_key}      },
+  {"iddfb",  NULL, not_net | not_demo, {cheat_reveal_keyx}     },
+  {"iddfy",  NULL, not_net | not_demo, {cheat_reveal_keyx}     },
+  {"iddfr",  NULL, not_net | not_demo, {cheat_reveal_keyx}     },
+  {"iddfbc", NULL, not_net | not_demo, {cheat_reveal_keyxx}, 0 },
+  {"iddfyc", NULL, not_net | not_demo, {cheat_reveal_keyxx}, 2 },
+  {"iddfrc", NULL, not_net | not_demo, {cheat_reveal_keyxx}, 1 },
+  {"iddfbs", NULL, not_net | not_demo, {cheat_reveal_keyxx}, 5 },
+  {"iddfys", NULL, not_net | not_demo, {cheat_reveal_keyxx}, 3 },
+  {"iddfrs", NULL, not_net | not_demo, {cheat_reveal_keyxx}, 4 },
 
-  {"linetarget", NULL, not_net | not_demo, {cheat_linetarget}     }, // Give info on the current linetarget
-  {"mdk",        NULL, not_net | not_demo, {cheat_mdk}            },
-  {"saitama",    NULL, not_net | not_demo, {cheat_saitama}        }, // MDK Fist
-  {"boomcan",    NULL, not_net | not_demo, {cheat_boomcan}        }, // Explosive hitscan
-  {"cheese",     NULL, not_net | not_demo, {cheat_cheese}         }, // cheese :)
-  {"idgaf",      NULL, not_net | not_demo, {cheat_idgaf}          },
+  {"linetarget", NULL, not_net | not_demo, {cheat_linetarget} }, // Give info on the current linetarget
+  {"mdk",        NULL, not_net | not_demo, {cheat_mdk}        },
+  {"saitama",    NULL, not_net | not_demo, {cheat_saitama}    }, // MDK Fist
+  {"boomcan",    NULL, not_net | not_demo, {cheat_boomcan}    }, // Explosive hitscan
+  {"cheese",     NULL, not_net | not_demo, {cheat_cheese}     }, // cheese :)
+  {"idgaf",      NULL, not_net | not_demo, {cheat_idgaf}      },
 
   #ifdef NUGMAGIC
   {"ggg", NULL, 0, {cheat_magic}},
@@ -436,7 +436,7 @@ extern int init_thinkers_count; // [Nugget]
 // [Nugget] /-----------------------------------------------------------------
 
 #ifdef NUGMAGIC
-// For debugging
+// For testing purposes
 static void cheat_magic()
 {
   
@@ -524,6 +524,7 @@ static void cheat_resurrect()
     mapthing_t mt = {0};
 
     P_MapStart();
+
     mt.x = plyr->mo->x >> FRACBITS;
     mt.y = plyr->mo->y >> FRACBITS;
     mt.angle = (plyr->mo->angle + ANG45/2)*(uint64_t)45/ANG45;
@@ -538,6 +539,7 @@ static void cheat_resurrect()
     an = plyr->mo->angle >> ANGLETOFINESHIFT;
     P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
     S_StartSound(plyr->mo, sfx_slop);
+
     P_MapEnd();
 
     // [Nugget] Announce
@@ -623,7 +625,7 @@ static boolean GetMobjType(char *buf)
   }
 
   spawneetype = type;
-  
+
   return true;
 }
 
@@ -733,10 +735,8 @@ static void cheat_reveal_keyxx(int key)
 
   thinker_t *th, *start_th;
 
-  if (last_mobj)
-  { th = &(last_mobj->thinker); }
-  else
-  { th = &thinkercap; }
+  if (last_mobj) { th = &(last_mobj->thinker); }
+  else           { th = &thinkercap; }
 
   start_th = th;
 
@@ -778,9 +778,12 @@ static void cheat_mdk()
   P_MapStart();
 
   if (vertical_aiming == VERTAIM_DIRECT)
-  { slope = plyr->slope; }
+  {
+    slope = plyr->slope;
+  }
   else {
     slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 16*64*FRACUNIT * (comp_longautoaim+1), 0);
+
     if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
     { slope = plyr->slope; }
   }

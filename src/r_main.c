@@ -52,6 +52,7 @@
 #include "m_nughud.h"
 #include "m_random.h"
 #include "p_map.h"
+#include "s_sound.h"
 #include "wi_stuff.h"
 
 // Fineangles in the SCREENWIDTH wide window.
@@ -132,7 +133,7 @@ int extra_level_brightness;               // level brightness feature
 
 // FOV effects --------------------------------------------
 
-static int r_fov; // Rendered (currently-applied) FOV, with effects added to it
+static int r_fov; // Rendered (currently applied) FOV, with effects added to it
 
 static fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
 static int     zoomed = 0;      // Current zoom state
@@ -997,8 +998,8 @@ static inline boolean CheckLocalView(const player_t *player)
     raw_input &&
     // Don't use localview if the player is spying.
     (player == &players[consoleplayer]
-     // [Nugget] Freecam: or locked onto a mobj
-     || (freecam_on && !freecam.mobj)) &&
+     // [Nugget] Freecam: or locked onto a mobj, or not controlling the camera
+     || (freecam_on && !(freecam.mobj || freecam_mode != FREECAM_CAM))) &&
     // Don't use localview if the player is dead.
     player->playerstate != PST_DEAD &&
     // Don't use localview if the player just teleported.
@@ -1028,10 +1029,14 @@ void R_SetupFrame (player_t *player)
   if (freecam_on && !(WI_UsingAltInterpic() && gamestate == GS_INTERMISSION))
   {
     static player_t dummyplayer = {0};
+    static mobj_t dummymobj = {0};
 
-    if (!(dummyplayer.mo = freecam.mobj))
+    if (freecam.mobj)
     {
-      static mobj_t dummymobj = {0};
+      dummymobj = *freecam.mobj;
+    }
+    else {
+      memset(&dummymobj, 0, sizeof(mobj_t));
 
       dummymobj.oldx = freecam.ox;
       dummymobj.x    = freecam.x;
@@ -1044,10 +1049,7 @@ void R_SetupFrame (player_t *player)
       dummymobj.angle    = freecam.angle;
 
       dummymobj.interp = freecam.interp;
-
       dummymobj.subsector = R_PointInSubsector(freecam.x, freecam.y);
-
-      dummyplayer.mo = &dummymobj;
     }
 
     dummyplayer.oldviewz = freecam.oz;
@@ -1055,6 +1057,8 @@ void R_SetupFrame (player_t *player)
     dummyplayer.oldpitch = freecam.opitch;
     dummyplayer.pitch    = freecam.pitch;
 
+    dummymobj.player = &dummyplayer;
+    dummyplayer.mo = &dummymobj;
     player = &dummyplayer;
   }
 
