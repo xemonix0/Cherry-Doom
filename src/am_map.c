@@ -53,22 +53,6 @@
 #include "s_sound.h"
 #include "sounds.h"
 
-// [Nugget] Tag Finder from PrBoomX /-----------------------------------------
-
-static boolean findtag;
-
-#define MAGIC_SECTOR_COLOR_MIN 168
-#define MAGIC_SECTOR_COLOR_MAX 180
-#define MAGIC_LINE_COLOR_MIN 112
-#define MAGIC_LINE_COLOR_MAX 124
-static int magic_sector_color_pos = MAGIC_SECTOR_COLOR_MIN;
-static int magic_line_color_pos = MAGIC_LINE_COLOR_MIN;
-
-static sector_t* magic_sector;
-static short     magic_tag = -1;
-
-// [Nugget] -----------------------------------------------------------------/
-
 //jff 1/7/98 default automap colors added
 int mapcolor_back;    // map background
 int mapcolor_grid;    // grid lines color
@@ -297,10 +281,7 @@ static patch_t *marknums[10];   // numbers used for marking by the automap
 mpoint_t *markpoints = NULL;    // where the points are
 int markpointnum = 0; // next point to be assigned (also number of points now)
 int markpointnum_max = 0;       // killough 2/22/98
-static int markblinktimer; // [Nugget] Blink marks
 int followplayer = 1; // specifies whether to follow the player around
-
-#define FOLLOW (followplayer || automapactive == AM_MINI) // [Nugget] Minimap
 
 static boolean stopped = true;
 
@@ -319,6 +300,34 @@ static angle_t mapangle;
 // [FG] prev/next weapon keys and buttons
 extern int mousebprevweapon;
 extern int mousebnextweapon;
+
+// [Nugget] /=================================================================
+
+// Tag Finder from PrBoomX ---------------------------------------------------
+
+static boolean findtag;
+
+#define MAGIC_SECTOR_COLOR_MIN 168
+#define MAGIC_SECTOR_COLOR_MAX 180
+#define MAGIC_LINE_COLOR_MIN 112
+#define MAGIC_LINE_COLOR_MAX 124
+static int magic_sector_color_pos = MAGIC_SECTOR_COLOR_MIN;
+static int magic_line_color_pos = MAGIC_LINE_COLOR_MIN;
+
+static sector_t* magic_sector;
+static short     magic_tag = -1;
+
+// Minimap -------------------------------------------------------------------
+
+static int64_t older_m_x, older_m_y, older_m_w, older_m_h;
+
+#define FOLLOW (followplayer || automapactive == AM_MINI)
+
+// Blink marks ---------------------------------------------------------------
+
+static int markblinktimer;
+
+// [Nugget] =================================================================/
 
 //
 // AM_activateNewScale()
@@ -724,10 +733,12 @@ void AM_Stop (void)
 //
 void AM_Start()
 {
-  static int lastlevel = -1, lastepisode = -1,
-             last_automap = -1, last_messages = -1; // [Nugget] Minimap
+  static int lastlevel = -1, lastepisode = -1;
 
-  int messages_height = message_list ? hud_msg_lines : 1; // [Nugget]
+  // [Nugget] Minimap
+  static int last_automap = -1, last_messages = -1;
+  const int messages_height = message_list ? hud_msg_lines : 1;
+  boolean reset_older = false;
 
   if (!stopped)
     AM_Stop();
@@ -736,6 +747,7 @@ void AM_Start()
       || automapactive != last_automap || messages_height != last_messages)
   {
     AM_LevelInit();
+    reset_older = lastlevel != gamemap || lastepisode != gameepisode;
     lastlevel = gamemap;
     lastepisode = gameepisode;
     last_automap = automapactive;
@@ -747,6 +759,14 @@ void AM_Start()
   }
   AM_initVariables();
   AM_loadPics();
+
+  // [Nugget] Minimap
+  if (reset_older) {
+    older_m_x = m_x;
+    older_m_y = m_y;
+    older_m_w = m_w;
+    older_m_h = m_h;
+  }
 }
 
 //
@@ -793,15 +813,37 @@ static int buttons_state[STATE_NUM] = { 0 };
 // [Nugget]
 void AM_ChangeMode(automapmode_t mode)
 {
+  const automapmode_t oldmode = automapactive;
+
   automapactive = mode;
 
   if (automapactive == AM_MINI)
-  { memset(buttons_state, 0, sizeof(buttons_state)); }
+  {
+    memset(buttons_state, 0, sizeof(buttons_state));
+
+    if (oldmode != AM_MINI)
+    {
+      older_m_x = m_x;
+      older_m_y = m_y;
+      older_m_w = m_w;
+      older_m_h = m_h;
+    }
+  }
 
   if (!automapactive)
     AM_Stop();
   else
     AM_Start();
+
+  if (oldmode == AM_MINI)
+  {
+    old_m_x = older_m_x;
+    old_m_y = older_m_y;
+    old_m_w = older_m_w;
+    old_m_h = older_m_h;
+    AM_restoreScaleAndLoc();
+    AM_activateNewScale();
+  }
 }
 
 //
