@@ -437,9 +437,10 @@ void HU_Init(void)
   }
 
   // [Nugget] Load Stats icons
-  for (i = HU_FONTSIZE + 6, j = 0; j < 3; i++, j++)
+  for (i = HU_FONTSIZE + 6, j = 0;  j < 3;  i++, j++)
   {
     static const char *names[] = { "HUDKILLS", "HUDITEMS", "HUDSCRTS" };
+    static const char fallback[] = { 'K', 'I', 'S' };
     const char *icon = names[j];
 
     if (W_CheckNumForName(icon) != -1)
@@ -447,7 +448,10 @@ void HU_Init(void)
       sml_font.patches[i] =
       big_font.patches[i] = (patch_t *) W_CacheLumpName(icon, PU_STATIC);
     }
-    else { sml_font.patches[i] = big_font.patches[i] = NULL; }
+    else {
+      sml_font.patches[i] = sml_font.patches[fallback[j] - HU_FONTSTART];
+      big_font.patches[i] = big_font.patches[fallback[j] - HU_FONTSTART];
+    }
   }
 
   // [FG] calculate font height once right here
@@ -1442,7 +1446,7 @@ static void HU_widget_build_monsec(void)
 
 static void HU_widget_build_sttime(void)
 {
-  char hud_timestr[HU_MAXLINELENGTH/2];
+  char hud_timestr[HU_MAXLINELENGTH/2] = {0};
   int offset = 0;
   extern int time_scale;
 
