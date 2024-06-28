@@ -51,7 +51,7 @@ The following Status-Bar widgets are available:
 
 | Widget(s)           | Alignable | Description |
 | :-----------------: | :-------: | :---------- |
-| `nughud_ammo`       | Yes       | Ammo count for the currently-equipped weapon |
+| `nughud_ammo`       | Yes       | Ammo count for the currently equipped weapon |
 | `nughud_ammoicon`   | Yes       | Ammo icon, which changes depending on the ammo type of the current weapon |
 | `nughud_health`     | Yes       | Health count |
 | `nughud_healthicon` | Yes       | Health icon, which changes depending on whether the player has Berserk |
@@ -66,7 +66,7 @@ The following Status-Bar widgets are available:
 
 **All Status-Bar widgets are disableable**, by setting `_x` to `-1`.
 
-**The _Ammo_, _Health_ and _Armor_ icons are vertically-alignable.**
+**The _Ammo_, _Health_ and _Armor_ icons are vertically alignable.**
 Additionally, **the offsets of the graphics used by these icons will be ignored, unless a custom font is being used** (see details below).
 
 **Arms number 1 is lit up when the player has Berserk.**
@@ -93,7 +93,7 @@ The following text lines are available:
 | `nughud_message` | Message and Chat display |
 | `nughud_secret`  | "Secret Revealed" and milestone-completion message display |
 
-**All text lines are horizontally-alignable.**
+**All text lines are horizontally alignable.**
 
 There are some additional properties, `nughud_sts_ml` and `nughud_coord_ml`,
 that respectively determine whether to draw the Stats and Coordinates display as multiple lines or a single one,
@@ -106,12 +106,12 @@ with the following possible values:
 There is an additional toggle, `nughud_message_defx`, to forcefully draw the _Message_ display at its original X position,
 where it'll be affected by the _Centered Messages_ setting.
 
-Note that the _Chat_ display is always drawn from the (widescreen-dependent) left-most border of the screen,
+Note that the _Chat_ display is always drawn from the (widescreen-dependent) leftmost border of the screen,
 regardless of the _Message_ display's X position and alignment.
 
 ### Stacks
 
-**Text lines can be drawn as part of stacks** by setting both `_x` and `-y` to `-1`.
+**Text lines can be drawn as part of stacks** by setting both `_x` and `_y` to `-1`.
 The following additional properties are used:
 
 - `_stack`: **Index of the stack** that the text line belongs to.
@@ -198,7 +198,7 @@ Arms Numbers, used for the weapon numbers:
 
 Keys:
 
-- NHKEYS# -- Key, where # is a number between 0 and 8 (inclusive)
+- NHKEYS# - Key, where # is a number between 0 and 8 (inclusive)
 
 
 Berserk, drawn in place of the Ammo count when using the Berserk Fist:
@@ -262,7 +262,7 @@ nughud_patch2_name "STARMS"
 
 ### Status-Bar Chunks
 
-**Status-Bar chunks** are square regions of the Status Bar, taken from the currently-loaded `STBAR`.
+**Status-Bar chunks** are square regions of the Status Bar, taken from the currently loaded `STBAR`.
 Up to 8 chunks can be drawn; they are drawn behind patches, following the same order (`chunk1` before `chunk2`, etc.).
 
 Apart from the shared properties, **chunks make use of the following additional properties**:
