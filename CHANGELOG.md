@@ -2,6 +2,7 @@
 
 - **_Freecam_**
 - **_'BABYMODE'_ cheat**, to toggle ITYTD benefits
+- **Setting to play `DSNOWAY` instead of `DSOOF` when failing to use key-locked triggers**
 
 ## Changes
 

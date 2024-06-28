@@ -128,7 +128,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 All of these are CFG-Only, so their CVAR names are included.
 
-- Bruiser attack (A_BruisAttack) doesn't face target (`comp_bruistarget`)
+- Bruiser attack (`A_BruisAttack()`) doesn't face target (`comp_bruistarget`)
 - Disable melee snapping (`comp_nomeleesnap`)
 - Double autoaim range (`comp_longautoaim`)
 - Fix Lost Soul colliding with items (`comp_lscollision`)
@@ -144,6 +144,7 @@ All of these are CFG-Only, so their CVAR names are included.
 - Chaingun makes two sounds with one bullet (`comp_cgundblsnd`)
 - Chaingunner uses pistol/chaingun sound (`comp_cgunnersfx`)
 - Arch-Vile fire plays flame start sound (`comp_flamst`) [p.f. Crispy Doom]
+- Play `DSNOWAY` instead of `DSOOF` when failing to use key-locked triggers
 - Higher god-mode face priority (`comp_godface`) [p.f. International Doom]
 - Dead players can still play "oof" sound (`comp_deadoof`) [p.f. Crispy Doom]
 - Use unused pain/bonus palettes (`comp_unusedpals`)

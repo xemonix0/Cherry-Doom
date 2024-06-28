@@ -1691,6 +1691,13 @@ default_t defaults[] = {
   },
 
   {
+    "comp_keynoway",
+    (config_t *) &comp_keynoway, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Play DSNOWAY instead of DSOOF when failing to use key-locked triggers"
+  },
+
+  {
     "comp_godface",
     (config_t *) &comp_godface, NULL,
     {0}, {0,1}, number, ss_none, wad_yes,
