@@ -793,10 +793,6 @@ static boolean D_AddZipFile(const char *file, wad_source_t source)
 
 void D_AddFile(const char *file, wad_source_t source)
 {
-  char *s = M_StringDuplicate(file);
-
-  NormalizeSlashes(s);
-
   if (source == source_iwad)
   {
     int i;
@@ -807,9 +803,7 @@ void D_AddFile(const char *file, wad_source_t source)
   }
 
   // [FG] search for PWADs by their filename
-  char *path = D_TryFindWADByName(s);
-
-  free(s);
+  char *path = D_TryFindWADByName(file);
 
   if (M_StringCaseEndsWith(path, ".kvx"))
   {
@@ -902,7 +896,7 @@ static char *GetAutoloadDir(const char *base, const char *iwadname, boolean crea
     char *lower;
 
     lower = M_StringDuplicate(iwadname);
-    M_ForceLowercase(lower);
+    M_StringToLower(lower);
     result = M_StringJoin(base, DIR_SEPARATOR_S, lower, NULL);
     free(lower);
 
@@ -925,9 +919,6 @@ static void PrepareAutoloadPaths (void)
     //
 
     if (M_CheckParm("-noautoload"))
-        return;
-
-    if (gamemode == shareware)
         return;
 
     for (i = 0; ; i++)
@@ -1190,7 +1181,7 @@ void IdentifyVersion (void)
 
   // locate the IWAD and determine game mode from it
 
-  iwad = D_FindIWADFile(&gamemode, &gamemission, &gamevariant);
+  iwad = D_FindIWADFile(&gamemode, &gamemission);
 
   if (iwad && *iwad)
     {
@@ -1528,7 +1519,7 @@ static int GuessFileType(const char *name)
 
     base = M_BaseName(name);
     lower = M_StringDuplicate(base);
-    M_ForceLowercase(lower);
+    M_StringToLower(lower);
 
     // only ever add one argument to the -iwad parameter
 
@@ -1767,7 +1758,8 @@ static void AutoLoadWADs(const char *path, wad_source_t source)
     I_EndGlob(glob);
 }
 
-static void D_AutoloadIWadDir()
+static void D_AutoloadIWadDir(void (*AutoLoadFunc)(const char *path,
+                                                   wad_source_t source))
 {
   char **base;
 
@@ -1775,29 +1767,45 @@ static void D_AutoloadIWadDir()
   {
     char *autoload_dir;
 
-    // [Nugget] Auto-loaded files for all games
-    autoload_dir = GetAutoloadDir(*base, "all", true);
-    AutoLoadWADs(autoload_dir, source_auto_load);
+    autoload_dir = GetAutoloadDir(*base, "all-all", true);
+    AutoLoadFunc(autoload_dir, source_auto_load);
     free(autoload_dir);
 
+    GameMission_t local_gamemission = D_GetGameMissionByIWADName(M_BaseName(wadfiles[0].name));
+
     // common auto-loaded files for all Doom flavors
-    if (gamemission < pack_chex &&
-        gamevariant != freedoom &&
-        gamevariant != miniwad)
+    if (local_gamemission != none)
     {
-      autoload_dir = GetAutoloadDir(*base, "doom-all", true);
-      AutoLoadWADs(autoload_dir, source_auto_load);
-      free(autoload_dir);
+      if (local_gamemission < pack_chex)
+      {
+        autoload_dir = GetAutoloadDir(*base, "doom-all", true);
+        AutoLoadFunc(autoload_dir, source_auto_load);
+        free(autoload_dir);
+      }
+
+      if (local_gamemission == doom)
+      {
+        autoload_dir = GetAutoloadDir(*base, "doom1-all", true);
+        AutoLoadFunc(autoload_dir, source_auto_load);
+        free(autoload_dir);
+      }
+      else if (local_gamemission >= doom2 && local_gamemission <= pack_plut)
+      {
+        autoload_dir = GetAutoloadDir(*base, "doom2-all", true);
+        AutoLoadFunc(autoload_dir, source_auto_load);
+        free(autoload_dir);
+      }
     }
 
     // auto-loaded files per IWAD
     autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[0].name), true);
-    AutoLoadWADs(autoload_dir, source_auto_load);
+    AutoLoadFunc(autoload_dir, source_auto_load);
     free(autoload_dir);
   }
 }
 
-static void D_AutoloadPWadDir()
+static void D_AutoloadPWadDir(void (*AutoLoadFunc)(const char *path,
+                                                   wad_source_t source))
 {
   int i;
 
@@ -1809,7 +1817,7 @@ static void D_AutoloadPWadDir()
     {
       char *autoload_dir;
       autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[i].name), false);
-      AutoLoadWADs(autoload_dir, source_auto_load);
+      AutoLoadFunc(autoload_dir, source_auto_load);
       free(autoload_dir);
     }
   }
@@ -1817,7 +1825,7 @@ static void D_AutoloadPWadDir()
 
 // Load all dehacked patches from the given directory.
 
-static void AutoLoadPatches(const char *path)
+static void AutoLoadPatches(const char *path, wad_source_t source)
 {
     const char *filename;
     glob_t *glob;
@@ -1835,56 +1843,6 @@ static void AutoLoadPatches(const char *path)
     }
 
     I_EndGlob(glob);
-}
-
-// auto-loading of .deh files.
-
-static void D_AutoloadDehDir()
-{
-  char **base;
-
-  for (base = autoload_paths; base && *base; base++)
-  {
-    char *autoload_dir;
-
-    // [Nugget] Auto-loaded files for all games
-    autoload_dir = GetAutoloadDir(*base, "all", true);
-    AutoLoadWADs(autoload_dir, source_auto_load);
-    free(autoload_dir);
-
-    // common auto-loaded files for all Doom flavors
-    if (gamemission < pack_chex &&
-        gamevariant != freedoom &&
-        gamevariant != miniwad)
-    {
-      autoload_dir = GetAutoloadDir(*base, "doom-all", true);
-      AutoLoadPatches(autoload_dir);
-      free(autoload_dir);
-    }
-
-    // auto-loaded files per IWAD
-    autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[0].name), true);
-    AutoLoadPatches(autoload_dir);
-    free(autoload_dir);
-  }
-}
-
-static void D_AutoloadPWadDehDir()
-{
-  int i;
-
-  for (i = 1; i < array_size(wadfiles); ++i)
-  {
-    char **base;
-
-    for (base = autoload_paths; base && *base; base++)
-    {
-      char *autoload_dir;
-      autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[i].name), false);
-      AutoLoadPatches(autoload_dir);
-      free(autoload_dir);
-    }
-  }
 }
 
 // killough 10/98: support .deh from wads
@@ -2355,7 +2313,7 @@ void D_DoomMain(void)
   // add wad files from autoload IWAD directories before wads from -file parameter
 
   PrepareAutoloadPaths();
-  D_AutoloadIWadDir();
+  D_AutoloadIWadDir(AutoLoadWADs);
 
   // add any files specified on the command line with -file wadfile
   // to the wad list
@@ -2388,7 +2346,7 @@ void D_DoomMain(void)
 
   // add wad files from autoload PWAD directories
 
-  D_AutoloadPWadDir();
+  D_AutoloadPWadDir(AutoLoadWADs);
 
   //!
   // @arg <demo>
@@ -2467,8 +2425,8 @@ void D_DoomMain(void)
      else
       {
         I_Error("Invalid parameter '%s' for -skill, valid values are 1-5 "
-                "(1: easiest, 5: hardest). "
-                "A skill of 0 disables all monsters.", myargv[p+1]);
+                "(1: easiest, 5: hardest).\n"
+                "In complevel Vanilla, '-skill 0' disables all monsters.", myargv[p+1]);
       }
    }
 
@@ -2670,7 +2628,6 @@ void D_DoomMain(void)
         free(oldsavegame);
       }
 
-      NormalizeSlashes(basesavegame);
       M_MakeDirectory(basesavegame);
 
       oldsavegame = basesavegame;
@@ -2678,7 +2635,6 @@ void D_DoomMain(void)
                                   M_BaseName(wadname), NULL);
       free(oldsavegame);
 
-      NormalizeSlashes(basesavegame);
       M_MakeDirectory(basesavegame);
     }
   }
@@ -2729,7 +2685,7 @@ void D_DoomMain(void)
 
   // process deh in wads and .deh files from autoload directory
   // before deh in wads from -file parameter
-  D_AutoloadDehDir();
+  D_AutoloadIWadDir(AutoLoadPatches);
 
   // killough 10/98: now process all deh in wads
   if (!M_ParmExists("-nodeh"))
@@ -2738,7 +2694,7 @@ void D_DoomMain(void)
   }
 
   // process .deh files from PWADs autoload directories
-  D_AutoloadPWadDehDir();
+  D_AutoloadPWadDir(AutoLoadPatches);
 
   PostProcessDeh();
 
@@ -2785,6 +2741,7 @@ void D_DoomMain(void)
 
   if (!M_ParmExists("-nomapinfo"))
   {
+    D_ProcessInWads("UMAPINFO", U_ParseMapInfo, true);
     D_ProcessInWads("UMAPINFO", U_ParseMapInfo, false);
   }
 
@@ -2850,6 +2807,7 @@ void D_DoomMain(void)
   I_InitController();
   I_InitSound();
   I_InitMusic();
+  MN_InitMidiPlayer();
 
   I_Printf(VB_INFO, "NET_Init: Init network subsystem.");
   NET_Init();
@@ -3094,8 +3052,6 @@ void D_DoomMain(void)
       // Update display, next frame, with current state.
       if (screenvisible)
         D_Display();
-
-      S_UpdateMusic();
     }
 }
 

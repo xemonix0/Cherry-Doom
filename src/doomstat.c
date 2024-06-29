@@ -23,7 +23,6 @@
 // Game Mode - identify IWAD as shareware, retail etc.
 GameMode_t gamemode = indetermined;
 GameMission_t gamemission = doom;
-GameVariant_t gamevariant = vanilla;
 
 // [FG] emulate a specific version of Doom
 GameVersion_t gameversion = exe_doom_1_9;
@@ -62,7 +61,7 @@ overflow_t overflow[EMU_TOTAL] = {
   { true, false, "donut_overflow"}
 };
 
-int demo_version;           // killough 7/19/98: Boom version of demo
+demo_version_t demo_version;        // killough 7/19/98: Boom version of demo
 
 // v1.1-like pitched sounds
 int pitched_sounds;  // killough 10/98
@@ -203,7 +202,9 @@ int sx_fix; // CFG-Only
 int announce_milestones;
 int show_save_messages; // CFG-Only
 int show_ssg; // CFG-Only
-int hud_kills_percentage;
+int hud_stats_format;
+int hud_stats_format_map;
+int hud_stats_icons;
 int alt_arms;
 int hud_time_teleport;
 int hud_time_keypickup;
@@ -215,14 +216,6 @@ int hudcolor_event_timer;
 int hudcolor_kills;
 int hudcolor_items;
 int hudcolor_secrets;
-// [Cherry] --------------------------------------------------------------
-int hudcolor_attempts;
-int hudcolor_attempts_count;
-int hudcolor_movement;
-int hudcolor_weapons;
-int hudcolor_keys;
-int hudcolor_frag;
-// [Cherry] End ----------------------------------------------------------
 int hudcolor_ms_incomp;
 int hudcolor_ms_comp;
 // [Cherry] --------------------------------------------------------------
@@ -249,7 +242,10 @@ int fancy_teleport;
 int screenshot_palette;
 int menu_backdrop_darkening;
 int automap_overlay_darkening;
+int no_killough_face;
 int sp_chat;
+
+int fail_safe;
 
 // Doom Compatibility (CFG-Only) ------
 
@@ -260,6 +256,7 @@ int comp_lscollision;
 int comp_lsamnesia;
 int comp_fuzzyblood;
 int comp_nonbleeders;
+int comp_faceshadow;
 int comp_iosdeath;
 int comp_choppers;
 
@@ -273,8 +270,6 @@ int comp_godface;
 int comp_deadoof;
 int comp_unusedpals;
 int comp_keypal;
-
-int fail_safe; // CFG-Only
 
 // [Nugget] -----------------------------------------------------------------/
 

@@ -25,6 +25,7 @@
 #include "doomstat.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
+#include "m_misc.h"
 #include "m_swap.h"
 #include "r_defs.h"
 #include "r_draw.h"
@@ -174,7 +175,7 @@ static void add_string_to_line (hu_line_t *const l, const hu_font_t *const f, co
 
   while (*s)
   {
-    c = toupper(*s++);
+    c = M_ToUpper(*s++);
 
     if (c == '\x1b')
     {
@@ -228,17 +229,11 @@ static int horz_align_widget(const hu_widget_t *const w, const hu_line_t *const 
   // [Nugget] NUGHUD
   if (st_crispyhud)
   {
-    int x = w->x;
-
-    // Messages hack
-    if (x == 1994)
-    { x = (h_align == align_center) ? SCREENWIDTH/2 : -video.deltaw * (hud_active == 2); }
-
     switch (h_align) {
       default:
-      case align_left:   return x;
-      case align_center: return x - l->width/2;
-      case align_right:  return x - l->width;
+      case align_left:   return w->x;
+      case align_center: return w->x - l->width/2;
+      case align_right:  return w->x - l->width;
     }
   }
 
@@ -349,7 +344,7 @@ static void draw_line_aligned (const hu_multiline_t *m, const hu_line_t *l, cons
   // draw the new stuff
   for (i = 0; i < l->len; i++)
   {
-    c = toupper(l->line[i]); //jff insure were not getting a cheap toupper conv.
+    c = M_ToUpper(l->line[i]);
 
 #if 0
     if (c == '\n')
@@ -494,7 +489,7 @@ void HUlib_draw_widget (const hu_widget_t *const w)
     draw_widget_topdown(w, f);
   // [FG] Vanilla widget with top alignment,
   //      or Boom widget with bottom alignment
-  else if ((m->on != NULL) ^ (w->v_align == align_bottom))
+  else if (m->bottomup ^ (w->v_align == align_bottom))
     draw_widget_bottomup(w, f);
   else
     draw_widget_topdown(w, f);
@@ -540,7 +535,8 @@ void HUlib_init_multiline(hu_multiline_t *m,
   m->builder = builder;
   m->built = false;
 
-  m->exclusive = (m->on != NULL);
+  m->exclusive = (on != NULL);
+  m->bottomup = (on != NULL);
 }
 
 void HUlib_erase_widget (const hu_widget_t *const w)
@@ -549,7 +545,15 @@ void HUlib_erase_widget (const hu_widget_t *const w)
   const hu_font_t *const f = *m->font;
 
   const int height = m->numlines * f->line_height;
-  const int y = vert_align_widget(w, m, f, w->h_align, w->v_align);
+
+  int y = 0;
+  for (int i = 0; i < m->numlines; ++i)
+  {
+    y = vert_align_widget(w, m, f, w->h_align, w->v_align);
+  }
+
+  if (w->v_align == align_top)
+    y += f->line_height - height;
 
   if (y > scaledviewy && y < scaledviewy + scaledviewheight - height)
   {

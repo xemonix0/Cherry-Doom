@@ -689,16 +689,28 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       return;      // killough 12/98: suppress error message
     }
 
-  if (special->flags & MF_COUNTITEM) {
+  if (special->flags & MF_COUNTITEM)
+  {
     player->itemcount++;
+
     // [Nugget] Announce milestone completion
-    if (!(complete_milestones & MILESTONE_ITEMS)
-        && (player->itemcount >= totalitems))
+    if (!(complete_milestones & MILESTONE_ITEMS))
     {
-      complete_milestones |= MILESTONE_ITEMS;
-      if (announce_milestones) {
-        player->secretmessage = "All items acquired!";
-        S_StartSound(NULL, sfx_secret);
+      int itemcount = 0;
+
+      for (int pl = 0;  pl < MAXPLAYERS;  ++pl) {
+        if (playeringame[pl])
+        { itemcount += players[pl].itemcount; }
+      }
+
+      if (itemcount >= totalitems)
+      {
+        complete_milestones |= MILESTONE_ITEMS;
+
+        if (announce_milestones) {
+          players[displayplayer].secretmessage = "All items acquired!";
+          S_StartSound(NULL, sfx_secret);
+        }
       }
     }
   }
@@ -708,7 +720,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   if (STRICTMODE(bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap))
   { player->bonuscount = bonuscount_cap; }
 
-  S_StartSoundOptional(player->mo, sound, sfx_itemup); // [Nugget]: [NS] Fallback to itemup.
+  S_StartSoundPitchOptional(player->mo, sound, sfx_itemup, // [Nugget]: [NS] Fallback to itemup.
+                            sound == sfx_itemup ? PITCH_NONE : PITCH_FULL);
 }
 
 // [Nugget] Check for Extra Gibbing
@@ -754,7 +767,7 @@ static void P_NuggetGib(mobj_t *mo)
 
   for (int i = 0; i < quantity; i++)
   {
-    mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + (mo->height / 1.5),
+    mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + (mo->height * 3/2),
                                 (comp_nonbleeders && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
@@ -774,7 +787,7 @@ static void P_NuggetGib(mobj_t *mo)
 
     // Physics differ between versions (complevels),
     // so this is done to get rather decent behavior in Vanilla
-    if (demo_version < 200) { splat->flags |= MF_NOCLIP; }
+    if (demo_version < DV_BOOM200) { splat->flags |= MF_NOCLIP; }
 
     splat->tics += (Woof_Random() & 3) - (Woof_Random() & 3);
     if (splat->tics < 1) { splat->tics = 1; }
@@ -858,7 +871,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
 
             if (playerscount)
             {
-              if (demo_version >= 203)
+              if (demo_version >= DV_MBF)
                 i = P_Random(pr_friends) % playerscount;
               else
                 i = Woof_Random() % playerscount;
@@ -870,13 +883,23 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
 #endif
 
   // [Nugget] Announce milestone completion
-  if (!(complete_milestones & MILESTONE_KILLS)
-      && ((players->killcount - players->maxkilldiscount) >= max_kill_requirement))
+  if (!(complete_milestones & MILESTONE_KILLS))
   {
-    complete_milestones |= MILESTONE_KILLS;
-    if (announce_milestones) {
-      players->secretmessage = "All enemies killed!";
-      S_StartSound(NULL, sfx_secret);
+    int killcount = 0;
+
+    for (int pl = 0;  pl < MAXPLAYERS;  ++pl) {
+      if (playeringame[pl])
+      { killcount += players[pl].killcount - players[pl].maxkilldiscount; }
+    }
+
+    if (killcount >= max_kill_requirement)
+    {
+      complete_milestones |= MILESTONE_KILLS;
+
+      if (announce_milestones) {
+        players[displayplayer].secretmessage = "All enemies killed!";
+        S_StartSound(NULL, sfx_secret);
+      }
     }
   }
 
@@ -1115,7 +1138,7 @@ void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage
     }
 
   // killough 9/7/98: keep track of targets so that friends can help friends
-  if (demo_version >= 203)
+  if (demo_version >= DV_MBF)
     {
       // If target is a player, set player's target to source,
       // so that a friend can tell who's hurting a player
@@ -1147,8 +1170,8 @@ void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage
 
   if (source && source != target && !(source->flags2 & MF2_DMGIGNORED) &&
       (!target->threshold || target->flags2 & MF2_NOTHRESHOLD) &&
-      ((source->flags ^ target->flags) & MF_FRIEND ||
-       monster_infighting || demo_version < 203) &&
+      ((source->flags ^ target->flags) & MF_FRIEND || 
+       monster_infighting || demo_version < DV_MBF) &&
       !P_InfightingImmune(target, source))
     {
       // if not intent on another player, chase after this one
@@ -1158,10 +1181,10 @@ void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage
       // killough 9/9/98: cleaned up, made more consistent:
 
       if (!target->lastenemy || target->lastenemy->health <= 0 ||
-          (demo_version < 203 ? !target->lastenemy->player :
-           !((target->flags ^ target->lastenemy->flags) & MF_FRIEND) &&
-           target->target != source)) // remember last enemy - killough
-        P_SetTarget(&target->lastenemy, target->target);
+	  (demo_version < DV_MBF ? !target->lastenemy->player :
+	   !((target->flags ^ target->lastenemy->flags) & MF_FRIEND) &&
+	   target->target != source)) // remember last enemy - killough
+	P_SetTarget(&target->lastenemy, target->target);
 
       P_SetTarget(&target->target, source);       // killough 11/98
       target->threshold = BASETHRESHOLD;

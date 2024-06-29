@@ -85,6 +85,7 @@ int mapcolor_ydor;    // yellow door color
 int mapcolor_tele;    // teleporter line color
 int mapcolor_secr;    // secret sector boundary color
 int mapcolor_revsecr; // revealed secret sector boundary color
+int mapcolor_trig;    // [Nugget] Trigger-line color
 int mapcolor_exit;    // jff 4/23/98 add exit line color
 int mapcolor_unsn;    // computer map unseen line color
 int mapcolor_flat;    // line with no floor/ceiling changes
@@ -632,7 +633,7 @@ static void AM_initScreenSize(void)
   if (automapoverlay && scaledviewheight == SCREENHEIGHT)
     f_h = video.height;
   else
-    f_h = video.height - V_ScaleY(ST_HEIGHT);
+    f_h = V_ScaleY(SCREENHEIGHT - ST_HEIGHT);
 }
 
 void AM_ResetScreenSize(void)
@@ -709,8 +710,6 @@ void AM_Stop (void)
   findtag = false;
   magic_sector = NULL;
   magic_tag = -1;
-
-  HU_NughudAlignTime(); // [Nugget] NUGHUD
 }
 
 //
@@ -748,8 +747,6 @@ void AM_Start()
   }
   AM_initVariables();
   AM_loadPics();
-
-  HU_NughudAlignTime(); // [Nugget] NUGHUD
 }
 
 //
@@ -846,6 +843,37 @@ boolean AM_Responder
       AM_ChangeMode(AM_FULL);
       viewactive = false;
       rc = true;
+    }
+    // [Nugget] Minimap: allow zooming
+    else if (automapactive == AM_MINI)
+    {
+      if (ev->type == ev_keydown)
+      {
+        rc = true;
+
+        if (M_InputActivated(input_map_zoomout))
+        {
+          buttons_state[ZOOM_OUT] = 1;
+        }
+        else if (M_InputActivated(input_map_zoomin))
+        {
+          buttons_state[ZOOM_IN] = 1;
+        }
+        else { rc = false; }
+      }
+      else if (ev->type == ev_keyup)
+      {
+        rc = false;
+
+        if (M_InputDeactivated(input_map_zoomout))
+        {
+          buttons_state[ZOOM_OUT] = 0;
+        }
+        else if (M_InputDeactivated(input_map_zoomin))
+        {
+          buttons_state[ZOOM_IN] = 0;
+        }
+      }
     }
   }
   else if (ev->type == ev_keydown ||
@@ -1774,6 +1802,17 @@ static int AM_DoorColor(int type)
 // jff 4/3/98 changed mapcolor_xxxx=-1 to disable drawing line completely
 //
 
+#define M_ARRAY_INIT_CAPACITY 500
+#include "m_array.h"
+
+typedef struct
+{
+  mline_t l;
+  int color;
+} am_line_t;
+
+static am_line_t *lines_1S = NULL;
+
 // [Nugget] Tag Finder from PrBoomX: Prototype this function
 static void AM_drawLineCharacter(mline_t*, int, fixed_t, angle_t, int, fixed_t, fixed_t);
 
@@ -1857,8 +1896,22 @@ static void AM_drawWalls(void)
         continue;
       }
 
+      // [Nugget] Trigger lines
+      #define IsTrigger(l) (        \
+        (l).special                 \
+        && !(   (l).special == 48   \
+             || (l).special == 85   \
+             || (l).special == 255) \
+      )
+
       if (!lines[i].backsector)
       {
+        // [Nugget] Trigger lines
+        if (ddt_cheating && mapcolor_trig && IsTrigger(lines[i]))
+        {
+          array_push(lines_1S, ((am_line_t){l, mapcolor_trig}));
+        }
+        else
         // jff 1/10/98 add new color for 1S secret sector boundary
         if (mapcolor_secr && //jff 4/3/98 0 is disable
             (
@@ -1866,16 +1919,25 @@ static void AM_drawWalls(void)
              P_IsSecret(lines[i].frontsector)
             )
           )
-          AM_drawMline(&l, mapcolor_secr); // line bounding secret sector
+        {
+          // line bounding secret sector
+          array_push(lines_1S, ((am_line_t){l, mapcolor_secr}));
+        }
         else if (mapcolor_revsecr &&
             (
              P_WasSecret(lines[i].frontsector) &&
              !P_IsSecret(lines[i].frontsector)
             )
           )
-          AM_drawMline(&l, mapcolor_revsecr); // line bounding revealed secret sector
+        {
+          // line bounding revealed secret sector
+          array_push(lines_1S, ((am_line_t){l, mapcolor_revsecr}));
+        }
         else                               //jff 2/16/98 fixed bug
-          AM_drawMline(&l, mapcolor_wall); // special was cleared
+        {
+          // special was cleared
+          array_push(lines_1S, ((am_line_t){l, mapcolor_wall}));
+        }
       }
       else
       {
@@ -1888,6 +1950,11 @@ static void AM_drawWalls(void)
         )
         { // teleporters
           AM_drawMline(&l, mapcolor_tele);
+        }
+        // [Nugget] Trigger lines
+        else if (ddt_cheating && mapcolor_trig && IsTrigger(lines[i]))
+        {
+          AM_drawMline(&l, mapcolor_trig);
         }
         else if (lines[i].flags & ML_SECRET)    // secret door
         {
@@ -1969,10 +2036,10 @@ static void AM_drawWalls(void)
     // [Nugget] Tag Finder from PrBoomX: Highlight sectors and lines
     if (magic_sector || magic_tag > 0)
     {
-      if (   (lines[i].frontsector && ((magic_sector && lines[i].frontsector->tag == magic_sector->tag)
-                                        || ((magic_tag > 0) && lines[i].frontsector->tag == magic_tag)))
-          || (lines[i].backsector  && ((magic_sector && lines[i].backsector->tag  == magic_sector->tag)
-                                        || ((magic_tag > 0) && lines[i].backsector->tag  == magic_tag))))
+      if (   (lines[i].frontsector && (   (magic_sector  && lines[i].frontsector->tag == magic_sector->tag)
+                                       || (magic_tag > 0 && lines[i].frontsector->tag == magic_tag)))
+          || (lines[i].backsector  && (   (magic_sector  && lines[i].backsector->tag  == magic_sector->tag)
+                                       || (magic_tag > 0 && lines[i].backsector->tag  == magic_tag))))
       {
         AM_drawMline(&l, magic_sector_color_pos);
 
@@ -1996,6 +2063,12 @@ static void AM_drawWalls(void)
       }
     }
   }
+
+  for (int i = 0; i < array_size(lines_1S); ++i)
+  {
+    AM_drawMline(&lines_1S[i].l, lines_1S[i].color);
+  }
+  array_clear(lines_1S);
 }
 
 //

@@ -1,4 +1,4 @@
-string(TIMESTAMP PROJECT_DATE "%Y-%m-%d")
+string(TIMESTAMP PROJECT_DATE "%Y-%m-%d" UTC)
 
 configure_file(io.github.xemonix0.Cherry-Doom.metainfo.in
                io.github.xemonix0.Cherry-Doom.metainfo.xml

@@ -35,7 +35,6 @@ Some of Cherry Doom's features come from other sources, like other source ports,
 ### Status Bar/HUD
 
 - **More widgets on intermission screen** setting: shows smaller versions of _Attempts_, _Health_, _Armor_ and _Weapons_ widgets on the intermission screen
-- **Further extended HUD color customization**
 - **Attempts display**: shows the amount of attempts spent on the current map in this session and across all sessions
 - **Movement display**: shows the current player movement and strafing speeds
 
@@ -142,7 +141,7 @@ Copyright:
  © 2022 Julia Nechaevskaya;  
  © 2022-2024 ceski;  
  © 2023 Andrew Apted;  
- © 2023 liPillON;
+ © 2023 liPillON;  
  © 2023-2024 Xemonix.   
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 

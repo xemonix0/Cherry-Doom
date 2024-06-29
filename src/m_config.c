@@ -75,7 +75,7 @@ extern int showMessages;
 extern int show_toggle_messages;
 extern int show_pickup_messages;
 
-extern int window_width, window_height;
+extern int default_window_width, default_window_height;
 extern int window_position_x, window_position_y;
 extern boolean flipcorpses;    // [crispy] randomly flip corpse, blood and death
                                // animation sprites
@@ -85,18 +85,15 @@ extern int mouse_acceleration;
 extern int mouse_acceleration_threshold;
 extern int show_endoom;
 #if defined(HAVE_FLUIDSYNTH)
-extern char *soundfont_path;
 extern char *soundfont_dir;
 extern boolean mus_chorus;
 extern boolean mus_reverb;
 extern int mus_gain;
 #endif
-#if defined(_WIN32)
-extern char *winmm_device;
-extern int winmm_complevel;
-extern int winmm_reset_type;
-extern int winmm_reset_delay;
-#endif
+extern int midi_complevel;
+extern int midi_reset_type;
+extern int midi_reset_delay;
+extern boolean midi_ctf;
 extern int opl_gain;
 extern boolean demobar;
 extern boolean smoothlight;
@@ -150,7 +147,7 @@ default_t defaults[] = {
 
   {
     "current_video_height",
-    (config_t *) &current_video_height, NULL,
+    (config_t *) &default_current_video_height, NULL,
     {600}, {SCREENHEIGHT, UL}, number, ss_none, wad_no,
     "vertical resolution (600p by default)"
   },
@@ -257,6 +254,27 @@ default_t defaults[] = {
     "current video display index"
   },
 
+  {
+    "max_video_width",
+    (config_t *) &max_video_width, NULL,
+    {0}, {SCREENWIDTH, UL}, number, ss_none, wad_no,
+    "maximum horizontal resolution (native by default)"
+  },
+
+  {
+    "max_video_height",
+    (config_t *) &max_video_height, NULL,
+    {0}, {SCREENHEIGHT, UL}, number, ss_none, wad_no,
+    "maximum vertical resolution (native by default)"
+  },
+
+  {
+    "change_display_resolution",
+    (config_t *) &change_display_resolution, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to change display resolution with exclusive fullscreen (make sense only with CRT)"
+  },
+
   // window position
   {
     "window_position_x",
@@ -275,7 +293,7 @@ default_t defaults[] = {
   // window width
   {
     "window_width",
-    (config_t *) &window_width, NULL,
+    (config_t *) &default_window_width, NULL,
     {1065}, {0, UL}, number, ss_none, wad_no,
     "window width"
   },
@@ -283,7 +301,7 @@ default_t defaults[] = {
   // window height
   {
     "window_height",
-    (config_t *) &window_height, NULL,
+    (config_t *) &default_window_height, NULL,
     {600}, {0, UL}, number, ss_none, wad_no,
     "window height"
   },
@@ -400,6 +418,13 @@ default_t defaults[] = {
     "1 to enable flashing HOM indicator"
   },
 
+  { // [Nugget]
+    "no_killough_face",
+    (config_t *) &no_killough_face, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "1 to disable the Killough-face easter egg"
+  },
+
   { // killough 2/21/98: default to 10
     "screenblocks",
     (config_t *) &screenblocks, NULL,
@@ -464,8 +489,15 @@ default_t defaults[] = {
   {
     "snd_resampler",
     (config_t *) &snd_resampler, NULL,
-    {1}, {0, 2}, number, ss_gen, wad_no,
-    "OpenAL resampler (0 = Nearest, 1 = Linear, 2 = Cubic)"
+    {1}, {0, UL}, number, ss_gen, wad_no,
+    "Sound resampler (0 = Nearest, 1 = Linear, ...)"
+  },
+
+  {
+    "snd_limiter",
+    (config_t *) &snd_limiter, NULL,
+    {0}, {0, 1}, number, ss_none, wad_no,
+    "1 to enable sound output limiter"
   },
 
   {
@@ -497,26 +529,26 @@ default_t defaults[] = {
   },
 
   {
-    "midi_player",
-    (config_t *) &midi_player, NULL,
-    {0}, {0, 2}, number, ss_none, wad_no,
-    "MIDI Player backend (Native if available, FluidSynth if available, OPL Emulation)"
-  },
-
-  {
     "midi_player_menu",
     (config_t *) &midi_player_menu, NULL,
     {0}, {0, UL}, number, ss_none, wad_no,
     "MIDI Player menu index"
   },
 
+  {
+    "midi_player_string",
+    (config_t *) &midi_player_string, NULL,
+    {.s = ""}, {0}, string, ss_none, wad_no,
+    "MIDI Player string"
+  },
+
 #if defined(HAVE_FLUIDSYNTH)
   {
     "soundfont_dir",
     (config_t *) &soundfont_dir, NULL,
-#if defined(_WIN32)
+#  if defined(_WIN32)
     {.s = "soundfonts"},
-#else
+#  else
     /* RedHat/Fedora/Arch */
     {.s = "/usr/share/soundfonts:"
     /* Debian/Ubuntu/OpenSUSE */
@@ -524,16 +556,9 @@ default_t defaults[] = {
     "/usr/share/sounds/sf3:"
     /* AppImage */
     "../share/" PROJECT_SHORTNAME "/soundfonts"},
-#endif
+#  endif
     {0}, string, ss_none, wad_no,
     "FluidSynth soundfont directories"
-  },
-
-  {
-    "soundfont_path",
-    (config_t *) &soundfont_path, NULL,
-    {.s = ""}, {0}, string, ss_none, wad_no,
-    "FluidSynth current soundfont path"
   },
 
   {
@@ -565,35 +590,33 @@ default_t defaults[] = {
     "fine tune OPL emulation output level (default 200%)"
   },
 
-#if defined(_WIN32)
   {
-    "winmm_device",
-    (config_t *) &winmm_device, NULL,
-    {.s = ""}, {0}, string, ss_none, wad_no,
-    "Native MIDI device"
-  },
-
-  {
-    "winmm_complevel",
-    (config_t *) &winmm_complevel, NULL,
+    "midi_complevel",
+    (config_t *) &midi_complevel, NULL,
     {1}, {0, 2}, number, ss_none, wad_no,
     "Native MIDI compatibility level (0 = Vanilla, 1 = Standard, 2 = Full)"
   },
 
   {
-    "winmm_reset_type",
-    (config_t *) &winmm_reset_type, NULL,
+    "midi_reset_type",
+    (config_t *) &midi_reset_type, NULL,
     {1}, {0, 3}, number, ss_none, wad_no,
-    "SysEx reset for native MIDI (0 = None, 1 = GM, 2 = GS, 3 = XG)"
+    "Reset type for native MIDI (0 = No SysEx, 1 = GM, 2 = GS, 3 = XG)"
   },
 
   {
-    "winmm_reset_delay",
-    (config_t *) &winmm_reset_delay, NULL,
-    {0}, {0, 2000}, number, ss_none, wad_no,
-    "Delay after reset for native MIDI (milliseconds)"
+    "midi_reset_delay",
+    (config_t *) &midi_reset_delay, NULL,
+    {-1}, {-1, 2000}, number, ss_none, wad_no,
+    "Delay after reset for native MIDI (-1 = Auto, 0 = None, 1-2000 = Milliseconds)"
   },
-#endif
+
+  {
+    "midi_ctf",
+    (config_t *) &midi_ctf, NULL,
+    {1}, {0, 1}, number, ss_none, wad_no,
+    "1 to fix invalid instruments by emulating SC-55 capital tone fallback"
+  },
 
   //
   // QOL features
@@ -1349,14 +1372,12 @@ default_t defaults[] = {
     "0 original, 1 blocky"
   },
 
-  /*
   { // [Nugget - ceski] Selective fuzz darkening
     "fuzzdark_mode",
     (config_t *) &fuzzdark_mode, NULL,
     {0}, {0,1}, number, ss_enem, wad_no,
-    "0 original, 1 selective darkening"
+    "Use selective fuzz darkening"
   },
-  */
 
   //
   // Compatibility
@@ -1611,6 +1632,13 @@ default_t defaults[] = {
     (config_t *) &comp_fuzzyblood, NULL,
     {0}, {0,1}, number, ss_none, wad_yes,
     "Fuzzy things bleed fuzzy blood"
+  },
+
+  {
+    "comp_faceshadow",
+    (config_t *) &comp_faceshadow, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Attackers face fuzzy targets straight"
   },
 
   {
@@ -2365,11 +2393,19 @@ default_t defaults[] = {
     input_idbeholdl, { {0, 0} }
   },
 
+  { // [Nugget]
+    "input_idbeholda",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to give computer area map",
+    input_idbeholda, { {0, 0} }
+  },
+
   {
     "input_iddt",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to reveal map",
+    "key to reveal map (IDDT)", // [Nugget] Tweaked description
     input_iddt, { {0, 0} }
   },
 
@@ -3081,6 +3117,13 @@ default_t defaults[] = {
     "color used for lines around revealed secret sectors"
   },
 
+  { // [Nugget] None
+    "mapcolor_trig",
+    (config_t *) &mapcolor_trig, NULL,
+    {0}, {0,255}, number, ss_none, wad_yes,
+    "Color used for trigger lines (lines with actions)"
+  },
+
   { // none
     "mapcolor_exit",
     (config_t *) &mapcolor_exit, NULL,
@@ -3539,11 +3582,29 @@ default_t defaults[] = {
     "show level stats (kill, items and secrets) widget (1 = on Automap, 2 = on HUD, 3 = always)"
   },
 
-  { // [Nugget] Restore kills percentage
-    "hud_kills_percentage",
-    (config_t *) &hud_kills_percentage, NULL,
-    {0}, {0,1}, number, ss_stat, wad_no,
-    "1 to show Kills percentage in Stats display"
+  // [Nugget] Stats formats from Crispy /-------------------------------------
+
+  {
+    "hud_stats_format",
+    (config_t *) &hud_stats_format, NULL,
+    {STATSFORMAT_RATIO}, {STATSFORMAT_RATIO,STATSFORMAT_REMAINING}, number, ss_stat, wad_no,
+    "level stats format (1 = ratio, 2 = boolean, 3 = percentage, 4 = remaining)"
+  },
+
+  {
+    "hud_stats_format_map",
+    (config_t *) &hud_stats_format_map, NULL,
+    {0}, {0,STATSFORMAT_REMAINING}, number, ss_stat, wad_no,
+    "level stats format in Automap (0 = match HUD)"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  { // [Nugget]
+    "hud_stats_icons",
+    (config_t *) &hud_stats_icons, NULL,
+    {1}, {0,1}, number, ss_stat, wad_yes,
+    "Allow usage of icons for the Level Stats widget's labels"
   },
 
   // [FG] level time widget
@@ -3671,49 +3732,7 @@ default_t defaults[] = {
 
   // [Nugget] ---------------------------------------------------------------/
 
-  // [Cherry] Extended HUD colors /-------------------------------------------
-  
-  { // [Cherry]
-    "hudcolor_weapons",
-    (config_t *) &hudcolor_weapons, NULL,
-    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
-    "Color used for Weapons label in Weapons widget"
-  },
-
-  { // [Cherry]
-    "hudcolor_keys",
-    (config_t *) &hudcolor_keys, NULL,
-    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
-    "Color used for Keys label in Keys widget"
-  },
-
-  { // [Cherry]
-    "hudcolor_frag",
-    (config_t *) &hudcolor_frag, NULL,
-    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
-    "Color used for Frags label in Frags widget"
-  },
-
-  { // [Cherry]
-    "hudcolor_attempts",
-    (config_t *) &hudcolor_attempts, NULL,
-    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
-    "Color used for Attempts label in Attempts widget"
-  },
-
-  { // [Cherry]
-    "hudcolor_attempts_count",
-    (config_t *) &hudcolor_attempts_count, NULL,
-    {CR_GRAY}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
-    "Color used for Attempts count in Attempts widget"
-  },
-
-  { // [Cherry]
-    "hudcolor_movement",
-    (config_t *) &hudcolor_movement, NULL,
-    {CR_RED}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_yes,
-    "Color used for Movement label in Movement widget"
-  },
+  // [Cherry] HUD value threshold colors /-----------------------------------
 
   { // [Cherry]
     "hudcolor_th_low",
@@ -3873,7 +3892,7 @@ static unsigned default_hash(const char *name)
     unsigned hash = 0;
     while (*name)
     {
-        hash = hash * 2 + toupper(*name++);
+        hash = hash * 2 + M_ToUpper(*name++);
     }
     return hash % NUMDEFAULTS;
 }
@@ -3936,7 +3955,6 @@ void M_SaveDefaults(void)
 
     tmpfile = M_StringJoin(D_DoomPrefDir(), DIR_SEPARATOR_S, "tmp",
                            D_DoomExeName(), ".cfg", NULL);
-    NormalizeSlashes(tmpfile);
 
     errno = 0;
     if (!(f = M_fopen(tmpfile, "w"))) // killough 9/21/98
@@ -4175,7 +4193,7 @@ boolean M_ParseOption(const char *p, boolean wad)
         dp->setup_menu = dp_preset->setup_menu;
     }
 
-    if (demo_version < 203 && dp->setup_menu
+    if (demo_version < DV_MBF && dp->setup_menu
         && !(dp->setup_menu->m_flags & S_COSMETIC))
     {
         return 1;
@@ -4412,8 +4430,6 @@ void M_LoadDefaults(void)
             defaultfile = strdup(basedefault);
         }
     }
-
-    NormalizeSlashes(defaultfile);
 
     // read the file in, overriding any set defaults
     //

@@ -38,6 +38,7 @@ set(CHERRYDOOM_SOURCES
     i_input.c              i_input.h
     i_main.c
     i_mbfsound.c
+    i_midimusic.c
     i_oalmusic.c
     i_oalsound.c           i_oalsound.h
                            i_oalstream.h
@@ -68,6 +69,7 @@ set(CHERRYDOOM_SOURCES
     memio.c                memio.h
     midifallback.c         midifallback.h
     midifile.c             midifile.h
+    midiout.c              midiout.h
     mus2mid.c              mus2mid.h
     nano_bsp.c             nano_bsp.h
     net_client.c           net_client.h
@@ -188,7 +190,6 @@ if(HAVE_AL_BUFFER_CALLBACK)
 endif()
 
 if(WIN32)
-    target_sources(cherry-doom PRIVATE i_winmusic.c)
     target_include_directories(cherry-doom PRIVATE "../win32")
     target_link_libraries(cherry-doom PRIVATE winmm)
     if(MSVC)
@@ -198,9 +199,15 @@ if(WIN32)
 endif()
 
 if(APPLE)
-    target_sources(cherry-doom PRIVATE i_macmusic.c)
     target_link_libraries(cherry-doom PRIVATE
-        -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,CoreServices)
+        -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit
+        -Wl,-framework,CoreServices -Wl,-framework,CoreAudio
+        -Wl,-framework,CoreMIDI)
+endif()
+
+if(ALSA_FOUND)
+    target_include_directories(cherry-doom PRIVATE ${ALSA_INCLUDE_DIR})
+    target_link_libraries(cherry-doom PRIVATE ALSA::ALSA)
 endif()
 
 if(FluidSynth_FOUND)

@@ -91,8 +91,6 @@ static void InitWadDataDir(void) {
       parent_directory = D_DoomPrefDir();
 
     M_StringPrintF(&base_data_dir, "%s/%s", parent_directory, cherry_data_root);
-    NormalizeSlashes(base_data_dir);
-
     M_MakeDirectory(base_data_dir);
   }
 
@@ -103,8 +101,6 @@ static void InitWadDataDir(void) {
     if (data_dir_strings[i])
     {
       M_StringCatF(&str, "/%s", data_dir_strings[i]);
-      NormalizeSlashes(str);
-
       M_MakeDirectory(str);
     }
 
@@ -141,7 +137,6 @@ static const char* WS_WadStatsPath(void) {
   {
     const char* data_dir = DataDir();
     M_StringPrintF(&path, "%s/%s", data_dir, filename);
-    NormalizeSlashes(path);
   }
 
   return path;

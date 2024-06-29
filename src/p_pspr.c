@@ -85,8 +85,6 @@ void A_Recoil(player_t* player)
 
 static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 {
-  P_SetPspritePtr(player, &player->psprites[position], stnum);
-
   if (position == ps_weapon)
   {
     const weaponinfo_t wp = weaponinfo[player->readyweapon];
@@ -96,6 +94,8 @@ static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
     else if (stnum == wp.downstate)
       player->switching = weapswitch_lowering;
   }
+
+  P_SetPspritePtr(player, &player->psprites[position], stnum);
 }
 
 //
@@ -161,7 +161,7 @@ static void P_BringUpWeapon(player_t *player)
     player->pendingweapon = player->readyweapon;
 
   if (player->pendingweapon == wp_chainsaw)
-    S_StartSound(player->mo, sfx_sawup);
+    S_StartSoundPitch(player->mo, sfx_sawup, PITCH_HALF);
 
   if (player->pendingweapon >= NUMWEAPONS)
   {
@@ -175,9 +175,8 @@ static void P_BringUpWeapon(player_t *player)
 
   // killough 12/98: prevent pistol from starting visibly at bottom of screen:
   player->psprites[ps_weapon].sy2 = // [Nugget]
-  player->psprites[ps_weapon].sy  = demo_version >= 203
-                                    ? WEAPONBOTTOM+FRACUNIT*2
-                                    : WEAPONBOTTOM;
+  player->psprites[ps_weapon].sy = demo_version >= DV_MBF ? 
+    WEAPONBOTTOM+FRACUNIT*2 : WEAPONBOTTOM;
 
   // [Nugget]: [crispy] squat down weapon sprite
   player->psprites[ps_weapon].dy = 0;
@@ -395,7 +394,6 @@ boolean P_CheckAmmo(player_t *player)
       player->pendingweapon = P_SwitchWeapon(player);      // phares
       // Now set appropriate weapon overlay.
       P_SetPsprite(player,ps_weapon,weaponinfo[player->readyweapon].downstate);
-      player->switching = weapswitch_lowering;
     }
 
 #if 0 /* PROBABLY UNSAFE */
@@ -566,7 +564,7 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
     P_SetMobjState(player->mo, S_PLAY);
 
   if (player->readyweapon == wp_chainsaw && psp->state == &states[S_SAW])
-    S_StartSound(player->mo, sfx_sawidl);
+    S_StartSoundPitch(player->mo, sfx_sawidl, PITCH_HALF);
 
   // check for change
   //  if player is dead, put the weapon away
@@ -639,7 +637,6 @@ void A_CheckReload(player_t *player, pspdef_t *psp)
     // for us later on.
     boom_weapon_state_injection = true;
     P_SetPsprite(player, ps_weapon, weaponinfo[player->readyweapon].downstate);
-    player->switching = weapswitch_lowering;
   }
 }
 
@@ -723,7 +720,7 @@ static void A_FireSomething(player_t* player,int adder)
 
   // killough 3/27/98: prevent recoil in no-clipping mode
   if (!(player->mo->flags & MF_NOCLIP))
-    if (weapon_recoil && (demo_version >= 203 || !compatibility))
+    if (weapon_recoil && (demo_version >= DV_MBF || !compatibility))
       P_Thrust(player, ANG180 + player->mo->angle,
                2048*recoil_values[player->readyweapon].thrust);          // phares
 }
@@ -768,7 +765,7 @@ void A_Punch(player_t *player, pspdef_t *psp)
 
     do {
       // killough 8/2/98: make autoaiming prefer enemies
-      const int mask = (demo_version < 203) ? 0 : MF_FRIEND;
+      const int mask = (demo_version < DV_MBF) ? 0 : MF_FRIEND;
       angle = player->mo->angle + ANG20 - (ANG2 * i);
 
       if (vertical_aiming == VERTAIM_DIRECT)
@@ -807,7 +804,7 @@ void A_Punch(player_t *player, pspdef_t *psp)
   }
   else {
     // killough 8/2/98: make autoaiming prefer enemies
-    if (demo_version<203 ||
+    if (demo_version < DV_MBF ||
         (slope = P_AimLineAttack(player->mo, angle, range, MF_FRIEND),
          !linetarget))
     {
@@ -860,7 +857,7 @@ void A_Saw(player_t *player, pspdef_t *psp)
   }
   else {
     // killough 8/2/98: make autoaiming prefer enemies
-    if (demo_version<203 ||
+    if (demo_version < DV_MBF ||
         (slope = P_AimLineAttack(player->mo, angle, range, MF_FRIEND),
          !linetarget))
     {
@@ -877,11 +874,11 @@ void A_Saw(player_t *player, pspdef_t *psp)
 
   if (!linetarget)
     {
-      S_StartSound(player->mo, sfx_sawful);
+      S_StartSoundPitch(player->mo, sfx_sawful, PITCH_HALF);
       return;
     }
 
-  S_StartSound(player->mo, sfx_sawhit);
+  S_StartSoundPitch(player->mo, sfx_sawhit, PITCH_HALF);
 
   // turn to face target
   // [Nugget]
@@ -1038,7 +1035,7 @@ static void P_BulletSlope(mobj_t *mo)
   angle_t an = mo->angle;    // see which target is to be aimed at
 
   // killough 8/2/98: make autoaiming prefer enemies
-  int mask = demo_version < 203 ? 0 : MF_FRIEND;
+  int mask = demo_version < DV_MBF ? 0 : MF_FRIEND;
 
   if (vertical_aiming == VERTAIM_DIRECT) // [Nugget] Vertical aiming
   { bulletslope = mo->player->slope; }
@@ -1231,8 +1228,8 @@ void A_BFGSpray(mobj_t *mo)
 
       // killough 8/2/98: make autoaiming prefer enemies
       // [Nugget] Double Autoaim range
-      if (demo_version < 203 ||
-          (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), MF_FRIEND),
+      if (demo_version < DV_MBF || 
+          (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), MF_FRIEND), 
            !linetarget))
         P_AimLineAttack(mo->target, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
 
@@ -1442,7 +1439,7 @@ void P_MovePsprites(player_t *player)
       // [FG] center the weapon sprite horizontally and push up vertically
       else if (player->attackdown && center_weapon_strict & WEAPON_CENTERED) // [Nugget] Horizontal weapon centering
       {
-        psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first person sprite centering
+        psp->sx2 = (1 - STRICTMODE(sx_fix)) * FRACUNIT; // [Nugget] Correct first person sprite centering
         if (center_weapon_strict == WEAPON_CENTERED) // [Nugget] Horizontal weapon centering
           psp->sy2 = WEAPONTOP;
       }

@@ -458,11 +458,15 @@ void P_LoadThings (int lump)
       P_SpawnMapThing (mt);
     }
 
-  // [Nugget] Reset milestones
+  // [Nugget] Reset milestones / ---------------------------------------------
+
   if (totalkills) { complete_milestones &= ~MILESTONE_KILLS; }
   else            { complete_milestones |=  MILESTONE_KILLS; }
+
   if (totalitems) { complete_milestones &= ~MILESTONE_ITEMS; }
   else            { complete_milestones |=  MILESTONE_ITEMS; }
+
+  // [Nugget] ---------------------------------------------------------------/
 
   Z_Free (data);
 }
@@ -1411,7 +1415,7 @@ void P_RemoveSlimeTrails(void)                // killough 10/98
 		    v->r_y = (fixed_t)((dy2 * y0 + dx2 * y1 + dxy * (x0 - x1)) / s);
 
 		    // [FG] override actual vertex coordinates except in compatibility mode
-		    if (demo_version >= 203)
+		    if (demo_version >= DV_MBF)
 		    {
 		      v->x = v->r_x;
 		      v->y = v->r_y;

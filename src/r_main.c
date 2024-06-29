@@ -617,7 +617,7 @@ void R_SmoothLight(void)
 
 int R_GetLightIndex(fixed_t scale)
 {
-  const int index = FixedDiv(scale * 160, lightfocallength) >> LIGHTSCALESHIFT;
+  const int index = ((int64_t)scale * (160 << FRACBITS) / lightfocallength) >> LIGHTSCALESHIFT;
   return BETWEEN(0, MAXLIGHTSCALE - 1, index);
 }
 
@@ -636,6 +636,11 @@ static void R_SetupFreelook(void)
   else
   {
     dy = 0;
+  }
+
+  if (STRICTMODE(st_crispyhud) && !(WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION)))
+  {
+    dy += (nughud.viewoffset * viewheight / SCREENHEIGHT) << FRACBITS;
   }
 
   centery = viewheight / 2 + (dy >> FRACBITS);
@@ -806,7 +811,7 @@ void R_ExecuteSetViewSize (void)
     { fx += fovfx[i].current; }
 
     r_fov = (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
-           ? MAX(140, custom_fov) : custom_fov + fx;
+            ? MAX(140, custom_fov) : custom_fov + fx;
   }
 
   centerxfrac = (viewwidth << FRACBITS) / 2;
@@ -831,7 +836,15 @@ void R_ExecuteSetViewSize (void)
   while (FixedMul(pspriteiscale, pspritescale) < FRACUNIT)
     pspriteiscale++;
 
-  skyiscale = FixedDiv(160 << FRACBITS, focallength);
+  // [Nugget] Use `r_fov` instead of `custom_fov`
+  if (r_fov == FOV_DEFAULT)
+  {
+    skyiscale = FixedDiv(SCREENWIDTH, viewwidth_nonwide);
+  }
+  else
+  {
+    skyiscale = tan(r_fov * M_PI / 360.0) * SCREENWIDTH / viewwidth_nonwide * FRACUNIT;
+  }
 
   for (i=0 ; i<viewwidth ; i++)
     {
@@ -866,7 +879,7 @@ void R_ExecuteSetViewSize (void)
     }
 
   // [crispy] forcefully initialize the status bar backing screen
-  ST_refreshBackground(true);
+  ST_refreshBackground();
 
   pspr_interp = false;
 }
@@ -1025,16 +1038,7 @@ void R_SetupFrame (player_t *player)
 
     basepitch = pitch = 0;
   }
-  else {
-    target_interangle = viewangle;
-
-    // NUGHUD
-    if (STRICTMODE(st_crispyhud)) {
-      angle_t viewoffset = nughud.viewoffset * ANG1/2;
-      basepitch += viewoffset;
-          pitch += viewoffset;
-    }
-  }
+  else { target_interangle = viewangle; }
 
   // Explosion shake effect
   chasecamheight = chasecam_height * FRACUNIT;
@@ -1297,7 +1301,8 @@ void R_RenderPlayerView (player_t* player)
 "/////////////////hffed\211de////////////////////"[i];
           c[i] = t=='/' ? color : t;
         }
-      if (gametic-lastshottic < TICRATE*2 && gametic-lastshottic > TICRATE/8)
+      if (gametic-lastshottic < TICRATE*2 && gametic-lastshottic > TICRATE/8
+          && !no_killough_face) // [Nugget]
         V_DrawBlock(scaledviewx +  scaledviewwidth/2 - 24,
                     scaledviewy + scaledviewheight/2 - 24, 47, 47, c);
       R_DrawViewBorder();

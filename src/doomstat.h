@@ -50,7 +50,6 @@ extern  int screenblocks;     // killough 11/98
 
 extern GameMode_t gamemode;
 extern GameMission_t gamemission;
-extern GameVariant_t gamevariant;
 
 // [FG] emulate a specific version of Doom
 extern GameVersion_t gameversion;
@@ -93,14 +92,26 @@ typedef struct {
 
 extern overflow_t overflow[EMU_TOTAL];
 
-extern int demo_version;           // killough 7/19/98: Version of demo
+typedef enum {
+  DV_NONE    = -1,
+  DV_VANILLA = 109,
+  DV_LONGTIC = 111,
+  DV_BOOM200 = 200,
+  DV_BOOM201 = 201,
+  DV_BOOM    = 202,
+  DV_MBF     = 203,
+  DV_MBF21   = 221,
+  DV_UM      = 255,
+} demo_version_t;
+
+extern demo_version_t demo_version;           // killough 7/19/98: Version of demo
 
 // Only true when playing back an old demo -- used only in "corner cases"
 // which break playback but are otherwise unnoticable or are just desirable:
 
-#define demo_compatibility (demo_version < 200) /* killough 11/98: macroized */
+#define demo_compatibility (demo_version < DV_BOOM200) /* killough 11/98: macroized */
 
-#define mbf21 (demo_version == 221)
+#define mbf21 (demo_version == DV_MBF21)
 
 // killough 7/19/98: whether monsters should fight against each other
 extern int monster_infighting, default_monster_infighting;
@@ -551,7 +562,17 @@ extern int sx_fix; // CFG-Only
 extern int announce_milestones;
 extern int show_save_messages; // CFG-Only
 extern int show_ssg; // CFG-Only
-extern int hud_kills_percentage;
+
+enum {
+  STATSFORMAT_RATIO = 1,
+  STATSFORMAT_BOOLEAN,
+  STATSFORMAT_PERCENTAGE,
+  STATSFORMAT_REMAINING,
+};
+extern int hud_stats_format;
+extern int hud_stats_format_map;
+extern int hud_stats_icons;
+
 extern int alt_arms;
 
 typedef enum {
@@ -571,14 +592,6 @@ extern int hudcolor_event_timer;
 extern int hudcolor_kills;
 extern int hudcolor_items;
 extern int hudcolor_secrets;
-// [Cherry] --------------------------------------------------------------
-extern int hudcolor_attempts;
-extern int hudcolor_attempts_count;
-extern int hudcolor_movement;
-extern int hudcolor_weapons;
-extern int hudcolor_keys;
-extern int hudcolor_frag;
-// [Cherry] End ----------------------------------------------------------
 extern int hudcolor_ms_incomp;
 extern int hudcolor_ms_comp;
 // [Cherry] --------------------------------------------------------------
@@ -619,7 +632,10 @@ enum {
 
 extern int menu_backdrop_darkening;
 extern int automap_overlay_darkening;
+extern int no_killough_face;
 extern int sp_chat;
+
+extern int fail_safe;
 
 // Doom Compatibility (CFG-Only) ------
 
@@ -630,6 +646,7 @@ extern int comp_lscollision;
 extern int comp_lsamnesia;
 extern int comp_fuzzyblood;
 extern int comp_nonbleeders;
+extern int comp_faceshadow;
 extern int comp_iosdeath;
 extern int comp_choppers;
 
@@ -643,8 +660,6 @@ extern int comp_godface;
 extern int comp_deadoof;
 extern int comp_unusedpals;
 extern int comp_keypal;
-
-extern int fail_safe; // CFG-Only
 
 // [Nugget] -----------------------------------------------------------------/
 
