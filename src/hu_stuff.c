@@ -648,6 +648,8 @@ boolean hud_automap;  // [Nugget] Condition used for level title
 
 // [Nugget] -----------------------------------------------------------------/
 
+void WI_BuildWidgets(void); // [Cherry]
+
 void HU_Start(void)
 {
   int i;
@@ -861,6 +863,12 @@ void HU_Start(void)
   // [Nugget] Minimap: height of Messages widget may've changed,
   // so relocate the minimap if prudent
   if (automapactive == AM_MINI) { AM_Start(); }
+  
+  // [Cherry] rebuild intermission screen widgets to prevent them from disappearing
+  if (gamestate == GS_INTERMISSION)
+  {
+      WI_BuildWidgets();
+  }
 }
 
 static void HU_widget_build_title (void)
@@ -1932,25 +1940,6 @@ int hud_time[NUMTIMERS]; // [Nugget] Support more event timers
 
 int hud_attempt_counter, hud_movement; // [Cherry]
 
-// [Cherry]
-// HU_UpdateWidgetFont
-//
-void HU_UpdateWidgetFont(void)
-{
-  if ((automapactive == AM_FULL && hud_widget_font == 1) || 
-      (automapactive != AM_FULL && hud_widget_font == 2) ||
-      hud_widget_font == 3)
-  {
-    boom_font = &big_font;
-    CR_BLUE = CR_BLUE2;
-  }
-  else
-  {
-    boom_font = &sml_font;
-    CR_BLUE = CR_BLUE1;
-  }
-}
-
 //
 // HU_Drawer()
 //
@@ -1983,42 +1972,45 @@ void HU_Drawer(void)
   }
 }
 
+int inter_health_armor, inter_weapons; // [Cherry]
+
 // [FG] draw Time widget on intermission screen
-void WI_DrawTimeWidget(void)
+// [Cherry] + attempts, health, armor and weapons
+void WI_DrawWidgets(void)
 {
-  const hu_widget_t w = {&w_sttime, align_left, align_top};
+  HUlib_reset_align_offsets();
 
   if (hud_level_time & HUD_WIDGET_HUD)
   {
-    HUlib_reset_align_offsets();
-    // [Cherry] allowed the font to change during intermission so an update is necessary
-    HU_widget_build_sttime();
+    const hu_widget_t w = { &w_sttime, align_left, align_top };
+    HUlib_draw_widget(&w);
+  }
+
+  if (hud_attempt_counter & HUD_WIDGET_HUD)
+  {
+    const hu_widget_t w = { &w_attempts, align_left, align_top };
+    HUlib_draw_widget(&w);
+  }
+
+  if (inter_health_armor)
+  {
+    const hu_widget_t w1 = { &w_health, align_left, align_top };
+    const hu_widget_t w2 = { &w_armor,  align_left, align_top };
+    HUlib_draw_widget(&w1);
+    HUlib_draw_widget(&w2);
+  }
+
+  if (inter_weapons)
+  {
+    const hu_widget_t w = { &w_weapon, align_left, align_top };
     HUlib_draw_widget(&w);
   }
 }
 
-int wi_more_widgets;
-
-// [Cherry] Draw attempts, health, armor and weapons on intermission screen
-void WI_DrawMoreWidgets(void)
-{
-  hu_widget_t w1 = { &w_attempts, align_left, align_top };
-  hu_widget_t w2 = { &w_health, align_left, align_top };
-  hu_widget_t w3 = { &w_armor, align_left, align_top };
-  hu_widget_t w4 = { &w_weapon, align_left, align_top };
-
-  if (wi_more_widgets)
-  {
-    HUlib_draw_widget(&w1);
-    HUlib_draw_widget(&w2);
-    HUlib_draw_widget(&w3);
-    HUlib_draw_widget(&w4);
-  }
-}
-
 // [Cherry]
-void WI_BuildMoreWidgets(void)
+void WI_BuildWidgets(void)
 {
+  HU_widget_rebuild_sttime();
   HU_widget_build_attempts();
   HU_widget_build_health();
   HU_widget_build_armor();
@@ -2075,7 +2067,18 @@ void HU_Ticker(void)
   draw_crispy_hud = false;
 
   // [Nugget] Minimap
-  HU_UpdateWidgetFont();
+  if ((automapactive == AM_FULL && hud_widget_font == 1) || 
+      (automapactive != AM_FULL && hud_widget_font == 2) ||
+      hud_widget_font == 3)
+  {
+    boom_font = &big_font;
+    CR_BLUE = CR_BLUE2;
+  }
+  else
+  {
+    boom_font = &sml_font;
+    CR_BLUE = CR_BLUE1;
+  }
 
   // wait a few tics before sending a backspace character
   if (bsdown && bscounter++ > 9)

@@ -2189,11 +2189,8 @@ void WI_loadData(void)
 //
 void WI_Drawer (void)
 {
-  extern void HU_UpdateWidgetFont(void); // [Cherry]
-  extern void WI_DrawTimeWidget(void);
-  extern void WI_DrawMoreWidgets(void); // [Cherry]
+  extern void WI_DrawWidgets(void);
 
-  HU_UpdateWidgetFont();
   HUlib_reset_align_offsets();
 
   switch (state)
@@ -2207,9 +2204,7 @@ void WI_Drawer (void)
         else
           WI_drawStats();
       // [FG] draw Time widget on intermission screen
-      WI_DrawTimeWidget();
-      // [Cherry] draw health, armor and weapons on intermission screen
-      WI_DrawMoreWidgets();
+      WI_DrawWidgets();
       break;
 
     case ShowNextLoc:
@@ -2286,7 +2281,6 @@ static void WI_initVariables(wbstartstruct_t* wbstartstruct)
 void WI_Start(wbstartstruct_t* wbstartstruct)
 {
   extern void HU_Start(void); // [Cherry]
-  extern void WI_BuildMoreWidgets(void); // [Cherry]
 
   WI_initVariables(wbstartstruct);
 
@@ -2295,9 +2289,7 @@ void WI_Start(wbstartstruct_t* wbstartstruct)
 
   WI_loadData();
 
-  // [Cherry] Update weapons widget line number
-  HU_Start();
-  WI_BuildMoreWidgets();
+  HU_Start(); // [Cherry] Update weapons widget line number, build widgets
 
   if (deathmatch)
     WI_initDeathmatchStats();

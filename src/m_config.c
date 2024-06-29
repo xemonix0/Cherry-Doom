@@ -3802,10 +3802,17 @@ default_t defaults[] = {
   },
 
   { // [Cherry]
-    "wi_more_widgets",
-    (config_t *)&wi_more_widgets, NULL,
-    {1}, {0,1}, number, ss_stat, wad_no,
-    "show Health, Armor and Weapons widgets on intermission screen"
+    "inter_health_armor",
+    (config_t *) &inter_health_armor, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "show Health and Armor widgets on intermission screen"
+  },
+
+  { // [Cherry]
+    "inter_weapons",
+    (config_t *) &inter_weapons, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "show Weapons widget on intermission screen"
   },
 
   { // [Nugget] Crosshair toggle

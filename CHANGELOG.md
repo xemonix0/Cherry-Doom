@@ -11,7 +11,9 @@ None.
 	- [**3.0.0**](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.0.0);
 	- [**3.1.0**](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.1.0).
 - **Removed Motion Blur**
+- **Introduced separate options for Health + Armor and Weapons widgets on the intermission screen**
 
 ## Bug Fixes
 
 - **Fixed attempts incrementing when playing demos**
+- **Fixed widgets disappearing from the intermission screen when exiting setup menus**

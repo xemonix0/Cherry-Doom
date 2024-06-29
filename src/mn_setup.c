@@ -1776,7 +1776,12 @@ static setup_menu_t stat_settings7[] =
 
     {"Show Attempt Counter", S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_attempt_counter"}, m_null, input_null, str_show_widgets},
     {"Show Player Movement", S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_movement"}, m_null, input_null, str_show_widgets},
-    {"More Widgets On Intermission Screen", S_ONOFF, M_X, M_SPC, {"wi_more_widgets"}},
+
+  MI_GAP,
+  {"Cherry - Intermission Screen Widgets", S_SKIP|S_TITLE, M_X, M_SPC},
+
+    {"Health & Armor", S_ONOFF|S_COSMETIC, M_X, M_SPC, {"inter_health_armor"}},
+    {"Weapons",        S_ONOFF|S_COSMETIC, M_X, M_SPC, {"inter_weapons"}},
 
   MI_GAP,
   {"Cherry - Threshold Colors", S_SKIP|S_TITLE, M_X, M_SPC},

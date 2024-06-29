@@ -81,7 +81,8 @@ extern int hud_player_coords, hud_level_stats, hud_level_time;
 extern int hud_power_timers; // [Nugget] Powerup timers
 extern int hud_time[NUMTIMERS]; // [Nugget] Support more event timers
 extern int hud_attempt_counter, hud_movement; // [Cherry]
-extern int wi_more_widgets; // [Cherry]
+extern int inter_health_armor; // [Cherry]
+extern int inter_weapons; // [Cherry]
 extern int hud_widget_font;
 extern int hud_widescreen_widgets;
 extern int hud_widget_layout;
