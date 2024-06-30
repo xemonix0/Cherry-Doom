@@ -575,6 +575,7 @@ extern int hud_stats_format;
 extern int hud_stats_format_map;
 extern int hud_stats_icons;
 
+extern int hud_highlight_weapon;
 extern int alt_arms;
 
 typedef enum {

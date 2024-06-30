@@ -204,6 +204,7 @@ int show_ssg; // CFG-Only
 int hud_stats_format;
 int hud_stats_format_map;
 int hud_stats_icons;
+int hud_highlight_weapon;
 int alt_arms;
 int hud_time_teleport;
 int hud_time_keypickup;

@@ -2,6 +2,7 @@
 
 - **_Freecam_**
 - **_Prev/Next [Weapon Buttons] Skip Ammoless Weapons_** setting
+- **_Highlight Current/Pending Weapon_** setting
 - **_'BABYMODE'_ cheat**, to toggle ITYTD benefits
 - **Setting to play `DSNOWAY` instead of `DSOOF` when failing to use key-locked triggers**
 

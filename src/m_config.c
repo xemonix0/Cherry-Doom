@@ -3483,19 +3483,30 @@ default_t defaults[] = {
     "1 for solid color status bar background in widescreen mode"
   },
 
-  { // [Nugget]
+  // [Nugget] /---------------------------------------------------------------
+
+  {
     "show_ssg",
     (config_t *) &show_ssg, NULL,
     {1}, {0,1}, number, ss_none, wad_yes,
     "1 to show SSG availability in the Shotgun slot of the arms widget"
   },
 
-  { // [Nugget]
+  {
+    "hud_highlight_weapon",
+    (config_t *) &hud_highlight_weapon, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to highlight the current/pending weapon on the status bar"
+  },
+
+  {
     "alt_arms",
     (config_t *) &alt_arms, NULL,
-    {0}, {0,1}, number, ss_none, wad_yes,
+    {0}, {0,1}, number, ss_stat, wad_yes,
     "1 to enable alternative Arms widget display"
   },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   { // [Alaux]
     "hud_animated_counts",

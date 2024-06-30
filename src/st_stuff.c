@@ -801,7 +801,6 @@ void ST_updateWidgets(void)
       else
         st_fragscount -= plyr->frags[i];
     }
-
 }
 
 // [Alaux]
@@ -1239,16 +1238,67 @@ void ST_drawWidgets(void)
     }
   }
 
-  // [Nugget] Highlight Arms #1 only if the player has Berserk
+  // [Nugget] /===============================================================
+  
+  // Highlight Arms #1 only if the player has Berserk
   st_berserk = plyr->powers[pw_strength] ? true : false;
 
-  // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
+  // [crispy] show SSG availability in the Shotgun slot of the arms widget
   st_shotguns = plyr->weaponowned[wp_shotgun] | plyr->weaponowned[wp_supershotgun];
 
+  // Highlight current/pending weapon ----------------------------------------
+
+  for (i = 0;  i < 9;  i++)
+  {
+    w_arms[i].data = 0;
+  }
+
+  if (hud_highlight_weapon)
+  {
+    const weapontype_t weapon = plyr->pendingweapon != wp_nochange
+                                ? plyr->pendingweapon : plyr->readyweapon;
+    int index;
+
+    if (st_crispyhud)
+    {
+      if (weapon == wp_chainsaw && nughud.arms[7].x == -1)
+      {
+        index = 0;
+      }
+      else if (weapon == wp_supershotgun && nughud.arms[8].x == -1)
+      {
+        index = 2;
+      }
+      else { index = weapon; }
+    }
+    else {
+      if (alt_arms && (weapon == wp_chainsaw || weapon == wp_supershotgun))
+      {
+        if (weapon == wp_chainsaw && have_ssg)
+        {
+          index = -1; // Don't highlight anything
+        }
+        else { index = 5; }
+      }
+      else if (weapon == wp_supershotgun)
+      {
+        index = 1;
+      }
+      else { index = weapon - 1 - alt_arms; }
+    }
+
+    if (0 <= index && index < 9) { w_arms[index].data = 2997; }
+  }
+
+  // [Nugget] ===============================================================/
+  
   // [Nugget] NUGHUD
-  if (st_crispyhud) {
+  if (st_crispyhud)
+  {
     for (i = 0;  i < 9;  i++)
+    {
       if (nughud.arms[i].x > -1) { STlib_updateMultIcon(&w_arms[i]); }
+    }
   }
   else
     for (i=0; i<6; i++)
@@ -1706,6 +1756,7 @@ void ST_createWidgets(void)
                 NUGHUDALIGN(nughud.ammo.align));
 
   w_ready.isready = true;
+
   /*
   // the last weapon type
   w_ready.data = plyr->readyweapon;
