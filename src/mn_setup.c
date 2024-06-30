@@ -1408,9 +1408,10 @@ static setup_menu_t weap_settings3[] =
 {
   {"Nugget - Gameplay", S_SKIP|S_TITLE, M_X, M_SPC},
 
-    {"Physical Recoil",       S_ONOFF,                     M_X, M_SPC, {"weapon_recoil"}}, // Restored Weapon Recoil menu item
-    {"No Horizontal Autoaim", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"no_hor_autoaim"}},
-    {"Switch on Pickup",      S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"switch_on_pickup"}},
+    {"Physical Recoil",                 S_ONOFF,                     M_X, M_SPC, {"weapon_recoil"}}, // Restored Weapon Recoil menu item
+    {"No Horizontal Autoaim",           S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"no_hor_autoaim"}},
+    {"Switch on Pickup",                S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"switch_on_pickup"}},
+    {"Prev/Next Skip Ammoless Weapons", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"skip_ammoless_weapons"}},
 
   MI_GAP,
   {"Nugget - Cosmetic", S_SKIP|S_TITLE, M_X, M_SPC},

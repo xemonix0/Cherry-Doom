@@ -186,6 +186,7 @@ int a11y_invul_colormap;
 
 int no_hor_autoaim;
 int switch_on_pickup;
+int skip_ammoless_weapons;
 int always_bob; // CFG-Only
 int bobbing_style;
 int weapon_inertia;

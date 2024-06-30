@@ -85,6 +85,9 @@
 #include "wi_stuff.h"
 #include "z_zone.h"
 
+// [Nugget]
+#include "d_items.h"
+
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
 
@@ -305,6 +308,19 @@ static boolean WeaponSelectable(weapontype_t weapon)
     {
         return false;
     }
+
+    // [Nugget] /-------------------------------------------------------------
+
+    const weaponinfo_t *const info = &weaponinfo[weapon];
+
+    if (CASUALPLAY(skip_ammoless_weapons)
+        && players[consoleplayer].ammo[info->ammo] < info->ammopershot
+        && !(players[consoleplayer].cheats & CF_INFAMMO))
+    {
+        return false;
+    }
+
+    // [Nugget] -------------------------------------------------------------/
 
     return true;
 }

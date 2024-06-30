@@ -1082,6 +1082,13 @@ default_t defaults[] = {
   },
 
   {
+    "skip_ammoless_weapons",
+    (config_t *) &skip_ammoless_weapons, NULL,
+    {0}, {0,1}, number, ss_weap, wad_no,
+    "1 to make previous/next-weapon buttons skip weapons with insufficient ammo"
+  },
+
+  {
     "always_bob",
     (config_t *) &always_bob, NULL,
     {1}, {0,1}, number, ss_none, wad_no,
