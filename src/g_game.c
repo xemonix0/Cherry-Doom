@@ -1081,7 +1081,7 @@ static void G_DoLoadLevel(void)
         }
     }
 
-  // [Nugget] ----------------------------------------------------------------
+  // [Nugget] ================================================================
 
   // Rewind
   G_SetRewindCountdown(0);
@@ -1092,13 +1092,17 @@ static void G_DoLoadLevel(void)
     minimap_was_on = false;
   }
 
+  // Clear visual effects
+  R_ClearFOVFX();
+  R_SetShake(-1);
+
   // Alt. intermission background
   if (WI_UsingAltInterpic()) {
     R_SetViewSize(screenblocks);
     R_ExecuteSetViewSize();
   }
 
-  // Freecam
+  // Freecam -----------------------------------------------------------------
 
   R_UpdateFreecamMobj(NULL);
 
@@ -4378,10 +4382,6 @@ void G_InitNew(skill_t skill, int episode, int map)
   gameskill = skill;
   gamemapinfo = G_LookupMapinfo(gameepisode, gamemap);
 
-  // [Nugget] Clear visual effects
-  R_ClearFOVFX();
-  R_SetShake(-1);
-
   // [FG] total time for all completed levels
   totalleveltimes = 0;
   playback_tic = 0;
@@ -4394,9 +4394,9 @@ void G_InitNew(skill_t skill, int episode, int map)
   if (demo_version == DV_MBF)
     G_MBFComp();
 
-  G_DoLoadLevel();
-
   D_NuggetUpdateCasual(); // [Nugget]
+
+  G_DoLoadLevel();
 }
 
 //
