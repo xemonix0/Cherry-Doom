@@ -155,7 +155,6 @@ extern void R_SetZoom(const int state);
 
 // [Nugget] Explosion shake effect
 extern void R_SetShake(int value);
-extern void R_DamageShake(int damage); // [Cherry]
 extern void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range);
 
 void R_InitLightTables(void);                // killough 8/9/98

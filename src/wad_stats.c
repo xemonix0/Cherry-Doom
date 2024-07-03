@@ -250,7 +250,6 @@ static boolean LoadWadStats(void)
         return false;
     }
 
-    boolean success = true;
     char **lines = M_StringSplit(buffer, "\n\r");
     if (!lines || !lines[0])
     {

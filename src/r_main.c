@@ -210,24 +210,17 @@ void R_SetZoom(const int state)
 // [Nugget] Explosion shake effect /------------------------------------------
 
 static fixed_t shake;
+#define MAXSHAKE 50
 
 void R_SetShake(int value)
 {
-  if (strictmode || value == -1)
+  if (strictmode || !explosion_shake || value == -1)
   {
     shake = 0;
     return;
   }
 
-  shake = MIN(shake + value, max_shake);
-}
-
-// [Cherry]
-void R_DamageShake(int damage)
-{
-  if (strictmode || !damage_shake) { return; }
-
-  R_SetShake(damage);
+  shake = MIN(shake + value, MAXSHAKE);
 }
 
 void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
@@ -251,7 +244,7 @@ void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
 
   if (dist >= range) { return; }
 
-  R_SetShake((force * (range - dist) / range) / ((128 / max_shake) * SHAKERANGEMULT));
+  R_SetShake((force * (range - dist) / range) / ((128 / MAXSHAKE) * SHAKERANGEMULT));
 
   #undef SHAKERANGEMULT
 }
@@ -1050,7 +1043,7 @@ void R_SetupFrame (player_t *player)
     {
       static int oldtime = -1;
       
-      #define CALCSHAKE (((Woof_Random() - 128) % 3) * FRACUNIT) * shake / max_shake
+      #define CALCSHAKE (((Woof_Random() - 128) % 3) * FRACUNIT) * shake / MAXSHAKE
       xofs = CALCSHAKE;
       yofs = CALCSHAKE;
       zofs = CALCSHAKE;

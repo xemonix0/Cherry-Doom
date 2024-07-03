@@ -789,20 +789,6 @@ default_t defaults[] = {
     "1 to make explosions shake the view"
   },
 
-  { // [Cherry]
-    "damage_shake",
-    (config_t *) &damage_shake, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to shake the view when taking damage"
-  },
-
-  { // [Cherry]
-    "max_shake",
-    (config_t *) &max_shake, NULL,
-    {50}, {0,100}, number, ss_gen, wad_no,
-    "Max shake effect intensity"
-  },
-
   {
     "breathing",
     (config_t *) &breathing, NULL,

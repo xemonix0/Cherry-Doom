@@ -15,6 +15,8 @@ None.
 - **Changed setup menu label colors**:
 	- _Selected setup menu tabs are now green_;
 	- _Setup menu titles are now red_.
+- **Removed damage shake effect**, in favor of _flinching_
+- **Removed View Shake Intensity setting**
 
 ## Bug Fixes
 

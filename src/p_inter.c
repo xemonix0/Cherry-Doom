@@ -1086,10 +1086,6 @@ void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage
       else
       if (player->damagecount > 100)
         player->damagecount = 100;  // teleport stomp does 10k points...
-
-      // [Cherry] Damage shake effect
-      if (&players[displayplayer] == player)
-        R_DamageShake(player->damagecount);
 #if 0
       // killough 11/98:
       // This is unused -- perhaps it was designed for

@@ -495,8 +495,6 @@ enum {
 }; extern int flinching;
 
 extern int explosion_shake;
-extern int damage_shake;
-extern int max_shake;
 extern int breathing;
 extern int teleporter_zoom;
 extern int death_camera;

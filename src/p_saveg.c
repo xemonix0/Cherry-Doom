@@ -1039,7 +1039,7 @@ static void saveg_read_player_t(player_t *str)
       return;
     }
 
-    if (saveg_compat == saveg_cherry100)
+    if (saveg_compat == saveg_cherry100) // [Cherry]
     {
       saveg_read32(); // int screenshake; // removed in 1.0.1
     }

@@ -149,8 +149,6 @@ int jump_crouch;
 int viewheight_value;
 int flinching;
 int explosion_shake;
-int damage_shake; // [Cherry]
-int max_shake; // [Cherry]
 int breathing;
 int teleporter_zoom;
 int death_camera;

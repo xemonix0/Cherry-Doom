@@ -2752,8 +2752,6 @@ static void ChangeViewHeight(void)
   oldviewheight = viewheight_value;
 }
 
-void UpdateScreenShakeItem(void); // [Cherry]
-
 static const char *over_under_strings[] = {
   "Off", "Player Only", "All Things", NULL
 };
@@ -2778,9 +2776,7 @@ setup_menu_t gen_settings7[] = {
 
     {"View Height",                   S_NUM   |S_STRICT,       M_X,       M_SPC,      {"viewheight_value"}, m_null, input_null, str_empty, ChangeViewHeight},
     {"Flinch upon",                   S_CHOICE|S_STRICT,       M_X,       M_SPC,      {"flinching"}, m_null, input_null, str_flinching},
-    {"Explosion Shake Effect",        S_ONOFF |S_STRICT,       M_X,       M_SPC,      {"explosion_shake"}, m_null, input_null, str_empty, UpdateScreenShakeItem},
-    {"Damage Shake Effect",           S_ONOFF |S_STRICT,       M_X,       M_SPC,      {"damage_shake"}, m_null, input_null, str_empty, UpdateScreenShakeItem}, // [Cherry]
-    {"Max Shake Intensity",           S_NUM   |S_STRICT|S_PCT, M_X,       M_SPC,      {"max_shake"}}, // [Cherry]
+    {"Explosion Shake Effect",        S_ONOFF |S_STRICT,       M_X,       M_SPC,      {"explosion_shake"},},
     {"Subtle Idle Bobbing/Breathing", S_ONOFF |S_STRICT,       M_X,       M_SPC,      {"breathing"}},
     {"Teleporter Zoom",               S_ONOFF |S_STRICT,       M_X,       M_SPC,      {"teleporter_zoom"}},
     {"Death Camera",                  S_ONOFF |S_STRICT,       M_X,       M_SPC,      {"death_camera"}},
@@ -2790,10 +2786,6 @@ setup_menu_t gen_settings7[] = {
 
   MI_END
 };
-
-void UpdateScreenShakeItem(void) {
-  DisableItem(!(damage_shake || explosion_shake), gen_settings7, "max_shake");
-}
 
 static const char *fake_contrast_strings[] = {
   "Off", "Smooth", "Vanilla", NULL
@@ -4446,10 +4438,8 @@ void MN_SetupResetMenu(void)
                 enem_settings1, "extra_gibbing");
 
     UpdatePaletteItems();
-    UpdateScreenShakeItem();
     UpdateMultiLineMsgItem();
 
     // [Cherry] ----------------------------------------------------------------
-
     UpdateDarkeningItems();
 }

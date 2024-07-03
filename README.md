@@ -25,12 +25,7 @@ Although the new code has been written with the intention of not breaking demo c
 Note that this feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features); read the latter for more details.
 Some features were first introduced in Cherry Doom and later merged into Nugget Doom, and so they're not listed here anymore.
 
-Some of Cherry Doom's features come from other sources, like other source ports, mods or games. The initial implementations for some are **(partially) ported from ((p.)p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
-
-### General
-
-- **Damage shake effect** setting [i.b. Doom Retro]
-- **View shake intensity** setting
+Some of Cherry Doom's features come from other sources, like other source ports, mods or games. The initial implementations for some are **ported from (p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
 
 ### Status Bar/HUD
 
