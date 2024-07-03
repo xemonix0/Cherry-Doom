@@ -26,10 +26,10 @@
 #include "i_glob.h"
 #include "i_printf.h"
 #include "m_array.h"
-#include "m_io.h"
 #include "m_config.h"
+#include "m_io.h"
 #include "w_wad.h"
-#include "ws_wadstats.h" // [Cherry]
+#include "wad_stats.h" // [Cherry]
 
 //
 // I_Quit

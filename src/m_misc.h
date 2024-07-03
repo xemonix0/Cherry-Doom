@@ -36,11 +36,12 @@ void M_StringToLower(char *text);
 char *M_StringDuplicate(const char *orig);
 boolean M_StringCopy(char *dest, const char *src, size_t dest_size);
 boolean M_StringConcat(char *dest, const char *src, size_t dest_size);
-void M_StringCatF(char **dest, const char *format, ...) PRINTF_ATTR(2, 0);
-void M_StringPrintF(char **dest, const char *format, ...) PRINTF_ATTR(2, 0);
+void M_StringConcatF(char **dest, const char *format, ...) PRINTF_ATTR(2, 0); // [Cherry]
+void M_StringPrintF(char **dest, const char *format, ...) PRINTF_ATTR(2, 0);  // [Cherry]
 char *M_StringReplace(const char *haystack, const char *needle,
                       const char *replacement);
 char *M_StringJoin(const char *s, ...);
+char **M_StringSplit(char *s, const char *delim); // [Cherry]
 boolean M_StringEndsWith(const char *s, const char *suffix);
 boolean M_StringCaseEndsWith(const char *s, const char *suffix);
 int M_vsnprintf(char *buf, size_t buf_len, const char *s, va_list args)
@@ -51,6 +52,6 @@ void M_CopyLumpName(char *dest, const char *src);
 char *AddDefaultExtension(char *path, const char *ext);
 boolean M_WriteFile(const char *name, void *source, int length);
 int M_ReadFile(char const *name, byte **buffer);
-int M_ReadFileToString(char const *name, char **buffer);
+int M_ReadFileToString(char const *name, char **buffer); // [Cherry]
 
 #endif

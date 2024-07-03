@@ -91,7 +91,7 @@
 #include <time.h>
 #include "m_nughud.h"
 
-#include "ws_wadstats.h" // [Cherry]
+#include "wad_stats.h" // [Cherry]
 
 // DEHacked support - Ty 03/09/97
 // killough 10/98:
@@ -2777,10 +2777,6 @@ void D_DoomMain(void)
     startloadgame = -1;
   }
 
-  // [Cherry]
-  I_Printf(VB_INFO, "WS_InitWadStats: Setting up wad stats.");
-  WS_InitWadStats();
-
   I_Printf(VB_INFO, "M_Init: Init miscellaneous info.");
   M_Init();
 
@@ -2817,6 +2813,10 @@ void D_DoomMain(void)
 
   I_Printf(VB_INFO, "D_CheckNetGame: Checking network game status.");
   D_CheckNetGame();
+
+  // [Cherry]
+  I_Printf(VB_INFO, "WS_InitWadStats: Setting up WAD stats tracking.");
+  WS_InitWadStats();
 
   G_UpdateSideMove();
   G_UpdateCarryAngle();
@@ -3003,8 +3003,6 @@ void D_DoomMain(void)
       if (autostart || netgame)
 	{
 	  G_InitNew(startskill, startepisode, startmap);
-      // [Cherry] track map stats
-      WS_WadStatsEnterMap();
 	  // [crispy] no need to write a demo header in demo continue mode
 	  if (demorecording && gameaction != ga_playdemo)
 	    G_BeginRecording();

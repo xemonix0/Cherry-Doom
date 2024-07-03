@@ -197,7 +197,6 @@ typedef enum {
   ss_gen,       // killough 10/98
   ss_comp,      // killough 10/98
   ss_max,
-  ss_ltbl,      // [Cherry]
 } ss_types;
 
 // phares 3/20/98:

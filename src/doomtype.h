@@ -101,12 +101,6 @@ typedef byte lighttable_t;
  #define NORETURN
 #endif
 
-#ifdef WIN32
-#define C_DECL __cdecl
-#else
-#define C_DECL
-#endif
-
 // The packed attribute forces structures to be packed into the minimum
 // space necessary.  If this is not done, the compiler may align structure
 // fields differently to optimize memory access, inflating the overall

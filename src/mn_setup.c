@@ -415,7 +415,7 @@ static void BlinkingArrowLeft(setup_menu_t *s)
         {
             strcpy(menu_buffer, "> ");
         }
-    }
+        }
     else
     {
         strcpy(menu_buffer, "> ");
@@ -489,13 +489,17 @@ static void DrawTabs(void)
             x += M_TAB_OFFSET;
         }
 
+        const boolean selected = i == current_page;
+
         menu_buffer[0] = '\0';
         strcpy(menu_buffer, tabs[i].text);
-        DrawMenuStringEx(tabs[i].flags, x, rect->y, CR_GOLD);
-        if (i == current_page)
+        DrawMenuStringEx(tabs[i].flags, x, rect->y,
+                         selected ? CR_GREEN : CR_GOLD);
+
+        if (selected)
         {
             V_FillRect(x + video.deltaw, rect->y + M_SPC, rect->w, 1,
-                       cr_gold[cr_shaded[v_lightest_color]]);
+                       cr_green[cr_shaded[v_lightest_color]]);
         }
 
         rect->x = x;
@@ -541,7 +545,7 @@ static void DrawItem(setup_menu_t *s, int accum_y)
     int color = flags & S_TITLE    ? CR_TITLE
                 : flags & S_SELECT ? CR_SELECT
                 : flags & S_HILITE ? CR_HILITE
-                                   : CR_ITEM; // killough 10/98
+                                      : CR_ITEM; // killough 10/98
 
     if (!(flags & S_NEXT_LINE))
     {
@@ -1904,6 +1908,8 @@ static const char *automap_preset_strings[] = {"Vanilla", "Boom", "ZDoom"};
 
 static const char *automap_keyed_door_strings[] = {"Off", "On", "Flashing"};
 
+static void UpdateDarkeningItems(void); // [Cherry]
+
 static setup_menu_t auto_settings1[] = {
 
     {"Modes", S_SKIP | S_TITLE, M_X, M_SPC},
@@ -1911,7 +1917,8 @@ static setup_menu_t auto_settings1[] = {
     {"Follow Player",   S_ONOFF,  M_X, M_SPC, {"followplayer"}},
     {"Rotate Automap",  S_ONOFF,  M_X, M_SPC, {"automaprotate"}},
     {"Overlay Automap", S_CHOICE, M_X, M_SPC, {"automapoverlay"},
-     m_null, input_null, str_overlay},
+     m_null, input_null, str_overlay, UpdateDarkeningItems},
+    {"Overlay Darkening", S_THERMO, M_X_THRM8, M_THRM_SPC, {"automap_overlay_darkening"}}, // [Cherry]
 
     // killough 10/98
     {"Coords Follow Pointer", S_ONOFF, M_X, M_SPC, {"map_point_coord"}},
@@ -2598,8 +2605,6 @@ static void SmoothLight(void)
     setsizeneeded = true; // run R_ExecuteSetViewSize
 }
 
-static void UpdateDarkeningItem(void);
-
 static const char *menu_backdrop_strings[] = {"Off", "Dark", "Texture"};
 
 static const char *endoom_strings[] = {"off", "on", "PWAD only"};
@@ -2634,7 +2639,7 @@ static setup_menu_t gen_settings5[] = {
     MI_GAP,
 
     {"Menu Backdrop Style", S_CHOICE, M_X, M_SPC, {"menu_backdrop"}, // [Nugget] Changed description
-     m_null, input_null, str_menu_backdrop, UpdateDarkeningItem},
+     m_null, input_null, str_menu_backdrop, UpdateDarkeningItems},
 
     {"Backdrop Darkening", S_THERMO, M_X_THRM8, M_THRM_SPC, {"menu_backdrop_darkening"}}, // [Cherry]
 
@@ -2644,9 +2649,13 @@ static setup_menu_t gen_settings5[] = {
     MI_END
 };
 
-static void UpdateDarkeningItem(void)
+// [Cherry]
+static void UpdateDarkeningItems(void)
 {
-  DisableItem(menu_backdrop != MENU_BG_DARK, gen_settings5, "menu_backdrop_darkening");
+    DisableItem(menu_backdrop != MENU_BG_DARK, gen_settings5,
+                "menu_backdrop_darkening");
+    DisableItem(automapoverlay != AM_OVERLAY_DARK, auto_settings1,
+                "automap_overlay_darkening");
 }
 
 const char *default_skill_strings[] = {
@@ -4313,7 +4322,7 @@ void MN_DrawTitle(int x, int y, const char *patch, const char *alttext)
             DrawMenuString(
                 SCREENWIDTH / 2 - MN_StringWidth(alttext) / 2,
                 y + 8 - MN_StringHeight(alttext) / 2, // assumes patch height 16
-                CR_TITLE);
+                CR_RED);
         }
     }
 }
@@ -4439,4 +4448,8 @@ void MN_SetupResetMenu(void)
     UpdatePaletteItems();
     UpdateScreenShakeItem();
     UpdateMultiLineMsgItem();
+
+    // [Cherry] ----------------------------------------------------------------
+
+    UpdateDarkeningItems();
 }

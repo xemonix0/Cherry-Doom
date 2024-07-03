@@ -367,9 +367,8 @@ boolean M_StringConcat(char *dest, const char *src, size_t dest_size)
     return M_StringCopy(dest + offset, src, dest_size - offset);
 }
 
-// [Cherry]
-
-void PRINTF_ATTR(2, 0) M_StringCatF(char **dest, const char *format, ...)
+// [Cherry]: [DSDA-Doom]
+void PRINTF_ATTR(2, 0) M_StringConcatF(char **dest, const char *format, ...)
 {
     size_t length;
     va_list v;
@@ -378,15 +377,14 @@ void PRINTF_ATTR(2, 0) M_StringCatF(char **dest, const char *format, ...)
     length = vsnprintf(NULL, 0, format, v);
     va_end(v);
 
-    *dest = Z_Realloc(*dest, strlen(*dest) + length + 1, PU_STATIC, NULL);
+    *dest = I_Realloc(*dest, strlen(*dest) + length + 1);
 
     va_start(v, format);
     vsnprintf(*dest + strlen(*dest), length + 1, format, v);
     va_end(v);
 }
 
-// [Cherry]
-
+// [Cherry]: [DSDA-Doom]
 void PRINTF_ATTR(2, 0) M_StringPrintF(char **dest, const char *format, ...)
 {
     size_t length;
@@ -398,7 +396,7 @@ void PRINTF_ATTR(2, 0) M_StringPrintF(char **dest, const char *format, ...)
     length = vsnprintf(NULL, 0, format, v);
     va_end(v);
 
-    *dest = Z_Malloc(length + 1, PU_STATIC, NULL);
+    *dest = malloc(length + 1);
 
     va_start(v, format);
     vsnprintf(*dest, length + 1, format, v);
@@ -466,6 +464,34 @@ char *M_StringJoin(const char *s, ...)
         M_StringConcat(result, v, result_len);
     }
     va_end(args);
+
+    return result;
+}
+
+// [Cherry]: [DSDA-Doom]
+char **M_StringSplit(char *s, const char *delim)
+{
+    int substring_count = 2;
+    char *p = s;
+    while (*p)
+    {
+        if (*p++ == *delim)
+        {
+            ++substring_count;
+        }
+    }
+
+    char **result = calloc(substring_count, sizeof(*result));
+    if (result)
+    {
+        char *token = strtok(s, delim);
+
+        for (int i = 0; token; ++i)
+        {
+            result[i] = token;
+            token = strtok(NULL, delim);
+        }
+    }
 
     return result;
 }
@@ -612,8 +638,7 @@ int M_ReadFile(char const *name, byte **buffer)
     return 0;
 }
 
-// [Cherry] support reading to string, require parameter
-
+// [Cherry]: [DSDA-Doom]
 int M_ReadFileToString(char const *name, char **buffer)
 {
     FILE *fp;

@@ -55,7 +55,7 @@ typedef PACKED_PREFIX struct
 // WADFILE I/O related stuff.
 //
 
-// [Cherry]: [p.f. DSDA-Doom]
+// [Cherry]: [DSDA-Doom]
 typedef enum
 {
   source_skip = -1,

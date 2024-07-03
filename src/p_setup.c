@@ -51,6 +51,7 @@
 #include "s_sound.h"
 #include "st_stuff.h"
 #include "tables.h"
+#include "wad_stats.h"
 #include "w_wad.h"
 #include "z_zone.h"
 
@@ -1712,6 +1713,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
   // set up world state
   P_SpawnSpecials();
+  WS_WatchEnterMap(); // [Cherry]
   P_MapEnd();
 
   // preload graphics

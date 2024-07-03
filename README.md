@@ -178,8 +178,8 @@ Copyright:
  © 2013 James Haley et al.  
 License: [GPL-3.0+](https://www.gnu.org/licenses/gpl-3.0)
 
-Files: `src/ws_wadstats.*`
-Copyright: © 2023 Ryan Krafnick.
+Files: `src/wadstats.*`  
+Copyright: © 2021-2023 Ryan Krafnick.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  

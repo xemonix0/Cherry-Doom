@@ -202,13 +202,6 @@ void *Z_Calloc(size_t n1, size_t n2, pu_tag tag, void **user)
     (n1*=n2) ? memset(Z_Malloc(n1, tag, user), 0, n1) : NULL;
 }
 
-// [Cherry]
-
-char *Z_Strdup(const char *s, int tag, void **user)
-{
-  return strcpy(Z_Malloc(strlen(s)+1, tag, user), s);
-}
-
 //-----------------------------------------------------------------------------
 //
 // $Log: z_zone.c,v $

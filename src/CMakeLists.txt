@@ -132,9 +132,9 @@ set(CHERRYDOOM_SOURCES
     v_trans.c              v_trans.h
     v_video.c              v_video.h
     version.c              version.h
-    w_wad.c                w_wad.h
+    wad_stats.c            wad_stats.h
     wi_stuff.c             wi_stuff.h
-    ws_wadstats.c          ws_wadstats.h
+    w_wad.c                w_wad.h
     z_zone.c               z_zone.h
     ../miniz/miniz.c       ../miniz/miniz.h)
 

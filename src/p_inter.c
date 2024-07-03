@@ -44,7 +44,7 @@
 #include "p_user.h"
 #include "v_video.h"
 
-#include "ws_wadstats.h" // [Cherry]
+#include "wad_stats.h" // [Cherry]
 
 // [Nugget] cheese :)
 extern boolean cheese;
@@ -808,7 +808,7 @@ static void WatchKill(player_t* player, mobj_t* target)
     player->maxkilldiscount++;
   }
 
-  WS_WadStatsKill(); // [Cherry]
+  WS_WatchKill(); // [Cherry]
 }
 
 static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
