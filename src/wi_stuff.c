@@ -398,6 +398,11 @@ boolean WI_UsingAltInterpic(void)
   return alt_interpic_on;
 }
 
+void WI_DisableAltInterpic(void)
+{
+  old_alt_interpic_on = alt_interpic_on = false;
+}
+
 // [Nugget] -----------------------------------------------------------------/
 
 //

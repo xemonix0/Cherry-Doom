@@ -948,7 +948,9 @@ void R_ExecuteSetViewSize (void)
     }
 
   // [crispy] forcefully initialize the status bar backing screen
-  ST_refreshBackground();
+  // [Nugget] Unless the alt. intermission background is enabled
+  if (!WI_UsingAltInterpic())
+    ST_refreshBackground();
 
   pspr_interp = false;
 }

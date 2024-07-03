@@ -1097,9 +1097,12 @@ static void G_DoLoadLevel(void)
   R_SetShake(-1);
 
   // Alt. intermission background
-  if (WI_UsingAltInterpic()) {
+  if (WI_UsingAltInterpic())
+  {
     R_SetViewSize(screenblocks);
     R_ExecuteSetViewSize();
+
+    WI_DisableAltInterpic();
   }
 
   // Freecam -----------------------------------------------------------------
