@@ -1054,7 +1054,8 @@ boolean AM_Responder
       findtag = !strictmode;
     }
     // Teleport to Automap pointer
-    else if (M_InputActivated(input_map_teleport) && !followplayer && casual_play)
+    else if (M_InputActivated(input_map_teleport) && casual_play
+             && (!followplayer || R_GetFreecamMode() == FREECAM_CAM))
     {
       mobj_t *const mo = plr->mo;
     
