@@ -790,6 +790,13 @@ default_t defaults[] = {
   },
 
   {
+    "explosion_shake_intensity_pct",
+    (config_t *) &explosion_shake_intensity_pct, NULL,
+    {100}, {10,100}, number, ss_none, wad_yes,
+    "Explosion shake intensity percent"
+  },
+
+  {
     "breathing",
     (config_t *) &breathing, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,

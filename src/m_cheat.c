@@ -51,7 +51,19 @@
 
 #define plyr (players+consoleplayer)     /* the console player */
 
-//#define NUGMAGIC // [Nugget]
+// [Nugget] Testing cheat /------------
+
+//#define NUGMAGIC
+
+#ifdef NUGMAGIC
+// For testing purposes
+static void cheat_magic()
+{
+  
+}
+#endif
+
+// [Nugget] --------------------------/
 
 //-----------------------------------------------------------------------------
 //
@@ -153,10 +165,6 @@ static void cheat_cheese();     // cheese :)
 
 boolean idgaf;
 static void cheat_idgaf();
-
-#ifdef NUGMAGIC
-static void cheat_magic();
-#endif
 
 // [Nugget] -----------------------------------------------------------------/
 
@@ -434,14 +442,6 @@ struct cheat_s cheat[] = {
 extern int init_thinkers_count; // [Nugget]
 
 // [Nugget] /-----------------------------------------------------------------
-
-#ifdef NUGMAGIC
-// For testing purposes
-static void cheat_magic()
-{
-  
-}
-#endif
 
 static void cheat_nomomentum()
 {

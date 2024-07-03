@@ -498,6 +498,7 @@ enum {
 }; extern int flinching;
 
 extern int explosion_shake;
+extern int explosion_shake_intensity_pct; // CFG-Only
 extern int breathing;
 extern int teleporter_zoom;
 extern int death_camera;

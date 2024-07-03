@@ -149,6 +149,7 @@ int jump_crouch;
 int viewheight_value;
 int flinching;
 int explosion_shake;
+int explosion_shake_intensity_pct; // CFG-Only
 int breathing;
 int teleporter_zoom;
 int death_camera;

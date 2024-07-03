@@ -1163,8 +1163,9 @@ void R_SetupFrame (player_t *player)
     if (!((menuactive && !demoplayback && !netgame) || paused))
     {
       static int oldtime = -1;
+      const fixed_t intensity = FRACUNIT * explosion_shake_intensity_pct / 100;
 
-      #define CALCSHAKE (((Woof_Random() - 128) % 3) * FRACUNIT) * shake / MAXSHAKE
+      #define CALCSHAKE (((Woof_Random() - 128) % 3) * intensity) * shake / MAXSHAKE
       xofs = CALCSHAKE;
       yofs = CALCSHAKE;
       zofs = CALCSHAKE;

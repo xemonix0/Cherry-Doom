@@ -38,7 +38,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first) [i.b. ZDoom]
 - **_View Height_** setting, which allows to enter a custom POV height value in the [32, 56] range [i.b. Brutal Doom]
 - **Flinching** setting, to flinch upon landing and/or taking damage
-- **_Explosion Shake Effect_** setting [i.b. Doom Retro]
+- **_Explosion Shake Effect_** setting (intensity determined by the CFG-Only `explosion_shake_intensity_pct` CVAR) [i.b. Doom Retro]
 - **_Subtle Idle Bobbing/Breathing_** setting [p.f. International Doom]
 - **_Teleporter Zoom_** setting [i.b. ZDoom]
 - **_Death Camera_** setting [i.b. ZDoom]
