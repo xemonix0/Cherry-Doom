@@ -1866,6 +1866,17 @@ static void AM_drawWalls(void)
 
   const boolean keyed_door_flash = (map_keyed_door == MAP_KEYED_DOOR_FLASH) && (leveltime & 16);
 
+  // [Nugget] Tag Finder from PrBoomX /---------------------------------------
+
+  typedef struct {
+    fixed_t x, y;
+    int color;
+  } crossmark_t;
+
+  crossmark_t *crossmarks = NULL;
+
+  // [Nugget] ---------------------------------------------------------------/
+
   // draw the unclipped visible portions of all lines
   for (i=0;i<numlines;i++)
   {
@@ -2084,25 +2095,25 @@ static void AM_drawWalls(void)
           || (lines[i].backsector  && (   (magic_sector  && lines[i].backsector->tag  == magic_sector->tag)
                                        || (magic_tag > 0 && lines[i].backsector->tag  == magic_tag))))
       {
-        AM_drawMline(&l, magic_sector_color_pos);
+        if (!lines[i].backsector)
+        { array_push(lines_1S, ((am_line_t) {l, magic_sector_color_pos})); }
+        else
+        { AM_drawMline(&l, magic_sector_color_pos); }
 
         if (magic_sector_color_pos <= MAGIC_SECTOR_COLOR_MIN+1)
-        {
-          AM_drawLineCharacter(cross_mark, NUMCROSSMARKLINES,
-                               128<<MAPBITS, 0, 229, l.a.x, l.a.y);
-        }
+        { array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, 229 })); }
       }
       
       if (   (lines[i].tag > 0)
           && (lines[i].tag == magic_tag || (magic_sector && (lines[i].tag == magic_sector->tag))))
       {
-        AM_drawMline(&l, magic_line_color_pos);
+        if (!lines[i].backsector)
+        { array_push(lines_1S, ((am_line_t) {l, magic_line_color_pos})); }
+        else
+        { AM_drawMline(&l, magic_line_color_pos); }
 
         if (magic_line_color_pos <= MAGIC_LINE_COLOR_MIN+1)
-        {
-          AM_drawLineCharacter(cross_mark, NUMCROSSMARKLINES,
-                               128<<MAPBITS, 0, 251, l.a.x, l.a.y);
-        }
+        { array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, 251 })); }
       }
     }
   }
@@ -2112,6 +2123,14 @@ static void AM_drawWalls(void)
     AM_drawMline(&lines_1S[i].l, lines_1S[i].color);
   }
   array_clear(lines_1S);
+
+  // [Nugget] Tag Finder from PrBoomX
+  for (int i = 0;  i < array_size(crossmarks);  i++)
+  {
+    AM_drawLineCharacter(cross_mark, NUMCROSSMARKLINES, 128<<MAPBITS, 0,
+                         crossmarks[i].color, crossmarks[i].x, crossmarks[i].y);
+  }
+  array_clear(crossmarks);
 }
 
 //

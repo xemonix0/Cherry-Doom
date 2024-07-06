@@ -20,6 +20,7 @@
 
 - **_Selective Fuzz Darkening_ overflow** (caused visual glitches and crashes) [thanks @ceski-1]
 - **Status bar popping when the _Alternative Intermission Background_ were enabled**
+- **1S lines obscuring _Tag Finder_ highlights in automap**
 - **Crosshair not being drawn if the chasecam mode were set** even if the chasecam itself were disabled
 - **Zoom being forcefully disabled if any player were dead**
 - **Explosion shake and FOV effects not being reset when restarting levels on death**
