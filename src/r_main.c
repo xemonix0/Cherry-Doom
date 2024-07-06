@@ -1059,6 +1059,9 @@ void R_SetupFrame (player_t *player)
     dummyplayer.oldpitch = freecam.opitch;
     dummyplayer.pitch    = freecam.pitch;
 
+    dummyplayer.centering = (dummyplayer.centering && freecam.opitch != freecam.pitch)
+                          | freecam.centering;
+
     dummymobj.player = &dummyplayer;
     dummyplayer.mo = &dummymobj;
     player = &dummyplayer;

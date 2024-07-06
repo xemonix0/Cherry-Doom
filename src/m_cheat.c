@@ -49,6 +49,9 @@
 #include "u_mapinfo.h"
 #include "w_wad.h"
 
+// [Nugget]
+#include "r_main.h"
+
 #define plyr (players+consoleplayer)     /* the console player */
 
 // [Nugget] Testing cheat /------------
@@ -1098,6 +1101,13 @@ static void cheat_noclip()
 // 'behold?' power-up cheats (modified for infinite duration -- killough)
 static void cheat_pw(int pw)
 {
+  // [Nugget] Freecam
+  if (pw == pw_infrared && R_GetFreecamOn())
+  {
+    viewplayer->fixedcolormap = !viewplayer->fixedcolormap;
+    return;
+  }
+
   if (pw == NUMPOWERS)
   {
     memset(plyr->powers, 0, sizeof(plyr->powers));
