@@ -319,6 +319,7 @@ static short     magic_tag = -1;
 
 // Minimap -------------------------------------------------------------------
 
+static boolean reset_older = true;
 static int64_t older_m_x, older_m_y, older_m_w, older_m_h;
 
 #define FOLLOW (followplayer || automapactive == AM_MINI)
@@ -738,7 +739,6 @@ void AM_Start()
   // [Nugget] Minimap
   static int last_automap = -1, last_messages = -1;
   const int messages_height = message_list ? hud_msg_lines : 1;
-  boolean reset_older = false;
 
   if (!stopped)
     AM_Stop();
@@ -747,7 +747,10 @@ void AM_Start()
       || automapactive != last_automap || messages_height != last_messages)
   {
     AM_LevelInit();
-    reset_older = lastlevel != gamemap || lastepisode != gameepisode;
+
+    // [Nugget] Minimap
+    reset_older = reset_older || lastlevel != gamemap || lastepisode != gameepisode;
+
     lastlevel = gamemap;
     lastepisode = gameepisode;
     last_automap = automapactive;
@@ -759,14 +762,6 @@ void AM_Start()
   }
   AM_initVariables();
   AM_loadPics();
-
-  // [Nugget] Minimap
-  if (reset_older) {
-    older_m_x = m_x;
-    older_m_y = m_y;
-    older_m_w = m_w;
-    older_m_h = m_h;
-  }
 }
 
 //
@@ -813,21 +808,24 @@ static int buttons_state[STATE_NUM] = { 0 };
 // [Nugget]
 void AM_ChangeMode(automapmode_t mode)
 {
-  const automapmode_t oldmode = automapactive;
+  const boolean modechange = mode && automapactive && mode != automapactive;
+  fixed_t rx=0, ry=0, rw=0, rh=0; // Restored values
 
   automapactive = mode;
 
   if (automapactive == AM_MINI)
-  {
-    memset(buttons_state, 0, sizeof(buttons_state));
+  { memset(buttons_state, 0, sizeof(buttons_state)); }
 
-    if (oldmode != AM_MINI)
-    {
-      older_m_x = m_x;
-      older_m_y = m_y;
-      older_m_w = m_w;
-      older_m_h = m_h;
-    }
+  if (modechange)
+  {
+    rx = older_m_x;
+    ry = older_m_y;
+    rw = older_m_w;
+    rh = older_m_h;
+    older_m_x = m_x;
+    older_m_y = m_y;
+    older_m_w = m_w;
+    older_m_h = m_h;
   }
 
   if (!automapactive)
@@ -835,14 +833,20 @@ void AM_ChangeMode(automapmode_t mode)
   else
     AM_Start();
 
-  if (oldmode == AM_MINI)
+  if (modechange)
   {
-    old_m_x = older_m_x;
-    old_m_y = older_m_y;
-    old_m_w = older_m_w;
-    old_m_h = older_m_h;
-    AM_restoreScaleAndLoc();
-    AM_activateNewScale();
+    if (reset_older)
+    {
+      reset_older = false;
+    }
+    else {
+      old_m_x = rx;
+      old_m_y = ry;
+      old_m_w = rw;
+      old_m_h = rh;
+      AM_restoreScaleAndLoc();
+      AM_activateNewScale();
+    }
   }
 }
 
