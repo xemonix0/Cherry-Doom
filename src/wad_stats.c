@@ -379,6 +379,23 @@ void WS_WatchEnterMap(void)
     totalattempts = ++current_map_stats->total_attempts;
 }
 
+void WS_UnwatchMap(void)
+{
+    if (!wad_stats.maps || !current_map_stats)
+    {
+        return;
+    }
+
+    --current_map_stats->session_attempts;
+    --current_map_stats->total_attempts;
+
+    current_map_stats = NULL;
+
+    sessionattempts = -1;
+    bestattempts = -1;
+    totalattempts = -1;
+}
+
 void WS_WatchLoadGame(void)
 {
     current_map_stats->session_attempts = sessionattempts;

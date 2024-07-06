@@ -2187,6 +2187,8 @@ static void G_DoPlayDemo(void)
   usergame = false;
   demoplayback = true;
 
+  WS_UnwatchMap(); // [Cherry]
+
   for (i=0; i<MAXPLAYERS;i++)         // killough 4/24/98
     players[i].cheats = 0;
 

@@ -1765,6 +1765,7 @@ static menuitem_t SetupMenu[] = {
     {1, "M_AUTO",   MN_Automap,     'a', "Automap",            SETUP_MENU_RECT(4)},
     {1, "M_WEAP",   MN_Weapons,     'w', "Weapons",            SETUP_MENU_RECT(5)},
     {1, "M_ENEM",   MN_Enemy,       'e', "Enemies",            SETUP_MENU_RECT(6)},
+    {1, "M_LVLTBL", MN_LevelTable,  'l', "Level Table",        SETUP_MENU_RECT(7)},
 };
 
 /////////////////////////////
@@ -1888,11 +1889,21 @@ static menu_t CompatDef = // killough 10/98
     0
 };
 
+static menu_t LevelTableDef = // [Cherry]
+{
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawLevelTable,
+    34, 5, // skull drawn here
+    0
+};
+
 void MN_SetNextMenuAlt(ss_types type)
 {
     static menu_t *setup_defs[] = {
         &KeybndDef, &WeaponDef,  &StatusHUDDef, &AutoMapDef,
-        &EnemyDef,  &GeneralDef, &CompatDef,
+        &EnemyDef,  &GeneralDef, &CompatDef,    &LevelTableDef,
     };
 
     SetNextMenu(setup_defs[type]);
@@ -3258,8 +3269,9 @@ void M_Drawer(void)
     }
 
     // DRAW SKULL
-
-    y = setup_active ? SCREENHEIGHT - 19 : currentMenu->y;
+    // [Cherry] Draw at the old position top on the level table
+    y = (setup_active && !set_lvltbl_active) ? SCREENHEIGHT - 19
+                                             : currentMenu->y;
 
     V_DrawPatch(x + SKULLXOFF, y - 5 + itemOn * LINEHEIGHT,
                 W_CacheLumpName(skullName[whichSkull], PU_CACHE));

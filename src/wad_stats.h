@@ -55,6 +55,7 @@ void WS_InitWadStats(void);
 void WS_SaveWadStats(void);
 
 void WS_WatchEnterMap(void);
+void WS_UnwatchMap(void);
 void WS_WatchLoadGame(void);
 void WS_WatchKill(void);
 void WS_WatchExitMap(void);
