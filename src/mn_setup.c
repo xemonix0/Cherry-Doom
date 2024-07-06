@@ -3092,6 +3092,18 @@ static void CalculateWadStatsSummary(void)
     }
 }
 
+static void FreeMText(const char *m_text)
+{
+    union
+    {
+        const char *c;
+        char *s;
+    } text;
+
+    text.c = m_text;
+    free(text.s);
+}
+
 static void ResetLevelTable(void)
 {
     for (int i = 0; i < LT_SCREENS; ++i)
@@ -3100,7 +3112,7 @@ static void ResetLevelTable(void)
         {
             if (level_table[i][j].m_text)
             {
-                free(level_table[i][j].m_text);
+                FreeMText(level_table[i][j].m_text);
             }
         }
 
