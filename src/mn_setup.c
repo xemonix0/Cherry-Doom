@@ -3182,11 +3182,21 @@ static void InsertLevelTableItem(setup_menu_t **menu, level_table_item_t type,
                 }
                 break;
             case LT_ITEM_STAT:
-            case LT_ITEM_ATTEMPTS:
                 M_StringPrintF(&text, "%d/%d", a, b);
-                if (type == LT_ITEM_STAT ? a == b : true)
+                if (a == b)
                 {
                     flags |= S_ALT_COL;
+                }
+                break;
+            case LT_ITEM_ATTEMPTS:
+                if (a)
+                {
+                    M_StringPrintF(&text, "%d/%d", a, b);
+                    flags |= S_ALT_COL;
+                }
+                else
+                {
+                    text = M_StringDuplicate("-");
                 }
                 break;
             case LT_ITEM_TIME:
@@ -3260,8 +3270,8 @@ static void BuildLevelTableStatsPage(void)
                              ms->max_items, 3);
         InsertLevelTableItem(page, LT_ITEM_STAT, done, ms->best_secrets,
                              ms->max_secrets, 4);
-        InsertLevelTableItem(page, LT_ITEM_ATTEMPTS, ms->total_attempts > 0,
-                             ms->best_attempts, ms->total_attempts, 5);
+        InsertLevelTableItem(page, LT_ITEM_ATTEMPTS, done, ms->best_attempts,
+                             ms->total_attempts, 5);
 
         INSERT_NEXT_ROW(page);
     }
@@ -3340,7 +3350,7 @@ static void InsertSummaryRow(setup_menu_t **menu, const char *heading,
             }
             break;
         case LT_ITEM_ATTEMPTS:
-            if (done)
+            if (done && a)
             {
                 M_StringPrintF(&text, "%d / %d", a, b);
             }
