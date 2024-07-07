@@ -23,3 +23,4 @@ None.
 - **Fixed attempts incrementing when playing demos**
 - **Fixed widgets disappearing from the intermission screen when exiting setup menus**
 - **Fixed "Backdrop Darkening" item not being disabled in some cases**
+- **Fixed attempts showing up as "0/0" on the level table for beaten level with no attempt data**

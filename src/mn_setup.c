@@ -3164,9 +3164,38 @@ static void InsertWarpItem(setup_menu_t **menu, const char *text, int x,
     array_push(*menu, item);
 }
 
+static void InsertLevelTableAttemptsItem(setup_menu_t **menu, int best,
+                                         int total, int x)
+{
+    char *text = NULL;
+    uint64_t flags = S_SKIP | S_TEXT;
+
+    if (best)
+    {
+        M_StringPrintF(&text, "%d/%d", best, total);
+        flags |= S_ALT_COL;
+    }
+    else if (total)
+    {
+        M_StringPrintF(&text, "-/%d", total);
+    }
+    else
+    {
+        text = M_StringDuplicate("-");
+    }
+
+    InsertGenericItem(menu, text, flags, x, M_SPC);
+}
+
 static void InsertLevelTableItem(setup_menu_t **menu, level_table_item_t type,
                                  boolean done, int a, int b, int x)
 {
+    if (type == LT_ITEM_ATTEMPTS)
+    {
+        InsertLevelTableAttemptsItem(menu, a, b, x);
+        return;
+    }
+
     char *text = NULL;
     uint64_t flags = S_SKIP | S_TEXT;
 
@@ -3188,25 +3217,10 @@ static void InsertLevelTableItem(setup_menu_t **menu, level_table_item_t type,
                     flags |= S_ALT_COL;
                 }
                 break;
-            case LT_ITEM_ATTEMPTS:
-                if (a)
-                {
-                    M_StringPrintF(&text, "%d/%d", a, b);
-                    flags |= S_ALT_COL;
-                }
-                else
-                {
-                    text = M_StringDuplicate("-");
-                }
-                break;
             case LT_ITEM_TIME:
                 StringPrintTime(&text, a);
                 break;
         }
-    }
-    else if (type == LT_ITEM_ATTEMPTS && b)
-    {
-        M_StringPrintF(&text, "-/%d", b);
     }
     else if (type == LT_ITEM_TIME)
     {
