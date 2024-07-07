@@ -3219,6 +3219,7 @@ static void InsertLevelTableItem(setup_menu_t **menu, level_table_item_t type,
                 break;
             case LT_ITEM_TIME:
                 StringPrintTime(&text, a);
+            default:
                 break;
         }
     }
