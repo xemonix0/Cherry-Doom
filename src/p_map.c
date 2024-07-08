@@ -558,6 +558,32 @@ static void P_SetOverUnderMobjs(mobj_t *thing)
   }
 }
 
+// Factored out from `PIT_CheckThing()`
+boolean P_SkullSlam(mobj_t *skull, mobj_t *hitthing)
+{
+  // A flying skull is smacking something.
+  // Determine damage amount, and the skull comes to a dead stop.
+
+  int damage = ((P_Random(pr_skullfly)%8)+1)*skull->info->damage;
+
+  // [Nugget] Fix lost soul collision
+  if (casual_play && comp_lscollision && !(hitthing->flags & MF_SHOOTABLE))
+  { return !(hitthing->flags & MF_SOLID); }
+
+  P_DamageMobj (hitthing, skull, skull, damage);
+
+  skull->flags &= ~MF_SKULLFLY;
+  skull->momx = skull->momy = skull->momz = 0;
+
+  // [Nugget] Fix forgetful lost soul
+  if (casual_play && comp_lsamnesia)
+    P_SetMobjState(skull, skull->info->seestate);
+  else
+    P_SetMobjState (skull, skull->info->spawnstate);
+
+  return false;   // stop moving
+}
+
 // [Nugget] -----------------------------------------------------------------/
 
 static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
@@ -658,27 +684,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
   if (tmthing->flags & MF_SKULLFLY)
     {
-      // A flying skull is smacking something.
-      // Determine damage amount, and the skull comes to a dead stop.
-
-      int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
-
-      // [Nugget] Fix lost soul collision
-      if (casual_play && comp_lscollision && !(thing->flags & MF_SHOOTABLE))
-      { return !(thing->flags & MF_SOLID); }
-
-      P_DamageMobj (thing, tmthing, tmthing, damage);
-
-      tmthing->flags &= ~MF_SKULLFLY;
-      tmthing->momx = tmthing->momy = tmthing->momz = 0;
-
-      // [Nugget] Fix forgetful lost soul
-      if (casual_play && comp_lsamnesia)
-        P_SetMobjState(tmthing, tmthing->info->seestate);
-      else
-        P_SetMobjState (tmthing, tmthing->info->spawnstate);
-
-      return false;   // stop moving
+      return P_SkullSlam(tmthing, thing); // [Nugget] Factored out
     }
 
   // missiles can hit other things
@@ -2830,7 +2836,7 @@ static boolean PIT_CheckOverUnderMobjZ(mobj_t *thing)
 }
 
 // Checks if the new Z position is legal
-overunder_t P_CheckOverUnderMobj(mobj_t *thing, boolean fakemove)
+overunder_t P_CheckOverUnderMobj(mobj_t *thing)
 {
   int xl, xh, yl, yh, bx, by;
   subsector_t *newsubsec;
@@ -2875,8 +2881,7 @@ overunder_t P_CheckOverUnderMobj(mobj_t *thing, boolean fakemove)
   p_above_tmthing = p_above_thing_s = p_above_thing_g = NULL;
 
   zdir = OU_NONE;
-
-  if (fakemove) { P_FakeZMovement(tmthing); }
+  P_FakeZMovement(tmthing);
 
   for (bx = xl; bx <= xh; bx++)
     for (by = yl; by <= yh; by++)

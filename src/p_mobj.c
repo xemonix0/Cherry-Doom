@@ -819,7 +819,7 @@ void P_MobjThinker (mobj_t* mobj)
       {
         overunder_t zdir;
 
-        if (!(zdir = P_CheckOverUnderMobj(mobj, true)))
+        if (!(zdir = P_CheckOverUnderMobj(mobj)))
         {
           P_ZMovement(mobj);
         }
@@ -827,10 +827,19 @@ void P_MobjThinker (mobj_t* mobj)
         {
           mobj->momz = 0;
 
-          if (mobj->below_thing && zdir == OU_UNDER)
-          { mobj->z = mobj->below_thing->z + mobj->below_thing->height; }
-          else if (mobj->above_thing) // zdir == OU_OVER
-          { mobj->z = mobj->above_thing->z - mobj->height; }
+          mobj_t *oumobj;
+
+          if ((oumobj = mobj->below_thing) && zdir == OU_UNDER)
+          {
+            mobj->z = oumobj->z + oumobj->height;
+          }
+          else if ((oumobj = mobj->above_thing)) // zdir == OU_OVER
+          {
+            mobj->z = oumobj->z - mobj->height;
+          }
+
+          if (oumobj && mobj->flags & MF_SKULLFLY)
+          { P_SkullSlam(mobj, oumobj); }
         }
       }
       else
