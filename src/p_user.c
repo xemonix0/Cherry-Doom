@@ -287,6 +287,8 @@ void P_MovePlayer (player_t* player)
   }
   else { jump = crouch = false; }
 
+  if (jump && crouch) { jump = crouch = false; } // Cancel each other out
+
   if (player->cheats & CF_FLY)
   {
     mo->flags |= MF_NOGRAVITY;

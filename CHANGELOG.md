@@ -14,6 +14,7 @@
     instead of a multiplayer Face background
   - The vertical position of the background is now dependent on the height
     of the multiplayer Face backgrounds
+- **Made jump and crouch buttons cancel each other out**
 - **Changed _"Fancy Teleport [to Pointer]"_ to _"Fancy Warping"_**
 
 ## Bug Fixes
@@ -23,7 +24,7 @@
 - **1S lines obscuring _Tag Finder_ highlights in automap**
 - **Lost souls improperly colliding with the over/underside of other things**
 - **Player getting stuck when standing up while over/under other things**
+- **Automap position and scale being reset when changing modes**
 - **Crosshair not being drawn if the chasecam mode were set** even if the chasecam itself were disabled
 - **Zoom being forcefully disabled if any player were dead**
 - **Explosion shake and FOV effects not being reset when restarting levels on death**
-- **Automap position and scale being reset when changing modes**
