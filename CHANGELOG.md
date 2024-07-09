@@ -22,6 +22,7 @@
 - **Status bar popping when the _Alternative Intermission Background_ were enabled**
 - **1S lines obscuring _Tag Finder_ highlights in automap**
 - **Lost souls improperly colliding with the over/underside of other things**
+- **Player getting stuck when standing up while over/under other things**
 - **Crosshair not being drawn if the chasecam mode were set** even if the chasecam itself were disabled
 - **Zoom being forcefully disabled if any player were dead**
 - **Explosion shake and FOV effects not being reset when restarting levels on death**

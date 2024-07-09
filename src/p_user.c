@@ -257,6 +257,18 @@ void P_MovePlayer (player_t* player)
 
   // [Nugget] /---------------------------------------------------------------
 
+  fixed_t floorz   = player->mo->floorz,
+          ceilingz = player->mo->ceilingz;
+
+  if (casual_play && over_under)
+  {
+    if (player->mo->below_thing)
+    { floorz = MAX(floorz, player->mo->below_thing->z + player->mo->below_thing->height); }
+
+    if (player->mo->above_thing)
+    { ceilingz = MIN(ceilingz, player->mo->above_thing->z); }
+  }
+
   // Allow movement if...
   if (casual_play) {
     onground |= 
@@ -315,7 +327,7 @@ void P_MovePlayer (player_t* player)
       }
       else if (onground && !(player->jumptics)
                && (player->mo->height == player->mo->info->height)
-               && ((player->mo->ceilingz - player->mo->floorz) > player->mo->height))
+               && ((ceilingz - floorz) > player->mo->height))
       { // Jump
         player->mo->momz = 8*FRACUNIT;
         player->jumptics = 20;
@@ -361,7 +373,7 @@ void P_MovePlayer (player_t* player)
   if (   ((player->mo->intflags & MIF_CROUCHING)
           && (player->mo->height > player->mo->info->height/2))
       || (!(player->mo->intflags & MIF_CROUCHING)
-          && (player->mo->height < (player->mo->ceilingz - player->mo->floorz))
+          && (player->mo->height < (ceilingz - floorz))
           && (player->mo->height < player->mo->info->height)))
   {
     const int sign = ((player->mo->intflags & MIF_CROUCHING)
@@ -378,15 +390,15 @@ void P_MovePlayer (player_t* player)
 
     if (!onground) { // Crouch jumping!
       player->mo->z -= step;
-      if (player->mo->z < player->mo->floorz)
-      { player->mo->z = player->mo->floorz; }
+      if (player->mo->z < floorz)
+      { player->mo->z = floorz; }
     }
 
-    if (player->mo->height > (player->mo->ceilingz - player->mo->floorz))
+    if (player->mo->height > (ceilingz - floorz))
     {
       player->crouchoffset += player->mo->height
-                              - (player->mo->ceilingz - player->mo->floorz);
-      player->mo->height = player->mo->ceilingz - player->mo->floorz;
+                              - (ceilingz - floorz);
+      player->mo->height = ceilingz - floorz;
     }
 
     if ((player->mo->height * sign) >= (heighttarget * sign))
