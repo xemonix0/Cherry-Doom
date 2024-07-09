@@ -2825,7 +2825,7 @@ void D_DoomMain(void)
   MN_ResetTimeScale();
 
   I_Printf(VB_INFO, "S_Init: Setting up sound.");
-  S_Init(snd_SfxVolume /* *8 */, snd_MusicVolume /* *8*/ );
+  S_Init(sfx_volume, music_volume);
 
   I_Printf(VB_INFO, "HU_Init: Setting up heads up display.");
   HU_Init();

@@ -207,20 +207,6 @@ void I_SetChannels(void)
     }
 }
 
-//
-// I_SetSfxVolume
-//
-void I_SetSfxVolume(int volume)
-{
-    // Identical to DOS.
-    // Basically, this should propagate
-    //  the menu/config file setting
-    //  to the state variable used in
-    //  the mixing.
-
-    snd_SfxVolume = volume;
-}
-
 // jff 1/21/98 moved music volume down into MUSIC API with the rest
 
 //

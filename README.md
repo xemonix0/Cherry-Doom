@@ -27,6 +27,10 @@ Some features were first introduced in Cherry Doom and later merged into Nugget 
 
 Some of Cherry Doom's features come from other sources, like other source ports, mods or games. The initial implementations for some are **ported from (p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
 
+### General
+
+- **Mute Inactive Window** setting [p.f. International Doom]
+
 ### Status Bar/HUD
 
 - **More widgets on the intermission screen**: shows smaller versions of _Attempts_, _Health_, _Armor_ and _Weapons_ widgets on the intermission screen, customizable through options

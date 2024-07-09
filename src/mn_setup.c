@@ -2444,12 +2444,12 @@ void MN_DisableResolutionScaleItem(void)
 
 static void UpdateSfxVolume(void)
 {
-    S_SetSfxVolume(snd_SfxVolume);
+    S_SetSfxVolume(sfx_volume);
 }
 
 static void UpdateMusicVolume(void)
 {
-    S_SetMusicVolume(snd_MusicVolume);
+    S_SetMusicVolume(music_volume);
 }
 
 static const char *sound_module_strings[] = {
@@ -2515,11 +2515,17 @@ static setup_menu_t gen_settings2[] = {
      input_null, str_resampler, I_OAL_SetResampler},
 
     MI_GAP,
-    MI_GAP,
 
     // [FG] music backend
     {"MIDI player", S_CHOICE | S_ACTION | S_NEXT_LINE, M_X, M_SPC,
      {"midi_player_menu"}, m_null, input_null, str_midi_player, SetMidiPlayer},
+
+    MI_GAP,
+    MI_GAP,
+
+    // [Cherry] Mute inactive window
+    {"Cherry Doom", S_SKIP | S_TITLE, M_X, M_SPC},
+    {"Mute Inactive Window", S_ONOFF, M_X, M_SPC, {"mute_inactive"}},
 
     MI_END
 };

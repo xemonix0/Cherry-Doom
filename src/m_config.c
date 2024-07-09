@@ -438,14 +438,14 @@ default_t defaults[] = {
 
   {
     "sfx_volume",
-    (config_t *) &snd_SfxVolume, NULL,
+    (config_t *) &sfx_volume, NULL,
     {8}, {0,15}, number, ss_none, wad_no,
     "adjust sound effects volume"
   },
 
   {
     "music_volume",
-    (config_t *) &snd_MusicVolume, NULL,
+    (config_t *) &music_volume, NULL,
     {8}, {0,15}, number, ss_none, wad_no,
     "adjust music volume"
   },
@@ -470,6 +470,13 @@ default_t defaults[] = {
     (config_t *) &full_sounds, NULL,
     {0}, {0, 1}, number, ss_gen, wad_no,
     "1 to play sounds in full length"
+  },
+
+  { // [Cherry] Mute inactive window
+    "mute_inactive",
+    (config_t *) &mute_inactive, NULL,
+    {0}, {0, 1}, number, ss_gen, wad_no,
+    "1 to mute inactive game window"
   },
 
   {

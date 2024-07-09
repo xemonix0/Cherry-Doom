@@ -133,6 +133,9 @@ boolean screenvisible = true;
 
 boolean window_focused = true;
 
+// [Cherry] Mute inactive window
+boolean volume_needs_update = false;
+
 boolean drs_skip_frame;
 
 void *I_GetSDLWindow(void)
@@ -264,11 +267,13 @@ static void HandleWindowEvent(SDL_WindowEvent *event)
 
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             window_focused = true;
+            volume_needs_update = true; // [Cherry] Unmute active window
             UpdatePriority();
             break;
 
         case SDL_WINDOWEVENT_FOCUS_LOST:
             window_focused = false;
+            volume_needs_update = true; // [Cherry] Mute inactive window
             UpdatePriority();
             break;
 

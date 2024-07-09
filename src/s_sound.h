@@ -75,6 +75,9 @@ void S_ResumeSound(void);
 
 void S_RestartMusic(void);
 
+// [Cherry] Mute inactive window
+void S_SetSoundMute(boolean mute);
+
 //
 // Updates music & sounds
 //

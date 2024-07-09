@@ -733,6 +733,8 @@ static void SinglePlayerClear(ticcmd_set_t *set)
 // TryRunTics
 //
 
+boolean mute_inactive; // [Cherry] Mute inactive window
+
 void RunTic(ticcmd_t *cmds, boolean *ingame);
 
 void TryRunTics(void)
@@ -884,6 +886,12 @@ void TryRunTics(void)
         }
 
         NetUpdate(); // check for new console commands
+    }
+
+    // [Cherry] Mute inactive window
+    if (mute_inactive && volume_needs_update)
+    {
+        S_SetSoundMute(!window_focused);
     }
 
     // killough 3/16/98: change consoleplayer to displayplayer

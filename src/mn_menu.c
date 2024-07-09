@@ -1338,7 +1338,7 @@ static void M_DrawSound(void)
     }
 
     M_DrawThermo(SoundDef.x, SoundDef.y + LINEHEIGHT * sfx_vol_thermo, 16,
-                 snd_SfxVolume, cr);
+                 sfx_volume, cr);
 
     if (index == music_vol_thermo && (item->flags & MF_HILITE))
     {
@@ -1350,7 +1350,7 @@ static void M_DrawSound(void)
     }
 
     M_DrawThermo(SoundDef.x, SoundDef.y + LINEHEIGHT * music_vol_thermo, 16,
-                 snd_MusicVolume, cr);
+                 music_volume, cr);
 }
 
 void M_Sound(int choice)
@@ -1365,26 +1365,26 @@ static void M_SfxVol(int choice)
     switch (choice)
     {
         case CHOICE_LEFT:
-            if (snd_SfxVolume)
+            if (sfx_volume)
             {
-                snd_SfxVolume--;
+                sfx_volume--;
             }
             break;
         case CHOICE_RIGHT:
-            if (snd_SfxVolume < M_MAX_VOL)
+            if (sfx_volume < M_MAX_VOL)
             {
-                snd_SfxVolume++;
+                sfx_volume++;
             }
             break;
         default:
             if (choice >= CHOICE_VALUE)
             {
-                snd_SfxVolume = choice;
+                sfx_volume = choice;
             }
             break;
     }
 
-    S_SetSfxVolume(snd_SfxVolume /* *8 */);
+    S_SetSfxVolume(sfx_volume);
 }
 
 static void M_MusicVol(int choice)
@@ -1392,26 +1392,26 @@ static void M_MusicVol(int choice)
     switch (choice)
     {
         case CHOICE_LEFT:
-            if (snd_MusicVolume)
+            if (music_volume)
             {
-                snd_MusicVolume--;
+                music_volume--;
             }
             break;
         case CHOICE_RIGHT:
-            if (snd_MusicVolume < M_MAX_VOL)
+            if (music_volume < M_MAX_VOL)
             {
-                snd_MusicVolume++;
+                music_volume++;
             }
             break;
         default:
             if (choice >= CHOICE_VALUE)
             {
-                snd_MusicVolume = choice;
+                music_volume = choice;
             }
             break;
     }
 
-    S_SetMusicVolume(snd_MusicVolume /* *8 */);
+    S_SetMusicVolume(music_volume);
 }
 
 /////////////////////////////

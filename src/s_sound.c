@@ -64,6 +64,9 @@ int snd_SfxVolume = 15;
 // Maximum volume of music. Useless so far.
 int snd_MusicVolume = 15;
 
+// [Cherry]
+int sfx_volume, music_volume;
+
 // whether songs are mus_paused
 static boolean mus_paused;
 
@@ -686,6 +689,33 @@ void S_StopMusic(void)
 
     mus_playing->data = NULL;
     mus_playing = NULL;
+}
+
+//
+// [Cherry] Mute inactive window
+// 
+void S_SetSoundMute(boolean mute)
+{
+    if (mute)
+    {
+        for (int cnum = 0; cnum < numChannels; ++cnum)
+        {
+            if (channels[cnum].sfxinfo)
+            {
+                S_StopChannel(cnum);
+            }
+        }
+
+        S_SetMusicVolume(0);
+        S_SetSfxVolume(0);
+    }
+    else
+    {
+        S_SetMusicVolume(music_volume);
+        S_SetSfxVolume(sfx_volume);
+    }
+
+    volume_needs_update = false;
 }
 
 //

@@ -238,6 +238,13 @@ extern boolean coop_spawns;
 extern int snd_SfxVolume;      // maximum volume for sound
 extern int snd_MusicVolume;    // maximum volume for music
 
+// [Cherry] Mute inactive window
+
+extern int sfx_volume, music_volume;
+extern boolean mute_inactive;
+
+extern boolean volume_needs_update;
+
 // -------------------------
 // Status flags for refresh.
 //
