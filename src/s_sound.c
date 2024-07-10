@@ -692,12 +692,14 @@ void S_StopMusic(void)
 }
 
 //
-// [Cherry] Mute inactive window
+// [Cherry]: [JN] Sets sfx and music volume to 0 when window 
+// loses it's focus and restores back when focus is regained
 // 
 void S_SetSoundMute(boolean mute)
 {
     if (mute)
     {
+        // Stop all sounds and clear sfx channels.
         for (int cnum = 0; cnum < numChannels; ++cnum)
         {
             if (channels[cnum].sfxinfo)
@@ -706,6 +708,7 @@ void S_SetSoundMute(boolean mute)
             }
         }
 
+        // Set volume variables to zero.
         S_SetMusicVolume(0);
         S_SetSfxVolume(0);
     }
@@ -715,6 +718,8 @@ void S_SetSoundMute(boolean mute)
         S_SetSfxVolume(sfx_volume);
     }
 
+    // All done, no need to invoke function until next
+    // minimizing/restoring of game window is happened.
     volume_needs_update = false;
 }
 

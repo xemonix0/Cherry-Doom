@@ -133,7 +133,7 @@ boolean screenvisible = true;
 
 boolean window_focused = true;
 
-// [Cherry] Mute inactive window
+// [Cherry] Mute Inactive Window feature from International Doom
 boolean volume_needs_update = false;
 
 boolean drs_skip_frame;
@@ -267,13 +267,13 @@ static void HandleWindowEvent(SDL_WindowEvent *event)
 
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             window_focused = true;
-            volume_needs_update = true; // [Cherry] Unmute active window
+            volume_needs_update = true; // [Cherry]
             UpdatePriority();
             break;
 
         case SDL_WINDOWEVENT_FOCUS_LOST:
             window_focused = false;
-            volume_needs_update = true; // [Cherry] Mute inactive window
+            volume_needs_update = true; // [Cherry]
             UpdatePriority();
             break;
 

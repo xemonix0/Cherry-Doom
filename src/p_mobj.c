@@ -60,6 +60,18 @@ void P_UpdateDirectVerticalAiming(void)
   vertical_aiming = CRITICAL(mouselook || padlook) ? default_vertical_aiming : 0;
 }
 
+// [Cherry]: [JN] Floating amplitude LUT
+static const fixed_t FloatBobOffsets[64] = {
+    0,       25694,   51141,   76096,   100318,  123573,  145639,  166302,
+    185363,  202640,  217964,  231190,  242189,  250856,  257106,  260881,
+    262143,  260881,  257106,  250856,  242189,  231190,  217964,  202640,
+    185363,  166302,  145639,  123573,  100318,  76096,   51141,   25694,
+    -0,      -25695,  -51142,  -76096,  -100318, -123574, -145639, -166302,
+    -185364, -202640, -217965, -231190, -242190, -250856, -257107, -260882,
+    -262144, -260882, -257107, -250856, -242189, -231190, -217965, -202640,
+    -185364, -166302, -145639, -123574, -100318, -76096,  -51142,  -25694,
+};
+
 //
 // P_SetMobjState
 // Returns true if the mobj is still present.
@@ -744,6 +756,9 @@ static inline void MusInfoThinker (mobj_t *thing)
   }
 }
 
+// [Cherry] Floating powerups from International Doom
+boolean floating_powerups;
+
 //
 // P_MobjThinker
 //
@@ -795,6 +810,9 @@ void P_MobjThinker (mobj_t* mobj)
       mobj->oldy = mobj->y;
       mobj->oldz = mobj->z;
       mobj->oldangle = mobj->angle;
+
+      // [Cherry] Floating powerups from International Doom
+      mobj->old_float_z = mobj->float_z;
   }
 
   // killough 11/98:
@@ -810,6 +828,17 @@ void P_MobjThinker (mobj_t* mobj)
         return;       // mobj was removed
 
       oucheck = true; // [Nugget] Over/Under
+    }
+
+    // [Cherry]: [JN] Set amplitude of floating powerups
+  if (floating_powerups
+      && (mobj->type == MT_MEGA      // Megasphere
+          || mobj->type == MT_MISC12 // Supercharge
+          || mobj->type == MT_INV    // Invulnerability
+          || mobj->type == MT_INS))  // Partial invisibility
+    {
+        mobj->float_z =
+            mobj->floorz + FloatBobOffsets[(mobj->float_amp++) & 63];
     }
 
   if (mobj->z != mobj->floorz || mobj->momz)
@@ -1009,6 +1038,18 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   }
 
   // [Nugget] Removed `actualheight`
+
+  // [Cherry]: [JN] Set floating z value of floating
+  // powerups to actual mobj z coord and randomize
+  // amplitude so they will spawn at random height
+  if (mobj->type == MT_MEGA      // Megasphere
+      || mobj->type == MT_MISC12 // Supercharge
+      || mobj->type == MT_INV    // Invulnerability
+      || mobj->type == MT_INS)   // Partial invisibility
+  {
+      mobj->old_float_z = mobj->float_z = mobj->z;
+      mobj->float_amp = Woof_Random() % 63;
+  }
 
   P_AddThinker(&mobj->thinker);
 

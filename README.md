@@ -30,6 +30,7 @@ Some of Cherry Doom's features come from other sources, like other source ports,
 ### General
 
 - **Mute Inactive Window** setting [p.f. International Doom]
+- **Floating Powerups** setting [p.f. International Doom]
 
 ### Status Bar/HUD
 

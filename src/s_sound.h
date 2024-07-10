@@ -75,7 +75,7 @@ void S_ResumeSound(void);
 
 void S_RestartMusic(void);
 
-// [Cherry] Mute inactive window
+// [Cherry] Mute Inactive Window feature from International Doom
 void S_SetSoundMute(boolean mute);
 
 //

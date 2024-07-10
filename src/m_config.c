@@ -376,6 +376,13 @@ default_t defaults[] = {
     "1 to enable swirling animated flats"
   },
 
+  { // [Cherry] Floating powerups from International Doom
+    "floating_powerups",
+    (config_t *) &floating_powerups, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to enable floating Megasphere, Supercharge, Invuln and Invis powerups"
+  },
+
   {
     "smoothlight",
     (config_t *) &smoothlight, NULL,
@@ -472,7 +479,7 @@ default_t defaults[] = {
     "1 to play sounds in full length"
   },
 
-  { // [Cherry] Mute inactive window
+  { // [Cherry] Mute Inactive Window feature from International Doom
     "mute_inactive",
     (config_t *) &mute_inactive, NULL,
     {0}, {0, 1}, number, ss_gen, wad_no,

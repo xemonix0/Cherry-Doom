@@ -2428,6 +2428,9 @@ void P_UnArchiveThinkers (void)
       //      mobj->floorz = mobj->subsector->sector->floorheight;
       //      mobj->ceilingz = mobj->subsector->sector->ceilingheight;
 
+      // [Cherry]: [JN] Restore floating z value to actual mobj z coord
+      mobj->old_float_z = mobj->float_z = mobj->z;
+
       mobj->thinker.function.p1 = (actionf_p1)P_MobjThinker;
       P_AddThinker (&mobj->thinker);
     }

@@ -1,6 +1,7 @@
 ## New Features
 
 - **Mute Inactive Window** setting
+- **Floating Powerups** setting
 
 ## Changes
 

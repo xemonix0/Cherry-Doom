@@ -733,7 +733,8 @@ static void SinglePlayerClear(ticcmd_set_t *set)
 // TryRunTics
 //
 
-boolean mute_inactive; // [Cherry] Mute inactive window
+// [Cherry] Mute Inactive Window feature from International Doom
+boolean mute_inactive;
 
 void RunTic(ticcmd_t *cmds, boolean *ingame);
 
@@ -888,7 +889,7 @@ void TryRunTics(void)
         NetUpdate(); // check for new console commands
     }
 
-    // [Cherry] Mute inactive window
+    // [Cherry]: [JN] Mute and restore sound and music volume
     if (mute_inactive && volume_needs_update)
     {
         S_SetSoundMute(!window_focused);

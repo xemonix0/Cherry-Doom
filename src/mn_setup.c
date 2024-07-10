@@ -2523,8 +2523,8 @@ static setup_menu_t gen_settings2[] = {
     MI_GAP,
     MI_GAP,
 
-    // [Cherry] Mute inactive window
-    {"Cherry Doom", S_SKIP | S_TITLE, M_X, M_SPC},
+    // [Cherry] Mute Inactive Window feature from International Doom
+    {"Cherry", S_SKIP | S_TITLE, M_X, M_SPC},
     {"Mute Inactive Window", S_ONOFF, M_X, M_SPC, {"mute_inactive"}},
 
     MI_END
@@ -2694,6 +2694,9 @@ static setup_menu_t gen_settings5[] = {
 
     {"Smooth Diminishing Lighting", S_ONOFF, M_X, M_SPC, {"smoothlight"},
      m_null, input_null, str_empty, SmoothLight},
+
+    // [Cherry] Floating powerups from International Doom
+    {"Floating Powerups", S_ONOFF, M_X, M_SPC, {"floating_powerups"}},
 
     MI_GAP,
 

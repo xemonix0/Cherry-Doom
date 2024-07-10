@@ -390,6 +390,11 @@ typedef struct mobj_s
     int bloodcolor;
 
     // [Nugget] Removed `actualheight`
+    
+    // [Cherry]: [JN] Amplitude of floating powerups, used *only* while rendering.
+    fixed_t float_amp;
+    fixed_t float_z;
+    fixed_t old_float_z;
 } mobj_t;
 
 // External declarations (fomerly in p_local.h) -- killough 5/2/98
@@ -427,6 +432,9 @@ extern int iquetail;
 
 // [FG] colored blood and gibs
 extern boolean colored_blood;
+
+// [Cherry] Floating powerups from International Doom
+extern boolean floating_powerups;
 
 enum {
   VERTAIM_AUTO,
