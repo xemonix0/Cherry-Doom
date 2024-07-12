@@ -25,3 +25,4 @@
 - **Fixed widgets disappearing from the intermission screen when exiting setup menus**
 - **Fixed "Backdrop Darkening" item not being disabled in some cases**
 - **Fixed attempts showing up as "0/0" on the level table for beaten levels with no attempt data**
+- **Fixed widgets overlapping on the intermission screen when Nugget HUD is enabled**

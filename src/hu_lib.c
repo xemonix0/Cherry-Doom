@@ -227,7 +227,8 @@ void HUlib_add_string_to_cur_line (hu_multiline_t *const m, const char *s)
 static int horz_align_widget(const hu_widget_t *const w, const hu_line_t *const l, const align_t h_align)
 {
   // [Nugget] NUGHUD
-  if (st_crispyhud)
+  // [Cherry] Fix intermission screen widgets
+  if (st_crispyhud && !(gamestate == GS_INTERMISSION))
   {
     switch (h_align) {
       default:
@@ -274,7 +275,12 @@ static int vert_align_widget(const hu_widget_t *const w, const hu_multiline_t *c
 
   int y = 0;
 
-  if (st_crispyhud) { return w->y + (font_height * currentline++); } // [Nugget] NUGHUD: List hack
+  // [Nugget] NUGHUD: List hack
+  // [Cherry] Fix intermission screen widgets
+  if (st_crispyhud && !(gamestate == GS_INTERMISSION))
+  {
+      return w->y + (font_height * currentline++);
+  } 
 
   if (v_align == align_direct)
   {
