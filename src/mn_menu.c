@@ -633,10 +633,19 @@ enum
 
 static void M_CustomSkill(int choice)
 {
-  if (!casual_play)
+  if (demorecording || netgame)
   {
       M_StartMessage("Custom skill is disallowed\n"
                      "during non-casual play.\n\n" PRESSKEY,
+                     NULL, false);
+
+      return;
+  }
+
+  if (default_strictmode || force_strictmode)
+  {
+      M_StartMessage("Custom skill is disallowed\n"
+                     "in strict mode.\n\n" PRESSKEY,
                      NULL, false);
 
       return;
@@ -657,7 +666,7 @@ void M_StartCustomSkill(const int mode)
       G_DeferedInitNew(sk_custom, EpiMenuEpi[epiChoice], EpiMenuMap[epiChoice]);
     }
   }
-  else if (mode == 1)
+  else if (mode == 1 || (mode == 2 && !usergame))
   {
     G_DeferedInitNew(sk_custom, gameepisode, gamemap);
   }
