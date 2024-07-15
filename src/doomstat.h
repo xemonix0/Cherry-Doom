@@ -43,6 +43,7 @@ extern  boolean fastparm; // checkparm of -fast
 extern  boolean devparm;  // DEBUG: launched with -devparm
 
 // [Nugget]
+extern  boolean coopspawnsparm;
 extern  boolean doubleammoparm;
 extern  boolean halfdamageparm;
 
@@ -216,9 +217,17 @@ extern  int             timelimit;
 // Nightmare mode flag, single player.
 extern  boolean         respawnmonsters;
 
-// [Nugget]
+// [Nugget] /-----------------------------------------------------------------
+
+enum { THINGSPAWNS_EASY, THINGSPAWNS_NORMAL, THINGSPAWNS_HARD };
+extern  int             thingspawns;
+
 extern  boolean         doubleammo;
 extern  boolean         halfdamage;
+extern  boolean         slowbrain;
+extern  boolean         aggressive;
+
+// [Nugget] -----------------------------------------------------------------/
 
 // Netgame? Only true if >1 player.
 extern  boolean netgame;
@@ -659,6 +668,18 @@ extern int comp_godface;
 extern int comp_deadoof;
 extern int comp_unusedpals;
 extern int comp_keypal;
+
+// Custom Skill -----------------------
+
+extern int custom_skill_things;
+extern int custom_skill_coopspawns;
+extern int custom_skill_nomonsters;
+extern int custom_skill_doubleammo;
+extern int custom_skill_halfdamage;
+extern int custom_skill_slowbrain;
+extern int custom_skill_fast;
+extern int custom_skill_respawn;
+extern int custom_skill_aggressive;
 
 // [Nugget] -----------------------------------------------------------------/
 

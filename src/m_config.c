@@ -623,11 +623,79 @@ default_t defaults[] = {
   //
 
   { // jff 3/24/98 allow default skill setting
+    // [Nugget] Account for custom skill
     "default_skill",
     (config_t *) &defaultskill, NULL,
-    {3}, {1,5}, number, ss_gen, wad_no,
-    "selects default skill (1 = ITYTD, 2 = HNTR, 3 = HMP, 4 = UV, 5 = NM)"
+    {3}, {1,6}, number, ss_gen, wad_no,
+    "selects default skill (1 = ITYTD, 2 = HNTR, 3 = HMP, 4 = UV, 5 = NM, 6 = Custom)"
   },
+
+  // [Nugget] Custom Skill /--------------------------------------------------
+
+  {
+    "custom_skill_things",
+    (config_t *) &custom_skill_things, NULL,
+    {2}, {0,2}, number, ss_skill, wad_yes,
+    "Custom Skill: thing spawns (0 = Easy, 1 = Normal, 2 = Hard)"
+  },
+
+  {
+    "custom_skill_coopspawns",
+    (config_t *) &custom_skill_coopspawns, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: spawn multiplayer things"
+  },
+
+  {
+    "custom_skill_nomonsters",
+    (config_t *) &custom_skill_nomonsters, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: don't spawn monsters"
+  },
+
+  {
+    "custom_skill_doubleammo",
+    (config_t *) &custom_skill_doubleammo, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: receive double ammo from pickups"
+  },
+
+  {
+    "custom_skill_halfdamage",
+    (config_t *) &custom_skill_halfdamage, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: player takes half the damage"
+  },
+
+  {
+    "custom_skill_slowbrain",
+    (config_t *) &custom_skill_slowbrain, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: Icon of Sin shoots cubes half the time"
+  },
+
+  {
+    "custom_skill_fast",
+    (config_t *) &custom_skill_fast, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: fast monsters"
+  },
+
+  {
+    "custom_skill_respawn",
+    (config_t *) &custom_skill_respawn, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: respawning monsters"
+  },
+
+  {
+    "custom_skill_aggressive",
+    (config_t *) &custom_skill_aggressive, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: aggressive monsters (instant reaction time, continuous attacks)"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   { // killough 3/6/98: preserve autorun across games
     "autorun",

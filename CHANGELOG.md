@@ -1,6 +1,7 @@
 ## New Features
 
 - **_Freecam_**
+- **Custom skill level**
 - **_Prev/Next [Weapon Buttons] Skip Ammoless Weapons_** setting
 - **_Highlight Current/Pending Weapon_** setting
 - **_'BABYMODE'_ cheat**, to toggle ITYTD benefits

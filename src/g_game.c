@@ -132,8 +132,11 @@ int             gamemap;
 mapentry_t*     gamemapinfo;
 
 // [Nugget]
+int             thingspawns;
 boolean         doubleammo;
 boolean         halfdamage;
+boolean         slowbrain;
+boolean         aggressive;
 
 // If non-zero, exit the level after this number of minutes.
 int             timelimit;
@@ -4251,12 +4254,56 @@ void G_SetFastParms(int fast_pending)
   }
 }
 
-// [Nugget]
+// [Nugget] /=================================================================
+
 void G_SetBabyModeParms(const skill_t skill)
 {
-  doubleammo = skill == sk_baby || skill == sk_nightmare || CASUALPLAY(doubleammoparm);
-  halfdamage = skill == sk_baby || CASUALPLAY(halfdamageparm);
+  if (skill == sk_custom)
+  {
+    doubleammo = custom_skill_doubleammo;
+    halfdamage = custom_skill_halfdamage;
+  }
+  else {
+    doubleammo = skill == sk_baby || skill == sk_nightmare;
+    halfdamage = skill == sk_baby;
+  }
+
+  doubleammo |= CASUALPLAY(doubleammoparm);
+  halfdamage |= CASUALPLAY(halfdamageparm);
 }
+
+// [Nugget]
+void G_SetSkillParms(const skill_t skill)
+{
+  if (skill == sk_custom)
+  {
+    thingspawns = custom_skill_things;
+    coop_spawns = custom_skill_coopspawns;
+    nomonsters  = custom_skill_nomonsters;
+    slowbrain   = custom_skill_slowbrain;
+    fastparm    = custom_skill_fast;
+    respawnmonsters = custom_skill_respawn;
+    aggressive  = custom_skill_aggressive;
+  }
+  else {
+    thingspawns = (skill == sk_baby || skill == sk_easy)      ? THINGSPAWNS_EASY :
+                  (skill == sk_hard || skill == sk_nightmare) ? THINGSPAWNS_HARD : THINGSPAWNS_NORMAL;
+
+    coop_spawns = coopspawnsparm;
+    nomonsters  = clnomonsters;
+    slowbrain   = skill <= sk_easy;
+
+    // `fastparm` is set in `G_ReloadDefaults()`, // which is called before this function
+
+    respawnmonsters = skill == sk_nightmare || respawnparm;
+    aggressive  = skill == sk_nightmare;
+  }
+
+  G_SetBabyModeParms(skill);
+  G_SetFastParms(fastparm || skill == sk_nightmare);
+}
+
+// [Nugget] =================================================================/
 
 mapentry_t *G_LookupMapinfo(int episode, int map)
 {
@@ -4332,7 +4379,7 @@ void G_InitNew(skill_t skill, int episode, int map)
       S_ResumeSound();
     }
 
-  if (skill > sk_nightmare)
+  if (skill > sk_nightmare && skill != sk_custom) // [Nugget] Custom Skill
     skill = sk_nightmare;
 
   if (episode < 1)
@@ -4363,13 +4410,9 @@ void G_InitNew(skill_t skill, int episode, int map)
     map = 9;
   }
 
-  G_SetFastParms(fastparm || skill == sk_nightmare);  // killough 4/10/98
-
   M_ClearRandom();
 
-  respawnmonsters = skill == sk_nightmare || respawnparm;
-
-  G_SetBabyModeParms(skill); // [Nugget]
+  G_SetSkillParms(skill); // [Nugget]
 
   // force players to be initialized upon first level load
   for (i=0 ; i<MAXPLAYERS ; i++)
@@ -4929,7 +4972,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
       mem_fputs(" -complevel 4", stream);
   }
 
-  if (coop_spawns)
+  if (coopspawnsparm)
   {
     mem_fputs(" -coop_spawns", stream);
   }

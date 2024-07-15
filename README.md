@@ -180,6 +180,7 @@ For more details, see the _New Nugget Doom cheats_ section of `docs/cheats.md`.
 
 ### Miscellaneous
 
+- **Custom skill level**
 - **SDL render driver** setting (CFG-Only: `sdl_renderdriver`) [p.f. Woof! 14.0.0]
 - Key to **toggle zoom**
 - **Autoload folder for all games** (`autoload/all`)

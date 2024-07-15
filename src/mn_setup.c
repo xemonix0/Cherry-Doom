@@ -57,7 +57,7 @@
 
 static int M_GetKeyString(int c, int offset);
 static void DrawMenuString(int cx, int cy, int color);
-static void DrawMenuStringEx(int flags, int x, int y, int color);
+static void DrawMenuStringEx(int64_t flags, int x, int y, int color);
 
 int warning_about_changes, print_warning_about_changes;
 
@@ -335,11 +335,12 @@ enum
     str_fake_contrast,
     str_s_clipping_dist,
     str_page_ticking,
+    str_thing_spawns,
 };
 
 static const char **GetStrings(int id);
 
-static boolean ItemDisabled(int flags)
+static boolean ItemDisabled(int64_t flags)
 {
     complevel_t complevel =
         force_complevel != CL_NONE ? force_complevel : default_complevel;
@@ -399,7 +400,7 @@ static void BlinkingArrowLeft(setup_menu_t *s)
         return;
     }
 
-    int flags = s->m_flags;
+    int64_t flags = s->m_flags;
 
     if (menu_input == mouse_mode)
     {
@@ -429,7 +430,7 @@ static void BlinkingArrowRight(setup_menu_t *s)
         return;
     }
 
-    int flags = s->m_flags;
+    int64_t flags = s->m_flags;
 
     if (menu_input == mouse_mode)
     {
@@ -446,7 +447,7 @@ static void BlinkingArrowRight(setup_menu_t *s)
             strcat(menu_buffer, " <");
         }
     }
-    else if (!setup_select)
+    else if (!setup_select || flags & S_FUNCTION) // [Nugget]
     {
         strcat(menu_buffer, " <");
     }
@@ -508,7 +509,7 @@ static void DrawItem(setup_menu_t *s, int accum_y)
 {
     int x = s->m_x;
     int y = s->m_y;
-    int flags = s->m_flags;
+    int64_t flags = s->m_flags;
     mrect_t *rect = &s->rect;
 
     if (flags & S_RESET)
@@ -546,6 +547,9 @@ static void DrawItem(setup_menu_t *s, int accum_y)
     if (!(flags & S_NEXT_LINE))
     {
         BlinkingArrowLeft(s);
+
+        // [Nugget]
+        if (flags & S_LEFTJUST) { x -= MN_GetPixelWidth(menu_buffer); }
     }
 
     // killough 10/98: support left-justification:
@@ -555,6 +559,9 @@ static void DrawItem(setup_menu_t *s, int accum_y)
     {
         x -= (w + 4);
     }
+
+    // [Nugget]
+    if (flags & S_FUNCTION) { BlinkingArrowRight(s); }
 
     rect->x = 0;
     rect->y = y;
@@ -620,7 +627,8 @@ static void DrawSetupThermo(int x, int y, int width, int size, int dot,
 
 static void DrawSetting(setup_menu_t *s, int accum_y)
 {
-    int x = s->m_x, y = s->m_y, flags = s->m_flags, color;
+    int x = s->m_x, y = s->m_y, color;
+    int64_t flags = s->m_flags;
 
     if (!(flags & S_DIRECT))
     {
@@ -943,7 +951,7 @@ void MN_DrawDelVerify(void)
 static void DrawInstructions()
 {
     int index = (menu_input == mouse_mode ? highlight_item : set_item_on);
-    int flags = current_menu[index].m_flags;
+    int64_t flags = current_menu[index].m_flags;
 
     if (ItemDisabled(flags) || print_warning_about_changes > 0)
     {
@@ -995,6 +1003,11 @@ static void DrawInstructions()
         {
             s = "Restore defaults";
         }
+        // [Nugget]
+        else if (flags & S_FUNCTION)
+        {
+            s = "[ Enter ] to confirm, [ Esc ] to cancel";
+        }
     }
     else
     {
@@ -1017,6 +1030,11 @@ static void DrawInstructions()
         else if (flags & S_RESET)
         {
             s = "Restore defaults";
+        }
+        // [Nugget]
+        else if (flags & S_FUNCTION)
+        {
+            s = "[ Enter ] to select";
         }
         else
         {
@@ -2615,7 +2633,7 @@ static setup_menu_t gen_settings5[] = {
 
 const char *default_skill_strings[] = {
     // dummy first option because defaultskill is 1-based
-    "", "ITYTD", "HNTR", "HMP", "UV", "NM"
+    "", "ITYTD", "HNTR", "HMP", "UV", "NM", "Custom" // [Nugget] Custom Skill
 };
 
 static const char *death_use_action_strings[] = {"default", "last save",
@@ -2896,6 +2914,83 @@ void MN_DrawGeneral(void)
     }
 }
 
+// [Nugget] Custom Skill menu /===============================================
+
+static const char *thing_spawns_strings[] = {
+  "Easy", "Normal", "Hard"
+};
+
+static void StartCustomSkill(const int mode)
+{
+  SetItemOn(set_item_on);
+  SetPageIndex(current_page);
+
+  M_StartCustomSkill(mode);
+
+  setup_active = false;
+}
+
+static void CSNewGame(void)
+{
+  StartCustomSkill(0);
+}
+
+static void CSPistolStart(void)
+{
+  StartCustomSkill(1);
+}
+
+static void CSKeepLoadout(void)
+{
+  StartCustomSkill(2);
+}
+
+static setup_menu_t customskill_settings1[] = {
+
+    {"Thing Spawns",       S_CHOICE|S_LEVWARN, M_X, M_SPC, {"custom_skill_things"}, m_null, input_null, str_thing_spawns},
+    {"Multiplayer Things", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_coopspawns"}},
+    {"No Monsters",        S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_nomonsters"}},
+    MI_GAP,
+    {"Double Ammo From Pickups", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_doubleammo"}},
+    {"Halved Damage To Player",  S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_halfdamage"}},
+    {"Slow Spawn-Cube Spitter",  S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_slowbrain"}},
+    MI_GAP,
+    {"Fast Monsters",                   S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_fast"}},
+    {"Respawning Monsters",             S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_respawn"}},
+    {"Aggressive (Nightmare) Monsters", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_aggressive"}},
+    MI_GAP,
+    MI_GAP,
+    {"Start New Game",               S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSNewGame},
+    {"Restart Level (Pistol Start)", S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSPistolStart},
+    {"Restart Level (Keep Loadout)", S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSKeepLoadout},
+
+    MI_END
+};
+
+static setup_menu_t *customskill_settings[] = {customskill_settings1, NULL};
+
+void MN_CustomSkill(void)
+{
+    MN_SetNextMenuAlt(ss_skill);
+    setup_screen = ss_skill;
+    current_page = GetPageIndex(customskill_settings);
+    current_menu = customskill_settings[current_page];
+    current_tabs = NULL;
+    SetupMenu();
+}
+
+void MN_DrawCustomSkill(void)
+{
+    inhelpscreens = true;
+
+    DrawBackground("FLOOR4_6"); // Draw background
+    MN_DrawTitle(114, 2, "M_CSTSKL", "Custom Skill");
+    DrawInstructions();
+    DrawScreenItems(current_menu);
+}
+
+// [Nugget] =================================================================/
+
 /////////////////////////////
 //
 // General routines used by the Setup screens.
@@ -2928,6 +3023,8 @@ static setup_menu_t **setup_screens[] = {
     enem_settings,
     gen_settings, // killough 10/98
     comp_settings,
+
+    customskill_settings, // [Nugget] Custom Skill menu
 };
 
 // [FG] save the index of the current screen in the first page's S_END element's
@@ -2999,7 +3096,7 @@ static void ResetDefaults()
 
             for (; !(current_item->m_flags & S_END); current_item++)
             {
-                int flags = current_item->m_flags;
+                int64_t flags = current_item->m_flags;
 
                 if (flags & S_HASDEFPTR && current_item->var.def == dp)
                 {
@@ -3208,7 +3305,7 @@ static void DrawMenuString(int cx, int cy, int color)
     MN_DrawString(cx, cy, color, menu_buffer);
 }
 
-static void DrawMenuStringEx(int flags, int x, int y, int color)
+static void DrawMenuStringEx(int64_t flags, int x, int y, int color)
 {
     if (ItemDisabled(flags))
     {
@@ -3399,7 +3496,7 @@ boolean MN_SetupCursorPostion(int x, int y)
     for (int i = 0; !(current_menu[i].m_flags & S_END); i++)
     {
         setup_menu_t *item = &current_menu[i];
-        int flags = item->m_flags;
+        int64_t flags = item->m_flags;
 
         if (flags & S_SKIP)
         {
@@ -3429,7 +3526,7 @@ static int setup_cancel = -1;
 static void OnOff(void)
 {
     setup_menu_t *current_item = current_menu + set_item_on;
-    int flags = current_item->m_flags;
+    int64_t flags = current_item->m_flags;
     default_t *def = current_item->var.def;
 
     def->location->i = !def->location->i; // killough 8/15/98
@@ -3454,7 +3551,7 @@ static void OnOff(void)
 static void Choice(menu_action_t action)
 {
     setup_menu_t *current_item = current_menu + set_item_on;
-    int flags = current_item->m_flags;
+    int64_t flags = current_item->m_flags;
     default_t *def = current_item->var.def;
     int value = def->location->i;
 
@@ -3535,6 +3632,17 @@ static void Choice(menu_action_t action)
     }
 }
 
+// [Nugget]
+static void Function(void)
+{
+    setup_menu_t *current_item = current_menu + set_item_on;
+    int64_t flags = current_item->m_flags;
+
+    if (flags & (S_LEVWARN | S_PRGWARN)) { warn_about_changes(flags); }
+
+    if (current_item->action) { current_item->action(); }
+}
+
 static boolean ChangeEntry(menu_action_t action, int ch)
 {
     if (!setup_select)
@@ -3543,7 +3651,7 @@ static boolean ChangeEntry(menu_action_t action, int ch)
     }
 
     setup_menu_t *current_item = current_menu + set_item_on;
-    int flags = current_item->m_flags;
+    int64_t flags = current_item->m_flags;
     default_t *def = current_item->var.def;
 
     if (action == MENU_ESCAPE) // Exit key = no change
@@ -3652,6 +3760,19 @@ static boolean ChangeEntry(menu_action_t action, int ch)
 
         // killough 10/98: character-based numerical input
         gather_buffer[gather_count++] = ch;
+        return true;
+    }
+
+    // [Nugget]
+    if (flags & S_FUNCTION)
+    {
+        if (action == MENU_ENTER)
+        {
+            Function();
+        }
+
+        SelectDone(current_item);
+
         return true;
     }
 
@@ -3927,7 +4048,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
 
     if (action == MENU_ENTER)
     {
-        int flags = current_item->m_flags;
+        int64_t flags = current_item->m_flags;
 
         // You've selected an item to change. Highlight it, post a new
         // message about what to do, and get ready to process the
@@ -4041,7 +4162,7 @@ boolean MN_SetupMouseResponder(int x, int y)
 
     if (M_InputDeactivated(input_menu_enter) && active_thermo)
     {
-        int flags = active_thermo->m_flags;
+        int64_t flags = active_thermo->m_flags;
         default_t *def = active_thermo->var.def;
 
         if (flags & S_ACTION)
@@ -4069,7 +4190,7 @@ boolean MN_SetupMouseResponder(int x, int y)
     }
 
     setup_menu_t *current_item = current_menu + set_item_on;
-    int flags = current_item->m_flags;
+    int64_t flags = current_item->m_flags;
     default_t *def = current_item->var.def;
     mrect_t *rect = &current_item->rect;
 
@@ -4180,6 +4301,14 @@ boolean MN_SetupMouseResponder(int x, int y)
             def->current->i = def->location->i;
         }
 
+        return true;
+    }
+
+    // [Nugget]
+    if (flags & S_FUNCTION)
+    {
+        Function();
+        M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [NS] Optional menu sounds.
         return true;
     }
 
@@ -4312,6 +4441,7 @@ static const char **selectstrings[] = {
     fake_contrast_strings,
     s_clipping_dist_strings,
     page_ticking_strings,
+    thing_spawns_strings,
 };
 
 static const char **GetStrings(int id)

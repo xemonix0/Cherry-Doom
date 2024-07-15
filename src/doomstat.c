@@ -139,8 +139,8 @@ char *MAPNAME(int e, int m)
 
 // [Nugget] /-----------------------------------------------------------------
 
-boolean fauxdemo;    // Checked for in `casual_play`, for debugging
-boolean casual_play; // Like `critical`, with different checks and functionality
+boolean fauxdemo = false;    // Checked for in `casual_play`, for debugging
+boolean casual_play = false; // Like `critical`, with different checks and functionality
 
 // General ----------------------------
 
@@ -266,6 +266,18 @@ int comp_godface;
 int comp_deadoof;
 int comp_unusedpals;
 int comp_keypal;
+
+// Custom Skill -----------------------
+
+int custom_skill_things;
+int custom_skill_coopspawns;
+int custom_skill_nomonsters;
+int custom_skill_doubleammo;
+int custom_skill_halfdamage;
+int custom_skill_slowbrain;
+int custom_skill_fast;
+int custom_skill_respawn;
+int custom_skill_aggressive;
 
 // [Nugget] -----------------------------------------------------------------/
 

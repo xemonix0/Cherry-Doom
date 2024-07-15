@@ -151,6 +151,8 @@ typedef enum
     MF_THRM     = 0x00000002,
     MF_THRM_STR = 0x00000004,
     MF_PAGE     = 0x00000008,
+
+    MF_OPTLUMP  = 0x00000010, // [Nugget] Optional graphic lump
 } mflags_t;
 
 typedef enum
@@ -612,6 +614,11 @@ enum
     hurtme,
     violence,
     nightmare,
+
+    // [Nugget]
+    newg_stub,
+    newg_custom,
+
     newg_end
 } newgame_e;
 
@@ -622,12 +629,59 @@ enum
 #define NEW_GAME_RECT(n) \
     {0, M_Y_NEWGAME + (n) * LINEHEIGHT, SCREENWIDTH, LINEHEIGHT}
 
+// [Nugget] Custom Skill menu /-----------------------------------------------
+
+static void M_CustomSkill(int choice)
+{
+  if (!casual_play)
+  {
+      M_StartMessage("Custom skill is disallowed\n"
+                     "during non-casual play.\n\n" PRESSKEY,
+                     NULL, false);
+
+      return;
+  }
+
+  MN_CustomSkill();
+}
+
+void M_StartCustomSkill(const int mode)
+{
+  if (mode == 0)
+  {
+    if (!EpiCustom)
+    {
+      G_DeferedInitNew(sk_custom, epiChoice + 1, 1);
+    }
+    else {
+      G_DeferedInitNew(sk_custom, EpiMenuEpi[epiChoice], EpiMenuMap[epiChoice]);
+    }
+  }
+  else if (mode == 1)
+  {
+    G_DeferedInitNew(sk_custom, gameepisode, gamemap);
+  }
+  else if (mode == 2)
+  {
+    gameaction = ga_loadlevel;
+    AM_clearMarks();
+  }
+
+  MN_ClearMenus();
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 static menuitem_t NewGameMenu[] = {
     {1, "M_JKILL", M_ChooseSkill, 'i', "I'm too young to die.", NEW_GAME_RECT(0)},
     {1, "M_ROUGH", M_ChooseSkill, 'h', "Hey, not too rough.",   NEW_GAME_RECT(1)},
     {1, "M_HURT",  M_ChooseSkill, 'h', "Hurt me plenty.",       NEW_GAME_RECT(2)},
     {1, "M_ULTRA", M_ChooseSkill, 'u', "Ultra-Violence.",       NEW_GAME_RECT(3)},
-    {1, "M_NMARE", M_ChooseSkill, 'n', "Nightmare!",            NEW_GAME_RECT(4)}
+    {1, "M_NMARE", M_ChooseSkill, 'n', "Nightmare!",            NEW_GAME_RECT(4)},
+
+    // [Nugget]
+    {-1},
+    {1, "M_CSTSKL", M_CustomSkill, 'c', "Custom Skill...", NEW_GAME_RECT(6), MF_OPTLUMP},
 };
 
 static menu_t NewDef = {
@@ -1802,7 +1856,8 @@ static menuitem_t Generic_Setup[] = {
 // with the main Setup screen.
 
 static menu_t SetupDef = {
-    ss_max,        // number of Setup Menu items (Key Bindings, etc.)
+    ss_max - 1,    // number of Setup Menu items (Key Bindings, etc.)
+                   // [Nugget] Custom Skill menu: don't count said menu
     &MainDef,      // menu to return to when BACKSPACE is hit on this menu
     SetupMenu,     // definition of items to show on the Setup Screen
     M_DrawSetup,   // program that draws the Setup Screen
@@ -1888,11 +1943,23 @@ static menu_t CompatDef = // killough 10/98
     0
 };
 
+static menu_t CustomSkillDef = // [Nugget] Custom Skill menu
+{
+    generic_setup_end,
+    &NewDef,
+    Generic_Setup,
+    MN_DrawCustomSkill,
+    34, 5, // skull drawn here
+    0
+};
+
 void MN_SetNextMenuAlt(ss_types type)
 {
     static menu_t *setup_defs[] = {
         &KeybndDef, &WeaponDef,  &StatusHUDDef, &AutoMapDef,
         &EnemyDef,  &GeneralDef, &CompatDef,
+
+        &CustomSkillDef // [Nugget] Custom Skill menu
     };
 
     SetNextMenu(setup_defs[type]);
@@ -3101,6 +3168,9 @@ void MN_StartControlPanel(void)
 
     NewDef.lastOn = defaultskill - 1;
 
+    // [Nugget] Custom Skill
+    if (defaultskill - 1 == sk_custom) { NewDef.lastOn++; }
+
     default_verify = 0; // killough 10/98
     menuactive = 1;
     currentMenu = &MainDef;              // JDC
@@ -3207,7 +3277,8 @@ void M_Drawer(void)
                 patch_lump = W_CheckNumForName(name);
             }
 
-            if (patch_lump < 0 && currentMenu->menuitems[i].alttext)
+            if (patch_lump < 0 && currentMenu->menuitems[i].alttext
+                && !(currentMenu->menuitems[i].flags & MF_OPTLUMP)) // [Nugget] 
             {
                 currentMenu->lumps_missing++;
                 break;
@@ -3246,9 +3317,12 @@ void M_Drawer(void)
         // due to the MainMenu[] hacks, we have to set `y` here
         rect->y = y;
 
+        const int lumpnum = W_CheckNumForName(name); // [Nugget]
+
         // [FG] at least one menu graphics lump is missing, draw alternative
         // text
-        if (currentMenu->lumps_missing > 0)
+        if (currentMenu->lumps_missing > 0
+            || (item->flags & MF_OPTLUMP && lumpnum < 0)) // [Nugget]
         {
             if (alttext)
             {
