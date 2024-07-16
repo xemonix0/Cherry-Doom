@@ -1,11 +1,11 @@
 ﻿# Cherry Doom
 [![Cherry Doom Icon](https://raw.githubusercontent.com/xemonix0/Cherry-Doom/master/data/cherry-doom.png)](https://github.com/xemonix0/Cherry-Doom)
 
-[![Top Language](https://img.shields.io/github/languages/top/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom)
 [![Code Size](https://img.shields.io/github/languages/code-size/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom)
 [![License](https://img.shields.io/github/license/xemonix0/Cherry-Doom.svg?logo=gnu)](https://github.com/xemonix0/Cherry-Doom/blob/master/COPYING)
 [![Release](https://img.shields.io/github/release/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
 [![Release Date](https://img.shields.io/github/release-date/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/latest/total.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
 [![Commits](https://img.shields.io/github/commits-since/xemonix0/Cherry-Doom/latest.svg)](https://github.com/xemonix0/Cherry-Doom/commits/master)
 [![Last Commit](https://img.shields.io/github/last-commit/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/commits/master)
 [![Build Status](https://github.com/xemonix0/Cherry-Doom/actions/workflows/main.yml/badge.svg)](https://github.com/xemonix0/Cherry-Doom/actions/workflows/main.yml)
@@ -29,19 +29,19 @@ Some of Cherry Doom's features come from other sources, like other source ports,
 
 ### General
 
-- **Mute Inactive Window** setting [p.f. International Doom]
-- **Floating Powerups** setting [p.f. International Doom]
+- _Mute Inactive Window_ setting [p.f. International Doom]
+- _Floating Powerups_ setting [p.f. International Doom]
 
 ### Status Bar/HUD
 
-- **More widgets on the intermission screen**: shows smaller versions of _Attempts_, _Health_, _Armor_ and _Weapons_ widgets on the intermission screen, customizable through options
-- **Attempts display**: shows the amount of attempts spent on the current map in this session and across all sessions
-- **Movement display**: shows the current player movement and strafing speeds
+- _More widgets on the intermission screen_ setting: shows smaller versions of _Attempts_, _Health_, _Armor_ and _Weapons_ widgets on the intermission screen, customizable through options
+- New HUD widgets:
+	- _Attempt counter_: shows the amount of attempts spent on the current map in this session and across all sessions
+	- _Movement widget_: shows the current player movement and strafing speeds
 
 ### Miscellaneous
 
-- **Level table** [p.f. DSDA-Doom], with the following additions:
-	- **Attempts** level table entry
+- _Level table_ [partially p.f. DSDA-Doom]
 
 # Releases
 

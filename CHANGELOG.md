@@ -1,28 +1,31 @@
 ## New Features
 
-- **Mute Inactive Window** setting
-- **Floating Powerups** setting
+- _Mute Inactive Window_ setting
+- _Floating Powerups_ setting
 
 ## Changes
 
-- **Merged changes from the following Nugget Doom releases**:
-	- [**2.2.1**](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.2.1);
-	- [**2.3.0**](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.3.0), note: _removed HUD color customization options added in **Cherry Doom 1.0.0**, except Low/Ok/Good/Extra value colors_;
-	- [**2.3.1**](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.3.1);
-	- [**3.0.0**](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.0.0);
-	- [**3.1.0**](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.1.0).
-- **Removed Motion Blur**
-- **Introduced separate options for Health + Armor and Weapons widgets on the intermission screen**
-- **Changed setup menu label colors**:
-	- _Selected setup menu tabs are now green_;
-	- _Setup menu titles are now red_.
-- **Removed damage shake effect**, in favor of _flinching_
-- **Removed View Shake Intensity setting**
+- Merged changes from the following _Nugget Doom_ releases:
+	- [2.2.1](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.2.1)
+	- [2.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.3.0)
+	- [2.3.1](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.3.1)
+	- [3.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.0.0)
+	- [3.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.1.0)
+- Removed some features added in previous versions:
+	- Cherry's _Extended HUD colors_, except colors for _Low/Ok/Good/Extra values_
+	- _Motion Blur_
+	- _Damage Shake Effect_, in favor of Nugget Doom's _Flinch Upon Damage_
+	- _View Shake Intensity_ setting
+- Introduced separate options for _Health + Armor_ and _Weapons_ widgets on the intermission screen
+- Minor menu color changes:
+	- _Selected setup menu tabs_: Yellow > Green
+	- _Setup menu titles_: Yellow > Red
+- Disable _Movement Widget_ in _strict mode_
 
 ## Bug Fixes
 
-- **Fixed attempts incrementing when playing demos**
-- **Fixed widgets disappearing from the intermission screen when exiting setup menus**
-- **Fixed "Backdrop Darkening" item not being disabled in some cases**
-- **Fixed attempts showing up as "0/0" on the level table for beaten levels with no attempt data**
-- **Fixed widgets overlapping on the intermission screen when Nugget HUD is enabled**
+- Attempts incrementing on demo playback
+- Widgets disappearing from the intermission screen when exiting setup menus
+- _Backdrop Darkening_ and _Overlay Darkening_ items not being toggled properly
+- Attempts showing up as "0/0" on the level table for beaten levels with no attempt data (i.e. in data files from DSDA-Doom)
+- Widgets overlapping on the intermission screen when _Nugget HUD_ is enabled

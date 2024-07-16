@@ -2194,7 +2194,7 @@ void HU_Ticker(void)
   {
     HU_cond_build_widget(w_stats, hud_level_stats & HUD_WIDGET_AUTOMAP);
     HU_cond_build_widget(&w_attempts, hud_attempt_counter & HUD_WIDGET_AUTOMAP); // [Cherry] Attempt counter
-    HU_cond_build_widget(&w_move, hud_movement & HUD_WIDGET_AUTOMAP); // [Cherry] Movement widget
+    HU_cond_build_widget(&w_move, STRICTMODE(hud_movement) & HUD_WIDGET_AUTOMAP); // [Cherry] Movement widget
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_AUTOMAP || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_AUTOMAP && SHOWPOWERS); // [Nugget] Powerup timers
     HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_AUTOMAP);
@@ -2203,7 +2203,7 @@ void HU_Ticker(void)
   {
     HU_cond_build_widget(w_stats, hud_level_stats & HUD_WIDGET_HUD);
     HU_cond_build_widget(&w_attempts, hud_attempt_counter & HUD_WIDGET_HUD); // [Cherry] Attempt counter
-    HU_cond_build_widget(&w_move, hud_movement & HUD_WIDGET_HUD); // [Cherry] Movement widget
+    HU_cond_build_widget(&w_move, STRICTMODE(hud_movement) & HUD_WIDGET_HUD); // [Cherry] Movement widget
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_HUD || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_HUD && SHOWPOWERS); // [Nugget] Powerup timers
     HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_HUD);
