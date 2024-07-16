@@ -966,8 +966,8 @@ static void DrawInstructions()
     int index = (menu_input == mouse_mode ? highlight_item : set_item_on);
     uint64_t flags = current_menu[index].m_flags;
 
-    if (ItemDisabled(flags) || print_warning_about_changes > 0
-        || flags & S_END) // [Cherry]
+    // [Cherry] No instructions on menus with no selectable items
+    if (print_warning_about_changes > 0 || flags & S_END)
     {
         return;
     }
@@ -1016,6 +1016,32 @@ static void DrawInstructions()
         else if (flags & S_RESET)
         {
             s = "Restore defaults";
+        }
+    }
+    else if (ItemDisabled(flags)) // [Cherry] Disabled items hints
+    {
+        const complevel_t complevel =
+            force_complevel != CL_NONE ? force_complevel : default_complevel;
+
+        if (flags & S_STRICT && (default_strictmode || force_strictmode))
+        {
+            s = "Disabled in strict mode";
+        }
+        else if (flags & S_BOOM && complevel < CL_BOOM)
+        {
+            s = "Available in complevel Boom and higher";
+        }
+        else if (flags & S_MBF && complevel < CL_MBF)
+        {
+            s = "Available in complevel MBF and higher";
+        }
+        else if (flags & S_VANILLA && complevel != CL_VANILLA)
+        {
+            s = "Avaliable in complevel Vanilla only";
+        }
+        else if (flags & S_CRITICAL && !casual_play)
+        {
+            s = "Disabled during non-casual play";
         }
     }
     else

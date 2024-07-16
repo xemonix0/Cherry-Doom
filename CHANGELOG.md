@@ -21,6 +21,7 @@
 	- _Selected setup menu tabs_: Yellow > Green
 	- _Setup menu titles_: Yellow > Red
 - Disable _Movement Widget_ in _strict mode_
+- Added hints for disabled menu items, which explain why the item is disabled
 
 ## Bug Fixes
 
