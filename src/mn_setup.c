@@ -1926,6 +1926,9 @@ static setup_menu_t auto_settings1[] = {
     {"Color Keyed Doors", S_CHOICE, M_X, M_SPC, {"map_keyed_door"},
      m_null, input_null, str_automap_keyed_door},
 
+     // [Nugget] Show thing hitboxes
+    {"Show Thing Hitboxes", S_ONOFF, M_X, M_SPC, {"map_hitboxes"}},
+
     MI_RESET,
 
     MI_END

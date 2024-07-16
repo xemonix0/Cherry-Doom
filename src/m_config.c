@@ -3299,6 +3299,13 @@ default_t defaults[] = {
   },
 
   {
+    "mapcolor_hitbox",
+    (config_t *) &mapcolor_hitbox, NULL,
+    {96}, {0,255}, number, ss_none, wad_yes,
+    "color used for thing hitboxes"
+  },
+
+  {
     "mapcolor_preset",
     (config_t *) &mapcolor_preset, NULL,
     {1}, {0,2}, number, ss_auto, wad_no,
@@ -3333,6 +3340,13 @@ default_t defaults[] = {
     (config_t *) &map_smooth_lines, NULL,
     {1}, {0,1}, number, ss_auto, wad_no,
     "1 to enable smooth automap lines"
+  },
+
+  {
+    "map_hitboxes",
+    (config_t *) &map_hitboxes, NULL,
+    {0}, {0,1}, number, ss_auto, wad_no,
+    "1 to show thing hitboxes in automap"
   },
 
   {

@@ -80,6 +80,7 @@ int mapcolor_plyr[4]; // colors for player arrows in multiplayer
 int mapcolor_frnd;    // colors for friends of player
 int mapcolor_item;    // item sprite color
 int mapcolor_enemy;   // enemy sprite color
+int mapcolor_hitbox;  // [Nugget] Hitbox color
 
 //jff 3/9/98 add option to not show secret sectors until entered
 int map_secret_after;
@@ -87,6 +88,8 @@ int map_secret_after;
 int map_keyed_door; // keyed doors are colored or flashing
 
 int map_smooth_lines;
+
+int map_hitboxes; // [Nugget] Show thing hitboxes
 
 // [Woof!] FRACTOMAPBITS: overflow-safe coordinate system.
 // Written by Andrey Budko (entryway), adapted from prboom-plus/src/am_map.*
@@ -213,6 +216,26 @@ static mline_t thintriangle_guy[] =
 };
 #undef R
 #define NUMTHINTRIANGLEGUYLINES (sizeof(thintriangle_guy)/sizeof(mline_t))
+
+// [Nugget] Square hitbox /---------------------------------------------------
+
+#define R (FRACUNIT/2)
+
+static mline_t square_hitbox[] =
+{
+  { { -R,  R }, {  R,  R } }, // Top
+  { { -R, -R }, {  R, -R } }, // Bottom
+  { { -R,  R }, { -R, -R } }, // Left
+  { {  R,  R }, {  R, -R } }, // Right
+  { { -R,  R }, {  R, -R } }, // Cross line, UL to LR
+  { { -R, -R }, {  R,  R } }  // Cross line, LL to UR
+};
+
+#undef R
+
+#define NUMSQUAREHITBOXLINES (sizeof(square_hitbox) / sizeof(mline_t))
+
+// [Nugget] -----------------------------------------------------------------/
 
 int ddt_cheating = 0;         // killough 2/7/98: make global, rename to ddt_*
 
@@ -2395,12 +2418,7 @@ static void AM_drawThings
     t = sectors[i].thinglist;
     while (t) // for all things in that sector
     {
-      // [crispy] do not draw an extra triangle for the player
-      if (t == plr->mo)
-      {
-          t = t->snext;
-          continue;
-      }
+      // [Nugget] Moved player check below, since we want to draw its hitbox
 
       // [crispy] interpolate thing triangles movement
       if (leveltime > oldleveltime)
@@ -2416,6 +2434,28 @@ static void AM_drawThings
       if (automaprotate)
       {
         AM_rotatePoint(&pt);
+      }
+
+      // [Nugget] Show hitbox
+      if (map_hitboxes)
+      {
+        AM_drawLineCharacter(
+          square_hitbox,
+          NUMSQUAREHITBOXLINES,
+          (t->radius * 2) >> FRACTOMAPBITS,
+          0,
+          mapcolor_hitbox,
+          pt.x,
+          pt.y
+        );
+      }
+
+      // [Nugget] Brought here
+      // [crispy] do not draw an extra triangle for the player
+      if (t == plr->mo)
+      {
+          t = t->snext;
+          continue;
       }
 
       //jff 1/5/98 case over doomednum of thing being drawn
