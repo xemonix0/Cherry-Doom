@@ -6,6 +6,7 @@
 - **_Highlight Current/Pending Weapon_** setting
 - **_Show Thing Hitboxes [in Automap]_** setting
 - **_'BABYMODE'_ cheat**, to toggle ITYTD benefits
+- **_"Count"_ Level Stats Format**
 - **Explosion shake intensity percent** setting
 - **Setting to play `DSNOWAY` instead of `DSOOF` when failing to use key-locked triggers**
 

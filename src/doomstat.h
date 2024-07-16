@@ -580,6 +580,9 @@ enum {
   STATSFORMAT_BOOLEAN,
   STATSFORMAT_PERCENTAGE,
   STATSFORMAT_REMAINING,
+  STATSFORMAT_COUNT,
+
+  NUMSTATSFORMATS
 };
 extern int hud_stats_format;
 extern int hud_stats_format_map;

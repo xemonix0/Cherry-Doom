@@ -1373,6 +1373,12 @@ static void HU_widget_build_monsec(void)
       M_snprintf(item_str,   sizeof(item_str),   "%d", totalitems           - fullitemcount);
       M_snprintf(secret_str, sizeof(secret_str), "%d", totalsecret          - fullsecretcount);
       break;
+
+    case STATSFORMAT_COUNT:
+      M_snprintf(kill_str,   sizeof(kill_str),   "%d", fullkillcount);
+      M_snprintf(item_str,   sizeof(item_str),   "%d", fullitemcount);
+      M_snprintf(secret_str, sizeof(secret_str), "%d", fullsecretcount);
+      break;
   }
 
   // [Nugget] ---------------------------------------------------------------/

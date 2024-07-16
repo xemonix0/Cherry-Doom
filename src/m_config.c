@@ -3695,14 +3695,14 @@ default_t defaults[] = {
   {
     "hud_stats_format",
     (config_t *) &hud_stats_format, NULL,
-    {STATSFORMAT_RATIO}, {STATSFORMAT_RATIO,STATSFORMAT_REMAINING}, number, ss_stat, wad_no,
-    "level stats format (1 = ratio, 2 = boolean, 3 = percentage, 4 = remaining)"
+    {STATSFORMAT_RATIO}, {STATSFORMAT_RATIO,NUMSTATSFORMATS-1}, number, ss_stat, wad_no,
+    "level stats format (1 = ratio, 2 = boolean, 3 = percentage, 4 = remaining, 5 = count)"
   },
 
   {
     "hud_stats_format_map",
     (config_t *) &hud_stats_format_map, NULL,
-    {0}, {0,STATSFORMAT_REMAINING}, number, ss_stat, wad_no,
+    {0}, {0,NUMSTATSFORMATS-1}, number, ss_stat, wad_no,
     "level stats format in Automap (0 = match HUD)"
   },
 

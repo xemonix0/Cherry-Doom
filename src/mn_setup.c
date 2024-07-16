@@ -1751,7 +1751,7 @@ static setup_menu_t stat_settings4[] = {
 // [Nugget] /-----------------------------------------------------------------
 
 static const char *stats_format_strings[] = {
-  "Match HUD", "Ratio", "Boolean", "Percentage", "Remaining", NULL
+  "Match HUD", "Ratio", "Boolean", "Percentage", "Remaining", "Count", NULL
 };
 
 static setup_menu_t stat_settings5[] =
