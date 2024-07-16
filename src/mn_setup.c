@@ -1006,7 +1006,9 @@ static void DrawInstructions()
         // [Nugget]
         else if (flags & S_FUNCTION)
         {
-            s = "[ Enter ] to confirm, [ Esc ] to cancel";
+            s = (menu_input == pad_mode)
+                ? "[ PadA ] to confirm, [ PadB ] to cancel"
+                : "[ Enter ] to confirm, [ Esc ] to cancel";
         }
     }
     else
@@ -1034,7 +1036,9 @@ static void DrawInstructions()
         // [Nugget]
         else if (flags & S_FUNCTION)
         {
-            s = "[ Enter ] to select";
+            s = (menu_input == pad_mode)
+                ? "[ PadA ] to select"
+                : "[ Enter ] to select";
         }
         else
         {
@@ -4301,14 +4305,6 @@ boolean MN_SetupMouseResponder(int x, int y)
             def->current->i = def->location->i;
         }
 
-        return true;
-    }
-
-    // [Nugget]
-    if (flags & S_FUNCTION)
-    {
-        Function();
-        M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [NS] Optional menu sounds.
         return true;
     }
 

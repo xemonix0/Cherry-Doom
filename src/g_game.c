@@ -101,7 +101,13 @@ static size_t   maxdemosize;
 static byte     *demo_p;
 static byte     consistancy[MAXPLAYERS][BACKUPTICS];
 
-// [Nugget] Rewind /----------------------------------------------------------
+// [Nugget] /=================================================================
+
+boolean minimap_was_on = false; // Minimap: keep it when advancing through levels
+
+boolean ignore_pistolstart = false; // Custom Skill: ignore pistol-start setting
+
+// Rewind --------------------------------------------------------------------
 
 static boolean keyframe_rw = false;
 
@@ -119,7 +125,7 @@ static keyframe_t *keyframe_list_head = NULL, *keyframe_list_tail = NULL;
 
 static int keyframe_index = -1;
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 static int G_GameOptionSize(void);
 
@@ -192,8 +198,6 @@ boolean         pistolstart, default_pistolstart;
 boolean         strictmode, default_strictmode;
 boolean         force_strictmode;
 boolean         critical;
-
-boolean         minimap_was_on = false; // [Nugget] Minimap: keep it when advancing through levels
 
 // [crispy] store last cmd to track joins
 static ticcmd_t* last_cmd = NULL;
@@ -579,8 +583,10 @@ void G_PrepTiccmd(void)
 
   float zoomdiv = 1.0f;
 
-  if (!strictmode) {
+  if (!strictmode)
+  {
     const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+
     if (zoom)
     { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
   }
@@ -1031,6 +1037,12 @@ static void G_DoLoadLevel(void)
 
   P_UpdateCheckSight();
 
+  // [Nugget] Custom Skill
+  if (ignore_pistolstart)
+  {
+    ignore_pistolstart = false;
+  }
+  else
   // [crispy] pistol start
   if (CRITICAL(pistolstart))
   {
@@ -1741,6 +1753,28 @@ static void G_WriteLevelStat(void)
             levelString, (secretexit ? "s" : ""),
             levelTimeString, totalTimeString, playerKills, totalkills,
             playerItems, totalitems, playerSecrets, totalsecret);
+}
+
+// [Nugget] Custom Skill
+void G_RestartKeepLoadout(void)
+{
+  gameaction = ga_loadlevel;
+
+  for (int i = 0;  i < MAXPLAYERS;  i++)
+  {
+    if (playeringame[i]) { G_PlayerFinishLevel(i); }
+  }
+
+  if (automapactive)
+  {
+    if (automapactive == AM_MINI) { minimap_was_on = true; }
+
+    AM_ChangeMode(AM_OFF);
+  }
+
+  AM_clearMarks();
+
+  ignore_pistolstart = true;
 }
 
 //
@@ -4277,13 +4311,13 @@ void G_SetSkillParms(const skill_t skill)
 {
   if (skill == sk_custom)
   {
-    thingspawns = custom_skill_things;
-    coop_spawns = custom_skill_coopspawns;
-    nomonsters  = custom_skill_nomonsters;
-    slowbrain   = custom_skill_slowbrain;
-    fastparm    = custom_skill_fast;
+    thingspawns     = custom_skill_things;
+    coop_spawns     = custom_skill_coopspawns;
+    nomonsters      = custom_skill_nomonsters;
+    slowbrain       = custom_skill_slowbrain;
+    fastparm        = custom_skill_fast;
     respawnmonsters = custom_skill_respawn;
-    aggressive  = custom_skill_aggressive;
+    aggressive      = custom_skill_aggressive;
   }
   else {
     thingspawns = (skill == sk_baby || skill == sk_easy)      ? THINGSPAWNS_EASY :
@@ -4293,10 +4327,10 @@ void G_SetSkillParms(const skill_t skill)
     nomonsters  = clnomonsters;
     slowbrain   = skill <= sk_easy;
 
-    // `fastparm` is set in `G_ReloadDefaults()`, // which is called before this function
+    // `fastparm` is set in `G_ReloadDefaults()`, which is called before this function
 
     respawnmonsters = skill == sk_nightmare || respawnparm;
-    aggressive  = skill == sk_nightmare;
+    aggressive      = skill == sk_nightmare;
   }
 
   G_SetBabyModeParms(skill);

@@ -672,8 +672,7 @@ void M_StartCustomSkill(const int mode)
   }
   else if (mode == 2)
   {
-    gameaction = ga_loadlevel;
-    AM_clearMarks();
+    G_RestartKeepLoadout();
   }
 
   MN_ClearMenus();
