@@ -59,6 +59,7 @@ set(CHERRYDOOM_SOURCES
     m_input.c              m_input.h
     m_io.c                 m_io.h
     mn_font.c              mn_font.h
+    mn_level_table.c       mn_level_table.h
     mn_menu.c              mn_menu.h
     mn_setup.c             mn_setup.h
     m_misc.c               m_misc.h
