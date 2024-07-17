@@ -1006,9 +1006,9 @@ static void DrawInstructions()
         // [Nugget]
         else if (flags & S_FUNCTION)
         {
-            s = (menu_input == pad_mode)
-                ? "[ PadA ] to confirm, [ PadB ] to cancel"
-                : "[ Enter ] to confirm, [ Esc ] to cancel";
+            s = (menu_input == mouse_mode) ? "Click again to confirm"                  :
+                (menu_input == pad_mode)   ? "[ PadA ] to confirm, [ PadB ] to cancel" :
+                                             "[ Enter ] to confirm, [ Esc ] to cancel";
         }
     }
     else
@@ -1034,7 +1034,7 @@ static void DrawInstructions()
             s = "Restore defaults";
         }
         // [Nugget]
-        else if (flags & S_FUNCTION)
+        else if (flags & S_FUNCTION && menu_input != mouse_mode)
         {
             s = (menu_input == pad_mode)
                 ? "[ PadA ] to select"
