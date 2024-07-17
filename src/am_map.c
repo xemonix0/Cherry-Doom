@@ -219,7 +219,7 @@ static mline_t thintriangle_guy[] =
 
 // [Nugget] Square hitbox /---------------------------------------------------
 
-#define R (FRACUNIT/2)
+#define R (FRACUNIT)
 
 static mline_t square_hitbox[] =
 {
@@ -2442,7 +2442,7 @@ static void AM_drawThings
         AM_drawLineCharacter(
           square_hitbox,
           NUMSQUAREHITBOXLINES,
-          (t->radius * 2) >> FRACTOMAPBITS,
+          t->radius >> FRACTOMAPBITS,
           0,
           mapcolor_hitbox,
           pt.x,

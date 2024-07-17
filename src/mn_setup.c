@@ -497,6 +497,10 @@ static void DrawTabs(void)
         {
             V_FillRect(x + video.deltaw, rect->y + M_SPC, rect->w, 1,
                        cr_gold[cr_shaded[v_lightest_color]]);
+
+            // [Nugget] HUD/menu shadows
+            if (hud_menu_shadows)
+            { V_ShadowRect(x + video.deltaw + 1, rect->y + M_SPC + 1, rect->w, 1); }
         }
 
         rect->x = x;
@@ -524,7 +528,7 @@ static void DrawItem(setup_menu_t *s, int accum_y)
         rect->y = y;
         rect->w = SHORT(patch->width);
         rect->h = SHORT(patch->height);
-        V_DrawPatch(x, y, patch);
+        V_DrawPatchShadowed(x, y, patch); // [Nugget] HUD/menu shadows
         return;
     }
 
@@ -916,8 +920,9 @@ static void DrawScreenItems(setup_menu_t *src)
 
 static void DrawDefVerify()
 {
-    V_DrawPatch(VERIFYBOXXORG, VERIFYBOXYORG,
-                W_CacheLumpName("M_VBOX", PU_CACHE));
+    // [Nugget] HUD/menu shadows
+    V_DrawPatchShadowed(VERIFYBOXXORG, VERIFYBOXYORG,
+                        W_CacheLumpName("M_VBOX", PU_CACHE));
 
     // The blinking messages is keyed off of the blinking of the
     // cursor skull.
@@ -931,8 +936,9 @@ static void DrawDefVerify()
 
 void MN_DrawDelVerify(void)
 {
-    V_DrawPatch(VERIFYBOXXORG, VERIFYBOXYORG,
-                W_CacheLumpName("M_VBOX", PU_CACHE));
+    // [Nugget] HUD/menu shadows
+    V_DrawPatchShadowed(VERIFYBOXXORG, VERIFYBOXYORG,
+                        W_CacheLumpName("M_VBOX", PU_CACHE));
 
     if (whichSkull)
     {
@@ -2777,6 +2783,7 @@ setup_menu_t gen_settings8[] = {
 
     {"Background For All Menus",     S_ONOFF,                 M_X, M_SPC, {"menu_background_all"}},
     {"No Palette Tint in Menus",     S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_menu_tint"}},
+    {"HUD/Menu Shadows",             S_ONOFF,                 M_X, M_SPC, {"hud_menu_shadows"}},
     {"No Berserk Tint",              S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_berserk_tint"}},
     {"No Radiation Suit Tint",       S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_radsuit_tint"}},
     {"Night-Vision Visor Effect",    S_ONOFF |S_STRICT,       M_X, M_SPC, {"nightvision_visor"}},
@@ -3286,11 +3293,11 @@ void MN_DrawStringCR(int cx, int cy, byte *cr1, byte *cr2, const char *ch)
         // desired color, colrngs[color]
         if (cr && cr2)
         {
-            V_DrawPatchTRTR(cx, cy, hu_font[c], cr, cr2);
+            V_DrawPatchTRTRShadowed(cx, cy, hu_font[c], cr, cr2); // [Nugget] HUD/menu shadows
         }
         else
         {
-            V_DrawPatchTranslated(cx, cy, hu_font[c], cr);
+            V_DrawPatchTRShadowed(cx, cy, hu_font[c], cr); // [Nugget] HUD/menu shadows
         }
 
         // The screen is cramped, so trim one unit from each
@@ -4378,7 +4385,7 @@ void MN_DrawTitle(int x, int y, const char *patch, const char *alttext)
 
     if (patch_lump >= 0)
     {
-        V_DrawPatch(x, y, W_CacheLumpNum(patch_lump, PU_CACHE));
+        V_DrawPatchShadowed(x, y, W_CacheLumpNum(patch_lump, PU_CACHE)); // [Nugget] HUD/menu shadows
     }
     else
     {

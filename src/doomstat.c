@@ -161,6 +161,7 @@ int chasecam_crosshair; // CFG-Only
 
 int menu_background_all;
 int no_menu_tint;
+int hud_menu_shadows;
 int no_berserk_tint;
 int no_radsuit_tint;
 int nightvision_visor;
@@ -235,6 +236,7 @@ int fancy_teleport;
 // Miscellaneous (CFG-Only) -----------
 
 int screenshot_palette;
+int hud_menu_shadows_filter_pct;
 int menu_backdrop_darkening;
 int automap_overlay_darkening;
 int no_killough_face;

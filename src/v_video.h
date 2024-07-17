@@ -59,8 +59,9 @@ extern byte *cr_bright;
 extern byte invul_gray[];
 
 // [Nugget]
-extern byte cr_gray_vc[];  // `V_Colorize()` only
-extern byte nightvision[]; // Night-vision visor
+extern byte cr_gray_vc[];    // `V_Colorize()` only
+extern byte nightvision[];   // Night-vision visor
+extern byte *shadow_tranmap; // HUD/menu shadows
 
 // array of pointers to color translation tables
 extern byte *colrngs[];
@@ -157,6 +158,22 @@ void V_DrawPatchTranslated(int x, int y, struct patch_s *patch, byte *outr);
 
 void V_DrawPatchTRTR(int x, int y, struct patch_s *patch, byte *outr1,
                      byte *outr2);
+
+// [Nugget] /-----------------------------------------------------------------
+
+void V_ToggleShadows(const boolean on); // HUD/menu shadows
+
+void V_DrawPatchTRTRShadowed(int x, int y, struct patch_s *patch, byte *outr1, byte *outr2);
+
+#define V_DrawPatchTRShadowed(x, y, p, cr)   \
+  V_DrawPatchTRTRShadowed(x, y, p, cr, NULL)
+
+#define V_DrawPatchShadowed(x, y, p)           \
+  V_DrawPatchTRTRShadowed(x, y, p, NULL, NULL)
+
+void V_ShadowRect(int x, int y, int width, int height);
+
+// [Nugget] -----------------------------------------------------------------/
 
 void V_DrawPatchFullScreen(struct patch_s *patch);
 

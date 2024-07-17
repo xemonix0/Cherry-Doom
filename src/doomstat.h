@@ -523,6 +523,7 @@ extern int chasecam_crosshair; // CFG-Only
 
 extern int menu_background_all;
 extern int no_menu_tint;
+extern int hud_menu_shadows;
 extern int no_berserk_tint;
 extern int no_radsuit_tint;
 extern int nightvision_visor;
@@ -640,6 +641,7 @@ enum {
   SHOTPAL_BOTH,
 }; extern int screenshot_palette;
 
+extern int hud_menu_shadows_filter_pct;
 extern int menu_backdrop_darkening;
 extern int automap_overlay_darkening;
 extern int no_killough_face;

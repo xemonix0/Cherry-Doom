@@ -960,15 +960,15 @@ static void M_DrawSaveLoadBorder(int x, int y, byte *cr)
 {
     int i;
 
-    V_DrawPatchTranslated(x - 8, y + 7, W_CacheLumpName("M_LSLEFT", PU_CACHE), cr);
+    V_DrawPatchTRShadowed(x - 8, y + 7, W_CacheLumpName("M_LSLEFT", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 
     for (i = 0; i < 24; i++)
     {
-        V_DrawPatchTranslated(x, y + 7, W_CacheLumpName("M_LSCNTR", PU_CACHE), cr);
+        V_DrawPatchTRShadowed(x, y + 7, W_CacheLumpName("M_LSCNTR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
         x += 8;
     }
 
-    V_DrawPatchTranslated(x, y + 7, W_CacheLumpName("M_LSRGHT", PU_CACHE), cr);
+    V_DrawPatchTRShadowed(x, y + 7, W_CacheLumpName("M_LSRGHT", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 }
 
 //
@@ -3345,7 +3345,7 @@ void M_Drawer(void)
         {
             patch_t *patch = W_CacheLumpName(name, PU_CACHE);
             rect->y -= SHORT(patch->topoffset);
-            V_DrawPatchTranslated(x, y, patch, cr);
+            V_DrawPatchTRShadowed(x, y, patch, cr); // [Nugget] HUD/menu shadows
         }
 
         y += LINEHEIGHT;
@@ -3355,8 +3355,9 @@ void M_Drawer(void)
 
     y = setup_active ? SCREENHEIGHT - 19 : currentMenu->y;
 
-    V_DrawPatch(x + SKULLXOFF, y - 5 + itemOn * LINEHEIGHT,
-                W_CacheLumpName(skullName[whichSkull], PU_CACHE));
+    // [Nugget] HUD/menu shadows
+    V_DrawPatchTRShadowed(x + SKULLXOFF, y - 5 + itemOn * LINEHEIGHT,
+                          W_CacheLumpName(skullName[whichSkull], PU_CACHE), NULL);
 
     if (delete_verify)
     {
@@ -3461,7 +3462,7 @@ static void WriteText(int x, int y, const char *string)
         {
             break;
         }
-        V_DrawPatch(cx, cy, hu_font[c]);
+        V_DrawPatchShadowed(cx, cy, hu_font[c]); // [Nugget] HUD/menu shadows
         cx += w;
     }
 }

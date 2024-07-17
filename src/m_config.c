@@ -928,6 +928,20 @@ default_t defaults[] = {
   },
 
   {
+    "hud_menu_shadows",
+    (config_t *) &hud_menu_shadows, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to enable shadows for HUD/menu graphics"
+  },
+
+  {
+    "hud_menu_shadows_filter_pct",
+    (config_t *) &hud_menu_shadows_filter_pct, NULL,
+    {66}, {0,100}, number, ss_none, wad_yes,
+    "HUD/menu-shadows translucency percentage"
+  },
+
+  {
     "no_berserk_tint",
     (config_t *) &no_berserk_tint, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,

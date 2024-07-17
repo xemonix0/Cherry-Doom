@@ -562,6 +562,11 @@ static hu_multiline_t *w_stats;
 
 // [Nugget] /-----------------------------------------------------------------
 
+boolean HU_IsSmallFont(const patch_t *const patch)
+{
+  return patch == sml_font.patches['A' - HU_FONTSTART];
+}
+
 #define NUMSQWIDGETS 10
 
 typedef struct {

@@ -2,6 +2,7 @@
 
 - **_Freecam_**
 - **Custom skill level**
+- **_HUD/Menu Shadows_** setting
 - **_Prev/Next [Weapon Buttons] Skip Ammoless Weapons_** setting
 - **_Highlight Current/Pending Weapon_** setting
 - **_Show Thing Hitboxes [in Automap]_** setting
