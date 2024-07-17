@@ -3057,7 +3057,7 @@ void MN_DrawLevelTable(void)
     inhelpscreens = true;
 
     DrawBackground("FLOOR4_6"); // Draw background
-    MN_DrawTitle(114, 2, "M_LVLTBL", "Level Table");
+    MN_DrawTitle(89, 2, "M_LVLTBL", "Level Table");
     DrawTabs();
     DrawInstructions();
 
