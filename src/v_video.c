@@ -471,9 +471,7 @@ static void V_DrawPatchColumnTRTR(const patch_column_t *patchcol)
 static void V_DrawPatchColumnTL(const patch_column_t *patchcol)
 {
     int count;
-    byte *dest;   // killough
-    fixed_t frac; // killough
-    fixed_t fracstep;
+    byte *dest;
 
     count = patchcol->y2 - patchcol->y1 + 1;
 
@@ -493,30 +491,23 @@ static void V_DrawPatchColumnTL(const patch_column_t *patchcol)
 
     dest = V_ADDRESS(dest_screen, patchcol->x, patchcol->y1);
 
-    // Determine scaling, which is the only mapping to be done.
-    fracstep = patchcol->step;
-    frac = patchcol->frac + ((patchcol->y1 * fracstep) & 0xFFFF);
-
     // Inner loop that does the actual texture mapping,
     //  e.g. a DDA-lile scaling.
     // This is as fast as it gets.       (Yeah, right!!! -- killough)
     //
     // killough 2/1/98: more performance tuning
     // haleyjd 06/21/06: rewrote and specialized for screen patches
+    while ((count -= 2) >= 0)
     {
-        while ((count -= 2) >= 0)
-        {
-            *dest = tranmap[*dest << 8];
-            dest += linesize;
-            frac += fracstep;
-            *dest = tranmap[*dest << 8];
-            dest += linesize;
-            frac += fracstep;
-        }
-        if (count & 1)
-        {
-            *dest = tranmap[*dest << 8];
-        }
+        *dest = tranmap[*dest << 8];
+        dest += linesize;
+        *dest = tranmap[*dest << 8];
+        dest += linesize;
+    }
+
+    if (count & 1)
+    {
+        *dest = tranmap[*dest << 8];
     }
 }
 
