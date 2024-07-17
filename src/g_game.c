@@ -1758,6 +1758,8 @@ static void G_WriteLevelStat(void)
 // [Nugget] Custom Skill
 void G_RestartKeepLoadout(void)
 {
+  G_SetSkillParms(sk_custom);
+
   gameaction = ga_loadlevel;
 
   for (int i = 0;  i < MAXPLAYERS;  i++)

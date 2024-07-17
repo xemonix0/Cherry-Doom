@@ -656,7 +656,7 @@ static void M_CustomSkill(int choice)
 
 void M_StartCustomSkill(const int mode)
 {
-  if (mode == 0)
+  if (mode == 0 || gamestate == GS_DEMOSCREEN)
   {
     if (!EpiCustom)
     {
@@ -666,7 +666,7 @@ void M_StartCustomSkill(const int mode)
       G_DeferedInitNew(sk_custom, EpiMenuEpi[epiChoice], EpiMenuMap[epiChoice]);
     }
   }
-  else if (mode == 1 || (mode == 2 && !usergame))
+  else if (mode == 1 || !usergame)
   {
     G_DeferedInitNew(sk_custom, gameepisode, gamemap);
   }
