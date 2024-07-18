@@ -14,6 +14,7 @@
 
 #include "mn_level_table.h"
 
+#include "doomdef.h"
 #include "m_array.h"
 #include "m_misc.h"
 #include "m_swap.h"
@@ -89,6 +90,14 @@ static void InsertLastItem(setup_menu_t **menu)
 
 #define LTBL_X 16
 
+static void LevelsInsertWadName(setup_menu_t **menu, const char *wad_name)
+{
+    setup_menu_t item = {wad_name, S_SKIP | S_LEFTJUST | S_TITLE,
+                         SCREENWIDTH / 2 - MN_GetPixelWidth(wad_name) / 2,
+                         M_SPC};
+    array_push(*menu, item);
+}
+
 static void LevelsInsertRow(setup_menu_t **menu, const char *text, int map_i)
 {
     extern void LT_Warp(void);
@@ -105,12 +114,22 @@ static void LevelsBuild(void)
     {
         setup_menu_t **page = &level_table[p];
 
+        int last_wad_index = -1;
         for (int i = 0; i < array_size(wad_stats.maps); ++i)
         {
             const map_stats_t *ms = &wad_stats.maps[i];
             if (ms->episode == -1)
             {
                 continue;
+            }
+
+            const int wad_index = ms->wad_index;
+
+            if (!wad_stats.one_wad && last_wad_index != wad_index)
+            {
+                last_wad_index = wad_index;
+
+                LevelsInsertWadName(page, M_StringDuplicate(ms->wad_name));
             }
 
             LevelsInsertRow(page, M_StringDuplicate(ms->lump), i);
@@ -497,12 +516,16 @@ static void LevelsDraw(setup_menu_t *current_menu, int current_page)
         {
             LevelsDrawRow(src, accum_y, current_page);
         }
-        else
+
+        if (src->m_flags & S_SHOWDESC)
         {
-            continue;
+            MN_DrawItem(src, accum_y);
         }
 
-        accum_y += src->m_y;
+        if (!(src->m_flags & S_DIRECT))
+        {
+            accum_y += src->m_y;
+        }
     }
 
     if (scroll_indicators & SCRL_UP)

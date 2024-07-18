@@ -24,6 +24,7 @@
 #include "doomstat.h"
 #include "i_printf.h"
 #include "i_system.h"
+#include "mn_menu.h"
 #include "m_array.h"
 #include "m_io.h"
 #include "m_misc.h"
@@ -158,50 +159,41 @@ static int CompareMapStats(const void *a, const void *b)
     const map_stats_t *ms1 = (const map_stats_t *)a;
     const map_stats_t *ms2 = (const map_stats_t *)b;
 
-    return (ms1->episode == -1 && ms2->episode == -1)
-               ? strncasecmp(ms1->lump, ms2->lump, 8)
-           : ms1->episode == -1 ? 1
-           : ms2->episode == -1 ? -1
-           : ms1->episode == ms2->episode
-               ? ms1->map == ms2->map
+    return (ms1->wad_index == ms2->wad_index)
+               ? (ms1->episode == -1 && ms2->episode == -1)
                      ? strncasecmp(ms1->lump, ms2->lump, 8)
-                     : (ms1->map > ms2->map) - (ms1->map < ms2->map)
-               : (ms1->episode > ms2->episode) - (ms1->episode < ms2->episode);
+                 : ms1->episode == -1 ? 1
+                 : ms2->episode == -1 ? -1
+                 : ms1->episode == ms2->episode
+                     ? ms1->map == ms2->map
+                           ? strncasecmp(ms1->lump, ms2->lump, 8)
+                           : (ms1->map > ms2->map) - (ms1->map < ms2->map)
+                     : (ms1->episode > ms2->episode) - (ms1->episode < ms2->episode)
+               : (ms1->wad_index > ms2->wad_index) - (ms1->wad_index < ms2->wad_index);
 }
 
 static void CreateWadStats(void)
 {
-    boolean pwad_maps = false;
+    char *last_wad_name = NULL;
+    int wad_index = -1;
 
     for (int i = numlumps - 1; i > 0; --i)
     {
-        int episode, map;
-
-        if (pwad_maps && lumpinfo[i].source == source_iwad)
-        {
-            break;
-        }
-
-        if (lumpinfo[i].source != source_iwad
-            && lumpinfo[i].source != source_pwad)
+        if (lumpinfo[i].source == source_other)
         {
             continue;
         }
 
-        if (strncasecmp(lumpinfo[i].name, "THINGS", 8) != 0)
+        if (!MN_StartsWithMapIdentifier(lumpinfo[i].name))
         {
             continue;
         }
 
-        const char *map_name = lumpinfo[i - 1].name;
+        const char *map_name = lumpinfo[i].name;
+
         if (MapStatsExist(map_name))
         {
             continue;
-        }
-
-        if (lumpinfo[i - 1].source == source_pwad)
-        {
-            pwad_maps = true;
         }
 
         map_stats_t ms = {0};
@@ -210,13 +202,13 @@ static void CreateWadStats(void)
         map_stats_t *p = &wad_stats.maps[array_size(wad_stats.maps) - 1];
         strcpy(p->lump, map_name);
 
+        int episode, map;
         if (gamemode == commercial && sscanf(map_name, "MAP%d", &map) == 1)
         {
             p->map = map;
             p->episode = 1;
         }
-        else if (gamemode != commercial
-                 && sscanf(map_name, "E%dM%d", &episode, &map) == 2)
+        else if (gamemode != commercial && sscanf(map_name, "E%dM%d", &episode, &map) == 2)
         {
             p->episode = episode;
             p->map = map;
@@ -227,16 +219,30 @@ static void CreateWadStats(void)
             p->map = -1;
         }
 
-        p->best_time = -1;
-        p->best_max_time = -1;
-        p->best_sk5_time = -1;
+        const char *wad_name = W_WadNameForLump(i);
+
+        if (!last_wad_name || last_wad_name != wad_name)
+        {
+            last_wad_name = wad_name;
+            ++wad_index;
+        }
+
+        p->wad_name = wad_name;
+        p->wad_index = wad_index;
+
         p->max_kills = -1;
         p->max_items = -1;
         p->max_secrets = -1;
+
+        p->best_time = -1;
+        p->best_max_time = -1;
+        p->best_sk5_time = -1;
     }
 
     qsort(wad_stats.maps, array_size(wad_stats.maps), sizeof(*wad_stats.maps),
           CompareMapStats);
+
+    wad_stats.one_wad = !wad_index;
 }
 
 char *wad_stats_fail;
@@ -273,6 +279,9 @@ static int LoadWadStats(void)
         return -1;
     }
 
+    char *last_wad_name = NULL;
+    int wad_index = -1;
+
     for (int i = 2; lines[i] && *lines[i]; ++i)
     {
         map_stats_t ms = {0};
@@ -300,8 +309,21 @@ static int LoadWadStats(void)
 
         ms.session_attempts = 0;
 
+        const char *wad_name = W_WadNameForLump(W_GetNumForName(ms.lump));
+
+        if (last_wad_name != wad_name)
+        {
+            last_wad_name = wad_name;
+            ++wad_index;
+        }
+
+        ms.wad_name = wad_name;
+        ms.wad_index = wad_index;
+
         array_push(wad_stats.maps, ms);
     }
+
+    wad_stats.one_wad = !wad_index;
 
     free(lines);
     Z_Free(buffer);
@@ -365,6 +387,12 @@ void WS_WatchEnterMap(void)
     }
 
     current_map_stats = MapStats(gameepisode, gamemap);
+
+    if (current_map_stats->wad_index)
+    {
+        current_map_stats = NULL;
+        return;
+    }
 
     if (!current_map_stats)
     {

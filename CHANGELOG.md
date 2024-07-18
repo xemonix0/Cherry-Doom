@@ -30,6 +30,7 @@
 - Made _stats tracking_ ignore WADs without maps when creating data folders for `stats.txt`[^1]
 - Disabled the level table in multiplayer
 - Made invalid WAD stats non-fatal (the game doesn't crash if stats can't be parsed)
+- Made level table display all loaded maps, grouped by WAD filename
 
 ## Bug Fixes
 

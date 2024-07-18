@@ -16,37 +16,43 @@
 #ifndef __WAD_STATS__
 #define __WAD_STATS__
 
+#include "doomtype.h"
+
 typedef struct
 {
-    char lump[9];
+    char *wad_name;
+    int   wad_index;
 
-    int  episode;
-    int  map;
+    char  lump[9];
 
-    int  max_kills;
-    int  max_items;
-    int  max_secrets;
+    int   episode;
+    int   map;
 
-    int  total_exits;
-    int  total_kills;
+    int   max_kills;
+    int   max_items;
+    int   max_secrets;
 
-    int  best_skill;
-    int  best_kills;
-    int  best_items;
-    int  best_secrets;
-    int  best_time;
-    int  best_max_time;
-    int  best_sk5_time;
+    int   total_exits;
+    int   total_kills;
 
-    int  best_attempts;
-    int  session_attempts;
-    int  total_attempts;
+    int   best_skill;
+    int   best_kills;
+    int   best_items;
+    int   best_secrets;
+    int   best_time;
+    int   best_max_time;
+    int   best_sk5_time;
+
+    int   best_attempts;
+    int   session_attempts;
+    int   total_attempts;
 } map_stats_t;
 
 typedef struct
 {
     map_stats_t* maps;
     int kill_check;
+    boolean one_wad;
 } wad_stats_t;
 
 extern wad_stats_t wad_stats;
