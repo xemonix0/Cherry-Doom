@@ -30,3 +30,4 @@
 - _Backdrop Darkening_ and _Overlay Darkening_ items not being toggled properly
 - Attempts showing up as "0/0" on the level table for beaten levels with no attempt data (i.e. in data files from DSDA-Doom)
 - Widgets overlapping on the intermission screen when _Nugget HUD_ is enabled
+- Doom 1 maps from PWADs being listed on the level table when loaded with the Doom 2 IWAD and vice versa (e.g. Maps of Chaos)

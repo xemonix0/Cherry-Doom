@@ -58,11 +58,9 @@ typedef PACKED_PREFIX struct
 // [Cherry]: [DSDA-Doom]
 typedef enum
 {
-  source_skip = -1,
-  source_iwad = 0,
-  source_auto_load,
+  source_iwad,
   source_pwad,
-  source_other, // [Cherry]
+  source_other,
 } wad_source_t;
 
 typedef struct

@@ -4338,22 +4338,16 @@ static boolean SetupTab(void)
         set_item_on = 0;
 
         // [Cherry] prevent UB when there is nothing to select
-        boolean no_select = false;
         while (current_menu[set_item_on].m_flags & S_SKIP)
         {
             if (current_menu[set_item_on].m_flags & S_END)
             {
-                no_select = true;
                 break;
             }
 
             ++set_item_on;
         }
-    }
 
-    // [Cherry]
-    if (!lt_level_pages)
-    {
         LT_ResetScroll(current_menu, set_item_on);
     }
 

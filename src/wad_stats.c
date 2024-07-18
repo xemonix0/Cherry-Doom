@@ -213,12 +213,13 @@ static void CreateWadStats(void)
         map_stats_t *p = &wad_stats.maps[array_size(wad_stats.maps) - 1];
         strcpy(p->lump, map_name);
 
-        if (sscanf(map_name, "MAP%d", &map) == 1)
+        if (gamemode == commercial && sscanf(map_name, "MAP%d", &map) == 1)
         {
             p->map = map;
             p->episode = 1;
         }
-        else if (sscanf(map_name, "E%dM%d", &episode, &map) == 2)
+        else if (gamemode != commercial
+                 && sscanf(map_name, "E%dM%d", &episode, &map) == 2)
         {
             p->episode = episode;
             p->map = map;

@@ -793,15 +793,6 @@ static boolean D_AddZipFile(const char *file, wad_source_t source)
 
 void D_AddFile(const char *file, wad_source_t source)
 {
-  if (source == source_iwad)
-  {
-    int i;
-
-    for (i = 0; i < array_size(wadfiles); ++i)
-      if (wadfiles[i].src == source_iwad)
-        wadfiles[i].src = source_skip;
-  }
-
   // [FG] search for PWADs by their filename
   char *path = D_TryFindWADByName(file);
 
@@ -1768,7 +1759,7 @@ static void D_AutoloadIWadDir(void (*AutoLoadFunc)(const char *path,
     char *autoload_dir;
 
     autoload_dir = GetAutoloadDir(*base, "all-all", true);
-    AutoLoadFunc(autoload_dir, source_auto_load);
+    AutoLoadFunc(autoload_dir, source_other);
     free(autoload_dir);
 
     GameMission_t local_gamemission = D_GetGameMissionByIWADName(M_BaseName(wadfiles[0].name));
@@ -1779,27 +1770,27 @@ static void D_AutoloadIWadDir(void (*AutoLoadFunc)(const char *path,
       if (local_gamemission < pack_chex)
       {
         autoload_dir = GetAutoloadDir(*base, "doom-all", true);
-        AutoLoadFunc(autoload_dir, source_auto_load);
+        AutoLoadFunc(autoload_dir, source_other);
         free(autoload_dir);
       }
 
       if (local_gamemission == doom)
       {
         autoload_dir = GetAutoloadDir(*base, "doom1-all", true);
-        AutoLoadFunc(autoload_dir, source_auto_load);
+        AutoLoadFunc(autoload_dir, source_other);
         free(autoload_dir);
       }
       else if (local_gamemission >= doom2 && local_gamemission <= pack_plut)
       {
         autoload_dir = GetAutoloadDir(*base, "doom2-all", true);
-        AutoLoadFunc(autoload_dir, source_auto_load);
+        AutoLoadFunc(autoload_dir, source_other);
         free(autoload_dir);
       }
     }
 
     // auto-loaded files per IWAD
     autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[0].name), true);
-    AutoLoadFunc(autoload_dir, source_auto_load);
+    AutoLoadFunc(autoload_dir, source_other);
     free(autoload_dir);
   }
 }
@@ -1817,7 +1808,7 @@ static void D_AutoloadPWadDir(void (*AutoLoadFunc)(const char *path,
     {
       char *autoload_dir;
       autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[i].name), false);
-      AutoLoadFunc(autoload_dir, source_auto_load);
+      AutoLoadFunc(autoload_dir, source_other);
       free(autoload_dir);
     }
   }

@@ -98,12 +98,6 @@ static void W_AddFile(wadfile_info_t wadfile) // killough 1/31/98: static, const
     int length;
     int startlump;
 
-    // [Cherry]
-    if (wadfile.src == source_skip)
-    {
-      return;
-    }
-
     // open the file and add to directory
 
     handle = M_open(wadfile.name, O_RDONLY | O_BINARY);
