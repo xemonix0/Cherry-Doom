@@ -50,6 +50,7 @@ typedef struct
 } wad_stats_t;
 
 extern wad_stats_t wad_stats;
+extern char *wad_stats_fail;
 
 void WS_InitWadStats(void);
 void WS_SaveWadStats(void);

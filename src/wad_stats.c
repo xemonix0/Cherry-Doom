@@ -239,29 +239,38 @@ static void CreateWadStats(void)
           CompareMapStats);
 }
 
-static boolean LoadWadStats(void)
+char *wad_stats_fail;
+
+static int LoadWadStats(void)
 {
     const char *path = WadStatsPath();
     char *buffer;
     if (M_ReadFileToString(path, &buffer) == -1)
     {
-        return false;
+        return 0;
     }
 
     char **lines = M_StringSplit(buffer, "\n\r");
     if (!lines || !lines[0])
     {
-        I_Error("Encountered invalid wad stats: %s", path);
+        I_Printf(VB_WARNING, "Encountered invalid WAD stats: %s", path);
+        wad_stats_fail = "Invalid WAD stats found!";
+        return -1;
     }
 
     if (strncmp(lines[0], "1", 1) && strncmp(lines[0], "2", 1))
     {
-        I_Error("Encountered unsupported wad stats version: %s", path);
+        I_Printf(VB_WARNING, "Encountered unsupported WAD stats version: %s",
+                 path);
+        wad_stats_fail = "Unsupported WAD stats version!";
+        return -1;
     }
 
     if (sscanf(lines[1], "%d", &wad_stats.kill_check) != 1)
     {
-        I_Error("Encountered invalid wad stats: %s", path);
+        I_Printf(VB_WARNING, "Encountered invalid WAD stats: %s", path);
+        wad_stats_fail = "Invalid WAD stats found!";
+        return -1;
     }
 
     for (int i = 2; lines[i] && *lines[i]; ++i)
@@ -278,7 +287,9 @@ static boolean LoadWadStats(void)
 
         if (values != 15 && values != 17)
         {
-            I_Error("Encountered invalid wad stats: %s", path);
+            I_Printf(VB_WARNING, "Encountered invalid WAD stats: %s", path);
+            wad_stats_fail = "Invalid WAD stats found!";
+            return -1;
         }
 
         if (values == 15)
@@ -295,7 +306,7 @@ static boolean LoadWadStats(void)
     free(lines);
     Z_Free(buffer);
 
-    return true;
+    return 1;
 }
 
 void WS_SaveWadStats(void)
@@ -310,7 +321,7 @@ void WS_SaveWadStats(void)
     if (!file)
     {
         I_Printf(VB_WARNING,
-                 "WS_SaveWadStats: Failed to save wad stats file \"%s\".",
+                 "WS_SaveWadStats: Failed to save WAD stats file \"%s\".",
                  path);
         return;
     }

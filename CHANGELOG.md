@@ -20,9 +20,16 @@
 - Minor menu color changes:
 	- _Selected setup menu tabs_: Yellow > Green
 	- _Setup menu titles_: Yellow > Red
-- Disable _Movement Widget_ in _strict mode_
+- Disabled _Movement Widget_ in _strict mode_
 - Added hints for disabled menu items, which explain why the item is disabled
+- Tweaked level table visuals:
+	- Display skill names instead of numbers
+	- Display valid times in white
+	- Display attempts in white for beaten levels
+	- Various changes to the Summary page
 - Made _stats tracking_ ignore WADs without maps when creating data folders for `stats.txt`[^1]
+- Disabled the level table in multiplayer
+- Made invalid WAD stats non-fatal (the game doesn't crash if stats can't be parsed)
 
 ## Bug Fixes
 
@@ -33,4 +40,4 @@
 - Widgets overlapping on the intermission screen when _Nugget HUD_ is enabled
 - Doom 1 maps from PWADs being listed on the level table when loaded with the Doom 2 IWAD and vice versa (e.g. Maps of Chaos)
 
-[^1]: This means that existing `stats.txt` files may require to be moved between `cherry_doom_data` subfolders folders for Cherry Doom to detect them
+[^1]: This means that existing `stats.txt` files may require to be moved between `cherry_doom_data` subfolders for Cherry Doom to detect them

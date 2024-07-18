@@ -57,6 +57,7 @@
 #include "st_stuff.h"
 
 // [Cherry]
+#include "dstrings.h"
 #include "mn_level_table.h"
 #include "wad_stats.h"
 
@@ -3047,6 +3048,27 @@ void MN_DrawGeneral(void)
 
 void MN_LevelTable(int choice)
 {
+    if (!wad_stats.maps)
+    {
+        if (netgame)
+        {
+            M_StartMessage("You can't use the Level Table\n"
+                           "while in a net game!\n\n" PRESSKEY,
+                           NULL, false);
+        }
+        else
+        {
+            char *message = NULL;
+            M_StringPrintF(&message, "%s\n"
+                           "Stats tracking is disabled.\n\n" PRESSKEY,
+                           wad_stats_fail);
+
+            M_StartMessage(message, NULL, false);
+        }
+
+        return;
+    }
+
     int page_index_save = GetPageIndex(level_table);
     int item_on_save = 0;
     if (level_table[0])
