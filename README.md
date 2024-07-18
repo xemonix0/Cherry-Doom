@@ -151,6 +151,7 @@ All of these are CFG-Only, so their CVAR names are included.
 - Play `DSNOWAY` instead of `DSOOF` when failing to use key-locked triggers
 - Higher god-mode face priority (`comp_godface`) [p.f. International Doom]
 - Dead players can still play "oof" sound (`comp_deadoof`) [p.f. Crispy Doom]
+- Use improved powerup run-out effect (`comp_powerrunout`)
 - Use unused pain/bonus palettes (`comp_unusedpals`)
 - Key pickup resets palette (`comp_keypal`)
 

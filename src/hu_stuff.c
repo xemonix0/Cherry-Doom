@@ -1517,25 +1517,25 @@ static void HU_widget_build_powers(void)
 
   if (plr->powers[pw_invisibility] > 0) {
     offset += M_snprintf(hud_powerstr, sizeof(hud_powerstr), "\x1b%cINVIS %i\" ",
-                         '0' + ((plr->powers[pw_invisibility] > 4*32 || plr->powers[pw_invisibility] & 8) ? CR_RED : CR_BLACK),
+                         '0' + (POWER_RUNOUT(plr->powers[pw_invisibility]) ? CR_RED : CR_BLACK),
                          MIN(INVISTICS/TICRATE, 1 + (plr->powers[pw_invisibility] / TICRATE)));
   }
 
   if (plr->powers[pw_invulnerability] > 0) {
     offset += M_snprintf(hud_powerstr + offset, sizeof(hud_powerstr), "\x1b%cINVUL %i\" ",
-                         '0' + ((plr->powers[pw_invulnerability] > 4*32 || plr->powers[pw_invulnerability] & 8) ? CR_GREEN : CR_BLACK),
+                         '0' + (POWER_RUNOUT(plr->powers[pw_invulnerability]) ? CR_GREEN : CR_BLACK),
                          MIN(INVULNTICS/TICRATE, 1 + (plr->powers[pw_invulnerability] / TICRATE)));
   }
 
   if (plr->powers[pw_infrared] > 0) {
     offset += M_snprintf(hud_powerstr + offset, sizeof(hud_powerstr), "\x1b%cLIGHT %i\" ",
-                         '0' + ((plr->powers[pw_infrared] > 4*32 || plr->powers[pw_infrared] & 8) ? CR_BRICK : CR_BLACK),
+                         '0' + (POWER_RUNOUT(plr->powers[pw_infrared]) ? CR_BRICK : CR_BLACK),
                          MIN(INFRATICS/TICRATE, 1 + (plr->powers[pw_infrared] / TICRATE)));
   }
 
   if (plr->powers[pw_ironfeet] > 0) {
     offset += M_snprintf(hud_powerstr + offset, sizeof(hud_powerstr), "\x1b%cSUIT %i\"",
-                         '0' + ((plr->powers[pw_ironfeet] > 4*32 || plr->powers[pw_ironfeet] & 8) ? CR_GRAY : CR_BLACK),
+                         '0' + (POWER_RUNOUT(plr->powers[pw_ironfeet]) ? CR_GRAY : CR_BLACK),
                          MIN(IRONTICS/TICRATE, 1 + (plr->powers[pw_ironfeet] / TICRATE)));
   }
 

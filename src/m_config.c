@@ -1808,6 +1808,13 @@ default_t defaults[] = {
   },
 
   {
+    "comp_powerrunout",
+    (config_t *) &comp_powerrunout, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Use improved powerup run-out effect"
+  },
+
+  {
     "comp_unusedpals",
     (config_t *) &comp_unusedpals, NULL,
     {0}, {0,1}, number, ss_none, wad_yes,

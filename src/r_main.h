@@ -118,6 +118,9 @@ void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // [Nugget] /-----------------------------------------------------------------
 
+#define POWER_RUNOUT(power) \
+  ((STRICTMODE(comp_powerrunout) ? (power) >= 4*32 : (power) > 4*32) || (power) & 8)
+
 // FOV effects --------------------------------------------
 
 typedef struct fovfx_s {

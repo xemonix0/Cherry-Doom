@@ -840,8 +840,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->patch = lump;
 
   // killough 7/11/98: beta psprites did not draw shadows
-  if ((viewplayer->powers[pw_invisibility] > 4*32
-      || viewplayer->powers[pw_invisibility] & 8) && !beta_emulation)
+  if (POWER_RUNOUT(viewplayer->powers[pw_invisibility]) && !beta_emulation)
 
     vis->colormap[0] = vis->colormap[1] = NULL;                    // shadow draw
   else if (fixedcolormap)

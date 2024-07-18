@@ -10,6 +10,7 @@
 - **_"Count"_ Level Stats Format**
 - **Explosion shake intensity percent** setting
 - **Setting to play `DSNOWAY` instead of `DSOOF` when failing to use key-locked triggers**
+- **Setting to use improved powerup run-out effect**
 
 ## Changes
 

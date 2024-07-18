@@ -841,9 +841,8 @@ void ST_Ticker(void)
   ST_updateWidgets();
   st_oldhealth = plyr->health;
 
-  st_invul = (plyr->powers[pw_invulnerability] > 4*32 ||
-              plyr->powers[pw_invulnerability] & 8) ||
-              plyr->cheats & CF_GODMODE;
+  st_invul = POWER_RUNOUT(plyr->powers[pw_invulnerability]) ||
+             plyr->cheats & CF_GODMODE;
 
   if (!nodrawers)
     ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
@@ -908,7 +907,7 @@ static void ST_doPaletteStuff(void)
       if (beta_emulation)
         palette = 0;
       else
-      if ((plyr->powers[pw_ironfeet] > 4*32 || plyr->powers[pw_ironfeet] & 8)
+      if (POWER_RUNOUT(plyr->powers[pw_ironfeet])
           && !STRICTMODE(no_radsuit_tint)) // [Nugget]
         palette = RADIATIONPAL;
       else

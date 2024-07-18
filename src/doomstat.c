@@ -266,6 +266,7 @@ int comp_flamst;
 int comp_keynoway;
 int comp_godface;
 int comp_deadoof;
+int comp_powerrunout;
 int comp_unusedpals;
 int comp_keypal;
 
