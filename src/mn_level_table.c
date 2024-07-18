@@ -371,7 +371,7 @@ static void LevelsDrawStat(lt_statf_t type, boolean done, int a, int b, int x,
     MN_DrawMenuStringEx(flags, x - (MN_GetPixelWidth(menu_buffer) + 4), accum_y,
                         color);
 
-    free(item.m_text);
+    FreeMText(item.m_text);
 }
 
 static void LevelsDrawRow(setup_menu_t *item, int accum_y, int page)
@@ -623,7 +623,7 @@ static void SummaryDrawRow(const char *heading, lt_statf_t type, boolean done,
     M_snprintf(menu_buffer, sizeof(menu_buffer), "%s", item.m_text);
     MN_DrawMenuStringEx(flags, LT_SUM_X + 2, accum_y, color);
 
-    free(item.m_text);
+    FreeMText(item.m_text);
 }
 
 static void SummaryDraw(void)
