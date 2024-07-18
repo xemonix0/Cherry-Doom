@@ -35,7 +35,7 @@
 #define DATA_DIR_DEPTH_LIMIT 9
 
 static const char *cherry_data_root = "cherry_doom_data";
-static char *data_dir_names[DATA_DIR_DEPTH_LIMIT];
+static char **data_dir_names;
 static const char *wad_stats_filename = "stats.txt";
 
 static map_stats_t *current_map_stats;
@@ -47,40 +47,40 @@ wad_stats_t wad_stats = {0};
 static char *InitWadDataDir(void)
 {
     static char *base_data_dir = NULL;
-    const int iwad_index = 0;
-    int pwad_index = 1;
-    int current_dir_index;
+
+    int current_dir_index = 0, pwad_index = 1;
+
+    array_clear(data_dir_names);
 
     for (int i = 0; i < array_size(wadfiles); ++i)
     {
-        const char *name = M_BaseName(wadfiles[i].name);
-
-        if (!M_StringCaseEndsWith(name, ".wad"))
+        if (!W_FileContainsMaps(wadfiles[i].name))
         {
             continue;
         }
 
-        switch (wadfiles[i].src)
+        if (wadfiles[i].src == source_pwad)
         {
-            case source_iwad:
-                current_dir_index = iwad_index;
-                break;
-            case source_pwad:
-                current_dir_index = pwad_index;
-                break;
-            default:
-                continue;
+            current_dir_index = pwad_index;
+        }
+        else if (i)
+        {
+            continue;
         }
 
         if (current_dir_index >= DATA_DIR_DEPTH_LIMIT)
         {
-            continue;
+            break;
         }
 
-        const size_t length = strlen(name) - 3;
-        data_dir_names[current_dir_index] = malloc(length);
-        M_StringCopy(data_dir_names[current_dir_index], name, length);
-        M_StringToLower(data_dir_names[current_dir_index]);
+        const char *filename = M_BaseName(wadfiles[i].name);
+        const size_t length = strlen(filename) - 3;
+
+        char *name = malloc(length);
+        M_StringCopy(name, filename, length);
+        M_StringToLower(name);
+
+        array_push(data_dir_names, name);
 
         if (current_dir_index == pwad_index)
         {
@@ -104,13 +104,10 @@ static char *InitWadDataDir(void)
 
     char *wad_data_dir = M_StringDuplicate(base_data_dir);
 
-    for (int i = 0; i < DATA_DIR_DEPTH_LIMIT; ++i)
+    for (int i = 0; i < array_size(data_dir_names); ++i)
     {
-        if (data_dir_names[i])
-        {
-            M_StringConcatF(&wad_data_dir, "/%s", data_dir_names[i]);
-            M_MakeDirectory(wad_data_dir);
-        }
+        M_StringConcatF(&wad_data_dir, "/%s", data_dir_names[i]);
+        M_MakeDirectory(wad_data_dir);
     }
 
     return wad_data_dir;

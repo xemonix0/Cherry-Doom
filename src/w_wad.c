@@ -26,6 +26,7 @@
 #include "d_main.h" // [FG] wadfiles
 #include "i_printf.h"
 #include "i_system.h"
+#include "mn_menu.h"
 #include "m_array.h"
 #include "m_io.h"
 #include "m_misc.h"
@@ -649,6 +650,75 @@ void W_DemoLumpNameCollision(char **name)
       W_InitLumpHash();
     }
   }
+}
+
+// [Cherry] moved to w_wad.c for use in wad_stats.c
+boolean W_FileContainsMaps(const char *filename)
+{
+    int i;
+    FILE *file = NULL;
+    wadinfo_t header;
+    filelump_t *fileinfo = NULL;
+    boolean ret = false;
+
+    while (ret == false)
+    {
+        if (filename == NULL || M_StringCaseEndsWith(filename, ".wad") == false)
+        {
+            break;
+        }
+
+        file = M_fopen(filename, "rb");
+
+        if (file == NULL)
+        {
+            break;
+        }
+
+        if (fread(&header, sizeof(header), 1, file) != 1)
+        {
+            break;
+        }
+
+        if (strncmp(header.identification, "IWAD", 4)
+            && strncmp(header.identification, "PWAD", 4))
+        {
+            break;
+        }
+
+        header.numlumps = LONG(header.numlumps);
+        header.infotableofs = LONG(header.infotableofs);
+        fileinfo = malloc(header.numlumps * sizeof(filelump_t));
+
+        if (fseek(file, header.infotableofs, SEEK_SET)
+            || fread(fileinfo, sizeof(filelump_t), header.numlumps, file)
+                   != header.numlumps)
+        {
+            break;
+        }
+
+        for (i = 0; i < header.numlumps; i++)
+        {
+            if (MN_StartsWithMapIdentifier(fileinfo[i].name))
+            {
+                ret = true;
+                break;
+            }
+        }
+
+        break;
+    }
+
+    if (fileinfo)
+    {
+        free(fileinfo);
+    }
+    if (file)
+    {
+        fclose(file);
+    }
+
+    return ret;
 }
 
 void W_CloseFileDescriptors(void)
