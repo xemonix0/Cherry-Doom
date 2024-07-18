@@ -2,9 +2,10 @@
 
 - **_Freecam_**
 - **Custom skill level**
-- **_HUD/Menu Shadows_** setting
 - **_Prev/Next [Weapon Buttons] Skip Ammoless Weapons_** setting
 - **_Highlight Current/Pending Weapon_** setting
+- **_HUD/Menu Shadows_** setting
+- **_[Crosshair] Translucency_** setting
 - **_Show Thing Hitboxes [in Automap]_** setting
 - **_'BABYMODE'_ cheat**, to toggle ITYTD benefits
 - **_"Count"_ Level Stats Format**
@@ -24,7 +25,7 @@
 
 ## Bug Fixes
 
-- **_Selective Fuzz Darkening_ overflow** (caused visual glitches and crashes) [thanks @ceski-1]
+- **Blocky _Selective Fuzz Darkening_ overflow** (caused visual glitches and crashes) [thanks @ceski-1]
 - **Status bar popping when the _Alternative Intermission Background_ were enabled**
 - **1S lines obscuring _Tag Finder_ highlights in automap**
 - **Lost souls improperly colliding with the over/underside of other things**

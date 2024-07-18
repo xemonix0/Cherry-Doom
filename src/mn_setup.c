@@ -1655,6 +1655,12 @@ static const char *hudcolor_strings[] = {
     "ORANGE", "YELLOW", "BLUE2", "BLACK", "PURPLE", "WHITE", "NONE"
 };
 
+// [Nugget] Translucent crosshair
+void CrosshairTrans(void)
+{
+    R_InitTranMapEx(&xhair_tranmap, hud_crosshair_tran_pct);
+}
+
 #define XH_X (M_X - 33)
 
 static setup_menu_t stat_settings3[] = {
@@ -1666,6 +1672,10 @@ static setup_menu_t stat_settings3[] = {
     // [Nugget] Actual type
     {"Crosshair Type", S_CHOICE,XH_X, M_SPC, {"hud_crosshair"},
      m_null, input_null, str_crosshair},
+
+    // [Nugget] Translucent crosshair
+    {"Translucency", S_THERMO | S_ACTION | S_PCT, M_X_THRM8 - 33, M_THRM_SPC,
+     {"hud_crosshair_tran_pct"}, m_null, input_null, str_empty, CrosshairTrans},
 
     {"Color By Player Health", S_ONOFF | S_STRICT, XH_X, M_SPC, {"hud_crosshair_health"}},
 
@@ -1883,7 +1893,8 @@ void MN_DrawStatusHUD(void)
         int x = XH_X + 85 - SHORT(patch->width) / 2;
         int y = M_Y + M_SPC + M_SPC / 2 - SHORT(patch->height) / 2 - 1; // [Nugget] Adjusted
 
-        V_DrawPatchTranslated(x, y, patch, colrngs[hud_crosshair_color]);
+        // [Nugget] Translucent crosshair
+        V_DrawPatchTRTL(x, y, patch, colrngs[hud_crosshair_color], xhair_tranmap);
     }
 
     // If the Reset Button has been selected, an "Are you sure?" message

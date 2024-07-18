@@ -3898,6 +3898,13 @@ default_t defaults[] = {
     "crosshair type"
   },
 
+  { // [Nugget] Translucent crosshair
+    "hud_crosshair_tran_pct",
+    (config_t *) &hud_crosshair_tran_pct, NULL,
+    {100}, {0,100}, number, ss_none, wad_no,
+    "crosshair translucency percent"
+  },
+
   {
     "hud_crosshair_health",
     (config_t *) &hud_crosshair_health, NULL,

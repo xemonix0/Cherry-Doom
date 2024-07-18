@@ -90,6 +90,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 
 - **Nugget HUD**, highly customizable through means of the **`NUGHUD` lump** (see `docs/nughud.md`)
 - **Crosshair:**
+  - Translucency;
   - Vertical-only target lock-on;
   - Horizontal-autoaim indicators;
   - Option to account for fuzzy targets [i.b. From Doom With Love];

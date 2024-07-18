@@ -1605,6 +1605,7 @@ static void HU_widget_build_rate (void)
 // Crosshair
 
 int hud_crosshair; // [Nugget] Crosshair type to be used
+int hud_crosshair_tran_pct; // [Nugget] Translucent crosshair
 boolean hud_crosshair_health;
 crosstarget_t hud_crosshair_target;
 crosslockon_t hud_crosshair_lockon; // [Alaux] Crosshair locks on target
@@ -1790,23 +1791,24 @@ void HU_DrawCrosshair(void)
   const int y = crosshair.y + (nughud.viewoffset * STRICTMODE(st_crispyhud));
 
   if (crosshair.patch)
-    V_DrawPatchTranslated(crosshair.x - crosshair.w,
-                                    y - crosshair.h,
-                          crosshair.patch, crosshair.cr);
+    // [Nugget] Translucent crosshair
+    V_DrawPatchTRTL(crosshair.x - crosshair.w,
+                              y - crosshair.h,
+                    crosshair.patch, crosshair.cr, xhair_tranmap);
 
   // [Nugget] Horizontal-autoaim indicators ----------------------------------
 
   if (crosshair.side == -1)
   {
-    V_DrawPatchTranslated(crosshair.x - crosshair.w - crosshair.lw,
-                                    y - crosshair.lh,
-                          crosshair.patchl, crosshair.cr);
+    V_DrawPatchTRTL(crosshair.x - crosshair.w - crosshair.lw,
+                              y - crosshair.lh,
+                    crosshair.patchl, crosshair.cr, xhair_tranmap);
   }
   else if (crosshair.side == 1)
   {
-    V_DrawPatchTranslated(crosshair.x + crosshair.w,
-                                    y - crosshair.rh,
-                          crosshair.patchr, crosshair.cr);
+    V_DrawPatchTRTL(crosshair.x + crosshair.w,
+                              y - crosshair.rh,
+                    crosshair.patchr, crosshair.cr, xhair_tranmap);
   }
 }
 

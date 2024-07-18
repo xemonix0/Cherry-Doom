@@ -106,6 +106,7 @@ extern boolean draw_crispy_hud;
 
 extern boolean hud_crosshair_on; // [Nugget] Keep the CVAR below just for the type
 extern int hud_crosshair;
+extern int hud_crosshair_tran_pct; // [Nugget] Translucent crosshair
 extern boolean hud_crosshair_health;
 
 enum

@@ -47,6 +47,9 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
+// [Nugget]
+#include "hu_stuff.h"
+
 //
 // Graphics.
 // DOOM graphics for walls and sprites
@@ -1133,8 +1136,11 @@ void R_InitData(void)
   R_InitTextures();
   R_InitSpriteLumps();
     R_InitTranMap(1);                   // killough 2/21/98, 3/6/98
-    R_InitTranMapEx(&shadow_tranmap, hud_menu_shadows_filter_pct); // [Nugget] HUD/menu shadows
   R_InitColormaps();                    // killough 3/20/98
+
+  // [Nugget]
+  R_InitTranMapEx(&shadow_tranmap, hud_menu_shadows_filter_pct); // HUD/menu shadows
+  R_InitTranMapEx(&xhair_tranmap, hud_crosshair_tran_pct); // Translucent crosshair
 }
 
 //

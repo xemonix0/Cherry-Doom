@@ -143,9 +143,11 @@ int v_lightest_color, v_darkest_color;
 byte invul_gray[256];
 
 // [Nugget]
+byte cr_allblack[256];
 byte cr_gray_vc[256];  // `V_Colorize()` only
 byte nightvision[256]; // Night-vision visor
 byte *shadow_tranmap;  // HUD/menu shadows
+byte *xhair_tranmap;   // Translucent crosshair
 
 // killough 5/2/98: tiny engine driven by table above
 void V_InitColorTranslation(void)
@@ -221,6 +223,8 @@ void V_InitColorTranslation(void)
     }
 
     // [Nugget] ==============================================================
+
+    memset(cr_allblack, I_GetPaletteIndex(playpal, 0, 0, 0), 256);
 
     for (int i = 0;  i < 256;  i++)
     {
@@ -472,6 +476,8 @@ static void V_DrawPatchColumnTL(const patch_column_t *patchcol)
 {
     int count;
     byte *dest;
+    fixed_t frac;
+    fixed_t fracstep;
 
     count = patchcol->y2 - patchcol->y1 + 1;
 
@@ -491,23 +497,39 @@ static void V_DrawPatchColumnTL(const patch_column_t *patchcol)
 
     dest = V_ADDRESS(dest_screen, patchcol->x, patchcol->y1);
 
+    // Determine scaling, which is the only mapping to be done.
+    fracstep = patchcol->step;
+    frac = patchcol->frac + ((patchcol->y1 * fracstep) & 0xFFFF);
+
     // Inner loop that does the actual texture mapping,
     //  e.g. a DDA-lile scaling.
     // This is as fast as it gets.       (Yeah, right!!! -- killough)
     //
     // killough 2/1/98: more performance tuning
     // haleyjd 06/21/06: rewrote and specialized for screen patches
-    while ((count -= 2) >= 0)
     {
-        *dest = tranmap[*dest << 8];
-        dest += linesize;
-        *dest = tranmap[*dest << 8];
-        dest += linesize;
-    }
+        const byte *source = patchcol->source;
 
-    if (count & 1)
-    {
-        *dest = tranmap[*dest << 8];
+        #define TRANSLATE (                                                     \
+          translation2 ? translation2[translation1[source[frac >> FRACBITS]]] : \
+          translation1 ?              translation1[source[frac >> FRACBITS]]  : \
+                                                   source[frac >> FRACBITS]     \
+        )
+
+        while ((count -= 2) >= 0)
+        {
+            *dest = tranmap[(*dest << 8) + TRANSLATE];
+            dest += linesize;
+            frac += fracstep;
+            *dest = tranmap[(*dest << 8) + TRANSLATE];
+            dest += linesize;
+            frac += fracstep;
+        }
+
+        if (count & 1)
+        {
+            *dest = tranmap[(*dest << 8) + TRANSLATE];
+        }
     }
 }
 
@@ -733,22 +755,39 @@ void V_DrawPatchTRTR(int x, int y, patch_t *patch, byte *outr1, byte *outr2)
     V_DrawPatchInt(x, y, patch, false);
 }
 
-// [Nugget]
+// [Nugget] /-----------------------------------------------------------------
+
+void V_DrawPatchTRTRTL(int x, int y, struct patch_s *patch, byte *outr1, byte *outr2, byte *tmap)
+{
+    x += video.deltaw;
+
+    if (outr1)
+    {
+        translation1 = outr1;
+
+        if (outr2)
+        { translation2 = outr2; }
+    }
+    else { translation1 = translation2 = NULL; }
+
+    drawcolfunc = V_DrawPatchColumnTL;
+    tranmap = tmap;
+
+    V_DrawPatchInt(x, y, patch, false);
+}
+
 void V_DrawPatchTRTRShadowed(int x, int y, struct patch_s *patch, byte *outr1, byte *outr2)
 {
-  if (hud_menu_shadows && drawshadows)
-  {
-    drawcolfunc = V_DrawPatchColumnTL;
-    tranmap = shadow_tranmap;
+    if (hud_menu_shadows && drawshadows)
+    { V_DrawPatchTRTRTL(x + 1, y + 1, patch, cr_allblack, NULL, shadow_tranmap); }
 
-    V_DrawPatchInt(x + video.deltaw + 1, y + 1, patch, false);
-  }
-
-  if (outr1 && outr2)
-  { V_DrawPatchTRTR(x, y, patch, outr1, outr2); }
-  else
-  { V_DrawPatchTranslated(x, y, patch, outr1); }
+    if (outr1 && outr2)
+    { V_DrawPatchTRTR(x, y, patch, outr1, outr2); }
+    else
+    { V_DrawPatchTranslated(x, y, patch, outr1); }
 }
+
+// [Nugget] -----------------------------------------------------------------/
 
 void V_DrawPatchFullScreen(patch_t *patch)
 {
