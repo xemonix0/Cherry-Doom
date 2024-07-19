@@ -207,15 +207,15 @@ static void CreateWadStats(boolean exists)
             p->map = -1;
         }
 
-        char *wad_name = W_WadNameForLump(i);
+        char *wad_name = M_StringDuplicate(W_WadNameForLump(i));
 
-        if (last_wad_name != wad_name)
+        if (!last_wad_name || strcmp(last_wad_name, wad_name))
         {
             last_wad_name = wad_name;
             ++wad_index;
         }
 
-        p->wad_name = M_StringDuplicate(wad_name);
+        p->wad_name = wad_name;
         p->wad_index = wad_index;
 
         p->max_kills = -1;
@@ -318,18 +318,17 @@ static int LoadWadStats(void)
                 &ms.best_secrets, &ms.max_kills, &ms.max_items, &ms.max_secrets,
                 &ms.best_attempts, &ms.total_attempts);
 
-            char *wad_name = W_WadNameForLump(W_GetNumForName(ms.lump));
+            char *wad_name = M_StringDuplicate(W_WadNameForLump(W_GetNumForName(ms.lump)));
 
             if (stats_version != ws_version_dsda && values == 3)
-                //&& !strncmp(lines[i] + strlen(ms.lump) + 1, "N/A", 3))
             {
-                if (last_wad_name != wad_name)
+                if (!last_wad_name || strcmp(last_wad_name, wad_name))
                 {
                     last_wad_name = wad_name;
                     ++wad_index;
                 }
 
-                ms.wad_name = M_StringDuplicate(wad_name);
+                ms.wad_name = wad_name;
                 ms.wad_index = wad_index;
 
                 array_push(wad_stats.maps, ms);
