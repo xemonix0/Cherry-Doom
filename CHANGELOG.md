@@ -27,7 +27,7 @@
 
 ### Stats Tracking & Level Table Changes
 
-This release includes many changes to the _Level Table_ and the _stats tracking system_, all of which are listed below, separate from other changes.
+This release introduces many changes to the _Level Table_ and the _stats tracking system_, all of which are listed below, separate from other changes.
 
 - Some color and formatting changes have been made to the _Level Table_:
 	- Skill names are displayed instead of numbers

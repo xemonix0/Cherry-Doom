@@ -2306,7 +2306,12 @@ void HU_Ticker(void)
             {
               // Don't account for empty lines beyond the first one;
               // message lines can be empty, and the chat's line-width is always zero
-              if (k && !ml->lines[k]->width) { continue; }
+              // [Cherry] Fix empty Attempt counter taking up space
+              boolean zero_width = !ml->lines[k]->width;
+              if ((ml == &w_chat) ? (k && zero_width) : (zero_width))
+              {
+                  continue;
+              }
 
               if (!secondtime)
               {

@@ -241,7 +241,7 @@ char *wad_stats_fail;
 
 static int InvalidWadStats(const char *path)
 {
-    I_Error("Encountered invalid WAD stats: %s", path);
+    I_Printf(VB_WARNING, "Encountered invalid WAD stats: %s", path);
     wad_stats_fail = "Invalid WAD stats found!";
     return -1;
 }
@@ -354,6 +354,11 @@ static int LoadWadStats(void)
             ms.wad_index = wad_index;
 
             array_push(wad_stats.maps, ms);
+        }
+
+        if (ret == -1)
+        {
+            break;
         }
 
         // For pre-2.0.0 stats files, go through missing maps from all the WADs
