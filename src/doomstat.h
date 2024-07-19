@@ -668,6 +668,10 @@ extern int comp_keypal;
 
 // [Nugget] -----------------------------------------------------------------/
 
+// [Cherry] Level Table
+
+extern int level_table_stats_format;
+
 // Doom-style printf
 
 typedef enum {

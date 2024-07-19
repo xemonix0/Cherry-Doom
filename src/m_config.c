@@ -3598,6 +3598,13 @@ default_t defaults[] = {
     "level stats format in Automap (0 = match HUD)"
   },
 
+  { // [Cherry]
+    "level_table_stats_format",
+    (config_t *) &level_table_stats_format, NULL,
+    {0}, {0,STATSFORMAT_REMAINING}, number, ss_stat, wad_no,
+    "level stats format in Level Table (0 = match HUD)"
+  },
+
   // [Nugget] ---------------------------------------------------------------/
 
   { // [Nugget]

@@ -1832,6 +1832,7 @@ static setup_menu_t stat_settings5[] =
     {"Show Powerup Timers",        S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_power_timers"}, m_null, input_null, str_show_widgets},
     {"HUD Level Stats Format",     S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format"}, m_null, input_null, str_stats_format},
     {"Automap Level Stats Format", S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format_map"}, m_null, input_null, str_stats_format},
+    {"Level Table Stats Format",   S_CHOICE|S_COSMETIC, M_X, M_SPC, {"level_table_stats_format"}, m_null, input_null, str_stats_format}, // [Cherry]
     {"Allow Level Stats Icons",    S_ONOFF,             M_X, M_SPC, {"hud_stats_icons"}},
     {"Alternative Arms Display",   S_ONOFF,             M_X, M_SPC, {"alt_arms"}, m_null, input_null, str_empty, ST_createWidgets},
 

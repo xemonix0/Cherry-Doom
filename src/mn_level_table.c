@@ -15,6 +15,7 @@
 #include "mn_level_table.h"
 
 #include "doomdef.h"
+#include "doomstat.h"
 #include "m_array.h"
 #include "m_misc.h"
 #include "m_swap.h"
@@ -279,6 +280,7 @@ void LT_Build(void)
 // Used for formatting
 typedef enum
 {
+    statf_maps,
     statf_skill,
     statf_generic,
     statf_attempts,
@@ -334,6 +336,30 @@ static void UpdateScrollingIndicators(int rows)
                                    : (scroll_indicators & ~SCRL_UP);
 }
 
+static char *LevelsFormatGenericStat(int a, int b)
+{
+    char *str = NULL;
+
+    switch (level_table_stats_format ? level_table_stats_format
+                                     : hud_stats_format)
+    {
+        case STATSFORMAT_RATIO:
+            M_StringPrintF(&str, "%d/%d", a, b);
+            break;
+        case STATSFORMAT_BOOLEAN:
+            M_StringPrintF(&str, "%s", (a >= b) ? "YES" : "NO");
+            break;
+        case STATSFORMAT_PERCENTAGE:
+            M_StringPrintF(&str, "%d%%", (!b) ? 100 : a * 100 / b);
+            break;
+        case STATSFORMAT_REMAINING:
+            M_StringPrintF(&str, "%d", b - a);
+            break;
+    }
+
+    return str;
+}
+
 static setup_menu_t LevelsFormatStat(lt_statf_t type, boolean done, int a,
                                      int b)
 {
@@ -368,7 +394,7 @@ static setup_menu_t LevelsFormatStat(lt_statf_t type, boolean done, int a,
                 }
                 break;
             case statf_generic:
-                M_StringPrintF(&text, "%d/%d", a, b);
+                M_StringPrintF(&text, "%s", LevelsFormatGenericStat(a, b));
                 if (a == b)
                 {
                     flags |= S_ALT_COL;
@@ -573,6 +599,48 @@ static void LevelsDraw(setup_menu_t *current_menu, int current_page)
 #define LT_SUM_X (SCREENWIDTH / 2)
 #define LT_SUM_Y (M_Y + M_SPC * 2)
 
+static char *SummaryFormatGenericStat(boolean done, int a, int b)
+{
+    char *str = NULL;
+
+    switch (level_table_stats_format ? level_table_stats_format
+                                     : hud_stats_format)
+    {
+        case STATSFORMAT_RATIO:
+            M_StringPrintF(&str, "%d", a);
+            if (done)
+            {
+                M_StringConcatF(&str, " / %d", b);
+            }
+            break;
+        case STATSFORMAT_BOOLEAN:
+            M_StringPrintF(&str, "%s", (done && a >= b) ? "YES" : "NO");
+            break;
+        case STATSFORMAT_PERCENTAGE:
+            if (done)
+            {
+                M_StringPrintF(&str, "%d%%", (!b) ? 100 : a * 100 / b);
+            }
+            else
+            {
+                M_StringPrintF(&str, "N/A");
+            }
+            break;
+        case STATSFORMAT_REMAINING:
+            if (done)
+            {
+                M_StringPrintF(&str, "%d", b - a);
+            }
+            else
+            {
+                M_StringPrintF(&str, "N/A");
+            }
+            break;
+    }
+
+    return str;
+}
+
 static setup_menu_t SummaryFormatStat(lt_statf_t type, boolean done, int a,
                                       int b)
 {
@@ -581,6 +649,26 @@ static setup_menu_t SummaryFormatStat(lt_statf_t type, boolean done, int a,
 
     switch (type)
     {
+        case statf_maps:
+            if (a > 0)
+            {
+                M_StringPrintF(&text, "%d", a);
+
+                if (done)
+                {
+                    M_StringConcatF(&text, " / %d", b);
+
+                    if (a == b)
+                    {
+                        flags |= S_ALT_COL;
+                    }
+                }
+            }
+            else
+            {
+                text = M_StringDuplicate("-");
+            }
+            break;
         case statf_skill:
             if (done)
             {
@@ -599,16 +687,11 @@ static setup_menu_t SummaryFormatStat(lt_statf_t type, boolean done, int a,
         case statf_generic:
             if (a > 0)
             {
-                M_StringPrintF(&text, "%d", a);
+                M_StringPrintF(&text, "%s", SummaryFormatGenericStat(done, a, b));
 
-                if (done)
+                if (done && a == b)
                 {
-                    M_StringConcatF(&text, " / %d", b);
-
-                    if (a == b)
-                    {
-                        flags |= S_ALT_COL;
-                    }
+                    flags |= S_ALT_COL;
                 }
             }
             else
@@ -679,7 +762,7 @@ static void SummaryDraw(void)
     const int map_count = wad_summary.map_count;
     boolean done = wad_summary.completed == map_count;
 
-    SummaryDrawRow("Maps Completed", statf_generic, true,
+    SummaryDrawRow("Maps Completed", statf_maps, true,
                    wad_summary.completed, map_count,
                    accum_y);
     accum_y += M_SPC * 2;

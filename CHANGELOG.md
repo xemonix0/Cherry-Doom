@@ -25,9 +25,21 @@
 - The _Movement Widget_ is now disabled in _strict mode_
 - Hints for disabled menu items, explaining the reason certain items are disabled, have been added
 
-### Stats Tracking & Level Table Changes
+## Bug Fixes
 
-This release introduces many changes to the _Level Table_ and the _stats tracking system_, all of which are listed below, separate from other changes.
+- Widgets disappearing from the intermission screen when exiting setup menus
+- _Backdrop Darkening_ and _Overlay Darkening_ items not being toggled properly
+- Widgets overlapping on the intermission screen when _Nugget HUD_ is enabled
+
+## Stats Tracking & Level Table
+
+This release introduces many additions, changes and fixes to the _Level Table_ and the _stats tracking system_, all of which are listed below.
+
+### New Features
+
+- _Level Table Stats Format_ setting
+
+### Changes
 
 - Some color and formatting changes have been made to the _Level Table_:
 	- Skill names are displayed instead of numbers
@@ -41,13 +53,10 @@ This release introduces many changes to the _Level Table_ and the _stats trackin
 - The _Level Table_ now displays all loaded maps, grouped by WAD filename
 	- Just like before, stats are only tracked for the last WAD in the load order, but now the _Level Table_ can be used to warp to other available maps as well
 
-## Bug Fixes
+### Bug Fixes
 
 - Attempts incrementing on demo playback
-- Widgets disappearing from the intermission screen when exiting setup menus
-- _Backdrop Darkening_ and _Overlay Darkening_ items not being toggled properly
 - Attempts showing up as "0/0" on the _Level Table_ for beaten levels with no attempt data (i.e. in data files from DSDA-Doom)
-- Widgets overlapping on the intermission screen when _Nugget HUD_ is enabled
 - Doom 1 maps from PWADs being listed on the _Level Table_ when loaded with the Doom 2 IWAD and vice versa (see Maps of Chaos)
 - _Level Table_'s Summary screen counting unavailable maps towards the totals
 
