@@ -98,13 +98,19 @@ static void LevelsInsertWadName(setup_menu_t **menu, const char *wad_name)
     array_push(*menu, item);
 }
 
-static void LevelsInsertRow(setup_menu_t **menu, const char *text, int map_i)
+static void LevelsInsertRow(setup_menu_t **menu, const char *text, int map_i,
+                            boolean display_stats)
 {
     extern void LT_Warp(void);
 
+    int64_t flags = S_LEFTJUST | S_TITLE | S_FUNCTION;
+    if (display_stats)
+    {
+        flags |= S_LTBL_MAP;
+    }
+
     setup_menu_t item =
-        {text, S_LEFTJUST | S_TITLE | S_FUNCTION | S_LTBL_MAP,
-         LTBL_X, M_SPC, .action = LT_Warp, .var.map_i = map_i};
+        {text, flags, LTBL_X, M_SPC, .action = LT_Warp, .var.map_i = map_i};
     array_push(*menu, item);
 }
 
@@ -132,7 +138,7 @@ static void LevelsBuild(void)
                 LevelsInsertWadName(page, M_StringDuplicate(ms->wad_name));
             }
 
-            LevelsInsertRow(page, M_StringDuplicate(ms->lump), i);
+            LevelsInsertRow(page, M_StringDuplicate(ms->lump), i, !wad_index);
         }
 
         InsertLastItem(page);
@@ -144,6 +150,7 @@ static void LevelsBuild(void)
 
 typedef struct
 {
+    int map_count;
     int completed;
 
     int timed;
@@ -178,9 +185,20 @@ static void SummaryCalculate(void)
     {
         map_stats_t *ms = &wad_stats.maps[i];
 
+        if (ms->wad_index)
+        {
+            break;
+        }
+
+        if (ms->episode == -1)
+        {
+            continue;
+        }
+
+        ++wad_summary.map_count;
         wad_summary.total_attempts += ms->total_attempts;
 
-        if (ms->episode == -1 || !ms->best_skill)
+        if (!ms->best_skill)
         {
             continue;
         }
@@ -599,11 +617,16 @@ static setup_menu_t SummaryFormatStat(lt_statf_t type, boolean done, int a,
             }
             break;
         case statf_attempts:
-            if (done && a > 0)
+            if (a > 0)
             {
                 M_StringPrintF(&text, "%d / %d", a, b);
+
+                if (done)
+                {
+                    flags |= S_ALT_COL;
+                }
             }
-            else if (a > 0)
+            else if (b > 0)
             {
                 M_StringPrintF(&text, "%d", b);
             }
@@ -653,7 +676,7 @@ static void SummaryDraw(void)
 {
     int accum_y = LT_SUM_Y;
 
-    const int map_count = array_size(wad_stats.maps);
+    const int map_count = wad_summary.map_count;
     boolean done = wad_summary.completed == map_count;
 
     SummaryDrawRow("Maps Completed", statf_generic, true,

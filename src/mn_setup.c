@@ -4040,6 +4040,7 @@ static boolean NextPage(int inc)
         if (current_menu[set_item_on].m_flags & S_END)
         {
             no_highlight = true;
+            highlight_item = set_item_on;
             break;
         }
 
@@ -4364,6 +4365,7 @@ static boolean SetupTab(void)
         {
             if (current_menu[set_item_on].m_flags & S_END)
             {
+                highlight_item = set_item_on;
                 break;
             }
 

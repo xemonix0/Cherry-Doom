@@ -33,20 +33,24 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
-#define DATA_DIR_DEPTH_LIMIT 9
+typedef enum
+{
+    ws_version_dsda,
+    ws_version_current,
+} ws_version_t;
 
 static const char *cherry_data_root = "cherry_doom_data";
-static char **data_dir_names;
 static const char *wad_stats_filename = "stats.txt";
 
-static map_stats_t *current_map_stats;
+static int wad_index = 0;
 
-static const int current_version = 2;
+static map_stats_t *current_map_stats;
 
 wad_stats_t wad_stats = {0};
 
 static char *InitWadDataDir(void)
 {
+    static char **data_dir_names;
     static char *base_data_dir = NULL;
 
     int current_dir_index = 0, pwad_index = 1;
@@ -67,11 +71,6 @@ static char *InitWadDataDir(void)
         else if (i)
         {
             continue;
-        }
-
-        if (current_dir_index >= DATA_DIR_DEPTH_LIMIT)
-        {
-            break;
         }
 
         const char *filename = M_BaseName(wadfiles[i].name);
@@ -114,25 +113,14 @@ static char *InitWadDataDir(void)
     return wad_data_dir;
 }
 
-static const char *WadDataDir(void)
-{
-    static char *wad_data_dir;
-
-    if (!wad_data_dir)
-    {
-        wad_data_dir = InitWadDataDir();
-    }
-
-    return wad_data_dir;
-}
-
 static const char *WadStatsPath(void)
 {
     static char *wad_stats_path;
 
     if (!wad_stats_path)
     {
-        const char *wad_data_dir = WadDataDir();
+        const char *wad_data_dir = InitWadDataDir();
+
         M_StringPrintF(&wad_stats_path, "%s/%s", wad_data_dir,
                        wad_stats_filename);
     }
@@ -172,10 +160,10 @@ static int CompareMapStats(const void *a, const void *b)
                : (ms1->wad_index > ms2->wad_index) - (ms1->wad_index < ms2->wad_index);
 }
 
-static void CreateWadStats(void)
+static void CreateWadStats(boolean exists)
 {
     char *last_wad_name = NULL;
-    int wad_index = -1;
+    wad_index = exists ? wad_index : -1;
 
     for (int i = numlumps - 1; i > 0; --i)
     {
@@ -219,15 +207,15 @@ static void CreateWadStats(void)
             p->map = -1;
         }
 
-        const char *wad_name = W_WadNameForLump(i);
+        char *wad_name = W_WadNameForLump(i);
 
-        if (!last_wad_name || last_wad_name != wad_name)
+        if (last_wad_name != wad_name)
         {
             last_wad_name = wad_name;
             ++wad_index;
         }
 
-        p->wad_name = wad_name;
+        p->wad_name = M_StringDuplicate(wad_name);
         p->wad_index = wad_index;
 
         p->max_kills = -1;
@@ -245,90 +233,141 @@ static void CreateWadStats(void)
     wad_stats.one_wad = !wad_index;
 }
 
+#define CURRENT_VERSION_STRING "CH1"
+
+static ws_version_t stats_version;
+
 char *wad_stats_fail;
+
+static int InvalidWadStats(const char *path)
+{
+    I_Error("Encountered invalid WAD stats: %s", path);
+    wad_stats_fail = "Invalid WAD stats found!";
+    return -1;
+}
+
+static boolean CheckStatsVersion(const char *line, const char *str,
+                                 ws_version_t ver)
+{
+    if (!strncmp(line, str, strlen(str)))
+    {
+        stats_version = ver;
+
+        return true;
+    }
+
+    return false;
+}
 
 static int LoadWadStats(void)
 {
-    const char *path = WadStatsPath();
-    char *buffer;
-    if (M_ReadFileToString(path, &buffer) == -1)
+    char *buffer = NULL;
+    char **lines = NULL;
+    int ret = 1;
+
+    while (true)
     {
-        return 0;
-    }
-
-    char **lines = M_StringSplit(buffer, "\n\r");
-    if (!lines || !lines[0])
-    {
-        I_Printf(VB_WARNING, "Encountered invalid WAD stats: %s", path);
-        wad_stats_fail = "Invalid WAD stats found!";
-        return -1;
-    }
-
-    if (strncmp(lines[0], "1", 1) && strncmp(lines[0], "2", 1))
-    {
-        I_Printf(VB_WARNING, "Encountered unsupported WAD stats version: %s",
-                 path);
-        wad_stats_fail = "Unsupported WAD stats version!";
-        return -1;
-    }
-
-    if (sscanf(lines[1], "%d", &wad_stats.kill_check) != 1)
-    {
-        I_Printf(VB_WARNING, "Encountered invalid WAD stats: %s", path);
-        wad_stats_fail = "Invalid WAD stats found!";
-        return -1;
-    }
-
-    char *last_wad_name = NULL;
-    int wad_index = -1;
-
-    for (int i = 2; lines[i] && *lines[i]; ++i)
-    {
-        map_stats_t ms = {0};
-
-        int values = sscanf(
-            lines[i], "%8s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-            ms.lump, &ms.episode, &ms.map, &ms.best_skill, &ms.best_time,
-            &ms.best_max_time, &ms.best_sk5_time, &ms.total_exits,
-            &ms.total_kills, &ms.best_kills, &ms.best_items, &ms.best_secrets,
-            &ms.max_kills, &ms.max_items, &ms.max_secrets, &ms.best_attempts,
-            &ms.total_attempts);
-
-        if (values != 15 && values != 17)
+        const char *path = WadStatsPath();
+        if (M_ReadFileToString(path, &buffer) == -1)
         {
-            I_Printf(VB_WARNING, "Encountered invalid WAD stats: %s", path);
-            wad_stats_fail = "Invalid WAD stats found!";
-            return -1;
+            ret = 0;
+            break;
         }
 
-        if (values == 15)
+        lines = M_StringSplit(buffer, "\n\r");
+        int i = 0;
+        if (!lines || !lines[i])
         {
-            ms.best_attempts = 0;
-            ms.total_attempts = 0;
+            ret = InvalidWadStats(path);
+            break;
         }
 
-        ms.session_attempts = 0;
-
-        const char *wad_name = W_WadNameForLump(W_GetNumForName(ms.lump));
-
-        if (last_wad_name != wad_name)
+        if (!(CheckStatsVersion(lines[i], "1", ws_version_dsda)
+              || CheckStatsVersion(lines[i], "2", ws_version_dsda)
+              || CheckStatsVersion(lines[i], CURRENT_VERSION_STRING,
+                                   ws_version_current)))
         {
-            last_wad_name = wad_name;
-            ++wad_index;
+            I_Printf(VB_WARNING,
+                     "Encountered unsupported WAD stats version: %s", path);
+            wad_stats_fail = "Unsupported WAD stats version!";
+            ret = -1;
+            break;
         }
 
-        ms.wad_name = wad_name;
-        ms.wad_index = wad_index;
+        ++i;
 
-        array_push(wad_stats.maps, ms);
+        int kill_check = 0; // Unused, required for format validation
+        if (stats_version == ws_version_dsda
+            && sscanf(lines[i++], "%d", &kill_check) != 1)
+        {
+            ret = InvalidWadStats(path);
+            break;
+        }
+
+        char *last_wad_name = NULL;
+
+        for (; lines[i] && *lines[i]; ++i)
+        {
+            map_stats_t ms = {0};
+
+            int values = sscanf(
+                lines[i], "%8s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+                ms.lump, &ms.episode, &ms.map, &ms.best_skill, &ms.best_time,
+                &ms.best_max_time, &ms.best_sk5_time, &ms.total_exits,
+                &ms.total_kills, &ms.best_kills, &ms.best_items,
+                &ms.best_secrets, &ms.max_kills, &ms.max_items, &ms.max_secrets,
+                &ms.best_attempts, &ms.total_attempts);
+
+            char *wad_name = W_WadNameForLump(W_GetNumForName(ms.lump));
+
+            if (stats_version != ws_version_dsda && values == 3)
+                //&& !strncmp(lines[i] + strlen(ms.lump) + 1, "N/A", 3))
+            {
+                if (last_wad_name != wad_name)
+                {
+                    last_wad_name = wad_name;
+                    ++wad_index;
+                }
+
+                ms.wad_name = M_StringDuplicate(wad_name);
+                ms.wad_index = wad_index;
+
+                array_push(wad_stats.maps, ms);
+
+                continue;
+            }
+
+            if (values != 15 && values != 17)
+            {
+                ret = InvalidWadStats(path);
+                break;
+            }
+
+            if (values == 15)
+            {
+                ms.best_attempts = 0;
+                ms.total_attempts = 0;
+            }
+
+            ms.session_attempts = 0;
+
+            ms.wad_name = M_StringDuplicate(wad_name);
+            ms.wad_index = wad_index;
+
+            array_push(wad_stats.maps, ms);
+        }
+
+        // For pre-2.0.0 stats files, go through missing maps from all the WADs
+        // and add dummy items for them
+        CreateWadStats(true);
+
+        break;
     }
-
-    wad_stats.one_wad = !wad_index;
 
     free(lines);
     Z_Free(buffer);
 
-    return 1;
+    return ret;
 }
 
 void WS_SaveWadStats(void)
@@ -348,12 +387,18 @@ void WS_SaveWadStats(void)
         return;
     }
 
-    fprintf(file, "%d\n", current_version);
-    fprintf(file, "%d\n", wad_stats.kill_check);
+    fprintf(file, CURRENT_VERSION_STRING "\n");
 
     for (int i = 0; i < array_size(wad_stats.maps); ++i)
     {
         map_stats_t *ms = &wad_stats.maps[i];
+
+        if (ms->wad_index)
+        {
+            fprintf(file, "%s %d %d\n", ms->lump, ms->episode, ms->map);
+            continue;
+        }
+
         fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                 ms->lump, ms->episode, ms->map, ms->best_skill, ms->best_time,
                 ms->best_max_time, ms->best_sk5_time, ms->total_exits,
@@ -369,10 +414,16 @@ static map_stats_t *MapStats(int episode, int map)
 {
     for (int i = 0; i < array_size(wad_stats.maps); ++i)
     {
-        if (wad_stats.maps[i].episode == episode
-            && wad_stats.maps[i].map == map)
+        map_stats_t *ms = &wad_stats.maps[i];
+
+        if (ms->wad_index)
         {
-            return &wad_stats.maps[i];
+            break;
+        }
+
+        if (ms->episode == episode && ms->map == map)
+        {
+            return ms;
         }
     }
 
@@ -387,12 +438,6 @@ void WS_WatchEnterMap(void)
     }
 
     current_map_stats = MapStats(gameepisode, gamemap);
-
-    if (current_map_stats->wad_index)
-    {
-        current_map_stats = NULL;
-        return;
-    }
 
     if (!current_map_stats)
     {
@@ -448,7 +493,6 @@ void WS_WatchKill(void)
     }
 
     ++current_map_stats->total_kills;
-    ++wad_stats.kill_check;
 }
 
 void WS_WatchExitMap(void)
@@ -560,6 +604,6 @@ void WS_InitWadStats(void)
 {
     if (!netgame && !LoadWadStats())
     {
-        CreateWadStats();
+        CreateWadStats(false);
     }
 }
