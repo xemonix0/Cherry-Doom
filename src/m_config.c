@@ -3598,13 +3598,6 @@ default_t defaults[] = {
     "level stats format in Automap (0 = match HUD)"
   },
 
-  { // [Cherry]
-    "level_table_stats_format",
-    (config_t *) &level_table_stats_format, NULL,
-    {0}, {0,STATSFORMAT_REMAINING}, number, ss_stat, wad_no,
-    "level stats format in Level Table (0 = match HUD)"
-  },
-
   // [Nugget] ---------------------------------------------------------------/
 
   { // [Nugget]
@@ -3877,6 +3870,24 @@ default_t defaults[] = {
     {CR_YELLOW}, {CR_BRICK,CR_NONE}, number, ss_stat, wad_no,
     "target crosshair color"
   },
+
+  // [Cherry] /-- Level table -------------------------------------------------
+
+  {
+    "lt_stats_format",
+    (config_t *) &lt_stats_format, NULL,
+    {STATSFORMAT_RATIO}, {0,STATSFORMAT_REMAINING}, number, ss_none, wad_no,
+    "level stats format in Level Table (0 = match HUD, 1 = ratio, 2 = boolean, 3 = percentage, 4 = remaining)"
+  },
+
+  {
+    "lt_track_continuous",
+    (config_t *) &lt_track_continuous, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to track kills and times for maps that aren't completed from a pistol start"
+  },
+
+  // [Cherry] ----------------------------------------------------------------/
 
   { // [Nugget]
     "fail_safe",

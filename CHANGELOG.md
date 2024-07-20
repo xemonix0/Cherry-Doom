@@ -39,6 +39,7 @@ This release introduces many additions, changes and fixes to the _Level Table_ a
 ### New Features
 
 - _Level Table Stats Format_ setting
+- Setting to _toggle tracking kills and time for maps beaten not from pistol start_
 
 ### Changes
 

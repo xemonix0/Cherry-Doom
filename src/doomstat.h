@@ -666,7 +666,9 @@ extern int comp_keypal;
 
 // [Cherry] Level Table
 
-extern int level_table_stats_format;
+extern boolean lt_track_continuous;
+
+extern int lt_stats_format;
 
 // Doom-style printf
 

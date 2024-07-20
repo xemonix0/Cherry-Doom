@@ -273,7 +273,9 @@ int comp_keypal;
 
 // [Cherry] Level Table
 
-int level_table_stats_format;
+boolean lt_track_continuous;
+
+int lt_stats_format;
 
 //----------------------------------------------------------------------------
 //

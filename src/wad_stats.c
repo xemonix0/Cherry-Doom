@@ -491,7 +491,7 @@ void WS_WatchExitMap(void)
 
     int skill = gameskill + 1;
 
-    if (skill < current_map_stats->best_skill)
+    if (skill < current_map_stats->best_skill && skill != 4)
     {
         return;
     }
@@ -507,12 +507,7 @@ void WS_WatchExitMap(void)
         current_map_stats->best_skill = skill;
     }
 
-    if (skill < current_map_stats->best_skill && skill != 4)
-    {
-        return;
-    }
-
-    if (levels_completed == 1)
+    if (lt_track_continuous || levels_completed == 1)
     {
         if (current_map_stats->best_time == -1
             || current_map_stats->best_time > leveltime)

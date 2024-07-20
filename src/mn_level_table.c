@@ -333,8 +333,7 @@ static char *LevelsFormatGenericStat(int a, int b)
 {
     char *str = NULL;
 
-    switch (level_table_stats_format ? level_table_stats_format
-                                     : hud_stats_format)
+    switch (lt_stats_format ? lt_stats_format : hud_stats_format)
     {
         case STATSFORMAT_RATIO:
             M_StringPrintF(&str, "%d/%d", a, b);
@@ -379,7 +378,10 @@ static setup_menu_t LevelsFormatStat(lt_statf_t type, boolean done, int a,
                 break;
             case statf_time:
                 StringPrintTime(&text, a);
-                flags |= S_ALT_COL;
+                if (a > -1)
+                {
+                    flags |= S_ALT_COL;
+                }
                 break;
             default:
                 break;
@@ -575,8 +577,7 @@ static char *SummaryFormatGenericStat(boolean done, int a, int b)
 {
     char *str = NULL;
 
-    switch (level_table_stats_format ? level_table_stats_format
-                                     : hud_stats_format)
+    switch (lt_stats_format ? lt_stats_format : hud_stats_format)
     {
         case STATSFORMAT_RATIO:
             M_StringPrintF(&str, "%d", a);
