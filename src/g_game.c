@@ -4327,8 +4327,12 @@ void G_SetSkillParms(const skill_t skill)
                   (skill == sk_hard || skill == sk_nightmare) ? THINGSPAWNS_HARD : THINGSPAWNS_NORMAL;
 
     coop_spawns = coopspawnsparm;
-    nomonsters  = clnomonsters;
-    slowbrain   = skill <= sk_easy;
+
+    // This is set by the netgame code in netgames,
+    // so we must not override it
+    if (!netgame) { nomonsters = clnomonsters; }
+
+    slowbrain = skill <= sk_easy;
 
     // `fastparm` is set in `G_ReloadDefaults()`, which is called before this function
 
