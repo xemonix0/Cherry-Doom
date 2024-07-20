@@ -89,7 +89,6 @@ The following text lines are available:
 | `nughud_sts`      | Stats (Kills/Items/Secrets) display, only shown if enabled by the user |
 | `nughud_title`    | Level Name display, only shown in the Automap |
 | `nughud_powers`   | Powerup Timers, only shown if enabled by the user |
-| `nughud_attempts` | Attempt counter, only shown if enabled by the user |
 | `nughud_movement` | Player movement widget, only shown if enabled by the user |
 | `nughud_coord`    | Coordinates display, only shown if enabled by the user |
 | `nughud_fps`      | FPS display, only shown when the `FPS` cheat is activated |

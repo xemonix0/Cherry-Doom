@@ -86,7 +86,6 @@ typedef struct nughud_s {
   int                sts_ml;
   nughud_textline_t  title;
   nughud_textline_t  powers;
-  nughud_textline_t  attempts; // [Cherry]
   nughud_textline_t  movement; // [Cherry]
   nughud_textline_t  coord;
   int                coord_ml;

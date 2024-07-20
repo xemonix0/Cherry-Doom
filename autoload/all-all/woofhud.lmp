@@ -2,7 +2,6 @@ hud 0
 rate topleft
 monsec topleft
 sttime topleft
-attempts topleft
 movement topleft
 powers topright
 coord topright
@@ -17,7 +16,6 @@ weapon bottomleft
 keys bottomleft
 monsec bottomleft
 sttime bottomleft
-attempts bottomleft
 movement bottomleft
 powers topright
 coord topright
@@ -32,7 +30,6 @@ weapon bottomright
 keys bottomleft
 monsec bottomleft
 sttime bottomleft
-attempts bottomleft
 movement bottomleft
 powers topright
 coord  topright

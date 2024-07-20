@@ -3650,13 +3650,6 @@ default_t defaults[] = {
     "show powerup timers (1 = on Automap, 2 = on HUD, 3 = always)"
   },
 
-  { // [Cherry] Attempt counter
-    "hud_attempt_counter",
-    (config_t *) &hud_attempt_counter, NULL,
-    {HUD_WIDGET_OFF}, {HUD_WIDGET_OFF,HUD_WIDGET_ALWAYS}, number, ss_stat, wad_no,
-    "show attempt counter (1 = on Automap, 2 = on HUD, 3 = always)"
-  },
-
   { // [Cherry] Movement widget
     "hud_movement",
     (config_t *) &hud_movement, NULL,

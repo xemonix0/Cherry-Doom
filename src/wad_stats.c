@@ -296,7 +296,7 @@ static int LoadWadStats(void)
 
         ++i;
 
-        int kill_check = 0; // Unused, required for format validation
+        int kill_check = 0; // Unused, required for version validation
         if (stats_version == ws_version_dsda
             && sscanf(lines[i++], "%d", &kill_check) != 1)
         {
@@ -311,12 +311,12 @@ static int LoadWadStats(void)
             map_stats_t ms = {0};
 
             int values = sscanf(
-                lines[i], "%8s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+                lines[i], "%8s %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
                 ms.lump, &ms.episode, &ms.map, &ms.best_skill, &ms.best_time,
                 &ms.best_max_time, &ms.best_sk5_time, &ms.total_exits,
                 &ms.total_kills, &ms.best_kills, &ms.best_items,
-                &ms.best_secrets, &ms.max_kills, &ms.max_items, &ms.max_secrets,
-                &ms.best_attempts, &ms.total_attempts);
+                &ms.best_secrets, &ms.max_kills, &ms.max_items,
+                &ms.max_secrets);
 
             char *wad_name = M_StringDuplicate(W_WadNameForLump(W_GetNumForName(ms.lump)));
 
@@ -336,19 +336,11 @@ static int LoadWadStats(void)
                 continue;
             }
 
-            if (values != 15 && values != 17)
+            if (values != 15)
             {
                 ret = InvalidWadStats(path);
                 break;
             }
-
-            if (values == 15)
-            {
-                ms.best_attempts = 0;
-                ms.total_attempts = 0;
-            }
-
-            ms.session_attempts = 0;
 
             ms.wad_name = M_StringDuplicate(wad_name);
             ms.wad_index = wad_index;
@@ -403,12 +395,12 @@ void WS_SaveWadStats(void)
             continue;
         }
 
-        fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+        fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                 ms->lump, ms->episode, ms->map, ms->best_skill, ms->best_time,
                 ms->best_max_time, ms->best_sk5_time, ms->total_exits,
                 ms->total_kills, ms->best_kills, ms->best_items,
-                ms->best_secrets, ms->max_kills, ms->max_items, ms->max_secrets,
-                ms->best_attempts, ms->total_attempts);
+                ms->best_secrets, ms->max_kills, ms->max_items,
+                ms->max_secrets);
     }
 
     fclose(file);
@@ -442,27 +434,6 @@ void WS_WatchEnterMap(void)
     }
 
     current_map_stats = MapStats(gameepisode, gamemap);
-
-    if (!current_map_stats)
-    {
-        sessionattempts = -1;
-        bestattempts = -1;
-        totalattempts = -1;
-
-        return;
-    }
-
-    if (current_map_stats->best_attempts)
-    {
-        bestattempts = current_map_stats->best_attempts;
-    }
-    else
-    {
-        bestattempts = -1;
-    }
-
-    sessionattempts = ++current_map_stats->session_attempts;
-    totalattempts = ++current_map_stats->total_attempts;
 }
 
 void WS_UnwatchMap(void)
@@ -472,26 +443,12 @@ void WS_UnwatchMap(void)
         return;
     }
 
-    --current_map_stats->session_attempts;
-    --current_map_stats->total_attempts;
-
     current_map_stats = NULL;
-
-    sessionattempts = -1;
-    bestattempts = -1;
-    totalattempts = -1;
-}
-
-void WS_WatchLoadGame(void)
-{
-    current_map_stats->session_attempts = sessionattempts;
-    // HACK: Prevent total attempts from incrementing
-    totalattempts = --current_map_stats->total_attempts;
 }
 
 void WS_WatchKill(void)
 {
-    if (!current_map_stats || demoplayback)
+    if (!wad_stats.maps || !current_map_stats)
     {
         return;
     }
@@ -501,7 +458,7 @@ void WS_WatchKill(void)
 
 void WS_WatchExitMap(void)
 {
-    if (!current_map_stats || demoplayback)
+    if (!wad_stats.maps || !current_map_stats)
     {
         return;
     }
@@ -555,7 +512,7 @@ void WS_WatchExitMap(void)
         return;
     }
 
-    if (levelscompleted == 1)
+    if (levels_completed == 1)
     {
         if (current_map_stats->best_time == -1
             || current_map_stats->best_time > leveltime)
@@ -584,15 +541,6 @@ void WS_WatchExitMap(void)
             }
         }
     }
-
-    if (!current_map_stats->best_attempts
-        || current_map_stats->session_attempts
-               < current_map_stats->best_attempts)
-    {
-        current_map_stats->best_attempts = current_map_stats->session_attempts;
-    }
-
-    current_map_stats->session_attempts = 0;
 
     current_map_stats->max_kills = totalkills;
     current_map_stats->max_items = totalitems;

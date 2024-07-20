@@ -170,9 +170,6 @@ typedef struct
     int best_kills;
     int best_items;
     int best_secrets;
-
-    int best_attempts;
-    int total_attempts;
 } summary_t;
 
 static summary_t wad_summary;
@@ -197,7 +194,6 @@ static void SummaryCalculate(void)
         }
 
         ++wad_summary.map_count;
-        wad_summary.total_attempts += ms->total_attempts;
 
         if (!ms->best_skill)
         {
@@ -215,7 +211,6 @@ static void SummaryCalculate(void)
         wad_summary.best_kills += ms->best_kills;
         wad_summary.best_items += ms->best_items;
         wad_summary.best_secrets += ms->best_secrets;
-        wad_summary.best_attempts += ms->best_attempts;
 
         if (ms->best_time >= 0)
         {
@@ -283,7 +278,6 @@ typedef enum
     statf_maps,
     statf_skill,
     statf_generic,
-    statf_attempts,
     statf_time,
 } lt_statf_t;
 
@@ -297,12 +291,11 @@ enum
     stats_kills_x,
     stats_items_x,
     stats_secrets_x,
-    stats_attempts_x,
 
     stats_max_x,
 };
 
-static const int stats_columns_x[] = {92, 160, 212, 252, 304};
+static const int stats_columns_x[] = {92, 182, 251, 304};
 
 // lt_page_times
 enum
@@ -366,23 +359,7 @@ static setup_menu_t LevelsFormatStat(lt_statf_t type, boolean done, int a,
     char *text = NULL;
     int64_t flags = 0;
 
-    if (type == statf_attempts)
-    {
-        if (a > 0)
-        {
-            M_StringPrintF(&text, "%d/%d", a, b);
-            flags |= S_ALT_COL;
-        }
-        else if (b > 0)
-        {
-            M_StringPrintF(&text, "-/%d", b);
-        }
-        else
-        {
-            text = M_StringDuplicate("-");
-        }
-    }
-    else if (done)
+    if (done)
     {
         switch (type)
         {
@@ -466,10 +443,6 @@ static void LevelsDrawRow(setup_menu_t *item, int accum_y, int page)
                            ms->best_secrets, ms->max_secrets,
                            stats_columns_x[stats_secrets_x], accum_y,
                            additional_flags);
-            LevelsDrawStat(statf_attempts, done,
-                           ms->best_attempts, ms->total_attempts,
-                           stats_columns_x[stats_attempts_x], accum_y,
-                           additional_flags);
             break;
         case lt_page_times:
             LevelsDrawStat(statf_time, done,
@@ -517,7 +490,6 @@ static void LevelsDraw(setup_menu_t *current_menu, int current_page)
             LevelsDrawHeader("K",     stats_columns_x[stats_kills_x],    accum_y);
             LevelsDrawHeader("I",     stats_columns_x[stats_items_x],    accum_y);
             LevelsDrawHeader("S",     stats_columns_x[stats_secrets_x],  accum_y);
-            LevelsDrawHeader("ATT",   stats_columns_x[stats_attempts_x], accum_y);
             break;
         case lt_page_times:
             LevelsDrawHeader("TIME",         times_columns_x[times_time_x],     accum_y);
@@ -699,25 +671,6 @@ static setup_menu_t SummaryFormatStat(lt_statf_t type, boolean done, int a,
                 text = M_StringDuplicate("-");
             }
             break;
-        case statf_attempts:
-            if (a > 0)
-            {
-                M_StringPrintF(&text, "%d / %d", a, b);
-
-                if (done)
-                {
-                    flags |= S_ALT_COL;
-                }
-            }
-            else if (b > 0)
-            {
-                M_StringPrintF(&text, "%d", b);
-            }
-            else
-            {
-                text = M_StringDuplicate("-");
-            }
-            break;
         case statf_time:
             if (a > 0)
             {
@@ -782,10 +735,6 @@ static void SummaryDraw(void)
     accum_y += M_SPC;
     SummaryDrawRow("Secret Completion", statf_generic, done,
                    wad_summary.best_secrets, wad_summary.max_secrets,
-                   accum_y);
-    accum_y += M_SPC;
-    SummaryDrawRow("Total Attempts", statf_attempts, done,
-                   wad_summary.best_attempts, wad_summary.total_attempts,
                    accum_y);
     accum_y += M_SPC * 2;
 

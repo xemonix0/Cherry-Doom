@@ -1867,7 +1867,6 @@ static setup_menu_t stat_settings7[] =
 {
   {"Cherry - Extended HUD", S_SKIP|S_TITLE, M_X, M_SPC},
 
-    {"Show Attempt Counter", S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_attempt_counter"}, m_null, input_null, str_show_widgets},
     {"Show Player Movement", S_CHOICE|S_STRICT,   M_X, M_SPC, {"hud_movement"}, m_null, input_null, str_show_widgets},
 
   MI_GAP,

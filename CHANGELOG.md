@@ -1,3 +1,4 @@
+**_Save_ version has been changed to `Cherry 2.0.0`**
 **_WAD Stats_ version has been changed to `CH1`**
 
 ## New Features
@@ -41,10 +42,10 @@ This release introduces many additions, changes and fixes to the _Level Table_ a
 
 ### Changes
 
+- Removed _Attempt tracking_
 - Some color and formatting changes have been made to the _Level Table_:
 	- Skill names are displayed instead of numbers
 	- All valid times are displayed in white
-	- Attempts for beaten levels are displayed in white
 	- Various changes to the Summary screen
 - _Stats tracking_ now ignores WADs without maps when creating data folders for _stats files_[^1]
 - The _Level Table_ is now inaccessible in multiplayer
@@ -55,8 +56,6 @@ This release introduces many additions, changes and fixes to the _Level Table_ a
 
 ### Bug Fixes
 
-- Attempts incrementing on demo playback
-- Attempts showing up as "0/0" on the _Level Table_ for beaten levels with no attempt data (i.e. in data files from DSDA-Doom)
 - Doom 1 maps from PWADs being listed on the _Level Table_ when loaded with the Doom 2 IWAD and vice versa (see Maps of Chaos)
 - _Level Table_'s Summary screen counting unavailable maps towards the totals
 

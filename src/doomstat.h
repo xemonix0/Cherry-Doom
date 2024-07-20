@@ -307,11 +307,7 @@ extern  int basetic;    // killough 9/29/98: levelstarttic, adjusted
 extern  int leveltime;  // tics in game play for par
 extern  int oldleveltime;
 extern  int totalleveltimes; // [FG] total time for all completed levels
-// [Cherry]
-extern  int levelscompleted; // total amount of completed levels
-extern  int sessionattempts; // attempts on the current map in this session
-extern  int bestattempts; // attempts on the current map in this session
-extern  int totalattempts; // attempts on the current map
+extern  int levels_completed; // [Cherry] levels completed continuously
 // --------------------------------------
 // DEMO playback/recording related stuff.
 
