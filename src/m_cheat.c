@@ -1272,7 +1272,7 @@ static void cheat_skill(char *buf)
 {
   int skill = buf[0] - '0';
 
-  if (skill >= 1 && skill <= 6) // [Nugget] Custom Skill
+  if (skill >= 1 && skill <= 5 + casual_play) // [Nugget] Custom Skill
   {
     gameskill = skill - 1;
     displaymsg("Next Level Skill: %s", default_skill_strings[gameskill + 1]);

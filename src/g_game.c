@@ -4419,6 +4419,10 @@ void G_InitNew(skill_t skill, int episode, int map)
   if (skill > sk_nightmare && skill != sk_custom) // [Nugget] Custom Skill
     skill = sk_nightmare;
 
+  // [Nugget] Custom Skill
+  if (skill == sk_custom && strictmode)
+  { skill = (defaultskill - 1 < sk_custom) ? defaultskill - 1 : sk_hard; }
+
   if (episode < 1)
     episode = 1;
 

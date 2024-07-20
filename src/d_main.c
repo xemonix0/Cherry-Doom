@@ -2048,7 +2048,7 @@ void D_ValidateStartSkill(void)
   if (startskill == sk_custom
       && (demorecording || demoplayback || netgame || strictmode))
   {
-    startskill = sk_hard;
+    startskill = (defaultskill - 1 < sk_custom) ? defaultskill - 1 : sk_hard;
   }
 }
 
