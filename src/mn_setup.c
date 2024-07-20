@@ -1000,21 +1000,6 @@ static void DrawInstructions()
         {
             s = "Restore defaults";
         }
-        else if (flags & S_LTBL_MAP) // [Cherry]
-        {
-            switch (menu_input)
-            {
-                case pad_mode:
-                    s = "[ PadA ] to warp, [ PadB ] to cancel";
-                    break;
-                case key_mode:
-                    s = "[ Enter ] to warp, [ Esc ] to cancel";
-                    break;
-                default:
-                    s = "[ Mouse1 ] to warp, [ Mouse2 ] to cancel";
-                    break;
-            }
-        }
         else if (flags & S_FUNCTION)
         {
             switch (menu_input) // [Cherry]
