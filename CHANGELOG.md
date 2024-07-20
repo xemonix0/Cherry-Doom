@@ -34,12 +34,12 @@
 
 ## Stats Tracking & Level Table
 
-This release introduces many additions, changes and fixes to the _Level Table_ and the _stats tracking system_, all of which are listed below.
+This release introduces many changes, fixes and some additions to the _Level Table_ and the _stats tracking system_, all of which are listed below.
 
 ### New Features
 
-- _Level Table Stats Format_ setting
-- Setting to _toggle tracking kills and time for maps beaten not from pistol start_
+- _Level table stats format_ customization
+- A CVAR to _toggle tracking kills and time for maps beaten not from pistol start_
 
 ### Changes
 

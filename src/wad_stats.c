@@ -320,22 +320,6 @@ static int LoadWadStats(void)
 
             char *wad_name = M_StringDuplicate(W_WadNameForLump(W_GetNumForName(ms.lump)));
 
-            if (stats_version != ws_version_dsda && values == 3)
-            {
-                if (!last_wad_name || strcmp(last_wad_name, wad_name))
-                {
-                    last_wad_name = wad_name;
-                    ++wad_index;
-                }
-
-                ms.wad_name = wad_name;
-                ms.wad_index = wad_index;
-
-                array_push(wad_stats.maps, ms);
-
-                continue;
-            }
-
             if (values != 15)
             {
                 ret = InvalidWadStats(path);
@@ -353,8 +337,8 @@ static int LoadWadStats(void)
             break;
         }
 
-        // For pre-2.0.0 stats files, go through missing maps from all the WADs
-        // and add dummy items for them
+        // Go through missing maps from all the WADs and add dummy items for
+        // them, so that the player can still warp to them from the level table
         CreateWadStats(true);
 
         break;
@@ -388,12 +372,6 @@ void WS_SaveWadStats(void)
     for (int i = 0; i < array_size(wad_stats.maps); ++i)
     {
         map_stats_t *ms = &wad_stats.maps[i];
-
-        if (ms->wad_index)
-        {
-            fprintf(file, "%s %d %d\n", ms->lump, ms->episode, ms->map);
-            continue;
-        }
 
         fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                 ms->lump, ms->episode, ms->map, ms->best_skill, ms->best_time,
