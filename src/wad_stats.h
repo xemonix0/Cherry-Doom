@@ -47,6 +47,7 @@ typedef struct
 typedef struct
 {
     map_stats_t* maps;
+    int kill_check;
     boolean one_wad;
 } wad_stats_t;
 

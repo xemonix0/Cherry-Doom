@@ -34,12 +34,6 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
-typedef enum
-{
-    ws_version_dsda,
-    ws_version_current,
-} ws_version_t;
-
 static const char *cherry_data_root = "cherry_doom_data";
 static const char *wad_stats_filename = "stats.txt";
 
@@ -234,9 +228,7 @@ static void CreateWadStats(boolean exists)
     wad_stats.one_wad = !wad_index;
 }
 
-#define CURRENT_VERSION_STRING "CH1"
-
-static ws_version_t stats_version;
+#define CURRENT_VERSION_STRING "1"
 
 char *wad_stats_fail;
 
@@ -247,13 +239,10 @@ static int InvalidWadStats(const char *path)
     return -1;
 }
 
-static boolean CheckStatsVersion(const char *line, const char *str,
-                                 ws_version_t ver)
+static boolean CheckStatsVersion(const char *line, const char *str)
 {
     if (!strncmp(line, str, strlen(str)))
     {
-        stats_version = ver;
-
         return true;
     }
 
@@ -283,10 +272,8 @@ static int LoadWadStats(void)
             break;
         }
 
-        if (!(CheckStatsVersion(lines[i], "1", ws_version_dsda)
-              || CheckStatsVersion(lines[i], "2", ws_version_dsda)
-              || CheckStatsVersion(lines[i], CURRENT_VERSION_STRING,
-                                   ws_version_current)))
+        if (!(CheckStatsVersion(lines[i], "1")
+              || CheckStatsVersion(lines[i], "2")))
         {
             I_Printf(VB_WARNING,
                      "Encountered unsupported WAD stats version: %s", path);
@@ -297,9 +284,7 @@ static int LoadWadStats(void)
 
         ++i;
 
-        int kill_check = 0; // Unused, required for version validation
-        if (stats_version == ws_version_dsda
-            && sscanf(lines[i++], "%d", &kill_check) != 1)
+        if (sscanf(lines[i++], "%d", &wad_stats.kill_check) != 1)
         {
             ret = InvalidWadStats(path);
             break;
@@ -369,6 +354,7 @@ void WS_SaveWadStats(void)
     }
 
     fprintf(file, CURRENT_VERSION_STRING "\n");
+    fprintf(file, "%d\n", wad_stats.kill_check);
 
     for (int i = 0; i < array_size(wad_stats.maps); ++i)
     {
@@ -437,6 +423,7 @@ void WS_WatchKill(void)
         return;
     }
 
+    ++wad_stats.kill_check;
     ++current_map_stats->total_kills;
 }
 
