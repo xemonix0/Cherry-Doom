@@ -1129,7 +1129,7 @@ static void G_DoLoadLevel(void)
     lastepisode = gameepisode;
     lastmap     = gamemap;
 
-    R_ResetFreecam();
+    R_ResetFreecam(true);
   }
 }
 
@@ -3391,7 +3391,7 @@ void G_Ticker(void)
       if (INPUT(input_use) && !usedown)
       {
         usedown = true;
-        R_ResetFreecam();
+        R_ResetFreecam(false);
       }
       else if (INPUT(input_fire) && !firedown)
       {

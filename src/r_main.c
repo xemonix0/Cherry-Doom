@@ -274,7 +274,8 @@ static struct {
   angle_t angle, oangle;
   fixed_t pitch, opitch;
 
-  boolean reset, interp, centering;
+  int     reset;
+  boolean interp, centering;
   mobj_t *mobj;
 } freecam;
 
@@ -303,9 +304,20 @@ angle_t R_GetFreecamAngle(void)
   return freecam.angle;
 }
 
-void R_ResetFreecam(void)
+void R_ResetFreecam(const boolean newmap)
 {
-  freecam.reset = true;
+  freecam.reset = (int) true + newmap;
+}
+
+void R_MoveFreecam(fixed_t x, fixed_t y, fixed_t z)
+{
+  if (freecam.mobj) { R_UpdateFreecamMobj(NULL); }
+
+  freecam.x = x;
+  freecam.y = y;
+  freecam.z = z;
+
+  freecam.interp = false;
 }
 
 void R_UpdateFreecamMobj(mobj_t *const mobj)
@@ -326,8 +338,6 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 {
   if (freecam.reset)
   {
-    freecam.reset = false;
-
     const player_t *const player = &players[displayplayer];
 
     freecam.x     = player->mo->x;
@@ -338,7 +348,13 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 
     freecam.interp = false;
     freecam.centering = false;
-    freecam.mobj = NULL;
+
+    if (freecam.reset == 2)
+    { freecam.mobj = NULL; }
+    else
+    { R_UpdateFreecamMobj(NULL); }
+
+    freecam.reset = false;
 
     return;
   }

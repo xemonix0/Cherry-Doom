@@ -1081,26 +1081,39 @@ boolean AM_Responder
       findtag = !strictmode;
     }
     // Teleport to Automap pointer
-    else if (M_InputActivated(input_map_teleport) && casual_play
-             && (!followplayer || R_GetFreecamMode() == FREECAM_CAM))
+    else if (M_InputActivated(input_map_teleport) && casual_play)
     {
-      mobj_t *const mo = plr->mo;
-    
-      P_MapStart();
+      const fixed_t x = (m_x + m_w/2) << FRACTOMAPBITS,
+                    y = (m_y + m_h/2) << FRACTOMAPBITS;
 
-      P_TeleportMove(mo, (m_x+m_w/2)<<FRACTOMAPBITS, (m_y+m_h/2)<<FRACTOMAPBITS, false);
-      mo->z = mo->floorz;
-      plr->viewz = mo->z + plr->viewheight - plr->crouchoffset;
-
-      if (fancy_teleport) {
-        R_SetFOVFX(FOVFX_TELEPORT); // Teleporter zoom
-        S_StartSound(P_SpawnMobj(mo->x + 20 * finecosine[mo->angle>>ANGLETOFINESHIFT],
-                                 mo->y + 20 *   finesine[mo->angle>>ANGLETOFINESHIFT],
-                                 mo->z, MT_TFOG),
-                     sfx_telept);
+      if (!followplayer && R_GetFreecamMode() == FREECAM_CAM)
+      {
+        R_MoveFreecam(
+          x, y,
+          R_PointInSubsector(x, y)->sector->floorheight + FRACUNIT
+        );
       }
+      else if (!followplayer || R_GetFreecamMode() == FREECAM_CAM)
+      {
+        mobj_t *const mo = plr->mo;
+      
+        P_MapStart();
 
-      P_MapEnd();
+        P_TeleportMove(mo, x, y, false);
+        mo->z = mo->floorz;
+        plr->viewz = mo->z + plr->viewheight - plr->crouchoffset;
+
+        if (fancy_teleport) {
+          R_SetFOVFX(FOVFX_TELEPORT); // Teleporter zoom
+          S_StartSound(P_SpawnMobj(mo->x + 20 * finecosine[mo->angle>>ANGLETOFINESHIFT],
+                                   mo->y + 20 *   finesine[mo->angle>>ANGLETOFINESHIFT],
+                                   mo->z, MT_TFOG),
+                       sfx_telept);
+        }
+
+        P_MapEnd();
+      }
+      
     }
 
     // [Nugget] -------------------------------------------------------------/
