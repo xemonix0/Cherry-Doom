@@ -91,7 +91,9 @@ void I_QuitFirst(void)
         G_CheckDemoStatus();
     }
 
-    WS_SaveWadStats(); // [Cherry]
+    // [Cherry]
+    WS_Save();
+    WS_Cleanup();
 }
 
 void I_QuitLast(void)

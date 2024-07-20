@@ -20,28 +20,28 @@
 
 typedef struct
 {
-    char   *wad_name;
-    int     wad_index;
+    char *wad_name;
+    int   wad_index;
 
-    char    lump[9];
+    char  lump[9];
 
-    int     episode;
-    int     map;
+    int   episode;
+    int   map;
 
-    int     max_kills;
-    int     max_items;
-    int     max_secrets;
+    int   max_kills;
+    int   max_items;
+    int   max_secrets;
 
-    int     total_exits;
-    int     total_kills;
+    int   total_exits;
+    int   total_kills;
 
-    int     best_skill;
-    int     best_kills;
-    int     best_items;
-    int     best_secrets;
-    int     best_time;
-    int     best_max_time;
-    int     best_sk5_time;
+    int   best_skill;
+    int   best_kills;
+    int   best_items;
+    int   best_secrets;
+    int   best_time;
+    int   best_max_time;
+    int   best_sk5_time;
 } map_stats_t;
 
 typedef struct
@@ -51,13 +51,14 @@ typedef struct
     boolean one_wad;
 } wad_stats_t;
 
-extern wad_stats_t wad_stats;
 extern char *wad_stats_fail;
+extern wad_stats_t wad_stats;
 
-void WS_InitWadStats(void);
-void WS_SaveWadStats(void);
+void WS_Init(void);
+void WS_Save(void);
+void WS_Cleanup(void);
 
-void WS_WatchEnterMap(void);
+void WS_WatchMap(void);
 void WS_UnwatchMap(void);
 void WS_WatchKill(void);
 void WS_WatchExitMap(void);

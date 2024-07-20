@@ -952,7 +952,7 @@ static void M_VerifyForcedLoadGame(int ch)
     {
         G_ForcedLoadGame();
     }
-    free(messageString); // free the message strdup()'ed below
+    M_FreeMessageString(0); // free the message strdup()'ed below
     MN_ClearMenus();
 }
 
@@ -3285,6 +3285,12 @@ void M_Drawer(void)
 //
 // Message Routines
 //
+
+// [Cherry]
+void M_FreeMessageString(int ch)
+{
+    free(messageString);
+}
 
 void M_StartMessage(char *string, void (*routine)(int), boolean input)
 {

@@ -3047,7 +3047,7 @@ void MN_LevelTable(int choice)
                            "Stats tracking is disabled.\n\n" PRESSKEY,
                            wad_stats_fail);
 
-            M_StartMessage(message, NULL, false);
+            M_StartMessage(message, M_FreeMessageString, false);
         }
 
         return;

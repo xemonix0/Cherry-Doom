@@ -34,23 +34,42 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
-static const char *cherry_data_root = "cherry_doom_data";
-static const char *wad_stats_filename = "stats.txt";
+#define CURRENT_VERSION_STRING "1"
 
-static int wad_index = 0;
+static const char *DATA_ROOT = "cherry_doom_data";
+static const char *STATS_FILENAME = "stats.txt";
 
+static char *stats_path;
+static int wad_index;
 static map_stats_t *current_map_stats;
 
+char *wad_stats_fail = NULL;
 wad_stats_t wad_stats = {0};
 
-static char *InitWadDataDir(void)
+#define CAN_WATCH_MAP (!STATS_TRACKING_DISABLED && wad_stats.maps)
+#define TRACKING      (CAN_WATCH_MAP && current_map_stats)
+
+// File I/O Operations
+//====================
+
+static char *InitBaseDataDir(void)
 {
-    static char **data_dir_names;
-    static char *base_data_dir = NULL;
+    const char *parent_directory = M_getenv("DOOMDATADIR");
+    if (!parent_directory)
+    {
+        parent_directory = D_DoomPrefDir();
+    }
 
-    int current_dir_index = 0, pwad_index = 1;
+    char *base_data_dir = NULL;
+    M_StringPrintF(&base_data_dir, "%s/%s", parent_directory, DATA_ROOT);
+    M_MakeDirectory(base_data_dir);
 
-    array_clear(data_dir_names);
+    return base_data_dir;
+}
+
+static char **DataDirNames(void)
+{
+    char **data_dir_names = NULL;
 
     for (int i = 0; i < array_size(wadfiles); ++i)
     {
@@ -59,322 +78,57 @@ static char *InitWadDataDir(void)
             continue;
         }
 
-        if (wadfiles[i].src == source_pwad)
-        {
-            current_dir_index = pwad_index;
-        }
-        else if (i)
-        {
-            continue;
-        }
-
         const char *filename = M_BaseName(wadfiles[i].name);
-        const size_t length = strlen(filename) - 3;
-
+        size_t length = strlen(filename) - 3;
         char *name = malloc(length);
         M_StringCopy(name, filename, length);
         M_StringToLower(name);
 
         array_push(data_dir_names, name);
-
-        if (current_dir_index == pwad_index)
-        {
-            ++pwad_index;
-        }
     }
 
-    if (!base_data_dir)
-    {
-        const char *parent_directory = M_getenv("DOOMDATADIR");
+    return data_dir_names;
+}
 
-        if (!parent_directory)
-        {
-            parent_directory = D_DoomPrefDir();
-        }
-
-        M_StringPrintF(&base_data_dir, "%s/%s", parent_directory,
-                       cherry_data_root);
-        M_MakeDirectory(base_data_dir);
-    }
-
-    char *wad_data_dir = M_StringDuplicate(base_data_dir);
-
+static char *InitDataDir(void)
+{
+    char *data_dir = InitBaseDataDir();
+    char **data_dir_names = DataDirNames();
     for (int i = 0; i < array_size(data_dir_names); ++i)
     {
-        M_StringConcatF(&wad_data_dir, "/%s", data_dir_names[i]);
-        M_MakeDirectory(wad_data_dir);
+        M_StringConcatF(&data_dir, "/%s", data_dir_names[i]);
+        M_MakeDirectory(data_dir);
     }
 
-    return wad_data_dir;
-}
-
-static const char *WadStatsPath(void)
-{
-    static char *wad_stats_path;
-
-    if (!wad_stats_path)
+    // Cleanup
+    for (int i = 0; i < array_size(data_dir_names); i++)
     {
-        const char *wad_data_dir = InitWadDataDir();
-
-        M_StringPrintF(&wad_stats_path, "%s/%s", wad_data_dir,
-                       wad_stats_filename);
+        if (data_dir_names[i])
+        {
+            free(data_dir_names[i]);
+        }
     }
+    array_free(data_dir_names);
 
-    return wad_stats_path;
+    return data_dir;
 }
 
-static boolean MapStatsExist(const char *lump)
+static const char *StatsPath(void)
 {
-    for (int i = 0; i < array_size(wad_stats.maps) && *wad_stats.maps[i].lump;
-         ++i)
+    if (!stats_path)
     {
-        if (!strncasecmp(wad_stats.maps[i].lump, lump, 8))
-        {
-            return true;
-        }
+        char *data_dir = InitDataDir();
+
+        M_StringPrintF(&stats_path, "%s/%s", data_dir, STATS_FILENAME);
+
+        free(data_dir);
     }
 
-    return false;
+    return stats_path;
 }
 
-static int CompareMapStats(const void *a, const void *b)
-{
-    const map_stats_t *ms1 = (const map_stats_t *)a;
-    const map_stats_t *ms2 = (const map_stats_t *)b;
-
-    return (ms1->wad_index == ms2->wad_index)
-               ? (ms1->episode == -1 && ms2->episode == -1)
-                     ? strncasecmp(ms1->lump, ms2->lump, 8)
-                 : ms1->episode == -1 ? 1
-                 : ms2->episode == -1 ? -1
-                 : ms1->episode == ms2->episode
-                     ? ms1->map == ms2->map
-                           ? strncasecmp(ms1->lump, ms2->lump, 8)
-                           : (ms1->map > ms2->map) - (ms1->map < ms2->map)
-                     : (ms1->episode > ms2->episode) - (ms1->episode < ms2->episode)
-               : (ms1->wad_index > ms2->wad_index) - (ms1->wad_index < ms2->wad_index);
-}
-
-static void CreateWadStats(boolean exists)
-{
-    char *last_wad_name = NULL;
-    wad_index = exists ? wad_index : -1;
-
-    for (int i = numlumps - 1; i > 0; --i)
-    {
-        if (lumpinfo[i].source == source_other)
-        {
-            continue;
-        }
-
-        if (!MN_StartsWithMapIdentifier(lumpinfo[i].name))
-        {
-            continue;
-        }
-
-        const char *map_name = lumpinfo[i].name;
-
-        if (MapStatsExist(map_name))
-        {
-            continue;
-        }
-
-        map_stats_t ms = {0};
-        array_push(wad_stats.maps, ms);
-
-        map_stats_t *p = &wad_stats.maps[array_size(wad_stats.maps) - 1];
-        strcpy(p->lump, map_name);
-
-        int episode, map;
-        if (gamemode == commercial && sscanf(map_name, "MAP%d", &map) == 1)
-        {
-            p->map = map;
-            p->episode = 1;
-        }
-        else if (gamemode != commercial && sscanf(map_name, "E%dM%d", &episode, &map) == 2)
-        {
-            p->episode = episode;
-            p->map = map;
-        }
-        else
-        {
-            p->episode = -1;
-            p->map = -1;
-        }
-
-        char *wad_name = M_StringDuplicate(W_WadNameForLump(i));
-
-        if (!last_wad_name || strcmp(last_wad_name, wad_name))
-        {
-            last_wad_name = wad_name;
-            ++wad_index;
-        }
-
-        p->wad_name = wad_name;
-        p->wad_index = wad_index;
-
-        p->max_kills = -1;
-        p->max_items = -1;
-        p->max_secrets = -1;
-
-        p->best_time = -1;
-        p->best_max_time = -1;
-        p->best_sk5_time = -1;
-    }
-
-    qsort(wad_stats.maps, array_size(wad_stats.maps), sizeof(*wad_stats.maps),
-          CompareMapStats);
-
-    wad_stats.one_wad = !wad_index;
-}
-
-#define CURRENT_VERSION_STRING "1"
-
-char *wad_stats_fail;
-
-static int InvalidWadStats(const char *path)
-{
-    I_Printf(VB_WARNING, "Encountered invalid WAD stats: %s", path);
-    wad_stats_fail = "Invalid WAD stats found!";
-    return -1;
-}
-
-static boolean CheckStatsVersion(const char *line, const char *str)
-{
-    if (!strncmp(line, str, strlen(str)))
-    {
-        return true;
-    }
-
-    return false;
-}
-
-static int LoadWadStats(void)
-{
-    char *buffer = NULL;
-    char **lines = NULL;
-    int ret = 1;
-
-    while (true)
-    {
-        const char *path = WadStatsPath();
-        if (M_ReadFileToString(path, &buffer) == -1)
-        {
-            ret = 0;
-            break;
-        }
-
-        lines = M_StringSplit(buffer, "\n\r");
-        int i = 0;
-        if (!lines || !lines[i])
-        {
-            ret = InvalidWadStats(path);
-            break;
-        }
-
-        if (!(CheckStatsVersion(lines[i], "1")
-              || CheckStatsVersion(lines[i], "2")))
-        {
-            I_Printf(VB_WARNING,
-                     "Encountered unsupported WAD stats version: %s", path);
-            wad_stats_fail = "Unsupported WAD stats version!";
-            ret = -1;
-            break;
-        }
-
-        ++i;
-
-        if (sscanf(lines[i++], "%d", &wad_stats.kill_check) != 1)
-        {
-            ret = InvalidWadStats(path);
-            break;
-        }
-
-        char *last_wad_name = NULL;
-
-        for (; lines[i] && *lines[i]; ++i)
-        {
-            map_stats_t ms = {0};
-
-            int values = sscanf(
-                lines[i], "%8s %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-                ms.lump, &ms.episode, &ms.map, &ms.best_skill, &ms.best_time,
-                &ms.best_max_time, &ms.best_sk5_time, &ms.total_exits,
-                &ms.total_kills, &ms.best_kills, &ms.best_items,
-                &ms.best_secrets, &ms.max_kills, &ms.max_items,
-                &ms.max_secrets);
-
-            char *wad_name = M_StringDuplicate(W_WadNameForLump(W_GetNumForName(ms.lump)));
-
-            if (values != 15)
-            {
-                ret = InvalidWadStats(path);
-                break;
-            }
-
-            ms.wad_name = M_StringDuplicate(wad_name);
-            ms.wad_index = wad_index;
-
-            array_push(wad_stats.maps, ms);
-        }
-
-        if (ret == -1)
-        {
-            break;
-        }
-
-        // Go through missing maps from all the WADs and add dummy items for
-        // them, so that the player can still warp to them from the level table
-        CreateWadStats(true);
-
-        break;
-    }
-
-    free(lines);
-    Z_Free(buffer);
-
-    return ret;
-}
-
-void WS_SaveWadStats(void)
-{
-    if (STATS_TRACKING_DISABLED || !wad_stats.maps || !array_size(wad_stats.maps))
-    {
-        return;
-    }
-
-    const char *path = WadStatsPath();
-    FILE *file = M_fopen(path, "wb");
-    if (!file)
-    {
-        I_Printf(VB_WARNING,
-                 "WS_SaveWadStats: Failed to save WAD stats file \"%s\".",
-                 path);
-        return;
-    }
-
-    fprintf(file, CURRENT_VERSION_STRING "\n");
-    fprintf(file, "%d\n", wad_stats.kill_check);
-
-    for (int i = 0; i < array_size(wad_stats.maps); ++i)
-    {
-        map_stats_t *ms = &wad_stats.maps[i];
-
-        if (ms->wad_index)
-        {
-            continue;
-        }
-
-        fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-                ms->lump, ms->episode, ms->map, ms->best_skill, ms->best_time,
-                ms->best_max_time, ms->best_sk5_time, ms->total_exits,
-                ms->total_kills, ms->best_kills, ms->best_items,
-                ms->best_secrets, ms->max_kills, ms->max_items,
-                ms->max_secrets);
-    }
-
-    fclose(file);
-}
+// Map Stats Operations
+//=====================
 
 static map_stats_t *MapStats(int episode, int map)
 {
@@ -396,9 +150,296 @@ static map_stats_t *MapStats(int episode, int map)
     return NULL;
 }
 
-void WS_WatchEnterMap(void)
+static boolean MapStatsExist(const char *lump)
 {
-    if (STATS_TRACKING_DISABLED || !wad_stats.maps)
+    for (int i = 0; i < array_size(wad_stats.maps); ++i)
+    {
+        if (!strncasecmp(wad_stats.maps[i].lump, lump, 8))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static int CompareMapStats(const void *a, const void *b)
+{
+    const map_stats_t *ms1 = (const map_stats_t *)a;
+    const map_stats_t *ms2 = (const map_stats_t *)b;
+
+    // 1. Sort by WAD index
+    if (ms1->wad_index != ms2->wad_index)
+    {
+        return (ms1->wad_index > ms2->wad_index)
+               - (ms1->wad_index < ms2->wad_index);
+    }
+    // 2. Sort unavailable maps lexicographically
+    if (ms1->episode == -1 && ms2->episode == -1)
+    {
+        return strncasecmp(ms1->lump, ms2->lump, 8);
+    }
+    // 3. Unavailable maps go last
+    if (ms1->episode == -1)
+    {
+        return 1;
+    }
+    if (ms2->episode == -1)
+    {
+        return -1;
+    }
+    // 4. Sort by episode number
+    if (ms1->episode != ms2->episode)
+    {
+        return (ms1->episode > ms2->episode) - (ms1->episode < ms2->episode);
+    }
+    // 5. Sort by map number
+    if (ms1->map != ms2->map)
+    {
+        return (ms1->map > ms2->map) - (ms1->map < ms2->map);
+    }
+    // 6. Sort lexicographically (shouldn't be possible to get here)
+    return strncasecmp(ms1->lump, ms2->lump, 8);
+}
+
+static map_stats_t CreateMapStats(const char *map_name, char *wad_name,
+                                  int wad_index)
+{
+    map_stats_t ms = {0};
+    strcpy(ms.lump, map_name);
+
+    if (gamemode == commercial && sscanf(map_name, "MAP%d", &ms.map) == 1)
+    {
+        ms.episode = 1;
+    }
+    else if (gamemode != commercial
+             && sscanf(map_name, "E%dM%d", &ms.episode, &ms.map) == 2)
+    {
+    }
+    else
+    {
+        ms.episode = -1;
+        ms.map = -1;
+    }
+
+    ms.wad_name = wad_name;
+    ms.wad_index = wad_index;
+
+    ms.max_kills = ms.max_items = ms.max_secrets = -1;
+    ms.best_time = ms.best_max_time = ms.best_sk5_time = -1;
+
+    return ms;
+}
+
+static void CreateStats(boolean finish)
+{
+    char *last_wad_name = NULL;
+    wad_index = finish ? wad_index : -1;
+
+    for (int i = numlumps - 1; i > 0; --i)
+    {
+        const char *lump_name = lumpinfo[i].name;
+        if (lumpinfo[i].source == source_other
+            || !MN_StartsWithMapIdentifier(lumpinfo[i].name)
+            || MapStatsExist(lump_name))
+        {
+            continue;
+        }
+
+        char *wad_name = M_StringDuplicate(W_WadNameForLump(i));
+        if (!last_wad_name || strcmp(last_wad_name, wad_name))
+        {
+            last_wad_name = wad_name;
+            ++wad_index;
+        }
+
+        map_stats_t ms = CreateMapStats(lump_name, wad_name, wad_index);
+        array_push(wad_stats.maps, ms);
+    }
+
+    qsort(wad_stats.maps, array_size(wad_stats.maps), sizeof(*wad_stats.maps),
+          CompareMapStats);
+    wad_stats.one_wad = !wad_index;
+
+    // Cleanup
+    free(last_wad_name);
+}
+
+// Stats Saving & Loading
+//=======================
+
+// Loading
+// -------
+
+enum
+{
+    LOAD_SUCCESS,
+    LOAD_ERROR_NOTFOUND,
+    LOAD_ERROR_VERSION,
+    LOAD_ERROR_GENERIC,
+};
+
+static int HandleLoadErrors(int err)
+{
+    const char *path = StatsPath();
+
+    switch (err)
+    {
+        case LOAD_ERROR_VERSION:
+            I_Printf(VB_WARNING,
+                     "Encountered unsupported WAD stats version: %s", path);
+            wad_stats_fail = "Unsupported WAD stats version!";
+            break;
+        case LOAD_ERROR_GENERIC:
+            I_Printf(VB_WARNING, "Encountered invalid WAD stats: %s", path);
+            wad_stats_fail = "Invalid WAD stats found!";
+            break;
+        case LOAD_ERROR_NOTFOUND:
+            return LOAD_ERROR_NOTFOUND;
+        default:
+            break;
+    }
+
+    return LOAD_SUCCESS;
+}
+
+static inline boolean CheckStatsVersion(const char *line, const char *str)
+{
+    return !strncmp(line, str, strlen(str));
+}
+
+static int ParseMapLine(const char *line, map_stats_t *ms)
+{
+    return sscanf(line, "%8s %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+                  ms->lump, &ms->episode, &ms->map, &ms->best_skill,
+                  &ms->best_time, &ms->best_max_time, &ms->best_sk5_time,
+                  &ms->total_exits, &ms->total_kills, &ms->best_kills,
+                  &ms->best_items, &ms->best_secrets, &ms->max_kills,
+                  &ms->max_items, &ms->max_secrets);
+}
+
+static int LoadStatsFromLines(char **lines)
+{
+    if (!CheckStatsVersion(lines[0], "1") && !CheckStatsVersion(lines[0], "2"))
+    {
+        return LOAD_ERROR_VERSION;
+    }
+
+    if (sscanf(lines[1], "%d", &wad_stats.kill_check) != 1)
+    {
+        return LOAD_ERROR_GENERIC;
+    }
+
+    for (int i = 2; lines[i] && *lines[i]; ++i)
+    {
+        map_stats_t ms = {0};
+        if (ParseMapLine(lines[i], &ms) != 15)
+        {
+            return LOAD_ERROR_GENERIC;
+        }
+
+        ms.wad_name =
+            M_StringDuplicate(W_WadNameForLump(W_GetNumForName(ms.lump)));
+        ms.wad_index = wad_index;
+        array_push(wad_stats.maps, ms);
+    }
+
+    return LOAD_SUCCESS;
+}
+
+static int LoadStats(void)
+{
+    char *buffer = NULL;
+    char **lines = NULL;
+    int ret = LOAD_SUCCESS;
+
+    while (ret == LOAD_SUCCESS)
+    {
+        const char *path = StatsPath();
+        if (M_ReadFileToString(path, &buffer) == -1)
+        {
+            return LOAD_ERROR_NOTFOUND;
+        }
+
+        lines = M_StringSplit(buffer, "\n\r");
+        if (!lines || !lines[0])
+        {
+            ret = LOAD_ERROR_GENERIC;
+            break;
+        }
+
+        ret = LoadStatsFromLines(lines);
+        if (ret != LOAD_SUCCESS)
+        {
+            break;
+        }
+
+        // Go through missing maps from all the WADs and add dummy items for
+        // them, so that the player can still warp to them from the level table
+        CreateStats(true);
+
+        break;
+    }
+
+    // Cleanup
+    free(lines);
+    free(buffer);
+
+    return ret;
+}
+
+// Saving
+// ------
+
+static void WriteMapLine(FILE *file, const map_stats_t *ms)
+{
+    fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", ms->lump,
+            ms->episode, ms->map, ms->best_skill, ms->best_time,
+            ms->best_max_time, ms->best_sk5_time, ms->total_exits,
+            ms->total_kills, ms->best_kills, ms->best_items, ms->best_secrets,
+            ms->max_kills, ms->max_items, ms->max_secrets);
+}
+
+void WS_Save(void)
+{
+    if (!CAN_WATCH_MAP)
+    {
+        return;
+    }
+
+    const char *path = StatsPath();
+    FILE *file = M_fopen(path, "wb");
+    if (!file)
+    {
+        I_Printf(VB_WARNING,
+                 "WS_Save: Failed to save WAD stats file \"%s\".",
+                 path);
+        return;
+    }
+
+    fprintf(file, CURRENT_VERSION_STRING "\n");
+    fprintf(file, "%d\n", wad_stats.kill_check);
+
+    for (int i = 0; i < array_size(wad_stats.maps); ++i)
+    {
+        map_stats_t *ms = &wad_stats.maps[i];
+        if (ms->wad_index)
+        {
+            continue;
+        }
+
+        WriteMapLine(file, ms);
+    }
+
+    fclose(file);
+}
+
+// Gameplay Tracking
+//==================
+
+void WS_WatchMap(void)
+{
+    if (!CAN_WATCH_MAP)
     {
         return;
     }
@@ -408,7 +449,7 @@ void WS_WatchEnterMap(void)
 
 void WS_UnwatchMap(void)
 {
-    if (STATS_TRACKING_DISABLED || !wad_stats.maps || !current_map_stats)
+    if (!TRACKING)
     {
         return;
     }
@@ -418,7 +459,7 @@ void WS_UnwatchMap(void)
 
 void WS_WatchKill(void)
 {
-    if (STATS_TRACKING_DISABLED || !wad_stats.maps || !current_map_stats)
+    if (!TRACKING)
     {
         return;
     }
@@ -427,20 +468,8 @@ void WS_WatchKill(void)
     ++current_map_stats->total_kills;
 }
 
-void WS_WatchExitMap(void)
+static int MissedMonsters(void)
 {
-    if (STATS_TRACKING_DISABLED || !wad_stats.maps || !current_map_stats)
-    {
-        return;
-    }
-
-    ++current_map_stats->total_exits;
-
-    if (nomonsters)
-    {
-        return;
-    }
-
     int missed_monsters = 0;
     for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next)
     {
@@ -460,7 +489,25 @@ void WS_WatchExitMap(void)
         ++missed_monsters;
     }
 
-    int skill = gameskill + 1;
+    return missed_monsters;
+}
+
+void WS_WatchExitMap(void)
+{
+    if (!TRACKING)
+    {
+        return;
+    }
+
+    ++current_map_stats->total_exits;
+
+    if (nomonsters)
+    {
+        return;
+    }
+
+    const int skill = gameskill + 1;
+    const int missed_monsters = MissedMonsters();
 
     if (skill < current_map_stats->best_skill && skill != 4)
     {
@@ -518,10 +565,31 @@ void WS_WatchExitMap(void)
                                           players[consoleplayer].secretcount);
 }
 
-void WS_InitWadStats(void)
+// Initialization & Cleanup
+//=========================
+
+void WS_Init(void)
 {
-    if (!netgame && (STATS_TRACKING_DISABLED || !LoadWadStats()))
+    if ((STATS_TRACKING_DISABLED // the level table still needs to work
+         || HandleLoadErrors(LoadStats()) == LOAD_ERROR_NOTFOUND))
     {
-        CreateWadStats(false);
+        CreateStats(false);
     }
+}
+
+static void FreeWadStats(void)
+{
+    for (int i = 0; i < array_size(wad_stats.maps); ++i)
+    {
+        free(wad_stats.maps[i].wad_name);
+    }
+
+    array_free(wad_stats.maps);
+}
+
+void WS_Cleanup(void)
+{
+    FreeWadStats();
+
+    free(stats_path);
 }

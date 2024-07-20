@@ -2751,8 +2751,11 @@ void D_DoomMain(void)
 
   lt_force_no_tracking = M_ParmExists("-notracking");
 
-  I_Printf(VB_INFO, "WS_InitWadStats: Setting up WAD stats tracking.");
-  WS_InitWadStats();
+  if (!netgame)
+  {
+      I_Printf(VB_INFO, "WS_Init: Setting up WAD stats tracking.");
+      WS_Init();
+  }
 
   G_UpdateSideMove();
   G_UpdateCarryAngle();
