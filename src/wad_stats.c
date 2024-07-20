@@ -25,6 +25,7 @@
 #include "i_printf.h"
 #include "i_system.h"
 #include "mn_menu.h"
+#include "m_argv.h"
 #include "m_array.h"
 #include "m_io.h"
 #include "m_misc.h"
@@ -352,7 +353,7 @@ static int LoadWadStats(void)
 
 void WS_SaveWadStats(void)
 {
-    if (!wad_stats.maps || !array_size(wad_stats.maps))
+    if (STATS_TRACKING_DISABLED || !wad_stats.maps || !array_size(wad_stats.maps))
     {
         return;
     }
@@ -372,6 +373,11 @@ void WS_SaveWadStats(void)
     for (int i = 0; i < array_size(wad_stats.maps); ++i)
     {
         map_stats_t *ms = &wad_stats.maps[i];
+
+        if (ms->wad_index)
+        {
+            continue;
+        }
 
         fprintf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                 ms->lump, ms->episode, ms->map, ms->best_skill, ms->best_time,
@@ -406,7 +412,7 @@ static map_stats_t *MapStats(int episode, int map)
 
 void WS_WatchEnterMap(void)
 {
-    if (!wad_stats.maps)
+    if (STATS_TRACKING_DISABLED || !wad_stats.maps)
     {
         return;
     }
@@ -416,7 +422,7 @@ void WS_WatchEnterMap(void)
 
 void WS_UnwatchMap(void)
 {
-    if (!wad_stats.maps || !current_map_stats)
+    if (STATS_TRACKING_DISABLED || !wad_stats.maps || !current_map_stats)
     {
         return;
     }
@@ -426,7 +432,7 @@ void WS_UnwatchMap(void)
 
 void WS_WatchKill(void)
 {
-    if (!wad_stats.maps || !current_map_stats)
+    if (STATS_TRACKING_DISABLED || !wad_stats.maps || !current_map_stats)
     {
         return;
     }
@@ -436,7 +442,7 @@ void WS_WatchKill(void)
 
 void WS_WatchExitMap(void)
 {
-    if (!wad_stats.maps || !current_map_stats)
+    if (STATS_TRACKING_DISABLED || !wad_stats.maps || !current_map_stats)
     {
         return;
     }
@@ -527,7 +533,7 @@ void WS_WatchExitMap(void)
 
 void WS_InitWadStats(void)
 {
-    if (!netgame && !LoadWadStats())
+    if (!netgame && (STATS_TRACKING_DISABLED || !LoadWadStats()))
     {
         CreateWadStats(false);
     }

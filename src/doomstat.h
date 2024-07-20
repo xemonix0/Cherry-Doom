@@ -666,8 +666,9 @@ extern int comp_keypal;
 
 // [Cherry] Level Table
 
+extern boolean lt_enable_tracking, lt_force_no_tracking;
+#define STATS_TRACKING_DISABLED (lt_force_no_tracking || !lt_enable_tracking)
 extern boolean lt_track_continuous;
-
 extern int lt_stats_format;
 
 // Doom-style printf

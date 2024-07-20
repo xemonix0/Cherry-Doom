@@ -52,6 +52,7 @@ static const char *params[] = {
 "-strict",
 "-cdrom", // [Nugged] Restored `-cdrom` parm
 "-nogui",
+"-notracking" // [Cherried] Disable WAD stats tracking
 };
 
 static const char *params_with_args[] = {

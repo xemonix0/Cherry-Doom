@@ -38,8 +38,10 @@ This release introduces many changes, fixes and some additions to the _Level Tab
 
 ### New Features
 
+- CVAR to toggle _stats tracking_
+- Command line parameter to _disable stats tracking_ (`-notracking`)
 - _Level table stats format_ customization
-- A CVAR to _toggle tracking kills and time for maps beaten not from pistol start_
+- CVAR to toggle _tracking kills and time for maps beaten not from pistol start_
 
 ### Changes
 

@@ -2743,6 +2743,14 @@ void D_DoomMain(void)
   D_CheckNetGame();
 
   // [Cherry]
+
+  //!
+  //
+  // Disable WAD stats tracking.
+  //
+
+  lt_force_no_tracking = M_ParmExists("-notracking");
+
   I_Printf(VB_INFO, "WS_InitWadStats: Setting up WAD stats tracking.");
   WS_InitWadStats();
 

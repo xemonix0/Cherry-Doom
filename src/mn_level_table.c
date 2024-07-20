@@ -139,7 +139,8 @@ static void LevelsBuild(void)
                 LevelsInsertWadName(page, M_StringDuplicate(ms->wad_name));
             }
 
-            LevelsInsertRow(page, M_StringDuplicate(ms->lump), i, !wad_index);
+            LevelsInsertRow(page, M_StringDuplicate(ms->lump), i,
+                            !STATS_TRACKING_DISABLED && !wad_index);
         }
 
         InsertLastItem(page);
@@ -177,6 +178,11 @@ static summary_t wad_summary;
 static void SummaryCalculate(void)
 {
     memset(&wad_summary, 0, sizeof(wad_summary));
+
+    if (STATS_TRACKING_DISABLED)
+    {
+        return;
+    }
 
     wad_summary.best_skill = sk_nightmare + 2;
     for (int i = 0; i < array_size(wad_stats.maps); ++i)
@@ -714,7 +720,7 @@ static void SummaryDraw(void)
     int accum_y = LT_SUM_Y;
 
     const int map_count = wad_summary.map_count;
-    boolean done = wad_summary.completed == map_count;
+    boolean done = map_count != 0 && wad_summary.completed == map_count;
 
     SummaryDrawRow("Maps Completed", statf_maps, true,
                    wad_summary.completed, map_count,
