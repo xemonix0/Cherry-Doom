@@ -163,25 +163,52 @@ void V_DrawPatchTRTR(int x, int y, struct patch_s *patch, byte *outr1,
 
 // [Nugget] /-----------------------------------------------------------------
 
-void V_ToggleShadows(const boolean on); // HUD/menu shadows
+// HUD/menu shadows
+void V_ToggleShadows(const boolean on);
+void V_SetShadowCrop(const int value);
 
-void V_DrawPatchTRTRTL(int x, int y, struct patch_s *patch, byte *outr1, byte *outr2, byte *tmap);
-
-#define V_DrawPatchTRTL(x, y, p, cr, tp) \
-  V_DrawPatchTRTRTL(x, y, p, cr, NULL, tp)
+void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped,
+                            byte *outr1, byte *outr2, byte *tmap);
 
 #define V_DrawPatchTL(x, y, p, tp) \
-  V_DrawPatchTRTRTL(x, y, p, NULL, NULL, tp)
+  V_DrawPatchTranslucent(x, y, p, false, NULL, NULL, tp)
 
-void V_DrawPatchTRTRShadowed(int x, int y, struct patch_s *patch, byte *outr1, byte *outr2);
+#define V_DrawPatchFlippedTL(x, y, p, tp) \
+  V_DrawPatchTranslucent(x, y, p, true, NULL, NULL, tp)
 
-#define V_DrawPatchTRShadowed(x, y, p, cr) \
-  V_DrawPatchTRTRShadowed(x, y, p, cr, NULL)
+#define V_DrawPatchTranslatedTL(x, y, p, cr, tp) \
+  V_DrawPatchTranslucent(x, y, p, false, cr, NULL, tp)
 
-#define V_DrawPatchShadowed(x, y, p) \
-  V_DrawPatchTRTRShadowed(x, y, p, NULL, NULL)
+#define V_DrawPatchTRTRTL(x, y, p, cr1, cr2, tp) \
+  V_DrawPatchTranslucent(x, y, p, false, cr1, cr2, tp)
+
+void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
+                         byte *outr1, byte *outr2);
+
+#define V_DrawPatchSH(x, y, p) \
+  V_DrawPatchShadowed(x, y, p, false, NULL, NULL)
+
+#define V_DrawPatchFlippedSH(x, y, p) \
+  V_DrawPatchShadowed(x, y, p, true, NULL, NULL)
+
+#define V_DrawPatchTranslatedSH(x, y, p, cr) \
+  V_DrawPatchShadowed(x, y, p, false, cr, NULL)
+
+#define V_DrawPatchTRTRSH(x, y, p, cr1, cr2) \
+  V_DrawPatchShadowed(x, y, p, false, cr1, cr2)
 
 void V_ShadowRect(int x, int y, int width, int height);
+
+#define SHADOW_REDRAW(_code_)                     \
+  if (hud_menu_shadows)                           \
+  {                                               \
+    const boolean old_shadows = hud_menu_shadows; \
+    hud_menu_shadows = false;                     \
+                                                  \
+    _code_;                                       \
+                                                  \
+    hud_menu_shadows = old_shadows;               \
+  }
 
 // [Nugget] -----------------------------------------------------------------/
 

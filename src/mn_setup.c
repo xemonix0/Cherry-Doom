@@ -528,7 +528,7 @@ static void DrawItem(setup_menu_t *s, int accum_y)
         rect->y = y;
         rect->w = SHORT(patch->width);
         rect->h = SHORT(patch->height);
-        V_DrawPatchShadowed(x, y, patch); // [Nugget] HUD/menu shadows
+        V_DrawPatchSH(x, y, patch); // [Nugget] HUD/menu shadows
         return;
     }
 
@@ -607,16 +607,22 @@ static void DrawSetupThermo(int x, int y, int width, int size, int dot,
     int i;
 
     xx = x;
-    V_DrawPatchTranslated(xx, y, W_CacheLumpName("M_THERML", PU_CACHE), cr);
+    V_DrawPatchTranslatedSH(xx, y, W_CacheLumpName("M_THERML", PU_CACHE), cr); // [Nugget] HUD/menu shadows
     xx += M_THRM_STEP;
 
     patch_t *patch = W_CacheLumpName("M_THERMM", PU_CACHE);
+
+    V_SetShadowCrop(SHORT(patch->width) - M_THRM_STEP); // [Nugget] HUD/menu shadows
+
     for (i = 0; i < width + 1; i++)
     {
-        V_DrawPatchTranslated(xx, y, patch, cr);
+        V_DrawPatchTranslatedSH(xx, y, patch, cr); // [Nugget] HUD/menu shadows
         xx += M_THRM_STEP;
     }
-    V_DrawPatchTranslated(xx, y, W_CacheLumpName("M_THERMR", PU_CACHE), cr);
+
+    V_SetShadowCrop(0); // [Nugget] HUD/menu shadows
+
+    V_DrawPatchTranslatedSH(xx, y, W_CacheLumpName("M_THERMR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 
     if (dot > size)
     {
@@ -921,8 +927,8 @@ static void DrawScreenItems(setup_menu_t *src)
 static void DrawDefVerify()
 {
     // [Nugget] HUD/menu shadows
-    V_DrawPatchShadowed(VERIFYBOXXORG, VERIFYBOXYORG,
-                        W_CacheLumpName("M_VBOX", PU_CACHE));
+    V_DrawPatchSH(VERIFYBOXXORG, VERIFYBOXYORG,
+                  W_CacheLumpName("M_VBOX", PU_CACHE));
 
     // The blinking messages is keyed off of the blinking of the
     // cursor skull.
@@ -937,8 +943,8 @@ static void DrawDefVerify()
 void MN_DrawDelVerify(void)
 {
     // [Nugget] HUD/menu shadows
-    V_DrawPatchShadowed(VERIFYBOXXORG, VERIFYBOXYORG,
-                        W_CacheLumpName("M_VBOX", PU_CACHE));
+    V_DrawPatchSH(VERIFYBOXXORG, VERIFYBOXYORG,
+                  W_CacheLumpName("M_VBOX", PU_CACHE));
 
     if (whichSkull)
     {
@@ -1894,7 +1900,7 @@ void MN_DrawStatusHUD(void)
         int y = M_Y + M_SPC + M_SPC / 2 - SHORT(patch->height) / 2 - 1; // [Nugget] Adjusted
 
         // [Nugget] Translucent crosshair
-        V_DrawPatchTRTL(x, y, patch, colrngs[hud_crosshair_color], xhair_tranmap);
+        V_DrawPatchTranslatedTL(x, y, patch, colrngs[hud_crosshair_color], xhair_tranmap);
     }
 
     // If the Reset Button has been selected, an "Are you sure?" message
@@ -3304,11 +3310,11 @@ void MN_DrawStringCR(int cx, int cy, byte *cr1, byte *cr2, const char *ch)
         // desired color, colrngs[color]
         if (cr && cr2)
         {
-            V_DrawPatchTRTRShadowed(cx, cy, hu_font[c], cr, cr2); // [Nugget] HUD/menu shadows
+            V_DrawPatchTRTRSH(cx, cy, hu_font[c], cr, cr2); // [Nugget] HUD/menu shadows
         }
         else
         {
-            V_DrawPatchTRShadowed(cx, cy, hu_font[c], cr); // [Nugget] HUD/menu shadows
+            V_DrawPatchTranslatedSH(cx, cy, hu_font[c], cr); // [Nugget] HUD/menu shadows
         }
 
         // The screen is cramped, so trim one unit from each
@@ -4396,7 +4402,7 @@ void MN_DrawTitle(int x, int y, const char *patch, const char *alttext)
 
     if (patch_lump >= 0)
     {
-        V_DrawPatchShadowed(x, y, W_CacheLumpNum(patch_lump, PU_CACHE)); // [Nugget] HUD/menu shadows
+        V_DrawPatchSH(x, y, W_CacheLumpNum(patch_lump, PU_CACHE)); // [Nugget] HUD/menu shadows
     }
     else
     {

@@ -271,11 +271,19 @@ void WriteGeneratedLumpWad(const char *filename)
 
 // [Nugget] HUD/menu shadows /------------------------------------------------
 
-static boolean drawshadows = true;
+static boolean drawshadows   = true,
+               drawingshadow = false;
+
+static int shadowcrop = 0;
 
 void V_ToggleShadows(const boolean on)
 {
   drawshadows = on;
+}
+
+void V_SetShadowCrop(const int value)
+{
+  shadowcrop = MAX(0, value);
 }
 
 // [Nugget] -----------------------------------------------------------------/
@@ -472,7 +480,7 @@ static void V_DrawPatchColumnTRTR(const patch_column_t *patchcol)
 }
 
 // [Nugget]
-static void V_DrawPatchColumnTL(const patch_column_t *patchcol)
+static void V_DrawPatchColumnTranslucent(const patch_column_t *patchcol)
 {
     int count;
     byte *dest;
@@ -596,6 +604,8 @@ static void V_DrawPatchInt(int x, int y, patch_t *patch, boolean flipped)
     patch_column_t patchcol = {0};
 
     w = SHORT(patch->width);
+
+    if (drawingshadow) { w -= shadowcrop; } // [Nugget] HUD/menu shadows
 
     // calculate edges of the shape
     if (flipped)
@@ -757,7 +767,8 @@ void V_DrawPatchTRTR(int x, int y, patch_t *patch, byte *outr1, byte *outr2)
 
 // [Nugget] /-----------------------------------------------------------------
 
-void V_DrawPatchTRTRTL(int x, int y, struct patch_s *patch, byte *outr1, byte *outr2, byte *tmap)
+void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped,
+                            byte *outr1, byte *outr2, byte *tmap)
 {
     x += video.deltaw;
 
@@ -770,21 +781,41 @@ void V_DrawPatchTRTRTL(int x, int y, struct patch_s *patch, byte *outr1, byte *o
     }
     else { translation1 = translation2 = NULL; }
 
-    drawcolfunc = V_DrawPatchColumnTL;
+    drawcolfunc = V_DrawPatchColumnTranslucent;
     tranmap = tmap;
 
-    V_DrawPatchInt(x, y, patch, false);
+    V_DrawPatchInt(x, y, patch, flipped);
 }
 
-void V_DrawPatchTRTRShadowed(int x, int y, struct patch_s *patch, byte *outr1, byte *outr2)
+void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
+                         byte *outr1, byte *outr2)
 {
     if (hud_menu_shadows && drawshadows)
-    { V_DrawPatchTRTRTL(x + 1, y + 1, patch, cr_allblack, NULL, shadow_tranmap); }
+    {
+      drawingshadow = true;
+      V_DrawPatchTranslucent(x + 1, y + 1, patch, flipped, cr_allblack, NULL, shadow_tranmap);
+      drawingshadow = false;
+    }
 
-    if (outr1 && outr2)
-    { V_DrawPatchTRTR(x, y, patch, outr1, outr2); }
+    if (outr1)
+    {
+      if (outr2)
+      {
+        V_DrawPatchTRTR(x, y, patch, outr1, outr2);
+      }
+      else
+      {
+        V_DrawPatchTranslated(x, y, patch, outr1);
+      }
+    }
+    else if (flipped)
+    {
+      V_DrawPatchFlipped(x, y, patch);
+    }
     else
-    { V_DrawPatchTranslated(x, y, patch, outr1); }
+    {
+      V_DrawPatch(x, y, patch);
+    }
 }
 
 // [Nugget] -----------------------------------------------------------------/
