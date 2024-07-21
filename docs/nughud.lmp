@@ -153,14 +153,6 @@ nughud_maxammo3_y     185
 nughud_maxammo3_wide  1
 nughud_maxammo3_align 1
 
-; Attempt counter
-nughud_attempts_x     -1
-nughud_attempts_y     -1
-nughud_attempts_wide  -1
-nughud_attempts_align -1
-nughud_attempts_stack 3
-nughud_attempts_order 4
-
 ; Movement widget
 nughud_movement_x     -1
 nughud_movement_y     -1

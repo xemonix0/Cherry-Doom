@@ -58,11 +58,9 @@ typedef PACKED_PREFIX struct
 // [Cherry]: [DSDA-Doom]
 typedef enum
 {
-  source_skip = -1,
-  source_iwad = 0,
-  source_auto_load,
+  source_iwad,
   source_pwad,
-  source_other, // [Cherry]
+  source_other,
 } wad_source_t;
 
 typedef struct
@@ -140,6 +138,8 @@ boolean W_IsWADLump (const int lump);
 boolean W_LumpExistsWithName(int lump, char *name);
 int W_LumpLengthWithName(int lump, char *name);
 void W_DemoLumpNameCollision(char **name);
+// [Cherry] moved to w_wad.c for use in wad_stats.c
+boolean W_FileContainsMaps(const char *filename);
 
 void W_CloseFileDescriptors(void);
 

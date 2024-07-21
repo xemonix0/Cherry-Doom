@@ -793,15 +793,6 @@ static boolean D_AddZipFile(const char *file, wad_source_t source)
 
 void D_AddFile(const char *file, wad_source_t source)
 {
-  if (source == source_iwad)
-  {
-    int i;
-
-    for (i = 0; i < array_size(wadfiles); ++i)
-      if (wadfiles[i].src == source_iwad)
-        wadfiles[i].src = source_skip;
-  }
-
   // [FG] search for PWADs by their filename
   char *path = D_TryFindWADByName(file);
 
@@ -1038,69 +1029,6 @@ static void CheckIWAD(const char *iwadname)
     {
         I_Error("Unknown or invalid IWAD file.");
     }
-}
-
-static boolean FileContainsMaps(const char *filename)
-{
-    int i;
-    FILE *file = NULL;
-    wadinfo_t header;
-    filelump_t *fileinfo = NULL;
-    boolean ret = false;
-
-    while (ret == false)
-    {
-        if (filename == NULL || M_StringCaseEndsWith(filename, ".wad") == false)
-        {
-            break;
-        }
-
-        file = M_fopen(filename, "rb");
-
-        if (file == NULL)
-        {
-            break;
-        }
-
-        if (fread(&header, sizeof(header), 1, file) != 1)
-        {
-            break;
-        }
-
-        if (strncmp(header.identification, "IWAD", 4) &&
-            strncmp(header.identification, "PWAD", 4))
-        {
-            break;
-        }
-
-        header.numlumps = LONG(header.numlumps);
-        header.infotableofs = LONG(header.infotableofs);
-        fileinfo = malloc(header.numlumps * sizeof(filelump_t));
-
-        if (fseek(file, header.infotableofs, SEEK_SET) ||
-            fread(fileinfo, sizeof(filelump_t), header.numlumps, file) != header.numlumps)
-        {
-            break;
-        }
-
-        for (i = 0; i < header.numlumps; i++)
-        {
-            if (MN_StartsWithMapIdentifier(fileinfo[i].name))
-            {
-                ret = true;
-                break;
-            }
-        }
-
-        break;
-    }
-
-    if (fileinfo)
-        free(fileinfo);
-    if (file)
-        fclose(file);
-
-    return ret;
 }
 
 //
@@ -1768,7 +1696,7 @@ static void D_AutoloadIWadDir(void (*AutoLoadFunc)(const char *path,
     char *autoload_dir;
 
     autoload_dir = GetAutoloadDir(*base, "all-all", true);
-    AutoLoadFunc(autoload_dir, source_auto_load);
+    AutoLoadFunc(autoload_dir, source_other);
     free(autoload_dir);
 
     GameMission_t local_gamemission = D_GetGameMissionByIWADName(M_BaseName(wadfiles[0].name));
@@ -1779,27 +1707,27 @@ static void D_AutoloadIWadDir(void (*AutoLoadFunc)(const char *path,
       if (local_gamemission < pack_chex)
       {
         autoload_dir = GetAutoloadDir(*base, "doom-all", true);
-        AutoLoadFunc(autoload_dir, source_auto_load);
+        AutoLoadFunc(autoload_dir, source_other);
         free(autoload_dir);
       }
 
       if (local_gamemission == doom)
       {
         autoload_dir = GetAutoloadDir(*base, "doom1-all", true);
-        AutoLoadFunc(autoload_dir, source_auto_load);
+        AutoLoadFunc(autoload_dir, source_other);
         free(autoload_dir);
       }
       else if (local_gamemission >= doom2 && local_gamemission <= pack_plut)
       {
         autoload_dir = GetAutoloadDir(*base, "doom2-all", true);
-        AutoLoadFunc(autoload_dir, source_auto_load);
+        AutoLoadFunc(autoload_dir, source_other);
         free(autoload_dir);
       }
     }
 
     // auto-loaded files per IWAD
     autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[0].name), true);
-    AutoLoadFunc(autoload_dir, source_auto_load);
+    AutoLoadFunc(autoload_dir, source_other);
     free(autoload_dir);
   }
 }
@@ -1817,7 +1745,7 @@ static void D_AutoloadPWadDir(void (*AutoLoadFunc)(const char *path,
     {
       char *autoload_dir;
       autoload_dir = GetAutoloadDir(*base, M_BaseName(wadfiles[i].name), false);
-      AutoLoadFunc(autoload_dir, source_auto_load);
+      AutoLoadFunc(autoload_dir, source_other);
       free(autoload_dir);
     }
   }
@@ -2613,7 +2541,7 @@ void D_DoomMain(void)
 
       for (i = mainwadfile; i < array_size(wadfiles); i++)
       {
-        if (FileContainsMaps(wadfiles[i].name))
+        if (W_FileContainsMaps(wadfiles[i].name))
         {
           wadname = wadfiles[i].name;
           break;
@@ -2815,8 +2743,19 @@ void D_DoomMain(void)
   D_CheckNetGame();
 
   // [Cherry]
-  I_Printf(VB_INFO, "WS_InitWadStats: Setting up WAD stats tracking.");
-  WS_InitWadStats();
+
+  //!
+  //
+  // Disable WAD stats tracking.
+  //
+
+  lt_force_no_tracking = M_ParmExists("-notracking");
+
+  if (!netgame)
+  {
+      I_Printf(VB_INFO, "WS_Init: Setting up WAD stats tracking.");
+      WS_Init();
+  }
 
   G_UpdateSideMove();
   G_UpdateCarryAngle();

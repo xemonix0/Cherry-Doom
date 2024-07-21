@@ -13,6 +13,9 @@
 //  GNU General Public License for more details.
 //
 
+#ifndef __MN_SETUP__
+#define __MN_SETUP__
+
 #include "doomdef.h"
 #include "doomtype.h"
 
@@ -54,8 +57,42 @@ extern short whichSkull; // which skull to draw (he blinks)
 extern int saved_screenblocks;
 
 extern boolean default_verify;
-extern uint64_t warning_about_changes;
+extern int64_t warning_about_changes;
 extern int print_warning_about_changes;
+
+// /--- [Cherry] For use in mn_level_table.c ----------------------------------
+
+struct setup_menu_s;
+
+typedef struct
+{
+    const char *text;
+    mrect_t rect;
+    int flags;
+} setup_tab_t;
+
+// Establish the message colors to be used
+
+#define CR_TITLE   CR_GOLD
+#define CR_SET     CR_GREEN
+#define CR_ITEM    CR_NONE
+#define CR_HILITE  CR_NONE // CR_ORANGE
+#define CR_SELECT  CR_GRAY
+#define CR_ALT_COL CR_GRAY // [Cherry]
+
+#define M_SPC    9
+#define M_Y      (29 + M_SPC)
+#define M_Y_WARN (SCREENHEIGHT - 15)
+#define M_TAB_Y  22
+
+extern char menu_buffer[66];
+extern const char *default_skill_strings[];
+
+void MN_BlinkingArrowRight(struct setup_menu_s *s);
+void MN_DrawItem(struct setup_menu_s *s, int accum_y);
+void MN_DrawMenuStringEx(int64_t flags, int x, int y, int color);
+
+// ---- [Cherry] -------------------------------------------------------------/
 
 void MN_InitDefaults(void);
 void MN_UpdateFreeLook(void);
@@ -106,48 +143,46 @@ extern const char *midi_player_string;
 // The following #defines are for the m_flags field of each item on every
 // Setup Screen. They can be OR'ed together where appropriate
 
-#define S_HILITE              0x00000001 // Cursor is sitting on this item
-#define S_SELECT              0x00000002 // We're changing this item
-#define S_TITLE               0x00000004 // Title item
-                              
-#define S_CRITEM              0x00000010 // Message color
-#define S_RESET               0x00000020 // Reset to Defaults Button
-#define S_INPUT               0x00000040 // Composite input
-#define S_WEAP                0x00000080 // Weapon #
-#define S_NUM                 0x00000100 // Numerical item
-#define S_SKIP                0x00000200 // Cursor can't land here
-#define S_KEEP                0x00000400 // Don't swap key out
-#define S_END                 0x00000800 // Last item in list (dummy)
-#define S_LEVWARN             0x00001000 // killough 8/30/98: Always warn about pending change
-#define S_PRGWARN             0x00002000 // killough 10/98: Warn about change until next run
-#define S_BADVAL              0x00004000 // killough 10/98: Warn about bad value
-#define S_LEFTJUST            0x00008000 // killough 10/98: items which are left-justified
-#define S_CREDIT              0x00010000 // killough 10/98: credit
-#define S_CHOICE              0x00020000 // [FG] selection of choices
-#define S_DISABLE             0x00040000 // Disable item
-#define S_COSMETIC            0x00080000 // Don't warn about change, always load from OPTIONS lump
-#define S_THERMO              0x00100000 // Thermo bar (default size 8)
-#define S_NEXT_LINE           0x00200000 // Two lines menu items
-#define S_STRICT              0x00400000 // Disable in strict mode
-#define S_BOOM                0x00800000 // Disable if complevel < boom
-#define S_VANILLA             0x01000000 // Disable if complevel != vanilla
-#define S_ACTION              0x02000000 // Run function call only when change is complete
-#define S_THRM_SIZE11         0x04000000 // Thermo bar size 11
-#define S_ONOFF               0x08000000 // Alias for S_YESNO
-#define S_MBF                 0x10000000 // Disable if complevel < mbf
-#define S_THRM_SIZE4          0x20000000 // Thermo bar size 4
-#define S_PCT                 0x40000000 // Show % sign
+#define S_HILITE      0x00000001 // Cursor is sitting on this item
+#define S_SELECT      0x00000002 // We're changing this item
+#define S_TITLE       0x00000004 // Title item
+                      
+#define S_CRITEM      0x00000010 // Message color
+#define S_RESET       0x00000020 // Reset to Defaults Button
+#define S_INPUT       0x00000040 // Composite input
+#define S_WEAP        0x00000080 // Weapon #
+#define S_NUM         0x00000100 // Numerical item
+#define S_SKIP        0x00000200 // Cursor can't land here
+#define S_KEEP        0x00000400 // Don't swap key out
+#define S_END         0x00000800 // Last item in list (dummy)
+#define S_LEVWARN     0x00001000 // killough 8/30/98: Always warn about pending change
+#define S_PRGWARN     0x00002000 // killough 10/98: Warn about change until next run
+#define S_BADVAL      0x00004000 // killough 10/98: Warn about bad value
+#define S_LEFTJUST    0x00008000 // killough 10/98: items which are left-justified
+#define S_CREDIT      0x00010000 // killough 10/98: credit
+#define S_CHOICE      0x00020000 // [FG] selection of choices
+#define S_DISABLE     0x00040000 // Disable item
+#define S_COSMETIC    0x00080000 // Don't warn about change, always load from OPTIONS lump
+#define S_THERMO      0x00100000 // Thermo bar (default size 8)
+#define S_NEXT_LINE   0x00200000 // Two lines menu items
+#define S_STRICT      0x00400000 // Disable in strict mode
+#define S_BOOM        0x00800000 // Disable if complevel < boom
+#define S_VANILLA     0x01000000 // Disable if complevel != vanilla
+#define S_ACTION      0x02000000 // Run function call only when change is complete
+#define S_THRM_SIZE11 0x04000000 // Thermo bar size 11
+#define S_ONOFF       0x08000000 // Alias for S_YESNO
+#define S_MBF         0x10000000 // Disable if complevel < mbf
+#define S_THRM_SIZE4  0x20000000 // Thermo bar size 4
+#define S_PCT         0x40000000 // Show % sign
                               
 // [Nugget]                   
-#define S_CRITICAL            0x00000008 // Disable during non-casual play
-#define S_RES                 0x80000000 // Report current resolution
+#define S_CRITICAL    0x0000000100000000 // Disable during non-casual play
+#define S_RES         0x0000000200000000 // Report current resolution
+#define S_FUNCTION    0x0000000400000000 // Used only to call a function
 
 // [Cherry]
-#define S_WARP        0x0000000100000000 // Map lump item (press enter to warp)
-#define S_TEXT        0x0000000200000000 // S_CREDIT that isn't S_DIRECT
-#define S_ALT_COL     0x0000000400000000 // White text
-#define S_COLUMN      0x0000000800000000 // Tables: column header, also stores the x position
-#define S_NEXT_ROW    0x0000001000000000 // Tables: reset x pos to first column, increment y pos
+#define S_LTBL_MAP    0x0000001000000000 // Level table row with a map's info
+#define S_ALT_COL     0x0000002000000000 // Alternate color text
 
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
@@ -156,7 +191,8 @@ extern const char *midi_player_string;
 
 #define S_SHOWDESC                                                       \
     (S_TITLE | S_ONOFF | S_CRITEM | S_RESET | S_INPUT | S_WEAP | S_NUM   \
-     | S_CREDIT | S_CHOICE | S_THERMO | S_WARP | S_TEXT)
+     | S_CREDIT | S_CHOICE | S_THERMO                                    \
+     | S_FUNCTION) // [Nugget]
 
 #define S_SHOWSET \
     (S_ONOFF | S_CRITEM | S_INPUT | S_WEAP | S_NUM | S_CHOICE | S_THERMO)
@@ -197,8 +233,10 @@ typedef enum
 
 typedef struct setup_menu_s
 {
-    const char *m_text;  // text to display
-    uint64_t m_flags;    // phares 4/17/98: flag bits S_* (defined above)
+    char *m_text;        // text to display
+                         // [Cherry] removed const
+    int64_t m_flags;     // phares 4/17/98: flag bits S_* (defined above)
+                         // [Nugget] Made 64-bit
     short m_x;           // screen x position (left is 0)
     short m_y;           // screen y position (top is 0)
 
@@ -207,6 +245,7 @@ typedef struct setup_menu_s
         void *var;             // generic variable
         char *name;            // name
         struct default_s *def; // default[] table entry
+        int map_i;             // [Cherry] wad_stats index
     } var;
 
     setup_group m_group;  // group
@@ -214,6 +253,6 @@ typedef struct setup_menu_s
     int strings_id;       // [FG] selection of choices
     void (*action)(void); // killough 10/98: function to call after changing
     mrect_t rect;
-
-    int map_index; // [Cherry] index of the map in wad_stats, for S_WARP items
 } setup_menu_t;
+
+#endif

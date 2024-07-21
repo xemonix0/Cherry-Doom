@@ -146,11 +146,10 @@ static hu_multiline_t w_rate;
 static hu_multiline_t w_powers; // Powerup timers
 
 // [Cherry]
-static hu_multiline_t w_attempts; // Attempt counter
 static hu_multiline_t w_move; // Movement widget
 
 #define MAX_HUDS 3
-#define MAX_WIDGETS (18 + 1) // [Nugget] Accommodate more widgets
+#define MAX_WIDGETS (17 + 1) // [Nugget] Accommodate more widgets
 
 #define NUGHUDSLOT 3 // [Nugget] NUGHUD
 
@@ -485,7 +484,6 @@ void HU_Init(void)
     {&w_monsec,   align_direct, align_direct},
     {&w_sttime,   align_direct, align_direct},
     {&w_powers,   align_direct, align_direct}, // Powerup timers
-    {&w_attempts, align_direct, align_direct}, // [Cherry]
     {&w_move,     align_direct, align_direct}, // [Cherry]
     {&w_coord,    align_direct, align_direct},
     {&w_fps,      align_direct, align_direct},
@@ -559,7 +557,6 @@ static void HU_widget_build_monsec(void);
 static void HU_widget_build_sttime(void);
 static void HU_widget_build_title (void);
 static void HU_widget_build_weapon (void);
-static void HU_widget_build_attempts(void); // [Cherry] Attempt counter
 static void HU_widget_build_move(void); // [Cherry] Movement widget
 
 static hu_multiline_t *w_stats;
@@ -744,11 +741,6 @@ void HU_Start(void)
                        &boom_font, colrngs[CR_GRAY],
                        NULL, HU_widget_build_powers);
 
-  // [Cherry] Attempt counter
-  HUlib_init_multiline(&w_attempts, 1,
-                       &boom_font, colrngs[CR_RED],
-                       NULL, HU_widget_build_attempts);
-
   // [Cherry] Movement widget
   HUlib_init_multiline(&w_move, 1,
                        &boom_font, colrngs[CR_RED],
@@ -802,7 +794,6 @@ void HU_Start(void)
       else if (m ==  w_stats)    { ntl = &nughud.sts;      }
       else if (m == &w_sttime)   { ntl = &nughud.time;     }
       else if (m == &w_powers)   { ntl = &nughud.powers;   }
-      else if (m == &w_attempts) { ntl = &nughud.attempts; }
       else if (m == &w_move)     { ntl = &nughud.movement; }
       else if (m == &w_coord)    { ntl = &nughud.coord;    }
       else if (m == &w_fps)      { ntl = &nughud.fps;      }
@@ -1592,33 +1583,6 @@ static void HU_widget_build_powers(void)
   else        { HUlib_clear_cur_line(&w_powers); }
 }
 
-// [Cherry] Attempt counter
-static void HU_widget_build_attempts(void)
-{
-  char hud_attemptstr[HU_MAXLINELENGTH];
-  int offset = 0;
-
-  if (sessionattempts != -1)
-  {
-      offset += M_snprintf(hud_attemptstr, sizeof(hud_attemptstr),
-                           "ATT \x1b%c%d", '0' + CR_GRAY, sessionattempts);
-    if (gamestate != GS_INTERMISSION)
-    {
-      offset += M_snprintf(hud_attemptstr + offset, sizeof(hud_attemptstr), "/%d",
-                           totalattempts);
-    }
-  }
-
-  if (offset)
-  {
-    HUlib_add_string_to_cur_line(&w_attempts, hud_attemptstr);
-  }
-  else
-  {
-    HUlib_clear_cur_line(&w_attempts);
-  }
-}
-
 // [Cherry] Movement widget
 static void HU_widget_build_move(void)
 {
@@ -1938,7 +1902,7 @@ int hud_power_timers; // Powerup timers
 
 int hud_time[NUMTIMERS]; // [Nugget] Support more event timers
 
-int hud_attempt_counter, hud_movement; // [Cherry]
+int hud_movement; // [Cherry]
 
 //
 // HU_Drawer()
@@ -1975,7 +1939,7 @@ void HU_Drawer(void)
 int inter_health_armor, inter_weapons; // [Cherry]
 
 // [FG] draw Time widget on intermission screen
-// [Cherry] + attempts, health, armor and weapons
+// [Cherry] + health, armor and weapons
 void WI_DrawWidgets(void)
 {
   HUlib_reset_align_offsets();
@@ -1983,12 +1947,6 @@ void WI_DrawWidgets(void)
   if (hud_level_time & HUD_WIDGET_HUD)
   {
     const hu_widget_t w = { &w_sttime, align_left, align_top };
-    HUlib_draw_widget(&w);
-  }
-
-  if (hud_attempt_counter & HUD_WIDGET_HUD)
-  {
-    const hu_widget_t w = { &w_attempts, align_left, align_top };
     HUlib_draw_widget(&w);
   }
 
@@ -2011,7 +1969,6 @@ void WI_DrawWidgets(void)
 void WI_BuildWidgets(void)
 {
   HU_widget_rebuild_sttime();
-  HU_widget_build_attempts();
   HU_widget_build_health();
   HU_widget_build_armor();
   HU_widget_build_weapon();
@@ -2193,7 +2150,6 @@ void HU_Ticker(void)
   if (automapactive == AM_FULL)
   {
     HU_cond_build_widget(w_stats, hud_level_stats & HUD_WIDGET_AUTOMAP);
-    HU_cond_build_widget(&w_attempts, hud_attempt_counter & HUD_WIDGET_AUTOMAP); // [Cherry] Attempt counter
     HU_cond_build_widget(&w_move, STRICTMODE(hud_movement) & HUD_WIDGET_AUTOMAP); // [Cherry] Movement widget
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_AUTOMAP || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_AUTOMAP && SHOWPOWERS); // [Nugget] Powerup timers
@@ -2202,7 +2158,6 @@ void HU_Ticker(void)
   else
   {
     HU_cond_build_widget(w_stats, hud_level_stats & HUD_WIDGET_HUD);
-    HU_cond_build_widget(&w_attempts, hud_attempt_counter & HUD_WIDGET_HUD); // [Cherry] Attempt counter
     HU_cond_build_widget(&w_move, STRICTMODE(hud_movement) & HUD_WIDGET_HUD); // [Cherry] Movement widget
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_HUD || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_HUD && SHOWPOWERS); // [Nugget] Powerup timers
@@ -2555,7 +2510,6 @@ static const struct {
 
     {"monsec",   "stats",   &w_monsec},
     {"sttime",   "time",    &w_sttime},
-    {"attempts",  NULL,     &w_attempts}, // [Cherry] Attempt counter
     {"movement", "move",    &w_move}, // [Cherry] Movement widget
     {"powers",    NULL,     &w_powers}, // [Nugget] Powerup Timers
     {"coord",    "coords",  &w_coord},

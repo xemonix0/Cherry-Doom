@@ -242,7 +242,6 @@ static void M_DrawHelp(void);  // phares 5/04/98
 static void M_DrawSaveLoadBorder(int x, int y, byte *cr);
 static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, byte *cr);
 static void WriteText(int x, int y, const char *string);
-static void M_StartMessage(char *string, void (*routine)(int), boolean input);
 
 // phares 3/30/98
 // prototypes added to support Setup Menus and Extended HELP screens
@@ -953,7 +952,7 @@ static void M_VerifyForcedLoadGame(int ch)
     {
         G_ForcedLoadGame();
     }
-    free(messageString); // free the message strdup()'ed below
+    M_FreeMessageString(0); // free the message strdup()'ed below
     MN_ClearMenus();
 }
 
@@ -3287,7 +3286,13 @@ void M_Drawer(void)
 // Message Routines
 //
 
-static void M_StartMessage(char *string, void (*routine)(int), boolean input)
+// [Cherry]
+void M_FreeMessageString(int ch)
+{
+    free(messageString);
+}
+
+void M_StartMessage(char *string, void (*routine)(int), boolean input)
 {
     messageLastMenuActive = menuactive;
     messageToPrint = 1;

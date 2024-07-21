@@ -45,6 +45,11 @@ void M_Ticker(void);
 
 void M_Drawer(void);
 
+// [Cherry]
+
+void M_FreeMessageString(int ch);
+void M_StartMessage(char *string, void (*routine)(int), boolean input);
+
 // Called by D_DoomMain,
 // loads the config file.
 

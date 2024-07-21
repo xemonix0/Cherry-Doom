@@ -51,17 +51,20 @@
 #include "sounds.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "wad_stats.h" // [Cherry]
 #include "z_zone.h"
 
 // [Nugget]
 #include "st_stuff.h"
 
+// [Cherry]
+#include "dstrings.h"
+#include "mn_level_table.h"
+#include "wad_stats.h"
+
 static int M_GetKeyString(int c, int offset);
 static void DrawMenuString(int cx, int cy, int color);
-static void DrawMenuStringEx(uint64_t flags, int x, int y, int color);
 
-uint64_t warning_about_changes;
+int64_t warning_about_changes;
 int print_warning_about_changes;
 
 // killough 8/15/98: warn about changes not being committed until next game
@@ -94,10 +97,7 @@ static boolean default_reset;
 #define X_BUTTON          301
 #define Y_BUTTON          (SCREENHEIGHT - 15 - 3)
 
-#define M_SPC             9
 #define M_X               240
-#define M_Y               (29 + M_SPC)
-#define M_Y_WARN          (SCREENHEIGHT - 15)
 
 #define M_THRM_STEP       8
 #define M_THRM_HEIGHT     13
@@ -178,13 +178,6 @@ static int set_item_on; // which setup item is selected?   // phares 3/98
 static setup_menu_t *current_menu; // points to current setup menu table
 static int current_page;           // the index of the current screen in a set
 
-typedef struct
-{
-    const char *text;
-    mrect_t rect;
-    int flags;
-} setup_tab_t;
-
 static setup_tab_t *current_tabs;
 static int highlight_tab;
 
@@ -229,7 +222,7 @@ static void SetPageIndex(const int y);
 //
 // The menu_buffer is used to construct strings for display on the screen.
 
-static char menu_buffer[66];
+char menu_buffer[66];
 
 /////////////////////////////
 //
@@ -259,14 +252,6 @@ static void DrawBackground(char *patchname)
 //
 // Data that's used by the Setup screen code
 //
-// Establish the message colors to be used
-
-#define CR_TITLE     CR_GOLD
-#define CR_SET       CR_GREEN
-#define CR_ITEM      CR_NONE
-#define CR_HILITE    CR_NONE // CR_ORANGE
-#define CR_SELECT    CR_GRAY
-
 // chat strings must fit in this screen space
 // killough 10/98: reduced, for more general uses
 #define MAXCHATWIDTH 272
@@ -343,7 +328,7 @@ enum
 
 static const char **GetStrings(int id);
 
-static boolean ItemDisabled(uint64_t flags)
+static boolean ItemDisabled(int64_t flags)
 {
     complevel_t complevel =
         force_complevel != CL_NONE ? force_complevel : default_complevel;
@@ -396,18 +381,18 @@ static boolean NextItemAvailable(setup_menu_t *s)
     return value < max;
 }
 
-static boolean BlinkingArrowLeft(setup_menu_t *s)
+static void BlinkingArrowLeft(setup_menu_t *s)
 {
     if (!ItemSelected(s))
     {
-        return false;
+        return;
     }
 
-    uint64_t flags = s->m_flags;
+    int64_t flags = s->m_flags;
 
     if (menu_input == mouse_mode)
     {
-        return false;
+        return;
     }
     else if (flags & (S_CHOICE | S_CRITEM | S_THERMO))
     {
@@ -419,27 +404,21 @@ static boolean BlinkingArrowLeft(setup_menu_t *s)
         {
             strcpy(menu_buffer, "> ");
         }
-        else
-        {
-            return false;
-        }
     }
     else
     {
         strcpy(menu_buffer, "> ");
     }
-
-    return true;
 }
 
-static void BlinkingArrowRight(setup_menu_t *s)
+void MN_BlinkingArrowRight(setup_menu_t *s)
 {
     if (!ItemSelected(s))
     {
         return;
     }
 
-    uint64_t flags = s->m_flags;
+    int64_t flags = s->m_flags;
 
     if (menu_input == mouse_mode)
     {
@@ -456,13 +435,12 @@ static void BlinkingArrowRight(setup_menu_t *s)
             strcat(menu_buffer, " <");
         }
     }
-    else if (!setup_select)
+    else if (!setup_select || flags & S_FUNCTION) // [Nugget]
     {
         strcat(menu_buffer, " <");
     }
 }
 
-#define M_TAB_Y      22
 #define M_TAB_OFFSET 7 // [Nugget] Decreased to 7
 
 static void DrawTabs(void)
@@ -503,8 +481,8 @@ static void DrawTabs(void)
 
         menu_buffer[0] = '\0';
         strcpy(menu_buffer, tabs[i].text);
-        DrawMenuStringEx(tabs[i].flags, x, rect->y,
-                         selected ? CR_GREEN : CR_GOLD);
+        MN_DrawMenuStringEx(tabs[i].flags, x, rect->y,
+                            selected ? CR_GREEN : CR_GOLD);
 
         if (selected)
         {
@@ -518,11 +496,11 @@ static void DrawTabs(void)
     }
 }
 
-static void DrawItem(setup_menu_t *s, int x, int accum_y,
-                     uint64_t additional_flags)
+void MN_DrawItem(setup_menu_t *s, int accum_y)
 {
+    int x = s->m_x;
     int y = s->m_y;
-    uint64_t flags = s->m_flags | additional_flags;
+    int64_t flags = s->m_flags;
     mrect_t *rect = &s->rect;
 
     if (flags & S_RESET)
@@ -552,16 +530,18 @@ static void DrawItem(setup_menu_t *s, int x, int accum_y,
 
     int w = 0;
     const char *text = s->m_text;
-    int color = flags & S_TITLE     ? CR_TITLE
-                : flags & S_SELECT  ? CR_SELECT
+    // [Cherry] prioritize CR_SELECT over CR_TITLE
+    int color = flags & S_SELECT    ? CR_SELECT
+                : flags & S_TITLE   ? CR_TITLE
                 : flags & S_HILITE  ? CR_HILITE
-                : flags & S_ALT_COL ? CR_GRAY  // [Cherry]
                                     : CR_ITEM; // killough 10/98
 
-    boolean arrow = false;
     if (!(flags & S_NEXT_LINE))
     {
-        arrow = BlinkingArrowLeft(s);
+        BlinkingArrowLeft(s);
+
+        // [Nugget]
+        if (flags & S_LEFTJUST) { x -= MN_GetPixelWidth(menu_buffer); }
     }
 
     // killough 10/98: support left-justification:
@@ -571,9 +551,12 @@ static void DrawItem(setup_menu_t *s, int x, int accum_y,
     {
         x -= (w + 4);
     }
-    else if (arrow) // [Cherry]
+
+    // [Nugget]
+    if (flags & S_FUNCTION
+        && !(flags & S_LTBL_MAP)) // [Cherry]
     {
-        x -= 8;
+        MN_BlinkingArrowRight(s);
     }
 
     rect->x = 0;
@@ -586,7 +569,7 @@ static void DrawItem(setup_menu_t *s, int x, int accum_y,
         y += M_THRM_TXT_OFFSET;
     }
 
-    DrawMenuStringEx(flags, x, y, color);
+    MN_DrawMenuStringEx(flags, x, y, color);
 }
 
 // If a number item is being changed, allow up to N keystrokes to 'gather'
@@ -641,7 +624,7 @@ static void DrawSetupThermo(int x, int y, int width, int size, int dot,
 static void DrawSetting(setup_menu_t *s, int accum_y)
 {
     int x = s->m_x, y = s->m_y, color;
-    uint64_t flags = s->m_flags;
+    int64_t flags = s->m_flags;
 
     if (!(flags & S_DIRECT))
     {
@@ -658,8 +641,8 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
     if (flags & S_ONOFF)
     {
         strcpy(menu_buffer, s->var.def->location->i ? "ON" : "OFF");
-        BlinkingArrowRight(s);
-        DrawMenuStringEx(flags, x, y, color);
+        MN_BlinkingArrowRight(s);
+        MN_DrawMenuStringEx(flags, x, y, color);
         return;
     }
 
@@ -684,8 +667,8 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
                        s->var.def->location->i);
         }
 
-        BlinkingArrowRight(s);
-        DrawMenuStringEx(flags, x, y, color);
+        MN_BlinkingArrowRight(s);
+        MN_DrawMenuStringEx(flags, x, y, color);
         return;
     }
 
@@ -735,8 +718,8 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
             M_GetKeyString(0, 0);
         }
 
-        BlinkingArrowRight(s);
-        DrawMenuStringEx(flags, x, y, color);
+        MN_BlinkingArrowRight(s);
+        MN_DrawMenuStringEx(flags, x, y, color);
     }
 
     // Is the item a weapon number?
@@ -751,8 +734,8 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
     if (flags & S_WEAP) // weapon number
     {
         sprintf(menu_buffer, "%d", s->var.def->location->i);
-        BlinkingArrowRight(s);
-        DrawMenuStringEx(flags, x, y, color);
+        MN_BlinkingArrowRight(s);
+        MN_DrawMenuStringEx(flags, x, y, color);
         return;
     }
 
@@ -784,8 +767,8 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
             rect->y = y;
         }
 
-        BlinkingArrowRight(s);
-        DrawMenuStringEx(flags, x, y, flags & S_CRITEM ? i : color);
+        MN_BlinkingArrowRight(s);
+        MN_DrawMenuStringEx(flags, x, y, flags & S_CRITEM ? i : color);
         return;
     }
 
@@ -858,9 +841,9 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
             M_snprintf(menu_buffer, sizeof(menu_buffer), "%d", value);
         }
 
-        BlinkingArrowRight(s);
-        DrawMenuStringEx(flags, x + M_THRM_STEP + rect->w,
-                         y + M_THRM_TXT_OFFSET, color);
+        MN_BlinkingArrowRight(s);
+        MN_DrawMenuStringEx(flags, x + M_THRM_STEP + rect->w,
+                            y + M_THRM_TXT_OFFSET, color);
     }
 }
 
@@ -900,7 +883,7 @@ static void DrawScreenItems(setup_menu_t *src)
 
         if (src->m_flags & S_SHOWDESC)
         {
-            DrawItem(src, src->m_x, accum_y, 0);
+            MN_DrawItem(src, accum_y);
         }
 
         // See if we're to draw the setting (right-hand part)
@@ -964,7 +947,7 @@ void MN_DrawDelVerify(void)
 static void DrawInstructions()
 {
     int index = (menu_input == mouse_mode ? highlight_item : set_item_on);
-    uint64_t flags = current_menu[index].m_flags;
+    int64_t flags = current_menu[index].m_flags;
 
     // [Cherry] No instructions on menus with no selectable items
     if (print_warning_about_changes > 0 || flags & S_END)
@@ -1017,6 +1000,21 @@ static void DrawInstructions()
         {
             s = "Restore defaults";
         }
+        else if (flags & S_FUNCTION)
+        {
+            switch (menu_input) // [Cherry]
+            {
+                case pad_mode:
+                    s = "[ PadA ] to confirm, [ PadB ] to cancel";
+                    break;
+                case key_mode:
+                    s = "[ Enter ] to confirm, [ Esc ] to cancel";
+                    break;
+                default:
+                    s = "[ Mouse1 ] to confirm, [ Mouse2 ] to cancel";
+                    break;
+            }
+        }
     }
     else if (ItemDisabled(flags)) // [Cherry] Disabled items hints
     {
@@ -1066,15 +1064,15 @@ static void DrawInstructions()
         {
             s = "Restore defaults";
         }
-        else if (flags & S_WARP) // [Cherry]
+        else if (flags & S_FUNCTION) // [Nugget]
         {
-            switch (menu_input)
+            switch (menu_input) // [Cherry]
             {
                 case pad_mode:
-                    s = "[ PadA ] to warp";
+                    s = "[ PadA ] to select";
                     break;
                 case key_mode:
-                    s = "[ Enter ] to warp";
+                    s = "[ Enter ] to select";
                     break;
                 default:
                     break;
@@ -1113,8 +1111,6 @@ static void DrawInstructions()
     }
 }
 
-static void ResetScroll(void); // [Cherry]
-
 static void SetupMenu(void)
 {
     setup_active = true;
@@ -1127,24 +1123,23 @@ static void SetupMenu(void)
 
     // [Cherry] prevent UB when there is nothing to highlight
     boolean no_highlight = false;
-    while (current_menu[set_item_on++].m_flags & S_SKIP)
+    while (current_menu[set_item_on].m_flags & S_SKIP)
     {
         if (current_menu[set_item_on].m_flags & S_END)
         {
             no_highlight = true;
             break;
         }
+
+        ++set_item_on;
     }
 
     if (!no_highlight)
     {
-        current_menu[--set_item_on].m_flags |= S_HILITE;
+        current_menu[set_item_on].m_flags |= S_HILITE;
     }
 
-    if (set_lvltbl_active) // [Cherry]
-    {
-        ResetScroll();
-    }
+    LT_ResetScroll(current_menu, set_item_on); // [Cherry]
 }
 
 /////////////////////////////
@@ -1856,7 +1851,6 @@ static setup_menu_t stat_settings7[] =
 {
   {"Cherry - Extended HUD", S_SKIP|S_TITLE, M_X, M_SPC},
 
-    {"Show Attempt Counter", S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_attempt_counter"}, m_null, input_null, str_show_widgets},
     {"Show Player Movement", S_CHOICE|S_STRICT,   M_X, M_SPC, {"hud_movement"}, m_null, input_null, str_show_widgets},
 
   MI_GAP,
@@ -3036,450 +3030,29 @@ void MN_DrawGeneral(void)
 // The level table.
 //
 
-typedef struct
+void MN_LevelTable(int choice)
 {
-    int completed;
-    int timed;
-    int max_timed;
-    int sk5_timed;
-
-    int max_kills;
-    int max_items;
-    int max_secrets;
-
-    int best_skill;
-    int best_kills;
-    int best_items;
-    int best_secrets;
-    int best_time;
-    int best_max_time;
-    int best_sk5_time;
-
-    int best_attempts;
-    int total_attempts;
-} wad_stats_summary_t;
-
-static wad_stats_summary_t wad_stats_summary;
-
-#define LT_SCREENS 3
-
-static setup_tab_t level_table_tabs[] = {
-    {"stats"},
-    {"times"},
-    {"summary"},
-    
-    {NULL}
-};
-
-static setup_menu_t *level_table[LT_SCREENS + 1] = {NULL};
-
-// ====================================
-// BUILDING & INITIALIZING
-
-static void CalculateWadStatsSummary(void)
-{
-    memset(&wad_stats_summary, 0, sizeof(wad_stats_summary));
-
-    wad_stats_summary.best_skill = 6;
-
-    for (int i = 0; i < array_size(wad_stats.maps); ++i)
+    if (!wad_stats.maps)
     {
-        map_stats_t *ms = &wad_stats.maps[i];
-
-        wad_stats_summary.total_attempts += ms->total_attempts;
-
-        if (ms->episode == -1 || !ms->best_skill)
+        if (netgame)
         {
-            continue;
+            M_StartMessage("You can't use the Level Table\n"
+                           "while in a net game!\n\n" PRESSKEY,
+                           NULL, false);
+        }
+        else
+        {
+            char *message = NULL;
+            M_StringPrintF(&message, "%s\n"
+                           "Stats tracking is disabled.\n\n" PRESSKEY,
+                           wad_stats_fail);
+
+            M_StartMessage(message, M_FreeMessageString, false);
         }
 
-        ++wad_stats_summary.completed;
-
-        wad_stats_summary.best_skill =
-            MIN(ms->best_skill, wad_stats_summary.best_skill);
-
-        wad_stats_summary.max_kills += ms->max_kills;
-        wad_stats_summary.max_items += ms->max_items;
-        wad_stats_summary.max_secrets += ms->max_secrets;
-
-        wad_stats_summary.best_kills += ms->best_kills;
-        wad_stats_summary.best_items += ms->best_items;
-        wad_stats_summary.best_secrets += ms->best_secrets;
-        wad_stats_summary.best_attempts += ms->best_attempts;
-
-        if (ms->best_time >= 0)
-        {
-            ++wad_stats_summary.timed;
-            wad_stats_summary.best_time += ms->best_time;
-        }
-
-        if (ms->best_max_time >= 0)
-        {
-            ++wad_stats_summary.max_timed;
-            wad_stats_summary.best_max_time += ms->best_max_time;
-        }
-
-        if (ms->best_sk5_time >= 0)
-        {
-            ++wad_stats_summary.sk5_timed;
-            wad_stats_summary.best_sk5_time += ms->best_sk5_time;
-        }
-    }
-}
-
-static void FreeMText(const char *m_text)
-{
-    union
-    {
-        const char *c;
-        char *s;
-    } text;
-
-    text.c = m_text;
-    free(text.s);
-}
-
-static void ResetLevelTable(void)
-{
-    for (int i = 0; i < LT_SCREENS; ++i)
-    {
-        for (int j = 0; j < array_size(level_table[i]); ++j)
-        {
-            if (level_table[i][j].m_text)
-            {
-                FreeMText(level_table[i][j].m_text);
-            }
-        }
-
-        array_clear(level_table[i]);
-    }
-}
-
-static void StringPrintTime(char **dest, int tics)
-{
-    if (tics >= 0)
-    {
-        M_StringPrintF(dest, "%d:%05.2f", tics / 35 / 60,
-                       (float)(tics % (60 * 35)) / 35);
-    }
-    else
-    {
-        *dest = M_StringDuplicate("- : --");
-    }
-}
-
-static void InsertGenericItem(setup_menu_t **menu, const char *text,
-                              uint64_t flags, int x, int y)
-{
-    setup_menu_t item = {text, flags, x, y};
-    array_push(*menu, item);
-}
-
-#define INSERT_NEXT_ROW(menu) \
-    InsertGenericItem((menu), NULL, S_SKIP | S_NEXT_ROW, 0, M_SPC)
-#define INSERT_LAST_ITEM(menu) \
-    InsertGenericItem((menu), NULL, S_SKIP | S_END, 0, 0)
-
-// ----------------------------
-// Level Tables (stats & times)
-
-typedef enum
-{
-    LT_ITEM_SKILL,
-    LT_ITEM_STAT,
-    LT_ITEM_ATTEMPTS,
-    LT_ITEM_TIME,
-} level_table_item_t;
-
-static void InsertWarpItem(setup_menu_t **menu, const char *text, int x,
-                           int map_index)
-{
-    setup_menu_t item = {text, S_TITLE | S_WARP, x, M_SPC,
-                         .map_index = map_index};
-    array_push(*menu, item);
-}
-
-static void InsertLevelTableAttemptsItem(setup_menu_t **menu, int best,
-                                         int total, int x)
-{
-    char *text = NULL;
-    uint64_t flags = S_SKIP | S_TEXT;
-
-    if (best)
-    {
-        M_StringPrintF(&text, "%d/%d", best, total);
-        flags |= S_ALT_COL;
-    }
-    else if (total)
-    {
-        M_StringPrintF(&text, "-/%d", total);
-    }
-    else
-    {
-        text = M_StringDuplicate("-");
-    }
-
-    InsertGenericItem(menu, text, flags, x, M_SPC);
-}
-
-static void InsertLevelTableItem(setup_menu_t **menu, level_table_item_t type,
-                                 boolean done, int a, int b, int x)
-{
-    if (type == LT_ITEM_ATTEMPTS)
-    {
-        InsertLevelTableAttemptsItem(menu, a, b, x);
         return;
     }
 
-    char *text = NULL;
-    uint64_t flags = S_SKIP | S_TEXT;
-
-    if (done)
-    {
-        switch (type)
-        {
-            case LT_ITEM_SKILL:
-                M_StringPrintF(&text, "%d", a);
-                if (a >= 4)
-                {
-                    flags |= S_ALT_COL;
-                }
-                break;
-            case LT_ITEM_STAT:
-                M_StringPrintF(&text, "%d/%d", a, b);
-                if (a == b)
-                {
-                    flags |= S_ALT_COL;
-                }
-                break;
-            case LT_ITEM_TIME:
-                StringPrintTime(&text, a);
-            default:
-                break;
-        }
-    }
-    else if (type == LT_ITEM_TIME)
-    {
-        StringPrintTime(&text, -1);
-    }
-    else
-    {
-        text = M_StringDuplicate("-");
-    }
-
-    InsertGenericItem(menu, text, flags, x, M_SPC);
-}
-
-static void InsertTableColumn(setup_menu_t **menu, const char *text, int x,
-                              boolean left_justified)
-{
-    uint64_t flags = S_SKIP | S_TITLE | S_COLUMN;
-
-    if (left_justified)
-    {
-        flags |= S_LEFTJUST;
-    }
-
-    InsertGenericItem(menu, text, flags, x, M_SPC);
-}
-
-static void BuildLevelTableStatsPage(void)
-{
-    setup_menu_t **page = &level_table[0];
-
-    int x = 16;
-    InsertTableColumn(page, M_StringDuplicate(""), x, true);
-    x += 76;
-    InsertTableColumn(page, M_StringDuplicate("SKILL"), x, false);
-    x += 68;
-    InsertTableColumn(page, M_StringDuplicate("K"), x, false);
-    x += 52;
-    InsertTableColumn(page, M_StringDuplicate("I"), x, false);
-    x += 40;
-    InsertTableColumn(page, M_StringDuplicate("S"), x, false);
-    x += 52;
-    InsertTableColumn(page, M_StringDuplicate("ATT"), x, false);
-
-    INSERT_NEXT_ROW(page);
-
-    for (int i = 0; i < array_size(wad_stats.maps); ++i)
-    {
-        const map_stats_t *ms = &wad_stats.maps[i];
-        if (ms->episode == -1)
-        {
-            break;
-        }
-
-        const boolean done = ms->best_skill;
-
-        InsertWarpItem(page, M_StringDuplicate(ms->lump), 0, i);
-        InsertLevelTableItem(page, LT_ITEM_SKILL, done, ms->best_skill, 0, 1);
-        InsertLevelTableItem(page, LT_ITEM_STAT, done, ms->best_kills,
-                             ms->max_kills, 2);
-        InsertLevelTableItem(page, LT_ITEM_STAT, done, ms->best_items,
-                             ms->max_items, 3);
-        InsertLevelTableItem(page, LT_ITEM_STAT, done, ms->best_secrets,
-                             ms->max_secrets, 4);
-        InsertLevelTableItem(page, LT_ITEM_ATTEMPTS, done, ms->best_attempts,
-                             ms->total_attempts, 5);
-
-        INSERT_NEXT_ROW(page);
-    }
-
-    INSERT_LAST_ITEM(page);
-}
-
-static void BuildLevelTableTimesPage(void)
-{
-    setup_menu_t **page = &level_table[1];
-
-    int x = 16;
-    InsertTableColumn(page, M_StringDuplicate(""), x, true);
-    x += 120;
-    InsertTableColumn(page, M_StringDuplicate("TIME"), x, false);
-    x += 84;
-    InsertTableColumn(page, M_StringDuplicate("100% TIME"), x, false);
-    x += 84;
-    InsertTableColumn(page, M_StringDuplicate("SKILL 5 TIME"), x, false);
-    INSERT_NEXT_ROW(page);
-
-    for (int i = 0; i < array_size(wad_stats.maps); ++i)
-    {
-        const map_stats_t *ms = &wad_stats.maps[i];
-        if (ms->episode == -1)
-        {
-            break;
-        }
-
-        const boolean done = ms->best_skill;
-
-        InsertWarpItem(page, M_StringDuplicate(ms->lump), 0, i);
-        InsertLevelTableItem(page, LT_ITEM_TIME, done, ms->best_time, 0, 1);
-        InsertLevelTableItem(page, LT_ITEM_TIME, done, ms->best_max_time, 0, 2);
-        InsertLevelTableItem(page, LT_ITEM_TIME, done, ms->best_sk5_time, 0, 3);
-
-        INSERT_NEXT_ROW(page);
-    }
-
-    INSERT_LAST_ITEM(page);
-}
-
-// -----------
-// WAD Summary
-
-#define LT_SUMMARY_X (SCREENWIDTH / 2 + 2)
-
-static void InsertSummaryRow(setup_menu_t **menu, const char *heading,
-                             level_table_item_t type, boolean done, int a,
-                             int b)
-{
-    char *text = NULL;
-    uint64_t flags = S_SKIP | S_TEXT;
-
-    switch (type)
-    {
-        case LT_ITEM_SKILL:
-            if (done)
-            {
-                M_StringPrintF(&text, "%d", a);
-            }
-            else
-            {
-                text = M_StringDuplicate("-");
-            }
-            break;
-        case LT_ITEM_STAT:
-            M_StringPrintF(&text, "%d / ", a);
-            if (done)
-            {
-                M_StringConcatF(&text, "%d", b);
-            }
-            else
-            {
-                M_StringConcatF(&text, "-");
-            }
-            break;
-        case LT_ITEM_ATTEMPTS:
-            if (done && a)
-            {
-                M_StringPrintF(&text, "%d / %d", a, b);
-            }
-            else
-            {
-                M_StringPrintF(&text, "- / %d", b);
-            }
-            break;
-        case LT_ITEM_TIME:
-            StringPrintTime(&text, done ? a : -1);
-            break;
-    }
-
-    InsertGenericItem(menu, heading, S_SKIP | S_TITLE, 0, M_SPC);
-    InsertGenericItem(menu, text, flags, 1, M_SPC);
-    INSERT_NEXT_ROW(menu);
-}
-
-static void BuildLevelTableSummaryPage(void)
-{
-    setup_menu_t **page = &level_table[2];
-
-    CalculateWadStatsSummary();
-
-    int map_count = array_size(wad_stats.maps);
-    boolean done = wad_stats_summary.completed == map_count;
-
-    InsertTableColumn(page, M_StringDuplicate(""), LT_SUMMARY_X, false);
-    InsertTableColumn(page, M_StringDuplicate(""), LT_SUMMARY_X, true);
-    INSERT_NEXT_ROW(page);
-
-    INSERT_NEXT_ROW(page);
-
-    InsertSummaryRow(page, M_StringDuplicate("Maps"), LT_ITEM_STAT, true,
-                      wad_stats_summary.completed, map_count);
-    InsertSummaryRow(page, M_StringDuplicate("Skill"), LT_ITEM_SKILL, done,
-                      wad_stats_summary.best_skill, 0);
-
-    INSERT_NEXT_ROW(page);
-
-    InsertSummaryRow(page, M_StringDuplicate("Kill completion"), LT_ITEM_STAT,
-                      done, wad_stats_summary.best_kills,
-                      wad_stats_summary.max_kills);
-    InsertSummaryRow(page, M_StringDuplicate("Item completion"), LT_ITEM_STAT,
-                      done, wad_stats_summary.best_items,
-                      wad_stats_summary.max_items);
-    InsertSummaryRow(page, M_StringDuplicate("Secret completion"),
-                      LT_ITEM_STAT, done, wad_stats_summary.best_secrets,
-                      wad_stats_summary.max_secrets);
-    InsertSummaryRow(page, M_StringDuplicate("Attempts"), LT_ITEM_ATTEMPTS,
-                      done, wad_stats_summary.best_attempts,
-                      wad_stats_summary.total_attempts);
-
-    INSERT_NEXT_ROW(page);
-
-    InsertSummaryRow(page, M_StringDuplicate("Time"), LT_ITEM_TIME,
-                      wad_stats_summary.timed == map_count,
-                      wad_stats_summary.best_time, 0);
-    InsertSummaryRow(page, M_StringDuplicate("100% Time"), LT_ITEM_TIME,
-                      wad_stats_summary.max_timed == map_count,
-                      wad_stats_summary.best_max_time, 0);
-    InsertSummaryRow(page, M_StringDuplicate("Nightmare Time"), LT_ITEM_TIME,
-                      wad_stats_summary.sk5_timed == map_count,
-                      wad_stats_summary.best_sk5_time, 0);
-
-    INSERT_LAST_ITEM(page);
-}
-
-static void BuildLevelTable(void)
-{
-    ResetLevelTable();
-
-    BuildLevelTableStatsPage();
-    BuildLevelTableTimesPage();
-    BuildLevelTableSummaryPage();
-}
-
-void MN_LevelTable(int choice)
-{
     int page_index_save = GetPageIndex(level_table);
     int item_on_save = 0;
     if (level_table[0])
@@ -3487,7 +3060,7 @@ void MN_LevelTable(int choice)
         item_on_save = GetItemOn();
     }
 
-    BuildLevelTable();
+    LT_Build();
 
     MN_SetNextMenuAlt(ss_ltbl);
     setup_screen = ss_ltbl;
@@ -3500,109 +3073,16 @@ void MN_LevelTable(int choice)
     SetupMenu();
 }
 
-// ====================================
-// DRAWING
-
-static const int lt_max_rows = 14;
-static int scroll_pos = 0;
-
-#define SCRL_X      (SCREENWIDTH - 9)
-#define SCRL_UP_Y   (M_TAB_Y + M_SPC)
-#define SCRL_DOWN_Y (M_Y_WARN - 5)
-
-#define SCROLL_UP   0x01
-#define SCROLL_DOWN 0x02
-static int scroll_indicators = 0x00;
-
-static void UpdateScrollingIndicators(int rows)
-{
-    scroll_indicators = (rows - lt_max_rows - scroll_pos - 1) > 0
-                            ? (scroll_indicators | SCROLL_DOWN)
-                            : (scroll_indicators & ~SCROLL_DOWN);
-    scroll_indicators = scroll_pos ? (scroll_indicators | SCROLL_UP)
-                                   : (scroll_indicators & ~SCROLL_UP);
-}
-
-// Draws tables (screens that start with column definitions)
-// Supports scrolling (with sticky column headings)
-static void DrawLevelTableItems(void)
-{
-    int rows = 0;
-    int accum_y = M_Y;
-    boolean column_defs = true;
-    for (setup_menu_t *src = current_menu; !(src->m_flags & S_END); ++src)
-    {
-        boolean skip = false;
-        if (rows - scroll_pos < 0 || rows - scroll_pos > lt_max_rows)
-        {
-            skip = !column_defs;
-        }
-
-        if (src->m_flags & S_NEXT_ROW && !column_defs)
-        {
-            ++rows;
-        }
-
-        if (skip)
-        {
-            // prevent mouse interaction with skipped entries
-            mrect_t *rect = &src->rect;
-            rect->x = 0;
-            rect->y = 0;
-            rect->w = 0;
-            rect->h = 0;
-
-            continue;
-        }
-
-        setup_menu_t *column = column_defs ? NULL : current_menu + src->m_x;
-
-        int x = column_defs ? src->m_x : column->m_x;
-
-        if (src->m_flags & S_SHOWDESC)
-        {
-            DrawItem(src, x, accum_y,
-                     !column_defs && (column->m_flags & S_LEFTJUST) ? S_LEFTJUST
-                                                                    : 0);
-        }
-
-        if (src->m_flags & S_NEXT_ROW)
-        {
-            accum_y += src->m_y;
-            column_defs = false;
-        }
-    }
-
-    if (scroll_indicators & SCROLL_UP)
-    {
-        patch_t *patch = W_CacheLumpName("SCRLUP", PU_CACHE);
-
-        int x = SCRL_X - SHORT(patch->width) / 2;
-        int y = SCRL_UP_Y;
-
-        V_DrawPatch(x, y, patch);
-    }
-
-    if (scroll_indicators & SCROLL_DOWN)
-    {
-        patch_t *patch = W_CacheLumpName("SCRLDOWN", PU_CACHE);
-
-        int x = SCRL_X - SHORT(patch->width) / 2;
-        int y = SCRL_DOWN_Y;
-
-        V_DrawPatch(x, y, patch);
-    }
-}
-
 void MN_DrawLevelTable(void)
 {
     inhelpscreens = true;
 
     DrawBackground("FLOOR4_6"); // Draw background
-    MN_DrawTitle(114, 2, "M_LVLTBL", "Level Table");
+    MN_DrawTitle(89, 2, "M_LVLTBL", "Level Table");
     DrawTabs();
     DrawInstructions();
-    DrawLevelTableItems();
+
+    LT_Draw(current_menu, current_page);
 }
 
 /////////////////////////////
@@ -3709,7 +3189,7 @@ static void ResetDefaults()
 
             for (; !(current_item->m_flags & S_END); current_item++)
             {
-                uint64_t flags = current_item->m_flags;
+                int64_t flags = current_item->m_flags;
 
                 if (flags & S_HASDEFPTR && current_item->var.def == dp)
                 {
@@ -3918,7 +3398,7 @@ static void DrawMenuString(int cx, int cy, int color)
     MN_DrawString(cx, cy, color, menu_buffer);
 }
 
-static void DrawMenuStringEx(uint64_t flags, int x, int y, int color)
+void MN_DrawMenuStringEx(int64_t flags, int x, int y, int color)
 {
     if (ItemDisabled(flags))
     {
@@ -4115,7 +3595,7 @@ boolean MN_SetupCursorPostion(int x, int y)
     for (int i = 0; !(current_menu[i].m_flags & S_END); i++)
     {
         setup_menu_t *item = &current_menu[i];
-        uint64_t flags = item->m_flags;
+        int64_t flags = item->m_flags;
 
         if (flags & S_SKIP)
         {
@@ -4145,7 +3625,7 @@ static int setup_cancel = -1;
 static void OnOff(void)
 {
     setup_menu_t *current_item = current_menu + set_item_on;
-    uint64_t flags = current_item->m_flags;
+    int64_t flags = current_item->m_flags;
     default_t *def = current_item->var.def;
 
     def->location->i = !def->location->i; // killough 8/15/98
@@ -4170,7 +3650,7 @@ static void OnOff(void)
 static void Choice(menu_action_t action)
 {
     setup_menu_t *current_item = current_menu + set_item_on;
-    uint64_t flags = current_item->m_flags;
+    int64_t flags = current_item->m_flags;
     default_t *def = current_item->var.def;
     int value = def->location->i;
 
@@ -4251,6 +3731,23 @@ static void Choice(menu_action_t action)
     }
 }
 
+// [Nugget]
+static void Function(void)
+{
+    setup_menu_t *current_item = current_menu + set_item_on;
+    int64_t flags = current_item->m_flags;
+
+    if (flags & (S_LEVWARN | S_PRGWARN))
+    {
+        warn_about_changes(flags);
+    }
+
+    if (current_item->action)
+    {
+        current_item->action();
+    }
+}
+
 static boolean ChangeEntry(menu_action_t action, int ch)
 {
     if (!setup_select)
@@ -4259,7 +3756,7 @@ static boolean ChangeEntry(menu_action_t action, int ch)
     }
 
     setup_menu_t *current_item = current_menu + set_item_on;
-    uint64_t flags = current_item->m_flags;
+    int64_t flags = current_item->m_flags;
     default_t *def = current_item->var.def;
 
     if (action == MENU_ESCAPE) // Exit key = no change
@@ -4371,6 +3868,19 @@ static boolean ChangeEntry(menu_action_t action, int ch)
         return true;
     }
 
+    // [Nugget]
+    if (flags & S_FUNCTION)
+    {
+        if (action == MENU_ENTER)
+        {
+            Function();
+        }
+
+        SelectDone(current_item);
+
+        return true;
+    }
+
     return false;
 }
 
@@ -4443,13 +3953,12 @@ static boolean BindInput(void)
     return true;
 }
 
-// [Cherry] /-----------------------------------------------------------------
-
-static void LevelTableWarp(void)
+// [Cherry]
+void LT_Warp(void)
 {
     setup_menu_t *current_item = current_menu + set_item_on;
 
-    map_stats_t *ms = &wad_stats.maps[current_item->map_index];
+    map_stats_t *ms = &wad_stats.maps[current_item->var.map_i];
     G_DeferedInitNew(gamestate == GS_LEVEL ? gameskill : startskill,
                      ms->episode, ms->map);
 
@@ -4467,92 +3976,6 @@ static void LevelTableWarp(void)
     M_StartSoundOptional(sfx_mnucls,
                          sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
 }
-
-// ----------------------------
-// Scrolling (level table only)
-
-#define SCROLL_BUFFER 3
-
-static void KeyboardScroll(setup_menu_t *current_item)
-{
-    boolean column_defs = true;
-    int current_row = 0;
-    int rows = 0;
-    for (setup_menu_t *src = current_menu; !(src->m_flags & S_END); ++src)
-    {
-        if (src == current_item)
-        {
-            current_row = rows;
-        }
-
-        if (!(src->m_flags & S_NEXT_ROW))
-        {
-            continue;
-        }
-
-        if (column_defs)
-        {
-            column_defs = false;
-            continue;
-        }
-
-        ++rows;
-    }
-
-    int buffer_i = MIN(SCROLL_BUFFER, rows - current_row - 1);
-    int top_buffer_i = MIN(SCROLL_BUFFER, current_row);
-
-    if (rows > lt_max_rows)
-    {
-        while (current_row - scroll_pos > lt_max_rows - buffer_i)
-        {
-            ++scroll_pos;
-        }
-    }
-
-    while (scroll_pos && current_row - scroll_pos < top_buffer_i)
-    {
-        --scroll_pos;
-    }
-
-    UpdateScrollingIndicators(rows);
-}
-
-static void MouseScroll(int inc)
-{
-    int rows = 0;
-    boolean column_defs = true;
-    for (setup_menu_t *src = current_menu; !(src->m_flags & S_END); ++src)
-    {
-        if (!(src->m_flags & S_NEXT_ROW))
-        {
-            continue;
-        }
-
-        if (column_defs)
-        {
-            column_defs = false;
-            continue;
-        }
-
-        ++rows;
-    }
-
-    scroll_pos = MAX(0, MIN(rows - lt_max_rows - 1, scroll_pos + inc));
-
-    UpdateScrollingIndicators(rows);
-}
-
-static void ResetScroll(void)
-{
-    if (set_lvltbl_active)
-    {
-        scroll_pos = 0;
-        KeyboardScroll(current_menu + set_item_on);
-    }
-}
-
-// [Cherry] -------------------------------------------------------------------/
 
 static boolean NextPage(int inc)
 {
@@ -4575,7 +3998,13 @@ static boolean NextPage(int inc)
         return false;
     }
 
+    // [Cherry] Save set_item_on between level table pages with level stat tables
+    boolean lt_level_pages =
+        (set_lvltbl_active && LT_IsLevelsPage(current_page));
+
     current_page += inc;
+
+    lt_level_pages &= (set_lvltbl_active && LT_IsLevelsPage(current_page));
 
     setup_menu_t *current_item = current_menu + set_item_on;
     current_item->m_flags &= ~S_HILITE;
@@ -4583,29 +4012,34 @@ static boolean NextPage(int inc)
     SetItemOn(set_item_on);
     highlight_tab = current_page;
     current_menu = setup_screens[setup_screen][current_page];
-    set_item_on = GetItemOn();
+    set_item_on = lt_level_pages ? set_item_on // [Cherry]
+                                 : GetItemOn();
 
     print_warning_about_changes = false; // killough 10/98
 
     // [Cherry] prevent UB when there is nothing to highlight
     boolean no_highlight = false;
-    while (current_menu[set_item_on++].m_flags & S_SKIP)
+    while (current_menu[set_item_on].m_flags & S_SKIP)
     {
         if (current_menu[set_item_on].m_flags & S_END)
         {
             no_highlight = true;
+            highlight_item = set_item_on;
             break;
         }
+
+        ++set_item_on;
     }
 
     if (!no_highlight)
     {
-        current_menu[--set_item_on].m_flags |= S_HILITE;
+        current_menu[set_item_on].m_flags |= S_HILITE;
     }
 
-    if (set_lvltbl_active) // [Cherry]
+    // [Cherry]
+    if (!lt_level_pages)
     {
-        ResetScroll();
+        LT_ResetScroll(current_menu, set_item_on);
     }
 
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
@@ -4754,7 +4188,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
 
         if (set_lvltbl_active) // [Cherry]
         {
-            KeyboardScroll(current_item);
+            LT_KeyboardScroll(current_menu, current_item);
         }
 
         SelectDone(current_item); // phares 4/17/98
@@ -4784,10 +4218,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
             current_item--;
         } while (current_item->m_flags & S_SKIP);
 
-        if (set_lvltbl_active) // [Cherry]
-        {
-            KeyboardScroll(current_item);
-        }
+        LT_KeyboardScroll(current_menu, current_item); // [Cherry]
 
         SelectDone(current_item); // phares 4/17/98
         return true;
@@ -4795,7 +4226,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
 
     if (action == MENU_ENTER)
     {
-        uint64_t flags = current_item->m_flags;
+        int64_t flags = current_item->m_flags;
 
         // You've selected an item to change. Highlight it, post a new
         // message about what to do, and get ready to process the
@@ -4815,11 +4246,6 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         else if (flags & S_RESET)
         {
             default_verify = true;
-        }
-        else if (flags & S_WARP) // [Cherry]
-        {
-            LevelTableWarp();
-            return true;
         }
         else if (flags & S_END) // [Cherry]
         {
@@ -4855,15 +4281,16 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         default_verify = false;              // phares 4/19/98
         print_warning_about_changes = false; // [FG] reset
         HU_Start(); // catch any message changes // phares 4/19/98
+        LT_Reset(); // [Cherry] level table cleanup
         M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
 
     if (action == MENU_LEFT)
     {
-        if (set_lvltbl_active && menu_input == mouse_mode) // [Cherry]
+        // [Cherry]
+        if (LT_MouseScroll(current_menu, -1))
         {
-            MouseScroll(-1);
             return true;
         }
 
@@ -4875,9 +4302,9 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
 
     if (action == MENU_RIGHT)
     {
-        if (set_lvltbl_active && menu_input == mouse_mode) // [Cherry]
+        // [Cherry]
+        if (LT_MouseScroll(current_menu, 1))
         {
-            MouseScroll(1);
             return true;
         }
 
@@ -4905,29 +4332,32 @@ static boolean SetupTab(void)
         return false;
     }
 
+    // [Cherry] Save set_item_on between level table pages with level stat tables
+    boolean lt_level_pages =
+        (set_lvltbl_active && LT_IsLevelsPage(current_page));
+
     current_page = highlight_tab;
     current_menu = setup_screens[setup_screen][current_page];
-    set_item_on = 0;
 
-    // [Cherry] prevent UB when there is nothing to select
-    boolean no_select = false;
-    while (current_menu[set_item_on++].m_flags & S_SKIP)
+    lt_level_pages &= (set_lvltbl_active && LT_IsLevelsPage(current_page));
+    
+    if (!lt_level_pages)
     {
-        if (current_menu[set_item_on].m_flags & S_END)
+        set_item_on = 0;
+
+        // [Cherry] prevent UB when there is nothing to select
+        while (current_menu[set_item_on].m_flags & S_SKIP)
         {
-            no_select = true;
-            break;
+            if (current_menu[set_item_on].m_flags & S_END)
+            {
+                highlight_item = set_item_on;
+                break;
+            }
+
+            ++set_item_on;
         }
-    }
 
-    if (!no_select)
-    {
-        set_item_on--;
-    }
-
-    if (set_lvltbl_active) // [Cherry]
-    {
-        ResetScroll();
+        LT_ResetScroll(current_menu, set_item_on);
     }
 
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
@@ -4950,7 +4380,7 @@ boolean MN_SetupMouseResponder(int x, int y)
 
     if (M_InputDeactivated(input_menu_enter) && active_thermo)
     {
-        uint64_t flags = active_thermo->m_flags;
+        int64_t flags = active_thermo->m_flags;
         default_t *def = active_thermo->var.def;
 
         if (flags & S_ACTION)
@@ -4979,7 +4409,7 @@ boolean MN_SetupMouseResponder(int x, int y)
     }
 
     setup_menu_t *current_item = current_menu + set_item_on;
-    uint64_t flags = current_item->m_flags;
+    int64_t flags = current_item->m_flags;
     default_t *def = current_item->var.def;
     mrect_t *rect = &current_item->rect;
 
@@ -5182,7 +4612,7 @@ void MN_DrawTitle(int x, int y, const char *patch, const char *alttext)
             DrawMenuString(
                 SCREENWIDTH / 2 - MN_StringWidth(alttext) / 2,
                 y + 8 - MN_StringHeight(alttext) / 2, // assumes patch height 16
-                CR_RED);
+                CR_NONE);
         }
     }
 }

@@ -271,6 +271,11 @@ int comp_keypal;
 
 // [Nugget] -----------------------------------------------------------------/
 
+// [Cherry] Level Table
+
+boolean lt_enable_tracking, lt_force_no_tracking;
+boolean lt_track_continuous;
+int lt_stats_format;
 
 //----------------------------------------------------------------------------
 //

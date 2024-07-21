@@ -307,11 +307,7 @@ extern  int basetic;    // killough 9/29/98: levelstarttic, adjusted
 extern  int leveltime;  // tics in game play for par
 extern  int oldleveltime;
 extern  int totalleveltimes; // [FG] total time for all completed levels
-// [Cherry]
-extern  int levelscompleted; // total amount of completed levels
-extern  int sessionattempts; // attempts on the current map in this session
-extern  int bestattempts; // attempts on the current map in this session
-extern  int totalattempts; // attempts on the current map
+extern  int levels_completed; // [Cherry] levels completed continuously
 // --------------------------------------
 // DEMO playback/recording related stuff.
 
@@ -667,6 +663,13 @@ extern int comp_unusedpals;
 extern int comp_keypal;
 
 // [Nugget] -----------------------------------------------------------------/
+
+// [Cherry] Level Table
+
+extern boolean lt_enable_tracking, lt_force_no_tracking;
+#define STATS_TRACKING_DISABLED (lt_force_no_tracking || !lt_enable_tracking)
+extern boolean lt_track_continuous;
+extern int lt_stats_format;
 
 // Doom-style printf
 

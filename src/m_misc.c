@@ -652,14 +652,14 @@ int M_ReadFileToString(char const *name, char **buffer)
         fseek(fp, 0, SEEK_END);
         length = ftell(fp);
         fseek(fp, 0, SEEK_SET);
-        *buffer = Z_Malloc(length + 1, PU_STATIC, 0);
+        *buffer = malloc(length + 1);
         if (fread(*buffer, 1, length, fp) == length)
         {
             fclose(fp);
             (*buffer)[length] = '\0';
             return length;
         }
-        Z_Free(*buffer);
+        free(*buffer);
         *buffer = NULL;
         fclose(fp);
     }

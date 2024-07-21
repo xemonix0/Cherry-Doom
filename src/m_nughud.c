@@ -132,8 +132,7 @@ default_t nughud_defaults[] = {
   WIDGET2( "nughud_maxammo3", nughud.maxammos[3], ST_MAXAMMO3X, ST_MAXAMMO3Y, 1, 1 ),
 
   // [Cherry]
-  TEXTLINE("nughud_movement", nughud.movement, -1, -1, -1, -1, 3, 4 ),
-  TEXTLINE("nughud_attempts", nughud.attempts, -1, -1, -1, -1, 3, 3 ),
+  TEXTLINE("nughud_movement", nughud.movement, -1, -1, -1, -1, 3, 3 ),
 
   TEXTLINE( "nughud_time", nughud.time, -1, -1, -1, -1, 3, 2 ),
 

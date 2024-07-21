@@ -158,10 +158,7 @@ int             totalkills, totalitems, totalsecret;    // for intermission
 int             max_kill_requirement; // DSDA UV Max category requirements
 milestone_t     complete_milestones; // [Nugget]
 int             totalleveltimes; // [FG] total time for all completed levels
-int             levelscompleted; // [Cherry] amount of levels completed
-int             sessionattempts = -1; // [Cherry] attempts on the current map in this session
-int             bestattempts = -1; // [Cherry] best attempts on the current map
-int             totalattempts = -1;   // [Cherry] attempts on the current map
+int             levels_completed; // [Cherry] levels completed continuously
 boolean         demorecording;
 boolean         longtics;             // cph's doom 1.91 longtics hack
 boolean         shorttics;            // Config key for low resolution turning.
@@ -1723,7 +1720,7 @@ static void G_DoCompleted(void)
   {
       G_WriteLevelStat();
   }
-  ++levelscompleted;
+  ++levels_completed;
 
   gameaction = ga_nothing;
 
@@ -2228,7 +2225,7 @@ static void G_DoPlayDemo(void)
 // killough 2/22/98: version id string format for savegames
 #define VERSIONID "MBF %d"
 
-#define CURRENT_SAVE_VERSION "Cherry 1.0.1"
+#define CURRENT_SAVE_VERSION "Cherry 2.0.0"
 
 static char *savename = NULL;
 
@@ -2419,11 +2416,8 @@ static void G_DoSaveGame(void)
   saveg_write32(leveltime); //killough 11/98: save entire word
 
   // [Cherry] levels completed
-  CheckSaveGame(sizeof(levelscompleted));
-  saveg_write32(levelscompleted);
-  // [Cherry] session attempts
-  CheckSaveGame(sizeof(sessionattempts));
-  saveg_write32(sessionattempts);
+  CheckSaveGame(sizeof(levels_completed));
+  saveg_write32(levels_completed);
 
   // killough 11/98: save revenant tracer state
   *save_p++ = (gametic-basetic) & 255;
@@ -2527,6 +2521,8 @@ static void G_DoLoadGame(void)
   CheckSaveVersion("Nugget 2.0.0", saveg_nugget200);
   CheckSaveVersion("Nugget 2.1.0", saveg_nugget210);
   CheckSaveVersion("Cherry 1.0.0", saveg_cherry100);
+  CheckSaveVersion("Cherry 1.0.1", saveg_cherry101);
+  CheckSaveVersion("Nugget 2.4.0", saveg_nugget300);
   CheckSaveVersion(CURRENT_SAVE_VERSION, saveg_current);
 
   // killough 2/22/98: Friendly savegame version difference message
@@ -2612,20 +2608,20 @@ static void G_DoLoadGame(void)
   leveltime = saveg_read32();
 
   // [Cherry]
-  if (saveg_compat > saveg_nugget210)
+  if (saveg_compat >= saveg_cherry100 && saveg_compat != saveg_nugget300)
   {
     // levels completed
-    levelscompleted = saveg_read32();
-    // sesion attempts
-    sessionattempts = saveg_read32();
+    levels_completed = saveg_read32();
+    // session attempts (removed in 2.0.0)
+    if (saveg_compat <= saveg_cherry101)
+    {
+        saveg_read32();
+    }
   }
   else
   {
-    levelscompleted = 0;
-    sessionattempts = 1;
+    levels_completed = 0;
   }
-
-  WS_WatchLoadGame(); // [Cherry]
 
   // killough 11/98: load revenant tracer state
   basetic = gametic - (int) *save_p++;
@@ -2676,7 +2672,7 @@ static void G_DoLoadGame(void)
   max_kill_requirement = totalkills;
   if (save_p - savebuffer <= length - sizeof(max_kill_requirement))
   {
-    if (saveg_compat > saveg_nugget210) // [Nugget]
+    if (saveg_compat >= saveg_nugget300) // [Cherry]
     {
       max_kill_requirement = saveg_read32();
     }
@@ -2786,11 +2782,8 @@ static void G_SaveKeyFrame(void)
   saveg_write32(leveltime); //killough 11/98: save entire word
 
   // [Cherry] levels completed
-  CheckSaveGame(sizeof(levelscompleted));
-  saveg_write32(levelscompleted);
-  // [Cherry] session attempts
-  CheckSaveGame(sizeof(sessionattempts));
-  saveg_write32(sessionattempts);
+  CheckSaveGame(sizeof(levels_completed));
+  saveg_write32(levels_completed);
 
   // killough 11/98: save revenant tracer state
   *save_p++ = (gametic-basetic) & 255;
@@ -2952,21 +2945,8 @@ static void G_DoRewind(void)
   // [FG] fix copy size and pointer progression
   leveltime = saveg_read32();
 
-  // [Cherry]
-  if (saveg_compat > saveg_nugget210)
-  {
-    // levels completed
-    levelscompleted = saveg_read32();
-    // sesion attempts
-    sessionattempts = saveg_read32();
-  }
-  else
-  {
-    levelscompleted = 0;
-    sessionattempts = 1;
-  }
-
-  WS_WatchLoadGame(); // [Cherry]
+  // [Cherry] levels completed
+  levels_completed = saveg_read32();
 
   // killough 11/98: load revenant tracer state
   basetic = gametic - (int) *save_p++;
@@ -3371,7 +3351,7 @@ void G_PlayerReborn(int player)
   for (i=0 ; i<NUMAMMO ; i++)
     p->maxammo[i] = maxammo[i];
 
-  levelscompleted = 0;
+  levels_completed = 0; // [Cherry]
 }
 
 //
@@ -4282,7 +4262,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   // [FG] total time for all completed levels
   totalleveltimes = 0;
-  levelscompleted = 0;
+  levels_completed = 0; // [Cherry]
   playback_tic = 0;
 
   //jff 4/16/98 force marks on automap cleared every new level start
