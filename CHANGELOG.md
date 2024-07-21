@@ -1,5 +1,5 @@
 **_Save_ version has been changed to `Cherry 2.0.0`**
-**_WAD Stats_ version has been changed back to `1`**
+**_WAD stats_ version has been changed back to `1`**
 
 ## New Features
 

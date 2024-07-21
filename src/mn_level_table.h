@@ -32,11 +32,12 @@ extern setup_menu_t *level_table[lt_page_max];
 
 boolean LT_IsLevelsPage(int page);
 
+void LT_Reset(void);
 void LT_Build(void);
 void LT_Draw(setup_menu_t *current_menu, int current_page);
 
 void LT_KeyboardScroll(setup_menu_t *current_menu, setup_menu_t *current_item);
 boolean LT_MouseScroll(setup_menu_t *current_menu, int inc);
-void LT_ResetScroll(setup_menu_t *current_menu, int set_item_on);
+void LT_ResetScroll(setup_menu_t *menu, int item_on);
 
 #endif

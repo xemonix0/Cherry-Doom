@@ -233,7 +233,8 @@ typedef enum
 
 typedef struct setup_menu_s
 {
-    const char *m_text;  // text to display
+    char *m_text;        // text to display
+                         // [Cherry] removed const
     int64_t m_flags;     // phares 4/17/98: flag bits S_* (defined above)
                          // [Nugget] Made 64-bit
     short m_x;           // screen x position (left is 0)

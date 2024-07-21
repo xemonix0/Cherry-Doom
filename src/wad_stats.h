@@ -24,24 +24,13 @@ typedef struct
     int   wad_index;
 
     char  lump[9];
+    int   episode, map;
 
-    int   episode;
-    int   map;
-
-    int   max_kills;
-    int   max_items;
-    int   max_secrets;
-
-    int   total_exits;
-    int   total_kills;
-
+    int   total_exits, total_kills;
+    int   max_kills, max_items, max_secrets;
     int   best_skill;
-    int   best_kills;
-    int   best_items;
-    int   best_secrets;
-    int   best_time;
-    int   best_max_time;
-    int   best_sk5_time;
+    int   best_kills, best_items, best_secrets;
+    int   best_time, best_max_time, best_sk5_time;
 } map_stats_t;
 
 typedef struct

@@ -202,8 +202,7 @@ static int CompareMapStats(const void *a, const void *b)
     return strncasecmp(ms1->lump, ms2->lump, 8);
 }
 
-static map_stats_t CreateMapStats(const char *map_name, char *wad_name,
-                                  int wad_index)
+static map_stats_t CreateMapStats(const char *map_name, char *wad_name)
 {
     map_stats_t ms = {0};
     strcpy(ms.lump, map_name);
@@ -249,11 +248,11 @@ static void CreateStats(boolean finish)
         char *wad_name = M_StringDuplicate(W_WadNameForLump(i));
         if (!last_wad_name || strcmp(last_wad_name, wad_name))
         {
-            last_wad_name = wad_name;
+            last_wad_name = M_StringDuplicate(wad_name);
             ++wad_index;
         }
 
-        map_stats_t ms = CreateMapStats(lump_name, wad_name, wad_index);
+        map_stats_t ms = CreateMapStats(lump_name, wad_name);
         array_push(wad_stats.maps, ms);
     }
 
