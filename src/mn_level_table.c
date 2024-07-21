@@ -138,7 +138,7 @@ static void InsertLastItem(setup_menu_t **menu)
 // Level Table
 // -----------
 
-static void LevelsInsertWadName(setup_menu_t **menu, const char *wad_name)
+static void LevelsInsertWadName(setup_menu_t **menu, char *wad_name)
 {
     setup_menu_t item = {wad_name, S_SKIP | S_LEFTJUST | S_TITLE,
                          SCREENWIDTH / 2 - MN_GetPixelWidth(wad_name) / 2,
@@ -146,7 +146,7 @@ static void LevelsInsertWadName(setup_menu_t **menu, const char *wad_name)
     array_push(*menu, item);
 }
 
-static void LevelsInsertRow(setup_menu_t **menu, const char *text, int map_i,
+static void LevelsInsertRow(setup_menu_t **menu, char *text, int map_i,
                             boolean display_stats)
 {
     extern void LT_Warp(void);
