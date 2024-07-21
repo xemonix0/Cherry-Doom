@@ -1283,7 +1283,8 @@ void AM_Ticker (void)
     if (subsec && subsec->sector)
     {
       // if we are close to a tagged line in the sector, choose it instead
-      float min_distance = 24 << MAPBITS;
+      float min_distance = MAX(followplayer ? 24 << MAPBITS : 0,
+                               8 * FixedMul(scale_ftom, video.xscale));
       short int min_tag = 0;
 
       magic_sector = (subsec->sector->tag > 0) ? subsec->sector : NULL;
@@ -1292,8 +1293,11 @@ void AM_Ticker (void)
       for (int i = 0;  i < subsec->sector->linecount;  i++)
       {
         line_t* l = subsec->sector->lines[i];
-        if (l && (l->tag > 0)) {
-          if (l->v1 && l->v2) {
+
+        if (l && l->tag > 0)
+        {
+          if (l->v1 && l->v2)
+          {
             const float
               x1 = (l->v1->x >> FRACTOMAPBITS),
               x2 = (l->v2->x >> FRACTOMAPBITS),
@@ -1309,6 +1313,7 @@ void AM_Ticker (void)
           }
         }
       }
+
       // only pick the line if the crosshair is "close" to it
       if (min_tag > 0) {
         magic_tag = min_tag;

@@ -20,6 +20,9 @@
     instead of a multiplayer Face background
   - The vertical position of the background is now dependent on the height
     of the multiplayer Face backgrounds
+- **_Tag Finder_ radius:**
+  - Now adjusted based on automap zoom
+  - Capped at a minimum of 24 map units when following the player
 - **Made jump and crouch buttons cancel each other out**
 - **Changed _"Fancy Teleport [to Pointer]"_ to _"Fancy Warping"_**
 
