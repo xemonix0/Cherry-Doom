@@ -455,10 +455,10 @@ static void cheat_nomomentum()
 // Emulates demo and/or net play state, for debugging
 static void cheat_fauxdemo()
 {
-  extern void D_NuggetUpdateCasual(void);
+  extern void D_UpdateCasualPlay(void);
 
   fauxdemo = !fauxdemo;
-  D_NuggetUpdateCasual();
+  D_UpdateCasualPlay();
 
   S_StartSound(plyr->mo, sfx_tink);
   displaymsg("Fauxdemo %s", fauxdemo ? "ON" : "OFF");

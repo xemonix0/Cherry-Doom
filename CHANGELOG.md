@@ -37,4 +37,5 @@
 - **Crosshair not being drawn if the chasecam mode were set** even if the chasecam itself were disabled
 - **Zoom being forcefully disabled if any player were dead**
 - **Explosion shake and FOV effects not being reset when restarting levels on death**
+- **_Selective Fuzz Darkening_ not being disabled in Strict Mode**
 - **Changed save version to `Nugget 3.0.0`** (was `Nugget 2.4.0` by mistake)

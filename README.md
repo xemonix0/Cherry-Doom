@@ -187,7 +187,6 @@ For more details, see the _New Nugget Doom cheats_ section of `docs/cheats.md`.
 - **Custom skill level**
 - **SDL render driver** setting (CFG-Only: `sdl_renderdriver`) [p.f. Woof! 14.0.0]
 - Key to **toggle zoom**
-- **Autoload folder for all games** (`autoload/all`)
 - **Setting of savegame and screenshot paths in config file** (CFG-Only: `savegame_dir` and `screenshot_dir`)
 - **Keep palette changes in screenshots** setting (CFG-Only: `screenshot_palette`)
 - **Allowed mouselook while dead**

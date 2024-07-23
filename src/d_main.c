@@ -2052,7 +2052,7 @@ void D_ValidateStartSkill(void)
   }
 }
 
-void D_NuggetUpdateCasual(void)
+void D_UpdateCasualPlay(void)
 {
   static int old_casual = -1;
 
@@ -2064,6 +2064,7 @@ void D_NuggetUpdateCasual(void)
   {
     old_casual = casual_play;
 
+    R_SetFuzzColumnMode();
     R_SetZoom(ZOOM_RESET); // Reset FOV
 
     MN_SetupResetMenu();
@@ -3028,7 +3029,7 @@ void D_DoomMain(void)
 
   D_StartGameLoop();
 
-  D_NuggetUpdateCasual(); // [Nugget]
+  D_UpdateCasualPlay(); // [Nugget]
 
   weapon_inertia_scale = weapon_inertia_scale_pct * ORIG_WEAPON_INERTIA_SCALE / 100; // [Nugget] Weapon inertia
 

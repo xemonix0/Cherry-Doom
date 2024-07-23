@@ -2292,7 +2292,7 @@ static void G_DoPlayDemo(void)
   // [FG] report compatibility mode
   I_Printf(VB_INFO, "G_DoPlayDemo: %.8s (%s)", basename, W_WadNameForLump(lumpnum));
 
-  D_NuggetUpdateCasual(); // [Nugget]
+  D_UpdateCasualPlay(); // [Nugget]
 }
 
 #define VERSIONSIZE   16
@@ -4485,7 +4485,7 @@ void G_InitNew(skill_t skill, int episode, int map)
   if (demo_version == DV_MBF)
     G_MBFComp();
 
-  D_NuggetUpdateCasual(); // [Nugget]
+  D_UpdateCasualPlay(); // [Nugget]
 
   G_DoLoadLevel();
 }
