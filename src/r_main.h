@@ -116,12 +116,12 @@ void R_RenderPlayerView(struct player_s *player);   // Called by G_Drawer.
 void R_Init(void);                           // Called by startup code.
 void R_SetViewSize(int blocks);              // Called by M_Responder.
 
-// [Nugget] /-----------------------------------------------------------------
+// [Nugget] /=================================================================
 
 #define POWER_RUNOUT(power) \
   ((STRICTMODE(comp_powerrunout) ? (power) >= 4*32 : (power) > 4*32) || (power) & 8)
 
-// FOV effects --------------------------------------------
+// FOV effects ---------------------------------------------------------------
 
 typedef struct fovfx_s {
   int old, current, target;
@@ -146,18 +146,18 @@ extern void R_SetFOVFX(const int fx);
 extern int  R_GetZoom(void);
 extern void R_SetZoom(const int state);
 
-// Explosion shake effect ---------------------------------
+// Explosion shake effect ----------------------------------------------------
 
 extern void R_SetShake(int value);
 extern void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range);
 
-// Chasecam -----------------------------------------------
+// Chasecam ------------------------------------------------------------------
 
 extern boolean R_GetChasecamOn(void);
 extern void    R_SetChasecamHit(const boolean value);
 extern void    R_UpdateChasecam(fixed_t x, fixed_t y, fixed_t z);
 
-// Freecam ------------------------------------------------
+// Freecam -------------------------------------------------------------------
 
 typedef enum freecammode_s {
   FREECAM_OFF,
@@ -181,7 +181,7 @@ extern const struct mobj_s *R_GetFreecamMobj(void);
 extern void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
                             fixed_t pitch, boolean center, boolean lock);
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 void R_InitLightTables(void);                // killough 8/9/98
 int R_GetLightIndex(fixed_t scale);

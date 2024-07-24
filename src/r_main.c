@@ -129,9 +129,9 @@ lighttable_t **colormaps;
 int extralight;                           // bumped light from gun blasts
 int extra_level_brightness;               // level brightness feature
 
-// [Nugget] /-----------------------------------------------------------------
+// [Nugget] /=================================================================
 
-// FOV effects --------------------------------------------
+// FOV effects ---------------------------------------------------------------
 
 static int r_fov; // Rendered (currently applied) FOV, with effects added to it
 
@@ -190,7 +190,7 @@ void R_SetZoom(const int state)
   else { zoomed = ZOOM_OFF; }
 }
 
-// Explosion shake effect ---------------------------------
+// Explosion shake effect ----------------------------------------------------
 
 static fixed_t shake;
 #define MAXSHAKE 50
@@ -232,7 +232,7 @@ void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
   #undef SHAKERANGEMULT
 }
 
-// Chasecam -----------------------------------------------
+// Chasecam ------------------------------------------------------------------
 
 static struct {
   fixed_t x, y, z;
@@ -262,7 +262,7 @@ void R_UpdateChasecam(fixed_t x, fixed_t y, fixed_t z)
   chasecam.z = z;
 }
 
-// Freecam ------------------------------------------------
+// Freecam -------------------------------------------------------------------
 
 static boolean       freecam_on = false;
 static freecammode_t freecam_mode = FREECAM_OFF + 1;
@@ -423,7 +423,7 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
   else { freecam.pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, freecam.pitch + pitch); }
 }
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 void (*colfunc)(void) = R_DrawColumn;     // current column draw function
 
@@ -805,7 +805,7 @@ static void R_SetupFreelook(void)
     dy = 0;
   }
 
-  if (STRICTMODE(st_crispyhud) && !(WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION)))
+  if (STRICTMODE(st_crispyhud) && gamestate == GS_LEVEL)
   {
     dy += (nughud.viewoffset * viewheight / SCREENHEIGHT) << FRACBITS;
   }
@@ -849,7 +849,7 @@ void R_ExecuteSetViewSize (void)
   setsizeneeded = false;
 
   // [Nugget] Alt. intermission background
-  if (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))
+  if (WI_UsingAltInterpic() && gamestate == GS_INTERMISSION)
   { setblocks = 11; }
 
   if (setblocks == 11)
@@ -1044,7 +1044,7 @@ void R_SetupFrame (player_t *player)
   static fixed_t chasecamheight;
 
   // [Nugget] Freecam
-  if (freecam_on && !(WI_UsingAltInterpic() && gamestate == GS_INTERMISSION))
+  if (freecam_on && gamestate == GS_LEVEL)
   {
     static player_t dummyplayer = {0};
     static mobj_t dummymobj = {0};
@@ -1094,7 +1094,8 @@ void R_SetupFrame (player_t *player)
       // that would necessitate turning it off for a tic.
       player->mo->interp == true &&
       // Don't interpolate during a paused state
-      leveltime > oldleveltime)
+      (leveltime > oldleveltime
+       || (freecam_on && gamestate == GS_LEVEL))) // [Nugget] Freecam
   {
     // Use localview unless the player or game is in an invalid state, in which
     // case fall back to interpolation.
@@ -1150,9 +1151,9 @@ void R_SetupFrame (player_t *player)
     pitch += player->flinch; // Flinching
   }
 
-  // [Nugget] /---------------------------------------------------------------
+  // [Nugget] /===============================================================
 
-  // Alt. intermission background -----
+  // Alt. intermission background --------------------------------------------
 
   if (WI_UsingAltInterpic() && gamestate == GS_INTERMISSION)
   {
@@ -1171,7 +1172,7 @@ void R_SetupFrame (player_t *player)
   }
   else { target_interangle = viewangle; }
 
-  // Explosion shake effect -----------
+  // Explosion shake effect --------------------------------------------------
 
   chasecamheight = R_GetFreecamMobj() ? freecam.z - freecam.mobj->z : chasecam_height * FRACUNIT;
 
@@ -1201,11 +1202,11 @@ void R_SetupFrame (player_t *player)
     chasecamheight += zofs;
   }
 
-  // Chasecam -------------------------
+  // Chasecam ----------------------------------------------------------------
 
-  chasecam_on = STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
-                && !(freecam_on && !freecam.mobj)
-                && !(WI_UsingAltInterpic() && gamestate == GS_INTERMISSION);
+  chasecam_on = gamestate == GS_LEVEL
+                && STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
+                && !(freecam_on && !freecam.mobj);
 
   if (chasecam_on)
   {
@@ -1284,7 +1285,7 @@ void R_SetupFrame (player_t *player)
   }
   else { chasexofs = chaseyofs = chaseaofs = 0; }
 
-  // [Nugget] ---------------------------------------------------------------/
+  // [Nugget] ===============================================================/
 
   if (pitch != viewpitch)
   {

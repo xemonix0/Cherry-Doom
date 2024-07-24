@@ -62,6 +62,7 @@
 
 // [Nugget]
 #include "am_map.h"
+#include "m_nughud.h"
 #include "st_stuff.h"
 
 // [crispy] remove DOS reference from the game quit confirmation dialogs
@@ -2345,9 +2346,18 @@ static boolean ShortcutResponder(const event_t *ev)
         }
         else
         {
+            const boolean old_active = !!hud_active; // [Nugget]
+
             hud_displayed = 1;                 // jff 3/3/98 turn hud on
             hud_active = (hud_active + 1) % 3; // cycle hud_active
             HU_disable_all_widgets();
+
+            // [Nugget] NUGHUD
+            if (hud_type == HUD_TYPE_CRISPY && old_active != !!hud_active
+                && nughud.viewoffset)
+            {
+              R_SetViewSize(screenblocks);
+            }
         }
         return true;
     }
