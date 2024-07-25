@@ -1868,6 +1868,7 @@ static void D_InitTables(void)
 
   mobjinfo[MT_PUFF].flags2 |= MF2_FLIPPABLE;
   mobjinfo[MT_BLOOD].flags2 |= MF2_FLIPPABLE;
+  mobjinfo[MT_TRAIL].flags2 |= MF2_FLIPPABLE; // [Cherry]
 
   for (i = MT_MISC61; i <= MT_MISC69; ++i)
      mobjinfo[i].flags2 |= MF2_FLIPPABLE;
@@ -2591,6 +2592,12 @@ void D_DoomMain(void)
 
   I_Printf(VB_INFO, "W_Init: Init WADfiles.");
   W_InitMultipleFiles();
+
+  // [Cherry] Rocket trails from Doom Retro
+  if (W_CheckNumForName("PUFFA0") != -1)
+  {
+      no_rocket_trails |= 0x10;
+  }
 
   // Check for wolf levels
   haswolflevels = (W_CheckNumForName("map31") >= 0);

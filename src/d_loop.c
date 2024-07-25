@@ -733,9 +733,6 @@ static void SinglePlayerClear(ticcmd_set_t *set)
 // TryRunTics
 //
 
-// [Cherry] Mute Inactive Window feature from International Doom
-boolean mute_inactive;
-
 void RunTic(ticcmd_t *cmds, boolean *ingame);
 
 void TryRunTics(void)

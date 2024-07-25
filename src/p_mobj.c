@@ -168,6 +168,10 @@ void P_ExplodeMissile (mobj_t* mo)
 //
 // killough 11/98: minor restructuring
 
+// [Cherry]
+static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
+                              const angle_t angle);
+
 void P_XYMovement (mobj_t* mo)
 {
   player_t *player;
@@ -194,6 +198,12 @@ void P_XYMovement (mobj_t* mo)
     }
 
   player = mo->player;
+
+  // [Cherry] Rocket trails from Doom Retro
+  if ((mo->intflags & MIF_SMOKE_TRAIL) && !(++mo->pursuecount % 3))
+  {
+      P_SpawnSmokeTrail(mo->x, mo->y, mo->z, mo->angle);
+  }
 
   if (mo->momx > MAXMOVE)
     mo->momx = MAXMOVE;
@@ -1536,6 +1546,19 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
   th->interp = -1;
 }
 
+//
+// P_SpawnSmokeTrail
+// 
+// [Cherry] Rocket trails from Doom Retro
+//
+static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
+                              const angle_t angle)
+{
+    mobj_t *th = P_SpawnMobj(x, y, z + (Woof_Random() << 10), MT_TRAIL);
+
+    th->momz = FRACUNIT / 2;
+    th->angle = angle;
+}
 
 //
 // P_SpawnBlood
@@ -1718,6 +1741,16 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   th->momz = FixedMul(th->info->speed,slope);
   // [FG] suppress interpolation of player missiles for the first tic
   th->interp = -1;
+
+  // [Cherry] Rocket trails from Doom Retro
+  if (type == MT_ROCKET && CASUALPLAY(rocket_trails)
+      && !(no_rocket_trails & 0x01)
+      && !(th->flags & MF_BOUNCES)
+      && (source->player && source->player->readyweapon == wp_missile))
+  {
+    th->intflags |= MIF_SMOKE_TRAIL;
+    th->pursuecount = 0;
+  }
 
   A_Recoil(source->player);
 

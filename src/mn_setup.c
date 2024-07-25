@@ -2884,6 +2884,9 @@ static setup_menu_t gen_settings5[] = {
     {"Smooth Diminishing Lighting", S_ONOFF, M_X, M_SPC, {"smoothlight"},
      m_null, input_null, str_empty, SmoothLight},
 
+    // [Cherry] Floating powerups from International Doom
+    {"Floating Powerups", S_ONOFF, M_X, M_SPC, {"floating_powerups"}},
+
     MI_GAP,
 
     {"Menu Backdrop Style", S_CHOICE, M_X, M_SPC, {"menu_backdrop"}, // [Nugget] Changed description
@@ -2918,6 +2921,7 @@ static setup_menu_t gen_settings5[] = {
     {"Cherry", S_SKIP | S_TITLE, M_X, M_SPC},
 
       {"Floating Powerups", S_ONOFF, M_X, M_SPC, {"floating_powerups"}},
+      {"Rocket Trails", S_ONOFF | S_STRICT | S_CRITICAL, M_X, M_SPC, {"rocket_trails"}},
 
     // [Cherry] Moved from `NG1` ----------------------------------------------
     MI_SPLIT,
@@ -4976,5 +4980,8 @@ void MN_SetupResetMenu(void)
     UpdateMultiLineMsgItem();
 
     // [Cherry] ----------------------------------------------------------------
+
+    DisableItem(no_rocket_trails == 0x11, gen_settings5, "rocket_trails");
+
     UpdateDarkeningItems();
 }

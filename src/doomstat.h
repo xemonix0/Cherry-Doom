@@ -238,10 +238,8 @@ extern boolean coop_spawns;
 extern int snd_SfxVolume;      // maximum volume for sound
 extern int snd_MusicVolume;    // maximum volume for music
 
-// [Cherry] Mute Inactive Window feature from International Doom
-
+// [Cherry]
 extern int sfx_volume, music_volume;
-extern boolean mute_inactive;
 
 extern boolean volume_needs_update;
 
@@ -595,12 +593,6 @@ extern int hudcolor_items;
 extern int hudcolor_secrets;
 extern int hudcolor_ms_incomp;
 extern int hudcolor_ms_comp;
-// [Cherry] --------------------------------------------------------------
-extern int hudcolor_th_low;
-extern int hudcolor_th_ok;
-extern int hudcolor_th_good;
-extern int hudcolor_th_extra;
-// [Cherry] End ----------------------------------------------------------
 
 // Enemies ----------------------------
 
@@ -664,12 +656,28 @@ extern int comp_keypal;
 
 // [Nugget] -----------------------------------------------------------------/
 
-// [Cherry] Level Table
+// [Cherry] /-----------------------------------------------------------------
+
+// General ----------------------------
+
+extern boolean mute_inactive;
+extern boolean rocket_trails;
+
+// Status Bar/HUD ---------------------
+
+extern int hudcolor_th_low;
+extern int hudcolor_th_ok;
+extern int hudcolor_th_good;
+extern int hudcolor_th_extra;
+
+// Level Table ------------------------
 
 extern boolean lt_enable_tracking, lt_force_no_tracking;
 #define STATS_TRACKING_DISABLED (lt_force_no_tracking || !lt_enable_tracking)
 extern boolean lt_track_continuous;
 extern int lt_stats_format;
+
+// [Cherry] -----------------------------------------------------------------/
 
 // Doom-style printf
 

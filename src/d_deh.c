@@ -2077,6 +2077,9 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
   return;
 }
 
+// [Cherry] Rocket trails from Doom Retro
+boolean no_rocket_trails;
+
 // ====================================================================
 // deh_procFrame
 // Purpose: Handle DEH Frame block
@@ -2106,6 +2109,8 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
 
   dsdh_EnsureStatesCapacity(indexnum);
 
+  boolean edited = false; // [Cherry]
+
   while (!dehfeof(fpin) && *inbuffer && (*inbuffer != ' '))
     {
       if (!dehfgets(inbuffer, sizeof(inbuffer), fpin)) break;
@@ -2120,24 +2125,28 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
         {
           if (fpout) fprintf(fpout," - sprite = %ld\n",value);
           states[indexnum].sprite = (spritenum_t)value;
+          edited = true;
         }
       else
         if (!strcasecmp(key,deh_state[1]))  // Sprite subnumber
           {
             if (fpout) fprintf(fpout," - frame = %ld\n",value);
             states[indexnum].frame = value; // long
+            edited = true;
           }
         else
           if (!strcasecmp(key,deh_state[2]))  // Duration
             {
               if (fpout) fprintf(fpout," - tics = %ld\n",value);
               states[indexnum].tics = value; // long
+              edited = true;
             }
           else
             if (!strcasecmp(key,deh_state[3]))  // Next frame
               {
                 if (fpout) fprintf(fpout," - nextstate = %ld\n",value);
                 states[indexnum].nextstate = (statenum_t)value;
+                edited = true;
               }
             else
               if (!strcasecmp(key,deh_state[4]))  // Codep frame (not set in Frame deh block)
@@ -2150,12 +2159,14 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
                   {
                     if (fpout) fprintf(fpout," - misc1 = %ld\n",value);
                     states[indexnum].misc1 = value; // long
+                    edited = true;
                   }
                 else
                   if (!strcasecmp(key,deh_state[6]))  // Unknown 2
                     {
                       if (fpout) fprintf(fpout," - misc2 = %ld\n",value);
                       states[indexnum].misc2 = value; // long
+                      edited = true;
                     }
                   else
                     if (!strcasecmp(key,deh_state[7]))  // Args1
@@ -2244,6 +2255,13 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
                                     else
                                       if (fpout) fprintf(fpout,"Invalid frame string index for '%s'\n",key);
     }
+
+  // [Cherry] Rocket trails from Doom Retro
+  if (edited && indexnum >= S_TRAIL && indexnum <= S_TRAIL4)
+  {
+      no_rocket_trails |= 0x11;
+  }
+
   return;
 }
 
@@ -2911,6 +2929,12 @@ void deh_procText(DEHFILE *fpin, FILE* fpout, char *line)
 
           strncpy(sprnames[i],&inbuffer[fromlen],tolen);
           found = true;
+
+          // [Cherry] Rocket trails from Doom Retro
+          if (i == SPR_RSMK)
+          {
+              no_rocket_trails |= 0x11;
+          }
         }
     }
 
@@ -3195,6 +3219,12 @@ void deh_procBexSprites(DEHFILE *fpin, FILE* fpout, char *line)
     {
       if (fpout) fprintf(fpout, "Substituting '%s' for sprite '%s'\n", candidate, key);
       sprnames[match] = strdup(candidate);
+
+      // [Cherry] Rocket trails from Doom Retro
+      if (match == SPR_RSMK)
+      {
+          no_rocket_trails |= 0x11;
+      }
     }
   }
 }
