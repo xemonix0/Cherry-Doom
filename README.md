@@ -82,7 +82,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Bobbing Styles_** selection [p.f. Zandronum]
 - **_Weapon Inertia_** setting (scale determined by the CFG-Only `weapon_inertia_scale_pct` CVAR) [by _ceski_]
 - **_Weapon Squat Upon Landing_** setting [p.f. Crispy Doom]
-- **_Translucent Flashes_** setting [i.b. Crispy Doom]
+- **_Translucent Flashes_** setting (translucency determined by the CFG-Only `translucent_pspr_pct` CVAR) [i.b. Crispy Doom]
 - **Show Berserk availability** setting [partially p.f. Crispy Doom]
 - **"Correct" first person sprite centering** setting, to toggle the 1px first-person sprite misalignment (CFG-Only: `sx_fix`)
 

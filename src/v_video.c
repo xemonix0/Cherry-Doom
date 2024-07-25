@@ -147,6 +147,7 @@ byte cr_allblack[256];
 byte cr_gray_vc[256];  // `V_Colorize()` only
 byte nightvision[256]; // Night-vision visor
 byte *shadow_tranmap;  // HUD/menu shadows
+byte *pspr_tranmap;    // Translucent flashes
 byte *xhair_tranmap;   // Translucent crosshair
 
 // killough 5/2/98: tiny engine driven by table above

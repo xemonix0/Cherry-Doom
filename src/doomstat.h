@@ -485,7 +485,8 @@ extern int center_weapon;
 extern int view_bobbing_pct;
 extern int weapon_bobbing_pct;
 
-// [Nugget] /-----------------------------------------------------------------
+
+// [Nugget] /=================================================================
 
 extern boolean fauxdemo;
 extern boolean casual_play;
@@ -493,7 +494,7 @@ extern boolean casual_play;
 #define    CASUALPLAY(x) (casual_play ? (x) : 0)
 #define NOTCASUALPLAY(x) (casual_play ? (x) : 1)
 
-// General ----------------------------
+// General -------------------------------------------------------------------
 
 extern int over_under;
 extern int jump_crouch;
@@ -546,7 +547,7 @@ extern int a11y_weapon_flash;
 extern int a11y_weapon_pspr;
 extern int a11y_invul_colormap;
 
-// Weapons ----------------------------
+// Weapons -------------------------------------------------------------------
 
 extern int no_hor_autoaim;
 extern int switch_on_pickup;
@@ -567,10 +568,11 @@ extern int weapon_inertia;
 extern int weapon_inertia_scale_pct; // CFG-Only
 extern int weaponsquat;
 extern int translucent_pspr;
+extern int translucent_pspr_pct; // CFG-Only
 extern int show_berserk;
 extern int sx_fix; // CFG-Only
 
-// Status Bar/HUD ---------------------
+// Status Bar/HUD ------------------------------------------------------------
 
 extern int announce_milestones;
 extern int show_save_messages; // CFG-Only
@@ -612,7 +614,7 @@ extern int hudcolor_secrets;
 extern int hudcolor_ms_incomp;
 extern int hudcolor_ms_comp;
 
-// Enemies ----------------------------
+// Enemies -------------------------------------------------------------------
 
 extern int extra_gibbing_on; // CFG-Only
 typedef enum {
@@ -627,12 +629,12 @@ extern int extra_gibbing[];
 extern int bloodier_gibbing;
 extern int zdoom_item_drops;
 
-// Key Bindings -----------------------
+// Key Bindings --------------------------------------------------------------
 
 extern int zoom_fov;
 extern int fancy_teleport;
 
-// Miscellaneous (CFG-Only) -----------
+// Miscellaneous (CFG-Only) --------------------------------------------------
 
 enum {
   SHOTPAL_NONE,
@@ -649,7 +651,7 @@ extern int sp_chat;
 
 extern int fail_safe;
 
-// Doom Compatibility (CFG-Only) ------
+// Doom Compatibility (CFG-Only) ---------------------------------------------
 
 extern int comp_bruistarget;
 extern int comp_nomeleesnap;
@@ -675,7 +677,7 @@ extern int comp_deadoof;
 extern int comp_unusedpals;
 extern int comp_keypal;
 
-// Custom Skill -----------------------
+// Custom Skill --------------------------------------------------------------
 
 extern int custom_skill_things;
 extern int custom_skill_coopspawns;
@@ -687,7 +689,8 @@ extern int custom_skill_fast;
 extern int custom_skill_respawn;
 extern int custom_skill_aggressive;
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
+
 
 // Doom-style printf
 

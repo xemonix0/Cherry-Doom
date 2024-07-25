@@ -63,6 +63,7 @@ extern byte cr_allblack[];
 extern byte cr_gray_vc[];    // `V_Colorize()` only
 extern byte nightvision[];   // Night-vision visor
 extern byte *shadow_tranmap; // HUD/menu shadows
+extern byte *pspr_tranmap;   // Translucent flashes
 extern byte *xhair_tranmap;  // Translucent crosshair
 
 // array of pointers to color translation tables

@@ -1140,7 +1140,8 @@ void R_InitData(void)
 
   // [Nugget]
   R_InitTranMapEx(&shadow_tranmap, hud_menu_shadows_filter_pct); // HUD/menu shadows
-  R_InitTranMapEx(&xhair_tranmap, hud_crosshair_tran_pct); // Translucent crosshair
+  R_InitTranMapEx(&pspr_tranmap,   translucent_pspr_pct);        // Translucent flashes
+  R_InitTranMapEx(&xhair_tranmap,  hud_crosshair_tran_pct);      // Translucent crosshair
 }
 
 //

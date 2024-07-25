@@ -137,12 +137,12 @@ char *MAPNAME(int e, int m)
 }
 
 
-// [Nugget] /-----------------------------------------------------------------
+// [Nugget] /=================================================================
 
 boolean fauxdemo = false;    // Checked for in `casual_play`, for debugging
 boolean casual_play = false; // Like `critical`, with different checks and functionality
 
-// General ----------------------------
+// General -------------------------------------------------------------------
 
 int over_under;
 int jump_crouch;
@@ -184,7 +184,7 @@ int a11y_weapon_flash;
 int a11y_weapon_pspr;
 int a11y_invul_colormap;
 
-// Weapons ----------------------------
+// Weapons -------------------------------------------------------------------
 
 int no_hor_autoaim;
 int switch_on_pickup;
@@ -195,10 +195,11 @@ int weapon_inertia;
 int weapon_inertia_scale_pct; // CFG-Only
 int weaponsquat;
 int translucent_pspr;
+int translucent_pspr_pct; // CFG-Only
 int show_berserk;
 int sx_fix; // CFG-Only
 
-// Status Bar/HUD ---------------------
+// Status Bar/HUD ------------------------------------------------------------
 
 int announce_milestones;
 int show_save_messages; // CFG-Only
@@ -221,19 +222,19 @@ int hudcolor_secrets;
 int hudcolor_ms_incomp;
 int hudcolor_ms_comp;
 
-// Enemies ----------------------------
+// Enemies -------------------------------------------------------------------
 
 int extra_gibbing_on;
 int extra_gibbing[NUMEXGIBS]; // CFG-Only
 int bloodier_gibbing;
 int zdoom_item_drops;
 
-// Key Bindings -----------------------
+// Key Bindings --------------------------------------------------------------
 
 int zoom_fov;
 int fancy_teleport;
 
-// Miscellaneous (CFG-Only) -----------
+// Miscellaneous (CFG-Only) --------------------------------------------------
 
 int screenshot_palette;
 int hud_menu_shadows_filter_pct;
@@ -244,7 +245,7 @@ int sp_chat;
 
 int fail_safe;
 
-// Doom Compatibility (CFG-Only) ------
+// Doom Compatibility (CFG-Only) ---------------------------------------------
 
 int comp_bruistarget;
 int comp_nomeleesnap;
@@ -270,7 +271,7 @@ int comp_powerrunout;
 int comp_unusedpals;
 int comp_keypal;
 
-// Custom Skill -----------------------
+// Custom Skill --------------------------------------------------------------
 
 int custom_skill_things;
 int custom_skill_coopspawns;
@@ -282,7 +283,7 @@ int custom_skill_fast;
 int custom_skill_respawn;
 int custom_skill_aggressive;
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 
 //----------------------------------------------------------------------------

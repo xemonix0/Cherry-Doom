@@ -11,6 +11,7 @@
 - **_"Count"_ Level Stats Format**
 - **Explosion shake intensity percent** setting
 - **Setting to play `DSNOWAY` instead of `DSOOF` when failing to use key-locked triggers**
+- **Independent translucency-percentage setting for _Translucent [Weapon] Flashes_**
 - **Setting to use improved powerup run-out effect**
 
 ## Changes

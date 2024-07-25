@@ -1220,6 +1220,13 @@ default_t defaults[] = {
   },
 
   {
+    "translucent_pspr_pct",
+    (config_t *) &translucent_pspr_pct, NULL,
+    {75}, {0,100}, number, ss_none, wad_yes,
+    "Weapon-flash translucency percentage"
+  },
+
+  {
     "show_berserk",
     (config_t *) &show_berserk, NULL,
     {1}, {0,1}, number, ss_weap, wad_yes,

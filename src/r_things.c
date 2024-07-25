@@ -73,6 +73,8 @@ typedef struct {
 fixed_t pspritescale;
 fixed_t pspriteiscale;
 
+static boolean drawingpspr = false; // [Nugget]
+
 lighttable_t **spritelights;        // killough 1/25/98 made static
 
 // [Woof!] optimization for drawing huge amount of drawsegs.
@@ -456,6 +458,8 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
         {
           colfunc = R_DrawTLColumn;
           tranmap = main_tranmap;       // killough 4/11/98
+
+          if (drawingpspr) { tranmap = pspr_tranmap; } // [Nugget] Translucent flashes
         }
       else
         colfunc = R_DrawColumn;         // killough 3/14/98, 4/11/98
@@ -942,6 +946,8 @@ void R_DrawPlayerSprites(void)
   if (hud_crosshair_on) // [Nugget] Use crosshair toggle
     HU_DrawCrosshair();
 
+  drawingpspr = true; // [Nugget]
+
   // add all active psprites
   for (i=0, psp=viewplayer->psprites;
        // [Nugget]: [crispy] A11Y number of player (first person) sprites to draw
@@ -949,6 +955,8 @@ void R_DrawPlayerSprites(void)
        i++,psp++)
     if (psp->state)
       R_DrawPSprite (psp, i == ps_flash && STRICTMODE(translucent_pspr)); // [Nugget] Translucent flashes
+
+  drawingpspr = false; // [Nugget]
 }
 
 //
