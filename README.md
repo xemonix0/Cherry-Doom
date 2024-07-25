@@ -36,8 +36,9 @@ Some settings are labeled as _CFG-Only_: they can only be changed by editing `ch
 
 ### Status Bar/HUD
 
-- _More widgets on the intermission screen_ setting: shows smaller versions of _Health_, _Armor_ and _Weapons_ widgets on the intermission screen, customizable through options
+- _More Widgets on the Intermission Screen_ setting: shows smaller versions of _Health_, _Armor_ and _Weapons_ widgets on the intermission screen, customizable through options
 - _Movement widget_: shows the current player movement and strafing speeds
+- _Disable Crosshair On Slot 1_ setting
 
 ### _Level Table_
 

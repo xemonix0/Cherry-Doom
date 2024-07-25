@@ -3822,6 +3822,13 @@ default_t defaults[] = {
     "crosshair type"
   },
 
+  { // [Cherry] Disable crosshair on slot 1
+    "hud_crosshair_slot1_disable",
+    (config_t *) &hud_crosshair_slot1_disable, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to disable crosshair on slot 1 weapons (fist and chainsaw)"
+  },
+
   {
     "hud_crosshair_health",
     (config_t *) &hud_crosshair_health, NULL,

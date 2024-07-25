@@ -14,8 +14,12 @@
 
 #include "mn_level_table.h"
 
+#include <stdint.h>
+#include <string.h>
+
 #include "doomdef.h"
 #include "doomstat.h"
+#include "doomtype.h"
 #include "m_array.h"
 #include "m_misc.h"
 #include "m_swap.h"

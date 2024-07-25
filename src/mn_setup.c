@@ -1717,6 +1717,9 @@ static setup_menu_t stat_settings3[] = {
     {"Crosshair Type", S_CHOICE,XH_X, M_SPC, {"hud_crosshair"},
      m_null, input_null, str_crosshair},
 
+    // [Cherry] Disable crosshair on slot 1
+    {"Disable On Slot 1", S_ONOFF, XH_X, M_SPC, {"hud_crosshair_slot1_disable"}},
+
     {"Color By Player Health", S_ONOFF | S_STRICT, XH_X, M_SPC, {"hud_crosshair_health"}},
 
     {"Color By Target", S_CHOICE | S_STRICT, XH_X, M_SPC,
@@ -1913,6 +1916,11 @@ void UpdateCrosshairItems(void) // [Nugget] Global
     DisableItem(
         !(hud_crosshair_on && (hud_crosshair_lockon || hud_crosshair_target)),
         stat_settings3, "hud_crosshair_fuzzy");
+
+    // [Cherry]
+
+    DisableItem(!hud_crosshair_on, stat_settings3,
+                "hud_crosshair_slot1_disable");
 }
 
 // [Nugget]

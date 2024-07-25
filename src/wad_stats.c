@@ -15,24 +15,23 @@
 
 #include "wad_stats.h"
 
-#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "d_iwad.h"
 #include "d_main.h"
+#include "d_think.h"
+#include "doomdef.h"
 #include "doomstat.h"
+#include "doomtype.h"
 #include "i_printf.h"
-#include "i_system.h"
-#include "mn_menu.h"
-#include "m_argv.h"
 #include "m_array.h"
 #include "m_io.h"
 #include "m_misc.h"
+#include "mn_menu.h"
 #include "p_mobj.h"
 #include "p_tick.h"
 #include "w_wad.h"
-#include "z_zone.h"
 
 #define CURRENT_VERSION_STRING "1"
 

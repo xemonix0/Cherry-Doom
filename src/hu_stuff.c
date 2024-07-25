@@ -1676,6 +1676,7 @@ static void HU_widget_build_rate (void)
 // Crosshair
 
 int hud_crosshair; // [Nugget] Crosshair type to be used
+boolean hud_crosshair_slot1_disable; // [Cherry] Disable crosshair on slot 1
 boolean hud_crosshair_health;
 crosstarget_t hud_crosshair_target;
 crosslockon_t hud_crosshair_lockon; // [Alaux] Crosshair locks on target
@@ -1844,7 +1845,9 @@ void HU_DrawCrosshair(void)
       // [Nugget] New conditions
       !crosshair.cr || // Crash fix
       (chasecam_mode && !chasecam_crosshair) || // Chasecam
-      (gamestate == GS_INTERMISSION)) // Alt. intermission background
+      (gamestate == GS_INTERMISSION) || // Alt. intermission background
+        (hud_crosshair_slot1_disable // [Cherry] Disable crosshair on slot 1
+         && (plr->readyweapon == wp_fist || plr->readyweapon == wp_chainsaw)))
   {
     return;
   }

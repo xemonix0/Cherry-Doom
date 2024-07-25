@@ -5,6 +5,7 @@
 
 - _Mute Inactive Window_ setting
 - _Floating Powerups_ setting
+- _Disable Crosshair On Slot 1_ setting
 
 ## Changes
 
