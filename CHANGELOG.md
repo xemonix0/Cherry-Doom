@@ -24,6 +24,7 @@
   - Now adjusted based on automap zoom
   - Capped at a minimum of 24 map units when following the player
 - **Made jump and crouch buttons cancel each other out**
+- **Chasecam speed effect is now effort-based in complevels MBF and beyond**
 - **Changed _"Fancy Teleport [to Pointer]"_ to _"Fancy Warping"_**
 
 ## Bug Fixes
