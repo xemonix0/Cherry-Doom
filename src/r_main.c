@@ -1095,7 +1095,7 @@ void R_SetupFrame (player_t *player)
       player->mo->interp == true &&
       // Don't interpolate during a paused state
       (leveltime > oldleveltime
-       || (freecam_on && gamestate == GS_LEVEL))) // [Nugget] Freecam
+       || (freecam_on && !freecam.mobj && gamestate == GS_LEVEL))) // [Nugget] Freecam
   {
     // Use localview unless the player or game is in an invalid state, in which
     // case fall back to interpolation.

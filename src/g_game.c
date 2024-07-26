@@ -3432,7 +3432,7 @@ void G_Ticker(void)
 
         pitch = cmd->pitch;
 
-        static int strafetime = -10;
+        static int strafetic = -10;
         static boolean strafedown = false;
 
         if (!INPUT(input_strafe))
@@ -3443,12 +3443,12 @@ void G_Ticker(void)
         {
           strafedown = true;
 
-          if (leveltime - strafetime < 10)
+          if (gametic - strafetic < 10)
           {
             center = true;
           }
 
-          strafetime = leveltime;
+          strafetic = gametic;
         }
       }
 
