@@ -444,7 +444,7 @@ struct cheat_s cheat[] = {
 
 extern int init_thinkers_count; // [Nugget]
 
-// [Nugget] /-----------------------------------------------------------------
+// [Nugget] /=================================================================
 
 static void cheat_nomomentum()
 {
@@ -513,9 +513,40 @@ static void cheat_gibbers()
   displaymsg("%s", GIBBERS ? "Ludicrous Gibs!" : "Ludicrous Gibs no more.");
 }
 
-// Used for resurrection,
-// both right here in cheat_resurrect() and later in cheat_god()
-extern void P_SpawnPlayer (mapthing_t* mthing);
+// Resurrection --------------------------------------------------------------
+
+// Factored out from `cheat_god()`
+static void DoResurrect(void)
+{
+  extern void P_SpawnPlayer (mapthing_t* mthing);
+
+  signed int an;
+  mapthing_t mt = {0};
+
+  P_MapStart();
+  mt.x = plyr->mo->x >> FRACBITS;
+  mt.y = plyr->mo->y >> FRACBITS;
+  mt.angle = (plyr->mo->angle + ANG45/2)*(uint64_t)45/ANG45;
+  mt.type = consoleplayer + 1;
+  P_SpawnPlayer(&mt);
+
+  // [crispy] spawn a teleport fog
+  an = plyr->mo->angle >> ANGLETOFINESHIFT;
+  P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
+  S_StartSound(plyr->mo, sfx_slop);
+  P_MapEnd();
+
+  // Fix reviving as "zombie" if god mode was already enabled
+  if (plyr->mo)
+    plyr->mo->health = god_health;  // Ty 03/09/98 - deh
+  plyr->health = god_health;
+
+  // [Nugget] Rewind;
+  // This is called before the countdown decrement in `G_Ticker()`,
+  // so add 1 to keep it aligned
+  if (leveltime)
+  { G_SetRewindCountdown(((rewind_interval * TICRATE) + 1) - ((leveltime - 1) % (rewind_interval * TICRATE))); }
+}
 
 // Resurrection cheat adapted from Crispy's IDDQD
 static void cheat_resurrect()
@@ -523,33 +554,15 @@ static void cheat_resurrect()
   // [crispy] dead players are first respawned at the current position
   if (plyr->playerstate == PST_DEAD)
   {
-    signed int an;
-    mapthing_t mt = {0};
-
-    P_MapStart();
-
-    mt.x = plyr->mo->x >> FRACBITS;
-    mt.y = plyr->mo->y >> FRACBITS;
-    mt.angle = (plyr->mo->angle + ANG45/2)*(uint64_t)45/ANG45;
-    mt.type = consoleplayer + 1;
-    P_SpawnPlayer(&mt);
-
-    // [Nugget] Set player health
-    if (plyr->mo) { plyr->mo->health = god_health; }
-    plyr->health = god_health;
-
-    // [crispy] spawn a teleport fog
-    an = plyr->mo->angle >> ANGLETOFINESHIFT;
-    P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
-    S_StartSound(plyr->mo, sfx_slop);
-
-    P_MapEnd();
+    DoResurrect();
 
     // [Nugget] Announce
     displaymsg("Resurrected!");
   }
   else { displaymsg("Still alive."); }
 }
+
+// ---------------------------------------------------------------------------
 
 static void cheat_fly()
 {
@@ -594,6 +607,8 @@ static void cheat_turbo(char *buf)
      sidemove[1] = 0x28 * scale / 100;
 }
 
+// Summoning -----------------------------------------------------------------
+
 static void cheat_summon()
 {
   if (spawneetype == -1)
@@ -601,8 +616,6 @@ static void cheat_summon()
   else
   { displaymsg("Summon: Enemy, Friend or Repeat last (%i)?", spawneetype); }
 }
-
-// Auxiliary functions for the summon cheats
 
 static boolean GetMobjType(char *buf)
 {
@@ -679,7 +692,6 @@ static void SummonMobj(boolean friendly)
              spawneefriend ? "Friend" : "Enemy", spawneetype);
 }
 
-
 static void cheat_summone0()
 {
   displaymsg("Summon Enemy: Enter mobj index");
@@ -707,6 +719,8 @@ static void cheat_summonr()
 {
   SummonMobj(spawneefriend);
 }
+
+// Key finder ----------------------------------------------------------------
 
 static void cheat_reveal_key()
 {
@@ -765,6 +779,8 @@ static void cheat_reveal_keyxx(int key)
 
   if (!found) { displaymsg("Key Finder: key not found"); }
 }
+
+// ---------------------------------------------------------------------------
 
 // Give info on the current `linetarget`
 static void cheat_linetarget()
@@ -825,7 +841,7 @@ static void cheat_idgaf()
   displaymsg("I %s.", idgaf ? "don't" : "do");
 }
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 // [FG] FPS counter widget
 static void cheat_showfps()
@@ -922,26 +938,7 @@ static void cheat_god()
   // [crispy] dead players are first respawned at the current position
   if (plyr->playerstate == PST_DEAD)
   {
-    signed int an;
-    mapthing_t mt = {0};
-
-    P_MapStart();
-    mt.x = plyr->mo->x >> FRACBITS;
-    mt.y = plyr->mo->y >> FRACBITS;
-    mt.angle = (plyr->mo->angle + ANG45/2)*(uint64_t)45/ANG45;
-    mt.type = consoleplayer + 1;
-    P_SpawnPlayer(&mt);
-
-    // [crispy] spawn a teleport fog
-    an = plyr->mo->angle >> ANGLETOFINESHIFT;
-    P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
-    S_StartSound(plyr->mo, sfx_slop);
-    P_MapEnd();
-
-    // Fix reviving as "zombie" if god mode was already enabled
-    if (plyr->mo)
-      plyr->mo->health = god_health;  // Ty 03/09/98 - deh
-    plyr->health = god_health;
+    DoResurrect(); // [Nugget] Factored out
   }
 
   plyr->cheats ^= CF_GODMODE;

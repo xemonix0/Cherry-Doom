@@ -36,6 +36,7 @@
 - **Lost souls improperly colliding with the over/underside of other things**
 - **Player getting stuck when standing up while over/under other things**
 - **Automap position and scale being reset when changing modes**
+- **Resurrection cheats misaligning the key-framing time**
 - **Crosshair not being drawn if the chasecam mode were set** even if the chasecam itself were disabled
 - **Zoom being forcefully disabled if any player were dead**
 - **HUD key not updating NUGHUD view offset**
