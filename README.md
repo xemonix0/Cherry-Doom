@@ -198,10 +198,6 @@ Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`
 Copyright: © 2018 Alex Mayfield.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `src/icon.c, setup/setup_icon.c`  
-Copyright: © 2022 Korp.  
-License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-
 Files: `miniz/*`  
 Copyright:  
  © 2010-2014 Rich Geldreich and Tenacious Software LLC;  

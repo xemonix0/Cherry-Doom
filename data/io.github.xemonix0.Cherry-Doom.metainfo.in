@@ -3,7 +3,7 @@
 <component type="desktop">
   <id>io.github.xemonix0.Cherry-Doom</id>
   <name>Cherry Doom</name>
-  <summary>Fork of Nugget Doom with more additional features</summary>
+  <summary>Fork of Nugget Doom with more additional features.</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-2.0+</project_license>
   <developer_name>Xemonix</developer_name>
