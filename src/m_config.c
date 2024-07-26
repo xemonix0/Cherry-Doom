@@ -1762,7 +1762,7 @@ default_t defaults[] = {
     "comp_manualdoor",
     (config_t *) &comp_manualdoor, NULL,
     {1}, {0,1}, number, ss_none, wad_yes,
-    "Manually-toggled moving doors are silent"
+    "Manually toggled moving doors are silent"
   },
 
   {

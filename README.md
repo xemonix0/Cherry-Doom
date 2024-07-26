@@ -20,13 +20,13 @@ Most of Nugget Doom's features come from other sources, like source ports and mo
 the initial implementations for some are **ported from (p.f.)** said sources, while others are just **inspired by (i.b.)** them.
 These acknowledgements are included in the feature lists below; be aware that some might be inaccurate or outright missing.
 
-A few settings are labeled as **_CFG-Only_**: they can only be toggled by editing `nugget-doom.cfg`.
-For these settings, their CVAR names are provided alongside the _CFG-Only_ label as guidance.
+A few settings are labeled as **_CFG-only_**: they can only be toggled by editing `nugget-doom.cfg`.
+For these settings, their CVAR names are provided alongside the _CFG-only_ label as guidance.
 
 ### General
 
 - **Extended FOV range:** [20, 140]
-- **Stretch viewport to fit window** setting (CFG-Only: `stretch_to_fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
+- **Stretch viewport to fit window** setting (CFG-only: `stretch_to_fit`) [i.b. and partially p.f. Crispy Doom; i.b. ZDoom]
 - **Set _Air Absorption_ and _Doppler Effect_ to 5 by default**
 - **Tweaked _Stretch Short Skies_ algorithm**
 - **_Black Fade_ screen wipe**
@@ -38,7 +38,7 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **Crouching/ducking** (default key: <kbd>C</kbd>, must be enabled first) [i.b. ZDoom]
 - **_View Height_** setting, which allows to enter a custom POV height value in the [32, 56] range [i.b. Brutal Doom]
 - **Flinching** setting, to flinch upon landing and/or taking damage
-- **_Explosion Shake Effect_** setting (intensity determined by the CFG-Only `explosion_shake_intensity_pct` CVAR) [i.b. Doom Retro]
+- **_Explosion Shake Effect_** setting (intensity determined by the CFG-only `explosion_shake_intensity_pct` CVAR) [i.b. Doom Retro]
 - **_Subtle Idle Bobbing/Breathing_** setting [p.f. International Doom]
 - **_Teleporter Zoom_** setting [i.b. ZDoom]
 - **_Death Camera_** setting [i.b. ZDoom]
@@ -51,15 +51,15 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Chasecam_** [i.b. ZDoom]
 - **_Background for all menus_** setting
 - **_No palette tint in menus_** setting [i.b. Crispy Doom]
-- **_HUD/Menu Shadows_** setting (translucency determined by the CFG-Only `hud_menu_shadows_filter_pct` CVAR) [i.b. CRL]
+- **_HUD/Menu Shadows_** setting (translucency determined by the CFG-only `hud_menu_shadows_filter_pct` CVAR) [i.b. CRL]
 - **_No Berserk Tint_** setting
 - **_No Radiation Suit Tint_** setting
 - **_Night-Vision Visor Effect_** setting [i.b. International Doom]
 - **_Damage Tint Cap_** and **_Bonus Tint Cap_**, to attenuate or disable said screen tinting
 - **_Fake Contrast_** setting
-- Toggle for **Diminished Lighting** (CFG-Only: `diminished_lighting`)
+- Toggle for **Diminished Lighting** (CFG-only: `diminished_lighting`)
 - **_Screen Wipe speed percentage_** setting
-- **_Alternative Intermission Background_** setting, to replace the intermission graphic with a darkened spinning camera view
+- **_Alternative Intermission Background_** setting, to replace the intermission graphic with a darkened rotating camera view
 - **_Sound Clipping Distance_** selection, to optionally double the distance at which sound effects become audible
 - **_One-Key Quick Save/Load_** setting, to skip the confirmation prompt
 - **Rewinding** [i.b. DSDA-Doom]
@@ -78,13 +78,13 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Prev/Next Skip Ammoless Weapons_** setting, to make the previous/next-weapon buttons skip weapons with insufficient ammo
 - Key to **equip last used weapon** [i.b. Cherry Doom]
 - **_Horizontal_ Weapon Centering** setting [i.b. DSDA-Doom]
-- **Always Bob** setting (CFG-Only: `always_bob`)
+- **Always Bob** setting (CFG-only: `always_bob`)
 - **_Bobbing Styles_** selection [p.f. Zandronum]
-- **_Weapon Inertia_** setting (scale determined by the CFG-Only `weapon_inertia_scale_pct` CVAR) [by _ceski_]
+- **_Weapon Inertia_** setting (scale determined by the CFG-only `weapon_inertia_scale_pct` CVAR) [by _ceski_]
 - **_Weapon Squat Upon Landing_** setting [p.f. Crispy Doom]
-- **_Translucent Flashes_** setting (translucency determined by the CFG-Only `translucent_pspr_pct` CVAR) [i.b. Crispy Doom]
+- **_Translucent Flashes_** setting (translucency determined by the CFG-only `translucent_pspr_pct` CVAR) [i.b. Crispy Doom]
 - **Show Berserk availability** setting [partially p.f. Crispy Doom]
-- **"Correct" first person sprite centering** setting, to toggle the 1px first-person sprite misalignment (CFG-Only: `sx_fix`)
+- **"Correct" first person sprite centering** setting, to toggle the 1px first-person sprite misalignment (CFG-only: `sx_fix`)
 
 ### Status Bar/HUD
 
@@ -96,12 +96,12 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
   - Option to account for fuzzy targets [i.b. From Doom With Love];
   - Dedicated toggle key.
 - **Secret count in "secret revealed" message** [p.f. Crispy Doom]
-- **Show Save Messages** setting (CFG-Only: `show_save_messages`)
+- **Show Save Messages** setting (CFG-only: `show_save_messages`)
 - **_Milestone Completion Announcements_** setting, to report completion of milestones (e.g. all items acquired)
 - Restored **_Upward Message Scrolling_** setting, and enabled it by default
 - **Restored various message-related menu items**
 - **_Show Powerup Timers_** setting
-- **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-Only: `show_ssg`) [p.f. Crispy Doom]
+- **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-only: `show_ssg`) [p.f. Crispy Doom]
 - **Support for Stats icons**, to be used in place of the "K/I/S" letter-labels: `HUDKILLS`, `HUDITEMS` and `HUDSCRTS` graphic lumps
 - **_Level Stats Format_** settings [i.b. Crispy Doom]
 - **_Highlight Current/Pending Weapon_** setting [i.b. PSX Doom]
@@ -120,18 +120,18 @@ For these settings, their CVAR names are provided alongside the _CFG-Only_ label
 - **_Tag Finder_**: Position the Automap pointer over a sector and press the _Tag Finder_ key to highlight its activator line(s), and vice versa [p.f. PrBoomX]
 - Key to **_Teleport to Automap pointer_**
 - **_Show Thing Hitboxes_** setting
-- **Color for trigger lines**, used with IDDT (CFG-Only: `mapcolor_trig`)
+- **Color for trigger lines**, used with IDDT (CFG-only: `mapcolor_trig`)
 
 ### Enemies
 
-- **_Extra Gibbing_** setting, to force Berserk Fist/Chainsaw/SSG gibbing (configurable through the CFG-Only `extra_gibbing_#` CVARs) [i.b. Smooth Doom]
+- **_Extra Gibbing_** setting, to force Berserk Fist/Chainsaw/SSG gibbing (configurable through the CFG-only `extra_gibbing_#` CVARs) [i.b. Smooth Doom]
 - **_Bloodier Gibbing_** setting [i.b. Smooth Doom]
 - **_ZDoom-like item drops_** setting [of course, i.b. ZDoom]
 - **_Selective Fuzz Darkening_** setting [by @ceski-1]
 
 ### Doom Compatibility settings
 
-All of these are CFG-Only, so their CVAR names are included.
+All of these are CFG-only, so their CVAR names are included.
 
 - Bruiser attack (`A_BruisAttack()`) doesn't face target (`comp_bruistarget`)
 - Disable melee snapping (`comp_nomeleesnap`)
@@ -144,12 +144,12 @@ All of these are CFG-Only, so their CVAR names are included.
 - Fix lopsided Icon of Sin explosions (`comp_iosdeath`)
 - Permanent IDCHOPPERS invulnerability (`comp_choppers`)
 - Blazing doors reopen with wrong sound (`comp_blazing2`) [p.f. Crispy Doom]
-- Manually-toggled moving doors are silent (`comp_manualdoor`) [p.f. Crispy Doom]
+- Manually toggled moving doors are silent (`comp_manualdoor`) [p.f. Crispy Doom]
 - Corrected switch sound source (`comp_switchsource`) [p.f. Crispy Doom]
 - Chaingun makes two sounds with one bullet (`comp_cgundblsnd`)
 - Chaingunner uses pistol/chaingun sound (`comp_cgunnersfx`)
 - Arch-Vile fire plays flame start sound (`comp_flamst`) [p.f. Crispy Doom]
-- Play `DSNOWAY` instead of `DSOOF` when failing to use key-locked triggers
+- Play `DSNOWAY` instead of `DSOOF` when failing to use key-locked triggers (`comp_keynoway`)
 - Higher god-mode face priority (`comp_godface`) [p.f. International Doom]
 - Dead players can still play "oof" sound (`comp_deadoof`) [p.f. Crispy Doom]
 - Use improved powerup run-out effect (`comp_powerrunout`)
@@ -185,10 +185,10 @@ For more details, see the _New Nugget Doom cheats_ section of `docs/cheats.md`.
 ### Miscellaneous
 
 - **Custom skill level**
-- **SDL render driver** setting (CFG-Only: `sdl_renderdriver`) [p.f. Woof! 14.0.0]
+- **SDL render driver** setting (CFG-only: `sdl_renderdriver`) [p.f. Woof! 14.0.0]
 - Key to **toggle zoom**
-- **Setting of savegame and screenshot paths in config file** (CFG-Only: `savegame_dir` and `screenshot_dir`)
-- **Keep palette changes in screenshots** setting (CFG-Only: `screenshot_palette`)
+- **Setting of savegame and screenshot paths in config file** (CFG-only: `savegame_dir` and `screenshot_dir`)
+- **Keep palette changes in screenshots** setting (CFG-only: `screenshot_palette`)
 - **Allowed mouselook while dead**
 - **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
 - **Support for optional sounds:** [partially p.f. Crispy Doom]
@@ -200,10 +200,10 @@ For more details, see the _New Nugget Doom cheats_ section of `docs/cheats.md`.
   - Menus: `DSMNUOPN`, `DSMNUCLS`, `DSMNUACT`, `DSMNUBAK`, `DSMNUMOV`, `DSMNUSLI`, `DSMNUERR`;
   - Intermission: `DSINTTIC`, `DSINTTOT`, `DSINTNEX`, `DSINTNET`, `DSINTDMS`;
   - Health-based player pain sounds: `DSPPAI25`, `DSPPAI50`, `DSPPAI75`, `DSPPA100` [i.b. ZDoom].
-- **Customizable darkening level for dark menu background and Automap overlay** (CFG-Only: `menu_background_darkening` and `automap_overlay_darkening`) [i.b. Cherry Doom]
+- **Customizable darkening level for dark menu background and Automap overlay** (CFG-only: `menu_background_darkening` and `automap_overlay_darkening`) [i.b. Cherry Doom]
 - The **Chaingun can be given a custom sound effect** by providing a `DSCHGUN` sound effect lump
-- Toggle to **disable the Killough-face easter egg** (CFG-Only: `no_killough_face`)
-- Toggle to **allow chat in singleplayer** (CFG-Only: `sp_chat`)
+- Toggle to **disable the Killough-face easter egg** (CFG-only: `no_killough_face`)
+- Toggle to **allow chat in singleplayer** (CFG-only: `sp_chat`)
 - Restored `-cdrom` command-line parameter
 - Decreased minimum window size to 200p (240p with aspect-ratio correction)
 
