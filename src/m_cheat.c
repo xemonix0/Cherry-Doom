@@ -629,13 +629,21 @@ static boolean GetMobjType(char *buf)
 
   type = (buf[0]-'0')*100 + (buf[1]-'0')*10 + buf[2]-'0';
 
+  const spritenum_t spritenum = states[mobjinfo[type].spawnstate].sprite;
+  const long            frame = states[mobjinfo[type].spawnstate].frame;
+
   // Sanity checks
-  if (   (type < 0)                                // In case it somehow happens
-      || (type == MT_MUSICSOURCE)                  // May cause issues once spawned
-      || ((MT_SCEPTRE == type || type == MT_BIBLE) // May be missing assets
-          && (W_CheckNumForName)(sprnames[states[mobjinfo[type].spawnstate].sprite], ns_sprites) == -1)
-      || num_mobj_types <= type)                   // May be uninitialized
-  {
+  if (
+    // In case it somehow happens
+    type < 0
+    // May cause issues once spawned
+    || type == MT_MUSICSOURCE
+    // May be missing assets
+    || ((unsigned) spritenum >= num_sprites)
+    || ((frame & FF_FRAMEMASK) >= sprites[spritenum].numframes)
+    // May be uninitialized
+    || num_mobj_types <= type
+  ) {
     displaymsg("Summon: Cannot summon mobj %i", type);
     return false;
   }
