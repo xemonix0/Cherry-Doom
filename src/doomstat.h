@@ -222,9 +222,11 @@ extern  boolean         respawnmonsters;
 enum { THINGSPAWNS_EASY, THINGSPAWNS_NORMAL, THINGSPAWNS_HARD };
 extern  int             thingspawns;
 
+extern  boolean         realnomonsters;
 extern  boolean         doubleammo;
 extern  boolean         halfdamage;
 extern  boolean         slowbrain;
+extern  boolean         fastmonsters;
 extern  boolean         aggressive;
 
 // [Nugget] -----------------------------------------------------------------/

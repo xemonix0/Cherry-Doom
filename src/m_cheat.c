@@ -1618,6 +1618,14 @@ static void cheat_hom()
 // killough 3/6/98: -fast parameter toggle
 static void cheat_fast()
 {
+  // [Nugget] Custom Skill
+  if (gameskill == sk_custom)
+  {
+    displaymsg((fastmonsters = !fastmonsters) ? "Fast Monsters On" : "Fast Monsters Off");
+    G_SetFastParms(fastmonsters);
+    return;
+  }
+
   displaymsg((fastparm = !fastparm) ? "Fast Monsters On" : 
     "Fast Monsters Off");  // Ty 03/27/98 - *not* externalized
   G_SetFastParms(fastparm); // killough 4/10/98: set -fast parameter correctly

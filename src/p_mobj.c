@@ -1398,8 +1398,9 @@ void P_SpawnMapThing (mapthing_t* mthing)
     return;
 
   // don't spawn any monsters if -nomonsters
+  // [Nugget] Custom Skill
 
-  if (nomonsters && (i == MT_SKULL || (mobjinfo[i].flags & MF_COUNTKILL)))
+  if (realnomonsters && (i == MT_SKULL || (mobjinfo[i].flags & MF_COUNTKILL)))
     return;
 
   // spawn it

@@ -657,6 +657,8 @@ static void M_CustomSkill(int choice)
 
 void M_StartCustomSkill(const int mode)
 {
+  G_SetUserCustomSkill();
+
   if (mode == 0 || gamestate == GS_DEMOSCREEN)
   {
     if (!EpiCustom)

@@ -135,6 +135,29 @@ static keyframe_t *keyframe_list_head = NULL, *keyframe_list_tail = NULL;
 
 static int keyframe_index = -1;
 
+// Custom skill --------------------------------------------------------------
+
+// Actual custom-skill settings, set either by menu or savegames
+static struct {
+  int     things;
+  boolean coopspawns;
+  boolean nomonsters;
+  boolean doubleammo;
+  boolean halfdamage;
+  boolean slowbrain;
+  boolean fast;
+  boolean respawn;
+  boolean aggressive;
+} customskill;
+
+int     thingspawns;
+boolean realnomonsters;
+boolean doubleammo;
+boolean halfdamage;
+boolean slowbrain;
+boolean fastmonsters;
+boolean aggressive;
+
 // [Nugget] =================================================================/
 
 static int G_GameOptionSize(void);
@@ -146,13 +169,6 @@ boolean         respawnmonsters;
 int             gameepisode;
 int             gamemap;
 mapentry_t*     gamemapinfo;
-
-// [Nugget]
-int             thingspawns;
-boolean         doubleammo;
-boolean         halfdamage;
-boolean         slowbrain;
-boolean         aggressive;
 
 // If non-zero, exit the level after this number of minutes.
 int             timelimit;
@@ -2316,7 +2332,7 @@ static void G_DoPlayDemo(void)
 // killough 2/22/98: version id string format for savegames
 #define VERSIONID "MBF %d"
 
-#define CURRENT_SAVE_VERSION "Nugget 3.0.0" // [Nugget]
+#define CURRENT_SAVE_VERSION "Nugget 3.2.0" // [Nugget]
 
 static char *savename = NULL;
 
@@ -2552,9 +2568,27 @@ static void G_DoSaveGame(void)
   CheckSaveGame(sizeof(max_kill_requirement));
   saveg_write32(max_kill_requirement);
 
-  // [Nugget] Save milestones
-  CheckSaveGame(sizeof complete_milestones);
+  // [Nugget] /===============================================================
+
+  // Save milestones
+  CheckSaveGame(sizeof(complete_milestones));
   saveg_write_enum(complete_milestones);
+
+  // Save custom-skill settings ----------------------------------------------
+
+  CheckSaveGame(sizeof(customskill));
+
+  saveg_write32(customskill.things);
+  saveg_write32(customskill.coopspawns);
+  saveg_write32(customskill.nomonsters);
+  saveg_write32(customskill.doubleammo);
+  saveg_write32(customskill.halfdamage);
+  saveg_write32(customskill.slowbrain);
+  saveg_write32(customskill.fast);
+  saveg_write32(customskill.respawn);
+  saveg_write32(customskill.aggressive);
+
+  // [Nugget] ===============================================================/
 
   // [Nugget] Autosave
   if (!autosaving)
@@ -2635,7 +2669,8 @@ static void G_DoLoadGame(void)
   CheckSaveVersion("Woof 6.0.0", saveg_woof600);
   CheckSaveVersion("Nugget 2.0.0", saveg_nugget200);
   CheckSaveVersion("Nugget 2.1.0", saveg_nugget210);
-  CheckSaveVersion("Nugget 2.4.0", saveg_current); // To be removed
+  CheckSaveVersion("Nugget 2.4.0", saveg_nugget300);
+  CheckSaveVersion("Nugget 3.0.0", saveg_nugget300); // To be removed
   CheckSaveVersion(CURRENT_SAVE_VERSION, saveg_current);
 
   // killough 2/22/98: Friendly savegame version difference message
@@ -2787,8 +2822,24 @@ static void G_DoLoadGame(void)
   { saveg_read32(); }
 
   // Restore milestones
-  if (saveg_compat > saveg_nugget200 && save_p - savebuffer <= length - sizeof complete_milestones)
+  if (saveg_compat > saveg_nugget200 && (save_p - savebuffer) <= (length - sizeof(complete_milestones)))
   { complete_milestones = saveg_read_enum(); }
+
+  // Restore custom-skill settings
+  if (saveg_compat > saveg_nugget300 && (save_p - savebuffer) <= (length - sizeof(customskill)))
+  {
+    customskill.things     = saveg_read32();
+    customskill.coopspawns = saveg_read32();
+    customskill.nomonsters = saveg_read32();
+    customskill.doubleammo = saveg_read32();
+    customskill.halfdamage = saveg_read32();
+    customskill.slowbrain  = saveg_read32();
+    customskill.fast       = saveg_read32();
+    customskill.respawn    = saveg_read32();
+    customskill.aggressive = saveg_read32();
+
+    if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
+  }
 
   // [Nugget] ---------------------------------------------------------------/
   
@@ -2910,9 +2961,27 @@ static void G_SaveKeyFrame(void)
   CheckSaveGame(sizeof(max_kill_requirement));
   saveg_write32(max_kill_requirement);
 
-  // [Nugget] Save milestones
-  CheckSaveGame(sizeof complete_milestones);
+  // [Nugget] /===============================================================
+
+  // Save milestones
+  CheckSaveGame(sizeof(complete_milestones));
   saveg_write_enum(complete_milestones);
+
+  // Save custom-skill settings ----------------------------------------------
+
+  CheckSaveGame(sizeof(customskill));
+
+  saveg_write32(customskill.things);
+  saveg_write32(customskill.coopspawns);
+  saveg_write32(customskill.nomonsters);
+  saveg_write32(customskill.doubleammo);
+  saveg_write32(customskill.halfdamage);
+  saveg_write32(customskill.slowbrain);
+  saveg_write32(customskill.fast);
+  saveg_write32(customskill.respawn);
+  saveg_write32(customskill.aggressive);
+
+  // [Nugget] ===============================================================/
 
   keyframe_rw = false;
 
@@ -3089,8 +3158,24 @@ static void G_DoRewind(void)
   }
 
   // [Nugget] Restore milestones
-  if (save_p - savebuffer <= length - sizeof complete_milestones)
+  if ((save_p - savebuffer) <= (length - sizeof(complete_milestones)))
   { complete_milestones = saveg_read_enum(); }
+
+  // [Nugget] Restore custom-skill settings
+  if ((save_p - savebuffer) <= (length - sizeof(customskill)))
+  {
+    customskill.things     = saveg_read32();
+    customskill.coopspawns = saveg_read32();
+    customskill.nomonsters = saveg_read32();
+    customskill.doubleammo = saveg_read32();
+    customskill.halfdamage = saveg_read32();
+    customskill.slowbrain  = saveg_read32();
+    customskill.fast       = saveg_read32();
+    customskill.respawn    = saveg_read32();
+    customskill.aggressive = saveg_read32();
+
+    if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
+  }
 
   keyframe_rw = false;
 
@@ -4358,8 +4443,8 @@ void G_SetBabyModeParms(const skill_t skill)
 {
   if (skill == sk_custom)
   {
-    doubleammo = custom_skill_doubleammo;
-    halfdamage = custom_skill_halfdamage;
+    doubleammo = customskill.doubleammo;
+    halfdamage = customskill.halfdamage;
   }
   else {
     doubleammo = skill == sk_baby || skill == sk_nightmare;
@@ -4375,34 +4460,41 @@ void G_SetSkillParms(const skill_t skill)
 {
   if (skill == sk_custom)
   {
-    thingspawns     = custom_skill_things;
-    coop_spawns     = custom_skill_coopspawns;
-    nomonsters      = custom_skill_nomonsters;
-    slowbrain       = custom_skill_slowbrain;
-    fastparm        = custom_skill_fast;
-    respawnmonsters = custom_skill_respawn;
-    aggressive      = custom_skill_aggressive;
+    thingspawns     = customskill.things;
+    coop_spawns     = customskill.coopspawns;
+    realnomonsters  = customskill.nomonsters;
+    slowbrain       = customskill.slowbrain;
+    fastmonsters    = customskill.fast;
+    respawnmonsters = customskill.respawn;
+    aggressive      = customskill.aggressive;
   }
   else {
     thingspawns = (skill == sk_baby || skill == sk_easy)      ? THINGSPAWNS_EASY :
                   (skill == sk_hard || skill == sk_nightmare) ? THINGSPAWNS_HARD : THINGSPAWNS_NORMAL;
 
-    coop_spawns = coopspawnsparm;
-
-    // This is set by the netgame code in netgames,
-    // so we must not override it
-    if (!netgame) { nomonsters = clnomonsters; }
-
-    slowbrain = skill <= sk_easy;
-
-    // `fastparm` is set in `G_ReloadDefaults()`, which is called before this function
-
+    coop_spawns     = coopspawnsparm;
+    realnomonsters  = nomonsters;
+    slowbrain       = skill <= sk_easy;
+    fastmonsters    = fastparm || skill == sk_nightmare;
     respawnmonsters = skill == sk_nightmare || respawnparm;
     aggressive      = skill == sk_nightmare;
   }
 
   G_SetBabyModeParms(skill);
-  G_SetFastParms(fastparm || skill == sk_nightmare);
+  G_SetFastParms(fastmonsters);
+}
+
+void G_SetUserCustomSkill(void)
+{
+  customskill.things     = custom_skill_things;
+  customskill.coopspawns = custom_skill_coopspawns;
+  customskill.nomonsters = custom_skill_nomonsters;
+  customskill.doubleammo = custom_skill_doubleammo;
+  customskill.halfdamage = custom_skill_halfdamage;
+  customskill.slowbrain  = custom_skill_slowbrain;
+  customskill.fast       = custom_skill_fast;
+  customskill.respawn    = custom_skill_respawn;
+  customskill.aggressive = custom_skill_aggressive;
 }
 
 // [Nugget] =================================================================/

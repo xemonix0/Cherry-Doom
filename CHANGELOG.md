@@ -44,4 +44,3 @@
 - **HUD key not updating NUGHUD view offset**
 - **Explosion shake and FOV effects not being reset when restarting levels on death**
 - **_Selective Fuzz Darkening_ not being disabled in Strict Mode**
-- **Changed save version to `Nugget 3.0.0`** (was `Nugget 2.4.0` by mistake)

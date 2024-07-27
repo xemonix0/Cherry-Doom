@@ -126,6 +126,7 @@ extern boolean G_KeyFrameRW(void);
 void G_RestartKeepLoadout(void);
 void G_SetBabyModeParms(const skill_t skill);
 void G_SetSkillParms(const skill_t skill);
+void G_SetUserCustomSkill(void);
 
 #endif
 
