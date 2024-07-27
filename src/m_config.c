@@ -1019,6 +1019,13 @@ default_t defaults[] = {
   },
 
   {
+    "autosave_interval",
+    (config_t *) &autosave_interval, NULL,
+    {0}, {30,600}, number, ss_none, wad_no,
+    "Interval between autosaves, in seconds"
+  },
+
+  {
     "rewind_interval",
     (config_t *) &rewind_interval, NULL,
     {1}, {1,600}, number, ss_gen, wad_no,

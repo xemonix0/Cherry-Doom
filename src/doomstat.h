@@ -508,7 +508,7 @@ enum {
 }; extern int flinching;
 
 extern int explosion_shake;
-extern int explosion_shake_intensity_pct; // CFG-Only
+extern int explosion_shake_intensity_pct; // CFG-only
 extern int breathing;
 extern int teleporter_zoom;
 extern int death_camera;
@@ -520,7 +520,7 @@ enum {
 }; extern int chasecam_mode;
 extern int chasecam_distance;
 extern int chasecam_height;
-extern int chasecam_crosshair; // CFG-Only
+extern int chasecam_crosshair; // CFG-only
 
 extern int menu_background_all;
 extern int no_menu_tint;
@@ -531,11 +531,12 @@ extern int nightvision_visor;
 extern int damagecount_cap;
 extern int bonuscount_cap;
 extern int fake_contrast;
-extern int diminished_lighting; // CFG-Only
+extern int diminished_lighting; // CFG-only
 extern int wipe_speed_percentage;
 extern int alt_interpic;
 extern int s_clipping_dist_x2;
 extern int one_key_saveload;
+extern int autosave_interval; // CFG-only
 extern int rewind_interval;
 extern int rewind_depth;
 extern int rewind_timeout;
@@ -552,7 +553,7 @@ extern int a11y_invul_colormap;
 extern int no_hor_autoaim;
 extern int switch_on_pickup;
 extern int skip_ammoless_weapons;
-extern int always_bob; // CFG-Only
+extern int always_bob; // CFG-only
 
 enum {
   BOBSTYLE_VANILLA,
@@ -565,18 +566,18 @@ enum {
 }; extern int bobbing_style;
 
 extern int weapon_inertia;
-extern int weapon_inertia_scale_pct; // CFG-Only
+extern int weapon_inertia_scale_pct; // CFG-only
 extern int weaponsquat;
 extern int translucent_pspr;
-extern int translucent_pspr_pct; // CFG-Only
+extern int translucent_pspr_pct; // CFG-only
 extern int show_berserk;
-extern int sx_fix; // CFG-Only
+extern int sx_fix; // CFG-only
 
 // Status Bar/HUD ------------------------------------------------------------
 
 extern int announce_milestones;
-extern int show_save_messages; // CFG-Only
-extern int show_ssg; // CFG-Only
+extern int show_save_messages; // CFG-only
+extern int show_ssg; // CFG-only
 
 enum {
   STATSFORMAT_RATIO = 1,
@@ -616,7 +617,7 @@ extern int hudcolor_ms_comp;
 
 // Enemies -------------------------------------------------------------------
 
-extern int extra_gibbing_on; // CFG-Only
+extern int extra_gibbing_on; // CFG-only
 typedef enum {
   EXGIB_FIST,
   EXGIB_CSAW,
@@ -634,7 +635,7 @@ extern int zdoom_item_drops;
 extern int zoom_fov;
 extern int fancy_teleport;
 
-// Miscellaneous (CFG-Only) --------------------------------------------------
+// Miscellaneous (CFG-only) --------------------------------------------------
 
 enum {
   SHOTPAL_NONE,
@@ -651,7 +652,7 @@ extern int sp_chat;
 
 extern int fail_safe;
 
-// Doom Compatibility (CFG-Only) ---------------------------------------------
+// Doom Compatibility (CFG-only) ---------------------------------------------
 
 extern int comp_bruistarget;
 extern int comp_nomeleesnap;

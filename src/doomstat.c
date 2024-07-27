@@ -149,7 +149,7 @@ int jump_crouch;
 int viewheight_value;
 int flinching;
 int explosion_shake;
-int explosion_shake_intensity_pct; // CFG-Only
+int explosion_shake_intensity_pct; // CFG-only
 int breathing;
 int teleporter_zoom;
 int death_camera;
@@ -157,7 +157,7 @@ int death_camera;
 int chasecam_mode;
 int chasecam_distance;
 int chasecam_height;
-int chasecam_crosshair; // CFG-Only
+int chasecam_crosshair; // CFG-only
 
 int menu_background_all;
 int no_menu_tint;
@@ -168,11 +168,12 @@ int nightvision_visor;
 int damagecount_cap;
 int bonuscount_cap;
 int fake_contrast;
-int diminished_lighting; // CFG-Only
+int diminished_lighting; // CFG-only
 int wipe_speed_percentage;
 int alt_interpic;
 int s_clipping_dist_x2;
 int one_key_saveload;
+int autosave_interval; // CFG-only
 int rewind_interval;
 int rewind_depth;
 int rewind_timeout;
@@ -189,21 +190,21 @@ int a11y_invul_colormap;
 int no_hor_autoaim;
 int switch_on_pickup;
 int skip_ammoless_weapons;
-int always_bob; // CFG-Only
+int always_bob; // CFG-only
 int bobbing_style;
 int weapon_inertia;
-int weapon_inertia_scale_pct; // CFG-Only
+int weapon_inertia_scale_pct; // CFG-only
 int weaponsquat;
 int translucent_pspr;
-int translucent_pspr_pct; // CFG-Only
+int translucent_pspr_pct; // CFG-only
 int show_berserk;
-int sx_fix; // CFG-Only
+int sx_fix; // CFG-only
 
 // Status Bar/HUD ------------------------------------------------------------
 
 int announce_milestones;
-int show_save_messages; // CFG-Only
-int show_ssg; // CFG-Only
+int show_save_messages; // CFG-only
+int show_ssg; // CFG-only
 int hud_stats_format;
 int hud_stats_format_map;
 int hud_stats_icons;
@@ -225,7 +226,7 @@ int hudcolor_ms_comp;
 // Enemies -------------------------------------------------------------------
 
 int extra_gibbing_on;
-int extra_gibbing[NUMEXGIBS]; // CFG-Only
+int extra_gibbing[NUMEXGIBS]; // CFG-only
 int bloodier_gibbing;
 int zdoom_item_drops;
 
@@ -234,7 +235,7 @@ int zdoom_item_drops;
 int zoom_fov;
 int fancy_teleport;
 
-// Miscellaneous (CFG-Only) --------------------------------------------------
+// Miscellaneous (CFG-only) --------------------------------------------------
 
 int screenshot_palette;
 int hud_menu_shadows_filter_pct;
@@ -245,7 +246,7 @@ int sp_chat;
 
 int fail_safe;
 
-// Doom Compatibility (CFG-Only) ---------------------------------------------
+// Doom Compatibility (CFG-only) ---------------------------------------------
 
 int comp_bruistarget;
 int comp_nomeleesnap;

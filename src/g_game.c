@@ -107,6 +107,16 @@ boolean minimap_was_on = false; // Minimap: keep it when advancing through level
 
 boolean ignore_pistolstart = false; // Custom Skill: ignore pistol-start setting
 
+// Autosave ------------------------------------------------------------------
+
+static boolean autosaving = false;
+static int autosave_countdown = 0;
+
+void G_SetAutosaveCountdown(int value)
+{
+  autosave_countdown = value;
+}
+
 // Rewind --------------------------------------------------------------------
 
 static boolean keyframe_rw = false;
@@ -1098,6 +1108,9 @@ static void G_DoLoadLevel(void)
 
   // [Nugget] ================================================================
 
+  // Autosave
+  G_SetAutosaveCountdown(autosave_interval * TICRATE);
+
   // Rewind
   G_SetRewindCountdown(0);
 
@@ -2014,6 +2027,9 @@ static void G_DoWorldDone(void)
   gameaction = ga_nothing;
   viewactive = true;
   AM_clearMarks();           //jff 4/12/98 clear any marks on the automap
+
+  // [Nugget] Autosave
+  G_SetAutosaveCountdown(0);
 }
 
 // killough 2/28/98: A ridiculously large number
@@ -2379,7 +2395,18 @@ char* G_SaveGameName(int slot)
   // Ty 05/04/98 - use savegamename variable (see d_deh.c)
   // killough 12/98: add .7 to truncate savegamename
   char buf[16] = {0};
-  sprintf(buf, "%.7s%d.dsg", savegamename, 10*savepage+slot);
+
+  // [Nugget] Autosave
+  if (autosaving)
+  {
+    static int autoslot = 0;
+
+    sprintf(buf, "nuggaut%d.dsg", autoslot);
+
+    autoslot = (autoslot + 1) % 4;
+  }
+  else
+    sprintf(buf, "%.7s%d.dsg", savegamename, 10*savepage+slot);
 
 // [Nugget] Restored `-cdrom` parm
 #ifdef _WIN32
@@ -2433,7 +2460,14 @@ static void G_DoSaveGame(void)
 
   name = G_SaveGameName(savegameslot);
 
-  description = savedescription;
+  // [Nugget] Autosave
+  if (autosaving)
+  {
+    static char *const autodesc = "Autosave";
+    description = autodesc;
+  }
+  else
+    description = savedescription;
 
   save_p = savebuffer = Z_Malloc(savegamesize, PU_STATIC, 0);
 
@@ -2522,16 +2556,20 @@ static void G_DoSaveGame(void)
   CheckSaveGame(sizeof complete_milestones);
   saveg_write_enum(complete_milestones);
 
-  // [FG] save snapshot
-  CheckSaveGame(MN_SnapshotDataSize());
-  MN_WriteSnapshot(save_p);
-  save_p += MN_SnapshotDataSize();
+  // [Nugget] Autosave
+  if (!autosaving)
+  {
+    // [FG] save snapshot
+    CheckSaveGame(MN_SnapshotDataSize());
+    MN_WriteSnapshot(save_p);
+    save_p += MN_SnapshotDataSize();
+  }
 
   length = save_p - savebuffer;
 
   if (!M_WriteFile(name, savebuffer, length))
     displaymsg("%s", errno ? strerror(errno) : "Could not save game: Error unknown");
-  else if (show_save_messages) // [Nugget]
+  else if (show_save_messages && !autosaving) // [Nugget]
     displaymsg("%s", s_GGSAVED);  // Ty 03/27/98 - externalized
 
   Z_Free(savebuffer);  // killough
@@ -2542,9 +2580,15 @@ static void G_DoSaveGame(void)
 
   if (name) free(name);
 
-  MN_SetQuickSaveSlot(savegameslot);
+  // [Nugget] Autosave
+  if (!autosaving)
+    MN_SetQuickSaveSlot(savegameslot);
 
   drs_skip_frame = true;
+
+  // [Nugget] Autosave:
+  // reset the countdown, even if this was a manual save
+  G_SetAutosaveCountdown(autosave_interval * TICRATE);
 }
 
 static void CheckSaveVersion(const char *str, saveg_compat_t ver)
@@ -2755,6 +2799,10 @@ static void G_DoLoadGame(void)
   // the same procedure is done in G_LoadLevel, but we have to repeat it here
   st_health = players[displayplayer].health;
   st_armor  = players[displayplayer].armorpoints;
+
+  // [Nugget] Autosave:
+  // we already have a save (the one we just loaded), so reset the countdown
+  G_SetAutosaveCountdown(autosave_interval * TICRATE);
 
   // [Nugget] Rewind:
   // Just like with `G_DoRewind`,
@@ -3201,6 +3249,19 @@ void G_Ticker(void)
 	break;
     }
 
+  // [Nugget] Autosave
+  if (CASUALPLAY(autosave_interval)
+      && gamestate == GS_LEVEL && oldleveltime < leveltime
+      && players[consoleplayer].playerstate != PST_DEAD)
+  {
+    if (--autosave_countdown <= 0)
+    {
+      autosaving = true;
+      G_DoSaveGame();
+      autosaving = false;
+    }
+  }
+
   // [Nugget] Rewind
   if (CASUALPLAY(rewind_depth && rewind_on)
       && gamestate == GS_LEVEL && oldleveltime < leveltime
@@ -3329,9 +3390,9 @@ void G_Ticker(void)
 	  }
     }
 
-  // [Nugget] /---------------------------------------------------------------
+  // [Nugget] /===============================================================
 
-  // Zoom -------------------------------------------------
+  // Zoom --------------------------------------------------------------------
 
   static boolean zoomKeyDown = false;
 
@@ -3346,12 +3407,12 @@ void G_Ticker(void)
     R_SetZoom(!R_GetZoom());
   }
 
-  // Freecam ----------------------------------------------
+  // Freecam -----------------------------------------------------------------
 
   if (casual_play && R_GetFreecamMode() == FREECAM_CAM && gamestate == GS_LEVEL)
   { memset(&players[consoleplayer].cmd, 0, sizeof(ticcmd_t)); }
 
-  // [Nugget] ---------------------------------------------------------------/
+  // [Nugget] ===============================================================/
 
   oldleveltime = leveltime;
 
