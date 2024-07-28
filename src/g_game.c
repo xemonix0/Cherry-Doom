@@ -135,7 +135,7 @@ static keyframe_t *keyframe_list_head = NULL, *keyframe_list_tail = NULL;
 
 static int keyframe_index = -1;
 
-// Custom skill --------------------------------------------------------------
+// Custom Skill --------------------------------------------------------------
 
 // Actual custom-skill settings, set either by menu or savegames
 static struct {
@@ -157,6 +157,94 @@ boolean halfdamage;
 boolean slowbrain;
 boolean fastmonsters;
 boolean aggressive;
+
+static struct {
+  int          mohealth;
+  int          health;
+  int          armorpoints;
+  int          armortype;
+  boolean      backpack;
+  weapontype_t readyweapon;
+  weapontype_t lastweapon;
+  boolean      weaponowned[NUMWEAPONS];
+  int          ammo[NUMAMMO];
+  int          maxammo[NUMAMMO];
+} initial_loadout;
+
+void G_SetBabyModeParms(const skill_t skill)
+{
+  if (skill == sk_custom)
+  {
+    doubleammo = customskill.doubleammo;
+    halfdamage = customskill.halfdamage;
+  }
+  else {
+    doubleammo = skill == sk_baby || skill == sk_nightmare;
+    halfdamage = skill == sk_baby;
+  }
+
+  doubleammo |= CASUALPLAY(doubleammoparm);
+  halfdamage |= CASUALPLAY(halfdamageparm);
+}
+
+// [Nugget]
+void G_SetSkillParms(const skill_t skill)
+{
+  if (skill == sk_custom)
+  {
+    thingspawns     = customskill.things;
+    coop_spawns     = customskill.coopspawns;
+    realnomonsters  = customskill.nomonsters;
+    slowbrain       = customskill.slowbrain;
+    fastmonsters    = customskill.fast;
+    respawnmonsters = customskill.respawn;
+    aggressive      = customskill.aggressive;
+  }
+  else {
+    thingspawns = (skill == sk_baby || skill == sk_easy)      ? THINGSPAWNS_EASY :
+                  (skill == sk_hard || skill == sk_nightmare) ? THINGSPAWNS_HARD : THINGSPAWNS_NORMAL;
+
+    coop_spawns     = coopspawnsparm;
+    realnomonsters  = nomonsters;
+    slowbrain       = skill <= sk_easy;
+    fastmonsters    = fastparm || skill == sk_nightmare;
+    respawnmonsters = skill == sk_nightmare || respawnparm;
+    aggressive      = skill == sk_nightmare;
+  }
+
+  G_SetBabyModeParms(skill);
+  G_SetFastParms(fastmonsters);
+}
+
+void G_SetUserCustomSkill(void)
+{
+  customskill.things     = custom_skill_things;
+  customskill.coopspawns = custom_skill_coopspawns;
+  customskill.nomonsters = custom_skill_nomonsters;
+  customskill.doubleammo = custom_skill_doubleammo;
+  customskill.halfdamage = custom_skill_halfdamage;
+  customskill.slowbrain  = custom_skill_slowbrain;
+  customskill.fast       = custom_skill_fast;
+  customskill.respawn    = custom_skill_respawn;
+  customskill.aggressive = custom_skill_aggressive;
+}
+
+static void G_UpdateInitialLoadout(void)
+{
+  player_t *const player = &players[consoleplayer];
+
+  initial_loadout.mohealth    = player->mo->health;
+  initial_loadout.health      = player->health;
+  initial_loadout.armorpoints = player->armorpoints;
+  initial_loadout.armortype   = player->armortype;
+  initial_loadout.backpack    = player->backpack;
+  initial_loadout.readyweapon = player->readyweapon;
+  initial_loadout.lastweapon  = player->lastweapon;
+
+  memcpy(initial_loadout.weaponowned, player->weaponowned, sizeof(player->weaponowned));
+  memcpy(initial_loadout.ammo,        player->ammo,        sizeof(player->ammo));
+  memcpy(initial_loadout.maxammo,     player->maxammo,     sizeof(player->maxammo));
+}
 
 // [Nugget] =================================================================/
 
@@ -1785,15 +1873,30 @@ static void G_WriteLevelStat(void)
 }
 
 // [Nugget] Custom Skill
-void G_RestartKeepLoadout(void)
+void G_RestartWithLoadout(const boolean current)
 {
   G_SetSkillParms(sk_custom);
 
   gameaction = ga_loadlevel;
 
-  for (int i = 0;  i < MAXPLAYERS;  i++)
+  G_PlayerFinishLevel(consoleplayer);
+
+  if (!current)
   {
-    if (playeringame[i]) { G_PlayerFinishLevel(i); }
+    player_t *const player = &players[consoleplayer];
+
+    player->playerstate = PST_LIVE;
+    player->mo->health  = initial_loadout.mohealth;
+    player->health      = initial_loadout.health;
+    player->armorpoints = initial_loadout.armorpoints;
+    player->armortype   = initial_loadout.armortype;
+    player->backpack    = initial_loadout.backpack;
+    player->readyweapon = initial_loadout.readyweapon;
+    player->lastweapon  = initial_loadout.lastweapon;
+
+    memcpy(player->weaponowned, initial_loadout.weaponowned, sizeof(player->weaponowned));
+    memcpy(player->ammo,        initial_loadout.ammo,        sizeof(player->ammo));
+    memcpy(player->maxammo,     initial_loadout.maxammo,     sizeof(player->maxammo));
   }
 
   if (automapactive)
@@ -2044,8 +2147,11 @@ static void G_DoWorldDone(void)
   viewactive = true;
   AM_clearMarks();           //jff 4/12/98 clear any marks on the automap
 
-  // [Nugget] Autosave
-  G_SetAutosaveCountdown(0);
+  // [Nugget] ----------------------------------------------------------------
+
+  G_SetAutosaveCountdown(0); // Autosave
+  
+  G_UpdateInitialLoadout(); // Custom Skill
 }
 
 // killough 2/28/98: A ridiculously large number
@@ -2588,6 +2694,25 @@ static void G_DoSaveGame(void)
   saveg_write32(customskill.respawn);
   saveg_write32(customskill.aggressive);
 
+  CheckSaveGame(sizeof(initial_loadout));
+
+  saveg_write32(initial_loadout.mohealth);
+  saveg_write32(initial_loadout.health);
+  saveg_write32(initial_loadout.armorpoints);
+  saveg_write32(initial_loadout.armortype);
+  saveg_write32(initial_loadout.backpack);
+  saveg_write_enum(initial_loadout.readyweapon);
+  saveg_write_enum(initial_loadout.lastweapon);
+
+  for (int i = 0;  i < NUMWEAPONS;  i++)
+  { saveg_write32(initial_loadout.weaponowned[i]); }
+
+  for (int i = 0;  i < NUMAMMO;  i++)
+  { saveg_write32(initial_loadout.ammo[i]); }
+
+  for (int i = 0;  i < NUMAMMO;  i++)
+  { saveg_write32(initial_loadout.maxammo[i]); }
+
   // [Nugget] ===============================================================/
 
   // [Nugget] Autosave
@@ -2839,6 +2964,23 @@ static void G_DoLoadGame(void)
     customskill.aggressive = saveg_read32();
 
     if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
+
+    initial_loadout.mohealth    = saveg_read32();
+    initial_loadout.health      = saveg_read32();
+    initial_loadout.armorpoints = saveg_read32();
+    initial_loadout.armortype   = saveg_read32();
+    initial_loadout.backpack    = saveg_read32();
+    initial_loadout.readyweapon = saveg_read_enum();
+    initial_loadout.lastweapon  = saveg_read_enum();
+
+    for (int i = 0;  i < NUMWEAPONS;  i++)
+    { initial_loadout.weaponowned[i] = saveg_read32(); }
+
+    for (int i = 0;  i < NUMAMMO;  i++)
+    { initial_loadout.ammo[i] = saveg_read32(); }
+
+    for (int i = 0;  i < NUMAMMO;  i++)
+    { initial_loadout.maxammo[i] = saveg_read32(); }
   }
 
   // [Nugget] ---------------------------------------------------------------/
@@ -2980,6 +3122,25 @@ static void G_SaveKeyFrame(void)
   saveg_write32(customskill.fast);
   saveg_write32(customskill.respawn);
   saveg_write32(customskill.aggressive);
+
+  CheckSaveGame(sizeof(initial_loadout));
+
+  saveg_write32(initial_loadout.mohealth);
+  saveg_write32(initial_loadout.health);
+  saveg_write32(initial_loadout.armorpoints);
+  saveg_write32(initial_loadout.armortype);
+  saveg_write32(initial_loadout.backpack);
+  saveg_write_enum(initial_loadout.readyweapon);
+  saveg_write_enum(initial_loadout.lastweapon);
+
+  for (int i = 0;  i < NUMWEAPONS;  i++)
+  { saveg_write32(initial_loadout.weaponowned[i]); }
+
+  for (int i = 0;  i < NUMAMMO;  i++)
+  { saveg_write32(initial_loadout.ammo[i]); }
+
+  for (int i = 0;  i < NUMAMMO;  i++)
+  { saveg_write32(initial_loadout.maxammo[i]); }
 
   // [Nugget] ===============================================================/
 
@@ -3175,6 +3336,23 @@ static void G_DoRewind(void)
     customskill.aggressive = saveg_read32();
 
     if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
+
+    initial_loadout.mohealth    = saveg_read32();
+    initial_loadout.health      = saveg_read32();
+    initial_loadout.armorpoints = saveg_read32();
+    initial_loadout.armortype   = saveg_read32();
+    initial_loadout.backpack    = saveg_read32();
+    initial_loadout.readyweapon = saveg_read_enum();
+    initial_loadout.lastweapon  = saveg_read_enum();
+
+    for (int i = 0;  i < NUMWEAPONS;  i++)
+    { initial_loadout.weaponowned[i] = saveg_read32(); }
+
+    for (int i = 0;  i < NUMAMMO;  i++)
+    { initial_loadout.ammo[i] = saveg_read32(); }
+
+    for (int i = 0;  i < NUMAMMO;  i++)
+    { initial_loadout.maxammo[i] = saveg_read32(); }
   }
 
   keyframe_rw = false;
@@ -4437,68 +4615,6 @@ void G_SetFastParms(int fast_pending)
   }
 }
 
-// [Nugget] /=================================================================
-
-void G_SetBabyModeParms(const skill_t skill)
-{
-  if (skill == sk_custom)
-  {
-    doubleammo = customskill.doubleammo;
-    halfdamage = customskill.halfdamage;
-  }
-  else {
-    doubleammo = skill == sk_baby || skill == sk_nightmare;
-    halfdamage = skill == sk_baby;
-  }
-
-  doubleammo |= CASUALPLAY(doubleammoparm);
-  halfdamage |= CASUALPLAY(halfdamageparm);
-}
-
-// [Nugget]
-void G_SetSkillParms(const skill_t skill)
-{
-  if (skill == sk_custom)
-  {
-    thingspawns     = customskill.things;
-    coop_spawns     = customskill.coopspawns;
-    realnomonsters  = customskill.nomonsters;
-    slowbrain       = customskill.slowbrain;
-    fastmonsters    = customskill.fast;
-    respawnmonsters = customskill.respawn;
-    aggressive      = customskill.aggressive;
-  }
-  else {
-    thingspawns = (skill == sk_baby || skill == sk_easy)      ? THINGSPAWNS_EASY :
-                  (skill == sk_hard || skill == sk_nightmare) ? THINGSPAWNS_HARD : THINGSPAWNS_NORMAL;
-
-    coop_spawns     = coopspawnsparm;
-    realnomonsters  = nomonsters;
-    slowbrain       = skill <= sk_easy;
-    fastmonsters    = fastparm || skill == sk_nightmare;
-    respawnmonsters = skill == sk_nightmare || respawnparm;
-    aggressive      = skill == sk_nightmare;
-  }
-
-  G_SetBabyModeParms(skill);
-  G_SetFastParms(fastmonsters);
-}
-
-void G_SetUserCustomSkill(void)
-{
-  customskill.things     = custom_skill_things;
-  customskill.coopspawns = custom_skill_coopspawns;
-  customskill.nomonsters = custom_skill_nomonsters;
-  customskill.doubleammo = custom_skill_doubleammo;
-  customskill.halfdamage = custom_skill_halfdamage;
-  customskill.slowbrain  = custom_skill_slowbrain;
-  customskill.fast       = custom_skill_fast;
-  customskill.respawn    = custom_skill_respawn;
-  customskill.aggressive = custom_skill_aggressive;
-}
-
-// [Nugget] =================================================================/
-
 mapentry_t *G_LookupMapinfo(int episode, int map)
 {
   int i;
@@ -4641,6 +4757,8 @@ void G_InitNew(skill_t skill, int episode, int map)
   D_UpdateCasualPlay(); // [Nugget]
 
   G_DoLoadLevel();
+
+  G_UpdateInitialLoadout(); // [Nugget] Custom Skill
 }
 
 //

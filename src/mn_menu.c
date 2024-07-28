@@ -675,7 +675,11 @@ void M_StartCustomSkill(const int mode)
   }
   else if (mode == 2)
   {
-    G_RestartKeepLoadout();
+    G_RestartWithLoadout(false);
+  }
+  else if (mode == 3)
+  {
+    G_RestartWithLoadout(true);
   }
 
   MN_ClearMenus();

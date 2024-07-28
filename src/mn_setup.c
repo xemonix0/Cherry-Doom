@@ -2971,9 +2971,14 @@ static void CSPistolStart(void)
   StartCustomSkill(1);
 }
 
-static void CSKeepLoadout(void)
+static void CSInitialLoadout(void)
 {
   StartCustomSkill(2);
+}
+
+static void CSCurrentLoadout(void)
+{
+  StartCustomSkill(3);
 }
 
 static setup_menu_t customskill_settings1[] = {
@@ -2990,10 +2995,10 @@ static setup_menu_t customskill_settings1[] = {
     {"Respawning Monsters",             S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_respawn"}},
     {"Aggressive (Nightmare) Monsters", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_aggressive"}},
     MI_GAP,
-    MI_GAP,
-    {"Start New Game",               S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSNewGame},
-    {"Restart Level (Pistol Start)", S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSPistolStart},
-    {"Restart Level (Keep Loadout)", S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSKeepLoadout},
+    {"Start New Game",                   S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSNewGame},
+    {"Restart Level -- Pistol Start",    S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSPistolStart},
+    {"Restart Level -- Initial Loadout", S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSInitialLoadout},
+    {"Restart Level -- Current Loadout", S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSCurrentLoadout},
 
     MI_END
 };
