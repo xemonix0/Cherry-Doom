@@ -22,14 +22,9 @@
 #include "doomtype.h"
 #include "m_array.h"
 #include "m_misc.h"
-#include "m_swap.h"
 #include "mn_menu.h"
 #include "mn_setup.h"
-#include "r_defs.h"
-#include "v_video.h"
-#include "w_wad.h"
 #include "wad_stats.h"
-#include "z_zone.h"
 
 #define LT_X_MARGIN         16
 #define LT_LEFT_X           (LT_X_MARGIN)
@@ -49,9 +44,6 @@
 
 #define LT_MAX_ROWS         14
 #define LT_SCROLL_BUFFER    3
-#define LT_SCROLL_X         (SCREENWIDTH - 9)
-#define LT_SCROLL_UP_Y      (M_TAB_Y + M_SPC)
-#define LT_SCROLL_DOWN_Y    (M_Y_WARN - 5)
 
 typedef enum
 {
@@ -66,12 +58,6 @@ typedef enum
     context_levels,
     context_summary,
 } value_context_t;
-
-enum
-{
-    scroll_up = 1,
-    scroll_down = 2,
-};
 
 typedef struct
 {
@@ -89,7 +75,7 @@ typedef struct
     int64_t flags;
 } formatted_value_t;
 
-static int scroll_pos, scroll_indicators;
+static int scroll_pos;
 static summary_t summary;
 
 setup_tab_t level_table_tabs[] = {
@@ -524,29 +510,6 @@ static void LevelsDrawPageHeaders(int page, int y)
     }
 }
 
-static void LevelsDrawScrollIndicators(void)
-{
-    if (scroll_indicators & scroll_up)
-    {
-        patch_t *patch = W_CacheLumpName("SCRLUP", PU_CACHE);
-
-        int x = LT_SCROLL_X - SHORT(patch->width) / 2;
-        int y = LT_SCROLL_UP_Y;
-
-        V_DrawPatch(x, y, patch);
-    }
-
-    if (scroll_indicators & scroll_down)
-    {
-        patch_t *patch = W_CacheLumpName("SCRLDOWN", PU_CACHE);
-
-        int x = LT_SCROLL_X - SHORT(patch->width) / 2;
-        int y = LT_SCROLL_DOWN_Y;
-
-        V_DrawPatch(x, y, patch);
-    }
-}
-
 static void LevelsDraw(setup_menu_t *menu, int page)
 {
     int accum_y = M_Y;
@@ -584,7 +547,7 @@ static void LevelsDraw(setup_menu_t *menu, int page)
         }
     }
 
-    LevelsDrawScrollIndicators();
+    MN_DrawScrollIndicators();
 }
 
 // WAD summary
@@ -680,11 +643,11 @@ static void UpdateScrollingIndicators(int rows)
                                    : (scroll_indicators & ~scroll_up);
 }
 
-void LT_KeyboardScroll(setup_menu_t *menu, setup_menu_t *item)
+boolean LT_KeyboardScroll(setup_menu_t *menu, setup_menu_t *item)
 {
     if (!set_lvltbl_active)
     {
-        return;
+        return false;
     }
 
     int current_row = 0, rows = 0;
@@ -718,6 +681,8 @@ void LT_KeyboardScroll(setup_menu_t *menu, setup_menu_t *item)
     }
 
     UpdateScrollingIndicators(rows);
+
+    return true;
 }
 
 boolean LT_MouseScroll(setup_menu_t *menu, int inc)

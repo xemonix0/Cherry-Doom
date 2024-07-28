@@ -124,6 +124,10 @@ static boolean default_reset;
 #define MI_GAP \
     {"", S_SKIP, 0, M_SPC}
 
+// [Cherry] Page split (subpages)
+#define MI_SPLIT \
+    {0, S_SKIP | S_SPLIT}
+
 static void DisableItem(boolean condition, setup_menu_t *menu, const char *item)
 {
     while (!(menu->m_flags & S_END))
@@ -180,6 +184,9 @@ static int current_page;           // the index of the current screen in a set
 
 static setup_tab_t *current_tabs;
 static int highlight_tab;
+
+// [Cherry] Subpages
+static int current_subpage, total_subpages;
 
 // [FG] save the setup menu's itemon value in the S_END element's x coordinate
 
@@ -847,12 +854,52 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
     }
 }
 
+// [Cherry] /--- Draw scroll indicators ---------------------------------------
+
+int scroll_indicators = 0x00;
+
+static void UpdateScrollIndicators(void)
+{
+    scroll_indicators = current_subpage < total_subpages - 1
+                            ? (scroll_indicators | scroll_down)
+                            : (scroll_indicators & ~scroll_down);
+    scroll_indicators = current_subpage > 0 ? (scroll_indicators | scroll_up)
+                                            : (scroll_indicators & ~scroll_up);
+}
+
+void MN_DrawScrollIndicators(void)
+{
+    if (scroll_indicators & scroll_up)
+    {
+        patch_t *patch = W_CacheLumpName("SCRLUP", PU_CACHE);
+
+        int x = LT_SCROLL_X - SHORT(patch->width) / 2;
+        int y = LT_SCROLL_UP_Y;
+
+        V_DrawPatch(x, y, patch);
+    }
+
+    if (scroll_indicators & scroll_down)
+    {
+        patch_t *patch = W_CacheLumpName("SCRLDOWN", PU_CACHE);
+
+        int x = LT_SCROLL_X - SHORT(patch->width) / 2;
+        int y = LT_SCROLL_DOWN_Y;
+
+        V_DrawPatch(x, y, patch);
+    }
+}
+
+// [Cherry] ------------------------------------------------------------------/
+
 /////////////////////////////
 //
 // M_DrawScreenItems takes the data for each menu item and gives it to
 // the drawing routines above.
+// 
+// [Cherry] Implement subpages
 
-static void DrawScreenItems(setup_menu_t *src)
+static void DrawScreenItems(setup_menu_t *src, boolean force_draw)
 {
     if (print_warning_about_changes > 0) // killough 8/15/98: print warning
     {
@@ -876,9 +923,28 @@ static void DrawScreenItems(setup_menu_t *src)
     }
 
     int accum_y = M_Y;
+    int subpage = 0;
 
-    while (!(src->m_flags & S_END))
+    for (; !(src->m_flags & S_END); src++)
     {
+        if (src->m_flags & S_SPLIT)
+        {
+            subpage++;
+            continue;
+        }
+
+        if (!force_draw && subpage != current_subpage)
+        {
+            // prevent mouse interaction with skipped entries
+            mrect_t *rect = &src->rect;
+            rect->x = 0;
+            rect->y = 0;
+            rect->w = 0;
+            rect->h = 0;
+
+            continue;
+        }
+
         // See if we're to draw the item description (left-hand part)
 
         if (src->m_flags & S_SHOWDESC)
@@ -897,9 +963,9 @@ static void DrawScreenItems(setup_menu_t *src)
         {
             accum_y += src->m_y;
         }
-
-        src++;
     }
+
+    MN_DrawScrollIndicators();
 }
 
 /////////////////////////////
@@ -1111,6 +1177,34 @@ static void DrawInstructions()
     }
 }
 
+// [Cherry]
+static void KeyboardScrollSubpage(int force_end)
+{
+    boolean found_current_item = false;
+    total_subpages = 1;
+    current_subpage = 0;
+
+    for (setup_menu_t *item = current_menu; !(item->m_flags & S_END); item++)
+    {
+        if (item->m_flags & S_SPLIT)
+        {
+            total_subpages++;
+            if (force_end >= 0 && (!found_current_item || force_end > 0))
+            {
+                current_subpage++;
+            }
+            continue;
+        }
+
+        if (item == current_menu + set_item_on)
+        {
+            found_current_item = true;
+        }
+    }
+
+    UpdateScrollIndicators();
+}
+
 static void SetupMenu(void)
 {
     setup_active = true;
@@ -1133,13 +1227,15 @@ static void SetupMenu(void)
 
         ++set_item_on;
     }
-
     if (!no_highlight)
     {
         current_menu[set_item_on].m_flags |= S_HILITE;
     }
+    highlight_item = 0;
 
-    LT_ResetScroll(current_menu, set_item_on); // [Cherry]
+    // [Cherry]
+    KeyboardScrollSubpage(0);
+    LT_ResetScroll(current_menu, set_item_on);
 }
 
 /////////////////////////////
@@ -1394,7 +1490,7 @@ void MN_DrawKeybnd(void)
     MN_DrawTitle(84, 2, "M_KEYBND", "Key Bindings");
     DrawTabs();
     DrawInstructions();
-    DrawScreenItems(current_menu);
+    DrawScreenItems(current_menu, false);
 
     // If the Reset Button has been selected, an "Are you sure?" message
     // is overlayed across everything else.
@@ -1543,7 +1639,7 @@ void MN_DrawWeapons(void)
     MN_DrawTitle(109, 2, "M_WEAP", "Weapons");
     DrawTabs();
     DrawInstructions();
-    DrawScreenItems(current_menu);
+    DrawScreenItems(current_menu, false);
 
     // If the Reset Button has been selected, an "Are you sure?" message
     // is overlayed across everything else.
@@ -1846,7 +1942,7 @@ static setup_menu_t stat_settings6[] =
     {"Secrets label",             S_CRITEM, M_X, M_SPC, {"hudcolor_secrets"},   m_null, input_null, str_hudcolor},
     {"Incomplete Milestone",      S_CRITEM, M_X, M_SPC, {"hudcolor_ms_incomp"}, m_null, input_null, str_hudcolor},
     {"Complete Milestone",        S_CRITEM, M_X, M_SPC, {"hudcolor_ms_comp"},   m_null, input_null, str_hudcolor},
-
+    
   MI_END
 };
 
@@ -1956,7 +2052,7 @@ void MN_DrawStatusHUD(void)
     MN_DrawTitle(59, 2, "M_STAT", "Status Bar/HUD");
     DrawTabs();
     DrawInstructions();
-    DrawScreenItems(current_menu);
+    DrawScreenItems(current_menu, false);
 
     if (hud_crosshair && current_page == 2)
     {
@@ -2050,7 +2146,7 @@ void MN_DrawAutoMap(void)
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(109, 2, "M_AUTO", "Automap");
     DrawInstructions();
-    DrawScreenItems(current_menu);
+    DrawScreenItems(current_menu, false);
 
     // If the Reset Button has been selected, an "Are you sure?" message
     // is overlayed across everything else.
@@ -2147,7 +2243,7 @@ void MN_DrawEnemy(void)
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(114, 2, "M_ENEM", "Enemies");
     DrawInstructions();
-    DrawScreenItems(current_menu);
+    DrawScreenItems(current_menu, false);
 
     // If the Reset Button has been selected, an "Are you sure?" message
     // is overlayed across everything else.
@@ -2247,7 +2343,7 @@ void MN_DrawCompat(void)
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(52, 2, "M_COMPAT", "Compatibility");
     DrawInstructions();
-    DrawScreenItems(current_menu);
+    DrawScreenItems(current_menu, false);
 
     // If the Reset Button has been selected, an "Are you sure?" message
     // is overlayed across everything else.
@@ -3021,7 +3117,7 @@ void MN_DrawGeneral(void)
     MN_DrawTitle(114, 2, "M_GENERL", "General");
     DrawTabs();
     DrawInstructions();
-    DrawScreenItems(current_menu);
+    DrawScreenItems(current_menu, false);
 
     // If the Reset Button has been selected, an "Are you sure?" message
     // is overlayed across everything else.
@@ -3569,7 +3665,8 @@ void MN_DrawCredits(void) // killough 10/98: credit screen
     inhelpscreens = true;
     DrawBackground(gamemode == shareware ? "CEIL5_1" : "MFLR8_4");
     MN_DrawTitle(42, 9, "MBFTEXT", mbftext_s);
-    DrawScreenItems(cred_settings);
+    // [Cherry] Fix credits not being drawn when current_subpage != 0
+    DrawScreenItems(cred_settings, true);
 }
 
 boolean MN_SetupCursorPostion(int x, int y)
@@ -3985,6 +4082,46 @@ void LT_Warp(void)
                          sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
 }
 
+// [Cherry] Scroll subpages with mouse wheel
+static boolean MouseScrollSubpage(int inc)
+{
+    if (menu_input != mouse_mode)
+    {
+        return false;
+    }
+
+    int i = current_subpage + inc;
+    if (i < 0 || i > total_subpages - 1)
+    {
+        return false;
+    }
+    current_subpage = i;
+
+    current_menu[set_item_on].m_flags &= ~S_HILITE;
+
+    int subpage = 0;
+    for (i = 0; !(current_menu[i].m_flags & S_END); i++)
+    {
+        if (current_menu[i].m_flags & S_SPLIT)
+        {
+            subpage++;
+            continue;
+        }
+
+        if (subpage == current_subpage
+            && !(current_menu[i].m_flags & S_SKIP))
+        {
+            break;
+        }
+    }
+    highlight_item = set_item_on = i;
+    current_menu[set_item_on].m_flags |= S_HILITE;
+
+    print_warning_about_changes = false; // killough 10/98
+    M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
+    return true;
+}
+
 static boolean NextPage(int inc)
 {
     // Some setup screens may have multiple screens.
@@ -4032,19 +4169,19 @@ static boolean NextPage(int inc)
         if (current_menu[set_item_on].m_flags & S_END)
         {
             no_highlight = true;
-            highlight_item = set_item_on;
             break;
         }
 
         ++set_item_on;
     }
-
     if (!no_highlight)
     {
         current_menu[set_item_on].m_flags |= S_HILITE;
     }
+    highlight_item = 0;
 
     // [Cherry]
+    KeyboardScrollSubpage(menu_input == mouse_mode ? -inc : false);
     if (!lt_level_pages)
     {
         LT_ResetScroll(current_menu, set_item_on);
@@ -4194,9 +4331,10 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
             }
         } while (current_item->m_flags & S_SKIP);
 
-        if (set_lvltbl_active) // [Cherry]
+        // [Cherry]
+        if (!LT_KeyboardScroll(current_menu, current_item))
         {
-            LT_KeyboardScroll(current_menu, current_item);
+            KeyboardScrollSubpage(0);
         }
 
         SelectDone(current_item); // phares 4/17/98
@@ -4226,7 +4364,11 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
             current_item--;
         } while (current_item->m_flags & S_SKIP);
 
-        LT_KeyboardScroll(current_menu, current_item); // [Cherry]
+        // [Cherry]
+        if (!LT_KeyboardScroll(current_menu, current_item))
+        {
+            KeyboardScrollSubpage(0);
+        }
 
         SelectDone(current_item); // phares 4/17/98
         return true;
@@ -4296,8 +4438,14 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
 
     if (action == MENU_LEFT)
     {
-        // [Cherry]
+        // [Cherry] Level table scrolling
         if (LT_MouseScroll(current_menu, -1))
+        {
+            return true;
+        }
+
+        // [Cherry] Subpage scrolling
+        if (MouseScrollSubpage(-1))
         {
             return true;
         }
@@ -4310,8 +4458,14 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
 
     if (action == MENU_RIGHT)
     {
-        // [Cherry]
+        // [Cherry] Level table scrolling
         if (LT_MouseScroll(current_menu, 1))
+        {
+            return true;
+        }
+
+        // [Cherry] Subpage scrolling
+        if (MouseScrollSubpage(1))
         {
             return true;
         }
@@ -4358,15 +4512,16 @@ static boolean SetupTab(void)
         {
             if (current_menu[set_item_on].m_flags & S_END)
             {
-                highlight_item = set_item_on;
                 break;
             }
 
             ++set_item_on;
         }
 
+        KeyboardScrollSubpage(0);
         LT_ResetScroll(current_menu, set_item_on);
     }
+    highlight_item = 0;
 
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
     return true;

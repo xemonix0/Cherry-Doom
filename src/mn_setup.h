@@ -18,6 +18,7 @@
 
 #include "doomdef.h"
 #include "doomtype.h"
+#include "v_video.h" // [Cherry] color ranges
 
 typedef struct
 {
@@ -71,6 +72,12 @@ typedef struct
     int flags;
 } setup_tab_t;
 
+enum
+{
+    scroll_up = 1,
+    scroll_down = 2,
+};
+
 // Establish the message colors to be used
 
 #define CR_TITLE   CR_GOLD
@@ -85,9 +92,15 @@ typedef struct
 #define M_Y_WARN (SCREENHEIGHT - 15)
 #define M_TAB_Y  22
 
+#define LT_SCROLL_X      (SCREENWIDTH - 9)
+#define LT_SCROLL_UP_Y   (M_TAB_Y + M_SPC)
+#define LT_SCROLL_DOWN_Y (M_Y_WARN - 5)
+
 extern char menu_buffer[66];
 extern const char *default_skill_strings[];
+extern int scroll_indicators;
 
+void MN_DrawScrollIndicators(void);
 void MN_BlinkingArrowRight(struct setup_menu_s *s);
 void MN_DrawItem(struct setup_menu_s *s, int accum_y);
 void MN_DrawMenuStringEx(int64_t flags, int x, int y, int color);
@@ -181,8 +194,9 @@ extern const char *midi_player_string;
 #define S_FUNCTION    0x0000000400000000 // Used only to call a function
 
 // [Cherry]
-#define S_LTBL_MAP    0x0000001000000000 // Level table row with a map's info
-#define S_ALT_COL     0x0000002000000000 // Alternate color text
+#define S_LTBL_MAP    0x0001000000000000 // Level table row with a map's info
+#define S_ALT_COL     0x0002000000000000 // Alternate color text
+#define S_SPLIT       0x0004000000000000 // Split page
 
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
