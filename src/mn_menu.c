@@ -657,21 +657,23 @@ static void M_CustomSkill(int choice)
 
 void M_StartCustomSkill(const int mode)
 {
+  if (casual_play) { gameskill = sk_custom; }
+
   G_SetUserCustomSkill();
 
   if (mode == 0 || gamestate == GS_DEMOSCREEN)
   {
     if (!EpiCustom)
     {
-      G_DeferedInitNew(sk_custom, epiChoice + 1, 1);
+      G_DeferedInitNew(gameskill, epiChoice + 1, 1);
     }
     else {
-      G_DeferedInitNew(sk_custom, EpiMenuEpi[epiChoice], EpiMenuMap[epiChoice]);
+      G_DeferedInitNew(gameskill, EpiMenuEpi[epiChoice], EpiMenuMap[epiChoice]);
     }
   }
   else if (mode == 1 || !usergame)
   {
-    G_DeferedInitNew(sk_custom, gameepisode, gamemap);
+    G_DeferedInitNew(gameskill, gameepisode, gamemap);
   }
   else if (mode == 2)
   {
