@@ -1067,7 +1067,7 @@ static void G_DoLoadLevel(void)
   int i;
 
   // [Nugget]
-  int lastaction  = gameaction;
+  int lastaction = gameaction;
   static int lastepisode = -1, lastmap = -1;
 
   // Set the sky map.
@@ -1163,7 +1163,14 @@ static void G_DoLoadLevel(void)
     G_PlayerReborn(0);
   }
 
-  P_SetupLevel (gameepisode, gamemap, 0, gameskill);
+  // [Nugget] Rewind: skip level setup if rewinding within the same map
+  if (lastaction == ga_rewind
+      && lastepisode == gameepisode && lastmap == gamemap)
+  {
+    S_Start(); // Stop sounds
+  }
+  else
+    P_SetupLevel (gameepisode, gamemap, 0, gameskill);
 
   MN_UpdateFreeLook();
 
@@ -1241,13 +1248,15 @@ static void G_DoLoadLevel(void)
 
   R_UpdateFreecamMobj(NULL);
 
-  if (lastepisode != gameepisode || lastmap  != gamemap)
+  if (lastepisode != gameepisode || lastmap != gamemap)
   {
-    lastepisode = gameepisode;
-    lastmap     = gamemap;
-
     R_ResetFreecam(true);
   }
+
+  // -------------------------------------------------------------------------
+
+  lastepisode = gameepisode;
+  lastmap     = gamemap;
 }
 
 extern int ddt_cheating;
