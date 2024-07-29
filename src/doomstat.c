@@ -216,12 +216,6 @@ int hudcolor_items;
 int hudcolor_secrets;
 int hudcolor_ms_incomp;
 int hudcolor_ms_comp;
-// [Cherry] --------------------------------------------------------------
-int hudcolor_th_low;
-int hudcolor_th_ok;
-int hudcolor_th_good;
-int hudcolor_th_extra;
-// [Cherry] End ----------------------------------------------------------
 
 // Enemies ----------------------------
 
@@ -271,11 +265,27 @@ int comp_keypal;
 
 // [Nugget] -----------------------------------------------------------------/
 
-// [Cherry] Level Table
+// [Cherry] /-----------------------------------------------------------------
+
+// General ----------------------------
+
+boolean mute_inactive;
+boolean rocket_trails;
+
+// Status Bar/HUD ---------------------
+
+int hudcolor_th_low;
+int hudcolor_th_ok;
+int hudcolor_th_good;
+int hudcolor_th_extra;
+
+// Level Table ------------------------
 
 boolean lt_enable_tracking, lt_force_no_tracking;
 boolean lt_track_continuous;
 int lt_stats_format;
+
+// [Cherry] -----------------------------------------------------------------/
 
 //----------------------------------------------------------------------------
 //

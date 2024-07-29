@@ -1490,7 +1490,13 @@ void A_CyberAttack(mobj_t *actor)
   if (!actor->target)
     return;
   A_FaceTarget(actor);
-  P_SpawnMissile(actor, actor->target, MT_ROCKET);
+  mobj_t *mo = P_SpawnMissile(actor, actor->target, MT_ROCKET);
+
+  if (CASUALPLAY(rocket_trails) && !(no_rocket_trails & no_rsmk_cyberdemon))
+  {
+    mo->intflags |= MIF_SMOKE_TRAIL;
+    mo->pursuecount = 0;
+  }
 }
 
 void A_BruisAttack(mobj_t *actor)
@@ -1560,17 +1566,22 @@ void A_Tracer(mobj_t *actor)
   if ((gametic-basetic) & 3)
     return;
 
-  // spawn a puff of smoke behind the rocket
-  P_SpawnPuff(actor->x, actor->y, actor->z);
+  if (CASUALPLAY(rocket_trails) && !(no_rocket_trails & no_rsmk_revenant))
+    actor->intflags |= MIF_SMOKE_TRAIL;
+  else
+  {
+    // spawn a puff of smoke behind the rocket
+    P_SpawnPuff(actor->x, actor->y, actor->z);
 
-  th = P_SpawnMobj (actor->x-actor->momx,
-                    actor->y-actor->momy,
-                    actor->z, MT_SMOKE);
+    th = P_SpawnMobj (actor->x-actor->momx,
+                      actor->y-actor->momy,
+                      actor->z, MT_SMOKE);
 
-  th->momz = FRACUNIT;
-  th->tics -= P_Random(pr_tracer) & 3;
-  if (th->tics < 1)
-    th->tics = 1;
+    th->momz = FRACUNIT;
+    th->tics -= P_Random(pr_tracer) & 3;
+    if (th->tics < 1)
+        th->tics = 1;
+  } 
 
   // adjust direction
   dest = actor->tracer;

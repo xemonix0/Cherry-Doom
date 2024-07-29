@@ -237,11 +237,17 @@ enum {
   MIF_FLIP = 16,
   MIF_SPAWNED_BY_ICON = 32,
 
-  // [Nugget] ----------------------------------------------------------------
+  // [Nugget] /----------------------------------------------------------------
 
   MIF_CROUCHING    = 0x00010000,  // Mobj (player) is crouching
 
   MIF_CHEESE       = 0x10000000,
+
+  // [Nugget] ----------------------------------------------------------------/
+
+  // [Cherry] -----------------------------------------------------------------
+
+  MIF_SMOKE_TRAIL = 0x00000100, // Rocket trails from Doom Retro
 };
 
 // Map Object definition.
@@ -435,6 +441,18 @@ extern boolean colored_blood;
 
 // [Cherry] Floating powerups from International Doom
 extern boolean floating_powerups;
+
+// [Cherry] Rocket trails from Doom Retro
+
+enum
+{
+    no_rsmk_player = 1,
+    no_rsmk_cyberdemon = 2,
+    no_rsmk_revenant = 4,
+
+    no_rsmk_all = no_rsmk_player | no_rsmk_cyberdemon | no_rsmk_revenant,
+};
+extern int no_rocket_trails;
 
 enum {
   VERTAIM_AUTO,
