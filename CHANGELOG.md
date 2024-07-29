@@ -16,8 +16,10 @@
 	- [2.2.1](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.2.1)
 	- [2.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.3.0)
 	- [2.3.1](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.3.1)
-	- [3.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.0.0)
-	- [3.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.1.0)
+	- [3.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.0.0), note:
+		- Added support for Woof! 14.0.0 saves missing in Nugget Doom 3.0.0 and up
+	- [3.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.1.0),
+	- [3.2.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.2.0)
 - Some features added in previous versions have been removed:
 	- Cherry's _Extended HUD colors_, except colors for _Low/Ok/Good/Extra values_
 	- _Motion Blur_

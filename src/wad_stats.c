@@ -499,7 +499,7 @@ void WS_WatchExitMap(void)
 
     ++current_map_stats->total_exits;
 
-    if (nomonsters)
+    if (nomonsters || gameskill == sk_custom)
     {
         return;
     }

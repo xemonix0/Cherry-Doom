@@ -44,6 +44,25 @@ void P_UnArchiveMap(void);
 extern byte *save_p;
 void CheckSaveGame(size_t);              // killough
 
+// [Cherry] /--- Better saveg_compat checking ---------------------------------
+
+enum saveg_compat_e;
+
+typedef enum
+{
+    saveg_port_mbf,
+    saveg_woof,
+    saveg_nugget,
+    saveg_cherry,
+} saveg_port_t;
+
+boolean saveg_check_version(enum saveg_compat_e lower,
+                            enum saveg_compat_e upper);
+#define saveg_check_version_exact(ver) saveg_check_version((ver), (ver))
+#define saveg_check_version_min(ver) saveg_check_version((ver), saveg_current)
+
+// [Cherry] ------------------------------------------------------------------/
+
 byte saveg_read8(void);
 void saveg_write8(byte value);
 int saveg_read32(void);
@@ -65,14 +84,13 @@ typedef enum saveg_compat_e
   saveg_mbf,
   saveg_woof510,
   saveg_woof600,
-  // [Nugget]
-  saveg_nugget200,
-  saveg_nugget210,
-  // [Cherry]
-  saveg_cherry100,
-  saveg_cherry101,
+  saveg_nugget200, // [Nugget]
+  saveg_nugget210, // [Cherry]
+  saveg_cherry100, // [Cherry]
+  saveg_cherry101, // [Cherry]
+  saveg_woof1300,  // [Cherry] Woof! 14.0.0 save support
   saveg_nugget300, // [Nugget] Identified by "Nugget 2.4.0"
-  saveg_nugget320,
+  saveg_nugget320, // [Cherry]
   saveg_current, // saveg_cherry200
 } saveg_compat_t;
 
