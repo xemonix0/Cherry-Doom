@@ -1019,6 +1019,13 @@ default_t defaults[] = {
     "1 to enable rocket trails"
   },
 
+  { // Rocket trails spawn interval
+    "rocket_trail_interval",
+    (config_t *) &rocket_trail_interval, NULL,
+    {3}, {1,5}, number, ss_gen, wad_yes,
+    "Rocket trails spawn interval (smoke spawns every n ticks, lower value = more smoke)"
+  },
+
   // [Cherry] ---------------------------------------------------------------/
 
   //

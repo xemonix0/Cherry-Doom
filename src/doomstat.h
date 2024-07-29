@@ -662,6 +662,7 @@ extern int comp_keypal;
 
 extern boolean mute_inactive;
 extern boolean rocket_trails;
+extern int rocket_trail_interval;
 
 // Status Bar/HUD ---------------------
 

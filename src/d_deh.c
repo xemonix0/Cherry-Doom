@@ -2078,7 +2078,7 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
 }
 
 // [Cherry] Rocket trails from Doom Retro
-boolean no_rocket_trails;
+int no_rocket_trails;
 
 // ====================================================================
 // deh_procFrame
