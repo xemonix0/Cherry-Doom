@@ -32,6 +32,7 @@
 
 ## Bug Fixes
 
+- **Occassional crash when exiting levels** [thanks @fabiangreffrath, @ceski-1, DW testers]
 - **Blocky _Selective Fuzz Darkening_ overflow** (caused visual glitches and crashes) [thanks @ceski-1]
 - **Status bar popping when the _Alternative Intermission Background_ were enabled**
 - **1S lines obscuring _Tag Finder_ highlights in automap**
