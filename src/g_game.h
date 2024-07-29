@@ -113,13 +113,20 @@ extern int  bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
 extern int pars[][10];  // hardcoded array size
 extern int cpars[];     // hardcoded array size
 
-// [Nugget] Rewind -----------------------------------------------------------
+// [Nugget] ------------------------------------------------------------------
 
+// Rewind
 extern void G_SetRewindCountdown(int value);
 extern void G_EnableRewind(void);
 extern void G_Rewind(void);
 extern void G_ClearExcessKeyFrames(void);
 extern boolean G_KeyFrameRW(void);
+
+// Skill
+void G_SetBabyModeParms(const skill_t skill);
+void G_SetSkillParms(const skill_t skill);
+void G_SetUserCustomSkill(void);
+void G_RestartWithLoadout(const boolean current);
 
 #endif
 

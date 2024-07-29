@@ -147,6 +147,10 @@ void MN_DrawWeapons(void);
 void MN_DrawEnemy(void);
 void MN_DrawLevelTable(void);
 
+// [Nugget] Custom Skill menu
+void MN_CustomSkill(void);
+void MN_DrawCustomSkill(void);
+
 extern int resolution_scale;
 extern int midi_player_menu;
 extern const char *midi_player_string;
@@ -188,7 +192,7 @@ extern const char *midi_player_string;
 #define S_THRM_SIZE4  0x20000000 // Thermo bar size 4
 #define S_PCT         0x40000000 // Show % sign
                               
-// [Nugget]                   
+// [Nugget]
 #define S_CRITICAL    0x0000000100000000 // Disable during non-casual play
 #define S_RES         0x0000000200000000 // Report current resolution
 #define S_FUNCTION    0x0000000400000000 // Used only to call a function

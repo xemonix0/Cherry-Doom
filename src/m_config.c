@@ -623,11 +623,79 @@ default_t defaults[] = {
   //
 
   { // jff 3/24/98 allow default skill setting
+    // [Nugget] Account for custom skill
     "default_skill",
     (config_t *) &defaultskill, NULL,
-    {3}, {1,5}, number, ss_gen, wad_no,
-    "selects default skill (1 = ITYTD, 2 = HNTR, 3 = HMP, 4 = UV, 5 = NM)"
+    {3}, {1,6}, number, ss_gen, wad_no,
+    "selects default skill (1 = ITYTD, 2 = HNTR, 3 = HMP, 4 = UV, 5 = NM, 6 = Custom)"
   },
+
+  // [Nugget] Custom Skill /--------------------------------------------------
+
+  {
+    "custom_skill_things",
+    (config_t *) &custom_skill_things, NULL,
+    {2}, {0,2}, number, ss_skill, wad_yes,
+    "Custom Skill: thing spawns (0 = Easy, 1 = Normal, 2 = Hard)"
+  },
+
+  {
+    "custom_skill_coopspawns",
+    (config_t *) &custom_skill_coopspawns, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: spawn multiplayer things"
+  },
+
+  {
+    "custom_skill_nomonsters",
+    (config_t *) &custom_skill_nomonsters, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: don't spawn monsters"
+  },
+
+  {
+    "custom_skill_doubleammo",
+    (config_t *) &custom_skill_doubleammo, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: receive double ammo from pickups"
+  },
+
+  {
+    "custom_skill_halfdamage",
+    (config_t *) &custom_skill_halfdamage, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: player takes half the damage"
+  },
+
+  {
+    "custom_skill_slowbrain",
+    (config_t *) &custom_skill_slowbrain, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: Icon of Sin shoots cubes half the time"
+  },
+
+  {
+    "custom_skill_fast",
+    (config_t *) &custom_skill_fast, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: fast monsters"
+  },
+
+  {
+    "custom_skill_respawn",
+    (config_t *) &custom_skill_respawn, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: respawning monsters"
+  },
+
+  {
+    "custom_skill_aggressive",
+    (config_t *) &custom_skill_aggressive, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: aggressive monsters (instant reaction time, continuous attacks)"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   { // killough 3/6/98: preserve autorun across games
     "autorun",
@@ -790,6 +858,13 @@ default_t defaults[] = {
   },
 
   {
+    "explosion_shake_intensity_pct",
+    (config_t *) &explosion_shake_intensity_pct, NULL,
+    {100}, {10,100}, number, ss_none, wad_yes,
+    "Explosion shake intensity percent"
+  },
+
+  {
     "breathing",
     (config_t *) &breathing, NULL,
     {0}, {0,1}, number, ss_gen, wad_yes,
@@ -850,6 +925,20 @@ default_t defaults[] = {
     (config_t *) &no_menu_tint, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
     "1 to disable palette tint in menus"
+  },
+
+  {
+    "hud_menu_shadows",
+    (config_t *) &hud_menu_shadows, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "1 to enable shadows for HUD/menu graphics"
+  },
+
+  {
+    "hud_menu_shadows_filter_pct",
+    (config_t *) &hud_menu_shadows_filter_pct, NULL,
+    {66}, {0,100}, number, ss_none, wad_yes,
+    "HUD/menu-shadows translucency percentage"
   },
 
   {
@@ -927,6 +1016,13 @@ default_t defaults[] = {
     (config_t *) &one_key_saveload, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
     "1 for single key quick saving/loading"
+  },
+
+  {
+    "autosave_interval",
+    (config_t *) &autosave_interval, NULL,
+    {0}, {30,600}, number, ss_none, wad_no,
+    "Interval between autosaves, in seconds"
   },
 
   {
@@ -1114,6 +1210,13 @@ default_t defaults[] = {
   },
 
   {
+    "skip_ammoless_weapons",
+    (config_t *) &skip_ammoless_weapons, NULL,
+    {0}, {0,1}, number, ss_weap, wad_no,
+    "1 to make previous/next-weapon buttons skip weapons with insufficient ammo"
+  },
+
+  {
     "always_bob",
     (config_t *) &always_bob, NULL,
     {1}, {0,1}, number, ss_none, wad_no,
@@ -1153,6 +1256,13 @@ default_t defaults[] = {
     (config_t *) &translucent_pspr, NULL,
     {0}, {0,1}, number, ss_weap, wad_yes,
     "1 to enable translucency for weapon flash sprites"
+  },
+
+  {
+    "translucent_pspr_pct",
+    (config_t *) &translucent_pspr_pct, NULL,
+    {75}, {0,100}, number, ss_none, wad_yes,
+    "Weapon-flash translucency percentage"
   },
 
   {
@@ -1691,7 +1801,7 @@ default_t defaults[] = {
     "comp_manualdoor",
     (config_t *) &comp_manualdoor, NULL,
     {1}, {0,1}, number, ss_none, wad_yes,
-    "Manually-toggled moving doors are silent"
+    "Manually toggled moving doors are silent"
   },
 
   {
@@ -1723,6 +1833,13 @@ default_t defaults[] = {
   },
 
   {
+    "comp_keynoway",
+    (config_t *) &comp_keynoway, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Play DSNOWAY instead of DSOOF when failing to use key-locked triggers"
+  },
+
+  {
     "comp_godface",
     (config_t *) &comp_godface, NULL,
     {0}, {0,1}, number, ss_none, wad_yes,
@@ -1734,6 +1851,13 @@ default_t defaults[] = {
     (config_t *) &comp_deadoof, NULL,
     {1}, {0,1}, number, ss_none, wad_yes,
     "Dead players can still play oof sound"
+  },
+
+  {
+    "comp_powerrunout",
+    (config_t *) &comp_powerrunout, NULL,
+    {0}, {0,1}, number, ss_none, wad_yes,
+    "Use improved powerup run-out effect"
   },
 
   {
@@ -1843,6 +1967,14 @@ default_t defaults[] = {
     {0}, {UL,UL}, input, ss_keys, wad_no,
     "key to cycle through chasecam modes",
     input_chasecam, { {0, 0} }
+  },
+
+  {
+    "input_freecam",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "Key to toggle freecam",
+    input_freecam, { {0, 0} }
   },
 
   // [Nugget] ---------------------------------------------------------------/
@@ -3234,6 +3366,13 @@ default_t defaults[] = {
   },
 
   {
+    "mapcolor_hitbox",
+    (config_t *) &mapcolor_hitbox, NULL,
+    {96}, {0,255}, number, ss_none, wad_yes,
+    "color used for thing hitboxes"
+  },
+
+  {
     "mapcolor_preset",
     (config_t *) &mapcolor_preset, NULL,
     {1}, {0,2}, number, ss_auto, wad_no,
@@ -3268,6 +3407,13 @@ default_t defaults[] = {
     (config_t *) &map_smooth_lines, NULL,
     {1}, {0,1}, number, ss_auto, wad_no,
     "1 to enable smooth automap lines"
+  },
+
+  {
+    "map_hitboxes",
+    (config_t *) &map_hitboxes, NULL,
+    {0}, {0,1}, number, ss_auto, wad_no,
+    "1 to show thing hitboxes in automap"
   },
 
   {
@@ -3493,19 +3639,30 @@ default_t defaults[] = {
     "1 for solid color status bar background in widescreen mode"
   },
 
-  { // [Nugget]
+  // [Nugget] /---------------------------------------------------------------
+
+  {
     "show_ssg",
     (config_t *) &show_ssg, NULL,
     {1}, {0,1}, number, ss_none, wad_yes,
     "1 to show SSG availability in the Shotgun slot of the arms widget"
   },
 
-  { // [Nugget]
+  {
+    "hud_highlight_weapon",
+    (config_t *) &hud_highlight_weapon, NULL,
+    {0}, {0,1}, number, ss_stat, wad_yes,
+    "1 to highlight the current/pending weapon on the status bar"
+  },
+
+  {
     "alt_arms",
     (config_t *) &alt_arms, NULL,
-    {0}, {0,1}, number, ss_none, wad_yes,
+    {0}, {0,1}, number, ss_stat, wad_yes,
     "1 to enable alternative Arms widget display"
   },
+
+  // [Nugget] ---------------------------------------------------------------/
 
   { // [Alaux]
     "hud_animated_counts",
@@ -3605,14 +3762,14 @@ default_t defaults[] = {
   {
     "hud_stats_format",
     (config_t *) &hud_stats_format, NULL,
-    {STATSFORMAT_RATIO}, {STATSFORMAT_RATIO,STATSFORMAT_REMAINING}, number, ss_stat, wad_no,
-    "level stats format (1 = ratio, 2 = boolean, 3 = percentage, 4 = remaining)"
+    {STATSFORMAT_RATIO}, {STATSFORMAT_RATIO,NUMSTATSFORMATS-1}, number, ss_stat, wad_no,
+    "level stats format (1 = ratio, 2 = boolean, 3 = percentage, 4 = remaining, 5 = count)"
   },
 
   {
     "hud_stats_format_map",
     (config_t *) &hud_stats_format_map, NULL,
-    {0}, {0,STATSFORMAT_REMAINING}, number, ss_stat, wad_no,
+    {0}, {0,NUMSTATSFORMATS-1}, number, ss_stat, wad_no,
     "level stats format in Automap (0 = match HUD)"
   },
 
@@ -3840,6 +3997,13 @@ default_t defaults[] = {
     "crosshair type"
   },
 
+  { // [Nugget] Translucent crosshair
+    "hud_crosshair_tran_pct",
+    (config_t *) &hud_crosshair_tran_pct, NULL,
+    {100}, {0,100}, number, ss_none, wad_no,
+    "crosshair translucency percent"
+  },
+
   { // [Cherry] Disable crosshair on slot 1
     "hud_crosshair_slot1_disable",
     (config_t *) &hud_crosshair_slot1_disable, NULL,
@@ -3915,8 +4079,8 @@ default_t defaults[] = {
   {
     "lt_stats_format",
     (config_t *) &lt_stats_format, NULL,
-    {STATSFORMAT_RATIO}, {0,STATSFORMAT_REMAINING}, number, ss_none, wad_no,
-    "level stats format in Level Table (0 = match HUD, 1 = ratio, 2 = boolean, 3 = percentage, 4 = remaining)"
+    {STATSFORMAT_RATIO}, {0,NUMSTATSFORMATS-1}, number, ss_none, wad_no,
+    "level stats format in Level Table (0 = match HUD, 1 = ratio, 2 = boolean, 3 = percentage, 4 = remaining, 5 = count)"
   },
 
   // [Cherry] ----------------------------------------------------------------/

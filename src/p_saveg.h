@@ -71,7 +71,8 @@ typedef enum saveg_compat_e
   // [Cherry]
   saveg_cherry100,
   saveg_cherry101,
-  saveg_nugget300,
+  saveg_nugget300, // [Nugget] Identified by "Nugget 2.4.0"
+  saveg_nugget320,
   saveg_current, // saveg_cherry200
 } saveg_compat_t;
 

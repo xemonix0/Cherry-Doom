@@ -120,7 +120,9 @@ typedef enum {
   sk_easy,
   sk_medium,
   sk_hard,
-  sk_nightmare
+  sk_nightmare,
+
+  sk_custom // [Nugget]
 } skill_t;
 
 //
@@ -197,6 +199,9 @@ typedef enum {
   ss_gen,       // killough 10/98
   ss_comp,      // killough 10/98
   ss_ltbl,      // [Cherry]
+
+  ss_skill, // [Nugget] Custom Skill menu
+
   ss_max,
 } ss_types;
 

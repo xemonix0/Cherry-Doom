@@ -204,11 +204,14 @@ static patch_t *nhwpnum[9][2];      // NHW0NUM# and NHW1NUM#, from 1 to 9
 static patch_t *nhkeys[NUMCARDS+3]; // NHKEYS
 static patch_t *nhbersrk;           // NHBERSRK
 static patch_t *nhammo[4];          // NHAMMO#, from 0 to 3
+static patch_t *nhambar[2];         // NHAMBAR#, from 0 to 1
 static patch_t *nhealth[2];         // NHEALTH#, from 0 to 1
+static patch_t *nhhlbar[2];         // NHHLBAR#, from 0 to 1
 static patch_t *nharmor[3];         // NHARMOR#, from 0 to 2
+static patch_t *nharbar[2];         // NHARBAR#, from 0 to 1
 static patch_t *nhinfnty;           // NHINFNTY
 
-// [Nugget] ------------------------------------------------------------------/
+// [Nugget] -----------------------------------------------------------------/
 
 // ready-weapon widget
 static st_number_t w_ready;
@@ -801,7 +804,6 @@ void ST_updateWidgets(void)
       else
         st_fragscount -= plyr->frags[i];
     }
-
 }
 
 // [Alaux]
@@ -842,9 +844,8 @@ void ST_Ticker(void)
   ST_updateWidgets();
   st_oldhealth = plyr->health;
 
-  st_invul = (plyr->powers[pw_invulnerability] > 4*32 ||
-              plyr->powers[pw_invulnerability] & 8) ||
-              plyr->cheats & CF_GODMODE;
+  st_invul = POWER_RUNOUT(plyr->powers[pw_invulnerability]) ||
+             plyr->cheats & CF_GODMODE;
 
   if (!nodrawers)
     ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
@@ -909,7 +910,7 @@ static void ST_doPaletteStuff(void)
       if (beta_emulation)
         palette = 0;
       else
-      if ((plyr->powers[pw_ironfeet] > 4*32 || plyr->powers[pw_ironfeet] & 8)
+      if (POWER_RUNOUT(plyr->powers[pw_ironfeet])
           && !STRICTMODE(no_radsuit_tint)) // [Nugget]
         palette = RADIATIONPAL;
       else
@@ -965,6 +966,33 @@ static void NughudDrawSBChunk(nughud_sbchunk_t *chunk)
   V_CopyRect(sx, sy, st_bar, sw, sh, x, y);
 }
 
+static void NughudDrawBar(nughud_bar_t *widget, patch_t **patches, int units, int maxunits)
+{
+  if (widget->x > -1 && patches[0])
+  {
+    const boolean twobars = patches[1] && (maxunits < units);
+
+    for (int i = 0;  i < (1 + twobars);  i++)
+    {
+      const int slices = MIN(100 * (2 - twobars), (units * 100 / maxunits) - (100 * i)) * 100 / widget->ups;
+      const int slicewidth = SHORT(patches[i]->width) + widget->gap;
+      const int x = widget->x
+                    + NUGHUDWIDESHIFT(widget->wide)
+                    - ((widget->align == 1) ? slices * slicewidth     :
+                       (widget->align == 0) ? slices * slicewidth / 2 : 0);
+
+      for (int j = 0;  j < slices;  j++)
+      {
+        V_DrawPatch(
+          x + (slicewidth * j),
+          widget->y,
+          patches[i]
+        );
+      }
+    }
+  }
+}
+
 // [Nugget] -----------------------------------------------------------------/
 
 void ST_drawWidgets(void)
@@ -995,7 +1023,30 @@ void ST_drawWidgets(void)
 
     // Patches ---------------------------------------------------------------
 
-    for (i = 0;  i < NUMNUGHUDPATCHES;  i++)
+    // First 4 patches are drawn before bars
+    for (i = 0;  i < NUMNUGHUDPATCHES/2;  i++)
+    {
+      if (nughud_patchlump[i] >= 0)
+      {
+        NughudDrawPatch(
+          &nughud.patches[i],
+          W_CacheLumpNum(nughud_patchlump[i], PU_STATIC),
+          !nughud.patch_offsets
+        );
+      }
+    }
+
+    {
+      extern int maxhealth, max_armor;
+
+      if (weaponinfo[w_ready.data].ammo != am_noammo)
+      { NughudDrawBar(&nughud.ammobar, nhambar, *w_ready.num, maxammo / (1 + plyr->backpack)); }
+
+      NughudDrawBar(&nughud.healthbar, nhhlbar, st_health, maxhealth);
+      NughudDrawBar(&nughud.armorbar, nharbar, st_armor, max_armor/2);
+    }
+
+    for (i = NUMNUGHUDPATCHES/2;  i < NUMNUGHUDPATCHES;  i++)
     {
       if (nughud_patchlump[i] >= 0)
       {
@@ -1239,26 +1290,96 @@ void ST_drawWidgets(void)
     }
   }
 
-  // [Nugget] Highlight Arms #1 only if the player has Berserk
+  // [Nugget] /===============================================================
+  
+  // Highlight Arms #1 only if the player has Berserk
   st_berserk = plyr->powers[pw_strength] ? true : false;
 
-  // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
+  // [crispy] show SSG availability in the Shotgun slot of the arms widget
   st_shotguns = plyr->weaponowned[wp_shotgun] | plyr->weaponowned[wp_supershotgun];
 
+  // Highlight current/pending weapon ----------------------------------------
+
+  for (i = 0;  i < 9;  i++)
+  {
+    w_arms[i].data = 0;
+  }
+
+  if (hud_highlight_weapon)
+  {
+    const weapontype_t weapon = plyr->pendingweapon != wp_nochange
+                                ? plyr->pendingweapon : plyr->readyweapon;
+    int index;
+
+    if (st_crispyhud)
+    {
+      if (weapon == wp_chainsaw && nughud.arms[7].x == -1)
+      {
+        index = 0;
+      }
+      else if (weapon == wp_supershotgun && nughud.arms[8].x == -1)
+      {
+        index = 2;
+      }
+      else { index = weapon; }
+    }
+    else {
+      if (alt_arms && (weapon == wp_chainsaw || weapon == wp_supershotgun))
+      {
+        if (weapon == wp_chainsaw && have_ssg)
+        {
+          index = -1; // Don't highlight anything
+        }
+        else { index = 5; }
+      }
+      else if (weapon == wp_supershotgun)
+      {
+        index = 1;
+      }
+      else { index = weapon - 1 - alt_arms; }
+    }
+
+    if (0 <= index && index < 9) { w_arms[index].data = 2997; }
+  }
+
+  // [Nugget] ===============================================================/
+  
   // [Nugget] NUGHUD
-  if (st_crispyhud) {
+  if (st_crispyhud)
+  {
     for (i = 0;  i < 9;  i++)
+    {
       if (nughud.arms[i].x > -1) { STlib_updateMultIcon(&w_arms[i]); }
+    }
   }
   else
     for (i=0; i<6; i++)
       STlib_updateMultIcon(&w_arms[i]);
 
-  // [Nugget] NUGHUD: This probably shouldn't go here, but it works
-  if (st_crispyhud && (nughud.face.x > -1) && nughud.face_bg)
+  // [Nugget] NUGHUD
+  if (st_crispyhud && nughud.face.x > -1 && nughud.face_bg)
   {
-    V_DrawPatch(nughud.face.x + NUGHUDWIDESHIFT(nughud.face.wide),
-                nughud.face.y+1, faceback[netgame ? displayplayer : 1]);
+    patch_t *bg = faceback[displayplayer];
+    const int x = nughud.face.x + NUGHUDWIDESHIFT(nughud.face.wide),
+              y = nughud.face.y + ST_HEIGHT - SHORT(bg->height);
+
+    if (netgame)
+    {
+      V_DrawPatch(x, y, bg);
+    }
+    else {
+      nughud_sbchunk_t chunk; // Reuse the chunk drawing function for its bounds-checking
+
+      chunk.x = x + SHORT(bg->leftoffset);
+      chunk.y = y - SHORT(bg->topoffset);
+      chunk.wide = 0;
+      chunk.sx = ST_FX + SHORT(bg->leftoffset);
+      chunk.sy = (ST_FY - ST_Y) - SHORT(bg->topoffset);
+      chunk.sw = SHORT(bg->width);
+      chunk.sh = SHORT(bg->height);
+
+      NughudDrawSBChunk(&chunk);
+    }
   }
 
   if (!st_crispyhud || nughud.face.x > -1) // [Nugget] NUGHUD
@@ -1583,6 +1704,20 @@ void ST_loadGraphics(void)
       }
     }
 
+    // Ammo bar -----------------------
+
+    // Load NHAMBAR0 to NHAMBAR1 if available
+    for (i = 0;  i < 2;  i++)
+    {
+      M_snprintf(namebuf, sizeof(namebuf), "NHAMBAR%d", i);
+
+      if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
+      {
+        nhambar[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      }
+      else if (!i) { break; }
+    }
+
     // Health icons -------------------
 
     // Load NHEALTH0 to NHEALTH1 if available
@@ -1600,6 +1735,20 @@ void ST_loadGraphics(void)
       }
     }
 
+    // Health bar ---------------------
+
+    // Load NHHLBAR0 to NHHLBAR1 if available
+    for (i = 0;  i < 2;  i++)
+    {
+      M_snprintf(namebuf, sizeof(namebuf), "NHHLBAR%d", i);
+
+      if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
+      {
+        nhhlbar[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      }
+      else if (!i) { break; }
+    }
+
     // Armor icons --------------------
 
     // Load NHARMOR0 to NHARMOR2 if available
@@ -1615,6 +1764,20 @@ void ST_loadGraphics(void)
         nharmor[0] = NULL;
         break;
       }
+    }
+
+    // Armor bar ----------------------
+
+    // Load NHARBAR0 to NHARBAR1 if available
+    for (i = 0;  i < 2;  i++)
+    {
+      M_snprintf(namebuf, sizeof(namebuf), "NHARBAR%d", i);
+
+      if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
+      {
+        nharbar[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      }
+      else if (!i) { break; }
     }
 
     // Infinity -----------------------
@@ -1687,6 +1850,7 @@ void ST_createWidgets(void)
                 NUGHUDALIGN(nughud.ammo.align));
 
   w_ready.isready = true;
+
   /*
   // the last weapon type
   w_ready.data = plyr->readyweapon;

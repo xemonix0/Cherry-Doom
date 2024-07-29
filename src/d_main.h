@@ -66,7 +66,7 @@ void D_StartTitle(void);
 
 extern boolean advancedemo;
 
-void D_NuggetUpdateCasual(void); // [Nugget]
+void D_UpdateCasualPlay(void); // [Nugget]
 
 #endif
 
