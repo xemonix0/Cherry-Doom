@@ -6,9 +6,12 @@
 - _Mute Inactive Window_ setting
 - _Floating Powerups_ setting
 - _Disable Crosshair On Slot 1_ setting
+- _Rocket Trails_ setting
+- Hints for disabled menu items
 
 ## Changes
 
+- New icon
 - Changes from the following _Nugget Doom_ releases have been merged:
 	- [2.2.1](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.2.1)
 	- [2.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.3.0)
@@ -25,7 +28,7 @@
 	- _Selected setup menu tabs_: Yellow > Green
 	- _Setup menu titles_: Yellow > Red
 - The _Movement Widget_ is now disabled in _strict mode_
-- Hints for disabled menu items, explaining the reason certain items are disabled, have been added
+- Most setup menus have been rearranged (utilizing the new _scrollable subpages_ feature)
 
 ## Bug Fixes
 

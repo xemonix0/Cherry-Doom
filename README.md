@@ -27,18 +27,24 @@ Some features were first introduced in Cherry Doom and later merged into Nugget 
 
 Most of Cherry Doom's features come from other sources, like other source ports, mods or games. The initial implementations for some are **ported from (p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
 
-Some settings are labeled as _CFG-Only_: they can only be changed by editing `cherry-doom.cfg`. For these settings, their CVAR names are provided alongside the _CFG-Only_ label as guidance.
+Some settings are labeled as _CFG-only_: they can only be changed by editing `cherry-doom.cfg`. For these settings, their CVAR names are provided alongside the _CFG-only_ label as guidance.
 
 ### General
 
 - _Mute Inactive Window_ setting [p.f. International Doom]
 - _Floating Powerups_ setting [p.f. International Doom]
+- _Rocket Trails_ setting (interval between smoke sprites determined by the CFG-only `rocket_trail_interval` CVAR) [p.f. Doom Retro]
 
 ### Status Bar/HUD
 
 - _More Widgets on the Intermission Screen_ setting: shows smaller versions of _Health_, _Armor_ and _Weapons_ widgets on the intermission screen, customizable through options
 - _Movement widget_: shows the current player movement and strafing speeds
 - _Disable Crosshair On Slot 1_ setting
+
+### Miscellaneous
+
+- Hints for disabled menu items, explaining the reason certain items are disabled
+- Most setup menus have been rearranged (utilizing the new _scrollable subpages_ feature) to improve user experience and make navigation easier
 
 ### _Level Table_
 
@@ -47,10 +53,10 @@ The _Level Table_, inspired by DSDA-Doom, provides a way to track your progress 
 This feature tracks statistics, such as the _skill level_, _kills_, _items_, _secrets_ and _time_, and allows you to see all that information in one place (including a _Summary_ screen, with overall statistics for the current WAD), also giving you the ability to warp to any map conveniently from the same screen.
 
 Compared to DSDA-Doom's implementation, there are a few notable additions and changes:
-- CVAR to toggle _stats tracking_ altogether (CFG-Only: `lt_enable_tracking`)
+- CVAR to toggle _stats tracking_ altogether (CFG-only: `lt_enable_tracking`)
 - Command line parameter to _disable stats tracking_ (`-notracking`)
-- _Level table stats format_ customization (CFG-Only: `lt_stats_format`)
-- CVAR to _toggle tracking kills and time for maps beaten not from pistol start_ (CFG-Only: `lt_track_continuous`)
+- _Level table stats format_ customization (CFG-only: `lt_stats_format`)
+- CVAR to _toggle tracking kills and time for maps beaten not from pistol start_ (CFG-only: `lt_track_continuous`)
 	- The old behavior (before 2.0.0 and in DSDA-Doom) is equivalent to this CVAR being set to `0`
 - The ability to see (and warp to) all loaded maps, not just maps from the last loaded WAD
 - Various visual changes
