@@ -4981,7 +4981,8 @@ void MN_SetupResetMenu(void)
 
     // [Cherry] ----------------------------------------------------------------
 
-    DisableItem(no_rocket_trails == 0x11, gen_settings5, "rocket_trails");
+    DisableItem(no_rocket_trails == no_rsmk_all, gen_settings5,
+                "rocket_trails");
 
     UpdateDarkeningItems();
 }

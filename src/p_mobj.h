@@ -443,7 +443,16 @@ extern boolean colored_blood;
 extern boolean floating_powerups;
 
 // [Cherry] Rocket trails from Doom Retro
-extern boolean no_rocket_trails;
+
+enum
+{
+    no_rsmk_player = 1,
+    no_rsmk_cyberdemon = 2,
+    no_rsmk_revenant = 4,
+
+    no_rsmk_all = no_rsmk_player | no_rsmk_cyberdemon | no_rsmk_revenant,
+};
+extern int no_rocket_trails;
 
 enum {
   VERTAIM_AUTO,

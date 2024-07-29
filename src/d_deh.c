@@ -2259,7 +2259,7 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
   // [Cherry] Rocket trails from Doom Retro
   if (edited && indexnum >= S_TRAIL && indexnum <= S_TRAIL4)
   {
-      no_rocket_trails |= 0x11;
+      no_rocket_trails |= no_rsmk_all;
   }
 
   return;
@@ -2933,7 +2933,7 @@ void deh_procText(DEHFILE *fpin, FILE* fpout, char *line)
           // [Cherry] Rocket trails from Doom Retro
           if (i == SPR_RSMK)
           {
-              no_rocket_trails |= 0x11;
+              no_rocket_trails |= no_rsmk_all;
           }
         }
     }
@@ -3223,7 +3223,7 @@ void deh_procBexSprites(DEHFILE *fpin, FILE* fpout, char *line)
       // [Cherry] Rocket trails from Doom Retro
       if (match == SPR_RSMK)
       {
-          no_rocket_trails |= 0x11;
+          no_rocket_trails |= no_rsmk_all;
       }
     }
   }

@@ -200,7 +200,8 @@ void P_XYMovement (mobj_t* mo)
   player = mo->player;
 
   // [Cherry] Rocket trails from Doom Retro
-  if ((mo->intflags & MIF_SMOKE_TRAIL) && !(++mo->pursuecount % 3))
+  if (CASUALPLAY(rocket_trails) && (mo->intflags & MIF_SMOKE_TRAIL)
+      && !(++mo->pursuecount % 3))
   {
       P_SpawnSmokeTrail(mo->x, mo->y, mo->z, mo->angle);
   }
@@ -1744,7 +1745,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   // [Cherry] Rocket trails from Doom Retro
   if (type == MT_ROCKET && CASUALPLAY(rocket_trails)
-      && !(no_rocket_trails & 0x01)
+      && !(no_rocket_trails & no_rsmk_player)
       && !(th->flags & MF_BOUNCES)
       && (source->player && source->player->readyweapon == wp_missile))
   {

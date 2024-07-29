@@ -2593,12 +2593,6 @@ void D_DoomMain(void)
   I_Printf(VB_INFO, "W_Init: Init WADfiles.");
   W_InitMultipleFiles();
 
-  // [Cherry] Rocket trails from Doom Retro
-  if (W_CheckNumForName("PUFFA0") != -1)
-  {
-      no_rocket_trails |= 0x10;
-  }
-
   // Check for wolf levels
   haswolflevels = (W_CheckNumForName("map31") >= 0);
 
@@ -2638,6 +2632,12 @@ void D_DoomMain(void)
   I_PutChar(VB_INFO, '\n');     // killough 3/6/98: add a newline, by popular demand :)
 
   M_NughudLoadOptions(); // [Nugget]
+
+  // [Cherry] Rocket trails from Doom Retro
+  if (W_CheckNumForName("puffa0") != -1)
+  {
+      no_rocket_trails |= no_rsmk_revenant;
+  }
 
   // Moved after WAD initialization because we are checking the COMPLVL lump
   G_ReloadDefaults(false); // killough 3/4/98: set defaults just loaded.
