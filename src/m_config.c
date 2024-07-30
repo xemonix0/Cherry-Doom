@@ -4075,7 +4075,7 @@ default_t defaults[] = {
   },
 
   // [Cherry] /-- Level table -------------------------------------------------
-      
+
   {
     "lt_enable_tracking",
     (config_t *) &lt_enable_tracking, NULL,
@@ -4088,6 +4088,13 @@ default_t defaults[] = {
     (config_t *) &lt_track_continuous, NULL,
     {1}, {0,1}, number, ss_none, wad_no,
     "1 to track kills and times for maps that aren't completed from a pistol start"
+  },
+
+  {
+    "lt_reset_on_higher_skill",
+    (config_t *) &lt_reset_on_higher_skill, NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to reset all stats for the current level upon beating the level on a new best skill"
   },
 
   {

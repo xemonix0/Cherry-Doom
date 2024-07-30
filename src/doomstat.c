@@ -307,6 +307,7 @@ int hudcolor_th_extra;
 
 boolean lt_enable_tracking;
 boolean lt_track_continuous;
+boolean lt_reset_on_higher_skill;
 int lt_stats_format;
 
 // [Cherry] -----------------------------------------------------------------/

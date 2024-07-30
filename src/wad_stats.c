@@ -535,6 +535,12 @@ void WS_WatchExitMap(void)
             current_map_stats->best_max_time = -1;
         }
 
+        if (lt_reset_on_higher_skill && skill != 5)
+        {
+            current_map_stats->best_kills = current_map_stats->best_items =
+                current_map_stats->best_secrets = -1;
+        }
+
         current_map_stats->best_skill = skill;
     }
 

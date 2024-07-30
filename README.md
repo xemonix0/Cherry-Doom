@@ -54,13 +54,15 @@ The _Level Table_, inspired by DSDA-Doom, provides a way to track your progress 
 This feature tracks statistics, such as the _skill level_, _kills_, _items_, _secrets_ and _time_, and allows you to see all that information in one place (including a _Summary_ screen, with overall statistics for the current WAD), also giving you the ability to warp to any map conveniently from the same screen.
 
 Compared to DSDA-Doom's implementation, there are a few notable additions and changes:
-- CVAR to toggle _stats tracking_ altogether (CFG-only: `lt_enable_tracking`)
 - Command line parameter to _disable stats tracking_ (`-notracking`)
-- _Level table stats format_ customization (CFG-only: `lt_stats_format`)
-- CVAR to _toggle tracking kills and time for maps beaten not from pistol start_ (CFG-only: `lt_track_continuous`)
-	- The old behavior (before 2.0.0 and in DSDA-Doom) is equivalent to this CVAR being set to `0`
+- CVAR to toggle _stats tracking_ altogether (`lt_enable_tracking`)
+- CVAR to toggle _tracking kills and time for maps beaten not from pistol start_ (`lt_track_continuous`)
+	- The old behavior _(before 2.0.0 and in DSDA-Doom)_ is equivalent to this CVAR being set to `0`
+- CVAR to toggle _resetting stats for the current level upon beating the level on a new best skill_ (`lt_reset_on_higher_skill`)
+	- The old behavior is equivalent to this CVAR being set to `0`
 - The ability to see (and warp to) all loaded maps, not just maps from the last loaded WAD
 - _Stats tracking_ now ignores WADs without maps when creating data folders for _stats files_
+- _Level table stats format_ customization (CFG-only: `lt_stats_format`)
 - Various visual changes
 
 # Releases

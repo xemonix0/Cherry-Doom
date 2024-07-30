@@ -726,6 +726,7 @@ extern int hudcolor_th_extra;
 
 extern boolean lt_enable_tracking;
 extern boolean lt_track_continuous;
+extern boolean lt_reset_on_higher_skill;
 extern int lt_stats_format;
 
 // [Cherry] -----------------------------------------------------------------/
