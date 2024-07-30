@@ -33,7 +33,7 @@ Some settings are labeled as _CFG-only_: they can only be changed by editing `ch
 
 - _Mute Inactive Window_ setting [p.f. International Doom]
 - _Floating Powerups_ setting [p.f. International Doom]
-- _Rocket Trails_ setting (interval between smoke sprites determined by the CFG-only `rocket_trail_interval` CVAR) [p.f. Doom Retro]
+- _Rocket Trails_ setting (with additional _Rocket Trails Interval_ and _Smoke Translucency_ settings for extended customization) [p.f. Doom Retro]
 
 ### Status Bar/HUD
 

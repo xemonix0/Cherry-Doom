@@ -2887,6 +2887,18 @@ static const char *fake_contrast_strings[] = {
 
 // [Nugget] ------------------------------------------------------------------/
 
+// [Cherry] /------------------------------------------------------------------
+
+static void UpdateRocketTrailsItems(void);
+
+// Translucent rocket trails
+static void SmokeTrans(void)
+{
+    R_InitTranMapEx(&smoke_tranmap, rocket_trails_tran);
+}
+
+// [Cherry] ------------------------------------------------------------------/
+
 static setup_menu_t gen_settings5[] = {
 
     {"Smooth Pixel Scaling", S_ONOFF, M_X, M_SPC, {"smooth_scaling"},
@@ -2946,13 +2958,6 @@ static setup_menu_t gen_settings5[] = {
       {"Fake Contrast",                S_CHOICE|S_STRICT,       M_X, M_SPC, {"fake_contrast"}, m_null, input_null, str_fake_contrast},
       {"Screen Wipe Speed Percentage", S_NUM   |S_STRICT|S_PCT, M_X, M_SPC, {"wipe_speed_percentage"}},
       {"Alt. Intermission Background", S_ONOFF |S_STRICT,       M_X, M_SPC, {"alt_interpic"}},
-      
-    // [Cherry]
-    MI_GAP,
-    {"Cherry", S_SKIP | S_TITLE, M_X, M_SPC},
-
-      {"Floating Powerups", S_ONOFF, M_X, M_SPC, {"floating_powerups"}},
-      {"Rocket Trails", S_ONOFF | S_STRICT | S_CRITICAL, M_X, M_SPC, {"rocket_trails"}},
 
     // [Cherry] Moved from `NG1` ----------------------------------------------
     MI_SPLIT,
@@ -2969,10 +2974,28 @@ static setup_menu_t gen_settings5[] = {
       {"Chasecam Distance",             S_THERMO|S_STRICT,       M_X_THRM8, M_THRM_SPC, {"chasecam_distance"}},
       {"Chasecam Height",               S_THERMO|S_STRICT,       M_X_THRM8, M_THRM_SPC, {"chasecam_height"}},
 
+    // [Cherry] ---------------------------------------------------------------
+    MI_SPLIT,
+
+    {"Cherry", S_SKIP | S_TITLE, M_X, M_SPC},
+
+      {"Floating Powerups", S_ONOFF, M_X, M_SPC, {"floating_powerups"}},
+      MI_GAP,
+      {"Rocket Trails",                          S_ONOFF | S_STRICT | S_CRITICAL,
+       M_X, M_SPC, {"rocket_trails"},
+       m_null, input_null, str_empty, UpdateRocketTrailsItems},
+      {"Rocket Trails Interval", S_THERMO | S_THRM_SIZE4 | S_STRICT | S_CRITICAL,
+       M_X_THRM4, M_THRM_SPC, {"rocket_trails_interval"}},
+      {"Smoke Translucency", S_THERMO | S_ACTION | S_PCT | S_STRICT | S_CRITICAL,
+       M_X_THRM8, M_THRM_SPC, {"rocket_trails_tran"},
+       m_null, input_null, str_empty, SmokeTrans},
+
+
     MI_END
 };
 
-// [Cherry]
+// [Cherry] /------------------------------------------------------------------
+
 static void UpdateDarkeningItems(void)
 {
     DisableItem(menu_backdrop != MENU_BG_DARK, gen_settings5,
@@ -2980,6 +3003,17 @@ static void UpdateDarkeningItems(void)
     DisableItem(automapoverlay != AM_OVERLAY_DARK, auto_settings1,
                 "automap_overlay_darkening");
 }
+
+static void UpdateRocketTrailsItems(void)
+{
+    const boolean disabled = !rocket_trails || no_rocket_trails == no_rsmk_all;
+    DisableItem(no_rocket_trails == no_rsmk_all, gen_settings5,
+                "rocket_trails");
+    DisableItem(disabled, gen_settings5, "rocket_trails_interval");
+    DisableItem(disabled, gen_settings5, "rocket_trails_tran");
+}
+
+// [Cherry] ------------------------------------------------------------------/
 
 const char *default_skill_strings[] = {
     // dummy first option because defaultskill is 1-based
@@ -5091,8 +5125,6 @@ void MN_SetupResetMenu(void)
 
     // [Cherry] ----------------------------------------------------------------
 
-    DisableItem(no_rocket_trails == no_rsmk_all, gen_settings5,
-                "rocket_trails");
-
     UpdateDarkeningItems();
+    UpdateRocketTrailsItems();
 }

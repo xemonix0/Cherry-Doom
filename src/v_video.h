@@ -66,6 +66,9 @@ extern byte *shadow_tranmap; // HUD/menu shadows
 extern byte *pspr_tranmap;   // Translucent flashes
 extern byte *xhair_tranmap;  // Translucent crosshair
 
+// [Cherry]
+extern byte *smoke_tranmap; // Translucent rocket trails
+
 // array of pointers to color translation tables
 extern byte *colrngs[];
 extern byte *red2col[];

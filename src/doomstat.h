@@ -707,7 +707,8 @@ extern int custom_skill_aggressive;
 
 extern boolean mute_inactive;
 extern boolean rocket_trails;
-extern int rocket_trail_interval;
+extern int rocket_trails_interval;
+extern int rocket_trails_tran;
 
 // Status Bar/HUD ---------------------
 

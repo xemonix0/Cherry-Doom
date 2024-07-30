@@ -386,6 +386,9 @@ typedef struct vissprite_s
 
   // andrewj: voxel support
   int voxel_index;
+
+  // [Cherry] Translucent rocket trails
+  boolean rocket_trail;
 } vissprite_t;
 
 //

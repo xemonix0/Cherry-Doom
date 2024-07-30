@@ -43,8 +43,6 @@
 // [Nugget]
 #include "s_sound.h"
 #include "sounds.h"
-// [Cherry] motion blur
-#include "i_video.h"
 
 static fixed_t PlayerSlope(player_t *player)
 {

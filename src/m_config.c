@@ -1116,10 +1116,17 @@ default_t defaults[] = {
   },
 
   { // Rocket trails spawn interval
-    "rocket_trail_interval",
-    (config_t *) &rocket_trail_interval, NULL,
+    "rocket_trails_interval",
+    (config_t *) &rocket_trails_interval, NULL,
     {3}, {1,5}, number, ss_gen, wad_yes,
     "Rocket trails spawn interval (smoke spawns every n ticks, lower value = more smoke)"
+  },
+
+  { // Rocket smoke translucency
+    "rocket_trails_tran",
+    (config_t *) &rocket_trails_tran, NULL,
+    {50}, {0,100}, number, ss_gen, wad_yes,
+    "Rocket smoke translucency percentage"
   },
 
   // [Cherry] ---------------------------------------------------------------/

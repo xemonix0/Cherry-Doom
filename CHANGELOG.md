@@ -5,8 +5,8 @@
 
 - _Mute Inactive Window_ setting
 - _Floating Powerups_ setting
-- _Disable Crosshair On Slot 1_ setting
 - _Rocket Trails_ setting
+- _Disable Crosshair On Slot 1_ setting
 - Hints for disabled menu items
 
 ## Changes
@@ -22,9 +22,9 @@
 	- [3.2.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.2.0)
 - Some features added in previous versions have been removed:
 	- Cherry's _Extended HUD colors_, except colors for _Low/Ok/Good/Extra values_
-	- _Motion Blur_
-	- _Damage Shake Effect_, in favor of Nugget Doom's _Flinch Upon Damage_
-	- _View Shake Intensity_ setting
+	- _Motion Blur_ setting
+	- _Damage Shake Effect_ setting, in favor of Nugget Doom's _Flinch Upon Damage_
+	- _View Shake Intensity_ setting, in favor of Nugget Doom's `explosion_shake_intensity_pct` CVAR
 - Separate options for _Health + Armor_ and _Weapons_ widgets on the intermission screen have been introduced
 - Minor menu color changes:
 	- _Selected setup menu tabs_: Yellow > Green

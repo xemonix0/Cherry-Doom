@@ -150,6 +150,9 @@ byte *shadow_tranmap;  // HUD/menu shadows
 byte *pspr_tranmap;    // Translucent flashes
 byte *xhair_tranmap;   // Translucent crosshair
 
+// [Cherry]
+byte *smoke_tranmap; // Translucent rocket trails
+
 // killough 5/2/98: tiny engine driven by table above
 void V_InitColorTranslation(void)
 {

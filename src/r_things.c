@@ -460,6 +460,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
           tranmap = main_tranmap;       // killough 4/11/98
 
           if (drawingpspr) { tranmap = pspr_tranmap; } // [Nugget] Translucent flashes
+          else if (vis->rocket_trail) { tranmap = smoke_tranmap; } // [Cherry] Translucent rocket trails
         }
       else
         colfunc = R_DrawColumn;         // killough 3/14/98, 4/11/98
@@ -717,6 +718,10 @@ void R_ProjectSprite (mobj_t* thing)
       vis->colormap[1] = fullcolormap;
     }
   vis->brightmap = R_BrightmapForSprite(thing->sprite);
+
+  // [Cherry] Translucent rocket trails
+  vis->rocket_trail =
+      no_rocket_trails != no_rsmk_all && thing->type == MT_TRAIL;
 
   // [Alaux] Lock crosshair on target
   if (STRICTMODE(hud_crosshair_lockon) && thing == crosshair_target

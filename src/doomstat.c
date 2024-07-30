@@ -292,6 +292,8 @@ int custom_skill_aggressive;
 
 boolean mute_inactive;
 boolean rocket_trails;
+int rocket_trails_interval;
+int rocket_trails_tran;
 
 // Status Bar/HUD ---------------------
 

@@ -1881,6 +1881,9 @@ void deh_procBexCodePointers(DEHFILE *fpin, FILE* fpout, char *line)
   return;
 }
 
+// [Cherry]
+#include "p_map.h" // MELEERANGE
+int no_rocket_trails; // Rocket trails from Doom Retro
 
 // ====================================================================
 // deh_procThing
@@ -1916,6 +1919,21 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
   --indexnum;
 
   dsdh_EnsureMobjInfoCapacity(indexnum);
+
+  // [Cherry] Rocket trails from Doom Retro
+  if (indexnum == MT_TRAIL)
+  {
+    memset(mobjinfo + indexnum, 0, sizeof(*mobjinfo));
+
+    mobjinfo[indexnum].droppeditem = MT_NULL;
+    mobjinfo[indexnum].infighting_group = IG_DEFAULT;
+    mobjinfo[indexnum].projectile_group = PG_DEFAULT;
+    mobjinfo[indexnum].splash_group = SG_DEFAULT;
+    mobjinfo[indexnum].altspeed = NO_ALTSPEED;
+    mobjinfo[indexnum].meleerange = MELEERANGE;
+
+    no_rocket_trails |= no_rsmk_all;
+  }
 
   // now process the stuff
   // Note that for Things we can look up the key and use its offset
@@ -2077,9 +2095,6 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
   return;
 }
 
-// [Cherry] Rocket trails from Doom Retro
-int no_rocket_trails;
-
 // ====================================================================
 // deh_procFrame
 // Purpose: Handle DEH Frame block
@@ -2109,7 +2124,17 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
 
   dsdh_EnsureStatesCapacity(indexnum);
 
-  boolean edited = false; // [Cherry]
+  // [Cherry] Rocket trails from Doom Retro
+  if (indexnum >= S_TRAIL && indexnum <= S_TRAIL4)
+  {
+    memset(states + indexnum, 0, sizeof(*states));
+
+    states[indexnum].sprite = SPR_TNT1;
+    states[indexnum].tics = -1;
+    states[indexnum].nextstate = indexnum;
+
+    no_rocket_trails |= no_rsmk_all;
+  }
 
   while (!dehfeof(fpin) && *inbuffer && (*inbuffer != ' '))
     {
@@ -2125,28 +2150,24 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
         {
           if (fpout) fprintf(fpout," - sprite = %ld\n",value);
           states[indexnum].sprite = (spritenum_t)value;
-          edited = true;
         }
       else
         if (!strcasecmp(key,deh_state[1]))  // Sprite subnumber
           {
             if (fpout) fprintf(fpout," - frame = %ld\n",value);
             states[indexnum].frame = value; // long
-            edited = true;
           }
         else
           if (!strcasecmp(key,deh_state[2]))  // Duration
             {
               if (fpout) fprintf(fpout," - tics = %ld\n",value);
               states[indexnum].tics = value; // long
-              edited = true;
             }
           else
             if (!strcasecmp(key,deh_state[3]))  // Next frame
               {
                 if (fpout) fprintf(fpout," - nextstate = %ld\n",value);
                 states[indexnum].nextstate = (statenum_t)value;
-                edited = true;
               }
             else
               if (!strcasecmp(key,deh_state[4]))  // Codep frame (not set in Frame deh block)
@@ -2159,14 +2180,12 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
                   {
                     if (fpout) fprintf(fpout," - misc1 = %ld\n",value);
                     states[indexnum].misc1 = value; // long
-                    edited = true;
                   }
                 else
                   if (!strcasecmp(key,deh_state[6]))  // Unknown 2
                     {
                       if (fpout) fprintf(fpout," - misc2 = %ld\n",value);
                       states[indexnum].misc2 = value; // long
-                      edited = true;
                     }
                   else
                     if (!strcasecmp(key,deh_state[7]))  // Args1
@@ -2255,12 +2274,6 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
                                     else
                                       if (fpout) fprintf(fpout,"Invalid frame string index for '%s'\n",key);
     }
-
-  // [Cherry] Rocket trails from Doom Retro
-  if (edited && indexnum >= S_TRAIL && indexnum <= S_TRAIL4)
-  {
-      no_rocket_trails |= no_rsmk_all;
-  }
 
   return;
 }

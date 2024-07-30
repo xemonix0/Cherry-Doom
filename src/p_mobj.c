@@ -171,7 +171,6 @@ void P_ExplodeMissile (mobj_t* mo)
 // [Cherry]
 static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
                               const angle_t angle);
-int rocket_trail_interval;
 
 void P_XYMovement (mobj_t* mo)
 {
@@ -202,7 +201,7 @@ void P_XYMovement (mobj_t* mo)
 
   // [Cherry] Rocket trails from Doom Retro
   if (CASUALPLAY(rocket_trails) && (mo->intflags & MIF_SMOKE_TRAIL)
-      && !(++mo->pursuecount % rocket_trail_interval))
+      && !(++mo->pursuecount % rocket_trails_interval))
   {
       P_SpawnSmokeTrail(mo->x, mo->y, mo->z, mo->angle);
   }
