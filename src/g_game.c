@@ -149,6 +149,7 @@ static struct {
   boolean fast;
   boolean respawn;
   boolean aggressive;
+  boolean notracking; // [Cherry]
 } customskill;
 
 int     thingspawns;
@@ -158,6 +159,7 @@ boolean halfdamage;
 boolean slowbrain;
 boolean fastmonsters;
 boolean aggressive;
+boolean notracking; // [Cherry]
 
 static struct {
   int          mohealth;
@@ -200,6 +202,7 @@ void G_SetSkillParms(const skill_t skill)
     fastmonsters    = customskill.fast;
     respawnmonsters = customskill.respawn;
     aggressive      = customskill.aggressive;
+    notracking      = customskill.notracking || notrackingparm; // [Cherry]
   }
   else {
     thingspawns = (skill == sk_baby || skill == sk_easy)      ? THINGSPAWNS_EASY :
@@ -211,6 +214,7 @@ void G_SetSkillParms(const skill_t skill)
     fastmonsters    = fastparm || skill == sk_nightmare;
     respawnmonsters = skill == sk_nightmare || respawnparm;
     aggressive      = skill == sk_nightmare;
+    notracking      = notrackingparm; // [Cherry]
   }
 
   G_SetBabyModeParms(skill);
@@ -228,6 +232,7 @@ void G_SetUserCustomSkill(void)
   customskill.fast       = custom_skill_fast;
   customskill.respawn    = custom_skill_respawn;
   customskill.aggressive = custom_skill_aggressive;
+  customskill.notracking = custom_skill_notracking;
 }
 
 static void G_UpdateInitialLoadout(void)

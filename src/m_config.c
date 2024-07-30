@@ -695,6 +695,13 @@ default_t defaults[] = {
     "Custom Skill: aggressive monsters (instant reaction time, continuous attacks)"
   },
 
+  { // [Cherry]
+    "custom_skill_notracking",
+    (config_t *) &custom_skill_notracking, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: disable stats tracking"
+  },
+
   // [Nugget] ---------------------------------------------------------------/
 
   { // killough 3/6/98: preserve autorun across games

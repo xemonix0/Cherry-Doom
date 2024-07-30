@@ -283,6 +283,7 @@ int custom_skill_slowbrain;
 int custom_skill_fast;
 int custom_skill_respawn;
 int custom_skill_aggressive;
+int custom_skill_notracking; // [Cherry]
 
 // [Nugget] =================================================================/
 
@@ -304,7 +305,7 @@ int hudcolor_th_extra;
 
 // Level Table ------------------------
 
-boolean lt_enable_tracking, lt_force_no_tracking;
+boolean lt_enable_tracking;
 boolean lt_track_continuous;
 int lt_stats_format;
 

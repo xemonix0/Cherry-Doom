@@ -47,6 +47,9 @@ extern  boolean coopspawnsparm;
 extern  boolean doubleammoparm;
 extern  boolean halfdamageparm;
 
+// [Cherry]
+extern  boolean notrackingparm;
+
 extern  int screenblocks;     // killough 11/98
 
 // -----------------------------------------------------
@@ -228,6 +231,7 @@ extern  boolean         halfdamage;
 extern  boolean         slowbrain;
 extern  boolean         fastmonsters;
 extern  boolean         aggressive;
+extern  boolean         notracking; // [Cherry]
 
 // [Nugget] -----------------------------------------------------------------/
 
@@ -697,6 +701,7 @@ extern int custom_skill_slowbrain;
 extern int custom_skill_fast;
 extern int custom_skill_respawn;
 extern int custom_skill_aggressive;
+extern int custom_skill_notracking; // [Cherry]
 
 // [Nugget] =================================================================/
 
@@ -719,8 +724,8 @@ extern int hudcolor_th_extra;
 
 // Level Table ------------------------
 
-extern boolean lt_enable_tracking, lt_force_no_tracking;
-#define STATS_TRACKING_DISABLED (lt_force_no_tracking || !lt_enable_tracking)
+extern boolean lt_enable_tracking;
+#define STATS_TRACKING_DISABLED (notracking || !lt_enable_tracking)
 extern boolean lt_track_continuous;
 extern int lt_stats_format;
 

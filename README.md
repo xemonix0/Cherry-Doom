@@ -45,6 +45,7 @@ Some settings are labeled as _CFG-only_: they can only be changed by editing `ch
 
 - Hints for disabled menu items, explaining the reason certain items are disabled
 - Most setup menus have been rearranged (utilizing the new _scrollable subpages_ feature) to improve user experience and make navigation easier
+- _Disable Stats Tracking_ setting for the _custom skill_
 
 ### _Level Table_
 

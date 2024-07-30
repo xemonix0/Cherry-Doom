@@ -6,7 +6,7 @@
 - _Mute Inactive Window_ setting
 - _Floating Powerups_ setting
 - _Rocket Trails_ setting
-- _Disable Crosshair On Slot 1_ setting
+- _Disable [Crosshair] On Slot 1_ setting
 - Hints for disabled menu items
 
 ## Changes
@@ -17,9 +17,11 @@
 	- [2.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.3.0)
 	- [2.3.1](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-2.3.1)
 	- [3.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.0.0), note:
-		- Added support for Woof! 14.0.0 saves missing in Nugget Doom 3.0.0 and up
-	- [3.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.1.0),
-	- [3.2.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.2.0)
+		- Support for Woof! 14.0.0 saves missing in Nugget Doom 3.0.0 and up has been added
+	- [3.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.1.0)
+	- [3.2.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.2.0), note:
+		- _Stats tracking_ can be disabled for _custom skill_ games using the new _Disable Stats Tracking_ setting
+		- If not disabled, the _stats tracking system_ converts the _custom skill level_ to one of the vanilla difficulties by checking chosen _Thing Spawns_ (+ ITYTD and NM specific modifiers)
 - Some features added in previous versions have been removed:
 	- Cherry's _Extended HUD colors_, except colors for _Low/Ok/Good/Extra values_
 	- _Motion Blur_ setting
@@ -45,7 +47,7 @@ This release introduces many changes, fixes and some additions to the _Level Tab
 ### New Features
 
 - CVAR to toggle _stats tracking_
-- Command line parameter to _disable stats tracking_ (`-notracking`)
+- `-notracking` command line parameter to _disable stats tracking_
 - _Level table stats format_ customization
 - CVAR to toggle _tracking kills and time for maps beaten not from pistol start_
 

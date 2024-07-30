@@ -177,7 +177,8 @@ static void LevelsBuild(void)
             }
 
             LevelsInsertRow(page, M_StringDuplicate(ms->lump), i,
-                            !STATS_TRACKING_DISABLED && !wad_index);
+                            !notrackingparm && lt_enable_tracking
+                                && !wad_index);
         }
 
         InsertLastItem(page);
@@ -191,7 +192,7 @@ static void SummaryCalculate(void)
 {
     memset(&summary, 0, sizeof(summary));
 
-    if (STATS_TRACKING_DISABLED)
+    if (notrackingparm || !lt_enable_tracking)
     {
         return;
     }

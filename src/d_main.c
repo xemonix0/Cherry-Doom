@@ -154,6 +154,9 @@ boolean coopspawnsparm = false;
 boolean doubleammoparm = false;
 boolean halfdamageparm = false;
 
+// [Cherry]
+boolean notrackingparm = false;
+
 boolean singletics = false; // debug flag to cancel adaptiveness
 
 //jff 1/22/98 parms for disabling music and sound
@@ -2782,7 +2785,7 @@ void D_DoomMain(void)
   // Disable WAD stats tracking.
   //
 
-  lt_force_no_tracking = M_ParmExists("-notracking");
+  notrackingparm = M_ParmExists("-notracking");
 
   if (!netgame)
   {
