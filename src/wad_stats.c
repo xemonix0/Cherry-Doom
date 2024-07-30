@@ -45,7 +45,7 @@ static map_stats_t *current_map_stats;
 char *wad_stats_fail = NULL;
 wad_stats_t wad_stats = {0};
 
-#define CAN_WATCH_MAP (!STATS_TRACKING_DISABLED && wad_stats.maps)
+#define CAN_WATCH_MAP (lt_enable_tracking && !notracking && wad_stats.maps)
 #define TRACKING      (CAN_WATCH_MAP && current_map_stats)
 
 // File I/O Operations
@@ -583,8 +583,8 @@ void WS_WatchExitMap(void)
 
 void WS_Init(void)
 {
-    if ((STATS_TRACKING_DISABLED // the level table still needs to work
-         || HandleLoadErrors(LoadStats()) == LOAD_ERROR_NOTFOUND))
+    if (notracking || !lt_enable_tracking // the level table still needs to work
+        || HandleLoadErrors(LoadStats()) == LOAD_ERROR_NOTFOUND)
     {
         CreateStats(false);
     }

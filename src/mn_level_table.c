@@ -177,11 +177,16 @@ static void LevelsBuild(void)
             }
 
             LevelsInsertRow(page, M_StringDuplicate(ms->lump), i,
-                            !notrackingparm && lt_enable_tracking
+                            lt_enable_tracking && !notrackingparm
                                 && !wad_index);
         }
 
         InsertLastItem(page);
+
+        if (p == 0 && (!lt_enable_tracking || notrackingparm))
+        {
+            break;
+        }
     }
 }
 
@@ -192,7 +197,7 @@ static void SummaryCalculate(void)
 {
     memset(&summary, 0, sizeof(summary));
 
-    if (notrackingparm || !lt_enable_tracking)
+    if (!lt_enable_tracking || notrackingparm)
     {
         return;
     }
@@ -272,8 +277,19 @@ void LT_Reset(void)
 
 void LT_Build(void)
 {
-    LevelsBuild();
-    SummaryBuild();
+    if (lt_enable_tracking && !notrackingparm)
+    {
+        level_table_tabs[lt_page_times].flags &= ~S_DISABLE;
+        level_table_tabs[lt_page_summary].flags &= ~S_DISABLE;
+        LevelsBuild();
+        SummaryBuild();
+    }
+    else
+    {
+        level_table_tabs[lt_page_times].flags |= S_DISABLE;
+        level_table_tabs[lt_page_summary].flags |= S_DISABLE;
+        LevelsBuild();
+    }
 }
 
 // Drawing
@@ -511,11 +527,26 @@ static void LevelsDrawPageHeaders(int page, int y)
     }
 }
 
+static void DrawNoTrackingWarning(int y)
+{
+    M_snprintf(menu_buffer, sizeof(menu_buffer), "Stats tracking is disabled");
+    MN_DrawMenuStringEx(0, SCREENWIDTH / 2 - MN_GetPixelWidth(menu_buffer) / 2,
+                        y, CR_NONE);
+}
+
 static void LevelsDraw(setup_menu_t *menu, int page)
 {
     int accum_y = M_Y;
 
-    LevelsDrawPageHeaders(page, accum_y);
+    if (lt_enable_tracking && !notrackingparm)
+    {
+        LevelsDrawPageHeaders(page, accum_y);
+    }
+    else
+    {
+        DrawNoTrackingWarning(accum_y);
+    }
+
     accum_y += M_SPC;
 
     int rows = 0;

@@ -3300,7 +3300,10 @@ void MN_DrawLevelTable(void)
 
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(89, 2, "M_LVLTBL", "Level Table");
-    DrawTabs();
+    if (lt_enable_tracking && !notrackingparm)
+    {
+        DrawTabs();
+    }
     DrawInstructions();
 
     LT_Draw(current_menu, current_page);
@@ -4351,7 +4354,8 @@ static boolean NextPage(int inc)
 
     int i = current_page + inc;
 
-    if (i < 0 || current_tabs[i].text == NULL)
+    if (i < 0 || current_tabs[i].text == NULL
+        || current_tabs[i].flags & S_DISABLE) // [Cherry]
     {
         return false;
     }

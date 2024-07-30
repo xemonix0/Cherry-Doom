@@ -725,7 +725,6 @@ extern int hudcolor_th_extra;
 // Level Table ------------------------
 
 extern boolean lt_enable_tracking;
-#define STATS_TRACKING_DISABLED (notracking || !lt_enable_tracking)
 extern boolean lt_track_continuous;
 extern int lt_stats_format;
 
