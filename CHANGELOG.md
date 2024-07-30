@@ -8,4 +8,4 @@ None.
 
 ## Bug Fixes
 
-None.
+- **Crash when loading status bars taller than 32px**
