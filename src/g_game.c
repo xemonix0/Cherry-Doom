@@ -1125,7 +1125,7 @@ static void G_DoLoadLevel(void)
     basetic = gametic;
 
   if (wipegamestate == GS_LEVEL
-      && gameaction != ga_rewind) // [Nugget] Rewind
+      && lastaction != ga_rewind) // [Nugget] Rewind
     wipegamestate = -1;             // force a wipe
 
   gamestate = GS_LEVEL;
@@ -1158,7 +1158,7 @@ static void G_DoLoadLevel(void)
   }
   else
   // [crispy] pistol start
-  if (CRITICAL(pistolstart))
+  if (CRITICAL(pistolstart) && lastaction != ga_rewind) // [Nugget] Rewind
   {
     G_PlayerReborn(0);
   }
