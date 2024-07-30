@@ -60,6 +60,7 @@ Compared to DSDA-Doom's implementation, there are a few notable additions and ch
 - CVAR to _toggle tracking kills and time for maps beaten not from pistol start_ (CFG-only: `lt_track_continuous`)
 	- The old behavior (before 2.0.0 and in DSDA-Doom) is equivalent to this CVAR being set to `0`
 - The ability to see (and warp to) all loaded maps, not just maps from the last loaded WAD
+- _Stats tracking_ now ignores WADs without maps when creating data folders for _stats files_
 - Various visual changes
 
 # Releases
