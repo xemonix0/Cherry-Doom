@@ -4060,6 +4060,24 @@ default_t defaults[] = {
     "1 to account for fuzzy targets when coloring and/or locking-on"
   },
 
+  // [Cherry] /----------------------------------------------------------------
+
+  {
+    "hud_crosshair_dark",
+    (config_t *) &hud_crosshair_dark, NULL,
+    {1}, {0,1}, number, ss_stat, wad_no,
+    "1 to account for targets in darkness when coloring and/or locking-on"
+  },
+
+  {
+    "hud_crosshair_dark_level",
+    (config_t *) &hud_crosshair_dark_level, NULL,
+    {120}, {1,256}, number, ss_stat, wad_no,
+    "Targets are not revealed if the light level is lower than this",
+  },
+
+  // [Cherry] ----------------------------------------------------------------/
+
   {
     "hud_crosshair_color",
     (config_t *) &hud_crosshair_color, NULL,

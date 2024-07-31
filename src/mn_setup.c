@@ -1936,6 +1936,9 @@ static setup_menu_t stat_settings3[] = {
 
     // [Nugget] -------------------------------------------------------------/
 
+    // [Cherry]
+    {"Detection of Targets in Darkness", S_ONOFF | S_STRICT, XH_X, M_SPC, {"hud_crosshair_dark"}},
+
     {"Default Color", S_CRITEM, XH_X, M_SPC, {"hud_crosshair_color"},
      m_null, input_null, str_hudcolor},
 
@@ -2082,6 +2085,7 @@ void UpdateCrosshairItems(void) // [Nugget] Global
 
     DisableItem(!hud_crosshair_on, stat_settings3,
                 "hud_crosshair_slot1_disable");
+    DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair_dark");
 }
 
 // [Nugget]

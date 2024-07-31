@@ -1698,6 +1698,8 @@ crosstarget_t hud_crosshair_target;
 crosslockon_t hud_crosshair_lockon; // [Alaux] Crosshair locks on target
 boolean hud_crosshair_indicators; // [Nugget] Horizontal-autoaim indicators
 boolean hud_crosshair_fuzzy; // [Nugget] Account for fuzzy targets
+boolean hud_crosshair_dark; // [Cherry] Account for targets in darkness
+int hud_crosshair_dark_level; // [Cherry]
 int hud_crosshair_color;
 int hud_crosshair_target_color;
 
@@ -1820,7 +1822,9 @@ static void HU_UpdateCrosshair(void)
     overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 
     if (linetarget
-        && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_fuzzy)) // [Nugget]
+        && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_fuzzy) // [Nugget]
+        && (!(linetarget->subsector->sector->lightlevel < hud_crosshair_dark_level)
+            || hud_crosshair_dark)) // [Cherry]
       crosshair_target = linetarget;
 
     if (hud_crosshair_target && crosshair_target)

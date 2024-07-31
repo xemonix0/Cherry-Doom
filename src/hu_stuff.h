@@ -140,6 +140,8 @@ extern crosslockon_t hud_crosshair_lockon;
 
 extern boolean hud_crosshair_indicators; // [Nugget] Horizontal autoaim indicators
 extern boolean hud_crosshair_fuzzy; // [Nugget] Account for fuzzy targets
+extern boolean hud_crosshair_dark; // [Cherry] Account for targets in darkness
+extern int hud_crosshair_dark_level; // [Cherry]
 extern struct mobj_s *crosshair_target;
 void HU_UpdateCrosshairLock(int x, int y);
 void HU_DrawCrosshair(void);

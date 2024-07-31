@@ -1,4 +1,4 @@
-**_Save_ version has been changed to `Cherry 2.0.0`**
+**_Save_ version has been changed to `Cherry 2.0.0`**  
 **_WAD stats_ version has been changed back to `1`**
 
 ## New Features
@@ -6,7 +6,8 @@
 - _Mute Inactive Window_ setting
 - _Floating Powerups_ setting
 - _Rocket Trails_ setting
-- _Disable [Crosshair] On Slot 1_ setting
+- Crosshair > _Disable On Slot 1_ setting
+- Crosshair > _Detection of Targets in Darkness_ setting
 - Hints for disabled menu items
 
 ## Changes

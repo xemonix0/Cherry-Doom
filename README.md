@@ -34,12 +34,15 @@ Some settings are labeled as _CFG-only_: they can only be changed by editing `ch
 - _Mute Inactive Window_ setting [p.f. International Doom]
 - _Floating Powerups_ setting [p.f. International Doom]
 - _Rocket Trails_ setting (with additional _Rocket Trails Interval_ and _Smoke Translucency_ settings for extended customization) [p.f. Doom Retro]
+	- Rocket trails are disabled if a mod using DSDHacked replaces the rocket smoke thing or any of its states or sprites
 
 ### Status Bar/HUD
 
 - _More Widgets on the Intermission Screen_ setting: shows smaller versions of _Health_, _Armor_ and _Weapons_ widgets on the intermission screen, customizable through options
 - _Movement widget_: shows the current player movement and strafing speeds
-- _Disable Crosshair On Slot 1_ setting
+- **Crosshair**:
+	- _Disable On Slot 1_ setting [i.b. _Precise Crosshair_ mod]
+	- _Detection of Targets in Darkness_ setting (the required light level is customizable through the CFG-only `hud_crosshair_dark_level` CVAR) [i.b. _Target Spy_ mod]
 
 ### Miscellaneous
 
@@ -57,9 +60,9 @@ Compared to DSDA-Doom's implementation, there are a few notable additions and ch
 - Command line parameter to _disable stats tracking_ (`-notracking`)
 - CVAR to toggle _stats tracking_ altogether (`lt_enable_tracking`)
 - CVAR to toggle _tracking kills and time for maps beaten not from pistol start_ (`lt_track_continuous`)
-	- This CVAR is `1` by default; the old behavior _(before 2.0.0 and in DSDA-Doom)_ is equivalent to this CVAR being set to `0`
+	- This CVAR is set to `1` by default; the old behavior _(before 2.0.0 and in DSDA-Doom)_ is equivalent to this CVAR being set to `0`
 - CVAR to toggle _resetting stats for the current level upon beating the level on a new best skill (except Nightmare)_ (`lt_reset_on_higher_skill`)
-	- This CVAR is `1` by default; the old behavior is equivalent to this CVAR being set to `0`
+	- This CVAR is set to `1` by default; the old behavior is equivalent to this CVAR being set to `0`
 - The ability to see (and warp to) all loaded maps, not just maps from the last loaded WAD
 - _Stats tracking_ now ignores WADs without maps when creating data folders for _stats files_
 - _Level table stats format_ customization (CFG-only: `lt_stats_format`)
@@ -200,7 +203,7 @@ Copyright:
  © 2013 James Haley et al.  
 License: [GPL-3.0+](https://www.gnu.org/licenses/gpl-3.0)
 
-Files: `src/wadstats.*`  
+Files: `src/wad_stats.*`  
 Copyright: © 2021-2023 Ryan Krafnick.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
