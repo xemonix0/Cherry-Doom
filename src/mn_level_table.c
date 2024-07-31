@@ -334,6 +334,9 @@ static char *FormatStat(int a, int b, boolean known_total)
                 M_StringPrintF(&str, "N/A");
             }
             break;
+        case STATSFORMAT_COUNT:
+            M_StringPrintF(&str, "%d", a);
+            break;
     }
 
     return str;
