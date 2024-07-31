@@ -738,11 +738,21 @@ boolean LT_MouseScroll(setup_menu_t *menu, int inc)
     return true;
 }
 
-void LT_ResetScroll(setup_menu_t *menu, int item_on)
+void LT_UpdateScrollingIndicators(setup_menu_t *menu)
 {
-    if (set_lvltbl_active)
+    if (!set_lvltbl_active)
     {
-        scroll_pos = 0;
-        LT_KeyboardScroll(menu, menu + item_on);
+        return;
     }
+
+    int rows = 0;
+    for (setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
+    {
+        if (!(src->m_flags & S_DIRECT))
+        {
+            ++rows;
+        }
+    }
+
+    UpdateScrollingIndicators(rows);
 }

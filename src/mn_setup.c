@@ -190,19 +190,19 @@ static int highlight_tab;
 static int current_subpage, total_subpages;
 
 // [FG] save the setup menu's itemon value in the S_END element's x coordinate
+// [Cherry] Turn menu into a parameter
 
-static int GetItemOn(void)
+static int GetItemOn(setup_menu_t *const menu)
 {
-    const setup_menu_t *menu = current_menu;
-
     if (menu)
     {
-        while (!(menu->m_flags & S_END))
+        setup_menu_t *item = menu;
+        while (!(item->m_flags & S_END))
         {
-            menu++;
+            item++;
         }
 
-        return menu->m_x;
+        return item->m_x;
     }
 
     return 0;
@@ -1236,7 +1236,7 @@ static void SetupMenu(void)
     setup_gather = false;
     highlight_tab = 0;
     highlight_item = 0;
-    set_item_on = GetItemOn();
+    set_item_on = GetItemOn(current_menu);
 
     // [Cherry] prevent UB when there is nothing to highlight
     boolean no_highlight = false;
@@ -1258,7 +1258,7 @@ static void SetupMenu(void)
 
     // [Cherry]
     KeyboardScrollSubpage(0);
-    LT_ResetScroll(current_menu, set_item_on);
+    LT_UpdateScrollingIndicators(current_menu);
 }
 
 /////////////////////////////
@@ -3276,9 +3276,9 @@ void MN_LevelTable(int choice)
 
     int page_index_save = GetPageIndex(level_table);
     int item_on_save = 0;
-    if (level_table[0])
+    if (level_table[page_index_save])
     {
-        item_on_save = GetItemOn();
+        item_on_save = GetItemOn(level_table[page_index_save]);
     }
 
     LT_Build();
@@ -4375,7 +4375,7 @@ static boolean NextPage(int inc)
     highlight_tab = current_page;
     current_menu = setup_screens[setup_screen][current_page];
     set_item_on = lt_level_pages ? set_item_on // [Cherry]
-                                 : GetItemOn();
+                                 : GetItemOn(current_menu);
 
     print_warning_about_changes = false; // killough 10/98
 
@@ -4399,10 +4399,7 @@ static boolean NextPage(int inc)
 
     // [Cherry]
     KeyboardScrollSubpage(menu_input == mouse_mode ? -inc : false);
-    if (!lt_level_pages)
-    {
-        LT_ResetScroll(current_menu, set_item_on);
-    }
+    LT_UpdateScrollingIndicators(current_menu);
 
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
     return true;
@@ -4743,11 +4740,12 @@ static boolean SetupTab(void)
 
                 ++set_item_on;
             }
-
-            KeyboardScrollSubpage(0);
-            LT_ResetScroll(current_menu, set_item_on);
         }
         highlight_item = 0;
+
+        // [Cherry]
+        KeyboardScrollSubpage(0);
+        LT_UpdateScrollingIndicators(current_menu);
     }
 
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.

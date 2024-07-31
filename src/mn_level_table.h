@@ -38,6 +38,6 @@ void LT_Draw(setup_menu_t *menu, int page);
 
 boolean LT_KeyboardScroll(setup_menu_t *menu, setup_menu_t *item);
 boolean LT_MouseScroll(setup_menu_t *menu, int inc);
-void LT_ResetScroll(setup_menu_t *menu, int item_on);
+void LT_UpdateScrollingIndicators(setup_menu_t *menu);
 
 #endif
