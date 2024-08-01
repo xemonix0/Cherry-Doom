@@ -10,5 +10,6 @@
 ## Bug Fixes
 
 - **Crash when loading status bars taller than 32px**
+- **_[Crosshair] Translucency_ menu item not being disabled when the crosshair were disabled**
 
 **[1].** This will affect existing config files.

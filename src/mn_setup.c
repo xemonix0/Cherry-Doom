@@ -1844,6 +1844,7 @@ void UpdateCrosshairItems(void) // [Nugget] Global
     // [Nugget] --------------------------------------------------------------
 
     DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair");
+    DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair_tran_pct");
 
     DisableItem(
         !(hud_crosshair_on
