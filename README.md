@@ -52,6 +52,7 @@ Most of Cherry Doom's features come from other sources, like other source ports,
 - Hints for disabled menu items, explaining the reason certain items are disabled
 - Most setup menus have been rearranged (utilizing the new _scrollable subpages_ feature) to improve user experience and make navigation easier
 - _Disable Stats Tracking_ setting for the _custom skill_
+- Blood amount now depends on the amount of damage dealt
 
 ### _Level Table_
 

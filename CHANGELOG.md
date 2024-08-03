@@ -37,6 +37,7 @@
 - The _Movement Widget_ is now disabled in _strict mode_
 - Most setup menus have been rearranged (utilizing the new _scrollable subpages_ feature)
 - Made it possible to get 100% items on maps without items
+- Blood amount now depends on the amount of damage dealt
 
 ## Bug Fixes
 

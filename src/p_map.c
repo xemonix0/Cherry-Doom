@@ -1839,7 +1839,20 @@ static boolean PTR_ShootTraverse(intercept_t *in)
   if (in->d.thing->flags & MF_NOBLOOD)
     P_SpawnPuff (x,y,z);
   else
-    P_SpawnBlood (x,y,z, la_damage, th);
+  {
+    // [Cherry] Blood amount depends on damage
+    if (casual_play)
+    {
+      for (int i = MIN((la_damage >> 2) + 1, 10); i > 0; i--)
+      {
+          P_SpawnBlood(x + (Woof_Random() % 7 - 3) * FRACUNIT,
+                       y + (Woof_Random() % 7 - 3) * FRACUNIT, z, la_damage,
+                       th);
+      }
+    }
+    else
+      P_SpawnBlood (x,y,z, la_damage, th);
+  }
 
   if (la_damage)
     P_DamageMobj (th, shootthing, shootthing, la_damage);
