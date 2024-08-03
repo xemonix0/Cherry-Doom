@@ -3984,20 +3984,6 @@ default_t defaults[] = {
     "Widget layout (0 = Horizontal, 1 = Vertical)"
   },
 
-  { // [Cherry]
-    "inter_health_armor",
-    (config_t *) &inter_health_armor, NULL,
-    {0}, {0,1}, number, ss_stat, wad_no,
-    "show Health and Armor widgets on intermission screen"
-  },
-
-  { // [Cherry]
-    "inter_weapons",
-    (config_t *) &inter_weapons, NULL,
-    {0}, {0,1}, number, ss_stat, wad_no,
-    "show Weapons widget on intermission screen"
-  },
-
   { // [Nugget] Crosshair toggle
     "hud_crosshair_on",
     (config_t *) &hud_crosshair_on, NULL,
@@ -4093,7 +4079,30 @@ default_t defaults[] = {
     "target crosshair color"
   },
 
-  // [Cherry] /-- Level table -------------------------------------------------
+  // [Cherry] /-- Intermission screen -----------------------------------------
+
+  {
+    "inter_health_armor",
+    (config_t *) &inter_health_armor, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "show Health and Armor widgets on intermission screen"
+  },
+
+  {
+    "inter_weapons",
+    (config_t *) &inter_weapons, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "show Weapons widget on intermission screen"
+  },
+
+  {
+    "inter_fix_kill_totals",
+    (config_t *) &inter_fix_kill_totals, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "make intermission screen kill totals follow the stats HUD widget logic"
+  },
+
+  // -- Level table -----------------------------------------------------------
 
   {
     "lt_enable_tracking",

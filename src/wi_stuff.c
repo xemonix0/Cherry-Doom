@@ -1734,7 +1734,10 @@ static void WI_updateStats(void)
     {
       acceleratestage = 0;
       cnt_kills[0] = (plrs[me].skills * 100) / wbs->maxkills;
-      cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxitems;
+
+      // [Cherry] Make items = 100% if maxitems = 0
+      cnt_items[0] = (wbs->maxitems ?
+                      (plrs[me].sitems * 100) / wbs->maxitems : 100);
 
       // killough 2/22/98: Make secrets = 100% if maxsecret = 0:
       cnt_secret[0] = (wbs->maxsecret ?
@@ -1769,9 +1772,13 @@ static void WI_updateStats(void)
         if (!(bcnt&3))
           S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
-        if (cnt_items[0] >= (plrs[me].sitems * 100) / wbs->maxitems)
+        // [Cherry] Make items = 100% if maxitems = 0
+        if ((!wbs->maxitems && !casual_play) ||
+            cnt_items[0] >= (wbs->maxitems ?
+                             (plrs[me].sitems * 100) / wbs->maxitems : 100))
           {
-            cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxitems;
+            cnt_items[0] = (wbs->maxitems ?
+                            (plrs[me].sitems * 100) / wbs->maxitems : 100);
             S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
             sp_state++;
           }
@@ -2282,8 +2289,9 @@ static void WI_initVariables(wbstartstruct_t* wbstartstruct)
   if (!wbs->maxkills)
     wbs->maxkills = 1;  // probably only useful in MAP30
 
-  if (!wbs->maxitems)
-    wbs->maxitems = 1;
+  // [Cherry] Keep maxitems = 0
+  // if (!wbs->maxitems)
+  //   wbs->maxitems = 1;
 
   // killough 2/22/98: Keep maxsecret=0 if it's zero, so
   // we can detect 0/0 as as a special case and print 100%.

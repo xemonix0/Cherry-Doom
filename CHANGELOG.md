@@ -9,6 +9,7 @@
 - Crosshair > _Disable On Slot 1_ setting
 - Crosshair > _Detection of Targets in Darkness_ setting
 - _Mouselook [Only]_ option for the _Stretch Short Skies_ setting
+- CVAR to _make intermission screen kill percentage follow the same logic as the stats widget_
 - Hints for disabled menu items
 
 ## Changes
@@ -35,6 +36,7 @@
 	- _Setup menu titles_: Yellow > Red
 - The _Movement Widget_ is now disabled in _strict mode_
 - Most setup menus have been rearranged (utilizing the new _scrollable subpages_ feature)
+- Made it possible to get 100% items on maps without items
 
 ## Bug Fixes
 

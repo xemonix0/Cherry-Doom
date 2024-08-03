@@ -1924,6 +1924,8 @@ void G_RestartWithLoadout(const boolean current)
 //
 
 boolean um_pars = false;
+// [Cherry] Make intermission screen kill percentage follow the same logic as the stats widget
+boolean inter_fix_kill_totals = false;
 
 static void G_DoCompleted(void)
 {
@@ -2118,6 +2120,9 @@ frommapinfo:
     {
       wminfo.plyr[i].in = playeringame[i];
       wminfo.plyr[i].skills = players[i].killcount;
+      // [Cherry] Make intermission screen kill percentage follow the same logic as the stats widget
+      if (CASUALPLAY(inter_fix_kill_totals))
+        wminfo.plyr[i].skills -= players[i].maxkilldiscount;
       wminfo.plyr[i].sitems = players[i].itemcount;
       wminfo.plyr[i].ssecret = players[i].secretcount;
       wminfo.plyr[i].stime = leveltime;

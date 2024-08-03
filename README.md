@@ -27,8 +27,6 @@ Some features were first introduced in Cherry Doom and later merged into Nugget 
 
 Most of Cherry Doom's features come from other sources, like other source ports, mods or games. The initial implementations for some are **ported from (p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
 
-Some settings are labeled as _CFG-only_: they can only be changed by editing `cherry-doom.cfg`. For these settings, their CVAR names are provided alongside the _CFG-only_ label as guidance.
-
 ### General
 
 - _Mute Inactive Window_ setting [p.f. International Doom]
@@ -36,10 +34,14 @@ Some settings are labeled as _CFG-only_: they can only be changed by editing `ch
 - _Rocket Trails_ setting (with additional _Rocket Trails Interval_ and _Smoke Translucency_ settings for extended customization) [p.f. Doom Retro]
 	- Rocket trails are disabled if a DSDHacked patch replaces the rocket smoke thing or any of its states or sprites
 - _Mouselook_ option for the _Stretch Short Skies_ setting to stretch only when mouselook is enabled
-
+- **Intermission screen**:
+	- Settings to show _Health & Armor_ and _Weapons_ widgets
+	- CVAR to _make intermission screen kill percentage follow the same logic as the stats widget_ (`inter_fix_kill_totals`)
+		- Specifically, it makes resurrected monsters and monsters spawned by the Icon of Sin not count
+	- Fixed items percentage being 0% if there are no items on the map
+ 
 ### Status Bar/HUD
 
-- _More Widgets on the Intermission Screen_ setting: shows smaller versions of _Health_, _Armor_ and _Weapons_ widgets on the intermission screen, customizable through options
 - _Movement widget_: shows the current player movement and strafing speeds
 - **Crosshair**:
 	- _Disable On Slot 1_ setting [i.b. _Precise Crosshair_ mod]
@@ -66,7 +68,7 @@ Compared to DSDA-Doom's implementation, there are a few notable additions and ch
 	- This CVAR is set to `1` by default; the old behavior is equivalent to this CVAR being set to `0`
 - The ability to see (and warp to) all loaded maps, not just maps from the last loaded WAD
 - _Stats tracking_ now ignores WADs without maps when creating data folders for _stats files_
-- _Level table stats format_ customization (CFG-only: `lt_stats_format`)
+- _Level table stats format_ customization through the CFG-only `lt_stats_format` CVAR
 - Various visual changes
 
 # Releases
