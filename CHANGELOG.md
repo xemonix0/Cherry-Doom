@@ -8,6 +8,7 @@
 - _Rocket Trails_ setting
 - Crosshair > _Disable On Slot 1_ setting
 - Crosshair > _Detection of Targets in Darkness_ setting
+- _Mouselook [Only]_ option for the _Stretch Short Skies_ setting
 - Hints for disabled menu items
 
 ## Changes

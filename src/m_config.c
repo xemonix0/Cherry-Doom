@@ -341,11 +341,12 @@ default_t defaults[] = {
     "show ENDOOM screen (0 = off, 1 = on, 2 = PWAD only)"
   },
 
+  // [Cherry] Option to stretch short skies only when mouselook is enabled
   {
     "stretchsky",
     (config_t *) &stretchsky, NULL,
-    {0}, {0,1}, number, ss_gen, wad_no,
-    "1 to stretch short skies"
+    {STRETCHSKY_OFF}, {STRETCHSKY_OFF,STRETCHSKY_MOUSELOOK}, number, ss_gen, wad_no,
+    "1 to stretch short skies, 2 to stretch only when mouselook is enabled"
   },
 
   {

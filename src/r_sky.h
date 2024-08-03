@@ -29,7 +29,15 @@
 #define ANGLETOSKYSHIFT         22
 
 // [Nugget] Removed unnecessary `SKYSTRETCH_HEIGHT` macro
-extern boolean stretchsky;
+// [Cherry] Option to stretch short skies only when mouselook is enabled
+
+enum {
+    STRETCHSKY_OFF,
+    STRETCHSKY_ALWAYS,
+    STRETCHSKY_MOUSELOOK,
+};
+
+extern int stretchsky;
 
 // [FG] linear horizontal sky scrolling
 extern boolean linearsky;

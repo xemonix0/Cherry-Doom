@@ -34,7 +34,8 @@ Some settings are labeled as _CFG-only_: they can only be changed by editing `ch
 - _Mute Inactive Window_ setting [p.f. International Doom]
 - _Floating Powerups_ setting [p.f. International Doom]
 - _Rocket Trails_ setting (with additional _Rocket Trails Interval_ and _Smoke Translucency_ settings for extended customization) [p.f. Doom Retro]
-	- Rocket trails are disabled if a mod using DSDHacked replaces the rocket smoke thing or any of its states or sprites
+	- Rocket trails are disabled if a DSDHacked patch replaces the rocket smoke thing or any of its states or sprites
+- _Mouselook_ option for the _Stretch Short Skies_ setting to stretch only when mouselook is enabled
 
 ### Status Bar/HUD
 

@@ -333,6 +333,9 @@ enum
     str_s_clipping_dist,
     str_page_ticking,
     str_thing_spawns,
+
+    // [Cherry]
+    str_stretchsky,
 };
 
 static const char **GetStrings(int id);
@@ -2893,6 +2896,10 @@ static const char *fake_contrast_strings[] = {
 
 // [Cherry] /------------------------------------------------------------------
 
+static const char *stretchsky_strings[] = {
+    "Off", "Always", "Mouselook"
+};
+
 static void UpdateRocketTrailsItems(void);
 
 // Translucent rocket trails
@@ -2919,8 +2926,9 @@ static setup_menu_t gen_settings5[] = {
 
     {"Brightmaps", S_ONOFF | S_STRICT, M_X, M_SPC, {"brightmaps"}},
 
-    {"Stretch Short Skies", S_ONOFF, M_X, M_SPC, {"stretchsky"},
-     m_null, input_null, str_empty, R_InitSkyMap},
+    // [Cherry] Option to stretch short skies only when mouselook is enabled
+    {"Stretch Short Skies", S_CHOICE, M_X, M_SPC, {"stretchsky"},
+     m_null, input_null, str_stretchsky, R_InitSkyMap},
 
     {"Linear Sky Scrolling", S_ONOFF, M_X, M_SPC, {"linearsky"},
      m_null, input_null, str_empty, R_InitPlanes},
@@ -5054,6 +5062,9 @@ static const char **selectstrings[] = {
     s_clipping_dist_strings,
     page_ticking_strings,
     thing_spawns_strings,
+
+    // [Cherry]
+    stretchsky_strings,
 };
 
 static const char **GetStrings(int id)

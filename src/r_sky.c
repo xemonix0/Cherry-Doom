@@ -32,7 +32,8 @@
 #include "z_zone.h"
 
 // [FG] stretch short skies
-boolean stretchsky;
+// [Cherry] Option to stretch short skies only when mouselook is enabled
+int stretchsky;
 
 //
 // sky mapping

@@ -38,6 +38,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
+#include "g_game.h" // [Cherry] Option to stretch short skies only when mouselook is enabled
 #include "i_system.h"
 #include "r_bmaps.h" // [crispy] R_BrightmapForTexName()
 #include "r_data.h"
@@ -471,7 +472,11 @@ static void do_draw_plane(visplane_t *pl)
         // [Nugget] Stretch sky just as much as necessary
         skyheight_target = 200 - (dc_texturemid >> FRACBITS);
         
-        stretch = (stretchsky && dc_texheight < skyheight_target);
+        stretch = ((stretchsky == STRETCHSKY_ALWAYS
+                    // [Cherry] Option to stretch short skies only when
+                    // mouselook is enabled
+                    || (stretchsky == STRETCHSKY_MOUSELOOK && mouselook))
+                   && dc_texheight < skyheight_target);
         if (stretch || !vertically_scrolling)
         {
           fixed_t diff;
