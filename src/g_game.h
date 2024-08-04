@@ -113,8 +113,8 @@ extern int  bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
 extern int pars[][10];  // hardcoded array size
 extern int cpars[];     // hardcoded array size
 
-// [Cherry] Make intermission screen kill percentage follow the same logic as the stats widget
-extern boolean inter_fix_kill_totals;
+// [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
+extern boolean inter_accurate_kill_count;
 
 // [Nugget] ------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 .TH @PROJECT_SHORTNAME@ 6
 .SH NAME
 @PROJECT_SHORTNAME@ \- Cherry Doom is a fork of Alaux's Doom source port Nugget
-Doom, intended to implement additional features.
+Doom, intended to add even more features.
 .SH SYNOPSIS
 .B cherry-doom
 [\fIOPTIONS\fR]
@@ -9,8 +9,8 @@ Doom, intended to implement additional features.
 .PP
 Woof! is a continuation of Team Eternity's WinMBF targeted at modern systems.
 Alaux's Nugget Doom is developed based on the Woof! code, aiming to implement
-additional features. Cherry Doom is a fork of Nugget Doom, intended to implement
-even more additional features.
+additional features. Cherry Doom is a fork of Nugget Doom, intended to add
+even more features.
 .br
 @content
 .SH IWAD SEARCH PATHS

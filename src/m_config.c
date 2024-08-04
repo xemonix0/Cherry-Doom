@@ -4096,10 +4096,10 @@ default_t defaults[] = {
   },
 
   {
-    "inter_fix_kill_totals",
-    (config_t *) &inter_fix_kill_totals, NULL,
+    "inter_accurate_kill_count",
+    (config_t *) &inter_accurate_kill_count, NULL,
     {0}, {0,1}, number, ss_stat, wad_no,
-    "make intermission screen kill totals follow the stats HUD widget logic"
+    "adjust intermission kill percentage to follow UV max speedrun requirements"
   },
 
   // -- Level table -----------------------------------------------------------

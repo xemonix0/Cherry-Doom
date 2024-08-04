@@ -1,14 +1,14 @@
 ﻿# Cherry Doom
 [![Cherry Doom Icon](https://raw.githubusercontent.com/xemonix0/Cherry-Doom/master/data/cherry-doom.png)](https://github.com/xemonix0/Cherry-Doom)
 
-[![Code Size](https://img.shields.io/github/languages/code-size/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom)
-[![License](https://img.shields.io/github/license/xemonix0/Cherry-Doom.svg?logo=gnu)](https://github.com/xemonix0/Cherry-Doom/blob/master/COPYING)
-[![Release](https://img.shields.io/github/release/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
-[![Release Date](https://img.shields.io/github/release-date/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/latest/total.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
-[![Commits](https://img.shields.io/github/commits-since/xemonix0/Cherry-Doom/latest.svg)](https://github.com/xemonix0/Cherry-Doom/commits/master)
-[![Last Commit](https://img.shields.io/github/last-commit/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/commits/master)
-[![Build Status](https://github.com/xemonix0/Cherry-Doom/actions/workflows/main.yml/badge.svg)](https://github.com/xemonix0/Cherry-Doom/actions/workflows/main.yml)
+[![Code Size](https://img.shields.io/github/languages/code-size/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom)
+[![License](https://img.shields.io/github/license/xemonix0/Cherry-Doom.svg?style=for-the-badge&logo=gnu)](https://github.com/xemonix0/Cherry-Doom/blob/master/COPYING)
+[![Release](https://img.shields.io/github/release/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
+[![Release Date](https://img.shields.io/github/release-date/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/latest/total.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
+[![Commits Since Latest Release](https://img.shields.io/github/commits-since/xemonix0/Cherry-Doom/latest.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/commits/master)
+[![Last Commit](https://img.shields.io/github/last-commit/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/commits/master)
+[![Continuous Integration](https://img.shields.io/github/check-runs/xemonix0/Cherry-Doom/master?style=for-the-badge&label=Continuous%20Integration)](https://github.com/xemonix0/Cherry-Doom/actions/workflows/main.yml)
 
 Cherry Doom is a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) intended to add even more features.
 
@@ -16,83 +16,68 @@ Cherry Doom is a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) i
 
 If you're seeking information on the version you're using, please refer to the documentation included with it.
 
-## DISCLAIMER
+## Demo compatibility notice
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
 **RECORD DEMOS AT YOUR OWN RISK!**
 
 ## Features
 
-Note that this feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features); read the latter for more details.
-Some features were first introduced in Cherry Doom and later merged into Nugget Doom, and so they're not listed here anymore.
-
-Most of Cherry Doom's features come from other sources, like other source ports, mods or games. The initial implementations for some are **ported from (p.f.)** or **inspired by (i.b.)** said sources. These acknowledgements are included in the feature lists below.
+**Important to note**:
+- This feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features)
+- Some of Cherry Doom's features come from other sources. The initial implementations for those are _ported from (p.f.)_ or _inspired by (i.b.)_ said sources. These acknowledgements are included in the feature list
+- Some config variables (CVARs) don't have a corresponding menu item and can only be changed by editing `cherry-doom.cfg`. For these, a "_CFG-only_" label is present and the CVAR name is included for guidance.
 
 ### General
 
-- _Mute Inactive Window_ setting [p.f. International Doom]
+- _Mute Inactive Window_ setting [p.f. [International Doom](https://jnechaevsky.github.io/inter-doom/)]
 - _Floating Powerups_ setting [p.f. International Doom]
-- _Rocket Trails_ setting (with additional _Rocket Trails Interval_ and _Smoke Translucency_ settings for extended customization) [p.f. Doom Retro]
-	- Rocket trails are disabled if a DSDHacked patch replaces the rocket smoke thing or any of its states or sprites
-- _Mouselook_ option for the _Stretch Short Skies_ setting to stretch only when mouselook is enabled
-- **Intermission screen**:
-	- Settings to show _Health & Armor_ and _Weapons_ widgets
-	- CVAR to _make intermission screen kill percentage follow the same logic as the stats widget_ (`inter_fix_kill_totals`)
-		- Specifically, it makes resurrected monsters and monsters spawned by the Icon of Sin not count
-	- Fixed items percentage being 0% if there are no items on the map
- 
+- _Rocket Trails_ setting [p.f. [Doom Retro](https://www.doomretro.com/)] (with extended customization through _Rocket Trails Interval_ and _Smoke Translucency_ settings)
+	- Just like in Doom Retro, rocket trails are disabled if a [DSDHacked](https://doomwiki.org/wiki/DSDHacked) patch replaces the rocket smoke thing definition or any of its states or sprites
+- _Mouselook_ option for the _Stretch Short Skies_ setting to enable sky stretching only when mouselook is enabled
+
+#### Intermission screen
+
+- Settings to show _Health & Armor_ and _Weapons_ widgets alongside the detailed time widget
+- Setting to _adjust intermission kill percentage to follow UV max speedrun requirements_ (CFG-only: `inter_accurate_kill_count`)
+	- Specifically, it prevents resurrected and Icon of Sin-spawned monsters from increasing the totals (which also aligns with the level stats widget logic)
+- Items percentage is now 100% on maps without items
+
 ### Status Bar/HUD
 
 - _Movement widget_: shows the current player movement and strafing speeds
-- **Crosshair**:
-	- _Disable On Slot 1_ setting [i.b. _Precise Crosshair_ mod]
-	- _Detection of Targets in Darkness_ setting (the required light level is customizable through the CFG-only `hud_crosshair_dark_level` CVAR) [i.b. _Target Spy_ mod]
+
+#### Crosshair
+
+- _Disable On Slot 1_ setting [i.b. [_Precise Crosshair_ mod](https://forum.zdoom.org/viewtopic.php?t=64788)]
+- _Detection of Targets in Darkness_ setting (the required light level is customizable through the CFG-only `hud_crosshair_dark_level` CVAR) [i.b. [_Target Spy_ mod](https://forum.zdoom.org/viewtopic.php?t=60784)]
 
 ### Miscellaneous
 
-- Hints for disabled menu items, explaining the reason certain items are disabled
-- Most setup menus have been rearranged (utilizing the new _scrollable subpages_ feature) to improve user experience and make navigation easier
+- Hints for some disabled menu items, explaining the reason they are disabled
+- Most setup menus have been rearranged (utilizing the new _scrollable subpages_ feature) to make navigation easier
 - _Disable Stats Tracking_ setting for the _custom skill_
-- Blood amount now depends on the amount of damage dealt
+- Blood amount now scales with the amount of damage dealt [i.b. Doom Retro]
 
 ### _Level Table_
 
-The _Level Table_, inspired by DSDA-Doom, provides a way to track your progress across the levels of a WAD.
+The _Level Table_, inspired by (and initially ported from) DSDA-Doom, provides a way to track your progress across the levels of a WAD.
 
 This feature tracks statistics, such as the _skill level_, _kills_, _items_, _secrets_ and _time_, and allows you to see all that information in one place (including a _Summary_ screen, with overall statistics for the current WAD), also giving you the ability to warp to any map conveniently from the same screen.
 
 Compared to DSDA-Doom's implementation, there are a few notable additions and changes:
+- Setting to toggle _stats tracking_ (CFG-only: `lt_enable_tracking`)
 - Command line parameter to _disable stats tracking_ (`-notracking`)
-- CVAR to toggle _stats tracking_ altogether (`lt_enable_tracking`)
-- CVAR to toggle _tracking kills and time for maps beaten not from pistol start_ (`lt_track_continuous`)
-	- This CVAR is set to `1` by default; the old behavior _(before 2.0.0 and in DSDA-Doom)_ is equivalent to this CVAR being set to `0`
-- CVAR to toggle _resetting stats for the current level upon beating the level on a new best skill (except Nightmare)_ (`lt_reset_on_higher_skill`)
-	- This CVAR is set to `1` by default; the old behavior is equivalent to this CVAR being set to `0`
-- The ability to see (and warp to) all loaded maps, not just maps from the last loaded WAD
-- _Stats tracking_ now ignores WADs without maps when creating data folders for _stats files_
-- _Level table stats format_ customization through the CFG-only `lt_stats_format` CVAR
+	- This can be used as a temporary alternative to the `lt_enable_tracking` CVAR
+- Setting to toggle _tracking kills and time for maps not beaten from a pistol start_ (CFG-only: `lt_track_continuous`)
+	- This setting is enabled by default; the old behavior _(before 2.0.0 and in DSDA-Doom)_ is equivalent to it being disabled
+- Setting to toggle _resetting stats for the current level upon beating the level on a new best skill (except Nightmare)_ (CFG-only: `lt_reset_on_higher_skill`)
+	- This setting is enabled by default; the old behavior is equivalent to it being disabled
+- The ability to see (and warp to, but not track stats for) all loaded maps (not just maps from the WAD that is the last in the load order), grouped by WAD filename
+- _Stats tracking_ now ignores WADs without maps when creating data folders for stats files
+- _Level Table Stats Format_ setting (CFG-only: `lt_stats_format`)
 - Various visual changes
 
-# Releases
-
-Source code, Windows binaries (MSVC builds for Windows 7 and newer) and Linux AppImages for the latest release can be found on the [Release](https://github.com/xemonix0/Cherry-Doom/releases/latest) page.
-
-The most recent list of changes can be found in the [Changelog](https://github.com/xemonix0/Cherry-Doom/blob/master/CHANGELOG.md).
-
-A complete history of changes and releases can be found on the [Releases](https://github.com/xemonix0/Cherry-Doom/releases) page.
-
-## Versioning
-
-Cherry Doom follows the same versioning system as Nugget Doom:
-
-- **X** is increased in the event of major implementations, as were arbitrary/dynamic resolution and voxel support;
-- **Y** is increased in the event of minor implementations, such as a new cheat;
-- **Z** is increased in the event of bug fixes or text/code reformatting.
-
-Incrementing any of the first values will reset the latter (i.e. a major change to 1.1.2 would shift it to 2.0.0).
-
-The merging of changes from Nugget Doom's releases may affect any of the version values, but not necessarily in the same way as Nugget Doom's own version (i.e. `Nugget Doom 2.Y.Z -> 3.Y.Z` doesn't necessarily mean `Cherry Doom 1.Y.Z -> 2.Y.Z`).
-
-# Compiling
+## Compiling
 
 The Cherry Doom source code is available at GitHub: <https://github.com/xemonix0/Cherry-Doom>.
 
@@ -102,18 +87,18 @@ It can be cloned via
 git clone https://github.com/xemonix0/Cherry-Doom.git
 ```
 
-## Linux, and Windows with MSYS2
+### Linux, and Windows with MSYS2
 
 The following build system and libraries need to be installed:
- 
- * [CMake](https://cmake.org) (>= 3.9)
- * [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
- * [SDL2_net](https://github.com/libsdl-org/SDL_net)
- * [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
- * [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
- * [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
- * [libxmp](https://github.com/libxmp/libxmp) (optional)
- 
+
+- [CMake](https://cmake.org) (>= 3.9)
+- [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
+- [SDL2_net](https://github.com/libsdl-org/SDL_net)
+- [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
+- [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
+- [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
+- [libxmp](https://github.com/libxmp/libxmp) (optional)
+
 Usually your distribution should have the corresponding packages in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
 
 Once installed, compilation should be as simple as:
@@ -129,7 +114,7 @@ After successful compilation the resulting binary can be found in the `src/` dir
 
 ## Windows with Visual Studio
 
-[Visual Studio 2019](https://visualstudio.microsoft.com/) and [Visual Studio Code](https://code.visualstudio.com/) come with built-in support for CMake by opening the source tree as a folder.
+[Visual Studio 2022](https://visualstudio.microsoft.com/) comes with built-in support for CMake by opening the source tree as a folder.
 
 Install vcpkg <https://github.com/Microsoft/vcpkg#quick-start-windows>. Integrate it into CMake or use toolchain file:
 ```shell
@@ -138,12 +123,6 @@ cmake -B build -DCMAKE_TOOLCHAIN_FILE="[path to vcpkg]/scripts/buildsystems/vcpk
 cmake --build build
 ```
 CMake will automatically download and build all dependencies for you.
-
-# Contact
-
-The homepage for Cherry Doom is <https://github.com/xemonix0/Cherry-Doom>.
-
-Please report any bugs, glitches or crashes that you encounter to the GitHub [Issue Tracker](https://github.com/xemonix0/Cherry-Doom/issues).
 
 # Legalese
 
