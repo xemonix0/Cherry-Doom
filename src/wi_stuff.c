@@ -1487,8 +1487,13 @@ static void WI_updateNetgameStats(void)
           if (!playeringame[i])
             continue;
 
-          cnt_kills[i] = (plrs[i].skills * 100) / wbs->maxkills;
-          cnt_items[i] = (plrs[i].sitems * 100) / wbs->maxitems;
+          // [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
+          cnt_kills[i] = !inter_accurate_kill_count || wbs->maxkills ?
+            (plrs[i].skills * 100) / wbs->maxkills : 100;
+
+          // [Cherry] Make items = 100% if maxitems = 0
+          cnt_items[i] = wbs->maxitems ?
+            (plrs[i].sitems * 100) / wbs->maxitems : 100;
 
           // killough 2/22/98: Make secrets = 100% if maxsecret = 0:
           cnt_secret[i] = wbs->maxsecret ?
@@ -1513,9 +1518,11 @@ static void WI_updateNetgameStats(void)
             continue;
 
           cnt_kills[i] += 2;
-
-          if (cnt_kills[i] >= (plrs[i].skills * 100) / wbs->maxkills)
-            cnt_kills[i] = (plrs[i].skills * 100) / wbs->maxkills;
+          // [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
+          if ((!wbs->maxkills && inter_accurate_kill_count) ||
+              cnt_kills[i] >= (wbs->maxkills ? (plrs[i].skills * 100) / wbs->maxkills : 100))
+            cnt_kills[i] = !inter_accurate_kill_count || wbs->maxkills ?
+              (plrs[i].skills * 100) / wbs->maxkills : 100;
           else
             stillticking = true; // still got stuff to tally
         }
@@ -1540,8 +1547,10 @@ static void WI_updateNetgameStats(void)
               continue;
 
             cnt_items[i] += 2;
-            if (cnt_items[i] >= (plrs[i].sitems * 100) / wbs->maxitems)
-              cnt_items[i] = (plrs[i].sitems * 100) / wbs->maxitems;
+            // [Cherry] Make items = 100% if maxitems = 0
+            if (!wbs->maxitems ||
+                cnt_items[i] >= (wbs->maxitems ? (plrs[i].sitems * 100) / wbs->maxitems : 100))
+              cnt_items[i] = wbs->maxitems ? (plrs[i].sitems * 100) / wbs->maxitems : 100;
             else
               stillticking = true;
           }
@@ -1733,7 +1742,10 @@ static void WI_updateStats(void)
   if (acceleratestage && sp_state != 10)
     {
       acceleratestage = 0;
-      cnt_kills[0] = (plrs[me].skills * 100) / wbs->maxkills;
+
+      // [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
+      cnt_kills[0] = (!inter_accurate_kill_count || wbs->maxkills ?
+                      (plrs[me].skills * 100) / wbs->maxkills : 100);
 
       // [Cherry] Make items = 100% if maxitems = 0
       cnt_items[0] = (wbs->maxitems ?
@@ -1757,9 +1769,13 @@ static void WI_updateStats(void)
       if (!(bcnt&3))
         S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
-      if (cnt_kills[0] >= (plrs[me].skills * 100) / wbs->maxkills)
+      // [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
+      if ((!wbs->maxkills && !casual_play && inter_accurate_kill_count) ||
+          cnt_kills[0] >= (wbs->maxkills ?
+                           (plrs[me].skills * 100) / wbs->maxkills : 100))
         {
-          cnt_kills[0] = (plrs[me].skills * 100) / wbs->maxkills;
+          cnt_kills[0] = (wbs->maxkills ?
+                          (plrs[me].skills * 100) / wbs->maxkills : 100);
           S_StartSoundOptional(0, sfx_inttot, sfx_barexp); // [Nugget]: [NS] Optional inter sounds.
           sp_state++;
         }
@@ -1773,7 +1789,7 @@ static void WI_updateStats(void)
           S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
         // [Cherry] Make items = 100% if maxitems = 0
-        if ((!wbs->maxitems && !casual_play) ||
+        if ((!wbs->maxitems && !casual_play)||
             cnt_items[0] >= (wbs->maxitems ?
                              (plrs[me].sitems * 100) / wbs->maxitems : 100))
           {
@@ -2286,7 +2302,8 @@ static void WI_initVariables(wbstartstruct_t* wbstartstruct)
   me = wbs->pnum;
   plrs = wbs->plyr;
 
-  if (!wbs->maxkills)
+  // [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
+  if (!wbs->maxkills && !inter_accurate_kill_count)
     wbs->maxkills = 1;  // probably only useful in MAP30
 
   // [Cherry] Keep maxitems = 0

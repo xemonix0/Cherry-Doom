@@ -39,7 +39,7 @@ Although the new code has been written with the intention of not breaking demo c
 
 - Settings to show _Health & Armor_ and _Weapons_ widgets alongside the detailed time widget
 - Setting to _adjust intermission kill percentage to follow UV max speedrun requirements_ (CFG-only: `inter_accurate_kill_count`)
-	- Specifically, it prevents resurrected and Icon of Sin-spawned monsters from increasing the totals (which also aligns with the level stats widget logic)
+	- Specifically, it prevents resurrected and Icon of Sin-spawned monsters from increasing the totals, and also makes 100% show up for maps without monsters
 - Items percentage is now 100% on maps without items
 
 ### Status Bar/HUD
