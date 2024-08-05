@@ -1862,7 +1862,6 @@ static setup_menu_t stat_settings2[] = {
     MI_GAP,
     {"Nugget - Widget Appearance", S_SKIP | S_TITLE, M_X, M_SPC},
 
-      {"Show Powerup Timers",              S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_power_timers"}, m_null, input_null, str_show_widgets},
       {"HUD Level Stats Format",           S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format"}, m_null, input_null, str_stats_format},
       {"Automap Level Stats Format",       S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format_map"}, m_null, input_null, str_stats_format},
       {"Allow Level Stats Icons",          S_ONOFF,             M_X, M_SPC, {"hud_stats_icons"}},
@@ -2938,9 +2937,6 @@ static setup_menu_t gen_settings5[] = {
     {"Smooth Diminishing Lighting", S_ONOFF, M_X, M_SPC, {"smoothlight"},
      m_null, input_null, str_empty, SmoothLight},
 
-    // [Cherry] Floating powerups from International Doom
-    {"Floating Powerups", S_ONOFF, M_X, M_SPC, {"floating_powerups"}},
-
     MI_GAP,
 
     {"Menu Backdrop Style", S_CHOICE, M_X, M_SPC, {"menu_backdrop"}, // [Nugget] Changed description
@@ -2993,15 +2989,13 @@ static setup_menu_t gen_settings5[] = {
 
       {"Floating Powerups", S_ONOFF, M_X, M_SPC, {"floating_powerups"}},
       MI_GAP,
-      {"Rocket Trails",                          S_ONOFF | S_STRICT | S_CRITICAL,
-       M_X, M_SPC, {"rocket_trails"},
+      {"Rocket Trails", S_ONOFF | S_STRICT | S_CRITICAL, M_X, M_SPC, {"rocket_trails"},
        m_null, input_null, str_empty, UpdateRocketTrailsItems},
       {"Rocket Trails Interval", S_THERMO | S_THRM_SIZE4 | S_STRICT | S_CRITICAL,
        M_X_THRM4, M_THRM_SPC, {"rocket_trails_interval"}},
       {"Smoke Translucency", S_THERMO | S_ACTION | S_PCT | S_STRICT | S_CRITICAL,
        M_X_THRM8, M_THRM_SPC, {"rocket_trails_tran"},
        m_null, input_null, str_empty, SmokeTrans},
-
 
     MI_END
 };
