@@ -25,13 +25,13 @@ Although the new code has been written with the intention of not breaking demo c
 **Important to note**:
 - This feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features)
 - Some of Cherry Doom's features come from other sources. The initial implementations for those are _ported from (p.f.)_ or _inspired by (i.b.)_ said sources. These acknowledgements are included in the feature list
-- Some config variables (CVARs) don't have a corresponding menu item and can only be changed by editing `cherry-doom.cfg`. For these, a "_CFG-only_" label is present and the CVAR name is included for guidance.
+- Some config variables (CVARs) don't have a corresponding menu item and can only be changed by editing `cherry-doom.cfg`. For these, a "_CFG-only_" label is present and the CVAR name is included for guidance
 
 ### General
 
 - _Mute Inactive Window_ setting [p.f. [International Doom](https://jnechaevsky.github.io/inter-doom/)]
 - _Floating Powerups_ setting [p.f. International Doom]
-- _Rocket Trails_ setting [p.f. [Doom Retro](https://www.doomretro.com/)] (with extended customization through _Rocket Trails Interval_ and _Smoke Translucency_ settings)
+- _Rocket Trails_ setting [p.f. [Doom Retro](https://www.doomretro.com/)] (with extended customization via the _Rocket Trails Interval_ and _Smoke Translucency_ settings)
 	- Just like in Doom Retro, rocket trails are disabled if a [DSDHacked](https://doomwiki.org/wiki/DSDHacked) patch replaces the rocket smoke thing definition or any of its states or sprites
 - _Mouselook_ option for the _Stretch Short Skies_ setting to enable sky stretching only when mouselook is enabled
 
