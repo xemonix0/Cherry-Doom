@@ -2541,7 +2541,7 @@ char* G_SaveGameName(int slot)
   {
     static int autoslot = 0;
 
-    sprintf(buf, "nuggaut%d.dsg", autoslot);
+    sprintf(buf, "cheraut%d.dsg", autoslot);
 
     autoslot = (autoslot + 1) % 4;
   }
