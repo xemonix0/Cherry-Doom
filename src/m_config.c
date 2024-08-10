@@ -3529,7 +3529,7 @@ default_t defaults[] = {
   { // [Nugget] Restore message scroll direction toggle
     "hud_msg_scrollup",
     (config_t *) &hud_msg_scrollup, NULL,
-    {1}, {0,1}, number, ss_stat, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "1 enables message review list scrolling upward"
   },
 
@@ -3538,6 +3538,13 @@ default_t defaults[] = {
     (config_t *) &message_colorized, NULL,
     {0}, {0,1}, number, ss_stat, wad_no,
     "1 to colorize player messages"
+  },
+
+  { // [Nugget] Message flash
+    "message_flash",
+    (config_t *) &message_flash, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to make messages flash when they first appear"
   },
 
   { // killough 11/98

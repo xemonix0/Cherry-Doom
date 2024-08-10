@@ -102,8 +102,9 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
   - Dedicated toggle key.
 - **Secret count in "secret revealed" message** [p.f. Crispy Doom]
 - **Show Save Messages** setting (CFG-only: `show_save_messages`)
-- **_Milestone Completion Announcements_** setting, to report completion of milestones (e.g. all items acquired)
-- Restored **_Upward Message Scrolling_** setting, and enabled it by default
+- **_Milestone-Completion Announcements_** setting, to report completion of milestones (e.g. all items acquired)
+- **_Message Flash_** setting
+- Restored **_Upward Message Scrolling_** setting, and enabled it by default (CFG-only: `hud_msg_scrollup`)
 - **Restored various message-related menu items**
 - **_Show Powerup Timers_** setting
 - **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-only: `show_ssg`) [p.f. Crispy Doom]

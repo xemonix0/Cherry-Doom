@@ -579,6 +579,7 @@ extern int sx_fix; // CFG-only
 
 extern int announce_milestones;
 extern int show_save_messages; // CFG-only
+extern int message_flash;
 extern int show_ssg; // CFG-only
 
 enum {

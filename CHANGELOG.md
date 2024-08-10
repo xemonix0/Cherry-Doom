@@ -1,12 +1,14 @@
 ## New Features
 
+- **FOV-based sky stretching** setting
+- **_Message Flash_** setting
 - **Support for powerup-timer icons**
   - Replaced `hud_stats_icons` with `hud_allow_icons` [1]
-- **FOV-based sky stretching** setting
 
 ## Changes
 
 - **Improved loading speed when rewinding**
+- **Removed _Upward Message Scrolling_ menu item**
 
 ## Bug Fixes
 

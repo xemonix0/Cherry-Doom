@@ -1726,7 +1726,7 @@ static setup_menu_t stat_settings4[] = {
      {"hud_secret_message"}, m_null, input_null, str_secret_message},
 
     // [Nugget]
-    {"Milestone Completion Announcements", S_ONOFF, M_X, M_SPC,
+    {"Milestone-Completion Announcements", S_ONOFF, M_X, M_SPC,
      {"announce_milestones"}},
 
     {"Show Toggle Messages", S_ONOFF, M_X, M_SPC, {"show_toggle_messages"}},
@@ -1739,7 +1739,10 @@ static setup_menu_t stat_settings4[] = {
     {"Colorize Messages",    S_ONOFF, M_X, M_SPC, {"message_colorized"},
      m_null, input_null, str_empty, HU_ResetMessageColors},
 
-    // [Nugget] Restored menu items /-------------------------------------------
+    // [Nugget] Message flash
+    {"Message Flash",        S_ONOFF, M_X, M_SPC, {"message_flash"}},
+
+    // [Nugget] Restored menu items /-----------------------------------------
 
     {"Message Color", S_CRITEM|S_COSMETIC, M_X, M_SPC,
      {"hudcolor_mesg"}, m_null, input_null, str_hudcolor},
@@ -1762,10 +1765,7 @@ static setup_menu_t stat_settings4[] = {
     {"Number of Lines", S_NUM, M_X, M_SPC,
      {"hud_msg_lines"}},
 
-    {"Upward Message Scrolling", S_ONOFF, M_X, M_SPC,
-     {"hud_msg_scrollup"}},
-
-    // [Nugget] ---------------------------------------------------------------/
+    // [Nugget] -------------------------------------------------------------/
 
     MI_END
 };
@@ -1861,8 +1861,6 @@ void UpdateCrosshairItems(void) // [Nugget] Global
 static void UpdateMultiLineMsgItem(void)
 {
   DisableItem(!message_list, stat_settings4, "hud_msg_lines");
-  // Restore message scroll direction toggle
-  DisableItem(!message_list, stat_settings4, "hud_msg_scrollup");
 }
 
 // Setting up for the Status Bar / HUD screen. Turn on flags, set pointers,

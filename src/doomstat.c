@@ -204,6 +204,7 @@ int sx_fix; // CFG-only
 
 int announce_milestones;
 int show_save_messages; // CFG-only
+int message_flash;
 int show_ssg; // CFG-only
 int hud_stats_format;
 int hud_stats_format_map;
