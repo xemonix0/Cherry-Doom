@@ -631,7 +631,7 @@ typedef enum {
 extern int extra_gibbing[];
 
 extern int bloodier_gibbing;
-extern int zdoom_item_drops;
+extern int tossdrop;
 
 // Key Bindings --------------------------------------------------------------
 

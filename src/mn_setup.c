@@ -2031,20 +2031,20 @@ static setup_menu_t enem_settings1[] = {
     {"Blocky Spectre Drawing", S_ONOFF, M_X, M_SPC, {"fuzzcolumn_mode"},
      m_null, input_null, str_overlay, R_SetFuzzColumnMode},
 
-    // [Nugget] /---------------------------------------------------------------
+    // [Nugget] /-------------------------------------------------------------
 
     MI_GAP,
     {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
 
       {"Extra Gibbing",            S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"extra_gibbing"}},
       {"Bloodier Gibbing",         S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"bloodier_gibbing"}},
-      {"ZDoom-like Item Drops",    S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"zdoom_item_drops"}},
+      {"Toss Items Upon Death",    S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"tossdrop"}},
 
       // [Nugget - ceski] Selective fuzz darkening
       {"Selective Fuzz Darkening", S_ONOFF|S_STRICT, M_X, M_SPC,
        {"fuzzdark_mode"}, m_null, input_null, str_empty, R_SetFuzzColumnMode},
 
-    // [Nugget] ---------------------------------------------------------------/
+    // [Nugget] -------------------------------------------------------------/
 
     MI_RESET,
 

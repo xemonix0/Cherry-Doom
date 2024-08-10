@@ -1431,10 +1431,10 @@ default_t defaults[] = {
   },
 
   {
-    "zdoom_item_drops",
-    (config_t *) &zdoom_item_drops, NULL,
+    "tossdrop",
+    (config_t *) &tossdrop, NULL,
     {0}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable ZDoom-like item drops for dying enemies"
+    "1 to make enemies toss their items dropped upon death"
   },
 
   // [Nugget] ---------------------------------------------------------------/

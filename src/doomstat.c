@@ -229,7 +229,7 @@ int hudcolor_ms_comp;
 int extra_gibbing_on;
 int extra_gibbing[NUMEXGIBS]; // CFG-only
 int bloodier_gibbing;
-int zdoom_item_drops;
+int tossdrop;
 
 // Key Bindings --------------------------------------------------------------
 
