@@ -1,5 +1,6 @@
 ## New Features
 
+- **Custom Skill: duplicate monster spawns** setting
 - **FOV-based sky stretching** setting
 - **_Message Flash_** setting
 - **Support for powerup-timer icons**
