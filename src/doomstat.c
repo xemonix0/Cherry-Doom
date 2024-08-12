@@ -179,6 +179,7 @@ int rewind_depth;
 int rewind_timeout;
 int no_page_ticking;
 int quick_quitgame;
+int quit_sound;
 
 //int a11y_sector_lighting;
 int a11y_weapon_flash;

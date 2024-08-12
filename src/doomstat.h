@@ -544,6 +544,7 @@ extern int rewind_depth;
 extern int rewind_timeout;
 extern int no_page_ticking;
 extern int quick_quitgame;
+extern int quit_sound;
 
 //extern int a11y_sector_lighting;
 extern int a11y_weapon_flash;

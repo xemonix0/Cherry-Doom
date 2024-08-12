@@ -1067,6 +1067,13 @@ default_t defaults[] = {
     "1 to skip prompt on Quit Game"
   },
 
+  {
+    "quit_sound",
+    (config_t *) &quit_sound, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "1 to play a sound when confirming the \"Quit Game\" prompt"
+  },
+
 #if 0
   {
     "a11y_sector_lighting",

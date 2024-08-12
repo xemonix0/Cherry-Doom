@@ -70,6 +70,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **Rewinding** [i.b. DSDA-Doom]
 - **_Play Internal Demos_** setting
 - **_Quick "Quit Game"_** setting, to skip the confirmation prompt [p.f. Crispy Doom]
+- **Quit Sound** setting, independent of ENDOOM and enabled by default (CFG-only: `quit_sound`)
 - Toggle for **_Weapon Flash Lighting_** [p.f. Crispy Doom]
 - Toggle for **_Weapon Flash Sprite_** [p.f. Crispy Doom]
 - Toggle for **_Invulnerability Colormap_** [p.f. Crispy Doom]
