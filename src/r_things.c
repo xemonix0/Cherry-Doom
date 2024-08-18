@@ -52,6 +52,7 @@
 #include "wi_stuff.h"
 
 #define MINZ        (FRACUNIT*4)
+#define MAXZ        (FRACUNIT*8192)
 #define BASEYCENTER 100
 
 typedef struct {
@@ -552,7 +553,7 @@ void R_ProjectSprite (mobj_t* thing)
   tz = gxt-gyt;
 
   // thing is behind view plane?
-  if (tz < MINZ)
+  if (tz < MINZ || tz > MAXZ)
     return;
 
   xscale = FixedDiv(projection, tz);
