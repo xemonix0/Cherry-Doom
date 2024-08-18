@@ -30,8 +30,8 @@
 #include "m_nughud.h"
 #include "st_stuff.h"
 
-int sts_colored_numbers; //jff 2/18/98 control to disable status color changes
-int sts_pct_always_gray; // killough 2/21/98: always gray %'s? bug or feature?
+boolean sts_colored_numbers; //jff 2/18/98 control to disable status color changes
+boolean sts_pct_always_gray; // killough 2/21/98: always gray %'s? bug or feature?
 
 patch_t*    sttminus;
 

@@ -47,7 +47,7 @@
 #include "m_swap.h"
 #include "mn_font.h"
 #include "mn_menu.h"
-#include "mn_setup.h"
+#include "mn_internal.h"
 #include "mn_snapshot.h"
 #include "p_saveg.h"
 #include "r_defs.h"
@@ -78,16 +78,7 @@ extern boolean chat_on; // in heads-up code
 // defaulted values
 //
 
-int mouseSensitivity_horiz;        // has default   //  killough
-int mouseSensitivity_vert;         // has default
-int mouseSensitivity_horiz_strafe; // [FG] strafe
-int mouseSensitivity_vert_look;    // [FG] look
-
-int showMessages; // Show messages has default, 0 = off, 1 = on
-int show_toggle_messages;
-int show_pickup_messages;
-
-int traditional_menu;
+boolean traditional_menu;
 
 // Blocky mode, has default, 0 = high, 1 = normal
 // int     detailLevel;    obsolete -- killough
@@ -126,6 +117,11 @@ boolean menuactive; // The menus are up
 static boolean options_active;
 
 backdrop_t menu_backdrop;
+
+// [Nugget]
+int menu_backdrop_darkening;
+boolean menu_background_all;
+boolean no_menu_tint;
 
 #define SKULLXOFF        -32
 #define LINEHEIGHT       16
@@ -1310,6 +1306,8 @@ static int quitsounds[8] = {sfx_pldeth, sfx_dmpain, sfx_popain, sfx_slop,
 static int quitsounds2[8] = {sfx_vilact, sfx_getpow, sfx_boscub, sfx_slop,
                              sfx_skeswg, sfx_kntdth, sfx_bspact, sfx_sgtatk};
 
+boolean quit_sound;
+
 static void M_QuitResponse(int ch)
 {
     if (ch != 'y')
@@ -1332,6 +1330,8 @@ static void M_QuitResponse(int ch)
     }
     I_SafeExit(0); // killough
 }
+
+boolean quick_quitgame;
 
 static void M_QuitDOOM(int choice)
 {
@@ -1630,9 +1630,9 @@ static void M_ChangeMessages(int choice)
 {
     // warning: unused parameter `int choice'
     choice = 0;
-    showMessages = 1 - showMessages;
+    show_messages = 1 - show_messages;
 
-    if (!showMessages)
+    if (!show_messages)
     {
         displaymsg("%s", s_MSGOFF); // Ty 03/27/98 - externalized
     }
@@ -2399,15 +2399,6 @@ static boolean ShortcutResponder(const event_t *ev)
             }
         }
 
-        return true;
-    }
-
-    // killough 10/98: allow key shortcut into Setup menu
-    if (M_InputActivated(input_setup))
-    {
-        MN_StartControlPanel();
-        M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
-        SetNextMenu(&SetupDef);
         return true;
     }
 
@@ -3192,10 +3183,10 @@ void MN_StartControlPanel(void)
     //  Fix to make "always floating" with menu selections, and to always follow
     //  defaultskill, instead of -skill.
 
-    NewDef.lastOn = defaultskill - 1;
+    NewDef.lastOn = default_skill - 1;
 
     // [Nugget] Custom Skill
-    if (defaultskill - 1 == sk_custom) { NewDef.lastOn++; }
+    if (default_skill - 1 == sk_custom) { NewDef.lastOn++; }
 
     default_verify = 0; // killough 10/98
     menuactive = 1;

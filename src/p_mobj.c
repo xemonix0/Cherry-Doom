@@ -50,8 +50,14 @@
 // [Nugget]
 #include "p_user.h"
 
-// [FG] colored blood and gibs
-boolean colored_blood;
+// [Nugget] CVARs
+int viewheight_value;
+int flinching;
+int damagecount_cap;
+int bonuscount_cap;
+boolean comp_fuzzyblood;
+boolean comp_nonbleeders;
+
 int vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
 
 void P_UpdateDirectVerticalAiming(void)
@@ -415,6 +421,8 @@ void P_XYMovement (mobj_t* mo)
      }
     }
 }
+
+boolean comp_deadoof; // [Nugget]
 
 //
 // P_ZMovement
@@ -1684,6 +1692,8 @@ int autoaim = 0;  // killough 7/19/98: autoaiming was not in original beta
 // P_SpawnPlayerMissile
 // Tries to aim at a nearby monster
 //
+
+boolean no_hor_autoaim; // [Nugget]
 
 mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 {

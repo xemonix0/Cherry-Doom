@@ -39,6 +39,7 @@
 #include "r_defs.h"
 #include "r_main.h"
 #include "r_state.h"
+#include "st_stuff.h"
 
 // [Nugget]
 #include "s_sound.h"
@@ -499,13 +500,6 @@ void P_MovePlayer (player_t* player)
 }
 
 #define ANG5 (ANG90/18)
-
-typedef enum
-{
-  death_use_default,
-  death_use_reload,
-  death_use_nothing
-} death_use_action_t;
 
 death_use_action_t death_use_action;
 

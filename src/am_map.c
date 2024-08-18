@@ -27,8 +27,10 @@
 #include "doomdata.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "doomtype.h"
 #include "hu_stuff.h"
 #include "i_video.h"
+#include "m_config.h"
 #include "m_input.h"
 #include "mn_menu.h"
 #include "m_misc.h"
@@ -53,43 +55,52 @@
 #include "s_sound.h"
 #include "sounds.h"
 
+// [Nugget] CVARs
+boolean fancy_teleport;
+
 //jff 1/7/98 default automap colors added
-int mapcolor_back;    // map background
-int mapcolor_grid;    // grid lines color
-int mapcolor_wall;    // normal 1s wall color
-int mapcolor_fchg;    // line at floor height change color
-int mapcolor_cchg;    // line at ceiling height change color
-int mapcolor_clsd;    // line at sector with floor=ceiling color
-int mapcolor_rkey;    // red key color
-int mapcolor_bkey;    // blue key color
-int mapcolor_ykey;    // yellow key color
-int mapcolor_rdor;    // red door color  (diff from keys to allow option)
-int mapcolor_bdor;    // blue door color (of enabling one but not other )
-int mapcolor_ydor;    // yellow door color
-int mapcolor_tele;    // teleporter line color
-int mapcolor_secr;    // secret sector boundary color
-int mapcolor_revsecr; // revealed secret sector boundary color
-int mapcolor_trig;    // [Nugget] Trigger-line color
-int mapcolor_exit;    // jff 4/23/98 add exit line color
-int mapcolor_unsn;    // computer map unseen line color
-int mapcolor_flat;    // line with no floor/ceiling changes
-int mapcolor_sprt;    // general sprite color
-int mapcolor_hair;    // crosshair color
-int mapcolor_sngl;    // single player arrow color
-int mapcolor_plyr[4]; // colors for player arrows in multiplayer
-int mapcolor_frnd;    // colors for friends of player
-int mapcolor_item;    // item sprite color
-int mapcolor_enemy;   // enemy sprite color
-int mapcolor_hitbox;  // [Nugget] Hitbox color
+static int mapcolor_back;    // map background
+static int mapcolor_grid;    // grid lines color
+static int mapcolor_wall;    // normal 1s wall color
+static int mapcolor_fchg;    // line at floor height change color
+static int mapcolor_cchg;    // line at ceiling height change color
+static int mapcolor_clsd;    // line at sector with floor=ceiling color
+static int mapcolor_rkey;    // red key color
+static int mapcolor_bkey;    // blue key color
+static int mapcolor_ykey;    // yellow key color
+static int mapcolor_rdor;    // red door color  (diff from keys to allow option)
+static int mapcolor_bdor;    // blue door color (of enabling one but not other )
+static int mapcolor_ydor;    // yellow door color
+static int mapcolor_tele;    // teleporter line color
+static int mapcolor_secr;    // secret sector boundary color
+static int mapcolor_revsecr; // revealed secret sector boundary color
+static int mapcolor_trig;    // [Nugget] Trigger-line color
+static int mapcolor_exit;    // jff 4/23/98 add exit line color
+static int mapcolor_unsn;    // computer map unseen line color
+static int mapcolor_flat;    // line with no floor/ceiling changes
+static int mapcolor_sprt;    // general sprite color
+static int mapcolor_hair;    // crosshair color
+static int mapcolor_sngl;    // single player arrow color
+static int mapcolor_plyr[4]; // colors for player arrows in multiplayer
+static int mapcolor_frnd;    // colors for friends of player
+static int mapcolor_item;    // item sprite color
+static int mapcolor_enemy;   // enemy sprite color
+static int mapcolor_hitbox;  // [Nugget] Hitbox color
 
 //jff 3/9/98 add option to not show secret sectors until entered
-int map_secret_after;
+static boolean map_secret_after;
 
-int map_keyed_door; // keyed doors are colored or flashing
+enum {
+  MAP_KEYED_DOOR_OFF,
+  MAP_KEYED_DOOR_COLOR,
+  MAP_KEYED_DOOR_FLASH
+};
 
-int map_smooth_lines;
+static int map_keyed_door; // keyed doors are colored or flashing
 
-int map_hitboxes; // [Nugget] Show thing hitboxes
+static boolean map_smooth_lines;
+
+static boolean map_hitboxes; // [Nugget] Show thing hitboxes
 
 // [Woof!] FRACTOMAPBITS: overflow-safe coordinate system.
 // Written by Andrey Budko (entryway), adapted from prboom-plus/src/am_map.*
@@ -239,7 +250,7 @@ static mline_t square_hitbox[] =
 
 int ddt_cheating = 0;         // killough 2/7/98: make global, rename to ddt_*
 
-int automap_grid = 0;
+boolean automap_grid = false;
 
 int automapactive = false; // [Nugget] Minimap: now an int
 static boolean automapfirststart = true;
@@ -304,7 +315,7 @@ static patch_t *marknums[10];   // numbers used for marking by the automap
 mpoint_t *markpoints = NULL;    // where the points are
 int markpointnum = 0; // next point to be assigned (also number of points now)
 int markpointnum_max = 0;       // killough 2/22/98
-int followplayer = 1; // specifies whether to follow the player around
+boolean followplayer = true; // specifies whether to follow the player around
 
 static boolean stopped = true;
 
@@ -319,10 +330,6 @@ static void AM_rotate(int64_t *x, int64_t *y, angle_t a);
 static void AM_rotatePoint(mpoint_t *pt);
 static mpoint_t mapcenter;
 static angle_t mapangle;
-
-// [FG] prev/next weapon keys and buttons
-extern int mousebprevweapon;
-extern int mousebnextweapon;
 
 // [Nugget] /=================================================================
 
@@ -1252,11 +1259,11 @@ static void AM_doFollowPlayer(void)
 // pointer. Allows map inspection without moving player to the location.
 //
 
-int map_point_coordinates;
+boolean map_point_coord; // [Nugget] Made global
 
 void AM_Coordinates(const mobj_t *mo, fixed_t *x, fixed_t *y, fixed_t *z)
 {
-  *z = FOLLOW || !map_point_coordinates || !automapactive ? *x = mo->x, *y = mo->y, mo->z :
+  *z = FOLLOW || !map_point_coord || !automapactive ? *x = mo->x, *y = mo->y, mo->z :
     R_PointInSubsector(*x = (m_x+m_w/2) << FRACTOMAPBITS, *y = (m_y+m_h/2) << FRACTOMAPBITS)->sector->floorheight;
 }
 
@@ -2655,7 +2662,10 @@ static void AM_drawCrosshair(int color)
   }
 }
 
-// [Nugget]
+// [Nugget] /-----------------------------------------------------------------
+
+static int automap_overlay_darkening;
+
 void AM_shadeScreen(void)
 {
   // Minimap
@@ -2672,6 +2682,8 @@ void AM_shadeScreen(void)
   else
     V_ShadeScreen(automap_overlay_darkening); // [Nugget] Parameterized
 }
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // AM_Drawer()
@@ -2788,6 +2800,82 @@ void AM_ColorPreset(void)
   {
     HU_Start();
   }
+}
+
+void AM_BindAutomapVariables(void)
+{
+  M_BindBool("followplayer", &followplayer, NULL, true, ss_auto, wad_no,
+             "1 to enable automap follow player mode");
+  M_BindNum("automapoverlay", &automapoverlay, NULL, AM_OVERLAY_OFF,
+            AM_OVERLAY_OFF, AM_OVERLAY_DARK, ss_auto, wad_no,
+            "Automap overlay mode (1 = On, 2 = Dark)");
+
+  // [Nugget] (CFG-only)
+  M_BindNum("automap_overlay_darkening", &automap_overlay_darkening, NULL,
+            20, 0, 31, ss_none, wad_no,
+            "Darkening level of dark automap overlay");
+
+  M_BindBool("automaprotate", &automaprotate, NULL, false, ss_auto, wad_no,
+             "1 to enable automap rotate mode");
+
+  M_BindBool("map_point_coord", &map_point_coord, NULL, true, ss_auto, wad_no,
+             "1 to show automap pointer coordinates in non-follow mode");
+  M_BindBool("map_secret_after", &map_secret_after, NULL, false, ss_auto, wad_no,
+             "1 to not show secret sectors till after entered");
+  M_BindNum("map_keyed_door", &map_keyed_door, NULL,
+            MAP_KEYED_DOOR_COLOR, MAP_KEYED_DOOR_OFF, MAP_KEYED_DOOR_FLASH,
+            ss_auto, wad_no,
+            "Keyed doors are colored (1) or flashing (2) on the automap");
+  M_BindBool("map_smooth_lines", &map_smooth_lines, NULL, true, ss_auto,
+             wad_no, "1 to enable smooth automap lines");
+
+  // [Nugget]
+  M_BindBool("map_hitboxes", &map_hitboxes, NULL, false, ss_auto,
+             wad_no, "Thing hitboxes in automap");
+
+  M_BindNum("mapcolor_preset", &mapcolor_preset, NULL, 1, 0, 2, ss_auto, wad_no,
+            "Automap color preset (0 = Vanilla Doom, 1 = Boom (default), "
+            "2 = ZDoom)");
+
+#define BIND_CR(name, v, help) \
+  M_BindNum(#name, &name, NULL, (v), 0, 255, ss_none, wad_yes, help)
+
+  BIND_CR(mapcolor_back, 247, "Color used as background for automap");
+  BIND_CR(mapcolor_grid, 104, "Color used for automap grid lines");
+  BIND_CR(mapcolor_wall, 23, "Color used for one side walls on automap");
+  BIND_CR(mapcolor_fchg, 55, "Color used for lines floor height changes across");
+  BIND_CR(mapcolor_cchg, 215, "Color used for lines ceiling height changes across");
+  BIND_CR(mapcolor_clsd, 208, "Color used for lines denoting closed doors, objects");
+  BIND_CR(mapcolor_rkey, 175, "Color used for red key sprites");
+  BIND_CR(mapcolor_bkey, 204, "Color used for blue key sprites");
+  BIND_CR(mapcolor_ykey, 231, "Color used for yellow key sprites");
+  BIND_CR(mapcolor_rdor, 175, "Color used for closed red doors");
+  BIND_CR(mapcolor_bdor, 204, "Color used for closed blue doors");
+  BIND_CR(mapcolor_ydor, 231, "Color used for closed yellow doors");
+  BIND_CR(mapcolor_tele, 119, "Color used for teleporter lines");
+  BIND_CR(mapcolor_secr, 252, "Color used for lines around secret sectors");
+  BIND_CR(mapcolor_revsecr, 112, "Color used for lines around revealed secret sectors");
+  BIND_CR(mapcolor_trig, 0, "Color used for trigger lines (lines with actions)"); // [Nugget]
+  BIND_CR(mapcolor_exit, 0, "Color used for exit lines");
+  BIND_CR(mapcolor_unsn, 104, "Color used for lines not seen without computer map");
+  BIND_CR(mapcolor_flat, 88, "Color used for lines with no height changes");
+  BIND_CR(mapcolor_sprt, 112, "Color used as things");
+  BIND_CR(mapcolor_hair, 208, "Color used for dot crosshair denoting center of map");
+  BIND_CR(mapcolor_sngl, 208, "Color used for the single player arrow");
+
+#define BIND_PLR_CR(num, v, help)                                           \
+  M_BindNum("mapcolor_ply"#num, &mapcolor_plyr[(num)-1], NULL, (v), 0, 255, \
+            ss_none, wad_yes, help)
+
+  BIND_PLR_CR(1, 112, "Color used for the green player arrow");
+  BIND_PLR_CR(2, 88, "Color used for the gray player arrow");
+  BIND_PLR_CR(3, 64, "Color used for the brown player arrow");
+  BIND_PLR_CR(4, 176, "Color used for the red player arrow");
+
+  BIND_CR(mapcolor_frnd, 252, "Color used for friends");
+  BIND_CR(mapcolor_enemy, 177, "Color used for enemies");
+  BIND_CR(mapcolor_item, 231, "Color used for countable items");
+  BIND_CR(mapcolor_hitbox, 96, "Color used for thing hitboxes");
 }
 
 //----------------------------------------------------------------------------

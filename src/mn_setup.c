@@ -13,7 +13,7 @@
 //  GNU General Public License for more details.
 //
 
-#include "mn_setup.h"
+#include "mn_internal.h"
 #include "am_map.h"
 #include "d_main.h"
 #include "doomdef.h"
@@ -53,6 +53,7 @@
 #include "z_zone.h"
 
 // [Nugget]
+#include "p_inter.h"
 #include "st_stuff.h"
 
 static int M_GetKeyString(int c, int offset);
@@ -1389,10 +1390,10 @@ static setup_menu_t weap_settings1[] = {
     // [Nugget] Extended bobbing settings /-------------------------------------
 
     {"View Bob", S_THERMO, M_X_THRM8, M_THRM_SPC,
-     {"view_bobbing_percentage"}},
+     {"view_bobbing_pct"}},
 
     {"Weapon Bob", S_THERMO, M_X_THRM8, M_THRM_SPC,
-     {"weapon_bobbing_percentage"}, m_null, input_null, str_empty, UpdateCenteredWeaponItem},
+     {"weapon_bobbing_pct"}, m_null, input_null, str_empty, UpdateCenteredWeaponItem},
 
     // [Nugget] ---------------------------------------------------------------/
 
@@ -1455,7 +1456,6 @@ static setup_menu_t weap_settings3[] =
     {"Weapon Inertia",                  S_ONOFF |S_STRICT, M_X, M_SPC, {"weapon_inertia"}, m_null, input_null, str_empty, NuggetResetWeaponInertia},
     {"Weapon Squat Upon Landing",       S_ONOFF |S_STRICT, M_X, M_SPC, {"weaponsquat"}},
     {"Translucent Flashes",             S_ONOFF |S_STRICT, M_X, M_SPC, {"translucent_pspr"}},
-    {"Berserk display when using Fist", S_ONOFF,           M_X, M_SPC, {"show_berserk"}},
 
   MI_END
 };
@@ -1785,8 +1785,9 @@ static setup_menu_t stat_settings5[] =
     {"HUD Level-Stats Format",           S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format"}, m_null, input_null, str_stats_format},
     {"Automap Level-Stats Format",       S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format_map"}, m_null, input_null, str_stats_format},
     {"Allow HUD Icons",                  S_ONOFF,             M_X, M_SPC, {"hud_allow_icons"}},
+    {"Show Berserk when using Fist",     S_ONOFF,             M_X, M_SPC, {"sts_show_berserk"}},
     {"Highlight Current/Pending Weapon", S_ONOFF,             M_X, M_SPC, {"hud_highlight_weapon"}},
-    {"Alternative Arms Display",         S_ONOFF,             M_X, M_SPC, {"alt_arms"}, m_null, input_null, str_empty, ST_createWidgets},
+    {"Alternative Arms Display",         S_ONOFF,             M_X, M_SPC, {"sts_alt_arms"}, m_null, input_null, str_empty, ST_createWidgets},
 
   MI_GAP,
   {"Nugget - Event Timers", S_SKIP|S_TITLE, M_X, M_SPC},
@@ -1891,7 +1892,7 @@ void MN_DrawStatusHUD(void)
     DrawInstructions();
     DrawScreenItems(current_menu);
 
-    if (hud_crosshair && current_page == 2)
+    if (hud_crosshair_on && current_page == 2) // [Nugget]
     {
         patch_t *patch =
             W_CacheLumpName(crosshair_lumps[hud_crosshair], PU_CACHE);
@@ -2212,7 +2213,7 @@ static setup_tab_t gen_tabs[] = {
     {NULL}
 };
 
-int resolution_scale;
+static int resolution_scale;
 
 static const char **GetResolutionScaleStrings(void)
 {
@@ -2323,13 +2324,8 @@ static void ToggleExclusiveFullScreen(void)
     toggle_exclusive_fullscreen = true;
 }
 
-
-static void CoerceFPSLimit(void)
+static void UpdateFPSLimit(void)
 {
-    if (fpslimit < TICRATE)
-    {
-        fpslimit = 0;
-    }
     setrefreshneeded = true;
 }
 
@@ -2377,10 +2373,10 @@ static setup_menu_t gen_settings1[] = {
     MI_GAP,
 
     {"Uncapped Framerate", S_ONOFF, M_X, M_SPC, {"uncapped"}, m_null, input_null,
-     str_empty, MN_UpdateFpsLimitItem},
+     str_empty, UpdateFPSLimit},
 
     {"Framerate Limit", S_NUM, M_X, M_SPC, {"fpslimit"}, m_null, input_null,
-     str_empty, CoerceFPSLimit},
+     str_empty, UpdateFPSLimit},
 
     {"VSync", S_ONOFF, M_X, M_SPC, {"use_vsync"}, m_null, input_null, str_empty,
      I_ToggleVsync},
@@ -2420,12 +2416,8 @@ static const char *sound_module_strings[] = {
 #endif
 };
 
-static void UpdateAdvancedSoundItems(void);
-
 static void SetSoundModule(void)
 {
-    UpdateAdvancedSoundItems();
-
     if (!I_AllowReinitSound())
     {
         // The OpenAL implementation doesn't support the ALC_SOFT_HRTF extension
@@ -2434,21 +2426,15 @@ static void SetSoundModule(void)
         return;
     }
 
-    I_SetSoundModule(snd_module);
+    I_SetSoundModule();
 }
-
-int midi_player_menu;
-const char *midi_player_string = "";
 
 static void SetMidiPlayer(void)
 {
     S_StopMusic();
-    I_SetMidiPlayer(&midi_player_menu);
+    I_SetMidiPlayer();
     S_SetMusicVolume(snd_MusicVolume);
     S_RestartMusic();
-
-    const char **strings = GetStrings(str_midi_player);
-    midi_player_string = strings[midi_player_menu];
 }
 
 static setup_menu_t gen_settings2[] = {
@@ -2875,15 +2861,14 @@ void MN_UpdateDynamicResolutionItem(void)
                 "dynamic_resolution");
 }
 
-static void UpdateAdvancedSoundItems(void)
+void MN_UpdateAdvancedSoundItems(boolean toggle)
 {
-    DisableItem(snd_module != SND_MODULE_3D, gen_settings2, "snd_hrtf");
+    DisableItem(toggle, gen_settings2, "snd_hrtf");
 }
 
 void MN_UpdateFpsLimitItem(void)
 {
-    DisableItem(!default_uncapped, gen_settings1, "fpslimit");
-    setrefreshneeded = true;
+    DisableItem(!uncapped, gen_settings1, "fpslimit");
 }
 
 void MN_DisableVoxelsRenderingItem(void)
@@ -2894,8 +2879,6 @@ void MN_DisableVoxelsRenderingItem(void)
 // [Nugget]
 static void UpdatePaletteItems(void)
 {
-  extern boolean palette_changes;
-
   DisableItem(!palette_changes, gen_settings8, "no_menu_tint");
   DisableItem(!palette_changes, gen_settings8, "no_berserk_tint");
   DisableItem(!palette_changes, gen_settings8, "no_radsuit_tint");
@@ -3175,7 +3158,7 @@ static void ResetDefaults()
                 }
                 else if (current_item->input_id == dp->input_id)
                 {
-                    M_InputSetDefault(dp->input_id, dp->inputs);
+                    M_InputSetDefault(dp->input_id);
                 }
             }
         }
@@ -4493,34 +4476,16 @@ static void UpdateHUDModeStrings(void)
     selectstrings[str_hudmode] = GetHUDModeStrings();
 }
 
-void MN_InitMidiPlayer(void)
+static const char **GetMidiPlayerStrings(void)
 {
-    const char **devices = I_DeviceList();
-
-    for (int i = 0; i < array_size(devices); ++i)
-    {
-        if (!strcasecmp(devices[i], midi_player_string))
-        {
-            midi_player_menu = i;
-            break;
-        }
-    }
-
-    if (midi_player_menu >= array_size(devices))
-    {
-        midi_player_menu = 0;
-    }
-
-    I_SetMidiPlayer(&midi_player_menu);
-    midi_player_string = devices[midi_player_menu];
-
-    selectstrings[str_midi_player] = devices;
+    return I_DeviceList();
 }
 
 void MN_InitMenuStrings(void)
 {
     UpdateHUDModeStrings();
     selectstrings[str_resolution_scale] = GetResolutionScaleStrings();
+    selectstrings[str_midi_player] = GetMidiPlayerStrings();
     selectstrings[str_mouse_accel] = GetMouseAccelStrings();
     selectstrings[str_resampler] = GetResamplerStrings();
 }
@@ -4537,13 +4502,9 @@ void MN_SetupResetMenu(void)
     DisableItem(deh_set_blood_color, enem_settings1, "colored_blood");
     DisableItem(!brightmaps_found || force_brightmaps, gen_settings5,
                 "brightmaps");
-    DisableItem(default_current_video_height <= DRS_MIN_HEIGHT, gen_settings1,
-                "dynamic_resolution");
     UpdateInterceptsEmuItem();
-    CoerceFPSLimit();
     UpdateCrosshairItems();
     UpdateCenteredWeaponItem();
-    UpdateAdvancedSoundItems();
 
     // [Nugget] ----------------------------------------------------------------
 
@@ -4552,4 +4513,36 @@ void MN_SetupResetMenu(void)
 
     UpdatePaletteItems();
     UpdateMultiLineMsgItem();
+}
+
+void MN_BindMenuVariables(void)
+{
+    BIND_NUM(resolution_scale, 0, 0, UL, "Resolution scale menu index");
+    BIND_NUM_GENERAL(menu_backdrop, MENU_BG_DARK, MENU_BG_OFF, MENU_BG_TEXTURE,
+        "Draw menu backdrop (0 = Off, 1 = Dark (default), 2 = Texture)");
+
+    // [Nugget] /---------------------------------------------------------------
+
+    BIND_NUM_GENERAL(menu_backdrop_darkening, 20, 0, 31,
+        "Darkening level for dark menu background");
+
+    BIND_BOOL_GENERAL(menu_background_all, false, "Background for all menus");
+
+    BIND_BOOL_GENERAL(no_menu_tint, false, "Disable palette tint in menus");
+
+    M_BindBool("hud_menu_shadows", &hud_menu_shadows, NULL,
+               false, ss_gen, wad_yes, "Shadows for HUD/menu graphics");
+
+    // (CFG-only)
+    M_BindNum("hud_menu_shadows_filter_pct", &hud_menu_shadows_filter_pct, NULL,
+              66, 0, 100, ss_none, wad_yes,
+              "HUD/menu-shadows translucency percent");
+
+    BIND_BOOL_GENERAL(quick_quitgame, false, "Skip \"Quit Game\" prompt");
+    BIND_BOOL_GENERAL(quit_sound, true, "Play a sound when confirming the \"Quit Game\" prompt");
+
+    // [Nugget] ---------------------------------------------------------------/
+
+    M_BindBool("traditional_menu", &traditional_menu, NULL,
+               true, ss_none, wad_yes, "1 to use Doom's main menu ordering");
 }

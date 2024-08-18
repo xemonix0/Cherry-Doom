@@ -425,14 +425,12 @@ extern int itemrespawntime[];
 extern int iquehead;
 extern int iquetail;
 
-// [FG] colored blood and gibs
-extern boolean colored_blood;
-
 enum {
   VERTAIM_AUTO,
   VERTAIM_DIRECT,
   VERTAIM_DIRECTAUTO,
-}; extern int vertical_aiming, default_vertical_aiming; // [Nugget] Replace `direct_vertical_aiming`
+}; extern int vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
+
 void P_UpdateDirectVerticalAiming(void);
 
 extern boolean checksight12;
@@ -455,8 +453,25 @@ void    P_ExplodeMissile(mobj_t*);    // killough
 boolean P_SeekerMissile(mobj_t *actor, mobj_t **seekTarget, angle_t thresh, angle_t turnMax, boolean seekcenter);
 int     P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
 
-// [Nugget]
+// [Nugget] ==================================================================
+
+enum {
+  FLINCH_OFF,
+  FLINCH_LANDING,
+  FLINCH_DAMAGE,
+  FLINCH_BOTH,
+}; extern int flinching;
+
+extern int viewheight_value;
+extern int damagecount_cap;
+extern int bonuscount_cap;
+extern boolean no_hor_autoaim;
+extern boolean comp_fuzzyblood;
+extern boolean comp_nonbleeders;
+extern boolean comp_deadoof;
+
 int P_FindDoomedNum(unsigned type); // Externalized
+
 void P_ToggleDuplicateSpawns(const boolean state);
 
 #endif
