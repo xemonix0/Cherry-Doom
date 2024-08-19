@@ -895,7 +895,7 @@ WI_drawTime
       // [FG] print at most in hhhh:mm:ss format
       if ((n = (t / div)))
       {
-        x = WI_drawNum(x, y, n, -1);
+        WI_drawNum(x, y, n, -1);
       }
 
       SHADOW_REDRAW(WI_drawTime(oldx, y, t, suck)) // [Nugget] HUD/menu shadows

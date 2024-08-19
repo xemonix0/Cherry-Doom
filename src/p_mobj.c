@@ -1430,6 +1430,8 @@ spawnit:
 
   z = mobjinfo[i].flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
 
+  // Because of DSDHacked, allow `i` values outside enum mobjtype_t range
+  // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
   mobj = P_SpawnMobj (x,y,z, i);
   mobj->spawnpoint = *mthing;
 

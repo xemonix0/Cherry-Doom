@@ -2462,14 +2462,14 @@ char* G_SaveGameName(int slot)
     return M_StringJoin("c:\\doomdata\\", buf, NULL);
   else
 #endif
-  return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf, NULL);
+  return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
 }
 
 char* G_MBFSaveGameName(int slot)
 {
    char buf[16] = {0};
    sprintf(buf, "MBFSAV%d.dsg", 10*savepage+slot);
-   return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf, NULL);
+   return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
 }
 
 // killough 12/98:
@@ -5209,7 +5209,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
 
   long pos = mem_ftell(stream);
 
-  tmp = M_StringJoin("-iwad \"", M_BaseName(wadfiles[0]), "\"", NULL);
+  tmp = M_StringJoin("-iwad \"", M_BaseName(wadfiles[0]), "\"");
   mem_fputs(tmp, stream);
   free(tmp);
 
@@ -5229,7 +5229,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
       has_files = true;
     }
 
-    tmp = M_StringJoin(" \"", basename, "\"", NULL);
+    tmp = M_StringJoin(" \"", basename, "\"");
     mem_fputs(tmp, stream);
     free(tmp);
   }
@@ -5239,7 +5239,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
     mem_fputs(" -deh", stream);
     for (i = 0; i < array_size(dehfiles); ++i)
     {
-      tmp = M_StringJoin(" \"", M_BaseName(dehfiles[i]), "\"", NULL);
+      tmp = M_StringJoin(" \"", M_BaseName(dehfiles[i]), "\"");
       mem_fputs(tmp, stream);
       free(tmp);
     }

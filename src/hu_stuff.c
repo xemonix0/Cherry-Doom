@@ -1201,7 +1201,6 @@ static void HU_widget_build_weapon (void)
 
     ammo = plr->ammo[weaponinfo[w].ammo];
     fullammo = plr->maxammo[weaponinfo[w].ammo];
-    ammopct = 0;
 
     // skip weapons not currently posessed
     if (!plr->weaponowned[w])
@@ -1802,12 +1801,17 @@ static void HU_UpdateCrosshair(void)
     if (!vertical_aiming && (ammo == am_misl || ammo == am_cell) // [Nugget] Vertical aiming
         && (!no_hor_autoaim || !casual_play)) // [Nugget]
     {
-      if (!linetarget) {
-        P_AimLineAttack(plr->mo, an += 1<<26, range, CROSSHAIR_AIM);
+      if (!linetarget)
+      {
+        P_AimLineAttack(plr->mo, an + (1<<26), range, CROSSHAIR_AIM);
+
         if (linetarget && hud_crosshair_indicators) { crosshair.side = -1; } // [Nugget]
       }
-      if (!linetarget) {
-        P_AimLineAttack(plr->mo, an -= 2<<26, range, CROSSHAIR_AIM);
+
+      if (!linetarget)
+      {
+        P_AimLineAttack(plr->mo, an - (1<<26), range, CROSSHAIR_AIM);
+
         if (linetarget && hud_crosshair_indicators) { crosshair.side = 1; } // [Nugget]
       }
     }
