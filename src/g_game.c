@@ -674,11 +674,8 @@ static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
   }
 }
 
-void G_PrepTiccmd(void)
+void G_PrepMouseTiccmd(void)
 {
-  const boolean strafe = M_InputGameActive(input_strafe);
-  ticcmd_t *cmd = &basecmd;
-
   // [Nugget] Decrease the intensity of some movements if zoomed in /---------
 
   float zoomdiv = 1.0f;
@@ -693,42 +690,55 @@ void G_PrepTiccmd(void)
 
   // [Nugget] ---------------------------------------------------------------/
 
-  // Gamepad
-
-  if (I_UseController() && I_CalcControllerAxes())
-  {
-    G_UpdateDeltaTics();
-    axis_turn_tic = axes[AXIS_TURN];
-
-    if (axes[AXIS_TURN] && !strafe)
-    {
-      localview.rawangle -= G_CalcControllerAngle() / zoomdiv;
-      cmd->angleturn = G_CarryAngle(localview.rawangle);
-      axes[AXIS_TURN] = 0.0f;
-    }
-
-    if (axes[AXIS_LOOK] && padlook)
-    {
-      localview.rawpitch -= G_CalcControllerPitch() / zoomdiv;
-      cmd->pitch = G_CarryPitch(localview.rawpitch);
-      axes[AXIS_LOOK] = 0.0f;
-    }
-  }
-
-  // Mouse
-
-  if (mousex && !strafe)
+  if (mousex && !M_InputGameActive(input_strafe))
   {
     localview.rawangle -= G_CalcMouseAngle(mousex) / zoomdiv;
-    cmd->angleturn = G_CarryAngle(localview.rawangle);
+    basecmd.angleturn = G_CarryAngle(localview.rawangle);
     mousex = 0;
   }
 
   if (mousey && mouselook)
   {
     localview.rawpitch += G_CalcMousePitch(mousey) / zoomdiv;
-    cmd->pitch = G_CarryPitch(localview.rawpitch);
+    basecmd.pitch = G_CarryPitch(localview.rawpitch);
     mousey = 0;
+  }
+}
+
+void G_PrepControllerTiccmd(void)
+{
+  if (I_UseController() && I_CalcControllerAxes())
+  {
+    // [Nugget] Decrease the intensity of some movements if zoomed in /---------
+
+    float zoomdiv = 1.0f;
+
+    if (!strictmode)
+    {
+      const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+
+      if (zoom)
+      { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+    }
+
+    // [Nugget] ---------------------------------------------------------------/
+
+    G_UpdateDeltaTics();
+    axis_turn_tic = axes[AXIS_TURN];
+
+    if (axes[AXIS_TURN] && !M_InputGameActive(input_strafe))
+    {
+      localview.rawangle -= G_CalcControllerAngle() / zoomdiv;
+      basecmd.angleturn = G_CarryAngle(localview.rawangle);
+      axes[AXIS_TURN] = 0.0f;
+    }
+
+    if (axes[AXIS_LOOK] && padlook)
+    {
+      localview.rawpitch -= G_CalcControllerPitch() / zoomdiv;
+      basecmd.pitch = G_CarryPitch(localview.rawpitch);
+      axes[AXIS_LOOK] = 0.0f;
+    }
   }
 }
 
@@ -757,7 +767,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (!uncapped || !raw_input)
   {
-    G_PrepTiccmd();
+    G_PrepMouseTiccmd();
+    G_PrepControllerTiccmd();
   }
 
   memcpy(cmd, &basecmd, sizeof(*cmd));
@@ -1467,9 +1478,9 @@ boolean G_MovementResponder(event_t *ev)
   switch (ev->type)
   {
     case ev_mouse:
-      mousex_tic += ev->data2;
-      mousex += ev->data2;
-      mousey += ev->data3;
+      mousex_tic += ev->data1;
+      mousex += ev->data1;
+      mousey -= ev->data2;
       return true;
 
     case ev_joystick:
