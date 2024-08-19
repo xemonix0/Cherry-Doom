@@ -35,6 +35,8 @@
 #include "m_fixed.h"
 #include "m_input.h"
 #include "m_misc.h"
+#include "mn_menu.h"
+#include "p_action.h"
 #include "p_inter.h"
 #include "p_map.h"
 #include "p_mobj.h"
@@ -42,6 +44,7 @@
 #include "p_spec.h" // SPECHITS
 #include "p_tick.h"
 #include "r_defs.h"
+#include "r_main.h"
 #include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
@@ -442,8 +445,6 @@ struct cheat_s cheat[] = {
 
 //-----------------------------------------------------------------------------
 
-extern int init_thinkers_count; // [Nugget]
-
 // [Nugget] /=================================================================
 
 static void cheat_nomomentum()
@@ -518,8 +519,6 @@ static void cheat_gibbers()
 // Factored out from `cheat_god()`
 static void DoResurrect(void)
 {
-  extern void P_SpawnPlayer (mapthing_t* mthing);
-
   signed int an;
   mapthing_t mt = {0};
 
@@ -860,7 +859,6 @@ static void cheat_showfps()
 // killough 7/19/98: Autoaiming optional in beta emulation mode
 static void cheat_autoaim()
 {
-  extern int autoaim;
   displaymsg((autoaim=!autoaim) ?
     "Projectile autoaiming on" : 
     "Projectile autoaiming off");
@@ -1263,8 +1261,6 @@ static void cheat_friction()
                                                "Variable Friction disabled");
 }
 
-extern const char *default_skill_strings[];
-
 static void cheat_skill0()
 {
   displaymsg("Skill: %s", default_skill_strings[gameskill + 1]);
@@ -1308,7 +1304,6 @@ static void cheat_massacre()    // jff 2/01/98 kill all monsters
 
   int killcount=0;
   thinker_t *currentthinker=&thinkercap;
-  extern void A_PainDie(mobj_t *);
   // killough 7/20/98: kill friendly monsters only if no others to kill
   int mask = MF_FRIEND;
 
@@ -1501,7 +1496,6 @@ static void cheat_spechits()
 // killough 3/26/98: emulate Doom better
 static void cheat_ddt()
 {
-  extern int ddt_cheating;
   if (automapactive)
     ddt_cheating = (ddt_cheating+1) % 3;
 }
@@ -1546,7 +1540,6 @@ static void cheat_reveal_secret()
 static void cheat_cycle_mobj(mobj_t **last_mobj, int *last_count,
                              int flags, int alive)
 {
-  // [Nugget] Moved `extern init_thinkers_count` to global scope
   thinker_t *th, *start_th;
 
   // If the thinkers have been wiped, addresses are invalid
@@ -1608,7 +1601,6 @@ static void cheat_reveal_item()
 // killough 2/7/98: HOM autodetection
 static void cheat_hom()
 {
-  extern int autodetect_hom;           // Ty 03/27/98 - *not* externalized
   displaymsg((autodetect_hom = !autodetect_hom) ? "HOM Detection On" :
     "HOM Detection Off");
 }
@@ -1727,7 +1719,6 @@ static void cheat_pitch()
 
 static void cheat_nuke()
 {
-  extern int disable_nuke;
   displaymsg((disable_nuke = !disable_nuke) ? "Nukage Disabled" :
     "Nukage Enabled");
 }

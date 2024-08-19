@@ -88,7 +88,8 @@ extern mpoint_t *markpoints;
 extern int markpointnum, markpointnum_max;
 extern boolean followplayer;
 extern boolean automap_grid;
-extern boolean map_point_coord; // [Nugget] Made global
+extern boolean map_point_coord; // [Nugget] Global
+extern int ddt_cheating;
 
 // end changes -- killough 2/22/98
 

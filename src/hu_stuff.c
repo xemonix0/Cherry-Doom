@@ -34,6 +34,7 @@
 #include "hu_lib.h"
 #include "hu_obituary.h"
 #include "hu_stuff.h"
+#include "i_timer.h" // time_scale
 #include "i_video.h" // fps
 #include "m_config.h"
 #include "m_fixed.h"
@@ -223,8 +224,8 @@ int hudcolor_xyco;  // color range of new coords on automap
 //jff 2/16/98 hud text colors, controls added
 static int hudcolor_mesg;  // color range of scrolling messages
 static int hudcolor_chat;  // color range of chat lines
-int hud_msg_lines;  // number of message lines in window | [Nugget] Made global
-boolean message_list;      // [Nugget] Made global
+int hud_msg_lines;  // number of message lines in window | [Nugget] Global
+boolean message_list;      // [Nugget] Global
 
 // [Nugget] Restore message scroll direction toggle
 boolean hud_msg_scrollup;  // killough 11/98: allow messages to scroll upwards
@@ -233,7 +234,7 @@ static int message_timer  = HU_MSGTIMEOUT * (1000/TICRATE);     // killough 11/9
 static int chat_msg_timer = HU_MSGTIMEOUT * (1000/TICRATE);     // killough 11/98
 
 static void HU_InitCrosshair(void);
-void HU_StartCrosshair(void); // [Nugget] Made global
+void HU_StartCrosshair(void); // [Nugget] Global
 boolean hud_crosshair_on; // [Nugget] Replace with crosshair toggle
 
 //
@@ -243,10 +244,6 @@ boolean hud_crosshair_on; // [Nugget] Replace with crosshair toggle
 // Ty 03/27/98 - externalized map name arrays - now in d_deh.c
 // and converted to arrays of pointers to char *
 // See modified HUTITLEx macros
-extern char **mapnames[];
-extern char **mapnames2[];
-extern char **mapnamesp[];
-extern char **mapnamest[];
 
 // key tables
 // jff 5/10/98 french support removed, 
@@ -373,8 +370,6 @@ void HU_ResetMessageColors(void)
         UpdateColor(*colorize_strings[i].str, colorize_strings[i].cr);
     }
 }
-
-extern boolean st_invul;
 
 static byte* ColorByHealth(int health, int maxhealth, boolean invul)
 {
@@ -1512,7 +1507,6 @@ static void HU_widget_build_sttime(void)
 {
   char hud_timestr[HU_MAXLINELENGTH/2] = {0};
   int offset = 0;
-  extern int time_scale;
 
   if ((hud_level_time & HUD_WIDGET_HUD     && !automapactive) ||
       (hud_level_time & HUD_WIDGET_AUTOMAP &&  automapactive))
@@ -2766,18 +2760,18 @@ static void HU_ParseHUD (void)
 void HU_BindHUDVariables(void)
 {
   M_BindBool("hud_displayed", &hud_displayed, NULL, false, ss_none, wad_yes,
-             "1 to enable display of HUD");
+             "Display HUD");
   M_BindNum("hud_active", &hud_active, NULL, 2, 0, 2, ss_stat, wad_yes,
-            "0 for HUD off, 1 for HUD small, 2 for full HUD");
+            "HUD layout (by default: 0 = Minimal; 1 = Compact; 2 = Distributed)");
   M_BindNum("hud_player_coords", &hud_player_coords, NULL,
             HUD_WIDGET_AUTOMAP, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
-            "Show player coords widget (1 = on Automap, 2 = on HUD, 3 = always)");
+            "Show player coordinates widget (1 = On automap; 2 = On HUD; 3 = Always)");
   M_BindNum("hud_level_stats", &hud_level_stats, NULL,
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
-            "Show level stats (kill, items and secrets) widget (1 = on "
-            "Automap, 2 = on HUD, 3 = always)");
+            "Show level stats (kills, items, and secrets) widget (1 = On automap; "
+            "2 = On HUD; 3 = Always)");
 
   // [Nugget] /===============================================================
 
@@ -2803,11 +2797,11 @@ void HU_BindHUDVariables(void)
   M_BindNum("hud_level_time", &hud_level_time, NULL,
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
-            "Show level time widget (1 = on Automap, 2 = on HUD, 3 = always)");
+            "Show level time widget (1 = On automap, 2 = On HUD, 3 = Always)");
 
   // [Nugget] Extended
   M_BindBool("hud_time_use", &hud_time[TIMER_USE], NULL, false, ss_stat, wad_no,
-             "Show split time when pressing the use button");
+             "Show split time when pressing the use-button");
 
   // [Nugget] /---------------------------------------------------------------
 
@@ -2825,22 +2819,22 @@ void HU_BindHUDVariables(void)
   // [Nugget] ---------------------------------------------------------------/
 
   M_BindNum("hud_type", &hud_type, NULL,
-            HUD_TYPE_CRISPY, HUD_TYPE_CRISPY, NUM_HUD_TYPES - 1,  // [Nugget] Make Nugget HUD the default
+            HUD_TYPE_CRISPY, HUD_TYPE_CRISPY, NUM_HUD_TYPES - 1, // [Nugget] Make Nugget HUD the default
             ss_stat, wad_no,
-            "Fullscreen HUD (0 = Nugget, 1 = Boom (No Bars), 2 = Boom)"); // [Nugget] Rename "Crispy" to "Nugget"
+            "Fullscreen HUD type (0 = Nugget; 1 = Boom (No Bars); 2 = Boom)"); // [Nugget] Rename "Crispy" to "Nugget"
   M_BindBool("hud_backpack_thresholds", &hud_backpack_thresholds, NULL,
              true, ss_stat, wad_no, "Backpack changes thresholds");
   M_BindBool("hud_armor_type", &hud_armor_type, NULL, false, ss_stat, wad_no,
-             "Color of armor depends on type");
+             "Armor count is colored based on armor type");
   M_BindBool("hud_widescreen_widgets", &hud_widescreen_widgets, NULL,
              true, ss_stat, wad_no, "Arrange widgets on widescreen edges");
   M_BindNum("hud_widget_font", &hud_widget_font, NULL,
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
-            "Use standard Doom font for widgets (1 = on Automap, 2 = on HUD, 3 "
-            "= always)");
+            "Use standard Doom font for widgets (1 = On automap, 2 = On HUD, 3 "
+            "= Always)");
   M_BindBool("hud_widget_layout", &hud_widget_layout, NULL,
-             false, ss_stat, wad_no, "Widget layout (0 = Horizontal, 1 = Vertical)");
+             false, ss_stat, wad_no, "Widget layout (0 = Horizontal; 1 = Vertical)");
 
   // [Nugget] Extended HUD colors /-------------------------------------------
 
@@ -2896,10 +2890,10 @@ void HU_BindHUDVariables(void)
             "Crosshair translucency percent");
 
   M_BindBool("hud_crosshair_health", &hud_crosshair_health, NULL,
-             false, ss_stat, wad_no, "1 to change crosshair color by player health");
+             false, ss_stat, wad_no, "Change crosshair color based on player health");
   M_BindNum("hud_crosshair_target", &hud_crosshair_target, NULL,
             0, 0, 2, ss_stat, wad_no,
-            "Change crosshair color on target (1 = Highlight, 2 = Health)");
+            "Change crosshair color when locking on target (1 = Highlight; 2 = Health)");
 
   // [Nugget] Vertical-only option
   M_BindNum("hud_crosshair_lockon", &hud_crosshair_lockon, NULL,
@@ -2918,7 +2912,7 @@ void HU_BindHUDVariables(void)
             "Default crosshair color");
   M_BindNum("hud_crosshair_target_color", &hud_crosshair_target_color, NULL,
             CR_YELLOW, CR_BRICK, CR_NONE, ss_stat, wad_no,
-            "Target crosshair color");
+            "Crosshair color when aiming at target");
 
   M_BindNum("hudcolor_titl", &hudcolor_titl, NULL,
             CR_GOLD, CR_BRICK, CR_NONE, ss_none, wad_yes,
@@ -2927,26 +2921,26 @@ void HU_BindHUDVariables(void)
             CR_GREEN, CR_BRICK, CR_NONE, ss_none, wad_yes,
             "Color range used for automap coordinates");
 
-  BIND_BOOL(show_messages, true, "1 to enable message display");
+  BIND_BOOL(show_messages, true, "Show messages");
 
    // [Nugget] "Count" mode from Crispy
   M_BindNum("hud_secret_message", &hud_secret_message, NULL,
-            1, 0, 2, ss_stat, wad_no, "\"A secret is revealed!\" message");
+            1, 0, 2, ss_stat, wad_no, "Show secret-revealed message (1 = Simple; 2 = Count)");
 
   // [Nugget] Announce milestone completion
   M_BindBool("announce_milestones", &announce_milestones, NULL,
             false, ss_stat, wad_no, "Announce completion of milestones");
 
   M_BindBool("show_toggle_messages", &show_toggle_messages, NULL,
-            true, ss_stat, wad_no, "1 to enable toggle messages");
+            true, ss_stat, wad_no, "Show toggle messages");
   M_BindBool("show_pickup_messages", &show_pickup_messages, NULL,
-             true, ss_stat, wad_no, "1 to enable pickup messages");
+             true, ss_stat, wad_no, "Show pickup messages");
   M_BindBool("show_obituary_messages", &show_obituary_messages, NULL,
-             true, ss_stat, wad_no, "1 to enable obituaries");
+             true, ss_stat, wad_no, "Show obituaries");
 
   // [Nugget] (CFG-only)
   M_BindBool("show_save_messages", &show_save_messages, NULL,
-             true, ss_none, wad_no, "1 to enable save messages");
+             true, ss_none, wad_no, "Show save messages");
 
   M_BindNum("hudcolor_mesg", &hudcolor_mesg, NULL, CR_NONE, CR_BRICK, CR_NONE,
             ss_none, wad_yes, "Color range used for messages during play");
@@ -2957,17 +2951,17 @@ void HU_BindHUDVariables(void)
 
   BIND_NUM(message_timer, 4000, 0, UL, "Duration of normal Doom messages (ms)");
   BIND_NUM(chat_msg_timer, 4000, 0, UL, "Duration of chat messages (ms)");
-  BIND_NUM(hud_msg_lines, 4, 1, HU_MAXMESSAGES, "Number of message lines");
+  BIND_NUM(hud_msg_lines, 4, 1, HU_MAXMESSAGES, "Number of message lines for message list");
   M_BindBool("message_colorized", &message_colorized, NULL,
-             false, ss_stat, wad_no, "1 to colorize player messages");
+             false, ss_stat, wad_no, "Colorize player messages");
 
   // [Nugget] Message flash
   M_BindBool("message_flash", &message_flash, NULL,
              false, ss_stat, wad_no, "Messages flash when they first appear");
 
   M_BindBool("message_centered", &message_centered, NULL,
-             false, ss_stat, wad_no, "1 to center messages");
-  BIND_BOOL(message_list, false, "1 means multiline message list is active");
+             false, ss_stat, wad_no, "Center messages horizontally");
+  BIND_BOOL(message_list, false, "Use message list");
 
   // [Nugget] Restore message scroll direction toggle (CFG-only)
   BIND_BOOL(hud_msg_scrollup, true, "Message list scrolls upwards");

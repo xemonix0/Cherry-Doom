@@ -14,7 +14,9 @@
 //
 
 #include "mn_internal.h"
+
 #include "am_map.h"
+#include "d_deh.h"
 #include "d_main.h"
 #include "doomdef.h"
 #include "doomstat.h"
@@ -2784,7 +2786,7 @@ setup_menu_t gen_settings8[] = {
 
   {"Nugget - Display", S_SKIP|S_TITLE, M_X, M_SPC},
 
-    {"Background For All Menus",     S_ONOFF,                 M_X, M_SPC, {"menu_background_all"}},
+    {"Backdrop For All Menus",     S_ONOFF,                   M_X, M_SPC, {"menu_background_all"}},
     {"No Palette Tint in Menus",     S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_menu_tint"}},
     {"HUD/Menu Shadows",             S_ONOFF,                 M_X, M_SPC, {"hud_menu_shadows"}},
     {"No Berserk Tint",              S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_berserk_tint"}},
@@ -4492,8 +4494,6 @@ void MN_InitMenuStrings(void)
 
 void MN_SetupResetMenu(void)
 {
-    extern boolean deh_set_blood_color;
-
     DisableItem(force_strictmode, comp_settings1, "strictmode");
     DisableItem(force_complevel != CL_NONE, comp_settings1, "default_complevel");
     DisableItem(M_ParmExists("-pistolstart"), comp_settings1, "pistolstart");
@@ -4517,16 +4517,16 @@ void MN_SetupResetMenu(void)
 
 void MN_BindMenuVariables(void)
 {
-    BIND_NUM(resolution_scale, 0, 0, UL, "Resolution scale menu index");
+    BIND_NUM(resolution_scale, 0, 0, UL, "Position of resolution scale slider (do not modify)");
     BIND_NUM_GENERAL(menu_backdrop, MENU_BG_DARK, MENU_BG_OFF, MENU_BG_TEXTURE,
-        "Draw menu backdrop (0 = Off, 1 = Dark (default), 2 = Texture)");
+        "Menu backdrop (0 = Off; 1 = Dark; 2 = Texture)");
 
     // [Nugget] /---------------------------------------------------------------
 
     BIND_NUM_GENERAL(menu_backdrop_darkening, 20, 0, 31,
-        "Darkening level for dark menu background");
+        "Darkening level for dark menu backdrop");
 
-    BIND_BOOL_GENERAL(menu_background_all, false, "Background for all menus");
+    BIND_BOOL_GENERAL(menu_background_all, false, "Backdrop for all menus");
 
     BIND_BOOL_GENERAL(no_menu_tint, false, "Disable palette tint in menus");
 
@@ -4544,5 +4544,5 @@ void MN_BindMenuVariables(void)
     // [Nugget] ---------------------------------------------------------------/
 
     M_BindBool("traditional_menu", &traditional_menu, NULL,
-               true, ss_none, wad_yes, "1 to use Doom's main menu ordering");
+               true, ss_none, wad_yes, "Use vanilla Doom's ordering for the main menu");
 }

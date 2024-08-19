@@ -89,6 +89,10 @@ extern boolean no_menu_tint;
 
 boolean MN_MenuIsShaded(void);
 
+extern int savepage;
+
+extern const char *default_skill_strings[];
+
 void MN_SetQuickSaveSlot(int slot);
 
 void MN_InitMenuStrings(void);

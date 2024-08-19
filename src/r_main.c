@@ -32,6 +32,7 @@
 #include "doomstat.h"
 #include "i_video.h"
 #include "p_mobj.h"
+#include "p_pspr.h"
 #include "p_setup.h" // P_SegLengths
 #include "r_bsp.h"
 #include "r_data.h"
@@ -40,6 +41,7 @@
 #include "r_main.h"
 #include "r_bmaps.h"
 #include "r_plane.h"
+#include "r_segs.h"
 #include "r_sky.h"
 #include "r_state.h"
 #include "r_swirl.h"
@@ -82,7 +84,6 @@ double deltatics;
 boolean raw_input;
 fixed_t  viewcos, viewsin;
 player_t *viewplayer;
-extern lighttable_t **walllights;
 fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
 
 static fixed_t focallength, lightfocallength;
@@ -1530,7 +1531,6 @@ void R_RenderPlayerView (player_t* player)
   if (autodetect_hom)
     { // killough 2/10/98: add flashing red HOM indicators
       pixel_t c[47*47];
-      extern int lastshottic;
       int i , color = !flashing_hom || (gametic % 20) < 9 ? 0xb0 : 0;
       V_FillRect(scaledviewx, scaledviewy, scaledviewwidth, scaledviewheight, color);
       for (i=0;i<47*47;i++)
@@ -1637,14 +1637,14 @@ void R_InitAnyRes(void)
 void R_BindRenderVariables(void)
 {
   BIND_NUM_GENERAL(extra_level_brightness, 0, -8, 8, "Level brightness"); // [Nugget] Broader light-level range
-  BIND_BOOL_GENERAL(stretchsky, false, "1 to stretch short skies for mouselook"); // [Nugget] Extended description
+  BIND_BOOL_GENERAL(stretchsky, false, "Stretch short skies for mouselook"); // [Nugget] Extended description
 
   // [Nugget] FOV-based sky stretching (CFG-only)
   BIND_BOOL(fov_stretchsky, true, "Stretch skies based on FOV");
 
-  BIND_BOOL_GENERAL(linearsky, false, "1 for linear horizontal sky scrolling");
-  BIND_BOOL_GENERAL(r_swirl, false, "1 to enable swirling animated flats");
-  BIND_BOOL_GENERAL(smoothlight, false, "1 to enable smooth diminishing lighting");
+  BIND_BOOL_GENERAL(linearsky, false, "Linear horizontal scrolling for skies");
+  BIND_BOOL_GENERAL(r_swirl, false, "Swirling animated flats");
+  BIND_BOOL_GENERAL(smoothlight, false, "Smooth diminishing lighting");
 
   // [Nugget] /---------------------------------------------------------------
 
@@ -1658,11 +1658,11 @@ void R_BindRenderVariables(void)
   // [Nugget] ---------------------------------------------------------------/
 
   M_BindBool("voxels_rendering", &default_voxels_rendering, &voxels_rendering,
-             true, ss_none, wad_no, "1 to enable voxels rendering");
+             true, ss_none, wad_no, "Allow voxel models");
   BIND_BOOL_GENERAL(brightmaps, false,
-    "1 to enable brightmaps for textures and sprites");
+    "Brightmaps for textures and sprites");
   BIND_NUM_GENERAL(invul_mode, INVUL_MBF, INVUL_VANILLA, INVUL_GRAY,
-    "Invulnerability effect (0 = Vanilla, 1 = MBF, 2 = Gray)");
+    "Invulnerability effect (0 = Vanilla; 1 = MBF; 2 = Gray)");
 
   // [Nugget] /---------------------------------------------------------------
 
@@ -1677,30 +1677,30 @@ void R_BindRenderVariables(void)
   
   // [Nugget] ---------------------------------------------------------------/
 
-  BIND_BOOL(flashing_hom, true, "1 to enable flashing HOM indicator");
+  BIND_BOOL(flashing_hom, true, "Enable flashing of the HOM indicator");
 
   // [Nugget] (CFG-only)
   BIND_BOOL(no_killough_face, false, "Disable the Killough-face easter egg");
 
-  BIND_NUM(screenblocks, 10, 3, 11, "Initial play screen size");
+  BIND_NUM(screenblocks, 10, 3, 11, "Size of game-world screen");
 
   M_BindBool("translucency", &translucency, NULL, true, ss_gen, wad_yes,
-             "1 to enable translucency for some things");
+             "Translucency for some things");
   M_BindNum("tran_filter_pct", &tran_filter_pct, NULL,
             66, 0, 100, ss_gen, wad_yes,
-            "Set percentage of foreground/background translucency mix");
+            "Percent of foreground/background translucency mix");
 
   M_BindBool("flipcorpses", &flipcorpses, NULL, false, ss_enem, wad_no,
-             "1 to enable randomly mirrored death animations");
+             "Randomly mirrored death animations");
   M_BindBool("fuzzcolumn_mode", &fuzzcolumn_mode, NULL, true, ss_enem, wad_no,
-             "0 original, 1 blocky");
+             "Fuzz rendering (0 = Resolution-dependent; 1 = Blocky)");
 
   // [Nugget - ceski] Selective fuzz darkening
   M_BindBool("fuzzdark_mode", &fuzzdark_mode, NULL, false, ss_enem, wad_no,
              "Selective fuzz darkening");
 
   BIND_BOOL(raw_input, true,
-    "Raw gamepad/mouse input for turning/looking (0 = Interpolate, 1 = Raw)");
+    "Raw gamepad/mouse input for turning/looking (0 = Interpolate; 1 = Raw)");
 
   // [Nugget] ----------------------------------------------------------------
 
