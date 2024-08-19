@@ -134,9 +134,11 @@ set(NUGGETDOOM_SOURCES
     v_video.c              v_video.h
     version.c              version.h
     w_wad.c                w_wad.h
+                           w_internal.h
+    w_file.c
+    w_zip.c
     wi_stuff.c             wi_stuff.h
-    z_zone.c               z_zone.h
-    ../miniz/miniz.c       ../miniz/miniz.h)
+    z_zone.c               z_zone.h)
 
 # Standard target definition
 if(WIN32)
@@ -149,11 +151,13 @@ if(WIN32)
     add_executable(nugget-doom-com WIN32 ../win32/win_launcher.c
         "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
     target_nuggetdoom_settings(nugget-doom-com)
+    target_include_directories(nugget-doom-com PRIVATE ${SDL2_INCLUDE_DIR})
     target_link_libraries(nugget-doom-com PRIVATE ${SDL2_LIBRARIES} nugget-doom)
 
     add_executable(nugget-doom-exe WIN32 ../win32/win_launcher.c
         "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
     target_nuggetdoom_settings(nugget-doom-exe)
+    target_include_directories(nugget-doom-exe PRIVATE ${SDL2_INCLUDE_DIR})
     target_link_libraries(nugget-doom-exe PRIVATE ${SDL2_LIBRARIES} nugget-doom)
 
     # MSVC tries to supply a default manifest and complains when it finds ours
@@ -169,8 +173,7 @@ else()
 endif()
 
 target_nuggetdoom_settings(nugget-doom)
-target_include_directories(nugget-doom PRIVATE
-        "${CMAKE_CURRENT_BINARY_DIR}/../" "../miniz")
+target_include_directories(nugget-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 
 target_link_libraries(nugget-doom PRIVATE
     ${SDL2_LIBRARIES}
@@ -178,7 +181,8 @@ target_link_libraries(nugget-doom PRIVATE
     OpenAL::OpenAL
     SndFile::sndfile
     opl
-    textscreen)
+    textscreen
+    miniz)
 
 # Some platforms require standard libraries to be linked against.
 if(HAVE_LIBM)
@@ -230,8 +234,6 @@ endif()
 if(NUGGETDOOM_STRICT)
     target_compile_definitions(nugget-doom PRIVATE MBF_STRICT)
 endif()
-
-target_compile_definitions(nugget-doom PRIVATE MINIZ_NO_TIME)
 
 set(SETUP_SOURCES
     d_iwad.c                d_iwad.h

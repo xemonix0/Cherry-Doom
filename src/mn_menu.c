@@ -74,8 +74,6 @@
 // defaulted values
 //
 
-boolean traditional_menu;
-
 // Blocky mode, has default, 0 = high, 1 = normal
 // int     detailLevel;    obsolete -- killough
 int screenblocks; // has default
@@ -279,9 +277,9 @@ static menu_t NewDef; // phares 5/04/98
 enum
 {
     newgame = 0,
+    options,
     loadgame,
     savegame,
-    options,
     readthis,
     quitdoom,
     main_end
@@ -300,10 +298,10 @@ enum
 
 static menuitem_t MainMenu[] = {
     {1, "M_NGAME",  M_NewGame,  'n', "New Game",   MAIN_MENU_RECT},
-    {1, "M_LOADG",  M_LoadGame, 'l', "Load Game",  MAIN_MENU_RECT},
-    {1, "M_SAVEG",  M_SaveGame, 's', "Save Game",  MAIN_MENU_RECT},
     // change M_Options to M_Setup
     {1, "M_OPTION", M_Setup,    'o', "Options",    MAIN_MENU_RECT},
+    {1, "M_LOADG",  M_LoadGame, 'l', "Load Game",  MAIN_MENU_RECT},
+    {1, "M_SAVEG",  M_SaveGame, 's', "Save Game",  MAIN_MENU_RECT},
     // Another hickup with Special edition.
     {1, "M_RDTHIS", M_ReadThis, 'r', "Read This!", MAIN_MENU_RECT},
     {1, "M_QUITG",  M_QuitDOOM, 'q', "Quit",       MAIN_MENU_RECT}
@@ -2027,6 +2025,7 @@ void MN_Back(void)
 
     currentMenu = currentMenu->prevMenu;
     itemOn = currentMenu->lastOn;
+    highlight_item = 0;
     M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
 }
 
@@ -2040,6 +2039,7 @@ void M_Init(void)
     currentMenu = &MainDef;
     menuactive = 0;
     itemOn = currentMenu->lastOn;
+    highlight_item = 0;
     whichSkull = 0;
     skullAnimCounter = 10;
     saved_screenblocks = screenblocks;
@@ -2099,7 +2099,6 @@ void M_Init(void)
         EpiDef.numitems--;
     }
 
-    MN_ResetMenu(); // killough 10/98
     MN_SetupResetMenu();
     M_InitExtendedHelp(); // init extended help screens // phares 3/30/98
 
@@ -2761,7 +2760,11 @@ boolean M_Responder(event_t *ev)
             break;
 
         case ev_mouseb_up:
-            return MouseResponder();
+            if (menu_input == mouse_mode)
+            {
+                return MouseResponder();
+            }
+            return false;
 
         case ev_mouse_state:
             if (ev->data1 == EV_RESIZE_VIEWPORT && menu_input != mouse_mode)
@@ -3072,6 +3075,7 @@ boolean M_Responder(event_t *ev)
                 currentMenu = currentMenu->prevMenu;
             }
             itemOn = currentMenu->lastOn;
+            highlight_item = 0;
             M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         }
         else
@@ -3138,23 +3142,6 @@ boolean M_Responder(event_t *ev)
 //
 /////////////////////////////////////////////////////////////////////////////
 
-// killough 10/98: allow runtime changing of menu order
-
-void MN_ResetMenu(void)
-{
-    // killough 4/17/98:
-    // Doom traditional menu, for arch-conservatives like yours truly
-
-    while ((traditional_menu ? M_SaveGame : M_Setup)
-           != MainMenu[options].routine)
-    {
-        menuitem_t t = MainMenu[loadgame];
-        MainMenu[loadgame] = MainMenu[options];
-        MainMenu[options] = MainMenu[savegame];
-        MainMenu[savegame] = t;
-    }
-}
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // General Routines
@@ -3188,6 +3175,7 @@ void MN_StartControlPanel(void)
     menuactive = 1;
     currentMenu = &MainDef;              // JDC
     itemOn = currentMenu->lastOn;        // JDC
+    highlight_item = 0;
     print_warning_about_changes = false; // killough 11/98
 
     G_ClearInput();

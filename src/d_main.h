@@ -30,10 +30,6 @@ extern const char *savegame_dir;
 extern const char *screenshot_dir;
 extern boolean fail_safe;
 
-extern char **wadfiles;       // killough 11/98
-
-extern char **tempdirs;
-
 void D_AddFile(const char *file);
 
 char *D_DoomExeName(void);      // killough 10/98: executable's name

@@ -1078,6 +1078,7 @@ void R_SetupFrame (player_t *player)
 {
   int i, cm;
   fixed_t pitch;
+  const boolean use_localview = CheckLocalView(player);
 
   // [Nugget]
   fixed_t playerz, basepitch;
@@ -1138,10 +1139,6 @@ void R_SetupFrame (player_t *player)
       (leveltime > oldleveltime
        || (freecam_on && !freecam.mobj && gamestate == GS_LEVEL))) // [Nugget] Freecam
   {
-    // Use localview unless the player or game is in an invalid state, in which
-    // case fall back to interpolation.
-    const boolean use_localview = CheckLocalView(player);
-
     // Interpolate player camera from their old position to their current one.
     viewx = LerpFixed(player->mo->oldx, player->mo->x);
     viewy = LerpFixed(player->mo->oldy, player->mo->y);
@@ -1151,8 +1148,8 @@ void R_SetupFrame (player_t *player)
 
     if (use_localview)
     {
-      viewangle = (player->mo->angle + localview.angle - localview.ticangle +
-                   LerpAngle(localview.oldticangle, localview.ticangle));
+      viewangle = (player->mo->angle + localview.angle - player->ticangle +
+                   LerpAngle(player->oldticangle, player->ticangle));
     }
     else
     {
@@ -1190,6 +1187,11 @@ void R_SetupFrame (player_t *player)
     // [Nugget]
     playerz = player->mo->z;
     pitch += player->flinch; // Flinching
+
+    if (use_localview && lowres_turn && fake_longtics)
+    {
+      viewangle += localview.angle;
+    }
   }
 
   // [Nugget] /===============================================================
@@ -1605,6 +1607,7 @@ void R_RenderPlayerView (player_t* player)
   // The head node is the last node output.
   R_RenderBSPNode (numnodes-1);
 
+  R_NearbySprites ();
   VX_NearbySprites ();
 
   // [FG] update automap while playing
@@ -1699,8 +1702,8 @@ void R_BindRenderVariables(void)
   M_BindBool("fuzzdark_mode", &fuzzdark_mode, NULL, false, ss_enem, wad_no,
              "Selective fuzz darkening");
 
-  BIND_BOOL(raw_input, true,
-    "Raw gamepad/mouse input for turning/looking (0 = Interpolate; 1 = Raw)");
+  BIND_BOOL(draw_nearby_sprites, true,
+    "Draw sprites overlapping into visible sectors");
 
   // [Nugget] ----------------------------------------------------------------
 

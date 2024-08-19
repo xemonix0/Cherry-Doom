@@ -788,6 +788,18 @@ void A_GunFlash(player_t *player, pspdef_t *psp)
 // WEAPON ATTACKS
 //
 
+static angle_t saved_angle;
+
+static void SavePlayerAngle(player_t *player)
+{
+  saved_angle = player->mo->angle;
+}
+
+static void AddToTicAngle(player_t *player)
+{
+  player->ticangle += player->mo->angle - saved_angle;
+}
+
 //
 // A_Punch
 //
@@ -874,8 +886,10 @@ void A_Punch(player_t *player, pspdef_t *psp)
   // [Nugget]
   if (!CASUALPLAY(comp_nomeleesnap))
   {
+    SavePlayerAngle(player);
     player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y,
                                         linetarget->x, linetarget->y);
+    AddToTicAngle(player);
   }
 }
 
@@ -935,6 +949,7 @@ void A_Saw(player_t *player, pspdef_t *psp)
     angle = R_PointToAngle2(player->mo->x, player->mo->y,
                             linetarget->x, linetarget->y);
 
+    SavePlayerAngle(player);
     if (angle - player->mo->angle > ANG180)
       if ((signed int) (angle - player->mo->angle) < -ANG90/20)
         player->mo->angle = angle + ANG90/21;
@@ -945,6 +960,7 @@ void A_Saw(player_t *player, pspdef_t *psp)
         player->mo->angle = angle - ANG90/21;
       else
         player->mo->angle += ANG90/20;
+    AddToTicAngle(player);
 
     player->mo->flags |= MF_JUSTATTACKED;
   }
@@ -1684,7 +1700,9 @@ void A_WeaponMeleeAttack(player_t *player, pspdef_t *psp)
   // [Nugget]
   if (!CASUALPLAY(comp_nomeleesnap))
   {
+    SavePlayerAngle(player);
     player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y, linetarget->x, linetarget->y);
+    AddToTicAngle(player);
   }
 }
 

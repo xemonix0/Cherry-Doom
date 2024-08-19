@@ -2875,6 +2875,8 @@ void MN_UpdateAdvancedSoundItems(boolean toggle)
 void MN_UpdateFpsLimitItem(void)
 {
     DisableItem(!uncapped, gen_settings1, "fpslimit");
+    G_ClearInput();
+    G_UpdateAngleFunctions();
 }
 
 void MN_DisableVoxelsRenderingItem(void)
@@ -4525,7 +4527,7 @@ void MN_BindMenuVariables(void)
     BIND_NUM_GENERAL(menu_backdrop, MENU_BG_DARK, MENU_BG_OFF, MENU_BG_TEXTURE,
         "Menu backdrop (0 = Off; 1 = Dark; 2 = Texture)");
 
-    // [Nugget] /---------------------------------------------------------------
+    // [Nugget] ----------------------------------------------------------------
 
     BIND_NUM_GENERAL(menu_backdrop_darkening, 20, 0, 31,
         "Darkening level for dark menu backdrop");
@@ -4544,9 +4546,4 @@ void MN_BindMenuVariables(void)
 
     BIND_BOOL_GENERAL(quick_quitgame, false, "Skip \"Quit Game\" prompt");
     BIND_BOOL_GENERAL(quit_sound, true, "Play a sound when confirming the \"Quit Game\" prompt");
-
-    // [Nugget] ---------------------------------------------------------------/
-
-    M_BindBool("traditional_menu", &traditional_menu, NULL,
-               true, ss_none, wad_yes, "Use vanilla Doom's ordering for the main menu");
 }
