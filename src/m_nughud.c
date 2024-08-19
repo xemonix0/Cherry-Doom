@@ -156,6 +156,8 @@ default_t nughud_defaults[] = {
 
   TEXTLINE( "nughud_rate", nughud.rate, 2, 192, -1, -1, 1, 0 ),
 
+  TEXTLINE( "nughud_cmd", nughud.cmd, -1, -1, -1, -1, 4, 0 ),
+
   { "nughud_message_x",     (config_t *) &nughud.message.x,     NULL, { -1 }, { -1, 320 }, number },
   { "nughud_message_y",     (config_t *) &nughud.message.y,     NULL, { -1 }, { -1, 200 }, number },
   { "nughud_message_wide",  (config_t *) &nughud.message.wide,  NULL, { -1 }, { -2, 2   }, number },
