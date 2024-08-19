@@ -131,6 +131,7 @@ set(NUGGETDOOM_SOURCES
     u_mapinfo.c            u_mapinfo.h
     u_scanner.c            u_scanner.h
     v_flextran.c           v_flextran.h
+    v_fmt.c                v_fmt.h
     v_trans.c              v_trans.h
     v_video.c              v_video.h
     version.c              version.h
@@ -183,7 +184,8 @@ target_link_libraries(nugget-doom PRIVATE
     SndFile::sndfile
     opl
     textscreen
-    miniz)
+    miniz
+    spng)
 
 # Some platforms require standard libraries to be linked against.
 if(HAVE_LIBM)

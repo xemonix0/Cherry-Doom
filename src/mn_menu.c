@@ -56,6 +56,7 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "u_mapinfo.h"
+#include "v_fmt.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "z_zone.h"
@@ -328,7 +329,7 @@ static void M_DrawMainMenu(void)
 
     options_active = false;
 
-    V_DrawPatch(94, 2, W_CacheLumpName("M_DOOM", PU_CACHE));
+    V_DrawPatch(94, 2, V_CachePatchName("M_DOOM", PU_CACHE));
 }
 
 /////////////////////////////
@@ -433,7 +434,7 @@ static void M_DrawReadThis1(void)
 {
     inhelpscreens = true;
 
-    V_DrawPatchFullScreen(W_CacheLumpName("HELP2", PU_CACHE));
+    V_DrawPatchFullScreen(V_CachePatchName("HELP2", PU_CACHE));
 }
 
 //
@@ -448,14 +449,14 @@ static void M_DrawReadThis2(void)
     // We only ever draw the second page if this is
     // gameversion == exe_doom_1_9 and gamemode == registered
 
-    V_DrawPatchFullScreen(W_CacheLumpName("HELP1", PU_CACHE));
+    V_DrawPatchFullScreen(V_CachePatchName("HELP1", PU_CACHE));
 }
 
 static void M_DrawReadThisCommercial(void)
 {
     inhelpscreens = true;
 
-    V_DrawPatchFullScreen(W_CacheLumpName("HELP", PU_CACHE));
+    V_DrawPatchFullScreen(V_CachePatchName("HELP", PU_CACHE));
 }
 
 /////////////////////////////
@@ -959,15 +960,15 @@ static void M_DrawSaveLoadBorder(int x, int y, byte *cr)
 {
     int i;
 
-    V_DrawPatchTranslatedSH(x - 8, y + 7, W_CacheLumpName("M_LSLEFT", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+    V_DrawPatchTranslatedSH(x - 8, y + 7, V_CachePatchName("M_LSLEFT", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 
     for (i = 0; i < 24; i++)
     {
-        V_DrawPatchTranslatedSH(x, y + 7, W_CacheLumpName("M_LSCNTR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+        V_DrawPatchTranslatedSH(x, y + 7, V_CachePatchName("M_LSCNTR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
         x += 8;
     }
 
-    V_DrawPatchTranslatedSH(x, y + 7, W_CacheLumpName("M_LSRGHT", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+    V_DrawPatchTranslatedSH(x, y + 7, V_CachePatchName("M_LSRGHT", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 }
 
 //
@@ -1778,7 +1779,7 @@ static void M_DrawExtHelp(void)
     inhelpscreens = true; // killough 5/1/98
     namebfr[4] = extended_help_index / 10 + 0x30;
     namebfr[5] = extended_help_index % 10 + 0x30;
-    V_DrawPatchFullScreen(W_CacheLumpName(namebfr, PU_CACHE));
+    V_DrawPatchFullScreen(V_CachePatchName(namebfr, PU_CACHE));
 }
 
 //
@@ -1800,7 +1801,7 @@ static void M_DrawHelp(void)
     }
 
     inhelpscreens = true; // killough 10/98
-    V_DrawPatchFullScreen(W_CacheLumpNum(helplump, PU_CACHE));
+    V_DrawPatchFullScreen(V_CachePatchNum(helplump, PU_CACHE));
 }
 
 //
@@ -3336,7 +3337,7 @@ void M_Drawer(void)
         }
         else if (name[0])
         {
-            patch_t *patch = W_CacheLumpName(name, PU_CACHE);
+            patch_t *patch = V_CachePatchName(name, PU_CACHE);
             rect->y -= SHORT(patch->topoffset);
             V_DrawPatchTranslatedSH(x, y, patch, cr); // [Nugget] HUD/menu shadows
         }
@@ -3350,7 +3351,7 @@ void M_Drawer(void)
 
     // [Nugget] HUD/menu shadows
     V_DrawPatchTranslatedSH(x + SKULLXOFF, y - 5 + itemOn * LINEHEIGHT,
-                            W_CacheLumpName(skullName[whichSkull], PU_CACHE), NULL);
+                            V_CachePatchName(skullName[whichSkull], PU_CACHE), NULL);
 
     if (delete_verify)
     {
@@ -3390,23 +3391,23 @@ static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, byte *cr)
     char num[4];
 
     xx = x;
-    V_DrawPatchTranslatedSH(xx, y, W_CacheLumpName("M_THERML", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+    V_DrawPatchTranslatedSH(xx, y, V_CachePatchName("M_THERML", PU_CACHE), cr); // [Nugget] HUD/menu shadows
     xx += 8;
 
     { // [Nugget] HUD/menu shadows
-      const patch_t *const patch = W_CacheLumpName("M_THERMM", PU_CACHE);
+      const patch_t *const patch = V_CachePatchName("M_THERMM", PU_CACHE);
       V_SetShadowCrop(SHORT(patch->width) - M_THRM_STEP);
     }
 
     for (i = 0; i < thermWidth; i++)
     {
-        V_DrawPatchTranslatedSH(xx, y, W_CacheLumpName("M_THERMM", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+        V_DrawPatchTranslatedSH(xx, y, V_CachePatchName("M_THERMM", PU_CACHE), cr); // [Nugget] HUD/menu shadows
         xx += 8;
     }
 
     V_SetShadowCrop(0); // [Nugget] HUD/menu shadows
 
-    V_DrawPatchTranslatedSH(xx, y, W_CacheLumpName("M_THERMR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+    V_DrawPatchTranslatedSH(xx, y, V_CachePatchName("M_THERMR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 
     // [FG] write numerical values next to thermometer
     M_snprintf(num, 4, "%3d", thermDot);
@@ -3419,7 +3420,7 @@ static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, byte *cr)
     }
 
     V_DrawPatchTranslated((x + 8) + thermDot * 8, y,
-                          W_CacheLumpName("M_THERMO", PU_CACHE), cr);
+                          V_CachePatchName("M_THERMO", PU_CACHE), cr);
 }
 
 //

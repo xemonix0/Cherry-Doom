@@ -54,6 +54,7 @@
 #include "tables.h"
 #include "u_mapinfo.h"
 #include "u_scanner.h"
+#include "v_fmt.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "z_zone.h"
@@ -431,28 +432,28 @@ void HU_Init(void)
   {
     M_snprintf(buffer, sizeof(buffer), "STCFN%.3d", j);
     if (W_CheckNumForName(buffer) != -1)
-      big_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+      big_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
 
     if ('0' <= j && j <= '9')
     {
       M_snprintf(buffer, sizeof(buffer), "DIG%.1d", j - 48);
-      sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+      sml_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
     }
     else if ('A' <= j && j <= 'Z')
     {
       M_snprintf(buffer, sizeof(buffer), "DIG%c", j);
-      sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+      sml_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
     }
     else if (j > 122)
     {
       M_snprintf(buffer, sizeof(buffer), "STBR%.3d", j);
-      sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+      sml_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
     }
     else
     {
       M_snprintf(buffer, sizeof(buffer), "DIG%.2d", j);
       if (W_CheckNumForName(buffer) != -1)
-        sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+        sml_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
     }
 
     // [FG] small font available, big font unavailable
@@ -478,7 +479,7 @@ void HU_Init(void)
   {
     M_snprintf(buffer, sizeof(buffer), "STKEYS%.1d", j);
     sml_font.patches[i] =
-    big_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+    big_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
   }
 
   // [Nugget] Load HUD icons
@@ -1752,7 +1753,7 @@ void HU_StartCrosshair(void) // [Nugget] Not static anymore
 
   if (crosshair_lumps[hud_crosshair])
   {
-    crosshair.patch = W_CacheLumpName(crosshair_lumps[hud_crosshair], PU_STATIC);
+    crosshair.patch = V_CachePatchName(crosshair_lumps[hud_crosshair], PU_STATIC);
 
     crosshair.w = SHORT(crosshair.patch->width)/2;
     crosshair.h = SHORT(crosshair.patch->height)/2;
