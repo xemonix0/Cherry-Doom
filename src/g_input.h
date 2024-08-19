@@ -70,4 +70,6 @@ extern int mousex_tic;
 void G_ClearQuickstartTic(void);
 void G_ApplyQuickstartCache(struct ticcmd_s *cmd, boolean strafe);
 
+void G_UpdateZoomDiv(const float value); // [Nugget] Zoom
+
 #endif

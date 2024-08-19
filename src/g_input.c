@@ -185,6 +185,17 @@ static int CarryVert(double vert)
     return CarryError(vert, &prevcarry.vert, &carry.vert);
 }
 
+// [Nugget] Decrease the intensity of some movements if zoomed in /-----------
+
+static float zoomdiv = 1.0f;
+
+void G_UpdateZoomDiv(const float value)
+{
+  zoomdiv = value;
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 //
 // Gamepad
 //
@@ -221,14 +232,14 @@ void G_UpdateDeltaTics(void)
 short G_CalcControllerAngle(void)
 {
     localview.rawangle -= (deltatics * axes[AXIS_TURN] * angleturn[1]
-                           * direction[joy_invert_turn]);
+                           * direction[joy_invert_turn]) / zoomdiv; // [Nugget] Zoom
     return CarryAngle(localview.rawangle);
 }
 
 int G_CalcControllerPitch(void)
 {
     localview.rawpitch -= (deltatics * axes[AXIS_LOOK] * angleturn[1]
-                           * direction[joy_invert_look] * FRACUNIT);
+                           * direction[joy_invert_look] * FRACUNIT) / zoomdiv; // [Nugget] Zoom
     return CarryPitch(localview.rawpitch);
 }
 
@@ -306,7 +317,7 @@ short G_CalcMouseAngle(void)
     if (mouse_sensitivity)
     {
         localview.rawangle -= (AccelerateMouse(mousex)
-                               * (mouse_sensitivity + 5) * 8 / 10);
+                               * (mouse_sensitivity + 5) * 8 / 10) / zoomdiv; // [Nugget] Zoom
         return CarryAngle(localview.rawangle);
     }
     else
@@ -321,7 +332,7 @@ int G_CalcMousePitch(void)
     {
         localview.rawpitch += (AccelerateMouse(mousey)
                                * (mouse_sensitivity_y_look + 5) * 8 / 10
-                               * direction[mouse_y_invert] * FRACUNIT);
+                               * direction[mouse_y_invert] * FRACUNIT) / zoomdiv; // [Nugget] Zoom
         return CarryPitch(localview.rawpitch);
     }
     else
