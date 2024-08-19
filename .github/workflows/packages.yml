@@ -24,21 +24,21 @@ jobs:
           - name: Linux GCC
             os: ubuntu-22.04
             triplet: x64-linux-dynamic-release
-            artifact-name: AppImage
+            artifact-name: Nugget-Doom-AppImage
             artifact-path: build/*.appimage
 
           - name: MSVC x64
             os: windows-latest
             arch: x64
             triplet: x64-windows-static-release
-            artifact-name: Win-64
+            artifact-name: Nugget-Doom-Win64
             artifact-path: build/*.zip
 
           - name: MSVC x86
             os: windows-latest
             arch: x86
             triplet: x86-windows-static-release
-            artifact-name: Win-32
+            artifact-name: Nugget-Doom-Win32
             artifact-path: build/*.zip
 
     steps:
@@ -95,7 +95,7 @@ jobs:
         run: |
           cd demotest
           pip install pyyaml joblib
-          python demotest --jobs 4 --port ../build/src/woof
+          python demotest --jobs 4 --port ../build/src/nugget-doom
 
       - name: Package (Linux)
         if: runner.os == 'Linux'
@@ -119,12 +119,3 @@ jobs:
       - name: Extract Version Number
         shell: bash
         run: echo "VERSION=${GITHUB_REF##*_}" >> $GITHUB_ENV
-
-      - name: Release
-        if: ${{ contains(github.ref, 'tags') }}
-        uses: ncipollo/release-action@v1
-        with:
-          name: Woof! ${{ env.VERSION }}
-          bodyFile: CHANGELOG.md
-          allowUpdates: true
-          artifacts: ${{ matrix.config.artifact-path }}
