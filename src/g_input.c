@@ -34,7 +34,9 @@
 boolean G_UseLocalView(const player_t *player)
 {
     return ((raw_input || (lowres_turn && fake_longtics))
-            && player == &players[consoleplayer]
+            && (player == &players[consoleplayer]
+                // [Nugget] Freecam
+                || (R_GetFreecamOn() && !(R_GetFreecamMobj() || R_GetFreecamMode() != FREECAM_CAM)))
             && player->playerstate != PST_DEAD
             && !player->mo->reactiontime
             && !demoplayback

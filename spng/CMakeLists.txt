@@ -1,8 +1,8 @@
-include(WoofSettings)
+include(NuggetDoomSettings)
 
 add_library(spng STATIC spng.c spng.h)
 
-target_woof_settings(spng)
+target_nuggetdoom_settings(spng)
 
 target_compile_definitions(spng PRIVATE SPNG_USE_MINIZ INTERFACE SPNG_STATIC)
 

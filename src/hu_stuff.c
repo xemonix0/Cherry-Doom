@@ -499,7 +499,7 @@ void HU_Init(void)
       icon_available[j] = true;
 
       sml_font.patches[i] =
-      big_font.patches[i] = (patch_t *) W_CacheLumpName(icon, PU_STATIC);
+      big_font.patches[i] = (patch_t *) V_CachePatchName(icon, PU_STATIC);
     }
     else {
       sml_font.patches[i] = sml_font.patches[fallback[j] - HU_FONTSTART];
@@ -1763,11 +1763,11 @@ void HU_StartCrosshair(void) // [Nugget] Not static anymore
 
   // [Nugget] Horizontal-autoaim indicators ----------------------------------
 
-  crosshair.patchl = W_CacheLumpName("CROSSIL", PU_STATIC);
+  crosshair.patchl = V_CachePatchName("CROSSIL", PU_STATIC);
   crosshair.lw = SHORT(crosshair.patchl->width);
   crosshair.lh = SHORT(crosshair.patchl->height)/2;
 
-  crosshair.patchr = W_CacheLumpName("CROSSIR", PU_STATIC);
+  crosshair.patchr = V_CachePatchName("CROSSIR", PU_STATIC);
   crosshair.rw = SHORT(crosshair.patchr->width);
   crosshair.rh = SHORT(crosshair.patchr->height)/2;
 }
