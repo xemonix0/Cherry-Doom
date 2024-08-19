@@ -322,7 +322,8 @@ void M_NughudLoadOptions(void)
 
       if (len >= buflen) { buf = I_Realloc(buf, buflen = len+1); }
       
-      strncpy(buf, p, len)[len] = 0;
+      strncpy(buf, p, len);
+      buf[len] = 0;
       p += len;
       size -= len;
 
@@ -340,8 +341,14 @@ void M_NughudLoadDefaults (void)
   register default_t *dp;
 
   for (dp = nughud_defaults; dp->name; dp++)
+  {
     if (dp->type == string && dp->defaultvalue.s)
-    { dp->location->s = strdup(dp->defaultvalue.s); }
+    {
+      dp->location->s = strdup(dp->defaultvalue.s);
+     }
     else if (dp->type == number)
-    { dp->location->i = dp->defaultvalue.i; }
+    {
+      dp->location->i = dp->defaultvalue.i;
+    }
+  }
 }
