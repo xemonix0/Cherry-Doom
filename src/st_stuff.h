@@ -153,7 +153,7 @@ void ST_InitRes(void);
 
 void ST_InitChunkBar(void); // [Nugget] NUGHUD: Status-Bar chunks
 
-void ST_createWidgets(void); // [Nugget] Externalized
+void ST_createWidgets(void); // [Nugget] Made global
 
 // killough 5/2/98: moved from m_misc.c:
 
@@ -185,7 +185,7 @@ extern boolean st_invul;
 
 void ST_BindSTSVariables(void);
 
-// [Nugget] Brought from `st_stuff.c`
+// [Nugget] Global
 extern boolean st_crispyhud;
 extern int distributed_delta;
 

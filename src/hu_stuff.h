@@ -73,8 +73,8 @@ extern boolean hud_displayed;   // hud is displayed
 //jff 2/18/98 hud/status control
 extern int hud_active;      // hud mode 0=off, 1=small, 2=full
 
-extern int hud_msg_lines; // [Nugget] Made global
-extern boolean message_list; // [Nugget] Made global
+extern int hud_msg_lines; // [Nugget] Global
+extern boolean message_list; // [Nugget] Global
 extern boolean hud_msg_scrollup; // [Nugget] Restore message scroll direction toggle
 
 // [Nugget]

@@ -472,7 +472,7 @@ extern boolean comp_fuzzyblood;
 extern boolean comp_nonbleeders;
 extern boolean comp_deadoof;
 
-int P_FindDoomedNum(unsigned type); // Externalized
+int P_FindDoomedNum(unsigned type); // Global
 
 void P_ToggleDuplicateSpawns(const boolean state);
 
