@@ -289,6 +289,15 @@ void D_Display (void)
     }
   }
 
+  if (MN_MenuIsShaded())
+    V_ShadeScreen(true);
+
+  if ((automapactive && automapoverlay == AM_OVERLAY_DARK)
+      || MN_MenuIsShaded())
+    R_ShadeScreen(true);
+  else
+    R_ShadeScreen(false);
+
   redrawsbar = false;
 
   wipe = false;
@@ -420,6 +429,8 @@ void D_Display (void)
 
       V_DrawPatch(x, y, patch);
     }
+
+  V_ShadeScreen(false);
 
   // menus go directly to the screen
   M_Drawer();          // menu is drawn even on top of everything
@@ -775,7 +786,7 @@ static void LoadBaseFile(void)
 
         if (d.dir && d.func)
         {
-            char *s = M_StringJoin(d.func(), DIR_SEPARATOR_S, d.dir, NULL);
+            char *s = M_StringJoin(d.func(), DIR_SEPARATOR_S, d.dir);
             result = W_InitBaseFile(s);
             free(s);
         }
@@ -2582,7 +2593,10 @@ void D_DoomMain(void)
 
   G_UpdateSideMove();
   G_UpdateAngleFunctions();
-  G_UpdateAccelerateMouse();
+  G_UpdateLocalViewFunction();
+  G_UpdateControllerVariables();
+  G_UpdateMouseVariables();
+  R_UpdateViewAngleFunction();
 
   MN_ResetTimeScale();
 

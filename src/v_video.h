@@ -164,6 +164,11 @@ void V_DrawPatchTRTR(int x, int y, struct patch_s *patch, byte *outr1,
 
 // [Nugget] /=================================================================
 
+extern int automap_overlay_darkening;
+extern int menu_backdrop_darkening;
+
+void V_ShadeScreenDirect(const int level);
+
 // HUD/menu shadows ----------------------------------------------------------
 
 extern boolean hud_menu_shadows;
@@ -235,11 +240,11 @@ void V_PutBlock(int x, int y, int width, int height, pixel_t *src);
 
 void V_FillRect(int x, int y, int width, int height, byte color);
 
-void V_ShadeScreen(const int targshade); // [Nugget] Parameterized
-
 void V_TileBlock64(int line, int width, int height, const byte *src);
 
 void V_DrawBackground(const char *patchname);
+
+void V_ShadeScreen(boolean toggle, const int level); // [Nugget]
 
 // [FG] colored blood and gibs
 

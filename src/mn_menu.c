@@ -114,7 +114,6 @@ static boolean options_active;
 backdrop_t menu_backdrop;
 
 // [Nugget]
-int menu_backdrop_darkening;
 boolean menu_background_all;
 boolean no_menu_tint;
 
@@ -2005,6 +2004,9 @@ static void M_Setup(int choice)
 
 void MN_ClearMenus(void)
 {
+    // force status bar refresh
+    inhelpscreens = true;
+
     menuactive = 0;
     options_active = false;
     print_warning_about_changes = 0; // killough 8/15/98
@@ -2014,7 +2016,6 @@ void MN_ClearMenus(void)
     //     sendpause = true;
 
     G_ClearInput();
-    I_ResetRelativeMouseState();
 }
 
 void MN_Back(void)
@@ -2894,6 +2895,7 @@ boolean M_Responder(event_t *ev)
             messageRoutine(ch);
         }
 
+        G_ClearInput();
         menuactive = false;
         M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         return true;
@@ -3241,13 +3243,8 @@ void M_Drawer(void)
         return;
     }
 
-    if (MN_MenuIsShaded())
-    {
-        inhelpscreens = true;
-        V_ShadeScreen(menu_backdrop_darkening); // [Nugget] Parameterized
-    }
     // [Nugget]
-    else if (menuactive && menu_background_all && menu_backdrop == MENU_BG_TEXTURE)
+    if (menu_background_all && menu_backdrop == MENU_BG_TEXTURE)
     {
         inhelpscreens = true;
         V_DrawBackground("FLOOR4_6");

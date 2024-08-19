@@ -320,7 +320,7 @@ Copyright:
  © 2020 JadingTsunami;  
  © 2020-2024 Fabian Greffrath;  
  © 2020-2024 Roman Fomin;  
- © 2021 Ryan Krafnick;  
+ © 2021-2022 Ryan Krafnick;  
  © 2021-2024 Alaux;  
  © 2022 Julia Nechaevskaya;  
  © 2022-2024 ceski;  

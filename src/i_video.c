@@ -83,7 +83,7 @@ boolean toggle_fullscreen;
 boolean toggle_exclusive_fullscreen;
 
 static boolean use_vsync; // killough 2/8/98: controls whether vsync is called
-static boolean correct_aspect_ratio;
+boolean correct_aspect_ratio;
 static boolean stretch_to_fit; // [Nugget]
 static int fpslimit; // when uncapped, limit framerate to this value
 static boolean fullscreen;
@@ -223,6 +223,8 @@ void I_ShowMouseCursor(boolean toggle)
 
 void I_ResetRelativeMouseState(void)
 {
+    SDL_PumpEvents();
+    SDL_FlushEvent(SDL_MOUSEMOTION);
     SDL_GetRelativeMouseState(NULL, NULL);
 }
 
@@ -715,6 +717,17 @@ static unsigned int disk_to_draw, disk_to_restore;
 static void CreateUpscaledTexture(boolean force);
 static void I_ResetTargetRefresh(void);
 
+//
+// I_CpuPause
+//  Avoids a performance penalty on exit from busy-wait loops. This should be
+//  called on every iteration of the loop and positioned near the loop exit.
+//
+#if SDL_VERSION_ATLEAST(2, 24, 0)
+ #define I_CpuPause() SDL_CPUPauseInstruction()
+#else
+ #define I_CpuPause()
+#endif
+
 void I_FinishUpdate(void)
 {
     if (noblit)
@@ -750,7 +763,7 @@ void I_FinishUpdate(void)
         // Update FPS counter every second
         if (time >= 1000000)
         {
-            fps = (frame_counter * 1000000) / time;
+            fps = ((uint64_t)frame_counter * 1000000) / time;
             frame_counter = 0;
             last_time = frametime_start;
         }
@@ -787,6 +800,8 @@ void I_FinishUpdate(void)
             uint64_t current_time = I_GetTimeUS();
             uint64_t elapsed_time = current_time - frametime_start;
             uint64_t remaining_time = 0;
+
+            I_CpuPause();
 
             if (elapsed_time >= target_time)
             {
@@ -1809,8 +1824,6 @@ void I_InitGraphics(void)
     ResetLogicalSize();
 
     // clear out events waiting at the start and center the mouse
-    SDL_PumpEvents();
-    SDL_FlushEvent(SDL_MOUSEMOTION);
     I_ResetRelativeMouseState();
 }
 

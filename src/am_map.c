@@ -39,6 +39,7 @@
 #include "p_setup.h"
 #include "p_spec.h"
 #include "r_defs.h"
+#include "r_draw.h"
 #include "r_main.h"
 #include "r_state.h"
 #include "r_things.h"
@@ -2664,23 +2665,16 @@ static void AM_drawCrosshair(int color)
 
 // [Nugget] /-----------------------------------------------------------------
 
-static int automap_overlay_darkening;
-
 void AM_shadeScreen(void)
 {
-  // Minimap
-  if (automapactive == AM_MINI)
+  for (int x = f_x;  x < f_x+f_w;  x++)
   {
-    int x, y, pixel;
-
-    for (x = f_x;  x < f_x+f_w;  x++)
-      for (y = f_y;  y < f_y+f_h;  y++) {
-        pixel = y * video.pitch + x;
-        I_VideoBuffer[pixel] = colormaps[0][automap_overlay_darkening * 256 + I_VideoBuffer[pixel]];
-      }
+    for (int y = f_y;  y < f_y+f_h;  y++)
+    {
+      const int pixel = y * video.pitch + x;
+      I_VideoBuffer[pixel] = colormaps[0][automap_overlay_darkening * 256 + I_VideoBuffer[pixel]];
+    }
   }
-  else
-    V_ShadeScreen(automap_overlay_darkening); // [Nugget] Parameterized
 }
 
 // [Nugget] -----------------------------------------------------------------/
@@ -2722,15 +2716,14 @@ void AM_Drawer (void)
     }
   }
 
-  if (!automapoverlay)
+  if (automapoverlay == AM_OVERLAY_OFF)
   {
     AM_clearFB(mapcolor_back);       //jff 1/5/98 background default color
     if (automapactive == AM_FULL) // [Nugget] Minimap
       pspr_interp = false;
   }
-  // [Alaux] Dark automap overlay
-  else if (automapoverlay == AM_OVERLAY_DARK && (!MN_MenuIsShaded()
-                                                 || automapactive == AM_MINI)) // [Nugget] Minimap
+  // [Nugget] Minimap
+  else if (automapoverlay == AM_OVERLAY_DARK && automapactive == AM_MINI)
     AM_shadeScreen();
 
   if (automap_grid)                  // killough 2/28/98: change var name

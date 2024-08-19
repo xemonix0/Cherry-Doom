@@ -82,8 +82,6 @@ static const char *params_with_args[] = {
 "-bexout",
 "-deh",
 "-dehout",
-"-dumplumps",
-"-dumptables",
 "-fastdemo",
 "-maxdemo",
 "-playdemo",
@@ -107,7 +105,7 @@ General options: \n\
   -iwad <file>   Specify an IWAD file to use.\n\
 \n\
 Game start options: \n\
-  -nm                 Alias for -skill 5.\n\
+  -nm                 Alias to -skill 5.\n\
   -nomo               Alias to -nomonsters.\n\
   -nomonsters         Disable monsters.\n\
   -pistolstart        Enables automatic pistol starts on each level.\n\
@@ -115,7 +113,7 @@ Game start options: \n\
                       1-6 (1: easiest, 5: hardest, 6: custom).\n\
                       A skill of 0 disables all monsters only in -complevel\n\
                       vanilla.\n\
-  -uv                 Alias for -skill 4.\n\
+  -uv                 Alias to -skill 4.\n\
   -warp <x> <y>|<xy>  Start a game immediately, warping to ExMy (Doom 1) or\n\
                       MAPxy (Doom 2).\n\
 \n\
