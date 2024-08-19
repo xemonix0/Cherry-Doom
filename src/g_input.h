@@ -52,6 +52,4 @@ double G_CalcMouseSide(int mousex);
 double G_CalcMouseVert(int mousey);
 void G_BindMouseVariables(void);
 
-void G_UpdateZoomDiv(const float value); // [Nugget] Zoom
-
 #endif

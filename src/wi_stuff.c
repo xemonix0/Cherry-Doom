@@ -424,7 +424,7 @@ void WI_slamBackground(void)
   // [Nugget] Alt. intermission background
   if (alt_interpic_on) {
     R_RenderPlayerView(&players[displayplayer]);
-    V_ShadeScreen(17);
+    V_ShadeScreenDirect(17);
     return;
   }
 

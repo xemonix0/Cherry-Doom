@@ -679,14 +679,19 @@ void G_PrepTiccmd(void)
   const boolean strafe = M_InputGameActive(input_strafe);
   ticcmd_t *cmd = &basecmd;
 
-  // [Nugget] Decrease the intensity of some movements if zoomed in
+  // [Nugget] Decrease the intensity of some movements if zoomed in /---------
+
+  float zoomdiv = 1.0f;
+
   if (!strictmode)
   {
     const int zoom = R_GetFOVFX(FOVFX_ZOOM);
 
     if (zoom)
-    { G_UpdateZoomDiv(MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom))); }
+    { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
   }
+
+  // [Nugget] ---------------------------------------------------------------/
 
   // Gamepad
 
@@ -697,14 +702,14 @@ void G_PrepTiccmd(void)
 
     if (axes[AXIS_TURN] && !strafe)
     {
-      localview.rawangle -= G_CalcControllerAngle();
+      localview.rawangle -= G_CalcControllerAngle() / zoomdiv;
       cmd->angleturn = G_CarryAngle(localview.rawangle);
       axes[AXIS_TURN] = 0.0f;
     }
 
     if (axes[AXIS_LOOK] && padlook)
     {
-      localview.rawpitch -= G_CalcControllerPitch();
+      localview.rawpitch -= G_CalcControllerPitch() / zoomdiv;
       cmd->pitch = G_CarryPitch(localview.rawpitch);
       axes[AXIS_LOOK] = 0.0f;
     }
@@ -714,14 +719,14 @@ void G_PrepTiccmd(void)
 
   if (mousex && !strafe)
   {
-    localview.rawangle -= G_CalcMouseAngle(mousex);
+    localview.rawangle -= G_CalcMouseAngle(mousex) / zoomdiv;
     cmd->angleturn = G_CarryAngle(localview.rawangle);
     mousex = 0;
   }
 
   if (mousey && mouselook)
   {
-    localview.rawpitch += G_CalcMousePitch(mousey);
+    localview.rawpitch += G_CalcMousePitch(mousey) / zoomdiv;
     cmd->pitch = G_CarryPitch(localview.rawpitch);
     mousey = 0;
   }

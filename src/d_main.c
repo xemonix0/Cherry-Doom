@@ -289,14 +289,20 @@ void D_Display (void)
     }
   }
 
-  if (MN_MenuIsShaded())
-    V_ShadeScreen(true);
+  // [Nugget]
+  int shade = automap_overlay_darkening;
 
-  if ((automapactive && automapoverlay == AM_OVERLAY_DARK)
+  if (MN_MenuIsShaded())
+  {
+    shade = menu_backdrop_darkening;
+    V_ShadeScreen(true, shade);
+  }
+
+  if ((automapactive == AM_FULL && automapoverlay == AM_OVERLAY_DARK)
       || MN_MenuIsShaded())
-    R_ShadeScreen(true);
+    R_ShadeScreen(true, shade);
   else
-    R_ShadeScreen(false);
+    R_ShadeScreen(false, 0);
 
   redrawsbar = false;
 
@@ -430,7 +436,7 @@ void D_Display (void)
       V_DrawPatch(x, y, patch);
     }
 
-  V_ShadeScreen(false);
+  V_ShadeScreen(false, 0); // [Nugget]
 
   // menus go directly to the screen
   M_Drawer();          // menu is drawn even on top of everything
@@ -2863,7 +2869,7 @@ void D_BindMiscVariables(void)
   BIND_BOOL_GENERAL(demobar, false, "Show demo progress bar");
 
   // [Nugget] More wipes
-  BIND_NUM_GENERAL(screen_melt, wipe_Melt, wipe_None, wipe_Fizzle,
+  BIND_NUM_GENERAL(screen_melt, wipe_Melt, wipe_None, wipe_BlackFade,
     "Screen wipe effect (0 = None; 1 = Melt; 2 = Crossfade; 3 = Fizzlefade; 4 = Black Fade)");
 
   // [Nugget] /---------------------------------------------------------------

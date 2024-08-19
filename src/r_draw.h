@@ -99,7 +99,7 @@ void R_InitDrawFunctions(void);
 
 extern byte *r_darkcolormap;
 
-void R_ShadeScreen(boolean toggle);
+void R_ShadeScreen(boolean toggle, const int level); // [Nugget]
 
 #endif
 

@@ -515,15 +515,7 @@ static const inline fixed_t thingheight (const mobj_t *const thing, const mobj_t
 // [Nugget] Factored out from `p_user.c`
 fixed_t P_PitchToSlope(const fixed_t pitch)
 {
-  if (pitch)
-  {
-    const fixed_t slope = -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT];
-    return (fixed_t)((int64_t)slope * SCREENHEIGHT / ACTUALHEIGHT);
-  }
-  else
-  {
-    return 0;
-  }
+  return pitch ? -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT] : 0;
 }
 
 // [Nugget] Over/Under /------------------------------------------------------

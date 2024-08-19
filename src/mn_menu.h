@@ -82,7 +82,6 @@ typedef enum
 extern backdrop_t menu_backdrop;
 
 // [Nugget]
-extern int menu_backdrop_darkening;
 extern boolean menu_background_all;
 extern boolean no_menu_tint;
 
