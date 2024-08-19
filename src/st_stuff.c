@@ -1046,7 +1046,7 @@ void ST_drawWidgets(void)
       {
         NughudDrawPatch(
           &nughud.patches[i],
-          W_CacheLumpNum(nughud_patchlump[i], PU_STATIC),
+          V_CachePatchNum(nughud_patchlump[i], PU_STATIC),
           !nughud.patch_offsets
         );
       }
@@ -1068,7 +1068,7 @@ void ST_drawWidgets(void)
       {
         NughudDrawPatch(
           &nughud.patches[i],
-          W_CacheLumpNum(nughud_patchlump[i], PU_STATIC),
+          V_CachePatchNum(nughud_patchlump[i], PU_STATIC),
           !nughud.patch_offsets
         );
       }
@@ -1545,7 +1545,7 @@ void ST_loadGraphics(void)
     // Find Status Bar Berserk patch
     if ((lump = (W_CheckNumForName)("STBERSRK", ns_global)) >= 0)
     {
-      stbersrk = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      stbersrk = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else {
       stbersrk = NULL;
@@ -1558,7 +1558,7 @@ void ST_loadGraphics(void)
     // Find Status Bar Infinity patch
     if ((lump = (W_CheckNumForName)("STINFNTY", ns_global)) >= 0)
     {
-      stinfnty = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      stinfnty = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { stinfnty = NULL; }
 
@@ -1585,7 +1585,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhtnum[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhtnum[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhtnum[0] = NULL;
@@ -1596,14 +1596,14 @@ void ST_loadGraphics(void)
     // Load NHTMINUS
     if (nhtnum[0] && (lump = (W_CheckNumForName)("NHTMINUS", ns_global)) >= 0)
     {
-      nhtminus = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      nhtminus = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhtnum[0] = nhtminus = NULL; }
 
     // Load NHTPRCNT
     if (nhtnum[0] && (lump = (W_CheckNumForName)("NHTPRCNT", ns_global)) >= 0)
     {
-      nhtprcnt = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      nhtprcnt = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhtnum[0] = nhtminus = nhtprcnt = NULL; }
 
@@ -1616,7 +1616,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhrnum[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhrnum[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhrnum[0] = NULL;
@@ -1627,7 +1627,7 @@ void ST_loadGraphics(void)
     // Load NHRMINUS
     if (nhrnum[0] && (lump = (W_CheckNumForName)("NHRMINUS", ns_global)) >= 0)
     {
-      nhrminus = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      nhrminus = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhrnum[0] = nhrminus = NULL; }
 
@@ -1640,7 +1640,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhamnum[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhamnum[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhamnum[0] = NULL;
@@ -1657,7 +1657,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhwpnum[i][0] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhwpnum[i][0] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhwpnum[0][0] = NULL;
@@ -1669,7 +1669,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhwpnum[i][1] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhwpnum[i][1] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhwpnum[0][0] = NULL;
@@ -1686,7 +1686,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhkeys[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhkeys[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhkeys[0] = NULL;
@@ -1699,7 +1699,7 @@ void ST_loadGraphics(void)
     // Load NHBERSRK
     if ((lump = (W_CheckNumForName)("NHBERSRK", ns_global)) >= 0)
     {
-      nhbersrk = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      nhbersrk = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhbersrk = NULL; }
 
@@ -1712,7 +1712,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhammo[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhammo[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhammo[0] = NULL;
@@ -1729,7 +1729,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhambar[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhambar[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else if (!i) { break; }
     }
@@ -1743,7 +1743,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhealth[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhealth[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhealth[0] = NULL;
@@ -1760,7 +1760,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhhlbar[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhhlbar[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else if (!i) { break; }
     }
@@ -1774,7 +1774,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nharmor[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nharmor[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nharmor[0] = NULL;
@@ -1791,7 +1791,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nharbar[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nharbar[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else if (!i) { break; }
     }
@@ -1801,7 +1801,7 @@ void ST_loadGraphics(void)
     // Load NHINFNTY
     if ((lump = (W_CheckNumForName)("NHINFNTY", ns_global)) >= 0)
     {
-      nhinfnty = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      nhinfnty = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhinfnty = NULL; }
   }
