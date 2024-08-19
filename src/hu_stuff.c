@@ -216,6 +216,10 @@ boolean           show_messages;
 boolean           show_toggle_messages;
 boolean           show_pickup_messages;
 
+static boolean    hud_map_announce;
+static boolean    title_on;
+static int        title_counter;
+
 static boolean    headsupactive = false;
 
 static int        flash_counter; // [Nugget] Message flash
@@ -697,8 +701,6 @@ static int NughudSortWidgets(const void *_p1, const void *_p2)
     || (st_crispyhud && (a) == 1)                      \
 )
 
-boolean hud_automap;  // [Nugget] Condition used for level title
-
 // [Nugget] -----------------------------------------------------------------/
 
 void HU_Start(void)
@@ -749,7 +751,7 @@ void HU_Start(void)
   // create the map title widget
   HUlib_init_multiline(&w_title, 1,
                        &doom_font, colrngs[hudcolor_titl],
-                       &hud_automap, HU_widget_build_title);
+                       &title_on, HU_widget_build_title);
   // [FG] built only once right here
   w_title.builder();
 
@@ -961,6 +963,11 @@ static void HU_widget_build_title (void)
   if ((n = strchr(s, '\n')))
   {
     *n = '\0';
+  }
+
+  if (hud_map_announce && leveltime == 0)
+  {
+    title_counter = HU_MSGTIMEOUT2;
   }
 
   M_StringConcat(hud_titlestr, s, sizeof(hud_titlestr));
@@ -2032,8 +2039,6 @@ void HU_Ticker(void)
 
   plr = &players[displayplayer];         // killough 3/7/98
 
-  hud_automap = (automapactive == AM_FULL); // [Nugget] Minimap
-
   HU_disable_all_widgets();
   draw_crispy_hud = false;
 
@@ -2086,7 +2091,7 @@ void HU_Ticker(void)
     HUlib_add_string_to_cur_line(&w_secret, plr->secretmessage);
     plr->secretmessage = NULL;
     secret_on = true;
-    secret_counter = 5*TICRATE/2; // [crispy] 2.5 seconds
+    secret_counter = HU_MSGTIMEOUT2;
   }
 
   // if messages on, or "Messages Off" is being displayed
@@ -2176,12 +2181,19 @@ void HU_Ticker(void)
     || plr->powers[pw_ironfeet] > 0        \
   )
 
+  if (title_counter)
+  {
+    title_counter--;
+  }
+
   if (automapactive == AM_FULL)
   {
     HU_cond_build_widget(w_stats, hud_level_stats & HUD_WIDGET_AUTOMAP);
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_AUTOMAP || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_AUTOMAP && SHOWPOWERS); // [Nugget] Powerup timers
     HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_AUTOMAP);
+
+    title_on = true;
   }
   else
   {
@@ -2189,6 +2201,8 @@ void HU_Ticker(void)
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_HUD || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_HUD && SHOWPOWERS); // [Nugget] Powerup timers
     HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_HUD);
+
+    title_on = (title_counter > 0);
   }
 
   #undef SHOWPOWERS
@@ -2831,7 +2845,7 @@ void HU_BindHUDVariables(void)
   M_BindNum("hud_level_time", &hud_level_time, NULL,
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
-            "Show level time widget (1 = On automap, 2 = On HUD, 3 = Always)");
+            "Show level time widget (1 = On automap; 2 = On HUD; 3 = Always)");
   M_BindNum("hud_player_coords", &hud_player_coords, NULL,
             HUD_WIDGET_AUTOMAP, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
@@ -2875,7 +2889,7 @@ void HU_BindHUDVariables(void)
   M_BindNum("hud_widget_font", &hud_widget_font, NULL,
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
-            "Use standard Doom font for widgets (1 = On automap, 2 = On HUD, 3 "
+            "Use standard Doom font for widgets (1 = On automap; 2 = On HUD; 3 "
             "= Always)");
   M_BindBool("hud_widget_layout", &hud_widget_layout, NULL,
              false, ss_stat, wad_no, "Widget layout (0 = Horizontal; 1 = Vertical)");
@@ -2969,7 +2983,10 @@ void HU_BindHUDVariables(void)
 
    // [Nugget] "Count" mode from Crispy
   M_BindNum("hud_secret_message", &hud_secret_message, NULL,
-            1, 0, 2, ss_stat, wad_no, "Show secret-revealed message (1 = Simple; 2 = Count)");
+            1, 0, 2, ss_stat, wad_no, "Announce revealed secrets (1 = Simple; 2 = Count)");
+
+  M_BindBool("hud_map_announce", &hud_map_announce, NULL,
+            false, ss_stat, wad_no, "Announce map titles");
 
   // [Nugget] Announce milestone completion
   M_BindBool("announce_milestones", &announce_milestones, NULL,

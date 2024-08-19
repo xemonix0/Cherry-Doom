@@ -80,7 +80,6 @@ fixed_t  skyiscale,
 fixed_t  viewx, viewy, viewz;
 angle_t  viewangle;
 localview_t localview;
-double deltatics;
 boolean raw_input;
 fixed_t  viewcos, viewsin;
 player_t *viewplayer;
@@ -1608,7 +1607,6 @@ void R_RenderPlayerView (player_t* player)
   R_RenderBSPNode (numnodes-1);
 
   R_NearbySprites ();
-  VX_NearbySprites ();
 
   // [FG] update automap while playing
   if (automap_on)

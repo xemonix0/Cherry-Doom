@@ -236,38 +236,12 @@ void D_ProcessEvents (void)
     }
 }
 
-static boolean input_ready;
-
-void D_UpdateDeltaTics(void)
-{
-  if (uncapped && raw_input)
-  {
-    static uint64_t last_time;
-    const uint64_t current_time = I_GetTimeUS();
-
-    if (input_ready)
-    {
-      const uint64_t delta_time = current_time - last_time;
-      deltatics = (double)delta_time * TICRATE / 1000000.0;
-      deltatics = BETWEEN(0.0, 1.0, deltatics);
-    }
-    else
-    {
-      deltatics = 0.0;
-    }
-
-    last_time = current_time;
-  }
-  else
-  {
-    deltatics = 1.0;
-  }
-}
-
 //
 // D_Display
 //  draw current display, possibly wiping it from the previous
 //
+
+boolean input_ready;
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate = GS_DEMOSCREEN;
@@ -2632,7 +2606,7 @@ void D_DoomMain(void)
 
   G_UpdateSideMove();
   G_UpdateAngleFunctions();
-  I_UpdateAccelerateMouse();
+  G_UpdateAccelerateMouse();
 
   MN_ResetTimeScale();
 
@@ -2896,7 +2870,7 @@ void D_BindMiscVariables(void)
 {
   BIND_NUM_GENERAL(show_endoom, 0, 0, 2,
     "Show ENDOOM screen (0 = Off; 1 = On; 2 = PWADs only)");
-  BIND_BOOL_GENERAL(demobar, false, "1 to enable demo progress bar");
+  BIND_BOOL_GENERAL(demobar, false, "Show demo progress bar");
 
   // [Nugget] More wipes
   BIND_NUM_GENERAL(screen_melt, wipe_Melt, wipe_None, wipe_Fizzle,

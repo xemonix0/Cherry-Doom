@@ -25,7 +25,6 @@
 #include "hu_lib.h"
 #include "hu_stuff.h"
 #include "i_gamepad.h"
-#include "i_input.h"
 #include "i_oalsound.h"
 #include "i_sound.h"
 #include "i_timer.h"
@@ -1729,8 +1728,10 @@ static const char *secret_message_strings[] = {
 
 static setup_menu_t stat_settings4[] = {
     // [Nugget] Multiple choice
-    {"\"A Secret is Revealed!\" Message", S_CHOICE, M_X, M_SPC,
+    {"Announce Revealed Secrets", S_CHOICE, M_X, M_SPC,
      {"hud_secret_message"}, m_null, input_null, str_secret_message},
+
+    {"Announce Map Titles",  S_ONOFF, M_X, M_SPC, {"hud_map_announce"}},
 
     // [Nugget]
     {"Milestone-Completion Announcements", S_ONOFF, M_X, M_SPC,
@@ -1756,12 +1757,6 @@ static setup_menu_t stat_settings4[] = {
 
     {"Message Duration (ms)", S_NUM, M_X, M_SPC,
      {"message_timer"}},
-
-    {"Chat Message Color", S_CRITEM|S_COSMETIC, M_X, M_SPC,
-     {"hudcolor_chat"}, m_null, input_null, str_hudcolor},
-
-    {"Chat Message Duration (ms)", S_NUM|S_COSMETIC, M_X, M_SPC,
-     {"chat_msg_timer"}},
 
     {"Obituary Color", S_CRITEM|S_COSMETIC, M_X, M_SPC,
      {"hudcolor_obituary"}, m_null, input_null, str_hudcolor},
@@ -2549,7 +2544,7 @@ static setup_menu_t gen_settings3[] = {
     MI_GAP,
 
     {"Mouse acceleration", S_THERMO, CNTR_X, M_THRM_SPC, {"mouse_acceleration"},
-     m_null, input_null, str_mouse_accel, I_UpdateAccelerateMouse},
+     m_null, input_null, str_mouse_accel, G_UpdateAccelerateMouse},
 
     MI_END
 };
