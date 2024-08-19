@@ -34,6 +34,8 @@
 // [FG] stretch short skies
 boolean stretchsky;
 
+boolean fov_stretchsky; // [Nugget]
+
 //
 // sky mapping
 //

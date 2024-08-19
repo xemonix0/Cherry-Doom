@@ -272,6 +272,9 @@ void WriteGeneratedLumpWad(const char *filename)
 
 // [Nugget] HUD/menu shadows /------------------------------------------------
 
+boolean hud_menu_shadows;
+int hud_menu_shadows_filter_pct;
+
 static boolean drawshadows   = true,
                drawingshadow = false;
 

@@ -24,6 +24,13 @@
 #define M_ARRAY_INIT_CAPACITY NUM_INPUTS
 #include "m_array.h"
 
+// [Nugget]
+#include "am_map.h"
+#include "g_game.h"
+#include "hu_stuff.h"
+#include "i_video.h"
+#include "r_main.h"
+
 static input_t *composite_inputs[NUM_INPUT_ID];
 
 extern boolean gamekeydown[];
@@ -569,6 +576,12 @@ static input_t default_inputs[NUM_INPUT_ID][NUM_INPUTS] =
     [input_chat_dest1]  = { {INPUT_KEY, 'i'} },
     [input_chat_dest2]  = { {INPUT_KEY, 'b'} },
     [input_chat_dest3]  = { {INPUT_KEY, 'r'} },
+
+    // [Nugget] --------------------------------------------------------------
+
+    [input_jump]        = { {INPUT_KEY, KEY_RALT} },
+    [input_crouch]      = { {INPUT_KEY, 'c'} },
+    [input_map_blink]   = { {INPUT_KEY, 'b'} },
 };
 
 void M_InputSetDefault(int id)
@@ -589,14 +602,36 @@ void M_BindInputVariables(void)
     BIND_INPUT(input_speed, "Run (move fast)");
     BIND_INPUT(input_strafe, "Hold to strafe");
     BIND_INPUT(input_autorun, "Toggle always run mode");
+
+    // [Nugget]
+    BIND_INPUT(input_jump, "Jump");
+    BIND_INPUT(input_crouch, "Crouch/duck");
+
     BIND_INPUT(input_reverse, "Spin 180 instantly");
     BIND_INPUT(input_use, "Open a door, use a switch");
     BIND_INPUT(input_fire, "Fire current weapon");
     BIND_INPUT(input_prevweapon, "Cycle to the previous weapon");
     BIND_INPUT(input_nextweapon, "Cycle to the next weapon");
+    BIND_INPUT(input_lastweapon, "Switch to the last-used weapon"); // [Nugget] Last weapon key
 
     BIND_INPUT(input_novert, "Toggle vertical mouse movement");
     BIND_INPUT(input_freelook, "Toggle free look");
+
+    // [Nugget] /---------------------------------------------------------------
+
+    BIND_INPUT(input_crosshair, "Toggle crosshair");
+
+    BIND_INPUT(input_zoom, "Toggle zoom");
+
+    M_BindNum("zoom_fov", &zoom_fov, NULL,
+              FOV_MIN, FOV_MIN, FOV_MAX, ss_keys, wad_no,
+              "Field of View when zoom is enabled");
+
+    BIND_INPUT(input_chasecam, "Cycle through chasecam modes");
+
+    BIND_INPUT(input_freecam, "Toggle freecam");
+
+    // [Nugget] ---------------------------------------------------------------/
 
     BIND_INPUT(input_weapon1, "Switch to weapon 1 (fist/chainsaw)");
     BIND_INPUT(input_weapon2, "Switch to weapon 2 (pistol)");
@@ -616,6 +651,7 @@ void M_BindInputVariables(void)
 
     BIND_INPUT(input_savegame, "Save current game");
     BIND_INPUT(input_loadgame, "Restore from saved games");
+    BIND_INPUT(input_rewind, "Rewind"); // [Nugget] 
 
     BIND_INPUT(input_soundvolume, "Bring up sound control panel");
     BIND_INPUT(input_hud, "Adjust heads up display mode");
@@ -628,6 +664,12 @@ void M_BindInputVariables(void)
     BIND_INPUT(input_spy, "View from another player's vantage");
     BIND_INPUT(input_screenshot, "Take a screenshot");
     BIND_INPUT(input_clean_screenshot, "Take a clean screenshot");
+
+    // [Nugget] (CFG-only)
+    M_BindNum("screenshot_palette", &screenshot_palette, NULL,
+              SHOTPAL_NORMAL, SHOTPAL_NONE, SHOTPAL_BOTH, ss_none, wad_no,
+              "Keep palette changes in screenshots (0 = None; 1 = Normal; 2 = Clean; 3 = Both)");
+
     BIND_INPUT(input_pause, "Pause the game");
 
     BIND_INPUT(input_demo_quit, "Finish recording demo");
@@ -648,11 +690,26 @@ void M_BindInputVariables(void)
     BIND_INPUT(input_map_mark, "Drop a marker on automap");
     BIND_INPUT(input_map_clear, "Clear all markers on automap");
     BIND_INPUT(input_map_gobig, "Max zoom for automap");
+    BIND_INPUT(input_map_mini, "Activate minimap mode"); // [Nugget]
     BIND_INPUT(input_map_grid, "Toggle grid display over automap");
     BIND_INPUT(input_map_overlay, "Toggle overlay mode");
     BIND_INPUT(input_map_rotate, "Toggle rotate mode");
 
+    // [Nugget] /---------------------------------------------------------------
+
+    BIND_INPUT(input_map_blink,     "Make automap markers blink");
+
+    BIND_INPUT(input_map_tagfinder, "Find associated sectors and lines");
+
+    BIND_INPUT(input_map_teleport,  "Teleport to automap pointer");
+
+    M_BindBool("fancy_teleport", &fancy_teleport, NULL, true, ss_keys, wad_no,
+               "Use effects when teleporting to pointer (fog, sound and zoom)");
+
+    // [Nugget] ---------------------------------------------------------------/
+
     BIND_INPUT(input_chat, "Enter a chat message");
+    BIND_BOOL(sp_chat, false, "Allow multiplayer chat in singleplayer"); // [Nugget] (CFG-only)
     BIND_INPUT(input_chat_dest0, "Chat with player 1");
     BIND_INPUT(input_chat_dest1, "Chat with player 2");
     BIND_INPUT(input_chat_dest2, "Chat with player 3");
@@ -669,8 +726,20 @@ void M_BindInputVariables(void)
     BIND_INPUT(input_idbeholdi, "Give partial invisibility");
     BIND_INPUT(input_idbeholdr, "Give radiation suit");
     BIND_INPUT(input_idbeholdl, "Give light amplification");
-    BIND_INPUT(input_iddt, "Reveal map");
+    BIND_INPUT(input_idbeholda, "Give computer area map"); // [Nugget]
+    BIND_INPUT(input_iddt, "Reveal map (IDDT)"); // [Nugget] Tweaked description
     BIND_INPUT(input_notarget, "No target mode");
     BIND_INPUT(input_freeze, "Freeze mode");
     BIND_INPUT(input_avj, "Fake Archvile Jump");
+
+    // [Nugget]
+    BIND_INPUT(input_infammo,    "Infinite ammo");
+    BIND_INPUT(input_fastweaps,  "Fast weapons");
+    BIND_INPUT(input_resurrect,  "Resurrect");
+    BIND_INPUT(input_fly,        "Fly mode");
+    BIND_INPUT(input_summonr,    "Summon last summoned mobj");
+    BIND_INPUT(input_linetarget, "Linetarget-query mode");
+    BIND_INPUT(input_mdk,        "MDK attack");
+    BIND_INPUT(input_saitama,    "MDK Fist");
+    BIND_INPUT(input_boomcan,    "Explosive hitscan attacks");
 }

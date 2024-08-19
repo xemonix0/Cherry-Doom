@@ -55,6 +55,9 @@
 // [Nugget]
 #include "m_nughud.h"
 
+// [Nugget] CVARs
+static boolean sts_alt_arms;
+
 //
 // STATUS BAR DATA
 //
@@ -465,6 +468,8 @@ static int ST_DeadFace(void)
   return ST_DEADFACE;
 }
 
+boolean comp_godface;
+
 void ST_updateFaceWidget(void)
 {
   int         i;
@@ -835,6 +840,12 @@ static int SmoothCount(int shownval, int realval)
 }
 
 boolean st_invul;
+
+// [Nugget]
+boolean no_berserk_tint;
+boolean no_radsuit_tint;
+boolean comp_unusedpals;
+
 static void ST_doPaletteStuff(void);
 
 void ST_Ticker(void)
@@ -996,6 +1007,10 @@ static void NughudDrawBar(nughud_bar_t *widget, patch_t **patches, int units, in
 }
 
 // [Nugget] -----------------------------------------------------------------/
+
+// [Nugget]
+static boolean sts_show_berserk;
+static boolean hud_highlight_weapon;
 
 void ST_drawWidgets(void)
 {
@@ -1192,7 +1207,7 @@ void ST_drawWidgets(void)
               ammoy = !st_crispyhud ? ST_AMMOY : nughud.ammo.y;
 
     // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
-    if (show_berserk && plyr->readyweapon == wp_fist && plyr->powers[pw_strength])
+    if (sts_show_berserk && plyr->readyweapon == wp_fist && plyr->powers[pw_strength])
     {
       // NUGHUD Berserk
       if (st_crispyhud && nhbersrk)
@@ -1326,7 +1341,7 @@ void ST_drawWidgets(void)
       else { index = weapon; }
     }
     else {
-      if (alt_arms && (weapon == wp_chainsaw || weapon == wp_supershotgun))
+      if (sts_alt_arms && (weapon == wp_chainsaw || weapon == wp_supershotgun))
       {
         if (weapon == wp_chainsaw && have_ssg)
         {
@@ -1338,7 +1353,7 @@ void ST_drawWidgets(void)
       {
         index = 1;
       }
-      else { index = weapon - 1 - alt_arms; }
+      else { index = weapon - 1 - sts_alt_arms; }
     }
 
     if (0 <= index && index < 9) { w_arms[index].data = 2997; }
@@ -1824,6 +1839,8 @@ void ST_initData(void)
 
 int distributed_delta = 0; // [Nugget] Not static anymore
 
+static boolean sts_show_ssg; // [Nugget]
+
 void ST_createWidgets(void)
 {
   int i;
@@ -1881,13 +1898,13 @@ void ST_createWidgets(void)
                          &st_armson);
 
     // [crispy] show SSG availability in the Shotgun slot of the arms widget
-    if (show_ssg && !(nughud.arms[8].x > -1)) { w_arms[2].inum = &st_shotguns; }
+    if (sts_show_ssg && !(nughud.arms[8].x > -1)) { w_arms[2].inum = &st_shotguns; }
   }
   else {
     for(i=0;i<6;i++)
       {
         // [Nugget] Alternative Arms display (Saw/SSG instead of Pistol)
-        const int alt = (alt_arms ? ((i==5 && have_ssg) ? 2 : 1) : 0);
+        const int alt = (sts_alt_arms ? ((i==5 && have_ssg) ? 2 : 1) : 0);
 
         STlib_initMultIcon(&w_arms[i],
                            ST_ARMSX+(i%3)*ST_ARMSXSPACE,
@@ -1897,7 +1914,7 @@ void ST_createWidgets(void)
       }
 
     // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
-    if (show_ssg && !alt_arms) { w_arms[1].inum = &st_shotguns; }
+    if (sts_show_ssg && !sts_alt_arms) { w_arms[1].inum = &st_shotguns; }
   }
 
   // frags sum
@@ -2178,6 +2195,24 @@ void ST_BindSTSVariables(void)
   M_BindBool("hud_blink_keys", &hud_blink_keys, NULL,
              false, ss_stat, wad_no,
       "1 to make missing keys blink when trying to trigger linedef actions");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  M_BindBool("sts_show_berserk", &sts_show_berserk, NULL, true, ss_stat, wad_yes,
+             "Show Berserk pack on the status bar when using the Fist, if available");
+
+  // (CFG-only)
+  M_BindBool("sts_show_ssg", &sts_show_ssg, NULL, true, ss_none, wad_yes,
+             "Show SSG availability in the Shotgun slot of the arms widget");
+
+  M_BindBool("hud_highlight_weapon", &hud_highlight_weapon, NULL, false, ss_stat, wad_yes,
+             "Highlight current/pending weapon on the status bar");
+
+  M_BindBool("sts_alt_arms", &sts_alt_arms, NULL, false, ss_stat, wad_yes,
+             "Alternative Arms-widget display");
+
+  // [Nugget] ---------------------------------------------------------------/
+
   M_BindBool("st_solidbackground", &st_solidbackground, NULL,
              false, ss_stat, wad_no,
              "1 for solid color status bar background in widescreen mode");

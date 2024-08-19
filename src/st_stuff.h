@@ -32,6 +32,12 @@ struct player_s;
 #include "d_player.h"
 #include "r_defs.h"
 
+// [Nugget] CVARs
+extern boolean no_berserk_tint;
+extern boolean no_radsuit_tint;
+extern boolean comp_godface;
+extern boolean comp_unusedpals;
+
 // Size of statusbar.
 // Now sensitive for scaling.
 
@@ -145,7 +151,7 @@ void ST_InitRes(void);
 
 void ST_InitChunkBar(void); // [Nugget] NUGHUD: Status-Bar chunks
 
-extern void ST_createWidgets(void); // [Nugget]
+void ST_createWidgets(void); // [Nugget] Externalized
 
 // killough 5/2/98: moved from m_misc.c:
 

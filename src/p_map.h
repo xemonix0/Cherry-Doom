@@ -29,6 +29,10 @@ struct msecnode_s;
 struct player_s;
 struct sector_s;
 
+// [Nugget] CVARs
+extern boolean comp_lscollision;
+extern boolean comp_lsamnesia;
+
 #define USERANGE        (64*FRACUNIT)
 #define MELEERANGE      (64*FRACUNIT)
 #define MISSILERANGE    (32*64*FRACUNIT)
@@ -87,11 +91,17 @@ extern fixed_t tmbbox[4];         // phares 3/20/98
 extern struct line_s *blockline;   // killough 8/11/98
 extern boolean hangsolid;
 
-// [Nugget] ------------------------------------------------------------------
+// [Nugget] ==================================================================
 
 fixed_t P_PitchToSlope(const fixed_t pitch);
 
-void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope);
+void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope); // Chasecam
+
+extern boolean boomshot; // Explosive hitscan cheat
+
+// Over/Under ----------------------------------------------------------------
+
+extern int over_under;
 
 typedef enum {
   OU_UNDER = -1,
@@ -99,11 +109,8 @@ typedef enum {
   OU_OVER,
 } overunder_t;
 
-// Over/Under
 overunder_t P_CheckOverUnderMobj(struct mobj_s *thing); // [DSDA]
 boolean     P_SkullSlam(struct mobj_s *skull, struct mobj_s *hitthing);
-
-extern boolean boomshot; // Explosive hitscan cheat
 
 #endif // __P_MAP__
 

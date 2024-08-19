@@ -613,7 +613,7 @@ static void R_DrawFuzzColumn_block(void)
 // Reference: https://www.doomworld.com/forum/post/1335769
 // /--------------------------------------------------------------------------
 
-int fuzzdark_mode;
+boolean fuzzdark_mode;
 
 static int nx, ny;
 #define FUZZDARK (256 * (Woof_Random() < 32 ? (Woof_Random() & 1 ? 4 : 8) : 6))

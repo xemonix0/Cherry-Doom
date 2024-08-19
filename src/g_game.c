@@ -91,6 +91,8 @@
 
 // [Nugget]
 #include "d_items.h"
+#include "m_cheat.h"
+#include "p_spec.h"
 
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
@@ -107,11 +109,22 @@ static byte     consistancy[MAXPLAYERS][BACKUPTICS];
 
 // [Nugget] /=================================================================
 
+// CVARs ---------------------------------------------------------------------
+
+boolean one_key_saveload;
+boolean skip_ammoless_weapons;
+boolean show_save_messages;
+boolean comp_longautoaim;
+
+// ---------------------------------------------------------------------------
+
 boolean minimap_was_on = false; // Minimap: keep it when advancing through levels
 
 boolean ignore_pistolstart = false; // Custom Skill: ignore pistol-start setting
 
 // Autosave ------------------------------------------------------------------
+
+static int autosave_interval;
 
 static boolean autosaving = false;
 static int autosave_countdown = 0;
@@ -122,6 +135,10 @@ void G_SetAutosaveCountdown(int value)
 }
 
 // Rewind --------------------------------------------------------------------
+
+int rewind_interval;
+static int rewind_depth;
+static int rewind_timeout;
 
 static boolean keyframe_rw = false;
 
@@ -139,7 +156,18 @@ static keyframe_t *keyframe_list_head = NULL, *keyframe_list_tail = NULL;
 
 static int keyframe_index = -1;
 
-// Custom Skill --------------------------------------------------------------
+// Skill ---------------------------------------------------------------------
+
+int custom_skill_things;
+boolean custom_skill_coopspawns;
+boolean custom_skill_nomonsters;
+boolean custom_skill_doubleammo;
+boolean custom_skill_halfdamage;
+boolean custom_skill_slowbrain;
+boolean custom_skill_fast;
+boolean custom_skill_respawn;
+boolean custom_skill_aggressive;
+boolean custom_skill_x2monsters;
 
 // Actual custom-skill settings, set either by menu or savegames
 static struct {
@@ -3512,6 +3540,8 @@ boolean G_KeyFrameRW(void)
 boolean clean_screenshot;
 extern void ST_ResetPalette(void); // [Nugget] Taken out of `G_CleanScreenshot()`
 
+int screenshot_palette; // [Nugget]
+
 void G_CleanScreenshot(void)
 {
   int old_screenblocks;
@@ -4796,7 +4826,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   // [Nugget] Custom Skill
   if (skill == sk_custom && strictmode)
-  { skill = (defaultskill - 1 < sk_custom) ? defaultskill - 1 : sk_hard; }
+  { skill = (default_skill - 1 < sk_custom) ? default_skill - 1 : sk_hard; }
 
   if (episode < 1)
     episode = 1;
@@ -5606,8 +5636,44 @@ void G_BindGameInputVariables(void)
 void G_BindGameVariables(void)
 {
   BIND_BOOL(shorttics, false, "1 to use low resolution turning");
-  BIND_NUM_GENERAL(default_skill, 3, 1, 5,
-    "Selects default skill (1 = ITYTD, 2 = HNTR, 3 = HMP, 4 = UV, 5 = NM)");
+  // [Nugget] Account for custom skill
+  BIND_NUM_GENERAL(default_skill, 3, 1, 6,
+    "Selects default skill (1 = ITYTD, 2 = HNTR, 3 = HMP, 4 = UV, 5 = NM, 6 = Custom)");
+
+  // [Nugget] Custom Skill /--------------------------------------------------
+
+  M_BindNum("custom_skill_things", &custom_skill_things, NULL, 2, 0, 2, ss_skill, wad_yes, 
+    "Custom Skill: thing spawns (0 = Easy; 1 = Normal; 2 = Hard)");
+
+  M_BindBool("custom_skill_coopspawns", &custom_skill_coopspawns, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: spawn multiplayer things");
+
+  M_BindBool("custom_skill_nomonsters", &custom_skill_nomonsters, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: don't spawn monsters");
+
+  M_BindBool("custom_skill_doubleammo", &custom_skill_doubleammo, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: receive double ammo from pickups");
+
+  M_BindBool("custom_skill_halfdamage", &custom_skill_halfdamage, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: player takes half the damage");
+
+  M_BindBool("custom_skill_slowbrain", &custom_skill_slowbrain, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: Icon of Sin shoots cubes half the time");
+
+  M_BindBool("custom_skill_fast", &custom_skill_fast, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: fast monsters");
+
+  M_BindBool("custom_skill_respawn", &custom_skill_respawn, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: respawning monsters");
+
+  M_BindBool("custom_skill_aggressive", &custom_skill_aggressive, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: aggressive monsters (instant reaction time; continuous attacks)");
+
+  M_BindBool("custom_skill_x2monsters", &custom_skill_x2monsters, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: duplicate monster spawns");
+
+  // [Nugget] ---------------------------------------------------------------/
+
   BIND_NUM_GENERAL(realtic_clock_rate, 100, 10, 1000,
     "Percentage of normal speed realtic clock runs at");
   M_BindNum("max_player_corpse", &default_bodyquesize, NULL,
@@ -5615,6 +5681,23 @@ void G_BindGameVariables(void)
     "Number of dead bodies in view supported (Negative value = No limit)");
   BIND_NUM_GENERAL(death_use_action, 0, 0, 2,
     "\"Use\" button action on death (0 = Default, 1 = Load save, 2 = Nothing)");
+
+  // [Nugget] ----------------------------------------------------------------
+
+  BIND_BOOL_GENERAL(one_key_saveload, false, "One-key quick-saving/loading");
+
+  // (CFG-only)
+  M_BindNum("autosave_interval", &autosave_interval, NULL, 0, 30, 600, ss_none, wad_no,
+    "Interval between autosaves, in seconds");
+
+  BIND_NUM_GENERAL(rewind_interval, 1, 1, 600,
+    "Interval between rewind key-frames, in seconds");
+
+  BIND_NUM_GENERAL(rewind_depth, 60, 0, 600,
+    "Number of rewind key-frames to be stored (0 = No rewinding)");
+
+  BIND_NUM_GENERAL(rewind_timeout, 10, 0, 25,
+    "Max. time to store a key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)");
 }
 
 void G_BindEnemVariables(void)
@@ -5648,6 +5731,29 @@ void G_BindEnemVariables(void)
             128, 0, 999, ss_none, wad_yes, "Distance friends stay away");
   M_BindBool("dog_jumping", &default_dog_jumping, &dog_jumping,
              true, ss_none, wad_yes, "1 to enable dogs to jump");
+
+  // [Nugget] ----------------------------------------------------------------
+
+  M_BindBool("extra_gibbing", &extra_gibbing_on, NULL,
+             false, ss_enem, wad_yes, "Enable extra-gibbing in general (affected by CVARs below)");
+
+  // (CFG-only)
+  M_BindBool("extra_gibbing_fist", &extra_gibbing[EXGIB_FIST], NULL,
+             true, ss_none, wad_yes, "Extra-gibbing for Berserk Fist");
+
+  // (CFG-only)
+  M_BindBool("extra_gibbing_csaw", &extra_gibbing[EXGIB_CSAW], NULL,
+             true, ss_none, wad_yes, "Extra-gibbing for Chainsaw");
+
+  // (CFG-only)
+  M_BindBool("extra_gibbing_ssg", &extra_gibbing[EXGIB_SSG], NULL,
+             true, ss_none, wad_yes, "Extra-gibbing for SSG");
+
+  M_BindBool("bloodier_gibbing", &bloodier_gibbing, NULL,
+             false, ss_enem, wad_yes, "Bloodier gibbing");
+
+  M_BindBool("tossdrop", &tossdrop, NULL,
+             false, ss_enem, wad_yes, "Enemies toss their items dropped upon death");
 }
 
 void G_BindCompVariables(void)
@@ -5661,12 +5767,26 @@ void G_BindCompVariables(void)
              false, ss_comp, wad_no, "1 to enable strict mode");
   M_BindBool("hangsolid", &hangsolid, NULL, false, ss_comp, wad_no,
              "1 to walk under solid hanging bodies");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  M_BindNum("over_under", &over_under, NULL, 0, 0, 2, ss_gen, wad_yes,
+            "Allow movement over/under things (1 = Player only; 2 = All things)");
+
+  M_BindBool("jump_crouch", &jump_crouch, NULL, false, ss_gen, wad_yes,
+             "Jumping/crouching");
+
+  // [Nugget] ---------------------------------------------------------------/
+
   M_BindBool("blockmapfix", &blockmapfix, NULL, false, ss_comp, wad_no,
              "1 to enable blockmap bug fix");
   M_BindBool("checksight12", &checksight12, NULL, false, ss_comp, wad_no,
              "1 to enable fast blockmap-based line-of-sight calculation");
-  M_BindBool("direct_vertical_aiming", &default_direct_vertical_aiming, &direct_vertical_aiming,
-             false, ss_comp, wad_no, "1 to enable direct vertical aiming");
+
+  // [Nugget] Replaces `direct_vertical_aiming`
+  M_BindNum("vertical_aiming", &default_vertical_aiming, &vertical_aiming,
+            0, 0, 2, ss_comp, wad_no, "Vertical aiming (0 = Auto; 1 = Direct; 2 = Direct + Auto)");
+
   M_BindBool("pistolstart", &default_pistolstart, &pistolstart,
              false, ss_comp, wad_no, "1 to enable pistol start");
 
@@ -5707,19 +5827,50 @@ void G_BindCompVariables(void)
     ss_comp, wad_no, "INTERCEPTS overflow emulation");
   BIND_EMU(emu_missedbackside, false, "Missed backside emulation");
   BIND_EMU(emu_donut, true, "Donut overrun emulation");
+
+  // [Nugget] (CFG-only) -----------------------------------------------------
+
+  M_BindBool("comp_bruistarget",  &comp_bruistarget,  NULL, true,  ss_none, wad_yes, "Bruiser attack doesn't face target");
+  M_BindBool("comp_nomeleesnap",  &comp_nomeleesnap,  NULL, false, ss_none, wad_yes, "Disable snapping to target when using melee");
+  M_BindBool("comp_longautoaim",  &comp_longautoaim,  NULL, false, ss_none, wad_yes, "Double autoaim range");
+  M_BindBool("comp_lscollision",  &comp_lscollision,  NULL, false, ss_none, wad_yes, "Fix Lost Souls colliding with items");
+  M_BindBool("comp_lsamnesia",    &comp_lsamnesia,    NULL, true,  ss_none, wad_yes, "Lost Souls forget target upon impact");
+  M_BindBool("comp_fuzzyblood",   &comp_fuzzyblood,   NULL, false, ss_none, wad_yes, "Fuzzy things bleed fuzzy blood");
+  M_BindBool("comp_faceshadow",   &comp_faceshadow,   NULL, false, ss_none, wad_yes, "Attackers face fuzzy targets straight");
+  M_BindBool("comp_nonbleeders",  &comp_nonbleeders,  NULL, false, ss_none, wad_yes, "Non-bleeders don't bleed when crushed");
+  M_BindBool("comp_iosdeath",     &comp_iosdeath,     NULL, false, ss_none, wad_yes, "Fix lopsided Icon of Sin explosions");
+  M_BindBool("comp_choppers",     &comp_choppers,     NULL, false, ss_none, wad_yes, "Permanent IDCHOPPERS invulnerability");
+  M_BindBool("comp_blazing2",     &comp_blazing2,     NULL, true,  ss_none, wad_yes, "Blazing doors reopen with wrong sound");
+  M_BindBool("comp_manualdoor",   &comp_manualdoor,   NULL, true,  ss_none, wad_yes, "Manually toggled moving doors are silent");
+  M_BindBool("comp_switchsource", &comp_switchsource, NULL, false, ss_none, wad_yes, "Corrected switch sound source");
+  M_BindBool("comp_cgundblsnd",   &comp_cgundblsnd,   NULL, true,  ss_none, wad_yes, "Chaingun makes two sounds with one bullet");
+  M_BindBool("comp_cgunnersfx",   &comp_cgunnersfx,   NULL, false, ss_none, wad_yes, "Chaingunner uses pistol/chaingun sound");
+  M_BindBool("comp_flamst",       &comp_flamst,       NULL, false, ss_none, wad_yes, "Arch-Vile fire plays flame-start sound");
+  M_BindBool("comp_keynoway",     &comp_keynoway,     NULL, false, ss_none, wad_yes, "Play DSNOWAY instead of DSOOF when failing to use key-locked triggers");
+  M_BindBool("comp_godface",      &comp_godface,      NULL, false, ss_none, wad_yes, "Higher god-mode face priority");
+  M_BindBool("comp_deadoof",      &comp_deadoof,      NULL, true,  ss_none, wad_yes, "Dead players can still play oof sound");
+  M_BindBool("comp_powerrunout",  &comp_powerrunout,  NULL, false, ss_none, wad_yes, "Use improved powerup run-out effect");
+  M_BindBool("comp_unusedpals",   &comp_unusedpals,   NULL, false, ss_none, wad_yes, "Use unused pain/bonus palettes");
+  M_BindBool("comp_keypal",       &comp_keypal,       NULL, true,  ss_none, wad_yes, "Key pickup resets palette");
 }
 
 void G_BindWeapVariables(void)
 {
-  M_BindNum("view_bobbing_pct", &view_bobbing_pct, NULL, 4, 0, 4, ss_weap, wad_no,
-            "Player View Bobbing (0 - 0%, 1 - 25% ... 4 - 100%)");
+  // [Nugget] Extended
+  M_BindNum("view_bobbing_pct", &view_bobbing_pct, NULL,
+            100, 0, 100, ss_weap, wad_no,
+            "Player View Bobbing percent");
   M_BindNum("weapon_bobbing_pct", &weapon_bobbing_pct, NULL,
-            4, 0, 4, ss_weap, wad_no,
-            "Player Weapon Bobbing (0 - 0%, 1 - 25% ... 4 - 100%)");
+            100, 0, 100, ss_weap, wad_no,
+            "Player Weapon Bobbing percent");
+
   M_BindBool("hide_weapon", &hide_weapon, NULL, false, ss_weap, wad_no,
              "1 to hide weapon");
-  M_BindNum("center_weapon", &center_weapon, NULL, 0, 0, 2, ss_weap, wad_no,
-            "1 to center the weapon sprite during attack, 2 to keep it bobbing");
+
+  // [Nugget] Horizontal weapon centering
+  M_BindNum("center_weapon", &center_weapon, NULL, 0, 0, 3, ss_weap, wad_no,
+            "1 to center the weapon sprite during attack, 2 to keep it bobbing, 3 to center it horizontally");
+
   M_BindBool("weapon_recoilpitch", &weapon_recoilpitch, NULL,
              false, ss_weap, wad_no,
              "1 to enable recoil pitch from weapon fire");
@@ -5732,6 +5883,52 @@ void G_BindWeapVariables(void)
              "1 to toggle between SG/SSG and Fist/Chainsaw");
   M_BindBool("player_bobbing", &default_player_bobbing, &player_bobbing,
              true, ss_none, wad_no, "1 to enable player bobbing (Boom version");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  M_BindBool("no_hor_autoaim", &no_hor_autoaim, NULL,
+             false, ss_weap, wad_yes, "Disable horizontal projectile autoaim");
+
+  M_BindBool("switch_on_pickup", &switch_on_pickup, NULL,
+             true, ss_weap, wad_no, "Switch weapons when acquiring new ones or ammo for them");
+
+  M_BindBool("weapswitch_interruption", &weapswitch_interruption, NULL,
+             false, ss_weap, wad_no, "Allow interruption of weapon switches");
+
+  M_BindBool("skip_ammoless_weapons", &skip_ammoless_weapons, NULL,
+             false, ss_weap, wad_no, "Previous/next-weapon buttons skip weapons with insufficient ammo");
+
+  // (CFG-only)
+  M_BindBool("always_bob", &always_bob, NULL,
+             true, ss_none, wad_no, "Bob weapon every tic (fixes choppy Chainsaw bobbing)");
+
+  M_BindNum("bobbing_style", &bobbing_style, NULL,
+            0, 0, 6, ss_weap, wad_yes,
+            "Weapon Bobbing Style");
+
+  M_BindBool("weapon_inertia", &weapon_inertia, NULL,
+             false, ss_weap, wad_yes, "Weapon inertia");
+
+  M_BindNum("weapon_inertia_scale_pct", &weapon_inertia_scale_pct, NULL,
+            100, 50, 200, ss_weap, wad_yes,
+            "Weapon-inertia scale percent");
+
+  M_BindBool("weaponsquat", &weaponsquat, NULL,
+             false, ss_weap, wad_yes, "Squat weapon down on impact");
+
+  M_BindBool("translucent_pspr", &translucent_pspr, NULL,
+             false, ss_weap, wad_yes, "Translucency for weapon-flash sprites");
+
+  // (CFG-only)
+  M_BindNum("translucent_pspr_pct", &translucent_pspr_pct, NULL,
+            75, 0, 100, ss_none, wad_yes,
+            "Weapon-flash translucency percent");
+
+  // (CFG-only)
+  M_BindBool("sx_fix", &sx_fix, NULL,
+             false, ss_none, wad_yes, "Correct centering of first-person sprites");
+
+  // [Nugget] ---------------------------------------------------------------/
 
 #define BIND_WEAP(num, v, help) \
   M_BindNum("weapon_choice_"#num, &weapon_preferences[0][(num) - 1], NULL, \

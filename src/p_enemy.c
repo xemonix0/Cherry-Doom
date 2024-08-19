@@ -1304,6 +1304,8 @@ void A_Chase(mobj_t *actor)
     S_StartSound(actor, actor->info->activesound);
 }
 
+boolean comp_faceshadow; // [Nugget]
+
 //
 // A_FaceTarget
 //
@@ -1364,6 +1366,8 @@ void A_SPosAttack(mobj_t* actor)
       P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
     }
 }
+
+boolean comp_cgunnersfx; // [Nugget]
 
 void A_CPosAttack(mobj_t *actor)
 {
@@ -1492,6 +1496,8 @@ void A_CyberAttack(mobj_t *actor)
   A_FaceTarget(actor);
   P_SpawnMissile(actor, actor->target, MT_ROCKET);
 }
+
+boolean comp_bruistarget; // [Nugget]
 
 void A_BruisAttack(mobj_t *actor)
 {
@@ -1899,6 +1905,8 @@ void A_Fire(mobj_t *actor)
   actor->z = dest->z;
   P_SetThingPosition(actor);
 }
+
+boolean comp_flamst; // [Nugget]
 
 //
 // A_VileTarget
@@ -2614,6 +2622,8 @@ void A_BrainPain(mobj_t *mo)
 {
   S_StartSound(NULL,sfx_bospn);
 }
+
+boolean comp_iosdeath; // [Nugget]
 
 void A_BrainScream(mobj_t *mo)
 {

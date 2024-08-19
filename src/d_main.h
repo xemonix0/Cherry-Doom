@@ -25,6 +25,11 @@
 
 struct event_s;
 
+// [Nugget] CVARs
+extern const char *savegame_dir;
+extern const char *screenshot_dir;
+extern boolean fail_safe;
+
 extern char **wadfiles;       // killough 11/98
 
 void D_AddFile(const char *file);
@@ -33,10 +38,6 @@ char *D_DoomExeName(void);      // killough 10/98: executable's name
 extern char *basesavegame;     // killough 2/16/98: savegame path
 extern char *screenshotdir; // [FG] screenshot path
 char *D_DoomPrefDir(void); // [FG] default configuration dir
-
-// [Nugget]
-extern char *savegame_dir;
-extern char *screenshot_dir;
 
 //jff 1/24/98 make command line copies of play modes available
 extern boolean clnomonsters; // checkparm of -nomonsters

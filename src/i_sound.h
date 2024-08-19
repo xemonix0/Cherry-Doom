@@ -27,6 +27,8 @@
 #include "doomtype.h"
 #include "m_fixed.h"
 
+extern boolean s_clipping_dist_x2; // [Nugget]
+
 // when to clip out sounds
 // Does not fit the large outdoor areas.
 // [Nugget] Now variable; initialized in `I_AdjustSoundParams()`

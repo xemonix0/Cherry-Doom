@@ -24,7 +24,7 @@
 #include "m_io.h"
 #include "m_config.h"
 #include "m_nughud.h"
-#include "mn_setup.h"
+#include "mn_internal.h"
 #include "st_stuff.h"
 #include "w_wad.h"
 

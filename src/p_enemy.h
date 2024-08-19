@@ -26,6 +26,13 @@
 
 struct mobj_s;
 
+// [Nugget] CVARs
+extern boolean comp_bruistarget;
+extern boolean comp_faceshadow;
+extern boolean comp_iosdeath;
+extern boolean comp_cgunnersfx;
+extern boolean comp_flamst;
+
 void P_NoiseAlert(struct mobj_s *target, struct mobj_s *emmiter);
 void P_SpawnBrainTargets(void); // killough 3/26/98: spawn icon landings
 

@@ -527,6 +527,8 @@ fixed_t P_PitchToSlope(const fixed_t pitch)
 
 // [Nugget] Over/Under /------------------------------------------------------
 
+int over_under;
+
 // Potential over/under mobjs
 static mobj_t *p_below_tmthing, *p_above_tmthing, // For `tmthing`
               *p_below_thing_s, *p_above_thing_s, // For `thing`    ("setter")
@@ -557,6 +559,10 @@ static void P_SetOverUnderMobjs(mobj_t *thing)
     }
   }
 }
+
+// [Nugget]
+boolean comp_lscollision;
+boolean comp_lsamnesia;
 
 // Factored out from `PIT_CheckThing()`
 boolean P_SkullSlam(mobj_t *skull, mobj_t *hitthing)

@@ -173,8 +173,8 @@ char    *screenshotdir = NULL; // [FG] screenshot directory
 int organize_savefiles;
 
 // [Nugget]
-char *savegame_dir = NULL;
-char *screenshot_dir = NULL;
+const char *savegame_dir = NULL;
+const char *screenshot_dir = NULL;
 
 boolean coop_spawns = false;
 
@@ -496,6 +496,8 @@ void D_Display (void)
 static int demosequence;         // killough 5/2/98: made static
 static int pagetic;
 static char *pagename;
+
+static int no_page_ticking; // [Nugget]
 
 //
 // D_PageTicker
@@ -2050,7 +2052,7 @@ void D_ValidateStartSkill(void)
   if (startskill == sk_custom
       && (demorecording || demoplayback || netgame || strictmode))
   {
-    startskill = (defaultskill - 1 < sk_custom) ? defaultskill - 1 : sk_hard;
+    startskill = (default_skill - 1 < sk_custom) ? default_skill - 1 : sk_hard;
   }
 }
 
@@ -2074,6 +2076,8 @@ void D_UpdateCasualPlay(void)
 }
 
 // [Nugget] -----------------------------------------------------------------/
+
+boolean fail_safe;
 
 //
 // D_DoomMain
@@ -3108,8 +3112,24 @@ void D_BindMiscVariables(void)
   BIND_NUM_GENERAL(show_endoom, 0, 0, 2,
     "Show ENDOOM screen (0 = Off, 1 = On, 2 = PWAD only)");
   BIND_BOOL_GENERAL(demobar, false, "1 to enable demo progress bar");
-  BIND_NUM_GENERAL(screen_melt, wipe_Melt, wipe_None, wipe_Fizzle,
-    "Screen wipe effect (0 = None, 1 = Melt, 2 = Crossfade, 3 = Fizzlefade)");
+
+  // [Nugget] More wipes
+  BIND_NUM_GENERAL(screen_melt, wipe_Melt, wipe_None, wipe_Fade,
+    "Screen wipe effect (0 = None, 1 = Melt, 2 = Crossfade, 3 = Fizzlefade, 4 = Black Fade)");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  BIND_NUM_GENERAL(wipe_speed_percentage, 100, 50, 200,
+    "Screen wipe speed percentage");
+
+  M_BindBool("alt_interpic", &alt_interpic, NULL, false, ss_gen, wad_yes,
+             "Alternative intermission background (spinning camera view)");
+
+  BIND_NUM_GENERAL(no_page_ticking, 0, 0, 2,
+    "Play internal demos (0 = Always; 1 = Not in menus; 2 = Never)");
+
+  // [Nugget] ---------------------------------------------------------------/
+
   BIND_BOOL_GENERAL(palette_changes, true, "0 to disable palette changes");
   BIND_NUM_GENERAL(organize_savefiles, -1, -1, 1,
     "1 to organize save files");

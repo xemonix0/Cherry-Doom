@@ -86,6 +86,8 @@ static channel_info_t channelinfo[MAX_CHANNELS];
 // [FG] variable pitch bend range
 static int pitch_bend_range;
 
+boolean s_clipping_dist_x2; // [Nugget]
+
 // [Nugget] Now variable
 int S_CLIPPING_DIST;
 int S_ATTENUATOR;
@@ -729,6 +731,10 @@ void I_BindSoundVariables(void)
     BIND_NUM(pitch_bend_range, 120, 100, 300,
         "Variable pitch bend range (100 none, 120 default)");
     BIND_BOOL_GENERAL(full_sounds, false, "1 to play sounds in full length");
+
+    // [Nugget]
+    BIND_BOOL_GENERAL(s_clipping_dist_x2, false, "Double sound-clipping distance");
+
     M_BindNum("snd_channels", &default_numChannels, NULL,
         MAX_CHANNELS, 1, MAX_CHANNELS, ss_none, wad_no,
         "Number of sound effects handled simultaneously");

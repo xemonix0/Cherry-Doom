@@ -24,6 +24,8 @@
 // SCREEN WIPE PACKAGE
 //
 
+extern int wipe_speed_percentage; // [Nugget]
+
 enum {
   wipe_None,
   wipe_Melt,        // weird screen melt

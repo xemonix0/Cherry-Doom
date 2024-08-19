@@ -117,16 +117,46 @@ extern int  bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
 extern int pars[][10];  // hardcoded array size
 extern int cpars[];     // hardcoded array size
 
-// [Nugget] ------------------------------------------------------------------
+// [Nugget] ==================================================================
 
-// Rewind
+// CVARs ---------------------------------------------------------------------
+
+extern boolean one_key_saveload;
+extern boolean skip_ammoless_weapons;
+extern boolean show_save_messages;
+
+enum {
+  SHOTPAL_NONE,
+  SHOTPAL_NORMAL,
+  SHOTPAL_CLEAN,
+  SHOTPAL_BOTH,
+}; extern int screenshot_palette;
+
+extern boolean comp_longautoaim;
+
+// Rewind --------------------------------------------------------------------
+
+extern int rewind_interval;
+
 extern void G_SetRewindCountdown(int value);
 extern void G_EnableRewind(void);
 extern void G_Rewind(void);
 extern void G_ClearExcessKeyFrames(void);
 extern boolean G_KeyFrameRW(void);
 
-// Skill
+// Skill ---------------------------------------------------------------------
+
+extern int custom_skill_things;
+extern boolean custom_skill_coopspawns;
+extern boolean custom_skill_nomonsters;
+extern boolean custom_skill_doubleammo;
+extern boolean custom_skill_halfdamage;
+extern boolean custom_skill_slowbrain;
+extern boolean custom_skill_fast;
+extern boolean custom_skill_respawn;
+extern boolean custom_skill_aggressive;
+extern boolean custom_skill_x2monsters;
+
 void G_SetBabyModeParms(const skill_t skill);
 void G_SetSkillParms(const skill_t skill);
 void G_SetUserCustomSkill(void);

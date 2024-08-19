@@ -31,6 +31,8 @@
 // [Nugget] Removed unnecessary `SKYSTRETCH_HEIGHT` macro
 extern boolean stretchsky;
 
+extern boolean fov_stretchsky; // [Nugget]
+
 // [FG] linear horizontal sky scrolling
 extern boolean linearsky;
 

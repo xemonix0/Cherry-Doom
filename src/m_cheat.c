@@ -50,6 +50,7 @@
 #include "w_wad.h"
 
 // [Nugget]
+#include "am_map.h"
 #include "r_main.h"
 
 #define plyr (players+consoleplayer)     /* the console player */
@@ -670,12 +671,12 @@ static void SummonMobj(boolean friendly)
 
   if (automapactive == AM_FULL && !followplayer)
   {
-    const int oldcoords = map_point_coordinates;
+    const int oldcoords = map_point_coord;
 
-    map_point_coordinates = true;
+    map_point_coord = true;
     AM_Coordinates(plyr->mo, &x, &y, &z);
 
-    map_point_coordinates = oldcoords;
+    map_point_coord = oldcoords;
   }
   else {
     x = plyr->mo->x + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
@@ -925,6 +926,8 @@ static void cheat_mus(char *buf)
         }
     }
 }
+
+boolean comp_choppers; // [Nugget]
 
 // 'choppers' invulnerability & chainsaw
 static void cheat_choppers()

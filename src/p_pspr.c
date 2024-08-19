@@ -42,6 +42,13 @@
 #include "m_input.h"
 #include "w_wad.h" // W_CheckNumForName
 
+// [Nugget] CVARs
+boolean weapswitch_interruption;
+boolean always_bob;
+boolean weaponsquat;
+boolean sx_fix;
+boolean comp_nomeleesnap;
+
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
 #define WEAPONBOTTOM (FRACUNIT*128)
@@ -498,7 +505,10 @@ static void P_ApplyBobbing(int *sx, int *sy, fixed_t bob)
 #define WEAPON_BOBBING 2
 #define WEAPON_HORIZONTAL 3 // [Nugget]
 
-// [Nugget] Bob weapon based on selected style
+// [Nugget] Bob weapon based on selected style /------------------------------
+
+int bobbing_style;
+
 static void P_NuggetBobbing(player_t* player)
 {
   pspdef_t *psp = player->psprites;
@@ -555,6 +565,8 @@ static void P_NuggetBobbing(player_t* player)
       break;
   }
 }
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // A_WeaponReady
@@ -1188,6 +1200,8 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
     }
 }
 
+boolean comp_cgundblsnd; // [Nugget]
+
 //
 // A_FireCGun
 //
@@ -1317,6 +1331,9 @@ void P_SetupPsprites(player_t *player)
 }
 
 // [Nugget - ceski] Weapon Inertia /------------------------------------------
+
+boolean weapon_inertia;
+int weapon_inertia_scale_pct;
 
 #define EASE_SCALE(x, y) (FRACUNIT - (FixedDiv(FixedMul(FixedDiv((x) << FRACBITS, (y) << FRACBITS), (fixed_t) weapon_inertia_scale), FRACUNIT)))
 #define EASE_OUT(x, y) ((x) - FixedMul((x), FixedMul((y), (y))))

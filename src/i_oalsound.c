@@ -471,9 +471,9 @@ void I_OAL_BindSoundVariables(void)
         "[OpenAL 3D] Headphones mode (0 = No, 1 = Yes)");
     BIND_NUM_GENERAL(snd_resampler, 1, 0, UL,
         "Sound resampler (0 = Nearest, 1 = Linear, ...)");
-    BIND_NUM(snd_absorption, 0, 0, 10,
+    BIND_NUM(snd_absorption, 5, 0, 10, // [Nugget] Enabled by default
         "[OpenAL 3D] Air absorption effect (0 = Off, 10 = Max)");
-    BIND_NUM(snd_doppler, 0, 0, 10,
+    BIND_NUM(snd_doppler, 5, 0, 10, // [Nugget] Enabled by default
         "[OpenAL 3D] Doppler effect (0 = Off, 10 = Max)");
     BIND_BOOL(snd_limiter, false, "1 to enable sound output limiter");
 }

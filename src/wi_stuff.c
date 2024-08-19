@@ -391,6 +391,8 @@ static const char *exitpic, *enterpic;
 
 // [Nugget] Alt. intermission background /------------------------------------
 
+boolean alt_interpic;
+
 static boolean alt_interpic_on = false, old_alt_interpic_on = false;
 
 boolean WI_UsingAltInterpic(void)

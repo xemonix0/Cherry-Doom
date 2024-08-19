@@ -51,11 +51,21 @@ static fixed_t PlayerSlope(player_t *player)
   return P_PitchToSlope(player->pitch);
 }
 
-// [Nugget] Flinching
+// [Nugget] /=================================================================
+
+// Jumping/crouching
+boolean jump_crouch;
+#define CROUCHUNITS (3*FRACUNIT)
+
+boolean breathing;
+
+// Flinching
 void P_SetFlinch(player_t *const player, int pitch)
 {
   player->flinch = BETWEEN(-12*ANG1, 12*ANG1, player->flinch + pitch*ANG1/2);
 }
+
+// [Nugget] =================================================================/
 
 // Index of the special effects (INVUL inverse) map.
 
@@ -70,9 +80,6 @@ void P_SetFlinch(player_t *const player, int pitch)
 #define MAXBOB  0x100000
 
 boolean onground; // whether player is on ground or in air
-
-// [Nugget]
-#define CROUCHUNITS 3*FRACUNIT
 
 //
 // P_Thrust
