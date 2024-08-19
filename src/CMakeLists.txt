@@ -2,8 +2,6 @@ include(NuggetDoomSettings)
 
 set(NUGGETDOOM_SOURCES
     am_map.c               am_map.h
-                           beta.h
-                           cross.h
     d_deh.c                d_deh.h
                            d_englsh.h
                            d_event.h
@@ -17,7 +15,6 @@ set(NUGGETDOOM_SOURCES
     d_quit.c               d_quit.h
                            d_think.h
                            d_ticcmd.h
-                           dogs.h
                            doomdata.h
                            doomdef.h
     doomstat.c             doomstat.h
@@ -26,7 +23,6 @@ set(NUGGETDOOM_SOURCES
     dstrings.c             dstrings.h
     f_finale.c             f_finale.h
     f_wipe.c               f_wipe.h
-                           font.h
     g_game.c               g_game.h
     g_input.c              g_input.h
     hu_command.c           hu_command.h
@@ -276,6 +272,11 @@ if(MSVC)
     target_link_options(nugget-doom-setup PRIVATE "/MANIFEST:NO")
 endif()
 
+add_custom_command(TARGET nugget-doom POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E tar cf
+    "$<TARGET_FILE_DIR:nugget-doom>/nugget-doom.pk3" --format=zip .
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/base")
+
 # Install
 #
 # Rename nugget-doom-com and nugget-doom-exe executables.
@@ -304,14 +305,9 @@ if(WIN32)
     endif()
     install(FILES "$<TARGET_FILE_DIR:nugget-doom-com>/nugget-doom.com" DESTINATION .)
     install(FILES "$<TARGET_FILE_DIR:nugget-doom-exe>/nugget-doom.exe" DESTINATION .)
+    install(FILES "$<TARGET_FILE_DIR:nugget-doom>/nugget-doom.pk3" DESTINATION .)
 else()
     install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(FILES "$<TARGET_FILE_DIR:nugget-doom>/nugget-doom.pk3"
+            DESTINATION "share/${PROJECT_SHORTNAME}")
 endif()
-
-# Copy autoload directory content to target directory.
-add_custom_command(TARGET nugget-doom POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-    "$<TARGET_FILE_DIR:nugget-doom>/autoload"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/autoload"
-    "$<TARGET_FILE_DIR:nugget-doom>/autoload" VERBATIM)
