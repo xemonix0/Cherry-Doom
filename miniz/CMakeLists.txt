@@ -1,8 +1,8 @@
-include(WoofSettings)
+include(NuggetDoomSettings)
 
 add_library(miniz STATIC miniz.c miniz.h)
 
-target_woof_settings(miniz)
+target_nuggetdoom_settings(miniz)
 
 target_compile_definitions(miniz PRIVATE MINIZ_NO_TIME)
 
