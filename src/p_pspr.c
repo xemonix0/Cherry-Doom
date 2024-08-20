@@ -173,7 +173,6 @@ static void P_BringUpWeapon(player_t *player)
 
   if (player->pendingweapon >= NUMWEAPONS)
   {
-    player->pendingweapon = NUMWEAPONS;
     I_Printf(VB_WARNING, "P_BringUpWeapon: weaponinfo overrun has occurred.");
   }
 
@@ -714,8 +713,11 @@ void A_Lower(player_t *player, pspdef_t *psp)
       return;
     }
 
-  player->lastweapon  = player->readyweapon; // [Nugget] Last weapon key
-  player->readyweapon = player->pendingweapon;
+  if (player->pendingweapon < NUMWEAPONS || !mbf21)
+  {
+    player->lastweapon  = player->readyweapon; // [Nugget] Last-weapon button
+    player->readyweapon = player->pendingweapon;
+  }
 
   P_BringUpWeapon(player);
 }

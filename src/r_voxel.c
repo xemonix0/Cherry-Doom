@@ -17,6 +17,7 @@
 
 #include "doomstat.h"
 #include "doomtype.h"
+#include "hu_crosshair.h"
 #include "i_printf.h"
 #include "i_video.h"
 #include "info.h"
@@ -565,7 +566,7 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 	else
 	{
 		// too far off the side?  if so, ignore it
-		if (ty > (64 * FRACUNIT) && abs(tx) / 4 > ty)
+		if (ty > (64 * FRACUNIT) && abs(tx) / max_project_slope > ty)
 			return true;
 
 		xscale = FixedDiv (projection, ty);
@@ -708,6 +709,18 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 
 	vis->brightmap = R_BrightmapForSprite(thing->sprite);
 	vis->color = thing->bloodcolor;
+
+	// [Alaux] Lock crosshair on target
+	if (STRICTMODE(hud_crosshair_lockon) && thing == crosshair_target)
+	{
+		HU_UpdateCrosshairLock
+		(
+			BETWEEN(0, viewwidth  - 1, (centerxfrac + FixedMul(tx, xscale)) >> FRACBITS),
+			BETWEEN(0, viewheight - 1, (centeryfrac + FixedMul(viewz - gz - crosshair_target->actualheight/2, xscale)) >> FRACBITS)
+		);
+
+		crosshair_target = NULL; // Don't update it again until next tic
+	}
 
 	return true;
 }

@@ -183,6 +183,7 @@ static hu_multiline_t w_coord;
 static hu_multiline_t w_fps;
 static hu_multiline_t w_rate;
 static hu_multiline_t w_cmd;
+static hu_multiline_t w_speed;
 
 // [Nugget] 
 static hu_multiline_t w_powers; // Powerup timers
@@ -190,7 +191,7 @@ static hu_multiline_t w_powers; // Powerup timers
 boolean icon_available[HU_FONTEXTRAS] = { false }; // [Nugget] HUD icons
 
 #define MAX_HUDS 3
-#define MAX_WIDGETS (16 + 1) // [Nugget] Accommodate more widgets
+#define MAX_WIDGETS 20
 
 #define NUGHUDSLOT 3 // [Nugget] NUGHUD
 
@@ -548,6 +549,7 @@ void HU_Init(void)
     {&w_fps,     align_direct, align_direct},
     {&w_rate,    align_direct, align_direct},
     {&w_cmd,     align_direct, align_direct},
+    {&w_speed,   align_direct, align_direct},
   };
 
   for (i = 0;  i < (sizeof(nughud_widgets) / sizeof(*nughud_widgets));  i++)
@@ -619,6 +621,7 @@ static void HU_widget_build_sttime(void);
 static void HU_widget_build_title (void);
 static void HU_widget_build_weapon (void);
 static void HU_widget_build_compact (void);
+static void HU_widget_build_speed(void);
 
 static hu_multiline_t *w_stats;
 
@@ -838,6 +841,10 @@ void HU_Start(void)
   // Draw command history bottom up.
   w_cmd.bottomup = true;
 
+  HUlib_init_multiline(&w_speed, 1,
+                       &boom_font, colrngs[hudcolor_xyco],
+                       NULL, HU_widget_build_speed);
+
   HU_set_centered_message();
 
   // [Nugget] NUGHUD
@@ -874,6 +881,7 @@ void HU_Start(void)
       else if (m == &w_fps)     { ntl = &nughud.fps;     }
       else if (m == &w_rate)    { ntl = &nughud.rate;    }
       else if (m == &w_cmd)     { ntl = &nughud.cmd;     }
+      else if (m == &w_speed)   { ntl = &nughud.speed;   }
       else                      { ntl = NULL;            }
 
       if (ntl)
@@ -1784,6 +1792,24 @@ static void HU_widget_build_cmd(void)
   HU_BuildCommandHistory(&w_cmd);
 }
 
+int speedometer;
+
+static void HU_widget_build_speed(void)
+{
+  static const double factor[] = {TICRATE, 2.4003, 525.0 / 352.0};
+  static const char *units[] = {"ups", "km/h", "mph"};
+  const int type = speedometer - 1;
+  const double dx = FIXED2DOUBLE(plr->mo->x - plr->mo->oldx);
+  const double dy = FIXED2DOUBLE(plr->mo->y - plr->mo->oldy);
+  const double dz = FIXED2DOUBLE(plr->mo->z - plr->mo->oldz);
+  const double speed = sqrt(dx*dx + dy*dy + dz*dz) * factor[type];
+
+  M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer), "\x1b%c%.*f \x1b%c%s",
+             '0' + CR_GRAY, type && speed ? 1 : 0, speed,
+             '0' + CR_ORIG, units[type]);
+  HUlib_add_string_to_cur_line(&w_speed, hud_stringbuffer);
+}
+
 // [crispy] print a bar indicating demo progress at the bottom of the screen
 boolean HU_DemoProgressBar(boolean force)
 {
@@ -2103,6 +2129,7 @@ void HU_Ticker(void)
   HU_cond_build_widget(&w_fps, plr->cheats & CF_SHOWFPS);
   HU_cond_build_widget(&w_rate, plr->cheats & CF_RENDERSTATS);
   HU_cond_build_widget(&w_cmd, STRICTMODE(hud_command_history));
+  HU_cond_build_widget(&w_speed, speedometer > 0);
 
   if (hud_displayed &&
       scaledviewheight == SCREENHEIGHT &&
@@ -2456,6 +2483,7 @@ static const struct {
     {"fps",     NULL,     &w_fps},
     {"rate",    NULL,     &w_rate},
     {"cmd",    "commands", &w_cmd},
+    {"speed",   NULL,     &w_speed},
     {NULL},
 };
 

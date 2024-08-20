@@ -280,7 +280,7 @@ void V_SetShadowCrop(const int value)
 
 video_t video;
 
-#define WIDE_SCREENWIDTH 864 // corresponds to 3.6 aspect ratio
+#define WIDE_SCREENWIDTH 864 // Up to 32:9 aspect ratio (3.6).
 
 static int x1lookup[WIDE_SCREENWIDTH + 1];
 static int y1lookup[SCREENHEIGHT + 1];
@@ -519,12 +519,14 @@ static void DrawPatchInternal(int x, int y, patch_t *patch, boolean flipped)
         {
             texturecolumn = startfrac >> FRACBITS;
 
-#ifdef RANGECHECK
-            if (texturecolumn < 0 || texturecolumn >= w)
+            if (texturecolumn < 0)
             {
-                I_Error("V_DrawPatchInt: bad texturecolumn %d", texturecolumn);
+                continue;
             }
-#endif
+            else if (texturecolumn >= w)
+            {
+                break;
+            }
 
             column = (column_t *)((byte *)patch
                                   + LONG(patch->columnofs[texturecolumn]));
@@ -647,7 +649,7 @@ void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
 
 void V_DrawPatchFullScreen(patch_t *patch)
 {
-    const int x = (video.unscaledw - SHORT(patch->width)) / 2;
+    const int x = DivRoundClosest(video.unscaledw - SHORT(patch->width), 2);
 
     patch->leftoffset = 0;
     patch->topoffset = 0;

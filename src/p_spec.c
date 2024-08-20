@@ -1207,7 +1207,7 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing, boolean bossactio
 
   if (!thing->player || bossaction)
     {
-      ok = 0;
+      ok = bossaction;
       switch(line->special)
         {
         case 39:      // teleport trigger
@@ -2728,11 +2728,11 @@ void T_Scroll(scroll_t *s)
 
     case sc_floor:                  // killough 3/7/98: Scroll floor texture
         sec = sectors + s->affectee;
-        if (sec->oldscrollgametic != gametic)
+        if (sec->old_floor_offs_gametic != gametic)
         {
           sec->old_floor_xoffs = sec->base_floor_xoffs;
           sec->old_floor_yoffs = sec->base_floor_yoffs;
-          sec->oldscrollgametic = gametic;
+          sec->old_floor_offs_gametic = gametic;
         }
         sec->base_floor_xoffs += dx;
         sec->base_floor_yoffs += dy;
@@ -2742,11 +2742,11 @@ void T_Scroll(scroll_t *s)
 
     case sc_ceiling:               // killough 3/7/98: Scroll ceiling texture
         sec = sectors + s->affectee;
-        if (sec->oldscrollgametic != gametic)
+        if (sec->old_ceil_offs_gametic != gametic)
         {
           sec->old_ceiling_xoffs = sec->base_ceiling_xoffs;
           sec->old_ceiling_yoffs = sec->base_ceiling_yoffs;
-          sec->oldscrollgametic = gametic;
+          sec->old_ceil_offs_gametic = gametic;
         }
         sec->base_ceiling_xoffs += dx;
         sec->base_ceiling_yoffs += dy;

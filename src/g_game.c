@@ -404,20 +404,16 @@ int    bodyqueslot, bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
 
 static int next_weapon = 0;
 
-static const struct
-{
-    weapontype_t weapon;
-    weapontype_t weapon_num;
-} weapon_order_table[] = {
-    { wp_fist,            wp_fist },
-    { wp_chainsaw,        wp_fist },
-    { wp_pistol,          wp_pistol },
-    { wp_shotgun,         wp_shotgun },
-    { wp_supershotgun,    wp_shotgun },
-    { wp_chaingun,        wp_chaingun },
-    { wp_missile,         wp_missile },
-    { wp_plasma,          wp_plasma },
-    { wp_bfg,             wp_bfg }
+static const weapontype_t weapon_order_table[] = {
+    wp_fist,
+    wp_chainsaw,
+    wp_pistol,
+    wp_shotgun,
+    wp_supershotgun,
+    wp_chaingun,
+    wp_missile,
+    wp_plasma,
+    wp_bfg
 };
 
 static boolean WeaponSelectable(weapontype_t weapon)
@@ -488,7 +484,7 @@ static int G_NextWeapon(int direction)
 
     for (i=0; i<arrlen(weapon_order_table); ++i)
     {
-        if (weapon_order_table[i].weapon == weapon)
+        if (weapon_order_table[i] == weapon)
         {
             break;
         }
@@ -505,9 +501,9 @@ static int G_NextWeapon(int direction)
     {
         i += direction;
         i = (i + arrlen(weapon_order_table)) % arrlen(weapon_order_table);
-    } while (i != start_i && !WeaponSelectable(weapon_order_table[i].weapon));
+    } while (i != start_i && !WeaponSelectable(weapon_order_table[i]));
 
-    return weapon_order_table[i].weapon_num;
+    return weapon_order_table[i];
 }
 
 // [FG] toggle demo warp mode
@@ -1002,8 +998,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       //
       // killough 10/98: make SG/SSG and Fist/Chainsaw
       // weapon toggles optional
-
-      if (!demo_compatibility && doom_weapon_toggles)
+      
+      if (!demo_compatibility && doom_weapon_toggles && !next_weapon)
         {
           const player_t *player = &players[consoleplayer];
 
@@ -1052,7 +1048,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   }
 
   // special buttons
-  if (sendpause)
+  if (sendpause && gameaction != ga_newgame)
     {
       sendpause = false;
       cmd->buttons = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
@@ -1200,7 +1196,7 @@ static void G_DoLoadLevel(void)
   else
     P_SetupLevel (gameepisode, gamemap, 0, gameskill);
 
-  MN_UpdateFreeLook();
+  MN_UpdateFreeLook(!mouselook && !padlook);
   HU_UpdateTurnFormat();
 
   // [Woof!] Do not reset chosen player view across levels in multiplayer
@@ -2577,20 +2573,45 @@ char* G_SaveGameName(int slot)
   else
     sprintf(buf, "%.7s%d.dsg", savegamename, 10*savepage+slot);
 
-// [Nugget] Restored `-cdrom` parm
+  char *filepath =
+    // [Nugget] Restored `-cdrom` parm
 #ifdef _WIN32
-  if (M_CheckParm("-cdrom"))
-    return M_StringJoin("c:\\doomdata\\", buf, NULL);
-  else
+    M_CheckParm("-cdrom") ? M_StringJoin("c:\\doomdata\\", buf) :
 #endif
-  return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
+    M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
+
+  char *existing = M_FileCaseExists(filepath);
+
+  if (existing)
+  {
+    free(filepath);
+    return existing;
+  }
+  else
+  {
+    char *filename = (char *)M_BaseName(filepath);
+    M_StringToLower(filename);
+    return filepath;
+  }
 }
 
 char* G_MBFSaveGameName(int slot)
 {
-   char buf[16] = {0};
-   sprintf(buf, "MBFSAV%d.dsg", 10*savepage+slot);
-   return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
+  char buf[16] = {0};
+  sprintf(buf, "MBFSAV%d.dsg", 10*savepage+slot);
+
+  char *filepath = M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
+  char *existing = M_FileCaseExists(filepath);
+
+  if (existing)
+  {
+    free(filepath);
+    return existing;
+  }
+  else
+  {
+    return filepath;
+  }
 }
 
 // killough 12/98:
@@ -4573,7 +4594,6 @@ void G_ReloadDefaults(boolean keep_demover)
   }
 
   G_UpdateSideMove();
-  P_UpdateDirectVerticalAiming();
 
   pistolstart = default_pistolstart;
 

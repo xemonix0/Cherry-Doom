@@ -7,6 +7,7 @@ powers topright
 coord topright
 fps topright
 cmd bottomright
+speed bottomcenter
 
 hud 1
 rate topleft
@@ -21,6 +22,7 @@ powers topright
 coord topright
 fps topright
 cmd bottomright
+speed bottomcenter
 
 hud 2
 rate topleft
@@ -35,3 +37,4 @@ powers topright
 coord topright
 fps topright
 cmd bottomright
+speed bottomcenter

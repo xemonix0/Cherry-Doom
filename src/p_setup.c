@@ -360,7 +360,8 @@ void P_LoadSectors (int lump)
       // [FG] inhibit sector interpolation during the 0th gametic
       ss->oldceilgametic = -1;
       ss->oldfloorgametic = -1;
-      ss->oldscrollgametic = -1;
+      ss->old_ceil_offs_gametic = -1;
+      ss->old_floor_offs_gametic = -1;
     }
 
   Z_Free (data);
@@ -1357,10 +1358,10 @@ int P_GroupLines (void)
       sector->lines -= sector->linecount;
 
       // set the degenmobj_t to the middle of the bounding box
-      sector->soundorg.x = (sector->blockbox[BOXRIGHT] +
-			    sector->blockbox[BOXLEFT])/2;
-      sector->soundorg.y = (sector->blockbox[BOXTOP] +
-			    sector->blockbox[BOXBOTTOM])/2;
+      sector->soundorg.x =
+          sector->blockbox[BOXRIGHT] / 2 + sector->blockbox[BOXLEFT] / 2;
+      sector->soundorg.y =
+          sector->blockbox[BOXTOP] / 2 + sector->blockbox[BOXBOTTOM] / 2;
 
       sector->soundorg.thinker.function.p1 = (actionf_p1)P_DegenMobjThinker;
 

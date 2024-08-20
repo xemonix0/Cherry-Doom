@@ -495,7 +495,7 @@ void P_MovePlayer (player_t* player)
         P_SetMobjState(mo,S_PLAY_RUN1);
     }
 
-  if (!menuactive && !demoplayback)
+  if (!menuactive && !demoplayback && !player->centering)
   {
     player->pitch += cmd->pitch;
     player->pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, player->pitch);
@@ -791,19 +791,20 @@ void P_PlayerThink (player_t* player)
       // other games which rely on user preferences, we must use the latter.
 
       if (demo_compatibility)
-        { // compatibility mode -- required for old demos -- killough
-          if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
-              ((player->readyweapon != wp_chainsaw
-                && lastweapon != wp_fist) || // [Nugget]
-               !player->powers[pw_strength]))
-            newweapon = wp_chainsaw;
-          if (have_ssg &&
-              newweapon == wp_shotgun &&
-              player->weaponowned[wp_supershotgun] &&
-              player->readyweapon != wp_supershotgun &&
-              lastweapon != wp_shotgun) // [Nugget]
-            newweapon = wp_supershotgun;
-        }
+	{ // compatibility mode -- required for old demos -- killough
+	  newweapon = (cmd->buttons & BT_WEAPONMASK_OLD) >> BT_WEAPONSHIFT;
+	  if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
+	      ((player->readyweapon != wp_chainsaw
+	              && lastweapon != wp_fist) || // [Nugget]
+	       !player->powers[pw_strength]))
+	    newweapon = wp_chainsaw;
+	  if (have_ssg &&
+	      newweapon == wp_shotgun &&
+	      player->weaponowned[wp_supershotgun] &&
+	      player->readyweapon != wp_supershotgun &&
+	      lastweapon != wp_shotgun) // [Nugget]
+	    newweapon = wp_supershotgun;
+	}
 
       // killough 2/8/98, 3/22/98 -- end of weapon selection changes
 

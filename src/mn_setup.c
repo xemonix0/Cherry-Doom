@@ -100,6 +100,7 @@ static boolean default_reset;
 #define M_X               240
 #define M_Y               (29 + M_SPC)
 #define M_Y_WARN          (SCREENHEIGHT - 15)
+#define M_Y_TITLE         2
 
 #define M_THRM_STEP       8
 #define M_THRM_HEIGHT     13
@@ -1356,7 +1357,7 @@ void MN_DrawKeybnd(void)
     // Set up the Key Binding screen
 
     DrawBackground("FLOOR4_6"); // Draw background
-    MN_DrawTitle(84, 2, "M_KEYBND", "Key Bindings");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_KEYBND", "Key Bindings");
     DrawTabs();
     DrawInstructions();
     DrawScreenItems(current_menu);
@@ -1506,7 +1507,7 @@ void MN_DrawWeapons(void)
     inhelpscreens = true; // killough 4/6/98: Force status bar redraw
 
     DrawBackground("FLOOR4_6"); // Draw background
-    MN_DrawTitle(109, 2, "M_WEAP", "Weapons");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_WEAP", "Weapons");
     DrawTabs();
     DrawInstructions();
     DrawScreenItems(current_menu);
@@ -1895,7 +1896,7 @@ void MN_DrawStatusHUD(void)
     inhelpscreens = true; // killough 4/6/98: Force status bar redraw
 
     DrawBackground("FLOOR4_6"); // Draw background
-    MN_DrawTitle(59, 2, "M_STAT", "Status Bar/HUD");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_STAT", "Status Bar/HUD");
     DrawTabs();
     DrawInstructions();
     DrawScreenItems(current_menu);
@@ -1990,7 +1991,7 @@ void MN_DrawAutoMap(void)
     inhelpscreens = true; // killough 4/6/98: Force status bar redraw
 
     DrawBackground("FLOOR4_6"); // Draw background
-    MN_DrawTitle(109, 2, "M_AUTO", "Automap");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_AUTO", "Automap");
     DrawInstructions();
     DrawScreenItems(current_menu);
 
@@ -2087,7 +2088,7 @@ void MN_DrawEnemy(void)
     inhelpscreens = true;
 
     DrawBackground("FLOOR4_6"); // Draw background
-    MN_DrawTitle(114, 2, "M_ENEM", "Enemies");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_ENEM", "Enemies");
     DrawInstructions();
     DrawScreenItems(current_menu);
 
@@ -2128,9 +2129,10 @@ setup_menu_t comp_settings1[] = {
 
     {"Compatibility-breaking Features", S_SKIP | S_TITLE, M_X, M_SPC},
 
-    // [Nugget] Replaces Woof's `direct_vertical_aiming`
+    // [Nugget] Replaces `direct_vertical_aiming`
     {"Vertical Aiming", S_CHOICE | S_STRICT, M_X, M_SPC,
-     {"vertical_aiming"}, m_null, input_null, str_vertical_aiming},
+     {"vertical_aiming"}, m_null, input_null, str_vertical_aiming,
+     P_UpdateDirectVerticalAiming},
 
     {"Auto Strafe 50", S_ONOFF | S_STRICT, M_X, M_SPC,
      {"autostrafe50"}, m_null, input_null, str_empty, G_UpdateSideMove},
@@ -2187,7 +2189,7 @@ void MN_DrawCompat(void)
     inhelpscreens = true;
 
     DrawBackground("FLOOR4_6"); // Draw background
-    MN_DrawTitle(52, 2, "M_COMPAT", "Compatibility");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_COMPAT", "Compatibility");
     DrawInstructions();
     DrawScreenItems(current_menu);
 
@@ -2310,7 +2312,7 @@ static void ResetVideoHeight(void)
 }
 
 static const char *widescreen_strings[] = {"Off", "Auto", "16:10", "16:9",
-                                           "21:9"};
+                                           "21:9", "32:9"};
 
 static void ResetVideo(void)
 {
@@ -2532,11 +2534,11 @@ static const char **GetResamplerStrings(void)
     return strings;
 }
 
-void MN_UpdateFreeLook(void)
+void MN_UpdateFreeLook(boolean condition)
 {
     P_UpdateDirectVerticalAiming();
 
-    if (!mouselook && !padlook)
+    if (condition)
     {
         for (int i = 0; i < MAXPLAYERS; ++i)
         {
@@ -2548,6 +2550,16 @@ void MN_UpdateFreeLook(void)
     }
 
     UpdateCrosshairItems(); // [Nugget]
+}
+
+void MN_UpdateMouseLook(void)
+{
+    MN_UpdateFreeLook(!mouselook);
+}
+
+void MN_UpdatePadLook(void)
+{
+    MN_UpdateFreeLook(!padlook);
 }
 
 #define MOUSE_ACCEL_STRINGS_SIZE (40 + 1)
@@ -2575,7 +2587,7 @@ static setup_menu_t gen_settings3[] = {
     {"Double-Click to \"Use\"", S_ONOFF, CNTR_X, M_SPC, {"dclick_use"}},
 
     {"Free Look", S_ONOFF, CNTR_X, M_SPC, {"mouselook"}, m_null, input_null,
-     str_empty, MN_UpdateFreeLook},
+     str_empty, MN_UpdateMouseLook},
 
     // [FG] invert vertical axis
     {"Invert Look", S_ONOFF, CNTR_X, M_SPC,
@@ -2626,7 +2638,7 @@ static setup_menu_t gen_settings4[] = {
      str_layout, I_ResetController},
 
     {"Free Look", S_ONOFF, CNTR_X, M_SPC, {"padlook"}, m_null, input_null,
-     str_empty, MN_UpdateFreeLook},
+     str_empty, MN_UpdatePadLook},
 
     {"Invert Look", S_ONOFF, CNTR_X, M_SPC, {"joy_invert_look"},
      m_null, input_null, str_empty, G_UpdateControllerVariables},
@@ -2979,7 +2991,7 @@ void MN_DrawGeneral(void)
     inhelpscreens = true;
 
     DrawBackground("FLOOR4_6"); // Draw background
-    MN_DrawTitle(114, 2, "M_GENERL", "General");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
     DrawTabs();
     DrawInstructions();
     DrawScreenItems(current_menu);
@@ -3074,7 +3086,7 @@ void MN_DrawCustomSkill(void)
     inhelpscreens = true;
 
     DrawBackground("FLOOR4_6"); // Draw background
-    MN_DrawTitle(114, 2, "M_CSTSKL", "Custom Skill");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_CSTSKL", "Custom Skill");
     DrawInstructions();
     DrawScreenItems(current_menu);
 }
@@ -3551,7 +3563,7 @@ void MN_DrawCredits(void) // killough 10/98: credit screen
     M_snprintf(mbftext_s, sizeof(mbftext_s), PROJECT_STRING);
     inhelpscreens = true;
     DrawBackground(gamemode == shareware ? "CEIL5_1" : "MFLR8_4");
-    MN_DrawTitle(42, 9, "MBFTEXT", mbftext_s);
+    MN_DrawTitle(M_X_CENTER, 9, "MBFTEXT", mbftext_s);
     DrawScreenItems(cred_settings);
 }
 
@@ -3994,6 +4006,11 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
     }
 
     setup_menu_t *current_item = current_menu + set_item_on;
+
+    if (menu_input != mouse_mode)
+    {
+       current_item->m_flags |= S_HILITE;
+    }
 
     // phares 4/19/98:
     // Catch the response to the 'reset to default?' verification
@@ -4461,7 +4478,10 @@ void MN_DrawTitle(int x, int y, const char *patch, const char *alttext)
 
     if (patch_lump >= 0)
     {
-        V_DrawPatchSH(x, y, V_CachePatchNum(patch_lump, PU_CACHE)); // [Nugget] HUD/menu shadows
+        patch_t *patch = V_CachePatchNum(patch_lump, PU_CACHE);
+        // [Nugget] HUD/menu shadows
+        V_DrawPatchSH(x == M_X_CENTER ? SCREENWIDTH / 2 - patch->width / 2 : x,
+                      y, patch);
     }
     else
     {

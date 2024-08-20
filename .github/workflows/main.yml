@@ -97,6 +97,10 @@ jobs:
       - name: Build
         run: cmake --build build
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: Test
         if: github.event_name == 'workflow_dispatch'
         run: |

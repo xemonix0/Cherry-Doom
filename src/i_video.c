@@ -44,6 +44,7 @@
 #include "m_config.h"
 #include "m_fixed.h"
 #include "m_io.h"
+#include "m_misc.h"
 #include "mn_menu.h"
 #include "r_draw.h"
 #include "r_main.h"
@@ -832,6 +833,7 @@ void I_FinishUpdate(void)
     if (use_limiter)
     {
         uint64_t target_time = 1000000ull / targetrefresh;
+        uint64_t last_pump = 0;
 
         while (true)
         {
@@ -844,7 +846,14 @@ void I_FinishUpdate(void)
                 break;
             }
 
-            if (target_time - elapsed_time > 1000)
+            uint64_t remaining_time = target_time - elapsed_time;
+
+            if (remaining_time > 200 && current_time - last_pump > 200)
+            {
+                last_pump = current_time;
+                SDL_PumpEvents();
+            }
+            else if (remaining_time > 1000)
             {
                 I_SleepUS(500);
             }
@@ -983,6 +992,7 @@ void I_SetPalette(byte *palette)
         colors[i].r = gamma[*palette++];
         colors[i].g = gamma[*palette++];
         colors[i].b = gamma[*palette++];
+        colors[i].a = 0xffu;
     }
 
     SDL_SetPaletteColors(screenbuffer->format->palette, colors, 0, 256);
@@ -1205,6 +1215,10 @@ static double CurrentAspectRatio(void)
             w = 21;
             h = 9;
             break;
+        case RATIO_32_9:
+            w = 32;
+            h = 9;
+            break;
         default:
             w = 16;
             h = 9;
@@ -1369,7 +1383,7 @@ static void CreateUpscaledTexture(boolean force)
     // screen.
 
     texture_upscaled = SDL_CreateTexture(
-        renderer, SDL_GetWindowPixelFormat(screen), SDL_TEXTUREACCESS_TARGET,
+        renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET,
         w_upscale * screen_width, h_upscale * screen_height);
 
     SDL_SetTextureScaleMode(texture_upscaled, SDL_ScaleModeLinear);
@@ -1648,7 +1662,9 @@ static void I_InitGraphicsMode(void)
 
     // [FG] create rendering window
 
-    screen = SDL_CreateWindow(PROJECT_STRING, window_x, window_y, w, h, flags);
+    char *title = M_StringJoin(gamedescription, " - ", PROJECT_STRING);
+    screen = SDL_CreateWindow(title, window_x, window_y, w, h, flags);
+    free(title);
 
     if (screen == NULL)
     {
@@ -1762,7 +1778,7 @@ static void CreateSurfaces(int w, int h)
         uint32_t rmask, gmask, bmask, amask;
         int bpp;
 
-        SDL_PixelFormatEnumToMasks(SDL_GetWindowPixelFormat(screen), &bpp,
+        SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_ARGB8888, &bpp,
                                    &rmask, &gmask, &bmask, &amask);
         argbbuffer =
             SDL_CreateRGBSurface(0, w, h, bpp, rmask, gmask, bmask, amask);
@@ -1778,7 +1794,7 @@ static void CreateSurfaces(int w, int h)
         SDL_DestroyTexture(texture);
     }
 
-    texture = SDL_CreateTexture(renderer, SDL_GetWindowPixelFormat(screen),
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                 SDL_TEXTUREACCESS_STREAMING, w, h);
 
     SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
@@ -1907,7 +1923,7 @@ void I_BindVideoVariables(void)
         "Framerate limit in frames per second (< 35 = Disable)");
     M_BindNum("widescreen", &default_widescreen, &widescreen, RATIO_AUTO, 0,
               NUM_RATIOS - 1, ss_gen, wad_no,
-              "Widescreen (0 = Off; 1 = Auto; 2 = 16:10; 3 = 16:9; 4 = 21:9)");
+              "Widescreen (0 = Off; 1 = Auto; 2 = 16:10; 3 = 16:9; 4 = 21:9; 5 = 32:9)");
     M_BindNum("fov", &custom_fov, NULL, FOV_DEFAULT, FOV_MIN, FOV_MAX, ss_gen,
               wad_no, "Field of view in degrees");
     BIND_NUM_GENERAL(gamma2, 9, 0, 17, "Custom gamma level (0 = -4; 9 = 0; 17 = 4)");

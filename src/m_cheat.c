@@ -30,6 +30,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "g_game.h"
+#include "hu_stuff.h"
 #include "info.h"
 #include "m_cheat.h"
 #include "m_fixed.h"
@@ -124,6 +125,7 @@ static void cheat_reveal_item();
 static void cheat_autoaim();      // killough 7/19/98
 static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
+static void cheat_speed();
 
 // [Nugget] /-----------------------------------------------------------------
 
@@ -292,7 +294,7 @@ struct cheat_s cheat[] = {
   {"iddt",       "Map cheat",         not_dm,
    {cheat_ddt} },        // killough 2/07/98: moved from am_map.c
 
-  {"iddst",      NULL,                always,
+  {"iddst",      NULL,                not_dm,
    {cheat_reveal_secret} },
 
   {"iddkt",      NULL,                not_dm,
@@ -390,8 +392,11 @@ struct cheat_s cheat[] = {
    {cheat_noclip} },
 
   // [Nugget] Change to just "fps"
-  {"fps",    NULL,                always,
+  {"fps",        NULL,                always,
    {cheat_showfps} },
+
+  {"speed",      NULL,                not_dm,
+   {cheat_speed} },
 
   // [Nugget] /---------------------------------------------------------------
 
@@ -854,6 +859,11 @@ static void cheat_idgaf()
 static void cheat_showfps()
 {
   plyr->cheats ^= CF_SHOWFPS;
+}
+
+static void cheat_speed()
+{
+  speedometer = (speedometer + 1) % 4;
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode
@@ -1866,6 +1876,9 @@ static const struct {
 boolean M_CheatResponder(event_t *ev)
 {
   int i;
+
+  if (strictmode && demorecording)
+    return false;
 
   if (ev->type == ev_keydown && M_FindCheats(ev->data1))
     return true;

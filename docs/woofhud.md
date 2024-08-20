@@ -31,6 +31,7 @@ Possible values for the HUD widget names:
  * "fps" or "rate"
  * "cmd" or "commands"
  * "compact"
+ * "speed"
 
 Possible values for the widget position keywords:
 
@@ -59,6 +60,7 @@ powers topright
 coord topright
 fps topright
 cmd bottomright
+speed bottomcenter
 
 hud 1
 rate topleft
@@ -73,6 +75,7 @@ powers topright
 coord topright
 fps topright
 cmd bottomright
+speed bottomcenter
 
 hud 2
 rate topleft
@@ -87,6 +90,7 @@ powers topright
 coord topright
 fps topright
 cmd bottomright
+speed bottomcenter
 ```
 
 An alternative approach to the distributed HUD, using absolute screen coordinates, could look like this:
@@ -108,6 +112,8 @@ fps 224 16
 ## Remarks
 
 The "title" widget is only visible if the Automap is enabled. The "monsec", "sttime", "powers" and "coord" widgets are only visible if they are explicitly enabled in the Options menu (separately for Automap and HUD). The "fps" widget is only visible if the SHOWFPS cheat is enabled.
+
+The "speed" widget is only visible if the SPEED cheat is enabled. Repeating the cheat cycles through different units.
 
 The "compact" widget is a minimal widget showing only health, armor and ammo information. It is enabled by default in the minimal Boom HUD mode.
 
