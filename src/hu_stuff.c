@@ -31,6 +31,7 @@
 #include "doomstat.h"
 #include "doomtype.h"
 #include "dstrings.h"
+#include "hu_coordinates.h"
 #include "hu_lib.h"
 #include "hu_obituary.h"
 #include "hu_stuff.h"
@@ -151,12 +152,19 @@ static player_t *plr;
 static hu_font_t big_font = {.space_width = 4, .tab_width = 15, .tab_mask = ~15},
                  sml_font = {.space_width = 5, .tab_width =  7, .tab_mask =  ~7};
 static hu_font_t *doom_font = &big_font, *boom_font = &sml_font;
-static hu_font_t *cmd_font = &sml_font;
+static hu_font_t *monospaced_font = &sml_font;
 patch_t **hu_font = big_font.patches;
 
 static int CR_BLUE = CR_BLUE1;
 
 // widgets
+
+static char hud_stringbuffer[HU_MAXLINELENGTH];
+
+static inline void InitStringBuffer(const char *const s)
+{
+  strncpy(hud_stringbuffer, s, sizeof(hud_stringbuffer));
+}
 
 // [FG] Vanilla widgets point to a boolean variable (*on) to determine
 //      if they are enabled, always big_font, mostly left-aligned
@@ -174,6 +182,8 @@ static hu_multiline_t w_armor;  //jff 2/16/98 new armor widget for hud
 static hu_multiline_t w_health; //jff 2/16/98 new health widget for hud
 static hu_multiline_t w_keys;   //jff 2/16/98 new keys widget for hud
 static hu_multiline_t w_weapon; //jff 2/16/98 new weapon widget for hud
+
+static hu_multiline_t w_compact;
 
 // [FG] extra Boom widgets, that need to be explicitly enabled
 static hu_multiline_t w_monsec; //jff 2/16/98 new kill/secret widget for hud
@@ -378,21 +388,28 @@ void HU_ResetMessageColors(void)
     }
 }
 
-static byte* ColorByHealth(int health, int maxhealth, boolean invul)
+static crange_idx_e CRByHealth(int health, int maxhealth, boolean invul)
 {
   if (invul)
-    return colrngs[CR_GRAY];
+    return CR_GRAY;
 
   health = 100 * health / maxhealth;
 
   if (health < health_red)
-    return colrngs[CR_RED];
+    return CR_RED;
   else if (health < health_yellow)
-    return colrngs[CR_GOLD];
+    return CR_GOLD;
   else if (health <= health_green)
-    return colrngs[CR_GREEN];
+    return CR_GREEN;
   else
-    return colrngs[CR_BLUE];
+    return CR_BLUE;
+}
+
+static byte* ColorByHealth(int health, int maxhealth, boolean invul)
+{
+  const crange_idx_e cr = CRByHealth(health, maxhealth, invul);
+
+  return colrngs[cr];
 }
 
 // [FG] support centered player messages
@@ -614,6 +631,7 @@ static void HU_widget_build_monsec(void);
 static void HU_widget_build_sttime(void);
 static void HU_widget_build_title (void);
 static void HU_widget_build_weapon (void);
+static void HU_widget_build_compact (void);
 
 static hu_multiline_t *w_stats;
 
@@ -781,6 +799,10 @@ void HU_Start(void)
                        &boom_font, colrngs[CR_GRAY],
                        NULL, deathmatch ? HU_widget_build_frag : HU_widget_build_keys);
 
+  HUlib_init_multiline(&w_compact, hud_widget_layout ? 3 : 1,
+                       &boom_font, colrngs[CR_GRAY],
+                       NULL, HU_widget_build_compact);
+
   // create the hud monster/secret widget
   HUlib_init_multiline(&w_monsec,
                        MULTILINE(nughud.sts_ml) ? 3 : 1, // [Nugget] NUGHUD
@@ -799,10 +821,19 @@ void HU_Start(void)
                        NULL, HU_widget_build_powers);
 
   // create the automaps coordinate widget
-  HUlib_init_multiline(&w_coord,
-                       MULTILINE(nughud.coord_ml) ? 3 : 1, // [Nugget] NUGHUD
-                       &boom_font, colrngs[hudcolor_xyco],
-                       NULL, HU_widget_build_coord);
+  if (hud_player_coords == HUD_WIDGET_ADVANCED)
+  {
+    HUlib_init_multiline(&w_coord, 12,
+                         &monospaced_font, colrngs[CR_GRAY],
+                         NULL, HU_widget_build_coord);
+  }
+  else
+  {
+    HUlib_init_multiline(&w_coord,
+                         MULTILINE(nughud.coord_ml) ? 3 : 1, // [Nugget] NUGHUD
+                         &boom_font, colrngs[hudcolor_xyco],
+                         NULL, HU_widget_build_coord);
+  }
 
   HUlib_init_multiline(&w_fps, 1,
                        &boom_font, colrngs[hudcolor_xyco],
@@ -815,7 +846,7 @@ void HU_Start(void)
   w_rate.exclusive = true;
 
   HUlib_init_multiline(&w_cmd, hud_command_history_size,
-                       &cmd_font, colrngs[hudcolor_xyco],
+                       &monospaced_font, colrngs[hudcolor_xyco],
                        NULL, HU_widget_build_cmd);
   // Draw command history bottom up.
   w_cmd.bottomup = true;
@@ -916,7 +947,8 @@ void HU_Start(void)
 
 static void HU_widget_build_title (void)
 {
-  char hud_titlestr[HU_MAXLINELENGTH] = "";
+  InitStringBuffer("");
+
   char *s, *n;
 
   if (gamemapinfo && gamemapinfo->levelname)
@@ -928,7 +960,7 @@ static void HU_widget_build_title (void)
 
     if (s == gamemapinfo->mapname || U_CheckField(s))
     {
-      M_snprintf(hud_titlestr, sizeof(hud_titlestr), "%s: ", s);
+      M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer), "%s: ", s);
     }
     s = gamemapinfo->levelname;
   }
@@ -971,15 +1003,36 @@ static void HU_widget_build_title (void)
     title_counter = HU_MSGTIMEOUT2;
   }
 
-  M_StringConcat(hud_titlestr, s, sizeof(hud_titlestr));
+  M_StringConcat(hud_stringbuffer, s, sizeof(hud_stringbuffer));
 
-  HUlib_add_string_to_cur_line(&w_title, hud_titlestr);
+  HUlib_add_string_to_cur_line(&w_title, hud_stringbuffer);
 }
 
 // do the hud ammo display
+static crange_idx_e CRByAmmo(const int ammo, const int fullammo, int ammopct)
+{
+  // [Nugget] Make it gray if the player has infinite ammo
+  if (plr->cheats & CF_INFAMMO) { return CR_GRAY; }
+
+  // backpack changes thresholds (ammo widget)
+  if (plr->backpack && !hud_backpack_thresholds && fullammo)
+    ammopct = (100 * ammo) / (fullammo / 2);
+
+  // set the display color from the percentage of total ammo held
+  if (ammopct < ammo_red)
+    return CR_RED;
+  else if (ammopct < ammo_yellow)
+    return CR_GOLD;
+  else if (ammopct > 100) // more than max threshold w/o backpack
+    return CR_BLUE;
+  else
+    return CR_GREEN;
+}
+
 static void HU_widget_build_ammo (void)
 {
-  char hud_ammostr[HU_MAXLINELENGTH] = "AMM ";
+  InitStringBuffer("AMM ");
+
   int fullammo = plr->maxammo[weaponinfo[plr->readyweapon].ammo];
   int i = 4;
 
@@ -988,9 +1041,9 @@ static void HU_widget_build_ammo (void)
   {
     if (hud_type == HUD_TYPE_BOOM)
     {
-      strcat(hud_ammostr, "\x7f\x7f\x7f\x7f\x7f\x7f\x7f");
+      strcat(hud_stringbuffer, "\x7f\x7f\x7f\x7f\x7f\x7f\x7f");
     }
-    strcat(hud_ammostr, "N/A");
+    strcat(hud_stringbuffer, "N/A");
     w_ammo.cr = colrngs[CR_GRAY];
   }
   else
@@ -1004,7 +1057,7 @@ static void HU_widget_build_ammo (void)
     {
       // full bargraph chars
       for (i = 4; i < 4 + ammobars / 4;)
-        hud_ammostr[i++] = 123;
+        hud_stringbuffer[i++] = 123;
 
       // plus one last character with 0, 1, 2, 3 bars
       switch (ammobars % 4)
@@ -1012,55 +1065,38 @@ static void HU_widget_build_ammo (void)
         case 0:
           break;
         case 1:
-          hud_ammostr[i++] = 126;
+          hud_stringbuffer[i++] = 126;
           break;
         case 2:
-          hud_ammostr[i++] = 125;
+          hud_stringbuffer[i++] = 125;
           break;
         case 3:
-          hud_ammostr[i++] = 124;
+          hud_stringbuffer[i++] = 124;
           break;
       }
 
       // pad string with blank bar characters
       while (i < 4 + 7)
-        hud_ammostr[i++] = 127;
-      hud_ammostr[i] = '\0';
+        hud_stringbuffer[i++] = 127;
+      hud_stringbuffer[i] = '\0';
     }
 
     // build the numeric amount init string
-    M_snprintf(hud_ammostr + i, sizeof(hud_ammostr), "%3d/%3d", ammo, fullammo);
+    M_snprintf(hud_stringbuffer + i, sizeof(hud_stringbuffer), "%3d/%3d", ammo, fullammo);
 
-    // backpack changes thresholds (ammo widget)
-    if (plr->backpack && !hud_backpack_thresholds && fullammo)
-      ammopct = (100 * ammo) / (fullammo / 2);
-
-    // set the display color from the percentage of total ammo held
-
-    // [Nugget] Make it gray if the player has infinite ammo /----------------
-    if (plr->cheats & CF_INFAMMO)
-      w_ammo.cr = colrngs[CR_GRAY];
-    else
-    // [Nugget] -------------------------------------------------------------/
-
-    if (ammopct < ammo_red)
-      w_ammo.cr = colrngs[CR_RED];
-    else if (ammopct < ammo_yellow)
-      w_ammo.cr = colrngs[CR_GOLD];
-    else if (ammopct > 100) // more than max threshold w/o backpack
-      w_ammo.cr = colrngs[CR_BLUE];
-    else
-      w_ammo.cr = colrngs[CR_GREEN];
+    const crange_idx_e cr = CRByAmmo(ammo, fullammo, ammopct);
+    w_ammo.cr = colrngs[cr];
   }
 
   // transfer the init string to the widget
-  HUlib_add_string_to_cur_line(&w_ammo, hud_ammostr);
+  HUlib_add_string_to_cur_line(&w_ammo, hud_stringbuffer);
 }
 
 // do the hud health display
 static void HU_widget_build_health (void)
 {
-  char hud_healthstr[HU_MAXLINELENGTH] = "HEL ";
+  InitStringBuffer("HEL ");
+
   int i = 4;
   int healthbars = (st_health > 100) ? 25 : (st_health / 4);
 
@@ -1069,7 +1105,7 @@ static void HU_widget_build_health (void)
   {
     // full bargraph chars
     for (i = 4; i < 4 + healthbars / 4;)
-      hud_healthstr[i++] = 123;
+      hud_stringbuffer[i++] = 123;
 
     // plus one last character with 0, 1, 2, 3 bars
     switch (healthbars % 4)
@@ -1077,36 +1113,64 @@ static void HU_widget_build_health (void)
       case 0:
         break;
       case 1:
-        hud_healthstr[i++] = 126;
+        hud_stringbuffer[i++] = 126;
         break;
       case 2:
-        hud_healthstr[i++] = 125;
+        hud_stringbuffer[i++] = 125;
         break;
       case 3:
-        hud_healthstr[i++] = 124;
+        hud_stringbuffer[i++] = 124;
         break;
     }
 
     // pad string with blank bar characters
     while (i < 4 + 7)
-      hud_healthstr[i++] = 127;
-    hud_healthstr[i] = '\0';
+      hud_stringbuffer[i++] = 127;
+    hud_stringbuffer[i] = '\0';
   }
 
   // build the numeric amount init string
-  M_snprintf(hud_healthstr + i, sizeof(hud_healthstr), "%3d", st_health);
+  M_snprintf(hud_stringbuffer + i, sizeof(hud_stringbuffer), "%3d", st_health);
 
   // set the display color from the amount of health posessed
   w_health.cr = ColorByHealth(plr->health, 100, st_invul);
 
   // transfer the init string to the widget
-  HUlib_add_string_to_cur_line(&w_health, hud_healthstr);
+  HUlib_add_string_to_cur_line(&w_health, hud_stringbuffer);
 }
 
 // do the hud armor display
+static crange_idx_e CRByArmor(void)
+{
+  // color of armor depends on type
+  if (hud_armor_type)
+  {
+    return
+      // [Nugget] Make it gray *only* if the player is in God Mode
+      (plr->cheats & CF_GODMODE) ? CR_GRAY :
+      (plr->armortype == 0) ? CR_RED :
+      (plr->armortype == 1) ? CR_GREEN :
+      CR_BLUE;
+  }
+  else
+  {
+    const int armor = plr->armorpoints;
+
+    // set the display color from the amount of armor posessed
+    return
+      // [Nugget] Make it gray *only* if the player is in God Mode
+      (plr->cheats & CF_GODMODE) ? CR_GRAY :
+      (armor < armor_red) ? CR_RED :
+      (armor < armor_yellow) ? CR_GOLD :
+      (armor <= armor_green) ? CR_GREEN :
+      CR_BLUE;
+  }
+}
+
 static void HU_widget_build_armor (void)
 {
-  char hud_armorstr[HU_MAXLINELENGTH] = "ARM ";
+  InitStringBuffer("ARM ");
+
   int i = 4;
   int armorbars = (st_armor > 100) ? 25 : (st_armor / 4);
 
@@ -1115,7 +1179,7 @@ static void HU_widget_build_armor (void)
   {
     // full bargraph chars
     for (i = 4; i < 4 + armorbars / 4;)
-      hud_armorstr[i++] = 123;
+      hud_stringbuffer[i++] = 123;
 
     // plus one last character with 0, 1, 2, 3 bars
     switch (armorbars % 4)
@@ -1123,56 +1187,97 @@ static void HU_widget_build_armor (void)
       case 0:
         break;
       case 1:
-        hud_armorstr[i++] = 126;
+        hud_stringbuffer[i++] = 126;
         break;
       case 2:
-        hud_armorstr[i++] = 125;
+        hud_stringbuffer[i++] = 125;
         break;
       case 3:
-        hud_armorstr[i++] = 124;
+        hud_stringbuffer[i++] = 124;
         break;
     }
 
     // pad string with blank bar characters
     while (i < 4 + 7)
-      hud_armorstr[i++] = 127;
-    hud_armorstr[i] = '\0';
+      hud_stringbuffer[i++] = 127;
+    hud_stringbuffer[i] = '\0';
   }
 
   // build the numeric amount init string
-  M_snprintf(hud_armorstr + i, sizeof(hud_armorstr), "%3d", st_armor);
+  M_snprintf(hud_stringbuffer + i, sizeof(hud_stringbuffer), "%3d", st_armor);
 
-  // color of armor depends on type
-  if (hud_armor_type)
+  const crange_idx_e cr = CRByArmor();
+  w_armor.cr = colrngs[cr];
+
+  // transfer the init string to the widget
+  HUlib_add_string_to_cur_line(&w_armor, hud_stringbuffer);
+}
+
+static void HU_widget_build_compact (void)
+{
+  const crange_idx_e cr_health = CRByHealth(plr->health, 100, st_invul);
+  const crange_idx_e cr_armor = CRByArmor();
+
+  const ammotype_t ammotype = weaponinfo[plr->readyweapon].ammo;
+  const int ammo = plr->ammo[ammotype];
+  const int fullammo = plr->maxammo[ammotype];
+  const boolean noammo = (ammotype == am_noammo || fullammo == 0);
+
+  if (hud_widget_layout)
   {
-    w_armor.cr =
-      // [Nugget] Make it gray ONLY if the player is in God Mode
-      (plr->cheats & CF_GODMODE) ? colrngs[CR_GRAY] :
-      (plr->armortype == 0) ? colrngs[CR_RED] :
-      (plr->armortype == 1) ? colrngs[CR_GREEN] :
-      colrngs[CR_BLUE];
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
+    "\x1b%cHEL \x1b%c%3d", '0'+CR_GRAY, '0'+cr_health, st_health);
+    HUlib_add_string_to_cur_line(&w_compact, hud_stringbuffer);
+
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
+    "\x1b%cARM \x1b%c%3d", '0'+CR_GRAY, '0'+cr_armor, st_armor);
+    HUlib_add_string_to_cur_line(&w_compact, hud_stringbuffer);
+
+    if (noammo)
+    {
+      M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
+      "\x1b%cAMM N/A", '0'+CR_GRAY);
+    }
+    else
+    {
+      const int ammopct = (100 * ammo) / fullammo;
+      const crange_idx_e cr_ammo = CRByAmmo(ammo, fullammo, ammopct);
+
+      M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
+      "\x1b%cAMM \x1b%c%3d/%3d", '0'+CR_GRAY, '0'+cr_ammo, ammo, fullammo);
+    }
+    HUlib_add_string_to_cur_line(&w_compact, hud_stringbuffer);
   }
   else
   {
-    int armor = plr->armorpoints;
-    
-    // set the display color from the amount of armor posessed
-    w_armor.cr =
-      st_invul ? colrngs[CR_GRAY] :
-      (armor < armor_red) ? colrngs[CR_RED] :
-      (armor < armor_yellow) ? colrngs[CR_GOLD] :
-      (armor <= armor_green) ? colrngs[CR_GREEN] :
-      colrngs[CR_BLUE];
-  }
+    if (noammo)
+    {
+      M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
+      "\x1b%cHEL \x1b%c%3d \x1b%cARM \x1b%c%3d \x1b%cAMM N/A",
+      '0'+CR_GRAY, '0'+cr_health, st_health,
+      '0'+CR_GRAY, '0'+cr_armor, st_armor,
+      '0'+CR_GRAY);
+    }
+    else
+    {
+      const int ammopct = (100 * ammo) / fullammo;
+      const crange_idx_e cr_ammo = CRByAmmo(ammo, fullammo, ammopct);
 
-  // transfer the init string to the widget
-  HUlib_add_string_to_cur_line(&w_armor, hud_armorstr);
+      M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
+      "\x1b%cHEL \x1b%c%3d \x1b%cARM \x1b%c%3d \x1b%cAMM \x1b%c%3d/%3d",
+      '0'+CR_GRAY, '0'+cr_health, st_health,
+      '0'+CR_GRAY, '0'+cr_armor, st_armor,
+      '0'+CR_GRAY, '0'+cr_ammo, ammo, fullammo);
+    }
+    HUlib_add_string_to_cur_line(&w_compact, hud_stringbuffer);
+  }
 }
 
 // do the hud weapon display
 static void HU_widget_build_weapon (void)
 {
-  char hud_weapstr[HU_MAXLINELENGTH] = "WEA ";
+  InitStringBuffer("WEA ");
+
   int i = 4, w, ammo, fullammo, ammopct;
 
   // do each weapon that exists in current gamemode
@@ -1213,30 +1318,32 @@ static void HU_widget_build_weapon (void)
     ammopct = fullammo ? (100 * ammo) / fullammo : 100;
 
     // display each weapon number in a color related to the ammo for it
-    hud_weapstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
+    hud_stringbuffer[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
     if (weaponinfo[w].ammo == am_noammo) //jff 3/14/98 show berserk on HUD
-      hud_weapstr[i++] = (w == wp_fist && !plr->powers[pw_strength]) ? '0'+CR_GRAY : '0'+CR_GREEN;
+      hud_stringbuffer[i++] = (w == wp_fist && !plr->powers[pw_strength]) ? '0'+CR_GRAY : '0'+CR_GREEN;
     else if (ammopct < ammo_red)
-      hud_weapstr[i++] = '0'+CR_RED;
+      hud_stringbuffer[i++] = '0'+CR_RED;
     else if (ammopct < ammo_yellow)
-      hud_weapstr[i++] = '0'+CR_GOLD;
+      hud_stringbuffer[i++] = '0'+CR_GOLD;
     else if (ammopct > 100) // more than max threshold w/o backpack
-      hud_weapstr[i++] = '0'+CR_BLUE;
+      hud_stringbuffer[i++] = '0'+CR_BLUE;
     else
-      hud_weapstr[i++] = '0'+CR_GREEN;
+      hud_stringbuffer[i++] = '0'+CR_GREEN;
 
-    hud_weapstr[i++] = '0'+w+1;
-    hud_weapstr[i++] = ' ';
-    hud_weapstr[i] = '\0';
+    hud_stringbuffer[i++] = '0'+w+1;
+    hud_stringbuffer[i++] = ' ';
+    hud_stringbuffer[i] = '\0';
   }
 
   // transfer the init string to the widget
-  HUlib_add_string_to_cur_line(&w_weapon, hud_weapstr);
+  HUlib_add_string_to_cur_line(&w_weapon, hud_stringbuffer);
 }
 
 static void HU_widget_build_keys (void)
 {
-  char hud_keysstr[HU_MAXLINELENGTH] = { 'K', 'E', 'Y', '\x1b', '0'+CR_NONE, ' ', '\0' };
+  const char hud_keysstr[] = { 'K', 'E', 'Y', '\x1b', '0'+CR_NONE, ' ', '\0' };
+  InitStringBuffer(hud_keysstr);
+
   int i = 6, k;
 
   // build text string whose characters call out graphic keys
@@ -1246,9 +1353,9 @@ static void HU_widget_build_keys (void)
     if (!plr->cards[k])
       continue;
 
-    hud_keysstr[i++] = HU_FONTEND + k + 1; // key number plus HU_FONTEND is char for key
-    hud_keysstr[i++] = ' ';   // spacing
-    hud_keysstr[i++] = ' ';
+    hud_stringbuffer[i++] = HU_FONTEND + k + 1; // key number plus HU_FONTEND is char for key
+    hud_stringbuffer[i++] = ' ';   // spacing
+    hud_stringbuffer[i++] = ' ';
   }
 
   // [Alaux] Blink missing keys *after* possessed keys
@@ -1276,18 +1383,18 @@ static void HU_widget_build_keys (void)
         continue;
     }
 
-    hud_keysstr[i++] = HU_FONTEND + k + 1;
-    hud_keysstr[i++] = ' ';
-    hud_keysstr[i++] = ' ';
+    hud_stringbuffer[i++] = HU_FONTEND + k + 1;
+    hud_stringbuffer[i++] = ' ';
+    hud_stringbuffer[i++] = ' ';
   }
 
-  hud_keysstr[i] = '\0';
+  hud_stringbuffer[i] = '\0';
 
   // transfer the built string (frags or key title) to the widget
-  HUlib_add_string_to_cur_line(&w_keys, hud_keysstr);
+  HUlib_add_string_to_cur_line(&w_keys, hud_stringbuffer);
 }
 
-static inline int HU_top (char *const fragstr, int i, const int idx1, const int top1)
+static inline int HU_top (int i, const int idx1, const int top1)
 {
   if (idx1 > -1)
   {
@@ -1296,18 +1403,20 @@ static inline int HU_top (char *const fragstr, int i, const int idx1, const int 
     M_snprintf(numbuf, sizeof(numbuf), "%5d", top1);
     // make frag count in player's color via escape code
 
-    fragstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-    fragstr[i++] = '0' + plyrcoltran[idx1 & 3];
+    hud_stringbuffer[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
+    hud_stringbuffer[i++] = '0' + plyrcoltran[idx1 & 3];
     s = numbuf;
     while (*s)
-      fragstr[i++] = *s++;
+      hud_stringbuffer[i++] = *s++;
   }
   return i;
 }
 
 static void HU_widget_build_frag (void)
 {
-  char hud_fragstr[HU_MAXLINELENGTH] = { 'F', 'R', 'G', '\x1b', '0'+CR_ORIG, ' ', '\0' };
+  const char hud_fragstr[] = { 'F', 'R', 'G', '\x1b', '0'+CR_ORIG, ' ', '\0' };
+  InitStringBuffer(hud_fragstr);
+
   int i = 6, k;
 
   int top1 = -999, top2 = -999, top3 = -999, top4 = -999;
@@ -1359,29 +1468,28 @@ static void HU_widget_build_frag (void)
 
   // if the biggest number exists,
   // put it in the init string
-  i = HU_top(hud_fragstr, i, idx1, top1);
+  i = HU_top(i, idx1, top1);
 
   // if the second biggest number exists,
   // put it in the init string
-  i = HU_top(hud_fragstr, i, idx2, top2);
+  i = HU_top(i, idx2, top2);
 
   // if the third biggest number exists,
   // put it in the init string
-  i = HU_top(hud_fragstr, i, idx3, top3);
+  i = HU_top(i, idx3, top3);
 
   // if the fourth biggest number exists,
   // put it in the init string
-  i = HU_top(hud_fragstr, i, idx4, top4);
+  i = HU_top(i, idx4, top4);
 
-  hud_fragstr[i] = '\0';
+  hud_stringbuffer[i] = '\0';
 
   // transfer the built string (frags or key title) to the widget
-  HUlib_add_string_to_cur_line(&w_keys, hud_fragstr);
+  HUlib_add_string_to_cur_line(&w_keys, hud_stringbuffer);
 }
 
 static void HU_widget_build_monsec(void)
 {
-  char hud_monsecstr[HU_MAXLINELENGTH];
   int i;
   int fullkillcount, fullitemcount, fullsecretcount;
   int killcolor, itemcolor, secretcolor;
@@ -1497,35 +1605,36 @@ static void HU_widget_build_monsec(void)
     // [Nugget] HUD icons
     // [Nugget] Stats formats from Crispy
 
-    M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
       "\x1b%c%c\t\x1b%c%s", killlabelcolor, killlabel, killcolor, kill_str);
-    HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
+    HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
 
-    M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
       "\x1b%c%c\t\x1b%c%s", itemlabelcolor, itemlabel, itemcolor, item_str);
-    HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
+    HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
 
-    M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
       "\x1b%c%c\t\x1b%c%s", secretlabelcolor, secretlabel, secretcolor, secret_str);
-    HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
+    HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
   }
   else
   {
     // [Nugget] HUD icons
     // [Nugget] Stats formats from Crispy
-    M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
       "\x1b%c%c \x1b%c%s \x1b%c%c \x1b%c%s \x1b%c%c \x1b%c%s",
       killlabelcolor, killlabel, killcolor, kill_str,
       itemlabelcolor, itemlabel, itemcolor, item_str,
       secretlabelcolor, secretlabel, secretcolor, secret_str);
 
-    HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
+    HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
   }
 }
 
 static void HU_widget_build_sttime(void)
 {
-  char hud_timestr[HU_MAXLINELENGTH/2] = {0};
+  InitStringBuffer("");
+
   int offset = 0;
 
   if ((hud_level_time & HUD_WIDGET_HUD     && !automapactive) ||
@@ -1533,23 +1642,23 @@ static void HU_widget_build_sttime(void)
   {
     if (time_scale != 100)
     {
-      offset += M_snprintf(hud_timestr, sizeof(hud_timestr), "\x1b%c%d%% ",
-                           '0'+hudcolor_time_scale, time_scale);
+      offset += M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer), "\x1b%c%d%% ",
+                           '0'+hudcolor_time_scale, time_scale); // [Nugget] Color
     }
 
     if (totalleveltimes)
     {
       const int time = (totalleveltimes + leveltime) / TICRATE;
 
-      offset += M_snprintf(hud_timestr + offset, sizeof(hud_timestr),
+      offset += M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer),
                            "\x1b%c%d:%02d ",
                            '0'+hudcolor_total_time, time/60, time%60);
     }
 
     if (!plr->btuse_tics)
     {
-      M_snprintf(hud_timestr + offset, sizeof(hud_timestr), "\x1b%c%d:%05.2f\t",
-                 '0'+hudcolor_time, leveltime / TICRATE / 60,
+      M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer), "\x1b%c%d:%05.2f\t",
+                 '0'+hudcolor_time, leveltime / TICRATE / 60, // [Nugget] Color
                  (float)(leveltime % (60 * TICRATE)) / TICRATE);
     }
   }
@@ -1559,14 +1668,14 @@ static void HU_widget_build_sttime(void)
     const int type = plr->eventtype;
 
     // [Nugget] Support other events
-    M_snprintf(hud_timestr + offset, sizeof(hud_timestr), "\x1b%c%c %d:%05.2f\t",
+    M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer), "\x1b%c%c %d:%05.2f\t",
                '0'+hudcolor_event_timer,
                type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
                plr->btuse / TICRATE / 60, 
                (float)(plr->btuse % (60 * TICRATE)) / TICRATE);
   }
 
-  HUlib_add_string_to_cur_line(&w_sttime, hud_timestr);
+  HUlib_add_string_to_cur_line(&w_sttime, hud_stringbuffer);
 }
 
 void HU_widget_rebuild_sttime(void)
@@ -1577,37 +1686,37 @@ void HU_widget_rebuild_sttime(void)
 // [Nugget] Powerup timers
 static void HU_widget_build_powers(void)
 {
-  char hud_powerstr[48];
+  InitStringBuffer("");
   int offset = 0;
 
   // TO-DO: Multi-lined?
 
-  #define POWERUP_TIMER(_power_, _powerdur_, _numicon_, _string_, _color_, _last_) \
-    if (plr->powers[_power_] > 0)                                                  \
-    {                                                                              \
-      const boolean runout = POWER_RUNOUT(plr->powers[_power_]);                   \
-                                                                                   \
-      if (hud_allow_icons && icon_available[_numicon_])                            \
-      {                                                                            \
-        offset += M_snprintf(                                                      \
-          hud_powerstr + offset, sizeof(hud_powerstr) - offset, "\x1b%c%c\x1b%c",  \
-          '0' + (runout ? CR_NONE : CR_BLACK),                                     \
-          (char) (HU_FONTEND + 7 + _numicon_),                                     \
-          '0' + (runout ? _color_ : CR_BLACK)                                      \
-        );                                                                         \
-      }                                                                            \
-      else {                                                                       \
-        offset += M_snprintf(                                                      \
-          hud_powerstr + offset, sizeof(hud_powerstr) - offset, "\x1b%c" _string_, \
-          '0' + (runout ? _color_ : CR_BLACK)                                      \
-        );                                                                         \
-      }                                                                            \
-                                                                                   \
-      offset += M_snprintf(                                                        \
-        hud_powerstr + offset, sizeof(hud_powerstr) - offset, " %i\"%s",           \
-        MIN(_powerdur_/TICRATE, 1 + (plr->powers[_power_] / TICRATE)),             \
-        !_last_ ? " " : ""                                                         \
-      );                                                                           \
+  #define POWERUP_TIMER(_power_, _powerdur_, _numicon_, _string_, _color_, _last_)         \
+    if (plr->powers[_power_] > 0)                                                          \
+    {                                                                                      \
+      const boolean runout = POWER_RUNOUT(plr->powers[_power_]);                           \
+                                                                                           \
+      if (hud_allow_icons && icon_available[_numicon_])                                    \
+      {                                                                                    \
+        offset += M_snprintf(                                                              \
+          hud_stringbuffer + offset, sizeof(hud_stringbuffer) - offset, "\x1b%c%c\x1b%c",  \
+          '0' + (runout ? CR_NONE : CR_BLACK),                                             \
+          (char) (HU_FONTEND + 7 + _numicon_),                                             \
+          '0' + (runout ? _color_ : CR_BLACK)                                              \
+        );                                                                                 \
+      }                                                                                    \
+      else {                                                                               \
+        offset += M_snprintf(                                                              \
+          hud_stringbuffer + offset, sizeof(hud_stringbuffer) - offset, "\x1b%c" _string_, \
+          '0' + (runout ? _color_ : CR_BLACK)                                              \
+        );                                                                                 \
+      }                                                                                    \
+                                                                                           \
+      offset += M_snprintf(                                                                \
+        hud_stringbuffer + offset, sizeof(hud_stringbuffer) - offset, " %i\"%s",           \
+        MIN(_powerdur_/TICRATE, 1 + (plr->powers[_power_] / TICRATE)),                     \
+        !_last_ ? " " : ""                                                                 \
+      );                                                                                   \
     }
 
   POWERUP_TIMER(pw_invisibility,    INVISTICS,  3, "INVIS", CR_RED,   false);
@@ -1615,15 +1724,21 @@ static void HU_widget_build_powers(void)
   POWERUP_TIMER(pw_infrared,        INFRATICS,  5, "LIGHT", CR_BRICK, false);
   POWERUP_TIMER(pw_ironfeet,        IRONTICS,   6, "SUIT",  CR_GRAY,  true);
 
-  if (offset) { HUlib_add_string_to_cur_line(&w_powers, hud_powerstr); }
+  if (offset) { HUlib_add_string_to_cur_line(&w_powers, hud_stringbuffer); }
   else        { HUlib_clear_cur_line(&w_powers); }
 }
 
 static void HU_widget_build_coord (void)
 {
-  char hud_coordstr[HU_MAXLINELENGTH];
   fixed_t x,y,z; // killough 10/98:
   void AM_Coordinates(const mobj_t *, fixed_t *, fixed_t *, fixed_t *);
+
+  if (hud_player_coords == HUD_WIDGET_ADVANCED)
+  {
+    HU_BuildCoordinatesEx(&w_coord, plr->mo, hud_stringbuffer,
+                          sizeof(hud_stringbuffer));
+    return;
+  }
 
   // killough 10/98: allow coordinates to display non-following pointer
   AM_Coordinates(plr->mo, &x, &y, &z);
@@ -1631,49 +1746,45 @@ static void HU_widget_build_coord (void)
   //jff 2/16/98 output new coord display
   if (MULTILINE(nughud.coord_ml)) // [Nugget] NUGHUD
   {
-    M_snprintf(hud_coordstr, sizeof(hud_coordstr), "X\t\x1b%c%d", '0'+CR_GRAY, x >> FRACBITS);
-    HUlib_add_string_to_cur_line(&w_coord, hud_coordstr);
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer), "X\t\x1b%c%d", '0'+CR_GRAY, x >> FRACBITS);
+    HUlib_add_string_to_cur_line(&w_coord, hud_stringbuffer);
 
-    M_snprintf(hud_coordstr, sizeof(hud_coordstr), "Y\t\x1b%c%d", '0'+CR_GRAY, y >> FRACBITS);
-    HUlib_add_string_to_cur_line(&w_coord, hud_coordstr);
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer), "Y\t\x1b%c%d", '0'+CR_GRAY, y >> FRACBITS);
+    HUlib_add_string_to_cur_line(&w_coord, hud_stringbuffer);
 
-    M_snprintf(hud_coordstr, sizeof(hud_coordstr), "Z\t\x1b%c%d", '0'+CR_GRAY, z >> FRACBITS);
-    HUlib_add_string_to_cur_line(&w_coord, hud_coordstr);
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer), "Z\t\x1b%c%d", '0'+CR_GRAY, z >> FRACBITS);
+    HUlib_add_string_to_cur_line(&w_coord, hud_stringbuffer);
   }
   else
   {
-    M_snprintf(hud_coordstr, sizeof(hud_coordstr), "X \x1b%c%d \x1b%cY \x1b%c%d \x1b%cZ \x1b%c%d",
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer), "X \x1b%c%d \x1b%cY \x1b%c%d \x1b%cZ \x1b%c%d",
             '0'+CR_GRAY, x >> FRACBITS, '0'+hudcolor_xyco,
             '0'+CR_GRAY, y >> FRACBITS, '0'+hudcolor_xyco,
             '0'+CR_GRAY, z >> FRACBITS);
 
-    HUlib_add_string_to_cur_line(&w_coord, hud_coordstr);
+    HUlib_add_string_to_cur_line(&w_coord, hud_stringbuffer);
   }
 }
 
 static void HU_widget_build_fps (void)
 {
-  char hud_fpsstr[HU_MAXLINELENGTH/4];
-
-  M_snprintf(hud_fpsstr, sizeof(hud_fpsstr), "\x1b%c%d \x1b%cFPS",
+  M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer), "\x1b%c%d \x1b%cFPS",
              '0'+CR_GRAY, fps, '0'+CR_ORIG);
-  HUlib_add_string_to_cur_line(&w_fps, hud_fpsstr);
+  HUlib_add_string_to_cur_line(&w_fps, hud_stringbuffer);
 }
 
 static void HU_widget_build_rate (void)
 {
-  char hud_ratestr[HU_MAXLINELENGTH];
-
-  M_snprintf(hud_ratestr, sizeof(hud_ratestr),
+  M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
              "Sprites %4d Segs %4d Visplanes %4d   \x1b%cFPS %3d %dx%d\x1b%c",
              rendered_vissprites, rendered_segs, rendered_visplanes,
              '0'+CR_GRAY, fps, video.width, video.height, '0'+CR_ORIG);
-  HUlib_add_string_to_cur_line(&w_rate, hud_ratestr);
+  HUlib_add_string_to_cur_line(&w_rate, hud_stringbuffer);
 
   if (voxels_rendering)
   {
-    M_snprintf(hud_ratestr, sizeof(hud_ratestr), " Voxels %4d", rendered_voxels);
-    HUlib_add_string_to_cur_line(&w_rate, hud_ratestr);
+    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer), " Voxels %4d", rendered_voxels);
+    HUlib_add_string_to_cur_line(&w_rate, hud_stringbuffer);
   }
 }
 
@@ -2192,7 +2303,8 @@ void HU_Ticker(void)
     HU_cond_build_widget(w_stats, hud_level_stats & HUD_WIDGET_AUTOMAP);
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_AUTOMAP || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_AUTOMAP && SHOWPOWERS); // [Nugget] Powerup timers
-    HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_AUTOMAP);
+    HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords == HUD_WIDGET_AUTOMAP
+                                              || hud_player_coords >= HUD_WIDGET_ALWAYS));
 
     title_on = true;
   }
@@ -2201,7 +2313,7 @@ void HU_Ticker(void)
     HU_cond_build_widget(w_stats, hud_level_stats & HUD_WIDGET_HUD);
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_HUD || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_HUD && SHOWPOWERS); // [Nugget] Powerup timers
-    HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_HUD);
+    HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords >= HUD_WIDGET_HUD));
 
     title_on = (title_counter > 0);
   }
@@ -2219,7 +2331,9 @@ void HU_Ticker(void)
     if (hud_type == HUD_TYPE_CRISPY)
     {
       if (hud_active > 0)
+      {
         draw_crispy_hud = true;
+      }
     }
     else
     {
@@ -2228,6 +2342,8 @@ void HU_Ticker(void)
       HU_cond_build_widget(&w_health, true);
       HU_cond_build_widget(&w_ammo, true);
       HU_cond_build_widget(&w_keys, true);
+
+      HU_cond_build_widget(&w_compact, true);
     }
   }
 
@@ -2551,6 +2667,8 @@ static const struct {
     {"keys",    NULL,     &w_keys},
     {"weapon", "weapons", &w_weapon},
 
+    {"compact", NULL,     &w_compact},
+
     {"monsec", "stats",   &w_monsec},
     {"sttime", "time",    &w_sttime},
     {"powers",  NULL,     &w_powers}, // [Nugget] Powerup Timers
@@ -2848,9 +2966,9 @@ void HU_BindHUDVariables(void)
             ss_stat, wad_no,
             "Show level time widget (1 = On automap; 2 = On HUD; 3 = Always)");
   M_BindNum("hud_player_coords", &hud_player_coords, NULL,
-            HUD_WIDGET_AUTOMAP, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
+            HUD_WIDGET_AUTOMAP, HUD_WIDGET_OFF, HUD_WIDGET_ADVANCED,
             ss_stat, wad_no,
-            "Show player coordinates widget (1 = On automap; 2 = On HUD; 3 = Always)");
+            "Show player coordinates widget (1 = On automap; 2 = On HUD; 3 = Always; 4 = Advanced)");
   M_BindBool("hud_command_history", &hud_command_history, NULL, false, ss_stat,
              wad_no, "Show command history widget");
   BIND_NUM(hud_command_history_size, 10, 1, HU_MAXMESSAGES,

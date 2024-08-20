@@ -1630,8 +1630,6 @@ static void M_EndGame(int choice)
 
 static void M_ChangeMessages(int choice)
 {
-    // warning: unused parameter `int choice'
-    choice = 0;
     show_messages = 1 - show_messages;
 
     if (!show_messages)
@@ -1722,7 +1720,6 @@ static menu_t ExtHelpDef = {
 
 static void M_ExtHelpNextScreen(int choice)
 {
-    choice = 0;
     if (++extended_help_index > extended_help_count)
     {
 
@@ -1772,7 +1769,6 @@ static void M_InitExtendedHelp(void)
 
 static void M_ExtHelp(int choice)
 {
-    choice = 0;
     extended_help_index = 1; // Start with first extended help screen
     SetNextMenu(&ExtHelpDef);
 }
