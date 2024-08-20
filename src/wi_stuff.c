@@ -546,11 +546,11 @@ static void WI_drawEL(void)
   {
     patch_t* lpic = V_CachePatchName(wbs->nextmapinfo->levelpic, PU_CACHE);
 
-    y += (5 * SHORT(lpic->height)) / 4;
+    if (SHORT(lnames[wbs->next]->height) < SCREENHEIGHT)
+      y += (5 * SHORT(lpic->height)) / 4;
 
     // [Nugget] HUD/menu shadows
-    V_DrawPatchSH((SCREENWIDTH - SHORT(lpic->width))/2,
-                  y, lpic);
+    V_DrawPatchSH((SCREENWIDTH - SHORT(lpic->width))/2, y, lpic);
   }
   // [FG] prevent crashes for levels without name graphics
   else if (wbs->next >= 0 && wbs->next < num_lnames && lnames[wbs->next] != NULL)

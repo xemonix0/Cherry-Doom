@@ -108,59 +108,20 @@ static boolean W_ZIP_AddDir(w_handle_t handle, const char *path,
 
     boolean is_root = (path[0] == '.');
 
-    int index = 0;
-
     char *dir = M_StringDuplicate(path);
-
-    if (!is_root)
-    {
-        ConvertSlashes(dir);
-
-        char *s = M_StringJoin(dir, "/");
-        index = mz_zip_reader_locate_file(zip, s, NULL, 0);
-        free(s);
-
-        if (index < 0)
-        {
-            free(dir);
-            return false;
-        }
-
-        ++index;
-    }
+    ConvertSlashes(dir);
 
     int startlump = numlumps;
 
-    char *subdir = NULL;
-
-    for ( ; index < mz_zip_reader_get_num_files(zip); ++index)
+    for (int index = 0 ; index < mz_zip_reader_get_num_files(zip); ++index)
     {
         mz_zip_archive_file_stat stat;
         mz_zip_reader_file_stat(zip, index, &stat);
 
         if (stat.m_is_directory)
         {
-            if (subdir)
-            {
-                free(subdir);
-            }
-            subdir = M_StringDuplicate(stat.m_filename);
-            subdir[strlen(subdir) - 1] = '\0';
             continue;
         }
-
-        char *name = M_DirName(stat.m_filename);
-        if (subdir && !strcasecmp(name, subdir))
-        {
-            free(name);
-            continue;
-        }
-        else if (strcasecmp(name, dir))
-        {
-            free(name);
-            break;
-        }
-        free(name);
 
         if (is_root && M_StringCaseEndsWith(stat.m_filename, ".wad"))
         {
@@ -168,6 +129,14 @@ static boolean W_ZIP_AddDir(w_handle_t handle, const char *path,
                         stat.m_uncomp_size);
             continue;
         }
+
+        char *name = M_DirName(stat.m_filename);
+        if (strcasecmp(name, dir))
+        {
+            free(name);
+            continue;
+        }
+        free(name);
 
         if (W_SkipFile(stat.m_filename))
         {
@@ -197,10 +166,6 @@ static boolean W_ZIP_AddDir(w_handle_t handle, const char *path,
         W_AddMarker(end_marker);
     }
 
-    if (subdir)
-    {
-        free(subdir);
-    }
     free(dir);
     return true;
 }
