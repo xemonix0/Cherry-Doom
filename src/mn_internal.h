@@ -106,7 +106,7 @@ void MN_DrawCustomSkill(void);
 #define S_HILITE      0x00000001 // Cursor is sitting on this item
 #define S_SELECT      0x00000002 // We're changing this item
 #define S_TITLE       0x00000004 // Title item
-
+#define S_FUNC        0x00000008 // Call var.func() on MENU_ENTER
 #define S_CRITEM      0x00000010 // Message color
 #define S_RESET       0x00000020 // Reset to Defaults Button
 #define S_INPUT       0x00000040 // Composite input
@@ -138,7 +138,7 @@ void MN_DrawCustomSkill(void);
 // [Nugget]
 #define S_CRITICAL    0x0000000100000000 // Disable during non-casual play
 #define S_RES         0x0000000200000000 // Report current resolution
-#define S_FUNCTION    0x0000000400000000 // Used only to call a function
+#define S_FUNC2       0x0000000400000000 // Like `S_FUNC`, but with confirmation
 
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
@@ -147,11 +147,12 @@ void MN_DrawCustomSkill(void);
 
 #define S_SHOWDESC                                                       \
     (S_TITLE | S_ONOFF | S_CRITEM | S_RESET | S_INPUT | S_WEAP | S_NUM   \
-     | S_CREDIT | S_CHOICE | S_THERMO                                    \
-     | S_FUNCTION) // [Nugget]
+     | S_CREDIT | S_CHOICE | S_THERMO | S_FUNC                           \
+     | S_FUNC2) // [Nugget]
 
 #define S_SHOWSET \
-    (S_ONOFF | S_CRITEM | S_INPUT | S_WEAP | S_NUM | S_CHOICE | S_THERMO)
+    (S_ONOFF | S_CRITEM | S_INPUT | S_WEAP | S_NUM | S_CHOICE | S_THERMO \
+     | S_FUNC)
 
 #define S_HASDEFPTR \
     (S_ONOFF | S_NUM | S_WEAP | S_CRITEM | S_CHOICE | S_THERMO)
@@ -168,7 +169,7 @@ typedef enum
     m_null, // Has no meaning; not applicable
     m_scrn, // A key can not be assigned to more than one action
     m_map,  // in the same group. A key can be assigned to one
-            // action in one group, and another action in another.
+    m_gyro, // action in one group, and another action in another.
 } setup_group;
 
 /////////////////////////////
@@ -200,6 +201,7 @@ typedef struct setup_menu_s
         void *var;             // generic variable
         char *name;            // name
         struct default_s *def; // default[] table entry
+        void (*func)(void);    // called on MENU_ENTER with S_FUNC flag
     } var;
 
     setup_group m_group;  // group
@@ -207,6 +209,7 @@ typedef struct setup_menu_s
     int strings_id;       // [FG] selection of choices
     void (*action)(void); // killough 10/98: function to call after changing
     mrect_t rect;
+    char *desc;           // overrides default description
 } setup_menu_t;
 
 // phares 4/21/98: Moved from m_misc.c so m_menu.c could see it.

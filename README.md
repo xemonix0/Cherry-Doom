@@ -328,6 +328,13 @@ Copyright:
  © 2023 liPillON.   
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
+Files: `src/i_flickstick.*, src/i_gyro.*`  
+Copyright:  
+ © 2018-2021 Julian "Jibb" Smart;  
+ © 2021-2024 Nicolas Lessard;  
+ © 2024 ceski.  
+License: [MIT](https://opensource.org/licenses/MIT)
+
 Files: `src/nano_bsp.*`  
 Copyright: © 2023 Andrew Apted.  
 License: [MIT](https://opensource.org/licenses/MIT)

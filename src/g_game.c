@@ -43,6 +43,7 @@
 #include "hu_obituary.h"
 #include "hu_stuff.h"
 #include "i_gamepad.h"
+#include "i_gyro.h"
 #include "i_input.h"
 #include "i_printf.h"
 #include "i_system.h"
@@ -389,7 +390,7 @@ boolean dclick;
 
 static ticcmd_t basecmd;
 
-boolean joybuttons[NUM_CONTROLLER_BUTTONS];
+boolean joybuttons[NUM_GAMEPAD_BUTTONS];
 
 int   savegameslot = -1;
 char  savedescription[32];
@@ -605,17 +606,20 @@ void G_UpdateLocalViewFunction(void)
 static int quickstart_cache_tics;
 static boolean quickstart_queued;
 static float axis_turn_tic;
+static float gyro_turn_tic;
 static int mousex_tic;
 
 static void ClearQuickstartTic(void)
 {
   axis_turn_tic = 0.0f;
+  gyro_turn_tic = 0.0f;
   mousex_tic = 0;
 }
 
 static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
 {
   static float axis_turn_cache[TICRATE];
+  static float gyro_turn_cache[TICRATE];
   static int mousex_cache[TICRATE];
   static short angleturn_cache[TICRATE];
   static int index;
@@ -628,6 +632,7 @@ static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
   if (quickstart_queued)
   {
     axes[AXIS_TURN] = 0.0f;
+    gyro_axes[GYRO_TURN] = 0.0f;
     mousex = 0;
 
     if (strafe)
@@ -635,6 +640,7 @@ static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
       for (int i = 0; i < quickstart_cache_tics; i++)
       {
         axes[AXIS_TURN] += axis_turn_cache[i];
+        gyro_axes[GYRO_TURN] += gyro_turn_cache[i];
         mousex += mousex_cache[i];
       }
 
@@ -655,6 +661,7 @@ static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
     }
 
     memset(axis_turn_cache, 0, sizeof(axis_turn_cache));
+    memset(gyro_turn_cache, 0, sizeof(gyro_turn_cache));
     memset(mousex_cache, 0, sizeof(mousex_cache));
     memset(angleturn_cache, 0, sizeof(angleturn_cache));
     index = 0;
@@ -664,6 +671,7 @@ static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
   else
   {
     axis_turn_cache[index] = axis_turn_tic;
+    gyro_turn_cache[index] = gyro_turn_tic;
     mousex_cache[index] = mousex_tic;
     angleturn_cache[index] = cmd->angleturn;
     index = (index + 1) % quickstart_cache_tics;
@@ -701,9 +709,9 @@ void G_PrepMouseTiccmd(void)
   }
 }
 
-void G_PrepControllerTiccmd(void)
+void G_PrepGamepadTiccmd(void)
 {
-  if (I_UseController() && I_CalcControllerAxes())
+  if (I_UseGamepad())
   {
     // [Nugget] Decrease the intensity of some movements if zoomed in /---------
 
@@ -719,21 +727,60 @@ void G_PrepControllerTiccmd(void)
 
     // [Nugget] ---------------------------------------------------------------/
 
-    G_UpdateDeltaTics();
+    const boolean strafe = M_InputGameActive(input_strafe);
+
+    I_CalcGamepadAxes(strafe);
     axis_turn_tic = axes[AXIS_TURN];
 
-    if (axes[AXIS_TURN] && !M_InputGameActive(input_strafe))
+    if (axes[AXIS_TURN] && !strafe)
     {
-      localview.rawangle -= G_CalcControllerAngle() / zoomdiv;
+      localview.rawangle -= G_CalcGamepadAngle() / zoomdiv;
       basecmd.angleturn = G_CarryAngle(localview.rawangle);
       axes[AXIS_TURN] = 0.0f;
     }
 
     if (axes[AXIS_LOOK] && padlook)
     {
-      localview.rawpitch -= G_CalcControllerPitch() / zoomdiv;
+      localview.rawpitch -= G_CalcGamepadPitch() / zoomdiv;
       basecmd.pitch = G_CarryPitch(localview.rawpitch);
       axes[AXIS_LOOK] = 0.0f;
+    }
+  }
+}
+
+void G_PrepGyroTiccmd(void)
+{
+  if (I_UseGamepad())
+  {
+    // [Nugget] Decrease the intensity of some movements if zoomed in /---------
+
+    float zoomdiv = 1.0f;
+
+    if (!strictmode)
+    {
+      const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+
+      if (zoom)
+      { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+    }
+
+    // [Nugget] ---------------------------------------------------------------/
+
+    I_CalcGyroAxes(M_InputGameActive(input_strafe));
+    gyro_turn_tic = gyro_axes[GYRO_TURN];
+
+    if (gyro_axes[GYRO_TURN])
+    {
+      localview.rawangle += gyro_axes[GYRO_TURN] / zoomdiv;
+      basecmd.angleturn = G_CarryAngle(localview.rawangle);
+      gyro_axes[GYRO_TURN] = 0.0f;
+    }
+
+    if (gyro_axes[GYRO_LOOK])
+    {
+      localview.rawpitch += gyro_axes[GYRO_LOOK] * FRACUNIT / zoomdiv;
+      basecmd.pitch = G_CarryPitch(localview.rawpitch);
+      gyro_axes[GYRO_LOOK] = 0.0f;
     }
   }
 }
@@ -764,7 +811,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   if (!uncapped || !raw_input)
   {
     G_PrepMouseTiccmd();
-    G_PrepControllerTiccmd();
+    G_PrepGamepadTiccmd();
+    G_PrepGyroTiccmd();
   }
 
   memcpy(cmd, &basecmd, sizeof(*cmd));
@@ -825,21 +873,21 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   // Gamepad
 
-  if (I_UseController())
+  if (I_UseGamepad())
   {
     if (axes[AXIS_TURN] && strafe && !cmd->angleturn)
     {
-      side += G_CalcControllerSideTurn(speed);
+      side += G_CalcGamepadSideTurn(speed);
     }
 
     if (axes[AXIS_STRAFE])
     {
-      side += G_CalcControllerSideStrafe(speed);
+      side += G_CalcGamepadSideStrafe(speed);
     }
 
     if (axes[AXIS_FORWARD])
     {
-      forward -= G_CalcControllerForward(speed);
+      forward -= G_CalcGamepadForward(speed);
     }
   }
 
@@ -879,7 +927,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   cmd->sidemove = side;
 
   ClearQuickstartTic();
-  I_ResetControllerAxes();
+  I_ResetGamepadAxes();
+  I_ResetGyroAxes();
   mousex = mousey = 0;
   UpdateLocalView();
   G_UpdateCarry();
@@ -1077,7 +1126,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 void G_ClearInput(void)
 {
   ClearQuickstartTic();
-  I_ResetControllerLevel();
+  I_ResetGamepadState();
+  I_FlushGamepadSensorEvents();
   mousex = mousey = 0;
   ClearLocalView();
   G_ClearCarry();
@@ -1415,7 +1465,7 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
 static boolean G_StrictModeSkipEvent(event_t *ev)
 {
   static boolean enable_mouse = false;
-  static boolean enable_controller = false;
+  static boolean enable_gamepad = false;
   static boolean first_event = true;
 
   if (!strictmode || !demorecording)
@@ -1438,24 +1488,38 @@ static boolean G_StrictModeSkipEvent(event_t *ev)
         if (first_event)
         {
           first_event = false;
-          enable_controller = true;
+          enable_gamepad = true;
         }
-        return !enable_controller;
+        return !enable_gamepad;
 
     case ev_joystick:
         if (first_event)
         {
           I_UpdateAxesData(ev);
-          I_CalcControllerAxes();
+          I_CalcGamepadAxes(M_InputGameActive(input_strafe));
           if (axes[AXIS_STRAFE] || axes[AXIS_FORWARD] || axes[AXIS_TURN] ||
               axes[AXIS_LOOK])
           {
             first_event = false;
-            enable_controller = true;
+            enable_gamepad = true;
           }
-          I_ResetControllerLevel();
+          I_ResetGamepadState();
         }
-        return !enable_controller;
+        return !enable_gamepad;
+
+    case ev_gyro:
+        if (first_event)
+        {
+          I_UpdateGyroData(ev);
+          I_CalcGyroAxes(M_InputGameActive(input_strafe));
+          if (gyro_axes[GYRO_TURN] || gyro_axes[GYRO_LOOK])
+          {
+            first_event = false;
+            enable_gamepad = true;
+          }
+          I_ResetGamepadState();
+        }
+        return !enable_gamepad;
 
     default:
         break;
@@ -1474,13 +1538,17 @@ boolean G_MovementResponder(event_t *ev)
   switch (ev->type)
   {
     case ev_mouse:
-      mousex_tic += ev->data1;
-      mousex += ev->data1;
-      mousey -= ev->data2;
+      mousex_tic += ev->data1.i;
+      mousex += ev->data1.i;
+      mousey -= ev->data2.i;
       return true;
 
     case ev_joystick:
       I_UpdateAxesData(ev);
+      return true;
+
+    case ev_gyro:
+      I_UpdateGyroData(ev);
       return true;
 
     default:
@@ -1595,7 +1663,7 @@ boolean G_Responder(event_t* ev)
 
   if (dclick_use && ev->type == ev_mouseb_down &&
       (M_InputActivated(input_strafe) || M_InputActivated(input_forward)) &&
-      ev->data2 >= 2 && (ev->data2 % 2) == 0)
+      ev->data2.i >= 2 && (ev->data2.i % 2) == 0)
   {
     dclick = true;
   }
@@ -1614,33 +1682,33 @@ boolean G_Responder(event_t* ev)
   switch (ev->type)
     {
     case ev_keydown:
-	if (ev->data1 <NUMKEYS)
-	  gamekeydown[ev->data1] = true;
+      if (ev->data1.i < NUMKEYS)
+        gamekeydown[ev->data1.i] = true;
       return true;    // eat key down events
 
     case ev_keyup:
-      if (ev->data1 <NUMKEYS)
-        gamekeydown[ev->data1] = false;
+      if (ev->data1.i < NUMKEYS)
+        gamekeydown[ev->data1.i] = false;
       return false;   // always let key up events filter down
 
     case ev_mouseb_down:
-      if (ev->data1 < NUM_MOUSE_BUTTONS)
-        mousebuttons[ev->data1] = true;
+      if (ev->data1.i < NUM_MOUSE_BUTTONS)
+        mousebuttons[ev->data1.i] = true;
       return true;
 
     case ev_mouseb_up:
-      if (ev->data1 < NUM_MOUSE_BUTTONS)
-        mousebuttons[ev->data1] = false;
+      if (ev->data1.i < NUM_MOUSE_BUTTONS)
+        mousebuttons[ev->data1.i] = false;
       return true;
 
     case ev_joyb_down:
-      if (ev->data1 < NUM_CONTROLLER_BUTTONS)
-        joybuttons[ev->data1] = true;
+      if (ev->data1.i < NUM_GAMEPAD_BUTTONS)
+        joybuttons[ev->data1.i] = true;
       return true;
 
     case ev_joyb_up:
-      if (ev->data1 < NUM_CONTROLLER_BUTTONS)
-        joybuttons[ev->data1] = false;
+      if (ev->data1.i < NUM_GAMEPAD_BUTTONS)
+        joybuttons[ev->data1.i] = false;
       return true;
 
     default:

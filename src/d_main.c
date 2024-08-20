@@ -45,6 +45,7 @@
 #include "g_game.h"
 #include "hu_stuff.h"
 #include "i_endoom.h"
+#include "i_gamepad.h"
 #include "i_glob.h"
 #include "i_input.h"
 #include "i_printf.h"
@@ -216,7 +217,16 @@ void D_PostEvent(event_t *ev)
       if (uncapped && raw_input)
       {
         G_MovementResponder(ev);
-        G_PrepControllerTiccmd();
+        G_PrepGamepadTiccmd();
+        return;
+      }
+      break;
+
+    case ev_gyro:
+      if (uncapped && raw_input)
+      {
+        G_MovementResponder(ev);
+        G_PrepGyroTiccmd();
         return;
       }
       break;
@@ -248,8 +258,6 @@ void D_ProcessEvents (void)
 // D_Display
 //  draw current display, possibly wiping it from the previous
 //
-
-boolean input_ready;
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate = GS_DEMOSCREEN;
@@ -283,14 +291,12 @@ void D_Display (void)
   st_crispyhud = (hud_type == HUD_TYPE_CRISPY) && hud_displayed && automap_off
                  && hud_active > 0; // [Nugget] NUGHUD
 
-  input_ready = (!menuactive && ((gamestate == GS_LEVEL && !paused) || R_GetFreecamOn())); // [Nugget] Freecam
-
   if (uncapped)
   {
     // [AM] Figure out how far into the current tic we're in as a fixed_t.
     fractionaltic = I_GetFracTime();
 
-    if (input_ready && raw_input)
+    if (!menuactive && gamestate == GS_LEVEL && !paused && raw_input)
     {
       I_StartDisplay();
     }
@@ -2593,7 +2599,7 @@ void D_DoomMain(void)
 
   I_Printf(VB_INFO, "I_Init: Setting up machine state.");
   I_InitTimer();
-  I_InitController();
+  I_InitGamepad();
   I_InitSound();
   I_InitMusic();
 
@@ -2611,7 +2617,7 @@ void D_DoomMain(void)
   G_UpdateSideMove();
   G_UpdateAngleFunctions();
   G_UpdateLocalViewFunction();
-  G_UpdateControllerVariables();
+  G_UpdateGamepadVariables();
   G_UpdateMouseVariables();
   R_UpdateViewAngleFunction();
 
