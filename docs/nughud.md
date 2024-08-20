@@ -103,6 +103,7 @@ The following text lines are available:
 | `nughud_fps`     | FPS display, only shown when the `FPS` cheat is activated |
 | `nughud_rate`    | Rendering-statistics display, only shown when the `IDRATE` cheat is activated |
 | `nughud_cmd`     | Command-history display, only shown if enabled by the user |
+| `nughud_speed`   | Speedometer, only shown when the `SPEED` cheat is activated |
 | `nughud_message` | Message and Chat display |
 | `nughud_secret`  | "Secret Revealed" and milestone-completion message display |
 

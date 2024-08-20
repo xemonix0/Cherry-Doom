@@ -716,7 +716,8 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 		HU_UpdateCrosshairLock
 		(
 			BETWEEN(0, viewwidth  - 1, (centerxfrac + FixedMul(tx, xscale)) >> FRACBITS),
-			BETWEEN(0, viewheight - 1, (centeryfrac + FixedMul(viewz - gz - crosshair_target->actualheight/2, xscale)) >> FRACBITS)
+      // [Nugget] Removed `actualheight`
+			BETWEEN(0, viewheight - 1, (centeryfrac + FixedMul(viewz - gz - crosshair_target->height/2, xscale)) >> FRACBITS)
 		);
 
 		crosshair_target = NULL; // Don't update it again until next tic
