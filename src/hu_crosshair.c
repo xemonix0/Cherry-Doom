@@ -31,21 +31,37 @@
 #include "v_fmt.h"
 #include "v_video.h"
 
+// [Nugget]
+#include "am_map.h"
+#include "g_game.h"
+#include "m_nughud.h"
+
 static player_t *plr = players;
 
 int hud_crosshair;
 
 crosstarget_t hud_crosshair_target;
 boolean hud_crosshair_health;
-boolean hud_crosshair_lockon; // [Alaux] Crosshair locks on target
+crosslockon_t hud_crosshair_lockon; // [Alaux] Crosshair locks on target
 int hud_crosshair_color;
 int hud_crosshair_target_color;
+
+// [Nugget]
+boolean hud_crosshair_on; // Crosshair toggle
+int     hud_crosshair_tran_pct; // Translucent crosshair
+boolean hud_crosshair_indicators; // Horizontal-autoaim indicators
+boolean hud_crosshair_fuzzy; // Account for fuzzy targets
 
 typedef struct
 {
     patch_t *patch;
     int w, h, x, y;
     byte *cr;
+
+    // [Nugget] Horizontal-autoaim indicators
+    patch_t *lpatch, *rpatch;
+    int lw, lh, rw, rh;
+    int side;
 } crosshair_t;
 
 static crosshair_t crosshair;
@@ -97,6 +113,19 @@ void HU_StartCrosshair(void)
     {
         crosshair.patch = NULL;
     }
+
+    // [Nugget] Horizontal-autoaim indicators --------------------------------
+
+    if (crosshair.lpatch) { Z_ChangeTag(crosshair.lpatch, PU_CACHE); }
+    if (crosshair.rpatch) { Z_ChangeTag(crosshair.rpatch, PU_CACHE); }
+
+    crosshair.lpatch = V_CachePatchName("CROSSIL", PU_STATIC);
+    crosshair.lw = SHORT(crosshair.lpatch->width);
+    crosshair.lh = SHORT(crosshair.lpatch->height)/2;
+
+    crosshair.rpatch = V_CachePatchName("CROSSIR", PU_STATIC);
+    crosshair.rw = SHORT(crosshair.rpatch->width);
+    crosshair.rh = SHORT(crosshair.rpatch->height)/2;
 }
 
 mobj_t *crosshair_target; // [Alaux] Lock crosshair on target
@@ -108,6 +137,14 @@ void HU_UpdateCrosshair(void)
     crosshair.x = SCREENWIDTH / 2;
     crosshair.y = (screenblocks <= 10) ? (SCREENHEIGHT - ST_HEIGHT) / 2
                                        : SCREENHEIGHT / 2;
+
+    // [Nugget] Freecam
+    if (R_GetFreecamOn()) {
+      crosshair.cr = colrngs[hud_crosshair_color];
+      return;
+    }
+
+    crosshair.side = 0; // [Nugget] Horizontal-autoaim indicators
 
     if (hud_crosshair_health)
     {
@@ -122,27 +159,35 @@ void HU_UpdateCrosshair(void)
     {
         angle_t an = plr->mo->angle;
         ammotype_t ammo = weaponinfo[plr->readyweapon].ammo;
-        fixed_t range = (ammo == am_noammo) ? MELEERANGE : 16 * 64 * FRACUNIT;
+        fixed_t range = (ammo == am_noammo
+                         && !(plr->readyweapon == wp_fist && plr->cheats & CF_SAITAMA)) // [Nugget]
+                        ? MELEERANGE : 16 * 64 * FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1); // [Nugget]
         boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
 
         crosshair_target = linetarget = NULL;
 
         overflow[emu_intercepts].enabled = false;
         P_AimLineAttack(plr->mo, an, range, CROSSHAIR_AIM);
-        if (!direct_vertical_aiming && (ammo == am_misl || ammo == am_cell))
+        if (!vertical_aiming && (ammo == am_misl || ammo == am_cell)
+            && (!no_hor_autoaim || !casual_play)) // [Nugget]
         {
             if (!linetarget)
             {
                 P_AimLineAttack(plr->mo, an + (1 << 26), range, CROSSHAIR_AIM);
+
+                if (linetarget && hud_crosshair_indicators) { crosshair.side = -1; } // [Nugget]
             }
             if (!linetarget)
             {
                 P_AimLineAttack(plr->mo, an - (1 << 26), range, CROSSHAIR_AIM);
+
+                if (linetarget && hud_crosshair_indicators) { crosshair.side = 1; } // [Nugget]
             }
         }
         overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 
-        if (linetarget && !(linetarget->flags & MF_SHADOW))
+        if (linetarget && (!(linetarget->flags & MF_SHADOW)
+                           || hud_crosshair_fuzzy)) // [Nugget]
         {
             crosshair_target = linetarget;
         }
@@ -172,21 +217,52 @@ void HU_UpdateCrosshairLock(int x, int y)
     x = viewwindowx + BETWEEN(w, viewwidth - w - 1, x);
     y = viewwindowy + BETWEEN(h, viewheight - h - 1, y);
 
-    crosshair.x = (x << FRACBITS) / video.xscale - video.deltaw;
+    // [Nugget] Vertical-only lock-on
+    if (hud_crosshair_lockon == crosslockon_full)
+      crosshair.x = (x << FRACBITS) / video.xscale - video.deltaw;
+
     crosshair.y = (y << FRACBITS) / video.yscale;
 }
 
 void HU_DrawCrosshair(void)
 {
-    if (plr->playerstate != PST_LIVE || automapactive || menuactive || paused)
+    if (plr->playerstate != PST_LIVE || automapactive == AM_FULL || menuactive || paused
+      // [Nugget] New conditions
+      // Crash fix
+      || !crosshair.cr
+      // Chasecam
+      || (R_GetChasecamOn() && !chasecam_crosshair)
+      // Freecam
+      || (R_GetFreecamOn() && (R_GetFreecamMode() != FREECAM_CAM || R_GetFreecamMobj()))
+      // Alt. intermission background
+      || (gamestate == GS_INTERMISSION))
     {
         return;
     }
 
+    // [Nugget] NUGHUD
+    const int y = crosshair.y + (nughud.viewoffset * STRICTMODE(st_crispyhud));
+
     if (crosshair.patch)
     {
-        V_DrawPatchTranslated(crosshair.x - crosshair.w,
-                              crosshair.y - crosshair.h, crosshair.patch,
-                              crosshair.cr);
+        // [Nugget] Translucent crosshair
+        V_DrawPatchTranslatedTL(crosshair.x - crosshair.w,
+                                          y - crosshair.h, crosshair.patch,
+                                crosshair.cr, xhair_tranmap);
+    }
+
+    // [Nugget] Horizontal-autoaim indicators --------------------------------
+
+    if (crosshair.side == -1)
+    {
+        V_DrawPatchTranslatedTL(crosshair.x - crosshair.w - crosshair.lw,
+                                          y - crosshair.lh,
+                                crosshair.lpatch, crosshair.cr, xhair_tranmap);
+    }
+    else if (crosshair.side == 1)
+    {
+        V_DrawPatchTranslatedTL(crosshair.x + crosshair.w,
+                                          y - crosshair.rh,
+                                crosshair.rpatch, crosshair.cr, xhair_tranmap);
     }
 }

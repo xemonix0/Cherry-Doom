@@ -35,9 +35,25 @@ extern crosstarget_t hud_crosshair_target;
 extern struct mobj_s *crosshair_target;
 
 extern boolean hud_crosshair_health;
-extern boolean hud_crosshair_lockon;
+
+// [Nugget]
+typedef enum
+{
+  crosslockon_off,
+  crosslockon_vertical, // [Nugget] Vertical-only lock-on
+  crosslockon_full,
+} crosslockon_t;
+
+extern crosslockon_t hud_crosshair_lockon;
+
 extern int hud_crosshair_color;
 extern int hud_crosshair_target_color;
+
+// [Nugget]
+extern boolean hud_crosshair_on; // Crosshair toggle
+extern int     hud_crosshair_tran_pct; // Translucent crosshair
+extern boolean hud_crosshair_indicators; // Horizontal-autoaim indicators
+extern boolean hud_crosshair_fuzzy; // Account for fuzzy targets
 
 #define HU_CROSSHAIRS 10
 extern const char *crosshair_lumps[HU_CROSSHAIRS];

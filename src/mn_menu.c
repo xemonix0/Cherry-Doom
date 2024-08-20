@@ -63,6 +63,7 @@
 
 // [Nugget]
 #include "am_map.h"
+#include "hu_crosshair.h"
 #include "m_nughud.h"
 #include "st_stuff.h"
 
@@ -2435,8 +2436,7 @@ static boolean ShortcutResponder(const event_t *ev)
 
     if (M_InputActivated(input_crosshair))
     {
-        extern void HU_StartCrosshair(void),
-                    UpdateCrosshairItems(void);
+        extern void UpdateCrosshairItems(void);
         
         if ((hud_crosshair_on = !hud_crosshair_on))
         { HU_StartCrosshair(); }

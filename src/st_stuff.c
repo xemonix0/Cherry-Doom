@@ -1836,7 +1836,7 @@ void ST_initData(void)
   STlib_init();
 }
 
-int distributed_delta = 0; // [Nugget] Not static anymore
+int distributed_delta = 0; // [Nugget] Global
 
 static boolean sts_show_ssg; // [Nugget]
 

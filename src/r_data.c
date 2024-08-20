@@ -50,7 +50,7 @@
 #include "z_zone.h"
 
 // [Nugget]
-#include "hu_stuff.h"
+#include "hu_crosshair.h"
 
 //
 // Graphics.
