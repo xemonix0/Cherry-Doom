@@ -25,40 +25,31 @@
 #include "d_deh.h" /* Ty 03/27/98 - externalization of mapnamesx arrays */
 #include "d_event.h"
 #include "d_items.h"
-#include "d_player.h"
-#include "doomdef.h"
 #include "doomkeys.h"
 #include "doomstat.h"
-#include "doomtype.h"
 #include "dstrings.h"
 #include "hu_coordinates.h"
+#include "hu_crosshair.h"
 #include "hu_lib.h"
 #include "hu_obituary.h"
 #include "hu_stuff.h"
 #include "i_timer.h" // time_scale
 #include "i_video.h" // fps
 #include "m_config.h"
-#include "m_fixed.h"
 #include "m_input.h"
 #include "m_misc.h"
 #include "m_swap.h"
-#include "p_map.h" // crosshair (linetarget)
 #include "p_mobj.h"
-#include "r_data.h"
-#include "r_defs.h"
 #include "r_main.h"
 #include "r_state.h"
 #include "r_voxel.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "st_stuff.h" /* jff 2/16/98 need loc of status bar */
-#include "tables.h"
 #include "u_mapinfo.h"
 #include "u_scanner.h"
 #include "v_fmt.h"
 #include "v_video.h"
-#include "w_wad.h"
-#include "z_zone.h"
 
 // [Nugget]
 #include "am_map.h"
@@ -250,10 +241,6 @@ boolean hud_msg_scrollup;  // killough 11/98: allow messages to scroll upwards
 static int message_timer  = HU_MSGTIMEOUT * (1000/TICRATE);     // killough 11/98
 static int chat_msg_timer = HU_MSGTIMEOUT * (1000/TICRATE);     // killough 11/98
 
-static void HU_InitCrosshair(void);
-void HU_StartCrosshair(void); // [Nugget] Global
-boolean hud_crosshair_on; // [Nugget] Replace with crosshair toggle
-
 //
 // Builtin map names.
 // The actual names can be found in DStrings.h.
@@ -405,7 +392,7 @@ static crange_idx_e CRByHealth(int health, int maxhealth, boolean invul)
     return CR_BLUE;
 }
 
-static byte* ColorByHealth(int health, int maxhealth, boolean invul)
+byte* HU_ColorByHealth(int health, int maxhealth, boolean invul)
 {
   const crange_idx_e cr = CRByHealth(health, maxhealth, invul);
 
@@ -1082,7 +1069,8 @@ static void HU_widget_build_ammo (void)
     }
 
     // build the numeric amount init string
-    M_snprintf(hud_stringbuffer + i, sizeof(hud_stringbuffer), "%3d/%3d", ammo, fullammo);
+    M_snprintf(hud_stringbuffer + i, sizeof(hud_stringbuffer) - i,
+               "%3d/%3d", ammo, fullammo);
 
     const crange_idx_e cr = CRByAmmo(ammo, fullammo, ammopct);
     w_ammo.cr = colrngs[cr];
@@ -1130,10 +1118,11 @@ static void HU_widget_build_health (void)
   }
 
   // build the numeric amount init string
-  M_snprintf(hud_stringbuffer + i, sizeof(hud_stringbuffer), "%3d", st_health);
+  M_snprintf(hud_stringbuffer + i, sizeof(hud_stringbuffer) - i,
+             "%3d", st_health);
 
   // set the display color from the amount of health posessed
-  w_health.cr = ColorByHealth(plr->health, 100, st_invul);
+  w_health.cr = HU_ColorByHealth(plr->health, 100, st_invul);
 
   // transfer the init string to the widget
   HUlib_add_string_to_cur_line(&w_health, hud_stringbuffer);
@@ -1204,7 +1193,7 @@ static void HU_widget_build_armor (void)
   }
 
   // build the numeric amount init string
-  M_snprintf(hud_stringbuffer + i, sizeof(hud_stringbuffer), "%3d", st_armor);
+  M_snprintf(hud_stringbuffer + i, sizeof(hud_stringbuffer) - i, "%3d", st_armor);
 
   const crange_idx_e cr = CRByArmor();
   w_armor.cr = colrngs[cr];
@@ -1650,14 +1639,15 @@ static void HU_widget_build_sttime(void)
     {
       const int time = (totalleveltimes + leveltime) / TICRATE;
 
-      offset += M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer),
+      offset += M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer) - offset,
                            "\x1b%c%d:%02d ",
                            '0'+hudcolor_total_time, time/60, time%60);
     }
 
     if (!plr->btuse_tics)
     {
-      M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer), "\x1b%c%d:%05.2f\t",
+      M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer) - offset,
+                 "\x1b%c%d:%05.2f\t",
                  '0'+hudcolor_time, leveltime / TICRATE / 60, // [Nugget] Color
                  (float)(leveltime % (60 * TICRATE)) / TICRATE);
     }
@@ -1668,7 +1658,8 @@ static void HU_widget_build_sttime(void)
     const int type = plr->eventtype;
 
     // [Nugget] Support other events
-    M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer), "\x1b%c%c %d:%05.2f\t",
+    M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer) - offset,
+               "\x1b%c%c %d:%05.2f\t",
                '0'+hudcolor_event_timer,
                type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
                plr->btuse / TICRATE / 60, 
@@ -1791,217 +1782,6 @@ static void HU_widget_build_rate (void)
 static void HU_widget_build_cmd(void)
 {
   HU_BuildCommandHistory(&w_cmd);
-}
-
-// Crosshair
-
-int hud_crosshair; // [Nugget] Crosshair type to be used
-int hud_crosshair_tran_pct; // [Nugget] Translucent crosshair
-static boolean hud_crosshair_health;
-crosstarget_t hud_crosshair_target;
-crosslockon_t hud_crosshair_lockon; // [Alaux] Crosshair locks on target
-static boolean hud_crosshair_indicators; // [Nugget] Horizontal-autoaim indicators
-boolean hud_crosshair_fuzzy; // [Nugget] Account for fuzzy targets
-int hud_crosshair_color;
-static int hud_crosshair_target_color;
-
-typedef struct
-{
-  patch_t *patch;
-  int w, h, x, y;
-  byte *cr;
-
-  // [Nugget] Horizontal-autoaim indicators
-  patch_t *patchl, *patchr;
-  int lw, lh, rw, rh;
-  int side;
-} crosshair_t;
-
-static crosshair_t crosshair;
-
-const char *crosshair_lumps[HU_CROSSHAIRS] =
-{
-  NULL,
-  "CROSS00", "CROSS01", "CROSS02", "CROSS03",
-  "CROSS04", "CROSS05", "CROSS06", "CROSS07",
-  "CROSS08"
-};
-
-const char *crosshair_strings[HU_CROSSHAIRS] =
-{
-  "Off",
-  "Cross", "Angle", "Dot", "Big Cross",
-  "Circle", "Big Circle", "Chevron", "Chevrons",
-  "Arcs"
-};
-
-static void HU_InitCrosshair(void)
-{
-  for (int i = 1; i < HU_CROSSHAIRS; i++)
-  {
-    int lump = W_CheckNumForName(crosshair_lumps[i]);
-
-    if (R_IsPatchLump(lump))
-      crosshair_strings[i] = crosshair_lumps[i];
-    else
-      crosshair_lumps[i] = NULL;
-  }
-}
-
-void HU_StartCrosshair(void) // [Nugget] Not static anymore
-{
-  if (crosshair.patch)
-    Z_ChangeTag(crosshair.patch, PU_CACHE);
-
-  // [Nugget] Horizontal-autoaim indicators
-  if (crosshair.patchl) { Z_ChangeTag(crosshair.patchl, PU_CACHE); }
-  if (crosshair.patchr) { Z_ChangeTag(crosshair.patchr, PU_CACHE); }
-
-  if (crosshair_lumps[hud_crosshair])
-  {
-    crosshair.patch = V_CachePatchName(crosshair_lumps[hud_crosshair], PU_STATIC);
-
-    crosshair.w = SHORT(crosshair.patch->width)/2;
-    crosshair.h = SHORT(crosshair.patch->height)/2;
-  }
-  else
-    crosshair.patch = NULL;
-
-  // [Nugget] Horizontal-autoaim indicators ----------------------------------
-
-  crosshair.patchl = V_CachePatchName("CROSSIL", PU_STATIC);
-  crosshair.lw = SHORT(crosshair.patchl->width);
-  crosshair.lh = SHORT(crosshair.patchl->height)/2;
-
-  crosshair.patchr = V_CachePatchName("CROSSIR", PU_STATIC);
-  crosshair.rw = SHORT(crosshair.patchr->width);
-  crosshair.rh = SHORT(crosshair.patchr->height)/2;
-}
-
-mobj_t *crosshair_target; // [Alaux] Lock crosshair on target
-
-static void HU_UpdateCrosshair(void)
-{
-  crosshair.x = SCREENWIDTH/2;
-  crosshair.y = (screenblocks <= 10) ? (SCREENHEIGHT-ST_HEIGHT)/2 : SCREENHEIGHT/2;
-
-  crosshair.side = 0; // [Nugget] Horizontal-autoaim indicators
-
-  if (hud_crosshair_health)
-    crosshair.cr = ColorByHealth(plr->health, 100, st_invul);
-  else
-    crosshair.cr = colrngs[hud_crosshair_color];
-
-  if (STRICTMODE(hud_crosshair_target || hud_crosshair_lockon))
-  {
-    angle_t an = plr->mo->angle;
-    ammotype_t ammo = weaponinfo[plr->readyweapon].ammo;
-    fixed_t range = (ammo == am_noammo
-                     && !(plr->readyweapon == wp_fist && plr->cheats & CF_SAITAMA)) // [Nugget]
-                    ? MELEERANGE : 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1); // [Nugget]
-    boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
-
-    crosshair_target = linetarget = NULL;
-
-    overflow[emu_intercepts].enabled = false;
-    P_AimLineAttack(plr->mo, an, range, CROSSHAIR_AIM);
-    if (!vertical_aiming && (ammo == am_misl || ammo == am_cell) // [Nugget] Vertical aiming
-        && (!no_hor_autoaim || !casual_play)) // [Nugget]
-    {
-      if (!linetarget)
-      {
-        P_AimLineAttack(plr->mo, an + (1<<26), range, CROSSHAIR_AIM);
-
-        if (linetarget && hud_crosshair_indicators) { crosshair.side = -1; } // [Nugget]
-      }
-
-      if (!linetarget)
-      {
-        P_AimLineAttack(plr->mo, an - (1<<26), range, CROSSHAIR_AIM);
-
-        if (linetarget && hud_crosshair_indicators) { crosshair.side = 1; } // [Nugget]
-      }
-    }
-    overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
-
-    if (linetarget
-        && (!(linetarget->flags & MF_SHADOW) || hud_crosshair_fuzzy)) // [Nugget]
-      crosshair_target = linetarget;
-
-    if (hud_crosshair_target && crosshair_target)
-    {
-      // [Alaux] Color crosshair by target health
-      if (hud_crosshair_target == crosstarget_health)
-      {
-        crosshair.cr = ColorByHealth(crosshair_target->health, crosshair_target->info->spawnhealth, false);
-      }
-      else
-      {
-        crosshair.cr = colrngs[hud_crosshair_target_color];
-      }
-    }
-  }
-
-  // [Nugget] Freecam
-  if (R_GetFreecamOn()) { crosshair.cr = colrngs[hud_crosshair_color]; }
-}
-
-void HU_UpdateCrosshairLock(int x, int y)
-{
-  int w = (crosshair.w * video.xscale) >> FRACBITS;
-  int h = (crosshair.h * video.yscale) >> FRACBITS;
-
-  x = viewwindowx + BETWEEN(w, viewwidth  - w - 1, x);
-  y = viewwindowy + BETWEEN(h, viewheight - h - 1, y);
-
-  if (hud_crosshair_lockon == crosslockon_full) // [Nugget]
-    crosshair.x = (x << FRACBITS) / video.xscale - video.deltaw;
-
-  crosshair.y = (y << FRACBITS) / video.yscale;
-}
-
-void HU_DrawCrosshair(void)
-{
-  if (plr->playerstate != PST_LIVE ||
-      automapactive == AM_FULL || // [Nugget] Changed condition
-      menuactive ||
-      paused ||
-      // [Nugget] New conditions
-      // Crash fix
-      !crosshair.cr ||
-      // Chasecam
-      (R_GetChasecamOn() && !chasecam_crosshair) ||
-      // Freecam
-      (R_GetFreecamOn() && (R_GetFreecamMode() != FREECAM_CAM || R_GetFreecamMobj())) ||
-      // Alt. intermission background
-      (gamestate == GS_INTERMISSION))
-  {
-    return;
-  }
-
-  // [Nugget] NUGHUD
-  const int y = crosshair.y + (nughud.viewoffset * STRICTMODE(st_crispyhud));
-
-  if (crosshair.patch)
-    // [Nugget] Translucent crosshair
-    V_DrawPatchTranslatedTL(crosshair.x - crosshair.w,
-                                      y - crosshair.h,
-                            crosshair.patch, crosshair.cr, xhair_tranmap);
-
-  // [Nugget] Horizontal-autoaim indicators ----------------------------------
-
-  if (crosshair.side == -1)
-  {
-    V_DrawPatchTranslatedTL(crosshair.x - crosshair.w - crosshair.lw,
-                                      y - crosshair.lh,
-                            crosshair.patchl, crosshair.cr, xhair_tranmap);
-  }
-  else if (crosshair.side == 1)
-  {
-    V_DrawPatchTranslatedTL(crosshair.x + crosshair.w,
-                                      y - crosshair.rh,
-                            crosshair.patchr, crosshair.cr, xhair_tranmap);
-  }
 }
 
 // [crispy] print a bar indicating demo progress at the bottom of the screen

@@ -27,6 +27,7 @@ set(NUGGETDOOM_SOURCES
     g_input.c              g_input.h
     hu_command.c           hu_command.h
     hu_coordinates.c       hu_coordinates.h
+    hu_crosshair.c         hu_crosshair.h
     hu_lib.c               hu_lib.h
     hu_obituary.c          hu_obituary.h
     hu_stuff.c             hu_stuff.h
@@ -38,6 +39,8 @@ set(NUGGETDOOM_SOURCES
     i_main.c
     i_mbfsound.c
     i_midimusic.c
+                           i_oalcommon.h
+    i_oalequalizer.c       i_oalequalizer.h
     i_oalmusic.c
     i_oalsound.c           i_oalsound.h
                            i_oalstream.h

@@ -348,12 +348,12 @@ void D_Display (void)
     case GS_LEVEL:
       if (!gametic)
         break;
-      // [Nugget] Removed Automap code block
+      // [Nugget] Removed automap code block
       if (wipe || (scaledviewheight != 200 && fullscreen) // killough 11/98
           || (inhelpscreensstate && !inhelpscreens))
         redrawsbar = true;              // just put away the help screen
-      // [Nugget] Moved ST_Drawer() call below,
-      // to ensure it is called *after* AM_Drawer()
+      // [Nugget] Moved `ST_Drawer()` call below,
+      // to ensure it is called *after* `AM_Drawer()`
       fullscreen = scaledviewheight == 200;               // killough 11/98
       break;
     case GS_INTERMISSION:
@@ -370,12 +370,12 @@ void D_Display (void)
     }
 
   // draw the view directly
-  // [Nugget] Removed '&& !automapactive' condition
+  // [Nugget] Removed `&& !automapactive` condition
   if (gamestate == GS_LEVEL && gametic)
     R_RenderPlayerView (&players[displayplayer]);
 
-  // [Nugget] Moved HU_Drawer() call below,
-  // to ensure it is called *after* AM_Drawer() and ST_Drawer()
+  // [Nugget] Moved `HU_Drawer()` call below,
+  // to ensure it is called *after* `AM_Drawer()` and `ST_Drawer()`
 
   // clean up border stuff
   if (gamestate != oldgamestate && gamestate != GS_LEVEL)
@@ -410,7 +410,7 @@ void D_Display (void)
   if (gamestate == GS_LEVEL && automapactive)
     {
       AM_Drawer();
-      // [Nugget] Removed HU_Drawer() call, since we
+      // [Nugget] Removed `HU_Drawer()` call, since we
       // now call it right after this code block
 
       // [crispy] force redraw of status bar and border
@@ -418,13 +418,13 @@ void D_Display (void)
       inhelpscreensstate = true;
     }
 
-  // [Nugget] Moved here, as to be run *after* AM_Drawer()
+  // [Nugget] Moved here, so as to be run *after* `AM_Drawer()`
   if (gamestate == GS_LEVEL && gametic)
   {
     ST_Drawer(scaledviewheight == 200, redrawsbar);
 
-    // Moved here too, as to be run
-    // *after* AM_Drawer() and ST_Drawer()
+    // Moved here too, so as to be run
+    // *after* `AM_Drawer()` and `ST_Drawer()`
     HU_Drawer();
   }
 
