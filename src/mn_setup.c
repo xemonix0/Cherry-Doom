@@ -2488,7 +2488,7 @@ static const char **GetResolutionScaleStrings(void)
 
     resolution_scale = BETWEEN(0, i, resolution_scale);
 
-    array_push(strings, "maximum");
+    array_push(strings, "max");
 
     return strings;
 }
