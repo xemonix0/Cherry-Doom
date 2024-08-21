@@ -2285,6 +2285,15 @@ static setup_menu_t enem_settings1[] = {
 
     // [Nugget] ---------------------------------------------------------------/
 
+    // [Cherry] /--------------------------------------------------------------
+
+    MI_GAP,
+    {"Cherry", S_SKIP|S_TITLE, M_X, M_SPC},
+
+      {"Blood Amount Scales With Damage", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"blood_amount_scaling"}},
+       
+    // [Cherry] --------------------------------------------------------------/
+
     MI_RESET,
 
     MI_END

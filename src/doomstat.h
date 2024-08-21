@@ -722,6 +722,10 @@ extern int hudcolor_th_ok;
 extern int hudcolor_th_good;
 extern int hudcolor_th_extra;
 
+// Enemies ----------------------------
+
+extern boolean blood_amount_scaling;
+
 // Level Table ------------------------
 
 extern boolean lt_enable_tracking;

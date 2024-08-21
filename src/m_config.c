@@ -1479,6 +1479,14 @@ default_t defaults[] = {
 
   // [Nugget] ---------------------------------------------------------------/
 
+  // [Cherry] Blood amount scales with the amount of damage dealt
+  {
+    "blood_amount_scaling",
+    (config_t *) &blood_amount_scaling, NULL,
+    {0}, {0,1}, number, ss_enem, wad_yes,
+    "1 to spawn more blood the more damage is dealt"
+  },
+
   {
     "voxels_rendering",
     (config_t *) &default_voxels_rendering, (config_t *) &voxels_rendering,

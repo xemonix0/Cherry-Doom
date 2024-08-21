@@ -51,12 +51,15 @@ Although the new code has been written with the intention of not breaking demo c
 - _Disable On Slot 1_ setting [i.b. [_Precise Crosshair_ mod](https://forum.zdoom.org/viewtopic.php?t=64788)]
 - _Detection of Targets in Darkness_ setting (the required light level is customizable through the CFG-only `hud_crosshair_dark_level` CVAR) [i.b. [_Target Spy_ mod](https://forum.zdoom.org/viewtopic.php?t=60784)]
 
+### Enemies
+
+- _Blood Amount Scales With Damage_ setting [i.b. Doom Retro]
+
 ### Miscellaneous
 
 - Hints for some disabled menu items, explaining the reason they are disabled
 - Most setup menus have been rearranged (utilizing the new _scrollable subpages_ feature) to make navigation easier
 - _Disable Stats Tracking_ setting for the _custom skill_
-- Blood amount now scales with the amount of damage dealt [i.b. Doom Retro]
 
 ### _Level Table_
 

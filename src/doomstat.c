@@ -303,6 +303,10 @@ int hudcolor_th_ok;
 int hudcolor_th_good;
 int hudcolor_th_extra;
 
+// Enemies ----------------------------
+
+boolean blood_amount_scaling;
+
 // Level Table ------------------------
 
 boolean lt_enable_tracking;

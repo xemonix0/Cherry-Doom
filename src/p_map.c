@@ -1840,8 +1840,8 @@ static boolean PTR_ShootTraverse(intercept_t *in)
     P_SpawnPuff (x,y,z);
   else
   {
-    // [Cherry] Blood amount depends on damage
-    if (casual_play)
+    // [Cherry] Blood amount scales with the amount of damage dealt
+    if (casual_play && blood_amount_scaling)
     {
       for (int i = MIN((la_damage >> 2) + 1, 10); i > 0; i--)
       {
