@@ -2278,7 +2278,7 @@ static boolean ShortcutResponder(const event_t *ev)
     {
         MN_StartControlPanel();
         currentMenu = &SoundDef;
-        itemOn = sfx_vol;
+        itemOn = currentMenu->lastOn;
         M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
