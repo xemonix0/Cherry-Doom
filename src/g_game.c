@@ -1957,7 +1957,9 @@ static void G_DoCompleted(void)
     AM_ChangeMode(AM_OFF);
   }
 
-  WS_WatchExitMap(); // [Cherry]
+  // [Cherry]
+  WS_WatchExitMap();
+  WS_Save();
 
   // Rebuild the Time widget to get rid of the Use-button timer
   HU_widget_rebuild_sttime();

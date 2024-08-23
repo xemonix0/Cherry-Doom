@@ -80,6 +80,7 @@ Compared to DSDA-Doom's implementation, there are a few notable additions and ch
 - _Level Table Stats Format_ setting (CFG-only: `lt_stats_format`)
 - Press `Del` to _erase selected map stats_
 - "Reset to defaults" button repurposed for _erasing current WAD stats_
+- WAD stats are now written to the file every time a level is beaten, and not just when you quit the game
 - Various visual changes
 
 ## Compiling
