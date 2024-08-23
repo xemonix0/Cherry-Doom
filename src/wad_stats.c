@@ -263,6 +263,27 @@ static void CreateStats(boolean finish)
     free(last_wad_name);
 }
 
+void WS_ClearMapStats(int i)
+{
+    if (!CAN_WATCH_MAP)
+    {
+        return;
+    }
+
+    map_stats_t *ms = &wad_stats.maps[i];
+
+    if (!ms)
+    {
+        return;
+    }
+
+    ms->total_exits = ms->total_kills = 0;
+    ms->best_skill = 0;
+    ms->best_kills = ms->best_items = ms->best_secrets = 0;
+    ms->max_kills = ms->max_items = ms->max_secrets = -1;
+    ms->best_time = ms->best_max_time = ms->best_sk5_time = -1;
+}
+
 // Stats Saving & Loading
 //=======================
 

@@ -1,6 +1,6 @@
 ## New Features
 
-None.
+- Press `Del` to clear selected map stats on the level table
 
 ## Changes
 

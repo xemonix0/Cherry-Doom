@@ -170,6 +170,7 @@ boolean set_lvltbl_active = false;        // [Cherry] in level table
 static boolean setup_select = false;      // changing an item
 static boolean setup_gather = false;      // gathering keys for value
 boolean default_verify = false;           // verify reset defaults decision
+static boolean ltbl_map_clear = false;    // [Cherry] verify clear map stats decision
 
 /////////////////////////////
 //
@@ -188,6 +189,8 @@ static int highlight_tab;
 
 // [Cherry] Subpages
 static int current_subpage, total_subpages;
+// [Cherry] Saved index of the map item being cleared
+static setup_menu_t *ltbl_map_clear_item;
 
 // [FG] save the setup menu's itemon value in the S_END element's x coordinate
 // [Cherry] Turn menu into a parameter
@@ -1033,8 +1036,9 @@ static void DrawInstructions()
     int index = (menu_input == mouse_mode ? highlight_item : set_item_on);
     int64_t flags = current_menu[index].m_flags;
 
-    // [Cherry] No instructions on menus with no selectable items
-    if (print_warning_about_changes > 0 || flags & S_END)
+    if (print_warning_about_changes > 0
+        || flags & S_END   // [Cherry] No instructions on menus with no selectable items,
+        || ltbl_map_clear) // or if verifying level table map stats clear decision
     {
         return;
     }
@@ -1148,6 +1152,22 @@ static void DrawInstructions()
         {
             s = "Restore defaults";
         }
+        else if (flags & S_LTBL_MAP) // [Cherry]
+        {
+            switch (menu_input)
+            {
+                case key_mode:
+                    s = "[ Enter ] to select, [ Del ] to clear";
+                    break;
+                case pad_mode:
+                    s = "[ PadA ] to select, [ PadY ] to clear";
+                    break;
+                default:
+                case mouse_mode:
+                    s = "[ Del ] to clear";
+                    break;
+            }
+        }
         else if (flags & S_FUNCTION) // [Nugget]
         {
             switch (menu_input) // [Cherry]
@@ -1237,6 +1257,7 @@ static void SetupMenu(void)
     setup_select = false;
     default_verify = false;
     setup_gather = false;
+    ltbl_map_clear = false; // [Cherry]
     highlight_tab = 0;
     highlight_item = 0;
     set_item_on = GetItemOn(current_menu);
@@ -1257,7 +1278,7 @@ static void SetupMenu(void)
     {
         current_menu[set_item_on].m_flags |= S_HILITE;
     }
-    highlight_item = 0;
+    highlight_item = set_item_on;
 
     // [Cherry]
     KeyboardScrollSubpage(0);
@@ -3309,6 +3330,22 @@ void MN_LevelTable(int choice)
     SetupMenu();
 }
 
+static void LT_DrawClearVerify(void)
+{
+    // [Nugget] HUD/menu shadows
+    V_DrawPatchSH(VERIFYBOXXORG, VERIFYBOXYORG,
+                  W_CacheLumpName("M_VBOX", PU_CACHE));
+
+    // The blinking messages is keyed off of the blinking of the
+    // cursor skull.
+
+    if (whichSkull) // blink the text
+    {
+        strcpy(menu_buffer, "Clear map stats? (Y or N)");
+        DrawMenuString(VERIFYBOXXORG + 8, VERIFYBOXYORG + 8, CR_RED);
+    }
+}
+
 void MN_DrawLevelTable(void)
 {
     inhelpscreens = true;
@@ -3322,6 +3359,11 @@ void MN_DrawLevelTable(void)
     DrawInstructions();
 
     LT_Draw(current_menu, current_page);
+
+    if (ltbl_map_clear)
+    {
+        LT_DrawClearVerify();
+    }
 }
 
 // [Nugget] Custom Skill menu /===============================================
@@ -4291,10 +4333,10 @@ void LT_Warp(void)
     set_lvltbl_active = false; // [Cherry]
     set_weapon_active = false;
     default_verify = false;              // phares 4/19/98
+    ltbl_map_clear = false;           // [Cherry]
     print_warning_about_changes = false; // [FG] reset
     HU_Start(); // catch any message changes // phares 4/19/98
-    M_StartSoundOptional(sfx_mnucls,
-                         sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
+    M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
 }
 
 // [Cherry] Scroll subpages with mouse wheel
@@ -4410,7 +4452,7 @@ static boolean NextPage(int inc)
     {
         current_menu[set_item_on].m_flags |= S_HILITE;
     }
-    highlight_item = 0;
+    highlight_item = set_item_on;
 
     // [Cherry]
     KeyboardScrollSubpage(menu_input == mouse_mode ? -inc : false);
@@ -4454,6 +4496,25 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
             default_verify = false;
             SelectDone(current_item);
         }
+        return true;
+    }
+
+    // [Cherry] Verify clear map stats decision
+    if (ltbl_map_clear)
+    {
+        if (M_ToUpper(ch) == 'Y')
+        {
+            WS_ClearMapStats(ltbl_map_clear_item->var.map_i);
+            ltbl_map_clear = false;
+            SelectDone(ltbl_map_clear_item);
+        }
+        else if (M_ToUpper(ch) == 'N')
+        {
+            ltbl_map_clear = false;
+            SelectDone(ltbl_map_clear_item);
+        }
+        menu_input = old_menu_input;
+        MN_ResetMouseCursor();
         return true;
     }
 
@@ -4522,6 +4583,15 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         if (current_item->m_flags & S_INPUT)
         {
             M_InputReset(current_item->input_id);
+        }
+        // [Cherry] Clear map stats
+        else if (current_item->m_flags & S_LTBL_MAP)
+        {
+            ltbl_map_clear = true;
+            ltbl_map_clear_item = current_item;
+            ltbl_map_clear_item->m_flags |= S_SELECT;
+            setup_select = true;
+            M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
         }
         menu_input = old_menu_input;
         MN_ResetMouseCursor();
@@ -4658,6 +4728,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         set_lvltbl_active = false; // [Cherry]
         set_weapon_active = false;
         default_verify = false;              // phares 4/19/98
+        ltbl_map_clear = false;           // [Cherry]
         print_warning_about_changes = false; // [FG] reset
         HU_Start(); // catch any message changes // phares 4/19/98
         LT_Reset(); // [Cherry] level table cleanup
@@ -4756,7 +4827,7 @@ static boolean SetupTab(void)
                 ++set_item_on;
             }
         }
-        highlight_item = 0;
+        highlight_item = set_item_on;
 
         // [Cherry]
         KeyboardScrollSubpage(0);
