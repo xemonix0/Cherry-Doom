@@ -1568,7 +1568,13 @@ static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
 {
     mobj_t *th = P_SpawnMobj(x, y, z + (Woof_Random() << 10), MT_TRAIL);
 
-    th->momz = FRACUNIT / 2;
+    th->momx = -FixedMul(FRACUNIT, finecosine[angle >> ANGLETOFINESHIFT])
+               + FixedMul((Woof_Random() - Woof_Random()) << 8,
+                          finesine[angle >> ANGLETOFINESHIFT]);
+    th->momy = -FixedMul(FRACUNIT, finesine[angle >> ANGLETOFINESHIFT])
+               + FixedMul((Woof_Random() - Woof_Random()) << 8,
+                          finecosine[angle >> ANGLETOFINESHIFT]);
+    th->momz = (Woof_Random() - Woof_Random()) << 8;
     th->angle = angle;
 }
 
