@@ -263,7 +263,7 @@ static void CreateStats(boolean finish)
     free(last_wad_name);
 }
 
-void WS_ClearMapStats(int i)
+void WS_EraseMapStats(int i)
 {
     if (!CAN_WATCH_MAP)
     {
@@ -282,6 +282,20 @@ void WS_ClearMapStats(int i)
     ms->best_kills = ms->best_items = ms->best_secrets = 0;
     ms->max_kills = ms->max_items = ms->max_secrets = -1;
     ms->best_time = ms->best_max_time = ms->best_sk5_time = -1;
+}
+
+void WS_EraseWadStats(void)
+{
+    if (!CAN_WATCH_MAP)
+    {
+        return;
+    }
+
+    for (int i = 0; i < array_size(wad_stats.maps); ++i)
+    {
+        WS_EraseMapStats(i);
+    }
+    wad_stats.kill_check = 0;
 }
 
 // Stats Saving & Loading

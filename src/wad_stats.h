@@ -47,7 +47,8 @@ void WS_Init(void);
 void WS_Save(void);
 void WS_Cleanup(void);
 
-void WS_ClearMapStats(int i);
+void WS_EraseMapStats(int i);
+void WS_EraseWadStats(void);
 
 void WS_WatchMap(void);
 void WS_UnwatchMap(void);

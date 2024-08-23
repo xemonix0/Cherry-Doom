@@ -32,6 +32,7 @@ extern setup_menu_t *level_table[lt_page_max];
 
 boolean LT_IsLevelsPage(int page);
 
+void LT_RecalculateSummary(void);
 void LT_Reset(void);
 void LT_Build(void);
 void LT_Draw(setup_menu_t *menu, int page);

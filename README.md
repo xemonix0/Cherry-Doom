@@ -78,7 +78,8 @@ Compared to DSDA-Doom's implementation, there are a few notable additions and ch
 - The ability to see (and warp to, but not track stats for) all loaded maps (not just maps from the WAD that is the last in the load order), grouped by WAD filename
 - _Stats tracking_ now ignores WADs without maps when creating data folders for stats files
 - _Level Table Stats Format_ setting (CFG-only: `lt_stats_format`)
-- Press `Del` to clear selected map stats
+- Press `Del` to _erase selected map stats_
+- "Reset to defaults" button repurposed for _erasing current WAD stats_
 - Various visual changes
 
 ## Compiling

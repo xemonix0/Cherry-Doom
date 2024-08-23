@@ -152,6 +152,12 @@ static void LevelsInsertRow(setup_menu_t **menu, char *text, int map_i,
     array_push(*menu, item);
 }
 
+static void InsertResetButton(setup_menu_t** menu)
+{
+    setup_menu_t item = {NULL, S_RESET, X_BUTTON, Y_BUTTON};
+    array_push(*menu, item);
+}
+
 static void LevelsBuild(void)
 {
     for (int p = 0; LT_IsLevelsPage(p); ++p)
@@ -181,6 +187,7 @@ static void LevelsBuild(void)
                                 && !wad_index);
         }
 
+        InsertResetButton(page);
         InsertLastItem(page);
 
         if (p == 0 && (!lt_enable_tracking || notrackingparm))
@@ -246,6 +253,11 @@ static void SummaryCalculate(void)
             summary.best_sk5_time += ms->best_sk5_time;
         }
     }
+}
+
+void LT_RecalculateSummary(void)
+{
+    SummaryCalculate();
 }
 
 static void SummaryBuild(void)
@@ -555,7 +567,9 @@ static void LevelsDraw(setup_menu_t *menu, int page)
     int rows = 0;
     for (setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
     {
-        boolean skip = (rows - scroll_pos < 0 || rows - scroll_pos > LT_MAX_ROWS);
+        boolean skip =
+            (rows - scroll_pos < 0 || rows - scroll_pos > LT_MAX_ROWS)
+            && !(src->m_flags & S_RESET); // Always draw the reset button
 
         if (!(src->m_flags & S_DIRECT))
         {
@@ -713,6 +727,12 @@ boolean LT_KeyboardScroll(setup_menu_t *menu, setup_menu_t *item)
     while (scroll_pos && current_row - scroll_pos < top_buffer_i)
     {
         --scroll_pos;
+    }
+
+    // Hack for the reset button to act like the first item in the menu
+    if (item->m_flags & S_RESET)
+    {
+        scroll_pos = 0;
     }
 
     UpdateScrollingIndicators(rows);

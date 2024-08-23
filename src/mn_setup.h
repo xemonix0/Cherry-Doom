@@ -87,6 +87,12 @@ enum
 #define CR_SELECT  CR_GRAY
 #define CR_ALT_COL CR_GRAY // [Cherry]
 
+// phares 4/16/98:
+// X,Y position of reset button. This is the same for every screen, and is
+// only defined once here.
+#define X_BUTTON 301
+#define Y_BUTTON 3
+
 #define M_SPC    9
 #define M_Y      (29 + M_SPC)
 #define M_Y_WARN (SCREENHEIGHT - 15)

@@ -91,13 +91,6 @@ static boolean default_reset;
 // killough 10/98: added Compatibility and General menus
 //
 
-// phares 4/16/98:
-// X,Y position of reset button. This is the same for every screen, and is
-// only defined once here.
-#define X_BUTTON          301
-// [Cherry] Moved to the top to prevent overlap with the scrolling indicator
-#define Y_BUTTON          3
-
 #define M_X               240
 
 #define M_THRM_STEP       8
@@ -170,7 +163,8 @@ boolean set_lvltbl_active = false;        // [Cherry] in level table
 static boolean setup_select = false;      // changing an item
 static boolean setup_gather = false;      // gathering keys for value
 boolean default_verify = false;           // verify reset defaults decision
-static boolean ltbl_map_clear = false;    // [Cherry] verify clear map stats decision
+static boolean ltbl_map_erase = false;    // [Cherry] verify erase map stats decision
+static boolean ltbl_wad_erase = false;    // [Cherry] verify erase WAD stats decision
 
 /////////////////////////////
 //
@@ -190,7 +184,7 @@ static int highlight_tab;
 // [Cherry] Subpages
 static int current_subpage, total_subpages;
 // [Cherry] Saved index of the map item being cleared
-static setup_menu_t *ltbl_map_clear_item;
+static setup_menu_t *ltbl_map_erase_item;
 
 // [FG] save the setup menu's itemon value in the S_END element's x coordinate
 // [Cherry] Turn menu into a parameter
@@ -1038,7 +1032,7 @@ static void DrawInstructions()
 
     if (print_warning_about_changes > 0
         || flags & S_END   // [Cherry] No instructions on menus with no selectable items,
-        || ltbl_map_clear) // or if verifying level table map stats clear decision
+        || ltbl_map_erase) // or if verifying level table map stats clear decision
     {
         return;
     }
@@ -1086,7 +1080,8 @@ static void DrawInstructions()
         }
         else if (flags & S_RESET)
         {
-            s = "Restore defaults";
+            s = set_lvltbl_active ? "Erase WAD stats" // [Cherry]
+                                  : "Restore defaults";
         }
         else if (flags & S_FUNCTION)
         {
@@ -1150,7 +1145,8 @@ static void DrawInstructions()
         }
         else if (flags & S_RESET)
         {
-            s = "Restore defaults";
+            s = set_lvltbl_active ? "Erase WAD stats" // [Cherry]
+                                  : "Restore defaults";
         }
         else if (flags & S_LTBL_MAP) // [Cherry]
         {
@@ -1257,7 +1253,8 @@ static void SetupMenu(void)
     setup_select = false;
     default_verify = false;
     setup_gather = false;
-    ltbl_map_clear = false; // [Cherry]
+    ltbl_map_erase = false; // [Cherry]
+    ltbl_wad_erase = false; // [Cherry]
     highlight_tab = 0;
     highlight_item = 0;
     set_item_on = GetItemOn(current_menu);
@@ -3330,7 +3327,7 @@ void MN_LevelTable(int choice)
     SetupMenu();
 }
 
-static void LT_DrawClearVerify(void)
+static void LT_DrawMapClearVerify(void)
 {
     // [Nugget] HUD/menu shadows
     V_DrawPatchSH(VERIFYBOXXORG, VERIFYBOXYORG,
@@ -3341,7 +3338,23 @@ static void LT_DrawClearVerify(void)
 
     if (whichSkull) // blink the text
     {
-        strcpy(menu_buffer, "Clear map stats? (Y or N)");
+        strcpy(menu_buffer, "Erase map stats? (Y or N)");
+        DrawMenuString(VERIFYBOXXORG + 8, VERIFYBOXYORG + 8, CR_RED);
+    }
+}
+
+static void LT_DrawWadClearVerify(void)
+{
+    // [Nugget] HUD/menu shadows
+    V_DrawPatchSH(VERIFYBOXXORG, VERIFYBOXYORG,
+                  W_CacheLumpName("M_VBOX", PU_CACHE));
+
+    // The blinking messages is keyed off of the blinking of the
+    // cursor skull.
+
+    if (whichSkull) // blink the text
+    {
+        strcpy(menu_buffer, "Erase wad stats? (Y or N)");
         DrawMenuString(VERIFYBOXXORG + 8, VERIFYBOXYORG + 8, CR_RED);
     }
 }
@@ -3360,9 +3373,13 @@ void MN_DrawLevelTable(void)
 
     LT_Draw(current_menu, current_page);
 
-    if (ltbl_map_clear)
+    if (ltbl_map_erase)
     {
-        LT_DrawClearVerify();
+        LT_DrawMapClearVerify();
+    }
+    else if (ltbl_wad_erase)
+    {
+        LT_DrawWadClearVerify();
     }
 }
 
@@ -4333,7 +4350,8 @@ void LT_Warp(void)
     set_lvltbl_active = false; // [Cherry]
     set_weapon_active = false;
     default_verify = false;              // phares 4/19/98
-    ltbl_map_clear = false;           // [Cherry]
+    ltbl_map_erase = false;              // [Cherry]
+    ltbl_wad_erase = false;              // [Cherry]
     print_warning_about_changes = false; // [FG] reset
     HU_Start(); // catch any message changes // phares 4/19/98
     M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
@@ -4499,22 +4517,43 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         return true;
     }
 
-    // [Cherry] Verify clear map stats decision
-    if (ltbl_map_clear)
+    // [Cherry] Verify erase map stats decision
+    if (ltbl_map_erase)
     {
         if (M_ToUpper(ch) == 'Y')
         {
-            WS_ClearMapStats(ltbl_map_clear_item->var.map_i);
-            ltbl_map_clear = false;
-            SelectDone(ltbl_map_clear_item);
+            WS_EraseMapStats(ltbl_map_erase_item->var.map_i);
+            ltbl_map_erase = false;
+            SelectDone(ltbl_map_erase_item);
+
+            LT_RecalculateSummary();
         }
         else if (M_ToUpper(ch) == 'N')
         {
-            ltbl_map_clear = false;
-            SelectDone(ltbl_map_clear_item);
+            ltbl_map_erase = false;
+            SelectDone(ltbl_map_erase_item);
         }
         menu_input = old_menu_input;
         MN_ResetMouseCursor();
+        return true;
+    }
+
+    // [Cherry] Verify erase WAD stats decision
+    if (ltbl_wad_erase)
+    {
+        if (M_ToUpper(ch) == 'Y')
+        {
+            WS_EraseWadStats();
+            ltbl_wad_erase = false;
+            SelectDone(current_item);
+
+            LT_RecalculateSummary();
+        }
+        else if (M_ToUpper(ch) == 'N')
+        {
+            ltbl_wad_erase = false;
+            SelectDone(current_item);
+        }
         return true;
     }
 
@@ -4584,12 +4623,12 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         {
             M_InputReset(current_item->input_id);
         }
-        // [Cherry] Clear map stats
+        // [Cherry] Erase map stats
         else if (current_item->m_flags & S_LTBL_MAP)
         {
-            ltbl_map_clear = true;
-            ltbl_map_clear_item = current_item;
-            ltbl_map_clear_item->m_flags |= S_SELECT;
+            ltbl_map_erase = true;
+            ltbl_map_erase_item = current_item;
+            ltbl_map_erase_item->m_flags |= S_SELECT;
             setup_select = true;
             M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
         }
@@ -4694,7 +4733,15 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         }
         else if (flags & S_RESET)
         {
-            default_verify = true;
+            // [Cherry] Erase WAD stats
+            if (set_lvltbl_active)
+            {
+                ltbl_wad_erase = true;
+            }
+            else
+            {
+                default_verify = true;
+            }
         }
         else if (flags & S_END) // [Cherry]
         {
@@ -4728,7 +4775,8 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         set_lvltbl_active = false; // [Cherry]
         set_weapon_active = false;
         default_verify = false;              // phares 4/19/98
-        ltbl_map_clear = false;           // [Cherry]
+        ltbl_map_erase = false;              // [Cherry]
+        ltbl_wad_erase = false;              // [Cherry]
         print_warning_about_changes = false; // [FG] reset
         HU_Start(); // catch any message changes // phares 4/19/98
         LT_Reset(); // [Cherry] level table cleanup

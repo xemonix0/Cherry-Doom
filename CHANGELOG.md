@@ -1,6 +1,9 @@
 ## New Features
 
-- Press `Del` to clear selected map stats on the level table
+### Level table
+
+- Press `Del` to _erase selected map stats_
+- "Reset to defaults" button repurposed for _erasing current WAD stats_
 
 ## Changes
 
