@@ -754,18 +754,20 @@ static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
 }
 
 // [Nugget] Bloodier Gibbing
-static void P_NuggetGib(mobj_t *mo)
+void P_NuggetGib(mobj_t *mo, const boolean crushed)
 {
   int quantity;
   extern boolean idgaf;
 
   if (!casual_play || !bloodier_gibbing) { return; }
   
-  quantity = 20 + (Woof_Random() % 21); // Spawn 20-40 blood splats
+  quantity = crushed ? (4 + (Woof_Random() % 5)) : (20 + (Woof_Random() % 21));
 
   for (int i = 0; i < quantity; i++)
   {
-    mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + (mo->height * 3/2),
+    const fixed_t height = !crushed ? (mo->height * 3/2) : 0;
+
+    mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + height,
                                 (comp_nonbleeders && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
@@ -774,21 +776,23 @@ static void P_NuggetGib(mobj_t *mo)
     if (comp_fuzzyblood && mo->flags & MF_SHADOW)
     { splat->flags |= MF_SHADOW; }
 
-    if (mo->info->bloodcolor || idgaf) {
+    if (mo->info->bloodcolor || idgaf)
+    {
       splat->flags2 |= MF2_COLOREDBLOOD;
       splat->bloodcolor = V_BloodColor(mo->info->bloodcolor);
     }
 
-    splat->momx = (Woof_Random() - Woof_Random()) << 12;
-    splat->momy = (Woof_Random() - Woof_Random()) << 12;
-    splat->momz = Woof_Random() << 12;
+    splat->momx = (Woof_Random() - Woof_Random()) << (12 - crushed);
+    splat->momy = (Woof_Random() - Woof_Random()) << (12 - crushed);
+
+    if (crushed) { splat->height = FRACUNIT; }
+    else         { splat->momz = Woof_Random() << 12; }
 
     // Physics differ between versions (complevels),
-    // so this is done to get rather decent behavior in Vanilla
+    // so this is done to get rather-decent behavior in vanilla
     if (demo_version < DV_BOOM200) { splat->flags |= MF_NOCLIP; }
 
-    splat->tics += (Woof_Random() & 3) - (Woof_Random() & 3);
-    if (splat->tics < 1) { splat->tics = 1; }
+    splat->tics = MAX(1, splat->tics + (Woof_Random() & 3) - (Woof_Random() & 3));
   }
 }
 
@@ -922,7 +926,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
           || GIBBERS || P_NuggetExtraGibbing(source, target)))
   {
     P_SetMobjState (target, target->info->xdeathstate);
-    P_NuggetGib(target); // [Nugget] Bloodier Gibbing
+    P_NuggetGib(target, false); // [Nugget] Bloodier Gibbing
   }
   else
     P_SetMobjState (target, target->info->deathstate);
