@@ -163,6 +163,7 @@ void HU_UpdateCrosshair(void)
                          && !(plr->readyweapon == wp_fist && plr->cheats & CF_SAITAMA)) // [Nugget]
                         ? MELEERANGE : 16 * 64 * FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1); // [Nugget]
         boolean intercepts_overflow_enabled = overflow[emu_intercepts].enabled;
+        int side = 0; // [Nugget]
 
         crosshair_target = linetarget = NULL;
 
@@ -175,13 +176,13 @@ void HU_UpdateCrosshair(void)
             {
                 P_AimLineAttack(plr->mo, an + (1 << 26), range, CROSSHAIR_AIM);
 
-                if (linetarget && hud_crosshair_indicators) { crosshair.side = -1; } // [Nugget]
+                if (linetarget && hud_crosshair_indicators) { side = -1; } // [Nugget]
             }
             if (!linetarget)
             {
                 P_AimLineAttack(plr->mo, an - (1 << 26), range, CROSSHAIR_AIM);
 
-                if (linetarget && hud_crosshair_indicators) { crosshair.side = 1; } // [Nugget]
+                if (linetarget && hud_crosshair_indicators) { side = 1; } // [Nugget]
             }
         }
         overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
@@ -190,6 +191,7 @@ void HU_UpdateCrosshair(void)
                            || hud_crosshair_fuzzy)) // [Nugget]
         {
             crosshair_target = linetarget;
+            crosshair.side = side; // [Nugget]
         }
 
         if (hud_crosshair_target && crosshair_target)

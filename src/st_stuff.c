@@ -1102,7 +1102,7 @@ void ST_drawWidgets(void)
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
         {
-          patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+          patch = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
         }
         else { patch = NULL; }
       }
@@ -1133,7 +1133,7 @@ void ST_drawWidgets(void)
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
         {
-          patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+          patch = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
         }
         else { patch = NULL; }
       }
@@ -1165,7 +1165,7 @@ void ST_drawWidgets(void)
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
         {
-          patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+          patch = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
         }
         else { patch = NULL; }
       }
@@ -1227,7 +1227,7 @@ void ST_drawWidgets(void)
       // Berserk or Medkit sprite
       else if (lu_berserk >= 0)
       {
-        patch_t *const patch = W_CacheLumpNum(lu_berserk, PU_STATIC);
+        patch_t *const patch = V_CachePatchNum(lu_berserk, PU_STATIC);
         
         // [crispy] (23,179) is the center of the Ammo widget
         V_DrawPatch(ammox + (21 * (st_crispyhud ? nughud.ammo.align : -1))
