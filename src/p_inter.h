@@ -79,6 +79,9 @@ extern int bfgcells;
 extern int deh_species_infighting;
 extern int maxammo[], clipammo[];
 
+// [Nugget]
+void P_NuggetGib(struct mobj_s *mo, const boolean crushed);
+
 #endif
 
 //----------------------------------------------------------------------------

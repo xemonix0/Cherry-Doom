@@ -1117,7 +1117,9 @@ void ST_drawWidgets(void)
       boolean no_offsets = false;
 
       if (nhealth[0])
-      { patch = nhealth[plyr->powers[pw_strength] ? 1 : 0]; }
+      {
+        patch = nhealth[plyr->powers[pw_strength] ? 1 : 0];
+      }
       else {
         char namebuf[32];
 
@@ -1130,9 +1132,10 @@ void ST_drawWidgets(void)
         }
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
-        { patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
-        else
-        { patch = NULL; }
+        {
+          patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        }
+        else { patch = NULL; }
       }
 
       if (patch) { NughudDrawPatch(&nughud.healthicon, patch, no_offsets); }
@@ -1145,7 +1148,9 @@ void ST_drawWidgets(void)
       boolean no_offsets = false;
 
       if (nharmor[0])
-      { patch = nharmor[BETWEEN(0, 2, plyr->armortype)]; }
+      {
+        patch = nharmor[BETWEEN(0, 2, plyr->armortype)];
+      }
       else {
         char namebuf[32];
 
@@ -1159,9 +1164,10 @@ void ST_drawWidgets(void)
         }
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
-        { patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
-        else
-        { patch = NULL; }
+        {
+          patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        }
+        else { patch = NULL; }
       }
 
       if (patch) { NughudDrawPatch(&nughud.armoricon, patch, no_offsets); }
@@ -1224,7 +1230,8 @@ void ST_drawWidgets(void)
         patch_t *const patch = W_CacheLumpNum(lu_berserk, PU_STATIC);
         
         // [crispy] (23,179) is the center of the Ammo widget
-        V_DrawPatch(ammox - 21 - SHORT(patch->width)/2 + SHORT(patch->leftoffset),
+        V_DrawPatch(ammox + (21 * (st_crispyhud ? nughud.ammo.align : -1))
+                    - SHORT(patch->width)/2 + SHORT(patch->leftoffset),
                     ammoy + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
                     patch);
       }
@@ -1242,8 +1249,10 @@ void ST_drawWidgets(void)
   }
 
   // [Nugget] NUGHUD
-  if (st_crispyhud) {
-    for (i = 0;  i < 4;  i++) {
+  if (st_crispyhud)
+  {
+    for (i = 0;  i < 4;  i++)
+    {
       if (nughud.ammos[i].x    > -1) { STlib_updateNum(&w_ammo[i],    NULL); }
       if (nughud.maxammos[i].x > -1) { STlib_updateNum(&w_maxammo[i], NULL); }
     }
@@ -1316,10 +1325,7 @@ void ST_drawWidgets(void)
 
   // Highlight current/pending weapon ----------------------------------------
 
-  for (i = 0;  i < 9;  i++)
-  {
-    w_arms[i].data = 0;
-  }
+  for (i = 0;  i < 9;  i++) { w_arms[i].data = 0; }
 
   if (hud_highlight_weapon)
   {
