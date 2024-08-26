@@ -419,6 +419,22 @@ void W_AddBaseDir(const char *path)
     AddDirs(&w_zip_module, base_handle, path);
 }
 
+// [Nugget]
+void W_InitPredefinedLumps(void)
+{
+  if (!num_predefined_lumps) { return; }
+
+  const size_t oldnumlumps = numlumps;
+
+  numlumps += num_predefined_lumps;
+  array_grow(lumpinfo, numlumps);
+
+  memcpy(lumpinfo + oldnumlumps, predefined_lumps,
+         num_predefined_lumps * sizeof(*predefined_lumps));
+
+  array_ptr(lumpinfo)->size += num_predefined_lumps;
+}
+
 void W_InitMultipleFiles(void)
 {
   if (!numlumps)

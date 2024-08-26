@@ -1905,6 +1905,8 @@ void D_DoomMain(void)
 
   LoadBaseFile();
 
+  W_InitPredefinedLumps(); // [Nugget]
+
   IdentifyVersion();
 
   // [FG] emulate a specific version of Doom
@@ -2804,12 +2806,11 @@ void D_DoomMain(void)
     time_t curtime = time(NULL);
     struct tm *curtm = localtime(&curtime);
 
-    // cheese :)
-
-    extern boolean cheese;
-
-    if (curtm && curtm->tm_mon == 3 && curtm->tm_mday == 1)
-    { cheese = true; }
+    if (curtm)
+    {
+           if (curtm->tm_mon == 3 && curtm->tm_mday == 1)  {  cheese = true; }
+      else if (curtm->tm_mon == 9 && curtm->tm_mday == 31) { frights = true; }
+    }
   }
 
   for (;;)

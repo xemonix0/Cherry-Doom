@@ -242,6 +242,7 @@ enum {
   MIF_CROUCHING    = 0x00010000,  // Mobj (player) is crouching
 
   MIF_CHEESE       = 0x10000000,
+  MIF_FRIGHTS      = 0x20000000,
 };
 
 // Map Object definition.
@@ -456,6 +457,8 @@ boolean P_SeekerMissile(mobj_t *actor, mobj_t **seekTarget, angle_t thresh, angl
 int     P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
 
 // [Nugget] ==================================================================
+
+extern boolean cheese, frights;
 
 enum {
   FLINCH_OFF,

@@ -168,8 +168,7 @@ static void cheat_saitama();    // MDK Fist
 
 static void cheat_boomcan();    // Explosive hitscan
 
-boolean cheese;
-static void cheat_cheese();     // cheese :)
+static void cheat_cheese();
 
 boolean idgaf;
 static void cheat_idgaf();
@@ -436,7 +435,7 @@ struct cheat_s cheat[] = {
   {"mdk",        NULL, not_net | not_demo, {cheat_mdk}        },
   {"saitama",    NULL, not_net | not_demo, {cheat_saitama}    }, // MDK Fist
   {"boomcan",    NULL, not_net | not_demo, {cheat_boomcan}    }, // Explosive hitscan
-  {"cheese",     NULL, not_net | not_demo, {cheat_cheese}     }, // cheese :)
+  {"cheese",     NULL, not_net | not_demo, {cheat_cheese}     },
   {"idgaf",      NULL, not_net | not_demo, {cheat_idgaf}      },
 
   #ifdef NUGMAGIC
@@ -840,7 +839,6 @@ static void cheat_boomcan()
   displaymsg("Explosive Hitscan %s", (plyr->cheats & CF_BOOMCAN) ? "ON" : "OFF");
 }
 
-// cheese :)
 static void cheat_cheese()
 {
   cheese = !cheese;
