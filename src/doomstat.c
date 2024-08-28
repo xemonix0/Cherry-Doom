@@ -173,7 +173,8 @@ int wipe_speed_percentage;
 int alt_interpic;
 int s_clipping_dist_x2;
 int one_key_saveload;
-int autosave_interval; // CFG-only
+int autosave;
+int autosave_interval;
 int rewind_interval;
 int rewind_depth;
 int rewind_timeout;

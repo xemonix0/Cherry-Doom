@@ -539,7 +539,8 @@ extern int wipe_speed_percentage;
 extern int alt_interpic;
 extern int s_clipping_dist_x2;
 extern int one_key_saveload;
-extern int autosave_interval; // CFG-only
+extern int autosave;
+extern int autosave_interval;
 extern int rewind_interval;
 extern int rewind_depth;
 extern int rewind_timeout;

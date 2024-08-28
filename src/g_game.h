@@ -115,12 +115,14 @@ extern int cpars[];     // hardcoded array size
 
 // [Nugget] ------------------------------------------------------------------
 
+void G_SetAutosaveCountdown(int value); // Autosave
+
 // Rewind
-extern void G_SetRewindCountdown(int value);
-extern void G_EnableRewind(void);
-extern void G_Rewind(void);
-extern void G_ClearExcessKeyFrames(void);
-extern boolean G_KeyFrameRW(void);
+void G_SetRewindCountdown(int value);
+void G_EnableRewind(void);
+void G_Rewind(void);
+void G_ClearExcessKeyFrames(void);
+boolean G_KeyFrameRW(void);
 
 // Skill
 void G_SetBabyModeParms(const skill_t skill);

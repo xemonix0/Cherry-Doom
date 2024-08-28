@@ -11,6 +11,10 @@
 ## Changes
 
 - **Improved loading speed when rewinding**
+- **Autosave improvements:**
+  - Separated level-end autosaves and periodic autosaves into two settings,
+    enabled the former by default, and gave menu items to both
+  - Autosaves are now prefixed as per the executable's name
 - **_Bloodier Gibbing_ setting now adds crushing effects**
 - **Renamed _ZDoom-like Item Drops_ (`zdoom_item_drops`) to _Toss Items Upon Death_ (`tossdrop`)** [1]
 - **Removed _Upward Message Scrolling_ menu item**

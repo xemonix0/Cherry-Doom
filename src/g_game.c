@@ -117,6 +117,15 @@ void G_SetAutosaveCountdown(int value)
   autosave_countdown = value;
 }
 
+static void G_DoSaveGame(void);
+
+static void G_DoAutosave(void)
+{
+  autosaving = true;
+  G_DoSaveGame();
+  autosaving = false;
+}
+
 // Rewind --------------------------------------------------------------------
 
 static boolean keyframe_rw = false;
@@ -2201,7 +2210,7 @@ static void G_DoWorldDone(void)
 
   // [Nugget] ----------------------------------------------------------------
 
-  G_SetAutosaveCountdown(0); // Autosave
+  if (autosave) { G_DoAutosave(); } // Autosave
   
   G_UpdateInitialLoadout(); // Custom Skill
 }
@@ -2575,7 +2584,7 @@ char* G_SaveGameName(int slot)
   {
     static int autoslot = 0;
 
-    sprintf(buf, "nuggaut%d.dsg", autoslot);
+    sprintf(buf, "%.4saut%d.dsg", D_DoomExeName(), autoslot);
 
     autoslot = (autoslot + 1) % 4;
   }
@@ -3593,16 +3602,11 @@ void G_Ticker(void)
     }
 
   // [Nugget] Autosave
-  if (CASUALPLAY(autosave_interval)
+  if (CASUALPLAY(autosave && autosave_interval)
       && gamestate == GS_LEVEL && oldleveltime < leveltime
       && players[consoleplayer].playerstate != PST_DEAD)
   {
-    if (--autosave_countdown <= 0)
-    {
-      autosaving = true;
-      G_DoSaveGame();
-      autosaving = false;
-    }
+    if (--autosave_countdown <= 0) { G_DoAutosave(); }
   }
 
   // [Nugget] Rewind

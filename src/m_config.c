@@ -1033,10 +1033,17 @@ default_t defaults[] = {
   },
 
   {
+    "autosave",
+    (config_t *) &autosave, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "Autosave when finishing levels"
+  },
+
+  {
     "autosave_interval",
     (config_t *) &autosave_interval, NULL,
-    {0}, {30,600}, number, ss_none, wad_no,
-    "Interval between autosaves, in seconds"
+    {0}, {0,600}, number, ss_gen, wad_no,
+    "Interval between periodic autosaves, in seconds (0 = Off)"
   },
 
   {
