@@ -3915,7 +3915,7 @@ void G_Ticker(void)
             displaymsg("Freecam Speed: %i unit%s", scaledspeed, (scaledspeed == 1) ? "" : "s");
           }
 
-          fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed)));
+          fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed))) * 100 / realtic_clock_rate;
 
           fixed_t forwardmove = speed * (INPUT(input_forward)     - INPUT(input_backward)),
                   sidemove    = speed * (INPUT(input_straferight) - INPUT(input_strafeleft));
