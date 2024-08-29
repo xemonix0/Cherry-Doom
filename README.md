@@ -63,7 +63,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Alternative Intermission Background_** setting, to replace the intermission graphic with a darkened rotating camera view
 - **_Sound Clipping Distance_** selection, to optionally double the distance at which sound effects become audible
 - **_One-Key Quick Save/Load_** setting, to skip the confirmation prompt
-- **Autosaving** (CFG-only: `autosave_interval`)
+- **Autosaving**
   - Autosaves are meant to serve as backups: they're stored in the same folder as manual saves,
     aren't accessible in-game, and lack preview snapshots, but otherwise function like normal saves.
     They must be renamed to appear in the save/load menus.

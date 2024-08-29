@@ -3242,6 +3242,15 @@ setup_menu_t gen_settings8[] = {
   MI_END
 };
 
+static void UpdateAutosaveItems(void);
+
+static void UpdateAutosaveInterval(void)
+{
+  if (autosave_interval) { autosave_interval = MAX(30, autosave_interval); }
+
+  G_SetAutosaveCountdown(autosave_interval * TICRATE);
+}
+
 static void UpdateRewindInterval(void)
 {
   G_EnableRewind();
@@ -3268,6 +3277,8 @@ setup_menu_t gen_settings9[] = { // [Nugget]
 
     {"Sound Hearing Distance",  S_CHOICE|S_STRICT,            N_X, M_SPC, {"s_clipping_dist_x2"}, .strings_id = str_s_clipping_dist, .action = SetSoundModule},
     {"One-Key Quick-Save/Load", S_ONOFF,                      N_X, M_SPC, {"one_key_saveload"}},
+    {"Autosaving",              S_ONOFF,                      N_X, M_SPC, {"autosave"}, .action = UpdateAutosaveItems},
+    {"Autosave Interval (S)",   S_NUM,                        N_X, M_SPC, {"autosave_interval"}, .action = UpdateAutosaveInterval},
     {"Rewind Interval (S)",     S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_interval"}, .action = UpdateRewindInterval},
     {"Rewind Depth",            S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_depth"}, .action = UpdateRewindDepth},
     {"Rewind Timeout (MS)",     S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_timeout"}, .action = G_EnableRewind},
@@ -3285,6 +3296,11 @@ setup_menu_t gen_settings9[] = { // [Nugget]
 
   MI_END
 };
+
+static void UpdateAutosaveItems(void)
+{
+  DisableItem(!autosave, gen_settings9, "autosave_interval");
+}
 
 // [Nugget] -----------------------------------------------------------------/
 
