@@ -1075,11 +1075,14 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 
 static inline boolean CheckLocalView(const player_t *player)
 {
+  // [Nugget] Freecam: use localview unless
+  // locked onto a mobj, or not controlling the camera
+  if (freecam_on && !(freecam.mobj || freecam_mode != FREECAM_CAM))
+  { return true; }
+
   return (
     // Don't use localview if the player is spying.
-    (player == &players[consoleplayer]
-     // [Nugget] Freecam: or locked onto a mobj, or not controlling the camera
-     || (freecam_on && !(freecam.mobj || freecam_mode != FREECAM_CAM))) &&
+    player == &players[consoleplayer] &&
     // Don't use localview if the player is dead.
     player->playerstate != PST_DEAD &&
     // Don't use localview if the player just teleported.
@@ -1208,7 +1211,7 @@ void R_SetupFrame (player_t *player)
       viewangle = LerpAngle(player->mo->oldangle, player->mo->angle);
     }
 
-    if ((use_localview || freecam.mobj) // [Nugget] Freecam
+    if ((use_localview || (freecam_on && freecam_mode == FREECAM_CAM)) // [Nugget] Freecam
         && raw_input && !player->centering)
     {
       basepitch = player->pitch + localview.pitch;

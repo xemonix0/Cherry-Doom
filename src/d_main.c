@@ -296,7 +296,8 @@ void D_Display (void)
     // [AM] Figure out how far into the current tic we're in as a fixed_t.
     fractionaltic = I_GetFracTime();
 
-    if (!menuactive && gamestate == GS_LEVEL && !paused && raw_input)
+    if (!menuactive && gamestate == GS_LEVEL && raw_input
+        && (!paused || (R_GetFreecamOn() && !R_GetFreecamMobj()))) // [Nugget] Freecam
     {
       I_StartDisplay();
     }
