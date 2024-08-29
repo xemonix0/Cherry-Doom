@@ -126,7 +126,8 @@ boolean ignore_pistolstart = false; // Custom Skill: ignore pistol-start setting
 
 // Autosave ------------------------------------------------------------------
 
-static int autosave_interval;
+boolean autosave;
+int autosave_interval;
 
 static boolean autosaving = false;
 static int autosave_countdown = 0;
@@ -5734,9 +5735,10 @@ void G_BindGameVariables(void)
 
   BIND_BOOL_GENERAL(one_key_saveload, false, "One-key quick-saving/loading");
 
-  // (CFG-only)
-  M_BindNum("autosave_interval", &autosave_interval, NULL, 0, 30, 600, ss_none, wad_no,
-    "Interval between autosaves, in seconds");
+  BIND_BOOL_GENERAL(autosave, true, "Autosave when finishing levels");
+
+  M_BindNum("autosave_interval", &autosave_interval, NULL, 0, 0, 600, ss_gen, wad_no,
+    "Interval between periodic autosaves, in seconds (0 = Off)");
 
   BIND_NUM_GENERAL(rewind_interval, 1, 1, 600,
     "Interval between rewind key-frames, in seconds");
