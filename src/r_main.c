@@ -1038,6 +1038,8 @@ void R_ExecuteSetViewSize (void)
 
 void R_Init (void)
 {
+  r_fov = custom_fov; // [Nugget]
+
   R_InitData();
   R_SetViewSize(screenblocks);
   R_InitPlanes();
