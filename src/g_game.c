@@ -1036,10 +1036,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
           iw_active[7] ? wp_chainsaw :
           iw_active[8] && have_ssg ? wp_supershotgun :
 
-          // [Nugget] Last weapon key
-          ilw_active && casual_play &&
-          WeaponSelectable(players[consoleplayer].lastweapon)
-          ? players[consoleplayer].lastweapon :
+          // [Nugget] Last-weapon button
+          CASUALPLAY(ilw_active) ? players[consoleplayer].lastweapon :
 
           wp_nochange;
       }

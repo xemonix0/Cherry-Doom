@@ -32,6 +32,7 @@
 - **_'FAST'_ cheat not fully toggling fast monsters outside of custom skill**
 - **Fallback status-bar Berserk graphic not taking NUGHUD Ammo alignment into account**
 - **Tag Finder not highlighting hidden lines**
+- **Last-weapon button being affected by _Skip Ammoless Weapons_ setting**
 - **Horizontal-autoaim indicators reacting to fuzzy targets regardless of detection setting**
 - **_[Crosshair] Translucency_ menu item not being disabled when the crosshair were disabled**
 
