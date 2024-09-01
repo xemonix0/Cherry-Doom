@@ -2721,7 +2721,7 @@ default_t defaults[] = {
                         {INPUT_JOYB, CONTROLLER_RIGHT_SHOULDER} }
   },
 
-  { // [Nugget] Last weapon key
+  { // [Nugget] Last-weapon button
     "input_lastweapon",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
