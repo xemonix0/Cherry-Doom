@@ -86,7 +86,7 @@ extern boolean screenvisible;
 extern const float gammalevels[GAMMA2MAX+1];
 
 extern int gamma2;
-byte I_GetPaletteIndex(byte *palette, int r, int g, int b);
+byte I_GetNearestColor(byte *palette, int r, int g, int b);
 
 boolean I_WritePNGfile(char *filename); // [FG] screenshots in PNG format
 

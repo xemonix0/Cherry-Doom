@@ -668,9 +668,12 @@ void I_StartFrame(void)
 
 static void UpdateRender(void)
 {
+    SDL_LockTexture(texture, &blit_rect, &argbbuffer->pixels,
+        &argbbuffer->pitch);
+
     SDL_LowerBlit(screenbuffer, &blit_rect, argbbuffer, &blit_rect);
-    SDL_UpdateTexture(texture, &blit_rect, argbbuffer->pixels,
-                      argbbuffer->pitch);
+
+    SDL_UnlockTexture(texture);
 
     if (letterboxed)
     {
@@ -1028,7 +1031,7 @@ void I_SetPalette(byte *palette)
 
 // Taken from Chocolate Doom chocolate-doom/src/i_video.c:L841-867
 
-byte I_GetPaletteIndex(byte *palette, int r, int g, int b)
+byte I_GetNearestColor(byte *palette, int r, int g, int b)
 {
     byte best;
     int best_diff, diff;
@@ -1833,16 +1836,9 @@ static void CreateSurfaces(int w, int h)
     }
 
     // [FG] create intermediate ARGB frame buffer
-    {
-        uint32_t rmask, gmask, bmask, amask;
-        int bpp;
 
-        SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_ARGB8888, &bpp,
-                                   &rmask, &gmask, &bmask, &amask);
-        argbbuffer =
-            SDL_CreateRGBSurface(0, w, h, bpp, rmask, gmask, bmask, amask);
-        SDL_FillRect(argbbuffer, NULL, 0);
-    }
+    argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(
+        NULL, w, h, 8, 0, SDL_PIXELFORMAT_ARGB8888);
 
     I_SetPalette(W_CacheLumpName("PLAYPAL", PU_CACHE));
 
