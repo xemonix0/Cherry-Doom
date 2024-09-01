@@ -233,7 +233,7 @@ void V_InitColorTranslation(void)
 
     // [Nugget] ==============================================================
 
-    memset(cr_allblack, I_GetPaletteIndex(playpal, 0, 0, 0), 256);
+    memset(cr_allblack, I_GetNearestColor(playpal, 0, 0, 0), 256);
 
     for (int i = 0;  i < 256;  i++)
     {
@@ -252,7 +252,7 @@ void V_InitColorTranslation(void)
 
         double greatest = MAX(MAX(blue, red), green);
         
-        nightvision[i] = I_GetPaletteIndex(playpal, 0.0, greatest, 0.0);
+        nightvision[i] = I_GetNearestColor(playpal, 0.0, greatest, 0.0);
     }
 }
 
