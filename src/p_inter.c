@@ -367,7 +367,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         0x61, 0x20, 0x63, 0x68, 0x65, 0x65, 0x73, 0x65, 0x2E, 0x00
       };
 
-      pickupmsg(player, s);
+      pickupmsg(player, "%s", s);
     }
     else if (frights && frame == 2)
     {
@@ -381,7 +381,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         0x61, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x2E, 0x00
       };
 
-      pickupmsg(player, s);
+      pickupmsg(player, "%s", s);
     }
     else
     // Match the below switch's default

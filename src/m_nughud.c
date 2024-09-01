@@ -309,9 +309,9 @@ static boolean M_NughudParseOption(const char *p, boolean wad)
 
 void M_NughudLoadOptions(void)
 {
-  int lump;
+  const int lump = W_CheckNumForName("NUGHUD");
 
-  if ((lump = W_CheckNumForName("NUGHUD")) != -1)
+  if (lump != -1)
   {
     int size = W_LumpLength(lump), buflen = 0;
     char *buf = NULL, *p, *options = p = W_CacheLumpNum(lump, PU_STATIC);

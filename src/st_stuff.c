@@ -1546,7 +1546,7 @@ void ST_loadGraphics(void)
   have_xdthfaces = i;
 
   { // [Nugget] --------------------------------------------------------------
-    int lump;
+    int lump = 0;
 
     // Find Status Bar Berserk patch
     if ((lump = (W_CheckNumForName)("STBERSRK", ns_global)) >= 0)
