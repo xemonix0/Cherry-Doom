@@ -26,7 +26,6 @@ struct event_s;
 
 // [Nugget]
 extern boolean quick_quitgame;
-extern boolean quit_sound;
 
 //
 // MENUS

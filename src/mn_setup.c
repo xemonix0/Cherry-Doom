@@ -4982,5 +4982,4 @@ void MN_BindMenuVariables(void)
               "HUD/menu-shadows translucency percent");
 
     BIND_BOOL_GENERAL(quick_quitgame, false, "Skip \"Quit Game\" prompt");
-    BIND_BOOL_GENERAL(quit_sound, true, "Play a sound when confirming the \"Quit Game\" prompt");
 }
