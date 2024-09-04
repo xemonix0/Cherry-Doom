@@ -1319,15 +1319,13 @@ static int quitsounds[8] = {sfx_pldeth, sfx_dmpain, sfx_popain, sfx_slop,
 static int quitsounds2[8] = {sfx_vilact, sfx_getpow, sfx_boscub, sfx_slop,
                              sfx_skeswg, sfx_kntdth, sfx_bspact, sfx_sgtatk};
 
-boolean quit_sound;
-
 static void M_QuitResponse(int ch)
 {
     if (ch != 'y')
     {
         return;
     }
-    if (quit_sound &&                 // [Nugget]
+    if (D_AllowQuitSound() &&
         (!netgame || demoplayback) && // killough 12/98
         !nosfxparm)                   // avoid delay if no sound card
     {

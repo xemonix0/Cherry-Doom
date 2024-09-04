@@ -694,12 +694,12 @@ void F_CastTicker (void)
 
 boolean F_CastResponder (event_t* ev)
 {
-  boolean xdeath = false; // [Nugget]: [crispy]
-
-  if (ev->type != ev_keydown)
+  if (ev->type != ev_keydown && ev->type != ev_mouseb_down && ev->type != ev_joyb_down)
     return false;
 
   // [Nugget] /---------------------------------------------------------------
+
+  boolean xdeath = false; // [crispy]
 
   // [crispy] make monsters turnable in cast ...
   if (M_InputActivated(input_turnleft))
@@ -741,9 +741,11 @@ boolean F_CastResponder (event_t* ev)
   if (xdeath && mobjinfo[castorder[castnum].type].xdeathstate)
     caststate = &states[mobjinfo[castorder[castnum].type].xdeathstate];
   else
-    caststate = &states[mobjinfo[castorder[castnum].type].deathstate];
+
+  caststate = &states[mobjinfo[castorder[castnum].type].deathstate];
 
   casttics = caststate->tics;
+
   // [Nugget]: [crispy] Allow A_RandomJump() in deaths in cast sequence
   if (casttics == -1 && caststate->action.p2 == (actionf_p2)A_RandomJump)
   {

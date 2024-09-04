@@ -338,7 +338,7 @@ enum
 
     str_default_skill,
     str_default_complevel,
-    str_endoom,
+    str_exit_sequence,
     str_death_use_action,
     str_menu_backdrop,
     str_widescreen,
@@ -1130,8 +1130,13 @@ static void DrawGyroCalibration(void)
         case GYRO_CALIBRATION_INACTIVE:
             break;
 
-        case GYRO_CALIBRATION_ACTIVE:
+        case GYRO_CALIBRATION_STARTING:
             block_input = true;
+            DrawNotification("Starting calibration...", CR_GRAY);
+            I_UpdateGyroCalibrationState();
+            break;
+
+        case GYRO_CALIBRATION_ACTIVE:
             DrawNotification("Calibrating, please wait...", CR_GRAY);
             I_UpdateGyroCalibrationState();
             break;
@@ -3045,7 +3050,9 @@ static void SmoothLight(void)
 
 static const char *menu_backdrop_strings[] = {"Off", "Dark", "Texture"};
 
-static const char *endoom_strings[] = {"off", "on", "PWAD only"};
+static const char *exit_sequence_strings[] = {
+    "Off", "Sound Only", "PWAD ENDOOM", "On"
+};
 
 static setup_menu_t gen_settings5[] = {
 
@@ -3081,8 +3088,8 @@ static setup_menu_t gen_settings5[] = {
     {"Menu Backdrop Style", S_CHOICE, OFF_CNTR_X, M_SPC, // [Nugget] Changed description
      {"menu_backdrop"}, .strings_id = str_menu_backdrop},
 
-    {"Show ENDOOM Screen", S_CHOICE, OFF_CNTR_X, M_SPC, {"show_endoom"},
-    .strings_id = str_endoom},
+    {"Exit Sequence", S_CHOICE, OFF_CNTR_X, M_SPC, {"exit_sequence"},
+    .strings_id = str_exit_sequence},
 
     MI_END
 };
@@ -4872,7 +4879,7 @@ static const char **selectstrings[] = {
     NULL, // str_gyro_accel
     default_skill_strings,
     default_complevel_strings,
-    endoom_strings,
+    exit_sequence_strings,
     death_use_action_strings,
     menu_backdrop_strings,
     widescreen_strings,
