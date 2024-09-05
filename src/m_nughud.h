@@ -20,6 +20,7 @@
 #ifndef __M_NUGHUD__
 #define __M_NUGHUD__
 
+#include "doomtype.h"
 #include "m_fixed.h"
 
 #define NUGHUDWIDESHIFT(x) (                                       \

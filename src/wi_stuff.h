@@ -20,6 +20,9 @@
 #ifndef __WI_STUFF__
 #define __WI_STUFF__
 
+// [Nugget]
+#include "doomtype.h"
+
 struct wbstartstruct_s;
 
 // States for the intermission
