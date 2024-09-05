@@ -3937,7 +3937,7 @@ void G_Ticker(void)
           z = speed * (INPUT(input_jump) - INPUT(input_crouch));
         }
 
-        pitch = cmd->pitch;
+        pitch = cmd->pitch << FRACBITS;
 
         static int strafetic = -10;
         static boolean strafedown = false;
