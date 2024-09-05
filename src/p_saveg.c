@@ -28,6 +28,7 @@
 #include "doomstat.h"
 #include "i_system.h"
 #include "info.h"
+#include "m_array.h"
 #include "m_random.h"
 #include "p_enemy.h"
 #include "p_maputl.h"
@@ -1027,6 +1028,27 @@ static void saveg_read_player_t(player_t *str)
         str->maxkilldiscount = 0;
     }
 
+    if (saveg_compat > saveg_nugget320) // [Nugget]
+    {
+        // [Woof!]: int num_visitedlevels;
+        str->num_visitedlevels = saveg_read32();
+
+        // [Woof!]: level_t *visitedlevels;
+        array_clear(str->visitedlevels);
+        for (int i = 0; i < str->num_visitedlevels; ++i)
+        {
+            level_t level = {0};
+            level.episode = saveg_read32();
+            level.map = saveg_read32();
+            array_push(str->visitedlevels, level);
+        }
+    }
+    else
+    {
+        str->num_visitedlevels = 0;
+        array_clear(str->visitedlevels);
+    }
+
     // [Nugget] --------------------------------------------------------------
 
     if (saveg_compat > saveg_woof600)
@@ -1199,6 +1221,17 @@ static void saveg_write_player_t(player_t *str)
 
     // [Woof!]: int maxkilldiscount;
     saveg_write32(str->maxkilldiscount);
+
+    // [Woof!]: int num_visitedlevels;
+    saveg_write32(str->num_visitedlevels);
+
+    // [Woof!]: level_t *visitedlevels;
+    level_t *level;
+    array_foreach(level, str->visitedlevels)
+    {
+        saveg_write32(level->episode);
+        saveg_write32(level->map);
+    }
 
     // [Nugget] --------------------------------------------------------------
 

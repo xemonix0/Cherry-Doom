@@ -379,13 +379,13 @@ Files: `data/nugget-doom.ico, data/nugget-doom.png, src/icon.c, data/setup.ico, 
 Copyright: © 2022 Korp.  
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-Files: `miniz/*`  
+Files: `third-party/miniz/*`  
 Copyright:  
  © 2010-2014 Rich Geldreich and Tenacious Software LLC;  
  © 2013-2014 RAD Game Tools and Valve Software.  
 License: [MIT](https://opensource.org/licenses/MIT)
 
-Files: `spng/*`  
+Files: `third-party/spng/*`  
 Copyright: © 2018-2023 Randy.  
 License: [BSD-2-Clause](https://opensource.org/license/bsd-2-clause)
 

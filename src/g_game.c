@@ -2235,6 +2235,14 @@ frommapinfo:
     StatCopy(&wminfo);
   }
 
+  for (int i = 0; i < MAXPLAYERS; ++i)
+  {
+      level_t level = {gameepisode, gamemap};
+      array_push(players[i].visitedlevels, level);
+      players[i].num_visitedlevels = array_size(players[i].visitedlevels);
+  }
+  wminfo.visitedlevels = players[consoleplayer].visitedlevels;
+
   WI_Start (&wminfo);
 
   // [Nugget] Clear visual effects
