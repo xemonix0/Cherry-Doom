@@ -217,22 +217,6 @@ static struct {
   int          maxammo[NUMAMMO];
 } initial_loadout;
 
-void G_SetBabyModeParms(const skill_t skill)
-{
-  if (skill == sk_custom)
-  {
-    doubleammo = customskill.doubleammo;
-    halfdamage = customskill.halfdamage;
-  }
-  else {
-    doubleammo = skill == sk_baby || skill == sk_nightmare;
-    halfdamage = skill == sk_baby;
-  }
-
-  doubleammo |= CASUALPLAY(doubleammoparm);
-  halfdamage |= CASUALPLAY(halfdamageparm);
-}
-
 // [Nugget]
 void G_SetSkillParms(const skill_t skill)
 {
@@ -241,6 +225,8 @@ void G_SetSkillParms(const skill_t skill)
     thingspawns     = customskill.things;
     coop_spawns     = customskill.coopspawns;
     realnomonsters  = customskill.nomonsters;
+    doubleammo      = customskill.doubleammo;
+    halfdamage      = customskill.halfdamage;
     slowbrain       = customskill.slowbrain;
     fastmonsters    = customskill.fast;
     respawnmonsters = customskill.respawn;
@@ -253,6 +239,8 @@ void G_SetSkillParms(const skill_t skill)
 
     coop_spawns     = coopspawnsparm;
     realnomonsters  = nomonsters;
+    doubleammo      = skill == sk_baby || skill == sk_nightmare;
+    halfdamage      = skill == sk_baby;
     slowbrain       = skill <= sk_easy;
     fastmonsters    = fastparm || skill == sk_nightmare;
     respawnmonsters = skill == sk_nightmare || respawnparm;
@@ -261,7 +249,6 @@ void G_SetSkillParms(const skill_t skill)
     x2monsters = false;
   }
 
-  G_SetBabyModeParms(skill);
   G_SetFastParms(fastmonsters);
 }
 
@@ -690,30 +677,38 @@ static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
 
 void G_PrepMouseTiccmd(void)
 {
-  // [Nugget] Decrease the intensity of some movements if zoomed in /---------
+  // [Nugget] /===============================================================
 
-  float zoomdiv = 1.0f;
+  float hmodifier = 1.0f;
+
+  // Decrease the intensity of some movements if zoomed in -------------------
 
   if (!strictmode)
   {
     const int zoom = R_GetFOVFX(FOVFX_ZOOM);
 
     if (zoom)
-    { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+    { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
   }
 
-  // [Nugget] ---------------------------------------------------------------/
+  float vmodifier = hmodifier;
+
+  // Flip levels ------------------------------------------------------------
+
+  if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
+
+  // [Nugget] ===============================================================/
 
   if (mousex && !M_InputGameActive(input_strafe))
   {
-    localview.rawangle -= G_CalcMouseAngle(mousex) / zoomdiv;
+    localview.rawangle -= G_CalcMouseAngle(mousex) / hmodifier;
     basecmd.angleturn = G_CarryAngle(localview.rawangle);
     mousex = 0;
   }
 
   if (mousey && mouselook)
   {
-    localview.rawpitch += G_CalcMousePitch(mousey) / zoomdiv;
+    localview.rawpitch += G_CalcMousePitch(mousey) / vmodifier;
     basecmd.pitch = G_CarryPitch(localview.rawpitch);
     mousey = 0;
   }
@@ -723,19 +718,27 @@ void G_PrepGamepadTiccmd(void)
 {
   if (I_UseGamepad())
   {
-    // [Nugget] Decrease the intensity of some movements if zoomed in /---------
+    // [Nugget] /=============================================================
 
-    float zoomdiv = 1.0f;
+    float hmodifier = 1.0f;
+
+    // Decrease the intensity of some movements if zoomed in -----------------
 
     if (!strictmode)
     {
       const int zoom = R_GetFOVFX(FOVFX_ZOOM);
 
       if (zoom)
-      { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+      { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
     }
 
-    // [Nugget] ---------------------------------------------------------------/
+    float vmodifier = hmodifier;
+
+    // Flip levels ----------------------------------------------------------
+
+    if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
+
+    // [Nugget] =============================================================/
 
     const boolean strafe = M_InputGameActive(input_strafe);
 
@@ -744,14 +747,14 @@ void G_PrepGamepadTiccmd(void)
 
     if (axes[AXIS_TURN] && !strafe)
     {
-      localview.rawangle -= G_CalcGamepadAngle() / zoomdiv;
+      localview.rawangle -= G_CalcGamepadAngle() / hmodifier;
       basecmd.angleturn = G_CarryAngle(localview.rawangle);
       axes[AXIS_TURN] = 0.0f;
     }
 
     if (axes[AXIS_LOOK] && padlook)
     {
-      localview.rawpitch -= G_CalcGamepadPitch() / zoomdiv;
+      localview.rawpitch -= G_CalcGamepadPitch() / vmodifier;
       basecmd.pitch = G_CarryPitch(localview.rawpitch);
       axes[AXIS_LOOK] = 0.0f;
     }
@@ -762,33 +765,41 @@ void G_PrepGyroTiccmd(void)
 {
   if (I_UseGamepad())
   {
-    // [Nugget] Decrease the intensity of some movements if zoomed in /---------
+    // [Nugget] /=============================================================
 
-    float zoomdiv = 1.0f;
+    float hmodifier = 1.0f;
+
+    // Decrease the intensity of some movements if zoomed in -----------------
 
     if (!strictmode)
     {
       const int zoom = R_GetFOVFX(FOVFX_ZOOM);
 
       if (zoom)
-      { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+      { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
     }
 
-    // [Nugget] ---------------------------------------------------------------/
+    float vmodifier = hmodifier;
+
+    // Flip levels ----------------------------------------------------------
+
+    if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
+
+    // [Nugget] =============================================================/
 
     I_CalcGyroAxes(M_InputGameActive(input_strafe));
     gyro_turn_tic = gyro_axes[GYRO_TURN];
 
     if (gyro_axes[GYRO_TURN])
     {
-      localview.rawangle += gyro_axes[GYRO_TURN] / zoomdiv;
+      localview.rawangle += gyro_axes[GYRO_TURN] / hmodifier;
       basecmd.angleturn = G_CarryAngle(localview.rawangle);
       gyro_axes[GYRO_TURN] = 0.0f;
     }
 
     if (gyro_axes[GYRO_LOOK])
     {
-      localview.rawpitch += gyro_axes[GYRO_LOOK] / zoomdiv;
+      localview.rawpitch += gyro_axes[GYRO_LOOK] / vmodifier;
       basecmd.pitch = G_CarryPitch(localview.rawpitch);
       gyro_axes[GYRO_LOOK] = 0.0f;
     }
@@ -916,6 +927,12 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   }
 
   // Update/reset
+
+  // [Nugget] Flip levels
+  if (STRICTMODE(flip_levels)) {
+    angle = -angle;
+    side  = -side;
+  }
 
   if (angle)
   {
@@ -3883,7 +3900,7 @@ void G_Ticker(void)
     fixed_t pitch = 0;
     boolean center = false,
             lock = false;
-    
+
     if (R_GetFreecamMode() == FREECAM_CAM && gamestate == GS_LEVEL && !menuactive)
     {
       const ticcmd_t *const cmd = &netcmds[consoleplayer];
@@ -3925,6 +3942,8 @@ void G_Ticker(void)
 
           fixed_t forwardmove = speed * (INPUT(input_forward)     - INPUT(input_backward)),
                   sidemove    = speed * (INPUT(input_straferight) - INPUT(input_strafeleft));
+
+          if (flip_levels) { sidemove = -sidemove; } // Flip levels
 
           angle_t fangle = R_GetFreecamAngle() + angle;
 

@@ -176,7 +176,6 @@ extern boolean custom_skill_respawn;
 extern boolean custom_skill_aggressive;
 extern boolean custom_skill_x2monsters;
 
-void G_SetBabyModeParms(const skill_t skill);
 void G_SetSkillParms(const skill_t skill);
 void G_SetUserCustomSkill(void);
 void G_RestartWithLoadout(const boolean current);

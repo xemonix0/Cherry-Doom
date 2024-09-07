@@ -589,6 +589,9 @@ static void R_ProjectSprite (mobj_t* thing)
       // choose a different rotation based on player view
       angle_t ang = R_PointToAngle(interpx, interpy);
       unsigned rot = (ang-interpangle+(unsigned)(ANG45/2)*9)>>29;
+
+      if (STRICTMODE(flip_levels)) { rot = (8 - rot) & 7; } // [Nugget] Flip levels
+
       lump = sprframe->lump[rot];
       flip = (boolean) sprframe->flip[rot];
     }
@@ -607,6 +610,8 @@ static void R_ProjectSprite (mobj_t* thing)
     {
       flip = !flip;
     }
+
+  if (STRICTMODE(flip_levels)) { flip = !flip; } // [Nugget] Flip levels
 
   txc = tx; // [FG] sprite center coordinate
 
@@ -714,6 +719,8 @@ static void R_ProjectSprite (mobj_t* thing)
       // [Nugget]
       && (!(crosshair_target->flags & MF_SHADOW) || hud_crosshair_fuzzy))
   {
+    if (STRICTMODE(flip_levels)) { txc = -txc; } // [Nugget] Flip levels
+
     HU_UpdateCrosshairLock
     (
       BETWEEN(0, viewwidth  - 1, (centerxfrac + FixedMul(txc, xscale)) >> FRACBITS),
@@ -847,7 +854,10 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   // calculate edges of the shape
   tx = psp->sx2-160*FRACUNIT; // [FG] centered weapon sprite
-  tx += (STRICTMODE(weapon_inertia) ? psp->wix : 0); // [Nugget] Weapon inertia
+
+  // [Nugget] Weapon inertia | Flip levels
+  if (STRICTMODE(weapon_inertia))
+  { tx += flip_levels ? -psp->wix : psp->wix; }
 
   tx -= spriteoffset[lump];
   x1 = (centerxfrac + FixedMul (tx,pspritescale))>>FRACBITS;
@@ -993,6 +1003,23 @@ void R_DrawPlayerSprites(void)
   // clip to screen bounds
   mfloorclip = screenheightarray;
   mceilingclip = negonearray;
+
+  // [Nugget] Flip levels
+  if (STRICTMODE(flip_levels))
+  {
+    for (int y = 0;  y < viewheight;  y++)
+    {
+      for (int x = 0;  x < viewwidth/2;  x++)
+      {
+        pixel_t *left = &I_VideoBuffer[(viewwindowy + y) * video.pitch + viewwindowx + x],
+                *right = left + viewwidth - 1 - x*2,
+                temp = *left;
+
+        *left = *right;
+        *right = temp;
+      }
+    }
+  }
 
   // display crosshair
   if (hud_crosshair_on) // [Nugget] Use crosshair toggle

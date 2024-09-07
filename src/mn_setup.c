@@ -3234,9 +3234,10 @@ setup_menu_t gen_settings8[] = {
 
   {"Nugget - Display", S_SKIP|S_TITLE, N_X, M_SPC},
 
-    {"Backdrop For All Menus",     S_ONOFF,                   N_X, M_SPC, {"menu_background_all"}},
+    {"Backdrop For All Menus",       S_ONOFF,                 N_X, M_SPC, {"menu_background_all"}},
     {"No Palette Tint in Menus",     S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_menu_tint"}},
     {"HUD/Menu Shadows",             S_ONOFF,                 N_X, M_SPC, {"hud_menu_shadows"}},
+    {"Flip Levels",                  S_ONOFF,                 N_X, M_SPC, {"flip_levels"}},
     {"No Berserk Tint",              S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_berserk_tint"}},
     {"No Radiation Suit Tint",       S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_radsuit_tint"}},
     {"Night-Vision Visor Effect",    S_ONOFF |S_STRICT,       N_X, M_SPC, {"nightvision_visor"}},

@@ -146,8 +146,6 @@ boolean fastparm;       // working -fast
 
 // [Nugget]
 boolean coopspawnsparm = false;
-boolean doubleammoparm = false;
-boolean halfdamageparm = false;
 
 boolean singletics = false; // debug flag to cancel adaptiveness
 
@@ -2008,10 +2006,6 @@ void D_DoomMain(void)
   //
 
   devparm = M_CheckParm ("-devparm");
-
-  // [Nugget]
-  doubleammoparm = false;
-  halfdamageparm = false;
 
   //!
   // @category net

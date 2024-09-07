@@ -109,10 +109,6 @@ Toggle the speedometer. Repeating the cheat cycles through different units: map 
 
 Most of them were taken from or inspired by other ports -- see `README.md` for credits.
 
-`BABYMODE`  
-Toggle benefits from the ITYTD skill on any skill level;
-pickups give double ammo and damage dealt to the player is halved.
-
 `FULLCLIP`  
 Toggle infinite ammo.
 
