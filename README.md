@@ -169,7 +169,6 @@ All of these are CFG-only, so their CVAR names are included.
 
 ### Cheats
 
-- **_'BABYMODE'_** to toggle ITYTD benefits
 - **_'FULLCLIP'_** for infinite ammo
 - **_'VALIANT'_** for fast weapons [i.b. ZDoom]
   - **_'BOBBERS'_** serves as a shortcut to toggle the two cheats mentioned above, plus IDFA

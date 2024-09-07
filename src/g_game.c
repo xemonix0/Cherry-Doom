@@ -182,22 +182,6 @@ static struct {
   int          maxammo[NUMAMMO];
 } initial_loadout;
 
-void G_SetBabyModeParms(const skill_t skill)
-{
-  if (skill == sk_custom)
-  {
-    doubleammo = customskill.doubleammo;
-    halfdamage = customskill.halfdamage;
-  }
-  else {
-    doubleammo = skill == sk_baby || skill == sk_nightmare;
-    halfdamage = skill == sk_baby;
-  }
-
-  doubleammo |= CASUALPLAY(doubleammoparm);
-  halfdamage |= CASUALPLAY(halfdamageparm);
-}
-
 // [Nugget]
 void G_SetSkillParms(const skill_t skill)
 {
@@ -206,6 +190,8 @@ void G_SetSkillParms(const skill_t skill)
     thingspawns     = customskill.things;
     coop_spawns     = customskill.coopspawns;
     realnomonsters  = customskill.nomonsters;
+    doubleammo      = customskill.doubleammo;
+    halfdamage      = customskill.halfdamage;
     slowbrain       = customskill.slowbrain;
     fastmonsters    = customskill.fast;
     respawnmonsters = customskill.respawn;
@@ -218,6 +204,8 @@ void G_SetSkillParms(const skill_t skill)
 
     coop_spawns     = coopspawnsparm;
     realnomonsters  = nomonsters;
+    doubleammo      = skill == sk_baby || skill == sk_nightmare;
+    halfdamage      = skill == sk_baby;
     slowbrain       = skill <= sk_easy;
     fastmonsters    = fastparm || skill == sk_nightmare;
     respawnmonsters = skill == sk_nightmare || respawnparm;
@@ -226,7 +214,6 @@ void G_SetSkillParms(const skill_t skill)
     x2monsters = false;
   }
 
-  G_SetBabyModeParms(skill);
   G_SetFastParms(fastmonsters);
 }
 

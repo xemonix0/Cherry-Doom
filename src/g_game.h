@@ -125,7 +125,6 @@ void G_ClearExcessKeyFrames(void);
 boolean G_KeyFrameRW(void);
 
 // Skill
-void G_SetBabyModeParms(const skill_t skill);
 void G_SetSkillParms(const skill_t skill);
 void G_SetUserCustomSkill(void);
 void G_RestartWithLoadout(const boolean current);

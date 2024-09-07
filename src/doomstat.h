@@ -44,8 +44,6 @@ extern  boolean devparm;  // DEBUG: launched with -devparm
 
 // [Nugget]
 extern  boolean coopspawnsparm;
-extern  boolean doubleammoparm;
-extern  boolean halfdamageparm;
 
 extern  int screenblocks;     // killough 11/98
 

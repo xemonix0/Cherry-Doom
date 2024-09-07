@@ -20,6 +20,7 @@
 - **Freecam speed is now mostly independent of game speed**
 - **Made `force_flip_pan` affect the _OpenAL 3D_ sound module** [by @ceski-1]
 - **Renamed _ZDoom-like Item Drops_ (`zdoom_item_drops`) to _Toss Items Upon Death_ (`tossdrop`)** [1]
+- **Removed _'BABYMODE'_ cheat**
 - **Removed _Upward Message Scrolling_ menu item**
 
 ## Bug Fixes
