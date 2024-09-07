@@ -106,7 +106,7 @@ static void CalcListenerParams(const mobj_t *listener,
 
     angle_t angle = listener->angle;
 
-    if (forceFlipPan ^ STRICTMODE(flip_levels)) // Flip levels
+    if (force_flip_pan ^ STRICTMODE(flip_levels)) // Flip levels
     {
         lis->position[0] *= -1.0f;
         lis->velocity[0] *= -1.0f;
@@ -170,7 +170,7 @@ static void CalcSourceParams(const mobj_t *source, oal_source_params_t *src)
     }
 
     // [Nugget - ceski]
-    if (forceFlipPan ^ STRICTMODE(flip_levels)) // Flip levels
+    if (force_flip_pan ^ STRICTMODE(flip_levels)) // Flip levels
     {
         src->position[0] *= -1.0f;
         src->velocity[0] *= -1.0f;

@@ -140,6 +140,7 @@ int extra_level_brightness;               // level brightness feature
 
 // CVARs ---------------------------------------------------------------------
 
+boolean flip_levels;
 boolean nightvision_visor;
 int fake_contrast;
 boolean diminished_lighting;
@@ -1725,6 +1726,8 @@ void R_BindRenderVariables(void)
     "Invulnerability effect (0 = Vanilla; 1 = MBF; 2 = Gray)");
 
   // [Nugget] /---------------------------------------------------------------
+
+  BIND_BOOL_GENERAL(flip_levels, false, "Flip levels horizontally (visual filter)");
 
   BIND_BOOL_GENERAL(no_berserk_tint, false, "Disable Berserk tint");
   BIND_BOOL_GENERAL(no_radsuit_tint, false, "Disable Radiation Suit tint");

@@ -123,6 +123,7 @@ void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // [Nugget] /=================================================================
 
+extern boolean flip_levels;
 extern boolean nightvision_visor;
 extern int fake_contrast;
 extern boolean diminished_lighting;

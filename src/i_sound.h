@@ -27,7 +27,9 @@
 #include "doomtype.h"
 #include "m_fixed.h"
 
-extern boolean s_clipping_dist_x2; // [Nugget]
+// [Nugget]
+extern boolean s_clipping_dist_x2;
+extern boolean force_flip_pan;
 
 // when to clip out sounds
 // Does not fit the large outdoor areas.
