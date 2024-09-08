@@ -16,7 +16,10 @@
   - Separated level-end autosaves and periodic autosaves into two settings,
     enabled the former by default, and gave menu items to both
   - Autosaves are now prefixed as per the executable's name
-- **Replaced `_gap` property of NUGHUD bars with `_xstep` and `_ystep`**, allowing for vertical bars [1]
+- **NUGHUD:**
+  - Replaced `_gap` property of bars with `_xstep` and `_ystep`, allowing for vertical bars [1]
+  - Extended bars' `_ups` range to [10, 10000]
+  - Extended `nughud_viewoffset` range to [-32, 32]
 - **_Bloodier Gibbing_ setting now adds crushing effects**
 - **Freecam speed is now mostly independent of game speed**
 - **Made `force_flip_pan` affect the _OpenAL 3D_ sound module** [by @ceski-1]

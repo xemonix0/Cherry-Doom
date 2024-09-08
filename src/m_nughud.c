@@ -48,11 +48,11 @@ nughud_t nughud; // Behold!!!
  { _cvar_ "_vlign", (config_t *) &(_struct_).vlign, NULL, { _vlign_ }, { -1, 1 }, number }
 
 
-#define BAR(_cvar_, _struct_, _x_, _y_, _wide_, _align_, _vlign_)                             \
- WIDGET3(_cvar_, _struct_, _x_, _y_, _wide_, _align_, _vlign_),                               \
- { _cvar_ "_xstep", (config_t *) &(_struct_).xstep, NULL, {   0 }, {   0,  64    }, number }, \
- { _cvar_ "_ystep", (config_t *) &(_struct_).ystep, NULL, {   0 }, {   0,  64    }, number }, \
- { _cvar_ "_ups",   (config_t *) &(_struct_).ups,   NULL, { 100 }, { 100, 10000 }, number }
+#define BAR(_cvar_, _struct_, _x_, _y_, _wide_, _align_, _vlign_)                            \
+ WIDGET3(_cvar_, _struct_, _x_, _y_, _wide_, _align_, _vlign_),                              \
+ { _cvar_ "_xstep", (config_t *) &(_struct_).xstep, NULL, {   0 }, {  0,  64    }, number }, \
+ { _cvar_ "_ystep", (config_t *) &(_struct_).ystep, NULL, {   0 }, {  0,  64    }, number }, \
+ { _cvar_ "_ups",   (config_t *) &(_struct_).ups,   NULL, { 100 }, { 10, 10000 }, number }
 
 
 #define STK (NUMNUGHUDSTACKS)
@@ -197,7 +197,7 @@ default_t nughud_defaults[] = {
   TOGGLE( "nughud_patch_offsets", nughud.patch_offsets, 1 ),
 
   { "nughud_weapheight", (config_t *) &nughud.weapheight, NULL, { 0 }, { -32, 32 }, number },
-  { "nughud_viewoffset", (config_t *) &nughud.viewoffset, NULL, { 0 }, { -16, 16 }, number },
+  { "nughud_viewoffset", (config_t *) &nughud.viewoffset, NULL, { 0 }, { -32, 32 }, number },
 
   { NULL }         // last entry
 };
