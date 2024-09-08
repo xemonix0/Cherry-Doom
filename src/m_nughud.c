@@ -48,15 +48,16 @@ nughud_t nughud; // Behold!!!
  { _cvar_ "_vlign", (config_t *) &(_struct_).vlign, NULL, { _vlign_ }, { -1, 1 }, number }
 
 
-#define BAR(_cvar_, _struct_, _x_, _y_, _wide_, _align_, _ups_, _gap_)                      \
- WIDGET2(_cvar_, _struct_, _x_, _y_, _wide_, _align_),                                      \
- { _cvar_ "_ups", (config_t *) &(_struct_).ups, NULL, { _ups_ }, {  100, 10000 }, number }, \
- { _cvar_ "_gap", (config_t *) &(_struct_).gap, NULL, { _gap_ }, { -4,   4     }, number }
+#define BAR(_cvar_, _struct_, _x_, _y_, _wide_, _align_, _vlign_)                             \
+ WIDGET3(_cvar_, _struct_, _x_, _y_, _wide_, _align_, _vlign_),                               \
+ { _cvar_ "_xstep", (config_t *) &(_struct_).xstep, NULL, {   0 }, {   0,  64    }, number }, \
+ { _cvar_ "_ystep", (config_t *) &(_struct_).ystep, NULL, {   0 }, {   0,  64    }, number }, \
+ { _cvar_ "_ups",   (config_t *) &(_struct_).ups,   NULL, { 100 }, { 100, 10000 }, number }
 
 
 #define STK (NUMNUGHUDSTACKS)
 
-#define TEXTLINE(_cvar_, _struct_, _x_, _y_, _wide_, _align_, _stack_, _order_)                   \
+#define TEXTLINE(_cvar_, _struct_, _x_, _y_, _wide_, _align_, _stack_, _order_)               \
  { _cvar_ "_x",     (config_t *) &(_struct_).x,     NULL, { _x_     }, { -1, 320 }, number }, \
  { _cvar_ "_y",     (config_t *) &(_struct_).y,     NULL, { _y_     }, { -1, 200 }, number }, \
  { _cvar_ "_wide",  (config_t *) &(_struct_).wide,  NULL, { _wide_  }, { -2, 2   }, number }, \
@@ -98,14 +99,14 @@ nughud_t nughud; // Behold!!!
 //
 
 default_t nughud_defaults[] = {
-  WIDGET2( "nughud_ammo",         nughud.ammo,          ST_AMMOX, ST_AMMOY, -1,  1         ),
-  WIDGET3( "nughud_ammoicon",     nughud.ammoicon,     -1,        0,         0, -1, 1      ),
-  TOGGLE(  "nughud_ammoicon_big", nughud.ammoicon_big,  0                                  ),
-  BAR(     "nughud_ammobar",      nughud.ammobar,      -1,        0,         0, -1, 100, 0 ),
+  WIDGET2( "nughud_ammo",         nughud.ammo,          ST_AMMOX, ST_AMMOY, -1,  1     ),
+  WIDGET3( "nughud_ammoicon",     nughud.ammoicon,     -1,        0,         0, -1, 1  ),
+  TOGGLE(  "nughud_ammoicon_big", nughud.ammoicon_big,  0                              ),
+  BAR(     "nughud_ammobar",      nughud.ammobar,      -1,        0,         0, -1, -1 ),
 
-  WIDGET2( "nughud_health",     nughud.health,      ST_HEALTHX, ST_HEALTHY, -1,  1         ),
-  WIDGET3( "nughud_healthicon", nughud.healthicon, -1,          0,           0, -1, 1      ),
-  BAR(     "nughud_healthbar",  nughud.healthbar,  -1,          0,           0, -1, 100, 0 ),
+  WIDGET2( "nughud_health",     nughud.health,      ST_HEALTHX, ST_HEALTHY, -1,  1     ),
+  WIDGET3( "nughud_healthicon", nughud.healthicon, -1,          0,           0, -1, 1  ),
+  BAR(     "nughud_healthbar",  nughud.healthbar,  -1,          0,           0, -1, -1 ),
 
   WIDGET( "nughud_arms1", nughud.arms[0], -1,   0,    0 ),
   WIDGET( "nughud_arms2", nughud.arms[1],  111, 172, -1 ),
@@ -122,9 +123,9 @@ default_t nughud_defaults[] = {
   WIDGET( "nughud_face",    nughud.face,    -1, ST_FACESY, 0 ),
   TOGGLE( "nughud_face_bg", nughud.face_bg,  1               ),
 
-  WIDGET2( "nughud_armor",     nughud.armor,      ST_ARMORX, ST_ARMORY, 1,  1         ),
-  WIDGET3( "nughud_armoricon", nughud.armoricon, -1,         0,         0, -1, 1      ),
-  BAR(     "nughud_armorbar",  nughud.armorbar,  -1,         0,         0, -1, 100, 0 ),
+  WIDGET2( "nughud_armor",     nughud.armor,      ST_ARMORX, ST_ARMORY, 1,  1     ),
+  WIDGET3( "nughud_armoricon", nughud.armoricon, -1,         0,         0, -1, 1  ),
+  BAR(     "nughud_armorbar",  nughud.armorbar,  -1,         0,         0, -1, -1 ),
 
   WIDGET( "nughud_key0", nughud.keys[0], ST_KEY0X, ST_KEY0Y, 1 ),
   WIDGET( "nughud_key1", nughud.keys[1], ST_KEY1X, ST_KEY1Y, 1 ),
@@ -207,8 +208,9 @@ default_t nughud_defaults[] = {
 static unsigned nughud_default_hash(const char *name)
 {
   unsigned hash = 0;
-  while (*name)
-    hash = hash*2 + toupper(*name++);
+
+  while (*name) { hash = hash*2 + toupper(*name++); }
+
   return hash % NUMNUGHUDDEFAULTS;
 }
 
@@ -220,12 +222,14 @@ static default_t *M_NughudLookupDefault(const char *name)
 
   // Initialize hash table if not initialized already
   if (!hash_init)
-    for (hash_init = 1, dp = nughud_defaults; dp->name; dp++)
+  {
+    for (hash_init = 1, dp = nughud_defaults;  dp->name;  dp++)
     {
       unsigned h = nughud_default_hash(dp->name);
       dp->next = nughud_defaults[h].first;
       nughud_defaults[h].first = dp;
     }
+  }
 
   // Look up name in hash table
   for (dp = nughud_defaults[nughud_default_hash(name)].first;
@@ -250,7 +254,9 @@ static boolean M_NughudParseOption(const char *p, boolean wad)
   if (sscanf(p, "%79s %1023[^\n]", name, strparm) != 2 || !isalnum(*name)
       || !(dp = M_NughudLookupDefault(name))
       || (*strparm == '"') == (dp->type != string))
-  { return 1; }
+  {
+    return 1;
+  }
 
   if (dp->type == string)     // get a string default
   {
@@ -262,7 +268,8 @@ static boolean M_NughudParseOption(const char *p, boolean wad)
 
     strparm[len+1] = 0;
 
-    if (wad && !dp->modified) {             // Modified by wad
+    if (wad && !dp->modified) // Modified by wad
+    {
       dp->modified = 1;                     // Mark it as modified
       dp->orig_default.s = dp->location->s; // Save original default
     }
@@ -270,12 +277,14 @@ static boolean M_NughudParseOption(const char *p, boolean wad)
 
     dp->location->s = strdup(strparm+1); // Change default value
 
-    if (dp->current) {                    // Current value
+    if (dp->current) // Current value
+    {
       free(dp->current->s);               // Free old value
       dp->current->s = strdup(strparm+1); // Change current value
     }
   }
-  else if (dp->type == number) {
+  else if (dp->type == number)
+  {
     if (sscanf(strparm, "%i", &parm) != 1) { return 1; } // Not A Number
 
     //jff 3/4/98 range check numeric parameters
@@ -284,13 +293,13 @@ static boolean M_NughudParseOption(const char *p, boolean wad)
     {
       if (wad)
       {
-        if (!dp->modified) { // First time it's modified by wad
+        if (!dp->modified) // First time it's modified by wad
+        {
           dp->modified = 1;                     // Mark it as modified
           dp->orig_default.i = dp->location->i; // Save original default
         }
 
-        if (dp->current) // Change current value
-        { dp->current->i = parm; }
+        if (dp->current) { dp->current->i = parm; } // Change current value
       }
 
       dp->location->i = parm;          // Change default
@@ -337,9 +346,15 @@ void M_NughudLoadDefaults (void)
 {
   register default_t *dp;
 
-  for (dp = nughud_defaults; dp->name; dp++)
+  for (dp = nughud_defaults;  dp->name;  dp++)
+  {
     if (dp->type == string && dp->defaultvalue.s)
-    { dp->location->s = strdup(dp->defaultvalue.s); }
+    {
+      dp->location->s = strdup(dp->defaultvalue.s);
+    }
     else if (dp->type == number)
-    { dp->location->i = dp->defaultvalue.i; }
+    {
+      dp->location->i = dp->defaultvalue.i;
+    }
+  }
 }
