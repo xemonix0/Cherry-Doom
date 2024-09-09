@@ -74,12 +74,13 @@ Additionally, **the offsets of the graphics used by these icons will be ignored,
 
 **The _Ammo_, _Health_ and _Armor bars_ support additional properties:**
 
-- `_ups`: Percentage of units per slice (e.g. a value of `200` would make a slice be drawn every 2 units), which can be any number between `100` and `10000`;
-- `_gap`: Additional space between slices (kerning), which can be any number between `-4` and `4`.
+- `_xstep` and `_ystep`: Horizontal and vertical spacing between slices, which can be any integer in the [0, 64] range;
+- `_ups`: Percentage of units per slice (e.g. a value of `200` would make a slice be drawn every 2 units), which can be any integer in the [10, 10000] range.
 
 **Bars also require slice graphics.** Respectively: `NHAMBAR#`, `NHHLBAR#` and `NHARBAR#`, where `#` stands for either `0` or `1`.
 If both slice graphics for a widget are provided, a second bar will be drawn on top of the first when the player has extra units (e.g. health over 100%).
 Otherwise, if only the first slice graphic is provided, the bars will continue to grow normally.
+**If both `_xstep` and `_ystep` are 0, the slice graphic's width will be used as the horizontal spacing.**
 
 **Arms number 1 is lit up when the player has Berserk.**
 
@@ -296,7 +297,7 @@ The latter can be drawn as a patch.
 ### Additional integer properties
 
 - `nughud_weapheight`: **vertical offset for weapon sprites**, in the [-32, 32] range; greater values shift the sprites downwards.
-- `nughud_viewoffset`: **vertical offset for the view window**, in the [-16, 16] range; greater values shift the view downwards.
+- `nughud_viewoffset`: **vertical offset for the view window**, in the [-32, 32] range; greater values shift the view downwards.
 
 ---
 

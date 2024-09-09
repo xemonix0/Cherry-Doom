@@ -51,8 +51,9 @@ typedef struct nughud_bar_s {
   int x, y;
   int wide;
   int align;
+  int vlign;
+  int xstep, ystep;
   int ups; // Units per slice
-  int gap;
 } nughud_bar_t;
 
 typedef struct nughud_textline_s {
