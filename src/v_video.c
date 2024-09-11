@@ -305,9 +305,6 @@ static byte *translation;
 
 static byte *translation1, *translation2;
 
-static boolean shade_screen;
-static byte *v_darkcolormap;
-
 static void (*drawcolfunc)(const patch_column_t *patchcol);
 
 #define DRAW_COLUMN(NAME, SRCPIXEL)                                           \
@@ -349,9 +346,7 @@ static void (*drawcolfunc)(const patch_column_t *patchcol);
     }
 
 DRAW_COLUMN(, source[frac >> FRACBITS])
-DRAW_COLUMN(Dark, v_darkcolormap[source[frac >> FRACBITS]])
 DRAW_COLUMN(TR, translation[source[frac >> FRACBITS]])
-DRAW_COLUMN(TRDark, v_darkcolormap[translation[source[frac >> FRACBITS]]])
 DRAW_COLUMN(TRTR, translation2[translation1[source[frac >> FRACBITS]]])
 
 // [Nugget]
@@ -558,7 +553,7 @@ void V_DrawPatchGeneral(int x, int y, patch_t *patch, boolean flipped)
 {
     x += video.deltaw;
 
-    drawcolfunc = shade_screen ? DrawPatchColumnDark : DrawPatchColumn;
+    drawcolfunc = DrawPatchColumn;
 
     DrawPatchInternal(x, y, patch, flipped);
 }
@@ -570,11 +565,11 @@ void V_DrawPatchTranslated(int x, int y, patch_t *patch, byte *outr)
     if (outr)
     {
         translation = outr;
-        drawcolfunc = shade_screen ? DrawPatchColumnTRDark : DrawPatchColumnTR;
+        drawcolfunc = DrawPatchColumnTR;
     }
     else
     {
-        drawcolfunc = shade_screen ? DrawPatchColumnDark : DrawPatchColumn;
+        drawcolfunc = DrawPatchColumn;
     }
 
     DrawPatchInternal(x, y, patch, false);
@@ -660,45 +655,30 @@ void V_DrawPatchFullScreen(patch_t *patch)
         V_FillRect(0, 0, video.unscaledw, SCREENHEIGHT, v_darkest_color);
     }
 
-    drawcolfunc = shade_screen ? DrawPatchColumnDark : DrawPatchColumn;
+    drawcolfunc = DrawPatchColumn;
 
     DrawPatchInternal(x, 0, patch, false);
 }
 
-void V_ShadeScreen(boolean toggle, const int level) // [Nugget]
+void V_ShadeScreen(const int level) // [Nugget]
 {
-    if (shade_screen == toggle)
+    const byte *darkcolormap = &colormaps[0][level * 256];
+
+    byte *row = dest_screen;
+    int height = video.height;
+
+    while (height--)
     {
-        return;
-    }
+        int width = video.width;
+        byte *col = row;
 
-    shade_screen = toggle;
-
-    if (shade_screen)
-    {
-        v_darkcolormap = &colormaps[0][level * 256]; // [Nugget]
-    }
-    else
-    {
-        v_darkcolormap = colormaps[0];
-    }
-    R_FillBackScreen();
-}
-
-// [Nugget]
-void V_ShadeScreenDirect(const int level)
-{
-    int x, y;
-
-    byte *dest = dest_screen;
-
-    for (y = 0; y < video.height; y++)
-    {
-        for (x = 0; x < video.width; x++)
+        while (width--)
         {
-            dest[x] = colormaps[0][level * 256 + dest[x]];
+            *col = darkcolormap[*col];
+            ++col;
         }
-        dest += linesize;
+
+        row += linesize;
     }
 }
 
@@ -979,7 +959,7 @@ void V_TileBlock64(int line, int width, int height, const byte *src)
         while (w--)
         {
             xtex = (xfrac >> FRACBITS) & 63;
-            *row++ = v_darkcolormap[src[ytex + xtex]];
+            *row++ = src[ytex + xtex];
             xfrac += video.xstep;
         }
 
@@ -1102,11 +1082,6 @@ void V_Init(void)
     }
     y2lookup[SCREENHEIGHT - 1] = video.height - 1;
     y1lookup[SCREENHEIGHT] = y2lookup[SCREENHEIGHT] = video.height;
-
-    if (!v_darkcolormap)
-    {
-        v_darkcolormap = colormaps[0];
-    }
 }
 
 // Set the buffer that the code draws to.

@@ -30,6 +30,7 @@
 #include "i_input.h"
 #include "i_oalequalizer.h"
 #include "i_oalsound.h"
+#include "i_rumble.h"
 #include "i_sound.h"
 #include "i_timer.h"
 #include "i_video.h"
@@ -307,6 +308,7 @@ enum
 {
     str_empty,
     str_layout,
+    str_rumble,
     str_curve,
     str_center_weapon,
     str_screensize,
@@ -340,7 +342,7 @@ enum
     str_default_complevel,
     str_exit_sequence,
     str_death_use_action,
-    str_menu_backdrop,
+    str_menu_backdrop, // [Nugget] Restored backdrop item
     str_widescreen,
     // [Nugget] Removed `str_bobbing_pct`
     str_screen_melt,
@@ -1079,48 +1081,44 @@ static void DrawScreenItems(setup_menu_t *src)
 // Data used to draw the "are you sure?" dialogue box when resetting
 // to defaults.
 
-#define VERIFYBOXXORG 66
-#define VERIFYBOXYORG 88
-
-static void DrawDefVerify()
+static void DrawDefVerify(void)
 {
-    // [Nugget] HUD/menu shadows
-    V_DrawPatchSH(VERIFYBOXXORG, VERIFYBOXYORG,
-                  V_CachePatchName("M_VBOX", PU_CACHE));
+    patch_t *patch = V_CachePatchName("M_VBOX", PU_CACHE);
+    int x = (SCREENWIDTH - patch->width) / 2;
+    int y = (SCREENHEIGHT - patch->height) / 2;
+    V_DrawPatchSH(x, y, patch); // [Nugget] HUD/menu shadows
 
     // The blinking messages is keyed off of the blinking of the
     // cursor skull.
 
     if (whichSkull) // blink the text
     {
-        strcpy(menu_buffer, "Restore defaults? (Y or N)");
-        DrawMenuString(VERIFYBOXXORG + 8, VERIFYBOXYORG + 8, CR_RED);
+        const char *text = "Restore defaults? (Y/N)";
+        strcpy(menu_buffer, text);
+        x = (SCREENWIDTH - MN_GetPixelWidth(text)) / 2;
+        y = (SCREENHEIGHT - MN_StringHeight(text)) / 2;
+        DrawMenuString(x, y, CR_RED);
+    }
+}
+
+static void DrawNotification(const char *text, int color, boolean blink)
+{
+    patch_t *patch = V_CachePatchName("M_VBOX", PU_CACHE);
+    int x = (SCREENWIDTH - patch->width) / 2;
+    int y = (SCREENHEIGHT - patch->height) / 2;
+    V_DrawPatchSH(x, y, patch); // [Nugget] HUD/menu shadows
+
+    if (!blink || whichSkull)
+    {
+        x = (SCREENWIDTH - MN_GetPixelWidth(text)) / 2;
+        y = (SCREENHEIGHT - MN_StringHeight(text)) / 2;
+        MN_DrawString(x, y, color, text);
     }
 }
 
 void MN_DrawDelVerify(void)
 {
-    // [Nugget] HUD/menu shadows
-    V_DrawPatchSH(VERIFYBOXXORG, VERIFYBOXYORG,
-                  V_CachePatchName("M_VBOX", PU_CACHE));
-
-    if (whichSkull)
-    {
-        MN_DrawString(VERIFYBOXXORG + 8, VERIFYBOXYORG + 8, CR_RED,
-                      "Delete savegame? (Y or N)");
-    }
-}
-
-static void DrawNotification(const char *text, int color)
-{
-    patch_t *patch = V_CachePatchName("M_VBOX", PU_CACHE);
-    int x = (SCREENWIDTH - patch->width) / 2;
-    int y = (SCREENHEIGHT - patch->height) / 2;
-    V_DrawPatch(x, y, patch);
-
-    x = (SCREENWIDTH - MN_GetPixelWidth(text)) / 2;
-    y = (SCREENHEIGHT - MN_StringHeight(text)) / 2;
-    MN_DrawString(x, y, color, text);
+    DrawNotification("Delete savegame? (Y/N)", CR_RED, true);
 }
 
 static void DrawGyroCalibration(void)
@@ -1132,17 +1130,17 @@ static void DrawGyroCalibration(void)
 
         case GYRO_CALIBRATION_STARTING:
             block_input = true;
-            DrawNotification("Starting calibration...", CR_GRAY);
+            DrawNotification("Starting calibration...", CR_GRAY, false);
             I_UpdateGyroCalibrationState();
             break;
 
         case GYRO_CALIBRATION_ACTIVE:
-            DrawNotification("Calibrating, please wait...", CR_GRAY);
+            DrawNotification("Calibrating, please wait...", CR_GRAY, false);
             I_UpdateGyroCalibrationState();
             break;
 
         case GYRO_CALIBRATION_COMPLETE:
-            DrawNotification("Calibration complete!", CR_GREEN);
+            DrawNotification("Calibration complete!", CR_GREEN, false);
             I_UpdateGyroCalibrationState();
             if (I_GetGyroCalibrationState() == GYRO_CALIBRATION_INACTIVE)
             {
@@ -1159,14 +1157,23 @@ static void DrawGyroCalibration(void)
 //
 // killough 8/15/98: rewritten
 
-static void DrawInstructions()
+typedef enum
 {
-    static char joyb_buf[64];
+    MENU_HELP_OFF,
+    MENU_HELP_AUTO,
+    MENU_HELP_KEY,
+    MENU_HELP_PAD
+} menu_help_t;
+
+static menu_help_t menu_help;
+
+static void DrawInstructions(void)
+{
     int index = (menu_input == mouse_mode ? highlight_item : set_item_on);
     const setup_menu_t *item = &current_menu[index];
     const int64_t flags = item->m_flags;
 
-    if (ItemDisabled(flags) || print_warning_about_changes > 0)
+    if (menu_help == MENU_HELP_OFF || print_warning_about_changes > 0)
     {
         return;
     }
@@ -1174,115 +1181,163 @@ static void DrawInstructions()
     // There are different instruction messages depending on whether you
     // are changing an item or just sitting on it.
 
-    const char *s = "";
+    char s[80];
+    s[0] = '\0';
+    const char *first, *second;
+    const boolean pad = ((menu_help == MENU_HELP_AUTO && help_input == pad_mode)
+                         || menu_help == MENU_HELP_PAD);
 
-    if (item->desc)
+    if (ItemDisabled(flags))
     {
-        s = item->desc;
+        if (pad)
+        {
+            second = M_GetPlatformName(GAMEPAD_B);
+        }
+        else
+        {
+            second = M_GetNameForKey(KEY_BACKSPACE);
+        }
+
+        M_snprintf(s, sizeof(s), "[ %s ] Back", second);
+    }
+    else if (item->desc)
+    {
+        M_snprintf(s, sizeof(s), "%s", item->desc);
     }
     else if (setup_select)
     {
         if (flags & S_INPUT)
         {
-            s = "Press key or button to bind/unbind";
+            M_snprintf(s, sizeof(s), "Press key or button to bind/unbind");
         }
         else if (flags & S_ONOFF)
         {
-            if (menu_input == pad_mode)
+            if (pad)
             {
-                M_snprintf(joyb_buf, sizeof(joyb_buf), "[ %s ] to toggle",
-                           M_GetPlatformName(GAMEPAD_A));
-                s = joyb_buf;
+                first = M_GetPlatformName(GAMEPAD_A);
+                second = M_GetPlatformName(GAMEPAD_B);
             }
             else
             {
-                s = "[ Enter ] to toggle, [ Esc ] to cancel";
+                first = M_GetNameForKey(KEY_ENTER);
+                second = M_GetNameForKey(KEY_ESCAPE);
             }
+
+            M_snprintf(s, sizeof(s), "[ %s ] Toggle, [ %s ] Cancel", first,
+                       second);
         }
         else if (flags & (S_CHOICE | S_CRITEM | S_THERMO))
         {
-            if (menu_input == pad_mode)
+            if (pad)
             {
-                M_snprintf(joyb_buf, sizeof(joyb_buf),
-                           "[ Left/Right ] to choose, [ %s ] to cancel",
-                           M_GetPlatformName(GAMEPAD_B));
-                s = joyb_buf;
+                second = M_GetPlatformName(GAMEPAD_B);
             }
             else
             {
-                s = "[ Left/Right ] to choose, [ Esc ] to cancel";
+                second = M_GetNameForKey(KEY_ESCAPE);
             }
+
+            M_snprintf(s, sizeof(s), "[ Left/Right ] Choose, [ %s ] Cancel",
+                       second);
         }
         else if (flags & S_NUM)
         {
-            s = "Enter value";
+            M_snprintf(s, sizeof(s), "Enter value");
         }
         else if (flags & S_WEAP)
         {
-            s = "Enter weapon number";
+            M_snprintf(s, sizeof(s), "Enter weapon number");
         }
         else if (flags & S_RESET)
         {
-            s = "Restore defaults";
+            if (pad)
+            {
+                first = M_GetPlatformName(GAMEPAD_A);
+                second = M_GetPlatformName(GAMEPAD_B);
+            }
+            else
+            {
+                first = M_GetNameForKey(KEY_ENTER);
+                second = M_GetNameForKey(KEY_ESCAPE);
+            }
+
+            M_snprintf(s, sizeof(s), "[ %s ] OK, [ %s ] Cancel", first, second);
         }
         // [Nugget]
         else if (flags & S_FUNC2)
         {
-            s = (menu_input == mouse_mode) ? "Click again to confirm"                  :
-                (menu_input == pad_mode)   ? "[ PadA ] to confirm, [ PadB ] to cancel" :
-                                             "[ Enter ] to confirm, [ Esc ] to cancel";
+            if (pad) {
+                first = M_GetPlatformName(GAMEPAD_A);
+                second = M_GetPlatformName(GAMEPAD_B);
+            }
+            else {
+                first = M_GetNameForKey(KEY_ENTER);
+                second = M_GetNameForKey(KEY_ESCAPE);
+            }
+
+            if (menu_input == mouse_mode)
+            {
+                M_snprintf(s, sizeof(s), "Click again to confirm");
+            }
+            else {
+                M_snprintf(s, sizeof(s), "[ %s ] Confirm, [ %s ] Cancel", first, second);
+            }
         }
     }
     else
     {
         if (flags & S_INPUT)
         {
-            switch (menu_input)
+            if (pad)
             {
-                case mouse_mode:
-                    s = "[ Del ] to clear";
-                    break;
-                case pad_mode:
-                    M_snprintf(joyb_buf, sizeof(joyb_buf),
-                               "[ %s ] to change, [ %s ] to clear",
-                               M_GetPlatformName(GAMEPAD_A),
-                               M_GetPlatformName(GAMEPAD_Y));
-                    s = joyb_buf;
-                    break;
-                default:
-                case key_mode:
-                    s = "[ Enter ] to change, [ Del ] to clear";
-                    break;
+                first = M_GetPlatformName(GAMEPAD_A);
+                second = M_GetPlatformName(GAMEPAD_Y);
             }
+            else
+            {
+                first = M_GetNameForKey(KEY_ENTER);
+                second = M_GetNameForKey(KEY_DEL);
+            }
+
+            M_snprintf(s, sizeof(s), "[ %s ] Change, [ %s ] Clear", first,
+                       second);
         }
         else if (flags & S_RESET)
         {
-            s = "Restore defaults";
+            if (pad)
+            {
+                first = M_GetPlatformName(GAMEPAD_A);
+            }
+            else
+            {
+                first = M_GetNameForKey(KEY_ENTER);
+            }
+
+            M_snprintf(s, sizeof(s), "[ %s ] Restore defaults", first);
         }
         // [Nugget]
         else if (flags & S_FUNC2 && menu_input != mouse_mode)
         {
-            s = (menu_input == pad_mode)
-                ? "[ PadA ] to select"
-                : "[ Enter ] to select";
+            if (pad) { first = M_GetPlatformName(GAMEPAD_A); }
+            else     { first = M_GetNameForKey(KEY_ENTER); }
+
+            M_snprintf(s, sizeof(s), "[ %s ] Select", first);
         }
         else
         {
-            switch (menu_input)
+            if (pad)
             {
-                case pad_mode:
-                    M_snprintf(joyb_buf, sizeof(joyb_buf),
-                               "[ %s ] to change, [ %s ] to return",
-                               M_GetPlatformName(GAMEPAD_A),
-                               M_GetPlatformName(GAMEPAD_B));
-                    s = joyb_buf;
-                    break;
-                case key_mode:
-                    s = "[ Enter ] to change";
-                    break;
-                default:
-                    break;
+                first = M_GetPlatformName(GAMEPAD_A);
+                second = M_GetPlatformName(GAMEPAD_B);
             }
+            else
+            {
+                first = M_GetNameForKey(KEY_ENTER);
+                second = M_GetNameForKey(KEY_BACKSPACE);
+            }
+
+            M_snprintf(s, sizeof(s), "[ %s ] Change, [ %s ] Back", first,
+                       second);
         }
     }
 
@@ -2572,43 +2627,42 @@ static setup_menu_t gen_settings1[] = {
     // [Nugget] These first three items now report
     // the current resolution when sitting on them
 
-    {"Resolution Scale", S_THERMO | S_THRM_SIZE11 | S_ACTION | S_RES, M_X_THRM11,
+    {"Resolution Scale", S_THERMO | S_THRM_SIZE11 | S_ACTION | S_RES, CNTR_X,
      M_THRM_SPC, {"resolution_scale"}, .strings_id = str_resolution_scale,
      .action = ResetVideoHeight},
 
-    {"Dynamic Resolution", S_ONOFF | S_RES, M_X, M_SPC, {"dynamic_resolution"},
+    {"Dynamic Resolution", S_ONOFF | S_RES, CNTR_X, M_SPC, {"dynamic_resolution"},
      .action = ResetVideoHeight},
 
-    {"Widescreen", S_CHOICE | S_RES, M_X, M_SPC, {"widescreen"},
+    {"Widescreen", S_CHOICE | S_RES, CNTR_X, M_SPC, {"widescreen"},
      .strings_id = str_widescreen, .action = ResetVideo},
 
-    // [Nugget] Lengthened
-    {"FOV", S_THERMO | S_THRM_SIZE11, M_X_THRM11, M_THRM_SPC, {"fov"},
-     .action = UpdateFOV},
-
-    {"Fullscreen", S_ONOFF, M_X, M_SPC, {"fullscreen"},
+    {"Fullscreen", S_ONOFF, CNTR_X, M_SPC, {"fullscreen"},
      .action = ToggleFullScreen},
 
-    {"Exclusive Fullscreen", S_ONOFF, M_X, M_SPC, {"exclusive_fullscreen"},
+    {"Exclusive Fullscreen", S_ONOFF, CNTR_X, M_SPC, {"exclusive_fullscreen"},
      .action = ToggleExclusiveFullScreen},
 
     MI_GAP,
 
-    {"Uncapped Framerate", S_ONOFF, M_X, M_SPC, {"uncapped"},
+    {"Uncapped FPS", S_ONOFF, CNTR_X, M_SPC, {"uncapped"},
      .action = UpdateFPSLimit},
 
-    {"Framerate Limit", S_NUM, M_X, M_SPC, {"fpslimit"},
+    {"FPS Limit", S_NUM, CNTR_X, M_SPC, {"fpslimit"},
      .action = UpdateFPSLimit},
 
-    {"VSync", S_ONOFF, M_X, M_SPC, {"use_vsync"},
+    {"VSync", S_ONOFF, CNTR_X, M_SPC, {"use_vsync"},
      .action = I_ToggleVsync},
 
     MI_GAP,
 
-    {"Gamma Correction", S_THERMO, M_X_THRM8, M_THRM_SPC, {"gamma2"},
+    {"FOV", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC, {"fov"},
+     .action = UpdateFOV},
+
+    {"Gamma Correction", S_THERMO, CNTR_X, M_THRM_SPC, {"gamma2"},
      .strings_id = str_gamma, .action = MN_ResetGamma},
 
-    {"Level Brightness", S_THERMO | S_THRM_SIZE4 | S_STRICT, M_X_THRM4,
+    {"Extra Lighting", S_THERMO | S_STRICT, CNTR_X,
      M_THRM_SPC, {"extra_level_brightness"}},
 
     MI_RESET,
@@ -2843,6 +2897,16 @@ static const char *layout_strings[] = {
     "Flick Stick Southpaw",
 };
 
+static void UpdateRumble(void)
+{
+    I_UpdateRumbleEnabled();
+    I_RumbleMenuFeedback();
+}
+
+static const char *rumble_strings[] = {
+    "Off", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"
+};
+
 static const char *curve_strings[] = {
     "",       "",    "",    "",        "",    "",    "",
     "",       "",    "", // Dummy values, start at 1.0.
@@ -2852,7 +2916,8 @@ static const char *curve_strings[] = {
 };
 
 static setup_menu_t gen_settings4[] = {
-    {"Stick Layout",S_CHOICE, CNTR_X, M_SPC, {"joy_stick_layout"},
+
+    {"Stick Layout", S_CHOICE, CNTR_X, M_SPC, {"joy_stick_layout"},
      .strings_id = str_layout, .action = UpdateStickLayout},
 
     {"Free Look", S_ONOFF, CNTR_X, M_SPC, {"padlook"},
@@ -2860,6 +2925,9 @@ static setup_menu_t gen_settings4[] = {
 
     {"Invert Look", S_ONOFF, CNTR_X, M_SPC, {"joy_invert_look"},
      .action = I_ResetGamepad},
+
+    {"Rumble", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_rumble"},
+     .strings_id = str_rumble, .action = UpdateRumble},
 
     MI_GAP,
 
@@ -2886,14 +2954,9 @@ static setup_menu_t gen_settings4[] = {
 static void UpdateGamepadItems(void)
 {
     boolean condition =
-        (!I_UseGamepad() || !I_GamepadEnabled() || !I_UseStickLayout());
+        (!I_UseGamepad() || !I_GamepadEnabled() || !I_RumbleSupported());
 
-    DisableItem(condition, gen_settings4, "joy_invert_look");
-    DisableItem(condition, gen_settings4, "joy_movement_inner_deadzone");
-    DisableItem(condition, gen_settings4, "joy_camera_inner_deadzone");
-    DisableItem(condition, gen_settings4, "joy_turn_speed");
-    DisableItem(condition, gen_settings4, "joy_look_speed");
-    DisableItem(condition, gen_settings4, "joy_camera_curve");
+    DisableItem(condition, gen_settings4, "joy_rumble");
 
     // Allow padlook toggle when the gamepad is using gyro, even if the
     // stick layout is set to off.
@@ -2902,6 +2965,14 @@ static void UpdateGamepadItems(void)
          || (!I_UseStickLayout() && (!I_GyroEnabled() || !I_GyroSupported())));
 
     DisableItem(condition, gen_settings4, "padlook");
+
+    condition = (!I_UseGamepad() || !I_GamepadEnabled() || !I_UseStickLayout());
+    DisableItem(condition, gen_settings4, "joy_invert_look");
+    DisableItem(condition, gen_settings4, "joy_movement_inner_deadzone");
+    DisableItem(condition, gen_settings4, "joy_camera_inner_deadzone");
+    DisableItem(condition, gen_settings4, "joy_turn_speed");
+    DisableItem(condition, gen_settings4, "joy_look_speed");
+    DisableItem(condition, gen_settings4, "joy_camera_curve");
 }
 
 static void UpdateGyroItems(void);
@@ -2981,6 +3052,7 @@ static void UpdateGyroSteadying(void)
 }
 
 static setup_menu_t gen_gyro[] = {
+
     {"Gyro Aiming", S_ONOFF, CNTR_X, M_SPC, {"gyro_enable"},
      .action = UpdateGyroAiming},
 
@@ -3048,6 +3120,7 @@ static void SmoothLight(void)
     setsizeneeded = true; // run R_ExecuteSetViewSize
 }
 
+// [Nugget] Restored backdrop item
 static const char *menu_backdrop_strings[] = {"Off", "Dark", "Texture"};
 
 static const char *exit_sequence_strings[] = {
@@ -3083,13 +3156,14 @@ static setup_menu_t gen_settings5[] = {
     {"Smooth Diminishing Lighting", S_ONOFF, OFF_CNTR_X, M_SPC, {"smoothlight"},
      .action = SmoothLight},
 
+    // [Nugget] Restored backdrop item /--------------------------------------
+
     MI_GAP,
 
-    {"Menu Backdrop Style", S_CHOICE, OFF_CNTR_X, M_SPC, // [Nugget] Changed description
+    {"Menu Backdrop Style", S_CHOICE, OFF_CNTR_X, M_SPC,
      {"menu_backdrop"}, .strings_id = str_menu_backdrop},
 
-    {"Exit Sequence", S_CHOICE, OFF_CNTR_X, M_SPC, {"exit_sequence"},
-    .strings_id = str_exit_sequence},
+    // [Nugget] -------------------------------------------------------------/
 
     MI_END
 };
@@ -3139,6 +3213,8 @@ void MN_ResetTimeScale(void)
     }
 
     I_SetTimeScale(time_scale);
+
+    setrefreshneeded = true;
 }
 
 static setup_menu_t gen_settings6[] = {
@@ -3171,6 +3247,9 @@ static setup_menu_t gen_settings6[] = {
 
     {"Default Skill", S_CHOICE | S_LEVWARN, OFF_CNTR_X, M_SPC,
      {"default_skill"}, .strings_id = str_default_skill},
+
+    {"Exit Sequence", S_CHOICE, OFF_CNTR_X, M_SPC, {"exit_sequence"},
+    .strings_id = str_exit_sequence},
 
     MI_END
 };
@@ -3925,7 +4004,15 @@ boolean MN_SetupCursorPostion(int x, int y)
 
         item->m_flags &= ~S_HILITE;
 
-        if (MN_PointInsideRect(&item->rect, x, y))
+        mrect_t rect = item->rect;
+
+        if (item->m_flags & S_THERMO)
+        {
+            rect.x = 0;
+            rect.w = SCREENWIDTH;
+        }
+
+        if (MN_PointInsideRect(&rect, x, y))
         {
             item->m_flags |= S_HILITE;
 
@@ -4085,6 +4172,7 @@ static boolean ChangeEntry(menu_action_t action, int ch)
 
         SelectDone(current_item); // phares 4/17/98
         setup_gather = false;     // finished gathering keys, if any
+        help_input = old_help_input;
         menu_input = old_menu_input;
         MN_ResetMouseCursor();
         return true;
@@ -4119,6 +4207,7 @@ static boolean ChangeEntry(menu_action_t action, int ch)
         // allow backspace, and return to original value if bad
         // value is entered).
 
+        help_input = old_help_input;
         menu_input = old_menu_input;
         MN_ResetMouseCursor();
 
@@ -4207,6 +4296,7 @@ static boolean BindInput(void)
         return false;
     }
 
+    help_input = old_help_input;
     menu_input = old_menu_input;
     MN_ResetMouseCursor();
 
@@ -4430,6 +4520,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         }
 
         SelectDone(current_item); // phares 4/17/98
+        help_input = old_help_input;
         menu_input = old_menu_input;
         MN_ResetMouseCursor();
         return true;
@@ -4445,6 +4536,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         {
             M_InputReset(current_item->input_id);
         }
+        help_input = old_help_input;
         menu_input = old_menu_input;
         MN_ResetMouseCursor();
         return true;
@@ -4854,6 +4946,7 @@ void MN_DrawTitle(int x, int y, const char *patch, const char *alttext)
 static const char **selectstrings[] = {
     NULL, // str_empty
     layout_strings,
+    rumble_strings,
     curve_strings,
     center_weapon_strings,
     screensize_strings,
@@ -4882,7 +4975,7 @@ static const char **selectstrings[] = {
     default_complevel_strings,
     exit_sequence_strings,
     death_use_action_strings,
-    menu_backdrop_strings,
+    menu_backdrop_strings, // [Nugget] Restored backdrop item
     widescreen_strings,
     // [Nugget] Removed unused `bobbing_pct_strings`
     screen_melt_strings,
@@ -4965,7 +5058,7 @@ void MN_BindMenuVariables(void)
     BIND_NUM_GENERAL(menu_backdrop, MENU_BG_DARK, MENU_BG_OFF, MENU_BG_TEXTURE,
         "Menu backdrop (0 = Off; 1 = Dark; 2 = Texture)");
 
-    // [Nugget] --------------------------------------------------------------
+    // [Nugget] /-------------------------------------------------------------
 
     BIND_NUM_GENERAL(menu_backdrop_darkening, 20, 0, 31,
         "Darkening level for dark menu backdrop");
@@ -4983,4 +5076,9 @@ void MN_BindMenuVariables(void)
               "HUD/menu-shadows translucency percent");
 
     BIND_BOOL_GENERAL(quick_quitgame, false, "Skip \"Quit Game\" prompt");
+
+    // [Nugget] -------------------------------------------------------------/
+
+    BIND_NUM_GENERAL(menu_help, MENU_HELP_AUTO, MENU_HELP_OFF, MENU_HELP_PAD,
+        "Menu help (0 = Off; 1 = Auto; 2 = Always Keyboard; 3 = Always Gamepad)");
 }

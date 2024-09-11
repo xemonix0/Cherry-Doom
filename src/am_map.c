@@ -2688,14 +2688,20 @@ static void AM_drawCrosshair(int color)
 
 void AM_shadeScreen(void)
 {
-  for (int x = f_x;  x < f_x+f_w;  x++)
+  // Minimap
+  if (automapactive == AM_MINI)
   {
-    for (int y = f_y;  y < f_y+f_h;  y++)
+    for (int x = f_x;  x < f_x+f_w;  x++)
     {
-      const int pixel = y * video.pitch + x;
-      I_VideoBuffer[pixel] = colormaps[0][automap_overlay_darkening * 256 + I_VideoBuffer[pixel]];
+      for (int y = f_y;  y < f_y+f_h;  y++)
+      {
+        const int pixel = y * video.pitch + x;
+        I_VideoBuffer[pixel] = colormaps[0][automap_overlay_darkening * 256 + I_VideoBuffer[pixel]];
+      }
     }
   }
+  else if (!MN_MenuIsShaded())
+    V_ShadeScreen(automap_overlay_darkening); // [Nugget] Parameterized
 }
 
 // [Nugget] -----------------------------------------------------------------/
@@ -2743,8 +2749,8 @@ void AM_Drawer (void)
     if (automapactive == AM_FULL) // [Nugget] Minimap
       pspr_interp = false;
   }
-  // [Nugget] Minimap
-  else if (automapoverlay == AM_OVERLAY_DARK && automapactive == AM_MINI)
+  // [Alaux] Dark automap overlay
+  else if (automapoverlay == AM_OVERLAY_DARK)
     AM_shadeScreen();
 
   if (automap_grid)                  // killough 2/28/98: change var name

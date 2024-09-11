@@ -301,21 +301,6 @@ void D_Display (void)
     }
   }
 
-  // [Nugget]
-  int shade = automap_overlay_darkening;
-
-  if (MN_MenuIsShaded())
-  {
-    shade = menu_backdrop_darkening;
-    V_ShadeScreen(true, shade);
-  }
-
-  if ((automapactive == AM_FULL && automapoverlay == AM_OVERLAY_DARK)
-      || MN_MenuIsShaded())
-    R_ShadeScreen(true, shade);
-  else
-    R_ShadeScreen(false, 0);
-
   redrawsbar = false;
 
   wipe = false;
@@ -447,8 +432,6 @@ void D_Display (void)
 
       V_DrawPatch(x, y, patch);
     }
-
-  V_ShadeScreen(false, 0); // [Nugget]
 
   // menus go directly to the screen
   M_Drawer();          // menu is drawn even on top of everything

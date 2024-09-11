@@ -2226,6 +2226,7 @@ static boolean ShortcutResponder(const event_t *ev)
         realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
         displaymsg("Game Speed: %d", realtic_clock_rate);
         I_SetTimeScale(realtic_clock_rate);
+        setrefreshneeded = true;
     }
 
     if (M_InputActivated(input_speed_down) && !D_CheckNetConnect()
@@ -2235,6 +2236,7 @@ static boolean ShortcutResponder(const event_t *ev)
         realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
         displaymsg("Game Speed: %d", realtic_clock_rate);
         I_SetTimeScale(realtic_clock_rate);
+        setrefreshneeded = true;
     }
 
     if (M_InputActivated(input_speed_default) && !D_CheckNetConnect()
@@ -2243,6 +2245,7 @@ static boolean ShortcutResponder(const event_t *ev)
         realtic_clock_rate = 100;
         displaymsg("Game Speed: %d", realtic_clock_rate);
         I_SetTimeScale(realtic_clock_rate);
+        setrefreshneeded = true;
     }
 
     if (M_InputActivated(input_help)) // Help key
@@ -2487,6 +2490,7 @@ static boolean ShortcutResponder(const event_t *ev)
     return false;
 }
 
+menu_input_mode_t help_input, old_help_input;
 menu_input_mode_t menu_input, old_menu_input;
 
 static int mouse_state_x, mouse_state_y;
@@ -2560,13 +2564,14 @@ static boolean SaveLoadResponder(menu_action_t action, int ch)
 
     if (delete_verify)
     {
-        if (M_ToUpper(ch) == 'Y')
+        if (M_ToUpper(ch) == 'Y' || action == MENU_ENTER)
         {
             M_DeleteGame(old_menu_input == mouse_mode ? highlight_item : itemOn);
             M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
             delete_verify = false;
         }
-        else if (M_ToUpper(ch) == 'N')
+        else if (M_ToUpper(ch) == 'N' || action == MENU_BACKSPACE
+                 || action == MENU_ESCAPE)
         {
             M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
             delete_verify = false;
@@ -2716,6 +2721,7 @@ boolean M_Responder(event_t *ev)
     static menu_action_t repeat = MENU_NULL;
     menu_action_t action = MENU_NULL;
 
+    old_help_input = help_input;
     old_menu_input = menu_input;
 
     ch = 0; // will be changed to a legit char if we're going to use it here
@@ -2752,6 +2758,7 @@ boolean M_Responder(event_t *ev)
             break;
 
         case ev_joyb_down:
+            help_input = pad_mode;
             menu_input = pad_mode;
             break;
 
@@ -2766,6 +2773,7 @@ boolean M_Responder(event_t *ev)
             return false;
 
         case ev_keydown:
+            help_input = key_mode;
             menu_input = key_mode;
             ch = ev->data1.i;
             break;
@@ -3064,6 +3072,7 @@ boolean M_Responder(event_t *ev)
         }
         MN_ClearMenus();
         M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
+        help_input = old_help_input;
         menu_input = old_menu_input;
         MN_ResetMouseCursor();
         return true;
@@ -3107,6 +3116,7 @@ boolean M_Responder(event_t *ev)
             MN_ClearMenus();
             M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         }
+        help_input = old_help_input;
         menu_input = old_menu_input;
         MN_ResetMouseCursor();
         return true;
@@ -3122,6 +3132,7 @@ boolean M_Responder(event_t *ev)
             {
                 M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
                 currentMenu->lastOn = itemOn;
+                help_input = old_help_input;
                 menu_input = old_menu_input;
                 delete_verify = true;
                 return true;
@@ -3223,6 +3234,11 @@ boolean MN_MenuIsShaded(void)
 void M_Drawer(void)
 {
     inhelpscreens = false;
+
+    if (MN_MenuIsShaded())
+    {
+        V_ShadeScreen(menu_backdrop_darkening); // [Nugget] Parameterized
+    }
 
     // Horiz. & Vertically center string and print it.
     // killough 9/29/98: simplified code, removed 40-character width limit

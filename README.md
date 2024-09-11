@@ -30,6 +30,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **Set _Air Absorption_ and _Doppler Effect_ to 5 by default**
 - **FOV-based sky stretching** setting (CFG-only: `fov_stretchsky`)
 - **Tweaked _Stretch Short Skies_ algorithm**
+- **Restored _Menu Backdrop Style_ menu item**
 - **_Black Fade_ screen wipe**
 - **Extended _Level Brightness_ range:** [-8, 8]
 - **_"Direct + Auto"_ mode for Vertical Aiming**
@@ -252,6 +253,7 @@ The following build system and libraries need to be installed:
  * [SDL2_net](https://github.com/libsdl-org/SDL_net)
  * [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
  * [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
+ * [cJSON](https://github.com/DaveGamble/cJSON)
  * [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
  * [libxmp](https://github.com/libxmp/libxmp) (optional)
  
@@ -380,16 +382,6 @@ Files: `data/nugget-doom.ico, data/nugget-doom.png, src/icon.c, data/setup.ico, 
 Copyright: © 2022 Korp.  
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-Files: `third-party/miniz/*`  
-Copyright:  
- © 2010-2014 Rich Geldreich and Tenacious Software LLC;  
- © 2013-2014 RAD Game Tools and Valve Software.  
-License: [MIT](https://opensource.org/licenses/MIT)
-
-Files: `third-party/spng/*`  
-Copyright: © 2018-2023 Randy.  
-License: [BSD-2-Clause](https://opensource.org/license/bsd-2-clause)
-
 Files: `opl/*`  
 Copyright:  
  © 2005-2014 Simon Howard;  
@@ -409,5 +401,22 @@ Copyright:
  © 2005-2017 Simon Howard.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
+Files: `third-party/miniz/*`  
+Copyright:  
+ © 2010-2014 Rich Geldreich and Tenacious Software LLC;  
+ © 2013-2014 RAD Game Tools and Valve Software.  
+License: [MIT](https://opensource.org/licenses/MIT)
+
+Files: `third-party/pffft/*`  
+Copyright:  
+ © 2004 The University Corporation for Atmospheric Research ("UCAR");  
+ © 2013 Julien Pommier.  
+License: [FFTPACK License](https://bitbucket.org/jpommier/pffft/src/master/pffft.h)
+
+Files: `third-party/spng/*`  
+Copyright: © 2018-2023 Randy.  
+License: [BSD-2-Clause](https://opensource.org/license/bsd-2-clause)
+
 Files: `win32/win_opendir.*`  
-License: public-domain
+Copyright: 2019 win32ports
+License: [MIT](https://opensource.org/licenses/MIT)

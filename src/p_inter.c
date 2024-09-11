@@ -228,7 +228,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
       P_GiveAmmo(player, weaponinfo[weapon].ammo, deathmatch ? 5 : 2);
 
       player->pendingweapon = weapon;
-      S_StartSound(player->mo, sfx_wpnup); // killough 4/25/98, 12/98
+      S_StartSoundPreset(player->mo, sfx_wpnup, PITCH_FULL); // killough 4/25/98, 12/98
       return false;
     }
 
@@ -733,16 +733,17 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
     {
       int itemcount = 0;
 
-      for (int pl = 0;  pl < MAXPLAYERS;  ++pl) {
-        if (playeringame[pl])
-        { itemcount += players[pl].itemcount; }
+      for (int pl = 0;  pl < MAXPLAYERS;  ++pl)
+      {
+        if (playeringame[pl]) { itemcount += players[pl].itemcount; }
       }
 
       if (itemcount >= totalitems)
       {
         complete_milestones |= MILESTONE_ITEMS;
 
-        if (announce_milestones) {
+        if (announce_milestones)
+        {
           players[displayplayer].secretmessage = "All items acquired!";
           S_StartSound(NULL, sfx_secret);
         }
@@ -751,12 +752,13 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   }
   P_RemoveMobj (special);
   player->bonuscount += BONUSADD;
+
   // [Nugget] Bonuscount cap
   if (STRICTMODE(bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap))
   { player->bonuscount = bonuscount_cap; }
 
-  S_StartSoundPitchOptional(player->mo, sound, sfx_itemup, // [Nugget]: [NS] Fallback to itemup.
-                            sound == sfx_itemup ? PITCH_NONE : PITCH_FULL);
+  S_StartSoundPresetOptional(player->mo, sound, sfx_itemup, // [Nugget]: [NS] Fallback to itemup.
+                             sound == sfx_itemup ? PITCH_NONE : PITCH_FULL);
 }
 
 // [Nugget] /=================================================================

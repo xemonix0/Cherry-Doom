@@ -169,7 +169,7 @@ static void P_BringUpWeapon(player_t *player)
     player->pendingweapon = player->readyweapon;
 
   if (player->pendingweapon == wp_chainsaw)
-    S_StartSoundPitch(player->mo, sfx_sawup, PITCH_HALF);
+    S_StartSoundPitchEx(player->mo, sfx_sawup, PITCH_HALF);
 
   if (player->pendingweapon >= NUMWEAPONS)
   {
@@ -816,7 +816,7 @@ void A_Punch(player_t *player, pspdef_t *psp)
   int t, slope, damage = (P_Random(pr_punch)%10+1)<<1;
   int range;
 
-  // [Nugget] MDK Fist, basically an absurdly high damage sniper
+  // [Nugget] MDK Fist, basically a sniper of absurdly high damage
   if (player->cheats & CF_SAITAMA)
   {
     int i = 10;
@@ -831,7 +831,9 @@ void A_Punch(player_t *player, pspdef_t *psp)
       angle = player->mo->angle + ANG20 - (ANG2 * i);
 
       if (vertical_aiming == VERTAIM_DIRECT)
-      { slope = player->slope; }
+      {
+        slope = player->slope;
+      }
       else {
         slope = P_AimLineAttack(player->mo, angle, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
 
@@ -882,17 +884,16 @@ void A_Punch(player_t *player, pspdef_t *psp)
   if (!linetarget)
     return;
 
-  S_StartSound(player->mo, sfx_punch);
+  S_StartSoundEx(player->mo, sfx_punch);
+
+  if (CASUALPLAY(comp_nomeleesnap)) { return; } // [Nugget]
 
   // turn to face target
-  // [Nugget]
-  if (!CASUALPLAY(comp_nomeleesnap))
-  {
-    SavePlayerAngle(player);
-    player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y,
-                                        linetarget->x, linetarget->y);
-    AddToTicAngle(player);
-  }
+
+  SavePlayerAngle(player);
+  player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y,
+                                      linetarget->x, linetarget->y);
+  AddToTicAngle(player);
 }
 
 //
@@ -938,34 +939,33 @@ void A_Saw(player_t *player, pspdef_t *psp)
 
   if (!linetarget)
     {
-      S_StartSoundPitch(player->mo, sfx_sawful, PITCH_HALF);
+      S_StartSoundPitchEx(player->mo, sfx_sawful, PITCH_HALF);
       return;
     }
 
-  S_StartSoundPitch(player->mo, sfx_sawhit, PITCH_HALF);
+  S_StartSoundPitchEx(player->mo, sfx_sawhit, PITCH_HALF);
+
+  if (CASUALPLAY(comp_nomeleesnap)) { return; } // [Nugget]
 
   // turn to face target
-  // [Nugget]
-  if (!CASUALPLAY(comp_nomeleesnap))
-  {
-    angle = R_PointToAngle2(player->mo->x, player->mo->y,
-                            linetarget->x, linetarget->y);
 
-    SavePlayerAngle(player);
-    if (angle - player->mo->angle > ANG180)
-      if ((signed int) (angle - player->mo->angle) < -ANG90/20)
-        player->mo->angle = angle + ANG90/21;
-      else
-        player->mo->angle -= ANG90/20;
+  angle = R_PointToAngle2(player->mo->x, player->mo->y,
+                          linetarget->x, linetarget->y);
+
+  SavePlayerAngle(player);
+  if (angle - player->mo->angle > ANG180)
+    if ((signed int) (angle - player->mo->angle) < -ANG90/20)
+      player->mo->angle = angle + ANG90/21;
     else
-      if (angle - player->mo->angle > ANG90/20)
-        player->mo->angle = angle - ANG90/21;
-      else
-        player->mo->angle += ANG90/20;
-    AddToTicAngle(player);
+      player->mo->angle -= ANG90/20;
+  else
+    if (angle - player->mo->angle > ANG90/20)
+      player->mo->angle = angle - ANG90/21;
+    else
+      player->mo->angle += ANG90/20;
+  AddToTicAngle(player);
 
-    player->mo->flags |= MF_JUSTATTACKED;
-  }
+  player->mo->flags |= MF_JUSTATTACKED;
 }
 
 //
@@ -1026,7 +1026,9 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
       // Taken outside of code block after this one
       // to allow direct vertical aiming in Beta
       if (vertical_aiming == VERTAIM_DIRECT)
-      { slope = player->slope; }
+      {
+        slope = player->slope;
+      }
       else
       if (autoaim || !beta_emulation)
 	{
@@ -1103,7 +1105,9 @@ static void P_BulletSlope(mobj_t *mo)
   int mask = demo_version < DV_MBF ? 0 : MF_FRIEND;
 
   if (vertical_aiming == VERTAIM_DIRECT) // [Nugget] Vertical aiming
-  { bulletslope = mo->player->slope; }
+  {
+    bulletslope = mo->player->slope;
+  }
   else
   do
     {
@@ -1136,8 +1140,7 @@ void P_GunShot(mobj_t *mo, boolean accurate)
     }
 
   // [Nugget] Explosive hitscan cheat
-  if (mo->player && mo->player->cheats & CF_BOOMCAN)
-  { boomshot = true; }
+  if (mo->player && mo->player->cheats & CF_BOOMCAN) { boomshot = true; }
 
   P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
 }
@@ -1148,7 +1151,7 @@ void P_GunShot(mobj_t *mo, boolean accurate)
 
 void A_FirePistol(player_t *player, pspdef_t *psp)
 {
-  S_StartSound(player->mo, sfx_pistol);
+  S_StartSoundPistol(player->mo, sfx_pistol);
 
   P_SetMobjState(player->mo, S_PLAY_ATK2);
   P_SubtractAmmo(player, 1);
@@ -1167,7 +1170,7 @@ void A_FireShotgun(player_t *player, pspdef_t *psp)
 {
   int i;
 
-  S_StartSound(player->mo, sfx_shotgn);
+  S_StartSoundShotgun(player->mo, sfx_shotgn);
   P_SetMobjState(player->mo, S_PLAY_ATK2);
 
   P_SubtractAmmo(player, 1);
@@ -1189,7 +1192,7 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
 {
   int i;
 
-  S_StartSound(player->mo, sfx_dshtgn);
+  S_StartSoundSSG(player->mo, sfx_dshtgn);
   P_SetMobjState(player->mo, S_PLAY_ATK2);
   P_SubtractAmmo(player, 2);
 
@@ -1208,8 +1211,7 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
       t = P_Random(pr_shotgun);
 
       // [Nugget] Explosive hitscan cheat
-      if (player->cheats & CF_BOOMCAN)
-      { boomshot = true; }
+      if (player->cheats & CF_BOOMCAN) { boomshot = true; }
 
       P_LineAttack(player->mo, angle, MISSILERANGE, bulletslope +
                    ((t - P_Random(pr_shotgun))<<5), damage);
@@ -1224,22 +1226,26 @@ boolean comp_cgundblsnd; // [Nugget]
 
 void A_FireCGun(player_t *player, pspdef_t *psp)
 {
-  // [Nugget] Use DSCHGUN if available
-  static int sound = -1;
-  if (sound == -1)
-  { sound = (W_CheckNumForName("dschgun") > -1 ? sfx_chgun : sfx_pistol); }
+  // [Nugget] /===============================================================
   
-  // [Nugget] Fix "Chaingun sound without ammo" bug
-  if (!strictmode && !comp_cgundblsnd)
+  // Fix "Chaingun sound without ammo" bug
+  if (!(strictmode || comp_cgundblsnd))
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
       return;
 
-  S_StartSound(player->mo, !strictmode ? sound : sfx_pistol); // [Nugget]
+  // Use DSCHGUN if available ------------------------------------------------
+  
+  static int sound = -1;
+  
+  if (sound == -1)
+  { sound = ((W_CheckNumForName("dschgun") > -1) ? sfx_chgun : sfx_pistol); }
+  
+  // [Nugget] ===============================================================/
+  
+  S_StartSoundCGun(player->mo, !strictmode ? sound : sfx_pistol); // [Nugget]
 
-  // [Nugget] Fix "Chaingun sound without ammo" bug
-  if (strictmode || comp_cgundblsnd)
-    if (!player->ammo[weaponinfo[player->readyweapon].ammo])
-      return;
+  if (!player->ammo[weaponinfo[player->readyweapon].ammo])
+    return;
 
   // killough 8/2/98: workaround for beta chaingun sprites missing at bottom
   // The beta did not have fullscreen, and its chaingun sprites were chopped
@@ -1325,7 +1331,7 @@ void A_BFGSpray(mobj_t *mo)
 
 void A_BFGsound(player_t *player, pspdef_t *psp)
 {
-  S_StartSound(player->mo, sfx_bfg);
+  S_StartSoundBFG(player->mo, sfx_bfg);
 }
 
 //
@@ -1519,10 +1525,8 @@ void P_MovePsprites(player_t *player)
   // [Nugget]: [crispy] squat down weapon sprite a bit after hitting the ground
   if (psp->dy)
   {
-    if (psp->dy > 24*FRACUNIT)
-    { psp->dy = 24*FRACUNIT; }
-    else
-    { psp->dy -= FRACUNIT; }
+    if (psp->dy > 24*FRACUNIT) { psp->dy = 24*FRACUNIT; }
+    else                       { psp->dy -= FRACUNIT; }
 
     if (psp->dy < 0) { psp->dy = 0; }
   }
@@ -1622,8 +1626,7 @@ void A_WeaponBulletAttack(player_t *player, pspdef_t *psp)
     slope = bulletslope + P_RandomHitscanSlope(pr_mbf21, vspread);
 
     // [Nugget] Explosive hitscan cheat
-    if (player->cheats & CF_BOOMCAN)
-    { boomshot = true; }
+    if (player->cheats & CF_BOOMCAN) { boomshot = true; }
 
     P_LineAttack(player->mo, angle, MISSILERANGE, slope, damage);
   }
@@ -1696,16 +1699,15 @@ void A_WeaponMeleeAttack(player_t *player, pspdef_t *psp)
     return;
 
   // un-missed!
-  S_StartSound(player->mo, hitsound);
+  S_StartSoundEx(player->mo, hitsound);
+
+  if (CASUALPLAY(comp_nomeleesnap)) { return; } // [Nugget]
 
   // turn to face target
-  // [Nugget]
-  if (!CASUALPLAY(comp_nomeleesnap))
-  {
-    SavePlayerAngle(player);
-    player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y, linetarget->x, linetarget->y);
-    AddToTicAngle(player);
-  }
+
+  SavePlayerAngle(player);
+  player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y, linetarget->x, linetarget->y);
+  AddToTicAngle(player);
 }
 
 //
@@ -1719,7 +1721,8 @@ void A_WeaponSound(player_t *player, pspdef_t *psp)
   if (!mbf21 || !psp->state)
     return;
 
-  S_StartSound(psp->state->args[1] ? NULL : player->mo, psp->state->args[0]);
+  S_StartSoundOrigin(player->mo, (psp->state->args[1] ? NULL : player->mo),
+                     psp->state->args[0]);
 }
 
 //

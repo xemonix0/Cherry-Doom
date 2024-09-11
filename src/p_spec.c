@@ -243,9 +243,9 @@ void P_HitFloor (mobj_t *mo, int oof)
 
   // [Nugget]: [NS] Landing sound for longer falls. (Hexen's calculation.)
   if ((hitsound[terrain][oof] == sfx_oof) && (mo->momz < -GRAVITY * 12))
-    S_StartSoundOptional(mo, sfx_plland, sfx_oof);
+    S_StartSoundHitFloorOptional(mo, sfx_plland, sfx_oof);
   else
-    S_StartSound(mo, hitsound[terrain][oof]);
+    S_StartSoundHitFloor(mo, hitsound[terrain][oof]);
 }
 
 ///////////////////////////////////////////////////////////////

@@ -48,6 +48,7 @@ set(NUGGETDOOM_SOURCES
                            i_oalstream.h
     i_oplmusic.c
     i_printf.c             i_printf.h
+    i_rumble.c             i_rumble.h
     i_sndfile.c            i_sndfile.h
     i_sound.c              i_sound.h
     i_system.c             i_system.h
@@ -187,6 +188,7 @@ target_link_libraries(nugget-doom PRIVATE
     OpenAL::OpenAL
     SndFile::sndfile
     opl
+    pffft
     textscreen
     miniz
     spng
@@ -203,11 +205,8 @@ endif()
 
 if(WIN32)
     target_include_directories(nugget-doom PRIVATE "../win32")
-    target_link_libraries(nugget-doom PRIVATE winmm)
-    if(MSVC)
-        target_sources(nugget-doom PRIVATE
-            ../win32/win_opendir.c ../win32/win_opendir.h)
-    endif()
+    target_link_libraries(nugget-doom PRIVATE winmm shlwapi)
+    target_sources(nugget-doom PRIVATE ../win32/win_opendir.c ../win32/win_opendir.h)
 endif()
 
 if(APPLE)
