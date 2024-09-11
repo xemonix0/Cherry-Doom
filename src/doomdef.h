@@ -199,6 +199,8 @@ typedef enum {
   ss_enem,
   ss_gen,       // killough 10/98
   ss_comp,      // killough 10/98
+  ss_eq,
+  ss_gyro,
 
   ss_skill, // [Nugget] Custom Skill menu
 
