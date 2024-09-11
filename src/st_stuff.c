@@ -2126,10 +2126,8 @@ void ST_Init(void)
 // [Nugget] NUGHUD: Status-Bar chunks
 void ST_InitChunkBar(void)
 {
-  if (st_bar) { Z_Free(st_bar); }
-
   // More than necessary, but so be it
-  st_bar = Z_Malloc((video.pitch * V_ScaleY(StatusBarBufferHeight())) * sizeof(*st_bar), PU_STATIC, 0);
+  st_bar = Z_Malloc((video.pitch * V_ScaleY(StatusBarBufferHeight())) * sizeof(*st_bar), PU_RENDERER, 0);
 
   V_UseBuffer(st_bar);
 
