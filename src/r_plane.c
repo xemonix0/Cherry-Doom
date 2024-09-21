@@ -50,8 +50,8 @@
 #include "r_state.h"
 #include "r_swirl.h" // [crispy] R_DistortedFlat()
 #include "tables.h"
+#include "v_fmt.h"
 #include "v_video.h"
-#include "w_wad.h"
 #include "z_zone.h"
 
 // [Nugget]
@@ -539,7 +539,7 @@ static void do_draw_plane(visplane_t *pl)
         }
         else
         {
-        ds_source = W_CacheLumpNum(firstflat + flattranslation[pl->picnum],
+        ds_source = V_CacheFlatNum(firstflat + flattranslation[pl->picnum],
                                    PU_STATIC);
         ds_brightmap = R_BrightmapForFlatNum(flattranslation[pl->picnum]);
         }

@@ -25,7 +25,6 @@
 #include "hu_lib.h"
 #include "hu_stuff.h"
 #include "i_gamepad.h"
-#include "i_input.h"
 #include "i_oalsound.h"
 #include "i_sound.h"
 #include "i_timer.h"
@@ -50,6 +49,7 @@
 #include "r_voxel.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "v_fmt.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "z_zone.h"
@@ -525,7 +525,7 @@ void MN_DrawItem(setup_menu_t *s, int accum_y)
         // Draw the blinking version in tune with the blinking skull otherwise
 
         const int index = (flags & (S_HILITE | S_SELECT)) ? whichSkull : 0;
-        patch_t *patch = W_CacheLumpName(reset_button_name[index], PU_CACHE);
+        patch_t *patch = V_CachePatchName(reset_button_name[index], PU_CACHE);
         rect->x = x;
         rect->y = y;
         rect->w = SHORT(patch->width);
@@ -614,10 +614,10 @@ static void DrawSetupThermo(int x, int y, int width, int size, int dot,
     int i;
 
     xx = x;
-    V_DrawPatchTranslatedSH(xx, y, W_CacheLumpName("M_THERML", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+    V_DrawPatchTranslatedSH(xx, y, V_CachePatchName("M_THERML", PU_CACHE), cr); // [Nugget] HUD/menu shadows
     xx += M_THRM_STEP;
 
-    patch_t *patch = W_CacheLumpName("M_THERMM", PU_CACHE);
+    patch_t *patch = V_CachePatchName("M_THERMM", PU_CACHE);
 
     V_SetShadowCrop(SHORT(patch->width) - M_THRM_STEP); // [Nugget] HUD/menu shadows
 
@@ -629,7 +629,7 @@ static void DrawSetupThermo(int x, int y, int width, int size, int dot,
 
     V_SetShadowCrop(0); // [Nugget] HUD/menu shadows
 
-    V_DrawPatchTranslatedSH(xx, y, W_CacheLumpName("M_THERMR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+    V_DrawPatchTranslatedSH(xx, y, V_CachePatchName("M_THERMR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 
     if (dot > size)
     {
@@ -639,7 +639,7 @@ static void DrawSetupThermo(int x, int y, int width, int size, int dot,
     int step = width * M_THRM_STEP * FRACUNIT / size;
 
     V_DrawPatchTranslated(x + M_THRM_STEP + dot * step / FRACUNIT, y,
-                          W_CacheLumpName("M_THERMO", PU_CACHE), cr);
+                          V_CachePatchName("M_THERMO", PU_CACHE), cr);
 }
 
 static void DrawSetting(setup_menu_t *s, int accum_y)
@@ -885,7 +885,7 @@ void MN_DrawScrollIndicators(void)
 {
     if (scroll_indicators & scroll_up)
     {
-        patch_t *patch = W_CacheLumpName("SCRLUP", PU_CACHE);
+        patch_t *patch = V_CachePatchName("SCRLUP", PU_CACHE);
 
         int x = LT_SCROLL_X - SHORT(patch->width) / 2;
         int y = LT_SCROLL_UP_Y;
@@ -895,7 +895,7 @@ void MN_DrawScrollIndicators(void)
 
     if (scroll_indicators & scroll_down)
     {
-        patch_t *patch = W_CacheLumpName("SCRLDOWN", PU_CACHE);
+        patch_t *patch = V_CachePatchName("SCRLDOWN", PU_CACHE);
 
         int x = LT_SCROLL_X - SHORT(patch->width) / 2;
         int y = LT_SCROLL_DOWN_Y;
@@ -995,7 +995,7 @@ static void DrawDefVerify()
 {
     // [Nugget] HUD/menu shadows
     V_DrawPatchSH(VERIFYBOXXORG, VERIFYBOXYORG,
-                  W_CacheLumpName("M_VBOX", PU_CACHE));
+                  V_CachePatchName("M_VBOX", PU_CACHE));
 
     // The blinking messages is keyed off of the blinking of the
     // cursor skull.
@@ -1011,7 +1011,7 @@ void MN_DrawDelVerify(void)
 {
     // [Nugget] HUD/menu shadows
     V_DrawPatchSH(VERIFYBOXXORG, VERIFYBOXYORG,
-                  W_CacheLumpName("M_VBOX", PU_CACHE));
+                  V_CachePatchName("M_VBOX", PU_CACHE));
 
     if (whichSkull)
     {
@@ -1987,8 +1987,10 @@ static const char *secret_message_strings[] = {
 
 static setup_menu_t stat_settings4[] = {
     // [Nugget] Multiple choice
-    {"\"A Secret is Revealed!\" Message", S_CHOICE, M_X, M_SPC,
+    {"Announce Revealed Secrets", S_CHOICE, M_X, M_SPC,
      {"hud_secret_message"}, m_null, input_null, str_secret_message},
+
+    {"Announce Map Titles",  S_ONOFF, M_X, M_SPC, {"hud_map_announce"}},
 
     // [Nugget]
     {"Milestone-Completion Announcements", S_ONOFF, M_X, M_SPC,
@@ -2016,12 +2018,6 @@ static setup_menu_t stat_settings4[] = {
 
     {"Message Duration (ms)", S_NUM, M_X, M_SPC,
      {"message_timer"}},
-
-    {"Chat Message Color", S_CRITEM|S_COSMETIC, M_X, M_SPC,
-     {"hudcolor_chat"}, m_null, input_null, str_hudcolor},
-
-    {"Chat Message Duration (ms)", S_NUM|S_COSMETIC, M_X, M_SPC,
-     {"chat_msg_timer"}},
 
     {"Obituary Color", S_CRITEM|S_COSMETIC, M_X, M_SPC,
      {"hudcolor_obituary"}, m_null, input_null, str_hudcolor},
@@ -2152,7 +2148,7 @@ void MN_DrawStatusHUD(void)
     if (hud_crosshair_on && current_page == 2) // [Nugget]
     {
         patch_t *patch =
-            W_CacheLumpName(crosshair_lumps[hud_crosshair], PU_CACHE);
+            V_CachePatchName(crosshair_lumps[hud_crosshair], PU_CACHE);
 
         int x = XH_X + 85 - SHORT(patch->width) / 2;
         int y = M_Y + M_SPC + M_SPC / 2 - SHORT(patch->height) / 2 - 1; // [Nugget] Adjusted
@@ -2176,7 +2172,7 @@ void MN_DrawStatusHUD(void)
 
 static const char *overlay_strings[] = {"Off", "On", "Dark"};
 
-static const char *automap_preset_strings[] = {"Vanilla", "Boom", "ZDoom"};
+static const char *automap_preset_strings[] = {"Vanilla", "Crispy", "Boom", "ZDoom"};
 
 static const char *automap_keyed_door_strings[] = {"Off", "On", "Flashing"};
 
@@ -2817,7 +2813,7 @@ static setup_menu_t gen_settings3[] = {
     MI_GAP,
 
     {"Mouse acceleration", S_THERMO, CNTR_X, M_THRM_SPC, {"mouse_acceleration"},
-     m_null, input_null, str_mouse_accel, I_UpdateAccelerateMouse},
+     m_null, input_null, str_mouse_accel, G_UpdateAccelerateMouse},
 
     MI_END
 };
@@ -3207,6 +3203,8 @@ void MN_UpdateAdvancedSoundItems(boolean toggle)
 void MN_UpdateFpsLimitItem(void)
 {
     DisableItem(!uncapped, gen_settings1, "fpslimit");
+    G_ClearInput();
+    G_UpdateAngleFunctions();
 }
 
 void MN_DisableVoxelsRenderingItem(void)
@@ -5115,7 +5113,7 @@ void MN_DrawTitle(int x, int y, const char *patch, const char *alttext)
 
     if (patch_lump >= 0)
     {
-        V_DrawPatchSH(x, y, W_CacheLumpNum(patch_lump, PU_CACHE)); // [Nugget] HUD/menu shadows
+        V_DrawPatchSH(x, y, V_CachePatchNum(patch_lump, PU_CACHE)); // [Nugget] HUD/menu shadows
     }
     else
     {
@@ -5246,7 +5244,7 @@ void MN_BindMenuVariables(void)
     BIND_NUM_GENERAL(menu_backdrop, MENU_BG_DARK, MENU_BG_OFF, MENU_BG_TEXTURE,
         "Menu backdrop (0 = Off; 1 = Dark; 2 = Texture)");
 
-    // [Nugget] /---------------------------------------------------------------
+    // [Nugget] ----------------------------------------------------------------
 
     BIND_NUM_GENERAL(menu_backdrop_darkening, 20, 0, 31,
         "Darkening level for dark menu backdrop");
@@ -5265,9 +5263,4 @@ void MN_BindMenuVariables(void)
 
     BIND_BOOL_GENERAL(quick_quitgame, false, "Skip \"Quit Game\" prompt");
     BIND_BOOL_GENERAL(quit_sound, true, "Play a sound when confirming the \"Quit Game\" prompt");
-
-    // [Nugget] ---------------------------------------------------------------/
-
-    M_BindBool("traditional_menu", &traditional_menu, NULL,
-               true, ss_none, wad_yes, "Use vanilla Doom's ordering for the main menu");
 }

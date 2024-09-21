@@ -54,6 +54,7 @@
 #include "tables.h"
 #include "u_mapinfo.h"
 #include "u_scanner.h"
+#include "v_fmt.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "z_zone.h"
@@ -216,6 +217,10 @@ static boolean    message_colorized;
 boolean           show_messages;
 boolean           show_toggle_messages;
 boolean           show_pickup_messages;
+
+static boolean    hud_map_announce;
+static boolean    title_on;
+static int        title_counter;
 
 static boolean    headsupactive = false;
 
@@ -428,28 +433,28 @@ void HU_Init(void)
   {
     M_snprintf(buffer, sizeof(buffer), "STCFN%.3d", j);
     if (W_CheckNumForName(buffer) != -1)
-      big_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+      big_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
 
     if ('0' <= j && j <= '9')
     {
       M_snprintf(buffer, sizeof(buffer), "DIG%.1d", j - 48);
-      sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+      sml_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
     }
     else if ('A' <= j && j <= 'Z')
     {
       M_snprintf(buffer, sizeof(buffer), "DIG%c", j);
-      sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+      sml_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
     }
     else if (j > 122)
     {
       M_snprintf(buffer, sizeof(buffer), "STBR%.3d", j);
-      sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+      sml_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
     }
     else
     {
       M_snprintf(buffer, sizeof(buffer), "DIG%.2d", j);
       if (W_CheckNumForName(buffer) != -1)
-        sml_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+        sml_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
     }
 
     // [FG] small font available, big font unavailable
@@ -475,7 +480,7 @@ void HU_Init(void)
   {
     M_snprintf(buffer, sizeof(buffer), "STKEYS%.1d", j);
     sml_font.patches[i] =
-    big_font.patches[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
+    big_font.patches[i] = V_CachePatchName(buffer, PU_STATIC);
   }
 
   // [Nugget] Load HUD icons
@@ -495,7 +500,7 @@ void HU_Init(void)
       icon_available[j] = true;
 
       sml_font.patches[i] =
-      big_font.patches[i] = (patch_t *) W_CacheLumpName(icon, PU_STATIC);
+      big_font.patches[i] = (patch_t *) V_CachePatchName(icon, PU_STATIC);
     }
     else {
       sml_font.patches[i] = sml_font.patches[fallback[j] - HU_FONTSTART];
@@ -700,8 +705,6 @@ static int NughudSortWidgets(const void *_p1, const void *_p2)
     || (st_crispyhud && (a) == 1)                      \
 )
 
-boolean hud_automap;  // [Nugget] Condition used for level title
-
 // [Nugget] -----------------------------------------------------------------/
 
 void WI_BuildWidgets(void); // [Cherry]
@@ -754,7 +757,7 @@ void HU_Start(void)
   // create the map title widget
   HUlib_init_multiline(&w_title, 1,
                        &doom_font, colrngs[hudcolor_titl],
-                       &hud_automap, HU_widget_build_title);
+                       &title_on, HU_widget_build_title);
   // [FG] built only once right here
   w_title.builder();
 
@@ -980,6 +983,11 @@ static void HU_widget_build_title (void)
   if ((n = strchr(s, '\n')))
   {
     *n = '\0';
+  }
+
+  if (hud_map_announce && leveltime == 0)
+  {
+    title_counter = HU_MSGTIMEOUT2;
   }
 
   M_StringConcat(hud_titlestr, s, sizeof(hud_titlestr));
@@ -1227,7 +1235,6 @@ static void HU_widget_build_weapon (void)
 
     ammo = plr->ammo[weaponinfo[w].ammo];
     fullammo = plr->maxammo[weaponinfo[w].ammo];
-    ammopct = 0;
 
     // skip weapons not currently posessed
     if (!plr->weaponowned[w])
@@ -1806,18 +1813,14 @@ const char *crosshair_strings[HU_CROSSHAIRS] =
 
 static void HU_InitCrosshair(void)
 {
-  int i, j;
-
-  for (i = 1; i < HU_CROSSHAIRS; i++)
+  for (int i = 1; i < HU_CROSSHAIRS; i++)
   {
-    j = W_CheckNumForName(crosshair_lumps[i]);
-    if (j >= num_predefined_lumps)
-    {
-      if (R_IsPatchLump(j))
-        crosshair_strings[i] = crosshair_lumps[i];
-      else
-        crosshair_lumps[i] = NULL;
-    }
+    int lump = W_CheckNumForName(crosshair_lumps[i]);
+
+    if (R_IsPatchLump(lump))
+      crosshair_strings[i] = crosshair_lumps[i];
+    else
+      crosshair_lumps[i] = NULL;
   }
 }
 
@@ -1832,7 +1835,7 @@ void HU_StartCrosshair(void) // [Nugget] Not static anymore
 
   if (crosshair_lumps[hud_crosshair])
   {
-    crosshair.patch = W_CacheLumpName(crosshair_lumps[hud_crosshair], PU_STATIC);
+    crosshair.patch = V_CachePatchName(crosshair_lumps[hud_crosshair], PU_STATIC);
 
     crosshair.w = SHORT(crosshair.patch->width)/2;
     crosshair.h = SHORT(crosshair.patch->height)/2;
@@ -1842,11 +1845,11 @@ void HU_StartCrosshair(void) // [Nugget] Not static anymore
 
   // [Nugget] Horizontal-autoaim indicators ----------------------------------
 
-  crosshair.patchl = W_CacheLumpName("CROSSIL", PU_STATIC);
+  crosshair.patchl = V_CachePatchName("CROSSIL", PU_STATIC);
   crosshair.lw = SHORT(crosshair.patchl->width);
   crosshair.lh = SHORT(crosshair.patchl->height)/2;
 
-  crosshair.patchr = W_CacheLumpName("CROSSIR", PU_STATIC);
+  crosshair.patchr = V_CachePatchName("CROSSIR", PU_STATIC);
   crosshair.rw = SHORT(crosshair.patchr->width);
   crosshair.rh = SHORT(crosshair.patchr->height)/2;
 }
@@ -1881,12 +1884,17 @@ static void HU_UpdateCrosshair(void)
     if (!vertical_aiming && (ammo == am_misl || ammo == am_cell) // [Nugget] Vertical aiming
         && (!no_hor_autoaim || !casual_play)) // [Nugget]
     {
-      if (!linetarget) {
-        P_AimLineAttack(plr->mo, an += 1<<26, range, CROSSHAIR_AIM);
+      if (!linetarget)
+      {
+        P_AimLineAttack(plr->mo, an + (1<<26), range, CROSSHAIR_AIM);
+
         if (linetarget && hud_crosshair_indicators) { crosshair.side = -1; } // [Nugget]
       }
-      if (!linetarget) {
-        P_AimLineAttack(plr->mo, an -= 2<<26, range, CROSSHAIR_AIM);
+
+      if (!linetarget)
+      {
+        P_AimLineAttack(plr->mo, an - (1<<26), range, CROSSHAIR_AIM);
+
         if (linetarget && hud_crosshair_indicators) { crosshair.side = 1; } // [Nugget]
       }
     }
@@ -2153,8 +2161,6 @@ void HU_Ticker(void)
 
   plr = &players[displayplayer];         // killough 3/7/98
 
-  hud_automap = (automapactive == AM_FULL); // [Nugget] Minimap
-
   HU_disable_all_widgets();
   draw_crispy_hud = false;
 
@@ -2207,7 +2213,7 @@ void HU_Ticker(void)
     HUlib_add_string_to_cur_line(&w_secret, plr->secretmessage);
     plr->secretmessage = NULL;
     secret_on = true;
-    secret_counter = 5*TICRATE/2; // [crispy] 2.5 seconds
+    secret_counter = HU_MSGTIMEOUT2;
   }
 
   // if messages on, or "Messages Off" is being displayed
@@ -2297,6 +2303,11 @@ void HU_Ticker(void)
     || plr->powers[pw_ironfeet] > 0        \
   )
 
+  if (title_counter)
+  {
+    title_counter--;
+  }
+
   if (automapactive == AM_FULL)
   {
     HU_cond_build_widget(w_stats, hud_level_stats & HUD_WIDGET_AUTOMAP);
@@ -2304,6 +2315,8 @@ void HU_Ticker(void)
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_AUTOMAP || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_AUTOMAP && SHOWPOWERS); // [Nugget] Powerup timers
     HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_AUTOMAP);
+
+    title_on = true;
   }
   else
   {
@@ -2312,6 +2325,8 @@ void HU_Ticker(void)
     HU_cond_build_widget(&w_sttime, hud_level_time & HUD_WIDGET_HUD || plr->btuse_tics);
     HU_cond_build_widget(&w_powers, STRICTMODE(hud_power_timers) & HUD_WIDGET_HUD && SHOWPOWERS); // [Nugget] Powerup timers
     HU_cond_build_widget(&w_coord, STRICTMODE(hud_player_coords) & HUD_WIDGET_HUD);
+
+    title_on = (title_counter > 0);
   }
 
   #undef SHOWPOWERS
@@ -2847,7 +2862,7 @@ static void HU_ParseHUD (void)
     HU_AddToWidgets(&w_title,   hud, align_direct, align_bottom, 0, 0);
     HU_AddToWidgets(&w_message, hud, align_direct, align_top,    0, 0);
     HU_AddToWidgets(&w_chat,    hud, align_direct, align_top,    0, 0);
-    HU_AddToWidgets(&w_secret , hud, align_center, align_direct, 0, (SCREENHEIGHT - ST_HEIGHT) / 4);
+    HU_AddToWidgets(&w_secret , hud, align_center, align_secret, 0, 0);
   }
 
   if ((lumpnum = W_CheckNumForName("WOOFHUD")) == -1)
@@ -2955,7 +2970,7 @@ void HU_BindHUDVariables(void)
   M_BindNum("hud_level_time", &hud_level_time, NULL,
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
-            "Show level time widget (1 = On automap, 2 = On HUD, 3 = Always)");
+            "Show level time widget (1 = On automap; 2 = On HUD; 3 = Always)");
   M_BindNum("hud_player_coords", &hud_player_coords, NULL,
             HUD_WIDGET_AUTOMAP, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
@@ -3005,7 +3020,7 @@ void HU_BindHUDVariables(void)
   M_BindNum("hud_widget_font", &hud_widget_font, NULL,
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
-            "Use standard Doom font for widgets (1 = On automap, 2 = On HUD, 3 "
+            "Use standard Doom font for widgets (1 = On automap; 2 = On HUD; 3 "
             "= Always)");
   M_BindBool("hud_widget_layout", &hud_widget_layout, NULL,
              false, ss_stat, wad_no, "Widget layout (0 = Horizontal; 1 = Vertical)");
@@ -3144,7 +3159,10 @@ void HU_BindHUDVariables(void)
 
    // [Nugget] "Count" mode from Crispy
   M_BindNum("hud_secret_message", &hud_secret_message, NULL,
-            1, 0, 2, ss_stat, wad_no, "Show secret-revealed message (1 = Simple; 2 = Count)");
+            1, 0, 2, ss_stat, wad_no, "Announce revealed secrets (1 = Simple; 2 = Count)");
+
+  M_BindBool("hud_map_announce", &hud_map_announce, NULL,
+            false, ss_stat, wad_no, "Announce map titles");
 
   // [Nugget] Announce milestone completion
   M_BindBool("announce_milestones", &announce_milestones, NULL,

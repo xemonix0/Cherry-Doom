@@ -29,6 +29,7 @@
 #include "config.h"
 #include "d_deh.h" // Ty 3/27/98 deh declarations
 #include "d_event.h"
+#include "d_iwad.h"
 #include "d_main.h"
 #include "d_player.h"
 #include "d_ticcmd.h"
@@ -337,6 +338,7 @@ int             totalleveltimes; // [FG] total time for all completed levels
 int             levels_completed; // [Cherry] levels completed continuously
 boolean         demorecording;
 boolean         longtics;             // cph's doom 1.91 longtics hack
+boolean         fake_longtics;        // Fake longtics when using shorttics.
 boolean         shorttics;            // Config key for low resolution turning.
 boolean         lowres_turn;          // low resolution turning for longtics
 boolean         demoplayback;
@@ -346,7 +348,7 @@ wbstartstruct_t wminfo;               // parms for world map / intermission
 boolean         haswolflevels = false;// jff 4/18/98 wolf levels present
 byte            *savebuffer;
 boolean         autorun = false;      // always running?          // phares
-static boolean  autostrafe50;
+boolean         autostrafe50;
 boolean         novert = false;
 boolean         mouselook = false;
 boolean         padlook = false;
@@ -371,14 +373,16 @@ static ticcmd_t* last_cmd = NULL;
 int     key_escape = KEY_ESCAPE;                           // phares 4/13/98
 int     key_help = KEY_F1;                                 // phares 4/13/98
 
-static int mouse_sensitivity;
-static int mouse_sensitivity_y;
-static int mouse_sensitivity_strafe; // [FG] strafe
-static int mouse_sensitivity_y_look; // [FG] look
+int mouse_sensitivity;
+int mouse_sensitivity_y;
+int mouse_sensitivity_strafe; // [FG] strafe
+int mouse_sensitivity_y_look; // [FG] look
 // [FG] double click acts as "use"
 static boolean dclick_use;
 // [FG] invert vertical axis
-static boolean mouse_y_invert;
+boolean mouse_y_invert;
+int mouse_acceleration;
+int mouse_acceleration_threshold;
 
 #define MAXPLMOVE   (forwardmove[1])
 #define TURBOTHRESHOLD  0x32
@@ -386,11 +390,10 @@ static boolean mouse_y_invert;
 #define QUICKREVERSE 32768 // 180 degree reverse                    // phares
 #define NUMKEYS   256
 
-static fixed_t default_forwardmove[2] = {0x19, 0x32};
-static fixed_t default_sidemove[2] = {0x18, 0x28};
-fixed_t *forwardmove = default_forwardmove;
+fixed_t forwardmove[2] = {0x19, 0x32};
+fixed_t default_sidemove[2] = {0x18, 0x28};
 fixed_t *sidemove = default_sidemove;
-fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
+const fixed_t angleturn[3] = {640, 1280, 320};  // + slow turn
 
 boolean gamekeydown[NUMKEYS];
 int     turnheld;       // for accelerative turning
@@ -398,26 +401,13 @@ int     turnheld;       // for accelerative turning
 boolean mousebuttons[NUM_MOUSE_BUTTONS];
 
 // mouse values are used once
-static int mousex;
-static int mousey;
+int mousex;
+int mousey;
 boolean dclick;
 
-typedef struct carry_s
-{
-    double angle;
-    double pitch;
-    double side;
-    double vert;
-    short lowres;
-} carry_t;
-
-static carry_t prevcarry;
-static carry_t carry;
 static ticcmd_t basecmd;
 
 boolean joybuttons[NUM_CONTROLLER_BUTTONS];
-
-static const int direction[] = { 1, -1 };
 
 int   savegameslot = -1;
 char  savedescription[32];
@@ -598,262 +588,36 @@ static void G_DemoSkipTics(void)
   }
 }
 
-static int RoundSide_Strict(double side)
-{
-  return lround(side * 0.5) * 2; // Even values only.
-}
-
-static int RoundSide_Full(double side)
-{
-  return lround(side);
-}
-
-static int (*RoundSide)(double side) = RoundSide_Full;
-
-void G_UpdateSideMove(void)
-{
-  if (strictmode || (netgame && !solonet))
-  {
-    RoundSide = RoundSide_Strict;
-    sidemove = default_sidemove;
-  }
-  else
-  {
-    RoundSide = RoundSide_Full;
-    sidemove = autostrafe50 ? default_forwardmove : default_sidemove;
-  }
-}
-
-static int CalcControllerForward(int speed)
-{
-  const int forward = lroundf(forwardmove[speed] * axes[AXIS_FORWARD] *
-                              direction[joy_invert_forward]);
-  return BETWEEN(-forwardmove[speed], forwardmove[speed], forward);
-}
-
-static int CalcControllerSideTurn(int speed)
-{
-  const int side = RoundSide(forwardmove[speed] * axes[AXIS_TURN] *
-                             direction[joy_invert_turn]);
-  return BETWEEN(-forwardmove[speed], forwardmove[speed], side);
-}
-
-static int CalcControllerSideStrafe(int speed)
-{
-  const int side = RoundSide(forwardmove[speed] * axes[AXIS_STRAFE] *
-                             direction[joy_invert_strafe]);
-  return BETWEEN(-sidemove[speed], sidemove[speed], side);
-}
-
-static double CalcControllerAngle(void)
-{
-  return (angleturn[1] * axes[AXIS_TURN] * direction[joy_invert_turn]);
-}
-
-static double CalcControllerPitch(void)
-{
-  const double pitch = angleturn[1] * axes[AXIS_LOOK];
-  return (pitch * FRACUNIT * direction[joy_invert_look]);
-}
-
-static int CarryError(double value, const double *prevcarry, double *carry)
-{
-  const double desired = value + *prevcarry;
-  const int actual = lround(desired);
-  *carry = desired - actual;
-  return actual;
-}
-
-static short CarryAngle_Full(double angle)
-{
-  return CarryError(angle, &prevcarry.angle, &carry.angle);
-}
-
-static short CarryAngle_LowRes(double angle)
-{
-  const short desired = CarryAngle_Full(angle) + prevcarry.lowres;
-  // Round to nearest 256 for single byte turning. From Chocolate Doom.
-  const short actual = (desired + 128) & 0xFF00;
-  carry.lowres = desired - actual;
-  return actual;
-}
-
-static short (*CarryAngle)(double angle) = CarryAngle_Full;
-
-void G_UpdateCarryAngle(void)
-{
-  CarryAngle = lowres_turn ? CarryAngle_LowRes : CarryAngle_Full;
-}
-
-static int CarryPitch(double pitch)
-{
-  return CarryError(pitch, &prevcarry.pitch, &carry.pitch);
-}
-
-static int CarryMouseVert(double vert)
-{
-  return CarryError(vert, &prevcarry.vert, &carry.vert);
-}
-
-static int CarryMouseSide(double side)
-{
-  const double desired = side + prevcarry.side;
-  const int actual = RoundSide(desired);
-  carry.side = desired - actual;
-  return actual;
-}
-
-static double CalcMouseAngle(int mousex)
-{
-  if (!mouse_sensitivity)
-    return 0.0;
-
-  return (I_AccelerateMouse(mousex) * (mouse_sensitivity + 5) * 8 / 10);
-}
-
-static double CalcMousePitch(int mousey)
-{
-  double pitch;
-
-  if (!mouse_sensitivity_y_look)
-    return 0.0;
-
-  pitch = I_AccelerateMouse(mousey) * (mouse_sensitivity_y_look + 5) * 8 / 10;
-
-  return pitch * FRACUNIT * direction[mouse_y_invert];
-}
-
-static double CalcMouseSide(int mousex)
-{
-  if (!mouse_sensitivity_strafe)
-    return 0.0;
-
-  return (I_AccelerateMouse(mousex) *
-          (mouse_sensitivity_strafe + 5) * 2 / 10);
-}
-
-static double CalcMouseVert(int mousey)
-{
-  if (!mouse_sensitivity_y)
-    return 0.0;
-
-  return (I_AccelerateMouse(mousey) * (mouse_sensitivity_y + 5) / 10);
-}
-
-//
-// ApplyQuickstartCache
-// When recording a demo and the map is reloaded, cached input from a circular
-// buffer can be applied prior to the screen wipe. Adapted from DSDA-Doom.
-//
-
-static int quickstart_cache_tics;
-static boolean quickstart_queued;
-static float axis_turn_tic;
-static int mousex_tic;
-
-static void ClearQuickstartTic(void)
-{
-  axis_turn_tic = 0.0f;
-  mousex_tic = 0;
-}
-
-static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
-{
-  static float axis_turn_cache[TICRATE];
-  static int mousex_cache[TICRATE];
-  static short angleturn_cache[TICRATE];
-  static int index;
-
-  if (quickstart_cache_tics < 1)
-  {
-    return;
-  }
-
-  if (quickstart_queued)
-  {
-    axes[AXIS_TURN] = 0.0f;
-    mousex = 0;
-
-    if (strafe)
-    {
-      for (int i = 0; i < quickstart_cache_tics; i++)
-      {
-        axes[AXIS_TURN] += axis_turn_cache[i];
-        mousex += mousex_cache[i];
-      }
-
-      cmd->angleturn = 0;
-      localview.rawangle = 0.0;
-    }
-    else
-    {
-      short result = 0;
-
-      for (int i = 0; i < quickstart_cache_tics; i++)
-      {
-        result += angleturn_cache[i];
-      }
-
-      cmd->angleturn = CarryAngle(result);
-      localview.rawangle = cmd->angleturn;
-    }
-
-    memset(axis_turn_cache, 0, sizeof(axis_turn_cache));
-    memset(mousex_cache, 0, sizeof(mousex_cache));
-    memset(angleturn_cache, 0, sizeof(angleturn_cache));
-    index = 0;
-
-    quickstart_queued = false;
-  }
-  else
-  {
-    axis_turn_cache[index] = axis_turn_tic;
-    mousex_cache[index] = mousex_tic;
-    angleturn_cache[index] = cmd->angleturn;
-    index = (index + 1) % quickstart_cache_tics;
-  }
-}
-
 void G_PrepTiccmd(void)
 {
   const boolean strafe = M_InputGameActive(input_strafe);
   ticcmd_t *cmd = &basecmd;
 
-  // [Nugget] Decrease the intensity of some movements if zoomed in /---------
-
-  float zoomdiv = 1.0f;
-
+  // [Nugget] Decrease the intensity of some movements if zoomed in
   if (!strictmode)
   {
     const int zoom = R_GetFOVFX(FOVFX_ZOOM);
 
     if (zoom)
-    { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+    { G_UpdateZoomDiv(MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom))); }
   }
-
-  // [Nugget] ---------------------------------------------------------------/
 
   // Gamepad
 
   if (I_UseController() && I_CalcControllerAxes())
   {
-    D_UpdateDeltaTics();
-
+    G_UpdateDeltaTics();
     axis_turn_tic = axes[AXIS_TURN];
 
     if (axes[AXIS_TURN] && !strafe)
     {
-      localview.rawangle -= CalcControllerAngle() * deltatics / zoomdiv;
-      cmd->angleturn = CarryAngle(localview.rawangle);
-      localview.angle = cmd->angleturn << 16;
+      cmd->angleturn = G_CalcControllerAngle();
       axes[AXIS_TURN] = 0.0f;
     }
 
     if (axes[AXIS_LOOK] && padlook)
     {
-      localview.rawpitch -= CalcControllerPitch() * deltatics / zoomdiv;
-      cmd->pitch = CarryPitch(localview.rawpitch);
-      localview.pitch = cmd->pitch;
+      cmd->pitch = G_CalcControllerPitch();
       axes[AXIS_LOOK] = 0.0f;
     }
   }
@@ -862,17 +626,13 @@ void G_PrepTiccmd(void)
 
   if (mousex && !strafe)
   {
-    localview.rawangle -= CalcMouseAngle(mousex) / zoomdiv;
-    cmd->angleturn = CarryAngle(localview.rawangle);
-    localview.angle = cmd->angleturn << 16;
+    cmd->angleturn = G_CalcMouseAngle();
     mousex = 0;
   }
 
   if (mousey && mouselook)
   {
-    localview.rawpitch += CalcMousePitch(mousey) / zoomdiv;
-    cmd->pitch = CarryPitch(localview.rawpitch);
-    localview.pitch = cmd->pitch;
+    cmd->pitch = G_CalcMousePitch();
     mousey = 0;
   }
 }
@@ -908,7 +668,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   memcpy(cmd, &basecmd, sizeof(*cmd));
   memset(&basecmd, 0, sizeof(basecmd));
 
-  ApplyQuickstartCache(cmd, strafe);
+  G_ApplyQuickstartCache(cmd, strafe);
 
   cmd->consistancy = consistancy[consoleplayer][maketic%BACKUPTICS];
 
@@ -967,17 +727,17 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   {
     if (axes[AXIS_TURN] && strafe && !cmd->angleturn)
     {
-      side += CalcControllerSideTurn(speed);
+      side += G_CalcControllerSideTurn(speed);
     }
 
     if (axes[AXIS_STRAFE])
     {
-      side += CalcControllerSideStrafe(speed);
+      side += G_CalcControllerSideStrafe(speed);
     }
 
     if (axes[AXIS_FORWARD])
     {
-      forward -= CalcControllerForward(speed);
+      forward -= G_CalcControllerForward(speed);
     }
   }
 
@@ -985,23 +745,19 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (mousex && strafe && !cmd->angleturn)
   {
-    const double mouseside = CalcMouseSide(mousex);
-    side += CarryMouseSide(mouseside);
+    side += G_CalcMouseSide();
   }
 
   if (mousey && !mouselook && !novert)
   {
-    const double mousevert = CalcMouseVert(mousey);
-    forward += CarryMouseVert(mousevert);
+    forward += G_CalcMouseVert();
   }
 
   // Update/reset
 
   if (angle)
   {
-    const short old_angleturn = cmd->angleturn;
-    cmd->angleturn = CarryAngle(localview.rawangle + angle);
-    localview.ticangleturn = cmd->angleturn - old_angleturn;
+    G_UpdateTicAngleTurn(cmd, angle);
   }
 
   if (forward > MAXPLMOVE)
@@ -1016,14 +772,11 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   cmd->forwardmove = forward;
   cmd->sidemove = side;
 
-  ClearQuickstartTic();
+  G_ClearQuickstartTic();
   I_ResetControllerAxes();
   mousex = mousey = 0;
-  localview.angle = 0;
-  localview.pitch = 0;
-  localview.rawangle = 0.0;
-  localview.rawpitch = 0.0;
-  prevcarry = carry;
+  G_UpdateLocalView();
+  G_UpdateCarry();
 
   // Buttons
 
@@ -1217,12 +970,11 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
 void G_ClearInput(void)
 {
-  ClearQuickstartTic();
+  G_ClearQuickstartTic();
   I_ResetControllerLevel();
   mousex = mousey = 0;
-  memset(&localview, 0, sizeof(localview));
-  memset(&carry, 0, sizeof(carry));
-  memset(&prevcarry, 0, sizeof(prevcarry));
+  G_ClearLocalView();
+  G_ClearCarry();
   memset(&basecmd, 0, sizeof(basecmd));
 }
 
@@ -1958,6 +1710,7 @@ static void G_PlayerFinishLevel(int player)
   p->centering = false;
   p->slope = 0;
   p->recoilpitch = p->oldrecoilpitch = 0;
+  p->ticangle = p->oldticangle = 0;
 
   // [Nugget] Reset more additional player properties ------------------------
 
@@ -2354,10 +2107,9 @@ static void G_DoPlayDemo(void)
 {
   skill_t skill;
   int i, episode, map;
-  char basename[9];
   demo_version_t demover;
   byte *option_p = NULL;      // killough 11/98
-  int lumpnum, lumplength;
+  int demolength;
 
   if (gameaction != ga_loadgame)      // killough 12/98: support -loadgame
     basetic = gametic;  // killough 9/29/98
@@ -2369,17 +2121,33 @@ static void G_DoPlayDemo(void)
       Z_Free(demobuffer);
   }
 
-  ExtractFileBase(defdemoname,basename);           // killough
+  char *filename = NULL;
+  if (singledemo)
+  {
+      filename = D_FindLMPByName(defdemoname);
+  }
 
-  lumpnum = W_GetNumForName(basename);
-  lumplength = W_LumpLength(lumpnum);
-
-  demobuffer = demo_p = W_CacheLumpNum(lumpnum, PU_STATIC);  // killough
+  if (singledemo && filename)
+  {
+      M_ReadFile(filename, &demobuffer);
+      demolength = M_FileLength(filename);
+      demo_p = demobuffer;
+      I_Printf(VB_INFO, "G_DoPlayDemo: %s", filename);
+  }
+  else
+  {
+      char lumpname[9] = {0};
+      W_ExtractFileBase(defdemoname, lumpname);           // killough
+      int lumpnum = W_GetNumForName(lumpname);
+      demolength = W_LumpLength(lumpnum);
+      demobuffer = demo_p = W_CacheLumpNum(lumpnum, PU_STATIC);  // killough
+      I_Printf(VB_INFO, "G_DoPlayDemo: %s (%s)", lumpname, W_WadNameForLump(lumpnum));
+  }
 
   // [FG] ignore too short demo lumps
-  if (lumplength < 0xd)
+  if (demolength < 0xd)
   {
-    I_Printf(VB_WARNING, "G_DoPlayDemo: Short demo lump %s.", basename);
+    I_Printf(VB_WARNING, "G_DoPlayDemo: Short demo lump %s.", defdemoname);
     InvalidDemo();
     return;
   }
@@ -2588,7 +2356,7 @@ static void G_DoPlayDemo(void)
 
   gameaction = ga_nothing;
 
-  maxdemosize = lumplength;
+  maxdemosize = demolength;
 
   // [crispy] demo progress bar
   {
@@ -2604,15 +2372,12 @@ static void G_DoPlayDemo(void)
         ++playerscount;
     }
 
-    while (*demo_ptr != DEMOMARKER && (demo_ptr - demobuffer) < lumplength)
+    while (*demo_ptr != DEMOMARKER && (demo_ptr - demobuffer) < demolength)
     {
       demo_ptr += playerscount * (longtics ? 5 : 4);
       ++playback_totaltics;
     }
   }
-
-  // [FG] report compatibility mode
-  I_Printf(VB_INFO, "G_DoPlayDemo: %.8s (%s)", basename, W_WadNameForLump(lumpnum));
 
   D_UpdateCasualPlay(); // [Nugget]
 }
@@ -2716,17 +2481,17 @@ char* G_SaveGameName(int slot)
 // [Nugget] Restored `-cdrom` parm
 #ifdef _WIN32
   if (M_CheckParm("-cdrom"))
-    return M_StringJoin("c:\\doomdata\\", buf, NULL);
+    return M_StringJoin("c:\\doomdata\\", buf);
   else
 #endif
-  return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf, NULL);
+  return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
 }
 
 char* G_MBFSaveGameName(int slot)
 {
    char buf[16] = {0};
    sprintf(buf, "MBFSAV%d.dsg", 10*savepage+slot);
-   return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf, NULL);
+   return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
 }
 
 // killough 12/98:
@@ -5481,9 +5246,6 @@ void D_CheckNetPlaybackSkip(void);
 
 void G_DeferedPlayDemo(char* name)
 {
-  // [FG] avoid demo lump name collisions
-  W_DemoLumpNameCollision(&name);
-
   defdemoname = name;
   gameaction = ga_playdemo;
 
@@ -5507,7 +5269,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
 
   long pos = mem_ftell(stream);
 
-  tmp = M_StringJoin("-iwad \"", M_BaseName(wadfiles[0].name), "\"", NULL);
+  tmp = M_StringJoin("-iwad \"", M_BaseName(wadfiles[0].name), "\"");
   mem_fputs(tmp, stream);
   free(tmp);
 
@@ -5527,7 +5289,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
       has_files = true;
     }
 
-    tmp = M_StringJoin(" \"", basename, "\"", NULL);
+    tmp = M_StringJoin(" \"", basename, "\"");
     mem_fputs(tmp, stream);
     free(tmp);
   }
@@ -5537,7 +5299,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
     mem_fputs(" -deh", stream);
     for (i = 0; i < array_size(dehfiles); ++i)
     {
-      tmp = M_StringJoin(" \"", M_BaseName(dehfiles[i]), "\"", NULL);
+      tmp = M_StringJoin(" \"", M_BaseName(dehfiles[i]), "\"");
       mem_fputs(tmp, stream);
       free(tmp);
     }
@@ -5760,6 +5522,10 @@ void G_BindGameInputVariables(void)
     "Horizontal mouse sensitivity for strafing");
   BIND_NUM_GENERAL(mouse_sensitivity_y_look, 5, 0, UL,
     "Vertical mouse sensitivity for looking");
+  BIND_NUM_GENERAL(mouse_acceleration, 10, 0, 40,
+    "Mouse acceleration (0 = 1.0; 40 = 5.0)");
+  BIND_NUM(mouse_acceleration_threshold, 10, 0, 32,
+    "Mouse acceleration threshold");
   BIND_BOOL_GENERAL(mouse_y_invert, false, "Invert vertical mouse axis");
   BIND_BOOL_GENERAL(dclick_use, true, "Double-click acts as use-button");
   BIND_BOOL(novert, true, "Disable vertical mouse movement");
@@ -5768,8 +5534,12 @@ void G_BindGameInputVariables(void)
 
 void G_BindGameVariables(void)
 {
+  BIND_BOOL(raw_input, true,
+    "Raw gamepad/mouse input for turning/looking (0 = Interpolate; 1 = Raw)");
+  BIND_BOOL(fake_longtics, true,
+    "Fake high-resolution turning when using low-resolution turning");
+  BIND_BOOL(shorttics, false, "Always use low-resolution turning");
   BIND_NUM(quickstart_cache_tics, 0, 0, TICRATE, "Quickstart cache tics");
-  BIND_BOOL(shorttics, false, "Low-resolution turning");
 
   // [Nugget] Account for custom skill
   BIND_NUM_GENERAL(default_skill, 3, 1, 6,

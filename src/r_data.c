@@ -44,6 +44,7 @@
 #include "r_main.h"
 #include "r_sky.h"
 #include "r_state.h"
+#include "v_fmt.h"
 #include "v_video.h" // cr_dark, cr_shaded
 #include "w_wad.h"
 #include "z_zone.h"
@@ -235,7 +236,7 @@ static void R_GenerateComposite(int texnum)
 
   for (; --i >=0; patch++)
     {
-      patch_t *realpatch = W_CacheLumpNum(patch->patch, PU_CACHE);
+      patch_t *realpatch = V_CachePatchNum(patch->patch, PU_CACHE);
       int x, x1 = patch->originx, x2 = x1 + SHORT(realpatch->width);
       const int *cofs = realpatch->columnofs - x1;
 
@@ -351,7 +352,7 @@ static void R_GenerateLookup(int texnum, int *const errors)
   while (--i >= 0)
     {
       int pat = patch->patch;
-      const patch_t *realpatch = W_CacheLumpNum(pat, PU_CACHE);
+      const patch_t *realpatch = V_CachePatchNum(pat, PU_CACHE);
       int x, x1 = patch++->originx, x2 = x1 + SHORT(realpatch->width);
       const int *cofs = realpatch->columnofs - x1;
       
@@ -389,7 +390,7 @@ static void R_GenerateLookup(int texnum, int *const errors)
       for (i = texture->patchcount, patch = texture->patches; --i >= 0;)
 	{
 	  int pat = patch->patch;
-	  const patch_t *realpatch = W_CacheLumpNum(pat, PU_CACHE);
+	  const patch_t *realpatch = V_CachePatchNum(pat, PU_CACHE);
 	  int x, x1 = patch++->originx, x2 = x1 + SHORT(realpatch->width);
 	  const int *cofs = realpatch->columnofs - x1;
 	  
@@ -836,7 +837,7 @@ void R_InitSpriteLumps(void)
       if (!(i&127))            // killough
         I_PutChar(VB_INFO, '.');
 
-      patch = W_CacheLumpNum(firstspritelump+i, PU_CACHE);
+      patch = V_CachePatchNum(firstspritelump+i, PU_CACHE);
       spritewidth[i] = SHORT(patch->width)<<FRACBITS;
       spriteoffset[i] = SHORT(patch->leftoffset)<<FRACBITS;
       spritetopoffset[i] = SHORT(patch->topoffset)<<FRACBITS;
@@ -946,7 +947,7 @@ void R_InitTranMap(int progress)
   else
     {   // Compose a default transparent filter map based on PLAYPAL.
       unsigned char *playpal = W_CacheLumpName("PLAYPAL", PU_STATIC);
-      char *fname = M_StringJoin(D_DoomPrefDir(), DIR_SEPARATOR_S, "tranmap.dat", NULL);
+      char *fname = M_StringJoin(D_DoomPrefDir(), DIR_SEPARATOR_S, "tranmap.dat");
       struct {
         unsigned char pct;
         unsigned char playpal[256*3]; // [FG] a palette has 256 colors saved as byte triples
@@ -1242,7 +1243,7 @@ void R_PrecacheLevel(void)
 
   for (i = numflats; --i >= 0; )
     if (hitlist[i])
-      W_CacheLumpNum(firstflat + i, PU_CACHE);
+      V_CacheFlatNum(firstflat + i, PU_CACHE);
 
   // Precache textures.
 
@@ -1268,7 +1269,7 @@ void R_PrecacheLevel(void)
         texture_t *texture = textures[i];
         int j = texture->patchcount;
         while (--j >= 0)
-          W_CacheLumpNum(texture->patches[j].patch, PU_CACHE);
+          V_CachePatchNum(texture->patches[j].patch, PU_CACHE);
       }
 
   // Precache sprites.
@@ -1290,7 +1291,7 @@ void R_PrecacheLevel(void)
             short *sflump = sprites[i].spriteframes[j].lump;
             int k = 7;
             do
-              W_CacheLumpNum(firstspritelump + sflump[k], PU_CACHE);
+              V_CachePatchNum(firstspritelump + sflump[k], PU_CACHE);
             while (--k >= 0);
           }
       }
@@ -1302,7 +1303,6 @@ void R_PrecacheLevel(void)
 
 boolean R_IsPatchLump (const int lump)
 {
-  int size;
   int width, height;
   const patch_t *patch;
   boolean result;
@@ -1311,22 +1311,12 @@ boolean R_IsPatchLump (const int lump)
   if (lump < 0)
     return false;
 
-  size = W_LumpLength(lump);
-
-  // minimum length of a valid Doom patch
-  if (size < 13)
-    return false;
-
-  patch = (const patch_t *)W_CacheLumpNum(lump, PU_CACHE);
-
-  // [FG] detect patches in PNG format early
-  if (!memcmp(patch, "\211PNG\r\n\032\n", 8))
-    return false;
+  patch = V_CachePatchNum(lump, PU_CACHE);
 
   width = SHORT(patch->width);
   height = SHORT(patch->height);
 
-  result = (height > 0 && height <= 16384 && width > 0 && width <= 16384 && width < size / 4);
+  result = (height > 0 && height <= 16384 && width > 0 && width <= 16384);
 
   if (result)
   {
@@ -1341,7 +1331,7 @@ boolean R_IsPatchLump (const int lump)
       unsigned int ofs = LONG(patch->columnofs[x]);
 
       // Need one byte for an empty column (but there's patches that don't know that!)
-      if (ofs < (unsigned int)width * 4 + 8 || ofs >= (unsigned int)size)
+      if (ofs < (unsigned int)width * 4 + 8)
       {
         result = false;
         break;

@@ -30,6 +30,7 @@
 #include "doomdata.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "g_input.h"
 #include "i_video.h"
 #include "p_mobj.h"
 #include "p_pspr.h"
@@ -80,7 +81,6 @@ fixed_t  skyiscale,
 fixed_t  viewx, viewy, viewz;
 angle_t  viewangle;
 localview_t localview;
-double deltatics;
 boolean raw_input;
 fixed_t  viewcos, viewsin;
 player_t *viewplayer;
@@ -1053,26 +1053,6 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
   return &subsectors[nodenum & ~NF_SUBSECTOR];
 }
 
-static inline boolean CheckLocalView(const player_t *player)
-{
-  return (
-    // Don't use localview when interpolation is preferred.
-    raw_input &&
-    // Don't use localview if the player is spying.
-    (player == &players[consoleplayer]
-     // [Nugget] Freecam: or locked onto a mobj, or not controlling the camera
-     || (freecam_on && !(freecam.mobj || freecam_mode != FREECAM_CAM))) &&
-    // Don't use localview if the player is dead.
-    player->playerstate != PST_DEAD &&
-    // Don't use localview if the player just teleported.
-    !player->mo->reactiontime &&
-    // Don't use localview if a demo is playing.
-    !demoplayback &&
-    // Don't use localview during a netgame (single-player or solo-net only).
-    (!netgame || solonet)
-  );
-}
-
 //
 // R_SetupFrame
 //
@@ -1081,6 +1061,7 @@ void R_SetupFrame (player_t *player)
 {
   int i, cm;
   fixed_t pitch;
+  const boolean use_localview = G_UseLocalView(player);
 
   // [Nugget]
   fixed_t playerz, basepitch;
@@ -1141,10 +1122,6 @@ void R_SetupFrame (player_t *player)
       (leveltime > oldleveltime
        || (freecam_on && !freecam.mobj && gamestate == GS_LEVEL))) // [Nugget] Freecam
   {
-    // Use localview unless the player or game is in an invalid state, in which
-    // case fall back to interpolation.
-    const boolean use_localview = CheckLocalView(player);
-
     // Interpolate player camera from their old position to their current one.
     viewx = LerpFixed(player->mo->oldx, player->mo->x);
     viewy = LerpFixed(player->mo->oldy, player->mo->y);
@@ -1154,8 +1131,7 @@ void R_SetupFrame (player_t *player)
 
     if (use_localview)
     {
-      viewangle = (player->mo->angle + localview.angle - localview.ticangle +
-                   LerpAngle(localview.oldticangle, localview.ticangle));
+      viewangle = G_CalcViewAngle(player);
     }
     else
     {
@@ -1193,6 +1169,11 @@ void R_SetupFrame (player_t *player)
     // [Nugget]
     playerz = player->mo->z;
     pitch += player->flinch; // Flinching
+
+    if (use_localview)
+    {
+      viewangle += localview.angle;
+    }
   }
 
   // [Nugget] /===============================================================
@@ -1608,7 +1589,7 @@ void R_RenderPlayerView (player_t* player)
   // The head node is the last node output.
   R_RenderBSPNode (numnodes-1);
 
-  VX_NearbySprites ();
+  R_NearbySprites ();
 
   // [FG] update automap while playing
   if (automap_on)
@@ -1708,8 +1689,8 @@ void R_BindRenderVariables(void)
   M_BindBool("fuzzdark_mode", &fuzzdark_mode, NULL, false, ss_enem, wad_no,
              "Selective fuzz darkening");
 
-  BIND_BOOL(raw_input, true,
-    "Raw gamepad/mouse input for turning/looking (0 = Interpolate; 1 = Raw)");
+  BIND_BOOL(draw_nearby_sprites, true,
+    "Draw sprites overlapping into visible sectors");
 
   // [Nugget] ----------------------------------------------------------------
 

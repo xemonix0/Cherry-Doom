@@ -28,17 +28,30 @@
 #include "m_misc.h"
 
 static const iwad_t iwads[] = {
-    {"doom2.wad",     doom2,         commercial,   "Doom II"                        },
-    {"plutonia.wad",  pack_plut,     commercial,   "Final Doom: Plutonia Experiment"},
-    {"tnt.wad",       pack_tnt,      commercial,   "Final Doom: TNT: Evilution"     },
+    {"doom2.wad",     doom2,      commercial,   "DOOM II: Hell on Earth"         },
+    {"plutonia.wad",  pack_plut,  commercial,   "Final DOOM: Plutonia Experiment"},
+    {"tnt.wad",       pack_tnt,   commercial,   "Final DOOM: TNT - Evilution"    },
     // "doom.wad" may be retail or registered
-    {"doom.wad",      doom,          indetermined, "Doom"                           },
-    {"doom1.wad",     doom,          indetermined, "Doom Shareware"                 },
-    {"doom2f.wad",    doom2,         commercial,   "Doom II: L'Enfer sur Terre"     },
-    {"chex.wad",      pack_chex,     retail,       "Chex Quest"                     },
-    {"hacx.wad",      pack_hacx,     commercial,   "Hacx"                           },
-    {"rekkrsa.wad",   pack_rekkr,    retail,       "REKKR"                          },
-    {"rekkrsl.wad",   pack_rekkr,    retail,       "REKKR: Sunken Land"             },
+    {"doom.wad",      doom,       indetermined, "DOOM"                           },
+    {"doom.wad",      doom,       registered,   "DOOM Registered"                },
+    {"doom.wad",      doom,       retail,       "The Ultimate DOOM"              },
+    {"doom1.wad",     doom,       shareware,    "DOOM Shareware"                 },
+    {"doom2f.wad",    doom2,      commercial,   "DOOM II: L'Enfer sur Terre"     },
+    {"freedoom2.wad", doom2,      commercial,   "Freedoom: Phase 2"              },
+    {"freedoom1.wad", doom,       retail,       "Freedoom: Phase 1"              },
+    {"freedm.wad",    doom2,      commercial,   "FreeDM"                         },
+    {"chex.wad",      pack_chex,  retail,       "Chex Quest"                     },
+    {"hacx.wad",      pack_hacx,  commercial,   "HACX: Twitch n' Kill"           },
+    {"rekkrsa.wad",   pack_rekkr, retail,       "REKKR"                          },
+    {"rekkrsl.wad",   pack_rekkr, retail,       "REKKR: Sunken Land"             },
+};
+
+static const char *const gamemode_str[] = {
+    "Shareware mode",
+    "Registered mode",
+    "Commercial mode",
+    "Retail mode",
+    "Unknown mode"
 };
 
 // "128 IWAD search directories should be enough for anybody".
@@ -356,7 +369,7 @@ static void CheckInstallRootPaths(void)
         for (j = 0; j < arrlen(root_path_subdirs); ++j)
         {
             subpath = M_StringJoin(install_path, DIR_SEPARATOR_S,
-                                   root_path_subdirs[j], NULL);
+                                   root_path_subdirs[j]);
             AddIWADDir(subpath);
         }
 
@@ -382,7 +395,7 @@ static void CheckSteamEdition(void)
     for (i = 0; i < arrlen(steam_install_subdirs); ++i)
     {
         subpath = M_StringJoin(install_path, DIR_SEPARATOR_S,
-                               steam_install_subdirs[i], NULL);
+                               steam_install_subdirs[i]);
 
         AddIWADDir(subpath);
     }
@@ -438,7 +451,7 @@ static void AddIWADPath(const char *path, const char *suffix)
             // as another iwad dir
             *p = '\0';
 
-            AddIWADDir(M_StringJoin(left, suffix, NULL));
+            AddIWADDir(M_StringJoin(left, suffix));
             left = p + 1;
         }
         else
@@ -447,7 +460,7 @@ static void AddIWADPath(const char *path, const char *suffix)
         }
     }
 
-    AddIWADDir(M_StringJoin(left, suffix, NULL));
+    AddIWADDir(M_StringJoin(left, suffix));
 
     free(dup_path);
 }
@@ -478,14 +491,14 @@ static void AddXdgDirs(void)
             homedir = "/";
         }
 
-        tmp_env = M_StringJoin(homedir, "/.local/share", NULL);
+        tmp_env = M_StringJoin(homedir, "/.local/share");
         env = tmp_env;
     }
 
     // We support $XDG_DATA_HOME/games/doom (which will usually be
     // ~/.local/share/games/doom) as a user-writeable extension to
     // the usual /usr/share/games/doom location.
-    AddIWADDir(M_StringJoin(env, "/games/doom", NULL));
+    AddIWADDir(M_StringJoin(env, "/games/doom"));
     free(tmp_env);
 
     // Quote:
@@ -529,7 +542,7 @@ static void AddSteamDirs(void)
     {
         homedir = "/";
     }
-    steampath = M_StringJoin(homedir, "/.steam/root/steamapps/common", NULL);
+    steampath = M_StringJoin(homedir, "/.steam/root/steamapps/common");
 
     AddIWADPath(steampath, "/Doom 2/base");
     AddIWADPath(steampath, "/Master Levels of Doom/doom2");
@@ -645,7 +658,7 @@ char *D_FindWADByName(const char *name)
 
         // Construct a string for the full path
 
-        path = M_StringJoin(iwad_dirs[i], DIR_SEPARATOR_S, name, NULL);
+        path = M_StringJoin(iwad_dirs[i], DIR_SEPARATOR_S, name);
 
         probe = M_FileCaseExists(path);
         if (probe != NULL)
@@ -661,21 +674,19 @@ char *D_FindWADByName(const char *name)
     return NULL;
 }
 
-static char *FindWithExtensions(const char *filename, ...)
+#define FindWithExtensions(filename, ...)                               \
+    FindWithExtensionsInternal(filename, (const char *[]){__VA_ARGS__}, \
+                               sizeof((const char *[]){__VA_ARGS__})    \
+                                   / sizeof(const char *))
+
+static char *FindWithExtensionsInternal(const char *filename,
+                                        const char *ext[], size_t n)
 {
     char *path = NULL;
-    va_list args;
 
-    va_start(args, filename);
-    while (true)
+    for (int i = 0; i < n; ++i)
     {
-        const char *arg = va_arg(args, const char *);
-        if (arg == NULL)
-        {
-            break;
-        }
-
-        char *s = M_StringJoin(filename, arg, NULL);
+        char *s = M_StringJoin(filename, ext[i]);
         path = D_FindWADByName(s);
         free(s);
         if (path != NULL)
@@ -683,7 +694,6 @@ static char *FindWithExtensions(const char *filename, ...)
             break;
         }
     }
-    va_end(args);
 
     return path;
 }
@@ -701,7 +711,7 @@ char *D_TryFindWADByName(const char *filename)
 
     if (!strrchr(M_BaseName(filename), '.'))
     {
-        result = FindWithExtensions(filename, ".wad", ".zip", ".lmp", NULL);
+        result = FindWithExtensions(filename, ".wad", ".zip", ".lmp");
     }
     else
     {
@@ -718,11 +728,23 @@ char *D_TryFindWADByName(const char *filename)
     }
 }
 
+char *D_FindLMPByName(const char *filename)
+{
+    if (!strrchr(M_BaseName(filename), '.'))
+    {
+        return FindWithExtensions(filename, ".lmp");
+    }
+    else
+    {
+        return D_FindWADByName(filename);
+    }
+}
+
 //
 // D_FindIWADFile
 //
 
-char *D_FindIWADFile(GameMode_t *mode, GameMission_t *mission)
+char *D_FindIWADFile(void)
 {
     char *result;
 
@@ -764,22 +786,6 @@ char *D_FindIWADFile(GameMode_t *mode, GameMission_t *mission)
         for (i = 0; result == NULL && i < arrlen(iwads); ++i)
         {
             result = D_FindWADByName(iwads[i].name);
-        }
-    }
-
-    if (result)
-    {
-        int i;
-        const char *name = M_BaseName(result);
-
-        for (i = 0; i < arrlen(iwads); ++i)
-        {
-            if (!strcasecmp(name, iwads[i].name))
-            {
-                *mode = iwads[i].mode;
-                *mission = iwads[i].mission;
-                break;
-            }
         }
     }
 
@@ -842,4 +848,32 @@ GameMission_t D_GetGameMissionByIWADName(const char *name)
     }
 
     return none;
+}
+
+void D_GetModeAndMissionByIWADName(const char *name, GameMode_t *mode,
+                                   GameMission_t *mission)
+{
+    for (int i = 0; i < arrlen(iwads); ++i)
+    {
+        if (!strcasecmp(name, iwads[i].name))
+        {
+            *mode = iwads[i].mode;
+            *mission = iwads[i].mission;
+            break;
+        }
+    }
+}
+
+const char *D_GetIWADDescription(const char *name, GameMode_t mode,
+                                 GameMission_t mission)
+{
+    for (int i = 0; i < arrlen(iwads); ++i)
+    {
+        if (!strcasecmp(name, iwads[i].name) && mode == iwads[i].mode
+            && mission == iwads[i].mission)
+        {
+            return iwads[i].description;
+        }
+    }
+    return gamemode_str[mode];
 }

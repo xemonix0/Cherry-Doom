@@ -37,7 +37,6 @@
 #include "hu_stuff.h"
 #include "i_gamepad.h"
 #include "i_printf.h"
-#include "i_input.h"
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -130,7 +129,6 @@ void M_InitConfig(void)
     G_BindGameVariables();
 
     G_BindGameInputVariables();
-    I_BindInputVariables();
     I_BindGamepadVariables();
     M_BindInputVariables();
 
@@ -222,7 +220,7 @@ void M_SaveDefaults(void)
     }
 
     tmpfile = M_StringJoin(D_DoomPrefDir(), DIR_SEPARATOR_S, "tmp",
-                           D_DoomExeName(), ".cfg", NULL);
+                           D_DoomExeName(), ".cfg");
 
     errno = 0;
     if (!(f = M_fopen(tmpfile, "w"))) // killough 9/21/98
@@ -611,7 +609,8 @@ void M_LoadOptions(void)
 
     if (!M_CheckParm("-nooptions"))
     {
-        if ((lump = W_CheckNumForName("OPTIONS")) != -1)
+        lump = W_CheckNumForName("OPTIONS");
+        if (lump != -1)
         {
             int size = W_LumpLength(lump), buflen = 0;
             char *buf = NULL, *p,
@@ -625,7 +624,8 @@ void M_LoadOptions(void)
                 {
                     buf = I_Realloc(buf, buflen = len + 1);
                 }
-                strncpy(buf, p, len)[len] = 0;
+                strncpy(buf, p, len);
+                buf[len] = 0;
                 p += len;
                 size -= len;
                 M_ParseOption(buf, true);
@@ -636,7 +636,6 @@ void M_LoadOptions(void)
     }
 
     MN_Trans();     // reset translucency in case of change
-    MN_ResetMenu(); // reset menu in case of change
 }
 
 //
@@ -716,22 +715,17 @@ void M_LoadDefaults(void)
 
     defaults_loaded = true; // killough 10/98
 
-    // [FG] initialize logging verbosity early to decide
-    //      if the following lines will get printed or not
-
-    I_InitPrintf();
-
     I_Printf(VB_INFO, "M_LoadDefaults: Load system defaults.");
 
     if (f)
     {
-        I_Printf(VB_INFO, " default file: %s\n", defaultfile);
+        I_Printf(VB_INFO, " default file: %s", defaultfile);
         fclose(f);
     }
     else
     {
         I_Printf(VB_WARNING,
-                 " Warning: Cannot read %s -- using built-in defaults\n",
+                 " Warning: Cannot read %s -- using built-in defaults",
                  defaultfile);
     }
 }

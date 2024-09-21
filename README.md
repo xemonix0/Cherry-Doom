@@ -196,6 +196,10 @@ Files: `src/wad_stats.*`
 Copyright: © 2021-2023 Ryan Krafnick.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
+Files: `base/all-all/sprites/tnt1b0.png`  
+Copyright: © 2023 Korp.  
+License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
 Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
 Copyright: © 2018 Alex Mayfield.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
@@ -205,6 +209,10 @@ Copyright:
  © 2010-2014 Rich Geldreich and Tenacious Software LLC;  
  © 2013-2014 RAD Game Tools and Valve Software.  
 License: [MIT](https://opensource.org/licenses/MIT)
+
+Files: `spng/*`  
+Copyright: © 2018-2023 Randy.  
+License: [BSD-2-Clause](https://opensource.org/license/bsd-2-clause)
 
 Files: `opl/*`  
 Copyright:  

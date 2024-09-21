@@ -31,10 +31,6 @@ extern const char *savegame_dir;
 extern const char *screenshot_dir;
 extern boolean fail_safe;
 
-extern wadfile_info_t* wadfiles;       // killough 11/98
-
-extern char **tempdirs;
-
 void D_AddFile(const char *file, wad_source_t source);
 
 char *D_DoomExeName(void);      // killough 10/98: executable's name
@@ -56,7 +52,7 @@ boolean D_CheckEndDoom(void);
 // Called by IO functions when input is detected.
 void D_PostEvent(struct event_s *ev);
 
-void D_UpdateDeltaTics(void);
+extern boolean input_ready;
 
 void D_BindMiscVariables(void);
 

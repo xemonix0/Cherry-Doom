@@ -48,6 +48,7 @@
 #include "st_lib.h"
 #include "st_stuff.h"
 #include "tables.h"
+#include "v_fmt.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "z_zone.h"
@@ -375,7 +376,7 @@ void ST_refreshBackground(void)
             // in widescreen mode
             const char *name = (gamemode == commercial) ? "GRNROCK" : "FLOOR7_2";
 
-            const byte *src = W_CacheLumpNum(firstflat + R_FlatNumForName(name), PU_CACHE);
+            const byte *src = V_CacheFlatNum(firstflat + R_FlatNumForName(name), PU_CACHE);
 
             V_TileBlock64(SCREENHEIGHT - ST_HEIGHT, video.unscaledw, ST_HEIGHT, src);
 
@@ -383,12 +384,12 @@ void ST_refreshBackground(void)
             if (scaledviewwidth == video.unscaledw)
             {
                 int x;
-                patch_t *patch = W_CacheLumpName("brdr_b", PU_CACHE);
+                patch_t *patch = V_CachePatchName("brdr_b", PU_CACHE);
 
                 for (x = 0; x < video.deltaw; x += 8)
                 {
                     V_DrawPatch(x - video.deltaw, 0, patch);
-                    V_DrawPatch(SCREENWIDTH + video.deltaw - x - 8, 0, patch);
+                    V_DrawPatch(video.unscaledw - video.deltaw - x - 8, 0, patch);
                 }
             }
         }
@@ -1045,7 +1046,7 @@ void ST_drawWidgets(void)
       {
         NughudDrawPatch(
           &nughud.patches[i],
-          W_CacheLumpNum(nughud_patchlump[i], PU_STATIC),
+          V_CachePatchNum(nughud_patchlump[i], PU_STATIC),
           !nughud.patch_offsets
         );
       }
@@ -1067,7 +1068,7 @@ void ST_drawWidgets(void)
       {
         NughudDrawPatch(
           &nughud.patches[i],
-          W_CacheLumpNum(nughud_patchlump[i], PU_STATIC),
+          V_CachePatchNum(nughud_patchlump[i], PU_STATIC),
           !nughud.patch_offsets
         );
       }
@@ -1450,24 +1451,24 @@ void ST_loadGraphics(void)
   for (i=0;i<10;i++)
     {
       M_snprintf(namebuf, sizeof(namebuf), "STTNUM%d", i);
-      tallnum[i] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
+      tallnum[i] = V_CachePatchName(namebuf, PU_STATIC);
       M_snprintf(namebuf, sizeof(namebuf), "STYSNUM%d", i);
-      shortnum[i] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
+      shortnum[i] = V_CachePatchName(namebuf, PU_STATIC);
     }
 
   // Load percent key.
   //Note: why not load STMINUS here, too?
-  tallpercent = (patch_t *) W_CacheLumpName("STTPRCNT", PU_STATIC);
+  tallpercent = V_CachePatchName("STTPRCNT", PU_STATIC);
 
   // key cards
   for (i=0;i<NUMCARDS+3;i++)  //jff 2/23/98 show both keys too
     {
       M_snprintf(namebuf, sizeof(namebuf), "STKEYS%d", i);
-      keys[i] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
+      keys[i] = V_CachePatchName(namebuf, PU_STATIC);
     }
 
   // arms background
-  armsbg = (patch_t *) W_CacheLumpName("STARMS", PU_STATIC);
+  armsbg = V_CachePatchName("STARMS", PU_STATIC);
 
   // arms ownership widgets
   for (i=0;i<6+3;i++) // [Nugget] Load all 9 numbers
@@ -1475,7 +1476,7 @@ void ST_loadGraphics(void)
       M_snprintf(namebuf, sizeof(namebuf), "STGNUM%d", i+1);
 
       // gray #
-      arms[i][0] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
+      arms[i][0] = V_CachePatchName(namebuf, PU_STATIC);
 
       // yellow #
       arms[i][1] = shortnum[i+1];
@@ -1487,19 +1488,19 @@ void ST_loadGraphics(void)
   for (i=0; i<MAXPLAYERS; i++)
     {
       M_snprintf(namebuf, sizeof(namebuf), "STFB%d", i);
-      faceback[i] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
+      faceback[i] = V_CachePatchName(namebuf, PU_STATIC);
     }
 
   // status bar background bits
   if (W_CheckNumForName("STBAR") >= 0)
   {
-    sbar  = (patch_t *) W_CacheLumpName("STBAR", PU_STATIC);
+    sbar  = V_CachePatchName("STBAR", PU_STATIC);
     sbarr = NULL;
   }
   else
   {
-    sbar  = (patch_t *) W_CacheLumpName("STMBARL", PU_STATIC);
-    sbarr = (patch_t *) W_CacheLumpName("STMBARR", PU_STATIC);
+    sbar  = V_CachePatchName("STMBARL", PU_STATIC);
+    sbarr = V_CachePatchName("STMBARR", PU_STATIC);
   }
 
   // face states
@@ -1510,21 +1511,21 @@ void ST_loadGraphics(void)
       for (j=0;j<ST_NUMSTRAIGHTFACES;j++)
         {
           M_snprintf(namebuf, sizeof(namebuf), "STFST%d%d", i, j);
-          faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
+          faces[facenum++] = V_CachePatchName(namebuf, PU_STATIC);
         }
       M_snprintf(namebuf, sizeof(namebuf), "STFTR%d0", i);        // turn right
-      faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
+      faces[facenum++] = V_CachePatchName(namebuf, PU_STATIC);
       M_snprintf(namebuf, sizeof(namebuf), "STFTL%d0", i);        // turn left
-      faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
+      faces[facenum++] = V_CachePatchName(namebuf, PU_STATIC);
       M_snprintf(namebuf, sizeof(namebuf), "STFOUCH%d", i);       // ouch!
-      faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
+      faces[facenum++] = V_CachePatchName(namebuf, PU_STATIC);
       M_snprintf(namebuf, sizeof(namebuf), "STFEVL%d", i);        // evil grin ;)
-      faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
+      faces[facenum++] = V_CachePatchName(namebuf, PU_STATIC);
       M_snprintf(namebuf, sizeof(namebuf), "STFKILL%d", i);       // pissed off
-      faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
+      faces[facenum++] = V_CachePatchName(namebuf, PU_STATIC);
     }
-  faces[facenum++] = W_CacheLumpName("STFGOD0", PU_STATIC);
-  faces[facenum++] = W_CacheLumpName("STFDEAD0", PU_STATIC);
+  faces[facenum++] = V_CachePatchName("STFGOD0", PU_STATIC);
+  faces[facenum++] = V_CachePatchName("STFDEAD0", PU_STATIC);
 
   // [FG] support face gib animations as in the 3DO/Jaguar/PSX ports
   for (i = 0; i < ST_NUMXDTHFACES; i++)
@@ -1532,7 +1533,7 @@ void ST_loadGraphics(void)
     M_snprintf(namebuf, sizeof(namebuf), "STFXDTH%d", i);
 
     if (W_CheckNumForName(namebuf) != -1)
-      faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
+      faces[facenum++] = V_CachePatchName(namebuf, PU_STATIC);
     else
       break;
   }
@@ -1544,7 +1545,7 @@ void ST_loadGraphics(void)
     // Find Status Bar Berserk patch
     if ((lump = (W_CheckNumForName)("STBERSRK", ns_global)) >= 0)
     {
-      stbersrk = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      stbersrk = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else {
       stbersrk = NULL;
@@ -1557,7 +1558,7 @@ void ST_loadGraphics(void)
     // Find Status Bar Infinity patch
     if ((lump = (W_CheckNumForName)("STINFNTY", ns_global)) >= 0)
     {
-      stinfnty = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      stinfnty = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { stinfnty = NULL; }
 
@@ -1584,7 +1585,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhtnum[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhtnum[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhtnum[0] = NULL;
@@ -1595,14 +1596,14 @@ void ST_loadGraphics(void)
     // Load NHTMINUS
     if (nhtnum[0] && (lump = (W_CheckNumForName)("NHTMINUS", ns_global)) >= 0)
     {
-      nhtminus = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      nhtminus = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhtnum[0] = nhtminus = NULL; }
 
     // Load NHTPRCNT
     if (nhtnum[0] && (lump = (W_CheckNumForName)("NHTPRCNT", ns_global)) >= 0)
     {
-      nhtprcnt = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      nhtprcnt = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhtnum[0] = nhtminus = nhtprcnt = NULL; }
 
@@ -1615,7 +1616,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhrnum[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhrnum[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhrnum[0] = NULL;
@@ -1626,7 +1627,7 @@ void ST_loadGraphics(void)
     // Load NHRMINUS
     if (nhrnum[0] && (lump = (W_CheckNumForName)("NHRMINUS", ns_global)) >= 0)
     {
-      nhrminus = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      nhrminus = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhrnum[0] = nhrminus = NULL; }
 
@@ -1639,7 +1640,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhamnum[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhamnum[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhamnum[0] = NULL;
@@ -1656,7 +1657,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhwpnum[i][0] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhwpnum[i][0] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhwpnum[0][0] = NULL;
@@ -1668,7 +1669,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhwpnum[i][1] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhwpnum[i][1] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhwpnum[0][0] = NULL;
@@ -1685,7 +1686,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhkeys[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhkeys[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhkeys[0] = NULL;
@@ -1698,7 +1699,7 @@ void ST_loadGraphics(void)
     // Load NHBERSRK
     if ((lump = (W_CheckNumForName)("NHBERSRK", ns_global)) >= 0)
     {
-      nhbersrk = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      nhbersrk = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhbersrk = NULL; }
 
@@ -1711,7 +1712,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhammo[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhammo[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhammo[0] = NULL;
@@ -1728,7 +1729,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhambar[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhambar[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else if (!i) { break; }
     }
@@ -1742,7 +1743,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhealth[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhealth[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nhealth[0] = NULL;
@@ -1759,7 +1760,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nhhlbar[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nhhlbar[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else if (!i) { break; }
     }
@@ -1773,7 +1774,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nharmor[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nharmor[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else {
         nharmor[0] = NULL;
@@ -1790,7 +1791,7 @@ void ST_loadGraphics(void)
 
       if ((lump = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
       {
-        nharbar[i] = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+        nharbar[i] = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
       }
       else if (!i) { break; }
     }
@@ -1800,7 +1801,7 @@ void ST_loadGraphics(void)
     // Load NHINFNTY
     if ((lump = (W_CheckNumForName)("NHINFNTY", ns_global)) >= 0)
     {
-      nhinfnty = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+      nhinfnty = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhinfnty = NULL; }
   }
@@ -2144,7 +2145,7 @@ void ST_InitRes(void)
 void ST_Warnings(void)
 {
   int i;
-  patch_t *const patch = W_CacheLumpName("brdr_b", PU_CACHE);
+  patch_t *const patch = V_CachePatchName("brdr_b", PU_CACHE);
 
   if (patch && SHORT(patch->height) > ST_HEIGHT)
   {

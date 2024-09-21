@@ -51,7 +51,6 @@ The following example represents the current default alignments of the Boom HUD 
 
 ```
 hud 0
-title bottomleft
 rate topleft
 monsec topleft
 sttime topleft
@@ -62,7 +61,6 @@ fps topright
 cmd bottomright
 
 hud 1
-title bottomleft
 rate topleft
 armor bottomleft
 health bottomleft
@@ -78,7 +76,6 @@ fps topright
 cmd bottomright
 
 hud 2
-title bottomleft
 rate topleft
 health topright
 armor topright
@@ -98,7 +95,6 @@ An alternative approach to the distributed HUD, using absolute screen coordinate
 
 ```
 hud 2
-title 0 -40
 health 224 0
 armor 224 8
 ammo 200 -8

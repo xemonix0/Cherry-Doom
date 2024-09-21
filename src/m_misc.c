@@ -17,7 +17,6 @@
 //      [FG] miscellaneous helper functions from Chocolate Doom.
 //
 
-#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +50,30 @@ boolean M_FileExists(const char *filename)
     }
 }
 
+boolean M_DirExists(const char *path)
+{
+    struct stat st;
+
+    if (M_stat(path, &st) == 0 && S_ISDIR(st.st_mode))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+int M_FileLength(const char *path)
+{
+    struct stat st;
+
+    if (M_stat(path, &st) == -1)
+    {
+        I_Error("M_FileLength: stat error %s", strerror(errno));
+    }
+
+    return st.st_size;
+}
+
 // Returns the path to a temporary file of the given name, stored
 // inside the system temporary directory.
 //
@@ -76,7 +99,7 @@ char *M_TempFile(const char *s)
     tempdir = "/tmp";
 #endif
 
-    return M_StringJoin(tempdir, DIR_SEPARATOR_S, s, NULL);
+    return M_StringJoin(tempdir, DIR_SEPARATOR_S, s);
 }
 
 // Check if a file exists by probing for common case variation of its filename.
@@ -420,50 +443,33 @@ boolean M_StringCaseEndsWith(const char *s, const char *suffix)
 // Return a newly-malloced string with all the strings given as arguments
 // concatenated together.
 
-char *M_StringJoin(const char *s, ...)
+char *M_StringJoinInternal(const char *s[], size_t n)
 {
-    char *result;
-    const char *v;
-    va_list args;
-    size_t result_len;
+    int length = 1;
 
-    result_len = strlen(s) + 1;
-
-    va_start(args, s);
-    for (;;)
+    for (int i = 0; i < n; ++i)
     {
-        v = va_arg(args, const char *);
-        if (v == NULL)
+        if (s[i] == NULL)
         {
-            break;
+            I_Error("M_StringJoin: %d argument is NULL", i);
         }
 
-        result_len += strlen(v);
+        length += strlen(s[i]);
     }
-    va_end(args);
 
-    result = malloc(result_len);
+    char *result = malloc(length);
 
     if (result == NULL)
     {
-        I_Error("M_StringJoin: Failed to allocate new string.");
-        return NULL;
+        I_Error("M_StringJoin: Failed to allocate new string");
     }
 
-    M_StringCopy(result, s, result_len);
+    M_StringCopy(result, s[0], length);
 
-    va_start(args, s);
-    for (;;)
+    for (int i = 1; i < n; ++i)
     {
-        v = va_arg(args, const char *);
-        if (v == NULL)
-        {
-            break;
-        }
-
-        M_StringConcat(result, v, result_len);
+        M_StringConcat(result, s[i], length);
     }
-    va_end(args);
 
     return result;
 }
