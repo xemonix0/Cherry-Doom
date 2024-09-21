@@ -24,7 +24,7 @@
 #include "d_player.h"
 #include "doomdef.h"
 #include "doomstat.h"
-#include "hu_stuff.h" // [Alaux] Lock crosshair on target
+#include "hu_crosshair.h" // [Alaux] Lock crosshair on target
 #include "i_printf.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -126,19 +126,12 @@ static int maxframe;
 
 void R_InitSpritesRes(void)
 {
-  if (xtoviewangle) Z_Free(xtoviewangle);
-  if (linearskyangle) Z_Free(linearskyangle);
-  if (negonearray) Z_Free(negonearray);
-  if (screenheightarray) Z_Free(screenheightarray);
+  xtoviewangle = Z_Calloc(1, (video.width + 1) * sizeof(*xtoviewangle), PU_RENDERER, NULL);
+  linearskyangle = Z_Calloc(1, (video.width + 1) * sizeof(*linearskyangle), PU_RENDERER, NULL);
+  negonearray = Z_Calloc(1, video.width * sizeof(*negonearray), PU_RENDERER, NULL);
+  screenheightarray = Z_Calloc(1, video.width * sizeof(*screenheightarray), PU_RENDERER, NULL);
 
-  xtoviewangle = Z_Calloc(1, (video.width + 1) * sizeof(*xtoviewangle), PU_STATIC, NULL);
-  linearskyangle = Z_Calloc(1, (video.width + 1) * sizeof(*linearskyangle), PU_STATIC, NULL);
-  negonearray = Z_Calloc(1, video.width * sizeof(*negonearray), PU_STATIC, NULL);
-  screenheightarray = Z_Calloc(1, video.width * sizeof(*screenheightarray), PU_STATIC, NULL);
-
-  if (clipbot) Z_Free(clipbot);
-
-  clipbot = Z_Calloc(1, 2 * video.width * sizeof(*clipbot), PU_STATIC, NULL);
+  clipbot = Z_Calloc(1, 2 * video.width * sizeof(*clipbot), PU_RENDERER, NULL);
   cliptop = clipbot + video.width;
 }
 
@@ -400,7 +393,7 @@ void R_DrawMaskedColumn(column_t *column)
       bottomscreen = topscreen + spryscale*column->length;
 
       // Here's where "sparkles" come in -- killough:
-      dc_yl = (int)((topscreen+FRACUNIT-1)>>FRACBITS); // [FG] 64-bit integer math
+      dc_yl = (int)((topscreen+FRACMASK)>>FRACBITS); // [FG] 64-bit integer math
       dc_yh = (int)((bottomscreen-1)>>FRACBITS); // [FG] 64-bit integer math
 
       if (dc_yh >= mfloorclip[dc_x])
@@ -582,15 +575,15 @@ static void R_ProjectSprite (mobj_t* thing)
   if (tz < MINZ || tz > MAXZ)
     return;
 
-  xscale = FixedDiv(projection, tz);
-
   gxt = -FixedMul(tr_x,viewsin);
   gyt = FixedMul(tr_y,viewcos);
   tx = -(gyt+gxt);
 
   // too far off the side?
-  if (abs(tx)>((int64_t) tz<<2))
+  if (abs(tx) / max_project_slope > tz)
     return;
+
+  xscale = FixedDiv(projection, tz);
 
     // decide which patch to use for sprite relative to player
   if ((unsigned) thing->sprite >= num_sprites)
@@ -609,6 +602,9 @@ static void R_ProjectSprite (mobj_t* thing)
       // choose a different rotation based on player view
       angle_t ang = R_PointToAngle(interpx, interpy);
       unsigned rot = (ang-interpangle+(unsigned)(ANG45/2)*9)>>29;
+
+      if (STRICTMODE(flip_levels)) { rot = (8 - rot) & 7; } // [Nugget] Flip levels
+
       lump = sprframe->lump[rot];
       flip = (boolean) sprframe->flip[rot];
     }
@@ -628,19 +624,21 @@ static void R_ProjectSprite (mobj_t* thing)
       flip = !flip;
     }
 
+  if (STRICTMODE(flip_levels)) { flip = !flip; } // [Nugget] Flip levels
+
   txc = tx; // [FG] sprite center coordinate
 
   // calculate edges of the shape
   // [crispy] fix sprite offsets for mirrored sprites
   tx -= flip ? spritewidth[lump] - spriteoffset[lump] : spriteoffset[lump];
-  x1 = (centerxfrac + FixedMul(tx,xscale)) >>FRACBITS;
+  x1 = (centerxfrac + FixedMul64(tx,xscale)) >>FRACBITS;
 
     // off the right side?
   if (x1 > viewwidth)
     return;
 
   tx +=  spritewidth[lump];
-  x2 = ((centerxfrac + FixedMul(tx,xscale)) >> FRACBITS) - 1;
+  x2 = ((centerxfrac + FixedMul64(tx,xscale)) >> FRACBITS) - 1;
 
     // off the left side
   if (x2 < 0)
@@ -724,7 +722,10 @@ static void R_ProjectSprite (mobj_t* thing)
       vis->colormap[0] = spritelights[index];
       vis->colormap[1] = fullcolormap;
     }
-  vis->brightmap = R_BrightmapForSprite(thing->sprite);
+
+  vis->brightmap = R_BrightmapForState(thing->state - states);
+  if (vis->brightmap == nobrightmap)
+    vis->brightmap = R_BrightmapForSprite(thing->sprite);
 
   // [Cherry] Translucent rocket trails
   vis->rocket_trail =
@@ -735,6 +736,8 @@ static void R_ProjectSprite (mobj_t* thing)
       // [Nugget]
       && (!(crosshair_target->flags & MF_SHADOW) || hud_crosshair_fuzzy))
   {
+    if (STRICTMODE(flip_levels)) { txc = -txc; } // [Nugget] Flip levels
+
     HU_UpdateCrosshairLock
     (
       BETWEEN(0, viewwidth  - 1, (centerxfrac + FixedMul(txc, xscale)) >> FRACBITS),
@@ -868,7 +871,10 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   // calculate edges of the shape
   tx = psp->sx2-160*FRACUNIT; // [FG] centered weapon sprite
-  tx += (STRICTMODE(weapon_inertia) ? psp->wix : 0); // [Nugget] Weapon inertia
+
+  // [Nugget] Weapon inertia | Flip levels
+  if (STRICTMODE(weapon_inertia))
+  { tx += flip_levels ? -psp->wix : psp->wix; }
 
   tx -= spriteoffset[lump];
   x1 = (centerxfrac + FixedMul (tx,pspritescale))>>FRACBITS;
@@ -1014,6 +1020,23 @@ void R_DrawPlayerSprites(void)
   // clip to screen bounds
   mfloorclip = screenheightarray;
   mceilingclip = negonearray;
+
+  // [Nugget] Flip levels
+  if (STRICTMODE(flip_levels))
+  {
+    for (int y = 0;  y < viewheight;  y++)
+    {
+      for (int x = 0;  x < viewwidth/2;  x++)
+      {
+        pixel_t *left = &I_VideoBuffer[(viewwindowy + y) * video.pitch + viewwindowx + x],
+                *right = left + viewwidth - 1 - x*2,
+                temp = *left;
+
+        *left = *right;
+        *right = temp;
+      }
+    }
+  }
 
   // display crosshair
   if (hud_crosshair_on) // [Nugget] Use crosshair toggle

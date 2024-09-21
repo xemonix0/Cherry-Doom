@@ -39,6 +39,7 @@
 #include "p_setup.h"
 #include "p_spec.h"
 #include "r_defs.h"
+#include "r_draw.h"
 #include "r_main.h"
 #include "r_state.h"
 #include "r_things.h"
@@ -289,9 +290,7 @@ static fixed_t  max_w;          // max_x-min_x,
 static fixed_t  max_h;          // max_y-min_y
 
 // based on player size
-static fixed_t  min_w;
-static fixed_t  min_h;
-
+static const fixed_t min_h = 2 * MAPPLAYERRADIUS; // const? never changed?
 
 static fixed_t  min_scale_mtof; // used to tell when to stop zooming out
 static fixed_t  max_scale_mtof; // used to tell when to stop zooming in
@@ -330,6 +329,19 @@ static void AM_rotate(int64_t *x, int64_t *y, angle_t a);
 static void AM_rotatePoint(mpoint_t *pt);
 static mpoint_t mapcenter;
 static angle_t mapangle;
+
+enum
+{
+  PAN_UP,
+  PAN_DOWN,
+  PAN_LEFT,
+  PAN_RIGHT,
+  ZOOM_IN,
+  ZOOM_OUT,
+  STATE_NUM
+};
+
+static int buttons_state[STATE_NUM] = { 0 };
 
 // [Nugget] /=================================================================
 
@@ -457,11 +469,25 @@ static void AM_addMark(void)
 //
 // Passed nothing, returns nothing
 //
+
+static void AM_setMinMaxScale(void)
+{
+  const fixed_t a = FixedDiv(f_w << FRACBITS, max_w);
+  const fixed_t b = FixedDiv(f_h << FRACBITS, max_h);
+
+  min_scale_mtof = (a < b) ? a : b;
+  max_scale_mtof = FixedDiv(f_h << FRACBITS, min_h);
+
+  if (scale_mtof > max_scale_mtof)
+    scale_mtof = max_scale_mtof;
+
+  if (scale_mtof < min_scale_mtof)
+    scale_mtof = min_scale_mtof;
+}
+
 static void AM_findMinMaxBoundaries(void)
 {
   int i;
-  fixed_t a;
-  fixed_t b;
 
   min_x = min_y =  INT_MAX;
   max_x = max_y = -INT_MAX;
@@ -483,14 +509,7 @@ static void AM_findMinMaxBoundaries(void)
   max_w = (max_x >>= FRACTOMAPBITS) - (min_x >>= FRACTOMAPBITS);
   max_h = (max_y >>= FRACTOMAPBITS) - (min_y >>= FRACTOMAPBITS);
 
-  min_w = 2*MAPPLAYERRADIUS; // const? never changed?
-  min_h = 2*MAPPLAYERRADIUS;
-
-  a = FixedDiv(f_w<<FRACBITS, max_w);
-  b = FixedDiv(f_h<<FRACBITS, max_h);
-
-  min_scale_mtof = a < b ? a : b;
-  max_scale_mtof = FixedDiv(f_h<<FRACBITS, 2*MAPPLAYERRADIUS);
+  AM_setMinMaxScale();
 }
 
 void AM_SetMapCenter(fixed_t x, fixed_t y)
@@ -561,7 +580,7 @@ static void AM_changeWindowLoc(void)
 //
 void AM_initVariables(void)
 {
-  static event_t st_notify = { ev_keyup, AM_MSGENTERED };
+  static event_t st_notify = {.type = ev_keyup, .data1.i = AM_MSGENTERED};
 
   m_paninc.x = m_paninc.y = 0;
   ftom_zoommul = FRACUNIT;
@@ -686,6 +705,9 @@ void AM_ResetScreenSize(void)
   {
     // Change the scaling multipliers
     scale_mtof = FixedDiv(f_w << FRACBITS, m_w);
+
+    AM_setMinMaxScale();
+
     scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
   }
 
@@ -739,7 +761,9 @@ static void AM_LevelInit(void)
 //
 void AM_Stop (void)
 {
-  static event_t st_notify = { 0, ev_keyup, AM_MSGEXITED };
+  static event_t st_notify = {.type = 0, .data1.i = ev_keyup, .data2.i = AM_MSGEXITED};
+
+  memset(buttons_state, 0, sizeof(buttons_state));
 
   AM_unloadPics();
 
@@ -821,19 +845,6 @@ static void AM_maxOutWindowScale(void)
   scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
   AM_activateNewScale();
 }
-
-enum
-{
-  PAN_UP,
-  PAN_DOWN,
-  PAN_LEFT,
-  PAN_RIGHT,
-  ZOOM_IN,
-  ZOOM_OUT,
-  STATE_NUM
-};
-
-static int buttons_state[STATE_NUM] = { 0 };
 
 // [Nugget]
 void AM_ChangeMode(automapmode_t mode)
@@ -980,7 +991,7 @@ boolean AM_Responder
         rc = false;
     else if (M_InputActivated(input_map_zoomout))
     {
-      if (ev->type == ev_mouseb_down && M_IsMouseWheel(ev->data1))
+      if (ev->type == ev_mouseb_down && M_IsMouseWheel(ev->data1.i))
       {
         mousewheelzoom = true;
         mtof_zoommul = m_zoomout_mouse;
@@ -991,7 +1002,7 @@ boolean AM_Responder
     }
     else if (M_InputActivated(input_map_zoomin))
     {
-      if (ev->type == ev_mouseb_down && M_IsMouseWheel(ev->data1))
+      if (ev->type == ev_mouseb_down && M_IsMouseWheel(ev->data1.i))
       {
         mousewheelzoom = true;
         mtof_zoommul = m_zoomin_mouse;
@@ -1004,7 +1015,6 @@ boolean AM_Responder
     {
       bigstate = 0;
       viewactive = true;
-      memset(buttons_state, 0, sizeof(buttons_state));
       AM_ChangeMode(AM_OFF);
     }
     else if (M_InputActivated(input_map_gobig))
@@ -1507,6 +1517,17 @@ static boolean AM_clipMline
 }
 #undef DOOUTCODE
 
+// [Nugget] Factored out
+static void PUTDOT(int xx, int yy, int cc)
+{
+  if (STRICTMODE(flip_levels)) { xx = f_x*2 + f_w - 1 - xx; } // [Nugget] Flip levels
+
+  // [Nugget] Minimap: take `f_x` and `f_y` into account
+  if ((f_x <= xx && xx < f_x+f_w) && (f_y <= yy && yy < f_y+f_h))
+    I_VideoBuffer[(yy) * video.pitch + (xx)] = (cc);
+}
+
+
 //
 // AM_drawFline()
 //
@@ -1543,10 +1564,7 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
   }
 #endif
 
-// [Nugget] Minimap: take `f_x` and `f_y` into account
-#define PUTDOT(xx,yy,cc)                                          \
-  if ((f_x <= xx && xx < f_x+f_w) && (f_y <= yy && yy < f_y+f_h)) \
-    I_VideoBuffer[(yy) * video.pitch + (xx)] = (cc)
+// [Nugget] Factored PUTDOT() out
 
   dx = fl->b.x - fl->a.x;
   ax = 2 * (dx<0 ? -dx : dx);
@@ -1600,6 +1618,8 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
 //
 static void AM_putWuDot(int x, int y, int color, int weight)
 {
+  if (STRICTMODE(flip_levels)) { x = f_x*2 + f_w - 1 - x; } // [Nugget] Flip levels
+
    byte *dest = &I_VideoBuffer[y * video.pitch + x];
    unsigned int *fg2rgb = Col2RGB8[weight];
    unsigned int *bg2rgb = Col2RGB8[64 - weight];
@@ -2073,14 +2093,17 @@ static void AM_drawWalls(void)
 
       if (!lines[i].backsector)
       {
+        if (mapcolor_exit && P_IsDeathExit(lines[i].frontsector))
+        {
+          array_push(lines_1S, ((am_line_t){l, keyed_door_flash ? mapcolor_grid : mapcolor_exit}));
+        }
         // [Nugget] Trigger lines
-        if (ddt_cheating && mapcolor_trig && IsTrigger(lines[i]))
+        else if (ddt_cheating && mapcolor_trig && IsTrigger(lines[i]))
         {
           array_push(lines_1S, ((am_line_t){l, mapcolor_trig}));
         }
-        else
         // jff 1/10/98 add new color for 1S secret sector boundary
-        if (mapcolor_secr && //jff 4/3/98 0 is disable
+        else if (mapcolor_secr && //jff 4/3/98 0 is disable
             (
              !map_secret_after &&
              P_IsSecret(lines[i].frontsector)
@@ -2137,6 +2160,13 @@ static void AM_drawWalls(void)
         {
           AM_drawMline(&l, mapcolor_clsd);      // non-secret closed door
         } //jff 1/6/98 show secret sector 2S lines
+        else if (mapcolor_exit &&
+            (P_IsDeathExit(lines[i].frontsector) ||
+             P_IsDeathExit(lines[i].backsector))
+        )
+        {
+          AM_drawMline(&l, keyed_door_flash ? mapcolor_grid : mapcolor_exit);
+        }
         else if
         (
             mapcolor_secr && //jff 2/16/98 fixed bug
@@ -2418,7 +2448,7 @@ static void AM_drawPlayers(void)
       color = mapcolor_plyr[their_color];   //jff 1/6/98 use default color
 
     // [crispy] interpolate other player arrows
-    if (uncapped && leveltime > oldleveltime)
+    if (uncapped && leveltime > oldleveltime && p->mo->interp)
     {
         pt.x = LerpFixed(p->mo->oldx, p->mo->x) >> FRACTOMAPBITS;
         pt.y = LerpFixed(p->mo->oldy, p->mo->y) >> FRACTOMAPBITS;
@@ -2477,7 +2507,7 @@ static void AM_drawThings
       // [Nugget] Moved player check below, since we want to draw its hitbox
 
       // [crispy] interpolate thing triangles movement
-      if (leveltime > oldleveltime)
+      if (uncapped && leveltime > oldleveltime && t->interp)
       {
         pt.x = LerpFixed(t->oldx, t->x) >> FRACTOMAPBITS;
         pt.y = LerpFixed(t->oldy, t->y) >> FRACTOMAPBITS;
@@ -2623,6 +2653,8 @@ static void AM_drawMarks(void)
 	fx = CXMTOF(pt.x);
 	fy = CYMTOF(pt.y);
 
+	if (STRICTMODE(flip_levels)) { fx = f_x*2 + f_w - 1 - fx; } // [Nugget] Flip levels
+
 	do
 	  {
 	    int d = j % 10;
@@ -2664,22 +2696,21 @@ static void AM_drawCrosshair(int color)
 
 // [Nugget] /-----------------------------------------------------------------
 
-static int automap_overlay_darkening;
-
 void AM_shadeScreen(void)
 {
   // Minimap
   if (automapactive == AM_MINI)
   {
-    int x, y, pixel;
-
-    for (x = f_x;  x < f_x+f_w;  x++)
-      for (y = f_y;  y < f_y+f_h;  y++) {
-        pixel = y * video.pitch + x;
+    for (int x = f_x;  x < f_x+f_w;  x++)
+    {
+      for (int y = f_y;  y < f_y+f_h;  y++)
+      {
+        const int pixel = y * video.pitch + x;
         I_VideoBuffer[pixel] = colormaps[0][automap_overlay_darkening * 256 + I_VideoBuffer[pixel]];
       }
+    }
   }
-  else
+  else if (!MN_MenuIsShaded())
     V_ShadeScreen(automap_overlay_darkening); // [Nugget] Parameterized
 }
 
@@ -2722,15 +2753,14 @@ void AM_Drawer (void)
     }
   }
 
-  if (!automapoverlay)
+  if (automapoverlay == AM_OVERLAY_OFF)
   {
     AM_clearFB(mapcolor_back);       //jff 1/5/98 background default color
     if (automapactive == AM_FULL) // [Nugget] Minimap
       pspr_interp = false;
   }
   // [Alaux] Dark automap overlay
-  else if (automapoverlay == AM_OVERLAY_DARK && (!MN_MenuIsShaded()
-                                                 || automapactive == AM_MINI)) // [Nugget] Minimap
+  else if (automapoverlay == AM_OVERLAY_DARK)
     AM_shadeScreen();
 
   if (automap_grid)                  // killough 2/28/98: change var name
@@ -2809,8 +2839,8 @@ void AM_ColorPreset(void)
   if (mapcolor_preset == AM_PRESET_CRISPY)
   {
     byte *playpal = W_CacheLumpName("PLAYPAL", PU_CACHE);
-    mapcolor_secr = I_GetPaletteIndex(playpal, 255, 0, 255);
-    mapcolor_revsecr = I_GetPaletteIndex(playpal, 119, 255, 111);
+    mapcolor_secr = I_GetNearestColor(playpal, 255, 0, 255);
+    mapcolor_revsecr = I_GetNearestColor(playpal, 119, 255, 111);
   }
 }
 

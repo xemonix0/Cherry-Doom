@@ -31,7 +31,6 @@
 #include "hu_stuff.h"
 #include "info.h"
 #include "m_cheat.h"
-#include "m_input.h"
 #include "p_map.h"
 #include "p_mobj.h"
 #include "p_pspr.h"
@@ -39,10 +38,10 @@
 #include "p_user.h"
 #include "r_defs.h"
 #include "r_main.h"
-#include "r_state.h"
 #include "st_stuff.h"
 
 // [Nugget]
+#include "m_input.h"
 #include "s_sound.h"
 #include "sounds.h"
 
@@ -495,9 +494,9 @@ void P_MovePlayer (player_t* player)
         P_SetMobjState(mo,S_PLAY_RUN1);
     }
 
-  if (!menuactive && !demoplayback)
+  if (!menuactive && !demoplayback && !player->centering)
   {
-    player->pitch += cmd->pitch;
+    player->pitch += cmd->pitch << FRACBITS;
     player->pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, player->pitch);
     player->slope = PlayerSlope(player);
   }
@@ -506,6 +505,7 @@ void P_MovePlayer (player_t* player)
 #define ANG5 (ANG90/18)
 
 death_use_action_t death_use_action;
+boolean activate_death_use_reload;
 
 //
 // P_DeathThink
@@ -584,29 +584,21 @@ void P_DeathThink (player_t* player)
 
   if (player->cmd.buttons & BT_USE)
   {
-    if (demorecording || demoplayback || netgame)
-      player->playerstate = PST_REBORN;
-    else switch(death_use_action)
+    player->playerstate = PST_REBORN;
+  }
+
+  if (activate_death_use_reload)
+  {
+    activate_death_use_reload = false;
+
+    if (savegameslot >= 0)
     {
-      case death_use_default:
-        player->playerstate = PST_REBORN;
-        break;
-      case death_use_reload:
-        if (savegameslot >= 0)
-        {
-          char *file = G_SaveGameName(savegameslot);
-          G_LoadGame(file, savegameslot, false);
-          free(file);
-          // [Woof!] prevent on-death-action reloads from activating specials
-          M_InputGameDeactivate(input_use);
-        }
-        else
-          player->playerstate = PST_REBORN;
-        break;
-      case death_use_nothing:
-      default:
-        break;
+      char *file = G_SaveGameName(savegameslot);
+      G_LoadGame(file, savegameslot, false);
+      free(file);
     }
+    else
+      player->playerstate = PST_REBORN;
   }
 }
 
@@ -771,12 +763,11 @@ void P_PlayerThink (player_t* player)
   if (cmd->buttons & BT_SPECIAL)
     cmd->buttons = 0;
 
-  if (cmd->buttons & BT_CHANGE
-      || (casual_play && M_InputGameActive(input_lastweapon))) // [Nugget] Last weapon key
+  if (cmd->buttons & BT_CHANGE)
     {
-      // [Nugget] Last weapon key
-      const weapontype_t lastweapon = ((casual_play && M_InputGameActive(input_lastweapon))
-                                       ? player->lastweapon : wp_nochange);
+      // [Nugget] Last-weapon button
+      const weapontype_t lastweapon = CASUALPLAY(M_InputGameActive(input_lastweapon))
+                                      ? player->lastweapon : wp_nochange;
 
       // The actual changing of the weapon is done
       //  when the weapon psprite can do it
@@ -793,19 +784,20 @@ void P_PlayerThink (player_t* player)
       // other games which rely on user preferences, we must use the latter.
 
       if (demo_compatibility)
-        { // compatibility mode -- required for old demos -- killough
-          if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
-              ((player->readyweapon != wp_chainsaw
-                && lastweapon != wp_fist) || // [Nugget]
-               !player->powers[pw_strength]))
-            newweapon = wp_chainsaw;
-          if (have_ssg &&
-              newweapon == wp_shotgun &&
-              player->weaponowned[wp_supershotgun] &&
-              player->readyweapon != wp_supershotgun &&
-              lastweapon != wp_shotgun) // [Nugget]
-            newweapon = wp_supershotgun;
-        }
+	{ // compatibility mode -- required for old demos -- killough
+	  newweapon = (cmd->buttons & BT_WEAPONMASK_OLD) >> BT_WEAPONSHIFT;
+	  if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
+	      ((player->readyweapon != wp_chainsaw
+	              && lastweapon != wp_fist) || // [Nugget]
+	       !player->powers[pw_strength]))
+	    newweapon = wp_chainsaw;
+	  if (have_ssg &&
+	      newweapon == wp_shotgun &&
+	      player->weaponowned[wp_supershotgun] &&
+	      player->readyweapon != wp_supershotgun &&
+	      lastweapon != wp_shotgun) // [Nugget]
+	    newweapon = wp_supershotgun;
+	}
 
       // killough 2/8/98, 3/22/98 -- end of weapon selection changes
 

@@ -482,6 +482,10 @@ static boolean P_Move(mobj_t *actor, boolean dropoff) // killough 9/12/98
         if (P_UseSpecialLine(actor, spechit[numspechit], 0, false))
 	  good |= spechit[numspechit] == blockline ? 1 : 2;
 
+      // There are checks elsewhere for numspechit == 0, so we don't want to
+      // leave numspechit == -1.
+      numspechit = 0;
+
       // [FG] compatibility maze here
       // Boom v2.01 and orig. Doom return "good"
       // Boom v2.02 and LxDoom return good && (P_Random(pr_trywalk)&3)
@@ -987,6 +991,17 @@ static boolean P_LookForMonsters(mobj_t *actor, boolean allaround)
 
       current_actor = actor;
       current_allaround = allaround;
+
+      // There is a bug in cl11+ that causes the player to get added
+      //   to the monster friend list when damaged to below 50% health.
+      // This causes all monsters to believe friend monsters exist.
+      // The search algorithm is expensive and massively so on maps with many monsters.
+      // We still need to match rng calls for demo sync, but PIT_FindTarget is a no op.
+      if (((mobj_t *) cap->cnext)->player && cap->cnext == cap->cprev)
+      {
+        P_Random(pr_friends);
+        return false;
+      }
 
       // Search first in the immediate vicinity.
 
@@ -2270,19 +2285,13 @@ void A_Scream(mobj_t *actor)
 
 void A_XScream(mobj_t *actor)
 {
-  S_StartSound(actor, sfx_slop);
+  S_StartSoundEx(actor, sfx_slop);
 }
 
 void A_Pain(mobj_t *actor)
 {
   if (actor->info->painsound)
-  {
-    // [Nugget]
-    if (STRICTMODE(actor->info->painsound == sfx_plpain))
-      S_PlayerPainSound(actor);
-    else
-      S_StartSound(actor, actor->info->painsound);
-  }
+    S_StartSoundPain(actor, actor->info->painsound);
 }
 
 void A_Fall(mobj_t *actor)
@@ -2799,7 +2808,7 @@ void A_PlayerScream(mobj_t *mo)
   int sound = sfx_pldeth;  // Default death sound.
   if (gamemode != shareware && mo->health < -50) // killough 12/98
     sound = sfx_pdiehi;   // IF THE PLAYER DIES LESS THAN -50% WITHOUT GIBBING
-  S_StartSound(mo, sound);
+  S_StartSoundEx(mo, sound);
 }
 
 //
@@ -2880,7 +2889,7 @@ void A_PlaySound(mobj_t *mo)
 {
   if (demo_version < DV_MBF)
     return;
-  S_StartSound(mo->state->misc2 ? NULL : mo, mo->state->misc1);
+  S_StartSoundOrigin(mo, mo->state->misc2 ? NULL : mo, mo->state->misc1);
 }
 
 void A_RandomJump(mobj_t *mo)

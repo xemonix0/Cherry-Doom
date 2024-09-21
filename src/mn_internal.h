@@ -49,6 +49,7 @@ typedef enum
     key_mode
 } menu_input_mode_t;
 
+extern menu_input_mode_t help_input, old_help_input; // pad_mode or key_mode.
 extern menu_input_mode_t menu_input, old_menu_input;
 void MN_ResetMouseCursor(void);
 
@@ -69,7 +70,7 @@ typedef struct
 {
     const char *text;
     mrect_t rect;
-    int flags;
+    int64_t flags;
 } setup_tab_t;
 
 enum
@@ -127,6 +128,9 @@ void MN_SetNextMenuAlt(ss_types type);
 boolean MN_PointInsideRect(mrect_t *rect, int x, int y);
 void MN_ClearMenus(void);
 void MN_Back(void);
+void MN_BackSecondary(void);
+
+#define M_X_CENTER (-1)
 
 // [FG] alternative text for missing menu graphics lumps
 void MN_DrawTitle(int x, int y, const char *patch, const char *alttext);
@@ -151,6 +155,8 @@ void MN_DrawAutoMap(void);
 void MN_DrawWeapons(void);
 void MN_DrawEnemy(void);
 void MN_DrawLevelTable(void);
+void MN_DrawGyro(void);
+void MN_DrawEqualizer(void);
 
 // [Nugget] Custom Skill menu
 void MN_CustomSkill(void);
@@ -164,7 +170,7 @@ void MN_DrawCustomSkill(void);
 #define S_HILITE      0x00000001 // Cursor is sitting on this item
 #define S_SELECT      0x00000002 // We're changing this item
 #define S_TITLE       0x00000004 // Title item
-                      
+#define S_FUNC        0x00000008 // Non-config item
 #define S_CRITEM      0x00000010 // Message color
 #define S_RESET       0x00000020 // Reset to Defaults Button
 #define S_INPUT       0x00000040 // Composite input
@@ -182,7 +188,7 @@ void MN_DrawCustomSkill(void);
 #define S_DISABLE     0x00040000 // Disable item
 #define S_COSMETIC    0x00080000 // Don't warn about change, always load from OPTIONS lump
 #define S_THERMO      0x00100000 // Thermo bar (default size 8)
-#define S_NEXT_LINE   0x00200000 // Two lines menu items
+#define S_WRAP_LINE   0x00200000 // Wrap long menu items relative to M_WRAP
 #define S_STRICT      0x00400000 // Disable in strict mode
 #define S_BOOM        0x00800000 // Disable if complevel < boom
 #define S_VANILLA     0x01000000 // Disable if complevel != vanilla
@@ -196,7 +202,7 @@ void MN_DrawCustomSkill(void);
 // [Nugget]
 #define S_CRITICAL    0x0000000100000000 // Disable during non-casual play
 #define S_RES         0x0000000200000000 // Report current resolution
-#define S_FUNCTION    0x0000000400000000 // Used only to call a function
+#define S_FUNC2       0x0000000400000000 // Like `S_FUNC`, but with confirmation
 
 // [Cherry]
 #define S_LTBL_MAP    0x0001000000000000 // Level table row with a map's info
@@ -210,11 +216,12 @@ void MN_DrawCustomSkill(void);
 
 #define S_SHOWDESC                                                       \
     (S_TITLE | S_ONOFF | S_CRITEM | S_RESET | S_INPUT | S_WEAP | S_NUM   \
-     | S_CREDIT | S_CHOICE | S_THERMO                                    \
-     | S_FUNCTION) // [Nugget]
+     | S_CREDIT | S_CHOICE | S_THERMO | S_FUNC                           \
+     | S_FUNC2) // [Nugget]
 
 #define S_SHOWSET \
-    (S_ONOFF | S_CRITEM | S_INPUT | S_WEAP | S_NUM | S_CHOICE | S_THERMO)
+    (S_ONOFF | S_CRITEM | S_INPUT | S_WEAP | S_NUM | S_CHOICE | S_THERMO \
+     | S_FUNC)
 
 #define S_HASDEFPTR \
     (S_ONOFF | S_NUM | S_WEAP | S_CRITEM | S_CHOICE | S_THERMO)
@@ -231,7 +238,7 @@ typedef enum
     m_null, // Has no meaning; not applicable
     m_scrn, // A key can not be assigned to more than one action
     m_map,  // in the same group. A key can be assigned to one
-            // action in one group, and another action in another.
+    m_gyro, // action in one group, and another action in another.
 } setup_group;
 
 /////////////////////////////
@@ -261,7 +268,6 @@ typedef struct setup_menu_s
 
     union // killough 11/98: The first field is a union of several types
     {
-        void *var;             // generic variable
         char *name;            // name
         struct default_s *def; // default[] table entry
         int map_i;             // [Cherry] wad_stats index
@@ -272,6 +278,8 @@ typedef struct setup_menu_s
     int strings_id;       // [FG] selection of choices
     void (*action)(void); // killough 10/98: function to call after changing
     mrect_t rect;
+    int lines;            // number of lines for rect, always > 0
+    const char *desc;     // overrides default description
 } setup_menu_t;
 
 // phares 4/21/98: Moved from m_misc.c so m_menu.c could see it.

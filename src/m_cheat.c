@@ -30,6 +30,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "g_game.h"
+#include "hu_stuff.h"
 #include "info.h"
 #include "m_cheat.h"
 #include "m_fixed.h"
@@ -124,12 +125,12 @@ static void cheat_reveal_item();
 static void cheat_autoaim();      // killough 7/19/98
 static void cheat_tst();
 static void cheat_showfps(); // [FG] FPS counter widget
+static void cheat_speed();
 
 // [Nugget] /-----------------------------------------------------------------
 
 static void cheat_nomomentum();
 static void cheat_fauxdemo();   // Emulates demo/net play state, for debugging
-static void cheat_babymode();   // Toggles double ammo and half damage as in ITYTD
 static void cheat_infammo();    // Infinite ammo cheat
 static void cheat_fastweaps();  // Fast weapons cheat
 static void cheat_bobbers();    // Shortcut to the two cheats above
@@ -166,8 +167,7 @@ static void cheat_saitama();    // MDK Fist
 
 static void cheat_boomcan();    // Explosive hitscan
 
-boolean cheese;
-static void cheat_cheese();     // cheese :)
+static void cheat_cheese();
 
 boolean idgaf;
 static void cheat_idgaf();
@@ -292,7 +292,7 @@ struct cheat_s cheat[] = {
   {"iddt",       "Map cheat",         not_dm,
    {cheat_ddt} },        // killough 2/07/98: moved from am_map.c
 
-  {"iddst",      NULL,                always,
+  {"iddst",      NULL,                not_dm,
    {cheat_reveal_secret} },
 
   {"iddkt",      NULL,                not_dm,
@@ -390,14 +390,16 @@ struct cheat_s cheat[] = {
    {cheat_noclip} },
 
   // [Nugget] Change to just "fps"
-  {"fps",    NULL,                always,
+  {"fps",        NULL,                always,
    {cheat_showfps} },
+
+  {"speed",      NULL,                not_dm,
+   {cheat_speed} },
 
   // [Nugget] /---------------------------------------------------------------
 
   {"nomomentum", NULL, not_net | not_demo, {cheat_nomomentum}     },
   {"fauxdemo",   NULL, not_net | not_demo, {cheat_fauxdemo}       }, // Emulates demo/net play state, for debugging
-  {"babymode",   NULL, not_net | not_demo, {cheat_babymode}       }, // Toggles double ammo and half damage as in ITYTD
   {"fullclip",   NULL, not_net | not_demo, {cheat_infammo}        }, // Infinite ammo cheat
   {"valiant",    NULL, not_net | not_demo, {cheat_fastweaps}      }, // Fast weapons cheat
   {"bobbers",    NULL, not_net | not_demo, {cheat_bobbers}        }, // Shortcut for the two above cheats
@@ -431,7 +433,7 @@ struct cheat_s cheat[] = {
   {"mdk",        NULL, not_net | not_demo, {cheat_mdk}        },
   {"saitama",    NULL, not_net | not_demo, {cheat_saitama}    }, // MDK Fist
   {"boomcan",    NULL, not_net | not_demo, {cheat_boomcan}    }, // Explosive hitscan
-  {"cheese",     NULL, not_net | not_demo, {cheat_cheese}     }, // cheese :)
+  {"cheese",     NULL, not_net | not_demo, {cheat_cheese}     },
   {"idgaf",      NULL, not_net | not_demo, {cheat_idgaf}      },
 
   #ifdef NUGMAGIC
@@ -463,17 +465,6 @@ static void cheat_fauxdemo()
 
   S_StartSound(plyr->mo, sfx_tink);
   displaymsg("Fauxdemo %s", fauxdemo ? "ON" : "OFF");
-}
-
-// Toggles double ammo and half damage as in ITYTD
-static void cheat_babymode()
-{
-  static boolean status = false;
-
-  displaymsg("Baby Mode %s", (status = !status) ? "ON" : "OFF");
-
-  doubleammoparm = halfdamageparm = status;
-  G_SetBabyModeParms(gameskill);
 }
 
 // Infinite ammo
@@ -532,7 +523,7 @@ static void DoResurrect(void)
   // [crispy] spawn a teleport fog
   an = plyr->mo->angle >> ANGLETOFINESHIFT;
   P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
-  S_StartSound(plyr->mo, sfx_slop);
+  S_StartSoundEx(plyr->mo, sfx_slop);
   P_MapEnd();
 
   // Fix reviving as "zombie" if god mode was already enabled
@@ -835,7 +826,6 @@ static void cheat_boomcan()
   displaymsg("Explosive Hitscan %s", (plyr->cheats & CF_BOOMCAN) ? "ON" : "OFF");
 }
 
-// cheese :)
 static void cheat_cheese()
 {
   cheese = !cheese;
@@ -854,6 +844,11 @@ static void cheat_idgaf()
 static void cheat_showfps()
 {
   plyr->cheats ^= CF_SHOWFPS;
+}
+
+static void cheat_speed()
+{
+  speedometer = (speedometer + 1) % 4;
 }
 
 // killough 7/19/98: Autoaiming optional in beta emulation mode
@@ -1360,6 +1355,8 @@ static void cheat_spechits()
     plyr->cards[i] = true;
   }
 
+  P_MapStart();
+
   for (i = 0; i < numlines; i++)
   {
     if (lines[i].special)
@@ -1379,6 +1376,13 @@ static void cheat_spechits()
         case 126:
         case 174:
         case 195:
+        // [FG] do not trigger silent teleporters
+        case 207:
+        case 208:
+        case 209:
+        case 210:
+        case 268:
+        case 269:
         {
           continue;
         }
@@ -1488,6 +1492,8 @@ static void cheat_spechits()
     dummy.tag = 666;
     speciallines += EV_DoDoor(&dummy, doorOpen);
   }
+
+  P_MapEnd();
 
   displaymsg("%d Special Action%s Triggered", speciallines, speciallines == 1 ? "" : "s");
 }
@@ -1856,7 +1862,10 @@ boolean M_CheatResponder(event_t *ev)
 {
   int i;
 
-  if (ev->type == ev_keydown && M_FindCheats(ev->data1))
+  if (strictmode && demorecording)
+    return false;
+
+  if (ev->type == ev_keydown && M_FindCheats(ev->data1.i))
     return true;
 
   for (i = 0; i < arrlen(cheat_input); ++i)

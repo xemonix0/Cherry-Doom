@@ -43,8 +43,10 @@
 #include "hu_obituary.h"
 #include "hu_stuff.h"
 #include "i_gamepad.h"
+#include "i_gyro.h"
 #include "i_input.h"
 #include "i_printf.h"
+#include "i_rumble.h"
 #include "i_system.h"
 #include "i_timer.h"
 #include "i_video.h"
@@ -128,7 +130,8 @@ boolean ignore_pistolstart = false; // Custom Skill: ignore pistol-start setting
 
 // Autosave ------------------------------------------------------------------
 
-static int autosave_interval;
+boolean autosave;
+int autosave_interval;
 
 static boolean autosaving = false;
 static int autosave_countdown = 0;
@@ -136,6 +139,15 @@ static int autosave_countdown = 0;
 void G_SetAutosaveCountdown(int value)
 {
   autosave_countdown = value;
+}
+
+static void G_DoSaveGame(void);
+
+static void G_DoAutosave(void)
+{
+  autosaving = true;
+  G_DoSaveGame();
+  autosaving = false;
 }
 
 // Rewind --------------------------------------------------------------------
@@ -212,22 +224,6 @@ static struct {
   int          maxammo[NUMAMMO];
 } initial_loadout;
 
-void G_SetBabyModeParms(const skill_t skill)
-{
-  if (skill == sk_custom)
-  {
-    doubleammo = customskill.doubleammo;
-    halfdamage = customskill.halfdamage;
-  }
-  else {
-    doubleammo = skill == sk_baby || skill == sk_nightmare;
-    halfdamage = skill == sk_baby;
-  }
-
-  doubleammo |= CASUALPLAY(doubleammoparm);
-  halfdamage |= CASUALPLAY(halfdamageparm);
-}
-
 // [Nugget]
 void G_SetSkillParms(const skill_t skill)
 {
@@ -236,6 +232,8 @@ void G_SetSkillParms(const skill_t skill)
     thingspawns     = customskill.things;
     coop_spawns     = customskill.coopspawns;
     realnomonsters  = customskill.nomonsters;
+    doubleammo      = customskill.doubleammo;
+    halfdamage      = customskill.halfdamage;
     slowbrain       = customskill.slowbrain;
     fastmonsters    = customskill.fast;
     respawnmonsters = customskill.respawn;
@@ -249,6 +247,8 @@ void G_SetSkillParms(const skill_t skill)
 
     coop_spawns     = coopspawnsparm;
     realnomonsters  = nomonsters;
+    doubleammo      = skill == sk_baby || skill == sk_nightmare;
+    halfdamage      = skill == sk_baby;
     slowbrain       = skill <= sk_easy;
     fastmonsters    = fastparm || skill == sk_nightmare;
     respawnmonsters = skill == sk_nightmare || respawnparm;
@@ -258,7 +258,6 @@ void G_SetSkillParms(const skill_t skill)
     x2monsters = false;
   }
 
-  G_SetBabyModeParms(skill);
   G_SetFastParms(fastmonsters);
 }
 
@@ -373,16 +372,8 @@ static ticcmd_t* last_cmd = NULL;
 int     key_escape = KEY_ESCAPE;                           // phares 4/13/98
 int     key_help = KEY_F1;                                 // phares 4/13/98
 
-int mouse_sensitivity;
-int mouse_sensitivity_y;
-int mouse_sensitivity_strafe; // [FG] strafe
-int mouse_sensitivity_y_look; // [FG] look
 // [FG] double click acts as "use"
 static boolean dclick_use;
-// [FG] invert vertical axis
-boolean mouse_y_invert;
-int mouse_acceleration;
-int mouse_acceleration_threshold;
 
 #define MAXPLMOVE   (forwardmove[1])
 #define TURBOTHRESHOLD  0x32
@@ -401,13 +392,13 @@ int     turnheld;       // for accelerative turning
 boolean mousebuttons[NUM_MOUSE_BUTTONS];
 
 // mouse values are used once
-int mousex;
-int mousey;
+static int mousex;
+static int mousey;
 boolean dclick;
 
 static ticcmd_t basecmd;
 
-boolean joybuttons[NUM_CONTROLLER_BUTTONS];
+boolean joybuttons[NUM_GAMEPAD_BUTTONS];
 
 int   savegameslot = -1;
 char  savedescription[32];
@@ -466,6 +457,7 @@ static boolean WeaponSelectable(weapontype_t weapon)
     // we also have the berserk pack.
 
     if (weapon == wp_fist
+     && demo_compatibility
      && players[consoleplayer].weaponowned[wp_chainsaw]
      && !players[consoleplayer].powers[pw_strength])
     {
@@ -525,7 +517,10 @@ static int G_NextWeapon(int direction)
         i = (i + arrlen(weapon_order_table)) % arrlen(weapon_order_table);
     } while (i != start_i && !WeaponSelectable(weapon_order_table[i].weapon));
 
-    return weapon_order_table[i].weapon_num;
+    if (!demo_compatibility)
+        return weapon_order_table[i].weapon;
+    else
+        return weapon_order_table[i].weapon_num;
 }
 
 // [FG] toggle demo warp mode
@@ -588,53 +583,268 @@ static void G_DemoSkipTics(void)
   }
 }
 
-void G_PrepTiccmd(void)
+static void ClearLocalView(void)
 {
-  const boolean strafe = M_InputGameActive(input_strafe);
-  ticcmd_t *cmd = &basecmd;
+  memset(&localview, 0, sizeof(localview));
+}
 
-  // [Nugget] Decrease the intensity of some movements if zoomed in
+static void UpdateLocalView_FakeLongTics(void)
+{
+  localview.angle -= localview.angleoffset << FRACBITS;
+  localview.rawangle -= localview.angleoffset;
+  localview.angleoffset = 0;
+  localview.pitch = 0;
+  localview.rawpitch = 0.0;
+  localview.oldlerpangle = localview.lerpangle;
+  localview.lerpangle = localview.angle;
+}
+
+static void (*UpdateLocalView)(void);
+
+void G_UpdateLocalViewFunction(void)
+{
+  if (lowres_turn && fake_longtics && (!netgame || solonet))
+  {
+    UpdateLocalView = UpdateLocalView_FakeLongTics;
+  }
+  else
+  {
+    UpdateLocalView = ClearLocalView;
+  }
+}
+
+//
+// ApplyQuickstartCache
+// When recording a demo and the map is reloaded, cached input from a circular
+// buffer can be applied prior to the screen wipe. Adapted from DSDA-Doom.
+//
+
+static int quickstart_cache_tics;
+static boolean quickstart_queued;
+static float axis_turn_tic;
+static float gyro_turn_tic;
+static int mousex_tic;
+
+static void ClearQuickstartTic(void)
+{
+  axis_turn_tic = 0.0f;
+  gyro_turn_tic = 0.0f;
+  mousex_tic = 0;
+}
+
+static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
+{
+  static float axis_turn_cache[TICRATE];
+  static float gyro_turn_cache[TICRATE];
+  static int mousex_cache[TICRATE];
+  static short angleturn_cache[TICRATE];
+  static int index;
+
+  if (quickstart_cache_tics < 1)
+  {
+    return;
+  }
+
+  if (quickstart_queued)
+  {
+    axes[AXIS_TURN] = 0.0f;
+    gyro_axes[GYRO_TURN] = 0.0f;
+    mousex = 0;
+
+    if (strafe)
+    {
+      for (int i = 0; i < quickstart_cache_tics; i++)
+      {
+        axes[AXIS_TURN] += axis_turn_cache[i];
+        gyro_axes[GYRO_TURN] += gyro_turn_cache[i];
+        mousex += mousex_cache[i];
+      }
+
+      cmd->angleturn = 0;
+      localview.rawangle = 0.0;
+    }
+    else
+    {
+      short result = 0;
+
+      for (int i = 0; i < quickstart_cache_tics; i++)
+      {
+        result += angleturn_cache[i];
+      }
+
+      cmd->angleturn = G_CarryAngleTic(result);
+      localview.rawangle = cmd->angleturn;
+    }
+
+    memset(axis_turn_cache, 0, sizeof(axis_turn_cache));
+    memset(gyro_turn_cache, 0, sizeof(gyro_turn_cache));
+    memset(mousex_cache, 0, sizeof(mousex_cache));
+    memset(angleturn_cache, 0, sizeof(angleturn_cache));
+    index = 0;
+
+    quickstart_queued = false;
+  }
+  else
+  {
+    axis_turn_cache[index] = axis_turn_tic;
+    gyro_turn_cache[index] = gyro_turn_tic;
+    mousex_cache[index] = mousex_tic;
+    angleturn_cache[index] = cmd->angleturn;
+    index = (index + 1) % quickstart_cache_tics;
+  }
+}
+
+void G_PrepMouseTiccmd(void)
+{
+  // [Nugget] /===============================================================
+
+  float hmodifier = 1.0f;
+
+  // Decrease the intensity of some movements if zoomed in -------------------
+
   if (!strictmode)
   {
     const int zoom = R_GetFOVFX(FOVFX_ZOOM);
 
     if (zoom)
-    { G_UpdateZoomDiv(MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom))); }
+    { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
   }
 
-  // Gamepad
+  float vmodifier = hmodifier;
 
-  if (I_UseController() && I_CalcControllerAxes())
+  // Flip levels ------------------------------------------------------------
+
+  if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
+
+  // [Nugget] ===============================================================/
+
+  if (mousex && !M_InputGameActive(input_strafe))
   {
-    G_UpdateDeltaTics();
-    axis_turn_tic = axes[AXIS_TURN];
-
-    if (axes[AXIS_TURN] && !strafe)
-    {
-      cmd->angleturn = G_CalcControllerAngle();
-      axes[AXIS_TURN] = 0.0f;
-    }
-
-    if (axes[AXIS_LOOK] && padlook)
-    {
-      cmd->pitch = G_CalcControllerPitch();
-      axes[AXIS_LOOK] = 0.0f;
-    }
-  }
-
-  // Mouse
-
-  if (mousex && !strafe)
-  {
-    cmd->angleturn = G_CalcMouseAngle();
+    localview.rawangle -= G_CalcMouseAngle(mousex) / hmodifier;
+    basecmd.angleturn = G_CarryAngle(localview.rawangle);
     mousex = 0;
   }
 
   if (mousey && mouselook)
   {
-    cmd->pitch = G_CalcMousePitch();
+    localview.rawpitch += G_CalcMousePitch(mousey) / vmodifier;
+    basecmd.pitch = G_CarryPitch(localview.rawpitch);
     mousey = 0;
   }
+}
+
+void G_PrepGamepadTiccmd(void)
+{
+  if (I_UseGamepad())
+  {
+    // [Nugget] /=============================================================
+
+    float hmodifier = 1.0f;
+
+    // Decrease the intensity of some movements if zoomed in -----------------
+
+    if (!strictmode)
+    {
+      const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+
+      if (zoom)
+      { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+    }
+
+    float vmodifier = hmodifier;
+
+    // Flip levels ----------------------------------------------------------
+
+    if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
+
+    // [Nugget] =============================================================/
+
+    const boolean strafe = M_InputGameActive(input_strafe);
+
+    I_CalcGamepadAxes(strafe);
+    axis_turn_tic = axes[AXIS_TURN];
+
+    if (axes[AXIS_TURN] && !strafe)
+    {
+      localview.rawangle -= G_CalcGamepadAngle() / hmodifier;
+      basecmd.angleturn = G_CarryAngle(localview.rawangle);
+      axes[AXIS_TURN] = 0.0f;
+    }
+
+    if (axes[AXIS_LOOK] && padlook)
+    {
+      localview.rawpitch -= G_CalcGamepadPitch() / vmodifier;
+      basecmd.pitch = G_CarryPitch(localview.rawpitch);
+      axes[AXIS_LOOK] = 0.0f;
+    }
+  }
+}
+
+void G_PrepGyroTiccmd(void)
+{
+  if (I_UseGamepad())
+  {
+    // [Nugget] /=============================================================
+
+    float hmodifier = 1.0f;
+
+    // Decrease the intensity of some movements if zoomed in -----------------
+
+    if (!strictmode)
+    {
+      const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+
+      if (zoom)
+      { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+    }
+
+    float vmodifier = hmodifier;
+
+    // Flip levels ----------------------------------------------------------
+
+    if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
+
+    // [Nugget] =============================================================/
+
+    I_CalcGyroAxes(M_InputGameActive(input_strafe));
+    gyro_turn_tic = gyro_axes[GYRO_TURN];
+
+    if (gyro_axes[GYRO_TURN])
+    {
+      localview.rawangle += gyro_axes[GYRO_TURN] / hmodifier;
+      basecmd.angleturn = G_CarryAngle(localview.rawangle);
+      gyro_axes[GYRO_TURN] = 0.0f;
+    }
+
+    if (gyro_axes[GYRO_LOOK])
+    {
+      localview.rawpitch += gyro_axes[GYRO_LOOK] / vmodifier;
+      basecmd.pitch = G_CarryPitch(localview.rawpitch);
+      gyro_axes[GYRO_LOOK] = 0.0f;
+    }
+  }
+}
+
+static boolean FilterDeathUseAction(void)
+{
+    if (players[consoleplayer].playerstate & PST_DEAD)
+    {
+        switch (death_use_action)
+        {
+            case death_use_nothing:
+                return true;
+            case death_use_reload:
+                if (!demoplayback && !demorecording && !netgame)
+                {
+                    activate_death_use_reload = true;
+                }
+                return true;
+            default:
+                break;
+        }
+    }
+
+    return false;
 }
 
 //
@@ -662,13 +872,15 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (!uncapped || !raw_input)
   {
-    G_PrepTiccmd();
+    G_PrepMouseTiccmd();
+    G_PrepGamepadTiccmd();
+    G_PrepGyroTiccmd();
   }
 
   memcpy(cmd, &basecmd, sizeof(*cmd));
   memset(&basecmd, 0, sizeof(basecmd));
 
-  G_ApplyQuickstartCache(cmd, strafe);
+  ApplyQuickstartCache(cmd, strafe);
 
   cmd->consistancy = consistancy[consoleplayer][maketic%BACKUPTICS];
 
@@ -723,21 +935,21 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   // Gamepad
 
-  if (I_UseController())
+  if (I_UseGamepad())
   {
     if (axes[AXIS_TURN] && strafe && !cmd->angleturn)
     {
-      side += G_CalcControllerSideTurn(speed);
+      side += G_CalcGamepadSideTurn(speed);
     }
 
     if (axes[AXIS_STRAFE])
     {
-      side += G_CalcControllerSideStrafe(speed);
+      side += G_CalcGamepadSideStrafe(speed);
     }
 
     if (axes[AXIS_FORWARD])
     {
-      forward -= G_CalcControllerForward(speed);
+      forward -= G_CalcGamepadForward(speed);
     }
   }
 
@@ -745,19 +957,29 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (mousex && strafe && !cmd->angleturn)
   {
-    side += G_CalcMouseSide();
+    const double mouseside = G_CalcMouseSide(mousex);
+    side += G_CarrySide(mouseside);
   }
 
   if (mousey && !mouselook && !novert)
   {
-    forward += G_CalcMouseVert();
+    const double mousevert = G_CalcMouseVert(mousey);
+    forward += G_CarryVert(mousevert);
   }
 
   // Update/reset
 
+  // [Nugget] Flip levels
+  if (STRICTMODE(flip_levels)) {
+    angle = -angle;
+    side  = -side;
+  }
+
   if (angle)
   {
-    G_UpdateTicAngleTurn(cmd, angle);
+    const short old_angleturn = cmd->angleturn;
+    cmd->angleturn = G_CarryAngleTic(localview.rawangle + angle);
+    cmd->ticangleturn = cmd->angleturn - old_angleturn;
   }
 
   if (forward > MAXPLMOVE)
@@ -772,10 +994,11 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   cmd->forwardmove = forward;
   cmd->sidemove = side;
 
-  G_ClearQuickstartTic();
-  I_ResetControllerAxes();
+  ClearQuickstartTic();
+  I_ResetGamepadAxes();
+  I_ResetGyroAxes();
   mousex = mousey = 0;
-  G_UpdateLocalView();
+  UpdateLocalView();
   G_UpdateCarry();
 
   // Buttons
@@ -787,7 +1010,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (M_InputGameActive(input_use)) // [FG] mouse button for "use"
     {
-      cmd->buttons |= BT_USE;
+      if (!FilterDeathUseAction())
+        cmd->buttons |= BT_USE;
       // clear double clicks if hit use button
       dclick = false;
     }
@@ -869,12 +1093,10 @@ void G_BuildTiccmd(ticcmd_t* cmd)
           iw_active[5] && gamemode != shareware ? wp_plasma :
           iw_active[6] && gamemode != shareware ? wp_bfg :
           iw_active[7] ? wp_chainsaw :
-          iw_active[8] && have_ssg ? wp_supershotgun :
+          iw_active[8] && !demo_compatibility && have_ssg ? wp_supershotgun :
 
-          // [Nugget] Last weapon key
-          ilw_active && casual_play &&
-          WeaponSelectable(players[consoleplayer].lastweapon)
-          ? players[consoleplayer].lastweapon :
+          // [Nugget] Last-weapon button
+          CASUALPLAY(ilw_active) ? players[consoleplayer].lastweapon :
 
           wp_nochange;
       }
@@ -892,7 +1114,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       //
       // killough 10/98: make SG/SSG and Fist/Chainsaw
       // weapon toggles optional
-
+      
       if (!demo_compatibility && doom_weapon_toggles)
         {
           const player_t *player = &players[consoleplayer];
@@ -938,11 +1160,12 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   if (dclick)
   {
     dclick = false;
-    cmd->buttons |= BT_USE;
+    if (!FilterDeathUseAction())
+      cmd->buttons |= BT_USE;
   }
 
   // special buttons
-  if (sendpause)
+  if (sendpause && gameaction != ga_newgame)
     {
       sendpause = false;
       cmd->buttons = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
@@ -970,12 +1193,15 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
 void G_ClearInput(void)
 {
-  G_ClearQuickstartTic();
-  I_ResetControllerLevel();
+  ClearQuickstartTic();
+  I_ResetGamepadState();
+  I_FlushGamepadSensorEvents();
   mousex = mousey = 0;
-  G_ClearLocalView();
+  ClearLocalView();
   G_ClearCarry();
   memset(&basecmd, 0, sizeof(basecmd));
+  I_ResetRelativeMouseState();
+  I_ResetAllRumbleChannels();
 }
 
 //
@@ -1089,7 +1315,7 @@ static void G_DoLoadLevel(void)
   else
     P_SetupLevel (gameepisode, gamemap, 0, gameskill);
 
-  MN_UpdateFreeLook();
+  MN_UpdateFreeLook(!mouselook && !padlook);
   HU_UpdateTurnFormat();
 
   // [Woof!] Do not reset chosen player view across levels in multiplayer
@@ -1308,7 +1534,7 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
 static boolean G_StrictModeSkipEvent(event_t *ev)
 {
   static boolean enable_mouse = false;
-  static boolean enable_controller = false;
+  static boolean enable_gamepad = false;
   static boolean first_event = true;
 
   if (!strictmode || !demorecording)
@@ -1331,24 +1557,38 @@ static boolean G_StrictModeSkipEvent(event_t *ev)
         if (first_event)
         {
           first_event = false;
-          enable_controller = true;
+          enable_gamepad = true;
         }
-        return !enable_controller;
+        return !enable_gamepad;
 
     case ev_joystick:
         if (first_event)
         {
           I_UpdateAxesData(ev);
-          I_CalcControllerAxes();
+          I_CalcGamepadAxes(M_InputGameActive(input_strafe));
           if (axes[AXIS_STRAFE] || axes[AXIS_FORWARD] || axes[AXIS_TURN] ||
               axes[AXIS_LOOK])
           {
             first_event = false;
-            enable_controller = true;
+            enable_gamepad = true;
           }
-          I_ResetControllerLevel();
+          I_ResetGamepadState();
         }
-        return !enable_controller;
+        return !enable_gamepad;
+
+    case ev_gyro:
+        if (first_event)
+        {
+          I_UpdateGyroData(ev);
+          I_CalcGyroAxes(M_InputGameActive(input_strafe));
+          if (gyro_axes[GYRO_TURN] || gyro_axes[GYRO_LOOK])
+          {
+            first_event = false;
+            enable_gamepad = true;
+          }
+          I_ResetGamepadState();
+        }
+        return !enable_gamepad;
 
     default:
         break;
@@ -1367,13 +1607,17 @@ boolean G_MovementResponder(event_t *ev)
   switch (ev->type)
   {
     case ev_mouse:
-      mousex_tic += ev->data2;
-      mousex += ev->data2;
-      mousey += ev->data3;
+      mousex_tic += ev->data1.i;
+      mousex += ev->data1.i;
+      mousey -= ev->data2.i;
       return true;
 
     case ev_joystick:
       I_UpdateAxesData(ev);
+      return true;
+
+    case ev_gyro:
+      I_UpdateGyroData(ev);
       return true;
 
     default:
@@ -1488,7 +1732,7 @@ boolean G_Responder(event_t* ev)
 
   if (dclick_use && ev->type == ev_mouseb_down &&
       (M_InputActivated(input_strafe) || M_InputActivated(input_forward)) &&
-      ev->data2 >= 2 && (ev->data2 % 2) == 0)
+      ev->data2.i >= 2 && (ev->data2.i % 2) == 0)
   {
     dclick = true;
   }
@@ -1507,33 +1751,33 @@ boolean G_Responder(event_t* ev)
   switch (ev->type)
     {
     case ev_keydown:
-	if (ev->data1 <NUMKEYS)
-	  gamekeydown[ev->data1] = true;
+      if (ev->data1.i < NUMKEYS)
+        gamekeydown[ev->data1.i] = true;
       return true;    // eat key down events
 
     case ev_keyup:
-      if (ev->data1 <NUMKEYS)
-        gamekeydown[ev->data1] = false;
+      if (ev->data1.i < NUMKEYS)
+        gamekeydown[ev->data1.i] = false;
       return false;   // always let key up events filter down
 
     case ev_mouseb_down:
-      if (ev->data1 < NUM_MOUSE_BUTTONS)
-        mousebuttons[ev->data1] = true;
+      if (ev->data1.i < NUM_MOUSE_BUTTONS)
+        mousebuttons[ev->data1.i] = true;
       return true;
 
     case ev_mouseb_up:
-      if (ev->data1 < NUM_MOUSE_BUTTONS)
-        mousebuttons[ev->data1] = false;
+      if (ev->data1.i < NUM_MOUSE_BUTTONS)
+        mousebuttons[ev->data1.i] = false;
       return true;
 
     case ev_joyb_down:
-      if (ev->data1 < NUM_CONTROLLER_BUTTONS)
-        joybuttons[ev->data1] = true;
+      if (ev->data1.i < NUM_GAMEPAD_BUTTONS)
+        joybuttons[ev->data1.i] = true;
       return true;
 
     case ev_joyb_up:
-      if (ev->data1 < NUM_CONTROLLER_BUTTONS)
-        joybuttons[ev->data1] = false;
+      if (ev->data1.i < NUM_GAMEPAD_BUTTONS)
+        joybuttons[ev->data1.i] = false;
       return true;
 
     default:
@@ -2062,6 +2306,14 @@ frommapinfo:
     StatCopy(&wminfo);
   }
 
+  for (int i = 0; i < MAXPLAYERS; ++i)
+  {
+      level_t level = {gameepisode, gamemap};
+      array_push(players[i].visitedlevels, level);
+      players[i].num_visitedlevels = array_size(players[i].visitedlevels);
+  }
+  wminfo.visitedlevels = players[consoleplayer].visitedlevels;
+
   WI_Start (&wminfo);
 
   // [Nugget] Clear visual effects
@@ -2084,7 +2336,7 @@ static void G_DoWorldDone(void)
 
   // [Nugget] ----------------------------------------------------------------
 
-  G_SetAutosaveCountdown(0); // Autosave
+  if (autosave) { G_DoAutosave(); } // Autosave
   
   G_UpdateInitialLoadout(); // Custom Skill
 }
@@ -2471,27 +2723,52 @@ char* G_SaveGameName(int slot)
   {
     static int autoslot = 0;
 
-    sprintf(buf, "cheraut%d.dsg", autoslot);
+    sprintf(buf, "%.4saut%d.dsg", D_DoomExeName(), autoslot);
 
     autoslot = (autoslot + 1) % 4;
   }
   else
     sprintf(buf, "%.7s%d.dsg", savegamename, 10*savepage+slot);
 
-// [Nugget] Restored `-cdrom` parm
+  char *filepath =
+    // [Nugget] Restored `-cdrom` parm
 #ifdef _WIN32
-  if (M_CheckParm("-cdrom"))
-    return M_StringJoin("c:\\doomdata\\", buf);
-  else
+    M_CheckParm("-cdrom") ? M_StringJoin("c:\\doomdata\\", buf) :
 #endif
-  return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
+    M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
+
+  char *existing = M_FileCaseExists(filepath);
+
+  if (existing)
+  {
+    free(filepath);
+    return existing;
+  }
+  else
+  {
+    char *filename = (char *)M_BaseName(filepath);
+    M_StringToLower(filename);
+    return filepath;
+  }
 }
 
 char* G_MBFSaveGameName(int slot)
 {
-   char buf[16] = {0};
-   sprintf(buf, "MBFSAV%d.dsg", 10*savepage+slot);
-   return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
+  char buf[16] = {0};
+  sprintf(buf, "MBFSAV%d.dsg", 10*savepage+slot);
+
+  char *filepath = M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
+  char *existing = M_FileCaseExists(filepath);
+
+  if (existing)
+  {
+    free(filepath);
+    return existing;
+  }
+  else
+  {
+    return filepath;
+  }
 }
 
 // killough 12/98:
@@ -2944,7 +3221,7 @@ static void G_DoLoadGame(void)
     READ(customskill.respawn);
     READ(customskill.aggressive);
 
-    if (saveg_compat > saveg_nugget320)
+    if (saveg_check_version_min(saveg_nugget330))
     { READ(customskill.x2monsters); }
 
     if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
@@ -3442,6 +3719,9 @@ void G_CleanScreenshot(void)
   if (!(screenshot_palette & SHOTPAL_CLEAN)) // [Nugget]
     ST_ResetPalette();
 
+  if (gamestate != GS_LEVEL)
+      return;
+
   old_screenblocks = screenblocks;
   old_hide_weapon = hide_weapon;
   hide_weapon = true;
@@ -3524,16 +3804,11 @@ void G_Ticker(void)
     }
 
   // [Nugget] Autosave
-  if (CASUALPLAY(autosave_interval)
+  if (CASUALPLAY(autosave && autosave_interval)
       && gamestate == GS_LEVEL && oldleveltime < leveltime
       && players[consoleplayer].playerstate != PST_DEAD)
   {
-    if (--autosave_countdown <= 0)
-    {
-      autosaving = true;
-      G_DoSaveGame();
-      autosaving = false;
-    }
+    if (--autosave_countdown <= 0) { G_DoAutosave(); }
   }
 
   // [Nugget] Rewind
@@ -3716,7 +3991,7 @@ void G_Ticker(void)
     fixed_t pitch = 0;
     boolean center = false,
             lock = false;
-    
+
     if (R_GetFreecamMode() == FREECAM_CAM && gamestate == GS_LEVEL && !menuactive)
     {
       const ticcmd_t *const cmd = &netcmds[consoleplayer];
@@ -3754,10 +4029,12 @@ void G_Ticker(void)
             displaymsg("Freecam Speed: %i unit%s", scaledspeed, (scaledspeed == 1) ? "" : "s");
           }
 
-          fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed)));
+          fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed))) * 100 / realtic_clock_rate;
 
           fixed_t forwardmove = speed * (INPUT(input_forward)     - INPUT(input_backward)),
                   sidemove    = speed * (INPUT(input_straferight) - INPUT(input_strafeleft));
+
+          if (flip_levels) { sidemove = -sidemove; } // Flip levels
 
           angle_t fangle = R_GetFreecamAngle() + angle;
 
@@ -3770,7 +4047,7 @@ void G_Ticker(void)
           z = speed * (INPUT(input_jump) - INPUT(input_crouch));
         }
 
-        pitch = cmd->pitch;
+        pitch = cmd->pitch << FRACBITS;
 
         static int strafetic = -10;
         static boolean strafedown = false;
@@ -3991,8 +4268,8 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
   if (&players[playernum] == &players[displayplayer])
   { R_SetFOVFX(FOVFX_TELEPORT); }
 
-  if (players[consoleplayer].viewz != 1)
-    S_StartSound(mo, sfx_telept);  // don't start sound on first frame
+  if (players[consoleplayer].viewz != 1) // don't start sound on first frame
+    S_StartSoundSource(players[consoleplayer].mo, mo, sfx_telept);
 
   return true;
 }
@@ -4195,26 +4472,26 @@ demo_version_t G_GetNamedComplevel(const char *arg)
 {
     const struct
     {
-        demo_version_t demover;
         const char *const name;
+        demo_version_t demover;
         int exe;
     } named_complevel[] = {
-        {DV_VANILLA, "vanilla",  exe_indetermined},
-        {DV_VANILLA, "doom2",    exe_doom_1_9    },
-        {DV_VANILLA, "1.9",      exe_doom_1_9    },
-        {DV_VANILLA, "2",        exe_doom_1_9    },
-        {DV_VANILLA, "ultimate", exe_ultimate    },
-        {DV_VANILLA, "3",        exe_ultimate    },
-        {DV_VANILLA, "final",    exe_final       },
-        {DV_VANILLA, "tnt",      exe_final       },
-        {DV_VANILLA, "plutonia", exe_final       },
-        {DV_VANILLA, "4",        exe_final       },
-        {DV_BOOM,    "boom",     exe_indetermined},
-        {DV_BOOM,    "9",        exe_indetermined},
-        {DV_MBF,     "mbf",      exe_indetermined},
-        {DV_MBF,     "11",       exe_indetermined},
-        {DV_MBF21,   "mbf21",    exe_indetermined},
-        {DV_MBF21,   "21",       exe_indetermined},
+        {"vanilla",  DV_VANILLA, exe_indetermined},
+        {"doom2",    DV_VANILLA, exe_doom_1_9    },
+        {"1.9",      DV_VANILLA, exe_doom_1_9    },
+        {"2",        DV_VANILLA, exe_doom_1_9    },
+        {"ultimate", DV_VANILLA, exe_ultimate    },
+        {"3",        DV_VANILLA, exe_ultimate    },
+        {"final",    DV_VANILLA, exe_final       },
+        {"tnt",      DV_VANILLA, exe_final       },
+        {"plutonia", DV_VANILLA, exe_final       },
+        {"4",        DV_VANILLA, exe_final       },
+        {"boom",     DV_BOOM,    exe_indetermined},
+        {"9",        DV_BOOM,    exe_indetermined},
+        {"mbf",      DV_MBF,     exe_indetermined},
+        {"11",       DV_MBF,     exe_indetermined},
+        {"mbf21",    DV_MBF21,   exe_indetermined},
+        {"21",       DV_MBF21,   exe_indetermined},
     };
 
     for (int i = 0; i < arrlen(named_complevel); i++)
@@ -4511,7 +4788,6 @@ void G_ReloadDefaults(boolean keep_demover)
   }
 
   G_UpdateSideMove();
-  P_UpdateDirectVerticalAiming();
 
   pistolstart = default_pistolstart;
 
@@ -5514,19 +5790,6 @@ void G_BindGameInputVariables(void)
 {
   BIND_BOOL(autorun, true, "Always run");
   BIND_BOOL_GENERAL(mouselook, false, "Mouselook");
-  BIND_NUM_GENERAL(mouse_sensitivity, 5, 0, UL,
-    "Horizontal mouse sensitivity for turning");
-  BIND_NUM_GENERAL(mouse_sensitivity_y, 5, 0, UL,
-    "Vertical mouse sensitivity for moving");
-  BIND_NUM_GENERAL(mouse_sensitivity_strafe, 5, 0, UL,
-    "Horizontal mouse sensitivity for strafing");
-  BIND_NUM_GENERAL(mouse_sensitivity_y_look, 5, 0, UL,
-    "Vertical mouse sensitivity for looking");
-  BIND_NUM_GENERAL(mouse_acceleration, 10, 0, 40,
-    "Mouse acceleration (0 = 1.0; 40 = 5.0)");
-  BIND_NUM(mouse_acceleration_threshold, 10, 0, 32,
-    "Mouse acceleration threshold");
-  BIND_BOOL_GENERAL(mouse_y_invert, false, "Invert vertical mouse axis");
   BIND_BOOL_GENERAL(dclick_use, true, "Double-click acts as use-button");
   BIND_BOOL(novert, true, "Disable vertical mouse movement");
   BIND_BOOL_GENERAL(padlook, false, "Padlook");
@@ -5595,9 +5858,10 @@ void G_BindGameVariables(void)
 
   BIND_BOOL_GENERAL(one_key_saveload, false, "One-key quick-saving/loading");
 
-  // (CFG-only)
-  M_BindNum("autosave_interval", &autosave_interval, NULL, 0, 30, 600, ss_none, wad_no,
-    "Interval between autosaves, in seconds");
+  BIND_BOOL_GENERAL(autosave, true, "Autosave when finishing levels");
+
+  M_BindNum("autosave_interval", &autosave_interval, NULL, 0, 0, 600, ss_gen, wad_no,
+    "Interval between periodic autosaves, in seconds (0 = Off)");
 
   BIND_NUM_GENERAL(rewind_interval, 1, 1, 600,
     "Interval between rewind key-frames, in seconds");

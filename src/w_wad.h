@@ -101,6 +101,7 @@ typedef struct
 
   char  name[8];
   int   size;
+  int   fmt_size;
   const void *data;     // killough 1/31/98: points to predefined lump data
 
   // killough 1/31/98: hash table fields, used for ultra-fast hash table lookup
@@ -130,6 +131,16 @@ boolean W_AddPath(const char *path, wad_source_t source); // [Cherry] Added the 
 void W_ProcessInWads(const char *name, void (*process)(int lumpnum),
                      boolean iwad);
 void W_InitMultipleFiles(void);
+
+// [Nugget] /-----------------------------------------------------------------
+
+// killough 1/31/98: predefined lumps
+extern const size_t num_predefined_lumps;
+extern const lumpinfo_t predefined_lumps[];
+
+void W_InitPredefinedLumps(void);
+
+// [Nugget] -----------------------------------------------------------------/
 
 // killough 4/17/98: if W_CheckNumForName() called with only
 // one argument, pass ns_global as the default namespace

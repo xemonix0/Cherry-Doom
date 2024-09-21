@@ -27,6 +27,7 @@
 #include "doomtype.h"
 #include "i_oalstream.h"
 #include "i_printf.h"
+#include "i_rumble.h"
 #include "i_system.h"
 #include "m_array.h"
 #include "mn_menu.h"
@@ -86,7 +87,9 @@ static channel_info_t channelinfo[MAX_CHANNELS];
 // [FG] variable pitch bend range
 static int pitch_bend_range;
 
-boolean s_clipping_dist_x2; // [Nugget]
+// [Nugget]
+boolean s_clipping_dist_x2;
+boolean force_flip_pan; // Brought over from i_mbfsound.c, global
 
 // [Nugget] Now variable
 int S_CLIPPING_DIST;
@@ -117,6 +120,8 @@ static void StopChannel(int channel)
 
         channelinfo[channel].enabled = false;
     }
+
+    I_ResetRumbleChannel(channel);
 }
 
 //

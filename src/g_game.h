@@ -34,7 +34,10 @@ struct event_s;
 
 #define MBF21_GAME_OPTION_SIZE (21 + MBF21_COMP_TOTAL)
 
-void G_PrepTiccmd(void);
+void G_UpdateLocalViewFunction(void);
+void G_PrepMouseTiccmd(void);
+void G_PrepGamepadTiccmd(void);
+void G_PrepGyroTiccmd(void);
 void G_ClearInput(void);
 boolean G_MovementResponder(struct event_s *ev);
 boolean G_Responder(struct event_s *ev);
@@ -108,16 +111,6 @@ extern boolean novert;
 extern boolean mouselook;
 extern boolean padlook;
 
-extern int mouse_sensitivity;
-extern int mouse_sensitivity_y;
-extern int mouse_sensitivity_strafe;
-extern int mouse_sensitivity_y_look;
-extern boolean mouse_y_invert;
-extern int mouse_acceleration;
-extern int mouse_acceleration_threshold;
-extern int mousex;
-extern int mousey;
-
 extern fixed_t forwardmove[2];
 extern fixed_t default_sidemove[2];
 extern fixed_t *sidemove;
@@ -153,15 +146,22 @@ enum {
 
 extern boolean comp_longautoaim;
 
+// Autosave ------------------------------------------------------------------
+
+extern boolean autosave;
+extern int autosave_interval;
+
+void G_SetAutosaveCountdown(int value);
+
 // Rewind --------------------------------------------------------------------
 
 extern int rewind_interval;
 
-extern void G_SetRewindCountdown(int value);
-extern void G_EnableRewind(void);
-extern void G_Rewind(void);
-extern void G_ClearExcessKeyFrames(void);
-extern boolean G_KeyFrameRW(void);
+void G_SetRewindCountdown(int value);
+void G_EnableRewind(void);
+void G_Rewind(void);
+void G_ClearExcessKeyFrames(void);
+boolean G_KeyFrameRW(void);
 
 // Skill ---------------------------------------------------------------------
 
@@ -177,7 +177,6 @@ extern boolean custom_skill_aggressive;
 extern boolean custom_skill_x2monsters;
 extern boolean custom_skill_notracking;
 
-void G_SetBabyModeParms(const skill_t skill);
 void G_SetSkillParms(const skill_t skill);
 void G_SetUserCustomSkill(void);
 void G_RestartWithLoadout(const boolean current);

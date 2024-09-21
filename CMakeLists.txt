@@ -1,6 +1,7 @@
 include(CheckLibraryExists)
 include(CheckIncludeFile)
 include(CheckSymbolExists)
+include(CheckCSourceCompiles)
 
 # Adds the cmake directory to the CMake include path.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -58,6 +59,27 @@ check_library_exists(m pow "" HAVE_LIBM)
 check_include_file("dirent.h" HAVE_DIRENT_H)
 check_symbol_exists(strcasecmp "strings.h" HAVE_DECL_STRCASECMP)
 check_symbol_exists(strncasecmp "strings.h" HAVE_DECL_STRNCASECMP)
+check_c_source_compiles("
+    #include <windows.h>
+    int main()
+    {
+        CreateWaitableTimerEx(NULL, NULL, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION,
+                              TIMER_ALL_ACCESS);
+        return 0;
+    }
+  "
+  HAVE_HIGH_RES_TIMER
+)
+check_c_source_compiles("
+    #include <immintrin.h>
+    int main()
+    {
+        int tmp = _div64(4, 2, NULL);
+        return 0;
+    }
+  "
+  HAVE__DIV64
+)
 
 option(CMAKE_FIND_PACKAGE_PREFER_CONFIG
        "Lookup package config files before using find modules" ON)
@@ -72,6 +94,7 @@ find_package(SndFile 1.0.29 REQUIRED)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(ALSA REQUIRED)
 endif()
+find_package(cJSON REQUIRED)
 
 if(ALSA_FOUND)
     set(HAVE_ALSA TRUE)
@@ -182,8 +205,7 @@ include(CPack)
 add_subdirectory(data)
 add_subdirectory(opl)
 add_subdirectory(textscreen)
-add_subdirectory(miniz)
-add_subdirectory(spng)
+add_subdirectory(third-party)
 add_subdirectory(src)
 add_subdirectory(setup)
 add_subdirectory(docs)

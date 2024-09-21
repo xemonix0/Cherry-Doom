@@ -515,15 +515,7 @@ static const inline fixed_t thingheight (const mobj_t *const thing, const mobj_t
 // [Nugget] Factored out from `p_user.c`
 fixed_t P_PitchToSlope(const fixed_t pitch)
 {
-  if (pitch)
-  {
-    const fixed_t slope = -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT];
-    return (fixed_t)((int64_t)slope * SCREENHEIGHT / ACTUALHEIGHT);
-  }
-  else
-  {
-    return 0;
-  }
+  return pitch ? -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT] : 0;
 }
 
 // [Nugget] Over/Under /------------------------------------------------------
@@ -1062,6 +1054,7 @@ boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
   // killough 11/98: simplified
 
   if (!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
+  {
     while (numspechit--)
       if (spechit[numspechit]->special)  // see if the line was crossed
 	{
@@ -1070,6 +1063,10 @@ boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
 	      P_PointOnLineSide(thing->x, thing->y, spechit[numspechit]))
 	    P_CrossSpecialLine(spechit[numspechit], oldside, thing, false);
 	}
+    // There are checks elsewhere for numspechit == 0, so we don't want to
+    // leave numspechit == -1.
+    numspechit = 0;
+  }
 
   return true;
 }
@@ -1340,7 +1337,7 @@ static void P_HitSlideLine(line_t *ld)
     {
       if (icyfloor && abs(tmymove) > abs(tmxmove))
 	{
-	  S_StartSound(slidemo,sfx_oof); // oooff!
+	  S_StartSoundPreset(slidemo, sfx_oof, PITCH_FULL); // oooff!
 	  tmxmove /= 2; // absorb half the momentum
 	  tmymove = -tmymove/2;
 	}
@@ -1353,7 +1350,7 @@ static void P_HitSlideLine(line_t *ld)
     {
       if (icyfloor && abs(tmxmove) > abs(tmymove))
 	{
-	  S_StartSound(slidemo,sfx_oof); // oooff!
+	  S_StartSoundPreset(slidemo, sfx_oof, PITCH_FULL); // oooff!
 	  tmxmove = -tmxmove/2; // absorb half the momentum
 	  tmymove /= 2;
 	}
@@ -1385,7 +1382,7 @@ static void P_HitSlideLine(line_t *ld)
 
   if (icyfloor && deltaangle > ANG45 && deltaangle < ANG90+ANG45)
     {
-      S_StartSound(slidemo,sfx_oof); // oooff!
+      S_StartSoundPreset(slidemo, sfx_oof, PITCH_FULL); // oooff!
       moveangle = lineangle - deltaangle;
       movelen /= 2; // absorb
       moveangle >>= ANGLETOFINESHIFT;
@@ -2328,12 +2325,6 @@ boolean PIT_ChangeSector(mobj_t *thing)
   if (thing->health <= 0)
     {
       P_SetMobjState(thing, S_GIBS);
-      // [Nugget] No gibs if the thing doesn't bleed to begin with
-      if (STRICTMODE(comp_nonbleeders) && thing->flags & MF_NOBLOOD)
-      {
-        thing->sprite = SPR_TNT1;
-        thing->frame = 0;
-      }
       thing->flags &= ~MF_SOLID;
       thing->height = thing->radius = 0;
       if (thing->info->bloodcolor || idgaf)
@@ -2341,6 +2332,26 @@ boolean PIT_ChangeSector(mobj_t *thing)
         thing->flags2 |= MF2_COLOREDBLOOD;
         thing->bloodcolor = V_BloodColor(thing->info->bloodcolor);
       }
+
+      // [Nugget] /-----------------------------------------------------------
+
+      // No gibs if the thing doesn't bleed to begin with
+      if (STRICTMODE(comp_nonbleeders) && thing->flags & MF_NOBLOOD)
+      {
+        thing->sprite = SPR_TNT1;
+        thing->frame = 0;
+      }
+
+      // Bloodier crushing
+      if (CASUALPLAY(bloodier_gibbing))
+      {
+        if (!(thing->flags & MF_NOBLOOD)) { S_StartSound(thing, sfx_slop); }
+
+        P_NuggetGib(thing, true);
+      }
+
+      // [Nugget] -----------------------------------------------------------/
+
       return true;      // keep checking
     }
 

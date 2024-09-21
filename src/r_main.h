@@ -52,6 +52,7 @@ extern int      validcount;
 extern int      linecount;
 extern int      loopcount;
 extern fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
+extern int      max_project_slope;
 
 //
 // Rendering stats
@@ -115,12 +116,14 @@ struct subsector_s *R_PointInSubsector(fixed_t x, fixed_t y);
 // REFRESH - the actual rendering functions.
 //
 
+void R_UpdateViewAngleFunction(void);
 void R_RenderPlayerView(struct player_s *player);   // Called by G_Drawer.
 void R_Init(void);                           // Called by startup code.
 void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // [Nugget] /=================================================================
 
+extern boolean flip_levels;
 extern boolean nightvision_visor;
 extern int fake_contrast;
 extern boolean diminished_lighting;
@@ -246,6 +249,8 @@ inline static angle_t LerpAngle(angle_t oangle, angle_t nangle)
             return oangle + (angle_t)((nangle - oangle) * FIXED2DOUBLE(fractionaltic));
     }
 }
+
+extern boolean raw_input;
 
 extern int autodetect_hom;
 

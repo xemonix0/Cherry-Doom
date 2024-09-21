@@ -694,12 +694,12 @@ void F_CastTicker (void)
 
 boolean F_CastResponder (event_t* ev)
 {
-  boolean xdeath = false; // [Nugget]: [crispy]
-
-  if (ev->type != ev_keydown)
+  if (ev->type != ev_keydown && ev->type != ev_mouseb_down && ev->type != ev_joyb_down)
     return false;
 
   // [Nugget] /---------------------------------------------------------------
+
+  boolean xdeath = false; // [crispy]
 
   // [crispy] make monsters turnable in cast ...
   if (M_InputActivated(input_turnleft))
@@ -741,9 +741,11 @@ boolean F_CastResponder (event_t* ev)
   if (xdeath && mobjinfo[castorder[castnum].type].xdeathstate)
     caststate = &states[mobjinfo[castorder[castnum].type].xdeathstate];
   else
-    caststate = &states[mobjinfo[castorder[castnum].type].deathstate];
+
+  caststate = &states[mobjinfo[castorder[castnum].type].deathstate];
 
   casttics = caststate->tics;
+
   // [Nugget]: [crispy] Allow A_RandomJump() in deaths in cast sequence
   if (casttics == -1 && caststate->action.p2 == (actionf_p2)A_RandomJump)
   {
@@ -871,31 +873,40 @@ void F_BunnyScroll (void)
   char        name[16];
   int         stage;
   static int  laststage;
-  int         offset;
 
-  p1 = V_CachePatchName ("PFUB2", PU_LEVEL);
-  p2 = V_CachePatchName ("PFUB1", PU_LEVEL);
+  p1 = V_CachePatchName ("PFUB1", PU_LEVEL);
+  p2 = V_CachePatchName ("PFUB2", PU_LEVEL);
 
   scrolled = 320 - (finalecount-230)/2;
-  if (scrolled > 320)
-      scrolled = 320;
-  if (scrolled < 0)
-      scrolled = 0;
 
-  offset = 0;
-  if (SHORT(p2->width) != SCREENWIDTH)
+  int p1offset = DivRoundClosest(video.unscaledw - SHORT(p1->width), 2);
+  if (SHORT(p1->width) == 320)
   {
-    offset = video.deltaw;
+      p1offset += (SHORT(p2->width) - 320) / 2;
   }
 
-  if (scrolled > 0)
-    V_DrawPatch(320 - scrolled - offset, 0, p2);
-  if (scrolled < 320)
-    V_DrawPatch(-scrolled - offset, 0, p1);
+  int p2offset = DivRoundClosest(video.unscaledw - SHORT(p2->width), 2);
 
-  if (SHORT(p2->width) == SCREENWIDTH)
+  if (scrolled <= 0)
   {
-    V_FillRect(0, 0, video.unscaledw, SCREENHEIGHT, v_darkest_color);
+      V_DrawPatch(p2offset - video.deltaw, 0, p2);
+  }
+  else if (scrolled >= 320)
+  {
+      V_DrawPatch(p1offset - video.deltaw, 0, p1);
+      V_DrawPatch(-320 + p2offset - video.deltaw, 0, p2);
+  }
+  else
+  {
+      V_DrawPatch(320 - scrolled + p1offset - video.deltaw, 0, p1);
+      V_DrawPatch(-scrolled + p2offset - video.deltaw, 0, p2);
+  }
+
+  if (p2offset > 0)
+  {
+      V_FillRect(0, 0, p2offset, SCREENHEIGHT, v_darkest_color);
+      V_FillRect(p2offset + SHORT(p2->width), 0, p2offset, SCREENHEIGHT,
+                 v_darkest_color);
   }
 
   if (finalecount < 1130)

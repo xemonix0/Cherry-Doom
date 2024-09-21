@@ -33,8 +33,6 @@
 // [Nugget]
 #include "r_state.h"
 
-static boolean force_flip_pan;
-
 static boolean I_MBF_AdjustSoundParams(const mobj_t *listener,
                                        const mobj_t *source, int chanvol,
                                        int *vol, int *sep, int *pri)
@@ -138,7 +136,7 @@ static boolean I_MBF_AdjustSoundParams(const mobj_t *listener,
 void I_MBF_UpdateSoundParams(int channel, int volume, int separation)
 {
     // SoM 7/1/02: forceFlipPan accounted for here
-    if (force_flip_pan)
+    if (force_flip_pan ^ STRICTMODE(flip_levels)) // [Nugget] Flip levels
     {
         separation = 254 - separation;
     }

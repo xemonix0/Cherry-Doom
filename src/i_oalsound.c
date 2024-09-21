@@ -25,8 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "i_oalcommon.h"
+#include "i_oalequalizer.h"
 #include "i_oalsound.h"
 #include "i_printf.h"
+#include "i_rumble.h"
 #include "i_sndfile.h"
 #include "i_sound.h"
 #include "m_array.h"
@@ -51,16 +54,6 @@
 
 #define VOL_TO_GAIN(x)          ((ALfloat)(x) / 127)
 
-// C doesn't allow casting between function and non-function pointer types, so
-// with C99 we need to use a union to reinterpret the pointer type. Pre-C99
-// still needs to use a normal cast and live with the warning (C++ is fine with
-// a regular reinterpret_cast).
-#if __STDC_VERSION__ >= 199901L
-#  define FUNCTION_CAST(T, ptr) (union{void *p; T f;}){ptr}.f
-#else
-#  define FUNCTION_CAST(T, ptr) (T)(ptr)
-#endif
-
 static int snd_resampler;
 static boolean snd_limiter;
 static boolean snd_hrtf;
@@ -70,18 +63,7 @@ static int snd_doppler;
 static int oal_snd_module;
 boolean oal_use_doppler;
 
-typedef struct oal_system_s
-{
-    ALCdevice *device;
-    ALCcontext *context;
-    ALuint *sources;
-    boolean SOFT_source_spatialize;
-    boolean EXT_EFX;
-    boolean EXT_SOURCE_RADIUS;
-    ALfloat absorption;
-} oal_system_t;
-
-static oal_system_t *oal;
+oal_system_t *oal;
 static LPALDEFERUPDATESSOFT alDeferUpdatesSOFT;
 static LPALPROCESSUPDATESSOFT alProcessUpdatesSOFT;
 
@@ -122,10 +104,8 @@ static void InitDeferred(void)
 
     if (alIsExtensionPresent("AL_SOFT_deferred_updates") == AL_TRUE)
     {
-        alDeferUpdatesSOFT = FUNCTION_CAST(
-            LPALDEFERUPDATESSOFT, alGetProcAddress("alDeferUpdatesSOFT"));
-        alProcessUpdatesSOFT = FUNCTION_CAST(
-            LPALPROCESSUPDATESSOFT, alGetProcAddress("alProcessUpdatesSOFT"));
+        ALFUNC(LPALDEFERUPDATESSOFT, alDeferUpdatesSOFT);
+        ALFUNC(LPALPROCESSUPDATESSOFT, alProcessUpdatesSOFT);
 
         if (alDeferUpdatesSOFT && alProcessUpdatesSOFT)
         {
@@ -166,9 +146,9 @@ void I_OAL_ShutdownModule(void)
 
 void I_OAL_ShutdownSound(void)
 {
-    int i;
+    I_OAL_ShutdownEqualizer();
 
-    for (i = 0; i < MAX_CHANNELS; ++i)
+    for (int i = 0; i < MAX_CHANNELS; ++i)
     {
         I_OAL_StopSound(i);
     }
@@ -211,8 +191,7 @@ void I_OAL_SetResampler(void)
         return;
     }
 
-    alGetStringiSOFT =
-        FUNCTION_CAST(LPALGETSTRINGISOFT, alGetProcAddress("alGetStringiSOFT"));
+    ALFUNC(LPALGETSTRINGISOFT, alGetStringiSOFT);
 
     if (!alGetStringiSOFT)
     {
@@ -337,8 +316,7 @@ const char **I_OAL_GetResamplerStrings(void)
         return NULL;
     }
 
-    alGetStringiSOFT =
-        FUNCTION_CAST(LPALGETSTRINGISOFT, alGetProcAddress("alGetStringiSOFT"));
+    ALFUNC(LPALGETSTRINGISOFT, alGetStringiSOFT);
 
     if (!alGetStringiSOFT)
     {
@@ -358,6 +336,7 @@ const char **I_OAL_GetResamplerStrings(void)
 static void UpdateUserSoundSettings(void)
 {
     I_OAL_SetResampler();
+    I_OAL_SetEqualizer();
 
     if (oal_snd_module == SND_MODULE_3D)
     {
@@ -379,7 +358,7 @@ static void ResetParams(void)
     int i;
 
     // [Nugget] Initialize these here
-    S_CLIPPING_DIST = (1200 << FRACBITS) * (STRICTMODE(s_clipping_dist_x2) + 1); // Double sound clipping distance
+    S_CLIPPING_DIST = (1200 << FRACBITS) * (STRICTMODE(s_clipping_dist_x2) + 1); // Double sound-clipping distance
     S_ATTENUATOR = (S_CLIPPING_DIST - S_CLOSE_DIST) >> FRACBITS;
 
     // Source parameters.
@@ -526,6 +505,8 @@ boolean I_OAL_InitSound(int snd_module)
         (alcIsExtensionPresent(oal->device, "ALC_EXT_EFX") == ALC_TRUE);
     oal->EXT_SOURCE_RADIUS =
         (alIsExtensionPresent("AL_EXT_SOURCE_RADIUS") == AL_TRUE);
+
+    I_OAL_InitEqualizer();
     InitDeferred();
     ResetParams();
 
@@ -587,49 +568,30 @@ boolean I_OAL_AllowReinitSound(void)
     return (alcIsExtensionPresent(oal->device, "ALC_SOFT_HRTF") == ALC_TRUE);
 }
 
-//
-// IsPaddedSound
-//
-// DMX sounds use 16 bytes of padding before and after the real sound. The
-// padding bytes are equal to the first or last real byte, respectively.
-// Reference: https://www.doomworld.com/forum/post/949486
-//
-static boolean IsPaddedSound(const byte *data, int size)
-{
-    const int sound_end = size - DMXPADSIZE;
-    int i;
-
-    for (i = 0; i < DMXPADSIZE; i++)
-    {
-        // Check padding before sound.
-        if (data[i] != data[DMXPADSIZE])
-        {
-            return false;
-        }
-
-        // Check padding after sound.
-        if (data[sound_end + i] != data[sound_end - 1])
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static void FadeInMono8(byte *data, ALsizei size, ALsizei freq)
+static void FadeInOutMono8(byte *data, ALsizei size, ALsizei freq)
 {
     const int fadelen = freq * FADETIME / 1000000;
     int i;
 
-    if (data[0] == 128 || size < fadelen)
+    if (size < fadelen)
     {
         return;
     }
 
-    for (i = 0; i < fadelen; i++)
+    if (data[0] != 128)
     {
-        data[i] = (data[i] - 128) * i / fadelen + 128;
+        for (i = 0; i < fadelen; i++)
+        {
+            data[i] = (data[i] - 128) * i / fadelen + 128;
+        }
+    }
+
+    if (data[size - 1] != 128)
+    {
+        for (i = 0; i < fadelen; i++)
+        {
+            data[size - 1 - i] = (data[size - 1 - i] - 128) * i / fadelen + 128;
+        }
     }
 }
 
@@ -682,19 +644,18 @@ boolean I_OAL_CacheSound(sfxinfo_t *sfx)
 
             sampledata = lumpdata + DMXHDRSIZE;
 
-            if (IsPaddedSound(sampledata, size))
-            {
-                // Ignore DMX padding.
-                sampledata += DMXPADSIZE;
-                size -= DMXPADSIZE * 2;
-            }
+            // DMX skips the first and last 16 bytes of data. Custom sounds may
+            // be created with tools that aren't aware of this, which means part
+            // of the waveform is cut off. We compensate for this by fading in
+            // or out sounds that start or end at a non-zero amplitude to
+            // prevent clicking.
+            // Reference: https://www.doomworld.com/forum/post/949486
+            sampledata += DMXPADSIZE;
+            size -= DMXPADSIZE * 2;
+            FadeInOutMono8(sampledata, size, freq);
 
             // All Doom sounds are 8-bit
             format = AL_FORMAT_MONO8;
-
-            // Fade in sounds that start at a non-zero amplitude to prevent
-            // clicking.
-            FadeInMono8(sampledata, size, freq);
         }
         else
         {
@@ -727,6 +688,7 @@ boolean I_OAL_CacheSound(sfxinfo_t *sfx)
 
         sfx->buffer = buffer;
         sfx->cached = true;
+        I_CacheRumble(sfx, format, sampledata, size, freq);
     }
 
     // don't need original lump data any more

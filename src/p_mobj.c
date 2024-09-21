@@ -169,8 +169,16 @@ void P_ExplodeMissile (mobj_t* mo)
   mo->flags &= ~MF_MISSILE;
 
   if (mo->info->deathsound)
-    S_StartSoundPitch(mo, mo->info->deathsound,
-                      brainexplode ? PITCH_NONE : PITCH_FULL);
+  {
+    if (brainexplode)
+    {
+      S_StartSoundPitch(mo, mo->info->deathsound, PITCH_NONE);
+    }
+    else
+    {
+      S_StartSoundOrigin(mo->target, mo, mo->info->deathsound);
+    }
+  }
 }
 
 //
@@ -788,9 +796,11 @@ boolean floating_powerups;
 // P_MobjThinker
 //
 
+// [Nugget]
+boolean cheese, frights;
+
 void P_MobjThinker (mobj_t* mobj)
 {
-  extern boolean cheese; // [Nugget] cheese :)
   boolean oucheck = false; // [Nugget] Over/Under
 
   // [crispy] support MUSINFO lump (dynamic music changing)
@@ -800,20 +810,39 @@ void P_MobjThinker (mobj_t* mobj)
       return;
   }
 
-  // [Nugget] cheese :)
-  if (casual_play && mobj->type == MT_MISC2)
+  // [Nugget]
+  if (casual_play)
   {
-    if (cheese && !(mobj->intflags & MIF_CHEESE))
+    if (mobj->type == MT_MISC2)
     {
-      mobj->intflags |= MIF_CHEESE;
-      mobj->tics = -1;
-      mobj->sprite = SPR_TNT1;
-      mobj->frame = 1;
+      if (cheese && !(mobj->intflags & MIF_CHEESE))
+      {
+        mobj->intflags |= MIF_CHEESE;
+        mobj->tics = -1;
+        mobj->sprite = SPR_TNT1;
+        mobj->frame = 1;
+      }
+      else if (!cheese && (mobj->intflags & MIF_CHEESE))
+      {
+        mobj->intflags &= ~MIF_CHEESE;
+        P_SetMobjState(mobj, mobj->info->spawnstate);
+      }
     }
-    else if (!cheese && (mobj->intflags & MIF_CHEESE))
+
+    if (mobj->type == MT_MISC3)
     {
-      mobj->intflags &= ~MIF_CHEESE;
-      P_SetMobjState(mobj, mobj->info->spawnstate);
+      if (frights && !(mobj->intflags & MIF_FRIGHTS))
+      {
+        mobj->intflags |= MIF_FRIGHTS;
+        mobj->tics = -1;
+        mobj->sprite = SPR_TNT1;
+        mobj->frame = 2|FF_FULLBRIGHT;
+      }
+      else if (!frights && (mobj->intflags & MIF_FRIGHTS))
+      {
+        mobj->intflags &= ~MIF_FRIGHTS;
+        P_SetMobjState(mobj, mobj->info->spawnstate);
+      }
     }
   }
 
@@ -1822,7 +1851,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   th = P_SpawnMobj (x,y,z, type);
 
   if (th->info->seesound)
-    S_StartSound (th, th->info->seesound);
+    S_StartSoundMissile(source, th, th->info->seesound);
 
   P_SetTarget(&th->target, source);   // killough 11/98
   th->angle = an;

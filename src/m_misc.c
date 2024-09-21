@@ -363,7 +363,11 @@ boolean M_StringCopy(char *dest, const char *src, size_t dest_size)
     if (dest_size >= 1)
     {
         dest[dest_size - 1] = '\0';
-        strncpy(dest, src, dest_size - 1);
+
+        if (dest_size > 1)
+        {
+            strncpy(dest, src, dest_size - 1);
+        }
     }
     else
     {
@@ -424,6 +428,14 @@ void PRINTF_ATTR(2, 0) M_StringPrintF(char **dest, const char *format, ...)
     va_start(v, format);
     vsnprintf(*dest, length + 1, format, v);
     va_end(v);
+}
+
+// Returns true if 's' begins with the specified prefix.
+
+boolean M_StringStartsWith(const char *s, const char *prefix)
+{
+    return strlen(s) >= strlen(prefix)
+           && strncmp(s, prefix, strlen(prefix)) == 0;
 }
 
 // Returns true if 's' ends with the specified suffix.

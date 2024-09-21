@@ -341,7 +341,7 @@ static void ST_DrawSolidBackground(int st_x)
     b /= 2 * depth * (v1 - v0);
 
     // [FG] tune down to half saturation (for empiric reasons)
-    col = I_GetPaletteIndex(pal, r/2, g/2, b/2);
+    col = I_GetNearestColor(pal, r/2, g/2, b/2);
 
     V_FillRect(0, v0, video.unscaledw, v1 - v0, col);
   }
@@ -421,9 +421,9 @@ void ST_refreshBackground(void)
 boolean ST_Responder(event_t *ev)
 {
   // Filter automap on/off.
-  if (ev->type == ev_keyup && (ev->data1 & 0xffff0000) == AM_MSGHEADER)
+  if (ev->type == ev_keyup && (ev->data1.i & 0xffff0000) == AM_MSGHEADER)
     {
-      if (ev->data1 == AM_MSGENTERED)
+      if (ev->data1.i == AM_MSGENTERED)
       {
         st_firsttime = true;
       }
@@ -562,7 +562,7 @@ void ST_updateFaceWidget(void)
                   // head-on
                   st_faceindex += ST_RAMPAGEOFFSET;
                 }
-              else if (i)
+              else if (i ^ STRICTMODE(flip_levels)) // [Nugget] Flip levels
                 {
                   // turn face right
                   st_faceindex += ST_TURNOFFSET;
@@ -945,12 +945,12 @@ static void NughudDrawPatch(nughud_vlignable_t *widget, patch_t *patch, boolean 
   int x, y;
 
   x = widget->x + NUGHUDWIDESHIFT(widget->wide)
-      - ((widget->align == 1) ? SHORT(patch->width)   :
-         (widget->align == 0) ? SHORT(patch->width)/2 : 0);
+    - ((widget->align == 1) ? SHORT(patch->width)   :
+       (widget->align == 0) ? SHORT(patch->width)/2 : 0);
 
   y = widget->y
-      - ((widget->vlign == -1) ? SHORT(patch->height)   :
-         (widget->vlign ==  0) ? SHORT(patch->height)/2 : 0);
+    - ((widget->vlign == -1) ? SHORT(patch->height)   :
+       (widget->vlign ==  0) ? SHORT(patch->height)/2 : 0);
 
   if (no_offsets) {
     x += SHORT(patch->leftoffset);
@@ -982,25 +982,28 @@ static void NughudDrawBar(nughud_bar_t *widget, patch_t **patches, int units, in
 {
   if (widget->x > -1 && patches[0])
   {
-    const boolean twobars = patches[1] && (maxunits < units);
+    const boolean twobars = patches[1] && maxunits < units;
 
     for (int i = 0;  i < (1 + twobars);  i++)
     {
       const int slices = MIN(100 * (2 - twobars), (units * 100 / maxunits) - (100 * i)) * 100 / widget->ups;
-      const int slicewidth = SHORT(patches[i]->width) + widget->gap;
+
+      const int xstep = (widget->xstep || widget->ystep)
+                        ? widget->xstep : SHORT(patches[i]->width);
+
+      const int ystep = widget->ystep;
+
       const int x = widget->x
-                    + NUGHUDWIDESHIFT(widget->wide)
-                    - ((widget->align == 1) ? slices * slicewidth     :
-                       (widget->align == 0) ? slices * slicewidth / 2 : 0);
+                  + NUGHUDWIDESHIFT(widget->wide)
+                  - ((widget->align == 1) ? slices * xstep     :
+                     (widget->align == 0) ? slices * xstep / 2 : 0);
+
+      const int y = widget->y
+                  - ((widget->vlign == -1) ? slices * ystep     :
+                     (widget->vlign ==  0) ? slices * ystep / 2 : 0);
 
       for (int j = 0;  j < slices;  j++)
-      {
-        V_DrawPatch(
-          x + (slicewidth * j),
-          widget->y,
-          patches[i]
-        );
-      }
+      { V_DrawPatch(x + (xstep * j), y + (ystep * j), patches[i]); }
     }
   }
 }
@@ -1102,7 +1105,7 @@ void ST_drawWidgets(void)
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
         {
-          patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC);
+          patch = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
         }
         else { patch = NULL; }
       }
@@ -1117,7 +1120,9 @@ void ST_drawWidgets(void)
       boolean no_offsets = false;
 
       if (nhealth[0])
-      { patch = nhealth[plyr->powers[pw_strength] ? 1 : 0]; }
+      {
+        patch = nhealth[plyr->powers[pw_strength] ? 1 : 0];
+      }
       else {
         char namebuf[32];
 
@@ -1130,9 +1135,10 @@ void ST_drawWidgets(void)
         }
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
-        { patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
-        else
-        { patch = NULL; }
+        {
+          patch = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
+        }
+        else { patch = NULL; }
       }
 
       if (patch) { NughudDrawPatch(&nughud.healthicon, patch, no_offsets); }
@@ -1145,7 +1151,9 @@ void ST_drawWidgets(void)
       boolean no_offsets = false;
 
       if (nharmor[0])
-      { patch = nharmor[BETWEEN(0, 2, plyr->armortype)]; }
+      {
+        patch = nharmor[BETWEEN(0, 2, plyr->armortype)];
+      }
       else {
         char namebuf[32];
 
@@ -1159,9 +1167,10 @@ void ST_drawWidgets(void)
         }
 
         if ((lump = (W_CheckNumForName)(namebuf, ns_sprites)) >= 0)
-        { patch = (patch_t *) W_CacheLumpNum(lump, PU_STATIC); }
-        else
-        { patch = NULL; }
+        {
+          patch = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
+        }
+        else { patch = NULL; }
       }
 
       if (patch) { NughudDrawPatch(&nughud.armoricon, patch, no_offsets); }
@@ -1221,10 +1230,11 @@ void ST_drawWidgets(void)
       // Berserk or Medkit sprite
       else if (lu_berserk >= 0)
       {
-        patch_t *const patch = W_CacheLumpNum(lu_berserk, PU_STATIC);
+        patch_t *const patch = V_CachePatchNum(lu_berserk, PU_STATIC);
         
         // [crispy] (23,179) is the center of the Ammo widget
-        V_DrawPatch(ammox - 21 - SHORT(patch->width)/2 + SHORT(patch->leftoffset),
+        V_DrawPatch(ammox + (21 * (st_crispyhud ? nughud.ammo.align : -1))
+                    - SHORT(patch->width)/2 + SHORT(patch->leftoffset),
                     ammoy + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
                     patch);
       }
@@ -1242,8 +1252,10 @@ void ST_drawWidgets(void)
   }
 
   // [Nugget] NUGHUD
-  if (st_crispyhud) {
-    for (i = 0;  i < 4;  i++) {
+  if (st_crispyhud)
+  {
+    for (i = 0;  i < 4;  i++)
+    {
       if (nughud.ammos[i].x    > -1) { STlib_updateNum(&w_ammo[i],    NULL); }
       if (nughud.maxammos[i].x > -1) { STlib_updateNum(&w_maxammo[i], NULL); }
     }
@@ -1316,10 +1328,7 @@ void ST_drawWidgets(void)
 
   // Highlight current/pending weapon ----------------------------------------
 
-  for (i = 0;  i < 9;  i++)
-  {
-    w_arms[i].data = 0;
-  }
+  for (i = 0;  i < 9;  i++) { w_arms[i].data = 0; }
 
   if (hud_highlight_weapon)
   {
@@ -1540,7 +1549,7 @@ void ST_loadGraphics(void)
   have_xdthfaces = i;
 
   { // [Nugget] --------------------------------------------------------------
-    int lump;
+    int lump = 0;
 
     // Find Status Bar Berserk patch
     if ((lump = (W_CheckNumForName)("STBERSRK", ns_global)) >= 0)
@@ -1836,7 +1845,7 @@ void ST_initData(void)
   STlib_init();
 }
 
-int distributed_delta = 0; // [Nugget] Not static anymore
+int distributed_delta = 0; // [Nugget] Global
 
 static boolean sts_show_ssg; // [Nugget]
 
@@ -2117,10 +2126,8 @@ void ST_Init(void)
 // [Nugget] NUGHUD: Status-Bar chunks
 void ST_InitChunkBar(void)
 {
-  if (st_bar) { Z_Free(st_bar); }
-
   // More than necessary, but so be it
-  st_bar = Z_Malloc((video.pitch * V_ScaleY(StatusBarBufferHeight())) * sizeof(*st_bar), PU_STATIC, 0);
+  st_bar = Z_Malloc((video.pitch * V_ScaleY(StatusBarBufferHeight())) * sizeof(*st_bar), PU_RENDERER, 0);
 
   V_UseBuffer(st_bar);
 
@@ -2133,13 +2140,8 @@ void ST_InitRes(void)
 {
   int height = V_ScaleY(StatusBarBufferHeight());
 
-  if (st_backing_screen)
-  {
-    Z_Free(st_backing_screen);
-  }
-
   // killough 11/98: allocate enough for hires
-  st_backing_screen = Z_Malloc(video.pitch * height * sizeof(*st_backing_screen), PU_STATIC, 0);
+  st_backing_screen = Z_Malloc(video.pitch * height * sizeof(*st_backing_screen), PU_RENDERER, 0);
 }
 
 void ST_Warnings(void)
@@ -2231,6 +2233,8 @@ void ST_BindSTSVariables(void)
             "Amount of armor for green-to-blue transition");
   M_BindNum("ammo_red", &ammo_red, NULL, 25, 0, 100, ss_none, wad_yes,
             "Percent of ammo for red-to-yellow transition");
+  M_BindNum("ammo_yellow", &ammo_yellow, NULL, 50, 0, 100, ss_none, wad_yes,
+            "Percent of ammo for yellow-to-green transition");
 }
 
 //----------------------------------------------------------------------------

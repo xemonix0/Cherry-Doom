@@ -35,8 +35,12 @@
 #include "doomtype.h"
 #include "g_game.h"
 #include "hu_stuff.h"
+#include "i_flickstick.h"
 #include "i_gamepad.h"
+#include "i_gyro.h"
+#include "i_oalequalizer.h"
 #include "i_printf.h"
+#include "i_rumble.h"
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -123,13 +127,20 @@ void M_InitConfig(void)
     R_BindRenderVariables();
 
     I_BindSoundVariables();
+    I_BindEqualizerVariables();
 
     MN_BindMenuVariables();
     D_BindMiscVariables();
     G_BindGameVariables();
 
     G_BindGameInputVariables();
+    G_BindMouseVariables();
+
     I_BindGamepadVariables();
+    I_BindRumbleVariables();
+    I_BindFlickStickVariables();
+    I_BindGyroVaribales();
+
     M_BindInputVariables();
 
     G_BindEnemVariables();

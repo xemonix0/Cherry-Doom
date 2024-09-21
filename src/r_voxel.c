@@ -15,14 +15,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "doomdata.h"
 #include "doomstat.h"
 #include "doomtype.h"
+#include "hu_crosshair.h"
 #include "i_printf.h"
 #include "i_video.h"
 #include "info.h"
 #include "m_array.h"
-#include "m_bbox.h"
 #include "m_fixed.h"
 #include "mn_menu.h"
 #include "m_misc.h"
@@ -567,7 +566,7 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 	else
 	{
 		// too far off the side?  if so, ignore it
-		if (ty > (64 * FRACUNIT) && abs(tx) / 4 > ty)
+		if (ty > (64 * FRACUNIT) && abs(tx) / max_project_slope > ty)
 			return true;
 
 		xscale = FixedDiv (projection, ty);
@@ -711,6 +710,19 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 	vis->brightmap = R_BrightmapForSprite(thing->sprite);
 	vis->color = thing->bloodcolor;
 
+	// [Alaux] Lock crosshair on target
+	if (STRICTMODE(hud_crosshair_lockon) && thing == crosshair_target)
+	{
+		HU_UpdateCrosshairLock
+		(
+			BETWEEN(0, viewwidth  - 1, (centerxfrac + FixedMul(tx, xscale)) >> FRACBITS),
+      // [Nugget] Removed `actualheight`
+			BETWEEN(0, viewheight - 1, (centeryfrac + FixedMul(viewz - gz - crosshair_target->height/2, xscale)) >> FRACBITS)
+		);
+
+		crosshair_target = NULL; // Don't update it again until next tic
+	}
+
 	return true;
 }
 
@@ -823,7 +835,7 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 	byte * dest = I_VideoBuffer + viewwindowy * linesize + viewwindowx;
 
 	// iterate over screen columns
-	fixed_t ux = ((Ax - 1) | (FRACUNIT - 1)) + 1;
+	fixed_t ux = ((Ax - 1) | FRACMASK) + 1;
 
 	for (; ux < ((Cx > Bx) ? Cx : Bx) ; ux += FRACUNIT)
 	{
@@ -905,7 +917,7 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 			{
 				fixed_t uy = centeryfrac - FixedMul (top_z, wscale);
 
-				uy = ((uy - 1) | (FRACUNIT - 1)) + 1;
+				uy = ((uy - 1) | FRACMASK) + 1;
 
 				if (uy < clip_y1)
 					uy = clip_y1;
@@ -936,7 +948,7 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 
 			if (has_side)
 			{
-				fixed_t uy = ((uy1 - 1) | (FRACUNIT - 1)) + 1;
+				fixed_t uy = ((uy1 - 1) | FRACMASK) + 1;
 
 				for (; uy <= uy2 ; uy += FRACUNIT)
 				{

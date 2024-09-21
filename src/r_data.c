@@ -50,7 +50,7 @@
 #include "z_zone.h"
 
 // [Nugget]
-#include "hu_stuff.h"
+#include "hu_crosshair.h"
 
 //
 // Graphics.
@@ -1303,6 +1303,7 @@ void R_PrecacheLevel(void)
 
 boolean R_IsPatchLump (const int lump)
 {
+  int size;
   int width, height;
   const patch_t *patch;
   boolean result;
@@ -1313,10 +1314,17 @@ boolean R_IsPatchLump (const int lump)
 
   patch = V_CachePatchNum(lump, PU_CACHE);
 
+  size = V_LumpSize(lump);
+
+  // minimum length of a valid Doom patch
+  if (size < 13)
+    return false;
+
   width = SHORT(patch->width);
   height = SHORT(patch->height);
 
-  result = (height > 0 && height <= 16384 && width > 0 && width <= 16384);
+  result = (height > 0 && height <= 16384 && width > 0 && width <= 16384
+            && width < size / 4);
 
   if (result)
   {
@@ -1331,7 +1339,7 @@ boolean R_IsPatchLump (const int lump)
       unsigned int ofs = LONG(patch->columnofs[x]);
 
       // Need one byte for an empty column (but there's patches that don't know that!)
-      if (ofs < (unsigned int)width * 4 + 8)
+      if (ofs < (unsigned int)width * 4 + 8 || ofs >= (unsigned int)size)
       {
         result = false;
         break;

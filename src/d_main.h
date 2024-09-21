@@ -38,6 +38,8 @@ extern char *basesavegame;     // killough 2/16/98: savegame path
 extern char *screenshotdir; // [FG] screenshot path
 char *D_DoomPrefDir(void); // [FG] default configuration dir
 
+extern const char *gamedescription;
+
 //jff 1/24/98 make command line copies of play modes available
 extern boolean clnomonsters; // checkparm of -nomonsters
 extern boolean clrespawnparm;  // checkparm of -respawn
@@ -47,12 +49,10 @@ extern boolean clfastparm; // checkparm of -fast
 void D_SetMaxHealth(void);
 void D_SetBloodColor(void);
 
-boolean D_CheckEndDoom(void);
+boolean D_AllowQuitSound(void);
 
 // Called by IO functions when input is detected.
 void D_PostEvent(struct event_s *ev);
-
-extern boolean input_ready;
 
 void D_BindMiscVariables(void);
 

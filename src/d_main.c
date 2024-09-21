@@ -45,6 +45,7 @@
 #include "g_game.h"
 #include "hu_stuff.h"
 #include "i_endoom.h"
+#include "i_gamepad.h"
 #include "i_glob.h"
 #include "i_input.h"
 #include "i_printf.h"
@@ -147,8 +148,6 @@ boolean fastparm;       // working -fast
 
 // [Nugget]
 boolean coopspawnsparm = false;
-boolean doubleammoparm = false;
-boolean halfdamageparm = false;
 
 // [Cherry]
 boolean notrackingparm = false;
@@ -209,20 +208,38 @@ void D_PostEvent(event_t *ev)
   switch (ev->type)
   {
     case ev_mouse:
+      if (uncapped && raw_input)
+      {
+        G_MovementResponder(ev);
+        G_PrepMouseTiccmd();
+        return;
+      }
+      break;
+
     case ev_joystick:
       if (uncapped && raw_input)
       {
         G_MovementResponder(ev);
-        G_PrepTiccmd();
-        break;
+        G_PrepGamepadTiccmd();
+        return;
       }
-      // Fall through.
+      break;
+
+    case ev_gyro:
+      if (uncapped && raw_input)
+      {
+        G_MovementResponder(ev);
+        G_PrepGyroTiccmd();
+        return;
+      }
+      break;
 
     default:
-      events[eventhead++] = *ev;
-      eventhead &= MAXEVENTS-1;
       break;
   }
+
+  events[eventhead++] = *ev;
+  eventhead &= MAXEVENTS - 1;
 }
 
 //
@@ -232,8 +249,6 @@ void D_PostEvent(event_t *ev)
 
 void D_ProcessEvents (void)
 {
-  // IF STORE DEMO, DO NOT ACCEPT INPUT
-  if (gamemode != commercial || W_CheckNumForName("map01") >= 0)
     for (; eventtail != eventhead; eventtail = (eventtail+1) & (MAXEVENTS-1))
     {
       M_InputTrackEvent(events+eventtail);
@@ -246,8 +261,6 @@ void D_ProcessEvents (void)
 // D_Display
 //  draw current display, possibly wiping it from the previous
 //
-
-boolean input_ready;
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate = GS_DEMOSCREEN;
@@ -281,14 +294,13 @@ void D_Display (void)
   st_crispyhud = (hud_type == HUD_TYPE_CRISPY) && hud_displayed && automap_off
                  && hud_active > 0; // [Nugget] NUGHUD
 
-  input_ready = (!menuactive && ((gamestate == GS_LEVEL && !paused) || R_GetFreecamOn())); // [Nugget] Freecam
-
   if (uncapped)
   {
     // [AM] Figure out how far into the current tic we're in as a fixed_t.
     fractionaltic = I_GetFracTime();
 
-    if (input_ready && raw_input)
+    if (!menuactive && gamestate == GS_LEVEL && raw_input
+        && (!paused || (R_GetFreecamOn() && !R_GetFreecamMobj()))) // [Nugget] Freecam
     {
       I_StartDisplay();
     }
@@ -302,7 +314,7 @@ void D_Display (void)
   if (gamestate != wipegamestate && (strictmode || screen_melt))
     {
       wipe = true;
-      wipe_StartScreen(0, 0, video.unscaledw, SCREENHEIGHT);
+      wipe_StartScreen(0, 0, video.width, video.height);
     }
 
   if (!wipe)
@@ -331,12 +343,12 @@ void D_Display (void)
     case GS_LEVEL:
       if (!gametic)
         break;
-      // [Nugget] Removed Automap code block
+      // [Nugget] Removed automap code block
       if (wipe || (scaledviewheight != 200 && fullscreen) // killough 11/98
           || (inhelpscreensstate && !inhelpscreens))
         redrawsbar = true;              // just put away the help screen
-      // [Nugget] Moved ST_Drawer() call below,
-      // to ensure it is called *after* AM_Drawer()
+      // [Nugget] Moved `ST_Drawer()` call below,
+      // to ensure it is called *after* `AM_Drawer()`
       fullscreen = scaledviewheight == 200;               // killough 11/98
       break;
     case GS_INTERMISSION:
@@ -353,12 +365,12 @@ void D_Display (void)
     }
 
   // draw the view directly
-  // [Nugget] Removed '&& !automapactive' condition
+  // [Nugget] Removed `&& !automapactive` condition
   if (gamestate == GS_LEVEL && gametic)
     R_RenderPlayerView (&players[displayplayer]);
 
-  // [Nugget] Moved HU_Drawer() call below,
-  // to ensure it is called *after* AM_Drawer() and ST_Drawer()
+  // [Nugget] Moved `HU_Drawer()` call below,
+  // to ensure it is called *after* `AM_Drawer()` and `ST_Drawer()`
 
   // clean up border stuff
   if (gamestate != oldgamestate && gamestate != GS_LEVEL)
@@ -393,7 +405,7 @@ void D_Display (void)
   if (gamestate == GS_LEVEL && automapactive)
     {
       AM_Drawer();
-      // [Nugget] Removed HU_Drawer() call, since we
+      // [Nugget] Removed `HU_Drawer()` call, since we
       // now call it right after this code block
 
       // [crispy] force redraw of status bar and border
@@ -401,13 +413,13 @@ void D_Display (void)
       inhelpscreensstate = true;
     }
 
-  // [Nugget] Moved here, as to be run *after* AM_Drawer()
+  // [Nugget] Moved here, so as to be run *after* `AM_Drawer()`
   if (gamestate == GS_LEVEL && gametic)
   {
     ST_Drawer(scaledviewheight == 200, redrawsbar);
 
-    // Moved here too, as to be run
-    // *after* AM_Drawer() and ST_Drawer()
+    // Moved here too, so as to be run
+    // *after* `AM_Drawer()` and `ST_Drawer()`
     HU_Drawer();
   }
 
@@ -441,29 +453,24 @@ void D_Display (void)
     }
 
   // wipe update
-  wipe_EndScreen(0, 0, video.unscaledw, SCREENHEIGHT);
+  wipe_EndScreen(0, 0, video.width, video.height);
 
   wipestart = I_GetTime () - 1;
 
   do
     {
-      int nowtime, tics;
-      do
-        {
-          I_Sleep(1);
-          nowtime = I_GetTime();
-          tics = nowtime - wipestart;
-        }
-      while (!tics);
-      wipestart = nowtime;
+      int nowtime = I_GetTime();
+      int tics = nowtime - wipestart;
+
+      fractionaltic = I_GetFracTime();
+
       done = wipe_ScreenWipe(strictmode ? wipe_Melt : screen_melt,
-                             0, 0, video.unscaledw, SCREENHEIGHT, tics);
+                             0, 0, video.width, video.height, tics);
+      wipestart = nowtime;
       M_Drawer();                   // menu is drawn even on top of wipes
       I_FinishUpdate();             // page flip or blit buffer
     }
   while (!done);
-
-  drs_skip_frame = true; // skip DRS after wipe
 }
 
 //
@@ -502,27 +509,7 @@ void D_PageTicker(void)
 
 void D_PageDrawer(void)
 {
-  if (pagename)
-    {
-      V_DrawPatchFullScreen(V_CachePatchName(pagename, PU_CACHE));
-#if 0
-      int l = W_CheckNumForName(pagename);
-      byte *t = W_CacheLumpNum(l, PU_CACHE);
-      size_t s = W_LumpLength(l);
-      unsigned c = 0;
-      while (s--)
-	c = c*3 + t[s];
-      V_DrawPatchFullScreen((patch_t *) t);
-      if (c==2119826587u || c==2391756584u)
-        // [FG] removed the embedded DOGOVRLY title pic overlay graphic lump
-        if (W_CheckNumForName("DOGOVRLY") > 0)
-        {
-	V_DrawPatch(0, 0, W_CacheLumpName("DOGOVRLY", PU_CACHE));
-        }
-#endif
-    }
-  else
-    MN_DrawCredits();
+  V_DrawPatchFullScreen(V_CachePatchName(pagename, PU_CACHE));
 }
 
 //
@@ -535,141 +522,107 @@ void D_AdvanceDemo (void)
   advancedemo = true;
 }
 
-// killough 11/98: functions to perform demo sequences
-
-static void D_SetPageName(char *name)
-{
-  pagename = name;
-}
-
-static void D_DrawTitle1(char *name)
-{
-  S_StartMusic(mus_intro);
-  pagetic = (TICRATE*170)/35;
-  D_SetPageName(name);
-}
-
-static void D_DrawTitle2(char *name)
-{
-  S_StartMusic(mus_dm2ttl);
-  D_SetPageName(name);
-}
-
-// killough 11/98: tabulate demo sequences
-
-static struct
-{
-  void (*func)(char *);
-  char *name;
-} const demostates[][4] =
-  {
-    {
-      {D_DrawTitle1, "TITLEPIC"},
-      {D_DrawTitle1, "TITLEPIC"},
-      {D_DrawTitle2, "TITLEPIC"},
-      {D_DrawTitle1, "TITLEPIC"},
-    },
-
-    {
-      {G_DeferedPlayDemo, "demo1"},
-      {G_DeferedPlayDemo, "demo1"},
-      {G_DeferedPlayDemo, "demo1"},
-      {G_DeferedPlayDemo, "demo1"},
-    },
-
-    // [FG] swap third and fifth state in the sequence,
-    //      so that a WAD's credit screen gets precedence over Woof!'s own
-    //      (also, show the credit screen for The Ultimate Doom)
-    {
-      {D_SetPageName, "HELP2"},
-      {D_SetPageName, "HELP2"},
-      {D_SetPageName, "CREDIT"},
-      {D_SetPageName, "CREDIT"},
-    },
-
-    {
-      {G_DeferedPlayDemo, "demo2"},
-      {G_DeferedPlayDemo, "demo2"},
-      {G_DeferedPlayDemo, "demo2"},
-      {G_DeferedPlayDemo, "demo2"},
-    },
-
-    // [FG] swap third and fifth state in the sequence,
-    //      so that a WAD's credit screen gets precedence over Woof!'s own
-    {
-      {D_SetPageName, NULL},
-      {D_SetPageName, NULL},
-      {D_SetPageName, NULL},
-      {D_SetPageName, NULL},
-    },
-
-    {
-      {G_DeferedPlayDemo, "demo3"},
-      {G_DeferedPlayDemo, "demo3"},
-      {G_DeferedPlayDemo, "demo3"},
-      {G_DeferedPlayDemo, "demo3"},
-    },
-
-    {
-      {NULL},
-      {NULL},
-      // Andrey Budko
-      // Both Plutonia and TNT are commercial like Doom2,
-      // but in difference from Doom2, they have demo4 in demo cycle.
-      {G_DeferedPlayDemo, "demo4"},
-      {D_SetPageName, "CREDIT"},
-    },
-
-    {
-      {NULL},
-      {NULL},
-      {NULL},
-      {G_DeferedPlayDemo, "demo4"},
-    },
-
-    {
-      {NULL},
-      {NULL},
-      {NULL},
-      {NULL},
-    }
-  };
-
 //
 // This cycles through the demo sequences.
+// FIXME - version dependend demo numbers?
 //
-// killough 11/98: made table-driven
 
 void D_DoAdvanceDemo(void)
 {
-  char *name;
-  players[consoleplayer].playerstate = PST_LIVE;  // not reborn
-  advancedemo = usergame = paused = false;
-  gameaction = ga_nothing;
+    players[consoleplayer].playerstate = PST_LIVE; // not reborn
+    advancedemo = false;
+    usergame = false; // no save / end game here
+    paused = false;
+    gameaction = ga_nothing;
 
-  pagetic = TICRATE * 11;         // killough 11/98: default behavior
-  gamestate = GS_DEMOSCREEN;
+    // The Ultimate Doom executable changed the demo sequence to add
+    // a DEMO4 demo.  Final Doom was based on Ultimate, so also
+    // includes this change; however, the Final Doom IWADs do not
+    // include a DEMO4 lump, so the game bombs out with an error
+    // when it reaches this point in the demo sequence.
 
-  if (!demostates[++demosequence][gamemode].func)
-    demosequence = 0;
+    // However! There is an alternate version of Final Doom that
+    // includes a fixed executable.
 
-  name = demostates[demosequence][gamemode].name;
-  if (name && W_CheckNumForName(name) < 0)
-  {
-    // [FG] the BFG Edition IWADs have no TITLEPIC lump, use DMENUPIC instead
-    if (!strcasecmp(name, "TITLEPIC"))
+    if (W_CheckNumForName("DEMO4") >= 0)
     {
-      name = "DMENUPIC";
+        demosequence = (demosequence + 1) % 7;
     }
-    // [FG] do not even attempt to play DEMO4 if it is not available
-    else if (!strcasecmp(name, "demo4"))
+    else
     {
-      demosequence = 0;
-      name = demostates[demosequence][gamemode].name;
+        demosequence = (demosequence + 1) % 6;
     }
-  }
 
-  demostates[demosequence][gamemode].func(name);
+    switch (demosequence)
+    {
+        case 0:
+            if (gamemode == commercial)
+            {
+                pagetic = TICRATE * 11;
+            }
+            else
+            {
+                pagetic = 170;
+            }
+            gamestate = GS_DEMOSCREEN;
+            pagename = "TITLEPIC";
+            if (gamemode == commercial)
+            {
+                S_StartMusic(mus_dm2ttl);
+            }
+            else
+            {
+                S_StartMusic(mus_intro);
+            }
+            break;
+        case 1:
+            G_DeferedPlayDemo("DEMO1");
+            break;
+        case 2:
+            pagetic = 200;
+            gamestate = GS_DEMOSCREEN;
+            pagename = "CREDIT";
+            break;
+        case 3:
+            G_DeferedPlayDemo("DEMO2");
+            break;
+        case 4:
+            gamestate = GS_DEMOSCREEN;
+            if (gamemode == commercial)
+            {
+                pagetic = TICRATE * 11;
+                pagename = "TITLEPIC";
+                S_StartMusic(mus_dm2ttl);
+            }
+            else
+            {
+                pagetic = 200;
+
+                if (gameversion >= exe_ultimate)
+                {
+                    pagename = "CREDIT";
+                }
+                else
+                {
+                    pagename = "HELP2";
+                }
+            }
+            break;
+        case 5:
+            G_DeferedPlayDemo("DEMO3");
+            break;
+        // THE DEFINITIVE DOOM Special Edition demo
+        case 6:
+            G_DeferedPlayDemo("DEMO4");
+            break;
+    }
+
+    // The Doom 3: BFG Edition version of doom2.wad does not have a
+    // TITLETPIC lump.
+    if (!strcasecmp(pagename, "TITLEPIC") && W_CheckNumForName("TITLEPIC") < 0)
+    {
+        pagename = "DMENUPIC";
+    }
 }
 
 //
@@ -764,7 +717,7 @@ typedef struct {
 } basedir_t;
 
 static basedir_t basedirs[] = {
-#if !defined(WIN32)
+#if !defined(_WIN32)
     {"../share/" PROJECT_SHORTNAME, D_DoomExeDir, false},
 #endif
     {NULL, D_DoomPrefDir, true},
@@ -935,6 +888,8 @@ static void CheckIWAD(void)
 //
 // jff 4/19/98 rewritten to use a more advanced search algorithm
 
+const char *gamedescription = NULL;
+
 void IdentifyVersion(void)
 {
     // get config file from same directory as executable
@@ -1012,8 +967,8 @@ void IdentifyVersion(void)
         CheckIWAD();
     }
 
-    I_Printf(VB_INFO, " - \"%s\" version",
-             D_GetIWADDescription(M_BaseName(wadfiles[0].name), gamemode, gamemission));
+    gamedescription = D_GetIWADDescription(M_BaseName(wadfiles[0].name), gamemode, gamemission);
+    I_Printf(VB_INFO, " - \"%s\" version", gamedescription);
 }
 
 // [FG] emulate a specific version of Doom
@@ -1180,7 +1135,6 @@ void FindResponseFile (void)
 // [FG] compose a proper command line from loose file paths passed as arguments
 // to allow for loading WADs and DEHACKED patches by drag-and-drop
 
-#if defined(_WIN32)
 enum
 {
     FILETYPE_UNKNOWN = 0x0,
@@ -1359,8 +1313,13 @@ static void M_AddLooseFiles(void)
         if (strlen(arg) < 3 ||
             arg[0] == '-' ||
             arg[0] == '@' ||
+#if defined (_WIN32)
             ((!isalpha(arg[0]) || arg[1] != ':' || arg[2] != '\\') &&
-            (arg[0] != '\\' || arg[1] != '\\')))
+            (arg[0] != '\\' || arg[1] != '\\'))
+#else
+            (arg[0] != '/' && arg[0] != '.')
+#endif
+          )
         {
             free(arguments);
             return;
@@ -1420,7 +1379,6 @@ static void M_AddLooseFiles(void)
 
     myargv = newargv;
 }
-#endif
 
 // killough 10/98: moved code to separate function
 
@@ -1725,14 +1683,18 @@ void D_SetBloodColor(void)
 // killough 2/22/98: Add support for ENDBOOM, which is PC-specific
 // killough 8/1/98: change back to ENDOOM
 
-static int show_endoom;
+typedef enum {
+  EXIT_SEQUENCE_OFF,          // Skip sound, skip ENDOOM.
+  EXIT_SEQUENCE_SOUND_ONLY,   // Play sound, skip ENDOOM.
+  EXIT_SEQUENCE_PWAD_ENDOOM,  // Play sound, show ENDOOM for PWADs only.
+  EXIT_SEQUENCE_ON            // Play sound, show ENDOOM.
+} exit_sequence_t;
 
-// Don't show ENDOOM if we have it disabled.
-boolean D_CheckEndDoom(void)
+static exit_sequence_t exit_sequence;
+
+boolean D_AllowQuitSound(void)
 {
-  int lumpnum = W_CheckNumForName("ENDOOM");
-
-  return (show_endoom == 1 || (show_endoom == 2 && !W_IsIWADLump(lumpnum)));
+  return (exit_sequence != EXIT_SEQUENCE_OFF);
 }
 
 static void D_ShowEndDoom(void)
@@ -1743,9 +1705,16 @@ static void D_ShowEndDoom(void)
   I_Endoom(endoom);
 }
 
+static boolean AllowEndDoom(void)
+{
+  return (exit_sequence == EXIT_SEQUENCE_ON
+          || (exit_sequence == EXIT_SEQUENCE_PWAD_ENDOOM
+              && !W_IsIWADLump(W_CheckNumForName("ENDOOM"))));
+}
+
 static void D_EndDoom(void)
 {
-  if (D_CheckEndDoom())
+  if (AllowEndDoom())
   {
     D_ShowEndDoom();
   }
@@ -1838,11 +1807,11 @@ void D_DoomMain(void)
 
   I_AtExitPrio(I_ErrorMsg,  true,  "I_ErrorMsg",  exit_priority_verylast);
 
-#if defined(_WIN32)
+  I_UpdatePriority(true);
+
   // [FG] compose a proper command line from loose file paths passed as
   // arguments to allow for loading WADs and DEHACKED patches by drag-and-drop
   M_AddLooseFiles();
-#endif
 
   //!
   //
@@ -1890,6 +1859,8 @@ void D_DoomMain(void)
   I_Printf(VB_INFO, "W_Init: Init WADfiles.");
 
   LoadBaseFile();
+
+  W_InitPredefinedLumps(); // [Nugget]
 
   IdentifyVersion();
 
@@ -1979,10 +1950,6 @@ void D_DoomMain(void)
   //
 
   devparm = M_CheckParm ("-devparm");
-
-  // [Nugget]
-  doubleammoparm = false;
-  halfdamageparm = false;
 
   //!
   // @category net
@@ -2420,6 +2387,7 @@ void D_DoomMain(void)
   {
     W_ProcessInWads("UMAPINFO", U_ParseMapInfo, true);
     W_ProcessInWads("UMAPINFO", U_ParseMapInfo, false);
+    U_BuildEpisodes();
   }
 
   if (!M_CheckParm("-save"))
@@ -2537,7 +2505,7 @@ void D_DoomMain(void)
 
   I_Printf(VB_INFO, "I_Init: Setting up machine state.");
   I_InitTimer();
-  I_InitController();
+  I_InitGamepad();
   I_InitSound();
   I_InitMusic();
 
@@ -2569,7 +2537,10 @@ void D_DoomMain(void)
 
   G_UpdateSideMove();
   G_UpdateAngleFunctions();
-  G_UpdateAccelerateMouse();
+  G_UpdateLocalViewFunction();
+  G_UpdateGamepadVariables();
+  G_UpdateMouseVariables();
+  R_UpdateViewAngleFunction();
 
   MN_ResetTimeScale();
 
@@ -2808,12 +2779,11 @@ void D_DoomMain(void)
     time_t curtime = time(NULL);
     struct tm *curtm = localtime(&curtime);
 
-    // cheese :)
-
-    extern boolean cheese;
-
-    if (curtm && curtm->tm_mon == 3 && curtm->tm_mday == 1)
-    { cheese = true; }
+    if (curtm)
+    {
+           if (curtm->tm_mon == 3 && curtm->tm_mday == 1)  {  cheese = true; }
+      else if (curtm->tm_mon == 9 && curtm->tm_mday == 31) { frights = true; }
+    }
   }
 
   for (;;)
@@ -2831,12 +2801,12 @@ void D_DoomMain(void)
 
 void D_BindMiscVariables(void)
 {
-  BIND_NUM_GENERAL(show_endoom, 0, 0, 2,
-    "Show ENDOOM screen (0 = Off; 1 = On; 2 = PWADs only)");
+  BIND_NUM_GENERAL(exit_sequence, 0, 0, EXIT_SEQUENCE_ON,
+    "Exit sequence (0 = Off; 1 = Sound Only; 2 = PWAD ENDOOM; 3 = On)");
   BIND_BOOL_GENERAL(demobar, false, "Show demo progress bar");
 
   // [Nugget] More wipes
-  BIND_NUM_GENERAL(screen_melt, wipe_Melt, wipe_None, wipe_Fizzle,
+  BIND_NUM_GENERAL(screen_melt, wipe_Melt, wipe_None, wipe_BlackFade,
     "Screen wipe effect (0 = None; 1 = Melt; 2 = Crossfade; 3 = Fizzlefade; 4 = Black Fade)");
 
   // [Nugget] /---------------------------------------------------------------

@@ -30,7 +30,6 @@
 #include "doomdata.h"
 #include "doomdef.h"
 #include "doomstat.h"
-#include "g_input.h"
 #include "i_video.h"
 #include "p_mobj.h"
 #include "p_pspr.h"
@@ -85,6 +84,7 @@ boolean raw_input;
 fixed_t  viewcos, viewsin;
 player_t *viewplayer;
 fixed_t  viewheightfrac; // [FG] sprite clipping optimizations
+int max_project_slope = 4;
 
 static fixed_t focallength, lightfocallength;
 
@@ -140,6 +140,7 @@ int extra_level_brightness;               // level brightness feature
 
 // CVARs ---------------------------------------------------------------------
 
+boolean flip_levels;
 boolean nightvision_visor;
 int fake_contrast;
 boolean diminished_lighting;
@@ -459,7 +460,7 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 // [Cherry] CVARs
 int rocket_trails_tran;
 
-void (*colfunc)(void) = R_DrawColumn;     // current column draw function
+void (*colfunc)(void);                    // current column draw function
 
 //
 // R_PointOnSide
@@ -603,6 +604,26 @@ static int scaledviewwidth_nonwide, viewwidth_nonwide;
 static fixed_t centerxfrac_nonwide;
 
 //
+// CalcMaxProjectSlope
+// Calculate the minimum divider needed to provide at least 45 degrees of FOV
+// padding. For fast rejection during sprite/voxel projection.
+//
+
+static void CalcMaxProjectSlope(int fov)
+{
+  max_project_slope = 16;
+
+  for (int i = 1; i < 16; i++)
+  {
+    if (atan(i) * FINEANGLES / M_PI - fov >= FINEANGLES / 8)
+    {
+      max_project_slope = i;
+      break;
+    }
+  }
+}
+
+//
 // R_InitTextureMapping
 //
 // killough 5/2/98: reformatted
@@ -658,7 +679,7 @@ static void R_InitTextureMapping(void)
       else
         {
           t = FixedMul(finetangent[i], focallength);
-          t = (centerxfrac - t + FRACUNIT-1) >> FRACBITS;
+          t = (centerxfrac - t + FRACMASK) >> FRACBITS;
           if (t < -1)
             t = -1;
           else
@@ -694,6 +715,7 @@ static void R_InitTextureMapping(void)
   clipangle = xtoviewangle[0];
 
   vx_clipangle = clipangle - ((fov << ANGLETOFINESHIFT) - ANG90);
+  CalcMaxProjectSlope(fov);
 }
 
 //
@@ -787,7 +809,7 @@ void R_InitLightTables (void)
       for (j=0; j<MAXLIGHTZ; j++)
         {
           int scale = FixedDiv ((SCREENWIDTH/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
-          int t, level = startmap - (scale >>= LIGHTSCALESHIFT)/DISTMAP;
+          int t, level = startmap - (scale >> LIGHTSCALESHIFT)/DISTMAP;
 
           if (level < 0)
             level = 0;
@@ -832,7 +854,6 @@ static void R_SetupFreelook(void)
   if (viewpitch)
   {
     dy = FixedMul(projection, -finetangent[(ANG90 - viewpitch) >> ANGLETOFINESHIFT]);
-    dy = (fixed_t)((int64_t)dy * SCREENHEIGHT / ACTUALHEIGHT);
   }
   else
   {
@@ -1021,6 +1042,8 @@ void R_ExecuteSetViewSize (void)
 
 void R_Init (void)
 {
+  r_fov = custom_fov; // [Nugget]
+
   R_InitData();
   R_SetViewSize(screenblocks);
   R_InitPlanes();
@@ -1031,6 +1054,9 @@ void R_Init (void)
 
   // [FG] spectre drawing mode
   R_SetFuzzColumnMode();
+
+  colfunc = R_DrawColumn;
+  R_InitDrawFunctions();
 }
 
 //
@@ -1053,21 +1079,63 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
   return &subsectors[nodenum & ~NF_SUBSECTOR];
 }
 
+static inline boolean CheckLocalView(const player_t *player)
+{
+  // [Nugget] Freecam: use localview unless
+  // locked onto a mobj, or not controlling the camera
+  if (freecam_on && !(freecam.mobj || freecam_mode != FREECAM_CAM))
+  { return true; }
+
+  return (
+    // Don't use localview if the player is spying.
+    player == &players[consoleplayer] &&
+    // Don't use localview if the player is dead.
+    player->playerstate != PST_DEAD &&
+    // Don't use localview if the player just teleported.
+    !player->mo->reactiontime &&
+    // Don't use localview if a demo is playing.
+    !demoplayback &&
+    // Don't use localview during a netgame (single-player or solo-net only).
+    (!netgame || solonet)
+  );
+}
+
+static angle_t CalcViewAngle_RawInput(const player_t *player)
+{
+  return (player->mo->angle + localview.angle - player->ticangle +
+          LerpAngle(player->oldticangle, player->ticangle));
+}
+
+static angle_t CalcViewAngle_LerpFakeLongTics(const player_t *player)
+{
+  return LerpAngle(player->mo->oldangle + localview.oldlerpangle,
+                   player->mo->angle + localview.lerpangle);
+}
+
+static angle_t (*CalcViewAngle)(const player_t *player);
+
+void R_UpdateViewAngleFunction(void)
+{
+  if (raw_input)
+  {
+    CalcViewAngle = CalcViewAngle_RawInput;
+  }
+  else if (lowres_turn && fake_longtics)
+  {
+    CalcViewAngle = CalcViewAngle_LerpFakeLongTics;
+  }
+  else
+  {
+    CalcViewAngle = NULL;
+  }
+}
+
 //
 // R_SetupFrame
 //
 
 void R_SetupFrame (player_t *player)
 {
-  int i, cm;
-  fixed_t pitch;
-  const boolean use_localview = G_UseLocalView(player);
-
-  // [Nugget]
-  fixed_t playerz, basepitch;
-  static angle_t old_interangle, target_interangle;
-  static fixed_t chasecamheight;
-
   // [Nugget] Freecam
   if (freecam_on && gamestate == GS_LEVEL)
   {
@@ -1108,19 +1176,30 @@ void R_SetupFrame (player_t *player)
     player = &dummyplayer;
   }
 
+  int i, cm;
+  fixed_t pitch;
+  const boolean use_localview = CheckLocalView(player);
+  const boolean camera_ready = (
+    // Don't interpolate on the first tic of a level,
+    // otherwise oldviewz might be garbage.
+    leveltime > 1 &&
+    // Don't interpolate if the player did something
+    // that would necessitate turning it off for a tic.
+    player->mo->interp == true &&
+    // Don't interpolate during a paused state
+    (leveltime > oldleveltime
+     || (freecam_on && !freecam.mobj && gamestate == GS_LEVEL)) // [Nugget] Freecam
+  );
+
+  // [Nugget]
+  fixed_t playerz, basepitch;
+  static angle_t old_interangle, target_interangle;
+  static fixed_t chasecamheight;
+
   viewplayer = player;
 
   // [AM] Interpolate the player camera if the feature is enabled.
-  if (uncapped &&
-      // Don't interpolate on the first tic of a level,
-      // otherwise oldviewz might be garbage.
-      leveltime > 1 &&
-      // Don't interpolate if the player did something
-      // that would necessitate turning it off for a tic.
-      player->mo->interp == true &&
-      // Don't interpolate during a paused state
-      (leveltime > oldleveltime
-       || (freecam_on && !freecam.mobj && gamestate == GS_LEVEL))) // [Nugget] Freecam
+  if (uncapped && camera_ready)
   {
     // Interpolate player camera from their old position to their current one.
     viewx = LerpFixed(player->mo->oldx, player->mo->x);
@@ -1129,16 +1208,17 @@ void R_SetupFrame (player_t *player)
 
     playerz = LerpFixed(player->mo->oldz, player->mo->z); // [Nugget]
 
-    if (use_localview)
+    if (use_localview && CalcViewAngle)
     {
-      viewangle = G_CalcViewAngle(player);
+      viewangle = CalcViewAngle(player);
     }
     else
     {
       viewangle = LerpAngle(player->mo->oldangle, player->mo->angle);
     }
 
-    if (use_localview && !player->centering)
+    if ((use_localview || (freecam_on && freecam_mode == FREECAM_CAM)) // [Nugget] Freecam
+        && raw_input && !player->centering)
     {
       basepitch = player->pitch + localview.pitch;
       basepitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, basepitch);
@@ -1170,7 +1250,7 @@ void R_SetupFrame (player_t *player)
     playerz = player->mo->z;
     pitch += player->flinch; // Flinching
 
-    if (use_localview)
+    if (camera_ready && use_localview && lowres_turn && fake_longtics)
     {
       viewangle += localview.angle;
     }
@@ -1655,6 +1735,8 @@ void R_BindRenderVariables(void)
     "Invulnerability effect (0 = Vanilla; 1 = MBF; 2 = Gray)");
 
   // [Nugget] /---------------------------------------------------------------
+
+  BIND_BOOL_GENERAL(flip_levels, false, "Flip levels horizontally (visual filter)");
 
   BIND_BOOL_GENERAL(no_berserk_tint, false, "Disable Berserk tint");
   BIND_BOOL_GENERAL(no_radsuit_tint, false, "Disable Radiation Suit tint");

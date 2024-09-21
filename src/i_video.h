@@ -26,7 +26,7 @@
 #define FOV_DEFAULT      90
 #define FOV_MIN          20  // [Nugget] Decreased
 #define FOV_MAX          140 // [Nugget] Increased
-#define ASPECT_RATIO_MAX 2.4  // Up to 21:9. TODO: Support up to 3.6 (32:9).
+#define ASPECT_RATIO_MAX 3.6 // Up to 32:9 aspect ratio.
 #define ASPECT_RATIO_MIN (4.0 / 3.0)
 
 typedef enum
@@ -36,6 +36,7 @@ typedef enum
     RATIO_16_10,
     RATIO_16_9,
     RATIO_21_9,
+    RATIO_32_9,
     NUM_RATIOS
 } aspect_ratio_mode_t;
 
@@ -78,6 +79,7 @@ extern boolean resetneeded;
 extern boolean setrefreshneeded;
 extern boolean toggle_fullscreen;
 extern boolean toggle_exclusive_fullscreen;
+extern boolean correct_aspect_ratio;
 extern boolean screenvisible;
 
 // [Nugget]
@@ -85,7 +87,7 @@ extern boolean screenvisible;
 extern const float gammalevels[GAMMA2MAX+1];
 
 extern int gamma2;
-byte I_GetPaletteIndex(byte *palette, int r, int g, int b);
+byte I_GetNearestColor(byte *palette, int r, int g, int b);
 
 boolean I_WritePNGfile(char *filename); // [FG] screenshots in PNG format
 
@@ -96,6 +98,8 @@ void I_InitWindowIcon(void);
 
 void I_ShowMouseCursor(boolean toggle);
 void I_ResetRelativeMouseState(void);
+
+void I_UpdatePriority(boolean active);
 
 void I_BindVideoVariables(void);
 

@@ -134,48 +134,20 @@ enum
 extern int hud_type;
 extern boolean draw_crispy_hud;
 
-
-extern boolean hud_crosshair_on;
-extern int hud_crosshair; // [Nugget] Crosshair type to be used
-extern int hud_crosshair_tran_pct; // [Nugget] Translucent crosshair
-
 enum
 {
   HUD_WIDGET_OFF,
   HUD_WIDGET_AUTOMAP,
   HUD_WIDGET_HUD,
   HUD_WIDGET_ALWAYS,
+  HUD_WIDGET_ADVANCED,
 };
 
-typedef enum
-{
-  crosstarget_off,
-  crosstarget_highlight,
-  crosstarget_health, // [Alaux] Color crosshair by target health
-} crosstarget_t;
-extern crosstarget_t hud_crosshair_target;
-
-// [Alaux] Lock crosshair on target
-typedef enum
-{
-  crosslockon_off,
-  crosslockon_vertical, // [Nugget] Vertical-only lock-on
-  crosslockon_full,
-} crosslockon_t;
-extern crosslockon_t hud_crosshair_lockon;
-
-extern boolean hud_crosshair_fuzzy; // [Nugget] Account for fuzzy targets
-extern struct mobj_s *crosshair_target;
-void HU_UpdateCrosshairLock(int x, int y);
-void HU_DrawCrosshair(void);
-
-extern int hud_crosshair_color;
-
-#define HU_CROSSHAIRS 10
-extern const char *crosshair_lumps[HU_CROSSHAIRS];
-extern const char *crosshair_strings[HU_CROSSHAIRS];
-
 void HU_BindHUDVariables(void);
+
+byte* HU_ColorByHealth(int health, int maxhealth, boolean invul);
+
+extern int speedometer;
 
 #endif
 

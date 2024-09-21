@@ -102,6 +102,7 @@ The following build system and libraries need to be installed:
 - [SDL2_net](https://github.com/libsdl-org/SDL_net)
 - [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
 - [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
+- [cJSON](https://github.com/DaveGamble/cJSON)
 - [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
 - [libxmp](https://github.com/libxmp/libxmp) (optional)
 
@@ -150,7 +151,7 @@ Copyright:
  © 2020 JadingTsunami;  
  © 2020-2024 Fabian Greffrath;  
  © 2020-2024 Roman Fomin;  
- © 2021 Ryan Krafnick;  
+ © 2021-2022 Ryan Krafnick;  
  © 2021-2024 Alaux;  
  © 2022 Julia Nechaevskaya;  
  © 2022-2024 ceski;  
@@ -159,16 +160,12 @@ Copyright:
  © 2023-2024 Xemonix.   
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `src/beta.h`  
-Copyright: © 2001-2019 Contributors to the Freedoom project.  
-License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
-
-Files: `src/dogs.h`  
+Files: `src/i_flickstick.*, src/i_gyro.*`  
 Copyright:  
- © 2017 Nash Muhandes;  
- © apolloaiello;  
- © TobiasKosmos.  
-License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+ © 2018-2021 Julian "Jibb" Smart;  
+ © 2021-2024 Nicolas Lessard;  
+ © 2024 ceski.  
+License: [MIT](https://opensource.org/licenses/MIT)
 
 Files: `src/nano_bsp.*`  
 Copyright: © 2023 Andrew Apted.  
@@ -196,23 +193,24 @@ Files: `src/wad_stats.*`
 Copyright: © 2021-2023 Ryan Krafnick.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
+Files: `base/all-all/sprites/pls*`  
+Copyright: © 2001-2019 Contributors to the Freedoom project.  
+License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
+
 Files: `base/all-all/sprites/tnt1b0.png`  
 Copyright: © 2023 Korp.  
 License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
+Files: `base/all-all/dsdg*, base/all-all/sprites/dog*`  
+Copyright:  
+ © 2017 Nash Muhandes;  
+ © apolloaiello;  
+ © TobiasKosmos.  
+License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+
 Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
 Copyright: © 2018 Alex Mayfield.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
-
-Files: `miniz/*`  
-Copyright:  
- © 2010-2014 Rich Geldreich and Tenacious Software LLC;  
- © 2013-2014 RAD Game Tools and Valve Software.  
-License: [MIT](https://opensource.org/licenses/MIT)
-
-Files: `spng/*`  
-Copyright: © 2018-2023 Randy.  
-License: [BSD-2-Clause](https://opensource.org/license/bsd-2-clause)
 
 Files: `opl/*`  
 Copyright:  
@@ -233,5 +231,22 @@ Copyright:
  © 2005-2017 Simon Howard.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
+Files: `third-party/miniz/*`  
+Copyright:  
+ © 2010-2014 Rich Geldreich and Tenacious Software LLC;  
+ © 2013-2014 RAD Game Tools and Valve Software.  
+License: [MIT](https://opensource.org/licenses/MIT)
+
+Files: `third-party/pffft/*`  
+Copyright:  
+ © 2004 The University Corporation for Atmospheric Research ("UCAR");  
+ © 2013 Julien Pommier.  
+License: [FFTPACK License](https://bitbucket.org/jpommier/pffft/src/master/pffft.h)
+
+Files: `third-party/spng/*`  
+Copyright: © 2018-2023 Randy.  
+License: [BSD-2-Clause](https://opensource.org/license/bsd-2-clause)
+
 Files: `win32/win_opendir.*`  
-License: public-domain
+Copyright: 2019 win32ports
+License: [MIT](https://opensource.org/licenses/MIT)

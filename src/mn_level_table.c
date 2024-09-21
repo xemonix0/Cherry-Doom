@@ -142,7 +142,7 @@ static void LevelsInsertRow(setup_menu_t **menu, char *text, int map_i,
 {
     extern void LT_Warp(void);
 
-    int64_t flags = S_LEFTJUST | S_TITLE | S_FUNCTION;
+    int64_t flags = S_LEFTJUST | S_TITLE | S_FUNC2;
     if (display_stats)
     {
         flags |= S_LTBL_MAP;

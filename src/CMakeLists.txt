@@ -26,22 +26,29 @@ set(CHERRYDOOM_SOURCES
     g_game.c               g_game.h
     g_input.c              g_input.h
     hu_command.c           hu_command.h
+    hu_coordinates.c       hu_coordinates.h
+    hu_crosshair.c         hu_crosshair.h
     hu_lib.c               hu_lib.h
     hu_obituary.c          hu_obituary.h
     hu_stuff.c             hu_stuff.h
     i_3dsound.c
     i_endoom.c             i_endoom.h
+    i_flickstick.c         i_flickstick.h
     i_gamepad.c            i_gamepad.h
     i_glob.c               i_glob.h
+    i_gyro.c               i_gyro.h
     i_input.c              i_input.h
     i_main.c
     i_mbfsound.c
     i_midimusic.c
+                           i_oalcommon.h
+    i_oalequalizer.c       i_oalequalizer.h
     i_oalmusic.c
     i_oalsound.c           i_oalsound.h
                            i_oalstream.h
     i_oplmusic.c
     i_printf.c             i_printf.h
+    i_rumble.c             i_rumble.h
     i_sndfile.c            i_sndfile.h
     i_sound.c              i_sound.h
     i_system.c             i_system.h
@@ -56,6 +63,7 @@ set(CHERRYDOOM_SOURCES
                            m_fixed.h
     m_input.c              m_input.h
     m_io.c                 m_io.h
+    m_json.c               m_json.h
     mn_font.c              mn_font.h
     mn_level_table.c       mn_level_table.h
     mn_menu.c              mn_menu.h
@@ -65,6 +73,7 @@ set(CHERRYDOOM_SOURCES
     m_random.c             m_random.h
     mn_snapshot.c          mn_snapshot.h
                            m_swap.h
+                           m_vector.h
     memio.c                memio.h
     midifallback.c         midifallback.h
     midifile.c             midifile.h
@@ -114,6 +123,7 @@ set(CHERRYDOOM_SOURCES
     r_plane.c              r_plane.h
     r_segs.c               r_segs.h
     r_sky.c                r_sky.h
+    r_skydefs.c            r_skydefs.h
                            r_state.h
     r_swirl.c              r_swirl.h
     r_things.c             r_things.h
@@ -138,6 +148,7 @@ set(CHERRYDOOM_SOURCES
     w_file.c
     w_zip.c
     wi_stuff.c             wi_stuff.h
+    wi_interlvl.c          wi_interlvl.h
     z_zone.c               z_zone.h)
 
 # Standard target definition
@@ -181,9 +192,11 @@ target_link_libraries(cherry-doom PRIVATE
     OpenAL::OpenAL
     SndFile::sndfile
     opl
+    pffft
     textscreen
     miniz
-    spng)
+    spng
+    cjson)
 
 # Some platforms require standard libraries to be linked against.
 if(HAVE_LIBM)
@@ -196,11 +209,8 @@ endif()
 
 if(WIN32)
     target_include_directories(cherry-doom PRIVATE "../win32")
-    target_link_libraries(cherry-doom PRIVATE winmm)
-    if(MSVC)
-        target_sources(cherry-doom PRIVATE
-            ../win32/win_opendir.c ../win32/win_opendir.h)
-    endif()
+    target_link_libraries(cherry-doom PRIVATE winmm shlwapi)
+    target_sources(cherry-doom PRIVATE ../win32/win_opendir.c ../win32/win_opendir.h)
 endif()
 
 if(APPLE)

@@ -24,6 +24,7 @@
 // of other structs: items (internal inventory),
 // animation states (closely tied to the sprites
 // used to represent them, unfortunately).
+#include "doomtype.h"
 #include "p_pspr.h"
 #include "tables.h"
 
@@ -52,6 +53,11 @@ typedef enum
 
 } playerstate_t;
 
+typedef struct
+{
+    int episode;
+    int map;
+} level_t;
 
 //
 // Player internal flags, for cheats and debug.
@@ -224,6 +230,9 @@ typedef struct player_s
   // Local angle for blending per-frame and per-tic turning.
   angle_t ticangle, oldticangle;
 
+  int num_visitedlevels;
+  level_t *visitedlevels;
+
   // [Nugget] ----------------------------------------------------------------
 
   weapontype_t        lastweapon;
@@ -265,8 +274,9 @@ typedef struct wbstartstruct_s
 
   // previous and next levels, origin 0
   int         last;
-  int         next;
-  int         nextep;	// for when MAPINFO progression crosses into another episode.
+  int         next;   
+  // for when MAPINFO progression crosses into another episode.
+  int         nextep;
   struct mapentry_s *lastmapinfo;
   struct mapentry_s *nextmapinfo;
     
@@ -285,6 +295,8 @@ typedef struct wbstartstruct_s
 
   // [FG] total time for all completed levels
   int totaltimes;
+
+  level_t *visitedlevels;
 
 } wbstartstruct_t;
 
