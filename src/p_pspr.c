@@ -32,6 +32,7 @@
 #include "p_mobj.h"
 #include "p_pspr.h"
 #include "p_tick.h"
+#include "p_user.h"
 #include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
@@ -42,14 +43,19 @@
 #include "m_input.h"
 #include "w_wad.h" // W_CheckNumForName
 
+// [Nugget] CVARs
+boolean weapswitch_interruption;
+boolean always_bob;
+boolean weaponsquat;
+boolean sx_fix;
+boolean comp_nomeleesnap;
+
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
 #define WEAPONBOTTOM (FRACUNIT*128)
 #define WEAPONTOP    (FRACUNIT*32)
 
 #define BFGCELLS bfgcells        /* Ty 03/09/98 externalized in p_inter.c */
-
-extern void P_Thrust(player_t *, angle_t, fixed_t);
 
 // The following array holds the recoil values         // phares
 static struct
@@ -153,6 +159,8 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
 // Uses player
 //
 
+static boolean switch_interrupted = false; // [Nugget] Weapon-switch interruption
+
 static void P_BringUpWeapon(player_t *player)
 {
   statenum_t newstate;
@@ -173,6 +181,12 @@ static void P_BringUpWeapon(player_t *player)
 
   player->pendingweapon = wp_nochange;
 
+  // [Nugget] Weapon-switch interruption
+  if (switch_interrupted)
+  {
+    switch_interrupted = false;
+  }
+  else
   // killough 12/98: prevent pistol from starting visibly at bottom of screen:
   player->psprites[ps_weapon].sy2 = // [Nugget]
   player->psprites[ps_weapon].sy = demo_version >= DV_MBF ? 
@@ -490,7 +504,10 @@ static void P_ApplyBobbing(int *sx, int *sy, fixed_t bob)
 #define WEAPON_BOBBING 2
 #define WEAPON_HORIZONTAL 3 // [Nugget]
 
-// [Nugget] Bob weapon based on selected style
+// [Nugget] Bob weapon based on selected style /------------------------------
+
+int bobbing_style;
+
 static void P_NuggetBobbing(player_t* player)
 {
   pspdef_t *psp = player->psprites;
@@ -548,6 +565,8 @@ static void P_NuggetBobbing(player_t* player)
   }
 }
 
+// [Nugget] -----------------------------------------------------------------/
+
 //
 // A_WeaponReady
 // The player can fire the weapon
@@ -571,10 +590,18 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
 
   if (player->pendingweapon != wp_nochange || !player->health)
     {
-      // change weapon (pending weapon should already be validated)
-      statenum_t newstate = weaponinfo[player->readyweapon].downstate;
-      P_SetPsprite(player, ps_weapon, newstate);
-      return;
+      // [Nugget] Weapon-switch interruption
+      if (CASUALPLAY(weapswitch_interruption)
+          && player->pendingweapon == player->readyweapon && player->health)
+      {
+        player->pendingweapon = wp_nochange;
+      }
+      else {
+        // change weapon (pending weapon should already be validated)
+        statenum_t newstate = weaponinfo[player->readyweapon].downstate;
+        P_SetPsprite(player, ps_weapon, newstate);
+        return;
+      }
     }
   else
     player->switching = weapswitch_none;
@@ -612,7 +639,11 @@ void A_ReFire(player_t *player, pspdef_t *psp)
   //  (if a weaponchange is pending, let it go through instead)
 
   if ( (player->cmd.buttons & BT_ATTACK)
-       && player->pendingweapon == wp_nochange && player->health)
+       && (player->pendingweapon == wp_nochange
+           // [Nugget] Weapon-switch interruption
+           || (CASUALPLAY(weapswitch_interruption)
+               && player->pendingweapon == player->readyweapon))
+       && player->health)
     {
       player->refire++;
       P_FireWeapon(player);
@@ -648,6 +679,15 @@ void A_CheckReload(player_t *player, pspdef_t *psp)
 
 void A_Lower(player_t *player, pspdef_t *psp)
 {
+  // [Nugget] Weapon-switch interruption
+  if (CASUALPLAY(weapswitch_interruption)
+      && player->pendingweapon == player->readyweapon && player->health)
+  {
+    switch_interrupted = true;
+    P_BringUpWeapon(player);
+    return;
+  }
+
   // [Nugget] Double speed with Fast Weapons
   const int speed = (player->cheats & CF_FASTWEAPS) ? LOWERSPEED*2 : LOWERSPEED;
 
@@ -686,6 +726,14 @@ void A_Lower(player_t *player, pspdef_t *psp)
 
 void A_Raise(player_t *player, pspdef_t *psp)
 {
+  // [Nugget] Weapon-switch interruption
+  if (CASUALPLAY(weapswitch_interruption) && player->pendingweapon != wp_nochange)
+  {
+    switch_interrupted = true;
+    P_SetPsprite(player, ps_weapon, weaponinfo[player->readyweapon].downstate);
+    return;
+  }
+
   statenum_t newstate;
   // [Nugget] Double speed with Fast Weapons
   const int speed = (player->cheats & CF_FASTWEAPS) ? RAISESPEED*2 : RAISESPEED;
@@ -954,8 +1002,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
       angle_t an = mo->angle;
       angle_t an1 = ((P_Random(pr_bfg)&127) - 64) * (ANG90/768) + an;
       angle_t an2 = ((P_Random(pr_bfg)&127) - 64) * (ANG90/640) + ANG90;
-      extern int autoaim;
-      fixed_t slope = 0;
+      fixed_t slope = 0; // [Nugget]
 
       // [Nugget] Vertical aiming;
       // Taken outside of code block after this one
@@ -1151,6 +1198,8 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
     }
 }
 
+boolean comp_cgundblsnd; // [Nugget]
+
 //
 // A_FireCGun
 //
@@ -1280,6 +1329,9 @@ void P_SetupPsprites(player_t *player)
 }
 
 // [Nugget - ceski] Weapon Inertia /------------------------------------------
+
+boolean weapon_inertia;
+int weapon_inertia_scale_pct;
 
 #define EASE_SCALE(x, y) (FRACUNIT - (FixedDiv(FixedMul(FixedDiv((x) << FRACBITS, (y) << FRACBITS), (fixed_t) weapon_inertia_scale), FRACUNIT)))
 #define EASE_OUT(x, y) ((x) - FixedMul((x), FixedMul((y), (y))))

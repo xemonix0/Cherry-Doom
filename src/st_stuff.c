@@ -33,6 +33,7 @@
 #include "i_video.h"
 #include "info.h"
 #include "m_cheat.h"
+#include "m_config.h"
 #include "m_misc.h"
 #include "m_random.h"
 #include "m_swap.h"
@@ -53,6 +54,9 @@
 
 // [Nugget]
 #include "m_nughud.h"
+
+// [Nugget] CVARs
+static boolean sts_alt_arms;
 
 //
 // STATUS BAR DATA
@@ -138,8 +142,9 @@ static int lu_palette;
 // whether left-side main status bar is active
 static boolean st_statusbaron;
 
-// [crispy] distinguish classic status bar with background and player face from Crispy HUD
-boolean st_crispyhud;
+// [crispy] distinguish classic status bar with background and player face
+// from Crispy HUD
+boolean st_crispyhud; // [Nugget] Global
 static boolean st_classicstatusbar;
 static boolean st_statusbarface; // [Nugget] Face may still be drawn in NUGHUD
 
@@ -217,7 +222,7 @@ static patch_t *nhinfnty;           // NHINFNTY
 static st_number_t w_ready;
 
 // [Alaux]
-int hud_animated_counts;
+static boolean hud_animated_counts;
 int st_health = 100;
 int st_armor = 0;
 
@@ -231,8 +236,8 @@ int armor_red;     // armor amount less than which status is red
 int armor_yellow;  // armor amount less than which status is yellow
 int armor_green;   // armor amount above is blue, below is green
 
-int hud_backpack_thresholds; // backpack changes thresholds
-int hud_armor_type; // color of armor depends on type
+boolean hud_backpack_thresholds; // backpack changes thresholds
+boolean hud_armor_type; // color of armor depends on type
 
  // in deathmatch only, summary of frags stats
 static st_number_t w_frags;
@@ -283,15 +288,13 @@ int             st_keyorskull[3];
 // a random number per tick
 static int      st_randomnumber;
 
-extern char     *mapnames[];
-
 //
 // STATUS BAR CODE
 //
 
 void ST_Stop(void);
 
-int st_solidbackground;
+static boolean st_solidbackground;
 
 static void ST_DrawSolidBackground(int st_x)
 {
@@ -462,6 +465,8 @@ static int ST_DeadFace(void)
 
   return ST_DEADFACE;
 }
+
+boolean comp_godface;
 
 void ST_updateFaceWidget(void)
 {
@@ -639,8 +644,8 @@ void ST_updateFaceWidget(void)
 
 }
 
-int sts_traditional_keys; // killough 2/28/98: traditional status bar keys
-int hud_blink_keys; // [crispy] blinking key or skull in the status bar
+static boolean sts_traditional_keys; // killough 2/28/98: traditional status bar keys
+static boolean hud_blink_keys; // [crispy] blinking key or skull in the status bar
 
 void ST_SetKeyBlink(player_t* player, int blue, int yellow, int red)
 {
@@ -833,6 +838,12 @@ static int SmoothCount(int shownval, int realval)
 }
 
 boolean st_invul;
+
+// [Nugget]
+boolean no_berserk_tint;
+boolean no_radsuit_tint;
+boolean comp_unusedpals;
+
 static void ST_doPaletteStuff(void);
 
 void ST_Ticker(void)
@@ -994,6 +1005,10 @@ static void NughudDrawBar(nughud_bar_t *widget, patch_t **patches, int units, in
 }
 
 // [Nugget] -----------------------------------------------------------------/
+
+// [Nugget]
+static boolean sts_show_berserk;
+static boolean hud_highlight_weapon;
 
 void ST_drawWidgets(void)
 {
@@ -1190,7 +1205,7 @@ void ST_drawWidgets(void)
               ammoy = !st_crispyhud ? ST_AMMOY : nughud.ammo.y;
 
     // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
-    if (show_berserk && plyr->readyweapon == wp_fist && plyr->powers[pw_strength])
+    if (sts_show_berserk && plyr->readyweapon == wp_fist && plyr->powers[pw_strength])
     {
       // NUGHUD Berserk
       if (st_crispyhud && nhbersrk)
@@ -1324,7 +1339,7 @@ void ST_drawWidgets(void)
       else { index = weapon; }
     }
     else {
-      if (alt_arms && (weapon == wp_chainsaw || weapon == wp_supershotgun))
+      if (sts_alt_arms && (weapon == wp_chainsaw || weapon == wp_supershotgun))
       {
         if (weapon == wp_chainsaw && have_ssg)
         {
@@ -1336,7 +1351,7 @@ void ST_drawWidgets(void)
       {
         index = 1;
       }
-      else { index = weapon - 1 - alt_arms; }
+      else { index = weapon - 1 - sts_alt_arms; }
     }
 
     if (0 <= index && index < 9) { w_arms[index].data = 2997; }
@@ -1822,6 +1837,8 @@ void ST_initData(void)
 
 int distributed_delta = 0; // [Nugget] Not static anymore
 
+static boolean sts_show_ssg; // [Nugget]
+
 void ST_createWidgets(void)
 {
   int i;
@@ -1879,13 +1896,13 @@ void ST_createWidgets(void)
                          &st_armson);
 
     // [crispy] show SSG availability in the Shotgun slot of the arms widget
-    if (show_ssg && !(nughud.arms[8].x > -1)) { w_arms[2].inum = &st_shotguns; }
+    if (sts_show_ssg && !(nughud.arms[8].x > -1)) { w_arms[2].inum = &st_shotguns; }
   }
   else {
     for(i=0;i<6;i++)
       {
         // [Nugget] Alternative Arms display (Saw/SSG instead of Pistol)
-        const int alt = (alt_arms ? ((i==5 && have_ssg) ? 2 : 1) : 0);
+        const int alt = (sts_alt_arms ? ((i==5 && have_ssg) ? 2 : 1) : 0);
 
         STlib_initMultIcon(&w_arms[i],
                            ST_ARMSX+(i%3)*ST_ARMSXSPACE,
@@ -1895,7 +1912,7 @@ void ST_createWidgets(void)
       }
 
     // [Nugget]: [crispy] show SSG availability in the Shotgun slot of the arms widget
-    if (show_ssg && !alt_arms) { w_arms[1].inum = &st_shotguns; }
+    if (sts_show_ssg && !sts_alt_arms) { w_arms[1].inum = &st_shotguns; }
   }
 
   // frags sum
@@ -2102,7 +2119,7 @@ void ST_InitChunkBar(void)
   if (st_bar) { Z_Free(st_bar); }
 
   // More than necessary, but so be it
-  st_bar = Z_Malloc((video.pitch * V_ScaleY(ST_HEIGHT)) * sizeof(*st_bar), PU_STATIC, 0);
+  st_bar = Z_Malloc((video.pitch * V_ScaleY(StatusBarBufferHeight())) * sizeof(*st_bar), PU_STATIC, 0);
 
   V_UseBuffer(st_bar);
 
@@ -2161,6 +2178,58 @@ void ST_ResetPalette(void)
 {
   st_palette = -1;
   I_SetPalette(W_CacheLumpNum(lu_palette, PU_CACHE));
+}
+
+void ST_BindSTSVariables(void)
+{
+  M_BindBool("sts_colored_numbers", &sts_colored_numbers, NULL,
+             false, ss_stat, wad_yes, "Colored numbers on the status bar");
+  M_BindBool("sts_pct_always_gray", &sts_pct_always_gray, NULL,
+             false, ss_stat, wad_yes,
+             "Percent signs on the status bar are always gray");
+  M_BindBool("sts_traditional_keys", &sts_traditional_keys, NULL,
+             false, ss_stat, wad_yes,
+             "Show last picked-up key on each key slot on the status bar");
+  M_BindBool("hud_blink_keys", &hud_blink_keys, NULL,
+             false, ss_stat, wad_no,
+             "Make missing keys blink when trying to trigger linedef actions");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  M_BindBool("sts_show_berserk", &sts_show_berserk, NULL, true, ss_stat, wad_yes,
+             "Show Berserk pack on the status bar when using the Fist, if available");
+
+  // (CFG-only)
+  M_BindBool("sts_show_ssg", &sts_show_ssg, NULL, true, ss_none, wad_yes,
+             "Show SSG availability in the Shotgun slot of the arms widget");
+
+  M_BindBool("hud_highlight_weapon", &hud_highlight_weapon, NULL, false, ss_stat, wad_yes,
+             "Highlight current/pending weapon on the status bar");
+
+  M_BindBool("sts_alt_arms", &sts_alt_arms, NULL, false, ss_stat, wad_yes,
+             "Alternative Arms-widget display");
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  M_BindBool("st_solidbackground", &st_solidbackground, NULL,
+             false, ss_stat, wad_no,
+             "Use solid-color borders for the status bar in widescreen mode");
+  M_BindBool("hud_animated_counts", &hud_animated_counts, NULL,
+            false, ss_stat, wad_no, "Animated health/armor counts");
+  M_BindNum("health_red", &health_red, NULL, 25, 0, 200, ss_none, wad_yes,
+            "Amount of health for red-to-yellow transition");
+  M_BindNum("health_yellow", &health_yellow, NULL, 50, 0, 200, ss_none, wad_yes,
+            "Amount of health for yellow-to-green transition");
+  M_BindNum("health_green", &health_green, NULL, 100, 0, 200, ss_none, wad_yes,
+            "Amount of health for green-to-blue transition");
+  M_BindNum("armor_red", &armor_red, NULL, 25, 0, 200, ss_none, wad_yes,
+            "Amount of armor for red-to-yellow transition");
+  M_BindNum("armor_yellow", &armor_yellow, NULL, 50, 0, 200, ss_none, wad_yes,
+            "Amount of armor for yellow-to-green transition");
+  M_BindNum("armor_green", &armor_green, NULL, 100, 0, 200, ss_none, wad_yes,
+            "Amount of armor for green-to-blue transition");
+  M_BindNum("ammo_red", &ammo_red, NULL, 25, 0, 100, ss_none, wad_yes,
+            "Percent of ammo for red-to-yellow transition");
 }
 
 //----------------------------------------------------------------------------

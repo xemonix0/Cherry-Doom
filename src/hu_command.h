@@ -1,7 +1,6 @@
 //
-// Copyright(C) 1993-1996 Id Software, Inc.
-// Copyright(C) 2000, 2005-2014 Simon Howard
-// Copyright(C) 2019 Fabian Greffrath
+// Copyright(C) 2022 Ryan Krafnick
+// Copyright(C) 2024 ceski
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -14,16 +13,26 @@
 // GNU General Public License for more details.
 //
 // DESCRIPTION:
-//	[crispy] add support for SMMU swirling flats
+//      Command History HUD Widget
 //
 
-#ifndef __R_SWIRL__
-#define __R_SWIRL__
+#ifndef __HU_COMMAND__
+#define __HU_COMMAND__
 
 #include "doomtype.h"
+#include "hu_lib.h"
 
-byte *R_DistortedFlat(int flatnum);
+struct hu_multiline_s;
+struct ticcmd_s;
 
-extern boolean r_swirl;
+extern boolean hud_command_history;
+extern int hud_command_history_size;
+extern boolean hud_hide_empty_commands;
+
+void HU_UpdateTurnFormat(void);
+void HU_InitCommandHistory(void);
+void HU_ResetCommandHistory(void);
+void HU_UpdateCommandHistory(const struct ticcmd_s *cmd);
+void HU_BuildCommandHistory(struct hu_multiline_s *const multiline);
 
 #endif

@@ -35,6 +35,8 @@
 // [Cherry] Option to stretch short skies only when mouselook is enabled
 int stretchsky;
 
+boolean fov_stretchsky; // [Nugget]
+
 //
 // sky mapping
 //

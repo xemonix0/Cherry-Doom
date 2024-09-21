@@ -21,12 +21,14 @@
 #include <string.h>
 
 #include "d_event.h"
+#include "d_deh.h"
 #include "d_player.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
 #include "g_game.h"
 #include "hu_lib.h"
+#include "hu_stuff.h"
 #include "i_printf.h"
 #include "m_misc.h"
 #include "m_random.h"
@@ -44,10 +46,6 @@
 
 // [Nugget]
 #include "r_main.h"
-
-// Ty 03/17/98: flag that new par times have been loaded in d_deh
-extern boolean deh_pars;
-extern boolean um_pars;
 
 //
 // Data needed to add patches to full screen intermission pics.
@@ -389,6 +387,8 @@ static int    num_lnames;
 static const char *exitpic, *enterpic;
 
 // [Nugget] Alt. intermission background /------------------------------------
+
+boolean alt_interpic;
 
 static boolean alt_interpic_on = false, old_alt_interpic_on = false;
 
@@ -2238,8 +2238,6 @@ void WI_loadData(void)
 //
 void WI_Drawer (void)
 {
-  extern void WI_DrawWidgets(void);
-
   HUlib_reset_align_offsets();
 
   switch (state)

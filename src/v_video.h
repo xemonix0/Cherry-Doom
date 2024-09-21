@@ -165,11 +165,17 @@ void V_DrawPatchTranslated(int x, int y, struct patch_s *patch, byte *outr);
 void V_DrawPatchTRTR(int x, int y, struct patch_s *patch, byte *outr1,
                      byte *outr2);
 
-// [Nugget] /-----------------------------------------------------------------
+// [Nugget] /=================================================================
 
-// HUD/menu shadows
+// HUD/menu shadows ----------------------------------------------------------
+
+extern boolean hud_menu_shadows;
+extern int hud_menu_shadows_filter_pct;
+
 void V_ToggleShadows(const boolean on);
 void V_SetShadowCrop(const int value);
+
+// ---------------------------------------------------------------------------
 
 void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped,
                             byte *outr1, byte *outr2, byte *tmap);
@@ -214,7 +220,7 @@ void V_ShadowRect(int x, int y, int width, int height);
     hud_menu_shadows = old_shadows;               \
   }
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 void V_DrawPatchFullScreen(struct patch_s *patch);
 

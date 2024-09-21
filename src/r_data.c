@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "d_main.h"
 #include "d_think.h"
 #include "doomdef.h"
 #include "doomstat.h"
@@ -851,6 +852,7 @@ void R_InitSpriteLumps(void)
 // killough 4/4/98: Add support for C_START/C_END markers
 //
 
+invul_mode_t invul_mode;
 static byte invul_orig[256];
 
 void R_InvulMode(void)
@@ -944,7 +946,6 @@ void R_InitTranMap(int progress)
   else
     {   // Compose a default transparent filter map based on PLAYPAL.
       unsigned char *playpal = W_CacheLumpName("PLAYPAL", PU_STATIC);
-      extern const char *D_DoomPrefDir(void);
       char *fname = M_StringJoin(D_DoomPrefDir(), DIR_SEPARATOR_S, "tranmap.dat", NULL);
       struct {
         unsigned char pct;

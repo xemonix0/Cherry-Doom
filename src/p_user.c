@@ -30,6 +30,7 @@
 #include "g_game.h"
 #include "hu_stuff.h"
 #include "info.h"
+#include "m_cheat.h"
 #include "m_input.h"
 #include "p_map.h"
 #include "p_mobj.h"
@@ -39,6 +40,7 @@
 #include "r_defs.h"
 #include "r_main.h"
 #include "r_state.h"
+#include "st_stuff.h"
 
 // [Nugget]
 #include "s_sound.h"
@@ -50,11 +52,21 @@ static fixed_t PlayerSlope(player_t *player)
   return P_PitchToSlope(player->pitch);
 }
 
-// [Nugget] Flinching
+// [Nugget] /=================================================================
+
+// Jumping/crouching
+boolean jump_crouch;
+#define CROUCHUNITS (3*FRACUNIT)
+
+boolean breathing;
+
+// Flinching
 void P_SetFlinch(player_t *const player, int pitch)
 {
   player->flinch = BETWEEN(-12*ANG1, 12*ANG1, player->flinch + pitch*ANG1/2);
 }
+
+// [Nugget] =================================================================/
 
 // Index of the special effects (INVUL inverse) map.
 
@@ -69,9 +81,6 @@ void P_SetFlinch(player_t *const player, int pitch)
 #define MAXBOB  0x100000
 
 boolean onground; // whether player is on ground or in air
-
-// [Nugget]
-#define CROUCHUNITS 3*FRACUNIT
 
 //
 // P_Thrust
@@ -500,13 +509,6 @@ void P_MovePlayer (player_t* player)
 
 #define ANG5 (ANG90/18)
 
-typedef enum
-{
-  death_use_default,
-  death_use_reload,
-  death_use_nothing
-} death_use_action_t;
-
 death_use_action_t death_use_action;
 
 //
@@ -813,7 +815,9 @@ void P_PlayerThink (player_t* player)
 
       // killough 2/8/98, 3/22/98 -- end of weapon selection changes
 
-      if (player->weaponowned[newweapon] && newweapon != player->readyweapon)
+      if (player->weaponowned[newweapon]
+          && (newweapon != player->readyweapon
+              || CASUALPLAY(weapswitch_interruption))) // [Nugget] Weapon-switch interruption
 
         // Do not go to plasma or BFG in shareware,
         //  even if cheated.
@@ -894,7 +898,6 @@ void P_PlayerThink (player_t* player)
 
   if (player->cheats & CF_MAPCOORDS)
   {
-    extern void cheat_mypos_print();
     cheat_mypos_print();
   }
 

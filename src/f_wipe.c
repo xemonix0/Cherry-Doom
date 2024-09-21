@@ -30,6 +30,8 @@
 // [Nugget]
 #include "doomstat.h"
 
+int wipe_speed_percentage; // [Nugget]
+
 // Even in hires mode, we simulate what happens on a 320x200 screen; ie.
 // the screen is vertically sliced into 160 columns that fall to the bottom
 // of the screen. Other hires implementations of the melt effect look weird

@@ -35,6 +35,8 @@
 #include "m_fixed.h"
 #include "m_input.h"
 #include "m_misc.h"
+#include "mn_menu.h"
+#include "p_action.h"
 #include "p_inter.h"
 #include "p_map.h"
 #include "p_mobj.h"
@@ -42,6 +44,7 @@
 #include "p_spec.h" // SPECHITS
 #include "p_tick.h"
 #include "r_defs.h"
+#include "r_main.h"
 #include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
@@ -50,6 +53,7 @@
 #include "w_wad.h"
 
 // [Nugget]
+#include "am_map.h"
 #include "r_main.h"
 
 #define plyr (players+consoleplayer)     /* the console player */
@@ -59,7 +63,6 @@
 //#define NUGMAGIC
 
 #ifdef NUGMAGIC
-// For testing purposes
 static void cheat_magic()
 {
   
@@ -386,11 +389,11 @@ struct cheat_s cheat[] = {
   {"nc",         NULL,                not_net | not_demo | beta_only,
    {cheat_noclip} },
 
-// [Nugget] Change to just "fps"
+  // [Nugget] Change to just "fps"
   {"fps",    NULL,                always,
    {cheat_showfps} },
 
-// [Nugget] /-----------------------------------------------------------------
+  // [Nugget] /---------------------------------------------------------------
 
   {"nomomentum", NULL, not_net | not_demo, {cheat_nomomentum}     },
   {"fauxdemo",   NULL, not_net | not_demo, {cheat_fauxdemo}       }, // Emulates demo/net play state, for debugging
@@ -435,14 +438,12 @@ struct cheat_s cheat[] = {
   {"ggg", NULL, 0, {cheat_magic}},
   #endif
 
-// [Nugget] -----------------------------------------------------------------/
+  // [Nugget] ---------------------------------------------------------------/
 
   {NULL}                 // end-of-list marker
 };
 
 //-----------------------------------------------------------------------------
-
-extern int init_thinkers_count; // [Nugget]
 
 // [Nugget] /=================================================================
 
@@ -518,8 +519,6 @@ static void cheat_gibbers()
 // Factored out from `cheat_god()`
 static void DoResurrect(void)
 {
-  extern void P_SpawnPlayer (mapthing_t* mthing);
-
   signed int an;
   mapthing_t mt = {0};
 
@@ -671,12 +670,12 @@ static void SummonMobj(boolean friendly)
 
   if (automapactive == AM_FULL && !followplayer)
   {
-    const int oldcoords = map_point_coordinates;
+    const int oldcoords = map_point_coord;
 
-    map_point_coordinates = true;
+    map_point_coord = true;
     AM_Coordinates(plyr->mo, &x, &y, &z);
 
-    map_point_coordinates = oldcoords;
+    map_point_coord = oldcoords;
   }
   else {
     x = plyr->mo->x + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
@@ -860,7 +859,6 @@ static void cheat_showfps()
 // killough 7/19/98: Autoaiming optional in beta emulation mode
 static void cheat_autoaim()
 {
-  extern int autoaim;
   displaymsg((autoaim=!autoaim) ?
     "Projectile autoaiming on" : 
     "Projectile autoaiming off");
@@ -927,6 +925,8 @@ static void cheat_mus(char *buf)
     }
 }
 
+boolean comp_choppers; // [Nugget]
+
 // 'choppers' invulnerability & chainsaw
 static void cheat_choppers()
 {
@@ -934,9 +934,9 @@ static void cheat_choppers()
   
   // [Nugget]
   if (casual_play && comp_choppers)
-  { P_GivePower(plyr, pw_invulnerability); }
+    P_GivePower(plyr, pw_invulnerability);
   else
-  { plyr->powers[pw_invulnerability] = true; }
+    plyr->powers[pw_invulnerability] = true;
   
   displaymsg("%s", s_STSTR_CHOPPERS); // Ty 03/27/98 - externalized
 }
@@ -973,30 +973,25 @@ static void cheat_buddha()
 
 static void cheat_notarget()
 {
-	plyr->cheats ^= CF_NOTARGET;
+  plyr->cheats ^= CF_NOTARGET;
 
   // [Nugget]: [crispy]
-  if (plyr->cheats & CF_NOTARGET) {
-    int i;
-    thinker_t *th;
-
+  if (plyr->cheats & CF_NOTARGET)
+  {
     // [crispy] let mobjs forget their target and tracer
-    for (th = thinkercap.next; th != &thinkercap; th = th->next)
+    for (thinker_t *th = thinkercap.next;  th != &thinkercap;  th = th->next)
     {
-      if (th->function.p1 == (actionf_p1)P_MobjThinker)
+      if (th->function.p1 == (actionf_p1) P_MobjThinker)
       {
-        mobj_t *const mo = (mobj_t *)th;
+        mobj_t *const mo = (mobj_t *) th;
 
         if (mo->target && mo->target->player) { mo->target = NULL; }
         if (mo->tracer && mo->tracer->player) { mo->tracer = NULL; }
       }
     }
-    // [crispy] let sectors forget their soundtarget
-    for (i = 0; i < numsectors; i++) {
-      sector_t *const sector = &sectors[i];
 
-      sector->soundtarget = NULL;
-    }
+    // [crispy] let sectors forget their soundtarget
+    for (int i = 0;  i < numsectors;  i++) { sectors[i].soundtarget = NULL; }
   }
 
   if (plyr->cheats & CF_NOTARGET)
@@ -1266,8 +1261,6 @@ static void cheat_friction()
                                                "Variable Friction disabled");
 }
 
-extern const char *default_skill_strings[];
-
 static void cheat_skill0()
 {
   displaymsg("Skill: %s", default_skill_strings[gameskill + 1]);
@@ -1311,18 +1304,19 @@ static void cheat_massacre()    // jff 2/01/98 kill all monsters
 
   int killcount=0;
   thinker_t *currentthinker=&thinkercap;
-  extern void A_PainDie(mobj_t *);
   // killough 7/20/98: kill friendly monsters only if no others to kill
   int mask = MF_FRIEND;
 
-  // [Nugget]
+  // [Nugget] /---------------------------------------------------------------
 
   // Temporarily disable Bloodier Gibbing if enabled;
   // it's too much to handle on maps with many monsters
-  int oldgibbing = bloodier_gibbing;
+  const int oldgibbing = bloodier_gibbing;
   bloodier_gibbing = false;
 
   complete_milestones |= MILESTONE_KILLS; // Don't announce
+
+  // [Nugget] ---------------------------------------------------------------/
 
   P_MapStart();
   do
@@ -1349,8 +1343,7 @@ static void cheat_massacre()    // jff 2/01/98 kill all monsters
   // Ty 03/27/98 - string(s) *not* externalized
   displaymsg("%d Monster%s Killed", killcount, killcount==1 ? "" : "s");
 
-  // [Nugget] Return Bloodier Gibbing to its original state
-  bloodier_gibbing = oldgibbing;
+  bloodier_gibbing = oldgibbing; // [Nugget]
 }
 
 static void cheat_spechits()
@@ -1503,7 +1496,6 @@ static void cheat_spechits()
 // killough 3/26/98: emulate Doom better
 static void cheat_ddt()
 {
-  extern int ddt_cheating;
   if (automapactive)
     ddt_cheating = (ddt_cheating+1) % 3;
 }
@@ -1548,7 +1540,6 @@ static void cheat_reveal_secret()
 static void cheat_cycle_mobj(mobj_t **last_mobj, int *last_count,
                              int flags, int alive)
 {
-  // [Nugget] Moved `extern init_thinkers_count` to global scope
   thinker_t *th, *start_th;
 
   // If the thinkers have been wiped, addresses are invalid
@@ -1610,7 +1601,6 @@ static void cheat_reveal_item()
 // killough 2/7/98: HOM autodetection
 static void cheat_hom()
 {
-  extern int autodetect_hom;           // Ty 03/27/98 - *not* externalized
   displaymsg((autodetect_hom = !autodetect_hom) ? "HOM Detection On" :
     "HOM Detection Off");
 }
@@ -1629,6 +1619,8 @@ static void cheat_fast()
   displaymsg((fastparm = !fastparm) ? "Fast Monsters On" : 
     "Fast Monsters Off");  // Ty 03/27/98 - *not* externalized
   G_SetFastParms(fastparm); // killough 4/10/98: set -fast parameter correctly
+
+  fastmonsters = fastparm; // [Nugget]
 }
 
 // killough 2/16/98: keycard/skullkey cheat functions
@@ -1727,7 +1719,6 @@ static void cheat_pitch()
 
 static void cheat_nuke()
 {
-  extern int disable_nuke;
   displaymsg((disable_nuke = !disable_nuke) ? "Nukage Disabled" :
     "Nukage Enabled");
 }
@@ -1844,7 +1835,6 @@ static const struct {
   { input_idbeholdi, not_net|not_demo, {cheat_pw},       pw_invisibility },
   { input_idbeholdr, not_net|not_demo, {cheat_pw},       pw_ironfeet },
   { input_idbeholdl, not_dm,           {cheat_pw},       pw_infrared },
-  { input_idrate,    always,           {cheat_rate},     0 },
   { input_iddt,      not_dm,           {cheat_ddt},      0 },
   { input_notarget,  not_net|not_demo, {cheat_notarget}, 0 },
   { input_freeze,    not_net|not_demo, {cheat_freeze},   0 },

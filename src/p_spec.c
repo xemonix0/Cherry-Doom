@@ -35,6 +35,7 @@
 #include "doomstat.h"
 #include "g_game.h"
 #include "hu_obituary.h"
+#include "hu_stuff.h"
 #include "i_system.h"
 #include "info.h"
 #include "m_argv.h"
@@ -56,6 +57,7 @@
 #include "r_plane.h" // killough 10/98
 #include "r_sky.h"   // R_GetSkyColor
 #include "r_state.h"
+#include "r_swirl.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "st_stuff.h"
@@ -65,6 +67,9 @@
 
 // [Nugget]
 #include "hu_stuff.h" // hud_secret_message
+
+// [Nugget] CVARs
+boolean comp_keynoway;
 
 //
 // Animating textures and planes
@@ -2175,7 +2180,8 @@ static void P_SecretRevealed(player_t *player)
   {
     int secretcount = 0;
 
-    for (int pl = 0;  pl < MAXPLAYERS;  ++pl) {
+    for (int pl = 0;  pl < MAXPLAYERS;  ++pl)
+    {
       if (playeringame[pl])
       { secretcount += players[pl].secretcount; }
     }
@@ -2184,9 +2190,11 @@ static void P_SecretRevealed(player_t *player)
     {
       complete_milestones |= MILESTONE_SECRETS;
 
-      if (announce_milestones) {
+      if (announce_milestones)
+      {
         players[displayplayer].secretmessage = "All secrets revealed!";
         S_StartSound(NULL, sfx_secret);
+
         return; // Skip the normal "Secret revealed" message
       }
     }
@@ -2374,8 +2382,6 @@ boolean         levelTimer;
 int             levelTimeCount;
 boolean         levelFragLimit;      // Ty 03/18/98 Added -frags support
 int             levelFragLimitCount; // Ty 03/18/98 Added -frags support
-
-boolean         r_swirl;
 
 void P_UpdateSpecials (void)
 {

@@ -38,6 +38,7 @@
 #include "p_mobj.h"
 #include "p_setup.h"
 #include "p_spec.h"
+#include "p_user.h"
 #include "r_defs.h"
 #include "r_main.h"
 #include "r_state.h"
@@ -527,6 +528,8 @@ fixed_t P_PitchToSlope(const fixed_t pitch)
 
 // [Nugget] Over/Under /------------------------------------------------------
 
+int over_under;
+
 // Potential over/under mobjs
 static mobj_t *p_below_tmthing, *p_above_tmthing, // For `tmthing`
               *p_below_thing_s, *p_above_thing_s, // For `thing`    ("setter")
@@ -557,6 +560,10 @@ static void P_SetOverUnderMobjs(mobj_t *thing)
     }
   }
 }
+
+// [Nugget]
+boolean comp_lscollision;
+boolean comp_lsamnesia;
 
 // Factored out from `PIT_CheckThing()`
 boolean P_SkullSlam(mobj_t *skull, mobj_t *hitthing)
@@ -1322,7 +1329,6 @@ static void P_HitSlideLine(line_t *ld)
   }
   else
   {
-    extern boolean onground;
     icyfloor = !compatibility &&
     variable_friction &&
     slidemo->player &&
@@ -1700,6 +1706,9 @@ static void P_SpawnExplosion(fixed_t x, fixed_t y, fixed_t z)
 }
 
 // [Nugget] -----------------------------------------------------------------/
+
+// [Cherry] Blood amount scales with the amount of damage dealt
+boolean blood_amount_scaling;
 
 //
 // PTR_ShootTraverse

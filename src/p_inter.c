@@ -40,14 +40,14 @@
 #include "tables.h"
 
 // [Nugget]
+#include "hu_stuff.h"
 #include "p_maputl.h"
 #include "p_user.h"
 #include "v_video.h"
 
 #include "wad_stats.h" // [Cherry]
 
-// [Nugget] cheese :)
-extern boolean cheese;
+extern boolean cheese; // [Nugget] cheese :)
 
 #define BONUSADD        6
 
@@ -86,7 +86,10 @@ int clipammo[NUMAMMO] = { 10,  4,  20,  1};
 // GET STUFF
 //
 
-// [Nugget]
+// [Nugget] /-----------------------------------------------------------------
+
+boolean switch_on_pickup;
+
 static boolean P_AutoswitchWeapon(void)
 {
   if (!casual_play || switch_on_pickup)
@@ -94,6 +97,8 @@ static boolean P_AutoswitchWeapon(void)
   
   return false;
 }
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // P_GiveAmmo
@@ -273,6 +278,8 @@ boolean P_GiveArmor(player_t *player, int armortype)
   player->armorpoints = hits;
   return true;
 }
+
+boolean comp_keypal; // [Nugget]
 
 //
 // P_GiveCard
@@ -724,7 +731,13 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
                             sound == sfx_itemup ? PITCH_NONE : PITCH_FULL);
 }
 
-// [Nugget] Check for Extra Gibbing
+// [Nugget] /=================================================================
+
+// Extra Gibbing -------------------------------------------------------------
+
+boolean extra_gibbing_on;
+boolean extra_gibbing[NUMEXGIBS];
+
 static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
 {
   extern void A_Punch(), A_Saw(), A_FireShotgun2();
@@ -755,7 +768,10 @@ static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
   return false;
 }
 
-// [Nugget] Bloodier Gibbing
+// Bloodier Gibbing ----------------------------------------------------------
+
+boolean bloodier_gibbing;
+
 static void P_NuggetGib(mobj_t *mo)
 {
   int quantity;
@@ -794,6 +810,8 @@ static void P_NuggetGib(mobj_t *mo)
   }
 }
 
+// [Nugget] =================================================================/
+
 //
 // KillMobj
 //
@@ -810,6 +828,8 @@ static void WatchKill(player_t* player, mobj_t* target)
 
   WS_WatchKill(); // [Cherry]
 }
+
+boolean tossdrop; // [Nugget]
 
 static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
 {
@@ -960,8 +980,8 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
   mo = P_SpawnMobj (target->x,target->y,ONFLOORZ, item);
   mo->flags |= MF_DROPPED;    // special versions of items
 
-  // [Nugget] ZDoom-like item drops
-  if (casual_play && zdoom_item_drops)
+  // [Nugget] Toss items upon death
+  if (casual_play && tossdrop)
   {
     mo->z += target->height*5/4;
     mo->momx = (Woof_Random() - Woof_Random()) << 7;

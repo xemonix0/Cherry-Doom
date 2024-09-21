@@ -36,6 +36,9 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
+// [Nugget] CVARs
+boolean comp_switchsource;
+
 // killough 2/8/98: Remove switch limit
 
 static int *switchlist;                           // killough

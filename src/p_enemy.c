@@ -347,10 +347,6 @@ static int P_IsUnderDamage(mobj_t *actor)
 static fixed_t xspeed[8] = {FRACUNIT,47000,0,-47000,-FRACUNIT,-47000,0,47000};
 static fixed_t yspeed[8] = {0,47000,FRACUNIT,47000,0,-47000,-FRACUNIT,-47000};
 
-// 1/11/98 killough: Limit removed on special lines crossed
-extern  line_t **spechit;          // New code -- killough
-extern  int    numspechit;
-
 static boolean P_Move(mobj_t *actor, boolean dropoff) // killough 9/12/98
 {
   fixed_t tryx, tryy, deltax, deltay;
@@ -1304,6 +1300,8 @@ void A_Chase(mobj_t *actor)
     S_StartSound(actor, actor->info->activesound);
 }
 
+boolean comp_faceshadow; // [Nugget]
+
 //
 // A_FaceTarget
 //
@@ -1364,6 +1362,8 @@ void A_SPosAttack(mobj_t* actor)
       P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
     }
 }
+
+boolean comp_cgunnersfx; // [Nugget]
 
 void A_CPosAttack(mobj_t *actor)
 {
@@ -1498,6 +1498,8 @@ void A_CyberAttack(mobj_t *actor)
     mo->pursuecount = 0;
   }
 }
+
+boolean comp_bruistarget; // [Nugget]
 
 void A_BruisAttack(mobj_t *actor)
 {
@@ -1910,6 +1912,8 @@ void A_Fire(mobj_t *actor)
   actor->z = dest->z;
   P_SetThingPosition(actor);
 }
+
+boolean comp_flamst; // [Nugget]
 
 //
 // A_VileTarget
@@ -2629,6 +2633,8 @@ void A_BrainPain(mobj_t *mo)
   S_StartSound(NULL,sfx_bospn);
 }
 
+boolean comp_iosdeath; // [Nugget]
+
 void A_BrainScream(mobj_t *mo)
 {
   int x;
@@ -2879,7 +2885,7 @@ void A_PlaySound(mobj_t *mo)
 
 void A_RandomJump(mobj_t *mo)
 {
-  if (demo_version < 203)
+  if (demo_version < DV_MBF)
     return;
   if (P_Random(pr_randomjump) < mo->state->misc2)
     P_SetMobjState(mo, mo->state->misc1);

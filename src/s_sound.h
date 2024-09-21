@@ -30,6 +30,9 @@ typedef enum {
 
 struct mobj_s;
 
+// [Cherry]
+extern int sfx_volume, music_volume;
+
 //
 // Initializes sound stuff, including volume
 // Sets channels, SFX and music volume,

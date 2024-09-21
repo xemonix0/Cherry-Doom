@@ -23,6 +23,7 @@
 #include "d_player.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "dsdhacked.h"
 #include "g_game.h"
 #include "hu_stuff.h"
 #include "i_printf.h"
@@ -50,8 +51,19 @@
 // [Nugget]
 #include "p_user.h"
 
-// [FG] colored blood and gibs
-boolean colored_blood;
+// [Nugget] CVARs
+int viewheight_value;
+int flinching;
+int damagecount_cap;
+int bonuscount_cap;
+boolean comp_fuzzyblood;
+boolean comp_nonbleeders;
+
+// [Cherry] CVARs
+boolean rocket_trails;
+int rocket_trails_interval;
+int no_rocket_trails;
+
 int vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
 
 void P_UpdateDirectVerticalAiming(void)
@@ -83,7 +95,7 @@ boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
 
   // killough 4/9/98: remember states seen, to detect cycles:
 
-  extern statenum_t *seenstate_tab;           // fast transition table
+  // fast transition table
   statenum_t *seenstate = seenstate_tab;      // pointer to table
   static int recursion;                       // detects recursion
   statenum_t i = state;                       // initial state
@@ -438,6 +450,8 @@ void P_XYMovement (mobj_t* mo)
      }
     }
 }
+
+boolean comp_deadoof; // [Nugget]
 
 //
 // P_ZMovement
@@ -1310,6 +1324,16 @@ void P_SpawnPlayer (mapthing_t* mthing)
     }
 }
 
+// [Nugget] Custom Skill: duplicate monster spawns /--------------------------
+
+static boolean duplicatespawns = false;
+
+void P_ToggleDuplicateSpawns(const boolean state)
+{
+  duplicatespawns = state;
+}
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // P_SpawnMapThing
@@ -1476,6 +1500,54 @@ spawnit:
       P_UpdateThinker(&mobj->thinker);     // transfer friendliness flag
     }
 
+  // [Nugget] Custom Skill: duplicate monster spawns
+  if (duplicatespawns)
+  {
+    const int offset = abs(mobj->x - mobj->y) % 8;
+    const fixed_t dist = (mobj->radius * 2) + (mobj->info->speed << FRACBITS);
+    boolean stuck = true;
+
+    const fixed_t xoffsets[8] = {
+      -dist,     0, dist,
+      -dist,        dist,
+      -dist,     0, dist
+    };
+
+    const fixed_t yoffsets[8] = {
+      dist,  dist,  dist,
+         0,            0,
+     -dist, -dist, -dist
+    };
+
+    mobj->flags |= MF_TELEPORT; // Don't interact with specials
+
+    for (int j = 0;  j < 8;  j++)
+    {
+      const int side = (j + offset) % 8;
+      const fixed_t xofs = xoffsets[side],
+                    yofs = yoffsets[side];
+
+      if (!Check_Sides(mobj, mobj->x + xofs, mobj->y + yofs)
+          && P_TryMove(mobj, mobj->x + xofs, mobj->y + yofs, false))
+      {
+        stuck = false;
+        break;
+      }
+    }
+
+    if (!(mobj->info->flags & MF_TELEPORT))
+    { mobj->flags &= ~MF_TELEPORT; }
+
+    if (stuck)
+    {
+      if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
+      { max_kill_requirement--; }
+
+      P_RemoveMobj(mobj);
+      return;
+    }
+  }
+
   // killough 7/20/98: exclude friends
   if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
     totalkills++;
@@ -1532,8 +1604,6 @@ spawnit:
 //
 // P_SpawnPuff
 //
-
-extern fixed_t attackrange;
 
 void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
 {
@@ -1697,12 +1767,12 @@ int autoaim = 0;  // killough 7/19/98: autoaiming was not in original beta
 // Tries to aim at a nearby monster
 //
 
+boolean no_hor_autoaim; // [Nugget]
+
 mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 {
   mobj_t *th;
   fixed_t x, y, z, slope = 0;
-
-  extern void A_Recoil(player_t* player);
 
   // see which target is to be aimed at
 

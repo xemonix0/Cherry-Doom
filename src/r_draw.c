@@ -23,6 +23,7 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "doomtype.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "m_random.h"
@@ -612,7 +613,7 @@ static void R_DrawFuzzColumn_block(void)
 // Reference: https://www.doomworld.com/forum/post/1335769
 // /--------------------------------------------------------------------------
 
-int fuzzdark_mode;
+boolean fuzzdark_mode;
 
 static int nx, ny;
 #define FUZZDARK (256 * (Woof_Random() < 32 ? (Woof_Random() & 1 ? 4 : 8) : 6))
@@ -687,7 +688,7 @@ static void R_DrawSelectiveFuzzColumn(void)
 
 // [FG] spectre drawing mode: 0 original, 1 blocky (hires)
 
-int fuzzcolumn_mode;
+boolean fuzzcolumn_mode;
 void (*R_DrawFuzzColumn) (void) = R_DrawFuzzColumn_orig;
 void R_SetFuzzColumnMode (void)
 {

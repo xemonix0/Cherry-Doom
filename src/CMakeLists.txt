@@ -28,6 +28,7 @@ set(CHERRYDOOM_SOURCES
     f_wipe.c               f_wipe.h
                            font.h
     g_game.c               g_game.h
+    hu_command.c           hu_command.h
     hu_lib.c               hu_lib.h
     hu_obituary.c          hu_obituary.h
     hu_stuff.c             hu_stuff.h
@@ -61,7 +62,7 @@ set(CHERRYDOOM_SOURCES
     mn_font.c              mn_font.h
     mn_level_table.c       mn_level_table.h
     mn_menu.c              mn_menu.h
-    mn_setup.c             mn_setup.h
+    mn_setup.c             mn_internal.h
     m_misc.c               m_misc.h
     m_nughud.c             m_nughud.h
     m_random.c             m_random.h

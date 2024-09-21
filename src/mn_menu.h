@@ -24,6 +24,10 @@
 
 struct event_s;
 
+// [Nugget]
+extern boolean quick_quitgame;
+extern boolean quit_sound;
+
 //
 // MENUS
 //
@@ -64,6 +68,8 @@ void MN_ForcedLoadGame(const char *msg); // killough 5/15/98: forced loadgames
 void MN_Trans(void);     // killough 11/98: reset translucency
 void MN_ResetMenu(void); // killough 11/98: reset main menu ordering
 void MN_SetupResetMenu(void);
+void MN_UpdateFreeLook(void);
+void MN_UpdateAdvancedSoundItems(boolean toggle);
 void MN_ResetTimeScale(void);
 void MN_DrawCredits(void); // killough 11/98
 void MN_SetHUFontKerning(void);
@@ -71,8 +77,6 @@ void MN_DisableVoxelsRenderingItem(void);
 void MN_UpdateDynamicResolutionItem(void);
 void MN_DisableResolutionScaleItem(void);
 void MN_UpdateFpsLimitItem(void);
-
-extern int traditional_menu; // display the menu traditional way
 
 typedef enum
 {
@@ -82,11 +86,19 @@ typedef enum
 } backdrop_t;
 
 extern backdrop_t menu_backdrop;
+
+// [Nugget]
+extern int menu_backdrop_darkening;
+extern boolean menu_background_all;
+extern boolean no_menu_tint;
+
 boolean MN_MenuIsShaded(void);
 
-void MN_SetQuickSaveSlot(int slot);
+extern int savepage;
 
-void MN_InitMidiPlayer(void);
+extern const char *default_skill_strings[];
+
+void MN_SetQuickSaveSlot(int slot);
 
 void MN_InitMenuStrings(void);
 
@@ -98,10 +110,11 @@ int MN_GetPixelWidth(const char *ch);
 void MN_DrawString(int cx, int cy, int color, const char *ch);
 
 void M_StartSound(int sound_id);
-
 void M_StartSoundOptional(const int opt_sound_id, const int sound_id); // [Nugget]
 
 void M_StartCustomSkill(const int mode); // [Nugget] Custom Skill
+
+void MN_BindMenuVariables(void);
 
 #endif
 

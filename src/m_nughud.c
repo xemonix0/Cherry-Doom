@@ -24,7 +24,7 @@
 #include "m_io.h"
 #include "m_config.h"
 #include "m_nughud.h"
-#include "mn_setup.h"
+#include "mn_internal.h"
 #include "st_stuff.h"
 #include "w_wad.h"
 
@@ -141,7 +141,7 @@ default_t nughud_defaults[] = {
   WIDGET2( "nughud_maxammo3", nughud.maxammos[3], ST_MAXAMMO3X, ST_MAXAMMO3Y, 1, 1 ),
 
   // [Cherry]
-  TEXTLINE("nughud_movement", nughud.movement, -1, -1, -1, -1, 3, 3 ),
+  TEXTLINE( "nughud_movement", nughud.movement, -1, -1, -1, -1, 3, 3 ),
 
   TEXTLINE( "nughud_time", nughud.time, -1, -1, -1, -1, 3, 2 ),
 
@@ -158,6 +158,8 @@ default_t nughud_defaults[] = {
   TEXTLINE( "nughud_fps", nughud.fps, -1, -1, -1, -1, 2, 2 ),
 
   TEXTLINE( "nughud_rate", nughud.rate, 2, 192, -1, -1, 1, 0 ),
+
+  TEXTLINE( "nughud_cmd", nughud.cmd, -1, -1, -1, -1, 4, 0 ),
 
   { "nughud_message_x",     (config_t *) &nughud.message.x,     NULL, { -1 }, { -1, 320 }, number },
   { "nughud_message_y",     (config_t *) &nughud.message.y,     NULL, { -1 }, { -1, 200 }, number },

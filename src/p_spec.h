@@ -29,6 +29,12 @@ struct mobj_s;
 struct player_s;
 struct sector_s;
 
+// [Nugget] CVARs
+extern boolean comp_blazing2;
+extern boolean comp_manualdoor;
+extern boolean comp_switchsource;
+extern boolean comp_keynoway;
+
 //      Define values for map objects
 #define MO_TELEPORTMAN  14
 
@@ -963,6 +969,8 @@ void P_ShootSpecialLine(struct mobj_s *thing, struct line_s *line);
 
 void P_CrossSpecialLine(struct line_s *, int side, struct mobj_s *thing,
                         boolean bossaction); // killough 11/98
+
+extern int disable_nuke;  // killough 12/98: nukage disabling cheat
 
 void P_PlayerInSpecialSector(struct player_s *player);
 

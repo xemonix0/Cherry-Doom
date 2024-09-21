@@ -1635,11 +1635,6 @@ deh_bexptr deh_bexptrs[] =
   {{NULL},             "A_NULL"},  // Ty 05/16/98
 };
 
-extern byte *defined_codeptr_args;
-
-// to hold startup code pointers from INFO.C
-extern actionf_t *deh_codeptr;
-
 // ====================================================================
 // ProcessDehFile
 // Purpose: Read and process a DEH or BEX file
@@ -1883,7 +1878,6 @@ void deh_procBexCodePointers(DEHFILE *fpin, FILE* fpout, char *line)
 
 // [Cherry]
 #include "p_map.h" // MELEERANGE
-int no_rocket_trails; // Rocket trails from Doom Retro
 
 // ====================================================================
 // deh_procThing
@@ -3428,6 +3422,43 @@ boolean deh_GetData(char *s, char *k, long *l, char **strval, FILE *fpout)
 
 static deh_bexptr null_bexptr = { {NULL}, "(NULL)" };
 
+static boolean CheckSafeState(statenum_t state)
+{
+    int count = 0;
+
+    for (statenum_t s = state; s != S_NULL; s = states[s].nextstate)
+    {
+        // [FG] recursive/nested states
+        if (count++ >= 100)
+        {
+            return false;
+        }
+
+        // [crispy] a state with -1 tics never changes
+        if (states[s].tics == -1)
+        {
+            break;
+        }
+
+        if (states[s].action.p2)
+        {
+            // [FG] A_Light*() considered harmless
+            if (states[s].action.p2 == (actionf_p2) A_Light0 ||
+                states[s].action.p2 == (actionf_p2) A_Light1 ||
+                states[s].action.p2 == (actionf_p2) A_Light2)
+            {
+                continue;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 void PostProcessDeh(void)
 {
   int i, j;
@@ -3466,6 +3497,12 @@ void PostProcessDeh(void)
         if (!(defined_codeptr_args[i] & (1 << j)))
           states[i].args[j] = bexptr_match->default_args[j];
     }
+  }
+
+  // [FG] fix desyncs by SSG-flash correction
+  if (CheckSafeState(S_DSGUNFLASH1) && states[S_DSGUNFLASH1].tics == 5)
+  {
+    states[S_DSGUNFLASH1].tics = 4;
   }
 
   dsdh_FreeTables();

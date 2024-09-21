@@ -43,6 +43,13 @@ typedef struct
 extern char *wad_stats_fail;
 extern wad_stats_t wad_stats;
 
+// CVARs
+
+extern boolean lt_enable_tracking;
+extern boolean lt_track_continuous;
+extern boolean lt_reset_on_higher_skill;
+extern int lt_stats_format;
+
 void WS_Init(void);
 void WS_Save(void);
 void WS_Cleanup(void);
@@ -54,5 +61,7 @@ void WS_WatchMap(void);
 void WS_UnwatchMap(void);
 void WS_WatchKill(void);
 void WS_WatchExitMap(void);
+
+void WS_BindLevelTableVariables(void);
 
 #endif

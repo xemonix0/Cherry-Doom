@@ -32,9 +32,11 @@ struct patch_s;
 // Calculate # of glyphs in font.
 #define HU_FONTSIZE     (HU_FONTEND - HU_FONTSTART + 1)
 
+#define HU_FONTEXTRAS 7 // [Nugget] HUD icons
+
 typedef struct
 {
-  struct patch_s *patches[HU_FONTSIZE+6+3]; // [Nugget] Stats icons
+  struct patch_s *patches[HU_FONTSIZE+6 + HU_FONTEXTRAS]; // [Nugget] HUD icons
 
   int line_height;
 
@@ -53,7 +55,7 @@ extern struct patch_s **hu_font;
 #define HU_MAXLINELENGTH 120
 
 //jff 2/26/98 maximum number of messages allowed in refresh list
-#define HU_MAXMESSAGES 8
+#define HU_MAXMESSAGES 20
 
 typedef enum
 {
@@ -107,6 +109,8 @@ typedef struct hu_multiline_s
   boolean exclusive;
   boolean bottomup;
 
+  boolean flash; // [Nugget] Message flash
+
 } hu_multiline_t;
 
 // [FG] configured alignment and coordinates for multilines
@@ -134,6 +138,7 @@ void HUlib_clear_all_lines (hu_multiline_t *const m);
 
 void HUlib_add_string_to_cur_line (hu_multiline_t *const m, const char *s);
 void HUlib_add_strings_to_cur_line (hu_multiline_t *const m, const char *prefix, const char *s);
+void HUlib_add_string_keep_space(hu_multiline_t *const m, const char *s);
 
 void HUlib_draw_widget (const hu_widget_t *const w);
 

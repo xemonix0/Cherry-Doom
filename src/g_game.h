@@ -76,6 +76,12 @@ const char *G_GetCurrentComplevelName(void);
 
 int G_GotoNextLevel(int *pEpi, int *pMap);
 
+void G_BindGameInputVariables(void);
+void G_BindGameVariables(void);
+void G_BindEnemVariables(void);
+void G_BindCompVariables(void);
+void G_BindWeapVariables(void);
+
 typedef enum
 {
   CL_NONE = -1,
@@ -89,21 +95,23 @@ extern complevel_t force_complevel, default_complevel;
 
 extern int realtic_clock_rate;
 
+extern boolean gamekeydown[];
+extern boolean mousebuttons[];
+extern boolean joybuttons[];
+
 // killough 5/2/98: moved from m_misc.c:
 extern int  key_escape;
 extern int  key_enter;
 extern int  key_help;
-extern int  autorun;           // always running?                   // phares
-extern boolean autostrafe50;
-extern int  novert;
+extern boolean autorun;           // always running?                   // phares
+extern boolean novert;
 extern boolean mouselook;
 extern boolean padlook;
-extern int  dclick_use; // [FG] double click acts as "use"
 
 extern fixed_t *forwardmove;
 extern fixed_t *sidemove;
 
-extern int  defaultskill;      //jff 3/24/98 default skill
+extern int  default_skill;      //jff 3/24/98 default skill
 extern boolean haswolflevels;  //jff 4/18/98 wolf levels present
 
 extern int  bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
@@ -112,24 +120,58 @@ extern int  bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
 // Par times (new item with BOOM) - from g_game.c
 extern int pars[][10];  // hardcoded array size
 extern int cpars[];     // hardcoded array size
+extern boolean um_pars;
 
-// [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
-extern boolean inter_accurate_kill_count;
+extern boolean secretexit;
 
-// [Nugget] ------------------------------------------------------------------
+// [Nugget] ==================================================================
 
-// Rewind
+// CVARs ---------------------------------------------------------------------
+
+extern boolean one_key_saveload;
+extern boolean skip_ammoless_weapons;
+extern boolean show_save_messages;
+
+enum {
+  SHOTPAL_NONE,
+  SHOTPAL_NORMAL,
+  SHOTPAL_CLEAN,
+  SHOTPAL_BOTH,
+}; extern int screenshot_palette;
+
+extern boolean comp_longautoaim;
+
+// Rewind --------------------------------------------------------------------
+
+extern int rewind_interval;
+
 extern void G_SetRewindCountdown(int value);
 extern void G_EnableRewind(void);
 extern void G_Rewind(void);
 extern void G_ClearExcessKeyFrames(void);
 extern boolean G_KeyFrameRW(void);
 
-// Skill
+// Skill ---------------------------------------------------------------------
+
+extern int custom_skill_things;
+extern boolean custom_skill_coopspawns;
+extern boolean custom_skill_nomonsters;
+extern boolean custom_skill_doubleammo;
+extern boolean custom_skill_halfdamage;
+extern boolean custom_skill_slowbrain;
+extern boolean custom_skill_fast;
+extern boolean custom_skill_respawn;
+extern boolean custom_skill_aggressive;
+extern boolean custom_skill_x2monsters;
+extern boolean custom_skill_notracking;
+
 void G_SetBabyModeParms(const skill_t skill);
 void G_SetSkillParms(const skill_t skill);
 void G_SetUserCustomSkill(void);
 void G_RestartWithLoadout(const boolean current);
+
+// [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
+extern boolean inter_accurate_kill_count;
 
 #endif
 

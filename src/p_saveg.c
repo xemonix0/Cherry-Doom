@@ -36,6 +36,7 @@
 #include "p_saveg.h"
 #include "p_spec.h"
 #include "p_tick.h"
+#include "r_data.h"
 #include "r_defs.h"
 #include "r_state.h"
 #include "w_wad.h" // [FG] W_LumpLength()
@@ -65,9 +66,11 @@ static struct
     {saveg_nugget210, saveg_nugget},
     {saveg_nugget300, saveg_nugget},
     {saveg_nugget320, saveg_nugget},
+    {saveg_nugget330, saveg_nugget},
 
     {saveg_cherry100, saveg_cherry},
     {saveg_cherry101, saveg_cherry},
+    {saveg_cherry200, saveg_cherry},
     {saveg_current,   saveg_cherry},
 };
 
@@ -2225,7 +2228,6 @@ void P_UnArchiveWorld (void)
     {
       // [crispy] add overflow guard for the flattranslation[] array
       short floorpic, ceilingpic;
-      extern int numflats;
 
       // killough 10/98: load full floor & ceiling heights, including fractions
 

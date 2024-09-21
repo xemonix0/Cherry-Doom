@@ -121,7 +121,7 @@ static char *D_dehout(void)
         // @category mod
         // @arg <filename>
         //
-        // Alias for -dehout.
+        // Alias to -dehout.
         //
 
         p = M_CheckParm("-bexout");
@@ -175,15 +175,18 @@ char    *basedefault = NULL;   // default file
 char    *basesavegame = NULL;  // killough 2/16/98: savegame directory
 char    *screenshotdir = NULL; // [FG] screenshot directory
 
-boolean organize_savefiles;
+int organize_savefiles;
 
 // [Nugget]
-char *savegame_dir = NULL;
-char *screenshot_dir = NULL;
+const char *savegame_dir = NULL;
+const char *screenshot_dir = NULL;
 
 boolean coop_spawns = false;
 
-boolean demobar;
+static boolean demobar;
+
+// [FG] colored blood and gibs
+static boolean colored_blood;
 
 void D_ConnectNetGame (void);
 void D_CheckNetGame (void);
@@ -278,8 +281,7 @@ void D_UpdateDeltaTics(void)
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t    wipegamestate = GS_DEMOSCREEN;
-boolean        screen_melt = true;
-extern int     showMessages;
+static int     screen_melt = wipe_Melt;
 
 void D_Display (void)
 {
@@ -499,6 +501,8 @@ void D_Display (void)
 static int demosequence;         // killough 5/2/98: made static
 static int pagetic;
 static char *pagename;
+
+static int no_page_ticking; // [Nugget]
 
 //
 // D_PageTicker
@@ -1627,7 +1631,7 @@ static void D_ProcessDehCommandLine(void)
   // @arg <files>
   // @category mod
   //
-  // Alias for -deh.
+  // Alias to -deh.
   //
 
   if (p || (p = M_CheckParm("-bex")))
@@ -1889,9 +1893,6 @@ static void D_InitTables(void)
 
 void D_SetMaxHealth(void)
 {
-  extern boolean deh_set_maxhealth;
-  extern int deh_maxhealth;
-
   if (demo_compatibility)
   {
     maxhealth = 100;
@@ -1906,8 +1907,6 @@ void D_SetMaxHealth(void)
 
 void D_SetBloodColor(void)
 {
-  extern boolean deh_set_blood_color;
-
   if (deh_set_blood_color)
     return;
 
@@ -1928,7 +1927,7 @@ void D_SetBloodColor(void)
 // killough 2/22/98: Add support for ENDBOOM, which is PC-specific
 // killough 8/1/98: change back to ENDOOM
 
-int show_endoom;
+static int show_endoom;
 
 // Don't show ENDOOM if we have it disabled.
 boolean D_CheckEndDoom(void)
@@ -1997,7 +1996,7 @@ void D_ValidateStartSkill(void)
   if (startskill == sk_custom
       && (demorecording || demoplayback || netgame || strictmode))
   {
-    startskill = (defaultskill - 1 < sk_custom) ? defaultskill - 1 : sk_hard;
+    startskill = (default_skill - 1 < sk_custom) ? default_skill - 1 : sk_hard;
   }
 }
 
@@ -2021,6 +2020,8 @@ void D_UpdateCasualPlay(void)
 }
 
 // [Nugget] -----------------------------------------------------------------/
+
+boolean fail_safe;
 
 //
 // D_DoomMain
@@ -2125,11 +2126,25 @@ void D_DoomMain(void)
   //!
   // @category game
   // @vanilla
+  // @help
   //
   // Disable monsters.
   //
 
-  nomonsters = clnomonsters = M_CheckParm ("-nomonsters");
+  p = M_CheckParm("-nomonsters");
+
+  if (!p)
+  {
+  //!
+  // @category game
+  // @help
+  //
+  // Alias to -nomonsters.
+  //
+    p = M_CheckParm("-nomo");
+  }
+
+  nomonsters = clnomonsters = p;
 
   //!
   // @category game
@@ -2388,6 +2403,32 @@ void D_DoomMain(void)
 
   //!
   // @category game
+  // @help
+  //
+  // Alias to -skill 4.
+  //
+
+  if (M_ParmExists("-uv"))
+  {
+    startskill = sk_hard;
+    autostart = true;
+  }
+
+  //!
+  // @category game
+  // @help
+  //
+  // Alias to -skill 5.
+  //
+
+  if (M_ParmExists("-nm"))
+  {
+    startskill = sk_nightmare;
+    autostart = true;
+  }
+
+  //!
+  // @category game
   // @arg <n>
   // @vanilla
   //
@@ -2532,6 +2573,8 @@ void D_DoomMain(void)
 
   if ((p = M_CheckParm("-dumplumps")) && p < myargc-1)
     WritePredefinedLumpWad(myargv[p+1]);
+
+  M_InitConfig();
 
   M_LoadDefaults();  // load before initing other systems
   M_NughudLoadDefaults(); // [Nugget]
@@ -2765,7 +2808,6 @@ void D_DoomMain(void)
   I_InitController();
   I_InitSound();
   I_InitMusic();
-  MN_InitMidiPlayer();
 
   I_Printf(VB_INFO, "NET_Init: Init network subsystem.");
   NET_Init();
@@ -3028,6 +3070,48 @@ void D_DoomMain(void)
       if (screenvisible)
         D_Display();
     }
+}
+
+void D_BindMiscVariables(void)
+{
+  BIND_NUM_GENERAL(show_endoom, 0, 0, 2,
+    "Show ENDOOM screen (0 = Off; 1 = On; 2 = PWADs only)");
+  BIND_BOOL_GENERAL(demobar, false, "1 to enable demo progress bar");
+
+  // [Nugget] More wipes
+  BIND_NUM_GENERAL(screen_melt, wipe_Melt, wipe_None, wipe_Fizzle,
+    "Screen wipe effect (0 = None; 1 = Melt; 2 = Crossfade; 3 = Fizzlefade; 4 = Black Fade)");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  BIND_NUM_GENERAL(wipe_speed_percentage, 100, 50, 200,
+    "Screen wipe speed percentage");
+
+  M_BindBool("alt_interpic", &alt_interpic, NULL, false, ss_gen, wad_yes,
+             "Alternative intermission background (spinning camera view)");
+
+  BIND_NUM_GENERAL(no_page_ticking, 0, 0, 2,
+    "Play internal demos (0 = Always; 1 = Not in menus; 2 = Never)");
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  // [Cherry] Mute Inactive Window feature from International Doom
+  BIND_BOOL_GENERAL(mute_inactive, false, "1 to mute inactive game window");
+
+  BIND_BOOL_GENERAL(palette_changes, true, "Palette changes when taking damage or picking up items");
+  BIND_NUM_GENERAL(organize_savefiles, -1, -1, 1,
+    "Organize save files");
+  M_BindStr("net_player_name", &net_player_name, DEFAULT_PLAYER_NAME, wad_no,
+    "Network setup player name");
+  BIND_NUM(default_verbosity, VB_INFO, VB_ERROR, VB_MAX - 1,
+    "Verbosity level (1 = Errors only; 2 = Warnings; 3 = Info; 4 = Debug)");
+
+  M_BindBool("colored_blood", &colored_blood, NULL, false, ss_enem, wad_no,
+             "Allow colored blood");
+
+  // [Cherry]
+  M_BindBool("inter_accurate_kill_count", &inter_accurate_kill_count, NULL, false, ss_stat, wad_no,
+             "Adjust intermission kill percentage to follow UV max speedrun requirements");
 }
 
 //----------------------------------------------------------------------------

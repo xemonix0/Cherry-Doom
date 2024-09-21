@@ -40,7 +40,7 @@
 
 #define HU_GAPX 2
 static int left_margin, right_margin;
-int hud_widescreen_widgets;
+boolean hud_widescreen_widgets;
 
 void HUlib_set_margins (void)
 {
@@ -164,7 +164,8 @@ static inline void inc_cur_line (hu_multiline_t *const m)
 
 // [FG] add string to line, increasing its (length and) width
 
-static void add_string_to_line (hu_line_t *const l, const hu_font_t *const f, const char *s)
+static void add_string_to_line(hu_line_t *const l, const hu_font_t *const f,
+                               const char *s, boolean keep_space)
 {
   int w = 0;
   unsigned char c;
@@ -185,7 +186,7 @@ static void add_string_to_line (hu_line_t *const l, const hu_font_t *const f, co
     }
     else if (c == '\t')
       w = (w + f->tab_width) & f->tab_mask;
-    else if (c >= HU_FONTSTART && c <= HU_FONTEND + 6 + 3) // [Nugget] Stats icons
+    else if (c >= HU_FONTSTART && c <= HU_FONTEND + 6 + HU_FONTEXTRAS) // [Nugget] HUD icons
       w += SHORT(p[c - HU_FONTSTART]->width);
     else
       w += f->space_width;
@@ -193,8 +194,11 @@ static void add_string_to_line (hu_line_t *const l, const hu_font_t *const f, co
     add_char_to_line(l, c);
   }
 
-  while (*--s == ' ')
-    w -= f->space_width;
+  if (!keep_space)
+  {
+    while (*--s == ' ')
+      w -= f->space_width;
+  }
 
   l->width += w;
 }
@@ -209,10 +213,10 @@ void HUlib_add_strings_to_cur_line (hu_multiline_t *const m, const char *prefix,
 
   if (prefix)
   {
-    add_string_to_line(l, *m->font, prefix);
+    add_string_to_line(l, *m->font, prefix, false);
   }
 
-  add_string_to_line(l, *m->font, s);
+  add_string_to_line(l, *m->font, s, false);
 
   inc_cur_line(m);
 }
@@ -220,6 +224,15 @@ void HUlib_add_strings_to_cur_line (hu_multiline_t *const m, const char *prefix,
 void HUlib_add_string_to_cur_line (hu_multiline_t *const m, const char *s)
 {
   HUlib_add_strings_to_cur_line(m, NULL, s);
+}
+
+void HUlib_add_string_keep_space(hu_multiline_t *const m, const char *s)
+{
+  hu_line_t *const l = m->lines[m->curline];
+
+  HUlib_clear_line(l);
+  add_string_to_line(l, *m->font, s, true);
+  inc_cur_line(m);
 }
 
 // [FG] horizontal and vertical alignment
@@ -373,7 +386,7 @@ static void draw_line_aligned (const hu_multiline_t *m, const hu_line_t *l, cons
           cr = m->cr;
       }
     }
-    else if (c >= HU_FONTSTART && c <= HU_FONTEND + 6 + 3) // [Nugget] Stats icons
+    else if (c >= HU_FONTSTART && c <= HU_FONTEND + 6 + HU_FONTEXTRAS) // [Nugget] HUD icons
     {
       int w = SHORT(p[c-HU_FONTSTART]->width);
 
@@ -381,7 +394,8 @@ static void draw_line_aligned (const hu_multiline_t *m, const hu_line_t *l, cons
         break;
 
       // killough 1/18/98 -- support multiple lines:
-      V_DrawPatchTranslatedSH(x, y, p[c-HU_FONTSTART], cr); // [Nugget] HUD/menu shadows
+      // [Nugget] HUD/menu shadows | Message flash
+      V_DrawPatchTRTRSH(x, y, p[c-HU_FONTSTART], cr, m->flash ? cr_bright : NULL);
       x += w;
     }
     else if ((x += f->space_width) >= right_margin + HU_GAPX && !st_crispyhud) // [Nugget] NUGHUD
@@ -549,6 +563,8 @@ void HUlib_init_multiline(hu_multiline_t *m,
 
   m->exclusive = (on != NULL);
   m->bottomup = (on != NULL);
+
+  m->flash = false; // [Nugget] Message flash
 }
 
 void HUlib_erase_widget (const hu_widget_t *const w)
