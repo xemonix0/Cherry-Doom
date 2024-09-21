@@ -41,6 +41,7 @@
 #include "st_stuff.h"
 
 // [Nugget]
+#include "m_input.h"
 #include "s_sound.h"
 #include "sounds.h"
 

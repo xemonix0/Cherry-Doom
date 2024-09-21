@@ -28,6 +28,7 @@
 - **_Bloodier Gibbing_ setting now adds crushing effects**
 - **Freecam speed is now mostly independent of game speed**
 - **Made `force_flip_pan` affect the _OpenAL 3D_ sound module** [by @ceski-1]
+- **Made _Screen Wipe Speed Percentage_ setting affect the _Fizzle_ fade**
 - **Renamed _ZDoom-like Item Drops_ (`zdoom_item_drops`) to _Toss Items Upon Death_ (`tossdrop`)** [2]
 - **Removed _'BABYMODE'_ cheat**
 - **Removed _Upward Message Scrolling_ menu item**
@@ -43,4 +44,5 @@
 - **_[Crosshair] Translucency_ menu item not being disabled when the crosshair were disabled**
 
 **[1].** This may affect existing NUGHUDs.
+
 **[2].** This will affect existing config files.
