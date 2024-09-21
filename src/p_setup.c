@@ -55,6 +55,9 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
+// [Nugget]
+#include "m_array.h"
+
 //
 // MAP related Lookup tables.
 // Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
@@ -358,7 +361,8 @@ void P_LoadSectors (int lump)
       // [FG] inhibit sector interpolation during the 0th gametic
       ss->oldceilgametic = -1;
       ss->oldfloorgametic = -1;
-      ss->oldscrollgametic = -1;
+      ss->old_ceil_offs_gametic = -1;
+      ss->old_floor_offs_gametic = -1;
     }
 
   Z_Free (data);
@@ -428,6 +432,8 @@ void P_LoadThings (int lump)
   int  i, numthings = W_LumpLength (lump) / sizeof(mapthing_t);
   byte *data = W_CacheLumpNum (lump,PU_STATIC);
 
+  int *enemies = NULL, numenemies = 0; // [Nugget]
+
   for (i=0; i<numthings; i++)
     {
       mapthing_t *mt = (mapthing_t *) data + i;
@@ -457,9 +463,49 @@ void P_LoadThings (int lump)
       mt->options = SHORT(mt->options);
 
       P_SpawnMapThing (mt);
+
+      // [Nugget] ------------------------------------------------------------
+
+      if (x2monsters)
+      {
+        const mobjtype_t mobjtype = P_FindDoomedNum(mt->type);
+
+        if (mobjtype < num_mobj_types
+            && ((mobjinfo[mobjtype].flags & MF_COUNTKILL) || mobjtype == MT_SKULL))
+        {
+          array_push(enemies, i);
+          numenemies++;
+        }
+      }
     }
 
-  // [Nugget] Reset milestones / ---------------------------------------------
+  // [Nugget] /===============================================================
+
+  // Custom Skill: duplicate monster spawns ----------------------------------
+
+  if (x2monsters)
+  {
+    P_ToggleDuplicateSpawns(true);
+
+    for (i = 0;  i < numenemies;  i++)
+    {
+      mapthing_t *mt = (mapthing_t *) data + enemies[i];
+
+      mt->x = SHORT(mt->x);
+      mt->y = SHORT(mt->y);
+      mt->angle = SHORT(mt->angle);
+      mt->type = SHORT(mt->type);
+      mt->options = SHORT(mt->options);
+
+      P_SpawnMapThing (mt);
+    }
+
+    array_clear(enemies);
+
+    P_ToggleDuplicateSpawns(false);
+  }
+
+  // Reset milestones --------------------------------------------------------
 
   if (totalkills) { complete_milestones &= ~MILESTONE_KILLS; }
   else            { complete_milestones |=  MILESTONE_KILLS; }
@@ -467,7 +513,7 @@ void P_LoadThings (int lump)
   if (totalitems) { complete_milestones &= ~MILESTONE_ITEMS; }
   else            { complete_milestones |=  MILESTONE_ITEMS; }
 
-  // [Nugget] ---------------------------------------------------------------/
+  // [Nugget] ===============================================================/
 
   Z_Free (data);
 }
@@ -1214,13 +1260,13 @@ boolean P_LoadBlockMap (int lump)
 
       blockmaplump[0] = SHORT(wadblockmaplump[0]);
       blockmaplump[1] = SHORT(wadblockmaplump[1]);
-      blockmaplump[2] = (long)(SHORT(wadblockmaplump[2])) & 0xffff;
-      blockmaplump[3] = (long)(SHORT(wadblockmaplump[3])) & 0xffff;
+      blockmaplump[2] = (long)(SHORT(wadblockmaplump[2])) & FRACMASK;
+      blockmaplump[3] = (long)(SHORT(wadblockmaplump[3])) & FRACMASK;
 
       for (i=4 ; i<count ; i++)
         {
           short t = SHORT(wadblockmaplump[i]);          // killough 3/1/98
-          blockmaplump[i] = t == -1 ? -1l : (long) t & 0xffff;
+          blockmaplump[i] = t == -1 ? -1l : (long) t & FRACMASK;
         }
 
       Z_Free(wadblockmaplump);
@@ -1313,10 +1359,10 @@ int P_GroupLines (void)
       sector->lines -= sector->linecount;
 
       // set the degenmobj_t to the middle of the bounding box
-      sector->soundorg.x = (sector->blockbox[BOXRIGHT] +
-			    sector->blockbox[BOXLEFT])/2;
-      sector->soundorg.y = (sector->blockbox[BOXTOP] +
-			    sector->blockbox[BOXBOTTOM])/2;
+      sector->soundorg.x =
+          sector->blockbox[BOXRIGHT] / 2 + sector->blockbox[BOXLEFT] / 2;
+      sector->soundorg.y =
+          sector->blockbox[BOXTOP] / 2 + sector->blockbox[BOXBOTTOM] / 2;
 
       sector->soundorg.thinker.function.p1 = (actionf_p1)P_DegenMobjThinker;
 

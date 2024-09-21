@@ -729,6 +729,9 @@ static void SinglePlayerClear(ticcmd_set_t *set)
     }
 }
 
+// [Cherry] Mute Inactive Window feature from International Doom
+boolean mute_inactive;
+
 //
 // TryRunTics
 //

@@ -38,6 +38,8 @@
 #include "g_game.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
+#include "i_input.h"
+#include "i_printf.h"
 #include "i_system.h"
 #include "i_timer.h"
 #include "i_video.h"
@@ -47,7 +49,7 @@
 #include "m_swap.h"
 #include "mn_font.h"
 #include "mn_menu.h"
-#include "mn_setup.h"
+#include "mn_internal.h"
 #include "mn_snapshot.h"
 #include "p_saveg.h"
 #include "r_defs.h"
@@ -56,12 +58,14 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "u_mapinfo.h"
+#include "v_fmt.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "z_zone.h"
 
 // [Nugget]
 #include "am_map.h"
+#include "hu_crosshair.h"
 #include "m_nughud.h"
 #include "st_stuff.h"
 
@@ -70,24 +74,9 @@
 #  include <unistd.h> // [FG] isatty()
 #endif
 
-extern boolean message_dontfuckwithme;
-
-extern boolean chat_on; // in heads-up code
-
 //
 // defaulted values
 //
-
-int mouseSensitivity_horiz;        // has default   //  killough
-int mouseSensitivity_vert;         // has default
-int mouseSensitivity_horiz_strafe; // [FG] strafe
-int mouseSensitivity_vert_look;    // [FG] look
-
-int showMessages; // Show messages has default, 0 = off, 1 = on
-int show_toggle_messages;
-int show_pickup_messages;
-
-int traditional_menu;
 
 // Blocky mode, has default, 0 = high, 1 = normal
 // int     detailLevel;    obsolete -- killough
@@ -126,6 +115,10 @@ boolean menuactive; // The menus are up
 static boolean options_active;
 
 backdrop_t menu_backdrop;
+
+// [Nugget]
+boolean menu_background_all;
+boolean no_menu_tint;
 
 #define SKULLXOFF        -32
 #define LINEHEIGHT       16
@@ -286,9 +279,9 @@ static menu_t NewDef; // phares 5/04/98
 enum
 {
     newgame = 0,
+    options,
     loadgame,
     savegame,
-    options,
     readthis,
     quitdoom,
     main_end
@@ -307,10 +300,10 @@ enum
 
 static menuitem_t MainMenu[] = {
     {1, "M_NGAME",  M_NewGame,  'n', "New Game",   MAIN_MENU_RECT},
-    {1, "M_LOADG",  M_LoadGame, 'l', "Load Game",  MAIN_MENU_RECT},
-    {1, "M_SAVEG",  M_SaveGame, 's', "Save Game",  MAIN_MENU_RECT},
     // change M_Options to M_Setup
     {1, "M_OPTION", M_Setup,    'o', "Options",    MAIN_MENU_RECT},
+    {1, "M_LOADG",  M_LoadGame, 'l', "Load Game",  MAIN_MENU_RECT},
+    {1, "M_SAVEG",  M_SaveGame, 's', "Save Game",  MAIN_MENU_RECT},
     // Another hickup with Special edition.
     {1, "M_RDTHIS", M_ReadThis, 'r', "Read This!", MAIN_MENU_RECT},
     {1, "M_QUITG",  M_QuitDOOM, 'q', "Quit",       MAIN_MENU_RECT}
@@ -337,7 +330,7 @@ static void M_DrawMainMenu(void)
 
     options_active = false;
 
-    V_DrawPatch(94, 2, W_CacheLumpName("M_DOOM", PU_CACHE));
+    V_DrawPatch(94, 2, V_CachePatchName("M_DOOM", PU_CACHE));
 }
 
 /////////////////////////////
@@ -442,7 +435,7 @@ static void M_DrawReadThis1(void)
 {
     inhelpscreens = true;
 
-    V_DrawPatchFullScreen(W_CacheLumpName("HELP2", PU_CACHE));
+    V_DrawPatchFullScreen(V_CachePatchName("HELP2", PU_CACHE));
 }
 
 //
@@ -457,14 +450,14 @@ static void M_DrawReadThis2(void)
     // We only ever draw the second page if this is
     // gameversion == exe_doom_1_9 and gamemode == registered
 
-    V_DrawPatchFullScreen(W_CacheLumpName("HELP1", PU_CACHE));
+    V_DrawPatchFullScreen(V_CachePatchName("HELP1", PU_CACHE));
 }
 
 static void M_DrawReadThisCommercial(void)
 {
     inhelpscreens = true;
 
-    V_DrawPatchFullScreen(W_CacheLumpName("HELP", PU_CACHE));
+    V_DrawPatchFullScreen(V_CachePatchName("HELP", PU_CACHE));
 }
 
 /////////////////////////////
@@ -487,6 +480,8 @@ enum
     ep_end
 } episodes_e;
 
+#define MAX_EPISODES 10 // [FG] UMAPINFO spec says 8, but oh well...
+
 // The definitions of the Episodes menu
 
 #define M_Y_EPISODES 63
@@ -494,7 +489,7 @@ enum
 #define EPISODES_RECT(n) \
     {0, M_Y_EPISODES + (n) * LINEHEIGHT, SCREENWIDTH, LINEHEIGHT}
 
-static menuitem_t EpisodeMenu[] = // added a few free entries for UMAPINFO
+static menuitem_t EpisodeMenu[MAX_EPISODES] = // added a few free entries for UMAPINFO
 {
     {1, "M_EPI1", M_Episode, 'k', "Knee-Deep in the Dead", EPISODES_RECT(0)},
     {1, "M_EPI2", M_Episode, 't', "The Shores of Hell",    EPISODES_RECT(1)},
@@ -503,7 +498,9 @@ static menuitem_t EpisodeMenu[] = // added a few free entries for UMAPINFO
     {1, "",       M_Episode, '0', NULL, EPISODES_RECT(4)},
     {1, "",       M_Episode, '0', NULL, EPISODES_RECT(5)},
     {1, "",       M_Episode, '0', NULL, EPISODES_RECT(6)},
-    {1, "",       M_Episode, '0', NULL, EPISODES_RECT(7)}
+    {1, "",       M_Episode, '0', NULL, EPISODES_RECT(7)},
+    {1, "",       M_Episode, '0', NULL, EPISODES_RECT(8)},
+    {1, "",       M_Episode, '0', NULL, EPISODES_RECT(9)}
 };
 
 static menu_t EpiDef = {
@@ -517,8 +514,8 @@ static menu_t EpiDef = {
 
 // This is for customized episode menus
 boolean EpiCustom;
-static short EpiMenuMap[] = {1, 1, 1, 1, -1, -1, -1, -1};
-static short EpiMenuEpi[] = {1, 2, 3, 4, -1, -1, -1, -1};
+static short EpiMenuMap[MAX_EPISODES] = {1, 1, 1, 1, -1, -1, -1, -1, -1, -1};
+static short EpiMenuEpi[MAX_EPISODES] = {1, 2, 3, 4, -1, -1, -1, -1, -1, -1};
 
 //
 //    M_Episode
@@ -547,7 +544,11 @@ void M_AddEpisode(const char *map, const char *gfx, const char *txt,
         }
     }
 
-    if (EpiDef.numitems >= 8)
+    if (EpiDef.numitems == 8)
+    {
+        I_Printf(VB_WARNING, "M_AddEpisode: UMAPINFO spec limit of 8 episodes exceeded!");
+    }
+    else if (EpiDef.numitems >= MAX_EPISODES)
     {
         return;
     }
@@ -567,7 +568,7 @@ void M_AddEpisode(const char *map, const char *gfx, const char *txt,
     }
     else
     {
-        EpiDef.y = 63 - (EpiDef.numitems - 4) * (LINEHEIGHT / 2);
+        EpiDef.y = MAX(25, 63 - (EpiDef.numitems - 4) * (LINEHEIGHT / 2));
     }
 }
 
@@ -851,7 +852,7 @@ static void M_DrawBorderedSnapshot(int n)
     const char *txt = "n/a";
 
     const int snapshot_x =
-        MAX((video.deltaw + SaveDef.x + SKULLXOFF - snapshot_width) / 2, 8);
+        MAX(video.deltaw + SaveDef.x + SKULLXOFF - snapshot_width - 8, 8);
     const int snapshot_y =
         LoadDef.y
         + MAX((load_end * LINEHEIGHT - snapshot_height) * n / load_end, 0);
@@ -955,7 +956,10 @@ static void M_DrawLoad(void)
 
     int index = (menu_input == mouse_mode ? highlight_item : itemOn);
 
-    M_DrawBorderedSnapshot(index);
+    if (index < load_page)
+    {
+        M_DrawBorderedSnapshot(index);
+    }
 
     M_DrawSaveLoadBottomLine();
 }
@@ -968,15 +972,15 @@ static void M_DrawSaveLoadBorder(int x, int y, byte *cr)
 {
     int i;
 
-    V_DrawPatchTranslatedSH(x - 8, y + 7, W_CacheLumpName("M_LSLEFT", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+    V_DrawPatchTranslatedSH(x - 8, y + 7, V_CachePatchName("M_LSLEFT", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 
     for (i = 0; i < 24; i++)
     {
-        V_DrawPatchTranslatedSH(x, y + 7, W_CacheLumpName("M_LSCNTR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+        V_DrawPatchTranslatedSH(x, y + 7, V_CachePatchName("M_LSCNTR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
         x += 8;
     }
 
-    V_DrawPatchTranslatedSH(x, y + 7, W_CacheLumpName("M_LSRGHT", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+    V_DrawPatchTranslatedSH(x, y + 7, V_CachePatchName("M_LSRGHT", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 }
 
 //
@@ -1180,7 +1184,12 @@ static void M_DrawSave(void)
         WriteText(LoadDef.x + i, LoadDef.y + LINEHEIGHT * saveSlot, "_");
     }
 
-    M_DrawBorderedSnapshot(itemOn);
+    int index = (menu_input == mouse_mode ? highlight_item : itemOn);
+
+    if (index < load_page)
+    {
+        M_DrawBorderedSnapshot(index);
+    }
 
     M_DrawSaveLoadBottomLine();
 }
@@ -1315,7 +1324,7 @@ static void M_QuitResponse(int ch)
     {
         return;
     }
-    if (D_CheckEndDoom() &&           // play quit sound only if showing ENDOOM
+    if (D_AllowQuitSound() &&
         (!netgame || demoplayback) && // killough 12/98
         !nosfxparm)                   // avoid delay if no sound card
     {
@@ -1331,6 +1340,8 @@ static void M_QuitResponse(int ch)
     }
     I_SafeExit(0); // killough
 }
+
+boolean quick_quitgame;
 
 static void M_QuitDOOM(int choice)
 {
@@ -1392,7 +1403,7 @@ static menu_t SoundDef = {sound_end, &MainDef, SoundMenu, M_DrawSound,
 
 static void M_DrawSound(void)
 {
-    MN_DrawTitle(60, 38, "M_SVOL", "Sound Volume");
+    MN_DrawTitle(M_X_CENTER, 38, "M_SVOL", "Sound Volume");
 
     int index = highlight_item + 1;
     menuitem_t *item = &currentMenu->menuitems[index];
@@ -1627,11 +1638,9 @@ static void M_EndGame(int choice)
 
 static void M_ChangeMessages(int choice)
 {
-    // warning: unused parameter `int choice'
-    choice = 0;
-    showMessages = 1 - showMessages;
+    show_messages = 1 - show_messages;
 
-    if (!showMessages)
+    if (!show_messages)
     {
         displaymsg("%s", s_MSGOFF); // Ty 03/27/98 - externalized
     }
@@ -1719,7 +1728,6 @@ static menu_t ExtHelpDef = {
 
 static void M_ExtHelpNextScreen(int choice)
 {
-    choice = 0;
     if (++extended_help_index > extended_help_count)
     {
 
@@ -1769,7 +1777,6 @@ static void M_InitExtendedHelp(void)
 
 static void M_ExtHelp(int choice)
 {
-    choice = 0;
     extended_help_index = 1; // Start with first extended help screen
     SetNextMenu(&ExtHelpDef);
 }
@@ -1783,7 +1790,7 @@ static void M_DrawExtHelp(void)
     inhelpscreens = true; // killough 5/1/98
     namebfr[4] = extended_help_index / 10 + 0x30;
     namebfr[5] = extended_help_index % 10 + 0x30;
-    V_DrawPatchFullScreen(W_CacheLumpName(namebfr, PU_CACHE));
+    V_DrawPatchFullScreen(V_CachePatchName(namebfr, PU_CACHE));
 }
 
 //
@@ -1805,7 +1812,7 @@ static void M_DrawHelp(void)
     }
 
     inhelpscreens = true; // killough 10/98
-    V_DrawPatchFullScreen(W_CacheLumpNum(helplump, PU_CACHE));
+    V_DrawPatchFullScreen(V_CachePatchNum(helplump, PU_CACHE));
 }
 
 //
@@ -1873,8 +1880,7 @@ static menuitem_t Generic_Setup[] = {
 // with the main Setup screen.
 
 static menu_t SetupDef = {
-    ss_max - 1,    // number of Setup Menu items (Key Bindings, etc.)
-                   // [Nugget] Custom Skill menu: don't count said menu
+    ss_ltbl + 1,   // number of Setup Menu items (Key Bindings, etc.)
     &MainDef,      // menu to return to when BACKSPACE is hit on this menu
     SetupMenu,     // definition of items to show on the Setup Screen
     M_DrawSetup,   // program that draws the Setup Screen
@@ -1970,21 +1976,36 @@ static menu_t LevelTableDef = // [Cherry]
     0
 };
 
-static menu_t CustomSkillDef = // [Nugget] Custom Skill menu
-{
+static menu_t EqualizerDef = {
+    generic_setup_end,  // numitems
+    &SetupDef,          // prevMenu
+    Generic_Setup,      // menuitems
+    MN_DrawEqualizer,   // routine
+    34, 5,              // x, y (skull drawn here)
+};
+
+static menu_t GyroDef = {
+    generic_setup_end,  // numitems
+    &SetupDef,          // prevMenu
+    Generic_Setup,      // menuitems
+    MN_DrawGyro,        // routine
+    34, 5,              // x, y (skull drawn here)
+};
+
+static menu_t CustomSkillDef = { // [Nugget] Custom Skill menu
     generic_setup_end,
     &NewDef,
     Generic_Setup,
     MN_DrawCustomSkill,
-    34, 5, // skull drawn here
+    34, 5,
     0
 };
 
 void MN_SetNextMenuAlt(ss_types type)
 {
     static menu_t *setup_defs[] = {
-        &KeybndDef, &WeaponDef,  &StatusHUDDef, &AutoMapDef,
-        &EnemyDef,  &GeneralDef, &CompatDef,    &LevelTableDef,
+        &KeybndDef,  &WeaponDef, &StatusHUDDef,  &AutoMapDef,   &EnemyDef,
+        &GeneralDef, &CompatDef, &LevelTableDef, &EqualizerDef, &GyroDef,
 
         &CustomSkillDef // [Nugget] Custom Skill menu
     };
@@ -1998,7 +2019,7 @@ void MN_SetNextMenuAlt(ss_types type)
 
 static void M_DrawSetup(void)
 {
-    MN_DrawTitle(108, 15, "M_OPTTTL", "OPTIONS");
+    MN_DrawTitle(M_X_CENTER, 15, "M_OPTTTL", "OPTIONS");
 }
 
 /////////////////////////////
@@ -2020,6 +2041,9 @@ static void M_Setup(int choice)
 
 void MN_ClearMenus(void)
 {
+    // force status bar refresh
+    inhelpscreens = true;
+
     menuactive = 0;
     options_active = false;
     print_warning_about_changes = 0; // killough 8/15/98
@@ -2028,20 +2052,39 @@ void MN_ClearMenus(void)
     // if (!netgame && usergame && paused)
     //     sendpause = true;
 
+    I_SetSensorEventState(false);
     G_ClearInput();
-    I_ResetRelativeMouseState();
 }
 
-void MN_Back(void)
+static boolean MenuBack(void)
 {
     if (!currentMenu->prevMenu)
     {
-        return;
+        return false;
     }
 
     currentMenu = currentMenu->prevMenu;
     itemOn = currentMenu->lastOn;
+    highlight_item = 0;
     M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
+    return true;
+}
+
+void MN_Back(void)
+{
+    MenuBack();
+}
+
+void MN_BackSecondary(void)
+{
+    if (MenuBack())
+    {
+        if (currentMenu->menuitems && currentMenu->numitems > itemOn
+            && currentMenu->menuitems[itemOn].routine)
+        {
+            currentMenu->menuitems[itemOn].routine(0);
+        }
+    }
 }
 
 //
@@ -2054,6 +2097,7 @@ void M_Init(void)
     currentMenu = &MainDef;
     menuactive = 0;
     itemOn = currentMenu->lastOn;
+    highlight_item = 0;
     whichSkull = 0;
     skullAnimCounter = 10;
     saved_screenblocks = screenblocks;
@@ -2113,7 +2157,6 @@ void M_Init(void)
         EpiDef.numitems--;
     }
 
-    MN_ResetMenu(); // killough 10/98
     MN_SetupResetMenu();
     M_InitExtendedHelp(); // init extended help screens // phares 3/30/98
 
@@ -2207,14 +2250,15 @@ static boolean ShortcutResponder(const event_t *ev)
             // Gamepad free look toggle only affects gamepad.
             padlook = !padlook;
             togglemsg("Gamepad Free Look %s", padlook ? "On" : "Off");
+            MN_UpdatePadLook();
         }
         else
         {
             // Keyboard or mouse free look toggle only affects mouse.
             mouselook = !mouselook;
             togglemsg("Free Look %s", mouselook ? "On" : "Off");
+            MN_UpdateMouseLook();
         }
-        MN_UpdateFreeLook();
         // return true; // [FG] don't let toggles eat keys
     }
 
@@ -2224,6 +2268,7 @@ static boolean ShortcutResponder(const event_t *ev)
         realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
         displaymsg("Game Speed: %d", realtic_clock_rate);
         I_SetTimeScale(realtic_clock_rate);
+        setrefreshneeded = true;
     }
 
     if (M_InputActivated(input_speed_down) && !D_CheckNetConnect()
@@ -2233,6 +2278,7 @@ static boolean ShortcutResponder(const event_t *ev)
         realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
         displaymsg("Game Speed: %d", realtic_clock_rate);
         I_SetTimeScale(realtic_clock_rate);
+        setrefreshneeded = true;
     }
 
     if (M_InputActivated(input_speed_default) && !D_CheckNetConnect()
@@ -2241,6 +2287,7 @@ static boolean ShortcutResponder(const event_t *ev)
         realtic_clock_rate = 100;
         displaymsg("Game Speed: %d", realtic_clock_rate);
         I_SetTimeScale(realtic_clock_rate);
+        setrefreshneeded = true;
     }
 
     if (M_InputActivated(input_help)) // Help key
@@ -2249,6 +2296,7 @@ static boolean ShortcutResponder(const event_t *ev)
 
         currentMenu = &HelpDef; // killough 10/98: new help screen
 
+        currentMenu->prevMenu = NULL;
         itemOn = 0;
         M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         return true;
@@ -2274,7 +2322,7 @@ static boolean ShortcutResponder(const event_t *ev)
     {
         MN_StartControlPanel();
         currentMenu = &SoundDef;
-        itemOn = sfx_vol;
+        itemOn = currentMenu->lastOn;
         M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
@@ -2412,15 +2460,6 @@ static boolean ShortcutResponder(const event_t *ev)
         return true;
     }
 
-    // killough 10/98: allow key shortcut into Setup menu
-    if (M_InputActivated(input_setup))
-    {
-        MN_StartControlPanel();
-        M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
-        SetNextMenu(&SetupDef);
-        return true;
-    }
-
     static boolean fastdemo_timer = false;
 
     // [FG] reload current level / go to next level
@@ -2453,8 +2492,7 @@ static boolean ShortcutResponder(const event_t *ev)
 
     if (M_InputActivated(input_crosshair))
     {
-        extern void HU_StartCrosshair(void),
-                    UpdateCrosshairItems(void);
+        extern void UpdateCrosshairItems(void);
         
         if ((hud_crosshair_on = !hud_crosshair_on))
         { HU_StartCrosshair(); }
@@ -2495,6 +2533,7 @@ static boolean ShortcutResponder(const event_t *ev)
     return false;
 }
 
+menu_input_mode_t help_input, old_help_input;
 menu_input_mode_t menu_input, old_menu_input;
 
 static int mouse_state_x, mouse_state_y;
@@ -2568,13 +2607,14 @@ static boolean SaveLoadResponder(menu_action_t action, int ch)
 
     if (delete_verify)
     {
-        if (M_ToUpper(ch) == 'Y')
+        if (M_ToUpper(ch) == 'Y' || action == MENU_ENTER)
         {
             M_DeleteGame(old_menu_input == mouse_mode ? highlight_item : itemOn);
             M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
             delete_verify = false;
         }
-        else if (M_ToUpper(ch) == 'N')
+        else if (M_ToUpper(ch) == 'N' || action == MENU_BACKSPACE
+                 || action == MENU_ESCAPE)
         {
             M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
             delete_verify = false;
@@ -2643,15 +2683,21 @@ static boolean MouseResponder(void)
 
     menuitem_t *current_item = &currentMenu->menuitems[highlight_item];
 
+    mrect_t *rect = &current_item->rect;
+
     if (current_item->flags & MF_PAGE)
     {
         if (M_InputActivated(input_menu_enter))
         {
-            if (savepage == savepage_max)
+            int dot = mouse_state_x - video.deltaw * 2 - rect->x;
+            if (dot >= rect->w / 2)
             {
-                savepage = -1;
+                SaveLoadResponder(MENU_RIGHT, 0);
             }
-            SaveLoadResponder(MENU_RIGHT, 0);
+            else
+            {
+                SaveLoadResponder(MENU_LEFT, 0);
+            }
             return true;
         }
         return false;
@@ -2662,7 +2708,7 @@ static boolean MouseResponder(void)
         current_item++;
     }
 
-    mrect_t *rect = &current_item->rect;
+    rect = &current_item->rect;
 
     if (M_InputActivated(input_menu_enter))
     {
@@ -2718,6 +2764,7 @@ boolean M_Responder(event_t *ev)
     static menu_action_t repeat = MENU_NULL;
     menu_action_t action = MENU_NULL;
 
+    old_help_input = help_input;
     old_menu_input = menu_input;
 
     ch = 0; // will be changed to a legit char if we're going to use it here
@@ -2754,6 +2801,7 @@ boolean M_Responder(event_t *ev)
             break;
 
         case ev_joyb_down:
+            help_input = pad_mode;
             menu_input = pad_mode;
             break;
 
@@ -2768,8 +2816,9 @@ boolean M_Responder(event_t *ev)
             return false;
 
         case ev_keydown:
+            help_input = key_mode;
             menu_input = key_mode;
-            ch = ev->data1;
+            ch = ev->data1.i;
             break;
 
         case ev_keyup:
@@ -2784,16 +2833,20 @@ boolean M_Responder(event_t *ev)
             break;
 
         case ev_mouseb_up:
-            return MouseResponder();
+            if (menu_input == mouse_mode)
+            {
+                return MouseResponder();
+            }
+            return false;
 
         case ev_mouse_state:
-            if (ev->data1 == EV_RESIZE_VIEWPORT && menu_input != mouse_mode)
+            if (ev->data1.i == EV_RESIZE_VIEWPORT && menu_input != mouse_mode)
             {
                 return true;
             }
             menu_input = mouse_mode;
-            mouse_state_x = ev->data2;
-            mouse_state_y = ev->data3;
+            mouse_state_x = ev->data2.i;
+            mouse_state_y = ev->data3.i;
             CursorPosition();
             MouseResponder();
             return true;
@@ -2913,6 +2966,8 @@ boolean M_Responder(event_t *ev)
             messageRoutine(ch);
         }
 
+        I_SetSensorEventState(false);
+        G_ClearInput();
         menuactive = false;
         M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         return true;
@@ -3060,6 +3115,7 @@ boolean M_Responder(event_t *ev)
         }
         MN_ClearMenus();
         M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
+        help_input = old_help_input;
         menu_input = old_menu_input;
         MN_ResetMouseCursor();
         return true;
@@ -3095,6 +3151,7 @@ boolean M_Responder(event_t *ev)
                 currentMenu = currentMenu->prevMenu;
             }
             itemOn = currentMenu->lastOn;
+            highlight_item = 0;
             M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         }
         else
@@ -3102,6 +3159,7 @@ boolean M_Responder(event_t *ev)
             MN_ClearMenus();
             M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         }
+        help_input = old_help_input;
         menu_input = old_menu_input;
         MN_ResetMouseCursor();
         return true;
@@ -3117,6 +3175,7 @@ boolean M_Responder(event_t *ev)
             {
                 M_StartSoundOptional(sfx_mnuact, sfx_itemup); // [Nugget]: [NS] Optional menu sounds.
                 currentMenu->lastOn = itemOn;
+                help_input = old_help_input;
                 menu_input = old_menu_input;
                 delete_verify = true;
                 return true;
@@ -3161,23 +3220,6 @@ boolean M_Responder(event_t *ev)
 //
 /////////////////////////////////////////////////////////////////////////////
 
-// killough 10/98: allow runtime changing of menu order
-
-void MN_ResetMenu(void)
-{
-    // killough 4/17/98:
-    // Doom traditional menu, for arch-conservatives like yours truly
-
-    while ((traditional_menu ? M_SaveGame : M_Setup)
-           != MainMenu[options].routine)
-    {
-        menuitem_t t = MainMenu[loadgame];
-        MainMenu[loadgame] = MainMenu[options];
-        MainMenu[options] = MainMenu[savegame];
-        MainMenu[savegame] = t;
-    }
-}
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // General Routines
@@ -3202,17 +3244,19 @@ void MN_StartControlPanel(void)
     //  Fix to make "always floating" with menu selections, and to always follow
     //  defaultskill, instead of -skill.
 
-    NewDef.lastOn = defaultskill - 1;
+    NewDef.lastOn = default_skill - 1;
 
     // [Nugget] Custom Skill
-    if (defaultskill - 1 == sk_custom) { NewDef.lastOn++; }
+    if (default_skill - 1 == sk_custom) { NewDef.lastOn++; }
 
     default_verify = 0; // killough 10/98
     menuactive = 1;
     currentMenu = &MainDef;              // JDC
     itemOn = currentMenu->lastOn;        // JDC
+    highlight_item = 0;
     print_warning_about_changes = false; // killough 11/98
 
+    I_SetSensorEventState(true);
     G_ClearInput();
 }
 
@@ -3232,8 +3276,6 @@ boolean MN_MenuIsShaded(void)
 
 void M_Drawer(void)
 {
-    inhelpscreens = false;
-
     // Horiz. & Vertically center string and print it.
     // killough 9/29/98: simplified code, removed 40-character width limit
     if (messageToPrint)
@@ -3281,7 +3323,7 @@ void M_Drawer(void)
         V_ShadeScreen(menu_backdrop_darkening); // [Nugget] Parameterized
     }
     // [Nugget]
-    else if (menuactive && menu_background_all && menu_backdrop == MENU_BG_TEXTURE)
+    else if (menu_background_all && menu_backdrop == MENU_BG_TEXTURE)
     {
         inhelpscreens = true;
         V_DrawBackground("FLOOR4_6");
@@ -3371,7 +3413,7 @@ void M_Drawer(void)
         }
         else if (name[0])
         {
-            patch_t *patch = W_CacheLumpName(name, PU_CACHE);
+            patch_t *patch = V_CachePatchName(name, PU_CACHE);
             rect->y -= SHORT(patch->topoffset);
             V_DrawPatchTranslatedSH(x, y, patch, cr); // [Nugget] HUD/menu shadows
         }
@@ -3386,7 +3428,7 @@ void M_Drawer(void)
 
     // [Nugget] HUD/menu shadows
     V_DrawPatchTranslatedSH(x + SKULLXOFF, y - 5 + itemOn * LINEHEIGHT,
-                            W_CacheLumpName(skullName[whichSkull], PU_CACHE), NULL);
+                            V_CachePatchName(skullName[whichSkull], PU_CACHE), NULL);
 
     if (delete_verify)
     {
@@ -3432,23 +3474,23 @@ static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, byte *cr)
     char num[4];
 
     xx = x;
-    V_DrawPatchTranslatedSH(xx, y, W_CacheLumpName("M_THERML", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+    V_DrawPatchTranslatedSH(xx, y, V_CachePatchName("M_THERML", PU_CACHE), cr); // [Nugget] HUD/menu shadows
     xx += 8;
 
     { // [Nugget] HUD/menu shadows
-      const patch_t *const patch = W_CacheLumpName("M_THERMM", PU_CACHE);
+      const patch_t *const patch = V_CachePatchName("M_THERMM", PU_CACHE);
       V_SetShadowCrop(SHORT(patch->width) - M_THRM_STEP);
     }
 
     for (i = 0; i < thermWidth; i++)
     {
-        V_DrawPatchTranslatedSH(xx, y, W_CacheLumpName("M_THERMM", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+        V_DrawPatchTranslatedSH(xx, y, V_CachePatchName("M_THERMM", PU_CACHE), cr); // [Nugget] HUD/menu shadows
         xx += 8;
     }
 
     V_SetShadowCrop(0); // [Nugget] HUD/menu shadows
 
-    V_DrawPatchTranslatedSH(xx, y, W_CacheLumpName("M_THERMR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
+    V_DrawPatchTranslatedSH(xx, y, V_CachePatchName("M_THERMR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 
     // [FG] write numerical values next to thermometer
     M_snprintf(num, 4, "%3d", thermDot);
@@ -3461,7 +3503,7 @@ static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, byte *cr)
     }
 
     V_DrawPatchTranslated((x + 8) + thermDot * 8, y,
-                          W_CacheLumpName("M_THERMO", PU_CACHE), cr);
+                          V_CachePatchName("M_THERMO", PU_CACHE), cr);
 }
 
 //

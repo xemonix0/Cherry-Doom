@@ -29,19 +29,24 @@
 #include "config.h"
 #include "d_deh.h" // Ty 3/27/98 deh declarations
 #include "d_event.h"
+#include "d_iwad.h"
 #include "d_main.h"
 #include "d_player.h"
 #include "d_ticcmd.h"
 #include "doomdata.h"
+#include "doomdef.h"
 #include "doomkeys.h"
 #include "doomstat.h"
+#include "doomtype.h"
 #include "f_finale.h"
 #include "g_game.h"
 #include "hu_obituary.h"
 #include "hu_stuff.h"
 #include "i_gamepad.h"
+#include "i_gyro.h"
 #include "i_input.h"
 #include "i_printf.h"
+#include "i_rumble.h"
 #include "i_system.h"
 #include "i_timer.h"
 #include "i_video.h"
@@ -56,16 +61,18 @@
 #include "m_swap.h" // [FG] LONG
 #include "memio.h"
 #include "mn_menu.h"
-#include "mn_setup.h"
 #include "mn_snapshot.h"
 #include "net_defs.h"
+#include "p_enemy.h"
 #include "p_inter.h"
 #include "p_map.h"
+#include "p_maputl.h"
 #include "p_mobj.h"
 #include "p_pspr.h"
 #include "p_saveg.h"
 #include "p_setup.h"
 #include "p_tick.h"
+#include "p_user.h"
 #include "r_data.h"
 #include "r_defs.h"
 #include "r_draw.h"
@@ -82,12 +89,16 @@
 #include "v_video.h"
 #include "version.h"
 #include "w_wad.h"
-#include "wad_stats.h" // [Cherry]
 #include "wi_stuff.h"
 #include "z_zone.h"
 
 // [Nugget]
 #include "d_items.h"
+#include "m_cheat.h"
+#include "p_spec.h"
+
+// [Cherry]
+#include "wad_stats.h"
 
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
@@ -104,11 +115,23 @@ static byte     consistancy[MAXPLAYERS][BACKUPTICS];
 
 // [Nugget] /=================================================================
 
+// CVARs ---------------------------------------------------------------------
+
+boolean one_key_saveload;
+boolean skip_ammoless_weapons;
+boolean show_save_messages;
+boolean comp_longautoaim;
+
+// ---------------------------------------------------------------------------
+
 boolean minimap_was_on = false; // Minimap: keep it when advancing through levels
 
 boolean ignore_pistolstart = false; // Custom Skill: ignore pistol-start setting
 
 // Autosave ------------------------------------------------------------------
+
+boolean autosave;
+int autosave_interval;
 
 static boolean autosaving = false;
 static int autosave_countdown = 0;
@@ -118,7 +141,20 @@ void G_SetAutosaveCountdown(int value)
   autosave_countdown = value;
 }
 
+static void G_DoSaveGame(void);
+
+static void G_DoAutosave(void)
+{
+  autosaving = true;
+  G_DoSaveGame();
+  autosaving = false;
+}
+
 // Rewind --------------------------------------------------------------------
+
+int rewind_interval;
+static int rewind_depth;
+static int rewind_timeout;
 
 static boolean keyframe_rw = false;
 
@@ -136,7 +172,19 @@ static keyframe_t *keyframe_list_head = NULL, *keyframe_list_tail = NULL;
 
 static int keyframe_index = -1;
 
-// Custom Skill --------------------------------------------------------------
+// Skill ---------------------------------------------------------------------
+
+int custom_skill_things;
+boolean custom_skill_coopspawns;
+boolean custom_skill_nomonsters;
+boolean custom_skill_doubleammo;
+boolean custom_skill_halfdamage;
+boolean custom_skill_slowbrain;
+boolean custom_skill_fast;
+boolean custom_skill_respawn;
+boolean custom_skill_aggressive;
+boolean custom_skill_x2monsters;
+boolean custom_skill_notracking;
 
 // Actual custom-skill settings, set either by menu or savegames
 static struct {
@@ -149,6 +197,7 @@ static struct {
   boolean fast;
   boolean respawn;
   boolean aggressive;
+  boolean x2monsters;
   boolean notracking; // [Cherry]
 } customskill;
 
@@ -159,6 +208,7 @@ boolean halfdamage;
 boolean slowbrain;
 boolean fastmonsters;
 boolean aggressive;
+boolean x2monsters;
 boolean notracking; // [Cherry]
 
 static struct {
@@ -174,22 +224,6 @@ static struct {
   int          maxammo[NUMAMMO];
 } initial_loadout;
 
-void G_SetBabyModeParms(const skill_t skill)
-{
-  if (skill == sk_custom)
-  {
-    doubleammo = customskill.doubleammo;
-    halfdamage = customskill.halfdamage;
-  }
-  else {
-    doubleammo = skill == sk_baby || skill == sk_nightmare;
-    halfdamage = skill == sk_baby;
-  }
-
-  doubleammo |= CASUALPLAY(doubleammoparm);
-  halfdamage |= CASUALPLAY(halfdamageparm);
-}
-
 // [Nugget]
 void G_SetSkillParms(const skill_t skill)
 {
@@ -198,10 +232,13 @@ void G_SetSkillParms(const skill_t skill)
     thingspawns     = customskill.things;
     coop_spawns     = customskill.coopspawns;
     realnomonsters  = customskill.nomonsters;
+    doubleammo      = customskill.doubleammo;
+    halfdamage      = customskill.halfdamage;
     slowbrain       = customskill.slowbrain;
     fastmonsters    = customskill.fast;
     respawnmonsters = customskill.respawn;
     aggressive      = customskill.aggressive;
+    x2monsters      = customskill.x2monsters;
     notracking      = customskill.notracking || notrackingparm; // [Cherry]
   }
   else {
@@ -210,14 +247,17 @@ void G_SetSkillParms(const skill_t skill)
 
     coop_spawns     = coopspawnsparm;
     realnomonsters  = nomonsters;
+    doubleammo      = skill == sk_baby || skill == sk_nightmare;
+    halfdamage      = skill == sk_baby;
     slowbrain       = skill <= sk_easy;
     fastmonsters    = fastparm || skill == sk_nightmare;
     respawnmonsters = skill == sk_nightmare || respawnparm;
     aggressive      = skill == sk_nightmare;
     notracking      = notrackingparm; // [Cherry]
+
+    x2monsters = false;
   }
 
-  G_SetBabyModeParms(skill);
   G_SetFastParms(fastmonsters);
 }
 
@@ -232,6 +272,7 @@ void G_SetUserCustomSkill(void)
   customskill.fast       = custom_skill_fast;
   customskill.respawn    = custom_skill_respawn;
   customskill.aggressive = custom_skill_aggressive;
+  customskill.x2monsters = custom_skill_x2monsters;
   customskill.notracking = custom_skill_notracking;
 }
 
@@ -296,6 +337,7 @@ int             totalleveltimes; // [FG] total time for all completed levels
 int             levels_completed; // [Cherry] levels completed continuously
 boolean         demorecording;
 boolean         longtics;             // cph's doom 1.91 longtics hack
+boolean         fake_longtics;        // Fake longtics when using shorttics.
 boolean         shorttics;            // Config key for low resolution turning.
 boolean         lowres_turn;          // low resolution turning for longtics
 boolean         demoplayback;
@@ -304,17 +346,18 @@ boolean         precache = true;      // if true, load all graphics at start
 wbstartstruct_t wminfo;               // parms for world map / intermission
 boolean         haswolflevels = false;// jff 4/18/98 wolf levels present
 byte            *savebuffer;
-int             autorun = false;      // always running?          // phares
+boolean         autorun = false;      // always running?          // phares
 boolean         autostrafe50;
-int             novert = false;
+boolean         novert = false;
 boolean         mouselook = false;
 boolean         padlook = false;
 // killough 4/13/98: Make clock rate adjustable by scale factor
 int             realtic_clock_rate = 100;
+static boolean  doom_weapon_toggles;
 
 complevel_t     force_complevel, default_complevel;
 
-boolean         pistolstart, default_pistolstart;
+static boolean  pistolstart, default_pistolstart;
 
 boolean         strictmode, default_strictmode;
 boolean         force_strictmode;
@@ -328,10 +371,9 @@ static ticcmd_t* last_cmd = NULL;
 //
 int     key_escape = KEY_ESCAPE;                           // phares 4/13/98
 int     key_help = KEY_F1;                                 // phares 4/13/98
+
 // [FG] double click acts as "use"
-int     dclick_use;
-// [FG] invert vertical axis
-int     mouse_y_invert;
+static boolean dclick_use;
 
 #define MAXPLMOVE   (forwardmove[1])
 #define TURBOTHRESHOLD  0x32
@@ -339,46 +381,30 @@ int     mouse_y_invert;
 #define QUICKREVERSE 32768 // 180 degree reverse                    // phares
 #define NUMKEYS   256
 
-static fixed_t default_forwardmove[2] = {0x19, 0x32};
-static fixed_t default_sidemove[2] = {0x18, 0x28};
-fixed_t *forwardmove = default_forwardmove;
+fixed_t forwardmove[2] = {0x19, 0x32};
+fixed_t default_sidemove[2] = {0x18, 0x28};
 fixed_t *sidemove = default_sidemove;
-fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
+const fixed_t angleturn[3] = {640, 1280, 320};  // + slow turn
 
 boolean gamekeydown[NUMKEYS];
 int     turnheld;       // for accelerative turning
 
-boolean mousearray[NUM_MOUSE_BUTTONS + 1]; // [FG] support more mouse buttons
-boolean *mousebuttons = &mousearray[1];    // allow [-1]
+boolean mousebuttons[NUM_MOUSE_BUTTONS];
 
 // mouse values are used once
 static int mousex;
 static int mousey;
 boolean dclick;
 
-typedef struct carry_s
-{
-    double angle;
-    double pitch;
-    double side;
-    double vert;
-    short lowres;
-} carry_t;
-
-static carry_t prevcarry;
-static carry_t carry;
 static ticcmd_t basecmd;
 
-boolean joyarray[NUM_CONTROLLER_BUTTONS + 1]; // [FG] support more joystick buttons
-boolean *joybuttons = &joyarray[1];    // allow [-1]
-
-static const int direction[] = { 1, -1 };
+boolean joybuttons[NUM_GAMEPAD_BUTTONS];
 
 int   savegameslot = -1;
 char  savedescription[32];
 
 //jff 3/24/98 declare startskill external, define defaultskill here
-int defaultskill;               //note 1-based
+int default_skill;               //note 1-based
 
 // killough 2/8/98: make corpse queue variable in size
 int    bodyqueslot, bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
@@ -431,6 +457,7 @@ static boolean WeaponSelectable(weapontype_t weapon)
     // we also have the berserk pack.
 
     if (weapon == wp_fist
+     && demo_compatibility
      && players[consoleplayer].weaponowned[wp_chainsaw]
      && !players[consoleplayer].powers[pw_strength])
     {
@@ -490,7 +517,10 @@ static int G_NextWeapon(int direction)
         i = (i + arrlen(weapon_order_table)) % arrlen(weapon_order_table);
     } while (i != start_i && !WeaponSelectable(weapon_order_table[i].weapon));
 
-    return weapon_order_table[i].weapon_num;
+    if (!demo_compatibility)
+        return weapon_order_table[i].weapon;
+    else
+        return weapon_order_table[i].weapon_num;
 }
 
 // [FG] toggle demo warp mode
@@ -553,207 +583,268 @@ static void G_DemoSkipTics(void)
   }
 }
 
-static int RoundSide_Strict(double side)
+static void ClearLocalView(void)
 {
-  return lround(side * 0.5) * 2; // Even values only.
+  memset(&localview, 0, sizeof(localview));
 }
 
-static int RoundSide_Full(double side)
+static void UpdateLocalView_FakeLongTics(void)
 {
-  return lround(side);
+  localview.angle -= localview.angleoffset << FRACBITS;
+  localview.rawangle -= localview.angleoffset;
+  localview.angleoffset = 0;
+  localview.pitch = 0;
+  localview.rawpitch = 0.0;
+  localview.oldlerpangle = localview.lerpangle;
+  localview.lerpangle = localview.angle;
 }
 
-static int (*RoundSide)(double side) = RoundSide_Full;
+static void (*UpdateLocalView)(void);
 
-void G_UpdateSideMove(void)
+void G_UpdateLocalViewFunction(void)
 {
-  if (strictmode || (netgame && !solonet))
+  if (lowres_turn && fake_longtics && (!netgame || solonet))
   {
-    RoundSide = RoundSide_Strict;
-    sidemove = default_sidemove;
+    UpdateLocalView = UpdateLocalView_FakeLongTics;
   }
   else
   {
-    RoundSide = RoundSide_Full;
-    sidemove = autostrafe50 ? default_forwardmove : default_sidemove;
+    UpdateLocalView = ClearLocalView;
   }
 }
 
-static int CalcControllerForward(int speed)
+//
+// ApplyQuickstartCache
+// When recording a demo and the map is reloaded, cached input from a circular
+// buffer can be applied prior to the screen wipe. Adapted from DSDA-Doom.
+//
+
+static int quickstart_cache_tics;
+static boolean quickstart_queued;
+static float axis_turn_tic;
+static float gyro_turn_tic;
+static int mousex_tic;
+
+static void ClearQuickstartTic(void)
 {
-  const int forward = lroundf(forwardmove[speed] * axes[AXIS_FORWARD] *
-                              direction[joy_invert_forward]);
-  return BETWEEN(-forwardmove[speed], forwardmove[speed], forward);
+  axis_turn_tic = 0.0f;
+  gyro_turn_tic = 0.0f;
+  mousex_tic = 0;
 }
 
-static int CalcControllerSideTurn(int speed)
+static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
 {
-  const int side = RoundSide(forwardmove[speed] * axes[AXIS_TURN] *
-                             direction[joy_invert_turn]);
-  return BETWEEN(-forwardmove[speed], forwardmove[speed], side);
+  static float axis_turn_cache[TICRATE];
+  static float gyro_turn_cache[TICRATE];
+  static int mousex_cache[TICRATE];
+  static short angleturn_cache[TICRATE];
+  static int index;
+
+  if (quickstart_cache_tics < 1)
+  {
+    return;
+  }
+
+  if (quickstart_queued)
+  {
+    axes[AXIS_TURN] = 0.0f;
+    gyro_axes[GYRO_TURN] = 0.0f;
+    mousex = 0;
+
+    if (strafe)
+    {
+      for (int i = 0; i < quickstart_cache_tics; i++)
+      {
+        axes[AXIS_TURN] += axis_turn_cache[i];
+        gyro_axes[GYRO_TURN] += gyro_turn_cache[i];
+        mousex += mousex_cache[i];
+      }
+
+      cmd->angleturn = 0;
+      localview.rawangle = 0.0;
+    }
+    else
+    {
+      short result = 0;
+
+      for (int i = 0; i < quickstart_cache_tics; i++)
+      {
+        result += angleturn_cache[i];
+      }
+
+      cmd->angleturn = G_CarryAngleTic(result);
+      localview.rawangle = cmd->angleturn;
+    }
+
+    memset(axis_turn_cache, 0, sizeof(axis_turn_cache));
+    memset(gyro_turn_cache, 0, sizeof(gyro_turn_cache));
+    memset(mousex_cache, 0, sizeof(mousex_cache));
+    memset(angleturn_cache, 0, sizeof(angleturn_cache));
+    index = 0;
+
+    quickstart_queued = false;
+  }
+  else
+  {
+    axis_turn_cache[index] = axis_turn_tic;
+    gyro_turn_cache[index] = gyro_turn_tic;
+    mousex_cache[index] = mousex_tic;
+    angleturn_cache[index] = cmd->angleturn;
+    index = (index + 1) % quickstart_cache_tics;
+  }
 }
 
-static int CalcControllerSideStrafe(int speed)
+void G_PrepMouseTiccmd(void)
 {
-  const int side = RoundSide(forwardmove[speed] * axes[AXIS_STRAFE] *
-                             direction[joy_invert_strafe]);
-  return BETWEEN(-sidemove[speed], sidemove[speed], side);
-}
+  // [Nugget] /===============================================================
 
-static double CalcControllerAngle(void)
-{
-  return (angleturn[1] * axes[AXIS_TURN] * direction[joy_invert_turn]);
-}
+  float hmodifier = 1.0f;
 
-static double CalcControllerPitch(void)
-{
-  const double pitch = angleturn[1] * axes[AXIS_LOOK];
-  return (pitch * FRACUNIT * direction[joy_invert_look]);
-}
-
-static int CarryError(double value, const double *prevcarry, double *carry)
-{
-  const double desired = value + *prevcarry;
-  const int actual = lround(desired);
-  *carry = desired - actual;
-  return actual;
-}
-
-static short CarryAngle_Full(double angle)
-{
-  return CarryError(angle, &prevcarry.angle, &carry.angle);
-}
-
-static short CarryAngle_LowRes(double angle)
-{
-  const short desired = CarryAngle_Full(angle) + prevcarry.lowres;
-  // Round to nearest 256 for single byte turning. From Chocolate Doom.
-  const short actual = (desired + 128) & 0xFF00;
-  carry.lowres = desired - actual;
-  return actual;
-}
-
-static short (*CarryAngle)(double angle) = CarryAngle_Full;
-
-void G_UpdateCarryAngle(void)
-{
-  CarryAngle = lowres_turn ? CarryAngle_LowRes : CarryAngle_Full;
-}
-
-static int CarryPitch(double pitch)
-{
-  return CarryError(pitch, &prevcarry.pitch, &carry.pitch);
-}
-
-static int CarryMouseVert(double vert)
-{
-  return CarryError(vert, &prevcarry.vert, &carry.vert);
-}
-
-static int CarryMouseSide(double side)
-{
-  const double desired = side + prevcarry.side;
-  const int actual = RoundSide(desired);
-  carry.side = desired - actual;
-  return actual;
-}
-
-static double CalcMouseAngle(int mousex)
-{
-  if (!mouseSensitivity_horiz)
-    return 0.0;
-
-  return (I_AccelerateMouse(mousex) * (mouseSensitivity_horiz + 5) * 8 / 10);
-}
-
-static double CalcMousePitch(int mousey)
-{
-  double pitch;
-
-  if (!mouseSensitivity_vert_look)
-    return 0.0;
-
-  pitch = I_AccelerateMouse(mousey) * (mouseSensitivity_vert_look + 5) * 8 / 10;
-
-  return pitch * FRACUNIT * direction[mouse_y_invert];
-}
-
-static double CalcMouseSide(int mousex)
-{
-  if (!mouseSensitivity_horiz_strafe)
-    return 0.0;
-
-  return (I_AccelerateMouse(mousex) *
-          (mouseSensitivity_horiz_strafe + 5) * 2 / 10);
-}
-
-static double CalcMouseVert(int mousey)
-{
-  if (!mouseSensitivity_vert)
-    return 0.0;
-
-  return (I_AccelerateMouse(mousey) * (mouseSensitivity_vert + 5) / 10);
-}
-
-void G_PrepTiccmd(void)
-{
-  const boolean strafe = M_InputGameActive(input_strafe);
-  ticcmd_t *cmd = &basecmd;
-
-  // [Nugget] Decrease the intensity of some movements if zoomed in /---------
-
-  float zoomdiv = 1.0f;
+  // Decrease the intensity of some movements if zoomed in -------------------
 
   if (!strictmode)
   {
     const int zoom = R_GetFOVFX(FOVFX_ZOOM);
 
     if (zoom)
-    { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+    { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
   }
 
-  // [Nugget] ---------------------------------------------------------------/
+  float vmodifier = hmodifier;
 
-  // Gamepad
+  // Flip levels ------------------------------------------------------------
 
-  if (I_UseController() && I_CalcControllerAxes())
+  if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
+
+  // [Nugget] ===============================================================/
+
+  if (mousex && !M_InputGameActive(input_strafe))
   {
-    D_UpdateDeltaTics();
-
-    if (axes[AXIS_TURN] && !strafe)
-    {
-      localview.rawangle -= CalcControllerAngle() * deltatics / zoomdiv;
-      cmd->angleturn = CarryAngle(localview.rawangle);
-      localview.angle = cmd->angleturn << 16;
-      axes[AXIS_TURN] = 0.0f;
-    }
-
-    if (axes[AXIS_LOOK] && padlook)
-    {
-      localview.rawpitch -= CalcControllerPitch() * deltatics / zoomdiv;
-      cmd->pitch = CarryPitch(localview.rawpitch);
-      localview.pitch = cmd->pitch;
-      axes[AXIS_LOOK] = 0.0f;
-    }
-  }
-
-  // Mouse
-
-  if (mousex && !strafe)
-  {
-    localview.rawangle -= CalcMouseAngle(mousex) / zoomdiv;
-    cmd->angleturn = CarryAngle(localview.rawangle);
-    localview.angle = cmd->angleturn << 16;
+    localview.rawangle -= G_CalcMouseAngle(mousex) / hmodifier;
+    basecmd.angleturn = G_CarryAngle(localview.rawangle);
     mousex = 0;
   }
 
   if (mousey && mouselook)
   {
-    localview.rawpitch += CalcMousePitch(mousey) / zoomdiv;
-    cmd->pitch = CarryPitch(localview.rawpitch);
-    localview.pitch = cmd->pitch;
+    localview.rawpitch += G_CalcMousePitch(mousey) / vmodifier;
+    basecmd.pitch = G_CarryPitch(localview.rawpitch);
     mousey = 0;
   }
+}
+
+void G_PrepGamepadTiccmd(void)
+{
+  if (I_UseGamepad())
+  {
+    // [Nugget] /=============================================================
+
+    float hmodifier = 1.0f;
+
+    // Decrease the intensity of some movements if zoomed in -----------------
+
+    if (!strictmode)
+    {
+      const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+
+      if (zoom)
+      { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+    }
+
+    float vmodifier = hmodifier;
+
+    // Flip levels ----------------------------------------------------------
+
+    if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
+
+    // [Nugget] =============================================================/
+
+    const boolean strafe = M_InputGameActive(input_strafe);
+
+    I_CalcGamepadAxes(strafe);
+    axis_turn_tic = axes[AXIS_TURN];
+
+    if (axes[AXIS_TURN] && !strafe)
+    {
+      localview.rawangle -= G_CalcGamepadAngle() / hmodifier;
+      basecmd.angleturn = G_CarryAngle(localview.rawangle);
+      axes[AXIS_TURN] = 0.0f;
+    }
+
+    if (axes[AXIS_LOOK] && padlook)
+    {
+      localview.rawpitch -= G_CalcGamepadPitch() / vmodifier;
+      basecmd.pitch = G_CarryPitch(localview.rawpitch);
+      axes[AXIS_LOOK] = 0.0f;
+    }
+  }
+}
+
+void G_PrepGyroTiccmd(void)
+{
+  if (I_UseGamepad())
+  {
+    // [Nugget] /=============================================================
+
+    float hmodifier = 1.0f;
+
+    // Decrease the intensity of some movements if zoomed in -----------------
+
+    if (!strictmode)
+    {
+      const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+
+      if (zoom)
+      { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+    }
+
+    float vmodifier = hmodifier;
+
+    // Flip levels ----------------------------------------------------------
+
+    if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
+
+    // [Nugget] =============================================================/
+
+    I_CalcGyroAxes(M_InputGameActive(input_strafe));
+    gyro_turn_tic = gyro_axes[GYRO_TURN];
+
+    if (gyro_axes[GYRO_TURN])
+    {
+      localview.rawangle += gyro_axes[GYRO_TURN] / hmodifier;
+      basecmd.angleturn = G_CarryAngle(localview.rawangle);
+      gyro_axes[GYRO_TURN] = 0.0f;
+    }
+
+    if (gyro_axes[GYRO_LOOK])
+    {
+      localview.rawpitch += gyro_axes[GYRO_LOOK] / vmodifier;
+      basecmd.pitch = G_CarryPitch(localview.rawpitch);
+      gyro_axes[GYRO_LOOK] = 0.0f;
+    }
+  }
+}
+
+static boolean FilterDeathUseAction(void)
+{
+    if (players[consoleplayer].playerstate & PST_DEAD)
+    {
+        switch (death_use_action)
+        {
+            case death_use_nothing:
+                return true;
+            case death_use_reload:
+                if (!demoplayback && !demorecording && !netgame)
+                {
+                    activate_death_use_reload = true;
+                }
+                return true;
+            default:
+                break;
+        }
+    }
+
+    return false;
 }
 
 //
@@ -775,18 +866,21 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   int side = 0;
   int newweapon;                                          // phares
 
-  extern boolean boom_weapon_state_injection;
   static boolean done_autoswitch = false;
 
   G_DemoSkipTics();
 
   if (!uncapped || !raw_input)
   {
-    G_PrepTiccmd();
+    G_PrepMouseTiccmd();
+    G_PrepGamepadTiccmd();
+    G_PrepGyroTiccmd();
   }
 
   memcpy(cmd, &basecmd, sizeof(*cmd));
   memset(&basecmd, 0, sizeof(basecmd));
+
+  ApplyQuickstartCache(cmd, strafe);
 
   cmd->consistancy = consistancy[consoleplayer][maketic%BACKUPTICS];
 
@@ -841,21 +935,21 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   // Gamepad
 
-  if (I_UseController())
+  if (I_UseGamepad())
   {
     if (axes[AXIS_TURN] && strafe && !cmd->angleturn)
     {
-      side += CalcControllerSideTurn(speed);
+      side += G_CalcGamepadSideTurn(speed);
     }
 
     if (axes[AXIS_STRAFE])
     {
-      side += CalcControllerSideStrafe(speed);
+      side += G_CalcGamepadSideStrafe(speed);
     }
 
     if (axes[AXIS_FORWARD])
     {
-      forward -= CalcControllerForward(speed);
+      forward -= G_CalcGamepadForward(speed);
     }
   }
 
@@ -863,23 +957,29 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (mousex && strafe && !cmd->angleturn)
   {
-    const double mouseside = CalcMouseSide(mousex);
-    side += CarryMouseSide(mouseside);
+    const double mouseside = G_CalcMouseSide(mousex);
+    side += G_CarrySide(mouseside);
   }
 
   if (mousey && !mouselook && !novert)
   {
-    const double mousevert = CalcMouseVert(mousey);
-    forward += CarryMouseVert(mousevert);
+    const double mousevert = G_CalcMouseVert(mousey);
+    forward += G_CarryVert(mousevert);
   }
 
   // Update/reset
 
+  // [Nugget] Flip levels
+  if (STRICTMODE(flip_levels)) {
+    angle = -angle;
+    side  = -side;
+  }
+
   if (angle)
   {
     const short old_angleturn = cmd->angleturn;
-    cmd->angleturn = CarryAngle(localview.rawangle + angle);
-    localview.ticangleturn = cmd->angleturn - old_angleturn;
+    cmd->angleturn = G_CarryAngleTic(localview.rawangle + angle);
+    cmd->ticangleturn = cmd->angleturn - old_angleturn;
   }
 
   if (forward > MAXPLMOVE)
@@ -894,13 +994,12 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   cmd->forwardmove = forward;
   cmd->sidemove = side;
 
-  I_ResetControllerAxes();
+  ClearQuickstartTic();
+  I_ResetGamepadAxes();
+  I_ResetGyroAxes();
   mousex = mousey = 0;
-  localview.angle = 0;
-  localview.pitch = 0;
-  localview.rawangle = 0.0;
-  localview.rawpitch = 0.0;
-  prevcarry = carry;
+  UpdateLocalView();
+  G_UpdateCarry();
 
   // Buttons
 
@@ -911,7 +1010,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (M_InputGameActive(input_use)) // [FG] mouse button for "use"
     {
-      cmd->buttons |= BT_USE;
+      if (!FilterDeathUseAction())
+        cmd->buttons |= BT_USE;
       // clear double clicks if hit use button
       dclick = false;
     }
@@ -947,24 +1047,59 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       // [FG] prev/next weapon keys and buttons
       if (gamestate == GS_LEVEL && next_weapon != 0)
         newweapon = G_NextWeapon(next_weapon);
-      else
-      newweapon =
-        M_InputGameActive(input_weapon1) ? wp_fist :    // killough 5/2/98: reformatted
-        M_InputGameActive(input_weapon2) ? wp_pistol :
-        M_InputGameActive(input_weapon3) ? wp_shotgun :
-        M_InputGameActive(input_weapon4) ? wp_chaingun :
-        M_InputGameActive(input_weapon5) ? wp_missile :
-        M_InputGameActive(input_weapon6) && gamemode != shareware ? wp_plasma :
-        M_InputGameActive(input_weapon7) && gamemode != shareware ? wp_bfg :
-        M_InputGameActive(input_weapon8) ? wp_chainsaw :
-        M_InputGameActive(input_weapon9) && have_ssg ? wp_supershotgun :
+      else {
+        // [Nugget] Tweaked switching
 
-        // [Nugget] Last weapon key
-        M_InputGameActive(input_lastweapon) && casual_play &&
-        WeaponSelectable(players[consoleplayer].lastweapon)
-        ? players[consoleplayer].lastweapon :
+        boolean iw_active[9] = {false}, ilw_active = false;
 
-        wp_nochange;
+        if (CASUALPLAY(weapswitch_interruption))
+        {
+          static boolean iw_down[9] = {false}, ilw_down = false;
+
+          for (int i = 0;  i < 9;  i++)
+          {
+            if (!M_InputGameActive(input_weapon1 + i))
+            {
+              iw_down[i] = false;
+            }
+            else if (!iw_down[i])
+            {
+              iw_active[i] = iw_down[i] = true;
+            }
+          }
+
+          if (!M_InputGameActive(input_lastweapon))
+          {
+            ilw_down = false;
+          }
+          else if (!ilw_down)
+          {
+            ilw_active = ilw_down = true;
+          }
+        }
+        else {
+          for (int i = 0;  i < 9;  i++)
+          { iw_active[i] = M_InputGameActive(input_weapon1 + i); }
+
+          ilw_active = M_InputGameActive(input_lastweapon);
+        }
+
+        newweapon =
+          iw_active[0] ? wp_fist :    // killough 5/2/98: reformatted
+          iw_active[1] ? wp_pistol :
+          iw_active[2] ? wp_shotgun :
+          iw_active[3] ? wp_chaingun :
+          iw_active[4] ? wp_missile :
+          iw_active[5] && gamemode != shareware ? wp_plasma :
+          iw_active[6] && gamemode != shareware ? wp_bfg :
+          iw_active[7] ? wp_chainsaw :
+          iw_active[8] && !demo_compatibility && have_ssg ? wp_supershotgun :
+
+          // [Nugget] Last-weapon button
+          CASUALPLAY(ilw_active) ? players[consoleplayer].lastweapon :
+
+          wp_nochange;
+      }
 
       // killough 3/22/98: For network and demo consistency with the
       // new weapons preferences, we must do the weapons switches here
@@ -979,7 +1114,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       //
       // killough 10/98: make SG/SSG and Fist/Chainsaw
       // weapon toggles optional
-
+      
       if (!demo_compatibility && doom_weapon_toggles)
         {
           const player_t *player = &players[consoleplayer];
@@ -1025,11 +1160,12 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   if (dclick)
   {
     dclick = false;
-    cmd->buttons |= BT_USE;
+    if (!FilterDeathUseAction())
+      cmd->buttons |= BT_USE;
   }
 
   // special buttons
-  if (sendpause)
+  if (sendpause && gameaction != ga_newgame)
     {
       sendpause = false;
       cmd->buttons = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
@@ -1057,12 +1193,15 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
 void G_ClearInput(void)
 {
-  I_ResetControllerLevel();
+  ClearQuickstartTic();
+  I_ResetGamepadState();
+  I_FlushGamepadSensorEvents();
   mousex = mousey = 0;
-  memset(&localview, 0, sizeof(localview));
-  memset(&carry, 0, sizeof(carry));
-  memset(&prevcarry, 0, sizeof(prevcarry));
+  ClearLocalView();
+  G_ClearCarry();
   memset(&basecmd, 0, sizeof(basecmd));
+  I_ResetRelativeMouseState();
+  I_ResetAllRumbleChannels();
 }
 
 //
@@ -1074,7 +1213,7 @@ static void G_DoLoadLevel(void)
   int i;
 
   // [Nugget]
-  int lastaction  = gameaction;
+  int lastaction = gameaction;
   static int lastepisode = -1, lastmap = -1;
 
   // Set the sky map.
@@ -1132,7 +1271,7 @@ static void G_DoLoadLevel(void)
     basetic = gametic;
 
   if (wipegamestate == GS_LEVEL
-      && gameaction != ga_rewind) // [Nugget] Rewind
+      && lastaction != ga_rewind) // [Nugget] Rewind
     wipegamestate = -1;             // force a wipe
 
   gamestate = GS_LEVEL;
@@ -1149,10 +1288,7 @@ static void G_DoLoadLevel(void)
   // by Z_FreeTags() when the previous level ended or player
   // died.
 
-   {
-    extern msecnode_t *headsecnode; // phares 3/25/98
-    headsecnode = NULL;
-   }
+  headsecnode = NULL;
 
   critical = (gameaction == ga_playdemo || demorecording || demoplayback || D_CheckNetConnect());
 
@@ -1165,14 +1301,22 @@ static void G_DoLoadLevel(void)
   }
   else
   // [crispy] pistol start
-  if (CRITICAL(pistolstart))
+  if (CRITICAL(pistolstart) && lastaction != ga_rewind) // [Nugget] Rewind
   {
     G_PlayerReborn(0);
   }
 
-  P_SetupLevel (gameepisode, gamemap, 0, gameskill);
+  // [Nugget] Rewind: skip level setup if rewinding within the same map
+  if (lastaction == ga_rewind
+      && lastepisode == gameepisode && lastmap == gamemap)
+  {
+    S_Start(); // Stop sounds
+  }
+  else
+    P_SetupLevel (gameepisode, gamemap, 0, gameskill);
 
-  MN_UpdateFreeLook();
+  MN_UpdateFreeLook(!mouselook && !padlook);
+  HU_UpdateTurnFormat();
 
   // [Woof!] Do not reset chosen player view across levels in multiplayer
   // demo playback. However, it must be reset when starting a new game.
@@ -1195,8 +1339,8 @@ static void G_DoLoadLevel(void)
     G_ClearInput();
     sendpause = sendsave = paused = false;
     // [FG] array size!
-    memset (mousearray, 0, sizeof(mousearray));
-    memset (joyarray, 0, sizeof(joyarray));
+    memset (mousebuttons, 0, sizeof(mousebuttons));
+    memset (joybuttons, 0, sizeof(joybuttons));
   }
 
   //jff 4/26/98 wake up the status bar in case were coming out of a DM demo
@@ -1248,16 +1392,16 @@ static void G_DoLoadLevel(void)
 
   R_UpdateFreecamMobj(NULL);
 
-  if (lastepisode != gameepisode || lastmap  != gamemap)
+  if (lastepisode != gameepisode || lastmap != gamemap)
   {
-    lastepisode = gameepisode;
-    lastmap     = gamemap;
-
     R_ResetFreecam(true);
   }
-}
 
-extern int ddt_cheating;
+  // -------------------------------------------------------------------------
+
+  lastepisode = gameepisode;
+  lastmap     = gamemap;
+}
 
 static void G_ReloadLevel(void)
 {
@@ -1390,7 +1534,7 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
 static boolean G_StrictModeSkipEvent(event_t *ev)
 {
   static boolean enable_mouse = false;
-  static boolean enable_controller = false;
+  static boolean enable_gamepad = false;
   static boolean first_event = true;
 
   if (!strictmode || !demorecording)
@@ -1413,24 +1557,38 @@ static boolean G_StrictModeSkipEvent(event_t *ev)
         if (first_event)
         {
           first_event = false;
-          enable_controller = true;
+          enable_gamepad = true;
         }
-        return !enable_controller;
+        return !enable_gamepad;
 
     case ev_joystick:
         if (first_event)
         {
           I_UpdateAxesData(ev);
-          I_CalcControllerAxes();
+          I_CalcGamepadAxes(M_InputGameActive(input_strafe));
           if (axes[AXIS_STRAFE] || axes[AXIS_FORWARD] || axes[AXIS_TURN] ||
               axes[AXIS_LOOK])
           {
             first_event = false;
-            enable_controller = true;
+            enable_gamepad = true;
           }
-          I_ResetControllerLevel();
+          I_ResetGamepadState();
         }
-        return !enable_controller;
+        return !enable_gamepad;
+
+    case ev_gyro:
+        if (first_event)
+        {
+          I_UpdateGyroData(ev);
+          I_CalcGyroAxes(M_InputGameActive(input_strafe));
+          if (gyro_axes[GYRO_TURN] || gyro_axes[GYRO_LOOK])
+          {
+            first_event = false;
+            enable_gamepad = true;
+          }
+          I_ResetGamepadState();
+        }
+        return !enable_gamepad;
 
     default:
         break;
@@ -1449,12 +1607,17 @@ boolean G_MovementResponder(event_t *ev)
   switch (ev->type)
   {
     case ev_mouse:
-      mousex += ev->data2;
-      mousey += ev->data3;
+      mousex_tic += ev->data1.i;
+      mousex += ev->data1.i;
+      mousey -= ev->data2.i;
       return true;
 
     case ev_joystick:
       I_UpdateAxesData(ev);
+      return true;
+
+    case ev_gyro:
+      I_UpdateGyroData(ev);
       return true;
 
     default:
@@ -1471,8 +1634,6 @@ boolean G_MovementResponder(event_t *ev)
 
 boolean G_Responder(event_t* ev)
 {
-  extern boolean chat_on; // [Nugget]
-
   // allow spy mode changes even during the demo
   // killough 2/22/98: even during DM demo
   //
@@ -1571,7 +1732,7 @@ boolean G_Responder(event_t* ev)
 
   if (dclick_use && ev->type == ev_mouseb_down &&
       (M_InputActivated(input_strafe) || M_InputActivated(input_forward)) &&
-      ev->data2 >= 2 && (ev->data2 % 2) == 0)
+      ev->data2.i >= 2 && (ev->data2.i % 2) == 0)
   {
     dclick = true;
   }
@@ -1579,7 +1740,6 @@ boolean G_Responder(event_t* ev)
   if (M_InputActivated(input_pause))
   {
     sendpause = true;
-
     return true;
   }
 
@@ -1591,33 +1751,33 @@ boolean G_Responder(event_t* ev)
   switch (ev->type)
     {
     case ev_keydown:
-	if (ev->data1 <NUMKEYS)
-	  gamekeydown[ev->data1] = true;
+      if (ev->data1.i < NUMKEYS)
+        gamekeydown[ev->data1.i] = true;
       return true;    // eat key down events
 
     case ev_keyup:
-      if (ev->data1 <NUMKEYS)
-        gamekeydown[ev->data1] = false;
+      if (ev->data1.i < NUMKEYS)
+        gamekeydown[ev->data1.i] = false;
       return false;   // always let key up events filter down
 
     case ev_mouseb_down:
-      if (ev->data1 < NUM_MOUSE_BUTTONS)
-        mousebuttons[ev->data1] = true;
+      if (ev->data1.i < NUM_MOUSE_BUTTONS)
+        mousebuttons[ev->data1.i] = true;
       return true;
 
     case ev_mouseb_up:
-      if (ev->data1 < NUM_MOUSE_BUTTONS)
-        mousebuttons[ev->data1] = false;
+      if (ev->data1.i < NUM_MOUSE_BUTTONS)
+        mousebuttons[ev->data1.i] = false;
       return true;
 
     case ev_joyb_down:
-      if (ev->data1 < NUM_CONTROLLER_BUTTONS)
-        joybuttons[ev->data1] = true;
+      if (ev->data1.i < NUM_GAMEPAD_BUTTONS)
+        joybuttons[ev->data1.i] = true;
       return true;
 
     case ev_joyb_up:
-      if (ev->data1 < NUM_CONTROLLER_BUTTONS)
-        joybuttons[ev->data1] = false;
+      if (ev->data1.i < NUM_GAMEPAD_BUTTONS)
+        joybuttons[ev->data1.i] = false;
       return true;
 
     default:
@@ -1794,6 +1954,7 @@ static void G_PlayerFinishLevel(int player)
   p->centering = false;
   p->slope = 0;
   p->recoilpitch = p->oldrecoilpitch = 0;
+  p->ticangle = p->oldticangle = 0;
 
   // [Nugget] Reset more additional player properties ------------------------
 
@@ -2145,6 +2306,14 @@ frommapinfo:
     StatCopy(&wminfo);
   }
 
+  for (int i = 0; i < MAXPLAYERS; ++i)
+  {
+      level_t level = {gameepisode, gamemap};
+      array_push(players[i].visitedlevels, level);
+      players[i].num_visitedlevels = array_size(players[i].visitedlevels);
+  }
+  wminfo.visitedlevels = players[consoleplayer].visitedlevels;
+
   WI_Start (&wminfo);
 
   // [Nugget] Clear visual effects
@@ -2167,7 +2336,7 @@ static void G_DoWorldDone(void)
 
   // [Nugget] ----------------------------------------------------------------
 
-  G_SetAutosaveCountdown(0); // Autosave
+  if (autosave) { G_DoAutosave(); } // Autosave
   
   G_UpdateInitialLoadout(); // Custom Skill
 }
@@ -2190,10 +2359,9 @@ static void G_DoPlayDemo(void)
 {
   skill_t skill;
   int i, episode, map;
-  char basename[9];
   demo_version_t demover;
   byte *option_p = NULL;      // killough 11/98
-  int lumpnum, lumplength;
+  int demolength;
 
   if (gameaction != ga_loadgame)      // killough 12/98: support -loadgame
     basetic = gametic;  // killough 9/29/98
@@ -2205,17 +2373,33 @@ static void G_DoPlayDemo(void)
       Z_Free(demobuffer);
   }
 
-  ExtractFileBase(defdemoname,basename);           // killough
+  char *filename = NULL;
+  if (singledemo)
+  {
+      filename = D_FindLMPByName(defdemoname);
+  }
 
-  lumpnum = W_GetNumForName(basename);
-  lumplength = W_LumpLength(lumpnum);
-
-  demobuffer = demo_p = W_CacheLumpNum(lumpnum, PU_STATIC);  // killough
+  if (singledemo && filename)
+  {
+      M_ReadFile(filename, &demobuffer);
+      demolength = M_FileLength(filename);
+      demo_p = demobuffer;
+      I_Printf(VB_INFO, "G_DoPlayDemo: %s", filename);
+  }
+  else
+  {
+      char lumpname[9] = {0};
+      W_ExtractFileBase(defdemoname, lumpname);           // killough
+      int lumpnum = W_GetNumForName(lumpname);
+      demolength = W_LumpLength(lumpnum);
+      demobuffer = demo_p = W_CacheLumpNum(lumpnum, PU_STATIC);  // killough
+      I_Printf(VB_INFO, "G_DoPlayDemo: %s (%s)", lumpname, W_WadNameForLump(lumpnum));
+  }
 
   // [FG] ignore too short demo lumps
-  if (lumplength < 0xd)
+  if (demolength < 0xd)
   {
-    I_Printf(VB_WARNING, "G_DoPlayDemo: Short demo lump %s.", basename);
+    I_Printf(VB_WARNING, "G_DoPlayDemo: Short demo lump %s.", defdemoname);
     InvalidDemo();
     return;
   }
@@ -2424,7 +2608,7 @@ static void G_DoPlayDemo(void)
 
   gameaction = ga_nothing;
 
-  maxdemosize = lumplength;
+  maxdemosize = demolength;
 
   // [crispy] demo progress bar
   {
@@ -2440,15 +2624,12 @@ static void G_DoPlayDemo(void)
         ++playerscount;
     }
 
-    while (*demo_ptr != DEMOMARKER && (demo_ptr - demobuffer) < lumplength)
+    while (*demo_ptr != DEMOMARKER && (demo_ptr - demobuffer) < demolength)
     {
       demo_ptr += playerscount * (longtics ? 5 : 4);
       ++playback_totaltics;
     }
   }
-
-  // [FG] report compatibility mode
-  I_Printf(VB_INFO, "G_DoPlayDemo: %.8s (%s)", basename, W_WadNameForLump(lumpnum));
 
   D_UpdateCasualPlay(); // [Nugget]
 }
@@ -2458,7 +2639,7 @@ static void G_DoPlayDemo(void)
 // killough 2/22/98: version id string format for savegames
 #define VERSIONID "MBF %d"
 
-#define CURRENT_SAVE_VERSION "Cherry 2.0.0"
+#define CURRENT_SAVE_VERSION "Cherry 2.1.0"
 
 static char *savename = NULL;
 
@@ -2530,7 +2711,6 @@ void CheckSaveGame(size_t size)
 // (previously code was scattered around in multiple places)
 
 // [FG] support up to 8 pages of savegames
-extern int savepage;
 
 char* G_SaveGameName(int slot)
 {
@@ -2543,27 +2723,52 @@ char* G_SaveGameName(int slot)
   {
     static int autoslot = 0;
 
-    sprintf(buf, "cheraut%d.dsg", autoslot);
+    sprintf(buf, "%.4saut%d.dsg", D_DoomExeName(), autoslot);
 
     autoslot = (autoslot + 1) % 4;
   }
   else
     sprintf(buf, "%.7s%d.dsg", savegamename, 10*savepage+slot);
 
-// [Nugget] Restored `-cdrom` parm
+  char *filepath =
+    // [Nugget] Restored `-cdrom` parm
 #ifdef _WIN32
-  if (M_CheckParm("-cdrom"))
-    return M_StringJoin("c:\\doomdata\\", buf, NULL);
-  else
+    M_CheckParm("-cdrom") ? M_StringJoin("c:\\doomdata\\", buf) :
 #endif
-  return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf, NULL);
+    M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
+
+  char *existing = M_FileCaseExists(filepath);
+
+  if (existing)
+  {
+    free(filepath);
+    return existing;
+  }
+  else
+  {
+    char *filename = (char *)M_BaseName(filepath);
+    M_StringToLower(filename);
+    return filepath;
+  }
 }
 
 char* G_MBFSaveGameName(int slot)
 {
-   char buf[16] = {0};
-   sprintf(buf, "MBFSAV%d.dsg", 10*savepage+slot);
-   return M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf, NULL);
+  char buf[16] = {0};
+  sprintf(buf, "MBFSAV%d.dsg", 10*savepage+slot);
+
+  char *filepath = M_StringJoin(basesavegame, DIR_SEPARATOR_S, buf);
+  char *existing = M_FileCaseExists(filepath);
+
+  if (existing)
+  {
+    free(filepath);
+    return existing;
+  }
+  else
+  {
+    return filepath;
+  }
 }
 
 // killough 12/98:
@@ -2717,6 +2922,7 @@ static void G_DoSaveGame(void)
   saveg_write32(customskill.fast);
   saveg_write32(customskill.respawn);
   saveg_write32(customskill.aggressive);
+  saveg_write32(customskill.x2monsters);
 
   CheckSaveGame(sizeof(initial_loadout));
 
@@ -2822,8 +3028,10 @@ static void G_DoLoadGame(void)
   CheckSaveVersion("Nugget 2.1.0", saveg_nugget210);
   CheckSaveVersion("Nugget 2.4.0", saveg_nugget300);
   CheckSaveVersion("Nugget 3.2.0", saveg_nugget320);
+  CheckSaveVersion("Nugget 3.3.0", saveg_nugget330);
   CheckSaveVersion("Cherry 1.0.0", saveg_cherry100);
   CheckSaveVersion("Cherry 1.0.1", saveg_cherry101);
+  CheckSaveVersion("Cherry 2.0.0", saveg_cherry200);
   CheckSaveVersion(CURRENT_SAVE_VERSION, saveg_current);
 
   // killough 2/22/98: Friendly savegame version difference message
@@ -2997,36 +3205,58 @@ static void G_DoLoadGame(void)
   { complete_milestones = saveg_read_enum(); }
 
   // Restore custom-skill settings
-  if (saveg_check_version_min(saveg_nugget320) && (save_p - savebuffer) <= (length - sizeof(customskill)))
+  if (saveg_check_version_min(saveg_nugget320))
   {
-    customskill.things     = saveg_read32();
-    customskill.coopspawns = saveg_read32();
-    customskill.nomonsters = saveg_read32();
-    customskill.doubleammo = saveg_read32();
-    customskill.halfdamage = saveg_read32();
-    customskill.slowbrain  = saveg_read32();
-    customskill.fast       = saveg_read32();
-    customskill.respawn    = saveg_read32();
-    customskill.aggressive = saveg_read32();
+    #define READ(x)                                      \
+      if ((save_p - savebuffer) <= (length - sizeof(x))) \
+        x = saveg_read32()
+
+    READ(customskill.things);
+    READ(customskill.coopspawns);
+    READ(customskill.nomonsters);
+    READ(customskill.doubleammo);
+    READ(customskill.halfdamage);
+    READ(customskill.slowbrain);
+    READ(customskill.fast);
+    READ(customskill.respawn);
+    READ(customskill.aggressive);
+
+    if (saveg_check_version_min(saveg_nugget330))
+    { READ(customskill.x2monsters); }
 
     if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
 
-    initial_loadout.mohealth    = saveg_read32();
-    initial_loadout.health      = saveg_read32();
-    initial_loadout.armorpoints = saveg_read32();
-    initial_loadout.armortype   = saveg_read32();
-    initial_loadout.backpack    = saveg_read32();
-    initial_loadout.readyweapon = saveg_read_enum();
-    initial_loadout.lastweapon  = saveg_read_enum();
+    READ(initial_loadout.mohealth);
+    READ(initial_loadout.health);
+    READ(initial_loadout.armorpoints);
+    READ(initial_loadout.armortype);
+    READ(initial_loadout.backpack);
 
-    for (int i = 0;  i < NUMWEAPONS;  i++)
-    { initial_loadout.weaponowned[i] = saveg_read32(); }
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout.readyweapon)))
+    { initial_loadout.readyweapon = saveg_read_enum(); }
 
-    for (int i = 0;  i < NUMAMMO;  i++)
-    { initial_loadout.ammo[i] = saveg_read32(); }
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout.lastweapon)))
+    { initial_loadout.lastweapon  = saveg_read_enum(); }
 
-    for (int i = 0;  i < NUMAMMO;  i++)
-    { initial_loadout.maxammo[i] = saveg_read32(); }
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout.weaponowned)))
+    {
+      for (int i = 0;  i < NUMWEAPONS;  i++)
+      { initial_loadout.weaponowned[i] = saveg_read32(); }
+    }
+
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout.ammo)))
+    {
+      for (int i = 0;  i < NUMAMMO;  i++)
+      { initial_loadout.ammo[i] = saveg_read32(); }
+    }
+
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout.maxammo)))
+    {
+      for (int i = 0;  i < NUMAMMO;  i++)
+      { initial_loadout.maxammo[i] = saveg_read32(); }
+    }
+
+    #undef READ
   }
 
   // [Nugget] ---------------------------------------------------------------/
@@ -3172,6 +3402,7 @@ static void G_SaveKeyFrame(void)
   saveg_write32(customskill.fast);
   saveg_write32(customskill.respawn);
   saveg_write32(customskill.aggressive);
+  saveg_write32(customskill.x2monsters);
 
   CheckSaveGame(sizeof(initial_loadout));
 
@@ -3387,25 +3618,29 @@ static void G_DoRewind(void)
     customskill.fast       = saveg_read32();
     customskill.respawn    = saveg_read32();
     customskill.aggressive = saveg_read32();
+    customskill.x2monsters = saveg_read32();
 
     if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
 
-    initial_loadout.mohealth    = saveg_read32();
-    initial_loadout.health      = saveg_read32();
-    initial_loadout.armorpoints = saveg_read32();
-    initial_loadout.armortype   = saveg_read32();
-    initial_loadout.backpack    = saveg_read32();
-    initial_loadout.readyweapon = saveg_read_enum();
-    initial_loadout.lastweapon  = saveg_read_enum();
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout)))
+    {
+      initial_loadout.mohealth    = saveg_read32();
+      initial_loadout.health      = saveg_read32();
+      initial_loadout.armorpoints = saveg_read32();
+      initial_loadout.armortype   = saveg_read32();
+      initial_loadout.backpack    = saveg_read32();
+      initial_loadout.readyweapon = saveg_read_enum();
+      initial_loadout.lastweapon  = saveg_read_enum();
 
-    for (int i = 0;  i < NUMWEAPONS;  i++)
-    { initial_loadout.weaponowned[i] = saveg_read32(); }
+      for (int i = 0;  i < NUMWEAPONS;  i++)
+      { initial_loadout.weaponowned[i] = saveg_read32(); }
 
-    for (int i = 0;  i < NUMAMMO;  i++)
-    { initial_loadout.ammo[i] = saveg_read32(); }
+      for (int i = 0;  i < NUMAMMO;  i++)
+      { initial_loadout.ammo[i] = saveg_read32(); }
 
-    for (int i = 0;  i < NUMAMMO;  i++)
-    { initial_loadout.maxammo[i] = saveg_read32(); }
+      for (int i = 0;  i < NUMAMMO;  i++)
+      { initial_loadout.maxammo[i] = saveg_read32(); }
+    }
   }
 
   keyframe_rw = false;
@@ -3473,16 +3708,19 @@ boolean G_KeyFrameRW(void)
 // [Nugget] -----------------------------------------------------------------/
 
 boolean clean_screenshot;
-extern void ST_ResetPalette(void); // [Nugget] Taken out of `G_CleanScreenshot()`
+
+int screenshot_palette; // [Nugget]
 
 void G_CleanScreenshot(void)
 {
   int old_screenblocks;
   boolean old_hide_weapon;
-  // [Nugget] Took `extern ST_ResetPalette()` out
 
   if (!(screenshot_palette & SHOTPAL_CLEAN)) // [Nugget]
     ST_ResetPalette();
+
+  if (gamestate != GS_LEVEL)
+      return;
 
   old_screenblocks = screenblocks;
   old_hide_weapon = hide_weapon;
@@ -3566,16 +3804,11 @@ void G_Ticker(void)
     }
 
   // [Nugget] Autosave
-  if (CASUALPLAY(autosave_interval)
+  if (CASUALPLAY(autosave && autosave_interval)
       && gamestate == GS_LEVEL && oldleveltime < leveltime
       && players[consoleplayer].playerstate != PST_DEAD)
   {
-    if (--autosave_countdown <= 0)
-    {
-      autosaving = true;
-      G_DoSaveGame();
-      autosaving = false;
-    }
+    if (--autosave_countdown <= 0) { G_DoAutosave(); }
   }
 
   // [Nugget] Rewind
@@ -3653,7 +3886,6 @@ void G_Ticker(void)
 		  cmd->forwardmove > TURBOTHRESHOLD &&
 		  !(gametic&31) && ((gametic>>5)&3) == i )
 		{
-		  extern char **player_names[];
 		  displaymsg("%s is turbo!", *player_names[i]); // killough 9/29/98
 		}
 
@@ -3674,6 +3906,8 @@ void G_Ticker(void)
       if (demoplayback)
         ++playback_tic;
 
+      HU_UpdateCommandHistory(&players[displayplayer].cmd);
+
       // check for special buttons
       for (i=0; i<MAXPLAYERS; i++)
 	if (playeringame[i] && players[i].cmd.buttons & BT_SPECIAL)
@@ -3683,6 +3917,10 @@ void G_Ticker(void)
 	      if (!demoplayback) // ignore in demos
 	      {
 	        gameaction = ga_reloadlevel;
+	        if (demorecording)
+	        {
+	          quickstart_queued = true;
+	        }
 	      }
 	      break;
 
@@ -3753,7 +3991,7 @@ void G_Ticker(void)
     fixed_t pitch = 0;
     boolean center = false,
             lock = false;
-    
+
     if (R_GetFreecamMode() == FREECAM_CAM && gamestate == GS_LEVEL && !menuactive)
     {
       const ticcmd_t *const cmd = &netcmds[consoleplayer];
@@ -3791,10 +4029,12 @@ void G_Ticker(void)
             displaymsg("Freecam Speed: %i unit%s", scaledspeed, (scaledspeed == 1) ? "" : "s");
           }
 
-          fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed)));
+          fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed))) * 100 / realtic_clock_rate;
 
           fixed_t forwardmove = speed * (INPUT(input_forward)     - INPUT(input_backward)),
                   sidemove    = speed * (INPUT(input_straferight) - INPUT(input_strafeleft));
+
+          if (flip_levels) { sidemove = -sidemove; } // Flip levels
 
           angle_t fangle = R_GetFreecamAngle() + angle;
 
@@ -3807,7 +4047,7 @@ void G_Ticker(void)
           z = speed * (INPUT(input_jump) - INPUT(input_crouch));
         }
 
-        pitch = cmd->pitch;
+        pitch = cmd->pitch << FRACBITS;
 
         static int strafetic = -10;
         static boolean strafedown = false;
@@ -3899,8 +4139,6 @@ void G_PlayerReborn(int player)
 // at the given mapthing_t spot
 // because something is occupying it
 //
-
-void P_SpawnPlayer(mapthing_t *mthing);
 
 static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
 {
@@ -4030,8 +4268,8 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
   if (&players[playernum] == &players[displayplayer])
   { R_SetFOVFX(FOVFX_TELEPORT); }
 
-  if (players[consoleplayer].viewz != 1)
-    S_StartSound(mo, sfx_telept);  // don't start sound on first frame
+  if (players[consoleplayer].viewz != 1) // don't start sound on first frame
+    S_StartSoundSource(players[consoleplayer].mo, mo, sfx_telept);
 
   return true;
 }
@@ -4234,26 +4472,26 @@ demo_version_t G_GetNamedComplevel(const char *arg)
 {
     const struct
     {
-        demo_version_t demover;
         const char *const name;
+        demo_version_t demover;
         int exe;
     } named_complevel[] = {
-        {DV_VANILLA, "vanilla",  exe_indetermined},
-        {DV_VANILLA, "doom2",    exe_doom_1_9    },
-        {DV_VANILLA, "1.9",      exe_doom_1_9    },
-        {DV_VANILLA, "2",        exe_doom_1_9    },
-        {DV_VANILLA, "ultimate", exe_ultimate    },
-        {DV_VANILLA, "3",        exe_ultimate    },
-        {DV_VANILLA, "final",    exe_final       },
-        {DV_VANILLA, "tnt",      exe_final       },
-        {DV_VANILLA, "plutonia", exe_final       },
-        {DV_VANILLA, "4",        exe_final       },
-        {DV_BOOM,    "boom",     exe_indetermined},
-        {DV_BOOM,    "9",        exe_indetermined},
-        {DV_MBF,     "mbf",      exe_indetermined},
-        {DV_MBF,     "11",       exe_indetermined},
-        {DV_MBF21,   "mbf21",    exe_indetermined},
-        {DV_MBF21,   "21",       exe_indetermined},
+        {"vanilla",  DV_VANILLA, exe_indetermined},
+        {"doom2",    DV_VANILLA, exe_doom_1_9    },
+        {"1.9",      DV_VANILLA, exe_doom_1_9    },
+        {"2",        DV_VANILLA, exe_doom_1_9    },
+        {"ultimate", DV_VANILLA, exe_ultimate    },
+        {"3",        DV_VANILLA, exe_ultimate    },
+        {"final",    DV_VANILLA, exe_final       },
+        {"tnt",      DV_VANILLA, exe_final       },
+        {"plutonia", DV_VANILLA, exe_final       },
+        {"4",        DV_VANILLA, exe_final       },
+        {"boom",     DV_BOOM,    exe_indetermined},
+        {"9",        DV_BOOM,    exe_indetermined},
+        {"mbf",      DV_MBF,     exe_indetermined},
+        {"11",       DV_MBF,     exe_indetermined},
+        {"mbf21",    DV_MBF21,   exe_indetermined},
+        {"21",       DV_MBF21,   exe_indetermined},
     };
 
     for (int i = 0; i < arrlen(named_complevel); i++)
@@ -4465,8 +4703,8 @@ void G_ReloadDefaults(boolean keep_demover)
 
   //jff 3/24/98 set startskill from defaultskill in config file, unless
   // it has already been set by a -skill parameter
-  if (startskill==sk_default)
-    startskill = (skill_t)(defaultskill-1);
+  if (startskill == sk_default)
+    startskill = (skill_t)(default_skill - 1);
 
   demoplayback = false;
   singledemo = false;            // killough 9/29/98: don't stop after 1 demo
@@ -4494,6 +4732,18 @@ void G_ReloadDefaults(boolean keep_demover)
     //
 
     int p = M_CheckParmWithArgs("-complevel", 1);
+
+    if (!p)
+    {
+    //!
+    // @arg <version>
+    // @category compat
+    // @help
+    //
+    // Alias to -complevel.
+    //
+      p = M_CheckParmWithArgs("-cl", 1);
+    }
 
     if (p > 0)
     {
@@ -4538,7 +4788,6 @@ void G_ReloadDefaults(boolean keep_demover)
   }
 
   G_UpdateSideMove();
-  P_UpdateDirectVerticalAiming();
 
   pistolstart = default_pistolstart;
 
@@ -4749,7 +4998,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   // [Nugget] Custom Skill
   if (skill == sk_custom && strictmode)
-  { skill = (defaultskill - 1 < sk_custom) ? defaultskill - 1 : sk_hard; }
+  { skill = (default_skill - 1 < sk_custom) ? default_skill - 1 : sk_hard; }
 
   if (episode < 1)
     episode = 1;
@@ -4801,6 +5050,8 @@ void G_InitNew(skill_t skill, int episode, int map)
   totalleveltimes = 0;
   levels_completed = 0; // [Cherry]
   playback_tic = 0;
+
+  HU_ResetCommandHistory();
 
   //jff 4/16/98 force marks on automap cleared every new level start
   AM_clearMarks();
@@ -5271,9 +5522,6 @@ void D_CheckNetPlaybackSkip(void);
 
 void G_DeferedPlayDemo(char* name)
 {
-  // [FG] avoid demo lump name collisions
-  W_DemoLumpNameCollision(&name);
-
   defdemoname = name;
   gameaction = ga_playdemo;
 
@@ -5288,7 +5536,6 @@ void G_DeferedPlayDemo(char* name)
 
 #define DEMO_FOOTER_SEPARATOR "\n"
 #define NUM_DEMO_FOOTER_LUMPS 4
-extern char **dehfiles;
 
 static size_t WriteCmdLineLump(MEMFILE *stream)
 {
@@ -5298,7 +5545,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
 
   long pos = mem_ftell(stream);
 
-  tmp = M_StringJoin("-iwad \"", M_BaseName(wadfiles[0].name), "\"", NULL);
+  tmp = M_StringJoin("-iwad \"", M_BaseName(wadfiles[0].name), "\"");
   mem_fputs(tmp, stream);
   free(tmp);
 
@@ -5318,7 +5565,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
       has_files = true;
     }
 
-    tmp = M_StringJoin(" \"", basename, "\"", NULL);
+    tmp = M_StringJoin(" \"", basename, "\"");
     mem_fputs(tmp, stream);
     free(tmp);
   }
@@ -5328,7 +5575,7 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
     mem_fputs(" -deh", stream);
     for (i = 0; i < array_size(dehfiles); ++i)
     {
-      tmp = M_StringJoin(" \"", M_BaseName(dehfiles[i]), "\"", NULL);
+      tmp = M_StringJoin(" \"", M_BaseName(dehfiles[i]), "\"");
       mem_fputs(tmp, stream);
       free(tmp);
     }
@@ -5519,8 +5766,6 @@ boolean G_CheckDemoStatus(void)
 
 #define MAX_MESSAGE_SIZE 1024
 
-extern int show_toggle_messages, show_pickup_messages;
-
 void doomprintf(player_t *player, msg_category_t category, const char *s, ...)
 {
   static char msg[MAX_MESSAGE_SIZE];
@@ -5539,6 +5784,351 @@ void doomprintf(player_t *player, msg_category_t category, const char *s, ...)
     player->message = msg;
   else
     players[displayplayer].message = msg;  // set new message
+}
+
+void G_BindGameInputVariables(void)
+{
+  BIND_BOOL(autorun, true, "Always run");
+  BIND_BOOL_GENERAL(mouselook, false, "Mouselook");
+  BIND_BOOL_GENERAL(dclick_use, true, "Double-click acts as use-button");
+  BIND_BOOL(novert, true, "Disable vertical mouse movement");
+  BIND_BOOL_GENERAL(padlook, false, "Padlook");
+}
+
+void G_BindGameVariables(void)
+{
+  BIND_BOOL(raw_input, true,
+    "Raw gamepad/mouse input for turning/looking (0 = Interpolate; 1 = Raw)");
+  BIND_BOOL(fake_longtics, true,
+    "Fake high-resolution turning when using low-resolution turning");
+  BIND_BOOL(shorttics, false, "Always use low-resolution turning");
+  BIND_NUM(quickstart_cache_tics, 0, 0, TICRATE, "Quickstart cache tics");
+
+  // [Nugget] Account for custom skill
+  BIND_NUM_GENERAL(default_skill, 3, 1, 6,
+    "Default skill level (1 = ITYTD; 2 = HNTR; 3 = HMP; 4 = UV; 5 = NM; 6 = Custom)");
+
+  // [Nugget] Custom Skill /--------------------------------------------------
+
+  M_BindNum("custom_skill_things", &custom_skill_things, NULL, 2, 0, 2, ss_skill, wad_yes, 
+    "Custom Skill: thing spawns (0 = Easy; 1 = Normal; 2 = Hard)");
+
+  M_BindBool("custom_skill_coopspawns", &custom_skill_coopspawns, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: spawn multiplayer things");
+
+  M_BindBool("custom_skill_nomonsters", &custom_skill_nomonsters, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: don't spawn monsters");
+
+  M_BindBool("custom_skill_doubleammo", &custom_skill_doubleammo, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: receive double ammo from pickups");
+
+  M_BindBool("custom_skill_halfdamage", &custom_skill_halfdamage, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: player takes half the damage");
+
+  M_BindBool("custom_skill_slowbrain", &custom_skill_slowbrain, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: Icon of Sin shoots cubes half the time");
+
+  M_BindBool("custom_skill_fast", &custom_skill_fast, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: fast monsters");
+
+  M_BindBool("custom_skill_respawn", &custom_skill_respawn, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: respawning monsters");
+
+  M_BindBool("custom_skill_aggressive", &custom_skill_aggressive, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: aggressive monsters (instant reaction time; continuous attacks)");
+
+  M_BindBool("custom_skill_x2monsters", &custom_skill_x2monsters, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: duplicate monster spawns");
+
+  // [Cherry]
+  M_BindBool("custom_skill_notracking", &custom_skill_notracking, NULL, 0, ss_skill, wad_yes,
+    "Custom Skill: disable stats tracking");
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  BIND_NUM_GENERAL(realtic_clock_rate, 100, 10, 1000,
+    "Game speed percent");
+  M_BindNum("max_player_corpse", &default_bodyquesize, NULL,
+    32, UL, UL, ss_none, wad_no,
+    "Maximum number of player corpses (< 0 = No limit)");
+  BIND_NUM_GENERAL(death_use_action, 0, 0, 2,
+    "Use-button action upon death (0 = Default; 1 = Load save; 2 = Nothing)");
+
+  // [Nugget] ----------------------------------------------------------------
+
+  BIND_BOOL_GENERAL(one_key_saveload, false, "One-key quick-saving/loading");
+
+  BIND_BOOL_GENERAL(autosave, true, "Autosave when finishing levels");
+
+  M_BindNum("autosave_interval", &autosave_interval, NULL, 0, 0, 600, ss_gen, wad_no,
+    "Interval between periodic autosaves, in seconds (0 = Off)");
+
+  BIND_NUM_GENERAL(rewind_interval, 1, 1, 600,
+    "Interval between rewind key-frames, in seconds");
+
+  BIND_NUM_GENERAL(rewind_depth, 60, 0, 600,
+    "Number of rewind key-frames to be stored (0 = No rewinding)");
+
+  BIND_NUM_GENERAL(rewind_timeout, 10, 0, 25,
+    "Max. time to store a key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)");
+
+  // [Cherry] Rocket trails from Doom Retro
+  M_BindBool("rocket_trails", &rocket_trails, NULL, false, ss_gen, wad_yes,
+    "Enable rocket trails");
+  BIND_NUM_GENERAL(rocket_trails_interval, 3, 1, 5,
+    "Rocket trails spawn interval (smoke spawns every n ticks, lower value = more smoke)");
+}
+
+void G_BindEnemVariables(void)
+{
+  M_BindNum("player_helpers", &default_dogs, &dogs, 0, 0, 3, ss_enem, wad_yes,
+    "Number of helper dogs to spawn at map start");
+  M_BindBool("ghost_monsters", &ghost_monsters, NULL, true, ss_enem, wad_no,
+             "Make ghost monsters (resurrected pools of gore) translucent");
+
+  M_BindBool("monsters_remember", &default_monsters_remember, &monsters_remember,
+             true, ss_none, wad_yes,
+             "Monsters return to their previous target after losing their current one");
+  M_BindBool("monster_infighting", &default_monster_infighting, &monster_infighting,
+             true, ss_none, wad_yes,
+             "Monsters fight each other when provoked");
+  M_BindBool("monster_backing", &default_monster_backing, &monster_backing,
+             false, ss_none, wad_yes,
+             "Ranged monsters back away from melee targets");
+  M_BindBool("monster_avoid_hazards", &default_monster_avoid_hazards, &monster_avoid_hazards,
+             true, ss_none, wad_yes,
+             "Monsters avoid hazards such as crushing ceilings");
+  M_BindBool("monkeys", &default_monkeys, &monkeys, false, ss_none, wad_yes,
+             "Monsters move up/down steep stairs");
+  M_BindBool("monster_friction", &default_monster_friction, &monster_friction,
+             true, ss_none, wad_yes,
+             "Monsters are affected by friction modifiers");
+  M_BindBool("help_friends", &default_help_friends, &help_friends,
+             false, ss_none, wad_yes, "Monsters prefer targets of injured allies");
+  M_BindNum("friend_distance", &default_distfriend, &distfriend,
+            128, 0, 999, ss_none, wad_yes, "Minimum distance that friends keep between each other");
+  M_BindBool("dog_jumping", &default_dog_jumping, &dog_jumping,
+             true, ss_none, wad_yes, "Dogs are able to jump down from high ledges");
+
+  // [Nugget] ----------------------------------------------------------------
+
+  M_BindBool("extra_gibbing", &extra_gibbing_on, NULL,
+             false, ss_enem, wad_yes, "Enable extra-gibbing in general (affected by CVARs below)");
+
+  // (CFG-only)
+  M_BindBool("extra_gibbing_fist", &extra_gibbing[EXGIB_FIST], NULL,
+             true, ss_none, wad_yes, "Extra-gibbing for Berserk Fist");
+
+  // (CFG-only)
+  M_BindBool("extra_gibbing_csaw", &extra_gibbing[EXGIB_CSAW], NULL,
+             true, ss_none, wad_yes, "Extra-gibbing for Chainsaw");
+
+  // (CFG-only)
+  M_BindBool("extra_gibbing_ssg", &extra_gibbing[EXGIB_SSG], NULL,
+             true, ss_none, wad_yes, "Extra-gibbing for SSG");
+
+  M_BindBool("bloodier_gibbing", &bloodier_gibbing, NULL,
+             false, ss_enem, wad_yes, "Bloodier gibbing");
+
+  M_BindBool("tossdrop", &tossdrop, NULL,
+             false, ss_enem, wad_yes, "Enemies toss their items dropped upon death");
+
+  // [Cherry] Blood amount scales with the amount of damage dealt
+  M_BindBool("blood_amount_scaling", &blood_amount_scaling, NULL, false,
+             ss_enem, wad_yes, "Spawn more blood the more damage is dealt");
+}
+
+void G_BindCompVariables(void)
+{
+  M_BindNum("default_complevel", &default_complevel, NULL,
+            CL_MBF21, CL_VANILLA, CL_MBF21, ss_comp, wad_no,
+            "Default compatibility level (0 = Vanilla; 1 = Boom; 2 = MBF; 3 = MBF21)");
+  M_BindBool("autostrafe50", &autostrafe50, NULL, false, ss_comp, wad_no,
+             "Automatic strafe50 (SR50)");
+  M_BindBool("strictmode", &default_strictmode, &strictmode,
+             false, ss_comp, wad_no, "Strict mode");
+  M_BindBool("hangsolid", &hangsolid, NULL, false, ss_comp, wad_no,
+             "Enable walking under solid hanging bodies");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  M_BindNum("over_under", &over_under, NULL, 0, 0, 2, ss_gen, wad_yes,
+            "Allow movement over/under things (1 = Player only; 2 = All things)");
+
+  M_BindBool("jump_crouch", &jump_crouch, NULL, false, ss_gen, wad_yes,
+             "Jumping/crouching");
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  M_BindBool("blockmapfix", &blockmapfix, NULL, false, ss_comp, wad_no,
+             "Fix blockmap bug (improves hit detection)");
+  M_BindBool("checksight12", &checksight12, NULL, false, ss_comp, wad_no,
+             "Fast blockmap-based line-of-sight calculation");
+
+  // [Nugget] Replaces `direct_vertical_aiming`
+  M_BindNum("vertical_aiming", &default_vertical_aiming, &vertical_aiming,
+            0, 0, 2, ss_comp, wad_no, "Vertical aiming (0 = Auto; 1 = Direct; 2 = Direct + Auto)");
+
+  M_BindBool("pistolstart", &default_pistolstart, &pistolstart,
+             false, ss_comp, wad_no, "Pistol start");
+
+#define BIND_COMP(id, v, help) \
+  M_BindNum(#id, &default_comp[(id)], &comp[(id)], (v), 0, 1, ss_none, wad_yes, help)
+
+  BIND_COMP(comp_zombie,    1, "Dead players can trigger linedef actions");
+  BIND_COMP(comp_infcheat,  0, "Powerup cheats don't last forever");
+  BIND_COMP(comp_stairs,    0, "Build stairs exactly the same way that Doom does");
+  BIND_COMP(comp_telefrag,  0, "Monsters can only telefrag on MAP30");
+  BIND_COMP(comp_dropoff,   0, "Some objects never move over tall ledges");
+  BIND_COMP(comp_falloff,   0, "Objects don't fall off ledges under their own weight");
+  BIND_COMP(comp_staylift,  0, "Monsters randomly walk off of moving lifts");
+  BIND_COMP(comp_doorstuck, 0, "Monsters get stuck in door tracks");
+  BIND_COMP(comp_pursuit,   1, "Monsters can infight immediately when alerted");
+  BIND_COMP(comp_vile,      0, "Arch-viles can create ghost monsters");
+  BIND_COMP(comp_pain,      0, "Pain elementals are limited to 20 lost souls");
+  BIND_COMP(comp_skull,     0, "Lost souls can spawn past impassable lines");
+  BIND_COMP(comp_blazing,   0, "Blazing doors make double closing sounds");
+  BIND_COMP(comp_doorlight, 0, "Door lighting changes are immediate");
+  BIND_COMP(comp_god,       0, "God mode isn't absolute");
+  BIND_COMP(comp_skymap,    0, "Don't apply invulnerability palette to skies");
+  BIND_COMP(comp_floors,    0, "Use exactly Doom's floor motion behavior");
+  BIND_COMP(comp_model,     0, "Use exactly Doom's linedef trigger model");
+  BIND_COMP(comp_zerotags,  0, "Linedef actions work on sectors with tag 0");
+  BIND_COMP(comp_soul,      0, "Lost souls bounce on floors and ceilings");
+  BIND_COMP(comp_respawn,   0, "Monsters not spawned at level start respawn at map origin");
+  BIND_COMP(comp_ledgeblock, 1, "Ledges block monsters");
+  BIND_COMP(comp_friendlyspawn, 1, "Things spawned by A_Spawn inherit friendliness of spawner");
+  BIND_COMP(comp_voodooscroller, 0, "Voodoo dolls on slow scrollers move too slowly");
+  BIND_COMP(comp_reservedlineflag, 1, "ML_RESERVED clears extended flags");
+
+#define BIND_EMU(id, v, help) \
+  M_BindBool(#id, &overflow[(id)].enabled, NULL, (v), ss_none, wad_no, help)
+
+  BIND_EMU(emu_spechits, true, "Emulate SPECHITS overflow");
+  BIND_EMU(emu_reject, true, "Emulate REJECT overflow");
+  M_BindBool("emu_intercepts", &overflow[emu_intercepts].enabled, NULL, true,
+    ss_comp, wad_no, "Emulate INTERCEPTS overflow");
+  BIND_EMU(emu_missedbackside, false, "Emulate overflow caused by two-sided lines with missing backsides");
+  BIND_EMU(emu_donut, true, "Emulate donut overflow");
+
+  // [Nugget] (CFG-only) -----------------------------------------------------
+
+  M_BindBool("comp_bruistarget",  &comp_bruistarget,  NULL, true,  ss_none, wad_yes, "Bruiser attack doesn't face target");
+  M_BindBool("comp_nomeleesnap",  &comp_nomeleesnap,  NULL, false, ss_none, wad_yes, "Disable snapping to target when using melee");
+  M_BindBool("comp_longautoaim",  &comp_longautoaim,  NULL, false, ss_none, wad_yes, "Double autoaim range");
+  M_BindBool("comp_lscollision",  &comp_lscollision,  NULL, false, ss_none, wad_yes, "Fix Lost Souls colliding with items");
+  M_BindBool("comp_lsamnesia",    &comp_lsamnesia,    NULL, true,  ss_none, wad_yes, "Lost Souls forget target upon impact");
+  M_BindBool("comp_fuzzyblood",   &comp_fuzzyblood,   NULL, false, ss_none, wad_yes, "Fuzzy things bleed fuzzy blood");
+  M_BindBool("comp_faceshadow",   &comp_faceshadow,   NULL, false, ss_none, wad_yes, "Attackers face fuzzy targets straight");
+  M_BindBool("comp_nonbleeders",  &comp_nonbleeders,  NULL, false, ss_none, wad_yes, "Non-bleeders don't bleed when crushed");
+  M_BindBool("comp_iosdeath",     &comp_iosdeath,     NULL, false, ss_none, wad_yes, "Fix lopsided Icon of Sin explosions");
+  M_BindBool("comp_choppers",     &comp_choppers,     NULL, false, ss_none, wad_yes, "Permanent IDCHOPPERS invulnerability");
+  M_BindBool("comp_blazing2",     &comp_blazing2,     NULL, true,  ss_none, wad_yes, "Blazing doors reopen with wrong sound");
+  M_BindBool("comp_manualdoor",   &comp_manualdoor,   NULL, true,  ss_none, wad_yes, "Manually toggled moving doors are silent");
+  M_BindBool("comp_switchsource", &comp_switchsource, NULL, false, ss_none, wad_yes, "Corrected switch sound source");
+  M_BindBool("comp_cgundblsnd",   &comp_cgundblsnd,   NULL, true,  ss_none, wad_yes, "Chaingun makes two sounds with one bullet");
+  M_BindBool("comp_cgunnersfx",   &comp_cgunnersfx,   NULL, false, ss_none, wad_yes, "Chaingunner uses pistol/chaingun sound");
+  M_BindBool("comp_flamst",       &comp_flamst,       NULL, false, ss_none, wad_yes, "Arch-Vile fire plays flame-start sound");
+  M_BindBool("comp_keynoway",     &comp_keynoway,     NULL, false, ss_none, wad_yes, "Play DSNOWAY instead of DSOOF when failing to use key-locked triggers");
+  M_BindBool("comp_godface",      &comp_godface,      NULL, false, ss_none, wad_yes, "Higher god-mode face priority");
+  M_BindBool("comp_deadoof",      &comp_deadoof,      NULL, true,  ss_none, wad_yes, "Dead players can still play oof sound");
+  M_BindBool("comp_powerrunout",  &comp_powerrunout,  NULL, false, ss_none, wad_yes, "Use improved powerup run-out effect");
+  M_BindBool("comp_unusedpals",   &comp_unusedpals,   NULL, false, ss_none, wad_yes, "Use unused pain/bonus palettes");
+  M_BindBool("comp_keypal",       &comp_keypal,       NULL, true,  ss_none, wad_yes, "Key pickup resets palette");
+}
+
+void G_BindWeapVariables(void)
+{
+  // [Nugget] Extended
+  M_BindNum("view_bobbing_pct", &view_bobbing_pct, NULL,
+            100, 0, 100, ss_weap, wad_no,
+            "Player view bobbing percent");
+  M_BindNum("weapon_bobbing_pct", &weapon_bobbing_pct, NULL,
+            100, 0, 100, ss_weap, wad_no,
+            "Player weapon bobbing percent");
+
+  M_BindBool("hide_weapon", &hide_weapon, NULL, false, ss_weap, wad_no,
+             "Disable rendering of weapon sprites");
+
+  // [Nugget] Horizontal weapon centering
+  M_BindNum("center_weapon", &center_weapon, NULL, 0, 0, 3, ss_weap, wad_no,
+            "Weapon alignment while attacking (1 = Centered; 2 = Bobbing; 3 = Horizontal)");
+
+  M_BindBool("weapon_recoilpitch", &weapon_recoilpitch, NULL,
+             false, ss_weap, wad_no,
+             "Recoil pitch from weapon fire");
+
+  M_BindBool("weapon_recoil", &default_weapon_recoil, &weapon_recoil,
+             false, ss_none, wad_yes,
+             "Physical recoil from weapon fire (affects compatibility)");
+  M_BindBool("doom_weapon_toggles", &doom_weapon_toggles, NULL,
+             true, ss_weap, wad_no,
+             "Allow toggling between SG/SSG and Fist/Chainsaw");
+  M_BindBool("player_bobbing", &default_player_bobbing, &player_bobbing,
+             true, ss_none, wad_no, "Physical player bobbing (affects compatibility)");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  M_BindBool("no_hor_autoaim", &no_hor_autoaim, NULL,
+             false, ss_weap, wad_yes, "Disable horizontal projectile autoaim");
+
+  M_BindBool("switch_on_pickup", &switch_on_pickup, NULL,
+             true, ss_weap, wad_no, "Switch weapons when acquiring new ones or ammo for them");
+
+  M_BindBool("weapswitch_interruption", &weapswitch_interruption, NULL,
+             false, ss_weap, wad_no, "Allow interruption of weapon switches");
+
+  M_BindBool("skip_ammoless_weapons", &skip_ammoless_weapons, NULL,
+             false, ss_weap, wad_no, "Previous/next-weapon buttons skip weapons with insufficient ammo");
+
+  // (CFG-only)
+  M_BindBool("always_bob", &always_bob, NULL,
+             true, ss_none, wad_no, "Bob weapon every tic (fixes choppy Chainsaw bobbing)");
+
+  M_BindNum("bobbing_style", &bobbing_style, NULL,
+            0, 0, 6, ss_weap, wad_yes,
+            "Weapon Bobbing Style");
+
+  M_BindBool("weapon_inertia", &weapon_inertia, NULL,
+             false, ss_weap, wad_yes, "Weapon inertia");
+
+  M_BindNum("weapon_inertia_scale_pct", &weapon_inertia_scale_pct, NULL,
+            100, 50, 200, ss_weap, wad_yes,
+            "Weapon-inertia scale percent");
+
+  M_BindBool("weaponsquat", &weaponsquat, NULL,
+             false, ss_weap, wad_yes, "Squat weapon down on impact");
+
+  M_BindBool("translucent_pspr", &translucent_pspr, NULL,
+             false, ss_weap, wad_yes, "Translucency for weapon-flash sprites");
+
+  // (CFG-only)
+  M_BindNum("translucent_pspr_pct", &translucent_pspr_pct, NULL,
+            75, 0, 100, ss_none, wad_yes,
+            "Weapon-flash translucency percent");
+
+  // (CFG-only)
+  M_BindBool("sx_fix", &sx_fix, NULL,
+             false, ss_none, wad_yes, "Correct centering of first-person sprites");
+
+  // [Nugget] ---------------------------------------------------------------/
+
+#define BIND_WEAP(num, v, help) \
+  M_BindNum("weapon_choice_"#num, &weapon_preferences[0][(num) - 1], NULL, \
+      (v), 1, 9, ss_weap, wad_yes, help)
+
+  BIND_WEAP(1, 6, "First choice for weapon (best)");
+  BIND_WEAP(2, 9, "Second choice for weapon");
+  BIND_WEAP(3, 4, "Third choice for weapon");
+  BIND_WEAP(4, 3, "Fourth choice for weapon");
+  BIND_WEAP(5, 2, "Fifth choice for weapon");
+  BIND_WEAP(6, 8, "Sixth choice for weapon");
+  BIND_WEAP(7, 5, "Seventh choice for weapon");
+  BIND_WEAP(8, 7, "Eighth choice for weapon");
+  BIND_WEAP(9, 1, "Ninth choice for weapon (worst)");
+
+  M_BindBool("classic_bfg", &default_classic_bfg, &classic_bfg,
+             false, ss_weap, wad_yes, "Use pre-beta BFG2704");
 }
 
 //----------------------------------------------------------------------------

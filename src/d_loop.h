@@ -20,6 +20,7 @@
 #define __D_LOOP__
 
 #include "doomtype.h"
+#include "m_fixed.h"
 #include "net_defs.h"
 
 // Callback function invoked while waiting for the netgame to start.
@@ -35,6 +36,9 @@ void NetUpdate(void);
 // Broadcasts special packets to other players
 //  to notify of game exit
 void D_QuitNetGame(void);
+
+// [Cherry] Mute Inactive Window feature from International Doom
+extern boolean mute_inactive;
 
 //? how many ticks to run?
 void TryRunTics(void);
@@ -52,8 +56,8 @@ boolean D_InitNetGame(net_connect_data_t *connect_data);
 void D_StartNetGame(net_gamesettings_t *settings,
                     netgame_startup_callback_t callback);
 
-// extern boolean singletics;
-// extern int gametic, ticdup;
-// extern int oldleveltime; // [crispy] check if leveltime keeps tickin'
+void D_ReceiveTic(ticcmd_t *ticcmds, boolean *players_mask);
+
+extern fixed_t offsetms;
 
 #endif

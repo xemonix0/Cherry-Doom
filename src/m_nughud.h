@@ -20,6 +20,7 @@
 #ifndef __M_NUGHUD__
 #define __M_NUGHUD__
 
+#include "doomtype.h"
 #include "m_fixed.h"
 
 #define NUGHUDWIDESHIFT(x) (                                       \
@@ -50,8 +51,9 @@ typedef struct nughud_bar_s {
   int x, y;
   int wide;
   int align;
+  int vlign;
+  int xstep, ystep;
   int ups; // Units per slice
-  int gap;
 } nughud_bar_t;
 
 typedef struct nughud_textline_s {
@@ -102,6 +104,8 @@ typedef struct nughud_s {
   int                coord_ml;
   nughud_textline_t  fps;
   nughud_textline_t  rate;
+  nughud_textline_t  cmd;
+  nughud_textline_t  speed;
   nughud_textline_t  message;
   boolean            message_defx;
   nughud_textline_t  secret;

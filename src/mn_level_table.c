@@ -20,10 +20,11 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
+#include "hu_stuff.h"
 #include "m_array.h"
 #include "m_misc.h"
 #include "mn_menu.h"
-#include "mn_setup.h"
+#include "mn_internal.h"
 #include "wad_stats.h"
 
 #define LT_X_MARGIN         16
@@ -141,7 +142,7 @@ static void LevelsInsertRow(setup_menu_t **menu, char *text, int map_i,
 {
     extern void LT_Warp(void);
 
-    int64_t flags = S_LEFTJUST | S_TITLE | S_FUNCTION;
+    int64_t flags = S_LEFTJUST | S_TITLE | S_FUNC2;
     if (display_stats)
     {
         flags |= S_LTBL_MAP;
