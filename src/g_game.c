@@ -403,16 +403,20 @@ int    bodyqueslot, bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
 
 static int next_weapon = 0;
 
-static const weapontype_t weapon_order_table[] = {
-    wp_fist,
-    wp_chainsaw,
-    wp_pistol,
-    wp_shotgun,
-    wp_supershotgun,
-    wp_chaingun,
-    wp_missile,
-    wp_plasma,
-    wp_bfg
+static const struct
+{
+    weapontype_t weapon;
+    weapontype_t weapon_num;
+} weapon_order_table[] = {
+    { wp_fist,            wp_fist },
+    { wp_chainsaw,        wp_fist },
+    { wp_pistol,          wp_pistol },
+    { wp_shotgun,         wp_shotgun },
+    { wp_supershotgun,    wp_shotgun },
+    { wp_chaingun,        wp_chaingun },
+    { wp_missile,         wp_missile },
+    { wp_plasma,          wp_plasma },
+    { wp_bfg,             wp_bfg }
 };
 
 static boolean WeaponSelectable(weapontype_t weapon)
@@ -443,6 +447,7 @@ static boolean WeaponSelectable(weapontype_t weapon)
     // we also have the berserk pack.
 
     if (weapon == wp_fist
+     && demo_compatibility
      && players[consoleplayer].weaponowned[wp_chainsaw]
      && !players[consoleplayer].powers[pw_strength])
     {
@@ -483,7 +488,7 @@ static int G_NextWeapon(int direction)
 
     for (i=0; i<arrlen(weapon_order_table); ++i)
     {
-        if (weapon_order_table[i] == weapon)
+        if (weapon_order_table[i].weapon == weapon)
         {
             break;
         }
@@ -500,9 +505,12 @@ static int G_NextWeapon(int direction)
     {
         i += direction;
         i = (i + arrlen(weapon_order_table)) % arrlen(weapon_order_table);
-    } while (i != start_i && !WeaponSelectable(weapon_order_table[i]));
+    } while (i != start_i && !WeaponSelectable(weapon_order_table[i].weapon));
 
-    return weapon_order_table[i];
+    if (!demo_compatibility)
+        return weapon_order_table[i].weapon;
+    else
+        return weapon_order_table[i].weapon_num;
 }
 
 // [FG] toggle demo warp mode
@@ -807,6 +815,28 @@ void G_PrepGyroTiccmd(void)
   }
 }
 
+static boolean FilterDeathUseAction(void)
+{
+    if (players[consoleplayer].playerstate & PST_DEAD)
+    {
+        switch (death_use_action)
+        {
+            case death_use_nothing:
+                return true;
+            case death_use_reload:
+                if (!demoplayback && !demorecording && !netgame)
+                {
+                    activate_death_use_reload = true;
+                }
+                return true;
+            default:
+                break;
+        }
+    }
+
+    return false;
+}
+
 //
 // G_BuildTiccmd
 // Builds a ticcmd from all of the available inputs
@@ -970,7 +1000,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (M_InputGameActive(input_use)) // [FG] mouse button for "use"
     {
-      cmd->buttons |= BT_USE;
+      if (!FilterDeathUseAction())
+        cmd->buttons |= BT_USE;
       // clear double clicks if hit use button
       dclick = false;
     }
@@ -1052,7 +1083,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
           iw_active[5] && gamemode != shareware ? wp_plasma :
           iw_active[6] && gamemode != shareware ? wp_bfg :
           iw_active[7] ? wp_chainsaw :
-          iw_active[8] && have_ssg ? wp_supershotgun :
+          iw_active[8] && !demo_compatibility && have_ssg ? wp_supershotgun :
 
           // [Nugget] Last-weapon button
           CASUALPLAY(ilw_active) ? players[consoleplayer].lastweapon :
@@ -1074,7 +1105,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       // killough 10/98: make SG/SSG and Fist/Chainsaw
       // weapon toggles optional
       
-      if (!demo_compatibility && doom_weapon_toggles && !next_weapon)
+      if (!demo_compatibility && doom_weapon_toggles)
         {
           const player_t *player = &players[consoleplayer];
 
@@ -1119,7 +1150,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   if (dclick)
   {
     dclick = false;
-    cmd->buttons |= BT_USE;
+    if (!FilterDeathUseAction())
+      cmd->buttons |= BT_USE;
   }
 
   // special buttons
@@ -4381,26 +4413,26 @@ demo_version_t G_GetNamedComplevel(const char *arg)
 {
     const struct
     {
-        demo_version_t demover;
         const char *const name;
+        demo_version_t demover;
         int exe;
     } named_complevel[] = {
-        {DV_VANILLA, "vanilla",  exe_indetermined},
-        {DV_VANILLA, "doom2",    exe_doom_1_9    },
-        {DV_VANILLA, "1.9",      exe_doom_1_9    },
-        {DV_VANILLA, "2",        exe_doom_1_9    },
-        {DV_VANILLA, "ultimate", exe_ultimate    },
-        {DV_VANILLA, "3",        exe_ultimate    },
-        {DV_VANILLA, "final",    exe_final       },
-        {DV_VANILLA, "tnt",      exe_final       },
-        {DV_VANILLA, "plutonia", exe_final       },
-        {DV_VANILLA, "4",        exe_final       },
-        {DV_BOOM,    "boom",     exe_indetermined},
-        {DV_BOOM,    "9",        exe_indetermined},
-        {DV_MBF,     "mbf",      exe_indetermined},
-        {DV_MBF,     "11",       exe_indetermined},
-        {DV_MBF21,   "mbf21",    exe_indetermined},
-        {DV_MBF21,   "21",       exe_indetermined},
+        {"vanilla",  DV_VANILLA, exe_indetermined},
+        {"doom2",    DV_VANILLA, exe_doom_1_9    },
+        {"1.9",      DV_VANILLA, exe_doom_1_9    },
+        {"2",        DV_VANILLA, exe_doom_1_9    },
+        {"ultimate", DV_VANILLA, exe_ultimate    },
+        {"3",        DV_VANILLA, exe_ultimate    },
+        {"final",    DV_VANILLA, exe_final       },
+        {"tnt",      DV_VANILLA, exe_final       },
+        {"plutonia", DV_VANILLA, exe_final       },
+        {"4",        DV_VANILLA, exe_final       },
+        {"boom",     DV_BOOM,    exe_indetermined},
+        {"9",        DV_BOOM,    exe_indetermined},
+        {"mbf",      DV_MBF,     exe_indetermined},
+        {"11",       DV_MBF,     exe_indetermined},
+        {"mbf21",    DV_MBF21,   exe_indetermined},
+        {"21",       DV_MBF21,   exe_indetermined},
     };
 
     for (int i = 0; i < arrlen(named_complevel); i++)

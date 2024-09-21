@@ -2286,6 +2286,7 @@ static boolean ShortcutResponder(const event_t *ev)
 
         currentMenu = &HelpDef; // killough 10/98: new help screen
 
+        currentMenu->prevMenu = NULL;
         itemOn = 0;
         M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         return true;
