@@ -65,7 +65,7 @@ typedef enum
 
 typedef struct
 {
-  char* name;
+  const char* name;
   wad_source_t src;
 } wadfile_info_t;
 

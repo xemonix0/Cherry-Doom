@@ -29,6 +29,7 @@
 #include "mn_menu.h"
 #include "m_array.h"
 #include "m_misc.h"
+#include "u_mapinfo.h" // [Cherry]
 #include "w_wad.h"
 #include "w_internal.h"
 #include "z_zone.h"
@@ -601,8 +602,6 @@ static boolean CheckMapLump(const char *lumpname, const char *filename)
 
 boolean W_FileContainsMaps(const char *filename)
 {
-    #include "u_mapinfo.h"
-
     for (int i = 0; i < U_mapinfo.mapcount; ++i)
     {
         if (CheckMapLump(U_mapinfo.maps[i].mapname, filename))

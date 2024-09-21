@@ -2636,8 +2636,6 @@ static void WI_initVariables(wbstartstruct_t* wbstartstruct)
 //
 void WI_Start(wbstartstruct_t* wbstartstruct)
 {
-  extern void HU_Start(void); // [Cherry]
-
   WI_initVariables(wbstartstruct);
 
   exitpic = NULL;

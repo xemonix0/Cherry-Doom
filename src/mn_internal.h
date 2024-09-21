@@ -104,7 +104,6 @@ enum
 #define LT_SCROLL_DOWN_Y (M_Y_WARN - 5)
 
 extern char menu_buffer[66];
-extern const char *default_skill_strings[];
 extern int scroll_indicators;
 
 void MN_DrawScrollIndicators(void);
