@@ -196,6 +196,12 @@ typedef enum
   NUMSPRITES  // counter of how many there are
 } spritenum_t;
 
+// [Nugget] Alt. sprites
+typedef enum {
+  ASPR_PLYC,
+  NUMALTSPRITES
+} altspritenum_t;
+
 // ********************************************************************
 // States (frames) enumeration -- must match info.c
 // ********************************************************************
@@ -1538,6 +1544,8 @@ extern char** sprnames;
 extern int num_sprites;
 extern mobjinfo_t* mobjinfo;
 extern int num_mobj_types;
+
+extern char *altsprnames[]; // [Nugget] Alt. sprites
 
 #endif
 

@@ -1784,9 +1784,18 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 //
 void P_Init (void)
 {
+  // [Nugget] Alt. sprites /--------------------------------------------------
+
+  char *namelist[num_sprites + NUMALTSPRITES];
+
+  memcpy(namelist,                  sprnames, sizeof(char *) * num_sprites);
+  memcpy(namelist + num_sprites, altsprnames, sizeof(char *) * NUMALTSPRITES);
+
+  // [Nugget] ---------------------------------------------------------------/
+
   P_InitSwitchList();
   P_InitPicAnims();
-  R_InitSprites(sprnames);
+  R_InitSprites(namelist);
 }
 
 //----------------------------------------------------------------------------

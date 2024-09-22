@@ -7,6 +7,8 @@
 - **_Message Flash_** setting
 - **Support for powerup-timer icons**
   - Replaced `hud_stats_icons` with `hud_allow_icons` [1]
+- **Support for crouching-player sprites**
+  - Allowed crouching when using the chasecam if said sprites are provided
 - **Quit Sound** setting, enabled by default
 
 ## Changes
@@ -23,6 +25,7 @@
 - **_Bloodier Gibbing_ setting now adds crushing effects**
 - **Extended _Blink [Automap] Marks_ feature to also highlight keyed lines**
 - **Freecam speed is now mostly independent of game speed**
+- **Improved interpolation of chasecam speed effect**
 - **Made `force_flip_pan` affect the _OpenAL 3D_ sound module** [by @ceski-1]
 - **Renamed _ZDoom-like Item Drops_ (`zdoom_item_drops`) to _Toss Items Upon Death_ (`tossdrop`)** [2]
 - **Removed _'BABYMODE'_ cheat**
