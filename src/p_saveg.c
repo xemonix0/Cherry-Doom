@@ -554,6 +554,8 @@ static void saveg_read_mobj_t(mobj_t *str)
     }
 
     // [Nugget] Removed `actualheight`
+
+    str->altsprite = str->altframe = -1; // [Nugget] Alt. sprites
 }
 
 static void saveg_write_mobj_t(mobj_t *str)
