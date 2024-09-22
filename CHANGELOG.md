@@ -21,6 +21,7 @@
   - Extended bars' `_ups` range to [10, 10000]
   - Extended `nughud_viewoffset` range to [-32, 32]
 - **_Bloodier Gibbing_ setting now adds crushing effects**
+- **Extended _Blink [Automap] Marks_ feature to also highlight keyed lines**
 - **Freecam speed is now mostly independent of game speed**
 - **Made `force_flip_pan` affect the _OpenAL 3D_ sound module** [by @ceski-1]
 - **Renamed _ZDoom-like Item Drops_ (`zdoom_item_drops`) to _Toss Items Upon Death_ (`tossdrop`)** [2]

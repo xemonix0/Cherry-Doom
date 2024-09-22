@@ -127,7 +127,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 ### Automap
 
 - **Minimap mode** [i.b. DSDA-Doom]
-- Key to **_Blink [Automap] Marks_** (default: <kbd>B</kbd>)
+- Key to **_Highlight Points of Interest_**; marks and keyed lines (default: <kbd>B</kbd>)
 - **_Tag Finder_**: Position the Automap pointer over a sector and press the _Tag Finder_ key to highlight its activator line(s), and vice versa [p.f. PrBoomX]
 - Key to **_Teleport to Automap pointer_**
 - **_Show Thing Hitboxes_** setting

@@ -347,9 +347,11 @@ static int64_t older_m_x, older_m_y, older_m_w, older_m_h;
 
 #define FOLLOW (followplayer || automapactive == AM_MINI)
 
-// Blink marks ---------------------------------------------------------------
+// Highlight points of interest ----------------------------------------------
 
-static int markblinktimer;
+static int highlight_timer;
+
+static int highlight_color[4];
 
 // [Nugget] =================================================================/
 
@@ -583,6 +585,17 @@ void AM_initVariables(void)
 
   // inform the status bar of the change
   ST_Responder(&st_notify);
+
+  // [Nugget] ----------------------------------------------------------------
+
+  byte *const playpal = W_CacheLumpNum(W_GetNumForName("PLAYPAL"), PU_STATIC);
+
+  const int low = 223;
+
+  highlight_color[0] = I_GetPaletteIndex(playpal, 255, low, low); // Red
+  highlight_color[1] = I_GetPaletteIndex(playpal, low, low, 255); // Blue
+  highlight_color[2] = I_GetPaletteIndex(playpal, 255, 255, low); // Yellow
+  highlight_color[3] = I_GetPaletteIndex(playpal, 255, 255, 255); // Any (white)
 }
 
 //
@@ -1064,11 +1077,15 @@ boolean AM_Responder
 
     // [Nugget] /-------------------------------------------------------------
 
-    // Blink marks
-    else if (M_InputActivated(input_map_blink) && markpointnum)
+    // Highlight points of interest
+    else if (M_InputActivated(input_map_blink))
     {
-      markblinktimer = 4*TICRATE;
-      displaymsg("Blinking %i mark%s...", markpointnum, (1 < markpointnum) ? "s" : "");
+      highlight_timer = 4*TICRATE;
+
+      if (markpointnum)
+      { displaymsg("Highlighting points of interest (%i mark%s)...", markpointnum, (markpointnum == 1) ? "" : "s"); }
+      else
+      { displaymsg("Highlighting points of interest..."); }
     }
     // Minimap
     else if (M_InputActivated(input_map_mini))
@@ -1269,7 +1286,7 @@ void AM_Coordinates(const mobj_t *mo, fixed_t *x, fixed_t *y, fixed_t *z)
 //
 void AM_Ticker (void)
 {
-  if (markblinktimer) { markblinktimer--; } // [Nugget] Blink marks
+  if (highlight_timer) { highlight_timer--; } // [Nugget] Highlight points of interest
 
   // [Nugget] Tag Finder from PrBoomX /---------------------------------------
 
@@ -2014,6 +2031,14 @@ static void AM_drawWalls(void)
       {
         /* cph - show keyed doors and lines */
         const int amd = AM_DoorColor(lines[i].special);
+
+        // [Nugget] Highlight keyed lines
+        if (amd != -1 && !(lines[i].flags & ML_SECRET)
+            && highlight_timer && (highlight_timer % 12) < 2)
+        {
+            array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, highlight_color[amd] })); 
+        }
+
         if ((mapcolor_bdor || mapcolor_ydor || mapcolor_rdor) &&
             !(lines[i].flags & ML_SECRET) &&    /* non-secret */
             (amd != -1)
@@ -2637,10 +2662,10 @@ static void AM_drawMarks(void)
 
 	    // [Nugget] Minimap: take `f_x` and `f_y` into account
 	    if (fx >= f_x && fx < f_x+f_w - w && fy >= f_y && fy < f_y+f_h - h)
-	      // [Nugget] Blink marks
+	      // [Nugget] Highlight marks
 	      V_DrawPatchTranslated(((fx << FRACBITS) / video.xscale) - video.deltaw,
                               (fy << FRACBITS) / video.yscale,
-                              marknums[d], (markblinktimer & 8) ? cr_dark : NULL);
+                              marknums[d], (highlight_timer & 8) ? cr_dark : NULL);
 
 	    fx -= w - (video.yscale >> FRACBITS); // killough 2/22/98: 1 space backwards
 
