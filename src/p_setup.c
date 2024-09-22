@@ -1787,7 +1787,7 @@ void P_Init (void)
 {
   // [Nugget] Alt. sprites /--------------------------------------------------
 
-  char *namelist[num_sprites + NUMALTSPRITES];
+  char **namelist = Z_Malloc(sizeof(char *) * (num_sprites + NUMALTSPRITES), PU_STATIC, NULL);
 
   memcpy(namelist,                  sprnames, sizeof(char *) * num_sprites);
   memcpy(namelist + num_sprites, altsprnames, sizeof(char *) * NUMALTSPRITES);
@@ -1797,6 +1797,8 @@ void P_Init (void)
   P_InitSwitchList();
   P_InitPicAnims();
   R_InitSprites(namelist);
+
+  Z_Free(namelist);
 }
 
 //----------------------------------------------------------------------------

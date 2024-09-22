@@ -618,10 +618,10 @@ void AM_initVariables(void)
 
   const int low = 223;
 
-  highlight_color[0] = I_GetPaletteIndex(playpal, 255, low, low); // Red
-  highlight_color[1] = I_GetPaletteIndex(playpal, low, low, 255); // Blue
-  highlight_color[2] = I_GetPaletteIndex(playpal, 255, 255, low); // Yellow
-  highlight_color[3] = I_GetPaletteIndex(playpal, 255, 255, 255); // Any (white)
+  highlight_color[0] = I_GetNearestColor(playpal, 255, low, low); // Red
+  highlight_color[1] = I_GetNearestColor(playpal, low, low, 255); // Blue
+  highlight_color[2] = I_GetNearestColor(playpal, 255, 255, low); // Yellow
+  highlight_color[3] = I_GetNearestColor(playpal, 255, 255, 255); // Any (white)
 }
 
 //
