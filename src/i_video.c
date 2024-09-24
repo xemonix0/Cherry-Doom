@@ -1294,8 +1294,6 @@ static void ResetResolution(int height, boolean reset_pitch)
         AM_ResetScreenSize();
     }
 
-    ST_InitChunkBar(); // [Nugget] NUGHUD: Status-Bar chunks
-
     I_Printf(VB_DEBUG, "ResetResolution: %dx%d", video.width, video.height);
 
     drs_skip_frame = true;

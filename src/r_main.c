@@ -1279,7 +1279,8 @@ void R_SetupFrame (player_t *player)
 
   // Explosion shake effect --------------------------------------------------
 
-  chasecamheight = R_GetFreecamMobj() ? freecam.z - freecam.mobj->z : chasecam_height * FRACUNIT;
+  chasecamheight = R_GetFreecamMobj() ? freecam.z - freecam.mobj->z
+                                      : chasecam_height * FRACUNIT;
 
   if (shake > 0)
   {
@@ -1316,17 +1317,6 @@ void R_SetupFrame (player_t *player)
   if (chasecam_on)
   {
     fixed_t slope = -P_PitchToSlope(basepitch);
-
-    static fixed_t oldeffort = 0, effort = 0;
-
-    const fixed_t z = MIN(playerz + ((player->mo->health <= 0 && player->playerstate == PST_DEAD) ? 6*FRACUNIT : chasecamheight),
-                          player->mo->ceilingz - (2*FRACUNIT));
-
-    fixed_t dist = chasecam_distance * FRACUNIT;
-
-    const fixed_t oldviewx = viewx,
-                  oldviewy = viewy;
-
     const angle_t oldviewangle = viewangle;
 
     if (chasecam_mode == CHASECAMMODE_FRONT)
@@ -1337,38 +1327,71 @@ void R_SetupFrame (player_t *player)
       pitch     += basepitch * 2;
     }
 
+    static fixed_t oldeffort = 0, effort = 0,
+                   oldcrouchoffset = 0, crouchoffset = 0;
+
+    static int oldtic = -1;
+
+    if (oldtic != gametic)
     {
-      static int oldtic = -1;
+      oldeffort = effort;
+      oldcrouchoffset = crouchoffset;
 
-      if (oldtic != gametic)
-      {
+      fixed_t momx, momy;
+
+      if (demo_version < DV_MBF) {
+        momx = player->mo->momx;
+        momy = player->mo->momy;
+      }
+      else {
+        momx = player->momx;
+        momy = player->momy;
+      }
+
+      effort = FixedMul(momx, finecosine[viewangle >> ANGLETOFINESHIFT])
+             + FixedMul(momy,   finesine[viewangle >> ANGLETOFINESHIFT]);
+
+      crouchoffset = player->crouchoffset;
+
+      if (gametic - oldtic > 1) {
+        // Chasecam was disabled; reset forcefully
         oldeffort = effort;
-
-        fixed_t momx, momy;
-
-        if (demo_version < DV_MBF) {
-          momx = player->mo->momx;
-          momy = player->mo->momy;
-        }
-        else {
-          momx = player->momx;
-          momy = player->momy;
-        }
-
-        effort = FixedMul(momx, finecosine[viewangle >> ANGLETOFINESHIFT])
-               + FixedMul(momy,   finesine[viewangle >> ANGLETOFINESHIFT]);
+        oldcrouchoffset = crouchoffset;
       }
 
       oldtic = gametic;
     }
 
+    static int oldmode = 0;
+
+    if (oldmode != chasecam_mode)
+    {
+      oldeffort = effort;
+      oldmode = chasecam_mode;
+    }
+
+    fixed_t dist = chasecam_distance * FRACUNIT;
+
+    fixed_t curcrouchoffset;
+
     if (uncapped && leveltime > 1 && player->mo->interp == true && leveltime > oldleveltime)
     {
       dist += LerpFixed(oldeffort, effort);
+      curcrouchoffset = LerpFixed(oldcrouchoffset, crouchoffset);
     }
-    else { dist += effort; }
+    else {
+      dist += effort;
+      curcrouchoffset = crouchoffset;
+    }
+
+    const fixed_t z = MIN(player->mo->ceilingz - (2*FRACUNIT),
+                          playerz + ((player->mo->health <= 0 && player->playerstate == PST_DEAD)
+                                     ? 6*FRACUNIT : chasecamheight - curcrouchoffset));
 
     P_PositionChasecam(z, dist, slope);
+
+    const fixed_t oldviewx = viewx,
+                  oldviewy = viewy;
 
     if (chasecam.hit) {
       viewx = chasecam.x;

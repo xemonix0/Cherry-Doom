@@ -87,6 +87,12 @@ char *original_sprnames[NUMSPRITES+1] = {
   NULL
 };
 
+// [Nugget] Alt. sprites
+char *altsprnames[NUMALTSPRITES+1] = {
+  "PLYC",
+  NULL
+};
+
 #include "p_action.h"
 
 // ********************************************************************

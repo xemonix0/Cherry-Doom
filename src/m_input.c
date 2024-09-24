@@ -790,7 +790,7 @@ void M_BindInputVariables(void)
 
     // [Nugget] /---------------------------------------------------------------
 
-    BIND_INPUT(input_map_blink,     "Make automap markers blink");
+    BIND_INPUT(input_map_blink,     "Highlight points of interest (keyed lines, marks) on the automap");
 
     BIND_INPUT(input_map_tagfinder, "Find associated sectors and lines");
 

@@ -1062,6 +1062,8 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   mobj->sprite = st->sprite;
   mobj->frame  = st->frame;
 
+  mobj->altsprite = mobj->altframe = -1; // [Nugget] Alt. sprites
+
   // NULL head of sector list // phares 3/13/98
   mobj->touching_sectorlist = NULL;
 

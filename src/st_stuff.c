@@ -351,6 +351,16 @@ static void ST_DrawSolidBackground(int st_x)
 
 void ST_refreshBackground(void)
 {
+    // [Nugget] NUGHUD: Status-Bar chunks /-----------------------------------
+
+    V_UseBuffer(st_bar);
+
+    V_DrawPatch(ST_X + (SCREENWIDTH - SHORT(sbar->width)) / 2 + SHORT(sbar->leftoffset), 0, sbar);
+
+    V_RestoreBuffer();
+
+    // [Nugget] -------------------------------------------------------------/
+
     int st_x;
 
     if (!st_classicstatusbar)
@@ -2123,25 +2133,17 @@ void ST_Init(void)
   ST_loadData();
 }
 
-// [Nugget] NUGHUD: Status-Bar chunks
-void ST_InitChunkBar(void)
-{
-  // More than necessary, but so be it
-  st_bar = Z_Malloc((video.pitch * V_ScaleY(StatusBarBufferHeight())) * sizeof(*st_bar), PU_RENDERER, 0);
-
-  V_UseBuffer(st_bar);
-
-  V_DrawPatch(ST_X + (SCREENWIDTH - SHORT(sbar->width)) / 2 + SHORT(sbar->leftoffset), 0, sbar);
-
-  V_RestoreBuffer();
-}
-
 void ST_InitRes(void)
 {
   int height = V_ScaleY(StatusBarBufferHeight());
 
   // killough 11/98: allocate enough for hires
   st_backing_screen = Z_Malloc(video.pitch * height * sizeof(*st_backing_screen), PU_RENDERER, 0);
+
+  // [Nugget] Status-Bar chunks ----------------------------------------------
+
+  // More than necessary (we only use the section visible in 4:3), but so be it
+  st_bar = Z_Malloc((video.pitch * height) * sizeof(*st_bar), PU_RENDERER, 0);
 }
 
 void ST_Warnings(void)

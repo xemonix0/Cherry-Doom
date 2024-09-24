@@ -124,6 +124,8 @@ spritedef_t *sprites;
 static spriteframe_t sprtemp[MAX_SPRITE_FRAMES];
 static int maxframe;
 
+boolean have_crouch_sprites; // [Nugget]
+
 void R_InitSpritesRes(void)
 {
   xtoviewangle = Z_Calloc(1, (video.width + 1) * sizeof(*xtoviewangle), PU_RENDERER, NULL);
@@ -207,7 +209,8 @@ void R_InitSpriteDefs(char **namelist)
   if (!numentries || !*namelist)
     return;
 
-  sprites = Z_Calloc(num_sprites, sizeof(*sprites), PU_STATIC, NULL);
+  // [Nugget] Alt. sprites
+  sprites = Z_Calloc(num_sprites + NUMALTSPRITES, sizeof(*sprites), PU_STATIC, NULL);
 
   // Create hash table based on just the first four letters of each sprite
   // killough 1/31/98
@@ -227,7 +230,7 @@ void R_InitSpriteDefs(char **namelist)
   // scan all the lump names for each of the names,
   //  noting the highest frame letter.
 
-  for (i=0 ; i<num_sprites ; i++)
+  for (i=0 ; i<num_sprites + NUMALTSPRITES ; i++) // [Nugget] Alt. sprites
     {
       const char *spritename = namelist[i];
       int j;
@@ -305,6 +308,9 @@ void R_InitSpriteDefs(char **namelist)
         }
     }
   Z_Free(hash);             // free hash table
+
+  // [Nugget]
+  have_crouch_sprites = sprites[num_sprites + ASPR_PLYC].numframes > 0;
 }
 
 //
@@ -595,7 +601,28 @@ static void R_ProjectSprite (mobj_t* thing)
     I_Error ("R_ProjectSprite: invalid frame %i for sprite %s",
              thing->frame & FF_FRAMEMASK, sprnames[thing->sprite]);
 
-  sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
+  // [Nugget] Alt. sprites /--------------------------------------------------
+
+  int sprite = thing->sprite, frame = thing->frame;
+
+  if (!strictmode && thing->altsprite > -1
+      && sprites[num_sprites + thing->altsprite].numframes > (frame & FF_FRAMEMASK))
+  {
+    sprite = num_sprites + thing->altsprite;
+
+    if (thing->altframe > -1)
+    {
+      frame = thing->altframe;
+
+      if (frame >= sprites[sprite].numframes) { sprite = thing->sprite; }
+    }
+
+    sprdef = &sprites[sprite];
+  }
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  sprframe = &sprdef->spriteframes[frame & FF_FRAMEMASK];
 
   if (sprframe->rotate)
     {
@@ -712,7 +739,7 @@ static void R_ProjectSprite (mobj_t* thing)
     vis->colormap[0] = vis->colormap[1] = NULL;               // shadow draw
   else if (fixedcolormap)
     vis->colormap[0] = vis->colormap[1] = fixedcolormap;      // fixed map
-  else if (thing->frame & FF_FULLBRIGHT)
+  else if (frame & FF_FULLBRIGHT)
     vis->colormap[0] = vis->colormap[1] = fullcolormap;       // full bright  // killough 3/20/98
   else
     {      // diminished light
@@ -725,7 +752,7 @@ static void R_ProjectSprite (mobj_t* thing)
 
   vis->brightmap = R_BrightmapForState(thing->state - states);
   if (vis->brightmap == nobrightmap)
-    vis->brightmap = R_BrightmapForSprite(thing->sprite);
+    vis->brightmap = R_BrightmapForSprite(sprite);
 
   // [Cherry] Translucent rocket trails
   vis->rocket_trail =

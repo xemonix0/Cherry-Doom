@@ -397,6 +397,12 @@ typedef struct mobj_s
     int bloodcolor;
 
     // [Nugget] Removed `actualheight`
+
+    // [Nugget] --------------------------------------------------------------
+
+    // Alt. sprites
+    int                 altsprite;
+    int                 altframe;
     
     // [Cherry]: [JN] Amplitude of floating powerups, used *only* while rendering.
     fixed_t float_amp;

@@ -1729,14 +1729,14 @@ static setup_menu_t keys_settings5[] = {
 
     MI_SPLIT,
     {"Nugget", S_SKIP | S_TITLE, KB_X, M_SPC},
-      {"Minimap",         S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map, input_map_mini},
+      {"Minimap",            S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_mini},
       MI_GAP,
-      {"Tag Finder",      S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map, input_map_tagfinder},
+      {"Tag Finder",         S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_tagfinder},
       MI_GAP,
-      {"Blink Marks",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map, input_map_blink},
+      {"Highlight P.O.I.'s", S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_blink},
       MI_GAP,
-      {"Warp to Pointer", S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_map, input_map_teleport},
-      {"Fancy Warping",  S_ONOFF|S_STRICT|S_CRITICAL, KB_X, M_SPC, {"fancy_teleport"}},
+      {"Warp to Pointer",    S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_map,  input_map_teleport},
+      {"Fancy Warping",      S_ONOFF|S_STRICT|S_CRITICAL, KB_X, M_SPC, {"fancy_teleport"}},
 
     MI_END
 };
