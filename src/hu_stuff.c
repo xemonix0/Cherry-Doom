@@ -737,9 +737,18 @@ void HU_Start(void)
                        &boom_font, colrngs[CR_GRAY],
                        NULL, deathmatch ? HU_widget_build_frag : HU_widget_build_keys);
 
+  // [Nugget] /---------------------------------------------------------------
+
+  const int *const showstats = (automapactive == AM_FULL) ? hud_stats_show_map : hud_stats_show;
+  int statslines = 0;
+
+  for (int i = 0;  i < NUMSHOWSTATS;  i++) { statslines += showstats[i]; }
+
+  // [Nugget] ---------------------------------------------------------------/
+
   // create the hud monster/secret widget
   HUlib_init_multiline(&w_monsec,
-                       MULTILINE(nughud.sts_ml) ? 3 : 1, // [Nugget] NUGHUD
+                       MULTILINE(nughud.sts_ml) ? statslines : MIN(1, statslines), // [Nugget] NUGHUD
                        &boom_font, colrngs[CR_GRAY],
                        NULL, HU_widget_build_monsec);
   // [FG] in deathmatch: w_keys.builder = HU_widget_build_frag()
@@ -1326,6 +1335,15 @@ static void HU_widget_build_frag (void)
 
 static void HU_widget_build_monsec(void)
 {
+  // [Nugget] /---------------------------------------------------------------
+
+  const int *const showstats = (automapactive == AM_FULL) ? hud_stats_show_map : hud_stats_show;
+
+  if (!(showstats[SHOWSTATS_KILLS] || showstats[SHOWSTATS_ITEMS] || showstats[SHOWSTATS_SECRETS]))
+  { return; }
+
+  // [Nugget] ---------------------------------------------------------------/
+
   char hud_monsecstr[HU_MAXLINELENGTH];
   int i;
   int fullkillcount, fullitemcount, fullsecretcount;
@@ -1439,30 +1457,57 @@ static void HU_widget_build_monsec(void)
 
   if (MULTILINE(nughud.sts_ml)) // [Nugget] NUGHUD
   {
-    // [Nugget] HUD icons
-    // [Nugget] Stats formats from Crispy
+    // [Nugget] HUD icons | Stats formats from Crispy
 
-    M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
-      "\x1b%c%c\t\x1b%c%s", killlabelcolor, killlabel, killcolor, kill_str);
-    HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
+    if (showstats[SHOWSTATS_KILLS])
+    {
+      M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
+        "\x1b%c%c\t\x1b%c%s", killlabelcolor, killlabel, killcolor, kill_str);
+      HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
+    }
 
-    M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
-      "\x1b%c%c\t\x1b%c%s", itemlabelcolor, itemlabel, itemcolor, item_str);
-    HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
+    if (showstats[SHOWSTATS_ITEMS])
+    {
+      M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
+        "\x1b%c%c\t\x1b%c%s", itemlabelcolor, itemlabel, itemcolor, item_str);
+      HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
+    }
 
-    M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
-      "\x1b%c%c\t\x1b%c%s", secretlabelcolor, secretlabel, secretcolor, secret_str);
-    HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
+    if (showstats[SHOWSTATS_SECRETS])
+    {
+      M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
+        "\x1b%c%c\t\x1b%c%s", secretlabelcolor, secretlabel, secretcolor, secret_str);
+      HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
+    }
   }
   else
   {
-    // [Nugget] HUD icons
-    // [Nugget] Stats formats from Crispy
-    M_snprintf(hud_monsecstr, sizeof(hud_monsecstr),
-      "\x1b%c%c \x1b%c%s \x1b%c%c \x1b%c%s \x1b%c%c \x1b%c%s",
-      killlabelcolor, killlabel, killcolor, kill_str,
-      itemlabelcolor, itemlabel, itemcolor, item_str,
-      secretlabelcolor, secretlabel, secretcolor, secret_str);
+    // [Nugget] HUD icons | Stats formats from Crispy
+
+    int offset = 0;
+
+    if (showstats[SHOWSTATS_KILLS])
+    {
+      offset += M_snprintf(hud_monsecstr + offset, sizeof(hud_monsecstr),
+        "\x1b%c%c \x1b%c%s%s",
+        killlabelcolor, killlabel, killcolor, kill_str,
+        (showstats[SHOWSTATS_ITEMS] || showstats[SHOWSTATS_SECRETS]) ? " " : "");
+    }
+
+    if (showstats[SHOWSTATS_ITEMS])
+    {
+      offset += M_snprintf(hud_monsecstr + offset, sizeof(hud_monsecstr),
+        "\x1b%c%c \x1b%c%s%s",
+        itemlabelcolor, itemlabel, itemcolor, item_str,
+        showstats[SHOWSTATS_SECRETS] ? " " : "");
+    }
+
+    if (showstats[SHOWSTATS_SECRETS])
+    {
+      offset += M_snprintf(hud_monsecstr + offset, sizeof(hud_monsecstr),
+        "\x1b%c%c \x1b%c%s",
+        secretlabelcolor, secretlabel, secretcolor, secret_str);
+    }
 
     HUlib_add_string_to_cur_line(&w_monsec, hud_monsecstr);
   }

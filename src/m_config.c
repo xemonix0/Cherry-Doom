@@ -3792,6 +3792,52 @@ default_t defaults[] = {
 
   // [Nugget] ---------------------------------------------------------------/
 
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "hud_stats_kills",
+    (config_t *) &hud_stats_show[SHOWSTATS_KILLS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the kill count on the stats display"
+  },
+
+  {
+    "hud_stats_items",
+    (config_t *) &hud_stats_show[SHOWSTATS_ITEMS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the item count on the stats display"
+  },
+
+  {
+    "hud_stats_secrets",
+    (config_t *) &hud_stats_show[SHOWSTATS_SECRETS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the item count on the stats display"
+  },
+
+  {
+    "hud_stats_kills_map",
+    (config_t *) &hud_stats_show_map[SHOWSTATS_KILLS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the kill count on the automap's stats display"
+  },
+
+  {
+    "hud_stats_items_map",
+    (config_t *) &hud_stats_show_map[SHOWSTATS_ITEMS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the item count on the automap's stats display"
+  },
+
+  {
+    "hud_stats_secrets_map",
+    (config_t *) &hud_stats_show_map[SHOWSTATS_SECRETS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the item count on the automap's stats display"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
+
   { // [Nugget]
     "hud_allow_icons",
     (config_t *) &hud_allow_icons, NULL,

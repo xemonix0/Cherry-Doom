@@ -884,6 +884,8 @@ void AM_ChangeMode(automapmode_t mode)
       AM_activateNewScale();
     }
   }
+
+  HU_Start();
 }
 
 //

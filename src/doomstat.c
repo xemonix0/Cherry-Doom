@@ -212,6 +212,8 @@ int message_flash;
 int show_ssg; // CFG-only
 int hud_stats_format;
 int hud_stats_format_map;
+int hud_stats_show[NUMSHOWSTATS];
+int hud_stats_show_map[NUMSHOWSTATS];
 int hud_allow_icons;
 int hud_highlight_weapon;
 int alt_arms;

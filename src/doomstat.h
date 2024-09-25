@@ -596,8 +596,18 @@ enum {
 };
 extern int hud_stats_format;
 extern int hud_stats_format_map;
-extern int hud_allow_icons;
 
+enum {
+  SHOWSTATS_KILLS,
+  SHOWSTATS_ITEMS,
+  SHOWSTATS_SECRETS,
+
+  NUMSHOWSTATS
+};
+extern int hud_stats_show[];
+extern int hud_stats_show_map[];
+
+extern int hud_allow_icons;
 extern int hud_highlight_weapon;
 extern int alt_arms;
 

@@ -5,6 +5,7 @@
 - **_Flip Levels_** setting [thanks @ceski-1]
 - **_Allow [Weapon] Switch Interruption_** setting
 - **_Message Flash_** setting
+- **Level-Stats Selection** settings
 - **Support for powerup-timer icons**
   - Replaced `hud_stats_icons` with `hud_allow_icons` [1]
 - **Support for crouching-player sprites**
