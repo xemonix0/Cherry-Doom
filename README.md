@@ -113,6 +113,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Show Powerup Timers_** setting
 - **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-only: `show_ssg`) [p.f. Crispy Doom]
 - **_Level-Stats Format_** settings [i.b. Crispy Doom]
+- **Level-Stats Selection** settings (CFG-only: `hud_stats_#[_map]`)
 - **_Highlight Current/Pending Weapon_** setting [i.b. PSX Doom]
 - **_Alternative Arms Display_** setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
 - **Event Timers:**
