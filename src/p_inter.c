@@ -44,9 +44,6 @@
 #include "p_user.h"
 #include "v_video.h"
 
-// [Nugget] cheese :)
-extern boolean cheese;
-
 #define BONUSADD        6
 
 // Ty 03/07/98 - add deh externals
@@ -348,6 +345,40 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   if (toucher->health <= 0)
     return;
 
+  // [Nugget]
+  if (casual_play)
+  {
+    if (special->altsprite == ASPR_NGCH)
+    {
+      player->mo->health = player->health = MIN(maxhealthbonus, player->health + 1);
+
+      static const char s[] = {
+        0x50, 0x69, 0x63, 0x6B, 0x65, 0x64, 0x20, 0x75, 0x70, 0x20,
+        0x61, 0x20, 0x63, 0x68, 0x65, 0x65, 0x73, 0x65, 0x2E, 0x00
+      };
+
+      pickupmsg(player, "%s", s);
+    }
+    else if (special->altsprite == ASPR_NGCL)
+    {
+      player->armorpoints = MIN(max_armor, player->armorpoints + 1);
+
+      if (!player->armortype) { player->armortype = green_armor_class; }
+
+      static const char s[] = {
+        0x50, 0x69, 0x63, 0x6B, 0x65, 0x64, 0x20, 0x75, 0x70, 0x20,
+        0x61, 0x20, 0x63, 0x61, 0x63, 0x2D, 0x6F, 0x27, 0x2D, 0x6C,
+        0x61, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x2E, 0x00
+      };
+
+      pickupmsg(player, "%s", s);
+    }
+    else
+    // Match the below switch's default
+    return;
+  }
+  else
+
     // Identify by sprite.
   switch (special->sprite)
     {
@@ -365,9 +396,6 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       break;
 
       // bonus items
-    // [Nugget] cheese :)
-    case SPR_TNT1:
-      if (!cheese) { return; }
     case SPR_BON1:
 
       if (beta_emulation)
@@ -380,8 +408,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (player->health > maxhealthbonus)
         player->health = maxhealthbonus;
       player->mo->health = player->health;
-      // [Nugget] cheese :)
-      pickupmsg(player, "%s", cheese ? "Picked up a cheese." : s_GOTHTHBONUS); // Ty 03/22/98 - externalized
+      pickupmsg(player, "%s", s_GOTHTHBONUS); // Ty 03/22/98 - externalized
       break;
 
     case SPR_BON2:

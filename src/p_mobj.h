@@ -240,8 +240,6 @@ enum {
   // [Nugget] ----------------------------------------------------------------
 
   MIF_CROUCHING    = 0x00010000,  // Mobj (player) is crouching
-
-  MIF_CHEESE       = 0x10000000,
 };
 
 // Map Object definition.
@@ -461,7 +459,10 @@ void    P_ExplodeMissile(mobj_t*);    // killough
 boolean P_SeekerMissile(mobj_t *actor, mobj_t **seekTarget, angle_t thresh, angle_t turnMax, boolean seekcenter);
 int     P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
 
-// [Nugget]
+// [Nugget] ==================================================================
+
+extern boolean cheese, frights;
+
 int P_FindDoomedNum(unsigned type); // Externalized
 void P_ToggleDuplicateSpawns(const boolean state);
 

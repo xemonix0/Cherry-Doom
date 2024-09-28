@@ -369,7 +369,7 @@ Copyright: © 2018 Alex Mayfield.
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `data/nugget-doom.ico, data/nugget-doom.png, src/icon.c, data/setup.ico, data/nugget-doom-setup.png, setup/setup_icon.c`  
-Copyright: © 2024 Korp.  
+Copyright: © 2022 Korp.  
 License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
 Files: `miniz/*`  

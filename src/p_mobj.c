@@ -748,9 +748,11 @@ static inline void MusInfoThinker (mobj_t *thing)
 // P_MobjThinker
 //
 
+// [Nugget]
+boolean cheese, frights;
+
 void P_MobjThinker (mobj_t* mobj)
 {
-  extern boolean cheese; // [Nugget] cheese :)
   boolean oucheck = false; // [Nugget] Over/Under
 
   // [crispy] support MUSINFO lump (dynamic music changing)
@@ -760,20 +762,32 @@ void P_MobjThinker (mobj_t* mobj)
       return;
   }
 
-  // [Nugget] cheese :)
-  if (casual_play && mobj->type == MT_MISC2)
+  // [Nugget]
+  if (casual_play)
   {
-    if (cheese && !(mobj->intflags & MIF_CHEESE))
+    if (mobj->type == MT_MISC2)
     {
-      mobj->intflags |= MIF_CHEESE;
-      mobj->tics = -1;
-      mobj->sprite = SPR_TNT1;
-      mobj->frame = 1;
+      if (cheese && mobj->altsprite == -1)
+      {
+        mobj->altsprite = ASPR_NGCH;
+        mobj->altframe = 0;
+      }
+      else if (!cheese && mobj->altsprite > -1)
+      {
+        mobj->altsprite = mobj->altframe = -1;
+      }
     }
-    else if (!cheese && (mobj->intflags & MIF_CHEESE))
+    else if (mobj->type == MT_MISC3)
     {
-      mobj->intflags &= ~MIF_CHEESE;
-      P_SetMobjState(mobj, mobj->info->spawnstate);
+      if (frights && mobj->altsprite == -1)
+      {
+        mobj->altsprite = ASPR_NGCL;
+        mobj->altframe = 0|FF_FULLBRIGHT;
+      }
+      else if (!frights && mobj->altsprite > -1)
+      {
+        mobj->altsprite = mobj->altframe = -1;
+      }
     }
   }
 

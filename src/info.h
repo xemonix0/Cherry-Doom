@@ -198,7 +198,7 @@ typedef enum
 
 // [Nugget] Alt. sprites
 typedef enum {
-  ASPR_PLYC,
+  ASPR_PLYC, ASPR_NGCH, ASPR_NGCL,
   NUMALTSPRITES
 } altspritenum_t;
 
