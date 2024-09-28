@@ -85,7 +85,6 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Switch [Weapon] on Pickup_** setting
 - **_Allow [Weapon] Switch Interruption_** setting
 - **_Prev/Next Skip Ammoless Weapons_** setting, to make the previous/next-weapon buttons skip weapons with insufficient ammo
-- Key to **equip last used weapon** [i.b. Cherry Doom]
 - **_Horizontal_ Weapon Centering** setting [i.b. DSDA-Doom]
 - **Always Bob** setting (CFG-only: `always_bob`)
 - **_Bobbing Styles_** selection [p.f. Zandronum]
@@ -367,7 +366,7 @@ License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `base/all-all/sprites/tnt1b0.png`  
 Copyright: © 2023 Korp.  
-License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
 Files: `base/all-all/dsdg*, base/all-all/sprites/dog*`  
 Copyright:  
@@ -381,7 +380,7 @@ Copyright: © 2018 Alex Mayfield.
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `data/nugget-doom.ico, data/nugget-doom.png, src/icon.c, data/setup.ico, data/nugget-doom-setup.png, setup/setup_icon.c`  
-Copyright: © 2024 Korp.  
+Copyright: © 2022 Korp.  
 License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
 Files: `opl/*`  

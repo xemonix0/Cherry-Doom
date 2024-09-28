@@ -703,7 +703,6 @@ void M_BindInputVariables(void)
     BIND_INPUT(input_fire, "Fire current weapon");
     BIND_INPUT(input_prevweapon, "Cycle to the previous weapon");
     BIND_INPUT(input_nextweapon, "Cycle to the next weapon");
-    BIND_INPUT(input_lastweapon, "Switch to the last-used weapon"); // [Nugget] Last-weapon button
 
     BIND_INPUT(input_novert, "Toggle vertical mouse movement");
     BIND_INPUT(input_freelook, "Toggle free look");

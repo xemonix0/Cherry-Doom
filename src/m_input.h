@@ -141,8 +141,6 @@ enum
     input_jump,
     input_crouch,
 
-    input_lastweapon,
-
     input_crosshair,
     input_zoom,
     input_chasecam,
