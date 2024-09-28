@@ -48,6 +48,7 @@
 #include "v_flextran.h"
 #include "v_fmt.h"
 #include "v_video.h"
+#include "ws_stuff.h"
 #include "z_zone.h"
 
 // [Nugget]
@@ -940,7 +941,7 @@ boolean AM_Responder
 
   if (automapactive != AM_FULL)
   {
-    if (M_InputActivated(input_map))
+    if (M_InputActivated(input_map) && !WS_Override())
     {
       AM_ChangeMode(AM_FULL);
       viewactive = false;
@@ -985,22 +986,22 @@ boolean AM_Responder
     rc = true;
                                                                 // phares
     if (M_InputActivated(input_map_right))                      //    |
-      if (!followplayer)                                        //    V
+      if (!followplayer && !WS_HoldOverride())                  //    V
         buttons_state[PAN_RIGHT] = 1;
       else
         rc = false;
     else if (M_InputActivated(input_map_left))
-      if (!followplayer)
+      if (!followplayer && !WS_HoldOverride())
         buttons_state[PAN_LEFT] = 1;
       else
         rc = false;
     else if (M_InputActivated(input_map_up))
-      if (!followplayer)
+      if (!followplayer && !WS_HoldOverride())
         buttons_state[PAN_UP] = 1;
       else
         rc = false;
     else if (M_InputActivated(input_map_down))
-      if (!followplayer)
+      if (!followplayer && !WS_HoldOverride())
         buttons_state[PAN_DOWN] = 1;
       else
         rc = false;
@@ -1028,9 +1029,16 @@ boolean AM_Responder
     }
     else if (M_InputActivated(input_map))
     {
-      bigstate = 0;
-      viewactive = true;
-      AM_ChangeMode(AM_OFF);
+      if (!WS_Override())
+      {
+        bigstate = 0;
+        viewactive = true;
+        AM_ChangeMode(AM_OFF);
+      }
+      else
+      {
+        rc = false;
+      }
     }
     else if (M_InputActivated(input_map_gobig))
     {

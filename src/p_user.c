@@ -795,7 +795,7 @@ void P_PlayerThink (player_t* player)
 	              && lastweapon != wp_fist) || // [Nugget]
 	       !player->powers[pw_strength]))
 	    newweapon = wp_chainsaw;
-	  if (have_ssg &&
+	  if (ALLOW_SSG &&
 	      newweapon == wp_shotgun &&
 	      player->weaponowned[wp_supershotgun] &&
 	      player->readyweapon != wp_supershotgun &&

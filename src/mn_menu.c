@@ -1974,6 +1974,14 @@ static menu_t EqualizerDef = {
     34, 5,              // x, y (skull drawn here)
 };
 
+static menu_t PadAdvDef = {
+    generic_setup_end,  // numitems
+    &SetupDef,          // prevMenu
+    Generic_Setup,      // menuitems
+    MN_DrawPadAdv,      // routine
+    34, 5,              // x, y (skull drawn here)
+};
+
 static menu_t GyroDef = {
     generic_setup_end,  // numitems
     &SetupDef,          // prevMenu
@@ -1995,7 +2003,7 @@ void MN_SetNextMenuAlt(ss_types type)
 {
     static menu_t *setup_defs[] = {
         &KeybndDef,  &WeaponDef, &StatusHUDDef, &AutoMapDef, &EnemyDef,
-        &GeneralDef, &CompatDef, &EqualizerDef, &GyroDef,
+        &GeneralDef, &CompatDef, &EqualizerDef, &PadAdvDef,  &GyroDef,
 
         &CustomSkillDef // [Nugget] Custom Skill menu
     };
@@ -2210,7 +2218,7 @@ void M_Ticker(void)
 // action based on the state of the system.
 //
 
-static boolean ShortcutResponder(const event_t *ev)
+boolean M_ShortcutResponder(const event_t *ev)
 {
     // If there is no active menu displayed...
 
@@ -2975,11 +2983,6 @@ boolean M_Responder(event_t *ev)
     {
         clean_screenshot = true;
         G_ScreenShot();
-    }
-
-    if (ShortcutResponder(ev))
-    {
-        return true;
     }
 
     // Pop-up Main menu?
