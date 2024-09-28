@@ -346,7 +346,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
     return;
 
   // [Nugget]
-  if (casual_play)
+  if (casual_play && special->altsprite > -1)
   {
     if (special->altsprite == ASPR_NGCH)
     {
