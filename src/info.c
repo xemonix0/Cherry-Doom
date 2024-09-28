@@ -86,7 +86,7 @@ char *original_sprnames[NUMSPRITES+1] = {
 
 // [Nugget] Alt. sprites
 char *altsprnames[NUMALTSPRITES+1] = {
-  "PLYC",
+  "PLYC", "NGCH", "NGCL",
   NULL
 };
 
@@ -5017,7 +5017,7 @@ mobjinfo_t original_mobjinfo[NUMMOBJTYPES] = {
 // [Nugget] ------------------------------------------------------------------
 
 // Copyright (C) 2024 Korp (CC BY-SA 4.0)
-static const unsigned char tnt1c0[] = {
+static const unsigned char ngcla0[] = {
   0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
   0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x10,
   0x08, 0x03, 0x00, 0x00, 0x00, 0x2C, 0xD8, 0xDF, 0x6E, 0x00, 0x00, 0x00,
@@ -5138,7 +5138,7 @@ static const unsigned char tnt1c0[] = {
 const lumpinfo_t predefined_lumps[] = {
   { "S_START"},
 
-  { "TNT1C0", sizeof(tnt1c0), .data = tnt1c0 },
+  { "NGCLA0", sizeof(ngcla0), .data = ngcla0 },
 
   { "S_END"}, 
 };
