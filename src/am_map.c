@@ -904,7 +904,7 @@ void AM_ChangeMode(automapmode_t mode)
     }
   }
 
-  HU_Start();
+  HU_InitMonSec();
 }
 
 //

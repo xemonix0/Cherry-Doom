@@ -721,6 +721,19 @@ static int NughudSortWidgets(const void *_p1, const void *_p2)
     || (st_crispyhud && (a) == 1)                      \
 )
 
+void HU_InitMonSec(void)
+{
+  const boolean *const showstats = (automapactive == AM_FULL) ? hud_stats_show_map : hud_stats_show;
+  int statslines = 0;
+
+  for (int i = 0;  i < NUMSHOWSTATS;  i++) { statslines += showstats[i]; }
+
+  HUlib_init_multiline(&w_monsec,
+                       MULTILINE(nughud.sts_ml) ? statslines : MIN(1, statslines), // [Nugget] NUGHUD
+                       &boom_font, colrngs[CR_GRAY],
+                       NULL, HU_widget_build_monsec);
+}
+
 // [Nugget] -----------------------------------------------------------------/
 
 void HU_Start(void)
@@ -804,20 +817,9 @@ void HU_Start(void)
                        &boom_font, colrngs[CR_GRAY],
                        NULL, HU_widget_build_compact);
 
-  // [Nugget] /---------------------------------------------------------------
-
-  const boolean *const showstats = (automapactive == AM_FULL) ? hud_stats_show_map : hud_stats_show;
-  int statslines = 0;
-
-  for (int i = 0;  i < NUMSHOWSTATS;  i++) { statslines += showstats[i]; }
-
-  // [Nugget] ---------------------------------------------------------------/
-
   // create the hud monster/secret widget
-  HUlib_init_multiline(&w_monsec,
-                       MULTILINE(nughud.sts_ml) ? statslines : MIN(1, statslines), // [Nugget] NUGHUD
-                       &boom_font, colrngs[CR_GRAY],
-                       NULL, HU_widget_build_monsec);
+  HU_InitMonSec(); // [Nugget]
+
   // [FG] in deathmatch: w_keys.builder = HU_widget_build_frag()
   w_stats = deathmatch ? &w_keys : &w_monsec;
 

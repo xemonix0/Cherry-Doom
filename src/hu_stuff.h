@@ -49,6 +49,7 @@ void HU_widget_rebuild_sttime(void);
 // [Nugget]
 struct patch_s;
 boolean HU_IsSmallFont(const struct patch_s *const patch);
+void HU_InitMonSec(void);
 
 void HU_NughudAlignTime(void); // [Nugget] NUGHUD
 
