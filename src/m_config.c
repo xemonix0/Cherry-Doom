@@ -3812,7 +3812,7 @@ default_t defaults[] = {
     "hud_stats_secrets",
     (config_t *) &hud_stats_show[SHOWSTATS_SECRETS], NULL,
     {1}, {0,1}, number, ss_none, wad_no,
-    "1 to show the item count on the stats display"
+    "1 to show the secrets count on the stats display"
   },
 
   {
@@ -3833,7 +3833,7 @@ default_t defaults[] = {
     "hud_stats_secrets_map",
     (config_t *) &hud_stats_show_map[SHOWSTATS_SECRETS], NULL,
     {1}, {0,1}, number, ss_none, wad_no,
-    "1 to show the item count on the automap's stats display"
+    "1 to show the secrets count on the automap's stats display"
   },
 
   // [Nugget] ---------------------------------------------------------------/
