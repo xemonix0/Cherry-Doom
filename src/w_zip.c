@@ -11,6 +11,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
+#include "doomstat.h" // [Cherry]
 #include "doomtype.h"
 #include "i_printf.h"
 #include "m_array.h"
@@ -79,8 +80,7 @@ static void AddWadInMem(mz_zip_archive *zip, const char *name, int index,
     filelump_t *fileinfo = (filelump_t *)(data + header.infotableofs);
 
     const char *wadname = M_StringDuplicate(name);
-    wadfile_info_t wadfile = { wadname, source };
-    array_push(wadfiles, wadfile);
+    wadfile_info_t wadfile = { wadname, source, false };
 
     numlumps += header.numlumps;
 
@@ -99,8 +99,46 @@ static void AddWadInMem(mz_zip_archive *zip, const char *name, int index,
  
         // [FG] WAD file that contains the lump
         item.wad_file = wadname;
+
+        // [Cherry]
+        item.source = source;
         array_push(lumpinfo, item);
+
+        // [Cherry] Mark the WAD file as one containing maps (for WAD stats)
+
+        if (wadfile.contains_maps)
+        {
+            continue;
+        }
+
+        if (gamemode == commercial)
+        {
+            for (int m = 1; m < 100; ++m)
+            {
+                if (strncasecmp(item.name, MAPNAME(1, m), 8))
+                {
+                    wadfile.contains_maps = true;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            for (int e = 1; e < 10; ++e)
+            {
+                for (int m = 1; m < 10; ++m)
+                {
+                    if (strncasecmp(item.name, MAPNAME(e, m), 8))
+                    {
+                        wadfile.contains_maps = true;
+                        break;
+                    }
+                }
+            }
+        }
     }
+
+    array_push(wadfiles, wadfile);
 }
 
 // [Cherry] Added the `source` paramater
@@ -160,6 +198,9 @@ static boolean W_ZIP_AddDir(w_handle_t handle, const char *path,
         item.module = &w_zip_module;
         w_handle_t local_handle = {.p1.zip = zip, .p2.index = index};
         item.handle = local_handle;
+
+        // [Cherry]
+        item.source = source;
 
         array_push(lumpinfo, item);
         numlumps++;

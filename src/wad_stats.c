@@ -81,7 +81,7 @@ static char **DataDirNames(void)
 
     for (int i = 0; i < array_size(wadfiles); ++i)
     {
-        if (!W_FileContainsMaps(wadfiles[i].name))
+        if (!wadfiles[i].contains_maps)
         {
             continue;
         }

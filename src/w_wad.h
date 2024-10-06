@@ -67,6 +67,7 @@ typedef struct
 {
   const char* name;
   wad_source_t src;
+  boolean contains_maps;
 } wadfile_info_t;
 
 typedef enum
@@ -166,8 +167,6 @@ boolean W_IsIWADLump (const int lump);
 boolean W_IsWADLump (const int lump);
 boolean W_LumpExistsWithName(int lump, char *name);
 int W_LumpLengthWithName(int lump, char *name);
-// [Cherry] Moved from d_main.c for use in wad_stats.c
-boolean W_FileContainsMaps(const char *filename);
 
 void W_Close(void);
 

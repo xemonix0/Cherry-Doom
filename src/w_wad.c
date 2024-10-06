@@ -588,55 +588,6 @@ int W_LumpLengthWithName(int lump, char *name)
   return W_LumpLength(lump);
 }
 
-// [Cherry] Moved from d_main.c for use in wad_stats.c
-
-static boolean CheckMapLump(const char *lumpname, const char *filename)
-{
-    int lumpnum = W_CheckNumForName(lumpname);
-    if (lumpnum >= 0 && lumpinfo[lumpnum].wad_file == filename)
-    {
-        return true;
-    }
-    return false;
-}
-
-boolean W_FileContainsMaps(const char *filename)
-{
-    for (int i = 0; i < U_mapinfo.mapcount; ++i)
-    {
-        if (CheckMapLump(U_mapinfo.maps[i].mapname, filename))
-        {
-            return true;
-        }
-    }
-
-    if (gamemode == commercial)
-    {
-        for (int m = 1; m < 35; ++m)
-        {
-            if (CheckMapLump(MAPNAME(1, m), filename))
-            {
-                return true;
-            }
-        }
-    }
-    else
-    {
-        for (int e = 1; e < 5; ++e)
-        {
-            for (int m = 1; m < 10; ++m)
-            {
-                if (CheckMapLump(MAPNAME(e, m), filename))
-                {
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
 // killough 10/98: support .deh from wads
 //
 // A lump named DEHACKED is treated as plaintext of a .deh file embedded in

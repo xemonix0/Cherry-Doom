@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "doomstat.h" // [Cherry]
 #include "doomtype.h"
 #include "i_glob.h"
 #include "i_printf.h"
@@ -207,8 +208,7 @@ static w_type_t W_FILE_Open(const char *path, w_handle_t *handle, wad_source_t s
     numlumps += header.numlumps;
 
     const char *wadname = M_StringDuplicate(M_BaseName(path));
-    wadfile_info_t wadfile = { wadname, source };
-    array_push(wadfiles, wadfile);
+    wadfile_info_t wadfile = { wadname, source, false };
 
     for (int i = 0; i < header.numlumps; i++)
     {
@@ -226,7 +226,42 @@ static w_type_t W_FILE_Open(const char *path, w_handle_t *handle, wad_source_t s
         // [Cherry]
         item.source = source;
         array_push(lumpinfo, item);
+
+        // [Cherry] Mark the WAD file as one containing maps (for WAD stats)
+
+        if (wadfile.contains_maps)
+        {
+            continue;
+        }
+
+        if (gamemode == commercial)
+        {
+            for (int m = 1; m < 100; ++m)
+            {
+                if (strncasecmp(item.name, MAPNAME(1, m), 8))
+                {
+                    wadfile.contains_maps = true;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            for (int e = 1; e < 10; ++e)
+            {
+                for (int m = 1; m < 10; ++m)
+                {
+                    if (strncasecmp(item.name, MAPNAME(e, m), 8))
+                    {
+                        wadfile.contains_maps = true;
+                        break;
+                    }
+                }
+            }
+        }
     }
+    
+    array_push(wadfiles, wadfile);
 
     free(fileinfo);
     return W_FILE;
