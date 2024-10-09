@@ -152,12 +152,12 @@ enum {
 
 extern boolean comp_longautoaim;
 
-// Autosave ------------------------------------------------------------------
+// Periodic auto save --------------------------------------------------------
 
-extern boolean autosave;
 extern int autosave_interval;
 
-void G_SetAutosaveCountdown(int value);
+boolean G_SavingPeriodicAutoSave(void);
+void G_SetAutoSaveCountdown(int value);
 
 // Rewind --------------------------------------------------------------------
 

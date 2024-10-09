@@ -14,6 +14,7 @@
 ## Changes
 
 - **Merged changes from [Woof! post-14.5.0]**, note:
+  - Integrated periodic auto saves into the save/load menus
   - Moved `show_berserk` menu item to _Status Bar/HUD_ setup menu
   - Removed `hudcolor_chat` and `chat_msg_timer` menu items
   - Renamed `#_bobbing_percentage` to `#_bobbing_pct` [1]
