@@ -78,7 +78,11 @@ typedef enum
   ga_worlddone,
   ga_screenshot,
   ga_reloadlevel,
-  ga_rewind, // [Nugget] Rewind
+  ga_loadautosave,
+  ga_saveautosave,
+
+  // [Nugget]
+  ga_rewind, // Rewind
 } gameaction_t;
 
 

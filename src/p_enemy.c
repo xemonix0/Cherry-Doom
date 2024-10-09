@@ -3355,6 +3355,7 @@ void A_JumpIfFlagsSet(mobj_t* actor)
 void A_AddFlags(mobj_t* actor)
 {
   unsigned int flags, flags2;
+  boolean update_blockmap;
 
   if (!mbf21 || !actor)
     return;
@@ -3362,8 +3363,19 @@ void A_AddFlags(mobj_t* actor)
   flags  = actor->state->args[0];
   flags2 = actor->state->args[1];
 
+  // unlink/relink the thing from the blockmap if
+  // the NOBLOCKMAP or NOSECTOR flags are added
+  update_blockmap = ((flags & MF_NOBLOCKMAP) && !(actor->flags & MF_NOBLOCKMAP))
+                    || ((flags & MF_NOSECTOR) && !(actor->flags & MF_NOSECTOR));
+
+  if (update_blockmap)
+    P_UnsetThingPosition(actor);
+
   actor->flags  |= flags;
   actor->flags2 |= flags2;
+
+  if (update_blockmap)
+    P_SetThingPosition(actor);
 }
 
 //
@@ -3375,6 +3387,7 @@ void A_AddFlags(mobj_t* actor)
 void A_RemoveFlags(mobj_t* actor)
 {
   unsigned int flags, flags2;
+  boolean update_blockmap;
 
   if (!mbf21 || !actor)
     return;
@@ -3382,8 +3395,19 @@ void A_RemoveFlags(mobj_t* actor)
   flags  = actor->state->args[0];
   flags2 = actor->state->args[1];
 
+  // unlink/relink the thing from the blockmap if
+  // the NOBLOCKMAP or NOSECTOR flags are removed
+  update_blockmap = ((flags & MF_NOBLOCKMAP) && (actor->flags & MF_NOBLOCKMAP))
+                    || ((flags & MF_NOSECTOR) && (actor->flags & MF_NOSECTOR));
+
+  if (update_blockmap)
+    P_UnsetThingPosition(actor);
+
   actor->flags  &= ~flags;
   actor->flags2 &= ~flags2;
+
+  if (update_blockmap)
+    P_SetThingPosition(actor);
 }
 
 //----------------------------------------------------------------------------

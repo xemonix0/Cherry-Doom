@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 
 #include "am_map.h"
@@ -126,26 +127,21 @@ boolean minimap_was_on = false; // Minimap: keep it when advancing through level
 
 boolean ignore_pistolstart = false; // Custom Skill: ignore pistol-start setting
 
-// Autosave ------------------------------------------------------------------
+// Periodic auto save --------------------------------------------------------
 
-boolean autosave;
 int autosave_interval;
 
-static boolean autosaving = false;
+static boolean is_periodic_autosave = false;
 static int autosave_countdown = 0;
 
-void G_SetAutosaveCountdown(int value)
+boolean G_SavingPeriodicAutoSave(void)
 {
-  autosave_countdown = value;
+  return is_periodic_autosave;
 }
 
-static void G_DoSaveGame(void);
-
-static void G_DoAutosave(void)
+void G_SetAutoSaveCountdown(int value)
 {
-  autosaving = true;
-  G_DoSaveGame();
-  autosaving = false;
+  autosave_countdown = value;
 }
 
 // Rewind --------------------------------------------------------------------
@@ -393,6 +389,9 @@ boolean joybuttons[NUM_GAMEPAD_BUTTONS];
 
 int   savegameslot = -1;
 char  savedescription[32];
+
+static boolean save_autosave;
+static boolean autosave;
 
 //jff 3/24/98 declare startskill external, define defaultskill here
 int default_skill;               //note 1-based
@@ -916,9 +915,10 @@ static boolean FilterDeathUseAction(void)
             case death_use_nothing:
                 return true;
             case death_use_reload:
-                if (!demoplayback && !demorecording && !netgame)
+                if (!demoplayback && !demorecording && !netgame
+                    && activate_death_use_reload == 0)
                 {
-                    activate_death_use_reload = true;
+                    activate_death_use_reload = 2;
                 }
                 return true;
             default:
@@ -1395,6 +1395,8 @@ static void G_DoLoadLevel(void)
   // Set the initial listener parameters using the player's initial state.
   S_InitListener(players[displayplayer].mo);
 
+  activate_death_use_reload = 0;
+
   // clear cmd building stuff
   // [Nugget] Rewind: unless we just rewound
   if (lastaction != ga_rewind) {
@@ -1426,8 +1428,8 @@ static void G_DoLoadLevel(void)
 
   // [Nugget] ================================================================
 
-  // Autosave
-  G_SetAutosaveCountdown(autosave_interval * TICRATE);
+  // Periodic auto save
+  G_SetAutoSaveCountdown(autosave_interval * TICRATE);
 
   // Rewind
   G_SetRewindCountdown(0);
@@ -2398,11 +2400,12 @@ static void G_DoWorldDone(void)
   viewactive = true;
   AM_clearMarks();           //jff 4/12/98 clear any marks on the automap
 
-  // [Nugget] ----------------------------------------------------------------
-
-  if (autosave) { G_DoAutosave(); } // Autosave
+  if (autosave && !demorecording && !demoplayback && !netgame)
+  {
+    M_SaveAutoSave();
+  }
   
-  G_UpdateInitialLoadout(); // Custom Skill
+  G_UpdateInitialLoadout(); // [Nugget] Custom Skill
 }
 
 // killough 2/28/98: A ridiculously large number
@@ -2712,6 +2715,12 @@ static char *savename = NULL;
 static boolean forced_loadgame = false;
 static boolean command_loadgame = false;
 
+void G_ForcedLoadAutoSave(void)
+{
+  gameaction = ga_loadautosave;
+  forced_loadgame = true;
+}
+
 void G_ForcedLoadGame(void)
 {
   gameaction = ga_loadgame;
@@ -2720,6 +2729,15 @@ void G_ForcedLoadGame(void)
 
 // killough 3/16/98: add slot info
 // killough 5/15/98: add command-line
+
+void G_LoadAutoSave(char *name)
+{
+  free(savename);
+  savename = M_StringDuplicate(name);
+  gameaction = ga_loadautosave;
+  forced_loadgame = false;
+  command_loadgame = false;
+}
 
 void G_LoadGame(char *name, int slot, boolean command)
 {
@@ -2733,6 +2751,12 @@ void G_LoadGame(char *name, int slot, boolean command)
 
 // killough 5/15/98:
 // Consistency Error when attempting to load savegame.
+
+static void G_LoadAutoSaveErr(const char *msg)
+{
+  Z_Free(savebuffer);
+  MN_ForcedLoadAutoSave(msg);
+}
 
 static void G_LoadGameErr(const char *msg)
 {
@@ -2751,6 +2775,12 @@ static void G_LoadGameErr(const char *msg)
 // Called by the menu task.
 // Description is a 24 byte text string
 //
+
+void G_SaveAutoSave(char *description)
+{
+  strcpy(savedescription, description);
+  save_autosave = true;
+}
 
 void G_SaveGame(int slot, char *description)
 {
@@ -2774,24 +2804,8 @@ void CheckSaveGame(size_t size)
 
 // [FG] support up to 8 pages of savegames
 
-char* G_SaveGameName(int slot)
+static char *SaveGameName(const char *buf)
 {
-  // Ty 05/04/98 - use savegamename variable (see d_deh.c)
-  // killough 12/98: add .7 to truncate savegamename
-  char buf[16] = {0};
-
-  // [Nugget] Autosave
-  if (autosaving)
-  {
-    static int autoslot = 0;
-
-    sprintf(buf, "%.4saut%d.dsg", D_DoomExeName(), autoslot);
-
-    autoslot = (autoslot + 1) % 4;
-  }
-  else
-    sprintf(buf, "%.7s%d.dsg", savegamename, 10*savepage+slot);
-
   char *filepath =
     // [Nugget] Restored `-cdrom` parm
 #ifdef _WIN32
@@ -2812,6 +2826,40 @@ char* G_SaveGameName(int slot)
     M_StringToLower(filename);
     return filepath;
   }
+}
+
+char *G_AutoSaveName(void)
+{
+  // [Nugget] Periodic auto save /--------------------------------------------
+
+  char buf[16] = {0};
+
+  if (G_SavingPeriodicAutoSave())
+  {
+    static int autoslot = 0;
+
+    sprintf(buf, "autosav%i.dsg", autoslot + 1);
+
+    autoslot = (autoslot + 1) % 7; // 8 pages, minus one with the level-end save
+  }
+  else if (savepage > 0)
+  {
+    sprintf(buf, "autosav%i.dsg", savepage);
+  }
+  else { sprintf(buf, "autosave.dsg"); }
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  return SaveGameName(buf);
+}
+
+char *G_SaveGameName(int slot)
+{
+  // Ty 05/04/98 - use savegamename variable (see d_deh.c)
+  // killough 12/98: add .7 to truncate savegamename
+  char buf[16] = {0};
+  sprintf(buf, "%.7s%d.dsg", savegamename, 10 * savepage + slot);
+  return SaveGameName(buf);
 }
 
 char* G_MBFSaveGameName(int slot)
@@ -2858,25 +2906,15 @@ static uint64_t G_Signature(int sig_epi, int sig_map)
   return s;
 }
 
-static void G_DoSaveGame(void)
+static void DoSaveGame(char *name)
 {
-  char *name = NULL;
   char name2[VERSIONSIZE];
   char *description;
   int  length, i;
 
   keyframe_rw = false; // [Nugget] Make sure endian-unsafe R/W is disabled
 
-  name = G_SaveGameName(savegameslot);
-
-  // [Nugget] Autosave
-  if (autosaving)
-  {
-    static char *const autodesc = "Autosave";
-    description = autodesc;
-  }
-  else
-    description = savedescription;
+  description = savedescription;
 
   save_p = savebuffer = Z_Malloc(savegamesize, PU_STATIC, 0);
 
@@ -3003,8 +3041,8 @@ static void G_DoSaveGame(void)
 
   // [Nugget] ===============================================================/
 
-  // [Nugget] Autosave
-  if (!autosaving)
+  // [Nugget] Periodic auto save
+  if (!is_periodic_autosave)
   {
     // [FG] save snapshot
     CheckSaveGame(MN_SnapshotDataSize());
@@ -3016,7 +3054,7 @@ static void G_DoSaveGame(void)
 
   if (!M_WriteFile(name, savebuffer, length))
     displaymsg("%s", errno ? strerror(errno) : "Could not save game: Error unknown");
-  else if (show_save_messages && !autosaving) // [Nugget]
+  else if (show_save_messages && !is_periodic_autosave) // [Nugget]
     displaymsg("%s", s_GGSAVED);  // Ty 03/27/98 - externalized
 
   Z_Free(savebuffer);  // killough
@@ -3027,15 +3065,24 @@ static void G_DoSaveGame(void)
 
   if (name) free(name);
 
-  // [Nugget] Autosave
-  if (!autosaving)
-    MN_SetQuickSaveSlot(savegameslot);
-
   drs_skip_frame = true;
 
-  // [Nugget] Autosave:
+  // [Nugget] Periodic auto save:
   // reset the countdown, even if this was a manual save
-  G_SetAutosaveCountdown(autosave_interval * TICRATE);
+  G_SetAutoSaveCountdown(autosave_interval * TICRATE);
+}
+
+static void G_DoSaveGame(void)
+{
+  char *name = G_SaveGameName(savegameslot);
+  DoSaveGame(name);
+  MN_SetQuickSaveSlot(savegameslot);
+}
+
+static void G_DoSaveAutoSave(void)
+{
+  char *name = G_AutoSaveName();
+  DoSaveGame(name);
 }
 
 static void CheckSaveVersion(const char *str, saveg_compat_t ver)
@@ -3046,7 +3093,7 @@ static void CheckSaveVersion(const char *str, saveg_compat_t ver)
   }
 }
 
-static void G_DoLoadGame(void)
+static boolean DoLoadGame(boolean do_load_autosave)
 {
   int  length, i;
   char vcheck[VERSIONSIZE];
@@ -3089,8 +3136,12 @@ static void G_DoLoadGame(void)
   // killough 2/22/98: Friendly savegame version difference message
   if (!forced_loadgame && saveg_compat != saveg_mbf && saveg_compat < saveg_woof600)
     {
-      G_LoadGameErr("Different Savegame Version!!!\n\nAre you sure?");
-      return;
+      const char *msg = "Different Savegame Version!!!\n\nAre you sure?";
+      if (do_load_autosave)
+        G_LoadAutoSaveErr(msg);
+      else
+        G_LoadGameErr(msg);
+      return false;
     }
 
   save_p += VERSIONSIZE;
@@ -3122,9 +3173,12 @@ static void G_DoLoadGame(void)
 	 if (save_p[sizeof checksum])
 	   strcat(strcat(msg,"Wads expected:\n\n"), (char *) save_p);
 	 strcat(msg, "\nAre you sure?");
-	 G_LoadGameErr(msg);
+	 if (do_load_autosave)
+	   G_LoadAutoSaveErr(msg);
+	 else
+	   G_LoadGameErr(msg);
 	 free(msg);
-	 return;
+	 return false;
        }
    }
 
@@ -3303,9 +3357,9 @@ static void G_DoLoadGame(void)
   st_health = players[displayplayer].health;
   st_armor  = players[displayplayer].armorpoints;
 
-  // [Nugget] Autosave:
+  // [Nugget] Periodic auto save:
   // we already have a save (the one we just loaded), so reset the countdown
-  G_SetAutosaveCountdown(autosave_interval * TICRATE);
+  G_SetAutoSaveCountdown(autosave_interval * TICRATE);
 
   // [Nugget] Rewind:
   // Just like with `G_DoRewind`,
@@ -3332,15 +3386,86 @@ static void G_DoLoadGame(void)
       if (demorecording) // So this can only possibly be a -recordfrom command.
 	G_BeginRecording();// Start the -recordfrom, since the game was loaded.
 
-  I_Printf(VB_INFO, "G_DoLoadGame: Slot %02d, Time ", 10 * savepage + savegameslot);
+  return true;
+}
 
+static void PrintLevelTimes(void)
+{
   if (totalleveltimes)
-    I_Printf(VB_INFO, "(%d:%02d) ", ((totalleveltimes + leveltime) / TICRATE) / 60,
-                                  ((totalleveltimes + leveltime) / TICRATE) % 60);
-  I_Printf(VB_INFO, "%d:%05.2f", leveltime / TICRATE / 60,
-                                 (float)(leveltime % (60 * TICRATE)) / TICRATE);
+  {
+    I_Printf(VB_INFO, "(%d:%02d) ",
+             ((totalleveltimes + leveltime) / TICRATE) / 60,
+             ((totalleveltimes + leveltime) / TICRATE) % 60);
+  }
 
-  MN_SetQuickSaveSlot(savegameslot);
+  I_Printf(VB_INFO, "%d:%05.2f", leveltime / TICRATE / 60,
+           (float)(leveltime % (60 * TICRATE)) / TICRATE);
+}
+
+static void G_DoLoadGame(void)
+{
+  if (DoLoadGame(false))
+  {
+    const int slot_num = 10 * savepage + savegameslot;
+    I_Printf(VB_INFO, "G_DoLoadGame: Slot %02d, Time ", slot_num);
+    PrintLevelTimes();
+    MN_SetQuickSaveSlot(savegameslot);
+  }
+}
+
+static void G_DoLoadAutoSave(void)
+{
+  if (DoLoadGame(true))
+  {
+    I_Printf(VB_INFO, "G_DoLoadGame: Auto Save, Time ");
+    PrintLevelTimes();
+  }
+}
+
+boolean G_AutoSaveEnabled(void)
+{
+  return autosave;
+}
+
+//
+// G_LoadAutoSaveDeathUse
+// Loads the auto save if it's more recent than the current save slot.
+// Returns true if the auto save is loaded.
+//
+boolean G_LoadAutoSaveDeathUse(void)
+{
+  struct stat st;
+  char *auto_path = G_AutoSaveName();
+  time_t auto_time = (M_stat(auto_path, &st) != -1 ? st.st_mtime : 0);
+  boolean result = (auto_time > 0);
+
+  if (result)
+  {
+    if (savegameslot >= 0)
+    {
+      char *save_path = G_SaveGameName(savegameslot);
+      time_t save_time = (M_stat(save_path, &st) != -1 ? st.st_mtime : 0);
+      free(save_path);
+      result = (auto_time > save_time);
+    }
+
+    if (result)
+    {
+      G_LoadAutoSave(auto_path);
+    }
+  }
+
+  free(auto_path);
+  return result;
+}
+
+static void CheckSaveAutoSave(void)
+{
+  if (save_autosave)
+  {
+    save_autosave = false;
+    gameaction = ga_saveautosave;
+  }
 }
 
 // [Nugget] Rewind /----------------------------------------------------------
@@ -3821,6 +3946,12 @@ void G_Ticker(void)
       case ga_reloadlevel:
 	G_ReloadLevel();
 	break;
+      case ga_loadautosave:
+	G_DoLoadAutoSave();
+	break;
+      case ga_saveautosave:
+	G_DoSaveAutoSave();
+	break;
       // [Nugget] Rewind
       case ga_rewind:
 	G_DoRewind();
@@ -3830,13 +3961,24 @@ void G_Ticker(void)
 	break;
     }
 
-  // [Nugget] Autosave
+  // [Nugget] Periodic auto save
   if (CASUALPLAY(autosave && autosave_interval)
       && gamestate == GS_LEVEL && oldleveltime < leveltime
       && players[consoleplayer].playerstate != PST_DEAD)
   {
-    if (--autosave_countdown <= 0) { G_DoAutosave(); }
+    if (--autosave_countdown <= 0)
+    {
+      is_periodic_autosave = true;
+
+      M_SaveAutoSave();
+      save_autosave = false;
+      G_DoSaveAutoSave();
+
+      is_periodic_autosave = false;
+    }
   }
+
+  CheckSaveAutoSave();
 
   // [Nugget] Rewind
   if (CASUALPLAY(rewind_depth && rewind_on)
@@ -5874,14 +6016,15 @@ void G_BindGameVariables(void)
   BIND_NUM_GENERAL(death_use_action, 0, 0, 2,
     "Use-button action upon death (0 = Default; 1 = Load save; 2 = Nothing)");
 
+  BIND_BOOL_GENERAL(autosave, true,
+    "Auto save at the beginning of a map, after completing the previous one.");
+
   // [Nugget] ----------------------------------------------------------------
 
-  BIND_BOOL_GENERAL(one_key_saveload, false, "One-key quick-saving/loading");
-
-  BIND_BOOL_GENERAL(autosave, true, "Autosave when finishing levels");
-
   M_BindNum("autosave_interval", &autosave_interval, NULL, 0, 0, 600, ss_gen, wad_no,
-    "Interval between periodic autosaves, in seconds (0 = Off)");
+    "Interval between periodic auto saves, in seconds (0 = Off)");
+
+  BIND_BOOL_GENERAL(one_key_saveload, false, "One-key quick-saving/loading");
 
   BIND_NUM_GENERAL(rewind_interval, 1, 1, 600,
     "Interval between rewind key-frames, in seconds");

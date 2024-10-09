@@ -95,9 +95,10 @@ void MN_DrawStatusHUD(void);
 void MN_DrawAutoMap(void);
 void MN_DrawWeapons(void);
 void MN_DrawEnemy(void);
+void MN_DrawMidi(void);
+void MN_DrawEqualizer(void);
 void MN_DrawPadAdv(void);
 void MN_DrawGyro(void);
-void MN_DrawEqualizer(void);
 
 // [Nugget] Custom Skill menu
 void MN_CustomSkill(void);
@@ -214,6 +215,7 @@ typedef struct setup_menu_s
     mrect_t rect;
     int lines;            // number of lines for rect, always > 0
     const char *desc;     // overrides default description
+    const char *append;   // string to append to value
 } setup_menu_t;
 
 // phares 4/21/98: Moved from m_misc.c so m_menu.c could see it.
