@@ -6017,7 +6017,7 @@ void G_BindGameVariables(void)
     "Use-button action upon death (0 = Default; 1 = Load save; 2 = Nothing)");
 
   BIND_BOOL_GENERAL(autosave, true,
-    "Auto save at the beginning of a map, after completing the previous one.");
+    "Auto save at the beginning of a map, after completing the previous one");
 
   // [Nugget] ----------------------------------------------------------------
 

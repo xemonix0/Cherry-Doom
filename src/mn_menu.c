@@ -198,7 +198,18 @@ short whichSkull;              // which skull to draw (he blinks)
 
 char skullName[2][/*8*/ 9] = {"M_SKULL1", "M_SKULL2"};
 
-static menu_t SaveDef, LoadDef, LoadAutoSaveDef;
+// Quick save and regular save menus. Auto save not shown.
+static menu_t SaveDef;
+
+// Regular load menu. Auto save not shown.
+static menu_t LoadDef;
+
+// Quick load menu. Shares same menuitems as LoadDef. Auto save not shown.
+static menu_t QuickLoadDef;
+
+// First page of regular load menu when auto saving is enabled.
+static menu_t LoadAutoSaveDef;
+
 static menu_t *currentMenu; // current menudef
 
 // end of externs added for setup menus
@@ -854,6 +865,16 @@ static menu_t LoadDef =
     0
 };
 
+static menu_t QuickLoadDef =
+{
+    load_end,
+    &MainDef,
+    LoadMenu,
+    M_DrawLoad,
+    M_X_LOADSAVE,
+    M_Y_LOADSAVE,
+};
+
 enum
 {
     autosave_page = load_end,
@@ -1324,7 +1345,7 @@ static void M_ReadSaveStrings(void)
     // [FG] shift savegame descriptions a bit to the right
     //      to make room for the snapshots on the left
     const int x = M_X_LOADSAVE + MIN(M_LOADSAVE_WIDTH / 2, video.deltaw);
-    SaveDef.x = LoadDef.x = LoadAutoSaveDef.x = x;
+    SaveDef.x = LoadDef.x = QuickLoadDef.x = LoadAutoSaveDef.x = x;
     UpdateRectX(&SaveDef, x);
     UpdateRectX(&LoadDef, x);
     UpdateRectX(&LoadAutoSaveDef, x);
@@ -1484,6 +1505,7 @@ static boolean GamepadSave(int choice)
         SetDefaultSaveName(savegamestrings[choice], NULL);
         M_DoSave(choice);
         LoadDef.lastOn = choice;
+        QuickLoadDef.lastOn = choice;
         LoadAutoSaveDef.lastOn = choice + 1;
         return true;
     }
@@ -1517,6 +1539,7 @@ static void M_SaveSelect(int choice)
 
     // [crispy] load the last game you saved
     LoadDef.lastOn = choice;
+    QuickLoadDef.lastOn = choice;
     LoadAutoSaveDef.lastOn = choice + 1;
 }
 
@@ -1815,7 +1838,7 @@ static void M_QuickLoad(void)
     {
         // [crispy] allow quickload before quicksave
         MN_StartControlPanel();
-        SetNextMenu(&LoadDef);
+        SetNextMenu(&QuickLoadDef);
         M_ReadSaveStrings();
         quickSaveSlot = -2; // means to pick a slot now
         return;
@@ -2880,8 +2903,8 @@ static void M_UpdateLoadMenu(void)
 
 static boolean AnyLoadSaveMenu(void)
 {
-    return (currentMenu == &LoadDef || currentMenu == &SaveDef
-            || currentMenu == &LoadAutoSaveDef);
+    return (currentMenu == &LoadDef || currentMenu == &QuickLoadDef
+            || currentMenu == &SaveDef || currentMenu == &LoadAutoSaveDef);
 }
 
 static boolean SaveLoadResponder(menu_action_t action, int ch)
@@ -3049,7 +3072,8 @@ static boolean MouseResponder(void)
 
 static boolean AllowDeleteSaveGame(void)
 {
-    return (((currentMenu == &LoadDef || currentMenu == &SaveDef)
+    return (((currentMenu == &LoadDef || currentMenu == &QuickLoadDef
+              || currentMenu == &SaveDef)
              && LoadDef.menuitems[itemOn].status)
             || (currentMenu == &LoadAutoSaveDef
                 && LoadAutoSaveDef.menuitems[itemOn].status));
