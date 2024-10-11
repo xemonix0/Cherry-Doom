@@ -528,8 +528,6 @@ static void do_draw_mbf_sky(visplane_t *pl)
     dc_texheight = textureheight[texture] >> FRACBITS; // killough
     dc_iscale = skyiscale;
 
-    // [FG] stretch short skies
-
     // [Nugget] /-------------------------------------------------------------
 
     // Stretch sky just as much as necessary
@@ -543,10 +541,10 @@ static void do_draw_mbf_sky(visplane_t *pl)
 
     // [Nugget] -------------------------------------------------------------/
 
-    boolean stretch = dc_texheight < skyheight_target;
-    if (!vertically_scrolling) // [Nugget] Don't stretch vert. scrolling skies
+    if (!vertically_scrolling)
     {
-        if (stretch)
+        // [FG] stretch short skies
+        if (dc_texheight < skyheight_target) // [Nugget]
         {
             dc_iscale = dc_iscale * dc_texheight / skyheight_target;
             dc_texturemid = dc_texturemid * dc_texheight / skyheight_target;
