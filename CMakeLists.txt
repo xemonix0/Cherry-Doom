@@ -46,10 +46,6 @@ set(NUGGETDOOM_ICON "nugget-doom.ico")
 set(SETUP_ICON "setup.ico")
 set(PROJECT_VERSION_RC "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0") # ${PROJECT_VERSION_TWEAK}
 
-if(NOT WIN32)
-    set(NUGGETDOOMDATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_SHORTNAME}" CACHE PATH "Path to install supplemental files")
-endif()
-
 # Toggle-able defines added at compile-time.
 option(NUGGETDOOM_RANGECHECK "Enable bounds-checking of performance-sensitive functions" ON)
 option(NUGGETDOOM_STRICT "Prefer original MBF code paths over demo compatiblity with PrBoom+" OFF)

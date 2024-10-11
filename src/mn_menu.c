@@ -116,6 +116,8 @@ static boolean options_active;
 
 backdrop_t menu_backdrop;
 
+int bigfont_priority = -1;
+
 // [Nugget]
 boolean menu_background_all;
 boolean no_menu_tint;
@@ -2403,8 +2405,9 @@ void M_Init(void)
     M_ResetAutoSave();
 
     int lumpnum = W_CheckNumForName("DBIGFONT");
-    if (lumpnum > 0)
+    if (lumpnum >= 0)
     {
+        bigfont_priority = lumpinfo[lumpnum].handle.priority;
         MN_LoadFon2(W_CacheLumpNum(lumpnum, PU_CACHE), W_LumpLength(lumpnum));
     }
 
@@ -3668,14 +3671,20 @@ void M_Drawer(void)
         {
             const char *name = currentMenu->menuitems[i].name;
             int patch_lump = -1;
+            int patch_priority = -1;
 
             if (name[0])
             {
                 patch_lump = W_CheckNumForName(name);
+                if (patch_lump >= 0)
+                {
+                    patch_priority = lumpinfo[patch_lump].handle.priority;
+                }
             }
 
-            if (patch_lump < 0 && currentMenu->menuitems[i].alttext
-                && !(currentMenu->menuitems[i].flags & MF_OPTLUMP)) // [Nugget] 
+            if ((patch_lump < 0 || patch_priority < bigfont_priority)
+                && currentMenu->menuitems[i].alttext
+                && !(currentMenu->menuitems[i].flags & MF_OPTLUMP)) // [Nugget]
             {
                 currentMenu->lumps_missing++;
                 break;
@@ -3714,12 +3723,21 @@ void M_Drawer(void)
         // due to the MainMenu[] hacks, we have to set `y` here
         rect->y = y;
 
-        const int lumpnum = W_CheckNumForName(name); // [Nugget]
+        // [Nugget] /---------------------------------------------------------
+
+        const int patch_lump = W_CheckNumForName(name);
+        int patch_priority = -1;
+
+        if (patch_lump >= 0) { patch_priority = lumpinfo[patch_lump].handle.priority; }
+
+        // [Nugget] ---------------------------------------------------------/
 
         // [FG] at least one menu graphics lump is missing, draw alternative
         // text
         if (currentMenu->lumps_missing > 0
-            || (item->flags & MF_OPTLUMP && lumpnum < 0)) // [Nugget]
+            // [Nugget]
+            || ((item->flags & MF_OPTLUMP)
+                && (patch_lump < 0 || patch_priority < bigfont_priority)))
         {
             if (alttext)
             {
