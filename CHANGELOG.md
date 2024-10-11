@@ -35,6 +35,7 @@
 ## Bug Fixes
 
 - **Crash when loading status bars taller than 32px**
+- **Vertically scrolling skies being affected by sky-stretching settings**
 - **_'FAST'_ cheat not fully toggling fast monsters outside of custom skill**
 - **Fallback status-bar Berserk graphic not taking NUGHUD Ammo alignment into account**
 - **Tag Finder not highlighting hidden lines**

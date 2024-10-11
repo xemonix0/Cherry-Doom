@@ -485,7 +485,7 @@ static void do_draw_plane(visplane_t *pl)
         // [Nugget] ---------------------------------------------------------/
 
         stretch = (dc_texheight < skyheight_target);
-        if (stretch || !vertically_scrolling)
+        if (!vertically_scrolling) // [Nugget] Don't stretch vert. scrolling skies
         {
           fixed_t diff;
 
