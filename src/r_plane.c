@@ -544,7 +544,7 @@ static void do_draw_mbf_sky(visplane_t *pl)
     // [Nugget] -------------------------------------------------------------/
 
     boolean stretch = dc_texheight < skyheight_target;
-    if (stretch || !vertically_scrolling)
+    if (!vertically_scrolling) // [Nugget] Don't stretch vert. scrolling skies
     {
         if (stretch)
         {
