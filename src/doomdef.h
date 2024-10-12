@@ -204,7 +204,9 @@ typedef enum {
   ss_padadv,
   ss_gyro,
 
-  ss_skill, // [Nugget] Custom Skill menu
+  // [Nugget]
+  ss_color,
+  ss_skill, // Custom Skill menu
 
   ss_max
 } ss_types;

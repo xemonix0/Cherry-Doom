@@ -97,7 +97,14 @@ static boolean smooth_scaling;
 static int video_display = 0; // display index
 static boolean disk_icon; // killough 10/98
 
-static const char *sdl_renderdriver = ""; // [Nugget]
+// [Nugget] /-----------------------------------------------------------------
+
+static const char *sdl_renderdriver = "";
+
+static int red_intensity, green_intensity, blue_intensity;
+static int color_saturation;
+
+// [Nugget] -----------------------------------------------------------------/
 
 // [FG] rendering window, renderer, intermediate ARGB frame buffer and texture
 
@@ -990,6 +997,34 @@ static void I_RestoreDiskBackground(void)
 
 int gamma2;
 
+// [Nugget]:
+// [JN] Saturation percent array.
+// 0.66 = 0% saturation, 0.0 = 100% saturation.
+const float I_SaturationPercent[101] =
+{
+    0.660000f, 0.653400f, 0.646800f, 0.640200f, 0.633600f,
+    0.627000f, 0.620400f, 0.613800f, 0.607200f, 0.600600f,
+    0.594000f, 0.587400f, 0.580800f, 0.574200f, 0.567600f,
+    0.561000f, 0.554400f, 0.547800f, 0.541200f, 0.534600f,
+    0.528000f, 0.521400f, 0.514800f, 0.508200f, 0.501600f,
+    0.495000f, 0.488400f, 0.481800f, 0.475200f, 0.468600f,
+    0.462000f, 0.455400f, 0.448800f, 0.442200f, 0.435600f,
+    0.429000f, 0.422400f, 0.415800f, 0.409200f, 0.402600f,
+    0.396000f, 0.389400f, 0.382800f, 0.376200f, 0.369600f,
+    0.363000f, 0.356400f, 0.349800f, 0.343200f, 0.336600f,
+    0.330000f, 0.323400f, 0.316800f, 0.310200f, 0.303600f,
+    0.297000f, 0.290400f, 0.283800f, 0.277200f, 0.270600f,
+    0.264000f, 0.257400f, 0.250800f, 0.244200f, 0.237600f,
+    0.231000f, 0.224400f, 0.217800f, 0.211200f, 0.204600f,
+    0.198000f, 0.191400f, 0.184800f, 0.178200f, 0.171600f,
+    0.165000f, 0.158400f, 0.151800f, 0.145200f, 0.138600f,
+    0.132000f, 0.125400f, 0.118800f, 0.112200f, 0.105600f,
+    0.099000f, 0.092400f, 0.085800f, 0.079200f, 0.072600f,
+    0.066000f, 0.059400f, 0.052800f, 0.046200f, 0.039600f,
+    0.033000f, 0.026400f, 0.019800f, 0.013200f, 0,
+    0
+};
+
 void I_SetPalette(byte *palette)
 {
     // haleyjd
@@ -1004,9 +1039,23 @@ void I_SetPalette(byte *palette)
 
     for (i = 0; i < 256; ++i)
     {
-        colors[i].r = gamma[*palette++];
-        colors[i].g = gamma[*palette++];
-        colors[i].b = gamma[*palette++];
+        // [Nugget] Color settings
+
+        const int r = gamma[*palette++],
+                  g = gamma[*palette++],
+                  b = gamma[*palette++];
+
+        // [JN] Saturation floats, high and low.
+        // If saturation has been modified (< 100), set high and low
+        // values according to saturation level. Sum of r,g,b channels
+        // and floats must be 1.0 to get proper colors.
+        const float a_hi = I_SaturationPercent[color_saturation],
+                    a_lo = a_hi / 2.0f;
+
+        colors[i].r = (((1.0f - a_hi) * r) + ((0.0f + a_lo) * g) + ((0.0f + a_lo) * b)) * ((float) red_intensity   / 100.0f);
+        colors[i].g = (((0.0f + a_lo) * r) + ((1.0f - a_hi) * g) + ((0.0f + a_lo) * b)) * ((float) green_intensity / 100.0f);
+        colors[i].b = (((0.0f + a_lo) * r) + ((0.0f + a_lo) * g) + ((1.0f - a_hi) * b)) * ((float) blue_intensity  / 100.0f);
+
         colors[i].a = 0xffu;
     }
 
@@ -1959,6 +2008,14 @@ void I_BindVideoVariables(void)
 
     M_BindBool("grabmouse", &default_grabmouse, &grabmouse, true, ss_none,
                wad_no, "Grab mouse during play");
+
+    // [Nugget] --------------------------------------------------------------
+
+    BIND_NUM(red_intensity,   100, 0, 100, "Intensity percent of the screen's red component");
+    BIND_NUM(green_intensity, 100, 0, 100, "Intensity percent of the screen's green component");
+    BIND_NUM(blue_intensity,  100, 0, 100, "Intensity percent of the screen's blue component");
+
+    BIND_NUM(color_saturation, 100, 0, 100, "Saturation percent of the screen's colors");
 }
 
 //----------------------------------------------------------------------------

@@ -102,9 +102,15 @@ void MN_DrawEqualizer(void);
 void MN_DrawPadAdv(void);
 void MN_DrawGyro(void);
 
-// [Nugget] Custom Skill menu
+// [Nugget] /-----------------------------------------------------------------
+
+void MN_DrawColor(void);
+
+// Custom Skill menu
 void MN_CustomSkill(void);
 void MN_DrawCustomSkill(void);
+
+// [Nugget] -----------------------------------------------------------------/
 
 /////////////////////////////
 //

@@ -3782,7 +3782,9 @@ static setup_menu_t gen_settings6[] = {
     MI_END
 };
 
-// [Nugget] /-----------------------------------------------------------------
+// [Nugget] /=================================================================
+
+// Page 7 --------------------------------------------------------------------
 
 static void ChangeViewHeight(void)
 {
@@ -3809,6 +3811,7 @@ static const char *chasecam_strings[] = {
 
 #define N_X (M_X - 8)
 #define N_X_THRM8 (M_X_THRM8 - 8)
+#define N_X_THRM11 (M_X_THRM11 - 8)
 
 setup_menu_t gen_settings7[] = {
 
@@ -3833,9 +3836,13 @@ setup_menu_t gen_settings7[] = {
   MI_END
 };
 
+// Page 8 --------------------------------------------------------------------
+
 static const char *fake_contrast_strings[] = {
   "Off", "Smooth", "Vanilla", NULL
 };
+
+static void MN_Color(void);
 
 setup_menu_t gen_settings8[] = {
 
@@ -3853,6 +3860,8 @@ setup_menu_t gen_settings8[] = {
     {"Fake Contrast",                S_CHOICE|S_STRICT,       N_X, M_SPC, {"fake_contrast"}, .strings_id = str_fake_contrast},
     {"Screen Wipe Speed Percentage", S_NUM   |S_STRICT|S_PCT, N_X, M_SPC, {"wipe_speed_percentage"}},
     {"Alt. Intermission Background", S_ONOFF |S_STRICT,       N_X, M_SPC, {"alt_interpic"}},
+    MI_GAP,
+    {"Color Options",                S_FUNC,                  N_X, M_SPC, .action = MN_Color},
 
   MI_END
 };
@@ -3883,6 +3892,60 @@ static const char *s_clipping_dist_strings[] = {
 static const char *page_ticking_strings[] = {
   "Always", "Not In Menus", "Never", NULL
 };
+
+// Page 8: Color -------------------------------------------------------------
+
+void SetPalette(void)
+{
+    I_SetPalette(W_CacheLumpName("PLAYPAL", PU_CACHE));
+}
+
+static setup_menu_t color_settings1[] = {
+
+    {"Red Intensity",   S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"red_intensity"},    .action = SetPalette},
+    {"Green Intensity", S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"green_intensity"},  .action = SetPalette},
+    {"Blue Intensity",  S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"blue_intensity"},   .action = SetPalette},
+    {"Saturation",      S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"color_saturation"}, .action = SetPalette},
+
+    MI_END
+};
+
+static setup_menu_t *color_settings[] = { color_settings1, NULL };
+
+static setup_tab_t color_tabs[] = { {"Colors"}, {NULL} };
+
+static void MN_Color(void)
+{
+    SetItemOn(set_item_on);
+    SetPageIndex(current_page);
+
+    MN_SetNextMenuAlt(ss_color);
+    setup_screen = ss_color;
+    current_page = GetPageIndex(color_settings);
+    current_menu = color_settings[current_page];
+    current_tabs = color_tabs;
+    SetupMenuSecondary();
+}
+
+void MN_DrawColor(void)
+{
+    inhelpscreens = true;
+
+    DrawBackground("FLOOR4_6");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
+    DrawTabs();
+    DrawInstructions();
+    DrawScreenItems(current_menu);
+
+    patch_t *const patch = V_CachePatchName("M_PALETT", PU_CACHE);
+
+    const int x = (SCREENWIDTH / 2) - (SHORT(patch->width) / 2);
+    const int y = 103;
+
+    V_DrawPatchSH(x, y, patch);
+}
+
+// Page 9 --------------------------------------------------------------------
 
 setup_menu_t gen_settings9[] = { // [Nugget]
 
@@ -4131,7 +4194,9 @@ static setup_menu_t **setup_screens[] = {
     padadv_settings,
     gyro_settings,
 
-    customskill_settings, // [Nugget] Custom Skill menu
+    // [Nugget]
+    color_settings,
+    customskill_settings, // Custom Skill menu
 };
 
 // [FG] save the index of the current screen in the first page's S_END element's
@@ -4262,6 +4327,8 @@ static void ResetDefaultsSecondary(void)
         ResetDefaults(ss_eq);
         ResetDefaults(ss_padadv);
         ResetDefaults(ss_gyro);
+
+        ResetDefaults(ss_color); // [Nugget]
     }
 }
 

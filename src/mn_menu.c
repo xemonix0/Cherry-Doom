@@ -2257,7 +2257,18 @@ static menu_t GyroDef = {
     34, 5,              // x, y (skull drawn here)
 };
 
-static menu_t CustomSkillDef = { // [Nugget] Custom Skill menu
+// [Nugget] /-----------------------------------------------------------------
+
+static menu_t ColorDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawColor,
+    34, 5,
+    0
+};
+
+static menu_t CustomSkillDef = { // Custom Skill menu
     generic_setup_end,
     &NewDef,
     Generic_Setup,
@@ -2266,6 +2277,8 @@ static menu_t CustomSkillDef = { // [Nugget] Custom Skill menu
     0
 };
 
+// [Nugget] -----------------------------------------------------------------/
+
 void MN_SetNextMenuAlt(ss_types type)
 {
     static menu_t *setup_defs[] = {
@@ -2273,7 +2286,9 @@ void MN_SetNextMenuAlt(ss_types type)
         &EnemyDef,     &GeneralDef, &CompatDef,    &MidiDef,
         &EqualizerDef, &PadAdvDef,  &GyroDef,
 
-        &CustomSkillDef // [Nugget] Custom Skill menu
+        // [Nugget]
+        &ColorDef,
+        &CustomSkillDef // Custom Skill menu
     };
 
     SetNextMenu(setup_defs[type]);

@@ -10,6 +10,7 @@
   - Replaced `hud_stats_icons` with `hud_allow_icons` [1]
 - **Support for crouching-player sprites**
   - Allowed crouching when using the chasecam if said sprites are provided
+- **Color settings** from International Doom
 
 ## Changes
 
