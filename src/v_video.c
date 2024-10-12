@@ -647,7 +647,7 @@ void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
 
 void V_DrawPatchFullScreen(patch_t *patch)
 {
-    const int x = DivRoundClosest(video.unscaledw - SHORT(patch->width), 2);
+    const int x = DIV_ROUND_CLOSEST(video.unscaledw - SHORT(patch->width), 2);
 
     patch->leftoffset = 0;
     patch->topoffset = 0;

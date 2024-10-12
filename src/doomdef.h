@@ -200,11 +200,14 @@ typedef enum {
   ss_gen,       // killough 10/98
   ss_comp,      // killough 10/98
   ss_ltbl,      // [Cherry]
+  ss_midi,
   ss_eq,
   ss_padadv,
   ss_gyro,
 
-  ss_skill, // [Nugget] Custom Skill menu
+  // [Nugget]
+  ss_color,
+  ss_skill, // Custom Skill menu
 
   ss_max,
 } ss_types;

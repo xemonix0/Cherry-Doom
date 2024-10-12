@@ -49,6 +49,8 @@ typedef enum
     key_mode
 } menu_input_mode_t;
 
+extern int bigfont_priority;
+
 extern menu_input_mode_t help_input, old_help_input; // pad_mode or key_mode.
 extern menu_input_mode_t menu_input, old_menu_input;
 void MN_ResetMouseCursor(void);
@@ -154,13 +156,20 @@ void MN_DrawAutoMap(void);
 void MN_DrawWeapons(void);
 void MN_DrawEnemy(void);
 void MN_DrawLevelTable(void);
+void MN_DrawMidi(void);
+void MN_DrawEqualizer(void);
 void MN_DrawPadAdv(void);
 void MN_DrawGyro(void);
-void MN_DrawEqualizer(void);
 
-// [Nugget] Custom Skill menu
+// [Nugget] /-----------------------------------------------------------------
+
+void MN_DrawColor(void);
+
+// Custom Skill menu
 void MN_CustomSkill(void);
 void MN_DrawCustomSkill(void);
+
+// [Nugget] -----------------------------------------------------------------/
 
 /////////////////////////////
 //
@@ -280,6 +289,7 @@ typedef struct setup_menu_s
     mrect_t rect;
     int lines;            // number of lines for rect, always > 0
     const char *desc;     // overrides default description
+    const char *append;   // string to append to value
 } setup_menu_t;
 
 // phares 4/21/98: Moved from m_misc.c so m_menu.c could see it.

@@ -266,7 +266,6 @@ typedef enum
 } overlay_t;
 
 extern  overlay_t automapoverlay;
-extern  boolean automaprotate;
 
 // [Nugget] Minimap support (1 == AM_FULL)
 #define automap_on (automapactive == 1 && !automapoverlay)

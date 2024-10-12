@@ -34,10 +34,12 @@ static void ConvertSlashes(char *path)
 }
 
 // [Cherry] Added the `source` parameter
-static void AddWadInMem(mz_zip_archive *zip, const char *name, int index,
+static void AddWadInMem(w_handle_t handle, const char *name, int index,
                         size_t data_size, wad_source_t source)
 {
     I_Printf(VB_INFO, " - adding %s", name);
+
+    mz_zip_archive *zip = handle.p1.zip;
 
     byte *data = malloc(data_size);
 
@@ -96,6 +98,8 @@ static void AddWadInMem(mz_zip_archive *zip, const char *name, int index,
         }
         item.size = size;
         item.data = data + position;
+
+        item.handle = handle;
  
         // [FG] WAD file that contains the lump
         item.wad_file = wadname;
@@ -167,7 +171,7 @@ static boolean W_ZIP_AddDir(w_handle_t handle, const char *path,
 
         if (is_root && M_StringCaseEndsWith(stat.m_filename, ".wad"))
         {
-            AddWadInMem(zip, M_BaseName(stat.m_filename), index,
+            AddWadInMem(handle, M_BaseName(stat.m_filename), index,
                         stat.m_uncomp_size, source);
             continue;
         }
@@ -196,7 +200,8 @@ static boolean W_ZIP_AddDir(w_handle_t handle, const char *path,
         item.size = stat.m_uncomp_size;
 
         item.module = &w_zip_module;
-        w_handle_t local_handle = {.p1.zip = zip, .p2.index = index};
+        w_handle_t local_handle = {.p1.zip = zip, .p2.index = index,
+                                   .priority = handle.priority};
         item.handle = local_handle;
 
         // [Cherry]

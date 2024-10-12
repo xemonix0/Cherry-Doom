@@ -94,6 +94,8 @@ typedef struct
         int position;
         int index;
     } p2;
+
+    int priority;
 } w_handle_t;
 
 typedef struct

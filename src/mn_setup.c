@@ -133,8 +133,8 @@ static boolean default_reset;
 #define MI_GAP \
     {NULL, S_SKIP, 0, M_SPC}
 
-#define MI_GAP_HALF \
-    {NULL, S_SKIP, 0, M_SPC / 2}
+#define MI_GAP_Y(y) \
+    {NULL, S_SKIP, 0, (y)}
 
 // [Cherry] Page split (subpages)
 #define MI_SPLIT \
@@ -308,6 +308,7 @@ enum
     str_layout,
     str_flick_snap,
     str_ms_time,
+    str_movement_sensitivity,
     str_movement_type,
     str_rumble,
     str_curve,
@@ -334,6 +335,8 @@ enum
     str_sound_module,
     str_resampler,
     str_equalizer_preset,
+    str_midi_complevel,
+    str_midi_reset_type,
 
     str_mouse_accel,
 
@@ -797,6 +800,11 @@ static void WrapSettingString(setup_menu_t *s, int x, int y, int color)
             DrawMenuStringBuffer(flags, x, y, color, &menu_buffer[index]);
             y += M_SPC;
             s->lines++;
+
+            if (s->lines > 1)
+            {
+                break;
+            }
         }
         else
         {
@@ -857,6 +865,11 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
         {
             M_snprintf(menu_buffer, sizeof(menu_buffer), "%d%%",
                        s->var.def->location->i);
+        }
+        else if (s->append)
+        {
+            M_snprintf(menu_buffer, sizeof(menu_buffer), "%d %s",
+                       s->var.def->location->i, s->append);
         }
         else
         {
@@ -1024,6 +1037,11 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
         else if (flags & S_PCT)
         {
             M_snprintf(menu_buffer, sizeof(menu_buffer), "%d%%", value);
+        }
+        else if (s->append)
+        {
+            M_snprintf(menu_buffer, sizeof(menu_buffer), "%d %s", value,
+                       s->append);
         }
         else
         {
@@ -2023,19 +2041,19 @@ static setup_menu_t weap_settings2[] = {
      .strings_id = str_weapon_slots_selection,
      .action = UpdateWeaponSlotSelection},
 
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
     MI_WEAPON_SLOT(0, "weapon_slots_1_1"),
     MI_WEAPON_SLOT(1, "weapon_slots_1_2"),
     MI_WEAPON_SLOT(2, "weapon_slots_1_3"),
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
     MI_WEAPON_SLOT(3, "weapon_slots_2_1"),
     MI_WEAPON_SLOT(4, "weapon_slots_2_2"),
     MI_WEAPON_SLOT(5, "weapon_slots_2_3"),
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
     MI_WEAPON_SLOT(6, "weapon_slots_3_1"),
     MI_WEAPON_SLOT(7, "weapon_slots_3_2"),
     MI_WEAPON_SLOT(8, "weapon_slots_3_3"),
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
     MI_WEAPON_SLOT(9, "weapon_slots_4_1"),
     MI_WEAPON_SLOT(10, "weapon_slots_4_2"),
     MI_WEAPON_SLOT(11, "weapon_slots_4_3"),
@@ -2651,6 +2669,8 @@ static setup_menu_t auto_settings1[] = {
      // [Nugget] Show thing hitboxes
     {"Show Thing Hitboxes", S_ONOFF, H_X, M_SPC, {"map_hitboxes"}},
 
+    {"Square Aspect Ratio", S_ONOFF, H_X, M_SPC, {"automapsquareaspect"}},
+
     MI_RESET,
 
     MI_END
@@ -2731,7 +2751,7 @@ static setup_menu_t enem_settings1[] = {
 
     // [Nugget] /-------------------------------------------------------------
 
-    MI_GAP_HALF,
+    MI_GAP_Y(5),
     {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
 
       {"Extra Gibbing",            S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"extra_gibbing"}},
@@ -2746,7 +2766,7 @@ static setup_menu_t enem_settings1[] = {
 
     // [Cherry] /--------------------------------------------------------------
 
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
     {"Cherry", S_SKIP|S_TITLE, M_X, M_SPC},
 
       {"Blood Amount Scales With Damage", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"blood_amount_scaling"}},
@@ -3077,7 +3097,7 @@ static setup_menu_t gen_settings1[] = {
     {"Exclusive Fullscreen", S_ONOFF, CNTR_X, M_SPC, {"exclusive_fullscreen"},
      .action = ToggleExclusiveFullScreen},
 
-    MI_GAP,
+    MI_GAP_Y(6),
 
     {"Uncapped FPS", S_ONOFF, CNTR_X, M_SPC, {"uncapped"},
      .action = UpdateFPSLimit},
@@ -3088,7 +3108,7 @@ static setup_menu_t gen_settings1[] = {
     {"VSync", S_ONOFF, CNTR_X, M_SPC, {"use_vsync"},
      .action = I_ToggleVsync},
 
-    MI_GAP,
+    MI_GAP_Y(5),
 
     {"FOV", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC, {"fov"},
      .action = UpdateFOV},
@@ -3147,6 +3167,31 @@ static void SetMidiPlayer(void)
     S_RestartMusic();
 }
 
+static void SetMidiPlayerNative(void)
+{
+    if (I_MidiPlayerType() == midiplayer_native)
+    {
+        SetMidiPlayer();
+    }
+}
+
+static void SetMidiPlayerOpl(void)
+{
+    if (I_MidiPlayerType() == midiplayer_opl)
+    {
+        SetMidiPlayer();
+    }
+}
+
+static void SetMidiPlayerFluidSynth(void)
+{
+    if (I_MidiPlayerType() == midiplayer_fluidsynth)
+    {
+        SetMidiPlayer();
+    }
+}
+
+static void MN_Midi(void);
 static void MN_Equalizer(void);
 
 static setup_menu_t gen_settings2[] = {
@@ -3157,7 +3202,7 @@ static setup_menu_t gen_settings2[] = {
     {"Music Volume", S_THERMO, CNTR_X, M_THRM_SPC, {"music_volume"},
      .action = UpdateMusicVolume},
 
-    MI_GAP,
+    MI_GAP_Y(6),
 
     {"Sound Module", S_CHOICE, CNTR_X, M_SPC, {"snd_module"},
      .strings_id = str_sound_module, .action = SetSoundModule},
@@ -3173,18 +3218,24 @@ static setup_menu_t gen_settings2[] = {
     {"Resampler", S_CHOICE, CNTR_X, M_SPC, {"snd_resampler"},
      .strings_id = str_resampler, .action = I_OAL_SetResampler},
 
-    {"Equalizer Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Equalizer},
-
-    MI_GAP,
+    MI_GAP_Y(6),
 
     // [FG] music backend
-    {"MIDI Player", S_CHOICE | S_ACTION | S_WRAP_LINE, CNTR_X, M_SPC,
+    {"MIDI Player", S_CHOICE | S_ACTION | S_WRAP_LINE, CNTR_X, M_SPC * 2,
      {"midi_player_menu"}, .strings_id = str_midi_player,
      .action = SetMidiPlayer},
 
-    MI_GAP,
+    MI_GAP_Y(6),
 
-    // [Cherry] Mute Inactive Window feature from International Doom
+    {"MIDI Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Midi},
+
+    {"Equalizer Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Equalizer},
+
+    // [Cherry] /--------------------------------------------------------------
+
+    MI_SPLIT,
+
+    // Mute Inactive Window feature from International Doom
     {"Cherry", S_SKIP | S_TITLE, CNTR_X, M_SPC},
     {"Mute Inactive Window", S_ONOFF, CNTR_X, M_SPC, {"mute_inactive"}},
 
@@ -3198,49 +3249,124 @@ static const char **GetResamplerStrings(void)
     return strings;
 }
 
+static const char *midi_complevel_strings[] = {
+    "Vanilla", "Standard", "Full"
+};
+
+static const char *midi_reset_type_strings[] = {
+    "No SysEx", "General MIDI", "Roland GS", "Yamaha XG"
+};
+
+static setup_menu_t midi_settings1[] = {
+
+    {"Native MIDI Gain", S_THERMO, CNTR_X, M_THRM_SPC,
+     {"midi_gain"}, .action = UpdateMusicVolume, .append = "dB"},
+
+    {"Native MIDI Reset", S_CHOICE | S_ACTION, CNTR_X, M_SPC,
+     {"midi_reset_type"}, .strings_id = str_midi_reset_type,
+     .action = SetMidiPlayerNative},
+
+    {"Compatibility Level", S_CHOICE | S_ACTION, CNTR_X, M_SPC,
+     {"midi_complevel"}, .strings_id = str_midi_complevel,
+     .action = SetMidiPlayerNative},
+
+    {"SC-55 CTF Emulation", S_ONOFF, CNTR_X, M_SPC, {"midi_ctf"},
+     .action = SetMidiPlayerNative},
+
+    MI_GAP,
+
+#if defined (HAVE_FLUIDSYNTH)
+    {"FluidSynth Gain", S_THERMO, CNTR_X, M_THRM_SPC, {"mus_gain"},
+     .action = UpdateMusicVolume, .append = "dB"},
+
+    {"FluidSynth Reverb", S_ONOFF, CNTR_X, M_SPC, {"mus_reverb"},
+     .action = SetMidiPlayerFluidSynth},
+
+    {"FluidSynth Chorus", S_ONOFF, CNTR_X, M_SPC, {"mus_chorus"},
+     .action = SetMidiPlayerFluidSynth},
+
+    MI_GAP,
+#endif
+
+    {"OPL3 Gain", S_THERMO, CNTR_X, M_THRM_SPC, {"opl_gain"},
+     .action = UpdateMusicVolume, .append = "dB"},
+
+    {"OPL3 Number of Chips", S_THERMO | S_THRM_SIZE4 | S_ACTION, CNTR_X,
+     M_THRM_SPC, {"num_opl_chips"}, .action = SetMidiPlayerOpl},
+
+    {"OPL3 Reverse Stereo", S_ONOFF, CNTR_X, M_SPC,
+     {"opl_stereo_correct"}, .action = SetMidiPlayerOpl},
+
+    MI_END
+};
+
+static setup_menu_t *midi_settings[] = {midi_settings1, NULL};
+
+static setup_tab_t midi_tabs[] = {{"MIDI"}, {NULL}};
+
+static void MN_Midi(void)
+{
+    SetItemOn(set_item_on);
+    SetPageIndex(current_page);
+
+    MN_SetNextMenuAlt(ss_midi);
+    setup_screen = ss_midi;
+    current_page = GetPageIndex(midi_settings);
+    current_menu = midi_settings[current_page];
+    current_tabs = midi_tabs;
+    SetupMenuSecondary();
+}
+void MN_DrawMidi(void)
+{
+    inhelpscreens = true;
+
+    DrawBackground("FLOOR4_6");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
+    DrawTabs();
+    DrawInstructions();
+    DrawScreenItems(current_menu);
+}
+
 static const char *equalizer_preset_strings[] = {
     "Off", "Classical", "Rock", "Vocal", "Custom"
 };
 
-#define M_THRM_SPC_EQ (M_THRM_HEIGHT - 1)
-#define M_SPC_EQ 8
-
 static setup_menu_t eq_settings1[] = {
-    {"Preset", S_CHOICE, CNTR_X, M_SPC_EQ, {"snd_equalizer"},
+    {"Preset", S_CHOICE, CNTR_X, M_SPC, {"snd_equalizer"},
      .strings_id = str_equalizer_preset, .action = I_OAL_EqualizerPreset},
 
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
 
-    {"Preamp dB", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
-     {"snd_eq_preamp"}, .action = I_OAL_EqualizerPreset},
+    {"Preamp", S_THERMO, CNTR_X, M_THRM_SPC,
+     {"snd_eq_preamp"}, .action = I_OAL_EqualizerPreset, .append = "dB"},
 
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
 
-    {"Low Gain dB", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
-     {"snd_eq_low_gain"}, .action = I_OAL_EqualizerPreset},
+    {"Low Gain", S_THERMO, CNTR_X, M_THRM_SPC,
+     {"snd_eq_low_gain"}, .action = I_OAL_EqualizerPreset, .append = "dB"},
 
-    {"Mid 1 Gain dB", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
-     {"snd_eq_mid1_gain"}, .action = I_OAL_EqualizerPreset},
+    {"Mid 1 Gain", S_THERMO, CNTR_X, M_THRM_SPC,
+     {"snd_eq_mid1_gain"}, .action = I_OAL_EqualizerPreset, .append = "dB"},
 
-    {"Mid 2 Gain dB", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
-     {"snd_eq_mid2_gain"}, .action = I_OAL_EqualizerPreset},
+    {"Mid 2 Gain", S_THERMO, CNTR_X, M_THRM_SPC,
+     {"snd_eq_mid2_gain"}, .action = I_OAL_EqualizerPreset, .append = "dB"},
 
-    {"High Gain dB", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
-     {"snd_eq_high_gain"}, .action = I_OAL_EqualizerPreset},
+    {"High Gain", S_THERMO, CNTR_X, M_THRM_SPC,
+     {"snd_eq_high_gain"}, .action = I_OAL_EqualizerPreset, .append = "dB"},
 
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
 
-    {"Low Cutoff Hz", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
-     {"snd_eq_low_cutoff"}, .action = I_OAL_EqualizerPreset},
+    {"Low Cutoff", S_NUM, CNTR_X, M_SPC,
+     {"snd_eq_low_cutoff"}, .action = I_OAL_EqualizerPreset, .append = "Hz"},
 
-    {"Mid 1 Center Hz", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
-     {"snd_eq_mid1_center"}, .action = I_OAL_EqualizerPreset},
+    {"Mid 1 Center", S_NUM, CNTR_X, M_SPC,
+     {"snd_eq_mid1_center"}, .action = I_OAL_EqualizerPreset, .append = "Hz"},
 
-    {"Mid 2 Center Hz", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
-     {"snd_eq_mid2_center"}, .action = I_OAL_EqualizerPreset},
+    {"Mid 2 Center", S_NUM, CNTR_X, M_SPC,
+     {"snd_eq_mid2_center"}, .action = I_OAL_EqualizerPreset, .append = "Hz"},
 
-    {"High Cutoff Hz", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
-     {"snd_eq_high_cutoff"}, .action = I_OAL_EqualizerPreset},
+    {"High Cutoff", S_NUM, CNTR_X, M_SPC,
+     {"snd_eq_high_cutoff"}, .action = I_OAL_EqualizerPreset, .append = "Hz"},
 
     MI_END
 };
@@ -3337,18 +3463,6 @@ static const char **GetMouseAccelStrings(void)
 }
 
 static setup_menu_t gen_settings3[] = {
-    // [FG] double click to "use"
-    {"Double-Click to \"Use\"", S_ONOFF, CNTR_X, M_SPC, {"dclick_use"}},
-
-    {"Free Look", S_ONOFF, CNTR_X, M_SPC, {"mouselook"},
-     .action = MN_UpdateMouseLook},
-
-    // [FG] invert vertical axis
-    {"Invert Look", S_ONOFF, CNTR_X, M_SPC, {"mouse_y_invert"},
-     .action = G_UpdateMouseVariables},
-
-    MI_GAP,
-
     {"Turn Sensitivity", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
      {"mouse_sensitivity"}, .action = G_UpdateMouseVariables},
 
@@ -3366,12 +3480,24 @@ static setup_menu_t gen_settings3[] = {
     {"Acceleration", S_THERMO, CNTR_X, M_THRM_SPC, {"mouse_acceleration"},
      .strings_id = str_mouse_accel, .action = G_UpdateMouseVariables},
 
+    MI_GAP,
+
+    // [FG] double click to "use"
+    {"Double-Click to \"Use\"", S_ONOFF, CNTR_X, M_SPC, {"dclick_use"}},
+
+    {"Free Look", S_ONOFF, CNTR_X, M_SPC, {"mouselook"},
+     .action = MN_UpdateMouseLook},
+
+    // [FG] invert vertical axis
+    {"Invert Look", S_ONOFF, CNTR_X, M_SPC, {"mouse_y_invert"},
+     .action = G_UpdateMouseVariables},
+
     MI_END
 };
 
 static void UpdateGamepadItems(void);
 
-static void UpdateStickLayout(void)
+static void UpdateGamepad(void)
 {
     UpdateGamepadItems();
     I_ResetGamepad();
@@ -3408,23 +3534,7 @@ static const char *curve_strings[] = {
 static void MN_PadAdv(void);
 static void MN_Gyro(void);
 
-#define MI_GAP_GAMEPAD {NULL, S_SKIP, 0, 6}
-
 static setup_menu_t gen_settings4[] = {
-
-    {"Advanced Options", S_FUNC, CNTR_X, M_SPC, .action = MN_PadAdv},
-
-    {"Gyro Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Gyro},
-
-    MI_GAP_GAMEPAD,
-
-    {"Free Look", S_ONOFF, CNTR_X, M_SPC, {"padlook"},
-     .action = MN_UpdatePadLook},
-
-    {"Invert Look", S_ONOFF, CNTR_X, M_SPC, {"joy_invert_look"},
-     .action = I_ResetGamepad},
-
-    MI_GAP_GAMEPAD,
 
     {"Turn Speed", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
      {"joy_turn_speed"}, .action = I_ResetGamepad},
@@ -3432,7 +3542,7 @@ static setup_menu_t gen_settings4[] = {
     {"Look Speed", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
      {"joy_look_speed"}, .action = I_ResetGamepad},
 
-    MI_GAP_GAMEPAD,
+    MI_GAP_Y(4),
 
     {"Movement Deadzone", S_THERMO | S_PCT, CNTR_X, M_THRM_SPC,
      {"joy_movement_inner_deadzone"}, .action = I_ResetGamepad},
@@ -3440,10 +3550,24 @@ static setup_menu_t gen_settings4[] = {
     {"Camera Deadzone", S_THERMO | S_PCT, CNTR_X, M_THRM_SPC,
      {"joy_camera_inner_deadzone"}, .action = I_ResetGamepad},
 
-    MI_GAP_GAMEPAD,
+    MI_GAP_Y(4),
 
     {"Rumble", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_rumble"},
      .strings_id = str_rumble, .action = UpdateRumble},
+
+    MI_GAP_Y(5),
+
+    {"Free Look", S_ONOFF, CNTR_X, M_SPC, {"padlook"},
+     .action = MN_UpdatePadLook},
+
+    {"Invert Look", S_ONOFF, CNTR_X, M_SPC, {"joy_invert_look"},
+     .action = I_ResetGamepad},
+
+    MI_GAP_Y(8),
+
+    {"Advanced Options", S_FUNC, CNTR_X, M_SPC, .action = MN_PadAdv},
+
+    {"Gyro Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Gyro},
 
     MI_END
 };
@@ -3452,7 +3576,22 @@ static const char *movement_type_strings[] = {
     "Normalized", "Faster Diagonals"
 };
 
-#define MS_TIME_STRINGS_SIZE (50 + 1)
+#define MOVEMENT_SENSITIVITY_STRINGS_SIZE (40 + 1)
+
+static const char **GetMovementSensitivityStrings(void)
+{
+    static const char *strings[MOVEMENT_SENSITIVITY_STRINGS_SIZE];
+    char buf[8];
+
+    for (int i = 0; i < MOVEMENT_SENSITIVITY_STRINGS_SIZE; i++)
+    {
+        M_snprintf(buf, sizeof(buf), "%1d.%1d", i / 10, i % 10);
+        strings[i] = M_StringDuplicate(buf);
+    }
+    return strings;
+}
+
+#define MS_TIME_STRINGS_SIZE (100 + 1)
 
 static const char **GetMsTimeStrings(void)
 {
@@ -3472,7 +3611,7 @@ static const char *flick_snap_strings[] = {"Off", "4-Way", "8-Way"};
 static setup_menu_t padadv_settings1[] = {
 
     {"Stick Layout", S_CHOICE, CNTR_X, M_SPC, {"joy_stick_layout"},
-     .strings_id = str_layout, .action = UpdateStickLayout},
+     .strings_id = str_layout, .action = UpdateGamepad},
 
     {"Flick Snap", S_CHOICE | S_STRICT, CNTR_X, M_SPC, {"joy_flick_snap"},
      .strings_id = str_flick_snap, .action = I_ResetGamepad},
@@ -3480,18 +3619,30 @@ static setup_menu_t padadv_settings1[] = {
     {"Flick Time", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_flick_time"},
      .strings_id = str_ms_time, .action = I_ResetGamepad},
 
-    MI_GAP,
+    MI_GAP_Y(6),
 
-    {"Movement Type", S_CHOICE, CNTR_X, M_SPC,
-     {"joy_scale_diagonal_movement"}, .strings_id = str_movement_type,
+    {"Movement Type", S_CHOICE, CNTR_X, M_SPC, {"joy_movement_type"},
+     .strings_id = str_movement_type, .action = I_ResetGamepad},
+
+    {"Forward Sensitivity", S_THERMO, CNTR_X, M_THRM_SPC,
+     {"joy_forward_sensitivity"}, .strings_id = str_movement_sensitivity,
      .action = I_ResetGamepad},
 
-    MI_GAP,
+    {"Strafe Sensitivity", S_THERMO, CNTR_X, M_THRM_SPC,
+     {"joy_strafe_sensitivity"}, .strings_id = str_movement_sensitivity,
+     .action = I_ResetGamepad},
 
-    {"Movement Curve", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_movement_curve"},
-     .strings_id = str_curve, .action = I_ResetGamepad},
+    MI_GAP_Y(6),
 
-    {"Camera Curve", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_camera_curve"},
+    {"Extra Turn Speed", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
+     {"joy_outer_turn_speed"}, .action = UpdateGamepad},
+
+    {"Extra Ramp Time", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_outer_ramp_time"},
+     .strings_id = str_ms_time, .action = I_ResetGamepad},
+
+    MI_GAP_Y(6),
+
+    {"Response Curve", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_camera_curve"},
      .strings_id = str_curve, .action = I_ResetGamepad},
 
     MI_END
@@ -3531,6 +3682,7 @@ static void UpdateGamepadItems(void)
     const boolean gyro = (I_GyroEnabled() && I_GyroSupported());
     const boolean sticks = I_UseStickLayout();
     const boolean flick = (gamepad && sticks && !I_StandardLayout());
+    const boolean ramp = (gamepad && sticks && I_RampTimeEnabled());
     const boolean condition = (!gamepad || !sticks);
 
     DisableItem(!gamepad, gen_settings4, "Advanced Options");
@@ -3546,8 +3698,11 @@ static void UpdateGamepadItems(void)
     DisableItem(!gamepad, padadv_settings1, "joy_stick_layout");
     DisableItem(!flick, padadv_settings1, "joy_flick_snap");
     DisableItem(!flick, padadv_settings1, "joy_flick_time");
-    DisableItem(condition, padadv_settings1, "joy_scale_diagonal_movement");
-    DisableItem(condition, padadv_settings1, "joy_movement_curve");
+    DisableItem(condition, padadv_settings1, "joy_movement_type");
+    DisableItem(condition, padadv_settings1, "joy_forward_sensitivity");
+    DisableItem(condition, padadv_settings1, "joy_strafe_sensitivity");
+    DisableItem(condition, padadv_settings1, "joy_outer_turn_speed");
+    DisableItem(!ramp, padadv_settings1, "joy_outer_ramp_time");
     DisableItem(condition, padadv_settings1, "joy_camera_curve");
 }
 
@@ -3643,11 +3798,13 @@ static setup_menu_t gyro_settings1[] = {
 
     MI_GAP,
 
-    {"Turn Speed", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
-     {"gyro_turn_speed"}, .strings_id = str_gyro_sens, .action = I_ResetGamepad},
+    {"Turn Sensitivity", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
+     {"gyro_turn_sensitivity"}, .strings_id = str_gyro_sens,
+     .action = I_ResetGamepad},
 
-    {"Look Speed", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
-     {"gyro_look_speed"}, .strings_id = str_gyro_sens, .action = I_ResetGamepad},
+    {"Look Sensitivity", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
+     {"gyro_look_sensitivity"}, .strings_id = str_gyro_sens,
+     .action = I_ResetGamepad},
 
     {"Acceleration", S_THERMO, CNTR_X, M_THRM_SPC, {"gyro_acceleration"},
      .strings_id = str_gyro_accel, .action = I_ResetGamepad},
@@ -3676,8 +3833,8 @@ static void UpdateGyroItems(void)
     DisableItem(condition, gyro_settings1, "gyro_space");
     DisableItem(condition, gyro_settings1, "gyro_button_action");
     DisableItem(condition, gyro_settings1, "gyro_stick_action");
-    DisableItem(condition, gyro_settings1, "gyro_turn_speed");
-    DisableItem(condition, gyro_settings1, "gyro_look_speed");
+    DisableItem(condition, gyro_settings1, "gyro_turn_sensitivity");
+    DisableItem(condition, gyro_settings1, "gyro_look_sensitivity");
     DisableItem(condition, gyro_settings1, "gyro_acceleration");
     DisableItem(condition, gyro_settings1, "gyro_smooth_threshold");
     DisableItem(condition, gyro_settings1, "Calibrate");
@@ -3766,8 +3923,11 @@ static const char *fake_contrast_strings[] = {
   "Off", "Smooth", "Vanilla", NULL
 };
 
+static void MN_Color(void);
+
 #define N_X (M_X - 8)
 #define N_X_THRM8 (M_X_THRM8 - 8)
+#define N_X_THRM11 (M_X_THRM11 - 8)
 
 // [Nugget] ------------------------------------------------------------------/
 
@@ -3850,6 +4010,8 @@ static setup_menu_t gen_settings5[] = {
       {"Fake Contrast",                S_CHOICE|S_STRICT,       N_X, M_SPC, {"fake_contrast"}, .strings_id = str_fake_contrast},
       {"Screen Wipe Speed Percentage", S_NUM   |S_STRICT|S_PCT, N_X, M_SPC, {"wipe_speed_percentage"}},
       {"Alt. Intermission Background", S_ONOFF |S_STRICT,       N_X, M_SPC, {"alt_interpic"}},
+      MI_GAP,
+      {"Color Options",                S_FUNC,                  N_X, M_SPC, .action = MN_Color},
 
     // [Cherry] Moved from `NG1` ----------------------------------------------
     MI_SPLIT,
@@ -3907,6 +4069,61 @@ static void UpdateRocketTrailsItems(void)
 
 // [Cherry] ------------------------------------------------------------------/
 
+// [Cherry] Moved here
+// [Nugget] Color /------------------------------------------------------------
+
+void SetPalette(void)
+{
+    I_SetPalette(W_CacheLumpName("PLAYPAL", PU_CACHE));
+}
+
+static setup_menu_t color_settings1[] = {
+
+    {"Red Intensity",   S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"red_intensity"},    .action = SetPalette},
+    {"Green Intensity", S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"green_intensity"},  .action = SetPalette},
+    {"Blue Intensity",  S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"blue_intensity"},   .action = SetPalette},
+    {"Saturation",      S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"color_saturation"}, .action = SetPalette},
+
+    MI_END
+};
+
+static setup_menu_t *color_settings[] = { color_settings1, NULL };
+
+static setup_tab_t color_tabs[] = { {"Colors"}, {NULL} };
+
+static void MN_Color(void)
+{
+    SetItemOn(set_item_on);
+    SetPageIndex(current_page);
+
+    MN_SetNextMenuAlt(ss_color);
+    setup_screen = ss_color;
+    current_page = GetPageIndex(color_settings);
+    current_menu = color_settings[current_page];
+    current_tabs = color_tabs;
+    SetupMenuSecondary();
+}
+
+void MN_DrawColor(void)
+{
+    inhelpscreens = true;
+
+    DrawBackground("FLOOR4_6");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
+    DrawTabs();
+    DrawInstructions();
+    DrawScreenItems(current_menu);
+
+    patch_t *const patch = V_CachePatchName("M_PALETT", PU_CACHE);
+
+    const int x = (SCREENWIDTH / 2) - (SHORT(patch->width) / 2);
+    const int y = 103;
+
+    V_DrawPatchSH(x, y, patch);
+}
+
+// [Nugget] ------------------------------------------------------------------/
+
 const char *default_skill_strings[] = {
     // dummy first option because defaultskill is 1-based
     "", "ITYTD", "HNTR", "HMP", "UV", "NM", "Custom" // [Nugget] Custom Skill
@@ -3956,16 +4173,24 @@ void MN_ResetTimeScale(void)
     setrefreshneeded = true;
 }
 
+// [Nugget] /-----------------------------------------------------------------
+
+static void UpdateAutoSaveItems(void);
+
+static void AutoSaveStuff(void)
+{
+  M_ResetAutoSave();
+  UpdateAutoSaveItems();
+}
+
 // [Cherry] Moved here
 // [Nugget] /------------------------------------------------------------------
 
-static void UpdateAutosaveItems(void);
-
-static void UpdateAutosaveInterval(void)
+static void UpdateAutoSaveInterval(void)
 {
-    if (autosave_interval) { autosave_interval = MAX(30, autosave_interval); }
+  if (autosave_interval) { autosave_interval = MAX(30, autosave_interval); }
 
-    G_SetAutosaveCountdown(autosave_interval * TICRATE);
+  G_SetAutoSaveCountdown(autosave_interval * TICRATE);
 }
 
 static void UpdateRewindInterval(void)
@@ -3988,8 +4213,6 @@ static const char *page_ticking_strings[] = {
   "Always", "Not In Menus", "Never", NULL
 };
 
-// [Nugget] ------------------------------------------------------------------/
-
 static setup_menu_t gen_settings6[] = {
 
     {"Quality of life", S_SKIP | S_TITLE, OFF_CNTR_X, M_SPC},
@@ -3997,16 +4220,19 @@ static setup_menu_t gen_settings6[] = {
     {"Screen wipe effect", S_CHOICE | S_STRICT, OFF_CNTR_X, M_SPC,
      {"screen_melt"}, .strings_id = str_screen_melt},
 
-    {"On death action", S_CHOICE, OFF_CNTR_X, M_SPC, {"death_use_action"},
-     .strings_id = str_death_use_action},
-
-    {"Demo progress bar", S_ONOFF, OFF_CNTR_X, M_SPC, {"demobar"}},
-
     {"Screen flashes", S_ONOFF | S_STRICT, OFF_CNTR_X, M_SPC,
      {"palette_changes"}, .action = UpdatePaletteItems}, // [Nugget]
 
     {"Invulnerability effect", S_CHOICE | S_STRICT, OFF_CNTR_X, M_SPC,
      {"invul_mode"}, .strings_id = str_invul_mode, .action = R_InvulMode},
+
+    {"Demo progress bar", S_ONOFF, OFF_CNTR_X, M_SPC, {"demobar"}},
+
+    {"On death action", S_CHOICE, OFF_CNTR_X, M_SPC, {"death_use_action"},
+     .strings_id = str_death_use_action},
+
+    {"Auto save", S_ONOFF, OFF_CNTR_X, M_SPC, {"autosave"},
+     .action = AutoSaveStuff},
 
     {"Organize save files", S_ONOFF | S_PRGWARN, OFF_CNTR_X, M_SPC,
      {"organize_savefiles"}},
@@ -4033,8 +4259,7 @@ static setup_menu_t gen_settings6[] = {
 
       {"Sound Hearing Distance",  S_CHOICE|S_STRICT,            N_X, M_SPC, {"s_clipping_dist_x2"}, .strings_id = str_s_clipping_dist, .action = SetSoundModule},
       {"One-Key Quick-Save/Load", S_ONOFF,                      N_X, M_SPC, {"one_key_saveload"}},
-      {"Autosaving",              S_ONOFF,                      N_X, M_SPC, {"autosave"}, .action = UpdateAutosaveItems},
-      {"Autosave Interval (S)",   S_NUM,                        N_X, M_SPC, {"autosave_interval"}, .action = UpdateAutosaveInterval},
+      {"Auto Save Interval (S)",  S_NUM,                        N_X, M_SPC, {"autosave_interval"}, .action = UpdateAutoSaveInterval},
       {"Rewind Interval (S)",     S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_interval"}, .action = UpdateRewindInterval},
       {"Rewind Depth",            S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_depth"}, .action = UpdateRewindDepth},
       {"Rewind Timeout (MS)",     S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_timeout"}, .action = G_EnableRewind},
@@ -4053,9 +4278,9 @@ static setup_menu_t gen_settings6[] = {
     MI_END
 };
 
-static void UpdateAutosaveItems(void)
+static void UpdateAutoSaveItems(void)
 {
-  DisableItem(!autosave, gen_settings6, "autosave_interval");
+  DisableItem(!G_AutoSaveEnabled(), gen_settings6, "autosave_interval");
 }
 
 // [Nugget]
@@ -4293,15 +4518,15 @@ static setup_menu_t customskill_settings1[] = {
     {"Duplicate Monsters",     S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_x2monsters"}},
     {"No Monsters",            S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_nomonsters"}},
     {"Disable Stats Tracking", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_notracking"}}, // [Cherry]
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
     {"Double Ammo From Pickups", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_doubleammo"}},
     {"Halved Damage To Player",  S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_halfdamage"}},
     {"Slow Spawn-Cube Spitter",  S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_slowbrain"}},
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
     {"Fast Monsters",                   S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_fast"}},
     {"Respawning Monsters",             S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_respawn"}},
     {"Aggressive (Nightmare) Monsters", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_aggressive"}},
-    MI_GAP_HALF,
+    MI_GAP_Y(4),
     {"Start New Game",                   S_FUNC2|S_LEFTJUST, 32, M_SPC, {NULL}, .action = CSNewGame},
     {"Restart Level -- Pistol Start",    S_FUNC2|S_LEFTJUST, 32, M_SPC, {NULL}, .action = CSPistolStart},
     {"Restart Level -- Initial Loadout", S_FUNC2|S_LEFTJUST, 32, M_SPC, {NULL}, .action = CSInitialLoadout},
@@ -4367,11 +4592,14 @@ static setup_menu_t **setup_screens[] = {
     gen_settings, // killough 10/98
     comp_settings,
     level_table,  // [Cherry]
+    midi_settings,
     eq_settings,
     padadv_settings,
     gyro_settings,
 
-    customskill_settings, // [Nugget] Custom Skill menu
+    // [Nugget]
+    color_settings,
+    customskill_settings, // Custom Skill menu
 };
 
 // [FG] save the index of the current screen in the first page's S_END element's
@@ -4498,9 +4726,12 @@ static void ResetDefaultsSecondary(void)
 {
     if (setup_screen == ss_gen)
     {
+        ResetDefaults(ss_midi);
         ResetDefaults(ss_eq);
         ResetDefaults(ss_padadv);
         ResetDefaults(ss_gyro);
+
+        ResetDefaults(ss_color); // [Nugget]
     }
 }
 
@@ -4982,36 +5213,36 @@ static boolean ChangeEntry(menu_action_t action, int ch)
         {
             if (gather_count) // Any input?
             {
-                int value;
-
                 gather_buffer[gather_count] = 0;
-                value = atoi(gather_buffer); // Integer value
 
-                if ((def->limit.min != UL && value < def->limit.min)
-                    || (def->limit.max != UL && value > def->limit.max))
+                int value = atoi(gather_buffer); // Integer value
+
+                int min = def->limit.min;
+                int max = def->limit.max;
+
+                if ((min != UL && value < min) || (max != UL && value > max))
                 {
                     warn_about_changes(S_BADVAL);
+                    value = BETWEEN(min, max, value);
                 }
-                else
+
+                def->location->i = value;
+
+                // killough 8/9/98: fix numeric vars
+                // killough 8/15/98: add warning message
+
+                if (flags & (S_LEVWARN | S_PRGWARN))
                 {
-                    def->location->i = value;
+                    warn_about_changes(flags);
+                }
+                else if (def->current)
+                {
+                    def->current->i = value;
+                }
 
-                    // killough 8/9/98: fix numeric vars
-                    // killough 8/15/98: add warning message
-
-                    if (flags & (S_LEVWARN | S_PRGWARN))
-                    {
-                        warn_about_changes(flags);
-                    }
-                    else if (def->current)
-                    {
-                        def->current->i = value;
-                    }
-
-                    if (current_item->action) // killough 10/98
-                    {
-                        current_item->action();
-                    }
+                if (current_item->action) // killough 10/98
+                {
+                    current_item->action();
                 }
             }
             SelectDone(current_item); // phares 4/17/98
@@ -5959,8 +6190,14 @@ int MN_StringHeight(const char *string)
 void MN_DrawTitle(int x, int y, const char *patch, const char *alttext)
 {
     int patch_lump = W_CheckNumForName(patch);
+    int patch_priority = -1;
 
     if (patch_lump >= 0)
+    {
+        patch_priority = lumpinfo[patch_lump].handle.priority;
+    }
+
+    if (patch_lump >= 0 && patch_priority >= bigfont_priority)
     {
         patch_t *patch = V_CachePatchNum(patch_lump, PU_CACHE);
         // [Nugget] HUD/menu shadows
@@ -5988,6 +6225,7 @@ static const char **selectstrings[] = {
     layout_strings,
     flick_snap_strings,
     NULL, // str_ms_time
+    NULL, // str_movement_sensitivity
     movement_type_strings,
     rumble_strings,
     curve_strings,
@@ -6012,6 +6250,8 @@ static const char **selectstrings[] = {
     sound_module_strings,
     NULL, // str_resampler
     equalizer_preset_strings,
+    midi_complevel_strings,
+    midi_reset_type_strings,
     NULL, // str_mouse_accel
     gyro_space_strings,
     gyro_action_strings,
@@ -6080,6 +6320,7 @@ void MN_InitMenuStrings(void)
     selectstrings[str_midi_player] = GetMidiPlayerStrings();
     selectstrings[str_mouse_accel] = GetMouseAccelStrings();
     selectstrings[str_ms_time] = GetMsTimeStrings();
+    selectstrings[str_movement_sensitivity] = GetMovementSensitivityStrings();
     selectstrings[str_gyro_sens] = GetGyroSensitivityStrings();
     selectstrings[str_gyro_accel] = GetGyroAccelStrings();
     selectstrings[str_resampler] = GetResamplerStrings();

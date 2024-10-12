@@ -157,7 +157,11 @@ static void AddDirs(w_module_t *module, w_handle_t handle, const char *base,
 // [Cherry] Added the `source` parameter
 boolean W_AddPath(const char *path, wad_source_t source)
 {
+    static int priority;
+
     w_handle_t handle = {0};
+    handle.priority = priority++;
+
     w_module_t *active_module = NULL;
 
     for (int i = 0; i < arrlen(modules); ++i)

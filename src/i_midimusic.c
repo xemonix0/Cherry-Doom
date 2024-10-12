@@ -64,6 +64,7 @@ static int midi_complevel = COMP_STANDARD;
 static int midi_reset_type = RESET_TYPE_GM;
 static int midi_reset_delay = -1;
 static boolean midi_ctf = true;
+static int midi_gain = 100;
 
 static const byte gm_system_on[] =
 {
@@ -1320,25 +1321,35 @@ static boolean I_MID_InitMusic(int device)
     return true;
 }
 
+// MIDI CC#7 volume formula (GM Level 1 Developer Guidelines, page 9).
+#define MIDI_DB_TO_GAIN(db) powf(10.0f, (db) / 40.0f)
+
+static void UpdateVolumeFactor(int volume)
+{
+    volume_factor = volume / 15.0f * MIDI_DB_TO_GAIN(midi_gain);
+}
+
 static void I_MID_SetMusicVolume(int volume)
 {
     static int last_volume = -1;
+    static int last_midi_gain = -1;
 
-    if (last_volume == volume)
+    if (last_volume == volume && midi_gain == last_midi_gain)
     {
         // Ignore holding key down in volume menu.
         return;
     }
     last_volume = volume;
+    last_midi_gain = midi_gain;
 
     if (!SDL_AtomicGet(&player_thread_running))
     {
-        volume_factor = sqrtf((float)volume / 15.0f);
+        UpdateVolumeFactor(volume);
         return;
     }
 
     SDL_LockMutex(music_lock);
-    volume_factor = sqrtf((float)volume / 15.0f);
+    UpdateVolumeFactor(volume);
     UpdateVolume();
     SDL_UnlockMutex(music_lock);
 }
@@ -1477,16 +1488,22 @@ static const char **I_MID_DeviceList(void)
     return midi_devices;
 }
 
+static midiplayertype_t I_MID_MidiPlayerType(void)
+{
+    return midiplayer_native;
+}
+
 static void I_MID_BindVariables(void)
 {
-    BIND_NUM(midi_complevel, COMP_STANDARD, 0, COMP_NUM - 1,
+    BIND_NUM_MIDI(midi_complevel, COMP_STANDARD, 0, COMP_NUM - 1,
         "Native MIDI compatibility level (0 = Vanilla; 1 = Standard; 2 = Full)");
-    BIND_NUM(midi_reset_type, RESET_TYPE_GM, 0, RESET_NUM - 1,
+    BIND_NUM_MIDI(midi_reset_type, RESET_TYPE_GM, 0, RESET_NUM - 1,
         "Reset type for native MIDI (0 = No SysEx; 1 = GM; 2 = GS; 3 = XG)");
     BIND_NUM(midi_reset_delay, -1, -1, 2000,
         "Delay after reset for native MIDI (-1 = Auto; 0 = None; 1-2000 = Milliseconds)");
-    BIND_BOOL(midi_ctf, true,
+    BIND_BOOL_MIDI(midi_ctf, true,
         "Fix invalid instruments by emulating SC-55 capital tone fallback");
+    BIND_NUM_MIDI(midi_gain, 0, -20, 0, "Native MIDI gain [dB]");
 }
 
 music_module_t music_mid_module =
@@ -1502,4 +1519,5 @@ music_module_t music_mid_module =
     I_MID_UnRegisterSong,
     I_MID_DeviceList,
     I_MID_BindVariables,
+    I_MID_MidiPlayerType,
 };
