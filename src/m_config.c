@@ -55,7 +55,8 @@
 #include "r_main.h"
 #include "st_stuff.h"
 #include "w_wad.h"
-#include "wad_stats.h"
+#include "ws_stuff.h"
+#include "wad_stats.h" // [Cherry]
 #include "z_zone.h"
 
 //
@@ -146,12 +147,13 @@ void M_InitConfig(void)
     G_BindEnemVariables();
     G_BindCompVariables();
     G_BindWeapVariables();
+    WS_BindVariables();
 
     HU_BindHUDVariables();
     ST_BindSTSVariables();
     AM_BindAutomapVariables();
 
-    WS_BindLevelTableVariables();
+    WadStats_BindLevelTableVariables();
 
     // [Nugget] (CFG-only)
     M_BindBool("fail_safe", &fail_safe, NULL, false, ss_none, wad_no, "Use only when instructed");

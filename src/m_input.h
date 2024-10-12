@@ -56,6 +56,7 @@ enum
     input_weapon8,
     input_weapon9,
     input_weapontoggle,
+    input_lastweapon,
 
     input_menu_up,
     input_menu_down,
@@ -139,8 +140,6 @@ enum
 
     input_jump,
     input_crouch,
-
-    input_lastweapon,
 
     input_crosshair,
     input_zoom,

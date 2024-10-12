@@ -84,6 +84,7 @@
 #include "v_video.h"
 #include "w_wad.h"
 #include "wi_stuff.h"
+#include "ws_stuff.h"
 #include "z_zone.h"
 
 // [Nugget]
@@ -2576,8 +2577,8 @@ void D_DoomMain(void)
 
   if (!netgame)
   {
-      I_Printf(VB_INFO, "WS_Init: Setting up WAD stats tracking.");
-      WS_Init();
+      I_Printf(VB_INFO, "WadStats_Init: Setting up WAD stats tracking.");
+      WadStats_Init();
   }
 
   G_UpdateSideMove();
@@ -2586,6 +2587,7 @@ void D_DoomMain(void)
   G_UpdateGamepadVariables();
   G_UpdateMouseVariables();
   R_UpdateViewAngleFunction();
+  WS_Init();
 
   MN_ResetTimeScale();
 

@@ -815,33 +815,26 @@ void P_MobjThinker (mobj_t* mobj)
   {
     if (mobj->type == MT_MISC2)
     {
-      if (cheese && !(mobj->intflags & MIF_CHEESE))
+      if (cheese && mobj->altsprite == -1)
       {
-        mobj->intflags |= MIF_CHEESE;
-        mobj->tics = -1;
-        mobj->sprite = SPR_TNT1;
-        mobj->frame = 1;
+        mobj->altsprite = ASPR_NGCH;
+        mobj->altframe = 0;
       }
-      else if (!cheese && (mobj->intflags & MIF_CHEESE))
+      else if (!cheese && mobj->altsprite > -1)
       {
-        mobj->intflags &= ~MIF_CHEESE;
-        P_SetMobjState(mobj, mobj->info->spawnstate);
+        mobj->altsprite = mobj->altframe = -1;
       }
     }
-
-    if (mobj->type == MT_MISC3)
+    else if (mobj->type == MT_MISC3)
     {
-      if (frights && !(mobj->intflags & MIF_FRIGHTS))
+      if (frights && mobj->altsprite == -1)
       {
-        mobj->intflags |= MIF_FRIGHTS;
-        mobj->tics = -1;
-        mobj->sprite = SPR_TNT1;
-        mobj->frame = 2|FF_FULLBRIGHT;
+        mobj->altsprite = ASPR_NGCL;
+        mobj->altframe = 0|FF_FULLBRIGHT;
       }
-      else if (!frights && (mobj->intflags & MIF_FRIGHTS))
+      else if (!frights && mobj->altsprite > -1)
       {
-        mobj->intflags &= ~MIF_FRIGHTS;
-        P_SetMobjState(mobj, mobj->info->spawnstate);
+        mobj->altsprite = mobj->altframe = -1;
       }
     }
   }

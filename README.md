@@ -199,7 +199,7 @@ License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `base/all-all/sprites/tnt1b0.png`  
 Copyright: © 2023 Korp.  
-License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
 Files: `base/all-all/dsdg*, base/all-all/sprites/dog*`  
 Copyright:  

@@ -771,19 +771,11 @@ void P_PlayerThink (player_t* player)
 
   if (cmd->buttons & BT_CHANGE)
     {
-      // [Nugget] Last-weapon button
-      const weapontype_t lastweapon = CASUALPLAY(M_InputGameActive(input_lastweapon))
-                                      ? player->lastweapon : wp_nochange;
-
       // The actual changing of the weapon is done
       //  when the weapon psprite can do it
       //  (read: not in the middle of an attack).
 
-      // [Nugget]
-      if (lastweapon != wp_nochange)
-        newweapon = lastweapon;
-      else
-        newweapon = (cmd->buttons & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
+      newweapon = (cmd->buttons & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
 
       // killough 3/22/98: For demo compatibility we must perform the fist
       // and SSG weapons switches here, rather than in G_BuildTiccmd(). For
@@ -793,15 +785,13 @@ void P_PlayerThink (player_t* player)
 	{ // compatibility mode -- required for old demos -- killough
 	  newweapon = (cmd->buttons & BT_WEAPONMASK_OLD) >> BT_WEAPONSHIFT;
 	  if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
-	      ((player->readyweapon != wp_chainsaw
-	              && lastweapon != wp_fist) || // [Nugget]
+	      (player->readyweapon != wp_chainsaw ||
 	       !player->powers[pw_strength]))
 	    newweapon = wp_chainsaw;
-	  if (have_ssg &&
+	  if (ALLOW_SSG &&
 	      newweapon == wp_shotgun &&
 	      player->weaponowned[wp_supershotgun] &&
-	      player->readyweapon != wp_supershotgun &&
-	      lastweapon != wp_shotgun) // [Nugget]
+	      player->readyweapon != wp_supershotgun)
 	    newweapon = wp_supershotgun;
 	}
 

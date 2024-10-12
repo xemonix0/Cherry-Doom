@@ -703,7 +703,6 @@ void M_BindInputVariables(void)
     BIND_INPUT(input_fire, "Fire current weapon");
     BIND_INPUT(input_prevweapon, "Cycle to the previous weapon");
     BIND_INPUT(input_nextweapon, "Cycle to the next weapon");
-    BIND_INPUT(input_lastweapon, "Switch to the last-used weapon"); // [Nugget] Last-weapon button
 
     BIND_INPUT(input_novert, "Toggle vertical mouse movement");
     BIND_INPUT(input_freelook, "Toggle free look");
@@ -734,6 +733,7 @@ void M_BindInputVariables(void)
     BIND_INPUT(input_weapon8, "Switch to weapon 8 (Chainsaw)");
     BIND_INPUT(input_weapon9, "Switch to weapon 9 (Super Shotgun)");
     BIND_INPUT(input_weapontoggle, "Switch between the two most-preferred weapons with ammo");
+    BIND_INPUT(input_lastweapon, "Switch to last used weapon");
 
     BIND_INPUT(input_menu_reloadlevel, "Restart current level/demo");
     BIND_INPUT(input_menu_nextlevel, "Go to next level");

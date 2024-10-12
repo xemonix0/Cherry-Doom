@@ -66,6 +66,17 @@ static boolean message_flash;
 int hud_stats_format; // [Cherry] Made non-static
 static int hud_stats_format_map;
 
+enum {
+  SHOWSTATS_KILLS,
+  SHOWSTATS_ITEMS,
+  SHOWSTATS_SECRETS,
+
+  NUMSHOWSTATS
+};
+
+static boolean hud_stats_show[NUMSHOWSTATS];
+static boolean hud_stats_show_map[NUMSHOWSTATS];
+
 static boolean hud_allow_icons;
 static int hudcolor_time_scale;
 static int hudcolor_total_time;
@@ -713,6 +724,19 @@ static int NughudSortWidgets(const void *_p1, const void *_p2)
     || (st_crispyhud && (a) == 1)                      \
 )
 
+void HU_InitMonSec(void)
+{
+  const boolean *const showstats = (automapactive == AM_FULL) ? hud_stats_show_map : hud_stats_show;
+  int statslines = 0;
+
+  for (int i = 0;  i < NUMSHOWSTATS;  i++) { statslines += showstats[i]; }
+
+  HUlib_init_multiline(&w_monsec,
+                       MULTILINE(nughud.sts_ml) ? statslines : MIN(1, statslines), // [Nugget] NUGHUD
+                       &boom_font, colrngs[CR_GRAY],
+                       NULL, HU_widget_build_monsec);
+}
+
 // [Nugget] -----------------------------------------------------------------/
 
 void WI_BuildWidgets(void); // [Cherry]
@@ -801,10 +825,8 @@ void HU_Start(void)
                        NULL, HU_widget_build_compact);
 
   // create the hud monster/secret widget
-  HUlib_init_multiline(&w_monsec,
-                       MULTILINE(nughud.sts_ml) ? 3 : 1, // [Nugget] NUGHUD
-                       &boom_font, colrngs[CR_GRAY],
-                       NULL, HU_widget_build_monsec);
+  HU_InitMonSec(); // [Nugget]
+
   // [FG] in deathmatch: w_keys.builder = HU_widget_build_frag()
   w_stats = deathmatch ? &w_keys : &w_monsec;
 
@@ -1323,7 +1345,7 @@ static void HU_widget_build_weapon (void)
         break;
       case retail:
       case registered:
-        if (w >= wp_supershotgun && !have_ssg)
+        if (w >= wp_supershotgun && !ALLOW_SSG)
           ok = 0;
         break;
       default:
@@ -1532,6 +1554,15 @@ static void HU_widget_build_frag (void)
 
 static void HU_widget_build_monsec(void)
 {
+  // [Nugget] /---------------------------------------------------------------
+
+  const boolean *const showstats = (automapactive == AM_FULL) ? hud_stats_show_map : hud_stats_show;
+
+  if (!(showstats[SHOWSTATS_KILLS] || showstats[SHOWSTATS_ITEMS] || showstats[SHOWSTATS_SECRETS]))
+  { return; }
+
+  // [Nugget] ---------------------------------------------------------------/
+
   int i;
   int fullkillcount, fullitemcount, fullsecretcount;
   int killcolor, itemcolor, secretcolor;
@@ -1644,30 +1675,57 @@ static void HU_widget_build_monsec(void)
 
   if (MULTILINE(nughud.sts_ml)) // [Nugget] NUGHUD
   {
-    // [Nugget] HUD icons
-    // [Nugget] Stats formats from Crispy
+    // [Nugget] HUD icons | Stats formats from Crispy
 
-    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
-      "\x1b%c%c\t\x1b%c%s", killlabelcolor, killlabel, killcolor, kill_str);
-    HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
+    if (showstats[SHOWSTATS_KILLS])
+    {
+      M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
+        "\x1b%c%c\t\x1b%c%s", killlabelcolor, killlabel, killcolor, kill_str);
+      HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
+    }
 
-    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
-      "\x1b%c%c\t\x1b%c%s", itemlabelcolor, itemlabel, itemcolor, item_str);
-    HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
+    if (showstats[SHOWSTATS_ITEMS])
+    {
+      M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
+        "\x1b%c%c\t\x1b%c%s", itemlabelcolor, itemlabel, itemcolor, item_str);
+      HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
+    }
 
-    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
-      "\x1b%c%c\t\x1b%c%s", secretlabelcolor, secretlabel, secretcolor, secret_str);
-    HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
+    if (showstats[SHOWSTATS_SECRETS])
+    {
+      M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
+        "\x1b%c%c\t\x1b%c%s", secretlabelcolor, secretlabel, secretcolor, secret_str);
+      HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
+    }
   }
   else
   {
-    // [Nugget] HUD icons
-    // [Nugget] Stats formats from Crispy
-    M_snprintf(hud_stringbuffer, sizeof(hud_stringbuffer),
-      "\x1b%c%c \x1b%c%s \x1b%c%c \x1b%c%s \x1b%c%c \x1b%c%s",
-      killlabelcolor, killlabel, killcolor, kill_str,
-      itemlabelcolor, itemlabel, itemcolor, item_str,
-      secretlabelcolor, secretlabel, secretcolor, secret_str);
+    // [Nugget] HUD icons | Stats formats from Crispy
+
+    int offset = 0;
+
+    if (showstats[SHOWSTATS_KILLS])
+    {
+      offset += M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer) - offset,
+        "\x1b%c%c \x1b%c%s%s",
+        killlabelcolor, killlabel, killcolor, kill_str,
+        (showstats[SHOWSTATS_ITEMS] || showstats[SHOWSTATS_SECRETS]) ? " " : "");
+    }
+
+    if (showstats[SHOWSTATS_ITEMS])
+    {
+      offset += M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer) - offset,
+        "\x1b%c%c \x1b%c%s%s",
+        itemlabelcolor, itemlabel, itemcolor, item_str,
+        showstats[SHOWSTATS_SECRETS] ? " " : "");
+    }
+
+    if (showstats[SHOWSTATS_SECRETS])
+    {
+      offset += M_snprintf(hud_stringbuffer + offset, sizeof(hud_stringbuffer) - offset,
+        "\x1b%c%c \x1b%c%s",
+        secretlabelcolor, secretlabel, secretcolor, secret_str);
+    }
 
     HUlib_add_string_to_cur_line(&w_monsec, hud_stringbuffer);
   }
@@ -2876,6 +2934,24 @@ void HU_BindHUDVariables(void)
             "Format of level stats in automap (0 = Match HUD)");
 
   // -------------------------------------------------------------------------
+
+  M_BindBool("hud_stats_kills", &hud_stats_show[SHOWSTATS_KILLS], NULL, true, ss_stat, wad_no,
+             "Show kill count in the level-stats widget");
+
+  M_BindBool("hud_stats_items", &hud_stats_show[SHOWSTATS_ITEMS], NULL, true, ss_stat, wad_no,
+             "Show item count in the level-stats widget");
+
+  M_BindBool("hud_stats_secrets", &hud_stats_show[SHOWSTATS_SECRETS], NULL, true, ss_stat, wad_no,
+             "Show secrets count in the level-stats widget");
+
+  M_BindBool("hud_stats_kills_map", &hud_stats_show_map[SHOWSTATS_KILLS], NULL, true, ss_stat, wad_no,
+             "Show kill count in the automap's level-stats widget");
+
+  M_BindBool("hud_stats_items_map", &hud_stats_show_map[SHOWSTATS_ITEMS], NULL, true, ss_stat, wad_no,
+             "Show item count in the automap's level-stats widget");
+
+  M_BindBool("hud_stats_secrets_map", &hud_stats_show_map[SHOWSTATS_SECRETS], NULL, true, ss_stat, wad_no,
+             "Show secrets count in the automap's level-stats widget");
 
   M_BindBool("hud_allow_icons", &hud_allow_icons, NULL, true, ss_stat, wad_yes,
              "Allow usage of icons for some labels in HUD widgets");

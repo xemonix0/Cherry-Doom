@@ -48,8 +48,8 @@ void I_QuitFirst(void)
     }
 
     // [Cherry]
-    WS_Save();
-    WS_Cleanup();
+    WadStats_Save();
+    WadStats_Cleanup();
 }
 
 void I_QuitLast(void)

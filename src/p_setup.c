@@ -1759,7 +1759,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
   // set up world state
   P_SpawnSpecials();
-  WS_WatchMap(); // [Cherry]
+  WadStats_WatchMap(); // [Cherry]
   P_MapEnd();
 
   // preload graphics

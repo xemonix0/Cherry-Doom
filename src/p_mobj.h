@@ -241,11 +241,6 @@ enum {
 
   MIF_CROUCHING    = 0x00010000,  // Mobj (player) is crouching
 
-  MIF_CHEESE       = 0x10000000,
-  MIF_FRIGHTS      = 0x20000000,
-
-  // [Nugget] ----------------------------------------------------------------/
-
   // [Cherry] -----------------------------------------------------------------
 
   MIF_SMOKE_TRAIL = 0x00000100, // Rocket trails from Doom Retro

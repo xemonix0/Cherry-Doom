@@ -356,11 +356,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
     return;
 
   // [Nugget]
-  if (casual_play && special->sprite == SPR_TNT1)
+  if (casual_play && special->altsprite > -1)
   {
-    const int frame = special->frame & ~FF_FULLBRIGHT;
-
-    if (cheese && frame == 1)
+    if (special->altsprite == ASPR_NGCH)
     {
       player->mo->health = player->health = MIN(maxhealthbonus, player->health + 1);
 
@@ -371,7 +369,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 
       pickupmsg(player, "%s", s);
     }
-    else if (frights && frame == 2)
+    else if (special->altsprite == ASPR_NGCL)
     {
       player->armorpoints = MIN(max_armor, player->armorpoints + 1);
 
@@ -863,7 +861,7 @@ static void WatchKill(player_t* player, mobj_t* target)
     player->maxkilldiscount++;
   }
 
-  WS_WatchKill(); // [Cherry]
+  WadStats_WatchKill(); // [Cherry]
 }
 
 boolean tossdrop; // [Nugget]

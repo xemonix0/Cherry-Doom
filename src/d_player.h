@@ -233,9 +233,10 @@ typedef struct player_s
   int num_visitedlevels;
   level_t *visitedlevels;
 
-  // [Nugget] ----------------------------------------------------------------
+  // Last used weapon (last readyweapon).
+  weapontype_t lastweapon;
 
-  weapontype_t        lastweapon;
+  // [Nugget] ----------------------------------------------------------------
 
   int                 jumptics; // Jumping delay
   fixed_t             crouchoffset; // How many units the player is crouched

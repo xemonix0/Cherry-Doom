@@ -38,6 +38,8 @@ extern boolean quick_quitgame;
 
 boolean M_Responder(struct event_s *ev);
 
+boolean M_ShortcutResponder(const struct event_s *ev);
+
 // Called by main loop,
 // only used for menu (skull cursor) animation.
 

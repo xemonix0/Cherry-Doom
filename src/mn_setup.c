@@ -57,6 +57,7 @@
 #include "v_fmt.h"
 #include "v_video.h"
 #include "w_wad.h"
+#include "ws_stuff.h"
 #include "z_zone.h"
 
 // [Nugget]
@@ -131,6 +132,9 @@ static boolean default_reset;
 
 #define MI_GAP \
     {NULL, S_SKIP, 0, M_SPC}
+
+#define MI_GAP_HALF \
+    {NULL, S_SKIP, 0, M_SPC / 2}
 
 // [Cherry] Page split (subpages)
 #define MI_SPLIT \
@@ -302,6 +306,9 @@ enum
 {
     str_empty,
     str_layout,
+    str_flick_snap,
+    str_ms_time,
+    str_movement_type,
     str_rumble,
     str_curve,
     str_center_weapon,
@@ -316,6 +323,9 @@ enum
     str_overlay,
     str_automap_preset,
     str_automap_keyed_door,
+    str_weapon_slots_activation,
+    str_weapon_slots_selection,
+    str_weapon_slots,
 
     str_resolution_scale,
     str_midi_player,
@@ -1638,19 +1648,11 @@ static setup_menu_t keys_settings2[] = {
     {"Chainsaw", S_INPUT, KB_X, M_SPC, {0}, m_scrn, input_weapon8},
     {"SSG",      S_INPUT, KB_X, M_SPC, {0}, m_scrn, input_weapon9},
     {"Best",     S_INPUT, KB_X, M_SPC, {0}, m_scrn, input_weapontoggle},
+    {"Last",     S_INPUT, KB_X, M_SPC, {0}, m_scrn, input_lastweapon},
     MI_GAP,
     // [FG] prev/next weapon keys and buttons
     {"Prev", S_INPUT, KB_X, M_SPC, {0}, m_scrn, input_prevweapon},
     {"Next", S_INPUT, KB_X, M_SPC, {0}, m_scrn, input_nextweapon},
-    
-    // [Nugget] /--------------------------------------------------------------
-
-    // [Cherry] Moved from `NG1` ----------------------------------------------
-
-    MI_GAP,
-    {"Nugget", S_SKIP|S_TITLE, KB_X, M_SPC},
-      {"Last Used Weapon", S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_lastweapon},
-
     MI_END
 };
 
@@ -1838,7 +1840,8 @@ void MN_DrawKeybnd(void)
 
 static setup_tab_t weap_tabs[] = {
     {"cosmetic"},
-    {"preferences"},
+    {"slots"},
+    {"prefs"},
     {"gameplay"}, // [Cherry]
 
     // [Cherry] Redistributed Nugget options across other pages
@@ -1905,27 +1908,181 @@ static setup_menu_t weap_settings1[] = {
     MI_END
 };
 
+static const char *weapon_slots_activation_strings[] = {
+    "Off", "Hold \"Last\"", "Always On"
+};
+
+static const char *weapon_slots_selection_strings[] = {
+    "D-Pad", "Face Buttons", "1-4 Keys"
+};
+
+static const char **GetWeaponSlotStrings(void)
+{
+    static const char *vanilla_doom_strings[] = {
+        "--", "Chainsaw/Fist", "Pistol", "Shotgun", "Chaingun",
+        "Rocket", "Plasma", "BFG", "Chainsaw/Fist", "Shotgun"
+    };
+    static const char *vanilla_doom2_strings[] = {
+        "--", "Chainsaw/Fist", "Pistol", "SSG/Shotgun", "Chaingun",
+        "Rocket", "Plasma", "BFG", "Chainsaw/Fist", "SSG/Shotgun"
+    };
+    static const char *full_doom2_strings[] = {
+        "--", "Fist", "Pistol", "Shotgun", "Chaingun",
+        "Rocket", "Plasma", "BFG", "Chainsaw", "SSG"
+    };
+
+    if (force_complevel == CL_VANILLA || default_complevel == CL_VANILLA)
+    {
+        return (ALLOW_SSG ? vanilla_doom2_strings : vanilla_doom_strings);
+    }
+    else
+    {
+        return full_doom2_strings;
+    }
+}
+
+#define WS_BUF_SiZE 80
+static char slot_labels[NUM_WS_SLOTS * NUM_WS_WEAPS][WS_BUF_SiZE];
+
+static void UpdateWeaponSlotLabels(void)
+{
+    const char *keys[NUM_WS_SLOTS];
+    int buttons[NUM_WS_SLOTS];
+
+    switch (WS_Selection())
+    {
+        case WS_SELECT_DPAD:
+            keys[0] = M_GetPlatformName(GAMEPAD_DPAD_UP);
+            keys[1] = M_GetPlatformName(GAMEPAD_DPAD_DOWN);
+            keys[2] = M_GetPlatformName(GAMEPAD_DPAD_LEFT);
+            keys[3] = M_GetPlatformName(GAMEPAD_DPAD_RIGHT);
+            break;
+
+        case WS_SELECT_FACE_BUTTONS:
+            I_GetFaceButtons(buttons);
+            keys[0] = M_GetPlatformName(buttons[0]);
+            keys[1] = M_GetPlatformName(buttons[1]);
+            keys[2] = M_GetPlatformName(buttons[2]);
+            keys[3] = M_GetPlatformName(buttons[3]);
+            break;
+
+        default: // WS_SELECT_1234
+            keys[0] = "1-Key";
+            keys[1] = "2-Key";
+            keys[2] = "3-Key";
+            keys[3] = "4-Key";
+            break;
+    }
+
+    const char *pos[NUM_WS_WEAPS] = {"1st", "2nd", "3rd"};
+    int num = 0;
+
+    for (int i = 0; i < NUM_WS_SLOTS; i++)
+    {
+        M_snprintf(slot_labels[num++], WS_BUF_SiZE, "%s %s", keys[i], pos[0]);
+
+        for (int j = 1; j < NUM_WS_WEAPS; j++)
+        {
+            M_snprintf(slot_labels[num++], WS_BUF_SiZE, "%s", pos[j]);
+        }
+    }
+}
+
+static void UpdateWeaponSlotItems(void);
+
+static void UpdateWeaponSlotActivation(void)
+{
+    WS_Reset();
+    UpdateWeaponSlotItems();
+}
+
+static void UpdateWeaponSlotSelection(void)
+{
+    WS_UpdateSelection();
+    WS_Reset();
+    UpdateWeaponSlotLabels();
+}
+
+static void UpdateWeaponSlots(void)
+{
+    WS_UpdateSlots();
+    WS_Reset();
+}
+
+#define MI_WEAPON_SLOT(i, s)                                      \
+    {slot_labels[i], S_CHOICE, CNTR_X, M_SPC, {s},                \
+     .strings_id = str_weapon_slots, .action = UpdateWeaponSlots}
+
 static setup_menu_t weap_settings2[] = {
-    {"1St Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_1"}},
-    {"2Nd Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_2"}},
-    {"3Rd Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_3"}},
-    {"4Th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_4"}},
-    {"5Th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_5"}},
-    {"6Th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_6"}},
-    {"7Th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_7"}},
-    {"8Th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_8"}},
-    {"9Th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_9"}},
+
+    {"Enable Slots", S_CHOICE, CNTR_X, M_SPC, {"weapon_slots_activation"},
+     .strings_id = str_weapon_slots_activation,
+     .action = UpdateWeaponSlotActivation},
+
+    {"Select Slots", S_CHOICE, CNTR_X, M_SPC, {"weapon_slots_selection"},
+     .strings_id = str_weapon_slots_selection,
+     .action = UpdateWeaponSlotSelection},
+
+    MI_GAP_HALF,
+    MI_WEAPON_SLOT(0, "weapon_slots_1_1"),
+    MI_WEAPON_SLOT(1, "weapon_slots_1_2"),
+    MI_WEAPON_SLOT(2, "weapon_slots_1_3"),
+    MI_GAP_HALF,
+    MI_WEAPON_SLOT(3, "weapon_slots_2_1"),
+    MI_WEAPON_SLOT(4, "weapon_slots_2_2"),
+    MI_WEAPON_SLOT(5, "weapon_slots_2_3"),
+    MI_GAP_HALF,
+    MI_WEAPON_SLOT(6, "weapon_slots_3_1"),
+    MI_WEAPON_SLOT(7, "weapon_slots_3_2"),
+    MI_WEAPON_SLOT(8, "weapon_slots_3_3"),
+    MI_GAP_HALF,
+    MI_WEAPON_SLOT(9, "weapon_slots_4_1"),
+    MI_WEAPON_SLOT(10, "weapon_slots_4_2"),
+    MI_WEAPON_SLOT(11, "weapon_slots_4_3"),
+    MI_END
+};
+
+static void UpdateWeaponSlotItems(void)
+{
+    const boolean condition = !WS_Enabled();
+
+    DisableItem(condition, weap_settings2, "weapon_slots_selection");
+    DisableItem(condition, weap_settings2, "weapon_slots_1_1");
+    DisableItem(condition, weap_settings2, "weapon_slots_1_2");
+    DisableItem(condition, weap_settings2, "weapon_slots_1_3");
+    DisableItem(condition, weap_settings2, "weapon_slots_2_1");
+    DisableItem(condition, weap_settings2, "weapon_slots_2_2");
+    DisableItem(condition, weap_settings2, "weapon_slots_2_3");
+    DisableItem(condition, weap_settings2, "weapon_slots_3_1");
+    DisableItem(condition, weap_settings2, "weapon_slots_3_2");
+    DisableItem(condition, weap_settings2, "weapon_slots_3_3");
+    DisableItem(condition, weap_settings2, "weapon_slots_4_1");
+    DisableItem(condition, weap_settings2, "weapon_slots_4_2");
+    DisableItem(condition, weap_settings2, "weapon_slots_4_3");
+}
+
+static setup_menu_t weap_settings3[] = {
+    {"1St Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_1"}},
+    {"2Nd Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_2"}},
+    {"3Rd Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_3"}},
+    {"4Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_4"}},
+    {"5Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_5"}},
+    {"6Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_6"}},
+    {"7Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_7"}},
+    {"8Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_8"}},
+    {"9Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_9"}},
     MI_GAP,
-    {"Use Weapon Toggles", S_ONOFF | S_BOOM, OFF_CNTR_X, M_SPC, {"doom_weapon_toggles"}},
+    {"Same Key Toggles Weapons", S_ONOFF | S_BOOM, M_X, M_SPC, {"doom_weapon_toggles"}},
+    {"Cycle Through All Weapons", S_ONOFF | S_BOOM, M_X, M_SPC, {"full_weapon_cycle"}},
     MI_GAP,
     // killough 8/8/98
-    {"Pre-Beta BFG", S_ONOFF | S_STRICT, OFF_CNTR_X, M_SPC, {"classic_bfg"}},
+    {"Pre-Beta BFG", S_ONOFF | S_STRICT, M_X, M_SPC, {"classic_bfg"}},
     MI_END
 };
 
 // [Cherry] /------------------------------------------------------------------
 
-static setup_menu_t weap_settings3[] =
+static setup_menu_t weap_settings4[] =
 {
   // [Cherry] From `Nugget`
 
@@ -1943,13 +2100,14 @@ static setup_menu_t weap_settings3[] =
 // [Cherry] ------------------------------------------------------------------/
 
 static setup_menu_t *weap_settings[] = {
-    weap_settings1,
-    weap_settings2,
-    weap_settings3, // [Cherry]
+    weap_settings1, weap_settings2, weap_settings3,
+
+    weap_settings4, // [Cherry]
 
     // [Cherry] Redistributed Nugget options across other pages
 
     NULL
+
 };
 
 static void UpdateCenteredWeaponItem(void)
@@ -2573,7 +2731,7 @@ static setup_menu_t enem_settings1[] = {
 
     // [Nugget] /-------------------------------------------------------------
 
-    MI_GAP,
+    MI_GAP_HALF,
     {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
 
       {"Extra Gibbing",            S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"extra_gibbing"}},
@@ -2588,7 +2746,7 @@ static setup_menu_t enem_settings1[] = {
 
     // [Cherry] /--------------------------------------------------------------
 
-    MI_GAP,
+    MI_GAP_HALF,
     {"Cherry", S_SKIP|S_TITLE, M_X, M_SPC},
 
       {"Blood Amount Scales With Damage", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"blood_amount_scaling"}},
@@ -2654,12 +2812,19 @@ static const char *vertical_aiming_strings[] = {
 };
 
 static void UpdateInterceptsEmuItem(void);
+static void UpdateWeaponSlotStrings(void);
+
+static void UpdateDefaultCompatibilityLevel(void)
+{
+    UpdateInterceptsEmuItem();
+    UpdateWeaponSlotStrings();
+}
 
 setup_menu_t comp_settings1[] = {
 
     {"Default Compatibility Level", S_CHOICE | S_LEVWARN, M_X, M_SPC,
      {"default_complevel"}, .strings_id = str_default_complevel,
-     .action = UpdateInterceptsEmuItem},
+     .action = UpdateDefaultCompatibilityLevel},
 
     {"Strict Mode", S_ONOFF | S_LEVWARN, M_X, M_SPC, {"strictmode"}},
 
@@ -3018,7 +3183,6 @@ static setup_menu_t gen_settings2[] = {
      .action = SetMidiPlayer},
 
     MI_GAP,
-    MI_GAP,
 
     // [Cherry] Mute Inactive Window feature from International Doom
     {"Cherry", S_SKIP | S_TITLE, CNTR_X, M_SPC},
@@ -3040,18 +3204,17 @@ static const char *equalizer_preset_strings[] = {
 
 #define M_THRM_SPC_EQ (M_THRM_HEIGHT - 1)
 #define M_SPC_EQ 8
-#define MI_GAP_EQ {NULL, S_SKIP, 0, 4}
 
 static setup_menu_t eq_settings1[] = {
     {"Preset", S_CHOICE, CNTR_X, M_SPC_EQ, {"snd_equalizer"},
      .strings_id = str_equalizer_preset, .action = I_OAL_EqualizerPreset},
 
-    MI_GAP_EQ,
+    MI_GAP_HALF,
 
     {"Preamp dB", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
      {"snd_eq_preamp"}, .action = I_OAL_EqualizerPreset},
 
-    MI_GAP_EQ,
+    MI_GAP_HALF,
 
     {"Low Gain dB", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
      {"snd_eq_low_gain"}, .action = I_OAL_EqualizerPreset},
@@ -3065,7 +3228,7 @@ static setup_menu_t eq_settings1[] = {
     {"High Gain dB", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
      {"snd_eq_high_gain"}, .action = I_OAL_EqualizerPreset},
 
-    MI_GAP_EQ,
+    MI_GAP_HALF,
 
     {"Low Cutoff Hz", S_THERMO, CNTR_X, M_THRM_SPC_EQ,
      {"snd_eq_low_cutoff"}, .action = I_OAL_EqualizerPreset},
@@ -3242,14 +3405,18 @@ static const char *curve_strings[] = {
     "2.4",    "2.5", "2.6", "2.7",     "2.8", "2.9", "Cubed"
 };
 
+static void MN_PadAdv(void);
 static void MN_Gyro(void);
+
+#define MI_GAP_GAMEPAD {NULL, S_SKIP, 0, 6}
 
 static setup_menu_t gen_settings4[] = {
 
+    {"Advanced Options", S_FUNC, CNTR_X, M_SPC, .action = MN_PadAdv},
+
     {"Gyro Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Gyro},
 
-    {"Stick Layout", S_CHOICE, CNTR_X, M_SPC, {"joy_stick_layout"},
-     .strings_id = str_layout, .action = UpdateStickLayout},
+    MI_GAP_GAMEPAD,
 
     {"Free Look", S_ONOFF, CNTR_X, M_SPC, {"padlook"},
      .action = MN_UpdatePadLook},
@@ -3257,10 +3424,7 @@ static setup_menu_t gen_settings4[] = {
     {"Invert Look", S_ONOFF, CNTR_X, M_SPC, {"joy_invert_look"},
      .action = I_ResetGamepad},
 
-    {"Rumble", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_rumble"},
-     .strings_id = str_rumble, .action = UpdateRumble},
-
-    MI_GAP,
+    MI_GAP_GAMEPAD,
 
     {"Turn Speed", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
      {"joy_turn_speed"}, .action = I_ResetGamepad},
@@ -3268,10 +3432,7 @@ static setup_menu_t gen_settings4[] = {
     {"Look Speed", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
      {"joy_look_speed"}, .action = I_ResetGamepad},
 
-    {"Response Curve", S_THERMO, CNTR_X, M_THRM_SPC,
-     {"joy_camera_curve"}, .strings_id = str_curve, .action = I_ResetGamepad},
-
-    MI_GAP,
+    MI_GAP_GAMEPAD,
 
     {"Movement Deadzone", S_THERMO | S_PCT, CNTR_X, M_THRM_SPC,
      {"joy_movement_inner_deadzone"}, .action = I_ResetGamepad},
@@ -3279,26 +3440,115 @@ static setup_menu_t gen_settings4[] = {
     {"Camera Deadzone", S_THERMO | S_PCT, CNTR_X, M_THRM_SPC,
      {"joy_camera_inner_deadzone"}, .action = I_ResetGamepad},
 
+    MI_GAP_GAMEPAD,
+
+    {"Rumble", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_rumble"},
+     .strings_id = str_rumble, .action = UpdateRumble},
+
     MI_END
 };
+
+static const char *movement_type_strings[] = {
+    "Normalized", "Faster Diagonals"
+};
+
+#define MS_TIME_STRINGS_SIZE (50 + 1)
+
+static const char **GetMsTimeStrings(void)
+{
+    static const char *strings[MS_TIME_STRINGS_SIZE];
+    char buf[8];
+
+    for (int i = 0; i < MS_TIME_STRINGS_SIZE; ++i)
+    {
+        M_snprintf(buf, sizeof(buf), "%d ms", i * 10);
+        strings[i] = M_StringDuplicate(buf);
+    }
+    return strings;
+}
+
+static const char *flick_snap_strings[] = {"Off", "4-Way", "8-Way"};
+
+static setup_menu_t padadv_settings1[] = {
+
+    {"Stick Layout", S_CHOICE, CNTR_X, M_SPC, {"joy_stick_layout"},
+     .strings_id = str_layout, .action = UpdateStickLayout},
+
+    {"Flick Snap", S_CHOICE | S_STRICT, CNTR_X, M_SPC, {"joy_flick_snap"},
+     .strings_id = str_flick_snap, .action = I_ResetGamepad},
+
+    {"Flick Time", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_flick_time"},
+     .strings_id = str_ms_time, .action = I_ResetGamepad},
+
+    MI_GAP,
+
+    {"Movement Type", S_CHOICE, CNTR_X, M_SPC,
+     {"joy_scale_diagonal_movement"}, .strings_id = str_movement_type,
+     .action = I_ResetGamepad},
+
+    MI_GAP,
+
+    {"Movement Curve", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_movement_curve"},
+     .strings_id = str_curve, .action = I_ResetGamepad},
+
+    {"Camera Curve", S_THERMO, CNTR_X, M_THRM_SPC, {"joy_camera_curve"},
+     .strings_id = str_curve, .action = I_ResetGamepad},
+
+    MI_END
+};
+
+static setup_menu_t *padadv_settings[] = {padadv_settings1, NULL};
+
+static setup_tab_t padadv_tabs[] = {{"Advanced"}, {NULL}};
+
+static void MN_PadAdv(void)
+{
+    SetItemOn(set_item_on);
+    SetPageIndex(current_page);
+
+    MN_SetNextMenuAlt(ss_padadv);
+    setup_screen = ss_padadv;
+    current_page = GetPageIndex(padadv_settings);
+    current_menu = padadv_settings[current_page];
+    current_tabs = padadv_tabs;
+    SetupMenuSecondary();
+}
+
+void MN_DrawPadAdv(void)
+{
+    inhelpscreens = true;
+
+    DrawBackground("FLOOR4_6");
+    MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
+    DrawTabs();
+    DrawInstructions();
+    DrawScreenItems(current_menu);
+}
 
 static void UpdateGamepadItems(void)
 {
     const boolean gamepad = (I_UseGamepad() && I_GamepadEnabled());
     const boolean gyro = (I_GyroEnabled() && I_GyroSupported());
     const boolean sticks = I_UseStickLayout();
+    const boolean flick = (gamepad && sticks && !I_StandardLayout());
     const boolean condition = (!gamepad || !sticks);
 
+    DisableItem(!gamepad, gen_settings4, "Advanced Options");
     DisableItem(!gamepad || !I_GyroSupported(), gen_settings4, "Gyro Options");
     DisableItem(!gamepad || !I_RumbleSupported(), gen_settings4, "joy_rumble");
     DisableItem(!gamepad || (!sticks && !gyro), gen_settings4, "padlook");
-    DisableItem(!gamepad, gen_settings4, "joy_stick_layout");
     DisableItem(condition, gen_settings4, "joy_invert_look");
     DisableItem(condition, gen_settings4, "joy_movement_inner_deadzone");
     DisableItem(condition, gen_settings4, "joy_camera_inner_deadzone");
     DisableItem(condition, gen_settings4, "joy_turn_speed");
     DisableItem(condition, gen_settings4, "joy_look_speed");
-    DisableItem(condition, gen_settings4, "joy_camera_curve");
+
+    DisableItem(!gamepad, padadv_settings1, "joy_stick_layout");
+    DisableItem(!flick, padadv_settings1, "joy_flick_snap");
+    DisableItem(!flick, padadv_settings1, "joy_flick_time");
+    DisableItem(condition, padadv_settings1, "joy_scale_diagonal_movement");
+    DisableItem(condition, padadv_settings1, "joy_movement_curve");
+    DisableItem(condition, padadv_settings1, "joy_camera_curve");
 }
 
 static void UpdateGyroItems(void);
@@ -3435,6 +3685,7 @@ static void UpdateGyroItems(void)
 
 void MN_UpdateAllGamepadItems(void)
 {
+    UpdateWeaponSlotSelection();
     UpdateGamepadItems();
     UpdateGyroItems();
 }
@@ -4035,9 +4286,6 @@ static void CSCurrentLoadout(void)
   StartCustomSkill(3);
 }
 
-#define MI_GAP2 \
-    {"", S_SKIP, 0, M_SPC / 2}
-
 static setup_menu_t customskill_settings1[] = {
 
     {"Thing Spawns",           S_CHOICE|S_LEVWARN, M_X, M_SPC, {"custom_skill_things"}, .strings_id = str_thing_spawns},
@@ -4045,15 +4293,15 @@ static setup_menu_t customskill_settings1[] = {
     {"Duplicate Monsters",     S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_x2monsters"}},
     {"No Monsters",            S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_nomonsters"}},
     {"Disable Stats Tracking", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_notracking"}}, // [Cherry]
-    MI_GAP2,
+    MI_GAP_HALF,
     {"Double Ammo From Pickups", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_doubleammo"}},
     {"Halved Damage To Player",  S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_halfdamage"}},
     {"Slow Spawn-Cube Spitter",  S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_slowbrain"}},
-    MI_GAP2,
+    MI_GAP_HALF,
     {"Fast Monsters",                   S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_fast"}},
     {"Respawning Monsters",             S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_respawn"}},
     {"Aggressive (Nightmare) Monsters", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_aggressive"}},
-    MI_GAP2,
+    MI_GAP_HALF,
     {"Start New Game",                   S_FUNC2|S_LEFTJUST, 32, M_SPC, {NULL}, .action = CSNewGame},
     {"Restart Level -- Pistol Start",    S_FUNC2|S_LEFTJUST, 32, M_SPC, {NULL}, .action = CSPistolStart},
     {"Restart Level -- Initial Loadout", S_FUNC2|S_LEFTJUST, 32, M_SPC, {NULL}, .action = CSInitialLoadout},
@@ -4061,8 +4309,6 @@ static setup_menu_t customskill_settings1[] = {
 
     MI_END
 };
-
-#undef MI_GAP2
 
 static setup_menu_t *customskill_settings[] = {customskill_settings1, NULL};
 
@@ -4122,6 +4368,7 @@ static setup_menu_t **setup_screens[] = {
     comp_settings,
     level_table,  // [Cherry]
     eq_settings,
+    padadv_settings,
     gyro_settings,
 
     customskill_settings, // [Nugget] Custom Skill menu
@@ -4252,6 +4499,7 @@ static void ResetDefaultsSecondary(void)
     if (setup_screen == ss_gen)
     {
         ResetDefaults(ss_eq);
+        ResetDefaults(ss_padadv);
         ResetDefaults(ss_gyro);
     }
 }
@@ -5098,7 +5346,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
     {
         if (M_ToUpper(ch) == 'Y')
         {
-            WS_EraseMapStats(ltbl_map_erase_item->var.map_i);
+            WadStats_EraseMapStats(ltbl_map_erase_item->var.map_i);
             ltbl_map_erase = false;
             SelectDone(ltbl_map_erase_item);
 
@@ -5119,7 +5367,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
     {
         if (M_ToUpper(ch) == 'Y')
         {
-            WS_EraseWadStats();
+            WadStats_EraseWadStats();
             ltbl_wad_erase = false;
             SelectDone(current_item);
 
@@ -5738,6 +5986,9 @@ void MN_DrawTitle(int x, int y, const char *patch, const char *alttext)
 static const char **selectstrings[] = {
     NULL, // str_empty
     layout_strings,
+    flick_snap_strings,
+    NULL, // str_ms_time
+    movement_type_strings,
     rumble_strings,
     curve_strings,
     center_weapon_strings,
@@ -5752,6 +6003,9 @@ static const char **selectstrings[] = {
     overlay_strings,
     automap_preset_strings,
     automap_keyed_door_strings,
+    weapon_slots_activation_strings,
+    weapon_slots_selection_strings,
+    NULL, // str_weapon_slots
     NULL, // str_resolution_scale
     NULL, // str_midi_player
     gamma_strings,
@@ -5807,6 +6061,11 @@ static void UpdateHUDModeStrings(void)
     selectstrings[str_hudmode] = GetHUDModeStrings();
 }
 
+static void UpdateWeaponSlotStrings(void)
+{
+    selectstrings[str_weapon_slots] = GetWeaponSlotStrings();
+}
+
 static const char **GetMidiPlayerStrings(void)
 {
     return I_DeviceList();
@@ -5815,9 +6074,12 @@ static const char **GetMidiPlayerStrings(void)
 void MN_InitMenuStrings(void)
 {
     UpdateHUDModeStrings();
+    UpdateWeaponSlotLabels();
+    UpdateWeaponSlotStrings();
     selectstrings[str_resolution_scale] = GetResolutionScaleStrings();
     selectstrings[str_midi_player] = GetMidiPlayerStrings();
     selectstrings[str_mouse_accel] = GetMouseAccelStrings();
+    selectstrings[str_ms_time] = GetMsTimeStrings();
     selectstrings[str_gyro_sens] = GetGyroSensitivityStrings();
     selectstrings[str_gyro_accel] = GetGyroAccelStrings();
     selectstrings[str_resampler] = GetResamplerStrings();
@@ -5836,7 +6098,9 @@ void MN_SetupResetMenu(void)
     UpdateInterceptsEmuItem();
     UpdateCrosshairItems();
     UpdateCenteredWeaponItem();
-    MN_UpdateAllGamepadItems();
+    UpdateGamepadItems();
+    UpdateGyroItems();
+    UpdateWeaponSlotItems();
     MN_UpdateEqualizerItems();
 
     // [Nugget] --------------------------------------------------------------

@@ -272,7 +272,7 @@ static void CreateStats(boolean finish)
     free(last_wad_name);
 }
 
-void WS_EraseMapStats(int i)
+void WadStats_EraseMapStats(int i)
 {
     if (!CAN_WATCH_MAP)
     {
@@ -293,7 +293,7 @@ void WS_EraseMapStats(int i)
     ms->best_time = ms->best_max_time = ms->best_sk5_time = -1;
 }
 
-void WS_EraseWadStats(void)
+void WadStats_EraseWadStats(void)
 {
     if (!CAN_WATCH_MAP)
     {
@@ -302,7 +302,7 @@ void WS_EraseWadStats(void)
 
     for (int i = 0; i < array_size(wad_stats.maps); ++i)
     {
-        WS_EraseMapStats(i);
+        WadStats_EraseMapStats(i);
     }
     wad_stats.kill_check = 0;
 }
@@ -442,7 +442,7 @@ static void WriteMapLine(FILE *file, const map_stats_t *ms)
             ms->max_kills, ms->max_items, ms->max_secrets);
 }
 
-void WS_Save(void)
+void WadStats_Save(void)
 {
     if (!CAN_WATCH_MAP)
     {
@@ -454,7 +454,7 @@ void WS_Save(void)
     if (!file)
     {
         I_Printf(VB_WARNING,
-                 "WS_Save: Failed to save WAD stats file \"%s\".",
+                 "WadStats_Save: Failed to save WAD stats file \"%s\".",
                  path);
         return;
     }
@@ -479,7 +479,7 @@ void WS_Save(void)
 // Gameplay Tracking
 //==================
 
-void WS_WatchMap(void)
+void WadStats_WatchMap(void)
 {
     if (!CAN_WATCH_MAP)
     {
@@ -489,7 +489,7 @@ void WS_WatchMap(void)
     current_map_stats = MapStats(gameepisode, gamemap);
 }
 
-void WS_UnwatchMap(void)
+void WadStats_UnwatchMap(void)
 {
     if (!TRACKING)
     {
@@ -499,7 +499,7 @@ void WS_UnwatchMap(void)
     current_map_stats = NULL;
 }
 
-void WS_WatchKill(void)
+void WadStats_WatchKill(void)
 {
     if (!TRACKING)
     {
@@ -548,7 +548,7 @@ static int MissedMonsters(void)
     return missed_monsters;
 }
 
-void WS_WatchExitMap(void)
+void WadStats_WatchExitMap(void)
 {
     if (!TRACKING)
     {
@@ -631,7 +631,7 @@ void WS_WatchExitMap(void)
 // Initialization & Cleanup
 //=========================
 
-void WS_Init(void)
+void WadStats_Init(void)
 {
     if (notracking || !lt_enable_tracking // the level table still needs to work
         || HandleLoadErrors(LoadStats()) == LOAD_ERROR_NOTFOUND)
@@ -650,14 +650,14 @@ static void FreeWadStats(void)
     array_free(wad_stats.maps);
 }
 
-void WS_Cleanup(void)
+void WadStats_Cleanup(void)
 {
     FreeWadStats();
 
     free(stats_path);
 }
 
-void WS_BindLevelTableVariables(void)
+void WadStats_BindLevelTableVariables(void)
 {
     M_BindBool("lt_enable_tracking", &lt_enable_tracking, NULL, true, ss_none,
                wad_no, "Enable WAD stats tracking");
