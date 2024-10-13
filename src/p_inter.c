@@ -358,6 +358,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       };
 
       pickupmsg(player, "%s", s);
+      goto picked_up;
     }
     else if (special->altsprite == ASPR_NGCL)
     {
@@ -372,12 +373,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       };
 
       pickupmsg(player, "%s", s);
+      goto picked_up;
     }
-    else
-    // Match the below switch's default
-    return;
   }
-  else
 
     // Identify by sprite.
   switch (special->sprite)
@@ -713,6 +711,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       // I_Error("P_SpecialThing: Unknown gettable thing");
       return;      // killough 12/98: suppress error message
     }
+
+picked_up: // [Nugget]
 
   if (special->flags & MF_COUNTITEM)
   {
