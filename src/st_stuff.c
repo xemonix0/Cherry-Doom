@@ -1217,7 +1217,7 @@ void ST_drawWidgets(void)
         patch_t *const patch = W_CacheLumpNum(lu_berserk, PU_STATIC);
         
         // [crispy] (23,179) is the center of the Ammo widget
-        V_DrawPatch(ammox + (21 * (st_crispyhud ? nughud.ammo.align : -1))
+        V_DrawPatch(ammox - (21 * (st_crispyhud ? nughud.ammo.align : 1))
                     - SHORT(patch->width)/2 + SHORT(patch->leftoffset),
                     ammoy + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
                     patch);
