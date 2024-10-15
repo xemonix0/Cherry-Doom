@@ -1041,20 +1041,23 @@ void I_SetPalette(byte *palette)
     {
         // [Nugget] Color settings
 
-        const int r = gamma[*palette++],
-                  g = gamma[*palette++],
-                  b = gamma[*palette++];
+        const byte r = gamma[*palette++] * red_intensity   / 100,
+                   g = gamma[*palette++] * green_intensity / 100,
+                   b = gamma[*palette++] * blue_intensity  / 100;
 
         // [JN] Saturation floats, high and low.
         // If saturation has been modified (< 100), set high and low
         // values according to saturation level. Sum of r,g,b channels
         // and floats must be 1.0 to get proper colors.
-        const float a_hi = I_SaturationPercent[color_saturation],
-                    a_lo = a_hi / 2.0f;
+        float a_hi = I_SaturationPercent[color_saturation],
+              a_lo = a_hi / 2.0f;
 
-        colors[i].r = (((1.0f - a_hi) * r) + ((0.0f + a_lo) * g) + ((0.0f + a_lo) * b)) * ((float) red_intensity   / 100.0f);
-        colors[i].g = (((0.0f + a_lo) * r) + ((1.0f - a_hi) * g) + ((0.0f + a_lo) * b)) * ((float) green_intensity / 100.0f);
-        colors[i].b = (((0.0f + a_lo) * r) + ((0.0f + a_lo) * g) + ((1.0f - a_hi) * b)) * ((float) blue_intensity  / 100.0f);
+        a_hi = 1.0f - a_hi;
+        a_lo = 0.0f + a_lo;
+
+        colors[i].r = (a_hi * r) + (a_lo * g) + (a_lo * b);
+        colors[i].g = (a_lo * r) + (a_hi * g) + (a_lo * b);
+        colors[i].b = (a_lo * r) + (a_lo * g) + (a_hi * b);
 
         colors[i].a = 0xffu;
     }
