@@ -22,10 +22,6 @@
   - Gave an `sts_` prefix to `show_berserk`, `show_ssg`, and `alt_arms` [1]
   - Revised the descriptions of many of Nugget's new CVARs
 - **Improved loading speed when rewinding**
-- **Autosave improvements:**
-  - Separated level-end autosaves and periodic autosaves into two settings,
-    enabled the former by default, and gave menu items to both
-  - Autosaves are now prefixed as per the executable's name
 - **NUGHUD:**
   - Replaced `_gap` property of bars with `_xstep` and `_ystep`, allowing for vertical bars [2]
   - Extended bars' `_ups` range to [10, 10000]
@@ -43,7 +39,6 @@
 ## Bug Fixes
 
 - **Crash when loading status bars taller than 32px**
-- **Vertically scrolling skies being affected by sky-stretching settings**
 - **_'FAST'_ cheat not fully toggling fast monsters outside of custom skill**
 - **Fallback status-bar Berserk graphic not taking NUGHUD Ammo alignment into account**
 - **Tag Finder not highlighting hidden lines**
