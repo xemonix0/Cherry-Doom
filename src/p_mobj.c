@@ -853,7 +853,7 @@ void P_MobjThinker (mobj_t* mobj)
           }
 
           if (oumobj && mobj->flags & MF_SKULLFLY)
-          { P_SkullSlam(mobj, oumobj); }
+          { P_SkullSlam(&mobj, oumobj); }
         }
       }
       else
