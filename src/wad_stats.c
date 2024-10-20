@@ -68,8 +68,8 @@ static char *InitBaseDataDir(void)
         parent_directory = D_DoomPrefDir();
     }
 
-    char *base_data_dir = NULL;
-    M_StringPrintF(&base_data_dir, "%s/%s", parent_directory, DATA_ROOT);
+    char *base_data_dir =
+        M_StringJoin(parent_directory, DIR_SEPARATOR_S, DATA_ROOT);
     M_MakeDirectory(base_data_dir);
 
     return base_data_dir;
@@ -104,7 +104,7 @@ static char *InitDataDir(void)
     char **data_dir_names = DataDirNames();
     for (int i = 0; i < array_size(data_dir_names); ++i)
     {
-        M_StringConcatF(&data_dir, "/%s", data_dir_names[i]);
+        data_dir = M_StringJoin(data_dir, DIR_SEPARATOR_S, data_dir_names[i]);
         M_MakeDirectory(data_dir);
     }
 
@@ -127,7 +127,9 @@ static const char *StatsPath(void)
     {
         char *data_dir = InitDataDir();
 
-        M_StringPrintF(&stats_path, "%s/%s", data_dir, STATS_FILENAME);
+        stats_path = M_StringJoin(data_dir, DIR_SEPARATOR_S, STATS_FILENAME);
+
+        I_Printf(VB_INFO, " stats file: %s", stats_path);
 
         free(data_dir);
     }

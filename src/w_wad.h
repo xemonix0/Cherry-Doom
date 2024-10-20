@@ -170,6 +170,9 @@ boolean W_IsWADLump (const int lump);
 boolean W_LumpExistsWithName(int lump, char *name);
 int W_LumpLengthWithName(int lump, char *name);
 
+// [Cherry]
+boolean W_IsMapName(const char *const name);
+
 void W_Close(void);
 
 #endif

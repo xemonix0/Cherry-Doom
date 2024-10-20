@@ -17,6 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <ctype.h> // [Cherry]
 #include <stdlib.h>
 #include <string.h>
 
@@ -590,6 +591,29 @@ int W_LumpLengthWithName(int lump, char *name)
     return 0;
 
   return W_LumpLength(lump);
+}
+
+// [Cherry]
+boolean W_IsMapName(const char* const name)
+{
+    if (strlen(name) > 5 || strlen(name) < 4)
+    {
+        return false;
+    }
+
+    if (strlen(name) == 4 && name[0] == 'E' && isdigit(name[1])
+        && name[2] == 'M' && isdigit(name[3]))
+    {
+        return true;
+    }
+
+    if (strlen(name) == 5 && M_StringStartsWith(name, "MAP") && isdigit(name[3])
+        && isdigit(name[4]))
+    {
+        return true;
+    }
+
+    return false;
 }
 
 // killough 10/98: support .deh from wads

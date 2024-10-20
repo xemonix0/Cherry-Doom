@@ -225,41 +225,13 @@ static w_type_t W_FILE_Open(const char *path, w_handle_t *handle, wad_source_t s
         // [FG] WAD file that contains the lump
         item.wad_file = wadname;
 
-        // [Cherry]
-        item.source = source;
+        item.source = source; // [Cherry]
         array_push(lumpinfo, item);
 
         // [Cherry] Mark the WAD file as one containing maps (for WAD stats)
-
-        if (wadfile.contains_maps)
+        if (!wadfile.contains_maps && W_IsMapName(item.name))
         {
-            continue;
-        }
-
-        if (gamemode == commercial)
-        {
-            for (int m = 1; m < 100; ++m)
-            {
-                if (strncasecmp(item.name, MAPNAME(1, m), 8))
-                {
-                    wadfile.contains_maps = true;
-                    break;
-                }
-            }
-        }
-        else
-        {
-            for (int e = 1; e < 10; ++e)
-            {
-                for (int m = 1; m < 10; ++m)
-                {
-                    if (strncasecmp(item.name, MAPNAME(e, m), 8))
-                    {
-                        wadfile.contains_maps = true;
-                        break;
-                    }
-                }
-            }
+            wadfile.contains_maps = true;
         }
     }
     
