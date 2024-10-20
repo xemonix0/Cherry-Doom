@@ -23,6 +23,7 @@
 #include "d_player.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "dsdhacked.h"
 #include "g_game.h"
 #include "hu_stuff.h"
 #include "i_printf.h"
@@ -50,8 +51,19 @@
 // [Nugget]
 #include "p_user.h"
 
-// [FG] colored blood and gibs
-boolean colored_blood;
+// [Nugget] CVARs
+int viewheight_value;
+int flinching;
+int damagecount_cap;
+int bonuscount_cap;
+boolean comp_fuzzyblood;
+boolean comp_nonbleeders;
+
+// [Cherry] CVARs
+boolean rocket_trails;
+int rocket_trails_interval;
+int no_rocket_trails;
+
 int vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
 
 void P_UpdateDirectVerticalAiming(void)
@@ -83,7 +95,7 @@ boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
 
   // killough 4/9/98: remember states seen, to detect cycles:
 
-  extern statenum_t *seenstate_tab;           // fast transition table
+  // fast transition table
   statenum_t *seenstate = seenstate_tab;      // pointer to table
   static int recursion;                       // detects recursion
   statenum_t i = state;                       // initial state
@@ -157,8 +169,16 @@ void P_ExplodeMissile (mobj_t* mo)
   mo->flags &= ~MF_MISSILE;
 
   if (mo->info->deathsound)
-    S_StartSoundPitch(mo, mo->info->deathsound,
-                      brainexplode ? PITCH_NONE : PITCH_FULL);
+  {
+    if (brainexplode)
+    {
+      S_StartSoundPitch(mo, mo->info->deathsound, PITCH_NONE);
+    }
+    else
+    {
+      S_StartSoundOrigin(mo->target, mo, mo->info->deathsound);
+    }
+  }
 }
 
 //
@@ -438,6 +458,8 @@ void P_XYMovement (mobj_t* mo)
      }
     }
 }
+
+boolean comp_deadoof; // [Nugget]
 
 //
 // P_ZMovement
@@ -774,9 +796,11 @@ boolean floating_powerups;
 // P_MobjThinker
 //
 
+// [Nugget]
+boolean cheese, frights;
+
 void P_MobjThinker (mobj_t* mobj)
 {
-  extern boolean cheese; // [Nugget] cheese :)
   boolean oucheck = false; // [Nugget] Over/Under
 
   // [crispy] support MUSINFO lump (dynamic music changing)
@@ -786,20 +810,32 @@ void P_MobjThinker (mobj_t* mobj)
       return;
   }
 
-  // [Nugget] cheese :)
-  if (casual_play && mobj->type == MT_MISC2)
+  // [Nugget]
+  if (casual_play)
   {
-    if (cheese && !(mobj->intflags & MIF_CHEESE))
+    if (mobj->type == MT_MISC2)
     {
-      mobj->intflags |= MIF_CHEESE;
-      mobj->tics = -1;
-      mobj->sprite = SPR_TNT1;
-      mobj->frame = 1;
+      if (cheese && mobj->altsprite == -1)
+      {
+        mobj->altsprite = ASPR_NGCH;
+        mobj->altframe = 0;
+      }
+      else if (!cheese && mobj->altsprite > -1)
+      {
+        mobj->altsprite = mobj->altframe = -1;
+      }
     }
-    else if (!cheese && (mobj->intflags & MIF_CHEESE))
+    else if (mobj->type == MT_MISC3)
     {
-      mobj->intflags &= ~MIF_CHEESE;
-      P_SetMobjState(mobj, mobj->info->spawnstate);
+      if (frights && mobj->altsprite == -1)
+      {
+        mobj->altsprite = ASPR_NGCL;
+        mobj->altframe = 0|FF_FULLBRIGHT;
+      }
+      else if (!frights && mobj->altsprite > -1)
+      {
+        mobj->altsprite = mobj->altframe = -1;
+      }
     }
   }
 
@@ -1018,6 +1054,8 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   mobj->tics   = st->tics;
   mobj->sprite = st->sprite;
   mobj->frame  = st->frame;
+
+  mobj->altsprite = mobj->altframe = -1; // [Nugget] Alt. sprites
 
   // NULL head of sector list // phares 3/13/98
   mobj->touching_sectorlist = NULL;
@@ -1310,6 +1348,16 @@ void P_SpawnPlayer (mapthing_t* mthing)
     }
 }
 
+// [Nugget] Custom Skill: duplicate monster spawns /--------------------------
+
+static boolean duplicatespawns = false;
+
+void P_ToggleDuplicateSpawns(const boolean state)
+{
+  duplicatespawns = state;
+}
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // P_SpawnMapThing
@@ -1462,6 +1510,8 @@ spawnit:
 
   z = mobjinfo[i].flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
 
+  // Because of DSDHacked, allow `i` values outside enum mobjtype_t range
+  // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
   mobj = P_SpawnMobj (x,y,z, i);
   mobj->spawnpoint = *mthing;
 
@@ -1475,6 +1525,54 @@ spawnit:
       mobj->flags |= MF_FRIEND;            // killough 10/98:
       P_UpdateThinker(&mobj->thinker);     // transfer friendliness flag
     }
+
+  // [Nugget] Custom Skill: duplicate monster spawns
+  if (duplicatespawns)
+  {
+    const int offset = abs(mobj->x - mobj->y) % 8;
+    const fixed_t dist = (mobj->radius * 2) + (mobj->info->speed << FRACBITS);
+    boolean stuck = true;
+
+    const fixed_t xoffsets[8] = {
+      -dist,     0, dist,
+      -dist,        dist,
+      -dist,     0, dist
+    };
+
+    const fixed_t yoffsets[8] = {
+      dist,  dist,  dist,
+         0,            0,
+     -dist, -dist, -dist
+    };
+
+    mobj->flags |= MF_TELEPORT; // Don't interact with specials
+
+    for (int j = 0;  j < 8;  j++)
+    {
+      const int side = (j + offset) % 8;
+      const fixed_t xofs = xoffsets[side],
+                    yofs = yoffsets[side];
+
+      if (!Check_Sides(mobj, mobj->x + xofs, mobj->y + yofs)
+          && P_TryMove(mobj, mobj->x + xofs, mobj->y + yofs, false))
+      {
+        stuck = false;
+        break;
+      }
+    }
+
+    if (!(mobj->info->flags & MF_TELEPORT))
+    { mobj->flags &= ~MF_TELEPORT; }
+
+    if (stuck)
+    {
+      if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
+      { max_kill_requirement--; }
+
+      P_RemoveMobj(mobj);
+      return;
+    }
+  }
 
   // killough 7/20/98: exclude friends
   if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
@@ -1532,8 +1630,6 @@ spawnit:
 //
 // P_SpawnPuff
 //
-
-extern fixed_t attackrange;
 
 void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
 {
@@ -1697,12 +1793,12 @@ int autoaim = 0;  // killough 7/19/98: autoaiming was not in original beta
 // Tries to aim at a nearby monster
 //
 
+boolean no_hor_autoaim; // [Nugget]
+
 mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 {
   mobj_t *th;
   fixed_t x, y, z, slope = 0;
-
-  extern void A_Recoil(player_t* player);
 
   // see which target is to be aimed at
 
@@ -1750,7 +1846,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   th = P_SpawnMobj (x,y,z, type);
 
   if (th->info->seesound)
-    S_StartSound (th, th->info->seesound);
+    S_StartSoundMissile(source, th, th->info->seesound);
 
   P_SetTarget(&th->target, source);   // killough 11/98
   th->angle = an;

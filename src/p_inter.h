@@ -26,6 +26,25 @@
 struct player_s;
 struct mobj_s;
 
+// [Nugget] CVARs /-----------------------------------------------------------
+
+extern boolean switch_on_pickup;
+extern boolean extra_gibbing_on;
+
+enum {
+  EXGIB_FIST,
+  EXGIB_CSAW,
+  EXGIB_SSG,
+  
+  NUMEXGIBS
+}; extern boolean extra_gibbing[NUMEXGIBS];
+
+extern boolean bloodier_gibbing;
+extern boolean tossdrop;
+extern boolean comp_keypal;
+
+// [Nugget] -----------------------------------------------------------------/
+
 // Ty 03/09/98 Moved to an int in p_inter.c for deh and externalization 
 #define MAXHEALTH maxhealth
 
@@ -59,6 +78,9 @@ extern int mega_health;
 extern int bfgcells;
 extern int deh_species_infighting;
 extern int maxammo[], clipammo[];
+
+// [Nugget]
+void P_NuggetGib(struct mobj_s *mo, const boolean crushed);
 
 #endif
 

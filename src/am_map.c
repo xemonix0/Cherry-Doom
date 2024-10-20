@@ -27,8 +27,10 @@
 #include "doomdata.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "doomtype.h"
 #include "hu_stuff.h"
 #include "i_video.h"
+#include "m_config.h"
 #include "m_input.h"
 #include "mn_menu.h"
 #include "m_misc.h"
@@ -37,14 +39,16 @@
 #include "p_setup.h"
 #include "p_spec.h"
 #include "r_defs.h"
+#include "r_draw.h"
 #include "r_main.h"
 #include "r_state.h"
 #include "r_things.h"
 #include "st_stuff.h"
 #include "tables.h"
 #include "v_flextran.h"
+#include "v_fmt.h"
 #include "v_video.h"
-#include "w_wad.h"
+#include "ws_stuff.h"
 #include "z_zone.h"
 
 // [Nugget]
@@ -53,43 +57,52 @@
 #include "s_sound.h"
 #include "sounds.h"
 
+// [Nugget] CVARs
+boolean fancy_teleport;
+
 //jff 1/7/98 default automap colors added
-int mapcolor_back;    // map background
-int mapcolor_grid;    // grid lines color
-int mapcolor_wall;    // normal 1s wall color
-int mapcolor_fchg;    // line at floor height change color
-int mapcolor_cchg;    // line at ceiling height change color
-int mapcolor_clsd;    // line at sector with floor=ceiling color
-int mapcolor_rkey;    // red key color
-int mapcolor_bkey;    // blue key color
-int mapcolor_ykey;    // yellow key color
-int mapcolor_rdor;    // red door color  (diff from keys to allow option)
-int mapcolor_bdor;    // blue door color (of enabling one but not other )
-int mapcolor_ydor;    // yellow door color
-int mapcolor_tele;    // teleporter line color
-int mapcolor_secr;    // secret sector boundary color
-int mapcolor_revsecr; // revealed secret sector boundary color
-int mapcolor_trig;    // [Nugget] Trigger-line color
-int mapcolor_exit;    // jff 4/23/98 add exit line color
-int mapcolor_unsn;    // computer map unseen line color
-int mapcolor_flat;    // line with no floor/ceiling changes
-int mapcolor_sprt;    // general sprite color
-int mapcolor_hair;    // crosshair color
-int mapcolor_sngl;    // single player arrow color
-int mapcolor_plyr[4]; // colors for player arrows in multiplayer
-int mapcolor_frnd;    // colors for friends of player
-int mapcolor_item;    // item sprite color
-int mapcolor_enemy;   // enemy sprite color
-int mapcolor_hitbox;  // [Nugget] Hitbox color
+static int mapcolor_back;    // map background
+static int mapcolor_grid;    // grid lines color
+static int mapcolor_wall;    // normal 1s wall color
+static int mapcolor_fchg;    // line at floor height change color
+static int mapcolor_cchg;    // line at ceiling height change color
+static int mapcolor_clsd;    // line at sector with floor=ceiling color
+static int mapcolor_rkey;    // red key color
+static int mapcolor_bkey;    // blue key color
+static int mapcolor_ykey;    // yellow key color
+static int mapcolor_rdor;    // red door color  (diff from keys to allow option)
+static int mapcolor_bdor;    // blue door color (of enabling one but not other )
+static int mapcolor_ydor;    // yellow door color
+static int mapcolor_tele;    // teleporter line color
+static int mapcolor_secr;    // secret sector boundary color
+static int mapcolor_revsecr; // revealed secret sector boundary color
+static int mapcolor_trig;    // [Nugget] Trigger-line color
+static int mapcolor_exit;    // jff 4/23/98 add exit line color
+static int mapcolor_unsn;    // computer map unseen line color
+static int mapcolor_flat;    // line with no floor/ceiling changes
+static int mapcolor_sprt;    // general sprite color
+static int mapcolor_hair;    // crosshair color
+static int mapcolor_sngl;    // single player arrow color
+static int mapcolor_plyr[4]; // colors for player arrows in multiplayer
+static int mapcolor_frnd;    // colors for friends of player
+static int mapcolor_item;    // item sprite color
+static int mapcolor_enemy;   // enemy sprite color
+static int mapcolor_hitbox;  // [Nugget] Hitbox color
 
 //jff 3/9/98 add option to not show secret sectors until entered
-int map_secret_after;
+static boolean map_secret_after;
 
-int map_keyed_door; // keyed doors are colored or flashing
+enum {
+  MAP_KEYED_DOOR_OFF,
+  MAP_KEYED_DOOR_COLOR,
+  MAP_KEYED_DOOR_FLASH
+};
 
-int map_smooth_lines;
+static int map_keyed_door; // keyed doors are colored or flashing
 
-int map_hitboxes; // [Nugget] Show thing hitboxes
+static boolean map_smooth_lines;
+
+static boolean map_hitboxes; // [Nugget] Show thing hitboxes
 
 // [Woof!] FRACTOMAPBITS: overflow-safe coordinate system.
 // Written by Andrey Budko (entryway), adapted from prboom-plus/src/am_map.*
@@ -239,7 +252,7 @@ static mline_t square_hitbox[] =
 
 int ddt_cheating = 0;         // killough 2/7/98: make global, rename to ddt_*
 
-int automap_grid = 0;
+boolean automap_grid = false;
 
 int automapactive = false; // [Nugget] Minimap: now an int
 static boolean automapfirststart = true;
@@ -278,9 +291,7 @@ static fixed_t  max_w;          // max_x-min_x,
 static fixed_t  max_h;          // max_y-min_y
 
 // based on player size
-static fixed_t  min_w;
-static fixed_t  min_h;
-
+static const fixed_t min_h = 2 * MAPPLAYERRADIUS; // const? never changed?
 
 static fixed_t  min_scale_mtof; // used to tell when to stop zooming out
 static fixed_t  max_scale_mtof; // used to tell when to stop zooming in
@@ -304,7 +315,7 @@ static patch_t *marknums[10];   // numbers used for marking by the automap
 mpoint_t *markpoints = NULL;    // where the points are
 int markpointnum = 0; // next point to be assigned (also number of points now)
 int markpointnum_max = 0;       // killough 2/22/98
-int followplayer = 1; // specifies whether to follow the player around
+boolean followplayer = true; // specifies whether to follow the player around
 
 static boolean stopped = true;
 
@@ -313,16 +324,27 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color);
 static void AM_drawFline_Smooth(fline_t* fl, int color);
 void (*AM_drawFline)(fline_t*, int) = AM_drawFline_Vanilla;
 
-// [crispy] automap rotate mode needs these early on
-boolean automaprotate = false;
+// [crispy/Woof!] automap rotate mode and square aspect ratio need these early on
+static boolean automaprotate = false;
+static boolean automapsquareaspect = false;
+#define ADJUST_ASPECT_RATIO (correct_aspect_ratio && automapsquareaspect)
 static void AM_rotate(int64_t *x, int64_t *y, angle_t a);
-static void AM_rotatePoint(mpoint_t *pt);
+static void AM_transformPoint(mpoint_t *pt);
 static mpoint_t mapcenter;
 static angle_t mapangle;
 
-// [FG] prev/next weapon keys and buttons
-extern int mousebprevweapon;
-extern int mousebnextweapon;
+enum
+{
+  PAN_UP,
+  PAN_DOWN,
+  PAN_LEFT,
+  PAN_RIGHT,
+  ZOOM_IN,
+  ZOOM_OUT,
+  STATE_NUM
+};
+
+static int buttons_state[STATE_NUM] = { 0 };
 
 // [Nugget] /=================================================================
 
@@ -347,9 +369,11 @@ static int64_t older_m_x, older_m_y, older_m_w, older_m_h;
 
 #define FOLLOW (followplayer || automapactive == AM_MINI)
 
-// Blink marks ---------------------------------------------------------------
+// Highlight points of interest ----------------------------------------------
 
-static int markblinktimer;
+static int highlight_timer;
+
+static int highlight_color[4];
 
 // [Nugget] =================================================================/
 
@@ -450,11 +474,25 @@ static void AM_addMark(void)
 //
 // Passed nothing, returns nothing
 //
+
+static void AM_setMinMaxScale(void)
+{
+  const fixed_t a = FixedDiv(f_w << FRACBITS, max_w);
+  const fixed_t b = FixedDiv(f_h << FRACBITS, max_h);
+
+  min_scale_mtof = (a < b) ? a : b;
+  max_scale_mtof = FixedDiv(f_h << FRACBITS, min_h);
+
+  if (scale_mtof > max_scale_mtof)
+    scale_mtof = max_scale_mtof;
+
+  if (scale_mtof < min_scale_mtof)
+    scale_mtof = min_scale_mtof;
+}
+
 static void AM_findMinMaxBoundaries(void)
 {
   int i;
-  fixed_t a;
-  fixed_t b;
 
   min_x = min_y =  INT_MAX;
   max_x = max_y = -INT_MAX;
@@ -476,14 +514,7 @@ static void AM_findMinMaxBoundaries(void)
   max_w = (max_x >>= FRACTOMAPBITS) - (min_x >>= FRACTOMAPBITS);
   max_h = (max_y >>= FRACTOMAPBITS) - (min_y >>= FRACTOMAPBITS);
 
-  min_w = 2*MAPPLAYERRADIUS; // const? never changed?
-  min_h = 2*MAPPLAYERRADIUS;
-
-  a = FixedDiv(f_w<<FRACBITS, max_w);
-  b = FixedDiv(f_h<<FRACBITS, max_h);
-
-  min_scale_mtof = a < b ? a : b;
-  max_scale_mtof = FixedDiv(f_h<<FRACBITS, 2*MAPPLAYERRADIUS);
+  AM_setMinMaxScale();
 }
 
 void AM_SetMapCenter(fixed_t x, fixed_t y)
@@ -554,7 +585,7 @@ static void AM_changeWindowLoc(void)
 //
 void AM_initVariables(void)
 {
-  static event_t st_notify = { ev_keyup, AM_MSGENTERED };
+  static event_t st_notify = {.type = ev_keyup, .data1.i = AM_MSGENTERED};
 
   m_paninc.x = m_paninc.y = 0;
   ftom_zoommul = FRACUNIT;
@@ -583,6 +614,17 @@ void AM_initVariables(void)
 
   // inform the status bar of the change
   ST_Responder(&st_notify);
+
+  // [Nugget] ----------------------------------------------------------------
+
+  byte *const playpal = W_CacheLumpNum(W_GetNumForName("PLAYPAL"), PU_STATIC);
+
+  const int low = 223;
+
+  highlight_color[0] = I_GetNearestColor(playpal, 255, low, low); // Red
+  highlight_color[1] = I_GetNearestColor(playpal, low, low, 255); // Blue
+  highlight_color[2] = I_GetNearestColor(playpal, 255, 255, low); // Yellow
+  highlight_color[3] = I_GetNearestColor(playpal, 255, 255, 255); // Any (white)
 }
 
 //
@@ -601,7 +643,7 @@ static void AM_loadPics(void)
   for (i=0;i<10;i++)
   {
     M_snprintf(namebuf, sizeof(namebuf), "AMMNUM%d", i);
-    marknums[i] = W_CacheLumpName(namebuf, PU_STATIC);
+    marknums[i] = V_CachePatchName(namebuf, PU_STATIC);
   }
 }
 
@@ -679,6 +721,9 @@ void AM_ResetScreenSize(void)
   {
     // Change the scaling multipliers
     scale_mtof = FixedDiv(f_w << FRACBITS, m_w);
+
+    AM_setMinMaxScale();
+
     scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
   }
 
@@ -732,7 +777,9 @@ static void AM_LevelInit(void)
 //
 void AM_Stop (void)
 {
-  static event_t st_notify = { 0, ev_keyup, AM_MSGEXITED };
+  static event_t st_notify = {.type = 0, .data1.i = ev_keyup, .data2.i = AM_MSGEXITED};
+
+  memset(buttons_state, 0, sizeof(buttons_state));
 
   AM_unloadPics();
 
@@ -815,19 +862,6 @@ static void AM_maxOutWindowScale(void)
   AM_activateNewScale();
 }
 
-enum
-{
-  PAN_UP,
-  PAN_DOWN,
-  PAN_LEFT,
-  PAN_RIGHT,
-  ZOOM_IN,
-  ZOOM_OUT,
-  STATE_NUM
-};
-
-static int buttons_state[STATE_NUM] = { 0 };
-
 // [Nugget]
 void AM_ChangeMode(automapmode_t mode)
 {
@@ -871,6 +905,8 @@ void AM_ChangeMode(automapmode_t mode)
       AM_activateNewScale();
     }
   }
+
+  HU_InitMonSec();
 }
 
 //
@@ -907,7 +943,7 @@ boolean AM_Responder
 
   if (automapactive != AM_FULL)
   {
-    if (M_InputActivated(input_map))
+    if (M_InputActivated(input_map) && !WS_Override())
     {
       AM_ChangeMode(AM_FULL);
       viewactive = false;
@@ -952,28 +988,28 @@ boolean AM_Responder
     rc = true;
                                                                 // phares
     if (M_InputActivated(input_map_right))                      //    |
-      if (!followplayer)                                        //    V
+      if (!followplayer && !WS_HoldOverride())                  //    V
         buttons_state[PAN_RIGHT] = 1;
       else
         rc = false;
     else if (M_InputActivated(input_map_left))
-      if (!followplayer)
+      if (!followplayer && !WS_HoldOverride())
         buttons_state[PAN_LEFT] = 1;
       else
         rc = false;
     else if (M_InputActivated(input_map_up))
-      if (!followplayer)
+      if (!followplayer && !WS_HoldOverride())
         buttons_state[PAN_UP] = 1;
       else
         rc = false;
     else if (M_InputActivated(input_map_down))
-      if (!followplayer)
+      if (!followplayer && !WS_HoldOverride())
         buttons_state[PAN_DOWN] = 1;
       else
         rc = false;
     else if (M_InputActivated(input_map_zoomout))
     {
-      if (ev->type == ev_mouseb_down && M_IsMouseWheel(ev->data1))
+      if (ev->type == ev_mouseb_down && M_IsMouseWheel(ev->data1.i))
       {
         mousewheelzoom = true;
         mtof_zoommul = m_zoomout_mouse;
@@ -984,7 +1020,7 @@ boolean AM_Responder
     }
     else if (M_InputActivated(input_map_zoomin))
     {
-      if (ev->type == ev_mouseb_down && M_IsMouseWheel(ev->data1))
+      if (ev->type == ev_mouseb_down && M_IsMouseWheel(ev->data1.i))
       {
         mousewheelzoom = true;
         mtof_zoommul = m_zoomin_mouse;
@@ -995,10 +1031,16 @@ boolean AM_Responder
     }
     else if (M_InputActivated(input_map))
     {
-      bigstate = 0;
-      viewactive = true;
-      memset(buttons_state, 0, sizeof(buttons_state));
-      AM_ChangeMode(AM_OFF);
+      if (!WS_Override())
+      {
+        bigstate = 0;
+        viewactive = true;
+        AM_ChangeMode(AM_OFF);
+      }
+      else
+      {
+        rc = false;
+      }
     }
     else if (M_InputActivated(input_map_gobig))
     {
@@ -1064,11 +1106,15 @@ boolean AM_Responder
 
     // [Nugget] /-------------------------------------------------------------
 
-    // Blink marks
-    else if (M_InputActivated(input_map_blink) && markpointnum)
+    // Highlight points of interest
+    else if (M_InputActivated(input_map_blink))
     {
-      markblinktimer = 4*TICRATE;
-      displaymsg("Blinking %i mark%s...", markpointnum, (1 < markpointnum) ? "s" : "");
+      highlight_timer = 4*TICRATE;
+
+      if (markpointnum)
+      { displaymsg("Highlighting points of interest (%i mark%s)...", markpointnum, (markpointnum == 1) ? "" : "s"); }
+      else
+      { displaymsg("Highlighting points of interest..."); }
     }
     // Minimap
     else if (M_InputActivated(input_map_mini))
@@ -1252,11 +1298,11 @@ static void AM_doFollowPlayer(void)
 // pointer. Allows map inspection without moving player to the location.
 //
 
-int map_point_coordinates;
+boolean map_point_coord; // [Nugget] Global
 
 void AM_Coordinates(const mobj_t *mo, fixed_t *x, fixed_t *y, fixed_t *z)
 {
-  *z = FOLLOW || !map_point_coordinates || !automapactive ? *x = mo->x, *y = mo->y, mo->z :
+  *z = FOLLOW || !map_point_coord || !automapactive ? *x = mo->x, *y = mo->y, mo->z :
     R_PointInSubsector(*x = (m_x+m_w/2) << FRACTOMAPBITS, *y = (m_y+m_h/2) << FRACTOMAPBITS)->sector->floorheight;
 }
 
@@ -1269,7 +1315,7 @@ void AM_Coordinates(const mobj_t *mo, fixed_t *x, fixed_t *y, fixed_t *z)
 //
 void AM_Ticker (void)
 {
-  if (markblinktimer) { markblinktimer--; } // [Nugget] Blink marks
+  if (highlight_timer) { highlight_timer--; } // [Nugget] Highlight points of interest
 
   // [Nugget] Tag Finder from PrBoomX /---------------------------------------
 
@@ -1292,7 +1338,7 @@ void AM_Ticker (void)
 
       for (int i = 0;  i < subsec->sector->linecount;  i++)
       {
-        line_t* l = subsec->sector->lines[i];
+        const line_t *const l = subsec->sector->lines[i];
 
         if (l && l->tag > 0)
         {
@@ -1500,6 +1546,17 @@ static boolean AM_clipMline
 }
 #undef DOOUTCODE
 
+// [Nugget] Factored out
+static void PUTDOT(int xx, int yy, int cc)
+{
+  if (STRICTMODE(flip_levels)) { xx = f_x*2 + f_w - 1 - xx; } // [Nugget] Flip levels
+
+  // [Nugget] Minimap: take `f_x` and `f_y` into account
+  if ((f_x <= xx && xx < f_x+f_w) && (f_y <= yy && yy < f_y+f_h))
+    I_VideoBuffer[(yy) * video.pitch + (xx)] = (cc);
+}
+
+
 //
 // AM_drawFline()
 //
@@ -1536,10 +1593,7 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
   }
 #endif
 
-// [Nugget] Minimap: take `f_x` and `f_y` into account
-#define PUTDOT(xx,yy,cc)                                          \
-  if ((f_x <= xx && xx < f_x+f_w) && (f_y <= yy && yy < f_y+f_h)) \
-    I_VideoBuffer[(yy) * video.pitch + (xx)] = (cc)
+// [Nugget] Factored PUTDOT() out
 
   dx = fl->b.x - fl->a.x;
   ax = 2 * (dx<0 ? -dx : dx);
@@ -1593,6 +1647,8 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
 //
 static void AM_putWuDot(int x, int y, int color, int weight)
 {
+  if (STRICTMODE(flip_levels)) { x = f_x*2 + f_w - 1 - x; } // [Nugget] Flip levels
+
    byte *dest = &I_VideoBuffer[y * video.pitch + x];
    unsigned int *fg2rgb = Col2RGB8[weight];
    unsigned int *bg2rgb = Col2RGB8[64 - weight];
@@ -1782,19 +1838,19 @@ static void AM_drawGrid(int color)
     // [crispy] moved here
     ml.a.y = m_y;
     ml.b.y = m_y+m_h;
-    if (automaprotate)
+    if (automaprotate || ADJUST_ASPECT_RATIO)
     {
       ml.a.y -= m_w / 2;
       ml.b.y += m_w / 2;
-      AM_rotatePoint(&ml.a);
-      AM_rotatePoint(&ml.b);
     }
+    AM_transformPoint(&ml.a);
+    AM_transformPoint(&ml.b);
     AM_drawMline(&ml, color);
   }
 
   // Figure out start of horizontal gridlines
   start = m_y;
-  if (automaprotate)
+  if (automaprotate || ADJUST_ASPECT_RATIO)
   {
     start -= m_w / 2;
   }
@@ -1803,7 +1859,7 @@ static void AM_drawGrid(int color)
     start += // (MAPBLOCKUNITS<<FRACBITS)
       - ((start-(bmaporgy>>FRACTOMAPBITS))%gridsize);
   end = m_y + m_h;
-  if (automaprotate)
+  if (automaprotate || ADJUST_ASPECT_RATIO)
   {
     end += m_w / 2;
   }
@@ -1820,9 +1876,9 @@ static void AM_drawGrid(int color)
     {
       ml.a.x -= m_h / 2;
       ml.b.x += m_h / 2;
-      AM_rotatePoint(&ml.a);
-      AM_rotatePoint(&ml.b);
     }
+    AM_transformPoint(&ml.a);
+    AM_transformPoint(&ml.b);
     AM_drawMline(&ml, color);
   }
 }
@@ -1901,8 +1957,39 @@ typedef struct
 
 static am_line_t *lines_1S = NULL;
 
-// [Nugget] Tag Finder from PrBoomX: Prototype this function
+// [Nugget] Tag Finder from PrBoomX /-----------------------------------------
+
+// Prototype this function
 static void AM_drawLineCharacter(mline_t*, int, fixed_t, angle_t, int, fixed_t, fixed_t);
+
+static int AM_isTagFinderLine(const line_t *const line)
+{
+  int ret = 0;
+
+  if (magic_sector || magic_tag > 0)
+  {
+    if (line->frontsector && (   (magic_sector  && line->frontsector->tag == magic_sector->tag)
+                              || (magic_tag > 0 && line->frontsector->tag == magic_tag)))
+    {
+      ret |= 0x1;
+    }
+    else 
+    if (line->backsector && (   (magic_sector  && line->backsector->tag == magic_sector->tag)
+                             || (magic_tag > 0 && line->backsector->tag == magic_tag)))
+    {
+      ret |= 0x1;
+    }
+
+    if (line->tag > 0 && (line->tag == magic_tag || (magic_sector && (line->tag == magic_sector->tag))))
+    {
+      ret |= 0x2;
+    }
+  }
+
+  return ret;
+}
+
+// [Nugget] -----------------------------------------------------------------/
 
 static void AM_drawWalls(void)
 {
@@ -1929,20 +2016,55 @@ static void AM_drawWalls(void)
     l.a.y = lines[i].v1->y >> FRACTOMAPBITS;
     l.b.x = lines[i].v2->x >> FRACTOMAPBITS;
     l.b.y = lines[i].v2->y >> FRACTOMAPBITS;
-    if (automaprotate)
+    AM_transformPoint(&l.a);
+    AM_transformPoint(&l.b);
+
+    // [Nugget] Tag Finder from PrBoomX: Highlight sectors and lines /--------
+
+    const int is_tf_line = AM_isTagFinderLine(&lines[i]);
+
+    if (is_tf_line & 0x1)
     {
-        AM_rotatePoint(&l.a);
-        AM_rotatePoint(&l.b);
+      if (!lines[i].backsector)
+      { array_push(lines_1S, ((am_line_t) {l, magic_sector_color_pos})); }
+      else
+      { AM_drawMline(&l, magic_sector_color_pos); }
+
+      if (magic_sector_color_pos <= MAGIC_SECTOR_COLOR_MIN+1)
+      { array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, 229 })); }
     }
+    
+    if (is_tf_line & 0x2)
+    {
+      if (!lines[i].backsector)
+      { array_push(lines_1S, ((am_line_t) {l, magic_line_color_pos})); }
+      else
+      { AM_drawMline(&l, magic_line_color_pos); }
+
+      if (magic_line_color_pos <= MAGIC_LINE_COLOR_MIN+1)
+      { array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, 251 })); }
+    }
+
+    if (is_tf_line) { continue; }
+
+    // [Nugget] -------------------------------------------------------------/
+
     // if line has been seen or IDDT has been used
     if (ddt_cheating || (lines[i].flags & ML_MAPPED))
     {
-      if ((lines[i].flags & ML_DONTDRAW) && !ddt_cheating
-          && lines[i].tag != magic_tag) // [Nugget] Tag Finder from PrBoomX
+      if ((lines[i].flags & ML_DONTDRAW) && !ddt_cheating)
         continue;
       {
         /* cph - show keyed doors and lines */
         const int amd = AM_DoorColor(lines[i].special);
+
+        // [Nugget] Highlight keyed lines
+        if (amd != -1 && !(lines[i].flags & ML_SECRET)
+            && highlight_timer && (highlight_timer % 12) < 2)
+        {
+            array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, highlight_color[amd] })); 
+        }
+
         if ((mapcolor_bdor || mapcolor_ydor || mapcolor_rdor) &&
             !(lines[i].flags & ML_SECRET) &&    /* non-secret */
             (amd != -1)
@@ -2005,14 +2127,17 @@ static void AM_drawWalls(void)
 
       if (!lines[i].backsector)
       {
+        if (mapcolor_exit && P_IsDeathExit(lines[i].frontsector))
+        {
+          array_push(lines_1S, ((am_line_t){l, keyed_door_flash ? mapcolor_grid : mapcolor_exit}));
+        }
         // [Nugget] Trigger lines
-        if (ddt_cheating && mapcolor_trig && IsTrigger(lines[i]))
+        else if (ddt_cheating && mapcolor_trig && IsTrigger(lines[i]))
         {
           array_push(lines_1S, ((am_line_t){l, mapcolor_trig}));
         }
-        else
         // jff 1/10/98 add new color for 1S secret sector boundary
-        if (mapcolor_secr && //jff 4/3/98 0 is disable
+        else if (mapcolor_secr && //jff 4/3/98 0 is disable
             (
              !map_secret_after &&
              P_IsSecret(lines[i].frontsector)
@@ -2069,6 +2194,13 @@ static void AM_drawWalls(void)
         {
           AM_drawMline(&l, mapcolor_clsd);      // non-secret closed door
         } //jff 1/6/98 show secret sector 2S lines
+        else if (mapcolor_exit &&
+            (P_IsDeathExit(lines[i].frontsector) ||
+             P_IsDeathExit(lines[i].backsector))
+        )
+        {
+          AM_drawMline(&l, keyed_door_flash ? mapcolor_grid : mapcolor_exit);
+        }
         else if
         (
             mapcolor_secr && //jff 2/16/98 fixed bug
@@ -2131,36 +2263,6 @@ static void AM_drawWalls(void)
           AM_drawMline(&l, mapcolor_unsn);
       }
     }
-
-    // [Nugget] Tag Finder from PrBoomX: Highlight sectors and lines
-    if (magic_sector || magic_tag > 0)
-    {
-      if (   (lines[i].frontsector && (   (magic_sector  && lines[i].frontsector->tag == magic_sector->tag)
-                                       || (magic_tag > 0 && lines[i].frontsector->tag == magic_tag)))
-          || (lines[i].backsector  && (   (magic_sector  && lines[i].backsector->tag  == magic_sector->tag)
-                                       || (magic_tag > 0 && lines[i].backsector->tag  == magic_tag))))
-      {
-        if (!lines[i].backsector)
-        { array_push(lines_1S, ((am_line_t) {l, magic_sector_color_pos})); }
-        else
-        { AM_drawMline(&l, magic_sector_color_pos); }
-
-        if (magic_sector_color_pos <= MAGIC_SECTOR_COLOR_MIN+1)
-        { array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, 229 })); }
-      }
-      
-      if (   (lines[i].tag > 0)
-          && (lines[i].tag == magic_tag || (magic_sector && (lines[i].tag == magic_sector->tag))))
-      {
-        if (!lines[i].backsector)
-        { array_push(lines_1S, ((am_line_t) {l, magic_line_color_pos})); }
-        else
-        { AM_drawMline(&l, magic_line_color_pos); }
-
-        if (magic_line_color_pos <= MAGIC_LINE_COLOR_MIN+1)
-        { array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, 251 })); }
-      }
-    }
   }
 
   for (int i = 0; i < array_size(lines_1S); ++i)
@@ -2209,26 +2311,36 @@ static void AM_rotate
 
 // [crispy] rotate point around map center
 // adapted from prboom-plus/src/am_map.c:898-920
-static void AM_rotatePoint(mpoint_t *pt)
+// [Woof!] Also, scale y coordinate of point for square aspect ratio
+static void AM_transformPoint(mpoint_t *pt)
 {
-  int64_t tmpx;
-  // [crispy] smooth automap rotation
-  angle_t smoothangle = FOLLOW ? ANG90 - viewangle : mapangle;
+  if (automaprotate)
+  {
+    int64_t tmpx;
+    // [crispy] smooth automap rotation
+    angle_t smoothangle = FOLLOW ? ANG90 - viewangle : mapangle;
 
-  pt->x -= mapcenter.x;
-  pt->y -= mapcenter.y;
+    pt->x -= mapcenter.x;
+    pt->y -= mapcenter.y;
 
-  smoothangle >>= ANGLETOFINESHIFT;
+    smoothangle >>= ANGLETOFINESHIFT;
 
-  tmpx = (int64_t)FixedMul(pt->x, finecosine[smoothangle])
-       - (int64_t)FixedMul(pt->y, finesine[smoothangle])
-       + mapcenter.x;
+    tmpx = (int64_t)FixedMul(pt->x, finecosine[smoothangle])
+        - (int64_t)FixedMul(pt->y, finesine[smoothangle])
+        + mapcenter.x;
 
-  pt->y = (int64_t)FixedMul(pt->x, finesine[smoothangle])
-        + (int64_t)FixedMul(pt->y, finecosine[smoothangle])
-        + mapcenter.y;
+    pt->y = (int64_t)FixedMul(pt->x, finesine[smoothangle])
+          + (int64_t)FixedMul(pt->y, finecosine[smoothangle])
+          + mapcenter.y;
 
-  pt->x = tmpx;
+    pt->x = tmpx;
+  }
+  if (ADJUST_ASPECT_RATIO)
+  {
+    int64_t diff = pt->y - mapcenter.y;
+    diff = 5 * diff / 6;
+    pt->y = mapcenter.y + diff;
+  }
 }
 
 //
@@ -2272,6 +2384,9 @@ static void AM_drawLineCharacter
     if (angle)
       AM_rotate(&l.a.x, &l.a.y, angle);
 
+    if (ADJUST_ASPECT_RATIO)
+      l.a.y = 5 * l.a.y / 6;
+
     l.a.x += x;
     l.a.y += y;
 
@@ -2286,6 +2401,9 @@ static void AM_drawLineCharacter
 
     if (angle)
       AM_rotate(&l.b.x, &l.b.y, angle);
+
+    if (ADJUST_ASPECT_RATIO)
+      l.b.y = 5 * l.b.y / 6;
 
     l.b.x += x;
     l.b.y += y;
@@ -2328,10 +2446,7 @@ static void AM_drawPlayers(void)
         pt.x = plr->mo->x >> FRACTOMAPBITS;
         pt.y = plr->mo->y >> FRACTOMAPBITS;
     }
-    if (automaprotate)
-    {
-        AM_rotatePoint(&pt);
-    }
+    AM_transformPoint(&pt);
 
     if (ddt_cheating)
       AM_drawLineCharacter
@@ -2380,7 +2495,7 @@ static void AM_drawPlayers(void)
       color = mapcolor_plyr[their_color];   //jff 1/6/98 use default color
 
     // [crispy] interpolate other player arrows
-    if (uncapped && leveltime > oldleveltime)
+    if (uncapped && leveltime > oldleveltime && p->mo->interp)
     {
         pt.x = LerpFixed(p->mo->oldx, p->mo->x) >> FRACTOMAPBITS;
         pt.y = LerpFixed(p->mo->oldy, p->mo->y) >> FRACTOMAPBITS;
@@ -2391,9 +2506,9 @@ static void AM_drawPlayers(void)
         pt.y = p->mo->y >> FRACTOMAPBITS;
     }
 
+    AM_transformPoint(&pt);
     if (automaprotate)
     {
-      AM_rotatePoint(&pt);
       smoothangle = p->mo->angle;
     }
     else
@@ -2439,7 +2554,7 @@ static void AM_drawThings
       // [Nugget] Moved player check below, since we want to draw its hitbox
 
       // [crispy] interpolate thing triangles movement
-      if (leveltime > oldleveltime)
+      if (uncapped && leveltime > oldleveltime && t->interp)
       {
         pt.x = LerpFixed(t->oldx, t->x) >> FRACTOMAPBITS;
         pt.y = LerpFixed(t->oldy, t->y) >> FRACTOMAPBITS;
@@ -2449,10 +2564,7 @@ static void AM_drawThings
         pt.x = t->x >> FRACTOMAPBITS;
         pt.y = t->y >> FRACTOMAPBITS;
       }
-      if (automaprotate)
-      {
-        AM_rotatePoint(&pt);
-      }
+      AM_transformPoint(&pt);
 
       // [Nugget] Show hitbox
       if (map_hitboxes)
@@ -2578,12 +2690,11 @@ static void AM_drawMarks(void)
 	// [crispy] center marks around player
 	pt.x = markpoints[i].x;
 	pt.y = markpoints[i].y;
-	if (automaprotate)
-	{
-	  AM_rotatePoint(&pt);
-	}
+	AM_transformPoint(&pt);
 	fx = CXMTOF(pt.x);
 	fy = CYMTOF(pt.y);
+
+	if (STRICTMODE(flip_levels)) { fx = f_x*2 + f_w - 1 - fx; } // [Nugget] Flip levels
 
 	do
 	  {
@@ -2594,10 +2705,10 @@ static void AM_drawMarks(void)
 
 	    // [Nugget] Minimap: take `f_x` and `f_y` into account
 	    if (fx >= f_x && fx < f_x+f_w - w && fy >= f_y && fy < f_y+f_h - h)
-	      // [Nugget] Blink marks
+	      // [Nugget] Highlight marks
 	      V_DrawPatchTranslated(((fx << FRACBITS) / video.xscale) - video.deltaw,
                               (fy << FRACBITS) / video.yscale,
-                              marknums[d], (markblinktimer & 8) ? cr_dark : NULL);
+                              marknums[d], (highlight_timer & 8) ? cr_dark : NULL);
 
 	    fx -= w - (video.yscale >> FRACBITS); // killough 2/22/98: 1 space backwards
 
@@ -2624,23 +2735,27 @@ static void AM_drawCrosshair(int color)
   }
 }
 
-// [Nugget]
+// [Nugget] /-----------------------------------------------------------------
+
 void AM_shadeScreen(void)
 {
   // Minimap
   if (automapactive == AM_MINI)
   {
-    int x, y, pixel;
-
-    for (x = f_x;  x < f_x+f_w;  x++)
-      for (y = f_y;  y < f_y+f_h;  y++) {
-        pixel = y * video.pitch + x;
+    for (int x = f_x;  x < f_x+f_w;  x++)
+    {
+      for (int y = f_y;  y < f_y+f_h;  y++)
+      {
+        const int pixel = y * video.pitch + x;
         I_VideoBuffer[pixel] = colormaps[0][automap_overlay_darkening * 256 + I_VideoBuffer[pixel]];
       }
+    }
   }
-  else
+  else if (!MN_MenuIsShaded())
     V_ShadeScreen(automap_overlay_darkening); // [Nugget] Parameterized
 }
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // AM_Drawer()
@@ -2667,27 +2782,26 @@ void AM_Drawer (void)
     AM_changeWindowLoc();
   }
 
-  // [crispy] required for AM_rotatePoint()
-  if (automaprotate)
+  // [crispy/Woof!] required for AM_transformPoint()
+  if (automaprotate || ADJUST_ASPECT_RATIO)
   {
     mapcenter.x = m_x + m_w / 2;
     mapcenter.y = m_y + m_h / 2;
     // [crispy] keep the map static if not following the player
-    if (FOLLOW)
+    if (automaprotate && FOLLOW)
     {
       mapangle = ANG90 - plr->mo->angle;
     }
   }
 
-  if (!automapoverlay)
+  if (automapoverlay == AM_OVERLAY_OFF)
   {
     AM_clearFB(mapcolor_back);       //jff 1/5/98 background default color
     if (automapactive == AM_FULL) // [Nugget] Minimap
       pspr_interp = false;
   }
   // [Alaux] Dark automap overlay
-  else if (automapoverlay == AM_OVERLAY_DARK && (!MN_MenuIsShaded()
-                                                 || automapactive == AM_MINI)) // [Nugget] Minimap
+  else if (automapoverlay == AM_OVERLAY_DARK)
     AM_shadeScreen();
 
   if (automap_grid)                  // killough 2/28/98: change var name
@@ -2701,53 +2815,57 @@ void AM_Drawer (void)
   AM_drawMarks();
 }
 
-int mapcolor_preset;
+typedef enum {
+  AM_PRESET_VANILLA,
+  AM_PRESET_CRISPY,
+  AM_PRESET_BOOM,
+  AM_PRESET_ZDOOM,
+  NUM_AM_PRESETS
+} am_preset_t;
+
+static am_preset_t mapcolor_preset;
 
 void AM_ColorPreset(void)
 {
   struct
   {
     int *var;
-    int color[3]; // Vanilla Doom, Boom, ZDoom
+    int color[NUM_AM_PRESETS]; // Vanilla Doom, Crispy, Boom, ZDoom
   } mapcolors[] =
-  {                                       // ZDoom CVAR name
-    {&mapcolor_back,    {  0, 247, 139}}, // am_backcolor
-    {&mapcolor_grid,    {104, 104,  70}}, // am_gridcolor
-    {&mapcolor_wall,    {176,  23, 239}}, // am_wallcolor
-    {&mapcolor_fchg,    { 64,  55, 135}}, // am_fdwallcolor
-    {&mapcolor_cchg,    {231, 215,  76}}, // am_cdwallcolor
-    {&mapcolor_clsd,    {  0, 208,   0}},
-    {&mapcolor_rkey,    {176, 175, 176}}, // P_GetMapColorForLock()
-    {&mapcolor_bkey,    {200, 204, 200}}, // P_GetMapColorForLock()
-    {&mapcolor_ykey,    {231, 231, 231}}, // P_GetMapColorForLock()
-    {&mapcolor_rdor,    {176, 175, 176}}, // P_GetMapColorForLock()
-    {&mapcolor_bdor,    {200, 204, 200}}, // P_GetMapColorForLock()
-    {&mapcolor_ydor,    {231, 231, 231}}, // P_GetMapColorForLock()
-    {&mapcolor_tele,    {  0, 119, 200}}, // am_intralevelcolor
-    {&mapcolor_secr,    {  0, 252, 251}}, // am_unexploredsecretcolor
-    {&mapcolor_revsecr, {  0, 112, 251}}, // am_secretsectorcolor
-    {&mapcolor_exit,    {  0, 208, 176}}, // am_interlevelcolor
-    {&mapcolor_unsn,    { 99, 104, 100}}, // am_notseencolor
-    {&mapcolor_flat,    { 97,  88,  95}}, // am_tswallcolor
-    {&mapcolor_sprt,    {112, 112,   4}}, // am_thingcolor
-    {&mapcolor_hair,    { 96, 208,  97}}, // am_xhaircolor
-    {&mapcolor_sngl,    {209, 208, 209}}, // am_yourcolor
-    {&mapcolor_plyr[0], {112, 112, 112}},
-    {&mapcolor_plyr[1], { 88,  88,  88}},
-    {&mapcolor_plyr[2], { 64,  64,  64}},
-    {&mapcolor_plyr[3], {176, 176, 176}},
-    {&mapcolor_frnd,    {252, 252,   4}}, // am_thingcolor_friend
-    {&mapcolor_enemy,   {112, 177,   4}}, // am_thingcolor_monster
-    {&mapcolor_item,    {112, 231,   4}}, // am_thingcolor_item
+  {                                            // ZDoom CVAR name
+    {&mapcolor_back,    {  0,   0, 247, 139}}, // am_backcolor
+    {&mapcolor_grid,    {104, 104, 104,  70}}, // am_gridcolor
+    {&mapcolor_wall,    {176, 180,  23, 239}}, // am_wallcolor
+    {&mapcolor_fchg,    { 64,  70,  55, 135}}, // am_fdwallcolor
+    {&mapcolor_cchg,    {231, 163, 215,  76}}, // am_cdwallcolor
+    {&mapcolor_clsd,    {  0,   0, 208,   0}},
+    {&mapcolor_rkey,    {176, 176, 175, 176}}, // P_GetMapColorForLock()
+    {&mapcolor_bkey,    {200, 200, 204, 200}}, // P_GetMapColorForLock()
+    {&mapcolor_ykey,    {231, 231, 231, 231}}, // P_GetMapColorForLock()
+    {&mapcolor_rdor,    {176, 174, 175, 176}}, // P_GetMapColorForLock()
+    {&mapcolor_bdor,    {200, 200, 204, 200}}, // P_GetMapColorForLock()
+    {&mapcolor_ydor,    {231, 229, 231, 231}}, // P_GetMapColorForLock()
+    {&mapcolor_tele,    {  0, 120, 119, 200}}, // am_intralevelcolor
+    {&mapcolor_secr,    {  0,  -1, 252, 251}}, // am_unexploredsecretcolor
+    {&mapcolor_revsecr, {  0,  -1, 112, 251}}, // am_secretsectorcolor
+    {&mapcolor_exit,    {  0, 209, 208, 176}}, // am_interlevelcolor
+    {&mapcolor_unsn,    { 99,  99, 104, 100}}, // am_notseencolor
+    {&mapcolor_flat,    { 96,  96,  88,  95}}, // am_tswallcolor
+    {&mapcolor_sprt,    {112, 112, 112,   4}}, // am_thingcolor
+    {&mapcolor_hair,    { 96,  96, 208,  97}}, // am_xhaircolor
+    {&mapcolor_sngl,    {209, 209, 208, 209}}, // am_yourcolor
+    {&mapcolor_plyr[0], {112, 112, 112, 112}},
+    {&mapcolor_plyr[1], { 96,  96,  88,  88}},
+    {&mapcolor_plyr[2], { 64,  64,  64,  64}},
+    {&mapcolor_plyr[3], {176, 176, 176, 176}},
+    {&mapcolor_frnd,    {252, 252, 252,   4}}, // am_thingcolor_friend
+    {&mapcolor_enemy,   {112, 176, 177,   4}}, // am_thingcolor_monster
+    {&mapcolor_item,    {112, 231, 231,   4}}, // am_thingcolor_item
 
-    {&hudcolor_titl,    {CR_NONE, CR_GOLD, CR_GRAY}}, // DrawAutomapHUD()
-
-    {NULL,              {  0,   0,   0}},
+    {&hudcolor_titl,    {CR_NONE, CR_GOLD, CR_GOLD, CR_GRAY}}, // DrawAutomapHUD()
   };
 
-  int i;
-
-  for (i = 0; mapcolors[i].var; i++)
+  for (int i = 0; i < arrlen(mapcolors); i++)
   {
     *mapcolors[i].var = mapcolors[i].color[mapcolor_preset];
   }
@@ -2757,6 +2875,93 @@ void AM_ColorPreset(void)
   {
     HU_Start();
   }
+
+  // [crispy] Make secret wall colors independent from PLAYPAL color indexes
+  if (mapcolor_preset == AM_PRESET_CRISPY)
+  {
+    byte *playpal = W_CacheLumpName("PLAYPAL", PU_CACHE);
+    mapcolor_secr = I_GetNearestColor(playpal, 255, 0, 255);
+    mapcolor_revsecr = I_GetNearestColor(playpal, 119, 255, 111);
+  }
+}
+
+void AM_BindAutomapVariables(void)
+{
+  M_BindBool("followplayer", &followplayer, NULL, true, ss_auto, wad_no,
+             "Automap follows the player");
+  M_BindNum("automapoverlay", &automapoverlay, NULL, AM_OVERLAY_OFF,
+            AM_OVERLAY_OFF, AM_OVERLAY_DARK, ss_auto, wad_no,
+            "Automap overlay mode (0 = Off; 1 = On; 2 = Dark)");
+
+  // [Nugget] (CFG-only)
+  M_BindNum("automap_overlay_darkening", &automap_overlay_darkening, NULL,
+            20, 0, 31, ss_none, wad_no,
+            "Darkening level of dark automap overlay");
+
+  M_BindBool("automaprotate", &automaprotate, NULL, false, ss_auto, wad_no,
+             "Automap rotation");
+
+  M_BindBool("map_point_coord", &map_point_coord, NULL, true, ss_auto, wad_no,
+             "Show automap pointer coordinates in non-follow mode");
+  M_BindBool("map_secret_after", &map_secret_after, NULL, false, ss_auto, wad_no,
+             "Don't highlight secret sectors on the automap before they're revealed");
+  M_BindNum("map_keyed_door", &map_keyed_door, NULL,
+            MAP_KEYED_DOOR_COLOR, MAP_KEYED_DOOR_OFF, MAP_KEYED_DOOR_FLASH,
+            ss_auto, wad_no,
+            "Color key-locked doors on the automap (1 = Static; 2 = Flashing)");
+  M_BindBool("map_smooth_lines", &map_smooth_lines, NULL, true, ss_auto,
+             wad_no, "Smooth automap lines");
+
+  // [Nugget]
+  M_BindBool("map_hitboxes", &map_hitboxes, NULL, false, ss_auto,
+             wad_no, "Thing hitboxes in automap");
+
+  M_BindNum("mapcolor_preset", &mapcolor_preset, NULL, AM_PRESET_BOOM,
+            AM_PRESET_VANILLA, AM_PRESET_ZDOOM, ss_auto, wad_no,
+            "Automap color preset (0 = Vanilla Doom; 1 = Crispy Doom; 2 = Boom; 3 = ZDoom)");
+
+  M_BindBool("automapsquareaspect", &automapsquareaspect, NULL, false, ss_auto, wad_no,
+             "Use square aspect ratio in automap");
+
+#define BIND_CR(name, v, help) \
+  M_BindNum(#name, &name, NULL, (v), 0, 255, ss_none, wad_yes, help)
+
+  BIND_CR(mapcolor_back, 247, "Color used for the automap background");
+  BIND_CR(mapcolor_grid, 104, "Color used for grid lines");
+  BIND_CR(mapcolor_wall, 23, "Color used for one-sided walls");
+  BIND_CR(mapcolor_fchg, 55, "Color used for lines with floor height changes");
+  BIND_CR(mapcolor_cchg, 215, "Color used for lines with ceiling height changes");
+  BIND_CR(mapcolor_clsd, 208, "Color used for lines denoting closed doors, objects");
+  BIND_CR(mapcolor_rkey, 175, "Color used for red-key sprites");
+  BIND_CR(mapcolor_bkey, 204, "Color used for blue-key sprites");
+  BIND_CR(mapcolor_ykey, 231, "Color used for yellow-key sprites");
+  BIND_CR(mapcolor_rdor, 175, "Color used for closed red doors");
+  BIND_CR(mapcolor_bdor, 204, "Color used for closed blue doors");
+  BIND_CR(mapcolor_ydor, 231, "Color used for closed yellow doors");
+  BIND_CR(mapcolor_tele, 119, "Color used for teleporter lines");
+  BIND_CR(mapcolor_secr, 252, "Color used for lines around secret sectors");
+  BIND_CR(mapcolor_revsecr, 112, "Color used for lines around revealed secret sectors");
+  BIND_CR(mapcolor_trig, 0, "Color used for trigger lines (lines with actions)"); // [Nugget]
+  BIND_CR(mapcolor_exit, 0, "Color used for exit lines");
+  BIND_CR(mapcolor_unsn, 104, "Color used for lines not seen without computer map");
+  BIND_CR(mapcolor_flat, 88, "Color used for lines with no height changes");
+  BIND_CR(mapcolor_sprt, 112, "Color used for things");
+  BIND_CR(mapcolor_hair, 208, "Color used for the automap pointer/crosshair");
+  BIND_CR(mapcolor_sngl, 208, "Color used for the player's arrow (single-player only)");
+
+#define BIND_PLR_CR(num, v, help)                                           \
+  M_BindNum("mapcolor_ply"#num, &mapcolor_plyr[(num)-1], NULL, (v), 0, 255, \
+            ss_none, wad_yes, help)
+
+  BIND_PLR_CR(1, 112, "Color used for the green player's arrow");
+  BIND_PLR_CR(2, 88, "Color used for the gray player's arrow");
+  BIND_PLR_CR(3, 64, "Color used for the brown player's arrow");
+  BIND_PLR_CR(4, 176, "Color used for the red player's arrow");
+
+  BIND_CR(mapcolor_frnd, 252, "Color used for friends");
+  BIND_CR(mapcolor_enemy, 177, "Color used for enemies");
+  BIND_CR(mapcolor_item, 231, "Color used for countable items");
+  BIND_CR(mapcolor_hitbox, 96, "Color used for thing hitboxes");
 }
 
 //----------------------------------------------------------------------------

@@ -24,8 +24,10 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
+#include "hu_stuff.h"
 #include "i_printf.h"
 #include "m_array.h"
+#include "m_config.h"
 #include "m_io.h"
 #include "m_misc.h"
 #include "mn_menu.h"
@@ -45,6 +47,13 @@ static map_stats_t *current_map_stats;
 char *wad_stats_fail = NULL;
 wad_stats_t wad_stats = {0};
 
+// CVARs
+
+boolean lt_enable_tracking;
+boolean lt_track_continuous;
+boolean lt_reset_on_higher_skill;
+int lt_stats_format;
+
 #define CAN_WATCH_MAP (lt_enable_tracking && !notracking && wad_stats.maps)
 #define TRACKING      (CAN_WATCH_MAP && current_map_stats)
 
@@ -59,8 +68,8 @@ static char *InitBaseDataDir(void)
         parent_directory = D_DoomPrefDir();
     }
 
-    char *base_data_dir = NULL;
-    M_StringPrintF(&base_data_dir, "%s/%s", parent_directory, DATA_ROOT);
+    char *base_data_dir =
+        M_StringJoin(parent_directory, DIR_SEPARATOR_S, DATA_ROOT);
     M_MakeDirectory(base_data_dir);
 
     return base_data_dir;
@@ -72,7 +81,7 @@ static char **DataDirNames(void)
 
     for (int i = 0; i < array_size(wadfiles); ++i)
     {
-        if (!W_FileContainsMaps(wadfiles[i].name))
+        if (!wadfiles[i].contains_maps)
         {
             continue;
         }
@@ -95,7 +104,7 @@ static char *InitDataDir(void)
     char **data_dir_names = DataDirNames();
     for (int i = 0; i < array_size(data_dir_names); ++i)
     {
-        M_StringConcatF(&data_dir, "/%s", data_dir_names[i]);
+        data_dir = M_StringJoin(data_dir, DIR_SEPARATOR_S, data_dir_names[i]);
         M_MakeDirectory(data_dir);
     }
 
@@ -118,7 +127,9 @@ static const char *StatsPath(void)
     {
         char *data_dir = InitDataDir();
 
-        M_StringPrintF(&stats_path, "%s/%s", data_dir, STATS_FILENAME);
+        stats_path = M_StringJoin(data_dir, DIR_SEPARATOR_S, STATS_FILENAME);
+
+        I_Printf(VB_INFO, " stats file: %s", stats_path);
 
         free(data_dir);
     }
@@ -263,7 +274,7 @@ static void CreateStats(boolean finish)
     free(last_wad_name);
 }
 
-void WS_EraseMapStats(int i)
+void WadStats_EraseMapStats(int i)
 {
     if (!CAN_WATCH_MAP)
     {
@@ -284,7 +295,7 @@ void WS_EraseMapStats(int i)
     ms->best_time = ms->best_max_time = ms->best_sk5_time = -1;
 }
 
-void WS_EraseWadStats(void)
+void WadStats_EraseWadStats(void)
 {
     if (!CAN_WATCH_MAP)
     {
@@ -293,7 +304,7 @@ void WS_EraseWadStats(void)
 
     for (int i = 0; i < array_size(wad_stats.maps); ++i)
     {
-        WS_EraseMapStats(i);
+        WadStats_EraseMapStats(i);
     }
     wad_stats.kill_check = 0;
 }
@@ -433,7 +444,7 @@ static void WriteMapLine(FILE *file, const map_stats_t *ms)
             ms->max_kills, ms->max_items, ms->max_secrets);
 }
 
-void WS_Save(void)
+void WadStats_Save(void)
 {
     if (!CAN_WATCH_MAP)
     {
@@ -445,7 +456,7 @@ void WS_Save(void)
     if (!file)
     {
         I_Printf(VB_WARNING,
-                 "WS_Save: Failed to save WAD stats file \"%s\".",
+                 "WadStats_Save: Failed to save WAD stats file \"%s\".",
                  path);
         return;
     }
@@ -470,7 +481,7 @@ void WS_Save(void)
 // Gameplay Tracking
 //==================
 
-void WS_WatchMap(void)
+void WadStats_WatchMap(void)
 {
     if (!CAN_WATCH_MAP)
     {
@@ -480,7 +491,7 @@ void WS_WatchMap(void)
     current_map_stats = MapStats(gameepisode, gamemap);
 }
 
-void WS_UnwatchMap(void)
+void WadStats_UnwatchMap(void)
 {
     if (!TRACKING)
     {
@@ -490,7 +501,7 @@ void WS_UnwatchMap(void)
     current_map_stats = NULL;
 }
 
-void WS_WatchKill(void)
+void WadStats_WatchKill(void)
 {
     if (!TRACKING)
     {
@@ -539,7 +550,7 @@ static int MissedMonsters(void)
     return missed_monsters;
 }
 
-void WS_WatchExitMap(void)
+void WadStats_WatchExitMap(void)
 {
     if (!TRACKING)
     {
@@ -622,7 +633,7 @@ void WS_WatchExitMap(void)
 // Initialization & Cleanup
 //=========================
 
-void WS_Init(void)
+void WadStats_Init(void)
 {
     if (notracking || !lt_enable_tracking // the level table still needs to work
         || HandleLoadErrors(LoadStats()) == LOAD_ERROR_NOTFOUND)
@@ -641,9 +652,23 @@ static void FreeWadStats(void)
     array_free(wad_stats.maps);
 }
 
-void WS_Cleanup(void)
+void WadStats_Cleanup(void)
 {
     FreeWadStats();
 
     free(stats_path);
+}
+
+void WadStats_BindLevelTableVariables(void)
+{
+    M_BindBool("lt_enable_tracking", &lt_enable_tracking, NULL, true, ss_none,
+               wad_no, "Enable WAD stats tracking");
+    M_BindBool("lt_track_continuous", &lt_track_continuous, NULL, true, ss_none,
+               wad_no, "Track kills and times for maps that aren't completed from a pistol start");
+    M_BindBool("lt_reset_on_higher_skill", &lt_reset_on_higher_skill, NULL, true, ss_none,
+               wad_no, "Reset all stats for the current level upon beating the level on a new best skill");
+    M_BindNum("lt_stats_format", &lt_stats_format, NULL,
+              STATSFORMAT_RATIO, STATSFORMAT_MATCHHUD, NUMSTATSFORMATS - 1,
+              ss_none, wad_no,
+              "Format of level stats in level table (0 = Match HUD; 1 = Ratio; 2 = Boolean; 3 = Percentage; 4 = Remaining; 5 = Count)");
 }

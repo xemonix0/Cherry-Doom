@@ -16,7 +16,7 @@
 #define __MN_LEVEL_TABLE__
 
 #include "doomtype.h"
-#include "mn_setup.h"
+#include "mn_internal.h"
 
 enum
 {
