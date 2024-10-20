@@ -2326,15 +2326,15 @@ static setup_menu_t stat_settings2[] = {
 
     MI_SPLIT, // [Cherry] ----------------------------------------------------/
 
-    {"Widget Appearance", S_SKIP | S_TITLE, H_X, M_SPC},
+    {"Widget Appearance", S_SKIP | S_TITLE, M_X, M_SPC},
 
-    {"Use Doom Font", S_CHOICE, H_X, M_SPC, {"hud_widget_font"},
+    {"Use Doom Font", S_CHOICE, M_X, M_SPC, {"hud_widget_font"},
      .strings_id = str_show_widgets},
 
-    {"Widescreen Alignment", S_ONOFF, H_X, M_SPC, {"hud_widescreen_widgets"},
+    {"Widescreen Alignment", S_ONOFF, M_X, M_SPC, {"hud_widescreen_widgets"},
      .action = HU_Start},
 
-    {"Vertical Layout", S_ONOFF, H_X, M_SPC, {"hud_widget_layout"},
+    {"Vertical Layout", S_ONOFF, M_X, M_SPC, {"hud_widget_layout"},
      .action = HU_Start},
      
     // [Nugget] /--------------------------------------------------------------
