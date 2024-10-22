@@ -558,27 +558,32 @@ boolean comp_lscollision;
 boolean comp_lsamnesia;
 
 // Factored out from `PIT_CheckThing()`
-boolean P_SkullSlam(mobj_t *skull, mobj_t *hitthing)
+boolean P_SkullSlam(mobj_t **skull, mobj_t *hitthing)
 {
+  // [Nugget] Note: `skull` is a double pointer because the original code in
+  // `PIT_CheckThing()` uses `tmthing`, which may potentially change midway
+  // through the slamming code, and passing it as a simple pointer wouldn't be
+  // able to reflect that
+
   // A flying skull is smacking something.
   // Determine damage amount, and the skull comes to a dead stop.
 
-  int damage = ((P_Random(pr_skullfly)%8)+1)*skull->info->damage;
+  int damage = ((P_Random(pr_skullfly)%8)+1) * (*skull)->info->damage;
 
   // [Nugget] Fix lost soul collision
   if (casual_play && comp_lscollision && !(hitthing->flags & MF_SHOOTABLE))
   { return !(hitthing->flags & MF_SOLID); }
 
-  P_DamageMobj (hitthing, skull, skull, damage);
+  P_DamageMobj (hitthing, *skull, *skull, damage);
 
-  skull->flags &= ~MF_SKULLFLY;
-  skull->momx = skull->momy = skull->momz = 0;
+  (*skull)->flags &= ~MF_SKULLFLY;
+  (*skull)->momx = (*skull)->momy = (*skull)->momz = 0;
 
   // [Nugget] Fix forgetful lost soul
   if (casual_play && comp_lsamnesia)
-    P_SetMobjState(skull, skull->info->seestate);
+    P_SetMobjState(*skull, (*skull)->info->seestate);
   else
-    P_SetMobjState (skull, skull->info->spawnstate);
+    P_SetMobjState (*skull, (*skull)->info->spawnstate);
 
   return false;   // stop moving
 }
@@ -683,7 +688,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
   if (tmthing->flags & MF_SKULLFLY)
     {
-      return P_SkullSlam(tmthing, thing); // [Nugget] Factored out
+      return P_SkullSlam(&tmthing, thing); // [Nugget] Factored out
     }
 
   // missiles can hit other things
