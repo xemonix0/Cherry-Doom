@@ -2915,6 +2915,7 @@ static void M_UpdateLoadMenu(void)
         && (currentMenu == &LoadDef || currentMenu == &LoadAutoSaveDef))
     {
         // [Nugget] Periodic auto save: all pages have an auto-save slot now
+        LoadAutoSaveDef.lastOn = itemOn;
         SetNextMenu(&LoadAutoSaveDef);
     }
 }
