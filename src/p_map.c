@@ -47,6 +47,7 @@
 #include "z_zone.h"
 
 // [Nugget]
+#include "g_game.h"
 #include "p_tick.h"
 
 static mobj_t    *tmthing;
@@ -93,6 +94,62 @@ int numspechit;
 
 // Temporary holder for thing_sectorlist threads
 msecnode_t *sector_list = NULL;                             // phares 3/16/98
+
+// [Nugget] Hitscan trails /--------------------------------------------------
+
+static int show_hitscan_trails = 0;
+
+static fixed_t distance_travelled = 0;
+
+int P_GetShowHitscanTrails(void)
+{
+  return show_hitscan_trails;
+}
+
+int P_CycleShowHitscanTrails(void)
+{
+  if (++show_hitscan_trails > 2) { show_hitscan_trails = 0; }
+
+  return show_hitscan_trails;
+}
+
+fixed_t P_GetDistanceTravelled(void)
+{
+  return distance_travelled;
+}
+
+void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
+                         angle_t angle, fixed_t slope,
+                         fixed_t range, fixed_t distance)
+{
+  const int scaled_range = (range >> FRACBITS) / 8;
+
+  if (!scaled_range) { return; }
+
+  angle >>= ANGLETOFINESHIFT;
+
+  const fixed_t x2 = x + (range >> FRACBITS) * finecosine[angle],
+                y2 = y + (range >> FRACBITS) * finesine[angle];
+
+  const fixed_t xstep = (x2 - x) / scaled_range,
+                ystep = (y2 - y) / scaled_range,
+                zstep = (slope * (range >> FRACBITS)) / scaled_range;
+
+  const int scaled_distance = (distance >> FRACBITS) / 8;
+
+  for (int i = 5;  i < scaled_distance;  i++)
+  {
+    mobj_t *const puff = P_SpawnMobj(x + xstep * i,
+                                     y + ystep * i,
+                                     z + zstep * i,
+                                     MT_PUFF);
+
+    puff->tics += i / 16;
+    puff->flags |= MF_TRANSLUCENT;
+  }
+}
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // TELEPORT MOVE
@@ -1762,7 +1819,7 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 	  // it's a sky hack wall
 	  // fix bullet-eaters -- killough:
 	  if  (li->backsector && li->backsector->ceilingpic == skyflatnum)
-	    // [Nugget- rrPKrr] Fix disappearing bullet puffs when outside
+	    // [Nugget - rrPKrr] Fix disappearing bullet puffs when outside
 	    if ((demo_compatibility && !casual_play) || li->backsector->ceilingheight < z)
 	    { return false; }
 	}
@@ -1789,6 +1846,8 @@ static boolean PTR_ShootTraverse(intercept_t *in)
           }
         }
       }
+
+      distance_travelled = P_AproxDistance(x - trace.x, y - trace.y); // [Nugget] Hitscan trails
 
       // [Nugget] Explosive hitscan cheat
       if (boomshot)
@@ -1835,6 +1894,8 @@ static boolean PTR_ShootTraverse(intercept_t *in)
   y = trace.y + FixedMul (trace.dy, frac);
   z = shootz + FixedMul (aimslope, FixedMul(frac, attackrange));
 
+  distance_travelled = P_AproxDistance(x - trace.x, y - trace.y); // [Nugget] Hitscan trails
+
   // [Nugget] Explosive hitscan cheat
   if (boomshot)
     P_SpawnExplosion(x, y, z);
@@ -1862,6 +1923,8 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 {
   fixed_t x2, y2;
+
+  distance_travelled = distance; // [Nugget] Hitscan trails
 
   t1 = P_SubstNullMobj(t1);
 
@@ -1910,6 +1973,8 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
 {
   fixed_t x2, y2;
 
+  distance_travelled = distance; // [Nugget] Hitscan trails
+
   angle >>= ANGLETOFINESHIFT;
   shootthing = t1;
   la_damage = damage;
@@ -1919,6 +1984,15 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
   attackrange = distance;
   aimslope = slope;
   P_PathTraverse(t1->x,t1->y,x2,y2,PT_ADDLINES|PT_ADDTHINGS,PTR_ShootTraverse);
+
+  // [Nugget] Hitscan trails
+  if (((show_hitscan_trails == 1 || G_GetSlowMotion()) && attackrange >= 128*FRACUNIT)
+      || show_hitscan_trails == 2)
+  {
+    P_SpawnHitscanTrail(t1->x, t1->y, shootz, angle << ANGLETOFINESHIFT,
+                        aimslope, attackrange, distance_travelled);
+  }
+
   boomshot = false; // [Nugget] Explosive hitscan cheat
 }
 

@@ -144,6 +144,44 @@ static keyframe_t *keyframe_list_head = NULL, *keyframe_list_tail = NULL;
 
 static int keyframe_index = -1;
 
+// Slow Motion ---------------------------------------------------------------
+
+static boolean slow_motion = false;
+static float slow_motion_factor = SLOWMO_FACTOR_NORMAL;
+
+boolean G_GetSlowMotion(void)
+{
+  return slow_motion;
+}
+
+void G_SetSlowMotion(const boolean value)
+{
+  slow_motion = value;
+}
+
+void G_ResetSlowMotion(void)
+{
+  const boolean reset_scale = slow_motion_factor != SLOWMO_FACTOR_NORMAL;
+
+  slow_motion = false;
+  slow_motion_factor = SLOWMO_FACTOR_NORMAL;
+
+  if (reset_scale) { G_SetTimeScale(realtic_clock_rate); }
+}
+
+float G_GetSlowMotionFactor(void)
+{
+  return slow_motion_factor;
+}
+
+void G_SetTimeScale(int scale)
+{
+  if (casual_play && !menuactive && slow_motion_factor != SLOWMO_FACTOR_NORMAL)
+  { scale *= slow_motion_factor; }
+
+  I_SetTimeScale(scale);
+}
+
 // Custom Skill --------------------------------------------------------------
 
 // Actual custom-skill settings, set either by menu or savegames
@@ -1282,6 +1320,9 @@ static void G_DoLoadLevel(void)
     minimap_was_on = false;
   }
 
+  // Slow Motion
+  G_ResetSlowMotion();
+
   // Clear visual effects
   R_ClearFOVFX();
   R_SetShake(-1);
@@ -2189,7 +2230,12 @@ frommapinfo:
 
   WI_Start (&wminfo);
 
-  // [Nugget] Clear visual effects
+  // [Nugget] ----------------------------------------------------------------
+
+  // Slow Motion
+  G_ResetSlowMotion();
+
+  // Clear visual effects
   R_ClearFOVFX();
   R_SetShake(-1);
 }
@@ -2210,7 +2256,7 @@ static void G_DoWorldDone(void)
   // [Nugget] ----------------------------------------------------------------
 
   if (autosave) { G_DoAutosave(); } // Autosave
-  
+
   G_UpdateInitialLoadout(); // Custom Skill
 }
 
@@ -3752,6 +3798,33 @@ void G_Ticker(void)
     zoomKeyDown = true;
     R_SetZoom(!R_GetZoom());
   }
+
+  // Slow Motion -------------------------------------------------------------
+
+  boolean change = false;
+
+  if (slow_motion && slow_motion_factor != SLOWMO_FACTOR_TARGET)
+  {
+    slow_motion_factor -= MAX(0.025f, (slow_motion_factor - SLOWMO_FACTOR_TARGET) / 4);
+    slow_motion_factor  = MAX(SLOWMO_FACTOR_TARGET, slow_motion_factor);
+    change = true;
+  }
+  else if (!slow_motion && slow_motion_factor != SLOWMO_FACTOR_NORMAL)
+  {
+    slow_motion_factor += MAX(0.025f, (SLOWMO_FACTOR_NORMAL - slow_motion_factor) / 4);
+    slow_motion_factor  = MIN(SLOWMO_FACTOR_NORMAL, slow_motion_factor);
+    change = true;
+  }
+
+  static boolean oldmenuactive = false;
+
+  if (oldmenuactive != menuactive)
+  {
+    oldmenuactive = menuactive;
+    change = true;
+  }
+
+  if (change) { G_SetTimeScale(realtic_clock_rate); }
 
   // Freecam -----------------------------------------------------------------
 

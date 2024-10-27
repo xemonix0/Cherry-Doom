@@ -738,9 +738,30 @@ void P_PlayerThink (player_t* player)
         R_SetZoom(ZOOM_OFF);
       }
 
+      G_SetSlowMotion(false); // [Nugget] Slow Motion
+
       P_DeathThink (player);
       return;
     }
+
+  // [Nugget] Slow Motion /---------------------------------------------------
+
+  static boolean slowMoKeyDown = false;
+
+  if (!M_InputGameActive(input_slowmo))
+  {
+    slowMoKeyDown = false;
+  }
+  else if (casual_play && !slowMoKeyDown)
+  {
+    slowMoKeyDown = true;
+
+    if (!G_GetSlowMotion()) { S_StartSoundPitch(NULL, sfx_getpow, PITCH_NONE); }
+
+    G_SetSlowMotion(!G_GetSlowMotion());
+  }
+
+  // [Nugget] ---------------------------------------------------------------/
 
   // Move around.
   // Reactiontime is used to prevent movement

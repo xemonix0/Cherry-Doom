@@ -1602,6 +1602,8 @@ static void M_EndGameResponse(int ch)
         G_CheckDemoStatus();
     }
 
+    G_ResetSlowMotion(); // [Nugget] Slow Motion
+
     // [crispy] clear quicksave slot
     quickSaveSlot = -1;
 
@@ -2213,7 +2215,7 @@ static boolean ShortcutResponder(const event_t *ev)
         realtic_clock_rate += 10;
         realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
         displaymsg("Game Speed: %d", realtic_clock_rate);
-        I_SetTimeScale(realtic_clock_rate);
+        G_SetTimeScale(realtic_clock_rate); // [Nugget] Slow Motion
     }
 
     if (M_InputActivated(input_speed_down) && !D_CheckNetConnect()
@@ -2222,7 +2224,7 @@ static boolean ShortcutResponder(const event_t *ev)
         realtic_clock_rate -= 10;
         realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
         displaymsg("Game Speed: %d", realtic_clock_rate);
-        I_SetTimeScale(realtic_clock_rate);
+        G_SetTimeScale(realtic_clock_rate); // [Nugget] Slow Motion
     }
 
     if (M_InputActivated(input_speed_default) && !D_CheckNetConnect()
@@ -2230,7 +2232,7 @@ static boolean ShortcutResponder(const event_t *ev)
     {
         realtic_clock_rate = 100;
         displaymsg("Game Speed: %d", realtic_clock_rate);
-        I_SetTimeScale(realtic_clock_rate);
+        G_SetTimeScale(realtic_clock_rate); // [Nugget] Slow Motion
     }
 
     if (M_InputActivated(input_help)) // Help key

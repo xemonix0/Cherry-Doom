@@ -40,6 +40,7 @@
 // [Nugget]
 #include "g_game.h"
 #include "m_input.h"
+#include "p_maputl.h"
 #include "w_wad.h" // W_CheckNumForName
 
 #define LOWERSPEED   (FRACUNIT*6)
@@ -1269,6 +1270,36 @@ void A_BFGSpray(mobj_t *mo)
           (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), MF_FRIEND), 
            !linetarget))
         P_AimLineAttack(mo->target, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
+
+      // [Nugget] Hitscan trails
+      if (P_GetShowHitscanTrails() == 2)
+      {
+        // To-do: these trails don't account for collision with walls
+
+        const int range = 16*64;
+
+        const fixed_t srcx = mo->target->x,
+                      srcy = mo->target->y,
+                      srcz = mo->target->z + (mo->target->height>>1) + 8*FRACUNIT;
+
+        fixed_t destx, desty, slope, distance;
+
+        if (linetarget)
+        {
+          destx = linetarget->x;
+          desty = linetarget->y;
+          distance = P_AproxDistance(destx - srcx, desty - srcy);
+          slope = FixedDiv(linetarget->z + (linetarget->height >> 2) - srcz, distance);
+        }
+        else {
+          destx = srcx + range * finecosine[an >> ANGLETOFINESHIFT];
+          desty = srcy + range * finesine[an >> ANGLETOFINESHIFT];
+          distance = P_AproxDistance(destx - srcx, desty - srcy);
+          slope = 0;
+        }
+
+        P_SpawnHitscanTrail(srcx, srcy, srcz, an, slope, range * FRACUNIT, distance);
+      }
 
       if (!linetarget)
         continue;

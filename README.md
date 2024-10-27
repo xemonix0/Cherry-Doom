@@ -51,6 +51,8 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
   - _Previous/Next Weapon_ to adjust the camera's movement speed
   - Rapid _Strafe On_ double-press to center the camera vertically
 - **_Chasecam_** [i.b. ZDoom]
+- **Slow Motion** button
+- **Zoom** button
 - **_Background for all menus_** setting
 - **_No palette tint in menus_** setting [i.b. Crispy Doom]
 - **_HUD/Menu Shadows_** setting (translucency determined by the CFG-only `hud_menu_shadows_filter_pct` CVAR) [i.b. CRL]
@@ -85,7 +87,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Switch [Weapon] on Pickup_** setting
 - **_Allow [Weapon] Switch Interruption_** setting
 - **_Prev/Next Skip Ammoless Weapons_** setting, to make the previous/next-weapon buttons skip weapons with insufficient ammo
-- Key to **equip last used weapon** [i.b. Cherry Doom]
+- Button to **equip last used weapon** [i.b. Cherry Doom]
 - **_Horizontal_ Weapon Centering** setting [i.b. DSDA-Doom]
 - **Always Bob** setting (CFG-only: `always_bob`)
 - **_Bobbing Styles_** selection [p.f. Zandronum]
@@ -103,7 +105,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
   - Vertical-only target lock-on;
   - Horizontal-autoaim indicators;
   - Option to account for fuzzy targets [i.b. From Doom With Love];
-  - Dedicated toggle key.
+  - Dedicated toggle button.
 - **Secret count in "secret revealed" message** [p.f. Crispy Doom]
 - **Show Save Messages** setting (CFG-only: `show_save_messages`)
 - **_Milestone-Completion Announcements_** setting, to report completion of milestones (e.g. all items acquired)
@@ -129,9 +131,9 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 ### Automap
 
 - **Minimap mode** [i.b. DSDA-Doom]
-- Key to **_Highlight Points of Interest_**; marks and keyed lines (default: <kbd>B</kbd>)
-- **_Tag Finder_**: Position the Automap pointer over a sector and press the _Tag Finder_ key to highlight its activator line(s), and vice versa [p.f. PrBoomX]
-- Key to **_Teleport to Automap pointer_**
+- Button to **_Highlight Points of Interest_**; marks and keyed lines (default: <kbd>B</kbd>)
+- **_Tag Finder_**: Position the Automap pointer over a sector and press the _Tag Finder_ button to highlight its activator line(s), and vice versa [p.f. PrBoomX]
+- Button to **_Teleport to Automap pointer_**
 - **_Show Thing Hitboxes_** setting
 - **Color for trigger lines**, used with IDDT (CFG-only: `mapcolor_trig`)
 
@@ -175,11 +177,12 @@ All of these are CFG-only, so their CVAR names are included.
 - **_'VALIANT'_** for fast weapons [i.b. ZDoom]
   - **_'BOBBERS'_** serves as a shortcut to toggle the two cheats mentioned above, plus IDFA
 - **_'GIBBERS'_** to force gibbing on dying enemies, independently of damage dealt
-- **_'IDFLY'_** to fly (uses jumping/crouching keys) [i.b. PrBoom+, ZDoom]
+- **_'IDFLY'_** to fly (uses jumping/crouching buttons) [i.b. PrBoom+, ZDoom]
 - **_'SUMMON'_** to spawn an actor based on its type index [i.b. ZDoom, PrBoomX]
 - **_'IDDF'_** to find a key on the Automap
 - **_'RESURRECT' / 'IDRES'_** to resurrect the player without toggling IDDQD [i.b. ZDoom]
 - **_'LINETARGET'_** to give some info on the player's linetarget [i.b. ZDoom]
+- **_'TRAILS'_** to show hitscan trails
 - **_'MDK'_** to perform a hitscan attack of 1-million damage [i.b. ZDoom]
 - **_'SAITAMA'_** to enable the MDK Fist
 - **_'BOOMCAN'_** for explosive hitscan attacks
@@ -198,11 +201,10 @@ For more details, see the _New Nugget Doom cheats_ section of `docs/cheats.md`.
 
 - **Customizable skill level**, supporting all vanilla settings and a new one for duplicate monster spawns
 - **SDL render driver** setting (CFG-only: `sdl_renderdriver`) [p.f. Woof! 14.0.0]
-- Key to **toggle zoom**
 - **Setting of savegame and screenshot paths in config file** (CFG-only: `savegame_dir` and `screenshot_dir`)
 - **Keep palette changes in screenshots** setting (CFG-only: `screenshot_palette`)
 - **Allowed mouselook while dead**
-- **Interactive character cast** (Turn keys to rotate enemy, Run key to gib, Strafe keys to skip) [p.f. Crispy Doom]
+- **Interactive character cast** (Turn buttons to rotate enemy, Run button to gib, Strafe buttons to skip) [p.f. Crispy Doom]
 - **Support for optional sounds:** [partially p.f. Crispy Doom]
   - Jumping: `DSPLJUMP`;
   - Landing: `DSPLLAND`;

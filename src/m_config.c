@@ -2130,6 +2130,14 @@ default_t defaults[] = {
     input_crouch, { {INPUT_KEY, 'c'} }
   },
 
+  { // [Nugget] 
+    "input_slowmo",
+    NULL, NULL,
+    {0}, {UL,UL}, input, ss_keys, wad_no,
+    "key to toggle slow motion",
+    input_slowmo, { {0, 0} }
+  },
+
   {
     "input_savegame",
     NULL, NULL,

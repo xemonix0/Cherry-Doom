@@ -130,6 +130,7 @@ typedef struct fovfx_s {
 
 enum {
   FOVFX_ZOOM,
+  FOVFX_SLOWMO,
   FOVFX_TELEPORT,
   
   NUMFOVFX

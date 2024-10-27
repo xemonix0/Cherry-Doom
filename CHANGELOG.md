@@ -1,6 +1,7 @@
 ## New Features
 
-None.
+- **_Slow Motion_ button**
+- **_'TRAILS'_ cheat**, to show hitscan trails
 
 ## Changes
 
