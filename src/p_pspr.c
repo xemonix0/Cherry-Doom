@@ -1265,11 +1265,10 @@ void A_BFGSpray(mobj_t *mo)
       // mo->target is the originator (player) of the missile
 
       // killough 8/2/98: make autoaiming prefer enemies
-      // [Nugget] Double Autoaim range
       if (demo_version < DV_MBF || 
-          (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), MF_FRIEND), 
+          (P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, MF_FRIEND), 
            !linetarget))
-        P_AimLineAttack(mo->target, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), 0);
+        P_AimLineAttack(mo->target, an, 16*64*FRACUNIT, 0);
 
       // [Nugget] Hitscan trails
       if (P_GetShowHitscanTrails() == 2)

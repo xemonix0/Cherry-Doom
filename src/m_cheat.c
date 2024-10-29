@@ -385,7 +385,7 @@ struct cheat_s cheat[] = {
    {cheat_noclip} },
 
   // [Nugget] Change to just "fps"
-  {"fps",    NULL,                always,
+  {"fps",        NULL,                always,
    {cheat_showfps} },
 
   // [Nugget] /---------------------------------------------------------------
