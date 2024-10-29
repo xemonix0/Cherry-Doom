@@ -169,6 +169,17 @@ void G_Rewind(void);
 void G_ClearExcessKeyFrames(void);
 boolean G_KeyFrameRW(void);
 
+// Slow Motion ---------------------------------------------------------------
+
+#define SLOWMO_FACTOR_TARGET 0.33f
+#define SLOWMO_FACTOR_NORMAL 1.0f
+
+boolean G_GetSlowMotion(void);
+void G_SetSlowMotion(const boolean value);
+void G_ResetSlowMotion(void);
+float G_GetSlowMotionFactor(void);
+void G_SetTimeScale(int scale);
+
 // Skill ---------------------------------------------------------------------
 
 extern int custom_skill_things;

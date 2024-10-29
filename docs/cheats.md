@@ -143,6 +143,9 @@ This cheat functions similarly to the `KEY` cheat, with `C` and `T` specifying t
 `RESURRECT` / `IDRES`  
 Resurrect the player without toggling IDDQD.
 
+`TRAILS`  
+Enable visualization of hitscan trails.
+
 `LINETARGET`  
 Toggle Linetarget Query Mode, which gives some info on the player's linetarget (i.e. the shootable thing being aimed at).
 

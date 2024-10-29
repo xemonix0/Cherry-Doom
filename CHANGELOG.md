@@ -1,5 +1,7 @@
 ## New Features
 
+- **_Slow Motion_ button**
+- **_'TRAILS'_ cheat**, to show hitscan trails
 - **Color settings** from International Doom
 
 ## Changes
@@ -16,3 +18,4 @@
 ## Bug Fixes
 
 - **Desync involving lost-soul charge attack**
+- **_Double autoaim range_ setting doubling range of BFG tracers**

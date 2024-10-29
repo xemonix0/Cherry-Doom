@@ -1573,18 +1573,19 @@ static setup_menu_t keys_settings7[] =
 {
   {"Nugget - General", S_SKIP|S_TITLE, KB_X, M_SPC},
   
-    {"Jump/Fly Up",      S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_jump},
-    {"Crouch/Fly Down",  S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_crouch},
+    {"Jump/Fly Up",        S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_jump},
+    {"Crouch/Fly Down",    S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_crouch},
     MI_GAP,
-    {"Cycle Chasecam",   S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_chasecam},
-    {"Toggle Freecam",   S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_freecam},
+    {"Cycle Chasecam",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_chasecam},
+    {"Toggle Freecam",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_freecam},
     MI_GAP,
-    {"Toggle Zoom",      S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_zoom},
-    {"Zoom FOV",         S_NUM  |S_STRICT,            KB_X, M_SPC, {"zoom_fov"}, .action = UpdateFOV},
+    {"Toggle Slow Motion", S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_slowmo},
+    {"Toggle Zoom",        S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_zoom},
+    {"Zoom FOV",           S_NUM  |S_STRICT,            KB_X, M_SPC, {"zoom_fov"}, .action = UpdateFOV},
     MI_GAP,
-    {"Toggle Crosshair", S_INPUT,                     KB_X, M_SPC, {0}, m_scrn, input_crosshair},
+    {"Toggle Crosshair",   S_INPUT,                     KB_X, M_SPC, {0}, m_scrn, input_crosshair},
     MI_GAP,
-    {"Rewind",           S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_rewind},
+    {"Rewind",             S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_rewind},
 
   MI_END
 };
@@ -3725,7 +3726,7 @@ void MN_ResetTimeScale(void)
         }
     }
 
-    I_SetTimeScale(time_scale);
+    G_SetTimeScale(time_scale); // [Nugget] Slow Motion
 
     setrefreshneeded = true;
 }

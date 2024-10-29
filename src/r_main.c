@@ -1540,6 +1540,11 @@ void R_RenderPlayerView (player_t* player)
         {
           fovchange = true;
         }
+        else if (fovfx[FOVFX_SLOWMO].target
+                 || (G_GetSlowMotion() && fovfx[FOVFX_SLOWMO].target != 10))
+        {
+          fovchange = true;
+        }
         else for (int i = 0;  i < NUMFOVFX;  i++)
         {
           if (fovfx[i].target || fovfx[i].current)
@@ -1557,6 +1562,8 @@ void R_RenderPlayerView (player_t* player)
           fovchange = false;
 
           int *target;
+
+          // Zoom ------------------------------------------------------------
 
           target = &fovfx[FOVFX_ZOOM].target;
           fovfx[FOVFX_ZOOM].old = fovfx[FOVFX_ZOOM].current = *target;
@@ -1576,10 +1583,24 @@ void R_RenderPlayerView (player_t* player)
             }
           }
 
+          // Teleporter Zoom -------------------------------------------------
+
           target = &fovfx[FOVFX_TELEPORT].target;
           fovfx[FOVFX_TELEPORT].old = fovfx[FOVFX_TELEPORT].current = *target;
 
           if (*target) { *target = MAX(0, *target - 5); }
+
+          // Slow Motion -----------------------------------------------------
+
+          target = &fovfx[FOVFX_SLOWMO].target;
+          fovfx[FOVFX_SLOWMO].old = fovfx[FOVFX_SLOWMO].current = *target;
+
+          if (G_GetSlowMotionFactor() != SLOWMO_FACTOR_NORMAL)
+          {
+            *target = -10 * (SLOWMO_FACTOR_NORMAL - G_GetSlowMotionFactor())
+                          / (SLOWMO_FACTOR_NORMAL - SLOWMO_FACTOR_TARGET);
+          }
+          else { *target = 0; }
         }
         else if (uncapped)
           for (int i = 0;  i < NUMFOVFX;  i++)
