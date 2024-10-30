@@ -394,6 +394,12 @@ typedef struct mobj_s
     // Alt. sprites
     int                 altsprite;
     int                 altframe;
+
+    // Alt. states
+    altstate_t          *altstate;
+    int                 alttics;
+
+    boolean             isvisual;
 } mobj_t;
 
 // External declarations (fomerly in p_local.h) -- killough 5/2/98
@@ -465,6 +471,10 @@ extern boolean cheese, frights;
 
 int P_FindDoomedNum(unsigned type); // Externalized
 void P_ToggleDuplicateSpawns(const boolean state);
+
+void P_SetMobjAltState(mobj_t *const mobj, altstatenum_t statenum); // Alt. states
+
+mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenum);
 
 #endif
 
