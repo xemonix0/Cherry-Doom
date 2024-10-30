@@ -13,9 +13,11 @@
   - Renamed `#_bobbing_percentage` to `#_bobbing_pct` [1]
   - Gave an `sts_` prefix to `show_berserk`, `show_ssg`, and `alt_arms` [1]
   - Revised the descriptions of many of Nugget's new CVARs
+- **Smoother FOV effects**
 - **Made _Screen Wipe Speed Percentage_ setting affect the _Fizzle_ fade**
 
 ## Bug Fixes
 
 - **Desync involving lost-soul charge attack**
 - **_Double autoaim range_ setting doubling range of BFG tracers**
+- **FOV effects disabling interpolation of weapon sprites**

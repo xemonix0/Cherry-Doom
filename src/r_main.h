@@ -141,10 +141,6 @@ extern boolean have_crouch_sprites;
 
 // FOV effects ---------------------------------------------------------------
 
-typedef struct fovfx_s {
-  int old, current, target;
-} fovfx_t;
-
 enum {
   FOVFX_ZOOM,
   FOVFX_SLOWMO,
