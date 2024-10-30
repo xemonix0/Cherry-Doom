@@ -140,13 +140,13 @@ void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
 
   for (int i = 5;  i < scaled_distance;  i++)
   {
-    mobj_t *const puff = P_SpawnMobj(x + xstep * i,
-                                     y + ystep * i,
-                                     z + zstep * i,
-                                     MT_PUFF);
+    mobj_t *const puff = P_SpawnVisualMobj(x + xstep * i,
+                                           y + ystep * i,
+                                           z + zstep * i,
+                                           AS_TRAIL1);
 
-    puff->tics += i / 16;
-    puff->flags |= MF_TRANSLUCENT;
+    puff->alttics += i / 16;
+    puff->flags |= MF_NOGRAVITY|MF_TRANSLUCENT;
   }
 }
 

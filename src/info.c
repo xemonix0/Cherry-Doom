@@ -84,12 +84,6 @@ char *original_sprnames[NUMSPRITES+1] = {
   NULL
 };
 
-// [Nugget] Alt. sprites
-char *altsprnames[NUMALTSPRITES+1] = {
-  "PLYC", "NGCH", "NGCL",
-  NULL
-};
-
 #include "p_action.h"
 
 // ********************************************************************
@@ -5014,7 +5008,28 @@ mobjinfo_t original_mobjinfo[NUMMOBJTYPES] = {
 
 };
 
-// [Nugget] ------------------------------------------------------------------
+// [Nugget] ==================================================================
+
+// Alt. sprites
+char *altsprnames[NUMALTSPRITES+1] = {
+  "PLYC", "NGCH", "NGCL", "NGTR",
+  NULL
+};
+
+// Alt. states
+altstate_t altstates[NUMALTSTATES] = {
+  { ASPR_NULL, -1,                -1, AS_NULL },
+
+  #define DUR 2
+  { ASPR_NGTR,  0|FF_FULLBRIGHT,   3, AS_TRAIL2 },
+  { ASPR_NGTR,  1,               DUR, AS_TRAIL3 },
+  { ASPR_NGTR,  2,               DUR, AS_TRAIL4 },
+  { ASPR_NGTR,  3,               DUR, AS_TRAIL5 },
+  { ASPR_NGTR,  4,               DUR, AS_TRAIL6 },
+  { ASPR_NGTR,  5,               DUR, AS_TRAIL7 },
+  { ASPR_NGTR,  6,               DUR, AS_NULL },
+  #undef DUR
+};
 
 // Copyright (C) 2024 Korp (CC BY-SA 4.0)
 static const unsigned char ngcla0[] = {
@@ -5136,11 +5151,11 @@ static const unsigned char ngcla0[] = {
 };
 
 const lumpinfo_t predefined_lumps[] = {
-  { "S_START"},
+  { "S_START" },
 
   { "NGCLA0", sizeof(ngcla0), .data = ngcla0 },
 
-  { "S_END"}, 
+  { "S_END" },
 };
 
 const size_t num_predefined_lumps = sizeof(predefined_lumps) / sizeof(lumpinfo_t);
