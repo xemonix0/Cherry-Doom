@@ -124,10 +124,6 @@ void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // FOV effects ---------------------------------------------------------------
 
-typedef struct fovfx_s {
-  int old, current, target;
-} fovfx_t;
-
 enum {
   FOVFX_ZOOM,
   FOVFX_SLOWMO,
