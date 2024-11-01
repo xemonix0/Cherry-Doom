@@ -123,6 +123,7 @@ boolean one_key_saveload;
 boolean skip_ammoless_weapons;
 boolean show_save_messages;
 boolean comp_longautoaim;
+boolean less_blinding_tints;
 
 // ---------------------------------------------------------------------------
 
@@ -4357,6 +4358,11 @@ void G_PlayerReborn(int player)
     p->maxammo[i] = maxammo[i];
 
   levels_completed = 0; // [Cherry]
+
+  // [Cherry] Less Blinding tints
+  if STRICTMODE(less_blinding_tints) {
+    I_TranslatePalette();
+  }
 }
 
 //
