@@ -58,6 +58,7 @@
 
 // [Nugget] CVARs
 static boolean sts_alt_arms;
+boolean less_blinding_tints;
 
 //
 // STATUS BAR DATA
@@ -1823,6 +1824,11 @@ void ST_loadGraphics(void)
       nhinfnty = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhinfnty = NULL; }
+
+    // [Cherry] Less Blinding Tints
+    if STRICTMODE(less_blinding_tints) {
+      I_TranslatePalette();
+    }
   }
 }
 

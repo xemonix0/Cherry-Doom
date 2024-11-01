@@ -1245,23 +1245,11 @@ static void I_RgbToHsl(float r, float g, float b, float* result) {
 void I_TranslatePalette(void)
 {
     if STRICTMODE(!less_blinding_tints) {
-        /*
-        int lumpnum = W_CheckNumForName("PLAYPAL");
-        byte* paletteStatic = (byte *)W_CacheLumpNum(lumpnum, PU_STATIC);
-        byte* paletteCache = (byte *)W_CacheLumpNum(lumpnum, PU_CACHE);
-
-        const byte *const gamma = gammatable[gamma2];
-        int paletteSize = 768 * 14;
-        for (int i = 0; i < paletteSize; ++i)
-        {
-            *paletteCache++ = gamma[*paletteStatic++];
-        }
-        */
         return;
     }
 
     int lumpnum = W_CheckNumForName("PLAYPAL");
-    byte* palette = (byte *)W_CacheLumpNum(lumpnum, PU_CACHE);
+    byte* palette = (byte *)W_CacheLumpNum(lumpnum, PU_STATIC);
 
     const byte *const gamma = gammatable[gamma2];
     for (int i = 0; i < 256; ++i)
@@ -1292,12 +1280,12 @@ void I_TranslatePalette(void)
             saturation = saturation < 0.9 ? saturation : 0.9;
             I_HslToRgb(hue, saturation, hsl[2], rgb);
             nextPalette = (byte*)(palette - 3 + 768*(j-1));
-            newR = (rgb[0] * 0.6 + gamma[*nextPalette++] * 0.55);
-            newG = (rgb[1] * 0.6  + gamma[*nextPalette++] * 0.55);
+            newR = (rgb[0] * 0.6 + gamma[*nextPalette] * 0.55);
+            *nextPalette++ = newR < 255 ? newR : 255;
+            newG = (rgb[1] * 0.6  + gamma[*nextPalette] * 0.55);
+            *nextPalette++ = newG < 255 ? newG : 255;
             newB = (rgb[2] * 0.6  + gamma[*nextPalette] * 0.55);
-            *nextPalette-- = newB < 255 ? newB : 255;
-            *nextPalette-- = newG < 255 ? newG : 255;
-            *nextPalette = newR < 255 ? newR : 255;
+            *nextPalette++ = newB < 255 ? newB : 255;
         }
 
         // Bonus/Pickup tint
@@ -1308,12 +1296,12 @@ void I_TranslatePalette(void)
             saturation = saturation < 1.0 ? saturation : 0.9;
             I_HslToRgb(hue, saturation, hsl[2], rgb);
             nextPalette = (byte*)(palette - 3 + 768*(j-1));
-            newR = (rgb[0] * 0.3 + gamma[*nextPalette++] * 0.7);
-            newG = (rgb[1] * 0.3  + gamma[*nextPalette++] * 0.7);
+            newR = (rgb[0] * 0.3 + gamma[*nextPalette] * 0.7);
+            *nextPalette++ = newR < 255 ? newR : 255;
+            newG = (rgb[1] * 0.3  + gamma[*nextPalette] * 0.7);
+            *nextPalette++ = newG < 255 ? newG : 255;
             newB = (rgb[2] * 0.3  + gamma[*nextPalette] * 0.7);
-            *nextPalette-- = newB < 255 ? newB : 255;
-            *nextPalette-- = newG < 255 ? newG : 255;
-            *nextPalette = newR < 255 ? newR : 255;
+            *nextPalette++ = newB < 255 ? newB : 255;
         }
 
         // Radsuit tint
@@ -1321,12 +1309,12 @@ void I_TranslatePalette(void)
         float hue = 130.0 / 360.0;  // Green
         I_HslToRgb(hue, hsl[1], hsl[2], rgb);
         nextPalette = (byte*)(palette - 3 + 768*(j-1));
-        newR = (rgb[0] * 0.1 + gamma[*nextPalette++] * 0.9);
-        newG = (rgb[1] * 0.1  + gamma[*nextPalette++] * 0.9);
+        newR = (rgb[0] * 0.1 + gamma[*nextPalette] * 0.9);
+        *nextPalette++ = newR < 255 ? newR : 255;
+        newG = (rgb[1] * 0.1  + gamma[*nextPalette] * 0.9);
+        *nextPalette++ = newG < 255 ? newG : 255;
         newB = (rgb[2] * 0.1  + gamma[*nextPalette] * 0.9);
-        *nextPalette-- = newB < 255 ? newB : 255;
-        *nextPalette-- = newG < 255 ? newG : 255;
-        *nextPalette = newR < 255 ? newR : 255;
+        *nextPalette++ = newB < 255 ? newB : 255;
     }
 }
 
