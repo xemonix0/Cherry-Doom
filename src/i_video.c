@@ -1280,11 +1280,11 @@ void I_TranslatePalette(void)
             saturation = saturation < 0.9 ? saturation : 0.9;
             I_HslToRgb(hue, saturation, hsl[2], rgb);
             nextPalette = (byte*)(palette - 3 + 768*(j-1));
-            newR = (rgb[0] * 0.5 * (j-1) + gamma[*nextPalette] * 0.3 * (21-j/2)) / 7;
+            newR = (rgb[0] * 0.5 * (2 + j*0.4) + gamma[*nextPalette] * 0.3 * (24 - j*1.1)) / 7;
             *nextPalette++ = newR < 255 ? newR : 255;
-            newG = (rgb[1] * 0.5 * (j-1) + gamma[*nextPalette] * 0.3 * (21-j/2)) / 7;
+            newG = (rgb[1] * 0.5 * (2 + j*0.4) + gamma[*nextPalette] * 0.3 * (24 - j*1.1)) / 7;
             *nextPalette++ = newG < 255 ? newG : 255;
-            newB = (rgb[2] * 0.5 * (j-1) + gamma[*nextPalette] * 0.3 * (21-j/2)) / 7;
+            newB = (rgb[2] * 0.5 * (2 + j*0.4) + gamma[*nextPalette] * 0.3 * (24 - j*1.1)) / 7;
             *nextPalette++ = newB < 255 ? newB : 255;
         }
 
@@ -1297,11 +1297,11 @@ void I_TranslatePalette(void)
             I_HslToRgb(hue, saturation, hsl[2], rgb);
             nextPalette = (byte*)(palette - 3 + 768*(j-1));
 
-            newR = (rgb[0] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15-j/2)) / 3;
+            newR = (rgb[0] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15.2 - j*0.5)) / 3;
             *nextPalette++ = newR < 255 ? newR : 255;
-            newG = (rgb[1] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15-j/2)) / 3;
+            newG = (rgb[1] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15.2 - j*0.5)) / 3;
             *nextPalette++ = newG < 255 ? newG : 255;
-            newB = (rgb[2] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15-j/2)) / 3;
+            newB = (rgb[2] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15.2 - j*0.5)) / 3;
             *nextPalette++ = newB < 255 ? newB : 255;
         }
 
