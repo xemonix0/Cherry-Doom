@@ -1276,37 +1276,38 @@ void I_TranslatePalette(void)
         for (j = 2;j <= 9; ++j)
         {
             float hue = 0.0;  // Red
-            float saturation = hsl[1] / 1.3 * (float)(j-1) * 1.01;
+            float saturation = hsl[1] / 1.3 * (float)(j-1) * 0.6;
             saturation = saturation < 0.9 ? saturation : 0.9;
             I_HslToRgb(hue, saturation, hsl[2], rgb);
             nextPalette = (byte*)(palette - 3 + 768*(j-1));
-            newR = (rgb[0] * 0.6 + gamma[*nextPalette] * 0.55);
+            newR = (rgb[0] * 0.5 * (j-1) + gamma[*nextPalette] * 0.3 * (21-j/2)) / 7;
             *nextPalette++ = newR < 255 ? newR : 255;
-            newG = (rgb[1] * 0.6  + gamma[*nextPalette] * 0.55);
+            newG = (rgb[1] * 0.5 * (j-1) + gamma[*nextPalette] * 0.3 * (21-j/2)) / 7;
             *nextPalette++ = newG < 255 ? newG : 255;
-            newB = (rgb[2] * 0.6  + gamma[*nextPalette] * 0.55);
+            newB = (rgb[2] * 0.5 * (j-1) + gamma[*nextPalette] * 0.3 * (21-j/2)) / 7;
             *nextPalette++ = newB < 255 ? newB : 255;
         }
 
         // Bonus/Pickup tint
         for (j = 10;j <= 13; ++j)
         {
-            float hue = 28.0 / 360.0;  // Gold-ish
+            float hue = 32.0 / 360.0;  // Gold-ish
             float saturation = hsl[1] / 1.3 * (float)(j-9) * 1.01;
             saturation = saturation < 1.0 ? saturation : 0.9;
             I_HslToRgb(hue, saturation, hsl[2], rgb);
             nextPalette = (byte*)(palette - 3 + 768*(j-1));
-            newR = (rgb[0] * 0.3 + gamma[*nextPalette] * 0.7);
+
+            newR = (rgb[0] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15-j/2)) / 3;
             *nextPalette++ = newR < 255 ? newR : 255;
-            newG = (rgb[1] * 0.3  + gamma[*nextPalette] * 0.7);
+            newG = (rgb[1] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15-j/2)) / 3;
             *nextPalette++ = newG < 255 ? newG : 255;
-            newB = (rgb[2] * 0.3  + gamma[*nextPalette] * 0.7);
+            newB = (rgb[2] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15-j/2)) / 3;
             *nextPalette++ = newB < 255 ? newB : 255;
         }
 
         // Radsuit tint
         j = 14;
-        float hue = 130.0 / 360.0;  // Green
+        float hue = 120.0 / 360.0;  // Green
         I_HslToRgb(hue, hsl[1], hsl[2], rgb);
         nextPalette = (byte*)(palette - 3 + 768*(j-1));
         newR = (rgb[0] * 0.1 + gamma[*nextPalette] * 0.9);
