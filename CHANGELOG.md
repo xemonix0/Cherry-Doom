@@ -18,6 +18,7 @@ Merged changes from [Nugget Doom 3.3.0](https://github.com/MrAlaux/Nugget-Doom/r
 - Minor improvements to rocket smoke physics have been introduced
 - _Detection of Targets in Darkness_ now accounts for fullbright frames
 - WAD stats are now saved every time a level is beaten
+- `TNT31.WAD` is now not considered a separate WAD by the _stats tracking_ system when loaded with `TNT.WAD`
 
 ## Bug Fixes
 
