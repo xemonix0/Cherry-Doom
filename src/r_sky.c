@@ -71,7 +71,7 @@ void R_InitSkyMap (void)
   skytexturemid = 100*FRACUNIT;
   #endif
 
-  skytexturemid = ((skyheight < 200 ? 100 : 200) - skyheight) * FRACUNIT;
+  skytexturemid = (((skyheight < 200) ? 100 : 200) - skyheight) * FRACUNIT;
 }
 
 typedef struct rgb_s {

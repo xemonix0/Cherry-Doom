@@ -151,8 +151,6 @@ boolean fastparm;       // working -fast
 
 // [Nugget]
 boolean coopspawnsparm = false;
-boolean doubleammoparm = false;
-boolean halfdamageparm = false;
 
 // [Cherry]
 boolean notrackingparm = false;
@@ -2158,10 +2156,6 @@ void D_DoomMain(void)
 
   devparm = M_CheckParm ("-devparm");
 
-  // [Nugget]
-  doubleammoparm = false;
-  halfdamageparm = false;
-
   //!
   // @category net
   // @vanilla
@@ -3009,12 +3003,11 @@ void D_DoomMain(void)
     time_t curtime = time(NULL);
     struct tm *curtm = localtime(&curtime);
 
-    // cheese :)
-
-    extern boolean cheese;
-
-    if (curtm && curtm->tm_mon == 3 && curtm->tm_mday == 1)
-    { cheese = true; }
+    if (curtm)
+    {
+           if (curtm->tm_mon == 3 && curtm->tm_mday == 1)  {  cheese = true; }
+      else if (curtm->tm_mon == 9 && curtm->tm_mday == 31) { frights = true; }
+    }
   }
 
   for (;;)

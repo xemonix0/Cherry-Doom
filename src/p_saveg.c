@@ -65,9 +65,11 @@ static struct
     {saveg_nugget210, saveg_nugget},
     {saveg_nugget300, saveg_nugget},
     {saveg_nugget320, saveg_nugget},
+    {saveg_nugget330, saveg_nugget},
 
     {saveg_cherry100, saveg_cherry},
     {saveg_cherry101, saveg_cherry},
+    {saveg_cherry200, saveg_cherry},
     {saveg_current,   saveg_cherry},
 };
 
@@ -609,6 +611,8 @@ static void saveg_read_mobj_t(mobj_t *str)
     }
 
     // [Nugget] Removed `actualheight`
+
+    str->altsprite = str->altframe = -1; // [Nugget] Alt. sprites
 }
 
 static void saveg_write_mobj_t(mobj_t *str)

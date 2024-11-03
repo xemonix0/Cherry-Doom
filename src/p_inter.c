@@ -46,9 +46,6 @@
 
 #include "wad_stats.h" // [Cherry]
 
-// [Nugget] cheese :)
-extern boolean cheese;
-
 #define BONUSADD        6
 
 // Ty 03/07/98 - add deh externals
@@ -350,6 +347,38 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
   if (toucher->health <= 0)
     return;
 
+  // [Nugget]
+  if (casual_play && special->altsprite > -1)
+  {
+    if (special->altsprite == ASPR_NGCH)
+    {
+      player->mo->health = player->health = MIN(maxhealthbonus, player->health + 1);
+
+      static const char s[] = {
+        0x50, 0x69, 0x63, 0x6B, 0x65, 0x64, 0x20, 0x75, 0x70, 0x20,
+        0x61, 0x20, 0x63, 0x68, 0x65, 0x65, 0x73, 0x65, 0x2E, 0x00
+      };
+
+      pickupmsg(player, "%s", s);
+      goto picked_up;
+    }
+    else if (special->altsprite == ASPR_NGCL)
+    {
+      player->armorpoints = MIN(max_armor, player->armorpoints + 1);
+
+      if (!player->armortype) { player->armortype = green_armor_class; }
+
+      static const char s[] = {
+        0x50, 0x69, 0x63, 0x6B, 0x65, 0x64, 0x20, 0x75, 0x70, 0x20,
+        0x61, 0x20, 0x63, 0x61, 0x63, 0x2D, 0x6F, 0x27, 0x2D, 0x6C,
+        0x61, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x2E, 0x00
+      };
+
+      pickupmsg(player, "%s", s);
+      goto picked_up;
+    }
+  }
+
     // Identify by sprite.
   switch (special->sprite)
     {
@@ -367,9 +396,6 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       break;
 
       // bonus items
-    // [Nugget] cheese :)
-    case SPR_TNT1:
-      if (!cheese) { return; }
     case SPR_BON1:
 
       if (beta_emulation)
@@ -382,8 +408,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (player->health > maxhealthbonus)
         player->health = maxhealthbonus;
       player->mo->health = player->health;
-      // [Nugget] cheese :)
-      pickupmsg(player, "%s", cheese ? "Picked up a cheese." : s_GOTHTHBONUS); // Ty 03/22/98 - externalized
+      pickupmsg(player, "%s", s_GOTHTHBONUS); // Ty 03/22/98 - externalized
       break;
 
     case SPR_BON2:
@@ -689,6 +714,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       return;      // killough 12/98: suppress error message
     }
 
+picked_up: // [Nugget]
+
   if (special->flags & MF_COUNTITEM)
   {
     player->itemcount++;
@@ -756,18 +783,20 @@ static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
 }
 
 // [Nugget] Bloodier Gibbing
-static void P_NuggetGib(mobj_t *mo)
+void P_NuggetGib(mobj_t *mo, const boolean crushed)
 {
   int quantity;
   extern boolean idgaf;
 
   if (!casual_play || !bloodier_gibbing) { return; }
   
-  quantity = 20 + (Woof_Random() % 21); // Spawn 20-40 blood splats
+  quantity = crushed ? (4 + (Woof_Random() % 5)) : (20 + (Woof_Random() % 21));
 
   for (int i = 0; i < quantity; i++)
   {
-    mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + (mo->height * 3/2),
+    const fixed_t height = !crushed ? (mo->height * 3/2) : 0;
+
+    mobj_t *splat = P_SpawnMobj(mo->x, mo->y, mo->z + height,
                                 (comp_nonbleeders && mo->flags & MF_NOBLOOD)
                                 ? MT_PUFF : MT_BLOOD);
 
@@ -776,21 +805,24 @@ static void P_NuggetGib(mobj_t *mo)
     if (comp_fuzzyblood && mo->flags & MF_SHADOW)
     { splat->flags |= MF_SHADOW; }
 
-    if (mo->info->bloodcolor || idgaf) {
+    if (mo->info->bloodcolor || idgaf)
+    {
       splat->flags2 |= MF2_COLOREDBLOOD;
       splat->bloodcolor = V_BloodColor(mo->info->bloodcolor);
     }
 
-    splat->momx = (Woof_Random() - Woof_Random()) << 12;
-    splat->momy = (Woof_Random() - Woof_Random()) << 12;
-    splat->momz = Woof_Random() << 12;
+    splat->momx = (Woof_Random() - Woof_Random()) << (12 - crushed);
+    splat->momy = (Woof_Random() - Woof_Random()) << (12 - crushed);
+
+    if (crushed) { splat->height = FRACUNIT; }
+    else         { splat->momz = Woof_Random() << 12; }
 
     // Physics differ between versions (complevels),
-    // so this is done to get rather decent behavior in Vanilla
+    // so this is done to get rather-decent behavior in vanilla
     if (demo_version < DV_BOOM200) { splat->flags |= MF_NOCLIP; }
 
     splat->tics += (Woof_Random() & 3) - (Woof_Random() & 3);
-    if (splat->tics < 1) { splat->tics = 1; }
+    splat->tics = MAX(1, splat->tics);
   }
 }
 
@@ -928,7 +960,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
           || GIBBERS || P_NuggetExtraGibbing(source, target)))
   {
     P_SetMobjState (target, target->info->xdeathstate);
-    P_NuggetGib(target); // [Nugget] Bloodier Gibbing
+    P_NuggetGib(target, false); // [Nugget] Bloodier Gibbing
   }
   else
     P_SetMobjState (target, target->info->deathstate);
@@ -960,8 +992,8 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
   mo = P_SpawnMobj (target->x,target->y,ONFLOORZ, item);
   mo->flags |= MF_DROPPED;    // special versions of items
 
-  // [Nugget] ZDoom-like item drops
-  if (casual_play && zdoom_item_drops)
+  // [Nugget] Toss items upon death
+  if (casual_play && tossdrop)
   {
     mo->z += target->height*5/4;
     mo->momx = (Woof_Random() - Woof_Random()) << 7;

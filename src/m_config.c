@@ -349,6 +349,13 @@ default_t defaults[] = {
     "1 to stretch short skies, 2 to stretch only when mouselook is enabled"
   },
 
+  { // [Nugget] FOV-based sky stretching
+    "fov_stretchsky",
+    (config_t *) &fov_stretchsky, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "1 to stretch skies based on FOV"
+  },
+
   {
     "linearsky",
     (config_t *) &linearsky, NULL,
@@ -696,6 +703,13 @@ default_t defaults[] = {
     "Custom Skill: aggressive monsters (instant reaction time, continuous attacks)"
   },
 
+  {
+    "custom_skill_x2monsters",
+    (config_t *) &custom_skill_x2monsters, NULL,
+    {0}, {0,1}, number, ss_skill, wad_yes,
+    "Custom Skill: duplicate monster spawns"
+  },
+
   { // [Cherry]
     "custom_skill_notracking",
     (config_t *) &custom_skill_notracking, NULL,
@@ -950,6 +964,13 @@ default_t defaults[] = {
   },
 
   {
+    "flip_levels",
+    (config_t *) &flip_levels, NULL,
+    {0}, {0,1}, number, ss_gen, wad_no,
+    "Flip levels horizontally (visual filter)"
+  },
+
+  {
     "no_berserk_tint",
     (config_t *) &no_berserk_tint, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
@@ -1027,10 +1048,17 @@ default_t defaults[] = {
   },
 
   {
+    "autosave",
+    (config_t *) &autosave, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "Autosave when finishing levels"
+  },
+
+  {
     "autosave_interval",
     (config_t *) &autosave_interval, NULL,
-    {0}, {30,600}, number, ss_none, wad_no,
-    "Interval between autosaves, in seconds"
+    {0}, {0,600}, number, ss_gen, wad_no,
+    "Interval between periodic autosaves, in seconds (0 = Off)"
   },
 
   {
@@ -1066,6 +1094,13 @@ default_t defaults[] = {
     (config_t *) &quick_quitgame, NULL,
     {0}, {0,1}, number, ss_gen, wad_no,
     "1 to skip prompt on Quit Game"
+  },
+
+  {
+    "quit_sound",
+    (config_t *) &quit_sound, NULL,
+    {1}, {0,1}, number, ss_gen, wad_no,
+    "1 to play a sound when confirming the \"Quit Game\" prompt"
   },
 
 #if 0
@@ -1222,6 +1257,13 @@ default_t defaults[] = {
     (config_t *) &switch_on_pickup, NULL,
     {1}, {0,1}, number, ss_weap, wad_no,
     "1 to switch weapons when acquiring new ones or ammo for them"
+  },
+
+  {
+    "weapswitch_interruption",
+    (config_t *) &weapswitch_interruption, NULL,
+    {0}, {0,1}, number, ss_weap, wad_no,
+    "1 to allow interruption of weapon switches"
   },
 
   {
@@ -1471,10 +1513,10 @@ default_t defaults[] = {
   },
 
   {
-    "zdoom_item_drops",
-    (config_t *) &zdoom_item_drops, NULL,
+    "tossdrop",
+    (config_t *) &tossdrop, NULL,
     {0}, {0,1}, number, ss_enem, wad_yes,
-    "1 to enable ZDoom-like item drops for dying enemies"
+    "1 to make enemies toss their items dropped upon death"
   },
 
   // [Nugget] ---------------------------------------------------------------/
@@ -2393,7 +2435,7 @@ default_t defaults[] = {
     "input_map_blink",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
-    "key to make automap markers blink",
+    "key to temporarily highlight points of interest on the automap",
     input_map_blink, { {INPUT_KEY, 'b'} }
   },
 
@@ -2741,7 +2783,7 @@ default_t defaults[] = {
                         {INPUT_JOYB, CONTROLLER_RIGHT_SHOULDER} }
   },
 
-  { // [Nugget] Last weapon key
+  { // [Nugget] Last-weapon button
     "input_lastweapon",
     NULL, NULL,
     {0}, {UL,UL}, input, ss_keys, wad_no,
@@ -3577,7 +3619,7 @@ default_t defaults[] = {
   { // [Nugget] Restore message scroll direction toggle
     "hud_msg_scrollup",
     (config_t *) &hud_msg_scrollup, NULL,
-    {1}, {0,1}, number, ss_stat, wad_yes,
+    {1}, {0,1}, number, ss_none, wad_yes,
     "1 enables message review list scrolling upward"
   },
 
@@ -3586,6 +3628,13 @@ default_t defaults[] = {
     (config_t *) &message_colorized, NULL,
     {0}, {0,1}, number, ss_stat, wad_no,
     "1 to colorize player messages"
+  },
+
+  { // [Nugget] Message flash
+    "message_flash",
+    (config_t *) &message_flash, NULL,
+    {0}, {0,1}, number, ss_stat, wad_no,
+    "1 to make messages flash when they first appear"
   },
 
   { // killough 11/98
@@ -3798,11 +3847,57 @@ default_t defaults[] = {
 
   // [Nugget] ---------------------------------------------------------------/
 
+  // [Nugget] /---------------------------------------------------------------
+
+  {
+    "hud_stats_kills",
+    (config_t *) &hud_stats_show[SHOWSTATS_KILLS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the kill count on the stats display"
+  },
+
+  {
+    "hud_stats_items",
+    (config_t *) &hud_stats_show[SHOWSTATS_ITEMS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the item count on the stats display"
+  },
+
+  {
+    "hud_stats_secrets",
+    (config_t *) &hud_stats_show[SHOWSTATS_SECRETS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the secrets count on the stats display"
+  },
+
+  {
+    "hud_stats_kills_map",
+    (config_t *) &hud_stats_show_map[SHOWSTATS_KILLS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the kill count on the automap's stats display"
+  },
+
+  {
+    "hud_stats_items_map",
+    (config_t *) &hud_stats_show_map[SHOWSTATS_ITEMS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the item count on the automap's stats display"
+  },
+
+  {
+    "hud_stats_secrets_map",
+    (config_t *) &hud_stats_show_map[SHOWSTATS_SECRETS], NULL,
+    {1}, {0,1}, number, ss_none, wad_no,
+    "1 to show the secrets count on the automap's stats display"
+  },
+
+  // [Nugget] ---------------------------------------------------------------/
+
   { // [Nugget]
-    "hud_stats_icons",
-    (config_t *) &hud_stats_icons, NULL,
+    "hud_allow_icons",
+    (config_t *) &hud_allow_icons, NULL,
     {1}, {0,1}, number, ss_stat, wad_yes,
-    "Allow usage of icons for the Level Stats widget's labels"
+    "Allow usage of icons for some labels in HUD widgets"
   },
 
   // [FG] level time widget

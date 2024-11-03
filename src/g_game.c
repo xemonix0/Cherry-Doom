@@ -118,6 +118,15 @@ void G_SetAutosaveCountdown(int value)
   autosave_countdown = value;
 }
 
+static void G_DoSaveGame(void);
+
+static void G_DoAutosave(void)
+{
+  autosaving = true;
+  G_DoSaveGame();
+  autosaving = false;
+}
+
 // Rewind --------------------------------------------------------------------
 
 static boolean keyframe_rw = false;
@@ -149,6 +158,7 @@ static struct {
   boolean fast;
   boolean respawn;
   boolean aggressive;
+  boolean x2monsters;
   boolean notracking; // [Cherry]
 } customskill;
 
@@ -159,6 +169,7 @@ boolean halfdamage;
 boolean slowbrain;
 boolean fastmonsters;
 boolean aggressive;
+boolean x2monsters;
 boolean notracking; // [Cherry]
 
 static struct {
@@ -174,22 +185,6 @@ static struct {
   int          maxammo[NUMAMMO];
 } initial_loadout;
 
-void G_SetBabyModeParms(const skill_t skill)
-{
-  if (skill == sk_custom)
-  {
-    doubleammo = customskill.doubleammo;
-    halfdamage = customskill.halfdamage;
-  }
-  else {
-    doubleammo = skill == sk_baby || skill == sk_nightmare;
-    halfdamage = skill == sk_baby;
-  }
-
-  doubleammo |= CASUALPLAY(doubleammoparm);
-  halfdamage |= CASUALPLAY(halfdamageparm);
-}
-
 // [Nugget]
 void G_SetSkillParms(const skill_t skill)
 {
@@ -198,10 +193,13 @@ void G_SetSkillParms(const skill_t skill)
     thingspawns     = customskill.things;
     coop_spawns     = customskill.coopspawns;
     realnomonsters  = customskill.nomonsters;
+    doubleammo      = customskill.doubleammo;
+    halfdamage      = customskill.halfdamage;
     slowbrain       = customskill.slowbrain;
     fastmonsters    = customskill.fast;
     respawnmonsters = customskill.respawn;
     aggressive      = customskill.aggressive;
+    x2monsters      = customskill.x2monsters;
     notracking      = customskill.notracking || notrackingparm; // [Cherry]
   }
   else {
@@ -210,14 +208,17 @@ void G_SetSkillParms(const skill_t skill)
 
     coop_spawns     = coopspawnsparm;
     realnomonsters  = nomonsters;
+    doubleammo      = skill == sk_baby || skill == sk_nightmare;
+    halfdamage      = skill == sk_baby;
     slowbrain       = skill <= sk_easy;
     fastmonsters    = fastparm || skill == sk_nightmare;
     respawnmonsters = skill == sk_nightmare || respawnparm;
     aggressive      = skill == sk_nightmare;
     notracking      = notrackingparm; // [Cherry]
+
+    x2monsters = false;
   }
 
-  G_SetBabyModeParms(skill);
   G_SetFastParms(fastmonsters);
 }
 
@@ -232,7 +233,8 @@ void G_SetUserCustomSkill(void)
   customskill.fast       = custom_skill_fast;
   customskill.respawn    = custom_skill_respawn;
   customskill.aggressive = custom_skill_aggressive;
-  customskill.notracking = custom_skill_notracking;
+  customskill.x2monsters = custom_skill_x2monsters;
+  customskill.notracking = custom_skill_notracking; // [Cherry]
 }
 
 static void G_UpdateInitialLoadout(void)
@@ -700,19 +702,27 @@ void G_PrepTiccmd(void)
   const boolean strafe = M_InputGameActive(input_strafe);
   ticcmd_t *cmd = &basecmd;
 
-  // [Nugget] Decrease the intensity of some movements if zoomed in /---------
+  // [Nugget] /===============================================================
 
-  float zoomdiv = 1.0f;
+  float hmodifier = 1.0f;
+
+  // Decrease the intensity of some movements if zoomed in -------------------
 
   if (!strictmode)
   {
     const int zoom = R_GetFOVFX(FOVFX_ZOOM);
 
     if (zoom)
-    { zoomdiv = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+    { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
   }
 
-  // [Nugget] ---------------------------------------------------------------/
+  float vmodifier = hmodifier;
+
+  // Flip levels ------------------------------------------------------------
+
+  if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
+
+  // [Nugget] ===============================================================/
 
   // Gamepad
 
@@ -722,7 +732,7 @@ void G_PrepTiccmd(void)
 
     if (axes[AXIS_TURN] && !strafe)
     {
-      localview.rawangle -= CalcControllerAngle() * deltatics / zoomdiv;
+      localview.rawangle -= CalcControllerAngle() * deltatics / hmodifier;
       cmd->angleturn = CarryAngle(localview.rawangle);
       localview.angle = cmd->angleturn << 16;
       axes[AXIS_TURN] = 0.0f;
@@ -730,7 +740,7 @@ void G_PrepTiccmd(void)
 
     if (axes[AXIS_LOOK] && padlook)
     {
-      localview.rawpitch -= CalcControllerPitch() * deltatics / zoomdiv;
+      localview.rawpitch -= CalcControllerPitch() * deltatics / vmodifier;
       cmd->pitch = CarryPitch(localview.rawpitch);
       localview.pitch = cmd->pitch;
       axes[AXIS_LOOK] = 0.0f;
@@ -741,7 +751,7 @@ void G_PrepTiccmd(void)
 
   if (mousex && !strafe)
   {
-    localview.rawangle -= CalcMouseAngle(mousex) / zoomdiv;
+    localview.rawangle -= CalcMouseAngle(mousex) / hmodifier;
     cmd->angleturn = CarryAngle(localview.rawangle);
     localview.angle = cmd->angleturn << 16;
     mousex = 0;
@@ -749,7 +759,7 @@ void G_PrepTiccmd(void)
 
   if (mousey && mouselook)
   {
-    localview.rawpitch += CalcMousePitch(mousey) / zoomdiv;
+    localview.rawpitch += CalcMousePitch(mousey) / vmodifier;
     cmd->pitch = CarryPitch(localview.rawpitch);
     localview.pitch = cmd->pitch;
     mousey = 0;
@@ -875,6 +885,12 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   // Update/reset
 
+  // [Nugget] Flip levels
+  if (STRICTMODE(flip_levels)) {
+    angle = -angle;
+    side  = -side;
+  }
+
   if (angle)
   {
     const short old_angleturn = cmd->angleturn;
@@ -947,24 +963,59 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       // [FG] prev/next weapon keys and buttons
       if (gamestate == GS_LEVEL && next_weapon != 0)
         newweapon = G_NextWeapon(next_weapon);
-      else
-      newweapon =
-        M_InputGameActive(input_weapon1) ? wp_fist :    // killough 5/2/98: reformatted
-        M_InputGameActive(input_weapon2) ? wp_pistol :
-        M_InputGameActive(input_weapon3) ? wp_shotgun :
-        M_InputGameActive(input_weapon4) ? wp_chaingun :
-        M_InputGameActive(input_weapon5) ? wp_missile :
-        M_InputGameActive(input_weapon6) && gamemode != shareware ? wp_plasma :
-        M_InputGameActive(input_weapon7) && gamemode != shareware ? wp_bfg :
-        M_InputGameActive(input_weapon8) ? wp_chainsaw :
-        M_InputGameActive(input_weapon9) && have_ssg ? wp_supershotgun :
+      else {
+        // [Nugget] Tweaked switching
 
-        // [Nugget] Last weapon key
-        M_InputGameActive(input_lastweapon) && casual_play &&
-        WeaponSelectable(players[consoleplayer].lastweapon)
-        ? players[consoleplayer].lastweapon :
+        boolean iw_active[9] = {false}, ilw_active = false;
 
-        wp_nochange;
+        if (CASUALPLAY(weapswitch_interruption))
+        {
+          static boolean iw_down[9] = {false}, ilw_down = false;
+
+          for (int i = 0;  i < 9;  i++)
+          {
+            if (!M_InputGameActive(input_weapon1 + i))
+            {
+              iw_down[i] = false;
+            }
+            else if (!iw_down[i])
+            {
+              iw_active[i] = iw_down[i] = true;
+            }
+          }
+
+          if (!M_InputGameActive(input_lastweapon))
+          {
+            ilw_down = false;
+          }
+          else if (!ilw_down)
+          {
+            ilw_active = ilw_down = true;
+          }
+        }
+        else {
+          for (int i = 0;  i < 9;  i++)
+          { iw_active[i] = M_InputGameActive(input_weapon1 + i); }
+
+          ilw_active = M_InputGameActive(input_lastweapon);
+        }
+
+        newweapon =
+          iw_active[0] ? wp_fist :    // killough 5/2/98: reformatted
+          iw_active[1] ? wp_pistol :
+          iw_active[2] ? wp_shotgun :
+          iw_active[3] ? wp_chaingun :
+          iw_active[4] ? wp_missile :
+          iw_active[5] && gamemode != shareware ? wp_plasma :
+          iw_active[6] && gamemode != shareware ? wp_bfg :
+          iw_active[7] ? wp_chainsaw :
+          iw_active[8] && have_ssg ? wp_supershotgun :
+
+          // [Nugget] Last-weapon button
+          CASUALPLAY(ilw_active) ? players[consoleplayer].lastweapon :
+
+          wp_nochange;
+      }
 
       // killough 3/22/98: For network and demo consistency with the
       // new weapons preferences, we must do the weapons switches here
@@ -1074,7 +1125,7 @@ static void G_DoLoadLevel(void)
   int i;
 
   // [Nugget]
-  int lastaction  = gameaction;
+  int lastaction = gameaction;
   static int lastepisode = -1, lastmap = -1;
 
   // Set the sky map.
@@ -1132,7 +1183,7 @@ static void G_DoLoadLevel(void)
     basetic = gametic;
 
   if (wipegamestate == GS_LEVEL
-      && gameaction != ga_rewind) // [Nugget] Rewind
+      && lastaction != ga_rewind) // [Nugget] Rewind
     wipegamestate = -1;             // force a wipe
 
   gamestate = GS_LEVEL;
@@ -1165,12 +1216,19 @@ static void G_DoLoadLevel(void)
   }
   else
   // [crispy] pistol start
-  if (CRITICAL(pistolstart))
+  if (CRITICAL(pistolstart) && lastaction != ga_rewind) // [Nugget] Rewind
   {
     G_PlayerReborn(0);
   }
 
-  P_SetupLevel (gameepisode, gamemap, 0, gameskill);
+  // [Nugget] Rewind: skip level setup if rewinding within the same map
+  if (lastaction == ga_rewind
+      && lastepisode == gameepisode && lastmap == gamemap)
+  {
+    S_Start(); // Stop sounds
+  }
+  else
+    P_SetupLevel (gameepisode, gamemap, 0, gameskill);
 
   MN_UpdateFreeLook();
 
@@ -1248,13 +1306,15 @@ static void G_DoLoadLevel(void)
 
   R_UpdateFreecamMobj(NULL);
 
-  if (lastepisode != gameepisode || lastmap  != gamemap)
+  if (lastepisode != gameepisode || lastmap != gamemap)
   {
-    lastepisode = gameepisode;
-    lastmap     = gamemap;
-
     R_ResetFreecam(true);
   }
+
+  // -------------------------------------------------------------------------
+
+  lastepisode = gameepisode;
+  lastmap     = gamemap;
 }
 
 extern int ddt_cheating;
@@ -2167,7 +2227,7 @@ static void G_DoWorldDone(void)
 
   // [Nugget] ----------------------------------------------------------------
 
-  G_SetAutosaveCountdown(0); // Autosave
+  if (autosave) { G_DoAutosave(); } // Autosave
   
   G_UpdateInitialLoadout(); // Custom Skill
 }
@@ -2458,7 +2518,7 @@ static void G_DoPlayDemo(void)
 // killough 2/22/98: version id string format for savegames
 #define VERSIONID "MBF %d"
 
-#define CURRENT_SAVE_VERSION "Cherry 2.0.0"
+#define CURRENT_SAVE_VERSION "Cherry 2.1.0"
 
 static char *savename = NULL;
 
@@ -2543,7 +2603,7 @@ char* G_SaveGameName(int slot)
   {
     static int autoslot = 0;
 
-    sprintf(buf, "cheraut%d.dsg", autoslot);
+    sprintf(buf, "%.4saut%d.dsg", D_DoomExeName(), autoslot);
 
     autoslot = (autoslot + 1) % 4;
   }
@@ -2717,6 +2777,8 @@ static void G_DoSaveGame(void)
   saveg_write32(customskill.fast);
   saveg_write32(customskill.respawn);
   saveg_write32(customskill.aggressive);
+  saveg_write32(customskill.x2monsters);
+  saveg_write32(customskill.notracking); // [Cherry]
 
   CheckSaveGame(sizeof(initial_loadout));
 
@@ -2822,8 +2884,10 @@ static void G_DoLoadGame(void)
   CheckSaveVersion("Nugget 2.1.0", saveg_nugget210);
   CheckSaveVersion("Nugget 2.4.0", saveg_nugget300);
   CheckSaveVersion("Nugget 3.2.0", saveg_nugget320);
+  CheckSaveVersion("Nugget 3.3.0", saveg_nugget330);
   CheckSaveVersion("Cherry 1.0.0", saveg_cherry100);
   CheckSaveVersion("Cherry 1.0.1", saveg_cherry101);
+  CheckSaveVersion("Cherry 2.0.0", saveg_cherry200);
   CheckSaveVersion(CURRENT_SAVE_VERSION, saveg_current);
 
   // killough 2/22/98: Friendly savegame version difference message
@@ -2997,36 +3061,62 @@ static void G_DoLoadGame(void)
   { complete_milestones = saveg_read_enum(); }
 
   // Restore custom-skill settings
-  if (saveg_check_version_min(saveg_nugget320) && (save_p - savebuffer) <= (length - sizeof(customskill)))
+  if (saveg_check_version_min(saveg_nugget320))
   {
-    customskill.things     = saveg_read32();
-    customskill.coopspawns = saveg_read32();
-    customskill.nomonsters = saveg_read32();
-    customskill.doubleammo = saveg_read32();
-    customskill.halfdamage = saveg_read32();
-    customskill.slowbrain  = saveg_read32();
-    customskill.fast       = saveg_read32();
-    customskill.respawn    = saveg_read32();
-    customskill.aggressive = saveg_read32();
+    #define READ(x)                                      \
+      if ((save_p - savebuffer) <= (length - sizeof(x))) \
+        x = saveg_read32()
+
+    READ(customskill.things);
+    READ(customskill.coopspawns);
+    READ(customskill.nomonsters);
+    READ(customskill.doubleammo);
+    READ(customskill.halfdamage);
+    READ(customskill.slowbrain);
+    READ(customskill.fast);
+    READ(customskill.respawn);
+    READ(customskill.aggressive);
+
+    if (saveg_check_version_min(saveg_nugget330))
+    { READ(customskill.x2monsters); }
+
+    // [Cherry]
+    if (saveg_check_version_min(saveg_current))
+    { READ(customskill.notracking); }
 
     if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
 
-    initial_loadout.mohealth    = saveg_read32();
-    initial_loadout.health      = saveg_read32();
-    initial_loadout.armorpoints = saveg_read32();
-    initial_loadout.armortype   = saveg_read32();
-    initial_loadout.backpack    = saveg_read32();
-    initial_loadout.readyweapon = saveg_read_enum();
-    initial_loadout.lastweapon  = saveg_read_enum();
+    READ(initial_loadout.mohealth);
+    READ(initial_loadout.health);
+    READ(initial_loadout.armorpoints);
+    READ(initial_loadout.armortype);
+    READ(initial_loadout.backpack);
 
-    for (int i = 0;  i < NUMWEAPONS;  i++)
-    { initial_loadout.weaponowned[i] = saveg_read32(); }
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout.readyweapon)))
+    { initial_loadout.readyweapon = saveg_read_enum(); }
 
-    for (int i = 0;  i < NUMAMMO;  i++)
-    { initial_loadout.ammo[i] = saveg_read32(); }
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout.lastweapon)))
+    { initial_loadout.lastweapon  = saveg_read_enum(); }
 
-    for (int i = 0;  i < NUMAMMO;  i++)
-    { initial_loadout.maxammo[i] = saveg_read32(); }
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout.weaponowned)))
+    {
+      for (int i = 0;  i < NUMWEAPONS;  i++)
+      { initial_loadout.weaponowned[i] = saveg_read32(); }
+    }
+
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout.ammo)))
+    {
+      for (int i = 0;  i < NUMAMMO;  i++)
+      { initial_loadout.ammo[i] = saveg_read32(); }
+    }
+
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout.maxammo)))
+    {
+      for (int i = 0;  i < NUMAMMO;  i++)
+      { initial_loadout.maxammo[i] = saveg_read32(); }
+    }
+
+    #undef READ
   }
 
   // [Nugget] ---------------------------------------------------------------/
@@ -3172,6 +3262,8 @@ static void G_SaveKeyFrame(void)
   saveg_write32(customskill.fast);
   saveg_write32(customskill.respawn);
   saveg_write32(customskill.aggressive);
+  saveg_write32(customskill.x2monsters);
+  saveg_write32(customskill.notracking); // [Cherry]
 
   CheckSaveGame(sizeof(initial_loadout));
 
@@ -3387,25 +3479,30 @@ static void G_DoRewind(void)
     customskill.fast       = saveg_read32();
     customskill.respawn    = saveg_read32();
     customskill.aggressive = saveg_read32();
+    customskill.x2monsters = saveg_read32();
+    customskill.notracking = saveg_read32(); // [Cherry]
 
     if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
 
-    initial_loadout.mohealth    = saveg_read32();
-    initial_loadout.health      = saveg_read32();
-    initial_loadout.armorpoints = saveg_read32();
-    initial_loadout.armortype   = saveg_read32();
-    initial_loadout.backpack    = saveg_read32();
-    initial_loadout.readyweapon = saveg_read_enum();
-    initial_loadout.lastweapon  = saveg_read_enum();
+    if ((save_p - savebuffer) <= (length - sizeof(initial_loadout)))
+    {
+      initial_loadout.mohealth    = saveg_read32();
+      initial_loadout.health      = saveg_read32();
+      initial_loadout.armorpoints = saveg_read32();
+      initial_loadout.armortype   = saveg_read32();
+      initial_loadout.backpack    = saveg_read32();
+      initial_loadout.readyweapon = saveg_read_enum();
+      initial_loadout.lastweapon  = saveg_read_enum();
 
-    for (int i = 0;  i < NUMWEAPONS;  i++)
-    { initial_loadout.weaponowned[i] = saveg_read32(); }
+      for (int i = 0;  i < NUMWEAPONS;  i++)
+      { initial_loadout.weaponowned[i] = saveg_read32(); }
 
-    for (int i = 0;  i < NUMAMMO;  i++)
-    { initial_loadout.ammo[i] = saveg_read32(); }
+      for (int i = 0;  i < NUMAMMO;  i++)
+      { initial_loadout.ammo[i] = saveg_read32(); }
 
-    for (int i = 0;  i < NUMAMMO;  i++)
-    { initial_loadout.maxammo[i] = saveg_read32(); }
+      for (int i = 0;  i < NUMAMMO;  i++)
+      { initial_loadout.maxammo[i] = saveg_read32(); }
+    }
   }
 
   keyframe_rw = false;
@@ -3566,16 +3663,11 @@ void G_Ticker(void)
     }
 
   // [Nugget] Autosave
-  if (CASUALPLAY(autosave_interval)
+  if (CASUALPLAY(autosave && autosave_interval)
       && gamestate == GS_LEVEL && oldleveltime < leveltime
       && players[consoleplayer].playerstate != PST_DEAD)
   {
-    if (--autosave_countdown <= 0)
-    {
-      autosaving = true;
-      G_DoSaveGame();
-      autosaving = false;
-    }
+    if (--autosave_countdown <= 0) { G_DoAutosave(); }
   }
 
   // [Nugget] Rewind
@@ -3753,7 +3845,7 @@ void G_Ticker(void)
     fixed_t pitch = 0;
     boolean center = false,
             lock = false;
-    
+
     if (R_GetFreecamMode() == FREECAM_CAM && gamestate == GS_LEVEL && !menuactive)
     {
       const ticcmd_t *const cmd = &netcmds[consoleplayer];
@@ -3791,10 +3883,12 @@ void G_Ticker(void)
             displaymsg("Freecam Speed: %i unit%s", scaledspeed, (scaledspeed == 1) ? "" : "s");
           }
 
-          fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed)));
+          fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed))) * 100 / realtic_clock_rate;
 
           fixed_t forwardmove = speed * (INPUT(input_forward)     - INPUT(input_backward)),
                   sidemove    = speed * (INPUT(input_straferight) - INPUT(input_strafeleft));
+
+          if (flip_levels) { sidemove = -sidemove; } // Flip levels
 
           angle_t fangle = R_GetFreecamAngle() + angle;
 

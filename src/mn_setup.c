@@ -1449,14 +1449,14 @@ static setup_menu_t keys_settings5[] = {
 
     MI_SPLIT,
     {"Nugget", S_SKIP | S_TITLE, KB_X, M_SPC},
-      {"Minimap",         S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map, input_map_mini},
+      {"Minimap",            S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_mini},
       MI_GAP,
-      {"Tag Finder",      S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map, input_map_tagfinder},
+      {"Tag Finder",         S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_tagfinder},
       MI_GAP,
-      {"Blink Marks",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map, input_map_blink},
+      {"Highlight P.O.I.'s", S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_blink},
       MI_GAP,
-      {"Warp to Pointer", S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_map, input_map_teleport},
-      {"Fancy Warping",  S_ONOFF|S_STRICT|S_CRITICAL, KB_X, M_SPC, {"fancy_teleport"}},
+      {"Warp to Pointer",    S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_map,  input_map_teleport},
+      {"Fancy Warping",      S_ONOFF|S_STRICT|S_CRITICAL, KB_X, M_SPC, {"fancy_teleport"}},
 
     MI_END
 };
@@ -1653,6 +1653,7 @@ static setup_menu_t weap_settings3[] =
     {"Physical Recoil",                 S_ONOFF,                     M_X, M_SPC, {"weapon_recoil"}}, // Restored Weapon Recoil menu item
     {"No Horizontal Autoaim",           S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"no_hor_autoaim"}},
     {"Switch on Pickup",                S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"switch_on_pickup"}},
+    {"Allow Switch Interruption",       S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"weapswitch_interruption"}},
     {"Prev/Next Skip Ammoless Weapons", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"skip_ammoless_weapons"}},
 
   MI_END
@@ -1848,7 +1849,7 @@ static setup_menu_t stat_settings2[] = {
      {"hud_power_timers"}, m_null, input_null, str_show_widgets},
     MI_GAP,
     {"Nugget - Event Timers", S_SKIP|S_TITLE, M_X, M_SPC},
-    {"Teleport Timer", S_ONOFF|S_STRICT, M_X, M_SPC, {"hud_time_teleport"}},
+    {"Teleport Timer",   S_ONOFF|S_STRICT, M_X, M_SPC, {"hud_time_teleport"}},
     {"Key-Pickup Timer", S_ONOFF|S_STRICT, M_X, M_SPC, {"hud_time_keypickup"}},
 
     // [Nugget] --------------------------------------------------------------/
@@ -1875,14 +1876,10 @@ static setup_menu_t stat_settings2[] = {
      
     // [Nugget] /--------------------------------------------------------------
 
-    // [Cherry] Moved from `NG1` ----------------------------------------------
 
-    MI_GAP,
-    {"Nugget - Widget Appearance", S_SKIP | S_TITLE, M_X, M_SPC},
-
-      {"HUD Level Stats Format",           S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format"}, m_null, input_null, str_stats_format},
-      {"Automap Level Stats Format",       S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format_map"}, m_null, input_null, str_stats_format},
-      {"Allow Level Stats Icons",          S_ONOFF,             M_X, M_SPC, {"hud_stats_icons"}},
+      {"HUD Level-Stats Format",           S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format"}, m_null, input_null, str_stats_format},
+      {"Automap Level-Stats Format",       S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format_map"}, m_null, input_null, str_stats_format},
+      {"Allow HUD Icons",                  S_ONOFF,             M_X, M_SPC, {"hud_allow_icons"}},
       {"Highlight Current/Pending Weapon", S_ONOFF,             M_X, M_SPC, {"hud_highlight_weapon"}},
       {"Alternative Arms Display",         S_ONOFF,             M_X, M_SPC, {"alt_arms"}, m_null, input_null, str_empty, ST_createWidgets},
 
@@ -1984,7 +1981,7 @@ static setup_menu_t stat_settings4[] = {
      {"hud_secret_message"}, m_null, input_null, str_secret_message},
 
     // [Nugget]
-    {"Milestone Completion Announcements", S_ONOFF, M_X, M_SPC,
+    {"Milestone-Completion Announcements", S_ONOFF, M_X, M_SPC,
      {"announce_milestones"}},
 
     {"Show Toggle Messages", S_ONOFF, M_X, M_SPC, {"show_toggle_messages"}},
@@ -1997,7 +1994,10 @@ static setup_menu_t stat_settings4[] = {
     {"Colorize Messages",    S_ONOFF, M_X, M_SPC, {"message_colorized"},
      m_null, input_null, str_empty, HU_ResetMessageColors},
 
-    // [Nugget] Restored menu items /-------------------------------------------
+    // [Nugget] Message flash
+    {"Message Flash",        S_ONOFF, M_X, M_SPC, {"message_flash"}},
+
+    // [Nugget] Restored menu items /-----------------------------------------
 
     MI_SPLIT, // [Cherry] Split the page here
 
@@ -2022,10 +2022,7 @@ static setup_menu_t stat_settings4[] = {
     {"Number of Lines", S_NUM, M_X, M_SPC,
      {"hud_msg_lines"}},
 
-    {"Upward Message Scrolling", S_ONOFF, M_X, M_SPC,
-     {"hud_msg_scrollup"}},
-
-    // [Nugget] ---------------------------------------------------------------/
+    // [Nugget] -------------------------------------------------------------/
 
     MI_END
 };
@@ -2090,6 +2087,7 @@ void UpdateCrosshairItems(void) // [Nugget] Global
     // [Nugget] --------------------------------------------------------------
 
     DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair");
+    DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair_tran_pct");
 
     DisableItem(
         !(hud_crosshair_on
@@ -2112,8 +2110,6 @@ void UpdateCrosshairItems(void) // [Nugget] Global
 static void UpdateMultiLineMsgItem(void)
 {
   DisableItem(!message_list, stat_settings4, "hud_msg_lines");
-  // Restore message scroll direction toggle
-  DisableItem(!message_list, stat_settings4, "hud_msg_scrollup");
 }
 
 // Setting up for the Status Bar / HUD screen. Turn on flags, set pointers,
@@ -2288,20 +2284,20 @@ static setup_menu_t enem_settings1[] = {
     {"Blocky Spectre Drawing", S_ONOFF, M_X, M_SPC, {"fuzzcolumn_mode"},
      m_null, input_null, str_overlay, R_SetFuzzColumnMode},
 
-    // [Nugget] /---------------------------------------------------------------
+    // [Nugget] /-------------------------------------------------------------
 
     MI_GAP,
     {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
 
       {"Extra Gibbing",            S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"extra_gibbing"}},
       {"Bloodier Gibbing",         S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"bloodier_gibbing"}},
-      {"ZDoom-like Item Drops",    S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"zdoom_item_drops"}},
+      {"Toss Items Upon Death",    S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"tossdrop"}},
 
       // [Nugget - ceski] Selective fuzz darkening
       {"Selective Fuzz Darkening", S_ONOFF|S_STRICT, M_X, M_SPC,
        {"fuzzdark_mode"}, m_null, input_null, str_empty, R_SetFuzzColumnMode},
 
-    // [Nugget] ---------------------------------------------------------------/
+    // [Nugget] -------------------------------------------------------------/
 
     // [Cherry] /--------------------------------------------------------------
 
@@ -2985,6 +2981,7 @@ static setup_menu_t gen_settings5[] = {
       {"Background For All Menus",     S_ONOFF,                 M_X, M_SPC, {"menu_background_all"}},
       {"No Palette Tint in Menus",     S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_menu_tint"}},
       {"HUD/Menu Shadows",             S_ONOFF,                 M_X, M_SPC, {"hud_menu_shadows"}},
+      {"Flip Levels",                  S_ONOFF,                 M_X, M_SPC, {"flip_levels"}},
       {"No Berserk Tint",              S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_berserk_tint"}},
       {"No Radiation Suit Tint",       S_ONOFF |S_STRICT,       M_X, M_SPC, {"no_radsuit_tint"}},
       {"Night-Vision Visor Effect",    S_ONOFF |S_STRICT,       M_X, M_SPC, {"nightvision_visor"}},
@@ -2999,15 +2996,15 @@ static setup_menu_t gen_settings5[] = {
 
     {"Nugget - View", S_SKIP|S_TITLE, M_X, M_SPC},
 
-      {"View Height",                   S_NUM   |S_STRICT,       M_X,       M_SPC,      {"viewheight_value"}, m_null, input_null, str_empty, ChangeViewHeight},
-      {"Flinch upon",                   S_CHOICE|S_STRICT,       M_X,       M_SPC,      {"flinching"}, m_null, input_null, str_flinching},
-      {"Explosion Shake Effect",        S_ONOFF |S_STRICT,       M_X,       M_SPC,      {"explosion_shake"},},
-      {"Subtle Idle Bobbing/Breathing", S_ONOFF |S_STRICT,       M_X,       M_SPC,      {"breathing"}},
-      {"Teleporter Zoom",               S_ONOFF |S_STRICT,       M_X,       M_SPC,      {"teleporter_zoom"}},
-      {"Death Camera",                  S_ONOFF |S_STRICT,       M_X,       M_SPC,      {"death_camera"}},
-      {"Chasecam",                      S_CHOICE|S_STRICT,       M_X,       M_SPC,      {"chasecam_mode"}, m_null, input_null, str_chasecam},
-      {"Chasecam Distance",             S_THERMO|S_STRICT,       M_X_THRM8, M_THRM_SPC, {"chasecam_distance"}},
-      {"Chasecam Height",               S_THERMO|S_STRICT,       M_X_THRM8, M_THRM_SPC, {"chasecam_height"}},
+      {"View Height",                   S_NUM   |S_STRICT, M_X,       M_SPC,      {"viewheight_value"}, m_null, input_null, str_empty, ChangeViewHeight},
+      {"Flinch upon",                   S_CHOICE|S_STRICT, M_X,       M_SPC,      {"flinching"}, m_null, input_null, str_flinching},
+      {"Explosion Shake Effect",        S_ONOFF |S_STRICT, M_X,       M_SPC,      {"explosion_shake"}},
+      {"Subtle Idle Bobbing/Breathing", S_ONOFF |S_STRICT, M_X,       M_SPC,      {"breathing"}},
+      {"Teleporter Zoom",               S_ONOFF |S_STRICT, M_X,       M_SPC,      {"teleporter_zoom"}},
+      {"Death Camera",                  S_ONOFF |S_STRICT, M_X,       M_SPC,      {"death_camera"}},
+      {"Chasecam",                      S_CHOICE|S_STRICT, M_X,       M_SPC,      {"chasecam_mode"}, m_null, input_null, str_chasecam},
+      {"Chasecam Distance",             S_THERMO|S_STRICT, M_X_THRM8, M_THRM_SPC, {"chasecam_distance"}},
+      {"Chasecam Height",               S_THERMO|S_STRICT, M_X_THRM8, M_THRM_SPC, {"chasecam_height"}},
 
     // [Cherry] ---------------------------------------------------------------
     MI_SPLIT,
@@ -3098,24 +3095,33 @@ void MN_ResetTimeScale(void)
 // [Cherry] Moved here
 // [Nugget] /------------------------------------------------------------------
 
+static void UpdateAutosaveItems(void);
+
+static void UpdateAutosaveInterval(void)
+{
+  if (autosave_interval) { autosave_interval = MAX(30, autosave_interval); }
+
+  G_SetAutosaveCountdown(autosave_interval * TICRATE);
+}
+
 static void UpdateRewindInterval(void)
 {
-    G_EnableRewind();
-    G_SetRewindCountdown((rewind_interval * TICRATE) - ((leveltime - 1) % (rewind_interval * TICRATE)));
+  G_EnableRewind();
+  G_SetRewindCountdown((rewind_interval * TICRATE) - ((leveltime - 1) % (rewind_interval * TICRATE)));
 }
 
 static void UpdateRewindDepth(void)
 {
-    G_EnableRewind();
-    G_ClearExcessKeyFrames();
+  G_EnableRewind();
+  G_ClearExcessKeyFrames();
 }
 
 static const char *s_clipping_dist_strings[] = {
-    "Original", "Double", NULL
+  "Original", "Double", NULL
 };
 
 static const char *page_ticking_strings[] = {
-    "Always", "Not In Menus", "Never", NULL
+  "Always", "Not In Menus", "Never", NULL
 };
 
 // [Nugget] ------------------------------------------------------------------/
@@ -3160,6 +3166,8 @@ static setup_menu_t gen_settings6[] = {
 
       {"Sound Hearing Distance",  S_CHOICE|S_STRICT,            M_X, M_SPC, {"s_clipping_dist_x2"}, m_null, input_null, str_s_clipping_dist, SetSoundModule},
       {"One-Key Quick-Save/Load", S_ONOFF,                      M_X, M_SPC, {"one_key_saveload"}},
+      {"Autosaving",              S_ONOFF,                      M_X, M_SPC, {"autosave"}, m_null, input_null, str_empty, UpdateAutosaveItems},
+      {"Autosave Interval (S)",   S_NUM,                        M_X, M_SPC, {"autosave_interval"}, m_null, input_null, str_empty, UpdateAutosaveInterval},
       {"Rewind Interval (S)",     S_NUM   |S_STRICT|S_CRITICAL, M_X, M_SPC, {"rewind_interval"}, m_null, input_null, str_empty, UpdateRewindInterval},
       {"Rewind Depth",            S_NUM   |S_STRICT|S_CRITICAL, M_X, M_SPC, {"rewind_depth"}, m_null, input_null, str_empty, UpdateRewindDepth},
       {"Rewind Timeout (MS)",     S_NUM   |S_STRICT|S_CRITICAL, M_X, M_SPC, {"rewind_timeout"}, m_null, input_null, str_empty, G_EnableRewind},
@@ -3178,10 +3186,16 @@ static setup_menu_t gen_settings6[] = {
     MI_END
 };
 
-// [Nugget]
+static void UpdateAutosaveItems(void)
+{
+  DisableItem(!autosave, gen_settings6, "autosave_interval");
+}
+
 static const char *over_under_strings[] = {
   "Off", "Player Only", "All Things", NULL
 };
+
+// [Nugget] -----------------------------------------------------------------/
 
 // [Cherry]
 setup_menu_t gen_settings7[] = {
@@ -3419,22 +3433,25 @@ static void CSCurrentLoadout(void)
   StartCustomSkill(3);
 }
 
+#define MI_GAPY4 \
+    {"", S_SKIP, 0, 4}
+
 static setup_menu_t customskill_settings1[] = {
 
     {"Thing Spawns",       S_CHOICE|S_LEVWARN, M_X, M_SPC, {"custom_skill_things"}, m_null, input_null, str_thing_spawns},
     {"Multiplayer Things", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_coopspawns"}},
+    {"Duplicate Monsters", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_x2monsters"}},
     {"No Monsters",        S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_nomonsters"}},
-    {"", S_SKIP, 0, M_SPC / 2},
+    {"Disable Stats Tracking",          S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_notracking"}}, // [Cherry]
+    MI_GAPY4,
     {"Double Ammo From Pickups", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_doubleammo"}},
     {"Halved Damage To Player",  S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_halfdamage"}},
     {"Slow Spawn-Cube Spitter",  S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_slowbrain"}},
-    {"", S_SKIP, 0, M_SPC / 2},
+    MI_GAPY4,
     {"Fast Monsters",                   S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_fast"}},
     {"Respawning Monsters",             S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_respawn"}},
     {"Aggressive (Nightmare) Monsters", S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_aggressive"}},
-    {"", S_SKIP, 0, M_SPC / 2},
-    {"Disable Stats Tracking",          S_ONOFF |S_LEVWARN, M_X, M_SPC, {"custom_skill_notracking"}}, // [Cherry]
-    {"", S_SKIP, 0, M_SPC / 2},
+    MI_GAPY4,
     {"Start New Game",                   S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSNewGame},
     {"Restart Level -- Pistol Start",    S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSPistolStart},
     {"Restart Level -- Initial Loadout", S_FUNCTION|S_LEFTJUST, 32, M_SPC, {NULL}, m_null, input_null, str_empty, CSInitialLoadout},
@@ -3442,6 +3459,8 @@ static setup_menu_t customskill_settings1[] = {
 
     MI_END
 };
+
+#undef MI_GAPY4
 
 static setup_menu_t *customskill_settings[] = {customskill_settings1, NULL};
 

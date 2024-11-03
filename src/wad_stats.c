@@ -503,10 +503,9 @@ void WS_WatchKill(void)
 
 static inline int CustomToVanillaSkill(void)
 {
-    return ((thingspawns == THINGSPAWNS_EASY)
-                ? (doubleammo && halfdamage)
-                      ? sk_baby
-                      : sk_easy
+    return (x2monsters ? sk_none
+            : (thingspawns == THINGSPAWNS_EASY)
+                ? (doubleammo && halfdamage) ? sk_baby : sk_easy
             : (thingspawns == THINGSPAWNS_HARD)
                 ? (doubleammo && fastmonsters && respawnmonsters && aggressive)
                       ? sk_nightmare
@@ -555,6 +554,12 @@ void WS_WatchExitMap(void)
 
     const int skill =
         (gameskill == sk_custom) ? CustomToVanillaSkill() : gameskill + 1;
+    
+    if (!skill)
+    {
+        return;
+    }
+
     const int missed_monsters = MissedMonsters();
 
     if (skill < current_map_stats->best_skill && skill != 4)

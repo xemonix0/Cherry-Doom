@@ -372,10 +372,16 @@ void P_MovePlayer (player_t* player)
 
   // Forcefully stand up under certain conditions
   if ((mo->intflags & MIF_CROUCHING)
-      && (!jump_crouch || player->cheats & CF_FLY || chasecam_mode))
+      && (!jump_crouch || player->cheats & CF_FLY
+          || ((R_GetChasecamOn() || R_GetFreecamOn()) && !have_crouch_sprites)))
   {
     mo->intflags &= ~MIF_CROUCHING;
   }
+
+  if (mo->intflags & MIF_CROUCHING)
+  { mo->altsprite = ASPR_PLYC; }
+  else
+  { mo->altsprite = -1; }
 
   // Smooth crouching
   if (   ((mo->intflags & MIF_CROUCHING)
@@ -775,12 +781,11 @@ void P_PlayerThink (player_t* player)
   if (cmd->buttons & BT_SPECIAL)
     cmd->buttons = 0;
 
-  if (cmd->buttons & BT_CHANGE
-      || (casual_play && M_InputGameActive(input_lastweapon))) // [Nugget] Last weapon key
+  if (cmd->buttons & BT_CHANGE)
     {
-      // [Nugget] Last weapon key
-      const weapontype_t lastweapon = ((casual_play && M_InputGameActive(input_lastweapon))
-                                       ? player->lastweapon : wp_nochange);
+      // [Nugget] Last-weapon button
+      const weapontype_t lastweapon = CASUALPLAY(M_InputGameActive(input_lastweapon))
+                                      ? player->lastweapon : wp_nochange;
 
       // The actual changing of the weapon is done
       //  when the weapon psprite can do it
@@ -813,7 +818,9 @@ void P_PlayerThink (player_t* player)
 
       // killough 2/8/98, 3/22/98 -- end of weapon selection changes
 
-      if (player->weaponowned[newweapon] && newweapon != player->readyweapon)
+      if (player->weaponowned[newweapon]
+          && (newweapon != player->readyweapon
+              || CASUALPLAY(weapswitch_interruption))) // [Nugget] Weapon-switch interruption
 
         // Do not go to plasma or BFG in shareware,
         //  even if cheated.

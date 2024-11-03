@@ -1,9 +1,16 @@
+- **_Save_ version has been changed to `Cherry 2.1.0`**
+
 ## New Features
 
 ### Level table
 
 - Press `Del` to _erase selected map stats_
 - "Reset to defaults" button repurposed for _erasing current WAD stats_
+
+## Nugget Doom merges
+
+Merged changes from [Nugget Doom 3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0), note:
+- Disabled stats tracking when _Duplicate Monsters_ is enabled in the _Custom Skill_ settings
 
 ## Changes
 
@@ -14,4 +21,4 @@
 
 ## Bug Fixes
 
-None.
+- The _Disable Stats Tracking_ setting of the _Custom Skill_ not being preserved in savegames and through rewinds

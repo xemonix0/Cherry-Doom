@@ -90,8 +90,10 @@ typedef enum saveg_compat_e
   saveg_cherry101, // [Cherry]
   saveg_woof1300,  // [Cherry] Woof! 14.0.0 save support
   saveg_nugget300, // [Nugget] Identified by "Nugget 2.4.0"
-  saveg_nugget320, // [Cherry]
-  saveg_current, // saveg_cherry200
+  saveg_nugget320, // [Nugget]
+  saveg_nugget330, // [Cherry]
+  saveg_cherry200, // [Cherry]
+  saveg_current, // saveg_cherry210
 } saveg_compat_t;
 
 extern saveg_compat_t saveg_compat;

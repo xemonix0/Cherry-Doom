@@ -54,6 +54,9 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
+// [Nugget]
+#include "i_video.h"
+
 #define MAXVISPLANES 128    /* must be a power of 2 */
 
 static visplane_t *visplanes[MAXVISPLANES];   // killough
@@ -407,7 +410,7 @@ static void do_draw_plane(visplane_t *pl)
 	angle_t an, flip;
 	boolean vertically_scrolling = false;
 	boolean stretch;
-	int skyheight_target; // [Nugget] Stretch sky just as much as necessary
+	int skyheight_target = 0; // [Nugget] Stretch sky just as much as necessary
 
 	// killough 10/98: allow skies to come from sidedefs.
 	// Allows scrolling and/or animated skies, as well as
@@ -468,16 +471,29 @@ static void do_draw_plane(visplane_t *pl)
         dc_iscale = skyiscale;
 
         // [FG] stretch short skies
-        
-        // [Nugget] Stretch sky just as much as necessary
-        skyheight_target = 200 - (dc_texturemid >> FRACBITS);
-        
-        stretch = ((stretchsky == STRETCHSKY_ALWAYS
+
+        // [Nugget] /---------------------------------------------------------
+
+        // Stretch sky just as much as necessary
+        skyheight_target =
+            ((stretchsky == STRETCHSKY_ALWAYS)
                     // [Cherry] Option to stretch short skies only when
                     // mouselook is enabled
-                    || (stretchsky == STRETCHSKY_MOUSELOOK && mouselook))
-                   && dc_texheight < skyheight_target);
-        if (stretch || !vertically_scrolling)
+                    || (stretchsky == STRETCHSKY_MOUSELOOK && mouselook)
+                ? 200
+                : 100)
+            - (dc_texturemid >> FRACBITS);
+
+        // FOV-based sky stretching
+        if (fov_stretchsky && skyiscalediff > FRACUNIT)
+        {
+          skyheight_target = skyheight_target * skyiscalediff / FRACUNIT;
+        }
+
+        // [Nugget] ---------------------------------------------------------/
+
+        stretch = (dc_texheight < skyheight_target);
+        if (!vertically_scrolling) // [Nugget] Don't stretch vert. scrolling skies
         {
           fixed_t diff;
 
