@@ -882,6 +882,8 @@ static void ST_doPaletteStuff(void)
   byte*       pal;
   int cnt = plyr->damagecount;
 
+  static boolean old_less_blinding_tints = false; // [Cherry]
+
   // killough 7/14/98: beta version did not cause red berserk palette
   if (!beta_emulation)
 
@@ -938,8 +940,10 @@ static void ST_doPaletteStuff(void)
       else
         palette = 0;
 
-  if (palette != st_palette)
+  if (palette != st_palette
+      || old_less_blinding_tints != less_blinding_tints) // [Cherry]
     {
+      old_less_blinding_tints = less_blinding_tints;
       st_palette = palette;
       // haleyjd: must cast to byte *, arith. on void pointer is
       // a GNU C extension
