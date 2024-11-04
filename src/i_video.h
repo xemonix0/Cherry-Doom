@@ -91,8 +91,6 @@ byte I_GetNearestColor(byte *palette, int r, int g, int b);
 
 boolean I_WritePNGfile(char *filename); // [FG] screenshots in PNG format
 
-void I_TranslatePalette(void); // [Cherry] Less Blinding tints
-
 void *I_GetSDLWindow(void);
 void *I_GetSDLRenderer(void);
 

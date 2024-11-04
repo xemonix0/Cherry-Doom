@@ -1770,7 +1770,6 @@ void R_BindRenderVariables(void)
   BIND_NUM_GENERAL(damagecount_cap, 100, 0, 100, "Player damage tint cap");
   BIND_NUM_GENERAL(bonuscount_cap, -1, -1, 100, "Player bonus tint cap");
 
-
   // [Nugget] ---------------------------------------------------------------/
 
   BIND_BOOL(flashing_hom, true, "Enable flashing of the HOM indicator");
@@ -1843,7 +1842,7 @@ void R_BindRenderVariables(void)
   // [Cherry] /----------------------------------------------------------------
 
   BIND_NUM_GENERAL(rocket_trails_tran, 50, 0, 100, "Rocket smoke translucency percentage");
-  BIND_BOOL_GENERAL(less_blinding_tints, false, "Less Blinding Tints");
+  BIND_BOOL_GENERAL(less_blinding_tints, false, "Less blinding tints");
 }
 
 //----------------------------------------------------------------------------

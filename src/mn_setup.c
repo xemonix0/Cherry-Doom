@@ -4044,8 +4044,7 @@ static setup_menu_t gen_settings5[] = {
        m_null, input_null, str_empty, SmokeTrans},
        MI_GAP,
       {"Less Blinding Tints", S_ONOFF,
-      N_X, M_SPC, {"less_blinding_tints"},
-      .action = I_TranslatePalette},
+      N_X, M_SPC, {"less_blinding_tints"}},
 
     MI_END
 };

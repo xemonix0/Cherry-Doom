@@ -58,7 +58,6 @@
 
 // [Nugget] CVARs
 static boolean sts_alt_arms;
-boolean less_blinding_tints;
 
 //
 // STATUS BAR DATA
@@ -944,7 +943,9 @@ static void ST_doPaletteStuff(void)
       st_palette = palette;
       // haleyjd: must cast to byte *, arith. on void pointer is
       // a GNU C extension
-      pal = (byte *)W_CacheLumpNum(lu_palette, PU_CACHE) + palette*768;
+      pal = less_blinding_tints // [Cherry] Less Blinding Tints
+                ? (byte *)(alttintpal + palette*768)
+                : (byte *)W_CacheLumpNum(lu_palette, PU_CACHE) + palette*768;
       I_SetPalette (pal);
     }
 }
@@ -1824,11 +1825,6 @@ void ST_loadGraphics(void)
       nhinfnty = (patch_t *) V_CachePatchNum(lump, PU_STATIC);
     }
     else { nhinfnty = NULL; }
-
-    // [Cherry] Less Blinding Tints
-    if STRICTMODE(less_blinding_tints) {
-      I_TranslatePalette();
-    }
   }
 }
 

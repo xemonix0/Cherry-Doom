@@ -1418,11 +1418,6 @@ static void G_DoLoadLevel(void)
     memset (joybuttons, 0, sizeof(joybuttons));
   }
 
-  // [Cherry] Less Blinding tints
-  if STRICTMODE(less_blinding_tints) {
-    I_TranslatePalette();
-  }
-
   //jff 4/26/98 wake up the status bar in case were coming out of a DM demo
   // killough 5/13/98: in case netdemo has consoleplayer other than green
   ST_Start();

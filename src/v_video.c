@@ -29,6 +29,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
+#include "i_gamma.h" // [Cherry] Less Blinding Tints
 #include "i_system.h"
 #include "i_video.h"
 #include "m_argv.h"
@@ -158,8 +159,145 @@ byte *xhair_tranmap;   // Translucent crosshair
 
 // [Nugget] -----------------------------------------------------------------/
 
-// [Cherry]
+// [Cherry] /-----------------------------------------------------------------
+
 byte *smoke_tranmap; // Translucent rocket trails
+
+// Less Blinding Tints ---
+
+boolean less_blinding_tints;
+byte alttintpal[14*768];
+
+static float HueToRgb(float p, float q, float t) {
+    if (t < 0.0) t += 1.0;
+    if (t > 1.0) t -= 1.0;
+    if (t < 1.0/6.0) return p + (q - p) * 6.0 * t;
+    if (t < 1.0/2.0) return q;
+    if (t < 2.0/3.0) return p + (q - p) * (2.0/3.0 - t) * 6.0;
+    return p;
+}
+
+static void HslToRgb(float h, float s, float l, int* result) {
+    float r, g, b;
+
+    if (s == 0.0) {
+        r = g = b = l;
+    } else {
+        const float q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const float p = 2 * l - q;
+        r = HueToRgb(p, q, h + 1.0/3.0);
+        g = HueToRgb(p, q, h);
+        b = HueToRgb(p, q, h - 1.0/3.0);
+    }
+    result[0] = roundf(r * 255);
+    result[1] = roundf(g * 255);
+    result[2] = roundf(b * 255);
+}
+
+static void RgbToHsl(float r, float g, float b, float* result) {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    const float vmax = MAX(MAX(r, g), b),
+                vmin = MIN(MIN(r, g), b);
+
+    float   h = (vmax + vmin) / 2,
+            s = (vmax + vmin) / 2,
+            l = (vmax + vmin) / 2;
+
+    if (vmax == vmin) {
+        result[0] = 0;
+        result[1] = 0;
+        result[2] = l;
+        return;
+    }
+
+    const float d = vmax - vmin;
+    s = l > 0.5 ? d / (2 - vmax - vmin) : d / (vmax + vmin);
+    if (vmax == r) h = (g - b) / d + (g < b ? 6 : 0);
+    if (vmax == g) h = (b - r) / d + 2;
+    if (vmax == b) h = (r - g) / d + 4;
+    h /= 6;
+
+    result[0] = h;
+    result[1] = s;
+    result[2] = l;
+}
+
+static void InitLessBlindingTints(void)
+{
+    const byte *const gamma = gammatable[gamma2];
+
+    byte *palsrc = alttintpal;
+    for (int i = 0; i < 256; ++i)
+    {
+        // Get normal palette values
+        const byte  r = gamma[*palsrc++],
+                    g = gamma[*palsrc++],
+                    b = gamma[*palsrc++];
+
+        // Convert RGB to HSL
+        float hsl[3];
+        RgbToHsl(r, g, b, hsl);
+
+        int rgb[3];
+        byte* nextPalette;
+        int newR, newB, newG;
+        int j;  // palette indices
+
+        // Create a new tinted color with the same brightness using HSL
+        // Then mix it with the original tinted palette to get the best of both worlds
+        // NOTE: this won't work well for custom palettes that don't use the vanilla colors for tints
+
+        // Pain tint
+        for (j = 2;j <= 9; ++j)
+        {
+            float hue = 0.0;  // Red
+            float saturation = hsl[1] / 1.3 * (float)(j-1) * 0.6;
+            saturation = saturation < 0.9 ? saturation : 0.9;
+            HslToRgb(hue, saturation, hsl[2], rgb);
+            nextPalette = (byte*)(palsrc - 3 + 768*(j-1));
+            newR = (rgb[0] * 0.5 * (2 + j*0.4) + gamma[*nextPalette] * 0.3 * (24 - j*1.1)) / 7;
+            *nextPalette++ = newR < 255 ? newR : 255;
+            newG = (rgb[1] * 0.5 * (2 + j*0.4) + gamma[*nextPalette] * 0.3 * (24 - j*1.1)) / 7;
+            *nextPalette++ = newG < 255 ? newG : 255;
+            newB = (rgb[2] * 0.5 * (2 + j*0.4) + gamma[*nextPalette] * 0.3 * (24 - j*1.1)) / 7;
+            *nextPalette++ = newB < 255 ? newB : 255;
+        }
+
+        // Bonus/Pickup tint
+        for (j = 10;j <= 13; ++j)
+        {
+            float hue = 32.0 / 360.0;  // Gold-ish
+            float saturation = hsl[1] / 1.3 * (float)(j-9) * 1.01;
+            saturation = saturation < 1.0 ? saturation : 0.9;
+            HslToRgb(hue, saturation, hsl[2], rgb);
+            nextPalette = (byte*)(palsrc - 3 + 768*(j-1));
+
+            newR = (rgb[0] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15.2 - j*0.5)) / 3;
+            *nextPalette++ = newR < 255 ? newR : 255;
+            newG = (rgb[1] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15.2 - j*0.5)) / 3;
+            *nextPalette++ = newG < 255 ? newG : 255;
+            newB = (rgb[2] * 0.1 * (j-9) + gamma[*nextPalette] * 0.28 * (15.2 - j*0.5)) / 3;
+            *nextPalette++ = newB < 255 ? newB : 255;
+        }
+
+        // Radsuit tint
+        j = 14;
+        float hue = 120.0 / 360.0;  // Green
+        HslToRgb(hue, hsl[1], hsl[2], rgb);
+        nextPalette = (byte*)(palsrc - 3 + 768*(j-1));
+        newR = (rgb[0] * 0.1 + gamma[*nextPalette] * 0.9);
+        *nextPalette++ = newR < 255 ? newR : 255;
+        newG = (rgb[1] * 0.1  + gamma[*nextPalette] * 0.9);
+        *nextPalette++ = newG < 255 ? newG : 255;
+        newB = (rgb[2] * 0.1  + gamma[*nextPalette] * 0.9);
+        *nextPalette++ = newB < 255 ? newB : 255;
+    }
+}
+
+// [Cherry] -----------------------------------------------------------------/
 
 // killough 5/2/98: tiny engine driven by table above
 void V_InitColorTranslation(void)
@@ -257,6 +395,11 @@ void V_InitColorTranslation(void)
         
         nightvision[i] = I_GetNearestColor(playpal, 0.0, greatest, 0.0);
     }
+
+    // [Cherry] Less Blinding Tints ==========================================
+
+    memcpy(alttintpal, playpal, sizeof(alttintpal));
+    InitLessBlindingTints();
 }
 
 // [Nugget] HUD/menu shadows /------------------------------------------------
