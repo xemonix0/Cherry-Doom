@@ -246,10 +246,13 @@ static void GenerateTintedPalette(byte *palsrc, const byte *gamma, float *hsl,
         int rgb[3];
         HslToRgb(hue, saturation, lightness, rgb);
 
-        const float tint_multiplier =
+        float tint_multiplier =
             (tint_offset + intensity * tint_fade_in_speed) / palette_num;
-        const float palette_multiplier =
+        tint_multiplier = MAX(tint_multiplier, 0.0f);
+
+        float palette_multiplier =
             (palette_num + palette_offset - intensity * palette_fade_out_speed) / palette_num;
+        palette_multiplier = MAX(palette_multiplier, 0.0f);
         
         for (int i = 0; i < 3; i++)
         {
@@ -290,8 +293,8 @@ static void InitLessBlindingTints(void)
         const float hue_degrees_bonus = 32.0f; // Gold-ish
         GenerateTintedPalette(
             palsrc, gamma, hsl,
-            10, 12, hue_degrees_bonus, 0.6f, 0.9f,
-            0.5f, 0.8f, -0.5f, 0.8f
+            10, 12, hue_degrees_bonus, 0.57f, 0.9f,
+            2.0f, 0.3f, -1.8f, 0.5f
         );
     }
 }
