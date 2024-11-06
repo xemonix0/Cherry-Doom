@@ -228,7 +228,7 @@ static void RgbToHsl(float r, float g, float b, float* result) {
 static void TranslateToLessBlindingTint(
     byte *palsrc, const byte *const gamma, float* hsl,
     int paletteStart, int paletteEnd,
-    float hueDegrees, float saturationCap,
+    float hueDegrees, float saturationCap, float lightnessCap,
     float editedPalOffset, float editedPalAppearSpeed,
     float originalPalOffset, float originalPalDisappearSpeed)
 {
@@ -242,9 +242,10 @@ static void TranslateToLessBlindingTint(
         const float hue = hueDegrees / 360.0;
         float saturation = (hsl[1] + 0.1) * intensity; // Add 0.1 so greys get translated too
         saturation = MIN(saturation, saturationCap); // Cap it so it doesn't look bad
+        const float lightness = MIN(hsl[2], lightnessCap); // Cap lightness so whites get translated too
 
         int rgb[3];
-        HslToRgb(hue, saturation, hsl[2], rgb);
+        HslToRgb(hue, saturation, lightness, rgb);
 
         const float editedPalMultiplier = (editedPalOffset + intensity * editedPalAppearSpeed) / numPalettes,
                     originalPalMultiplier = (numPalettes + originalPalOffset - intensity * originalPalDisappearSpeed) / numPalettes;
@@ -284,7 +285,7 @@ static void InitLessBlindingTints(void)
         const float hueDegreesPain = 0.0; // Red
         TranslateToLessBlindingTint(
             palsrc, gamma, hsl,
-            2, 8, hueDegreesPain, 0.9,
+            2, 8, hueDegreesPain, 0.9, 0.75,
             0, 1, 0, 0.8
         );
 
@@ -292,7 +293,7 @@ static void InitLessBlindingTints(void)
         const float hueDegreesBonus = 32.0; // Gold-ish
         TranslateToLessBlindingTint(
             palsrc, gamma, hsl,
-            10, 12, hueDegreesBonus, 0.6,
+            10, 12, hueDegreesBonus, 0.6, 0.9,
             0.5, 0.8, -0.5, 0.8
         );
 
