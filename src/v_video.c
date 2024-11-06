@@ -168,111 +168,108 @@ byte *smoke_tranmap; // Translucent rocket trails
 boolean less_blinding_tints;
 byte alttintpal[14*768];
 
-static float HueToRgb(float p, float q, float t) {
-    if (t < 0.0) t += 1.0;
-    if (t > 1.0) t -= 1.0;
-    if (t < 1.0/6.0) return p + (q - p) * 6.0 * t;
-    if (t < 1.0/2.0) return q;
-    if (t < 2.0/3.0) return p + (q - p) * (2.0/3.0 - t) * 6.0;
+static float HueToRgb(float p, float q, float t)
+{
+    if (t < 0.0f) t += 1.0f;
+    else if (t > 1.0f) t -= 1.0f;
+    if (t < 1.0f/6.0f) return p + (q - p) * 6.0f * t;
+    if (t < 1.0f/2.0f) return q;
+    if (t < 2.0f/3.0f) return p + (q - p) * (2.0f/3.0f - t) * 6.0f;
     return p;
 }
 
-static void HslToRgb(float h, float s, float l, int* result) {
-    float r, g, b;
-
-    if (s == 0.0) {
-        r = g = b = l;
-    } else {
-        const float q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        const float p = 2 * l - q;
-        r = HueToRgb(p, q, h + 1.0/3.0);
-        g = HueToRgb(p, q, h);
-        b = HueToRgb(p, q, h - 1.0/3.0);
-    }
-    result[0] = roundf(r * 255);
-    result[1] = roundf(g * 255);
-    result[2] = roundf(b * 255);
-}
-
-static void RgbToHsl(float r, float g, float b, float* result) {
-    r /= 255;
-    g /= 255;
-    b /= 255;
-
-    const float vmax = MAX(MAX(r, g), b),
-                vmin = MIN(MIN(r, g), b);
-
-    float   h = (vmax + vmin) / 2,
-            s = (vmax + vmin) / 2,
-            l = (vmax + vmin) / 2;
-
-    if (vmax == vmin) {
-        result[0] = 0;
-        result[1] = 0;
-        result[2] = l;
+static void HslToRgb(float h, float s, float l, int *rgb)
+{
+    if (s == 0.0f)
+    {
+        rgb[0] = rgb[1] = rgb[2] = roundf(l * 255.0f);
         return;
     }
 
-    const float d = vmax - vmin;
-    s = l > 0.5 ? d / (2 - vmax - vmin) : d / (vmax + vmin);
-    if (vmax == r) h = (g - b) / d + (g < b ? 6 : 0);
-    if (vmax == g) h = (b - r) / d + 2;
-    if (vmax == b) h = (r - g) / d + 4;
-    h /= 6;
+    const float q = l < 0.5f ? l * (1.0f + s) : l + s - l * s;
+    const float p = 2.0f * l - q;
 
-    result[0] = h;
-    result[1] = s;
-    result[2] = l;
+    const float r = HueToRgb(p, q, h + 1.0f/3.0f);
+    const float g = HueToRgb(p, q, h);
+    const float b = HueToRgb(p, q, h - 1.0f/3.0f);
+    
+    rgb[0] = roundf(r * 255.0f);
+    rgb[1] = roundf(g * 255.0f);
+    rgb[2] = roundf(b * 255.0f);
 }
 
-static void TranslateToLessBlindingTint(
-    byte *palsrc, const byte *const gamma, float* hsl,
-    int paletteStart, int paletteEnd,
-    float hueDegrees, float saturationCap, float lightnessCap,
-    float editedPalOffset, float editedPalAppearSpeed,
-    float originalPalOffset, float originalPalDisappearSpeed)
+static void RgbToHsl(float r, float g, float b, float *hsl)
 {
-    for (int palette = paletteStart; palette <= paletteEnd; palette++)
+    r /= 255.0f;
+    g /= 255.0f;
+    b /= 255.0f;
+
+    const float vmax = MAX(MAX(r, g), b);
+    const float vmin = MIN(MIN(r, g), b);
+    const float d = vmax - vmin;
+
+    hsl[0] = hsl[1] = hsl[2] = (vmax + vmin) / 2.0f;
+
+    if (vmax == vmin)
     {
-        byte* palByte = (byte*)(palsrc + 768 * (palette));
+        hsl[0] = hsl[1] = 0.0f;
+        return;
+    }
+    
+    hsl[1] = hsl[0] > 0.5f ? d / (2.0f - vmax - vmin) : d / (vmax + vmin);
 
-        const int intensity = palette - paletteStart + 1,
-                  numPalettes = paletteEnd - paletteStart + 1;
+    if (vmax == r) hsl[0] = (g - b) / d + (g < b ? 6.0f : 0.0f);
+    if (vmax == g) hsl[0] = (b - r) / d + 2.0f;
+    if (vmax == b) hsl[0] = (r - g) / d + 4.0f;
+    hsl[0] /= 6.0f;
+}
 
-        const float hue = hueDegrees / 360.0;
-        float saturation = (hsl[1] + 0.1) * intensity; // Add 0.1 so greys get translated too
-        saturation = MIN(saturation, saturationCap); // Cap it so it doesn't look bad
-        const float lightness = MIN(hsl[2], lightnessCap); // Cap lightness so whites get translated too
+static void GenerateTintedPalette(byte *palsrc, const byte *gamma, float *hsl,
+                                  int palette_start, int palette_end,
+                                  float hue_degrees, float saturation_cap, float lightness_cap,
+                                  float tint_offset, float tint_fade_in_speed,
+                                  float palette_offset, float palette_fade_out_speed)
+{
+    const int palette_num = palette_end - palette_start + 1;
+    const float hue = hue_degrees / 360.0f;
+
+    for (int palette = palette_start; palette <= palette_end; palette++)
+    {
+        byte *pal_byte = (byte *)(palsrc + 768 * palette);
+
+        const int intensity = palette - palette_start + 1;
+        
+        float saturation = (hsl[1] + 0.1f) * intensity; // Add 0.1 so greys get translated too
+        saturation = MIN(saturation, saturation_cap); // Cap it so it doesn't look bad
+        const float lightness = MIN(hsl[2], lightness_cap); // Cap lightness so whites get translated too
 
         int rgb[3];
         HslToRgb(hue, saturation, lightness, rgb);
 
-        const float editedPalMultiplier = (editedPalOffset + intensity * editedPalAppearSpeed) / numPalettes,
-                    originalPalMultiplier = (numPalettes + originalPalOffset - intensity * originalPalDisappearSpeed) / numPalettes;
-
-        int newR, newG, newB;
-        newR = rgb[0] * editedPalMultiplier + gamma[*palByte] * originalPalMultiplier;
-        *palByte++ = MIN(newR, 255);
-        newG = rgb[1] * editedPalMultiplier + gamma[*palByte] * originalPalMultiplier;
-        *palByte++ = MIN(newG, 255);
-        newB = rgb[2] * editedPalMultiplier + gamma[*palByte] * originalPalMultiplier;
-        *palByte++ = MIN(newB, 255);
+        const float tint_multiplier =
+            (tint_offset + intensity * tint_fade_in_speed) / palette_num;
+        const float palette_multiplier =
+            (palette_num + palette_offset - intensity * palette_fade_out_speed) / palette_num;
+        
+        for (int i = 0; i < 3; i++)
+        {
+            int new_color = rgb[i] * tint_multiplier
+                            + gamma[*pal_byte] * palette_multiplier;
+            *pal_byte++ = MIN(new_color, 255);
+        }
     }
 }
 
 static void InitLessBlindingTints(void)
 {
     const byte *const gamma = gammatable[gamma2];
-
-    byte *palsrc = alttintpal;
-    for (int i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; i++)
     {
-        // Get original color values
-        const byte  r = gamma[*palsrc++],
-                    g = gamma[*palsrc++],
-                    b = gamma[*palsrc++];
-
-        palsrc = (byte*)(palsrc - 3); // Back to color start
+        byte *const palsrc = alttintpal + i*3;
+        
+        const byte r = gamma[palsrc[0]];
+        const byte g = gamma[palsrc[1]];
+        const byte b = gamma[palsrc[2]];
 
         // Create a new tinted color with the same brightness using HSL
         // Then mix it with the original tinted palette to get the best of both worlds
@@ -282,22 +279,20 @@ static void InitLessBlindingTints(void)
         RgbToHsl(r, g, b, hsl);
 
         // Pain tint
-        const float hueDegreesPain = 0.0; // Red
-        TranslateToLessBlindingTint(
+        const float hue_degrees_pain = 0.0f; // Red
+        GenerateTintedPalette(
             palsrc, gamma, hsl,
-            2, 8, hueDegreesPain, 0.9, 0.75,
-            0, 1, 0, 0.8
+            2, 8, hue_degrees_pain, 0.9f, 0.75f,
+            0.0f, 1.0f, 0.0f, 0.8f
         );
 
         // Bonus/Pickup tint
-        const float hueDegreesBonus = 32.0; // Gold-ish
-        TranslateToLessBlindingTint(
+        const float hue_degrees_bonus = 32.0f; // Gold-ish
+        GenerateTintedPalette(
             palsrc, gamma, hsl,
-            10, 12, hueDegreesBonus, 0.6, 0.9,
-            0.5, 0.8, -0.5, 0.8
+            10, 12, hue_degrees_bonus, 0.6f, 0.9f,
+            0.5f, 0.8f, -0.5f, 0.8f
         );
-
-        palsrc = (byte*)(palsrc + 3); // Back to where we left off for the next loop
     }
 }
 
