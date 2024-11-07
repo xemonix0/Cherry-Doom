@@ -901,7 +901,12 @@ void R_InitColormaps(void)
   // [Nugget] Night-vision visor
   if (!beta_emulation) {
     for (i = 0;  i < numcolormaps;  i++)
-    { memcpy(&colormaps[i][256*33], nightvision, 256); }
+    {
+      // Guard against markers (empty lumps) among the actual colormaps
+      if (colormaps[i] == NULL) { continue; }
+
+      memcpy(&colormaps[i][256*33], nightvision, 256);
+    }
   }
 }
 
