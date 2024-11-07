@@ -2218,11 +2218,20 @@ static void P_SecretRevealed(player_t *player)
 
   if (hud_secret_message && player == &players[consoleplayer])
   {
-    // [Nugget] Secret count in secret revealed message, from Crispy Doom
-    static char str_count[32];
-    M_snprintf(str_count, sizeof(str_count), "Secret %d of %d revealed!", player->secretcount, totalsecret);
+    if (hud_secret_message == SECRETMESSAGE_COUNT)
+    {
+      static char str_count[32];
 
-    player->secretmessage = (hud_secret_message == secretmessage_count) ? str_count : s_HUSTR_SECRETFOUND;
+      M_snprintf(str_count, sizeof(str_count), "Secret %d of %d revealed!",
+                 player->secretcount, totalsecret);
+
+      player->secretmessage = str_count;
+    }
+    else
+    {
+      player->secretmessage = s_HUSTR_SECRETFOUND;
+    }
+
     S_StartSound(NULL, sfx_secret);
   }
 }
@@ -3353,7 +3362,7 @@ void T_Pusher(pusher_t *p)
       yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
       for (bx=xl ; bx<=xh ; bx++)
         for (by=yl ; by<=yh ; by++)
-          P_BlockThingsIterator(bx,by,PIT_PushThing);
+          P_BlockThingsIterator(bx, by, PIT_PushThing, true);
       return;
     }
 

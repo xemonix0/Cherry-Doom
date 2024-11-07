@@ -325,9 +325,11 @@ enum
     str_hudmode,
     str_show_widgets,
     str_show_adv_widgets,
+    str_stats_format,
     str_crosshair,
     str_crosshair_target,
     str_hudcolor,
+    str_secretmessage,
     str_overlay,
     str_automap_preset,
     str_automap_keyed_door,
@@ -366,8 +368,6 @@ enum
 
     str_bobbing_style,
     str_crosshair_lockon,
-    str_secret_message,
-    str_stats_format,
     str_vertical_aiming,
     str_over_under,
     str_flinching,
@@ -2087,16 +2087,23 @@ static setup_menu_t stat_settings1[] = {
     MI_END
 };
 
+static void UpdateStatsFormatItem(void);
+
 static const char *show_widgets_strings[] = {"Off", "Automap", "HUD", "Always"};
 static const char *show_adv_widgets_strings[] = {"Off", "Automap", "HUD",
                                                  "Always", "Advanced"};
+
+static const char *stats_format_strings[] = {
+  "Match HUD", // [Nugget]
+  "Ratio", "Boolean", "Percent", "Remaining", "Count"
+};
 
 static setup_menu_t stat_settings2[] = {
 
     {"Widget Types", S_SKIP | S_TITLE, H_X, M_SPC},
 
     {"Show Level Stats", S_CHOICE, H_X, M_SPC, {"hud_level_stats"},
-     .strings_id = str_show_widgets},
+     .strings_id = str_show_widgets, .action = UpdateStatsFormatItem},
 
     {"Show Level Time", S_CHOICE, H_X, M_SPC, {"hud_level_time"},
      .strings_id = str_show_widgets},
@@ -2113,6 +2120,13 @@ static setup_menu_t stat_settings2[] = {
     MI_GAP,
 
     {"Widget Appearance", S_SKIP | S_TITLE, H_X, M_SPC},
+
+    {"Level Stats Format", S_CHOICE, H_X, M_SPC, {"hud_stats_format"},
+    .strings_id = str_stats_format, .action = HU_Start},
+
+    // [Nugget]
+    {"Automap Level Stats Format", S_CHOICE, H_X, M_SPC, {"hud_stats_format_map"},
+    .strings_id = str_stats_format, .action = HU_Start},
 
     {"Use Doom Font", S_CHOICE, H_X, M_SPC, {"hud_widget_font"},
      .strings_id = str_show_widgets},
@@ -2188,23 +2202,18 @@ static setup_menu_t stat_settings3[] = {
     MI_END
 };
 
-// [Nugget] /-----------------------------------------------------------------
-
-static void UpdateMultiLineMsgItem(void);
-
-static const char *secret_message_strings[] = {
-  "Off", "On", "Count", NULL
+static const char *secretmessage_strings[] = {
+    "Off", "On", "Count",
 };
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget]
+static void UpdateMultiLineMsgItem(void);
 
 static setup_menu_t stat_settings4[] = {
     // [Nugget] Shifted X-position of all items
 
-    // [Nugget] Multiple choice
-    {"Announce Revealed Secrets", S_CHOICE, M_X, M_SPC,
-     {"hud_secret_message"}, .strings_id = str_secret_message},
-
+    {"Announce Revealed Secrets", S_CHOICE, M_X, M_SPC, {"hud_secret_message"},
+     .strings_id = str_secretmessage},
     {"Announce Map Titles",  S_ONOFF, M_X, M_SPC, {"hud_map_announce"}},
 
     // [Nugget]
@@ -2246,19 +2255,19 @@ static setup_menu_t stat_settings4[] = {
     MI_END
 };
 
-// [Nugget] /-----------------------------------------------------------------
+static void UpdateStatsFormatItem(void)
+{
+  DisableItem(!hud_level_stats, stat_settings2, "hud_stats_format");
+  DisableItem(!hud_level_stats, stat_settings2, "hud_stats_format_map"); // [Nugget]
+}
 
-static const char *stats_format_strings[] = {
-  "Match HUD", "Ratio", "Boolean", "Percentage", "Remaining", "Count", NULL
-};
+// [Nugget] /-----------------------------------------------------------------
 
 static setup_menu_t stat_settings5[] =
 {
   {"Nugget - Extended HUD", S_SKIP|S_TITLE, M_X, M_SPC},
 
     {"Show Powerup Timers",              S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_power_timers"}, .strings_id = str_show_widgets},
-    {"HUD Level-Stats Format",           S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format"}, .strings_id = str_stats_format},
-    {"Automap Level-Stats Format",       S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format_map"}, .strings_id = str_stats_format},
     {"Allow HUD Icons",                  S_ONOFF,             M_X, M_SPC, {"hud_allow_icons"}},
     {"Show Berserk when using Fist",     S_ONOFF,             M_X, M_SPC, {"sts_show_berserk"}},
     {"Highlight Current/Pending Weapon", S_ONOFF,             M_X, M_SPC, {"hud_highlight_weapon"}},
@@ -3460,12 +3469,7 @@ static void UpdateGyroAiming(void)
     I_ResetGamepad();
 }
 
-static const char *gyro_space_strings[] = {
-    "Local Turn",
-    "Local Lean",
-    "Player Turn",
-    "Player Lean",
-};
+static const char *gyro_space_strings[] = {"Local", "Player"};
 
 static const char *gyro_action_strings[] = {
     "None",
@@ -3697,41 +3701,6 @@ static const char *invul_mode_strings[] = {"Vanilla", "MBF", "Gray"};
 
 static void UpdatePaletteItems(void); // [Nugget]
 
-void MN_ResetTimeScale(void)
-{
-    if (strictmode || D_CheckNetConnect())
-    {
-        I_SetTimeScale(100);
-        return;
-    }
-
-    int time_scale = realtic_clock_rate;
-
-    //!
-    // @arg <n>
-    // @category game
-    //
-    // Increase or decrease game speed, percentage of normal.
-    //
-
-    int p = M_CheckParmWithArgs("-speed", 1);
-
-    if (p)
-    {
-        time_scale = M_ParmArgToInt(p);
-        if (time_scale < 10 || time_scale > 1000)
-        {
-            I_Error(
-                "Invalid parameter '%d' for -speed, valid values are 10-1000.",
-                time_scale);
-        }
-    }
-
-    G_SetTimeScale(time_scale); // [Nugget] Slow Motion
-
-    setrefreshneeded = true;
-}
-
 // [Nugget] /-----------------------------------------------------------------
 
 static void UpdateAutoSaveItems(void);
@@ -3773,7 +3742,7 @@ static setup_menu_t gen_settings6[] = {
     {"Miscellaneous", S_SKIP | S_TITLE, OFF_CNTR_X, M_SPC},
 
     {"Game speed", S_NUM | S_STRICT | S_PCT, OFF_CNTR_X, M_SPC,
-     {"realtic_clock_rate"}, .action = MN_ResetTimeScale},
+     {"realtic_clock_rate"}, .action = G_SetTimeScale},
 
     {"Default Skill", S_CHOICE | S_LEVWARN, OFF_CNTR_X, M_SPC,
      {"default_skill"}, .strings_id = str_default_skill},
@@ -5572,9 +5541,11 @@ static const char **selectstrings[] = {
     NULL, // str_hudmode
     show_widgets_strings,
     show_adv_widgets_strings,
+    stats_format_strings,
     crosshair_strings,
     crosshair_target_strings,
     hudcolor_strings,
+    secretmessage_strings,
     overlay_strings,
     automap_preset_strings,
     automap_keyed_door_strings,
@@ -5608,8 +5579,6 @@ static const char **selectstrings[] = {
 
     bobbing_style_strings,
     crosshair_lockon_strings,
-    secret_message_strings,
-    stats_format_strings,
     vertical_aiming_strings,
     over_under_strings,
     flinching_strings,
@@ -5671,6 +5640,7 @@ void MN_SetupResetMenu(void)
     DisableItem(!brightmaps_found || force_brightmaps, gen_settings5,
                 "brightmaps");
     UpdateInterceptsEmuItem();
+    UpdateStatsFormatItem();
     UpdateCrosshairItems();
     UpdateCenteredWeaponItem();
     UpdateGamepadItems();

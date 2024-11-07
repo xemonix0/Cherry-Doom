@@ -188,20 +188,12 @@ void G_ResetSlowMotion(void)
   slow_motion = false;
   slow_motion_factor = SLOWMO_FACTOR_NORMAL;
 
-  if (reset_scale) { G_SetTimeScale(realtic_clock_rate); }
+  if (reset_scale) { G_SetTimeScale(); }
 }
 
 float G_GetSlowMotionFactor(void)
 {
   return slow_motion_factor;
-}
-
-void G_SetTimeScale(int scale)
-{
-  if (casual_play && !menuactive && slow_motion_factor != SLOWMO_FACTOR_NORMAL)
-  { scale *= slow_motion_factor; }
-
-  I_SetTimeScale(scale);
 }
 
 // Custom Skill --------------------------------------------------------------
@@ -651,6 +643,45 @@ static void G_DemoSkipTics(void)
   }
 }
 
+void G_SetTimeScale(void)
+{
+    if (strictmode || D_CheckNetConnect())
+    {
+        I_SetTimeScale(100);
+        return;
+    }
+
+    int time_scale = realtic_clock_rate;
+
+    //!
+    // @arg <n>
+    // @category game
+    //
+    // Increase or decrease game speed, percentage of normal.
+    //
+
+    int p = M_CheckParmWithArgs("-speed", 1);
+
+    if (p)
+    {
+        time_scale = M_ParmArgToInt(p);
+        if (time_scale < 10 || time_scale > 1000)
+        {
+            I_Error(
+                "Invalid parameter '%d' for -speed, valid values are 10-1000.",
+                time_scale);
+        }
+    }
+
+    // [Nugget] Slow Motion
+    if (casual_play && !menuactive && slow_motion_factor != SLOWMO_FACTOR_NORMAL)
+    { time_scale *= slow_motion_factor; }
+
+    I_SetTimeScale(time_scale);
+
+    setrefreshneeded = true;
+}
+
 static void ClearLocalView(void)
 {
   memset(&localview, 0, sizeof(localview));
@@ -946,19 +977,21 @@ static void AdjustWeaponSelection(int *newweapon)
 
 static boolean FilterDeathUseAction(void)
 {
-    if (players[consoleplayer].playerstate & PST_DEAD)
+    if (players[consoleplayer].playerstate == PST_DEAD && gamestate == GS_LEVEL)
     {
         switch (death_use_action)
         {
-            case death_use_nothing:
+            case DEATH_USE_ACTION_NOTHING:
                 return true;
-            case death_use_reload:
+
+            case DEATH_USE_ACTION_LAST_SAVE:
                 if (!demoplayback && !demorecording && !netgame
-                    && activate_death_use_reload == 0)
+                    && death_use_state == DEATH_USE_STATE_INACTIVE)
                 {
-                    activate_death_use_reload = 2;
+                    death_use_state = DEATH_USE_STATE_PENDING;
                 }
                 return true;
+
             default:
                 break;
         }
@@ -1433,7 +1466,7 @@ static void G_DoLoadLevel(void)
   // Set the initial listener parameters using the player's initial state.
   S_InitListener(players[displayplayer].mo);
 
-  activate_death_use_reload = 0;
+  death_use_state = DEATH_USE_STATE_INACTIVE;
 
   // clear cmd building stuff
   // [Nugget] Rewind: unless we just rewound
@@ -2497,7 +2530,7 @@ static void G_DoPlayDemo(void)
       M_ReadFile(filename, &demobuffer);
       demolength = M_FileLength(filename);
       demo_p = demobuffer;
-      I_Printf(VB_INFO, "G_DoPlayDemo: %s", filename);
+      I_Printf(VB_DEMO, "G_DoPlayDemo: %s", filename);
   }
   else
   {
@@ -2506,7 +2539,7 @@ static void G_DoPlayDemo(void)
       int lumpnum = W_GetNumForName(lumpname);
       demolength = W_LumpLength(lumpnum);
       demobuffer = demo_p = W_CacheLumpNum(lumpnum, PU_STATIC);  // killough
-      I_Printf(VB_INFO, "G_DoPlayDemo: %s (%s)", lumpname, W_WadNameForLump(lumpnum));
+      I_Printf(VB_DEMO, "G_DoPlayDemo: %s (%s)", lumpname, W_WadNameForLump(lumpnum));
   }
 
   // [FG] ignore too short demo lumps
@@ -3440,12 +3473,12 @@ static void PrintLevelTimes(void)
 {
   if (totalleveltimes)
   {
-    I_Printf(VB_INFO, "(%d:%02d) ",
+    I_Printf(VB_DEBUG, "(%d:%02d) ",
              ((totalleveltimes + leveltime) / TICRATE) / 60,
              ((totalleveltimes + leveltime) / TICRATE) % 60);
   }
 
-  I_Printf(VB_INFO, "%d:%05.2f", leveltime / TICRATE / 60,
+  I_Printf(VB_DEBUG, "%d:%05.2f", leveltime / TICRATE / 60,
            (float)(leveltime % (60 * TICRATE)) / TICRATE);
 }
 
@@ -3454,7 +3487,7 @@ static void G_DoLoadGame(void)
   if (DoLoadGame(false))
   {
     const int slot_num = 10 * savepage + savegameslot;
-    I_Printf(VB_INFO, "G_DoLoadGame: Slot %02d, Time ", slot_num);
+    I_Printf(VB_DEBUG, "G_DoLoadGame: Slot %02d, Time ", slot_num);
     PrintLevelTimes();
     MN_SetQuickSaveSlot(savegameslot);
   }
@@ -3464,7 +3497,7 @@ static void G_DoLoadAutoSave(void)
 {
   if (DoLoadGame(true))
   {
-    I_Printf(VB_INFO, "G_DoLoadGame: Auto Save, Time ");
+    I_Printf(VB_DEBUG, "G_DoLoadGame: Auto Save, Time ");
     PrintLevelTimes();
   }
 }
@@ -4202,7 +4235,7 @@ void G_Ticker(void)
     change = true;
   }
 
-  if (change) { G_SetTimeScale(realtic_clock_rate); }
+  if (change) { G_SetTimeScale(); }
 
   // Freecam -----------------------------------------------------------------
 
@@ -6088,8 +6121,7 @@ void G_BindGameVariables(void)
     32, UL, UL, ss_none, wad_no,
     "Maximum number of player corpses (< 0 = No limit)");
   BIND_NUM_GENERAL(death_use_action, 0, 0, 2,
-    "Use-button action upon death (0 = Default; 1 = Load save; 2 = Nothing)");
-
+    "Use-button action upon death (0 = Default; 1 = Last Save; 2 = Nothing)");
   BIND_BOOL_GENERAL(autosave, true,
     "Auto save at the beginning of a map, after completing the previous one");
 

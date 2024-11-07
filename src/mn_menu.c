@@ -2582,7 +2582,7 @@ boolean M_ShortcutResponder(const event_t *ev)
         realtic_clock_rate += 10;
         realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
         displaymsg("Game Speed: %d", realtic_clock_rate);
-        G_SetTimeScale(realtic_clock_rate); // [Nugget] Slow Motion
+        G_SetTimeScale();
         setrefreshneeded = true;
     }
 
@@ -2592,7 +2592,7 @@ boolean M_ShortcutResponder(const event_t *ev)
         realtic_clock_rate -= 10;
         realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
         displaymsg("Game Speed: %d", realtic_clock_rate);
-        G_SetTimeScale(realtic_clock_rate); // [Nugget] Slow Motion
+        G_SetTimeScale();
         setrefreshneeded = true;
     }
 
@@ -2601,7 +2601,7 @@ boolean M_ShortcutResponder(const event_t *ev)
     {
         realtic_clock_rate = 100;
         displaymsg("Game Speed: %d", realtic_clock_rate);
-        G_SetTimeScale(realtic_clock_rate); // [Nugget] Slow Motion
+        G_SetTimeScale();
         setrefreshneeded = true;
     }
 
