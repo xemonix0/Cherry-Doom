@@ -2983,7 +2983,7 @@ overunder_t P_CheckOverUnderMobj(mobj_t *thing)
 
   for (bx = xl; bx <= xh; bx++)
     for (by = yl; by <= yh; by++)
-      if (!P_BlockThingsIterator(bx, by, PIT_CheckOverUnderMobjZ))
+      if (!P_BlockThingsIterator(bx, by, PIT_CheckOverUnderMobjZ, !(tmthing->flags2 & MF2_RIP)))
       {
         P_SetOverUnderMobjs(tmthing);
         ret = zdir;

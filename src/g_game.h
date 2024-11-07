@@ -179,7 +179,6 @@ boolean G_GetSlowMotion(void);
 void G_SetSlowMotion(const boolean value);
 void G_ResetSlowMotion(void);
 float G_GetSlowMotionFactor(void);
-void G_SetTimeScale(int scale);
 
 // Skill ---------------------------------------------------------------------
 
