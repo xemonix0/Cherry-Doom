@@ -4235,7 +4235,10 @@ void G_Ticker(void)
     change = true;
   }
 
-  if (change) { G_SetTimeScale(); }
+  if (change) {
+    G_SetTimeScale();
+    setrefreshneeded = false;
+  }
 
   // Freecam -----------------------------------------------------------------
 
