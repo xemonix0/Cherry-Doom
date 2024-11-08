@@ -234,10 +234,6 @@ void S_StartSoundPitch(const mobj_t *origin, int sfx_id, const pitchrange_t pitc
     // Initialize sound parameters
     pitch = NORM_PITCH;
 
-    // [Nugget] Slow Motion
-    if (!menuactive && G_GetSlowMotionFactor() != SLOWMO_FACTOR_NORMAL)
-    { pitch *= G_GetSlowMotionFactor(); }
-
     // haleyjd: modified so that priority value is always used
     // haleyjd: also modified to get and store proper singularity value
     o_priority = priority = sfx->priority;

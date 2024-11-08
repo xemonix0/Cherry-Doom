@@ -136,7 +136,7 @@ Text lines will inherit the properties of the stack they belong to.
 **Stacks make use of all the shared properties, and are alignable both horizontally and vertically.**
 
 The _Message_ and _Chat_ displays will always be drawn first in whichever stack they're assigned to,
-and will also be assigned to the next stack, which is assumed to be on the other end of the screen at the same height,
+and will also be assigned to the next stack, which is assumed to be on the other side of the screen at the same height,
 so as to leave space to prevent overlapping issues due to those displays' potential length.
 
 #### Examples
@@ -147,7 +147,7 @@ so as to leave space to prevent overlapping issues due to those displays' potent
 
 nughud_face_x 143
 
-; Move the Frags widget elsewhere, since in the default Nugget HUD distribution,
+; Move the Frags widget elsewhere, since in the default NUGHUD,
 ; it is drawn right where the Face is drawn in the traditional Status Bar.
 nughud_frags_x     314
 nughud_frags_y     155
