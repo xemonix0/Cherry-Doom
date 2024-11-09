@@ -224,78 +224,52 @@ static void RgbToHsl(float r, float g, float b, float *hsl)
     hsl[0] /= 6.0f;
 }
 
-static void GenerateTintedPalette(byte *palsrc, const byte *gamma, float *hsl,
-                                  int palette_start, int palette_end,
-                                  float hue_degrees, float saturation_cap, float lightness_cap,
-                                  float tint_offset, float tint_fade_in_speed,
-                                  float palette_offset, float palette_fade_out_speed)
+static void GenerateTintedPalette(byte *palsrc, const byte *gamma, float lightness,
+                                  int palette_start, int palette_end)
 {
-    const int palette_num = palette_end - palette_start + 1;
-    const float hue = hue_degrees / 360.0f;
+    // Cap lightness so whites get translated too
+    const float capped_lightness = MIN(lightness, 0.9);
 
     for (int palette = palette_start; palette <= palette_end; palette++)
     {
         byte *pal_byte = (byte *)(palsrc + 768 * palette);
 
-        const int intensity = palette - palette_start + 1;
-        
-        float saturation = (hsl[1] + 0.1f) * intensity; // Add 0.1 so greys get translated too
-        saturation = MIN(saturation, saturation_cap); // Cap it so it doesn't look bad
-        const float lightness = MIN(hsl[2], lightness_cap); // Cap lightness so whites get translated too
+        const byte tinted_r = gamma[pal_byte[0]];
+        const byte tinted_g = gamma[pal_byte[1]];
+        const byte tinted_b = gamma[pal_byte[2]];
 
+        float tinted_hsl[3];
+        RgbToHsl(tinted_r, tinted_g, tinted_b, tinted_hsl);
+
+        // Replace the tinted color's lightness
         int rgb[3];
-        HslToRgb(hue, saturation, lightness, rgb);
-
-        float tint_multiplier =
-            (tint_offset + intensity * tint_fade_in_speed) / palette_num;
-        tint_multiplier = MAX(tint_multiplier, 0.0f);
-
-        float palette_multiplier =
-            (palette_num + palette_offset - intensity * palette_fade_out_speed) / palette_num;
-        palette_multiplier = MAX(palette_multiplier, 0.0f);
+        HslToRgb(tinted_hsl[0], tinted_hsl[1], capped_lightness, rgb);
         
         for (int i = 0; i < 3; i++)
         {
-            int new_color = rgb[i] * tint_multiplier
-                            + gamma[*pal_byte] * palette_multiplier;
-            *pal_byte++ = MIN(new_color, 255);
+            *pal_byte++ = rgb[i];
         }
     }
 }
-
 static void InitLessBlindingTints(void)
 {
     const byte *const gamma = gammatable[gamma2];
-    for (int i = 0; i < 256; i++)
+    for (int color = 0; color < 256; color++)
     {
-        byte *const palsrc = alttintpal + i*3;
+        byte *const palsrc = alttintpal + color * 3;
         
         const byte r = gamma[palsrc[0]];
         const byte g = gamma[palsrc[1]];
         const byte b = gamma[palsrc[2]];
 
-        // Create a new tinted color with the same brightness using HSL
-        // Then mix it with the original tinted palette to get the best of both worlds
-        // NOTE: this won't work well for custom palettes that don't use the vanilla colors for tints
-
         float hsl[3];
         RgbToHsl(r, g, b, hsl);
 
-        // Pain tint
-        const float hue_degrees_pain = 0.0f; // Red
-        GenerateTintedPalette(
-            palsrc, gamma, hsl,
-            2, 8, hue_degrees_pain, 0.9f, 0.75f,
-            0.0f, 1.0f, 0.0f, 0.8f
-        );
-
-        // Bonus/Pickup tint
-        const float hue_degrees_bonus = 32.0f; // Gold-ish
-        GenerateTintedPalette(
-            palsrc, gamma, hsl,
-            10, 12, hue_degrees_bonus, 0.57f, 0.9f,
-            2.0f, 0.3f, -1.8f, 0.5f
-        );
+        const float lightness = hsl[2];
+        
+        GenerateTintedPalette(palsrc, gamma, lightness, 2,  8);  // Pain tint
+        GenerateTintedPalette(palsrc, gamma, lightness, 10, 12); // Bonus/Pickup tint
+        GenerateTintedPalette(palsrc, gamma, lightness, 13, 13); // Radsuit tint
     }
 }
 
