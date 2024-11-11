@@ -347,9 +347,11 @@ static int64_t older_m_x, older_m_y, older_m_w, older_m_h;
 
 #define FOLLOW (followplayer || automapactive == AM_MINI)
 
-// Blink marks ---------------------------------------------------------------
+// Highlight points of interest ----------------------------------------------
 
-static int markblinktimer;
+static int highlight_timer;
+
+static int highlight_color[4];
 
 // [Nugget] =================================================================/
 
@@ -583,6 +585,17 @@ void AM_initVariables(void)
 
   // inform the status bar of the change
   ST_Responder(&st_notify);
+
+  // [Nugget] ----------------------------------------------------------------
+
+  byte *const playpal = W_CacheLumpNum(W_GetNumForName("PLAYPAL"), PU_STATIC);
+
+  const int low = 223;
+
+  highlight_color[0] = I_GetPaletteIndex(playpal, 255, low, low); // Red
+  highlight_color[1] = I_GetPaletteIndex(playpal, low, low, 255); // Blue
+  highlight_color[2] = I_GetPaletteIndex(playpal, 255, 255, low); // Yellow
+  highlight_color[3] = I_GetPaletteIndex(playpal, 255, 255, 255); // Any (white)
 }
 
 //
@@ -871,6 +884,8 @@ void AM_ChangeMode(automapmode_t mode)
       AM_activateNewScale();
     }
   }
+
+  HU_InitMonSec();
 }
 
 //
@@ -1064,11 +1079,15 @@ boolean AM_Responder
 
     // [Nugget] /-------------------------------------------------------------
 
-    // Blink marks
-    else if (M_InputActivated(input_map_blink) && markpointnum)
+    // Highlight points of interest
+    else if (M_InputActivated(input_map_blink))
     {
-      markblinktimer = 4*TICRATE;
-      displaymsg("Blinking %i mark%s...", markpointnum, (1 < markpointnum) ? "s" : "");
+      highlight_timer = 4*TICRATE;
+
+      if (markpointnum)
+      { displaymsg("Highlighting points of interest (%i mark%s)...", markpointnum, (markpointnum == 1) ? "" : "s"); }
+      else
+      { displaymsg("Highlighting points of interest..."); }
     }
     // Minimap
     else if (M_InputActivated(input_map_mini))
@@ -1269,7 +1288,7 @@ void AM_Coordinates(const mobj_t *mo, fixed_t *x, fixed_t *y, fixed_t *z)
 //
 void AM_Ticker (void)
 {
-  if (markblinktimer) { markblinktimer--; } // [Nugget] Blink marks
+  if (highlight_timer) { highlight_timer--; } // [Nugget] Highlight points of interest
 
   // [Nugget] Tag Finder from PrBoomX /---------------------------------------
 
@@ -1292,7 +1311,7 @@ void AM_Ticker (void)
 
       for (int i = 0;  i < subsec->sector->linecount;  i++)
       {
-        line_t* l = subsec->sector->lines[i];
+        const line_t *const l = subsec->sector->lines[i];
 
         if (l && l->tag > 0)
         {
@@ -1500,6 +1519,17 @@ static boolean AM_clipMline
 }
 #undef DOOUTCODE
 
+// [Nugget] Factored out
+static void PUTDOT(int xx, int yy, int cc)
+{
+  if (STRICTMODE(flip_levels)) { xx = f_x*2 + f_w - 1 - xx; } // [Nugget] Flip levels
+
+  // [Nugget] Minimap: take `f_x` and `f_y` into account
+  if ((f_x <= xx && xx < f_x+f_w) && (f_y <= yy && yy < f_y+f_h))
+    I_VideoBuffer[(yy) * video.pitch + (xx)] = (cc);
+}
+
+
 //
 // AM_drawFline()
 //
@@ -1536,10 +1566,7 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
   }
 #endif
 
-// [Nugget] Minimap: take `f_x` and `f_y` into account
-#define PUTDOT(xx,yy,cc)                                          \
-  if ((f_x <= xx && xx < f_x+f_w) && (f_y <= yy && yy < f_y+f_h)) \
-    I_VideoBuffer[(yy) * video.pitch + (xx)] = (cc)
+// [Nugget] Factored PUTDOT() out
 
   dx = fl->b.x - fl->a.x;
   ax = 2 * (dx<0 ? -dx : dx);
@@ -1593,6 +1620,8 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
 //
 static void AM_putWuDot(int x, int y, int color, int weight)
 {
+  if (STRICTMODE(flip_levels)) { x = f_x*2 + f_w - 1 - x; } // [Nugget] Flip levels
+
    byte *dest = &I_VideoBuffer[y * video.pitch + x];
    unsigned int *fg2rgb = Col2RGB8[weight];
    unsigned int *bg2rgb = Col2RGB8[64 - weight];
@@ -1901,8 +1930,39 @@ typedef struct
 
 static am_line_t *lines_1S = NULL;
 
-// [Nugget] Tag Finder from PrBoomX: Prototype this function
+// [Nugget] Tag Finder from PrBoomX /-----------------------------------------
+
+// Prototype this function
 static void AM_drawLineCharacter(mline_t*, int, fixed_t, angle_t, int, fixed_t, fixed_t);
+
+static int AM_isTagFinderLine(const line_t *const line)
+{
+  int ret = 0;
+
+  if (magic_sector || magic_tag > 0)
+  {
+    if (line->frontsector && (   (magic_sector  && line->frontsector->tag == magic_sector->tag)
+                              || (magic_tag > 0 && line->frontsector->tag == magic_tag)))
+    {
+      ret |= 0x1;
+    }
+    else 
+    if (line->backsector && (   (magic_sector  && line->backsector->tag == magic_sector->tag)
+                             || (magic_tag > 0 && line->backsector->tag == magic_tag)))
+    {
+      ret |= 0x1;
+    }
+
+    if (line->tag > 0 && (line->tag == magic_tag || (magic_sector && (line->tag == magic_sector->tag))))
+    {
+      ret |= 0x2;
+    }
+  }
+
+  return ret;
+}
+
+// [Nugget] -----------------------------------------------------------------/
 
 static void AM_drawWalls(void)
 {
@@ -1934,15 +1994,53 @@ static void AM_drawWalls(void)
         AM_rotatePoint(&l.a);
         AM_rotatePoint(&l.b);
     }
+
+    // [Nugget] Tag Finder from PrBoomX: Highlight sectors and lines /--------
+
+    const int is_tf_line = AM_isTagFinderLine(&lines[i]);
+
+    if (is_tf_line & 0x1)
+    {
+      if (!lines[i].backsector)
+      { array_push(lines_1S, ((am_line_t) {l, magic_sector_color_pos})); }
+      else
+      { AM_drawMline(&l, magic_sector_color_pos); }
+
+      if (magic_sector_color_pos <= MAGIC_SECTOR_COLOR_MIN+1)
+      { array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, 229 })); }
+    }
+    
+    if (is_tf_line & 0x2)
+    {
+      if (!lines[i].backsector)
+      { array_push(lines_1S, ((am_line_t) {l, magic_line_color_pos})); }
+      else
+      { AM_drawMline(&l, magic_line_color_pos); }
+
+      if (magic_line_color_pos <= MAGIC_LINE_COLOR_MIN+1)
+      { array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, 251 })); }
+    }
+
+    if (is_tf_line) { continue; }
+
+    // [Nugget] -------------------------------------------------------------/
+
     // if line has been seen or IDDT has been used
     if (ddt_cheating || (lines[i].flags & ML_MAPPED))
     {
-      if ((lines[i].flags & ML_DONTDRAW) && !ddt_cheating
-          && lines[i].tag != magic_tag) // [Nugget] Tag Finder from PrBoomX
+      if ((lines[i].flags & ML_DONTDRAW) && !ddt_cheating)
         continue;
       {
         /* cph - show keyed doors and lines */
         const int amd = AM_DoorColor(lines[i].special);
+
+        // [Nugget] Highlight keyed lines
+        if (amd != -1 && !(lines[i].flags & ML_SECRET)
+            && highlight_timer && (highlight_timer % 12) < 2)
+        {
+            array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, highlight_color[amd] })); 
+        }
+
         if ((mapcolor_bdor || mapcolor_ydor || mapcolor_rdor) &&
             !(lines[i].flags & ML_SECRET) &&    /* non-secret */
             (amd != -1)
@@ -2129,36 +2227,6 @@ static void AM_drawWalls(void)
           != lines[i].frontsector->ceilingheight
         )
           AM_drawMline(&l, mapcolor_unsn);
-      }
-    }
-
-    // [Nugget] Tag Finder from PrBoomX: Highlight sectors and lines
-    if (magic_sector || magic_tag > 0)
-    {
-      if (   (lines[i].frontsector && (   (magic_sector  && lines[i].frontsector->tag == magic_sector->tag)
-                                       || (magic_tag > 0 && lines[i].frontsector->tag == magic_tag)))
-          || (lines[i].backsector  && (   (magic_sector  && lines[i].backsector->tag  == magic_sector->tag)
-                                       || (magic_tag > 0 && lines[i].backsector->tag  == magic_tag))))
-      {
-        if (!lines[i].backsector)
-        { array_push(lines_1S, ((am_line_t) {l, magic_sector_color_pos})); }
-        else
-        { AM_drawMline(&l, magic_sector_color_pos); }
-
-        if (magic_sector_color_pos <= MAGIC_SECTOR_COLOR_MIN+1)
-        { array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, 229 })); }
-      }
-      
-      if (   (lines[i].tag > 0)
-          && (lines[i].tag == magic_tag || (magic_sector && (lines[i].tag == magic_sector->tag))))
-      {
-        if (!lines[i].backsector)
-        { array_push(lines_1S, ((am_line_t) {l, magic_line_color_pos})); }
-        else
-        { AM_drawMline(&l, magic_line_color_pos); }
-
-        if (magic_line_color_pos <= MAGIC_LINE_COLOR_MIN+1)
-        { array_push(crossmarks, ((crossmark_t) { l.a.x, l.a.y, 251 })); }
       }
     }
   }
@@ -2585,6 +2653,8 @@ static void AM_drawMarks(void)
 	fx = CXMTOF(pt.x);
 	fy = CYMTOF(pt.y);
 
+	if (STRICTMODE(flip_levels)) { fx = f_x*2 + f_w - 1 - fx; } // [Nugget] Flip levels
+
 	do
 	  {
 	    int d = j % 10;
@@ -2594,10 +2664,10 @@ static void AM_drawMarks(void)
 
 	    // [Nugget] Minimap: take `f_x` and `f_y` into account
 	    if (fx >= f_x && fx < f_x+f_w - w && fy >= f_y && fy < f_y+f_h - h)
-	      // [Nugget] Blink marks
+	      // [Nugget] Highlight marks
 	      V_DrawPatchTranslated(((fx << FRACBITS) / video.xscale) - video.deltaw,
                               (fy << FRACBITS) / video.yscale,
-                              marknums[d], (markblinktimer & 8) ? cr_dark : NULL);
+                              marknums[d], (highlight_timer & 8) ? cr_dark : NULL);
 
 	    fx -= w - (video.yscale >> FRACBITS); // killough 2/22/98: 1 space backwards
 

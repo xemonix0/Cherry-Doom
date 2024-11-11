@@ -2319,12 +2319,6 @@ boolean PIT_ChangeSector(mobj_t *thing)
   if (thing->health <= 0)
     {
       P_SetMobjState(thing, S_GIBS);
-      // [Nugget] No gibs if the thing doesn't bleed to begin with
-      if (STRICTMODE(comp_nonbleeders) && thing->flags & MF_NOBLOOD)
-      {
-        thing->sprite = SPR_TNT1;
-        thing->frame = 0;
-      }
       thing->flags &= ~MF_SOLID;
       thing->height = thing->radius = 0;
       if (thing->info->bloodcolor || idgaf)
@@ -2332,6 +2326,26 @@ boolean PIT_ChangeSector(mobj_t *thing)
         thing->flags2 |= MF2_COLOREDBLOOD;
         thing->bloodcolor = V_BloodColor(thing->info->bloodcolor);
       }
+
+      // [Nugget] /-----------------------------------------------------------
+
+      // No gibs if the thing doesn't bleed to begin with
+      if (STRICTMODE(comp_nonbleeders) && thing->flags & MF_NOBLOOD)
+      {
+        thing->sprite = SPR_TNT1;
+        thing->frame = 0;
+      }
+
+      // Bloodier crushing
+      if (CASUALPLAY(bloodier_gibbing))
+      {
+        if (!(thing->flags & MF_NOBLOOD)) { S_StartSound(thing, sfx_slop); }
+
+        P_NuggetGib(thing, true);
+      }
+
+      // [Nugget] -----------------------------------------------------------/
+
       return true;      // keep checking
     }
 

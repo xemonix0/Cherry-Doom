@@ -44,8 +44,6 @@ extern  boolean devparm;  // DEBUG: launched with -devparm
 
 // [Nugget]
 extern  boolean coopspawnsparm;
-extern  boolean doubleammoparm;
-extern  boolean halfdamageparm;
 
 // [Cherry]
 extern  boolean notrackingparm;
@@ -231,6 +229,7 @@ extern  boolean         halfdamage;
 extern  boolean         slowbrain;
 extern  boolean         fastmonsters;
 extern  boolean         aggressive;
+extern  boolean         x2monsters;
 extern  boolean         notracking; // [Cherry]
 
 // [Nugget] -----------------------------------------------------------------/
@@ -537,6 +536,7 @@ extern int chasecam_crosshair; // CFG-only
 extern int menu_background_all;
 extern int no_menu_tint;
 extern int hud_menu_shadows;
+extern int flip_levels;
 extern int no_berserk_tint;
 extern int no_radsuit_tint;
 extern int nightvision_visor;
@@ -548,12 +548,14 @@ extern int wipe_speed_percentage;
 extern int alt_interpic;
 extern int s_clipping_dist_x2;
 extern int one_key_saveload;
-extern int autosave_interval; // CFG-only
+extern int autosave;
+extern int autosave_interval;
 extern int rewind_interval;
 extern int rewind_depth;
 extern int rewind_timeout;
 extern int no_page_ticking;
 extern int quick_quitgame;
+extern int quit_sound;
 
 //extern int a11y_sector_lighting;
 extern int a11y_weapon_flash;
@@ -564,6 +566,7 @@ extern int a11y_invul_colormap;
 
 extern int no_hor_autoaim;
 extern int switch_on_pickup;
+extern int weapswitch_interruption;
 extern int skip_ammoless_weapons;
 extern int always_bob; // CFG-only
 
@@ -589,6 +592,7 @@ extern int sx_fix; // CFG-only
 
 extern int announce_milestones;
 extern int show_save_messages; // CFG-only
+extern int message_flash;
 extern int show_ssg; // CFG-only
 
 enum {
@@ -602,8 +606,18 @@ enum {
 };
 extern int hud_stats_format;
 extern int hud_stats_format_map;
-extern int hud_stats_icons;
 
+enum {
+  SHOWSTATS_KILLS,
+  SHOWSTATS_ITEMS,
+  SHOWSTATS_SECRETS,
+
+  NUMSHOWSTATS
+};
+extern int hud_stats_show[];
+extern int hud_stats_show_map[];
+
+extern int hud_allow_icons;
 extern int hud_highlight_weapon;
 extern int alt_arms;
 
@@ -640,7 +654,7 @@ typedef enum {
 extern int extra_gibbing[];
 
 extern int bloodier_gibbing;
-extern int zdoom_item_drops;
+extern int tossdrop;
 
 // Key Bindings --------------------------------------------------------------
 
@@ -656,6 +670,7 @@ enum {
   SHOTPAL_BOTH,
 }; extern int screenshot_palette;
 
+extern int fov_stretchsky;
 extern int hud_menu_shadows_filter_pct;
 extern int menu_backdrop_darkening;
 extern int automap_overlay_darkening;
@@ -701,6 +716,7 @@ extern int custom_skill_slowbrain;
 extern int custom_skill_fast;
 extern int custom_skill_respawn;
 extern int custom_skill_aggressive;
+extern int custom_skill_x2monsters;
 extern int custom_skill_notracking; // [Cherry]
 
 // [Nugget] =================================================================/

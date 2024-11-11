@@ -162,6 +162,7 @@ int chasecam_crosshair; // CFG-only
 int menu_background_all;
 int no_menu_tint;
 int hud_menu_shadows;
+int flip_levels;
 int no_berserk_tint;
 int no_radsuit_tint;
 int nightvision_visor;
@@ -173,12 +174,14 @@ int wipe_speed_percentage;
 int alt_interpic;
 int s_clipping_dist_x2;
 int one_key_saveload;
-int autosave_interval; // CFG-only
+int autosave;
+int autosave_interval;
 int rewind_interval;
 int rewind_depth;
 int rewind_timeout;
 int no_page_ticking;
 int quick_quitgame;
+int quit_sound;
 
 //int a11y_sector_lighting;
 int a11y_weapon_flash;
@@ -189,6 +192,7 @@ int a11y_invul_colormap;
 
 int no_hor_autoaim;
 int switch_on_pickup;
+int weapswitch_interruption;
 int skip_ammoless_weapons;
 int always_bob; // CFG-only
 int bobbing_style;
@@ -204,10 +208,13 @@ int sx_fix; // CFG-only
 
 int announce_milestones;
 int show_save_messages; // CFG-only
+int message_flash;
 int show_ssg; // CFG-only
 int hud_stats_format;
 int hud_stats_format_map;
-int hud_stats_icons;
+int hud_stats_show[NUMSHOWSTATS];
+int hud_stats_show_map[NUMSHOWSTATS];
+int hud_allow_icons;
 int hud_highlight_weapon;
 int alt_arms;
 int hud_time_teleport;
@@ -228,7 +235,7 @@ int hudcolor_ms_comp;
 int extra_gibbing_on;
 int extra_gibbing[NUMEXGIBS]; // CFG-only
 int bloodier_gibbing;
-int zdoom_item_drops;
+int tossdrop;
 
 // Key Bindings --------------------------------------------------------------
 
@@ -238,6 +245,7 @@ int fancy_teleport;
 // Miscellaneous (CFG-only) --------------------------------------------------
 
 int screenshot_palette;
+int fov_stretchsky;
 int hud_menu_shadows_filter_pct;
 int menu_backdrop_darkening;
 int automap_overlay_darkening;
@@ -283,6 +291,7 @@ int custom_skill_slowbrain;
 int custom_skill_fast;
 int custom_skill_respawn;
 int custom_skill_aggressive;
+int custom_skill_x2monsters;
 int custom_skill_notracking; // [Cherry]
 
 // [Nugget] =================================================================/
