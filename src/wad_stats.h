@@ -17,6 +17,7 @@
 #define __WAD_STATS__
 
 #include "doomtype.h"
+#include "hu_stuff.h"
 
 typedef struct
 {
@@ -48,7 +49,7 @@ extern wad_stats_t wad_stats;
 extern boolean lt_enable_tracking;
 extern boolean lt_track_continuous;
 extern boolean lt_reset_on_higher_skill;
-extern int lt_stats_format;
+extern statsformat_t lt_stats_format;
 
 void WadStats_Init(void);
 void WadStats_Save(void);

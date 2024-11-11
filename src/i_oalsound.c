@@ -41,6 +41,7 @@
 
 // [Nugget]
 #include "doomstat.h"
+#include "g_game.h"
 
 #define OAL_ROLLOFF_FACTOR      1
 #define OAL_SPEED_OF_SOUND      343.3f
@@ -716,6 +717,10 @@ boolean I_OAL_StartSound(int channel, sfxinfo_t *sfx, float pitch)
     {
         return false;
     }
+
+    // [Nugget] Slow Motion
+    if (!menuactive && G_GetSlowMotionFactor() != SLOWMO_FACTOR_NORMAL)
+    { pitch *= (4.0f + G_GetSlowMotionFactor()) / 5.0f; }
 
     alSourcef(oal->sources[channel], AL_PITCH, pitch);
 

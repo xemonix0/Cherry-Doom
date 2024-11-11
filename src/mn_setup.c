@@ -318,9 +318,11 @@ enum
     str_hudmode,
     str_show_widgets,
     str_show_adv_widgets,
+    str_stats_format,
     str_crosshair,
     str_crosshair_target,
     str_hudcolor,
+    str_secretmessage,
     str_overlay,
     str_automap_preset,
     str_automap_keyed_door,
@@ -359,8 +361,6 @@ enum
 
     str_bobbing_style,
     str_crosshair_lockon,
-    str_secret_message,
-    str_stats_format,
     str_vertical_aiming,
     str_over_under,
     str_flinching,
@@ -1642,14 +1642,15 @@ static setup_menu_t keys_settings1[] = {
     MI_SPLIT,
     {"Nugget", S_SKIP|S_TITLE, KB_X, M_SPC},
 
-      {"Jump/Fly Up",     S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_jump},
-      {"Crouch/Fly Down", S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_crouch},
+      {"Jump/Fly Up",        S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_jump},
+      {"Crouch/Fly Down",    S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_crouch},
       MI_GAP,
-      {"Cycle Chasecam",  S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_chasecam},
-      {"Toggle Freecam",  S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_freecam},
+      {"Cycle Chasecam",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_chasecam},
+      {"Toggle Freecam",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_freecam},
       MI_GAP,
-      {"Toggle Zoom",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_zoom},
-      {"Zoom FOV",        S_NUM  |S_STRICT,            KB_X, M_SPC, {"zoom_fov"}, .action = UpdateFOV},
+      {"Toggle Slow Motion", S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_slowmo},
+      {"Toggle Zoom",        S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_zoom},
+      {"Zoom FOV",           S_NUM  |S_STRICT,            KB_X, M_SPC, {"zoom_fov"}, .action = UpdateFOV},
 
     MI_RESET,
     MI_END
@@ -2270,25 +2271,25 @@ static setup_menu_t stat_settings1[] = {
     MI_END
 };
 
+static void UpdateStatsFormatItem(void);
+
 static const char *show_widgets_strings[] = {"Off", "Automap", "HUD", "Always"};
 static const char *show_adv_widgets_strings[] = {"Off", "Automap", "HUD",
                                                  "Always", "Advanced"};
 
 // [Cherry] Moved here
-// [Nugget] /------------------------------------------------------------------
 
 static const char *stats_format_strings[] = {
-  "Match HUD", "Ratio", "Boolean", "Percentage", "Remaining", "Count", NULL
+  "Match HUD", // [Nugget]
+  "Ratio", "Boolean", "Percent", "Remaining", "Count"
 };
-
-// [Nugget] ------------------------------------------------------------------/
 
 static setup_menu_t stat_settings2[] = {
 
     {"Widget Types", S_SKIP | S_TITLE, H_X, M_SPC},
 
     {"Show Level Stats", S_CHOICE, H_X, M_SPC, {"hud_level_stats"},
-     .strings_id = str_show_widgets},
+     .strings_id = str_show_widgets, .action = UpdateStatsFormatItem},
 
     {"Show Level Time", S_CHOICE, H_X, M_SPC, {"hud_level_time"},
      .strings_id = str_show_widgets},
@@ -2328,6 +2329,13 @@ static setup_menu_t stat_settings2[] = {
 
     {"Widget Appearance", S_SKIP | S_TITLE, M_X, M_SPC},
 
+    {"Level Stats Format", S_CHOICE, M_X, M_SPC, {"hud_stats_format"},
+    .strings_id = str_stats_format, .action = HU_Start},
+
+    // [Nugget]
+    {"Automap Level Stats Format", S_CHOICE, M_X, M_SPC, {"hud_stats_format_map"},
+    .strings_id = str_stats_format, .action = HU_Start},
+
     {"Use Doom Font", S_CHOICE, M_X, M_SPC, {"hud_widget_font"},
      .strings_id = str_show_widgets},
 
@@ -2344,8 +2352,6 @@ static setup_menu_t stat_settings2[] = {
     MI_GAP,
     {"Nugget - Widget Appearance", S_SKIP | S_TITLE, M_X, M_SPC},
 
-      {"HUD Level-Stats Format",           S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format"}, .strings_id = str_stats_format},
-      {"Automap Level-Stats Format",       S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_stats_format_map"}, .strings_id = str_stats_format},
       {"Allow HUD Icons",                  S_ONOFF,             M_X, M_SPC, {"hud_allow_icons"}},
       {"Show Berserk when using Fist",     S_ONOFF,             M_X, M_SPC, {"sts_show_berserk"}},
       {"Highlight Current/Pending Weapon", S_ONOFF,             M_X, M_SPC, {"hud_highlight_weapon"}},
@@ -2432,23 +2438,18 @@ static setup_menu_t stat_settings3[] = {
     MI_END
 };
 
-// [Nugget] /-----------------------------------------------------------------
-
-static void UpdateMultiLineMsgItem(void);
-
-static const char *secret_message_strings[] = {
-  "Off", "On", "Count", NULL
+static const char *secretmessage_strings[] = {
+    "Off", "On", "Count",
 };
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget]
+static void UpdateMultiLineMsgItem(void);
 
 static setup_menu_t stat_settings4[] = {
     // [Nugget] Shifted X-position of all items
 
-    // [Nugget] Multiple choice
-    {"Announce Revealed Secrets", S_CHOICE, M_X, M_SPC,
-     {"hud_secret_message"}, .strings_id = str_secret_message},
-
+    {"Announce Revealed Secrets", S_CHOICE, M_X, M_SPC, {"hud_secret_message"},
+     .strings_id = str_secretmessage},
     {"Announce Map Titles",  S_ONOFF, M_X, M_SPC, {"hud_map_announce"}},
 
     // [Nugget]
@@ -2491,6 +2492,14 @@ static setup_menu_t stat_settings4[] = {
 
     MI_END
 };
+
+static void UpdateStatsFormatItem(void)
+{
+  DisableItem(!hud_level_stats, stat_settings2, "hud_stats_format");
+  DisableItem(!hud_level_stats, stat_settings2, "hud_stats_format_map"); // [Nugget]
+}
+
+// [Nugget] /-----------------------------------------------------------------
 
 // [Cherry] /------------------------------------------------------------------
 
@@ -3716,12 +3725,7 @@ static void UpdateGyroAiming(void)
     I_ResetGamepad();
 }
 
-static const char *gyro_space_strings[] = {
-    "Local Turn",
-    "Local Lean",
-    "Player Turn",
-    "Player Lean",
-};
+static const char *gyro_space_strings[] = {"Local", "Player"};
 
 static const char *gyro_action_strings[] = {
     "None",
@@ -3730,7 +3734,7 @@ static const char *gyro_action_strings[] = {
     "Invert"
 };
 
-#define GYRO_SENS_STRINGS_SIZE (100 + 1)
+#define GYRO_SENS_STRINGS_SIZE (500 + 1)
 
 static const char **GetGyroSensitivityStrings(void)
 {
@@ -3745,35 +3749,27 @@ static const char **GetGyroSensitivityStrings(void)
     return strings;
 }
 
-#define GYRO_ACCEL_STRINGS_SIZE (40 + 1)
+#define GYRO_ACCEL_STRINGS_SIZE (200 + 1)
 
 static const char **GetGyroAccelStrings(void)
 {
     static const char *strings[GYRO_ACCEL_STRINGS_SIZE] = {
-        [10] = "Off",
-        [15] = "Low",
-        [20] = "Medium",
-        [40] = "High",
+        "", "", "", "", "", "", "", "", "", "", "Off"
     };
     char buf[8];
 
-    for (int i = 0; i < GYRO_ACCEL_STRINGS_SIZE; i++)
+    for (int i = 11; i < GYRO_ACCEL_STRINGS_SIZE; i++)
     {
-        if (i < 10)
-        {
-            strings[i] = "";
-        }
-        else if (i == 10 || i == 15 || i == 20 || i == 40)
-        {
-            continue;
-        }
-        else
-        {
-            M_snprintf(buf, sizeof(buf), "%1d.%1d", i / 10, i % 10);
-            strings[i] = M_StringDuplicate(buf);
-        }
+        M_snprintf(buf, sizeof(buf), "%1d.%1d", i / 10, i % 10);
+        strings[i] = M_StringDuplicate(buf);
     }
     return strings;
+}
+
+static void UpdateGyroAcceleration(void)
+{
+    UpdateGyroItems();
+    I_ResetGamepad();
 }
 
 static void UpdateGyroSteadying(void)
@@ -3796,8 +3792,6 @@ static setup_menu_t gyro_settings1[] = {
     {"Camera Stick Action", S_CHOICE, CNTR_X, M_SPC, {"gyro_stick_action"},
      .strings_id = str_gyro_action, .action = I_ResetGamepad},
 
-    MI_GAP,
-
     {"Turn Sensitivity", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
      {"gyro_turn_sensitivity"}, .strings_id = str_gyro_sens,
      .action = I_ResetGamepad},
@@ -3806,13 +3800,21 @@ static setup_menu_t gyro_settings1[] = {
      {"gyro_look_sensitivity"}, .strings_id = str_gyro_sens,
      .action = I_ResetGamepad},
 
-    {"Acceleration", S_THERMO, CNTR_X, M_THRM_SPC, {"gyro_acceleration"},
-     .strings_id = str_gyro_accel, .action = I_ResetGamepad},
+    {"Acceleration", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
+     {"gyro_acceleration"}, .strings_id = str_gyro_accel,
+     .action = UpdateGyroAcceleration},
 
-    {"Steadying", S_THERMO, CNTR_X, M_THRM_SPC, {"gyro_smooth_threshold"},
-     .strings_id = str_gyro_sens, .action = UpdateGyroSteadying},
+    {"Lower Threshold", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
+     {"gyro_accel_min_threshold"}, .action = I_ResetGamepad},
 
-    MI_GAP,
+    {"Upper Threshold", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
+     {"gyro_accel_max_threshold"}, .action = I_ResetGamepad},
+
+    {"Steadying", S_THERMO | S_THRM_SIZE11, CNTR_X, M_THRM_SPC,
+     {"gyro_smooth_threshold"}, .strings_id = str_gyro_sens,
+     .action = UpdateGyroSteadying},
+
+    MI_GAP_Y(2),
 
     {"Calibrate", S_FUNC, CNTR_X, M_SPC,
      .action = I_UpdateGyroCalibrationState,
@@ -3827,6 +3829,7 @@ static void UpdateGyroItems(void)
 {
     const boolean gamepad = (I_UseGamepad() && I_GamepadEnabled());
     const boolean gyro = (I_GyroEnabled() && I_GyroSupported());
+    const boolean acceleration = (gamepad && gyro && I_GyroAcceleration());
     const boolean condition = (!gamepad || !gyro);
 
     DisableItem(!gamepad || !I_GyroSupported(), gyro_settings1, "gyro_enable");
@@ -3836,6 +3839,8 @@ static void UpdateGyroItems(void)
     DisableItem(condition, gyro_settings1, "gyro_turn_sensitivity");
     DisableItem(condition, gyro_settings1, "gyro_look_sensitivity");
     DisableItem(condition, gyro_settings1, "gyro_acceleration");
+    DisableItem(!acceleration, gyro_settings1, "gyro_accel_min_threshold");
+    DisableItem(!acceleration, gyro_settings1, "gyro_accel_max_threshold");
     DisableItem(condition, gyro_settings1, "gyro_smooth_threshold");
     DisableItem(condition, gyro_settings1, "Calibrate");
 }
@@ -4138,41 +4143,6 @@ static const char *invul_mode_strings[] = {"Vanilla", "MBF", "Gray"};
 
 static void UpdatePaletteItems(void); // [Nugget]
 
-void MN_ResetTimeScale(void)
-{
-    if (strictmode || D_CheckNetConnect())
-    {
-        I_SetTimeScale(100);
-        return;
-    }
-
-    int time_scale = realtic_clock_rate;
-
-    //!
-    // @arg <n>
-    // @category game
-    //
-    // Increase or decrease game speed, percentage of normal.
-    //
-
-    int p = M_CheckParmWithArgs("-speed", 1);
-
-    if (p)
-    {
-        time_scale = M_ParmArgToInt(p);
-        if (time_scale < 10 || time_scale > 1000)
-        {
-            I_Error(
-                "Invalid parameter '%d' for -speed, valid values are 10-1000.",
-                time_scale);
-        }
-    }
-
-    I_SetTimeScale(time_scale);
-
-    setrefreshneeded = true;
-}
-
 // [Nugget] /-----------------------------------------------------------------
 
 static void UpdateAutoSaveItems(void);
@@ -4242,7 +4212,7 @@ static setup_menu_t gen_settings6[] = {
     {"Miscellaneous", S_SKIP | S_TITLE, OFF_CNTR_X, M_SPC},
 
     {"Game speed", S_NUM | S_STRICT | S_PCT, OFF_CNTR_X, M_SPC,
-     {"realtic_clock_rate"}, .action = MN_ResetTimeScale},
+     {"realtic_clock_rate"}, .action = G_SetTimeScale},
 
     {"Default Skill", S_CHOICE | S_LEVWARN, OFF_CNTR_X, M_SPC,
      {"default_skill"}, .strings_id = str_default_skill},
@@ -6235,9 +6205,11 @@ static const char **selectstrings[] = {
     NULL, // str_hudmode
     show_widgets_strings,
     show_adv_widgets_strings,
+    stats_format_strings,
     crosshair_strings,
     crosshair_target_strings,
     hudcolor_strings,
+    secretmessage_strings,
     overlay_strings,
     automap_preset_strings,
     automap_keyed_door_strings,
@@ -6271,8 +6243,6 @@ static const char **selectstrings[] = {
 
     bobbing_style_strings,
     crosshair_lockon_strings,
-    secret_message_strings,
-    stats_format_strings,
     vertical_aiming_strings,
     over_under_strings,
     flinching_strings,
@@ -6337,6 +6307,7 @@ void MN_SetupResetMenu(void)
     DisableItem(!brightmaps_found || force_brightmaps, gen_settings5,
                 "brightmaps");
     UpdateInterceptsEmuItem();
+    UpdateStatsFormatItem();
     UpdateCrosshairItems();
     UpdateCenteredWeaponItem();
     UpdateGamepadItems();

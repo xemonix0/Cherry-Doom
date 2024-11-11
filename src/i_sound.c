@@ -720,6 +720,15 @@ const char **I_DeviceList(void)
     return devices;
 }
 
+const char *I_MusicFormat(void)
+{
+    if (active_module)
+    {
+        return active_module->I_MusicFormat();
+    }
+    return "Unknown";
+}
+
 void I_BindSoundVariables(void)
 {
     // [Cherry] Change variables for the volume CVARs

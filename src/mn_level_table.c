@@ -327,7 +327,7 @@ static char *FormatStat(int a, int b, boolean known_total)
         case STATSFORMAT_BOOLEAN:
             M_StringPrintF(&str, "%s", (known_total && a >= b) ? "YES" : "NO");
             break;
-        case STATSFORMAT_PERCENTAGE:
+        case STATSFORMAT_PERCENT:
             if (known_total)
             {
                 M_StringPrintF(&str, "%d%%", !b ? 100 : a * 100 / b);

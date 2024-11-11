@@ -710,6 +710,8 @@ void M_BindInputVariables(void)
 
     BIND_INPUT(input_crosshair, "Toggle crosshair");
 
+    BIND_INPUT(input_slowmo, "Toggle slow motion");
+
     BIND_INPUT(input_zoom, "Toggle zoom");
 
     M_BindNum("zoom_fov", &zoom_fov, NULL,

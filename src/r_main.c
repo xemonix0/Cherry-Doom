@@ -156,7 +156,13 @@ boolean comp_powerrunout;
 
 static boolean teleporter_zoom;
 
-static int r_fov; // Rendered (currently applied) FOV, with effects added to it
+static float r_fov; // Rendered (currently applied) FOV, with effects added to it
+
+static boolean keep_pspr_interp = false;
+
+typedef struct fovfx_s {
+  float old, current, target;
+} fovfx_t;
 
 static fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
 static int     zoomed = 0;      // Current zoom state
@@ -1033,7 +1039,9 @@ void R_ExecuteSetViewSize (void)
   if (!WI_UsingAltInterpic())
     ST_refreshBackground();
 
-  pspr_interp = false;
+  // [Nugget]
+  if (!keep_pspr_interp)
+    pspr_interp = false;
 }
 
 //
@@ -1509,7 +1517,7 @@ void R_RenderPlayerView (player_t* player)
   R_ClearStats();
 
   { // [Nugget] FOV effects
-    int targetfov = custom_fov;
+    float targetfov = custom_fov;
 
     if (WI_UsingAltInterpic() && gamestate == GS_INTERMISSION)
     {
@@ -1531,7 +1539,7 @@ void R_RenderPlayerView (player_t* player)
         zoomtarget = zoomed ? zoom_fov - custom_fov : 0;
 
         // In case `custom_fov` changes while zoomed in...
-        if (zoomed && abs(fovfx[FOVFX_ZOOM].target) > abs(zoomtarget))
+        if (zoomed && fabs(fovfx[FOVFX_ZOOM].target) > abs(zoomtarget))
         { fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = zoomtarget, .current = zoomtarget, .old = zoomtarget }; }
       }
 
@@ -1540,6 +1548,11 @@ void R_RenderPlayerView (player_t* player)
       if (!strictmode)
       {
         if (fovfx[FOVFX_ZOOM].target != zoomtarget)
+        {
+          fovchange = true;
+        }
+        else if (fovfx[FOVFX_SLOWMO].target
+                 || (G_GetSlowMotion() && fovfx[FOVFX_SLOWMO].target != 10))
         {
           fovchange = true;
         }
@@ -1559,7 +1572,9 @@ void R_RenderPlayerView (player_t* player)
         {
           fovchange = false;
 
-          int *target;
+          float *target;
+
+          // Zoom ------------------------------------------------------------
 
           target = &fovfx[FOVFX_ZOOM].target;
           fovfx[FOVFX_ZOOM].old = fovfx[FOVFX_ZOOM].current = *target;
@@ -1567,10 +1582,10 @@ void R_RenderPlayerView (player_t* player)
           // Special handling for zoom
           if (zoomtarget || *target)
           {
-            int step = zoomtarget - *target;
+            float step = zoomtarget - *target;
             const int sign = ((step > 0) ? 1 : -1);
 
-            *target += BETWEEN(1, 16, round(abs(step) / 3.0)) * sign;
+            *target += BETWEEN(1, 16, fabs(step) / 3.0) * sign;
 
             if (   (sign > 0 && *target > zoomtarget)
                 || (sign < 0 && *target < zoomtarget))
@@ -1579,10 +1594,24 @@ void R_RenderPlayerView (player_t* player)
             }
           }
 
+          // Teleporter Zoom -------------------------------------------------
+
           target = &fovfx[FOVFX_TELEPORT].target;
           fovfx[FOVFX_TELEPORT].old = fovfx[FOVFX_TELEPORT].current = *target;
 
           if (*target) { *target = MAX(0, *target - 5); }
+
+          // Slow Motion -----------------------------------------------------
+
+          target = &fovfx[FOVFX_SLOWMO].target;
+          fovfx[FOVFX_SLOWMO].old = fovfx[FOVFX_SLOWMO].current = *target;
+
+          if (G_GetSlowMotionFactor() != SLOWMO_FACTOR_NORMAL)
+          {
+            *target = -10 * (SLOWMO_FACTOR_NORMAL - G_GetSlowMotionFactor())
+                          / (SLOWMO_FACTOR_NORMAL - SLOWMO_FACTOR_TARGET);
+          }
+          else { *target = 0; }
         }
         else if (uncapped)
           for (int i = 0;  i < NUMFOVFX;  i++)
@@ -1602,7 +1631,10 @@ void R_RenderPlayerView (player_t* player)
     if (r_fov != targetfov)
     {
       r_fov = targetfov;
+
+      keep_pspr_interp = true;
       R_ExecuteSetViewSize();
+      keep_pspr_interp = false;
     }
   }
 

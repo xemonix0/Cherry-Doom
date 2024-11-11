@@ -114,6 +114,14 @@ void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope); // Chasecam
 
 extern boolean boomshot; // Explosive hitscan cheat
 
+// Hitscan trails ------------------------------------------------------------
+
+int  P_GetShowHitscanTrails(void);
+int  P_CycleShowHitscanTrails(void);
+void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
+                         angle_t angle, fixed_t slope,
+                         fixed_t range, fixed_t distance);
+
 // Over/Under ----------------------------------------------------------------
 
 extern int over_under;
@@ -125,7 +133,7 @@ typedef enum {
 } overunder_t;
 
 overunder_t P_CheckOverUnderMobj(struct mobj_s *thing); // [DSDA]
-boolean     P_SkullSlam(struct mobj_s *skull, struct mobj_s *hitthing);
+boolean     P_SkullSlam(struct mobj_s **skull, struct mobj_s *hitthing);
 
 #endif // __P_MAP__
 

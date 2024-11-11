@@ -68,6 +68,7 @@ static struct
     {saveg_nugget300, saveg_nugget},
     {saveg_nugget320, saveg_nugget},
     {saveg_nugget330, saveg_nugget},
+    {saveg_nugget340, saveg_nugget},
 
     {saveg_cherry100, saveg_cherry},
     {saveg_cherry101, saveg_cherry},
@@ -614,7 +615,27 @@ static void saveg_read_mobj_t(mobj_t *str)
 
     // [Nugget] Removed `actualheight`
 
-    str->altsprite = str->altframe = -1; // [Nugget] Alt. sprites
+    // [Nugget]
+    if (saveg_compat > saveg_nugget330)
+    {
+      // Alt. sprites
+      str->altsprite = saveg_read32(); // int altsprite;
+      str->altframe  = saveg_read32(); // int altframe;
+
+      // Alt. states
+      str->altstate = saveg_readp();  // altstate_t *altstate;
+      str->alttics  = saveg_read32(); // int        alttics;
+
+      str->isvisual = saveg_read32(); // boolean isvisual;
+    }
+    else {
+      str->altsprite = str->altframe = -1;
+
+      str->altstate = NULL;
+      str->alttics  = -1;
+
+      str->isvisual = false;
+    }
 }
 
 static void saveg_write_mobj_t(mobj_t *str)
@@ -780,6 +801,19 @@ static void saveg_write_mobj_t(mobj_t *str)
 
     // [Woof!]: int bloodcolor;
     saveg_write32(str->bloodcolor);
+
+    // [Nugget] --------------------------------------------------------------
+
+    // [Nugget] Alt. sprites
+    saveg_write32(str->altsprite); // int altsprite;
+    saveg_write32(str->altframe);  // int altframe;
+
+    // [Nugget] Alt. states
+    saveg_writep(str->altstate); // altstate_t *altstate;
+    saveg_write32(str->alttics); // int        alttics;
+
+    // [Nugget]
+    saveg_write32(str->isvisual); // boolean isvisual;
 }
 
 //
@@ -2404,6 +2438,9 @@ void P_ArchiveThinkers (void)
         if (mobj->player)
           mobj->player = (player_t *)((mobj->player-players) + 1);
 
+        // [Nugget] Alt. states
+        mobj->altstate = (altstate_t *) (mobj->altstate - altstates);
+
         saveg_write8(tc_mobj);
         saveg_write_pad();
         saveg_write_mobj_t(mobj);
@@ -2520,8 +2557,18 @@ void P_UnArchiveThinkers (void)
       if (mobj->player)
         (mobj->player = &players[(size_t) mobj->player - 1]) -> mo = mobj;
 
+      // [Nugget] Alt. states
+      mobj->altstate = altstates + (size_t) mobj->altstate;
+
       P_SetThingPosition (mobj);
-      mobj->info = &mobjinfo[mobj->type];
+
+      // [Nugget]
+      if (mobj->isvisual) {
+        static mobjinfo_t info = {0};
+        mobj->info = &info;
+      }
+      else
+        mobj->info = &mobjinfo[mobj->type];
 
       // killough 2/28/98:
       // Fix for falling down into a wall after savegame loaded:

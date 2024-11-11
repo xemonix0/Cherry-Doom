@@ -31,18 +31,18 @@ extern boolean announce_milestones;
 extern boolean sp_chat;
 
 // [Cherry] Moved here for use in wad_stats.c
-enum {
-  STATSFORMAT_MATCHHUD,
+typedef enum {
+  STATSFORMAT_MATCHHUD, // [Nugget]
   STATSFORMAT_RATIO,
   STATSFORMAT_BOOLEAN,
-  STATSFORMAT_PERCENTAGE,
+  STATSFORMAT_PERCENT,
   STATSFORMAT_REMAINING,
   STATSFORMAT_COUNT,
 
-  NUMSTATSFORMATS
-};
+  NUM_STATSFORMATS
+} statsformat_t;
 
-extern int hud_stats_format; // [Cherry] Made extern
+extern statsformat_t hud_stats_format; // [Cherry] Made extern
 
 struct event_s;
 struct mobj_s;
@@ -63,6 +63,7 @@ void HU_widget_rebuild_sttime(void);
 // [Nugget]
 struct patch_s;
 boolean HU_IsSmallFont(const struct patch_s *const patch);
+void HU_InitStatsFormatFunc(void);
 void HU_InitMonSec(void);
 
 void HU_NughudAlignTime(void); // [Nugget] NUGHUD
@@ -94,8 +95,13 @@ extern int hud_msg_lines; // [Nugget] Global
 extern boolean message_list; // [Nugget] Global
 extern boolean hud_msg_scrollup; // [Nugget] Restore message scroll direction toggle
 
-// [Nugget]
-typedef enum { secretmessage_off, secretmessage_on, secretmessage_count, } secretmessage_t;
+typedef enum
+{
+  SECRETMESSAGE_OFF,
+  SECRETMESSAGE_ON,
+  SECRETMESSAGE_COUNT
+} secretmessage_t;
+
 extern secretmessage_t hud_secret_message; // "A secret is revealed!" message
 
 extern int hud_player_coords, hud_level_stats, hud_level_time;

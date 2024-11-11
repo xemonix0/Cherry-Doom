@@ -102,7 +102,7 @@ static int hudcolor_th_extra;
 
 int hud_active;       //jff 2/17/98 controls heads-up display mode 
 boolean hud_displayed;    //jff 2/23/98 turns heads-up display on/off
-secretmessage_t hud_secret_message; // "A secret is revealed!" message | [Nugget]
+secretmessage_t hud_secret_message; // "A secret is revealed!" message
 static int hud_widget_font;
 static boolean hud_widget_layout;
 
@@ -639,6 +639,48 @@ static void HU_widget_build_move(void); // [Cherry] Movement widget
 
 static hu_multiline_t *w_stats;
 
+// [Cherry] Moved the STATSFORMAT enum to hu_stuff.h for use in wad_stats.c
+
+statsformat_t hud_stats_format; // [Cherry] Made non-static
+static statsformat_t hud_stats_format_map; // [Nugget]
+
+static void StatsFormatFunc_Ratio(char *buffer, size_t size, const int count, const int total)
+{
+  M_snprintf(buffer, size, "%d/%d", count, total);
+}
+
+static void StatsFormatFunc_Boolean(char *buffer, size_t size, const int count, const int total)
+{
+  M_snprintf(buffer, size, "%s", (count >= total) ? "YES" : "NO");
+}
+
+static void StatsFormatFunc_Percent(char *buffer, size_t size, const int count, const int total)
+{
+  M_snprintf(buffer, size, "%d%%", !total ? 100 : count * 100 / total);
+}
+
+static void StatsFormatFunc_Remaining(char *buffer, size_t size, const int count, const int total)
+{
+  M_snprintf(buffer, size, "%d", total - count);
+}
+
+static void StatsFormatFunc_Count(char *buffer, size_t size, const int count, const int total)
+{
+  M_snprintf(buffer, size, "%d", count);
+}
+
+typedef void (*StatsFormatFunc_t)(char *buffer, size_t size, const int count, const int total);
+
+static const StatsFormatFunc_t StatsFormatFuncs[NUM_STATSFORMATS] = {
+  StatsFormatFunc_Ratio,
+  StatsFormatFunc_Boolean,
+  StatsFormatFunc_Percent,
+  StatsFormatFunc_Remaining,
+  StatsFormatFunc_Count,
+};
+
+static StatsFormatFunc_t StatsFormatFunc;
+
 // [Nugget] /-----------------------------------------------------------------
 
 boolean HU_IsSmallFont(const patch_t *const patch)
@@ -723,6 +765,14 @@ static int NughudSortWidgets(const void *_p1, const void *_p2)
    (hud_widget_layout && (!st_crispyhud || (a) == -1)) \
     || (st_crispyhud && (a) == 1)                      \
 )
+
+void HU_InitStatsFormatFunc(void)
+{
+  const statsformat_t statsformat = (automapactive == AM_FULL && hud_stats_format_map)
+                                    ? hud_stats_format_map : hud_stats_format;
+
+  StatsFormatFunc = StatsFormatFuncs[statsformat - 1];
+}
 
 void HU_InitMonSec(void)
 {
@@ -829,6 +879,8 @@ void HU_Start(void)
 
   // [FG] in deathmatch: w_keys.builder = HU_widget_build_frag()
   w_stats = deathmatch ? &w_keys : &w_monsec;
+
+  HU_InitStatsFormatFunc(); // [Nugget]
 
   HUlib_init_multiline(&w_sttime, 1,
                        &boom_font, colrngs[CR_GRAY],
@@ -1598,46 +1650,7 @@ static void HU_widget_build_monsec(void)
   itemcolor   = (fullitemcount >= totalitems)           ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
   secretcolor = (fullsecretcount >= totalsecret)        ? '0'+hudcolor_ms_comp : '0'+hudcolor_ms_incomp;
 
-  // [Nugget] /===============================================================
-
-  // Stats formats -----------------------------------------------------------
-
-  char kill_str[32], item_str[32], secret_str[32];
-
-  switch ((automapactive == AM_FULL && hud_stats_format_map) ? hud_stats_format_map : hud_stats_format)
-  {
-    case STATSFORMAT_RATIO:
-      M_snprintf(kill_str,   sizeof(kill_str),   "%d/%d", fullkillcount,   max_kill_requirement);
-      M_snprintf(item_str,   sizeof(item_str),   "%d/%d", fullitemcount,   totalitems);
-      M_snprintf(secret_str, sizeof(secret_str), "%d/%d", fullsecretcount, totalsecret);
-      break;
-
-    case STATSFORMAT_BOOLEAN:
-      M_snprintf(kill_str,   sizeof(kill_str),   "%s", (fullkillcount   >= max_kill_requirement) ? "YES" : "NO");
-      M_snprintf(item_str,   sizeof(item_str),   "%s", (fullitemcount   >= totalitems)           ? "YES" : "NO");
-      M_snprintf(secret_str, sizeof(secret_str), "%s", (fullsecretcount >= totalsecret)          ? "YES" : "NO");
-      break;
-
-    case STATSFORMAT_PERCENTAGE:
-      M_snprintf(kill_str,   sizeof(kill_str),   "%d%%", (!max_kill_requirement) ? 100 : fullkillcount   * 100 / max_kill_requirement);
-      M_snprintf(item_str,   sizeof(item_str),   "%d%%", (!totalitems)           ? 100 : fullitemcount   * 100 / totalitems);
-      M_snprintf(secret_str, sizeof(secret_str), "%d%%", (!totalsecret)          ? 100 : fullsecretcount * 100 / totalsecret);
-      break;
-
-    case STATSFORMAT_REMAINING:
-      M_snprintf(kill_str,   sizeof(kill_str),   "%d", max_kill_requirement - fullkillcount);
-      M_snprintf(item_str,   sizeof(item_str),   "%d", totalitems           - fullitemcount);
-      M_snprintf(secret_str, sizeof(secret_str), "%d", totalsecret          - fullsecretcount);
-      break;
-
-    case STATSFORMAT_COUNT:
-      M_snprintf(kill_str,   sizeof(kill_str),   "%d", fullkillcount);
-      M_snprintf(item_str,   sizeof(item_str),   "%d", fullitemcount);
-      M_snprintf(secret_str, sizeof(secret_str), "%d", fullsecretcount);
-      break;
-  }
-
-  // HUD icons ---------------------------------------------------------------
+  // [Nugget] HUD icons /-----------------------------------------------------
 
   char killlabel, itemlabel, secretlabel;
 
@@ -1671,11 +1684,17 @@ static void HU_widget_build_monsec(void)
     secretlabelcolor = '0'+hudcolor_secrets;
   }
 
-  // [Nugget] ===============================================================/
+  // [Nugget] ---------------------------------------------------------------/
+
+  char kill_str[32], item_str[32], secret_str[32];
+
+  StatsFormatFunc(kill_str, sizeof(kill_str), fullkillcount, max_kill_requirement);
+  StatsFormatFunc(item_str, sizeof(item_str), fullitemcount, totalitems);
+  StatsFormatFunc(secret_str, sizeof(secret_str), fullsecretcount, totalsecret);
 
   if (MULTILINE(nughud.sts_ml)) // [Nugget] NUGHUD
   {
-    // [Nugget] HUD icons | Stats formats from Crispy
+    // [Nugget] HUD icons
 
     if (showstats[SHOWSTATS_KILLS])
     {
@@ -1700,7 +1719,7 @@ static void HU_widget_build_monsec(void)
   }
   else
   {
-    // [Nugget] HUD icons | Stats formats from Crispy
+    // [Nugget] HUD icons
 
     int offset = 0;
 
@@ -2921,20 +2940,6 @@ void HU_BindHUDVariables(void)
 
   // [Nugget] /===============================================================
 
-  // Stats formats from Crispy -----------------------------------------------
-
-  M_BindNum("hud_stats_format", &hud_stats_format, NULL,
-            STATSFORMAT_RATIO, STATSFORMAT_RATIO, NUMSTATSFORMATS-1,
-            ss_stat, wad_no,
-            "Format of level stats (1 = Ratio; 2 = Boolean; 3 = Percentage; 4 = Remaining; 5 = Count)");
-
-  M_BindNum("hud_stats_format_map", &hud_stats_format_map, NULL,
-            STATSFORMAT_MATCHHUD, STATSFORMAT_MATCHHUD, NUMSTATSFORMATS-1,
-            ss_stat, wad_no,
-            "Format of level stats in automap (0 = Match HUD)");
-
-  // -------------------------------------------------------------------------
-
   M_BindBool("hud_stats_kills", &hud_stats_show[SHOWSTATS_KILLS], NULL, true, ss_stat, wad_no,
              "Show kill count in the level-stats widget");
 
@@ -2957,6 +2962,17 @@ void HU_BindHUDVariables(void)
              "Allow usage of icons for some labels in HUD widgets");
 
   // [Nugget] ===============================================================/
+
+  M_BindNum("hud_stats_format", &hud_stats_format, NULL,
+            STATSFORMAT_RATIO, STATSFORMAT_RATIO, NUM_STATSFORMATS-1,
+            ss_stat, wad_no,
+            "Format of level stats (1 = Ratio; 2 = Boolean; 3 = Percent; 4 = Remaining; 5 = Count)");
+
+  // [Nugget]
+  M_BindNum("hud_stats_format_map", &hud_stats_format_map, NULL,
+            STATSFORMAT_MATCHHUD, STATSFORMAT_MATCHHUD, NUM_STATSFORMATS-1,
+            ss_stat, wad_no,
+            "Format of level stats in automap (0 = Match HUD)");
 
   M_BindNum("hud_level_time", &hud_level_time, NULL,
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
@@ -3147,11 +3163,10 @@ void HU_BindHUDVariables(void)
             "Color range used for automap coordinates");
 
   BIND_BOOL(show_messages, true, "Show messages");
-
-   // [Nugget] "Count" mode from Crispy
   M_BindNum("hud_secret_message", &hud_secret_message, NULL,
-            1, 0, 2, ss_stat, wad_no, "Announce revealed secrets (1 = Simple; 2 = Count)");
-
+            SECRETMESSAGE_ON, SECRETMESSAGE_OFF, SECRETMESSAGE_COUNT,
+            ss_stat, wad_no,
+            "Announce revealed secrets (0 = Off; 1 = On; 2 = Count)");
   M_BindBool("hud_map_announce", &hud_map_announce, NULL,
             false, ss_stat, wad_no, "Announce map titles");
 

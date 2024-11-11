@@ -915,7 +915,7 @@ void P_MobjThinker (mobj_t* mobj)
           }
 
           if (oumobj && mobj->flags & MF_SKULLFLY)
-          { P_SkullSlam(mobj, oumobj); }
+          { P_SkullSlam(&mobj, oumobj); }
         }
       }
       else
@@ -1007,6 +1007,10 @@ void P_MobjThinker (mobj_t* mobj)
 	++mobj->movecount >= 12*35 && !(leveltime & 31) &&
 	P_Random (pr_respawn) <= 4)
       P_NightmareRespawn(mobj);          // check for nightmare respawn
+
+  // [Nugget] Alt. states
+  if (mobj->altstate && mobj->alttics != -1 && !--mobj->alttics)
+  { P_SetMobjAltState(mobj, mobj->altstate->nextstate); }
 }
 
 
@@ -1055,8 +1059,6 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   mobj->sprite = st->sprite;
   mobj->frame  = st->frame;
 
-  mobj->altsprite = mobj->altframe = -1; // [Nugget] Alt. sprites
-
   // NULL head of sector list // phares 3/13/98
   mobj->touching_sectorlist = NULL;
 
@@ -1068,6 +1070,18 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   mobj->oldy = mobj->y;
   mobj->oldz = mobj->z;
   mobj->oldangle = mobj->angle;
+
+  // [Nugget] /---------------------------------------------------------------
+
+  mobj->altsprite = mobj->altframe = -1; // Alt. sprites
+
+  // Alt. states
+  mobj->altstate = NULL;
+  mobj->alttics  = -1; 
+
+  mobj->isvisual = false;
+
+  // [Nugget] ---------------------------------------------------------------/
 
   // set subsector and/or block links
 
@@ -1971,6 +1985,84 @@ int P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta)
             return 0;
         }
     }
+}
+
+// [Nugget] ==================================================================
+
+// [Nugget] Alt. states
+void P_SetMobjAltState(mobj_t *const mobj, altstatenum_t statenum)
+{
+  if (statenum == -1)
+  {
+    mobj->altstate = NULL;
+    mobj->alttics = mobj->altsprite = mobj->altframe = -1;
+    return;
+  }
+
+  altstate_t *state;
+
+  do {
+    if (statenum == AS_NULL)
+    {
+      mobj->altstate = NULL;
+      P_RemoveMobj(mobj);
+      break;
+    }
+
+    state = &altstates[statenum];
+    mobj->altstate = state;
+    mobj->alttics = state->tics;
+    mobj->altsprite = state->sprite;
+    mobj->altframe = state->frame;
+
+    statenum = state->nextstate;
+  } while (!mobj->alttics);
+}
+
+mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenum)
+{
+  mobj_t *const mobj = Z_Malloc(sizeof(*mobj), PU_LEVEL, NULL);
+
+  static mobjinfo_t info = {0};
+
+  memset(mobj, 0, sizeof(*mobj));
+
+  mobj->oldx = mobj->x = x;
+  mobj->oldy = mobj->y = y;
+
+  mobj->radius = FRACUNIT/2;
+  mobj->height = FRACUNIT;
+
+  mobj->flags = MF_NOBLOCKMAP;
+
+  mobj->sprite = SPR_TNT1;
+
+  mobj->type = mobj->tics = -1;
+
+  mobj->info = &info;
+
+  mobj->isvisual = true;
+
+  P_SetMobjAltState(mobj, statenum);
+
+  P_SetThingPosition(mobj);
+
+  mobj->dropoffz =
+  mobj->floorz   = mobj->subsector->sector->floorheight;
+
+  mobj->ceilingz = mobj->subsector->sector->ceilingheight;
+
+  mobj->oldz =
+  mobj->z    =   (z == ONFLOORZ)   ? mobj->floorz
+               : (z == ONCEILINGZ) ? mobj->ceilingz - mobj->height
+               :                     z;
+
+  mobj->friction = ORIG_FRICTION;
+
+  mobj->thinker.function.p1 = (actionf_p1) P_MobjThinker;
+  P_AddThinker(&mobj->thinker);
+
+  return mobj;
 }
 
 //----------------------------------------------------------------------------

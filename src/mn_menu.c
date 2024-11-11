@@ -1871,6 +1871,8 @@ static void M_EndGameResponse(int ch)
         G_CheckDemoStatus();
     }
 
+    G_ResetSlowMotion(); // [Nugget] Slow Motion
+
     // [crispy] clear quicksave slot
     quickSaveSlot = -1;
 
@@ -2590,7 +2592,7 @@ boolean M_ShortcutResponder(const event_t *ev)
         realtic_clock_rate += 10;
         realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
         displaymsg("Game Speed: %d", realtic_clock_rate);
-        I_SetTimeScale(realtic_clock_rate);
+        G_SetTimeScale();
         setrefreshneeded = true;
     }
 
@@ -2600,7 +2602,7 @@ boolean M_ShortcutResponder(const event_t *ev)
         realtic_clock_rate -= 10;
         realtic_clock_rate = BETWEEN(10, 1000, realtic_clock_rate);
         displaymsg("Game Speed: %d", realtic_clock_rate);
-        I_SetTimeScale(realtic_clock_rate);
+        G_SetTimeScale();
         setrefreshneeded = true;
     }
 
@@ -2609,7 +2611,7 @@ boolean M_ShortcutResponder(const event_t *ev)
     {
         realtic_clock_rate = 100;
         displaymsg("Game Speed: %d", realtic_clock_rate);
-        I_SetTimeScale(realtic_clock_rate);
+        G_SetTimeScale();
         setrefreshneeded = true;
     }
 
@@ -2925,6 +2927,7 @@ static void M_UpdateLoadMenu(void)
         && (currentMenu == &LoadDef || currentMenu == &LoadAutoSaveDef))
     {
         // [Nugget] Periodic auto save: all pages have an auto-save slot now
+        LoadAutoSaveDef.lastOn = itemOn;
         SetNextMenu(&LoadAutoSaveDef);
     }
 }

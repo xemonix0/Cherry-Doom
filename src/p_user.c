@@ -511,7 +511,7 @@ void P_MovePlayer (player_t* player)
 #define ANG5 (ANG90/18)
 
 death_use_action_t death_use_action;
-int activate_death_use_reload;
+death_use_state_t death_use_state;
 
 //
 // P_DeathThink
@@ -593,9 +593,9 @@ void P_DeathThink (player_t* player)
     player->playerstate = PST_REBORN;
   }
 
-  if (activate_death_use_reload == 2)
+  if (death_use_state == DEATH_USE_STATE_PENDING)
   {
-    activate_death_use_reload = 1;
+    death_use_state = DEATH_USE_STATE_ACTIVE;
 
     if (!G_AutoSaveEnabled() || !G_LoadAutoSaveDeathUse())
     {
@@ -733,9 +733,30 @@ void P_PlayerThink (player_t* player)
         R_SetZoom(ZOOM_OFF);
       }
 
+      G_SetSlowMotion(false); // [Nugget] Slow Motion
+
       P_DeathThink (player);
       return;
     }
+
+  // [Nugget] Slow Motion /---------------------------------------------------
+
+  static boolean slowMoKeyDown = false;
+
+  if (!M_InputGameActive(input_slowmo))
+  {
+    slowMoKeyDown = false;
+  }
+  else if (casual_play && !slowMoKeyDown)
+  {
+    slowMoKeyDown = true;
+
+    if (!G_GetSlowMotion()) { S_StartSoundPitch(NULL, sfx_getpow, PITCH_NONE); }
+
+    G_SetSlowMotion(!G_GetSlowMotion());
+  }
+
+  // [Nugget] ---------------------------------------------------------------/
 
   // Move around.
   // Reactiontime is used to prevent movement

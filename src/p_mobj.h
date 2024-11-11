@@ -398,6 +398,12 @@ typedef struct mobj_s
     // Alt. sprites
     int                 altsprite;
     int                 altframe;
+
+    // Alt. states
+    altstate_t          *altstate;
+    int                 alttics;
+
+    boolean             isvisual;
     
     // [Cherry]: [JN] Amplitude of floating powerups, used *only* while rendering.
     fixed_t float_amp;
@@ -493,6 +499,10 @@ extern boolean comp_deadoof;
 int P_FindDoomedNum(unsigned type); // Global
 
 void P_ToggleDuplicateSpawns(const boolean state);
+
+void P_SetMobjAltState(mobj_t *const mobj, altstatenum_t statenum); // Alt. states
+
+mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenum);
 
 // [Cherry] CVARs
 

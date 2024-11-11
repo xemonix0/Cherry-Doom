@@ -52,7 +52,7 @@ wad_stats_t wad_stats = {0};
 boolean lt_enable_tracking;
 boolean lt_track_continuous;
 boolean lt_reset_on_higher_skill;
-int lt_stats_format;
+statsformat_t lt_stats_format;
 
 #define CAN_WATCH_MAP (lt_enable_tracking && !notracking && wad_stats.maps)
 #define TRACKING      (CAN_WATCH_MAP && current_map_stats)
@@ -668,7 +668,7 @@ void WadStats_BindLevelTableVariables(void)
     M_BindBool("lt_reset_on_higher_skill", &lt_reset_on_higher_skill, NULL, true, ss_none,
                wad_no, "Reset all stats for the current level upon beating the level on a new best skill");
     M_BindNum("lt_stats_format", &lt_stats_format, NULL,
-              STATSFORMAT_RATIO, STATSFORMAT_MATCHHUD, NUMSTATSFORMATS - 1,
+              STATSFORMAT_RATIO, STATSFORMAT_MATCHHUD, NUM_STATSFORMATS - 1,
               ss_none, wad_no,
               "Format of level stats in level table (0 = Match HUD; 1 = Ratio; 2 = Boolean; 3 = Percentage; 4 = Remaining; 5 = Count)");
 }

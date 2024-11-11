@@ -163,6 +163,7 @@ static void cheat_reveal_keyx();
 static void cheat_reveal_keyxx(int key);
 
 static void cheat_linetarget(); // Give info on the current linetarget
+static void cheat_trails();     // Show hitscan trails
 static void cheat_mdk();        // Inspired by ZDoom's console command
 static void cheat_saitama();    // MDK Fist
 
@@ -431,6 +432,7 @@ struct cheat_s cheat[] = {
   {"iddfrs", NULL, not_net | not_demo, {cheat_reveal_keyxx}, 4 },
 
   {"linetarget", NULL, not_net | not_demo, {cheat_linetarget} }, // Give info on the current linetarget
+  {"trails",     NULL, not_net | not_demo, {cheat_trails}     }, // Show hitscan trails
   {"mdk",        NULL, not_net | not_demo, {cheat_mdk}        },
   {"saitama",    NULL, not_net | not_demo, {cheat_saitama}    }, // MDK Fist
   {"boomcan",    NULL, not_net | not_demo, {cheat_boomcan}    }, // Explosive hitscan
@@ -786,6 +788,19 @@ static void cheat_linetarget()
 {
   plyr->cheats ^= CF_LINETARGET;
   displaymsg("Linetarget Query %s", (plyr->cheats & CF_LINETARGET) ? "ON" : "OFF");
+}
+
+// Show hitscan trails
+static void cheat_trails()
+{
+  const int value = P_CycleShowHitscanTrails();
+
+  displaymsg(
+    "Hitscan Trails: %s",
+      (value == 2) ? "All"
+    : (value == 1) ? "Bullets Only"
+    :                "Off"
+  );
 }
 
 // 1-million-damage hitscan attack
