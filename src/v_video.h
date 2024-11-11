@@ -68,6 +68,9 @@ extern byte *xhair_tranmap;  // Translucent crosshair
 
 // [Cherry]
 extern byte *smoke_tranmap; // Translucent rocket trails
+// Less Blinding Tints
+extern boolean less_blinding_tints;
+extern byte alttintpal[14*768];
 
 // array of pointers to color translation tables
 extern byte *colrngs[];
