@@ -87,6 +87,13 @@ static char **DataDirNames(void)
         }
 
         const char *filename = M_BaseName(wadfiles[i].name);
+
+        // Do not separate the official TNT MAP31 fix from the base game
+        if (gamemission == pack_tnt && !strncasecmp(filename, "TNT31.WAD", 9))
+        {
+            continue;
+        }
+
         size_t length = strlen(filename) - 3;
         char *name = malloc(length);
         M_StringCopy(name, filename, length);
@@ -248,7 +255,8 @@ static void CreateStats(boolean finish)
     for (int i = numlumps - 1; i > 0; --i)
     {
         const char *lump_name = lumpinfo[i].name;
-        if (lumpinfo[i].source == source_other
+        const wad_source_t source = lumpinfo[i].source;
+        if (source == source_other
             || !MN_StartsWithMapIdentifier(lumpinfo[i].name)
             || MapStatsExist(lump_name))
         {
@@ -256,6 +264,15 @@ static void CreateStats(boolean finish)
         }
 
         char *wad_name = M_StringDuplicate(W_WadNameForLump(i));
+
+        // Do not separate the official TNT MAP31 fix from the base game
+        if (source == source_pwad && gamemission == pack_tnt
+            && !strncasecmp(wad_name, "TNT31.WAD", 9))
+        {
+            free(wad_name);
+            continue;
+        }
+
         if (!last_wad_name || strcmp(last_wad_name, wad_name))
         {
             last_wad_name = M_StringDuplicate(wad_name);
@@ -514,10 +531,9 @@ void WadStats_WatchKill(void)
 
 static inline int CustomToVanillaSkill(void)
 {
-    return ((thingspawns == THINGSPAWNS_EASY)
-                ? (doubleammo && halfdamage)
-                      ? sk_baby
-                      : sk_easy
+    return (x2monsters ? sk_none
+            : (thingspawns == THINGSPAWNS_EASY)
+                ? (doubleammo && halfdamage) ? sk_baby : sk_easy
             : (thingspawns == THINGSPAWNS_HARD)
                 ? (doubleammo && fastmonsters && respawnmonsters && aggressive)
                       ? sk_nightmare
@@ -566,6 +582,12 @@ void WadStats_WatchExitMap(void)
 
     const int skill =
         (gameskill == sk_custom) ? CustomToVanillaSkill() : gameskill + 1;
+    
+    if (!skill)
+    {
+        return;
+    }
+
     const int missed_monsters = MissedMonsters();
 
     if (skill < current_map_stats->best_skill && skill != 4)

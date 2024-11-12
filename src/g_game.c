@@ -300,7 +300,7 @@ void G_SetUserCustomSkill(void)
   customskill.respawn    = custom_skill_respawn;
   customskill.aggressive = custom_skill_aggressive;
   customskill.x2monsters = custom_skill_x2monsters;
-  customskill.notracking = custom_skill_notracking;
+  customskill.notracking = custom_skill_notracking; // [Cherry]
 }
 
 static void G_UpdateInitialLoadout(void)
@@ -3124,6 +3124,7 @@ static void DoSaveGame(char *name)
   saveg_write32(customskill.respawn);
   saveg_write32(customskill.aggressive);
   saveg_write32(customskill.x2monsters);
+  saveg_write32(customskill.notracking); // [Cherry]
 
   CheckSaveGame(sizeof(initial_loadout));
 
@@ -3442,6 +3443,10 @@ static boolean DoLoadGame(boolean do_load_autosave)
     if (saveg_check_version_min(saveg_nugget330))
     { READ(customskill.x2monsters); }
 
+    // [Cherry]
+    if (saveg_check_version_min(saveg_current))
+    { READ(customskill.notracking); }
+
     if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
 
     READ(initial_loadout.mohealth);
@@ -3692,6 +3697,7 @@ static void G_SaveKeyFrame(void)
   saveg_write32(customskill.respawn);
   saveg_write32(customskill.aggressive);
   saveg_write32(customskill.x2monsters);
+  saveg_write32(customskill.notracking); // [Cherry]
 
   CheckSaveGame(sizeof(initial_loadout));
 
@@ -3908,6 +3914,7 @@ static void G_DoRewind(void)
     customskill.respawn    = saveg_read32();
     customskill.aggressive = saveg_read32();
     customskill.x2monsters = saveg_read32();
+    customskill.notracking = saveg_read32(); // [Cherry]
 
     if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
 

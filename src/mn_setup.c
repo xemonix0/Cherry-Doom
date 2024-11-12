@@ -2347,7 +2347,6 @@ static setup_menu_t stat_settings2[] = {
      
     // [Nugget] /--------------------------------------------------------------
 
-    // [Cherry] Moved from `NG1` ----------------------------------------------
 
     MI_GAP,
     {"Nugget - Widget Appearance", S_SKIP | S_TITLE, M_X, M_SPC},
@@ -4257,6 +4256,8 @@ static void UpdateAutoSaveItems(void)
 static const char *over_under_strings[] = {
   "Off", "Player Only", "All Things", NULL
 };
+
+// [Nugget] -----------------------------------------------------------------/
 
 // [Cherry]
 setup_menu_t gen_settings7[] = {
