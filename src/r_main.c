@@ -1874,6 +1874,8 @@ void R_BindRenderVariables(void)
   // [Cherry] /----------------------------------------------------------------
 
   BIND_NUM_GENERAL(rocket_trails_tran, 50, 0, 100, "Rocket smoke translucency percentage");
+
+  BIND_BOOL_GENERAL(less_blinding_tints, false, "Less blinding tints");
 }
 
 //----------------------------------------------------------------------------
