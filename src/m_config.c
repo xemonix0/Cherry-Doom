@@ -1172,6 +1172,13 @@ default_t defaults[] = {
     "Rocket smoke translucency percentage"
   },
 
+  { // Less Blinding Tints
+    "less_blinding_tints",
+    (config_t *) &less_blinding_tints, NULL,
+    {0}, {0,1}, number, ss_gen, wad_yes,
+    "Less blinding tints"
+  },
+
   // [Cherry] ---------------------------------------------------------------/
 
   //

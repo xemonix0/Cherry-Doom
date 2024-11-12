@@ -3020,6 +3020,9 @@ static setup_menu_t gen_settings5[] = {
       {"Smoke Translucency", S_THERMO | S_ACTION | S_PCT | S_STRICT | S_CRITICAL,
        M_X_THRM8, M_THRM_SPC, {"rocket_trails_tran"},
        m_null, input_null, str_empty, SmokeTrans},
+       MI_GAP,
+      {"Less Blinding Tints", S_ONOFF | S_STRICT,
+       M_X, M_SPC, {"less_blinding_tints"}},
 
     MI_END
 };
@@ -3248,6 +3251,7 @@ static void UpdatePaletteItems(void)
   DisableItem(!palette_changes, gen_settings5, "no_radsuit_tint");
   DisableItem(!palette_changes, gen_settings5, "damagecount_cap");
   DisableItem(!palette_changes, gen_settings5, "bonuscount_cap");
+  DisableItem(!palette_changes, gen_settings5, "less_blinding_tints");
   DisableItem(!palette_changes, gen_settings6, "a11y_invul_colormap");
 }
 

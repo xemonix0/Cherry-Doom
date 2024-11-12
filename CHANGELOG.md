@@ -2,6 +2,8 @@
 
 ## New Features
 
+- _Less Blinding Tints_ setting [thanks to @Spaicrab]
+
 ### Level table
 
 - Press `Del` to _erase selected map stats_

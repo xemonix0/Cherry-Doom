@@ -29,6 +29,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
+#include "i_gamma.h" // [Cherry] Less Blinding Tints
 #include "i_system.h"
 #include "i_video.h"
 #include "m_argv.h"
@@ -150,8 +151,121 @@ byte *shadow_tranmap;  // HUD/menu shadows
 byte *pspr_tranmap;    // Translucent flashes
 byte *xhair_tranmap;   // Translucent crosshair
 
-// [Cherry]
+// [Cherry] /-----------------------------------------------------------------
+
 byte *smoke_tranmap; // Translucent rocket trails
+
+// Less Blinding Tints ---
+
+boolean less_blinding_tints;
+byte alttintpal[14*768];
+
+static float HueToRgb(float p, float q, float t)
+{
+    if (t < 0.0f) t += 1.0f;
+    else if (t > 1.0f) t -= 1.0f;
+    if (t < 1.0f/6.0f) return p + (q - p) * 6.0f * t;
+    if (t < 1.0f/2.0f) return q;
+    if (t < 2.0f/3.0f) return p + (q - p) * (2.0f/3.0f - t) * 6.0f;
+    return p;
+}
+
+static void HslToRgb(float h, float s, float l, int *rgb)
+{
+    if (s == 0.0f)
+    {
+        rgb[0] = rgb[1] = rgb[2] = roundf(l * 255.0f);
+        return;
+    }
+
+    const float q = l < 0.5f ? l * (1.0f + s) : l + s - l * s;
+    const float p = 2.0f * l - q;
+
+    const float r = HueToRgb(p, q, h + 1.0f/3.0f);
+    const float g = HueToRgb(p, q, h);
+    const float b = HueToRgb(p, q, h - 1.0f/3.0f);
+    
+    rgb[0] = roundf(r * 255.0f);
+    rgb[1] = roundf(g * 255.0f);
+    rgb[2] = roundf(b * 255.0f);
+}
+
+static void RgbToHsl(float r, float g, float b, float *hsl)
+{
+    r /= 255.0f;
+    g /= 255.0f;
+    b /= 255.0f;
+
+    const float vmax = MAX(MAX(r, g), b);
+    const float vmin = MIN(MIN(r, g), b);
+    const float d = vmax - vmin;
+
+    hsl[0] = hsl[1] = hsl[2] = (vmax + vmin) / 2.0f;
+
+    if (vmax == vmin)
+    {
+        hsl[0] = hsl[1] = 0.0f;
+        return;
+    }
+    
+    hsl[1] = hsl[0] > 0.5f ? d / (2.0f - vmax - vmin) : d / (vmax + vmin);
+
+    if (vmax == r) hsl[0] = (g - b) / d + (g < b ? 6.0f : 0.0f);
+    if (vmax == g) hsl[0] = (b - r) / d + 2.0f;
+    if (vmax == b) hsl[0] = (r - g) / d + 4.0f;
+    hsl[0] /= 6.0f;
+}
+
+static void GenerateTintedPalette(byte *palsrc, const byte *gamma, float lightness,
+                                  int palette_start, int palette_end)
+{
+    // Cap lightness so whites get translated too
+    const float capped_lightness = MIN(lightness, 0.9);
+
+    for (int palette = palette_start; palette <= palette_end; palette++)
+    {
+        byte *pal_byte = (byte *)(palsrc + 768 * palette);
+
+        const byte tinted_r = gamma[pal_byte[0]];
+        const byte tinted_g = gamma[pal_byte[1]];
+        const byte tinted_b = gamma[pal_byte[2]];
+
+        float tinted_hsl[3];
+        RgbToHsl(tinted_r, tinted_g, tinted_b, tinted_hsl);
+
+        // Replace the tinted color's lightness
+        int rgb[3];
+        HslToRgb(tinted_hsl[0], tinted_hsl[1], capped_lightness, rgb);
+        
+        for (int i = 0; i < 3; i++)
+        {
+            *pal_byte++ = rgb[i];
+        }
+    }
+}
+static void InitLessBlindingTints(void)
+{
+    const byte *const gamma = gammatable[gamma2];
+    for (int color = 0; color < 256; color++)
+    {
+        byte *const palsrc = alttintpal + color * 3;
+        
+        const byte r = gamma[palsrc[0]];
+        const byte g = gamma[palsrc[1]];
+        const byte b = gamma[palsrc[2]];
+
+        float hsl[3];
+        RgbToHsl(r, g, b, hsl);
+
+        const float lightness = hsl[2];
+        
+        GenerateTintedPalette(palsrc, gamma, lightness, 2,  8);  // Pain tint
+        GenerateTintedPalette(palsrc, gamma, lightness, 10, 12); // Bonus/Pickup tint
+        GenerateTintedPalette(palsrc, gamma, lightness, 13, 13); // Radsuit tint
+    }
+}
+
+// [Cherry] -----------------------------------------------------------------/
 
 // killough 5/2/98: tiny engine driven by table above
 void V_InitColorTranslation(void)
@@ -249,6 +363,11 @@ void V_InitColorTranslation(void)
         
         nightvision[i] = I_GetPaletteIndex(playpal, 0.0, greatest, 0.0);
     }
+
+    // [Cherry] Less Blinding Tints ==========================================
+
+    memcpy(alttintpal, playpal, sizeof(alttintpal));
+    InitLessBlindingTints();
 }
 
 void WriteGeneratedLumpWad(const char *filename)
