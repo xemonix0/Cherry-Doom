@@ -315,7 +315,8 @@ static char *FormatStat(int a, int b, boolean known_total)
 {
     char *str = NULL;
 
-    switch (lt_stats_format ? lt_stats_format : hud_stats_format)
+    switch (lt_stats_format != STATSFORMAT_MATCHHUD ? lt_stats_format
+                                                    : hud_stats_format)
     {
         case STATSFORMAT_RATIO:
             M_StringPrintF(&str, "%d", a);
@@ -349,6 +350,7 @@ static char *FormatStat(int a, int b, boolean known_total)
             break;
         case STATSFORMAT_COUNT:
             M_StringPrintF(&str, "%d", a);
+        default:
             break;
     }
 

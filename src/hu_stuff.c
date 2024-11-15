@@ -61,11 +61,6 @@
 boolean announce_milestones;
 static boolean message_flash;
 
-// [Cherry] Moved the STATSFORMAT enum to hu_stuff.h for use in wad_stats.c
-
-int hud_stats_format; // [Cherry] Made non-static
-static int hud_stats_format_map;
-
 enum {
   SHOWSTATS_KILLS,
   SHOWSTATS_ITEMS,
