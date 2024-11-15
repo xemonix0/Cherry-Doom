@@ -20,10 +20,11 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
+#include "hu_stuff.h"
 #include "m_array.h"
 #include "m_misc.h"
 #include "mn_menu.h"
-#include "mn_setup.h"
+#include "mn_internal.h"
 #include "wad_stats.h"
 
 #define LT_X_MARGIN         16
@@ -141,7 +142,7 @@ static void LevelsInsertRow(setup_menu_t **menu, char *text, int map_i,
 {
     extern void LT_Warp(void);
 
-    int64_t flags = S_LEFTJUST | S_TITLE | S_FUNCTION;
+    int64_t flags = S_LEFTJUST | S_TITLE | S_FUNC2;
     if (display_stats)
     {
         flags |= S_LTBL_MAP;
@@ -314,7 +315,8 @@ static char *FormatStat(int a, int b, boolean known_total)
 {
     char *str = NULL;
 
-    switch (lt_stats_format ? lt_stats_format : hud_stats_format)
+    switch (lt_stats_format != STATSFORMAT_MATCHHUD ? lt_stats_format
+                                                    : hud_stats_format)
     {
         case STATSFORMAT_RATIO:
             M_StringPrintF(&str, "%d", a);
@@ -326,7 +328,7 @@ static char *FormatStat(int a, int b, boolean known_total)
         case STATSFORMAT_BOOLEAN:
             M_StringPrintF(&str, "%s", (known_total && a >= b) ? "YES" : "NO");
             break;
-        case STATSFORMAT_PERCENTAGE:
+        case STATSFORMAT_PERCENT:
             if (known_total)
             {
                 M_StringPrintF(&str, "%d%%", !b ? 100 : a * 100 / b);
@@ -348,6 +350,7 @@ static char *FormatStat(int a, int b, boolean known_total)
             break;
         case STATSFORMAT_COUNT:
             M_StringPrintF(&str, "%d", a);
+        default:
             break;
     }
 

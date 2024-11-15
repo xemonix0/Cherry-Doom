@@ -96,22 +96,24 @@ There are some additional toggles (value of `0` or `1`) for some specific widget
 
 The following text lines are available:
 
-| Widget(s)         | Description |
-| :--------------:  | :---------- |
-| `nughud_time`     | Time display, only shown if enabled by the user |
-| `nughud_sts`      | Stats (Kills/Items/Secrets) display, only shown if enabled by the user |
-| `nughud_title`    | Level Name display, only shown in the Automap |
-| `nughud_powers`   | Powerup Timers, only shown if enabled by the user |
-| `nughud_movement` | Player movement widget, only shown if enabled by the user |
-| `nughud_coord`    | Coordinates display, only shown if enabled by the user |
-| `nughud_fps`      | FPS display, only shown when the `FPS` cheat is activated |
-| `nughud_rate`     | Rendering-statistics display, only shown when the `IDRATE` cheat is activated |
-| `nughud_message`  | Message and Chat display |
-| `nughud_secret`   | "Secret Revealed" and milestone-completion message display |
+| Widget(s)        | Description |
+| :--------------: | :---------- |
+| `nughud_time`    | Time display, only shown if enabled by the user |
+| `nughud_sts`     | Stats (Kills/Items/Secrets) display, only shown if enabled by the user |
+| `nughud_title`   | Level Name display, only shown in the Automap |
+| `nughud_powers`  | Powerup Timers, only shown if enabled by the user |
+| `nughud_movement`| Player movement widget, only shown if enabled by the user |
+| `nughud_coord`   | Coordinates display, only shown if enabled by the user |
+| `nughud_fps`     | FPS display, only shown when the `FPS` cheat is activated |
+| `nughud_rate`    | Rendering-statistics display, only shown when the `IDRATE` cheat is activated |
+| `nughud_cmd`     | Command-history display, only shown if enabled by the user |
+| `nughud_speed`   | Speedometer, only shown when the `SPEED` cheat is activated |
+| `nughud_message` | Message and Chat display |
+| `nughud_secret`  | "Secret Revealed" and milestone-completion message display |
 
 **All text lines are horizontally alignable.**
 
-There are some additional properties, `nughud_sts_ml` and `nughud_coord_ml`,
+There are some additional properties -- `nughud_sts_ml` and `nughud_coord_ml` --
 that respectively determine whether to draw the Stats and Coordinates display as multiple lines or a single one,
 with the following possible values:
 
@@ -139,7 +141,7 @@ Text lines will inherit the properties of the stack they belong to.
 **Stacks make use of all the shared properties, and are alignable both horizontally and vertically.**
 
 The _Message_ and _Chat_ displays will always be drawn first in whichever stack they're assigned to,
-and will also be assigned to the next stack, which is assumed to be on the other end of the screen at the same height,
+and will also be assigned to the next stack, which is assumed to be on the other side of the screen at the same height,
 so as to leave space to prevent overlapping issues due to those displays' potential length.
 
 #### Examples
@@ -150,7 +152,7 @@ so as to leave space to prevent overlapping issues due to those displays' potent
 
 nughud_face_x 143
 
-; Move the Frags widget elsewhere, since in the default Nugget HUD distribution,
+; Move the Frags widget elsewhere, since in the default NUGHUD,
 ; it is drawn right where the Face is drawn in the traditional Status Bar.
 nughud_frags_x     314
 nughud_frags_y     155
