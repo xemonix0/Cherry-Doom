@@ -87,7 +87,6 @@ extern backdrop_t menu_backdrop;
 
 // [Nugget]
 extern boolean menu_background_all;
-extern boolean no_menu_tint;
 
 boolean MN_MenuIsShaded(void);
 

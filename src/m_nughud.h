@@ -23,12 +23,6 @@
 #include "doomtype.h"
 #include "m_fixed.h"
 
-#define NUGHUDWIDESHIFT(x) (                                       \
-  st_crispyhud ? (abs(x) == 2) ? video.deltaw      * (2 / (x)) :   \
-                 (abs(x) == 1) ? distributed_delta *      (x)  : 0 \
-               : 0                                                 \
-)
-
 typedef struct nughud_widget_s {
   int x, y;
   int wide;

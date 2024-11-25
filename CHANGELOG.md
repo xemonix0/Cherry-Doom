@@ -8,11 +8,13 @@
 
 - **Merged changes from [Woof! post-14.5.0]**, note:
   - Integrated periodic auto saves into the save/load menus
-  - Moved `show_berserk` menu item to _Status Bar/HUD_ setup menu
-  - Removed `hudcolor_chat` and `chat_msg_timer` menu items
-  - Renamed `#_bobbing_percentage` to `#_bobbing_pct` [1]
-  - Gave an `sts_` prefix to `show_berserk`, `show_ssg`, and `alt_arms` [1]
+  - Maintained message list, message duration, and chat-message duration settings [1]
+  - Removed `show_ssg` (now default behavior), `alt_arms` and `hud_highlight_weapon` settings
+  - Renamed `#_bobbing_percentage` to `#_bobbing_pct` [2]
+  - Renamed `show_berserk` to `sts_show_berserk` [2]
+  - Moved `sts_show_berserk` menu item to _Status Bar/HUD_ setup menu
   - Revised the descriptions of many of Nugget's new CVARs
+- **Messages in the message list now have individual durations**
 - **Smoother FOV effects**
 - **Made _Screen Wipe Speed Percentage_ setting affect the _Fizzle_ fade**
 
@@ -22,3 +24,7 @@
 - **_Double autoaim range_ setting doubling range of BFG tracers**
 - **FOV effects disabling interpolation of weapon sprites**
 - **Crash when loading WADs with empty lumps between `C_#` markers** (fixes `nt_rc1.wad`)
+
+**[1].** Not necessarily with the same CVARs; existing config files will be affected.
+
+**[2].** This will affect existing config files.

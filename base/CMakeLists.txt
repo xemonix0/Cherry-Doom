@@ -18,12 +18,15 @@ set(BASE_SOURCES
     all-all/cross06.png
     all-all/cross07.png
     all-all/cross08.png
+    all-all/crossil.png # [Nugget]
+    all-all/crossir.png # [Nugget]
     all-all/crpurple.lmp
     all-all/crred.lmp
     all-all/crtan.lmp
     all-all/crwhite.lmp
     all-all/cryellow.lmp
     all-all/dig033.png
+    all-all/dig034.png # [Nugget]
     all-all/dig037.png
     all-all/dig043.png
     all-all/dig045.png
@@ -75,6 +78,7 @@ set(BASE_SOURCES
     all-all/dsdgsit.wav
     all-all/m_butt1.png
     all-all/m_butt2.png
+    all-all/m_palett.png # [Nugget]
     all-all/m_vbox.png
     all-all/sbardef.lmp
     all-all/sbhuddef.lmp
@@ -175,6 +179,16 @@ set(BASE_SOURCES
     all-all/sprites/pls2e0.png
     all-all/sprites/tnt1a0.png
 
+    # [Nugget]
+    all-all/sprites/ngcha0.png
+    all-all/sprites/ngtra0.png
+    all-all/sprites/ngtrb0.png
+    all-all/sprites/ngtrc0.png
+    all-all/sprites/ngtrd0.png
+    all-all/sprites/ngtre0.png
+    all-all/sprites/ngtrf0.png
+    all-all/sprites/ngtrg0.png
+
     betalevl.wad/umapdef.lmp
 
     chex.wad/brghtmps.lmp
@@ -208,7 +222,7 @@ add_custom_command(OUTPUT "${BASE_PK3_PATH}"
     DEPENDS ${BASE_SOURCES}
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-add_custom_target(woof-base DEPENDS "${BASE_PK3_PATH}")
+add_custom_target(nugget-doom-base DEPENDS "${BASE_PK3_PATH}")
 
 if(WIN32)
     install(FILES "${BASE_PK3_PATH}" DESTINATION .)

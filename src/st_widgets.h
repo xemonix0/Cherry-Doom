@@ -16,6 +16,18 @@
 
 #include "doomtype.h"
 
+// [Nugget] /=================================================================
+
+// CVARs
+extern boolean announce_milestones;
+extern boolean show_save_messages;
+extern boolean sp_chat;
+
+boolean ST_GetChatOn(void);
+int ST_GetNumMessageLines(void);
+
+// [Nugget] =================================================================/
+
 struct sbarelem_s;
 struct sbe_widget_s;
 struct player_s;
@@ -54,7 +66,16 @@ extern widgetstate_t hud_player_coords;
 extern int hudcolor_titl;
 extern int hudcolor_xyco;
 
-extern boolean hud_time_use;
+// [Nugget]
+typedef enum eventtimer_e {
+  TIMER_USE,
+  TIMER_TELEPORT,
+  TIMER_KEYPICKUP,
+  
+  NUMTIMERS
+} eventtimer_t;
+
+extern boolean hud_time[NUMTIMERS]; // [Nugget] Extended
 
 extern struct sbarelem_s *st_time_elem;
 

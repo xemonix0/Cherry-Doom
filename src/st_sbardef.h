@@ -54,6 +54,9 @@ typedef enum
     sbc_widgetenabled,
     sbc_widgetdisabled,
 
+    // [Nugget]
+    sbc_weaponnotowned,
+
     sbc_max,
 } sbarconditiontype_t;
 
@@ -117,6 +120,16 @@ typedef enum
     sbw_secret,
     sbw_chat,
     sbw_title,
+
+    // [Nugget]
+
+    sbw_end_woof,
+
+    sbw_start_nugget = 31,
+    sbw_powers,
+    sbw_end_nugget,
+
+    sbw_num = sbw_end_woof + (sbw_end_nugget - 1 - sbw_start_nugget)
 } sbarwidgettype_t;
 
 typedef enum
@@ -136,6 +149,8 @@ typedef enum
     // Woof!
     sbe_wide_left = 0x10,
     sbe_wide_right = 0x20,
+
+    sbe_wide_force = 0x40, // [Nugget] NUGHUD
 } sbaralignment_t;
 
 typedef struct
@@ -187,6 +202,8 @@ typedef struct
     const char *string;
     int totalwidth;
     int xoffset;
+
+    boolean flash; // [Nugget] Message flash
 } widgetline_t;
 
 typedef struct sbe_widget_s

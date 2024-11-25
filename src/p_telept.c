@@ -39,6 +39,9 @@
 #include "sounds.h"
 #include "tables.h"
 
+// [Nugget]
+#include "st_widgets.h"
+
 //
 // TELEPORTATION
 //

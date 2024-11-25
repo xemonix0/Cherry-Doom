@@ -40,9 +40,9 @@
 #include "tables.h"
 
 // [Nugget]
-#include "hu_stuff.h"
 #include "p_maputl.h"
 #include "p_user.h"
+#include "st_widgets.h"
 #include "v_video.h"
 
 #define BONUSADD        6

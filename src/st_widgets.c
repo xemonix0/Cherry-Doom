@@ -42,6 +42,60 @@
 #include "v_video.h"
 #include "u_mapinfo.h"
 
+// [Nugget]
+#include "st_stuff.h"
+#include "z_zone.h"
+
+// [Nugget] /=================================================================
+
+// CVARs ---------------------------------------------------------------------
+
+enum {
+  SHOWSTATS_KILLS,
+  SHOWSTATS_ITEMS,
+  SHOWSTATS_SECRETS,
+
+  NUMSHOWSTATS
+};
+
+static boolean hud_stats_show[NUMSHOWSTATS];
+static boolean hud_stats_show_map[NUMSHOWSTATS];
+
+boolean hud_time[NUMTIMERS];
+
+static int hud_power_timers;
+
+static boolean hud_allow_icons = false;
+
+static int hudcolor_time_scale;
+static int hudcolor_total_time;
+static int hudcolor_time;
+static int hudcolor_event_timer;
+static int hudcolor_kills;
+static int hudcolor_items;
+static int hudcolor_secrets;
+static int hudcolor_ms_incomp;
+static int hudcolor_ms_comp;
+
+boolean announce_milestones;
+boolean show_save_messages;
+static boolean message_flash;
+static int hud_msg_duration;
+static int hud_chat_duration;
+static int hud_msg_lines;
+static boolean hud_msg_scrollup;
+
+boolean sp_chat;
+
+// ---------------------------------------------------------------------------
+
+int ST_GetNumMessageLines(void)
+{
+    return hud_msg_lines;
+}
+
+// [Nugget] =================================================================/
+
 boolean       show_messages;
 boolean       show_toggle_messages;
 boolean       show_pickup_messages;
@@ -60,6 +114,12 @@ int hudcolor_titl;  // color range of automap level title
 int hudcolor_xyco;  // color range of new coords on automap
 
 boolean chat_on;
+
+// [Nugget]
+boolean ST_GetChatOn(void)
+{
+  return chat_on;
+}
 
 void ST_ClearLines(sbe_widget_t *widget)
 {
@@ -83,38 +143,158 @@ static char message_string[HU_MAXLINELENGTH];
 
 static boolean message_review;
 
+// [Nugget] Message list /----------------------------------------------------
+
+typedef struct linkedmessage_s
+{
+    struct linkedmessage_s *prev, *next;
+    char string[HU_MAXLINELENGTH];
+    int duration_left;
+    int flash_duration_left; // Message flash
+
+    // Messages from other players cannot be overwritten by normal messages
+    // until their duration runs out
+    boolean is_chat_msg;
+} linkedmessage_t;
+
+static linkedmessage_t *message_list_head = NULL, *message_list_tail = NULL;
+
+static int message_index = 0;
+
+static void AddMessage(char *const string, int duration, const boolean is_chat_msg)
+{
+    message_index++;
+
+    if (message_list_tail && message_index > hud_msg_lines)
+    {
+        message_index--;
+
+        linkedmessage_t *m = message_list_head;
+
+        // Look for a non-chat message to remove
+        while (m->is_chat_msg && m->next) { m = m->next; }
+
+        if (m->is_chat_msg)
+        {
+            // All messages in the list are chat messages
+
+            // Is the new one a chat message too?
+            if (is_chat_msg)
+            {
+                // Yes; advance the list normally
+                m = message_list_head;
+            }
+            else {
+                // No; omit it
+                goto clear_string;
+            }
+        }
+
+        linkedmessage_t *const prev = m->prev,
+                        *const next = m->next;
+
+        Z_Free(m);
+
+        if (prev) { prev->next = next; }
+        else      { message_list_head = next; }
+
+        if (next) { next->prev = prev; }
+        else      { message_list_tail = prev; }
+    }
+
+    if (message_list_tail)
+    {
+        message_list_tail->next = Z_Malloc(sizeof(linkedmessage_t), PU_STATIC, NULL);
+
+        message_list_tail->next->prev = message_list_tail;
+        message_list_tail = message_list_tail->next;
+    }
+    else {
+        message_list_head =
+        message_list_tail = Z_Malloc(sizeof(linkedmessage_t), PU_STATIC, NULL);
+
+        message_list_tail->prev = NULL;
+    }
+
+    message_list_tail->next = NULL;
+
+    M_StringCopy(message_list_tail->string, string, sizeof(message_list_tail->string));
+
+    if (is_chat_msg)
+    {
+        message_list_tail->duration_left = hud_chat_duration ? hud_chat_duration : duration;
+        message_list_tail->is_chat_msg = true;
+    }
+    else {
+        message_list_tail->duration_left = hud_msg_duration ? hud_msg_duration : duration;
+        message_list_tail->is_chat_msg = false;
+    }
+
+    // Message flash (actually 4, as it will be decremented right after this)
+    message_list_tail->flash_duration_left = message_flash ? 5 : 0;
+
+    clear_string: string[0] = '\0';
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 static void UpdateMessage(sbe_widget_t *widget, player_t *player)
 {
+    // [Nugget] Rewritten to make use of list system
+
+    ST_ClearLines(widget);
+
     if (!player->message)
     {
-        ST_ClearLines(widget);
+        linkedmessage_t *m = message_list_head;
+
+        while (m)
+        {
+            linkedmessage_t *const deletee = m;
+            m = m->next;
+            Z_Free(deletee);
+        }
+
+        message_list_head = message_list_tail = NULL;
+        message_index = 0;
+
         return;
     }
 
-    static char string[120];
-    static int duration_left;
-    static boolean overwrite = true;
+    // Handle setting changes
+    while (message_index > hud_msg_lines)
+    {
+        message_list_head = message_list_head->next;
+        Z_Free(message_list_head->prev);
+
+        message_list_head->prev = NULL;
+
+        message_index--;
+    }
+
     static boolean messages_enabled = true;
 
     if (messages_enabled)
     {
         if (message_string[0])
         {
-            duration_left = widget->duration;
-            M_StringCopy(string, message_string, sizeof(string));
-            message_string[0] = '\0';
-            overwrite = false;
+            AddMessage(message_string, widget->duration, true);
         }
-        else if (player->message && player->message[0] && overwrite)
+        else if (player->message && player->message[0])
         {
-            duration_left = widget->duration;
-            M_StringCopy(string, player->message, sizeof(string));
-            player->message[0] = '\0';
+            AddMessage(player->message, widget->duration, false);
         }
         else if (message_review)
         {
             message_review = false;
-            duration_left = widget->duration;
+
+            linkedmessage_t *m = message_list_head;
+
+            while (m)
+            {
+                m->duration_left = widget->duration;
+                m = m->next;
+            }
         }
     }
 
@@ -123,15 +303,28 @@ static void UpdateMessage(sbe_widget_t *widget, player_t *player)
         messages_enabled = show_messages;
     }
 
-    if (duration_left == 0)
+    linkedmessage_t *m = hud_msg_scrollup ? message_list_head : message_list_tail;
+
+    while (m)
     {
-        ST_ClearLines(widget);
-        overwrite = true;
-    }
-    else
-    {
-        SetLine(widget, string);
-        --duration_left;
+        if (m->duration_left > 0)
+        {
+            m->duration_left--;
+
+            ST_AddLine(widget, m->string);
+
+            // Message flash -------------------------------------------------
+
+            if (m->flash_duration_left) { m->flash_duration_left--; }
+
+            widget->lines[array_size(widget->lines) - 1].flash = !!m->flash_duration_left;
+        }
+        else {
+            m->is_chat_msg = false; // Allow overwriting
+            m->flash_duration_left = 0;
+        }
+
+        m = hud_msg_scrollup ? m->next : m->prev;
     }
 }
 
@@ -139,7 +332,7 @@ static void UpdateSecretMessage(sbe_widget_t *widget, player_t *player)
 {
     ST_ClearLines(widget);
 
-    if (!hud_secret_message)
+    if (!hud_secret_message && !announce_milestones) // [Nugget]
     {
         return;
     }
@@ -416,7 +609,8 @@ boolean ST_MessagesResponder(event_t *ev)
         {
             eatkey = false;
         }
-        else if (netgame && M_InputActivated(input_chat))
+        else if ((netgame || sp_chat) // [Nugget]
+                 && M_InputActivated(input_chat))
         {
             eatkey = chat_on = true;
             ClearChatLine(&chatline);
@@ -634,11 +828,11 @@ static void UpdateTitle(sbe_widget_t *widget)
 
 static boolean WidgetEnabled(widgetstate_t state)
 {
-    if (automapactive && !(state & HUD_WIDGET_AUTOMAP))
+    if (automapactive == AM_FULL && !(state & HUD_WIDGET_AUTOMAP))
     {
         return false;
     }
-    else if (!automapactive && !(state & HUD_WIDGET_HUD))
+    else if (automapactive != AM_FULL && !(state & HUD_WIDGET_HUD))
     {
         return false;
     }
@@ -679,14 +873,18 @@ static void UpdateCoord(sbe_widget_t *widget, player_t *player)
 
 typedef enum
 {
+    STATSFORMAT_MATCHHUD, // [Nugget]
     STATSFORMAT_RATIO,
     STATSFORMAT_BOOLEAN,
     STATSFORMAT_PERCENT,
     STATSFORMAT_REMAINING,
-    STATSFORMAT_COUNT
+    STATSFORMAT_COUNT,
+
+    NUM_STATSFORMATS // [Nugget]
 } statsformat_t;
 
 static statsformat_t hud_stats_format;
+static statsformat_t hud_stats_format_map; // [Nugget]
 
 static void StatsFormatFunc_Ratio(char *buffer, size_t size, const int count,
                                   const int total)
@@ -735,6 +933,15 @@ static void UpdateMonSec(sbe_widget_t *widget)
         return;
     }
 
+    // [Nugget] /-------------------------------------------------------------
+
+    const boolean *const showstats = (automapactive == AM_FULL) ? hud_stats_show_map : hud_stats_show;
+
+    if (!(showstats[SHOWSTATS_KILLS] || showstats[SHOWSTATS_ITEMS] || showstats[SHOWSTATS_SECRETS]))
+    { return; }
+
+    // [Nugget] -------------------------------------------------------------/
+
     static char string[120];
 
     int fullkillcount = 0;
@@ -759,26 +966,76 @@ static void UpdateMonSec(sbe_widget_t *widget)
         max_kill_requirement = totalkills;
     }
 
-    int killcolor = (fullkillcount >= max_kill_requirement) ? '0' + CR_BLUE1
-                                                            : '0' + CR_GRAY;
+    // [Nugget] Customizable Stats colors
+
+    char killlabelcolor, itemlabelcolor, secretlabelcolor;
+
+    int killcolor = (fullkillcount >= max_kill_requirement) ? '0' + hudcolor_ms_comp
+                                                            : '0' + hudcolor_ms_incomp;
     int secretcolor =
-        (fullsecretcount >= totalsecret) ? '0' + CR_BLUE1 : '0' + CR_GRAY;
+        (fullsecretcount >= totalsecret) ? '0' + hudcolor_ms_comp : '0' + hudcolor_ms_incomp;
     int itemcolor =
-        (fullitemcount >= totalitems) ? '0' + CR_BLUE1 : '0' + CR_GRAY;
+        (fullitemcount >= totalitems) ? '0' + hudcolor_ms_comp : '0' + hudcolor_ms_incomp;
+
+    // [Nugget] HUD icons /---------------------------------------------------
+
+    char killlabel, itemlabel, secretlabel;
+
+    #define USE_ICON(_labelvar_, _label_, _labelcolorvar_, _labelcolor_, _icon_) \
+        if (hud_allow_icons && ST_IconAvailable(_icon_))                         \
+        {                                                                        \
+            _labelvar_ = (char) (HU_FONTEND + 1 + _icon_);                       \
+            _labelcolorvar_ = '0' + CR_NONE;                                     \
+        }                                                                        \
+        else {                                                                   \
+            _labelvar_ = _label_;                                                \
+            _labelcolorvar_ = '0' + _labelcolor_;                                \
+        }
+
+    USE_ICON(killlabel,   'K', killlabelcolor,   hudcolor_kills,   0);
+    USE_ICON(itemlabel,   'I', itemlabelcolor,   hudcolor_items,   1);
+    USE_ICON(secretlabel, 'S', secretlabelcolor, hudcolor_secrets, 2);
+
+    #undef USE_ICON
+
+    // [Nugget] -------------------------------------------------------------/
 
     char kill_str[16], item_str[16], secret_str[16];
 
-    statsformatfunc_t StatsFormatFunc = StatsFormatFuncs[hud_stats_format];
+    statsformatfunc_t StatsFormatFunc = StatsFormatFuncs[
+        // [Nugget]
+        ((automapactive == AM_FULL && hud_stats_format_map)
+         ? hud_stats_format_map : hud_stats_format) - 1
+    ];
 
     StatsFormatFunc(kill_str, sizeof(kill_str), fullkillcount, max_kill_requirement);
     StatsFormatFunc(item_str, sizeof(item_str), fullitemcount, totalitems);
     StatsFormatFunc(secret_str, sizeof(secret_str), fullsecretcount, totalsecret);
 
-    M_snprintf(string, sizeof(string),
-        RED_S "K \x1b%c%s " RED_S "I \x1b%c%s " RED_S "S \x1b%c%s",
-        killcolor, kill_str,
-        itemcolor, item_str,
-        secretcolor, secret_str);
+    int offset = 0;
+
+    if (showstats[SHOWSTATS_KILLS])
+    {
+        offset += M_snprintf(string + offset, sizeof(string) - offset,
+          "\x1b%c%c \x1b%c%s%s",
+          killlabelcolor, killlabel, killcolor, kill_str,
+          (showstats[SHOWSTATS_ITEMS] || showstats[SHOWSTATS_SECRETS]) ? " " : "");
+    }
+
+    if (showstats[SHOWSTATS_ITEMS])
+    {
+        offset += M_snprintf(string + offset, sizeof(string) - offset,
+          "\x1b%c%c \x1b%c%s%s",
+          itemlabelcolor, itemlabel, itemcolor, item_str,
+          showstats[SHOWSTATS_SECRETS] ? " " : "");
+    }
+
+    if (showstats[SHOWSTATS_SECRETS])
+    {
+        offset += M_snprintf(string + offset, sizeof(string) - offset,
+          "\x1b%c%c \x1b%c%s",
+          secretlabelcolor, secretlabel, secretcolor, secret_str);
+    }
 
     ST_AddLine(widget, string);
 }
@@ -796,10 +1053,12 @@ static void UpdateStTime(sbe_widget_t *widget, player_t *player)
 
     int offset = 0;
 
+    // [Nugget] Colors
+
     if (time_scale != 100)
     {
         offset +=
-            M_snprintf(string, sizeof(string), BLUE_S "%d%% ", time_scale);
+            M_snprintf(string, sizeof(string), "\x1b%c%d%% ", '0'+hudcolor_time_scale, time_scale);
     }
 
     if (totalleveltimes)
@@ -807,19 +1066,25 @@ static void UpdateStTime(sbe_widget_t *widget, player_t *player)
         const int time = (totalleveltimes + leveltime) / TICRATE;
 
         offset += M_snprintf(string + offset, sizeof(string) - offset,
-                             GREEN_S "%d:%02d ", time / 60, time % 60);
+                             "\x1b%c%d:%02d ", '0'+hudcolor_total_time, time / 60, time % 60);
     }
 
     if (!player->btuse_tics)
     {
         M_snprintf(string + offset, sizeof(string) - offset,
-                   GRAY_S "%d:%05.2f\t", leveltime / TICRATE / 60,
+                   "\x1b%c%d:%05.2f\t", '0'+hudcolor_time, leveltime / TICRATE / 60,
                    (float)(leveltime % (60 * TICRATE)) / TICRATE);
     }
     else
     {
+        const int type = player->eventtype;
+
+        // [Nugget] Support other events
         M_snprintf(string + offset, sizeof(string) - offset,
-                   GOLD_S "U %d:%05.2f\t", player->btuse / TICRATE / 60,
+                   "\x1b%c%c %d:%05.2f\t",
+                   '0'+hudcolor_event_timer,
+                   type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
+                   player->btuse / TICRATE / 60, 
                    (float)(player->btuse % (60 * TICRATE)) / TICRATE);
     }
 
@@ -894,6 +1159,63 @@ static void UpdateSpeed(sbe_widget_t *widget, player_t *player)
 static void UpdateCmd(sbe_widget_t *widget)
 {
     HU_BuildCommandHistory(widget);
+}
+
+// [Nugget]
+static void UpdatePowers(sbe_widget_t *widget, player_t *player)
+{
+    ST_ClearLines(widget);
+
+    static char string[64];
+
+    memset(string, 0, sizeof(string));
+
+    if (!WidgetEnabled(hud_power_timers))
+    {
+        return;
+    }
+
+    int offset = 0;
+    
+    // TO-DO: Multi-lined?
+
+    #define POWERUP_TIMER(_power_, _powerdur_, _numicon_, _string_, _color_) \
+        if (player->powers[_power_] > 0)                                     \
+        {                                                                    \
+          const boolean runout = POWER_RUNOUT(player->powers[_power_]);      \
+                                                                             \
+          if (hud_allow_icons && ST_IconAvailable(_numicon_))                \
+          {                                                                  \
+            offset += M_snprintf(                                            \
+              string + offset, sizeof(string) - offset, "\x1b%c%c\x1b%c",    \
+              '0' + (runout ? CR_NONE : CR_BLACK),                           \
+              (char) (HU_FONTEND + 1 + _numicon_),                           \
+              '0' + (runout ? _color_ : CR_BLACK)                            \
+            );                                                               \
+          }                                                                  \
+          else {                                                             \
+            offset += M_snprintf(                                            \
+              string + offset, sizeof(string) - offset, "\x1b%c" _string_,   \
+              '0' + (runout ? _color_ : CR_BLACK)                            \
+            );                                                               \
+          }                                                                  \
+                                                                             \
+          offset += M_snprintf(                                              \
+            string + offset, sizeof(string) - offset, " %i\" ",              \
+            MIN(_powerdur_/TICRATE, 1 + (player->powers[_power_] / TICRATE)) \
+          );                                                                 \
+        }
+
+    POWERUP_TIMER(pw_invisibility,    INVISTICS,  3, "INVIS", CR_RED);
+    POWERUP_TIMER(pw_invulnerability, INVULNTICS, 4, "INVUL", CR_GREEN);
+    POWERUP_TIMER(pw_infrared,        INFRATICS,  5, "LIGHT", CR_BRICK);
+    POWERUP_TIMER(pw_ironfeet,        IRONTICS,   6, "SUIT",  CR_GRAY);
+
+    string[offset - 1] = '\0'; // Trim leading space
+
+    SetLine(widget, string);
+
+    #undef POWERUP_TIMER
 }
 
 // [crispy] print a bar indicating demo progress at the bottom of the screen
@@ -1046,6 +1368,10 @@ void ST_UpdateWidget(sbarelem_t *elem, player_t *player)
         case sbw_speed:
             UpdateSpeed(widget, player);
             break;
+
+        // [Nugget]
+        case sbw_powers: UpdatePowers(widget, player); break;
+
         default:
             break;
     }
@@ -1059,9 +1385,37 @@ void ST_BindHUDVariables(void)
             "Show level stats (kills, items, and secrets) widget (1 = On automap; "
             "2 = On HUD; 3 = Always)");
   M_BindNum("hud_stats_format", &hud_stats_format, NULL,
-            STATSFORMAT_RATIO, STATSFORMAT_RATIO, STATSFORMAT_COUNT,
+            STATSFORMAT_RATIO, STATSFORMAT_RATIO, NUM_STATSFORMATS-1, // [Nugget]
             ss_stat, wad_no,
-            "Format of level stats (0 = Ratio; 1 = Boolean; 2 = Percent; 3 = Remaining; 4 = Count)");
+            "Format of level stats (1 = Ratio; 2 = Boolean; 3 = Percent; 4 = Remaining; 5 = Count)");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  M_BindNum("hud_stats_format_map", &hud_stats_format_map, NULL,
+            STATSFORMAT_MATCHHUD, STATSFORMAT_MATCHHUD, NUM_STATSFORMATS-1,
+            ss_stat, wad_no,
+            "Format of level stats in automap (0 = Match HUD)");
+
+  M_BindBool("hud_stats_kills", &hud_stats_show[SHOWSTATS_KILLS], NULL, true, ss_stat, wad_no,
+             "Show kill count in the level-stats widget");
+
+  M_BindBool("hud_stats_items", &hud_stats_show[SHOWSTATS_ITEMS], NULL, true, ss_stat, wad_no,
+             "Show item count in the level-stats widget");
+
+  M_BindBool("hud_stats_secrets", &hud_stats_show[SHOWSTATS_SECRETS], NULL, true, ss_stat, wad_no,
+             "Show secrets count in the level-stats widget");
+
+  M_BindBool("hud_stats_kills_map", &hud_stats_show_map[SHOWSTATS_KILLS], NULL, true, ss_stat, wad_no,
+             "Show kill count in the automap's level-stats widget");
+
+  M_BindBool("hud_stats_items_map", &hud_stats_show_map[SHOWSTATS_ITEMS], NULL, true, ss_stat, wad_no,
+             "Show item count in the automap's level-stats widget");
+
+  M_BindBool("hud_stats_secrets_map", &hud_stats_show_map[SHOWSTATS_SECRETS], NULL, true, ss_stat, wad_no,
+             "Show secrets count in the automap's level-stats widget");
+
+  // [Nugget] ---------------------------------------------------------------/
+
   M_BindNum("hud_level_time", &hud_level_time, NULL,
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
@@ -1076,8 +1430,29 @@ void ST_BindHUDVariables(void)
            "Number of commands to display for command history widget");
   BIND_BOOL(hud_hide_empty_commands, true,
             "Hide empty commands from command history widget");
-  M_BindBool("hud_time_use", &hud_time_use, NULL, false, ss_stat, wad_no,
+
+  // [Nugget] Extended
+  M_BindBool("hud_time_use", &hud_time[TIMER_USE], NULL, false, ss_stat, wad_no,
              "Show split time when pressing the use-button");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  M_BindBool("hud_time_teleport", &hud_time[TIMER_TELEPORT], NULL, false, ss_stat, wad_no,
+             "Show split time when going through a teleporter");
+
+  M_BindBool("hud_time_keypickup", &hud_time[TIMER_KEYPICKUP], NULL, false, ss_stat, wad_no,
+             "Show split time when picking up a key");
+
+  M_BindNum("hud_power_timers", &hud_power_timers, NULL,
+            HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
+            ss_stat, wad_no,
+            "Show powerup-timers widget (1 = On automap; 2 = On HUD; 3 = Always)");
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  // [Nugget]
+  M_BindBool("hud_allow_icons", &hud_allow_icons, NULL, true, ss_stat, wad_yes,
+             "Allow usage of icons for some labels in HUD widgets");
 
   M_BindNum("hudcolor_titl", &hudcolor_titl, NULL,
             CR_GOLD, CR_BRICK, CR_NONE, ss_none, wad_yes,
@@ -1086,6 +1461,46 @@ void ST_BindHUDVariables(void)
             CR_GREEN, CR_BRICK, CR_NONE, ss_none, wad_yes,
             "Color range used for automap coordinates");
 
+  // [Nugget] Extended HUD colors /-------------------------------------------
+
+  M_BindNum("hudcolor_time_scale", &hudcolor_time_scale, NULL,
+            CR_BLUE1, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            "Color used for time scale (game-speed percent) in Time display");
+
+  M_BindNum("hudcolor_total_time", &hudcolor_total_time, NULL,
+            CR_GREEN, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            "Color used for total level time in Time display");
+
+  M_BindNum("hudcolor_time", &hudcolor_time, NULL,
+            CR_GRAY, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            "Color used for level time in Time display");
+
+  M_BindNum("hudcolor_event_timer", &hudcolor_event_timer, NULL,
+            CR_GOLD, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            "Color used for event timer in Time display");
+
+  M_BindNum("hudcolor_kills", &hudcolor_kills, NULL,
+            CR_RED, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            "Color used for Kills label in Stats display");
+
+  M_BindNum("hudcolor_items", &hudcolor_items, NULL,
+            CR_RED, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            "Color used for Items label in Stats display");
+
+  M_BindNum("hudcolor_secrets", &hudcolor_secrets, NULL,
+            CR_RED, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            "Color used for Secrets label in Stats display");
+
+  M_BindNum("hudcolor_ms_incomp", &hudcolor_ms_incomp, NULL,
+            CR_GRAY, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            "Color used for incomplete milestones in Stats display");
+
+  M_BindNum("hudcolor_ms_comp", &hudcolor_ms_comp, NULL,
+            CR_BLUE1, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            "Color used for complete milestones in Stats display");
+
+  // [Nugget] ---------------------------------------------------------------/
+
   BIND_BOOL(show_messages, true, "Show messages");
   M_BindNum("hud_secret_message", &hud_secret_message, NULL,
             SECRETMESSAGE_OFF, SECRETMESSAGE_COUNT, SECRETMESSAGE_ON,
@@ -1093,16 +1508,41 @@ void ST_BindHUDVariables(void)
             "Announce revealed secrets (0 = Off; 1 = On; 2 = Count)");
   M_BindBool("hud_map_announce", &hud_map_announce, NULL,
             false, ss_stat, wad_no, "Announce map titles");
+
+  // [Nugget] Announce milestone completion
+  M_BindBool("announce_milestones", &announce_milestones, NULL,
+            false, ss_stat, wad_no, "Announce completion of milestones");
+
   M_BindBool("show_toggle_messages", &show_toggle_messages, NULL,
             true, ss_stat, wad_no, "Show toggle messages");
   M_BindBool("show_pickup_messages", &show_pickup_messages, NULL,
              true, ss_stat, wad_no, "Show pickup messages");
   M_BindBool("show_obituary_messages", &show_obituary_messages, NULL,
              true, ss_stat, wad_no, "Show obituaries");
+
+  // [Nugget] (CFG-only)
+  M_BindBool("show_save_messages", &show_save_messages, NULL,
+             true, ss_none, wad_no, "Show save messages");
+
   BIND_NUM(hudcolor_obituary, CR_GRAY, CR_BRICK, CR_NONE,
            "Color range used for obituaries");
   M_BindBool("message_colorized", &message_colorized, NULL,
              false, ss_stat, wad_no, "Colorize player messages");
+
+  // [Nugget] /---------------------------------------------------------------
+
+  // Message flash
+  M_BindBool("message_flash", &message_flash, NULL,
+             false, ss_stat, wad_no, "Messages flash when they first appear");
+
+  BIND_NUM(hud_msg_duration, 0, 0, UL, "Force duration of messages, in tics (0 = Don't force)");
+  BIND_NUM(hud_chat_duration, 0, 0, UL, "Force duration of chat messages, in tics (0 = Don't force)");
+  BIND_NUM(hud_msg_lines, 1, 1, 8, "Number of lines for message list");
+
+  // (CFG-only)
+  BIND_BOOL(hud_msg_scrollup, true, "Message list scrolls upwards");
+
+  // [Nugget] ---------------------------------------------------------------/
 
 #define BIND_CHAT(num)                                                     \
     M_BindStr("chatmacro" #num, &chat_macros[(num)], HUSTR_CHATMACRO##num, \
