@@ -7,6 +7,7 @@
 ## Changes
 
 - **Merged changes from [Woof! 15.0.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_15.0.0)**, note:
+  - NUGHUD now partially uses SBARDEF as its backend, which may cause some rendering differences
   - Integrated periodic auto saves into the save/load menus
   - Maintained message list, message duration, and chat-message duration settings [1]
   - Removed `show_ssg` (now default behavior), `alt_arms` and `hud_highlight_weapon` settings
