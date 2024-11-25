@@ -2429,7 +2429,7 @@ frommapinfo:
 
   gamestate = GS_INTERMISSION;
   viewactive = false;
-  automapactive = false;
+  automapactive = AM_OFF;
 
   // [FG] -statdump implementation from Chocolate Doom
   if (gamemode == commercial || gamemap != 8)
@@ -5297,7 +5297,7 @@ void G_InitNew(skill_t skill, int episode, int map)
   usergame = true;                // will be set false if a demo
   paused = false;
   demoplayback = false;
-  automapactive = false;
+  automapactive = AM_OFF;
   viewactive = true;
   gameepisode = episode;
   gamemap = map;
