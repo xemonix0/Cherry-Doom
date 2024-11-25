@@ -91,7 +91,6 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Weapon Inertia_** setting (scale determined by the CFG-only `weapon_inertia_scale_pct` CVAR) [by _ceski_]
 - **_Weapon Squat Upon Landing_** setting [p.f. Crispy Doom]
 - **_Translucent Flashes_** setting (translucency determined by the CFG-only `translucent_pspr_pct` CVAR) [i.b. Crispy Doom]
-- **Show Berserk availability** setting [partially p.f. Crispy Doom]
 - **"Correct" first person sprite centering** setting, to toggle the 1px first-person sprite misalignment (CFG-only: `sx_fix`)
 
 ### Status Bar/HUD
@@ -107,14 +106,13 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **Show Save Messages** setting (CFG-only: `show_save_messages`)
 - **_Milestone-Completion Announcements_** setting, to report completion of milestones (e.g. all items acquired)
 - **_Message Flash_** setting
+- **_Message Lines_** setting
+- **_(Chat) Message Duration_** settings
 - Restored **_Upward Message Scrolling_** setting, and enabled it by default (CFG-only: `hud_msg_scrollup`)
-- **Restored various message-related menu items**
 - **_Show Powerup Timers_** setting
-- **Show SSG availability in the Shotgun slot of the Arms widget** setting (CFG-only: `show_ssg`) [p.f. Crispy Doom]
+- **_Berserk display when using Fist** setting [partially p.f. Crispy Doom]
 - **_Automap Level Stats Format_** setting
 - **Level-Stats Selection** settings (CFG-only: `hud_stats_#[_map]`)
-- **_Highlight Current/Pending Weapon_** setting [i.b. PSX Doom]
-- **_Alternative Arms Display_** setting, to show the Chainsaw or SSG's availability on the Arms widget in place of the trivial Pistol
 - **Event Timers:**
   - _Teleport Timer_ [i.b. Crispy Doom];
   - _Key-Pickup Timer_ [same as above].
@@ -374,6 +372,11 @@ Copyright:
  © apolloaiello;  
  © TobiasKosmos.  
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+
+Files: `base/all-all/sbardef.lmp`  
+Copyright:  
+ © 2024 Ethan Watson.  
+License: [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
 Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
 Copyright: © 2018 Alex Mayfield.  

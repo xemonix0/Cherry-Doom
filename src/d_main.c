@@ -43,9 +43,7 @@
 #include "f_finale.h"
 #include "f_wipe.h"
 #include "g_game.h"
-#include "hu_stuff.h"
 #include "i_endoom.h"
-#include "i_gamepad.h"
 #include "i_glob.h"
 #include "i_input.h"
 #include "i_printf.h"
@@ -78,6 +76,7 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "st_stuff.h"
+#include "st_widgets.h"
 #include "statdump.h"
 #include "u_mapinfo.h"
 #include "v_fmt.h"
@@ -266,16 +265,14 @@ void D_Display (void)
 {
   static boolean viewactivestate = false;
   static boolean menuactivestate = false;
-  static boolean inhelpscreensstate = false;
-  static boolean fullscreen = false;
   static gamestate_t oldgamestate = GS_NONE;
   static int borderdrawcount;
   int wipestart;
-  boolean done, wipe, redrawsbar;
+  boolean done, wipe;
 
   if (demobar && PLAYBACK_SKIP)
   {
-    if (HU_DemoProgressBar(false))
+    if (ST_DemoProgressBar(false))
     {
       I_FinishUpdate();
       return;
@@ -284,11 +281,6 @@ void D_Display (void)
 
   if (nodrawers)                    // for comparative timing / profiling
     return;
-
-  // [Nugget] Brought over from `ST_Drawer()`:
-  // [crispy] distinguish classic status bar with background and player face from Crispy HUD
-  st_crispyhud = (hud_type == HUD_TYPE_CRISPY) && hud_displayed && automap_off
-                 && hud_active > 0; // [Nugget] NUGHUD
 
   if (uncapped)
   {
@@ -301,8 +293,6 @@ void D_Display (void)
       I_StartDisplay();
     }
   }
-
-  redrawsbar = false;
 
   wipe = false;
 
@@ -332,7 +322,7 @@ void D_Display (void)
     }
 
   if (gamestate == GS_LEVEL && gametic)
-    HU_Erase();
+    ST_Erase();
 
   switch (gamestate)                // do buffered drawing
     {
@@ -340,12 +330,6 @@ void D_Display (void)
       if (!gametic)
         break;
       // [Nugget] Removed automap code block
-      if (wipe || (scaledviewheight != 200 && fullscreen) // killough 11/98
-          || (inhelpscreensstate && !inhelpscreens))
-        redrawsbar = true;              // just put away the help screen
-      // [Nugget] Moved `ST_Drawer()` call below,
-      // to ensure it is called *after* `AM_Drawer()`
-      fullscreen = scaledviewheight == 200;               // killough 11/98
       break;
     case GS_INTERMISSION:
       WI_Drawer();
@@ -361,12 +345,12 @@ void D_Display (void)
     }
 
   // draw the view directly
-  // [Nugget] Removed `&& !automapactive` condition
+  // [Nugget] Removed `&& automap_off` condition
   if (gamestate == GS_LEVEL && gametic)
-    R_RenderPlayerView (&players[displayplayer]);
-
-  // [Nugget] Moved `HU_Drawer()` call below,
-  // to ensure it is called *after* `AM_Drawer()` and `ST_Drawer()`
+    {
+      R_RenderPlayerView(&players[displayplayer]);
+      // [Nugget] Removed `ST_Drawer()` call
+    }
 
   // clean up border stuff
   if (gamestate != oldgamestate && gamestate != GS_LEVEL)
@@ -386,37 +370,28 @@ void D_Display (void)
         borderdrawcount = 3;
       if (borderdrawcount)
         {
-          R_DrawViewBorder ();    // erase old menu stuff
-          HU_Drawer ();
+          R_DrawViewBorder();    // erase old menu stuff
+          // [Nugget] Removed `ST_Drawer()` call
           borderdrawcount--;
         }
     }
 
   menuactivestate = menuactive;
   viewactivestate = viewactive;
-  inhelpscreensstate = inhelpscreens;
   oldgamestate = wipegamestate = gamestate;
 
-  // [Nugget] Removed '&& automapoverlay' condition
-  if (gamestate == GS_LEVEL && automapactive)
+  // [Nugget] Centralized drawer calls
+  if (gamestate == GS_LEVEL)
+  {
+    if (automapactive)
     {
       AM_Drawer();
-      // [Nugget] Removed `HU_Drawer()` call, since we
-      // now call it right after this code block
 
-      // [crispy] force redraw of status bar and border
-      viewactivestate = false;
-      inhelpscreensstate = true;
+      // [crispy] force redraw of border
+      if (automapoverlay) { viewactivestate = false; }
     }
 
-  // [Nugget] Moved here, so as to be run *after* `AM_Drawer()`
-  if (gamestate == GS_LEVEL && gametic)
-  {
-    ST_Drawer(scaledviewheight == 200, redrawsbar);
-
-    // Moved here too, so as to be run
-    // *after* `AM_Drawer()` and `ST_Drawer()`
-    HU_Drawer();
+    if (gametic) { ST_Drawer(); }
   }
 
   // draw pause pic
@@ -428,7 +403,7 @@ void D_Display (void)
 
       x += (scaledviewwidth - SHORT(patch->width)) / 2 - video.deltaw;
 
-      if (!automapactive)
+      if (automapactive != AM_FULL)
         y += scaledviewy;
 
       V_DrawPatch(x, y, patch);
@@ -439,7 +414,7 @@ void D_Display (void)
   NetUpdate();         // send out any new accumulation
 
   if (demobar && demoplayback)
-    HU_DemoProgressBar(true);
+    ST_DemoProgressBar(true);
 
   // normal update
   if (!wipe)
@@ -883,7 +858,7 @@ static boolean FileContainsMaps(const char *filename)
     {
         for (int m = 1; m < 35; ++m)
         {
-            if (CheckMapLump(MAPNAME(1, m), filename))
+            if (CheckMapLump(MapName(1, m), filename))
             {
                 return true;
             }
@@ -895,7 +870,7 @@ static boolean FileContainsMaps(const char *filename)
         {
             for (int m = 1; m < 10; ++m)
             {
-                if (CheckMapLump(MAPNAME(e, m), filename))
+                if (CheckMapLump(MapName(e, m), filename))
                 {
                     return true;
                 }
@@ -2563,12 +2538,10 @@ void D_DoomMain(void)
   S_Init(snd_SfxVolume /* *8 */, snd_MusicVolume /* *8*/ );
 
   I_Printf(VB_INFO, "HU_Init: Setting up heads up display.");
-  HU_Init();
-  MN_SetHUFontKerning();
 
   I_Printf(VB_INFO, "ST_Init: Init status bar.");
   ST_Init();
-  ST_Warnings();
+  MN_SetHUFontKerning();
 
   // andrewj: voxel support
   I_Printf(VB_INFO, "VX_Init: ");

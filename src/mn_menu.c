@@ -36,8 +36,6 @@
 #include "doomtype.h"
 #include "dstrings.h"
 #include "g_game.h"
-#include "hu_lib.h"
-#include "hu_stuff.h"
 #include "i_input.h"
 #include "i_printf.h"
 #include "i_system.h"
@@ -57,6 +55,9 @@
 #include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "st_sbardef.h"
+#include "st_stuff.h"
+#include "st_widgets.h"
 #include "u_mapinfo.h"
 #include "v_fmt.h"
 #include "v_video.h"
@@ -82,10 +83,6 @@
 // int     detailLevel;    obsolete -- killough
 int screenblocks; // has default
 
-int saved_screenblocks;
-
-static int screenSize; // temp for screenblocks (0-9)
-
 static int quickSaveSlot; // -1 = no quicksave slot picked!
 
 static int messageToPrint; // 1 = message to be printed
@@ -108,8 +105,6 @@ static int saveCharIndex; // which char we're editing
 // old save description before edit
 static char saveOldString[SAVESTRINGSIZE];
 
-boolean inhelpscreens; // indicates we are in or just left a help screen
-
 boolean menuactive; // The menus are up
 
 static boolean options_active;
@@ -120,7 +115,6 @@ int bigfont_priority = -1;
 
 // [Nugget]
 boolean menu_background_all;
-boolean no_menu_tint;
 
 #define SKULLXOFF        -32
 #define LINEHEIGHT       16
@@ -345,9 +339,6 @@ static menu_t MainDef = {
 
 static void M_DrawMainMenu(void)
 {
-    // [crispy] force status bar refresh
-    inhelpscreens = true;
-
     options_active = false;
 
     V_DrawPatch(94, 2, V_CachePatchName("M_DOOM", PU_CACHE));
@@ -453,8 +444,6 @@ static void M_FinishHelp(int choice) // killough 10/98
 
 static void M_DrawReadThis1(void)
 {
-    inhelpscreens = true;
-
     V_DrawPatchFullScreen(V_CachePatchName("HELP2", PU_CACHE));
 }
 
@@ -465,8 +454,6 @@ static void M_DrawReadThis1(void)
 
 static void M_DrawReadThis2(void)
 {
-    inhelpscreens = true;
-
     // We only ever draw the second page if this is
     // gameversion == exe_doom_1_9 and gamemode == registered
 
@@ -475,8 +462,6 @@ static void M_DrawReadThis2(void)
 
 static void M_DrawReadThisCommercial(void)
 {
-    inhelpscreens = true;
-
     V_DrawPatchFullScreen(V_CachePatchName("HELP", PU_CACHE));
 }
 
@@ -594,9 +579,6 @@ void M_AddEpisode(const char *map, const char *gfx, const char *txt,
 
 static void M_DrawEpisode(void)
 {
-    // [crispy] force status bar refresh
-    inhelpscreens = true;
-
     MN_DrawTitle(54, EpiDef.y - 25, "M_EPISOD", "Which Episode?");
 }
 
@@ -736,9 +718,6 @@ static menu_t NewDef = {
 
 static void M_DrawNewGame(void)
 {
-    // [crispy] force status bar refresh
-    inhelpscreens = true;
-
     MN_DrawTitle(96, 14, "M_NEWG", "NEW GAME");
     MN_DrawTitle(54, 38, "M_SKILL", "Choose Skill Level:");
 }
@@ -1016,9 +995,6 @@ static void M_DrawSaveLoadBottomLine(void)
     char pagestr[16];
     const int x = currentMenu->x;
     const int y = currentMenu->y + LINEHEIGHT * (currentMenu->numitems - 1);
-
-    // [crispy] force status bar refresh
-    inhelpscreens = true;
 
     int index = (menu_input == mouse_mode ? highlight_item : itemOn);
 
@@ -1425,7 +1401,7 @@ void MN_SetQuickSaveSlot(int slot)
 // [FG] generate a default save slot name when the user saves to an empty slot
 static void SetDefaultSaveName(char *name, const char *append)
 {
-    char *maplump = MAPNAME(gameepisode, gamemap);
+    char *maplump = MapName(gameepisode, gamemap);
     int maplumpnum = W_CheckNumForName(maplump);
 
     if (gamemapinfo && U_CheckField(gamemapinfo->label))
@@ -1910,8 +1886,6 @@ static void M_ChangeMessages(int choice)
     {
         displaymsg("%s", s_MSGON); // Ty 03/27/98 - externalized
     }
-
-    message_dontfuckwithme = true;
 }
 
 /////////////////////////////
@@ -1923,33 +1897,21 @@ static void M_ChangeMessages(int choice)
 // hud_displayed is toggled by + or = in fullscreen
 // hud_displayed is cleared by -
 
-void MN_SizeDisplay(int choice)
+static void M_SizeDisplay(int choice)
 {
     switch (choice)
     {
         case 0:
-            if (screenSize > 0)
-            {
-                screenblocks--;
-                screenSize--;
-                hud_displayed = 0;
-            }
+            screenblocks--;
             break;
         case 1:
-            if (screenSize < 8)
-            {
-                screenblocks++;
-                screenSize++;
-            }
-            else
-            {
-                hud_displayed = !hud_displayed;
-                HU_disable_all_widgets();
-            }
+            screenblocks++;
+            break;
+        default:
             break;
     }
+    screenblocks = BETWEEN(3, 12, screenblocks);
     R_SetViewSize(screenblocks /*, detailLevel obsolete -- killough */);
-    saved_screenblocks = screenblocks;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2048,8 +2010,6 @@ static void M_ExtHelp(int choice)
 static void M_DrawExtHelp(void)
 {
     char namebfr[] = "HELPnn"; // [FG] char array!
-
-    inhelpscreens = true; // killough 5/1/98
     namebfr[4] = extended_help_index / 10 + 0x30;
     namebfr[5] = extended_help_index % 10 + 0x30;
     V_DrawPatchFullScreen(V_CachePatchName(namebfr, PU_CACHE));
@@ -2073,7 +2033,6 @@ static void M_DrawHelp(void)
         helplump = W_CheckNumForName("HELP1");
     }
 
-    inhelpscreens = true; // killough 10/98
     V_DrawPatchFullScreen(V_CachePatchNum(helplump, PU_CACHE));
 }
 
@@ -2324,9 +2283,6 @@ static void M_Setup(int choice)
 
 void MN_ClearMenus(void)
 {
-    // force status bar refresh
-    inhelpscreens = true;
-
     menuactive = 0;
     options_active = false;
     print_warning_about_changes = 0; // killough 8/15/98
@@ -2413,8 +2369,6 @@ void M_Init(void)
     highlight_item = 0;
     whichSkull = 0;
     skullAnimCounter = 10;
-    saved_screenblocks = screenblocks;
-    screenSize = screenblocks - 3;
     messageToPrint = 0;
     messageString = NULL;
     messageLastMenuActive = menuactive;
@@ -2695,7 +2649,7 @@ boolean M_ShortcutResponder(const event_t *ev)
         {
             return false;
         }
-        MN_SizeDisplay(0);
+        M_SizeDisplay(0);
         M_StartSoundOptional(sfx_mnusli, sfx_stnmov); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
@@ -2706,7 +2660,7 @@ boolean M_ShortcutResponder(const event_t *ev)
         {                               // key_hud==key_zoomin
             return false;
         }
-        MN_SizeDisplay(1);
+        M_SizeDisplay(1);
         M_StartSoundOptional(sfx_mnusli, sfx_stnmov); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
@@ -2718,28 +2672,20 @@ boolean M_ShortcutResponder(const event_t *ev)
             return false; // HUD mode control
         }
 
-        if (screenSize < 8) // function on default F5
+        if (screenblocks < 10)
         {
-            while (screenSize < 8 || !hud_displayed) // make hud visible
-            {
-                MN_SizeDisplay(1); // when configuring it
-            }
+            screenblocks = 10;
         }
         else
         {
-            const boolean old_active = !!hud_active; // [Nugget]
-
-            hud_displayed = 1;                 // jff 3/3/98 turn hud on
-            hud_active = (hud_active + 1) % 3; // cycle hud_active
-            HU_disable_all_widgets();
-
-            // [Nugget] NUGHUD
-            if (hud_type == HUD_TYPE_CRISPY && old_active != !!hud_active
-                && nughud.viewoffset)
+            ++screenblocks;
+            if (screenblocks > 12)
             {
-              R_SetViewSize(screenblocks);
+                screenblocks = 10;
             }
         }
+
+        R_SetViewSize(screenblocks);
         return true;
     }
 
@@ -3659,13 +3605,11 @@ void M_Drawer(void)
 
     if (MN_MenuIsShaded())
     {
-        inhelpscreens = true;
         V_ShadeScreen(menu_backdrop_darkening); // [Nugget] Parameterized
     }
     // [Nugget]
     else if (menu_background_all && menu_backdrop == MENU_BG_TEXTURE)
     {
-        inhelpscreens = true;
         V_DrawBackground("FLOOR4_6");
     }
 

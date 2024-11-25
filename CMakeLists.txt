@@ -42,6 +42,7 @@ set(PROJECT_COPYRIGHT "Copyright (C) 1993-2024")
 set(PROJECT_LICENSE "GNU General Public License, version 2")
 set(PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
 set(PROJECT_SHORTNAME "nugget-doom")
+set(BASE_PK3 "nugget-doom.pk3")
 set(NUGGETDOOM_ICON "nugget-doom.ico")
 set(SETUP_ICON "setup.ico")
 set(PROJECT_VERSION_RC "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0") # ${PROJECT_VERSION_TWEAK}
@@ -197,7 +198,10 @@ set(CPACK_SOURCE_IGNORE_FILES "/.git/;/build;/.vs/;/out/;CMakeSettings.json")
 set(CPACK_STRIP_FILES TRUE)
 include(CPack)
 
+set(BASE_PK3_PATH "${CMAKE_BINARY_DIR}/src/${BASE_PK3}")
+
 # Where to find other CMakeLists.txt files.
+add_subdirectory(base)
 add_subdirectory(data)
 add_subdirectory(opl)
 add_subdirectory(textscreen)

@@ -863,7 +863,7 @@ static void R_SetupFreelook(void)
     dy = 0;
   }
 
-  if (STRICTMODE(st_crispyhud) && gamestate == GS_LEVEL)
+  if (STRICTMODE(ST_GetNughudOn()) && gamestate == GS_LEVEL)
   {
     dy += (nughud.viewoffset * viewheight / SCREENHEIGHT) << FRACBITS;
   }
@@ -892,7 +892,7 @@ int     setblocks;
 void R_SetViewSize(int blocks)
 {
   setsizeneeded = true;
-  setblocks = blocks;
+  setblocks = MIN(blocks, 11);
 }
 
 //
@@ -1034,7 +1034,7 @@ void R_ExecuteSetViewSize (void)
   // [crispy] forcefully initialize the status bar backing screen
   // [Nugget] Unless the alt. intermission background is enabled
   if (!WI_UsingAltInterpic())
-    ST_refreshBackground();
+    ST_refreshBackground(); // [Nugget] NUGHUD
 
   // [Nugget]
   if (!keep_pspr_interp)
@@ -1800,7 +1800,7 @@ void R_BindRenderVariables(void)
   // [Nugget] (CFG-only)
   BIND_BOOL(no_killough_face, false, "Disable the Killough-face easter egg");
 
-  BIND_NUM(screenblocks, 10, 3, 11, "Size of game-world screen");
+  BIND_NUM(screenblocks, 10, 3, 12, "Size of game-world screen");
 
   M_BindBool("translucency", &translucency, NULL, true, ss_gen, wad_yes,
              "Translucency for some things");

@@ -28,9 +28,7 @@ set(NUGGETDOOM_SOURCES
     hu_command.c           hu_command.h
     hu_coordinates.c       hu_coordinates.h
     hu_crosshair.c         hu_crosshair.h
-    hu_lib.c               hu_lib.h
     hu_obituary.c          hu_obituary.h
-    hu_stuff.c             hu_stuff.h
     i_3dsound.c
     i_endoom.c             i_endoom.h
     i_flickstick.c         i_flickstick.h
@@ -68,7 +66,7 @@ set(NUGGETDOOM_SOURCES
     mn_menu.c              mn_menu.h
     mn_setup.c             mn_internal.h
     m_misc.c               m_misc.h
-    m_nughud.c             m_nughud.h
+    m_nughud.c             m_nughud.h # [Nugget]
     m_random.c             m_random.h
     mn_snapshot.c          mn_snapshot.h
                            m_swap.h
@@ -130,8 +128,9 @@ set(NUGGETDOOM_SOURCES
     s_musinfo.c            s_musinfo.h
     s_sound.c              s_sound.h
     sounds.c               sounds.h
-    st_lib.c               st_lib.h
+    st_sbardef.c           st_sbardef.h
     st_stuff.c             st_stuff.h
+    st_widgets.c           st_widgets.h
     statdump.c             statdump.h
     tables.c               tables.h
     u_mapinfo.c            u_mapinfo.h
@@ -283,10 +282,14 @@ if(MSVC)
     target_link_options(nugget-doom-setup PRIVATE "/MANIFEST:NO")
 endif()
 
-add_custom_command(TARGET nugget-doom POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E tar cf
-    "$<TARGET_FILE_DIR:nugget-doom>/nugget-doom.pk3" --format=zip .
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/base")
+add_dependencies(nugget-doom nugget-doom-base)
+
+if(MSVC)
+    add_custom_command(TARGET nugget-doom POST_BUILD
+        DEPENDS "${BASE_PK3_PATH}"
+        COMMAND ${CMAKE_COMMAND} -E copy
+        "${BASE_PK3_PATH}" "$<TARGET_FILE_DIR:nugget-doom>")
+endif()
 
 # Install
 #
@@ -314,11 +317,9 @@ if(WIN32)
     else()
         install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION .)
     endif()
-    install(FILES "$<TARGET_FILE_DIR:nugget-doom-com>/nugget-doom.com" DESTINATION .)
-    install(FILES "$<TARGET_FILE_DIR:nugget-doom-exe>/nugget-doom.exe" DESTINATION .)
-    install(FILES "$<TARGET_FILE_DIR:nugget-doom>/nugget-doom.pk3" DESTINATION .)
+    install(FILES "$<TARGET_FILE_DIR:nugget-doom-com>/nugget-doom.com"
+                  "$<TARGET_FILE_DIR:nugget-doom-exe>/nugget-doom.exe"
+            DESTINATION .)
 else()
     install(TARGETS nugget-doom nugget-doom-setup RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(FILES "$<TARGET_FILE_DIR:nugget-doom>/nugget-doom.pk3"
-            DESTINATION "share/${PROJECT_SHORTNAME}")
 endif()
