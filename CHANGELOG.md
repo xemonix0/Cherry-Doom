@@ -6,6 +6,7 @@
 ## Changes
 
 - **Smoother FOV effects**
+- **Allowed orbiting around freecam mobj**
 
 ## Bug Fixes
 

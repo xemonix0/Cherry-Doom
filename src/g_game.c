@@ -3880,10 +3880,11 @@ void G_Ticker(void)
         lock = true;
       }
       else {
+        if (!R_GetFreecamMobj() || R_GetChasecamOn())
+        { angle = cmd->angleturn << 16; }
+
         if (!R_GetFreecamMobj())
         {
-          angle = cmd->angleturn << 16;
-
           static fixed_t basespeed = 8*FRACUNIT;
           const int speedchange = INPUT(input_nextweapon) - INPUT(input_prevweapon);
 

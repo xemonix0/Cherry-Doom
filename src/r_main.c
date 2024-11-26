@@ -396,7 +396,7 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
         R_UpdateFreecamMobj(linetarget);
         freecam.interp = false;
         freecam.mobj->interp = -1;
-        freecam.pitch = 0;
+        freecam.angle = freecam.pitch = 0;
       }
     }
   }
@@ -412,7 +412,11 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
     freecam.x     = freecam.mobj->x;
     freecam.y     = freecam.mobj->y;
     freecam.z     = freecam.mobj->z + (freecam.mobj->height * 13/16);
-    freecam.angle = freecam.mobj->angle;
+
+    if (chasecam_on)
+    { freecam.angle += angle; }
+    else
+    { freecam.angle = 0; }
   }
   else {
     freecam.x     += x;
@@ -1036,8 +1040,8 @@ static inline boolean CheckLocalView(const player_t *player)
     raw_input &&
     // Don't use localview if the player is spying.
     (player == &players[consoleplayer]
-     // [Nugget] Freecam: or locked onto a mobj, or not controlling the camera
-     || (freecam_on && !(freecam.mobj || freecam_mode != FREECAM_CAM))) &&
+     // [Nugget] Freecam: or locked onto a mobj in first person, or not controlling the camera
+     || (freecam_on && (!freecam.mobj || chasecam_on) && freecam_mode == FREECAM_CAM)) &&
     // Don't use localview if the player is dead.
     player->playerstate != PST_DEAD &&
     // Don't use localview if the player just teleported.
@@ -1063,6 +1067,10 @@ void R_SetupFrame (player_t *player)
   static angle_t old_interangle, target_interangle;
   static fixed_t chasecamheight;
 
+  chasecam_on = gamestate == GS_LEVEL
+                && STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
+                && !(freecam_on && !freecam.mobj);
+
   // [Nugget] Freecam
   if (freecam_on && gamestate == GS_LEVEL)
   {
@@ -1072,6 +1080,15 @@ void R_SetupFrame (player_t *player)
     if (freecam.mobj)
     {
       dummymobj = *freecam.mobj;
+
+      if (chasecam_on)
+      {
+        if (uncapped && leveltime > oldleveltime)
+        { dummymobj.angle = LerpAngle(dummymobj.oldangle, dummymobj.angle); }
+
+        dummymobj.oldangle += freecam.oangle;
+        dummymobj.angle    += freecam.angle;
+      }
     }
     else {
       memset(&dummymobj, 0, sizeof(mobj_t));
@@ -1224,10 +1241,6 @@ void R_SetupFrame (player_t *player)
   }
 
   // Chasecam ----------------------------------------------------------------
-
-  chasecam_on = gamestate == GS_LEVEL
-                && STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
-                && !(freecam_on && !freecam.mobj);
 
   if (chasecam_on)
   {
