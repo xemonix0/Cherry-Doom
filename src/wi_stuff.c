@@ -2311,6 +2311,7 @@ void WI_Ticker(void)
       else
         if (netgame) WI_updateNetgameStats();
         else WI_updateStats();
+      WI_UpdateWidgets();
       break;
 
     case ShowNextLoc:

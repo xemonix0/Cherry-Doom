@@ -1893,7 +1893,7 @@ static setup_menu_t weap_settings3[] = {
     {"9Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_9"}},
     MI_GAP,
     {"Same Key Toggles Weapons", S_ONOFF | S_BOOM, M_X, M_SPC, {"doom_weapon_toggles"}},
-    {"Cycle Through All Weapons", S_ONOFF | S_BOOM, M_X, M_SPC, {"full_weapon_cycle"}},
+    {"Vanilla Weapon Cycle", S_ONOFF | S_BOOM, M_X, M_SPC, {"doom_weapon_cycle"}},
     MI_GAP,
     // killough 8/8/98
     {"Pre-Beta BFG", S_ONOFF | S_STRICT, M_X, M_SPC, {"classic_bfg"}},
@@ -2054,6 +2054,10 @@ static setup_menu_t stat_settings1[] = {
 
     // [Nugget] Disallowed in Strict Mode
     {"Animated Health/Armor Count", S_ONOFF | S_STRICT, H_X, M_SPC, {"hud_animated_counts"}},
+
+    MI_GAP,
+
+    {"Weapon Carousel", S_ONOFF, H_X, M_SPC, {"weapon_carousel"}},
 
     MI_RESET,
 

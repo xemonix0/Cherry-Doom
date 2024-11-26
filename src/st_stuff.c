@@ -49,6 +49,7 @@
 #include "r_main.h"
 #include "r_state.h"
 #include "s_sound.h"
+#include "st_carousel.h"
 #include "st_stuff.h"
 #include "st_sbardef.h"
 #include "st_widgets.h"
@@ -220,6 +221,8 @@ static int armor_green;   // armor amount above is blue, below is green
 
 static boolean hud_armor_type; // color of armor depends on type
 
+static boolean weapon_carousel;
+
 // used for evil grin
 static boolean  oldweaponsowned[NUMWEAPONS];
 
@@ -229,6 +232,8 @@ int st_keyorskull[3];
 static sbardef_t *sbardef;
 
 static statusbar_t *statusbar;
+
+static int st_cmd_x, st_cmd_y;
 
 typedef enum
 {
@@ -891,7 +896,6 @@ static void UpdateNumber(sbarelem_t *elem, player_t *player)
         number->xoffset -= totalwidth;
     }
 
-    number->font = font;
     number->value = value;
     number->numvalues = numvalues;
 }
@@ -952,8 +956,6 @@ static void UpdateLines(sbarelem_t *elem)
         }
         line->totalwidth = totalwidth;
     }
-
-    widget->font = font;
 }
 
 static void UpdateAnimation(sbarelem_t *elem)
@@ -1109,6 +1111,13 @@ static void UpdateElem(sbarelem_t *elem, player_t *player)
             UpdateLines(elem);
             break;
 
+        case sbe_carousel:
+            if (weapon_carousel)
+            {
+                ST_UpdateCarousel(player);
+            }
+            break;
+
         default:
             break;
     }
@@ -1130,6 +1139,9 @@ static void UpdateStatusBar(player_t *player)
     }
 
     if (st_nughud) { barindex = 0; } // [Nugget] NUGHUD
+
+    st_time_elem = NULL;
+    st_cmd_elem = NULL;
 
     statusbar = &sbardef->statusbars[barindex];
 
@@ -1568,7 +1580,19 @@ static void DrawElem(int x, int y, sbarelem_t *elem, player_t *player)
             break;
 
         case sbe_widget:
+            if (elem == st_cmd_elem)
+            {
+                st_cmd_x = x;
+                st_cmd_y = y;
+            }
             DrawLines(x, y, elem);
+            break;
+
+        case sbe_carousel:
+            if (weapon_carousel)
+            {
+                ST_DrawCarousel(x, y, elem);
+            }
             break;
 
         default:
@@ -2062,6 +2086,7 @@ void ST_Start(void)
     }
 
     ResetStatusBar();
+    ST_ResetCarousel();
 
     HU_StartCrosshair();
 }
@@ -2228,17 +2253,30 @@ void ST_ResetPalette(void)
 }
 
 // [FG] draw Time widget on intermission screen
+
+void WI_UpdateWidgets(void)
+{
+    if (st_cmd_elem && STRICTMODE(hud_command_history))
+    {
+        ST_UpdateWidget(st_cmd_elem, &players[displayplayer]);
+        UpdateLines(st_cmd_elem);
+    }
+}
+
 void WI_DrawWidgets(void)
 {
-    if (!st_time_elem || !(hud_level_time & HUD_WIDGET_HUD))
+    if (st_time_elem && hud_level_time & HUD_WIDGET_HUD)
     {
-        return;
+        sbarelem_t time = *st_time_elem;
+        time.alignment = sbe_wide_left;
+        // leveltime is already added to totalleveltimes before WI_Start()
+        DrawLines(0, 0, &time);
     }
 
-    sbarelem_t time = *st_time_elem;
-    time.alignment = sbe_wide_left;
-    // leveltime is already added to totalleveltimes before WI_Start()
-    DrawLines(0, 0, &time);
+    if (st_cmd_elem && STRICTMODE(hud_command_history))
+    {
+        DrawLines(st_cmd_x, st_cmd_y, st_cmd_elem);
+    }
 }
 
 // [Nugget] /=================================================================
@@ -3629,6 +3667,22 @@ end_amnum:
 
   array_push(out->statusbars, sb);
 
+  // Carousel ----------------------------------------------------------------
+
+  {
+    sbarelem_t elem = {0};
+    elem.cr = elem.crboom = CR_NONE;
+
+    elem.type = sbe_carousel;
+
+    elem.x_pos = 0;
+    elem.y_pos = 18;
+
+    array_push(sb.children, elem);
+  }
+
+  // -------------------------------------------------------------------------
+
   return out;
 }
 
@@ -3714,6 +3768,9 @@ void ST_BindSTSVariables(void)
   M_BindNum("hud_crosshair_target_color", &hud_crosshair_target_color, NULL,
             CR_YELLOW, CR_BRICK, CR_NONE, ss_stat, wad_no,
             "Crosshair color when aiming at target");
+
+  M_BindBool("weapon_carousel", &weapon_carousel, NULL,
+             true, ss_weap, wad_no, "Show weapon carousel");
 }
 
 //----------------------------------------------------------------------------

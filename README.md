@@ -390,6 +390,10 @@ Files: `data/nugget-doom.ico, data/nugget-doom.png, src/icon.c, data/setup.ico, 
 Copyright: © 2022 Korp.  
 License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
+Files: `base/all-all/sm*.png`  
+Copyright: © 2024 Julia Nechaevskaya.  
+License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
+
 Files: `opl/*`  
 Copyright:  
  © 2005-2014 Simon Howard;  

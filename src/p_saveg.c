@@ -1104,6 +1104,8 @@ static void saveg_read_player_t(player_t *str)
         str->lastweapon = wp_nochange;
         return;
     }
+
+    str->nextweapon = str->readyweapon;
 }
 
 static void saveg_write_player_t(player_t *str)

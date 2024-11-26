@@ -856,13 +856,18 @@ static void ForceDoomFont(sbe_widget_t *widget)
 
 static void UpdateCoord(sbe_widget_t *widget, player_t *player)
 {
+    ST_ClearLines(widget);
+
+    if (strictmode)
+    {
+        return;
+    }
+
     if (hud_player_coords == HUD_WIDGET_ADVANCED)
     {
         HU_BuildCoordinatesEx(widget, player->mo);
         return;
     }
-
-    ST_ClearLines(widget);
 
     if (!WidgetEnabled(hud_player_coords))
     {
@@ -1244,6 +1249,13 @@ static void UpdateSpeed(sbe_widget_t *widget, player_t *player)
 
 static void UpdateCmd(sbe_widget_t *widget)
 {
+    ST_ClearLines(widget);
+
+    if (!STRICTMODE(hud_command_history))
+    {
+        return;
+    }
+
     HU_BuildCommandHistory(widget);
 }
 
@@ -1413,7 +1425,7 @@ void ST_ResetMessageColors(void)
     }
 }
 
-sbarelem_t *st_time_elem = NULL;
+sbarelem_t *st_time_elem = NULL, *st_cmd_elem = NULL;
 
 void ST_UpdateWidget(sbarelem_t *elem, player_t *player)
 {
@@ -1454,6 +1466,7 @@ void ST_UpdateWidget(sbarelem_t *elem, player_t *player)
             UpdateRate(widget, player);
             break;
         case sbw_cmd:
+            st_cmd_elem = elem;
             UpdateCmd(widget);
             break;
         case sbw_speed:

@@ -102,6 +102,7 @@ typedef enum
 
     // Woof!
     sbe_widget,
+    sbe_carousel,
 
     sbe_max,
 } sbarelementtype_t;
