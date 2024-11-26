@@ -17,6 +17,7 @@
   - Revised the descriptions of many of Nugget's new CVARs
 - **Messages in the message list now have individual durations**
 - **Smoother FOV effects**
+- **Allowed orbiting around freecam mobj**
 - **Made _Screen Wipe Speed Percentage_ setting affect the _Fizzle_ fade**
 - **Removed _Physical [Weapon] Recoil_ menu item**
 
