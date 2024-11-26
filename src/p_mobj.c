@@ -1034,6 +1034,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   mobj->alttics  = -1; 
 
   mobj->isvisual = false;
+  mobj->tranmap = NULL;
 
   // [Nugget] ---------------------------------------------------------------/
 
@@ -1896,6 +1897,8 @@ void P_SetMobjAltState(mobj_t *const mobj, altstatenum_t statenum)
     mobj->alttics = state->tics;
     mobj->altsprite = state->sprite;
     mobj->altframe = state->frame;
+
+    if (statenum == AS_TRAIL2) { mobj->flags |= MF_TRANSLUCENT; }
 
     statenum = state->nextstate;
   } while (!mobj->alttics);

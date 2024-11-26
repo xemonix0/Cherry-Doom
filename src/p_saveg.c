@@ -578,6 +578,8 @@ static void saveg_read_mobj_t(mobj_t *str)
 
       str->isvisual = false;
     }
+
+    str->tranmap = NULL; // [Nugget]
 }
 
 static void saveg_write_mobj_t(mobj_t *str)

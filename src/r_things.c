@@ -75,8 +75,6 @@ typedef struct {
 fixed_t pspritescale;
 fixed_t pspriteiscale;
 
-static boolean drawingpspr = false; // [Nugget]
-
 lighttable_t **spritelights;        // killough 1/25/98 made static
 
 // [Woof!] optimization for drawing huge amount of drawsegs.
@@ -465,7 +463,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
           colfunc = R_DrawTLColumn;
           tranmap = main_tranmap;       // killough 4/11/98
 
-          if (drawingpspr) { tranmap = pspr_tranmap; } // [Nugget] Translucent flashes
+          if (vis->tranmap) { tranmap = vis->tranmap; } // [Nugget]
         }
       else
         colfunc = R_DrawColumn;         // killough 3/14/98, 4/11/98
@@ -731,6 +729,8 @@ static void R_ProjectSprite (mobj_t* thing)
   if (vis->brightmap == nobrightmap)
     vis->brightmap = R_BrightmapForSprite(sprite);
 
+  vis->tranmap = thing->tranmap; // [Nugget]
+
   // [Alaux] Lock crosshair on target
   if (STRICTMODE(hud_crosshair_lockon) && thing == crosshair_target
       // [Nugget]
@@ -892,7 +892,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   // store information in a vissprite
   vis = &avis;
-  vis->mobjflags = (translucent ? MF_TRANSLUCENT : 0); // [Nugget] Translucent flashes
+  vis->mobjflags = translucent ? MF_TRANSLUCENT : 0; // [Nugget] Translucent flashes
   vis->mobjflags2 = 0;
 
   // killough 12/98: fix psprite positioning problem
@@ -939,6 +939,8 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
     vis->colormap[1] = fullcolormap;
   }
   vis->brightmap = R_BrightmapForState(psp->state - states);
+
+  vis->tranmap = translucent ? pspr_tranmap : NULL; // [Nugget] Translucent flashes
 
   // interpolation for weapon bobbing
   if (uncapped)
@@ -1042,17 +1044,13 @@ void R_DrawPlayerSprites(void)
   if (hud_crosshair_on) // [Nugget] Use crosshair toggle
     HU_DrawCrosshair();
 
-  drawingpspr = true; // [Nugget]
-
   // add all active psprites
   for (i=0, psp=viewplayer->psprites;
        // [Nugget]: [crispy] A11Y number of player (first person) sprites to draw
        i < ((strictmode || a11y_weapon_pspr) ? NUMPSPRITES : ps_flash);
        i++,psp++)
     if (psp->state)
-      R_DrawPSprite (psp, i == ps_flash && STRICTMODE(translucent_pspr)); // [Nugget] Translucent flashes
-
-  drawingpspr = false; // [Nugget]
+      R_DrawPSprite (psp, i == ps_flash && STRICTMODE(pspr_translucency_pct != 100)); // [Nugget] Translucent flashes
 }
 
 //

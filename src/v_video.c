@@ -160,12 +160,13 @@ byte invul_gray[256];
 int automap_overlay_darkening;
 int menu_backdrop_darkening;
 
-byte cr_allblack[256];
-byte cr_gray_vc[256];  // `V_Colorize()` only
-byte nightvision[256]; // Night-vision visor
-byte *shadow_tranmap;  // HUD/menu shadows
-byte *pspr_tranmap;    // Translucent flashes
-byte *xhair_tranmap;   // Translucent crosshair
+byte cr_allblack[256],
+     cr_gray_vc[256],  // `V_Colorize()` only
+     nightvision[256], // Night-vision visor
+     *shadow_tranmap,  // HUD/menu shadows
+     *pspr_tranmap,    // Translucent flashes
+     *xhair_tranmap,   // Translucent crosshair
+     *trail_tranmap;
 
 // [Nugget] -----------------------------------------------------------------/
 

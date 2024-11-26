@@ -1924,7 +1924,13 @@ static void NuggetResetWeaponInertia(void)
   P_NuggetResetWeaponInertia();
 }
 
-#define W_X 230
+#define W_X       235
+#define W_X_THRM8 (W_X - (M_THRM_SIZE8 + 3) * M_THRM_STEP)
+
+void WeaponFlashTrans(void)
+{
+    R_InitTranMapEx(&pspr_tranmap, pspr_translucency_pct);
+}
 
 static setup_menu_t weap_settings4[] =
 {
@@ -1938,14 +1944,15 @@ static setup_menu_t weap_settings4[] =
   MI_GAP,
   {"Nugget - Cosmetic", S_SKIP|S_TITLE, W_X, M_SPC},
 
-    {"Bobbing Style",                   S_CHOICE|S_STRICT, W_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
-    {"Weapon Inertia",                  S_ONOFF |S_STRICT, W_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
-    {"Weapon Squat Upon Landing",       S_ONOFF |S_STRICT, W_X, M_SPC, {"weaponsquat"}},
-    {"Translucent Flashes",             S_ONOFF |S_STRICT, W_X, M_SPC, {"translucent_pspr"}},
+    {"Bobbing Style",             S_CHOICE|S_STRICT, W_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
+    {"Weapon Inertia",            S_ONOFF |S_STRICT, W_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
+    {"Weapon Squat Upon Landing", S_ONOFF |S_STRICT, W_X, M_SPC, {"weaponsquat"}},
+    {"Flash Translucency",        S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X_THRM8, M_THRM_SPC, {"pspr_translucency_pct"}, .action = WeaponFlashTrans},
 
   MI_END
 };
 
+#undef W_X_THRM8
 #undef W_X
 
 // [Nugget] -----------------------------------------------------------------/

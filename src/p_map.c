@@ -146,7 +146,8 @@ void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
                                            AS_TRAIL1);
 
     puff->alttics += i / 16;
-    puff->flags |= MF_NOGRAVITY|MF_TRANSLUCENT;
+    puff->flags |= MF_NOGRAVITY;
+    puff->tranmap = trail_tranmap;
   }
 }
 

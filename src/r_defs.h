@@ -387,6 +387,9 @@ typedef struct vissprite_s
 
   // andrewj: voxel support
   int voxel_index;
+
+  // [Nugget]
+  byte *tranmap;
 } vissprite_t;
 
 //

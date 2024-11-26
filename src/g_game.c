@@ -6228,12 +6228,8 @@ void G_BindWeapVariables(void)
   M_BindBool("weaponsquat", &weaponsquat, NULL,
              false, ss_weap, wad_yes, "Squat weapon down on impact");
 
-  M_BindBool("translucent_pspr", &translucent_pspr, NULL,
-             false, ss_weap, wad_yes, "Translucency for weapon-flash sprites");
-
-  // (CFG-only)
-  M_BindNum("translucent_pspr_pct", &translucent_pspr_pct, NULL,
-            75, 0, 100, ss_none, wad_yes,
+  M_BindNum("pspr_translucency_pct", &pspr_translucency_pct, NULL,
+            100, 0, 100, ss_weap, wad_yes,
             "Weapon-flash translucency percent");
 
   // (CFG-only)

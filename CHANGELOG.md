@@ -18,6 +18,7 @@
 - **Messages in the message list now have individual durations**
 - **Smoother FOV effects**
 - **Allowed orbiting around freecam mobj**
+- **Replaced `translucent_pspr(_pct)` with `pspr_translucency_pct`** [2]
 - **Made _Screen Wipe Speed Percentage_ setting affect the _Fizzle_ fade**
 - **Raised maximum _Rewind Depth_ to 3000**
 - **Gave shadow to the _Pause_ graphic when using _HUD/Menu Shadows_**
