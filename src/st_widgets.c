@@ -33,6 +33,7 @@
 #include "m_input.h"
 #include "m_misc.h"
 #include "p_mobj.h"
+#include "p_spec.h"
 #include "r_main.h"
 #include "r_voxel.h"
 #include "s_sound.h"
@@ -1058,6 +1059,58 @@ static void UpdateMonSec(sbe_widget_t *widget)
     ST_AddLine(widget, string);
 }
 
+static void UpdateDM(sbe_widget_t *widget)
+{
+    ST_ClearLines(widget);
+
+    if (!WidgetEnabled(hud_level_stats))
+    {
+        return;
+    }
+
+    ForceDoomFont(widget);
+
+    static char string[120];
+
+    const int cr_blue = (widget->font == stcfnt) ? CR_BLUE2 : CR_BLUE1;
+
+    int offset = 0;
+
+    for (int i = 0; i < MAXPLAYERS; ++i)
+    {
+        int result = 0, others = 0;
+
+        if (!playeringame[i])
+        {
+            continue;
+        }
+
+        for (int p = 0; p < MAXPLAYERS; ++p)
+        {
+            if (!playeringame[p])
+            {
+                continue;
+            }
+
+            if (i != p)
+            {
+                result += players[i].frags[p];
+                others -= players[p].frags[i];
+            }
+            else
+            {
+                result -= players[i].frags[p];
+            }
+        }
+
+        offset += M_snprintf(string + offset, sizeof(string) - offset,
+                             "\x1b%c%d/%d ", (i == displayplayer) ?
+                             '0' + cr_blue : '0' + CR_GRAY, result, others);
+    }
+
+    ST_AddLine(widget, string);
+}
+
 static void UpdateStTime(sbe_widget_t *widget, player_t *player)
 {
     ST_ClearLines(widget);
@@ -1082,7 +1135,14 @@ static void UpdateStTime(sbe_widget_t *widget, player_t *player)
                        '0'+hudcolor_time_scale, time_scale);
     }
 
-    if (totalleveltimes)
+    if (levelTimer == true)
+    {
+        const int time = levelTimeCount / TICRATE;
+
+        offset += M_snprintf(string + offset, sizeof(string) - offset,
+                             BROWN_S "%d:%02d ", time / 60, time % 60);
+    }
+    else if (totalleveltimes)
     {
         const int time = (totalleveltimes + leveltime) / TICRATE;
 
@@ -1375,7 +1435,10 @@ void ST_UpdateWidget(sbarelem_t *elem, player_t *player)
             break;
 
         case sbw_monsec:
-            UpdateMonSec(widget);
+            if (deathmatch)
+                UpdateDM(widget);
+            else
+                UpdateMonSec(widget);
             break;
         case sbw_time:
             st_time_elem = elem;
