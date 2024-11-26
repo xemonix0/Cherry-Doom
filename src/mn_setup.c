@@ -31,7 +31,6 @@
 #include "i_oalsound.h"
 #include "i_rumble.h"
 #include "i_sound.h"
-#include "i_timer.h"
 #include "i_video.h"
 #include "m_argv.h"
 #include "m_array.h"
@@ -52,6 +51,7 @@
 #include "r_sky.h"   // [FG] R_InitSkyMap()
 #include "r_voxel.h"
 #include "s_sound.h"
+#include "s_trakinfo.h"
 #include "st_sbardef.h"
 #include "st_stuff.h"
 #include "sounds.h"
@@ -343,10 +343,9 @@ enum
 
     str_gamma,
     str_sound_module,
+    str_extra_music,
     str_resampler,
     str_equalizer_preset,
-    str_midi_complevel,
-    str_midi_reset_type,
 
     str_mouse_accel,
 
@@ -2867,14 +2866,6 @@ static void SetMidiPlayer(void)
     S_RestartMusic();
 }
 
-static void SetMidiPlayerNative(void)
-{
-    if (I_MidiPlayerType() == midiplayer_native)
-    {
-        SetMidiPlayer();
-    }
-}
-
 static void SetMidiPlayerOpl(void)
 {
     if (I_MidiPlayerType() == midiplayer_opl)
@@ -2891,8 +2882,19 @@ static void SetMidiPlayerFluidSynth(void)
     }
 }
 
+static void RestartMusic(void)
+{
+    S_StopMusic();
+    S_SetMusicVolume(snd_MusicVolume);
+    S_RestartMusic();
+}
+
+static const char *extra_music_strings[] = {
+    "Off", "Remix", "Original"
+};
+
 static void MN_Sfx(void);
-static void MN_Midi(void);
+static void MN_Music(void);
 static void MN_Equalizer(void);
 
 static setup_menu_t gen_settings2[] = {
@@ -2913,6 +2915,9 @@ static setup_menu_t gen_settings2[] = {
 
     MI_GAP,
 
+    {"Extra Soundtrack", S_CHOICE | S_ACTION, CNTR_X, M_SPC, {"extra_music"},
+      .strings_id = str_extra_music, .action = RestartMusic},
+
     // [FG] music backend
     {"MIDI Player", S_CHOICE | S_ACTION | S_WRAP_LINE, CNTR_X, M_SPC * 2,
      {"midi_player_menu"}, .strings_id = str_midi_player,
@@ -2922,7 +2927,7 @@ static setup_menu_t gen_settings2[] = {
 
     {"Sound Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Sfx},
 
-    {"MIDI Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Midi},
+    {"Music Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Music},
 
     {"Equalizer Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Equalizer},
 
@@ -2982,6 +2987,7 @@ static void MN_Sfx(void)
     current_tabs = sfx_tabs;
     SetupMenuSecondary();
 }
+
 void MN_DrawSfx(void)
 {
     DrawBackground("FLOOR4_6");
@@ -2991,29 +2997,18 @@ void MN_DrawSfx(void)
     DrawScreenItems(current_menu);
 }
 
-static const char *midi_complevel_strings[] = {
-    "Vanilla", "Standard", "Full"
-};
+static void UpdateGainItems(void);
 
-static const char *midi_reset_type_strings[] = {
-    "No SysEx", "General MIDI", "Roland GS", "Yamaha XG"
-};
+static void ResetAutoGain(void)
+{
+    RestartMusic();
+    UpdateGainItems();
+}
 
-static setup_menu_t midi_settings1[] = {
+static setup_menu_t music_settings1[] = {
 
-    {"Native MIDI Gain", S_THERMO, CNTR_X, M_THRM_SPC,
-     {"midi_gain"}, .action = UpdateMusicVolume, .append = "dB"},
-
-    {"Native MIDI Reset", S_CHOICE | S_ACTION, CNTR_X, M_SPC,
-     {"midi_reset_type"}, .strings_id = str_midi_reset_type,
-     .action = SetMidiPlayerNative},
-
-    {"Compatibility Level", S_CHOICE | S_ACTION, CNTR_X, M_SPC,
-     {"midi_complevel"}, .strings_id = str_midi_complevel,
-     .action = SetMidiPlayerNative},
-
-    {"SC-55 CTF Emulation", S_ONOFF, CNTR_X, M_SPC, {"midi_ctf"},
-     .action = SetMidiPlayerNative},
+    {"Auto Gain", S_ONOFF, CNTR_X, M_SPC, {"auto_gain"},
+      .action = ResetAutoGain},
 
     MI_GAP,
 
@@ -3042,19 +3037,25 @@ static setup_menu_t midi_settings1[] = {
     MI_END
 };
 
-static setup_menu_t *midi_settings[] = {midi_settings1, NULL};
+static void UpdateGainItems(void)
+{
+    DisableItem(auto_gain, music_settings1, "fl_gain");
+    DisableItem(auto_gain, music_settings1, "opl_gain");
+}
 
-static setup_tab_t midi_tabs[] = {{"MIDI"}, {NULL}};
+static setup_menu_t *music_settings[] = {music_settings1, NULL};
 
-static void MN_Midi(void)
+static setup_tab_t midi_tabs[] = {{"Music"}, {NULL}};
+
+static void MN_Music(void)
 {
     SetItemOn(set_item_on);
     SetPageIndex(current_page);
 
-    MN_SetNextMenuAlt(ss_midi);
-    setup_screen = ss_midi;
-    current_page = GetPageIndex(midi_settings);
-    current_menu = midi_settings[current_page];
+    MN_SetNextMenuAlt(ss_music);
+    setup_screen = ss_music;
+    current_page = GetPageIndex(music_settings);
+    current_menu = music_settings[current_page];
     current_tabs = midi_tabs;
     SetupMenuSecondary();
 }
@@ -3619,7 +3620,7 @@ static void SmoothLight(void)
 static const char *menu_backdrop_strings[] = {"Off", "Dark", "Texture"};
 
 static const char *exit_sequence_strings[] = {
-    "Off", "Sound Only", "PWAD ENDOOM", "On"
+    "Off", "Sound Only", "PWAD ENDOOM", "Full"
 };
 
 static setup_menu_t gen_settings5[] = {
@@ -4132,7 +4133,7 @@ static setup_menu_t **setup_screens[] = {
     gen_settings, // killough 10/98
     comp_settings,
     sfx_settings,
-    midi_settings,
+    music_settings,
     eq_settings,
     padadv_settings,
     gyro_settings,
@@ -4267,7 +4268,7 @@ static void ResetDefaultsSecondary(void)
     if (setup_screen == ss_gen)
     {
         ResetDefaults(ss_sfx);
-        ResetDefaults(ss_midi);
+        ResetDefaults(ss_music);
         ResetDefaults(ss_eq);
         ResetDefaults(ss_padadv);
         ResetDefaults(ss_gyro);
@@ -5524,10 +5525,9 @@ static const char **selectstrings[] = {
     NULL, // str_midi_player
     gamma_strings,
     sound_module_strings,
+    extra_music_strings,
     NULL, // str_resampler
     equalizer_preset_strings,
-    midi_complevel_strings,
-    midi_reset_type_strings,
     NULL, // str_mouse_accel
     gyro_space_strings,
     gyro_action_strings,
@@ -5602,6 +5602,7 @@ void MN_SetupResetMenu(void)
     DisableItem(deh_set_blood_color, enem_settings1, "colored_blood");
     DisableItem(!brightmaps_found || force_brightmaps, gen_settings5,
                 "brightmaps");
+    DisableItem(!trakinfo_found, gen_settings2, "extra_music");
     UpdateInterceptsEmuItem();
     UpdateStatsFormatItem();
     UpdateCrosshairItems();
@@ -5610,6 +5611,7 @@ void MN_SetupResetMenu(void)
     UpdateGyroItems();
     UpdateWeaponSlotItems();
     MN_UpdateEqualizerItems();
+    UpdateGainItems();
 
     // [Nugget] --------------------------------------------------------------
 

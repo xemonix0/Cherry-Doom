@@ -1094,7 +1094,7 @@ static void M_LoadSelect(int choice)
     char *name = NULL; // killough 3/22/98
     int slot = choice;
 
-    if (currentMenu == &LoadAutoSaveDef)
+    if (menuactive && currentMenu == &LoadAutoSaveDef)
     {
         slot--;
     }
@@ -3070,22 +3070,6 @@ boolean M_Responder(event_t *ev)
 
     switch (ev->type)
     {
-        // "close" button pressed on window?
-        case ev_quit:
-            // First click on close button = bring up quit confirm message.
-            // Second click on close button = confirm quit
-            if (menuactive && messageToPrint
-                && messageRoutine == M_QuitResponse)
-            {
-                M_QuitResponse('y');
-            }
-            else
-            {
-                M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
-                M_QuitDOOM(0);
-            }
-            return true;
-
         case ev_joystick_state:
             if (menu_input == pad_mode && repeat != MENU_NULL
                 && joywait < I_GetTime())

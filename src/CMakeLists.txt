@@ -128,6 +128,7 @@ set(NUGGETDOOM_SOURCES
     r_voxel.c              r_voxel.h
     s_musinfo.c            s_musinfo.h
     s_sound.c              s_sound.h
+    s_trakinfo.c           s_trakinfo.h
     sounds.c               sounds.h
     st_sbardef.c           st_sbardef.h
     st_stuff.c             st_stuff.h
@@ -189,13 +190,15 @@ target_link_libraries(nugget-doom PRIVATE
     ${SDL2_LIBRARIES}
     SDL2_net::SDL2_net
     OpenAL::OpenAL
+    libebur128::libebur128
     SndFile::sndfile
+    yyjson::yyjson
     opl
     pffft
     textscreen
     miniz
     spng
-    cjson
+    sha1
     md5)
 
 # Some platforms require standard libraries to be linked against.
