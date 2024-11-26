@@ -1570,39 +1570,41 @@ static setup_menu_t keys_settings6[] = {
 
 static void UpdateFOV(void);
 
+#define NKB_X 145
+
 static setup_menu_t keys_settings7[] =
 {
-  {"Nugget - General", S_SKIP|S_TITLE, KB_X, M_SPC},
+  {"Nugget - General", S_SKIP|S_TITLE, NKB_X, M_SPC},
   
-    {"Jump/Fly Up",        S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_jump},
-    {"Crouch/Fly Down",    S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_crouch},
+    {"Jump/Fly Up",        S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_scrn, input_jump},
+    {"Crouch/Fly Down",    S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_scrn, input_crouch},
     MI_GAP,
-    {"Cycle Chasecam",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_chasecam},
-    {"Toggle Freecam",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_freecam},
+    {"Cycle Chasecam",     S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_scrn, input_chasecam},
+    {"Toggle Freecam",     S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_scrn, input_freecam},
     MI_GAP,
-    {"Toggle Slow Motion", S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_slowmo},
-    {"Toggle Zoom",        S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_zoom},
-    {"Zoom FOV",           S_NUM  |S_STRICT,            KB_X, M_SPC, {"zoom_fov"}, .action = UpdateFOV},
+    {"Toggle Slow Motion", S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_scrn, input_slowmo},
+    {"Toggle Zoom",        S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_scrn, input_zoom},
+    {"Zoom FOV",           S_NUM  |S_STRICT,            NKB_X, M_SPC, {"zoom_fov"}, .action = UpdateFOV},
     MI_GAP,
-    {"Toggle Crosshair",   S_INPUT,                     KB_X, M_SPC, {0}, m_scrn, input_crosshair},
+    {"Toggle Crosshair",   S_INPUT,                     NKB_X, M_SPC, {0}, m_scrn, input_crosshair},
     MI_GAP,
-    {"Rewind",             S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_rewind},
+    {"Rewind",             S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_scrn, input_rewind},
 
   MI_END
 };
 
 static setup_menu_t keys_settings8[] =
 {
-  {"Nugget - Automap", S_SKIP|S_TITLE, KB_X, M_SPC},
+  {"Nugget - Automap", S_SKIP|S_TITLE, NKB_X, M_SPC},
   
-    {"Minimap",            S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_mini},
+    {"Minimap",            S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_map,  input_map_mini},
     MI_GAP,
-    {"Tag Finder",         S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_tagfinder},
+    {"Tag Finder",         S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_map,  input_map_tagfinder},
     MI_GAP,
-    {"Highlight P.O.I.'s", S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_blink},
+    {"Highlight P.O.I.'s", S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_map,  input_map_blink},
     MI_GAP,
-    {"Warp to Pointer",    S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_map,  input_map_teleport},
-    {"Fancy Warping",      S_ONOFF|S_STRICT|S_CRITICAL, KB_X, M_SPC, {"fancy_teleport"}},
+    {"Warp to Pointer",    S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_map,  input_map_teleport},
+    {"Fancy Warping",      S_ONOFF|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {"fancy_teleport"}},
 
   MI_END
 };
@@ -1623,6 +1625,8 @@ static setup_menu_t keys_settings9[] =
 
   MI_END
 };
+
+#undef NKB_X
 
 // [Nugget] -----------------------------------------------------------------/
 
@@ -2234,7 +2238,7 @@ static void UpdateStatsFormatItem(void)
 
 static setup_menu_t stat_settings5[] =
 {
-  {"Nugget - Extended HUD", S_SKIP|S_TITLE, M_X, M_SPC},
+  {"Nugget - HUD", S_SKIP|S_TITLE, M_X, M_SPC},
 
     {"Show Powerup Timers",              S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_power_timers"}, .strings_id = str_show_widgets},
     {"Berserk display when using Fist",  S_ONOFF,             M_X, M_SPC, {"sts_show_berserk"}},
@@ -2251,7 +2255,7 @@ static setup_menu_t stat_settings5[] =
 
 static setup_menu_t stat_settings6[] =
 {
-  {"Nugget - Extended HUD Colors", S_SKIP|S_TITLE, M_X, M_SPC},
+  {"Nugget - HUD Colors", S_SKIP|S_TITLE, M_X, M_SPC},
 
     {"Time Scale (Game Speed %)", S_CRITEM, M_X, M_SPC, {"hudcolor_time_scale"},  .strings_id = str_hudcolor},
     {"Total Level Time",          S_CRITEM, M_X, M_SPC, {"hudcolor_total_time"},  .strings_id = str_hudcolor},
@@ -3903,30 +3907,34 @@ void MN_DrawColor(void)
 
 // Page 9 --------------------------------------------------------------------
 
+#define N2_X (M_X - 16)
+
 setup_menu_t gen_settings9[] = { // [Nugget]
 
-  {"Nugget - Miscellaneous", S_SKIP|S_TITLE, N_X, M_SPC},
+  {"Nugget - Miscellaneous", S_SKIP|S_TITLE, N2_X, M_SPC},
 
-    {"Sound Hearing Distance",  S_CHOICE|S_STRICT,            N_X, M_SPC, {"s_clipping_dist_x2"}, .strings_id = str_s_clipping_dist, .action = SetSoundModule},
-    {"One-Key Quick-Save/Load", S_ONOFF,                      N_X, M_SPC, {"one_key_saveload"}},
-    {"Auto Save Interval (S)",  S_NUM,                        N_X, M_SPC, {"autosave_interval"}, .action = UpdateAutoSaveInterval},
-    {"Rewind Interval (S)",     S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_interval"}, .action = UpdateRewindInterval},
-    {"Rewind Depth",            S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_depth"}, .action = UpdateRewindDepth},
-    {"Rewind Timeout (MS)",     S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_timeout"}, .action = G_EnableRewind},
-    {"Play Internal Demos",     S_CHOICE,                     N_X, M_SPC, {"no_page_ticking"}, .strings_id = str_page_ticking},
-    {"Quick \"Quit Game\"",     S_ONOFF,                      N_X, M_SPC, {"quick_quitgame"}},
+    {"Sound Hearing Distance",  S_CHOICE|S_STRICT,            N2_X, M_SPC, {"s_clipping_dist_x2"}, .strings_id = str_s_clipping_dist, .action = SetSoundModule},
+    {"One-Key Quick-Save/Load", S_ONOFF,                      N2_X, M_SPC, {"one_key_saveload"}},
+    {"Auto Save Interval (S)",  S_NUM,                        N2_X, M_SPC, {"autosave_interval"}, .action = UpdateAutoSaveInterval},
+    {"Rewind Interval (S)",     S_NUM   |S_STRICT|S_CRITICAL, N2_X, M_SPC, {"rewind_interval"}, .action = UpdateRewindInterval},
+    {"Rewind Depth",            S_NUM   |S_STRICT|S_CRITICAL, N2_X, M_SPC, {"rewind_depth"}, .action = UpdateRewindDepth},
+    {"Rewind Timeout (MS)",     S_NUM   |S_STRICT|S_CRITICAL, N2_X, M_SPC, {"rewind_timeout"}, .action = G_EnableRewind},
+    {"Play Internal Demos",     S_CHOICE,                     N2_X, M_SPC, {"no_page_ticking"}, .strings_id = str_page_ticking},
+    {"Quick \"Quit Game\"",     S_ONOFF,                      N2_X, M_SPC, {"quick_quitgame"}},
 
   MI_GAP,
-  {"Nugget - Accessibility", S_SKIP|S_TITLE, N_X, M_SPC},
+  {"Nugget - Accessibility", S_SKIP|S_TITLE, N2_X, M_SPC},
 #if 0 // For future use, hopefully
-    {"Flickering Sector Lighting", S_ONOFF|S_STRICT, N_X, M_SPC, {"a11y_sector_lighting"}},
+    {"Flickering Sector Lighting", S_ONOFF|S_STRICT, N2_X, M_SPC, {"a11y_sector_lighting"}},
 #endif
-    {"Weapon Flash Lighting",      S_ONOFF|S_STRICT, N_X, M_SPC, {"a11y_weapon_flash"}},
-    {"Weapon Flash Sprite",        S_ONOFF|S_STRICT, N_X, M_SPC, {"a11y_weapon_pspr"}},
-    {"Invulnerability Colormap",   S_ONOFF|S_STRICT, N_X, M_SPC, {"a11y_invul_colormap"}},
+    {"Weapon Flash Lighting",      S_ONOFF|S_STRICT, N2_X, M_SPC, {"a11y_weapon_flash"}},
+    {"Weapon Flash Sprite",        S_ONOFF|S_STRICT, N2_X, M_SPC, {"a11y_weapon_pspr"}},
+    {"Invulnerability Colormap",   S_ONOFF|S_STRICT, N2_X, M_SPC, {"a11y_invul_colormap"}},
 
   MI_END
 };
+
+#undef N2_X
 
 static void UpdateAutoSaveItems(void)
 {
