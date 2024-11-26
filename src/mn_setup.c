@@ -1924,25 +1924,29 @@ static void NuggetResetWeaponInertia(void)
   P_NuggetResetWeaponInertia();
 }
 
+#define W_X 230
+
 static setup_menu_t weap_settings4[] =
 {
-  {"Nugget - Gameplay", S_SKIP|S_TITLE, M_X, M_SPC},
+  {"Nugget - Gameplay", S_SKIP|S_TITLE, W_X, M_SPC},
 
-    {"No Horizontal Autoaim",           S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"no_hor_autoaim"}},
-    {"Switch on Pickup",                S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"switch_on_pickup"}},
-    {"Allow Switch Interruption",       S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"weapswitch_interruption"}},
-    {"Prev/Next Skip Ammoless Weapons", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"skip_ammoless_weapons"}},
+    {"No Horizontal Autoaim",        S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"no_hor_autoaim"}},
+    {"Switch on Pickup",             S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"switch_on_pickup"}},
+    {"Allow Switch Interruption",    S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"weapswitch_interruption"}},
+    {"Prev/Next Skip Empty Weapons", S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"skip_ammoless_weapons"}},
 
   MI_GAP,
-  {"Nugget - Cosmetic", S_SKIP|S_TITLE, M_X, M_SPC},
+  {"Nugget - Cosmetic", S_SKIP|S_TITLE, W_X, M_SPC},
 
-    {"Bobbing Style",                   S_CHOICE|S_STRICT, M_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
-    {"Weapon Inertia",                  S_ONOFF |S_STRICT, M_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
-    {"Weapon Squat Upon Landing",       S_ONOFF |S_STRICT, M_X, M_SPC, {"weaponsquat"}},
-    {"Translucent Flashes",             S_ONOFF |S_STRICT, M_X, M_SPC, {"translucent_pspr"}},
+    {"Bobbing Style",                   S_CHOICE|S_STRICT, W_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
+    {"Weapon Inertia",                  S_ONOFF |S_STRICT, W_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
+    {"Weapon Squat Upon Landing",       S_ONOFF |S_STRICT, W_X, M_SPC, {"weaponsquat"}},
+    {"Translucent Flashes",             S_ONOFF |S_STRICT, W_X, M_SPC, {"translucent_pspr"}},
 
   MI_END
 };
+
+#undef W_X
 
 // [Nugget] -----------------------------------------------------------------/
 
@@ -2350,7 +2354,7 @@ void MN_DrawStatusHUD(void)
         int y = M_Y + M_SPC + M_SPC / 2 - SHORT(patch->height) / 2 - 1; // [Nugget] Adjusted
 
         // [Nugget] Translucent crosshair
-        V_DrawPatchTranslatedTL(x, y, patch, colrngs[hud_crosshair_color], xhair_tranmap);
+        V_DrawPatchTRTL2(x, y, patch, colrngs[hud_crosshair_color], xhair_tranmap);
     }
 
     // If the Reset Button has been selected, an "Are you sure?" message

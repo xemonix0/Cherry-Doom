@@ -369,7 +369,7 @@ DRAW_COLUMN(TRTL, tranmap[(*dest << 8) + translation[source[frac >> FRACBITS]]])
 DRAW_COLUMN(TRTRTL, tranmap[(*dest << 8) + translation2[translation1[source[frac >> FRACBITS]]]])
 
 DRAW_COLUMN(
-  Translucent,
+  Translucent2,
   tranmap[
     (*dest << 8)
   + (translation2 ? translation2[translation1[source[frac >> FRACBITS]]] :
@@ -642,8 +642,8 @@ void V_DrawPatchTRTRTL(int x, int y, struct patch_s *patch,
     DrawPatchInternal(x, y, patch, false);
 }
 
-void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped,
-                            byte *outr1, byte *outr2, byte *tmap)
+void V_DrawPatchTranslucent2(int x, int y, struct patch_s *patch, boolean flipped,
+                             byte *outr1, byte *outr2, byte *tmap)
 {
     x += video.deltaw;
 
@@ -656,7 +656,7 @@ void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped
     }
     else { translation1 = translation2 = NULL; }
 
-    drawcolfunc = DrawPatchColumnTranslucent;
+    drawcolfunc = DrawPatchColumnTranslucent2;
     tranmap = tmap;
 
     DrawPatchInternal(x, y, patch, flipped);
@@ -668,7 +668,7 @@ void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
     if (hud_menu_shadows && drawshadows)
     {
       drawingshadow = true;
-      V_DrawPatchTranslucent(x + 1, y + 1, patch, flipped, cr_allblack, NULL, shadow_tranmap);
+      V_DrawPatchTranslucent2(x + 1, y + 1, patch, flipped, cr_allblack, NULL, shadow_tranmap);
       drawingshadow = false;
     }
 
