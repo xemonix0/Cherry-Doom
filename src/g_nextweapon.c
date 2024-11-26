@@ -20,6 +20,10 @@
 #include "m_input.h"
 #include "st_carousel.h"
 
+// [Nugget]
+#include "d_items.h"
+#include "g_game.h"
+
 boolean doom_weapon_cycle;
 
 weapontype_t vanilla_nextweapon;
@@ -82,6 +86,19 @@ boolean G_WeaponSelectable(weapontype_t weapon)
     {
         return false;
     }
+
+    // [Nugget] /-------------------------------------------------------------
+
+    const weaponinfo_t *const info = &weaponinfo[weapon];
+
+    if (CASUALPLAY(skip_ammoless_weapons)
+        && players[consoleplayer].ammo[info->ammo] < info->ammopershot
+        && !(players[consoleplayer].cheats & CF_INFAMMO))
+    {
+        return false;
+    }
+
+    // [Nugget] -------------------------------------------------------------/
 
     return true;
 }

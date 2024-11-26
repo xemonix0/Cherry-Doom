@@ -65,9 +65,6 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
-// [Nugget]
-#include "hu_stuff.h" // hud_secret_message
-
 // [Nugget] CVARs
 boolean comp_keynoway;
 
