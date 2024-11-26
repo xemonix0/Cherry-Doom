@@ -20,6 +20,7 @@
 - **Allowed orbiting around freecam mobj**
 - **Made _Screen Wipe Speed Percentage_ setting affect the _Fizzle_ fade**
 - **Raised maximum _Rewind Depth_ to 3000**
+- **Gave shadow to the _Pause_ graphic when using _HUD/Menu Shadows_**
 - **Removed _Physical [Weapon] Recoil_ menu item**
 
 ## Bug Fixes

@@ -408,7 +408,7 @@ void D_Display (void)
       if (automapactive != AM_FULL)
         y += scaledviewy;
 
-      V_DrawPatch(x, y, patch);
+      V_DrawPatchSH(x, y, patch); // [Nugget] HUD/menu shadows
     }
 
   // menus go directly to the screen
