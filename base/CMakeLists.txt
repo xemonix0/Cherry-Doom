@@ -71,6 +71,7 @@ set(BASE_SOURCES
     all-all/dig090.png
     all-all/dig091.png
     all-all/dig093.png
+    all-all/dmxopl.op2
     all-all/dsdgact.wav
     all-all/dsdgatk.wav
     all-all/dsdgdth.wav
@@ -202,8 +203,12 @@ set(BASE_SOURCES
     e1m4b.wad/umapdef.lmp
     e1m8b.wad/umapdef.lmp
 
+    extras.wad/sbardef.lmp
+
     hacx.wad/brghtmps.lmp
     hacx.wad/dehacked.deh
+
+    id1.wad/sbardef.lmp
 
     masterlevels.wad/umapdef.lmp
 

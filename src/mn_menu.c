@@ -2186,6 +2186,14 @@ static menu_t CompatDef = // killough 10/98
     0
 };
 
+static menu_t SfxDef = {
+    generic_setup_end,  // numitems
+    &SetupDef,          // prevMenu
+    Generic_Setup,      // menuitems
+    MN_DrawSfx,         // routine
+    34, 5,              // x, y (skull drawn here)
+};
+
 static menu_t MidiDef = {
     generic_setup_end,  // numitems
     &SetupDef,          // prevMenu
@@ -2243,9 +2251,9 @@ static menu_t CustomSkillDef = { // Custom Skill menu
 void MN_SetNextMenuAlt(ss_types type)
 {
     static menu_t *setup_defs[] = {
-        &KeybndDef,    &WeaponDef,  &StatusHUDDef, &AutoMapDef,
-        &EnemyDef,     &GeneralDef, &CompatDef,    &MidiDef,
-        &EqualizerDef, &PadAdvDef,  &GyroDef,
+        &KeybndDef, &WeaponDef,    &StatusHUDDef, &AutoMapDef,
+        &EnemyDef,  &GeneralDef,   &CompatDef,    &SfxDef,
+        &MidiDef,   &EqualizerDef, &PadAdvDef,    &GyroDef,
 
         // [Nugget]
         &ColorDef,
@@ -3039,11 +3047,12 @@ static boolean MouseResponder(void)
 
 static boolean AllowDeleteSaveGame(void)
 {
+    int index = (old_menu_input == mouse_mode ? highlight_item : itemOn);
     return (((currentMenu == &LoadDef || currentMenu == &QuickLoadDef
               || currentMenu == &SaveDef)
-             && LoadDef.menuitems[itemOn].status)
+             && LoadDef.menuitems[index].status)
             || (currentMenu == &LoadAutoSaveDef
-                && LoadAutoSaveDef.menuitems[itemOn].status));
+                && LoadAutoSaveDef.menuitems[index].status));
 }
 
 boolean M_Responder(event_t *ev)

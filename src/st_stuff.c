@@ -420,11 +420,13 @@ static boolean CheckConditions(sbarcondition_t *conditions, player_t *player)
                 break;
 
             case sbc_featurelevelgreaterequal:
-                // ignore
+                // always MBF21
+                result &= 7 >= cond->param;
                 break;
 
             case sbc_featurelevelless:
-                // ignore
+                // always MBF21
+                result &= 7 < cond->param;
                 break;
 
             case sbc_sessiontypeeequal:
@@ -822,24 +824,13 @@ static void UpdateFace(sbe_face_t *face, player_t *player)
 static void UpdateNumber(sbarelem_t *elem, player_t *player)
 {
     sbe_number_t *number = elem->subtype.number;
+    numberfont_t *font = number->font;
 
     int value = ResolveNumber(number, player);
     int power = (value < 0 ? number->maxlength - 1 : number->maxlength);
     int max = (int)pow(10.0, power) - 1;
     int valglyphs = 0;
     int numvalues = 0;
-
-    numberfont_t *font = number->font;
-    if (font == NULL)
-    {
-        array_foreach(font, sbardef->numberfonts)
-        {
-            if (!strcmp(font->name, number->font_name))
-            {
-                break;
-            }
-        }
-    }
 
     if (value < 0 && font->minus != NULL)
     {
@@ -898,18 +889,7 @@ static void UpdateNumber(sbarelem_t *elem, player_t *player)
 static void UpdateLines(sbarelem_t *elem)
 {
     sbe_widget_t *widget = elem->subtype.widget;
-
     hudfont_t *font = widget->font;
-    if (font == NULL)
-    {
-        array_foreach(font, sbardef->hudfonts)
-        {
-            if (!strcmp(font->name, widget->font_name))
-            {
-                break;
-            }
-        }
-    }
 
     widgetline_t *line;
     array_foreach(line, widget->lines)
@@ -1243,7 +1223,7 @@ static void DrawPatchEx(int x, int y, int maxheight, sbaralignment_t alignment,
 
     if (alignment & sbe_h_middle)
     {
-        x -= (width >> 1);
+        x = x - width / 2 + SHORT(patch->leftoffset);
     }
     else if (alignment & sbe_h_right)
     {
@@ -1252,7 +1232,7 @@ static void DrawPatchEx(int x, int y, int maxheight, sbaralignment_t alignment,
 
     if (alignment & sbe_v_middle)
     {
-        y -= (height >> 1);
+        y = y - height / 2 + SHORT(patch->topoffset);
     }
     else if (alignment & sbe_v_bottom)
     {
@@ -2065,6 +2045,7 @@ void ST_Start(void)
     HU_StartCrosshair();
 }
 
+hudfont_t *stcfnt;
 patch_t **hu_font = NULL;
 
 void ST_Init(void)
@@ -2090,19 +2071,12 @@ void ST_Init(void)
 
     // [Nugget] Moved `LoadFacePatches()` below
 
-    hudfont_t *hudfont;
-    array_foreach(hudfont, sbardef->hudfonts)
-    {
-        if (!strcmp(hudfont->name, "Console"))
-        {
-            hu_font = hudfont->characters;
-            break;
-        }
-    }
+    stcfnt = LoadSTCFN();
+    hu_font = stcfnt->characters;
 
     if (!hu_font)
     {
-        I_Error("ST_Init: \"Console\" font not found");
+        I_Error("ST_Init: \"STCFN\" font not found");
     }
 
     // [Nugget]
@@ -3677,7 +3651,7 @@ void ST_BindSTSVariables(void)
              "Use solid-color borders for the status bar in widescreen mode");
   M_BindBool("hud_animated_counts", &hud_animated_counts, NULL,
             false, ss_stat, wad_no, "Animated health/armor counts");
-  M_BindBool("hud_armor_type", &hud_armor_type, NULL, false, ss_stat, wad_no,
+  M_BindBool("hud_armor_type", &hud_armor_type, NULL, true, ss_none, wad_no,
              "Armor count is colored based on armor type");
 
   // [Nugget]
