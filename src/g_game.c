@@ -6003,7 +6003,7 @@ void G_BindGameVariables(void)
   BIND_NUM_GENERAL(rewind_interval, 1, 1, 600,
     "Interval between rewind key-frames, in seconds");
 
-  BIND_NUM_GENERAL(rewind_depth, 60, 0, 600,
+  BIND_NUM_GENERAL(rewind_depth, 60, 0, 3000,
     "Number of rewind key-frames to be stored (0 = No rewinding)");
 
   BIND_NUM_GENERAL(rewind_timeout, 10, 0, 25,

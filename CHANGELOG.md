@@ -19,6 +19,7 @@
 - **Smoother FOV effects**
 - **Allowed orbiting around freecam mobj**
 - **Made _Screen Wipe Speed Percentage_ setting affect the _Fizzle_ fade**
+- **Raised maximum _Rewind Depth_ to 3000**
 - **Removed _Physical [Weapon] Recoil_ menu item**
 
 ## Bug Fixes
