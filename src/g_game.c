@@ -2650,7 +2650,7 @@ static void G_DoPlayDemo(void)
 // killough 2/22/98: version id string format for savegames
 #define VERSIONID "MBF %d"
 
-#define CURRENT_SAVE_VERSION "Nugget 3.4.0" // [Nugget]
+#define CURRENT_SAVE_VERSION "Nugget 4.0.0" // [Nugget]
 
 static char *savename = NULL;
 
@@ -3085,6 +3085,7 @@ static boolean DoLoadGame(boolean do_load_autosave)
   CheckSaveVersion("Nugget 2.4.0", saveg_nugget300);
   CheckSaveVersion("Nugget 3.2.0", saveg_nugget320);
   CheckSaveVersion("Nugget 3.3.0", saveg_nugget330);
+  CheckSaveVersion("Nugget 3.4.0", saveg_current); // TO BE REMOVED
   CheckSaveVersion(CURRENT_SAVE_VERSION, saveg_current);
 
   // killough 2/22/98: Friendly savegame version difference message
