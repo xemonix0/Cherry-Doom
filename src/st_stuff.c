@@ -3175,8 +3175,8 @@ end_amnum:
 
       elem.type = sbe_facebackground;
 
-      elem.x_pos = nughud.face.x - 1;
-      elem.y_pos = nughud.face.y - 1;
+      elem.x_pos = nughud.face.x;
+      elem.y_pos = nughud.face.y + 1;
       elem.alignment = NughudConvertAlignment(nughud.face.wide, -1);
 
       sbarcondition_t condition = {0};
