@@ -1375,14 +1375,9 @@ static void DrawGlyphLine(int x, int y, sbarelem_t *elem, widgetline_t *line,
 
     if (glyph)
     {
-        // [Nugget] HUD/menu shadows: don't draw for digits
-        draw_shadow = hud_menu_shadows && strcmp(widget->font_name, "Digits");
-
         // [Nugget] Message flash
         DrawPatchEx(x + line->xoffset, y, font->maxheight, elem->alignment, glyph,
                     elem->cr, line->flash ? CR_BRIGHT : CR_NONE, elem->tranmap);
-
-        draw_shadow = false;
     }
 
     if (elem->alignment & sbe_h_middle)
@@ -1470,10 +1465,15 @@ static void DrawLines(int x, int y, sbarelem_t *elem)
 
             ch = (unsigned char) M_ToUpper(ch) - HU_FONTSTART; // [Nugget] Cast to unsigned
 
+            // [Nugget] HUD/menu shadows
+
+            draw_shadow = hud_menu_shadows;
+
             patch_t *glyph;
             if (ch < 0 || ch >= HU_FONTSIZE + HU_FONTEXTRAS) // [Nugget]
             {
                 glyph = NULL;
+                draw_shadow = false;
             }
 
             // [Nugget]
@@ -1485,8 +1485,11 @@ static void DrawLines(int x, int y, sbarelem_t *elem)
             else
             {
                 glyph = font->characters[ch];
+                draw_shadow &= !!strcmp(widget->font->name, "Digits"); // Don't draw for digits
             }
             DrawGlyphLine(x, y, elem, line, glyph);
+
+            draw_shadow = false;
         }
 
         if (elem->alignment & sbe_v_bottom)
@@ -2228,22 +2231,11 @@ int ST_GetMessageFontHeight(void)
 
     if (!sbardef) { return height; }
 
-    const char *font_name = NULL;
-
     const sbarelem_t *child;
     array_foreach(child, statusbar->children)
     {
         if (child->type == sbe_widget && child->subtype.widget->type == sbw_message)
-        { font_name = child->subtype.widget->font_name; }
-    }
-
-    if (!font_name) { return height; }
-
-    const hudfont_t *font;
-    array_foreach(font, sbardef->hudfonts)
-    {
-        if (!strcmp(font->name, font_name))
-        { height = font->maxheight; }
+        { height = child->subtype.widget->font->maxheight; }
     }
 
     return height;
@@ -2768,9 +2760,11 @@ static sbardef_t *CreateNughudSbarDef(void)
 
   // Fonts ===================================================================
 
+  #define GET_LAST_NUMFONT() (&out->numberfonts[array_size(out->numberfonts)])
+
   // Tall Numbers ------------------------------------------------------------
 
-  numberfont_t tnum = {0};
+  static numberfont_t tnum = {0};
 
   tnum.name = M_StringDuplicate("Tall");
   tnum.type = sbf_mono0;
@@ -2843,11 +2837,9 @@ end_tnum:
   tnum.monowidth = SHORT(tnum.numbers[0]->width);
   tnum.maxheight = maxheight;
 
-  array_push(out->numberfonts, tnum);
-
   // Ready Ammo Numbers ------------------------------------------------------
 
-  numberfont_t rnum = {0};
+  static numberfont_t rnum = {0};
 
   rnum.name = M_StringDuplicate("ReadyAmmo");
   rnum.type = sbf_mono0;
@@ -2894,11 +2886,9 @@ end_rnum:
   rnum.monowidth = SHORT(rnum.numbers[0]->width);
   rnum.maxheight = maxheight;
 
-  array_push(out->numberfonts, rnum);
-
   // Ammo Numbers ------------------------------------------------------------
 
-  numberfont_t amnum = {0};
+  static numberfont_t amnum = {0};
 
   amnum.name = M_StringDuplicate("Ammo");
   amnum.type = sbf_mono0;
@@ -2941,11 +2931,9 @@ end_amnum:
   amnum.monowidth = SHORT(amnum.numbers[0]->width);
   amnum.maxheight = maxheight;
 
-  array_push(out->numberfonts, amnum);
-
   // Console Font ------------------------------------------------------------
 
-  hudfont_t cfn = {0};
+  static hudfont_t cfn = {0};
 
   cfn.name = M_StringDuplicate("Console");
   cfn.type = sbf_proportional;
@@ -2967,11 +2955,9 @@ end_amnum:
   cfn.monowidth = maxwidth;
   cfn.maxheight = maxheight;
 
-  array_push(out->hudfonts, cfn);
-
   // Digits Font -------------------------------------------------------------
 
-  hudfont_t dig = {0};
+  static hudfont_t dig = {0};
 
   dig.name = M_StringDuplicate("Digits");
   dig.type = sbf_mono0;
@@ -2992,8 +2978,6 @@ end_amnum:
 
   dig.monowidth = maxwidth;
   dig.maxheight = maxheight;
-
-  array_push(out->hudfonts, dig);
 
   // Widgets =================================================================
 
@@ -3018,7 +3002,7 @@ end_amnum:
     sbe_number_t *number = calloc(1, sizeof(*number));
 
     number->type = sbn_ammoselected;
-    number->font_name = M_StringDuplicate("ReadyAmmo");
+    number->font = &rnum;
     number->maxlength = 3;
 
     elem.subtype.number = number;
@@ -3048,7 +3032,7 @@ end_amnum:
     sbe_number_t *number = calloc(1, sizeof(*number));
 
     number->type = sbn_health;
-    number->font_name = M_StringDuplicate("Tall");
+    number->font = &tnum;
     number->maxlength = 3;
 
     elem.subtype.number = number;
@@ -3147,7 +3131,7 @@ end_amnum:
     sbe_number_t *number = calloc(1, sizeof(*number));
 
     number->type = sbn_frags;
-    number->font_name = M_StringDuplicate("Tall");
+    number->font = &tnum;
     number->maxlength = 2;
 
     elem.subtype.number = number;
@@ -3309,7 +3293,7 @@ end_amnum:
     sbe_number_t *number = calloc(1, sizeof(*number));
 
     number->type = sbn_armor;
-    number->font_name = M_StringDuplicate("Tall");
+    number->font = &tnum;
     number->maxlength = 3;
 
     elem.subtype.number = number;
@@ -3340,7 +3324,7 @@ end_amnum:
 
         number->type = j ? sbn_maxammo : sbn_ammo;
         number->param = i;
-        number->font_name = M_StringDuplicate("Ammo");
+        number->font = &amnum;
         number->maxlength = 3;
 
         elem.subtype.number = number;
@@ -3365,7 +3349,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_time;
-    widget->font_name = M_StringDuplicate("Digits");
+    widget->font = widget->default_font = &dig;
 
     elem.subtype.widget = widget;
 
@@ -3387,7 +3371,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_monsec;
-    widget->font_name = M_StringDuplicate("Digits");
+    widget->font = widget->default_font = &dig;
 
     elem.subtype.widget = widget;
 
@@ -3409,7 +3393,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_title;
-    widget->font_name = M_StringDuplicate("Console");
+    widget->font = widget->default_font = &cfn;
 
     elem.subtype.widget = widget;
 
@@ -3438,7 +3422,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_powers;
-    widget->font_name = M_StringDuplicate("Digits");
+    widget->font = widget->default_font = &dig;
 
     elem.subtype.widget = widget;
 
@@ -3460,7 +3444,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_coord;
-    widget->font_name = M_StringDuplicate("Digits");
+    widget->font = widget->default_font = &dig;
 
     elem.subtype.widget = widget;
 
@@ -3482,7 +3466,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_fps;
-    widget->font_name = M_StringDuplicate("Digits");
+    widget->font = widget->default_font = &dig;
 
     elem.subtype.widget = widget;
 
@@ -3504,7 +3488,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_rate;
-    widget->font_name = M_StringDuplicate("Digits");
+    widget->font = widget->default_font = &dig;
 
     elem.subtype.widget = widget;
 
@@ -3526,7 +3510,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_cmd;
-    widget->font_name = M_StringDuplicate("Digits");
+    widget->font = widget->default_font = &dig;
 
     elem.subtype.widget = widget;
 
@@ -3548,7 +3532,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_speed;
-    widget->font_name = M_StringDuplicate("Digits");
+    widget->font = widget->default_font = &dig;
 
     elem.subtype.widget = widget;
 
@@ -3570,7 +3554,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_message;
-    widget->font_name = M_StringDuplicate("Console");
+    widget->font = widget->default_font = &cfn;
     widget->duration = 4*TICRATE;
 
     elem.subtype.widget = widget;
@@ -3594,7 +3578,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_chat;
-    widget->font_name = M_StringDuplicate("Console");
+    widget->font = widget->default_font = &cfn;
 
     elem.subtype.widget = widget;
 
@@ -3617,7 +3601,7 @@ end_amnum:
     sbe_widget_t *widget = calloc(1, sizeof(*widget));
 
     widget->type = sbw_secret;
-    widget->font_name = M_StringDuplicate("Console");
+    widget->font = widget->default_font = &cfn;
     widget->duration = 2.5f*TICRATE;
 
     elem.subtype.widget = widget;

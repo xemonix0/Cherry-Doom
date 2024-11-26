@@ -30,7 +30,6 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **Set _Air Absorption_ and _Doppler Effect_ to 5 by default**
 - **FOV-based sky stretching** setting (CFG-only: `fov_stretchsky`)
 - **Tweaked _Stretch Short Skies_ algorithm**
-- **Restored _Menu Backdrop Style_ menu item**
 - **_Black Fade_ screen wipe**
 - **Extended _Level Brightness_ range:** [-8, 8]
 - **_"Direct + Auto"_ mode for Vertical Aiming**
@@ -80,7 +79,6 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 ### Weapons
 
 - **Extended _View/Weapon Bob_ percentages**
-- Restored **_Weapon Recoil_** menu item
 - **_No Horizontal Autoaim_** setting
 - **_Switch [Weapon] on Pickup_** setting
 - **_Allow [Weapon] Switch Interruption_** setting
@@ -106,9 +104,8 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **Show Save Messages** setting (CFG-only: `show_save_messages`)
 - **_Milestone-Completion Announcements_** setting, to report completion of milestones (e.g. all items acquired)
 - **_Message Flash_** setting
-- **_Message Lines_** setting
+- **_Message Lines_** setting (scrolling direction determined by the CFG-only `hud_msg_scrollup` CVAR)
 - **_(Chat) Message Duration_** settings
-- Restored **_Upward Message Scrolling_** setting, and enabled it by default (CFG-only: `hud_msg_scrollup`)
 - **_Show Powerup Timers_** setting
 - **_Berserk display when using Fist** setting [partially p.f. Crispy Doom]
 - **_Automap Level Stats Format_** setting
@@ -214,6 +211,7 @@ For more details, see the _New Nugget Doom cheats_ section of `docs/cheats.md`.
 - Toggle to **disable the Killough-face easter egg** (CFG-only: `no_killough_face`)
 - Toggle to **allow chat in singleplayer** (CFG-only: `sp_chat`)
 - Made `force_flip_pan` affect the _OpenAL 3D_ sound module [by _ceski_]
+- Restored menu items for various Woof settings
 - Restored `-cdrom` command-line parameter
 - Decreased minimum window size to 200p (240p with aspect-ratio correction)
 

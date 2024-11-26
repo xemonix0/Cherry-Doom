@@ -18,6 +18,7 @@
 - **Messages in the message list now have individual durations**
 - **Smoother FOV effects**
 - **Made _Screen Wipe Speed Percentage_ setting affect the _Fizzle_ fade**
+- **Removed _Physical [Weapon] Recoil_ menu item**
 
 ## Bug Fixes
 
@@ -25,6 +26,7 @@
 - **_Double autoaim range_ setting doubling range of BFG tracers**
 - **FOV effects disabling interpolation of weapon sprites**
 - **Crash when loading WADs with empty lumps between `C_#` markers** (fixes `nt_rc1.wad`)
+- **Shadows not being drawn for HUD icons when using Boom font**
 
 **[1].** Not necessarily with the same CVARs; existing config files will be affected.
 
