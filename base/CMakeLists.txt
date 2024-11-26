@@ -205,6 +205,7 @@ set(BASE_SOURCES
 
     # [Nugget]
     all-all/sprites/ngcha0.png
+    all-all/sprites/ngcla0.png
     all-all/sprites/ngtra0.png
     all-all/sprites/ngtrb0.png
     all-all/sprites/ngtrc0.png

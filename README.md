@@ -361,8 +361,8 @@ Files: `base/all-all/sprites/pls*`
 Copyright: © 2001-2019 Contributors to the Freedoom project.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `base/all-all/sprites/tnt1b0.png`  
-Copyright: © 2023 Korp.  
+Files: `base/all-all/sprites/ngcha0.png, base/all-all/sprites/ngcla0.png, base/all-all/sprites/ngtr*0.png`  
+Copyright: © 2023-2024 Korp.  
 License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
 Files: `base/all-all/dsdg*, base/all-all/sprites/dog*`  
@@ -371,6 +371,10 @@ Copyright:
  © apolloaiello;  
  © TobiasKosmos.  
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+
+Files: `base/all-all/sm*.png`  
+Copyright: © 2024 Julia Nechaevskaya.  
+License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
 Files: `base/all-all/sbardef.lmp`  
 Copyright:  
@@ -389,10 +393,6 @@ License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 Files: `data/nugget-doom.ico, data/nugget-doom.png, src/icon.c, data/setup.ico, data/nugget-doom-setup.png, setup/setup_icon.c`  
 Copyright: © 2022 Korp.  
 License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
-
-Files: `base/all-all/sm*.png`  
-Copyright: © 2024 Julia Nechaevskaya.  
-License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
 Files: `opl/*`  
 Copyright:  
