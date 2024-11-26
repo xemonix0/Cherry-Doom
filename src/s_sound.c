@@ -25,13 +25,16 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "i_printf.h"
+#include "i_rumble.h"
 #include "i_sound.h"
 #include "i_system.h"
+#include "m_config.h"
 #include "m_misc.h"
 #include "m_random.h"
 #include "p_mobj.h"
 #include "s_musinfo.h" // [crispy] struct musinfo
 #include "s_sound.h"
+#include "s_trakinfo.h"
 #include "sounds.h"
 #include "u_mapinfo.h"
 #include "w_wad.h"
@@ -78,8 +81,7 @@ static musicinfo_t *mus_playing;
 // following is set
 //  by the defaults code in M_misc:
 // number of channels available
-int numChannels;
-int default_numChannels; // killough 9/98
+int snd_channels;
 
 // jff 3/17/98 to keep track of last IDMUS specified music num
 int idmusnum;
@@ -96,7 +98,7 @@ int idmusnum;
 static void S_StopChannel(int cnum)
 {
 #ifdef RANGECHECK
-    if (cnum < 0 || cnum >= numChannels)
+    if (cnum < 0 || cnum >= snd_channels)
     {
         I_Error("S_StopChannel: handle %d out of range\n", cnum);
     }
@@ -109,6 +111,17 @@ static void S_StopChannel(int cnum)
         // haleyjd 09/27/06: clear the entire channel
         memset(&channels[cnum], 0, sizeof(channel_t));
     }
+}
+
+void S_StopChannels(void)
+{
+    for (int i = 0; i < MAX_CHANNELS; i++)
+    {
+        I_StopSound(channels[i].handle);
+    }
+
+    memset(channels, 0, sizeof(channels));
+    memset(sobjs, 0, sizeof(sobjs));
 }
 
 //
@@ -148,7 +161,7 @@ static int S_getChannel(const mobj_t *origin, sfxinfo_t *sfxinfo, int priority,
     // kill old sound
     // killough 12/98: replace is_pickup hack with singularity flag
     // haleyjd 06/12/08: only if subchannel matches
-    for (cnum = 0; cnum < numChannels; cnum++)
+    for (cnum = 0; cnum < snd_channels; cnum++)
     {
         if (channels[cnum].sfxinfo && channels[cnum].singularity == singularity
             && channels[cnum].origin == origin)
@@ -159,13 +172,13 @@ static int S_getChannel(const mobj_t *origin, sfxinfo_t *sfxinfo, int priority,
     }
 
     // Find an open channel
-    if (cnum == numChannels)
+    if (cnum == snd_channels)
     {
         // haleyjd 09/28/06: it isn't necessary to look for playing sounds in
         // the same singularity class again, as we just did that above. Here
         // we are looking for an open channel. We will also keep track of the
         // channel found with the lowest sound priority while doing this.
-        for (cnum = 0; cnum < numChannels && channels[cnum].sfxinfo; cnum++)
+        for (cnum = 0; cnum < snd_channels && channels[cnum].sfxinfo; cnum++)
         {
             if (channels[cnum].priority > lowestpriority)
             {
@@ -176,7 +189,7 @@ static int S_getChannel(const mobj_t *origin, sfxinfo_t *sfxinfo, int priority,
     }
 
     // None available?
-    if (cnum == numChannels)
+    if (cnum == snd_channels)
     {
         // Look for lower priority
         // haleyjd: we have stored the channel found with the lowest priority
@@ -193,7 +206,7 @@ static int S_getChannel(const mobj_t *origin, sfxinfo_t *sfxinfo, int priority,
     }
 
 #ifdef RANGECHECK
-    if (cnum >= numChannels)
+    if (cnum >= snd_channels)
     {
         I_Error("S_getChannel: handle %d out of range\n", cnum);
     }
@@ -202,7 +215,10 @@ static int S_getChannel(const mobj_t *origin, sfxinfo_t *sfxinfo, int priority,
     return cnum;
 }
 
-void S_StartSoundPitch(const mobj_t *origin, int sfx_id, const pitchrange_t pitch_range)
+static int optionals[NUG_SFX_END - NUG_SFX_START]; // [Nugget]
+
+static void StartSound(const mobj_t *origin, int sfx_id,
+                       pitchrange_t pitch_range, rumble_type_t rumble_type)
 {
     int sep, pitch, o_priority, priority, singularity, cnum, handle;
     int volumeScale = 127;
@@ -283,7 +299,7 @@ void S_StartSoundPitch(const mobj_t *origin, int sfx_id, const pitchrange_t pitc
     }
 
 #ifdef RANGECHECK
-    if (cnum < 0 || cnum >= numChannels)
+    if (cnum < 0 || cnum >= snd_channels)
     {
         I_Error("S_StartSfxInfo: handle %d out of range\n", cnum);
     }
@@ -314,6 +330,12 @@ void S_StartSoundPitch(const mobj_t *origin, int sfx_id, const pitchrange_t pitc
         channels[cnum].priority = priority;     // scaled priority
         channels[cnum].singularity = singularity;
         channels[cnum].idnum = I_SoundID(handle); // unique instance id
+
+        if (rumble_type != RUMBLE_NONE)
+        {
+            I_StartRumble(players[displayplayer].mo, origin, sfx, handle,
+                          rumble_type);
+        }
     }
     else // haleyjd: the sound didn't start, so clear the channel info
     {
@@ -321,39 +343,190 @@ void S_StartSoundPitch(const mobj_t *origin, int sfx_id, const pitchrange_t pitc
     }
 }
 
+void S_StartSoundPitch(const mobj_t *origin, int sfx_id,
+                       pitchrange_t pitch_range)
+{
+    StartSound(origin, sfx_id, pitch_range, RUMBLE_NONE);
+}
+
+static boolean IsRumblePlayer(const mobj_t *mo)
+{
+    return (I_RumbleEnabled() && mo && mo == players[displayplayer].mo);
+}
+
+static rumble_type_t RumbleType(const mobj_t *mo, rumble_type_t rumble_type)
+{
+    return (IsRumblePlayer(mo) ? rumble_type : RUMBLE_NONE);
+}
+
+void S_StartSoundPitchEx(const mobj_t *origin, int sfx_id,
+                         pitchrange_t pitch_range)
+{
+    StartSound(origin, sfx_id, pitch_range, RumbleType(origin, RUMBLE_PLAYER));
+}
+
+void S_StartSoundPistol(const mobj_t *origin, int sfx_id)
+{
+    StartSound(origin, sfx_id, PITCH_FULL, RumbleType(origin, RUMBLE_PISTOL));
+}
+
+void S_StartSoundShotgun(const mobj_t *origin, int sfx_id)
+{
+    StartSound(origin, sfx_id, PITCH_FULL, RumbleType(origin, RUMBLE_SHOTGUN));
+}
+
+void S_StartSoundSSG(const mobj_t *origin, int sfx_id)
+{
+    StartSound(origin, sfx_id, PITCH_FULL, RumbleType(origin, RUMBLE_SSG));
+}
+
+void S_StartSoundCGun(const mobj_t *origin, int sfx_id)
+{
+    StartSound(origin, sfx_id, PITCH_FULL, RumbleType(origin, RUMBLE_CGUN));
+}
+
+void S_StartSoundBFG(const mobj_t *origin, int sfx_id)
+{
+    StartSound(origin, sfx_id, PITCH_FULL, RumbleType(origin, RUMBLE_BFG));
+}
+
+static rumble_type_t RumbleTypePreset(const mobj_t *origin, int sfx_id)
+{
+    if (IsRumblePlayer(origin))
+    {
+        switch (sfx_id)
+        {
+            case sfx_keyup: // [Nugget]: [NS] Optional key pickup sound.
+            case sfx_itemup:
+                return RUMBLE_ITEMUP;
+            case sfx_wpnup:
+                return RUMBLE_WPNUP;
+            case sfx_getpow:
+                return RUMBLE_GETPOW;
+            case sfx_oof:
+                return RUMBLE_OOF;
+        }
+    }
+    return RUMBLE_NONE;
+}
+
+void S_StartSoundPreset(const mobj_t *origin, int sfx_id,
+                        pitchrange_t pitch_range)
+{
+    StartSound(origin, sfx_id, pitch_range, RumbleTypePreset(origin, sfx_id));
+}
+
+void S_StartSoundPain(const mobj_t *origin, int sfx_id)
+{
+    // [Nugget] As of writing this, this function is only used by the player,
+    // so we can place this code right here
+    if (STRICTMODE(sfx_id == sfx_plpain))
+    {
+        int i = BETWEEN(0, 3, (origin->health - 1) / 25);
+
+        while (optionals[sfx_ppai25 + i - NUG_SFX_START] == -1)
+        {
+          if (3 < ++i) { break; }
+        }
+
+        if (i <= 3) { sfx_id = sfx_ppai25 + i; }
+    }
+
+    StartSound(origin, sfx_id, PITCH_FULL, RumbleType(origin, RUMBLE_PAIN));
+}
+
+void S_StartSoundHitFloor(const mobj_t *origin, int sfx_id)
+{
+    StartSound(origin, sfx_id, PITCH_FULL, RumbleType(origin, RUMBLE_HITFLOOR));
+}
+
+void S_StartSoundSource(const mobj_t *source, const mobj_t *origin, int sfx_id)
+{
+    StartSound(origin, sfx_id, PITCH_FULL, RumbleType(source, RUMBLE_PLAYER));
+}
+
+static rumble_type_t RumbleTypeMissile(const mobj_t *source,
+                                       const mobj_t *origin)
+{
+    if (IsRumblePlayer(source))
+    {
+        if (origin)
+        {
+            switch (origin->type)
+            {
+                case MT_ROCKET:
+                    return RUMBLE_ROCKET;
+                case MT_PLASMA:
+                case MT_PLASMA1:
+                case MT_PLASMA2:
+                    return RUMBLE_PLASMA;
+
+                default:
+                    break;
+            }
+        }
+        return RUMBLE_PLAYER;
+    }
+    return RUMBLE_NONE;
+}
+
+void S_StartSoundMissile(const mobj_t *source, const mobj_t *origin, int sfx_id)
+{
+    StartSound(origin, sfx_id, PITCH_FULL, RumbleTypeMissile(source, origin));
+}
+
+void S_StartSoundOrigin(const mobj_t *source, const mobj_t *origin, int sfx_id)
+{
+    StartSound(origin, sfx_id, PITCH_FULL, RumbleType(source, RUMBLE_ORIGIN));
+}
+
 // [Nugget] /-----------------------------------------------------------------
 
-static int optionals[NUG_SFX_END - NUG_SFX_START];
-
 // [NS] Try to play an optional sound.
+static int OptionalOrFallback(const int opt_sound_id, const int sound_id)
+{
+    // If `opt_sound_id` corresponds to a non-optional sound, use it without checking,
+    // otherwise use the optional sound if present
+    if (   !(NUG_SFX_START <= opt_sound_id && opt_sound_id < NUG_SFX_END)
+        ||  (optionals[opt_sound_id - NUG_SFX_START] >= 0))
+    {
+        return opt_sound_id;
+    }
+    else if (sound_id >= 0) // Use the fallback
+    {
+        return sound_id;
+    }
+
+    return -1;
+}
+
 void S_StartSoundPitchOptional(const mobj_t *const origin,
                                const int opt_sound_id, const int sound_id,
                                const pitchrange_t pitch_range)
 {
-  // If `opt_sound_id` corresponds to a non-optional sound, play it without checking,
-  // otherwise play the optional sound if present
-  if (   !(NUG_SFX_START <= opt_sound_id && opt_sound_id < NUG_SFX_END)
-      ||  (optionals[opt_sound_id - NUG_SFX_START] >= 0))
-  {
-    S_StartSoundPitch(origin, opt_sound_id, pitch_range);
-  }
-  else if (sound_id >= 0) // Play the fallback
-  {
-    S_StartSoundPitch(origin, sound_id, pitch_range);
-  }
+    const int final_id = OptionalOrFallback(opt_sound_id, sound_id);
+
+    if (final_id >= 0)
+    { StartSound(origin, final_id, pitch_range, RUMBLE_NONE); }
 }
 
-void S_PlayerPainSound(const mobj_t *const origin)
+void S_StartSoundPresetOptional(const mobj_t *const origin,
+                                const int opt_sound_id, const int sound_id,
+                                const pitchrange_t pitch_range)
 {
-  int i = BETWEEN(0, 3, (origin->health - 1) / 25);
+    const int final_id = OptionalOrFallback(opt_sound_id, sound_id);
 
-  while (optionals[sfx_ppai25 + i - NUG_SFX_START] == -1)
-  {
-    if (3 < ++i) { break; }
-  }
+    if (final_id >= 0)
+    { StartSound(origin, final_id, pitch_range, RumbleTypePreset(origin, final_id)); }
+}
 
-  if (i <= 3) { S_StartSound(origin, sfx_ppai25 + i); }
-  else        { S_StartSound(origin, sfx_plpain); }
+void S_StartSoundHitFloorOptional(const mobj_t *const origin,
+                                  const int opt_sound_id, const int sound_id)
+{
+    const int final_id = OptionalOrFallback(opt_sound_id, sound_id);
+
+    if (final_id >= 0)
+    { StartSound(origin, final_id, PITCH_FULL, RumbleType(origin, RUMBLE_HITFLOOR)); }
 }
 
 // [Nugget] -----------------------------------------------------------------/
@@ -371,7 +544,7 @@ void S_StopSound(const mobj_t *origin)
         return;
     }
 
-    for (cnum = 0; cnum < numChannels; ++cnum)
+    for (cnum = 0; cnum < snd_channels; ++cnum)
     {
         if (channels[cnum].sfxinfo && channels[cnum].origin == origin)
         {
@@ -396,7 +569,7 @@ void S_UnlinkSound(mobj_t *origin)
 
     if (origin)
     {
-        for (cnum = 0; cnum < numChannels; cnum++)
+        for (cnum = 0; cnum < snd_channels; cnum++)
         {
             if (channels[cnum].sfxinfo && channels[cnum].origin == origin)
             {
@@ -465,7 +638,7 @@ void S_UpdateSounds(const mobj_t *listener)
 
     I_DeferSoundUpdates();
 
-    for (cnum = 0; cnum < numChannels; ++cnum)
+    for (cnum = 0; cnum < snd_channels; ++cnum)
     {
         channel_t *c = &channels[cnum];
         sfxinfo_t *sfx = c->sfxinfo;
@@ -503,6 +676,8 @@ void S_UpdateSounds(const mobj_t *listener)
                         c->priority = pri; // haleyjd
                     }
                 }
+
+                I_UpdateRumbleParams(listener, c->origin, c->handle);
             }
             else // if channel is allocated but sound has stopped, free it
             {
@@ -513,6 +688,7 @@ void S_UpdateSounds(const mobj_t *listener)
 
     I_UpdateListenerParams(listener);
     I_ProcessSoundUpdates();
+    I_UpdateRumble();
 }
 
 void S_SetMusicVolume(int volume)
@@ -551,6 +727,8 @@ void S_SetSfxVolume(int volume)
 
     snd_SfxVolume = volume;
 }
+
+static extra_music_t extra_music;
 
 static int current_musicnum = -1;
 
@@ -592,8 +770,21 @@ void S_ChangeMusic(int musicnum, int looping)
         music->lumpnum = W_GetNumForName(namebuf);
     }
 
+    int old_lumpnum = music->lumpnum;
+
     // load & register it
     music->data = W_CacheLumpNum(music->lumpnum, PU_STATIC);
+    if (extra_music && trakinfo_found)
+    {
+        const char *extra =
+            S_GetExtra(music->data, W_LumpLength(music->lumpnum), extra_music);
+        if (extra)
+        {
+            music->lumpnum = W_GetNumForName(extra);
+            Z_Free(music->data);
+            music->data = W_CacheLumpNum(music->lumpnum, PU_STATIC);
+        }
+    }
     // julian: added lump length
     music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
 
@@ -601,8 +792,12 @@ void S_ChangeMusic(int musicnum, int looping)
     I_PlaySong((void *)music->handle, looping);
 
     // [crispy] log played music
-    I_Printf(VB_INFO, "S_ChangeMusic: %.8s (%s)", lumpinfo[music->lumpnum].name,
-             W_WadNameForLump(music->lumpnum));
+    I_Printf(VB_DEBUG, "S_ChangeMusic: %.8s (%s), %s",
+             lumpinfo[music->lumpnum].name,
+             W_WadNameForLump(music->lumpnum),
+             I_MusicFormat());
+
+    music->lumpnum = old_lumpnum;
 
     mus_playing = music;
 
@@ -643,13 +838,28 @@ void S_ChangeMusInfoMusic(int lumpnum, int looping)
     music->lumpnum = lumpnum;
 
     music->data = W_CacheLumpNum(music->lumpnum, PU_STATIC);
+    if (extra_music && trakinfo_found)
+    {
+        const char *extra =
+            S_GetExtra(music->data, W_LumpLength(music->lumpnum), extra_music);
+        if (extra)
+        {
+            music->lumpnum = W_GetNumForName(extra);
+            Z_Free(music->data);
+            music->data = W_CacheLumpNum(music->lumpnum, PU_STATIC);
+        }
+    }
     music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
 
     I_PlaySong((void *)music->handle, looping);
 
     // [crispy] log played music
-    I_Printf(VB_INFO, "S_ChangeMusInfoMusic: %.8s (%s)",
-             lumpinfo[music->lumpnum].name, W_WadNameForLump(music->lumpnum));
+    I_Printf(VB_DEBUG, "S_ChangeMusInfoMusic: %.8s (%s), %s",
+             lumpinfo[music->lumpnum].name,
+             W_WadNameForLump(music->lumpnum),
+             I_MusicFormat());
+
+    music->lumpnum = lumpnum;
 
     mus_playing = music;
 
@@ -727,7 +937,7 @@ void S_Start(void)
     // jff 1/22/98 skip sound init if sound not enabled
     if (!nosfxparm)
     {
-        for (cnum = 0; cnum < numChannels; ++cnum)
+        for (cnum = 0; cnum < snd_channels; ++cnum)
         {
             if (channels[cnum].sfxinfo)
             {
@@ -830,7 +1040,6 @@ void S_Init(int sfxVolume, int musicVolume)
         S_SetSfxVolume(sfxVolume);
 
         // Reset channel memory
-        numChannels = default_numChannels;
         memset(channels, 0, sizeof(channels));
         memset(sobjs, 0, sizeof(sobjs));
     }
@@ -848,6 +1057,12 @@ void S_Init(int sfxVolume, int musicVolume)
     // [Nugget] Get lump nums for optional sounds
     for (int i = NUG_SFX_START;  i < NUG_SFX_END;  i++)
     { optionals[i - NUG_SFX_START] = I_GetSfxLumpNum(&S_sfx[i]); }
+}
+
+void S_BindSoundVariables(void)
+{
+    BIND_NUM(extra_music, EXMUS_OFF, EXMUS_OFF, EXMUS_ORIGINAL,
+             "Extra soundtrack (0 = Off; 1 = Remix; 2 = Original");
 }
 
 //----------------------------------------------------------------------------

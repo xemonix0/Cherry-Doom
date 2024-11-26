@@ -1,13 +1,20 @@
-# Nugget Doom's `NUGHUD` guide
+# Nugget Doom's NUGHUD guide
 
-**The `NUGHUD` lump** is a variant of MBF's `OPTIONS` lump, **used specifically by Nugget Doom to customize the Nugget HUD**.
+**The `NUGHUD` lump** is a variant of MBF's `OPTIONS` lump, **used exclusively by Nugget Doom to customize the fullscreen HUD**
+used when the `screenblocks` CVAR is set to 11 and the _Fullscreen HUD Type_ setting is set to _NUGHUD_.
 
-As implied, `NUGHUD` uses the same format as `OPTIONS`. Excerpt from `mbfedit.txt`:
+From this point onwards, _NUGHUD_ refers to the customization system in general, whereas _`NUGHUD`_ refers to a NUGHUD lump.
+
+As implied, NUGHUD uses the same format as `OPTIONS`. Excerpt from `mbfedit.txt`:
 
 ```
 The OPTIONS lump has the same format as mbf.cfg: A text file listing option
 names and values, optionally separated by blank or comment lines.
 ```
+
+NUGHUD mostly serves as an interface for SBARDEF, with simpler (albeit verbose) syntax and some exclusive features.
+Unlike SBARDEF, however, **NUGHUD works by applying modifications to a built-in `NUGHUD`**,
+meaning that **it is not necessary to redefine all properties in new NUGHUDs for them to work**.
 
 ## Loading `NUGHUD` lumps
 
@@ -18,9 +25,9 @@ names and values, optionally separated by blank or comment lines.
 - By using the `-file` command-line parameter to load a file explicitly named `nughud.#`,
   where `#` can be any extension name (`.lmp` is recommended).
 
-## Nugget HUD widgets
+## NUGHUD widgets
 
-**The Nugget HUD is composed of widgets**, whose behavior is determined by a set of properties.
+**NUGHUD is composed of widgets**, whose behavior is determined by a set of properties.
 
 **The following properties are shared across all widgets:**
 
@@ -82,7 +89,8 @@ If both slice graphics for a widget are provided, a second bar will be drawn on 
 Otherwise, if only the first slice graphic is provided, the bars will continue to grow normally.
 **If both `_xstep` and `_ystep` are 0, the slice graphic's width will be used as the horizontal spacing.**
 
-**Arms number 1 is lit up when the player has Berserk.**
+**Arms #1 is highlighted when the player has Berserk.**
+**If Arms #8 is disabled, Arms #3 is highlighted when the player owns either the Shotgun or the Super Shotgun.**
 
 There are some additional toggles (value of `0` or `1`) for some specific widgets:
 
@@ -103,24 +111,18 @@ The following text lines are available:
 | `nughud_coord`   | Coordinates display, only shown if enabled by the user |
 | `nughud_fps`     | FPS display, only shown when the `FPS` cheat is activated |
 | `nughud_rate`    | Rendering-statistics display, only shown when the `IDRATE` cheat is activated |
+| `nughud_cmd`     | Command-history display, only shown if enabled by the user |
+| `nughud_speed`   | Speedometer, only shown when the `SPEED` cheat is activated |
 | `nughud_message` | Message and Chat display |
 | `nughud_secret`  | "Secret Revealed" and milestone-completion message display |
 
 **All text lines are horizontally alignable.**
 
-There are some additional properties, `nughud_sts_ml` and `nughud_coord_ml`,
-that respectively determine whether to draw the Stats and Coordinates display as multiple lines or a single one,
-with the following possible values:
-
-- `-1` to draw them according to the user's choice, through the `hud_widget_layout` CVAR.
-- ` 0` to forcefully draw them as a single line.
-- ` 1` to forcefully draw them as multiple lines.
+There are some additional properties -- `nughud_sts_ml` and `nughud_coord_ml` --
+that respectively determine whether to draw the Stats and Coordinates display as multiple lines or a single one (currently unused).
 
 There is an additional toggle, `nughud_message_defx`, to forcefully draw the _Message_ display at its original X position,
 where it'll be affected by the _Centered Messages_ setting.
-
-Note that the _Chat_ display is always drawn from the (widescreen-dependent) leftmost border of the screen,
-regardless of the _Message_ display's X position and alignment.
 
 ### Stacks
 
@@ -143,11 +145,11 @@ so as to leave space to prevent overlapping issues due to those displays' potent
 
 ```
 ; This is a comment!
-; Loading a NUGHUD with these contents will restore the Face widget.
+; Loading a NUGHUD lump with these contents will restore the Face widget.
 
 nughud_face_x 143
 
-; Move the Frags widget elsewhere, since in the default NUGHUD,
+; Move the Frags widget elsewhere, since in the default NUGHUD lump,
 ; it is drawn right where the Face is drawn in the traditional Status Bar.
 nughud_frags_x     314
 nughud_frags_y     155
@@ -156,7 +158,7 @@ nughud_frags_align 1
 ```
 
 ```
-; Loading a NUGHUD with these contents will create a bottom-aligned stack on the right side of the screen
+; Loading a NUGHUD lump with these contents will create a bottom-aligned stack on the right side of the screen
 ; and assign the Level Name and "Secret Revealed" message displays to it.
 
 nughud_stack5_x     318
@@ -241,12 +243,14 @@ Infinity, drawn in place of the Ammo count when using weapons with no ammo type 
 
 ### Patches
 
-**Patches are static graphics that can be drawn anywhere on the screen**, behind the rest of widgets.  
+**Patches are static graphics that can be drawn anywhere on the screen**, behind the rest of widgets.
+
 Up to 8 patches can be drawn; `patch1` is drawn behind `patch2`, which is drawn behind `patch3`, and so on.
 Most widgets are drawn over patches, with the exception of bars: the first 4 patches are drawn behind bars, while the rest are drawn over them.
 
 Aside from the shared properties, **patches make use of an additional property, `_name`, that determines the name of the graphic lump to be used**,
-which can be either a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`).  
+which can be either a sprite (i.e. a lump between `S_START` and `S_END` markers, like `MEDIA0`) or a graphic (like `STBAR`).
+
 **Custom lumps can be used** (for example, a graphic called `NEWPATCH`). The names used in `NUGHUD` must be enclosed between quotation marks.
 
 **Patches are alignable**, both horizontally and vertically, and can be disabled by simply not providing any graphic.
@@ -258,7 +262,7 @@ Otherwise, enabling it is useful when using exclusive graphics, whose offsets ar
 #### Example
 
 ```
-; Loading a NUGHUD with these contents will draw
+; Loading a NUGHUD lump with these contents will draw
 ; the Status Bar graphic in its traditional position.
 ; It doesn't look right, but it's just an example.
 
@@ -276,7 +280,7 @@ nughud_patch2_name "STARMS"
 
 ### Status-Bar Chunks
 
-**Status-Bar chunks** are square regions of the Status Bar, taken from the currently loaded `STBAR`.
+**Status-bar chunks** are square regions of the status bar, taken from the currently loaded `STBAR`.
 Up to 8 chunks can be drawn; they are drawn behind patches, following the same order (`chunk1` before `chunk2`, etc.).
 
 Apart from the shared properties, **chunks make use of the following additional properties**:
@@ -286,8 +290,8 @@ Apart from the shared properties, **chunks make use of the following additional 
 - `_sw`: **Width** (right end, relative to left end) of the chunk, which can be any integer in the [1, 320] range.
 - `_sh`: **Height** (bottom end, relative to top end) of the chunk, which can be any integer in the [1, 32] range.
 
-Chunks can only be taken from the original 320x200 region of the Status Bar;
-this keeps the feature functional with wide Status Bars, whose extended borders are ignored.
+Chunks can only be taken from the original 320x200 region of the status bar;
+this keeps the feature functional with wide status bars, whose extended borders are ignored.
 
 **Note:** The `STBAR` graphic itself features the _Frags_ widget instead of the _Arms_ widget.
 The latter can be drawn as a patch.
@@ -299,7 +303,7 @@ The latter can be drawn as a patch.
 
 ---
 
-**By default, the Nugget HUD emulates Woof's Crispy HUD**, with the exception of showing Arms numbers `2-9` instead of `2-7`.
+**The default `NUGHUD` is based on the traditional status bar**, with the addition of showing Arms numbers `2-9` instead of `2-7`.
 
-**Said default HUD**, as built into the executable, **is available in text format as `nughud.lmp`**, found in the `docs/` folder.
-Comments were added to it for clarity. Feel free to use it as a base to make new HUDs.
+**Said default `NUGHUD`**, as built into the executable, **is available in text format as `nughud.lmp`**, found in the `docs/` folder.
+Comments were added to it for clarity. Feel free to use it as a base to make new NUGHUDs.

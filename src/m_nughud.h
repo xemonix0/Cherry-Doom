@@ -20,13 +20,8 @@
 #ifndef __M_NUGHUD__
 #define __M_NUGHUD__
 
+#include "doomtype.h"
 #include "m_fixed.h"
-
-#define NUGHUDWIDESHIFT(x) (                                       \
-  st_crispyhud ? (abs(x) == 2) ? video.deltaw      * (2 / (x)) :   \
-                 (abs(x) == 1) ? distributed_delta *      (x)  : 0 \
-               : 0                                                 \
-)
 
 typedef struct nughud_widget_s {
   int x, y;
@@ -102,6 +97,8 @@ typedef struct nughud_s {
   int                coord_ml;
   nughud_textline_t  fps;
   nughud_textline_t  rate;
+  nughud_textline_t  cmd;
+  nughud_textline_t  speed;
   nughud_textline_t  message;
   boolean            message_defx;
   nughud_textline_t  secret;

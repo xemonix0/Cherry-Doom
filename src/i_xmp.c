@@ -150,6 +150,23 @@ static const char **I_XMP_DeviceList(void)
     return NULL;
 }
 
+static void I_XMP_BindVariables(void)
+{
+    ;
+}
+
+static const char *I_XMP_MusicFormat(void)
+{
+    if (!context)
+    {
+        return "Unknown";
+    }
+
+    static struct xmp_module_info info;
+    xmp_get_module_info(context, &info);
+    return info.mod->type;
+}
+
 stream_module_t stream_xmp_module =
 {
     I_XMP_InitStream,
@@ -159,4 +176,6 @@ stream_module_t stream_xmp_module =
     I_XMP_CloseStream,
     I_XMP_ShutdownStream,
     I_XMP_DeviceList,
+    I_XMP_BindVariables,
+    I_XMP_MusicFormat,
 };

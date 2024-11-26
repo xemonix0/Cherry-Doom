@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "i_oalstream.h"
+#include "m_config.h"
 
 #if (FLUIDSYNTH_VERSION_MAJOR < 2 \
      || (FLUIDSYNTH_VERSION_MAJOR == 2 && FLUIDSYNTH_VERSION_MINOR < 2))
@@ -31,27 +32,40 @@ typedef long fluid_long_long_t;
 typedef fluid_long_long_t fluid_int_t;
 #endif
 
-#include "d_iwad.h" // [FG] D_DoomExeDir()
+#include "d_iwad.h"
+#include "d_main.h"
 #include "doomtype.h"
 #include "i_glob.h"
 #include "i_printf.h"
 #include "i_sound.h"
 #include "m_array.h"
+#include "m_io.h"
 #include "m_misc.h"
 #include "memio.h"
 #include "mus2mid.h"
 #include "w_wad.h"
 #include "z_zone.h"
 
-char *soundfont_dir = "";
-boolean mus_chorus;
-boolean mus_reverb;
+static const char *soundfont_dir = "";
+static int fl_polyphony;
+static boolean fl_interpolation;
+static boolean fl_reverb;
+static boolean fl_chorus;
+static int fl_reverb_damp;
+static int fl_reverb_level;
+static int fl_reverb_roomsize;
+static int fl_reverb_width;
+static int fl_chorus_depth;
+static int fl_chorus_level;
+static int fl_chorus_nr;
+static int fl_chorus_speed;
 
 static fluid_synth_t *synth = NULL;
 static fluid_settings_t *settings = NULL;
 static fluid_player_t *player = NULL;
 
 static const char **soundfonts = NULL;
+static int interp_method;
 
 // Load SNDFONT lump
 
@@ -97,20 +111,56 @@ static fluid_long_long_t FL_sftell(void *handle)
     return mem_ftell((MEMFILE *)handle);
 }
 
-static void ScanDir(const char *dir)
+static void ScanDir(const char *dir, boolean recursion)
 {
-    char *rel = NULL;
     glob_t *glob;
 
-    // [FG] relative to the executable directory
-    if (dir[0] == '.')
+    if (recursion == false)
     {
-        rel = M_StringJoin(D_DoomExeDir(), DIR_SEPARATOR_S, dir, NULL);
-        dir = rel;
+        // [FG] replace global "/usr/share" with user's "~/.local/share"
+        const char usr_share[] = "/usr/share";
+        if (strncmp(dir, usr_share, strlen(usr_share)) == 0)
+        {
+            char *home_dir = M_getenv("XDG_DATA_HOME");
+
+            if (home_dir == NULL)
+            {
+                home_dir = M_getenv("HOME");
+            }
+
+            if (home_dir)
+            {
+                char *local_share = M_StringJoin(home_dir, "/.local/share");
+                char *local_dir = M_StringReplace(dir, usr_share, local_share);
+                free(local_share);
+                ScanDir(local_dir, true);
+                free(local_dir);
+            }
+        }
+        else if (dir[0] == '.')
+        {
+            // [FG] relative to the executable directory
+            char *rel = M_StringJoin(D_DoomExeDir(), DIR_SEPARATOR_S, dir);
+            ScanDir(rel, true);
+            free(rel);
+
+            // [FG] relative to the config directory (if different)
+            if (dir[1] != '.' && strcmp(D_DoomExeDir(), D_DoomPrefDir()) != 0)
+            {
+                rel = M_StringJoin(D_DoomPrefDir(), DIR_SEPARATOR_S, dir);
+                ScanDir(rel, true);
+                free(rel);
+            }
+
+            // [FG] never absolute path
+            return;
+        }
     }
 
+    I_Printf(VB_DEBUG, "Scanning for soundfonts in %s", dir);
+
     glob = I_StartMultiGlob(dir, GLOB_FLAG_NOCASE | GLOB_FLAG_SORTED, "*.sf2",
-                            "*.sf3", NULL);
+                            "*.sf3");
 
     while (1)
     {
@@ -125,11 +175,6 @@ static void ScanDir(const char *dir)
     }
 
     I_EndGlob(glob);
-
-    if (rel)
-    {
-        free(rel);
-    }
 }
 
 static void GetSoundFonts(void)
@@ -155,7 +200,7 @@ static void GetSoundFonts(void)
             // as another soundfont dir
             *p = '\0';
 
-            ScanDir(left);
+            ScanDir(left, false);
 
             left = p + 1;
         }
@@ -165,7 +210,7 @@ static void GetSoundFonts(void)
         }
     }
 
-    ScanDir(left);
+    ScanDir(left, false);
 
     free(dup_path);
 }
@@ -209,23 +254,38 @@ static boolean I_FL_InitStream(int device)
 
     settings = new_fluid_settings();
 
+    interp_method =
+        fl_interpolation ? FLUID_INTERP_HIGHEST : FLUID_INTERP_DEFAULT;
+
+    fluid_settings_setint(settings, "synth.polyphony", fl_polyphony);
+    fluid_settings_setnum(settings, "synth.gain", 0.2);
     fluid_settings_setnum(settings, "synth.sample-rate", SND_SAMPLERATE);
+    fluid_settings_setint(settings, "synth.device-id", 16);
+    fluid_settings_setstr(settings, "synth.midi-bank-select", "gs");
+    fluid_settings_setint(settings, "synth.reverb.active", fl_reverb);
+    fluid_settings_setint(settings, "synth.chorus.active", fl_chorus);
 
-    fluid_settings_setint(settings, "synth.chorus.active", mus_chorus);
-    fluid_settings_setint(settings, "synth.reverb.active", mus_reverb);
-
-    if (mus_reverb)
+    if (fl_reverb)
     {
-        fluid_settings_setnum(settings, "synth.reverb.room-size", 0.6);
-        fluid_settings_setnum(settings, "synth.reverb.damp", 0.4);
-        fluid_settings_setnum(settings, "synth.reverb.width", 4);
-        fluid_settings_setnum(settings, "synth.reverb.level", 0.15);
+        fluid_settings_setnum(settings, "synth.reverb.damp",
+                              fl_reverb_damp / 100.0);
+        fluid_settings_setnum(settings, "synth.reverb.level",
+                              fl_reverb_level / 100.0);
+        fluid_settings_setnum(settings, "synth.reverb.room-size",
+                              fl_reverb_roomsize / 100.0);
+        fluid_settings_setnum(settings, "synth.reverb.width",
+                              fl_reverb_width / 100.0);
     }
 
-    if (mus_chorus)
+    if (fl_chorus)
     {
-        fluid_settings_setnum(settings, "synth.chorus.level", 0.35);
-        fluid_settings_setnum(settings, "synth.chorus.depth", 5);
+        fluid_settings_setnum(settings, "synth.chorus.depth",
+                              fl_chorus_depth / 100.0);
+        fluid_settings_setnum(settings, "synth.chorus.level",
+                              fl_chorus_level / 100.0);
+        fluid_settings_setint(settings, "synth.chorus.nr", fl_chorus_nr);
+        fluid_settings_setnum(settings, "synth.chorus.speed",
+                              fl_chorus_speed / 100.0);
     }
 
     synth = new_fluid_synth(settings);
@@ -269,7 +329,7 @@ static boolean I_FL_InitStream(int device)
         char *errmsg;
         errmsg = M_StringJoin(
             "Error loading FluidSynth soundfont: ",
-            lumpnum >= 0 ? "SNDFONT lump" : soundfonts[device], NULL);
+            lumpnum >= 0 ? "SNDFONT lump" : soundfonts[device]);
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, PROJECT_STRING, errmsg,
                                  NULL);
         free(errmsg);
@@ -282,6 +342,8 @@ static boolean I_FL_InitStream(int device)
 
     return true;
 }
+
+static const char *music_format = "Unknown";
 
 static boolean I_FL_OpenStream(void *data, ALsizei size, ALenum *format,
                                ALsizei *freq, ALsizei *frame_size)
@@ -310,6 +372,7 @@ static boolean I_FL_OpenStream(void *data, ALsizei size, ALenum *format,
     if (IsMid(data, size))
     {
         result = fluid_player_add_mem(player, data, size);
+        music_format = "MIDI (FluidSynth)";
     }
     else
     {
@@ -330,6 +393,7 @@ static boolean I_FL_OpenStream(void *data, ALsizei size, ALenum *format,
 
         mem_fclose(instream);
         mem_fclose(outstream);
+        music_format = "MUS (FluidSynth)";
     }
 
     if (result != FLUID_OK)
@@ -369,6 +433,7 @@ static void I_FL_PlayStream(boolean looping)
         return;
     }
 
+    fluid_synth_set_interp_method(synth, -1, interp_method);
     fluid_player_set_loop(player, looping ? -1 : 1);
     fluid_player_play(player);
 }
@@ -407,7 +472,7 @@ static const char **I_FL_DeviceList(void)
 
     if (W_CheckNumForName("SNDFONT") >= 0)
     {
-        array_push(devices, "FluidSynth (SNDFONT)");
+        array_push(devices, "FluidSynth: SNDFONT");
         return devices;
     }
 
@@ -420,11 +485,58 @@ static const char **I_FL_DeviceList(void)
         {
             name[NAME_MAX_LENGTH] = '\0';
         }
-        array_push(devices, M_StringJoin("FluidSynth (", name, ")", NULL));
+        array_push(devices, M_StringJoin("FluidSynth: ", name));
         free(name);
     }
 
     return devices;
+}
+
+static void I_FL_BindVariables(void)
+{
+    M_BindStr("soundfont_dir", &soundfont_dir,
+#if defined(_WIN32)
+    "soundfonts",
+#else
+    "./soundfonts:"
+    // RedHat/Fedora/Arch
+    "/usr/share/soundfonts:"
+    // Debian/Ubuntu/OpenSUSE
+    "/usr/share/sounds/sf2:"
+    "/usr/share/sounds/sf3:"
+    // AppImage
+    "../share/" PROJECT_SHORTNAME "/soundfonts",
+#endif
+    wad_no, "[FluidSynth] Soundfont directories");
+    BIND_NUM(fl_polyphony, 256, 1, 65535,
+        "[FluidSynth] Number of voices that can be played in parallel");
+    BIND_BOOL(fl_interpolation, false,
+        "[FluidSynth] Interpolation method (0 = Default; 1 = Highest Quality)");
+    BIND_BOOL_MUSIC(fl_reverb, false,
+        "[FluidSynth] Enable reverb effects");
+    BIND_BOOL_MUSIC(fl_chorus, false,
+        "[FluidSynth] Enable chorus effects");
+    BIND_NUM(fl_reverb_damp, 30, 0, 100,
+        "[FluidSynth] Reverb damping");
+    BIND_NUM(fl_reverb_level, 70, 0, 100,
+        "[FluidSynth] Reverb output level");
+    BIND_NUM(fl_reverb_roomsize, 50, 0, 100,
+        "[FluidSynth] Reverb room size");
+    BIND_NUM(fl_reverb_width, 80, 0, 10000,
+        "[FluidSynth] Reverb width (stereo spread)");
+    BIND_NUM(fl_chorus_depth, 360, 0, 25600,
+        "[FluidSynth] Chorus modulation depth");
+    BIND_NUM(fl_chorus_level, 55, 0, 1000,
+        "[FluidSynth] Chorus output level");
+    BIND_NUM(fl_chorus_nr, 4, 0, 99,
+        "[FluidSynth] Chorus voice count");
+    BIND_NUM(fl_chorus_speed, 36, 10, 500,
+        "[FluidSynth] Chorus modulation speed");
+}
+
+static const char *I_FL_MusicFormat(void)
+{
+    return music_format;
 }
 
 stream_module_t stream_fl_module =
@@ -436,4 +548,6 @@ stream_module_t stream_fl_module =
     I_FL_CloseStream,
     I_FL_ShutdownStream,
     I_FL_DeviceList,
+    I_FL_BindVariables,
+    I_FL_MusicFormat,
 };

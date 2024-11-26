@@ -5,11 +5,9 @@ set(NUGGETDOOM_DOCS
     mbf.txt
     mbfedit.txt
     mbffaq.txt
-    nughud.lmp
-    nughud.md
-    options.txt
-    woofhud.lmp
-    woofhud.md)
+    nughud.lmp # [Nugget]
+    nughud.md # [Nugget]
+    options.txt)
 
 if(WIN32)
     install(FILES ${NUGGETDOOM_DOCS} DESTINATION docs)

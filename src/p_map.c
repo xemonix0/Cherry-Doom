@@ -38,6 +38,7 @@
 #include "p_mobj.h"
 #include "p_setup.h"
 #include "p_spec.h"
+#include "p_user.h"
 #include "r_defs.h"
 #include "r_main.h"
 #include "r_state.h"
@@ -354,7 +355,7 @@ boolean P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean boss)
 
   for (bx=xl ; bx<=xh ; bx++)
     for (by=yl ; by<=yh ; by++)
-      if (!P_BlockThingsIterator(bx,by,PIT_StompThing))
+      if (!P_BlockThingsIterator(bx, by, PIT_StompThing, true))
         return false;
 
   // the move is ok,
@@ -571,18 +572,12 @@ static const inline fixed_t thingheight (const mobj_t *const thing, const mobj_t
 // [Nugget] Factored out from `p_user.c`
 fixed_t P_PitchToSlope(const fixed_t pitch)
 {
-  if (pitch)
-  {
-    const fixed_t slope = -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT];
-    return (fixed_t)((int64_t)slope * SCREENHEIGHT / ACTUALHEIGHT);
-  }
-  else
-  {
-    return 0;
-  }
+  return pitch ? -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT] : 0;
 }
 
 // [Nugget] Over/Under /------------------------------------------------------
+
+int over_under;
 
 // Potential over/under mobjs
 static mobj_t *p_below_tmthing, *p_above_tmthing, // For `tmthing`
@@ -614,6 +609,10 @@ static void P_SetOverUnderMobjs(mobj_t *thing)
     }
   }
 }
+
+// [Nugget]
+boolean comp_lscollision;
+boolean comp_lsamnesia;
 
 // Factored out from `PIT_CheckThing()`
 boolean P_SkullSlam(mobj_t **skull, mobj_t *hitthing)
@@ -808,7 +807,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
         P_DamageMobj(thing, tmthing, tmthing->target, damage);
 
         numspechit = 0;
-        return (true);
+        return true;
       }
 
       // damage / explode
@@ -984,7 +983,7 @@ boolean P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y)
 
   for (bx=xl ; bx<=xh ; bx++)
     for (by=yl ; by<=yh ; by++)
-      if (!P_BlockThingsIterator(bx,by,PIT_CheckThing))
+      if (!P_BlockThingsIterator(bx, by, PIT_CheckThing, !(tmthing->flags2 & MF2_RIP)))
         return false;
 
   // check lines
@@ -1117,6 +1116,7 @@ boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
   // killough 11/98: simplified
 
   if (!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
+  {
     while (numspechit--)
       if (spechit[numspechit]->special)  // see if the line was crossed
 	{
@@ -1125,6 +1125,10 @@ boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
 	      P_PointOnLineSide(thing->x, thing->y, spechit[numspechit]))
 	    P_CrossSpecialLine(spechit[numspechit], oldside, thing, false);
 	}
+    // There are checks elsewhere for numspechit == 0, so we don't want to
+    // leave numspechit == -1.
+    numspechit = 0;
+  }
 
   return true;
 }
@@ -1384,7 +1388,6 @@ static void P_HitSlideLine(line_t *ld)
   }
   else
   {
-    extern boolean onground;
     icyfloor = !compatibility &&
     variable_friction &&
     slidemo->player &&
@@ -1396,7 +1399,7 @@ static void P_HitSlideLine(line_t *ld)
     {
       if (icyfloor && abs(tmymove) > abs(tmxmove))
 	{
-	  S_StartSound(slidemo,sfx_oof); // oooff!
+	  S_StartSoundPreset(slidemo, sfx_oof, PITCH_FULL); // oooff!
 	  tmxmove /= 2; // absorb half the momentum
 	  tmymove = -tmymove/2;
 	}
@@ -1409,7 +1412,7 @@ static void P_HitSlideLine(line_t *ld)
     {
       if (icyfloor && abs(tmxmove) > abs(tmymove))
 	{
-	  S_StartSound(slidemo,sfx_oof); // oooff!
+	  S_StartSoundPreset(slidemo, sfx_oof, PITCH_FULL); // oooff!
 	  tmxmove = -tmxmove/2; // absorb half the momentum
 	  tmymove /= 2;
 	}
@@ -1441,7 +1444,7 @@ static void P_HitSlideLine(line_t *ld)
 
   if (icyfloor && deltaangle > ANG45 && deltaangle < ANG90+ANG45)
     {
-      S_StartSound(slidemo,sfx_oof); // oooff!
+      S_StartSoundPreset(slidemo, sfx_oof, PITCH_FULL); // oooff!
       moveangle = lineangle - deltaangle;
       movelen /= 2; // absorb
       moveangle >>= ANGLETOFINESHIFT;
@@ -1768,7 +1771,7 @@ static void P_SpawnExplosion(fixed_t x, fixed_t y, fixed_t z)
 //
 static boolean PTR_ShootTraverse(intercept_t *in)
 {
-  fixed_t slope, dist, thingtopslope, thingbottomslope, x, y, z, frac;
+  fixed_t dist, thingtopslope, thingbottomslope, x, y, z, frac;
   mobj_t *th;
 
   if (in->isaline)
@@ -1789,15 +1792,15 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 	  // backsector can be NULL when emulating missing back side.
 	  if (li->backsector == NULL)
 	  {
-	    if ((slope = FixedDiv(openbottom - shootz , dist)) <= aimslope &&
-	        (slope = FixedDiv(opentop - shootz , dist)) >= aimslope)
+	    if (FixedDiv(openbottom - shootz , dist) <= aimslope &&
+	        FixedDiv(opentop - shootz , dist) >= aimslope)
 	      return true;      // shot continues
 	  }
 	  else
 	  if ((li->frontsector->floorheight==li->backsector->floorheight ||
-	       (slope = FixedDiv(openbottom - shootz , dist)) <= aimslope) &&
+	       FixedDiv(openbottom - shootz , dist) <= aimslope) &&
 	      (li->frontsector->ceilingheight==li->backsector->ceilingheight ||
-	       (slope = FixedDiv (opentop - shootz , dist)) >= aimslope))
+	       FixedDiv (opentop - shootz , dist) >= aimslope))
 	    return true;      // shot continues
 	}
 
@@ -2349,7 +2352,7 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
 
   for (y=yl ; y<=yh ; y++)
     for (x=xl ; x<=xh ; x++)
-      P_BlockThingsIterator(x, y, PIT_RadiusAttack);
+      P_BlockThingsIterator(x, y, PIT_RadiusAttack, false);
 }
 
 //
@@ -2491,7 +2494,7 @@ boolean P_ChangeSector(sector_t *sector,boolean crunch)
 
   for (x=sector->blockbox[BOXLEFT] ; x<= sector->blockbox[BOXRIGHT] ; x++)
     for (y=sector->blockbox[BOXBOTTOM];y<= sector->blockbox[BOXTOP] ; y++)
-      P_BlockThingsIterator (x, y, PIT_ChangeSector);
+      P_BlockThingsIterator (x, y, PIT_ChangeSector, false);
 
   return nofit;
 }
@@ -2554,7 +2557,7 @@ msecnode_t *headsecnode = NULL;
 
 static msecnode_t *P_GetSecnode(void)
 {
-  msecnode_t *node = headsecnode;
+  msecnode_t *node;
 
   return headsecnode ?
     node = headsecnode, headsecnode = node->m_snext, node :
@@ -2980,7 +2983,7 @@ overunder_t P_CheckOverUnderMobj(mobj_t *thing)
 
   for (bx = xl; bx <= xh; bx++)
     for (by = yl; by <= yh; by++)
-      if (!P_BlockThingsIterator(bx, by, PIT_CheckOverUnderMobjZ))
+      if (!P_BlockThingsIterator(bx, by, PIT_CheckOverUnderMobjZ, !(tmthing->flags2 & MF2_RIP)))
       {
         P_SetOverUnderMobjs(tmthing);
         ret = zdir;

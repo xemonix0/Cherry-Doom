@@ -56,15 +56,17 @@
 #include "r_plane.h" // killough 10/98
 #include "r_sky.h"   // R_GetSkyColor
 #include "r_state.h"
+#include "r_swirl.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "st_stuff.h"
+#include "st_widgets.h"
 #include "tables.h"
 #include "w_wad.h"
 #include "z_zone.h"
 
-// [Nugget]
-#include "hu_stuff.h" // hud_secret_message
+// [Nugget] CVARs
+boolean comp_keynoway;
 
 //
 // Animating textures and planes
@@ -238,9 +240,9 @@ void P_HitFloor (mobj_t *mo, int oof)
 
   // [Nugget]: [NS] Landing sound for longer falls. (Hexen's calculation.)
   if ((hitsound[terrain][oof] == sfx_oof) && (mo->momz < -GRAVITY * 12))
-    S_StartSoundOptional(mo, sfx_plland, sfx_oof);
+    S_StartSoundHitFloorOptional(mo, sfx_plland, sfx_oof);
   else
-    S_StartSound(mo, hitsound[terrain][oof]);
+    S_StartSoundHitFloor(mo, hitsound[terrain][oof]);
 }
 
 ///////////////////////////////////////////////////////////////
@@ -823,7 +825,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           doomprintf(player, MESSAGES_NONE, "%s", s_PD_ANY); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, // [Nugget] Locked door sound
                                STRICTMODE(comp_keynoway) ? sfx_noway : sfx_oof); // [Nugget]
-          ST_SetKeyBlink(player, KEYBLINK_EITHER, KEYBLINK_EITHER, KEYBLINK_EITHER);
+          // ST_SetKeyBlink(player, KEYBLINK_EITHER, KEYBLINK_EITHER, KEYBLINK_EITHER);
           return false;
         }
       break;
@@ -834,7 +836,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_REDK : s_PD_REDC); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, // [Nugget] Locked door sound
                                STRICTMODE(comp_keynoway) ? sfx_noway : sfx_oof); // [Nugget]
-          ST_SetKeyBlink(player, KEYBLINK_NONE, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD);
+          // ST_SetKeyBlink(player, KEYBLINK_NONE, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD);
           return false;
         }
       break;
@@ -845,7 +847,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_BLUEK : s_PD_BLUEC); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, // [Nugget] Locked door sound
                                STRICTMODE(comp_keynoway) ? sfx_noway : sfx_oof); // [Nugget]
-          ST_SetKeyBlink(player, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD, KEYBLINK_NONE, KEYBLINK_NONE);
+          // ST_SetKeyBlink(player, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD, KEYBLINK_NONE, KEYBLINK_NONE);
           return false;
         }
       break;
@@ -856,7 +858,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_YELLOWK : s_PD_YELLOWC); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, // [Nugget] Locked door sound
                                STRICTMODE(comp_keynoway) ? sfx_noway : sfx_oof); // [Nugget]
-          ST_SetKeyBlink(player, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD, KEYBLINK_NONE);
+          // ST_SetKeyBlink(player, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_CARD, KEYBLINK_NONE);
           return false;
         }
       break;
@@ -867,7 +869,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_REDK : s_PD_REDS); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, // [Nugget] Locked door sound
                                STRICTMODE(comp_keynoway) ? sfx_noway : sfx_oof); // [Nugget]
-          ST_SetKeyBlink(player, KEYBLINK_NONE, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL);
+          // ST_SetKeyBlink(player, KEYBLINK_NONE, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL);
           return false;
         }
       break;
@@ -878,7 +880,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_BLUEK : s_PD_BLUES); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, // [Nugget] Locked door sound
                                STRICTMODE(comp_keynoway) ? sfx_noway : sfx_oof); // [Nugget]
-          ST_SetKeyBlink(player, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL, KEYBLINK_NONE, KEYBLINK_NONE);
+          // ST_SetKeyBlink(player, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL, KEYBLINK_NONE, KEYBLINK_NONE);
           return false;
         }
       break;
@@ -889,7 +891,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           doomprintf(player, MESSAGES_NONE, "%s", skulliscard? s_PD_YELLOWK : s_PD_YELLOWS); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, // [Nugget] Locked door sound
                                STRICTMODE(comp_keynoway) ? sfx_noway : sfx_oof); // [Nugget]
-          ST_SetKeyBlink(player, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL, KEYBLINK_NONE);
+          // ST_SetKeyBlink(player, KEYBLINK_NONE, skulliscard ? KEYBLINK_EITHER : KEYBLINK_SKULL, KEYBLINK_NONE);
           return false;
         }
       break;
@@ -905,7 +907,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           doomprintf(player, MESSAGES_NONE, "%s", s_PD_ALL6); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, // [Nugget] Locked door sound
                                STRICTMODE(comp_keynoway) ? sfx_noway : sfx_oof); // [Nugget]
-          ST_SetKeyBlink(player, KEYBLINK_BOTH, KEYBLINK_BOTH, KEYBLINK_BOTH);
+          // ST_SetKeyBlink(player, KEYBLINK_BOTH, KEYBLINK_BOTH, KEYBLINK_BOTH);
           return false;
         }
       if (skulliscard &&
@@ -918,7 +920,7 @@ boolean P_CanUnlockGenDoor(line_t *line, player_t *player)
           doomprintf(player, MESSAGES_NONE, "%s", s_PD_ALL3); // Ty 03/27/98 - externalized
           S_StartSoundOptional(player->mo, sfx_locked, // [Nugget] Locked door sound
                                STRICTMODE(comp_keynoway) ? sfx_noway : sfx_oof); // [Nugget]
-          ST_SetKeyBlink(player, KEYBLINK_EITHER, KEYBLINK_EITHER, KEYBLINK_EITHER);
+          // ST_SetKeyBlink(player, KEYBLINK_EITHER, KEYBLINK_EITHER, KEYBLINK_EITHER);
           return false;
         }
       break;
@@ -1022,6 +1024,22 @@ int P_CheckTag(line_t *line)
     }
 
   return 0;
+}
+
+boolean P_IsDeathExit(sector_t *sector)
+{
+  if (sector->special < 32)
+  {
+    return (sector->special == 11);
+  }
+  else if (mbf21 && sector->special & DEATH_MASK)
+  {
+    const int i = (sector->special & DAMAGE_MASK) >> DAMAGE_SHIFT;
+
+    return (i == 2 || i == 3);
+  }
+
+  return false;
 }
 
 //
@@ -1202,7 +1220,7 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing, boolean bossactio
 
   if (!thing->player || bossaction)
     {
-      ok = 0;
+      ok = bossaction;
       switch(line->special)
         {
         case 39:      // teleport trigger
@@ -2175,7 +2193,8 @@ static void P_SecretRevealed(player_t *player)
   {
     int secretcount = 0;
 
-    for (int pl = 0;  pl < MAXPLAYERS;  ++pl) {
+    for (int pl = 0;  pl < MAXPLAYERS;  ++pl)
+    {
       if (playeringame[pl])
       { secretcount += players[pl].secretcount; }
     }
@@ -2184,9 +2203,11 @@ static void P_SecretRevealed(player_t *player)
     {
       complete_milestones |= MILESTONE_SECRETS;
 
-      if (announce_milestones) {
+      if (announce_milestones)
+      {
         players[displayplayer].secretmessage = "All secrets revealed!";
         S_StartSound(NULL, sfx_secret);
+
         return; // Skip the normal "Secret revealed" message
       }
     }
@@ -2194,11 +2215,20 @@ static void P_SecretRevealed(player_t *player)
 
   if (hud_secret_message && player == &players[consoleplayer])
   {
-    // [Nugget] Secret count in secret revealed message, from Crispy Doom
-    static char str_count[32];
-    M_snprintf(str_count, sizeof(str_count), "Secret %d of %d revealed!", player->secretcount, totalsecret);
+    if (hud_secret_message == SECRETMESSAGE_COUNT)
+    {
+      static char str_count[32];
 
-    player->secretmessage = (hud_secret_message == secretmessage_count) ? str_count : s_HUSTR_SECRETFOUND;
+      M_snprintf(str_count, sizeof(str_count), "Secret %d of %d revealed!",
+                 player->secretcount, totalsecret);
+
+      player->secretmessage = str_count;
+    }
+    else
+    {
+      player->secretmessage = s_HUSTR_SECRETFOUND;
+    }
+
     S_StartSound(NULL, sfx_secret);
   }
 }
@@ -2375,8 +2405,6 @@ int             levelTimeCount;
 boolean         levelFragLimit;      // Ty 03/18/98 Added -frags support
 int             levelFragLimitCount; // Ty 03/18/98 Added -frags support
 
-boolean         r_swirl;
-
 void P_UpdateSpecials (void)
 {
   anim_t*     anim;
@@ -2384,8 +2412,12 @@ void P_UpdateSpecials (void)
   int         i;
 
   // Downcount level timer, exit level if elapsed
-  if (levelTimer == true && --levelTimeCount)
-    G_ExitLevel();
+  if (levelTimer == true)
+  {
+    levelTimeCount--;
+    if (!levelTimeCount)
+      G_ExitLevel();
+  }
 
   // Check frag counters, if frag limit reached, exit level // Ty 03/18/98
   //  Seems like the total frags should be kept in a simple
@@ -2456,6 +2488,8 @@ void P_UpdateSpecials (void)
 
   // [crispy] draw fuzz effect independent of rendering frame rate
   R_SetFuzzPosTic();
+
+  R_UpdateSky();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2722,11 +2756,11 @@ void T_Scroll(scroll_t *s)
 
     case sc_floor:                  // killough 3/7/98: Scroll floor texture
         sec = sectors + s->affectee;
-        if (sec->oldscrollgametic != gametic)
+        if (sec->old_floor_offs_gametic != gametic)
         {
           sec->old_floor_xoffs = sec->base_floor_xoffs;
           sec->old_floor_yoffs = sec->base_floor_yoffs;
-          sec->oldscrollgametic = gametic;
+          sec->old_floor_offs_gametic = gametic;
         }
         sec->base_floor_xoffs += dx;
         sec->base_floor_yoffs += dy;
@@ -2736,11 +2770,11 @@ void T_Scroll(scroll_t *s)
 
     case sc_ceiling:               // killough 3/7/98: Scroll ceiling texture
         sec = sectors + s->affectee;
-        if (sec->oldscrollgametic != gametic)
+        if (sec->old_ceil_offs_gametic != gametic)
         {
           sec->old_ceiling_xoffs = sec->base_ceiling_xoffs;
           sec->old_ceiling_yoffs = sec->base_ceiling_yoffs;
-          sec->oldscrollgametic = gametic;
+          sec->old_ceil_offs_gametic = gametic;
         }
         sec->base_ceiling_xoffs += dx;
         sec->base_ceiling_yoffs += dy;
@@ -3329,7 +3363,7 @@ void T_Pusher(pusher_t *p)
       yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
       for (bx=xl ; bx<=xh ; bx++)
         for (by=yl ; by<=yh ; by++)
-          P_BlockThingsIterator(bx,by,PIT_PushThing);
+          P_BlockThingsIterator(bx, by, PIT_PushThing, true);
       return;
     }
 
