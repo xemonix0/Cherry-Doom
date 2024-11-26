@@ -2501,10 +2501,10 @@ void D_DoomMain(void)
 
   //!
   // @category game
-  // @arg <s>
+  // @arg <ps>
   // @vanilla
   //
-  // Load the game in slot s.
+  // Load the game on page p (0-7) in slot s (0-7). Use 255 to load an auto save.
   //
 
   p = M_CheckParmWithArgs("-loadgame", 1);
@@ -2744,10 +2744,19 @@ void D_DoomMain(void)
 
   // [FG] init graphics (video.widedelta) before HUD widgets
   I_InitGraphics();
+  I_InitKeyboard();
 
   MN_InitMenuStrings();
 
-  if (startloadgame >= 0)
+  // Auto save slot is 255 for -loadgame command.
+  if (startloadgame == 255 && !demorecording && gameaction != ga_playdemo
+      && !netgame)
+  {
+    char *file = G_AutoSaveName();
+    G_LoadAutoSave(file, true);
+    free(file);
+  }
+  else if (startloadgame >= 0 && startloadgame <= 77) // Page 0-7, slot 0-7.
   {
     char *file;
     file = G_SaveGameName(startloadgame);

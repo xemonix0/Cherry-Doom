@@ -32,6 +32,7 @@
 #include "d_event.h"
 #include "d_main.h"
 #include "doomdef.h"
+#include "doomkeys.h"
 #include "doomstat.h"
 #include "doomtype.h"
 #include "dstrings.h"
@@ -1082,7 +1083,7 @@ static void M_LoadAutoSaveSelect(int choice)
 {
     saveg_compat = saveg_woof510;
     char *name = G_AutoSaveName();
-    G_LoadAutoSave(name);
+    G_LoadAutoSave(name, false);
     free(name);
     MN_ClearMenus();
     // Auto save slot doesn't exist for save menu, so don't change lastOn.
@@ -1503,6 +1504,9 @@ static void M_SaveSelect(int choice)
 
     // we are going to be intercepting all chars
     saveStringEnter = 1;
+
+    // We need to turn on text input:
+    I_StartTextInput();
 
     saveSlot = choice;
     strcpy(saveOldString, savegamestrings[choice]);
@@ -3104,6 +3108,9 @@ boolean M_Responder(event_t *ev)
             ch = ev->data1.i;
             break;
 
+        case ev_text:
+            break;
+
         case ev_keyup:
             return false;
 
@@ -3181,7 +3188,7 @@ boolean M_Responder(event_t *ev)
 
     if (saveStringEnter)
     {
-        if (action == MENU_BACKSPACE) // phares 3/7/98
+        if (ch == KEY_BACKSPACE) // phares 3/7/98
         {
             if (saveCharIndex > 0)
             {
@@ -3197,28 +3204,32 @@ boolean M_Responder(event_t *ev)
                 savegamestrings[saveSlot][saveCharIndex] = 0;
             }
         }
-        else if (action == MENU_ESCAPE) // phares 3/7/98
+        else if (ch == KEY_ESCAPE) // phares 3/7/98
         {
+            I_StopTextInput();
             saveStringEnter = 0;
             strcpy(&savegamestrings[saveSlot][0], saveOldString);
         }
-        else if (action == MENU_ENTER) // phares 3/7/98
+        else if (ch == KEY_ENTER) // phares 3/7/98
         {
+            I_StopTextInput();
             saveStringEnter = 0;
             if (savegamestrings[saveSlot][0])
             {
                 M_DoSave(saveSlot);
             }
         }
-        else
+        else if (ev->type == ev_text)
         {
-            ch = M_ToUpper(ch);
+            int txt = ev->data1.i;
 
-            if (ch >= 32 && ch <= 127 && saveCharIndex < SAVESTRINGSIZE - 1
+            txt = M_ToUpper(txt);
+
+            if (txt >= ' ' && txt <= '_' && saveCharIndex < SAVESTRINGSIZE - 1
                 && MN_StringWidth(savegamestrings[saveSlot])
                        < (SAVESTRINGSIZE - 2) * 8)
             {
-                savegamestrings[saveSlot][saveCharIndex++] = ch;
+                savegamestrings[saveSlot][saveCharIndex++] = txt;
                 savegamestrings[saveSlot][saveCharIndex] = 0;
             }
             saveStringEnter = 2; // [FG] save string modified
@@ -3822,7 +3833,7 @@ static void WriteText(int x, int y, const char *string)
         }
 
         c = M_ToUpper(c) - HU_FONTSTART;
-        if (c < 0 || c >= HU_FONTSIZE)
+        if (c < 0 || c >= HU_FONTSIZE || hu_font[c] == NULL)
         {
             cx += 4;
             continue;

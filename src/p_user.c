@@ -829,9 +829,9 @@ void P_PlayerThink (player_t* player)
         // Do not go to plasma or BFG in shareware,
         //  even if cheated.
 
-        if ((newweapon != wp_plasma && newweapon != wp_bfg)
-            || (gamemode != shareware) )
-          player->pendingweapon = newweapon;
+	if ((newweapon != wp_plasma && newweapon != wp_bfg)
+	    || (gamemode != shareware) )
+	  player->nextweapon = player->pendingweapon = newweapon;
     }
 
   // check for use

@@ -470,7 +470,7 @@ static boolean CheckConditions(sbarcondition_t *conditions, player_t *player)
                     {
                         enabled |= (automapactive == AM_FULL && automapoverlay);
                     }
-                    else if (cond->param & sbc_mode_automap)
+                    if (cond->param & sbc_mode_automap)
                     {
                         enabled |= (automapactive == AM_FULL && !automapoverlay);
                     }
@@ -1131,6 +1131,8 @@ static void UpdateElem(sbarelem_t *elem, player_t *player)
 
 static void UpdateStatusBar(player_t *player)
 {
+    static int oldbarindex = -1;
+
     int barindex = MAX(screenblocks - 10, 0);
 
     if (automapactive == AM_FULL && automapoverlay == AM_OVERLAY_OFF)
@@ -1140,8 +1142,13 @@ static void UpdateStatusBar(player_t *player)
 
     if (st_nughud) { barindex = 0; } // [Nugget] NUGHUD
 
-    st_time_elem = NULL;
-    st_cmd_elem = NULL;
+    if (oldbarindex != barindex)
+    {
+        st_time_elem = NULL;
+        st_cmd_elem = NULL;
+        st_msg_elem = NULL;
+        oldbarindex = barindex;
+    }
 
     statusbar = &sbardef->statusbars[barindex];
 
@@ -1150,6 +1157,7 @@ static void UpdateStatusBar(player_t *player)
     sbarelem_t *child;
     array_foreach(child, statusbar->children)
     {
+        // [Nugget]
         if (child->type == sbe_number || child->type == sbe_percent)
         {
             switch (child->subtype.number->type)
@@ -1585,6 +1593,10 @@ static void DrawElem(int x, int y, sbarelem_t *elem, player_t *player)
                 st_cmd_x = x;
                 st_cmd_y = y;
             }
+            if (message_centered && elem == st_msg_elem && !st_nughud) // [Nugget] NUGHUD
+            {
+                break;
+            }
             DrawLines(x, y, elem);
             break;
 
@@ -1701,6 +1713,14 @@ static void DrawBackground(const char *name)
     V_CopyRect(0, 0, st_backing_screen, video.unscaledw, ST_HEIGHT, 0, ST_Y);
 }
 
+static void DrawCenteredMessage(void)
+{
+    if (message_centered && st_msg_elem && !st_nughud) // [Nugget] NUGHUD
+    {
+        DrawLines(SCREENWIDTH / 2, 0, st_msg_elem);
+    }
+}
+
 static void DrawStatusBar(void)
 {
     player_t *player = &players[displayplayer];
@@ -1717,6 +1737,8 @@ static void DrawStatusBar(void)
     {
         DrawElem(0, SCREENHEIGHT - statusbar->height, child, player);
     }
+
+    DrawCenteredMessage();
 
     // [Nugget] In case of `am_noammo`
     if (ammo_elem && !CheckConditions(ammo_elem->conditions, player))
@@ -2120,11 +2142,6 @@ void ST_Init(void)
     stcfnt = LoadSTCFN();
     hu_font = stcfnt->characters;
 
-    if (!hu_font)
-    {
-        I_Error("ST_Init: \"STCFN\" font not found");
-    }
-
     // [Nugget]
     if (firsttime) { firsttime = false; }
     else           { return; }
@@ -2193,25 +2210,10 @@ void ST_Init(void)
             default: continue;
         }
 
-        if (nughud.message_defx)
+        if (type == sbw_chat && nughud.message_defx)
         {
-            if (type == sbw_message)
-            {
-                /*if (message_centered)
-                {
-                  elem->x_pos = SCREENWIDTH/2;
-                  elem->alignment = align_center;
-                }
-                else*/ {
-                  elem->x_pos = 0;
-                  elem->alignment = sbe_h_left | sbe_wide_left;
-                }
-            }
-            else if (type == sbw_chat)
-            {
-                elem->x_pos = 0;
-                elem->alignment = sbe_h_left | sbe_wide_left;
-            }
+            elem->x_pos = 0;
+            elem->alignment = sbe_h_left | sbe_wide_left;
         }
 
         if (NughudAddToStack(ntl, elem, ntl->stack))
