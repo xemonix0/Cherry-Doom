@@ -107,7 +107,8 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Message Lines_** setting (scrolling direction determined by the CFG-only `hud_msg_scrollup` CVAR)
 - **_(Chat) Message Duration_** settings
 - **_Show Powerup Timers_** setting
-- **_Berserk display when using Fist** setting [partially p.f. Crispy Doom]
+- **_Blink Missing Keys_** setting [partially p.f. Crispy Doom]
+- **_Berserk display when using Fist_** setting [partially p.f. Crispy Doom]
 - **_Automap Level Stats Format_** setting
 - **Level-Stats Selection** settings (CFG-only: `hud_stats_#[_map]`)
 - **Event Timers:**

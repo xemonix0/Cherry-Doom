@@ -61,6 +61,7 @@
 
 // [Nugget]
 #include "m_nughud.h"
+#include "sounds.h"
 
 // [Nugget] /=================================================================
 
@@ -81,6 +82,7 @@ boolean no_berserk_tint;
 boolean no_radsuit_tint;
 boolean comp_godface;
 boolean comp_unusedpals;
+static boolean hud_blink_keys;
 static boolean sts_show_berserk;
 
 typedef enum hudtype_s
@@ -96,6 +98,23 @@ static hudtype_t hud_type;
 #define HU_FONTEXTRAS 7
 
 static patch_t *font_extras[HU_FONTEXTRAS] = { NULL };
+
+// Key blinking --------------------------------------------------------------
+
+#define KEYBLINKMASK 0x8
+#define KEYBLINKTICS (7*KEYBLINKMASK)
+
+keyblink_t st_keyorskull[3];
+
+static keyblink_t keyblinkkeys[3];
+static int keyblinktics;
+
+static int key_override[6];
+
+static void ResetKeyOverride(void)
+{
+  for (int i = 0;  i < 6;  i++) { key_override[i] = -1; }
+}
 
 // NUGHUD --------------------------------------------------------------------
 
@@ -225,9 +244,6 @@ static boolean weapon_carousel;
 
 // used for evil grin
 static boolean  oldweaponsowned[NUMWEAPONS];
-
-// [crispy] blinking key or skull in the status bar
-int st_keyorskull[3];
 
 static sbardef_t *sbardef;
 
@@ -422,11 +438,33 @@ static boolean CheckConditions(sbarcondition_t *conditions, player_t *player)
                 break;
 
             case sbc_itemowned:
+                { // [Nugget] Key blinking
+                  const int i = cond->param - item_bluecard;
+
+                  if (item_bluecard <= cond->param && cond->param <= item_redskull
+                      && key_override[i] != -1)
+                  {
+                      result &= !!key_override[i];
+                      break;
+                  }
+                }
+
                 result &=
                     !!P_EvaluateItemOwned((itemtype_t)cond->param, player);
                 break;
 
             case sbc_itemnotowned:
+                { // [Nugget] Key blinking
+                  const int i = cond->param - item_bluecard;
+
+                  if (item_bluecard <= cond->param && cond->param <= item_redskull
+                      && key_override[i] != -1)
+                  {
+                      result &= !key_override[i];
+                      break;
+                  }
+                }
+
                 result &=
                     !P_EvaluateItemOwned((itemtype_t)cond->param, player);
                 break;
@@ -1152,6 +1190,69 @@ static void UpdateStatusBar(player_t *player)
     }
 
     statusbar = &sbardef->statusbars[st_nughud ? 0 : barindex]; // [Nugget] NUGHUD
+
+    // [Nugget] Key blinking /------------------------------------------------
+
+    static boolean was_blinking = false;
+
+    if (was_blinking != !!keyblinktics)
+    {
+        if (was_blinking) { ResetKeyOverride(); }
+
+        was_blinking = !!keyblinktics;
+    }
+
+    // [crispy] blinking key or skull in the status bar
+    if (keyblinktics)
+    {
+        if (!hud_blink_keys || barindex == 2)
+        {
+            keyblinktics = 0;
+        }
+        else {
+            if (!(keyblinktics & (2*KEYBLINKMASK - 1)))
+            { S_StartSoundPitchOptional(NULL, sfx_keybnk, sfx_itemup, PITCH_NONE); }
+
+            keyblinktics--;
+
+            for (int i = 0;  i < 3;  i++)
+            {
+                keyblink_t keyblink = keyblinkkeys[i];
+
+                if (!keyblink) { continue; }
+
+                key_override[i] = key_override[i + 3] = 0;
+
+                if (keyblinktics & KEYBLINKMASK)
+                {
+                    if (keyblink == KEYBLINK_EITHER)
+                    {
+                        if (st_keyorskull[i] && st_keyorskull[i] != KEYBLINK_BOTH)
+                        {
+                            // Map has only one type
+                            keyblink = st_keyorskull[i];
+                        }
+                        else
+                        // Map has none or both types
+                        if ( (keyblinktics & (2*KEYBLINKMASK)) &&
+                            !(keyblinktics & (4*KEYBLINKMASK)))
+                        {
+                            keyblink = KEYBLINK_SKULL;
+                        }
+                        else
+                        {
+                            keyblink = KEYBLINK_CARD;
+                        }
+                    }
+
+                    if (keyblink & KEYBLINK_CARD)  { key_override[i]     = 1; }
+                    if (keyblink & KEYBLINK_SKULL) { key_override[i + 3] = 1; }
+                }
+            }
+        }
+    }
+
+    // [Nugget] -------------------------------------------------------------/
 
     sbarelem_t *child;
     array_foreach(child, statusbar->children)
@@ -2099,6 +2200,10 @@ void ST_Drawer(void)
 
 void ST_Start(void)
 {
+    // [Nugget] Key blinking
+    memset(keyblinkkeys, 0, sizeof(keyblinkkeys));
+    keyblinktics = 0;
+
     if (!sbardef)
     {
         return;
@@ -2149,6 +2254,8 @@ void ST_Init(void)
     ST_InitWidgets();
 
     // [Nugget] ==============================================================
+
+    ResetKeyOverride();
 
     LoadNuggetGraphics();
 
@@ -2475,6 +2582,34 @@ void LoadNuggetGraphics(void)
     nhinfnty = (patch_t *) V_CachePatchNum(lumpnum, PU_STATIC);
   }
   else { nhinfnty = NULL; }
+}
+
+// Key blinking --------------------------------------------------------------
+
+void ST_SetKeyBlink(player_t* player, int blue, int yellow, int red)
+{
+  if (player != &players[displayplayer]) { return; }
+
+  ResetKeyOverride();
+
+  // Init array with args to iterate through
+  const int keys[3] = { blue, yellow, red };
+
+  keyblinktics = KEYBLINKTICS;
+
+  for (int i = 0;  i < 3;  i++)
+  {
+    if (   ((keys[i] == KEYBLINK_EITHER) && !(player->cards[i] || player->cards[i+3]))
+        || ((keys[i] == KEYBLINK_CARD)   && !(player->cards[i]))
+        || ((keys[i] == KEYBLINK_SKULL)  && !(player->cards[i+3]))
+        || ((keys[i] == KEYBLINK_BOTH)   && !(player->cards[i] && player->cards[i+3])))
+    {
+      keyblinkkeys[i] = keys[i];
+    }
+    else {
+      keyblinkkeys[i] = KEYBLINK_NONE;
+    }
+  }
 }
 
 // NUGHUD --------------------------------------------------------------------
@@ -3449,9 +3584,15 @@ void ST_BindSTSVariables(void)
   M_BindBool("hud_armor_type", &hud_armor_type, NULL, true, ss_none, wad_no,
              "Armor count is colored based on armor type");
 
-  // [Nugget]
+  // [Nugget] /---------------------------------------------------------------
+
   M_BindBool("sts_show_berserk", &sts_show_berserk, NULL, true, ss_stat, wad_yes,
              "Show Berserk pack on the status bar when using the Fist, if available");
+
+  M_BindBool("hud_blink_keys", &hud_blink_keys, NULL, false, ss_stat, wad_yes,
+             "Make missing keys blink when trying to trigger linedef actions");
+
+  // [Nugget] ---------------------------------------------------------------/
 
   M_BindNum("health_red", &health_red, NULL, 25, 0, 200, ss_none, wad_yes,
             "Amount of health for red-to-yellow transition");

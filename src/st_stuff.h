@@ -28,6 +28,10 @@
 struct event_s;
 struct patch_s;
 
+// [Nugget]
+enum keyblink_e;
+struct player_s;
+
 // [Nugget] /=================================================================
 
 // CVARs
@@ -40,6 +44,20 @@ extern boolean comp_unusedpals;
 int ST_GetMessageFontHeight(void);
 boolean ST_IconAvailable(const int i);
 boolean ST_GetNughudOn(void);
+
+// Key blinking --------------------------------------------------------------
+
+typedef enum keyblink_e
+{
+  KEYBLINK_NONE,
+  KEYBLINK_CARD,
+  KEYBLINK_SKULL,
+  KEYBLINK_BOTH,
+  KEYBLINK_EITHER,
+} keyblink_t;
+
+extern void ST_SetKeyBlink(struct player_s *player, int blue, int yellow, int red);
+extern enum keyblink_e st_keyorskull[3];
 
 // [Nugget] =================================================================/
 

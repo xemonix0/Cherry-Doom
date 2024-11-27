@@ -2252,6 +2252,7 @@ static setup_menu_t stat_settings5[] =
   {"Nugget - HUD", S_SKIP|S_TITLE, M_X, M_SPC},
 
     {"Show Powerup Timers",              S_CHOICE|S_COSMETIC, M_X, M_SPC, {"hud_power_timers"}, .strings_id = str_show_widgets},
+    {"Blink Missing Keys",               S_ONOFF,             M_X, M_SPC, {"hud_blink_keys"}},
     {"Berserk display when using Fist",  S_ONOFF,             M_X, M_SPC, {"sts_show_berserk"}},
     {"Allow HUD Icons",                  S_ONOFF,             M_X, M_SPC, {"hud_allow_icons"}},
 
