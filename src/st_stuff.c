@@ -3260,7 +3260,7 @@ end_amnum:
   }
 
   dig.monowidth = maxwidth;
-  dig.maxheight = maxheight;
+  dig.maxheight = MAX(8, maxheight);
 
   // Widgets =================================================================
 
