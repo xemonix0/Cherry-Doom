@@ -3031,7 +3031,7 @@ static sbarelem_t CreateNughudWidget(
 
 static sbardef_t *CreateNughudSbarDef(void)
 {
-  sbardef_t *out = calloc(1, sizeof(*out));
+  sbardef_t *const out = calloc(1, sizeof(*out));
 
   statusbar_t sb = {0};
 

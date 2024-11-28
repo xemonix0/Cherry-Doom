@@ -1090,15 +1090,13 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 static inline boolean CheckLocalView(const player_t *player)
 {
   // [Nugget] Freecam: use localview unless
-  // locked onto a mobj, or not controlling the camera
-  if (freecam_on && !(freecam.mobj || freecam_mode != FREECAM_CAM))
+  // locked onto a mobj in first person, or not controlling the camera
+  if (freecam_on && (!freecam.mobj || chasecam_on) && freecam_mode == FREECAM_CAM)
   { return true; }
 
   return (
     // Don't use localview if the player is spying.
-    (player == &players[consoleplayer]
-     // [Nugget] Freecam: or locked onto a mobj in first person, or not controlling the camera
-     || (freecam_on && (!freecam.mobj || chasecam_on) && freecam_mode == FREECAM_CAM)) &&
+    player == &players[consoleplayer] &&
     // Don't use localview if the player is dead.
     player->playerstate != PST_DEAD &&
     // Don't use localview if the player just teleported.
@@ -1212,7 +1210,7 @@ void R_SetupFrame (player_t *player)
     player->mo->interp == true &&
     // Don't interpolate during a paused state
     (leveltime > oldleveltime
-     || (freecam_on && !freecam.mobj && gamestate == GS_LEVEL)) // [Nugget] Freecam
+     || (freecam_on && (!freecam.mobj || chasecam_on) && gamestate == GS_LEVEL)) // [Nugget] Freecam
   );
 
   // [Nugget]
@@ -1639,6 +1637,8 @@ void R_RenderPlayerView (player_t* player)
         targetfov += fovfx[i].current;
       }
     }
+
+    targetfov = MAX(1.0f, targetfov);
 
     if (r_fov != targetfov)
     {
