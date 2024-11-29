@@ -41,6 +41,7 @@ extern boolean no_radsuit_tint;
 extern boolean comp_godface;
 extern boolean comp_unusedpals;
 
+boolean ST_GetLayout(void);
 int ST_GetMessageFontHeight(void);
 boolean ST_IconAvailable(const int i);
 boolean ST_GetNughudOn(void);

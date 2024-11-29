@@ -2063,7 +2063,7 @@ static setup_menu_t stat_settings1[] = {
      .strings_id = str_hud_type},
 
     {"Layout", S_CHOICE, H_X, M_SPC, {"st_layout"},
-     .strings_id = str_stlayout},
+     .strings_id = str_stlayout, .action = AM_Start}, // [Nugget] Minimap
 
     MI_GAP,
 

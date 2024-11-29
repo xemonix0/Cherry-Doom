@@ -1,6 +1,7 @@
 {
   "type": "statusbar",
   "version": "1.1.0",
+  "nugget_version": 1,
   "metadata": null,
   "data":
   {
@@ -1120,6 +1121,17 @@
               "conditions": null,
               "children": null
             }
+          },
+          {
+            "minimap":
+            {
+              "x": 8,
+              "y": 0,
+              "alignment": 80,
+              "width": 80,
+              "height": 80,
+              "under_messages": true
+            }
           }
         ]
       },
@@ -1961,6 +1973,17 @@
                     "conditions": null,
                     "children": null
                   }
+                },
+                {
+                  "minimap":
+                  {
+                    "x": 8,
+                    "y": 0,
+                    "alignment": 80,
+                    "width": 80,
+                    "height": 80,
+                    "under_messages": true
+                  }
                 }
               ]
             }
@@ -2253,6 +2276,17 @@
               "translation": null,
               "conditions": null,
               "children": null
+            }
+          },
+          {
+            "minimap":
+            {
+              "x": 8,
+              "y": 0,
+              "alignment": 80,
+              "width": 80,
+              "height": 80,
+              "under_messages": true
             }
           }
         ]

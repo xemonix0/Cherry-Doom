@@ -16,6 +16,7 @@
   - Moved `sts_show_berserk` menu item to _Status Bar/HUD_ setup menu
   - Revised the descriptions of many of Nugget's new CVARs
 - **Messages in the message list now have individual durations**
+- **Made the minimap customizable through SBARDEF and NUGHUD**
 - **Smoother FOV effects**
 - **Allowed orbiting around freecam mobj**
 - **Replaced `translucent_pspr(_pct)` with `pspr_translucency_pct`** [2]

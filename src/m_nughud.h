@@ -65,6 +65,13 @@ typedef struct nughud_sbchunk_s {
   int sx, sy, sw, sh;
 } nughud_sbchunk_t;
 
+typedef struct nughud_minimap_s {
+  int x, y;
+  int wide;
+  int w, h;
+  boolean undmess;
+} nughud_minimap_t;
+
 #define NUMNUGHUDPATCHES 8
 #define NUMNUGHUDSTACKS 8
 #define NUMSBCHUNKS 8
@@ -110,6 +117,8 @@ typedef struct nughud_s {
   boolean            patch_offsets;
 
   nughud_sbchunk_t   sbchunks[NUMSBCHUNKS];
+
+  nughud_minimap_t   minimap;
 
   boolean percents;
   fixed_t weapheight;

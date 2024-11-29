@@ -84,6 +84,7 @@ set(BASE_SOURCES
     all-all/m_vbox.png
     all-all/sbardef.lmp
     all-all/sbhuddef.lmp
+    all-all/sbnugdef.lmp # [Nugget]
     all-all/skytran.lmp
 
     all-all/smbfgg0.png

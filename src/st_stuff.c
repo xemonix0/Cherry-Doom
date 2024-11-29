@@ -149,7 +149,7 @@ static sbardef_t *CreateNughudSbarDef(void);
 
 // NUGHUD stacks -------------------------------------------------------------
 
-#define NUMSQWIDGETS (sbw_num) // Number of widgets
+#define NUMSQWIDGETS (sbw_max) // Number of widgets
 
 typedef struct widgetpair_s {
   const nughud_textline_t *ntl;
@@ -1258,11 +1258,27 @@ static void UpdateStatusBar(player_t *player)
     array_foreach(child, statusbar->children)
     {
         // [Nugget]
-        if (oldbarindex != barindex
-            && (child->type == sbe_number || child->type == sbe_percent)
-            && child->subtype.number->type == sbn_ammoselected)
+        if (oldbarindex != barindex)
         {
-            st_ammo_elem = child;
+          if (child->type == sbe_minimap)
+          {
+              sbe_minimap_t *const mm = child->subtype.minimap;
+              int ws = 0;
+
+              if (child->alignment & sbe_wide_left)  { ws -= 1; }
+              if (child->alignment & sbe_wide_right) { ws += 1; }
+              if (child->alignment & sbe_wide_force) { ws *= 2; }
+
+              AM_UpdateMinimap(
+                  child->x_pos, child->y_pos, ws,
+                  mm->width, mm->height, mm->under_messages
+              );
+          }
+          else if ((child->type == sbe_number || child->type == sbe_percent)
+                   && child->subtype.number->type == sbn_ammoselected)
+          {
+              st_ammo_elem = child;
+          }
         }
 
         UpdateElem(child, player);
@@ -2226,21 +2242,21 @@ void ST_Init(void)
 
     static sbardef_t *normal_sbardef = NULL, *nughud_sbardef = NULL;
 
-    if (!normal_sbardef) { normal_sbardef = ST_ParseSbarDef(); }
-    if (!nughud_sbardef) { nughud_sbardef = CreateNughudSbarDef(); }
+    if (firsttime) {
+        normal_sbardef = ST_ParseSbarDef();
+        nughud_sbardef = CreateNughudSbarDef();
+    }
 
     // [Nugget] -------------------------------------------------------------/
 
     sbardef = st_nughud ? nughud_sbardef : normal_sbardef;
 
-    if (!sbardef)
-    {
-        return;
-    }
-
     // [Nugget]
     if (firsttime) { firsttime = false; }
     else           { return; }
+
+    // [Nugget] Removed return when `!sbardef`;
+    // everything below can be loaded regardless
 
     LoadFacePatches();
 
@@ -2260,8 +2276,6 @@ void ST_Init(void)
     LoadNuggetGraphics();
 
     // NUGHUD ----------------------------------------------------------------
-
-    const nughud_textline_t *ntl;
 
     for (int i = 0;  i < NUMNUGHUDSTACKS;  i++)
     {
@@ -2296,6 +2310,7 @@ void ST_Init(void)
         }
 
         const sbarwidgettype_t type = elem->subtype.widget->type;
+        const nughud_textline_t *ntl;
 
         switch (type)
         {
@@ -2343,10 +2358,10 @@ void ST_Init(void)
     for (int i = 0;  i < NUMNUGHUDSTACKS;  i++)
     {
         qsort(
-          nughud_stackqueues[i].pairs,
-          NUMSQWIDGETS,
-          sizeof(widgetpair_t),
-          NughudSortWidgets
+            nughud_stackqueues[i].pairs,
+            NUMSQWIDGETS,
+            sizeof(widgetpair_t),
+            NughudSortWidgets
         );
     }
 }
@@ -2396,6 +2411,11 @@ void WI_DrawWidgets(void)
 }
 
 // [Nugget] /=================================================================
+
+boolean ST_GetLayout(void)
+{
+  return st_layout;
+}
 
 int ST_GetMessageFontHeight(void)
 {
@@ -2679,8 +2699,8 @@ static void DrawNughudSBChunk(nughud_sbchunk_t *chunk)
       sw = chunk->sw,
       sh = chunk->sh;
 
-  sw = MIN(ST_WIDTH - chunk->sx, sw);
-  sw = MIN(video.unscaledw - x,  sw);
+  sw = MIN(ST_WIDTH - chunk->sx, sw); // Don't exceed boundaries of bar buffer
+  sw = MIN(video.unscaledw - x,  sw); // Don't exceed boundaries of screen
 
   sh = MIN(ST_HEIGHT - chunk->sy, sh);
   sh = MIN(SCREENHEIGHT - y,      sh);
@@ -3549,6 +3569,29 @@ end_amnum:
 
     elem.x_pos = 0;
     elem.y_pos = 18;
+
+    array_push(sb.children, elem);
+  }
+
+  // Minimap -----------------------------------------------------------------
+
+  {
+    sbarelem_t elem = {0};
+    elem.cr = elem.crboom = CR_NONE;
+
+    elem.type = sbe_minimap;
+
+    elem.x_pos = nughud.minimap.x;
+    elem.y_pos = nughud.minimap.y;
+    elem.alignment = NughudConvertAlignment(nughud.minimap.wide, -1);
+
+    sbe_minimap_t *const minimap = calloc(1, sizeof(*minimap));
+
+    minimap->width = nughud.minimap.w;
+    minimap->height = nughud.minimap.h;
+    minimap->under_messages = nughud.minimap.undmess;
+
+    elem.subtype.minimap = minimap;
 
     array_push(sb.children, elem);
   }

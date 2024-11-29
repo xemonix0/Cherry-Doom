@@ -26,8 +26,20 @@
 struct event_s;
 enum automapmode_e; // [Nugget]
 
-// [Nugget] CVARs
+// [Nugget] /=================================================================
+
+// CVARs
 extern boolean fancy_teleport;
+
+void AM_ChangeMode(enum automapmode_e mode);
+
+void AM_UpdateMinimap(
+  const int x, const int y, const int ws,
+  const int w, const int h,
+  const boolean under_messages
+);
+
+// [Nugget] =================================================================/
 
 // Used by ST StatusBar stuff.
 #define AM_MSGHEADER (('a'<<24)+('m'<<16))
@@ -51,8 +63,6 @@ void AM_Stop (void);
 // killough 2/22/98: for saving automap information in savegame:
 
 extern void AM_Start(void);
-
-extern void AM_ChangeMode(enum automapmode_e mode); // [Nugget]
 
 //jff 4/16/98 make externally available
 

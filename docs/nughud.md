@@ -283,7 +283,7 @@ nughud_patch2_name "STARMS"
 **Status-bar chunks** are square regions of the status bar, taken from the currently loaded `STBAR`.
 Up to 8 chunks can be drawn; they are drawn behind patches, following the same order (`chunk1` before `chunk2`, etc.).
 
-Apart from the shared properties, **chunks make use of the following additional properties**:
+Aside from the shared properties, **chunks make use of the following additional properties**:
 
 - `_sx`: **X origin** (left end, absolute) of the chunk, which can be any integer in the [0, 319] range.
 - `_sy`: **Y origin** (top end, absolute) of the chunk, which can be any integer in the [0, 31] range.
@@ -295,6 +295,15 @@ this keeps the feature functional with wide status bars, whose extended borders 
 
 **Note:** The `STBAR` graphic itself features the _Frags_ widget instead of the _Arms_ widget.
 The latter can be drawn as a patch.
+
+### Minimap
+
+Just like with SBARDEF, **the minimap can be customized through NUGHUD**.
+Aside from the shared properties, **the minimap makes use of the following additional properties**:
+
+- `_w`: **Width**, which can be any integer in the [32, 96] range.
+- `_h`: **Height**, which can be any integer in the [32, 96] range.
+- `_undmess`: A boolean which determines if the minimap is **under messages**, in which case its Y position will be affected by the length of the message list.
 
 ### Additional integer properties
 

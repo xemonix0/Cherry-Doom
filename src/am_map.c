@@ -363,6 +363,34 @@ static short     magic_tag = -1;
 
 // Minimap -------------------------------------------------------------------
 
+static int mm_x = 8,
+           mm_y = 0,
+           mm_ws = -2, // Widescreen shift
+           mm_w = 80,
+           mm_h = 80;
+
+static boolean mm_under_messages = true;
+
+static int mm_update_tic = 0;
+
+void AM_UpdateMinimap(
+  const int x, const int y, const int ws,
+  const int w, const int h,
+  const boolean under_messages
+)
+{
+  mm_x = x;
+  mm_y = y;
+  mm_ws = ws;
+  mm_w = w;
+  mm_h = h;
+  mm_under_messages = under_messages;
+
+  mm_update_tic = gametic;
+
+  if (automapactive == AM_MINI) { AM_Start(); }
+}
+
 static boolean reset_older = true;
 static int64_t older_m_x, older_m_y, older_m_w, older_m_h;
 
@@ -696,9 +724,21 @@ static void AM_initScreenSize(void)
   // [Nugget] Minimap
   if (automapactive == AM_MINI)
   {
-    f_x = V_ScaleY(8);
-    f_y = V_ScaleY((ST_GetNumMessageLines() + 1) * ST_GetMessageFontHeight() + 1);
-    f_w = f_h = V_ScaleY(80);
+    int x = mm_x + video.deltaw;
+
+    x += (abs(mm_ws) == 2) ? video.deltaw                  * (mm_ws / 2)
+       : (abs(mm_ws) == 1) ? video.deltaw * ST_GetLayout() *  mm_ws
+       :                     0;
+
+    f_x = V_ScaleX(x);
+    f_y = V_ScaleY(mm_y);
+
+    if (mm_under_messages)
+    { f_y += V_ScaleY((ST_GetNumMessageLines() + 1) * ST_GetMessageFontHeight() + 1); }
+
+     // Don't exceed boundaries of screen
+    f_w = V_ScaleX(MIN(SCREENWIDTH  - mm_x, mm_w));
+    f_h = V_ScaleY(MIN(SCREENHEIGHT - mm_y, mm_h));
 
     return;
   }
@@ -805,15 +845,24 @@ void AM_Start()
 {
   static int lastlevel = -1, lastepisode = -1;
 
-  // [Nugget] Minimap
-  static int last_automap = -1, last_messages = -1;
+  // [Nugget] Minimap /-------------------------------------------------------
+
+  static int last_automap = -1,
+             last_messages = -1,
+             last_layout = -1,
+             last_mm_update_tic = -1;
+
   const int messages_height = ST_GetNumMessageLines();
+  const boolean layout = ST_GetLayout();
+
+  // [Nugget] ---------------------------------------------------------------/
 
   if (!stopped)
     AM_Stop();
   stopped = false;
   if (lastlevel != gamemap || lastepisode != gameepisode
-      || automapactive != last_automap || messages_height != last_messages)
+      || last_automap != automapactive || last_messages != messages_height
+      || last_layout != layout || last_mm_update_tic != mm_update_tic)
   {
     AM_LevelInit();
 
@@ -824,6 +873,8 @@ void AM_Start()
     lastepisode = gameepisode;
     last_automap = automapactive;
     last_messages = messages_height;
+    last_layout = layout;
+    last_mm_update_tic = mm_update_tic;
   }
   else
   {

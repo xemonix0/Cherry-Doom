@@ -231,6 +231,27 @@ static boolean ParseSbarElemType(json_t *json, sbarelementtype_t type,
             }
             break;
 
+        // [Nugget] /---------------------------------------------------------
+
+        case sbe_minimap: {
+            sbe_minimap_t *const minimap = calloc(1, sizeof(*minimap));
+
+            minimap->width  = JS_GetNumberValue(json, "width");
+            minimap->height = JS_GetNumberValue(json, "height");
+
+            minimap->width  = BETWEEN(32, 96, minimap->width);
+            minimap->height = BETWEEN(32, 96, minimap->height);
+
+            json_t *const js_under_messages = JS_GetObject(json, "under_messages");
+
+            if (JS_IsBoolean(js_under_messages))
+            { minimap->under_messages = JS_GetBoolean(js_under_messages); }
+
+            out->subtype.minimap = minimap;
+        }
+
+        // [Nugget] ---------------------------------------------------------/
+
         default:
             break;
     }
@@ -250,14 +271,30 @@ static const char *sbe_names[] =
     [sbe_carousel] = "carousel"
 };
 
+// [Nugget]
+static const char *nugget_sbe_names[] =
+{
+    [sbe_minimap - sbe_start_nugget] = "minimap",
+};
+
 static boolean ParseSbarElem(json_t *json, sbarelem_t *out)
 {
-    for (sbarelementtype_t type = sbe_none + 1; type < sbe_max; ++type)
+    for (sbarelementtype_t type = sbe_none + 1; type < sbe_max_woof; ++type)
     {
         json_t *obj = JS_GetObject(json, sbe_names[type]);
         if (obj && JS_IsObject(obj))
         {
             return ParseSbarElemType(obj, type, out);
+        }
+    }
+
+    // [Nugget]
+    for (sbarelementtype_t type = 0;  type < sbe_max_nugget;  ++type)
+    {
+        json_t *obj = JS_GetObject(json, nugget_sbe_names[type]);
+        if (obj && JS_IsObject(obj))
+        {
+            return ParseSbarElemType(obj, type + sbe_start_nugget, out);
         }
     }
 
@@ -463,6 +500,33 @@ sbardef_t *ST_ParseSbarDef(void)
         load_defaults = true;
     }
 
+    // [Nugget] /-------------------------------------------------------------
+
+    boolean load_nugget_defaults = false;
+
+    const int max_nugver = 1;
+    int nugver = 0;
+
+    json_t *const js_nugver = JS_GetObject(json, "nugget_version");
+
+    if (JS_IsNumber(js_nugver))
+    {
+        nugver = JS_GetInteger(js_nugver);
+
+        if (nugver != max_nugver)
+        {
+            I_Printf(
+               VB_WARNING,
+               "SBARDEF: outdated/unsupported Nugget version (%i, expected %i)",
+               nugver, max_nugver
+            );
+        }
+    }
+
+    if (nugver != max_nugver) { load_nugget_defaults = true; }
+
+    // [Nugget] -------------------------------------------------------------/
+
     json_t *data = JS_GetObject(json, "data");
     if (JS_IsNull(data) || !JS_IsObject(data))
     {
@@ -513,7 +577,7 @@ sbardef_t *ST_ParseSbarDef(void)
 
     if (!load_defaults)
     {
-        return out;
+        goto nugget_defaults; // [Nugget]
     }
 
     json = JS_Open("SBHUDDEF", "hud", (version_t){1, 0, 0});
@@ -554,6 +618,40 @@ sbardef_t *ST_ParseSbarDef(void)
     }
 
     JS_Close("SBHUDDEF");
+
+    // [Nugget] /-------------------------------------------------------------
+
+nugget_defaults:
+
+    if (!load_nugget_defaults) { goto end; }
+
+    json = JS_Open("SBNUGDEF", "nugget", (version_t){1, 0, 0});
+
+    if (json == NULL) { return NULL; }
+
+    data = JS_GetObject(json, "data");
+
+    array_foreach(statusbar, out->statusbars)
+    {
+        json_t *js_elems = JS_GetObject(data, "elements");
+        json_t *js_elem = NULL;
+
+        JS_ArrayForEach(js_elem, js_elems)
+        {
+            sbarelem_t elem = {0};
+            if (ParseSbarElem(js_elem, &elem))
+            {
+                elem.y_pos += (statusbar->height - SCREENHEIGHT);
+                array_push(statusbar->children, elem);
+            }
+        }
+    }
+
+    JS_Close("SBNUGDEF");
+
+end:
+
+    // [Nugget] -------------------------------------------------------------/
 
     return out;
 }
