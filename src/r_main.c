@@ -1638,7 +1638,7 @@ void R_RenderPlayerView (player_t* player)
       }
     }
 
-    targetfov = MAX(1.0f, targetfov);
+    targetfov = BETWEEN(1.0f, 179.0f, targetfov);
 
     if (r_fov != targetfov)
     {

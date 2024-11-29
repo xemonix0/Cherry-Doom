@@ -29,6 +29,7 @@
 ## Bug Fixes
 
 - **Desync involving lost-soul charge attack**
+- **FOV going below 1 degree and beyond 180 degrees**
 - **_Double autoaim range_ setting doubling range of BFG tracers**
 - **FOV effects disabling interpolation of weapon sprites**
 - **Crash when loading WADs with empty lumps between `C_#` markers** (fixes `nt_rc1.wad`)
