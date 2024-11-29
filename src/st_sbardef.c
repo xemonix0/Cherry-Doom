@@ -220,6 +220,9 @@ static boolean ParseSbarElemType(json_t *json, sbarelementtype_t type,
                         break;
                 }
 
+                // [Nugget]
+                widget->vertical_layout = JS_GetNumberValue(json, "vertical_layout");
+
                 out->subtype.widget = widget;
             }
             break;

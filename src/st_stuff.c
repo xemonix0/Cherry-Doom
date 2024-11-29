@@ -3496,21 +3496,39 @@ end_amnum:
     }
   }
 
-  // Boom widgets ------------------------------------------------------------
+  // Various Boom widgets ----------------------------------------------------
 
   #define CREATE_BOOM_WIDGET(_ntl_, _type_) \
     array_push(sb.children, CreateNughudWidget(_ntl_, _type_, &dig));
 
   CREATE_BOOM_WIDGET(nughud.time,   sbw_time);
-  CREATE_BOOM_WIDGET(nughud.sts,    sbw_monsec);
   CREATE_BOOM_WIDGET(nughud.powers, sbw_powers);
-  CREATE_BOOM_WIDGET(nughud.coord,  sbw_coord);
   CREATE_BOOM_WIDGET(nughud.fps,    sbw_fps);
   CREATE_BOOM_WIDGET(nughud.rate,   sbw_rate);
   CREATE_BOOM_WIDGET(nughud.cmd,    sbw_cmd);
   CREATE_BOOM_WIDGET(nughud.speed,  sbw_speed);
 
   #undef CREATE_BOOM_WIDGET
+
+  // Stats -------------------------------------------------------------------
+
+  {
+    sbarelem_t elem = CreateNughudWidget(nughud.sts, sbw_monsec, &dig);
+
+    elem.subtype.widget->vertical_layout = MAX(0, nughud.sts_ml);
+
+    array_push(sb.children, elem);
+  }
+
+  // Coords ------------------------------------------------------------------
+
+  {
+    sbarelem_t elem = CreateNughudWidget(nughud.coord, sbw_coord, &dig);
+
+    elem.subtype.widget->vertical_layout = MAX(0, nughud.coord_ml);
+
+    array_push(sb.children, elem);
+  }
 
   // Title -------------------------------------------------------------------
 

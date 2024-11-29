@@ -829,15 +829,32 @@ static void UpdateCoord(sbe_widget_t *widget, player_t *player)
     // killough 10/98: allow coordinates to display non-following pointer
     AM_Coordinates(player->mo, &x, &y, &z);
 
-    static char string[80];
+    // [Nugget] /-------------------------------------------------------------
 
-    // jff 2/16/98 output new coord display
-    M_snprintf(string, sizeof(string),
-               "\x1b%cX " GRAY_S "%d \x1b%cY " GRAY_S "%d \x1b%cZ " GRAY_S "%d",
-               '0' + hudcolor_xyco, x >> FRACBITS, '0' + hudcolor_xyco,
-               y >> FRACBITS, '0' + hudcolor_xyco, z >> FRACBITS);
+    static char x_str[16], y_str[16], z_str[16];
 
-    ST_AddLine(widget, string);
+    M_snprintf(x_str, sizeof(x_str), "\x1b%cX " GRAY_S "%d", '0' + hudcolor_xyco, x >> FRACBITS);
+    M_snprintf(y_str, sizeof(y_str), "\x1b%cY " GRAY_S "%d", '0' + hudcolor_xyco, y >> FRACBITS);
+    M_snprintf(z_str, sizeof(z_str), "\x1b%cZ " GRAY_S "%d", '0' + hudcolor_xyco, z >> FRACBITS);
+
+    // [Nugget] -------------------------------------------------------------/
+
+    // [Nugget]
+    if (widget->vertical_layout)
+    {
+        ST_AddLine(widget, x_str);
+        ST_AddLine(widget, y_str);
+        ST_AddLine(widget, z_str);
+    }
+    else
+    {
+        static char string[80];
+
+        // jff 2/16/98 output new coord display
+        M_snprintf(string, sizeof(string), "%s %s %s", x_str, y_str, z_str);
+
+        ST_AddLine(widget, string);
+    }
 }
 
 typedef enum
@@ -983,32 +1000,65 @@ static void UpdateMonSec(sbe_widget_t *widget)
     StatsFormatFunc(item_str, sizeof(item_str), fullitemcount, totalitems);
     StatsFormatFunc(secret_str, sizeof(secret_str), fullsecretcount, totalsecret);
 
-    int offset = 0;
+    static char kill_str2[24], item_str2[24], secret_str2[24];
+
+    memset(kill_str2,   0, sizeof(kill_str2));
+    memset(item_str2,   0, sizeof(item_str2));
+    memset(secret_str2, 0, sizeof(secret_str2));
+
+    // [Nugget] Make each stat optional
 
     if (showstats[SHOWSTATS_KILLS])
     {
-        offset += M_snprintf(string + offset, sizeof(string) - offset,
-          "\x1b%c%c \x1b%c%s%s",
-          killlabelcolor, killlabel, killcolor, kill_str,
-          (showstats[SHOWSTATS_ITEMS] || showstats[SHOWSTATS_SECRETS]) ? " " : "");
+        M_snprintf(kill_str2, sizeof(kill_str2),
+          "\x1b%c%c \x1b%c%s",
+          killlabelcolor, killlabel, killcolor, kill_str);
     }
 
     if (showstats[SHOWSTATS_ITEMS])
     {
-        offset += M_snprintf(string + offset, sizeof(string) - offset,
-          "\x1b%c%c \x1b%c%s%s",
-          itemlabelcolor, itemlabel, itemcolor, item_str,
-          showstats[SHOWSTATS_SECRETS] ? " " : "");
+        M_snprintf(item_str2, sizeof(item_str2),
+          "\x1b%c%c \x1b%c%s",
+          itemlabelcolor, itemlabel, itemcolor, item_str);
     }
 
     if (showstats[SHOWSTATS_SECRETS])
     {
-        offset += M_snprintf(string + offset, sizeof(string) - offset,
+        M_snprintf(secret_str2, sizeof(secret_str2),
           "\x1b%c%c \x1b%c%s",
           secretlabelcolor, secretlabel, secretcolor, secret_str);
     }
 
-    ST_AddLine(widget, string);
+    // [Nugget]
+    if (widget->vertical_layout)
+    {
+        if (kill_str2[0])   { ST_AddLine(widget, kill_str2); }
+        if (item_str2[0])   { ST_AddLine(widget, item_str2); }
+        if (secret_str2[0]) { ST_AddLine(widget, secret_str2); }
+    }
+    else
+    {
+        int offset = 0;
+
+        if (showstats[SHOWSTATS_KILLS])
+        {
+            offset += M_snprintf(string + offset, sizeof(string) - offset, "%s%s", kill_str2,
+              (showstats[SHOWSTATS_ITEMS] || showstats[SHOWSTATS_SECRETS]) ? " " : "");
+        }
+
+        if (showstats[SHOWSTATS_ITEMS])
+        {
+            offset += M_snprintf(string + offset, sizeof(string) - offset, "%s%s", item_str2,
+              showstats[SHOWSTATS_SECRETS] ? " " : "");
+        }
+
+        if (showstats[SHOWSTATS_SECRETS])
+        {
+            offset += M_snprintf(string + offset, sizeof(string) - offset, "%s", secret_str2);
+        }
+  
+        ST_AddLine(widget, string);
+    }
 }
 
 static void UpdateDM(sbe_widget_t *widget)

@@ -849,6 +849,7 @@
               "translation": null,
               "type": 0,
               "font": "Digits",
+              "vertical_layout": 0,
               "conditions":
               [
                 {
@@ -917,6 +918,7 @@
               "translation": null,
               "type": 0,
               "font": "Digits",
+              "vertical_layout": 0,
               "conditions":
               [
                 {
@@ -985,6 +987,7 @@
               "translation": null,
               "type": 2,
               "font": "Digits",
+              "vertical_layout": 0,
               "conditions": null,
               "children": null
             }
@@ -1704,6 +1707,7 @@
                     "translation": null,
                     "type": 0,
                     "font": "Digits",
+                    "vertical_layout": 0,
                     "conditions":
                     [
                       {
@@ -1772,6 +1776,7 @@
                     "translation": null,
                     "type": 0,
                     "font": "Digits",
+                    "vertical_layout": 0,
                     "conditions":
                     [
                       {
@@ -1840,6 +1845,7 @@
                     "translation": null,
                     "type": 2,
                     "font": "Digits",
+                    "vertical_layout": 0,
                     "conditions": null,
                     "children": null
                   }
@@ -2011,6 +2017,7 @@
               "translation": null,
               "type": 0,
               "font": "Digits",
+              "vertical_layout": 0,
               "conditions":
               [
                 {
@@ -2079,6 +2086,7 @@
               "translation": null,
               "type": 0,
               "font": "Digits",
+              "vertical_layout": 0,
               "conditions":
               [
                 {
@@ -2147,6 +2155,7 @@
               "translation": null,
               "type": 2,
               "font": "Digits",
+              "vertical_layout": 0,
               "conditions": null,
               "children": null
             }

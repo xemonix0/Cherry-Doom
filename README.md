@@ -94,6 +94,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 ### Status Bar/HUD
 
 - **Nugget HUD**, highly customizable through means of the **`NUGHUD` lump** (see `docs/nughud.md`)
+- **SBARDEF: optional vertical layout for _Stats_ and _Coordinates_ widgets**
 - **Crosshair:**
   - Translucency;
   - Vertical-only target lock-on;

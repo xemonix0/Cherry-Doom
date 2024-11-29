@@ -229,6 +229,9 @@ typedef struct sbe_widget_s
 
     // message
     int duration;
+
+    // [Nugget]
+    int vertical_layout;
 } sbe_widget_t;
 
 // [Nugget]

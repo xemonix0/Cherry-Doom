@@ -10,6 +10,7 @@
   - NUGHUD now partially uses SBARDEF as its backend, which may cause some rendering differences
   - Integrated periodic auto saves into the save/load menus
   - Maintained key blink, message list, message duration, and chat-message duration settings [1]
+  - Turned optional vertical layout for _Stats_ and _Coordinates_ widgets into SBARDEF fields
   - Removed `show_ssg` (now default behavior), `alt_arms` and `hud_highlight_weapon` settings
   - Renamed `#_bobbing_percentage` to `#_bobbing_pct` [2]
   - Renamed `show_berserk` to `sts_show_berserk` [2]
