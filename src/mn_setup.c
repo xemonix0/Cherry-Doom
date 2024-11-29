@@ -2156,11 +2156,11 @@ static setup_menu_t stat_settings3[] = {
 
     // [Nugget] Toggle instead of type
     {"Crosshair", S_ONOFF, XH_X, M_SPC, {"hud_crosshair_on"},
-     .strings_id = str_crosshair, .action = UpdateCrosshairItems},
+     .action = UpdateCrosshairItems},
 
     // [Nugget] Actual type
     {"Crosshair Type", S_CHOICE,XH_X, M_SPC, {"hud_crosshair"},
-     m_null, input_null, str_crosshair},
+     .strings_id = str_crosshair, .action = HU_StartCrosshair},
 
     // [Nugget] Translucent crosshair
     {"Translucency", S_THERMO | S_ACTION | S_PCT, H_X_THRM8 - 13, M_THRM_SPC,
