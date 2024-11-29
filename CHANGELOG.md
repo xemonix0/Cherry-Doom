@@ -29,6 +29,7 @@
 ## Bug Fixes
 
 - **Desync involving lost-soul charge attack**
+- **Potential recursive spawning of blood splats when crushing with _Bloodier Gibbing_ enabled** (fixes `strg.wad`)
 - **FOV going below 1 degree and beyond 180 degrees**
 - **_Double autoaim range_ setting doubling range of BFG tracers**
 - **FOV effects disabling interpolation of weapon sprites**

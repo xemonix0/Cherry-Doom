@@ -820,6 +820,10 @@ void P_NuggetGib(mobj_t *mo, const boolean crushed)
 
     splat->flags |= MF_DROPOFF|MF_TELEPORT;
 
+    // Ensure that the splat has health so that it can't be crushed,
+    // otherwise splats could spawn recursively and freeze the game
+    splat->health = MAX(1, splat->health);
+
     if (comp_fuzzyblood && mo->flags & MF_SHADOW)
     { splat->flags |= MF_SHADOW; }
 
