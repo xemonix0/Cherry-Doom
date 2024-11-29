@@ -1768,7 +1768,10 @@ boolean G_Responder(event_t* ev)
     return true; // eat events
   }
 
-  G_NextWeaponUpdate();
+  if (R_GetFreecamMode() != FREECAM_CAM) // [Nugget] Freecam
+  {
+    G_NextWeaponUpdate();
+  }
 
   switch (ev->type)
     {
