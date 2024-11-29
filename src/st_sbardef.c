@@ -216,6 +216,12 @@ static boolean ParseSbarElemType(json_t *json, sbarelementtype_t type,
                         widget->duration =
                             JS_GetNumberValue(json, "duration") * TICRATE;
                         break;
+
+                    // [Nugget]
+                    case sbw_chat:
+                        widget->under_messages = JS_GetBooleanValue(json, "under_messages");
+                        break;
+
                     default:
                         break;
                 }
@@ -240,15 +246,12 @@ static boolean ParseSbarElemType(json_t *json, sbarelementtype_t type,
             sbe_minimap_t *const minimap = calloc(1, sizeof(*minimap));
 
             minimap->width  = JS_GetNumberValue(json, "width");
-            minimap->height = JS_GetNumberValue(json, "height");
-
             minimap->width  = BETWEEN(32, 96, minimap->width);
+
+            minimap->height = JS_GetNumberValue(json, "height");
             minimap->height = BETWEEN(32, 96, minimap->height);
 
-            json_t *const js_under_messages = JS_GetObject(json, "under_messages");
-
-            if (JS_IsBoolean(js_under_messages))
-            { minimap->under_messages = JS_GetBoolean(js_under_messages); }
+            minimap->under_messages = JS_GetBooleanValue(json, "under_messages");
 
             out->subtype.minimap = minimap;
         }

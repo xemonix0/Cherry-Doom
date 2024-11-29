@@ -232,6 +232,7 @@ typedef struct sbe_widget_s
 
     // [Nugget]
     int vertical_layout;
+    boolean under_messages;
 } sbe_widget_t;
 
 // [Nugget]

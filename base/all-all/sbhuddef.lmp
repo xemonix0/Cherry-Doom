@@ -258,12 +258,13 @@
         "widget":
         {
           "x": 2,
-          "y": 8,
+          "y": 0,
           "alignment": 16,
           "tranmap": null,
           "translation": "CRGOLD",
           "type": 9,
           "font": "Console",
+          "under_messages": true,
           "conditions": null,
           "children": null
         }

@@ -70,7 +70,9 @@ static int lu_berserk;
 
 static patch_t *stinfnty;
 
-static sbarelem_t *st_ammo_elem = NULL;
+static sbarelem_t *st_ammo_elem = NULL,
+                  *st_message_elem = NULL,
+                  *st_chat_elem = NULL;
 
 static int NughudWideShift(const int wide);
 static void LoadNuggetGraphics(void);
@@ -137,9 +139,7 @@ boolean ST_GetNughudOn(void)
 }
 
 static sbarelem_t *nughud_health_elem = NULL,
-                  *nughud_armor_elem = NULL,
-                  *nughud_message_elem = NULL,
-                  *nughud_chat_elem = NULL;
+                  *nughud_armor_elem = NULL;
 
 static pixel_t *st_bar = NULL; // Used for Status-Bar chunks
 
@@ -1279,6 +1279,15 @@ static void UpdateStatusBar(player_t *player)
           {
               st_ammo_elem = child;
           }
+          else if (child->type == sbe_widget)
+          {
+              switch (child->subtype.widget->type)
+              {
+                  case sbw_message:  st_message_elem = child;  break;
+                  case sbw_chat:     st_chat_elem    = child;  break;
+                  default:                                     break;
+              }
+          }
         }
 
         UpdateElem(child, player);
@@ -2104,28 +2113,33 @@ void ST_Ticker(void)
 
     UpdateStatusBar(player);
 
-    // [Nugget] NUGHUD
-    if (st_nughud)
+    // [Nugget] Chat hack
+    if (st_message_elem && st_chat_elem && st_chat_elem->subtype.widget->under_messages
+        && (!st_nughud || (nughud.message.x != -1 && nughud.message.y != -1)))
     {
-        if (nughud.message.x != -1 && nughud.message.y != -1)
+        static int orig_y = -1;
+
+        if (orig_y == -1) { orig_y = st_chat_elem->y_pos; }
+
+        st_chat_elem->y_pos = orig_y + st_message_elem->y_pos;
+
+        const sbe_widget_t *const mwid = st_message_elem->subtype.widget;
+        const int numlines = array_size(mwid->lines);
+
+        if (numlines > 0)
         {
-            nughud_chat_elem->y_pos = nughud.message.y;
+            const int lineheight = mwid->font->maxheight;
 
-            const sbe_widget_t *const mwid = nughud_message_elem->subtype.widget;
-            const int numlines = array_size(mwid->lines);
-
-            if (numlines > 0)
+            for (int i = 0;  i < numlines;  i++)
             {
-                const int lineheight = mwid->font->maxheight;
-
-                for (int i = 0;  i < numlines;  i++)
-                {
-                    if (mwid->lines[i].totalwidth) { nughud_chat_elem->y_pos += lineheight; }
-                }
+                if (mwid->lines[i].totalwidth) { st_chat_elem->y_pos += lineheight; }
             }
         }
+    }
 
-        // Stacks
+    // [Nugget] NUGHUD stacks
+    if (st_nughud)
+    {
         for (int i = 0;  i < NUMNUGHUDSTACKS;  i++)
         {
             nughud_stackqueues[i].offset = 0;
@@ -2321,17 +2335,8 @@ void ST_Init(void)
             case sbw_rate:     ntl = &nughud.rate;     break;
             case sbw_cmd:      ntl = &nughud.cmd;      break;
             case sbw_speed:    ntl = &nughud.speed;    break;
-
-            case sbw_message:
-              ntl = &nughud.message;
-              nughud_message_elem = elem;
-              break;
-
-            case sbw_chat:
-              ntl = &nughud.message;
-              nughud_chat_elem = elem;
-              break;
-
+            case sbw_message:  ntl = &nughud.message;  break;
+            case sbw_chat:     ntl = &nughud.message;  break;
             case sbw_secret:   ntl = &nughud.secret;   break;
             case sbw_title:    ntl = &nughud.title;    break;
             case sbw_powers:   ntl = &nughud.powers;   break;
@@ -3561,7 +3566,9 @@ end_amnum:
     sbarelem_t elem = CreateNughudWidget(nughud.message, sbw_chat, &cfn);
 
     elem.cr = CR_GOLD;
-    elem.y_pos += cfn.maxheight;
+    elem.y_pos = 0;
+
+    elem.subtype.widget->under_messages = true;
 
     array_push(sb.children, elem);
   }

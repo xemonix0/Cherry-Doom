@@ -93,8 +93,10 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 
 ### Status Bar/HUD
 
-- **Nugget HUD**, highly customizable through means of the **`NUGHUD` lump** (see `docs/nughud.md`)
-- **SBARDEF: optional vertical layout for _Stats_ and _Coordinates_ widgets**
+- **NUGHUD**, an alternative lump for HUD customization (see `docs/nughud.md`)
+- **SBARDEF:**
+  - Optional vertical layout for _Stats_ and _Coordinates_ widgets
+  - Chat hack to move it vertically based on the height of the message list
 - **Crosshair:**
   - Translucency;
   - Vertical-only target lock-on;
