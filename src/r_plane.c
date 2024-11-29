@@ -536,7 +536,7 @@ static void do_draw_mbf_sky(visplane_t *pl)
     // FOV-based sky stretching
     if (fov_stretchsky && skyiscalediff > FRACUNIT)
     {
-      skyheight_target = skyheight_target * skyiscalediff / FRACUNIT;
+      skyheight_target += 100 * (skyiscalediff - FRACUNIT) / FRACUNIT;
     }
 
     // [Nugget] -------------------------------------------------------------/

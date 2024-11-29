@@ -2414,7 +2414,7 @@ void WI_DrawWidgets(void)
 
 boolean ST_GetLayout(void)
 {
-  return st_layout;
+  return (boolean) st_layout;
 }
 
 int ST_GetMessageFontHeight(void)
