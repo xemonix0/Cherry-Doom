@@ -119,7 +119,7 @@ The following text lines are available:
 **All text lines are horizontally alignable.**
 
 There are some additional properties -- `nughud_sts_ml` and `nughud_coord_ml` --
-that respectively determine whether to draw the Stats and Coordinates display as multiple lines or a single one (currently unused).
+that respectively determine whether to draw the Stats and Coordinates display as multiple lines or a single one.
 
 There is an additional toggle, `nughud_message_defx`, to forcefully draw the _Message_ display at its original X position,
 where it'll be affected by the _Centered Messages_ setting.
