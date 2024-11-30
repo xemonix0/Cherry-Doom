@@ -88,6 +88,7 @@ static int hud_msg_duration;
 static int hud_chat_duration;
 static int hud_msg_lines;
 static boolean hud_msg_scrollup;
+static boolean hud_msg_group;
 
 boolean sp_chat;
 
@@ -150,10 +151,13 @@ static boolean message_review;
 
 // [Nugget] Message list /----------------------------------------------------
 
+const int MAX_COPIES = 99999;
+
 typedef struct linkedmessage_s
 {
     struct linkedmessage_s *prev, *next;
-    char string[HU_MAXLINELENGTH];
+    char string[HU_MAXLINELENGTH + 8]; // Extra space for " [MAX_COPIES]"
+    size_t orig_length;
     int duration_left;
     int flash_duration_left; // Message flash
 
@@ -168,62 +172,79 @@ static int message_index = 0;
 
 static void AddMessage(char *const string, int duration, const boolean is_chat_msg)
 {
-    message_index++;
+    static int num_copies = 0;
 
-    if (message_list_tail && message_index > hud_msg_lines)
+    if (hud_msg_group && message_list_tail && num_copies < MAX_COPIES
+        && !strncmp(string, message_list_tail->string, message_list_tail->orig_length))
     {
-        message_index--;
+        num_copies++;
 
-        linkedmessage_t *m = message_list_head;
-
-        // Look for a non-chat message to remove
-        while (m->is_chat_msg && m->next) { m = m->next; }
-
-        if (m->is_chat_msg)
-        {
-            // All messages in the list are chat messages
-
-            // Is the new one a chat message too?
-            if (is_chat_msg)
-            {
-                // Yes; advance the list normally
-                m = message_list_head;
-            }
-            else {
-                // No; omit it
-                goto clear_string;
-            }
-        }
-
-        linkedmessage_t *const prev = m->prev,
-                        *const next = m->next;
-
-        Z_Free(m);
-
-        if (prev) { prev->next = next; }
-        else      { message_list_head = next; }
-
-        if (next) { next->prev = prev; }
-        else      { message_list_tail = prev; }
-    }
-
-    if (message_list_tail)
-    {
-        message_list_tail->next = Z_Malloc(sizeof(linkedmessage_t), PU_STATIC, NULL);
-
-        message_list_tail->next->prev = message_list_tail;
-        message_list_tail = message_list_tail->next;
+        M_snprintf(
+            message_list_tail->string + message_list_tail->orig_length,
+            sizeof(message_list_tail->string) - message_list_tail->orig_length,
+            " [%i]", num_copies
+        );
     }
     else {
-        message_list_head =
-        message_list_tail = Z_Malloc(sizeof(linkedmessage_t), PU_STATIC, NULL);
+        message_index++;
+        num_copies = 1;
 
-        message_list_tail->prev = NULL;
+        if (message_list_tail && message_index > hud_msg_lines)
+        {
+            message_index--;
+
+            linkedmessage_t *m = message_list_head;
+
+            // Look for a non-chat message to remove
+            while (m->is_chat_msg && m->next) { m = m->next; }
+
+            if (m->is_chat_msg)
+            {
+                // All messages in the list are chat messages
+
+                // Is the new one a chat message too?
+                if (is_chat_msg)
+                {
+                    // Yes; advance the list normally
+                    m = message_list_head;
+                }
+                else {
+                    // No; omit it
+                    goto clear_string;
+                }
+            }
+
+            linkedmessage_t *const prev = m->prev,
+                            *const next = m->next;
+
+            Z_Free(m);
+
+            if (prev) { prev->next = next; }
+            else      { message_list_head = next; }
+
+            if (next) { next->prev = prev; }
+            else      { message_list_tail = prev; }
+        }
+
+        if (message_list_tail)
+        {
+            message_list_tail->next = Z_Malloc(sizeof(linkedmessage_t), PU_STATIC, NULL);
+
+            message_list_tail->next->prev = message_list_tail;
+            message_list_tail = message_list_tail->next;
+        }
+        else {
+            message_list_head =
+            message_list_tail = Z_Malloc(sizeof(linkedmessage_t), PU_STATIC, NULL);
+
+            message_list_tail->prev = NULL;
+        }
+
+        message_list_tail->next = NULL;
+
+        M_StringCopy(message_list_tail->string, string, sizeof(message_list_tail->string));
+        message_list_tail->orig_length = strlen(message_list_tail->string);
     }
-
-    message_list_tail->next = NULL;
-
-    M_StringCopy(message_list_tail->string, string, sizeof(message_list_tail->string));
 
     if (is_chat_msg)
     {
@@ -238,7 +259,9 @@ static void AddMessage(char *const string, int duration, const boolean is_chat_m
     // Message flash (actually 4, as it will be decremented right after this)
     message_list_tail->flash_duration_left = message_flash ? 5 : 0;
 
-    clear_string: string[0] = '\0';
+clear_string:
+
+    string[0] = '\0';
 }
 
 // [Nugget] -----------------------------------------------------------------/
@@ -1687,6 +1710,9 @@ void ST_BindHUDVariables(void)
   BIND_NUM(hud_msg_duration, 0, 0, UL, "Force duration of messages, in tics (0 = Don't force)");
   BIND_NUM(hud_chat_duration, 0, 0, UL, "Force duration of chat messages, in tics (0 = Don't force)");
   BIND_NUM(hud_msg_lines, 1, 1, 8, "Number of lines for message list");
+
+  M_BindBool("hud_msg_group", &hud_msg_group, NULL,
+             false, ss_stat, wad_no, "Group repeated messages together");
 
   // (CFG-only)
   BIND_BOOL(hud_msg_scrollup, true, "Message list scrolls upwards");

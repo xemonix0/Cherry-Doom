@@ -1,6 +1,7 @@
 ## New Features
 
 - **_Slow Motion_ button**
+- **_Group Repeated Messages_ setting**
 - **_'TRAILS'_ cheat**, to show hitscan trails
 - **Color settings** from International Doom
 

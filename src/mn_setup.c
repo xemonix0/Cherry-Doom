@@ -2227,9 +2227,11 @@ static setup_menu_t stat_settings4[] = {
      {"hudcolor_obituary"}, .strings_id = str_hudcolor},
 
     // Message flash
-    {"Message Flash",        S_ONOFF, H_X, M_SPC, {"message_flash"}},
+    {"Message Flash", S_ONOFF, H_X, M_SPC, {"message_flash"}},
 
     {"Message Lines", S_NUM, H_X, M_SPC, {"hud_msg_lines"}, .action = MoveMinimap},
+
+    {"Group Repeated Messages", S_ONOFF, H_X, M_SPC, {"hud_msg_group"}},
 
     {"Forced Message Tics", S_NUM, H_X, M_SPC, {"hud_msg_duration"}},
     {"Forced Chat Message Tics", S_NUM, H_X, M_SPC, {"hud_chat_duration"}},

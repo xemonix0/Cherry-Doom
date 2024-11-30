@@ -108,6 +108,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Milestone-Completion Announcements_** setting, to report completion of milestones (e.g. all items acquired)
 - **_Message Flash_** setting
 - **_Message Lines_** setting (scrolling direction determined by the CFG-only `hud_msg_scrollup` CVAR)
+- **_Group Repeated Messages_** setting [i.b. Doom Retro]
 - **_(Chat) Message Duration_** settings
 - **_Show Powerup Timers_** setting
 - **_Blink Missing Keys_** setting [partially p.f. Crispy Doom]

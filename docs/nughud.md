@@ -14,7 +14,7 @@ names and values, optionally separated by blank or comment lines.
 
 NUGHUD mostly serves as an interface for SBARDEF, with simpler (albeit verbose) syntax and some exclusive features.
 Unlike SBARDEF, however, **NUGHUD works by applying modifications to a built-in `NUGHUD`**,
-meaning that **it is not necessary to redefine all properties in new NUGHUDs for them to work**.
+meaning that **it is not necessary to redefine all properties in new `NUGHUD`s for them to work**.
 
 ## Loading `NUGHUD` lumps
 
@@ -52,9 +52,9 @@ meaning that **it is not necessary to redefine all properties in new NUGHUDs for
   - `-1` for bottom alignment.
   
 
-## Status-Bar widgets
+## Status-bar widgets
 
-The following Status-Bar widgets are available:
+The following status-bar widgets are available:
 
 | Widget(s)           | Alignable | Description |
 | :-----------------: | :-------: | :---------- |
@@ -74,7 +74,7 @@ The following Status-Bar widgets are available:
 | `nughud_ammo#`      | Yes       | Ammo count for each type, where `#` is an integer in the [0, 3] range (in order: Bullets; Shells; Cells; Rockets) |
 | `nughud_maxammo#`   | Yes       | Same as the above, but for Max. Ammo |
 
-**All Status-Bar widgets are disableable**, by setting `_x` to `-1`.
+**All status-bar widgets are disableable**, by setting `_x` to `-1`.
 
 **The _Ammo_, _Health_ and _Armor_ icons are vertically alignable.**
 Additionally, **the offsets of the graphics used by these icons will be ignored, unless a custom font is being used** (see details below).
@@ -263,7 +263,7 @@ Otherwise, enabling it is useful when using exclusive graphics, whose offsets ar
 
 ```
 ; Loading a NUGHUD lump with these contents will draw
-; the Status Bar graphic in its traditional position.
+; the status-bar graphic in its traditional position.
 ; It doesn't look right, but it's just an example.
 
 nughud_patch1_x 0
@@ -278,7 +278,7 @@ nughud_patch2_wide 0
 nughud_patch2_name "STARMS"
 ```
 
-### Status-Bar Chunks
+### Status-bar chunks
 
 **Status-bar chunks** are square regions of the status bar, taken from the currently loaded `STBAR`.
 Up to 8 chunks can be drawn; they are drawn behind patches, following the same order (`chunk1` before `chunk2`, etc.).
@@ -303,7 +303,7 @@ Aside from the shared properties, **the minimap makes use of the following addit
 
 - `_w`: **Width**, which can be any integer in the [32, 96] range.
 - `_h`: **Height**, which can be any integer in the [32, 96] range.
-- `_undmess`: A boolean which determines if the minimap is **under messages**, in which case its Y position will be affected by the length of the message list.
+- `_undmess`: A boolean which determines if the minimap is **under messages**, in which case its Y position will be affected by the height of the message list.
 
 ### Additional integer properties
 
@@ -315,4 +315,4 @@ Aside from the shared properties, **the minimap makes use of the following addit
 **The default `NUGHUD` is based on the traditional status bar**, with the addition of showing Arms numbers `2-9` instead of `2-7`.
 
 **Said default `NUGHUD`**, as built into the executable, **is available in text format as `nughud.lmp`**, found in the `docs/` folder.
-Comments were added to it for clarity. Feel free to use it as a base to make new NUGHUDs.
+Comments were added to it for clarity. Feel free to use it as a base to make new `NUGHUD`s.
