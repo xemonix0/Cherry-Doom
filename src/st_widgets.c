@@ -264,6 +264,21 @@ clear_string:
     string[0] = '\0';
 }
 
+void ST_ClearMessages(void)
+{
+    linkedmessage_t *m = message_list_head;
+
+    while (m)
+    {
+        linkedmessage_t *const deletee = m;
+        m = m->next;
+        Z_Free(deletee);
+    }
+
+    message_list_head = message_list_tail = NULL;
+    message_index = 0;
+}
+
 // [Nugget] -----------------------------------------------------------------/
 
 static void UpdateMessage(sbe_widget_t *widget, player_t *player)
@@ -274,18 +289,7 @@ static void UpdateMessage(sbe_widget_t *widget, player_t *player)
 
     if (!player->message)
     {
-        linkedmessage_t *m = message_list_head;
-
-        while (m)
-        {
-            linkedmessage_t *const deletee = m;
-            m = m->next;
-            Z_Free(deletee);
-        }
-
-        message_list_head = message_list_tail = NULL;
-        message_index = 0;
-
+        ST_ClearMessages();
         return;
     }
 
