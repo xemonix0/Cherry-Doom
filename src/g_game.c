@@ -1388,8 +1388,8 @@ static void G_DoLoadLevel(void)
   // Rewind
   G_SetRewindCountdown(0);
 
-  // Clear messages
-  ST_ClearMessages();
+  // Hide messages (but don't delete them outright)
+  ST_HideMessages();
 
   // Minimap
   if (minimap_was_on) {

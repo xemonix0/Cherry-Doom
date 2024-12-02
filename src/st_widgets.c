@@ -279,6 +279,19 @@ void ST_ClearMessages(void)
     message_index = 0;
 }
 
+void ST_HideMessages(void)
+{
+    linkedmessage_t *m = message_list_head;
+
+    while (m)
+    {
+        m->duration_left = 0;
+        m = m->next;
+    }
+
+    players[consoleplayer].secretmessage = ""; // Clear secret message too
+}
+
 // [Nugget] -----------------------------------------------------------------/
 
 static void UpdateMessage(sbe_widget_t *widget, player_t *player)

@@ -26,6 +26,7 @@ extern boolean sp_chat;
 boolean ST_GetChatOn(void);
 int ST_GetNumMessageLines(void);
 void ST_ClearMessages(void);
+void ST_HideMessages(void);
 
 // [Nugget] =================================================================/
 
