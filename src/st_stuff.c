@@ -141,7 +141,9 @@ boolean ST_GetNughudOn(void)
 static sbarelem_t *nughud_health_elem = NULL,
                   *nughud_armor_elem = NULL;
 
-static pixel_t *st_bar = NULL; // Used for Status-Bar chunks
+// Used for Status-Bar chunks
+static pixel_t *st_bar = NULL;
+static int stbar_height = 32;
 
 static sbaralignment_t NughudConvertAlignment(const int wide, const int align);
 static void DrawNughudGraphics();
@@ -2291,6 +2293,10 @@ void ST_Init(void)
 
     // NUGHUD ----------------------------------------------------------------
 
+    const patch_t *const sbar = V_CachePatchName("STBAR", PU_STATIC);
+
+    stbar_height = MAX(32, SHORT(sbar->height));
+
     for (int i = 0;  i < NUMNUGHUDSTACKS;  i++)
     {
         stackqueue_t *const sq = &nughud_stackqueues[i];
@@ -2380,7 +2386,7 @@ void ST_InitRes(void)
 
   // [Nugget] Status-Bar chunks
   // More than necessary (we only use the section visible in 4:3), but so be it
-  st_bar = Z_Malloc((video.pitch * V_ScaleY(ST_HEIGHT)) * sizeof(*st_bar), PU_RENDERER, 0);
+  st_bar = Z_Malloc((video.pitch * V_ScaleY(stbar_height)) * sizeof(*st_bar), PU_RENDERER, 0);
 }
 
 void ST_ResetPalette(void)
@@ -2646,7 +2652,7 @@ void ST_refreshBackground(void)
   // Status-Bar chunks -------------------------------------------------------
 
   patch_t *const sbar = V_CachePatchName("STBAR", PU_STATIC);
-  
+
   V_UseBuffer(st_bar);
 
   V_DrawPatch((SCREENWIDTH - SHORT(sbar->width)) / 2 + SHORT(sbar->leftoffset), 0, sbar);
