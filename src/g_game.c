@@ -6051,19 +6051,27 @@ void G_BindEnemVariables(void)
   // [Nugget] ----------------------------------------------------------------
 
   M_BindBool("extra_gibbing", &extra_gibbing_on, NULL,
-             false, ss_enem, wad_yes, "Enable extra-gibbing in general (affected by CVARs below)");
+             false, ss_enem, wad_yes, "Enable extra gibbing in general (affected by CVARs below)");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_fist", &extra_gibbing[EXGIB_FIST], NULL,
-             true, ss_none, wad_yes, "Extra-gibbing for Berserk Fist");
+             true, ss_none, wad_yes, "Extra gibbing for Berserk Fist");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_csaw", &extra_gibbing[EXGIB_CSAW], NULL,
-             true, ss_none, wad_yes, "Extra-gibbing for Chainsaw");
+             true, ss_none, wad_yes, "Extra gibbing for Chainsaw");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_ssg", &extra_gibbing[EXGIB_SSG], NULL,
-             true, ss_none, wad_yes, "Extra-gibbing for SSG");
+             true, ss_none, wad_yes, "Extra gibbing for SSG");
+
+  // (CFG-only)
+  M_BindBool("extra_gibbing_bfg", &extra_gibbing[EXGIB_BFG], NULL,
+             true, ss_none, wad_yes, "Extra gibbing for BFG tracers");
+
+  // (CFG-only)
+  M_BindBool("extra_gibbing_proj", &extra_gibbing[EXGIB_PROJ], NULL,
+             true, ss_none, wad_yes, "Extra gibbing for projectiles dealing 20+ base damage");
 
   M_BindBool("bloodier_gibbing", &bloodier_gibbing, NULL,
              false, ss_enem, wad_yes, "Bloodier gibbing");

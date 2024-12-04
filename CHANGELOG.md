@@ -1,6 +1,7 @@
 ## New Features
 
 - **_Slow Motion_ button**
+- **Extra gibbing with high-damage projectiles and BFG tracers**
 - **_Group Repeated Messages_ setting**
 - **_'TRAILS'_ cheat**, to show hitscan trails
 - **Color settings** from International Doom
@@ -37,6 +38,7 @@
 - **FOV effects disabling interpolation of weapon sprites**
 - **Crash when loading WADs with empty lumps between `C_#` markers** (fixes `nt_rc1.wad`)
 - **Shadows not being drawn for HUD icons when using Boom font**
+- **Enemies potentially firing explosive-hitscan shots**
 
 **[1].** Not necessarily with the same CVARs; existing config files may be affected.
 

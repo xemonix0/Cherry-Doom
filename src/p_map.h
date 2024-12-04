@@ -109,7 +109,11 @@ fixed_t P_PitchToSlope(const fixed_t pitch);
 
 void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope); // Chasecam
 
-extern boolean boomshot; // Explosive hitscan cheat
+// Extra Gibbing
+boolean P_IsBFGTracer(void);
+void P_SetIsBFGTracer(const boolean value); 
+
+void P_SetIsBoomShot(const boolean value); // Explosive hitscan cheat
 
 // Hitscan trails ------------------------------------------------------------
 

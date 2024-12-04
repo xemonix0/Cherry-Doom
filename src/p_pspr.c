@@ -845,7 +845,7 @@ void A_Punch(player_t *player, pspdef_t *psp)
         { slope = player->slope; }
       }
 
-      if (player->cheats & CF_BOOMCAN) { boomshot = true; }
+      if (player->cheats & CF_BOOMCAN) { P_SetIsBoomShot(true); }
 
       P_LineAttack(player->mo, angle, MISSILERANGE, slope, 1000000);
     } while (++i < 21 && !once);
@@ -1144,7 +1144,7 @@ void P_GunShot(mobj_t *mo, boolean accurate)
     }
 
   // [Nugget] Explosive hitscan cheat
-  if (mo->player && mo->player->cheats & CF_BOOMCAN) { boomshot = true; }
+  if (mo->player && mo->player->cheats & CF_BOOMCAN) { P_SetIsBoomShot(true); }
 
   P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
 }
@@ -1215,7 +1215,7 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
       t = P_Random(pr_shotgun);
 
       // [Nugget] Explosive hitscan cheat
-      if (player->cheats & CF_BOOMCAN) { boomshot = true; }
+      if (player->cheats & CF_BOOMCAN) { P_SetIsBoomShot(true); }
 
       P_LineAttack(player->mo, angle, MISSILERANGE, bulletslope +
                    ((t - P_Random(pr_shotgun))<<5), damage);
@@ -1348,7 +1348,11 @@ void A_BFGSpray(mobj_t *mo)
       for (damage=j=0; j<15; j++)
         damage += (P_Random(pr_bfg)&7) + 1;
 
+      P_SetIsBFGTracer(true); // [Nugget] Extra Gibbing
+
       P_DamageMobj(linetarget, mo->target, mo->target, damage);
+
+      P_SetIsBFGTracer(false); // [Nugget] Extra Gibbing
 
       shake++; // [Nugget] Explosion shake effect
     }
@@ -1659,7 +1663,7 @@ void A_WeaponBulletAttack(player_t *player, pspdef_t *psp)
     slope = bulletslope + P_RandomHitscanSlope(pr_mbf21, vspread);
 
     // [Nugget] Explosive hitscan cheat
-    if (player->cheats & CF_BOOMCAN) { boomshot = true; }
+    if (player->cheats & CF_BOOMCAN) { P_SetIsBoomShot(true); }
 
     P_LineAttack(player->mo, angle, MISSILERANGE, slope, damage);
   }

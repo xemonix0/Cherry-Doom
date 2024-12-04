@@ -35,6 +35,8 @@ enum {
   EXGIB_FIST,
   EXGIB_CSAW,
   EXGIB_SSG,
+  EXGIB_BFG,
+  EXGIB_PROJ,
   
   NUMEXGIBS
 }; extern boolean extra_gibbing[NUMEXGIBS];
