@@ -782,7 +782,9 @@ static boolean P_NuggetForceGibbing(
 
   if (extra_gibbing[EXGIB_PROJ]
       && inflictor && inflictor->flags & MF_MISSILE
-      && inflictor->info && inflictor->info->damage >= 20)
+      && inflictor->info && inflictor->info->damage >= 20
+      // If no momentum, the damage isn't from projectile collision
+      && (inflictor->momx || inflictor->momy))
   {
     return true;
   }
