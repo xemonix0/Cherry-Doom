@@ -1647,6 +1647,8 @@ void R_RenderPlayerView (player_t* player)
       keep_pspr_interp = true;
       R_ExecuteSetViewSize();
       keep_pspr_interp = false;
+
+      R_FillBackScreen();
     }
   }
 

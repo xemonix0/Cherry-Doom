@@ -2,11 +2,14 @@
 
 <component type="desktop">
   <id>io.github.MrAlaux.Nugget-Doom</id>
+  <launchable type="desktop-id">io.github.MrAlaux.Nugget-Doom.desktop</launchable>
   <name>Nugget Doom</name>
   <summary>Fork of Woof! with additional features</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-2.0+</project_license>
-  <developer_name>Alaux</developer_name>
+  <developer id="io.github.MrAlaux">
+    <name>Alaux</name>
+  </developer>
   <url type="homepage">https://github.com/MrAlaux/Nugget-Doom</url>
   <url type="bugtracker">https://github.com/MrAlaux/Nugget-Doom/issues</url>
   <description>
