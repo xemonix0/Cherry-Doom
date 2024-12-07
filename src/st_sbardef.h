@@ -130,7 +130,7 @@ typedef enum
     sbw_speed,
 
     sbw_message,
-    sbw_secret,
+    sbw_announce,
     sbw_chat,
     sbw_title,
 
@@ -227,8 +227,10 @@ typedef struct sbe_widget_s
     hudfont_t *font;
     widgetline_t *lines;
 
-    // message
+    int height;
+
     int duration;
+    int duration_left;
 
     // [Nugget]
     int vertical_layout;

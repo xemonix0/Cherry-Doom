@@ -8,16 +8,19 @@
 
 ## Changes
 
-- **Merged changes from [Woof! 15.0.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_15.0.0)**, note:
-  - NUGHUD now partially uses SBARDEF as its backend, which may cause some rendering differences
-  - Integrated periodic auto saves into the save/load menus
-  - Maintained key blink, message list, message duration, and chat-message duration settings [1]
-  - Turned optional vertical layout for _Stats_ and _Coordinates_ widgets into SBARDEF fields
-  - Removed `show_ssg` (now default behavior), `alt_arms` and `hud_highlight_weapon` settings
-  - Renamed `#_bobbing_percentage` to `#_bobbing_pct` [2]
-  - Renamed `show_berserk` to `sts_show_berserk` [2]
-  - Moved `sts_show_berserk` menu item to _Status Bar/HUD_ setup menu
-  - Revised the descriptions of many of Nugget's new CVARs
+- **Merged changes from the following Woof! releases:**
+  - [Woof! 15.0.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_15.0.0), note:
+    - NUGHUD now partially uses SBARDEF as its backend, which may cause some rendering differences
+    - Integrated periodic auto saves into the save/load menus
+    - Maintained key blink, message list, message duration, and chat-message duration settings [1]
+    - Turned optional vertical layout for _Stats_ and _Coordinates_ widgets into SBARDEF fields
+    - Removed `show_ssg` (now default behavior), `alt_arms` and `hud_highlight_weapon` settings
+    - Renamed `#_bobbing_percentage` to `#_bobbing_pct` [2]
+    - Renamed `show_berserk` to `sts_show_berserk` [2]
+    - Moved `sts_show_berserk` menu item to _Status Bar/HUD_ setup menu
+    - Revised the descriptions of many of Nugget's new CVARs
+  - [Woof! 15.0.1](https://github.com/fabiangreffrath/woof/releases/tag/woof_15.0.1)
+  - Also merged the ouch-face fix from Woof! post-15.0.1
 - **Messages in the message list now have individual durations**
 - **Made the minimap customizable through SBARDEF and NUGHUD**
 - **Improved FOV-based sky stretching**

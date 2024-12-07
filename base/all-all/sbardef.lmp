@@ -1066,7 +1066,7 @@
           {
             "widget":
             {
-              "x": 2,
+              "x": 0,
               "y": 0,
               "alignment": 16,
               "tranmap": null,
@@ -1085,7 +1085,7 @@
               "y": 52,
               "alignment": 1,
               "tranmap": null,
-              "translation": "CRGOLD",
+              "translation": null,
               "type": 8,
               "font": "Console",
               "duration": 2.5,
@@ -1096,7 +1096,7 @@
           {
             "widget":
             {
-              "x": 2,
+              "x": 0,
               "y": 0,
               "alignment": 16,
               "tranmap": null,
@@ -1111,7 +1111,7 @@
           {
             "widget":
             {
-              "x": 2,
+              "x": 0,
               "y": 160,
               "alignment": 16,
               "tranmap": null,
@@ -1936,7 +1936,7 @@
                 {
                   "widget":
                   {
-                    "x": 2,
+                    "x": 0,
                     "y": 0,
                     "alignment": 16,
                     "tranmap": null,
@@ -1955,7 +1955,7 @@
                     "y": 68,
                     "alignment": 1,
                     "tranmap": null,
-                    "translation": "CRGOLD",
+                    "translation": null,
                     "type": 8,
                     "font": "Console",
                     "duration": 2.5,
@@ -1966,7 +1966,7 @@
                 {
                   "widget":
                   {
-                    "x": 2,
+                    "x": 0,
                     "y": 0,
                     "alignment": 16,
                     "tranmap": null,
@@ -1981,7 +1981,7 @@
                 {
                   "widget":
                   {
-                    "x": 2,
+                    "x": 0,
                     "y": 155,
                     "alignment": 16,
                     "tranmap": null,
@@ -2277,7 +2277,7 @@
               "y": 68,
               "alignment": 1,
               "tranmap": null,
-              "translation": "CRGOLD",
+              "translation": null,
               "type": 8,
               "font": "Console",
               "duration": 2.5,

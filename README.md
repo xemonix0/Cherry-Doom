@@ -341,7 +341,8 @@ Copyright:
 License: [MIT](https://opensource.org/licenses/MIT)
 
 Files: `src/nano_bsp.*`  
-Copyright: © 2023 Andrew Apted.  
+Copyright:  
+ © 2023 Andrew Apted.  
 License: [MIT](https://opensource.org/licenses/MIT)
 
 Files: `src/u_scanner.*`  
@@ -362,12 +363,14 @@ Copyright:
  © 2013 James Haley et al.  
 License: [GPL-3.0+](https://www.gnu.org/licenses/gpl-3.0)
 
-Files: `base/all-all/sprites/pls*`  
-Copyright: © 2001-2019 Contributors to the Freedoom project.  
+Files: `base/all-all/sprites/pls*, man/simplecpp`  
+Copyright:  
+ © 2001-2019 Contributors to the Freedoom project.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `base/all-all/sprites/ngcha0.png, base/all-all/sprites/ngcla0.png, base/all-all/sprites/ngtr*0.png`  
-Copyright: © 2023-2024 Korp.  
+Copyright:  
+ © 2023-2024 Korp.  
 License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
 Files: `base/all-all/dsdg*, base/all-all/sprites/dog*`  
@@ -378,7 +381,8 @@ Copyright:
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
 Files: `base/all-all/sm*.png`  
-Copyright: © 2024 Julia Nechaevskaya.  
+Copyright:  
+ © 2024 Julia Nechaevskaya.  
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
 
 Files: `base/all-all/sbardef.lmp`  
@@ -389,15 +393,22 @@ License: [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 Files: `base/all-all/dmxopl.op2`  
 Copyright:  
  © 2017 Shannon Freeman.  
-License: [MIT](https://opensource.org/licenses/MIT)
+License: [MIT](https://github.com/sneakernets/DMXOPL/blob/DMXOPL3/LICENSE)
 
 Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
-Copyright: © 2018 Alex Mayfield.  
+Copyright:  
+ © 2018 Alex Mayfield.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `data/nugget-doom.ico, data/nugget-doom.png, src/icon.c, data/setup.ico, data/nugget-doom-setup.png, setup/setup_icon.c`  
-Copyright: © 2022 Korp.  
+Copyright:  
+ © 2022 Korp.  
 License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+
+Files: `data/io.github.MrAlaux.Nugget-Doom.metainfo.*`  
+Copyright:  
+ © 2023-2024 Fabian Greffrath.  
+License: [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
 Files: `opl/*`  
 Copyright:  
@@ -437,16 +448,19 @@ Files: `third-party/sha1/*`
 Copyright:  
  © 1998-2001 Free Software Foundation, Inc.;  
  © 2005-2014 Simon Howard.  
-License: [GPL-2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `third-party/spng/*`  
-Copyright: © 2018-2023 Randy.  
+Copyright:  
+ © 2018-2023 Randy.  
 License: [BSD-2-Clause](https://opensource.org/license/bsd-2-clause)
 
 Files: `third-party/yyjson/*`  
-Copyright © 2020 YaoYuan.  
+Copyright:  
+ © 2020 YaoYuan.  
 License: [MIT](https://opensource.org/licenses/MIT)
 
 Files: `win32/win_opendir.*`  
-Copyright: © 2019 win32ports.  
+Copyright:  
+ © 2019 win32ports.  
 License: [MIT](https://opensource.org/licenses/MIT)

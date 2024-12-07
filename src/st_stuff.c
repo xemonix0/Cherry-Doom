@@ -31,7 +31,6 @@
 #include "doomtype.h"
 #include "hu_command.h"
 #include "hu_obituary.h"
-#include "i_system.h"
 #include "i_video.h"
 #include "info.h"
 #include "m_array.h"
@@ -685,10 +684,15 @@ static int ResolveNumber(sbe_number_t *number, player_t *player)
 
 static int CalcPainOffset(sbe_face_t *face, player_t *player)
 {
+    static int lasthealthcalc;
+    static int oldhealth = -1;
     int health = player->health > 100 ? 100 : player->health;
-    int lasthealthcalc =
-        ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
-    face->oldhealth = health;
+    if (oldhealth != health)
+    {
+        lasthealthcalc =
+            ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
+        oldhealth = health;
+    }
     return lasthealthcalc;
 }
 
@@ -763,7 +767,7 @@ static void UpdateFace(sbe_face_t *face, player_t *player)
             boolean right = false;
 
             // [FG] show "Ouch Face" as intended
-            if (player->health - face->oldhealth > ST_MUCHPAIN)
+            if (face->oldhealth - player->health > ST_MUCHPAIN)
             {
                 // [FG] raise "Ouch Face" priority
                 priority = 8;
@@ -816,7 +820,7 @@ static void UpdateFace(sbe_face_t *face, player_t *player)
         // getting hurt because of your own damn stupidity
         if (player->damagecount)
         {
-            if (player->health - face->oldhealth > ST_MUCHPAIN)
+            if (face->oldhealth - player->health > ST_MUCHPAIN)
             {
                 priority = 7;
                 face->facecount = ST_TURNCOUNT;
@@ -874,6 +878,8 @@ static void UpdateFace(sbe_face_t *face, player_t *player)
     }
 
     --face->facecount;
+
+    face->oldhealth = player->health;
 }
 
 static void UpdateNumber(sbarelem_t *elem, player_t *player)
@@ -1334,6 +1340,10 @@ static void ResetElem(sbarelem_t *elem)
         case sbe_number:
         case sbe_percent:
             elem->subtype.number->oldvalue = -1;
+            break;
+
+        case sbe_widget:
+            elem->subtype.widget->duration_left = 0;
             break;
 
         default:
@@ -1917,6 +1927,19 @@ static void DrawStatusBar(void)
     }
 }
 
+static void EraseBackground(int y, int height)
+{
+    if (y > scaledviewy && y < scaledviewy + scaledviewheight - height)
+    {
+        R_VideoErase(0, y, scaledviewx, height);
+        R_VideoErase(scaledviewx + scaledviewwidth, y, scaledviewx, height);
+    }
+    else
+    {
+        R_VideoErase(0, y, video.unscaledw, height);
+    }
+}
+
 static void EraseElem(int x, int y, sbarelem_t *elem, player_t *player)
 {
     if (!CheckConditions(elem->conditions, player))
@@ -1943,15 +1966,20 @@ static void EraseElem(int x, int y, sbarelem_t *elem, player_t *player)
             height += font->maxheight;
         }
 
-        if (y > scaledviewy && y < scaledviewy + scaledviewheight - height)
+        if (height > 0)
         {
-            R_VideoErase(0, y, scaledviewx, height);
-            R_VideoErase(scaledviewx + scaledviewwidth, y, scaledviewx, height);
+            EraseBackground(y, height);
+            widget->height = height;
         }
-        else
+        else if (widget->height)
         {
-            R_VideoErase(0, y, video.unscaledw, height);
+            EraseBackground(y, widget->height);
+            widget->height = 0;
         }
+    }
+    else if (elem->type == sbe_carousel)
+    {
+        ST_EraseCarousel(y);
     }
 
     sbarelem_t *child;
@@ -1963,7 +1991,7 @@ static void EraseElem(int x, int y, sbarelem_t *elem, player_t *player)
 
 void ST_Erase(void)
 {
-    if (!sbardef)
+    if (!sbardef || screenblocks >= 10)
     {
         return;
     }
@@ -2271,13 +2299,13 @@ void ST_Init(void)
     if (firsttime) { firsttime = false; }
     else           { return; }
 
+    stcfnt = LoadSTCFN();
+    hu_font = stcfnt->characters;
+
     // [Nugget] Removed return when `!sbardef`;
     // everything below can be loaded regardless
 
     LoadFacePatches();
-
-    stcfnt = LoadSTCFN();
-    hu_font = stcfnt->characters;
 
     HU_InitCrosshair();
     HU_InitCommandHistory();
@@ -2334,18 +2362,18 @@ void ST_Init(void)
 
         switch (type)
         {
-            case sbw_monsec:   ntl = &nughud.sts;      break;
-            case sbw_time:     ntl = &nughud.time;     break;
-            case sbw_coord:    ntl = &nughud.coord;    break;
-            case sbw_fps:      ntl = &nughud.fps;      break;
-            case sbw_rate:     ntl = &nughud.rate;     break;
-            case sbw_cmd:      ntl = &nughud.cmd;      break;
-            case sbw_speed:    ntl = &nughud.speed;    break;
-            case sbw_message:  ntl = &nughud.message;  break;
-            case sbw_chat:     ntl = &nughud.message;  break;
-            case sbw_secret:   ntl = &nughud.secret;   break;
-            case sbw_title:    ntl = &nughud.title;    break;
-            case sbw_powers:   ntl = &nughud.powers;   break;
+            case sbw_monsec:    ntl = &nughud.sts;      break;
+            case sbw_time:      ntl = &nughud.time;     break;
+            case sbw_coord:     ntl = &nughud.coord;    break;
+            case sbw_fps:       ntl = &nughud.fps;      break;
+            case sbw_rate:      ntl = &nughud.rate;     break;
+            case sbw_cmd:       ntl = &nughud.cmd;      break;
+            case sbw_speed:     ntl = &nughud.speed;    break;
+            case sbw_message:   ntl = &nughud.message;  break;
+            case sbw_chat:      ntl = &nughud.message;  break;
+            case sbw_announce:  ntl = &nughud.secret;   break;
+            case sbw_title:     ntl = &nughud.title;    break;
+            case sbw_powers:    ntl = &nughud.powers;   break;
 
             default: continue;
         }
@@ -3579,12 +3607,11 @@ end_amnum:
     array_push(sb.children, elem);
   }
 
-  // Secret message ----------------------------------------------------------
+  // Announcements -----------------------------------------------------------
 
   {
-    sbarelem_t elem = CreateNughudWidget(nughud.secret, sbw_secret, &cfn);
+    sbarelem_t elem = CreateNughudWidget(nughud.secret, sbw_announce, &cfn);
 
-    elem.cr = CR_GOLD;
     elem.subtype.widget->duration = 2.5f*TICRATE;
 
     array_push(sb.children, elem);
