@@ -2189,10 +2189,6 @@ void ST_Ticker(void)
                     { continue; }
 
                     sbe_widget_t *const wid = elem->subtype.widget;
-                    const int numlines = array_size(wid->lines);
-
-                    if (numlines <= 0) { continue; }
-
                     const nughud_vlignable_t *const stack = &nughud.stacks[i];
                     const sbarwidgettype_t type = wid->type;
 
@@ -2207,6 +2203,7 @@ void ST_Ticker(void)
                         }
                     }
 
+                    const int numlines = array_size(wid->lines);
                     const int lineheight = wid->font->maxheight;
 
                     for (int k = 0;  k < numlines;  k++)
