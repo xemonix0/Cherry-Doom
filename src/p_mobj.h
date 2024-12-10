@@ -510,17 +510,6 @@ mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenu
 extern boolean rocket_trails;
 extern int rocket_trails_interval;
 
-enum
-{
-    no_rsmk_player = 1,
-    no_rsmk_cyberdemon = 2,
-    no_rsmk_revenant = 4,
-
-    no_rsmk_all = no_rsmk_player | no_rsmk_cyberdemon | no_rsmk_revenant,
-};
-
-extern int no_rocket_trails;
-
 #endif
 
 //----------------------------------------------------------------------------

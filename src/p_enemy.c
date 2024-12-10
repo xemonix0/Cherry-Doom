@@ -1507,7 +1507,7 @@ void A_CyberAttack(mobj_t *actor)
   A_FaceTarget(actor);
   mobj_t *mo = P_SpawnMissile(actor, actor->target, MT_ROCKET);
 
-  if (CASUALPLAY(rocket_trails) && !(no_rocket_trails & no_rsmk_cyberdemon))
+  if (CASUALPLAY(rocket_trails))
   {
     mo->intflags |= MIF_SMOKE_TRAIL;
     mo->pursuecount = 0;
@@ -1583,7 +1583,7 @@ void A_Tracer(mobj_t *actor)
   if ((gametic-basetic) & 3)
     return;
 
-  if (CASUALPLAY(rocket_trails) && !(no_rocket_trails & no_rsmk_revenant))
+  if (CASUALPLAY(rocket_trails))
     actor->intflags |= MIF_SMOKE_TRAIL;
   else
   {

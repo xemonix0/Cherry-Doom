@@ -25,6 +25,7 @@ Also, merged Nugget Doom's [`master`](https://github.com/MrAlaux/Nugget-Doom/tre
 - _Detection of Targets in Darkness_ now accounts for fullbright frames
 - WAD stats are now saved every time a level is beaten
 - `TNT31.WAD` is now not considered a separate WAD by the _stats tracking_ system when loaded with `TNT.WAD`
+- _Rocket Trails_ now work even when there are DSDHacked patches loaded
 
 ## Bug Fixes
 

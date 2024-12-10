@@ -31,8 +31,7 @@ Although the new code has been written with the intention of not breaking demo c
 
 - _Mute Inactive Window_ setting [p.f. [International Doom](https://jnechaevsky.github.io/inter-doom/)]
 - _Floating Powerups_ setting [p.f. International Doom]
-- _Rocket Trails_ setting [p.f. [Doom Retro](https://www.doomretro.com/)] (with extended customization via the _Rocket Trails Interval_ and _Smoke Translucency_ settings)
-	- Just like in Doom Retro, rocket trails are disabled if a [DSDHacked](https://doomwiki.org/wiki/DSDHacked) patch replaces the rocket smoke thing definition or any of its states or sprites
+- _Rocket Trails_ setting [partially p.f. [Doom Retro](https://www.doomretro.com/)] (with extended customization via the _Rocket Trails Interval_ and _Smoke Translucency_ settings)
 - _Mouselook_ option for the _Stretch Short Skies_ setting to enable sky stretching only when mouselook is enabled
 - _Less Blinding Tints_ setting
 

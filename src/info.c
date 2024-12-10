@@ -81,9 +81,6 @@ char *original_sprnames[NUMSPRITES+1] = {
   "SP80", "SP81", "SP82", "SP83", "SP84", "SP85", "SP86", "SP87", "SP88", "SP89",
   "SP90", "SP91", "SP92", "SP93", "SP94", "SP95", "SP96", "SP97", "SP98", "SP99",
 
-  // [Cherry] Rocket trails from Doom Retro
-  "RSMK",
-
   NULL
 };
 
@@ -1204,12 +1201,6 @@ state_t original_states[NUMSTATES] = {
 
   // killough 10/98: mushroom effect
   {SPR_MISL,1|FF_FULLBRIGHT,8,{A_Mushroom},S_EXPLODE2},  // S_MUSHROOM
-
-  // [Cherry] Rocket trails from Doom Retro
-  {SPR_RSMK,0,4,{NULL},S_TRAIL2},  // S_TRAIL
-  {SPR_RSMK,1,4,{NULL},S_TRAIL3},  // S_TRAIL2
-  {SPR_RSMK,2,10,{NULL},S_TRAIL4}, // S_TRAIL3
-  {SPR_RSMK,3,14,{NULL},S_NULL},   // S_TRAIL4
 };
 
 // ********************************************************************
@@ -5013,33 +5004,6 @@ mobjinfo_t original_mobjinfo[NUMMOBJTYPES] = {
     sfx_None,   // activesound
     MF_NOBLOCKMAP,   // flags
     S_NULL   // raisestate
-  },
-
-  // [Cherry] Rocket trails from Doom Retro
-  { // MT_TRAIL
-    -1,   // doomednum
-    S_TRAIL,   // spawnstate
-    1000,   // spawnhealth
-    S_NULL,   // seestate
-    sfx_None,   // seesound
-    8,    // reactiontime
-    sfx_None,   // attacksound
-    S_NULL,   // painstate
-    0,    // painchance
-    sfx_None,    // painsound
-    S_NULL,   // meleestate
-    S_NULL,   // missilestate
-    S_NULL,   // deathstate
-    S_NULL,   // xdeathstate
-    sfx_None,    // deathsound
-    0,    // speed
-    0,   // radius
-    0,   // height
-    100,   // mass
-    0,    // damage
-    sfx_None,   // activesound
-    MF_NOBLOCKMAP | MF_NOGRAVITY | MF_TRANSLUCENT,   // flags
-    S_NULL   // raisestate
   }
 };
 
@@ -5048,6 +5012,10 @@ mobjinfo_t original_mobjinfo[NUMMOBJTYPES] = {
 // Alt. sprites
 char *altsprnames[NUMALTSPRITES+1] = {
   "PLYC", "NGCH", "NGCL", "NGTR",
+
+  // [Cherry]
+  "RSMK",
+
   NULL
 };
 
@@ -5064,6 +5032,13 @@ altstate_t altstates[NUMALTSTATES] = {
   { ASPR_NGTR,  5,               DUR, AS_TRAIL7 },
   { ASPR_NGTR,  6,               DUR, AS_NULL },
   #undef DUR
+
+  // [Cherry]
+
+  { ASPR_RSMK,  0,                 4, AS_SMK_TRAIL2 },
+  { ASPR_RSMK,  1,                 4, AS_SMK_TRAIL3 },
+  { ASPR_RSMK,  2,                10, AS_SMK_TRAIL4 },
+  { ASPR_RSMK,  3,                14, AS_NULL },
 };
 
 const lumpinfo_t predefined_lumps[] = {

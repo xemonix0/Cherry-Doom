@@ -1960,21 +1960,6 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
 
   dsdh_EnsureMobjInfoCapacity(indexnum);
 
-  // [Cherry] Rocket trails from Doom Retro
-  if (indexnum == MT_TRAIL)
-  {
-    memset(mobjinfo + indexnum, 0, sizeof(*mobjinfo));
-
-    mobjinfo[indexnum].droppeditem = MT_NULL;
-    mobjinfo[indexnum].infighting_group = IG_DEFAULT;
-    mobjinfo[indexnum].projectile_group = PG_DEFAULT;
-    mobjinfo[indexnum].splash_group = SG_DEFAULT;
-    mobjinfo[indexnum].altspeed = NO_ALTSPEED;
-    mobjinfo[indexnum].meleerange = MELEERANGE;
-
-    no_rocket_trails |= no_rsmk_all;
-  }
-
   // now process the stuff
   // Note that for Things we can look up the key and use its offset
   // in the array of key strings as an int offset in the structure
@@ -2163,18 +2148,6 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
   }
 
   dsdh_EnsureStatesCapacity(indexnum);
-
-  // [Cherry] Rocket trails from Doom Retro
-  if (indexnum >= S_TRAIL && indexnum <= S_TRAIL4)
-  {
-    memset(states + indexnum, 0, sizeof(*states));
-
-    states[indexnum].sprite = SPR_TNT1;
-    states[indexnum].tics = -1;
-    states[indexnum].nextstate = indexnum;
-
-    no_rocket_trails |= no_rsmk_all;
-  }
 
   while (!dehfeof(fpin) && *inbuffer && (*inbuffer != ' '))
     {
@@ -2982,12 +2955,6 @@ void deh_procText(DEHFILE *fpin, FILE* fpout, char *line)
 
           strncpy(sprnames[i],&inbuffer[fromlen],tolen);
           found = true;
-
-          // [Cherry] Rocket trails from Doom Retro
-          if (i == SPR_RSMK)
-          {
-              no_rocket_trails |= no_rsmk_all;
-          }
         }
     }
 
@@ -3312,12 +3279,6 @@ void deh_procBexSprites(DEHFILE *fpin, FILE* fpout, char *line)
     {
       if (fpout) fprintf(fpout, "Substituting '%s' for sprite '%s'\n", candidate, key);
       sprnames[match] = strdup(candidate);
-
-      // [Cherry] Rocket trails from Doom Retro
-      if (match == SPR_RSMK)
-      {
-          no_rocket_trails |= no_rsmk_all;
-      }
     }
   }
 }

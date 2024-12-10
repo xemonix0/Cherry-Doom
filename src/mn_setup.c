@@ -4035,11 +4035,8 @@ static void UpdateDarkeningItems(void)
 
 static void UpdateRocketTrailsItems(void)
 {
-    const boolean disabled = !rocket_trails || no_rocket_trails == no_rsmk_all;
-    DisableItem(no_rocket_trails == no_rsmk_all, gen_settings5,
-                "rocket_trails");
-    DisableItem(disabled, gen_settings5, "rocket_trails_interval");
-    DisableItem(disabled, gen_settings5, "rocket_trails_tran");
+    DisableItem(!rocket_trails, gen_settings5, "rocket_trails_interval");
+    DisableItem(!rocket_trails, gen_settings5, "rocket_trails_tran");
 }
 
 // [Cherry] ------------------------------------------------------------------/

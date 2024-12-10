@@ -61,7 +61,6 @@ boolean comp_nonbleeders;
 // [Cherry] CVARs
 boolean rocket_trails;
 int rocket_trails_interval;
-int no_rocket_trails;
 
 int vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
 
@@ -1657,8 +1656,8 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
 static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
                               const angle_t angle)
 {
-    mobj_t *th = P_SpawnMobj(x, y, z + (Woof_Random() << 10), MT_TRAIL);
-
+    mobj_t *th = P_SpawnVisualMobj(x, y, z + (Woof_Random() << 10), AS_SMK_TRAIL1);
+    
     th->momx = -FixedMul(FRACUNIT, finecosine[angle >> ANGLETOFINESHIFT])
                + FixedMul((Woof_Random() - Woof_Random()) << 8,
                           finesine[angle >> ANGLETOFINESHIFT]);
@@ -1667,6 +1666,9 @@ static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
                           finecosine[angle >> ANGLETOFINESHIFT]);
     th->momz = (Woof_Random() - Woof_Random()) << 8;
     th->angle = angle;
+
+    th->flags |= MF_TRANSLUCENT | MF_NOGRAVITY;
+    th->tranmap = smoke_tranmap;
 }
 
 //
@@ -1853,7 +1855,6 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   // [Cherry] Rocket trails from Doom Retro
   if (type == MT_ROCKET && CASUALPLAY(rocket_trails)
-      && !(no_rocket_trails & no_rsmk_player)
       && !(th->flags & MF_BOUNCES)
       && (source->player && source->player->readyweapon == wp_missile))
   {

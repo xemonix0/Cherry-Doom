@@ -390,9 +390,6 @@ typedef struct vissprite_s
 
   // [Nugget]
   byte *tranmap;
-
-  // [Cherry] Translucent rocket trails
-  boolean rocket_trail;
 } vissprite_t;
 
 //
