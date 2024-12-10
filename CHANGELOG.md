@@ -14,7 +14,7 @@
 Merged changes from [Nugget Doom 3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0), note:
 - Disabled stats tracking when _Duplicate Monsters_ is enabled in the _Custom Skill_ settings
 
-Also, merged changes from Nugget Doom's [`upstream-merge`](https://github.com/MrAlaux/Nugget-Doom/tree/upstream-merge) branch, effectively bringing changes from Woof! introduced post-14.5.0, as well as Nugget Doom changes post-3.2.0. Note:
+Also, merged changes from Nugget Doom's [`upstream-merge`](https://github.com/MrAlaux/Nugget-Doom/tree/upstream-merge) branch, effectively bringing changes from Woof! 15.0.0, as well as Nugget Doom changes post-3.2.0. Note:
 - Removed the _Movement widget_, in favor of Woof!'s speedometer and command history widget
 - Removed _Low/Ok/Good/Extra value color customization_ and the _intermission screen widgets_ settings, since Health, Armor, Ammo and Weapons widgets have been removed
 

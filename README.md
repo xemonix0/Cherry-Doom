@@ -94,16 +94,17 @@ git clone https://github.com/xemonix0/Cherry-Doom.git
 ### Linux, and Windows with MSYS2
 
 The following build system and libraries need to be installed:
-
-- [CMake](https://cmake.org) (>= 3.9)
-- [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
-- [SDL2_net](https://github.com/libsdl-org/SDL_net)
-- [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
-- [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
-- [cJSON](https://github.com/DaveGamble/cJSON)
-- [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
-- [libxmp](https://github.com/libxmp/libxmp) (optional)
-
+ 
+ * [CMake](https://cmake.org) (>= 3.9)
+ * [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
+ * [SDL2_net](https://github.com/libsdl-org/SDL_net)
+ * [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
+ * [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
+ * [libebur128](https://github.com/jiixyj/libebur128) (>= 1.2.0)
+ * [yyjson](https://github.com/ibireme/yyjson) (>= 0.10.0, optional)
+ * [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
+ * [libxmp](https://github.com/libxmp/libxmp) (optional)
+ 
 Usually your distribution should have the corresponding packages in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
 
 Once installed, compilation should be as simple as:
@@ -220,6 +221,10 @@ Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`
 Copyright: © 2018 Alex Mayfield.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
+Files: `base/all-all/sm*.png`  
+Copyright: © 2024 Julia Nechaevskaya.  
+License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
+
 Files: `opl/*`  
 Copyright:  
  © 2005-2014 Simon Howard;  
@@ -239,6 +244,9 @@ Copyright:
  © 2005-2017 Simon Howard.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
+Files: `third-party/md5/*`  
+License: public-domain
+
 Files: `third-party/miniz/*`  
 Copyright:  
  © 2010-2014 Rich Geldreich and Tenacious Software LLC;  
@@ -251,10 +259,20 @@ Copyright:
  © 2013 Julien Pommier.  
 License: [FFTPACK License](https://bitbucket.org/jpommier/pffft/src/master/pffft.h)
 
+Files: `third-party/sha1/*`  
+Copyright:  
+ © 1998-2001 Free Software Foundation, Inc.;  
+ © 2005-2014 Simon Howard.  
+License: [GPL-2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+
 Files: `third-party/spng/*`  
 Copyright: © 2018-2023 Randy.  
 License: [BSD-2-Clause](https://opensource.org/license/bsd-2-clause)
 
+Files: `third-party/yyjson/*`  
+Copyright © 2020 YaoYuan.  
+License: [MIT](https://opensource.org/licenses/MIT)
+
 Files: `win32/win_opendir.*`  
-Copyright: 2019 win32ports
+Copyright: © 2019 win32ports.  
 License: [MIT](https://opensource.org/licenses/MIT)

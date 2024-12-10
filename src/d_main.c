@@ -42,6 +42,7 @@
 #include "dstrings.h"
 #include "f_finale.h"
 #include "f_wipe.h"
+#include "g_compatibility.h"
 #include "g_game.h"
 #include "i_endoom.h"
 #include "i_glob.h"
@@ -75,6 +76,7 @@
 #include "r_voxel.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "s_trakinfo.h"
 #include "st_stuff.h"
 #include "st_widgets.h"
 #include "statdump.h"
@@ -1708,7 +1710,7 @@ typedef enum {
   EXIT_SEQUENCE_OFF,          // Skip sound, skip ENDOOM.
   EXIT_SEQUENCE_SOUND_ONLY,   // Play sound, skip ENDOOM.
   EXIT_SEQUENCE_PWAD_ENDOOM,  // Play sound, show ENDOOM for PWADs only.
-  EXIT_SEQUENCE_ON            // Play sound, show ENDOOM.
+  EXIT_SEQUENCE_FULL          // Play sound, show ENDOOM.
 } exit_sequence_t;
 
 static exit_sequence_t exit_sequence;
@@ -1726,9 +1728,11 @@ static void D_ShowEndDoom(void)
   I_Endoom(endoom);
 }
 
+boolean disable_endoom = false;
+
 static boolean AllowEndDoom(void)
 {
-  return (exit_sequence == EXIT_SEQUENCE_ON
+  return  !disable_endoom && (exit_sequence == EXIT_SEQUENCE_FULL
           || (exit_sequence == EXIT_SEQUENCE_PWAD_ENDOOM
               && !W_IsIWADLump(W_CheckNumForName("ENDOOM"))));
 }
@@ -1887,6 +1891,21 @@ void D_DoomMain(void)
 
   // [FG] emulate a specific version of Doom
   InitGameVersion();
+
+  //!
+  // @category mod
+  //
+  // Disable auto loading of extras.wad.
+  //
+
+  if (!M_ParmExists("-noextras"))
+  {
+      char *extras = D_FindWADByName("extras.wad");
+      if (extras)
+      {
+          D_AddFile(extras, source_other);
+      }
+  }
 
   dsdh_InitTables();
 
@@ -2408,8 +2427,9 @@ void D_DoomMain(void)
   {
     W_ProcessInWads("UMAPINFO", U_ParseMapInfo, true);
     W_ProcessInWads("UMAPINFO", U_ParseMapInfo, false);
-    U_BuildEpisodes();
   }
+
+  G_ParseCompDatabase();
 
   if (!M_CheckParm("-save"))
   {
@@ -2498,10 +2518,10 @@ void D_DoomMain(void)
 
   //!
   // @category game
-  // @arg <s>
+  // @arg <ps>
   // @vanilla
   //
-  // Load the game in slot s.
+  // Load the game on page p (0-7) in slot s (0-7). Use 255 to load an auto save.
   //
 
   p = M_CheckParmWithArgs("-loadgame", 1);
@@ -2514,6 +2534,8 @@ void D_DoomMain(void)
     // Not loading a game
     startloadgame = -1;
   }
+
+  W_ProcessInWads("TRAKINFO", S_ParseTrakInfo, false);
 
   I_Printf(VB_INFO, "M_Init: Init miscellaneous info.");
   M_Init();
@@ -2754,10 +2776,19 @@ void D_DoomMain(void)
 
   // [FG] init graphics (video.widedelta) before HUD widgets
   I_InitGraphics();
+  I_InitKeyboard();
 
   MN_InitMenuStrings();
 
-  if (startloadgame >= 0)
+  // Auto save slot is 255 for -loadgame command.
+  if (startloadgame == 255 && !demorecording && gameaction != ga_playdemo
+      && !netgame)
+  {
+    char *file = G_AutoSaveName();
+    G_LoadAutoSave(file, true);
+    free(file);
+  }
+  else if (startloadgame >= 0 && startloadgame <= 77) // Page 0-7, slot 0-7.
   {
     char *file;
     file = G_SaveGameName(startloadgame);
@@ -2821,8 +2852,8 @@ void D_DoomMain(void)
 
 void D_BindMiscVariables(void)
 {
-  BIND_NUM_GENERAL(exit_sequence, 0, 0, EXIT_SEQUENCE_ON,
-    "Exit sequence (0 = Off; 1 = Sound Only; 2 = PWAD ENDOOM; 3 = On)");
+  BIND_NUM_GENERAL(exit_sequence, 0, 0, EXIT_SEQUENCE_FULL,
+    "Exit sequence (0 = Off; 1 = Sound Only; 2 = PWAD ENDOOM; 3 = Full)");
   BIND_BOOL_GENERAL(demobar, false, "Show demo progress bar");
 
   // [Nugget] More wipes

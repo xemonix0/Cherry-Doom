@@ -1163,6 +1163,8 @@ static void saveg_read_player_t(player_t *str)
         return;
     }
 
+    str->nextweapon = str->readyweapon;
+
     if (saveg_check_version_exact(saveg_cherry100)) // [Cherry]
     {
       saveg_read32(); // int screenshake; // removed in 1.0.1

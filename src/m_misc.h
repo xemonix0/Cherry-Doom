@@ -62,5 +62,6 @@ char *AddDefaultExtension(char *path, const char *ext);
 boolean M_WriteFile(const char *name, void *source, int length);
 int M_ReadFile(char const *name, byte **buffer);
 int M_ReadFileToString(char const *name, char **buffer); // [Cherry]
+boolean M_StringToDigest(const char *string, byte *digest, int size);
 
 #endif

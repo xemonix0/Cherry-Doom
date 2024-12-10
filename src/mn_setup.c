@@ -31,7 +31,6 @@
 #include "i_oalsound.h"
 #include "i_rumble.h"
 #include "i_sound.h"
-#include "i_timer.h"
 #include "i_video.h"
 #include "m_argv.h"
 #include "m_array.h"
@@ -52,6 +51,7 @@
 #include "r_sky.h"   // [FG] R_InitSkyMap()
 #include "r_voxel.h"
 #include "s_sound.h"
+#include "s_trakinfo.h"
 #include "st_sbardef.h"
 #include "st_stuff.h"
 #include "sounds.h"
@@ -336,10 +336,9 @@ enum
 
     str_gamma,
     str_sound_module,
+    str_extra_music,
     str_resampler,
     str_equalizer_preset,
-    str_midi_complevel,
-    str_midi_reset_type,
 
     str_mouse_accel,
 
@@ -1858,10 +1857,9 @@ void MN_DrawKeybnd(void)
 // The Weapon Screen tables.
 
 static setup_tab_t weap_tabs[] = {
-    {"cosmetic"},
-    {"slots"},
-    {"prefs"},
-    {"gameplay"}, // [Cherry]
+    {"Prefs"},
+    {"Slots"},
+    {"Priority"},
 
     // [Cherry] Redistributed Nugget options across other pages
 
@@ -1891,32 +1889,55 @@ static void NuggetResetWeaponInertia(void)
 
 static setup_menu_t weap_settings1[] = {
 
+    {"Gameplay", S_SKIP | S_TITLE, CNTR_X, M_SPC},
+
+    {"Weapon Carousel", S_ONOFF, CNTR_X, M_SPC, {"weapon_carousel"}},
+
+    {"Vanilla Weapon Cycle", S_ONOFF | S_BOOM, CNTR_X, M_SPC,
+     {"doom_weapon_cycle"}},
+
+    {"Use Weapon Toggles", S_ONOFF | S_BOOM, CNTR_X, M_SPC,
+     {"doom_weapon_toggles"}},
+
+    // killough 8/8/98
+    {"Pre-Beta BFG", S_ONOFF | S_STRICT, CNTR_X, M_SPC, {"classic_bfg"}},
+
+    MI_GAP,
+
+    {"Cosmetic", S_SKIP | S_TITLE, CNTR_X, M_SPC},
+
     // [Nugget] Extended bobbing settings /-------------------------------------
 
-    {"View Bob", S_THERMO, M_X_THRM8, M_THRM_SPC,
+    {"View Bob", S_THERMO, CNTR_X, M_THRM_SPC,
      {"view_bobbing_pct"}},
 
-    {"Weapon Bob", S_THERMO, M_X_THRM8, M_THRM_SPC,
+    {"Weapon Bob", S_THERMO, CNTR_X, M_THRM_SPC,
      {"weapon_bobbing_pct"}, .action = UpdateCenteredWeaponItem},
 
     // [Nugget] ---------------------------------------------------------------/
 
-    MI_GAP,
-
     // [FG] centered or bobbing weapon sprite
-    {"Weapon Alignment", S_CHOICE | S_STRICT, M_X, M_SPC, {"center_weapon"},
+    {"Weapon Alignment", S_CHOICE | S_STRICT, CNTR_X, M_SPC, {"center_weapon"},
      .strings_id = str_center_weapon},
 
-    {"Hide Weapon", S_ONOFF | S_STRICT, M_X, M_SPC, {"hide_weapon"}},
+    {"Hide Weapon", S_ONOFF | S_STRICT, CNTR_X, M_SPC, {"hide_weapon"}},
 
-    {"Weapon Recoil", S_ONOFF, M_X, M_SPC, {"weapon_recoilpitch"}},
+    {"Weapon Recoil", S_ONOFF, CNTR_X, M_SPC, {"weapon_recoilpitch"}},
 
-    // [Nugget] /--------------------------------------------------------------
+    MI_RESET,
 
     // [Cherry] Moved from `Nugget` -------------------------------------------
 
+    MI_SPLIT,
+    {"Nugget - Gameplay", S_SKIP|S_TITLE, M_X, M_SPC},
+
+      {"No Horizontal Autoaim",           S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"no_hor_autoaim"}},
+      {"Switch on Pickup",                S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"switch_on_pickup"}},
+      {"Allow Switch Interruption",       S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"weapswitch_interruption"}},
+      {"Prev/Next Skip Ammoless Weapons", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"skip_ammoless_weapons"}},
+
     MI_GAP,
-    {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
+    {"Nugget - Cosmetic", S_SKIP|S_TITLE, M_X, M_SPC},
 
       {"Bobbing Style",                   S_CHOICE|S_STRICT, M_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
       {"Weapon Inertia",                  S_ONOFF |S_STRICT, M_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
@@ -1924,6 +1945,7 @@ static setup_menu_t weap_settings1[] = {
       {"Translucent Flashes",             S_ONOFF |S_STRICT, M_X, M_SPC, {"translucent_pspr"}},
 
     MI_RESET,
+
     MI_END
 };
 
@@ -2081,46 +2103,20 @@ static void UpdateWeaponSlotItems(void)
 }
 
 static setup_menu_t weap_settings3[] = {
-    {"1St Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_1"}},
-    {"2Nd Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_2"}},
-    {"3Rd Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_3"}},
-    {"4Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_4"}},
-    {"5Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_5"}},
-    {"6Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_6"}},
-    {"7Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_7"}},
-    {"8Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_8"}},
-    {"9Th Choice Weapon", S_WEAP | S_BOOM, M_X, M_SPC, {"weapon_choice_9"}},
-    MI_GAP,
-    {"Same Key Toggles Weapons", S_ONOFF | S_BOOM, M_X, M_SPC, {"doom_weapon_toggles"}},
-    {"Cycle Through All Weapons", S_ONOFF | S_BOOM, M_X, M_SPC, {"full_weapon_cycle"}},
-    MI_GAP,
-    // killough 8/8/98
-    {"Pre-Beta BFG", S_ONOFF | S_STRICT, M_X, M_SPC, {"classic_bfg"}},
+    {"1st Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_1"}},
+    {"2nd Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_2"}},
+    {"3rd Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_3"}},
+    {"4th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_4"}},
+    {"5th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_5"}},
+    {"6th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_6"}},
+    {"7th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_7"}},
+    {"8th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_8"}},
+    {"9th Choice Weapon", S_WEAP | S_BOOM, OFF_CNTR_X, M_SPC, {"weapon_choice_9"}},
     MI_END
 };
 
-// [Cherry] /------------------------------------------------------------------
-
-static setup_menu_t weap_settings4[] =
-{
-  // [Cherry] From `Nugget`
-
-  {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
-
-    {"No Horizontal Autoaim",           S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"no_hor_autoaim"}},
-    {"Switch on Pickup",                S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"switch_on_pickup"}},
-    {"Allow Switch Interruption",       S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"weapswitch_interruption"}},
-    {"Prev/Next Skip Ammoless Weapons", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"skip_ammoless_weapons"}},
-
-  MI_END
-};
-
-// [Cherry] ------------------------------------------------------------------/
-
 static setup_menu_t *weap_settings[] = {
     weap_settings1, weap_settings2, weap_settings3,
-
-    weap_settings4, // [Cherry]
 
     // [Cherry] Redistributed Nugget options across other pages
 
@@ -2412,6 +2408,7 @@ static setup_menu_t stat_settings4[] = {
 
     MI_GAP, // [Nugget]
 
+    {"Center Messages",      S_ONOFF, H_X, M_SPC, {"message_centered"}},
     {"Colorize Messages",    S_ONOFF, H_X, M_SPC, {"message_colorized"},
      .action = ST_ResetMessageColors},
 
@@ -3093,14 +3090,6 @@ static void SetMidiPlayer(void)
     S_RestartMusic();
 }
 
-static void SetMidiPlayerNative(void)
-{
-    if (I_MidiPlayerType() == midiplayer_native)
-    {
-        SetMidiPlayer();
-    }
-}
-
 static void SetMidiPlayerOpl(void)
 {
     if (I_MidiPlayerType() == midiplayer_opl)
@@ -3117,8 +3106,19 @@ static void SetMidiPlayerFluidSynth(void)
     }
 }
 
+static void RestartMusic(void)
+{
+    S_StopMusic();
+    S_SetMusicVolume(snd_MusicVolume);
+    S_RestartMusic();
+}
+
+static const char *extra_music_strings[] = {
+    "Off", "Remix", "Original"
+};
+
 static void MN_Sfx(void);
-static void MN_Midi(void);
+static void MN_Music(void);
 static void MN_Equalizer(void);
 
 static setup_menu_t gen_settings2[] = {
@@ -3142,6 +3142,9 @@ static setup_menu_t gen_settings2[] = {
 
     MI_GAP,
 
+    {"Extra Soundtrack", S_CHOICE | S_ACTION, CNTR_X, M_SPC, {"extra_music"},
+      .strings_id = str_extra_music, .action = RestartMusic},
+
     // [FG] music backend
     {"MIDI Player", S_CHOICE | S_ACTION | S_WRAP_LINE, CNTR_X, M_SPC * 2,
      {"midi_player_menu"}, .strings_id = str_midi_player,
@@ -3151,7 +3154,7 @@ static setup_menu_t gen_settings2[] = {
 
     {"Sound Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Sfx},
 
-    {"MIDI Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Midi},
+    {"Music Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Music},
 
     {"Equalizer Options", S_FUNC, CNTR_X, M_SPC, .action = MN_Equalizer},
 
@@ -3211,6 +3214,7 @@ static void MN_Sfx(void)
     current_tabs = sfx_tabs;
     SetupMenuSecondary();
 }
+
 void MN_DrawSfx(void)
 {
     DrawBackground("FLOOR4_6");
@@ -3220,29 +3224,18 @@ void MN_DrawSfx(void)
     DrawScreenItems(current_menu);
 }
 
-static const char *midi_complevel_strings[] = {
-    "Vanilla", "Standard", "Full"
-};
+static void UpdateGainItems(void);
 
-static const char *midi_reset_type_strings[] = {
-    "No SysEx", "General MIDI", "Roland GS", "Yamaha XG"
-};
+static void ResetAutoGain(void)
+{
+    RestartMusic();
+    UpdateGainItems();
+}
 
-static setup_menu_t midi_settings1[] = {
+static setup_menu_t music_settings1[] = {
 
-    {"Native MIDI Gain", S_THERMO, CNTR_X, M_THRM_SPC,
-     {"midi_gain"}, .action = UpdateMusicVolume, .append = "dB"},
-
-    {"Native MIDI Reset", S_CHOICE | S_ACTION, CNTR_X, M_SPC,
-     {"midi_reset_type"}, .strings_id = str_midi_reset_type,
-     .action = SetMidiPlayerNative},
-
-    {"Compatibility Level", S_CHOICE | S_ACTION, CNTR_X, M_SPC,
-     {"midi_complevel"}, .strings_id = str_midi_complevel,
-     .action = SetMidiPlayerNative},
-
-    {"SC-55 CTF Emulation", S_ONOFF, CNTR_X, M_SPC, {"midi_ctf"},
-     .action = SetMidiPlayerNative},
+    {"Auto Gain", S_ONOFF, CNTR_X, M_SPC, {"auto_gain"},
+      .action = ResetAutoGain},
 
     MI_GAP,
 
@@ -3271,19 +3264,25 @@ static setup_menu_t midi_settings1[] = {
     MI_END
 };
 
-static setup_menu_t *midi_settings[] = {midi_settings1, NULL};
+static void UpdateGainItems(void)
+{
+    DisableItem(auto_gain, music_settings1, "fl_gain");
+    DisableItem(auto_gain, music_settings1, "opl_gain");
+}
 
-static setup_tab_t midi_tabs[] = {{"MIDI"}, {NULL}};
+static setup_menu_t *music_settings[] = {music_settings1, NULL};
 
-static void MN_Midi(void)
+static setup_tab_t midi_tabs[] = {{"Music"}, {NULL}};
+
+static void MN_Music(void)
 {
     SetItemOn(set_item_on);
     SetPageIndex(current_page);
 
-    MN_SetNextMenuAlt(ss_midi);
-    setup_screen = ss_midi;
-    current_page = GetPageIndex(midi_settings);
-    current_menu = midi_settings[current_page];
+    MN_SetNextMenuAlt(ss_music);
+    setup_screen = ss_music;
+    current_page = GetPageIndex(music_settings);
+    current_menu = music_settings[current_page];
     current_tabs = midi_tabs;
     SetupMenuSecondary();
 }
@@ -3848,7 +3847,7 @@ static void SmoothLight(void)
 static const char *menu_backdrop_strings[] = {"Off", "Dark", "Texture"};
 
 static const char *exit_sequence_strings[] = {
-    "Off", "Sound Only", "PWAD ENDOOM", "On"
+    "Off", "Sound Only", "PWAD ENDOOM", "Full"
 };
 
 // [Cherry] Moved here
@@ -4509,7 +4508,7 @@ static setup_menu_t **setup_screens[] = {
     comp_settings,
     level_table,  // [Cherry]
     sfx_settings,
-    midi_settings,
+    music_settings,
     eq_settings,
     padadv_settings,
     gyro_settings,
@@ -4644,7 +4643,7 @@ static void ResetDefaultsSecondary(void)
     if (setup_screen == ss_gen)
     {
         ResetDefaults(ss_sfx);
-        ResetDefaults(ss_midi);
+        ResetDefaults(ss_music);
         ResetDefaults(ss_eq);
         ResetDefaults(ss_padadv);
         ResetDefaults(ss_gyro);
@@ -4766,7 +4765,7 @@ void MN_DrawStringCR(int cx, int cy, byte *cr1, byte *cr2, const char *ch)
         }
 
         c = M_ToUpper(c) - HU_FONTSTART;
-        if (c < 0 || c > HU_FONTSIZE)
+        if (c < 0 || c >= HU_FONTSIZE || hu_font[c] == NULL)
         {
             cx += SPACEWIDTH; // space
             continue;
@@ -4859,7 +4858,7 @@ int MN_GetPixelWidth(const char *ch)
         }
 
         c = M_ToUpper(c) - HU_FONTSTART;
-        if (c < 0 || c > HU_FONTSIZE)
+        if (c < 0 || c >= HU_FONTSIZE || hu_font[c] == NULL)
         {
             len += SPACEWIDTH; // space
             continue;
@@ -6062,7 +6061,7 @@ int MN_StringWidth(const char *string)
             continue;
         }
         c = M_ToUpper(c) - HU_FONTSTART;
-        if (c < 0 || c > HU_FONTSIZE)
+        if (c < 0 || c > HU_FONTSIZE || hu_font[c] == NULL)
         {
             w += SPACEWIDTH;
             continue;
@@ -6162,10 +6161,9 @@ static const char **selectstrings[] = {
     NULL, // str_midi_player
     gamma_strings,
     sound_module_strings,
+    extra_music_strings,
     NULL, // str_resampler
     equalizer_preset_strings,
-    midi_complevel_strings,
-    midi_reset_type_strings,
     NULL, // str_mouse_accel
     gyro_space_strings,
     gyro_action_strings,
@@ -6243,6 +6241,7 @@ void MN_SetupResetMenu(void)
     DisableItem(deh_set_blood_color, enem_settings1, "colored_blood");
     DisableItem(!brightmaps_found || force_brightmaps, gen_settings5,
                 "brightmaps");
+    DisableItem(!trakinfo_found, gen_settings2, "extra_music");
     UpdateInterceptsEmuItem();
     UpdateStatsFormatItem();
     UpdateCrosshairItems();
@@ -6251,6 +6250,7 @@ void MN_SetupResetMenu(void)
     UpdateGyroItems();
     UpdateWeaponSlotItems();
     MN_UpdateEqualizerItems();
+    UpdateGainItems();
 
     // [Nugget] --------------------------------------------------------------
 

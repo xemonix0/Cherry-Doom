@@ -1881,7 +1881,7 @@ boolean M_CheatResponder(event_t *ev)
   if (strictmode && demorecording)
     return false;
 
-  if (ev->type == ev_keydown && M_FindCheats(ev->data1.i))
+  if (ev->type == ev_keydown && M_FindCheats(ev->data2.i))
     return true;
 
   if (WS_Override())

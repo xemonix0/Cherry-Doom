@@ -229,7 +229,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 
       P_GiveAmmo(player, weaponinfo[weapon].ammo, deathmatch ? 5 : 2);
 
-      player->pendingweapon = weapon;
+      player->nextweapon = player->pendingweapon = weapon;
       S_StartSoundPreset(player->mo, sfx_wpnup, PITCH_FULL); // killough 4/25/98, 12/98
       return false;
     }
@@ -240,9 +240,10 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 
   // [Nugget]
   if (!player->weaponowned[weapon] && P_AutoswitchWeapon())
-  { player->pendingweapon = weapon; }
+  { player->nextweapon = player->pendingweapon = weapon; }
 
-  return !player->weaponowned[weapon] ? player->weaponowned[weapon] = true : gaveammo;
+  return !player->weaponowned[weapon] ?
+    player->weaponowned[weapon] = true : gaveammo;
 }
 
 //

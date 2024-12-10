@@ -128,6 +128,8 @@ extern int snd_channels;
 // jff 3/17/98 holds last IDMUS number, or -1
 extern int idmusnum;
 
+void S_BindSoundVariables(void);
+
 // [Nugget] ------------------------------------------------------------------
 
 // [NS] Try to play an optional sound.

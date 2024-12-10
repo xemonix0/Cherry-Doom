@@ -37,6 +37,7 @@
 #include "i_flickstick.h"
 #include "i_gamepad.h"
 #include "i_gyro.h"
+#include "i_input.h"
 #include "i_oalequalizer.h"
 #include "i_printf.h"
 #include "i_rumble.h"
@@ -49,9 +50,10 @@
 #include "m_input.h"
 #include "m_io.h"
 #include "m_misc.h"
-#include "mn_menu.h"
 #include "mn_internal.h"
+#include "mn_menu.h"
 #include "r_main.h"
+#include "s_sound.h"
 #include "st_stuff.h"
 #include "st_widgets.h"
 #include "w_wad.h"
@@ -128,6 +130,7 @@ void M_InitConfig(void)
     R_BindRenderVariables();
 
     I_BindSoundVariables();
+    S_BindSoundVariables();
     I_BindEqualizerVariables();
 
     MN_BindMenuVariables();
@@ -137,6 +140,7 @@ void M_InitConfig(void)
     G_BindGameInputVariables();
     G_BindMouseVariables();
 
+    I_BindKeyboardVariables();
     I_BindGamepadVariables();
     I_BindRumbleVariables();
     I_BindFlickStickVariables();

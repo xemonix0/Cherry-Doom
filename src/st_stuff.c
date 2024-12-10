@@ -49,6 +49,7 @@
 #include "r_main.h"
 #include "r_state.h"
 #include "s_sound.h"
+#include "st_carousel.h"
 #include "st_stuff.h"
 #include "st_sbardef.h"
 #include "st_widgets.h"
@@ -220,6 +221,8 @@ static int armor_green;   // armor amount above is blue, below is green
 
 static boolean hud_armor_type; // color of armor depends on type
 
+static boolean weapon_carousel;
+
 // used for evil grin
 static boolean  oldweaponsowned[NUMWEAPONS];
 
@@ -230,6 +233,8 @@ static sbardef_t *sbardef;
 
 static statusbar_t *statusbar;
 
+static int st_cmd_x, st_cmd_y;
+
 typedef enum
 {
     st_original,
@@ -239,6 +244,7 @@ typedef enum
 static st_layout_t st_layout;
 
 static patch_t **facepatches = NULL;
+static patch_t **facebackpatches = NULL;
 
 static int have_xdthfaces;
 
@@ -264,30 +270,30 @@ static void LoadFacePatches(void)
 {
     char lump[9] = {0};
 
-    int painface;
+    int count;
 
-    for (painface = 0; painface < ST_NUMPAINFACES; ++painface)
+    for (count = 0; count < ST_NUMPAINFACES; ++count)
     {
         for (int straightface = 0; straightface < ST_NUMSTRAIGHTFACES;
              ++straightface)
         {
-            M_snprintf(lump, sizeof(lump), "STFST%d%d", painface, straightface);
+            M_snprintf(lump, sizeof(lump), "STFST%d%d", count, straightface);
             array_push(facepatches, V_CachePatchName(lump, PU_STATIC));
         }
 
-        M_snprintf(lump, sizeof(lump), "STFTR%d0", painface); // turn right
+        M_snprintf(lump, sizeof(lump), "STFTR%d0", count); // turn right
         array_push(facepatches, V_CachePatchName(lump, PU_STATIC));
 
-        M_snprintf(lump, sizeof(lump), "STFTL%d0", painface); // turn left
+        M_snprintf(lump, sizeof(lump), "STFTL%d0", count); // turn left
         array_push(facepatches, V_CachePatchName(lump, PU_STATIC));
 
-        M_snprintf(lump, sizeof(lump), "STFOUCH%d", painface); // ouch!
+        M_snprintf(lump, sizeof(lump), "STFOUCH%d", count); // ouch!
         array_push(facepatches, V_CachePatchName(lump, PU_STATIC));
 
-        M_snprintf(lump, sizeof(lump), "STFEVL%d", painface); // evil grin ;)
+        M_snprintf(lump, sizeof(lump), "STFEVL%d", count); // evil grin ;)
         array_push(facepatches, V_CachePatchName(lump, PU_STATIC));
 
-        M_snprintf(lump, sizeof(lump), "STFKILL%d", painface); // pissed off
+        M_snprintf(lump, sizeof(lump), "STFKILL%d", count); // pissed off
         array_push(facepatches, V_CachePatchName(lump, PU_STATIC));
     }
 
@@ -298,9 +304,9 @@ static void LoadFacePatches(void)
     array_push(facepatches, V_CachePatchName(lump, PU_STATIC));
 
     // [FG] support face gib animations as in the 3DO/Jaguar/PSX ports
-    for (painface = 0; painface < ST_NUMXDTHFACES; ++painface)
+    for (count = 0; count < ST_NUMXDTHFACES; ++count)
     {
-        M_snprintf(lump, sizeof(lump), "STFXDTH%d", painface);
+        M_snprintf(lump, sizeof(lump), "STFXDTH%d", count);
 
         if (W_CheckNumForName(lump) != -1)
         {
@@ -311,7 +317,13 @@ static void LoadFacePatches(void)
             break;
         }
     }
-    have_xdthfaces = painface;
+    have_xdthfaces = count;
+
+    for (count = 0; count < MAXPLAYERS; ++count)
+    {
+        M_snprintf(lump, sizeof(lump), "STFB%d", count);
+        array_push(facebackpatches, V_CachePatchName(lump, PU_STATIC));
+    }
 }
 
 static boolean CheckWidgetState(widgetstate_t state)
@@ -458,7 +470,7 @@ static boolean CheckConditions(sbarcondition_t *conditions, player_t *player)
                     {
                         enabled |= (automapactive == AM_FULL && automapoverlay);
                     }
-                    else if (cond->param & sbc_mode_automap)
+                    if (cond->param & sbc_mode_automap)
                     {
                         enabled |= (automapactive == AM_FULL && !automapoverlay);
                     }
@@ -584,7 +596,10 @@ static int ResolveNumber(sbe_number_t *number, player_t *player)
         case sbn_frags:
             for (int p = 0; p < MAXPLAYERS; ++p)
             {
-                result += player->frags[p];
+                if (player != &players[p])
+                    result += player->frags[p];
+                else
+                    result -= player->frags[p];
             }
             break;
 
@@ -881,7 +896,6 @@ static void UpdateNumber(sbarelem_t *elem, player_t *player)
         number->xoffset -= totalwidth;
     }
 
-    number->font = font;
     number->value = value;
     number->numvalues = numvalues;
 }
@@ -942,8 +956,6 @@ static void UpdateLines(sbarelem_t *elem)
         }
         line->totalwidth = totalwidth;
     }
-
-    widget->font = font;
 }
 
 static void UpdateAnimation(sbarelem_t *elem)
@@ -1099,6 +1111,13 @@ static void UpdateElem(sbarelem_t *elem, player_t *player)
             UpdateLines(elem);
             break;
 
+        case sbe_carousel:
+            if (weapon_carousel)
+            {
+                ST_UpdateCarousel(player);
+            }
+            break;
+
         default:
             break;
     }
@@ -1112,6 +1131,8 @@ static void UpdateElem(sbarelem_t *elem, player_t *player)
 
 static void UpdateStatusBar(player_t *player)
 {
+    static int oldbarindex = -1;
+
     int barindex = MAX(screenblocks - 10, 0);
 
     if (automapactive == AM_FULL && automapoverlay == AM_OVERLAY_OFF)
@@ -1121,6 +1142,14 @@ static void UpdateStatusBar(player_t *player)
 
     if (st_nughud) { barindex = 0; } // [Nugget] NUGHUD
 
+    if (oldbarindex != barindex)
+    {
+        st_time_elem = NULL;
+        st_cmd_elem = NULL;
+        st_msg_elem = NULL;
+        oldbarindex = barindex;
+    }
+
     statusbar = &sbardef->statusbars[barindex];
 
     health_elem = armor_elem = ammo_elem = NULL; // [Nugget]
@@ -1128,6 +1157,7 @@ static void UpdateStatusBar(player_t *player)
     sbarelem_t *child;
     array_foreach(child, statusbar->children)
     {
+        // [Nugget]
         if (child->type == sbe_number || child->type == sbe_percent)
         {
             switch (child->subtype.number->type)
@@ -1525,6 +1555,14 @@ static void DrawElem(int x, int y, sbarelem_t *elem, player_t *player)
             }
             break;
 
+        case sbe_facebackground:
+            {
+                DrawPatch(x, y, 0, elem->alignment,
+                          facebackpatches[displayplayer], elem->cr,
+                          elem->tranmap);
+            }
+            break;
+
         case sbe_face:
             {
                 sbe_face_t *face = elem->subtype.face;
@@ -1550,7 +1588,23 @@ static void DrawElem(int x, int y, sbarelem_t *elem, player_t *player)
             break;
 
         case sbe_widget:
+            if (elem == st_cmd_elem)
+            {
+                st_cmd_x = x;
+                st_cmd_y = y;
+            }
+            if (message_centered && elem == st_msg_elem && !st_nughud) // [Nugget] NUGHUD
+            {
+                break;
+            }
             DrawLines(x, y, elem);
+            break;
+
+        case sbe_carousel:
+            if (weapon_carousel)
+            {
+                ST_DrawCarousel(x, y, elem);
+            }
             break;
 
         default:
@@ -1659,6 +1713,14 @@ static void DrawBackground(const char *name)
     V_CopyRect(0, 0, st_backing_screen, video.unscaledw, ST_HEIGHT, 0, ST_Y);
 }
 
+static void DrawCenteredMessage(void)
+{
+    if (message_centered && st_msg_elem && !st_nughud) // [Nugget] NUGHUD
+    {
+        DrawLines(SCREENWIDTH / 2, 0, st_msg_elem);
+    }
+}
+
 static void DrawStatusBar(void)
 {
     player_t *player = &players[displayplayer];
@@ -1675,6 +1737,8 @@ static void DrawStatusBar(void)
     {
         DrawElem(0, SCREENHEIGHT - statusbar->height, child, player);
     }
+
+    DrawCenteredMessage();
 
     // [Nugget] In case of `am_noammo`
     if (ammo_elem && !CheckConditions(ammo_elem->conditions, player))
@@ -2052,6 +2116,7 @@ void ST_Start(void)
     }
 
     ResetStatusBar();
+    ST_ResetCarousel();
 
     HU_StartCrosshair();
 }
@@ -2084,11 +2149,6 @@ void ST_Init(void)
 
     stcfnt = LoadSTCFN();
     hu_font = stcfnt->characters;
-
-    if (!hu_font)
-    {
-        I_Error("ST_Init: \"STCFN\" font not found");
-    }
 
     // [Nugget]
     if (firsttime) { firsttime = false; }
@@ -2158,25 +2218,10 @@ void ST_Init(void)
             default: continue;
         }
 
-        if (nughud.message_defx)
+        if (type == sbw_chat && nughud.message_defx)
         {
-            if (type == sbw_message)
-            {
-                /*if (message_centered)
-                {
-                  elem->x_pos = SCREENWIDTH/2;
-                  elem->alignment = align_center;
-                }
-                else*/ {
-                  elem->x_pos = 0;
-                  elem->alignment = sbe_h_left | sbe_wide_left;
-                }
-            }
-            else if (type == sbw_chat)
-            {
-                elem->x_pos = 0;
-                elem->alignment = sbe_h_left | sbe_wide_left;
-            }
+            elem->x_pos = 0;
+            elem->alignment = sbe_h_left | sbe_wide_left;
         }
 
         if (NughudAddToStack(ntl, elem, ntl->stack))
@@ -2218,17 +2263,30 @@ void ST_ResetPalette(void)
 }
 
 // [FG] draw Time widget on intermission screen
+
+void WI_UpdateWidgets(void)
+{
+    if (st_cmd_elem && STRICTMODE(hud_command_history))
+    {
+        ST_UpdateWidget(st_cmd_elem, &players[displayplayer]);
+        UpdateLines(st_cmd_elem);
+    }
+}
+
 void WI_DrawWidgets(void)
 {
-    if (!st_time_elem || !(hud_level_time & HUD_WIDGET_HUD))
+    if (st_time_elem && hud_level_time & HUD_WIDGET_HUD)
     {
-        return;
+        sbarelem_t time = *st_time_elem;
+        time.alignment = sbe_wide_left;
+        // leveltime is already added to totalleveltimes before WI_Start()
+        DrawLines(0, 0, &time);
     }
 
-    sbarelem_t time = *st_time_elem;
-    time.alignment = sbe_wide_left;
-    // leveltime is already added to totalleveltimes before WI_Start()
-    DrawLines(0, 0, &time);
+    if (st_cmd_elem && STRICTMODE(hud_command_history))
+    {
+        DrawLines(st_cmd_x, st_cmd_y, st_cmd_elem);
+    }
 }
 
 // [Nugget] /=================================================================
@@ -3165,8 +3223,8 @@ end_amnum:
 
       elem.type = sbe_facebackground;
 
-      elem.x_pos = nughud.face.x - 1;
-      elem.y_pos = nughud.face.y - 1;
+      elem.x_pos = nughud.face.x;
+      elem.y_pos = nughud.face.y + 1;
       elem.alignment = NughudConvertAlignment(nughud.face.wide, -1);
 
       sbarcondition_t condition = {0};
@@ -3619,6 +3677,22 @@ end_amnum:
 
   array_push(out->statusbars, sb);
 
+  // Carousel ----------------------------------------------------------------
+
+  {
+    sbarelem_t elem = {0};
+    elem.cr = elem.crboom = CR_NONE;
+
+    elem.type = sbe_carousel;
+
+    elem.x_pos = 0;
+    elem.y_pos = 18;
+
+    array_push(sb.children, elem);
+  }
+
+  // -------------------------------------------------------------------------
+
   return out;
 }
 
@@ -3719,6 +3793,9 @@ void ST_BindSTSVariables(void)
   M_BindNum("hud_crosshair_target_color", &hud_crosshair_target_color, NULL,
             CR_YELLOW, CR_BRICK, CR_NONE, ss_stat, wad_no,
             "Crosshair color when aiming at target");
+
+  M_BindBool("weapon_carousel", &weapon_carousel, NULL,
+             true, ss_weap, wad_no, "Show weapon carousel");
 }
 
 //----------------------------------------------------------------------------
