@@ -3911,12 +3911,6 @@ static const char *stretchsky_strings[] = {
     "Off", "Always", "Mouselook"
 };
 
-// Translucent rocket trails
-static void SmokeTrans(void)
-{
-    R_InitTranMapEx(&smoke_tranmap, rocket_trails_tran);
-}
-
 #define OFF_CNTR_THRM8_X (OFF_CNTR_X - (M_THRM_SIZE8 + 3) * M_THRM_STEP)
 
 // [Cherry] ------------------------------------------------------------------/
@@ -3998,8 +3992,7 @@ static setup_menu_t gen_settings5[] = {
       {"Chasecam Distance",             S_THERMO|S_STRICT, N_X_THRM8, M_THRM_SPC, {"chasecam_distance"}},
       {"Chasecam Height",               S_THERMO|S_STRICT, N_X_THRM8, M_THRM_SPC, {"chasecam_height"}},
 
-    // [Cherry] ---------------------------------------------------------------
-    MI_SPLIT,
+    MI_SPLIT, // [Cherry] -----------------------------------------------------
 
     {"Cherry", S_SKIP | S_TITLE, N_X, M_SPC},
 
@@ -4012,8 +4005,7 @@ static setup_menu_t gen_settings5[] = {
 
 #undef OFF_CNTR_THRM8_X
 
-// [Cherry] /------------------------------------------------------------------
-
+// [Cherry]
 static void UpdateDarkeningItems(void)
 {
     DisableItem(menu_backdrop != MENU_BG_DARK, gen_settings5,
@@ -4021,8 +4013,6 @@ static void UpdateDarkeningItems(void)
     DisableItem(automapoverlay != AM_OVERLAY_DARK, auto_settings1,
                 "automap_overlay_darkening");
 }
-
-// [Cherry] ------------------------------------------------------------------/
 
 // [Cherry] Moved here
 // [Nugget] Color /------------------------------------------------------------

@@ -2113,7 +2113,7 @@ static void DoPaletteStuff(player_t *player)
         byte *pal =
             STRICTMODE(less_blinding_tints) // [Cherry] Less Blinding Tints
                 ? (byte *)(alttintpal + palette * 768)
-                : (byte *)W_CacheLumpNum("PLAYPAL", PU_CACHE) + palette * 768;
+                : (byte *)W_CacheLumpName("PLAYPAL", PU_CACHE) + palette * 768;
 
         I_SetPalette(pal);
     }
