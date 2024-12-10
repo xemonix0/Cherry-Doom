@@ -1616,6 +1616,9 @@ static setup_tab_t keys_tabs[] = {
 // button. If there is more than one screen in a set, the others don't get
 // the reset button.
 
+// [Cherry] Moved here
+#define NKB_X 145 // [Nugget]
+
 static void UpdateFOV(void); // [Nugget]
 
 static setup_menu_t keys_settings1[] = {
@@ -1643,15 +1646,15 @@ static setup_menu_t keys_settings1[] = {
     MI_SPLIT,
     {"Nugget", S_SKIP|S_TITLE, KB_X, M_SPC},
 
-      {"Jump/Fly Up",        S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_jump},
-      {"Crouch/Fly Down",    S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_crouch},
+      {"Jump/Fly Up",        S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_scrn, input_jump},
+      {"Crouch/Fly Down",    S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_scrn, input_crouch},
       MI_GAP,
-      {"Cycle Chasecam",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_chasecam},
-      {"Toggle Freecam",     S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_freecam},
+      {"Cycle Chasecam",     S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_scrn, input_chasecam},
+      {"Toggle Freecam",     S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_scrn, input_freecam},
       MI_GAP,
-      {"Toggle Slow Motion", S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_slowmo},
-      {"Toggle Zoom",        S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_scrn, input_zoom},
-      {"Zoom FOV",           S_NUM  |S_STRICT,            KB_X, M_SPC, {"zoom_fov"}, .action = UpdateFOV},
+      {"Toggle Slow Motion", S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_scrn, input_slowmo},
+      {"Toggle Zoom",        S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_scrn, input_zoom},
+      {"Zoom FOV",           S_NUM  |S_STRICT,            NKB_X, M_SPC, {"zoom_fov"}, .action = UpdateFOV},
 
     MI_RESET,
     MI_END
@@ -1701,9 +1704,9 @@ static setup_menu_t keys_settings3[] = {
 
     MI_SPLIT,
     {"Nugget", S_SKIP|S_TITLE, KB_X, M_SPC},
-      {"Toggle Crosshair", S_INPUT, KB_X, M_SPC, {0}, m_scrn, input_crosshair},
+      {"Toggle Crosshair",   S_INPUT,                     NKB_X, M_SPC, {0}, m_scrn, input_crosshair},
       MI_GAP,
-      {"Rewind",           S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_scrn, input_rewind},
+      {"Rewind",             S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_scrn, input_rewind},
 
     MI_END
 };
@@ -1751,14 +1754,14 @@ static setup_menu_t keys_settings5[] = {
 
     MI_SPLIT,
     {"Nugget", S_SKIP | S_TITLE, KB_X, M_SPC},
-      {"Minimap",            S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_mini},
+      {"Minimap",            S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_map,  input_map_mini},
       MI_GAP,
-      {"Tag Finder",         S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_tagfinder},
+      {"Tag Finder",         S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_map,  input_map_tagfinder},
       MI_GAP,
-      {"Highlight P.O.I.'s", S_INPUT|S_STRICT,            KB_X, M_SPC, {0}, m_map,  input_map_blink},
+      {"Highlight P.O.I.'s", S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_map,  input_map_blink},
       MI_GAP,
-      {"Warp to Pointer",    S_INPUT|S_STRICT|S_CRITICAL, KB_X, M_SPC, {0}, m_map,  input_map_teleport},
-      {"Fancy Warping",      S_ONOFF|S_STRICT|S_CRITICAL, KB_X, M_SPC, {"fancy_teleport"}},
+      {"Warp to Pointer",    S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_map,  input_map_teleport},
+      {"Fancy Warping",      S_ONOFF|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {"fancy_teleport"}},
 
     MI_END
 };
@@ -1801,6 +1804,8 @@ static setup_menu_t keys_settings6[] = {
 
     MI_END
 };
+
+#undef NKB_X // [Nugget]
 
 static setup_menu_t *keys_settings[] = {
     keys_settings1,
@@ -1885,6 +1890,14 @@ static void NuggetResetWeaponInertia(void)
     P_NuggetResetWeaponInertia();
 }
 
+#define W_X       235
+#define W_X_THRM8 (W_X - (M_THRM_SIZE8 + 3) * M_THRM_STEP)
+
+void WeaponFlashTrans(void)
+{
+    R_InitTranMapEx(&pspr_tranmap, pspr_translucency_pct);
+}
+
 // [Nugget] ------------------------------------------------------------------/
 
 static setup_menu_t weap_settings1[] = {
@@ -1931,23 +1944,28 @@ static setup_menu_t weap_settings1[] = {
     MI_SPLIT,
     {"Nugget - Gameplay", S_SKIP|S_TITLE, M_X, M_SPC},
 
-      {"No Horizontal Autoaim",           S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"no_hor_autoaim"}},
-      {"Switch on Pickup",                S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"switch_on_pickup"}},
-      {"Allow Switch Interruption",       S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"weapswitch_interruption"}},
-      {"Prev/Next Skip Ammoless Weapons", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"skip_ammoless_weapons"}},
+      {"No Horizontal Autoaim",        S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"no_hor_autoaim"}},
+      {"Switch on Pickup",             S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"switch_on_pickup"}},
+      {"Allow Switch Interruption",    S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"weapswitch_interruption"}},
+      {"Prev/Next Skip Empty Weapons", S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"skip_ammoless_weapons"}},
 
     MI_GAP,
     {"Nugget - Cosmetic", S_SKIP|S_TITLE, M_X, M_SPC},
 
-      {"Bobbing Style",                   S_CHOICE|S_STRICT, M_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
-      {"Weapon Inertia",                  S_ONOFF |S_STRICT, M_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
-      {"Weapon Squat Upon Landing",       S_ONOFF |S_STRICT, M_X, M_SPC, {"weaponsquat"}},
-      {"Translucent Flashes",             S_ONOFF |S_STRICT, M_X, M_SPC, {"translucent_pspr"}},
+      {"Bobbing Style",             S_CHOICE|S_STRICT, W_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
+      {"Weapon Inertia",            S_ONOFF |S_STRICT, W_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
+      {"Weapon Squat Upon Landing", S_ONOFF |S_STRICT, W_X, M_SPC, {"weaponsquat"}},
+      {"Flash Translucency",        S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X_THRM8, M_THRM_SPC, {"pspr_translucency_pct"}, .action = WeaponFlashTrans},
 
     MI_RESET,
 
     MI_END
 };
+
+// [Cherry] Moved here
+// [Nugget]
+#undef W_X_THRM8
+#undef W_X
 
 static const char *weapon_slots_activation_strings[] = {
     "Off", "Hold \"Last\"", "Always On"
@@ -2220,7 +2238,7 @@ static setup_menu_t stat_settings1[] = {
      .strings_id = str_hud_type},
 
     {"Layout", S_CHOICE, H_X, M_SPC, {"st_layout"},
-     .strings_id = str_stlayout},
+     .strings_id = str_stlayout, .action = AM_Start}, // [Nugget] Minimap
 
     MI_GAP,
 
@@ -2308,6 +2326,7 @@ static setup_menu_t stat_settings2[] = {
     MI_GAP,
     {"Nugget - Widget Appearance", S_SKIP | S_TITLE, H_X, M_SPC},
       
+      {"Blink Missing Keys",              S_ONOFF, H_X, M_SPC, {"hud_blink_keys"}},
       {"Berserk display when using Fist", S_ONOFF, H_X, M_SPC, {"sts_show_berserk"}},
       {"Allow HUD Icons",                 S_ONOFF, H_X, M_SPC, {"hud_allow_icons"}},
 
@@ -2342,11 +2361,11 @@ static setup_menu_t stat_settings3[] = {
 
     // [Nugget] Toggle instead of type
     {"Crosshair", S_ONOFF, XH_X, M_SPC, {"hud_crosshair_on"},
-     .strings_id = str_crosshair, .action = UpdateCrosshairItems},
+     .action = UpdateCrosshairItems},
 
     // [Nugget] Actual type
     {"Crosshair Type", S_CHOICE,XH_X, M_SPC, {"hud_crosshair"},
-     m_null, input_null, str_crosshair},
+     .strings_id = str_crosshair, .action = HU_StartCrosshair},
 
     // [Cherry] Disable crosshair on slot 1
     {"Disable On Slot 1", S_ONOFF, XH_X, M_SPC, {"hud_crosshair_slot1_disable"}},
@@ -2419,9 +2438,11 @@ static setup_menu_t stat_settings4[] = {
      {"hudcolor_obituary"}, .strings_id = str_hudcolor},
 
     // Message flash
-    {"Message Flash",        S_ONOFF, H_X, M_SPC, {"message_flash"}},
+    {"Message Flash", S_ONOFF, H_X, M_SPC, {"message_flash"}},
 
     {"Message Lines", S_NUM, H_X, M_SPC, {"hud_msg_lines"}, .action = MoveMinimap},
+
+    {"Group Repeated Messages", S_ONOFF, H_X, M_SPC, {"hud_msg_group"}},
 
     {"Forced Message Tics", S_NUM, H_X, M_SPC, {"hud_msg_duration"}},
     {"Forced Chat Message Tics", S_NUM, H_X, M_SPC, {"hud_chat_duration"}},
@@ -2445,7 +2466,7 @@ static setup_menu_t stat_settings5[] =
 {
   // [Cherry] From `NG2` ------------------------------------------------------
 
-  {"Nugget - Extended HUD", S_SKIP|S_TITLE, M_X, M_SPC},
+  {"Nugget - HUD", S_SKIP|S_TITLE, M_X, M_SPC},
 
     {"Time Scale (Game Speed %)", S_CRITEM, M_X, M_SPC, {"hudcolor_time_scale"},  .strings_id = str_hudcolor},
     {"Total Level Time",          S_CRITEM, M_X, M_SPC, {"hudcolor_total_time"},  .strings_id = str_hudcolor},
@@ -2547,7 +2568,7 @@ void MN_DrawStatusHUD(void)
         int y = M_Y + M_SPC + M_SPC / 2 - SHORT(patch->height) / 2 - 1; // [Nugget] Adjusted
 
         // [Nugget] Translucent crosshair
-        V_DrawPatchTranslatedTL(x, y, patch, colrngs[hud_crosshair_color], xhair_tranmap);
+        V_DrawPatchTRTL2(x, y, patch, colrngs[hud_crosshair_color], xhair_tranmap);
     }
 
     // If the Reset Button has been selected, an "Are you sure?" message
@@ -4130,6 +4151,9 @@ static const char *page_ticking_strings[] = {
   "Always", "Not In Menus", "Never", NULL
 };
 
+// [Cherry] Moved here
+#define N2_X (M_X - 16) // [Nugget]
+
 static setup_menu_t gen_settings6[] = {
 
     {"Quality of life", S_SKIP | S_TITLE, OFF_CNTR_X, M_SPC},
@@ -4174,26 +4198,28 @@ static setup_menu_t gen_settings6[] = {
 
     {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
 
-      {"Sound Hearing Distance",  S_CHOICE|S_STRICT,            N_X, M_SPC, {"s_clipping_dist_x2"}, .strings_id = str_s_clipping_dist, .action = SetSoundModule},
-      {"One-Key Quick-Save/Load", S_ONOFF,                      N_X, M_SPC, {"one_key_saveload"}},
-      {"Auto Save Interval (S)",  S_NUM,                        N_X, M_SPC, {"autosave_interval"}, .action = UpdateAutoSaveInterval},
-      {"Rewind Interval (S)",     S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_interval"}, .action = UpdateRewindInterval},
-      {"Rewind Depth",            S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_depth"}, .action = UpdateRewindDepth},
-      {"Rewind Timeout (MS)",     S_NUM   |S_STRICT|S_CRITICAL, N_X, M_SPC, {"rewind_timeout"}, .action = G_EnableRewind},
-      {"Play Internal Demos",     S_CHOICE,                     N_X, M_SPC, {"no_page_ticking"}, .strings_id = str_page_ticking},
-      {"Quick \"Quit Game\"",     S_ONOFF,                      N_X, M_SPC, {"quick_quitgame"}},
+      {"Sound Hearing Distance",  S_CHOICE|S_STRICT,            N2_X, M_SPC, {"s_clipping_dist_x2"}, .strings_id = str_s_clipping_dist, .action = SetSoundModule},
+      {"One-Key Quick-Save/Load", S_ONOFF,                      N2_X, M_SPC, {"one_key_saveload"}},
+      {"Auto Save Interval (S)",  S_NUM,                        N2_X, M_SPC, {"autosave_interval"}, .action = UpdateAutoSaveInterval},
+      {"Rewind Interval (S)",     S_NUM   |S_STRICT|S_CRITICAL, N2_X, M_SPC, {"rewind_interval"}, .action = UpdateRewindInterval},
+      {"Rewind Depth",            S_NUM   |S_STRICT|S_CRITICAL, N2_X, M_SPC, {"rewind_depth"}, .action = UpdateRewindDepth},
+      {"Rewind Timeout (MS)",     S_NUM   |S_STRICT|S_CRITICAL, N2_X, M_SPC, {"rewind_timeout"}, .action = G_EnableRewind},
+      {"Play Internal Demos",     S_CHOICE,                     N2_X, M_SPC, {"no_page_ticking"}, .strings_id = str_page_ticking},
+      {"Quick \"Quit Game\"",     S_ONOFF,                      N2_X, M_SPC, {"quick_quitgame"}},
 
     MI_GAP,
-    {"Nugget - Accessibility", S_SKIP|S_TITLE, N_X, M_SPC},
+    {"Nugget - Accessibility", S_SKIP|S_TITLE, N2_X, M_SPC},
 #if 0 // For future use, hopefully
-      {"Flickering Sector Lighting", S_ONOFF|S_STRICT, N_X, M_SPC, {"a11y_sector_lighting"}},
+      {"Flickering Sector Lighting", S_ONOFF|S_STRICT, N2_X, M_SPC, {"a11y_sector_lighting"}},
 #endif
-      {"Weapon Flash Lighting",      S_ONOFF|S_STRICT, N_X, M_SPC, {"a11y_weapon_flash"}},
-      {"Weapon Flash Sprite",        S_ONOFF|S_STRICT, N_X, M_SPC, {"a11y_weapon_pspr"}},
-      {"Invulnerability Colormap",   S_ONOFF|S_STRICT, N_X, M_SPC, {"a11y_invul_colormap"}},
+      {"Weapon Flash Lighting",      S_ONOFF|S_STRICT, N2_X, M_SPC, {"a11y_weapon_flash"}},
+      {"Weapon Flash Sprite",        S_ONOFF|S_STRICT, N2_X, M_SPC, {"a11y_weapon_pspr"}},
+      {"Invulnerability Colormap",   S_ONOFF|S_STRICT, N2_X, M_SPC, {"a11y_invul_colormap"}},
 
     MI_END
 };
+
+#undef N2_X
 
 static void UpdateAutoSaveItems(void)
 {
@@ -6061,7 +6087,7 @@ int MN_StringWidth(const char *string)
             continue;
         }
         c = M_ToUpper(c) - HU_FONTSTART;
-        if (c < 0 || c > HU_FONTSIZE || hu_font[c] == NULL)
+        if (c < 0 || c >= HU_FONTSIZE || hu_font[c] == NULL)
         {
             w += SPACEWIDTH;
             continue;

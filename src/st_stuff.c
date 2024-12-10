@@ -31,7 +31,6 @@
 #include "doomtype.h"
 #include "hu_command.h"
 #include "hu_obituary.h"
-#include "i_system.h"
 #include "i_video.h"
 #include "info.h"
 #include "m_array.h"
@@ -61,6 +60,7 @@
 
 // [Nugget]
 #include "m_nughud.h"
+#include "sounds.h"
 
 // [Nugget] /=================================================================
 
@@ -68,6 +68,10 @@ static patch_t *stbersrk;
 static int lu_berserk;
 
 static patch_t *stinfnty;
+
+static sbarelem_t *st_ammo_elem = NULL,
+                  *st_message_elem = NULL,
+                  *st_chat_elem = NULL;
 
 static int NughudWideShift(const int wide);
 static void LoadNuggetGraphics(void);
@@ -79,6 +83,7 @@ boolean no_berserk_tint;
 boolean no_radsuit_tint;
 boolean comp_godface;
 boolean comp_unusedpals;
+static boolean hud_blink_keys;
 static boolean sts_show_berserk;
 
 typedef enum hudtype_s
@@ -95,22 +100,35 @@ static hudtype_t hud_type;
 
 static patch_t *font_extras[HU_FONTEXTRAS] = { NULL };
 
-sbarelem_t *health_elem = NULL;
-sbarelem_t *armor_elem = NULL;
-sbarelem_t *ammo_elem = NULL;
+// Key blinking --------------------------------------------------------------
+
+#define KEYBLINKMASK 0x8
+#define KEYBLINKTICS (7*KEYBLINKMASK)
+
+keyblink_t st_keyorskull[3];
+
+static keyblink_t keyblinkkeys[3];
+static int keyblinktics;
+
+static int key_override[6];
+
+static void ResetKeyOverride(void)
+{
+  for (int i = 0;  i < 6;  i++) { key_override[i] = -1; }
+}
 
 // NUGHUD --------------------------------------------------------------------
 
 static int nughud_patchlump[NUMNUGHUDPATCHES];
 
-static patch_t *nhbersrk;   // NHBERSRK
-static patch_t *nhammo[4];  // NHAMMO#, from 0 to 3
-static patch_t *nhambar[2]; // NHAMBAR#, from 0 to 1
-static patch_t *nhealth[2]; // NHEALTH#, from 0 to 1
-static patch_t *nhhlbar[2]; // NHHLBAR#, from 0 to 1
-static patch_t *nharmor[3]; // NHARMOR#, from 0 to 2
-static patch_t *nharbar[2]; // NHARBAR#, from 0 to 1
-static patch_t *nhinfnty;   // NHINFNTY
+static patch_t *nhbersrk,   // NHBERSRK
+               *nhammo[4],  // NHAMMO#, from 0 to 3
+               *nhambar[2], // NHAMBAR#, from 0 to 1
+               *nhealth[2], // NHEALTH#, from 0 to 1
+               *nhhlbar[2], // NHHLBAR#, from 0 to 1
+               *nharmor[3], // NHARMOR#, from 0 to 2
+               *nharbar[2], // NHARBAR#, from 0 to 1
+               *nhinfnty;   // NHINFNTY
 
 static boolean st_nughud;
 
@@ -119,10 +137,12 @@ boolean ST_GetNughudOn(void)
   return st_nughud;
 }
 
-sbarelem_t *message_elem = NULL;
-sbarelem_t *chat_elem = NULL;
+static sbarelem_t *nughud_health_elem = NULL,
+                  *nughud_armor_elem = NULL;
 
-static pixel_t *st_bar = NULL; // Used for Status-Bar chunks
+// Used for Status-Bar chunks
+static pixel_t *st_bar = NULL;
+static int stbar_height = 32;
 
 static sbaralignment_t NughudConvertAlignment(const int wide, const int align);
 static void DrawNughudGraphics();
@@ -130,7 +150,7 @@ static sbardef_t *CreateNughudSbarDef(void);
 
 // NUGHUD stacks -------------------------------------------------------------
 
-#define NUMSQWIDGETS (sbw_num) // Number of widgets
+#define NUMSQWIDGETS (sbw_max) // Number of widgets
 
 typedef struct widgetpair_s {
   const nughud_textline_t *ntl;
@@ -225,9 +245,6 @@ static boolean weapon_carousel;
 
 // used for evil grin
 static boolean  oldweaponsowned[NUMWEAPONS];
-
-// [crispy] blinking key or skull in the status bar
-int st_keyorskull[3];
 
 static sbardef_t *sbardef;
 
@@ -422,11 +439,33 @@ static boolean CheckConditions(sbarcondition_t *conditions, player_t *player)
                 break;
 
             case sbc_itemowned:
+                { // [Nugget] Key blinking
+                  const int i = cond->param - item_bluecard;
+
+                  if (item_bluecard <= cond->param && cond->param <= item_redskull
+                      && key_override[i] != -1)
+                  {
+                      result &= !!key_override[i];
+                      break;
+                  }
+                }
+
                 result &=
                     !!P_EvaluateItemOwned((itemtype_t)cond->param, player);
                 break;
 
             case sbc_itemnotowned:
+                { // [Nugget] Key blinking
+                  const int i = cond->param - item_bluecard;
+
+                  if (item_bluecard <= cond->param && cond->param <= item_redskull
+                      && key_override[i] != -1)
+                  {
+                      result &= !key_override[i];
+                      break;
+                  }
+                }
+
                 result &=
                     !P_EvaluateItemOwned((itemtype_t)cond->param, player);
                 break;
@@ -645,10 +684,15 @@ static int ResolveNumber(sbe_number_t *number, player_t *player)
 
 static int CalcPainOffset(sbe_face_t *face, player_t *player)
 {
+    static int lasthealthcalc;
+    static int oldhealth = -1;
     int health = player->health > 100 ? 100 : player->health;
-    int lasthealthcalc =
-        ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
-    face->oldhealth = health;
+    if (oldhealth != health)
+    {
+        lasthealthcalc =
+            ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
+        oldhealth = health;
+    }
     return lasthealthcalc;
 }
 
@@ -723,7 +767,7 @@ static void UpdateFace(sbe_face_t *face, player_t *player)
             boolean right = false;
 
             // [FG] show "Ouch Face" as intended
-            if (player->health - face->oldhealth > ST_MUCHPAIN)
+            if (face->oldhealth - player->health > ST_MUCHPAIN)
             {
                 // [FG] raise "Ouch Face" priority
                 priority = 8;
@@ -776,7 +820,7 @@ static void UpdateFace(sbe_face_t *face, player_t *player)
         // getting hurt because of your own damn stupidity
         if (player->damagecount)
         {
-            if (player->health - face->oldhealth > ST_MUCHPAIN)
+            if (face->oldhealth - player->health > ST_MUCHPAIN)
             {
                 priority = 7;
                 face->facecount = ST_TURNCOUNT;
@@ -834,6 +878,8 @@ static void UpdateFace(sbe_face_t *face, player_t *player)
     }
 
     --face->facecount;
+
+    face->oldhealth = player->health;
 }
 
 static void UpdateNumber(sbarelem_t *elem, player_t *player)
@@ -1140,37 +1186,122 @@ static void UpdateStatusBar(player_t *player)
         barindex = 0;
     }
 
-    if (st_nughud) { barindex = 0; } // [Nugget] NUGHUD
+    if (st_nughud) { barindex = 3; } // [Nugget] NUGHUD
 
     if (oldbarindex != barindex)
     {
+        st_ammo_elem = NULL; // [Nugget]
         st_time_elem = NULL;
         st_cmd_elem = NULL;
         st_msg_elem = NULL;
-        oldbarindex = barindex;
+        // [Nugget] Moved `oldbarindex` assignment below
     }
 
-    statusbar = &sbardef->statusbars[barindex];
+    statusbar = &sbardef->statusbars[st_nughud ? 0 : barindex]; // [Nugget] NUGHUD
 
-    health_elem = armor_elem = ammo_elem = NULL; // [Nugget]
+    // [Nugget] Key blinking /------------------------------------------------
+
+    static boolean was_blinking = false;
+
+    if (was_blinking != !!keyblinktics)
+    {
+        if (was_blinking) { ResetKeyOverride(); }
+
+        was_blinking = !!keyblinktics;
+    }
+
+    // [crispy] blinking key or skull in the status bar
+    if (keyblinktics)
+    {
+        if (!hud_blink_keys || barindex == 2)
+        {
+            keyblinktics = 0;
+        }
+        else {
+            if (!(keyblinktics & (2*KEYBLINKMASK - 1)))
+            { S_StartSoundPitchOptional(NULL, sfx_keybnk, sfx_itemup, PITCH_NONE); }
+
+            keyblinktics--;
+
+            for (int i = 0;  i < 3;  i++)
+            {
+                keyblink_t keyblink = keyblinkkeys[i];
+
+                if (!keyblink) { continue; }
+
+                key_override[i] = key_override[i + 3] = 0;
+
+                if (keyblinktics & KEYBLINKMASK)
+                {
+                    if (keyblink == KEYBLINK_EITHER)
+                    {
+                        if (st_keyorskull[i] && st_keyorskull[i] != KEYBLINK_BOTH)
+                        {
+                            // Map has only one type
+                            keyblink = st_keyorskull[i];
+                        }
+                        else
+                        // Map has none or both types
+                        if ( (keyblinktics & (2*KEYBLINKMASK)) &&
+                            !(keyblinktics & (4*KEYBLINKMASK)))
+                        {
+                            keyblink = KEYBLINK_SKULL;
+                        }
+                        else
+                        {
+                            keyblink = KEYBLINK_CARD;
+                        }
+                    }
+
+                    if (keyblink & KEYBLINK_CARD)  { key_override[i]     = 1; }
+                    if (keyblink & KEYBLINK_SKULL) { key_override[i + 3] = 1; }
+                }
+            }
+        }
+    }
+
+    // [Nugget] -------------------------------------------------------------/
 
     sbarelem_t *child;
     array_foreach(child, statusbar->children)
     {
         // [Nugget]
-        if (child->type == sbe_number || child->type == sbe_percent)
+        if (oldbarindex != barindex)
         {
-            switch (child->subtype.number->type)
-            {
-                case sbn_ammoselected:  ammo_elem   = child;  break;
-                case sbn_health:        health_elem = child;  break;
-                case sbn_armor:         armor_elem  = child;  break;
-                default:                                      break;
-            }
+          if (child->type == sbe_minimap)
+          {
+              sbe_minimap_t *const mm = child->subtype.minimap;
+              int ws = 0;
+
+              if (child->alignment & sbe_wide_left)  { ws -= 1; }
+              if (child->alignment & sbe_wide_right) { ws += 1; }
+              if (child->alignment & sbe_wide_force) { ws *= 2; }
+
+              AM_UpdateMinimap(
+                  child->x_pos, child->y_pos, ws,
+                  mm->width, mm->height, mm->under_messages
+              );
+          }
+          else if ((child->type == sbe_number || child->type == sbe_percent)
+                   && child->subtype.number->type == sbn_ammoselected)
+          {
+              st_ammo_elem = child;
+          }
+          else if (child->type == sbe_widget)
+          {
+              switch (child->subtype.widget->type)
+              {
+                  case sbw_message:  st_message_elem = child;  break;
+                  case sbw_chat:     st_chat_elem    = child;  break;
+                  default:                                     break;
+              }
+          }
         }
 
         UpdateElem(child, player);
     }
+
+    oldbarindex = barindex;
 }
 
 static void ResetElem(sbarelem_t *elem)
@@ -1209,6 +1340,10 @@ static void ResetElem(sbarelem_t *elem)
         case sbe_number:
         case sbe_percent:
             elem->subtype.number->oldvalue = -1;
+            break;
+
+        case sbe_widget:
+            elem->subtype.widget->duration_left = 0;
             break;
 
         default:
@@ -1741,17 +1876,17 @@ static void DrawStatusBar(void)
     DrawCenteredMessage();
 
     // [Nugget] In case of `am_noammo`
-    if (ammo_elem && !CheckConditions(ammo_elem->conditions, player))
+    if (st_ammo_elem && !CheckConditions(st_ammo_elem->conditions, player))
     {
         int wide = 0;
 
-        if (ammo_elem->alignment & sbe_wide_left)  { wide--; }
-        if (ammo_elem->alignment & sbe_wide_right) { wide++; }
+        if (st_ammo_elem->alignment & sbe_wide_left)  { wide--; }
+        if (st_ammo_elem->alignment & sbe_wide_right) { wide++; }
 
-        wide *= 1 + !!(ammo_elem->alignment & sbe_wide_force);
+        wide *= 1 + !!(st_ammo_elem->alignment & sbe_wide_force);
 
-        const int ammox = ammo_elem->x_pos + NughudWideShift(wide),
-                  ammoy = ammo_elem->y_pos;
+        const int ammox = st_ammo_elem->x_pos + NughudWideShift(wide),
+                  ammoy = st_ammo_elem->y_pos;
 
         // [Nugget]: [crispy] draw berserk pack instead of no ammo if appropriate
         if (sts_show_berserk && player->readyweapon == wp_fist && player->powers[pw_strength])
@@ -1772,7 +1907,7 @@ static void DrawStatusBar(void)
                 patch_t *const patch = V_CachePatchNum(lu_berserk, PU_STATIC);
                 
                 V_DrawPatch(
-                    ammox - (21 * ((ammo_elem->alignment & sbe_h_mask) - 1))
+                    ammox - (21 * ((st_ammo_elem->alignment & sbe_h_mask) - 1))
                     - SHORT(patch->width)/2 + SHORT(patch->leftoffset),
                     ammoy + 8 - SHORT(patch->height)/2 + SHORT(patch->topoffset),
                     patch
@@ -1789,6 +1924,19 @@ static void DrawStatusBar(void)
         {
             V_DrawPatch(ammox, ammoy, stinfnty);
         }
+    }
+}
+
+static void EraseBackground(int y, int height)
+{
+    if (y > scaledviewy && y < scaledviewy + scaledviewheight - height)
+    {
+        R_VideoErase(0, y, scaledviewx, height);
+        R_VideoErase(scaledviewx + scaledviewwidth, y, scaledviewx, height);
+    }
+    else
+    {
+        R_VideoErase(0, y, video.unscaledw, height);
     }
 }
 
@@ -1818,15 +1966,20 @@ static void EraseElem(int x, int y, sbarelem_t *elem, player_t *player)
             height += font->maxheight;
         }
 
-        if (y > scaledviewy && y < scaledviewy + scaledviewheight - height)
+        if (height > 0)
         {
-            R_VideoErase(0, y, scaledviewx, height);
-            R_VideoErase(scaledviewx + scaledviewwidth, y, scaledviewx, height);
+            EraseBackground(y, height);
+            widget->height = height;
         }
-        else
+        else if (widget->height)
         {
-            R_VideoErase(0, y, video.unscaledw, height);
+            EraseBackground(y, widget->height);
+            widget->height = 0;
         }
+    }
+    else if (elem->type == sbe_carousel)
+    {
+        ST_EraseCarousel(y);
     }
 
     sbarelem_t *child;
@@ -1838,7 +1991,7 @@ static void EraseElem(int x, int y, sbarelem_t *elem, player_t *player)
 
 void ST_Erase(void)
 {
-    if (!sbardef)
+    if (!sbardef || screenblocks >= 10)
     {
         return;
     }
@@ -1998,28 +2151,33 @@ void ST_Ticker(void)
 
     UpdateStatusBar(player);
 
-    // [Nugget] NUGHUD
-    if (st_nughud)
+    // [Nugget] Chat hack
+    if (st_message_elem && st_chat_elem && st_chat_elem->subtype.widget->under_messages
+        && (!st_nughud || (nughud.message.x != -1 && nughud.message.y != -1)))
     {
-        if (nughud.message.x != -1 && nughud.message.y != -1)
+        static int orig_y = -1;
+
+        if (orig_y == -1) { orig_y = st_chat_elem->y_pos; }
+
+        st_chat_elem->y_pos = orig_y + st_message_elem->y_pos;
+
+        const sbe_widget_t *const mwid = st_message_elem->subtype.widget;
+        const int numlines = array_size(mwid->lines);
+
+        if (numlines > 0)
         {
-            chat_elem->y_pos = nughud.message.y;
+            const int lineheight = mwid->font->maxheight;
 
-            const sbe_widget_t *const mwid = message_elem->subtype.widget;
-            const int numlines = array_size(mwid->lines);
-
-            if (numlines > 0)
+            for (int i = 0;  i < numlines;  i++)
             {
-                const int lineheight = mwid->font->maxheight;
-
-                for (int i = 0;  i < numlines;  i++)
-                {
-                    if (mwid->lines[i].totalwidth) { chat_elem->y_pos += lineheight; }
-                }
+                if (mwid->lines[i].totalwidth) { st_chat_elem->y_pos += lineheight; }
             }
         }
+    }
 
-        // Stacks
+    // [Nugget] NUGHUD stacks
+    if (st_nughud)
+    {
         for (int i = 0;  i < NUMNUGHUDSTACKS;  i++)
         {
             nughud_stackqueues[i].offset = 0;
@@ -2039,10 +2197,6 @@ void ST_Ticker(void)
                     { continue; }
 
                     sbe_widget_t *const wid = elem->subtype.widget;
-                    const int numlines = array_size(wid->lines);
-
-                    if (numlines <= 0) { continue; }
-
                     const nughud_vlignable_t *const stack = &nughud.stacks[i];
                     const sbarwidgettype_t type = wid->type;
 
@@ -2057,6 +2211,7 @@ void ST_Ticker(void)
                         }
                     }
 
+                    const int numlines = array_size(wid->lines);
                     const int lineheight = wid->font->maxheight;
 
                     for (int k = 0;  k < numlines;  k++)
@@ -2110,6 +2265,10 @@ void ST_Drawer(void)
 
 void ST_Start(void)
 {
+    // [Nugget] Key blinking
+    memset(keyblinkkeys, 0, sizeof(keyblinkkeys));
+    keyblinktics = 0;
+
     if (!sbardef)
     {
         return;
@@ -2132,27 +2291,24 @@ void ST_Init(void)
 
     static sbardef_t *normal_sbardef = NULL, *nughud_sbardef = NULL;
 
-    if (!normal_sbardef) { normal_sbardef = ST_ParseSbarDef(); }
-    if (!nughud_sbardef) { nughud_sbardef = CreateNughudSbarDef(); }
+    if (firsttime) {
+        normal_sbardef = ST_ParseSbarDef();
+        nughud_sbardef = CreateNughudSbarDef();
+    }
 
     // [Nugget] -------------------------------------------------------------/
 
     sbardef = st_nughud ? nughud_sbardef : normal_sbardef;
 
-    if (!sbardef)
-    {
-        health_elem = armor_elem = ammo_elem = NULL; // [Nugget]
-        return;
-    }
-
-    // [Nugget] Moved `LoadFacePatches()` below
+    // [Nugget]
+    if (firsttime) { firsttime = false; }
+    else           { return; }
 
     stcfnt = LoadSTCFN();
     hu_font = stcfnt->characters;
 
-    // [Nugget]
-    if (firsttime) { firsttime = false; }
-    else           { return; }
+    // [Nugget] Removed return when `!sbardef`;
+    // everything below can be loaded regardless
 
     LoadFacePatches();
 
@@ -2164,11 +2320,15 @@ void ST_Init(void)
 
     // [Nugget] ==============================================================
 
+    ResetKeyOverride();
+
     LoadNuggetGraphics();
 
     // NUGHUD ----------------------------------------------------------------
 
-    const nughud_textline_t *ntl;
+    const patch_t *const sbar = V_CachePatchName("STBAR", PU_STATIC);
+
+    stbar_height = MAX(32, SHORT(sbar->height));
 
     for (int i = 0;  i < NUMNUGHUDSTACKS;  i++)
     {
@@ -2187,33 +2347,38 @@ void ST_Init(void)
     sbarelem_t *elem;
     array_foreach(elem, nughud_sbardef->statusbars[0].children)
     {
-        if (elem->type != sbe_widget) { continue; }
+        if (elem->type != sbe_widget)
+        {
+            if (elem->type == sbe_number || elem->type == sbe_percent)
+            {
+                switch (elem->subtype.number->type)
+                {
+                    case sbn_health:  nughud_health_elem = elem;  break;
+                    case sbn_armor:   nughud_armor_elem  = elem;  break;
+                    default:                                      break;
+                }
+            }
+
+            continue; 
+        }
 
         const sbarwidgettype_t type = elem->subtype.widget->type;
+        const nughud_textline_t *ntl;
 
         switch (type)
         {
-            case sbw_monsec:   ntl = &nughud.sts;      break;
-            case sbw_time:     ntl = &nughud.time;     break;
-            case sbw_coord:    ntl = &nughud.coord;    break;
-            case sbw_fps:      ntl = &nughud.fps;      break;
-            case sbw_rate:     ntl = &nughud.rate;     break;
-            case sbw_cmd:      ntl = &nughud.cmd;      break;
-            case sbw_speed:    ntl = &nughud.speed;    break;
-
-            case sbw_message:
-              ntl = &nughud.message;
-              message_elem = elem;
-              break;
-
-            case sbw_chat:
-              ntl = &nughud.message;
-              chat_elem = elem;
-              break;
-
-            case sbw_secret:   ntl = &nughud.secret;   break;
-            case sbw_title:    ntl = &nughud.title;    break;
-            case sbw_powers:   ntl = &nughud.powers;   break;
+            case sbw_monsec:    ntl = &nughud.sts;      break;
+            case sbw_time:      ntl = &nughud.time;     break;
+            case sbw_coord:     ntl = &nughud.coord;    break;
+            case sbw_fps:       ntl = &nughud.fps;      break;
+            case sbw_rate:      ntl = &nughud.rate;     break;
+            case sbw_cmd:       ntl = &nughud.cmd;      break;
+            case sbw_speed:     ntl = &nughud.speed;    break;
+            case sbw_message:   ntl = &nughud.message;  break;
+            case sbw_chat:      ntl = &nughud.message;  break;
+            case sbw_announce:  ntl = &nughud.secret;   break;
+            case sbw_title:     ntl = &nughud.title;    break;
+            case sbw_powers:    ntl = &nughud.powers;   break;
 
             default: continue;
         }
@@ -2237,10 +2402,10 @@ void ST_Init(void)
     for (int i = 0;  i < NUMNUGHUDSTACKS;  i++)
     {
         qsort(
-          nughud_stackqueues[i].pairs,
-          NUMSQWIDGETS,
-          sizeof(widgetpair_t),
-          NughudSortWidgets
+            nughud_stackqueues[i].pairs,
+            NUMSQWIDGETS,
+            sizeof(widgetpair_t),
+            NughudSortWidgets
         );
     }
 }
@@ -2254,7 +2419,7 @@ void ST_InitRes(void)
 
   // [Nugget] Status-Bar chunks
   // More than necessary (we only use the section visible in 4:3), but so be it
-  st_bar = Z_Malloc((video.pitch * V_ScaleY(ST_HEIGHT)) * sizeof(*st_bar), PU_RENDERER, 0);
+  st_bar = Z_Malloc((video.pitch * V_ScaleY(stbar_height)) * sizeof(*st_bar), PU_RENDERER, 0);
 }
 
 void ST_ResetPalette(void)
@@ -2291,25 +2456,30 @@ void WI_DrawWidgets(void)
 
 // [Nugget] /=================================================================
 
+boolean ST_GetLayout(void)
+{
+  return (boolean) st_layout;
+}
+
 int ST_GetMessageFontHeight(void)
 {
-    int height = 8;
+  int height = 8;
 
-    if (!sbardef) { return height; }
+  if (!sbardef) { return height; }
 
-    const sbarelem_t *child;
-    array_foreach(child, statusbar->children)
-    {
-        if (child->type == sbe_widget && child->subtype.widget->type == sbw_message)
-        { height = child->subtype.widget->font->maxheight; }
-    }
+  const sbarelem_t *child;
+  array_foreach(child, statusbar->children)
+  {
+    if (child->type == sbe_widget && child->subtype.widget->type == sbw_message)
+    { height = child->subtype.widget->font->maxheight; }
+  }
 
-    return height;
+  return height;
 }
 
 boolean ST_IconAvailable(const int i)
 {
-    return font_extras[i] != NULL;
+  return font_extras[i] != NULL;
 }
 
 void LoadNuggetGraphics(void)
@@ -2478,6 +2648,34 @@ void LoadNuggetGraphics(void)
   else { nhinfnty = NULL; }
 }
 
+// Key blinking --------------------------------------------------------------
+
+void ST_SetKeyBlink(player_t* player, int blue, int yellow, int red)
+{
+  if (player != &players[displayplayer]) { return; }
+
+  ResetKeyOverride();
+
+  // Init array with args to iterate through
+  const int keys[3] = { blue, yellow, red };
+
+  keyblinktics = KEYBLINKTICS;
+
+  for (int i = 0;  i < 3;  i++)
+  {
+    if (   ((keys[i] == KEYBLINK_EITHER) && !(player->cards[i] || player->cards[i+3]))
+        || ((keys[i] == KEYBLINK_CARD)   && !(player->cards[i]))
+        || ((keys[i] == KEYBLINK_SKULL)  && !(player->cards[i+3]))
+        || ((keys[i] == KEYBLINK_BOTH)   && !(player->cards[i] && player->cards[i+3])))
+    {
+      keyblinkkeys[i] = keys[i];
+    }
+    else {
+      keyblinkkeys[i] = KEYBLINK_NONE;
+    }
+  }
+}
+
 // NUGHUD --------------------------------------------------------------------
 
 void ST_refreshBackground(void)
@@ -2487,7 +2685,7 @@ void ST_refreshBackground(void)
   // Status-Bar chunks -------------------------------------------------------
 
   patch_t *const sbar = V_CachePatchName("STBAR", PU_STATIC);
-  
+
   V_UseBuffer(st_bar);
 
   V_DrawPatch((SCREENWIDTH - SHORT(sbar->width)) / 2 + SHORT(sbar->leftoffset), 0, sbar);
@@ -2545,8 +2743,8 @@ static void DrawNughudSBChunk(nughud_sbchunk_t *chunk)
       sw = chunk->sw,
       sh = chunk->sh;
 
-  sw = MIN(ST_WIDTH - chunk->sx, sw);
-  sw = MIN(video.unscaledw - x,  sw);
+  sw = MIN(ST_WIDTH - chunk->sx, sw); // Don't exceed boundaries of bar buffer
+  sw = MIN(video.unscaledw - x,  sw); // Don't exceed boundaries of screen
 
   sh = MIN(ST_HEIGHT - chunk->sy, sh);
   sh = MIN(SCREENHEIGHT - y,      sh);
@@ -2624,11 +2822,11 @@ static void DrawNughudGraphics(void)
       );
     }
 
-    const int health = health_elem ? SmoothCount(health_elem->subtype.number->oldvalue, plyr->health)
-                                   : plyr->health;
+    const int health = nughud_health_elem ? SmoothCount(nughud_health_elem->subtype.number->oldvalue, plyr->health)
+                                          : plyr->health;
 
-    const int armor = armor_elem ? SmoothCount(armor_elem->subtype.number->oldvalue, plyr->armorpoints)
-                                 : plyr->armorpoints;
+    const int armor = nughud_armor_elem ? SmoothCount(nughud_armor_elem->subtype.number->oldvalue, plyr->armorpoints)
+                                        : plyr->armorpoints;
 
     DrawNughudBar(&nughud.healthbar, nhhlbar, health, maxhealth);
     DrawNughudBar(&nughud.armorbar,  nharbar,  armor, max_armor/2);
@@ -2816,17 +3014,100 @@ static int NughudSortWidgets(const void *_p1, const void *_p2)
 
 // NUGHUD loading ------------------------------------------------------------
 
+static sbarelem_t CreateNughudNumber(
+  const nughud_alignable_t na,
+  const sbarnumbertype_t type,
+  numberfont_t *const font,
+  const int maxlength,
+  const boolean is_percent
+)
+{
+  sbarelem_t elem = {0};
+
+  elem.cr = elem.crboom = CR_NONE;
+
+  elem.type = is_percent ? sbe_percent : sbe_number;
+
+  elem.x_pos = na.x;
+  elem.y_pos = na.y;
+  elem.alignment = NughudConvertAlignment(na.wide, na.align);
+
+  sbe_number_t *const number = calloc(1, sizeof(*number));
+
+  number->type = type;
+  number->font = font;
+  number->maxlength = maxlength;
+
+  elem.subtype.number = number;
+
+  return elem;
+}
+
+static sbarelem_t CreateNughudGraphic(
+  const nughud_widget_t nw,
+  const char *const name
+)
+{
+  sbarelem_t elem = {0};
+
+  elem.cr = elem.crboom = CR_NONE;
+
+  elem.type = sbe_graphic;
+
+  elem.x_pos = nw.x;
+  elem.y_pos = nw.y;
+  elem.alignment = NughudConvertAlignment(nw.wide, -1);
+
+  sbe_graphic_t *graphic = calloc(1, sizeof(*graphic));
+
+  graphic->patch_name = M_StringDuplicate(name);
+
+  elem.subtype.graphic = graphic;
+
+  return elem;
+}
+
+static sbarelem_t CreateNughudWidget(
+  const nughud_textline_t ntl,
+  const sbarwidgettype_t type,
+  hudfont_t *const font
+)
+{
+  sbarelem_t elem = {0};
+
+  elem.cr = elem.crboom = CR_NONE;
+
+  elem.type = sbe_widget;
+
+  elem.x_pos = MAX(0, ntl.x);
+  elem.y_pos = MAX(0, ntl.y);
+  elem.alignment = NughudConvertAlignment(ntl.wide, ntl.align);
+
+  sbe_widget_t *const widget = calloc(1, sizeof(*widget));
+
+  widget->type = type;
+  widget->font = widget->default_font = font;
+
+  elem.subtype.widget = widget;
+
+  return elem;
+}
+
 static sbardef_t *CreateNughudSbarDef(void)
 {
-  sbardef_t *out = calloc(1, sizeof(*out));
+  sbardef_t *const out = calloc(1, sizeof(*out));
+
+  statusbar_t sb = {0};
+
+  sb.height = 200;
+  sb.fullscreenrender = true;
 
   char namebuf[16];
-  int lumpnum;
-  int maxwidth, maxheight;
 
   // Fonts ===================================================================
 
-  #define GET_LAST_NUMFONT() (&out->numberfonts[array_size(out->numberfonts)])
+  int lumpnum;
+  int maxwidth, maxheight;
 
   // Tall Numbers ------------------------------------------------------------
 
@@ -3043,35 +3324,15 @@ end_amnum:
   }
 
   dig.monowidth = maxwidth;
-  dig.maxheight = maxheight;
+  dig.maxheight = MAX(8, maxheight);
 
   // Widgets =================================================================
-
-  statusbar_t sb = {0};
-
-  sb.height = 200;
-  sb.fullscreenrender = true;
 
   // Ammo --------------------------------------------------------------------
 
   if (nughud.ammo.x > -1)
   {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_number;
-
-    elem.x_pos = nughud.ammo.x;
-    elem.y_pos = nughud.ammo.y;
-    elem.alignment = NughudConvertAlignment(nughud.ammo.wide, nughud.ammo.align);
-
-    sbe_number_t *number = calloc(1, sizeof(*number));
-
-    number->type = sbn_ammoselected;
-    number->font = &rnum;
-    number->maxlength = 3;
-
-    elem.subtype.number = number;
+    sbarelem_t elem = CreateNughudNumber(nughud.ammo, sbn_ammoselected, &rnum, 3, false);
 
     sbarcondition_t condition = {0};
 
@@ -3086,24 +3347,7 @@ end_amnum:
 
   if (nughud.health.x > -1)
   {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_percent;
-
-    elem.x_pos = nughud.health.x;
-    elem.y_pos = nughud.health.y;
-    elem.alignment = NughudConvertAlignment(nughud.health.wide, nughud.health.align);
-
-    sbe_number_t *number = calloc(1, sizeof(*number));
-
-    number->type = sbn_health;
-    number->font = &tnum;
-    number->maxlength = 3;
-
-    elem.subtype.number = number;
-
-    array_push(sb.children, elem);
+    array_push(sb.children, CreateNughudNumber(nughud.health, sbn_health, &tnum, 3, true));
   }
 
   // Arms Numbers ------------------------------------------------------------
@@ -3136,42 +3380,29 @@ end_amnum:
     {
       for (int j = 0;  j < 2;  j++)
       {
-        sbarelem_t elem = {0};
-        elem.cr = elem.crboom = CR_NONE;
-
-        elem.type = sbe_graphic;
-
-        elem.x_pos = nughud.arms[i].x;
-        elem.y_pos = nughud.arms[i].y;
-        elem.alignment = NughudConvertAlignment(nughud.arms[i].wide, -1);
-
-        sbe_graphic_t *graphic = calloc(1, sizeof(*graphic));
-
         M_snprintf(
           namebuf, sizeof(namebuf), "%s%d",
           j ? available_string : unavailable_string,
           i + 1
         );
 
-        graphic->patch_name = M_StringDuplicate(namebuf);
-
-        elem.subtype.graphic = graphic;
+        sbarelem_t elem = CreateNughudGraphic(nughud.arms[i], namebuf);
 
         sbarcondition_t condition = {0};
 
         if (i == wp_fist)
         {
-            condition.condition = j ? sbc_itemowned : sbc_itemnotowned;
-            condition.param = item_berserk;
+          condition.condition = j ? sbc_itemowned : sbc_itemnotowned;
+          condition.param = item_berserk;
         }
         else if (i == wp_shotgun && nughud.arms[wp_supershotgun].x == -1)
         {
-            condition.condition = j ? sbc_weaponslotowned : sbc_weaponslotnotowned;
-            condition.param = 3;
+          condition.condition = j ? sbc_weaponslotowned : sbc_weaponslotnotowned;
+          condition.param = 3;
         }
         else {
-            condition.condition = j ? sbc_weaponowned : sbc_weaponnotowned;
-            condition.param = i;
+          condition.condition = j ? sbc_weaponowned : sbc_weaponnotowned;
+          condition.param = i;
         }
 
         array_push(elem.conditions, condition);
@@ -3185,22 +3416,7 @@ end_amnum:
 
   if (nughud.frags.x > -1)
   {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_number;
-
-    elem.x_pos = nughud.frags.x;
-    elem.y_pos = nughud.frags.y;
-    elem.alignment = NughudConvertAlignment(nughud.frags.wide, nughud.frags.align);
-
-    sbe_number_t *number = calloc(1, sizeof(*number));
-
-    number->type = sbn_frags;
-    number->font = &tnum;
-    number->maxlength = 2;
-
-    elem.subtype.number = number;
+    sbarelem_t elem = CreateNughudNumber(nughud.frags, sbn_frags, &tnum, 2, false);
 
     sbarcondition_t condition = {0};
 
@@ -3219,6 +3435,7 @@ end_amnum:
     if (nughud.face_bg)
     {
       sbarelem_t elem = {0};
+
       elem.cr = elem.crboom = CR_NONE;
 
       elem.type = sbe_facebackground;
@@ -3276,64 +3493,18 @@ end_amnum:
     {
       for (int j = 0;  j < 3;  j++)
       {
-        sbarelem_t elem = {0};
-        elem.cr = elem.crboom = CR_NONE;
-
-        elem.type = sbe_graphic;
-
-        elem.x_pos = nh.x;
-        elem.y_pos = nh.y;
-        elem.alignment = NughudConvertAlignment(nh.wide, -1);
-
-        sbe_graphic_t *graphic = calloc(1, sizeof(*graphic));
-
         M_snprintf(namebuf, sizeof(namebuf), "%s%d", keys_string, (j * 3) + i);
 
-        graphic->patch_name = M_StringDuplicate(namebuf);
-
-        elem.subtype.graphic = graphic;
+        sbarelem_t elem = CreateNughudGraphic(nughud.keys[i], namebuf);
 
         sbarcondition_t cond1 = {0};
         sbarcondition_t cond2 = {0};
 
-        switch (j)
-        {
-          case 0: { // Card
-            // Card owned
-            cond1.condition = sbc_itemowned;
-            cond1.param = i + 1;
+        cond1.condition = ((j + 1) & 1) ? sbc_itemowned : sbc_itemnotowned;
+        cond2.condition = ((j + 1) & 2) ? sbc_itemowned : sbc_itemnotowned;
 
-            // Skull not owned
-            cond2.condition = sbc_itemnotowned;
-            cond2.param = i + 4;
-
-            break;
-          }
-
-          case 1: { // Skull
-            // Card not owned
-            cond1.condition = sbc_itemnotowned;
-            cond1.param = i + 1;
-
-            // Skull owned
-            cond2.condition = sbc_itemowned;
-            cond2.param = i + 4;
-
-            break;
-          }
-
-          case 2: { // Both
-            // Card owned
-            cond1.condition = sbc_itemowned;
-            cond1.param = i + 1;
-
-            // Skull owned
-            cond2.condition = sbc_itemowned;
-            cond2.param = i + 4;
-
-            break;
-          }
-        }
+        cond1.param = i + 1;
+        cond2.param = i + 4;
 
         array_push(elem.conditions, cond1);
         array_push(elem.conditions, cond2);
@@ -3347,24 +3518,7 @@ end_amnum:
 
   if (nughud.armor.x > -1)
   {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_percent;
-
-    elem.x_pos = nughud.armor.x;
-    elem.y_pos = nughud.armor.y;
-    elem.alignment = NughudConvertAlignment(nughud.armor.wide, nughud.armor.align);
-
-    sbe_number_t *number = calloc(1, sizeof(*number));
-
-    number->type = sbn_armor;
-    number->font = &tnum;
-    number->maxlength = 3;
-
-    elem.subtype.number = number;
-
-    array_push(sb.children, elem);
+    array_push(sb.children, CreateNughudNumber(nughud.armor, sbn_armor, &tnum, 3, true));
   }
 
   // Ammos -------------------------------------------------------------------
@@ -3373,73 +3527,49 @@ end_amnum:
   {
     for (int j = 0;  j < 2;  j++)
     {
-      nughud_alignable_t nh = (j ? nughud.maxammos : nughud.ammos)[i];
+      nughud_alignable_t na = j ? nughud.maxammos[i] : nughud.ammos[i];
 
-      if (nh.x > -1)
+      if (na.x > -1)
       {
-        sbarelem_t elem = {0};
-        elem.cr = elem.crboom = CR_NONE;
+        sbarelem_t elem = CreateNughudNumber(na, j ? sbn_maxammo : sbn_ammo, &amnum, 3, false);
 
-        elem.type = sbe_number;
-
-        elem.x_pos = nh.x;
-        elem.y_pos = nh.y;
-        elem.alignment = NughudConvertAlignment(nh.wide, nh.align);
-
-        sbe_number_t *number = calloc(1, sizeof(*number));
-
-        number->type = j ? sbn_maxammo : sbn_ammo;
-        number->param = i;
-        number->font = &amnum;
-        number->maxlength = 3;
-
-        elem.subtype.number = number;
+        elem.subtype.number->param = i;
 
         array_push(sb.children, elem);
       }
     }
   }
 
-  // Time --------------------------------------------------------------------
+  // Various Boom widgets ----------------------------------------------------
 
-  {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
+  #define CREATE_BOOM_WIDGET(_ntl_, _type_) \
+    array_push(sb.children, CreateNughudWidget(_ntl_, _type_, &dig));
 
-    elem.type = sbe_widget;
+  CREATE_BOOM_WIDGET(nughud.time,   sbw_time);
+  CREATE_BOOM_WIDGET(nughud.powers, sbw_powers);
+  CREATE_BOOM_WIDGET(nughud.fps,    sbw_fps);
+  CREATE_BOOM_WIDGET(nughud.rate,   sbw_rate);
+  CREATE_BOOM_WIDGET(nughud.cmd,    sbw_cmd);
+  CREATE_BOOM_WIDGET(nughud.speed,  sbw_speed);
 
-    elem.x_pos = MAX(0, nughud.time.x);
-    elem.y_pos = MAX(0, nughud.time.y);
-    elem.alignment = NughudConvertAlignment(nughud.time.wide, nughud.time.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_time;
-    widget->font = widget->default_font = &dig;
-
-    elem.subtype.widget = widget;
-
-    array_push(sb.children, elem);
-  }
+  #undef CREATE_BOOM_WIDGET
 
   // Stats -------------------------------------------------------------------
 
   {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
+    sbarelem_t elem = CreateNughudWidget(nughud.sts, sbw_monsec, &dig);
 
-    elem.type = sbe_widget;
+    elem.subtype.widget->vertical_layout = MAX(0, nughud.sts_ml);
 
-    elem.x_pos = MAX(0, nughud.sts.x);
-    elem.y_pos = MAX(0, nughud.sts.y);
-    elem.alignment = NughudConvertAlignment(nughud.sts.wide, nughud.sts.align);
+    array_push(sb.children, elem);
+  }
 
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
+  // Coords ------------------------------------------------------------------
 
-    widget->type = sbw_monsec;
-    widget->font = widget->default_font = &dig;
+  {
+    sbarelem_t elem = CreateNughudWidget(nughud.coord, sbw_coord, &dig);
 
-    elem.subtype.widget = widget;
+    elem.subtype.widget->vertical_layout = MAX(0, nughud.coord_ml);
 
     array_push(sb.children, elem);
   }
@@ -3447,21 +3577,7 @@ end_amnum:
   // Title -------------------------------------------------------------------
 
   {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_widget;
-
-    elem.x_pos = MAX(0, nughud.title.x);
-    elem.y_pos = MAX(0, nughud.title.y);
-    elem.alignment = NughudConvertAlignment(nughud.title.wide, nughud.title.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_title;
-    widget->font = widget->default_font = &cfn;
-
-    elem.subtype.widget = widget;
+    sbarelem_t elem = CreateNughudWidget(nughud.title, sbw_title, &cfn);
 
     sbarcondition_t condition = {0};
 
@@ -3473,157 +3589,12 @@ end_amnum:
     array_push(sb.children, elem);
   }
 
-  // Powerup timers ----------------------------------------------------------
-
-  {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_widget;
-
-    elem.x_pos = MAX(0, nughud.powers.x);
-    elem.y_pos = MAX(0, nughud.powers.y);
-    elem.alignment = NughudConvertAlignment(nughud.powers.wide, nughud.powers.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_powers;
-    widget->font = widget->default_font = &dig;
-
-    elem.subtype.widget = widget;
-
-    array_push(sb.children, elem);
-  }
-
-  // Coords ------------------------------------------------------------------
-
-  {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_widget;
-
-    elem.x_pos = MAX(0, nughud.coord.x);
-    elem.y_pos = MAX(0, nughud.coord.y);
-    elem.alignment = NughudConvertAlignment(nughud.coord.wide, nughud.coord.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_coord;
-    widget->font = widget->default_font = &dig;
-
-    elem.subtype.widget = widget;
-
-    array_push(sb.children, elem);
-  }
-
-  // FPS ---------------------------------------------------------------------
-
-  {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_widget;
-
-    elem.x_pos = MAX(0, nughud.fps.x);
-    elem.y_pos = MAX(0, nughud.fps.y);
-    elem.alignment = NughudConvertAlignment(nughud.fps.wide, nughud.fps.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_fps;
-    widget->font = widget->default_font = &dig;
-
-    elem.subtype.widget = widget;
-
-    array_push(sb.children, elem);
-  }
-
-  // Rate --------------------------------------------------------------------
-
-  {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_widget;
-
-    elem.x_pos = MAX(0, nughud.rate.x);
-    elem.y_pos = MAX(0, nughud.rate.y);
-    elem.alignment = NughudConvertAlignment(nughud.rate.wide, nughud.rate.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_rate;
-    widget->font = widget->default_font = &dig;
-
-    elem.subtype.widget = widget;
-
-    array_push(sb.children, elem);
-  }
-
-  // Command history ---------------------------------------------------------
-
-  {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_widget;
-
-    elem.x_pos = MAX(0, nughud.cmd.x);
-    elem.y_pos = MAX(0, nughud.cmd.y);
-    elem.alignment = NughudConvertAlignment(nughud.cmd.wide, nughud.cmd.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_cmd;
-    widget->font = widget->default_font = &dig;
-
-    elem.subtype.widget = widget;
-
-    array_push(sb.children, elem);
-  }
-
-  // Speedometer -------------------------------------------------------------
-
-  {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
-
-    elem.type = sbe_widget;
-
-    elem.x_pos = MAX(0, nughud.speed.x);
-    elem.y_pos = MAX(0, nughud.speed.y);
-    elem.alignment = NughudConvertAlignment(nughud.speed.wide, nughud.speed.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_speed;
-    widget->font = widget->default_font = &dig;
-
-    elem.subtype.widget = widget;
-
-    array_push(sb.children, elem);
-  }
-
   // Message -----------------------------------------------------------------
 
   {
-    sbarelem_t elem = {0};
-    elem.cr = elem.crboom = CR_NONE;
+    sbarelem_t elem = CreateNughudWidget(nughud.message, sbw_message, &cfn);
 
-    elem.type = sbe_widget;
-
-    elem.x_pos = MAX(0, nughud.message.x);
-    elem.y_pos = MAX(0, nughud.message.y);
-    elem.alignment = NughudConvertAlignment(nughud.message.wide, nughud.message.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_message;
-    widget->font = widget->default_font = &cfn;
-    widget->duration = 4*TICRATE;
-
-    elem.subtype.widget = widget;
+    elem.subtype.widget->duration = 4*TICRATE;
 
     array_push(sb.children, elem);
   }
@@ -3631,51 +3602,25 @@ end_amnum:
   // Chat --------------------------------------------------------------------
 
   {
-    sbarelem_t elem = {0};
+    sbarelem_t elem = CreateNughudWidget(nughud.message, sbw_chat, &cfn);
+
     elem.cr = CR_GOLD;
-    elem.crboom = CR_NONE;
+    elem.y_pos = 0;
 
-    elem.type = sbe_widget;
-
-    elem.x_pos = MAX(0, nughud.message.x);
-    elem.y_pos = MAX(0, nughud.message.y) + cfn.maxheight;
-    elem.alignment = NughudConvertAlignment(nughud.message.wide, nughud.message.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_chat;
-    widget->font = widget->default_font = &cfn;
-
-    elem.subtype.widget = widget;
+    elem.subtype.widget->under_messages = true;
 
     array_push(sb.children, elem);
   }
 
-  // Secret message ----------------------------------------------------------
+  // Announcements -----------------------------------------------------------
 
   {
-    sbarelem_t elem = {0};
-    elem.cr = CR_GOLD;
-    elem.crboom = CR_NONE;
+    sbarelem_t elem = CreateNughudWidget(nughud.secret, sbw_announce, &cfn);
 
-    elem.type = sbe_widget;
-
-    elem.x_pos = MAX(0, nughud.secret.x);
-    elem.y_pos = MAX(0, nughud.secret.y);
-    elem.alignment = NughudConvertAlignment(nughud.secret.wide, nughud.secret.align);
-
-    sbe_widget_t *widget = calloc(1, sizeof(*widget));
-
-    widget->type = sbw_secret;
-    widget->font = widget->default_font = &cfn;
-    widget->duration = 2.5f*TICRATE;
-
-    elem.subtype.widget = widget;
+    elem.subtype.widget->duration = 2.5f*TICRATE;
 
     array_push(sb.children, elem);
   }
-
-  array_push(out->statusbars, sb);
 
   // Carousel ----------------------------------------------------------------
 
@@ -3691,7 +3636,32 @@ end_amnum:
     array_push(sb.children, elem);
   }
 
+  // Minimap -----------------------------------------------------------------
+
+  {
+    sbarelem_t elem = {0};
+    elem.cr = elem.crboom = CR_NONE;
+
+    elem.type = sbe_minimap;
+
+    elem.x_pos = nughud.minimap.x;
+    elem.y_pos = nughud.minimap.y;
+    elem.alignment = NughudConvertAlignment(nughud.minimap.wide, -1);
+
+    sbe_minimap_t *const minimap = calloc(1, sizeof(*minimap));
+
+    minimap->width = nughud.minimap.w;
+    minimap->height = nughud.minimap.h;
+    minimap->under_messages = nughud.minimap.undmess;
+
+    elem.subtype.minimap = minimap;
+
+    array_push(sb.children, elem);
+  }
+
   // -------------------------------------------------------------------------
+
+  array_push(out->statusbars, sb);
 
   return out;
 }
@@ -3720,9 +3690,15 @@ void ST_BindSTSVariables(void)
   M_BindBool("hud_armor_type", &hud_armor_type, NULL, true, ss_none, wad_no,
              "Armor count is colored based on armor type");
 
-  // [Nugget]
+  // [Nugget] /---------------------------------------------------------------
+
   M_BindBool("sts_show_berserk", &sts_show_berserk, NULL, true, ss_stat, wad_yes,
              "Show Berserk pack on the status bar when using the Fist, if available");
+
+  M_BindBool("hud_blink_keys", &hud_blink_keys, NULL, false, ss_stat, wad_yes,
+             "Make missing keys blink when trying to trigger linedef actions");
+
+  // [Nugget] ---------------------------------------------------------------/
 
   M_BindNum("health_red", &health_red, NULL, 25, 0, 200, ss_none, wad_yes,
             "Amount of health for red-to-yellow transition");

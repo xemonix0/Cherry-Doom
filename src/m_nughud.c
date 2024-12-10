@@ -197,6 +197,11 @@ default_t nughud_defaults[] = {
   SBCHUNK( "nughud_sbchunk7", 6 ),
   SBCHUNK( "nughud_sbchunk8", 7 ),
 
+  WIDGET( "nughud_minimap", nughud.minimap, 8, 0, -2),
+  { "nughud_minimap_w",       (config_t *) &nughud.minimap.w,       NULL, { 80 }, { 32, 96  }, number },
+  { "nughud_minimap_h",       (config_t *) &nughud.minimap.h,       NULL, { 80 }, { 32, 96  }, number },
+  { "nughud_minimap_undmess", (config_t *) &nughud.minimap.undmess, NULL, {  1 }, {  0, 1   }, number },
+
   TOGGLE( "nughud_percents",      nughud.percents,      1 ),
   TOGGLE( "nughud_patch_offsets", nughud.patch_offsets, 1 ),
 

@@ -535,9 +535,8 @@ static void R_DrawFuzzColumn_block(void)
 
 boolean fuzzdark_mode;
 
-static int nx, ny;
 #define FUZZDARK (256 * (Woof_Random() < 32 ? (Woof_Random() & 1 ? 4 : 8) : 6))
-#define FUZZSELECT (MIN(0, fuzzoffset[fuzzpos]) ? 0 : FUZZDARK)
+#define FUZZSELECT ((fuzzoffset[fuzzpos] == -FUZZOFF) ? 0 : FUZZDARK)
 
 static void R_DrawSelectiveFuzzColumn(void)
 {
@@ -545,22 +544,17 @@ static void R_DrawSelectiveFuzzColumn(void)
   byte *dest;
   boolean cutoff = false;
 
-  if (nx > 1 || ny > 1)
+  if (fuzzblocksize > 1 && dc_x % fuzzblocksize)
   {
-    if (dc_x % nx)
-      return;
-
-    dc_yl += ny;
-    dc_yl -= dc_yl % ny;
-    dc_yh -= dc_yh % ny;
+    return;
   }
 
   if (!dc_yl)
-    dc_yl = ny;
+    dc_yl = 1;
 
-  if (dc_yh >= viewheight - ny)
+  if (dc_yh == viewheight - 1)
   {
-    dc_yh = viewheight - 2 * ny;
+    dc_yh = viewheight - 2;
     cutoff = true;
   }
 
@@ -574,33 +568,42 @@ static void R_DrawSelectiveFuzzColumn(void)
     I_Error("R_DrawSelectiveFuzzColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
 #endif
 
+  ++count;
+
   dest = ylookup[dc_yl] + columnofs[dc_x];
-  count += ny;
+
+  int lines = fuzzblocksize - (dc_yl % fuzzblocksize);
 
   do
   {
-    const int offset = fuzzoffset[fuzzpos] * ny * linesize;
-    const byte fuzz = fullcolormap[FUZZSELECT + dest[offset]];
+    count -= lines;
 
-    for (int i = 0; i < ny && count - i > 0; i++)
+    const int mask = count >> (8 * sizeof(mask) - 1);
+
+    lines += count & mask;
+    count &= ~mask;
+
+    const byte fuzz = fullcolormap[FUZZSELECT + dest[linesize * fuzzoffset[fuzzpos]]];
+
+    do
     {
-      memset(dest, fuzz, nx);
+      memset(dest, fuzz, fuzzblocksize);
       dest += linesize;
-    }
+    } while (--lines);
 
-    fuzzpos = (fuzzpos + 1) % FUZZTABLE;
-  } while ((count -= ny) > 0);
+    ++fuzzpos;
+
+    // Clamp table lookup index.
+    fuzzpos &= (fuzzpos - FUZZTABLE) >> (8 * sizeof(fuzzpos) - 1); // killough 1/99
+
+    lines = fuzzblocksize;
+  } while (count);
 
   if (cutoff)
   {
-    const int offset = ny * linesize * fuzzoffset[fuzzpos];
-    const byte fuzz = fullcolormap[FUZZSELECT + dest[offset]];
+      const byte fuzz = fullcolormap[FUZZSELECT + dest[linesize * (fuzzoffset[fuzzpos] - FUZZOFF) / 2]];
 
-    for (int i = 0; i < ny; i++)
-    {
-      memset(dest, fuzz, nx);
-      dest += linesize;
-    }
+      memset(dest, fuzz, fuzzblocksize);
   }
 }
 
@@ -618,12 +621,11 @@ void R_SetFuzzColumnMode(void)
     {
         if (fuzzcolumn_mode && current_video_height > SCREENHEIGHT)
         {
-            nx = video.xscale >> FRACBITS;
-            ny = video.yscale >> FRACBITS;
+            fuzzblocksize = FixedToInt(video.yscale);
         }
         else
         {
-            nx = ny = 1;
+            fuzzblocksize = 1;
         }
 
         R_DrawFuzzColumn = R_DrawSelectiveFuzzColumn;

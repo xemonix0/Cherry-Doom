@@ -1079,6 +1079,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   mobj->alttics  = -1; 
 
   mobj->isvisual = false;
+  mobj->tranmap = NULL;
 
   // [Nugget] ---------------------------------------------------------------/
 
@@ -1602,6 +1603,19 @@ spawnit:
   {
       mobj->health = 1000 + musid;
   }
+
+  // [Nugget] Key blinking:
+  // [crispy] blinking key or skull in the status bar
+  switch (mobj->sprite)
+  {
+    case SPR_BKEY:  st_keyorskull[it_bluecard]   |= KEYBLINK_CARD;   break;
+    case SPR_BSKU:  st_keyorskull[it_bluecard]   |= KEYBLINK_SKULL;  break;
+    case SPR_RKEY:  st_keyorskull[it_redcard]    |= KEYBLINK_CARD;   break;
+    case SPR_RSKU:  st_keyorskull[it_redcard]    |= KEYBLINK_SKULL;  break;
+    case SPR_YKEY:  st_keyorskull[it_yellowcard] |= KEYBLINK_CARD;   break;
+    case SPR_YSKU:  st_keyorskull[it_yellowcard] |= KEYBLINK_SKULL;  break;
+    default:                                                         break;
+  }
 }
 
 //
@@ -1981,6 +1995,8 @@ void P_SetMobjAltState(mobj_t *const mobj, altstatenum_t statenum)
     mobj->alttics = state->tics;
     mobj->altsprite = state->sprite;
     mobj->altframe = state->frame;
+
+    if (statenum == AS_TRAIL2) { mobj->flags |= MF_TRANSLUCENT; }
 
     statenum = state->nextstate;
   } while (!mobj->alttics);

@@ -328,6 +328,14 @@ nughud_sbchunk1_sy    0
 nughud_sbchunk1_sw    1
 nughud_sbchunk1_sh    32
 
+; Minimap
+nughud_minimap_x       8
+nughud_minimap_y       0
+nughud_minimap_wide    -2
+nughud_minimap_w       80
+nughud_minimap_h       80
+nughud_minimap_undmess 1
+
 ; Draw percentage signs
 nughud_percents 1
 

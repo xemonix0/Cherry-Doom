@@ -59,12 +59,13 @@ extern byte *cr_bright;
 extern byte invul_gray[];
 
 // [Nugget]
-extern byte cr_allblack[];
-extern byte cr_gray_vc[];    // `V_Colorize()` only
-extern byte nightvision[];   // Night-vision visor
-extern byte *shadow_tranmap; // HUD/menu shadows
-extern byte *pspr_tranmap;   // Translucent flashes
-extern byte *xhair_tranmap;  // Translucent crosshair
+extern byte cr_allblack[],
+            cr_gray_vc[],    // `V_Colorize()` only
+            nightvision[],   // Night-vision visor
+            *shadow_tranmap, // HUD/menu shadows
+            *pspr_tranmap,   // Translucent flashes
+            *xhair_tranmap,  // Translucent crosshair
+            *trail_tranmap;
 
 // [Cherry]
 extern byte *smoke_tranmap; // Translucent rocket trails
@@ -204,17 +205,20 @@ void V_SetShadowCrop(const int value);
 void V_DrawPatchTRTRTL(int x, int y, struct patch_s *patch,
                        byte *outr1, byte *outr2, byte *tl);
 
-void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped,
-                            byte *outr1, byte *outr2, byte *tmap);
+void V_DrawPatchTranslucent2(int x, int y, struct patch_s *patch, boolean flipped,
+                             byte *outr1, byte *outr2, byte *tmap);
 
-#define V_DrawPatchFlippedTL(x, y, p, tp) \
-  V_DrawPatchTranslucent(x, y, p, true, NULL, NULL, tp)
+#define V_DrawPatchTL2(x, y, p, tp) \
+  V_DrawPatchTranslucent2(x, y, p, false, NULL, NULL, tp)
 
-#define V_DrawPatchTranslatedTL(x, y, p, cr, tp) \
-  V_DrawPatchTranslucent(x, y, p, false, cr, NULL, tp)
+#define V_DrawPatchFlippedTL2(x, y, p, tp) \
+  V_DrawPatchTranslucent2(x, y, p, true, NULL, NULL, tp)
+
+#define V_DrawPatchTRTL2(x, y, p, cr, tp) \
+  V_DrawPatchTranslucent2(x, y, p, false, cr, NULL, tp)
 
 #define V_DrawPatchTRTRTL2(x, y, p, cr1, cr2, tp) \
-  V_DrawPatchTranslucent(x, y, p, false, cr1, cr2, tp)
+  V_DrawPatchTranslucent2(x, y, p, false, cr1, cr2, tp)
 
 void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
                          byte *outr1, byte *outr2, byte *tmap);
@@ -231,14 +235,14 @@ void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
 #define V_DrawPatchTRTRSH(x, y, p, cr1, cr2) \
   V_DrawPatchShadowed(x, y, p, false, cr1, cr2, NULL)
 
-#define V_DrawPatchTRTRTLSH(x, y, p, cr1, cr2, tp) \
-  V_DrawPatchShadowed(x, y, p, false, cr1, cr2, tp)
+#define V_DrawPatchTLSH(x, y, p, tp) \
+  V_DrawPatchShadowed(x, y, p, false, NULL, NULL, tp)
 
 #define V_DrawPatchTRTLSH(x, y, p, cr, tp) \
   V_DrawPatchShadowed(x, y, p, false, cr, NULL, tp)
 
-#define V_DrawPatchTLSH(x, y, p, tp) \
-  V_DrawPatchShadowed(x, y, p, false, NULL, NULL, tp)
+#define V_DrawPatchTRTRTLSH(x, y, p, cr1, cr2, tp) \
+  V_DrawPatchShadowed(x, y, p, false, cr1, cr2, tp)
 
 void V_ShadowRect(int x, int y, int width, int height);
 

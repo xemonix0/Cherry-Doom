@@ -3215,13 +3215,13 @@ boolean M_Responder(event_t *ev)
                 savegamestrings[saveSlot][saveCharIndex] = 0;
             }
         }
-        else if (ch == KEY_ESCAPE) // phares 3/7/98
+        else if (action == MENU_ESCAPE) // phares 3/7/98
         {
             I_StopTextInput();
             saveStringEnter = 0;
             strcpy(&savegamestrings[saveSlot][0], saveOldString);
         }
-        else if (ch == KEY_ENTER) // phares 3/7/98
+        else if (action == MENU_ENTER) // phares 3/7/98
         {
             I_StopTextInput();
             saveStringEnter = 0;
@@ -3296,8 +3296,11 @@ boolean M_Responder(event_t *ev)
 
     if (!menuactive)
     {
-        if ((demoplayback && (action == MENU_ENTER || action == MENU_BACKSPACE) && !R_GetFreecamOn()) // [Nugget] Freecam
-            || action == MENU_ESCAPE) // phares
+        if (!chat_on
+            && ((demoplayback
+                 && (action == MENU_ENTER || action == MENU_BACKSPACE)
+                 && !R_GetFreecamOn()) // [Nugget] Freecam
+                || action == MENU_ESCAPE)) // phares
         {
             I_ShowMouseCursor(menu_input != pad_mode);
             MN_StartControlPanel();

@@ -400,10 +400,11 @@ typedef struct mobj_s
     int                 altframe;
 
     // Alt. states
-    altstate_t          *altstate;
+    const altstate_t    *altstate;
     int                 alttics;
 
     boolean             isvisual;
+    byte                *tranmap;
     
     // [Cherry]: [JN] Amplitude of floating powerups, used *only* while rendering.
     fixed_t float_amp;

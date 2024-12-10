@@ -289,23 +289,23 @@ void HU_DrawCrosshair(void)
     if (crosshair.patch)
     {
         // [Nugget] Translucent crosshair
-        V_DrawPatchTranslatedTL(crosshair.x - crosshair.w,
-                                          y - crosshair.h, crosshair.patch,
-                                crosshair.cr, xhair_tranmap);
+        V_DrawPatchTRTL2(crosshair.x - crosshair.w,
+                                   y - crosshair.h, crosshair.patch,
+                         crosshair.cr, xhair_tranmap);
     }
 
     // [Nugget] Horizontal-autoaim indicators --------------------------------
 
     if (crosshair.side == -1)
     {
-        V_DrawPatchTranslatedTL(crosshair.x - crosshair.w - crosshair.lw,
-                                          y - crosshair.lh,
-                                crosshair.lpatch, crosshair.cr, xhair_tranmap);
+        V_DrawPatchTRTL2(crosshair.x - crosshair.w - crosshair.lw,
+                                   y - crosshair.lh,
+                         crosshair.lpatch, crosshair.cr, xhair_tranmap);
     }
     else if (crosshair.side == 1)
     {
-        V_DrawPatchTranslatedTL(crosshair.x + crosshair.w,
-                                          y - crosshair.rh,
-                                crosshair.rpatch, crosshair.cr, xhair_tranmap);
+        V_DrawPatchTRTL2(crosshair.x + crosshair.w,
+                                   y - crosshair.rh,
+                         crosshair.rpatch, crosshair.cr, xhair_tranmap);
     }
 }

@@ -84,6 +84,7 @@ set(BASE_SOURCES
     all-all/m_vbox.png
     all-all/sbardef.lmp
     all-all/sbhuddef.lmp
+    all-all/sbnugdef.lmp # [Nugget]
     all-all/scrldown.png # [Cherry]
     all-all/scrlup.png # [Cherry]
     all-all/skytran.lmp
@@ -207,6 +208,7 @@ set(BASE_SOURCES
 
     # [Nugget]
     all-all/sprites/ngcha0.png
+    all-all/sprites/ngcla0.png
     all-all/sprites/ngtra0.png
     all-all/sprites/ngtrb0.png
     all-all/sprites/ngtrc0.png

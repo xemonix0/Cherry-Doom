@@ -2,11 +2,14 @@
 
 <component type="desktop">
   <id>io.github.xemonix0.Cherry-Doom</id>
+  <launchable type="desktop-id">io.github.xemonix0.Cherry-Doom.desktop</launchable>
   <name>Cherry Doom</name>
-  <summary>Fork of Nugget Doom with more additional features.</summary>
+  <summary>Fork of Nugget Doom with more additional features</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-2.0+</project_license>
-  <developer_name>Xemonix</developer_name>
+  <developer id="io.github.xemonix0">
+    <name>Xemonix</name>
+  </developer>
   <url type="homepage">https://github.com/xemonix0/Cherry-Doom</url>
   <url type="bugtracker">https://github.com/xemonix0/Cherry-Doom/issues</url>
   <description>

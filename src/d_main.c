@@ -334,8 +334,6 @@ void D_Display (void)
   switch (gamestate)                // do buffered drawing
     {
     case GS_LEVEL:
-      if (!gametic)
-        break;
       // [Nugget] Removed automap code block
       break;
     case GS_INTERMISSION:
@@ -354,10 +352,7 @@ void D_Display (void)
   // draw the view directly
   // [Nugget] Removed `&& automap_off` condition
   if (gamestate == GS_LEVEL && gametic)
-    {
       R_RenderPlayerView(&players[displayplayer]);
-      // [Nugget] Removed `ST_Drawer()` call
-    }
 
   // clean up border stuff
   if (gamestate != oldgamestate && gamestate != GS_LEVEL)
@@ -378,7 +373,6 @@ void D_Display (void)
       if (borderdrawcount)
         {
           R_DrawViewBorder();    // erase old menu stuff
-          // [Nugget] Removed `ST_Drawer()` call
           borderdrawcount--;
         }
     }
@@ -413,7 +407,7 @@ void D_Display (void)
       if (automapactive != AM_FULL)
         y += scaledviewy;
 
-      V_DrawPatch(x, y, patch);
+      V_DrawPatchSH(x, y, patch); // [Nugget] HUD/menu shadows
     }
 
   // menus go directly to the screen
@@ -1132,10 +1126,23 @@ void FindResponseFile (void)
         indexinfile++;  // SKIP PAST ARGV[0] (KEEP IT)
         do
           {
+            boolean quote = false;
+            if (infile[k] == '"')
+            {
+                quote = true;
+                k++;
+            }
             myargv[indexinfile++] = infile+k;
             while(k < size &&
-                  ((*(infile+k)>= ' '+1) && (*(infile+k)<='z')))
+                  ((*(infile+k)>= ' ') && (*(infile+k)<='z')))
+            {
+              if ((!quote && infile[k] == ' ') ||
+                  (quote && infile[k] == '"'))
+              {
+                break;
+              }
               k++;
+            }
             *(infile+k) = 0;
             while(k < size &&
                   ((*(infile+k)<= ' ') || (*(infile+k)>'z')))
@@ -1892,21 +1899,6 @@ void D_DoomMain(void)
   // [FG] emulate a specific version of Doom
   InitGameVersion();
 
-  //!
-  // @category mod
-  //
-  // Disable auto loading of extras.wad.
-  //
-
-  if (!M_ParmExists("-noextras"))
-  {
-      char *extras = D_FindWADByName("extras.wad");
-      if (extras)
-      {
-          D_AddFile(extras, source_other);
-      }
-  }
-
   dsdh_InitTables();
 
   D_InitTables();
@@ -2357,7 +2349,7 @@ void D_DoomMain(void)
 
   if (!M_ParmExists("-nodeh"))
   {
-    W_ProcessInWads("DEHACKED", ProcessDehLump, true);
+    W_ProcessInWads("DEHACKED", ProcessDehLump, PROCESS_IWAD);
   }
 
   // process .deh files specified on the command line with -deh or -bex.
@@ -2370,7 +2362,7 @@ void D_DoomMain(void)
   // killough 10/98: now process all deh in wads
   if (!M_ParmExists("-nodeh"))
   {
-    W_ProcessInWads("DEHACKED", ProcessDehLump, false);
+    W_ProcessInWads("DEHACKED", ProcessDehLump, PROCESS_PWAD);
   }
 
   // process .deh files from PWADs autoload directories
@@ -2378,7 +2370,7 @@ void D_DoomMain(void)
 
   PostProcessDeh();
 
-  W_ProcessInWads("BRGHTMPS", R_ParseBrightmaps, false);
+  W_ProcessInWads("BRGHTMPS", R_ParseBrightmaps, PROCESS_PWAD);
 
   M_NughudLoadOptions(); // [Nugget]
 
@@ -2415,7 +2407,7 @@ void D_DoomMain(void)
             I_Error("\nThis is not the registered version.");
     }
 
-  W_ProcessInWads("UMAPDEF", U_ParseMapDefInfo, false);
+  W_ProcessInWads("UMAPDEF", U_ParseMapDefInfo, PROCESS_PWAD);
 
   //!
   // @category mod
@@ -2425,8 +2417,7 @@ void D_DoomMain(void)
 
   if (!M_ParmExists("-nomapinfo"))
   {
-    W_ProcessInWads("UMAPINFO", U_ParseMapInfo, true);
-    W_ProcessInWads("UMAPINFO", U_ParseMapInfo, false);
+    W_ProcessInWads("UMAPINFO", U_ParseMapInfo, PROCESS_IWAD | PROCESS_PWAD);
   }
 
   G_ParseCompDatabase();
@@ -2535,7 +2526,7 @@ void D_DoomMain(void)
     startloadgame = -1;
   }
 
-  W_ProcessInWads("TRAKINFO", S_ParseTrakInfo, false);
+  W_ProcessInWads("TRAKINFO", S_ParseTrakInfo, PROCESS_IWAD | PROCESS_PWAD);
 
   I_Printf(VB_INFO, "M_Init: Init miscellaneous info.");
   M_Init();

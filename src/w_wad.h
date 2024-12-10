@@ -131,8 +131,17 @@ extern wadfile_info_t *wadfiles; // [Cherry] changed the type from char**
 boolean W_InitBaseFile(const char *path);
 void W_AddBaseDir(const char *path);
 boolean W_AddPath(const char *path, wad_source_t source); // [Cherry] Added the `source` parameter
+
+typedef enum
+{
+    PROCESS_PWAD = 0x01,
+    PROCESS_IWAD = 0x02,
+    PROCESS_ALL  = 0x03
+} process_wad_t;
+
 void W_ProcessInWads(const char *name, void (*process)(int lumpnum),
-                     boolean iwad);
+                     process_wad_t flags);
+
 void W_InitMultipleFiles(void);
 
 // [Nugget] /-----------------------------------------------------------------

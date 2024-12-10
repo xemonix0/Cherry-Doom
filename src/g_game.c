@@ -1398,6 +1398,9 @@ static void G_DoLoadLevel(void)
   // Rewind
   G_SetRewindCountdown(0);
 
+  // Hide messages (but don't delete them outright)
+  ST_HideMessages();
+
   // Minimap
   if (minimap_was_on) {
     AM_ChangeMode(AM_MINI);
@@ -1778,7 +1781,10 @@ boolean G_Responder(event_t* ev)
     return true; // eat events
   }
 
-  G_NextWeaponUpdate();
+  if (R_GetFreecamMode() != FREECAM_CAM) // [Nugget] Freecam
+  {
+    G_NextWeaponUpdate();
+  }
 
   switch (ev->type)
     {
@@ -3114,7 +3120,8 @@ static boolean DoLoadGame(boolean do_load_autosave)
   CheckSaveVersion("Nugget 2.4.0", saveg_nugget300);
   CheckSaveVersion("Nugget 3.2.0", saveg_nugget320);
   CheckSaveVersion("Nugget 3.3.0", saveg_nugget330);
-  CheckSaveVersion("Nugget 3.4.0", saveg_nugget340);
+  CheckSaveVersion("Nugget 3.4.0", saveg_nugget400); // [Nugget] TO BE REMOVED
+  CheckSaveVersion("Nugget 4.0.0", saveg_nugget400);
   CheckSaveVersion("Cherry 1.0.0", saveg_cherry100);
   CheckSaveVersion("Cherry 1.0.1", saveg_cherry101);
   CheckSaveVersion("Cherry 2.0.0", saveg_cherry200);
@@ -6074,7 +6081,7 @@ void G_BindGameVariables(void)
   BIND_NUM_GENERAL(rewind_interval, 1, 1, 600,
     "Interval between rewind key-frames, in seconds");
 
-  BIND_NUM_GENERAL(rewind_depth, 60, 0, 600,
+  BIND_NUM_GENERAL(rewind_depth, 60, 0, 3000,
     "Number of rewind key-frames to be stored (0 = No rewinding)");
 
   BIND_NUM_GENERAL(rewind_timeout, 10, 0, 25,
@@ -6121,19 +6128,27 @@ void G_BindEnemVariables(void)
   // [Nugget] ----------------------------------------------------------------
 
   M_BindBool("extra_gibbing", &extra_gibbing_on, NULL,
-             false, ss_enem, wad_yes, "Enable extra-gibbing in general (affected by CVARs below)");
+             false, ss_enem, wad_yes, "Enable extra gibbing in general (affected by CVARs below)");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_fist", &extra_gibbing[EXGIB_FIST], NULL,
-             true, ss_none, wad_yes, "Extra-gibbing for Berserk Fist");
+             true, ss_none, wad_yes, "Extra gibbing for Berserk Fist");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_csaw", &extra_gibbing[EXGIB_CSAW], NULL,
-             true, ss_none, wad_yes, "Extra-gibbing for Chainsaw");
+             true, ss_none, wad_yes, "Extra gibbing for Chainsaw");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_ssg", &extra_gibbing[EXGIB_SSG], NULL,
-             true, ss_none, wad_yes, "Extra-gibbing for SSG");
+             true, ss_none, wad_yes, "Extra gibbing for SSG");
+
+  // (CFG-only)
+  M_BindBool("extra_gibbing_bfg", &extra_gibbing[EXGIB_BFG], NULL,
+             true, ss_none, wad_yes, "Extra gibbing for BFG tracers");
+
+  // (CFG-only)
+  M_BindBool("extra_gibbing_proj", &extra_gibbing[EXGIB_PROJ], NULL,
+             true, ss_none, wad_yes, "Extra gibbing for projectiles dealing 20+ base damage");
 
   M_BindBool("bloodier_gibbing", &bloodier_gibbing, NULL,
              false, ss_enem, wad_yes, "Bloodier gibbing");
@@ -6309,12 +6324,8 @@ void G_BindWeapVariables(void)
   M_BindBool("weaponsquat", &weaponsquat, NULL,
              false, ss_weap, wad_yes, "Squat weapon down on impact");
 
-  M_BindBool("translucent_pspr", &translucent_pspr, NULL,
-             false, ss_weap, wad_yes, "Translucency for weapon-flash sprites");
-
-  // (CFG-only)
-  M_BindNum("translucent_pspr_pct", &translucent_pspr_pct, NULL,
-            75, 0, 100, ss_none, wad_yes,
+  M_BindNum("pspr_translucency_pct", &pspr_translucency_pct, NULL,
+            100, 0, 100, ss_weap, wad_yes,
             "Weapon-flash translucency percent");
 
   // (CFG-only)

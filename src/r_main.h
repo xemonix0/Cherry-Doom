@@ -129,8 +129,7 @@ extern int fake_contrast;
 extern boolean diminished_lighting;
 extern boolean a11y_weapon_pspr;
 extern boolean a11y_invul_colormap;
-extern boolean translucent_pspr;
-extern int translucent_pspr_pct;
+extern int pspr_translucency_pct;
 extern int zoom_fov;
 extern boolean comp_powerrunout;
 

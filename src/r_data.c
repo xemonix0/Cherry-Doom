@@ -1166,11 +1166,12 @@ void R_InitData(void)
 
   // [Nugget]
   R_InitTranMapEx(&shadow_tranmap, hud_menu_shadows_filter_pct); // HUD/menu shadows
-  R_InitTranMapEx(&pspr_tranmap,   translucent_pspr_pct);        // Translucent flashes
-  R_InitTranMapEx(&xhair_tranmap,  hud_crosshair_tran_pct);      // Translucent crosshair
+  R_InitTranMapEx(&  pspr_tranmap, pspr_translucency_pct);       // Translucent flashes
+  R_InitTranMapEx(& xhair_tranmap, hud_crosshair_tran_pct);      // Translucent crosshair
+  R_InitTranMapEx(& trail_tranmap, 25);
 
   // [Cherry]
-  R_InitTranMapEx(&smoke_tranmap,  rocket_trails_tran); // Translucent rocket trails
+  R_InitTranMapEx(& smoke_tranmap, rocket_trails_tran);          // Translucent rocket trails
 }
 
 //

@@ -1,6 +1,7 @@
 {
   "type": "statusbar",
   "version": "1.1.0",
+  "nugget_version": 1,
   "metadata": null,
   "data":
   {
@@ -849,6 +850,7 @@
               "translation": null,
               "type": 0,
               "font": "Digits",
+              "vertical_layout": 0,
               "conditions":
               [
                 {
@@ -917,6 +919,7 @@
               "translation": null,
               "type": 0,
               "font": "Digits",
+              "vertical_layout": 0,
               "conditions":
               [
                 {
@@ -979,11 +982,26 @@
             "widget":
             {
               "x": 320,
-              "y": 8,
+              "y": 16,
               "alignment": 34,
               "tranmap": null,
               "translation": null,
               "type": 2,
+              "font": "Digits",
+              "vertical_layout": 0,
+              "conditions": null,
+              "children": null
+            }
+          },
+          {
+            "widget":
+            {
+              "x": 320,
+              "y": 8,
+              "alignment": 34,
+              "tranmap": null,
+              "translation": null,
+              "type": 32,
               "font": "Digits",
               "conditions": null,
               "children": null
@@ -1048,7 +1066,7 @@
           {
             "widget":
             {
-              "x": 2,
+              "x": 0,
               "y": 0,
               "alignment": 16,
               "tranmap": null,
@@ -1067,7 +1085,7 @@
               "y": 52,
               "alignment": 1,
               "tranmap": null,
-              "translation": "CRGOLD",
+              "translation": null,
               "type": 8,
               "font": "Console",
               "duration": 2.5,
@@ -1078,13 +1096,14 @@
           {
             "widget":
             {
-              "x": 2,
-              "y": 8,
+              "x": 0,
+              "y": 0,
               "alignment": 16,
               "tranmap": null,
               "translation": "CRGOLD",
               "type": 9,
               "font": "Console",
+              "under_messages": true,
               "conditions": null,
               "children": null
             }
@@ -1092,7 +1111,7 @@
           {
             "widget":
             {
-              "x": 2,
+              "x": 0,
               "y": 160,
               "alignment": 16,
               "tranmap": null,
@@ -1119,6 +1138,17 @@
               "translation": null,
               "conditions": null,
               "children": null
+            }
+          },
+          {
+            "minimap":
+            {
+              "x": 8,
+              "y": 0,
+              "alignment": 80,
+              "width": 80,
+              "height": 80,
+              "under_messages": true
             }
           }
         ]
@@ -1690,6 +1720,7 @@
                     "translation": null,
                     "type": 0,
                     "font": "Digits",
+                    "vertical_layout": 0,
                     "conditions":
                     [
                       {
@@ -1758,6 +1789,7 @@
                     "translation": null,
                     "type": 0,
                     "font": "Digits",
+                    "vertical_layout": 0,
                     "conditions":
                     [
                       {
@@ -1820,11 +1852,26 @@
                   "widget":
                   {
                     "x": 320,
-                    "y": 8,
+                    "y": 16,
                     "alignment": 34,
                     "tranmap": null,
                     "translation": null,
                     "type": 2,
+                    "font": "Digits",
+                    "vertical_layout": 0,
+                    "conditions": null,
+                    "children": null
+                  }
+                },
+                {
+                  "widget":
+                  {
+                    "x": 320,
+                    "y": 8,
+                    "alignment": 34,
+                    "tranmap": null,
+                    "translation": null,
+                    "type": 32,
                     "font": "Digits",
                     "conditions": null,
                     "children": null
@@ -1889,7 +1936,7 @@
                 {
                   "widget":
                   {
-                    "x": 2,
+                    "x": 0,
                     "y": 0,
                     "alignment": 16,
                     "tranmap": null,
@@ -1908,7 +1955,7 @@
                     "y": 68,
                     "alignment": 1,
                     "tranmap": null,
-                    "translation": "CRGOLD",
+                    "translation": null,
                     "type": 8,
                     "font": "Console",
                     "duration": 2.5,
@@ -1919,13 +1966,14 @@
                 {
                   "widget":
                   {
-                    "x": 2,
-                    "y": 8,
+                    "x": 0,
+                    "y": 0,
                     "alignment": 16,
                     "tranmap": null,
                     "translation": "CRGOLD",
                     "type": 9,
                     "font": "Console",
+                    "under_messages": true,
                     "conditions": null,
                     "children": null
                   }
@@ -1933,7 +1981,7 @@
                 {
                   "widget":
                   {
-                    "x": 2,
+                    "x": 0,
                     "y": 155,
                     "alignment": 16,
                     "tranmap": null,
@@ -1961,6 +2009,17 @@
                     "conditions": null,
                     "children": null
                   }
+                },
+                {
+                  "minimap":
+                  {
+                    "x": 8,
+                    "y": 0,
+                    "alignment": 80,
+                    "width": 80,
+                    "height": 80,
+                    "under_messages": true
+                  }
                 }
               ]
             }
@@ -1983,6 +2042,7 @@
               "translation": null,
               "type": 0,
               "font": "Digits",
+              "vertical_layout": 0,
               "conditions":
               [
                 {
@@ -2051,6 +2111,7 @@
               "translation": null,
               "type": 0,
               "font": "Digits",
+              "vertical_layout": 0,
               "conditions":
               [
                 {
@@ -2113,11 +2174,26 @@
             "widget":
             {
               "x": 320,
-              "y": 8,
+              "y": 16,
               "alignment": 34,
               "tranmap": null,
               "translation": null,
               "type": 2,
+              "font": "Digits",
+              "vertical_layout": 0,
+              "conditions": null,
+              "children": null
+            }
+          },
+          {
+            "widget":
+            {
+              "x": 320,
+              "y": 8,
+              "alignment": 34,
+              "tranmap": null,
+              "translation": null,
+              "type": 32,
               "font": "Digits",
               "conditions": null,
               "children": null
@@ -2201,7 +2277,7 @@
               "y": 68,
               "alignment": 1,
               "tranmap": null,
-              "translation": "CRGOLD",
+              "translation": null,
               "type": 8,
               "font": "Console",
               "duration": 2.5,
@@ -2213,12 +2289,13 @@
             "widget":
             {
               "x": 2,
-              "y": 8,
+              "y": 0,
               "alignment": 16,
               "tranmap": null,
               "translation": "CRGOLD",
               "type": 9,
               "font": "Console",
+              "under_messages": true,
               "conditions": null,
               "children": null
             }
@@ -2253,6 +2330,17 @@
               "translation": null,
               "conditions": null,
               "children": null
+            }
+          },
+          {
+            "minimap":
+            {
+              "x": 8,
+              "y": 0,
+              "alignment": 80,
+              "width": 80,
+              "height": 80,
+              "under_messages": true
             }
           }
         ]

@@ -22,6 +22,7 @@
 #include "m_array.h"
 #include "m_misc.h"
 #include "r_defs.h"
+#include "r_draw.h"
 #include "st_sbardef.h"
 #include "v_fmt.h"
 #include "v_video.h"
@@ -143,7 +144,8 @@ void ST_UpdateCarousel(player_t *player)
         return;
     }
 
-    if (player->switching == weapswitch_none)
+    if (player->switching == weapswitch_none
+        && player->pendingweapon == wp_nochange)
     {
         --duration;
     }
@@ -169,17 +171,19 @@ static void DrawIcon(int x, int y, sbarelem_t *elem, weapon_icon_t icon)
 
     byte *cr = icon.state == wpi_disabled ? cr_dark : NULL;
 
+    // [Nugget] HUD/menu shadows
+
     if (cr && elem->tranmap)
     {
-        V_DrawPatchTRTL(x, y, patch, cr, elem->tranmap);
+        V_DrawPatchTRTLSH(x, y, patch, cr, elem->tranmap);
     }
     else if (elem->tranmap)
     {
-        V_DrawPatchTL(x, y, patch, elem->tranmap);
+        V_DrawPatchTLSH(x, y, patch, elem->tranmap);
     }
     else
     {
-        V_DrawPatchTranslated(x, y, patch, cr);
+        V_DrawPatchTranslatedSH(x, y, patch, cr);
     }
 }
 
@@ -199,6 +203,22 @@ static int CalcOffset(void)
     }
 
     return 0;
+}
+
+void ST_EraseCarousel(int y)
+{
+    static boolean erase;
+
+    if (duration > 0)
+    {
+        R_VideoErase(0, y - 16, video.unscaledw, 32);
+        erase = true;
+    }
+    else if (erase)
+    {
+        R_VideoErase(0, y - 16, video.unscaledw, 32);
+        erase = false;
+    }
 }
 
 void ST_DrawCarousel(int x, int y, sbarelem_t *elem)

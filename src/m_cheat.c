@@ -136,7 +136,7 @@ static void cheat_infammo();    // Infinite ammo cheat
 static void cheat_fastweaps();  // Fast weapons cheat
 static void cheat_bobbers();    // Shortcut to the two cheats above
 
-boolean GIBBERS;                // Used for 'GIBBERS'
+boolean gibbers;                // Used for 'GIBBERS'
 static void cheat_gibbers();    // Everything gibs
 
 static void cheat_resurrect();
@@ -504,8 +504,8 @@ static void cheat_bobbers()
 // Everything gibs
 static void cheat_gibbers()
 {
-  GIBBERS = !GIBBERS;
-  displaymsg("%s", GIBBERS ? "Ludicrous Gibs!" : "Ludicrous Gibs no more.");
+  gibbers = !gibbers;
+  displaymsg("%s", gibbers ? "Ludicrous Gibs!" : "Ludicrous Gibs no more.");
 }
 
 // Resurrection --------------------------------------------------------------

@@ -104,7 +104,19 @@ typedef enum
     sbe_widget,
     sbe_carousel,
 
-    sbe_max,
+    // [Nugget] /-------------------------------------------------------------
+
+    sbe_max_woof,
+
+    sbe_start_nugget = 32,
+    sbe_minimap = 32,
+    sbe_end_nugget,
+
+    sbe_max_nugget = sbe_end_nugget - sbe_start_nugget,
+
+    // [Nugget] -------------------------------------------------------------/
+
+    sbe_max = sbe_max_woof + sbe_max_nugget, // [Nugget]
 } sbarelementtype_t;
 
 typedef enum
@@ -118,19 +130,21 @@ typedef enum
     sbw_speed,
 
     sbw_message,
-    sbw_secret,
+    sbw_announce,
     sbw_chat,
     sbw_title,
 
     // [Nugget]
 
-    sbw_end_woof,
+    sbw_max_woof,
 
-    sbw_start_nugget = 31,
-    sbw_powers,
+    sbw_start_nugget = 32,
+    sbw_powers = 32,
     sbw_end_nugget,
 
-    sbw_num = sbw_end_woof + (sbw_end_nugget - 1 - sbw_start_nugget)
+    sbw_max_nugget = sbw_end_nugget - sbw_start_nugget,
+
+    sbw_max = sbw_max_woof + sbw_max_nugget,
 } sbarwidgettype_t;
 
 typedef enum
@@ -213,9 +227,23 @@ typedef struct sbe_widget_s
     hudfont_t *font;
     widgetline_t *lines;
 
-    // message
+    int height;
+
     int duration;
+    int duration_left;
+
+    // [Nugget]
+    int vertical_layout;
+    boolean under_messages;
 } sbe_widget_t;
+
+// [Nugget]
+typedef struct sbe_minimap_s
+{
+    int width;
+    int height;
+    boolean under_messages;
+} sbe_minimap_t;
 
 struct sbarelem_s
 {
@@ -239,6 +267,9 @@ struct sbarelem_s
 
         // Woof!
         sbe_widget_t *widget;
+
+        // [Nugget]
+        sbe_minimap_t *minimap;
     } subtype;
 };
 

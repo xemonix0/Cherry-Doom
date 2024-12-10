@@ -161,12 +161,13 @@ byte invul_gray[256];
 int automap_overlay_darkening;
 int menu_backdrop_darkening;
 
-byte cr_allblack[256];
-byte cr_gray_vc[256];  // `V_Colorize()` only
-byte nightvision[256]; // Night-vision visor
-byte *shadow_tranmap;  // HUD/menu shadows
-byte *pspr_tranmap;    // Translucent flashes
-byte *xhair_tranmap;   // Translucent crosshair
+byte cr_allblack[256],
+     cr_gray_vc[256],  // `V_Colorize()` only
+     nightvision[256], // Night-vision visor
+     *shadow_tranmap,  // HUD/menu shadows
+     *pspr_tranmap,    // Translucent flashes
+     *xhair_tranmap,   // Translucent crosshair
+     *trail_tranmap;
 
 // [Nugget] -----------------------------------------------------------------/
 
@@ -491,7 +492,7 @@ DRAW_COLUMN(TRTL, tranmap[(*dest << 8) + translation[source[frac >> FRACBITS]]])
 DRAW_COLUMN(TRTRTL, tranmap[(*dest << 8) + translation2[translation1[source[frac >> FRACBITS]]]])
 
 DRAW_COLUMN(
-  Translucent,
+  Translucent2,
   tranmap[
     (*dest << 8)
   + (translation2 ? translation2[translation1[source[frac >> FRACBITS]]] :
@@ -764,8 +765,8 @@ void V_DrawPatchTRTRTL(int x, int y, struct patch_s *patch,
     DrawPatchInternal(x, y, patch, false);
 }
 
-void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped,
-                            byte *outr1, byte *outr2, byte *tmap)
+void V_DrawPatchTranslucent2(int x, int y, struct patch_s *patch, boolean flipped,
+                             byte *outr1, byte *outr2, byte *tmap)
 {
     x += video.deltaw;
 
@@ -778,7 +779,7 @@ void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped
     }
     else { translation1 = translation2 = NULL; }
 
-    drawcolfunc = DrawPatchColumnTranslucent;
+    drawcolfunc = DrawPatchColumnTranslucent2;
     tranmap = tmap;
 
     DrawPatchInternal(x, y, patch, flipped);
@@ -790,7 +791,7 @@ void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
     if (hud_menu_shadows && drawshadows)
     {
       drawingshadow = true;
-      V_DrawPatchTranslucent(x + 1, y + 1, patch, flipped, cr_allblack, NULL, shadow_tranmap);
+      V_DrawPatchTranslucent2(x + 1, y + 1, patch, flipped, cr_allblack, NULL, shadow_tranmap);
       drawingshadow = false;
     }
 

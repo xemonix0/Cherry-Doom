@@ -388,6 +388,9 @@ typedef struct vissprite_s
   // andrewj: voxel support
   int voxel_index;
 
+  // [Nugget]
+  byte *tranmap;
+
   // [Cherry] Translucent rocket trails
   boolean rocket_trail;
 } vissprite_t;

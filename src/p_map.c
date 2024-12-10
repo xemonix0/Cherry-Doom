@@ -146,7 +146,8 @@ void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
                                            AS_TRAIL1);
 
     puff->alttics += i / 16;
-    puff->flags |= MF_NOGRAVITY|MF_TRANSLUCENT;
+    puff->flags |= MF_NOGRAVITY;
+    puff->tranmap = trail_tranmap;
   }
 }
 
@@ -1751,9 +1752,30 @@ static boolean PTR_AimTraverse (intercept_t *in)
   return false;   // don't go any farther
 }
 
-// [Nugget] Explosive hitscan cheat /-----------------------------------------
+// [Nugget] /=================================================================
 
-boolean boomshot = false;
+// Extra Gibbing -------------------------------------------------------------
+
+static boolean is_bfg_tracer = false;
+
+boolean P_IsBFGTracer(void)
+{
+  return is_bfg_tracer;
+}
+
+void P_SetIsBFGTracer(const boolean value)
+{
+  is_bfg_tracer = value;
+}
+
+// Explosive hitscan cheat ---------------------------------------------------
+
+static boolean is_boomshot = false;
+
+void P_SetIsBoomShot(const boolean value)
+{
+  is_boomshot = value;
+}
 
 static void P_SpawnExplosion(fixed_t x, fixed_t y, fixed_t z)
 {
@@ -1764,7 +1786,7 @@ static void P_SpawnExplosion(fixed_t x, fixed_t y, fixed_t z)
   P_ExplodeMissile(mo);
 }
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 // [Cherry] Blood amount scales with the amount of damage dealt
 boolean blood_amount_scaling;
@@ -1856,8 +1878,11 @@ static boolean PTR_ShootTraverse(intercept_t *in)
       distance_travelled = P_AproxDistance(x - trace.x, y - trace.y); // [Nugget] Hitscan trails
 
       // [Nugget] Explosive hitscan cheat
-      if (boomshot)
+      if (is_boomshot)
+      {
+        is_boomshot = false;
         P_SpawnExplosion(x, y, z);
+      }
       else
     
       // Spawn bullet puffs.
@@ -1903,8 +1928,11 @@ static boolean PTR_ShootTraverse(intercept_t *in)
   distance_travelled = P_AproxDistance(x - trace.x, y - trace.y); // [Nugget] Hitscan trails
 
   // [Nugget] Explosive hitscan cheat
-  if (boomshot)
+  if (is_boomshot)
+  {
+    is_boomshot = false;
     P_SpawnExplosion(x, y, z);
+  }
   else
   // Spawn bullet puffs or blod spots,
   // depending on target type.
@@ -2012,7 +2040,7 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
                         aimslope, attackrange, distance_travelled);
   }
 
-  boomshot = false; // [Nugget] Explosive hitscan cheat
+  is_boomshot = false; // [Nugget] Explosive hitscan cheat
 }
 
 //
