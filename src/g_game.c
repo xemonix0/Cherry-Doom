@@ -6383,7 +6383,7 @@ void G_BindWeapVariables(void)
              "Recoil pitch from weapon fire");
 
   M_BindBool("weapon_recoil", &default_weapon_recoil, &weapon_recoil,
-             false, ss_none, wad_yes,
+             false, ss_weap, wad_yes, // [Nugget] Restored menu item
              "Physical recoil from weapon fire (affects compatibility)");
   M_BindBool("doom_weapon_toggles", &doom_weapon_toggles, NULL,
              true, ss_weap, wad_no,

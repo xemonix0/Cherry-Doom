@@ -49,7 +49,7 @@ json_t *JS_Open(const char *lump, const char *type, version_t maxversion)
         return NULL;
     }
 
-    json_t *json = cJSON_Parse(W_CacheLumpNum(lumpnum, PU_CACHE));
+    json_t *json = cJSON_ParseWithLength(W_CacheLumpNum(lumpnum, PU_CACHE), W_LumpLength(lumpnum));
     if (json == NULL)
     {
         const char *error_ptr = cJSON_GetErrorPtr();
@@ -174,22 +174,12 @@ const char *JS_GetString(json_t *json)
     return json->valuestring;
 }
 
-const char *JS_GetStringRef(json_t *json, const char *string)
+const char *JS_GetStringValue(json_t *json, const char *string)
 {
     json_t *obj = JS_GetObject(json, string);
     if (JS_IsString(obj))
     {
         return obj->valuestring;
-    }
-    return NULL;
-}
-
-const char *JS_GetStringCopy(json_t *json, const char *string)
-{
-    json_t *obj = JS_GetObject(json, string);
-    if (JS_IsString(obj))
-    {
-        return M_StringDuplicate(obj->valuestring);
     }
     return NULL;
 }
