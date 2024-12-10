@@ -26,6 +26,7 @@ Also, merged Nugget Doom's [`master`](https://github.com/MrAlaux/Nugget-Doom/tre
 - WAD stats are now saved every time a level is beaten
 - `TNT31.WAD` is now not considered a separate WAD by the _stats tracking_ system when loaded with `TNT.WAD`
 - _Rocket Trails_ now work even when there are DSDHacked patches loaded
+- Menu items for the _Rocket Trails Interval_ and _Smoke Translucency_ settings have been removed
 
 ## Bug Fixes
 

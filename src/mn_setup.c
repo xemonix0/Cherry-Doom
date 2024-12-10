@@ -3911,8 +3911,6 @@ static const char *stretchsky_strings[] = {
     "Off", "Always", "Mouselook"
 };
 
-static void UpdateRocketTrailsItems(void);
-
 // Translucent rocket trails
 static void SmokeTrans(void)
 {
@@ -4003,20 +4001,11 @@ static setup_menu_t gen_settings5[] = {
     // [Cherry] ---------------------------------------------------------------
     MI_SPLIT,
 
-    {"Cherry", S_SKIP | S_TITLE, M_X, M_SPC},
+    {"Cherry", S_SKIP | S_TITLE, N_X, M_SPC},
 
-      {"Floating Powerups", S_ONOFF, M_X, M_SPC, {"floating_powerups"}},
-      MI_GAP,
-      {"Rocket Trails", S_ONOFF | S_STRICT | S_CRITICAL, M_X, M_SPC, {"rocket_trails"},
-       m_null, input_null, str_empty, UpdateRocketTrailsItems},
-      {"Rocket Trails Interval", S_THERMO | S_THRM_SIZE4 | S_STRICT | S_CRITICAL,
-       M_X_THRM4, M_THRM_SPC, {"rocket_trails_interval"}},
-      {"Smoke Translucency", S_THERMO | S_ACTION | S_PCT | S_STRICT | S_CRITICAL,
-       M_X_THRM8, M_THRM_SPC, {"rocket_trails_tran"},
-       m_null, input_null, str_empty, SmokeTrans},
-       MI_GAP,
-      {"Less Blinding Tints", S_ONOFF | S_STRICT,
-       M_X, M_SPC, {"less_blinding_tints"}},
+      {"Floating Powerups", S_ONOFF, N_X, M_SPC, {"floating_powerups"}},
+      {"Rocket Trails", S_ONOFF | S_STRICT | S_CRITICAL, N_X, M_SPC, {"rocket_trails"}},
+      {"Less Blinding Tints", S_ONOFF | S_STRICT, N_X, M_SPC, {"less_blinding_tints"}},
 
     MI_END
 };
@@ -4031,12 +4020,6 @@ static void UpdateDarkeningItems(void)
                 "menu_backdrop_darkening");
     DisableItem(automapoverlay != AM_OVERLAY_DARK, auto_settings1,
                 "automap_overlay_darkening");
-}
-
-static void UpdateRocketTrailsItems(void)
-{
-    DisableItem(!rocket_trails, gen_settings5, "rocket_trails_interval");
-    DisableItem(!rocket_trails, gen_settings5, "rocket_trails_tran");
 }
 
 // [Cherry] ------------------------------------------------------------------/
@@ -6285,7 +6268,6 @@ void MN_SetupResetMenu(void)
     // [Cherry] ----------------------------------------------------------------
 
     UpdateDarkeningItems();
-    UpdateRocketTrailsItems();
 }
 
 void MN_BindMenuVariables(void)
