@@ -24,7 +24,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
-#include "hu_stuff.h"
 #include "i_printf.h"
 #include "m_array.h"
 #include "m_config.h"
@@ -33,6 +32,7 @@
 #include "mn_menu.h"
 #include "p_mobj.h"
 #include "p_tick.h"
+#include "st_widgets.h"
 #include "w_wad.h"
 
 #define CURRENT_VERSION_STRING "1"

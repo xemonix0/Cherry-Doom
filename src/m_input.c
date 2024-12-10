@@ -29,9 +29,9 @@
 // [Nugget]
 #include "am_map.h"
 #include "g_game.h"
-#include "hu_stuff.h"
 #include "i_video.h"
 #include "r_main.h"
+#include "st_widgets.h"
 
 static input_t *composite_inputs[NUM_INPUT_ID];
 

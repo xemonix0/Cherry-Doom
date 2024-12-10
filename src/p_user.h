@@ -22,12 +22,11 @@
 #ifndef __P_USER__
 #define __P_USER__
 
+#include "doomdef.h"
 #include "m_fixed.h"
 #include "tables.h"
 
-// [Nugget]
-#include "hu_stuff.h"
-
+enum eventtimer_e; // [Nugget]
 struct player_s;
 
 void P_PlayerThink(struct player_s *player);
@@ -54,6 +53,8 @@ typedef enum
 
 extern death_use_state_t death_use_state;
 
+boolean P_EvaluateItemOwned(itemtype_t item, struct player_s *player);
+
 extern boolean onground; // whether player is on ground or in air
 
 // [Nugget] ==================================================================
@@ -63,7 +64,7 @@ extern boolean breathing;
 
 void P_SetFlinch(player_t *const player, int pitch); // Flinching
 
-void P_SetPlayerEvent(player_t *player, eventtimer_t type); // Event timers
+void P_SetPlayerEvent(player_t *player, enum eventtimer_e type); // Event timers
 
 #endif // __P_USER__
 

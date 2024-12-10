@@ -183,14 +183,6 @@ nughud_maxammo3_y     185
 nughud_maxammo3_wide  1
 nughud_maxammo3_align 1
 
-; Movement widget
-nughud_movement_x     -1
-nughud_movement_y     -1
-nughud_movement_wide  -1
-nughud_movement_align -1
-nughud_movement_stack 3
-nughud_movement_order 3
-
 ; Time display
 nughud_time_x     -1
 nughud_time_y     -1

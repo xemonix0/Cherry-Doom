@@ -28,7 +28,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
-#include "hu_stuff.h"
 #include "i_video.h"
 #include "m_config.h"
 #include "m_input.h"
@@ -39,11 +38,11 @@
 #include "p_setup.h"
 #include "p_spec.h"
 #include "r_defs.h"
-#include "r_draw.h"
 #include "r_main.h"
 #include "r_state.h"
 #include "r_things.h"
 #include "st_stuff.h"
+#include "st_widgets.h"
 #include "tables.h"
 #include "v_flextran.h"
 #include "v_fmt.h"
@@ -254,7 +253,7 @@ int ddt_cheating = 0;         // killough 2/7/98: make global, rename to ddt_*
 
 boolean automap_grid = false;
 
-int automapactive = false; // [Nugget] Minimap: now an int
+automapmode_t automapactive = AM_OFF;
 static boolean automapfirststart = true;
 
 overlay_t automapoverlay = AM_OVERLAY_OFF;
@@ -698,7 +697,7 @@ static void AM_initScreenSize(void)
   if (automapactive == AM_MINI)
   {
     f_x = V_ScaleY(8);
-    f_y = V_ScaleY(((message_list ? hud_msg_lines : 1) + 1) * 8 + 1);
+    f_y = V_ScaleY((ST_GetNumMessageLines() + 1) * ST_GetMessageFontHeight() + 1);
     f_w = f_h = V_ScaleY(80);
 
     return;
@@ -808,7 +807,7 @@ void AM_Start()
 
   // [Nugget] Minimap
   static int last_automap = -1, last_messages = -1;
-  const int messages_height = message_list ? hud_msg_lines : 1;
+  const int messages_height = ST_GetNumMessageLines();
 
   if (!stopped)
     AM_Stop();
@@ -905,9 +904,6 @@ void AM_ChangeMode(automapmode_t mode)
       AM_activateNewScale();
     }
   }
-
-  HU_InitStatsFormatFunc();
-  HU_InitMonSec();
 }
 
 //
@@ -2871,12 +2867,6 @@ void AM_ColorPreset(void)
     *mapcolors[i].var = mapcolors[i].color[mapcolor_preset];
   }
 
-  // [FG] immediately apply changes if the automap is visible through the menu
-  if (automapactive && menu_backdrop != MENU_BG_TEXTURE)
-  {
-    HU_Start();
-  }
-
   // [crispy] Make secret wall colors independent from PLAYPAL color indexes
   if (mapcolor_preset == AM_PRESET_CRISPY)
   {
@@ -2884,6 +2874,8 @@ void AM_ColorPreset(void)
     mapcolor_secr = I_GetNearestColor(playpal, 255, 0, 255);
     mapcolor_revsecr = I_GetNearestColor(playpal, 119, 255, 111);
   }
+
+  ST_ResetTitle();
 }
 
 void AM_BindAutomapVariables(void)

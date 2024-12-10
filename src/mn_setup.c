@@ -13,6 +13,7 @@
 //  GNU General Public License for more details.
 //
 
+#include "hu_command.h"
 #include "mn_internal.h"
 
 #include "am_map.h"
@@ -23,8 +24,6 @@
 #include "doomtype.h"
 #include "g_game.h"
 #include "hu_crosshair.h"
-#include "hu_lib.h"
-#include "hu_stuff.h"
 #include "i_gamepad.h"
 #include "i_gyro.h"
 #include "i_input.h"
@@ -53,7 +52,10 @@
 #include "r_sky.h"   // [FG] R_InitSkyMap()
 #include "r_voxel.h"
 #include "s_sound.h"
+#include "st_sbardef.h"
+#include "st_stuff.h"
 #include "sounds.h"
+#include "st_widgets.h"
 #include "v_fmt.h"
 #include "v_video.h"
 #include "w_wad.h"
@@ -314,8 +316,7 @@ enum
     str_curve,
     str_center_weapon,
     str_screensize,
-    str_hudtype,
-    str_hudmode,
+    str_stlayout,
     str_show_widgets,
     str_show_adv_widgets,
     str_stats_format,
@@ -360,6 +361,7 @@ enum
     // [Nugget] --------------------------------------------------------------
 
     str_bobbing_style,
+    str_hud_type,
     str_crosshair_lockon,
     str_vertical_aiming,
     str_over_under,
@@ -1834,8 +1836,6 @@ void MN_KeyBindings(int choice)
 
 void MN_DrawKeybnd(void)
 {
-    inhelpscreens = true; // killough 4/6/98: Force status bar redraw
-
     // Set up the Key Binding screen
 
     DrawBackground("FLOOR4_6"); // Draw background
@@ -2154,8 +2154,6 @@ void MN_Weapons(int choice)
 
 void MN_DrawWeapons(void)
 {
-    inhelpscreens = true; // killough 4/6/98: Force status bar redraw
-
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_WEAP", "Weapons");
     DrawTabs();
@@ -2189,43 +2187,28 @@ static setup_tab_t stat_tabs[] = {
 
 static void SizeDisplayAlt(void)
 {
-    int choice = -1;
+    R_SetViewSize(screenblocks);
+}
 
-    if (screenblocks > saved_screenblocks)
-    {
-        choice = 1;
-    }
-    else if (screenblocks < saved_screenblocks)
-    {
-        choice = 0;
-    }
-
-    screenblocks = saved_screenblocks;
-
-    if (choice != -1)
-    {
-        MN_SizeDisplay(choice);
-    }
-
-    hud_displayed = (screenblocks == 11);
+static void RefreshSolidBackground(void)
+{
+    ST_refreshBackground(); // [Nugget] NUGHUD
 }
 
 static const char *screensize_strings[] = {
-    "",           "",           "",           "Status Bar",
-    "Status Bar", "Status Bar", "Status Bar", "Status Bar",
-    "Status Bar", "Status Bar", "Status Bar", "Fullscreen"
+    "",           "",           "",           "Status Bar", "Status Bar",
+    "Status Bar", "Status Bar", "Status Bar", "Status Bar", "Status Bar",
+    "Status Bar", "Fullscreen", "Fullscreen"
 };
 
-static const char *hudtype_strings[] = {"Nugget", "Boom No Bars", "Boom"}; // [Nugget] Rename "Crispy" to "Nugget"
+// [Nugget] NUGHUD
+static const char *hud_type_strings[] = {
+    "SBARDEF", "NUGHUD"
+};
 
-static const char **GetHUDModeStrings(void)
-{
-    static const char *crispy_strings[] = {"Off", "Original", "Widescreen"};
-    static const char *boom_strings[] = {"Minimal", "Compact", "Distributed"};
-    return hud_type ? boom_strings : crispy_strings;
-}
-
-static void UpdateHUDModeStrings(void);
+static const char *st_layout_strings[] = {
+    "Original", "Wide"
+};
 
 #define H_X_THRM8 (M_X_THRM8 - 14)
 #define H_X       (M_X - 14)
@@ -2237,34 +2220,28 @@ static setup_menu_t stat_settings1[] = {
 
     MI_GAP,
 
+    // [Nugget] NUGHUD
+    {"Fullscreen HUD Type", S_CHOICE, H_X, M_SPC, {"fullscreen_hud_type"},
+     .strings_id = str_hud_type},
+
+    {"Layout", S_CHOICE, H_X, M_SPC, {"st_layout"},
+     .strings_id = str_stlayout},
+
+    MI_GAP,
+
     {"Status Bar", S_SKIP | S_TITLE, H_X, M_SPC},
 
     {"Colored Numbers", S_ONOFF | S_COSMETIC, H_X, M_SPC, {"sts_colored_numbers"}},
 
     {"Gray Percent Sign", S_ONOFF | S_COSMETIC, H_X, M_SPC, {"sts_pct_always_gray"}},
 
-    {"Solid Background Color", S_ONOFF, H_X, M_SPC, {"st_solidbackground"}},
-
-    MI_GAP,
-
-    {"Fullscreen HUD", S_SKIP | S_TITLE, H_X, M_SPC},
-
-    {"HUD Type", S_CHOICE, H_X, M_SPC, {"hud_type"},
-     .strings_id = str_hudtype, .action = UpdateHUDModeStrings},
-
-    {"HUD Mode", S_CHOICE, H_X, M_SPC, {"hud_active"},
-     .strings_id = str_hudmode},
-
-    MI_GAP,
-
-    {"Backpack Shifts Ammo Color", S_ONOFF, H_X, M_SPC, {"hud_backpack_thresholds"}},
+    {"Solid Background Color", S_ONOFF, H_X, M_SPC, {"st_solidbackground"},
+     .action = RefreshSolidBackground},
 
     {"Armor Color Matches Type", S_ONOFF, H_X, M_SPC, {"hud_armor_type"}},
 
     // [Nugget] Disallowed in Strict Mode
     {"Animated Health/Armor Count", S_ONOFF | S_STRICT, H_X, M_SPC, {"hud_animated_counts"}},
-
-    {"Blink Missing Keys", S_ONOFF, H_X, M_SPC, {"hud_blink_keys"}},
 
     MI_RESET,
 
@@ -2295,8 +2272,7 @@ static setup_menu_t stat_settings2[] = {
      .strings_id = str_show_widgets},
 
     {"Show Player Coords", S_CHOICE | S_STRICT, H_X, M_SPC,
-     {"hud_player_coords"}, .strings_id = str_show_adv_widgets,
-     .action = HU_Start},
+     {"hud_player_coords"}, .strings_id = str_show_adv_widgets},
 
     {"Show Command History", S_ONOFF | S_STRICT, H_X, M_SPC,
      {"hud_command_history"}, .action = HU_ResetCommandHistory},
@@ -2310,61 +2286,36 @@ static setup_menu_t stat_settings2[] = {
     MI_GAP,
     {"Nugget - Widget Types", S_SKIP | S_TITLE, H_X, M_SPC},
     {"Show Powerup Timers", S_CHOICE|S_COSMETIC, H_X, M_SPC,
-     {"hud_power_timers"}, m_null, input_null, str_show_widgets},
+     {"hud_power_timers"}, .strings_id = str_show_widgets},
     MI_GAP,
     {"Nugget - Event Timers", S_SKIP|S_TITLE, H_X, M_SPC},
-    {"Teleport Timer", S_ONOFF|S_STRICT, H_X, M_SPC, {"hud_time_teleport"}},
-    {"Key-Pickup Timer", S_ONOFF|S_STRICT, H_X, M_SPC, {"hud_time_keypickup"}},
+      {"Teleport Timer",   S_ONOFF|S_STRICT, H_X, M_SPC, {"hud_time_teleport"}},
+      {"Key-Pickup Timer", S_ONOFF|S_STRICT, H_X, M_SPC, {"hud_time_keypickup"}},
 
     // [Nugget] --------------------------------------------------------------/
 
-    // [Cherry] /--------------------------------------------------------------
+    MI_SPLIT, // [Cherry]
 
-    MI_GAP,
-    {"Cherry - Widget Types", S_SKIP | S_TITLE, H_X, M_SPC},
-    {"Show Player Movement", S_CHOICE|S_STRICT, H_X, M_SPC,
-     {"hud_movement"}, .strings_id = str_show_widgets},
+    {"Widget Appearance", S_SKIP | S_TITLE, H_X, M_SPC},
 
-    MI_SPLIT, // [Cherry] ----------------------------------------------------/
-
-    {"Widget Appearance", S_SKIP | S_TITLE, M_X, M_SPC},
-
-    {"Level Stats Format", S_CHOICE, M_X, M_SPC, {"hud_stats_format"},
-    .strings_id = str_stats_format, .action = HU_Start},
+    {"Level Stats Format", S_CHOICE, H_X, M_SPC, {"hud_stats_format"},
+     .strings_id = str_stats_format},
 
     // [Nugget]
-    {"Automap Level Stats Format", S_CHOICE, M_X, M_SPC, {"hud_stats_format_map"},
-    .strings_id = str_stats_format, .action = HU_Start},
+    {"Automap Level Stats Format", S_CHOICE, H_X, M_SPC, {"hud_stats_format_map"},
+    .strings_id = str_stats_format},
 
-    {"Use Doom Font", S_CHOICE, M_X, M_SPC, {"hud_widget_font"},
-     .strings_id = str_show_widgets},
-
-    {"Widescreen Alignment", S_ONOFF, M_X, M_SPC, {"hud_widescreen_widgets"},
-     .action = HU_Start},
-
-    {"Vertical Layout", S_ONOFF, M_X, M_SPC, {"hud_widget_layout"},
-     .action = HU_Start},
-     
     // [Nugget] /--------------------------------------------------------------
 
+    // [Cherry] Moved from `NG1` ----------------------------------------------
 
     MI_GAP,
-    {"Nugget - Widget Appearance", S_SKIP | S_TITLE, M_X, M_SPC},
-
-      {"Allow HUD Icons",                  S_ONOFF,             M_X, M_SPC, {"hud_allow_icons"}},
-      {"Show Berserk when using Fist",     S_ONOFF,             M_X, M_SPC, {"sts_show_berserk"}},
-      {"Highlight Current/Pending Weapon", S_ONOFF,             M_X, M_SPC, {"hud_highlight_weapon"}},
-      {"Alternative Arms Display",         S_ONOFF,             M_X, M_SPC, {"sts_alt_arms"}, .action = ST_createWidgets},
+    {"Nugget - Widget Appearance", S_SKIP | S_TITLE, H_X, M_SPC},
+      
+      {"Berserk display when using Fist", S_ONOFF, H_X, M_SPC, {"sts_show_berserk"}},
+      {"Allow HUD Icons",                 S_ONOFF, H_X, M_SPC, {"hud_allow_icons"}},
 
     // [Nugget] --------------------------------------------------------------/
-
-    // [Cherry] /--------------------------------------------------------------
-
-    MI_GAP,
-    {"Cherry - Intermission Screen Widgets", S_SKIP | S_TITLE, M_X, M_SPC},
-
-      {"Health & Armor", S_ONOFF | S_COSMETIC, M_X, M_SPC, {"inter_health_armor"}},
-      {"Weapons",        S_ONOFF | S_COSMETIC, M_X, M_SPC, {"inter_weapons"}},
 
     MI_END
 };
@@ -2441,51 +2392,42 @@ static const char *secretmessage_strings[] = {
     "Off", "On", "Count",
 };
 
-// [Nugget]
-static void UpdateMultiLineMsgItem(void);
+// [Nugget] Minimap
+void MoveMinimap(void)
+{
+    if (automapactive == AM_MINI) { AM_Start(); }
+}
 
 static setup_menu_t stat_settings4[] = {
-    // [Nugget] Shifted X-position of all items
-
-    {"Announce Revealed Secrets", S_CHOICE, M_X, M_SPC, {"hud_secret_message"},
+    {"Announce Revealed Secrets", S_CHOICE, H_X, M_SPC, {"hud_secret_message"},
      .strings_id = str_secretmessage},
-    {"Announce Map Titles",  S_ONOFF, M_X, M_SPC, {"hud_map_announce"}},
+    {"Announce Map Titles",  S_ONOFF, H_X, M_SPC, {"hud_map_announce"}},
 
     // [Nugget]
-    {"Milestone-Completion Announcements", S_ONOFF, M_X, M_SPC,
-     {"announce_milestones"}},
+    {"Announce Milestones", S_ONOFF, H_X, M_SPC, {"announce_milestones"}},
 
-    {"Show Toggle Messages", S_ONOFF, M_X, M_SPC, {"show_toggle_messages"}},
-    {"Show Pickup Messages", S_ONOFF, M_X, M_SPC, {"show_pickup_messages"}},
-    {"Show Obituaries",      S_ONOFF, M_X, M_SPC, {"show_obituary_messages"}},
+    {"Show Toggle Messages", S_ONOFF, H_X, M_SPC, {"show_toggle_messages"}},
+    {"Show Pickup Messages", S_ONOFF, H_X, M_SPC, {"show_pickup_messages"}},
+    {"Show Obituaries",      S_ONOFF, H_X, M_SPC, {"show_obituary_messages"}},
 
     MI_GAP, // [Nugget]
 
-    {"Center Messages",      S_ONOFF, M_X, M_SPC, {"message_centered"}},
-    {"Colorize Messages",    S_ONOFF, M_X, M_SPC, {"message_colorized"},
-     .action = HU_ResetMessageColors},
+    {"Colorize Messages",    S_ONOFF, H_X, M_SPC, {"message_colorized"},
+     .action = ST_ResetMessageColors},
 
-    // [Nugget] Message flash
-    {"Message Flash",        S_ONOFF, M_X, M_SPC, {"message_flash"}},
+    // [Nugget] /-------------------------------------------------------------
 
-    // [Nugget] Restored menu items /-----------------------------------------
-
-    MI_SPLIT, // [Cherry] Split the page here
-
-    {"Message Color", S_CRITEM|S_COSMETIC, M_X, M_SPC,
-     {"hudcolor_mesg"}, .strings_id = str_hudcolor},
-
-    {"Message Duration (ms)", S_NUM, M_X, M_SPC,
-     {"message_timer"}},
-
-    {"Obituary Color", S_CRITEM|S_COSMETIC, M_X, M_SPC,
+    // Restored menu item
+    {"Obituary Color", S_CRITEM|S_COSMETIC, H_X, M_SPC,
      {"hudcolor_obituary"}, .strings_id = str_hudcolor},
 
-    {"Multi-Line Messages", S_ONOFF, M_X, M_SPC,
-     {"message_list"}, .action = UpdateMultiLineMsgItem},
+    // Message flash
+    {"Message Flash",        S_ONOFF, H_X, M_SPC, {"message_flash"}},
 
-    {"Number of Lines", S_NUM, M_X, M_SPC,
-     {"hud_msg_lines"}},
+    {"Message Lines", S_NUM, H_X, M_SPC, {"hud_msg_lines"}, .action = MoveMinimap},
+
+    {"Forced Message Tics", S_NUM, H_X, M_SPC, {"hud_msg_duration"}},
+    {"Forced Chat Message Tics", S_NUM, H_X, M_SPC, {"hud_chat_duration"}},
 
     // [Nugget] -------------------------------------------------------------/
 
@@ -2518,15 +2460,6 @@ static setup_menu_t stat_settings5[] =
     {"Secrets label",             S_CRITEM, M_X, M_SPC, {"hudcolor_secrets"},   .strings_id = str_hudcolor},
     {"Incomplete Milestone",      S_CRITEM, M_X, M_SPC, {"hudcolor_ms_incomp"}, .strings_id = str_hudcolor},
     {"Complete Milestone",        S_CRITEM, M_X, M_SPC, {"hudcolor_ms_comp"},   .strings_id = str_hudcolor},
-
-  // [Cherry] /----------------------------------------------------------------
-  MI_SPLIT,
-  {"Cherry - Value Thresholds", S_SKIP|S_TITLE, M_X, M_SPC},
-
-    {"Low value",   S_CRITEM, M_X, M_SPC, {"hudcolor_th_low"},   .strings_id = str_hudcolor},
-    {"Ok value",    S_CRITEM, M_X, M_SPC, {"hudcolor_th_ok"},    .strings_id = str_hudcolor},
-    {"Good value",  S_CRITEM, M_X, M_SPC, {"hudcolor_th_good"},  .strings_id = str_hudcolor},
-    {"Extra value", S_CRITEM, M_X, M_SPC, {"hudcolor_th_extra"}, .strings_id = str_hudcolor},
 
   MI_END
 };
@@ -2572,17 +2505,15 @@ void UpdateCrosshairItems(void) // [Nugget] Global
         !(hud_crosshair_on && (hud_crosshair_lockon || hud_crosshair_target)),
         stat_settings3, "hud_crosshair_fuzzy");
 
-    // [Cherry] ---------------------------------------------------------------
+    // [Cherry] /--------------------------------------------------------------
 
     DisableItem(!hud_crosshair_on, stat_settings3,
                 "hud_crosshair_slot1_disable");
     DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair_dark");
-}
 
-// [Nugget]
-static void UpdateMultiLineMsgItem(void)
-{
-  DisableItem(!message_list, stat_settings4, "hud_msg_lines");
+    // [Cherry] --------------------------------------------------------------/
+
+    HU_StartCrosshair();
 }
 
 // Setting up for the Status Bar / HUD screen. Turn on flags, set pointers,
@@ -2604,8 +2535,6 @@ void MN_StatusBar(int choice)
 
 void MN_DrawStatusHUD(void)
 {
-    inhelpscreens = true; // killough 4/6/98: Force status bar redraw
-
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_STAT", "Status Bar/HUD");
     DrawTabs();
@@ -2705,8 +2634,6 @@ void MN_Automap(int choice)
 
 void MN_DrawAutoMap(void)
 {
-    inhelpscreens = true; // killough 4/6/98: Force status bar redraw
-
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_AUTO", "Automap");
     DrawInstructions();
@@ -2809,8 +2736,6 @@ void MN_Enemy(int choice)
 
 void MN_DrawEnemy(void)
 {
-    inhelpscreens = true;
-
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_ENEM", "Enemies");
     DrawInstructions();
@@ -2917,8 +2842,6 @@ void MN_Compat(int choice)
 
 void MN_DrawCompat(void)
 {
-    inhelpscreens = true;
-
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_COMPAT", "Compatibility");
     DrawInstructions();
@@ -3324,10 +3247,9 @@ static void MN_Midi(void)
     current_tabs = midi_tabs;
     SetupMenuSecondary();
 }
+
 void MN_DrawMidi(void)
 {
-    inhelpscreens = true;
-
     DrawBackground("FLOOR4_6");
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
     DrawTabs();
@@ -3415,8 +3337,6 @@ static void MN_Equalizer(void)
 
 void MN_DrawEqualizer(void)
 {
-    inhelpscreens = true;
-
     DrawBackground("FLOOR4_6");
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
     DrawTabs();
@@ -3675,8 +3595,6 @@ static void MN_PadAdv(void)
 
 void MN_DrawPadAdv(void)
 {
-    inhelpscreens = true;
-
     DrawBackground("FLOOR4_6");
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
     DrawTabs();
@@ -3868,8 +3786,6 @@ static void MN_Gyro(void)
 
 void MN_DrawGyro(void)
 {
-    inhelpscreens = true;
-
     DrawBackground("FLOOR4_6");
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
     DrawTabs();
@@ -3993,8 +3909,6 @@ static setup_menu_t gen_settings5[] = {
     {"Backdrop Darkening", S_THERMO, OFF_CNTR_THRM8_X, M_THRM_SPC, // [Cherry]
      {"menu_backdrop_darkening"}},
 
-    // [Nugget] -------------------------------------------------------------/
-
     // [Nugget] /--------------------------------------------------------------
 
     // [Cherry] Moved from `NG2` ----------------------------------------------
@@ -4113,8 +4027,6 @@ static void MN_Color(void)
 
 void MN_DrawColor(void)
 {
-    inhelpscreens = true;
-
     DrawBackground("FLOOR4_6");
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
     DrawTabs();
@@ -4340,8 +4252,6 @@ void MN_General(int choice)
 
 void MN_DrawGeneral(void)
 {
-    inhelpscreens = true;
-
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_GENERL", "General");
     DrawTabs();
@@ -4428,8 +4338,6 @@ static void LT_DrawWadClearVerify(void)
 
 void MN_DrawLevelTable(void)
 {
-    inhelpscreens = true;
-
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_LVLTBL", "Level Table");
     if (lt_enable_tracking && !notrackingparm)
@@ -4524,8 +4432,6 @@ void MN_CustomSkill(void)
 
 void MN_DrawCustomSkill(void)
 {
-    inhelpscreens = true;
-
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_CSTSKL", "Custom Skill");
     DrawInstructions();
@@ -4808,21 +4714,18 @@ void MN_DrawStringCR(int cx, int cy, byte *cr1, byte *cr2, const char *ch)
     {
         c = *ch++; // get next char
 
-        if (c == '\x1b')
+        if (c == '\x1b' && *ch)
         {
-            if (ch)
+            c = *ch++;
+            if (c >= '0' && c <= '0' + CR_NONE)
             {
-                c = *ch++;
-                if (c >= '0' && c <= '0' + CR_NONE)
-                {
-                    cr = colrngs[c - '0'];
-                }
-                else if (c == '0' + CR_ORIG)
-                {
-                    cr = cr1;
-                }
-                continue;
+                cr = colrngs[c - '0'];
             }
+            else if (c == '0' + CR_ORIG)
+            {
+                cr = cr1;
+            }
+            continue;
         }
 
         c = M_ToUpper(c) - HU_FONTSTART;
@@ -5353,7 +5256,6 @@ void LT_Warp(void)
     ltbl_map_erase = false;              // [Cherry]
     ltbl_wad_erase = false;              // [Cherry]
     print_warning_about_changes = false; // [FG] reset
-    HU_Start(); // catch any message changes // phares 4/19/98
     M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
 }
 
@@ -5820,7 +5722,6 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         ltbl_map_erase = false;              // [Cherry]
         ltbl_wad_erase = false;              // [Cherry]
         print_warning_about_changes = false; // [FG] reset
-        HU_Start(); // catch any message changes // phares 4/19/98
         LT_Reset(); // [Cherry] level table cleanup
         M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         return true;
@@ -6206,8 +6107,7 @@ static const char **selectstrings[] = {
     curve_strings,
     center_weapon_strings,
     screensize_strings,
-    hudtype_strings,
-    NULL, // str_hudmode
+    st_layout_strings,
     show_widgets_strings,
     show_adv_widgets_strings,
     stats_format_strings,
@@ -6247,6 +6147,7 @@ static const char **selectstrings[] = {
     // [Nugget] --------------------------------------------------------------
 
     bobbing_style_strings,
+    hud_type_strings,
     crosshair_lockon_strings,
     vertical_aiming_strings,
     over_under_strings,
@@ -6271,11 +6172,6 @@ static const char **GetStrings(int id)
     return NULL;
 }
 
-static void UpdateHUDModeStrings(void)
-{
-    selectstrings[str_hudmode] = GetHUDModeStrings();
-}
-
 static void UpdateWeaponSlotStrings(void)
 {
     selectstrings[str_weapon_slots] = GetWeaponSlotStrings();
@@ -6288,7 +6184,6 @@ static const char **GetMidiPlayerStrings(void)
 
 void MN_InitMenuStrings(void)
 {
-    UpdateHUDModeStrings();
     UpdateWeaponSlotLabels();
     UpdateWeaponSlotStrings();
     selectstrings[str_resolution_scale] = GetResolutionScaleStrings();
@@ -6326,7 +6221,6 @@ void MN_SetupResetMenu(void)
                 enem_settings1, "extra_gibbing");
 
     UpdatePaletteItems();
-    UpdateMultiLineMsgItem();
 
     // [Cherry] ----------------------------------------------------------------
 

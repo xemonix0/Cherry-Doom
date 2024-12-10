@@ -27,7 +27,6 @@
 #include "doomstat.h"
 #include "doomtype.h"
 #include "g_game.h"
-#include "hu_lib.h"
 #include "info.h"
 #include "m_misc.h" // [FG] M_StringDuplicate()
 #include "m_swap.h"
@@ -35,6 +34,8 @@
 #include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "st_sbardef.h"
+#include "st_stuff.h"
 #include "u_mapinfo.h"
 #include "v_fmt.h"
 #include "v_video.h"
@@ -82,7 +83,7 @@ void F_StartFinale (void)
   gameaction = ga_nothing;
   gamestate = GS_FINALE;
   viewactive = false;
-  automapactive = false;
+  automapactive = AM_OFF;
 
   // killough 3/28/98: clear accelerative text flags
   acceleratestage = midstage = 0;

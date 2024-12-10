@@ -38,7 +38,6 @@
 #include "m_swap.h"
 #include "r_data.h"
 #include "r_defs.h"
-#include "r_draw.h"
 #include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
@@ -139,6 +138,18 @@ int V_BloodColor(int blood)
 {
     extern boolean idgaf; // [Nugget]
     return (idgaf ? CR_WHITE : bloodcolor[blood]);
+}
+
+crange_idx_e V_CRByName(const char *name)
+{
+    for (const crdef_t *p = crdefs; p->name; ++p)
+    {
+        if (!strcmp(p->name, name))
+        {
+            return p - crdefs;
+        }
+    }
+    return CR_NONE;
 }
 
 int v_lightest_color, v_darkest_color;
@@ -350,6 +361,8 @@ void V_InitColorTranslation(void)
 
     // [Nugget] ==============================================================
 
+    colrngs[CR_BRIGHT] = cr_bright;
+
     memset(cr_allblack, I_GetNearestColor(playpal, 0, 0, 0), 256);
 
     for (int i = 0;  i < 256;  i++)
@@ -470,8 +483,13 @@ static void (*drawcolfunc)(const patch_column_t *patchcol);
 DRAW_COLUMN(, source[frac >> FRACBITS])
 DRAW_COLUMN(TR, translation[source[frac >> FRACBITS]])
 DRAW_COLUMN(TRTR, translation2[translation1[source[frac >> FRACBITS]]])
+DRAW_COLUMN(TL, tranmap[(*dest << 8) + source[frac >> FRACBITS]])
+DRAW_COLUMN(TRTL, tranmap[(*dest << 8) + translation[source[frac >> FRACBITS]]])
 
-// [Nugget]
+// [Nugget] /-----------------------------------------------------------------
+
+DRAW_COLUMN(TRTRTL, tranmap[(*dest << 8) + translation2[translation1[source[frac >> FRACBITS]]]])
+
 DRAW_COLUMN(
   Translucent,
   tranmap[
@@ -481,6 +499,8 @@ DRAW_COLUMN(
                                               source[frac >> FRACBITS]   )
   ]
 )
+
+// [Nugget] -----------------------------------------------------------------/
 
 static void DrawMaskedColumn(patch_column_t *patchcol, const int ytop,
                              column_t *column)
@@ -697,6 +717,27 @@ void V_DrawPatchTranslated(int x, int y, patch_t *patch, byte *outr)
     DrawPatchInternal(x, y, patch, false);
 }
 
+void V_DrawPatchTL(int x, int y, struct patch_s *patch, byte *tl)
+{
+    x += video.deltaw;
+
+    tranmap = tl;
+    drawcolfunc = DrawPatchColumnTL;
+
+    DrawPatchInternal(x, y, patch, false);
+}
+
+void V_DrawPatchTRTL(int x, int y, struct patch_s *patch, byte *outr, byte *tl)
+{
+    x += video.deltaw;
+
+    translation = outr;
+    tranmap = tl;
+    drawcolfunc = DrawPatchColumnTRTL;
+
+    DrawPatchInternal(x, y, patch, false);
+}
+
 void V_DrawPatchTRTR(int x, int y, patch_t *patch, byte *outr1, byte *outr2)
 {
     x += video.deltaw;
@@ -709,6 +750,19 @@ void V_DrawPatchTRTR(int x, int y, patch_t *patch, byte *outr1, byte *outr2)
 }
 
 // [Nugget] /-----------------------------------------------------------------
+
+void V_DrawPatchTRTRTL(int x, int y, struct patch_s *patch,
+                       byte *outr1, byte *outr2, byte *tl)
+{
+    x += video.deltaw;
+
+    translation1 = outr1;
+    translation2 = outr2;
+    tranmap = tl;
+    drawcolfunc = DrawPatchColumnTRTRTL;
+
+    DrawPatchInternal(x, y, patch, false);
+}
 
 void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped,
                             byte *outr1, byte *outr2, byte *tmap)
@@ -731,7 +785,7 @@ void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped
 }
 
 void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
-                         byte *outr1, byte *outr2)
+                         byte *outr1, byte *outr2, byte *tmap)
 {
     if (hud_menu_shadows && drawshadows)
     {
@@ -742,15 +796,40 @@ void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
 
     if (outr1 && outr2)
     {
-      V_DrawPatchTRTR(x, y, patch, outr1, outr2);
+      if (tmap)
+      {
+        V_DrawPatchTRTRTL(x, y, patch, outr1, outr2, tmap);
+      }
+      else
+      {
+        V_DrawPatchTRTR(x, y, patch, outr1, outr2);
+      }
     }
     else if (outr2)
     {
-      V_DrawPatchTranslated(x, y, patch, outr2);
+      if (tmap)
+      {
+        V_DrawPatchTRTL(x, y, patch, outr2, tmap);
+      }
+      else
+      {
+        V_DrawPatchTranslated(x, y, patch, outr2);
+      }
     }
     else if (outr1)
     {
-      V_DrawPatchTranslated(x, y, patch, outr1);
+      if (tmap)
+      {
+        V_DrawPatchTRTL(x, y, patch, outr1, tmap);
+      }
+      else
+      {
+        V_DrawPatchTranslated(x, y, patch, outr1);
+      }
+    }
+    else if (tmap)
+    {
+      V_DrawPatchTL(x, y, patch, tmap);
     }
     else if (flipped)
     {

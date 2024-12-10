@@ -99,14 +99,14 @@ nughud_t nughud; // Behold!!!
 //
 
 default_t nughud_defaults[] = {
-  WIDGET2( "nughud_ammo",         nughud.ammo,          ST_AMMOX, ST_AMMOY, -1,  1     ),
-  WIDGET3( "nughud_ammoicon",     nughud.ammoicon,     -1,        0,         0, -1, 1  ),
-  TOGGLE(  "nughud_ammoicon_big", nughud.ammoicon_big,  0                              ),
-  BAR(     "nughud_ammobar",      nughud.ammobar,      -1,        0,         0, -1, -1 ),
+  WIDGET2( "nughud_ammo",         nughud.ammo,          44, 171, -1,  1     ),
+  WIDGET3( "nughud_ammoicon",     nughud.ammoicon,     -1,  0,    0, -1, 1  ),
+  TOGGLE(  "nughud_ammoicon_big", nughud.ammoicon_big,  0                   ),
+  BAR(     "nughud_ammobar",      nughud.ammobar,      -1,  0,    0, -1, -1 ),
 
-  WIDGET2( "nughud_health",     nughud.health,      ST_HEALTHX, ST_HEALTHY, -1,  1     ),
-  WIDGET3( "nughud_healthicon", nughud.healthicon, -1,          0,           0, -1, 1  ),
-  BAR(     "nughud_healthbar",  nughud.healthbar,  -1,          0,           0, -1, -1 ),
+  WIDGET2( "nughud_health",     nughud.health,      90, 171, -1,  1     ),
+  WIDGET3( "nughud_healthicon", nughud.healthicon, -1,  0,    0, -1, 1  ),
+  BAR(     "nughud_healthbar",  nughud.healthbar,  -1,  0,    0, -1, -1 ),
 
   WIDGET( "nughud_arms1", nughud.arms[0], -1,   0,    0 ),
   WIDGET( "nughud_arms2", nughud.arms[1],  111, 172, -1 ),
@@ -120,29 +120,26 @@ default_t nughud_defaults[] = {
 
   WIDGET2( "nughud_frags", nughud.frags, 160, 171, 0, 0 ),
 
-  WIDGET( "nughud_face",    nughud.face,    -1, ST_FACESY, 0 ),
-  TOGGLE( "nughud_face_bg", nughud.face_bg,  1               ),
+  WIDGET( "nughud_face",    nughud.face,    -1, 168, 0 ),
+  TOGGLE( "nughud_face_bg", nughud.face_bg,  1         ),
 
-  WIDGET2( "nughud_armor",     nughud.armor,      ST_ARMORX, ST_ARMORY, 1,  1     ),
-  WIDGET3( "nughud_armoricon", nughud.armoricon, -1,         0,         0, -1, 1  ),
-  BAR(     "nughud_armorbar",  nughud.armorbar,  -1,         0,         0, -1, -1 ),
+  WIDGET2( "nughud_armor",     nughud.armor,      221, 171, 1,  1     ),
+  WIDGET3( "nughud_armoricon", nughud.armoricon, -1,   0,   0, -1, 1  ),
+  BAR(     "nughud_armorbar",  nughud.armorbar,  -1,   0,   0, -1, -1 ),
 
-  WIDGET( "nughud_key0", nughud.keys[0], ST_KEY0X, ST_KEY0Y, 1 ),
-  WIDGET( "nughud_key1", nughud.keys[1], ST_KEY1X, ST_KEY1Y, 1 ),
-  WIDGET( "nughud_key2", nughud.keys[2], ST_KEY2X, ST_KEY2Y, 1 ),
+  WIDGET( "nughud_key0", nughud.keys[0], 239, 171, 1 ),
+  WIDGET( "nughud_key1", nughud.keys[1], 239, 181, 1 ),
+  WIDGET( "nughud_key2", nughud.keys[2], 239, 191, 1 ),
 
-  WIDGET2( "nughud_ammo0", nughud.ammos[0], ST_AMMO0X, ST_AMMO0Y, 1, 1 ),
-  WIDGET2( "nughud_ammo1", nughud.ammos[1], ST_AMMO1X, ST_AMMO1Y, 1, 1 ),
-  WIDGET2( "nughud_ammo2", nughud.ammos[2], ST_AMMO2X, ST_AMMO2Y, 1, 1 ),
-  WIDGET2( "nughud_ammo3", nughud.ammos[3], ST_AMMO3X, ST_AMMO3Y, 1, 1 ),
+  WIDGET2( "nughud_ammo0", nughud.ammos[0], 288, 173, 1, 1 ),
+  WIDGET2( "nughud_ammo1", nughud.ammos[1], 288, 179, 1, 1 ),
+  WIDGET2( "nughud_ammo2", nughud.ammos[2], 288, 191, 1, 1 ),
+  WIDGET2( "nughud_ammo3", nughud.ammos[3], 288, 185, 1, 1 ),
 
-  WIDGET2( "nughud_maxammo0", nughud.maxammos[0], ST_MAXAMMO0X, ST_MAXAMMO0Y, 1, 1 ),
-  WIDGET2( "nughud_maxammo1", nughud.maxammos[1], ST_MAXAMMO1X, ST_MAXAMMO1Y, 1, 1 ),
-  WIDGET2( "nughud_maxammo2", nughud.maxammos[2], ST_MAXAMMO2X, ST_MAXAMMO2Y, 1, 1 ),
-  WIDGET2( "nughud_maxammo3", nughud.maxammos[3], ST_MAXAMMO3X, ST_MAXAMMO3Y, 1, 1 ),
-
-  // [Cherry]
-  TEXTLINE( "nughud_movement", nughud.movement, -1, -1, -1, -1, 3, 3 ),
+  WIDGET2( "nughud_maxammo0", nughud.maxammos[0], 314, 173, 1, 1 ),
+  WIDGET2( "nughud_maxammo1", nughud.maxammos[1], 314, 179, 1, 1 ),
+  WIDGET2( "nughud_maxammo2", nughud.maxammos[2], 314, 191, 1, 1 ),
+  WIDGET2( "nughud_maxammo3", nughud.maxammos[3], 314, 185, 1, 1 ),
 
   TEXTLINE( "nughud_time", nughud.time, -1, -1, -1, -1, 3, 2 ),
 

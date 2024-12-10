@@ -38,14 +38,11 @@ Although the new code has been written with the intention of not breaking demo c
 
 #### Intermission screen
 
-- Settings to show _Health & Armor_ and _Weapons_ widgets alongside the detailed time widget
 - Setting to _adjust intermission kill percentage to follow UV max speedrun requirements_ (CFG-only: `inter_accurate_kill_count`)
 	- Specifically, it prevents resurrected and Icon of Sin-spawned monsters from increasing the totals, and also makes 100% show up for maps without monsters
 - Items percentage is now 100% on maps without items
 
 ### Status Bar/HUD
-
-- _Movement widget_: shows the current player movement and strafing speeds
 
 #### Crosshair
 
@@ -208,6 +205,11 @@ Copyright:
  © apolloaiello;  
  © TobiasKosmos.  
 License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+
+Files: `base/all-all/sbardef.lmp`  
+Copyright:  
+ © 2024 Ethan Watson.  
+License: [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
 Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
 Copyright: © 2018 Alex Mayfield.  

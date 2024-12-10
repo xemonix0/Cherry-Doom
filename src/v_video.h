@@ -79,6 +79,7 @@ extern byte *red2col[];
 // symbolic indices into color translation table pointer array
 typedef enum
 {
+    CR_ORIG = -1,
     CR_BRICK,  // 0
     CR_TAN,    // 1
     CR_GRAY,   // 2
@@ -98,7 +99,19 @@ typedef enum
     CR_LIMIT   // 16 //jff 2/27/98 added for range check
 } crange_idx_e;
 
+#define ORIG_S  "\x1b\x2f"
+#define BRICK_S "\x1b\x30"
+#define TAN_S   "\x1b\x31"
+#define GRAY_S  "\x1b\x32"
+#define GREEN_S "\x1b\x33"
+#define BROWN_S "\x1b\x34"
+#define GOLD_S  "\x1b\x35"
+#define RED_S   "\x1b\x36"
+#define BLUE_S  "\x1b\x37"
+
 // jff 1/16/98 end palette color range additions
+
+crange_idx_e V_CRByName(const char *name);
 
 extern pixel_t *I_VideoBuffer;
 
@@ -168,6 +181,10 @@ void V_DrawPatchTranslated(int x, int y, struct patch_s *patch, byte *outr);
 void V_DrawPatchTRTR(int x, int y, struct patch_s *patch, byte *outr1,
                      byte *outr2);
 
+void V_DrawPatchTL(int x, int y, struct patch_s *patch, byte *tl);
+
+void V_DrawPatchTRTL(int x, int y, struct patch_s *patch, byte *outr, byte *tl);
+
 // [Nugget] /=================================================================
 
 extern int automap_overlay_darkening;
@@ -183,11 +200,11 @@ void V_SetShadowCrop(const int value);
 
 // ---------------------------------------------------------------------------
 
+void V_DrawPatchTRTRTL(int x, int y, struct patch_s *patch,
+                       byte *outr1, byte *outr2, byte *tl);
+
 void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped,
                             byte *outr1, byte *outr2, byte *tmap);
-
-#define V_DrawPatchTL(x, y, p, tp) \
-  V_DrawPatchTranslucent(x, y, p, false, NULL, NULL, tp)
 
 #define V_DrawPatchFlippedTL(x, y, p, tp) \
   V_DrawPatchTranslucent(x, y, p, true, NULL, NULL, tp)
@@ -195,23 +212,32 @@ void V_DrawPatchTranslucent(int x, int y, struct patch_s *patch, boolean flipped
 #define V_DrawPatchTranslatedTL(x, y, p, cr, tp) \
   V_DrawPatchTranslucent(x, y, p, false, cr, NULL, tp)
 
-#define V_DrawPatchTRTRTL(x, y, p, cr1, cr2, tp) \
+#define V_DrawPatchTRTRTL2(x, y, p, cr1, cr2, tp) \
   V_DrawPatchTranslucent(x, y, p, false, cr1, cr2, tp)
 
 void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
-                         byte *outr1, byte *outr2);
+                         byte *outr1, byte *outr2, byte *tmap);
 
 #define V_DrawPatchSH(x, y, p) \
-  V_DrawPatchShadowed(x, y, p, false, NULL, NULL)
+  V_DrawPatchShadowed(x, y, p, false, NULL, NULL, NULL)
 
 #define V_DrawPatchFlippedSH(x, y, p) \
-  V_DrawPatchShadowed(x, y, p, true, NULL, NULL)
+  V_DrawPatchShadowed(x, y, p, true, NULL, NULL, NULL)
 
 #define V_DrawPatchTranslatedSH(x, y, p, cr) \
-  V_DrawPatchShadowed(x, y, p, false, cr, NULL)
+  V_DrawPatchShadowed(x, y, p, false, cr, NULL, NULL)
 
 #define V_DrawPatchTRTRSH(x, y, p, cr1, cr2) \
-  V_DrawPatchShadowed(x, y, p, false, cr1, cr2)
+  V_DrawPatchShadowed(x, y, p, false, cr1, cr2, NULL)
+
+#define V_DrawPatchTRTRTLSH(x, y, p, cr1, cr2, tp) \
+  V_DrawPatchShadowed(x, y, p, false, cr1, cr2, tp)
+
+#define V_DrawPatchTRTLSH(x, y, p, cr, tp) \
+  V_DrawPatchShadowed(x, y, p, false, cr, NULL, tp)
+
+#define V_DrawPatchTLSH(x, y, p, tp) \
+  V_DrawPatchShadowed(x, y, p, false, NULL, NULL, tp)
 
 void V_ShadowRect(int x, int y, int width, int height);
 

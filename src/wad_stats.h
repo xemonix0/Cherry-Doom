@@ -17,7 +17,7 @@
 #define __WAD_STATS__
 
 #include "doomtype.h"
-#include "hu_stuff.h"
+#include "st_widgets.h"
 
 typedef struct
 {

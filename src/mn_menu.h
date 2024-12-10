@@ -92,7 +92,6 @@ extern backdrop_t menu_backdrop;
 
 // [Nugget]
 extern boolean menu_background_all;
-extern boolean no_menu_tint;
 
 boolean MN_MenuIsShaded(void);
 
@@ -109,8 +108,6 @@ void M_SaveAutoSave(void);
 void MN_InitMenuStrings(void);
 
 boolean MN_StartsWithMapIdentifier(char *str);
-
-extern boolean inhelpscreens;
 
 int MN_GetPixelWidth(const char *ch);
 void MN_DrawString(int cx, int cy, int color, const char *ch);
