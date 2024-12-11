@@ -28,9 +28,8 @@ jobs:
         run: |
           python3 "./code/man/docgen" -M "./code/man/CMDLINE.template.md" \
                   "./code/src/" > "./wiki/Command-Line-Parameters.md"
-          cp -af "./code/docs/woofhud.md" "./wiki/Woof-HUD.md"
           cp -af "./code/docs/cheats.md" "./wiki/Cheats.md"
-          cp -af "./code/docs/nughud.md" "./wiki/Nugget-HUD.md"
+          cp -af "./code/docs/nughud.md" "./wiki/NUGHUD.md" # [Nugget]
 
       - name: Push to wiki
         env:

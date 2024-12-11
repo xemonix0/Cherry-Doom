@@ -20,13 +20,8 @@
 #ifndef __M_NUGHUD__
 #define __M_NUGHUD__
 
+#include "doomtype.h"
 #include "m_fixed.h"
-
-#define NUGHUDWIDESHIFT(x) (                                       \
-  st_crispyhud ? (abs(x) == 2) ? video.deltaw      * (2 / (x)) :   \
-                 (abs(x) == 1) ? distributed_delta *      (x)  : 0 \
-               : 0                                                 \
-)
 
 typedef struct nughud_widget_s {
   int x, y;
@@ -70,6 +65,13 @@ typedef struct nughud_sbchunk_s {
   int sx, sy, sw, sh;
 } nughud_sbchunk_t;
 
+typedef struct nughud_minimap_s {
+  int x, y;
+  int wide;
+  int w, h;
+  boolean undmess;
+} nughud_minimap_t;
+
 #define NUMNUGHUDPATCHES 8
 #define NUMNUGHUDSTACKS 8
 #define NUMSBCHUNKS 8
@@ -98,11 +100,12 @@ typedef struct nughud_s {
   int                sts_ml;
   nughud_textline_t  title;
   nughud_textline_t  powers;
-  nughud_textline_t  movement; // [Cherry]
   nughud_textline_t  coord;
   int                coord_ml;
   nughud_textline_t  fps;
   nughud_textline_t  rate;
+  nughud_textline_t  cmd;
+  nughud_textline_t  speed;
   nughud_textline_t  message;
   boolean            message_defx;
   nughud_textline_t  secret;
@@ -114,6 +117,8 @@ typedef struct nughud_s {
   boolean            patch_offsets;
 
   nughud_sbchunk_t   sbchunks[NUMSBCHUNKS];
+
+  nughud_minimap_t   minimap;
 
   boolean percents;
   fixed_t weapheight;

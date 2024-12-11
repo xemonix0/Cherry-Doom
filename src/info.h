@@ -193,17 +193,8 @@ typedef enum
   SPR_SP80, SPR_SP81, SPR_SP82, SPR_SP83, SPR_SP84, SPR_SP85, SPR_SP86, SPR_SP87, SPR_SP88, SPR_SP89,
   SPR_SP90, SPR_SP91, SPR_SP92, SPR_SP93, SPR_SP94, SPR_SP95, SPR_SP96, SPR_SP97, SPR_SP98, SPR_SP99,
 
-  // [Cherry] Rocket trails from Doom Retro
-  SPR_RSMK,
-
   NUMSPRITES  // counter of how many there are
 } spritenum_t;
-
-// [Nugget] Alt. sprites
-typedef enum {
-  ASPR_PLYC, ASPR_NGCH, ASPR_NGCL,
-  NUMALTSPRITES
-} altspritenum_t;
 
 // ********************************************************************
 // States (frames) enumeration -- must match info.c
@@ -1255,12 +1246,6 @@ typedef enum
 
   S_MUSHROOM,  // killough 10/98: mushroom explosion effect
 
-  // [Cherry] Rocket trails from Doom Retro
-  S_TRAIL,
-  S_TRAIL2,
-  S_TRAIL3,
-  S_TRAIL4,
-
   NUMSTATES  // Counter of how many there are
 } statenum_t;
 
@@ -1450,8 +1435,6 @@ typedef enum {
 
   MT_MUSICSOURCE, // [crispy] support MUSINFO lump (dynamic music changing)
 
-  MT_TRAIL, // [Cherry] Rocket trails from Doom Retro
-
   NUMMOBJTYPES  // Counter of how many there are
 
 } mobjtype_t;
@@ -1558,6 +1541,51 @@ extern int num_mobj_types;
 
 extern char *altsprnames[]; // [Nugget] Alt. sprites
 
+// [Nugget] ==================================================================
+
+// Alt. sprites
+typedef enum {
+  ASPR_NULL = -1,
+
+  ASPR_PLYC, ASPR_NGCH, ASPR_NGCL, ASPR_NGTR,
+
+  // [Cherry]
+  ASPR_RSMK,
+
+  NUMALTSPRITES
+} altspritenum_t;
+
+// Alt. states ---------------------------------------------------------------
+
+typedef enum {
+  AS_NULL,
+  AS_TRAIL1,
+  AS_TRAIL2,
+  AS_TRAIL3,
+  AS_TRAIL4,
+  AS_TRAIL5,
+  AS_TRAIL6,
+  AS_TRAIL7,
+
+  // [Cherry]
+
+  AS_SMK_TRAIL1,
+  AS_SMK_TRAIL2,
+  AS_SMK_TRAIL3,
+  AS_SMK_TRAIL4,
+
+  NUMALTSTATES
+} altstatenum_t;
+
+typedef struct {
+  altspritenum_t sprite;
+  int            frame;
+  int            tics;
+  altstatenum_t  nextstate;
+} altstate_t;
+
+extern altstate_t altstates[NUMALTSTATES];
+  
 #endif
 
 //----------------------------------------------------------------------------

@@ -27,6 +27,7 @@
 #include "doomdata.h"
 #include "doomstat.h"
 #include "g_game.h"
+#include "g_compatibility.h"
 #include "i_printf.h"
 #include "i_system.h"
 #include "info.h"
@@ -49,7 +50,6 @@
 #include "r_things.h"
 #include "s_musinfo.h" // [crispy] S_ParseMusInfo()
 #include "s_sound.h"
-#include "st_stuff.h"
 #include "tables.h"
 #include "wad_stats.h"
 #include "w_wad.h"
@@ -57,6 +57,7 @@
 
 // [Nugget]
 #include "m_array.h"
+#include "st_stuff.h"
 
 //
 // MAP related Lookup tables.
@@ -361,7 +362,8 @@ void P_LoadSectors (int lump)
       // [FG] inhibit sector interpolation during the 0th gametic
       ss->oldceilgametic = -1;
       ss->oldfloorgametic = -1;
-      ss->oldscrollgametic = -1;
+      ss->old_ceil_offs_gametic = -1;
+      ss->old_floor_offs_gametic = -1;
     }
 
   Z_Free (data);
@@ -1259,13 +1261,13 @@ boolean P_LoadBlockMap (int lump)
 
       blockmaplump[0] = SHORT(wadblockmaplump[0]);
       blockmaplump[1] = SHORT(wadblockmaplump[1]);
-      blockmaplump[2] = (long)(SHORT(wadblockmaplump[2])) & 0xffff;
-      blockmaplump[3] = (long)(SHORT(wadblockmaplump[3])) & 0xffff;
+      blockmaplump[2] = (long)(SHORT(wadblockmaplump[2])) & FRACMASK;
+      blockmaplump[3] = (long)(SHORT(wadblockmaplump[3])) & FRACMASK;
 
       for (i=4 ; i<count ; i++)
         {
           short t = SHORT(wadblockmaplump[i]);          // killough 3/1/98
-          blockmaplump[i] = t == -1 ? -1l : (long) t & 0xffff;
+          blockmaplump[i] = t == -1 ? -1l : (long) t & FRACMASK;
         }
 
       Z_Free(wadblockmaplump);
@@ -1358,10 +1360,10 @@ int P_GroupLines (void)
       sector->lines -= sector->linecount;
 
       // set the degenmobj_t to the middle of the bounding box
-      sector->soundorg.x = (sector->blockbox[BOXRIGHT] +
-			    sector->blockbox[BOXLEFT])/2;
-      sector->soundorg.y = (sector->blockbox[BOXTOP] +
-			    sector->blockbox[BOXBOTTOM])/2;
+      sector->soundorg.x =
+          sector->blockbox[BOXRIGHT] / 2 + sector->blockbox[BOXLEFT] / 2;
+      sector->soundorg.y =
+          sector->blockbox[BOXTOP] / 2 + sector->blockbox[BOXBOTTOM] / 2;
 
       sector->soundorg.thinker.function.p1 = (actionf_p1)P_DegenMobjThinker;
 
@@ -1665,9 +1667,11 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   //    W_Reload ();     killough 1/31/98: W_Reload obsolete
 
   // find map name
-  strcpy(lumpname, MAPNAME(episode, map));
+  strcpy(lumpname, MapName(episode, map));
 
   lumpnum = W_GetNumForName(lumpname);
+
+  G_ApplyLevelCompatibility(lumpnum);
 
   leveltime = 0;
   oldleveltime = 0;
@@ -1723,6 +1727,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
   // [crispy] fix long wall wobble
   P_SegLengths(false);
+
+  // [Nugget] Key blinking:
   // [crispy] blinking key or skull in the status bar
   memset(st_keyorskull, 0, sizeof(st_keyorskull));
 
@@ -1758,7 +1764,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
   // set up world state
   P_SpawnSpecials();
-  WS_WatchMap(); // [Cherry]
+  WadStats_WatchMap(); // [Cherry]
   P_MapEnd();
 
   // preload graphics
@@ -1766,7 +1772,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     R_PrecacheLevel();
 
   // [FG] log level setup
-  I_Printf(VB_INFO, "P_SetupLevel: %.8s (%s), Skill %d, %s%s%s, %s",
+  I_Printf(VB_DEMO, "P_SetupLevel: %.8s (%s), Skill %d, %s%s%s, %s",
     lumpname, W_WadNameForLump(lumpnum),
     gameskill + 1,
     mapformat >= MFMT_UNSUPPORTED ? "NanoBSP" :

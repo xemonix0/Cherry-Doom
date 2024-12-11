@@ -23,7 +23,8 @@
 #include "m_array.h"
 #include "m_misc.h"
 #include "mn_menu.h"
-#include "mn_setup.h"
+#include "mn_internal.h"
+#include "st_widgets.h"
 #include "wad_stats.h"
 
 #define LT_X_MARGIN         16
@@ -141,7 +142,7 @@ static void LevelsInsertRow(setup_menu_t **menu, char *text, int map_i,
 {
     extern void LT_Warp(void);
 
-    int64_t flags = S_LEFTJUST | S_TITLE | S_FUNCTION;
+    int64_t flags = S_LEFTJUST | S_TITLE | S_FUNC2;
     if (display_stats)
     {
         flags |= S_LTBL_MAP;
@@ -183,14 +184,17 @@ static void LevelsBuild(void)
             }
 
             LevelsInsertRow(page, M_StringDuplicate(ms->lump), i,
-                            lt_enable_tracking && !notrackingparm
-                                && !wad_index);
+                            TRACKING_WAD_STATS && !wad_index);
         }
 
-        InsertResetButton(page);
+        if (TRACKING_WAD_STATS)
+        {
+            InsertResetButton(page);
+        }
+
         InsertLastItem(page);
 
-        if (p == 0 && (!lt_enable_tracking || notrackingparm))
+        if (p == 0 && !TRACKING_WAD_STATS)
         {
             break;
         }
@@ -204,7 +208,7 @@ static void SummaryCalculate(void)
 {
     memset(&summary, 0, sizeof(summary));
 
-    if (!lt_enable_tracking || notrackingparm)
+    if (!TRACKING_WAD_STATS)
     {
         return;
     }
@@ -289,7 +293,7 @@ void LT_Reset(void)
 
 void LT_Build(void)
 {
-    if (lt_enable_tracking && !notrackingparm)
+    if (TRACKING_WAD_STATS)
     {
         level_table_tabs[lt_page_times].flags &= ~S_DISABLE;
         level_table_tabs[lt_page_summary].flags &= ~S_DISABLE;
@@ -314,7 +318,8 @@ static char *FormatStat(int a, int b, boolean known_total)
 {
     char *str = NULL;
 
-    switch (lt_stats_format ? lt_stats_format : hud_stats_format)
+    switch (lt_stats_format != STATSFORMAT_MATCHHUD ? lt_stats_format
+                                                    : hud_stats_format)
     {
         case STATSFORMAT_RATIO:
             M_StringPrintF(&str, "%d", a);
@@ -326,7 +331,7 @@ static char *FormatStat(int a, int b, boolean known_total)
         case STATSFORMAT_BOOLEAN:
             M_StringPrintF(&str, "%s", (known_total && a >= b) ? "YES" : "NO");
             break;
-        case STATSFORMAT_PERCENTAGE:
+        case STATSFORMAT_PERCENT:
             if (known_total)
             {
                 M_StringPrintF(&str, "%d%%", !b ? 100 : a * 100 / b);
@@ -348,6 +353,7 @@ static char *FormatStat(int a, int b, boolean known_total)
             break;
         case STATSFORMAT_COUNT:
             M_StringPrintF(&str, "%d", a);
+        default:
             break;
     }
 
@@ -553,7 +559,7 @@ static void LevelsDraw(setup_menu_t *menu, int page)
 {
     int accum_y = M_Y;
 
-    if (lt_enable_tracking && !notrackingparm)
+    if (TRACKING_WAD_STATS)
     {
         LevelsDrawPageHeaders(page, accum_y);
     }

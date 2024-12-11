@@ -546,9 +546,11 @@ void R_StoreWallRange(const int start, const int stop)
   sidedef = curline->sidedef;
   linedef = curline->linedef;
 
+  if (!linedef)
+    return;
+
   // mark the segment as visible for auto map
-  if (linedef)
-    linedef->flags |= ML_MAPPED;
+  linedef->flags |= ML_MAPPED;
 
   // [FG] update automap while playing
   if (automap_on)
@@ -570,6 +572,13 @@ void R_StoreWallRange(const int start, const int stop)
   ds_p->x2 = stop;
   ds_p->curline = curline;
   rw_stopx = stop+1;
+
+  ptrdiff_t pos = lastopening - openings;
+  size_t need = (rw_stopx - start) * sizeof(*lastopening) + pos;
+  if (need > maxopenings)
+  {
+      return;
+  }
 
   // WiggleFix: add this line, in r_segs.c:R_StoreWallRange,
   // right before calls to R_ScaleFromGlobalAngle
@@ -668,7 +677,6 @@ void R_StoreWallRange(const int start, const int stop)
       // killough 4/7/98: make doorclosed external variable
 
       {
-        extern int doorclosed;    // killough 1/17/98, 2/8/98, 4/7/98
         if (doorclosed || backsector->interpceilingheight<=frontsector->interpfloorheight)
           {
             ds_p->sprbottomclip = negonearray;

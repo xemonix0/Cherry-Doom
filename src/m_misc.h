@@ -24,6 +24,8 @@
 #include "doomtype.h"
 
 boolean M_FileExists(const char *file);
+boolean M_DirExists(const char *path);
+int M_FileLength(const char *path);
 char *M_TempFile(const char *s);
 char *M_FileCaseExists(const char *file);
 boolean M_StrToInt(const char *str, int *result);
@@ -40,8 +42,15 @@ void M_StringConcatF(char **dest, const char *format, ...) PRINTF_ATTR(2, 0); //
 void M_StringPrintF(char **dest, const char *format, ...) PRINTF_ATTR(2, 0);  // [Cherry]
 char *M_StringReplace(const char *haystack, const char *needle,
                       const char *replacement);
-char *M_StringJoin(const char *s, ...);
-char **M_StringSplit(char *s, const char *delim); // [Cherry]
+
+char *M_StringJoinInternal(const char *s[], size_t n);
+#define M_StringJoin(...)                                      \
+    M_StringJoinInternal((const char *[]){__VA_ARGS__},        \
+                         sizeof((const char *[]){__VA_ARGS__}) \
+                             / sizeof(const char *))
+char** M_StringSplit(char* s, const char* delim); // [Cherry]
+
+boolean M_StringStartsWith(const char *s, const char *prefix);
 boolean M_StringEndsWith(const char *s, const char *suffix);
 boolean M_StringCaseEndsWith(const char *s, const char *suffix);
 int M_vsnprintf(char *buf, size_t buf_len, const char *s, va_list args)
@@ -53,5 +62,6 @@ char *AddDefaultExtension(char *path, const char *ext);
 boolean M_WriteFile(const char *name, void *source, int length);
 int M_ReadFile(char const *name, byte **buffer);
 int M_ReadFileToString(char const *name, char **buffer); // [Cherry]
+boolean M_StringToDigest(const char *string, byte *digest, int size);
 
 #endif

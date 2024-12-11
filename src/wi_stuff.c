@@ -21,12 +21,12 @@
 #include <string.h>
 
 #include "d_event.h"
+#include "d_deh.h"
 #include "d_player.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
 #include "g_game.h"
-#include "hu_lib.h"
 #include "i_printf.h"
 #include "m_misc.h"
 #include "m_random.h"
@@ -34,20 +34,21 @@
 #include "mn_menu.h"
 #include "r_defs.h"
 #include "s_sound.h"
-#include "st_lib.h"
+#include "st_sbardef.h"
+#include "st_stuff.h"
 #include "sounds.h"
 #include "u_mapinfo.h"
+#include "v_fmt.h"
 #include "v_video.h"
 #include "w_wad.h"
+#include "wi_interlvl.h"
 #include "wi_stuff.h"
 #include "z_zone.h"
 
 // [Nugget]
 #include "r_main.h"
 
-// Ty 03/17/98: flag that new par times have been loaded in d_deh
-extern boolean deh_pars;
-extern boolean um_pars;
+#define LARGENUMBER 1994
 
 //
 // Data needed to add patches to full screen intermission pics.
@@ -388,7 +389,35 @@ static int    num_lnames;
 
 static const char *exitpic, *enterpic;
 
+#define M_ARRAY_MALLOC(size) Z_Malloc((size), PU_LEVEL, NULL)
+#define M_ARRAY_REALLOC(ptr, size) Z_Realloc((ptr), (size), PU_LEVEL, NULL)
+#define M_ARRAY_FREE(ptr) Z_Free((ptr))
+#include "m_array.h"
+
+typedef struct
+{
+    interlevelframe_t *frames;
+    int x_pos;
+    int y_pos;
+    int frame_index;
+    boolean frame_start;
+    int duration_left;
+} wi_animationstate_t;
+
+typedef struct
+{
+    interlevel_t *interlevel_exiting;
+    interlevel_t *interlevel_entering;
+
+    wi_animationstate_t *states;
+    char *background_lump;
+} wi_animation_t;
+
+static wi_animation_t *animation;
+
 // [Nugget] Alt. intermission background /------------------------------------
+
+boolean alt_interpic;
 
 static boolean alt_interpic_on = false, old_alt_interpic_on = false;
 
@@ -408,6 +437,276 @@ void WI_DisableAltInterpic(void)
 // CODE
 //
 
+static boolean CheckConditions(interlevelcond_t *conditions,
+                               boolean enteringcondition)
+{
+    boolean conditionsmet = true;
+
+    int map, episode;
+    if (enteringcondition)
+    {
+        map = wbs->next + 1;
+        episode = wbs->nextep + 1;
+    }
+    else
+    {
+        map = wbs->last + 1;
+        episode = wbs->epsd + 1;
+    }
+
+    interlevelcond_t *cond;
+    array_foreach(cond, conditions)
+    {
+        switch (cond->condition)
+        {
+            case AnimCondition_MapNumGreater:
+                conditionsmet &= (map > cond->param);
+                break;
+
+            case AnimCondition_MapNumEqual:
+                conditionsmet &= (map == cond->param);
+                break;
+
+            case AnimCondition_MapVisited:
+                {
+                    boolean result = false;
+                    level_t *level;
+                    array_foreach(level, wbs->visitedlevels)
+                    {
+                        if (level->map == cond->param)
+                        {
+                            result = true;
+                            break;
+                        }
+                    }
+                    conditionsmet &= result;
+                }
+                break;
+
+            case AnimCondition_MapNotSecret:
+                conditionsmet &= !U_IsSecretMap(episode, map);
+                break;
+
+            case AnimCondition_SecretVisited:
+                conditionsmet &= wbs->didsecret;
+                break;
+
+            case AnimCondition_Tally:
+                conditionsmet &= !enteringcondition;
+                break;
+
+            case AnimCondition_IsEntering:
+                conditionsmet &= enteringcondition;
+                break;
+
+            default:
+                break;
+        }
+    }
+    return conditionsmet;
+}
+
+static boolean UpdateAnimation(void)
+{
+    if (!animation || !animation->states)
+    {
+        return false;
+    }
+
+    wi_animationstate_t *state;
+    array_foreach(state, animation->states)
+    {
+        interlevelframe_t *frame = &state->frames[state->frame_index];
+
+        if (frame->type & Frame_Infinite)
+        {
+            continue;
+        }
+
+        if (state->duration_left == 0)
+        {
+            if (!state->frame_start)
+            {
+                state->frame_index++;
+                if (state->frame_index == array_size(state->frames))
+                {
+                    state->frame_index = 0;
+                }
+
+                frame = &state->frames[state->frame_index];
+            }
+
+            int tics = 1;
+            switch (frame->type)
+            {
+                case Frame_RandomStart:
+                    if (state->frame_start)
+                    {
+                        tics = M_Random() % frame->duration;
+                        break;
+                    }
+                    // fall through
+                case Frame_FixedDuration:
+                    tics = frame->duration;
+                    break;
+
+                case Frame_RandomDuration:
+                    tics = M_Random() % frame->maxduration;
+                    tics = BETWEEN(frame->duration, frame->maxduration, tics);
+                    break;
+
+                default:
+                    break;
+            }
+
+            state->duration_left = MAX(tics, 1);
+        }
+
+        state->duration_left--;
+        state->frame_start = false;
+    }
+
+    return true;
+}
+
+static boolean DrawAnimation(void)
+{
+    if (!animation)
+    {
+        return false;
+    }
+
+    if (animation->background_lump)
+    {
+        V_DrawPatchFullScreen(
+            V_CachePatchName(animation->background_lump, PU_CACHE));
+    }
+
+    wi_animationstate_t *state;
+    array_foreach(state, animation->states)
+    {
+        interlevelframe_t *frame = &state->frames[state->frame_index];
+        int lumpnum = W_CheckNumForName(frame->image_lump);
+        if (lumpnum < 0)
+        {
+            lumpnum = (W_CheckNumForName)(frame->image_lump, ns_sprites);
+        }
+        V_DrawPatch(state->x_pos, state->y_pos,
+                    V_CachePatchNum(lumpnum, PU_CACHE));
+    }
+
+    return true;
+}
+
+static wi_animationstate_t *SetupAnimationStates(interlevellayer_t *layers,
+                                                 boolean enteringcondition)
+{
+    wi_animationstate_t *states = NULL;
+
+    interlevellayer_t *layer;
+    array_foreach(layer, layers)
+    {
+        if (!CheckConditions(layer->conditions, enteringcondition))
+        {
+            continue;
+        }
+
+        interlevelanim_t *anim;
+        array_foreach(anim, layer->anims)
+        {
+            if (!CheckConditions(anim->conditions, enteringcondition))
+            {
+                continue;
+            }
+
+            wi_animationstate_t state = {0};
+            state.x_pos = anim->x_pos;
+            state.y_pos = anim->y_pos;
+            state.frames = anim->frames;
+            state.frame_start = true;
+            array_push(states, state);
+        }
+    }
+
+    return states;
+}
+
+static boolean SetupAnimation(boolean enteringcondition)
+{
+    if (!animation)
+    {
+        return false;
+    }
+
+    interlevel_t *interlevel = NULL;
+    if (!enteringcondition)
+    {
+        if (animation->interlevel_exiting)
+        {
+            interlevel = animation->interlevel_exiting;
+        }
+    }
+    else if (animation->interlevel_entering)
+    {
+        interlevel = animation->interlevel_entering;
+    }
+
+    if (interlevel)
+    {
+        animation->states =
+            SetupAnimationStates(interlevel->layers, enteringcondition);
+        animation->background_lump = interlevel->background_lump;
+        return true;
+    }
+
+    animation->states = NULL;
+    animation->background_lump = NULL;
+    return false;
+}
+
+static boolean NextLocAnimation(void)
+{
+    if (animation && animation->interlevel_entering
+        && !(demorecording || demoplayback))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+static boolean SetupMusic(boolean enteringcondition)
+{
+    if (!animation)
+    {
+        return false;
+    }
+
+    interlevel_t *interlevel = NULL;
+    if (!enteringcondition)
+    {
+        if (animation->interlevel_exiting)
+        {
+            interlevel = animation->interlevel_exiting;
+        }
+    }
+    else if (animation->interlevel_entering)
+    {
+        interlevel = animation->interlevel_entering;
+    }
+
+    if (interlevel)
+    {
+        int musicnum = W_GetNumForName(interlevel->music_lump);
+        if (musicnum >= 0)
+        {
+            S_ChangeMusInfoMusic(musicnum, true);
+            return true;
+        }
+    }
+
+    return false;
+}
 
 // ====================================================================
 // WI_slamBackground
@@ -436,7 +735,7 @@ void WI_slamBackground(void)
   else
     M_snprintf(name, sizeof(name), "WIMAP%d", wbs->epsd);
 
-  V_DrawPatchFullScreen(W_CacheLumpName(name, PU_CACHE));
+  V_DrawPatchFullScreen(V_CachePatchName(name, PU_CACHE));
 }
 
 // ====================================================================
@@ -484,7 +783,7 @@ static void WI_drawLF(void)
   }
   else if (wbs->lastmapinfo && wbs->lastmapinfo->levelpic[0])
   {
-    patch_t* lpic = W_CacheLumpName(wbs->lastmapinfo->levelpic, PU_CACHE);
+    patch_t* lpic = V_CachePatchName(wbs->lastmapinfo->levelpic, PU_CACHE);
 
      // [Nugget] HUD/menu shadows
     V_DrawPatchSH((SCREENWIDTH - SHORT(lpic->width))/2,
@@ -542,13 +841,13 @@ static void WI_drawEL(void)
   }
   else if (wbs->nextmapinfo && wbs->nextmapinfo->levelpic[0])
   {
-    patch_t* lpic = W_CacheLumpName(wbs->nextmapinfo->levelpic, PU_CACHE);
+    patch_t* lpic = V_CachePatchName(wbs->nextmapinfo->levelpic, PU_CACHE);
 
-    y += (5 * SHORT(lpic->height)) / 4;
+    if (SHORT(lpic->height) < SCREENHEIGHT)
+      y += (5 * SHORT(lpic->height)) / 4;
 
     // [Nugget] HUD/menu shadows
-    V_DrawPatchSH((SCREENWIDTH - SHORT(lpic->width))/2,
-                  y, lpic);
+    V_DrawPatchSH((SCREENWIDTH - SHORT(lpic->width))/2, y, lpic);
   }
   // [FG] prevent crashes for levels without name graphics
   else if (wbs->next >= 0 && wbs->next < num_lnames && lnames[wbs->next] != NULL)
@@ -628,6 +927,11 @@ static void WI_initAnimatedBack(boolean firstcall)
   int   i;
   anim_t* a;
 
+  if (SetupAnimation(state != StatCount))
+  {
+      return;
+  }
+
   if (exitpic)
     return;
   if (enterpic && entering)
@@ -648,8 +952,8 @@ static void WI_initAnimatedBack(boolean firstcall)
       // via WI_initShowNextLoc. Fixes notable blinking of Tower of Babel drawing
       // and the rest of animations from being restarted.
       if (firstcall)
-      a->ctr = -1;
-
+        a->ctr = -1;
+  
       // specify the next time to draw it
       if (a->type == ANIM_ALWAYS)
         a->nexttic = bcnt + 1 + (M_Random()%a->period);
@@ -673,6 +977,11 @@ static void WI_updateAnimatedBack(void)
 {
   int   i;
   anim_t* a;
+
+  if (UpdateAnimation())
+  {
+      return;
+  }
 
   if (exitpic)
     return;
@@ -736,6 +1045,13 @@ static void WI_drawAnimatedBack(void)
   int     i;
   anim_t*   a;
 
+  if (alt_interpic_on) { return; } // [Nugget] Alt. intermission background
+
+  if (DrawAnimation())
+  {
+      return;
+  }
+
   if (exitpic)
     return;
   if (enterpic && state != StatCount)
@@ -746,8 +1062,6 @@ static void WI_drawAnimatedBack(void)
 
   if (wbs->epsd > 2)
     return;
-
-  if (alt_interpic_on) { return; } // [Nugget] Alt. intermission background
 
   for (i=0 ; i<NUMANIMS[wbs->epsd] ; i++)
     {
@@ -893,7 +1207,7 @@ WI_drawTime
       // [FG] print at most in hhhh:mm:ss format
       if ((n = (t / div)))
       {
-        x = WI_drawNum(x, y, n, -1);
+        WI_drawNum(x, y, n, -1);
       }
 
       SHADOW_REDRAW(WI_drawTime(oldx, y, t, suck)) // [Nugget] HUD/menu shadows
@@ -1033,6 +1347,8 @@ static boolean    snl_pointeron = false;
 //
 static void WI_initShowNextLoc(void)
 {
+  SetupMusic(true);
+
   if (gamemapinfo)
   {
     if (gamemapinfo->endpic[0])
@@ -1115,6 +1431,8 @@ static void WI_drawShowNextLoc(void)
           return;
         }
 
+      if (!animation || !animation->states)
+      {
       last = (wbs->last == 8) ? wbs->next - 1 : wbs->last;
 
       // draw a splat on taken cities.
@@ -1127,7 +1445,8 @@ static void WI_drawShowNextLoc(void)
 
       // draw flashing ptr
       if (snl_pointeron)
-        WI_drawOnLnode(wbs->next, yah);
+        WI_drawOnLnode(wbs->next, yah); 
+      }
     }
 
   // draws which level you are entering..
@@ -1308,6 +1627,8 @@ static void WI_updateDeathmatchStats(void)
           {
             S_StartSoundOptional(0, sfx_intdms, sfx_slop); // [Nugget]: [NS] Optional inter sounds.
 
+            if (NextLocAnimation())
+              WI_initShowNextLoc();
             if ( gamemode == commercial)
               WI_initNoState();
             else
@@ -1625,6 +1946,9 @@ static void WI_updateNetgameStats(void)
               if (acceleratestage)
                 {
                   S_StartSoundOptional(0, sfx_intnex, sfx_sgcock); // [Nugget]: [NS] Optional inter sounds.
+
+                  if (NextLocAnimation())
+                    WI_initShowNextLoc();
                   if ( gamemode == commercial )
                     WI_initNoState();
                   else
@@ -1861,7 +2185,9 @@ static void WI_updateStats(void)
                 {
                   S_StartSoundOptional(0, sfx_intnex, sfx_sgcock); // [Nugget]: [NS] Optional inter sounds.
 
-                  if (gamemode == commercial)
+                  if (NextLocAnimation())
+                    WI_initShowNextLoc();
+                  else if (gamemode == commercial)
                     WI_initNoState();
                   else
                     WI_initShowNextLoc();
@@ -1887,8 +2213,8 @@ static void WI_updateStats(void)
 static void WI_drawStats(void)
 {
   // line height
-  int lh;
-  int maplump = W_CheckNumForName(MAPNAME(wbs->epsd + 1, wbs->last + 1));
+  int lh; 
+  int maplump = W_CheckNumForName(MapName(wbs->epsd + 1, wbs->last + 1));
 
   lh = (3*SHORT(num[0]->height))/2;
 
@@ -1984,7 +2310,7 @@ void WI_Ticker(void)
   // counter for general background animation
   bcnt++;
 
-  if (bcnt == 1)
+  if (bcnt == 1 && !SetupMusic(false))
     {
       // intermission music
       if ( gamemode == commercial )
@@ -2002,6 +2328,7 @@ void WI_Ticker(void)
       else
         if (netgame) WI_updateNetgameStats();
         else WI_updateStats();
+      WI_UpdateWidgets();
       break;
 
     case ShowNextLoc:
@@ -2086,7 +2413,7 @@ void WI_loadData(void)
           M_snprintf(name, sizeof(name), "CWILV%2.2d", i);
           if (W_CheckNumForName(name) != -1)
           {
-          lnames[i] = W_CacheLumpName(name, PU_STATIC);
+          lnames[i] = V_CachePatchName(name, PU_STATIC);
           }
           else
           {
@@ -2103,7 +2430,7 @@ void WI_loadData(void)
           M_snprintf(name, sizeof(name), "WILV%d%d", wbs->epsd, i);
           if (W_CheckNumForName(name) != -1)
           {
-          lnames[i] = W_CacheLumpName(name, PU_STATIC);
+          lnames[i] = V_CachePatchName(name, PU_STATIC);
           }
           else
           {
@@ -2112,13 +2439,13 @@ void WI_loadData(void)
         }
 
       // you are here
-      yah[0] = W_CacheLumpName("WIURH0", PU_STATIC);
+      yah[0] = V_CachePatchName("WIURH0", PU_STATIC);
 
       // you are here (alt.)
-      yah[1] = W_CacheLumpName("WIURH1", PU_STATIC);
+      yah[1] = V_CachePatchName("WIURH1", PU_STATIC);
 
       // splat
-      splat[0] = W_CacheLumpName("WISPLAT", PU_STATIC); 
+      splat[0] = V_CachePatchName("WISPLAT", PU_STATIC); 
   
       if (wbs->epsd < 3)
         {
@@ -2132,7 +2459,7 @@ void WI_loadData(void)
                     {
                       // animations
                       M_snprintf(name, sizeof(name), "WIA%d%.2d%.2d", wbs->epsd, j, i);
-                      a->p[i] = W_CacheLumpName(name, PU_STATIC);
+                      a->p[i] = V_CachePatchName(name, PU_STATIC);
                     }
                   else
                     {
@@ -2147,32 +2474,32 @@ void WI_loadData(void)
   // More hacks on minus sign.
   // [FG] allow playing with the Doom v1.2 IWAD which is missing the WIMINUS lump
   if (W_CheckNumForName("WIMINUS") >= 0)
-  wiminus = W_CacheLumpName("WIMINUS", PU_STATIC);
+  wiminus = V_CachePatchName("WIMINUS", PU_STATIC); 
 
   for (i=0;i<10;i++)
     {
       // numbers 0-9
       M_snprintf(name, sizeof(name), "WINUM%d", i);
-      num[i] = W_CacheLumpName(name, PU_STATIC);
+      num[i] = V_CachePatchName(name, PU_STATIC);
     }
 
   // percent sign
-  percent = W_CacheLumpName("WIPCNT", PU_STATIC);
+  percent = V_CachePatchName("WIPCNT", PU_STATIC);
 
   // "finished"
-  finished = W_CacheLumpName("WIF", PU_STATIC);
+  finished = V_CachePatchName("WIF", PU_STATIC);
 
   // "entering"
-  entering = W_CacheLumpName("WIENTER", PU_STATIC);
+  entering = V_CachePatchName("WIENTER", PU_STATIC);
 
   // "kills"
-  kills = W_CacheLumpName("WIOSTK", PU_STATIC);
+  kills = V_CachePatchName("WIOSTK", PU_STATIC);   
 
   // "scrt"
-  secret = W_CacheLumpName("WIOSTS", PU_STATIC);
+  secret = V_CachePatchName("WIOSTS", PU_STATIC);
 
   // "secret"
-  sp_secret = W_CacheLumpName("WISCRT2", PU_STATIC);
+  sp_secret = V_CachePatchName("WISCRT2", PU_STATIC);
 
   // Yuck. // Ty 03/27/98 - got that right :)
   // french is an enum=1 always true.
@@ -2185,47 +2512,47 @@ void WI_loadData(void)
   //      items = W_CacheLumpName("WIOSTI", PU_STATIC);
   //    } else
 
-  items = W_CacheLumpName("WIOSTI", PU_STATIC);
+  items = V_CachePatchName("WIOSTI", PU_STATIC);
 
   // "frgs"
-  frags = W_CacheLumpName("WIFRGS", PU_STATIC);
+  frags = V_CachePatchName("WIFRGS", PU_STATIC);    
 
   // ":"
-  colon = W_CacheLumpName("WICOLON", PU_STATIC);
+  colon = V_CachePatchName("WICOLON", PU_STATIC); 
 
   // "time"
-  witime = W_CacheLumpName("WITIME", PU_STATIC);
+  witime = V_CachePatchName("WITIME", PU_STATIC);
 
   // "sucks"
-  sucks = W_CacheLumpName("WISUCKS", PU_STATIC);
+  sucks = V_CachePatchName("WISUCKS", PU_STATIC);  
 
   // "par"
-  par = W_CacheLumpName("WIPAR", PU_STATIC);
+  par = V_CachePatchName("WIPAR", PU_STATIC);   
 
   // "killers" (vertical)
-  killers = W_CacheLumpName("WIKILRS", PU_STATIC);
-
+  killers = V_CachePatchName("WIKILRS", PU_STATIC);
+  
   // "victims" (horiz)
-  victims = W_CacheLumpName("WIVCTMS", PU_STATIC);
+  victims = V_CachePatchName("WIVCTMS", PU_STATIC);
 
   // "total"
-  total = W_CacheLumpName("WIMSTT", PU_STATIC);
+  total = V_CachePatchName("WIMSTT", PU_STATIC);   
 
   // your face
-  star = W_CacheLumpName("STFST01", PU_STATIC);
+  star = V_CachePatchName("STFST01", PU_STATIC);
 
   // dead face
-  bstar = W_CacheLumpName("STFDEAD0", PU_STATIC);
+  bstar = V_CachePatchName("STFDEAD0", PU_STATIC);    
 
   for (i=0 ; i<MAXPLAYERS ; i++)
     {
       // "1,2,3,4"
       M_snprintf(name, sizeof(name), "STPB%d", i);
-      p[i] = W_CacheLumpName(name, PU_STATIC);
+      p[i] = V_CachePatchName(name, PU_STATIC);
 
       // "1,2,3,4"
       M_snprintf(name, sizeof(name), "WIBP%d", i + 1);
-      bp[i] = W_CacheLumpName(name, PU_STATIC);
+      bp[i] = V_CachePatchName(name, PU_STATIC);
     }
 }
 
@@ -2238,10 +2565,6 @@ void WI_loadData(void)
 //
 void WI_Drawer (void)
 {
-  extern void WI_DrawWidgets(void);
-
-  HUlib_reset_align_offsets();
-
   switch (state)
     {
     case StatCount:
@@ -2331,16 +2654,47 @@ static void WI_initVariables(wbstartstruct_t* wbstartstruct)
 //
 void WI_Start(wbstartstruct_t* wbstartstruct)
 {
-  extern void HU_Start(void); // [Cherry]
-
   WI_initVariables(wbstartstruct);
 
-  exitpic = (wbs->lastmapinfo && wbs->lastmapinfo->exitpic[0]) ? wbs->lastmapinfo->exitpic : NULL;
-  enterpic = (wbs->nextmapinfo && wbs->nextmapinfo->enterpic[0]) ? wbs->nextmapinfo->enterpic : NULL;
+  exitpic = NULL;
+  enterpic = NULL;
+  animation = NULL;
+
+  if (wbs->lastmapinfo)
+  {
+      if (wbs->lastmapinfo->exitpic[0])
+      {
+          exitpic = wbs->lastmapinfo->exitpic;
+      }
+      if (wbs->lastmapinfo->exitanim[0])
+      {
+          if (!animation)
+          {
+              animation = Z_Calloc(1, sizeof(*animation), PU_LEVEL, NULL);
+          }
+          animation->interlevel_exiting =
+              WI_ParseInterlevel(wbs->lastmapinfo->exitanim);
+      }
+  }
+
+  if (wbs->nextmapinfo)
+  {
+      if (wbs->nextmapinfo->enterpic[0])
+      {
+          enterpic = wbs->nextmapinfo->enterpic;
+      }
+      if (wbs->nextmapinfo->enteranim[0])
+      {
+          if (!animation)
+          {
+              animation = Z_Calloc(1, sizeof(*animation), PU_LEVEL, NULL);
+          }
+          animation->interlevel_entering =
+              WI_ParseInterlevel(wbs->nextmapinfo->enteranim);
+      }
+  }
 
   WI_loadData();
-
-  HU_Start(); // [Cherry] Update weapons widget line number, build widgets
 
   if (deathmatch)
     WI_initDeathmatchStats();

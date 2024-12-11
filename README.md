@@ -31,21 +31,18 @@ Although the new code has been written with the intention of not breaking demo c
 
 - _Mute Inactive Window_ setting [p.f. [International Doom](https://jnechaevsky.github.io/inter-doom/)]
 - _Floating Powerups_ setting [p.f. International Doom]
-- _Rocket Trails_ setting [p.f. [Doom Retro](https://www.doomretro.com/)] (with extended customization via the _Rocket Trails Interval_ and _Smoke Translucency_ settings)
-	- Just like in Doom Retro, rocket trails are disabled if a [DSDHacked](https://doomwiki.org/wiki/DSDHacked) patch replaces the rocket smoke thing definition or any of its states or sprites
+- _Rocket Trails_ setting [partially p.f. [Doom Retro](https://www.doomretro.com/)]
+	- Smoke particle spawn rate and smoke translucency are customizable via the CFG-only `rocket_trails_interval` and `rocket_trails_tran` CVARs respectively
 - _Mouselook_ option for the _Stretch Short Skies_ setting to enable sky stretching only when mouselook is enabled
 - _Less Blinding Tints_ setting
 
 #### Intermission screen
 
-- Settings to show _Health & Armor_ and _Weapons_ widgets alongside the detailed time widget
 - Setting to _adjust intermission kill percentage to follow UV max speedrun requirements_ (CFG-only: `inter_accurate_kill_count`)
 	- Specifically, it prevents resurrected and Icon of Sin-spawned monsters from increasing the totals, and also makes 100% show up for maps without monsters
 - Items percentage is now 100% on maps without items
 
 ### Status Bar/HUD
-
-- _Movement widget_: shows the current player movement and strafing speeds
 
 #### Crosshair
 
@@ -97,15 +94,17 @@ git clone https://github.com/xemonix0/Cherry-Doom.git
 ### Linux, and Windows with MSYS2
 
 The following build system and libraries need to be installed:
-
-- [CMake](https://cmake.org) (>= 3.9)
-- [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
-- [SDL2_net](https://github.com/libsdl-org/SDL_net)
-- [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
-- [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
-- [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
-- [libxmp](https://github.com/libxmp/libxmp) (optional)
-
+ 
+ * [CMake](https://cmake.org) (>= 3.9)
+ * [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
+ * [SDL2_net](https://github.com/libsdl-org/SDL_net)
+ * [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
+ * [libsndfile](https://github.com/libsndfile/libsndfile) (>= 1.1.0 for MPEG support)
+ * [libebur128](https://github.com/jiixyj/libebur128) (>= 1.2.0)
+ * [yyjson](https://github.com/ibireme/yyjson) (>= 0.10.0, optional)
+ * [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
+ * [libxmp](https://github.com/libxmp/libxmp) (optional)
+ 
 Usually your distribution should have the corresponding packages in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
 
 Once installed, compilation should be as simple as:
@@ -151,7 +150,7 @@ Copyright:
  © 2020 JadingTsunami;  
  © 2020-2024 Fabian Greffrath;  
  © 2020-2024 Roman Fomin;  
- © 2021 Ryan Krafnick;  
+ © 2021-2022 Ryan Krafnick;  
  © 2021-2024 Alaux;  
  © 2022 Julia Nechaevskaya;  
  © 2022-2024 ceski;  
@@ -160,19 +159,16 @@ Copyright:
  © 2023-2024 Xemonix.   
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `src/beta.h`  
-Copyright: © 2001-2019 Contributors to the Freedoom project.  
-License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
-
-Files: `src/dogs.h`  
+Files: `src/i_flickstick.*, src/i_gyro.*`  
 Copyright:  
- © 2017 Nash Muhandes;  
- © apolloaiello;  
- © TobiasKosmos.  
-License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+ © 2018-2021 Julian "Jibb" Smart;  
+ © 2021-2024 Nicolas Lessard;  
+ © 2024 ceski.  
+License: [MIT](https://opensource.org/licenses/MIT)
 
 Files: `src/nano_bsp.*`  
-Copyright: © 2023 Andrew Apted.  
+Copyright:  
+ © 2023 Andrew Apted.  
 License: [MIT](https://opensource.org/licenses/MIT)
 
 Files: `src/u_scanner.*`  
@@ -197,15 +193,47 @@ Files: `src/wad_stats.*`
 Copyright: © 2021-2023 Ryan Krafnick.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
-Copyright: © 2018 Alex Mayfield.  
+Files: `base/all-all/sprites/pls*, man/simplecpp`  
+Copyright:  
+ © 2001-2019 Contributors to the Freedoom project.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-Files: `miniz/*`  
+Files: `base/all-all/sprites/ngcha0.png, base/all-all/sprites/ngcla0.png, base/all-all/sprites/ngtr*0.png`  
 Copyright:  
- © 2010-2014 Rich Geldreich and Tenacious Software LLC;  
- © 2013-2014 RAD Game Tools and Valve Software.  
-License: [MIT](https://opensource.org/licenses/MIT)
+ © 2023-2024 Korp.  
+License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+
+Files: `base/all-all/dsdg*, base/all-all/sprites/dog*`  
+Copyright:  
+ © 2017 Nash Muhandes;  
+ © apolloaiello;  
+ © TobiasKosmos.  
+License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/) and [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+
+Files: `base/all-all/sm*.png`  
+Copyright:  
+ © 2024 Julia Nechaevskaya.  
+License: [CC-BY-3.0](https://creativecommons.org/licenses/by/3.0/)
+
+Files: `base/all-all/sbardef.lmp`  
+Copyright:  
+ © 2024 Ethan Watson.  
+License: [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+
+Files: `base/all-all/dmxopl.op2`  
+Copyright:  
+ © 2017 Shannon Freeman.  
+License: [MIT](https://github.com/sneakernets/DMXOPL/blob/DMXOPL3/LICENSE)
+
+Files: `cmake/FindSDL2.cmake, cmake/FindSDL2_net.cmake`  
+Copyright:  
+ © 2018 Alex Mayfield.  
+License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
+
+Files: `data/io.github.xemonix0.Cherry-Doom.metainfo.*`  
+Copyright:  
+ © 2023-2024 Fabian Greffrath.  
+License: [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
 Files: `opl/*`  
 Copyright:  
@@ -226,5 +254,38 @@ Copyright:
  © 2005-2017 Simon Howard.  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
-Files: `win32/win_opendir.*`  
+Files: `third-party/md5/*`  
 License: public-domain
+
+Files: `third-party/miniz/*`  
+Copyright:  
+ © 2010-2014 Rich Geldreich and Tenacious Software LLC;  
+ © 2013-2014 RAD Game Tools and Valve Software.  
+License: [MIT](https://opensource.org/licenses/MIT)
+
+Files: `third-party/pffft/*`  
+Copyright:  
+ © 2004 The University Corporation for Atmospheric Research ("UCAR");  
+ © 2013 Julien Pommier.  
+License: [FFTPACK License](https://bitbucket.org/jpommier/pffft/src/master/pffft.h)
+
+Files: `third-party/sha1/*`  
+Copyright:  
+ © 1998-2001 Free Software Foundation, Inc.;  
+ © 2005-2014 Simon Howard.  
+License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+
+Files: `third-party/spng/*`  
+Copyright:  
+ © 2018-2023 Randy.  
+License: [BSD-2-Clause](https://opensource.org/license/bsd-2-clause)
+
+Files: `third-party/yyjson/*`  
+Copyright:  
+ © 2020 YaoYuan.  
+License: [MIT](https://opensource.org/licenses/MIT)
+
+Files: `win32/win_opendir.*`  
+Copyright:  
+ © 2019 win32ports.  
+License: [MIT](https://opensource.org/licenses/MIT)

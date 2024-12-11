@@ -1,15 +1,15 @@
 include(CheckLibraryExists)
 include(CheckIncludeFile)
 include(CheckSymbolExists)
+include(CheckCSourceCompiles)
 
 # Adds the cmake directory to the CMake include path.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # X_VCPKG_APPLOCAL_DEPS_INSTALL automatically installs dependencies.
-set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)
 
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.15)
 
 project("Cherry Doom"
     VERSION 2.0.0
@@ -41,13 +41,10 @@ set(PROJECT_COPYRIGHT "Copyright (C) 1993-2024")
 set(PROJECT_LICENSE "GNU General Public License, version 2")
 set(PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
 set(PROJECT_SHORTNAME "cherry-doom")
+set(BASE_PK3 "cherry-doom.pk3")
 set(CHERRYDOOM_ICON "cherry-doom.ico")
 set(SETUP_ICON "setup.ico")
 set(PROJECT_VERSION_RC "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0") # ${PROJECT_VERSION_TWEAK}
-
-if(NOT WIN32)
-    set(CHERRYDOOMDATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_SHORTNAME}" CACHE PATH "Path to install supplemental files")
-endif()
 
 # Toggle-able defines added at compile-time.
 option(CHERRYDOOM_RANGECHECK "Enable bounds-checking of performance-sensitive functions" ON)
@@ -58,6 +55,27 @@ check_library_exists(m pow "" HAVE_LIBM)
 check_include_file("dirent.h" HAVE_DIRENT_H)
 check_symbol_exists(strcasecmp "strings.h" HAVE_DECL_STRCASECMP)
 check_symbol_exists(strncasecmp "strings.h" HAVE_DECL_STRNCASECMP)
+check_c_source_compiles("
+    #include <windows.h>
+    int main()
+    {
+        CreateWaitableTimerEx(NULL, NULL, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION,
+                              TIMER_ALL_ACCESS);
+        return 0;
+    }
+  "
+  HAVE_HIGH_RES_TIMER
+)
+check_c_source_compiles("
+    #include <immintrin.h>
+    int main()
+    {
+        int tmp = _div64(4, 2, NULL);
+        return 0;
+    }
+  "
+  HAVE__DIV64
+)
 
 option(CMAKE_FIND_PACKAGE_PREFER_CONFIG
        "Lookup package config files before using find modules" ON)
@@ -68,6 +86,7 @@ set(CMAKE_FIND_FRAMEWORK NEVER)
 find_package(SDL2 2.0.18 REQUIRED)
 find_package(SDL2_net REQUIRED)
 find_package(OpenAL REQUIRED)
+find_package(libebur128 REQUIRED)
 find_package(SndFile 1.0.29 REQUIRED)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(ALSA REQUIRED)
@@ -89,6 +108,7 @@ if(SndFile_VERSION VERSION_GREATER_EQUAL "1.1.0")
    set(HAVE_SNDFILE_MPEG TRUE)
 endif()
 
+find_package(yyjson)
 find_package(FluidSynth)
 find_package(libxmp)
 
@@ -116,14 +136,12 @@ if(WIN32)
     install(FILES COPYING DESTINATION . RENAME COPYING.txt)
     install(FILES README.md DESTINATION .)
     install(DIRECTORY examples/ DESTINATION docs/examples)
-    install(DIRECTORY autoload/ DESTINATION autoload)
     if(FluidSynth_FOUND)
         install(DIRECTORY soundfonts/ DESTINATION soundfonts)
     endif()
 else()
     install(FILES COPYING DESTINATION "share/doc/${PROJECT_SHORTNAME}")
     install(FILES README.md DESTINATION "share/doc/${PROJECT_SHORTNAME}")
-    install(DIRECTORY autoload/ DESTINATION "share/${PROJECT_SHORTNAME}/autoload")
     if(EXISTS "${CMAKE_SOURCE_DIR}/examples")
         install(DIRECTORY examples/ DESTINATION "share/doc/${PROJECT_SHORTNAME}/examples")
     endif()
@@ -180,12 +198,15 @@ set(CPACK_SOURCE_IGNORE_FILES "/.git/;/build;/.vs/;/out/;CMakeSettings.json")
 set(CPACK_STRIP_FILES TRUE)
 include(CPack)
 
+set(BASE_PK3_PATH "${CMAKE_BINARY_DIR}/src/${BASE_PK3}")
+
 # Where to find other CMakeLists.txt files.
+add_subdirectory(base)
 add_subdirectory(data)
 add_subdirectory(opl)
 add_subdirectory(textscreen)
+add_subdirectory(third-party)
 add_subdirectory(src)
-add_subdirectory(toolsrc)
 add_subdirectory(setup)
 add_subdirectory(docs)
 add_subdirectory(man)

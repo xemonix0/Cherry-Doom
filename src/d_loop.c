@@ -729,6 +729,9 @@ static void SinglePlayerClear(ticcmd_set_t *set)
     }
 }
 
+// [Cherry] Mute Inactive Window feature from International Doom
+boolean mute_inactive;
+
 //
 // TryRunTics
 //
@@ -747,7 +750,7 @@ void TryRunTics(void)
 
 // [AM] If we've uncapped the framerate and there are no tics
 //      to run, return early instead of waiting around.
-#define return_early (uncapped && counts == 0)
+#define return_early (uncapped && counts == 0 && screenvisible)
 
     // get real tics
     entertic = I_GetTime() / ticdup;

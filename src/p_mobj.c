@@ -23,8 +23,8 @@
 #include "d_player.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "dsdhacked.h"
 #include "g_game.h"
-#include "hu_stuff.h"
 #include "i_printf.h"
 #include "info.h"
 #include "m_random.h"
@@ -50,8 +50,18 @@
 // [Nugget]
 #include "p_user.h"
 
-// [FG] colored blood and gibs
-boolean colored_blood;
+// [Nugget] CVARs
+int viewheight_value;
+int flinching;
+int damagecount_cap;
+int bonuscount_cap;
+boolean comp_fuzzyblood;
+boolean comp_nonbleeders;
+
+// [Cherry] CVARs
+boolean rocket_trails;
+int rocket_trails_interval;
+
 int vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
 
 void P_UpdateDirectVerticalAiming(void)
@@ -83,7 +93,7 @@ boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
 
   // killough 4/9/98: remember states seen, to detect cycles:
 
-  extern statenum_t *seenstate_tab;           // fast transition table
+  // fast transition table
   statenum_t *seenstate = seenstate_tab;      // pointer to table
   static int recursion;                       // detects recursion
   statenum_t i = state;                       // initial state
@@ -157,8 +167,16 @@ void P_ExplodeMissile (mobj_t* mo)
   mo->flags &= ~MF_MISSILE;
 
   if (mo->info->deathsound)
-    S_StartSoundPitch(mo, mo->info->deathsound,
-                      brainexplode ? PITCH_NONE : PITCH_FULL);
+  {
+    if (brainexplode)
+    {
+      S_StartSoundPitch(mo, mo->info->deathsound, PITCH_NONE);
+    }
+    else
+    {
+      S_StartSoundOrigin(mo->target, mo, mo->info->deathsound);
+    }
+  }
 }
 
 //
@@ -438,6 +456,8 @@ void P_XYMovement (mobj_t* mo)
      }
     }
 }
+
+boolean comp_deadoof; // [Nugget]
 
 //
 // P_ZMovement
@@ -893,7 +913,7 @@ void P_MobjThinker (mobj_t* mobj)
           }
 
           if (oumobj && mobj->flags & MF_SKULLFLY)
-          { P_SkullSlam(mobj, oumobj); }
+          { P_SkullSlam(&mobj, oumobj); }
         }
       }
       else
@@ -985,6 +1005,10 @@ void P_MobjThinker (mobj_t* mobj)
 	++mobj->movecount >= 12*35 && !(leveltime & 31) &&
 	P_Random (pr_respawn) <= 4)
       P_NightmareRespawn(mobj);          // check for nightmare respawn
+
+  // [Nugget] Alt. states
+  if (mobj->altstate && mobj->alttics != -1 && !--mobj->alttics)
+  { P_SetMobjAltState(mobj, mobj->altstate->nextstate); }
 }
 
 
@@ -1033,8 +1057,6 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   mobj->sprite = st->sprite;
   mobj->frame  = st->frame;
 
-  mobj->altsprite = mobj->altframe = -1; // [Nugget] Alt. sprites
-
   // NULL head of sector list // phares 3/13/98
   mobj->touching_sectorlist = NULL;
 
@@ -1046,6 +1068,19 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   mobj->oldy = mobj->y;
   mobj->oldz = mobj->z;
   mobj->oldangle = mobj->angle;
+
+  // [Nugget] /---------------------------------------------------------------
+
+  mobj->altsprite = mobj->altframe = -1; // Alt. sprites
+
+  // Alt. states
+  mobj->altstate = NULL;
+  mobj->alttics  = -1; 
+
+  mobj->isvisual = false;
+  mobj->tranmap = NULL;
+
+  // [Nugget] ---------------------------------------------------------------/
 
   // set subsector and/or block links
 
@@ -1322,7 +1357,6 @@ void P_SpawnPlayer (mapthing_t* mthing)
   if (mthing->type-1 == consoleplayer)
     {
       ST_Start(); // wake up the status bar
-      HU_Start(); // wake up the heads up text
     }
 }
 
@@ -1488,6 +1522,8 @@ spawnit:
 
   z = mobjinfo[i].flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
 
+  // Because of DSDHacked, allow `i` values outside enum mobjtype_t range
+  // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
   mobj = P_SpawnMobj (x,y,z, i);
   mobj->spawnpoint = *mthing;
 
@@ -1567,35 +1603,17 @@ spawnit:
       mobj->health = 1000 + musid;
   }
 
+  // [Nugget] Key blinking:
   // [crispy] blinking key or skull in the status bar
   switch (mobj->sprite)
   {
-    case SPR_BKEY:
-      st_keyorskull[it_bluecard] |= KEYBLINK_CARD;
-      break;
-
-    case SPR_BSKU:
-      st_keyorskull[it_bluecard] |= KEYBLINK_SKULL;
-      break;
-
-    case SPR_RKEY:
-      st_keyorskull[it_redcard] |= KEYBLINK_CARD;
-      break;
-
-    case SPR_RSKU:
-      st_keyorskull[it_redcard] |= KEYBLINK_SKULL;
-      break;
-
-    case SPR_YKEY:
-      st_keyorskull[it_yellowcard] |= KEYBLINK_CARD;
-      break;
-
-    case SPR_YSKU:
-      st_keyorskull[it_yellowcard] |= KEYBLINK_SKULL;
-      break;
-
-    default:
-      break;
+    case SPR_BKEY:  st_keyorskull[it_bluecard]   |= KEYBLINK_CARD;   break;
+    case SPR_BSKU:  st_keyorskull[it_bluecard]   |= KEYBLINK_SKULL;  break;
+    case SPR_RKEY:  st_keyorskull[it_redcard]    |= KEYBLINK_CARD;   break;
+    case SPR_RSKU:  st_keyorskull[it_redcard]    |= KEYBLINK_SKULL;  break;
+    case SPR_YKEY:  st_keyorskull[it_yellowcard] |= KEYBLINK_CARD;   break;
+    case SPR_YSKU:  st_keyorskull[it_yellowcard] |= KEYBLINK_SKULL;  break;
+    default:                                                         break;
   }
 }
 
@@ -1606,8 +1624,6 @@ spawnit:
 //
 // P_SpawnPuff
 //
-
-extern fixed_t attackrange;
 
 void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
 {
@@ -1640,8 +1656,8 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
 static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
                               const angle_t angle)
 {
-    mobj_t *th = P_SpawnMobj(x, y, z + (Woof_Random() << 10), MT_TRAIL);
-
+    mobj_t *th = P_SpawnVisualMobj(x, y, z + (Woof_Random() << 10), AS_SMK_TRAIL1);
+    
     th->momx = -FixedMul(FRACUNIT, finecosine[angle >> ANGLETOFINESHIFT])
                + FixedMul((Woof_Random() - Woof_Random()) << 8,
                           finesine[angle >> ANGLETOFINESHIFT]);
@@ -1650,6 +1666,9 @@ static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
                           finecosine[angle >> ANGLETOFINESHIFT]);
     th->momz = (Woof_Random() - Woof_Random()) << 8;
     th->angle = angle;
+
+    th->flags |= MF_TRANSLUCENT | MF_NOGRAVITY;
+    th->tranmap = smoke_tranmap;
 }
 
 //
@@ -1771,12 +1790,12 @@ int autoaim = 0;  // killough 7/19/98: autoaiming was not in original beta
 // Tries to aim at a nearby monster
 //
 
+boolean no_hor_autoaim; // [Nugget]
+
 mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 {
   mobj_t *th;
   fixed_t x, y, z, slope = 0;
-
-  extern void A_Recoil(player_t* player);
 
   // see which target is to be aimed at
 
@@ -1824,7 +1843,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   th = P_SpawnMobj (x,y,z, type);
 
   if (th->info->seesound)
-    S_StartSound (th, th->info->seesound);
+    S_StartSoundMissile(source, th, th->info->seesound);
 
   P_SetTarget(&th->target, source);   // killough 11/98
   th->angle = an;
@@ -1836,7 +1855,6 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
 
   // [Cherry] Rocket trails from Doom Retro
   if (type == MT_ROCKET && CASUALPLAY(rocket_trails)
-      && !(no_rocket_trails & no_rsmk_player)
       && !(th->flags & MF_BOUNCES)
       && (source->player && source->player->readyweapon == wp_missile))
   {
@@ -1949,6 +1967,86 @@ int P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta)
             return 0;
         }
     }
+}
+
+// [Nugget] ==================================================================
+
+// [Nugget] Alt. states
+void P_SetMobjAltState(mobj_t *const mobj, altstatenum_t statenum)
+{
+  if (statenum == -1)
+  {
+    mobj->altstate = NULL;
+    mobj->alttics = mobj->altsprite = mobj->altframe = -1;
+    return;
+  }
+
+  altstate_t *state;
+
+  do {
+    if (statenum == AS_NULL)
+    {
+      mobj->altstate = NULL;
+      P_RemoveMobj(mobj);
+      break;
+    }
+
+    state = &altstates[statenum];
+    mobj->altstate = state;
+    mobj->alttics = state->tics;
+    mobj->altsprite = state->sprite;
+    mobj->altframe = state->frame;
+
+    if (statenum == AS_TRAIL2) { mobj->flags |= MF_TRANSLUCENT; }
+
+    statenum = state->nextstate;
+  } while (!mobj->alttics);
+}
+
+mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenum)
+{
+  mobj_t *const mobj = Z_Malloc(sizeof(*mobj), PU_LEVEL, NULL);
+
+  static mobjinfo_t info = {0};
+
+  memset(mobj, 0, sizeof(*mobj));
+
+  mobj->oldx = mobj->x = x;
+  mobj->oldy = mobj->y = y;
+
+  mobj->radius = FRACUNIT/2;
+  mobj->height = FRACUNIT;
+
+  mobj->flags = MF_NOBLOCKMAP;
+
+  mobj->sprite = SPR_TNT1;
+
+  mobj->type = mobj->tics = -1;
+
+  mobj->info = &info;
+
+  mobj->isvisual = true;
+
+  P_SetMobjAltState(mobj, statenum);
+
+  P_SetThingPosition(mobj);
+
+  mobj->dropoffz =
+  mobj->floorz   = mobj->subsector->sector->floorheight;
+
+  mobj->ceilingz = mobj->subsector->sector->ceilingheight;
+
+  mobj->oldz =
+  mobj->z    =   (z == ONFLOORZ)   ? mobj->floorz
+               : (z == ONCEILINGZ) ? mobj->ceilingz - mobj->height
+               :                     z;
+
+  mobj->friction = ORIG_FRICTION;
+
+  mobj->thinker.function.p1 = (actionf_p1) P_MobjThinker;
+  P_AddThinker(&mobj->thinker);
+
+  return mobj;
 }
 
 //----------------------------------------------------------------------------
