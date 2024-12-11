@@ -218,10 +218,10 @@ set(BASE_SOURCES
     all-all/sprites/ngtrg0.png
 
     # [Cherry]
-    all-all/sprites/rsmka0.lmp
-    all-all/sprites/rsmkb0.lmp
-    all-all/sprites/rsmkc0.lmp
-    all-all/sprites/rsmkd0.lmp
+    all-all/sprites/rsmka0.png
+    all-all/sprites/rsmkb0.png
+    all-all/sprites/rsmkc0.png
+    all-all/sprites/rsmkd0.png
 
     betalevl.wad/umapdef.lmp
 
