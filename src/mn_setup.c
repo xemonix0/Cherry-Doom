@@ -1641,11 +1641,9 @@ static setup_menu_t keys_settings1[] = {
     
     // [Nugget] /--------------------------------------------------------------
 
-    // [Cherry] Moved from `NG1` ----------------------------------------------
+    MI_SPLIT, // [Cherry] Moved from `NG1` ------------------------------------
 
-    MI_SPLIT,
-    {"Nugget", S_SKIP|S_TITLE, KB_X, M_SPC},
-
+    {"Nugget", S_SKIP|S_TITLE, NKB_X, M_SPC},
       {"Jump/Fly Up",        S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_scrn, input_jump},
       {"Crouch/Fly Down",    S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_scrn, input_crouch},
       MI_GAP,
@@ -1700,13 +1698,12 @@ static setup_menu_t keys_settings3[] = {
     
     // [Nugget] /--------------------------------------------------------------
 
-    // [Cherry] Moved from `NG1` ----------------------------------------------
+    MI_SPLIT, // [Cherry] Moved from `NG1` ------------------------------------
 
-    MI_SPLIT,
-    {"Nugget", S_SKIP|S_TITLE, KB_X, M_SPC},
-      {"Toggle Crosshair",   S_INPUT,                     NKB_X, M_SPC, {0}, m_scrn, input_crosshair},
+    {"Nugget", S_SKIP | S_TITLE, NKB_X, M_SPC},
+      {"Toggle Crosshair", S_INPUT,                     NKB_X, M_SPC, {0}, m_scrn, input_crosshair},
       MI_GAP,
-      {"Rewind",             S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_scrn, input_rewind},
+      {"Rewind",           S_INPUT|S_STRICT|S_CRITICAL, NKB_X, M_SPC, {0}, m_scrn, input_rewind},
 
     MI_END
 };
@@ -1753,7 +1750,7 @@ static setup_menu_t keys_settings5[] = {
     // [Cherry] Moved from `NG2` ----------------------------------------------
 
     MI_SPLIT,
-    {"Nugget", S_SKIP | S_TITLE, KB_X, M_SPC},
+    {"Nugget", S_SKIP | S_TITLE, NKB_X, M_SPC},
       {"Minimap",            S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_map,  input_map_mini},
       MI_GAP,
       {"Tag Finder",         S_INPUT|S_STRICT,            NKB_X, M_SPC, {0}, m_map,  input_map_tagfinder},
@@ -1937,12 +1934,9 @@ static setup_menu_t weap_settings1[] = {
 
     {"Weapon Recoil", S_ONOFF, CNTR_X, M_SPC, {"weapon_recoilpitch"}},
 
-    MI_RESET,
+    MI_SPLIT, // [Cherry] Moved from `Nugget` ---------------------------------
 
-    // [Cherry] Moved from `Nugget` -------------------------------------------
-
-    MI_SPLIT,
-    {"Nugget - Gameplay", S_SKIP|S_TITLE, M_X, M_SPC},
+    {"Nugget - Gameplay", S_SKIP|S_TITLE, W_X, M_SPC},
 
       {"No Horizontal Autoaim",        S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"no_hor_autoaim"}},
       {"Switch on Pickup",             S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"switch_on_pickup"}},
@@ -1950,7 +1944,7 @@ static setup_menu_t weap_settings1[] = {
       {"Prev/Next Skip Empty Weapons", S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"skip_ammoless_weapons"}},
 
     MI_GAP,
-    {"Nugget - Cosmetic", S_SKIP|S_TITLE, M_X, M_SPC},
+    {"Nugget - Cosmetic", S_SKIP|S_TITLE, W_X, M_SPC},
 
       {"Bobbing Style",             S_CHOICE|S_STRICT, W_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
       {"Weapon Inertia",            S_ONOFF |S_STRICT, W_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
@@ -2458,13 +2452,13 @@ static void UpdateStatsFormatItem(void)
   DisableItem(!hud_level_stats, stat_settings2, "hud_stats_format_map"); // [Nugget]
 }
 
-// [Nugget] /-----------------------------------------------------------------
-
 // [Cherry] /------------------------------------------------------------------
 
 static setup_menu_t stat_settings5[] =
 {
-  // [Cherry] From `NG2` ------------------------------------------------------
+  // [Cherry] Moved from `NG2`
+
+  // [Nugget] /----------------------------------------------------------------
 
   {"Nugget - HUD", S_SKIP|S_TITLE, M_X, M_SPC},
 
@@ -2478,6 +2472,8 @@ static setup_menu_t stat_settings5[] =
     {"Secrets label",             S_CRITEM, M_X, M_SPC, {"hudcolor_secrets"},   .strings_id = str_hudcolor},
     {"Incomplete Milestone",      S_CRITEM, M_X, M_SPC, {"hudcolor_ms_incomp"}, .strings_id = str_hudcolor},
     {"Complete Milestone",        S_CRITEM, M_X, M_SPC, {"hudcolor_ms_comp"},   .strings_id = str_hudcolor},
+
+  // [Nugget] ----------------------------------------------------------------/
 
   MI_END
 };
@@ -3957,10 +3953,9 @@ static setup_menu_t gen_settings5[] = {
 
     // [Nugget] /--------------------------------------------------------------
 
-    // [Cherry] Moved from `NG2` ----------------------------------------------
-    MI_SPLIT,
+    MI_SPLIT, // [Cherry] Moved from `NG2` ------------------------------------
 
-    {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
+    {"Nugget", S_SKIP|S_TITLE, N_X, M_SPC},
 
       {"Backdrop For All Menus",       S_ONOFF,                 N_X, M_SPC, {"menu_background_all"}},
       {"No Palette Tint in Menus",     S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_menu_tint"}},
@@ -3977,10 +3972,9 @@ static setup_menu_t gen_settings5[] = {
       MI_GAP,
       {"Color Options",                S_FUNC,                  N_X, M_SPC, .action = MN_Color},
 
-    // [Cherry] Moved from `NG1` ----------------------------------------------
-    MI_SPLIT,
+    MI_SPLIT, // [Cherry] Moved from `NG1` ------------------------------------
 
-    {"Nugget - View", S_SKIP|S_TITLE, M_X, M_SPC},
+    {"Nugget - View", S_SKIP|S_TITLE, N_X, M_SPC},
 
       {"View Height",                   S_NUM   |S_STRICT, N_X,       M_SPC,      {"viewheight_value"}, .action = ChangeViewHeight},
       {"Flinch upon",                   S_CHOICE|S_STRICT, N_X,       M_SPC,      {"flinching"}, .strings_id = str_flinching},
@@ -4121,8 +4115,9 @@ static const char *page_ticking_strings[] = {
   "Always", "Not In Menus", "Never", NULL
 };
 
-// [Cherry] Moved here
-#define N2_X (M_X - 16) // [Nugget]
+#define N2_X (M_X - 16)
+
+// [Nugget] ------------------------------------------------------------------/
 
 static setup_menu_t gen_settings6[] = {
 
@@ -4161,12 +4156,11 @@ static setup_menu_t gen_settings6[] = {
     {"Exit Sequence", S_CHOICE, OFF_CNTR_X, M_SPC, {"exit_sequence"},
     .strings_id = str_exit_sequence},
 
+    MI_SPLIT, // [Cherry] Moved from `NG3` ------------------------------------
+
     // [Nugget] /--------------------------------------------------------------
 
-    // [Cherry] Moved from `NG3` ----------------------------------------------
-    MI_SPLIT,
-
-    {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
+    {"Nugget", S_SKIP|S_TITLE, N2_X, M_SPC},
 
       {"Sound Hearing Distance",  S_CHOICE|S_STRICT,            N2_X, M_SPC, {"s_clipping_dist_x2"}, .strings_id = str_s_clipping_dist, .action = SetSoundModule},
       {"One-Key Quick-Save/Load", S_ONOFF,                      N2_X, M_SPC, {"one_key_saveload"}},
@@ -4196,14 +4190,13 @@ static void UpdateAutoSaveItems(void)
   DisableItem(!G_AutoSaveEnabled(), gen_settings6, "autosave_interval");
 }
 
+// [Cherry] /------------------------------------------------------------------
+
 // [Nugget]
 static const char *over_under_strings[] = {
   "Off", "Player Only", "All Things", NULL
 };
 
-// [Nugget] -----------------------------------------------------------------/
-
-// [Cherry]
 setup_menu_t gen_settings7[] = {
 
   {"Nugget", S_SKIP|S_TITLE, N_X, M_SPC},
@@ -4213,6 +4206,8 @@ setup_menu_t gen_settings7[] = {
 
   MI_END
 };
+
+// [Cherry] ------------------------------------------------------------------/
 
 static setup_menu_t *gen_settings[] = {
     gen_settings1, gen_settings2, gen_settings3, gen_settings4,
