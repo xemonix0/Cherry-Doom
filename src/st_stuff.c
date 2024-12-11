@@ -137,6 +137,11 @@ boolean ST_GetNughudOn(void)
   return st_nughud;
 }
 
+static void UpdateNughudOn(void)
+{
+  st_nughud = screenblocks == 11 && hud_type == HUDTYPE_NUGHUD && automap_off;
+}
+
 static sbarelem_t *nughud_health_elem = NULL,
                   *nughud_armor_elem = NULL;
 
@@ -172,6 +177,7 @@ static boolean NughudAddToStack(
 );
 
 static int NughudSortWidgets(const void *_p1, const void *_p2);
+static void UpdateNughudStacks(void);
 
 // [Nugget] =================================================================/
 
@@ -2115,11 +2121,15 @@ void ST_Ticker(void)
 {
     // [Nugget] NUGHUD /------------------------------------------------------
 
-    st_nughud = screenblocks == 11 && hud_type == HUDTYPE_NUGHUD && automap_off;
+    UpdateNughudOn();
 
-    static int old_st_nughud = 0;
+    static int old_st_nughud = -1;
 
-    if (old_st_nughud != st_nughud)
+    if (old_st_nughud == -1)
+    {
+      old_st_nughud = st_nughud;
+    }
+    else if (old_st_nughud != st_nughud)
     {
       old_st_nughud = st_nughud;
       ST_Init();
@@ -2167,67 +2177,7 @@ void ST_Ticker(void)
         }
     }
 
-    // [Nugget] NUGHUD stacks
-    if (st_nughud)
-    {
-        for (int i = 0;  i < NUMNUGHUDSTACKS;  i++)
-        {
-            nughud_stackqueues[i].offset = 0;
-
-            int secondtime = 0;
-
-            do {
-                for (int j = 0;  j < NUMSQWIDGETS;  j++)
-                {
-                    const widgetpair_t *const pair = &nughud_stackqueues[i].pairs[j];
-
-                    if (!pair->ntl) { continue; }
-
-                    sbarelem_t *const elem = pair->elem;
-
-                    if (!CheckConditions(elem->conditions, player))
-                    { continue; }
-
-                    sbe_widget_t *const wid = elem->subtype.widget;
-                    const nughud_vlignable_t *const stack = &nughud.stacks[i];
-                    const sbarwidgettype_t type = wid->type;
-
-                    if (secondtime && i == pair->ntl->stack - 1)
-                    {
-                        elem->y_pos = stack->y - nughud_stackqueues[i].offset;
-
-                        if (!((type == sbw_message || type == sbw_chat) && nughud.message_defx))
-                        {
-                            elem->alignment = NughudConvertAlignment(stack->wide, stack->align);
-                            elem->x_pos = stack->x;
-                        }
-                    }
-
-                    const int numlines = array_size(wid->lines);
-                    const int lineheight = wid->font->maxheight;
-
-                    for (int k = 0;  k < numlines;  k++)
-                    {
-                        if (!wid->lines[k].totalwidth
-                            && !(type == sbw_chat && ST_GetChatOn()))
-                        {
-                            continue;
-                        }
-
-                        if (!secondtime)
-                        {
-                            switch (stack->vlign) {
-                                case -1:  nughud_stackqueues[i].offset += lineheight;      break;
-                                case  0:  nughud_stackqueues[i].offset += lineheight / 2;  break;
-                                case  1:  default:                                         break;
-                            }
-                        }
-                        else { nughud_stackqueues[i].offset -= lineheight; }
-                    }
-                }
-            } while (!secondtime++);
-        }
-    }
+    UpdateNughudStacks();
 
     if (hud_crosshair)
     {
@@ -2283,9 +2233,12 @@ void ST_Init(void)
 
     static sbardef_t *normal_sbardef = NULL, *nughud_sbardef = NULL;
 
-    if (firsttime) {
+    if (firsttime)
+    {
         normal_sbardef = ST_ParseSbarDef();
         nughud_sbardef = CreateNughudSbarDef();
+
+        UpdateNughudOn();
     }
 
     // [Nugget] -------------------------------------------------------------/
@@ -2400,6 +2353,8 @@ void ST_Init(void)
             NughudSortWidgets
         );
     }
+
+    UpdateNughudStacks();
 }
 
 void ST_InitRes(void)
@@ -3002,6 +2957,69 @@ static int NughudSortWidgets(const void *_p1, const void *_p2)
   if (nughud.stacks[p1->ntl->stack - 1].vlign == -1) { ret = -ret; }
 
   return ret;
+}
+
+static void UpdateNughudStacks(void)
+{
+    if (!st_nughud) { return; }
+
+    for (int i = 0;  i < NUMNUGHUDSTACKS;  i++)
+    {
+        nughud_stackqueues[i].offset = 0;
+
+        int secondtime = 0;
+
+        do {
+            for (int j = 0;  j < NUMSQWIDGETS;  j++)
+            {
+                const widgetpair_t *const pair = &nughud_stackqueues[i].pairs[j];
+
+                if (!pair->ntl) { continue; }
+
+                sbarelem_t *const elem = pair->elem;
+
+                if (!CheckConditions(elem->conditions, &players[displayplayer]))
+                { continue; }
+
+                sbe_widget_t *const wid = elem->subtype.widget;
+                const nughud_vlignable_t *const stack = &nughud.stacks[i];
+                const sbarwidgettype_t type = wid->type;
+
+                if (secondtime && i == pair->ntl->stack - 1)
+                {
+                    elem->y_pos = stack->y - nughud_stackqueues[i].offset;
+
+                    if (!((type == sbw_message || type == sbw_chat) && nughud.message_defx))
+                    {
+                        elem->alignment = NughudConvertAlignment(stack->wide, stack->align);
+                        elem->x_pos = stack->x;
+                    }
+                }
+
+                const int numlines = array_size(wid->lines);
+                const int lineheight = wid->font->maxheight;
+
+                for (int k = 0;  k < numlines;  k++)
+                {
+                    if (!wid->lines[k].totalwidth
+                        && !(type == sbw_chat && ST_GetChatOn()))
+                    {
+                        continue;
+                    }
+
+                    if (!secondtime)
+                    {
+                        switch (stack->vlign) {
+                            case -1:  nughud_stackqueues[i].offset += lineheight;      break;
+                            case  0:  nughud_stackqueues[i].offset += lineheight / 2;  break;
+                            case  1:  default:                                         break;
+                        }
+                    }
+                    else { nughud_stackqueues[i].offset -= lineheight; }
+                }
+            }
+        } while (!secondtime++);
+    }
 }
 
 // NUGHUD loading ------------------------------------------------------------
