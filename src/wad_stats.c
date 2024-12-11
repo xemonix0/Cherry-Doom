@@ -55,7 +55,7 @@ boolean lt_reset_on_higher_skill;
 statsformat_t lt_stats_format;
 
 #define CAN_WATCH_MAP (lt_enable_tracking && !notracking && wad_stats.maps)
-#define TRACKING      (CAN_WATCH_MAP && current_map_stats)
+#define TRACKING_MAP  (CAN_WATCH_MAP && current_map_stats)
 
 // File I/O Operations
 //====================
@@ -510,7 +510,7 @@ void WadStats_WatchMap(void)
 
 void WadStats_UnwatchMap(void)
 {
-    if (!TRACKING)
+    if (!TRACKING_MAP)
     {
         return;
     }
@@ -520,7 +520,7 @@ void WadStats_UnwatchMap(void)
 
 void WadStats_WatchKill(void)
 {
-    if (!TRACKING)
+    if (!TRACKING_MAP)
     {
         return;
     }
@@ -568,7 +568,7 @@ static int MissedMonsters(void)
 
 void WadStats_WatchExitMap(void)
 {
-    if (!TRACKING)
+    if (!TRACKING_MAP)
     {
         return;
     }

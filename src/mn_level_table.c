@@ -184,14 +184,17 @@ static void LevelsBuild(void)
             }
 
             LevelsInsertRow(page, M_StringDuplicate(ms->lump), i,
-                            lt_enable_tracking && !notrackingparm
-                                && !wad_index);
+                            TRACKING_WAD_STATS && !wad_index);
         }
 
-        InsertResetButton(page);
+        if (TRACKING_WAD_STATS)
+        {
+            InsertResetButton(page);
+        }
+
         InsertLastItem(page);
 
-        if (p == 0 && (!lt_enable_tracking || notrackingparm))
+        if (p == 0 && !TRACKING_WAD_STATS)
         {
             break;
         }
@@ -205,7 +208,7 @@ static void SummaryCalculate(void)
 {
     memset(&summary, 0, sizeof(summary));
 
-    if (!lt_enable_tracking || notrackingparm)
+    if (!TRACKING_WAD_STATS)
     {
         return;
     }
@@ -290,7 +293,7 @@ void LT_Reset(void)
 
 void LT_Build(void)
 {
-    if (lt_enable_tracking && !notrackingparm)
+    if (TRACKING_WAD_STATS)
     {
         level_table_tabs[lt_page_times].flags &= ~S_DISABLE;
         level_table_tabs[lt_page_summary].flags &= ~S_DISABLE;
@@ -556,7 +559,7 @@ static void LevelsDraw(setup_menu_t *menu, int page)
 {
     int accum_y = M_Y;
 
-    if (lt_enable_tracking && !notrackingparm)
+    if (TRACKING_WAD_STATS)
     {
         LevelsDrawPageHeaders(page, accum_y);
     }

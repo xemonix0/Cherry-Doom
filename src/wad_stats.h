@@ -51,6 +51,8 @@ extern boolean lt_track_continuous;
 extern boolean lt_reset_on_higher_skill;
 extern statsformat_t lt_stats_format;
 
+#define TRACKING_WAD_STATS (lt_enable_tracking && !notrackingparm)
+
 void WadStats_Init(void);
 void WadStats_Save(void);
 void WadStats_Cleanup(void);

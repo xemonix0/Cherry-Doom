@@ -4370,7 +4370,7 @@ void MN_DrawLevelTable(void)
 {
     DrawBackground("FLOOR4_6"); // Draw background
     MN_DrawTitle(M_X_CENTER, M_Y_TITLE, "M_LVLTBL", "Level Table");
-    if (lt_enable_tracking && !notrackingparm)
+    if (TRACKING_WAD_STATS)
     {
         DrawTabs();
     }
