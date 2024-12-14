@@ -1921,7 +1921,7 @@ static const char *bobbing_style_strings[] = {
 };
 
 static const char *force_carousel_strings[] = {
-  "Off", "On Chasecam", "Always"
+  "Off", "Off Player", "Always"
 };
 
 static void NuggetResetWeaponInertia(void)

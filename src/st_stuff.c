@@ -3772,7 +3772,7 @@ void ST_BindSTSVariables(void)
 
   // [Nugget]
   M_BindNum("force_carousel", &force_carousel, NULL,
-            1, 0, 2, ss_weap, wad_no, "Force display of weapon carousel (1 = On chasecam; 2 = Always)");
+            1, 0, 2, ss_weap, wad_no, "Force display of weapon carousel (1 = Off player; 2 = Always)");
 }
 
 //----------------------------------------------------------------------------

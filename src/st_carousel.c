@@ -132,7 +132,8 @@ static void BuildWeaponIcons(const player_t *player)
 boolean ST_ForceCarousel(const player_t *const player)
 {
   return player->pendingweapon != wp_nochange
-         && (force_carousel == 2 || (force_carousel == 1 && R_GetChasecamOn()));
+         && (force_carousel == 2
+             || (force_carousel == 1 && (R_GetChasecamOn() || R_GetFreecamOn())));
 }
 
 void ST_UpdateCarousel(player_t *player)
