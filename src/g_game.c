@@ -6231,7 +6231,7 @@ void G_BindWeapVariables(void)
 
   M_BindNum("bobbing_style", &bobbing_style, NULL,
             0, 0, 6, ss_weap, wad_yes,
-            "Weapon Bobbing Style");
+            "Weapon bobbing style");
 
   M_BindBool("weapon_inertia", &weapon_inertia, NULL,
              false, ss_weap, wad_yes, "Weapon inertia");
@@ -6250,6 +6250,11 @@ void G_BindWeapVariables(void)
   // (CFG-only)
   M_BindBool("sx_fix", &sx_fix, NULL,
              false, ss_none, wad_yes, "Correct centering of first-person sprites");
+
+  // (CFG-only)
+  M_BindNum("hitscan_trail_interval", &hitscan_trail_interval, NULL,
+            8, 1, 16, ss_none, wad_yes,
+            "Distance between particles of hitscan trails, in units");
 
   // [Nugget] ---------------------------------------------------------------/
 
