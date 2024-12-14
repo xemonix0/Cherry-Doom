@@ -26,11 +26,42 @@
 #include "doomtype.h"
 
 struct event_s;
-struct player_s;
+struct patch_s;
 
 // [Nugget]
-#include "d_player.h"
-#include "r_defs.h"
+enum keyblink_e;
+struct player_s;
+
+// [Nugget] /=================================================================
+
+// CVARs
+extern boolean no_menu_tint;
+extern boolean no_berserk_tint;
+extern boolean no_radsuit_tint;
+extern boolean comp_godface;
+extern boolean comp_unusedpals;
+extern int force_carousel;
+
+boolean ST_GetLayout(void);
+int ST_GetMessageFontHeight(void);
+boolean ST_IconAvailable(const int i);
+boolean ST_GetNughudOn(void);
+
+// Key blinking --------------------------------------------------------------
+
+typedef enum keyblink_e
+{
+  KEYBLINK_NONE,
+  KEYBLINK_CARD,
+  KEYBLINK_SKULL,
+  KEYBLINK_BOTH,
+  KEYBLINK_EITHER,
+} keyblink_t;
+
+extern void ST_SetKeyBlink(struct player_s *player, int blue, int yellow, int red);
+extern enum keyblink_e st_keyorskull[3];
+
+// [Nugget] =================================================================/
 
 // Size of statusbar.
 // Now sensitive for scaling.
@@ -38,84 +69,6 @@ struct player_s;
 #define ST_HEIGHT 32
 #define ST_WIDTH  SCREENWIDTH
 #define ST_Y      (SCREENHEIGHT - ST_HEIGHT)
-
-// [Nugget] Macros brought over from `st_stuff.c` /---------------------------
-
-#define ST_FACESX               143
-#define ST_FACESY               168
-
-// AMMO number pos.
-#define ST_AMMOWIDTH            3
-#define ST_AMMOX                44
-#define ST_AMMOY                171
-
-// HEALTH number pos.
-#define ST_HEALTHWIDTH          3
-#define ST_HEALTHX              90
-#define ST_HEALTHY              171
-
-// Weapon pos.
-#define ST_ARMSX                111
-#define ST_ARMSY                172
-#define ST_ARMSBGX              104
-#define ST_ARMSBGY              168
-#define ST_ARMSXSPACE           12
-#define ST_ARMSYSPACE           10
-
-// Frags pos.
-#define ST_FRAGSX               138
-#define ST_FRAGSY               171
-#define ST_FRAGSWIDTH           2
-
-// ARMOR number pos.
-#define ST_ARMORWIDTH           3
-#define ST_ARMORX               221
-#define ST_ARMORY               171
-
-// Key icon positions.
-#define ST_KEY0WIDTH            8
-#define ST_KEY0HEIGHT           5
-#define ST_KEY0X                239
-#define ST_KEY0Y                171
-#define ST_KEY1WIDTH            ST_KEY0WIDTH
-#define ST_KEY1X                239
-#define ST_KEY1Y                181
-#define ST_KEY2WIDTH            ST_KEY0WIDTH
-#define ST_KEY2X                239
-#define ST_KEY2Y                191
-
-// Ammunition counter.
-#define ST_AMMO0WIDTH           3
-#define ST_AMMO0HEIGHT          6
-#define ST_AMMO0X               288
-#define ST_AMMO0Y               173
-#define ST_AMMO1WIDTH           ST_AMMO0WIDTH
-#define ST_AMMO1X               288
-#define ST_AMMO1Y               179
-#define ST_AMMO2WIDTH           ST_AMMO0WIDTH
-#define ST_AMMO2X               288
-#define ST_AMMO2Y               191
-#define ST_AMMO3WIDTH           ST_AMMO0WIDTH
-#define ST_AMMO3X               288
-#define ST_AMMO3Y               185
-
-// Indicate maximum ammunition.
-// Only needed because backpack exists.
-#define ST_MAXAMMO0WIDTH        3
-#define ST_MAXAMMO0HEIGHT       5
-#define ST_MAXAMMO0X            314
-#define ST_MAXAMMO0Y            173
-#define ST_MAXAMMO1WIDTH        ST_MAXAMMO0WIDTH
-#define ST_MAXAMMO1X            314
-#define ST_MAXAMMO1Y            179
-#define ST_MAXAMMO2WIDTH        ST_MAXAMMO0WIDTH
-#define ST_MAXAMMO2X            314
-#define ST_MAXAMMO2Y            191
-#define ST_MAXAMMO3WIDTH        ST_MAXAMMO0WIDTH
-#define ST_MAXAMMO3X            314
-#define ST_MAXAMMO3Y            185
-
-// [Nugget] -----------------------------------------------------------------/
 
 
 //
@@ -129,61 +82,36 @@ boolean ST_Responder(struct event_s *ev);
 void ST_Ticker(void);
 
 // Called by main loop.
-void ST_Drawer(boolean fullscreen, boolean refresh);
+void ST_Drawer(void);
+
+void ST_Erase(void);
 
 // Called when the console player is spawned on each level.
 void ST_Start(void);
 
 // Called by startup code.
 void ST_Init(void);
-void ST_Warnings(void);
 
-// [crispy] forcefully initialize the status bar backing screen
+void ST_ResetPalette(void);
+
+// [Nugget] NUGHUD: replaces `boolean st_refresh_background`
 void ST_refreshBackground(void);
 
 void ST_InitRes(void);
 
-void ST_InitChunkBar(void); // [Nugget] NUGHUD: Status-Bar chunks
-
-extern void ST_createWidgets(void); // [Nugget]
-
-// killough 5/2/98: moved from m_misc.c:
-
-// [Alaux]
-extern int hud_animated_counts;
-extern int st_health;
-extern int st_armor;
-
 extern int health_red;    // health amount less than which status is red
 extern int health_yellow; // health amount less than which status is yellow
 extern int health_green;  // health amount above is blue, below is green
-extern int armor_red;     // armor amount less than which status is red
-extern int armor_yellow;  // armor amount less than which status is yellow
-extern int armor_green;   // armor amount above is blue, below is green
-extern int ammo_red;      // ammo percent less than which status is red
-extern int ammo_yellow;   // ammo percent less is yellow more green
-extern int sts_colored_numbers;// status numbers do not change colors
-extern int sts_pct_always_gray;// status percents do not change colors
-extern int sts_traditional_keys;  // display keys the traditional way
 
-// [crispy] blinking key or skull in the status bar
-extern int hud_blink_keys;
-#define KEYBLINKMASK 0x8
-#define KEYBLINKTICS (7*KEYBLINKMASK)
-extern void ST_SetKeyBlink(struct player_s *player, int blue, int yellow, int red);
-extern int  ST_BlinkKey(struct player_s *player, int index);
-extern int  st_keyorskull[3];
+extern boolean palette_changes;
 
-extern int hud_backpack_thresholds; // backpack changes thresholds
-extern int hud_armor_type; // color of armor depends on type
+extern struct hudfont_s *stcfnt;
+extern struct patch_s **hu_font;
 
-extern int st_solidbackground;
+void WI_UpdateWidgets(void);
+void WI_DrawWidgets(void);
 
-// [Nugget] Brought from `st_stuff.c`
-extern boolean st_crispyhud;
-extern int distributed_delta;
-
-extern patch_t *nhtminus, *nhrminus; // [Nugget]
+void ST_BindSTSVariables(void);
 
 #endif
 

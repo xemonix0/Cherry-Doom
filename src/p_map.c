@@ -38,6 +38,7 @@
 #include "p_mobj.h"
 #include "p_setup.h"
 #include "p_spec.h"
+#include "p_user.h"
 #include "r_defs.h"
 #include "r_main.h"
 #include "r_state.h"
@@ -47,6 +48,8 @@
 #include "z_zone.h"
 
 // [Nugget]
+#include <math.h>
+#include "g_game.h"
 #include "p_tick.h"
 
 static mobj_t    *tmthing;
@@ -93,6 +96,67 @@ int numspechit;
 
 // Temporary holder for thing_sectorlist threads
 msecnode_t *sector_list = NULL;                             // phares 3/16/98
+
+// [Nugget] Hitscan trails /--------------------------------------------------
+
+int hitscan_trail_interval;
+
+static int show_hitscan_trails = 0;
+
+static fixed_t distance_travelled = 0;
+
+int P_GetShowHitscanTrails(void)
+{
+  return show_hitscan_trails;
+}
+
+int P_CycleShowHitscanTrails(void)
+{
+  if (++show_hitscan_trails > 2) { show_hitscan_trails = 0; }
+
+  return show_hitscan_trails;
+}
+
+fixed_t P_GetDistanceTravelled(void)
+{
+  return distance_travelled;
+}
+
+void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
+                         angle_t angle, fixed_t slope,
+                         fixed_t range, fixed_t distance)
+{
+  const int scaled_range = (range >> FRACBITS) / hitscan_trail_interval;
+
+  if (!scaled_range) { return; }
+
+  angle >>= ANGLETOFINESHIFT;
+
+  const fixed_t x2 = x + (range >> FRACBITS) * finecosine[angle],
+                y2 = y + (range >> FRACBITS) * finesine[angle];
+
+  const fixed_t xstep = (x2 - x) / scaled_range,
+                ystep = (y2 - y) / scaled_range,
+                zstep = (slope * (range >> FRACBITS)) / scaled_range;
+
+  const int num_particles = (distance >> FRACBITS) / hitscan_trail_interval;
+
+  // Don't spawn particles less than 40 units away
+  for (int i = ceil((float) 40 / hitscan_trail_interval);  i < num_particles;  i++)
+  {
+    const fixed_t xdist = xstep * i,  ydist = ystep * i,  zdist = zstep * i;
+
+    mobj_t *const puff = P_SpawnVisualMobj(x + xdist, y + ydist, z + zdist, AS_TRAIL1);
+
+    // One more tic every 128 units
+    puff->alttics += (P_AproxDistance(xdist, ydist) >> FRACBITS) / 128;
+
+    puff->flags |= MF_NOGRAVITY;
+    puff->tranmap = trail_tranmap;
+  }
+}
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // TELEPORT MOVE
@@ -297,7 +361,7 @@ boolean P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean boss)
 
   for (bx=xl ; bx<=xh ; bx++)
     for (by=yl ; by<=yh ; by++)
-      if (!P_BlockThingsIterator(bx,by,PIT_StompThing))
+      if (!P_BlockThingsIterator(bx, by, PIT_StompThing, true))
         return false;
 
   // the move is ok,
@@ -514,18 +578,12 @@ static const inline fixed_t thingheight (const mobj_t *const thing, const mobj_t
 // [Nugget] Factored out from `p_user.c`
 fixed_t P_PitchToSlope(const fixed_t pitch)
 {
-  if (pitch)
-  {
-    const fixed_t slope = -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT];
-    return (fixed_t)((int64_t)slope * SCREENHEIGHT / ACTUALHEIGHT);
-  }
-  else
-  {
-    return 0;
-  }
+  return pitch ? -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT] : 0;
 }
 
 // [Nugget] Over/Under /------------------------------------------------------
+
+int over_under;
 
 // Potential over/under mobjs
 static mobj_t *p_below_tmthing, *p_above_tmthing, // For `tmthing`
@@ -558,28 +616,37 @@ static void P_SetOverUnderMobjs(mobj_t *thing)
   }
 }
 
+// [Nugget]
+boolean comp_lscollision;
+boolean comp_lsamnesia;
+
 // Factored out from `PIT_CheckThing()`
-boolean P_SkullSlam(mobj_t *skull, mobj_t *hitthing)
+boolean P_SkullSlam(mobj_t **skull, mobj_t *hitthing)
 {
+  // [Nugget] Note: `skull` is a double pointer because the original code in
+  // `PIT_CheckThing()` uses `tmthing`, which may potentially change midway
+  // through the slamming code, and passing it as a simple pointer wouldn't be
+  // able to reflect that
+
   // A flying skull is smacking something.
   // Determine damage amount, and the skull comes to a dead stop.
 
-  int damage = ((P_Random(pr_skullfly)%8)+1)*skull->info->damage;
+  int damage = ((P_Random(pr_skullfly)%8)+1) * (*skull)->info->damage;
 
   // [Nugget] Fix lost soul collision
   if (casual_play && comp_lscollision && !(hitthing->flags & MF_SHOOTABLE))
   { return !(hitthing->flags & MF_SOLID); }
 
-  P_DamageMobj (hitthing, skull, skull, damage);
+  P_DamageMobj (hitthing, *skull, *skull, damage);
 
-  skull->flags &= ~MF_SKULLFLY;
-  skull->momx = skull->momy = skull->momz = 0;
+  (*skull)->flags &= ~MF_SKULLFLY;
+  (*skull)->momx = (*skull)->momy = (*skull)->momz = 0;
 
   // [Nugget] Fix forgetful lost soul
   if (casual_play && comp_lsamnesia)
-    P_SetMobjState(skull, skull->info->seestate);
+    P_SetMobjState(*skull, (*skull)->info->seestate);
   else
-    P_SetMobjState (skull, skull->info->spawnstate);
+    P_SetMobjState (*skull, (*skull)->info->spawnstate);
 
   return false;   // stop moving
 }
@@ -684,7 +751,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
   if (tmthing->flags & MF_SKULLFLY)
     {
-      return P_SkullSlam(tmthing, thing); // [Nugget] Factored out
+      return P_SkullSlam(&tmthing, thing); // [Nugget] Factored out
     }
 
   // missiles can hit other things
@@ -746,7 +813,7 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
         P_DamageMobj(thing, tmthing, tmthing->target, damage);
 
         numspechit = 0;
-        return (true);
+        return true;
       }
 
       // damage / explode
@@ -922,7 +989,7 @@ boolean P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y)
 
   for (bx=xl ; bx<=xh ; bx++)
     for (by=yl ; by<=yh ; by++)
-      if (!P_BlockThingsIterator(bx,by,PIT_CheckThing))
+      if (!P_BlockThingsIterator(bx, by, PIT_CheckThing, !(tmthing->flags2 & MF2_RIP)))
         return false;
 
   // check lines
@@ -1055,6 +1122,7 @@ boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
   // killough 11/98: simplified
 
   if (!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
+  {
     while (numspechit--)
       if (spechit[numspechit]->special)  // see if the line was crossed
 	{
@@ -1063,6 +1131,10 @@ boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
 	      P_PointOnLineSide(thing->x, thing->y, spechit[numspechit]))
 	    P_CrossSpecialLine(spechit[numspechit], oldside, thing, false);
 	}
+    // There are checks elsewhere for numspechit == 0, so we don't want to
+    // leave numspechit == -1.
+    numspechit = 0;
+  }
 
   return true;
 }
@@ -1322,7 +1394,6 @@ static void P_HitSlideLine(line_t *ld)
   }
   else
   {
-    extern boolean onground;
     icyfloor = !compatibility &&
     variable_friction &&
     slidemo->player &&
@@ -1334,7 +1405,7 @@ static void P_HitSlideLine(line_t *ld)
     {
       if (icyfloor && abs(tmymove) > abs(tmxmove))
 	{
-	  S_StartSound(slidemo,sfx_oof); // oooff!
+	  S_StartSoundPreset(slidemo, sfx_oof, PITCH_FULL); // oooff!
 	  tmxmove /= 2; // absorb half the momentum
 	  tmymove = -tmymove/2;
 	}
@@ -1347,7 +1418,7 @@ static void P_HitSlideLine(line_t *ld)
     {
       if (icyfloor && abs(tmxmove) > abs(tmymove))
 	{
-	  S_StartSound(slidemo,sfx_oof); // oooff!
+	  S_StartSoundPreset(slidemo, sfx_oof, PITCH_FULL); // oooff!
 	  tmxmove = -tmxmove/2; // absorb half the momentum
 	  tmymove /= 2;
 	}
@@ -1379,7 +1450,7 @@ static void P_HitSlideLine(line_t *ld)
 
   if (icyfloor && deltaangle > ANG45 && deltaangle < ANG90+ANG45)
     {
-      S_StartSound(slidemo,sfx_oof); // oooff!
+      S_StartSoundPreset(slidemo, sfx_oof, PITCH_FULL); // oooff!
       moveangle = lineangle - deltaangle;
       movelen /= 2; // absorb
       moveangle >>= ANGLETOFINESHIFT;
@@ -1686,9 +1757,30 @@ static boolean PTR_AimTraverse (intercept_t *in)
   return false;   // don't go any farther
 }
 
-// [Nugget] Explosive hitscan cheat /-----------------------------------------
+// [Nugget] /=================================================================
 
-boolean boomshot = false;
+// Extra Gibbing -------------------------------------------------------------
+
+static boolean is_bfg_tracer = false;
+
+boolean P_IsBFGTracer(void)
+{
+  return is_bfg_tracer;
+}
+
+void P_SetIsBFGTracer(const boolean value)
+{
+  is_bfg_tracer = value;
+}
+
+// Explosive hitscan cheat ---------------------------------------------------
+
+static boolean is_boomshot = false;
+
+void P_SetIsBoomShot(const boolean value)
+{
+  is_boomshot = value;
+}
 
 static void P_SpawnExplosion(fixed_t x, fixed_t y, fixed_t z)
 {
@@ -1699,14 +1791,17 @@ static void P_SpawnExplosion(fixed_t x, fixed_t y, fixed_t z)
   P_ExplodeMissile(mo);
 }
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
+
+// [Cherry] Blood amount scales with the amount of damage dealt
+boolean blood_amount_scaling;
 
 //
 // PTR_ShootTraverse
 //
 static boolean PTR_ShootTraverse(intercept_t *in)
 {
-  fixed_t slope, dist, thingtopslope, thingbottomslope, x, y, z, frac;
+  fixed_t dist, thingtopslope, thingbottomslope, x, y, z, frac;
   mobj_t *th;
 
   if (in->isaline)
@@ -1727,15 +1822,15 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 	  // backsector can be NULL when emulating missing back side.
 	  if (li->backsector == NULL)
 	  {
-	    if ((slope = FixedDiv(openbottom - shootz , dist)) <= aimslope &&
-	        (slope = FixedDiv(opentop - shootz , dist)) >= aimslope)
+	    if (FixedDiv(openbottom - shootz , dist) <= aimslope &&
+	        FixedDiv(opentop - shootz , dist) >= aimslope)
 	      return true;      // shot continues
 	  }
 	  else
 	  if ((li->frontsector->floorheight==li->backsector->floorheight ||
-	       (slope = FixedDiv(openbottom - shootz , dist)) <= aimslope) &&
+	       FixedDiv(openbottom - shootz , dist) <= aimslope) &&
 	      (li->frontsector->ceilingheight==li->backsector->ceilingheight ||
-	       (slope = FixedDiv (opentop - shootz , dist)) >= aimslope))
+	       FixedDiv (opentop - shootz , dist) >= aimslope))
 	    return true;      // shot continues
 	}
 
@@ -1757,7 +1852,7 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 	  // it's a sky hack wall
 	  // fix bullet-eaters -- killough:
 	  if  (li->backsector && li->backsector->ceilingpic == skyflatnum)
-	    // [Nugget- rrPKrr] Fix disappearing bullet puffs when outside
+	    // [Nugget - rrPKrr] Fix disappearing bullet puffs when outside
 	    if ((demo_compatibility && !casual_play) || li->backsector->ceilingheight < z)
 	    { return false; }
 	}
@@ -1785,9 +1880,14 @@ static boolean PTR_ShootTraverse(intercept_t *in)
         }
       }
 
+      distance_travelled = P_AproxDistance(x - trace.x, y - trace.y); // [Nugget] Hitscan trails
+
       // [Nugget] Explosive hitscan cheat
-      if (boomshot)
+      if (is_boomshot)
+      {
+        is_boomshot = false;
         P_SpawnExplosion(x, y, z);
+      }
       else
     
       // Spawn bullet puffs.
@@ -1830,9 +1930,14 @@ static boolean PTR_ShootTraverse(intercept_t *in)
   y = trace.y + FixedMul (trace.dy, frac);
   z = shootz + FixedMul (aimslope, FixedMul(frac, attackrange));
 
+  distance_travelled = P_AproxDistance(x - trace.x, y - trace.y); // [Nugget] Hitscan trails
+
   // [Nugget] Explosive hitscan cheat
-  if (boomshot)
+  if (is_boomshot)
+  {
+    is_boomshot = false;
     P_SpawnExplosion(x, y, z);
+  }
   else
   // Spawn bullet puffs or blod spots,
   // depending on target type.
@@ -1870,6 +1975,8 @@ static boolean PTR_ShootTraverse(intercept_t *in)
 fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
 {
   fixed_t x2, y2;
+
+  distance_travelled = distance; // [Nugget] Hitscan trails
 
   t1 = P_SubstNullMobj(t1);
 
@@ -1918,6 +2025,8 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
 {
   fixed_t x2, y2;
 
+  distance_travelled = distance; // [Nugget] Hitscan trails
+
   angle >>= ANGLETOFINESHIFT;
   shootthing = t1;
   la_damage = damage;
@@ -1927,7 +2036,16 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
   attackrange = distance;
   aimslope = slope;
   P_PathTraverse(t1->x,t1->y,x2,y2,PT_ADDLINES|PT_ADDTHINGS,PTR_ShootTraverse);
-  boomshot = false; // [Nugget] Explosive hitscan cheat
+
+  // [Nugget] Hitscan trails
+  if (((show_hitscan_trails == 1 || G_GetSlowMotion()) && attackrange >= 128*FRACUNIT)
+      || show_hitscan_trails == 2)
+  {
+    P_SpawnHitscanTrail(t1->x, t1->y, shootz, angle << ANGLETOFINESHIFT,
+                        aimslope, attackrange, distance_travelled);
+  }
+
+  is_boomshot = false; // [Nugget] Explosive hitscan cheat
 }
 
 //
@@ -2283,7 +2401,7 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
 
   for (y=yl ; y<=yh ; y++)
     for (x=xl ; x<=xh ; x++)
-      P_BlockThingsIterator(x, y, PIT_RadiusAttack);
+      P_BlockThingsIterator(x, y, PIT_RadiusAttack, false);
 }
 
 //
@@ -2425,7 +2543,7 @@ boolean P_ChangeSector(sector_t *sector,boolean crunch)
 
   for (x=sector->blockbox[BOXLEFT] ; x<= sector->blockbox[BOXRIGHT] ; x++)
     for (y=sector->blockbox[BOXBOTTOM];y<= sector->blockbox[BOXTOP] ; y++)
-      P_BlockThingsIterator (x, y, PIT_ChangeSector);
+      P_BlockThingsIterator (x, y, PIT_ChangeSector, false);
 
   return nofit;
 }
@@ -2488,7 +2606,7 @@ msecnode_t *headsecnode = NULL;
 
 static msecnode_t *P_GetSecnode(void)
 {
-  msecnode_t *node = headsecnode;
+  msecnode_t *node;
 
   return headsecnode ?
     node = headsecnode, headsecnode = node->m_snext, node :
@@ -2914,7 +3032,7 @@ overunder_t P_CheckOverUnderMobj(mobj_t *thing)
 
   for (bx = xl; bx <= xh; bx++)
     for (by = yl; by <= yh; by++)
-      if (!P_BlockThingsIterator(bx, by, PIT_CheckOverUnderMobjZ))
+      if (!P_BlockThingsIterator(bx, by, PIT_CheckOverUnderMobjZ, !(tmthing->flags2 & MF2_RIP)))
       {
         P_SetOverUnderMobjs(tmthing);
         ret = zdir;

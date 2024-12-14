@@ -28,6 +28,7 @@
 #include "doomstat.h"
 #include "i_system.h"
 #include "info.h"
+#include "m_array.h"
 #include "m_random.h"
 #include "p_enemy.h"
 #include "p_maputl.h"
@@ -36,6 +37,7 @@
 #include "p_saveg.h"
 #include "p_spec.h"
 #include "p_tick.h"
+#include "r_data.h"
 #include "r_defs.h"
 #include "r_state.h"
 #include "w_wad.h" // [FG] W_LumpLength()
@@ -66,6 +68,7 @@ static struct
     {saveg_nugget300, saveg_nugget},
     {saveg_nugget320, saveg_nugget},
     {saveg_nugget330, saveg_nugget},
+    {saveg_nugget400, saveg_nugget},
 
     {saveg_cherry100, saveg_cherry},
     {saveg_cherry101, saveg_cherry},
@@ -612,7 +615,29 @@ static void saveg_read_mobj_t(mobj_t *str)
 
     // [Nugget] Removed `actualheight`
 
-    str->altsprite = str->altframe = -1; // [Nugget] Alt. sprites
+    // [Nugget]
+    if (saveg_check_version_min(saveg_nugget400))
+    {
+      // Alt. sprites
+      str->altsprite = saveg_read32(); // int altsprite;
+      str->altframe  = saveg_read32(); // int altframe;
+
+      // Alt. states
+      str->altstate = saveg_readp();  // altstate_t *altstate;
+      str->alttics  = saveg_read32(); // int        alttics;
+
+      str->isvisual = saveg_read32(); // boolean isvisual;
+    }
+    else {
+      str->altsprite = str->altframe = -1;
+
+      str->altstate = NULL;
+      str->alttics  = -1;
+
+      str->isvisual = false;
+    }
+
+    str->tranmap = NULL; // [Nugget]
 }
 
 static void saveg_write_mobj_t(mobj_t *str)
@@ -778,6 +803,19 @@ static void saveg_write_mobj_t(mobj_t *str)
 
     // [Woof!]: int bloodcolor;
     saveg_write32(str->bloodcolor);
+
+    // [Nugget] --------------------------------------------------------------
+
+    // [Nugget] Alt. sprites
+    saveg_write32(str->altsprite); // int altsprite;
+    saveg_write32(str->altframe);  // int altframe;
+
+    // [Nugget] Alt. states
+    saveg_writep(str->altstate); // altstate_t *altstate;
+    saveg_write32(str->alttics); // int        alttics;
+
+    // [Nugget]
+    saveg_write32(str->isvisual); // boolean isvisual;
 }
 
 //
@@ -1085,6 +1123,27 @@ static void saveg_read_player_t(player_t *str)
         str->maxkilldiscount = 0;
     }
 
+    if (saveg_check_version_min(saveg_nugget330)) // [Nugget]
+    {
+        // [Woof!]: int num_visitedlevels;
+        str->num_visitedlevels = saveg_read32();
+
+        // [Woof!]: level_t *visitedlevels;
+        array_clear(str->visitedlevels);
+        for (int i = 0; i < str->num_visitedlevels; ++i)
+        {
+            level_t level = {0};
+            level.episode = saveg_read32();
+            level.map = saveg_read32();
+            array_push(str->visitedlevels, level);
+        }
+    }
+    else
+    {
+        str->num_visitedlevels = 0;
+        array_clear(str->visitedlevels);
+    }
+
     // [Nugget] --------------------------------------------------------------
 
     if (saveg_check_version_min(saveg_nugget200))
@@ -1105,6 +1164,8 @@ static void saveg_read_player_t(player_t *str)
         str->lastweapon = wp_nochange;
         return;
     }
+
+    str->nextweapon = str->readyweapon;
 
     if (saveg_check_version_exact(saveg_cherry100)) // [Cherry]
     {
@@ -1262,6 +1323,17 @@ static void saveg_write_player_t(player_t *str)
 
     // [Woof!]: int maxkilldiscount;
     saveg_write32(str->maxkilldiscount);
+
+    // [Woof!]: int num_visitedlevels;
+    saveg_write32(str->num_visitedlevels);
+
+    // [Woof!]: level_t *visitedlevels;
+    level_t *level;
+    array_foreach(level, str->visitedlevels)
+    {
+        saveg_write32(level->episode);
+        saveg_write32(level->map);
+    }
 
     // [Nugget] --------------------------------------------------------------
 
@@ -2229,7 +2301,6 @@ void P_UnArchiveWorld (void)
     {
       // [crispy] add overflow guard for the flattranslation[] array
       short floorpic, ceilingpic;
-      extern int numflats;
 
       // killough 10/98: load full floor & ceiling heights, including fractions
 
@@ -2371,6 +2442,9 @@ void P_ArchiveThinkers (void)
         if (mobj->player)
           mobj->player = (player_t *)((mobj->player-players) + 1);
 
+        // [Nugget] Alt. states
+        mobj->altstate = (altstate_t *) (mobj->altstate - altstates);
+
         saveg_write8(tc_mobj);
         saveg_write_pad();
         saveg_write_mobj_t(mobj);
@@ -2487,8 +2561,18 @@ void P_UnArchiveThinkers (void)
       if (mobj->player)
         (mobj->player = &players[(size_t) mobj->player - 1]) -> mo = mobj;
 
+      // [Nugget] Alt. states
+      mobj->altstate = altstates + (size_t) mobj->altstate;
+
       P_SetThingPosition (mobj);
-      mobj->info = &mobjinfo[mobj->type];
+
+      // [Nugget]
+      if (mobj->isvisual) {
+        static mobjinfo_t info = {0};
+        mobj->info = &info;
+      }
+      else
+        mobj->info = &mobjinfo[mobj->type];
 
       // killough 2/28/98:
       // Fix for falling down into a wall after savegame loaded:

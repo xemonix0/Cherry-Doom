@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "d_items.h"
+#include "d_main.h"
 #include "d_think.h"
 #include "doomdef.h"
 #include "doomtype.h"
@@ -1103,6 +1104,51 @@ char **mapnamest[] = // TNT WAD map names.
   &s_THUSTR_32,
 };
 
+// Strings for dehacked replacements of the startup banner
+//
+// These are from the original source: some of them are perhaps
+// not used in any dehacked patches
+
+static const char *const banners[] =
+{
+    // doom2.wad
+    "                         "
+    "DOOM 2: Hell on Earth v%i.%i"
+    "                           ",
+    // doom2.wad v1.666
+    "                         "
+    "DOOM 2: Hell on Earth v%i.%i66"
+    "                          ",
+    // doom1.wad
+    "                            "
+    "DOOM Shareware Startup v%i.%i"
+    "                           ",
+    // doom.wad
+    "                            "
+    "DOOM Registered Startup v%i.%i"
+    "                           ",
+    // Registered DOOM uses this
+    "                          "
+    "DOOM System Startup v%i.%i"
+    "                          ",
+    // Doom v1.666
+    "                          "
+    "DOOM System Startup v%i.%i66"
+    "                          "
+    // doom.wad (Ultimate DOOM)
+    "                         "
+    "The Ultimate DOOM Startup v%i.%i"
+    "                        ",
+    // tnt.wad
+    "                     "
+    "DOOM 2: TNT - Evilution v%i.%i"
+    "                           ",
+    // plutonia.wad
+    "                   "
+    "DOOM 2: Plutonia Experiment v%i.%i"
+    "                           ",
+};
+
 // Function prototypes
 void    lfstrip(char *);     // strip the \r and/or \n off of a line
 void    rstrip(char *);      // strip trailing whitespace
@@ -1635,11 +1681,6 @@ deh_bexptr deh_bexptrs[] =
   {{NULL},             "A_NULL"},  // Ty 05/16/98
 };
 
-extern byte *defined_codeptr_args;
-
-// to hold startup code pointers from INFO.C
-extern actionf_t *deh_codeptr;
-
 // ====================================================================
 // ProcessDehFile
 // Purpose: Read and process a DEH or BEX file
@@ -1883,7 +1924,6 @@ void deh_procBexCodePointers(DEHFILE *fpin, FILE* fpout, char *line)
 
 // [Cherry]
 #include "p_map.h" // MELEERANGE
-int no_rocket_trails; // Rocket trails from Doom Retro
 
 // ====================================================================
 // deh_procThing
@@ -1919,21 +1959,6 @@ void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
   --indexnum;
 
   dsdh_EnsureMobjInfoCapacity(indexnum);
-
-  // [Cherry] Rocket trails from Doom Retro
-  if (indexnum == MT_TRAIL)
-  {
-    memset(mobjinfo + indexnum, 0, sizeof(*mobjinfo));
-
-    mobjinfo[indexnum].droppeditem = MT_NULL;
-    mobjinfo[indexnum].infighting_group = IG_DEFAULT;
-    mobjinfo[indexnum].projectile_group = PG_DEFAULT;
-    mobjinfo[indexnum].splash_group = SG_DEFAULT;
-    mobjinfo[indexnum].altspeed = NO_ALTSPEED;
-    mobjinfo[indexnum].meleerange = MELEERANGE;
-
-    no_rocket_trails |= no_rsmk_all;
-  }
 
   // now process the stuff
   // Note that for Things we can look up the key and use its offset
@@ -2123,18 +2148,6 @@ void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
   }
 
   dsdh_EnsureStatesCapacity(indexnum);
-
-  // [Cherry] Rocket trails from Doom Retro
-  if (indexnum >= S_TRAIL && indexnum <= S_TRAIL4)
-  {
-    memset(states + indexnum, 0, sizeof(*states));
-
-    states[indexnum].sprite = SPR_TNT1;
-    states[indexnum].tics = -1;
-    states[indexnum].nextstate = indexnum;
-
-    no_rocket_trails |= no_rsmk_all;
-  }
 
   while (!dehfeof(fpin) && *inbuffer && (*inbuffer != ' '))
     {
@@ -2942,12 +2955,6 @@ void deh_procText(DEHFILE *fpin, FILE* fpout, char *line)
 
           strncpy(sprnames[i],&inbuffer[fromlen],tolen);
           found = true;
-
-          // [Cherry] Rocket trails from Doom Retro
-          if (i == SPR_RSMK)
-          {
-              no_rocket_trails |= no_rsmk_all;
-          }
         }
     }
 
@@ -3178,6 +3185,46 @@ boolean deh_procStringSub(char *key, char *lookfor, char *newstring, FILE *fpout
           break;
         }
     }
+
+  if (!found && lookfor)
+  {
+    for (i = 0; i < arrlen(banners); i++)
+    {
+      found = !strcasecmp(banners[i], lookfor);
+
+      if (found)
+      {
+        const int version = DV_VANILLA; // We only support version 1.9 of Vanilla Doom
+        char *deh_gamename = M_StringDuplicate(newstring);
+        char *fmt = deh_gamename;
+
+        // Expand "%i" in deh_gamename to include the Doom version number
+        // We cannot use sprintf() here, because deh_gamename isn't a string literal
+
+        fmt = strstr(fmt, "%i");
+        if (fmt)
+        {
+            *fmt++ = '0' + version / 100;
+            memmove(fmt, fmt + 1, strlen(fmt));
+
+            fmt = strstr(fmt, "%i");
+            if (fmt)
+            {
+              *fmt++ = '0' + version % 100;
+              memmove(fmt, fmt + 1, strlen(fmt));
+            }
+        }
+
+        // Cut off trailing and leading spaces to get the basic name
+
+        rstrip(deh_gamename);
+        gamedescription = ptr_lstrip(deh_gamename);
+
+        break;
+      }
+    }
+  }
+
   if (!found)
     if (fpout) fprintf(fpout,
                        "Could not find '%.12s'\n",key ? key: lookfor);
@@ -3232,12 +3279,6 @@ void deh_procBexSprites(DEHFILE *fpin, FILE* fpout, char *line)
     {
       if (fpout) fprintf(fpout, "Substituting '%s' for sprite '%s'\n", candidate, key);
       sprnames[match] = strdup(candidate);
-
-      // [Cherry] Rocket trails from Doom Retro
-      if (match == SPR_RSMK)
-      {
-          no_rocket_trails |= no_rsmk_all;
-      }
     }
   }
 }
@@ -3428,6 +3469,43 @@ boolean deh_GetData(char *s, char *k, long *l, char **strval, FILE *fpout)
 
 static deh_bexptr null_bexptr = { {NULL}, "(NULL)" };
 
+static boolean CheckSafeState(statenum_t state)
+{
+    int count = 0;
+
+    for (statenum_t s = state; s != S_NULL; s = states[s].nextstate)
+    {
+        // [FG] recursive/nested states
+        if (count++ >= 100)
+        {
+            return false;
+        }
+
+        // [crispy] a state with -1 tics never changes
+        if (states[s].tics == -1)
+        {
+            break;
+        }
+
+        if (states[s].action.p2)
+        {
+            // [FG] A_Light*() considered harmless
+            if (states[s].action.p2 == (actionf_p2) A_Light0 ||
+                states[s].action.p2 == (actionf_p2) A_Light1 ||
+                states[s].action.p2 == (actionf_p2) A_Light2)
+            {
+                continue;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 void PostProcessDeh(void)
 {
   int i, j;
@@ -3466,6 +3544,12 @@ void PostProcessDeh(void)
         if (!(defined_codeptr_args[i] & (1 << j)))
           states[i].args[j] = bexptr_match->default_args[j];
     }
+  }
+
+  // [FG] fix desyncs by SSG-flash correction
+  if (CheckSafeState(S_DSGUNFLASH1) && states[S_DSGUNFLASH1].tics == 5)
+  {
+    states[S_DSGUNFLASH1].tics = 4;
   }
 
   dsdh_FreeTables();

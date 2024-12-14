@@ -2,8 +2,6 @@ include(CherryDoomSettings)
 
 set(CHERRYDOOM_SOURCES
     am_map.c               am_map.h
-                           beta.h
-                           cross.h
     d_deh.c                d_deh.h
                            d_englsh.h
                            d_event.h
@@ -17,7 +15,6 @@ set(CHERRYDOOM_SOURCES
     d_quit.c               d_quit.h
                            d_think.h
                            d_ticcmd.h
-                           dogs.h
                            doomdata.h
                            doomdef.h
     doomstat.c             doomstat.h
@@ -26,24 +23,32 @@ set(CHERRYDOOM_SOURCES
     dstrings.c             dstrings.h
     f_finale.c             f_finale.h
     f_wipe.c               f_wipe.h
-                           font.h
+    g_compatibility.c      g_compatibility.h
     g_game.c               g_game.h
-    hu_lib.c               hu_lib.h
+    g_input.c              g_input.h
+    g_nextweapon.c         g_nextweapon.h
+    hu_command.c           hu_command.h
+    hu_coordinates.c       hu_coordinates.h
+    hu_crosshair.c         hu_crosshair.h
     hu_obituary.c          hu_obituary.h
-    hu_stuff.c             hu_stuff.h
     i_3dsound.c
     i_endoom.c             i_endoom.h
+    i_flickstick.c         i_flickstick.h
     i_gamepad.c            i_gamepad.h
     i_glob.c               i_glob.h
+    i_gyro.c               i_gyro.h
     i_input.c              i_input.h
     i_main.c
     i_mbfsound.c
     i_midimusic.c
+                           i_oalcommon.h
+    i_oalequalizer.c       i_oalequalizer.h
     i_oalmusic.c
     i_oalsound.c           i_oalsound.h
                            i_oalstream.h
     i_oplmusic.c
     i_printf.c             i_printf.h
+    i_rumble.c             i_rumble.h
     i_sndfile.c            i_sndfile.h
     i_sound.c              i_sound.h
     i_system.c             i_system.h
@@ -58,15 +63,17 @@ set(CHERRYDOOM_SOURCES
                            m_fixed.h
     m_input.c              m_input.h
     m_io.c                 m_io.h
+    m_json.c               m_json.h
     mn_font.c              mn_font.h
     mn_level_table.c       mn_level_table.h
     mn_menu.c              mn_menu.h
-    mn_setup.c             mn_setup.h
+    mn_setup.c             mn_internal.h
     m_misc.c               m_misc.h
-    m_nughud.c             m_nughud.h
+    m_nughud.c             m_nughud.h # [Nugget]
     m_random.c             m_random.h
     mn_snapshot.c          mn_snapshot.h
                            m_swap.h
+                           m_vector.h
     memio.c                memio.h
     midifallback.c         midifallback.h
     midifile.c             midifile.h
@@ -116,28 +123,37 @@ set(CHERRYDOOM_SOURCES
     r_plane.c              r_plane.h
     r_segs.c               r_segs.h
     r_sky.c                r_sky.h
+    r_skydefs.c            r_skydefs.h
                            r_state.h
     r_swirl.c              r_swirl.h
     r_things.c             r_things.h
     r_voxel.c              r_voxel.h
     s_musinfo.c            s_musinfo.h
     s_sound.c              s_sound.h
+    s_trakinfo.c           s_trakinfo.h
     sounds.c               sounds.h
-    st_lib.c               st_lib.h
+    st_sbardef.c           st_sbardef.h
+    st_carousel.c          st_carousel.h
     st_stuff.c             st_stuff.h
+    st_widgets.c           st_widgets.h
     statdump.c             statdump.h
     tables.c               tables.h
     u_mapinfo.c            u_mapinfo.h
     u_scanner.c            u_scanner.h
     v_flextran.c           v_flextran.h
+    v_fmt.c                v_fmt.h
     v_trans.c              v_trans.h
     v_video.c              v_video.h
     version.c              version.h
     wad_stats.c            wad_stats.h
-    wi_stuff.c             wi_stuff.h
     w_wad.c                w_wad.h
-    z_zone.c               z_zone.h
-    ../miniz/miniz.c       ../miniz/miniz.h)
+                           w_internal.h
+    w_file.c
+    w_zip.c
+    wi_stuff.c             wi_stuff.h
+    wi_interlvl.c          wi_interlvl.h
+    ws_stuff.c             ws_stuff.h
+    z_zone.c               z_zone.h)
 
 # Standard target definition
 if(WIN32)
@@ -150,11 +166,13 @@ if(WIN32)
     add_executable(cherry-doom-com WIN32 ../win32/win_launcher.c
         "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
     target_cherrydoom_settings(cherry-doom-com)
+    target_include_directories(cherry-doom-com PRIVATE ${SDL2_INCLUDE_DIR})
     target_link_libraries(cherry-doom-com PRIVATE ${SDL2_LIBRARIES} cherry-doom)
 
     add_executable(cherry-doom-exe WIN32 ../win32/win_launcher.c
         "${CMAKE_CURRENT_BINARY_DIR}/resource.rc")
     target_cherrydoom_settings(cherry-doom-exe)
+    target_include_directories(cherry-doom-exe PRIVATE ${SDL2_INCLUDE_DIR})
     target_link_libraries(cherry-doom-exe PRIVATE ${SDL2_LIBRARIES} cherry-doom)
 
     # MSVC tries to supply a default manifest and complains when it finds ours
@@ -170,16 +188,22 @@ else()
 endif()
 
 target_cherrydoom_settings(cherry-doom)
-target_include_directories(cherry-doom PRIVATE
-        "${CMAKE_CURRENT_BINARY_DIR}/../" "../miniz")
+target_include_directories(cherry-doom PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
 
 target_link_libraries(cherry-doom PRIVATE
     ${SDL2_LIBRARIES}
     SDL2_net::SDL2_net
     OpenAL::OpenAL
+    libebur128::libebur128
     SndFile::sndfile
+    yyjson::yyjson
     opl
-    textscreen)
+    pffft
+    textscreen
+    miniz
+    spng
+    sha1
+    md5)
 
 # Some platforms require standard libraries to be linked against.
 if(HAVE_LIBM)
@@ -192,11 +216,8 @@ endif()
 
 if(WIN32)
     target_include_directories(cherry-doom PRIVATE "../win32")
-    target_link_libraries(cherry-doom PRIVATE winmm)
-    if(MSVC)
-        target_sources(cherry-doom PRIVATE
-            ../win32/win_opendir.c ../win32/win_opendir.h)
-    endif()
+    target_link_libraries(cherry-doom PRIVATE winmm shlwapi)
+    target_sources(cherry-doom PRIVATE ../win32/win_opendir.c ../win32/win_opendir.h)
 endif()
 
 if(APPLE)
@@ -231,8 +252,6 @@ endif()
 if(CHERRYDOOM_STRICT)
     target_compile_definitions(cherry-doom PRIVATE MBF_STRICT)
 endif()
-
-target_compile_definitions(cherry-doom PRIVATE MINIZ_NO_TIME)
 
 set(SETUP_SOURCES
     d_iwad.c                d_iwad.h
@@ -272,6 +291,14 @@ if(MSVC)
     target_link_options(cherry-doom-setup PRIVATE "/MANIFEST:NO")
 endif()
 
+add_dependencies(cherry-doom cherry-doom-base)
+
+if(MSVC)
+    add_custom_command(TARGET cherry-doom POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        "${BASE_PK3_PATH}" "$<TARGET_FILE_DIR:cherry-doom>")
+endif()
+
 # Install
 #
 # Rename cherry-doom-com and cherry-doom-exe executables.
@@ -298,16 +325,9 @@ if(WIN32)
     else()
         install(TARGETS cherry-doom cherry-doom-setup RUNTIME DESTINATION .)
     endif()
-    install(FILES "$<TARGET_FILE_DIR:cherry-doom-com>/cherry-doom.com" DESTINATION .)
-    install(FILES "$<TARGET_FILE_DIR:cherry-doom-exe>/cherry-doom.exe" DESTINATION .)
+    install(FILES "$<TARGET_FILE_DIR:cherry-doom-com>/cherry-doom.com"
+                  "$<TARGET_FILE_DIR:cherry-doom-exe>/cherry-doom.exe"
+            DESTINATION .)
 else()
     install(TARGETS cherry-doom cherry-doom-setup RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
-
-# Copy autoload directory content to target directory.
-add_custom_command(TARGET cherry-doom POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-    "$<TARGET_FILE_DIR:cherry-doom>/autoload"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/autoload"
-    "$<TARGET_FILE_DIR:cherry-doom>/autoload" VERBATIM)

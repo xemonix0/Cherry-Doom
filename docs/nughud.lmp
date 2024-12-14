@@ -183,14 +183,6 @@ nughud_maxammo3_y     185
 nughud_maxammo3_wide  1
 nughud_maxammo3_align 1
 
-; Movement widget
-nughud_movement_x     -1
-nughud_movement_y     -1
-nughud_movement_wide  -1
-nughud_movement_align -1
-nughud_movement_stack 3
-nughud_movement_order 3
-
 ; Time display
 nughud_time_x     -1
 nughud_time_y     -1
@@ -248,6 +240,22 @@ nughud_rate_wide  -1
 nughud_rate_align -1
 nughud_rate_stack 1
 nughud_rate_order 0
+
+; Command-history display
+nughud_cmd_x     -1
+nughud_cmd_y     -1
+nughud_cmd_wide  -1
+nughud_cmd_align -1
+nughud_cmd_stack 4
+nughud_cmd_order 0
+
+; Speedometer
+nughud_speed_x     160
+nughud_speed_y     160
+nughud_speed_wide  0
+nughud_speed_align 0
+nughud_speed_stack 1
+nughud_speed_order 0
 
 ; Message display
 nughud_message_x     -1
@@ -319,6 +327,14 @@ nughud_sbchunk1_sx    0
 nughud_sbchunk1_sy    0
 nughud_sbchunk1_sw    1
 nughud_sbchunk1_sh    32
+
+; Minimap
+nughud_minimap_x       8
+nughud_minimap_y       0
+nughud_minimap_wide    -2
+nughud_minimap_w       80
+nughud_minimap_h       80
+nughud_minimap_undmess 1
 
 ; Draw percentage signs
 nughud_percents 1

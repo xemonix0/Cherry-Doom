@@ -17,6 +17,7 @@
 #define __WAD_STATS__
 
 #include "doomtype.h"
+#include "st_widgets.h"
 
 typedef struct
 {
@@ -43,16 +44,27 @@ typedef struct
 extern char *wad_stats_fail;
 extern wad_stats_t wad_stats;
 
-void WS_Init(void);
-void WS_Save(void);
-void WS_Cleanup(void);
+// CVARs
 
-void WS_EraseMapStats(int i);
-void WS_EraseWadStats(void);
+extern boolean lt_enable_tracking;
+extern boolean lt_track_continuous;
+extern boolean lt_reset_on_higher_skill;
+extern statsformat_t lt_stats_format;
 
-void WS_WatchMap(void);
-void WS_UnwatchMap(void);
-void WS_WatchKill(void);
-void WS_WatchExitMap(void);
+#define TRACKING_WAD_STATS (lt_enable_tracking && !notrackingparm)
+
+void WadStats_Init(void);
+void WadStats_Save(void);
+void WadStats_Cleanup(void);
+
+void WadStats_EraseMapStats(int i);
+void WadStats_EraseWadStats(void);
+
+void WadStats_WatchMap(void);
+void WadStats_UnwatchMap(void);
+void WadStats_WatchKill(void);
+void WadStats_WatchExitMap(void);
+
+void WadStats_BindLevelTableVariables(void);
 
 #endif

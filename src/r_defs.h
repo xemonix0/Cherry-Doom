@@ -150,7 +150,8 @@ typedef struct sector_s
   //      if old values were not updated recently.
   int oldceilgametic;
   int oldfloorgametic;
-  int oldscrollgametic;
+  int old_ceil_offs_gametic;
+  int old_floor_offs_gametic;
 
   // [AM] Interpolated floor and ceiling height.
   //      Calculated once per tic and used inside
@@ -387,8 +388,8 @@ typedef struct vissprite_s
   // andrewj: voxel support
   int voxel_index;
 
-  // [Cherry] Translucent rocket trails
-  boolean rocket_trail;
+  // [Nugget]
+  byte *tranmap;
 } vissprite_t;
 
 //

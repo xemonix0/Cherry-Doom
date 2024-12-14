@@ -40,8 +40,10 @@
 #include "tables.h"
 
 // [Nugget]
+#include "p_map.h"
 #include "p_maputl.h"
 #include "p_user.h"
+#include "st_widgets.h"
 #include "v_video.h"
 
 #include "wad_stats.h" // [Cherry]
@@ -83,14 +85,16 @@ int clipammo[NUMAMMO] = { 10,  4,  20,  1};
 // GET STUFF
 //
 
-// [Nugget]
+// [Nugget] /-----------------------------------------------------------------
+
+boolean switch_on_pickup;
+
 static boolean P_AutoswitchWeapon(void)
 {
-  if (!casual_play || switch_on_pickup)
-  { return true; }
-  
-  return false;
+  return !casual_play || switch_on_pickup;
 }
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // P_GiveAmmo
@@ -223,8 +227,8 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 
       P_GiveAmmo(player, weaponinfo[weapon].ammo, deathmatch ? 5 : 2);
 
-      player->pendingweapon = weapon;
-      S_StartSound(player->mo, sfx_wpnup); // killough 4/25/98, 12/98
+      player->nextweapon = player->pendingweapon = weapon;
+      S_StartSoundPreset(player->mo, sfx_wpnup, PITCH_FULL); // killough 4/25/98, 12/98
       return false;
     }
 
@@ -234,9 +238,10 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 
   // [Nugget]
   if (!player->weaponowned[weapon] && P_AutoswitchWeapon())
-  { player->pendingweapon = weapon; }
+  { player->nextweapon = player->pendingweapon = weapon; }
 
-  return !player->weaponowned[weapon] ? player->weaponowned[weapon] = true : gaveammo;
+  return !player->weaponowned[weapon] ?
+    player->weaponowned[weapon] = true : gaveammo;
 }
 
 //
@@ -270,6 +275,8 @@ boolean P_GiveArmor(player_t *player, int armortype)
   player->armorpoints = hits;
   return true;
 }
+
+boolean comp_keypal; // [Nugget]
 
 //
 // P_GiveCard
@@ -545,7 +552,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 	if ((!beta_emulation // killough 10/98: don't switch as much in -beta
 	     || player->readyweapon == wp_pistol)
 	    && P_AutoswitchWeapon()) // [Nugget]
-	  player->pendingweapon = wp_fist;
+	  player->nextweapon = player->pendingweapon = wp_fist;
       sound = sfx_getpow;
       break;
 
@@ -725,16 +732,17 @@ picked_up: // [Nugget]
     {
       int itemcount = 0;
 
-      for (int pl = 0;  pl < MAXPLAYERS;  ++pl) {
-        if (playeringame[pl])
-        { itemcount += players[pl].itemcount; }
+      for (int pl = 0;  pl < MAXPLAYERS;  ++pl)
+      {
+        if (playeringame[pl]) { itemcount += players[pl].itemcount; }
       }
 
       if (itemcount >= totalitems)
       {
         complete_milestones |= MILESTONE_ITEMS;
 
-        if (announce_milestones) {
+        if (announce_milestones)
+        {
           players[displayplayer].secretmessage = "All items acquired!";
           S_StartSound(NULL, sfx_secret);
         }
@@ -743,46 +751,88 @@ picked_up: // [Nugget]
   }
   P_RemoveMobj (special);
   player->bonuscount += BONUSADD;
+
   // [Nugget] Bonuscount cap
   if (STRICTMODE(bonuscount_cap >= 0 && player->bonuscount > bonuscount_cap))
   { player->bonuscount = bonuscount_cap; }
 
-  S_StartSoundPitchOptional(player->mo, sound, sfx_itemup, // [Nugget]: [NS] Fallback to itemup.
-                            sound == sfx_itemup ? PITCH_NONE : PITCH_FULL);
+  S_StartSoundPresetOptional(player->mo, sound, sfx_itemup, // [Nugget]: [NS] Fallback to itemup.
+                             sound == sfx_itemup ? PITCH_NONE : PITCH_FULL);
 }
 
-// [Nugget] Check for Extra Gibbing
-static boolean P_NuggetExtraGibbing(mobj_t *source, mobj_t *target)
+// [Nugget] /=================================================================
+
+// Extra Gibbing -------------------------------------------------------------
+
+boolean extra_gibbing_on;
+boolean extra_gibbing[NUMEXGIBS];
+
+static boolean P_NuggetForceGibbing(
+  const mobj_t *const source,
+  const mobj_t *const inflictor, // Assumed to be a projectile from `source`
+  const mobj_t *const target
+)
 {
-  extern void A_Punch(), A_Saw(), A_FireShotgun2();
+  extern boolean gibbers; // GIBBERS cheat
+  extern void A_BFGSpray(), A_Punch(), A_Saw(), A_FireShotgun2();
 
-  if (casual_play && extra_gibbing_on && source && source->player
-      && (
-          (extra_gibbing[EXGIB_FIST]
-           && source->player->psprites->state->action.p2 == (actionf_p2)A_Punch
-           && source->player->powers[pw_strength]
-           && (P_AproxDistance(target->x - source->x, target->y - source->y)
-               < ((64*FRACUNIT) + target->info->radius)))
+  if (!casual_play) { return false; }
 
-       || (extra_gibbing[EXGIB_CSAW]
-           && source->player->psprites->state->action.p2 == (actionf_p2)A_Saw
-           && (P_AproxDistance(target->x - source->x, target->y - source->y)
-               < ((65*FRACUNIT) + target->info->radius)))
+  if (gibbers) { return true; }
 
-       || (extra_gibbing[EXGIB_SSG]
-           && source->player->psprites->state->action.p2 == (actionf_p2)A_FireShotgun2
-           && (P_AproxDistance(target->x - source->x, target->y - source->y)
-               < ((128*FRACUNIT) + target->info->radius)))
-      )
-     )
+  if (!extra_gibbing_on || !source) { return false; }
+
+  if (extra_gibbing[EXGIB_PROJ]
+      && inflictor && inflictor->flags & MF_MISSILE
+      && inflictor->info && inflictor->info->damage >= 20
+      // If no momentum, the damage isn't from projectile collision
+      && (inflictor->momx || inflictor->momy))
   {
     return true;
+  }
+
+  if (extra_gibbing[EXGIB_BFG] && P_IsBFGTracer()
+      && (P_AproxDistance(target->x - source->x, target->y - source->y)
+          < ((128*FRACUNIT) + target->info->radius)))
+  {
+    return true;
+  }
+
+  if (source->player)
+  {
+    if (extra_gibbing[EXGIB_FIST]
+        && source->player->psprites->state->action.p2 == (actionf_p2) A_Punch
+        && source->player->powers[pw_strength]
+        && (P_AproxDistance(target->x - source->x, target->y - source->y)
+            < ((64*FRACUNIT) + target->info->radius)))
+    {
+      return true;
+    }
+
+    if (extra_gibbing[EXGIB_CSAW]
+        && source->player->psprites->state->action.p2 == (actionf_p2) A_Saw
+        && (P_AproxDistance(target->x - source->x, target->y - source->y)
+            < ((65*FRACUNIT) + target->info->radius)))
+    {
+      return true;
+    }
+
+    if (extra_gibbing[EXGIB_SSG]
+        && source->player->psprites->state->action.p2 == (actionf_p2) A_FireShotgun2
+        && (P_AproxDistance(target->x - source->x, target->y - source->y)
+            < ((128*FRACUNIT) + target->info->radius)))
+    {
+      return true;
+    }
   }
 
   return false;
 }
 
-// [Nugget] Bloodier Gibbing
+// Bloodier Gibbing ----------------------------------------------------------
+
+boolean bloodier_gibbing;
+
 void P_NuggetGib(mobj_t *mo, const boolean crushed)
 {
   int quantity;
@@ -801,6 +851,10 @@ void P_NuggetGib(mobj_t *mo, const boolean crushed)
                                 ? MT_PUFF : MT_BLOOD);
 
     splat->flags |= MF_DROPOFF|MF_TELEPORT;
+
+    // Ensure that the splat has health so that it can't be crushed,
+    // otherwise splats could spawn recursively and freeze the game
+    splat->health = MAX(1, splat->health);
 
     if (comp_fuzzyblood && mo->flags & MF_SHADOW)
     { splat->flags |= MF_SHADOW; }
@@ -826,6 +880,8 @@ void P_NuggetGib(mobj_t *mo, const boolean crushed)
   }
 }
 
+// [Nugget] =================================================================/
+
 //
 // KillMobj
 //
@@ -840,14 +896,16 @@ static void WatchKill(player_t* player, mobj_t* target)
     player->maxkilldiscount++;
   }
 
-  WS_WatchKill(); // [Cherry]
+  WadStats_WatchKill(); // [Cherry]
 }
 
-static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
+boolean tossdrop; // [Nugget]
+
+static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod,
+                       mobj_t *inflictor) // [Nugget] Receive inflictor
 {
   mobjtype_t item;
   mobj_t     *mo;
-  extern boolean GIBBERS; // [Nugget] GIBBERS cheat
 
   target->flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
 
@@ -928,7 +986,8 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
     {
       complete_milestones |= MILESTONE_KILLS;
 
-      if (announce_milestones) {
+      if (announce_milestones)
+      {
         players[displayplayer].secretmessage = "All enemies killed!";
         S_StartSound(NULL, sfx_secret);
       }
@@ -954,16 +1013,18 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
       HU_Obituary(target, source, mod);
     }
 
-  // [Nugget] Extra Gibbing/GIBBERS cheat
   if (target->info->xdeathstate
-      && ((target->health < -target->info->spawnhealth)
-          || GIBBERS || P_NuggetExtraGibbing(source, target)))
+      && (target->health < -target->info->spawnhealth
+          // [Nugget] Extra Gibbing
+          || P_NuggetForceGibbing(source, inflictor, target)))
   {
     P_SetMobjState (target, target->info->xdeathstate);
     P_NuggetGib(target, false); // [Nugget] Bloodier Gibbing
   }
   else
     P_SetMobjState (target, target->info->deathstate);
+
+  P_SetIsBFGTracer(false); // [Nugget]
 
   target->tics -= P_Random(pr_killtics)&3;
 
@@ -995,10 +1056,10 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
   // [Nugget] Toss items upon death
   if (casual_play && tossdrop)
   {
-    mo->z += target->height*5/4;
+    mo->z += target->height * 5/4;
     mo->momx = (Woof_Random() - Woof_Random()) << 7;
     mo->momy = (Woof_Random() - Woof_Random()) << 7;
-    mo->momz = (4*FRACUNIT) + ((Woof_Random()%9) * FRACUNIT/8);
+    mo->momz = (4*FRACUNIT) + ((Woof_Random() % 9) * FRACUNIT/8);
   }
 }
 
@@ -1161,7 +1222,7 @@ void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage
   else
   if (target->health <= 0)
     {
-      P_KillMobj(source, target, mod);
+      P_KillMobj(source, target, mod, inflictor); // [Nugget] Pass inflictor
       return;
     }
 

@@ -11,8 +11,12 @@
 
 ## Nugget Doom merges
 
-Merged changes from [Nugget Doom 3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0), note:
-- Disabled stats tracking when _Duplicate Monsters_ is enabled in the _Custom Skill_ settings
+Merged changes from the following Nugget Doom releases:
+- [Nugget Doom 3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0), note:
+	- Disabled stats tracking when _Duplicate Monsters_ is enabled in the _Custom Skill_ settings
+- [Nugget Doom 4.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.0.0), note:
+	- Removed the _Movement widget_, in favor of Woof!'s speedometer and command history widget
+	- Removed _Low/Ok/Good/Extra value color customization_ and the _intermission screen widgets_ settings, since Health, Armor, Ammo and Weapons widgets have been removed
 
 ## Changes
 
@@ -21,7 +25,9 @@ Merged changes from [Nugget Doom 3.3.0](https://github.com/MrAlaux/Nugget-Doom/r
 - _Detection of Targets in Darkness_ now accounts for fullbright frames
 - WAD stats are now saved every time a level is beaten
 - `TNT31.WAD` is now not considered a separate WAD by the _stats tracking_ system when loaded with `TNT.WAD`
+- _Rocket Trails_ now work even when there are DSDHacked patches loaded
+- Menu items for the _Rocket Trails Interval_ and _Smoke Translucency_ settings have been removed
 
 ## Bug Fixes
 
-- The _Disable Stats Tracking_ setting of the _Custom Skill_ not being preserved in savegames and through rewinds
+None.

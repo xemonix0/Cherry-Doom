@@ -88,6 +88,7 @@ typedef enum
 // at the intermission screen, the game final animation, or a demo.
 
 typedef enum {
+  GS_NONE = -1,
   GS_LEVEL,
   GS_INTERMISSION,
   GS_FINALE,
@@ -177,6 +178,33 @@ typedef enum {
   NUMPOWERS,
 } powertype_t;
 
+typedef enum
+{
+    item_noitem = -1,
+    item_messageonly,
+    item_bluecard,
+    item_yellowcard,
+    item_redcard,
+    item_blueskull,
+    item_yellowskull,
+    item_redskull,
+    item_backpack,
+    item_healthbonus,
+    item_stimpack,
+    item_medikit,
+    item_soulsphere,
+    item_megasphere,
+    item_armorbonus,
+    item_greenarmor,
+    item_bluearmor,
+    item_areamap,
+    item_lightamp,
+    item_berserk,
+    item_invisibility,
+    item_radsuit,
+    item_invulnerability,
+} itemtype_t;
+
 // Power up durations (how many seconds till expiration).
 typedef enum {
   INVULNTICS  = (30*TICRATE),
@@ -199,11 +227,23 @@ typedef enum {
   ss_gen,       // killough 10/98
   ss_comp,      // killough 10/98
   ss_ltbl,      // [Cherry]
+  ss_sfx,
+  ss_music,
+  ss_eq,
+  ss_padadv,
+  ss_gyro,
 
-  ss_skill, // [Nugget] Custom Skill menu
+  // [Nugget]
+  ss_color,
+  ss_skill, // Custom Skill menu
 
   ss_max,
 } ss_types;
+
+typedef enum {
+  wad_no,
+  wad_yes
+} wad_allowed_t;
 
 // phares 3/20/98:
 //

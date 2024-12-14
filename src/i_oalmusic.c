@@ -18,14 +18,17 @@
 #include "al.h"
 #include "alc.h"
 #include "alext.h"
+#include "ebur128.h"
 
 #include <stdlib.h>
 
 #include "doomtype.h"
+#include "i_oalcommon.h"
 #include "i_oalstream.h"
 #include "i_printf.h"
 #include "i_sound.h"
 #include "m_array.h"
+#include "m_config.h"
 
 // Define the number of buffers and buffer size (in milliseconds) to use. 4
 // buffers with 4096 samples each gives a nice per-chunk size, and lets the
@@ -72,10 +75,15 @@ typedef struct
     byte *data;
     boolean looping;
 
+    ALfloat gain;
+    ALfloat auto_gain;
+
     // The format of the output stream
     ALenum format;
     ALsizei freq;
     ALsizei frame_size;
+    int channels;
+    int total_frames;
 } stream_player_t;
 
 static stream_player_t player;
@@ -84,6 +92,134 @@ static SDL_Thread *player_thread_handle;
 static SDL_atomic_t player_thread_running;
 
 static boolean music_initialized;
+
+static ebur128_state *ebur_state;
+boolean auto_gain;
+
+static void ShutdownAutoGain(void)
+{
+    if (ebur_state)
+    {
+        ebur128_destroy(&ebur_state);
+    }
+}
+
+static void InitAutoGain(void)
+{
+    if (player.format == AL_FORMAT_MONO16 || player.format == AL_FORMAT_MONO_FLOAT32)
+    {
+        player.channels = 1;
+    }
+    else
+    {
+        player.channels = 2;
+    }
+
+    ebur_state = ebur128_init(player.channels, player.freq, EBUR128_MODE_S
+        | EBUR128_MODE_I | EBUR128_MODE_SAMPLE_PEAK | EBUR128_MODE_HISTOGRAM);
+
+    player.auto_gain = 1.0f;
+    player.total_frames = 0;
+}
+
+static void AutoGain(uint32_t frames)
+{
+    if (!auto_gain)
+    {
+        return;
+    }
+
+    if (player.format == AL_FORMAT_MONO16 || player.format == AL_FORMAT_STEREO16)
+    {
+        ebur128_add_frames_short(ebur_state, (int16_t *)player.data, frames);
+    }
+    else
+    {
+        ebur128_add_frames_float(ebur_state, (float *)player.data, frames);
+    }
+
+    player.total_frames += frames;
+
+    const float target = -23.0f; // UFS
+
+    boolean failed = false;
+    double momentary = 0.0;
+    double shortterm = 0.0;
+    double global = 0.0;
+    double relative = 0.0;
+
+    if (EBUR128_SUCCESS != ebur128_loudness_momentary(ebur_state, &momentary))
+    {
+        failed = true;
+    }
+
+    if (EBUR128_SUCCESS != ebur128_loudness_shortterm(ebur_state, &shortterm))
+    {
+        failed = true;
+    }
+
+    if (EBUR128_SUCCESS != ebur128_loudness_global(ebur_state, &global))
+    {
+        failed = true;
+    }
+
+    if (EBUR128_SUCCESS != ebur128_relative_threshold(ebur_state, &relative))
+    {
+        failed = true;
+    }
+
+    if (player.total_frames < 3 * BUFFER_SAMPLES && !failed)
+    {
+        if (momentary > -70.0)
+        {
+            float diff = target - momentary;
+            player.auto_gain = DB_TO_GAIN(diff);
+        }
+    }
+
+    if (relative > -70.0 && momentary > relative && !failed)
+    {
+        double peak_L = 0.0;
+        double peak_R = 0.0;
+
+        if (EBUR128_SUCCESS != ebur128_prev_sample_peak(ebur_state, 0, &peak_L))
+        {
+            failed = true;
+        }
+
+        if (player.channels == 2)
+        {
+            if (EBUR128_SUCCESS
+                != ebur128_prev_sample_peak(ebur_state, 1, &peak_R))
+            {
+                failed = true;
+            }
+        }
+
+        if (!failed)
+        {
+            const float weight_m = 0.1f;
+            const float weight_s = 1.0f;
+            const float weight_i = 1.0f;
+            float loudness = (weight_m * momentary + weight_s * shortterm
+                              + weight_i * global)
+                             / (weight_m + weight_s + weight_i);
+
+            float diff = target - loudness;
+
+            float gain = DB_TO_GAIN(diff);
+
+            double peak = (peak_L > peak_R) ? peak_L : peak_R;
+
+            if (peak >= 0.00001 && gain * peak < 1.0f)
+            {
+                player.auto_gain = gain;
+            }
+        }
+    }
+
+    alSourcef(player.source, AL_GAIN, player.gain * player.auto_gain);
+}
 
 static boolean UpdatePlayer(void)
 {
@@ -111,6 +247,11 @@ static boolean UpdatePlayer(void)
         // Read the next chunk of data, refill the buffer, and queue it back on
         // the source.
         frames = active_module->I_FillStream(player.data, BUFFER_SAMPLES);
+
+        if (frames > 0)
+        {
+            AutoGain(frames);
+        }
 
         if (frames > 0)
         {
@@ -172,6 +313,11 @@ static boolean StartPlayer(void)
         if (frames < 1)
         {
             break;
+        }
+
+        if (frames > 0)
+        {
+            AutoGain(frames);
         }
 
         size = frames * player.frame_size;
@@ -293,8 +439,7 @@ static boolean I_OAL_InitMusic(int device)
     return false;
 }
 
-int mus_gain = 100;
-int opl_gain = 200;
+static int fl_gain, opl_gain;
 
 static void I_OAL_SetMusicVolume(int volume)
 {
@@ -303,20 +448,23 @@ static void I_OAL_SetMusicVolume(int volume)
         return;
     }
 
-    ALfloat gain = (ALfloat)volume / 15.0f;
+    player.gain = (ALfloat)volume / 15.0f;
 
-    if (active_module == &stream_opl_module)
+    if (!auto_gain)
     {
-        gain *= (ALfloat)opl_gain / 100.0f;
-    }
-#if defined(HAVE_FLUIDSYNTH)
-    else if (active_module == &stream_fl_module)
-    {
-        gain *= (ALfloat)mus_gain / 100.0f;
-    }
-#endif
+        if (active_module == &stream_opl_module)
+        {
+            player.gain *= (ALfloat)DB_TO_GAIN(opl_gain);
+        }
+    #if defined(HAVE_FLUIDSYNTH)
+        else if (active_module == &stream_fl_module)
+        {
+            player.gain *= (ALfloat)DB_TO_GAIN(fl_gain);
+        }
+    #endif
 
-    alSourcef(player.source, AL_GAIN, gain);
+        alSourcef(player.source, AL_GAIN, player.gain);
+    }
 }
 
 static void I_OAL_PauseSong(void *handle)
@@ -387,8 +535,9 @@ static void I_OAL_UnRegisterSong(void *handle)
     if (active_module)
     {
         active_module->I_CloseStream();
-        active_module = NULL;
     }
+
+    ShutdownAutoGain();
 
     if (player.data)
     {
@@ -428,6 +577,7 @@ static void *I_OAL_RegisterSong(void *data, int len)
                                             &player.freq, &player.frame_size))
         {
             active_module = all_modules[i];
+            InitAutoGain();
             return (void *)1;
         }
     }
@@ -457,6 +607,43 @@ static const char **I_OAL_DeviceList(void)
     return devices;
 }
 
+static midiplayertype_t I_OAL_MidiPlayerType(void)
+{
+#ifdef HAVE_FLUIDSYNTH
+    if (active_module == &stream_fl_module)
+    {
+        return midiplayer_fluidsynth;
+    }
+#endif
+    if (active_module == &stream_opl_module)
+    {
+        return midiplayer_opl;
+    }
+    return midiplayer_none;
+}
+
+static void I_OAL_BindVariables(void)
+{
+    BIND_BOOL_MUSIC(auto_gain, true, "Auto Gain");
+#if defined (HAVE_FLUIDSYNTH)
+    BIND_NUM_MUSIC(fl_gain, 0, -20, 20, "[FluidSynth] Gain [dB]");
+#endif
+    BIND_NUM_MUSIC(opl_gain, 0, -20, 20, "[OPL3 Emulation] Gain [dB]");
+    for (int i = 0; i < arrlen(midi_modules); ++i)
+    {
+        midi_modules[i]->BindVariables();
+    }
+}
+
+static const char *I_OAL_MusicFormat(void)
+{
+    if (active_module)
+    {
+        return active_module->I_MusicFormat();
+    }
+    return "None";
+}
+
 music_module_t music_oal_module =
 {
     I_OAL_InitMusic,
@@ -469,4 +656,7 @@ music_module_t music_oal_module =
     I_OAL_StopSong,
     I_OAL_UnRegisterSong,
     I_OAL_DeviceList,
+    I_OAL_BindVariables,
+    I_OAL_MidiPlayerType,
+    I_OAL_MusicFormat,
 };
