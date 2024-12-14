@@ -27,6 +27,7 @@ Merged changes from the following Nugget Doom releases:
 - `TNT31.WAD` is now not considered a separate WAD by the _stats tracking_ system when loaded with `TNT.WAD`
 - _Rocket Trails_ now work even when there are DSDHacked patches loaded
 - Menu items for the _Rocket Trails Interval_ and _Smoke Translucency_ settings have been removed
+- Times on the level table now display hours when over 60 minutes
 
 ## Bug Fixes
 

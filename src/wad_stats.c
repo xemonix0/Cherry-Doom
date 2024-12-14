@@ -588,8 +588,6 @@ void WadStats_WatchExitMap(void)
         return;
     }
 
-    const int missed_monsters = MissedMonsters();
-
     if (skill < current_map_stats->best_skill && skill != 4)
     {
         return;
@@ -629,6 +627,8 @@ void WadStats_WatchExitMap(void)
 
         if (!respawnmonsters)
         {
+            const int missed_monsters = MissedMonsters();
+
             current_map_stats->best_kills = MAX(current_map_stats->best_kills,
                                                 totalkills - missed_monsters);
 

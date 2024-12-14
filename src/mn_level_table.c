@@ -62,7 +62,7 @@ typedef enum
 
 typedef struct
 {
-    int map_count, completed;
+    int map_count, maps_completed;
     int timed, max_timed, sk5_timed;
     int max_kills, max_items, max_secrets;
     int best_skill;
@@ -106,7 +106,13 @@ inline boolean LT_IsLevelsPage(int page)
 
 static void StringPrintTime(char **dest, int tics)
 {
-    if (tics >= 0)
+    if (tics >= 60 * 60 * TICRATE)
+    {
+        M_StringPrintF(dest, "%d:%02d:%05.2f", tics / TICRATE / 60 / 60,
+                       (tics % (60 * 60 * TICRATE)) / TICRATE / 60,
+                       (float)(tics % (60 * TICRATE)) / TICRATE);
+    }
+    else if (tics >= 0)
     {
         M_StringPrintF(dest, "%d:%05.2f", tics / TICRATE / 60,
                        (float)(tics % (60 * TICRATE)) / TICRATE);
@@ -207,6 +213,7 @@ static void LevelsBuild(void)
 static void SummaryCalculate(void)
 {
     memset(&summary, 0, sizeof(summary));
+    summary.best_time = summary.best_max_time = summary.best_sk5_time = -1;
 
     if (!TRACKING_WAD_STATS)
     {
@@ -230,7 +237,7 @@ static void SummaryCalculate(void)
             continue;
         }
 
-        summary.completed++;
+        summary.maps_completed++;
         summary.best_skill    = MIN(ms->best_skill, summary.best_skill);
         summary.max_kills    += ms->max_kills;
         summary.max_items    += ms->max_items;
@@ -376,10 +383,7 @@ static formatted_value_t FormatValue(value_context_t context,
                 if (done)
                 {
                     M_StringConcatF(&text, "/%d", b);
-                    if (a == b)
-                    {
-                        flags |= S_ALT_COL;
-                    }
+                    if (a == b) flags |= S_ALT_COL;
                 }
             }
             break;
@@ -387,11 +391,7 @@ static formatted_value_t FormatValue(value_context_t context,
             if (done)
             {
                 M_StringPrintF(&text, "%s", default_skill_strings[a]);
-                if (a >= sk_hard + 1)
-                {
-                    flags |= S_ALT_COL;
-                }
-                break;
+                if (a >= 4) flags |= S_ALT_COL;
             }
             break;
         case format_stat:
@@ -399,42 +399,17 @@ static formatted_value_t FormatValue(value_context_t context,
                 || (context == context_summary && a))
             {
                 text = FormatStat(a, b, done);
-                if (done && a == b)
-                {
-                    flags |= S_ALT_COL;
-                }
+                if (done && a == b) flags |= S_ALT_COL;
             }
             break;
         case format_time:
-            if (context == context_levels)
-            {
-                StringPrintTime(&text, done ? a : -1);
-                if (a >= 0)
-                {
-                    flags |= S_ALT_COL;
-                }
-            }
-            else if (a > 0)
-            {
-                StringPrintTime(&text, a);
-                if (done)
-                {
-                    flags |= S_ALT_COL;
-                }
-            }
-            break;
+            StringPrintTime(&text, a);
+            if (done) flags |= S_ALT_COL;
     }
 
     if (!text)
     {
-        if (format == format_time)
-        {
-            StringPrintTime(&text, -1);
-        }
-        else
-        {
-            text = M_StringDuplicate("-");
-        }
+        text = M_StringDuplicate("-");
     }
 
     formatted_value_t value = {text, flags};
@@ -481,35 +456,35 @@ static void LevelsDrawRow(setup_menu_t *src, int y, int page)
     {
         case lt_page_stats:
             LevelsDrawValue(format_skill, done,
-                           ms->best_skill, 0,
-                           LT_STATS_SKILL_X, y,
-                           additional_flags);
+                            ms->best_skill, 0,
+                            LT_STATS_SKILL_X, y,
+                            additional_flags);
             LevelsDrawValue(format_stat, done,
-                           ms->best_kills, ms->max_kills,
-                           LT_STATS_KILLS_X, y,
-                           additional_flags);
+                            ms->best_kills, ms->max_kills,
+                            LT_STATS_KILLS_X, y,
+                            additional_flags);
             LevelsDrawValue(format_stat, done,
-                           ms->best_items, ms->max_items,
-                           LT_STATS_ITEMS_X, y,
-                           additional_flags);
+                            ms->best_items, ms->max_items,
+                            LT_STATS_ITEMS_X, y,
+                            additional_flags);
             LevelsDrawValue(format_stat, done,
-                           ms->best_secrets, ms->max_secrets,
-                           LT_STATS_SECRETS_X, y,
-                           additional_flags);
+                            ms->best_secrets, ms->max_secrets,
+                            LT_STATS_SECRETS_X, y,
+                            additional_flags);
             break;
         case lt_page_times:
             LevelsDrawValue(format_time, done,
-                           ms->best_time, 0,
-                           LT_TIMES_TIME_X, y,
-                           additional_flags);
+                            ms->best_time, 0,
+                            LT_TIMES_TIME_X, y,
+                            additional_flags);
             LevelsDrawValue(format_time, done && ms->best_max_time >= 0,
-                           ms->best_max_time, 0,
-                           LT_TIMES_MAX_TIME_X, y,
-                           additional_flags);
+                            ms->best_max_time, 0,
+                            LT_TIMES_MAX_TIME_X, y,
+                            additional_flags);
             LevelsDrawValue(format_time, done && ms->best_sk5_time >= 0,
-                           ms->best_sk5_time, 0,
-                           LT_TIMES_SK5_TIME_X, y,
-                           additional_flags);
+                            ms->best_sk5_time, 0,
+                            LT_TIMES_SK5_TIME_X, y,
+                            additional_flags);
             break;
         default:
             break;
@@ -630,10 +605,10 @@ static void SummaryDraw(void)
     int accum_y = LT_SUMMARY_Y;
 
     boolean done =
-        summary.map_count != 0 && summary.completed == summary.map_count;
+        summary.map_count != 0 && summary.maps_completed == summary.map_count;
 
     SummaryDrawRow("Maps Completed", format_maps, true,
-                   summary.completed, summary.map_count,
+                   summary.maps_completed, summary.map_count,
                    accum_y);
     accum_y += M_SPC * 2;
 
