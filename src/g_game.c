@@ -3120,7 +3120,6 @@ static boolean DoLoadGame(boolean do_load_autosave)
   CheckSaveVersion("Nugget 2.4.0", saveg_nugget300);
   CheckSaveVersion("Nugget 3.2.0", saveg_nugget320);
   CheckSaveVersion("Nugget 3.3.0", saveg_nugget330);
-  CheckSaveVersion("Nugget 3.4.0", saveg_nugget400); // [Nugget] TO BE REMOVED
   CheckSaveVersion("Nugget 4.0.0", saveg_nugget400);
   CheckSaveVersion("Cherry 1.0.0", saveg_cherry100);
   CheckSaveVersion("Cherry 1.0.1", saveg_cherry101);
@@ -6312,7 +6311,7 @@ void G_BindWeapVariables(void)
 
   M_BindNum("bobbing_style", &bobbing_style, NULL,
             0, 0, 6, ss_weap, wad_yes,
-            "Weapon Bobbing Style");
+            "Weapon bobbing style");
 
   M_BindBool("weapon_inertia", &weapon_inertia, NULL,
              false, ss_weap, wad_yes, "Weapon inertia");
@@ -6331,6 +6330,11 @@ void G_BindWeapVariables(void)
   // (CFG-only)
   M_BindBool("sx_fix", &sx_fix, NULL,
              false, ss_none, wad_yes, "Correct centering of first-person sprites");
+
+  // (CFG-only)
+  M_BindNum("hitscan_trail_interval", &hitscan_trail_interval, NULL,
+            8, 1, 16, ss_none, wad_yes,
+            "Distance between particles of hitscan trails, in units");
 
   // [Nugget] ---------------------------------------------------------------/
 

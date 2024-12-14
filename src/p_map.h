@@ -30,6 +30,7 @@ struct player_s;
 struct sector_s;
 
 // [Nugget] CVARs
+extern int hitscan_trail_interval;
 extern boolean comp_lscollision;
 extern boolean comp_lsamnesia;
 

@@ -27,6 +27,10 @@
 #include "v_fmt.h"
 #include "v_video.h"
 
+// [Nugget]
+#include "r_main.h"
+#include "st_stuff.h"
+
 static const char *names[] = {
     [wp_fist] = "SMFIST",
     [wp_pistol] = "SMPISG",
@@ -125,9 +129,17 @@ static void BuildWeaponIcons(const player_t *player)
     }
 }
 
+boolean ST_ForceCarousel(const player_t *const player)
+{
+  return player->pendingweapon != wp_nochange
+         && (force_carousel == 2
+             || (force_carousel == 1 && (R_GetChasecamOn() || R_GetFreecamOn())));
+}
+
 void ST_UpdateCarousel(player_t *player)
 {
-    if (G_NextWeaponActivate())
+    if (G_NextWeaponActivate()
+        || ST_ForceCarousel(player)) // [Nugget]
     {
         duration = TICRATE / 2;
     }

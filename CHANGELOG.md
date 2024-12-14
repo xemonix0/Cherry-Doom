@@ -11,12 +11,12 @@
 
 ## Nugget Doom merges
 
-Merged changes from [Nugget Doom 3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0), note:
-- Disabled stats tracking when _Duplicate Monsters_ is enabled in the _Custom Skill_ settings
-
-Also, merged Nugget Doom's [`master`](https://github.com/MrAlaux/Nugget-Doom/tree/master) branch, bringing changes introduced after 3.3.0. Note:
-- Removed the _Movement widget_, in favor of Woof!'s speedometer and command history widget
-- Removed _Low/Ok/Good/Extra value color customization_ and the _intermission screen widgets_ settings, since Health, Armor, Ammo and Weapons widgets have been removed
+Merged changes from the following Nugget Doom releases:
+- [Nugget Doom 3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0), note:
+	- Disabled stats tracking when _Duplicate Monsters_ is enabled in the _Custom Skill_ settings
+- [Nugget Doom 4.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.0.0), note:
+	- Removed the _Movement widget_, in favor of Woof!'s speedometer and command history widget
+	- Removed _Low/Ok/Good/Extra value color customization_ and the _intermission screen widgets_ settings, since Health, Armor, Ammo and Weapons widgets have been removed
 
 ## Changes
 

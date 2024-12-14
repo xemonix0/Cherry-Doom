@@ -230,5 +230,9 @@ void G_NextWeaponResendCmd(void)
 void G_NextWeaponReset(void)
 {
     state = nw_state_none;
-    ST_ResetCarousel();
+
+    if (!ST_ForceCarousel(&players[consoleplayer])) // [Nugget]
+    {
+        ST_ResetCarousel();
+    }
 }

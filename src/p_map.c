@@ -48,6 +48,7 @@
 #include "z_zone.h"
 
 // [Nugget]
+#include <math.h>
 #include "g_game.h"
 #include "p_tick.h"
 
@@ -98,6 +99,8 @@ msecnode_t *sector_list = NULL;                             // phares 3/16/98
 
 // [Nugget] Hitscan trails /--------------------------------------------------
 
+int hitscan_trail_interval;
+
 static int show_hitscan_trails = 0;
 
 static fixed_t distance_travelled = 0;
@@ -123,7 +126,7 @@ void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
                          angle_t angle, fixed_t slope,
                          fixed_t range, fixed_t distance)
 {
-  const int scaled_range = (range >> FRACBITS) / 8;
+  const int scaled_range = (range >> FRACBITS) / hitscan_trail_interval;
 
   if (!scaled_range) { return; }
 
@@ -136,16 +139,18 @@ void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
                 ystep = (y2 - y) / scaled_range,
                 zstep = (slope * (range >> FRACBITS)) / scaled_range;
 
-  const int scaled_distance = (distance >> FRACBITS) / 8;
+  const int num_particles = (distance >> FRACBITS) / hitscan_trail_interval;
 
-  for (int i = 5;  i < scaled_distance;  i++)
+  // Don't spawn particles less than 40 units away
+  for (int i = ceil((float) 40 / hitscan_trail_interval);  i < num_particles;  i++)
   {
-    mobj_t *const puff = P_SpawnVisualMobj(x + xstep * i,
-                                           y + ystep * i,
-                                           z + zstep * i,
-                                           AS_TRAIL1);
+    const fixed_t xdist = xstep * i,  ydist = ystep * i,  zdist = zstep * i;
 
-    puff->alttics += i / 16;
+    mobj_t *const puff = P_SpawnVisualMobj(x + xdist, y + ydist, z + zdist, AS_TRAIL1);
+
+    // One more tic every 128 units
+    puff->alttics += (P_AproxDistance(xdist, ydist) >> FRACBITS) / 128;
+
     puff->flags |= MF_NOGRAVITY;
     puff->tranmap = trail_tranmap;
   }

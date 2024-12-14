@@ -93,7 +93,6 @@ typedef enum saveg_compat_e
   saveg_nugget320, // [Nugget]
   saveg_cherry200, // [Cherry]
   saveg_nugget330, // [Nugget]
-  saveg_nugget340, // [Nugget] TO BE REMOVED
   saveg_nugget400, // [Cherry]
   saveg_current, // saveg_cherry210
 } saveg_compat_t;

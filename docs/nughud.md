@@ -114,7 +114,7 @@ The following text lines are available:
 | `nughud_cmd`     | Command-history display, only shown if enabled by the user |
 | `nughud_speed`   | Speedometer, only shown when the `SPEED` cheat is activated |
 | `nughud_message` | Message and Chat display |
-| `nughud_secret`  | "Secret Revealed" and milestone-completion message display |
+| `nughud_secret`  | Announcements display (secret revealed, level name, etc.) |
 
 **All text lines are horizontally alignable.**
 

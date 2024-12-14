@@ -40,6 +40,7 @@ extern boolean no_berserk_tint;
 extern boolean no_radsuit_tint;
 extern boolean comp_godface;
 extern boolean comp_unusedpals;
+extern int force_carousel;
 
 boolean ST_GetLayout(void);
 int ST_GetMessageFontHeight(void);

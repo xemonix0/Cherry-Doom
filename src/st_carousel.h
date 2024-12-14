@@ -25,4 +25,6 @@ void ST_EraseCarousel(int y);
 
 void ST_DrawCarousel(int x, int y, struct sbarelem_s *elem);
 
+boolean ST_ForceCarousel(const player_t *const player); // [Nugget]
+
 #endif
