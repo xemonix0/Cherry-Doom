@@ -367,6 +367,7 @@ enum
     // [Nugget] --------------------------------------------------------------
 
     str_bobbing_style,
+    str_force_carousel,
     str_hud_type,
     str_crosshair_lockon,
     str_vertical_aiming,
@@ -1919,6 +1920,10 @@ static const char *bobbing_style_strings[] = {
   "Vanilla", "Inv. Vanilla", "Alpha", "Inv. Alpha", "Smooth", "Inv. Smooth", "Quake"
 };
 
+static const char *force_carousel_strings[] = {
+  "Off", "On Chasecam", "Always"
+};
+
 static void NuggetResetWeaponInertia(void)
 {
   P_NuggetResetWeaponInertia();
@@ -1947,6 +1952,7 @@ static setup_menu_t weap_settings4[] =
     {"Bobbing Style",             S_CHOICE|S_STRICT, W_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
     {"Weapon Inertia",            S_ONOFF |S_STRICT, W_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
     {"Weapon Squat Upon Landing", S_ONOFF |S_STRICT, W_X, M_SPC, {"weaponsquat"}},
+    {"Force Weapon Carousel",     S_CHOICE|S_STRICT, W_X, M_SPC, {"force_carousel"}, .strings_id = str_force_carousel},
     {"Flash Translucency",        S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X_THRM8, M_THRM_SPC, {"pspr_translucency_pct"}, .action = WeaponFlashTrans},
 
   MI_END
@@ -4429,10 +4435,14 @@ void MN_DrawStringCR(int cx, int cy, byte *cr1, byte *cr2, const char *ch)
         }
 
         w = SHORT(hu_font[c]->width);
+
+        // [Nugget] Do draw off-screen characters
+        /*
         if (cx + w > SCREENWIDTH)
         {
             break;
         }
+        */
 
         // V_DrawpatchTranslated() will draw the string in the
         // desired color, colrngs[color]
@@ -5578,6 +5588,7 @@ static const char **selectstrings[] = {
     // [Nugget] --------------------------------------------------------------
 
     bobbing_style_strings,
+    force_carousel_strings,
     hud_type_strings,
     crosshair_lockon_strings,
     vertical_aiming_strings,

@@ -40,6 +40,7 @@
 - **_Double autoaim range_ setting doubling range of BFG tracers**
 - **FOV effects disabling interpolation of weapon sprites**
 - **Crash when loading WADs with empty lumps between `C_#` markers** (fixes `nt_rc1.wad`)
+- **Characters not being drawn near right side of the screen in setup menus**
 - **Shadows not being drawn for HUD icons when using Boom font**
 - **Enemies potentially firing explosive-hitscan shots**
 

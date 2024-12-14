@@ -83,8 +83,6 @@ boolean no_berserk_tint;
 boolean no_radsuit_tint;
 boolean comp_godface;
 boolean comp_unusedpals;
-static boolean hud_blink_keys;
-static boolean sts_show_berserk;
 
 typedef enum hudtype_s
 {
@@ -93,6 +91,10 @@ typedef enum hudtype_s
 } hudtype_t;
 
 static hudtype_t hud_type;
+
+static boolean hud_blink_keys;
+static boolean sts_show_berserk;
+int force_carousel;
 
 // Font extras ---------------------------------------------------------------
 
@@ -3767,6 +3769,10 @@ void ST_BindSTSVariables(void)
 
   M_BindBool("weapon_carousel", &weapon_carousel, NULL,
              true, ss_weap, wad_no, "Show weapon carousel");
+
+  // [Nugget]
+  M_BindNum("force_carousel", &force_carousel, NULL,
+            0, 0, 2, ss_weap, wad_no, "Force display of weapon carousel (1 = On chasecam; 2 = Always)");
 }
 
 //----------------------------------------------------------------------------
