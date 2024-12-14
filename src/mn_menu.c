@@ -2066,7 +2066,10 @@ static menuitem_t SetupMenu[] = {
     {1, "M_AUTO",   MN_Automap,     'a', "Automap",            SETUP_MENU_RECT(4)},
     {1, "M_WEAP",   MN_Weapons,     'w', "Weapons",            SETUP_MENU_RECT(5)},
     {1, "M_ENEM",   MN_Enemy,       'e', "Enemies",            SETUP_MENU_RECT(6)},
-    {1, "M_LVLTBL", MN_LevelTable,  'l', "Level Table",        SETUP_MENU_RECT(7)},
+
+    // [Cherry]
+    {-1},
+    {1, "M_LVLTBL", MN_LevelTable,  'l', "Level Table",        SETUP_MENU_RECT(8)},
 };
 
 /////////////////////////////
@@ -2104,7 +2107,7 @@ static menuitem_t Generic_Setup[] = {
 // with the main Setup screen.
 
 static menu_t SetupDef = {
-    ss_ltbl + 1,   // number of Setup Menu items (Key Bindings, etc.)
+    ss_ltbl + 2,   // number of Setup Menu items (Key Bindings, etc.)
     &MainDef,      // menu to return to when BACKSPACE is hit on this menu
     SetupMenu,     // definition of items to show on the Setup Screen
     M_DrawSetup,   // program that draws the Setup Screen
