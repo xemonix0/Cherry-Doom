@@ -60,12 +60,8 @@ extern byte invul_gray[];
 
 // [Nugget]
 extern byte cr_allblack[],
-            cr_gray_vc[],    // `V_Colorize()` only
-            nightvision[],   // Night-vision visor
-            *shadow_tranmap, // HUD/menu shadows
-            *pspr_tranmap,   // Translucent flashes
-            *xhair_tranmap,  // Translucent crosshair
-            *trail_tranmap;
+            cr_gray_vc[],  // `V_Colorize()` only
+            nightvision[]; // Night-vision visor
 
 // array of pointers to color translation tables
 extern byte *colrngs[];

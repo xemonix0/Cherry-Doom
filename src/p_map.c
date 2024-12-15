@@ -51,6 +51,7 @@
 #include <math.h>
 #include "g_game.h"
 #include "p_tick.h"
+#include "r_data.h"
 
 static mobj_t    *tmthing;
 static int       tmflags;
@@ -152,7 +153,7 @@ void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
     puff->alttics += (P_AproxDistance(xdist, ydist) >> FRACBITS) / 128;
 
     puff->flags |= MF_NOGRAVITY;
-    puff->tranmap = trail_tranmap;
+    puff->tranmap = R_GetGenericTranMap(25);
   }
 }
 

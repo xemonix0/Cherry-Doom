@@ -940,7 +940,8 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   }
   vis->brightmap = R_BrightmapForState(psp->state - states);
 
-  vis->tranmap = translucent ? pspr_tranmap : NULL; // [Nugget] Translucent flashes
+  // [Nugget] Translucent flashes
+  vis->tranmap = translucent ? R_GetGenericTranMap(pspr_translucency_pct) : NULL;
 
   // interpolation for weapon bobbing
   if (uncapped)

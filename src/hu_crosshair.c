@@ -272,6 +272,7 @@ void HU_DrawCrosshair(void)
 
     // [Nugget] NUGHUD
     const int y = crosshair.y + (nughud.viewoffset * STRICTMODE(ST_GetNughudOn()));
+    byte *const xhair_tranmap = R_GetGenericTranMap(hud_crosshair_tran_pct);
 
     if (crosshair.patch)
     {

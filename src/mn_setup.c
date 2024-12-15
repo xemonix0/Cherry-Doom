@@ -1934,7 +1934,7 @@ static void NuggetResetWeaponInertia(void)
 
 void WeaponFlashTrans(void)
 {
-    R_InitTranMapEx(&pspr_tranmap, pspr_translucency_pct);
+    R_GetGenericTranMap(pspr_translucency_pct);
 }
 
 static setup_menu_t weap_settings4[] =
@@ -2153,7 +2153,7 @@ static const char *hudcolor_strings[] = {
 // [Nugget] Translucent crosshair
 void CrosshairTrans(void)
 {
-    R_InitTranMapEx(&xhair_tranmap, hud_crosshair_tran_pct);
+    R_GetGenericTranMap(hud_crosshair_tran_pct);
 }
 
 #define XH_X (H_X - 13) // [Nugget] Tweaked
@@ -2370,7 +2370,8 @@ void MN_DrawStatusHUD(void)
         int y = M_Y + M_SPC + M_SPC / 2 - SHORT(patch->height) / 2 - 1; // [Nugget] Adjusted
 
         // [Nugget] Translucent crosshair
-        V_DrawPatchTRTL2(x, y, patch, colrngs[hud_crosshair_color], xhair_tranmap);
+        V_DrawPatchTRTL2(x, y, patch, colrngs[hud_crosshair_color],
+                         R_GetGenericTranMap(hud_crosshair_tran_pct));
     }
 
     // If the Reset Button has been selected, an "Are you sure?" message
@@ -3820,6 +3821,11 @@ setup_menu_t gen_settings7[] = {
 
 // Page 8 --------------------------------------------------------------------
 
+static void ShadowTrans(void)
+{
+  R_GetGenericTranMap(hud_menu_shadows_filter_pct);
+}
+
 static const char *fake_contrast_strings[] = {
   "Off", "Smooth", "Vanilla", NULL
 };
@@ -3832,7 +3838,7 @@ setup_menu_t gen_settings8[] = {
 
     {"Backdrop For All Menus",       S_ONOFF,                 N_X, M_SPC, {"menu_background_all"}},
     {"No Palette Tint in Menus",     S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_menu_tint"}},
-    {"HUD/Menu Shadows",             S_ONOFF,                 N_X, M_SPC, {"hud_menu_shadows"}},
+    {"HUD/Menu Shadows",             S_ONOFF,                 N_X, M_SPC, {"hud_menu_shadows"}, .action = ShadowTrans},
     {"Flip Levels",                  S_ONOFF,                 N_X, M_SPC, {"flip_levels"}},
     {"No Berserk Tint",              S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_berserk_tint"}},
     {"No Radiation Suit Tint",       S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_radsuit_tint"}},

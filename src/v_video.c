@@ -162,11 +162,7 @@ int menu_backdrop_darkening;
 
 byte cr_allblack[256],
      cr_gray_vc[256],  // `V_Colorize()` only
-     nightvision[256], // Night-vision visor
-     *shadow_tranmap,  // HUD/menu shadows
-     *pspr_tranmap,    // Translucent flashes
-     *xhair_tranmap,   // Translucent crosshair
-     *trail_tranmap;
+     nightvision[256]; // Night-vision visor
 
 // [Nugget] -----------------------------------------------------------------/
 
@@ -669,7 +665,12 @@ void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
     if (hud_menu_shadows && drawshadows)
     {
       drawingshadow = true;
-      V_DrawPatchTranslucent2(x + 1, y + 1, patch, flipped, cr_allblack, NULL, shadow_tranmap);
+
+      V_DrawPatchTranslucent2(
+        x + 1, y + 1, patch, flipped, cr_allblack, NULL,
+        R_GetGenericTranMap(hud_menu_shadows_filter_pct)
+      );
+
       drawingshadow = false;
     }
 
@@ -869,7 +870,7 @@ void V_ShadowRect(int x, int y, int width, int height)
         {
           byte *const d = &dest[x];
 
-          *d = shadow_tranmap[*d << 8];
+          *d = R_GetGenericTranMap(hud_menu_shadows_filter_pct)[*d << 8];
         }
 
         dest += linesize;
