@@ -1,6 +1,6 @@
 ## New Features
 
-None.
+- **_Message Fadeout_** setting
 
 ## Changes
 

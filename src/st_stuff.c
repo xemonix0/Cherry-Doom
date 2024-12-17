@@ -1548,9 +1548,14 @@ static void DrawGlyphLine(int x, int y, sbarelem_t *elem, widgetline_t *line,
 
     if (glyph)
     {
+        // [Nugget] Message fadeout
+        byte *const tl = (!elem->tranmap && line->tran_pct)
+                         ? R_GetGenericTranMap(line->tran_pct)
+                         : elem->tranmap;
+
         // [Nugget] Message flash
         DrawPatchEx(x + line->xoffset, y, font->maxheight, elem->alignment, glyph,
-                    elem->cr, line->flash ? CR_BRIGHT : CR_NONE, elem->tranmap);
+                    elem->cr, line->flash ? CR_BRIGHT : CR_NONE, tl);
     }
 
     if (elem->alignment & sbe_h_middle)

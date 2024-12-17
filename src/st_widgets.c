@@ -82,6 +82,7 @@ static int hudcolor_ms_comp;
 
 boolean announce_milestones;
 boolean show_save_messages;
+static boolean message_fadeout;
 static boolean message_flash;
 static int hud_msg_duration;
 static int hud_chat_duration;
@@ -93,9 +94,23 @@ boolean sp_chat;
 
 // ---------------------------------------------------------------------------
 
+boolean ST_MessageFadeoutOn(void)
+{
+    return message_fadeout;
+}
+
 int ST_GetNumMessageLines(void)
 {
     return hud_msg_lines;
+}
+
+void FadeOutLine(widgetline_t *const line, const int duration_left)
+{
+    if (message_fadeout && 0 <= duration_left && duration_left < 9)
+    {
+        line->tran_pct = (duration_left + 1) * 10;
+    }
+    else { line->tran_pct = 0; }
 }
 
 // [Nugget] =================================================================/
@@ -349,11 +364,15 @@ static void UpdateMessage(sbe_widget_t *widget, player_t *player)
 
             ST_AddLine(widget, m->string);
 
+            widgetline_t *const line = &widget->lines[array_size(widget->lines) - 1];
+
+            FadeOutLine(line, m->duration_left); // Message fadeout
+
             // Message flash -------------------------------------------------
 
             if (m->flash_duration_left) { m->flash_duration_left--; }
 
-            widget->lines[array_size(widget->lines) - 1].flash = !!m->flash_duration_left;
+            line->flash = !!m->flash_duration_left;
         }
         else {
             m->is_chat_msg = false; // Allow overwriting
@@ -405,6 +424,9 @@ static void UpdateAnnounceMessage(sbe_widget_t *widget, player_t *player)
     {
         ST_AddLine(widget, string);
         --widget->duration_left;
+
+        // [Nugget] Message fadeout
+        FadeOutLine(&widget->lines[array_size(widget->lines) - 1], widget->duration_left);
     }
     else
     {
@@ -1799,6 +1821,10 @@ void ST_BindHUDVariables(void)
              false, ss_stat, wad_no, "Colorize player messages");
 
   // [Nugget] /---------------------------------------------------------------
+
+  // Message fadeout
+  M_BindBool("message_fadeout", &message_fadeout, NULL,
+             false, ss_stat, wad_no, "Messages fade out");
 
   // Message flash
   M_BindBool("message_flash", &message_flash, NULL,

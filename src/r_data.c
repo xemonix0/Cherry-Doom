@@ -51,6 +51,7 @@
 
 // [Nugget]
 #include "hu_crosshair.h"
+#include "st_widgets.h"
 
 // [Nugget] /-----------------------------------------------------------------
 
@@ -133,6 +134,12 @@ byte *R_GetGenericTranMap(const int filter_pct)
   if (!*tmap) { *tmap = R_InitGenericTranMap(filter_pct); }
 
   return *tmap;
+}
+
+void R_InitMessageFadeoutTranMaps(void)
+{
+  for (int i = 0;  i < 10;  i++)
+  { R_GetGenericTranMap(i * 10); }
 }
 
 // [Nugget] -----------------------------------------------------------------/
@@ -1193,6 +1200,10 @@ void R_InitData(void)
   // HUD/menu shadows
   if (hud_menu_shadows && hud_menu_shadows_filter_pct != 100)
   { R_GetGenericTranMap(hud_menu_shadows_filter_pct); }
+
+  // Message fadeout
+  if (ST_MessageFadeoutOn())
+  { R_InitMessageFadeoutTranMaps(); }
 
   // Translucent flashes
   if (pspr_translucency_pct != 100)

@@ -106,6 +106,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **Secret count in "secret revealed" message** [p.f. Crispy Doom]
 - **Show Save Messages** setting (CFG-only: `show_save_messages`)
 - **_Milestone-Completion Announcements_** setting, to report completion of milestones (e.g. all items acquired)
+- **_Message Fadeout_** setting
 - **_Message Flash_** setting
 - **_Message Lines_** setting (scrolling direction determined by the CFG-only `hud_msg_scrollup` CVAR)
 - **_Group Repeated Messages_** setting [i.b. Doom Retro]

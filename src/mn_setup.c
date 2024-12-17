@@ -2232,6 +2232,10 @@ static setup_menu_t stat_settings4[] = {
     {"Obituary Color", S_CRITEM|S_COSMETIC, H_X, M_SPC,
      {"hudcolor_obituary"}, .strings_id = str_hudcolor},
 
+    // Message fadeout
+    {"Message Fadeout", S_ONOFF, H_X, M_SPC, {"message_fadeout"},
+     .action = R_InitMessageFadeoutTranMaps},
+
     // Message flash
     {"Message Flash", S_ONOFF, H_X, M_SPC, {"message_flash"}},
 

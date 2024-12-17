@@ -217,7 +217,9 @@ typedef struct
     int totalwidth;
     int xoffset;
 
-    boolean flash; // [Nugget] Message flash
+    // [Nugget]
+    int tran_pct; // Message fadeout
+    boolean flash; // Message flash
 } widgetline_t;
 
 typedef struct sbe_widget_s
