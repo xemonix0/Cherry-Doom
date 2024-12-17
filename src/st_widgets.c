@@ -189,6 +189,7 @@ static void AddMessage(char *const string, int duration, const boolean is_chat_m
     static int num_copies = 0;
 
     if (hud_msg_group && message_list_tail && num_copies < MAX_COPIES
+        && strlen(string) == message_list_tail->orig_length
         && !strncmp(string, message_list_tail->string, message_list_tail->orig_length))
     {
         num_copies++;

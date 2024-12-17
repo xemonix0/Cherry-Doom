@@ -10,4 +10,5 @@
 
 ## Bug Fixes
 
-None.
+- Message grouping only checking as many characters as the last message had,
+  causing incorrect grouping (e.g. new message "TEST" being grouped with last message "TES")
