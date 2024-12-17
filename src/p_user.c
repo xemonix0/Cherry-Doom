@@ -463,8 +463,8 @@ void P_MovePlayer (player_t* player)
 
           // [Nugget] /-------------------------------------------------------
 
-          char forwardmove = cmd->forwardmove,
-               sidemove    = cmd->sidemove;
+          signed char forwardmove = cmd->forwardmove,
+                      sidemove    = cmd->sidemove;
                   
           if (mo->intflags & MIF_CROUCHING)
           { forwardmove /= 2;  sidemove /= 2; }

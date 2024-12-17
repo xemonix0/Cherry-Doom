@@ -10,5 +10,6 @@
 
 ## Bug Fixes
 
+- Broken movement in systems assuming `char`s to be unsigned
 - Message grouping only checking as many characters as the last message had,
   causing incorrect grouping (e.g. new message "TEST" being grouped with last message "TES")
