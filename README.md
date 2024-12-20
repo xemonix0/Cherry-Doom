@@ -66,6 +66,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Screen Wipe speed percentage_** setting
 - **_Alternative Intermission Background_** setting, to replace the intermission graphic with a darkened rotating camera view
 - **Color settings** [p.f. International Doom]
+  - _Contrast_ by [@pvictress](https://github.com/pvictress)
 - **_Sound Clipping Distance_** selection, to optionally double the distance at which sound effects become audible
 - **_One-Key Quick Save/Load_** setting, to skip the confirmation prompt
 - **_Auto Save Interval_** setting, for periodic auto saves
@@ -331,7 +332,8 @@ Copyright:
  © 2022 Julia Nechaevskaya;  
  © 2022-2024 ceski;  
  © 2023 Andrew Apted;  
- © 2023 liPillON.   
+ © 2023 liPillON;  
+ © 2024 pvictress.   
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/i_flickstick.*, src/i_gyro.*`  

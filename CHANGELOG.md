@@ -1,6 +1,7 @@
 ## New Features
 
 - **_Message Fadeout_** setting
+- **_[Color] Contrast_** setting [by @pvictress]
 
 ## Changes
 

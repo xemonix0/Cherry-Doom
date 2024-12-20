@@ -3898,6 +3898,7 @@ static setup_menu_t color_settings1[] = {
     {"Green Intensity", S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"green_intensity"},  .action = SetPalette},
     {"Blue Intensity",  S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"blue_intensity"},   .action = SetPalette},
     {"Saturation",      S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"color_saturation"}, .action = SetPalette},
+    {"Contrast",        S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"color_contrast"},   .action = SetPalette},
 
     MI_END
 };
@@ -3930,7 +3931,7 @@ void MN_DrawColor(void)
     patch_t *const patch = V_CachePatchName("M_PALETT", PU_CACHE);
 
     const int x = (SCREENWIDTH / 2) - (SHORT(patch->width) / 2);
-    const int y = 103;
+    const int y = 109;
 
     V_DrawPatchSH(x, y, patch);
 }

@@ -102,7 +102,7 @@ static boolean disk_icon; // killough 10/98
 static const char *sdl_renderdriver = "";
 
 static int red_intensity, green_intensity, blue_intensity;
-static int color_saturation;
+static int color_saturation, color_contrast;
 
 // [Nugget] -----------------------------------------------------------------/
 
@@ -1045,19 +1045,35 @@ void I_SetPalette(byte *palette)
                    g = gamma[*palette++] * green_intensity / 100,
                    b = gamma[*palette++] * blue_intensity  / 100;
 
+        // [PN] Contrast adjustment
+
+        const int contrast_adjustment = 128 * (100 - color_contrast) / 100;
+
+        int channels[3] = {
+            ((int) r * color_contrast / 100) + contrast_adjustment,
+            ((int) g * color_contrast / 100) + contrast_adjustment,
+            ((int) b * color_contrast / 100) + contrast_adjustment
+        };
+
+        channels[0] = BETWEEN(0, 255, channels[0]);
+        channels[1] = BETWEEN(0, 255, channels[1]);
+        channels[2] = BETWEEN(0, 255, channels[2]);
+
         // [JN] Saturation floats, high and low.
         // If saturation has been modified (< 100), set high and low
         // values according to saturation level. Sum of r,g,b channels
         // and floats must be 1.0 to get proper colors.
+
         float a_hi = I_SaturationPercent[color_saturation],
               a_lo = a_hi / 2.0f;
 
         a_hi = 1.0f - a_hi;
         a_lo = 0.0f + a_lo;
 
-        colors[i].r = (a_hi * r) + (a_lo * g) + (a_lo * b);
-        colors[i].g = (a_lo * r) + (a_hi * g) + (a_lo * b);
-        colors[i].b = (a_lo * r) + (a_lo * g) + (a_hi * b);
+        // Calculate final color values
+        colors[i].r = (a_hi * channels[0]) + (a_lo * channels[1]) + (a_lo * channels[2]);
+        colors[i].g = (a_lo * channels[0]) + (a_hi * channels[1]) + (a_lo * channels[2]);
+        colors[i].b = (a_lo * channels[0]) + (a_lo * channels[1]) + (a_hi * channels[2]);
 
         colors[i].a = 0xffu;
     }
@@ -2021,6 +2037,7 @@ void I_BindVideoVariables(void)
     BIND_NUM(blue_intensity,  100, 0, 100, "Intensity percent of the screen's blue component");
 
     BIND_NUM(color_saturation, 100, 0, 100, "Saturation percent of the screen's colors");
+    BIND_NUM(color_contrast, 100, 10, 200, "Contrast percent of the screen's colors");
 }
 
 //----------------------------------------------------------------------------
