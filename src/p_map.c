@@ -644,7 +644,7 @@ boolean P_SkullSlam(mobj_t **skull, mobj_t *hitthing)
   (*skull)->momx = (*skull)->momy = (*skull)->momz = 0;
 
   // [Nugget] Fix forgetful lost soul
-  if (casual_play && comp_lsamnesia)
+  if (casual_play && !comp_lsamnesia)
     P_SetMobjState(*skull, (*skull)->info->seestate);
   else
     P_SetMobjState (*skull, (*skull)->info->spawnstate);
