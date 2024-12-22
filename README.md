@@ -5,7 +5,8 @@
 [![License](https://img.shields.io/github/license/xemonix0/Cherry-Doom.svg?style=for-the-badge&logo=gnu)](https://github.com/xemonix0/Cherry-Doom/blob/master/COPYING)
 [![Release](https://img.shields.io/github/release/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
 [![Release Date](https://img.shields.io/github/release-date/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/latest/total.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
+[![Downloads (total)](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/total?style=for-the-badge)](https://github.com/fabiangreffrath/woof/releases/latest)
+[![Downloads (latest)](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/latest/total.svg?style=for-the-badge)](https://github.com/fabiangreffrath/woof/releases/latest)
 [![Commits Since Latest Release](https://img.shields.io/github/commits-since/xemonix0/Cherry-Doom/latest.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/commits/master)
 [![Last Commit](https://img.shields.io/github/last-commit/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/commits/master)
 [![Continuous Integration](https://img.shields.io/github/check-runs/xemonix0/Cherry-Doom/master?style=for-the-badge&label=Continuous%20Integration)](https://github.com/xemonix0/Cherry-Doom/actions/workflows/main.yml)
@@ -16,38 +17,38 @@ Cherry Doom is a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) i
 
 If you're seeking information on the version you're using, please refer to the documentation included with it.
 
-## Demo compatibility notice
+## Demo Compatibility Notice
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
 **RECORD DEMOS AT YOUR OWN RISK!**
 
 ## Features
 
-**Important to note**:
+**Important notes**:
 - This feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features)
-- Some of Cherry Doom's features come from other sources. The initial implementations for those are _ported from (p.f.)_ or _inspired by (i.b.)_ said sources. These acknowledgements are included in the feature list
-- Some config variables (CVARs) don't have a corresponding menu item and can only be changed by editing `cherry-doom.cfg`. For these, a "_CFG-only_" label is present and the CVAR name is included for guidance
+- Some of Cherry Doom's features originate from other sources; acknowledgements are provided _(ported from [p.f.] or inspired by [i.b.])_
+- Some config variables (CVARs) don't have a corresponding menu item and can only be changed by editing `cherry-doom.cfg`. These are marked as "_CFG-only_" and the CVAR name is included for guidance
 
 ### General
 
 - _Mute Inactive Window_ setting [p.f. [International Doom](https://jnechaevsky.github.io/inter-doom/)]
 - _Floating Powerups_ setting [p.f. International Doom]
 - _Rocket Trails_ setting [partially p.f. [Doom Retro](https://www.doomretro.com/)]
-	- Smoke particle spawn rate and smoke translucency are customizable via the CFG-only `rocket_trails_interval` and `rocket_trails_tran` CVARs respectively
-- _Mouselook_ option for the _Stretch Short Skies_ setting to enable sky stretching only when mouselook is enabled
-- _Less Blinding Tints_ setting
+	- Customize smoke particle spawn rate and translucency via CFG-only CVARs: `rocket_trails_interval` and `rocket_trails_tran` respectively
+- _Mouselook_ option for the _Stretch Short Skies_ setting, enabling sky stretching only with mouselook active
+- _Less Blinding Tints_ setting (by [@Spaicrab](https://github.com/Spaicrab))
 
 #### Intermission screen
 
-- Setting to _adjust intermission kill percentage to follow UV max speedrun requirements_ (CFG-only: `inter_accurate_kill_count`)
-	- Specifically, it prevents resurrected and Icon of Sin-spawned monsters from increasing the totals, and also makes 100% show up for maps without monsters
-- Items percentage is now 100% on maps without items
+- Setting to adjust intermission kill percentage to meet UV max speedrun requirements (CFG-only: `inter_accurate_kill_count`)
+	- Ensures that resurrected and Icon of Sin-spawned monsters do not increase the kill count. Maps without monsters display 100% kill completion
+- Maps without items display 100% item completion
 
 ### Status Bar/HUD
 
 #### Crosshair
 
 - _Disable On Slot 1_ setting [i.b. [_Precise Crosshair_ mod](https://forum.zdoom.org/viewtopic.php?t=64788)]
-- _Detection of Targets in Darkness_ setting (the required light level is customizable through the CFG-only `hud_crosshair_dark_level` CVAR) [i.b. [_Target Spy_ mod](https://forum.zdoom.org/viewtopic.php?t=60784)]
+- _Detection of Targets in Darkness_ setting, with required light level customizable via the CFG-only CVAR `hud_crosshair_dark_level` [i.b. [_Target Spy_ mod](https://forum.zdoom.org/viewtopic.php?t=60784)]
 
 ### Enemies
 
@@ -55,31 +56,27 @@ Although the new code has been written with the intention of not breaking demo c
 
 ### Miscellaneous
 
-- Hints for some disabled menu items, explaining the reason they are disabled
-- Most setup menus have been rearranged (utilizing the new _scrollable subpages_ feature) to make navigation easier
-- _Disable Stats Tracking_ setting for the _custom skill_
+- Menu items, disabled due to acive compatibility options, now include hints, explaining the reason for their unavailability
+- Most setup menus have been reorganized using a new _scrollable subpages_ feature for easier navigation
+- _Disable Stats Tracking_ setting for the _Custom Skill_
 
 ### _Level Table_
 
-The _Level Table_, inspired by (and initially ported from) DSDA-Doom, provides a way to track your progress across the levels of a WAD.
-
-This feature tracks statistics, such as the _skill level_, _kills_, _items_, _secrets_ and _time_, and allows you to see all that information in one place (including a _Summary_ screen, with overall statistics for the current WAD), also giving you the ability to warp to any map conveniently from the same screen.
+The _Level Table_, inspired by and initially ported from DSDA-Doom, tracks WAD level progress, including statistics like skill level, kills, items, secrets, and time, has a summary screen with overall statistics for the current WAD, and allows you to warp to any map.
 
 Compared to DSDA-Doom's implementation, there are a few notable additions and changes:
-- Setting to toggle _stats tracking_ (CFG-only: `lt_enable_tracking`)
-- Command line parameter to _disable stats tracking_ (`-notracking`)
-	- This can be used as a temporary alternative to the `lt_enable_tracking` CVAR
-- Setting to toggle _tracking kills and time for maps not beaten from a pistol start_ (CFG-only: `lt_track_continuous`)
-	- This setting is enabled by default; the old behavior _(before 2.0.0 and in DSDA-Doom)_ is equivalent to it being disabled
-- Setting to toggle _resetting stats for the current level upon beating the level on a new best skill (except Nightmare)_ (CFG-only: `lt_reset_on_higher_skill`)
-	- This setting is enabled by default; the old behavior is equivalent to it being disabled
-- The ability to see (and warp to, but not track stats for) all loaded maps (not just maps from the WAD that is the last in the load order), grouped by WAD filename
-- _Stats tracking_ now ignores WADs without maps when creating data folders for stats files
+- Toggleable _stats tracking_ (CFG-only: `lt_enable_tracking`)
+- Command line parameter to temporarily disable stats tracking (`-notracking`)
+- Option to track kills and time for maps not beaten from a pistol start (CFG-only: `lt_track_continuous`)
+	- Enabled by default; disabling replicates older (pre-2.0.0) behavior.
+- Option to reset stats for the current level upon achieving a new best skill, excluding Nightmare (CFG-only: `lt_reset_on_higher_skill`)
+	- Enabled by default; disabling replicates older behavior.
+- Ability to view and warp to all loaded maps, not just those from the last-loaded WAD, grouped by WAD filename
+- Stats tracking excludes WADs without maps when creating data folders for stats files
 - _Level Table Stats Format_ setting (CFG-only: `lt_stats_format`)
-- Press `Del` to _erase selected map stats_
-- "Reset to defaults" button repurposed for _erasing current WAD stats_
-- WAD stats are now written to the file every time a level is beaten, and not just when you quit the game
-- Various visual changes
+- Press `Del` to erase selected map stats
+- "Reset to defaults" button repurposed for erasing current WAD stats
+- Various visual enhancements
 
 ## Compiling
 
