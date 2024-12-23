@@ -1616,6 +1616,9 @@ static void DrawLines(int x, int y, sbarelem_t *elem)
 
     int cr = elem->cr;
 
+    // [Nugget]
+    const boolean is_digits_font = !!strcmp(widget->font->name, "Digits");
+
     widgetline_t *line;
     array_foreach(line, widget->lines)
     {
@@ -1663,7 +1666,7 @@ static void DrawLines(int x, int y, sbarelem_t *elem)
             else
             {
                 glyph = font->characters[ch];
-                draw_shadow &= !!strcmp(widget->font->name, "Digits"); // Don't draw for digits
+                draw_shadow &= is_digits_font; // Don't draw for digits
             }
             DrawGlyphLine(x, y, elem, line, glyph);
 
@@ -3031,6 +3034,54 @@ static void UpdateNughudStacks(void)
 
 // NUGHUD loading ------------------------------------------------------------
 
+static hudfont_t LoadNughudHUDFont(
+  const char *const name,
+  const fonttype_t type,
+  const char *const stem
+)
+{
+  hudfont_t font = {0};
+
+  font.name = M_StringDuplicate(name);
+  font.type = type;
+
+  int maxwidth = 0, maxheight = 0;
+
+  // If any lowercase character is missing, don't use lowercase at all
+  boolean use_lowercase = true;
+
+  for (int i = 0;  i < HU_FONTSIZE;  i++)
+  {
+    char namebuf[16];
+    int lumpnum;
+
+    M_snprintf(namebuf, sizeof(namebuf), "%s%03d", stem, i + HU_FONTSTART);
+
+    if ((lumpnum = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
+    {
+      font.characters[i] = V_CachePatchNum(lumpnum, PU_STATIC);
+      maxwidth  = MAX(maxwidth,  SHORT(font.characters[i]->width));
+      maxheight = MAX(maxheight, SHORT(font.characters[i]->height));
+    }
+    else {
+      const char c = i + HU_FONTSTART;
+
+      if ('a' <= c && c <= 'z') { use_lowercase = false; }
+    }
+  }
+
+  if (!use_lowercase)
+  {
+    for (int i = 'a' - HU_FONTSTART;  i <= 'z' - HU_FONTSTART;  i++)
+    { font.characters[i] = font.characters[i + 'A' - 'a']; }
+  }
+
+  font.monowidth = maxwidth;
+  font.maxheight = maxheight;
+
+  return font;
+}
+
 static sbarelem_t CreateNughudNumber(
   const nughud_alignable_t na,
   const sbarnumbertype_t type,
@@ -3121,7 +3172,7 @@ static sbardef_t *CreateNughudSbarDef(void)
 
   char namebuf[16];
 
-  // Fonts ===================================================================
+  // Number fonts ============================================================
 
   int lumpnum;
   int maxwidth, maxheight;
@@ -3295,53 +3346,15 @@ end_amnum:
   amnum.monowidth = SHORT(amnum.numbers[0]->width);
   amnum.maxheight = maxheight;
 
-  // Console Font ------------------------------------------------------------
+  // HUD fonts ===============================================================
 
+  // Console font
   static hudfont_t cfn = {0};
+  cfn = LoadNughudHUDFont("Console", sbf_proportional, "STCFN");
 
-  cfn.name = M_StringDuplicate("Console");
-  cfn.type = sbf_proportional;
-
-  maxwidth = maxheight = 0;
-
-  for (int i = 0;  i < HU_FONTSIZE;  i++)
-  {
-    M_snprintf(namebuf, sizeof(namebuf), "STCFN%03d", i + HU_FONTSTART);
-
-    if ((lumpnum = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
-    {
-      cfn.characters[i] = V_CachePatchNum(lumpnum, PU_STATIC);
-      maxwidth  = MAX(maxwidth,  SHORT(cfn.characters[i]->width));
-      maxheight = MAX(maxheight, SHORT(cfn.characters[i]->height));
-    }
-  }
-
-  cfn.monowidth = maxwidth;
-  cfn.maxheight = maxheight;
-
-  // Digits Font -------------------------------------------------------------
-
+  // Digits Font
   static hudfont_t dig = {0};
-
-  dig.name = M_StringDuplicate("Digits");
-  dig.type = sbf_mono0;
-
-  maxwidth = maxheight = 0;
-
-  for (int i = 0;  i < HU_FONTSIZE;  i++)
-  {
-    M_snprintf(namebuf, sizeof(namebuf), "DIG%03d", i + HU_FONTSTART);
-
-    if ((lumpnum = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
-    {
-      dig.characters[i] = V_CachePatchNum(lumpnum, PU_STATIC);
-      maxwidth  = MAX(maxwidth,  SHORT(dig.characters[i]->width));
-      maxheight = MAX(maxheight, SHORT(dig.characters[i]->height));
-    }
-  }
-
-  dig.monowidth = maxwidth;
-  dig.maxheight = MAX(8, maxheight);
+  dig = LoadNughudHUDFont("Digits", sbf_mono0, "DIG");
 
   // Widgets =================================================================
 
