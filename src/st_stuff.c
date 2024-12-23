@@ -3053,7 +3053,7 @@ static hudfont_t LoadNughudHUDFont(
   for (int i = 0;  i < HU_FONTSIZE;  i++)
   {
     char namebuf[16];
-    int lumpnum;
+    int lumpnum = 0;
 
     M_snprintf(namebuf, sizeof(namebuf), "%s%03d", stem, i + HU_FONTSTART);
 
