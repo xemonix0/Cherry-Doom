@@ -1617,7 +1617,7 @@ static void DrawLines(int x, int y, sbarelem_t *elem)
     int cr = elem->cr;
 
     // [Nugget]
-    const boolean is_digits_font = !!strcmp(widget->font->name, "Digits");
+    const boolean isnt_digits_font = !!strcmp(widget->font->name, "Digits");
 
     widgetline_t *line;
     array_foreach(line, widget->lines)
@@ -1666,7 +1666,7 @@ static void DrawLines(int x, int y, sbarelem_t *elem)
             else
             {
                 glyph = font->characters[ch];
-                draw_shadow &= is_digits_font; // Don't draw for digits
+                draw_shadow &= isnt_digits_font; // Don't draw for digits
             }
             DrawGlyphLine(x, y, elem, line, glyph);
 
