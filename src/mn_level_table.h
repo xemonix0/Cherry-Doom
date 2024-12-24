@@ -30,15 +30,15 @@ enum
 extern setup_tab_t level_table_tabs[];
 extern setup_menu_t *level_table[lt_page_max];
 
-boolean LT_IsLevelsPage(int page);
+inline boolean LT_IsLevelsPage(int page);
 
 void LT_RecalculateSummary(void);
 void LT_Reset(void);
 void LT_Build(void);
 void LT_Draw(setup_menu_t *menu, int page);
 
-boolean LT_KeyboardScroll(setup_menu_t *menu, setup_menu_t *item);
-boolean LT_MouseScroll(setup_menu_t *menu, int inc);
-void LT_UpdateScrollingIndicators(setup_menu_t *menu);
+boolean LT_HandleKeyboardScroll(setup_menu_t *menu, setup_menu_t *item);
+boolean LT_HandleMouseScroll(setup_menu_t *menu, int inc);
+void LT_UpdateScrollIndicators(setup_menu_t *menu);
 
 #endif

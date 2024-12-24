@@ -1583,7 +1583,7 @@ static void SetupMenu(void)
 
     // [Cherry]
     KeyboardScrollSubpage(0);
-    LT_UpdateScrollingIndicators(current_menu);
+    LT_UpdateScrollIndicators(current_menu);
 }
 
 static void SetupMenuSecondary(void)
@@ -5415,7 +5415,7 @@ static boolean NextPage(int inc)
 
     // [Cherry]
     KeyboardScrollSubpage(menu_input == mouse_mode ? -inc : false);
-    LT_UpdateScrollingIndicators(current_menu);
+    LT_UpdateScrollIndicators(current_menu);
 
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
     return true;
@@ -5641,7 +5641,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         } while (current_item->m_flags & S_SKIP);
 
         // [Cherry]
-        if (!LT_KeyboardScroll(current_menu, current_item))
+        if (!LT_HandleKeyboardScroll(current_menu, current_item))
         {
             KeyboardScrollSubpage(0);
         }
@@ -5674,7 +5674,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         } while (current_item->m_flags & S_SKIP);
 
         // [Cherry]
-        if (!LT_KeyboardScroll(current_menu, current_item))
+        if (!LT_HandleKeyboardScroll(current_menu, current_item))
         {
             KeyboardScrollSubpage(0);
         }
@@ -5767,7 +5767,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
     if (action == MENU_LEFT)
     {
         // [Cherry] Level table scrolling
-        if (LT_MouseScroll(current_menu, -1))
+        if (LT_HandleMouseScroll(current_menu, -1))
         {
             return true;
         }
@@ -5787,7 +5787,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
     if (action == MENU_RIGHT)
     {
         // [Cherry] Level table scrolling
-        if (LT_MouseScroll(current_menu, 1))
+        if (LT_HandleMouseScroll(current_menu, 1))
         {
             return true;
         }
@@ -5859,7 +5859,7 @@ static boolean SetupTab(void)
 
         // [Cherry]
         KeyboardScrollSubpage(0);
-        LT_UpdateScrollingIndicators(current_menu);
+        LT_UpdateScrollIndicators(current_menu);
     }
 
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
