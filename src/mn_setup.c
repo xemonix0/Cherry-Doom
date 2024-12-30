@@ -2496,21 +2496,13 @@ static setup_menu_t enem_settings1[] = {
 
     // [Nugget] /-------------------------------------------------------------
 
-    // Restored menu item
-    // [FG] spectre drawing mode
-    {"Blocky Spectre Drawing", S_ONOFF, M_X, M_SPC, {"fuzzcolumn_mode"},
-     .action = R_SetFuzzColumnMode},
-
     MI_GAP,
+
     {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
 
-      {"Extra Gibbing",            S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"extra_gibbing"}},
-      {"Bloodier Gibbing",         S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"bloodier_gibbing"}},
-      {"Toss Items Upon Death",    S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"tossdrop"}},
-
-      // [Nugget - ceski] Selective fuzz darkening
-      {"Selective Fuzz Darkening", S_ONOFF|S_STRICT, M_X, M_SPC,
-       {"fuzzdark_mode"}, .action = R_SetFuzzColumnMode},
+      {"Extra Gibbing",         S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"extra_gibbing"}},
+      {"Bloodier Gibbing",      S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"bloodier_gibbing"}},
+      {"Toss Items Upon Death", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"tossdrop"}},
 
     // [Nugget] -------------------------------------------------------------/
 
