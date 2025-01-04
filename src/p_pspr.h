@@ -43,7 +43,7 @@ struct player_s;
 extern boolean weapswitch_interruption;
 extern boolean always_bob;
 
-enum {
+typedef enum bobstyle_s {
   BOBSTYLE_VANILLA,
   BOBSTYLE_INVVANILLA,
   BOBSTYLE_ALPHA,
@@ -51,8 +51,12 @@ enum {
   BOBSTYLE_SMOOTH,
   BOBSTYLE_INVSMOOTH,
   BOBSTYLE_QUAKE,
-}; extern int bobbing_style;
 
+  NUM_BOBSTYLES
+} bobstyle_t;
+
+extern bobstyle_t bobbing_style;
+extern int weapon_bobbing_speed_pct;
 extern boolean weaponsquat;
 extern boolean sx_fix;
 extern boolean comp_nomeleesnap;

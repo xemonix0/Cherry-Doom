@@ -48,6 +48,7 @@
 // [Nugget] CVARs
 boolean weapswitch_interruption;
 boolean always_bob;
+int weapon_bobbing_speed_pct;
 boolean weaponsquat;
 boolean sx_fix;
 boolean comp_nomeleesnap;
@@ -509,7 +510,7 @@ static void P_ApplyBobbing(int *sx, int *sy, fixed_t bob)
 
 // [Nugget] Bob weapon based on selected style /------------------------------
 
-int bobbing_style;
+bobstyle_t bobbing_style;
 
 static void P_NuggetBobbing(player_t* player)
 {
@@ -524,7 +525,11 @@ static void P_NuggetBobbing(player_t* player)
   // Extended weapon bobbing percentage setting
   const fixed_t bob = player->bob * weapon_bobbing_pct / 100;
 
-  const int angle = (128*leveltime) & FINEMASK;
+  const int speed = (!strictmode && weapon_bobbing_speed_pct != 100)
+                    ? 128 * weapon_bobbing_speed_pct / 100
+                    : 128;
+
+  const int angle = (speed * leveltime) & FINEMASK;
 
   // `sx` - Default, differs in a few styles
   psp->sx2 = ((1 - STRICTMODE(sx_fix)) * FRACUNIT) + FixedMul(bob, finecosine[angle]);
@@ -535,6 +540,7 @@ static void P_NuggetBobbing(player_t* player)
   // Bobbing Styles, ported from Zandronum
   switch (STRICTMODE(bobbing_style))
   {
+    default:
     case BOBSTYLE_VANILLA:
       psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
       break;
