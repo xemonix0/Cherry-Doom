@@ -1280,6 +1280,10 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget] /===============================================================
 
+  // Flip levels
+  if (viewangleoffset && STRICTMODE(flip_levels))
+  { viewangle += ANG180; }
+
   // Alt. intermission background --------------------------------------------
 
   if (WI_UsingAltInterpic() && gamestate == GS_INTERMISSION)

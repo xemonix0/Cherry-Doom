@@ -15,6 +15,8 @@
 
 - Broken movement in systems assuming `char`s to be unsigned
 - `comp_lsamnesia` inversely affecting collision with entities (i.e. lost souls would remember their target)
-- Weapon sprites being raised/lowered excessively when using switch interruption with certain bobbing styles
+- Weapon sprites being raised/lowered excessively when using switch interruption
+  with certain bobbing styles and/or reduced weapon bobbing amplitude
+- _Flip Levels_ setting not working for side screens in three-screen mode
 - Message grouping only checking as many characters as the last message had,
   causing incorrect grouping (e.g. new message "TEST" being grouped with last message "TES")

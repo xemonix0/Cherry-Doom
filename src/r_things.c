@@ -1024,23 +1024,6 @@ void R_DrawPlayerSprites(void)
   mfloorclip = screenheightarray;
   mceilingclip = negonearray;
 
-  // [Nugget] Flip levels
-  if (STRICTMODE(flip_levels))
-  {
-    for (int y = 0;  y < viewheight;  y++)
-    {
-      for (int x = 0;  x < viewwidth/2;  x++)
-      {
-        pixel_t *left = &I_VideoBuffer[(viewwindowy + y) * video.pitch + viewwindowx + x],
-                *right = left + viewwidth - 1 - x*2,
-                temp = *left;
-
-        *left = *right;
-        *right = temp;
-      }
-    }
-  }
-
   // display crosshair
   if (hud_crosshair_on) // [Nugget] Use crosshair toggle
     HU_DrawCrosshair();
@@ -1372,6 +1355,23 @@ void R_DrawMasked(void)
   for (ds=ds_p ; ds-- > drawsegs ; )  // new -- killough
     if (ds->maskedtexturecol)
       R_RenderMaskedSegRange(ds, ds->x1, ds->x2);
+
+  // [Nugget] Flip levels
+  if (STRICTMODE(flip_levels))
+  {
+    for (int y = 0;  y < viewheight;  y++)
+    {
+      for (int x = 0;  x < viewwidth/2;  x++)
+      {
+        pixel_t *left = &I_VideoBuffer[(viewwindowy + y) * video.pitch + viewwindowx + x],
+                *right = left + viewwidth - 1 - x*2,
+                temp = *left;
+
+        *left = *right;
+        *right = temp;
+      }
+    }
+  }
 
   // draw the psprites on top of everything
   //  but does not draw on side views
