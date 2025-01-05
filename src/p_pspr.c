@@ -720,7 +720,8 @@ void A_Lower(player_t *player, pspdef_t *psp)
   const int speed = (player->cheats & CF_FASTWEAPS) ? LOWERSPEED*2 : LOWERSPEED;
 
   psp->sy += speed;
-  psp->sy2 += speed; // [Nugget]
+
+  psp->sy2 = MIN(WEAPONBOTTOM, psp->sy2 + speed); // [Nugget]
 
   // Is already down.
   if (psp->sy < WEAPONBOTTOM)
@@ -770,7 +771,8 @@ void A_Raise(player_t *player, pspdef_t *psp)
   const int speed = (player->cheats & CF_FASTWEAPS) ? RAISESPEED*2 : RAISESPEED;
 
   psp->sy -= speed;
-  psp->sy2 -= speed; // [Nugget]
+
+  psp->sy2 = MAX(WEAPONTOP, psp->sy2 - speed); // [Nugget]
 
   if (psp->sy > WEAPONTOP)
     return;
