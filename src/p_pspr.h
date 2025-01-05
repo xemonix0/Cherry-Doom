@@ -57,6 +57,7 @@ typedef enum bobstyle_s {
 
 extern bobstyle_t bobbing_style;
 extern int weapon_bobbing_speed_pct;
+extern boolean switch_bob;
 extern boolean weaponsquat;
 extern boolean sx_fix;
 extern boolean comp_nomeleesnap;

@@ -48,7 +48,11 @@
 // [Nugget] CVARs
 boolean weapswitch_interruption;
 boolean always_bob;
+bobstyle_t bobbing_style;
 int weapon_bobbing_speed_pct;
+boolean switch_bob;
+boolean weapon_inertia;
+int weapon_inertia_scale_pct;
 boolean weaponsquat;
 boolean sx_fix;
 boolean comp_nomeleesnap;
@@ -138,8 +142,8 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
           psp->sx = state->misc1 << FRACBITS;
           psp->sy = state->misc2 << FRACBITS;
           // [FG] centered weapon sprite
-          // [Nugget] If applicable, subtract 1 pixel from the misc1 calculation,
-          // for consistency with the first person sprite centering correction
+          // [Nugget] If applicable, subtract 1 pixel from the `misc1` calculation,
+          // for consistency with the first-person-sprite-centering correction
           psp->sx2 = (state->misc1 - STRICTMODE(sx_fix)) << FRACBITS;
           psp->sy2 = state->misc2 << FRACBITS;
         }
@@ -509,16 +513,13 @@ static void P_ApplyBobbing(int *sx, int *sy, fixed_t bob)
 #define WEAPON_BOBBING 2
 #define WEAPON_HORIZONTAL 3 // [Nugget]
 
-// [Nugget] Bob weapon based on selected style /------------------------------
-
-bobstyle_t bobbing_style;
-
+// [Nugget]
 static void P_NuggetBobbing(player_t* player)
 {
   pspdef_t *psp = player->psprites;
 
   if ((player->attackdown && STRICTMODE(center_weapon) != WEAPON_BOBBING) // [FG] not attacking means idle
-      || !psp->state || psp->state->misc1 || player->switching)
+      || !psp->state || psp->state->misc1 || (player->switching && !switch_bob))
   {
     return;
   }
@@ -532,50 +533,66 @@ static void P_NuggetBobbing(player_t* player)
 
   const int angle = (speed * leveltime) & FINEMASK;
 
+  const bobstyle_t bobstyle = STRICTMODE(bobbing_style);
+
   // `sx` - Default, differs in a few styles
   psp->sx2 = ((1 - STRICTMODE(sx_fix)) * FRACUNIT) + FixedMul(bob, finecosine[angle]);
 
-  // `sy` - Used for all styles; their specific values are added to this one right after
-  psp->sy2 = WEAPONTOP + abs(psp->dy); // Squat weapon down on impact
-
-  // Bobbing Styles, ported from Zandronum
-  switch (STRICTMODE(bobbing_style))
+  switch (bobstyle)
   {
-    default:
-    case BOBSTYLE_VANILLA:
-      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
-      break;
-
-    case BOBSTYLE_INVVANILLA:
-      psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
-      break;
+    default: break;
 
     case BOBSTYLE_ALPHA:
-      psp->sx2  = FixedMul(bob, finesine[angle]);
-      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
+      psp->sx2 = FixedMul(bob, finesine[angle]);
       break;
 
     case BOBSTYLE_INVALPHA:
-      psp->sx2  = FixedMul(bob, finesine[angle]);
-      psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
-      break;
-
-    case BOBSTYLE_SMOOTH:
-      psp->sy2 += (bob - FixedMul(bob, finecosine[angle*2 & (FINEANGLES - 1)])) / 2;
-      break;
-
-    case BOBSTYLE_INVSMOOTH:
-      psp->sy2 += (bob + FixedMul(bob, finecosine[angle*2 & (FINEANGLES - 1)])) / 2;
+      psp->sx2 = FixedMul(bob, finesine[angle]);
       break;
 
     case BOBSTYLE_QUAKE:
-      psp->sx2  = 0;
-      psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
+      psp->sx2 = 0;
       break;
   }
-}
 
-// [Nugget] -----------------------------------------------------------------/
+  if (!player->switching)
+  {
+    // `sy` - Used for all styles; their specific values are added to this one right after
+    psp->sy2 = WEAPONTOP + abs(psp->dy); // Squat weapon down on impact
+
+    switch (bobstyle)
+    {
+      default:
+      case BOBSTYLE_VANILLA:
+        psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
+        break;
+
+      case BOBSTYLE_INVVANILLA:
+        psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
+        break;
+
+      case BOBSTYLE_ALPHA:
+        psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
+        break;
+
+      case BOBSTYLE_INVALPHA:
+        psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
+        break;
+
+      case BOBSTYLE_SMOOTH:
+        psp->sy2 += (bob - FixedMul(bob, finecosine[angle*2 & (FINEANGLES - 1)])) / 2;
+        break;
+
+      case BOBSTYLE_INVSMOOTH:
+        psp->sy2 += (bob + FixedMul(bob, finecosine[angle*2 & (FINEANGLES - 1)])) / 2;
+        break;
+
+      case BOBSTYLE_QUAKE:
+        psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
+        break;
+    }
+  }
+}
 
 //
 // A_WeaponReady
@@ -699,7 +716,7 @@ void A_Lower(player_t *player, pspdef_t *psp)
     return;
   }
 
-  // [Nugget] Double speed with Fast Weapons
+  // [Nugget] Double speed with fast-weapons cheat
   const int speed = (player->cheats & CF_FASTWEAPS) ? LOWERSPEED*2 : LOWERSPEED;
 
   psp->sy += speed;
@@ -749,7 +766,7 @@ void A_Raise(player_t *player, pspdef_t *psp)
   }
 
   statenum_t newstate;
-  // [Nugget] Double speed with Fast Weapons
+  // [Nugget] Double speed with fast-weapons cheat
   const int speed = (player->cheats & CF_FASTWEAPS) ? RAISESPEED*2 : RAISESPEED;
 
   psp->sy -= speed;
@@ -1049,7 +1066,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
 	  // [Nugget] Moved vertical aiming code above
 	  do
 	    {
-	      // [Nugget] Double Autoaim range
+	      // [Nugget] Double autoaim range
 	      slope = P_AimLineAttack(mo, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
 	      if (!linetarget)
 		slope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
@@ -1123,7 +1140,7 @@ static void P_BulletSlope(mobj_t *mo)
   else
   do
     {
-      // [Nugget] Double Autoaim range
+      // [Nugget] Double autoaim range
       bulletslope = P_AimLineAttack(mo, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
       if (!linetarget)
         bulletslope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
@@ -1151,7 +1168,7 @@ void P_GunShot(mobj_t *mo, boolean accurate)
       angle += (t - P_Random(pr_misfire))<<18;
     }
 
-  // [Nugget] Explosive hitscan cheat
+  // [Nugget] Explosive-hitscan cheat
   if (mo->player && mo->player->cheats & CF_BOOMCAN) { P_SetIsBoomShot(true); }
 
   P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);
@@ -1222,7 +1239,7 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
       angle += (t - P_Random(pr_shotgun))<<19;
       t = P_Random(pr_shotgun);
 
-      // [Nugget] Explosive hitscan cheat
+      // [Nugget] Explosive-hitscan cheat
       if (player->cheats & CF_BOOMCAN) { P_SetIsBoomShot(true); }
 
       P_LineAttack(player->mo, angle, MISSILERANGE, bulletslope +
@@ -1397,9 +1414,6 @@ void P_SetupPsprites(player_t *player)
 
 // [Nugget - ceski] Weapon Inertia /------------------------------------------
 
-boolean weapon_inertia;
-int weapon_inertia_scale_pct;
-
 #define EASE_SCALE(x, y) (FRACUNIT - (FixedDiv(FixedMul(FixedDiv((x) << FRACBITS, (y) << FRACBITS), (fixed_t) weapon_inertia_scale), FRACUNIT)))
 #define EASE_OUT(x, y) ((x) - FixedMul((x), FixedMul((y), (y))))
 #define MAX_DELTA (SCREENWIDTH << FRACBITS)
@@ -1529,7 +1543,7 @@ void P_MovePsprites(player_t *player)
   psp = &player->psprites[ps_weapon];
 
   // [Nugget]
-  if (always_bob || weapon_ready
+  if (always_bob || weapon_ready || (player->switching && switch_bob)
       || (player->attackdown && center_weapon_strict == WEAPON_BOBBING))
   {
     P_NuggetBobbing(player);
@@ -1541,7 +1555,7 @@ void P_MovePsprites(player_t *player)
     {
       static fixed_t last_sy = WEAPONTOP;
 
-      psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first person sprite centering
+      psp->sx2 = (1 - STRICTMODE(sx_fix))*FRACUNIT; // [Nugget] Correct first-person-sprite centering
 
       if (!psp->state->misc1 && !player->switching)
       {
@@ -1563,7 +1577,7 @@ void P_MovePsprites(player_t *player)
       // [FG] center the weapon sprite horizontally and push up vertically
       else if (player->attackdown && center_weapon_strict & WEAPON_CENTERED) // [Nugget] Horizontal weapon centering
       {
-        psp->sx2 = (1 - STRICTMODE(sx_fix)) * FRACUNIT; // [Nugget] Correct first person sprite centering
+        psp->sx2 = (1 - STRICTMODE(sx_fix)) * FRACUNIT; // [Nugget] Correct first-person-sprite centering
         if (center_weapon_strict == WEAPON_CENTERED) // [Nugget] Horizontal weapon centering
           psp->sy2 = WEAPONTOP;
       }
@@ -1673,7 +1687,7 @@ void A_WeaponBulletAttack(player_t *player, pspdef_t *psp)
     angle = (int)player->mo->angle + P_RandomHitscanAngle(pr_mbf21, hspread);
     slope = bulletslope + P_RandomHitscanSlope(pr_mbf21, vspread);
 
-    // [Nugget] Explosive hitscan cheat
+    // [Nugget] Explosive-hitscan cheat
     if (player->cheats & CF_BOOMCAN) { P_SetIsBoomShot(true); }
 
     P_LineAttack(player->mo, angle, MISSILERANGE, slope, damage);
