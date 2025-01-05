@@ -52,6 +52,7 @@ int weapon_bobbing_speed_pct;
 boolean weaponsquat;
 boolean sx_fix;
 boolean comp_nomeleesnap;
+boolean comp_cgundblsnd;
 
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
@@ -534,7 +535,7 @@ static void P_NuggetBobbing(player_t* player)
   // `sx` - Default, differs in a few styles
   psp->sx2 = ((1 - STRICTMODE(sx_fix)) * FRACUNIT) + FixedMul(bob, finecosine[angle]);
 
-  // `sy` - Used for all styles, their specific values are added to this one right after
+  // `sy` - Used for all styles; their specific values are added to this one right after
   psp->sy2 = WEAPONTOP + abs(psp->dy); // Squat weapon down on impact
 
   // Bobbing Styles, ported from Zandronum
@@ -550,12 +551,12 @@ static void P_NuggetBobbing(player_t* player)
       break;
 
     case BOBSTYLE_ALPHA:
-      psp->sx2 = FixedMul(bob, finesine[angle]);
+      psp->sx2  = FixedMul(bob, finesine[angle]);
       psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
       break;
 
     case BOBSTYLE_INVALPHA:
-      psp->sx2 = FixedMul(bob, finesine[angle]);
+      psp->sx2  = FixedMul(bob, finesine[angle]);
       psp->sy2 += bob - FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
       break;
 
@@ -568,7 +569,7 @@ static void P_NuggetBobbing(player_t* player)
       break;
 
     case BOBSTYLE_QUAKE:
-      psp->sx2 = 0;
+      psp->sx2  = 0;
       psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
       break;
   }
@@ -583,6 +584,8 @@ static void P_NuggetBobbing(player_t* player)
 // Follows after getting weapon up,
 // or after previous attack/fire sequence.
 //
+
+static boolean weapon_ready = false;
 
 void A_WeaponReady(player_t *player, pspdef_t *psp)
 {
@@ -631,9 +634,8 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
     player->attackdown = false;
 
   P_ApplyBobbing(&psp->sx, &psp->sy, player->bob);
-  
-  // [Nugget] Calculate `sx2` and `sy2` alongside `sx` and `sy`
-  if (!always_bob) { P_NuggetBobbing(player); }
+
+  weapon_ready = true; // [Nugget]
 }
 
 //
@@ -1228,8 +1230,6 @@ void A_FireShotgun2(player_t *player, pspdef_t *psp)
     }
 }
 
-boolean comp_cgundblsnd; // [Nugget]
-
 //
 // A_FireCGun
 //
@@ -1237,21 +1237,21 @@ boolean comp_cgundblsnd; // [Nugget]
 void A_FireCGun(player_t *player, pspdef_t *psp)
 {
   // [Nugget] /===============================================================
-  
+
   // Fix "Chaingun sound without ammo" bug
   if (!(strictmode || comp_cgundblsnd))
     if (!player->ammo[weaponinfo[player->readyweapon].ammo])
       return;
 
   // Use DSCHGUN if available ------------------------------------------------
-  
+
   static int sound = -1;
-  
+
   if (sound == -1)
   { sound = ((W_CheckNumForName("dschgun") > -1) ? sfx_chgun : sfx_pistol); }
-  
+
   // [Nugget] ===============================================================/
-  
+
   S_StartSoundCGun(player->mo, !strictmode ? sound : sfx_pistol); // [Nugget]
 
   if (!player->ammo[weaponinfo[player->readyweapon].ammo])
@@ -1512,6 +1512,8 @@ void P_MovePsprites(player_t *player)
   const int center_weapon_strict = STRICTMODE(center_weapon);
   int i;
 
+  weapon_ready = false; // [Nugget]
+
   // a null state means not active
   // drop tic count and possibly change state
   // a -1 tic count never changes
@@ -1526,9 +1528,12 @@ void P_MovePsprites(player_t *player)
   // [FG] centered weapon sprite
   psp = &player->psprites[ps_weapon];
 
-  // [Nugget] Calculate sx2 and sy2 separately from sx and sy
-  if (always_bob || (player->attackdown && center_weapon_strict == WEAPON_BOBBING))
-  { P_NuggetBobbing(player); }
+  // [Nugget]
+  if (always_bob || weapon_ready
+      || (player->attackdown && center_weapon_strict == WEAPON_BOBBING))
+  {
+    P_NuggetBobbing(player);
+  }
 
   if (psp->state)
   {
