@@ -7,6 +7,9 @@
 
 ## Changes
 
+- **Improved interpolation of weapon sprites**
+- **Applied weapon inertia when firing** (added `weapon_inertia_fire` CVAR to disable it)
+- **Lowered `weapon_inertia_scale_pct` limit to -200**
 - Nugget's translucency features now use translucency maps from a shared pool,
   potentially improving program startup time in exchange for stutters
   when enabling said features for the first time since launch

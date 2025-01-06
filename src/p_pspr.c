@@ -53,6 +53,7 @@ int weapon_bobbing_speed_pct;
 boolean switch_bob;
 boolean weapon_inertia;
 int weapon_inertia_scale_pct;
+boolean weapon_inertia_fire;
 boolean weaponsquat;
 boolean sx_fix;
 boolean comp_nomeleesnap;
@@ -1488,9 +1489,9 @@ static void WeaponInertiaVertical(player_t* player, pspdef_t *psp)
 
 static void P_NuggetWeaponInertia(player_t *player, pspdef_t *psp)
 {
-  if (STRICTMODE(weapon_inertia))
+  if (STRICTMODE(weapon_inertia) && weapon_inertia_scale)
   {
-    if (!psp->state || player->switching || player->attackdown || psp->state->misc1)
+    if (!psp->state || (player->attackdown && !weapon_inertia_fire))
     {
       psp->wix = 0;
       psp->wiy = 0;
@@ -1529,6 +1530,12 @@ void P_MovePsprites(player_t *player)
   int i;
 
   weapon_ready = false; // [Nugget]
+
+  // [Nugget]
+  psp[ps_weapon].oldsx2 = psp[ps_weapon].sx2;
+  psp[ps_weapon].oldsy2 = psp[ps_weapon].sy2;
+  psp[ps_weapon].oldwix = psp[ps_weapon].wix;
+  psp[ps_weapon].oldwiy = psp[ps_weapon].wiy;
 
   // a null state means not active
   // drop tic count and possibly change state
@@ -1599,9 +1606,15 @@ void P_MovePsprites(player_t *player)
 
   player->psprites[ps_flash].sx2 = player->psprites[ps_weapon].sx2;
   player->psprites[ps_flash].sy2 = player->psprites[ps_weapon].sy2;
-  player->psprites[ps_flash].dy  = player->psprites[ps_weapon].dy;
-  player->psprites[ps_flash].wix = player->psprites[ps_weapon].wix;
-  player->psprites[ps_flash].wiy = player->psprites[ps_weapon].wiy;
+
+  // [Nugget]
+  player->psprites[ps_flash].oldsx2 = player->psprites[ps_weapon].oldsx2;
+  player->psprites[ps_flash].oldsy2 = player->psprites[ps_weapon].oldsy2;
+  player->psprites[ps_flash].dy     = player->psprites[ps_weapon].dy;
+  player->psprites[ps_flash].wix    = player->psprites[ps_weapon].wix;
+  player->psprites[ps_flash].oldwix = player->psprites[ps_weapon].oldwix;
+  player->psprites[ps_flash].wiy    = player->psprites[ps_weapon].wiy;
+  player->psprites[ps_flash].oldwiy = player->psprites[ps_weapon].oldwiy;
 }
 
 //

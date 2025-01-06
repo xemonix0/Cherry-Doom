@@ -6243,8 +6243,12 @@ void G_BindWeapVariables(void)
              false, ss_weap, wad_yes, "Weapon inertia");
 
   M_BindNum("weapon_inertia_scale_pct", &weapon_inertia_scale_pct, NULL,
-            100, 50, 200, ss_weap, wad_yes,
+            100, -200, 200, ss_weap, wad_yes,
             "Weapon-inertia scale percent");
+
+  // (CFG-only)
+  M_BindBool("weapon_inertia_fire", &weapon_inertia_fire, NULL,
+             true, ss_none, wad_yes, "Apply weapon inertia while firing");
 
   M_BindBool("weaponsquat", &weaponsquat, NULL,
              false, ss_weap, wad_yes, "Squat weapon down on impact");

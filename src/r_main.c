@@ -157,8 +157,6 @@ static boolean teleporter_zoom;
 
 static float r_fov; // Rendered (currently applied) FOV, with effects added to it
 
-static boolean keep_pspr_interp = false;
-
 typedef struct fovfx_s {
   float old, current, target;
 } fovfx_t;
@@ -1039,9 +1037,7 @@ void R_ExecuteSetViewSize (void)
   if (!WI_UsingAltInterpic())
     ST_refreshBackground(); // [Nugget] NUGHUD
 
-  // [Nugget]
-  if (!keep_pspr_interp)
-    pspr_interp = false;
+  /*pspr_interp = false;*/ // [Nugget] New weapon interpolation: don't need this
 }
 
 //
@@ -1647,11 +1643,7 @@ void R_RenderPlayerView (player_t* player)
     if (r_fov != targetfov)
     {
       r_fov = targetfov;
-
-      keep_pspr_interp = true;
       R_ExecuteSetViewSize();
-      keep_pspr_interp = false;
-
       R_FillBackScreen();
     }
   }

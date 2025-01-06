@@ -869,12 +869,34 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   lump = sprframe->lump[0];
   flip = (boolean) sprframe->flip[0];
 
+  // [Nugget] New interpolation /---------------------------------------------
+
+  fixed_t sx2, sy2, wix, wiy;
+
+  if (uncapped && oldleveltime < leveltime && pspr_interp)
+  {
+    sx2 = LerpFixed(psp->oldsx2, psp->sx2);
+    sy2 = LerpFixed(psp->oldsy2, psp->sy2);
+    wix = LerpFixed(psp->oldwix, psp->wix);
+    wiy = LerpFixed(psp->oldwiy, psp->wiy);
+  }
+  else {
+    pspr_interp = true;
+
+    sx2 = psp->sx2;
+    sy2 = psp->sy2;
+    wix = psp->wix;
+    wiy = psp->wiy;
+  }
+
+  // [Nugget] ---------------------------------------------------------------/
+
   // calculate edges of the shape
-  tx = psp->sx2-160*FRACUNIT; // [FG] centered weapon sprite
+  tx = sx2-160*FRACUNIT; // [FG] centered weapon sprite
 
   // [Nugget] Weapon inertia | Flip levels
   if (STRICTMODE(weapon_inertia))
-  { tx += flip_levels ? -psp->wix : psp->wix; }
+  { tx += flip_levels ? -wix : wix; }
 
   tx -= spriteoffset[lump];
   x1 = (centerxfrac + FixedMul (tx,pspritescale))>>FRACBITS;
@@ -897,9 +919,9 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   // killough 12/98: fix psprite positioning problem
   vis->texturemid = (BASEYCENTER<<FRACBITS) /* + FRACUNIT/2 */ -
-                    (psp->sy2-spritetopoffset[lump]) // [FG] centered weapon sprite
+                    (sy2-spritetopoffset[lump]) // [FG] centered weapon sprite
                     // [Nugget]
-                    - (STRICTMODE(weapon_inertia) ? psp->wiy : 0) // Weapon inertia
+                    - (STRICTMODE(weapon_inertia) ? wiy : 0) // Weapon inertia
                     + MIN(0, R_GetFOVFX(FOVFX_ZOOM) * FRACUNIT/2); // Lower weapon based on zoom
 
   vis->x1 = x1 < 0 ? 0 : x1;
@@ -943,41 +965,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   // [Nugget] Translucent flashes
   vis->tranmap = translucent ? R_GetGenericTranMap(pspr_translucency_pct) : NULL;
 
-  // interpolation for weapon bobbing
-  if (uncapped)
-  {
-    static int     oldx1, x1_saved;
-    static fixed_t oldtexturemid, texturemid_saved;
-    static int     oldlump = -1;
-    static int     oldgametic = -1;
-
-    if (oldgametic < gametic)
-    {
-      oldx1 = x1_saved;
-      oldtexturemid = texturemid_saved;
-      oldgametic = gametic;
-    }
-
-    x1_saved = vis->x1;
-    texturemid_saved = vis->texturemid;
-
-    if (lump == oldlump && pspr_interp)
-    {
-      int deltax = x2 - vis->x1;
-      vis->x1 = LerpFixed(oldx1, vis->x1);
-      vis->x2 = vis->x1 + deltax;
-      if (vis->x2 >= viewwidth)
-        vis->x2 = viewwidth - 1;
-      vis->texturemid = LerpFixed(oldtexturemid, vis->texturemid);
-    }
-    else
-    {
-      oldx1 = vis->x1;
-      oldtexturemid = vis->texturemid;
-      oldlump = lump;
-      pspr_interp = true;
-    }
-  }
+  // [Nugget] Removed old interpolation code
 
   // [crispy] free look
   vis->texturemid += (centery - viewheight/2) * pspriteiscale
