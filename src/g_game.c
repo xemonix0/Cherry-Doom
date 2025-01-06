@@ -6182,13 +6182,13 @@ void G_BindCompVariables(void)
 
 void G_BindWeapVariables(void)
 {
-  // [Nugget] Extended
+  // [Nugget] Extended, tweaked descriptions
   M_BindNum("view_bobbing_pct", &view_bobbing_pct, NULL,
             100, 0, 100, ss_weap, wad_no,
-            "Player view bobbing percent");
+            "Player view bobbing amplitude percent");
   M_BindNum("weapon_bobbing_pct", &weapon_bobbing_pct, NULL,
             100, 0, 100, ss_weap, wad_no,
-            "Player weapon bobbing percent");
+            "Player weapon bobbing amplitude percent");
 
   M_BindBool("hide_weapon", &hide_weapon, NULL, false, ss_weap, wad_no,
              "Disable rendering of weapon sprites");
@@ -6231,15 +6231,26 @@ void G_BindWeapVariables(void)
              true, ss_none, wad_no, "Bob weapon every tic (fixes choppy Chainsaw bobbing)");
 
   M_BindNum("bobbing_style", &bobbing_style, NULL,
-            0, 0, 6, ss_weap, wad_yes,
+            0, 0, NUM_BOBSTYLES-1, ss_weap, wad_yes,
             "Weapon bobbing style");
+
+  M_BindNum("weapon_bobbing_speed_pct", &weapon_bobbing_speed_pct, NULL,
+            100, 50, 300, ss_weap, wad_yes,
+            "Player weapon bobbing speed percent");
+
+  M_BindBool("switch_bob", &switch_bob, NULL,
+             false, ss_weap, wad_yes, "Bob weapon while switching it");
 
   M_BindBool("weapon_inertia", &weapon_inertia, NULL,
              false, ss_weap, wad_yes, "Weapon inertia");
 
   M_BindNum("weapon_inertia_scale_pct", &weapon_inertia_scale_pct, NULL,
-            100, 50, 200, ss_weap, wad_yes,
+            100, -200, 200, ss_weap, wad_yes,
             "Weapon-inertia scale percent");
+
+  // (CFG-only)
+  M_BindBool("weapon_inertia_fire", &weapon_inertia_fire, NULL,
+             true, ss_none, wad_yes, "Apply weapon inertia while firing");
 
   M_BindBool("weaponsquat", &weaponsquat, NULL,
              false, ss_weap, wad_yes, "Squat weapon down on impact");

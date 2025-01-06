@@ -79,6 +79,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 
 ### Weapons
 
+- **Improved interpolation**
 - **Extended _View/Weapon Bob_ percentages**
 - **_No Horizontal Autoaim_** setting
 - **_Switch [Weapon] on Pickup_** setting
@@ -87,10 +88,14 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Horizontal_ Weapon Centering** setting [i.b. DSDA-Doom]
 - **Always Bob** setting (CFG-only: `always_bob`)
 - **_Bobbing Styles_** selection [p.f. Zandronum]
-- **_Weapon Inertia_** setting (scale determined by the CFG-only `weapon_inertia_scale_pct` CVAR) [by _ceski_]
+- **_Weapon Bob Speed_** setting
+- **_Bob While Switching_** setting
+- **_Weapon Inertia_** setting [by _ceski_]
+  - Scale determined by the CFG-only `weapon_inertia_scale_pct` CVAR
+  - Application while firing determined by the CFG-only `weapon_inertia_fire` CVAR
 - **_Weapon Squat Upon Landing_** setting [p.f. Crispy Doom]
 - **_Translucent Flashes_** setting (translucency determined by the CFG-only `translucent_pspr_pct` CVAR) [i.b. Crispy Doom]
-- **"Correct" first person sprite centering** setting, to toggle the 1px first-person sprite misalignment (CFG-only: `sx_fix`)
+- **"Correct" first-person-sprite centering** setting, to toggle the 1px misalignment of first-person sprites (CFG-only: `sx_fix`)
 
 ### Status Bar/HUD
 
@@ -328,7 +333,7 @@ Copyright:
  © 2020-2024 Fabian Greffrath;  
  © 2020-2024 Roman Fomin;  
  © 2021-2022 Ryan Krafnick;  
- © 2021-2024 Alaux;  
+ © 2021-2025 Alaux;  
  © 2022 Julia Nechaevskaya;  
  © 2022-2024 ceski;  
  © 2023 Andrew Apted;  

@@ -1951,6 +1951,8 @@ static setup_menu_t weap_settings4[] =
   {"Nugget - Cosmetic", S_SKIP|S_TITLE, W_X, M_SPC},
 
     {"Bobbing Style",             S_CHOICE|S_STRICT, W_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
+    {"Weapon Bob Speed",          S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X_THRM8, M_THRM_SPC, {"weapon_bobbing_speed_pct"}},
+    {"Bob While Switching",       S_ONOFF |S_STRICT, W_X, M_SPC, {"switch_bob"}},
     {"Weapon Inertia",            S_ONOFF |S_STRICT, W_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
     {"Weapon Squat Upon Landing", S_ONOFF |S_STRICT, W_X, M_SPC, {"weaponsquat"}},
     {"Force Weapon Carousel",     S_CHOICE|S_STRICT, W_X, M_SPC, {"force_carousel"}, .strings_id = str_force_carousel},
