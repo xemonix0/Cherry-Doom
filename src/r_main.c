@@ -1618,8 +1618,8 @@ void R_RenderPlayerView (player_t* player)
 
           if (G_GetSlowMotionFactor() != SLOWMO_FACTOR_NORMAL)
           {
-            *target = -10 * (SLOWMO_FACTOR_NORMAL - G_GetSlowMotionFactor())
-                          / (SLOWMO_FACTOR_NORMAL - SLOWMO_FACTOR_TARGET);
+            *target = -10.0f * (SLOWMO_FACTOR_NORMAL - G_GetSlowMotionFactor())
+                             / (SLOWMO_FACTOR_NORMAL - SLOWMO_FACTOR_TARGET);
           }
           else { *target = 0; }
         }

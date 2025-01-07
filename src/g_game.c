@@ -170,7 +170,7 @@ static int keyframe_index = -1;
 // Slow Motion ---------------------------------------------------------------
 
 static boolean slow_motion = false;
-static float slow_motion_factor = SLOWMO_FACTOR_NORMAL;
+static int slow_motion_factor = SLOWMO_FACTOR_NORMAL;
 
 boolean G_GetSlowMotion(void)
 {
@@ -192,7 +192,7 @@ void G_ResetSlowMotion(void)
   if (reset_scale) { G_SetTimeScale(); }
 }
 
-float G_GetSlowMotionFactor(void)
+int G_GetSlowMotionFactor(void)
 {
   return slow_motion_factor;
 }
@@ -562,7 +562,7 @@ void G_SetTimeScale(void)
 
     // [Nugget] Slow Motion
     if (casual_play && !menuactive && slow_motion_factor != SLOWMO_FACTOR_NORMAL)
-    { time_scale *= slow_motion_factor; }
+    { time_scale = time_scale * slow_motion_factor / SLOWMO_FACTOR_NORMAL; }
 
     I_SetTimeScale(time_scale);
 
@@ -4086,13 +4086,13 @@ void G_Ticker(void)
 
   if (slow_motion && slow_motion_factor != SLOWMO_FACTOR_TARGET)
   {
-    slow_motion_factor -= MAX(0.025f, (slow_motion_factor - SLOWMO_FACTOR_TARGET) / 4);
+    slow_motion_factor -= MAX(MIN_SLOWMO_STEP, (slow_motion_factor - SLOWMO_FACTOR_TARGET) / 4);
     slow_motion_factor  = MAX(SLOWMO_FACTOR_TARGET, slow_motion_factor);
     change = true;
   }
   else if (!slow_motion && slow_motion_factor != SLOWMO_FACTOR_NORMAL)
   {
-    slow_motion_factor += MAX(0.025f, (SLOWMO_FACTOR_NORMAL - slow_motion_factor) / 4);
+    slow_motion_factor += MAX(MIN_SLOWMO_STEP, (SLOWMO_FACTOR_NORMAL - slow_motion_factor) / 4);
     slow_motion_factor  = MIN(SLOWMO_FACTOR_NORMAL, slow_motion_factor);
     change = true;
   }

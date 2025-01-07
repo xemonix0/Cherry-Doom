@@ -171,13 +171,14 @@ boolean G_KeyFrameRW(void);
 
 // Slow Motion ---------------------------------------------------------------
 
-#define SLOWMO_FACTOR_TARGET 0.33f
-#define SLOWMO_FACTOR_NORMAL 1.0f
+#define SLOWMO_FACTOR_NORMAL 100000
+#define SLOWMO_FACTOR_TARGET (SLOWMO_FACTOR_NORMAL * 33/100)
+#define MIN_SLOWMO_STEP      (SLOWMO_FACTOR_NORMAL / 40)
 
 boolean G_GetSlowMotion(void);
 void G_SetSlowMotion(const boolean value);
 void G_ResetSlowMotion(void);
-float G_GetSlowMotionFactor(void);
+int G_GetSlowMotionFactor(void);
 
 // Skill ---------------------------------------------------------------------
 
