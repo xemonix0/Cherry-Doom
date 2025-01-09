@@ -131,49 +131,49 @@ static void cheat_speed(void);
 
 // [Nugget] /-----------------------------------------------------------------
 
-static void cheat_nomomentum();
-static void cheat_fauxdemo();   // Emulates demo/net play state, for debugging
-static void cheat_infammo();    // Infinite ammo cheat
-static void cheat_fastweaps();  // Fast weapons cheat
-static void cheat_bobbers();    // Shortcut to the two cheats above
+static void cheat_nomomentum(void);
+static void cheat_fauxdemo(void);   // Emulates demo/net play state, for debugging
+static void cheat_infammo(void);    // Infinite ammo cheat
+static void cheat_fastweaps(void);  // Fast weapons cheat
+static void cheat_bobbers(void);    // Shortcut to the two cheats above
 
 boolean gibbers;                // Used for 'GIBBERS'
-static void cheat_gibbers();    // Everything gibs
+static void cheat_gibbers(void);    // Everything gibs
 
-static void cheat_resurrect();
-static void cheat_fly();
-static void cheat_normalexit(); // Emulate normal level exit
-static void cheat_secretexit(); // Emulate secret level exit
+static void cheat_resurrect(void);
+static void cheat_fly(void);
+static void cheat_normalexit(void); // Emulate normal level exit
+static void cheat_secretexit(void); // Emulate secret level exit
 static void cheat_turbo(char *buf);
 
 // Summon a mobj
-static void cheat_summon();
+static void cheat_summon(void);
 // Enemy
-static void cheat_summone0();
+static void cheat_summone0(void);
 static void cheat_summone(char *buf);
 // Friend
-static void cheat_summonf0();
+static void cheat_summonf0(void);
 static void cheat_summonf(char *buf);
 // Repeat last
-static void cheat_summonr();
+static void cheat_summonr(void);
 static int spawneetype = -1;
 static boolean spawneefriend;
 
-static void cheat_reveal_key();
-static void cheat_reveal_keyx();
+static void cheat_reveal_key(void);
+static void cheat_reveal_keyx(void);
 static void cheat_reveal_keyxx(int key);
 
-static void cheat_linetarget(); // Give info on the current linetarget
-static void cheat_trails();     // Show hitscan trails
-static void cheat_mdk();        // Inspired by ZDoom's console command
-static void cheat_saitama();    // MDK Fist
+static void cheat_linetarget(void); // Give info on the current linetarget
+static void cheat_trails(void);     // Show hitscan trails
+static void cheat_mdk(void);        // Inspired by ZDoom's console command
+static void cheat_saitama(void);    // MDK Fist
 
-static void cheat_boomcan();    // Explosive hitscan
+static void cheat_boomcan(void);    // Explosive hitscan
 
-static void cheat_cheese();
+static void cheat_cheese(void);
 
 boolean idgaf;
-static void cheat_idgaf();
+static void cheat_idgaf(void);
 
 // [Nugget] -----------------------------------------------------------------/
 
