@@ -588,14 +588,6 @@ static int F_RandomizeSound (int sound)
   }
 }
 
-extern void A_BruisAttack(); extern void A_BspiAttack();  extern void A_CPosAttack();
-extern void A_CPosRefire();  extern void A_CyberAttack(); extern void A_FatAttack1();
-extern void A_FatAttack2();  extern void A_FatAttack3();  extern void A_HeadAttack();
-extern void A_PainAttack();  extern void A_PosAttack();   extern void A_SargAttack();
-extern void A_SkelFist();    extern void A_SkelMissile(); extern void A_SkelWhoosh();
-extern void A_SkullAttack(); extern void A_SPosAttack();  extern void A_TroopAttack();
-extern void A_VileTarget();  extern void A_RandomJump();
-
 extern boolean flipcorpses;
 
 typedef struct {
