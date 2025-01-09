@@ -1813,7 +1813,7 @@ void R_BindRenderVariables(void)
   // [Nugget] (CFG-only)
   BIND_BOOL(no_killough_face, false, "Disable the Killough-face easter egg");
 
-  BIND_NUM(screenblocks, 10, 3, 12, "Size of game-world screen");
+  BIND_NUM(screenblocks, 10, 3, UL, "Size of game-world screen");
 
   M_BindBool("translucency", &translucency, NULL, true, ss_gen, wad_yes,
              "Translucency for some things");

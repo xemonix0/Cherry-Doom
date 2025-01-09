@@ -369,7 +369,6 @@ enum
 
     str_bobbing_style,
     str_force_carousel,
-    str_hud_type,
     str_crosshair_lockon,
     str_vertical_aiming,
     str_over_under,
@@ -2035,23 +2034,13 @@ static setup_tab_t stat_tabs[] = {
 static void SizeDisplayAlt(void)
 {
     R_SetViewSize(screenblocks);
+    MN_UpdateNughudItem(); // [Nugget] NUGHUD
 }
 
 static void RefreshSolidBackground(void)
 {
     ST_refreshBackground(); // [Nugget] NUGHUD
 }
-
-static const char *screensize_strings[] = {
-    "",           "",           "",           "Status Bar", "Status Bar",
-    "Status Bar", "Status Bar", "Status Bar", "Status Bar", "Status Bar",
-    "Status Bar", "Fullscreen", "Fullscreen"
-};
-
-// [Nugget] NUGHUD
-static const char *hud_type_strings[] = {
-    "SBARDEF", "NUGHUD"
-};
 
 static const char *st_layout_strings[] = {
     "Original", "Wide"
@@ -2068,8 +2057,7 @@ static setup_menu_t stat_settings1[] = {
     MI_GAP,
 
     // [Nugget] NUGHUD
-    {"Fullscreen HUD Type", S_CHOICE, H_X, M_SPC, {"fullscreen_hud_type"},
-     .strings_id = str_hud_type},
+    {"Use NUGHUD", S_ONOFF, H_X, M_SPC, {"use_nughud"}},
 
     {"Layout", S_CHOICE, H_X, M_SPC, {"st_layout"},
      .strings_id = str_stlayout, .action = AM_Start}, // [Nugget] Minimap
@@ -2092,6 +2080,12 @@ static setup_menu_t stat_settings1[] = {
 
     MI_END
 };
+
+// [Nugget] NUGHUD
+void MN_UpdateNughudItem(void)
+{
+    DisableItem(screenblocks != maxscreenblocks - 1, stat_settings1, "use_nughud");
+}
 
 static void UpdateStatsFormatItem(void);
 
@@ -5561,7 +5555,7 @@ static const char **selectstrings[] = {
     percent_strings,
     curve_strings,
     center_weapon_strings,
-    screensize_strings,
+    NULL, // str_screensize
     st_layout_strings,
     show_widgets_strings,
     show_adv_widgets_strings,
@@ -5603,7 +5597,6 @@ static const char **selectstrings[] = {
 
     bobbing_style_strings,
     force_carousel_strings,
-    hud_type_strings,
     crosshair_lockon_strings,
     vertical_aiming_strings,
     over_under_strings,
@@ -5635,6 +5628,41 @@ static const char **GetMidiPlayerStrings(void)
     return I_DeviceList();
 }
 
+static const char **GetScreenSizeStrings(void)
+{
+    const char **strings = NULL;
+
+    for (int i = 0; i < 3; ++i)
+    {
+        array_push(strings, "");
+    }
+    for (int i = 3; i < 10; ++i)
+    {
+        array_push(strings, "Status Bar");
+    }
+
+    const char **st_strings = ST_StatusbarList();
+    for (int i = 0; i < array_size(st_strings); ++i)
+    {
+        array_push(strings, st_strings[i]);
+    }
+
+    // [Nugget] NUGHUD /------------------------------------------------------
+
+    // `maxscreenblocks` is now calculated in `ST_StatusbarList()`
+
+    if (!st_strings) {
+        array_push(strings, "Status Bar");
+        array_push(strings, "NUGHUD");
+    }
+
+    MN_UpdateNughudItem();
+
+    // [Nugget] -------------------------------------------------------------/
+
+    return strings;
+}
+
 void MN_InitMenuStrings(void)
 {
     UpdateWeaponSlotLabels();
@@ -5647,6 +5675,7 @@ void MN_InitMenuStrings(void)
     selectstrings[str_gyro_sens] = GetGyroSensitivityStrings();
     selectstrings[str_gyro_accel] = GetGyroAccelStrings();
     selectstrings[str_resampler] = GetResamplerStrings();
+    selectstrings[str_screensize] = GetScreenSizeStrings();
 }
 
 void MN_SetupResetMenu(void)
@@ -5677,6 +5706,7 @@ void MN_SetupResetMenu(void)
                 enem_settings1, "extra_gibbing");
 
     UpdatePaletteItems();
+    MN_UpdateNughudItem(); // NUGHUD
 }
 
 void MN_BindMenuVariables(void)
