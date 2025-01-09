@@ -2068,8 +2068,6 @@ static setup_menu_t stat_settings1[] = {
 
     {"Colored Numbers", S_ONOFF | S_COSMETIC, H_X, M_SPC, {"sts_colored_numbers"}},
 
-    {"Gray Percent Sign", S_ONOFF | S_COSMETIC, H_X, M_SPC, {"sts_pct_always_gray"}},
-
     {"Solid Background Color", S_ONOFF, H_X, M_SPC, {"st_solidbackground"},
      .action = RefreshSolidBackground},
 
@@ -2902,6 +2900,7 @@ static void SetMidiPlayerOpl(void)
     }
 }
 
+#if defined(HAVE_FLUIDSYNTH)
 static void SetMidiPlayerFluidSynth(void)
 {
     if (I_MidiPlayerType() == midiplayer_fluidsynth)
@@ -2909,6 +2908,7 @@ static void SetMidiPlayerFluidSynth(void)
         SetMidiPlayer();
     }
 }
+#endif
 
 static void RestartMusic(void)
 {
@@ -3067,7 +3067,10 @@ static setup_menu_t music_settings1[] = {
 
 static void UpdateGainItems(void)
 {
+#if defined (HAVE_FLUIDSYNTH)
     DisableItem(auto_gain, music_settings1, "fl_gain");
+#endif
+
     DisableItem(auto_gain, music_settings1, "opl_gain");
 }
 
@@ -3648,7 +3651,7 @@ static void SmoothLight(void)
 static const char *menu_backdrop_strings[] = {"Off", "Dark", "Texture"};
 
 static const char *exit_sequence_strings[] = {
-    "Off", "Sound Only", "PWAD ENDOOM", "Full"
+    "Off", "Sound Only", "ENDOOM Only", "Full"
 };
 
 static const char *fuzzmode_strings[] = {
@@ -3662,9 +3665,6 @@ static setup_menu_t gen_settings5[] = {
 
     {"Sprite Translucency", S_ONOFF | S_STRICT, OFF_CNTR_X, M_SPC,
      {"translucency"}},
-
-    {"Translucency Filter", S_NUM | S_ACTION | S_PCT, OFF_CNTR_X, M_SPC,
-     {"tran_filter_pct"}, .action = MN_Trans},
 
     {"Partial Invisibility", S_CHOICE | S_STRICT, OFF_CNTR_X, M_SPC, {"fuzzmode"},
      .strings_id = str_fuzzmode, .action = R_SetFuzzColumnMode},
@@ -3761,6 +3761,8 @@ static setup_menu_t gen_settings6[] = {
 
     {"Exit Sequence", S_CHOICE, OFF_CNTR_X, M_SPC, {"exit_sequence"},
     .strings_id = str_exit_sequence},
+
+    {"PWAD ENDOOM Only", S_ONOFF, OFF_CNTR_X, M_SPC, {"endoom_pwad_only"}},
 
     MI_END
 };
@@ -4991,6 +4993,8 @@ static boolean NextPage(int inc)
     return true;
 }
 
+static setup_menu_t *active_thermo = NULL;
+
 boolean MN_SetupResponder(menu_action_t action, int ch)
 {
     // phares 3/26/98 - 4/11/98:
@@ -5239,6 +5243,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         set_weapon_active = false;
         default_verify = false;              // phares 4/19/98
         print_warning_about_changes = false; // [FG] reset
+        active_thermo = NULL;
         M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
@@ -5304,8 +5309,6 @@ boolean MN_SetupMouseResponder(int x, int y)
     {
         return true;
     }
-
-    static setup_menu_t *active_thermo = NULL;
 
     if (M_InputDeactivated(input_menu_enter) && active_thermo)
     {

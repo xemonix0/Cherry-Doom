@@ -835,8 +835,6 @@ void R_NearbySprites (void)
 // R_DrawPSprite
 //
 
-boolean pspr_interp = true; // weapon bobbing interpolation
-
 void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent flashes
 {
   fixed_t       tx;
@@ -869,30 +867,29 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   lump = sprframe->lump[0];
   flip = (boolean) sprframe->flip[0];
 
-  // [Nugget] New interpolation /---------------------------------------------
+  fixed_t sx2, sy2;
 
-  fixed_t sx2, sy2, wix, wiy;
+  fixed_t wix, wiy; // [Nugget]
 
-  if (uncapped && oldleveltime < leveltime && pspr_interp)
+  if (uncapped && oldleveltime < leveltime)
   {
     sx2 = LerpFixed(psp->oldsx2, psp->sx2);
     sy2 = LerpFixed(psp->oldsy2, psp->sy2);
+
     wix = LerpFixed(psp->oldwix, psp->wix);
     wiy = LerpFixed(psp->oldwiy, psp->wiy);
   }
-  else {
-    pspr_interp = true;
-
+  else
+  {
     sx2 = psp->sx2;
     sy2 = psp->sy2;
+
     wix = psp->wix;
     wiy = psp->wiy;
   }
 
-  // [Nugget] ---------------------------------------------------------------/
-
   // calculate edges of the shape
-  tx = sx2-160*FRACUNIT; // [FG] centered weapon sprite
+  tx = sx2 - 160*FRACUNIT; // [FG] centered weapon sprite
 
   // [Nugget] Weapon inertia | Flip levels
   if (STRICTMODE(weapon_inertia))
@@ -919,10 +916,11 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   // killough 12/98: fix psprite positioning problem
   vis->texturemid = (BASEYCENTER<<FRACBITS) /* + FRACUNIT/2 */ -
-                    (sy2-spritetopoffset[lump]) // [FG] centered weapon sprite
-                    // [Nugget]
-                    - (STRICTMODE(weapon_inertia) ? wiy : 0) // Weapon inertia
-                    + MIN(0, R_GetFOVFX(FOVFX_ZOOM) * FRACUNIT/2); // Lower weapon based on zoom
+                    (sy2 - spritetopoffset[lump]); // [FG] centered weapon sprite
+
+  // [Nugget]
+  vis->texturemid += (STRICTMODE(weapon_inertia) ? -wiy : 0) // Weapon inertia
+                   + MIN(0, R_GetFOVFX(FOVFX_ZOOM) * FRACUNIT/2); // Lower weapon based on zoom
 
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
@@ -964,8 +962,6 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   // [Nugget] Translucent flashes
   vis->tranmap = translucent ? R_GetGenericTranMap(pspr_translucency_pct) : NULL;
-
-  // [Nugget] Removed old interpolation code
 
   // [crispy] free look
   vis->texturemid += (centery - viewheight/2) * pspriteiscale

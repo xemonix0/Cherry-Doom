@@ -80,7 +80,7 @@
 #include "st_stuff.h"
 #include "st_widgets.h"
 #include "statdump.h"
-#include "u_mapinfo.h"
+#include "g_umapinfo.h"
 #include "v_fmt.h"
 #include "v_video.h"
 #include "w_wad.h"
@@ -268,7 +268,7 @@ void D_Display (void)
   static boolean viewactivestate = false;
   static boolean menuactivestate = false;
   static gamestate_t oldgamestate = GS_NONE;
-  static int borderdrawcount;
+  static boolean borderdrawcount;
   int wipestart;
   boolean done, wipe;
 
@@ -320,7 +320,7 @@ void D_Display (void)
     {
       R_ExecuteSetViewSize();
       oldgamestate = GS_NONE;            // force background redraw
-      borderdrawcount = 3;
+      borderdrawcount = true;
     }
 
   if (gamestate == GS_LEVEL && gametic)
@@ -364,11 +364,11 @@ void D_Display (void)
   if (gamestate == GS_LEVEL && automap_off && scaledviewwidth != video.unscaledw)
     {
       if (menuactive || menuactivestate || !viewactivestate)
-        borderdrawcount = 3;
+        borderdrawcount = true;
       if (borderdrawcount)
         {
           R_DrawViewBorder();    // erase old menu stuff
-          borderdrawcount--;
+          borderdrawcount = false;
         }
     }
 
@@ -622,54 +622,9 @@ void D_AddFile(const char *file)
 }
 
 // killough 10/98: return the name of the program the exe was invoked as
-char *D_DoomExeName(void)
+const char *D_DoomExeName(void)
 {
-  static char *name;
-
-  if (!name) // cache multiple requests
-  {
-    char *ext;
-
-    name = M_StringDuplicate(M_BaseName(myargv[0]));
-
-    ext = strrchr(name, '.');
-    if (ext)
-      *ext = '\0';
-  }
-
-  return name;
-}
-
-// [FG] get the path to the default configuration dir to use
-
-char *D_DoomPrefDir(void)
-{
-    static char *dir;
-
-    if (dir == NULL)
-    {
-#if !defined(_WIN32) || defined(_WIN32_WCE)
-        // Configuration settings are stored in an OS-appropriate path
-        // determined by SDL.  On typical Unix systems, this might be
-        // ~/.local/share/chocolate-doom.  On Windows, we behave like
-        // Vanilla Doom and save in the current directory.
-
-        char *result = SDL_GetPrefPath("", PROJECT_SHORTNAME);
-        if (result != NULL)
-        {
-            dir = M_DirName(result);
-            SDL_free(result);
-        }
-        else
-#endif /* #ifndef _WIN32 */
-        {
-            dir = D_DoomExeDir();
-        }
-
-        M_MakeDirectory(dir);
-    }
-
-    return dir;
+  return PROJECT_SHORTNAME;
 }
 
 // Calculate the path to the directory for autoloaded WADs/DEHs.
@@ -842,9 +797,9 @@ static boolean CheckMapLump(const char *lumpname, const char *filename)
 
 static boolean FileContainsMaps(const char *filename)
 {
-    for (int i = 0; i < U_mapinfo.mapcount; ++i)
+    for (int i = 0; i < array_size(umapinfo); ++i)
     {
-        if (CheckMapLump(U_mapinfo.maps[i].mapname, filename))
+        if (CheckMapLump(umapinfo[i].mapname, filename))
         {
             return true;
         }
@@ -914,7 +869,11 @@ void IdentifyVersion(void)
 
     if (!iwadfile)
     {
-        I_Error("IWAD not found");
+        I_Error("IWAD not found!\n"
+                "\n"
+                "Place an IWAD file (e.g. doom.wad, doom2.wad)\n"
+                "in one of the IWAD search directories, e.g.\n"
+                "%s", D_DoomPrefDir());
     }
 
     D_AddFile(iwadfile);
@@ -975,7 +934,7 @@ static void InitGameVersion(void)
         // Determine automatically
 
         if (gamemode == shareware || gamemode == registered ||
-            (gamemode == commercial && gamemission == doom2))
+            (gamemode == commercial && gamemission != pack_tnt && gamemission != pack_plut))
         {
             // original
             gameversion = exe_doom_1_9;
@@ -1032,8 +991,7 @@ void FindResponseFile (void)
         // READ THE RESPONSE FILE INTO MEMORY
 
         // killough 10/98: add default .rsp extension
-        char *filename = malloc(strlen(myargv[i])+5);
-        AddDefaultExtension(strcpy(filename,&myargv[i][1]),".rsp");
+        char *filename = AddDefaultExtension(&myargv[i][1],".rsp");
 
         handle = M_fopen(filename,"rb");
         if (!handle)
@@ -1395,14 +1353,15 @@ static void D_ProcessDehCommandLine(void)
           if (deh)
             {
               char *probe;
-              char *file = malloc(strlen(myargv[p]) + 5);      // killough
-              AddDefaultExtension(strcpy(file, myargv[p]), ".bex");
+              char *file = AddDefaultExtension(myargv[p], ".bex");
               probe = D_TryFindWADByName(file);
+              free(file);
               if (M_access(probe, F_OK))  // nope
                 {
                   free(probe);
-                  AddDefaultExtension(strcpy(file, myargv[p]), ".deh");
+                  file = AddDefaultExtension(myargv[p], ".deh");
                   probe = D_TryFindWADByName(file);
+                  free(file);
                   if (M_access(probe, F_OK))  // still nope
                   {
                     free(probe);
@@ -1414,7 +1373,6 @@ static void D_ProcessDehCommandLine(void)
               // (apparently, this was never removed after Boom beta-killough)
               ProcessDehFile(probe, D_dehout(), 0);  // killough 10/98
               free(probe);
-              free(file);
             }
     }
   // ty 03/09/98 end of do dehacked stuff
@@ -1452,6 +1410,15 @@ static void LoadIWadBase(void)
     if (local_gamemission < pack_chex)
     {
         W_AddBaseDir("doom-all");
+    }
+    if (local_gamemission == doom)
+    {
+        W_AddBaseDir("doom1-all");
+    }
+    else if (local_gamemission >= doom2
+             && local_gamemission <= pack_plut)
+    {
+        W_AddBaseDir("doom2-all");
     }
     W_AddBaseDir(M_BaseName(wadfiles[0]));
 }
@@ -1654,15 +1621,17 @@ void D_SetBloodColor(void)
 typedef enum {
   EXIT_SEQUENCE_OFF,          // Skip sound, skip ENDOOM.
   EXIT_SEQUENCE_SOUND_ONLY,   // Play sound, skip ENDOOM.
-  EXIT_SEQUENCE_PWAD_ENDOOM,  // Play sound, show ENDOOM for PWADs only.
+  EXIT_SEQUENCE_ENDOOM_ONLY,  // Skip sound, show ENDOOM.
   EXIT_SEQUENCE_FULL          // Play sound, show ENDOOM.
 } exit_sequence_t;
 
 static exit_sequence_t exit_sequence;
+static boolean endoom_pwad_only;
 
 boolean D_AllowQuitSound(void)
 {
-  return (exit_sequence != EXIT_SEQUENCE_OFF);
+  return (exit_sequence == EXIT_SEQUENCE_FULL
+          || exit_sequence == EXIT_SEQUENCE_SOUND_ONLY);
 }
 
 static void D_ShowEndDoom(void)
@@ -1677,14 +1646,18 @@ boolean disable_endoom = false;
 
 static boolean AllowEndDoom(void)
 {
-  return  !disable_endoom && (exit_sequence == EXIT_SEQUENCE_FULL
-          || (exit_sequence == EXIT_SEQUENCE_PWAD_ENDOOM
-              && !W_IsIWADLump(W_CheckNumForName("ENDOOM"))));
+  return (!disable_endoom
+          && (exit_sequence == EXIT_SEQUENCE_FULL
+          || exit_sequence == EXIT_SEQUENCE_ENDOOM_ONLY));
+}
+
+static boolean AllowEndDoomPWADOnly() {
+  return (!W_IsIWADLump(W_CheckNumForName("ENDOOM")) && endoom_pwad_only);
 }
 
 static void D_EndDoom(void)
 {
-  if (AllowEndDoom())
+  if (AllowEndDoom() && AllowEndDoomPWADOnly())
   {
     D_ShowEndDoom();
   }
@@ -1949,6 +1922,21 @@ void D_DoomMain(void)
   W_InitPredefinedLumps(); // [Nugget]
 
   IdentifyVersion();
+
+  //!
+  // @category mod
+  //
+  // Disable auto-loading of extars.wad file.
+  //
+
+  if (gamemission < pack_chex && !M_ParmExists("-noextras"))
+  {
+      char *path = D_FindWADByName("extras.wad");
+      if (path)
+      {
+          D_AddFile(path);
+      }
+  }
 
   // [FG] emulate a specific version of Doom
   InitGameVersion();
@@ -2455,8 +2443,6 @@ void D_DoomMain(void)
             I_Error("\nThis is not the registered version.");
     }
 
-  W_ProcessInWads("UMAPDEF", U_ParseMapDefInfo, PROCESS_PWAD);
-
   //!
   // @category mod
   //
@@ -2465,7 +2451,7 @@ void D_DoomMain(void)
 
   if (!M_ParmExists("-nomapinfo"))
   {
-    W_ProcessInWads("UMAPINFO", U_ParseMapInfo, PROCESS_IWAD | PROCESS_PWAD);
+    W_ProcessInWads("UMAPINFO", G_ParseMapInfo, PROCESS_IWAD | PROCESS_PWAD);
   }
 
   G_ParseCompDatabase();
@@ -2807,7 +2793,8 @@ void D_DoomMain(void)
 void D_BindMiscVariables(void)
 {
   BIND_NUM_GENERAL(exit_sequence, 0, 0, EXIT_SEQUENCE_FULL,
-    "Exit sequence (0 = Off; 1 = Sound Only; 2 = PWAD ENDOOM; 3 = Full)");
+    "Exit sequence (0 = Off; 1 = Sound Only; 2 = ENDOOM Only; 3 = Full)");
+  BIND_BOOL_GENERAL(endoom_pwad_only, false, "Show only ENDOOM from PWAD");
   BIND_BOOL_GENERAL(demobar, false, "Show demo progress bar");
 
   // [Nugget] More wipes
