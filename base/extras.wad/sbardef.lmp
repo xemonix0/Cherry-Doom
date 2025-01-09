@@ -2899,11 +2899,25 @@
             "widget":
             {
               "x": 320,
-              "y": 8,
+              "y": 16,
               "alignment": 34,
               "tranmap": null,
               "translation": null,
               "type": 2,
+              "font": "Digits",
+              "conditions": null,
+              "children": null
+            }
+          },
+          {
+            "widget":
+            {
+              "x": 320,
+              "y": 8,
+              "alignment": 34,
+              "tranmap": null,
+              "translation": null,
+              "type": 32,
               "font": "Digits",
               "conditions": null,
               "children": null
@@ -2999,12 +3013,13 @@
             "widget":
             {
               "x": 0,
-              "y": 8,
+              "y": 0,
               "alignment": 16,
               "tranmap": null,
               "translation": "CRGOLD",
               "type": 9,
               "font": "Console",
+              "under_messages": true,
               "conditions": null,
               "children": null
             }

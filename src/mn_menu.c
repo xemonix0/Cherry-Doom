@@ -1916,6 +1916,8 @@ static void M_SizeDisplay(int choice)
     }
     screenblocks = BETWEEN(3, maxscreenblocks, screenblocks);
     R_SetViewSize(screenblocks /*, detailLevel obsolete -- killough */);
+
+    MN_UpdateNughudItem(); // [Nugget] NUGHUD
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2698,6 +2700,7 @@ boolean M_ShortcutResponder(const event_t *ev)
         }
 
         R_SetViewSize(screenblocks);
+        MN_UpdateNughudItem(); // [Nugget] NUGHUD
         return true;
     }
 

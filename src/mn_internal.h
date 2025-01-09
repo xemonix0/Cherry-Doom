@@ -112,6 +112,8 @@ void MN_DrawColor(void);
 void MN_CustomSkill(void);
 void MN_DrawCustomSkill(void);
 
+void MN_UpdateNughudItem(void);
+
 // [Nugget] -----------------------------------------------------------------/
 
 /////////////////////////////
