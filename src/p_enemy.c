@@ -135,7 +135,8 @@ static void P_RecursiveSound(sector_t *sec, int soundblocks,
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
   // [crispy] monsters are deaf with NOTARGET cheat
-  if (target && target->player && (target->player->cheats & CF_NOTARGET))
+  if (target && target->player && (target->player->cheats & CF_NOTARGET)
+      && !riotmode) // [Nugget]
     return;
 
   validcount++;
@@ -1047,8 +1048,13 @@ static boolean P_LookForMonsters(mobj_t *actor, boolean allaround)
 }
 
 // [Nugget]
-static boolean P_LookForAnyTargets(mobj_t *actor)
+static boolean P_LookForAnyTargets(mobj_t *const actor, const boolean force)
 {
+  // Only perform the search if this actor was alerted by the player,
+  // through sound (represented by `force`) or sight
+  if (!force && !P_CheckSight(players[0].mo, actor))
+  { return false; }
+
   thinker_t *currentthinker = &thinkercap;
 
   mobj_t *closest = NULL;
@@ -1102,7 +1108,7 @@ static boolean P_LookForTargets(mobj_t *actor, int allaround)
 {
   // [Nugget]
   if (riotmode && !(actor->flags & MF_FRIEND))
-  { return P_LookForAnyTargets(actor); }
+  { return P_LookForAnyTargets(actor, false); }
 
   return actor->flags & MF_FRIEND ?
     P_LookForMonsters(actor, allaround) || P_LookForPlayers (actor, allaround):
@@ -1164,10 +1170,9 @@ void A_Look(mobj_t *actor)
 
   targ = actor->subsector->sector->soundtarget;
 
-  if (riotmode) { targ = NULL; } // [Nugget]
-
   // [crispy] monsters don't look for players with NOTARGET cheat
-  if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
+  if (targ && targ->player && (targ->player->cheats & CF_NOTARGET)
+      && !riotmode) // [Nugget]
     return;
 
   // killough 7/18/98:
@@ -1176,6 +1181,14 @@ void A_Look(mobj_t *actor)
   // cannot find any targets. A marine's best friend :)
 
   actor->threshold = actor->pursuecount = 0;
+
+  // [Nugget]
+  if (riotmode && !(actor->flags & MF_FRIEND) && targ)
+  {
+    P_LookForAnyTargets(actor, true);
+  }
+  else
+
   if (!(actor->flags & MF_FRIEND && P_LookForTargets(actor, false)) &&
       !(targ &&
 	targ->flags & MF_SHOOTABLE &&

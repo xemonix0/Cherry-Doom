@@ -122,8 +122,10 @@ Shortcut to toggle the two cheats mentioned above, and IDFA.
 Force gibbing on dying enemies, independently of damage dealt.
 
 `RIOTMODE`  
-Make enemies attack all sentient entities (including other enemies),
+Make enemies alerted by the player attack all sentient entities (including other enemies),
 and allow entities to damage their same species.
+
+Note that when both the no-target cheat and this one are enabled, enemies will still be alerted normally, but they won't target the player.
 
 `IDFLY`  
 Toggle Fly Mode (uses jumping/crouching keys).
