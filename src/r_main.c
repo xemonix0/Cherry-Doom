@@ -401,6 +401,7 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
   if (lock)
   {
     if (freecam.mobj) {
+      freecam.angle += freecam.mobj->angle;
       R_UpdateFreecamMobj(NULL);
     }
     else {
@@ -1144,8 +1145,10 @@ void R_SetupFrame (player_t *player)
 {
   // [Nugget]
   chasecam_on = gamestate == GS_LEVEL
-                && STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
-                && !(freecam_on && !freecam.mobj);
+                && !(freecam_on && !freecam.mobj)
+                && STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0
+                                                && player->playerstate == PST_DEAD
+                                                && !freecam_on));
 
   // [Nugget] Freecam
   if (freecam_on && gamestate == GS_LEVEL)
