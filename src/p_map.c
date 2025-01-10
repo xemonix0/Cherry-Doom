@@ -98,7 +98,11 @@ int numspechit;
 // Temporary holder for thing_sectorlist threads
 msecnode_t *sector_list = NULL;                             // phares 3/16/98
 
-// [Nugget] Hitscan trails /--------------------------------------------------
+// [Nugget] /=================================================================
+
+boolean riotmode;
+
+// Hitscan trails ------------------------------------------------------------
 
 int hitscan_trail_interval;
 
@@ -157,7 +161,7 @@ void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
   }
 }
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 //
 // TELEPORT MOVE
@@ -775,7 +779,8 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 	  return true;                // Don't hit same species as originator.
 	else
 	  // Dehacked support - monsters infight
-	  if (thing->type != MT_PLAYER && !deh_species_infighting) // Explode, but do no damage.
+	  if (thing->type != MT_PLAYER && !deh_species_infighting // Explode, but do no damage.
+	      && !riotmode) // [Nugget]
 	    return false;	        // Let players missile other players.
       }
       

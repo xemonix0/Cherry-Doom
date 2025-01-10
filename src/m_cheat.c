@@ -146,6 +146,7 @@ static void cheat_bobbers();    // Shortcut to the two cheats above
 boolean gibbers;                // Used for 'GIBBERS'
 static void cheat_gibbers();    // Everything gibs
 
+static void cheat_riotmode(void);
 static void cheat_resurrect();
 static void cheat_fly();
 static void cheat_normalexit(); // Emulate normal level exit
@@ -413,6 +414,7 @@ struct cheat_s cheat[] = {
   {"valiant",    NULL, not_net | not_demo, {cheat_fastweaps}      }, // Fast weapons cheat
   {"bobbers",    NULL, not_net | not_demo, {cheat_bobbers}        }, // Shortcut for the two above cheats
   {"gibbers",    NULL, not_net | not_demo, {cheat_gibbers}        }, // Everything gibs
+  {"riotmode",   NULL, not_net | not_demo, {cheat_riotmode}   },
   {"resurrect",  NULL, not_net | not_demo, {cheat_resurrect}      },
   {"idres",      NULL, not_net | not_demo, {cheat_resurrect}      }, // 'RESURRECT' alternative
   {"idfly",      NULL, not_net | not_demo, {cheat_fly}            },
@@ -850,6 +852,11 @@ static void cheat_boomcan()
 {
   plyr->cheats ^= CF_BOOMCAN;
   displaymsg("Explosive Hitscan %s", (plyr->cheats & CF_BOOMCAN) ? "ON" : "OFF");
+}
+
+static void cheat_riotmode(void)
+{
+  displaymsg("Riot Mode %s", (riotmode = !riotmode) ? "ON" : "OFF");
 }
 
 static void cheat_cheese()

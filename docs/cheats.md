@@ -121,6 +121,10 @@ Shortcut to toggle the two cheats mentioned above, and IDFA.
 `GIBBERS`  
 Force gibbing on dying enemies, independently of damage dealt.
 
+`RIOTMODE`  
+Make enemies attack all sentient entities (including other enemies),
+and allow entities to damage their same species.
+
 `IDFLY`  
 Toggle Fly Mode (uses jumping/crouching keys).
 

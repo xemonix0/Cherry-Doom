@@ -1046,6 +1046,52 @@ static boolean P_LookForMonsters(mobj_t *actor, boolean allaround)
   return false;  // No monster found
 }
 
+// [Nugget]
+static boolean P_LookForAnyTargets(mobj_t *actor)
+{
+  thinker_t *currentthinker = &thinkercap;
+
+  mobj_t *closest = NULL;
+  fixed_t closest_dist = 0;
+  boolean closest_visible = false;
+
+  while ((currentthinker = currentthinker->next) != &thinkercap)
+  {
+    if (currentthinker->function.p1 == (actionf_p1) P_MobjThinker)
+    {
+      mobj_t *const mo = (mobj_t *) currentthinker;
+
+      if (
+        mo->health > 0
+        && (   mo->flags & MF_COUNTKILL
+            || mo->type == MT_SKULL
+            || (mo->player && mo->player->mo == mo && !(mo->player->cheats & CF_NOTARGET)))
+        && mo != actor
+      ) {
+        const fixed_t dist = P_AproxDistance(mo->x - actor->x, mo->y - actor->y);
+        boolean visible = false;
+
+        // If we found a visible mobj, don't bother checking whether this one
+        // is visible unless it's closer than the visible one
+        if (dist < closest_dist || !closest_visible)
+        { visible = P_CheckSight(actor, mo); }
+
+        // Prefer visible targets regardless of distance
+        if (dist < closest_dist || (visible && !closest_visible) || !closest)
+        {
+          closest = mo;
+          closest_dist = dist;
+          closest_visible = visible;
+        }
+      }
+    }
+  }
+
+  P_SetTarget(&actor->target, closest);
+
+  return actor->target != NULL;
+}
+
 //
 // P_LookForTargets
 //
@@ -1054,6 +1100,10 @@ static boolean P_LookForMonsters(mobj_t *actor, boolean allaround)
 
 static boolean P_LookForTargets(mobj_t *actor, int allaround)
 {
+  // [Nugget]
+  if (riotmode && !(actor->flags & MF_FRIEND))
+  { return P_LookForAnyTargets(actor); }
+
   return actor->flags & MF_FRIEND ?
     P_LookForMonsters(actor, allaround) || P_LookForPlayers (actor, allaround):
     P_LookForPlayers (actor, allaround) || P_LookForMonsters(actor, allaround);
@@ -1113,6 +1163,8 @@ void A_Look(mobj_t *actor)
   mobj_t *targ;
 
   targ = actor->subsector->sector->soundtarget;
+
+  if (riotmode) { targ = NULL; } // [Nugget]
 
   // [crispy] monsters don't look for players with NOTARGET cheat
   if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
@@ -1770,6 +1822,9 @@ static void WatchResurrection(mobj_t* target, mobj_t* raiser)
 
 static boolean P_HealCorpse(mobj_t* actor, int radius, statenum_t healstate, sfxenum_t healsound)
 {
+  // [Nugget]
+  if (riotmode && !(actor->flags & MF_FRIEND)) { return false; }
+
   int xl, xh;
   int yl, yh;
   int bx, by;

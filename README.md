@@ -182,6 +182,7 @@ All of these are CFG-only, so their CVAR names are included.
 - **_'VALIANT'_** for fast weapons [i.b. ZDoom]
   - **_'BOBBERS'_** serves as a shortcut to toggle the two cheats mentioned above, plus IDFA
 - **_'GIBBERS'_** to force gibbing on dying enemies, independently of damage dealt
+- **_'RIOTMODE'_** cheat, to make enemies attack all sentient entities
 - **_'IDFLY'_** to fly (uses jumping/crouching buttons) [i.b. PrBoom+, ZDoom]
 - **_'SUMMON'_** to spawn an actor based on its type index [i.b. ZDoom, PrBoomX]
 - **_'IDDF'_** to find a key on the Automap

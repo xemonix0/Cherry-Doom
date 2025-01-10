@@ -116,6 +116,8 @@ void P_SetIsBFGTracer(const boolean value);
 
 void P_SetIsBoomShot(const boolean value); // Explosive hitscan cheat
 
+extern boolean riotmode;
+
 // Hitscan trails ------------------------------------------------------------
 
 int  P_GetShowHitscanTrails(void);
