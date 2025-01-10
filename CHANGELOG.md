@@ -3,6 +3,7 @@
 - **_Message Fadeout_** setting
 - **_Weapon Bob Speed_** setting
 - **_Bob [Weapon] While Switching_** setting
+- **Low-resolution pixel width/height** settings
 - **_[Color] Contrast_** setting [by @pvictress]
 
 ## Changes

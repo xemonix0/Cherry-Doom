@@ -65,10 +65,17 @@
 //#define NUGMAGIC
 
 #ifdef NUGMAGIC
-static void cheat_magic()
+
+static void cheat_magic(void)
 {
   
 }
+
+static void cheat_magic2(void)
+{
+  
+}
+
 #endif
 
 // [Nugget] --------------------------/
@@ -440,7 +447,10 @@ struct cheat_s cheat[] = {
   {"idgaf",      NULL, not_net | not_demo, {cheat_idgaf}      },
 
   #ifdef NUGMAGIC
-  {"ggg", NULL, 0, {cheat_magic}},
+
+  {"ggg", NULL, 0, {.v = cheat_magic}},
+  {"hhh", NULL, 0, {.v = cheat_magic2}},
+
   #endif
 
   // [Nugget] ---------------------------------------------------------------/

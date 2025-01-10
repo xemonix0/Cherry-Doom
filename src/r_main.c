@@ -141,6 +141,8 @@ int extra_level_brightness;               // level brightness feature
 // CVARs ---------------------------------------------------------------------
 
 boolean flip_levels;
+static int lowres_pixel_width;
+static int lowres_pixel_height;
 boolean nightvision_visor;
 int fake_contrast;
 boolean diminished_lighting;
@@ -1752,6 +1754,55 @@ void R_RenderPlayerView (player_t* player)
   R_SetFuzzPosDraw();
   R_DrawMasked ();
 
+  // [Nugget]
+  if (!strictmode && current_video_height == SCREENHEIGHT
+      && (lowres_pixel_width > 1 || lowres_pixel_height > 1))
+  {
+    int y, x, y2;
+
+    const int pw = lowres_pixel_width,
+              ph = lowres_pixel_height;
+
+    int first_y = ((viewheight % ph) / 2),
+        first_x;
+
+    byte *const dest = I_VideoBuffer;
+
+    for (y = viewwindowy;  y < (viewwindowy + viewheight);)
+    {
+      first_x = (viewwidth % pw) / 2;
+
+      for (x = viewwindowx;  x < (viewwindowx + viewwidth);)
+      {
+        for (y2 = 0;  y2 < (first_y ? first_y : MIN(ph, (viewwindowy + viewheight) - y));  y2++)
+        {
+          memset(
+            dest + ((y + y2) * video.pitch) + x,
+            dest[
+              ( (first_y ? viewwindowy + first_y
+                         : y + ((y < viewwindowy + viewheight/2) ? ph-1 : 0)) * video.pitch)
+              + (first_x ? viewwindowx + first_x
+                         : x + ((x < viewwindowx + viewwidth/2)  ? pw-1 : 0))
+            ],
+            first_x ? first_x : MIN(pw, (viewwindowx + viewwidth) - x)
+          );
+        }
+
+        if (first_x) {
+          x += first_x;
+          first_x = 0;
+        }
+        else { x += pw; }
+      }
+
+      if (first_y) {
+        y += first_y;
+        first_y = 0;
+      }
+      else { y += ph; }
+    }
+  }
+
   // Check for new console commands.
   NetUpdate ();
 }
@@ -1796,6 +1847,16 @@ void R_BindRenderVariables(void)
   // [Nugget] /---------------------------------------------------------------
 
   BIND_BOOL_GENERAL(flip_levels, false, "Flip levels horizontally (visual filter)");
+
+  // (CFG-only)
+  M_BindNum("lowres_pixel_width", &lowres_pixel_width, NULL,
+            1, 1, 8, ss_none, wad_yes,
+            "Width multiplier for pixels at 100% resolution");
+
+  // (CFG-only)
+  M_BindNum("lowres_pixel_height", &lowres_pixel_height, NULL,
+            1, 1, 8, ss_none, wad_yes,
+            "Height multiplier for pixels at 100% resolution");
 
   BIND_BOOL_GENERAL(no_berserk_tint, false, "Disable Berserk tint");
   BIND_BOOL_GENERAL(no_radsuit_tint, false, "Disable Radiation Suit tint");
