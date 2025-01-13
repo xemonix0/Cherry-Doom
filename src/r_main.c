@@ -140,6 +140,8 @@ int extra_level_brightness;               // level brightness feature
 
 // CVARs ---------------------------------------------------------------------
 
+boolean vertical_lockon;
+
 boolean flip_levels;
 static int lowres_pixel_width;
 static int lowres_pixel_height;
@@ -1241,7 +1243,7 @@ void R_SetupFrame (player_t *player)
     }
 
     if ((use_localview || (freecam_on && freecam_mode == FREECAM_CAM)) // [Nugget] Freecam
-        && raw_input && !player->centering)
+        && raw_input && !player->centering && (mouselook || padlook)) // [Nugget]
     {
       basepitch = player->pitch + localview.pitch;
       basepitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, basepitch);
@@ -1904,6 +1906,9 @@ void R_BindRenderVariables(void)
 
   M_BindNum("flinching", &flinching, NULL, 0, 0, 3, ss_gen, wad_yes,
             "Flinch player view (0 = Off; 1 = Upon landing; 2 = Upon taking damage; 3 = Upon either)");
+
+  M_BindBool("vertical_lockon", &vertical_lockon, NULL,
+             false, ss_gen, wad_yes, "Camera automatically locks onto targets vertically");
 
   M_BindBool("explosion_shake", &explosion_shake, NULL,
              false, ss_gen, wad_yes, "Explosions shake the view");

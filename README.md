@@ -39,6 +39,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **Crouching/ducking** (default key: <kbd>C</kbd>) [i.b. ZDoom]
   - Includes support for crouching-player sprites, named `PLYC`; must be provided by the user
 - **_View Height_** setting, which allows to enter a custom POV height value in the [32, 56] range [i.b. Brutal Doom]
+- **_Vertical Target Lock-on_** setting, to make the camera automatically lock onto targets vertically [i.b. Rise of the Triad]
 - **Flinching** setting, to flinch upon landing and/or taking damage
 - **_Explosion Shake Effect_** setting (intensity determined by the CFG-only `explosion_shake_intensity_pct` CVAR) [i.b. Doom Retro]
 - **_Subtle Idle Bobbing/Breathing_** setting [p.f. International Doom]

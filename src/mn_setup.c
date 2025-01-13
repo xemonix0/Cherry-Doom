@@ -3786,6 +3786,12 @@ static void ChangeViewHeight(void)
   oldviewheight = viewheight_value;
 }
 
+static void ToggleVerticalLockon(void)
+{
+  if (!(vertical_lockon || mouselook || padlook))
+  { players[displayplayer].centering = true; }
+}
+
 static const char *over_under_strings[] = {
   "Off", "Player Only", "All Things", NULL
 };
@@ -3813,6 +3819,7 @@ setup_menu_t gen_settings7[] = {
   {"Nugget - View", S_SKIP|S_TITLE, N_X, M_SPC},
 
     {"View Height",                   S_NUM   |S_STRICT, N_X,       M_SPC,      {"viewheight_value"}, .action = ChangeViewHeight},
+    {"Vertical Target Lock-on",       S_ONOFF |S_STRICT, N_X,       M_SPC,      {"vertical_lockon"}, .action = ToggleVerticalLockon},
     {"Flinch upon",                   S_CHOICE|S_STRICT, N_X,       M_SPC,      {"flinching"}, .strings_id = str_flinching},
     {"Explosion Shake Effect",        S_ONOFF |S_STRICT, N_X,       M_SPC,      {"explosion_shake"}},
     {"Subtle Idle Bobbing/Breathing", S_ONOFF |S_STRICT, N_X,       M_SPC,      {"breathing"}},

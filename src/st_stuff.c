@@ -2189,7 +2189,7 @@ void ST_Ticker(void)
 
     UpdateNughudStacks();
 
-    if (hud_crosshair)
+    if (hud_crosshair_on) // [Nugget] Crosshair toggle
     {
         HU_UpdateCrosshair();
     }

@@ -107,6 +107,9 @@ extern fixed_t attackrange;
 // [Nugget] ==================================================================
 
 fixed_t P_PitchToSlope(const fixed_t pitch);
+fixed_t P_SlopeToPitch(const fixed_t slope);
+fixed_t P_GetLinetargetTopSlope(void);
+fixed_t P_GetLinetargetBottomSlope(void);
 
 void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope); // Chasecam
 

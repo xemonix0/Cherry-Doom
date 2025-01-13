@@ -1,6 +1,7 @@
 ## New Features
 
 - **_'RIOTMODE'_** cheat, to make enemies attack all sentient entities
+- **_Vertical Target Lock-on_** setting
 - **_Message Fadeout_** setting
 - **_Weapon Bob Speed_** setting
 - **_Bob [Weapon] While Switching_** setting

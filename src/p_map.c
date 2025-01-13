@@ -580,12 +580,6 @@ static const inline fixed_t thingheight (const mobj_t *const thing, const mobj_t
   return thing->height; // [Nugget] Removed `actualheight`
 }
 
-// [Nugget] Factored out from `p_user.c`
-fixed_t P_PitchToSlope(const fixed_t pitch)
-{
-  return pitch ? -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT] : 0;
-}
-
 // [Nugget] Over/Under /------------------------------------------------------
 
 int over_under;
@@ -1664,6 +1658,48 @@ fixed_t attackrange;
 
 static fixed_t   aimslope;
 
+// [Nugget] /-----------------------------------------------------------------
+
+// Factored out from `p_user.c`
+fixed_t P_PitchToSlope(const fixed_t pitch)
+{
+  return pitch ? -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT] : 0;
+}
+
+fixed_t P_SlopeToPitch(const fixed_t slope)
+{
+  if (!slope) { return 0; }
+
+  int closest = 0;
+  fixed_t closest_diff = abs(finetangent[closest] - slope);
+
+  for (int i = 1;  i < FINEANGLES/2;  i++)
+  {
+    if (abs(finetangent[i] - slope) < closest_diff)
+    {
+      closest = i;
+      closest_diff = abs(finetangent[i] - slope);
+    }
+  }
+
+  return (closest << ANGLETOFINESHIFT) - ANG90;
+}
+
+static fixed_t linetarget_topslope = 0,
+               linetarget_bottomslope = 0;
+
+fixed_t P_GetLinetargetTopSlope(void)
+{
+  return linetarget_topslope;
+}
+
+fixed_t P_GetLinetargetBottomSlope(void)
+{
+  return linetarget_bottomslope;
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 // slopes to top and bottom of target
 // killough 4/20/98: make static instead of using ones in p_sight.c
 
@@ -1759,6 +1795,10 @@ static boolean PTR_AimTraverse (intercept_t *in)
 
   aimslope = (thingtopslope+thingbottomslope)/2;
   linetarget = th;
+
+  // [Nugget]
+  linetarget_topslope    = thingtopslope;
+  linetarget_bottomslope = thingbottomslope;
 
   return false;   // don't go any farther
 }
