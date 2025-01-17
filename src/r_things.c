@@ -328,6 +328,12 @@ static size_t num_vissprite, num_vissprite_alloc, num_vissprite_ptrs;
 
 static mobj_t **nearby_sprites = NULL;
 
+// [Nugget]
+vissprite_t *R_GetLastVisSprite(void)
+{
+  return &vissprites[num_vissprite - 1];
+}
+
 //
 // R_InitSprites
 // Called at program start.
@@ -850,6 +856,9 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   boolean       flip;
   vissprite_t   *vis;
   vissprite_t   avis;
+
+  // [Nugget]
+  if (VX_DrawWeaponVoxel(psp, translucent)) { return; }
 
   // decide which patch to use
 

@@ -97,6 +97,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
   - Application while firing determined by the CFG-only `weapon_inertia_fire` CVAR
 - **_Weapon Squat Upon Landing_** setting [p.f. Crispy Doom]
 - **_Translucent Flashes_** setting (translucency determined by the CFG-only `translucent_pspr_pct` CVAR) [i.b. Crispy Doom]
+- **Support for weapon voxel models**
 - **"Correct" first-person-sprite centering** setting, to toggle the 1px misalignment of first-person sprites (CFG-only: `sx_fix`)
 
 ### Status Bar/HUD

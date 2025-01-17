@@ -1,5 +1,6 @@
 ## New Features
 
+- **Support for weapon voxel models**
 - **_'RIOTMODE'_** cheat, to make enemies attack all sentient entities
 - **_Vertical Target Lock-on_** setting
 - **_Message Fadeout_** setting
@@ -10,7 +11,7 @@
 
 ## Changes
 
-- **Merged changes from [Woof! post-15.0.1]**, note:
+- **Merged changes from [Woof! 15.0.1](https://github.com/fabiangreffrath/woof/releases/tag/woof_15.1.0)**, note:
   - Replaced `fullscreen_hud_type` with `use_nughud`, with the NUGHUD now replacing the second-to-last HUD
   - Removed `fuzzdark_mode` in favor of Woof!'s `fuzzmode` (_Refraction_ is equivalent to _Selective Fuzz Darkening_)
   - Removed `comp_blazing2`; its functionality has been integrated into `comp_blazing`
