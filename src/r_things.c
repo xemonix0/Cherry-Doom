@@ -328,12 +328,6 @@ static size_t num_vissprite, num_vissprite_alloc, num_vissprite_ptrs;
 
 static mobj_t **nearby_sprites = NULL;
 
-// [Nugget]
-vissprite_t *R_GetLastVisSprite(void)
-{
-  return &vissprites[num_vissprite - 1];
-}
-
 //
 // R_InitSprites
 // Called at program start.
@@ -842,6 +836,8 @@ void R_NearbySprites (void)
   array_clear(nearby_sprites);
 }
 
+static int queued_weapon_voxels = 0; // [Nugget] Weapon voxels
+
 //
 // R_DrawPSprite
 //
@@ -857,8 +853,14 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vissprite_t   *vis;
   vissprite_t   avis;
 
-  // [Nugget]
-  if (VX_DrawWeaponVoxel(psp, translucent)) { return; }
+  // [Nugget] Weapon voxels
+  if (VX_ProjectWeaponVoxel(psp, translucent))
+  {
+    queued_weapon_voxels++;
+    return;
+  }
+  // If any are queued, don't draw sprites
+  else if (queued_weapon_voxels) { return; }
 
   // decide which patch to use
 
@@ -1026,6 +1028,8 @@ void R_DrawPlayerSprites(void)
   if (hud_crosshair_on) // [Nugget] Use crosshair toggle
     HU_DrawCrosshair();
 
+  queued_weapon_voxels = 0; // [Nugget] Weapon voxels
+
   // add all active psprites
   for (i=0, psp=viewplayer->psprites;
        // [Nugget]: [crispy] A11Y number of player (first person) sprites to draw
@@ -1033,6 +1037,12 @@ void R_DrawPlayerSprites(void)
        i++,psp++)
     if (psp->state)
       R_DrawPSprite (psp, i == ps_flash && STRICTMODE(pspr_translucency_pct != 100)); // [Nugget] Translucent flashes
+
+  // [Nugget] Weapon voxels: drawn in reverse order
+  for (i = 0;  i < queued_weapon_voxels;  i++)
+  {
+    VX_DrawVoxel(&vissprites[num_vissprite - (1 + i)]);
+  }
 }
 
 //

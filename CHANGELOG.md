@@ -16,8 +16,8 @@
   - Removed `fuzzdark_mode` in favor of Woof!'s `fuzzmode` (_Refraction_ is equivalent to _Selective Fuzz Darkening_)
   - Removed `comp_blazing2`; its functionality has been integrated into `comp_blazing`
 - **Improved interpolation of weapon sprites**
-- **Applied weapon inertia when firing** (added `weapon_inertia_fire` CVAR to disable it)
-- **Lowered `weapon_inertia_scale_pct` limit to -200**
+- **Applied weapon inertia while firing** (added `weapon_inertia_fire` CVAR to disable it)
+- **Lowered lower limit of `weapon_inertia_scale_pct` to -200**
 - Nugget's translucency features now use translucency maps from a shared pool,
   potentially improving program startup time in exchange for stutters
   when enabling said features for the first time since launch

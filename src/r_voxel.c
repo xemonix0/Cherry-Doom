@@ -1087,8 +1087,9 @@ void VX_DrawVoxel (vissprite_t * spr)
 	VX_RecursiveDraw (spr, 0, 0, v->x_size, v->y_size);
 }
 
-// [Nugget]
-boolean VX_DrawWeaponVoxel (pspdef_t *psp, boolean translucent)
+// [Nugget] Weapon voxels
+boolean VX_ProjectWeaponVoxel(const pspdef_t *const psp,
+                              const boolean translucent)
 {
   if (STRICTMODE(hide_weapon)
       || R_GetChasecamOn() // Chasecam
@@ -1148,9 +1149,5 @@ boolean VX_DrawWeaponVoxel (pspdef_t *psp, boolean translucent)
   subsector_t sub = { .sector = &sector };
   thing.subsector = &sub;
 
-  if (!VX_ProjectVoxel(&thing))
-  { return false; }
-
-  VX_DrawVoxel(R_GetLastVisSprite());
-  return true;
+  return VX_ProjectVoxel(&thing);
 }

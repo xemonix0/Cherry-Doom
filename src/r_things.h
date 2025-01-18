@@ -60,8 +60,6 @@ void R_InitSpritesRes(void);
 
 void R_NearbySprites(void);
 
-vissprite_t *R_GetLastVisSprite(void); // [Nugget]
-
 #endif
 
 //----------------------------------------------------------------------------
