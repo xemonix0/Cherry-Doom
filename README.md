@@ -149,7 +149,6 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Extra Gibbing_** setting, to force gibbing under certain conditions (configurable through the CFG-only `extra_gibbing_#` CVARs) [i.b. Smooth Doom]
 - **_Bloodier Gibbing_** setting [i.b. Smooth Doom]
 - **_Toss Items Upon Death_** setting [i.b. ZDoom, Doom Retro]
-- **_Selective Fuzz Darkening_** setting [by _ceski_]
 
 ### Doom Compatibility settings
 
