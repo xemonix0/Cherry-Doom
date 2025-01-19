@@ -1120,10 +1120,12 @@ boolean VX_ProjectWeaponVoxel(const pspdef_t *const psp,
   fixed_t x = sx2,
           y = sy2 - 32*FRACUNIT;
 
-  if (STRICTMODE(weapon_inertia) && default_vertical_aiming != VERTAIM_AUTO)
+  if (STRICTMODE(weapon_inertia))
   {
     x += wix / 2;
-    y += wiy / 2;
+
+    if (default_vertical_aiming != VERTAIM_AUTO)
+    { y += wiy / 2; }
   }
 
   x /= 5;
