@@ -1038,10 +1038,20 @@ void R_DrawPlayerSprites(void)
     if (psp->state)
       R_DrawPSprite (psp, i == ps_flash && STRICTMODE(pspr_translucency_pct != 100)); // [Nugget] Translucent flashes
 
-  // [Nugget] Weapon voxels: drawn in reverse order
-  for (i = 0;  i < queued_weapon_voxels;  i++)
+  // [Nugget] Weapon voxels
+  if (queued_weapon_voxels)
   {
-    VX_DrawVoxel(&vissprites[num_vissprite - (1 + i)]);
+    const fixed_t old_centeryfrac = centeryfrac;
+
+    // Hack to make weapon voxels be unaffected by view pitch
+    if (default_vertical_aiming != VERTAIM_AUTO)
+    { centeryfrac = (viewheight / 2 + (R_GetNughudViewPitch() >> FRACBITS)) << FRACBITS; }
+
+    // Drawn in reverse order
+    for (i = 0;  i < queued_weapon_voxels;  i++)
+    { VX_DrawVoxel(&vissprites[num_vissprite - (1 + i)]); }
+
+    centeryfrac = old_centeryfrac;
   }
 }
 

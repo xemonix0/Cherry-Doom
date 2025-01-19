@@ -138,6 +138,13 @@ int extra_level_brightness;               // level brightness feature
 
 // [Nugget] /=================================================================
 
+static fixed_t nughud_viewpitch;
+
+fixed_t R_GetNughudViewPitch(void)
+{
+  return nughud_viewpitch;
+}
+
 // CVARs ---------------------------------------------------------------------
 
 boolean vertical_lockon;
@@ -869,10 +876,17 @@ static void R_SetupFreelook(void)
     dy = 0;
   }
 
+  // [Nugget] NUGHUD /--------------------------------------------------------
+
   if (STRICTMODE(ST_GetNughudOn()) && gamestate == GS_LEVEL)
   {
-    dy += (nughud.viewoffset * viewheight / SCREENHEIGHT) << FRACBITS;
+    nughud_viewpitch = (nughud.viewoffset * viewheight / SCREENHEIGHT) << FRACBITS;
   }
+  else { nughud_viewpitch = 0; }
+
+  dy += nughud_viewpitch;
+
+  // [Nugget] ---------------------------------------------------------------/
 
   centery = viewheight / 2 + (dy >> FRACBITS);
   centeryfrac = centery << FRACBITS;
@@ -1240,7 +1254,7 @@ void R_SetupFrame (player_t *player)
     }
 
     if ((use_localview || (freecam_on && freecam_mode == FREECAM_CAM)) // [Nugget] Freecam
-        && raw_input && !player->centering && (mouselook || padlook)) // [Nugget]
+        && raw_input && !player->centering && (mouselook || padlook)) // [Nugget] Freelook checks
     {
       basepitch = player->pitch + localview.pitch;
       basepitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, basepitch);
