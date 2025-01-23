@@ -366,6 +366,69 @@ vissprite_t *R_NewVisSprite(void)
  return vissprites + num_vissprite++;
 }
 
+// [Nugget] Actual sprite height (without padding) /--------------------------
+
+static actualspriteheight_t *actual_sprite_heights = NULL;
+
+static const actualspriteheight_t *CalculateActualSpriteHeight(const int lump)
+{
+  patch_t *const patch = W_CacheLumpNum(lump, PU_CACHE);
+  const short width = SHORT(patch->width);
+
+  short actualheight = 0, toppadding = SHRT_MAX;
+
+  for (int i = 0;  i < width;  i++)
+  {
+    const post_t *post = (post_t *) ((byte *) patch + LONG(patch->columnofs[i]));
+
+    if (post->topdelta == 0xFF) { continue; }
+
+    short columnpadding = post->topdelta,
+          columnheight,
+          topdelta = 0;
+
+    do {
+      // [FG] support for tall sprites in DeePsea format
+      if (post->topdelta <= topdelta)
+      {
+        topdelta += post->topdelta;
+      }
+      else { topdelta = post->topdelta; }
+
+      columnheight = topdelta + SHORT(post->length);
+
+      post = (post_t *) ((byte *) post + 4 + post->length); // 4 = sizeof(topdelta) + sizeof(length)
+    } while (post->topdelta != 0xFF);
+
+    toppadding = MIN(toppadding, columnpadding);
+    actualheight = MAX(actualheight, columnheight);
+  }
+
+  actualheight -= toppadding;
+
+  array_push(
+    actual_sprite_heights,
+    ((actualspriteheight_t) { lump, actualheight, toppadding })
+  );
+
+  return &actual_sprite_heights[array_size(actual_sprite_heights) - 1];
+}
+
+const actualspriteheight_t *R_GetActualSpriteHeight(int sprite, int frame)
+{
+  const int lump = firstspritelump + sprites[sprite].spriteframes[frame].lump[0];
+
+  for (int i = 0;  i < array_size(actual_sprite_heights);  i++)
+  {
+    if (actual_sprite_heights[i].lump == lump)
+    { return &actual_sprite_heights[i]; }
+  }
+
+  return CalculateActualSpriteHeight(lump);
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 //
 // R_DrawMaskedColumn
 // Used for sprites and masked mid textures.
@@ -980,8 +1043,11 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->tranmap = translucent ? R_GetGenericTranMap(pspr_translucency_pct) : NULL;
 
   // [crispy] free look
-  vis->texturemid += (centery - viewheight/2) * pspriteiscale
-                   - (STRICTMODE(ST_GetNughudOn()) ? nughud.weapheight*FRACUNIT : 0); // [Nugget] NUGHUD
+  vis->texturemid += (centery - viewheight/2) * pspriteiscale;
+
+  // [Nugget] NUGHUD
+  if (STRICTMODE(ST_GetNughudOn()))
+  { vis->texturemid -= nughud.weapheight*FRACUNIT; }
 
   if (STRICTMODE(hide_weapon)
       // [Nugget]

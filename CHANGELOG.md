@@ -4,7 +4,7 @@ None.
 
 ## Changes
 
-None.
+- **Vertical weapon inertia now takes the sprite's height into account**
 
 ## Bug Fixes
 
