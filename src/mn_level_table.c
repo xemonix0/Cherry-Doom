@@ -92,7 +92,7 @@ setup_menu_t *level_table[lt_page_max] = {NULL};
 // Utility functions
 //===============================================
 
-inline boolean LT_IsLevelsPage(int page)
+boolean LT_IsLevelsPage(int page)
 {
     switch (page)
     {

@@ -30,7 +30,7 @@ enum
 extern setup_tab_t level_table_tabs[];
 extern setup_menu_t *level_table[lt_page_max];
 
-inline boolean LT_IsLevelsPage(int page);
+boolean LT_IsLevelsPage(int page);
 
 void LT_RecalculateSummary(void);
 void LT_Reset(void);
