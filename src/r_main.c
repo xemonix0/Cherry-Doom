@@ -470,7 +470,7 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 // [Nugget] =================================================================/
 
 // [Cherry] CVARs
-int rocket_trails_tran;
+int rocket_trails_tran_pct;
 
 void (*colfunc)(void);                    // current column draw function
 
@@ -1948,8 +1948,6 @@ void R_BindRenderVariables(void)
   BIND_BOOL_GENERAL(a11y_invul_colormap,  true, "Allow Invulnerability colormap");
 
   // [Cherry] /----------------------------------------------------------------
-
-  BIND_NUM_GENERAL(rocket_trails_tran, 50, 0, 100, "Rocket smoke translucency percentage");
 
   BIND_BOOL_GENERAL(less_blinding_tints, false, "Less blinding tints");
 }

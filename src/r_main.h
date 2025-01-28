@@ -210,7 +210,7 @@ extern void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 // [Nugget] =================================================================/
 
 // [Cherry] CVARs
-extern int rocket_trails_tran;
+extern int rocket_trails_tran_pct;
 
 void R_InitLightTables(void);                // killough 8/9/98
 int R_GetLightIndex(fixed_t scale);

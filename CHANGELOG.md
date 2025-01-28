@@ -29,3 +29,6 @@ Merged changes from the following Nugget Doom releases:
 - _Rocket Trails_ now work even when DSDHacked patches are loaded
 - Removed menu items for the _Rocket Trails Interval_ and _Smoke Translucency_ settings
 - Times on the level table now display hours when exceeding 60 minutes
+- Renamed the `rocket_trails_tran` CVAR to `rocket_trails_tran_pct` for consistency [^1]
+
+[^1]: This will affect existing config files.

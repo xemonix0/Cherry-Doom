@@ -6067,6 +6067,8 @@ void G_BindGameVariables(void)
     "Enable rocket trails");
   BIND_NUM_GENERAL(rocket_trails_interval, 3, 1, 5,
     "Rocket trails spawn interval (smoke spawns every n ticks, lower value = more smoke)");
+  BIND_NUM_GENERAL(rocket_trails_tran_pct, 50, 0, 100,
+    "Rocket smoke translucency percent");
 }
 
 void G_BindEnemVariables(void)

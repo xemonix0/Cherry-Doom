@@ -1214,8 +1214,8 @@ void R_InitData(void)
   R_GetGenericTranMap(25); // Hitscan trails
 
   // [Cherry] Rocket trials
-  if (rocket_trails_tran != 100)
-  { R_GetGenericTranMap(rocket_trails_tran); }
+  if (rocket_trails_tran_pct != 100)
+  { R_GetGenericTranMap(rocket_trails_tran_pct); }
 }
 
 //

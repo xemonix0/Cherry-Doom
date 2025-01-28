@@ -1669,7 +1669,7 @@ static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
     th->angle = angle;
 
     th->flags |= MF_TRANSLUCENT | MF_NOGRAVITY;
-    th->tranmap = R_GetGenericTranMap(rocket_trails_tran);
+    th->tranmap = R_GetGenericTranMap(rocket_trails_tran_pct);
 }
 
 //
