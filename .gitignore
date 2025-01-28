@@ -15,3 +15,5 @@ CMakePresets.json
 
 # clangd
 /.cache/
+CMakeFiles/
+src/CMakeFiles/

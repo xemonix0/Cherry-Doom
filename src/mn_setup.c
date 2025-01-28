@@ -327,6 +327,7 @@ enum
     str_overlay,
     str_automap_preset,
     str_automap_keyed_door,
+    str_fuzzmode,
     str_weapon_slots_activation,
     str_weapon_slots_selection,
     str_weapon_slots,
@@ -361,7 +362,6 @@ enum
 
     str_bobbing_style,
     str_force_carousel,
-    str_hud_type,
     str_crosshair_lockon,
     str_vertical_aiming,
     str_over_under,
@@ -1897,7 +1897,7 @@ static void NuggetResetWeaponInertia(void)
 
 void WeaponFlashTrans(void)
 {
-    R_InitTranMapEx(&pspr_tranmap, pspr_translucency_pct);
+    R_GetGenericTranMap(pspr_translucency_pct);
 }
 
 // [Nugget] ------------------------------------------------------------------/
@@ -1952,6 +1952,8 @@ static setup_menu_t weap_settings1[] = {
     {"Nugget - Cosmetic", S_SKIP|S_TITLE, W_X, M_SPC},
 
       {"Bobbing Style",             S_CHOICE|S_STRICT, W_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
+      {"Weapon Bob Speed",          S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X_THRM8, M_THRM_SPC, {"weapon_bobbing_speed_pct"}},
+      {"Bob While Switching",       S_ONOFF |S_STRICT, W_X, M_SPC, {"switch_bob"}},
       {"Weapon Inertia",            S_ONOFF |S_STRICT, W_X, M_SPC, {"weapon_inertia"}, .action = NuggetResetWeaponInertia},
       {"Weapon Squat Upon Landing", S_ONOFF |S_STRICT, W_X, M_SPC, {"weaponsquat"}},
       {"Force Weapon Carousel",     S_CHOICE|S_STRICT, W_X, M_SPC, {"force_carousel"}, .strings_id = str_force_carousel},
@@ -2201,23 +2203,13 @@ static setup_tab_t stat_tabs[] = {
 static void SizeDisplayAlt(void)
 {
     R_SetViewSize(screenblocks);
+    MN_UpdateNughudItem(); // [Nugget] NUGHUD
 }
 
 static void RefreshSolidBackground(void)
 {
     ST_refreshBackground(); // [Nugget] NUGHUD
 }
-
-static const char *screensize_strings[] = {
-    "",           "",           "",           "Status Bar", "Status Bar",
-    "Status Bar", "Status Bar", "Status Bar", "Status Bar", "Status Bar",
-    "Status Bar", "Fullscreen", "Fullscreen"
-};
-
-// [Nugget] NUGHUD
-static const char *hud_type_strings[] = {
-    "SBARDEF", "NUGHUD"
-};
 
 static const char *st_layout_strings[] = {
     "Original", "Wide"
@@ -2234,8 +2226,7 @@ static setup_menu_t stat_settings1[] = {
     MI_GAP,
 
     // [Nugget] NUGHUD
-    {"Fullscreen HUD Type", S_CHOICE, H_X, M_SPC, {"fullscreen_hud_type"},
-     .strings_id = str_hud_type},
+    {"Use NUGHUD", S_ONOFF, H_X, M_SPC, {"use_nughud"}},
 
     {"Layout", S_CHOICE, H_X, M_SPC, {"st_layout"},
      .strings_id = str_stlayout, .action = AM_Start}, // [Nugget] Minimap
@@ -2245,8 +2236,6 @@ static setup_menu_t stat_settings1[] = {
     {"Status Bar", S_SKIP | S_TITLE, H_X, M_SPC},
 
     {"Colored Numbers", S_ONOFF | S_COSMETIC, H_X, M_SPC, {"sts_colored_numbers"}},
-
-    {"Gray Percent Sign", S_ONOFF | S_COSMETIC, H_X, M_SPC, {"sts_pct_always_gray"}},
 
     {"Solid Background Color", S_ONOFF, H_X, M_SPC, {"st_solidbackground"},
      .action = RefreshSolidBackground},
@@ -2258,6 +2247,12 @@ static setup_menu_t stat_settings1[] = {
 
     MI_END
 };
+
+// [Nugget] NUGHUD
+void MN_UpdateNughudItem(void)
+{
+    DisableItem(screenblocks != maxscreenblocks - 1, stat_settings1, "use_nughud");
+}
 
 static void UpdateStatsFormatItem(void);
 
@@ -2352,7 +2347,7 @@ static const char *hudcolor_strings[] = {
 // [Nugget] Translucent crosshair
 void CrosshairTrans(void)
 {
-    R_InitTranMapEx(&xhair_tranmap, hud_crosshair_tran_pct);
+    R_GetGenericTranMap(hud_crosshair_tran_pct);
 }
 
 #define XH_X (H_X - 13) // [Nugget] Tweaked
@@ -2436,6 +2431,10 @@ static setup_menu_t stat_settings4[] = {
     // Restored menu item
     {"Obituary Color", S_CRITEM|S_COSMETIC, H_X, M_SPC,
      {"hudcolor_obituary"}, .strings_id = str_hudcolor},
+
+    // Message fadeout
+    {"Message Fadeout", S_ONOFF, H_X, M_SPC, {"message_fadeout"},
+     .action = R_InitMessageFadeoutTranMaps},
 
     // Message flash
     {"Message Flash", S_ONOFF, H_X, M_SPC, {"message_flash"}},
@@ -2570,7 +2569,8 @@ void MN_DrawStatusHUD(void)
         int y = M_Y + M_SPC + M_SPC / 2 - SHORT(patch->height) / 2 - 1; // [Nugget] Adjusted
 
         // [Nugget] Translucent crosshair
-        V_DrawPatchTRTL2(x, y, patch, colrngs[hud_crosshair_color], xhair_tranmap);
+        V_DrawPatchTRTL2(x, y, patch, colrngs[hud_crosshair_color],
+                         R_GetGenericTranMap(hud_crosshair_tran_pct));
     }
 
     // If the Reset Button has been selected, an "Are you sure?" message
@@ -2694,23 +2694,13 @@ static setup_menu_t enem_settings1[] = {
 
     // [Nugget] /-------------------------------------------------------------
 
-    // Restored menu item
-    // [FG] spectre drawing mode
-    {"Blocky Spectre Drawing", S_ONOFF, M_X, M_SPC, {"fuzzcolumn_mode"},
-     .action = R_SetFuzzColumnMode},
-
-    // [Nugget] /-------------------------------------------------------------
-
     MI_GAP_Y(5),
+
     {"Nugget", S_SKIP|S_TITLE, M_X, M_SPC},
 
-      {"Extra Gibbing",            S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"extra_gibbing"}},
-      {"Bloodier Gibbing",         S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"bloodier_gibbing"}},
-      {"Toss Items Upon Death",    S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"tossdrop"}},
-
-      // [Nugget - ceski] Selective fuzz darkening
-      {"Selective Fuzz Darkening", S_ONOFF|S_STRICT, M_X, M_SPC,
-       {"fuzzdark_mode"}, .action = R_SetFuzzColumnMode},
+      {"Extra Gibbing",         S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"extra_gibbing"}},
+      {"Bloodier Gibbing",      S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"bloodier_gibbing"}},
+      {"Toss Items Upon Death", S_ONOFF|S_STRICT|S_CRITICAL, M_X, M_SPC, {"tossdrop"}},
 
     // [Nugget] -------------------------------------------------------------/
 
@@ -3121,6 +3111,7 @@ static void SetMidiPlayerOpl(void)
     }
 }
 
+#if defined(HAVE_FLUIDSYNTH)
 static void SetMidiPlayerFluidSynth(void)
 {
     if (I_MidiPlayerType() == midiplayer_fluidsynth)
@@ -3128,6 +3119,7 @@ static void SetMidiPlayerFluidSynth(void)
         SetMidiPlayer();
     }
 }
+#endif
 
 static void RestartMusic(void)
 {
@@ -3289,7 +3281,10 @@ static setup_menu_t music_settings1[] = {
 
 static void UpdateGainItems(void)
 {
+#if defined (HAVE_FLUIDSYNTH)
     DisableItem(auto_gain, music_settings1, "fl_gain");
+#endif
+
     DisableItem(auto_gain, music_settings1, "opl_gain");
 }
 
@@ -3870,7 +3865,7 @@ static void SmoothLight(void)
 static const char *menu_backdrop_strings[] = {"Off", "Dark", "Texture"};
 
 static const char *exit_sequence_strings[] = {
-    "Off", "Sound Only", "PWAD ENDOOM", "Full"
+    "Off", "Sound Only", "ENDOOM Only", "Full"
 };
 
 // [Cherry] Moved here
@@ -3887,6 +3882,17 @@ static void ChangeViewHeight(void)
   oldviewheight = viewheight_value;
 }
 
+static void ToggleVerticalLockon(void)
+{
+  if (!(vertical_lockon || mouselook || padlook))
+  { players[displayplayer].centering = true; }
+}
+
+static void ShadowTrans(void)
+{
+  R_GetGenericTranMap(hud_menu_shadows_filter_pct);
+}
+
 static const char *flinching_strings[] = {
   "Nothing", "Landing", "Damage", "Both", NULL
 };
@@ -3897,6 +3903,10 @@ static const char *chasecam_strings[] = {
 
 static const char *fake_contrast_strings[] = {
   "Off", "Smooth", "Vanilla", NULL
+};
+
+static const char* fuzzmode_strings[] = {
+    "Vanilla", "Refraction", "Shadow"
 };
 
 static void MN_Color(void);
@@ -3925,8 +3935,8 @@ static setup_menu_t gen_settings5[] = {
     {"Sprite Translucency", S_ONOFF | S_STRICT, OFF_CNTR_X, M_SPC,
      {"translucency"}},
 
-    {"Translucency Filter", S_NUM | S_ACTION | S_PCT, OFF_CNTR_X, M_SPC,
-     {"tran_filter_pct"}, .action = MN_Trans},
+    {"Partial Invisibility", S_CHOICE | S_STRICT, OFF_CNTR_X, M_SPC, {"fuzzmode"},
+     .strings_id = str_fuzzmode, .action = R_SetFuzzColumnMode},
 
     MI_GAP,
 
@@ -3965,7 +3975,7 @@ static setup_menu_t gen_settings5[] = {
 
       {"Backdrop For All Menus",       S_ONOFF,                 N_X, M_SPC, {"menu_background_all"}},
       {"No Palette Tint in Menus",     S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_menu_tint"}},
-      {"HUD/Menu Shadows",             S_ONOFF,                 N_X, M_SPC, {"hud_menu_shadows"}},
+      {"HUD/Menu Shadows",             S_ONOFF,                 N_X, M_SPC, {"hud_menu_shadows"}, .action = ShadowTrans},
       {"Flip Levels",                  S_ONOFF,                 N_X, M_SPC, {"flip_levels"}},
       {"No Berserk Tint",              S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_berserk_tint"}},
       {"No Radiation Suit Tint",       S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_radsuit_tint"}},
@@ -3983,6 +3993,7 @@ static setup_menu_t gen_settings5[] = {
     {"Nugget - View", S_SKIP|S_TITLE, N_X, M_SPC},
 
       {"View Height",                   S_NUM   |S_STRICT, N_X,       M_SPC,      {"viewheight_value"}, .action = ChangeViewHeight},
+      {"Vertical Target Lock-on",       S_ONOFF |S_STRICT, N_X,       M_SPC,      {"vertical_lockon"}, .action = ToggleVerticalLockon},
       {"Flinch upon",                   S_CHOICE|S_STRICT, N_X,       M_SPC,      {"flinching"}, .strings_id = str_flinching},
       {"Explosion Shake Effect",        S_ONOFF |S_STRICT, N_X,       M_SPC,      {"explosion_shake"}},
       {"Subtle Idle Bobbing/Breathing", S_ONOFF |S_STRICT, N_X,       M_SPC,      {"breathing"}},
@@ -4028,6 +4039,7 @@ static setup_menu_t color_settings1[] = {
     {"Green Intensity", S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"green_intensity"},  .action = SetPalette},
     {"Blue Intensity",  S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"blue_intensity"},   .action = SetPalette},
     {"Saturation",      S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"color_saturation"}, .action = SetPalette},
+    {"Contrast",        S_THERMO|S_THRM_SIZE11|S_PCT, M_X_THRM11, M_THRM_SPC, {"color_contrast"},   .action = SetPalette},
 
     MI_END
 };
@@ -4060,7 +4072,7 @@ void MN_DrawColor(void)
     patch_t *const patch = V_CachePatchName("M_PALETT", PU_CACHE);
 
     const int x = (SCREENWIDTH / 2) - (SHORT(patch->width) / 2);
-    const int y = 103;
+    const int y = 109;
 
     V_DrawPatchSH(x, y, patch);
 }
@@ -4147,7 +4159,7 @@ static setup_menu_t gen_settings6[] = {
      .action = AutoSaveStuff},
 
     {"Organize save files", S_ONOFF | S_PRGWARN, OFF_CNTR_X, M_SPC,
-     {"organize_savefiles"}},
+     {"organize_savefiles"}, .action = D_SetSavegameDirectory},
 
     MI_GAP,
 
@@ -4161,6 +4173,8 @@ static setup_menu_t gen_settings6[] = {
 
     {"Exit Sequence", S_CHOICE, OFF_CNTR_X, M_SPC, {"exit_sequence"},
     .strings_id = str_exit_sequence},
+
+    {"PWAD ENDOOM Only", S_ONOFF, OFF_CNTR_X, M_SPC, {"endoom_pwad_only"}},
 
     MI_SPLIT, // [Cherry] Moved from `NG3` ------------------------------------
 
@@ -5421,6 +5435,8 @@ static boolean NextPage(int inc)
     return true;
 }
 
+static setup_menu_t *active_thermo = NULL;
+
 boolean MN_SetupResponder(menu_action_t action, int ch)
 {
     // phares 3/26/98 - 4/11/98:
@@ -5759,6 +5775,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         ltbl_map_erase = false;              // [Cherry]
         ltbl_wad_erase = false;              // [Cherry]
         print_warning_about_changes = false; // [FG] reset
+        active_thermo = NULL;
         LT_Reset(); // [Cherry] level table cleanup
         M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         return true;
@@ -5882,8 +5899,6 @@ boolean MN_SetupMouseResponder(int x, int y)
     {
         return true;
     }
-
-    static setup_menu_t *active_thermo = NULL;
 
     if (M_InputDeactivated(input_menu_enter) && active_thermo)
     {
@@ -6143,7 +6158,7 @@ static const char **selectstrings[] = {
     percent_strings,
     curve_strings,
     center_weapon_strings,
-    screensize_strings,
+    NULL, // str_screensize
     st_layout_strings,
     show_widgets_strings,
     show_adv_widgets_strings,
@@ -6155,6 +6170,7 @@ static const char **selectstrings[] = {
     overlay_strings,
     automap_preset_strings,
     automap_keyed_door_strings,
+    fuzzmode_strings,
     weapon_slots_activation_strings,
     weapon_slots_selection_strings,
     NULL, // str_weapon_slots
@@ -6184,7 +6200,6 @@ static const char **selectstrings[] = {
 
     bobbing_style_strings,
     force_carousel_strings,
-    hud_type_strings,
     crosshair_lockon_strings,
     vertical_aiming_strings,
     over_under_strings,
@@ -6219,6 +6234,41 @@ static const char **GetMidiPlayerStrings(void)
     return I_DeviceList();
 }
 
+static const char **GetScreenSizeStrings(void)
+{
+    const char **strings = NULL;
+
+    for (int i = 0; i < 3; ++i)
+    {
+        array_push(strings, "");
+    }
+    for (int i = 3; i < 10; ++i)
+    {
+        array_push(strings, "Status Bar");
+    }
+
+    const char **st_strings = ST_StatusbarList();
+    for (int i = 0; i < array_size(st_strings); ++i)
+    {
+        array_push(strings, st_strings[i]);
+    }
+
+    // [Nugget] NUGHUD /------------------------------------------------------
+
+    // `maxscreenblocks` is now calculated in `ST_StatusbarList()`
+
+    if (!st_strings) {
+        array_push(strings, "Status Bar");
+        array_push(strings, "NUGHUD");
+    }
+
+    MN_UpdateNughudItem();
+
+    // [Nugget] -------------------------------------------------------------/
+
+    return strings;
+}
+
 void MN_InitMenuStrings(void)
 {
     UpdateWeaponSlotLabels();
@@ -6231,6 +6281,7 @@ void MN_InitMenuStrings(void)
     selectstrings[str_gyro_sens] = GetGyroSensitivityStrings();
     selectstrings[str_gyro_accel] = GetGyroAccelStrings();
     selectstrings[str_resampler] = GetResamplerStrings();
+    selectstrings[str_screensize] = GetScreenSizeStrings();
 }
 
 void MN_SetupResetMenu(void)
@@ -6244,6 +6295,7 @@ void MN_SetupResetMenu(void)
     DisableItem(!brightmaps_found || force_brightmaps, gen_settings5,
                 "brightmaps");
     DisableItem(!trakinfo_found, gen_settings2, "extra_music");
+    DisableItem(M_ParmExists("-save"), gen_settings6, "organize_savefiles");
     UpdateInterceptsEmuItem();
     UpdateStatsFormatItem();
     UpdateCrosshairItems();
@@ -6260,6 +6312,7 @@ void MN_SetupResetMenu(void)
                 enem_settings1, "extra_gibbing");
 
     UpdatePaletteItems();
+    MN_UpdateNughudItem(); // NUGHUD
 
     // [Cherry] ----------------------------------------------------------------
 

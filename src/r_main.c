@@ -140,7 +140,11 @@ int extra_level_brightness;               // level brightness feature
 
 // CVARs ---------------------------------------------------------------------
 
+boolean vertical_lockon;
+
 boolean flip_levels;
+static int lowres_pixel_width;
+static int lowres_pixel_height;
 boolean nightvision_visor;
 int fake_contrast;
 boolean diminished_lighting;
@@ -156,8 +160,6 @@ boolean comp_powerrunout;
 static boolean teleporter_zoom;
 
 static float r_fov; // Rendered (currently applied) FOV, with effects added to it
-
-static boolean keep_pspr_interp = false;
 
 typedef struct fovfx_s {
   float old, current, target;
@@ -401,6 +403,7 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
   if (lock)
   {
     if (freecam.mobj) {
+      freecam.angle += freecam.mobj->angle;
       R_UpdateFreecamMobj(NULL);
     }
     else {
@@ -1037,14 +1040,9 @@ void R_ExecuteSetViewSize (void)
         }
     }
 
-  // [crispy] forcefully initialize the status bar backing screen
-  // [Nugget] Unless the alt. intermission background is enabled
+  // [Nugget] Alt. intermission background
   if (!WI_UsingAltInterpic())
     ST_refreshBackground(); // [Nugget] NUGHUD
-
-  // [Nugget]
-  if (!keep_pspr_interp)
-    pspr_interp = false;
 }
 
 //
@@ -1149,8 +1147,10 @@ void R_SetupFrame (player_t *player)
 {
   // [Nugget]
   chasecam_on = gamestate == GS_LEVEL
-                && STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0 && player->playerstate == PST_DEAD))
-                && !(freecam_on && !freecam.mobj);
+                && !(freecam_on && !freecam.mobj)
+                && STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0
+                                                && player->playerstate == PST_DEAD
+                                                && !freecam_on));
 
   // [Nugget] Freecam
   if (freecam_on && gamestate == GS_LEVEL)
@@ -1243,7 +1243,7 @@ void R_SetupFrame (player_t *player)
     }
 
     if ((use_localview || (freecam_on && freecam_mode == FREECAM_CAM)) // [Nugget] Freecam
-        && raw_input && !player->centering)
+        && raw_input && !player->centering && (mouselook || padlook)) // [Nugget]
     {
       basepitch = player->pitch + localview.pitch;
       basepitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, basepitch);
@@ -1282,6 +1282,10 @@ void R_SetupFrame (player_t *player)
   }
 
   // [Nugget] /===============================================================
+
+  // Flip levels
+  if (viewangleoffset && STRICTMODE(flip_levels))
+  { viewangle += ANG180; }
 
   // Alt. intermission background --------------------------------------------
 
@@ -1621,8 +1625,8 @@ void R_RenderPlayerView (player_t* player)
 
           if (G_GetSlowMotionFactor() != SLOWMO_FACTOR_NORMAL)
           {
-            *target = -10 * (SLOWMO_FACTOR_NORMAL - G_GetSlowMotionFactor())
-                          / (SLOWMO_FACTOR_NORMAL - SLOWMO_FACTOR_TARGET);
+            *target = -10.0f * (SLOWMO_FACTOR_NORMAL - G_GetSlowMotionFactor())
+                             / (SLOWMO_FACTOR_NORMAL - SLOWMO_FACTOR_TARGET);
           }
           else { *target = 0; }
         }
@@ -1646,11 +1650,7 @@ void R_RenderPlayerView (player_t* player)
     if (r_fov != targetfov)
     {
       r_fov = targetfov;
-
-      keep_pspr_interp = true;
       R_ExecuteSetViewSize();
-      keep_pspr_interp = false;
-
       R_FillBackScreen();
     }
   }
@@ -1759,6 +1759,55 @@ void R_RenderPlayerView (player_t* player)
   R_SetFuzzPosDraw();
   R_DrawMasked ();
 
+  // [Nugget]
+  if (!strictmode && current_video_height == SCREENHEIGHT
+      && (lowres_pixel_width > 1 || lowres_pixel_height > 1))
+  {
+    int y, x, y2;
+
+    const int pw = lowres_pixel_width,
+              ph = lowres_pixel_height;
+
+    int first_y = ((viewheight % ph) / 2),
+        first_x;
+
+    byte *const dest = I_VideoBuffer;
+
+    for (y = viewwindowy;  y < (viewwindowy + viewheight);)
+    {
+      first_x = (viewwidth % pw) / 2;
+
+      for (x = viewwindowx;  x < (viewwindowx + viewwidth);)
+      {
+        for (y2 = 0;  y2 < (first_y ? first_y : MIN(ph, (viewwindowy + viewheight) - y));  y2++)
+        {
+          memset(
+            dest + ((y + y2) * video.pitch) + x,
+            dest[
+              ( (first_y ? viewwindowy + first_y
+                         : y + ((y < viewwindowy + viewheight/2) ? ph-1 : 0)) * video.pitch)
+              + (first_x ? viewwindowx + first_x
+                         : x + ((x < viewwindowx + viewwidth/2)  ? pw-1 : 0))
+            ],
+            first_x ? first_x : MIN(pw, (viewwindowx + viewwidth) - x)
+          );
+        }
+
+        if (first_x) {
+          x += first_x;
+          first_x = 0;
+        }
+        else { x += pw; }
+      }
+
+      if (first_y) {
+        y += first_y;
+        first_y = 0;
+      }
+      else { y += ph; }
+    }
+  }
+
   // Check for new console commands.
   NetUpdate ();
 }
@@ -1810,6 +1859,16 @@ void R_BindRenderVariables(void)
 
   BIND_BOOL_GENERAL(flip_levels, false, "Flip levels horizontally (visual filter)");
 
+  // (CFG-only)
+  M_BindNum("lowres_pixel_width", &lowres_pixel_width, NULL,
+            1, 1, 8, ss_none, wad_yes,
+            "Width multiplier for pixels at 100% resolution");
+
+  // (CFG-only)
+  M_BindNum("lowres_pixel_height", &lowres_pixel_height, NULL,
+            1, 1, 8, ss_none, wad_yes,
+            "Height multiplier for pixels at 100% resolution");
+
   BIND_BOOL_GENERAL(no_berserk_tint, false, "Disable Berserk tint");
   BIND_BOOL_GENERAL(no_radsuit_tint, false, "Disable Radiation Suit tint");
 
@@ -1826,22 +1885,19 @@ void R_BindRenderVariables(void)
   // [Nugget] (CFG-only)
   BIND_BOOL(no_killough_face, false, "Disable the Killough-face easter egg");
 
-  BIND_NUM(screenblocks, 10, 3, 12, "Size of game-world screen");
+  BIND_NUM(screenblocks, 10, 3, UL, "Size of game-world screen");
 
   M_BindBool("translucency", &translucency, NULL, true, ss_gen, wad_yes,
              "Translucency for some things");
   M_BindNum("tran_filter_pct", &tran_filter_pct, NULL,
-            66, 0, 100, ss_gen, wad_yes,
+            66, 0, 100, ss_none, wad_yes,
             "Percent of foreground/background translucency mix");
 
   M_BindBool("flipcorpses", &flipcorpses, NULL, false, ss_enem, wad_no,
              "Randomly mirrored death animations");
-  M_BindBool("fuzzcolumn_mode", &fuzzcolumn_mode, NULL, true, ss_enem, wad_no, // [Nugget] Restored menu item
-             "Fuzz rendering (0 = Resolution-dependent; 1 = Blocky)");
-
-  // [Nugget - ceski] Selective fuzz darkening
-  M_BindBool("fuzzdark_mode", &fuzzdark_mode, NULL, false, ss_enem, wad_no,
-             "Selective fuzz darkening");
+  M_BindNum("fuzzmode", &fuzzmode, NULL,
+            FUZZ_BLOCKY, FUZZ_BLOCKY, FUZZ_SHADOW, ss_none, wad_no,
+            "Partial Invisibility (0 = Vanilla; 1 = Refraction; 2 = Shadow)");
 
   BIND_BOOL(draw_nearby_sprites, true,
     "Draw sprites overlapping into visible sectors");
@@ -1853,6 +1909,9 @@ void R_BindRenderVariables(void)
 
   M_BindNum("flinching", &flinching, NULL, 0, 0, 3, ss_gen, wad_yes,
             "Flinch player view (0 = Off; 1 = Upon landing; 2 = Upon taking damage; 3 = Upon either)");
+
+  M_BindBool("vertical_lockon", &vertical_lockon, NULL,
+             false, ss_gen, wad_yes, "Camera automatically locks onto targets vertically");
 
   M_BindBool("explosion_shake", &explosion_shake, NULL,
              false, ss_gen, wad_yes, "Explosions shake the view");

@@ -2843,11 +2843,7 @@ void AM_Drawer (void)
   }
 
   if (automapoverlay == AM_OVERLAY_OFF)
-  {
     AM_clearFB(mapcolor_back);       //jff 1/5/98 background default color
-    if (automapactive == AM_FULL) // [Nugget] Minimap
-      pspr_interp = false;
-  }
   // [Alaux] Dark automap overlay
   else if (automapoverlay == AM_OVERLAY_DARK)
     AM_shadeScreen();

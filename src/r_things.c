@@ -143,6 +143,11 @@ void R_InitSpritesRes(void)
 static void R_InstallSpriteLump(int lump, unsigned frame,
                                 unsigned rotation, boolean flipped)
 {
+  if (frame == '^' - 'A')
+  {
+    frame = '\\' - 'A';
+  }
+
   if (frame >= MAX_SPRITE_FRAMES || rotation > 8)
     I_Error("R_InstallSpriteLump: Bad frame characters in lump %i", lump);
 
@@ -850,11 +855,11 @@ void R_NearbySprites (void)
   array_clear(nearby_sprites);
 }
 
+static int queued_weapon_voxels = 0; // [Nugget] Weapon voxels
+
 //
 // R_DrawPSprite
 //
-
-boolean pspr_interp = true; // weapon bobbing interpolation
 
 void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent flashes
 {
@@ -866,6 +871,15 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   boolean       flip;
   vissprite_t   *vis;
   vissprite_t   avis;
+
+  // [Nugget] Weapon voxels
+  if (VX_ProjectWeaponVoxel(psp, translucent))
+  {
+    queued_weapon_voxels++;
+    return;
+  }
+  // If any are queued, don't draw sprites
+  else if (queued_weapon_voxels) { return; }
 
   // decide which patch to use
 
@@ -888,12 +902,33 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   lump = sprframe->lump[0];
   flip = (boolean) sprframe->flip[0];
 
+  fixed_t sx2, sy2;
+
+  fixed_t wix, wiy; // [Nugget]
+
+  if (uncapped && oldleveltime < leveltime)
+  {
+    sx2 = LerpFixed(psp->oldsx2, psp->sx2);
+    sy2 = LerpFixed(psp->oldsy2, psp->sy2);
+
+    wix = LerpFixed(psp->oldwix, psp->wix);
+    wiy = LerpFixed(psp->oldwiy, psp->wiy);
+  }
+  else
+  {
+    sx2 = psp->sx2;
+    sy2 = psp->sy2;
+
+    wix = psp->wix;
+    wiy = psp->wiy;
+  }
+
   // calculate edges of the shape
-  tx = psp->sx2-160*FRACUNIT; // [FG] centered weapon sprite
+  tx = sx2 - 160*FRACUNIT; // [FG] centered weapon sprite
 
   // [Nugget] Weapon inertia | Flip levels
   if (STRICTMODE(weapon_inertia))
-  { tx += flip_levels ? -psp->wix : psp->wix; }
+  { tx += flip_levels ? -wix : wix; }
 
   tx -= spriteoffset[lump];
   x1 = (centerxfrac + FixedMul (tx,pspritescale))>>FRACBITS;
@@ -916,10 +951,11 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   // killough 12/98: fix psprite positioning problem
   vis->texturemid = (BASEYCENTER<<FRACBITS) /* + FRACUNIT/2 */ -
-                    (psp->sy2-spritetopoffset[lump]) // [FG] centered weapon sprite
-                    // [Nugget]
-                    - (STRICTMODE(weapon_inertia) ? psp->wiy : 0) // Weapon inertia
-                    + MIN(0, R_GetFOVFX(FOVFX_ZOOM) * FRACUNIT/2); // Lower weapon based on zoom
+                    (sy2 - spritetopoffset[lump]); // [FG] centered weapon sprite
+
+  // [Nugget]
+  vis->texturemid += (STRICTMODE(weapon_inertia) ? -wiy : 0) // Weapon inertia
+                   + MIN(0, R_GetFOVFX(FOVFX_ZOOM) * FRACUNIT/2); // Lower weapon based on zoom
 
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
@@ -959,43 +995,8 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   }
   vis->brightmap = R_BrightmapForState(psp->state - states);
 
-  vis->tranmap = translucent ? pspr_tranmap : NULL; // [Nugget] Translucent flashes
-
-  // interpolation for weapon bobbing
-  if (uncapped)
-  {
-    static int     oldx1, x1_saved;
-    static fixed_t oldtexturemid, texturemid_saved;
-    static int     oldlump = -1;
-    static int     oldgametic = -1;
-
-    if (oldgametic < gametic)
-    {
-      oldx1 = x1_saved;
-      oldtexturemid = texturemid_saved;
-      oldgametic = gametic;
-    }
-
-    x1_saved = vis->x1;
-    texturemid_saved = vis->texturemid;
-
-    if (lump == oldlump && pspr_interp)
-    {
-      int deltax = x2 - vis->x1;
-      vis->x1 = LerpFixed(oldx1, vis->x1);
-      vis->x2 = vis->x1 + deltax;
-      if (vis->x2 >= viewwidth)
-        vis->x2 = viewwidth - 1;
-      vis->texturemid = LerpFixed(oldtexturemid, vis->texturemid);
-    }
-    else
-    {
-      oldx1 = vis->x1;
-      oldtexturemid = vis->texturemid;
-      oldlump = lump;
-      pspr_interp = true;
-    }
-  }
+  // [Nugget] Translucent flashes
+  vis->tranmap = translucent ? R_GetGenericTranMap(pspr_translucency_pct) : NULL;
 
   // [crispy] free look
   vis->texturemid += (centery - viewheight/2) * pspriteiscale
@@ -1042,26 +1043,11 @@ void R_DrawPlayerSprites(void)
   mfloorclip = screenheightarray;
   mceilingclip = negonearray;
 
-  // [Nugget] Flip levels
-  if (STRICTMODE(flip_levels))
-  {
-    for (int y = 0;  y < viewheight;  y++)
-    {
-      for (int x = 0;  x < viewwidth/2;  x++)
-      {
-        pixel_t *left = &I_VideoBuffer[(viewwindowy + y) * video.pitch + viewwindowx + x],
-                *right = left + viewwidth - 1 - x*2,
-                temp = *left;
-
-        *left = *right;
-        *right = temp;
-      }
-    }
-  }
-
   // display crosshair
   if (hud_crosshair_on) // [Nugget] Use crosshair toggle
     HU_DrawCrosshair();
+
+  queued_weapon_voxels = 0; // [Nugget] Weapon voxels
 
   // add all active psprites
   for (i=0, psp=viewplayer->psprites;
@@ -1070,6 +1056,12 @@ void R_DrawPlayerSprites(void)
        i++,psp++)
     if (psp->state)
       R_DrawPSprite (psp, i == ps_flash && STRICTMODE(pspr_translucency_pct != 100)); // [Nugget] Translucent flashes
+
+  // [Nugget] Weapon voxels: drawn in reverse order
+  for (i = 0;  i < queued_weapon_voxels;  i++)
+  {
+    VX_DrawVoxel(&vissprites[num_vissprite - (1 + i)]);
+  }
 }
 
 //
@@ -1390,6 +1382,23 @@ void R_DrawMasked(void)
   for (ds=ds_p ; ds-- > drawsegs ; )  // new -- killough
     if (ds->maskedtexturecol)
       R_RenderMaskedSegRange(ds, ds->x1, ds->x2);
+
+  // [Nugget] Flip levels
+  if (STRICTMODE(flip_levels))
+  {
+    for (int y = 0;  y < viewheight;  y++)
+    {
+      for (int x = 0;  x < viewwidth/2;  x++)
+      {
+        pixel_t *left = &I_VideoBuffer[(viewwindowy + y) * video.pitch + viewwindowx + x],
+                *right = left + viewwidth - 1 - x*2,
+                temp = *left;
+
+        *left = *right;
+        *right = temp;
+      }
+    }
+  }
 
   // draw the psprites on top of everything
   //  but does not draw on side views

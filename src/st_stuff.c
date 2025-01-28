@@ -59,10 +59,14 @@
 #include "z_zone.h"
 
 // [Nugget]
+#include "mn_internal.h"
 #include "m_nughud.h"
 #include "sounds.h"
 
 // [Nugget] /=================================================================
+
+static sbardef_t *normal_sbardef = NULL,
+                 *nughud_sbardef = NULL;  // NUGHUD
 
 static patch_t *stbersrk;
 static int lu_berserk;
@@ -84,14 +88,7 @@ boolean no_radsuit_tint;
 boolean comp_godface;
 boolean comp_unusedpals;
 
-typedef enum hudtype_s
-{
-  HUDTYPE_SBARDEF,
-  HUDTYPE_NUGHUD
-} hudtype_t;
-
-static hudtype_t hud_type;
-
+static boolean use_nughud;
 static boolean hud_blink_keys;
 static boolean sts_show_berserk;
 int force_carousel;
@@ -141,7 +138,11 @@ boolean ST_GetNughudOn(void)
 
 static void UpdateNughudOn(void)
 {
-  st_nughud = screenblocks == 11 && hud_type == HUDTYPE_NUGHUD && automap_off;
+  // If we have no proper status bars (e.g. SBARDEF is empty),
+  // use NUGHUD when `screenblocks == 11`
+  st_nughud = automap_off
+              && (   ( normal_sbardef && screenblocks == maxscreenblocks - 1 && use_nughud)
+                  || (!normal_sbardef && screenblocks == 11));
 }
 
 static sbarelem_t *nughud_health_elem = NULL,
@@ -1189,12 +1190,22 @@ static void UpdateStatusBar(player_t *player)
 
     int barindex = MAX(screenblocks - 10, 0);
 
+    // [Nugget] NUGHUD
+    if (st_nughud)
+    {
+        barindex = -2;
+    }
+    else
+
+    if (barindex >= array_size(sbardef->statusbars))
+    {
+        barindex = array_size(sbardef->statusbars) - 1;
+    }
+
     if (automapactive == AM_FULL && automapoverlay == AM_OVERLAY_OFF)
     {
         barindex = 0;
     }
-
-    if (st_nughud) { barindex = 3; } // [Nugget] NUGHUD
 
     if (oldbarindex != barindex)
     {
@@ -1548,9 +1559,14 @@ static void DrawGlyphLine(int x, int y, sbarelem_t *elem, widgetline_t *line,
 
     if (glyph)
     {
+        // [Nugget] Message fadeout
+        byte *const tl = (!elem->tranmap && line->tran_pct)
+                         ? R_GetGenericTranMap(line->tran_pct)
+                         : elem->tranmap;
+
         // [Nugget] Message flash
         DrawPatchEx(x + line->xoffset, y, font->maxheight, elem->alignment, glyph,
-                    elem->cr, line->flash ? CR_BRIGHT : CR_NONE, elem->tranmap);
+                    elem->cr, line->flash ? CR_BRIGHT : CR_NONE, tl);
     }
 
     if (elem->alignment & sbe_h_middle)
@@ -1611,6 +1627,9 @@ static void DrawLines(int x, int y, sbarelem_t *elem)
 
     int cr = elem->cr;
 
+    // [Nugget]
+    const boolean isnt_digits_font = !!strcmp(widget->font->name, "Digits");
+
     widgetline_t *line;
     array_foreach(line, widget->lines)
     {
@@ -1658,7 +1677,7 @@ static void DrawLines(int x, int y, sbarelem_t *elem)
             else
             {
                 glyph = font->characters[ch];
-                draw_shadow &= !!strcmp(widget->font->name, "Digits"); // Don't draw for digits
+                draw_shadow &= isnt_digits_font; // Don't draw for digits
             }
             DrawGlyphLine(x, y, elem, line, glyph);
 
@@ -2189,7 +2208,7 @@ void ST_Ticker(void)
 
     UpdateNughudStacks();
 
-    if (hud_crosshair)
+    if (hud_crosshair_on) // [Nugget] Crosshair toggle
     {
         HU_UpdateCrosshair();
     }
@@ -2208,11 +2227,6 @@ void ST_Drawer(void)
     }
 
     DrawStatusBar();
-
-    if (hud_crosshair_on) // [Nugget] Crosshair toggle
-    {
-        HU_DrawCrosshair();
-    }
 }
 
 void ST_Start(void)
@@ -2241,13 +2255,12 @@ void ST_Init(void)
 
     static boolean firsttime = true;
 
-    static sbardef_t *normal_sbardef = NULL, *nughud_sbardef = NULL;
-
     if (firsttime)
     {
         normal_sbardef = ST_ParseSbarDef();
         nughud_sbardef = CreateNughudSbarDef();
 
+        ST_StatusbarList(); // Calculate `maxscreenblocks`
         UpdateNughudOn();
     }
 
@@ -2377,6 +2390,44 @@ void ST_InitRes(void)
   // [Nugget] Status-Bar chunks
   // More than necessary (we only use the section visible in 4:3), but so be it
   st_bar = Z_Malloc((video.pitch * V_ScaleY(stbar_height)) * sizeof(*st_bar), PU_RENDERER, 0);
+}
+
+const char **ST_StatusbarList(void)
+{
+    // [Nugget] Use `normal_sbardef`; calculate `maxscreenblocks` here
+
+    if (!normal_sbardef)
+    {
+        maxscreenblocks = 11; // [Nugget] NUGHUD
+        return NULL;
+    }
+
+    maxscreenblocks = 10;
+
+    static const char **strings;
+
+    if (array_size(strings))
+    {
+        maxscreenblocks += array_size(strings) - 1;
+        return strings;
+    }
+
+    statusbar_t *item;
+    array_foreach(item, normal_sbardef->statusbars)
+    {
+        if (item->fullscreenrender)
+        {
+            array_push(strings, "Fullscreen");
+        }
+        else
+        {
+            array_push(strings, "Status Bar");
+        }
+    }
+
+    maxscreenblocks += array_size(strings) - 1;
+
+    return strings;
 }
 
 void ST_ResetPalette(void)
@@ -3034,6 +3085,54 @@ static void UpdateNughudStacks(void)
 
 // NUGHUD loading ------------------------------------------------------------
 
+static hudfont_t LoadNughudHUDFont(
+  const char *const name,
+  const fonttype_t type,
+  const char *const stem
+)
+{
+  hudfont_t font = {0};
+
+  font.name = M_StringDuplicate(name);
+  font.type = type;
+
+  int maxwidth = 0, maxheight = 0;
+
+  // If any lowercase character is missing, don't use lowercase at all
+  boolean use_lowercase = true;
+
+  for (int i = 0;  i < HU_FONTSIZE;  i++)
+  {
+    char namebuf[16];
+    int lumpnum = 0;
+
+    M_snprintf(namebuf, sizeof(namebuf), "%s%03d", stem, i + HU_FONTSTART);
+
+    if ((lumpnum = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
+    {
+      font.characters[i] = V_CachePatchNum(lumpnum, PU_STATIC);
+      maxwidth  = MAX(maxwidth,  SHORT(font.characters[i]->width));
+      maxheight = MAX(maxheight, SHORT(font.characters[i]->height));
+    }
+    else {
+      const char c = i + HU_FONTSTART;
+
+      if ('a' <= c && c <= 'z') { use_lowercase = false; }
+    }
+  }
+
+  if (!use_lowercase)
+  {
+    for (int i = 'a' - HU_FONTSTART;  i <= 'z' - HU_FONTSTART;  i++)
+    { font.characters[i] = font.characters[i + 'A' - 'a']; }
+  }
+
+  font.monowidth = maxwidth;
+  font.maxheight = maxheight;
+
+  return font;
+}
+
 static sbarelem_t CreateNughudNumber(
   const nughud_alignable_t na,
   const sbarnumbertype_t type,
@@ -3124,7 +3223,7 @@ static sbardef_t *CreateNughudSbarDef(void)
 
   char namebuf[16];
 
-  // Fonts ===================================================================
+  // Number fonts ============================================================
 
   int lumpnum;
   int maxwidth, maxheight;
@@ -3298,53 +3397,15 @@ end_amnum:
   amnum.monowidth = SHORT(amnum.numbers[0]->width);
   amnum.maxheight = maxheight;
 
-  // Console Font ------------------------------------------------------------
+  // HUD fonts ===============================================================
 
+  // Console font
   static hudfont_t cfn = {0};
+  cfn = LoadNughudHUDFont("Console", sbf_proportional, "STCFN");
 
-  cfn.name = M_StringDuplicate("Console");
-  cfn.type = sbf_proportional;
-
-  maxwidth = maxheight = 0;
-
-  for (int i = 0;  i < HU_FONTSIZE;  i++)
-  {
-    M_snprintf(namebuf, sizeof(namebuf), "STCFN%03d", i + HU_FONTSTART);
-
-    if ((lumpnum = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
-    {
-      cfn.characters[i] = V_CachePatchNum(lumpnum, PU_STATIC);
-      maxwidth  = MAX(maxwidth,  SHORT(cfn.characters[i]->width));
-      maxheight = MAX(maxheight, SHORT(cfn.characters[i]->height));
-    }
-  }
-
-  cfn.monowidth = maxwidth;
-  cfn.maxheight = maxheight;
-
-  // Digits Font -------------------------------------------------------------
-
+  // Digits Font
   static hudfont_t dig = {0};
-
-  dig.name = M_StringDuplicate("Digits");
-  dig.type = sbf_mono0;
-
-  maxwidth = maxheight = 0;
-
-  for (int i = 0;  i < HU_FONTSIZE;  i++)
-  {
-    M_snprintf(namebuf, sizeof(namebuf), "DIG%03d", i + HU_FONTSTART);
-
-    if ((lumpnum = (W_CheckNumForName)(namebuf, ns_global)) >= 0)
-    {
-      dig.characters[i] = V_CachePatchNum(lumpnum, PU_STATIC);
-      maxwidth  = MAX(maxwidth,  SHORT(dig.characters[i]->width));
-      maxheight = MAX(maxheight, SHORT(dig.characters[i]->height));
-    }
-  }
-
-  dig.monowidth = maxwidth;
-  dig.maxheight = MAX(8, maxheight);
+  dig = LoadNughudHUDFont("Digits", sbf_mono0, "DIG");
 
   // Widgets =================================================================
 
@@ -3691,16 +3752,15 @@ end_amnum:
 void ST_BindSTSVariables(void)
 {
   // [Nugget] NUGHUD
-  M_BindNum("fullscreen_hud_type", &hud_type, NULL,
-            HUDTYPE_SBARDEF, HUDTYPE_SBARDEF, HUDTYPE_NUGHUD,
-            ss_stat, wad_no, "Fullscreen HUD type (0 = SBARDEF; 1 = NUGHUD)");
+  M_BindBool("use_nughud", &use_nughud, NULL,
+             true, ss_stat, wad_no, "Replace second-to-last HUD with NUGHUD");
 
   M_BindNum("st_layout", &st_layout, NULL,  st_wide, st_original, st_wide,
              ss_stat, wad_no, "HUD layout");
   M_BindBool("sts_colored_numbers", &sts_colored_numbers, NULL,
              false, ss_stat, wad_yes, "Colored numbers on the status bar");
   M_BindBool("sts_pct_always_gray", &sts_pct_always_gray, NULL,
-             false, ss_stat, wad_yes,
+             false, ss_none, wad_yes,
              "Percent signs on the status bar are always gray");
   M_BindBool("st_solidbackground", &st_solidbackground, NULL,
              false, ss_stat, wad_no,

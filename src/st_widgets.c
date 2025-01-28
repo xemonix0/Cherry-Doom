@@ -24,6 +24,7 @@
 #include "doomstat.h"
 #include "doomtype.h"
 #include "dstrings.h"
+#include "g_umapinfo.h"
 #include "hu_command.h"
 #include "hu_coordinates.h"
 #include "hu_obituary.h"
@@ -41,7 +42,6 @@
 #include "sounds.h"
 #include "st_sbardef.h"
 #include "st_stuff.h"
-#include "u_mapinfo.h"
 #include "v_video.h"
 
 // [Nugget]
@@ -82,6 +82,7 @@ static int hudcolor_ms_comp;
 
 boolean announce_milestones;
 boolean show_save_messages;
+static boolean message_fadeout;
 static boolean message_flash;
 static int hud_msg_duration;
 static int hud_chat_duration;
@@ -93,9 +94,23 @@ boolean sp_chat;
 
 // ---------------------------------------------------------------------------
 
+boolean ST_MessageFadeoutOn(void)
+{
+    return message_fadeout;
+}
+
 int ST_GetNumMessageLines(void)
 {
     return hud_msg_lines;
+}
+
+void FadeOutLine(widgetline_t *const line, const int duration_left)
+{
+    if (message_fadeout && 0 <= duration_left && duration_left < 9)
+    {
+        line->tran_pct = (duration_left + 1) * 10;
+    }
+    else { line->tran_pct = 0; }
 }
 
 // [Nugget] =================================================================/
@@ -174,6 +189,7 @@ static void AddMessage(char *const string, int duration, const boolean is_chat_m
     static int num_copies = 0;
 
     if (hud_msg_group && message_list_tail && num_copies < MAX_COPIES
+        && strlen(string) == message_list_tail->orig_length
         && !strncmp(string, message_list_tail->string, message_list_tail->orig_length))
     {
         num_copies++;
@@ -349,11 +365,15 @@ static void UpdateMessage(sbe_widget_t *widget, player_t *player)
 
             ST_AddLine(widget, m->string);
 
+            widgetline_t *const line = &widget->lines[array_size(widget->lines) - 1];
+
+            FadeOutLine(line, m->duration_left); // Message fadeout
+
             // Message flash -------------------------------------------------
 
             if (m->flash_duration_left) { m->flash_duration_left--; }
 
-            widget->lines[array_size(widget->lines) - 1].flash = !!m->flash_duration_left;
+            line->flash = !!m->flash_duration_left;
         }
         else {
             m->is_chat_msg = false; // Allow overwriting
@@ -405,6 +425,9 @@ static void UpdateAnnounceMessage(sbe_widget_t *widget, player_t *player)
     {
         ST_AddLine(widget, string);
         --widget->duration_left;
+
+        // [Nugget] Message fadeout
+        FadeOutLine(&widget->lines[array_size(widget->lines) - 1], widget->duration_left);
     }
     else
     {
@@ -827,10 +850,11 @@ void ST_ResetTitle(void)
             s = gamemapinfo->mapname;
         }
 
-        if (s == gamemapinfo->mapname || U_CheckField(s))
+        if (!(gamemapinfo->flags & MapInfo_LabelClear))
         {
             M_snprintf(string, sizeof(string), "%s: ", s);
         }
+
         s = gamemapinfo->levelname;
     }
     else if (gamestate == GS_LEVEL)
@@ -879,7 +903,7 @@ void ST_ResetTitle(void)
     announce_string[0] = '\0';
     if (hud_map_announce && leveltime == 0)
     {
-        if (gamemapinfo && U_CheckField(gamemapinfo->author))
+        if (gamemapinfo && gamemapinfo->author)
         {
             M_snprintf(announce_string, sizeof(announce_string), "%s by %s",
                        string, gamemapinfo->author);
@@ -1787,6 +1811,10 @@ void ST_BindHUDVariables(void)
              false, ss_stat, wad_no, "Colorize player messages");
 
   // [Nugget] /---------------------------------------------------------------
+
+  // Message fadeout
+  M_BindBool("message_fadeout", &message_fadeout, NULL,
+             false, ss_stat, wad_no, "Messages fade out");
 
   // Message flash
   M_BindBool("message_flash", &message_flash, NULL,

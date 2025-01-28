@@ -66,7 +66,9 @@ typedef enum
 
 extern invul_mode_t invul_mode;
 
-void R_InitTranMapEx(byte **const tmap, const int filter_pct); // [Nugget]
+// [Nugget]
+byte *R_GetGenericTranMap(const int filter_pct);
+void R_InitMessageFadeoutTranMaps(void);
 
 #endif
 

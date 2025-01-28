@@ -100,11 +100,6 @@ void HU_InitCrosshair(void)
 
 void HU_StartCrosshair(void)
 {
-    if (crosshair.patch)
-    {
-        Z_ChangeTag(crosshair.patch, PU_CACHE);
-    }
-
     if (crosshair_lumps[hud_crosshair])
     {
         crosshair.patch =
@@ -285,6 +280,7 @@ void HU_DrawCrosshair(void)
 
     // [Nugget] NUGHUD
     const int y = crosshair.y + (nughud.viewoffset * STRICTMODE(ST_GetNughudOn()));
+    byte *const xhair_tranmap = R_GetGenericTranMap(hud_crosshair_tran_pct);
 
     if (crosshair.patch)
     {

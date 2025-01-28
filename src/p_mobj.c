@@ -50,6 +50,9 @@
 // [Nugget]
 #include "p_user.h"
 
+// [Cherry]
+#include "r_data.h"
+
 // [Nugget] CVARs
 int viewheight_value;
 int flinching;
@@ -1342,8 +1345,6 @@ void P_SpawnPlayer (mapthing_t* mthing)
 
   p->momx = p->momy = 0;   // killough 10/98: initialize bobbing to 0.
 
-  pspr_interp = false;
-
   // setup gun psprite
 
   P_SetupPsprites (p);
@@ -1668,7 +1669,7 @@ static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
     th->angle = angle;
 
     th->flags |= MF_TRANSLUCENT | MF_NOGRAVITY;
-    th->tranmap = smoke_tranmap;
+    th->tranmap = R_GetGenericTranMap(rocket_trails_tran);
 }
 
 //

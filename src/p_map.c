@@ -51,6 +51,7 @@
 #include <math.h>
 #include "g_game.h"
 #include "p_tick.h"
+#include "r_data.h"
 
 static mobj_t    *tmthing;
 static int       tmflags;
@@ -97,7 +98,11 @@ int numspechit;
 // Temporary holder for thing_sectorlist threads
 msecnode_t *sector_list = NULL;                             // phares 3/16/98
 
-// [Nugget] Hitscan trails /--------------------------------------------------
+// [Nugget] /=================================================================
+
+boolean riotmode;
+
+// Hitscan trails ------------------------------------------------------------
 
 int hitscan_trail_interval;
 
@@ -152,11 +157,11 @@ void P_SpawnHitscanTrail(fixed_t x, fixed_t y, fixed_t z,
     puff->alttics += (P_AproxDistance(xdist, ydist) >> FRACBITS) / 128;
 
     puff->flags |= MF_NOGRAVITY;
-    puff->tranmap = trail_tranmap;
+    puff->tranmap = R_GetGenericTranMap(25);
   }
 }
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 //
 // TELEPORT MOVE
@@ -575,12 +580,6 @@ static const inline fixed_t thingheight (const mobj_t *const thing, const mobj_t
   return thing->height; // [Nugget] Removed `actualheight`
 }
 
-// [Nugget] Factored out from `p_user.c`
-fixed_t P_PitchToSlope(const fixed_t pitch)
-{
-  return pitch ? -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT] : 0;
-}
-
 // [Nugget] Over/Under /------------------------------------------------------
 
 int over_under;
@@ -643,7 +642,7 @@ boolean P_SkullSlam(mobj_t **skull, mobj_t *hitthing)
   (*skull)->momx = (*skull)->momy = (*skull)->momz = 0;
 
   // [Nugget] Fix forgetful lost soul
-  if (casual_play && comp_lsamnesia)
+  if (casual_play && !comp_lsamnesia)
     P_SetMobjState(*skull, (*skull)->info->seestate);
   else
     P_SetMobjState (*skull, (*skull)->info->spawnstate);
@@ -774,7 +773,8 @@ static boolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 	  return true;                // Don't hit same species as originator.
 	else
 	  // Dehacked support - monsters infight
-	  if (thing->type != MT_PLAYER && !deh_species_infighting) // Explode, but do no damage.
+	  if (thing->type != MT_PLAYER && !deh_species_infighting // Explode, but do no damage.
+	      && !riotmode) // [Nugget]
 	    return false;	        // Let players missile other players.
       }
       
@@ -1023,7 +1023,7 @@ boolean P_CheckPosition(mobj_t *thing, fixed_t x, fixed_t y)
 //
 // killough 3/15/98: allow dropoff as option
 
-boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
+boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, int dropoff)
 {
   fixed_t oldx, oldy;
 
@@ -1658,6 +1658,48 @@ fixed_t attackrange;
 
 static fixed_t   aimslope;
 
+// [Nugget] /-----------------------------------------------------------------
+
+// Factored out from `p_user.c`
+fixed_t P_PitchToSlope(const fixed_t pitch)
+{
+  return pitch ? -finetangent[(ANG90 - pitch) >> ANGLETOFINESHIFT] : 0;
+}
+
+fixed_t P_SlopeToPitch(const fixed_t slope)
+{
+  if (!slope) { return 0; }
+
+  int closest = 0;
+  fixed_t closest_diff = abs(finetangent[closest] - slope);
+
+  for (int i = 1;  i < FINEANGLES/2;  i++)
+  {
+    if (abs(finetangent[i] - slope) < closest_diff)
+    {
+      closest = i;
+      closest_diff = abs(finetangent[i] - slope);
+    }
+  }
+
+  return (closest << ANGLETOFINESHIFT) - ANG90;
+}
+
+static fixed_t linetarget_topslope = 0,
+               linetarget_bottomslope = 0;
+
+fixed_t P_GetLinetargetTopSlope(void)
+{
+  return linetarget_topslope;
+}
+
+fixed_t P_GetLinetargetBottomSlope(void)
+{
+  return linetarget_bottomslope;
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 // slopes to top and bottom of target
 // killough 4/20/98: make static instead of using ones in p_sight.c
 
@@ -1753,6 +1795,10 @@ static boolean PTR_AimTraverse (intercept_t *in)
 
   aimslope = (thingtopslope+thingbottomslope)/2;
   linetarget = th;
+
+  // [Nugget]
+  linetarget_topslope    = thingtopslope;
+  linetarget_bottomslope = thingbottomslope;
 
   return false;   // don't go any farther
 }

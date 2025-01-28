@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "d_main.h"
+#include "d_iwad.h"
 #include "d_think.h"
 #include "doomdef.h"
 #include "doomstat.h"
@@ -51,6 +51,98 @@
 
 // [Nugget]
 #include "hu_crosshair.h"
+#include "st_widgets.h"
+
+// [Nugget] /-----------------------------------------------------------------
+
+// Brought from below
+#define TSC 12        /* number of fixed point digits in filter percent */
+
+static byte *R_InitGenericTranMap(const int filter_pct)
+{
+  I_Printf(VB_DEBUG, "R_InitGenericTranMap: %i%%", filter_pct);
+
+  unsigned char *const playpal = W_CacheLumpName("PLAYPAL", PU_STATIC);
+
+  long pal[3][256], pal_w1[3][256], tot[256];
+
+  const long w1 = ((unsigned long) filter_pct << TSC) / 100;
+
+  {
+    register int i = 255;
+    register const unsigned char *p = playpal + 255*3;
+
+    do {
+      register long t, d;
+
+      pal_w1[0][i] = (pal[0][i] = t = p[0]) * w1;
+      d = t*t;
+
+      pal_w1[1][i] = (pal[1][i] = t = p[1]) * w1;
+      d += t*t;
+
+      pal_w1[2][i] = (pal[2][i] = t = p[2]) * w1;
+      d += t*t;
+      p -= 3;
+
+      tot[i] = d << (TSC - 1);
+    } while (--i >= 0);
+  }
+
+  const long w2 = (1l << TSC) - w1;
+  byte *tmap = Z_Malloc(256*256, PU_STATIC, 0), *tp = tmap;
+
+  for (int i = 0;  i < 256;  i++)
+  {
+    const long r1 = pal[0][i] * w2;
+    const long g1 = pal[1][i] * w2;
+    const long b1 = pal[2][i] * w2;
+
+    for (int j = 0;  j < 256;  j++, tp++)
+    {
+      register int color = 255;
+      register long err;
+
+      const long r = pal_w1[0][j] + r1,
+                 g = pal_w1[1][j] + g1,
+                 b = pal_w1[2][j] + b1;
+
+      long best = LONG_MAX;
+
+      do {
+        if ((err = tot[color] - pal[0][color]*r - pal[1][color]*g - pal[2][color]*b) < best)
+        {
+          best = err;
+          *tp = color;
+        }
+      } while (--color >= 0);
+    }
+  }
+
+  Z_ChangeTag(playpal, PU_CACHE);
+
+  return tmap;
+}
+
+// 0% and 100% are trivial, but we'll allow them for now
+static byte *generic_tranmaps[101] = { NULL };
+
+byte *R_GetGenericTranMap(const int filter_pct)
+{
+  byte **const tmap = &generic_tranmaps[filter_pct];
+
+  if (!*tmap) { *tmap = R_InitGenericTranMap(filter_pct); }
+
+  return *tmap;
+}
+
+void R_InitMessageFadeoutTranMaps(void)
+{
+  for (int i = 0;  i < 10;  i++)
+  { R_GetGenericTranMap(i * 10); }
+}
+
+// [Nugget] -----------------------------------------------------------------/
 
 //
 // Graphics.
@@ -933,7 +1025,7 @@ int R_ColormapNumForName(const char *name)
 
 int tran_filter_pct = 66;       // filter percent
 
-#define TSC 12        /* number of fixed point digits in filter percent */
+// [Nugget] Moved `TSC` macro above
 
 void R_InitTranMap(int progress)
 {
@@ -1069,79 +1161,12 @@ void R_InitTranMap(int progress)
   int p = M_CheckParmWithArgs("-dumptranmap", 1);
   if (p > 0)
   {
-      char *path = malloc(strlen(myargv[p + 1]) + 5);
-      strcpy(path, myargv[p + 1]);
-      AddDefaultExtension(path, ".lmp");
+      char *path = AddDefaultExtension(myargv[p + 1], ".lmp");
 
       M_WriteFile(path, main_tranmap, 256 * 256);
 
       free(path);
   }
-}
-
-// [Nugget]
-void R_InitTranMapEx(byte **const tmap, const int filter_pct)
-{
-  if (*tmap == NULL) { *tmap = Z_Malloc(256*256, PU_STATIC, 0); }
-
-  long pal[3][256], tot[256], pal_w1[3][256];
-
-  long w1 = ((unsigned long) filter_pct << TSC) / 100;
-  long w2 = (1l << TSC) - w1;
-
-  unsigned char *const playpal = W_CacheLumpName("PLAYPAL", PU_STATIC);
-
-  {
-    register int i = 255;
-    register const unsigned char *p = playpal + 255*3;
-
-    do {
-      register long t, d;
-
-      pal_w1[0][i] = (pal[0][i] = t = p[0]) * w1;
-      d = t*t;
-
-      pal_w1[1][i] = (pal[1][i] = t = p[1]) * w1;
-      d += t*t;
-
-      pal_w1[2][i] = (pal[2][i] = t = p[2]) * w1;
-      d += t*t;
-      p -= 3;
-
-      tot[i] = d << (TSC - 1);
-    } while (--i >= 0);
-  }
-
-  byte *tp = *tmap;
-
-  for (int i = 0;  i < 256;  i++)
-  {
-    long r1 = pal[0][i] * w2;
-    long g1 = pal[1][i] * w2;
-    long b1 = pal[2][i] * w2;
-
-    for (int j = 0;  j < 256;  j++, tp++)
-    {
-      register int color = 255;
-      register long err;
-
-      long r = pal_w1[0][j] + r1,
-           g = pal_w1[1][j] + g1,
-           b = pal_w1[2][j] + b1;
-
-      long best = LONG_MAX;
-
-      do {
-        if ((err = tot[color] - pal[0][color]*r - pal[1][color]*g - pal[2][color]*b) < best)
-        {
-          best = err;
-          *tp = color;
-        }
-      } while (--color >= 0);
-    }
-  }
-
-  Z_ChangeTag(playpal, PU_CACHE);
 }
 
 //
@@ -1164,14 +1189,33 @@ void R_InitData(void)
     R_InitTranMap(1);                   // killough 2/21/98, 3/6/98
   R_InitColormaps();                    // killough 3/20/98
 
-  // [Nugget]
-  R_InitTranMapEx(&shadow_tranmap, hud_menu_shadows_filter_pct); // HUD/menu shadows
-  R_InitTranMapEx(&  pspr_tranmap, pspr_translucency_pct);       // Translucent flashes
-  R_InitTranMapEx(& xhair_tranmap, hud_crosshair_tran_pct);      // Translucent crosshair
-  R_InitTranMapEx(& trail_tranmap, 25);
+  // [Nugget] ----------------------------------------------------------------
 
-  // [Cherry]
-  R_InitTranMapEx(& smoke_tranmap, rocket_trails_tran);          // Translucent rocket trails
+  // These could be initialized just in time, upon being requested,
+  // but if we can already guess that they'll be used,
+  // we initialize them in advance to prevent stutters later
+
+  // HUD/menu shadows
+  if (hud_menu_shadows && hud_menu_shadows_filter_pct != 100)
+  { R_GetGenericTranMap(hud_menu_shadows_filter_pct); }
+
+  // Message fadeout
+  if (ST_MessageFadeoutOn())
+  { R_InitMessageFadeoutTranMaps(); }
+
+  // Translucent flashes
+  if (pspr_translucency_pct != 100)
+  { R_GetGenericTranMap(pspr_translucency_pct); }
+
+  // Translucent crosshair
+  if (hud_crosshair_tran_pct != 100)
+  { R_GetGenericTranMap(hud_crosshair_tran_pct); }
+
+  R_GetGenericTranMap(25); // Hitscan trails
+
+  // [Cherry] Rocket trials
+  if (rocket_trails_tran != 100)
+  { R_GetGenericTranMap(rocket_trails_tran); }
 }
 
 //

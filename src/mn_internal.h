@@ -49,6 +49,8 @@ typedef enum
     key_mode
 } menu_input_mode_t;
 
+extern int maxscreenblocks;
+
 extern int bigfont_priority;
 
 extern menu_input_mode_t help_input, old_help_input; // pad_mode or key_mode.
@@ -168,6 +170,8 @@ void MN_DrawColor(void);
 // Custom Skill menu
 void MN_CustomSkill(void);
 void MN_DrawCustomSkill(void);
+
+void MN_UpdateNughudItem(void);
 
 // [Nugget] -----------------------------------------------------------------/
 

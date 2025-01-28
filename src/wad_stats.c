@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "d_iwad.h"
 #include "d_main.h"
 #include "d_think.h"
 #include "doomdef.h"

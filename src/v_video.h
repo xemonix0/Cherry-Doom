@@ -60,16 +60,10 @@ extern byte invul_gray[];
 
 // [Nugget]
 extern byte cr_allblack[],
-            cr_gray_vc[],    // `V_Colorize()` only
-            nightvision[],   // Night-vision visor
-            *shadow_tranmap, // HUD/menu shadows
-            *pspr_tranmap,   // Translucent flashes
-            *xhair_tranmap,  // Translucent crosshair
-            *trail_tranmap;
+            cr_gray_vc[],  // `V_Colorize()` only
+            nightvision[]; // Night-vision visor
 
-// [Cherry]
-extern byte *smoke_tranmap; // Translucent rocket trails
-// Less Blinding Tints
+// [Cherry] Less Blinding Tints
 extern boolean less_blinding_tints;
 extern byte alttintpal[14*768];
 

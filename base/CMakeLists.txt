@@ -223,18 +223,18 @@ set(BASE_SOURCES
     all-all/sprites/rsmkc0.png
     all-all/sprites/rsmkd0.png
 
-    betalevl.wad/umapdef.lmp
+    betalevl.wad/umapinfo.lmp
 
     chex.wad/brghtmps.lmp
     chex.wad/dehacked.lmp
-    chex.wad/umapdef.lmp
+    chex.wad/umapinfo.lmp
 
     chex2.wad/brghtmps.lmp
 
     doom-all/brghtmps.lmp
 
-    e1m4b.wad/umapdef.lmp
-    e1m8b.wad/umapdef.lmp
+    e1m4b.wad/umapinfo.lmp
+    e1m8b.wad/umapinfo.lmp
 
     extras.wad/sbardef.lmp
 
@@ -243,15 +243,9 @@ set(BASE_SOURCES
 
     id1.wad/sbardef.lmp
 
-    masterlevels.wad/umapdef.lmp
-
-    nerve.wad/umapdef.lmp
-
     rekkr.wad/dehacked.lmp
     rekkrsa.wad/dehacked.lmp
     rekkrsl.wad/dehacked.lmp
-
-    sigil_v1_21.wad/umapdef.lmp
 
     tnt.wad/brghtmps.lmp)
 

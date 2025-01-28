@@ -42,6 +42,7 @@
 #include "f_finale.h"
 #include "g_game.h"
 #include "g_nextweapon.h"
+#include "g_umapinfo.h"
 #include "hu_command.h"
 #include "hu_obituary.h"
 #include "i_gamepad.h"
@@ -88,7 +89,6 @@
 #include "st_widgets.h"
 #include "statdump.h" // [FG] StatCopy()
 #include "tables.h"
-#include "u_mapinfo.h"
 #include "v_video.h"
 #include "version.h"
 #include "w_wad.h"
@@ -110,7 +110,7 @@
 static size_t   savegamesize = SAVEGAMESIZE; // killough
 static char     *demoname = NULL;
 // [crispy] the name originally chosen for the demo, i.e. without "-00000"
-static char     *orig_demoname = NULL;
+static const char *orig_demoname = NULL;
 static boolean  netdemo;
 static byte     *demobuffer;   // made some static -- killough
 static size_t   maxdemosize;
@@ -173,7 +173,7 @@ static int keyframe_index = -1;
 // Slow Motion ---------------------------------------------------------------
 
 static boolean slow_motion = false;
-static float slow_motion_factor = SLOWMO_FACTOR_NORMAL;
+static int slow_motion_factor = SLOWMO_FACTOR_NORMAL;
 
 boolean G_GetSlowMotion(void)
 {
@@ -195,7 +195,7 @@ void G_ResetSlowMotion(void)
   if (reset_scale) { G_SetTimeScale(); }
 }
 
-float G_GetSlowMotionFactor(void)
+int G_GetSlowMotionFactor(void)
 {
   return slow_motion_factor;
 }
@@ -572,7 +572,7 @@ void G_SetTimeScale(void)
 
     // [Nugget] Slow Motion
     if (casual_play && !menuactive && slow_motion_factor != SLOWMO_FACTOR_NORMAL)
-    { time_scale *= slow_motion_factor; }
+    { time_scale = time_scale * slow_motion_factor / SLOWMO_FACTOR_NORMAL; }
 
     I_SetTimeScale(time_scale);
 
@@ -1491,7 +1491,7 @@ int G_GotoNextLevel(int *pEpi, int *pMap)
       next = gamemapinfo->nextsecret;
     else if (gamemapinfo->nextmap[0])
       next = gamemapinfo->nextmap;
-    else if (U_CheckField(gamemapinfo->endpic))
+    else if (gamemapinfo->flags & MapInfo_EndGame)
     {
       epsd = 1;
       map = 1;
@@ -1846,7 +1846,7 @@ static void CheckPlayersInNetGame(void)
 
 int playback_tic = 0, playback_totaltics = 0;
 
-static char *defdemoname;
+static const char *defdemoname;
 
 #define DEMOMARKER    0x80
 
@@ -2006,7 +2006,7 @@ static void G_PlayerFinishLevel(int player)
 
 // [crispy] format time for level statistics
 #define TIMESTRSIZE 16
-static void G_FormatLevelStatTime(char *str, int tics, boolean total)
+static void FormatLevelStatTime(char *str, int tics, boolean total)
 {
     int exitHours, exitMinutes;
     float exitTime, exitSeconds;
@@ -2037,31 +2037,39 @@ static void G_FormatLevelStatTime(char *str, int tics, boolean total)
 // [crispy] Write level statistics upon exit
 static void G_WriteLevelStat(void)
 {
-    static FILE *fstream = NULL;
+    int playerKills = 0, playerItems = 0, playerSecrets = 0;
 
-    int i, playerKills = 0, playerItems = 0, playerSecrets = 0;
+    char levelString[9] = {0};
+    char levelTimeString[TIMESTRSIZE] = {0};
+    char totalTimeString[TIMESTRSIZE] = {0};
 
-    char levelString[8];
-    char levelTimeString[TIMESTRSIZE];
-    char totalTimeString[TIMESTRSIZE];
+    static boolean firsttime = true;
+
+    FILE *fstream = NULL;
+
+    if (firsttime)
+    {
+        firsttime = false;
+        fstream = M_fopen("levelstat.txt", "w");
+    }
+    else
+    {
+        fstream = M_fopen("levelstat.txt", "a");
+    }
 
     if (fstream == NULL)
     {
-        fstream = M_fopen("levelstat.txt", "w");
-
-        if (fstream == NULL)
-        {
-            I_Printf(VB_ERROR, "G_WriteLevelStat: Unable to open levelstat.txt for writing!");
-            return;
-        }
+        I_Printf(VB_ERROR,
+            "G_WriteLevelStat: Unable to open levelstat.txt for writing!");
+        return;
     }
 
     strcpy(levelString, MapName(gameepisode, gamemap));
 
-    G_FormatLevelStatTime(levelTimeString, leveltime, false);
-    G_FormatLevelStatTime(totalTimeString, totalleveltimes + leveltime, true);
+    FormatLevelStatTime(levelTimeString, leveltime, false);
+    FormatLevelStatTime(totalTimeString, totalleveltimes + leveltime, true);
 
-    for (i = 0; i < MAXPLAYERS; i++)
+    for (int i = 0; i < MAXPLAYERS; i++)
     {
         if (playeringame[i])
         {
@@ -2075,6 +2083,8 @@ static void G_WriteLevelStat(void)
             levelString, (secretexit ? "s" : ""),
             levelTimeString, totalTimeString, playerKills, totalkills,
             playerItems, totalitems, playerSecrets, totalsecret);
+
+    fclose(fstream);
 }
 
 // [Nugget] Custom Skill
@@ -2169,9 +2179,9 @@ static void G_DoCompleted(void)
     const char *next = NULL;
     boolean intermission = false;
 
-    if (U_CheckField(gamemapinfo->endpic))
+    if (gamemapinfo->flags & MapInfo_EndGame)
     {
-      if (gamemapinfo->nointermission)
+      if (gamemapinfo->flags & MapInfo_NoIntermission)
       {
         gameaction = ga_victory;
         return;
@@ -3037,6 +3047,8 @@ static void DoSaveGame(char *name)
   }
 
   length = save_p - savebuffer;
+
+  M_MakeDirectory(basesavegame);
 
   if (!M_WriteFile(name, savebuffer, length))
     displaymsg("%s", errno ? strerror(errno) : "Could not save game: Error unknown");
@@ -4150,13 +4162,13 @@ void G_Ticker(void)
 
   if (slow_motion && slow_motion_factor != SLOWMO_FACTOR_TARGET)
   {
-    slow_motion_factor -= MAX(0.025f, (slow_motion_factor - SLOWMO_FACTOR_TARGET) / 4);
+    slow_motion_factor -= MAX(MIN_SLOWMO_STEP, (slow_motion_factor - SLOWMO_FACTOR_TARGET) / 4);
     slow_motion_factor  = MAX(SLOWMO_FACTOR_TARGET, slow_motion_factor);
     change = true;
   }
   else if (!slow_motion && slow_motion_factor != SLOWMO_FACTOR_NORMAL)
   {
-    slow_motion_factor += MAX(0.025f, (SLOWMO_FACTOR_NORMAL - slow_motion_factor) / 4);
+    slow_motion_factor += MAX(MIN_SLOWMO_STEP, (SLOWMO_FACTOR_NORMAL - slow_motion_factor) / 4);
     slow_motion_factor  = MIN(SLOWMO_FACTOR_NORMAL, slow_motion_factor);
     change = true;
   }
@@ -4597,25 +4609,44 @@ void G_WorldDone(void)
 
   if (gamemapinfo)
   {
-    if (gamemapinfo->intertextsecret && secretexit)
-    {
-      if (U_CheckField(gamemapinfo->intertextsecret)) // if the intermission was not cleared
-        F_StartFinale();
-      return;
-    }
-    else if (gamemapinfo->intertext && !secretexit)
-    {
-      if (U_CheckField(gamemapinfo->intertext)) // if the intermission was not cleared
-        F_StartFinale();
-      return;
-    }
-    else if (U_CheckField(gamemapinfo->endpic) && !secretexit)
-    {
-      // game ends without a status screen.
-      gameaction = ga_victory;
-      return;
-    }
-    // if nothing applied, use the defaults.
+      if (gamemapinfo->flags & MapInfo_InterTextClear
+          && gamemapinfo->flags & MapInfo_EndGame)
+      {
+          I_Printf(VB_DEBUG,
+              "UMAPINFO: 'intertext = clear' with one of the end game keys.");
+      }
+
+      if (secretexit)
+      {
+          if (gamemapinfo->flags & MapInfo_InterTextSecretClear)
+          {
+              return;
+          }
+          if (gamemapinfo->intertextsecret)
+          {
+              F_StartFinale();
+              return;
+          }
+      }
+      else
+      {
+          if (gamemapinfo->flags & MapInfo_EndGame)
+          {
+              // game ends without a status screen.
+              gameaction = ga_victory;
+              return;
+          }
+          else if (gamemapinfo->flags & MapInfo_InterTextClear)
+          {
+              return;
+          }
+          else if (gamemapinfo->intertext)
+          {
+              F_StartFinale();
+              return;
+          }
+      }
+      // if nothing applied, use the defaults.
   }
 
   if (gamemode == commercial)
@@ -5133,65 +5164,6 @@ void G_SetFastParms(int fast_pending)
   }
 }
 
-mapentry_t *G_LookupMapinfo(int episode, int map)
-{
-  int i;
-  char lumpname[9];
-
-  strcpy(lumpname, MapName(episode, map));
-
-  for (i = 0; i < U_mapinfo.mapcount; i++)
-  {
-    if (!strcasecmp(lumpname, U_mapinfo.maps[i].mapname))
-      return &U_mapinfo.maps[i];
-  }
-
-  for (i = 0; i < default_mapinfo.mapcount; i++)
-  {
-    if (!strcasecmp(lumpname, default_mapinfo.maps[i].mapname))
-      return &default_mapinfo.maps[i];
-  }
-
-  return NULL;
-}
-
-// Check if the given map name can be expressed as a gameepisode/gamemap pair
-// and be reconstructed from it.
-int G_ValidateMapName(const char *mapname, int *pEpi, int *pMap)
-{
-  char lumpname[9], mapuname[9];
-  int epi = -1, map = -1;
-
-  if (strlen(mapname) > 8)
-    return 0;
-  strncpy(mapuname, mapname, 8);
-  mapuname[8] = 0;
-  M_StringToUpper(mapuname);
-
-  if (gamemode != commercial)
-  {
-    if (sscanf(mapuname, "E%dM%d", &epi, &map) != 2)
-      return 0;
-    strcpy(lumpname, MapName(epi, map));
-  }
-  else
-  {
-    if (sscanf(mapuname, "MAP%d", &map) != 1)
-      return 0;
-    strcpy(lumpname, MapName(epi = 1, map));
-  }
-
-  if (epi > 4)
-    EpiCustom = true;
-
-  if (pEpi)
-    *pEpi = epi;
-  if (pMap)
-    *pMap = map;
-
-  return !strcmp(mapuname, lumpname);
-}
-
 //
 // G_InitNew
 // Can be called by the startup code or the menu task,
@@ -5286,7 +5258,7 @@ void G_InitNew(skill_t skill, int episode, int map)
 // G_RecordDemo
 //
 
-void G_RecordDemo(char *name)
+void G_RecordDemo(const char *name)
 {
   int i;
   size_t demoname_size;
@@ -5302,9 +5274,13 @@ void G_RecordDemo(char *name)
   demo_insurance = 0;
 
   usergame = false;
-  demoname_size = strlen(name) + 5 + 6; // [crispy] + 6 for "-00000"
+  if (demoname)
+  {
+    free(demoname);
+  }
+  demoname = AddDefaultExtension(name, ".lmp");  // 1/18/98 killough
+  demoname_size = strlen(demoname) + 6; // [crispy] + 6 for "-00000"
   demoname = I_Realloc(demoname, demoname_size);
-  AddDefaultExtension(strcpy(demoname, name), ".lmp");  // 1/18/98 killough
 
   for(; j <= 99999 && !M_access(demoname, F_OK); ++j)
   {
@@ -5734,7 +5710,7 @@ void G_BeginRecording(void)
 
 void D_CheckNetPlaybackSkip(void);
 
-void G_DeferedPlayDemo(char* name)
+void G_DeferedPlayDemo(const char* name)
 {
   defdemoname = name;
   gameaction = ga_playdemo;
@@ -6209,7 +6185,7 @@ void G_BindCompVariables(void)
   BIND_COMP(comp_vile,      0, "Arch-viles can create ghost monsters");
   BIND_COMP(comp_pain,      0, "Pain elementals are limited to 20 lost souls");
   BIND_COMP(comp_skull,     0, "Lost souls can spawn past impassable lines");
-  BIND_COMP(comp_blazing,   0, "Blazing doors make double closing sounds");
+  BIND_COMP(comp_blazing,   0, "Incorrect sound behavior for blazing doors");
   BIND_COMP(comp_doorlight, 0, "Door lighting changes are immediate");
   BIND_COMP(comp_god,       0, "God mode isn't absolute");
   BIND_COMP(comp_skymap,    0, "Don't apply invulnerability palette to skies");
@@ -6245,7 +6221,6 @@ void G_BindCompVariables(void)
   M_BindBool("comp_nonbleeders",  &comp_nonbleeders,  NULL, false, ss_none, wad_yes, "Non-bleeders don't bleed when crushed");
   M_BindBool("comp_iosdeath",     &comp_iosdeath,     NULL, false, ss_none, wad_yes, "Fix lopsided Icon of Sin explosions");
   M_BindBool("comp_choppers",     &comp_choppers,     NULL, false, ss_none, wad_yes, "Permanent IDCHOPPERS invulnerability");
-  M_BindBool("comp_blazing2",     &comp_blazing2,     NULL, true,  ss_none, wad_yes, "Blazing doors reopen with wrong sound");
   M_BindBool("comp_manualdoor",   &comp_manualdoor,   NULL, true,  ss_none, wad_yes, "Manually toggled moving doors are silent");
   M_BindBool("comp_switchsource", &comp_switchsource, NULL, false, ss_none, wad_yes, "Corrected switch sound source");
   M_BindBool("comp_cgundblsnd",   &comp_cgundblsnd,   NULL, true,  ss_none, wad_yes, "Chaingun makes two sounds with one bullet");
@@ -6261,13 +6236,13 @@ void G_BindCompVariables(void)
 
 void G_BindWeapVariables(void)
 {
-  // [Nugget] Extended
+  // [Nugget] Extended, tweaked descriptions
   M_BindNum("view_bobbing_pct", &view_bobbing_pct, NULL,
             100, 0, 100, ss_weap, wad_no,
-            "Player view bobbing percent");
+            "Player view bobbing amplitude percent");
   M_BindNum("weapon_bobbing_pct", &weapon_bobbing_pct, NULL,
             100, 0, 100, ss_weap, wad_no,
-            "Player weapon bobbing percent");
+            "Player weapon bobbing amplitude percent");
 
   M_BindBool("hide_weapon", &hide_weapon, NULL, false, ss_weap, wad_no,
              "Disable rendering of weapon sprites");
@@ -6310,15 +6285,26 @@ void G_BindWeapVariables(void)
              true, ss_none, wad_no, "Bob weapon every tic (fixes choppy Chainsaw bobbing)");
 
   M_BindNum("bobbing_style", &bobbing_style, NULL,
-            0, 0, 6, ss_weap, wad_yes,
+            0, 0, NUM_BOBSTYLES-1, ss_weap, wad_yes,
             "Weapon bobbing style");
+
+  M_BindNum("weapon_bobbing_speed_pct", &weapon_bobbing_speed_pct, NULL,
+            100, 50, 300, ss_weap, wad_yes,
+            "Player weapon bobbing speed percent");
+
+  M_BindBool("switch_bob", &switch_bob, NULL,
+             false, ss_weap, wad_yes, "Bob weapon while switching it");
 
   M_BindBool("weapon_inertia", &weapon_inertia, NULL,
              false, ss_weap, wad_yes, "Weapon inertia");
 
   M_BindNum("weapon_inertia_scale_pct", &weapon_inertia_scale_pct, NULL,
-            100, 50, 200, ss_weap, wad_yes,
+            100, -200, 200, ss_weap, wad_yes,
             "Weapon-inertia scale percent");
+
+  // (CFG-only)
+  M_BindBool("weapon_inertia_fire", &weapon_inertia_fire, NULL,
+             true, ss_none, wad_yes, "Apply weapon inertia while firing");
 
   M_BindBool("weaponsquat", &weaponsquat, NULL,
              false, ss_weap, wad_yes, "Squat weapon down on impact");

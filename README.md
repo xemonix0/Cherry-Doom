@@ -92,7 +92,7 @@ git clone https://github.com/xemonix0/Cherry-Doom.git
 
 The following build system and libraries need to be installed:
  
- * [CMake](https://cmake.org) (>= 3.9)
+ * [CMake](https://cmake.org) (>= 3.15)
  * [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) (>= 2.0.18)
  * [SDL2_net](https://github.com/libsdl-org/SDL_net)
  * [openal-soft](https://github.com/kcat/openal-soft) (>= 1.22.0 for PC Speaker emulation)
@@ -142,18 +142,19 @@ Copyright:
  © 2007-2011 Moritz "Ripper" Kroll;  
  © 2008-2019 Simon Judd;  
  © 2017 Christoph Oelckers;  
- © 2019 Fernando Carmona Varo;  
  © 2020 Alex Mayfield;  
  © 2020 JadingTsunami;  
  © 2020-2024 Fabian Greffrath;  
  © 2020-2024 Roman Fomin;  
  © 2021-2022 Ryan Krafnick;  
- © 2021-2024 Alaux;  
+ © 2021-2025 Alaux;  
  © 2022 Julia Nechaevskaya;  
  © 2022-2024 ceski;  
  © 2023 Andrew Apted;  
  © 2023 liPillON;  
- © 2023-2024 Xemonix.   
+ © 2024 pvictress;  
+ © 2025 Guilherme Miranda;  
+ © 2023-2025 Xemonix.   
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/i_flickstick.*, src/i_gyro.*`  
@@ -168,10 +169,9 @@ Copyright:
  © 2023 Andrew Apted.  
 License: [MIT](https://opensource.org/licenses/MIT)
 
-Files: `src/u_scanner.*`  
+Files: `src/m_scanner.*`  
 Copyright:  
- © 2010 Braden "Blzut3" Obrzut;  
- © 2019 Fernando Carmona Varo.  
+ © 2015 Braden "Blzut3" Obrzut.  
 License: [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
 Files: `src/v_flextran.*`  
@@ -187,7 +187,7 @@ Copyright:
 License: [GPL-3.0+](https://www.gnu.org/licenses/gpl-3.0)
 
 Files: `src/wad_stats.*`  
-Copyright: © 2021-2023 Ryan Krafnick.  
+Copyright: © 2021-2023 Ryan Krafnick;  
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `base/all-all/sprites/pls*, man/simplecpp`  

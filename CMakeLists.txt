@@ -37,7 +37,7 @@ endif()
 
 # Hardcoded defines added to configure and resource files.
 set(PROJECT_COMPANY "Xemonix and contributors")
-set(PROJECT_COPYRIGHT "Copyright (C) 1993-2024")
+set(PROJECT_COPYRIGHT "Copyright (C) 1993-2025")
 set(PROJECT_LICENSE "GNU General Public License, version 2")
 set(PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
 set(PROJECT_SHORTNAME "cherry-doom")
@@ -55,6 +55,7 @@ check_library_exists(m pow "" HAVE_LIBM)
 check_include_file("dirent.h" HAVE_DIRENT_H)
 check_symbol_exists(strcasecmp "strings.h" HAVE_DECL_STRCASECMP)
 check_symbol_exists(strncasecmp "strings.h" HAVE_DECL_STRNCASECMP)
+check_symbol_exists(getpwuid "unistd.h;sys/types.h;pwd.h" HAVE_GETPWUID)
 check_c_source_compiles("
     #include <windows.h>
     int main()
@@ -75,6 +76,16 @@ check_c_source_compiles("
     }
   "
   HAVE__DIV64
+)
+check_c_source_compiles("
+    typedef float vec __attribute__((ext_vector_type(4)));
+    int main()
+    {
+        vec a = (vec){0, 1, 2, 3};
+        return 0;
+    }
+  "
+  HAVE_EXT_VECTOR_TYPE
 )
 
 option(CMAKE_FIND_PACKAGE_PREFER_CONFIG
