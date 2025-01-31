@@ -841,47 +841,47 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 	int linesize = video.pitch;
 	byte * dest = I_VideoBuffer + viewwindowy * linesize + viewwindowx;
 
-  // [Nugget] Per-column thing lighting /-------------------------------------
+	// [Nugget] Per-column thing lighting /-------------------------------------
 
-  const byte *colormap[2];
-  memcpy(colormap, spr->colormap, sizeof(spr->colormap));
+	const byte *colormap[2];
+	memcpy(colormap, spr->colormap, sizeof(spr->colormap));
 
-  if (STRICTMODE(thing_column_lighting)
-      && !spr->fullbright && spr->colormap[0] && !fixedcolormap)
-  {
-    const fixed_t xofs = ((x << FRACBITS) + FRACUNIT/2) - v->x_pivot,
-                  yofs = ((y << FRACBITS) + FRACUNIT/2) - v->y_pivot;
+	if (STRICTMODE(thing_column_lighting)
+			&& !spr->fullbright && spr->colormap[0] && !fixedcolormap)
+	{
+		const fixed_t xofs = ((x << FRACBITS) + FRACUNIT/2) - v->x_pivot,
+									yofs = ((y << FRACBITS) + FRACUNIT/2) - v->y_pivot;
 
-    const angle_t angle = (vv->angle + ANG90) >> ANGLETOFINESHIFT;
+		const angle_t angle = (vv->angle + ANG90) >> ANGLETOFINESHIFT;
 
-    const fixed_t cosine = finecosine[angle],
-                    sine =   finesine[angle];
+		const fixed_t cosine = finecosine[angle],
+										sine =   finesine[angle];
 
-    const fixed_t gx = spr->gx + FixedMul(xofs, cosine) + FixedMul(yofs,   sine),
-                  gy = spr->gy + FixedMul(xofs,   sine) - FixedMul(yofs, cosine);
+		const fixed_t gx = spr->gx + FixedMul(xofs, cosine) + FixedMul(yofs,   sine),
+									gy = spr->gy + FixedMul(xofs,   sine) - FixedMul(yofs, cosine);
 
-    sector_t *const sector = R_PointInSubsector(gx, gy)->sector;
+		sector_t *const sector = R_PointInSubsector(gx, gy)->sector;
 
-    int lightnum = extralight;
+		int lightnum = extralight;
 
-    if (demo_version > DV_BOOM)
-    {
-      sector_t tempsector;
-      int floorlightlevel, ceilinglightlevel;
+		if (demo_version > DV_BOOM)
+		{
+			sector_t tempsector;
+			int floorlightlevel, ceilinglightlevel;
 
-      R_FakeFlat(sector, &tempsector, &floorlightlevel, &ceilinglightlevel, false);
+			R_FakeFlat(sector, &tempsector, &floorlightlevel, &ceilinglightlevel, false);
 
-      lightnum += (floorlightlevel + ceilinglightlevel) >> (LIGHTSEGSHIFT+1);
-    }
-    else { lightnum += sector->lightlevel >> LIGHTSEGSHIFT; }
+			lightnum += (floorlightlevel + ceilinglightlevel) >> (LIGHTSEGSHIFT+1);
+		}
+		else { lightnum += sector->lightlevel >> LIGHTSEGSHIFT; }
 
-    const int lightindex = STRICTMODE(!diminished_lighting)
-                           ? 0 : R_GetLightIndex(B_xscale);
+		const int lightindex = STRICTMODE(!diminished_lighting)
+													 ? 0 : R_GetLightIndex(B_xscale);
 
-    colormap[0] = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)][lightindex];
-  }
+		colormap[0] = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)][lightindex];
+	}
 
-  // [Nugget] ---------------------------------------------------------------/
+	// [Nugget] ---------------------------------------------------------------/
 
 	// iterate over screen columns
 	fixed_t ux = ((Ax - 1) | FRACMASK) + 1;
