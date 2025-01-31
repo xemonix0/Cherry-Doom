@@ -125,6 +125,7 @@ void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 extern boolean vertical_lockon;
 
+extern boolean thing_column_lighting;
 extern boolean flip_levels;
 extern boolean nightvision_visor;
 extern int fake_contrast;

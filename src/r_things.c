@@ -542,6 +542,32 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   spryscale = vis->scale;
   sprtopscreen = centeryfrac - FixedMul(dc_texturemid,spryscale);
 
+  // [Nugget] Per-column thing lighting /-------------------------------------
+
+  boolean percolumn_lighting;
+
+  fixed_t pcl_patchoffset = 0;
+  fixed_t pcl_cosine = 0, pcl_sine = 0;
+  int pcl_lightindex = 0;
+
+  if (STRICTMODE(thing_column_lighting)
+      && !vis->fullbright && dc_colormap[0] && !fixedcolormap)
+  {
+    percolumn_lighting = true;
+
+    pcl_patchoffset = SHORT(patch->leftoffset) << FRACBITS;
+
+    const int angle = (viewangle - ANG90) >> ANGLETOFINESHIFT;
+
+    pcl_cosine = finecosine[angle];
+    pcl_sine   =   finesine[angle];
+
+    pcl_lightindex = STRICTMODE(!diminished_lighting) ? 0 : R_GetLightIndex(spryscale);
+  }
+  else { percolumn_lighting = false; }
+
+  // [Nugget] ---------------------------------------------------------------/
+
   for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
     {
       texturecolumn = frac>>FRACBITS;
@@ -550,6 +576,32 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
         continue;
       else if (texturecolumn >= SHORT(patch->width))
         break;
+
+      // [Nugget] Per-column thing lighting
+      if (percolumn_lighting)
+      {
+        const fixed_t offset = frac - pcl_patchoffset;
+
+        const fixed_t gx = vis->gx + FixedMul(offset, pcl_cosine),
+                      gy = vis->gy + FixedMul(offset, pcl_sine);
+
+        sector_t *const sector = R_PointInSubsector(gx, gy)->sector;
+
+        int lightnum = extralight;
+
+        if (demo_version > DV_BOOM)
+        {
+          sector_t tempsector;
+          int floorlightlevel, ceilinglightlevel;
+
+          R_FakeFlat(sector, &tempsector, &floorlightlevel, &ceilinglightlevel, false);
+
+          lightnum += (floorlightlevel + ceilinglightlevel) >> (LIGHTSEGSHIFT+1);
+        }
+        else { lightnum += sector->lightlevel >> LIGHTSEGSHIFT; }
+
+        dc_colormap[0] = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)][pcl_lightindex];
+      }
 
       column = (column_t *)((byte *) patch +
                             LONG(patch->columnofs[texturecolumn]));
@@ -762,6 +814,8 @@ static void R_ProjectSprite (mobj_t* thing)
   iscale = FixedDiv(FRACUNIT, xscale);
   vis->color = thing->bloodcolor;
 
+  vis->fullbright = false; // [Nugget]
+
   if (flip)
     {
       vis->startfrac = spritewidth[lump]-1;
@@ -783,7 +837,10 @@ static void R_ProjectSprite (mobj_t* thing)
   else if (fixedcolormap)
     vis->colormap[0] = vis->colormap[1] = fixedcolormap;      // fixed map
   else if (frame & FF_FULLBRIGHT)
+  {
     vis->colormap[0] = vis->colormap[1] = fullcolormap;       // full bright  // killough 3/20/98
+    vis->fullbright = true; // [Nugget]
+  }
   else
     {      // diminished light
       const int index = STRICTMODE(!diminished_lighting) // [Nugget]
@@ -1005,6 +1062,9 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
   vis->scale = pspritescale;
 
+  // [Nugget] Per-column thing lighting: set true to make it not apply to psprites
+  vis->fullbright = true;
+
   if (flip)
     {
       vis->xiscale = -pspriteiscale;
@@ -1028,7 +1088,10 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   else if (fixedcolormap)
     vis->colormap[0] = vis->colormap[1] = fixedcolormap;           // fixed color
   else if (psp->state->frame & FF_FULLBRIGHT)
+  {
     vis->colormap[0] = vis->colormap[1] = fullcolormap;            // full bright // killough 3/20/98
+    vis->fullbright = true; // [Nugget]
+  }
   else
   {
     // [Nugget]

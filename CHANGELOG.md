@@ -1,6 +1,6 @@
 ## New Features
 
-None.
+- **_Per-column Thing Lighting_** setting
 
 ## Changes
 

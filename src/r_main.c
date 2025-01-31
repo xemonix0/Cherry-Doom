@@ -149,6 +149,7 @@ fixed_t R_GetNughudViewPitch(void)
 
 boolean vertical_lockon;
 
+boolean thing_column_lighting;
 boolean flip_levels;
 static int lowres_pixel_width;
 static int lowres_pixel_height;
@@ -1850,6 +1851,9 @@ void R_BindRenderVariables(void)
   // (CFG-only)
   M_BindBool("diminished_lighting", &diminished_lighting, NULL,
              true, ss_none, wad_yes, "Diminished lighting (light emitted by player)");
+
+  M_BindBool("thing_column_lighting", &thing_column_lighting, NULL,
+             false, ss_gen, wad_yes, "Per-column thing lighting");
 
   // [Nugget] ---------------------------------------------------------------/
 
