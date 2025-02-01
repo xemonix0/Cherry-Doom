@@ -7,7 +7,7 @@
 - **Merged changes from the following Woof! releases:**
   - **[Woof! 15.2.0](https://github.com/fabiangreffrath/woof/releases/tag/woof_15.2.0)**, note:
     - Removed `vertical_layout` property of SBARDEF widgets in favor of Woof's `vertical` [1]
-  - Also merged reporting of SDL platform/release from Woof! post-15.2.0
+  - Also merged reporting of SDL release/platform from Woof! post-15.2.0
 - **Vertical weapon inertia now takes the sprite's height into account**
 
 ## Bug Fixes

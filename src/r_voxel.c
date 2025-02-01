@@ -687,7 +687,9 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 	vis->x1 = x1;
 	vis->x2 = x2;
 
-	vis->fullbright = false; // [Nugget]
+	// [Nugget]
+	vis->fullbright = false;
+	vis->flipped = false;
 
 	// get light level...
 

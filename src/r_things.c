@@ -580,7 +580,9 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
       // [Nugget] Per-column thing lighting
       if (percolumn_lighting)
       {
-        const fixed_t offset = frac - pcl_patchoffset;
+        fixed_t offset = frac - pcl_patchoffset;
+
+        if (vis->flipped) { offset = -offset; }
 
         const fixed_t gx = vis->gx + FixedMul(offset, pcl_cosine),
                       gy = vis->gy + FixedMul(offset, pcl_sine);
@@ -814,7 +816,9 @@ static void R_ProjectSprite (mobj_t* thing)
   iscale = FixedDiv(FRACUNIT, xscale);
   vis->color = thing->bloodcolor;
 
-  vis->fullbright = false; // [Nugget]
+  // [Nugget]
+  vis->fullbright = false;
+  vis->flipped = flip;
 
   if (flip)
     {
@@ -1062,8 +1066,9 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
   vis->scale = pspritescale;
 
-  // [Nugget] Per-column thing lighting: set true to make it not apply to psprites
-  vis->fullbright = true;
+  // [Nugget]
+  vis->fullbright = true; // Per-column thing lighting: set true to make it not apply to psprites
+  vis->flipped = flip;
 
   if (flip)
     {
