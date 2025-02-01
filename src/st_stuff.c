@@ -20,6 +20,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <math.h>
 #include <stdlib.h>
 
 #include "am_map.h"
@@ -251,9 +252,6 @@ static int armor_green;   // armor amount above is blue, below is green
 static boolean hud_armor_type; // color of armor depends on type
 
 static boolean weapon_carousel;
-
-// used for evil grin
-static boolean  oldweaponsowned[NUMWEAPONS];
 
 static sbardef_t *sbardef;
 
@@ -747,10 +745,13 @@ static void UpdateFace(sbe_face_t *face, player_t *player)
 
             for (int i = 0; i < NUMWEAPONS; ++i)
             {
-                if (oldweaponsowned[i] != player->weaponowned[i])
+                if (face->oldweaponsowned[i] != player->weaponowned[i])
                 {
-                    doevilgrin = true;
-                    oldweaponsowned[i] = player->weaponowned[i];
+                    if (face->oldweaponsowned[i] < player->weaponowned[i])
+                    {
+                        doevilgrin = true;
+                    }
+                    face->oldweaponsowned[i] = player->weaponowned[i];
                 }
             }
 
@@ -1323,7 +1324,7 @@ static void UpdateStatusBar(player_t *player)
     oldbarindex = barindex;
 }
 
-static void ResetElem(sbarelem_t *elem)
+static void ResetElem(sbarelem_t *elem, player_t *player)
 {
     switch (elem->type)
     {
@@ -1340,6 +1341,10 @@ static void ResetElem(sbarelem_t *elem)
                 face->faceindex = 0;
                 face->facecount = 0;
                 face->oldhealth = -1;
+                for (int i = 0; i < NUMWEAPONS; i++)
+                {
+                    face->oldweaponsowned[i] = player->weaponowned[i];
+                }
             }
             break;
 
@@ -1372,19 +1377,21 @@ static void ResetElem(sbarelem_t *elem)
     sbarelem_t *child;
     array_foreach(child, elem->children)
     {
-        ResetElem(child);
+        ResetElem(child, player);
     }
 }
 
 static void ResetStatusBar(void)
 {
+    player_t *player = &players[displayplayer];
+
     statusbar_t *local_statusbar;
     array_foreach(local_statusbar, sbardef->statusbars)
     {
         sbarelem_t *child;
         array_foreach(child, local_statusbar->children)
         {
-            ResetElem(child);
+            ResetElem(child, player);
         }
     }
 
@@ -3632,7 +3639,7 @@ end_amnum:
   {
     sbarelem_t elem = CreateNughudWidget(nughud.sts, sbw_monsec, &dig);
 
-    elem.subtype.widget->vertical_layout = MAX(0, nughud.sts_ml);
+    elem.subtype.widget->vertical = nughud.sts_ml;
 
     array_push(sb.children, elem);
   }
@@ -3642,7 +3649,7 @@ end_amnum:
   {
     sbarelem_t elem = CreateNughudWidget(nughud.coord, sbw_coord, &dig);
 
-    elem.subtype.widget->vertical_layout = MAX(0, nughud.coord_ml);
+    elem.subtype.widget->vertical = nughud.coord_ml;
 
     array_push(sb.children, elem);
   }

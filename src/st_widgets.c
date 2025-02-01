@@ -973,31 +973,30 @@ static void UpdateCoord(sbe_widget_t *widget, player_t *player)
     // killough 10/98: allow coordinates to display non-following pointer
     AM_Coordinates(player->mo, &x, &y, &z);
 
-    // [Nugget] /-------------------------------------------------------------
-
-    static char x_str[16], y_str[16], z_str[16];
-
-    M_snprintf(x_str, sizeof(x_str), "\x1b%cX " GRAY_S "%d", '0' + hudcolor_xyco, x >> FRACBITS);
-    M_snprintf(y_str, sizeof(y_str), "\x1b%cY " GRAY_S "%d", '0' + hudcolor_xyco, y >> FRACBITS);
-    M_snprintf(z_str, sizeof(z_str), "\x1b%cZ " GRAY_S "%d", '0' + hudcolor_xyco, z >> FRACBITS);
-
-    // [Nugget] -------------------------------------------------------------/
-
-    // [Nugget]
-    if (widget->vertical_layout)
+    if (!widget->vertical)
     {
-        ST_AddLine(widget, x_str);
-        ST_AddLine(widget, y_str);
-        ST_AddLine(widget, z_str);
+        static char string[80];
+        // jff 2/16/98 output new coord display
+        M_snprintf(string, sizeof(string),
+                   "\x1b%cX " GRAY_S "%d \x1b%cY " GRAY_S "%d \x1b%cZ " GRAY_S "%d",
+                   '0' + hudcolor_xyco, x >> FRACBITS, '0' + hudcolor_xyco,
+                   y >> FRACBITS, '0' + hudcolor_xyco, z >> FRACBITS);
+        ST_AddLine(widget, string);
     }
     else
     {
-        static char string[80];
-
-        // jff 2/16/98 output new coord display
-        M_snprintf(string, sizeof(string), "%s %s %s", x_str, y_str, z_str);
-
-        ST_AddLine(widget, string);
+        static char string1[16];
+        M_snprintf(string1, sizeof(string1), "\x1b%cX " GRAY_S "%d",
+                   '0' + hudcolor_xyco, x >> FRACBITS);
+        ST_AddLine(widget, string1);
+        static char string2[16];
+        M_snprintf(string2, sizeof(string2), "\x1b%cY " GRAY_S "%d",
+                   '0' + hudcolor_xyco, y >> FRACBITS);
+        ST_AddLine(widget, string2);
+        static char string3[16];
+        M_snprintf(string3, sizeof(string3), "\x1b%cZ " GRAY_S "%d",
+                   '0' + hudcolor_xyco, z >> FRACBITS);
+        ST_AddLine(widget, string3);
     }
 }
 
@@ -1073,8 +1072,6 @@ static void UpdateMonSec(sbe_widget_t *widget)
     // [Nugget] -------------------------------------------------------------/
 
     ForceDoomFont(widget);
-
-    static char string[120];
 
     int fullkillcount = 0;
     int fullitemcount = 0;
@@ -1173,35 +1170,41 @@ static void UpdateMonSec(sbe_widget_t *widget)
           secretlabelcolor, secretlabel, secretcolor, secret_str);
     }
 
-    // [Nugget]
-    if (widget->vertical_layout)
+    if (!widget->vertical)
+    {
+        static char string[120];
+        int offset = 0;
+
+        if (kill_str2[0])
+        {
+            offset += M_snprintf(
+              string + offset, sizeof(string) - offset, "%s%s", kill_str2,
+              (item_str2[0] || secret_str2[0]) ? " " : ""
+            );
+        }
+
+        if (item_str2[0])
+        {
+            offset += M_snprintf(
+              string + offset, sizeof(string) - offset, "%s%s", item_str2,
+              secret_str2[0] ? " " : ""
+            );
+        }
+
+        if (secret_str2[0])
+        {
+            offset += M_snprintf(
+              string + offset, sizeof(string) - offset, "%s", secret_str2
+            );
+        }
+  
+        ST_AddLine(widget, string);
+    }
+    else
     {
         if (kill_str2[0])   { ST_AddLine(widget, kill_str2); }
         if (item_str2[0])   { ST_AddLine(widget, item_str2); }
         if (secret_str2[0]) { ST_AddLine(widget, secret_str2); }
-    }
-    else
-    {
-        int offset = 0;
-
-        if (showstats[SHOWSTATS_KILLS])
-        {
-            offset += M_snprintf(string + offset, sizeof(string) - offset, "%s%s", kill_str2,
-              (showstats[SHOWSTATS_ITEMS] || showstats[SHOWSTATS_SECRETS]) ? " " : "");
-        }
-
-        if (showstats[SHOWSTATS_ITEMS])
-        {
-            offset += M_snprintf(string + offset, sizeof(string) - offset, "%s%s", item_str2,
-              showstats[SHOWSTATS_SECRETS] ? " " : "");
-        }
-
-        if (showstats[SHOWSTATS_SECRETS])
-        {
-            offset += M_snprintf(string + offset, sizeof(string) - offset, "%s", secret_str2);
-        }
-  
-        ST_AddLine(widget, string);
     }
 }
 
@@ -1717,7 +1720,7 @@ void ST_BindHUDVariables(void)
              "Show split time when pressing the use-button");
 
   M_BindNum("hud_widget_font", &hud_widget_font, NULL,
-            HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
+            HUD_WIDGET_AUTOMAP, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
             ss_stat, wad_no,
             "Use standard Doom font for widgets (1 = On automap; 2 = On HUD; 3 "
             "= Always)");
