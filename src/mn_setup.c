@@ -379,6 +379,7 @@ enum
     str_over_under,
     str_flinching,
     str_chasecam,
+    str_thing_lighting,
     str_fake_contrast,
     str_s_clipping_dist,
     str_page_ticking,
@@ -3844,6 +3845,10 @@ static void ShadowTrans(void)
   R_GetGenericTranMap(hud_menu_shadows_filter_pct);
 }
 
+static const char *thing_lighting_strings[] = {
+  "Origin", "Hitbox", "Per-column", NULL
+};
+
 static const char *fake_contrast_strings[] = {
   "Off", "Smooth", "Vanilla", NULL
 };
@@ -3857,7 +3862,7 @@ setup_menu_t gen_settings8[] = {
     {"Backdrop For All Menus",       S_ONOFF,                 N_X, M_SPC, {"menu_background_all"}},
     {"No Palette Tint in Menus",     S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_menu_tint"}},
     {"HUD/Menu Shadows",             S_ONOFF,                 N_X, M_SPC, {"hud_menu_shadows"}, .action = ShadowTrans},
-    {"Per-column Thing Lighting",    S_ONOFF |S_STRICT,       N_X, M_SPC, {"thing_column_lighting"}},
+    {"Thing Lighting Mode",          S_CHOICE|S_STRICT,       N_X, M_SPC, {"thing_lighting_mode"}, .strings_id = str_thing_lighting},
     {"Flip Levels",                  S_ONOFF,                 N_X, M_SPC, {"flip_levels"}},
     {"No Berserk Tint",              S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_berserk_tint"}},
     {"No Radiation Suit Tint",       S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_radsuit_tint"}},
@@ -5620,6 +5625,7 @@ static const char **selectstrings[] = {
     over_under_strings,
     flinching_strings,
     chasecam_strings,
+    thing_lighting_strings,
     fake_contrast_strings,
     s_clipping_dist_strings,
     page_ticking_strings,

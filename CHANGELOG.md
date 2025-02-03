@@ -1,6 +1,6 @@
 ## New Features
 
-- **_Per-column Thing Lighting_** setting
+- **_Thing Lighting Mode_** setting
 
 ## Changes
 

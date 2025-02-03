@@ -123,9 +123,17 @@ void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // [Nugget] /=================================================================
 
+typedef enum thinglighting_s {
+  THINGLIGHTING_ORIGIN,
+  THINGLIGHTING_HITBOX,
+  THINGLIGHTING_PERCOLUMN,
+
+  NUM_THINGLIGHTING
+} thinglighting_t;
+
 extern boolean vertical_lockon;
 
-extern boolean thing_column_lighting;
+extern thinglighting_t thing_lighting_mode;
 extern boolean flip_levels;
 extern boolean nightvision_visor;
 extern int fake_contrast;
@@ -139,6 +147,7 @@ extern boolean comp_powerrunout;
 extern boolean have_crouch_sprites;
 
 fixed_t R_GetNughudViewPitch(void);
+int R_GetLightLevelInPoint(const fixed_t x, const fixed_t y);
 
 #define POWER_RUNOUT(power) \
   ((STRICTMODE(comp_powerrunout) ? (power) >= 4*32 : (power) > 4*32) || (power) & 8)

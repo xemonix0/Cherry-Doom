@@ -57,7 +57,9 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Background for all menus_** setting
 - **_No palette tint in menus_** setting [i.b. Crispy Doom]
 - **_HUD/Menu Shadows_** setting (translucency determined by the CFG-only `hud_menu_shadows_filter_pct` CVAR) [i.b. CRL]
-- **_Per-column Thing Lighting_** setting [i.b. PSX Hexen]
+- **_Thing Lighting Mode_** setting
+  - _Hitbox_ suggested by [@fragglet](https://github.com/fragglet)
+  - _Per-column_ inspired by PSX Hexen
 - **_Flip Levels_** setting
 - **Low-resolution pixel width/height** settings, to enlarge pixels when using 100% resolution (CFG-only: `lowres_pixel_width`, `lowres_pixel_height`) [i.b. Doom Retro]
 - **_No Berserk Tint_** setting
@@ -206,6 +208,7 @@ For more details, see the _New Nugget Doom cheats_ section of `docs/cheats.md`.
 ### Miscellaneous
 
 - **Customizable skill level**, supporting all vanilla settings and a new one for duplicate monster spawns
+  - Its menu item uses the `M_CSTSKL` graphic if found
 - **SDL render driver** setting (CFG-only: `sdl_renderdriver`) [p.f. Woof! 14.0.0]
 - **Setting of savegame and screenshot paths in config file** (CFG-only: `savegame_dir` and `screenshot_dir`)
 - **Keep palette changes in screenshots** setting (CFG-only: `screenshot_palette`)

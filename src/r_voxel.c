@@ -709,8 +709,26 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 	else
 	{
 		// diminished light
-    const int index = STRICTMODE(!diminished_lighting) // [Nugget]
-                      ? 0 : R_GetLightIndex(xscale);
+		const int index = STRICTMODE(!diminished_lighting) // [Nugget]
+											? 0 : R_GetLightIndex(xscale);
+
+		// [Nugget] Thing lighting
+		if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_HITBOX)
+		{
+			int lightlevel = 0;
+
+			for (int i = 0;  i < 9;  i++)
+			{
+				const fixed_t gx = vis->gx + (thing->radius * ((i % 3) - 1)),
+											gy = vis->gy + (thing->radius * ((i / 3) - 1));
+
+				lightlevel += R_GetLightLevelInPoint(gx, gy);
+			}
+
+			int lightnum = ((lightlevel / 9) >> LIGHTSEGSHIFT) + extralight;
+
+			spritelights = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)];
+		}
 
 		vis->colormap[0] = spritelights[index];
 		vis->colormap[1] = fullcolormap;
@@ -843,12 +861,12 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 	int linesize = video.pitch;
 	byte * dest = I_VideoBuffer + viewwindowy * linesize + viewwindowx;
 
-	// [Nugget] Per-column thing lighting /-------------------------------------
+	// [Nugget] Thing lighting /------------------------------------------------
 
 	const byte *colormap[2];
 	memcpy(colormap, spr->colormap, sizeof(spr->colormap));
 
-	if (STRICTMODE(thing_column_lighting)
+	if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_PERCOLUMN
 			&& !spr->fullbright && spr->colormap[0] && !fixedcolormap)
 	{
 		const fixed_t xofs = ((x << FRACBITS) + FRACUNIT/2) - v->x_pivot,
@@ -862,20 +880,8 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 		const fixed_t gx = spr->gx + FixedMul(xofs, cosine) + FixedMul(yofs,   sine),
 									gy = spr->gy + FixedMul(xofs,   sine) - FixedMul(yofs, cosine);
 
-		sector_t *const sector = R_PointInSubsector(gx, gy)->sector;
-
-		int lightnum = extralight;
-
-		if (demo_version > DV_BOOM)
-		{
-			sector_t tempsector;
-			int floorlightlevel, ceilinglightlevel;
-
-			R_FakeFlat(sector, &tempsector, &floorlightlevel, &ceilinglightlevel, false);
-
-			lightnum += (floorlightlevel + ceilinglightlevel) >> (LIGHTSEGSHIFT+1);
-		}
-		else { lightnum += sector->lightlevel >> LIGHTSEGSHIFT; }
+		int lightnum = (R_GetLightLevelInPoint(gx, gy) >> LIGHTSEGSHIFT)
+								 + extralight;
 
 		const int lightindex = STRICTMODE(!diminished_lighting)
 													 ? 0 : R_GetLightIndex(B_xscale);

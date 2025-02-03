@@ -542,7 +542,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   spryscale = vis->scale;
   sprtopscreen = centeryfrac - FixedMul(dc_texturemid,spryscale);
 
-  // [Nugget] Per-column thing lighting /-------------------------------------
+  // [Nugget] Thing lighting /------------------------------------------------
 
   boolean percolumn_lighting;
 
@@ -550,7 +550,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   fixed_t pcl_cosine = 0, pcl_sine = 0;
   int pcl_lightindex = 0;
 
-  if (STRICTMODE(thing_column_lighting)
+  if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_PERCOLUMN
       && !vis->fullbright && dc_colormap[0] && !fixedcolormap)
   {
     percolumn_lighting = true;
@@ -577,7 +577,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
       else if (texturecolumn >= SHORT(patch->width))
         break;
 
-      // [Nugget] Per-column thing lighting
+      // [Nugget] Thing lighting
       if (percolumn_lighting)
       {
         fixed_t offset = frac - pcl_patchoffset;
@@ -587,20 +587,8 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
         const fixed_t gx = vis->gx + FixedMul(offset, pcl_cosine),
                       gy = vis->gy + FixedMul(offset, pcl_sine);
 
-        sector_t *const sector = R_PointInSubsector(gx, gy)->sector;
-
-        int lightnum = extralight;
-
-        if (demo_version > DV_BOOM)
-        {
-          sector_t tempsector;
-          int floorlightlevel, ceilinglightlevel;
-
-          R_FakeFlat(sector, &tempsector, &floorlightlevel, &ceilinglightlevel, false);
-
-          lightnum += (floorlightlevel + ceilinglightlevel) >> (LIGHTSEGSHIFT+1);
-        }
-        else { lightnum += sector->lightlevel >> LIGHTSEGSHIFT; }
+        int lightnum = (R_GetLightLevelInPoint(gx, gy) >> LIGHTSEGSHIFT)
+                     + extralight;
 
         dc_colormap[0] = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)][pcl_lightindex];
       }
@@ -850,6 +838,24 @@ static void R_ProjectSprite (mobj_t* thing)
       const int index = STRICTMODE(!diminished_lighting) // [Nugget]
                         ? 0 : R_GetLightIndex(xscale);
 
+      // [Nugget] Thing lighting
+      if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_HITBOX)
+      {
+        int lightlevel = 0;
+
+        for (int i = 0;  i < 9;  i++)
+        {
+          const fixed_t gx = vis->gx + (thing->radius * ((i % 3) - 1)),
+                        gy = vis->gy + (thing->radius * ((i / 3) - 1));
+
+          lightlevel += R_GetLightLevelInPoint(gx, gy);
+        }
+
+        int lightnum = ((lightlevel / 9) >> LIGHTSEGSHIFT) + extralight;
+
+        spritelights = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)];
+      }
+
       vis->colormap[0] = spritelights[index];
       vis->colormap[1] = fullcolormap;
     }
@@ -1067,7 +1073,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->scale = pspritescale;
 
   // [Nugget]
-  vis->fullbright = true; // Per-column thing lighting: set true to make it not apply to psprites
+  vis->fullbright = true; // Thing lighting: set true to make per-column lighting not apply to psprites
   vis->flipped = flip;
 
   if (flip)

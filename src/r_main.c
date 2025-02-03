@@ -145,11 +145,31 @@ fixed_t R_GetNughudViewPitch(void)
   return nughud_viewpitch;
 }
 
+int R_GetLightLevelInPoint(const fixed_t x, const fixed_t y)
+{
+  int lightlevel;
+
+  sector_t *const sector = R_PointInSubsector(x, y)->sector;
+
+  if (demo_version > DV_BOOM)
+  {
+    sector_t tempsector;
+    int floorlightlevel, ceilinglightlevel;
+
+    R_FakeFlat(sector, &tempsector, &floorlightlevel, &ceilinglightlevel, false);
+
+    lightlevel = (floorlightlevel + ceilinglightlevel) >> 1;
+  }
+  else { lightlevel = sector->lightlevel; }
+
+  return lightlevel;
+}
+
 // CVARs ---------------------------------------------------------------------
 
 boolean vertical_lockon;
 
-boolean thing_column_lighting;
+thinglighting_t thing_lighting_mode;
 boolean flip_levels;
 static int lowres_pixel_width;
 static int lowres_pixel_height;
@@ -1853,8 +1873,9 @@ void R_BindRenderVariables(void)
   M_BindBool("diminished_lighting", &diminished_lighting, NULL,
              true, ss_none, wad_yes, "Diminished lighting (light emitted by player)");
 
-  M_BindBool("thing_column_lighting", &thing_column_lighting, NULL,
-             false, ss_gen, wad_yes, "Per-column thing lighting");
+  M_BindNum("thing_lighting_mode", &thing_lighting_mode, NULL,
+            THINGLIGHTING_ORIGIN, THINGLIGHTING_ORIGIN, NUM_THINGLIGHTING-1, ss_gen, wad_yes,
+            "Thing lighting mode (0 = Origin (vanilla); 1 = Hitbox; 2 = Per-column");
 
   // [Nugget] ---------------------------------------------------------------/
 
