@@ -562,7 +562,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     pcl_cosine = finecosine[angle];
     pcl_sine   =   finesine[angle];
 
-    pcl_lightindex = STRICTMODE(!diminished_lighting) ? 0 : R_GetLightIndex(spryscale);
+    pcl_lightindex = STRICTMODE(!diminishing_lighting) ? 0 : R_GetLightIndex(spryscale);
   }
   else { percolumn_lighting = false; }
 
@@ -835,7 +835,7 @@ static void R_ProjectSprite (mobj_t* thing)
   }
   else
     {      // diminished light
-      const int index = STRICTMODE(!diminished_lighting) // [Nugget]
+      const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
                         ? 0 : R_GetLightIndex(xscale);
 
       // [Nugget] Thing lighting
@@ -1106,7 +1106,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   else
   {
     // [Nugget]
-    const int index = (STRICTMODE(!diminished_lighting)) ? 0 : MAXLIGHTSCALE-1;
+    const int index = (STRICTMODE(!diminishing_lighting)) ? 0 : MAXLIGHTSCALE-1;
 
     vis->colormap[0] = spritelights[index];  // local light
     vis->colormap[1] = fullcolormap;

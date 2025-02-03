@@ -67,7 +67,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Night-Vision Visor Effect_** setting [i.b. International Doom]
 - **_Damage Tint Cap_** and **_Bonus Tint Cap_**, to attenuate or disable said screen tinting
 - **_Fake Contrast_** setting
-- Toggle for **Diminished Lighting** (CFG-only: `diminished_lighting`)
+- Toggle for **diminishing lighting** (CFG-only: `diminishing_lighting`)
 - **_Screen Wipe speed percentage_** setting
 - **_Alternative Intermission Background_** setting, to replace the intermission graphic with a darkened rotating camera view
 - **Color settings** [p.f. International Doom]

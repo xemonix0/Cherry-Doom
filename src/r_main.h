@@ -137,7 +137,7 @@ extern thinglighting_t thing_lighting_mode;
 extern boolean flip_levels;
 extern boolean nightvision_visor;
 extern int fake_contrast;
-extern boolean diminished_lighting;
+extern boolean diminishing_lighting;
 extern boolean a11y_weapon_pspr;
 extern boolean a11y_invul_colormap;
 extern int pspr_translucency_pct;

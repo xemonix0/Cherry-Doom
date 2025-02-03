@@ -175,7 +175,7 @@ static int lowres_pixel_width;
 static int lowres_pixel_height;
 boolean nightvision_visor;
 int fake_contrast;
-boolean diminished_lighting;
+boolean diminishing_lighting;
 static boolean a11y_weapon_flash;
 boolean a11y_weapon_pspr;
 boolean a11y_invul_colormap;
@@ -1870,12 +1870,12 @@ void R_BindRenderVariables(void)
             "Fake contrast for walls (0 = Off, 1 = Smooth, 2 = Vanilla)");
 
   // (CFG-only)
-  M_BindBool("diminished_lighting", &diminished_lighting, NULL,
-             true, ss_none, wad_yes, "Diminished lighting (light emitted by player)");
+  M_BindBool("diminishing_lighting", &diminishing_lighting, NULL,
+             true, ss_none, wad_yes, "Diminishing lighting (light emitted by player)");
 
   M_BindNum("thing_lighting_mode", &thing_lighting_mode, NULL,
             THINGLIGHTING_ORIGIN, THINGLIGHTING_ORIGIN, NUM_THINGLIGHTING-1, ss_gen, wad_yes,
-            "Thing lighting mode (0 = Origin (vanilla); 1 = Hitbox; 2 = Per-column");
+            "Thing lighting mode (0 = Origin (vanilla); 1 = Hitbox; 2 = Per-column)");
 
   // [Nugget] ---------------------------------------------------------------/
 

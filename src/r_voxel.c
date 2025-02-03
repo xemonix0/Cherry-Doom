@@ -709,7 +709,7 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 	else
 	{
 		// diminished light
-		const int index = STRICTMODE(!diminished_lighting) // [Nugget]
+		const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
 											? 0 : R_GetLightIndex(xscale);
 
 		// [Nugget] Thing lighting
@@ -883,7 +883,7 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 		int lightnum = (R_GetLightLevelInPoint(gx, gy) >> LIGHTSEGSHIFT)
 								 + extralight;
 
-		const int lightindex = STRICTMODE(!diminished_lighting)
+		const int lightindex = STRICTMODE(!diminishing_lighting)
 													 ? 0 : R_GetLightIndex(B_xscale);
 
 		colormap[0] = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)][lightindex];
