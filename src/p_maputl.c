@@ -22,6 +22,7 @@
 
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h> // [Nugget]
 
 #include "doomdata.h"
 #include "doomstat.h"
