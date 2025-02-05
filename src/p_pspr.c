@@ -1672,6 +1672,18 @@ void A_WeaponProjectile(player_t *player, pspdef_t *psp)
   spawnofs_xy = psp->state->args[3];
   spawnofs_z  = psp->state->args[4];
 
+  // [Nugget] Smart autoaim
+  if (CASUALPLAY(smart_autoaim))
+  {
+    const angle_t an2 = player->mo->angle + (angle_t) (((int64_t) angle << 16) / 360);
+
+    P_SetProjectileOffsets(
+      FixedMul(spawnofs_xy, finecosine[an2]),
+      FixedMul(spawnofs_xy,   finesine[an2]),
+      spawnofs_z
+    );
+  }
+
   mo = P_SpawnPlayerMissile(player->mo, type);
   if (!mo)
     return;

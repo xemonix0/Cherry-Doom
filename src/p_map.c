@@ -100,7 +100,52 @@ msecnode_t *sector_list = NULL;                             // phares 3/16/98
 
 // [Nugget] /=================================================================
 
+// CVARs
+boolean smart_autoaim;
+
 boolean riotmode;
+
+// Smart autoaim -------------------------------------------------------------
+
+static boolean firing_player_projectile = false;
+
+static fixed_t sa_x, sa_y, sa_z, sa_r, sa_h,
+               sa_xofs, sa_yofs, sa_zofs;
+
+static int sa_fineangle;
+static fixed_t sa_distance;
+
+void P_ClearProjectileInfo(void)
+{
+  firing_player_projectile = false;
+
+  sa_x = sa_y = sa_z = sa_r = sa_h = sa_xofs = sa_yofs = sa_zofs = 0;
+}
+
+void P_SetProjectileInfo(fixed_t x, fixed_t y, fixed_t z, fixed_t radius, fixed_t height)
+{
+  if (!CASUALPLAY(smart_autoaim)) { return; }
+
+  firing_player_projectile = true;
+
+  // Offsets, if any, should be set already
+  sa_x = x + sa_xofs;
+  sa_y = y + sa_yofs;
+  sa_z = z + sa_zofs;
+  sa_r = radius;
+  sa_h = height;
+}
+
+void P_SetProjectileOffsets(fixed_t x, fixed_t y, fixed_t z)
+{
+  if (!CASUALPLAY(smart_autoaim)) { return; }
+
+  sa_xofs = x;
+  sa_yofs = y;
+  sa_zofs = z;
+}
+
+static boolean P_SmartAimLineAttack(fixed_t slope);
 
 // Hitscan trails ------------------------------------------------------------
 
@@ -1793,7 +1838,27 @@ static boolean PTR_AimTraverse (intercept_t *in)
   if (thingbottomslope < bottomslope)
     thingbottomslope = bottomslope;
 
-  aimslope = (thingtopslope+thingbottomslope)/2;
+  // [Nugget] Smart autoaim /-------------------------------------------------
+
+  const fixed_t finalslope = (thingtopslope + thingbottomslope) / 2;
+
+  // If we're aiming a projectile and it won't hit a shootable thing with this slope,
+  // continue looking for targets
+  if (firing_player_projectile)
+  {
+    sa_distance = sqrt(  pow(th->x - shootthing->x, 2)
+                       + pow(th->y - shootthing->y, 2));
+
+    if (!P_SmartAimLineAttack(finalslope))
+    {
+      return true;
+    }
+  }
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  aimslope = finalslope;
+
   linetarget = th;
 
   // [Nugget]
@@ -2036,6 +2101,8 @@ fixed_t P_AimLineAttack(mobj_t *t1,angle_t angle,fixed_t distance,int mask)
   // killough 8/2/98: prevent friends from aiming at friends
   aim_flags_mask = mask & MF_FRIEND;
 
+  sa_fineangle = angle; // [Nugget] Smart autoaim
+
   P_PathTraverse(t1->x,t1->y,x2,y2,PT_ADDLINES|PT_ADDTHINGS,PTR_AimTraverse);
 
   if (linetarget)
@@ -2253,7 +2320,125 @@ boolean P_CheckSight_12(mobj_t *t1, mobj_t *t2)
   return P_SightPathTraverse (t1->x, t1->y, t2->x, t2->y);
 }
 
-// [Nugget] Chasecam /--------------------------------------------------------
+// [Nugget] /=================================================================
+
+// Smart autoaim -------------------------------------------------------------
+
+static fixed_t sa_topslope, sa_bottomslope;
+static boolean sa_hit_shootable_thing;
+
+static boolean PTR_SmartAimTraverse(intercept_t *in)
+{
+  sa_hit_shootable_thing = false;
+
+  if (in->isaline)
+  {
+    line_t *const li = in->d.line;
+
+    if (!(li->flags & ML_TWOSIDED)) { return false; } // stop
+
+    // Crosses a two sided line.
+    // A two sided line will restrict
+    // the possible target ranges.
+
+    P_LineOpening(li);
+
+    if (openbottom >= opentop) { return false; } // stop
+
+    const fixed_t dist = FixedMul (sa_distance, in->frac);
+
+    // Andrey Budko: emulation of missed back side on two-sided lines.
+    // backsector can be NULL when emulating missing back side.
+    if (li->backsector == NULL ||
+        li->frontsector->floorheight != li->backsector->floorheight)
+    {
+      const fixed_t slope = FixedDiv(openbottom - shootz, dist);
+
+      sa_bottomslope = MAX(sa_bottomslope, slope);
+    }
+
+    if (li->backsector == NULL ||
+        li->frontsector->ceilingheight != li->backsector->ceilingheight)
+    {
+      const fixed_t slope = FixedDiv(opentop - shootz, dist);
+
+      sa_topslope = MIN(sa_topslope, slope);
+    }
+
+    if (sa_topslope <= sa_bottomslope) { return false; } // stop
+
+    return true; // shot continues
+  }
+
+  // shoot a thing
+
+  const mobj_t *const th = in->d.thing;
+  
+  if (!(th->flags & (MF_SOLID|MF_SHOOTABLE)))
+  { return true; } // corpse or something
+
+  // killough 7/19/98, 8/2/98:
+  // friends don't aim at friends (except players), at least not first
+  if (th->flags & shootthing->flags & aim_flags_mask && !th->player)
+  { return true; }
+
+  if (th == shootthing)
+  { return true; } // can't shoot self
+
+  // check angles to see if the thing can be aimed at
+
+  const fixed_t dist = FixedMul(sa_distance, in->frac);
+
+  const fixed_t thingtopslope = FixedDiv(th->z + thingheight(th, shootthing) - shootz, dist);
+
+  if (thingtopslope < sa_bottomslope) { return true; } // shot over the thing
+
+  const fixed_t thingbottomslope = FixedDiv (th->z - shootz, dist);
+
+  if (thingbottomslope > sa_topslope) { return true; } // shot under the thing
+
+  // this thing can be hit!
+
+  sa_hit_shootable_thing = !!(th->flags & MF_SHOOTABLE);
+
+  return false; // don't go any farther
+}
+
+static boolean P_SmartAimLineAttack(fixed_t slope)
+{
+  // Should be called by `P_AimLineAttack()`, so many variables are already set
+
+  boolean ret = true;
+
+  P_SaveIntercepts();
+
+  sa_topslope    = slope + 1;
+  sa_bottomslope = slope - 1;
+
+  for (int i = 0;  i < 8;  i++)
+  {
+    const fixed_t x = sa_x + (( i      % 2) ? sa_r : -sa_r),
+                  y = sa_y + (((i / 2) % 2) ? sa_r : -sa_r),
+                  z = sa_z + (( i / 4     ) ? sa_h : 0    );
+
+    const fixed_t x2 = x + ((sa_distance >> FRACBITS) * finecosine[sa_fineangle]),
+                  y2 = y + ((sa_distance >> FRACBITS) *   finesine[sa_fineangle]);
+
+    shootz = z;
+
+    if (!P_PathTraverse(x, y, x2, y2, PT_ADDLINES|PT_ADDTHINGS, PTR_SmartAimTraverse)
+        && !sa_hit_shootable_thing)
+    {
+      ret = false; // Hit something solid that isn't a shootable thing
+      break;
+    }
+  }
+
+  P_RestoreIntercepts();
+  return ret;
+}
+
+// Chasecam ------------------------------------------------------------------
 
 static boolean PTR_ChasecamTraverse(intercept_t *in)
 {
@@ -2331,7 +2516,7 @@ void P_PositionChasecam(fixed_t z, fixed_t dist, fixed_t slope)
   overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 }
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 //
 // RADIUS ATTACK

@@ -1951,6 +1951,7 @@ static setup_menu_t weap_settings4[] =
 {
   {"Nugget - Gameplay", S_SKIP|S_TITLE, W_X, M_SPC},
 
+    {"Smart Autoaim",                S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"smart_autoaim"}},
     {"No Horizontal Autoaim",        S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"no_hor_autoaim"}},
     {"Switch on Pickup",             S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"switch_on_pickup"}},
     {"Allow Switch Interruption",    S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"weapswitch_interruption"}},

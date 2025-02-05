@@ -6189,6 +6189,9 @@ void G_BindWeapVariables(void)
 
   // [Nugget] /---------------------------------------------------------------
 
+  M_BindBool("smart_autoaim", &smart_autoaim, NULL,
+             false, ss_weap, wad_yes, "Smart projectile autoaim (checks if projectile will hit a living entity)");
+
   M_BindBool("no_hor_autoaim", &no_hor_autoaim, NULL,
              false, ss_weap, wad_yes, "Disable horizontal projectile autoaim");
 

@@ -1731,6 +1731,15 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   // killough 7/19/98: autoaiming was not in original beta
   if (!beta_emulation || autoaim)
     {
+      // [Nugget] Smart autoaim
+      P_SetProjectileInfo(
+        source->x,
+        source->y,
+        source->z + (4*8*FRACUNIT) - source->player->crouchoffset,
+        mobjinfo[type].radius,
+        mobjinfo[type].height
+      );
+
       // killough 8/2/98: prefer autoaiming at enemies
       int mask = demo_version < DV_MBF ? 0 : MF_FRIEND;
       // [Nugget] Moved vertical aiming code above
@@ -1752,6 +1761,8 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
             slope = (vertical_aiming == VERTAIM_DIRECTAUTO) ? source->player->slope : 0;
         }
       while (mask && (mask=0, !linetarget));  // killough 8/2/98
+
+      P_ClearProjectileInfo(); // [Nugget] Smart autoaim
     }
 
   x = source->x;

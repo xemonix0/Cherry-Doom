@@ -86,6 +86,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 
 - **Improved interpolation**
 - **Extended _View/Weapon Bob_ percentages**
+- **_Smart Autoaim_** setting
 - **_No Horizontal Autoaim_** setting
 - **_Switch [Weapon] on Pickup_** setting
 - **_Allow [Weapon] Switch Interruption_** setting

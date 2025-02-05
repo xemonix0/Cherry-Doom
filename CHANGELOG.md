@@ -1,6 +1,7 @@
 ## New Features
 
 - **_Thing Lighting Mode_** setting
+- **_Smart Autoaim_** setting
 
 ## Changes
 
