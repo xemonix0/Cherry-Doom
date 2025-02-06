@@ -1704,7 +1704,8 @@ static setup_tab_t weap_tabs[] = {
     {"Priority"},
 
     // [Nugget]
-    {"Nugget"},
+    {"NG1"},
+    {"NG2"},
 
     {NULL}
 };
@@ -1726,7 +1727,7 @@ static setup_menu_t weap_settings1[] = {
      {"doom_weapon_cycle"}},
 
     {"Use Weapon Toggles", S_ONOFF | S_BOOM, CNTR_X, M_SPC,
-     {"doom_weapon_toggles"}},
+     {"doom_weapon_toggles"}, .action = MN_UpdateImprovedWeaponTogglesItem}, // [Nugget] Improved weapon toggles
 
     // killough 8/8/98
     {"Pre-Beta BFG", S_ONOFF | S_STRICT, CNTR_X, M_SPC, {"classic_bfg"}},
@@ -1926,6 +1927,23 @@ static setup_menu_t weap_settings3[] = {
 
 // [Nugget] /-----------------------------------------------------------------
 
+#define W_X       235
+#define W_X_THRM8 (W_X - (M_THRM_SIZE8 + 3) * M_THRM_STEP)
+
+static setup_menu_t weap_settings4[] =
+{
+  {"Nugget - Gameplay", S_SKIP|S_TITLE, W_X, M_SPC},
+
+    {"Smart Autoaim",                S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"smart_autoaim"}},
+    {"No Horizontal Autoaim",        S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"no_hor_autoaim"}},
+    {"Switch on Pickup",             S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"switch_on_pickup"}},
+    {"Improved Weapon Toggles",      S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"improved_weapon_toggles"}},
+    {"Allow Switch Interruption",    S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"weapswitch_interruption"}},
+    {"Prev/Next Skip Empty Weapons", S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"skip_ammoless_weapons"}},
+
+  MI_END
+};
+
 static const char *bobbing_style_strings[] = {
   "Vanilla", "Inv. Vanilla", "Alpha", "Inv. Alpha", "Smooth", "Inv. Smooth", "Quake"
 };
@@ -1939,25 +1957,13 @@ static void NuggetResetWeaponInertia(void)
   P_NuggetResetWeaponInertia();
 }
 
-#define W_X       235
-#define W_X_THRM8 (W_X - (M_THRM_SIZE8 + 3) * M_THRM_STEP)
-
 void WeaponFlashTrans(void)
 {
     R_GetGenericTranMap(pspr_translucency_pct);
 }
 
-static setup_menu_t weap_settings4[] =
+static setup_menu_t weap_settings5[] =
 {
-  {"Nugget - Gameplay", S_SKIP|S_TITLE, W_X, M_SPC},
-
-    {"Smart Autoaim",                S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"smart_autoaim"}},
-    {"No Horizontal Autoaim",        S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"no_hor_autoaim"}},
-    {"Switch on Pickup",             S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"switch_on_pickup"}},
-    {"Allow Switch Interruption",    S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"weapswitch_interruption"}},
-    {"Prev/Next Skip Empty Weapons", S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"skip_ammoless_weapons"}},
-
-  MI_GAP,
   {"Nugget - Cosmetic", S_SKIP|S_TITLE, W_X, M_SPC},
 
     {"Bobbing Style",             S_CHOICE|S_STRICT, W_X, M_SPC, {"bobbing_style"}, .strings_id = str_bobbing_style},
@@ -1974,12 +1980,18 @@ static setup_menu_t weap_settings4[] =
 #undef W_X_THRM8
 #undef W_X
 
+void MN_UpdateImprovedWeaponTogglesItem(void)
+{
+    DisableItem(!(demo_compatibility || doom_weapon_toggles),
+                weap_settings4, "improved_weapon_toggles");
+}
+
 // [Nugget] -----------------------------------------------------------------/
 
 static setup_menu_t *weap_settings[] = {
     weap_settings1, weap_settings2, weap_settings3,
 
-    weap_settings4, // [Nugget]
+    weap_settings4, weap_settings5, // [Nugget]
 
     NULL
 
@@ -5731,6 +5743,7 @@ void MN_SetupResetMenu(void)
                 enem_settings1, "extra_gibbing");
 
     UpdatePaletteItems();
+    MN_UpdateImprovedWeaponTogglesItem();
     MN_UpdateNughudItem(); // NUGHUD
 }
 

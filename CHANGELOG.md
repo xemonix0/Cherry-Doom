@@ -2,6 +2,7 @@
 
 - **_Thing Lighting Mode_** setting
 - **_Smart Autoaim_** setting
+- **_Improved Weapon Toggles_** setting
 
 ## Changes
 

@@ -119,6 +119,7 @@ static byte     consistancy[MAXPLAYERS][BACKUPTICS];
 // CVARs ---------------------------------------------------------------------
 
 boolean one_key_saveload;
+boolean improved_weapon_toggles;
 boolean skip_ammoless_weapons;
 boolean comp_longautoaim;
 
@@ -195,6 +196,96 @@ void G_ResetSlowMotion(void)
 int G_GetSlowMotionFactor(void)
 {
   return slow_motion_factor;
+}
+
+// Improved weapon toggles ---------------------------------------------------
+
+boolean G_ToggleFistChainsaw(const player_t *const player, boolean vanilla)
+{
+  const boolean saw_preferred = vanilla || P_WeaponPreferred(wp_chainsaw, wp_fist);
+  const boolean berserk = player->powers[pw_strength];
+
+  if (CASUALPLAY(weapswitch_interruption)
+      && player->pendingweapon != wp_nochange
+      && !(   player->pendingweapon == wp_fist
+           || player->pendingweapon == wp_chainsaw))
+  {
+    return player->readyweapon == wp_chainsaw;
+  }
+  else if (CASUALPLAY(improved_weapon_toggles))
+  {
+    if (player->readyweapon == wp_fist
+        || player->pendingweapon == wp_fist
+        || player->pendingweapon == wp_chainsaw)
+    {
+      return player->pendingweapon != wp_chainsaw || (vanilla && !berserk);
+    }
+    else if (player->readyweapon == wp_chainsaw)
+    {
+      return player->pendingweapon == wp_fist || (vanilla && !berserk);
+    }
+    else
+    {
+      return !berserk || saw_preferred;
+    }
+  }
+  else
+  {
+    if (vanilla)
+    {
+      return player->readyweapon != wp_chainsaw || !berserk;
+    }
+    else
+    {
+      return player->readyweapon != wp_chainsaw
+             && (player->readyweapon == wp_fist
+                 || !berserk
+                 || saw_preferred);
+    }
+  }
+}
+
+boolean G_ToggleShotgunSSG(const player_t *const player, boolean vanilla)
+{
+  const boolean ssg_preferred = vanilla || P_WeaponPreferred(wp_supershotgun, wp_shotgun);
+
+  if (CASUALPLAY(weapswitch_interruption)
+      && player->pendingweapon != wp_nochange
+      && !(   player->pendingweapon == wp_shotgun
+           || player->pendingweapon == wp_supershotgun))
+  {
+    return player->readyweapon == wp_supershotgun;
+  }
+  else if (CASUALPLAY(improved_weapon_toggles))
+  {
+    if (player->readyweapon == wp_shotgun
+        || player->pendingweapon == wp_shotgun
+        || player->pendingweapon == wp_supershotgun)
+    {
+      return player->pendingweapon != wp_supershotgun;
+    }
+    else if (player->readyweapon == wp_supershotgun)
+    {
+      return player->pendingweapon == wp_shotgun;
+    }
+    else
+    {
+      return ssg_preferred;
+    }
+  }
+  else
+  {
+    if (vanilla)
+    {
+      return player->readyweapon != wp_supershotgun;
+    }
+    else
+    {
+      return player->readyweapon == wp_shotgun
+             || (player->readyweapon != wp_supershotgun
+                 && ssg_preferred);
+    }
+  }
 }
 
 // Custom Skill --------------------------------------------------------------
@@ -371,7 +462,7 @@ boolean         mouselook = false;
 boolean         padlook = false;
 // killough 4/13/98: Make clock rate adjustable by scale factor
 int             realtic_clock_rate = 100;
-static boolean  doom_weapon_toggles;
+boolean         doom_weapon_toggles; // [Nugget] Global
 
 complevel_t     force_complevel, default_complevel;
 
@@ -836,10 +927,7 @@ static void AdjustWeaponSelection(int *newweapon)
 
     if (*newweapon == wp_fist
         && player->weaponowned[wp_chainsaw]
-        && player->readyweapon != wp_chainsaw
-        && (player->readyweapon == wp_fist
-            || !player->powers[pw_strength]
-            || P_WeaponPreferred(wp_chainsaw, wp_fist)))
+        && G_ToggleFistChainsaw(player, false)) // [Nugget] Improved weapon toggles
     {
         *newweapon = wp_chainsaw;
     }
@@ -852,9 +940,7 @@ static void AdjustWeaponSelection(int *newweapon)
     if (*newweapon == wp_shotgun && ALLOW_SSG
         && player->weaponowned[wp_supershotgun]
         && (!player->weaponowned[wp_shotgun]
-            || player->readyweapon == wp_shotgun
-            || (player->readyweapon != wp_supershotgun
-                && P_WeaponPreferred(wp_supershotgun, wp_shotgun))))
+            || G_ToggleShotgunSSG(player, false))) // [Nugget] Improved weapon toggles
     {
         *newweapon = wp_supershotgun;
     }
@@ -1079,7 +1165,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   boolean ilw_active = false;
 
-  if (CASUALPLAY(weapswitch_interruption))
+  if (CASUALPLAY(improved_weapon_toggles || weapswitch_interruption))
   {
     static boolean ilw_down = false;
 
@@ -1127,7 +1213,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
       boolean iw_active[9] = {false};
 
-      if (CASUALPLAY(weapswitch_interruption))
+      if (CASUALPLAY(improved_weapon_toggles || weapswitch_interruption))
       {
         static boolean iw_down[9] = {false};
 
@@ -6197,6 +6283,9 @@ void G_BindWeapVariables(void)
 
   M_BindBool("switch_on_pickup", &switch_on_pickup, NULL,
              true, ss_weap, wad_no, "Switch weapons when acquiring new ones or ammo for them");
+
+  M_BindBool("improved_weapon_toggles", &improved_weapon_toggles, NULL,
+             false, ss_weap, wad_no, "Improved Fist/Chainsaw and Shotgun/SSG toggles");
 
   M_BindBool("weapswitch_interruption", &weapswitch_interruption, NULL,
              false, ss_weap, wad_no, "Allow interruption of weapon switches");
