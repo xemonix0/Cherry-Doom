@@ -188,6 +188,8 @@ enum {
   CHASECAMMODE_OFF,
   CHASECAMMODE_BACK,
   CHASECAMMODE_FRONT,
+
+  NUM_CHASECAMMODES
 }; extern int chasecam_mode;
 extern boolean chasecam_crosshair;
 

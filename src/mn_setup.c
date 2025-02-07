@@ -5755,22 +5755,30 @@ void MN_BindMenuVariables(void)
 
     // [Nugget] /-------------------------------------------------------------
 
-    BIND_NUM_GENERAL(menu_backdrop_darkening, 20, 0, 31,
-        "Darkening level for dark menu backdrop");
+    // (CFG-only)
+    BIND_NUM(menu_backdrop_darkening,
+             20, 0, 31,
+             "Darkening level for dark menu backdrop");
 
-    BIND_BOOL_GENERAL(menu_background_all, false, "Backdrop for all menus");
+    M_BindBool("menu_background_all", &menu_background_all, NULL,
+               false, ss_gen, wad_yes,
+               "Backdrop for all menus");
 
-    BIND_BOOL_GENERAL(no_menu_tint, false, "Disable palette tint in menus");
+    M_BindBool("no_menu_tint", &no_menu_tint, NULL,
+               false, ss_gen, wad_yes,
+               "Disable palette tint in menus");
 
     M_BindBool("hud_menu_shadows", &hud_menu_shadows, NULL,
-               false, ss_gen, wad_yes, "Shadows for HUD/menu graphics");
+               false, ss_gen, wad_yes,
+               "Shadows for HUD/menu graphics");
 
     // (CFG-only)
     M_BindNum("hud_menu_shadows_filter_pct", &hud_menu_shadows_filter_pct, NULL,
               66, 0, 100, ss_none, wad_yes,
               "HUD/menu-shadows translucency percent");
 
-    BIND_BOOL_GENERAL(quick_quitgame, false, "Skip \"Quit Game\" prompt");
+    BIND_BOOL_GENERAL(quick_quitgame, false,
+                      "Skip \"Quit Game\" prompt");
 
     // [Nugget] -------------------------------------------------------------/
 

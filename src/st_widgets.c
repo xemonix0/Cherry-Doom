@@ -1676,26 +1676,31 @@ void ST_BindHUDVariables(void)
   // [Nugget] /---------------------------------------------------------------
 
   M_BindNum("hud_stats_format_map", &hud_stats_format_map, NULL,
-            STATSFORMAT_MATCHHUD, STATSFORMAT_MATCHHUD, NUM_STATSFORMATS-1,
-            ss_stat, wad_no,
+            STATSFORMAT_MATCHHUD, STATSFORMAT_MATCHHUD, NUM_STATSFORMATS-1, ss_stat, wad_no,
             "Format of level stats in automap (0 = Match HUD)");
 
-  M_BindBool("hud_stats_kills", &hud_stats_show[SHOWSTATS_KILLS], NULL, true, ss_stat, wad_no,
+  M_BindBool("hud_stats_kills", &hud_stats_show[SHOWSTATS_KILLS], NULL,
+             true, ss_stat, wad_no,
              "Show kill count in the level-stats widget");
 
-  M_BindBool("hud_stats_items", &hud_stats_show[SHOWSTATS_ITEMS], NULL, true, ss_stat, wad_no,
+  M_BindBool("hud_stats_items", &hud_stats_show[SHOWSTATS_ITEMS], NULL,
+             true, ss_stat, wad_no,
              "Show item count in the level-stats widget");
 
-  M_BindBool("hud_stats_secrets", &hud_stats_show[SHOWSTATS_SECRETS], NULL, true, ss_stat, wad_no,
+  M_BindBool("hud_stats_secrets", &hud_stats_show[SHOWSTATS_SECRETS], NULL,
+             true, ss_stat, wad_no,
              "Show secrets count in the level-stats widget");
 
-  M_BindBool("hud_stats_kills_map", &hud_stats_show_map[SHOWSTATS_KILLS], NULL, true, ss_stat, wad_no,
+  M_BindBool("hud_stats_kills_map", &hud_stats_show_map[SHOWSTATS_KILLS], NULL,
+             true, ss_stat, wad_no,
              "Show kill count in the automap's level-stats widget");
 
-  M_BindBool("hud_stats_items_map", &hud_stats_show_map[SHOWSTATS_ITEMS], NULL, true, ss_stat, wad_no,
+  M_BindBool("hud_stats_items_map", &hud_stats_show_map[SHOWSTATS_ITEMS], NULL,
+             true, ss_stat, wad_no,
              "Show item count in the automap's level-stats widget");
 
-  M_BindBool("hud_stats_secrets_map", &hud_stats_show_map[SHOWSTATS_SECRETS], NULL, true, ss_stat, wad_no,
+  M_BindBool("hud_stats_secrets_map", &hud_stats_show_map[SHOWSTATS_SECRETS], NULL,
+             true, ss_stat, wad_no,
              "Show secrets count in the automap's level-stats widget");
 
   // [Nugget] ---------------------------------------------------------------/
@@ -1727,21 +1732,23 @@ void ST_BindHUDVariables(void)
 
   // [Nugget] /---------------------------------------------------------------
 
-  M_BindBool("hud_time_teleport", &hud_time[TIMER_TELEPORT], NULL, false, ss_stat, wad_no,
+  M_BindBool("hud_time_teleport", &hud_time[TIMER_TELEPORT], NULL,
+             false, ss_stat, wad_no,
              "Show split time when going through a teleporter");
 
-  M_BindBool("hud_time_keypickup", &hud_time[TIMER_KEYPICKUP], NULL, false, ss_stat, wad_no,
+  M_BindBool("hud_time_keypickup", &hud_time[TIMER_KEYPICKUP], NULL,
+             false, ss_stat, wad_no,
              "Show split time when picking up a key");
 
   M_BindNum("hud_power_timers", &hud_power_timers, NULL,
-            HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS,
-            ss_stat, wad_no,
+            HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS, ss_stat, wad_no,
             "Show powerup-timers widget (1 = On automap; 2 = On HUD; 3 = Always)");
 
   // [Nugget] ---------------------------------------------------------------/
 
   // [Nugget]
-  M_BindBool("hud_allow_icons", &hud_allow_icons, NULL, true, ss_stat, wad_yes,
+  M_BindBool("hud_allow_icons", &hud_allow_icons, NULL,
+             true, ss_stat, wad_yes,
              "Allow usage of icons for some labels in HUD widgets");
 
   M_BindNum("hudcolor_titl", &hudcolor_titl, NULL,
@@ -1801,7 +1808,8 @@ void ST_BindHUDVariables(void)
 
   // [Nugget] Announce milestone completion
   M_BindBool("announce_milestones", &announce_milestones, NULL,
-            false, ss_stat, wad_no, "Announce completion of milestones");
+            false, ss_stat, wad_yes,
+            "Announce completion of milestones");
 
   M_BindBool("show_toggle_messages", &show_toggle_messages, NULL,
             true, ss_stat, wad_no, "Show toggle messages");
@@ -1812,7 +1820,8 @@ void ST_BindHUDVariables(void)
 
   // [Nugget] (CFG-only)
   M_BindBool("show_save_messages", &show_save_messages, NULL,
-             true, ss_none, wad_no, "Show save messages");
+             true, ss_none, wad_no,
+             "Show save messages");
 
   // [Nugget] Restored menu item
   M_BindNum("hudcolor_obituary", &hudcolor_obituary, NULL,
@@ -1829,18 +1838,26 @@ void ST_BindHUDVariables(void)
 
   // Message fadeout
   M_BindBool("message_fadeout", &message_fadeout, NULL,
-             false, ss_stat, wad_no, "Messages fade out");
+             false, ss_stat, wad_yes,
+             "Messages fade out");
 
   // Message flash
   M_BindBool("message_flash", &message_flash, NULL,
-             false, ss_stat, wad_no, "Messages flash when they first appear");
+             false, ss_stat, wad_yes,
+             "Messages flash when they first appear");
 
-  BIND_NUM(hud_msg_duration, 0, 0, UL, "Force duration of messages, in tics (0 = Don't force)");
-  BIND_NUM(hud_chat_duration, 0, 0, UL, "Force duration of chat messages, in tics (0 = Don't force)");
-  BIND_NUM(hud_msg_lines, 1, 1, 8, "Number of lines for message list");
+  BIND_NUM(hud_msg_duration, 0, 0, UL,
+           "Force duration of messages, in tics (0 = Don't force)");
+
+  BIND_NUM(hud_chat_duration, 0, 0, UL,
+           "Force duration of chat messages, in tics (0 = Don't force)");
+
+  BIND_NUM(hud_msg_lines, 1, 1, 8,
+           "Number of lines in message list");
 
   M_BindBool("hud_msg_group", &hud_msg_group, NULL,
-             false, ss_stat, wad_no, "Group repeated messages together");
+             false, ss_stat, wad_no,
+             "Group repeated messages together");
 
   // (CFG-only)
   BIND_BOOL(hud_msg_scrollup, true, "Message list scrolls upwards");
