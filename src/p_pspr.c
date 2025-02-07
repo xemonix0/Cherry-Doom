@@ -1675,7 +1675,8 @@ void A_WeaponProjectile(player_t *player, pspdef_t *psp)
   // [Nugget] Smart autoaim
   if (CASUALPLAY(smart_autoaim))
   {
-    const angle_t an2 = player->mo->angle + (angle_t) (((int64_t) angle << 16) / 360);
+    const int an2 = (player->mo->angle + (angle_t) (((int64_t) angle << 16) / 360))
+                    >> ANGLETOFINESHIFT;
 
     P_SetProjectileOffsets(
       FixedMul(spawnofs_xy, finecosine[an2]),
