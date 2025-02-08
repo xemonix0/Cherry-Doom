@@ -42,7 +42,9 @@
 // [Nugget]
 #include "g_game.h"
 #include "m_input.h"
+#include "m_swap.h"
 #include "p_maputl.h"
+#include "r_things.h"
 #include "w_wad.h" // W_CheckNumForName
 
 // [Nugget] CVARs
@@ -1485,7 +1487,27 @@ static void WeaponInertiaVertical(player_t* player, pspdef_t *psp)
 
   if (psp->wiy != 0)
   {
-    const fixed_t min = WEAPONTOP - (screenblocks < 11 ? (WEAPONTOP >> 1) : 0);
+    static int sprite = -1, frame = -1;
+    static const actualspriteheight_t *ash = NULL;
+    static short spritetopoffset;
+
+    if (psp->state->sprite != sprite || (psp->state->frame & FF_FRAMEMASK) != frame)
+    {
+      sprite = psp->state->sprite;
+      frame  = psp->state->frame & FF_FRAMEMASK;
+
+      ash = R_GetActualSpriteHeight(sprite, frame);
+
+      const patch_t *const patch = (patch_t *) W_CacheLumpNum(ash->lump, PU_CACHE);
+      spritetopoffset = SHORT(patch->topoffset);
+    }
+
+    const int screenbottom = SCREENHEIGHT - ((screenblocks < 11) ? 48 : 32);
+
+    fixed_t min = WEAPONTOP - ((-spritetopoffset + ash->height - screenbottom) * FRACUNIT);
+
+    min = MIN(min, WEAPONTOP);
+
     if (psp->sy2 + psp->wiy < min)
       psp->wiy = min - psp->sy2;
   }
@@ -1649,6 +1671,19 @@ void A_WeaponProjectile(player_t *player, pspdef_t *psp)
   pitch       = psp->state->args[2];
   spawnofs_xy = psp->state->args[3];
   spawnofs_z  = psp->state->args[4];
+
+  // [Nugget] Smart autoaim
+  if (CASUALPLAY(smart_autoaim))
+  {
+    const int an2 = (player->mo->angle + (angle_t) (((int64_t) angle << 16) / 360))
+                    >> ANGLETOFINESHIFT;
+
+    P_SetProjectileOffsets(
+      FixedMul(spawnofs_xy, finecosine[an2]),
+      FixedMul(spawnofs_xy,   finesine[an2]),
+      spawnofs_z
+    );
+  }
 
   mo = P_SpawnPlayerMissile(player->mo, type);
   if (!mo)

@@ -366,6 +366,69 @@ vissprite_t *R_NewVisSprite(void)
  return vissprites + num_vissprite++;
 }
 
+// [Nugget] Actual sprite height (without padding) /--------------------------
+
+static actualspriteheight_t *actual_sprite_heights = NULL;
+
+static const actualspriteheight_t *CalculateActualSpriteHeight(const int lump)
+{
+  patch_t *const patch = W_CacheLumpNum(lump, PU_CACHE);
+  const short width = SHORT(patch->width);
+
+  short actualheight = 0, toppadding = SHRT_MAX;
+
+  for (int i = 0;  i < width;  i++)
+  {
+    const post_t *post = (post_t *) ((byte *) patch + LONG(patch->columnofs[i]));
+
+    if (post->topdelta == 0xFF) { continue; }
+
+    short columnpadding = post->topdelta,
+          columnheight,
+          topdelta = 0;
+
+    do {
+      // [FG] support for tall sprites in DeePsea format
+      if (post->topdelta <= topdelta)
+      {
+        topdelta += post->topdelta;
+      }
+      else { topdelta = post->topdelta; }
+
+      columnheight = topdelta + SHORT(post->length);
+
+      post = (post_t *) ((byte *) post + 4 + post->length); // 4 = sizeof(topdelta) + sizeof(length)
+    } while (post->topdelta != 0xFF);
+
+    toppadding = MIN(toppadding, columnpadding);
+    actualheight = MAX(actualheight, columnheight);
+  }
+
+  actualheight -= toppadding;
+
+  array_push(
+    actual_sprite_heights,
+    ((actualspriteheight_t) { lump, actualheight, toppadding })
+  );
+
+  return &actual_sprite_heights[array_size(actual_sprite_heights) - 1];
+}
+
+const actualspriteheight_t *R_GetActualSpriteHeight(int sprite, int frame)
+{
+  const int lump = firstspritelump + sprites[sprite].spriteframes[frame].lump[0];
+
+  for (int i = 0;  i < array_size(actual_sprite_heights);  i++)
+  {
+    if (actual_sprite_heights[i].lump == lump)
+    { return &actual_sprite_heights[i]; }
+  }
+
+  return CalculateActualSpriteHeight(lump);
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 //
 // R_DrawMaskedColumn
 // Used for sprites and masked mid textures.
@@ -479,6 +542,32 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   spryscale = vis->scale;
   sprtopscreen = centeryfrac - FixedMul(dc_texturemid,spryscale);
 
+  // [Nugget] Thing lighting /------------------------------------------------
+
+  boolean percolumn_lighting;
+
+  fixed_t pcl_patchoffset = 0;
+  fixed_t pcl_cosine = 0, pcl_sine = 0;
+  int pcl_lightindex = 0;
+
+  if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_PERCOLUMN
+      && !vis->fullbright && dc_colormap[0] && !fixedcolormap)
+  {
+    percolumn_lighting = true;
+
+    pcl_patchoffset = SHORT(patch->leftoffset) << FRACBITS;
+
+    const int angle = (viewangle - ANG90) >> ANGLETOFINESHIFT;
+
+    pcl_cosine = finecosine[angle];
+    pcl_sine   =   finesine[angle];
+
+    pcl_lightindex = STRICTMODE(!diminishing_lighting) ? 0 : R_GetLightIndex(spryscale);
+  }
+  else { percolumn_lighting = false; }
+
+  // [Nugget] ---------------------------------------------------------------/
+
   for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
     {
       texturecolumn = frac>>FRACBITS;
@@ -487,6 +576,22 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
         continue;
       else if (texturecolumn >= SHORT(patch->width))
         break;
+
+      // [Nugget] Thing lighting
+      if (percolumn_lighting)
+      {
+        fixed_t offset = frac - pcl_patchoffset;
+
+        if (vis->flipped) { offset = -offset; }
+
+        const fixed_t gx = vis->gx + FixedMul(offset, pcl_cosine),
+                      gy = vis->gy + FixedMul(offset, pcl_sine);
+
+        int lightnum = (R_GetLightLevelInPoint(gx, gy) >> LIGHTSEGSHIFT)
+                     + extralight;
+
+        dc_colormap[0] = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)][pcl_lightindex];
+      }
 
       column = (column_t *)((byte *) patch +
                             LONG(patch->columnofs[texturecolumn]));
@@ -718,6 +823,10 @@ static void R_ProjectSprite (mobj_t* thing)
   iscale = FixedDiv(FRACUNIT, xscale);
   vis->color = thing->bloodcolor;
 
+  // [Nugget]
+  vis->fullbright = false;
+  vis->flipped = flip;
+
   if (flip)
     {
       vis->startfrac = spritewidth[lump]-1;
@@ -739,11 +848,32 @@ static void R_ProjectSprite (mobj_t* thing)
   else if (fixedcolormap)
     vis->colormap[0] = vis->colormap[1] = fixedcolormap;      // fixed map
   else if (frame & FF_FULLBRIGHT)
+  {
     vis->colormap[0] = vis->colormap[1] = fullcolormap;       // full bright  // killough 3/20/98
+    vis->fullbright = true; // [Nugget]
+  }
   else
     {      // diminished light
-      const int index = STRICTMODE(!diminished_lighting) // [Nugget]
+      const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
                         ? 0 : R_GetLightIndex(xscale);
+
+      // [Nugget] Thing lighting
+      if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_HITBOX)
+      {
+        int lightlevel = 0;
+
+        for (int i = 0;  i < 9;  i++)
+        {
+          const fixed_t gx = vis->gx + (thing->radius * ((i % 3) - 1)),
+                        gy = vis->gy + (thing->radius * ((i / 3) - 1));
+
+          lightlevel += R_GetLightLevelInPoint(gx, gy);
+        }
+
+        int lightnum = ((lightlevel / 9) >> LIGHTSEGSHIFT) + extralight;
+
+        spritelights = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)];
+      }
 
       vis->colormap[0] = spritelights[index];
       vis->colormap[1] = fullcolormap;
@@ -961,6 +1091,10 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
   vis->scale = pspritescale;
 
+  // [Nugget]
+  vis->fullbright = true; // Thing lighting: set true to make per-column lighting not apply to psprites
+  vis->flipped = flip;
+
   if (flip)
     {
       vis->xiscale = -pspriteiscale;
@@ -984,11 +1118,14 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   else if (fixedcolormap)
     vis->colormap[0] = vis->colormap[1] = fixedcolormap;           // fixed color
   else if (psp->state->frame & FF_FULLBRIGHT)
+  {
     vis->colormap[0] = vis->colormap[1] = fullcolormap;            // full bright // killough 3/20/98
+    vis->fullbright = true; // [Nugget]
+  }
   else
   {
     // [Nugget]
-    const int index = (STRICTMODE(!diminished_lighting)) ? 0 : MAXLIGHTSCALE-1;
+    const int index = (STRICTMODE(!diminishing_lighting)) ? 0 : MAXLIGHTSCALE-1;
 
     vis->colormap[0] = spritelights[index];  // local light
     vis->colormap[1] = fullcolormap;
@@ -999,8 +1136,11 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->tranmap = translucent ? R_GetGenericTranMap(pspr_translucency_pct) : NULL;
 
   // [crispy] free look
-  vis->texturemid += (centery - viewheight/2) * pspriteiscale
-                   - (STRICTMODE(ST_GetNughudOn()) ? nughud.weapheight*FRACUNIT : 0); // [Nugget] NUGHUD
+  vis->texturemid += (centery - viewheight/2) * pspriteiscale;
+
+  // [Nugget] NUGHUD
+  if (STRICTMODE(ST_GetNughudOn()))
+  { vis->texturemid -= nughud.weapheight*FRACUNIT; }
 
   if (STRICTMODE(hide_weapon)
       // [Nugget]
@@ -1057,10 +1197,20 @@ void R_DrawPlayerSprites(void)
     if (psp->state)
       R_DrawPSprite (psp, i == ps_flash && STRICTMODE(pspr_translucency_pct != 100)); // [Nugget] Translucent flashes
 
-  // [Nugget] Weapon voxels: drawn in reverse order
-  for (i = 0;  i < queued_weapon_voxels;  i++)
+  // [Nugget] Weapon voxels
+  if (queued_weapon_voxels)
   {
-    VX_DrawVoxel(&vissprites[num_vissprite - (1 + i)]);
+    const fixed_t old_centeryfrac = centeryfrac;
+
+    // Hack to make weapon voxels be unaffected by view pitch
+    if (default_vertical_aiming != VERTAIM_AUTO)
+    { centeryfrac = (viewheight / 2 + (R_GetNughudViewPitch() >> FRACBITS)) << FRACBITS; }
+
+    // Drawn in reverse order
+    for (i = 0;  i < queued_weapon_voxels;  i++)
+    { VX_DrawVoxel(&vissprites[num_vissprite - (1 + i)]); }
+
+    centeryfrac = old_centeryfrac;
   }
 }
 

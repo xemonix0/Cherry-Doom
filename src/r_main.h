@@ -123,12 +123,21 @@ void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // [Nugget] /=================================================================
 
+typedef enum thinglighting_s {
+  THINGLIGHTING_ORIGIN,
+  THINGLIGHTING_HITBOX,
+  THINGLIGHTING_PERCOLUMN,
+
+  NUM_THINGLIGHTING
+} thinglighting_t;
+
 extern boolean vertical_lockon;
 
+extern thinglighting_t thing_lighting_mode;
 extern boolean flip_levels;
 extern boolean nightvision_visor;
 extern int fake_contrast;
-extern boolean diminished_lighting;
+extern boolean diminishing_lighting;
 extern boolean a11y_weapon_pspr;
 extern boolean a11y_invul_colormap;
 extern int pspr_translucency_pct;
@@ -136,6 +145,9 @@ extern int zoom_fov;
 extern boolean comp_powerrunout;
 
 extern boolean have_crouch_sprites;
+
+fixed_t R_GetNughudViewPitch(void);
+int R_GetLightLevelInPoint(const fixed_t x, const fixed_t y);
 
 #define POWER_RUNOUT(power) \
   ((STRICTMODE(comp_powerrunout) ? (power) >= 4*32 : (power) > 4*32) || (power) & 8)
@@ -176,6 +188,8 @@ enum {
   CHASECAMMODE_OFF,
   CHASECAMMODE_BACK,
   CHASECAMMODE_FRONT,
+
+  NUM_CHASECAMMODES
 }; extern int chasecam_mode;
 extern boolean chasecam_crosshair;
 

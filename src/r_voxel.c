@@ -38,6 +38,7 @@
 #include "z_zone.h"
 
 // [Nugget]
+#include "r_bsp.h"
 #include "wi_stuff.h"
 
 static boolean voxels_found;
@@ -686,6 +687,10 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 	vis->x1 = x1;
 	vis->x2 = x2;
 
+	// [Nugget]
+	vis->fullbright = false;
+	vis->flipped = false;
+
 	// get light level...
 
 	if (vis->mobjflags & MF_SHADOW)
@@ -699,12 +704,31 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 	else if (thing->frame & FF_FULLBRIGHT)
 	{
 		vis->colormap[0] = vis->colormap[1] = fullcolormap;
+		vis->fullbright = true; // [Nugget]
 	}
 	else
 	{
 		// diminished light
-    const int index = STRICTMODE(!diminished_lighting) // [Nugget]
-                      ? 0 : R_GetLightIndex(xscale);
+		const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
+											? 0 : R_GetLightIndex(xscale);
+
+		// [Nugget] Thing lighting
+		if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_HITBOX)
+		{
+			int lightlevel = 0;
+
+			for (int i = 0;  i < 9;  i++)
+			{
+				const fixed_t gx = vis->gx + (thing->radius * ((i % 3) - 1)),
+											gy = vis->gy + (thing->radius * ((i / 3) - 1));
+
+				lightlevel += R_GetLightLevelInPoint(gx, gy);
+			}
+
+			int lightnum = ((lightlevel / 9) >> LIGHTSEGSHIFT) + extralight;
+
+			spritelights = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)];
+		}
 
 		vis->colormap[0] = spritelights[index];
 		vis->colormap[1] = fullcolormap;
@@ -837,6 +861,36 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 	int linesize = video.pitch;
 	byte * dest = I_VideoBuffer + viewwindowy * linesize + viewwindowx;
 
+	// [Nugget] Thing lighting /------------------------------------------------
+
+	const byte *colormap[2];
+	memcpy(colormap, spr->colormap, sizeof(spr->colormap));
+
+	if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_PERCOLUMN
+			&& !spr->fullbright && spr->colormap[0] && !fixedcolormap)
+	{
+		const fixed_t xofs = ((x << FRACBITS) + FRACUNIT/2) - v->x_pivot,
+									yofs = ((y << FRACBITS) + FRACUNIT/2) - v->y_pivot;
+
+		const angle_t angle = (vv->angle + ANG90) >> ANGLETOFINESHIFT;
+
+		const fixed_t cosine = finecosine[angle],
+										sine =   finesine[angle];
+
+		const fixed_t gx = spr->gx + FixedMul(xofs, cosine) + FixedMul(yofs,   sine),
+									gy = spr->gy + FixedMul(xofs,   sine) - FixedMul(yofs, cosine);
+
+		int lightnum = (R_GetLightLevelInPoint(gx, gy) >> LIGHTSEGSHIFT)
+								 + extralight;
+
+		const int lightindex = STRICTMODE(!diminishing_lighting)
+													 ? 0 : R_GetLightIndex(B_xscale);
+
+		colormap[0] = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)][lightindex];
+	}
+
+	// [Nugget] ---------------------------------------------------------------/
+
 	// iterate over screen columns
 	fixed_t ux = ((Ax - 1) | FRACMASK) + 1;
 
@@ -927,7 +981,7 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 					uy = clip_y1;
 
 				byte src = slab[0];
-				byte pix = spr->colormap[spr->brightmap[src]][src];
+				byte pix = colormap[spr->brightmap[src]][src];
 
 				for (; uy < uy1 ; uy += FRACUNIT)
 				{
@@ -942,7 +996,7 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 					uy = clip_y2;
 
 				byte src = slab[len - 1];
-				byte pix = spr->colormap[spr->brightmap[src]][src];
+				byte pix = colormap[spr->brightmap[src]][src];
 
 				for (; uy > uy2 ; uy -= FRACUNIT)
 				{
@@ -962,7 +1016,7 @@ static void VX_DrawColumn (vissprite_t * spr, int x, int y)
 					if (i >= len) i = len - 1;
 
 					byte src = slab[i];
-					byte pix = spr->colormap[spr->brightmap[src]][src];
+					byte pix = colormap[spr->brightmap[src]][src];
 
 					dest[(uy >> FRACBITS) * linesize + (ux >> FRACBITS)] = pix;
 				}
@@ -1123,7 +1177,9 @@ boolean VX_ProjectWeaponVoxel(const pspdef_t *const psp,
   if (STRICTMODE(weapon_inertia))
   {
     x += wix / 2;
-    y += wiy / 2;
+
+    if (default_vertical_aiming != VERTAIM_AUTO)
+    { y += wiy / 2; }
   }
 
   x /= 5;

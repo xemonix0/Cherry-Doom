@@ -2795,14 +2795,17 @@ void D_BindMiscVariables(void)
 
   // [Nugget] /---------------------------------------------------------------
 
-  BIND_NUM_GENERAL(wipe_speed_percentage, 100, 50, 200,
-    "Screen wipe speed percentage");
+  BIND_NUM_GENERAL(wipe_speed_percentage,
+                   100, 50, 200,
+                   "Screen-wipe speed percent");
 
-  M_BindBool("alt_interpic", &alt_interpic, NULL, false, ss_gen, wad_yes,
+  M_BindBool("alt_interpic", &alt_interpic, NULL,
+             false, ss_gen, wad_yes,
              "Alternative intermission background (spinning camera view)");
 
-  BIND_NUM_GENERAL(no_page_ticking, 0, 0, 2,
-    "Play internal demos (0 = Always; 1 = Not in menus; 2 = Never)");
+  BIND_NUM_GENERAL(no_page_ticking,
+                   0, 0, 2,
+                   "Play internal demos (0 = Always; 1 = Not in menus; 2 = Never)");
 
   // [Nugget] ---------------------------------------------------------------/
 

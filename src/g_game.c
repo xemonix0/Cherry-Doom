@@ -109,8 +109,8 @@
 
 static size_t   savegamesize = SAVEGAMESIZE; // killough
 static char     *demoname = NULL;
-// [crispy] the name originally chosen for the demo, i.e. without "-00000"
-static const char *orig_demoname = NULL;
+// the original name of the demo, without "-00000" and file extension
+static char *demoname_orig = NULL;
 static boolean  netdemo;
 static byte     *demobuffer;   // made some static -- killough
 static size_t   maxdemosize;
@@ -122,6 +122,7 @@ static byte     consistancy[MAXPLAYERS][BACKUPTICS];
 // CVARs ---------------------------------------------------------------------
 
 boolean one_key_saveload;
+boolean improved_weapon_toggles;
 boolean skip_ammoless_weapons;
 boolean comp_longautoaim;
 
@@ -198,6 +199,96 @@ void G_ResetSlowMotion(void)
 int G_GetSlowMotionFactor(void)
 {
   return slow_motion_factor;
+}
+
+// Improved weapon toggles ---------------------------------------------------
+
+boolean G_ToggleFistChainsaw(const player_t *const player, boolean vanilla)
+{
+  const boolean saw_preferred = vanilla || P_WeaponPreferred(wp_chainsaw, wp_fist);
+  const boolean berserk = player->powers[pw_strength];
+
+  if (CASUALPLAY(weapswitch_interruption)
+      && player->pendingweapon != wp_nochange
+      && !(   player->pendingweapon == wp_fist
+           || player->pendingweapon == wp_chainsaw))
+  {
+    return player->readyweapon == wp_chainsaw;
+  }
+  else if (CASUALPLAY(improved_weapon_toggles))
+  {
+    if (player->readyweapon == wp_fist
+        || player->pendingweapon == wp_fist
+        || player->pendingweapon == wp_chainsaw)
+    {
+      return player->pendingweapon != wp_chainsaw || (vanilla && !berserk);
+    }
+    else if (player->readyweapon == wp_chainsaw)
+    {
+      return player->pendingweapon == wp_fist || (vanilla && !berserk);
+    }
+    else
+    {
+      return !berserk || saw_preferred;
+    }
+  }
+  else
+  {
+    if (vanilla)
+    {
+      return player->readyweapon != wp_chainsaw || !berserk;
+    }
+    else
+    {
+      return player->readyweapon != wp_chainsaw
+             && (player->readyweapon == wp_fist
+                 || !berserk
+                 || saw_preferred);
+    }
+  }
+}
+
+boolean G_ToggleShotgunSSG(const player_t *const player, boolean vanilla)
+{
+  const boolean ssg_preferred = vanilla || P_WeaponPreferred(wp_supershotgun, wp_shotgun);
+
+  if (CASUALPLAY(weapswitch_interruption)
+      && player->pendingweapon != wp_nochange
+      && !(   player->pendingweapon == wp_shotgun
+           || player->pendingweapon == wp_supershotgun))
+  {
+    return player->readyweapon == wp_supershotgun;
+  }
+  else if (CASUALPLAY(improved_weapon_toggles))
+  {
+    if (player->readyweapon == wp_shotgun
+        || player->pendingweapon == wp_shotgun
+        || player->pendingweapon == wp_supershotgun)
+    {
+      return player->pendingweapon != wp_supershotgun;
+    }
+    else if (player->readyweapon == wp_supershotgun)
+    {
+      return player->pendingweapon == wp_shotgun;
+    }
+    else
+    {
+      return ssg_preferred;
+    }
+  }
+  else
+  {
+    if (vanilla)
+    {
+      return player->readyweapon != wp_supershotgun;
+    }
+    else
+    {
+      return player->readyweapon == wp_shotgun
+             || (player->readyweapon != wp_supershotgun
+                 && ssg_preferred);
+    }
+  }
 }
 
 // Custom Skill --------------------------------------------------------------
@@ -381,7 +472,7 @@ boolean         mouselook = false;
 boolean         padlook = false;
 // killough 4/13/98: Make clock rate adjustable by scale factor
 int             realtic_clock_rate = 100;
-static boolean  doom_weapon_toggles;
+boolean         doom_weapon_toggles; // [Nugget] Global
 
 complevel_t     force_complevel, default_complevel;
 
@@ -846,10 +937,7 @@ static void AdjustWeaponSelection(int *newweapon)
 
     if (*newweapon == wp_fist
         && player->weaponowned[wp_chainsaw]
-        && player->readyweapon != wp_chainsaw
-        && (player->readyweapon == wp_fist
-            || !player->powers[pw_strength]
-            || P_WeaponPreferred(wp_chainsaw, wp_fist)))
+        && G_ToggleFistChainsaw(player, false)) // [Nugget] Improved weapon toggles
     {
         *newweapon = wp_chainsaw;
     }
@@ -862,9 +950,7 @@ static void AdjustWeaponSelection(int *newweapon)
     if (*newweapon == wp_shotgun && ALLOW_SSG
         && player->weaponowned[wp_supershotgun]
         && (!player->weaponowned[wp_shotgun]
-            || player->readyweapon == wp_shotgun
-            || (player->readyweapon != wp_supershotgun
-                && P_WeaponPreferred(wp_supershotgun, wp_shotgun))))
+            || G_ToggleShotgunSSG(player, false))) // [Nugget] Improved weapon toggles
     {
         *newweapon = wp_supershotgun;
     }
@@ -1089,7 +1175,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   boolean ilw_active = false;
 
-  if (CASUALPLAY(weapswitch_interruption))
+  if (CASUALPLAY(improved_weapon_toggles || weapswitch_interruption))
   {
     static boolean ilw_down = false;
 
@@ -1137,7 +1223,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
       boolean iw_active[9] = {false};
 
-      if (CASUALPLAY(weapswitch_interruption))
+      if (CASUALPLAY(improved_weapon_toggles || weapswitch_interruption))
       {
         static boolean iw_down[9] = {false};
 
@@ -1453,7 +1539,7 @@ static void G_ReloadLevel(void)
   {
     ddt_cheating = 0;
     G_CheckDemoStatus();
-    G_RecordDemo(orig_demoname);
+    G_RecordDemo(demoname_orig);
   }
 
   G_InitNew(gameskill, gameepisode, gamemap);
@@ -1857,7 +1943,7 @@ static void G_JoinDemo(void)
   if (netgame)
     CheckPlayersInNetGame();
 
-  if (!orig_demoname)
+  if (!demoname_orig)
   {
     byte *actualbuffer = demobuffer;
     size_t actualsize = maxdemosize;
@@ -3408,6 +3494,8 @@ static boolean DoLoadGame(boolean do_load_autosave)
       if (demorecording) // So this can only possibly be a -recordfrom command.
 	G_BeginRecording();// Start the -recordfrom, since the game was loaded.
 
+  ST_Start();
+
   return true;
 }
 
@@ -3837,6 +3925,8 @@ static void G_DoRewind(void)
   // This is called before the countdown decrement in `G_Ticker()`,
   // so add 1 to keep it aligned
   G_SetRewindCountdown((rewind_interval * TICRATE) + 1);
+
+  ST_Start();
 }
 
 void G_EnableRewind(void)
@@ -4683,7 +4773,7 @@ void G_DeferedInitNew(skill_t skill, int episode, int map)
   {
     ddt_cheating = 0;
     G_CheckDemoStatus();
-    G_RecordDemo(orig_demoname);
+    G_RecordDemo(demoname_orig);
   }
 }
 
@@ -5261,34 +5351,30 @@ void G_InitNew(skill_t skill, int episode, int map)
 void G_RecordDemo(const char *name)
 {
   int i;
-  size_t demoname_size;
-  // [crispy] demo file name suffix counter
-  static int j = 0;
 
-  // [crispy] the name originally chosen for the demo, i.e. without "-00000"
-  if (!orig_demoname)
+  // the original name of the demo, without "-00000" and file extension
+  if (!demoname_orig)
   {
-    orig_demoname = name;
+    demoname_orig = M_StringDuplicate(name);
+    if (M_StringCaseEndsWith(demoname_orig, ".lmp"))
+    {
+      demoname_orig[strlen(demoname_orig) - 4] = '\0';
+    }
   }
 
   demo_insurance = 0;
-
   usergame = false;
-  if (demoname)
-  {
-    free(demoname);
-  }
-  demoname = AddDefaultExtension(name, ".lmp");  // 1/18/98 killough
-  demoname_size = strlen(demoname) + 6; // [crispy] + 6 for "-00000"
-  demoname = I_Realloc(demoname, demoname_size);
 
-  for(; j <= 99999 && !M_access(demoname, F_OK); ++j)
+  // + 11 for "-00000.lmp\0"
+  size_t demoname_size = strlen(demoname_orig) + 11;
+  demoname = I_Realloc(demoname, demoname_size);
+  M_snprintf(demoname, demoname_size, "%s.lmp", demoname_orig);
+
+  // demo file name suffix counter
+  static int j;
+  while (M_access(demoname, F_OK) == 0)
   {
-    char *str = M_StringDuplicate(name);
-    if (M_StringCaseEndsWith(str, ".lmp"))
-      str[strlen(str) - 4] = '\0';
-    M_snprintf(demoname, demoname_size, "%s-%05d.lmp", str, j);
-    free(str);
+    M_snprintf(demoname, demoname_size, "%s-%05d.lmp", demoname_orig, j++);
   }
 
   //!
@@ -5803,10 +5889,10 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
   return mem_ftell(stream) - pos;
 }
 
-static void WriteFileInfo(const char *name, size_t size, MEMFILE *stream)
+static long WriteFileInfo(const char *name, size_t size, long filepos,
+                          MEMFILE *stream)
 {
   filelump_t fileinfo = { 0 };
-  static long filepos = sizeof(wadinfo_t);
 
   fileinfo.filepos = LONG(filepos);
   fileinfo.size = LONG(size);
@@ -5817,6 +5903,7 @@ static void WriteFileInfo(const char *name, size_t size, MEMFILE *stream)
   mem_fwrite(&fileinfo, 1, sizeof(fileinfo), stream);
 
   filepos += size;
+  return filepos;
 }
 
 static void G_AddDemoFooter(void)
@@ -5840,10 +5927,11 @@ static void G_AddDemoFooter(void)
   mem_fwrite(&header, 1, sizeof(header), stream);
   mem_fseek(stream, 0, MEM_SEEK_END);
 
-  WriteFileInfo("PORTNAME", strlen(PROJECT_STRING), stream);
-  WriteFileInfo(NULL, strlen(DEMO_FOOTER_SEPARATOR), stream);
-  WriteFileInfo("CMDLINE", size, stream);
-  WriteFileInfo(NULL, strlen(DEMO_FOOTER_SEPARATOR), stream);
+  long filepos = sizeof(wadinfo_t);
+  filepos = WriteFileInfo("PORTNAME", strlen(PROJECT_STRING), filepos, stream);
+  filepos = WriteFileInfo(NULL, strlen(DEMO_FOOTER_SEPARATOR), filepos, stream);
+  filepos = WriteFileInfo("CMDLINE", size, filepos, stream);
+  WriteFileInfo(NULL, strlen(DEMO_FOOTER_SEPARATOR), filepos, stream);
 
   mem_get_buf(stream, (void **)&data, &size);
 
@@ -6000,35 +6088,45 @@ void G_BindGameVariables(void)
 
   // [Nugget] Custom Skill /--------------------------------------------------
 
-  M_BindNum("custom_skill_things", &custom_skill_things, NULL, 2, 0, 2, ss_skill, wad_yes, 
-    "Custom Skill: thing spawns (0 = Easy; 1 = Normal; 2 = Hard)");
+  M_BindNum("custom_skill_things", &custom_skill_things, NULL,
+            2, 0, 2, ss_skill, wad_yes,
+            "Custom Skill: thing spawns (0 = Easy; 1 = Normal; 2 = Hard)");
 
-  M_BindBool("custom_skill_coopspawns", &custom_skill_coopspawns, NULL, 0, ss_skill, wad_yes,
-    "Custom Skill: spawn multiplayer things");
+  M_BindBool("custom_skill_coopspawns", &custom_skill_coopspawns, NULL,
+            0, ss_skill, wad_yes,
+            "Custom Skill: spawn multiplayer things");
 
-  M_BindBool("custom_skill_nomonsters", &custom_skill_nomonsters, NULL, 0, ss_skill, wad_yes,
-    "Custom Skill: don't spawn monsters");
+  M_BindBool("custom_skill_nomonsters", &custom_skill_nomonsters, NULL,
+            0, ss_skill, wad_yes,
+            "Custom Skill: don't spawn monsters");
 
-  M_BindBool("custom_skill_doubleammo", &custom_skill_doubleammo, NULL, 0, ss_skill, wad_yes,
-    "Custom Skill: receive double ammo from pickups");
+  M_BindBool("custom_skill_doubleammo", &custom_skill_doubleammo, NULL,
+            0, ss_skill, wad_yes,
+            "Custom Skill: receive double ammo from pickups");
 
-  M_BindBool("custom_skill_halfdamage", &custom_skill_halfdamage, NULL, 0, ss_skill, wad_yes,
-    "Custom Skill: player takes half the damage");
+  M_BindBool("custom_skill_halfdamage", &custom_skill_halfdamage, NULL,
+            0, ss_skill, wad_yes,
+            "Custom Skill: player takes half the damage");
 
-  M_BindBool("custom_skill_slowbrain", &custom_skill_slowbrain, NULL, 0, ss_skill, wad_yes,
-    "Custom Skill: Icon of Sin shoots cubes half the time");
+  M_BindBool("custom_skill_slowbrain", &custom_skill_slowbrain, NULL,
+            0, ss_skill, wad_yes,
+            "Custom Skill: Icon of Sin shoots cubes half the time");
 
-  M_BindBool("custom_skill_fast", &custom_skill_fast, NULL, 0, ss_skill, wad_yes,
-    "Custom Skill: fast monsters");
+  M_BindBool("custom_skill_fast", &custom_skill_fast, NULL,
+            0, ss_skill, wad_yes,
+            "Custom Skill: fast monsters");
 
-  M_BindBool("custom_skill_respawn", &custom_skill_respawn, NULL, 0, ss_skill, wad_yes,
-    "Custom Skill: respawning monsters");
+  M_BindBool("custom_skill_respawn", &custom_skill_respawn, NULL,
+            0, ss_skill, wad_yes,
+            "Custom Skill: respawning monsters");
 
-  M_BindBool("custom_skill_aggressive", &custom_skill_aggressive, NULL, 0, ss_skill, wad_yes,
-    "Custom Skill: aggressive monsters (instant reaction time; continuous attacks)");
+  M_BindBool("custom_skill_aggressive", &custom_skill_aggressive, NULL,
+            0, ss_skill, wad_yes,
+            "Custom Skill: aggressive monsters (instant reaction time; continuous attacks)");
 
-  M_BindBool("custom_skill_x2monsters", &custom_skill_x2monsters, NULL, 0, ss_skill, wad_yes,
-    "Custom Skill: duplicate monster spawns");
+  M_BindBool("custom_skill_x2monsters", &custom_skill_x2monsters, NULL,
+            0, ss_skill, wad_yes,
+            "Custom Skill: duplicate monster spawns");
 
   // [Cherry]
   M_BindBool("custom_skill_notracking", &custom_skill_notracking, NULL, 0, ss_skill, wad_yes,
@@ -6048,19 +6146,23 @@ void G_BindGameVariables(void)
 
   // [Nugget] ----------------------------------------------------------------
 
-  M_BindNum("autosave_interval", &autosave_interval, NULL, 0, 0, 600, ss_gen, wad_no,
-    "Interval between periodic auto saves, in seconds (0 = Off)");
+  M_BindNum("autosave_interval", &autosave_interval, NULL,
+            0, 0, 600, ss_gen, wad_no,
+            "Interval between periodic auto saves, in seconds (0 = Off)");
 
   BIND_BOOL_GENERAL(one_key_saveload, false, "One-key quick-saving/loading");
 
-  BIND_NUM_GENERAL(rewind_interval, 1, 1, 600,
-    "Interval between rewind key-frames, in seconds");
+  BIND_NUM_GENERAL(rewind_interval,
+                   1, 1, 600,
+                   "Interval between rewind key-frames, in seconds");
 
-  BIND_NUM_GENERAL(rewind_depth, 60, 0, 3000,
-    "Number of rewind key-frames to be stored (0 = No rewinding)");
+  BIND_NUM_GENERAL(rewind_depth,
+                   60, 0, 3000,
+                   "Number of rewind key-frames to be stored (0 = No rewinding)");
 
-  BIND_NUM_GENERAL(rewind_timeout, 10, 0, 25,
-    "Max. time to store a key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)");
+  BIND_NUM_GENERAL(rewind_timeout,
+                   10, 0, 25,
+                   "Max. time to store a key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)");
 
   // [Cherry] Rocket trails from Doom Retro
   M_BindBool("rocket_trails", &rocket_trails, NULL, false, ss_gen, wad_yes,
@@ -6105,33 +6207,41 @@ void G_BindEnemVariables(void)
   // [Nugget] ----------------------------------------------------------------
 
   M_BindBool("extra_gibbing", &extra_gibbing_on, NULL,
-             false, ss_enem, wad_yes, "Enable extra gibbing in general (affected by CVARs below)");
+             false, ss_enem, wad_yes,
+             "Enable extra gibbing in general (affected by CVARs below)");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_fist", &extra_gibbing[EXGIB_FIST], NULL,
-             true, ss_none, wad_yes, "Extra gibbing for Berserk Fist");
+             true, ss_none, wad_yes,
+             "Extra gibbing for Berserk Fist");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_csaw", &extra_gibbing[EXGIB_CSAW], NULL,
-             true, ss_none, wad_yes, "Extra gibbing for Chainsaw");
+             true, ss_none, wad_yes,
+             "Extra gibbing for Chainsaw");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_ssg", &extra_gibbing[EXGIB_SSG], NULL,
-             true, ss_none, wad_yes, "Extra gibbing for SSG");
+             true, ss_none, wad_yes,
+             "Extra gibbing for SSG");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_bfg", &extra_gibbing[EXGIB_BFG], NULL,
-             true, ss_none, wad_yes, "Extra gibbing for BFG tracers");
+             true, ss_none, wad_yes,
+             "Extra gibbing for BFG tracers");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_proj", &extra_gibbing[EXGIB_PROJ], NULL,
-             true, ss_none, wad_yes, "Extra gibbing for projectiles dealing 20+ base damage");
+             true, ss_none, wad_yes,
+             "Extra gibbing for projectiles dealing 20+ base damage");
 
   M_BindBool("bloodier_gibbing", &bloodier_gibbing, NULL,
-             false, ss_enem, wad_yes, "Bloodier gibbing");
+             false, ss_enem, wad_yes,
+             "Bloodier gibbing");
 
   M_BindBool("tossdrop", &tossdrop, NULL,
-             false, ss_enem, wad_yes, "Enemies toss their items dropped upon death");
+             false, ss_enem, wad_yes,
+             "Enemies toss their items dropped upon death");
 
   // [Cherry] Blood amount scales with the amount of damage dealt
   M_BindBool("blood_amount_scaling", &blood_amount_scaling, NULL, false,
@@ -6152,10 +6262,12 @@ void G_BindCompVariables(void)
 
   // [Nugget] /---------------------------------------------------------------
 
-  M_BindNum("over_under", &over_under, NULL, 0, 0, 2, ss_gen, wad_yes,
-            "Allow movement over/under things (1 = Player only; 2 = All things)");
+  M_BindNum("over_under", &over_under, NULL,
+            0, 0, 2, ss_gen, wad_yes,
+            "Allow movement over/under things (0 = Off; 1 = Player only; 2 = All things)");
 
-  M_BindBool("jump_crouch", &jump_crouch, NULL, false, ss_gen, wad_yes,
+  M_BindBool("jump_crouch", &jump_crouch, NULL,
+             false, ss_gen, wad_yes,
              "Jumping/crouching");
 
   // [Nugget] ---------------------------------------------------------------/
@@ -6213,27 +6325,30 @@ void G_BindCompVariables(void)
 
   // [Nugget] (CFG-only) -----------------------------------------------------
 
-  M_BindBool("comp_bruistarget",  &comp_bruistarget,  NULL, true,  ss_none, wad_yes, "Bruiser attack doesn't face target");
-  M_BindBool("comp_nomeleesnap",  &comp_nomeleesnap,  NULL, false, ss_none, wad_yes, "Disable snapping to target when using melee");
-  M_BindBool("comp_longautoaim",  &comp_longautoaim,  NULL, false, ss_none, wad_yes, "Double autoaim range");
-  M_BindBool("comp_lscollision",  &comp_lscollision,  NULL, false, ss_none, wad_yes, "Fix Lost Souls colliding with items");
-  M_BindBool("comp_lsamnesia",    &comp_lsamnesia,    NULL, true,  ss_none, wad_yes, "Lost Souls forget target upon impact");
-  M_BindBool("comp_fuzzyblood",   &comp_fuzzyblood,   NULL, false, ss_none, wad_yes, "Fuzzy things bleed fuzzy blood");
-  M_BindBool("comp_faceshadow",   &comp_faceshadow,   NULL, false, ss_none, wad_yes, "Attackers face fuzzy targets straight");
-  M_BindBool("comp_nonbleeders",  &comp_nonbleeders,  NULL, false, ss_none, wad_yes, "Non-bleeders don't bleed when crushed");
-  M_BindBool("comp_iosdeath",     &comp_iosdeath,     NULL, false, ss_none, wad_yes, "Fix lopsided Icon of Sin explosions");
-  M_BindBool("comp_choppers",     &comp_choppers,     NULL, false, ss_none, wad_yes, "Permanent IDCHOPPERS invulnerability");
-  M_BindBool("comp_manualdoor",   &comp_manualdoor,   NULL, true,  ss_none, wad_yes, "Manually toggled moving doors are silent");
-  M_BindBool("comp_switchsource", &comp_switchsource, NULL, false, ss_none, wad_yes, "Corrected switch sound source");
-  M_BindBool("comp_cgundblsnd",   &comp_cgundblsnd,   NULL, true,  ss_none, wad_yes, "Chaingun makes two sounds with one bullet");
-  M_BindBool("comp_cgunnersfx",   &comp_cgunnersfx,   NULL, false, ss_none, wad_yes, "Chaingunner uses pistol/chaingun sound");
-  M_BindBool("comp_flamst",       &comp_flamst,       NULL, false, ss_none, wad_yes, "Arch-Vile fire plays flame-start sound");
-  M_BindBool("comp_keynoway",     &comp_keynoway,     NULL, false, ss_none, wad_yes, "Play DSNOWAY instead of DSOOF when failing to use key-locked triggers");
-  M_BindBool("comp_godface",      &comp_godface,      NULL, false, ss_none, wad_yes, "Higher god-mode face priority");
-  M_BindBool("comp_deadoof",      &comp_deadoof,      NULL, true,  ss_none, wad_yes, "Dead players can still play oof sound");
-  M_BindBool("comp_powerrunout",  &comp_powerrunout,  NULL, false, ss_none, wad_yes, "Use improved powerup run-out effect");
-  M_BindBool("comp_unusedpals",   &comp_unusedpals,   NULL, false, ss_none, wad_yes, "Use unused pain/bonus palettes");
-  M_BindBool("comp_keypal",       &comp_keypal,       NULL, true,  ss_none, wad_yes, "Key pickup resets palette");
+  #define BIND_COMP_NUG(name, v, help) \
+    M_BindBool(#name, &name, NULL, (v), ss_none, wad_yes, help)
+
+  BIND_COMP_NUG(comp_bruistarget,  true,  "Bruiser attack doesn't face target");
+  BIND_COMP_NUG(comp_nomeleesnap,  false, "Disable snapping to target when using melee");
+  BIND_COMP_NUG(comp_longautoaim,  false, "Double autoaim range");
+  BIND_COMP_NUG(comp_lscollision,  false, "Fix Lost Souls colliding with items");
+  BIND_COMP_NUG(comp_lsamnesia,    true,  "Lost Souls forget target upon impact");
+  BIND_COMP_NUG(comp_fuzzyblood,   false, "Fuzzy things bleed fuzzy blood");
+  BIND_COMP_NUG(comp_faceshadow,   false, "Attackers face fuzzy targets straight");
+  BIND_COMP_NUG(comp_nonbleeders,  false, "Non-bleeders don't bleed when crushed");
+  BIND_COMP_NUG(comp_iosdeath,     false, "Fix lopsided Icon of Sin explosions");
+  BIND_COMP_NUG(comp_choppers,     false, "Permanent IDCHOPPERS invulnerability");
+  BIND_COMP_NUG(comp_manualdoor,   true,  "Manually toggled moving doors are silent");
+  BIND_COMP_NUG(comp_switchsource, false, "Corrected switch sound source");
+  BIND_COMP_NUG(comp_cgundblsnd,   true,  "Chaingun makes two sounds with one bullet");
+  BIND_COMP_NUG(comp_cgunnersfx,   false, "Chaingunner uses pistol/chaingun sound");
+  BIND_COMP_NUG(comp_flamst,       false, "Arch-Vile fire plays flame-start sound");
+  BIND_COMP_NUG(comp_keynoway,     false, "Play DSNOWAY instead of DSOOF when failing to use key-locked triggers");
+  BIND_COMP_NUG(comp_godface,      false, "Higher god-mode face priority");
+  BIND_COMP_NUG(comp_deadoof,      true,  "Dead players can still play oof sound");
+  BIND_COMP_NUG(comp_powerrunout,  false, "Use improved powerup run-out effect");
+  BIND_COMP_NUG(comp_unusedpals,   false, "Use unused pain/bonus palettes");
+  BIND_COMP_NUG(comp_keypal,       true,  "Key pickup resets palette");
 }
 
 void G_BindWeapVariables(void)
@@ -6270,24 +6385,37 @@ void G_BindWeapVariables(void)
 
   // [Nugget] /---------------------------------------------------------------
 
+  M_BindBool("smart_autoaim", &smart_autoaim, NULL,
+             false, ss_weap, wad_yes,
+             "Smart projectile autoaim (checks if projectile will hit a living entity)");
+
   M_BindBool("no_hor_autoaim", &no_hor_autoaim, NULL,
-             false, ss_weap, wad_yes, "Disable horizontal projectile autoaim");
+             false, ss_weap, wad_yes,
+             "Disable horizontal projectile autoaim");
 
   M_BindBool("switch_on_pickup", &switch_on_pickup, NULL,
-             true, ss_weap, wad_no, "Switch weapons when acquiring new ones or ammo for them");
+             true, ss_weap, wad_no,
+             "Switch weapons when acquiring new ones or ammo for them");
+
+  M_BindBool("improved_weapon_toggles", &improved_weapon_toggles, NULL,
+             false, ss_weap, wad_no,
+             "Improved Fist/Chainsaw and Shotgun/SSG toggles");
 
   M_BindBool("weapswitch_interruption", &weapswitch_interruption, NULL,
-             false, ss_weap, wad_no, "Allow interruption of weapon switches");
+             false, ss_weap, wad_yes,
+             "Allow interruption of weapon switches");
 
   M_BindBool("skip_ammoless_weapons", &skip_ammoless_weapons, NULL,
-             false, ss_weap, wad_no, "Previous/next-weapon buttons skip weapons with insufficient ammo");
+             false, ss_weap, wad_no,
+             "Previous/next-weapon buttons skip weapons with insufficient ammo");
 
   // (CFG-only)
   M_BindBool("always_bob", &always_bob, NULL,
-             true, ss_none, wad_no, "Bob weapon every tic (fixes choppy Chainsaw bobbing)");
+             true, ss_none, wad_yes,
+             "Bob weapon every tic (fixes choppy Chainsaw bobbing)");
 
   M_BindNum("bobbing_style", &bobbing_style, NULL,
-            0, 0, NUM_BOBSTYLES-1, ss_weap, wad_yes,
+            BOBSTYLE_VANILLA, BOBSTYLE_VANILLA, NUM_BOBSTYLES-1, ss_weap, wad_yes,
             "Weapon bobbing style");
 
   M_BindNum("weapon_bobbing_speed_pct", &weapon_bobbing_speed_pct, NULL,
@@ -6295,10 +6423,12 @@ void G_BindWeapVariables(void)
             "Player weapon bobbing speed percent");
 
   M_BindBool("switch_bob", &switch_bob, NULL,
-             false, ss_weap, wad_yes, "Bob weapon while switching it");
+             false, ss_weap, wad_yes,
+             "Bob weapon while switching it");
 
   M_BindBool("weapon_inertia", &weapon_inertia, NULL,
-             false, ss_weap, wad_yes, "Weapon inertia");
+             false, ss_weap, wad_yes,
+             "Weapon inertia");
 
   M_BindNum("weapon_inertia_scale_pct", &weapon_inertia_scale_pct, NULL,
             100, -200, 200, ss_weap, wad_yes,
@@ -6306,10 +6436,12 @@ void G_BindWeapVariables(void)
 
   // (CFG-only)
   M_BindBool("weapon_inertia_fire", &weapon_inertia_fire, NULL,
-             true, ss_none, wad_yes, "Apply weapon inertia while firing");
+             true, ss_none, wad_yes,
+             "Apply weapon inertia while firing");
 
   M_BindBool("weaponsquat", &weaponsquat, NULL,
-             false, ss_weap, wad_yes, "Squat weapon down on impact");
+             false, ss_weap, wad_yes,
+             "Squat weapon down upon landing/jumping");
 
   M_BindNum("pspr_translucency_pct", &pspr_translucency_pct, NULL,
             100, 0, 100, ss_weap, wad_yes,
@@ -6317,7 +6449,8 @@ void G_BindWeapVariables(void)
 
   // (CFG-only)
   M_BindBool("sx_fix", &sx_fix, NULL,
-             false, ss_none, wad_yes, "Correct centering of first-person sprites");
+             false, ss_none, wad_yes,
+             "Correct centering of first-person sprites");
 
   // (CFG-only)
   M_BindNum("hitscan_trail_interval", &hitscan_trail_interval, NULL,

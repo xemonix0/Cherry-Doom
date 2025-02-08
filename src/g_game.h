@@ -136,9 +136,12 @@ extern boolean secretexit;
 
 // [Nugget] ==================================================================
 
+extern boolean doom_weapon_toggles; // Global
+
 // CVARs ---------------------------------------------------------------------
 
 extern boolean one_key_saveload;
+extern boolean improved_weapon_toggles;
 extern boolean skip_ammoless_weapons;
 
 enum {
@@ -177,6 +180,11 @@ boolean G_GetSlowMotion(void);
 void G_SetSlowMotion(const boolean value);
 void G_ResetSlowMotion(void);
 int G_GetSlowMotionFactor(void);
+
+// Improved weapon toggles ---------------------------------------------------
+
+boolean G_ToggleFistChainsaw(const player_t *const player, boolean vanilla);
+boolean G_ToggleShotgunSSG(const player_t *const player, boolean vanilla);
 
 // Skill ---------------------------------------------------------------------
 

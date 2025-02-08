@@ -2953,8 +2953,9 @@ void AM_BindAutomapVariables(void)
              wad_no, "Smooth automap lines");
 
   // [Nugget]
-  M_BindBool("map_hitboxes", &map_hitboxes, NULL, false, ss_auto,
-             wad_no, "Thing hitboxes in automap");
+  M_BindBool("map_hitboxes", &map_hitboxes, NULL,
+             false, ss_auto, wad_no,
+             "Show thing hitboxes in automap");
 
   M_BindNum("mapcolor_preset", &mapcolor_preset, NULL, AM_PRESET_BOOM,
             AM_PRESET_VANILLA, AM_PRESET_ZDOOM, ss_auto, wad_no,

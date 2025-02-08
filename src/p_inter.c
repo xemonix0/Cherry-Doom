@@ -1198,10 +1198,13 @@ void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage
         const int dmg = MAX(0, damage) / 2;
         int pitch;
 
-        if (inflictor) { // Hitscan, melee, projectile, explosion
-          pitch = -(dmg+1) * finecosine[(R_PointToAngle2(inflictor->x, inflictor->y,
-                                                            target->x,    target->y)
-                                         - player->mo->angle) >> ANGLETOFINESHIFT] / FRACUNIT;
+        if (inflictor) // Hitscan, melee, projectile, explosion
+        {
+          pitch = -(dmg+1)
+                * finecosine[
+                    (R_PointToAngle2(inflictor->x, inflictor->y, target->x, target->y)
+                     - player->mo->angle) >> ANGLETOFINESHIFT
+                  ] / FRACUNIT;
         }
         else { pitch = dmg * ((Woof_Random() % 2) ? -1 : 1); }
 

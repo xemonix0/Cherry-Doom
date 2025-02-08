@@ -138,16 +138,44 @@ int extra_level_brightness;               // level brightness feature
 
 // [Nugget] /=================================================================
 
+static fixed_t nughud_viewpitch;
+
+fixed_t R_GetNughudViewPitch(void)
+{
+  return nughud_viewpitch;
+}
+
+int R_GetLightLevelInPoint(const fixed_t x, const fixed_t y)
+{
+  int lightlevel;
+
+  sector_t *const sector = R_PointInSubsector(x, y)->sector;
+
+  if (demo_version > DV_BOOM)
+  {
+    sector_t tempsector;
+    int floorlightlevel, ceilinglightlevel;
+
+    R_FakeFlat(sector, &tempsector, &floorlightlevel, &ceilinglightlevel, false);
+
+    lightlevel = (floorlightlevel + ceilinglightlevel) >> 1;
+  }
+  else { lightlevel = sector->lightlevel; }
+
+  return lightlevel;
+}
+
 // CVARs ---------------------------------------------------------------------
 
 boolean vertical_lockon;
 
+thinglighting_t thing_lighting_mode;
 boolean flip_levels;
 static int lowres_pixel_width;
 static int lowres_pixel_height;
 boolean nightvision_visor;
 int fake_contrast;
-boolean diminished_lighting;
+boolean diminishing_lighting;
 static boolean a11y_weapon_flash;
 boolean a11y_weapon_pspr;
 boolean a11y_invul_colormap;
@@ -713,7 +741,8 @@ static void R_InitTextureMapping(void)
         ;
       xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
       // [FG] linear horizontal sky scrolling
-      linearskyangle[x] = (0.5 - x / (double)viewwidth) * linearskyfactor;
+      int angle = (0.5 - x / (double)viewwidth) * linearskyfactor;
+      linearskyangle[x] = (angle >= 0) ? angle : ANGLE_MAX + angle;
     }
     
   // Take out the fencepost cases from viewangletox.
@@ -872,10 +901,17 @@ static void R_SetupFreelook(void)
     dy = 0;
   }
 
+  // [Nugget] NUGHUD /--------------------------------------------------------
+
   if (STRICTMODE(ST_GetNughudOn()) && gamestate == GS_LEVEL)
   {
-    dy += (nughud.viewoffset * viewheight / SCREENHEIGHT) << FRACBITS;
+    nughud_viewpitch = (nughud.viewoffset * viewheight / SCREENHEIGHT) << FRACBITS;
   }
+  else { nughud_viewpitch = 0; }
+
+  dy += nughud_viewpitch;
+
+  // [Nugget] ---------------------------------------------------------------/
 
   centery = viewheight / 2 + (dy >> FRACBITS);
   centeryfrac = centery << FRACBITS;
@@ -1243,7 +1279,7 @@ void R_SetupFrame (player_t *player)
     }
 
     if ((use_localview || (freecam_on && freecam_mode == FREECAM_CAM)) // [Nugget] Freecam
-        && raw_input && !player->centering && (mouselook || padlook)) // [Nugget]
+        && raw_input && !player->centering && (mouselook || padlook)) // [Nugget] Freelook checks
     {
       basepitch = player->pitch + localview.pitch;
       basepitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, basepitch);
@@ -1835,12 +1871,18 @@ void R_BindRenderVariables(void)
 
   // [Nugget] /---------------------------------------------------------------
 
-  M_BindNum("fake_contrast", &fake_contrast, NULL, 1, 0, 2, ss_gen, wad_yes,
-            "Fake contrast for walls (0 = Off, 1 = Smooth, 2 = Vanilla)");
+  M_BindNum("fake_contrast", &fake_contrast, NULL,
+            1, 0, 2, ss_gen, wad_yes,
+            "Fake contrast for walls (0 = Off; 1 = Smooth; 2 = Vanilla)");
 
   // (CFG-only)
-  M_BindBool("diminished_lighting", &diminished_lighting, NULL,
-             true, ss_none, wad_yes, "Diminished lighting (light emitted by player)");
+  M_BindBool("diminishing_lighting", &diminishing_lighting, NULL,
+             true, ss_none, wad_yes,
+             "Diminishing lighting (light emitted by player)");
+
+  M_BindNum("thing_lighting_mode", &thing_lighting_mode, NULL,
+            THINGLIGHTING_ORIGIN, THINGLIGHTING_ORIGIN, NUM_THINGLIGHTING-1, ss_gen, wad_yes,
+            "Thing lighting mode (0 = Origin (vanilla); 1 = Hitbox; 2 = Per-column)");
 
   // [Nugget] ---------------------------------------------------------------/
 
@@ -1869,21 +1911,34 @@ void R_BindRenderVariables(void)
             1, 1, 8, ss_none, wad_yes,
             "Height multiplier for pixels at 100% resolution");
 
-  BIND_BOOL_GENERAL(no_berserk_tint, false, "Disable Berserk tint");
-  BIND_BOOL_GENERAL(no_radsuit_tint, false, "Disable Radiation Suit tint");
+  M_BindBool("no_berserk_tint", &no_berserk_tint, NULL,
+             false, ss_gen, wad_yes,
+             "Disable Berserk tint");
+
+  M_BindBool("no_radsuit_tint", &no_radsuit_tint, NULL,
+             false, ss_gen, wad_yes,
+             "Disable Radiation Suit tint");
 
   M_BindBool("nightvision_visor", &nightvision_visor, NULL,
-             false, ss_gen, wad_yes, "Night-vision effect for the light amplification visor");
+             false, ss_gen, wad_yes,
+             "Night-vision effect for the light amplification visor");
 
-  BIND_NUM_GENERAL(damagecount_cap, 100, 0, 100, "Player damage tint cap");
-  BIND_NUM_GENERAL(bonuscount_cap, -1, -1, 100, "Player bonus tint cap");
-  
+  M_BindNum("damagecount_cap", &damagecount_cap, NULL,
+            100, 0, 100, ss_gen, wad_yes,
+            "Player damage-tint cap");
+
+  M_BindNum("bonuscount_cap", &bonuscount_cap, NULL,
+            -1, -1, 100, ss_gen, wad_yes,
+            "Player bonus-tint cap (-1 = Uncapped)");
+
   // [Nugget] ---------------------------------------------------------------/
 
   BIND_BOOL(flashing_hom, true, "Enable flashing of the HOM indicator");
 
   // [Nugget] (CFG-only)
-  BIND_BOOL(no_killough_face, false, "Disable the Killough-face easter egg");
+  M_BindBool("no_killough_face", &no_killough_face, NULL,
+             false, ss_gen, wad_yes,
+             "Disable the Killough-face easter egg");
 
   BIND_NUM(screenblocks, 10, 3, UL, "Size of game-world screen");
 
@@ -1904,17 +1959,21 @@ void R_BindRenderVariables(void)
 
   // [Nugget] ----------------------------------------------------------------
 
-  M_BindNum("viewheight_value", &viewheight_value, NULL, 41, 32, 56, ss_gen, wad_yes,
+  M_BindNum("viewheight_value", &viewheight_value, NULL,
+            41, 32, 56, ss_gen, wad_yes,
             "Height of player's POV");
 
-  M_BindNum("flinching", &flinching, NULL, 0, 0, 3, ss_gen, wad_yes,
+  M_BindNum("flinching", &flinching, NULL,
+            0, 0, 3, ss_gen, wad_yes,
             "Flinch player view (0 = Off; 1 = Upon landing; 2 = Upon taking damage; 3 = Upon either)");
 
   M_BindBool("vertical_lockon", &vertical_lockon, NULL,
-             false, ss_gen, wad_yes, "Camera automatically locks onto targets vertically");
+             false, ss_gen, wad_no,
+             "Camera automatically locks onto targets vertically");
 
   M_BindBool("explosion_shake", &explosion_shake, NULL,
-             false, ss_gen, wad_yes, "Explosions shake the view");
+             false, ss_gen, wad_yes,
+             "Explosions shake the view");
 
   // (CFG-only)
   M_BindNum("explosion_shake_intensity_pct", &explosion_shake_intensity_pct, NULL,
@@ -1922,26 +1981,33 @@ void R_BindRenderVariables(void)
             "Explosion-shake intensity percent");
 
   M_BindBool("breathing", &breathing, NULL,
-             false, ss_gen, wad_yes, "Imitate player's breathing (subtle idle bobbing)");
+             false, ss_gen, wad_yes,
+             "Imitate player's breathing (subtle idle bobbing)");
 
   M_BindBool("teleporter_zoom", &teleporter_zoom, NULL,
-             false, ss_gen, wad_yes, "Zoom effect when teleporting");
+             false, ss_gen, wad_yes,
+             "Zoom effect when teleporting");
 
   M_BindBool("death_camera", &death_camera, NULL,
-             false, ss_gen, wad_yes, "Force third-person perspective upon death");
+             false, ss_gen, wad_yes,
+             "Force third-person perspective upon death");
 
-  M_BindNum("chasecam_mode", &chasecam_mode, NULL, 0, 0, 2, ss_gen, wad_no,
+  M_BindNum("chasecam_mode", &chasecam_mode, NULL,
+            CHASECAMMODE_OFF, CHASECAMMODE_OFF, NUM_CHASECAMMODES-1, ss_gen, wad_yes,
             "Chasecam mode (0 = Off; 1 = Back; 2 = Front)");
 
-  M_BindNum("chasecam_distance", &chasecam_distance, NULL, 80, 1, 128, ss_gen, wad_no,
+  M_BindNum("chasecam_distance", &chasecam_distance, NULL,
+            80, 1, 128, ss_gen, wad_yes,
             "Chasecam distance");
 
-  M_BindNum("chasecam_height", &chasecam_height, NULL, 48, 1, 64, ss_gen, wad_no,
+  M_BindNum("chasecam_height", &chasecam_height, NULL,
+            48, 1, 64, ss_gen, wad_yes,
             "Chasecam height");
 
   // (CFG-only)
   M_BindBool("chasecam_crosshair", &chasecam_crosshair, NULL,
-             false, ss_none, wad_no, "Allow crosshair when using Chasecam");
+             false, ss_none, wad_yes,
+             "Allow crosshair when using Chasecam");
 
   BIND_BOOL_GENERAL(a11y_weapon_flash,    true, "Allow weapon light flashes");
   BIND_BOOL_GENERAL(a11y_weapon_pspr,     true, "Allow rendering of weapon muzzleflash");

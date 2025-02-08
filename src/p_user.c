@@ -894,13 +894,12 @@ void P_PlayerThink (player_t* player)
 	{ // compatibility mode -- required for old demos -- killough
 	  newweapon = (cmd->buttons & BT_WEAPONMASK_OLD) >> BT_WEAPONSHIFT;
 	  if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
-	      (player->readyweapon != wp_chainsaw ||
-	       !player->powers[pw_strength]))
+	      G_ToggleFistChainsaw(player, true)) // [Nugget] Improved weapon toggles
 	    newweapon = wp_chainsaw;
 	  if (ALLOW_SSG &&
 	      newweapon == wp_shotgun &&
 	      player->weaponowned[wp_supershotgun] &&
-	      player->readyweapon != wp_supershotgun)
+	      G_ToggleShotgunSSG(player, true)) // [Nugget] Improved weapon toggles
 	    newweapon = wp_supershotgun;
 	}
 
