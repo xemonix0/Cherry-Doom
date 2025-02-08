@@ -50,64 +50,6 @@ byte *save_p;
 
 saveg_compat_t saveg_compat = saveg_woof600;
 
-// [Cherry] /--- Better saveg_compat checking ---------------------------------
-
-static struct
-{
-    saveg_compat_t compat;
-    saveg_port_t port;
-} saveg_compat_ports[] = {
-    {saveg_mbf,       saveg_port_mbf},
-
-    {saveg_woof510,   saveg_woof},
-    {saveg_woof600,   saveg_woof},
-    {saveg_woof1300,  saveg_woof},
-
-    {saveg_nugget200, saveg_nugget},
-    {saveg_nugget210, saveg_nugget},
-    {saveg_nugget300, saveg_nugget},
-    {saveg_nugget320, saveg_nugget},
-    {saveg_nugget330, saveg_nugget},
-    {saveg_nugget400, saveg_nugget},
-
-    {saveg_cherry100, saveg_cherry},
-    {saveg_cherry101, saveg_cherry},
-    {saveg_cherry200, saveg_cherry},
-    {saveg_current,   saveg_cherry},
-};
-
-boolean saveg_check_version(saveg_compat_t lower, saveg_compat_t upper)
-{
-    if (upper < lower)
-    {
-        return false;
-    }
-
-    saveg_port_t check_port = saveg_cherry, current_port = saveg_cherry;
-
-    for (int i = 0; i < arrlen(saveg_compat_ports); i++)
-    {
-        if (saveg_compat_ports[i].compat == saveg_compat)
-        {
-            current_port = saveg_compat_ports[i].port;
-        }
-
-        if (saveg_compat_ports[i].compat == lower)
-        {
-            check_port = saveg_compat_ports[i].port;
-        }
-    }
-
-    if (current_port < check_port)
-    {
-        return false;
-    }
-
-    return lower <= saveg_compat && saveg_compat <= upper;
-}
-
-// [Cherry] ------------------------------------------------------------------/
-
 // Endian-safe integer read/write functions
 
 byte saveg_read8(void)
@@ -496,7 +438,7 @@ static void saveg_read_mobj_t(mobj_t *str)
     // int flags;
     str->flags = saveg_read32();
 
-    if (saveg_check_version_min(saveg_woof600))
+    if (saveg_compat > saveg_woof510)
     {
         // [Woof!]: mbf21: int flags2;
         str->flags2 = saveg_read32();
@@ -560,7 +502,7 @@ static void saveg_read_mobj_t(mobj_t *str)
     // struct mobj_s* below_thing;
     str->below_thing = saveg_readp();
 
-    if (saveg_check_version_min(saveg_woof510))
+    if (saveg_compat > saveg_mbf)
     {
         // [Woof!]: int friction;
         str->friction = saveg_read32();
@@ -577,7 +519,7 @@ static void saveg_read_mobj_t(mobj_t *str)
     // struct msecnode_s* touching_sectorlist;
     str->touching_sectorlist = saveg_readp();
 
-    if (saveg_check_version_min(saveg_woof510))
+    if (saveg_compat > saveg_mbf)
     {
         // [Woof!]: int interp;
         str->interp = saveg_read32();
@@ -603,7 +545,7 @@ static void saveg_read_mobj_t(mobj_t *str)
         str->oldangle = 0;
     }
 
-    if (saveg_check_version_min(saveg_woof600))
+    if (saveg_compat > saveg_woof510)
     {
         // [Woof!]: int bloodcolor;
         str->bloodcolor = saveg_read32();
@@ -616,7 +558,7 @@ static void saveg_read_mobj_t(mobj_t *str)
     // [Nugget] Removed `actualheight`
 
     // [Nugget]
-    if (saveg_check_version_min(saveg_nugget400))
+    if (saveg_compat > saveg_cherry200)
     {
       // Alt. sprites
       str->altsprite = saveg_read32(); // int altsprite;
@@ -894,7 +836,7 @@ static void saveg_read_pspdef_t(pspdef_t *str)
     // fixed_t sy;
     str->sy = saveg_read32();
 
-    if (saveg_check_version_min(saveg_woof510))
+    if (saveg_compat > saveg_mbf)
     {
         // [Woof!]: fixed_t sx2;
         str->sx2 = saveg_read32();
@@ -913,7 +855,7 @@ static void saveg_read_pspdef_t(pspdef_t *str)
 
     // [Nugget] --------------------------------------------------------------
 
-    if (saveg_check_version_min(saveg_nugget200))
+    if (saveg_compat > saveg_woof600)
     {
       str->dy  = saveg_read32(); // fixed_t dy;
       str->wix = saveg_read32(); // fixed_t wix;
@@ -1100,7 +1042,7 @@ static void saveg_read_player_t(player_t *str)
     // boolean didsecret;
     str->didsecret = saveg_read32();
 
-    if (saveg_check_version_min(saveg_woof510))
+    if (saveg_compat > saveg_mbf)
     {
         // [Woof!]: angle_t oldviewz;
         str->oldviewz = saveg_read32();
@@ -1110,7 +1052,7 @@ static void saveg_read_player_t(player_t *str)
         str->oldviewz = 0;
     }
 
-    if (saveg_check_version_min(saveg_woof1300)) // [Cherry]
+    if (saveg_compat > saveg_cherry100) // [Cherry]
     {
         // [Woof!]: fixed_t pitch;
         str->pitch = saveg_read32();
@@ -1132,7 +1074,7 @@ static void saveg_read_player_t(player_t *str)
         str->maxkilldiscount = 0;
     }
 
-    if (saveg_check_version_min(saveg_nugget330)) // [Nugget]
+    if (saveg_compat > saveg_cherry200) // [Cherry]
     {
         // [Woof!]: int num_visitedlevels;
         str->num_visitedlevels = saveg_read32();
@@ -1155,7 +1097,7 @@ static void saveg_read_player_t(player_t *str)
 
     // [Nugget] --------------------------------------------------------------
 
-    if (saveg_check_version_min(saveg_nugget200))
+    if (saveg_compat > saveg_woof600)
     {
         str->jumptics     = saveg_read32(); // int jumptics;
         str->crouchoffset = saveg_read32(); // fixed_t crouchoffset;
@@ -1165,7 +1107,7 @@ static void saveg_read_player_t(player_t *str)
         return;
     }
 
-    if (saveg_check_version_min(saveg_nugget210))
+    if (saveg_compat > saveg_nugget200)
     {
         str->lastweapon = saveg_read_enum(); // weapontype_t lastweapon;
     }
@@ -1176,7 +1118,7 @@ static void saveg_read_player_t(player_t *str)
 
     str->nextweapon = str->readyweapon;
 
-    if (saveg_check_version_exact(saveg_cherry100)) // [Cherry]
+    if (saveg_compat == saveg_cherry100) // [Cherry]
     {
       saveg_read32(); // int screenshake; // removed in 1.0.1
     }
@@ -3128,7 +3070,7 @@ void P_UnArchiveMap(void)
 
       for (i = 0; i < markpointnum; ++i)
       {
-        if (saveg_check_version_min(saveg_woof510))
+          if (saveg_compat > saveg_mbf)
         {
           // [Woof!]: int64_t x,y;
           markpoints[i].x = saveg_read64();

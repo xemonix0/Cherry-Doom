@@ -3211,14 +3211,7 @@ static boolean DoLoadGame(boolean do_load_autosave)
 
   CheckSaveVersion(vcheck, saveg_mbf);
   CheckSaveVersion("Woof 6.0.0", saveg_woof600);
-  // [Cherry] Woof! 14.0.0 save support
-  CheckSaveVersion("Woof 13.0.0", saveg_woof1300);
   CheckSaveVersion("Nugget 2.0.0", saveg_nugget200);
-  CheckSaveVersion("Nugget 2.1.0", saveg_nugget210);
-  CheckSaveVersion("Nugget 2.4.0", saveg_nugget300);
-  CheckSaveVersion("Nugget 3.2.0", saveg_nugget320);
-  CheckSaveVersion("Nugget 3.3.0", saveg_nugget330);
-  CheckSaveVersion("Nugget 4.0.0", saveg_nugget400);
   CheckSaveVersion("Cherry 1.0.0", saveg_cherry100);
   CheckSaveVersion("Cherry 1.0.1", saveg_cherry101);
   CheckSaveVersion("Cherry 2.0.0", saveg_cherry200);
@@ -3237,7 +3230,7 @@ static boolean DoLoadGame(boolean do_load_autosave)
 
   save_p += VERSIONSIZE;
 
-  if (saveg_check_version_min(saveg_woof600))
+  if (saveg_compat > saveg_woof510)
   {
     demo_version = *save_p++;
   }
@@ -3314,12 +3307,12 @@ static boolean DoLoadGame(boolean do_load_autosave)
   leveltime = saveg_read32();
 
   // [Cherry]
-  if (saveg_check_version_min(saveg_cherry100))
+  if (saveg_compat > saveg_nugget200)
   {
     // levels completed
     levels_completed = saveg_read32();
     // session attempts (removed in 2.0.0)
-    if (saveg_check_version(saveg_cherry100, saveg_cherry101))
+    if (saveg_cherry100 <= saveg_compat && saveg_compat < saveg_cherry200)
     {
         saveg_read32();
     }
@@ -3378,13 +3371,12 @@ static boolean DoLoadGame(boolean do_load_autosave)
   max_kill_requirement = totalkills;
   if (save_p - savebuffer <= length - sizeof(max_kill_requirement))
   {
-    // [Cherry]
-    if (saveg_check_version_min(saveg_woof1300))
+    if (saveg_compat > saveg_cherry100) // [Cherry]
     {
       max_kill_requirement = saveg_read32();
     }
     // [Nugget]
-    else if (saveg_check_version_min(saveg_woof600))
+    else if (saveg_compat > saveg_woof510)
     {
       max_kill_requirement += saveg_read32();
     }
@@ -3393,16 +3385,15 @@ static boolean DoLoadGame(boolean do_load_autosave)
   // [Nugget] /---------------------------------------------------------------
 
   // Was `extrakills`
-  if (saveg_check_version(saveg_nugget200, saveg_nugget210))
+  if (saveg_cherry100 >= saveg_compat && saveg_compat > saveg_woof600)
   { saveg_read32(); }
 
   // Restore milestones
-  if (saveg_check_version_min(saveg_nugget210)
-      && (save_p - savebuffer) <= (length - sizeof(complete_milestones)))
+  if (saveg_compat > saveg_nugget200 && (save_p - savebuffer) <= (length - sizeof(complete_milestones)))
   { complete_milestones = saveg_read_enum(); }
 
   // Restore custom-skill settings
-  if (saveg_check_version_min(saveg_nugget320))
+  if (saveg_compat > saveg_cherry101)
   {
     #define READ(x)                                      \
       if ((save_p - savebuffer) <= (length - sizeof(x))) \
@@ -3418,12 +3409,11 @@ static boolean DoLoadGame(boolean do_load_autosave)
     READ(customskill.respawn);
     READ(customskill.aggressive);
 
-    if (saveg_check_version_min(saveg_nugget330))
-    { READ(customskill.x2monsters); }
-
-    // [Cherry]
-    if (saveg_check_version_min(saveg_current))
-    { READ(customskill.notracking); }
+    if (saveg_compat > saveg_cherry200)
+    {
+      READ(customskill.x2monsters);
+      READ(customskill.notracking); // [Cherry]
+    }
 
     if (gameskill == sk_custom) { G_SetSkillParms(sk_custom); }
 

@@ -14,9 +14,7 @@
 Merged changes from the following Nugget Doom releases:
 - [3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0):
 	- Disabled stats tracking when _Duplicate Monsters_ is enabled in the _Custom Skill_ settings
-- [4.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.0.0):
-	- Removed the _Movement widget_, favoring Woof!'s _speedometer_ and _command history widget_
-	- Removed _Low/Ok/Good/Extra value color customization_ and the _intermission screen widgets_ due to the removal of Health, Armor, Ammo, and Weapons widgets
+- [4.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.0.0)
 - [4.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.1.0)
 - [4.2.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.2.0)
 
@@ -31,5 +29,11 @@ Merged changes from the following Nugget Doom releases:
 - Removed menu items for the _Rocket Trails Interval_ and _Smoke Translucency_ settings
 - Times on the level table now display hours when exceeding 60 minutes
 - Renamed the `rocket_trails_tran` CVAR to `rocket_trails_tran_pct` for consistency [^1]
+
+### Regressions
+
+- Removed the _Movement widget_, favoring Woof!'s _speedometer_ and _command history widget_
+- Removed _Low/Ok/Good/Extra value color customization_ and the _intermission screen widgets_ due to the removal of Health, Armor, Ammo, and Weapons widgets
+- Saves from Woof! 14.0.0 and later, as well as Nugget Doom 2.1.0 and later, are no longer supported
 
 [^1]: This may affect existing config files.
