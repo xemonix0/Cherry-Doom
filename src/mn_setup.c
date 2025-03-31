@@ -2550,7 +2550,9 @@ void UpdateCrosshairItems(void) // [Nugget] Global
 
     DisableItem(!hud_crosshair_on, stat_settings3,
                 "hud_crosshair_slot1_disable");
-    DisableItem(!hud_crosshair_on, stat_settings3, "hud_crosshair_dark");
+    DisableItem(
+        !(hud_crosshair_on && (hud_crosshair_lockon || hud_crosshair_target)),
+        stat_settings3, "hud_crosshair_dark");
 
     // [Cherry] --------------------------------------------------------------/
 

@@ -3,17 +3,13 @@
 ## New Features
 
 - _Less Blinding Tints_ setting by [@Spaicrab](https://github.com/Spaicrab)
-
-### Level table
-
-- Press `Del` to _erase selected map stats_
-- The "Reset to defaults" button is repurposed for erasing current WAD stats
+- Ways to erase stats for the selected map (via the `Del` key) and the whole WAD (via the reset button) from the level table screen
 
 ## Nugget Doom merges
 
 Merged changes from the following Nugget Doom releases:
 - [3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0):
-	- Disabled stats tracking when _Duplicate Monsters_ is enabled in the _Custom Skill_ settings
+	- Stats tracking is disabled when _Duplicate Monsters_ is active
 - [4.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.0.0)
 - [4.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.1.0)
 - [4.2.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.2.0)
@@ -36,4 +32,4 @@ Merged changes from the following Nugget Doom releases:
 - Removed _Low/Ok/Good/Extra value color customization_ and the _intermission screen widgets_ due to the removal of Health, Armor, Ammo, and Weapons widgets
 - Saves from Woof! 14.0.0 and later, as well as Nugget Doom 2.1.0 and later, are no longer supported
 
-[^1]: This may affect existing config files.
+[^1]: This will affect existing config files.
