@@ -2334,7 +2334,7 @@ static boolean MenuBack(void)
     currentMenu = currentMenu->prevMenu;
     itemOn = currentMenu->lastOn;
     highlight_item = 0;
-    M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
+    M_StartSoundOptional(sfx_mnubak, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
     return true;
 }
 
@@ -3463,7 +3463,7 @@ boolean M_Responder(event_t *ev)
             }
             itemOn = currentMenu->lastOn;
             highlight_item = 0;
-            M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
+            M_StartSoundOptional(sfx_mnubak, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         }
         else
         {

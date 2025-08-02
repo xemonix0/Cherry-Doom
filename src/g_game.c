@@ -104,19 +104,6 @@
 // [Cherry]
 #include "wad_stats.h"
 
-#define SAVEGAMESIZE  0x20000
-#define SAVESTRINGSIZE  24
-
-static size_t   savegamesize = SAVEGAMESIZE; // killough
-static char     *demoname = NULL;
-// the original name of the demo, without "-00000" and file extension
-static char *demoname_orig = NULL;
-static boolean  netdemo;
-static byte     *demobuffer;   // made some static -- killough
-static size_t   maxdemosize;
-static byte     *demo_p;
-static byte     consistancy[MAXPLAYERS][BACKUPTICS];
-
 // [Nugget] /=================================================================
 
 // CVARs ---------------------------------------------------------------------
@@ -126,11 +113,36 @@ boolean improved_weapon_toggles;
 boolean skip_ammoless_weapons;
 boolean comp_longautoaim;
 
+boolean nugget_devmode;
+
 // ---------------------------------------------------------------------------
 
 boolean minimap_was_on = false; // Minimap: keep it when advancing through levels
 
 boolean ignore_pistolstart = false; // Custom Skill: ignore pistol-start setting
+
+static float mouse_h_modifier = 1.0f,
+             mouse_v_modifier = 1.0f;
+
+static void UpdateMouseModifiers(void)
+{
+  mouse_h_modifier = mouse_v_modifier = 1.0f;
+
+  if (strictmode) { return; }
+
+  // Decrease the intensity of some movements if zoomed in -------------------
+
+  const int zoom = R_GetFOVFX(FOVFX_ZOOM);
+
+  if (zoom)
+  { mouse_h_modifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
+
+  mouse_v_modifier = mouse_h_modifier;
+
+  // Flip levels -------------------------------------------------------------
+
+  if (STRICTMODE(flip_levels)) { mouse_h_modifier = -mouse_h_modifier; }
+}
 
 // Periodic auto save --------------------------------------------------------
 
@@ -205,44 +217,52 @@ int G_GetSlowMotionFactor(void)
 
 boolean G_ToggleFistChainsaw(const player_t *const player, boolean vanilla)
 {
-  const boolean saw_preferred = vanilla || P_WeaponPreferred(wp_chainsaw, wp_fist);
   const boolean berserk = player->powers[pw_strength];
+  const boolean saw_preferred = vanilla || P_WeaponPreferred(wp_chainsaw, wp_fist) || !berserk;
+  const weapontype_t pendingweapon = player->pendingweapon,
+                       readyweapon = player->readyweapon;
 
   if (CASUALPLAY(weapswitch_interruption)
-      && player->pendingweapon != wp_nochange
-      && !(   player->pendingweapon == wp_fist
-           || player->pendingweapon == wp_chainsaw))
+      && pendingweapon != wp_nochange
+      && !(   pendingweapon == wp_fist
+           || pendingweapon == wp_chainsaw))
   {
-    return player->readyweapon == wp_chainsaw;
-  }
-  else if (CASUALPLAY(improved_weapon_toggles))
-  {
-    if (player->readyweapon == wp_fist
-        || player->pendingweapon == wp_fist
-        || player->pendingweapon == wp_chainsaw)
+    if (readyweapon == wp_fist || readyweapon == wp_chainsaw)
     {
-      return player->pendingweapon != wp_chainsaw || (vanilla && !berserk);
-    }
-    else if (player->readyweapon == wp_chainsaw)
-    {
-      return player->pendingweapon == wp_fist || (vanilla && !berserk);
+      return readyweapon == wp_chainsaw;
     }
     else
     {
-      return !berserk || saw_preferred;
+      return saw_preferred;
+    }
+  }
+  else if (CASUALPLAY(improved_weapon_toggles))
+  {
+    if (readyweapon == wp_fist
+        || pendingweapon == wp_fist
+        || pendingweapon == wp_chainsaw)
+    {
+      return pendingweapon != wp_chainsaw || (vanilla && !berserk);
+    }
+    else if (readyweapon == wp_chainsaw)
+    {
+      return pendingweapon == wp_fist || (vanilla && !berserk);
+    }
+    else
+    {
+      return saw_preferred;
     }
   }
   else
   {
     if (vanilla)
     {
-      return player->readyweapon != wp_chainsaw || !berserk;
+      return readyweapon != wp_chainsaw || !berserk;
     }
     else
     {
-      return player->readyweapon != wp_chainsaw
-             && (player->readyweapon == wp_fist
-                 || !berserk
+      return readyweapon != wp_chainsaw
+             && (readyweapon == wp_fist
                  || saw_preferred);
     }
   }
@@ -251,25 +271,34 @@ boolean G_ToggleFistChainsaw(const player_t *const player, boolean vanilla)
 boolean G_ToggleShotgunSSG(const player_t *const player, boolean vanilla)
 {
   const boolean ssg_preferred = vanilla || P_WeaponPreferred(wp_supershotgun, wp_shotgun);
+  const weapontype_t pendingweapon = player->pendingweapon,
+                       readyweapon = player->readyweapon;
 
   if (CASUALPLAY(weapswitch_interruption)
-      && player->pendingweapon != wp_nochange
-      && !(   player->pendingweapon == wp_shotgun
-           || player->pendingweapon == wp_supershotgun))
+      && pendingweapon != wp_nochange
+      && !(   pendingweapon == wp_shotgun
+           || pendingweapon == wp_supershotgun))
   {
-    return player->readyweapon == wp_supershotgun;
+    if (readyweapon == wp_shotgun || readyweapon == wp_supershotgun)
+    {
+      return readyweapon == wp_supershotgun;
+    }
+    else
+    {
+      return ssg_preferred;
+    }
   }
   else if (CASUALPLAY(improved_weapon_toggles))
   {
-    if (player->readyweapon == wp_shotgun
-        || player->pendingweapon == wp_shotgun
-        || player->pendingweapon == wp_supershotgun)
+    if (readyweapon == wp_shotgun
+        || pendingweapon == wp_shotgun
+        || pendingweapon == wp_supershotgun)
     {
-      return player->pendingweapon != wp_supershotgun;
+      return pendingweapon != wp_supershotgun;
     }
-    else if (player->readyweapon == wp_supershotgun)
+    else if (readyweapon == wp_supershotgun)
     {
-      return player->pendingweapon == wp_shotgun;
+      return pendingweapon == wp_shotgun;
     }
     else
     {
@@ -280,12 +309,12 @@ boolean G_ToggleShotgunSSG(const player_t *const player, boolean vanilla)
   {
     if (vanilla)
     {
-      return player->readyweapon != wp_supershotgun;
+      return readyweapon != wp_supershotgun;
     }
     else
     {
-      return player->readyweapon == wp_shotgun
-             || (player->readyweapon != wp_supershotgun
+      return readyweapon == wp_shotgun
+             || (readyweapon != wp_supershotgun
                  && ssg_preferred);
     }
   }
@@ -413,6 +442,19 @@ static void G_UpdateInitialLoadout(void)
 }
 
 // [Nugget] =================================================================/
+
+#define SAVEGAMESIZE  0x20000
+#define SAVESTRINGSIZE  24
+
+static size_t   savegamesize = SAVEGAMESIZE; // killough
+static char     *demoname = NULL;
+// the original name of the demo, without "-00000" and file extension
+static char *demoname_orig = NULL;
+static boolean  netdemo;
+static byte     *demobuffer;   // made some static -- killough
+static size_t   maxdemosize;
+static byte     *demo_p;
+static byte     consistancy[MAXPLAYERS][BACKUPTICS];
 
 static int G_GameOptionSize(void);
 
@@ -783,38 +825,18 @@ static void ApplyQuickstartCache(ticcmd_t *cmd, boolean strafe)
 
 void G_PrepMouseTiccmd(void)
 {
-  // [Nugget] /===============================================================
-
-  float hmodifier = 1.0f;
-
-  // Decrease the intensity of some movements if zoomed in -------------------
-
-  if (!strictmode)
-  {
-    const int zoom = R_GetFOVFX(FOVFX_ZOOM);
-
-    if (zoom)
-    { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
-  }
-
-  float vmodifier = hmodifier;
-
-  // Flip levels ------------------------------------------------------------
-
-  if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
-
-  // [Nugget] ===============================================================/
+  UpdateMouseModifiers(); // [Nugget]
 
   if (mousex && !M_InputGameActive(input_strafe))
   {
-    localview.rawangle -= G_CalcMouseAngle(mousex) / hmodifier;
+    localview.rawangle -= G_CalcMouseAngle(mousex) / mouse_h_modifier;
     basecmd.angleturn = G_CarryAngle(localview.rawangle);
     mousex = 0;
   }
 
   if (mousey && mouselook)
   {
-    localview.rawpitch += G_CalcMousePitch(mousey) / vmodifier;
+    localview.rawpitch += G_CalcMousePitch(mousey) / mouse_v_modifier;
     basecmd.pitch = G_CarryPitch(localview.rawpitch);
     mousey = 0;
   }
@@ -824,27 +846,7 @@ void G_PrepGamepadTiccmd(void)
 {
   if (I_UseGamepad())
   {
-    // [Nugget] /=============================================================
-
-    float hmodifier = 1.0f;
-
-    // Decrease the intensity of some movements if zoomed in -----------------
-
-    if (!strictmode)
-    {
-      const int zoom = R_GetFOVFX(FOVFX_ZOOM);
-
-      if (zoom)
-      { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
-    }
-
-    float vmodifier = hmodifier;
-
-    // Flip levels ----------------------------------------------------------
-
-    if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
-
-    // [Nugget] =============================================================/
+    UpdateMouseModifiers(); // [Nugget]
 
     const boolean strafe = M_InputGameActive(input_strafe);
 
@@ -853,14 +855,14 @@ void G_PrepGamepadTiccmd(void)
 
     if (axes[AXIS_TURN] && !strafe)
     {
-      localview.rawangle -= G_CalcGamepadAngle() / hmodifier;
+      localview.rawangle -= G_CalcGamepadAngle() / mouse_h_modifier;
       basecmd.angleturn = G_CarryAngle(localview.rawangle);
       axes[AXIS_TURN] = 0.0f;
     }
 
     if (axes[AXIS_LOOK] && padlook)
     {
-      localview.rawpitch -= G_CalcGamepadPitch() / vmodifier;
+      localview.rawpitch -= G_CalcGamepadPitch() / mouse_v_modifier;
       basecmd.pitch = G_CarryPitch(localview.rawpitch);
       axes[AXIS_LOOK] = 0.0f;
     }
@@ -871,41 +873,21 @@ void G_PrepGyroTiccmd(void)
 {
   if (I_UseGamepad())
   {
-    // [Nugget] /=============================================================
-
-    float hmodifier = 1.0f;
-
-    // Decrease the intensity of some movements if zoomed in -----------------
-
-    if (!strictmode)
-    {
-      const int zoom = R_GetFOVFX(FOVFX_ZOOM);
-
-      if (zoom)
-      { hmodifier = MAX(1.0f, (float) custom_fov / MAX(1, custom_fov + zoom)); }
-    }
-
-    float vmodifier = hmodifier;
-
-    // Flip levels ----------------------------------------------------------
-
-    if (STRICTMODE(flip_levels)) { hmodifier = -hmodifier; }
-
-    // [Nugget] =============================================================/
+    UpdateMouseModifiers(); // [Nugget]
 
     I_CalcGyroAxes(M_InputGameActive(input_strafe));
     gyro_turn_tic = gyro_axes[GYRO_TURN];
 
     if (gyro_axes[GYRO_TURN])
     {
-      localview.rawangle += gyro_axes[GYRO_TURN] / hmodifier;
+      localview.rawangle += gyro_axes[GYRO_TURN] / mouse_h_modifier;
       basecmd.angleturn = G_CarryAngle(localview.rawangle);
       gyro_axes[GYRO_TURN] = 0.0f;
     }
 
     if (gyro_axes[GYRO_LOOK])
     {
-      localview.rawpitch += gyro_axes[GYRO_LOOK] / vmodifier;
+      localview.rawpitch += gyro_axes[GYRO_LOOK] / mouse_v_modifier;
       basecmd.pitch = G_CarryPitch(localview.rawpitch);
       gyro_axes[GYRO_LOOK] = 0.0f;
     }
@@ -3967,7 +3949,7 @@ boolean G_KeyFrameRW(void)
 
 boolean clean_screenshot;
 
-int screenshot_palette; // [Nugget]
+screenshotpalette_t screenshot_palette; // [Nugget]
 
 void G_CleanScreenshot(void)
 {
@@ -4292,7 +4274,8 @@ void G_Ticker(void)
     fixed_t x = 0,
             y = 0,
             z = 0;
-    angle_t angle = 0;
+    angle_t angle = 0,
+            ticangle = 0;
     fixed_t pitch = 0;
     boolean center = false,
             lock = false;
@@ -4319,8 +4302,11 @@ void G_Ticker(void)
         lock = true;
       }
       else {
-        if (!R_GetFreecamMobj() || R_GetChasecamOn())
-        { angle = cmd->angleturn << 16; }
+        if (R_FreecamTurningOverride())
+        {
+          angle = cmd->angleturn << 16;
+          ticangle = cmd->ticangleturn << FRACBITS;
+        }
 
         if (!R_GetFreecamMobj())
         {
@@ -4378,7 +4364,7 @@ void G_Ticker(void)
       #undef INPUT
     }
 
-    R_UpdateFreecam(x, y, z, angle, pitch, center, lock);
+    R_UpdateFreecam(x, y, z, angle, ticangle, pitch, center, lock);
   }
 }
 
@@ -5111,6 +5097,21 @@ void G_ReloadDefaults(boolean keep_demover)
     strictmode = true;
     force_strictmode = true;
   }
+
+  // [Nugget] /---------------------------------------------------------------
+
+  static int old_strictmode = -1;
+
+  if (old_strictmode == -1) { old_strictmode = strictmode; }
+
+  if (old_strictmode != strictmode)
+  {
+    P_SegLengths(true); // Fake contrast
+
+    old_strictmode = strictmode;
+  }
+
+  // [Nugget] ---------------------------------------------------------------/
 
   G_UpdateSideMove();
 
@@ -6229,6 +6230,11 @@ void G_BindEnemVariables(void)
              false, ss_enem, wad_yes,
              "Bloodier gibbing");
 
+  // (CFG-only)
+  M_BindNum("bloodier_gibbing_splats", &bloodier_gibbing_splats, &bloodier_gibbing_splats,
+            40, 10, 256, ss_none, wad_yes,
+            "Max. number of bloodier-gibbing splats");
+
   M_BindBool("tossdrop", &tossdrop, NULL,
              false, ss_enem, wad_yes,
              "Enemies toss their items dropped upon death");
@@ -6264,6 +6270,11 @@ void G_BindCompVariables(void)
 
   M_BindBool("blockmapfix", &blockmapfix, NULL, false, ss_comp, wad_no,
              "Fix blockmap bug (improves hit detection)");
+
+  // [Nugget] Hitbox-based hitscan collision
+  M_BindBool("hitbox_hitscan", &hitbox_hitscan, NULL, false, ss_comp, wad_no,
+             "Hitbox-based hitscan collision (fixes melee against large things)");
+
   M_BindBool("checksight12", &checksight12, NULL, false, ss_comp, wad_no,
              "Fast blockmap-based line-of-sight calculation");
 
@@ -6361,6 +6372,11 @@ void G_BindWeapVariables(void)
   M_BindBool("weapon_recoilpitch", &weapon_recoilpitch, NULL,
              false, ss_weap, wad_no,
              "Recoil pitch from weapon fire");
+
+  // [Nugget] (CFG-only)
+  M_BindNum("weapon_recoilpitch_scale_pct", &weapon_recoilpitch_scale_pct, NULL,
+            100, 10, 100, ss_none, wad_no,
+            "Recoil-pitch scale percent");
 
   M_BindBool("weapon_recoil", &default_weapon_recoil, &weapon_recoil,
              false, ss_weap, wad_yes, // [Nugget] Restored menu item

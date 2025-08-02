@@ -1,32 +1,28 @@
 ﻿# Cherry Doom
 [![Cherry Doom Icon](https://raw.githubusercontent.com/xemonix0/Cherry-Doom/master/data/cherry-doom.png)](https://github.com/xemonix0/Cherry-Doom)
 
-[![Code Size](https://img.shields.io/github/languages/code-size/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom)
-[![License](https://img.shields.io/github/license/xemonix0/Cherry-Doom.svg?style=for-the-badge&logo=gnu)](https://github.com/xemonix0/Cherry-Doom/blob/master/COPYING)
-[![Release](https://img.shields.io/github/release/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
-[![Release Date](https://img.shields.io/github/release-date/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
-[![Downloads (total)](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/total?style=for-the-badge)](https://github.com/fabiangreffrath/woof/releases/latest)
-[![Downloads (latest)](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/latest/total.svg?style=for-the-badge)](https://github.com/fabiangreffrath/woof/releases/latest)
-[![Commits Since Latest Release](https://img.shields.io/github/commits-since/xemonix0/Cherry-Doom/latest.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/commits/master)
-[![Last Commit](https://img.shields.io/github/last-commit/xemonix0/Cherry-Doom.svg?style=for-the-badge)](https://github.com/xemonix0/Cherry-Doom/commits/master)
-[![Continuous Integration](https://img.shields.io/github/check-runs/xemonix0/Cherry-Doom/master?style=for-the-badge&label=Continuous%20Integration)](https://github.com/xemonix0/Cherry-Doom/actions/workflows/main.yml)
+[![Release](https://img.shields.io/github/release/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
+[![Release Date](https://img.shields.io/github/release-date/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
+[![Downloads (total)](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/total)](https://github.com/fabiangreffrath/woof/releases/latest)
+[![Downloads (latest)](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/latest/total.svg)](https://github.com/fabiangreffrath/woof/releases/latest)
+[![Commits Since Latest Release](https://img.shields.io/github/commits-since/xemonix0/Cherry-Doom/latest.svg)](https://github.com/xemonix0/Cherry-Doom/commits/master)
+[![Last Commit](https://img.shields.io/github/last-commit/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/commits/master)
 
 Cherry Doom is a fork of [Nugget Doom](https://github.com/MrAlaux/Nugget-Doom) intended to add even more features.
 
-**Note**: this README and the rest of documentation are updated on a per-commit basis, meaning that they may not correspond to the latest release.
+**Note**: this README reflects the latest commit, not necessarily the latest release. For release-specific info, check your version's docs.
 
-If you're seeking information on the version you're using, please refer to the documentation included with it.
-
-## Demo Compatibility Notice
+## DISCLAIMER
 Although the new code has been written with the intention of not breaking demo compatibility, it has not been properly tested yet.
 **RECORD DEMOS AT YOUR OWN RISK!**
 
 ## Features
 
-**Important notes**:
-- This feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features)
-- Some of Cherry Doom's features originate from other sources; acknowledgements are provided _(ported from [p.f.] or inspired by [i.b.])_
-- Some config variables (CVARs) don't have a corresponding menu item and can only be changed by editing `cherry-doom.cfg`. These are marked as "_CFG-only_" and the CVAR name is included for guidance
+This feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features). The build corresponding to this README is based on [Nugget Doom 4.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.3.0).
+
+Some of Cherry Doom's features originate from other sources; acknowledgements are provided _(ported from [p.f.] or inspired by [i.b.])_.
+
+Config variables marked as "_CFG-only_" don't have a corresponding menu item and can only be changed by editing `cherry-doom.cfg`.
 
 ### General
 
@@ -56,8 +52,8 @@ Although the new code has been written with the intention of not breaking demo c
 
 ### Miscellaneous
 
-- Menu items, disabled due to acive compatibility options, now include hints, explaining the reason for their unavailability
-- Most setup menus have been reorganized using a new _scrollable subpages_ feature for easier navigation
+- Menu items, disabled due to active compatibility options, now include hints, explaining the reason for their unavailability
+- Most setup menus have been reorganized into subpages for easier navigation
 - _Disable Stats Tracking_ setting for the _Custom Skill_
 
 ### _Level Table_

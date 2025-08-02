@@ -160,8 +160,19 @@ void M_InitConfig(void)
 
     WadStats_BindLevelTableVariables();
 
-    // [Nugget] (CFG-only)
-    M_BindBool("fail_safe", &fail_safe, NULL, false, ss_none, wad_no, "Use only when instructed");
+    // [Nugget] /-------------------------------------------------------------
+
+    // (CFG-only)
+    M_BindBool("nugget_devmode", &nugget_devmode, NULL,
+               false, ss_none, wad_no,
+               "Enable developer features");
+
+    // (CFG-only)
+    M_BindBool("fail_safe", &fail_safe, NULL,
+               false, ss_none, wad_no,
+               "Use only when instructed");
+
+    // [Nugget] -------------------------------------------------------------/
 
     default_t last_entry = {NULL};
     array_push(defaults, last_entry);

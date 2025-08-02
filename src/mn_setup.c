@@ -69,6 +69,7 @@
 
 // [Nugget]
 #include "p_inter.h"
+#include "p_setup.h"
 #include "st_stuff.h"
 
 // [Cherry]
@@ -374,6 +375,7 @@ enum
     str_chasecam,
     str_thing_lighting,
     str_fake_contrast,
+    str_alt_interpic,
     str_s_clipping_dist,
     str_page_ticking,
     str_thing_spawns,
@@ -2829,6 +2831,10 @@ setup_menu_t comp_settings1[] = {
     {"Improved Hit Detection", S_ONOFF | S_STRICT, M_X, M_SPC,
      {"blockmapfix"}},
 
+    // [Nugget] Hitbox-based hitscan collision
+    {"Hitbox-based Hitscan Collision", S_ONOFF | S_CRITICAL, M_X, M_SPC,
+     {"hitbox_hitscan"}},
+
     {"Fast Line-of-Sight Calculation", S_ONOFF | S_STRICT, M_X, M_SPC,
      {"checksight12"}, .action = P_UpdateCheckSight},
 
@@ -3879,6 +3885,9 @@ void MN_DrawGyro(void)
     DrawGyroCalibration();
 }
 
+// [Nugget] Voxel rendering mode
+static void UpdateVoxelRenderingModeItem(void);
+
 static void SmoothLight(void)
 {
     setsmoothlight = true;
@@ -3917,6 +3926,11 @@ static void ShadowTrans(void)
   R_GetGenericTranMap(hud_menu_shadows_filter_pct);
 }
 
+static void RecalculateFakeContrast(void)
+{
+  P_SegLengths(true);
+}
+
 static const char *flinching_strings[] = {
   "Nothing", "Landing", "Damage", "Both", NULL
 };
@@ -3931,6 +3945,10 @@ static const char *thing_lighting_strings[] = {
 
 static const char *fake_contrast_strings[] = {
   "Off", "Smooth", "Vanilla", NULL
+};
+
+static const char *alt_interpic_strings[] = {
+  "Off", "IWAD only", "Always", NULL
 };
 
 static const char* fuzzmode_strings[] = {
@@ -3968,7 +3986,12 @@ static setup_menu_t gen_settings5[] = {
 
     MI_GAP,
 
-    {"Voxels", S_ONOFF | S_STRICT, OFF_CNTR_X, M_SPC, {"voxels_rendering"}},
+    {"Voxels", S_ONOFF | S_STRICT, OFF_CNTR_X, M_SPC, {"voxels_rendering"},
+     .action = UpdateVoxelRenderingModeItem}, // [Nugget] Voxel rendering mode
+
+    // [Nugget] Voxel rendering mode
+    {"Bounded Voxel Rendering", S_ONOFF|S_STRICT, OFF_CNTR_X, M_SPC,
+     {"bounded_voxels_rendering"}, .action = VX_SetVoxelRenderingMode},
 
     {"Brightmaps", S_ONOFF | S_STRICT, OFF_CNTR_X, M_SPC, {"brightmaps"},
      .action = R_InitDrawFunctions},
@@ -4011,9 +4034,9 @@ static setup_menu_t gen_settings5[] = {
       {"Night-Vision Visor Effect",    S_ONOFF |S_STRICT,       N_X, M_SPC, {"nightvision_visor"}},
       {"Damage Tint Cap",              S_NUM   |S_STRICT,       N_X, M_SPC, {"damagecount_cap"}},
       {"Bonus Tint Cap",               S_NUM   |S_STRICT,       N_X, M_SPC, {"bonuscount_cap"}},
-      {"Fake Contrast",                S_CHOICE|S_STRICT,       N_X, M_SPC, {"fake_contrast"}, .strings_id = str_fake_contrast},
+      {"Fake Contrast",                S_CHOICE|S_STRICT,       N_X, M_SPC, {"fake_contrast"}, .strings_id = str_fake_contrast, .action = RecalculateFakeContrast},
       {"Screen Wipe Speed Percentage", S_NUM   |S_STRICT|S_PCT, N_X, M_SPC, {"wipe_speed_percentage"}},
-      {"Alt. Intermission Background", S_ONOFF |S_STRICT,       N_X, M_SPC, {"alt_interpic"}},
+      {"Alt. Intermission Background", S_CHOICE|S_STRICT,       N_X, M_SPC, {"alt_interpic"}, .strings_id = str_alt_interpic},
       {"Color Options",                S_FUNC,                  N_X, M_SPC, .action = MN_Color},
 
     MI_SPLIT, // [Cherry] Moved from `NG1` ------------------------------------
@@ -4287,6 +4310,14 @@ void MN_UpdateFpsLimitItem(void)
 void MN_DisableVoxelsRenderingItem(void)
 {
     DisableItem(true, gen_settings5, "voxels_rendering");
+
+    UpdateVoxelRenderingModeItem(); // [Nugget] Voxel rendering mode
+}
+
+// [Nugget] Voxel rendering mode
+static void UpdateVoxelRenderingModeItem(void)
+{
+    DisableItem(!voxels_rendering, gen_settings5, "bounded_voxels_rendering");
 }
 
 // [Nugget]
@@ -5780,6 +5811,8 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
             MN_ClearMenus();
             setup_active = false;
             setup_active_secondary = false;
+
+            M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         }
         else
         {
@@ -5793,6 +5826,8 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
                 MN_Back();
                 setup_active = false;
             }
+
+            M_StartSoundOptional(sfx_mnubak, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         }
 
         current_item->m_flags &= ~(S_HILITE | S_SELECT); // phares 4/19/98
@@ -5805,7 +5840,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         print_warning_about_changes = false; // [FG] reset
         active_thermo = NULL;
         LT_Reset(); // [Cherry] level table cleanup
-        M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
+        // [Nugget] Sounds are handled above
         return true;
     }
 
@@ -6234,6 +6269,7 @@ static const char **selectstrings[] = {
     chasecam_strings,
     thing_lighting_strings,
     fake_contrast_strings,
+    alt_interpic_strings,
     s_clipping_dist_strings,
     page_ticking_strings,
     thing_spawns_strings,

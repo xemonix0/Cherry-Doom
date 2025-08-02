@@ -372,7 +372,7 @@ static actualspriteheight_t *actual_sprite_heights = NULL;
 
 static const actualspriteheight_t *CalculateActualSpriteHeight(const int lump)
 {
-  patch_t *const patch = W_CacheLumpNum(lump, PU_CACHE);
+  patch_t *const patch = V_CachePatchNum(lump, PU_CACHE);
   const short width = SHORT(patch->width);
 
   short actualheight = 0, toppadding = SHRT_MAX;
@@ -626,6 +626,9 @@ static void R_ProjectSprite (mobj_t* thing)
   fixed_t tr_x, tr_y, gxt, gyt, tz;
   fixed_t interpx, interpy, interpz, interpangle;
 
+  // [Nugget]
+  if (thing->intflags & MIF_DONTRENDER) { return; }
+
   // [Nugget] Freecam
   if (thing == R_GetFreecamMobj() && !R_GetChasecamOn())
   { return; }
@@ -687,6 +690,9 @@ static void R_ProjectSprite (mobj_t* thing)
   // thing is behind view plane?
   if (tz < MINZ || tz > MAXZ)
     return;
+
+  // [Nugget]
+  if (thing->intflags & MIF_FLAKE && tz > 1024*FRACUNIT) { return; }
 
   gxt = -FixedMul(tr_x,viewsin);
   gyt = FixedMul(tr_y,viewcos);
@@ -1167,10 +1173,32 @@ void R_DrawPlayerSprites(void)
   // killough 9/18/98: compute lightlevel from floor and ceiling lightlevels
   // (see r_bsp.c for similar calculations for non-player sprites)
 
-  R_FakeFlat(viewplayer->mo->subsector->sector, &tmpsec,
-             &floorlightlevel, &ceilinglightlevel, 0);
-  lightnum = ((floorlightlevel+ceilinglightlevel) >> (LIGHTSEGSHIFT+1))
-    + extralight;
+  // [Nugget] Thing lighting
+  if (STRICTMODE(thing_lighting_mode) >= THINGLIGHTING_HITBOX)
+  {
+    int lightlevel = 0;
+
+    for (int i = 0;  i < 9;  i++)
+    {
+      const fixed_t gx = viewx + (viewplayer->mo->radius * ((i % 3) - 1)),
+                    gy = viewy + (viewplayer->mo->radius * ((i / 3) - 1));
+
+      sector_t *const sector = R_PointInSubsector(gx, gy)->sector;
+
+      R_FakeFlat(sector, &tmpsec, &floorlightlevel, &ceilinglightlevel, 0);
+
+      lightlevel += floorlightlevel + ceilinglightlevel;
+    }
+
+    lightnum = ((lightlevel / 9) >> (LIGHTSEGSHIFT+1)) + extralight;
+  }
+  else
+  {
+    R_FakeFlat(viewplayer->mo->subsector->sector, &tmpsec,
+               &floorlightlevel, &ceilinglightlevel, 0);
+    lightnum = ((floorlightlevel+ceilinglightlevel) >> (LIGHTSEGSHIFT+1))
+      + extralight;
+  }
 
   if (lightnum < 0)
     spritelights = scalelight[0];
