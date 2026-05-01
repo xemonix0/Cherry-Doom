@@ -295,6 +295,7 @@ For a complete list with more details, see the _New Nugget Doom cheats_ section 
 - **SDL render driver** setting (CFG-only: `sdl_renderdriver`) [p.f. Woof! 14.0.0]
 - **Setting of savegame and screenshot paths in config file** (CFG-only: `savegame_dir` and `screenshot_dir`)
 - **Keep palette changes in screenshots** setting (CFG-only: `screenshot_palette`)
+- **Organize screenshots** setting (CFG-only: `organize_screenshots`)
 - **Intermission ratio stats** setting, to use ratios for the stats on the intermission screen (CFG-only: `inter_ratio_stats`) [i.b. Heretic]
 - Setting to **increase the duration of the "Entering" state in Doom 2's intermission screen** (CFG-only: `inter_entering_delay`)
   - When enabled, said state can also be accelerated like previous states by pressing the _Fire_ or _Use_ buttons
