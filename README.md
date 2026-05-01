@@ -39,18 +39,18 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
     - Supports 16 distinct light levels for sectors
   - _Smooth_ (a.k.a. _Smooth Diminishing Lighting_):
     - Smoother lighting for floors and ceilings
-    - Supports 32 distinct light levels for sectors
+    - Supports 31 distinct light levels for sectors
   - _Interpolated_:
     - Partial true-color lighting
     - Smoother lighting in general
     - Theoretically compatible with all colormap effects
-    - Supports 256 distinct light levels for sectors
+    - Supports 241 distinct light levels for sectors
   - _True-color_:
     - Full true-color lighting
     - Better color quality
     - Smoothest lighting in general
     - Does not support some colormap effects (colormap brightmaps and fog are still supported)
-    - Supports 256 distinct light levels for sectors
+    - Supports 241 distinct light levels for sectors
   - Notes on the true-color modes:
     - Compatible with custom tinted palettes
     - No support for true-color (32-bit PNG) graphics; those are still palettized at startup
