@@ -1234,7 +1234,7 @@ static void InitColormaps32(void)
     // this lets us maintain some colormap effects (e.g. vanilla brightmaps, fog) and also palette tinting
     // (the colormap row we're interpolating towards is already colored as per the current palette)
 
-    // Load first, last, and invuln original colormap rows
+    // Load a few original colormap rows
     for (int i = 0;  i < num_palettes;  i++)
     {
       for (int j = 0;  j < numcolormaps;  j++)
@@ -1255,6 +1255,16 @@ static void InitColormaps32(void)
             const byte color_index = colormaps[j][(row * 256) + m];
 
             pal_colormaps[i][j][((row << CRSB) * 256) + m] = palscolors[i][color_index];
+          }
+        }
+
+        if (beta_emulation)
+        {
+          for (int m = 0;  m < 256;  m++)
+          {
+            const byte color_index = colormaps[j][(33 * 256) + m];
+
+            pal_colormaps[i][j][(257 * 256) + m] = palscolors[i][color_index];
           }
         }
       }
@@ -1299,6 +1309,16 @@ static void InitColormaps32(void)
             const byte color_index = colormaps[j][(k * 256) + m];
 
             pal_colormaps[i][j][((k<<CRSB) * 256) + m] = palscolors[i][color_index];
+          }
+        }
+
+        if (beta_emulation)
+        {
+          for (int m = 0;  m < 256;  m++)
+          {
+            const byte color_index = colormaps[j][(33 * 256) + m];
+
+            pal_colormaps[i][j][(257 * 256) + m] = palscolors[i][color_index];
           }
         }
       }

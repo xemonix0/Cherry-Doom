@@ -19,4 +19,5 @@
 - **_Blink Missing Keys_ not working when `screenblocks` were set to 12 and NUGHUD were disabled**
 - **Sprite shadows flickering when the crosshair locked onto a target with _Flip Levels_ enabled**
 - **Horizontal-autoaim indicators not accounting for _Flip Levels_**
+- **True-color rendering breaking invisibility colormap in beta-emulation mode**
 - **_Solid [Status Bar] Background Color_ not respecting color settings with true-color rendering**
