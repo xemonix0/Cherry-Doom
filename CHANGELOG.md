@@ -1,5 +1,6 @@
 ## New Features
 
+- **Support for high-resolution sprites between `HI_START`/`HI_END` markers**
 - **DeHackEd thing sprite `Scale` property** support
 - **Weapon Carousel fadeout** setting
 - Toggle to **organize screenshots**

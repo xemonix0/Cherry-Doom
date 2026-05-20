@@ -305,6 +305,7 @@ For a complete list with more details, see the _New Nugget Doom cheats_ section 
   - _Run_ button to gib
   - _Strafe_ buttons to skip
   - Press `0` to toggle fancy mode
+- **Support for high-resolution sprites between `HI_START`/`HI_END` markers**
 - **Support for the DeHackEd thing sprite `Scale` property**, as featured in ZDoom and derivatives
   - Does not work with voxel models
 - **Support for optional sounds:** [partially p.f. Crispy Doom]

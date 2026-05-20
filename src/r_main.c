@@ -193,6 +193,7 @@ static int num_colormap_rows;
 
 boolean vertical_lockon;
 
+boolean allow_hires_graphics;
 spriteshadows_t sprite_shadows;
 int sprite_shadows_tran_pct;
 thinglighting_t thing_lighting_mode;
@@ -2303,6 +2304,11 @@ void R_BindRenderVariables(void)
   M_BindNum("radial_plane_fog_fidelity", &radial_plane_fog_fidelity, NULL,
             2, 0, 4, ss_none, wad_yes,
             "Fidelity of radial fog for planes (higher values cause more stutter)");
+
+  // (CFG-only)
+  M_BindBool("allow_hires_graphics", &allow_hires_graphics, NULL,
+             true, ss_none, wad_no,
+             "Use high-resolution sprites when available");
 
   // [Nugget] ---------------------------------------------------------------/
 
