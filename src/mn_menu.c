@@ -3297,7 +3297,7 @@ boolean M_Responder(event_t *ev)
         {
             int txt = ev->data1.i;
 
-            txt = M_ToUpper(txt);
+            txt = ST_ToUpper(txt);
 
             if (txt >= ' ' && txt <= '_' && saveCharIndex < SAVESTRINGSIZE - 1
                 && MN_StringWidth(savegamestrings[saveSlot])
@@ -3912,7 +3912,7 @@ static void WriteText(int x, int y, const char *string)
             continue;
         }
 
-        c = M_ToUpper(c) - HU_FONTSTART;
+        c = ST_ToUpper(c) - HU_FONTSTART;
         if (c < 0 || c >= HU_FONTSIZE || hu_font[c] == NULL)
         {
             cx += 4;
