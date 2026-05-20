@@ -4,6 +4,7 @@
 - **DeHackEd thing sprite `Scale` property** support
 - **Weapon Carousel fadeout** setting
 - Toggle to **organize screenshots**
+- **Support for lowercase characters in console font**
 - Toggle to **use palette colors exactly when gamma correction is disabled**
 
 ## Changes

@@ -3297,7 +3297,7 @@ boolean M_Responder(event_t *ev)
         {
             int txt = ev->data1.i;
 
-            txt = ST_ToUpper(txt);
+            txt = M_ToUpper(txt);
 
             if (txt >= ' ' && txt <= '_' && saveCharIndex < SAVESTRINGSIZE - 1
                 && MN_StringWidth(savegamestrings[saveSlot])
