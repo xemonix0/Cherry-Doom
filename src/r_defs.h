@@ -406,6 +406,7 @@ typedef struct vissprite_s
   visspriteflag_t flags;
   byte *tranmap;
   byte lightnum;
+  fixed_t leftoffset;
 } vissprite_t;
 
 //

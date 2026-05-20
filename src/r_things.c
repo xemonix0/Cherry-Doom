@@ -728,7 +728,7 @@ static void DrawVisSpriteLoop8(
       // Thing lighting
       if (percolumn_lighting)
       {
-        fixed_t offset = (frac - pcl_offset) * pcl_scale_mult;
+        fixed_t offset = frac * pcl_scale_mult - pcl_offset;
 
         if (vis->flags & VSF_FLIPPED) { offset = -offset; }
 
@@ -792,7 +792,7 @@ static void DrawVisSpriteLoop32(
       // Thing lighting
       if (percolumn_lighting)
       {
-        fixed_t offset = (frac - pcl_offset) * pcl_scale_mult;
+        fixed_t offset = frac * pcl_scale_mult - pcl_offset;
 
         if (vis->flags & VSF_FLIPPED) { offset = -offset; }
 
@@ -899,7 +899,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     {
       percolumn_lighting = true;
 
-      pcl_offset = (SHORT(patch->leftoffset) << FRACBITS) - vis->xiscale/2;
+      pcl_offset = vis->leftoffset - vis->xiscale/2;
 
       const int angle = (viewangle - ANG90) >> ANGLETOFINESHIFT;
 
@@ -1023,8 +1023,7 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
         yscale_mult = 1.0f,
         info_scale_mult = 1.0f;
 
-  boolean have_scale = false,
-          have_info_scale = false;
+  boolean have_scale = false;
 
   const fixed_t info_scale = thing->info ? thing->info->scale : FRACUNIT;
 
@@ -1033,9 +1032,8 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
     if (info_scale <= 0) { return; }
 
     have_scale = true;
-    have_info_scale = true;
 
-    info_scale_mult = FIXED2DOUBLE(thing->info->scale);
+    info_scale_mult = FIXED2DOUBLE(info_scale);
     xscale_mult = yscale_mult = info_scale_mult;
 
     xscale *= xscale_mult;
@@ -1163,7 +1161,8 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
   gzt = interpz + thisspritetopoffset;
 
   // [Nugget] Sprite scaling
-  if (have_info_scale) { gzt = interpz + thisspritetopoffset * info_scale_mult; }
+  if (info_scale_mult != 1.0f)
+  { gzt = interpz + thisspritetopoffset * info_scale_mult; }
 
   // killough 4/9/98: clip things which are out of view due to height
   if (interpz > (int64_t)viewz + FixedDiv(viewheightfrac, xscale) ||
@@ -1215,6 +1214,7 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
   vis->scale_mult = xscale_mult;
   vis->yscale = yscale;
   vis->lightnum = lightnum;
+  vis->leftoffset = spriteoffset[lump] * info_scale_mult;
   vis->flags = (VSF_FLIPPED * flip) | (VSF_SCALED * have_scale);
 
   if (flip)
@@ -1672,6 +1672,7 @@ void R_DrawPSprite (pspdef_t *psp, const boolean is_flash) // [Nugget] Transluce
   vis->scale_mult = xscale_mult;
   vis->yscale = yscale;
   vis->lightnum = 0;
+  vis->leftoffset = spriteoffset[lump];
   vis->flags = (VSF_FLIPPED * flip) | (VSF_SCALED * have_scale);
   vis->flags |= VSF_FULLBRIGHT; // Don't apply per-column lighting and radial fog
 
