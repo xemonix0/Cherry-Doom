@@ -602,6 +602,14 @@ static boolean CheckConditions(sbarcondition_t *conditions, player_t *player)
                 }
                 break;
 
+            // [Nugget] NUGHUD
+            case sbc_havearmor:
+                if (st_nughud)
+                {
+                    result &= player->armorpoints != 0;
+                }
+                break;
+
             case sbc_none:
             default:
                 result = false;
@@ -2987,10 +2995,13 @@ static void DrawNughudGraphics(void)
 
     if (weaponinfo[plyr->readyweapon].ammo != am_noammo)
     {
+      const int maxammo_divisor = nughud.ammobar_resize
+                                ? 1 : (1 + plyr->backpack);
+
       DrawNughudBar(
         &nughud.ammobar, nhambar,
         plyr->ammo[weaponinfo[plyr->readyweapon].ammo],
-        plyr->maxammo[weaponinfo[plyr->readyweapon].ammo] / (1 + plyr->backpack)
+        plyr->maxammo[weaponinfo[plyr->readyweapon].ammo] / maxammo_divisor
       );
     }
 
@@ -2998,7 +3009,9 @@ static void DrawNughudGraphics(void)
                armor = sbar_armor;
 
     DrawNughudBar(&nughud.healthbar, nhhlbar, health, maxhealth);
-    DrawNughudBar(&nughud.armorbar,  nharbar,  armor, max_armor/2);
+
+    if (!nughud.armor_hide || plyr->armorpoints)
+    { DrawNughudBar(&nughud.armorbar,  nharbar,  armor, max_armor/2); }
   }
 
   for (int i = NUMNUGHUDPATCHES/2;  i < NUMNUGHUDPATCHES;  i++)
@@ -3129,7 +3142,7 @@ static void DrawNughudGraphics(void)
     if (patch) { DrawNughudPatch(&nughud.healthicon, patch, no_offsets); }
   }
 
-  if (nughud.armoricon.x > -1)
+  if (nughud.armoricon.x > -1 && (!nughud.armor_hide || plyr->armorpoints))
   {
     patch_t *patch = NULL;
     boolean no_offsets = false;
@@ -3795,7 +3808,18 @@ end_amnum:
 
   if (nughud.armor.x > -1)
   {
-    array_push(sb.children, CreateNughudNumber(nughud.armor, sbn_armor, &tnum, 3, true));
+    sbarelem_t elem = CreateNughudNumber(nughud.armor, sbn_armor, &tnum, 3, true);
+
+    if (nughud.armor_hide)
+    {
+      sbarcondition_t condition = {0};
+
+      condition.condition = sbc_havearmor;
+
+      array_push(elem.conditions, condition);
+    }
+
+    array_push(sb.children, elem);
   }
 
   // Ammos -------------------------------------------------------------------

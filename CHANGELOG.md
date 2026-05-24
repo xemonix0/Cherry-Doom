@@ -3,6 +3,9 @@
 - **Support for high-resolution sprites between `HI_START`/`HI_END` markers**
 - **DeHackEd thing sprite `Scale` property** support
 - **Weapon Carousel fadeout** setting
+- **NUGHUD:**
+  - Toggle to hide armor-related widgets when the player has no armor
+  - Toggle to resize the ammo bar when the player has the backpack
 - Toggle to **organize screenshots**
 - **Support for lowercase characters in console font**
 - Toggle to **use palette colors exactly when gamma correction is disabled**
