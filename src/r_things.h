@@ -31,7 +31,7 @@ int R_CalculateHitboxLightNum(fixed_t x, fixed_t y, fixed_t radius, boolean forc
 
 typedef struct actualspriteheight_s
 {
-  int lump;
+  short lump;
   short height, toppadding;
 } actualspriteheight_t;
 

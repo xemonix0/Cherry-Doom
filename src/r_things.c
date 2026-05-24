@@ -538,9 +538,9 @@ vissprite_t *R_NewVisSprite(void)
 
 static actualspriteheight_t *actual_sprite_heights = NULL;
 
-static const actualspriteheight_t *CalculateActualSpriteHeight(const int lump)
+static const actualspriteheight_t *CalculateActualSpriteHeight(const short lump)
 {
-  patch_t *const patch = V_CachePatchNum(lump, PU_CACHE);
+  patch_t *const patch = V_CachePatchNum(firstspritelump + lump, PU_CACHE);
   const short width = SHORT(patch->width);
 
   short actualheight = 0, toppadding = SHRT_MAX;
@@ -572,7 +572,12 @@ static const actualspriteheight_t *CalculateActualSpriteHeight(const int lump)
     actualheight = MAX(actualheight, columnheight);
   }
 
-  actualheight -= toppadding;
+  if (!actualheight)
+  {
+    // The sprite is blank
+    toppadding = 0;
+  }
+  else { actualheight -= toppadding; }
 
   array_push(
     actual_sprite_heights,
@@ -596,7 +601,7 @@ const actualspriteheight_t *R_GetActualSpriteHeight(const int sprite, int frame)
   if (frame >= sprdef->numframes)
   { return &dummy; }
 
-  const int lump = firstspritelump + sprdef->spriteframes[frame].lump[0];
+  const short lump = sprdef->spriteframes[frame].lump[0];
 
   for (int i = 0;  i < array_size(actual_sprite_heights);  i++)
   {
