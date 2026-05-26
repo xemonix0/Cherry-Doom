@@ -9,6 +9,7 @@
 - Toggle to **organize screenshots**
 - **Support for lowercase characters in console font**
 - Toggle to **use palette colors exactly when gamma correction is disabled**
+- Developer cheats to toggle netgame and deathmatch states
 
 ## Changes
 
