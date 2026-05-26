@@ -15,6 +15,7 @@
 - **Optimized initialization of _Interpolated/True-color Lighting_ and _Radial Fog_ through multithreading**
 - **Raised upper limits of color _Intensity_ and _Saturation_ settings to 200%**
 - **Randomized duration of spawn, death, and gib states in _Fancy Cast_**, emulating in-game behavior
+- **Improved _Sprite Shadows_ casting threshold**
 
 ## Bug Fixes
 

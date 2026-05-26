@@ -1299,8 +1299,12 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
 
   // [Nugget] Sprite shadows -------------------------------------------------
 
+  const unsigned sprite_area =
+    (thisspritewidth >> FRACBITS) * (thisspriteheight >> FRACBITS)
+    * FIXED2DOUBLE(vis->scale);
+
   if (   !R_SpriteShadowsOn()
-      || (vis->scale <= FRACUNIT/4)
+      || (sprite_area < 1024)
       || (frame & FF_FULLBRIGHT)
       || (thing->flags & (MF_SHADOW|MF_TRANSLUCENT))
       || thing->gentranmap
@@ -1349,8 +1353,6 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
   }
 
   fixed_t shadow_xscale, shadow_yscale, shadow_gz, shadow_gzt;
-
-  if (vis->scale * shadow_yscale_mult <= FRACUNIT * 3/256) { return; }
 
   shadow_yscale = yscale * shadow_yscale_mult;
   shadow_xscale = xscale * (1.0f - floordist);
