@@ -427,13 +427,20 @@ static const int markcolors[] =
 
 static const size_t NUM_MARKCOLORS = sizeof(markcolors) / sizeof(*markcolors);
 
-static void AM_colorPointedMark(void)
+static void AM_colorPointedMark(const boolean shift)
 {
   if (!markpointnum || pointed_mark_index < 0) { return; }
 
   mapmark_t *const mark = markpoints + pointed_mark_index;
 
-  mark->color = (mark->color + 1) % NUM_MARKCOLORS;
+  if (shift)
+  {
+    if (--mark->color < 0) { mark->color = NUM_MARKCOLORS-1; }
+  }
+  else
+  {
+    if (++mark->color >= NUM_MARKCOLORS) { mark->color = 0; }
+  }
 }
 
 static void AM_clearPointedMark(void)
@@ -1233,7 +1240,7 @@ boolean AM_Responder
       // [Nugget]
       if (pointed_mark_index >= 0)
       {
-        AM_colorPointedMark();
+        AM_colorPointedMark(M_ShiftPressed());
       }
       else
       {

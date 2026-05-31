@@ -28,7 +28,7 @@
 
 // [Nugget]
 #include "am_map.h"
-#include "g_game.h"
+#include "i_input.h"
 #include "i_video.h"
 #include "mn_internal.h"
 #include "r_main.h"
@@ -525,6 +525,12 @@ int M_GetMouseBForName(const char *name)
 boolean M_IsMouseWheel(int mouseb)
 {
     return mouseb >= MOUSE_BUTTON_WHEELUP && mouseb <= MOUSE_BUTTON_WHEELRIGHT;
+}
+
+// [Nugget]
+boolean M_ShiftPressed(void)
+{
+  return I_ShiftPressed();
 }
 
 void M_InputPredefined(void)

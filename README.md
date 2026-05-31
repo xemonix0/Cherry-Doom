@@ -198,7 +198,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 - **_Show Powerup Timers_** setting
   - The CFG-only `hud_power_timers_notime` CVAR can be enabled to show only the powerup names/icons
 - **_Blink Missing Keys_** setting [partially p.f. Crispy Doom]
-- **_Animated Health/Armor Count_** setting
+- **_Animated Health/Armor Counts_** setting
 - **_Berserk display when using Fist_** setting [partially p.f. Crispy Doom]
 - **_Automap Level Stats Format_** setting
 - **Level-Stats Selection** settings (CFG-only: `hud_stats_#[_map]`)
@@ -206,7 +206,7 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
   - _Teleport Timer_ [i.b. Crispy Doom];
   - _Key-Pickup Timer_ [same as above].
 - **Extended HUD color customization**
-- **Armor count is colored gray when in God Mode**
+- **Armor count is colored gray only when in God Mode** when _Colored Numbers_ are enabled
 - **Support for Berserk (`STBERSRK`) and Infinite Ammo (`STINFNTY`) icons**
 - **Support for HUD icons**:
   - Level-stats widget: `HUDKILLS`, `HUDITEMS`, `HUDSCRTS`
@@ -306,7 +306,7 @@ For a complete list with more details, see the _New Nugget Doom cheats_ section 
   - _Strafe_ buttons to skip
   - Press `0` to toggle fancy mode
 - **Support for high-resolution sprites between `HI_START`/`HI_END` markers**
-- **Support for the DeHackEd thing sprite `Scale` property**, as featured in ZDoom and derivatives
+- **Support for the DeHackEd thing `Scale` property**, as featured in ZDoom and derivatives
   - Does not work with voxel models
 - **Support for optional sounds:** [partially p.f. Crispy Doom]
   - Jumping: `DSPLJUMP`
