@@ -58,6 +58,7 @@
 #include "sounds.h"
 
 // [Nugget] CVARs
+boolean minimap_double_press;
 boolean fancy_teleport;
 
 //jff 1/7/98 default automap colors added
@@ -1005,7 +1006,8 @@ void AM_ChangeMode(automapmode_t mode)
   {
     mode = AM_OFF;
   }
-  else if (automapactive != AM_MINI && gametic - last_change_tic < TICRATE/5) // 0.2 seconds
+  else if (minimap_double_press && automapactive != AM_MINI
+           && gametic - last_change_tic < TICRATE/5) // 0.2 seconds
   {
     mode = AM_MINI;
   }

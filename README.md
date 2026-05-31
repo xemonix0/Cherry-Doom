@@ -214,7 +214,8 @@ For these settings, their CVAR names are provided alongside the _CFG-only_ label
 
 ### Automap
 
-- **Minimap mode:** Quickly press the automap button twice to enable it [i.b. DSDA-Doom]
+- **Minimap mode:** Quickly press the automap button twice to toggle it [i.b. DSDA-Doom]
+  - The CFG-only `minimap_double_press` CVAR controls this functionality
 - Button to **_Highlight Points of Interest_**; marks and keyed lines (default: <kbd>B</kbd>)
 - **_Tag Finder_** button [p.f. PrBoomX]
   - Position the automap pointer over a sector and press this button

@@ -822,13 +822,19 @@ void M_BindInputVariables(void)
 
     // [Nugget] /---------------------------------------------------------------
 
+    // (CFG-only)
+    M_BindBool("minimap_double_press", &minimap_double_press, NULL,
+               true, ss_none, wad_no,
+               "Toggle minimap by quickly pressing the automap button twice");
+
     BIND_INPUT_SUB(input_map_blink, "Highlight points of interest (keyed lines, marks) on the automap", ss_mapkeys);
 
     BIND_INPUT_SUB(input_map_tagfinder, "Find associated sectors and lines", ss_mapkeys);
 
     BIND_INPUT_SUB(input_map_teleport, "Teleport to automap pointer", ss_mapkeys);
 
-    M_BindBool("fancy_teleport", &fancy_teleport, NULL, true, ss_mapkeys, wad_no,
+    M_BindBool("fancy_teleport", &fancy_teleport, NULL,
+               true, ss_mapkeys, wad_no,
                "Use effects when teleporting to pointer (fog, sound and zoom)");
 
     // [Nugget] ---------------------------------------------------------------/

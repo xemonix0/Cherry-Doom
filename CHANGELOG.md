@@ -8,6 +8,7 @@
   - Toggle to resize the ammo bar when the player has the backpack
 - Toggle to **organize screenshots**
 - **Support for lowercase characters in console font**
+- Toggle to **disable minimap double-press**
 - Toggle to **use palette colors exactly when gamma correction is disabled**
 - Developer cheats to toggle netgame and deathmatch states
 
