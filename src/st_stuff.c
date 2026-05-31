@@ -2084,8 +2084,9 @@ static void DoPaletteStuff(player_t *player)
         }
     }
 
-    // [Nugget] Disable palette tint in menus
-    if (STRICTMODE(!palette_changes || (no_menu_tint && menuactive)))
+    // [Nugget] Disable palette tint in menus or when controlling freecam
+    if (STRICTMODE(!palette_changes || (no_menu_tint && menuactive)
+                   || R_GetFreecamMode() == FREECAM_CAM))
     {
         palette = 0;
     }
@@ -3105,9 +3106,6 @@ static hudfont_t LoadNughudHUDFont(
 
   int maxwidth = 0, maxheight = 0;
 
-  // If any lowercase character is missing, don't use lowercase at all
-  boolean use_lowercase = true;
-
   for (int i = 0;  i < HU_FONTSIZE;  i++)
   {
     char namebuf[16];
@@ -3121,17 +3119,6 @@ static hudfont_t LoadNughudHUDFont(
       maxwidth  = MAX(maxwidth,  SHORT(font.characters[i]->width));
       maxheight = MAX(maxheight, SHORT(font.characters[i]->height));
     }
-    else {
-      const char c = i + HU_FONTSTART;
-
-      if ('a' <= c && c <= 'z') { use_lowercase = false; }
-    }
-  }
-
-  if (!use_lowercase)
-  {
-    for (int i = 'a' - HU_FONTSTART;  i <= 'z' - HU_FONTSTART;  i++)
-    { font.characters[i] = font.characters[i + 'A' - 'a']; }
   }
 
   font.monowidth = maxwidth;
@@ -3221,8 +3208,6 @@ static sbarelem_t CreateNughudWidget(
 
 static sbardef_t *CreateNughudSbarDef(void)
 {
-  sbardef_t *const out = calloc(1, sizeof(*out));
-
   statusbar_t sb = {0};
 
   sb.height = 200;
@@ -3748,6 +3733,8 @@ end_amnum:
   }
 
   // -------------------------------------------------------------------------
+
+  sbardef_t *const out = calloc(1, sizeof(*out));
 
   array_push(out->statusbars, sb);
 

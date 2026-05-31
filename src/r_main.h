@@ -125,6 +125,14 @@ void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // CVARs ---------------------------------------------------------------------
 
+typedef enum spriteshadows_s {
+  SPRITESHADOWS_OFF,
+  SPRITESHADOWS_SIMPLE,
+  SPRITESHADOWS_3D,
+
+  NUM_SPRITESHADOWS
+} spriteshadows_t;
+
 typedef enum thinglighting_s {
   THINGLIGHTING_ORIGIN,
   THINGLIGHTING_HITBOX,
@@ -143,6 +151,8 @@ typedef enum fakecontrast_s {
 
 extern boolean vertical_lockon;
 
+extern spriteshadows_t sprite_shadows;
+extern int sprite_shadows_tran_pct;
 extern thinglighting_t thing_lighting_mode;
 extern boolean flip_levels;
 extern boolean nightvision_visor;
@@ -159,6 +169,7 @@ extern boolean comp_powerrunout;
 extern boolean have_crouch_sprites;
 
 fixed_t R_GetNughudViewPitch(void);
+boolean R_SpriteShadowsOn(void);
 int R_GetLightLevelInPoint(const fixed_t x, const fixed_t y);
 
 #define POWER_RUNOUT(power) \
@@ -191,7 +202,7 @@ extern void R_SetZoom(const int state);
 extern boolean explosion_shake;
 extern int explosion_shake_intensity_pct;
 
-extern void R_SetShake(int value);
+extern void R_ClearShake(void);
 extern void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range);
 
 // Chasecam ------------------------------------------------------------------
@@ -205,7 +216,7 @@ enum {
 }; extern int chasecam_mode;
 extern boolean chasecam_crosshair;
 
-extern boolean R_GetChasecamOn(void);
+extern boolean R_ChasecamOn(void);
 extern void    R_SetChasecamHit(const boolean value);
 extern void    R_UpdateChasecam(fixed_t x, fixed_t y, fixed_t z);
 
@@ -219,12 +230,11 @@ typedef enum freecammode_s {
   NUMFREECAMMODES
 } freecammode_t;
 
-extern boolean       R_GetFreecamOn(void);
+extern boolean       R_FreecamOn(void);
 extern void          R_SetFreecamOn(const boolean value);
 extern freecammode_t R_GetFreecamMode(void);
 extern freecammode_t R_CycleFreecamMode(void);
 extern angle_t       R_GetFreecamAngle(void);
-extern boolean       R_FreecamTurningOverride(void);
 extern void          R_ResetFreecam(const boolean newmap);
 extern void          R_MoveFreecam(fixed_t x, fixed_t y, fixed_t z);
 

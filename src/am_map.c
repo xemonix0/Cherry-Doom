@@ -1747,16 +1747,21 @@ static void AM_drawFline_Vanilla(fline_t* fl, int color)
 //
 static void AM_putWuDot(int x, int y, int color, int weight)
 {
-  if (STRICTMODE(flip_levels)) { x = f_x*2 + f_w - 1 - x; } // [Nugget] Flip levels
+  // [Nugget] /---------------------------------------------------------------
+
+  // Flip levels
+  if (STRICTMODE(flip_levels)) { x = f_x*2 + f_w - 1 - x; }
+
+  // Minimap: take `f_x` and `f_y` into account
+  if (!((f_x <= x && x < f_x+f_w) && (f_y <= y && y < f_y+f_h)))
+  { return; }
+
+  // [Nugget] ---------------------------------------------------------------/
 
    byte *dest = &I_VideoBuffer[y * video.pitch + x];
    unsigned int *fg2rgb = Col2RGB8[weight];
    unsigned int *bg2rgb = Col2RGB8[64 - weight];
    unsigned int fg, bg;
-
-  // [Nugget] Minimap: take `f_x` and `f_y` into account
-  if (!((f_x <= x && x < f_x+f_w) && (f_y <= y && y < f_y+f_h)))
-  { return; }
 
    fg = fg2rgb[color];
    bg = bg2rgb[*dest];
@@ -2529,13 +2534,13 @@ static void AM_drawPlayers(void)
   int   color;
   mpoint_t pt;
 
-  if (!netgame || R_GetFreecamOn()) // [Nugget] Freecam
+  if (!netgame || R_FreecamOn()) // [Nugget] Freecam
   {
     // [crispy] smooth player arrow rotation
     const angle_t smoothangle = (automaprotate ? plr->mo->angle : viewangle) - chaseaofs; // [Nugget]
 
     // interpolate player arrow
-    if ((uncapped && leveltime > oldleveltime) || R_GetFreecamOn()) // [Nugget]
+    if ((uncapped && leveltime > oldleveltime) || R_FreecamOn()) // [Nugget]
     {
         // [Nugget] Prevent Chasecam from shifting the map view
         pt.x = (viewx - chasexofs) >> FRACTOMAPBITS;
@@ -2571,7 +2576,7 @@ static void AM_drawPlayers(void)
         pt.y);
 
     // [Nugget] Freecam: draw the other arrows
-    if (!R_GetFreecamOn())
+    if (!R_FreecamOn())
       return;
   }
 
@@ -3094,7 +3099,6 @@ static mline_t *GetTanzerF(int f)
   // Thanks Ayba!
   static mline_t tanzer[NUMTANZERF][NUMTANZERFL] =
   {
-    // hl,       ht,       hr,       tu,       tb,       au,       alm,      alb,      arm,      arb,      llm,      llb,      lrm,      lrb
     RF( 41,  31,  47,  26,  52,  31,  47,  38,  47,  63,  47,  41,  47,  41,  39,  69,  50,  55,  54,  69,  47,  63,  44, 103,  47,  63,  54, 104),
     RF( 41,  32,  46,  26,  52,  31,  46,  38,  47,  62,  46,  41,  43,  53,  39,  69,  46,  41,  54,  69,  47,  62,  44, 103,  50,  82,  54, 104),
     RF( 40,  32,  45,  26,  51,  32,  45,  38,  46,  63,  45,  41,  45,  41,  38,  69,  45,  41,  54,  69,  46,  63,  43, 103,  50,  82,  54, 104),
@@ -3228,7 +3232,7 @@ static mline_t *GetTanzerF(int f)
   #undef RX
   #undef R
 
-  return tanzer[f];
+  return f[tanzer];
 }
 
 //----------------------------------------------------------------------------

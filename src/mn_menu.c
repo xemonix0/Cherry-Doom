@@ -1778,7 +1778,9 @@ static void M_QuickSave(void)
         return;
     }
 
-    if (!one_key_saveload) { // [Nugget] Restore quick-save/load prompts
+    // [Nugget] Restore quick-save/load prompts
+    if (!one_key_saveload)
+    {
         sprintf(tempstring, QSPROMPT, savegamestrings[quickSaveSlot]);
         M_StartMessage(tempstring, M_QuickSaveResponse, true);
     }
@@ -1826,7 +1828,9 @@ static void M_QuickLoad(void)
         return;
     }
 
-    if (!one_key_saveload) { // [Nugget] Restore quick-save/load prompts
+    // [Nugget] Restore quick-save/load prompts
+    if (!one_key_saveload)
+    {
         sprintf(tempstring, QLPROMPT, savegamestrings[quickSaveSlot]);
         M_StartMessage(tempstring, M_QuickLoadResponse, true);
     }
@@ -2248,11 +2252,56 @@ static menu_t GyroDef = {
 
 // [Nugget] /-----------------------------------------------------------------
 
-static menu_t ColorDef = {
+static menu_t ViewDef = {
     generic_setup_end,
     &SetupDef,
     Generic_Setup,
-    MN_DrawColor,
+    MN_DrawView,
+    34, 5,
+    0
+};
+
+static menu_t DisplayDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawDisplay,
+    34, 5,
+    0
+};
+
+static menu_t MiscDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawMisc,
+    34, 5,
+    0
+};
+
+static menu_t HUDColDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawHUDCol,
+    34, 5,
+    0
+};
+
+static menu_t MapKeysDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawMapKeys,
+    34, 5,
+    0
+};
+
+static menu_t CheatKeysDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawCheatKeys,
     34, 5,
     0
 };
@@ -2277,7 +2326,12 @@ void MN_SetNextMenuAlt(ss_types type)
         &PadAdvDef, &GyroDef,
 
         // [Nugget]
-        &ColorDef,
+        &ViewDef,
+        &DisplayDef,
+        &MiscDef,
+        &HUDColDef,
+        &MapKeysDef,
+        &CheatKeysDef,
         &CustomSkillDef // Custom Skill menu
     };
 
@@ -2796,7 +2850,7 @@ boolean M_ShortcutResponder(const event_t *ev)
     if (STRICTMODE(M_InputActivated(input_chasecam)))
     {
         // Freecam
-        if (R_GetFreecamOn() && !R_GetFreecamMobj())
+        if (R_FreecamOn() && !R_GetFreecamMobj())
         {
           const freecammode_t mode = R_CycleFreecamMode();
 
@@ -2810,7 +2864,7 @@ boolean M_ShortcutResponder(const event_t *ev)
 
     if (STRICTMODE(M_InputActivated(input_freecam)))
     {
-        R_SetFreecamOn(!R_GetFreecamOn());
+        R_SetFreecamOn(!R_FreecamOn());
     }
 
     if (STRICTMODE(M_InputActivated(input_rewind)))
@@ -3306,7 +3360,7 @@ boolean M_Responder(event_t *ev)
         if (!chat_on
             && ((demoplayback
                  && (action == MENU_ENTER || action == MENU_BACKSPACE)
-                 && !R_GetFreecamOn()) // [Nugget] Freecam
+                 && !R_FreecamOn()) // [Nugget] Freecam
                 || action == MENU_ESCAPE)) // phares
         {
             I_ShowMouseCursor(menu_input != pad_mode);

@@ -1808,7 +1808,9 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   // Taken outside of code block after this one
   // to allow direct vertical aiming in Beta
   if (vertical_aiming == VERTAIM_DIRECT)
-  { slope = source->player->slope; }
+  {
+    slope = source->player->slope;
+  }
   else
   // killough 7/19/98: autoaiming was not in original beta
   if (!beta_emulation || autoaim)
@@ -2088,7 +2090,7 @@ void P_RunFlakers(void)
 
   if (nodrawers || leveltime <= 1) { return; } // View positions are presumably uninitialized
 
-  flaker_t *flaker;
+  const flaker_t *flaker;
   array_foreach(flaker, flakers)
   {
     const fixed_t dist = P_AproxDistance(viewx - flaker->x, viewy - flaker->y);

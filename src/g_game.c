@@ -148,12 +148,12 @@ static void UpdateMouseModifiers(void)
 
 int autosave_interval;
 
-static boolean is_periodic_autosave = false;
+static boolean saving_periodic_autosave = false;
 static int autosave_countdown = 0;
 
 boolean G_SavingPeriodicAutoSave(void)
 {
-  return is_periodic_autosave;
+  return saving_periodic_autosave;
 }
 
 void G_SetAutoSaveCountdown(int value)
@@ -1432,7 +1432,8 @@ static void G_DoLoadLevel(void)
 
   // clear cmd building stuff
   // [Nugget] Rewind: unless we just rewound
-  if (lastaction != ga_rewind) {
+  if (lastaction != ga_rewind)
+  {
     memset (gamekeydown, 0, sizeof(gamekeydown));
     G_ClearInput();
     sendpause = sendsave = paused = false;
@@ -1470,7 +1471,8 @@ static void G_DoLoadLevel(void)
   ST_HideMessages();
 
   // Minimap
-  if (minimap_was_on) {
+  if (minimap_was_on)
+  {
     AM_ChangeMode(AM_MINI);
     minimap_was_on = false;
   }
@@ -1480,10 +1482,10 @@ static void G_DoLoadLevel(void)
 
   // Clear visual effects
   R_ClearFOVFX();
-  R_SetShake(-1);
+  R_ClearShake();
 
   // Alt. intermission background
-  if (WI_UsingAltInterpic())
+  if (WI_AltInterpicOn())
   {
     R_SetViewSize(screenblocks);
     R_ExecuteSetViewSize();
@@ -1496,9 +1498,7 @@ static void G_DoLoadLevel(void)
   R_UpdateFreecamMobj(NULL);
 
   if (lastepisode != gameepisode || lastmap != gamemap)
-  {
-    R_ResetFreecam(true);
-  }
+  { R_ResetFreecam(true); }
 
   // -------------------------------------------------------------------------
 
@@ -1815,7 +1815,7 @@ boolean G_Responder(event_t* ev)
       // Don't suck up keys, which may be cheats
 
       // [Nugget] Freecam
-      if (!R_GetFreecamOn())
+      if (!R_FreecamOn())
         return gamestate == GS_DEMOSCREEN &&
 	  !(paused & 2) && automapactive != AM_FULL &&
 	  ((ev->type == ev_keydown) ||
@@ -2434,7 +2434,7 @@ frommapinfo:
 
   // Clear visual effects
   R_ClearFOVFX();
-  R_SetShake(-1);
+  R_ClearShake();
 }
 
 static void G_DoWorldDone(void)
@@ -2891,21 +2891,46 @@ char *G_AutoSaveName(void)
 {
   // [Nugget] Periodic auto save /--------------------------------------------
 
-  char buf[16] = {0};
+  char buf[24] = {0};
+  static int autoslot = -1;
+  static boolean last_save_was_periodic = false; // Only changes upon saving
 
-  if (G_SavingPeriodicAutoSave())
+  if (saving_periodic_autosave)
   {
-    static int autoslot = 0;
-
-    sprintf(buf, "autosav%i.dsg", autoslot + 1);
+    // We're autosaving (periodic)
 
     autoslot = (autoslot + 1) % 7; // 8 pages, minus one with the level-end save
+
+    sprintf(buf, "autosav%i.dsg", autoslot + 1);
+    last_save_was_periodic = true;
   }
-  else if (savepage > 0)
+  else if (death_use_state == DEATH_USE_STATE_ACTIVE)
   {
+    // We're loading by on-death action
+
+    if (last_save_was_periodic)
+    {
+      sprintf(buf, "autosav%i.dsg", autoslot + 1);
+    }
+    else { sprintf(buf, "autosave.dsg"); }
+  }
+  else if (savepage > 0 && gameaction != ga_saveautosave)
+  {
+    // We're loading a periodic auto save manually
+
     sprintf(buf, "autosav%i.dsg", savepage);
   }
-  else { sprintf(buf, "autosave.dsg"); }
+  else {
+    // We're loading a level-end auto save manually, or autosaving upon level end
+
+    sprintf(buf, "autosave.dsg");
+
+    if (gameaction == ga_saveautosave)
+    {
+      // We're autosaving upon level end
+      last_save_was_periodic = false;
+    }
+  }
 
   // [Nugget] ---------------------------------------------------------------/
 
@@ -3106,7 +3131,7 @@ static void DoSaveGame(char *name)
   // [Nugget] ===============================================================/
 
   // [Nugget] Periodic auto save
-  if (!is_periodic_autosave)
+  if (!saving_periodic_autosave)
   {
     // [FG] save snapshot
     CheckSaveGame(MN_SnapshotDataSize());
@@ -3120,7 +3145,7 @@ static void DoSaveGame(char *name)
 
   if (!M_WriteFile(name, savebuffer, length))
     displaymsg("%s", errno ? strerror(errno) : "Could not save game: Error unknown");
-  else if (show_save_messages && !is_periodic_autosave) // [Nugget]
+  else if (show_save_messages && !saving_periodic_autosave) // [Nugget]
     displaymsg("%s", s_GGSAVED);  // Ty 03/27/98 - externalized
 
   Z_Free(savebuffer);  // killough
@@ -4056,13 +4081,13 @@ void G_Ticker(void)
   {
     if (--autosave_countdown <= 0)
     {
-      is_periodic_autosave = true;
+      saving_periodic_autosave = true;
 
       M_SaveAutoSave();
       save_autosave = false;
       G_DoSaveAutoSave();
 
-      is_periodic_autosave = false;
+      saving_periodic_autosave = false;
     }
   }
 
@@ -4269,7 +4294,7 @@ void G_Ticker(void)
 	  gamestate == GS_DEMOSCREEN ? D_PageTicker() : (void) 0;
 
   // [Nugget] Freecam
-  if (R_GetFreecamOn())
+  if (R_FreecamOn())
   {
     fixed_t x = 0,
             y = 0,
@@ -4302,7 +4327,7 @@ void G_Ticker(void)
         lock = true;
       }
       else {
-        if (R_FreecamTurningOverride())
+        if (!R_GetFreecamMobj() || R_ChasecamOn())
         {
           angle = cmd->angleturn << 16;
           ticangle = cmd->ticangleturn << FRACBITS;
@@ -4315,7 +4340,7 @@ void G_Ticker(void)
 
           if (speedchange)
           {
-            basespeed = BETWEEN(FRACUNIT, 20*FRACUNIT, basespeed + (FRACUNIT * speedchange));
+            basespeed = BETWEEN(FRACUNIT, 40*FRACUNIT, basespeed + (FRACUNIT * speedchange));
 
             const int scaledspeed = basespeed / FRACUNIT;
             displaymsg("Freecam Speed: %i unit%s", scaledspeed, (scaledspeed == 1) ? "" : "s");
@@ -6138,22 +6163,24 @@ void G_BindGameVariables(void)
   // [Nugget] ----------------------------------------------------------------
 
   M_BindNum("autosave_interval", &autosave_interval, NULL,
-            0, 0, 600, ss_gen, wad_no,
+            0, 0, 600, ss_misc, wad_no,
             "Interval between periodic auto saves, in seconds (0 = Off)");
 
-  BIND_BOOL_GENERAL(one_key_saveload, false, "One-key quick-saving/loading");
+  M_BindBool("one_key_saveload", &one_key_saveload, NULL,
+             false, ss_misc, wad_no,
+             "One-key quick-saving/loading");
 
-  BIND_NUM_GENERAL(rewind_interval,
-                   1, 1, 600,
-                   "Interval between rewind key-frames, in seconds");
+  M_BindNum("rewind_interval", &rewind_interval, NULL,
+            1, 1, 600, ss_misc, wad_no,
+            "Interval between rewind key-frames, in seconds");
 
-  BIND_NUM_GENERAL(rewind_depth,
-                   60, 0, 3000,
-                   "Number of rewind key-frames to be stored (0 = No rewinding)");
+  M_BindNum("rewind_depth", &rewind_depth, NULL,
+            60, 0, 3000, ss_misc, wad_no,
+            "Number of rewind key-frames to be stored (0 = No rewinding)");
 
-  BIND_NUM_GENERAL(rewind_timeout,
-                   10, 0, 25,
-                   "Max. time to store a key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)");
+  M_BindNum("rewind_timeout", &rewind_timeout, NULL,
+            10, 0, 25, ss_misc, wad_no,
+            "Max. time to store a key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)");
 
   // [Cherry] Rocket trails from Doom Retro
   M_BindBool("rocket_trails", &rocket_trails, NULL, false, ss_gen, wad_yes,
@@ -6204,7 +6231,7 @@ void G_BindEnemVariables(void)
   // (CFG-only)
   M_BindBool("extra_gibbing_fist", &extra_gibbing[EXGIB_FIST], NULL,
              true, ss_none, wad_yes,
-             "Extra gibbing for Berserk Fist");
+             "Extra gibbing for Berserk Fist and similar MBF21 attacks");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_csaw", &extra_gibbing[EXGIB_CSAW], NULL,
@@ -6214,7 +6241,7 @@ void G_BindEnemVariables(void)
   // (CFG-only)
   M_BindBool("extra_gibbing_ssg", &extra_gibbing[EXGIB_SSG], NULL,
              true, ss_none, wad_yes,
-             "Extra gibbing for SSG");
+             "Extra gibbing for SSG and similar MBF21 attacks");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_bfg", &extra_gibbing[EXGIB_BFG], NULL,

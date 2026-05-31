@@ -49,6 +49,7 @@
 
 // [Nugget]
 #include "m_nughud.h"
+#include "p_map.h"
 #include "st_stuff.h"
 #include "wi_stuff.h"
 
@@ -508,6 +509,13 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   // killough 4/11/98: rearrange and handle translucent sprites
   // mixed with translucent/non-translucent 2s normals
 
+  // [Nugget] Sprite shadows
+  if (vis->yscale > 0)
+  {
+    colfunc = R_DrawColumnShadow;
+  }
+  else
+
   if (!dc_colormap[0])   // NULL colormap = shadow draw
     colfunc = R_DrawFuzzColumn;    // killough 3/14/98
   else
@@ -542,11 +550,14 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   spryscale = vis->scale;
   sprtopscreen = centeryfrac - FixedMul(dc_texturemid,spryscale);
 
+  // [Nugget] Sprite shadows
+  if (vis->yscale > 0) { spryscale = vis->yscale; }
+
   // [Nugget] Thing lighting /------------------------------------------------
 
   boolean percolumn_lighting;
 
-  fixed_t pcl_patchoffset = 0;
+  fixed_t pcl_offset = 0;
   fixed_t pcl_cosine = 0, pcl_sine = 0;
   int pcl_lightindex = 0;
 
@@ -555,7 +566,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   {
     percolumn_lighting = true;
 
-    pcl_patchoffset = SHORT(patch->leftoffset) << FRACBITS;
+    pcl_offset = (SHORT(patch->leftoffset) << FRACBITS) - vis->xiscale/2;
 
     const int angle = (viewangle - ANG90) >> ANGLETOFINESHIFT;
 
@@ -580,7 +591,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
       // [Nugget] Thing lighting
       if (percolumn_lighting)
       {
-        fixed_t offset = frac - pcl_patchoffset;
+        fixed_t offset = frac - pcl_offset;
 
         if (vis->flipped) { offset = -offset; }
 
@@ -630,8 +641,7 @@ static void R_ProjectSprite (mobj_t* thing)
   if (thing->intflags & MIF_DONTRENDER) { return; }
 
   // [Nugget] Freecam
-  if (thing == R_GetFreecamMobj() && !R_GetChasecamOn())
-  { return; }
+  if (thing == R_GetFreecamMobj() && !R_ChasecamOn()) { return; }
 
   // andrewj: voxel support
   if (VX_ProjectVoxel (thing))
@@ -830,6 +840,7 @@ static void R_ProjectSprite (mobj_t* thing)
   vis->color = thing->bloodcolor;
 
   // [Nugget]
+  vis->xscale = vis->yscale = 0;
   vis->fullbright = false;
   vis->flipped = flip;
 
@@ -907,6 +918,114 @@ static void R_ProjectSprite (mobj_t* thing)
 
     crosshair_target = NULL; // Don't update it again until next tic
   }
+
+  // [Nugget] Sprite shadows -------------------------------------------------
+
+  if (!(R_SpriteShadowsOn()
+        && (xscale > FRACUNIT/4)
+        && !(frame & FF_FULLBRIGHT)
+        && !(   (thing->flags & (MF_SHADOW|MF_TRANSLUCENT))
+             || (thing->flags & MF_SPAWNCEILING && thing->flags & MF_NOGRAVITY))))
+  {
+    return;
+  }
+
+  fixed_t floorheight, shadow_xscale, shadow_yscale, shadow_gz, shadow_gzt;
+
+  floorheight = R_PointInSubsector(interpx, interpy)->sector->floorheight;
+
+  if (viewz < floorheight + FRACUNIT) { return; }
+
+  int offset_divisor = 0;
+  fixed_t yscale_mult;
+
+  fixed_t floordist = MAX(0, interpz - floorheight) * 10/32;
+          floordist = FixedMul(floordist, floordist / 8);
+
+  if (sprite_shadows == SPRITESHADOWS_3D)
+  {
+    #define SHADOW_HEIGHT_DIVISOR 2
+    offset_divisor = 8;
+
+    const fixed_t shadow_depth = spriteheight[lump] / SHADOW_HEIGHT_DIVISOR,
+                  shadow_dist  = tz + shadow_depth - shadow_depth / offset_divisor;
+
+    const angle_t angle = P_SlopeToPitch(FixedDiv(viewz - floorheight, shadow_dist));
+
+    yscale_mult = finesine[angle >> ANGLETOFINESHIFT] / SHADOW_HEIGHT_DIVISOR;
+
+    floordist /= SHADOW_HEIGHT_DIVISOR * 10;
+    yscale_mult -= FixedMul(floordist, yscale_mult);
+  }
+  else {
+    const fixed_t base_yscale_mult = FRACUNIT/10;
+    offset_divisor = 4;
+
+    floordist = FixedMul(floordist, base_yscale_mult / 2);
+    yscale_mult = base_yscale_mult - FixedMul(floordist, base_yscale_mult);
+  }
+
+  shadow_yscale = FixedMul(xscale, yscale_mult);
+
+  if (shadow_yscale <= FRACUNIT * 3/256) { return; }
+
+  shadow_xscale = FixedMul(xscale, FRACUNIT - floordist);
+
+  const fixed_t shadow_height = FixedMul(spriteheight[lump], yscale_mult);
+
+  shadow_gz  = floorheight - shadow_height / offset_divisor;
+  shadow_gzt = shadow_gz   + shadow_height;
+
+  // Could clip shadows out of view due to height
+
+  // The following `R_NewVisSprite()` call may leave `vis` dangling,
+  // so we'll copy it beforehand
+  const vissprite_t vis_copy = *vis;
+
+  vissprite_t *const shadow_vis = R_NewVisSprite();
+
+  *shadow_vis = vis_copy;
+
+  shadow_vis->scale--; // Draw behind main sprite
+
+  shadow_vis->gz = shadow_gz;
+  shadow_vis->gzt = shadow_gzt;
+  shadow_vis->texturemid = shadow_vis->gzt - viewz;
+
+  shadow_vis->xscale = shadow_xscale;
+  shadow_vis->yscale = shadow_yscale;
+
+  const fixed_t midx = centerxfrac + FixedMul64(txc, xscale);
+  fixed_t shadow_tx;
+
+  shadow_tx = flip ? spritewidth[lump] - spriteoffset[lump] : spriteoffset[lump];
+  const fixed_t shadow_x1 = (midx - FixedMul64(shadow_tx, shadow_xscale)) >> FRACBITS;
+
+  shadow_vis->x1 = MAX(0, shadow_x1);
+
+  shadow_tx = spritewidth[lump];
+  const fixed_t shadow_x2 = ((midx + FixedMul64(shadow_tx, shadow_xscale)) >> FRACBITS) - 1;
+
+  shadow_vis->x2 = MIN(viewwidth - 1, shadow_x2);
+
+  const fixed_t shadow_iscale = FixedDiv(FRACUNIT, shadow_xscale);
+
+  if (flip) {
+    shadow_vis->startfrac = spritewidth[lump]-1;
+    shadow_vis->xiscale = -shadow_iscale;
+  }
+  else {
+    shadow_vis->startfrac = 0;
+    shadow_vis->xiscale = shadow_iscale;
+  }
+
+  if (shadow_vis->x1 > shadow_x1)
+  { shadow_vis->startfrac += shadow_vis->xiscale * (shadow_vis->x1 - shadow_x1); }
+
+  shadow_vis->mobjflags |= MF_TRANSLUCENT;
+
+  // Thing lighting: set true to make per-column lighting not apply to shadows
+  shadow_vis->fullbright = true;
 }
 
 //
@@ -1098,6 +1217,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   vis->scale = pspritescale;
 
   // [Nugget]
+  vis->yscale = 0;
   vis->fullbright = true; // Thing lighting: set true to make per-column lighting not apply to psprites
   vis->flipped = flip;
 
@@ -1150,9 +1270,9 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   if (STRICTMODE(hide_weapon)
       // [Nugget]
-      || R_GetChasecamOn() // Chasecam
-      || R_GetFreecamOn() // Freecam
-      || (WI_UsingAltInterpic() && (gamestate == GS_INTERMISSION))) // Alt. intermission background
+      || R_ChasecamOn() // Chasecam
+      || R_FreecamOn() // Freecam
+      || (WI_AltInterpicOn() && gamestate == GS_INTERMISSION)) // Alt. intermission background
     return;
 
   R_DrawVisSprite(vis, vis->x1, vis->x2);
@@ -1568,8 +1688,8 @@ void R_DrawMasked(void)
     {
       for (int x = 0;  x < viewwidth/2;  x++)
       {
-        pixel_t *left = &I_VideoBuffer[(viewwindowy + y) * video.pitch + viewwindowx + x],
-                *right = left + viewwidth - 1 - x*2,
+        pixel_t *const restrict left = &I_VideoBuffer[(viewwindowy + y) * video.pitch + viewwindowx + x],
+                *const restrict right = left + viewwidth - 1 - x*2,
                 temp = *left;
 
         *left = *right;

@@ -549,7 +549,7 @@ boolean P_BlockThingsIterator(int x, int y, boolean func(mobj_t*),
 // 1/11/98 killough: Intercept limit removed
 static intercept_t *intercepts, *intercept_p;
 
-static size_t num_intercepts; // [Nugget] Extracted from function below
+static size_t num_intercepts; // [Nugget] Extracted from `check_intercept()`
 
 // [Nugget] /-----------------------------------------------------------------
 
@@ -793,55 +793,55 @@ boolean PIT_AddThingIntercepts(mobj_t *thing)
         }
       }
     }
+
+    return true;
   }
+
+  fixed_t   x1, y1;
+  fixed_t   x2, y2;
+  int       s1, s2;
+  divline_t dl;
+  fixed_t   frac;
+
+  // check a corner to corner crossection for hit
+  if ((trace.dx ^ trace.dy) > 0)
+    {
+      x1 = thing->x - thing->radius;
+      y1 = thing->y + thing->radius;
+      x2 = thing->x + thing->radius;
+      y2 = thing->y - thing->radius;
+    }
   else
-  {
-    fixed_t   x1, y1;
-    fixed_t   x2, y2;
-    int       s1, s2;
-    divline_t dl;
-    fixed_t   frac;
+    {
+      x1 = thing->x - thing->radius;
+      y1 = thing->y - thing->radius;
+      x2 = thing->x + thing->radius;
+      y2 = thing->y + thing->radius;
+    }
 
-    // check a corner to corner crossection for hit
-    if ((trace.dx ^ trace.dy) > 0)
-      {
-        x1 = thing->x - thing->radius;
-        y1 = thing->y + thing->radius;
-        x2 = thing->x + thing->radius;
-        y2 = thing->y - thing->radius;
-      }
-    else
-      {
-        x1 = thing->x - thing->radius;
-        y1 = thing->y - thing->radius;
-        x2 = thing->x + thing->radius;
-        y2 = thing->y + thing->radius;
-      }
+  s1 = P_PointOnDivlineSide (x1, y1, &trace);
+  s2 = P_PointOnDivlineSide (x2, y2, &trace);
 
-    s1 = P_PointOnDivlineSide (x1, y1, &trace);
-    s2 = P_PointOnDivlineSide (x2, y2, &trace);
+  if (s1 == s2)
+    return true;                // line isn't crossed
 
-    if (s1 == s2)
-      return true;                // line isn't crossed
+  dl.x = x1;
+  dl.y = y1;
+  dl.dx = x2-x1;
+  dl.dy = y2-y1;
 
-    dl.x = x1;
-    dl.y = y1;
-    dl.dx = x2-x1;
-    dl.dy = y2-y1;
+  frac = P_InterceptVector (&trace, &dl);
 
-    frac = P_InterceptVector (&trace, &dl);
-  
-    if (frac < 0)
-      return true;                // behind source
+  if (frac < 0)
+    return true;                // behind source
 
-    check_intercept();            // killough
+  check_intercept();            // killough
 
-    intercept_p->frac = frac;
-    intercept_p->isaline = false;
-    intercept_p->d.thing = thing;
-    InterceptsOverrun(intercept_p - intercepts, intercept_p);
-    intercept_p++;
-  }
+  intercept_p->frac = frac;
+  intercept_p->isaline = false;
+  intercept_p->d.thing = thing;
+  InterceptsOverrun(intercept_p - intercepts, intercept_p);
+  intercept_p++;
 
   return true;          // keep going
 }

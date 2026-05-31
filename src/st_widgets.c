@@ -354,13 +354,13 @@ static void UpdateMessage(sbe_widget_t *widget, player_t *player)
         messages_enabled = show_messages;
     }
 
-    linkedmessage_t *m = hud_msg_scrollup ? message_list_head : message_list_tail;
-
     // If true, show full list, otherwise maybe omit some messages
     if (message_review_duration_left > 0)
     {
         message_review_duration_left--;
     }
+
+    linkedmessage_t *m = hud_msg_scrollup ? message_list_head : message_list_tail;
 
     for (int index = hud_msg_scrollup ? 0 : num_messages-1;  m;)
     {
@@ -376,8 +376,8 @@ static void UpdateMessage(sbe_widget_t *widget, player_t *player)
             // Message fadeout -----------------------------------------------
 
             const int fadeout_time = (index < num_messages - hud_msg_lines)
-                                     ? message_review_duration_left
-                                     : MAX(m->duration_left, message_review_duration_left);
+                                   ? message_review_duration_left
+                                   : MAX(m->duration_left, message_review_duration_left);
 
             FadeOutLine(line, fadeout_time);
 
@@ -1756,6 +1756,7 @@ void ST_BindHUDVariables(void)
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS, ss_stat, wad_no,
             "Show powerup-timers widget (1 = On automap; 2 = On HUD; 3 = Always)");
 
+  // (CFG-only)
   M_BindBool("hud_power_timers_notime", &hud_power_timers_notime, NULL,
              false, ss_none, wad_no,
              "Show only powerup names/icons in powerup-timers widget");
@@ -1777,48 +1778,51 @@ void ST_BindHUDVariables(void)
   // [Nugget] Extended HUD colors /-------------------------------------------
 
   M_BindNum("hudcolor_time_scale", &hudcolor_time_scale, NULL,
-            CR_BLUE1, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_BLUE1, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for time scale (game-speed percent) in Time display");
 
   M_BindNum("hudcolor_total_time", &hudcolor_total_time, NULL,
-            CR_GREEN, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_GREEN, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for total level time in Time display");
 
   M_BindNum("hudcolor_time", &hudcolor_time, NULL,
-            CR_GRAY, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_GRAY, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for level time in Time display");
 
   M_BindNum("hudcolor_event_timer", &hudcolor_event_timer, NULL,
-            CR_GOLD, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_GOLD, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for event timer in Time display");
 
   M_BindNum("hudcolor_kills", &hudcolor_kills, NULL,
-            CR_RED, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_RED, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for Kills label in Stats display");
 
   M_BindNum("hudcolor_items", &hudcolor_items, NULL,
-            CR_RED, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_RED, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for Items label in Stats display");
 
   M_BindNum("hudcolor_secrets", &hudcolor_secrets, NULL,
-            CR_RED, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_RED, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for Secrets label in Stats display");
 
   M_BindNum("hudcolor_ms_incomp", &hudcolor_ms_incomp, NULL,
-            CR_GRAY, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_GRAY, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for incomplete milestones in Stats display");
 
   M_BindNum("hudcolor_ms_comp", &hudcolor_ms_comp, NULL,
-            CR_BLUE1, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_BLUE1, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for complete milestones in Stats display");
 
   // [Nugget] ---------------------------------------------------------------/
 
   BIND_BOOL(show_messages, true, "Show messages");
+
+  // [Nugget] Sound-only option
   M_BindNum("hud_secret_message", &hud_secret_message, NULL,
-            SECRETMESSAGE_ON, SECRETMESSAGE_OFF, SECRETMESSAGE_COUNT,
+            SECRETMESSAGE_ON, SECRETMESSAGE_OFF, NUM_SECRETMESSAGE-1,
             ss_stat, wad_no,
-            "Announce revealed secrets (0 = Off; 1 = On; 2 = Count)");
+            "Announce revealed secrets (0 = Off; 1 = On; 2 = Count; 3 = Sound only)");
+
   M_BindBool("hud_map_announce", &hud_map_announce, NULL,
             false, ss_stat, wad_no, "Announce map titles");
 
@@ -1841,8 +1845,7 @@ void ST_BindHUDVariables(void)
 
   // [Nugget] Restored menu item
   M_BindNum("hudcolor_obituary", &hudcolor_obituary, NULL,
-            CR_GRAY, CR_BRICK, CR_NONE,
-            ss_stat, wad_no,
+            CR_GRAY, CR_BRICK, CR_NONE, ss_stat, wad_no,
             "Color range used for obituaries");
 
   M_BindBool("message_centered", &message_centered, NULL,
@@ -1862,17 +1865,21 @@ void ST_BindHUDVariables(void)
              false, ss_stat, wad_yes,
              "Messages flash when they first appear");
 
-  BIND_NUM(hud_msg_duration, 0, 0, UL,
-           "Force duration of messages, in tics (0 = Don't force)");
+  M_BindNum("hud_msg_duration", &hud_msg_duration, NULL,
+            0, 0, UL, ss_stat, wad_no,
+            "Force duration of messages, in tics (0 = Don't force)");
 
-  BIND_NUM(hud_chat_duration, 0, 0, UL,
-           "Force duration of chat messages, in tics (0 = Don't force)");
+  M_BindNum("hud_chat_duration", &hud_chat_duration, NULL,
+            0, 0, UL, ss_stat, wad_no,
+            "Force duration of chat messages, in tics (0 = Don't force)");
 
-  BIND_NUM(hud_msg_lines, 1, 1, 8,
-           "Number of lines in message list shown normally");
+  M_BindNum("hud_msg_lines", &hud_msg_lines, NULL,
+            1, 1, 8, ss_stat, wad_no,
+            "Number of lines in message list shown normally");
 
-  BIND_NUM(hud_msg_total_lines, 1, 1, 8,
-           "Number of lines in message list shown during message review");
+  M_BindNum("hud_msg_total_lines", &hud_msg_total_lines, NULL,
+            1, 1, 8, ss_stat, wad_no,
+            "Number of lines in message list shown during message review");
 
   M_BindBool("hud_msg_group", &hud_msg_group, NULL,
              false, ss_stat, wad_no,

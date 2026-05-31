@@ -156,7 +156,7 @@ int v_lightest_color, v_darkest_color;
 
 byte invul_gray[256];
 
-// [Nugget] /-----------------------------------------------------------------
+// [Nugget] /=================================================================
 
 int automap_overlay_darkening;
 int menu_backdrop_darkening;
@@ -165,7 +165,34 @@ byte cr_allblack[256],
      cr_gray_vc[256],  // `V_Colorize()` only
      nightvision[256]; // Night-vision visor
 
-// [Nugget] -----------------------------------------------------------------/
+// HUD/menu shadows ----------------------------------------------------------
+
+boolean hud_menu_shadows;
+int hud_menu_shadows_filter_pct;
+
+byte *shadow_tranmap = NULL;
+
+static boolean drawshadows   = true,
+               drawingshadow = false;
+
+static int shadowcrop = 0;
+
+void V_InitShadowTranMap(void)
+{
+  shadow_tranmap = R_GetGenericTranMap(hud_menu_shadows_filter_pct);
+}
+
+void V_ToggleShadows(const boolean on)
+{
+  drawshadows = on;
+}
+
+void V_SetShadowCrop(const int value)
+{
+  shadowcrop = MAX(0, value);
+}
+
+// [Nugget] =================================================================/
 
 // [Cherry] /-----------------------------------------------------------------
 
@@ -365,17 +392,18 @@ void V_InitColorTranslation(void)
         cr_gray_vc[i] = V_Colorize(playpal, CR_GRAY, (byte) i);
     }
 
+    V_InitShadowTranMap(); // HUD/menu shadows
+
     // Night-vision visor ----------------------------------------------------
 
     palsrc = playpal;
 
     for (int i = 0;  i < 256;  i++)
     {
-        double red   = *palsrc++ * 0.299;
-        double green = *palsrc++;
-        double blue  = *palsrc++ * 0.144;
-
-        double greatest = MAX(MAX(blue, red), green);
+        const double red   = *palsrc++,
+                     green = *palsrc++,
+                     blue  = *palsrc++,
+                     greatest = MAX(MAX(blue, red), green);
         
         nightvision[i] = I_GetNearestColor(playpal, 0.0, greatest, 0.0);
     }
@@ -385,28 +413,6 @@ void V_InitColorTranslation(void)
     memcpy(alttintpal, playpal, sizeof(alttintpal));
     InitLessBlindingTints();
 }
-
-// [Nugget] HUD/menu shadows /------------------------------------------------
-
-boolean hud_menu_shadows;
-int hud_menu_shadows_filter_pct;
-
-static boolean drawshadows   = true,
-               drawingshadow = false;
-
-static int shadowcrop = 0;
-
-void V_ToggleShadows(const boolean on)
-{
-  drawshadows = on;
-}
-
-void V_SetShadowCrop(const int value)
-{
-  shadowcrop = MAX(0, value);
-}
-
-// [Nugget] -----------------------------------------------------------------/
 
 video_t video;
 
@@ -787,8 +793,7 @@ void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
       drawingshadow = true;
 
       V_DrawPatchTranslucent2(
-        x + 1, y + 1, patch, flipped, cr_allblack, NULL,
-        R_GetGenericTranMap(hud_menu_shadows_filter_pct)
+        x + 1, y + 1, patch, flipped, cr_allblack, NULL, shadow_tranmap
       );
 
       drawingshadow = false;
@@ -805,26 +810,17 @@ void V_DrawPatchShadowed(int x, int y, struct patch_s *patch, boolean flipped,
         V_DrawPatchTRTR(x, y, patch, outr1, outr2);
       }
     }
-    else if (outr2)
+    else if (outr1 || outr2)
     {
+      byte *const outr = outr1 ? outr1 : outr2;
+
       if (tmap)
       {
-        V_DrawPatchTRTL(x, y, patch, outr2, tmap);
+        V_DrawPatchTRTL(x, y, patch, outr, tmap);
       }
       else
       {
-        V_DrawPatchTranslated(x, y, patch, outr2);
-      }
-    }
-    else if (outr1)
-    {
-      if (tmap)
-      {
-        V_DrawPatchTRTL(x, y, patch, outr1, tmap);
-      }
-      else
-      {
-        V_DrawPatchTranslated(x, y, patch, outr1);
+        V_DrawPatchTranslated(x, y, patch, outr);
       }
     }
     else if (tmap)
@@ -990,7 +986,7 @@ void V_ShadowRect(int x, int y, int width, int height)
         {
           byte *const d = &dest[x];
 
-          *d = R_GetGenericTranMap(hud_menu_shadows_filter_pct)[*d << 8];
+          *d = shadow_tranmap[*d << 8];
         }
 
         dest += linesize;

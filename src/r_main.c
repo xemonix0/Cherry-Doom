@@ -145,6 +145,13 @@ fixed_t R_GetNughudViewPitch(void)
   return nughud_viewpitch;
 }
 
+static boolean sprite_shadows_on = false;
+
+boolean R_SpriteShadowsOn(void)
+{
+  return sprite_shadows_on;
+}
+
 int R_GetLightLevelInPoint(const fixed_t x, const fixed_t y)
 {
   int lightlevel;
@@ -169,6 +176,8 @@ int R_GetLightLevelInPoint(const fixed_t x, const fixed_t y)
 
 boolean vertical_lockon;
 
+spriteshadows_t sprite_shadows;
+int sprite_shadows_tran_pct;
 thinglighting_t thing_lighting_mode;
 boolean flip_levels;
 static int lowres_pixel_width;
@@ -248,49 +257,173 @@ void R_SetZoom(const int state)
   else { zoomed = ZOOM_OFF; }
 }
 
+static void ProcessFOVEffects(void)
+{
+  float targetfov = custom_fov;
+
+  if (WI_AltInterpicOn() && gamestate == GS_INTERMISSION)
+  {
+    targetfov = MAX(140, targetfov);
+  }
+  else {
+    static int oldtic = -1;
+
+    int zoomtarget;
+
+    // Force zoom reset
+    if (strictmode || zoomed == ZOOM_RESET)
+    {
+      zoomtarget = 0;
+      fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
+      zoomed = ZOOM_OFF;
+    }
+    else {
+      zoomtarget = zoomed ? zoom_fov - custom_fov : 0;
+
+      // In case `custom_fov` changes while zoomed in...
+      if (zoomed && fabs(fovfx[FOVFX_ZOOM].target) > abs(zoomtarget))
+      {
+        fovfx[FOVFX_ZOOM] = (fovfx_t) {
+          .target = zoomtarget, .current = zoomtarget, .old = zoomtarget
+        };
+      }
+    }
+
+    boolean fovchange = false;
+
+    if (!strictmode)
+    {
+      if (fovfx[FOVFX_ZOOM].target != zoomtarget)
+      {
+        fovchange = true;
+      }
+      else if (fovfx[FOVFX_SLOWMO].target
+               || (G_GetSlowMotion() && fovfx[FOVFX_SLOWMO].target != 10))
+      {
+        fovchange = true;
+      }
+      else for (int i = 0;  i < NUMFOVFX;  i++)
+      {
+        if (fovfx[i].target || fovfx[i].current)
+        {
+          fovchange = true;
+          break;
+        }
+      }
+    }
+
+    if (fovchange)
+    {
+      if (oldtic != gametic)
+      {
+        fovchange = false;
+
+        float *target;
+
+        // Zoom --------------------------------------------------------------
+
+        target = &fovfx[FOVFX_ZOOM].target;
+        fovfx[FOVFX_ZOOM].old = fovfx[FOVFX_ZOOM].current = *target;
+
+        // Special handling for zoom
+        if (zoomtarget || *target)
+        {
+          float step = zoomtarget - *target;
+          const int sign = (step > 0) ? 1 : -1;
+
+          *target += BETWEEN(1, 16, fabs(step) / 3.0) * sign;
+
+          if (   (sign > 0 && *target > zoomtarget)
+              || (sign < 0 && *target < zoomtarget))
+          {
+            *target = zoomtarget;
+          }
+        }
+
+        // Teleporter Zoom ---------------------------------------------------
+
+        target = &fovfx[FOVFX_TELEPORT].target;
+        fovfx[FOVFX_TELEPORT].old = fovfx[FOVFX_TELEPORT].current = *target;
+
+        if (*target) { *target = MAX(0, *target - 5); }
+
+        // Slow Motion -------------------------------------------------------
+
+        target = &fovfx[FOVFX_SLOWMO].target;
+        fovfx[FOVFX_SLOWMO].old = fovfx[FOVFX_SLOWMO].current = *target;
+
+        if (G_GetSlowMotionFactor() != SLOWMO_FACTOR_NORMAL)
+        {
+          *target = -10.0f * (SLOWMO_FACTOR_NORMAL - G_GetSlowMotionFactor())
+                           / (SLOWMO_FACTOR_NORMAL - SLOWMO_FACTOR_TARGET);
+        }
+        else { *target = 0; }
+      }
+      else if (uncapped)
+      {
+        for (int i = 0;  i < NUMFOVFX;  i++)
+        { fovfx[i].current = fovfx[i].old + ((fovfx[i].target - fovfx[i].old) * ((float) fractionaltic/FRACUNIT)); }
+      }
+    }
+
+    oldtic = gametic;
+
+    for (int i = 0;  i < NUMFOVFX;  i++)
+    {
+      if (FOVFX_ZOOM < i && R_FreecamOn()) { break; }
+
+      targetfov += fovfx[i].current;
+    }
+  }
+
+  targetfov = BETWEEN(1.0f, 179.0f, targetfov);
+
+  if (r_fov != targetfov)
+  {
+    r_fov = targetfov;
+    R_ExecuteSetViewSize();
+    R_FillBackScreen();
+  }
+}
+
 // Explosion shake effect ----------------------------------------------------
 
 boolean explosion_shake;
 int explosion_shake_intensity_pct;
 
-static fixed_t shake;
-#define MAXSHAKE 50
+static int shake;
+#define MAX_SHAKE 50
 
-void R_SetShake(int value)
+void R_ClearShake(void)
 {
-  if (strictmode || !explosion_shake || value == -1)
-  {
-    shake = 0;
-    return;
-  }
-
-  shake = MIN(shake + value, MAXSHAKE);
+  shake = 0;
 }
 
 void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
 {
-  #define SHAKERANGEMULT 5
-
-  const mobj_t *const player = players[displayplayer].mo;
-  fixed_t dx, dy, dist;
-
   if (strictmode || !explosion_shake) { return; }
 
-  range *= SHAKERANGEMULT;
-  force *= SHAKERANGEMULT;
+  #define SHAKE_RANGE_MULT 5
 
-  dx = abs(player->x - bombx);
-  dy = abs(player->y - bomby);
+  range *= SHAKE_RANGE_MULT;
+  force *= SHAKE_RANGE_MULT;
 
-  dist = MAX(dx, dy);
-  dist = (dist - player->radius) >> FRACBITS;
-  dist = MAX(0, dist);
+  const fixed_t dx = abs(viewx - bombx),
+                dy = abs(viewy - bomby);
+
+  const fixed_t radius = viewplayer
+                       ? viewplayer->mo->radius
+                       : players[displayplayer].mo->radius;
+
+  fixed_t dist = (MAX(dx, dy) - radius) >> FRACBITS;
+          dist = MAX(0, dist);
 
   if (dist >= range) { return; }
 
-  R_SetShake((force * (range - dist) / range) / ((128 / MAXSHAKE) * SHAKERANGEMULT));
+  shake += (force * (range - dist) / range) / ((128 / MAX_SHAKE) * SHAKE_RANGE_MULT);
+  shake = MIN(shake, MAX_SHAKE);
 
-  #undef SHAKERANGEMULT
+  #undef SHAKE_RANGE_MULT
 }
 
 // Chasecam ------------------------------------------------------------------
@@ -312,7 +445,7 @@ boolean chasecam_on = false;
 fixed_t  chasexofs, chaseyofs;
 angle_t  chaseaofs;
 
-boolean R_GetChasecamOn(void)
+boolean R_ChasecamOn(void)
 {
   return chasecam_on;
 }
@@ -344,7 +477,7 @@ static struct {
   mobj_t *mobj;
 } freecam;
 
-boolean R_GetFreecamOn(void)
+boolean R_FreecamOn(void)
 {
   return freecam_on;
 }
@@ -356,7 +489,7 @@ void R_SetFreecamOn(const boolean value)
 
 freecammode_t R_GetFreecamMode(void)
 {
-  return freecam_on * freecam_mode;
+  return freecam_on ? freecam_mode : FREECAM_OFF;
 }
 
 freecammode_t R_CycleFreecamMode(void)
@@ -367,11 +500,6 @@ freecammode_t R_CycleFreecamMode(void)
 angle_t R_GetFreecamAngle(void)
 {
   return freecam.angle;
-}
-
-boolean R_FreecamTurningOverride(void)
-{
-  return freecam_on && (!freecam.mobj || R_GetChasecamOn());
 }
 
 void R_ResetFreecam(const boolean newmap)
@@ -479,7 +607,7 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
     freecam.y = freecam.mobj->y;
     freecam.z = freecam.mobj->z + (freecam.mobj->height * 13/16);
 
-    if (R_GetChasecamOn())
+    if (R_ChasecamOn())
     {
       freecam.angle    += angle;
       freecam.ticangle += ticangle;
@@ -961,7 +1089,7 @@ void R_ExecuteSetViewSize (void)
   setsizeneeded = false;
 
   // [Nugget] Alt. intermission background
-  if (WI_UsingAltInterpic() && gamestate == GS_INTERMISSION)
+  if (WI_AltInterpicOn() && gamestate == GS_INTERMISSION)
   { setblocks = 11; }
 
   if (setblocks == 11)
@@ -1086,7 +1214,7 @@ void R_ExecuteSetViewSize (void)
     }
 
   // [Nugget] Alt. intermission background
-  if (!WI_UsingAltInterpic())
+  if (!WI_AltInterpicOn())
     ST_refreshBackground(); // [Nugget] NUGHUD
 }
 
@@ -1135,11 +1263,6 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 
 static inline boolean CheckLocalView(const player_t *player)
 {
-  // [Nugget] Freecam: use localview unless
-  // locked onto a mobj in first person, or not controlling the camera
-  if (R_FreecamTurningOverride() && R_GetFreecamMode() == FREECAM_CAM)
-  { return true; }
-
   return (
     // Don't use localview if the player is spying.
     player == &players[consoleplayer] &&
@@ -1192,13 +1315,13 @@ void R_SetupFrame (player_t *player)
 {
   // [Nugget]
   chasecam_on = gamestate == GS_LEVEL
-                && !(R_GetFreecamOn() && !R_GetFreecamMobj())
+                && !(R_FreecamOn() && !R_GetFreecamMobj())
                 && STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0
                                                 && player->playerstate == PST_DEAD
-                                                && !R_GetFreecamOn()));
+                                                && !R_FreecamOn()));
 
   // [Nugget] Freecam
-  if (freecam_on && gamestate == GS_LEVEL)
+  if (R_FreecamOn() && gamestate == GS_LEVEL)
   {
     static player_t dummyplayer = {0};
     static mobj_t dummymobj = {0};
@@ -1207,11 +1330,13 @@ void R_SetupFrame (player_t *player)
     {
       dummymobj = *freecam.mobj;
 
-      if (R_GetChasecamOn())
-      {
-        if (uncapped && leveltime > oldleveltime)
-        { dummymobj.angle = LerpAngle(dummymobj.oldangle, dummymobj.angle); }
+      if (uncapped && dummymobj.interp && leveltime > oldleveltime)
+      { dummymobj.angle = LerpAngle(dummymobj.oldangle, dummymobj.angle); }
 
+      dummymobj.oldangle = dummymobj.angle;
+
+      if (R_ChasecamOn())
+      {
         dummymobj.oldangle += freecam.oangle;
         dummymobj.angle    += freecam.angle;
       }
@@ -1259,19 +1384,20 @@ void R_SetupFrame (player_t *player)
     // that would necessitate turning it off for a tic.
     player->mo->interp == true &&
     // Don't interpolate during a paused state
-    (leveltime > oldleveltime
-     || (R_FreecamTurningOverride() && gamestate == GS_LEVEL)) // [Nugget] Freecam
+    leveltime > oldleveltime
   );
 
   // [Nugget]
   fixed_t playerz, basepitch;
   static angle_t old_interangle, target_interangle;
-  static fixed_t chasecamheight;
+  static fixed_t camera_height;
 
   viewplayer = player;
 
   // [AM] Interpolate the player camera if the feature is enabled.
-  if (uncapped && camera_ready)
+  // [Nugget] Freecam: separated position and rotation
+
+  if (uncapped && (camera_ready || (R_FreecamOn() && freecam.interp && !R_GetFreecamMobj())))
   {
     // Interpolate player camera from their old position to their current one.
     viewx = LerpFixed(player->mo->oldx, player->mo->x);
@@ -1279,8 +1405,23 @@ void R_SetupFrame (player_t *player)
     viewz = LerpFixed(player->oldviewz, player->viewz);
 
     playerz = LerpFixed(player->mo->oldz, player->mo->z); // [Nugget]
+  }
+  else
+  {
+    viewx = player->mo->x;
+    viewy = player->mo->y;
+    viewz = player->viewz; // [FG] moved here
 
-    if (use_localview && CalcViewAngle)
+    playerz = player->mo->z; // [Nugget]
+  }
+
+  if (uncapped && (camera_ready || (R_FreecamOn() && freecam.interp)))
+  {
+    if ((use_localview
+         // [Nugget] Freecam
+         || (R_FreecamOn() && R_GetFreecamMode() == FREECAM_CAM
+             && (!R_GetFreecamMobj() || R_ChasecamOn())))
+        && CalcViewAngle)
     {
       viewangle = CalcViewAngle(player);
     }
@@ -1289,7 +1430,7 @@ void R_SetupFrame (player_t *player)
       viewangle = LerpAngle(player->mo->oldangle, player->mo->angle);
     }
 
-    if ((use_localview || (R_GetFreecamOn() && R_GetFreecamMode() == FREECAM_CAM)) // [Nugget] Freecam
+    if ((use_localview || (R_FreecamOn() && R_GetFreecamMode() == FREECAM_CAM)) // [Nugget] Freecam
         && raw_input && !player->centering && (mouselook || padlook)) // [Nugget] Freelook checks
     {
       basepitch = player->pitch + localview.pitch;
@@ -1310,17 +1451,12 @@ void R_SetupFrame (player_t *player)
   }
   else
   {
-    viewx = player->mo->x;
-    viewy = player->mo->y;
-    viewz = player->viewz; // [FG] moved here
     viewangle = player->mo->angle;
     // [crispy] pitch is actual lookdir and weapon pitch
     basepitch = player->pitch;
     pitch = basepitch + player->recoilpitch;
 
-    // [Nugget]
-    playerz = player->mo->z;
-    pitch += player->flinch; // Flinching
+    pitch += player->flinch; // [Nugget] Flinching
 
     if (camera_ready && use_localview && lowres_turn && fake_longtics)
     {
@@ -1336,7 +1472,7 @@ void R_SetupFrame (player_t *player)
 
   // Alt. intermission background --------------------------------------------
 
-  if (WI_UsingAltInterpic() && gamestate == GS_INTERMISSION)
+  if (WI_AltInterpicOn() && gamestate == GS_INTERMISSION)
   {
     static int oldtic = -1;
 
@@ -1355,8 +1491,8 @@ void R_SetupFrame (player_t *player)
 
   // Explosion shake effect --------------------------------------------------
 
-  chasecamheight = R_GetFreecamMobj() ? freecam.z - freecam.mobj->z
-                                      : chasecam_height * FRACUNIT;
+  camera_height = R_GetFreecamMobj() ? freecam.z - freecam.mobj->z
+                                     : chasecam_height * FRACUNIT;
 
   if (shake > 0)
   {
@@ -1367,11 +1503,13 @@ void R_SetupFrame (player_t *player)
       static int oldtime = -1;
       const fixed_t intensity = FRACUNIT * explosion_shake_intensity_pct / 100;
 
-      #define CALCSHAKE (((Woof_Random() - 128) % 3) * intensity) * shake / MAXSHAKE
-      xofs = CALCSHAKE;
-      yofs = CALCSHAKE;
-      zofs = CALCSHAKE;
-      #undef CALCSHAKE
+      #define CALC_SHAKE (((Woof_Random() - 128) % 3) * intensity) * shake / MAX_SHAKE
+
+      xofs = CALC_SHAKE;
+      yofs = CALC_SHAKE;
+      zofs = CALC_SHAKE;
+
+      #undef CALC_SHAKE
 
       if (oldtime != leveltime) { shake--; }
 
@@ -1381,7 +1519,7 @@ void R_SetupFrame (player_t *player)
     viewx += xofs;
     viewy += yofs;
     viewz += zofs;
-    chasecamheight += zofs;
+    camera_height += zofs;
   }
 
   // Chasecam ----------------------------------------------------------------
@@ -1411,7 +1549,8 @@ void R_SetupFrame (player_t *player)
 
       fixed_t momx, momy;
 
-      if (demo_version < DV_MBF) {
+      if (demo_version < DV_MBF)
+      {
         momx = player->mo->momx;
         momy = player->mo->momy;
       }
@@ -1425,7 +1564,8 @@ void R_SetupFrame (player_t *player)
 
       crouchoffset = player->crouchoffset;
 
-      if (gametic - oldtic > 1) {
+      if (gametic - oldtic > 1)
+      {
         // Chasecam was disabled; reset forcefully
         oldeffort = effort;
         oldcrouchoffset = crouchoffset;
@@ -1456,16 +1596,19 @@ void R_SetupFrame (player_t *player)
       curcrouchoffset = crouchoffset;
     }
 
-    const fixed_t z = MIN(player->mo->ceilingz - (2*FRACUNIT),
-                          playerz + ((player->mo->health <= 0 && player->playerstate == PST_DEAD)
-                                     ? 6*FRACUNIT : chasecamheight - curcrouchoffset));
+    const fixed_t z = MIN(
+      player->mo->ceilingz - (2*FRACUNIT),
+      playerz + ((player->mo->health <= 0 && player->playerstate == PST_DEAD)
+                 ? 6*FRACUNIT : camera_height - curcrouchoffset)
+    );
 
     P_PositionChasecam(z, dist, slope);
 
     const fixed_t oldviewx = viewx,
                   oldviewy = viewy;
 
-    if (chasecam.hit) {
+    if (chasecam.hit)
+    {
       viewx = chasecam.x;
       viewy = chasecam.y;
       viewz = chasecam.z;
@@ -1478,11 +1621,11 @@ void R_SetupFrame (player_t *player)
 
       viewz = z + FixedMul(slope, dist);
 
-      if (viewz < sec->floorheight+FRACUNIT || sec->ceilingheight-FRACUNIT < viewz)
+      if (viewz < (sec->floorheight + FRACUNIT) || (sec->ceilingheight - FRACUNIT) < viewz)
       {
         fixed_t frac;
 
-        viewz  = BETWEEN(sec->floorheight+FRACUNIT, sec->ceilingheight-FRACUNIT, viewz);
+        viewz  = BETWEEN(sec->floorheight + FRACUNIT, sec->ceilingheight - FRACUNIT, viewz);
         frac   = FixedDiv(viewz - z, FixedMul(slope, dist));
         viewx -= FixedMul(dx, frac);
         viewy -= FixedMul(dy, frac);
@@ -1580,127 +1723,7 @@ void R_RenderPlayerView (player_t* player)
 {
   R_ClearStats();
 
-  { // [Nugget] FOV effects
-    float targetfov = custom_fov;
-
-    if (WI_UsingAltInterpic() && gamestate == GS_INTERMISSION)
-    {
-      targetfov = MAX(140, targetfov);
-    }
-    else {
-      static int oldtic = -1;
-
-      int zoomtarget;
-
-      // Force zoom reset
-      if (strictmode || zoomed == ZOOM_RESET)
-      {
-        zoomtarget = 0;
-        fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
-        zoomed = ZOOM_OFF;
-      }
-      else {
-        zoomtarget = zoomed ? zoom_fov - custom_fov : 0;
-
-        // In case `custom_fov` changes while zoomed in...
-        if (zoomed && fabs(fovfx[FOVFX_ZOOM].target) > abs(zoomtarget))
-        { fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = zoomtarget, .current = zoomtarget, .old = zoomtarget }; }
-      }
-
-      boolean fovchange = false;
-
-      if (!strictmode)
-      {
-        if (fovfx[FOVFX_ZOOM].target != zoomtarget)
-        {
-          fovchange = true;
-        }
-        else if (fovfx[FOVFX_SLOWMO].target
-                 || (G_GetSlowMotion() && fovfx[FOVFX_SLOWMO].target != 10))
-        {
-          fovchange = true;
-        }
-        else for (int i = 0;  i < NUMFOVFX;  i++)
-        {
-          if (fovfx[i].target || fovfx[i].current)
-          {
-            fovchange = true;
-            break;
-          }
-        }
-      }
-
-      if (fovchange)
-      {
-        if (oldtic != gametic)
-        {
-          fovchange = false;
-
-          float *target;
-
-          // Zoom ------------------------------------------------------------
-
-          target = &fovfx[FOVFX_ZOOM].target;
-          fovfx[FOVFX_ZOOM].old = fovfx[FOVFX_ZOOM].current = *target;
-
-          // Special handling for zoom
-          if (zoomtarget || *target)
-          {
-            float step = zoomtarget - *target;
-            const int sign = ((step > 0) ? 1 : -1);
-
-            *target += BETWEEN(1, 16, fabs(step) / 3.0) * sign;
-
-            if (   (sign > 0 && *target > zoomtarget)
-                || (sign < 0 && *target < zoomtarget))
-            {
-              *target = zoomtarget;
-            }
-          }
-
-          // Teleporter Zoom -------------------------------------------------
-
-          target = &fovfx[FOVFX_TELEPORT].target;
-          fovfx[FOVFX_TELEPORT].old = fovfx[FOVFX_TELEPORT].current = *target;
-
-          if (*target) { *target = MAX(0, *target - 5); }
-
-          // Slow Motion -----------------------------------------------------
-
-          target = &fovfx[FOVFX_SLOWMO].target;
-          fovfx[FOVFX_SLOWMO].old = fovfx[FOVFX_SLOWMO].current = *target;
-
-          if (G_GetSlowMotionFactor() != SLOWMO_FACTOR_NORMAL)
-          {
-            *target = -10.0f * (SLOWMO_FACTOR_NORMAL - G_GetSlowMotionFactor())
-                             / (SLOWMO_FACTOR_NORMAL - SLOWMO_FACTOR_TARGET);
-          }
-          else { *target = 0; }
-        }
-        else if (uncapped)
-          for (int i = 0;  i < NUMFOVFX;  i++)
-          { fovfx[i].current = fovfx[i].old + ((fovfx[i].target - fovfx[i].old) * ((float) fractionaltic/FRACUNIT)); }
-      }
-
-      oldtic = gametic;
-
-      for (int i = 0;  i < NUMFOVFX;  i++)
-      {
-        if (FOVFX_ZOOM < i && R_GetFreecamOn()) { break; }
-
-        targetfov += fovfx[i].current;
-      }
-    }
-
-    targetfov = BETWEEN(1.0f, 179.0f, targetfov);
-
-    if (r_fov != targetfov)
-    {
-      r_fov = targetfov;
-      R_ExecuteSetViewSize();
-      R_FillBackScreen();
-    }
-  }
+  ProcessFOVEffects(); // [Nugget]
 
   R_SetupFrame (player);
 
@@ -1785,6 +1808,10 @@ void R_RenderPlayerView (player_t* player)
   // check for new console commands.
   NetUpdate ();
 
+  // [Nugget]
+  sprite_shadows_on = STRICTMODE(sprite_shadows != 0)
+                      && !viewplayer->powers[pw_infrared];
+
   // The head node is the last node output.
   R_RenderBSPNode (numnodes-1);
 
@@ -1815,7 +1842,7 @@ void R_RenderPlayerView (player_t* player)
     const int pw = lowres_pixel_width,
               ph = lowres_pixel_height;
 
-    int first_y = ((viewheight % ph) / 2),
+    int first_y = (viewheight % ph) / 2,
         first_x;
 
     byte *const dest = I_VideoBuffer;
@@ -1840,14 +1867,16 @@ void R_RenderPlayerView (player_t* player)
           );
         }
 
-        if (first_x) {
+        if (first_x)
+        {
           x += first_x;
           first_x = 0;
         }
         else { x += pw; }
       }
 
-      if (first_y) {
+      if (first_y)
+      {
         y += first_y;
         first_y = 0;
       }
@@ -1874,7 +1903,9 @@ void R_BindRenderVariables(void)
                    "Stretch short skies for mouselook"); // [Nugget] Extended description
 
   // [Nugget] FOV-based sky stretching (CFG-only)
-  BIND_BOOL(fov_stretchsky, true, "Stretch skies based on FOV");
+  M_BindBool("fov_stretchsky", &fov_stretchsky, NULL,
+             true, ss_display, wad_no,
+             "Stretch skies based on FOV");
 
   BIND_BOOL_GENERAL(linearsky, false, "Linear horizontal scrolling for skies");
   BIND_BOOL_GENERAL(r_swirl, false, "Swirling animated flats");
@@ -1883,7 +1914,7 @@ void R_BindRenderVariables(void)
   // [Nugget] /---------------------------------------------------------------
 
   M_BindNum("fake_contrast", &fake_contrast, NULL,
-            FAKECONTRAST_SMOOTH, FAKECONTRAST_OFF, NUM_FAKECONTRAST-1, ss_gen, wad_yes,
+            FAKECONTRAST_SMOOTH, FAKECONTRAST_OFF, NUM_FAKECONTRAST-1, ss_display, wad_yes,
             "Fake contrast for walls (0 = Off; 1 = Smooth; 2 = Vanilla)");
 
   // (CFG-only)
@@ -1891,8 +1922,17 @@ void R_BindRenderVariables(void)
              true, ss_none, wad_yes,
              "Diminishing lighting (light emitted by player)");
 
+  M_BindNum("sprite_shadows", &sprite_shadows, NULL,
+            SPRITESHADOWS_OFF, SPRITESHADOWS_OFF, NUM_SPRITESHADOWS-1, ss_display, wad_yes,
+            "Shadows for world sprites (1 = Simple; 2 = 3D)");
+
+  // (CFG-only)
+  M_BindNum("sprite_shadows_tran_pct", &sprite_shadows_tran_pct, NULL,
+            50, 0, 100, ss_none, wad_yes,
+            "Sprite-shadows translucency percent");
+
   M_BindNum("thing_lighting_mode", &thing_lighting_mode, NULL,
-            THINGLIGHTING_ORIGIN, THINGLIGHTING_ORIGIN, NUM_THINGLIGHTING-1, ss_gen, wad_yes,
+            THINGLIGHTING_ORIGIN, THINGLIGHTING_ORIGIN, NUM_THINGLIGHTING-1, ss_display, wad_yes,
             "Thing lighting mode (0 = Origin (vanilla); 1 = Hitbox; 2 = Per-column)");
 
   // [Nugget] ---------------------------------------------------------------/
@@ -1916,7 +1956,9 @@ void R_BindRenderVariables(void)
 
   // [Nugget] /---------------------------------------------------------------
 
-  BIND_BOOL_GENERAL(flip_levels, false, "Flip levels horizontally (visual filter)");
+  M_BindBool("flip_levels", &flip_levels, NULL,
+             false, ss_display, wad_no,
+             "Flip levels horizontally (visual filter)");
 
   // (CFG-only)
   M_BindNum("lowres_pixel_width", &lowres_pixel_width, NULL,
@@ -1929,23 +1971,23 @@ void R_BindRenderVariables(void)
             "Height multiplier for pixels at 100% resolution");
 
   M_BindBool("no_berserk_tint", &no_berserk_tint, NULL,
-             false, ss_gen, wad_yes,
+             false, ss_display, wad_yes,
              "Disable Berserk tint");
 
   M_BindBool("no_radsuit_tint", &no_radsuit_tint, NULL,
-             false, ss_gen, wad_yes,
+             false, ss_display, wad_yes,
              "Disable Radiation Suit tint");
 
   M_BindBool("nightvision_visor", &nightvision_visor, NULL,
-             false, ss_gen, wad_yes,
+             false, ss_display, wad_yes,
              "Night-vision effect for the light amplification visor");
 
   M_BindNum("damagecount_cap", &damagecount_cap, NULL,
-            100, 0, 100, ss_gen, wad_yes,
+            100, 0, 100, ss_display, wad_yes,
             "Player damage-tint cap");
 
   M_BindNum("bonuscount_cap", &bonuscount_cap, NULL,
-            -1, -1, 100, ss_gen, wad_yes,
+            -1, -1, 100, ss_display, wad_yes,
             "Player bonus-tint cap (-1 = Uncapped)");
 
   // [Nugget] ---------------------------------------------------------------/
@@ -1954,7 +1996,7 @@ void R_BindRenderVariables(void)
 
   // [Nugget] (CFG-only)
   M_BindBool("no_killough_face", &no_killough_face, NULL,
-             false, ss_gen, wad_yes,
+             false, ss_none, wad_yes,
              "Disable the Killough-face easter egg");
 
   BIND_NUM(screenblocks, 10, 3, UL, "Size of game-world screen");
@@ -1977,19 +2019,19 @@ void R_BindRenderVariables(void)
   // [Nugget] ----------------------------------------------------------------
 
   M_BindNum("viewheight_value", &viewheight_value, NULL,
-            41, 32, 56, ss_gen, wad_yes,
+            41, 32, 56, ss_view, wad_yes,
             "Height of player's POV");
 
   M_BindNum("flinching", &flinching, NULL,
-            0, 0, 3, ss_gen, wad_yes,
+            0, 0, 3, ss_view, wad_yes,
             "Flinch player view (0 = Off; 1 = Upon landing; 2 = Upon taking damage; 3 = Upon either)");
 
   M_BindBool("vertical_lockon", &vertical_lockon, NULL,
-             false, ss_gen, wad_no,
+             false, ss_view, wad_no,
              "Camera automatically locks onto targets vertically");
 
   M_BindBool("explosion_shake", &explosion_shake, NULL,
-             false, ss_gen, wad_yes,
+             false, ss_view, wad_yes,
              "Explosions shake the view");
 
   // (CFG-only)
@@ -1998,27 +2040,27 @@ void R_BindRenderVariables(void)
             "Explosion-shake intensity percent");
 
   M_BindBool("breathing", &breathing, NULL,
-             false, ss_gen, wad_yes,
+             false, ss_view, wad_yes,
              "Imitate player's breathing (subtle idle bobbing)");
 
   M_BindBool("teleporter_zoom", &teleporter_zoom, NULL,
-             false, ss_gen, wad_yes,
+             false, ss_view, wad_yes,
              "Zoom effect when teleporting");
 
   M_BindBool("death_camera", &death_camera, NULL,
-             false, ss_gen, wad_yes,
+             false, ss_view, wad_yes,
              "Force third-person perspective upon death");
 
   M_BindNum("chasecam_mode", &chasecam_mode, NULL,
-            CHASECAMMODE_OFF, CHASECAMMODE_OFF, NUM_CHASECAMMODES-1, ss_gen, wad_yes,
+            CHASECAMMODE_OFF, CHASECAMMODE_OFF, NUM_CHASECAMMODES-1, ss_view, wad_yes,
             "Chasecam mode (0 = Off; 1 = Back; 2 = Front)");
 
   M_BindNum("chasecam_distance", &chasecam_distance, NULL,
-            80, 1, 128, ss_gen, wad_yes,
+            80, 1, 128, ss_view, wad_yes,
             "Chasecam distance");
 
   M_BindNum("chasecam_height", &chasecam_height, NULL,
-            48, 1, 64, ss_gen, wad_yes,
+            48, 1, 64, ss_view, wad_yes,
             "Chasecam height");
 
   // (CFG-only)

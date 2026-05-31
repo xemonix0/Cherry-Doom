@@ -60,7 +60,7 @@
 
 static byte *R_InitGenericTranMap(const int filter_pct)
 {
-  I_Printf(VB_DEBUG, "R_InitGenericTranMap: %i%%", filter_pct);
+  I_Printf(VB_DEBUG, "%s: %i%%", __func__, filter_pct);
 
   unsigned char *const playpal = W_CacheLumpName("PLAYPAL", PU_STATIC);
 
@@ -241,6 +241,9 @@ const byte **texturebrightmap; // [crispy] brightmaps
 
 // needed for pre-rendering
 fixed_t   *spritewidth, *spriteoffset, *spritetopoffset;
+
+// [Nugget]
+fixed_t *spriteheight;
 
 //
 // MAPTEXTURE_T CACHING
@@ -931,6 +934,9 @@ void R_InitSpriteLumps(void)
   spritetopoffset =
     Z_Malloc(numspritelumps*sizeof*spritetopoffset, PU_STATIC, 0);
 
+  // [Nugget]
+  spriteheight = Z_Malloc(numspritelumps * sizeof(*spriteheight), PU_STATIC, 0);
+
   for (i=0 ; i< numspritelumps ; i++)
     {
       if (!(i&127))            // killough
@@ -940,6 +946,9 @@ void R_InitSpriteLumps(void)
       spritewidth[i] = SHORT(patch->width)<<FRACBITS;
       spriteoffset[i] = SHORT(patch->leftoffset)<<FRACBITS;
       spritetopoffset[i] = SHORT(patch->topoffset)<<FRACBITS;
+
+      // [Nugget]
+      spriteheight[i] = SHORT(patch->height) << FRACBITS;
     }
 }
 
@@ -1205,6 +1214,8 @@ void R_InitData(void)
   // HUD/menu shadows
   if (hud_menu_shadows && hud_menu_shadows_filter_pct != 100)
   { R_GetGenericTranMap(hud_menu_shadows_filter_pct); }
+
+  // Sprite shadows are handled in `R_InitDrawFunctions()`
 
   // Message fadeout
   if (ST_MessageFadeoutOn())

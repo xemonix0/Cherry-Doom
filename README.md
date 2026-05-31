@@ -150,7 +150,7 @@ Copyright:
  © 2023 liPillON;  
  © 2024 pvictress;  
  © 2025 Guilherme Miranda;  
- © 2023-2025 Xemonix.   
+ © 2023-2026 Xemonix.   
 License: [GPL-2.0+](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 Files: `src/i_flickstick.*, src/i_gyro.*`  

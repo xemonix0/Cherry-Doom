@@ -296,7 +296,7 @@ void D_Display (void)
     fractionaltic = I_GetFracTime();
 
     if (!menuactive && gamestate == GS_LEVEL && raw_input
-        && (!paused || R_FreecamTurningOverride())) // [Nugget] Freecam
+        && (!paused || R_FreecamOn())) // [Nugget] Freecam
     {
       I_StartDisplay();
     }
@@ -1819,7 +1819,7 @@ void D_UpdateCasualPlay(void)
 
     R_SetFuzzColumnMode();
     R_SetZoom(ZOOM_RESET); // Reset FOV
-    R_SetFreecamOn(R_GetFreecamOn());
+    R_SetFreecamOn(R_FreecamOn());
 
     MN_SetupResetMenu();
   }
@@ -2767,6 +2767,7 @@ void D_DoomMain(void)
     {
            if (curtm->tm_mon ==  3 && curtm->tm_mday ==  1) {  cheese = true; }
       else if (curtm->tm_mon ==  6 && curtm->tm_mday == 15) {    tanz = true; }
+      else if (curtm->tm_mon ==  9 && curtm->tm_mday ==  7) { src_ain = true; }
       else if (curtm->tm_mon ==  9 && curtm->tm_mday == 31) { frights = true; }
       else if (curtm->tm_mon == 11 && curtm->tm_mday == 25) {  flakes = allow_flakes = true; }
     }
@@ -2798,12 +2799,12 @@ void D_BindMiscVariables(void)
 
   // [Nugget] /---------------------------------------------------------------
 
-  BIND_NUM_GENERAL(wipe_speed_percentage,
-                   100, 50, 200,
-                   "Screen-wipe speed percent");
+  M_BindNum("wipe_speed_percentage", &wipe_speed_percentage, NULL,
+            100, 50, 200, ss_display, wad_no,
+            "Screen-wipe speed percent");
 
   M_BindNum("alt_interpic", &alt_interpic, NULL,
-            ALTINTERPIC_OFF, ALTINTERPIC_OFF, NUM_ALTINTERPIC-1, ss_gen, wad_yes,
+            ALTINTERPIC_OFF, ALTINTERPIC_OFF, NUM_ALTINTERPIC-1, ss_display, wad_yes,
             "Alternative intermission background (0 = Off; 1 = IWAD backgrounds only; 2 = Always)");
 
   // (CFG-only)
@@ -2811,9 +2812,9 @@ void D_BindMiscVariables(void)
              false, ss_none, wad_yes,
              "Use ratios for stats in intermission screen");
 
-  BIND_NUM_GENERAL(no_page_ticking,
-                   0, 0, 2,
-                   "Play internal demos (0 = Always; 1 = Not in menus; 2 = Never)");
+  M_BindNum("no_page_ticking", &no_page_ticking, NULL,
+            0, 0, 2, ss_misc, wad_no,
+            "Play internal demos (0 = Always; 1 = Not in menus; 2 = Never)");
 
   // [Nugget] ---------------------------------------------------------------/
 

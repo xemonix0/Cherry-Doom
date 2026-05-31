@@ -57,6 +57,7 @@
 
 // [Nugget]
 #include "am_map.h"
+#include "f_finale.h"
 #include "r_main.h"
 
 #define plyr (players+consoleplayer)     /* the console player */
@@ -183,6 +184,7 @@ static void cheat_boomcan(void);     // Explosive hitscan
 
 static void cheat_fauxdemo(void); // Emulates demo/net-play state, for debugging
 static void cheat_dimlight(void);
+static void cheat_castcall(void);
 
 static void cheat_cheese(void);
 static void cheat_flakes(void);
@@ -457,6 +459,7 @@ struct cheat_s cheat[] = {
 
   {"fauxdemo",   NULL, not_net | not_demo, {.v = cheat_fauxdemo} }, // Emulates demo/net-play state, for debugging
   {"dimlight",   NULL, not_net | not_demo, {.v = cheat_dimlight} },
+  {"castcall",   NULL, not_net | not_demo, {.v = cheat_castcall} },
 
   {"cheese",     NULL, not_net | not_demo, {.v = cheat_cheese} },
   {"flakes",     NULL, not_net | not_demo, {.v = cheat_flakes} },
@@ -672,43 +675,48 @@ static void SummonMobj(boolean friendly)
 
   extern void AM_Coordinates(const mobj_t *, fixed_t *, fixed_t *, fixed_t *);
 
-  if (spawneetype == -1) {
+  if (spawneetype == -1)
+  {
     displaymsg("You must summon a mobj first!");
     return;
   }
 
   spawneefriend = friendly;
 
-  P_MapStart();
+  const mobj_t *const playermo = viewplayer ? viewplayer->mo : plyr->mo;
 
   if (automapactive == AM_FULL && !followplayer)
   {
     const int oldcoords = map_point_coord;
 
     map_point_coord = true;
-    AM_Coordinates(plyr->mo, &x, &y, &z);
+    AM_Coordinates(playermo, &x, &y, &z);
 
     map_point_coord = oldcoords;
   }
   else {
-    x = plyr->mo->x + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
-                               finecosine[plyr->mo->angle >> ANGLETOFINESHIFT]);
+    x = playermo->x + FixedMul(64*FRACUNIT + mobjinfo[spawneetype].radius,
+                               finecosine[playermo->angle >> ANGLETOFINESHIFT]);
 
-    y = plyr->mo->y + FixedMul((64*FRACUNIT) + mobjinfo[spawneetype].radius,
-                               finesine[plyr->mo->angle >> ANGLETOFINESHIFT]);
+    y = playermo->y + FixedMul(64*FRACUNIT + mobjinfo[spawneetype].radius,
+                               finesine[playermo->angle >> ANGLETOFINESHIFT]);
 
-    z = plyr->mo->z + 32*FRACUNIT;
+    z = playermo->z;
+
+    if (!R_FreecamOn()) { z += 32*FRACUNIT; }
   }
 
+  P_MapStart();
+
   spawnee = P_SpawnMobj(x, y, z, spawneetype);
+
+  P_MapEnd();
 
   spawnee->angle = plyr->mo->angle;
 
   if (spawneefriend) { spawnee->flags |= MF_FRIEND; }
 
-  P_MapEnd();
-
-  displaymsg("Mobj summoned! (%s - Type = %i)",
+  displaymsg("Mobj summoned! (%s - Type: %i)",
              spawneefriend ? "Friend" : "Enemy", spawneetype);
 }
 
@@ -945,6 +953,14 @@ static void cheat_dimlight(void)
 
   diminishing_lighting = !diminishing_lighting;
   displaymsg("Diminishing Lighting %s", diminishing_lighting ? "ON" : "OFF");
+}
+
+static void cheat_castcall(void)
+{
+  if (!nugget_devmode) { return; }
+
+  F_StartFinale();
+  F_StartCast();
 }
 
 // ---------------------------------------------------------------------------
@@ -1229,7 +1245,7 @@ static void cheat_noclip(void)
 static void cheat_pw(int pw)
 {
   // [Nugget] Freecam
-  if (pw == pw_infrared && R_GetFreecamOn())
+  if (pw == pw_infrared && R_FreecamOn())
   {
     viewplayer->fixedcolormap = !viewplayer->fixedcolormap;
     return;
