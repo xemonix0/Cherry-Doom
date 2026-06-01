@@ -15,6 +15,7 @@ Merged changes from the following Nugget Doom releases:
 - [4.2.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.2.0)
 - [4.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.3.0)
 - [4.4.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.4.0)
+- [4.5.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.5.0)
 
 ## Changes
 

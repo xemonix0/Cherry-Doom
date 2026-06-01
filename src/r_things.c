@@ -53,6 +53,37 @@
 #include "st_stuff.h"
 #include "wi_stuff.h"
 
+// [Nugget] Thing lighting
+int R_CalculateHitboxLightNum(
+  const fixed_t x,
+  const fixed_t y,
+  const fixed_t radius,
+  const boolean force_mbf
+) {
+  int lightlevel = 0;
+
+  for (int i = 0;  i < 9;  i++)
+  {
+    fixed_t gx, gy;
+
+    if (i < 8)
+    {
+      const int fineangle = ((angle_t) ANG45 * i) >> ANGLETOFINESHIFT;
+
+      gx = x + FixedMul(radius, finecosine[fineangle]);
+      gy = y + FixedMul(radius,   finesine[fineangle]);
+    }
+    else {
+      gx = x;
+      gy = y;
+    }
+
+    lightlevel += R_GetLightLevelInPoint(gx, gy, force_mbf);
+  }
+
+  return (lightlevel / 9) >> LIGHTSEGSHIFT;
+}
+
 #define MINZ        (FRACUNIT*4)
 #define MAXZ        (FRACUNIT*8192)
 #define BASEYCENTER 100
@@ -532,14 +563,20 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
         dc_translation = translationtables - 256 +
           ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
       }
+
+    // [Nugget]
+    else if (STRICTMODE(vis->tranmap))
+    {
+      colfunc = R_DrawTLColumn;
+      tranmap = vis->tranmap;
+    }
+
     else
       if (translucency && !(strictmode && demo_compatibility)
           && vis->mobjflags & MF_TRANSLUCENT) // phares
         {
           colfunc = R_DrawTLColumn;
           tranmap = main_tranmap;       // killough 4/11/98
-
-          if (vis->tranmap) { tranmap = vis->tranmap; } // [Nugget]
         }
       else
         colfunc = R_DrawColumn;         // killough 3/14/98, 4/11/98
@@ -598,7 +635,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
         const fixed_t gx = vis->gx + FixedMul(offset, pcl_cosine),
                       gy = vis->gy + FixedMul(offset, pcl_sine);
 
-        int lightnum = (R_GetLightLevelInPoint(gx, gy) >> LIGHTSEGSHIFT)
+        int lightnum = (R_GetLightLevelInPoint(gx, gy, false) >> LIGHTSEGSHIFT)
                      + extralight;
 
         dc_colormap[0] = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)][pcl_lightindex];
@@ -877,17 +914,8 @@ static void R_ProjectSprite (mobj_t* thing)
       // [Nugget] Thing lighting
       if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_HITBOX)
       {
-        int lightlevel = 0;
-
-        for (int i = 0;  i < 9;  i++)
-        {
-          const fixed_t gx = vis->gx + (thing->radius * ((i % 3) - 1)),
-                        gy = vis->gy + (thing->radius * ((i / 3) - 1));
-
-          lightlevel += R_GetLightLevelInPoint(gx, gy);
-        }
-
-        int lightnum = ((lightlevel / 9) >> LIGHTSEGSHIFT) + extralight;
+        const int lightnum = R_CalculateHitboxLightNum(vis->gx, vis->gy, thing->radius, false)
+                           + extralight;
 
         spritelights = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)];
       }
@@ -900,7 +928,7 @@ static void R_ProjectSprite (mobj_t* thing)
   if (vis->brightmap == nobrightmap)
     vis->brightmap = R_BrightmapForSprite(sprite);
 
-  vis->tranmap = thing->tranmap; // [Nugget]
+  vis->tranmap = thing->gentranmap; // [Nugget]
 
   // [Alaux] Lock crosshair on target
   if (STRICTMODE(hud_crosshair_lockon) && thing == crosshair_target
@@ -921,26 +949,31 @@ static void R_ProjectSprite (mobj_t* thing)
 
   // [Nugget] Sprite shadows -------------------------------------------------
 
-  if (!(R_SpriteShadowsOn()
-        && (xscale > FRACUNIT/4)
-        && !(frame & FF_FULLBRIGHT)
-        && !(   (thing->flags & (MF_SHADOW|MF_TRANSLUCENT))
-             || (thing->flags & MF_SPAWNCEILING && thing->flags & MF_NOGRAVITY))))
+  if (   !R_SpriteShadowsOn()
+      || (xscale <= FRACUNIT/4)
+      || (frame & FF_FULLBRIGHT)
+      || (thing->flags & (MF_SHADOW|MF_TRANSLUCENT))
+      || thing->gentranmap
+      || (thing->flags & MF_SPAWNCEILING && thing->flags & MF_NOGRAVITY))
   {
     return;
   }
 
   fixed_t floorheight, shadow_xscale, shadow_yscale, shadow_gz, shadow_gzt;
 
-  floorheight = R_PointInSubsector(interpx, interpy)->sector->floorheight;
+  floorheight = R_PointInSubsector(interpx, interpy)->sector->interpfloorheight;
 
   if (viewz < floorheight + FRACUNIT) { return; }
 
+  fixed_t floordist = MAX(0, interpz - floorheight);
+
+  if (floordist >= 256*FRACUNIT) { return; }
+
+  floordist = floordist * 10/32;
+  floordist = FixedMul(floordist, floordist / 8);
+
   int offset_divisor = 0;
   fixed_t yscale_mult;
-
-  fixed_t floordist = MAX(0, interpz - floorheight) * 10/32;
-          floordist = FixedMul(floordist, floordist / 8);
 
   if (sprite_shadows == SPRITESHADOWS_3D)
   {
@@ -958,11 +991,11 @@ static void R_ProjectSprite (mobj_t* thing)
     yscale_mult -= FixedMul(floordist, yscale_mult);
   }
   else {
-    const fixed_t base_yscale_mult = FRACUNIT/10;
+    #define BASE_YSCALE_MULT (FRACUNIT/10)
     offset_divisor = 4;
 
-    floordist = FixedMul(floordist, base_yscale_mult / 2);
-    yscale_mult = base_yscale_mult - FixedMul(floordist, base_yscale_mult);
+    floordist = FixedMul(floordist, BASE_YSCALE_MULT / 2);
+    yscale_mult = BASE_YSCALE_MULT - FixedMul(floordist, BASE_YSCALE_MULT);
   }
 
   shadow_yscale = FixedMul(xscale, yscale_mult);
@@ -1021,8 +1054,6 @@ static void R_ProjectSprite (mobj_t* thing)
 
   if (shadow_vis->x1 > shadow_x1)
   { shadow_vis->startfrac += shadow_vis->xiscale * (shadow_vis->x1 - shadow_x1); }
-
-  shadow_vis->mobjflags |= MF_TRANSLUCENT;
 
   // Thing lighting: set true to make per-column lighting not apply to shadows
   shadow_vis->fullbright = true;
@@ -1182,7 +1213,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
   tx = sx2 - 160*FRACUNIT; // [FG] centered weapon sprite
 
   // [Nugget] Weapon inertia | Flip levels
-  if (STRICTMODE(weapon_inertia))
+  if (P_WeaponInertiaOn())
   { tx += flip_levels ? -wix : wix; }
 
   tx -= spriteoffset[lump];
@@ -1201,7 +1232,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
 
   // store information in a vissprite
   vis = &avis;
-  vis->mobjflags = translucent ? MF_TRANSLUCENT : 0; // [Nugget] Translucent flashes
+  vis->mobjflags = 0;
   vis->mobjflags2 = 0;
 
   // killough 12/98: fix psprite positioning problem
@@ -1209,7 +1240,7 @@ void R_DrawPSprite (pspdef_t *psp, boolean translucent) // [Nugget] Translucent 
                     (sy2 - spritetopoffset[lump]); // [FG] centered weapon sprite
 
   // [Nugget]
-  vis->texturemid += (STRICTMODE(weapon_inertia) ? -wiy : 0) // Weapon inertia
+  vis->texturemid += (P_WeaponInertiaOn() ? -wiy : 0) // Weapon inertia
                    + MIN(0, R_GetFOVFX(FOVFX_ZOOM) * FRACUNIT/2); // Lower weapon based on zoom
 
   vis->x1 = x1 < 0 ? 0 : x1;
@@ -1296,21 +1327,8 @@ void R_DrawPlayerSprites(void)
   // [Nugget] Thing lighting
   if (STRICTMODE(thing_lighting_mode) >= THINGLIGHTING_HITBOX)
   {
-    int lightlevel = 0;
-
-    for (int i = 0;  i < 9;  i++)
-    {
-      const fixed_t gx = viewx + (viewplayer->mo->radius * ((i % 3) - 1)),
-                    gy = viewy + (viewplayer->mo->radius * ((i / 3) - 1));
-
-      sector_t *const sector = R_PointInSubsector(gx, gy)->sector;
-
-      R_FakeFlat(sector, &tmpsec, &floorlightlevel, &ceilinglightlevel, 0);
-
-      lightlevel += floorlightlevel + ceilinglightlevel;
-    }
-
-    lightnum = ((lightlevel / 9) >> (LIGHTSEGSHIFT+1)) + extralight;
+    lightnum = R_CalculateHitboxLightNum(viewx, viewy, viewplayer->mo->radius, true)
+             + extralight;
   }
   else
   {
@@ -1684,17 +1702,43 @@ void R_DrawMasked(void)
   // [Nugget] Flip levels
   if (STRICTMODE(flip_levels))
   {
-    for (int y = 0;  y < viewheight;  y++)
-    {
-      for (int x = 0;  x < viewwidth/2;  x++)
-      {
-        pixel_t *const restrict left = &I_VideoBuffer[(viewwindowy + y) * video.pitch + viewwindowx + x],
-                *const restrict right = left + viewwidth - 1 - x*2,
-                temp = *left;
+    pixel_t *row = I_VideoBuffer + (viewwindowy * video.pitch + viewwindowx);
+    const int half_viewwidth = viewwidth / 2;
 
-        *left = *right;
-        *right = temp;
+    for (int y = 0;  y < viewheight;  y++, row += video.pitch)
+    {
+      pixel_t *restrict  left = row,
+              *restrict right = left + (viewwidth - 1);
+
+      int16_t count = half_viewwidth;
+
+      #define SWAP() \
+          temp = *left; \
+         *left = *right; \
+        *right = temp; \
+        left++; \
+        right--;
+
+      while (count >= 8)
+      {
+        pixel_t temp;
+
+        SWAP(); SWAP(); SWAP(); SWAP();
+        SWAP(); SWAP(); SWAP(); SWAP();
+
+        count -= 8;
       }
+
+      while (count)
+      {
+        pixel_t temp;
+
+        SWAP();
+
+        count--;
+      }
+
+      #undef SWAP
     }
   }
 

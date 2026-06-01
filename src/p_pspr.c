@@ -56,9 +56,8 @@ boolean always_bob;
 bobstyle_t bobbing_style;
 int weapon_bobbing_speed_pct;
 boolean switch_bob;
-boolean weapon_inertia;
 int weapon_inertia_scale_pct;
-boolean weapon_inertia_fire;
+int weapon_inertia_fire_scale_pct;
 boolean weaponsquat;
 boolean sx_fix;
 boolean comp_nomeleesnap;
@@ -163,10 +162,19 @@ void P_SetPspritePtr(player_t *player, pspdef_t *psp, statenum_t stnum)
           psp->sx = state->misc1 << FRACBITS;
           psp->sy = state->misc2 << FRACBITS;
           // [FG] centered weapon sprite
-          // [Nugget] If applicable, subtract 1 pixel from the `misc1` calculation,
-          // for consistency with the first-person-sprite-centering correction
-          psp->sx2 = (state->misc1 - STRICTMODE(sx_fix)) << FRACBITS;
-          psp->sy2 = state->misc2 << FRACBITS;
+          psp->sx2 = psp->sx;
+          psp->sy2 = psp->sy;
+
+          // [Nugget] --------------------------------------------------------
+
+          if (STRICTMODE(sx_fix))
+          {
+            // Subtract 1 pixel for consistency
+            psp->sx2 -= 1<<FRACBITS;
+          }
+
+          psp->sxf = psp->sx2;
+          psp->syf = psp->sy2;
         }
 
       // Call action routine.
@@ -224,11 +232,11 @@ static void P_BringUpWeapon(player_t *player)
     psp->sy2 = psp->oldsy2 = psp->sy;
   }
 
-  // [Nugget]: [crispy] squat down weapon sprite
-  psp->dy = 0;
-  // [Nugget] Reset offsets for weapon inertia
-  psp->wix = 0;
-  psp->wiy = 0;
+  // [Nugget]
+  psp->sxf = STRICTMODE(sx_fix) ? -(1<<FRACBITS) : 0;
+  psp->syf = 0;
+  psp->dy = 0; // [crispy] squat down weapon sprite
+  psp->wix = psp->wiy = 0; // Reset offsets for weapon inertia
 
   P_SetPsprite(player, ps_weapon, newstate);
 }
@@ -334,6 +342,10 @@ int P_SwitchWeapon(player_t *player)
   // switches are saved in the demo itself)
   if (mbf21)
     return P_SwitchWeaponMBF21(player);
+
+  // Fix weapon switch logic in vanilla (example: chainsaw with ammo)
+  if (demo_compatibility)
+    currentweapon = newweapon = wp_nochange;
 
   // killough 2/8/98: follow preferences and fix BFG/SSG bugs
 
@@ -543,11 +555,14 @@ static void P_NuggetBobbing(player_t* player)
 {
   pspdef_t *psp = player->psprites;
 
-  if ((player->attackdown && STRICTMODE(center_weapon) != WEAPON_BOBBING) // [FG] not attacking means idle
-      || !psp->state || psp->state->misc1 || (player->switching && !switch_bob))
+  if (((player->attackdown || psp->state->misc1) // [FG] not attacking means idle
+       && STRICTMODE(center_weapon) != WEAPON_BOBBING)
+      || !psp->state || (player->switching && !switch_bob))
   {
     return;
   }
+
+  const boolean fixed_position = (psp->sxf != (STRICTMODE(sx_fix) ? -(1<<FRACBITS) : 0));
 
   // Extended weapon bobbing percentage setting
   const fixed_t bob = player->bob * weapon_bobbing_pct / 100;
@@ -580,7 +595,9 @@ static void P_NuggetBobbing(player_t* player)
       break;
   }
 
-  if (!player->switching)
+  if (fixed_position) { psp->sx2 += psp->sxf; }
+
+  if (!player->switching) // Don't bob vertically while switching, regardless of the setting
   {
     // `sy` - Used for all styles; their specific values are added to this one right after
     psp->sy2 = WEAPONTOP + abs(psp->dy); // Squat weapon down on impact
@@ -616,6 +633,8 @@ static void P_NuggetBobbing(player_t* player)
         psp->sy2 += FixedMul(bob, finesine[angle & (FINEANGLES/2 - 1)]);
         break;
     }
+
+    if (fixed_position) { psp->sy2 += psp->syf - WEAPONTOP; }
   }
 }
 
@@ -674,6 +693,10 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
     }
   else
     player->attackdown = false;
+
+  // [Nugget]
+  psp->sxf = STRICTMODE(sx_fix) ? -(1<<FRACBITS) : 0;
+  psp->syf = 0;
 
   P_ApplyBobbing(&psp->sx, &psp->sy, player->bob);
 
@@ -1087,7 +1110,14 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
         slope = player->slope;
       }
       else
+
+// desync fix: mh1910-430
+// in PrBoom, autoaim can only be activated with AIM cheat in beta emulation
+#ifdef MBF_STRICT
       if (autoaim || !beta_emulation)
+#else
+      if (autoaim || vertical_aiming == VERTAIM_DIRECTAUTO) // [Nugget] Vertical aiming
+#endif
 	{
 	  // killough 8/2/98: make autoaiming prefer enemies
 	  int mask = MF_FRIEND;
@@ -1293,7 +1323,11 @@ void A_FireCGun(player_t *player, pspdef_t *psp)
   static int sound = -1;
 
   if (sound == -1)
-  { sound = ((W_CheckNumForName("dschgun") > -1) ? sfx_chgun : sfx_pistol); }
+  {
+    sound = (W_CheckNumForName("dschgun") > -1 && gamemission != pack_hacx)
+          ? sfx_chgun
+          : sfx_pistol;
+  }
 
   // [Nugget] ===============================================================/
 
@@ -1442,14 +1476,27 @@ void P_SetupPsprites(player_t *player)
 
 // [Nugget - ceski] Weapon Inertia /------------------------------------------
 
-#define EASE_SCALE(x, y) (FRACUNIT - (FixedDiv(FixedMul(FixedDiv((x) << FRACBITS, (y) << FRACBITS), (fixed_t) weapon_inertia_scale), FRACUNIT)))
+#define ORIG_WEAPON_INERTIA_SCALE 60000
+
+#define EASE_SCALE(x, y, scale) (FRACUNIT - (FixedDiv(FixedMul(FixedDiv((x) << FRACBITS, (y) << FRACBITS), scale), FRACUNIT)))
 #define EASE_OUT(x, y) ((x) - FixedMul((x), FixedMul((y), (y))))
+
 #define MAX_DELTA (SCREENWIDTH << FRACBITS)
 
-fixed_t weapon_inertia_scale;
+static boolean weapon_inertia = false;
 
-static void WeaponInertiaHorizontal(player_t* player, pspdef_t *psp)
+boolean P_WeaponInertiaOn(void)
 {
+  return weapon_inertia;
+}
+
+static fixed_t weapon_inertia_scale, weapon_inertia_fire_scale;
+
+static void WeaponInertiaHorizontal(
+  const player_t *const player,
+  pspdef_t *const psp,
+  const fixed_t scale
+) {
   angle_t angle;
   boolean clockwise;
 
@@ -1471,8 +1518,8 @@ static void WeaponInertiaHorizontal(player_t* player, pspdef_t *psp)
   angle >>= ANGLETOFINESHIFT;
   if (angle > 0)
   {
-    const fixed_t scale = EASE_SCALE(angle, FINEANGLES);
-    fixed_t delta = EASE_OUT(MAX_DELTA, scale);
+    const fixed_t escale = EASE_SCALE(angle, FINEANGLES, scale);
+    fixed_t delta = EASE_OUT(MAX_DELTA, escale);
     delta = MIN(delta, MAX_DELTA);
     psp->wix += clockwise ? -delta : delta;
   }
@@ -1485,14 +1532,17 @@ static void WeaponInertiaHorizontal(player_t* player, pspdef_t *psp)
   }
 }
 
-static void WeaponInertiaVertical(player_t* player, pspdef_t *psp)
-{
+static void WeaponInertiaVertical(
+  const player_t *const player,
+  pspdef_t *const psp,
+  const fixed_t scale
+) {
   const fixed_t pitch = (player->pitch - player->oldpitch) >> ANGLETOFINESHIFT;
 
   if (pitch != 0)
   {
-    const fixed_t scale = EASE_SCALE(abs(pitch), FINEANGLES);
-    fixed_t delta = EASE_OUT(MAX_DELTA, scale);
+    const fixed_t escale = EASE_SCALE(abs(pitch), FINEANGLES, scale);
+    fixed_t delta = EASE_OUT(MAX_DELTA, escale);
     delta = MIN(delta, MAX_DELTA);
     psp->wiy += pitch < 0 ? -delta : delta;
   }
@@ -1532,26 +1582,40 @@ static void WeaponInertiaVertical(player_t* player, pspdef_t *psp)
   }
 }
 
-static void P_NuggetWeaponInertia(player_t *player, pspdef_t *psp)
-{
-  if (STRICTMODE(weapon_inertia) && weapon_inertia_scale)
+static void P_NuggetWeaponInertia(
+  const player_t *const player,
+  pspdef_t *const psp
+) {
+  weapon_inertia = !strictmode && (weapon_inertia_scale || weapon_inertia_fire_scale);
+
+  if (weapon_inertia)
   {
-    if (!psp->state || (player->attackdown && !weapon_inertia_fire))
+    if (!psp->state)
     {
-      psp->wix = 0;
-      psp->wiy = 0;
+      psp->wix = psp->wiy = 0;
       return;
     }
 
-    WeaponInertiaHorizontal(player, psp);
+    const fixed_t scale = player->attackdown ? weapon_inertia_fire_scale
+                                             : weapon_inertia_scale;
+
+    WeaponInertiaHorizontal(player, psp, scale);
 
     if (mouselook || padlook || player->pitch || psp->wiy)
-      WeaponInertiaVertical(player, psp);
+      WeaponInertiaVertical(player, psp, scale);
   }
+}
+
+void P_NuggetSetWeaponInertiaScale(void)
+{
+  weapon_inertia_scale      = weapon_inertia_scale_pct      * ORIG_WEAPON_INERTIA_SCALE / 100;
+  weapon_inertia_fire_scale = weapon_inertia_fire_scale_pct * ORIG_WEAPON_INERTIA_SCALE / 100;
 }
 
 void P_NuggetResetWeaponInertia(void)
 {
+  P_NuggetSetWeaponInertiaScale();
+
   if (gamestate == GS_LEVEL && playeringame[displayplayer])
   {
     pspdef_t *psp = &players[displayplayer].psprites[ps_weapon];
@@ -1656,6 +1720,8 @@ void P_MovePsprites(player_t *player)
   player->psprites[ps_flash].oldsy2 = player->psprites[ps_weapon].oldsy2;
 
   // [Nugget]
+  player->psprites[ps_flash].sxf    = player->psprites[ps_weapon].sxf;
+  player->psprites[ps_flash].syf    = player->psprites[ps_weapon].syf;
   player->psprites[ps_flash].dy     = player->psprites[ps_weapon].dy;
   player->psprites[ps_flash].wix    = player->psprites[ps_weapon].wix;
   player->psprites[ps_flash].oldwix = player->psprites[ps_weapon].oldwix;

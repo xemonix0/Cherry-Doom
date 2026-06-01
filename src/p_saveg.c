@@ -557,7 +557,8 @@ static void saveg_read_mobj_t(mobj_t *str)
 
     // [Nugget] Removed `actualheight`
 
-    // [Nugget]
+    // [Nugget] --------------------------------------------------------------
+
     if (saveg_compat > saveg_cherry200)
     {
       // Alt. sprites
@@ -579,7 +580,13 @@ static void saveg_read_mobj_t(mobj_t *str)
       str->isvisual = false;
     }
 
-    str->tranmap = NULL; // [Nugget]
+    if (saveg_compat > saveg_cherry200)
+    {
+      str->gentranmap_pct = saveg_read8(); // signed char gentranmap_pct;
+    }
+    else {
+      str->gentranmap_pct = -1;
+    }
 }
 
 static void saveg_write_mobj_t(mobj_t *str)
@@ -748,16 +755,16 @@ static void saveg_write_mobj_t(mobj_t *str)
 
     // [Nugget] --------------------------------------------------------------
 
-    // [Nugget] Alt. sprites
+    // Alt. sprites
     saveg_write32(str->altsprite); // int altsprite;
     saveg_write32(str->altframe);  // int altframe;
 
-    // [Nugget] Alt. states
+    // Alt. states
     saveg_writep(str->altstate); // altstate_t *altstate;
     saveg_write32(str->alttics); // int        alttics;
 
-    // [Nugget]
     saveg_write32(str->isvisual); // boolean isvisual;
+    saveg_write8(str->gentranmap_pct); // signed char gentranmap_pct;
 }
 
 //
@@ -865,6 +872,16 @@ static void saveg_read_pspdef_t(pspdef_t *str)
 
     str->oldwix = str->wix;
     str->oldwiy = str->wiy;
+
+    if (saveg_compat > saveg_cherry200)
+    {
+      str->sxf = saveg_read32(); // fixed_t sxf;
+      str->syf = saveg_read32(); // fixed_t syf;
+    }
+    else {
+      str->sxf = STRICTMODE(sx_fix) ? -(1<<FRACBITS) : 0;
+      str->syf = 0;
+    }
 }
 
 static void saveg_write_pspdef_t(pspdef_t *str)
@@ -897,6 +914,8 @@ static void saveg_write_pspdef_t(pspdef_t *str)
     saveg_write32(str->dy);  // fixed_t dy;
     saveg_write32(str->wix); // fixed_t wix;
     saveg_write32(str->wiy); // fixed_t wiy;
+    saveg_write32(str->sxf); // fixed_t sxf;
+    saveg_write32(str->syf); // fixed_t syf;
 }
 
 //
@@ -2429,7 +2448,7 @@ void P_ArchiveThinkers (void)
           mobj->player = (player_t *)((mobj->player-players) + 1);
 
         // [Nugget] Alt. states
-        mobj->altstate = (altstate_t *) (mobj->altstate - altstates);
+        if (mobj->altstate) { mobj->altstate = (altstate_t *) (mobj->altstate - altstates); }
 
         saveg_write8(tc_mobj);
         saveg_write_pad();
@@ -2547,8 +2566,16 @@ void P_UnArchiveThinkers (void)
       if (mobj->player)
         (mobj->player = &players[(size_t) mobj->player - 1]) -> mo = mobj;
 
-      // [Nugget] Alt. states
-      mobj->altstate = altstates + (size_t) mobj->altstate;
+      // [Nugget] /-----------------------------------------------------------
+
+      // Alt. states
+      if (mobj->altstate) { mobj->altstate = altstates + (size_t) mobj->altstate; }
+
+      mobj->gentranmap = (mobj->gentranmap_pct >= 0)
+                       ? R_GetGenericTranMap(mobj->gentranmap_pct)
+                       : NULL;
+
+      // [Nugget] -----------------------------------------------------------/
 
       P_SetThingPosition (mobj);
 
@@ -3070,7 +3097,7 @@ void P_UnArchiveMap(void)
 
       for (i = 0; i < markpointnum; ++i)
       {
-          if (saveg_compat > saveg_mbf)
+        if (saveg_compat > saveg_mbf)
         {
           // [Woof!]: int64_t x,y;
           markpoints[i].x = saveg_read64();

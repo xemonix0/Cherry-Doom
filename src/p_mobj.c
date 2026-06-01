@@ -67,13 +67,18 @@ boolean comp_nonbleeders;
 boolean rocket_trails;
 int rocket_trails_interval;
 
-int vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
+vertaim_t vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
+int max_pitch_angle = 32 * ANG1, default_max_pitch_angle;
 
 void P_UpdateDirectVerticalAiming(void)
 {
   // [Nugget]
   vertical_aiming = CRITICAL(mouselook || padlook) ? default_vertical_aiming : 0;
+
+  max_pitch_angle = default_max_pitch_angle * ANG1;
 }
+
+// [Nugget] Removed `actualheight`
 
 // [Cherry]: [JN] Floating amplitude LUT
 static const fixed_t FloatBobOffsets[64] = {
@@ -1065,28 +1070,6 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   // NULL head of sector list // phares 3/13/98
   mobj->touching_sectorlist = NULL;
 
-  // [AM] Do not interpolate on spawn.
-  mobj->interp = false;
-
-  // [AM] Just in case interpolation is attempted...
-  mobj->oldx = mobj->x;
-  mobj->oldy = mobj->y;
-  mobj->oldz = mobj->z;
-  mobj->oldangle = mobj->angle;
-
-  // [Nugget] /---------------------------------------------------------------
-
-  mobj->altsprite = mobj->altframe = -1; // Alt. sprites
-
-  // Alt. states
-  mobj->altstate = NULL;
-  mobj->alttics  = -1; 
-
-  mobj->isvisual = false;
-  mobj->tranmap = NULL;
-
-  // [Nugget] ---------------------------------------------------------------/
-
   // set subsector and/or block links
 
   P_SetThingPosition(mobj);
@@ -1097,6 +1080,15 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
 
   mobj->z = z == ONFLOORZ ? mobj->floorz : z == ONCEILINGZ ?
     mobj->ceilingz - mobj->height : z;
+
+  // [AM] Do not interpolate on spawn.
+  mobj->interp = false;
+
+  // [AM] Just in case interpolation is attempted...
+  mobj->oldx = mobj->x;
+  mobj->oldy = mobj->y;
+  mobj->oldz = mobj->z;
+  mobj->oldangle = mobj->angle;
 
   mobj->thinker.function.p1 = (actionf_p1)P_MobjThinker;
   mobj->above_thing = mobj->below_thing = 0;           // phares
@@ -1114,6 +1106,20 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
   }
 
   // [Nugget] Removed `actualheight`
+
+  // [Nugget] /---------------------------------------------------------------
+
+  mobj->altsprite = mobj->altframe = -1; // Alt. sprites
+
+  // Alt. states
+  mobj->altstate = NULL;
+  mobj->alttics  = -1;
+
+  mobj->isvisual = false;
+  mobj->gentranmap = NULL;
+  mobj->gentranmap_pct = -1;
+
+  // [Nugget] ---------------------------------------------------------------/
 
   // [Cherry]: [JN] Set floating z value of floating
   // powerups to actual mobj z coord and randomize
@@ -1343,7 +1349,7 @@ void P_SpawnPlayer (mapthing_t* mthing)
   p->extralight    = 0;
   p->fixedcolormap = 0;
   // [Nugget] Adjustable viewheight
-  p->viewheight = (!strictmode ? viewheight_value*FRACUNIT : VIEWHEIGHT);
+  p->viewheight = !strictmode ? viewheight_value*FRACUNIT : VIEWHEIGHT;
 
   p->momx = p->momy = 0;   // killough 10/98: initialize bobbing to 0.
 
@@ -1544,32 +1550,23 @@ spawnit:
   // [Nugget] Custom Skill: duplicate monster spawns
   if (duplicatespawns)
   {
-    const int offset = abs(mobj->x - mobj->y) % 8;
-    const fixed_t dist = (mobj->radius * 2) + (mobj->info->speed << FRACBITS);
     boolean stuck = true;
 
-    const fixed_t xoffsets[8] = {
-      -dist,     0, dist,
-      -dist,        dist,
-      -dist,     0, dist
-    };
+    mobj->flags |= MF_TELEPORT; // Don't interact with specials while checking bounds
 
-    const fixed_t yoffsets[8] = {
-      dist,  dist,  dist,
-         0,            0,
-     -dist, -dist, -dist
-    };
-
-    mobj->flags |= MF_TELEPORT; // Don't interact with specials
+    const int offset = abs(mobj->x - mobj->y) % 8;
+    const fixed_t dist = (mobj->radius * 2) + (mobj->info->speed << FRACBITS);
 
     for (int j = 0;  j < 8;  j++)
     {
-      const int side = (j + offset) % 8;
-      const fixed_t xofs = xoffsets[side],
-                    yofs = yoffsets[side];
+      int k = (j + offset) % 8;
 
-      if (!Check_Sides(mobj, mobj->x + xofs, mobj->y + yofs)
-          && P_TryMove(mobj, mobj->x + xofs, mobj->y + yofs, false))
+      if (k >= 4) { k++; } // Don't check inside the original monster
+
+      const fixed_t xx = mobj->x + (dist *  ((k % 3) - 1)),
+                    yy = mobj->y + (dist * -((k / 3) - 1));
+
+      if (!Check_Sides(mobj, xx, yy) && P_TryMove(mobj, xx, yy, false))
       {
         stuck = false;
         break;
@@ -1596,7 +1593,7 @@ spawnit:
   if (mobj->flags & MF_COUNTITEM)
     totalitems++;
 
-  mobj->angle = ANG45 * (mthing->angle/45);
+  mobj->angle = (angle_t)ANG45 * (mthing->angle/45);
   if (mthing->options & MTF_AMBUSH)
     mobj->flags |= MF_AMBUSH;
 
@@ -1653,14 +1650,14 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
 
 //
 // P_SpawnSmokeTrail
-// 
+//
 // [Cherry] Rocket trails from Doom Retro
 //
 static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
                               const angle_t angle)
 {
     mobj_t *th = P_SpawnVisualMobj(x, y, z + (Woof_Random() << 10), AS_SMK_TRAIL1);
-    
+
     th->momx = -FixedMul(FRACUNIT, finecosine[angle >> ANGLETOFINESHIFT])
                + FixedMul((Woof_Random() - Woof_Random()) << 8,
                           finesine[angle >> ANGLETOFINESHIFT]);
@@ -1671,7 +1668,8 @@ static void P_SpawnSmokeTrail(const fixed_t x, const fixed_t y, const fixed_t z,
     th->angle = angle;
 
     th->flags |= MF_TRANSLUCENT | MF_NOGRAVITY;
-    th->tranmap = R_GetGenericTranMap(rocket_trails_tran_pct);
+    th->gentranmap_pct = rocket_trails_tran_pct;
+    th->gentranmap = R_GetGenericTranMap(th->gentranmap_pct);
 }
 
 //
@@ -1987,7 +1985,7 @@ int P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta)
 
 // [Nugget] ==================================================================
 
-// [Nugget] Alt. states
+// Alt. states
 void P_SetMobjAltState(mobj_t *const mobj, altstatenum_t statenum)
 {
   if (statenum == -1)
@@ -1997,8 +1995,6 @@ void P_SetMobjAltState(mobj_t *const mobj, altstatenum_t statenum)
     return;
   }
 
-  altstate_t *state;
-
   do {
     if (statenum == AS_NULL)
     {
@@ -2007,13 +2003,18 @@ void P_SetMobjAltState(mobj_t *const mobj, altstatenum_t statenum)
       break;
     }
 
-    state = &altstates[statenum];
+    altstate_t *const state = &altstates[statenum];
+
     mobj->altstate = state;
     mobj->alttics = state->tics;
     mobj->altsprite = state->sprite;
     mobj->altframe = state->frame;
 
-    if (statenum == AS_TRAIL2) { mobj->flags |= MF_TRANSLUCENT; }
+    if (statenum == AS_TRAIL2)
+    {
+      mobj->gentranmap_pct = 15;
+      mobj->gentranmap = R_GetGenericTranMap(mobj->gentranmap_pct);
+    }
 
     statenum = state->nextstate;
   } while (!mobj->alttics);
@@ -2041,6 +2042,8 @@ mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenu
 
   mobj->info = &info;
 
+  mobj->gentranmap_pct = -1;
+
   mobj->isvisual = true;
 
   P_SetMobjAltState(mobj, statenum);
@@ -2053,9 +2056,9 @@ mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenu
   mobj->ceilingz = mobj->subsector->sector->ceilingheight;
 
   mobj->oldz =
-  mobj->z    =   (z == ONFLOORZ)   ? mobj->floorz
-               : (z == ONCEILINGZ) ? mobj->ceilingz - mobj->height
-               :                     z;
+  mobj->z    = (z == ONFLOORZ)   ? mobj->floorz
+             : (z == ONCEILINGZ) ? mobj->ceilingz - mobj->height
+             :                     z;
 
   mobj->friction = ORIG_FRICTION;
 
@@ -2065,7 +2068,7 @@ mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenu
   return mobj;
 }
 
-boolean flakes, allow_flakes;
+boolean flakes, allow_flakes, faint_flakes;
 
 typedef struct flaker_s {
   fixed_t x, y, z;
@@ -2074,9 +2077,69 @@ typedef struct flaker_s {
 
 flaker_t *flakers = NULL;
 
-void P_AddFlaker(fixed_t x, fixed_t y, fixed_t z, const sector_t *sector)
+static void SpawnFlake(const flaker_t *const flaker, const boolean prespawn)
+{
+  if (prespawn)
+  {
+    if (M_Random() & 3) { return; }
+  }
+  else if (M_Random() != 4) { return; }
+
+  if (faint_flakes)
+  {
+    if (leveltime & 1 || M_Random() != Woof_Random()) { return; }
+  }
+
+  fixed_t vx, vy, vz;
+
+  if (prespawn)
+  {
+    const player_t *const player = &players[displayplayer];
+
+    vx = player->mo->x;
+    vy = player->mo->y;
+    vz = player->mo->z + player->viewheight;
+  }
+  else {
+    vx = viewx;
+    vy = viewy;
+    vz = viewz;
+  }
+
+  const fixed_t dist = P_AproxDistance(vx - flaker->x, vy - flaker->y);
+
+  if (dist > 4096*FRACUNIT) { return; }
+
+  const fixed_t x = flaker->x + (FLAKER_DIST * Woof_Random() / 255) - FLAKER_DIST/2,
+                y = flaker->y + (FLAKER_DIST * Woof_Random() / 255) - FLAKER_DIST/2;
+
+  if (R_PointInSubsector(x, y)->sector != flaker->sector) { return; }
+
+  fixed_t z = MIN(flaker->z - FRACUNIT, vz + 1024*FRACUNIT);
+
+  if (prespawn)
+  { z -= ((int64_t) z - flaker->sector->floorheight) * Woof_Random() / 255; }
+
+  mobj_t *const flake = P_SpawnVisualMobj(x, y, z, AS_FLAKE1);
+
+  flake->flags |= MF_NOGRAVITY;
+  flake->intflags |= MIF_FLAKE;
+
+  flake->gentranmap_pct = faint_flakes ? 5 : 40;
+  flake->gentranmap = R_GetGenericTranMap(flake->gentranmap_pct);
+
+  const fixed_t momz = FRACUNIT + (dist / 3000);
+
+  flake->momz = -(momz + (momz * Woof_Random() / 255));
+
+  flake->alttics = 28 + (z - flaker->sector->floorheight) / -flake->momz;
+}
+
+void P_AddFlaker(fixed_t x, fixed_t y, fixed_t z, const sector_t *const sector)
 {
   array_push(flakers, ((flaker_t) { x, y, z, sector }));
+
+  if (flakes) { SpawnFlake(&flakers[array_size(flakers) - 1], true); }
 }
 
 void P_ClearFlakers(void)
@@ -2093,29 +2156,7 @@ void P_RunFlakers(void)
   const flaker_t *flaker;
   array_foreach(flaker, flakers)
   {
-    const fixed_t dist = P_AproxDistance(viewx - flaker->x, viewy - flaker->y);
-
-    if (dist > 4096*FRACUNIT) { continue; }
-
-    if (M_Random() != 4) { continue; }
-
-    const fixed_t x = flaker->x + (FLAKER_DIST * Woof_Random() / 255) - FLAKER_DIST/2,
-                  y = flaker->y + (FLAKER_DIST * Woof_Random() / 255) - FLAKER_DIST/2,
-                  z = MIN(flaker->z, viewz + 1024*FRACUNIT);
-
-    if (R_PointInSubsector(x, y)->sector != flaker->sector) { continue; }
-
-    mobj_t *const flake = P_SpawnVisualMobj(x, y, z, AS_FLAKE1);
-
-    flake->flags |= MF_NOGRAVITY|MF_TRANSLUCENT;
-    flake->intflags |= MIF_FLAKE;
-    flake->tranmap = R_GetGenericTranMap(40);
-
-    const fixed_t momz = FRACUNIT + (dist / 3000);
-
-    flake->momz = -(momz + (momz * Woof_Random() / 255));
-
-    flake->alttics = 28 + (z - flaker->sector->floorheight) / -flake->momz;
+    SpawnFlake(flaker, false);
   }
 }
 

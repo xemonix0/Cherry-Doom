@@ -404,7 +404,7 @@ void V_InitColorTranslation(void)
                      green = *palsrc++,
                      blue  = *palsrc++,
                      greatest = MAX(MAX(blue, red), green);
-        
+
         nightvision[i] = I_GetNearestColor(playpal, 0.0, greatest, 0.0);
     }
 

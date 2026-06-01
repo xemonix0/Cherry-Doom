@@ -406,8 +406,9 @@ typedef struct mobj_s
     int                 alttics;
 
     boolean             isvisual;
-    byte                *tranmap;
-    
+    byte                *gentranmap;
+    signed char         gentranmap_pct;
+
     // [Cherry]: [JN] Amplitude of floating powerups, used *only* while rendering.
     fixed_t float_amp;
     fixed_t float_z;
@@ -450,16 +451,22 @@ extern int iquetail;
 // [Cherry] Floating powerups from International Doom
 extern boolean floating_powerups;
 
-enum {
+typedef enum vertaim_e {
   VERTAIM_AUTO,
   VERTAIM_DIRECT,
   VERTAIM_DIRECTAUTO,
-}; extern int vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
+} vertaim_t;
+
+extern vertaim_t vertical_aiming, default_vertical_aiming; // [Nugget] Replaces `direct_vertical_aiming`
+
+extern int max_pitch_angle, default_max_pitch_angle;
 
 void P_UpdateDirectVerticalAiming(void);
 
 extern boolean checksight12;
 void P_UpdateCheckSight(void);
+
+// [Nugget] Removed `actualheight`
 
 mobj_t *P_SubstNullMobj(mobj_t *mobj);
 void    P_RespawnSpecials(void);
@@ -482,7 +489,7 @@ int     P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
 
 // [Nugget] ==================================================================
 
-extern boolean cheese, frights, flakes, allow_flakes;
+extern boolean cheese, frights, flakes, allow_flakes, faint_flakes;
 
 enum {
   FLINCH_OFF,

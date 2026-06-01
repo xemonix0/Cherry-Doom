@@ -722,17 +722,8 @@ boolean VX_ProjectVoxel (mobj_t * thing)
 		// [Nugget] Thing lighting
 		if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_HITBOX)
 		{
-			int lightlevel = 0;
-
-			for (int i = 0;  i < 9;  i++)
-			{
-				const fixed_t gx = vis->gx + (thing->radius * ((i % 3) - 1)),
-											gy = vis->gy + (thing->radius * ((i / 3) - 1));
-
-				lightlevel += R_GetLightLevelInPoint(gx, gy);
-			}
-
-			int lightnum = ((lightlevel / 9) >> LIGHTSEGSHIFT) + extralight;
+			const int lightnum = R_CalculateHitboxLightNum(vis->gx, vis->gy, thing->radius, false)
+			                   + extralight;
 
 			spritelights = scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)];
 		}
@@ -888,7 +879,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 		const fixed_t gx = spr->gx + FixedMul(xofs, cosine) + FixedMul(yofs,   sine),
 									gy = spr->gy + FixedMul(xofs,   sine) - FixedMul(yofs, cosine);
 
-		int lightnum = (R_GetLightLevelInPoint(gx, gy) >> LIGHTSEGSHIFT)
+		int lightnum = (R_GetLightLevelInPoint(gx, gy, false) >> LIGHTSEGSHIFT)
 								 + extralight;
 
 		const int lightindex = STRICTMODE(!diminishing_lighting)
@@ -1082,13 +1073,13 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 	fixed_t const By = ty[idx];
 	idx = (idx + 1) & 3;
 
+	if (By < VX_MINZ) { return; }
+
 	fixed_t       Cx = tx[idx];
 	fixed_t const Cy = ty[idx];
 	idx = (idx + 1) & 3;
 
 	fixed_t const Dy = ty[idx];
-
-	if (By < VX_MINZ) { return; }
 
 	const fixed_t A_xscale = FixedDiv(projection, Ay),
 	              B_xscale = FixedDiv(projection, By),
@@ -1101,7 +1092,8 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 
 	const fixed_t frontscale = MAX(B_xscale, MAX(C_xscale, A_xscale)),
 	               backscale = MIN(D_xscale, MIN(C_xscale, A_xscale)),
-	                midscale = ((int64_t) frontscale + backscale) / 2;
+	                midscale = ((int64_t) frontscale + backscale) / 2,
+	               imidscale = FixedDiv(FRACUNIT, midscale);
 
 	static const byte A_faces[9] = { F_BACK, F_BACK, F_RIGHT, F_LEFT, 0, F_RIGHT, F_LEFT,  F_FRONT, F_FRONT };
 	static const byte B_faces[9] = { F_LEFT,      0, F_BACK,       0, 0,       0, F_FRONT,       0, F_RIGHT };
@@ -1132,7 +1124,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 		const fixed_t gx = spr->gx + FixedMul(xofs, cosine) + FixedMul(yofs,   sine),
 									gy = spr->gy + FixedMul(xofs,   sine) - FixedMul(yofs, cosine);
 
-		int lightnum = (R_GetLightLevelInPoint(gx, gy) >> LIGHTSEGSHIFT)
+		int lightnum = (R_GetLightLevelInPoint(gx, gy, false) >> LIGHTSEGSHIFT)
 								 + extralight;
 
 		const int lightindex = STRICTMODE(!diminishing_lighting)
@@ -1196,7 +1188,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 
 			for (fixed_t uy = ((uy1 - 1) | FRACMASK) + 1;  uy <= uy2;  uy += FRACUNIT)
 			{
-				int i = (((uy - uy0) >> FRACBITS) * FixedDiv(FRACUNIT, midscale)) >> FRACBITS;
+				int i = (((uy - uy0) >> FRACBITS) * imidscale) >> FRACBITS;
 
 				i = BETWEEN(0, len - 1, i);
 
@@ -1212,7 +1204,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 
 // [Nugget] Voxel rendering mode: function pointer /--------------------------
 
-static void (*VX_DrawColumn) (vissprite_t*, int, int) = VX_DrawColumnBounded;
+static void (*VX_DrawColumn) (vissprite_t*, int, int) = VX_DrawColumnCubes;
 
 void VX_SetVoxelRenderingMode(void)
 {
@@ -1370,7 +1362,7 @@ boolean VX_ProjectWeaponVoxel(const pspdef_t *const psp,
   fixed_t x = sx2,
           y = sy2 - 32*FRACUNIT;
 
-  if (STRICTMODE(weapon_inertia))
+  if (P_WeaponInertiaOn())
   {
     x += wix / 2;
 
@@ -1390,11 +1382,11 @@ boolean VX_ProjectWeaponVoxel(const pspdef_t *const psp,
   thing.sprite = psp->state->sprite;
   thing.frame  = psp->state->frame;
 
-  if (translucent)
-  { thing.flags |= MF_TRANSLUCENT; }
-
   if (POWER_RUNOUT(viewplayer->powers[pw_invisibility]) && !beta_emulation)
   { thing.flags |= MF_SHADOW; }
+
+  // Thing lighting: use the player's radius
+  thing.radius = players[displayplayer].mo->radius;
 
   // Albeit unused, `R_ProjectVoxel()` accesses `heightsec`
   sector_t sector = {0};

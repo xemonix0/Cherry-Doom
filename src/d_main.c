@@ -483,7 +483,8 @@ void D_PageTicker(void)
 
 void D_PageDrawer(void)
 {
-  V_DrawPatchFullScreen(V_CachePatchName(pagename, PU_CACHE));
+  V_DrawPatchFullScreen(
+    V_CachePatchName(W_CheckWidescreenPatch(pagename), PU_CACHE));
 }
 
 //
@@ -510,20 +511,12 @@ void D_DoAdvanceDemo(void)
     usergame = false; // no save / end game here
     paused = false;
     gameaction = ga_nothing;
+    gamestate = GS_DEMOSCREEN;
 
     D_AdvanceDemoLoop();
     switch (demoloop_point->type)
     {
         case TYPE_ART:
-            gamestate = GS_DEMOSCREEN;
-
-            // Needed to support the Doom 3: BFG Edition variant
-            if (W_CheckNumForName(demoloop_point->primary_lump) < 0
-                && !strcasecmp(demoloop_point->primary_lump, "TITLEPIC"))
-            {
-                M_CopyLumpName(demoloop_point->primary_lump, "DMENUPIC");
-            }
-
             if (W_CheckNumForName(demoloop_point->primary_lump) >= 0)
             {
                 pagename = demoloop_point->primary_lump;
@@ -533,24 +526,18 @@ void D_DoAdvanceDemo(void)
                 {
                     S_ChangeMusInfoMusic(music, false);
                 }
-                break;
             }
-            // fallthrough
+            break;
 
         case TYPE_DEMO:
-            gamestate = GS_DEMOSCREEN;
-
             if (W_CheckNumForName(demoloop_point->primary_lump) >= 0)
             {
                 G_DeferedPlayDemo(demoloop_point->primary_lump);
-                break;
             }
-            // fallthrough
+            break;
 
         default:
-            I_Printf(VB_WARNING,
-                     "D_DoAdvanceDemo: Invalid demoloop[%d] entry, skipping",
-                     demosequence);
+            I_Printf(VB_DEBUG, "D_DoAdvanceDemo: unhandled demoloop type");
             break;
     }
 }
@@ -1377,6 +1364,10 @@ static void LoadIWadBase(void)
     {
         W_AddBaseDir("doom-all");
     }
+    else if (local_gamemission == pack_chex || local_gamemission == pack_chex3v)
+    {
+        W_AddBaseDir("chex-all");
+    }
     if (local_gamemission == doom)
     {
         W_AddBaseDir("doom1-all");
@@ -1407,6 +1398,12 @@ static void AutoloadIWadDir(void (*AutoLoadFunc)(const char *path, wad_source_t 
             if (local_gamemission < pack_chex)
             {
                 dir = GetAutoloadDir(autoload_paths[i], "doom-all", true);
+                AutoLoadFunc(dir, source_other);
+                free(dir);
+            }
+            else if (local_gamemission == pack_chex || local_gamemission == pack_chex3v)
+            {
+                dir = GetAutoloadDir(autoload_paths[i], "chex-all", true);
                 AutoLoadFunc(dir, source_other);
                 free(dir);
             }
@@ -1612,7 +1609,7 @@ static void D_ShowEndDoom(void)
 
 boolean disable_endoom = false;
 
-static boolean AllowEndDoom(void)
+boolean D_AllowEndDoom(void)
 {
   return (!disable_endoom
           && (exit_sequence == EXIT_SEQUENCE_FULL
@@ -1622,7 +1619,7 @@ static boolean AllowEndDoom(void)
 static void D_EndDoom(void)
 {
   // Do we even want to show an ENDOOM?
-  if (!AllowEndDoom())
+  if (!D_AllowEndDoom())
   {
     return;
   }
@@ -1642,6 +1639,7 @@ static void D_EndDoom(void)
 // [FG] fast-forward demo to the desired map
 int playback_warp = -1;
 
+// [Nugget] SSG in Doom 1
 // [FG] check for SSG assets
 static boolean CheckHaveSSG (void)
 {
@@ -2355,6 +2353,12 @@ void D_DoomMain(void)
 
   W_InitMultipleFiles();
 
+  // Always process chex.deh first
+  if (gamemission == pack_chex)
+  {
+    ProcessDehLump(W_GetNumForName("chexdeh"));
+  }
+
   // Check for wolf levels
   haswolflevels = (W_CheckNumForName("map31") >= 0);
 
@@ -2546,8 +2550,10 @@ void D_DoomMain(void)
       I_Printf(VB_INFO, "External statistics registered.");
     }
 
+  // [Nugget] SSG in Doom 1
   // [FG] check for SSG assets
   have_ssg = CheckHaveSSG();
+  MN_UpdateDoom1SSGItem();
 
   //!
   // @category game
@@ -2753,11 +2759,12 @@ void D_DoomMain(void)
 
   D_StartGameLoop();
 
-  D_UpdateCasualPlay(); // [Nugget]
+  // [Nugget] /---------------------------------------------------------------
 
-  weapon_inertia_scale = weapon_inertia_scale_pct * ORIG_WEAPON_INERTIA_SCALE / 100; // [Nugget] Weapon inertia
+  D_UpdateCasualPlay();
 
-  // [Nugget]
+  P_NuggetSetWeaponInertiaScale();
+
   if (casual_play && !fail_safe)
   {
     time_t curtime = time(NULL);
@@ -2765,13 +2772,16 @@ void D_DoomMain(void)
 
     if (curtm)
     {
-           if (curtm->tm_mon ==  3 && curtm->tm_mday ==  1) {  cheese = true; }
-      else if (curtm->tm_mon ==  6 && curtm->tm_mday == 15) {    tanz = true; }
+           if (curtm->tm_mon ==  3 && curtm->tm_mday ==  1) { cheese = true; }
+      else if (curtm->tm_mon ==  6 && curtm->tm_mday == 15) { tanz = true; }
       else if (curtm->tm_mon ==  9 && curtm->tm_mday ==  7) { src_ain = true; }
       else if (curtm->tm_mon ==  9 && curtm->tm_mday == 31) { frights = true; }
-      else if (curtm->tm_mon == 11 && curtm->tm_mday == 25) {  flakes = allow_flakes = true; }
+      else if (curtm->tm_mon == 11 && curtm->tm_mday == 24) { flakes = allow_flakes = faint_flakes = true; }
+      else if (curtm->tm_mon == 11 && curtm->tm_mday == 25) { flakes = allow_flakes = true; }
     }
   }
+
+  // [Nugget] ---------------------------------------------------------------/
 
   for (;;)
     {
