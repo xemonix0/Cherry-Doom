@@ -92,6 +92,7 @@
 // [Nugget]
 #include <time.h>
 #include "m_nughud.h"
+#include "r_data.h"
 
 #include "wad_stats.h" // [Cherry]
 
@@ -319,8 +320,13 @@ void D_Display (void)
         I_DynamicResolution();
     }
 
-  if (setsmoothlight)
-    R_SmoothLight();
+  // [Nugget] True color
+  if (R_InitColormapsPending())
+  { R_InitColormaps(); }
+
+  // [Nugget] Lighting modes
+  if (R_InitLightTablesPending())
+  { R_InitLightTables(); }
 
   if (setsizeneeded)                // change the view size if needed
     {
@@ -329,8 +335,17 @@ void D_Display (void)
       borderdrawcount = true;
     }
 
+  // [Nugget] Radial fog
+  if (R_InitDistLightTablesPending())
+  { R_InitDistLightTables(); }
+
   if (gamestate == GS_LEVEL && gametic)
     ST_Erase();
+
+  // [Nugget] True color: brought from below
+  // clean up border stuff
+  if (gamestate != oldgamestate && gamestate != GS_LEVEL)
+    I_SetPalette (0); // [Nugget] Pass index
 
   switch (gamestate)                // do buffered drawing
     {
@@ -355,9 +370,7 @@ void D_Display (void)
   if (gamestate == GS_LEVEL && gametic)
       R_RenderPlayerView(&players[displayplayer]);
 
-  // clean up border stuff
-  if (gamestate != oldgamestate && gamestate != GS_LEVEL)
-    I_SetPalette (W_CacheLumpName ("PLAYPAL",PU_CACHE));
+  // [Nugget] True color: moved "border stuff" code above
 
   // see if the border needs to be initially drawn
   if (gamestate == GS_LEVEL && oldgamestate != GS_LEVEL)
@@ -2821,6 +2834,11 @@ void D_BindMiscVariables(void)
   M_BindBool("inter_ratio_stats", &inter_ratio_stats, NULL,
              false, ss_none, wad_yes,
              "Use ratios for stats in intermission screen");
+
+  // (CFG-only)
+  M_BindBool("inter_entering_delay", &inter_entering_delay, NULL,
+             false, ss_none, wad_yes,
+             "Increase the duration of the \"Entering\" screen in Doom 2's intermission screen");
 
   M_BindNum("no_page_ticking", &no_page_ticking, NULL,
             0, 0, 2, ss_misc, wad_no,

@@ -58,11 +58,12 @@
 // [Nugget]
 #include "am_map.h"
 #include "f_finale.h"
+#include "m_random.h"
 #include "r_main.h"
 
 #define plyr (players+consoleplayer)     /* the console player */
 
-// [Nugget] Testing cheat /------------
+// [Nugget] Testing cheats /--------------------------------------------------
 
 //#define NUGMAGIC
 
@@ -72,19 +73,21 @@ int nugmagic = 0;
 
 static void cheat_magic(void)
 {
-  
+  nugmagic = !nugmagic;
+  displaymsg("Magic %s", nugmagic ? "true" : "false");
 }
 
 int nugmagic2 = 0;
 
 static void cheat_magic2(void)
 {
-  
+  nugmagic2 = !nugmagic2;
+  displaymsg("Magic2 %s", nugmagic2 ? "true" : "false");
 }
 
 #endif
 
-// [Nugget] --------------------------/
+// [Nugget] -----------------------------------------------------------------/
 
 //-----------------------------------------------------------------------------
 //
@@ -184,6 +187,8 @@ static void cheat_saitama(void);     // MDK Fist
 static void cheat_boomcan(void);     // Explosive hitscan
 
 static void cheat_fauxdemo(void); // Emulates demo/net-play state, for debugging
+static void cheat_myrng(void);
+static void cheat_myrngx(char *buf);
 static void cheat_dimlight(void);
 static void cheat_fovsky(void);
 static void cheat_castcall(void);
@@ -421,58 +426,60 @@ struct cheat_s cheat[] = {
 
   // [Nugget] /---------------------------------------------------------------
 
-  {"nomomentum", NULL, not_net | not_demo, {.v = cheat_nomomentum}     },
-  {"fullclip",   NULL, not_net | not_demo, {.v = cheat_infammo}        }, // Infinite ammo cheat
-  {"valiant",    NULL, not_net | not_demo, {.v = cheat_fastweaps}      }, // Fast weapons cheat
-  {"bobbers",    NULL, not_net | not_demo, {.v = cheat_bobbers}        }, // Shortcut for the two above cheats
-  {"gibbers",    NULL, not_net | not_demo, {.v = cheat_gibbers}        }, // Everything gibs
-  {"riotmode",   NULL, not_net | not_demo, {.v = cheat_riotmode}       },
-  {"resurrect",  NULL, not_net | not_demo, {.v = cheat_resurrect}      },
-  {"idres",      NULL, not_net | not_demo, {.v = cheat_resurrect}      }, // 'RESURRECT' alternative
-  {"idfly",      NULL, not_net | not_demo, {.v = cheat_fly}            },
-  {"nextmap",    NULL, not_net | not_demo, {.v = cheat_normalexit}     },
-  {"nextsecret", NULL, not_net | not_demo, {.v = cheat_secretexit}     },
-  {"turbo",      NULL, not_net | not_demo, {.v = cheat_turbo},         },
-  {"turbo",      NULL, not_net | not_demo, {.s = cheat_turbox},     -3 },
+  { "nomomentum", NULL, not_net | not_demo, {.v = cheat_nomomentum} },
+  { "fullclip",   NULL, not_net | not_demo, {.v = cheat_infammo} }, // ------- Infinite ammo cheat
+  { "valiant",    NULL, not_net | not_demo, {.v = cheat_fastweaps} }, // ----- Fast weapons cheat
+  { "bobbers",    NULL, not_net | not_demo, {.v = cheat_bobbers} }, // ------- Shortcut for the two above cheats
+  { "gibbers",    NULL, not_net | not_demo, {.v = cheat_gibbers} }, // ------- Everything gibs
+  { "riotmode",   NULL, not_net | not_demo, {.v = cheat_riotmode} },
+  { "resurrect",  NULL, not_net | not_demo, {.v = cheat_resurrect} },
+  { "idres",      NULL, not_net | not_demo, {.v = cheat_resurrect} }, // ----- 'RESURRECT' alternative
+  { "idfly",      NULL, not_net | not_demo, {.v = cheat_fly} },
+  { "nextmap",    NULL, not_net | not_demo, {.v = cheat_normalexit}, .repeatable = true },
+  { "nextsecret", NULL, not_net | not_demo, {.v = cheat_secretexit}, .repeatable = true },
+  { "turbo",      NULL, not_net | not_demo, {.v = cheat_turbo}, },
+  { "turbo",      NULL, not_net | not_demo, {.s = cheat_turbox}, -3 },
 
-  {"summon",  NULL, not_net | not_demo, {.v = cheat_summon}      }, // Summon "Menu"
-  {"summone", NULL, not_net | not_demo, {.v = cheat_summone0}    }, // Summon Enemy "Menu"
-  {"summone", NULL, not_net | not_demo, {.s = cheat_summone}, -3 }, // Summon a hostile mobj
-  {"summonf", NULL, not_net | not_demo, {.v = cheat_summonf0}    }, // Summon Friend "Menu"
-  {"summonf", NULL, not_net | not_demo, {.s = cheat_summonf}, -3 }, // Summon a friendly mobj
-  {"summonr", NULL, not_net | not_demo, {.v = cheat_summonr}     }, // Repeat last summon
+  { "summon",  NULL, not_net | not_demo, {.v = cheat_summon} }, // --------------------- Summon "Menu"
+  { "summone", NULL, not_net | not_demo, {.v = cheat_summone0} }, // ------------------- Summon Enemy "Menu"
+  { "summone", NULL, not_net | not_demo, {.s = cheat_summone}, -3 }, // ---------------- Summon a hostile mobj
+  { "summonf", NULL, not_net | not_demo, {.v = cheat_summonf0} }, // ------------------- Summon Friend "Menu"
+  { "summonf", NULL, not_net | not_demo, {.s = cheat_summonf}, -3 }, // ---------------- Summon a friendly mobj
+  { "summonr", NULL, not_net | not_demo, {.v = cheat_summonr}, .repeatable = true }, //  Repeat last summon
 
-  {"iddf",   NULL, not_net | not_demo, {.v = cheat_reveal_key}      },
-  {"iddfb",  NULL, not_net | not_demo, {.v = cheat_reveal_keyx}     },
-  {"iddfy",  NULL, not_net | not_demo, {.v = cheat_reveal_keyx}     },
-  {"iddfr",  NULL, not_net | not_demo, {.v = cheat_reveal_keyx}     },
-  {"iddfbc", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 0 },
-  {"iddfyc", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 2 },
-  {"iddfrc", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 1 },
-  {"iddfbs", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 5 },
-  {"iddfys", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 3 },
-  {"iddfrs", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 4 },
+  { "iddf",   NULL, not_net | not_demo, {.v = cheat_reveal_key} },
+  { "iddfb",  NULL, not_net | not_demo, {.v = cheat_reveal_keyx} },
+  { "iddfy",  NULL, not_net | not_demo, {.v = cheat_reveal_keyx} },
+  { "iddfr",  NULL, not_net | not_demo, {.v = cheat_reveal_keyx} },
+  { "iddfbc", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 0, .repeatable = true },
+  { "iddfyc", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 2, .repeatable = true },
+  { "iddfrc", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 1, .repeatable = true },
+  { "iddfbs", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 5, .repeatable = true },
+  { "iddfys", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 3, .repeatable = true },
+  { "iddfrs", NULL, not_net | not_demo, {.i = cheat_reveal_keyxx}, 4, .repeatable = true },
 
-  {"iddet",      NULL, not_net | not_demo, {.v = cheat_reveal_exit} }, // Exit finder
-  {"linetarget", NULL, not_net | not_demo, {.v = cheat_linetarget}  }, // Give info on the current linetarget
-  {"trails",     NULL, not_net | not_demo, {.v = cheat_trails}      }, // Show hitscan trails
-  {"mdk",        NULL, not_net | not_demo, {.v = cheat_mdk}         },
-  {"saitama",    NULL, not_net | not_demo, {.v = cheat_saitama}     }, // MDK Fist
-  {"boomcan",    NULL, not_net | not_demo, {.v = cheat_boomcan}     }, // Explosive hitscan
+  { "iddet",      NULL, not_net | not_demo, {.v = cheat_reveal_exit}, .repeatable = true }, // --- Exit finder
+  { "linetarget", NULL, not_net | not_demo, {.v = cheat_linetarget} }, // ------------------------ Give info on the current linetarget
+  { "trails",     NULL, not_net | not_demo, {.v = cheat_trails} }, // ---------------------------- Show hitscan trails
+  { "mdk",        NULL, not_net | not_demo, {.v = cheat_mdk}, .repeatable = true },
+  { "saitama",    NULL, not_net | not_demo, {.v = cheat_saitama} }, // --------------------------- MDK Fist
+  { "boomcan",    NULL, not_net | not_demo, {.v = cheat_boomcan} }, // --------------------------- Explosive hitscan
 
-  {"fauxdemo",   NULL, not_net | not_demo, {.v = cheat_fauxdemo} }, // Emulates demo/net-play state, for debugging
-  {"dimlight",   NULL, not_net | not_demo, {.v = cheat_dimlight} },
-  {"fovsky",     NULL, not_net | not_demo, {.v = cheat_fovsky}   },
-  {"castcall",   NULL, not_net | not_demo, {.v = cheat_castcall} },
+  { "fauxdemo",   NULL, devmode_only, {.v = cheat_fauxdemo} }, // Emulates demo/net-play state, for debugging
+  { "myrng",        NULL, devmode_only, {.v = cheat_myrng} },
+  { "myrng",        NULL, devmode_only, {.s = cheat_myrngx}, -3 },
+  { "dimlight",   NULL, devmode_only, {.v = cheat_dimlight} },
+  { "fovsky",     NULL, devmode_only, {.v = cheat_fovsky} },
+  { "castcall",   NULL, devmode_only, {.v = cheat_castcall} },
 
-  {"cheese",     NULL, not_net | not_demo, {.v = cheat_cheese} },
-  {"flakes",     NULL, not_net | not_demo, {.v = cheat_flakes} },
-  {"idgaf",      NULL, not_net | not_demo, {.v = cheat_idgaf}  },
+  { "cheese",     NULL, not_net | not_demo, {.v = cheat_cheese} },
+  { "flakes",     NULL, not_net | not_demo, {.v = cheat_flakes} },
+  { "idgaf",      NULL, not_net | not_demo, {.v = cheat_idgaf} },
 
   #ifdef NUGMAGIC
 
-  {"ggg", NULL, 0, {.v = cheat_magic}},
-  {"hhh", NULL, 0, {.v = cheat_magic2}},
+  { "ggg", NULL, 0, {.v = cheat_magic},  .repeatable = true },
+  { "hhh", NULL, 0, {.v = cheat_magic2}, .repeatable = true },
 
   #endif
 
@@ -639,9 +646,12 @@ static void cheat_turbox(char *buf)
 static void cheat_summon(void)
 {
   if (spawneetype == -1)
-  { displaymsg("Summon: Enemy or Friend?"); }
-  else
-  { displaymsg("Summon: Enemy, Friend or Repeat last (%i)?", spawneetype); }
+  {
+    displaymsg("Summon: Enemy or Friend?");
+  }
+  else {
+    displaymsg("Summon: Enemy, Friend or Repeat last (%i)?", spawneetype);
+  }
 }
 
 static boolean GetMobjType(char *buf)
@@ -809,9 +819,13 @@ static void cheat_reveal_keyxx(int key)
       if (mobj->type == MT_MISC4 + key)
       {
         found = true;
+
         followplayer = false;
         AM_SetMapCenter(mobj->x, mobj->y);
+
         P_SetTarget(&last_mobj, mobj);
+
+        displaymsg("Key Finder: key found");
         break;
       }
     }
@@ -948,8 +962,6 @@ static void cheat_boomcan(void)
 // Emulates demo/net-play state, for debugging
 static void cheat_fauxdemo(void)
 {
-  if (!nugget_devmode) { return; }
-
   extern void D_UpdateCasualPlay(void);
 
   fauxdemo = !fauxdemo;
@@ -959,18 +971,51 @@ static void cheat_fauxdemo(void)
   displaymsg("Fauxdemo %s", fauxdemo ? "ON" : "OFF");
 }
 
+static void cheat_myrng(void)
+{
+  if (rng_override >= 0)
+  {
+    rng_override = -1;
+    displaymsg("RNG Override: Value cleared. Enter new value");
+  }
+  else { displaymsg("RNG Override: Enter value"); }
+}
+
+static void cheat_myrngx(char *buf)
+{
+  int value;
+
+  if (!isdigit(buf[0]) || !isdigit(buf[1]) || !isdigit(buf[2]))
+  {
+    displaymsg("RNG Override: Digits only");
+    return;
+  }
+
+  value = (buf[0] - '0') * 100
+        + (buf[1] - '0') * 10
+        + (buf[2] - '0');
+
+  if (value < 0 || 255 < value)
+  {
+    displaymsg("RNG Override: 0-255 only");
+    return;
+  }
+
+  rng_override = value;
+
+  displaymsg("RNG Override: %i", rng_override);
+}
+
 static void cheat_dimlight(void)
 {
-  if (!nugget_devmode) { return; }
-
   diminishing_lighting = !diminishing_lighting;
   displaymsg("Diminishing Lighting %s", diminishing_lighting ? "ON" : "OFF");
+
+  R_DeferredInitDistLightTables();
 }
 
 static void cheat_fovsky(void)
 {
-  if (!nugget_devmode) { return; }
-
   extern boolean fov_stretchsky;
 
   fov_stretchsky = !fov_stretchsky;
@@ -979,8 +1024,6 @@ static void cheat_fovsky(void)
 
 static void cheat_castcall(void)
 {
-  if (!nugget_devmode) { return; }
-
   F_StartFinale();
   F_StartCast();
 }
@@ -1914,7 +1957,8 @@ static boolean CheatAllowed(cheat_when_t when)
            && !(when & not_coop && netgame && !deathmatch)
            && !(when & not_demo && (demorecording || demoplayback))
            && !(when & not_menu && menuactive)
-           && !(when & beta_only && !beta_emulation);
+           && !(when & beta_only && !beta_emulation)
+           && !(when & devmode_only_bit && !nugget_devmode); // [Nugget]
 }
 
 // The cheat detection function was replaced with a version from Chocolate Doom

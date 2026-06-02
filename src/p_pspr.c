@@ -45,7 +45,7 @@
 #include "m_swap.h"
 #include "p_maputl.h"
 #include "r_things.h"
-#include "w_wad.h" // W_CheckNumForName
+#include "v_fmt.h"
 
 // [Nugget] /=================================================================
 
@@ -555,9 +555,10 @@ static void P_NuggetBobbing(player_t* player)
 {
   pspdef_t *psp = player->psprites;
 
-  if (((player->attackdown || psp->state->misc1) // [FG] not attacking means idle
-       && STRICTMODE(center_weapon) != WEAPON_BOBBING)
-      || !psp->state || (player->switching && !switch_bob))
+  if (!psp->state
+      || (player->switching && !switch_bob)
+      || ((player->attackdown || psp->state->misc1) // [FG] not attacking means idle
+          && STRICTMODE(center_weapon) != WEAPON_BOBBING))
   {
     return;
   }
@@ -669,7 +670,8 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
       {
         player->pendingweapon = wp_nochange;
       }
-      else {
+      else
+      {
         // change weapon (pending weapon should already be validated)
         statenum_t newstate = weaponinfo[player->readyweapon].downstate;
         P_SetPsprite(player, ps_weapon, newstate);
@@ -1567,7 +1569,7 @@ static void WeaponInertiaVertical(
 
       ash = R_GetActualSpriteHeight(sprite, frame);
 
-      const patch_t *const patch = (patch_t *) W_CacheLumpNum(ash->lump, PU_CACHE);
+      const patch_t *const patch = (patch_t *) V_CachePatchNum(ash->lump, PU_CACHE);
       spritetopoffset = SHORT(patch->topoffset);
     }
 

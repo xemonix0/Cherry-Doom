@@ -18,7 +18,7 @@ Although the new code has been written with the intention of not breaking demo c
 
 ## Features
 
-This feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features). The build corresponding to this README is based on [Nugget Doom 4.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.3.0).
+This feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features). The build corresponding to this README is based on [Nugget Doom 5.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.3.0).
 
 Some of Cherry Doom's features originate from other sources; acknowledgements are provided _(ported from [p.f.] or inspired by [i.b.])_.
 
@@ -98,7 +98,8 @@ The following build system and libraries need to be installed:
  * [fluidsynth](https://github.com/FluidSynth/fluidsynth) (>= 2.2.0, optional)
  * [libxmp](https://github.com/libxmp/libxmp) (optional)
  
-Usually your distribution should have the corresponding packages in its repositories, and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
+Usually your distribution should have the corresponding packages in its repositories,
+and if your distribution has "dev" versions of those libraries, those are the ones you'll need.
 
 Once installed, compilation should be as simple as:
 
@@ -143,7 +144,7 @@ Copyright:
  © 2020-2024 Fabian Greffrath;  
  © 2020-2024 Roman Fomin;  
  © 2021-2022 Ryan Krafnick;  
- © 2021-2025 Alaux;  
+ © 2021-2026 Alaux;  
  © 2022 Julia Nechaevskaya;  
  © 2022-2024 ceski;  
  © 2023 Andrew Apted;  

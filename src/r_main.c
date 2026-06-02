@@ -72,6 +72,7 @@
 int viewangleoffset;
 int validcount = 1;         // increment every time a check is made
 lighttable_t *fixedcolormap;
+lighttable32_t *fixedcolormap32 = NULL;
 int      centerx, centery;
 fixed_t  centerxfrac, centeryfrac;
 fixed_t  projection;
@@ -123,13 +124,18 @@ int LIGHTZSHIFT;
 // killough 4/4/98: support dynamic number of them as well
 
 int numcolormaps;
-lighttable_t ***(*c_scalelight) = NULL;
-lighttable_t ***(*c_zlight) = NULL;
-lighttable_t **(*scalelight) = NULL;
-lighttable_t **scalelightfixed = NULL;
-lighttable_t **(*zlight) = NULL;
+cmapoffset_t **(*c_scalelight) = NULL;
+cmapoffset_t **(*c_zlight) = NULL;
+cmapoffset_t *(*scalelight) = NULL;
+cmapoffset_t *scalelightfixed = NULL;
+cmapoffset_t *(*zlight) = NULL;
 lighttable_t *fullcolormap;
 lighttable_t **colormaps;
+
+lighttable32_t ***pal_colormaps = NULL;
+lighttable32_t *fullcolormap32 = NULL;
+lighttable32_t **colormaps32 = NULL;
+cmapoffset_t fixedcolormapoffset = 0;
 
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
@@ -137,6 +143,8 @@ int extralight;                           // bumped light from gun blasts
 int extra_level_brightness;               // level brightness feature
 
 // [Nugget] /=================================================================
+
+static int viewwidth_nonwide; // Brought from below
 
 static fixed_t nughud_viewpitch;
 
@@ -157,10 +165,13 @@ int R_GetLightLevelInPoint(
   const fixed_t y,
   const boolean force_mbf
 ) {
-  int lightlevel;
+  return R_GetLightLevelInSector(R_PointInSubsector(x, y)->sector, force_mbf);
+}
 
-  sector_t *const sector = R_PointInSubsector(x, y)->sector;
-
+int R_GetLightLevelInSector(
+  sector_t *const sector,
+  const boolean force_mbf
+) {
   if (demo_version > DV_BOOM || force_mbf)
   {
     sector_t tempsector;
@@ -168,12 +179,14 @@ int R_GetLightLevelInPoint(
 
     R_FakeFlat(sector, &tempsector, &floorlightlevel, &ceilinglightlevel, false);
 
-    lightlevel = (floorlightlevel + ceilinglightlevel) >> 1;
+    return (floorlightlevel + ceilinglightlevel) >> 1;
   }
-  else { lightlevel = sector->lightlevel; }
 
-  return lightlevel;
+  return sector->lightlevel;
 }
+
+// True color
+static int num_colormap_rows;
 
 // CVARs ---------------------------------------------------------------------
 
@@ -182,6 +195,8 @@ boolean vertical_lockon;
 spriteshadows_t sprite_shadows;
 int sprite_shadows_tran_pct;
 thinglighting_t thing_lighting_mode;
+boolean radial_fog;
+int radial_plane_fog_fidelity;
 boolean flip_levels;
 static int lowres_pixel_width;
 static int lowres_pixel_height;
@@ -191,9 +206,229 @@ boolean diminishing_lighting;
 static boolean a11y_weapon_flash;
 boolean a11y_weapon_pspr;
 boolean a11y_invul_colormap;
+int pspr_invis_translucent;
 int pspr_translucency_pct;
 int zoom_fov;
 boolean comp_powerrunout;
+
+// ---------------------------------------------------------------------------
+
+static void ApplyBlockPostProcess(void)
+{
+  int y, x, y2;
+
+  const int pw = lowres_pixel_width,
+            ph = lowres_pixel_height;
+
+  int first_y = (viewheight % ph) / 2,
+      first_x;
+
+  pixel_t *const dest = I_VideoBuffer;
+
+  for (y = viewwindowy;  y < (viewwindowy + viewheight);)
+  {
+    first_x = (viewwidth % pw) / 2;
+
+    for (x = viewwindowx;  x < (viewwindowx + viewwidth);)
+    {
+      for (y2 = 0;  y2 < (first_y ? first_y : MIN(ph, (viewwindowy + viewheight) - y));  y2++)
+      {
+        memset(
+          dest + ((y + y2) * video.pitch) + x,
+          dest[
+            ( (first_y ? viewwindowy + first_y
+                       : y + ((y < viewwindowy + viewheight/2) ? ph-1 : 0)) * video.pitch)
+            + (first_x ? viewwindowx + first_x
+                       : x + ((x < viewwindowx + viewwidth/2)  ? pw-1 : 0))
+          ],
+          first_x ? first_x : MIN(pw, (viewwindowx + viewwidth) - x)
+        );
+      }
+
+      if (first_x)
+      {
+        x += first_x;
+        first_x = 0;
+      }
+      else { x += pw; }
+    }
+
+    if (first_y)
+    {
+      y += first_y;
+      first_y = 0;
+    }
+    else { y += ph; }
+  }
+}
+
+static void ApplyBlockPostProcess32(void)
+{
+  int y, x, y2;
+
+  const int pw = lowres_pixel_width,
+            ph = lowres_pixel_height;
+
+  int first_y = (viewheight % ph) / 2,
+      first_x;
+
+  pixel32_t *const dest = I_VideoBuffer32;
+
+  for (y = viewwindowy;  y < (viewwindowy + viewheight);)
+  {
+    first_x = (viewwidth % pw) / 2;
+
+    for (x = viewwindowx;  x < (viewwindowx + viewwidth);)
+    {
+      for (y2 = 0;  y2 < (first_y ? first_y : MIN(ph, (viewwindowy + viewheight) - y));  y2++)
+      {
+        V_RGBSet(
+          dest + ((y + y2) * video.pitch) + x,
+          dest[
+            ( (first_y ? viewwindowy + first_y
+                       : y + ((y < viewwindowy + viewheight/2) ? ph-1 : 0)) * video.pitch)
+            + (first_x ? viewwindowx + first_x
+                       : x + ((x < viewwindowx + viewwidth/2)  ? pw-1 : 0))
+          ],
+          first_x ? first_x : MIN(pw, (viewwindowx + viewwidth) - x)
+        );
+      }
+
+      if (first_x)
+      {
+        x += first_x;
+        first_x = 0;
+      }
+      else { x += pw; }
+    }
+
+    if (first_y)
+    {
+      y += first_y;
+      first_y = 0;
+    }
+    else { y += ph; }
+  }
+}
+
+// Lighting modes ------------------------------------------------------------
+
+lightingmode_t lighting_mode;
+
+static boolean init_light_tables = false;
+
+boolean R_InitLightTablesPending(void)
+{
+  return init_light_tables;
+}
+
+void R_DeferredInitLightTables(void)
+{
+  init_light_tables = true;
+}
+
+// Radial fog ----------------------------------------------------------------
+
+static int R_GetLightIndexVanilla(fixed_t scale, int x);
+
+#define RADFOG_MULT 1.414213562 // Square root of 2
+
+static int R_GetLightIndexRadFog(fixed_t scale, const int x)
+{
+  scale = FixedMul(scale, finecosine[xtoviewangle[x] >> ANGLETOFINESHIFT]) * RADFOG_MULT;
+
+  const int index = ((int64_t) scale * (160 << FRACBITS) / lightfocallength) >> LIGHTSCALESHIFT;
+
+  return BETWEEN(0, MAXLIGHTSCALE - 1, index);
+}
+
+int (*R_GetLightIndex)(fixed_t scale, int x) = R_GetLightIndexVanilla;
+
+int light_distance_shift_bits;
+
+uint16_t ** planedistlight = NULL,
+          *  spandistlight = NULL;
+
+boolean do_radial_fog = false;
+
+static boolean init_radfog = false;
+
+boolean R_InitDistLightTablesPending(void)
+{
+  return init_radfog;
+}
+
+void R_DeferredInitDistLightTables(void)
+{
+  init_radfog = true;
+}
+
+void R_InitDistLightTables(void)
+{
+  static int max_width = 0, max_light_distance = 0;
+
+  const int old_width = max_width;
+
+  if (planedistlight && planedistlight[0] && old_width < video.width)
+  {
+    Z_Free(planedistlight[0]);
+
+    planedistlight[0] = NULL;
+  }
+
+  do_radial_fog = STRICTMODE(radial_fog && diminishing_lighting);
+
+  if (!do_radial_fog)
+  {
+    R_GetLightIndex = R_GetLightIndexVanilla;
+    return;
+  }
+
+  R_GetLightIndex = R_GetLightIndexRadFog;
+
+  light_distance_shift_bits = 18 - radial_plane_fog_fidelity;
+  max_light_distance = 1 << (27 - light_distance_shift_bits);
+
+  if (!planedistlight)
+  { planedistlight = Z_Malloc(sizeof(*planedistlight) * max_light_distance, PU_STATIC, 0); }
+
+  max_width = MAX(max_width, video.width);
+
+  if (old_width < max_width)
+  {
+    uint16_t *const all_spandistlight = Z_Malloc(
+      sizeof(**planedistlight) * max_light_distance * max_width, PU_STATIC, 0
+    );
+
+    for (int i = 0;  i < max_light_distance;  i++)
+    { planedistlight[i] = all_spandistlight + (max_width * i); }
+  }
+
+  const int width = viewwidth - 1;
+
+  const int shift_bits = light_distance_shift_bits - LIGHTZSHIFT,
+            maxlightz = MAXLIGHTZ-1;
+
+  for (int i = 0;  i < max_light_distance;  i++)
+  {
+    // spandistlight
+    uint16_t *sdll = planedistlight[i],
+             *sdlr = sdll + width;
+
+    const angle_t *xtva = xtoviewangle;
+
+    const fixed_t base_distance = (i << shift_bits) * (1.0 / RADFOG_MULT);
+
+    for (; sdll <= sdlr;  sdll++, sdlr--, xtva++)
+    {
+      const fixed_t distance = base_distance * floatsecant[*xtva >> ANGLETOFINESHIFT];
+
+      *sdll = *sdlr = MIN(maxlightz, distance);
+    }
+  }
+
+  init_radfog = false;
+}
 
 // FOV effects ---------------------------------------------------------------
 
@@ -205,8 +440,8 @@ typedef struct fovfx_s {
   float old, current, target;
 } fovfx_t;
 
-static fovfx_t fovfx[NUMFOVFX]; // FOV effects (recoil, teleport)
-static int     zoomed = 0;      // Current zoom state
+static fovfx_t fovfx[NUMFOVFX] = {0}; // FOV effects (recoil, teleport)
+static int     zoomed = 0; // ---------- Current zoom state
 
 void R_ClearFOVFX(void)
 {
@@ -227,16 +462,21 @@ void R_SetFOVFX(const int fx)
 {
   if (strictmode) { return; }
 
-  switch (fx) {
+  switch (fx)
+  {
     case FOVFX_ZOOM:
       // Handled by `R_Get/SetZoom()`
       break;
 
     case FOVFX_TELEPORT:
+    {
       if (!teleporter_zoom) { break; }
+
       R_SetZoom(ZOOM_RESET);
       fovfx[FOVFX_TELEPORT].target = 50;
+
       break;
+    }
   }
 }
 
@@ -259,6 +499,9 @@ void R_SetZoom(const int state)
   }
   else { zoomed = ZOOM_OFF; }
 }
+
+static void R_InitTextureMapping(void);
+static void R_SetupFreelook(void);
 
 static void ProcessFOVEffects(void)
 {
@@ -384,8 +627,24 @@ static void ProcessFOVEffects(void)
   if (r_fov != targetfov)
   {
     r_fov = targetfov;
-    R_ExecuteSetViewSize();
-    R_FillBackScreen();
+
+    // Run only a few parts of `R_ExecuteSetViewSize()`
+
+    R_InitTextureMapping();
+    R_SetupFreelook();
+
+    if (r_fov == FOV_DEFAULT)
+    {
+      skyiscale = FixedDiv(SCREENWIDTH, viewwidth_nonwide);
+    }
+    else
+    {
+      skyiscale = tan(r_fov * M_PI / 360.0) * SCREENWIDTH / viewwidth_nonwide * FRACUNIT;
+    }
+
+    skyiscalediff = (custom_fov == FOV_DEFAULT)
+                  ? FRACUNIT
+                  : tan(custom_fov * M_PI / 360.0) * FRACUNIT;
   }
 }
 
@@ -780,7 +1039,7 @@ angle_t R_PointToAngleCrispy(fixed_t x, fixed_t y)
 
 // [crispy] in widescreen mode, make sure the same number of horizontal
 // pixels shows the same part of the game scene as in regular rendering mode
-static int scaledviewwidth_nonwide, viewwidth_nonwide;
+static int scaledviewwidth_nonwide; // [Nugget] Moved `viewwidth_nonwide` above
 static fixed_t centerxfrac_nonwide;
 
 //
@@ -897,6 +1156,9 @@ static void R_InitTextureMapping(void)
 
   vx_clipangle = clipangle - ((fov << ANGLETOFINESHIFT) - ANG90);
   CalcMaxProjectSlope(fov);
+
+  // [Nugget] Radial fog
+  R_DeferredInitDistLightTables();
 }
 
 //
@@ -907,10 +1169,10 @@ static void R_InitTextureMapping(void)
 
 #define DISTMAP 2
 
-boolean smoothlight;
-
 void R_InitLightTables (void)
 {
+  init_light_tables = false; // [Nugget] Lighting modes
+
   int i, cm;
 
   if (c_scalelight)
@@ -942,26 +1204,39 @@ void R_InitLightTables (void)
     Z_Free(c_zlight);
   }
 
-  if (smoothlight)
+  // [Nugget] Lighting modes
+  if (lighting_mode >= LIGHTINGMODE_INTERPOLATED) // True color
   {
-      LIGHTLEVELS = 32;
+    num_colormap_rows = 256;
+
+    LIGHTSEGSHIFT = 0;
+    LIGHTSCALESHIFT = 9;
+    LIGHTZSHIFT = 16;
+  }
+  else {
+    num_colormap_rows = NUMCOLORMAPS;
+
+    LIGHTSCALESHIFT = 12;
+
+    if (lighting_mode >= LIGHTINGMODE_SMOOTH)
+    {
       LIGHTSEGSHIFT = 3;
-      LIGHTBRIGHT = 2;
-      MAXLIGHTSCALE = 48;
-      LIGHTSCALESHIFT = 12;
-      MAXLIGHTZ = 1024;
       LIGHTZSHIFT = 17;
-  }
-  else
-  {
-      LIGHTLEVELS = 16;
+    }
+    else {
       LIGHTSEGSHIFT = 4;
-      LIGHTBRIGHT = 1;
-      MAXLIGHTSCALE = 48;
-      LIGHTSCALESHIFT = 12;
-      MAXLIGHTZ = 128;
       LIGHTZSHIFT = 20;
+    }
   }
+
+  // [Nugget] Radial fog
+  if (STRICTMODE(radial_fog))
+  { LIGHTZSHIFT = MIN(LIGHTZSHIFT, 18 - radial_plane_fog_fidelity); }
+
+  LIGHTLEVELS = 1 << (8 - LIGHTSEGSHIFT);
+  LIGHTBRIGHT = LIGHTLEVELS / 16;
+  MAXLIGHTSCALE = 3 << (16 - LIGHTSCALESHIFT);
+  MAXLIGHTZ = 1 << (27 - LIGHTZSHIFT);
 
   scalelightfixed = Z_Malloc(MAXLIGHTSCALE * sizeof(*scalelightfixed), PU_STATIC, 0);
 
@@ -979,7 +1254,7 @@ void R_InitLightTables (void)
   //  for each level / distance combination.
   for (i=0; i< LIGHTLEVELS; i++)
     {
-      int j, startmap = ((LIGHTLEVELS-LIGHTBRIGHT-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
+      int j, startmap = ((LIGHTLEVELS-LIGHTBRIGHT-i)*2)*num_colormap_rows/LIGHTLEVELS;
 
       for (cm = 0; cm < numcolormaps; ++cm)
       {
@@ -995,31 +1270,25 @@ void R_InitLightTables (void)
           if (level < 0)
             level = 0;
           else
-            if (level >= NUMCOLORMAPS)
-              level = NUMCOLORMAPS-1;
+            if (level >= num_colormap_rows)
+              level = num_colormap_rows-1;
 
           // killough 3/20/98: Initialize multiple colormaps
           level *= 256;
           for (t=0; t<numcolormaps; t++)         // killough 4/4/98
-            c_zlight[t][i][j] = colormaps[t] + level;
+            c_zlight[t][i][j] = level;
         }
     }
-}
 
-boolean setsmoothlight;
-
-void R_SmoothLight(void)
-{
-  setsmoothlight = false;
-  // [crispy] re-calculate the zlight[][] array
-  R_InitLightTables();
-  // [crispy] re-calculate the scalelight[][] array
-  // R_ExecuteSetViewSize();
-  // [crispy] re-calculate fake contrast
+  // [Nugget]: [crispy] re-calculate fake contrast
   P_SegLengths(true);
+
+  setsizeneeded = true;
+  R_DeferredInitDistLightTables(); // [Nugget] Radial fog
 }
 
-int R_GetLightIndex(fixed_t scale)
+// [Nugget] Static, added X parameter
+static int R_GetLightIndexVanilla(const fixed_t scale, const int x)
 {
   const int index = ((int64_t)scale * (160 << FRACBITS) / lightfocallength) >> LIGHTSCALESHIFT;
   return BETWEEN(0, MAXLIGHTSCALE - 1, index);
@@ -1090,10 +1359,6 @@ void R_ExecuteSetViewSize (void)
   vrect_t view;
 
   setsizeneeded = false;
-
-  // [Nugget] Alt. intermission background
-  if (WI_AltInterpicOn() && gamestate == GS_INTERMISSION)
-  { setblocks = 11; }
 
   if (setblocks == 11)
     {
@@ -1176,13 +1441,9 @@ void R_ExecuteSetViewSize (void)
 
   // [Nugget] FOV-based sky stretching;
   // we intentionally use `custom_fov` to disregard any FOV effects
-  if (custom_fov == FOV_DEFAULT)
-  {
-    skyiscalediff = FRACUNIT;
-  }
-  else {
-    skyiscalediff = tan(custom_fov * M_PI / 360.0) * FRACUNIT;
-  }
+  skyiscalediff = (custom_fov == FOV_DEFAULT)
+                ? FRACUNIT
+                : tan(custom_fov * M_PI / 360.0) * FRACUNIT;
 
   for (i=0 ; i<viewwidth ; i++)
     {
@@ -1196,7 +1457,7 @@ void R_ExecuteSetViewSize (void)
   //  for each level / scale combination.
   for (i=0; i<LIGHTLEVELS; i++)
     {
-      int j, startmap = ((LIGHTLEVELS-LIGHTBRIGHT-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
+      int j, startmap = ((LIGHTLEVELS-LIGHTBRIGHT-i)*2)*num_colormap_rows/LIGHTLEVELS;
 
       for (j=0 ; j<MAXLIGHTSCALE ; j++)
         {                                       // killough 11/98:
@@ -1205,14 +1466,14 @@ void R_ExecuteSetViewSize (void)
           if (level < 0)
             level = 0;
 
-          if (level >= NUMCOLORMAPS)
-            level = NUMCOLORMAPS-1;
+          if (level >= num_colormap_rows)
+            level = num_colormap_rows-1;
 
           // killough 3/20/98: initialize multiple colormaps
           level *= 256;
 
           for (t=0; t<numcolormaps; t++)     // killough 4/4/98
-            c_scalelight[t][i][j] = colormaps[t] + level;
+            c_scalelight[t][i][j] = level;
         }
     }
 
@@ -1227,7 +1488,20 @@ void R_ExecuteSetViewSize (void)
 
 void R_Init (void)
 {
-  r_fov = custom_fov; // [Nugget]
+  // [Nugget] /---------------------------------------------------------------
+
+  for (int i = 0;  i < FINEANGLES;  i++)
+  {
+    floatsine[i] = (float) finesine[i] / FRACUNIT;
+    floatcosine[i] = (float) finecosine[i] / FRACUNIT;
+
+    finesecant[i] = FixedDiv(FRACUNIT, finecosine[i]);
+    floatsecant[i] = (float) FRACUNIT / finecosine[i];
+  }
+
+  r_fov = custom_fov;
+
+  // [Nugget] ---------------------------------------------------------------/
 
   R_InitData();
   R_SetViewSize(screenblocks);
@@ -1240,7 +1514,7 @@ void R_Init (void)
   // [FG] spectre drawing mode
   R_SetFuzzColumnMode();
 
-  colfunc = R_DrawColumn;
+  // [Nugget] `colfunc` initialized in this function
   R_InitDrawFunctions();
 }
 
@@ -1479,7 +1753,8 @@ void R_SetupFrame (player_t *player)
   {
     static int oldtic = -1;
 
-    if (oldtic != gametic) {
+    if (oldtic != gametic)
+    {
       old_interangle = viewangle = target_interangle;
       target_interangle += ANG1;
     }
@@ -1660,7 +1935,7 @@ void R_SetupFrame (player_t *player)
   if (!(strictmode || a11y_weapon_flash))
     extralight = 0;
   else
-    extralight = player->extralight;
+    extralight = player->extralight * LIGHTBRIGHT;
 
   extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness);
 
@@ -1680,22 +1955,57 @@ void R_SetupFrame (player_t *player)
   else
     cm = 0;
 
-  fullcolormap = colormaps[cm];
+  V_SetCurrentColormap(cm);
+
   zlight = c_zlight[cm];
   scalelight = c_scalelight[cm];
 
-  if (player->fixedcolormap)
-    {
-      fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
-        + player->fixedcolormap*256*sizeof(lighttable_t);
+  fixedcolormapoffset = 0;
 
-      walllights = scalelightfixed;
+  if (truecolor_rendering)
+  {
+    if (player->fixedcolormap)
+      {
+        // Only the first 32 original rows are expanded and should be shifted
+        const int cmaprow = (MIN(32, player->fixedcolormap) << COLORMAP_ROW_SHIFT_BITS)
+                          + MAX(0, player->fixedcolormap - 32);
 
-      for (i=0 ; i<MAXLIGHTSCALE ; i++)
-        scalelightfixed[i] = fixedcolormap;
-    }
+        fixedcolormapoffset = cmaprow * 256;
+
+        fixedcolormap32 = fullcolormap32
+          + fixedcolormapoffset;
+
+        walllights = scalelightfixed;
+
+        for (i=0 ; i<MAXLIGHTSCALE ; i++)
+          scalelightfixed[i] = fixedcolormapoffset;
+
+        // [Nugget] Set `dc_colormap` here
+        dc_colormap32[0] = dc_colormap32[1] = fixedcolormap32;
+      }
+    else
+      fixedcolormap32 = NULL;
+  }
   else
-    fixedcolormap = 0;
+  {
+    if (player->fixedcolormap)
+      {
+        fixedcolormapoffset = player->fixedcolormap * 256;
+
+        fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
+          + fixedcolormapoffset;
+
+        walllights = scalelightfixed;
+
+        for (i=0 ; i<MAXLIGHTSCALE ; i++)
+          scalelightfixed[i] = fixedcolormapoffset;
+
+        // [Nugget] Set `dc_colormap` here
+        dc_colormap[0] = dc_colormap[1] = fixedcolormap;
+      }
+    else
+      fixedcolormap = 0;
+  }
 
   validcount++;
 }
@@ -1719,32 +2029,9 @@ int autodetect_hom = 0;       // killough 2/7/98: HOM autodetection flag
 
 static boolean no_killough_face; // [Nugget]
 
-//
-// R_RenderView
-//
-void R_RenderPlayerView (player_t* player)
-{
-  R_ClearStats();
+static void (*DrawHOMDetector)(void) = NULL;
 
-  ProcessFOVEffects(); // [Nugget]
-
-  R_SetupFrame (player);
-
-  // Clear buffers.
-  R_ClearClipSegs ();
-  R_ClearDrawSegs ();
-  R_ClearPlanes ();
-  R_ClearSprites ();
-  VX_ClearVoxels ();
-
-  if (autodetect_hom)
-    { // killough 2/10/98: add flashing red HOM indicators
-      pixel_t c[47*47];
-      int i , color = !flashing_hom || (gametic % 20) < 9 ? 0xb0 : 0;
-      V_FillRect(scaledviewx, scaledviewy, scaledviewwidth, scaledviewheight, color);
-      for (i=0;i<47*47;i++)
-        {
-          char t =
+static const char *const killough =
 "/////////////////////////////////////////////////////////////////////////////"
 "/////////////////////////////////////////////////////////////////////////////"
 "///////jkkkkklk////////////////////////////////////hkllklklkklkj/////////////"
@@ -1798,13 +2085,69 @@ void R_RenderPlayerView (player_t* player)
 "//////////////////////////////c\3f\206\203\201\200\200\200\200\200\201\203bdc"
 "////////////////////////////////g\3\211\206\202\\\201\200\201\202\203dde/////"
 "/////////////////////////////\234\3db\203\203\203\203adec////////////////////"
-"/////////////////hffed\211de////////////////////"[i];
-          c[i] = t=='/' ? color : t;
-        }
-      if (gametic-lastshottic < TICRATE*2 && gametic-lastshottic > TICRATE/8
-          && !no_killough_face) // [Nugget]
-        V_DrawBlock(scaledviewx +  scaledviewwidth/2 - 24,
-                    scaledviewy + scaledviewheight/2 - 24, 47, 47, c);
+"/////////////////hffed\211de////////////////////";
+
+static void DrawHOMDetector8(void)
+{
+  pixel_t c[47*47];
+  int i , color = !flashing_hom || (gametic % 20) < 9 ? 0xb0 : 0;
+
+  V_FillRect(scaledviewx, scaledviewy, scaledviewwidth, scaledviewheight, color);
+
+  if (no_killough_face) { return; } // [Nugget]
+
+  for (i=0;i<47*47;i++)
+    {
+      char t = killough[i];
+      c[i] = t=='/' ? color : t;
+    }
+
+  if (gametic-lastshottic < TICRATE*2 && gametic-lastshottic > TICRATE/8) 
+    V_DrawBlock(scaledviewx +  scaledviewwidth/2 - 24,
+                scaledviewy + scaledviewheight/2 - 24, 47, 47, c);
+}
+
+static void DrawHOMDetector32(void)
+{
+  pixel32_t c[47*47];
+  int i , color = !flashing_hom || (gametic % 20) < 9 ? 0xb0 : 0;
+
+  V_FillRect(scaledviewx, scaledviewy, scaledviewwidth, scaledviewheight, color);
+
+  if (no_killough_face) { return; } // [Nugget]
+
+  for (i=0;i<47*47;i++)
+    {
+      char t = killough[i];
+      c[i] = V_IndexToRGB(t=='/' ? color : t);
+    }
+
+  if (gametic-lastshottic < TICRATE*2 && gametic-lastshottic > TICRATE/8)
+    V_DrawBlock32(scaledviewx +  scaledviewwidth/2 - 24,
+                  scaledviewy + scaledviewheight/2 - 24, 47, 47, c);
+}
+
+//
+// R_RenderView
+//
+void R_RenderPlayerView (player_t* player)
+{
+  R_ClearStats();
+
+  ProcessFOVEffects(); // [Nugget]
+
+  R_SetupFrame (player);
+
+  // Clear buffers.
+  R_ClearClipSegs ();
+  R_ClearDrawSegs ();
+  R_ClearPlanes ();
+  R_ClearSprites ();
+  VX_ClearVoxels ();
+
+  if (autodetect_hom)
+    { // killough 2/10/98: add flashing red HOM indicators
+      DrawHOMDetector();
       R_DrawViewBorder();
     }
 
@@ -1822,7 +2165,10 @@ void R_RenderPlayerView (player_t* player)
 
   // [FG] update automap while playing
   if (automap_on)
+  {
+    V_SetCurrentColormap(0);
     return;
+  }
 
   // Check for new console commands.
   NetUpdate ();
@@ -1840,52 +2186,14 @@ void R_RenderPlayerView (player_t* player)
   if (!strictmode && current_video_height == SCREENHEIGHT
       && (lowres_pixel_width > 1 || lowres_pixel_height > 1))
   {
-    int y, x, y2;
-
-    const int pw = lowres_pixel_width,
-              ph = lowres_pixel_height;
-
-    int first_y = (viewheight % ph) / 2,
-        first_x;
-
-    byte *const dest = I_VideoBuffer;
-
-    for (y = viewwindowy;  y < (viewwindowy + viewheight);)
+    if (truecolor_rendering)
     {
-      first_x = (viewwidth % pw) / 2;
-
-      for (x = viewwindowx;  x < (viewwindowx + viewwidth);)
-      {
-        for (y2 = 0;  y2 < (first_y ? first_y : MIN(ph, (viewwindowy + viewheight) - y));  y2++)
-        {
-          memset(
-            dest + ((y + y2) * video.pitch) + x,
-            dest[
-              ( (first_y ? viewwindowy + first_y
-                         : y + ((y < viewwindowy + viewheight/2) ? ph-1 : 0)) * video.pitch)
-              + (first_x ? viewwindowx + first_x
-                         : x + ((x < viewwindowx + viewwidth/2)  ? pw-1 : 0))
-            ],
-            first_x ? first_x : MIN(pw, (viewwindowx + viewwidth) - x)
-          );
-        }
-
-        if (first_x)
-        {
-          x += first_x;
-          first_x = 0;
-        }
-        else { x += pw; }
-      }
-
-      if (first_y)
-      {
-        y += first_y;
-        first_y = 0;
-      }
-      else { y += ph; }
+      ApplyBlockPostProcess32();
     }
+    else { ApplyBlockPostProcess(); }
   }
+
+  V_SetCurrentColormap(0);
 
   // Check for new console commands.
   NetUpdate ();
@@ -1896,6 +2204,20 @@ void R_InitAnyRes(void)
   R_InitSpritesRes();
   R_InitBufferRes();
   R_InitPlanesRes();
+
+  R_DeferredInitDistLightTables(); // [Nugget] Radial fog
+}
+
+void R_InitColorFunctions(void)
+{
+  if (truecolor_rendering)
+  {
+    DrawHOMDetector = DrawHOMDetector32;
+  }
+  else
+  {
+    DrawHOMDetector = DrawHOMDetector8;
+  }
 }
 
 void R_BindRenderVariables(void)
@@ -1914,7 +2236,6 @@ void R_BindRenderVariables(void)
 
   BIND_BOOL_GENERAL(linearsky, false, "Linear horizontal scrolling for skies");
   BIND_BOOL_GENERAL(r_swirl, false, "Swirling animated flats");
-  BIND_BOOL_GENERAL(smoothlight, false, "Smooth diminishing lighting");
 
   // [Nugget] /---------------------------------------------------------------
 
@@ -1939,6 +2260,15 @@ void R_BindRenderVariables(void)
   M_BindNum("thing_lighting_mode", &thing_lighting_mode, NULL,
             THINGLIGHTING_ORIGIN, THINGLIGHTING_ORIGIN, NUM_THINGLIGHTING-1, ss_display, wad_yes,
             "Thing lighting mode (0 = Origin (vanilla); 1 = Hitbox; 2 = Per-column)");
+
+  M_BindBool("radial_fog", &radial_fog, NULL,
+             false, ss_display, wad_yes,
+             "Radial fog (diminishing lighting)");
+
+  // (CFG-only)
+  M_BindNum("radial_plane_fog_fidelity", &radial_plane_fog_fidelity, NULL,
+            2, 0, 4, ss_none, wad_yes,
+            "Fidelity of radial fog for planes (higher values cause more stutter)");
 
   // [Nugget] ---------------------------------------------------------------/
 
@@ -2075,10 +2405,6 @@ void R_BindRenderVariables(void)
   BIND_BOOL_GENERAL(a11y_weapon_flash,    true, "Allow weapon light flashes");
   BIND_BOOL_GENERAL(a11y_weapon_pspr,     true, "Allow rendering of weapon muzzleflash");
   BIND_BOOL_GENERAL(a11y_invul_colormap,  true, "Allow Invulnerability colormap");
-
-  // [Cherry] /----------------------------------------------------------------
-
-  BIND_BOOL_GENERAL(less_blinding_tints, false, "Less blinding tints");
 }
 
 //----------------------------------------------------------------------------

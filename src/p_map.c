@@ -2236,7 +2236,7 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
 
   // [Nugget] ================================================================
 
-  if (no_hit)
+  if (casual_play && no_hit)
   {
     // No lines nor things were hit; spawn a puff if we hit a plane
 
@@ -2263,7 +2263,7 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
   }
 
   // Hitscan trails
-  if (((show_hitscan_trails == 1 || G_GetSlowMotion()) && attackrange >= 128*FRACUNIT)
+  if (((show_hitscan_trails == 1 || G_GetSlowMotion()) && attackrange > 192*FRACUNIT)
       || show_hitscan_trails == 2)
   {
     P_SpawnHitscanTrail(t1->x, t1->y, shootz, angle << ANGLETOFINESHIFT,
@@ -2779,6 +2779,9 @@ boolean PIT_ChangeSector(mobj_t *thing)
 
   if (thing->health <= 0)
     {
+      // [Nugget] Don't do bloodier crushing if the thing was already crushed
+      const boolean not_already_crushed = thing->height || thing->radius;
+
       P_SetMobjState(thing, S_GIBS);
       thing->flags &= ~MF_SOLID;
       thing->height = thing->radius = 0;
@@ -2795,7 +2798,7 @@ boolean PIT_ChangeSector(mobj_t *thing)
       { thing->intflags |= MIF_DONTRENDER; }
 
       // Bloodier crushing
-      if (CASUALPLAY(bloodier_gibbing))
+      if (CASUALPLAY(bloodier_gibbing) && not_already_crushed)
       {
         if (!(thing->flags & MF_NOBLOOD)) { S_StartSound(thing, sfx_slop); }
 

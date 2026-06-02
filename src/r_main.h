@@ -30,6 +30,7 @@ struct seg_s;
 
 // [Nugget]
 struct mobj_s;
+struct sector_s;
 
 //
 // POV related.
@@ -77,16 +78,14 @@ extern int MAXLIGHTZ;
 extern int LIGHTZSHIFT;
 
 // killough 3/20/98: Allow colormaps to be dynamic (e.g. underwater)
-extern lighttable_t **(*scalelight);
-extern lighttable_t **(*zlight);
+extern cmapoffset_t *(*scalelight);
+extern cmapoffset_t *(*zlight);
 extern int numcolormaps;    // killough 4/4/98: dynamic number of maps
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
-extern boolean setsmoothlight;
-void R_SmoothLight(void);
-
 extern int          extralight;
 extern lighttable_t *fixedcolormap;
+extern lighttable32_t *fixedcolormap32;
 
 // Number of diminishing brightness levels.
 // There a 0-31, i.e. 32 LUT in the COLORMAP lump.
@@ -152,12 +151,14 @@ extern boolean vertical_lockon;
 extern spriteshadows_t sprite_shadows;
 extern int sprite_shadows_tran_pct;
 extern thinglighting_t thing_lighting_mode;
+extern boolean radial_fog;
 extern boolean flip_levels;
 extern boolean nightvision_visor;
 extern fakecontrast_t fake_contrast;
 extern boolean diminishing_lighting;
 extern boolean a11y_weapon_pspr;
 extern boolean a11y_invul_colormap;
+extern int pspr_invis_translucent;
 extern int pspr_translucency_pct;
 extern int zoom_fov;
 extern boolean comp_powerrunout;
@@ -169,9 +170,44 @@ extern boolean have_crouch_sprites;
 fixed_t R_GetNughudViewPitch(void);
 boolean R_SpriteShadowsOn(void);
 int R_GetLightLevelInPoint(fixed_t x, fixed_t y, boolean force_mbf);
+int R_GetLightLevelInSector(struct sector_s *sector, const boolean force_mbf);
+
+#define PSPR_INVIS_TRANSLUCENCY 50
 
 #define POWER_RUNOUT(power) \
   ((STRICTMODE(comp_powerrunout) ? (power) >= 4*32 : (power) > 4*32) || (power) & 8)
+
+// True color
+void R_InitColorFunctions(void);
+
+// Lighting modes ------------------------------------------------------------
+
+typedef enum lightingmode_e {
+  LIGHTINGMODE_VANILLA,
+  LIGHTINGMODE_SMOOTH,
+  LIGHTINGMODE_INTERPOLATED,
+  LIGHTINGMODE_TRUECOLOR,
+
+  NUM_LIGHTINGMODES
+} lightingmode_t;
+
+extern lightingmode_t lighting_mode;
+
+boolean R_InitLightTablesPending(void);
+void R_DeferredInitLightTables(void);
+
+// Radial fog ----------------------------------------------------------------
+
+extern int light_distance_shift_bits;
+
+extern cmapoffset_t *planezlight;
+extern uint16_t **planedistlight, *spandistlight;
+
+extern boolean do_radial_fog;
+
+boolean R_InitDistLightTablesPending(void);
+void    R_DeferredInitDistLightTables(void);
+void    R_InitDistLightTables(void);
 
 // FOV effects ---------------------------------------------------------------
 
@@ -179,7 +215,7 @@ enum {
   FOVFX_ZOOM,
   FOVFX_SLOWMO,
   FOVFX_TELEPORT,
-  
+
   NUMFOVFX
 };
 
@@ -248,7 +284,9 @@ extern void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 extern int rocket_trails_tran_pct;
 
 void R_InitLightTables(void);                // killough 8/9/98
-int R_GetLightIndex(fixed_t scale);
+
+// [Nugget] Made function pointer, added X parameter
+extern int (*R_GetLightIndex)(fixed_t scale, int x);
 
 extern boolean setsizeneeded;
 void R_ExecuteSetViewSize(void);

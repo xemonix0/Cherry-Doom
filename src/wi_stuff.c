@@ -51,6 +51,7 @@
 // [Nugget] CVARs
 altinterpic_t alt_interpic;
 boolean inter_ratio_stats;
+boolean inter_entering_delay;
 
 #define LARGENUMBER 1994
 
@@ -433,6 +434,8 @@ boolean WI_AltInterpicOn(void)
 void WI_DisableAltInterpic(void)
 {
   old_alt_interpic_on = alt_interpic_on = false;
+
+  R_SetViewSize(screenblocks);
 }
 
 // [Nugget] -----------------------------------------------------------------/
@@ -1335,11 +1338,13 @@ static void WI_End(void)
 // Args:    none
 // Returns: void
 //
-static void WI_initNoState(void)
+static void WI_initNoState(const boolean long_wait) // [Nugget] Parameter
 {
   state = NoState;
   acceleratestage = 0;
-  cnt = 10;
+
+  // [Nugget] Optional longer delay
+  cnt = (casual_play && inter_entering_delay && long_wait) ? TICRATE*3 : 10;
 }
 
 
@@ -1353,7 +1358,8 @@ static void WI_updateNoState(void)
 {
   WI_updateAnimatedBack();
 
-  if (!--cnt)
+  // [Nugget] Allow acceleration if the longer delay is enabled
+  if (!--cnt || (CASUALPLAY(inter_entering_delay) && acceleratestage))
     {
       WI_End();
       G_WorldDone();
@@ -1413,7 +1419,7 @@ static void WI_updateShowNextLoc(void)
   WI_updateAnimatedBack();
 
   if (!--cnt || acceleratestage)
-    WI_initNoState();
+    WI_initNoState(false);
   else
     snl_pointeron = (cnt & 31) < 20;
 }
@@ -1655,7 +1661,7 @@ static void WI_updateDeathmatchStats(void)
             if (NextLocAnimation())
               WI_initShowNextLoc();
             if ( gamemode == commercial)
-              WI_initNoState();
+              WI_initNoState(true);
             else
               WI_initShowNextLoc();
           }
@@ -1975,7 +1981,7 @@ static void WI_updateNetgameStats(void)
                   if (NextLocAnimation())
                     WI_initShowNextLoc();
                   if ( gamemode == commercial )
-                    WI_initNoState();
+                    WI_initNoState(true);
                   else
                     WI_initShowNextLoc();
                 }
@@ -2238,7 +2244,7 @@ static void WI_updateStats(void)
                   if (NextLocAnimation())
                     WI_initShowNextLoc();
                   else if (gamemode == commercial)
-                    WI_initNoState();
+                    WI_initNoState(true);
                   else
                     WI_initShowNextLoc();
                 }
@@ -2270,7 +2276,8 @@ static int NumWidth(int n)
 
   int digits;
 
-  if (n) {
+  if (n)
+  {
     digits = 0;
 
     do { digits++; } while (n /= 10);
@@ -2520,12 +2527,8 @@ void WI_Ticker(void)
   {
     old_alt_interpic_on = alt_interpic_on;
 
-    if (!alt_interpic_on)
-    { R_SetViewSize(screenblocks); }
-
-    R_ExecuteSetViewSize();
+    R_SetViewSize(alt_interpic_on ? 11 : screenblocks);
   }
-
 }
 
 // ====================================================================
