@@ -11,6 +11,7 @@
 - Toggle to **disable minimap double-press**
 - Toggle to **use palette colors exactly when gamma correction is disabled**
 - Developer cheats to toggle netgame and deathmatch states
+- Version cheat
 
 ## Changes
 

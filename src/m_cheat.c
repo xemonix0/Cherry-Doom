@@ -60,6 +60,7 @@
 #include "f_finale.h"
 #include "m_random.h"
 #include "r_main.h"
+#include "version.h"
 
 #define plyr (players+consoleplayer)     /* the console player */
 
@@ -185,6 +186,8 @@ static void cheat_trails(void);      // Show hitscan trails
 static void cheat_mdk(void);         // Inspired by ZDoom's console command
 static void cheat_saitama(void);     // MDK Fist
 static void cheat_boomcan(void);     // Explosive hitscan
+
+static void cheat_version(void);
 
 static void cheat_fauxdemo(void); // Emulates demo/net-play state, for debugging
 static void cheat_netgame(void);
@@ -467,6 +470,8 @@ struct cheat_s cheat[] = {
   { "mdk",        NULL, not_net | not_demo, {.v = cheat_mdk}, .repeatable = true },
   { "saitama",    NULL, not_net | not_demo, {.v = cheat_saitama} }, // --------------------------- MDK Fist
   { "boomcan",    NULL, not_net | not_demo, {.v = cheat_boomcan} }, // --------------------------- Explosive hitscan
+
+  { "version", NULL, always, {.v = cheat_version} },
 
   { "fauxdemo",   NULL, devmode_only|not_demo|not_net, {.v = cheat_fauxdemo} },
   { "netgame",    NULL, devmode_only|not_demo,         {.v = cheat_netgame}, .repeatable = true },
@@ -961,6 +966,11 @@ static void cheat_boomcan(void)
 {
   plyr->cheats ^= CF_BOOMCAN;
   displaymsg("Explosive Hitscan %s", (plyr->cheats & CF_BOOMCAN) ? "ON" : "OFF");
+}
+
+static void cheat_version(void)
+{
+  displaymsg("%s (built on %s)", PROJECT_STRING, version_date);
 }
 
 // Developer cheats ----------------------------------------------------------
