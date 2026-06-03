@@ -17,3 +17,6 @@ CMakePresets.json
 /.cache/
 CMakeFiles/
 src/CMakeFiles/
+
+# CLion
+/.idea/

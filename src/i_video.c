@@ -128,6 +128,94 @@ void I_DeferredInitPalettes(void)
   resetneeded = true;
 }
 
+// [Cherry] /- Less Blinding Tints --------------------------------------------
+
+static boolean less_blinding_tints;
+
+static float HueToRgb(const float p, const float q, float t)
+{
+    if (t < 0.0f) t += 1.0f;
+    else if (t > 1.0f) t -= 1.0f;
+    if (t < 1.0f/6.0f) return p + (q - p) * 6.0f * t;
+    if (t < 1.0f/2.0f) return q;
+    if (t < 2.0f/3.0f) return p + (q - p) * (2.0f/3.0f - t) * 6.0f;
+    return p;
+}
+
+static void HslToRgb(const float h, const float s, const float l, byte *rgb)
+{
+    if (s == 0.0f)
+    {
+        rgb[0] = rgb[1] = rgb[2] = roundf(l * 255.0f);
+        return;
+    }
+
+    const float q = l < 0.5f ? l * (1.0f + s) : l + s - l * s;
+    const float p = 2.0f * l - q;
+
+    const float r = HueToRgb(p, q, h + 1.0f/3.0f);
+    const float g = HueToRgb(p, q, h);
+    const float b = HueToRgb(p, q, h - 1.0f/3.0f);
+
+    rgb[0] = roundf(r * 255.0f);
+    rgb[1] = roundf(g * 255.0f);
+    rgb[2] = roundf(b * 255.0f);
+}
+
+static void RgbToHsl(float r, float g, float b, float *hsl)
+{
+    r /= 255.0f;
+    g /= 255.0f;
+    b /= 255.0f;
+
+    const float vmax = MAX(MAX(r, g), b);
+    const float vmin = MIN(MIN(r, g), b);
+    const float d = vmax - vmin;
+
+    hsl[2] = (vmax + vmin) / 2.0f;
+
+    if (d == 0.0f)
+    {
+        hsl[0] = hsl[1] = 0.0f;
+        return;
+    }
+
+    hsl[1] = hsl[2] > 0.5f ? d / (2.0f - vmax - vmin) : d / (vmax + vmin);
+
+    if (vmax == r) hsl[0] = (g - b) / d + (g < b ? 6.0f : 0.0f);
+    if (vmax == g) hsl[0] = (b - r) / d + 2.0f;
+    if (vmax == b) hsl[0] = (r - g) / d + 4.0f;
+    hsl[0] /= 6.0f;
+}
+
+static void GenerateTintedColors(const int i, const float base_l, const int k_num)
+{
+    #define R (i * 3)
+    #define G (i * 3 + 1)
+    #define B (i * 3 + 2)
+
+    for (int k = 1; k <= k_num; k++)
+    {
+        byte *tint = palettes[k];
+
+        float tint_hsl[3];
+        RgbToHsl(tint[R], tint[G], tint[B], tint_hsl);
+
+        byte new_tint[3];
+        HslToRgb(tint_hsl[0], tint_hsl[1], base_l, new_tint);
+
+        tint[R] = new_tint[0];
+        tint[G] = new_tint[1];
+        tint[B] = new_tint[2];
+    }
+
+    #undef R
+    #undef G
+    #undef B
+}
+
+// [Cherry] ------------------------------------------------------------------/
+
 static void InitPalettes(void)
 {
   init_palettes_pending = false;
@@ -214,6 +302,21 @@ static void InitPalettes(void)
   }
   else {
     memcpy(*palettes, playpal, sizeof(**palettes) * 768 * 14);
+  }
+
+  // [Cherry] Less Blinding Tints
+  if (less_blinding_tints)
+  {
+    for (int i = 0; i < 256; i++)
+    {
+      const byte *base = palettes[0];
+
+      float base_hsl[3];
+      RgbToHsl(base[i * 3], base[i * 3 + 1], base[i * 3 + 2], base_hsl);
+      const float capped_l = MIN(base_hsl[2], 0.9f);
+
+      GenerateTintedColors(i, capped_l, smooth_palette_tinting ? 127 : 13);
+    }
   }
 
   R_DeferredInitColormaps();
@@ -1306,11 +1409,13 @@ void I_SetPalette(byte palette_index) // [Nugget] Pass index
 {
     if (truecolor_rendering)
     {
-        static int old_palettes, old_red, old_green, old_blue, old_gamma, old_saturation, old_contrast;
+        static int old_palettes, old_red, old_green, old_blue, old_gamma, old_saturation, old_contrast,
+                   old_less_blinding; // [Cherry]
 
         if (old_palettes != num_palettes
             || old_red != red_intensity || old_green != green_intensity || old_blue != blue_intensity
-            || old_gamma != gamma2 || old_saturation != color_saturation || old_contrast != color_contrast)
+            || old_gamma != gamma2 || old_saturation != color_saturation || old_contrast != color_contrast
+            || old_less_blinding != less_blinding_tints) // [Cherry]
         {
             V_InitPalsColors();
 
@@ -1321,6 +1426,7 @@ void I_SetPalette(byte palette_index) // [Nugget] Pass index
             old_gamma = gamma2;
             old_saturation = color_saturation;
             old_contrast = color_contrast;
+            old_less_blinding = less_blinding_tints; // [Cherry]
         }
 
         V_SetPalColors(palette_index);
@@ -2398,6 +2504,11 @@ void I_BindVideoVariables(void)
     M_BindNum("color_contrast", &color_contrast, NULL,
               100, 10, 200, ss_display, wad_no,
               "Contrast percent of the screen's colors");
+
+    // [Cherry] ---------------------------------------------------------------
+    M_BindBool("less_blinding_tints", &less_blinding_tints, NULL,
+               false, ss_display, wad_no,
+               "Less blinding tints");
 }
 
 //----------------------------------------------------------------------------
