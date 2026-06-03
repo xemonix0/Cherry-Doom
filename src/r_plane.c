@@ -93,7 +93,7 @@ static int *spanstart = NULL;                // killough 2/8/98
 // texture mapping
 //
 
-static lighttable_t **planezlight;
+cmapoffset_t *planezlight; // [Nugget] Global
 static fixed_t planeheight;
 
 // killough 2/8/98: make variables static
@@ -136,7 +136,7 @@ void R_InitPlanesRes(void)
   maxopenings = video.width * video.height;
   openings = Z_Calloc(1, maxopenings * sizeof(*openings), PU_RENDERER, NULL);
 
-  xtoskyangle = linearsky ? linearskyangle : xtoviewangle;
+  R_InitPlanes();
 }
 
 void R_InitVisplanesRes(void)
@@ -166,10 +166,95 @@ void R_InitVisplanesRes(void)
 // BASIC PRIMITIVE
 //
 
+static void (*DrawPlane)(fixed_t distance) = NULL;
+
+static void DrawPlane8(fixed_t distance)
+{
+  unsigned index;
+
+  // [Nugget] Radial fog
+  void (*DrawSpan)(void) = R_DrawSpan;
+
+  if (!(ds_colormap[0] = ds_colormap[1] = fixedcolormap))
+    {
+      boolean do_plane_radial_fog = do_radial_fog; // [Nugget] Radial fog
+
+      index = distance >> LIGHTZSHIFT;
+      if (index >= MAXLIGHTZ )
+      {
+        index = MAXLIGHTZ-1;
+        do_plane_radial_fog = false;
+      }
+
+      // [Nugget]
+      if (STRICTMODE(!diminishing_lighting))
+      {
+        index = MAXLIGHTZ-1;
+        do_plane_radial_fog = false;
+      }
+
+      // [Nugget] Radial fog
+      if (do_plane_radial_fog)
+      {
+        DrawSpan = R_DrawSpanWithRadialFog;
+        spandistlight = planedistlight[distance >> light_distance_shift_bits];
+      }
+      else
+      {
+        ds_colormap[0] = V_ColormapRowByIndex(planezlight[index]);
+      }
+
+      ds_colormap[1] = fullcolormap;
+    }
+
+  DrawSpan();
+}
+
+static void DrawPlane32(fixed_t distance)
+{
+  unsigned index;
+
+  // [Nugget] Radial fog
+  void (*DrawSpan)(void) = R_DrawSpan;
+
+  if (!(ds_colormap32[0] = ds_colormap32[1] = fixedcolormap32))
+    {
+      boolean do_plane_radial_fog = do_radial_fog; // [Nugget] Radial fog
+
+      index = distance >> LIGHTZSHIFT;
+      if (index >= MAXLIGHTZ )
+      {
+        index = MAXLIGHTZ-1;
+        do_plane_radial_fog = false;
+      }
+
+      // [Nugget]
+      if (STRICTMODE(!diminishing_lighting))
+      {
+        index = MAXLIGHTZ-1;
+        do_plane_radial_fog = false;
+      }
+
+      // [Nugget] Radial fog
+      if (do_plane_radial_fog)
+      {
+        DrawSpan = R_DrawSpanWithRadialFog;
+        spandistlight = planedistlight[distance >> light_distance_shift_bits];
+      }
+      else
+      {
+        ds_colormap32[0] = V_ColormapRowByIndex32(planezlight[index]);
+      }
+
+      ds_colormap32[1] = fullcolormap32;
+    }
+
+  DrawSpan();
+}
+
 static void R_MapPlane(int y, int x1, int x2)
 {
   fixed_t distance;
-  unsigned index;
   int dx;
   fixed_t dy;
 
@@ -211,23 +296,11 @@ static void R_MapPlane(int y, int x1, int x2)
   ds_xfrac =  viewx + FixedMul(viewcos, distance) + (dx * ds_xstep) + xoffs;
   ds_yfrac = -viewy - FixedMul(viewsin, distance) + (dx * ds_ystep) + yoffs;
 
-  if (!(ds_colormap[0] = ds_colormap[1] = fixedcolormap))
-    {
-      index = distance >> LIGHTZSHIFT;
-      if (index >= MAXLIGHTZ )
-        index = MAXLIGHTZ-1;
-
-      if (STRICTMODE(!diminishing_lighting)) { index = MAXLIGHTZ-1; } // [Nugget]
-
-      ds_colormap[0] = planezlight[index];
-      ds_colormap[1] = fullcolormap;
-    }
-
   ds_y = y;
   ds_x1 = x1;
   ds_x2 = x2;
 
-  R_DrawSpan();
+  DrawPlane(distance);
 }
 
 //
@@ -411,9 +484,9 @@ static void DrawSkyFire(visplane_t *pl, fire_t *fire)
 
 static void DrawSkyTex(visplane_t *pl, skytex_t *skytex)
 {
-    int texture = R_TextureNumForName(skytex->name);
+    int texture = texturetranslation[skytex->texture];
 
-    dc_texturemid = skytex->mid * FRACUNIT;
+    dc_texturemid = skytex->mid;
     dc_texheight = textureheight[texture] >> FRACBITS;
     dc_iscale = FixedMul(skyiscale, skytex->scaley);
 
@@ -441,8 +514,9 @@ static void DrawSkyTex(visplane_t *pl, skytex_t *skytex)
 
         if (dc_yl != USHRT_MAX && dc_yl <= dc_yh)
         {
-            dc_source = R_GetColumnMod2(texture, (an + xtoskyangle[x])
-                                                     >> ANGLETOSKYSHIFT);
+            int col = (an + xtoskyangle[x]) >> ANGLETOSKYSHIFT;
+            col = FixedToInt(FixedMul(IntToFixed(col), skytex->scalex));
+            dc_source = R_GetColumn(texture, col);
             colfunc();
         }
     }
@@ -455,10 +529,21 @@ static void DrawSkyDef(visplane_t *pl)
     //
     // killough 7/19/98: fix hack to be more realistic:
 
-    if (STRICTMODE_COMP(comp_skymap)
-        || !(dc_colormap[0] = dc_colormap[1] = fixedcolormap))
+    if (truecolor_rendering)
     {
-        dc_colormap[0] = dc_colormap[1] = fullcolormap; // killough 3/20/98
+        if (STRICTMODE_COMP(comp_skymap)
+            || !(dc_colormap32[0] = dc_colormap32[1] = fixedcolormap32))
+        {
+            dc_colormap32[0] = dc_colormap32[1] = fullcolormap32;
+        }
+    }
+    else
+    {
+        if (STRICTMODE_COMP(comp_skymap)
+            || !(dc_colormap[0] = dc_colormap[1] = fixedcolormap))
+        {
+            dc_colormap[0] = dc_colormap[1] = fullcolormap; // killough 3/20/98
+        }
     }
 
     if (sky->type == SkyType_Fire)
@@ -532,7 +617,7 @@ static void do_draw_mbf_sky(visplane_t *pl)
     else // Normal Doom sky, only one allowed per level
     {
         dc_texturemid = skytexturemid; // Default y-offset
-        texture = skytexture;          // Default texture
+        texture = texturetranslation[skytexture]; // Default texture
         flip = 0;                      // Doom flips it
     }
 
@@ -541,10 +626,21 @@ static void do_draw_mbf_sky(visplane_t *pl)
     //
     // killough 7/19/98: fix hack to be more realistic:
 
-    if (STRICTMODE_COMP(comp_skymap)
-        || !(dc_colormap[0] = dc_colormap[1] = fixedcolormap))
+    if (truecolor_rendering)
     {
-        dc_colormap[0] = dc_colormap[1] = fullcolormap; // killough 3/20/98
+        if (STRICTMODE_COMP(comp_skymap)
+            || !(dc_colormap32[0] = dc_colormap32[1] = fixedcolormap32))
+        {
+            dc_colormap32[0] = dc_colormap32[1] = fullcolormap32;
+        }
+    }
+    else
+    {
+        if (STRICTMODE_COMP(comp_skymap)
+            || !(dc_colormap[0] = dc_colormap[1] = fixedcolormap))
+        {
+            dc_colormap[0] = dc_colormap[1] = fullcolormap; // killough 3/20/98
+        }
     }
 
     dc_texheight = textureheight[texture] >> FRACBITS; // killough
@@ -600,7 +696,7 @@ static void do_draw_mbf_sky(visplane_t *pl)
 
         if (dc_yl != USHRT_MAX && dc_yl <= dc_yh)
         {
-            dc_source = R_GetColumnMod2(texture, ((an + xtoskyangle[x]) ^ flip)
+            dc_source = R_GetColumn(texture, ((an + xtoskyangle[x]) ^ flip)
                                                      >> ANGLETOSKYSHIFT);
             colfunc();
         }
@@ -697,6 +793,18 @@ void R_DrawPlanes (void)
       do_draw_plane(pl);
       rendered_visplanes++;
     }
+}
+
+void R_InitPlanesColorFunctions(void)
+{
+  if (truecolor_rendering)
+  {
+    DrawPlane = DrawPlane32;
+  }
+  else
+  {
+    DrawPlane = DrawPlane8;
+  }
 }
 
 //----------------------------------------------------------------------------

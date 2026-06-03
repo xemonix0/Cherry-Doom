@@ -43,6 +43,8 @@ void M_StringConcatF(char **dest, const char *format, ...) PRINTF_ATTR(2, 0); //
 void M_StringPrintF(char **dest, const char *format, ...) PRINTF_ATTR(2, 0);  // [Cherry]
 char *M_StringReplace(const char *haystack, const char *needle,
                       const char *replacement);
+char *M_StringReplaceWord(const char *haystack, const char *needle,
+                          const char *replacement);
 
 char *M_StringJoinInternal(const char *s[], size_t n);
 #define M_StringJoin(...)                                      \

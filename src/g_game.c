@@ -117,7 +117,7 @@ boolean nugget_devmode;
 
 // ---------------------------------------------------------------------------
 
-boolean minimap_was_on = false; // Minimap: keep it when advancing through levels
+static boolean minimap_was_on = false; // Minimap: keep it when advancing through levels
 
 boolean ignore_pistolstart = false; // Custom Skill: ignore pistol-start setting
 
@@ -148,12 +148,12 @@ static void UpdateMouseModifiers(void)
 
 int autosave_interval;
 
-static boolean is_periodic_autosave = false;
+static boolean saving_periodic_autosave = false;
 static int autosave_countdown = 0;
 
 boolean G_SavingPeriodicAutoSave(void)
 {
-  return is_periodic_autosave;
+  return saving_periodic_autosave;
 }
 
 void G_SetAutoSaveCountdown(int value)
@@ -165,11 +165,12 @@ void G_SetAutoSaveCountdown(int value)
 
 int rewind_interval;
 static int rewind_depth;
-static int rewind_timeout;
+static int rewind_frame_timeout;
+static int rewind_multiframe_timeout;
 
 static boolean keyframe_rw = false;
 
-static boolean rewind_on = true;
+static boolean rewind_on = false;
 static int rewind_countdown = 0;
 
 typedef struct keyframe_s
@@ -182,6 +183,12 @@ typedef struct keyframe_s
 static keyframe_t *keyframe_list_head = NULL, *keyframe_list_tail = NULL;
 
 static int keyframe_index = -1;
+
+// Change menu item and CVAR description accordingly if this is changed
+#define LAST_KEYFRAME_TIMES_COUNT_MAX 4
+
+static int last_keyframe_times[LAST_KEYFRAME_TIMES_COUNT_MAX] = {0},
+           last_keyframe_times_count = 0;
 
 // Slow Motion ---------------------------------------------------------------
 
@@ -575,6 +582,14 @@ int    bodyqueslot, bodyquesize, default_bodyquesize; // killough 2/8/98, 10/98
 static weapontype_t LastWeapon(void)
 {
     const weapontype_t weapon = players[consoleplayer].lastweapon;
+
+    // [Nugget] Weapon-switch interruption
+    if (CASUALPLAY(weapswitch_interruption))
+    {
+        const player_t *const player = players + consoleplayer;
+
+        if (player->pendingweapon == weapon) { return player->readyweapon; }
+    }
 
     if (weapon < wp_fist || weapon >= NUMWEAPONS
         || !G_WeaponSelectable(weapon))
@@ -1432,7 +1447,8 @@ static void G_DoLoadLevel(void)
 
   // clear cmd building stuff
   // [Nugget] Rewind: unless we just rewound
-  if (lastaction != ga_rewind) {
+  if (lastaction != ga_rewind)
+  {
     memset (gamekeydown, 0, sizeof(gamekeydown));
     G_ClearInput();
     sendpause = sendsave = paused = false;
@@ -1463,16 +1479,23 @@ static void G_DoLoadLevel(void)
   // Periodic auto save
   G_SetAutoSaveCountdown(autosave_interval * TICRATE);
 
-  // Rewind
+  // Rewind ------------------------------------------------------------------
+
+  if (lastepisode != gameepisode || lastmap != gamemap)
+  { G_EnableRewind(); }
+
   G_SetRewindCountdown(0);
+
+  // -------------------------------------------------------------------------
 
   // Hide messages (but don't delete them outright)
   ST_HideMessages();
 
   // Minimap
-  if (minimap_was_on) {
-    AM_ChangeMode(AM_MINI);
+  if (minimap_was_on)
+  {
     minimap_was_on = false;
+    AM_ChangeMode(AM_MINI);
   }
 
   // Slow Motion
@@ -1480,25 +1503,17 @@ static void G_DoLoadLevel(void)
 
   // Clear visual effects
   R_ClearFOVFX();
-  R_SetShake(-1);
+  R_ClearShake();
 
   // Alt. intermission background
-  if (WI_UsingAltInterpic())
-  {
-    R_SetViewSize(screenblocks);
-    R_ExecuteSetViewSize();
-
-    WI_DisableAltInterpic();
-  }
+  if (WI_AltInterpicOn()) { WI_DisableAltInterpic(); }
 
   // Freecam -----------------------------------------------------------------
 
   R_UpdateFreecamMobj(NULL);
 
   if (lastepisode != gameepisode || lastmap != gamemap)
-  {
-    R_ResetFreecam(true);
-  }
+  { R_ResetFreecam(true); }
 
   // -------------------------------------------------------------------------
 
@@ -1797,9 +1812,15 @@ boolean G_Responder(event_t* ev)
 	if (M_InputActivated(input_pause))
 	{
 	  if (paused ^= 2)
+	  {
 	    S_PauseSound();
+	    S_PauseMusic();
+	  }
 	  else
+	  {
 	    S_ResumeSound();
+	    S_ResumeMusic();
+	  }
 	  return true;
 	}
 
@@ -1815,14 +1836,12 @@ boolean G_Responder(event_t* ev)
       // Don't suck up keys, which may be cheats
 
       // [Nugget] Freecam
-      if (!R_GetFreecamOn())
+      if (!R_FreecamOn())
         return gamestate == GS_DEMOSCREEN &&
 	  !(paused & 2) && automapactive != AM_FULL &&
 	  ((ev->type == ev_keydown) ||
 	   (ev->type == ev_mouseb_down) ||
 	   (ev->type == ev_joyb_down)) ?
-	  (!menuactive ? S_StartSoundOptional(NULL, sfx_mnuopn, sfx_swtchn) // [Nugget]: [NS] Optional menu sounds.
-	               : true),
 	  MN_StartControlPanel(), true : false;
     }
 
@@ -1941,6 +1960,7 @@ static void G_JoinDemo(void)
 
   // [crispy] continue recording
   demoplayback = false;
+  usergame = true;
 
   // clear progress demo bar
   ST_Start();
@@ -2186,7 +2206,7 @@ void G_RestartWithLoadout(const boolean current)
   {
     if (automapactive == AM_MINI) { minimap_was_on = true; }
 
-    AM_ChangeMode(AM_OFF);
+    AM_Stop();
   }
 
   AM_clearMarks();
@@ -2225,12 +2245,11 @@ static void G_DoCompleted(void)
     if (playeringame[i])
       G_PlayerFinishLevel(i);        // take away cards and stuff
 
-  if (automapactive)
-  {
-    if (automapactive == AM_MINI) { minimap_was_on = true; }
+  // [Nugget] Minimap
+  if (automapactive == AM_MINI) { minimap_was_on = true; }
 
-    AM_ChangeMode(AM_OFF);
-  }
+  if (automapactive)
+    AM_Stop();
 
   // [Cherry]
   WadStats_WatchExitMap();
@@ -2434,7 +2453,7 @@ frommapinfo:
 
   // Clear visual effects
   R_ClearFOVFX();
-  R_SetShake(-1);
+  R_ClearShake();
 }
 
 static void G_DoWorldDone(void)
@@ -2891,21 +2910,46 @@ char *G_AutoSaveName(void)
 {
   // [Nugget] Periodic auto save /--------------------------------------------
 
-  char buf[16] = {0};
+  char buf[24] = {0};
+  static int autoslot = -1;
+  static boolean last_save_was_periodic = false; // Only changes upon saving
 
-  if (G_SavingPeriodicAutoSave())
+  if (saving_periodic_autosave)
   {
-    static int autoslot = 0;
-
-    sprintf(buf, "autosav%i.dsg", autoslot + 1);
+    // We're autosaving (periodic)
 
     autoslot = (autoslot + 1) % 7; // 8 pages, minus one with the level-end save
+
+    sprintf(buf, "autosav%i.dsg", autoslot + 1);
+    last_save_was_periodic = true;
   }
-  else if (savepage > 0)
+  else if (death_use_state == DEATH_USE_STATE_ACTIVE)
   {
+    // We're loading by on-death action
+
+    if (last_save_was_periodic)
+    {
+      sprintf(buf, "autosav%i.dsg", autoslot + 1);
+    }
+    else { sprintf(buf, "autosave.dsg"); }
+  }
+  else if (savepage > 0 && gameaction != ga_saveautosave)
+  {
+    // We're loading a periodic auto save manually
+
     sprintf(buf, "autosav%i.dsg", savepage);
   }
-  else { sprintf(buf, "autosave.dsg"); }
+  else {
+    // We're loading a level-end auto save manually, or autosaving upon level end
+
+    sprintf(buf, "autosave.dsg");
+
+    if (gameaction == ga_saveautosave)
+    {
+      // We're autosaving upon level end
+      last_save_was_periodic = false;
+    }
+  }
 
   // [Nugget] ---------------------------------------------------------------/
 
@@ -3106,7 +3150,7 @@ static void DoSaveGame(char *name)
   // [Nugget] ===============================================================/
 
   // [Nugget] Periodic auto save
-  if (!is_periodic_autosave)
+  if (!saving_periodic_autosave)
   {
     // [FG] save snapshot
     CheckSaveGame(MN_SnapshotDataSize());
@@ -3120,7 +3164,7 @@ static void DoSaveGame(char *name)
 
   if (!M_WriteFile(name, savebuffer, length))
     displaymsg("%s", errno ? strerror(errno) : "Could not save game: Error unknown");
-  else if (show_save_messages && !is_periodic_autosave) // [Nugget]
+  else if (show_save_messages && !saving_periodic_autosave) // [Nugget]
     displaymsg("%s", s_GGSAVED);  // Ty 03/27/98 - externalized
 
   Z_Free(savebuffer);  // killough
@@ -3442,16 +3486,11 @@ static boolean DoLoadGame(boolean do_load_autosave)
   G_SetAutoSaveCountdown(autosave_interval * TICRATE);
 
   // [Nugget] Rewind:
-  // Just like with `G_DoRewind`,
-  // this is called before the countdown decrement in `G_Ticker()`,
-  // so add 1 to keep it aligned
+  // This is called before the countdown decrement in `G_Ticker()`, so add 1 to keep it aligned
   G_SetRewindCountdown(((rewind_interval * TICRATE) + 1) - ((leveltime - 1) % (rewind_interval * TICRATE)));
 
-  if (setsizeneeded)
-    R_ExecuteSetViewSize();
-
-  // draw the pattern into the back screen
-  R_FillBackScreen();
+  // [Nugget] True color: remove `R_ExecuteSetViewSize()`
+  // and `R_FillBackScreen()` calls from here
 
   // killough 12/98: support -recordfrom and -loadgame -playdemo
   if (!command_loadgame)
@@ -3706,9 +3745,52 @@ static void G_SaveKeyFrame(void)
     keyframe_index--;
   }
 
-  if (rewind_timeout && (rewind_timeout < (I_GetTimeMS() - start_time)))
+  const int store_time = I_GetTimeMS() - start_time;
+
+  if (last_keyframe_times_count >= LAST_KEYFRAME_TIMES_COUNT_MAX)
   {
-    displaymsg("Slow key-framing: storing stopped");
+    memmove(
+      last_keyframe_times,
+      last_keyframe_times + 1,
+      sizeof(*last_keyframe_times) * (LAST_KEYFRAME_TIMES_COUNT_MAX-1)
+    );
+
+    last_keyframe_times_count--;
+  }
+
+  last_keyframe_times[last_keyframe_times_count++] = store_time;
+
+  boolean timed_out = rewind_frame_timeout && rewind_frame_timeout < store_time;
+
+  int total_store_time = -1;
+
+  if (!timed_out && rewind_multiframe_timeout)
+  {
+    total_store_time = 0;
+
+    for (int i = 0;  i < last_keyframe_times_count;  i++)
+    { total_store_time += last_keyframe_times[i]; }
+
+    timed_out = rewind_multiframe_timeout < total_store_time;
+  }
+
+  if (timed_out)
+  {
+    displaymsg("\x1b%cSlow key-framing: storing stopped\x1b%c", '0' + CR_RED, '0' + CR_NONE);
+
+    if (total_store_time >= 0)
+    {
+      I_Printf(
+        VB_DEBUG,
+        "Slow key-framing: storing stopped. "
+        "(last frame: %ims; last %i frames: %ims)",
+        store_time, LAST_KEYFRAME_TIMES_COUNT_MAX, total_store_time
+      );
+    }
+    else {
+      I_Printf(VB_DEBUG, "Slow key-framing: storing stopped. (last frame: %ims)", store_time);
+    }
+
     rewind_on = false;
   }
 
@@ -3888,22 +3970,24 @@ static void G_DoRewind(void)
 
   keyframe_rw = false;
 
-  if (setsizeneeded) { R_ExecuteSetViewSize(); }
-
-  R_FillBackScreen(); // draw the pattern into the back screen
-
   displaymsg("Restored key frame %i", keyframe_index);
 
-  // This is called before the countdown decrement in `G_Ticker()`,
-  // so add 1 to keep it aligned
-  G_SetRewindCountdown((rewind_interval * TICRATE) + 1);
+  G_SetRewindCountdown(rewind_interval * TICRATE);
 
   ST_Start();
 }
 
 void G_EnableRewind(void)
 {
-  rewind_on = true;
+  const boolean rewind_input_set = array_size(M_Input(input_rewind)) > 0;
+
+  rewind_on = CASUALPLAY(rewind_depth && rewind_input_set);
+
+  const int countdown = rewind_interval * TICRATE;
+  G_SetRewindCountdown(countdown - (leveltime % countdown) + 1);
+
+  memset(last_keyframe_times, 0, sizeof(*last_keyframe_times) * LAST_KEYFRAME_TIMES_COUNT_MAX);
+  last_keyframe_times_count = 0;
 }
 
 void G_Rewind(void)
@@ -3913,9 +3997,10 @@ void G_Rewind(void)
   G_EnableRewind();
 
   if (0 <= keyframe_index)
-  { gameaction = ga_rewind; }
-  else
-  { displaymsg("No key frame found"); }
+  {
+    gameaction = ga_rewind;
+  }
+  else { displaymsg("No key frame found"); }
 }
 
 void G_ClearExcessKeyFrames(void)
@@ -4056,20 +4141,20 @@ void G_Ticker(void)
   {
     if (--autosave_countdown <= 0)
     {
-      is_periodic_autosave = true;
+      saving_periodic_autosave = true;
 
       M_SaveAutoSave();
       save_autosave = false;
       G_DoSaveAutoSave();
 
-      is_periodic_autosave = false;
+      saving_periodic_autosave = false;
     }
   }
 
   CheckSaveAutoSave();
 
   // [Nugget] Rewind
-  if (CASUALPLAY(rewind_depth && rewind_on)
+  if (rewind_on
       && gamestate == GS_LEVEL && oldleveltime < leveltime
       && players[consoleplayer].playerstate != PST_DEAD)
   {
@@ -4183,9 +4268,15 @@ void G_Ticker(void)
 
 	    case BTS_PAUSE:
 	      if ((paused ^= 1))
-		S_PauseSound();
+	      {
+	        S_PauseSound();
+	        S_PauseMusic();
+	      }
 	      else
-		S_ResumeSound();
+	      {
+	        S_ResumeSound();
+	        S_ResumeMusic();
+	      }
 	      break;
 
 	    case BTS_SAVEGAME:
@@ -4269,7 +4360,7 @@ void G_Ticker(void)
 	  gamestate == GS_DEMOSCREEN ? D_PageTicker() : (void) 0;
 
   // [Nugget] Freecam
-  if (R_GetFreecamOn())
+  if (R_FreecamOn())
   {
     fixed_t x = 0,
             y = 0,
@@ -4302,7 +4393,7 @@ void G_Ticker(void)
         lock = true;
       }
       else {
-        if (R_FreecamTurningOverride())
+        if (!R_GetFreecamMobj() || R_ChasecamOn())
         {
           angle = cmd->angleturn << 16;
           ticangle = cmd->ticangleturn << FRACBITS;
@@ -4315,20 +4406,20 @@ void G_Ticker(void)
 
           if (speedchange)
           {
-            basespeed = BETWEEN(FRACUNIT, 20*FRACUNIT, basespeed + (FRACUNIT * speedchange));
+            basespeed = BETWEEN(FRACUNIT, 40*FRACUNIT, basespeed + (FRACUNIT * speedchange));
 
             const int scaledspeed = basespeed / FRACUNIT;
             displaymsg("Freecam Speed: %i unit%s", scaledspeed, (scaledspeed == 1) ? "" : "s");
           }
 
-          fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed))) * 100 / realtic_clock_rate;
+          const fixed_t speed = basespeed * (1 + (autorun ^ INPUT(input_speed))) * 100 / realtic_clock_rate;
 
-          fixed_t forwardmove = speed * (INPUT(input_forward)     - INPUT(input_backward)),
-                  sidemove    = speed * (INPUT(input_straferight) - INPUT(input_strafeleft));
+          const fixed_t forwardmove = speed * (INPUT(input_forward)     - INPUT(input_backward));
+                fixed_t    sidemove = speed * (INPUT(input_straferight) - INPUT(input_strafeleft));
 
           if (flip_levels) { sidemove = -sidemove; } // Flip levels
 
-          angle_t fangle = R_GetFreecamAngle() + angle;
+          const angle_t fangle = R_GetFreecamAngle() + angle;
 
           x = FixedMul(forwardmove, finecosine[ fangle          >> ANGLETOFINESHIFT])
             + FixedMul(sidemove,    finecosine[(fangle - ANG90) >> ANGLETOFINESHIFT]);
@@ -4341,7 +4432,7 @@ void G_Ticker(void)
 
         pitch = cmd->pitch << FRACBITS;
 
-        static int strafetic = -10;
+        static int strafetic = SHRT_MIN;
         static boolean strafedown = false;
 
         if (!INPUT(input_strafe))
@@ -4352,7 +4443,7 @@ void G_Ticker(void)
         {
           strafedown = true;
 
-          if (gametic - strafetic < 10)
+          if (gametic - strafetic < TICRATE * 2/7) // A bit under 0.3 seconds
           {
             center = true;
           }
@@ -4388,12 +4479,17 @@ void G_PlayerReborn(int player)
   int itemcount;
   int secretcount;
   int maxkilldiscount;
+  int num_visitedlevels;
+  level_t *visitedlevels;
+
 
   memcpy (frags, players[player].frags, sizeof frags);
   killcount = players[player].killcount;
   itemcount = players[player].itemcount;
   secretcount = players[player].secretcount;
   maxkilldiscount = players[player].maxkilldiscount;
+  num_visitedlevels = players[player].num_visitedlevels;
+  visitedlevels = players[player].visitedlevels;
 
   p = &players[player];
 
@@ -4409,6 +4505,8 @@ void G_PlayerReborn(int player)
   players[player].itemcount = itemcount;
   players[player].secretcount = secretcount;
   players[player].maxkilldiscount = maxkilldiscount;
+  players[player].num_visitedlevels = num_visitedlevels;
+  players[player].visitedlevels = visitedlevels;
 
   p->usedown = p->attackdown = true;  // don't do anything immediately
   p->playerstate = PST_LIVE;
@@ -4875,6 +4973,38 @@ const char *G_GetCurrentComplevelName(void)
     }
 }
 
+static GameVersion_t GetWadGameVersion(void)
+{
+    int lumpnum = W_CheckNumForName("GAMEVERS");
+
+    if (lumpnum < 0)
+    {
+        return exe_indetermined;
+    }
+
+    int length = W_LumpLength(lumpnum);
+    char *data = W_CacheLumpNum(lumpnum, PU_CACHE);
+
+    if (length >= 5 && !strncasecmp("1.666", data, 5))
+    {
+        return exe_doom_1_9;
+    }
+    else if (length >= 3 && !strncasecmp("1.9", data, 3))
+    {
+        return exe_doom_1_9;
+    }
+    else if (length >= 8 && !strncasecmp("ultimate", data, 8))
+    {
+        return exe_ultimate;
+    }
+    else if (length >= 5 && !strncasecmp("final", data, 5))
+    {
+        return exe_final;
+    }
+
+    return exe_indetermined;
+}
+
 static demo_version_t GetWadDemover(void)
 {
     int lumpnum = W_CheckNumForName("COMPLVL");
@@ -5069,6 +5199,12 @@ void G_ReloadDefaults(boolean keep_demover)
     if (demover == DV_NONE)
     {
       demover = GetWadDemover();
+      if (demover == DV_VANILLA)
+      {
+        GameVersion_t gamever = GetWadGameVersion();
+        if (gamever != exe_indetermined)
+          gameversion = gamever;
+      }
     }
 
     if (demover == DV_NONE)
@@ -5257,7 +5393,7 @@ void G_InitNew(skill_t skill, int episode, int map)
   if (paused)
     {
       paused = false;
-      S_ResumeSound();
+      S_ResumeMusic();
     }
 
   if (skill > sk_nightmare && skill != sk_custom) // [Nugget] Custom Skill
@@ -6138,22 +6274,28 @@ void G_BindGameVariables(void)
   // [Nugget] ----------------------------------------------------------------
 
   M_BindNum("autosave_interval", &autosave_interval, NULL,
-            0, 0, 600, ss_gen, wad_no,
+            0, 0, 600, ss_misc, wad_no,
             "Interval between periodic auto saves, in seconds (0 = Off)");
 
-  BIND_BOOL_GENERAL(one_key_saveload, false, "One-key quick-saving/loading");
+  M_BindBool("one_key_saveload", &one_key_saveload, NULL,
+             false, ss_misc, wad_no,
+             "One-key quick-saving/loading");
 
-  BIND_NUM_GENERAL(rewind_interval,
-                   1, 1, 600,
-                   "Interval between rewind key-frames, in seconds");
+  M_BindNum("rewind_interval", &rewind_interval, NULL,
+            1, 1, 600, ss_misc, wad_no,
+            "Interval between rewind key-frames, in seconds");
 
-  BIND_NUM_GENERAL(rewind_depth,
-                   60, 0, 3000,
-                   "Number of rewind key-frames to be stored (0 = No rewinding)");
+  M_BindNum("rewind_depth", &rewind_depth, NULL,
+            60, 0, 3000, ss_misc, wad_no,
+            "Number of rewind key-frames to be stored (0 = No rewinding)");
 
-  BIND_NUM_GENERAL(rewind_timeout,
-                   10, 0, 25,
-                   "Max. time to store a key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)");
+  M_BindNum("rewind_frame_timeout", &rewind_frame_timeout, NULL,
+            10, 0, 50, ss_misc, wad_no,
+            "Max. time to store a single key frame, in milliseconds; if exceeded, storing will stop (0 = No limit)");
+
+  M_BindNum("rewind_multiframe_timeout", &rewind_multiframe_timeout, NULL,
+            100, 0, 250, ss_misc, wad_no,
+            "Max. time to store the last 4 key frames, in milliseconds (0 = No limit)");
 
   // [Cherry] Rocket trails from Doom Retro
   M_BindBool("rocket_trails", &rocket_trails, NULL, false, ss_gen, wad_yes,
@@ -6204,7 +6346,7 @@ void G_BindEnemVariables(void)
   // (CFG-only)
   M_BindBool("extra_gibbing_fist", &extra_gibbing[EXGIB_FIST], NULL,
              true, ss_none, wad_yes,
-             "Extra gibbing for Berserk Fist");
+             "Extra gibbing for Berserk Fist and similar MBF21 attacks");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_csaw", &extra_gibbing[EXGIB_CSAW], NULL,
@@ -6214,7 +6356,7 @@ void G_BindEnemVariables(void)
   // (CFG-only)
   M_BindBool("extra_gibbing_ssg", &extra_gibbing[EXGIB_SSG], NULL,
              true, ss_none, wad_yes,
-             "Extra gibbing for SSG");
+             "Extra gibbing for SSG and similar MBF21 attacks");
 
   // (CFG-only)
   M_BindBool("extra_gibbing_bfg", &extra_gibbing[EXGIB_BFG], NULL,
@@ -6284,6 +6426,10 @@ void G_BindCompVariables(void)
 
   M_BindBool("pistolstart", &default_pistolstart, &pistolstart,
              false, ss_comp, wad_no, "Pistol start");
+
+  // [Nugget] SSG in Doom 1
+  M_BindBool("doom1_ssg", &doom1_ssg, NULL, false, ss_comp, wad_yes,
+             "Allow SSG in Doom 1");
 
 #define BIND_COMP(id, v, help) \
   M_BindNum(#id, &default_comp[(id)], &comp[(id)], (v), 0, 1, ss_none, wad_yes, help)
@@ -6432,26 +6578,25 @@ void G_BindWeapVariables(void)
              false, ss_weap, wad_yes,
              "Bob weapon while switching it");
 
-  M_BindBool("weapon_inertia", &weapon_inertia, NULL,
-             false, ss_weap, wad_yes,
-             "Weapon inertia");
-
   M_BindNum("weapon_inertia_scale_pct", &weapon_inertia_scale_pct, NULL,
-            100, -200, 200, ss_weap, wad_yes,
+            0, -200, 200, ss_weap, wad_yes,
             "Weapon-inertia scale percent");
 
-  // (CFG-only)
-  M_BindBool("weapon_inertia_fire", &weapon_inertia_fire, NULL,
-             true, ss_none, wad_yes,
-             "Apply weapon inertia while firing");
+  M_BindNum("weapon_inertia_fire_scale_pct", &weapon_inertia_fire_scale_pct, NULL,
+            0, -200, 200, ss_weap, wad_yes,
+            "Weapon-inertia scale percent while firing");
 
   M_BindBool("weaponsquat", &weaponsquat, NULL,
              false, ss_weap, wad_yes,
              "Squat weapon down upon landing/jumping");
 
+  M_BindBool("pspr_invis_translucent", &pspr_invis_translucent, NULL,
+             false, ss_weap, wad_yes,
+             "Make the weapon translucent instead of fuzzy when partially invisible");
+
   M_BindNum("pspr_translucency_pct", &pspr_translucency_pct, NULL,
             100, 0, 100, ss_weap, wad_yes,
-            "Weapon-flash translucency percent");
+            "Weapon-flash opacity percent");
 
   // (CFG-only)
   M_BindBool("sx_fix", &sx_fix, NULL,

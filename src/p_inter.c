@@ -362,8 +362,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       player->mo->health = player->health = MIN(maxhealthbonus, player->health + 1);
 
       static const char s[] = {
-        0x50, 0x69, 0x63, 0x6B, 0x65, 0x64, 0x20, 0x75, 0x70, 0x20,
-        0x61, 0x20, 0x63, 0x68, 0x65, 0x65, 0x73, 0x65, 0x2E, 0x00
+        0120, 0151, 0143, 0153, 0145, 0144, 040, 0165, 0160, 040,
+        0141, 040, 0143, 0150, 0145, 0145, 0163, 0145, 056, 0
       };
 
       pickupmsg(player, "%s", s);
@@ -376,9 +376,9 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       if (!player->armortype) { player->armortype = green_armor_class; }
 
       static const char s[] = {
-        0x50, 0x69, 0x63, 0x6B, 0x65, 0x64, 0x20, 0x75, 0x70, 0x20,
-        0x61, 0x20, 0x63, 0x61, 0x63, 0x2D, 0x6F, 0x27, 0x2D, 0x6C,
-        0x61, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x2E, 0x00
+        0120, 0151, 0143, 0153, 0145, 0144, 040, 0165, 0160, 040,
+        0141, 040, 0143, 0141, 0143, 055, 0157, 047, 055, 0154,
+        0141, 0156, 0164, 0145, 0162, 0156, 056, 0
       };
 
       pickupmsg(player, "%s", s);
@@ -435,11 +435,11 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       break;
 
     case SPR_BON3:      // killough 7/11/98: evil sceptre from beta version
-      pickupmsg(player, "Picked up an evil sceptre");
+      pickupmsg(player, "%s", s_BETA_BONUS3);
       break;
 
     case SPR_BON4:      // killough 7/11/98: unholy bible from beta version
-      pickupmsg(player, "Picked up an unholy bible");
+      pickupmsg(player, "%s", s_BETA_BONUS4);
       break;
 
     case SPR_SOUL:
@@ -792,36 +792,79 @@ static boolean P_NuggetForceGibbing(
 
   if (extra_gibbing[EXGIB_BFG] && P_IsBFGTracer()
       && (P_AproxDistance(target->x - source->x, target->y - source->y)
-          < ((128*FRACUNIT) + target->info->radius)))
+          < (128*FRACUNIT + target->info->radius)))
   {
     return true;
   }
 
   if (source->player)
   {
-    if (extra_gibbing[EXGIB_FIST]
-        && source->player->psprites->state->action.p2 == (actionf_p2) A_Punch
-        && source->player->powers[pw_strength]
-        && (P_AproxDistance(target->x - source->x, target->y - source->y)
-            < ((64*FRACUNIT) + target->info->radius)))
+    const state_t *const state = source->player->psprites->state;
+
+    if (extra_gibbing[EXGIB_FIST])
     {
-      return true;
+      if (state->action.p2 == (actionf_p2) A_Punch
+          && source->player->powers[pw_strength]
+          && (P_AproxDistance(target->x - source->x, target->y - source->y)
+              < (64*FRACUNIT + target->info->radius)))
+      {
+        return true;
+      }
+
+      if (state->action.p2 == (actionf_p2) A_WeaponMeleeAttack)
+      {
+        const unsigned damagebase = state->args[0],
+                       damagemod  = state->args[1];
+
+        const fixed_t zerkfactor = source->player->powers[pw_strength]
+                                 ? state->args[2] : FRACUNIT;
+
+        const fixed_t range = state->args[4] ? state->args[4] : source->info->meleerange;
+
+        const int average_damage = ((int) (damagebase * ((damagemod + 1) / 2.0f))
+                                    * zerkfactor) >> FRACBITS;
+
+        if (average_damage >= 100 // Just below theoretical avg. damage of berserk fist
+            && (P_AproxDistance(target->x - source->x, target->y - source->y)
+                < (range + target->info->radius)))
+        {
+          return true;
+        }
+      }
     }
 
     if (extra_gibbing[EXGIB_CSAW]
-        && source->player->psprites->state->action.p2 == (actionf_p2) A_Saw
+        && state->action.p2 == (actionf_p2) A_Saw
         && (P_AproxDistance(target->x - source->x, target->y - source->y)
-            < ((65*FRACUNIT) + target->info->radius)))
+            < (65*FRACUNIT + target->info->radius)))
     {
       return true;
     }
 
-    if (extra_gibbing[EXGIB_SSG]
-        && source->player->psprites->state->action.p2 == (actionf_p2) A_FireShotgun2
-        && (P_AproxDistance(target->x - source->x, target->y - source->y)
-            < ((128*FRACUNIT) + target->info->radius)))
+    if (extra_gibbing[EXGIB_SSG])
     {
-      return true;
+      if (state->action.p2 == (actionf_p2) A_FireShotgun2
+          && (P_AproxDistance(target->x - source->x, target->y - source->y)
+              < (128*FRACUNIT + target->info->radius)))
+      {
+        return true;
+      }
+
+      if (state->action.p2 == (actionf_p2) A_WeaponBulletAttack)
+      {
+        const unsigned numbullets = state->args[2],
+                       damagebase = state->args[3],
+                       damagemod  = state->args[4];
+
+        const int average_damage = damagebase * ((damagemod + 1) / 2.0f) * numbullets;
+
+        if (average_damage >= 200 // Theoretical avg. damage of SSG
+            && (P_AproxDistance(target->x - source->x, target->y - source->y)
+                < (128*FRACUNIT + target->info->radius)))
+        {
+          return true;
+        }
+      }
     }
   }
 
@@ -833,7 +876,7 @@ static boolean P_NuggetForceGibbing(
 boolean bloodier_gibbing;
 int bloodier_gibbing_splats;
 
-void P_NuggetGib(mobj_t *mo, const boolean crushed)
+void P_NuggetGib(const mobj_t *const mo, const boolean crushed)
 {
   extern boolean idgaf;
 
@@ -868,7 +911,7 @@ void P_NuggetGib(mobj_t *mo, const boolean crushed)
     #define MOM_SCALE (FRACUNIT / 16)
 
     const fixed_t momentum = Woof_Random() * (MOM_SCALE / (crushed ? 2 : 1));
-    const int fineangle = (FINEANGLES - 1) * Woof_Random() / 255;
+    const int fineangle = (FINEANGLES - 1) * Woof2_Random() / 255;
 
     splat->momx = FixedMul(momentum, finecosine[fineangle]);
     splat->momy = FixedMul(momentum,   finesine[fineangle]);
@@ -882,7 +925,7 @@ void P_NuggetGib(mobj_t *mo, const boolean crushed)
     // so this is done to get rather-decent behavior in vanilla
     if (demo_version < DV_BOOM200) { splat->flags |= MF_NOCLIP; }
 
-    splat->tics += (Woof_Random() & 3) - (Woof_Random() & 3);
+    splat->tics += (Woof2_Random() % 7) - 3;
     splat->tics = MAX(1, splat->tics);
   }
 }
@@ -1013,9 +1056,9 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod,
       // [crispy] center view when dying
       target->player->centering = true;
 
-      if (target->player == &players[consoleplayer] && automapactive == AM_FULL)
+      if (target->player == &players[consoleplayer] && automapactive)
 	if (!demoplayback) // killough 11/98: don't switch out in demos, though
-	  AM_ChangeMode(AM_OFF); // don't die in auto map; switch view prior to dying
+	  AM_Stop();    // don't die in auto map; switch view prior to dying
 
       HU_Obituary(target, source, mod);
     }
@@ -1064,9 +1107,14 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod,
   if (casual_play && tossdrop)
   {
     mo->z += target->height * 5/4;
-    mo->momx = (Woof_Random() - Woof_Random()) << 7;
-    mo->momy = (Woof_Random() - Woof_Random()) << 7;
-    mo->momz = (4*FRACUNIT) + ((Woof_Random() % 9) * FRACUNIT/8);
+
+    const fixed_t momentum = Woof_Random() * FRACUNIT/512;
+    const int fineangle = (FINEANGLES - 1) * Woof2_Random() / 255;
+
+    mo->momx = FixedMul(momentum, finecosine[fineangle]);
+    mo->momy = FixedMul(momentum,   finesine[fineangle]);
+
+    mo->momz = 4*FRACUNIT + (Woof_Random() * FRACUNIT/256);
   }
 }
 

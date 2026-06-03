@@ -60,9 +60,8 @@ extern boolean always_bob;
 extern bobstyle_t bobbing_style;
 extern int weapon_bobbing_speed_pct;
 extern boolean switch_bob;
-extern boolean weapon_inertia;
 extern int weapon_inertia_scale_pct;
-extern boolean weapon_inertia_fire;
+extern int weapon_inertia_fire_scale_pct;
 extern boolean weaponsquat;
 extern boolean sx_fix;
 extern boolean comp_nomeleesnap;
@@ -70,9 +69,8 @@ extern boolean comp_cgundblsnd;
 
 // [ceski] Weapon Inertia ----------------------------------------------------
 
-#define ORIG_WEAPON_INERTIA_SCALE 60000
-extern fixed_t weapon_inertia_scale;
-
+boolean P_WeaponInertiaOn(void);
+void P_NuggetSetWeaponInertiaScale(void);
 void P_NuggetResetWeaponInertia(void);
 
 // [Nugget] =================================================================/
@@ -103,6 +101,10 @@ typedef struct pspdef_s
   fixed_t oldsy2;
 
   // [Nugget] ----------------------------------------------------------------
+
+  // Fixed position, as set by the `misc#` values
+  fixed_t sxf;
+  fixed_t syf;
 
   // [crispy] squat down weapon sprite
   fixed_t dy;

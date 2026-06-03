@@ -25,8 +25,7 @@
 
 // Retrieve column data for span blitting.
 byte *R_GetColumn(int tex, int col);
-byte *R_GetColumnMod(int tex, int col);
-byte *R_GetColumnMod2(int tex, int col);
+byte *R_GetColumnMasked(int tex, int col);
 
 // I/O, setting up the stuff.
 void R_InitData (void);
@@ -67,6 +66,8 @@ typedef enum
 extern invul_mode_t invul_mode;
 
 // [Nugget]
+boolean R_InitColormapsPending(void);
+void R_DeferredInitColormaps(void);
 byte *R_GetGenericTranMap(const int filter_pct);
 void R_InitMessageFadeoutTranMaps(void);
 

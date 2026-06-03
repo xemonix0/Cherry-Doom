@@ -29,6 +29,7 @@
 #include "d_think.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "doomtype.h"
 #include "i_printf.h"
 #include "i_system.h"
 #include "info.h"
@@ -51,16 +52,33 @@
 
 // [Nugget]
 #include "hu_crosshair.h"
+#include "i_video.h"
 #include "st_widgets.h"
 
-// [Nugget] /-----------------------------------------------------------------
+// [Nugget] /=================================================================
+
+// True color ----------------------------------------------------------------
+
+static boolean init_colormaps = false;
+
+boolean R_InitColormapsPending(void)
+{
+  return init_colormaps;
+}
+
+void R_DeferredInitColormaps(void)
+{
+  init_colormaps = true;
+}
+
+// ---------------------------------------------------------------------------
 
 // Brought from below
 #define TSC 12        /* number of fixed point digits in filter percent */
 
 static byte *R_InitGenericTranMap(const int filter_pct)
 {
-  I_Printf(VB_DEBUG, "R_InitGenericTranMap: %i%%", filter_pct);
+  I_Printf(VB_DEBUG, "%s: %i%%", __func__, filter_pct);
 
   unsigned char *const playpal = W_CacheLumpName("PLAYPAL", PU_STATIC);
 
@@ -142,7 +160,7 @@ void R_InitMessageFadeoutTranMaps(void)
   { R_GetGenericTranMap(i * 10); }
 }
 
-// [Nugget] -----------------------------------------------------------------/
+// [Nugget] =================================================================/
 
 //
 // Graphics.
@@ -241,6 +259,9 @@ const byte **texturebrightmap; // [crispy] brightmaps
 
 // needed for pre-rendering
 fixed_t   *spritewidth, *spriteoffset, *spritetopoffset;
+
+// [Nugget]
+fixed_t *spriteheight;
 
 //
 // MAPTEXTURE_T CACHING
@@ -592,13 +613,28 @@ static void R_GenerateLookup(int texnum, int *const errors)
 
 //
 // R_GetColumn
+// [EA] Updated to support Non-power-of-2 textures, everywhere
 //
 
 byte *R_GetColumn(int tex, int col)
 {
+  const int width = texturewidth[tex];
+  const int mask = texturewidthmask[tex];
   int ofs;
 
-  col &= texturewidthmask[tex];
+  if (mask + 1 == width)
+  {
+    col &= mask;
+  }
+  else
+  {
+    while (col < 0)
+    {
+      col += width;
+    }
+    col %= width;
+  }
+
   ofs  = texturecolumnofs2[tex][col];
 
   if (!texturecomposite2[tex])
@@ -608,7 +644,7 @@ byte *R_GetColumn(int tex, int col)
 }
 
 // [FG] wrapping column getter function for composited translucent mid-textures on 2S walls
-byte *R_GetColumnMod(int tex, int col)
+byte *R_GetColumnMasked(int tex, int col)
 {
   int ofs;
 
@@ -622,23 +658,6 @@ byte *R_GetColumnMod(int tex, int col)
     R_GenerateComposite(tex);
 
   return texturecomposite[tex] + ofs;
-}
-
-// [FG] wrapping column getter function for non-power-of-two wide sky textures
-byte *R_GetColumnMod2(int tex, int col)
-{
-  int ofs;
-
-  while (col < 0)
-    col += texturewidth[tex];
-
-  col %= texturewidth[tex];
-  ofs  = texturecolumnofs2[tex][col];
-
-  if (!texturecomposite2[tex])
-    R_GenerateComposite(tex);
-
-  return texturecomposite2[tex] + ofs;
 }
 
 //
@@ -931,6 +950,9 @@ void R_InitSpriteLumps(void)
   spritetopoffset =
     Z_Malloc(numspritelumps*sizeof*spritetopoffset, PU_STATIC, 0);
 
+  // [Nugget]
+  spriteheight = Z_Malloc(numspritelumps * sizeof(*spriteheight), PU_STATIC, 0);
+
   for (i=0 ; i< numspritelumps ; i++)
     {
       if (!(i&127))            // killough
@@ -940,6 +962,9 @@ void R_InitSpriteLumps(void)
       spritewidth[i] = SHORT(patch->width)<<FRACBITS;
       spriteoffset[i] = SHORT(patch->leftoffset)<<FRACBITS;
       spritetopoffset[i] = SHORT(patch->topoffset)<<FRACBITS;
+
+      // [Nugget]
+      spriteheight[i] = SHORT(patch->height) << FRACBITS;
     }
 }
 
@@ -957,6 +982,29 @@ static byte invul_orig[256];
 
 void R_InvulMode(void)
 {
+  if (truecolor_rendering)
+  {
+    if (colormaps32 == NULL || beta_emulation)
+      return;
+
+    const int mode = STRICTMODE(invul_mode);
+
+    default_comp[comp_skymap] = (mode == INVUL_VANILLA);
+
+    const byte *const invul_colormap = (mode == INVUL_GRAY) ? invul_gray : invul_orig;
+
+    for (int i = 0;  i < I_GetNumPalettes();  i++)
+    {
+      pixel32_t *dest = &pal_colormaps[i][0][256 * (32<<CRSB)];
+      const pixel_t *src = invul_colormap;
+
+      for (int j = 0;  j < 256;  j++)
+      { *dest++ = palscolors[i][*src++]; }
+    }
+
+    return;
+  }
+
   if (colormaps == NULL || beta_emulation)
     return;
 
@@ -977,29 +1025,85 @@ void R_InvulMode(void)
   }
 }
 
+static void InitColormaps8(void), InitColormaps32(void);
+
 void R_InitColormaps(void)
 {
   int i;
-  firstcolormaplump = W_GetNumForName("C_START");
-  lastcolormaplump  = W_GetNumForName("C_END");
-  numcolormaps = lastcolormaplump - firstcolormaplump;
-  colormaps = Z_Malloc(sizeof(*colormaps) * numcolormaps, PU_STATIC, 0);
+  static boolean init = true; // [Nugget]
 
-  colormaps[0] = W_CacheLumpNum(W_GetNumForName("COLORMAP"), PU_STATIC);
+  // [Nugget] The function may be called more than once;
+  // initialize this stuff only once
+  if (init)
+  {
+    init = false;
 
-  for (i=1; i<numcolormaps; i++)
-    colormaps[i] = W_CacheLumpNum(i+firstcolormaplump, PU_STATIC);
+    firstcolormaplump = W_GetNumForName("C_START");
+    lastcolormaplump  = W_GetNumForName("C_END");
+    numcolormaps = lastcolormaplump - firstcolormaplump;
+    colormaps = Z_Malloc(sizeof(*colormaps) * numcolormaps, PU_STATIC, 0);
 
-  // [FG] dark/shaded color translation table
-  cr_dark = &colormaps[0][256*15];
-  cr_shaded = &colormaps[0][256*6];
+    colormaps[0] = W_CacheLumpName("COLORMAP", PU_STATIC);
 
-  memcpy(invul_orig, &colormaps[0][256*32], 256);
+    for (i = 1;  i < numcolormaps;  i++)
+    { colormaps[i] = W_CacheLumpNum(firstcolormaplump + i, PU_STATIC); }
+
+    // [FG] dark/shaded color translation table
+    cr_dark = (byte *) &colormaps[0][256*15];
+    cr_shaded = (byte *) &colormaps[0][256*6];
+
+    memcpy(invul_orig, &colormaps[0][256*32], 256);
+  }
+
+  static int num_palettes = 0;
+
+  if (pal_colormaps)
+  {
+    Z_Free(pal_colormaps[0][0]);
+
+    for (i = 0;  i < num_palettes;  i++)
+    { Z_Free(pal_colormaps[i]); }
+
+    Z_Free(pal_colormaps);
+    pal_colormaps = NULL;
+  }
+
+  num_palettes = I_GetNumPalettes();
+
+  if (truecolor_rendering && !pal_colormaps)
+  {
+    lighttable32_t *const all_pal_colormaps = Z_Malloc(
+      sizeof(***pal_colormaps) * num_palettes * numcolormaps * (256 * 258), PU_STATIC, 0
+    );
+
+    pal_colormaps = Z_Malloc(sizeof(*pal_colormaps) * num_palettes, PU_STATIC, 0);
+
+    for (i = 0;  i < num_palettes;  i++)
+    {
+      pal_colormaps[i] = Z_Malloc(sizeof(**pal_colormaps) * numcolormaps, PU_STATIC, 0);
+
+      for (int j = 0;  j < numcolormaps;  j++)
+      { pal_colormaps[i][j] = all_pal_colormaps + (i * numcolormaps + j) * (256 * 258); }
+    }
+  }
+
+  if (truecolor_rendering)
+  {
+    InitColormaps32();
+  }
+  else { InitColormaps8(); }
+
   R_InvulMode();
 
+  init_colormaps = false;
+}
+
+static void InitColormaps8(void)
+{
   // [Nugget] Night-vision visor
-  if (!beta_emulation) {
-    for (i = 0;  i < numcolormaps;  i++)
+  if (!beta_emulation)
+  {
+    for (int i = 0;  i < numcolormaps;  i++)
     {
       // Guard against markers (empty lumps) among the actual colormaps
       if (colormaps[i] == NULL) { continue; }
@@ -1007,6 +1111,135 @@ void R_InitColormaps(void)
       memcpy(&colormaps[i][256*33], nightvision, 256);
     }
   }
+}
+
+static void InitColormaps32(void)
+{
+  // Load original colormap rows
+  for (int i = 0;  i < I_GetNumPalettes();  i++)
+  {
+    for (int j = 0;  j < numcolormaps;  j++)
+    {
+      if (colormaps[j] == NULL)
+      {
+        pal_colormaps[i][j] = NULL;
+        continue;
+      }
+
+      for (int k = 0;  k < 33;  k++)
+      {
+        for (int m = 0;  m < 256;  m++)
+        {
+          const byte color_index = colormaps[j][(k * 256) + m];
+
+          pal_colormaps[i][j][((k<<CRSB) * 256) + m] = palscolors[i][color_index];
+        }
+      }
+    }
+  }
+
+  if (lighting_mode == LIGHTINGMODE_TRUECOLOR)
+  {
+    // Shade rows after first one
+
+    for (int i = 0;  i < I_GetNumPalettes();  i++)
+    {
+      for (int j = 0;  j < numcolormaps;  j++)
+      {
+        const lighttable32_t *const first_colormap = pal_colormaps[i][j];
+
+        if (first_colormap == NULL) { continue; }
+
+        // Instead of fading to an arbitrary black, we fade to the last color of the colormap column;
+        // this lets us maintain some colormap effects (e.g. vanilla brightmaps, fog) and also palette tinting
+        // (the colormap row we're interpolating towards is already colored as per the current palette)
+        lighttable32_t *const last_colormap = pal_colormaps[i][j] + ((31<<CRSB) * 256);
+
+        // We take the index from the original colormap; it might be inaccurate,
+        // but it's much faster than finding the nearest color in the palette
+        const byte *const orig_colormap = colormaps[j];
+
+        for (int k = 1;  k < 248;  k++)
+        {
+          lighttable32_t *const current_colormap = pal_colormaps[i][j] + (k * 256);
+
+          const byte *const orig_colormap_row = orig_colormap + (k / (1<<CRSB)) * 256;
+
+          const double factor = k / 248.0;
+
+          for (int m = 0;  m < 256;  m++)
+          {
+            const pixel32_t rgb = V_LerpRGB(first_colormap[m], last_colormap[m], factor);
+
+            const byte index = orig_colormap_row[m];
+
+            current_colormap[m] = (index << PIXEL_INDEX_SHIFT)
+                                | (rgb & PIXEL_COLOR_MASK);
+          }
+        }
+
+        // Fill the remainder with the last colormap row
+        for (int l = 1;  l < 1<<CRSB;  l++)
+        { memcpy(last_colormap + (l * 256), last_colormap, sizeof(*last_colormap) * 256); }
+      }
+    }
+  }
+  else if (lighting_mode == LIGHTINGMODE_INTERPOLATED)
+  {
+    // Calculate intermediate colormap rows
+
+    for (int i = 0;  i < I_GetNumPalettes();  i++)
+    {
+      for (int j = 0;  j < numcolormaps;  j++)
+      {
+        if (pal_colormaps[i][j] == NULL) { continue; }
+
+        for (int k = 0;  k < 31;  k++)
+        {
+          const lighttable32_t
+            *const prev_colormap = pal_colormaps[i][j] + ((k<<CRSB) * 256),
+            *const next_colormap = pal_colormaps[i][j] + (((k + 1) << CRSB) * 256);
+
+          for (int l = 1;  l < 1<<CRSB;  l++)
+          {
+            lighttable32_t *const current_colormap = pal_colormaps[i][j] + (((k<<CRSB) + l) * 256);
+            const double factor = l / (double) (1<<CRSB);
+
+            for (int m = 0;  m < 256;  m++)
+            { current_colormap[m] = V_LerpRGB(prev_colormap[m], next_colormap[m], factor); }
+          }
+        }
+
+        // Fill the remainder with the last colormap row
+
+        lighttable32_t *const last_colormap = pal_colormaps[i][j] + ((31<<CRSB) * 256);
+
+        for (int l = 1;  l < 1<<CRSB;  l++)
+        { memcpy(last_colormap + (l * 256), last_colormap, sizeof(*last_colormap) * 256); }
+      }
+    }
+  }
+
+  // [Nugget] Night-vision visor
+  if (!beta_emulation)
+  {
+    const int row_index = 256 * ((32<<CRSB) + 1);
+
+    for (int i = 0;  i < I_GetNumPalettes();  i++)
+    {
+      V_SetPalColors(i);
+
+      for (int j = 0;  j < numcolormaps;  j++)
+      {
+        // Guard against markers (empty lumps) among the actual colormaps
+        if (colormaps32[j] == NULL) { continue; }
+
+        V_IndexCopy(&colormaps32[j][row_index], nightvision, 256);
+      }
+    }
+  }
+
+  V_SetPalColors(0);
 }
 
 // killough 4/4/98: get colormap number from name
@@ -1206,19 +1439,30 @@ void R_InitData(void)
   if (hud_menu_shadows && hud_menu_shadows_filter_pct != 100)
   { R_GetGenericTranMap(hud_menu_shadows_filter_pct); }
 
+  // Sprite shadows are handled in `R_InitDrawFunctions()`
+
   // Message fadeout
   if (ST_MessageFadeoutOn())
   { R_InitMessageFadeoutTranMaps(); }
 
-  // Translucent flashes
+  // Translucent weapon when invisible
+  if (pspr_invis_translucent)
+  { R_GetGenericTranMap(PSPR_INVIS_TRANSLUCENCY); }
+
+  // Translucent weapon flashes
   if (pspr_translucency_pct != 100)
-  { R_GetGenericTranMap(pspr_translucency_pct); }
+  {
+    R_GetGenericTranMap(pspr_translucency_pct);
+
+    if (pspr_invis_translucent)
+    { R_GetGenericTranMap(pspr_translucency_pct * PSPR_INVIS_TRANSLUCENCY / 100); }
+  }
 
   // Translucent crosshair
   if (hud_crosshair_tran_pct != 100)
   { R_GetGenericTranMap(hud_crosshair_tran_pct); }
 
-  R_GetGenericTranMap(25); // Hitscan trails
+  R_GetGenericTranMap(15); // Hitscan trails
 
   // [Cherry] Rocket trials
   if (rocket_trails_tran_pct != 100)

@@ -107,7 +107,7 @@ static int saveCharIndex; // which char we're editing
 static char saveOldString[SAVESTRINGSIZE];
 
 boolean menuactive; // The menus are up
-
+static boolean mouse_active_thermo;
 static boolean options_active;
 
 backdrop_t menu_backdrop;
@@ -262,6 +262,22 @@ static void M_InitExtendedHelp(void);
 static void M_ExtHelpNextScreen(int choice);
 static void M_ExtHelp(int choice);
 static void M_DrawExtHelp(void);
+
+static void M_PauseSound(void)
+{
+    if (!paused && gamestate == GS_LEVEL && !demoplayback && !netgame)
+    {
+        S_PauseSound();
+    }
+}
+
+static void M_ResumeSound(void)
+{
+    if (!paused && gamestate == GS_LEVEL && !demoplayback && !netgame)
+    {
+        S_ResumeSound();
+    }
+}
 
 //
 // SetNextMenu
@@ -444,7 +460,8 @@ static void M_FinishHelp(int choice) // killough 10/98
 
 static void M_DrawReadThis1(void)
 {
-    V_DrawPatchFullScreen(V_CachePatchName("HELP2", PU_CACHE));
+    V_DrawPatchFullScreen(
+        V_CachePatchName(W_CheckWidescreenPatch("HELP2"), PU_CACHE));
 }
 
 //
@@ -457,12 +474,14 @@ static void M_DrawReadThis2(void)
     // We only ever draw the second page if this is
     // gameversion == exe_doom_1_9 and gamemode == registered
 
-    V_DrawPatchFullScreen(V_CachePatchName("HELP1", PU_CACHE));
+    V_DrawPatchFullScreen(
+        V_CachePatchName(W_CheckWidescreenPatch("HELP1"), PU_CACHE));
 }
 
 static void M_DrawReadThisCommercial(void)
 {
-    V_DrawPatchFullScreen(V_CachePatchName("HELP", PU_CACHE));
+    V_DrawPatchFullScreen(
+        V_CachePatchName(W_CheckWidescreenPatch("HELP"), PU_CACHE));
 }
 
 /////////////////////////////
@@ -1778,7 +1797,9 @@ static void M_QuickSave(void)
         return;
     }
 
-    if (!one_key_saveload) { // [Nugget] Restore quick-save/load prompts
+    // [Nugget] Restore quick-save/load prompts
+    if (!one_key_saveload)
+    {
         sprintf(tempstring, QSPROMPT, savegamestrings[quickSaveSlot]);
         M_StartMessage(tempstring, M_QuickSaveResponse, true);
     }
@@ -1804,12 +1825,14 @@ static void M_QuickLoad(void)
 {
     if (netgame && !demoplayback) // killough 5/26/98: add !demoplayback
     {
+        M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         M_StartMessage(s_QLOADNET, NULL, false); // Ty 03/27/98 - externalized
         return;
     }
 
     if (demorecording) // killough 5/26/98: exclude during demo recordings
     {
+        M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         M_StartMessage("you can't quickload\n"
                        "while recording a demo!\n\n" PRESSKEY,
                        NULL, false); // killough 5/26/98: not externalized
@@ -1826,7 +1849,9 @@ static void M_QuickLoad(void)
         return;
     }
 
-    if (!one_key_saveload) { // [Nugget] Restore quick-save/load prompts
+    // [Nugget] Restore quick-save/load prompts
+    if (!one_key_saveload)
+    {
         sprintf(tempstring, QLPROMPT, savegamestrings[quickSaveSlot]);
         M_StartMessage(tempstring, M_QuickLoadResponse, true);
     }
@@ -1858,6 +1883,7 @@ static void M_EndGameResponse(int ch)
     quickSaveSlot = -1;
 
     currentMenu->lastOn = itemOn;
+    S_StopChannels();
     MN_ClearMenus();
     D_StartTitle();
 }
@@ -2032,11 +2058,11 @@ static void M_DrawHelp(void)
     int helplump;
     if (gamemode == commercial)
     {
-        helplump = W_CheckNumForName("HELP");
+        helplump = W_CheckNumForName(W_CheckWidescreenPatch("HELP"));
     }
     else
     {
-        helplump = W_CheckNumForName("HELP1");
+        helplump = W_CheckNumForName(W_CheckWidescreenPatch("HELP1"));
     }
 
     V_DrawPatchFullScreen(V_CachePatchNum(helplump, PU_CACHE));
@@ -2248,11 +2274,56 @@ static menu_t GyroDef = {
 
 // [Nugget] /-----------------------------------------------------------------
 
-static menu_t ColorDef = {
+static menu_t ViewDef = {
     generic_setup_end,
     &SetupDef,
     Generic_Setup,
-    MN_DrawColor,
+    MN_DrawView,
+    34, 5,
+    0
+};
+
+static menu_t DisplayDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawDisplay,
+    34, 5,
+    0
+};
+
+static menu_t MiscDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawMisc,
+    34, 5,
+    0
+};
+
+static menu_t HUDColDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawHUDCol,
+    34, 5,
+    0
+};
+
+static menu_t MapKeysDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawMapKeys,
+    34, 5,
+    0
+};
+
+static menu_t CheatKeysDef = {
+    generic_setup_end,
+    &SetupDef,
+    Generic_Setup,
+    MN_DrawCheatKeys,
     34, 5,
     0
 };
@@ -2277,7 +2348,12 @@ void MN_SetNextMenuAlt(ss_types type)
         &PadAdvDef, &GyroDef,
 
         // [Nugget]
-        &ColorDef,
+        &ViewDef,
+        &DisplayDef,
+        &MiscDef,
+        &HUDColDef,
+        &MapKeysDef,
+        &CheatKeysDef,
         &CustomSkillDef // Custom Skill menu
     };
 
@@ -2313,6 +2389,7 @@ static void M_Setup(int choice)
 void MN_ClearMenus(void)
 {
     menuactive = 0;
+    mouse_active_thermo = false;
     options_active = false;
     print_warning_about_changes = 0; // killough 8/15/98
     default_verify = 0;              // killough 10/98
@@ -2322,6 +2399,7 @@ void MN_ClearMenus(void)
 
     I_SetSensorEventState(false);
     G_ClearInput();
+    M_ResumeSound();
 }
 
 static boolean MenuBack(void)
@@ -2591,19 +2669,15 @@ boolean M_ShortcutResponder(const event_t *ev)
     if (M_InputActivated(input_help)) // Help key
     {
         MN_StartControlPanel();
-
         currentMenu = &HelpDef; // killough 10/98: new help screen
-
         currentMenu->prevMenu = NULL;
         itemOn = 0;
-        M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
 
     if (M_InputActivated(input_savegame)) // Save Game
     {
         MN_StartControlPanel();
-        M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         M_SaveGame(0);
         return true;
     }
@@ -2611,7 +2685,6 @@ boolean M_ShortcutResponder(const event_t *ev)
     if (M_InputActivated(input_loadgame)) // Load Game
     {
         MN_StartControlPanel();
-        M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         M_LoadGame(0);
         return true;
     }
@@ -2621,19 +2694,18 @@ boolean M_ShortcutResponder(const event_t *ev)
         MN_StartControlPanel();
         currentMenu = &SoundDef;
         itemOn = currentMenu->lastOn;
-        M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
 
     if (M_InputActivated(input_quicksave)) // Quicksave
     {
-        M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         M_QuickSave();
         return true;
     }
 
     if (M_InputActivated(input_endgame)) // End game
     {
+        M_PauseSound();
         M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         M_EndGame(0);
         return true;
@@ -2648,13 +2720,13 @@ boolean M_ShortcutResponder(const event_t *ev)
 
     if (M_InputActivated(input_quickload)) // Quickload
     {
-        M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         M_QuickLoad();
         return true;
     }
 
     if (M_InputActivated(input_quit)) // Quit DOOM
     {
+        M_PauseSound();
         M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
         M_QuitDOOM(0);
         return true;
@@ -2796,7 +2868,7 @@ boolean M_ShortcutResponder(const event_t *ev)
     if (STRICTMODE(M_InputActivated(input_chasecam)))
     {
         // Freecam
-        if (R_GetFreecamOn() && !R_GetFreecamMobj())
+        if (R_FreecamOn() && !R_GetFreecamMobj())
         {
           const freecammode_t mode = R_CycleFreecamMode();
 
@@ -2810,7 +2882,7 @@ boolean M_ShortcutResponder(const event_t *ev)
 
     if (STRICTMODE(M_InputActivated(input_freecam)))
     {
-        R_SetFreecamOn(!R_GetFreecamOn());
+        R_SetFreecamOn(!R_FreecamOn());
     }
 
     if (STRICTMODE(M_InputActivated(input_rewind)))
@@ -3036,18 +3108,16 @@ static boolean MouseResponder(void)
         return false;
     }
 
-    static boolean active_thermo;
-
     if (M_InputActivated(input_menu_enter))
     {
-        active_thermo = true;
+        mouse_active_thermo = true;
     }
     else if (M_InputDeactivated(input_menu_enter))
     {
-        active_thermo = false;
+        mouse_active_thermo = false;
     }
 
-    if (active_thermo)
+    if (mouse_active_thermo)
     {
         int dot = mouse_state_x - (rect->x + M_THRM_STEP + video.deltaw);
         int step = M_MAX_VOL * FRACUNIT / (rect->w - M_THRM_STEP * 3);
@@ -3281,6 +3351,7 @@ boolean M_Responder(event_t *ev)
         I_SetSensorEventState(false);
         G_ClearInput();
         menuactive = false;
+        M_ResumeSound();
         M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
         return true;
     }
@@ -3306,12 +3377,11 @@ boolean M_Responder(event_t *ev)
         if (!chat_on
             && ((demoplayback
                  && (action == MENU_ENTER || action == MENU_BACKSPACE)
-                 && !R_GetFreecamOn()) // [Nugget] Freecam
+                 && !R_FreecamOn()) // [Nugget] Freecam
                 || action == MENU_ESCAPE)) // phares
         {
             I_ShowMouseCursor(menu_input != pad_mode);
             MN_StartControlPanel();
-            M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
             return true;
         }
         return false;
@@ -3569,6 +3639,9 @@ void MN_StartControlPanel(void)
 
     I_SetSensorEventState(true);
     G_ClearInput();
+
+    M_PauseSound();
+    M_StartSoundOptional(sfx_mnuopn, sfx_swtchn); // [Nugget]: [NS] Optional menu sounds.
 }
 
 //
@@ -3803,7 +3876,7 @@ static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, byte *cr)
 
     { // [Nugget] HUD/menu shadows
       const patch_t *const patch = V_CachePatchName("M_THERMM", PU_CACHE);
-      V_SetShadowCrop(SHORT(patch->width) - M_THRM_STEP);
+      V_SetPatchCrop(0, SHORT(patch->width) - M_THRM_STEP, 0, 0, true);
     }
 
     for (i = 0; i < thermWidth; i++)
@@ -3812,7 +3885,7 @@ static void M_DrawThermo(int x, int y, int thermWidth, int thermDot, byte *cr)
         xx += 8;
     }
 
-    V_SetShadowCrop(0); // [Nugget] HUD/menu shadows
+    V_ClearPatchCrop(); // [Nugget] HUD/menu shadows
 
     V_DrawPatchTranslatedSH(xx, y, V_CachePatchName("M_THERMR", PU_CACHE), cr); // [Nugget] HUD/menu shadows
 

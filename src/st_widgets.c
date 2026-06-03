@@ -34,6 +34,7 @@
 #include "m_config.h"
 #include "m_input.h"
 #include "m_misc.h"
+#include "mn_menu.h"
 #include "p_mobj.h"
 #include "p_spec.h"
 #include "r_main.h"
@@ -354,13 +355,13 @@ static void UpdateMessage(sbe_widget_t *widget, player_t *player)
         messages_enabled = show_messages;
     }
 
-    linkedmessage_t *m = hud_msg_scrollup ? message_list_head : message_list_tail;
-
     // If true, show full list, otherwise maybe omit some messages
     if (message_review_duration_left > 0)
     {
         message_review_duration_left--;
     }
+
+    linkedmessage_t *m = hud_msg_scrollup ? message_list_head : message_list_tail;
 
     for (int index = hud_msg_scrollup ? 0 : num_messages-1;  m;)
     {
@@ -376,8 +377,8 @@ static void UpdateMessage(sbe_widget_t *widget, player_t *player)
             // Message fadeout -----------------------------------------------
 
             const int fadeout_time = (index < num_messages - hud_msg_lines)
-                                     ? message_review_duration_left
-                                     : MAX(m->duration_left, message_review_duration_left);
+                                   ? message_review_duration_left
+                                   : MAX(m->duration_left, message_review_duration_left);
 
             FadeOutLine(line, fadeout_time);
 
@@ -405,7 +406,7 @@ static void UpdateMessage(sbe_widget_t *widget, player_t *player)
     }
 }
 
-static char announce_string[HU_MAXLINELENGTH];
+static char announce_string[HU_MAXLINELENGTH], author_string[HU_MAXLINELENGTH];
 
 static void UpdateAnnounceMessage(sbe_widget_t *widget, player_t *player)
 {
@@ -435,6 +436,7 @@ static void UpdateAnnounceMessage(sbe_widget_t *widget, player_t *player)
     }
     else if (player->secretmessage)
     {
+        author_string[0] = '\0';
         state = announce_secret;
         widget->duration_left = widget->duration;
         M_snprintf(string, sizeof(string), GOLD_S "%s" ORIG_S,
@@ -445,10 +447,15 @@ static void UpdateAnnounceMessage(sbe_widget_t *widget, player_t *player)
     if (widget->duration_left > 0)
     {
         ST_AddLine(widget, string);
+        if (author_string[0])
+        {
+            ST_AddLine(widget, author_string);
+        }
         --widget->duration_left;
 
         // [Nugget] Message fadeout
-        FadeOutLine(&widget->lines[array_size(widget->lines) - 1], widget->duration_left);
+        for (int i = 0;  i < array_size(widget->lines);  i++)
+        { FadeOutLine(&widget->lines[i], widget->duration_left); }
     }
     else
     {
@@ -508,7 +515,7 @@ typedef struct
     int pos;
 } chatline_t;
 
-static chatline_t lines[MAXPLAYERS];
+static chatline_t chatlines[MAXPLAYERS]; // [Nugget] Renamed
 
 static void ClearChatLine(chatline_t *line)
 {
@@ -581,20 +588,20 @@ void ST_UpdateChatMessage(void)
                     ch = (char)shiftxform[(unsigned char)ch];
                 }
 
-                if (AddKeyToChatLine(&lines[p], ch) && ch == KEY_ENTER)
+                if (AddKeyToChatLine(&chatlines[p], ch) && ch == KEY_ENTER)
                 {
-                    if (lines[p].pos && (chat_dest[p] == consoleplayer + 1
-                                         || chat_dest[p] == HU_BROADCAST))
+                    if (chatlines[p].pos && (chat_dest[p] == consoleplayer + 1
+                                             || chat_dest[p] == HU_BROADCAST))
                     {
                         M_snprintf(message_string, sizeof(message_string),
-                            "%s%s", *player_names[p], lines[p].string);
+                            "%s%s", *player_names[p], chatlines[p].string);
 
                         S_StartSoundPitch(0,
                                           gamemode == commercial ? sfx_radio
                                                                  : sfx_tink,
                                           PITCH_NONE);
                     }
-                    ClearChatLine(&lines[p]);
+                    ClearChatLine(&chatlines[p]);
                 }
             }
             players[p].cmd.chatchar = 0;
@@ -922,16 +929,23 @@ void ST_ResetTitle(void)
                '0' + hudcolor_titl, string);
 
     announce_string[0] = '\0';
+    author_string[0] = '\0';
     if (hud_map_announce && leveltime == 0)
     {
         if (gamemapinfo && gamemapinfo->author)
         {
             M_snprintf(announce_string, sizeof(announce_string), "%s by %s",
                        string, gamemapinfo->author);
+            if (MN_StringWidth(announce_string) > SCREENWIDTH) 
+            {
+                M_StringCopy(announce_string, string, sizeof(announce_string));
+                M_snprintf(author_string, sizeof(author_string), "by %s",
+                           gamemapinfo->author);
+            }
         }
         else
         {
-            M_snprintf(announce_string, sizeof(announce_string), "%s", string);
+            M_StringCopy(announce_string, string, sizeof(announce_string));
         }
     }
 }
@@ -1273,7 +1287,7 @@ static void UpdateStTime(sbe_widget_t *widget, player_t *player)
 {
     ST_ClearLines(widget);
 
-    if (!WidgetEnabled(hud_level_time))
+    if (!WidgetEnabled(hud_level_time) && !player->btuse_tics)
     {
         return;
     }
@@ -1286,35 +1300,32 @@ static void UpdateStTime(sbe_widget_t *widget, player_t *player)
 
     // [Nugget] Colors
 
-    if (time_scale != 100)
+    if (WidgetEnabled(hud_level_time))
     {
-        offset +=
-            M_snprintf(string, sizeof(string), "\x1b%c%d%% ",
-                       '0'+hudcolor_time_scale, time_scale);
+        if (time_scale != 100)
+        {
+            offset +=
+                M_snprintf(string, sizeof(string), "\x1b%c%d%% ",
+                           '0'+hudcolor_time_scale, time_scale);
+        }
+
+        if (levelTimer == true)
+        {
+            const int time = levelTimeCount / TICRATE;
+
+            offset += M_snprintf(string + offset, sizeof(string) - offset,
+                                 BROWN_S "%d:%02d ", time / 60, time % 60);
+        }
+        else if (totalleveltimes)
+        {
+            const int time = (totalleveltimes + leveltime) / TICRATE;
+
+            offset += M_snprintf(string + offset, sizeof(string) - offset,
+                                 "\x1b%c%d:%02d ", '0'+hudcolor_total_time, time / 60, time % 60);
+        }
     }
 
-    if (levelTimer == true)
-    {
-        const int time = levelTimeCount / TICRATE;
-
-        offset += M_snprintf(string + offset, sizeof(string) - offset,
-                             BROWN_S "%d:%02d ", time / 60, time % 60);
-    }
-    else if (totalleveltimes)
-    {
-        const int time = (totalleveltimes + leveltime) / TICRATE;
-
-        offset += M_snprintf(string + offset, sizeof(string) - offset,
-                             "\x1b%c%d:%02d ", '0'+hudcolor_total_time, time / 60, time % 60);
-    }
-
-    if (!player->btuse_tics)
-    {
-        M_snprintf(string + offset, sizeof(string) - offset,
-                   "\x1b%c%d:%05.2f\t", '0'+hudcolor_time, leveltime / TICRATE / 60,
-                   (float)(leveltime % (60 * TICRATE)) / TICRATE);
-    }
-    else
+    if (player->btuse_tics)
     {
         const int type = player->eventtype;
 
@@ -1325,7 +1336,12 @@ static void UpdateStTime(sbe_widget_t *widget, player_t *player)
                    type == TIMER_KEYPICKUP ? 'K' : type == TIMER_TELEPORT ? 'T' : 'U',
                    player->btuse / TICRATE / 60, 
                    (float)(player->btuse % (60 * TICRATE)) / TICRATE);
-        player->btuse_tics--;
+    }
+    else
+    {
+        M_snprintf(string + offset, sizeof(string) - offset,
+                   "\x1b%c%d:%05.2f\t", '0'+hudcolor_time, leveltime / TICRATE / 60,
+                   (float)(leveltime % (60 * TICRATE)) / TICRATE);
     }
 
     ST_AddLine(widget, string);
@@ -1503,30 +1519,30 @@ struct
     const char *col;
 } static const colorize_strings[] = {
     // [Woof!] colorize keycard and skull key messages
-    {&s_GOTBLUECARD,     CR_BLUE2, " blue "  },
-    {&s_GOTBLUESKUL,     CR_BLUE2, " blue "  },
-    {&s_GOTREDCARD,      CR_RED,   " red "   },
-    {&s_GOTREDSKULL,     CR_RED,   " red "   },
-    {&s_GOTYELWCARD,     CR_GOLD,  " yellow "},
-    {&s_GOTYELWSKUL,     CR_GOLD,  " yellow "},
-    {&s_PD_BLUEC,        CR_BLUE2, " blue "  },
-    {&s_PD_BLUEK,        CR_BLUE2, " blue "  },
-    {&s_PD_BLUEO,        CR_BLUE2, " blue "  },
-    {&s_PD_BLUES,        CR_BLUE2, " blue "  },
-    {&s_PD_REDC,         CR_RED,   " red "   },
-    {&s_PD_REDK,         CR_RED,   " red "   },
-    {&s_PD_REDO,         CR_RED,   " red "   },
-    {&s_PD_REDS,         CR_RED,   " red "   },
-    {&s_PD_YELLOWC,      CR_GOLD,  " yellow "},
-    {&s_PD_YELLOWK,      CR_GOLD,  " yellow "},
-    {&s_PD_YELLOWO,      CR_GOLD,  " yellow "},
-    {&s_PD_YELLOWS,      CR_GOLD,  " yellow "},
+    {&s_GOTBLUECARD,     CR_BLUE2, "blue"  },
+    {&s_GOTBLUESKUL,     CR_BLUE2, "blue"  },
+    {&s_GOTREDCARD,      CR_RED,   "red"   },
+    {&s_GOTREDSKULL,     CR_RED,   "red"   },
+    {&s_GOTYELWCARD,     CR_GOLD,  "yellow"},
+    {&s_GOTYELWSKUL,     CR_GOLD,  "yellow"},
+    {&s_PD_BLUEC,        CR_BLUE2, "blue"  },
+    {&s_PD_BLUEK,        CR_BLUE2, "blue"  },
+    {&s_PD_BLUEO,        CR_BLUE2, "blue"  },
+    {&s_PD_BLUES,        CR_BLUE2, "blue"  },
+    {&s_PD_REDC,         CR_RED,   "red"   },
+    {&s_PD_REDK,         CR_RED,   "red"   },
+    {&s_PD_REDO,         CR_RED,   "red"   },
+    {&s_PD_REDS,         CR_RED,   "red"   },
+    {&s_PD_YELLOWC,      CR_GOLD,  "yellow"},
+    {&s_PD_YELLOWK,      CR_GOLD,  "yellow"},
+    {&s_PD_YELLOWO,      CR_GOLD,  "yellow"},
+    {&s_PD_YELLOWS,      CR_GOLD,  "yellow"},
 
     // [Woof!] colorize multi-player messages
-    {&s_HUSTR_PLRGREEN,  CR_GREEN, "Green: " },
-    {&s_HUSTR_PLRINDIGO, CR_GRAY,  "Indigo: "},
-    {&s_HUSTR_PLRBROWN,  CR_BROWN, "Brown: " },
-    {&s_HUSTR_PLRRED,    CR_RED,   "Red: "   },
+    {&s_HUSTR_PLRGREEN,  CR_GREEN, "Green:" },
+    {&s_HUSTR_PLRINDIGO, CR_GRAY,  "Indigo:"},
+    {&s_HUSTR_PLRBROWN,  CR_BROWN, "Brown:" },
+    {&s_HUSTR_PLRRED,    CR_RED,   "Red:"   },
 };
 
 static char* PrepareColor(const char *str, const char *col)
@@ -1535,7 +1551,7 @@ static char* PrepareColor(const char *str, const char *col)
 
     M_snprintf(col_replace, sizeof(col_replace),
                ORIG_S "%s" ORIG_S, col);
-    str_replace = M_StringReplace(str, col, col_replace);
+    str_replace = M_StringReplaceWord(str, col, col_replace);
 
     return str_replace;
 }
@@ -1756,6 +1772,7 @@ void ST_BindHUDVariables(void)
             HUD_WIDGET_OFF, HUD_WIDGET_OFF, HUD_WIDGET_ALWAYS, ss_stat, wad_no,
             "Show powerup-timers widget (1 = On automap; 2 = On HUD; 3 = Always)");
 
+  // (CFG-only)
   M_BindBool("hud_power_timers_notime", &hud_power_timers_notime, NULL,
              false, ss_none, wad_no,
              "Show only powerup names/icons in powerup-timers widget");
@@ -1777,48 +1794,51 @@ void ST_BindHUDVariables(void)
   // [Nugget] Extended HUD colors /-------------------------------------------
 
   M_BindNum("hudcolor_time_scale", &hudcolor_time_scale, NULL,
-            CR_BLUE1, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_BLUE1, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for time scale (game-speed percent) in Time display");
 
   M_BindNum("hudcolor_total_time", &hudcolor_total_time, NULL,
-            CR_GREEN, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_GREEN, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for total level time in Time display");
 
   M_BindNum("hudcolor_time", &hudcolor_time, NULL,
-            CR_GRAY, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_GRAY, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for level time in Time display");
 
   M_BindNum("hudcolor_event_timer", &hudcolor_event_timer, NULL,
-            CR_GOLD, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_GOLD, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for event timer in Time display");
 
   M_BindNum("hudcolor_kills", &hudcolor_kills, NULL,
-            CR_RED, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_RED, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for Kills label in Stats display");
 
   M_BindNum("hudcolor_items", &hudcolor_items, NULL,
-            CR_RED, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_RED, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for Items label in Stats display");
 
   M_BindNum("hudcolor_secrets", &hudcolor_secrets, NULL,
-            CR_RED, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_RED, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for Secrets label in Stats display");
 
   M_BindNum("hudcolor_ms_incomp", &hudcolor_ms_incomp, NULL,
-            CR_GRAY, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_GRAY, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for incomplete milestones in Stats display");
 
   M_BindNum("hudcolor_ms_comp", &hudcolor_ms_comp, NULL,
-            CR_BLUE1, CR_BRICK, CR_NONE, ss_stat, wad_yes,
+            CR_BLUE1, CR_BRICK, CR_NONE, ss_hudcol, wad_yes,
             "Color used for complete milestones in Stats display");
 
   // [Nugget] ---------------------------------------------------------------/
 
   BIND_BOOL(show_messages, true, "Show messages");
+
+  // [Nugget] Sound-only option
   M_BindNum("hud_secret_message", &hud_secret_message, NULL,
-            SECRETMESSAGE_ON, SECRETMESSAGE_OFF, SECRETMESSAGE_COUNT,
+            SECRETMESSAGE_ON, SECRETMESSAGE_OFF, NUM_SECRETMESSAGE-1,
             ss_stat, wad_no,
-            "Announce revealed secrets (0 = Off; 1 = On; 2 = Count)");
+            "Announce revealed secrets (0 = Off; 1 = On; 2 = Count; 3 = Sound only)");
+
   M_BindBool("hud_map_announce", &hud_map_announce, NULL,
             false, ss_stat, wad_no, "Announce map titles");
 
@@ -1841,8 +1861,7 @@ void ST_BindHUDVariables(void)
 
   // [Nugget] Restored menu item
   M_BindNum("hudcolor_obituary", &hudcolor_obituary, NULL,
-            CR_GRAY, CR_BRICK, CR_NONE,
-            ss_stat, wad_no,
+            CR_GRAY, CR_BRICK, CR_NONE, ss_stat, wad_no,
             "Color range used for obituaries");
 
   M_BindBool("message_centered", &message_centered, NULL,
@@ -1862,17 +1881,21 @@ void ST_BindHUDVariables(void)
              false, ss_stat, wad_yes,
              "Messages flash when they first appear");
 
-  BIND_NUM(hud_msg_duration, 0, 0, UL,
-           "Force duration of messages, in tics (0 = Don't force)");
+  M_BindNum("hud_msg_duration", &hud_msg_duration, NULL,
+            0, 0, UL, ss_stat, wad_no,
+            "Force duration of messages, in tics (0 = Don't force)");
 
-  BIND_NUM(hud_chat_duration, 0, 0, UL,
-           "Force duration of chat messages, in tics (0 = Don't force)");
+  M_BindNum("hud_chat_duration", &hud_chat_duration, NULL,
+            0, 0, UL, ss_stat, wad_no,
+            "Force duration of chat messages, in tics (0 = Don't force)");
 
-  BIND_NUM(hud_msg_lines, 1, 1, 8,
-           "Number of lines in message list shown normally");
+  M_BindNum("hud_msg_lines", &hud_msg_lines, NULL,
+            1, 1, 8, ss_stat, wad_no,
+            "Number of lines in message list shown normally");
 
-  BIND_NUM(hud_msg_total_lines, 1, 1, 8,
-           "Number of lines in message list shown during message review");
+  M_BindNum("hud_msg_total_lines", &hud_msg_total_lines, NULL,
+            1, 1, 8, ss_stat, wad_no,
+            "Number of lines in message list shown during message review");
 
   M_BindBool("hud_msg_group", &hud_msg_group, NULL,
              false, ss_stat, wad_no,

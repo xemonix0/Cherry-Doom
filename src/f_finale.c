@@ -73,7 +73,7 @@ static int finalecount;
 static const char *finaletext;
 static const char *finaleflat;
 
-static void F_StartCast(void);
+void F_StartCast(void); // [Nugget] Global
 static void F_CastTicker(void);
 static boolean F_CastResponder(event_t *ev);
 static void F_CastDrawer(void);
@@ -233,7 +233,8 @@ static boolean MapInfo_Drawer(void)
             else if (gamemapinfo->endpic[0])
             {
                 V_DrawPatchFullScreen(
-                    V_CachePatchName(gamemapinfo->endpic, PU_CACHE));
+                    V_CachePatchName(
+                        W_CheckWidescreenPatch(gamemapinfo->endpic), PU_CACHE));
             }
             break;
         case FINALE_STAGE_CAST:
@@ -638,7 +639,7 @@ static int F_SoundForState (int st)
 //
 // F_StartCast
 //
-static void F_StartCast(void)
+void F_StartCast(void) // [Nugget] Global
 {
   // Ty 03/23/98 - clumsy but time is of the essence
   castorder[0].name = s_CC_ZOMBIE,  castorder[0].type = MT_POSSESSED;
@@ -1143,10 +1144,8 @@ static boolean F_CastResponder(event_t* ev)
     else {
       caststate = &states[mobjinfo[castorder[castnum].type].seestate];
       casttics = caststate->tics;
-      castdeath = false;
-      castframes = 0;
-      castonmelee = 0;
-      castattacking = false;
+      castattacking = castdeath = castflip = false;
+      castframes = castonmelee = 0;
     }
 
     return true;
@@ -1329,7 +1328,9 @@ static void F_CastDrawer(void)
 
   // [Nugget] ---------------------------------------------------------------/
 
-    V_DrawPatchFullScreen (V_CachePatchName (bgcastcall, PU_CACHE)); // Ty 03/30/98 bg texture extern
+    // Ty 03/30/98 bg texture extern
+    V_DrawPatchFullScreen(
+      V_CachePatchName(W_CheckWidescreenPatch(bgcastcall), PU_CACHE));
 
   // [Nugget] Fancy cast
   if (!fc_enabled || fc_showname)
@@ -1403,8 +1404,8 @@ static void F_BunnyScroll(void)
   int         stage;
   static int  laststage;
 
-  p1 = V_CachePatchName ("PFUB1", PU_LEVEL);
-  p2 = V_CachePatchName ("PFUB2", PU_LEVEL);
+  p1 = V_CachePatchName(W_CheckWidescreenPatch("PFUB1"), PU_LEVEL);
+  p2 = V_CachePatchName(W_CheckWidescreenPatch("PFUB2"), PU_LEVEL);
 
   scrolled = 320 - (finalecount-230)/2;
 
@@ -1491,18 +1492,22 @@ void F_Drawer (void)
     {
       case 1:
            if ( gamemode == retail || gamemode == commercial )
-             V_DrawPatchFullScreen (V_CachePatchName("CREDIT",PU_CACHE));
+             V_DrawPatchFullScreen(
+              V_CachePatchName(W_CheckWidescreenPatch("CREDIT"), PU_CACHE));
            else
-             V_DrawPatchFullScreen (V_CachePatchName("HELP2",PU_CACHE));
+             V_DrawPatchFullScreen(
+              V_CachePatchName(W_CheckWidescreenPatch("HELP2"), PU_CACHE));
            break;
       case 2:
-           V_DrawPatchFullScreen (V_CachePatchName("VICTORY2",PU_CACHE));
+           V_DrawPatchFullScreen(
+            V_CachePatchName(W_CheckWidescreenPatch("VICTORY2"), PU_CACHE));
            break;
       case 3:
-           F_BunnyScroll ();
+           F_BunnyScroll();
            break;
       case 4:
-           V_DrawPatchFullScreen (V_CachePatchName("ENDPIC",PU_CACHE));
+           V_DrawPatchFullScreen(
+            V_CachePatchName(W_CheckWidescreenPatch("ENDPIC"), PU_CACHE));
            break;
     }
   }

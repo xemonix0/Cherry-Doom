@@ -78,8 +78,6 @@ typedef struct
     sfxinfo_t *sfx;
 
     boolean enabled;
-    // haleyjd 06/16/08: unique id number
-    int idnum;
 } channel_info_t;
 
 static channel_info_t channelinfo[MAX_CHANNELS];
@@ -131,14 +129,14 @@ static void StopChannel(int channel)
 // Returns false if no sound should be played.
 //
 boolean I_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
-                            int chanvol, int *vol, int *sep, int *pri)
+                            sfxparams_t *params)
 {
     if (!snd_init)
     {
         return false;
     }
 
-    return sound_module->AdjustSoundParams(listener, source, chanvol, vol, sep, pri);
+    return sound_module->AdjustSoundParams(listener, source, params);
 }
 
 //
@@ -147,7 +145,7 @@ boolean I_AdjustSoundParams(const mobj_t *listener, const mobj_t *source,
 // Changes sound parameters in response to stereo panning and relative location
 // change.
 //
-void I_UpdateSoundParams(int channel, int volume, int separation)
+void I_UpdateSoundParams(int channel, const sfxparams_t *params)
 {
     if (!snd_init)
     {
@@ -161,7 +159,7 @@ void I_UpdateSoundParams(int channel, int volume, int separation)
     }
 #endif
 
-    sound_module->UpdateSoundParams(channel, volume, separation);
+    sound_module->UpdateSoundParams(channel, params);
 }
 
 void I_UpdateListenerParams(const mobj_t *listener)
@@ -256,9 +254,8 @@ int I_GetSfxLumpNum(sfxinfo_t *sfx)
 // active sounds, which is maintained as a given number
 // of internal channels. Returns a free channel.
 //
-int I_StartSound(sfxinfo_t *sfx, int vol, int sep, int pitch)
+int I_StartSound(sfxinfo_t *sfx, const sfxparams_t *params, int pitch)
 {
-    static unsigned int id = 0;
     int channel;
 
     if (!snd_init)
@@ -291,9 +288,8 @@ int I_StartSound(sfxinfo_t *sfx, int vol, int sep, int pitch)
 
     channelinfo[channel].sfx = sfx;
     channelinfo[channel].enabled = true;
-    channelinfo[channel].idnum = id++; // give the sound a unique id
 
-    I_UpdateSoundParams(channel, vol, sep);
+    I_UpdateSoundParams(channel, params);
 
     float step = (pitch == NORM_PITCH) ? 1.0f : steptable[pitch];
 
@@ -330,6 +326,46 @@ void I_StopSound(int channel)
     StopChannel(channel);
 }
 
+void I_PauseSound(int channel)
+{
+    if (!snd_init || !sound_module->PauseSound)
+    {
+        return;
+    }
+
+#ifdef RANGECHECK
+    if (channel < 0 || channel >= MAX_CHANNELS)
+    {
+        I_Error("I_PauseSound: channel out of range");
+    }
+#endif
+
+    if (channelinfo[channel].enabled)
+    {
+        sound_module->PauseSound(channel);
+    }
+}
+
+void I_ResumeSound(int channel)
+{
+    if (!snd_init || !sound_module->ResumeSound)
+    {
+        return;
+    }
+
+#ifdef RANGECHECK
+    if (channel < 0 || channel >= MAX_CHANNELS)
+    {
+        I_Error("I_ResumeSound: channel out of range");
+    }
+#endif
+
+    if (channelinfo[channel].enabled)
+    {
+        sound_module->ResumeSound(channel);
+    }
+}
+
 //
 // I_SoundIsPlaying
 //
@@ -352,29 +388,21 @@ boolean I_SoundIsPlaying(int channel)
     return sound_module->SoundIsPlaying(channel);
 }
 
-//
-// I_SoundID
-//
-// haleyjd: returns the unique id number assigned to a specific instance
-// of a sound playing on a given channel. This is required to make sure
-// that the higher-level sound code doesn't start updating sounds that have
-// been displaced without it noticing.
-//
-int I_SoundID(int channel)
+boolean I_SoundIsPaused(int channel)
 {
-    if (!snd_init)
+    if (!snd_init || !sound_module->SoundIsPaused)
     {
-        return 0;
+        return false;
     }
 
 #ifdef RANGECHECK
     if (channel < 0 || channel >= MAX_CHANNELS)
     {
-        I_Error("I_SoundID: channel out of range\n");
+        I_Error("I_SoundIsPaused: channel out of range");
     }
 #endif
 
-    return channelinfo[channel].idnum;
+    return sound_module->SoundIsPaused(channel);
 }
 
 //
@@ -745,7 +773,7 @@ void I_BindSoundVariables(void)
 
     // [Nugget]
     M_BindBool("s_clipping_dist_x2", &s_clipping_dist_x2, NULL,
-               false, ss_gen, wad_yes,
+               false, ss_misc, wad_yes,
                "Double sound-clipping distance");
 
     BIND_NUM_SFX(snd_channels, MAX_CHANNELS, 1, MAX_CHANNELS,

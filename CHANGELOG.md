@@ -7,13 +7,8 @@
 
 ## Nugget Doom merges
 
-Merged changes from the following Nugget Doom releases:
-- [3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0):
-	- Stats tracking is disabled when _Duplicate Monsters_ is active
-- [4.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.0.0)
-- [4.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.1.0)
-- [4.2.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.2.0)
-- [4.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.3.0)
+Merged changes from Nugget Doom releases [3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0) through [5.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-5.0.0), note:
+- Stats tracking is disabled when _Duplicate Monsters_ is active
 
 ## Changes
 
@@ -31,6 +26,6 @@ Merged changes from the following Nugget Doom releases:
 
 - Removed the _Movement widget_, favoring Woof!'s _speedometer_ and _command history widget_
 - Removed _Low/Ok/Good/Extra value color customization_ and the _intermission screen widgets_ due to the removal of Health, Armor, Ammo, and Weapons widgets
-- Saves from Woof! 14.0.0 and later, as well as Nugget Doom 2.1.0 and later, are no longer supported
+- Removed support for Woof! and Nugget Doom savefiles
 
 [^1]: This will affect existing config files.

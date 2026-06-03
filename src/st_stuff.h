@@ -47,6 +47,10 @@ int ST_GetMessageFontHeight(void);
 boolean ST_IconAvailable(const int i);
 boolean ST_GetNughudOn(void);
 
+// Animated health/armor counts
+int ST_GetStatusBarHealth(void);
+int ST_GetStatusBarArmor(void);
+
 // Key blinking --------------------------------------------------------------
 
 typedef enum keyblink_e
@@ -102,6 +106,13 @@ void ST_InitRes(void);
 extern int health_red;    // health amount less than which status is red
 extern int health_yellow; // health amount less than which status is yellow
 extern int health_green;  // health amount above is blue, below is green
+
+static inline boolean ST_PlayerInvulnerable(player_t *player)
+{
+    return (player->cheats & CF_GODMODE) ||
+        (player->powers[pw_invulnerability] > 4 * 32) ||
+        (player->powers[pw_invulnerability] & 8);
+}
 
 extern boolean palette_changes;
 

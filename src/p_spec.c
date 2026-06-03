@@ -220,6 +220,11 @@ void P_InitPicAnims (void)
                  animdefs[i].endname);
       }
 
+      if (lastanim->speed == 0)
+        I_Error ("%s to %s animation cannot have speed 0",
+                 animdefs[i].startname,
+                 animdefs[i].endname);
+
       lastanim++;
     }
   Z_ChangeTag (animdefs,PU_CACHE); //jff 3/23/98 allow table to be freed
@@ -2215,7 +2220,12 @@ static void P_SecretRevealed(player_t *player)
 
   if (hud_secret_message && player == &players[consoleplayer])
   {
-    if (hud_secret_message == SECRETMESSAGE_COUNT)
+    // [Nugget] Sound-only option
+    if (hud_secret_message == SECRETMESSAGE_SOUNDONLY)
+    {
+      // No message, duh
+    }
+    else if (hud_secret_message == SECRETMESSAGE_COUNT)
     {
       static char str_count[32];
 

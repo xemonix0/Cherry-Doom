@@ -347,7 +347,7 @@ void P_MovePlayer (player_t* player)
       else if (onground && !player->jumptics
                && mo->height == mo->info->height
                && ceilingz - floorz > mo->height)
-      { // Jump
+      {
         mo->momz = 8*FRACUNIT;
         player->jumptics = 20;
 
@@ -384,7 +384,7 @@ void P_MovePlayer (player_t* player)
   // Forcefully stand up under certain conditions
   if ((mo->intflags & MIF_CROUCHING)
       && (!jump_crouch || player->cheats & CF_FLY
-          || ((R_GetChasecamOn() || R_GetFreecamOn()) && !have_crouch_sprites)))
+          || ((R_ChasecamOn() || R_FreecamOn()) && !have_crouch_sprites)))
   {
     mo->intflags &= ~MIF_CROUCHING;
   }
@@ -474,7 +474,7 @@ void P_MovePlayer (player_t* player)
           // [Nugget] -------------------------------------------------------/
 
           // [Nugget] Freecam
-          const angle_t angle = (casual_play && R_GetFreecamOn() && player == &players[consoleplayer])
+          const angle_t angle = (casual_play && R_FreecamOn() && player == &players[consoleplayer])
                                 ? R_GetFreecamAngle() : mo->angle;
 
           if (cmd->forwardmove)
@@ -506,7 +506,7 @@ void P_MovePlayer (player_t* player)
   if (!menuactive && !demoplayback && !player->centering)
   {
     player->pitch += cmd->pitch << FRACBITS;
-    player->pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, player->pitch);
+    player->pitch = BETWEEN(-max_pitch_angle, max_pitch_angle, player->pitch);
     player->slope = PlayerSlope(player);
   }
 }
@@ -584,7 +584,7 @@ void P_DeathThink (player_t* player)
 
         fixed_t pitch;
 
-        if (!R_GetChasecamOn())
+        if (!R_ChasecamOn())
         {
           const fixed_t slope =
             FixedDiv(
@@ -597,7 +597,7 @@ void P_DeathThink (player_t* player)
 
           pitch = P_SlopeToPitch(slope);
 
-          pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, pitch);
+          pitch = BETWEEN(-max_pitch_angle, max_pitch_angle, pitch);
         }
         else { pitch = 0; }
 
@@ -657,7 +657,7 @@ void P_SetPlayerEvent(player_t* player, eventtimer_t type)
   player->eventtype = type;
   // to match the timer, we use the leveltime value at the end of the frame
   player->btuse = leveltime + 1;
-  player->btuse_tics = 5*TICRATE/2; // [crispy] 2.5 seconds
+  player->btuse_tics = 5*TICRATE/2 + 1; // [crispy] 2.5 seconds
 }
 
 //
@@ -709,19 +709,11 @@ void P_PlayerThink (player_t* player)
   { player->centering = false; }
 
   // [crispy] center view
-  #define CENTERING_VIEW_ANGLE (4 * ANG1)
-
   if (player->centering)
   {
-    if (player->pitch > 0)
-    {
-      player->pitch -= CENTERING_VIEW_ANGLE;
-    }
-    else if (player->pitch < 0)
-    {
-      player->pitch += CENTERING_VIEW_ANGLE;
-    }
-    if (abs(player->pitch) < CENTERING_VIEW_ANGLE)
+    player->pitch /= 2;
+
+    if (abs(player->pitch) < ANG1)
     {
       player->pitch = 0;
 
@@ -766,7 +758,7 @@ void P_PlayerThink (player_t* player)
     {
       // [Nugget] Disable zoom upon death
       if (player == &players[displayplayer] && R_GetZoom() == ZOOM_ON
-          && !R_GetFreecamOn())
+          && !R_FreecamOn())
       {
         R_SetZoom(ZOOM_OFF);
       }
@@ -819,27 +811,26 @@ void P_PlayerThink (player_t* player)
         overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
       }
 
-      if (linetarget) { lock_time = 21; } // 0.6s
-
       fixed_t target_pitch = 0;
 
-      if (lock_time)
+      if (linetarget)
       {
-        if (linetarget)
-        {
-          fixed_t slope = FixedDiv(linetarget->z - player->mo->z,
-                                   P_AproxDistance(player->mo->x - linetarget->x,
-                                                   player->mo->y - linetarget->y));
+        lock_time = TICRATE * 3/5; // 0.6s
 
-          slope = BETWEEN(P_GetLinetargetBottomSlope(),
-                          P_GetLinetargetTopSlope(),
-                          slope);
+        fixed_t slope = FixedDiv(linetarget->z - player->mo->z,
+                                 P_AproxDistance(player->mo->x - linetarget->x,
+                                                 player->mo->y - linetarget->y));
 
-          target_pitch = P_SlopeToPitch(slope);
-          target_pitch = BETWEEN(-MAX_PITCH_ANGLE, MAX_PITCH_ANGLE, target_pitch);
-        }
-        else { target_pitch = player->pitch; }
+        slope = BETWEEN(P_GetLinetargetBottomSlope(),
+                        P_GetLinetargetTopSlope(),
+                        slope);
+
+        target_pitch = P_SlopeToPitch(slope);
+        target_pitch = BETWEEN(-max_pitch_angle, max_pitch_angle, target_pitch);
       }
+      else if (lock_time) { target_pitch = player->pitch; }
+
+      if (abs(target_pitch) < 8*ANG1) { target_pitch = 0; }
 
       const fixed_t step = MAX(ANG1, abs(player->pitch - target_pitch) / 4);
 
@@ -959,8 +950,8 @@ void P_PlayerThink (player_t* player)
 	  P_UseLines (player);
 	  player->usedown = true;
 
-    // [Nugget] Support more event timers
-    P_SetPlayerEvent(player, TIMER_USE);
+	  // [Nugget] Support more event timers
+	  P_SetPlayerEvent(player, TIMER_USE);
 	}
     }
   else
@@ -971,6 +962,9 @@ void P_PlayerThink (player_t* player)
   P_MovePsprites (player);
 
   // Counters, time dependent power ups.
+
+  if (player->btuse_tics > 0)
+    player->btuse_tics--;
 
   // Strength counts up to diminish fade.
 

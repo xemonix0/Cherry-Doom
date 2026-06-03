@@ -137,7 +137,6 @@ void MN_BackSecondary(void);
 // [FG] alternative text for missing menu graphics lumps
 void MN_DrawTitle(int x, int y, const char *patch, const char *alttext);
 void MN_DrawStringCR(int cx, int cy, byte *cr1, byte *cr2, const char *ch);
-int MN_StringWidth(const char *string);
 int MN_StringHeight(const char *string);
 
 void MN_General(int choice);
@@ -165,7 +164,12 @@ void MN_DrawGyro(void);
 
 // [Nugget] /-----------------------------------------------------------------
 
-void MN_DrawColor(void);
+void MN_DrawView(void);
+void MN_DrawDisplay(void);
+void MN_DrawMisc(void);
+void MN_DrawHUDCol(void);
+void MN_DrawMapKeys(void);
+void MN_DrawCheatKeys(void);
 
 // Custom Skill menu
 void MN_CustomSkill(void);

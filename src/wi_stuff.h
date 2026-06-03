@@ -36,10 +36,11 @@ typedef enum altinterpic_s {
 // CVARs
 extern altinterpic_t alt_interpic;
 extern boolean inter_ratio_stats;
+extern boolean inter_entering_delay;
 
 // Alt. intermission background ----------------------------------------------
 
-extern boolean WI_UsingAltInterpic(void);
+extern boolean WI_AltInterpicOn(void);
 extern void WI_DisableAltInterpic(void);
 
 // [Nugget] =================================================================/

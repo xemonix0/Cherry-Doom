@@ -92,6 +92,7 @@
 // [Nugget]
 #include <time.h>
 #include "m_nughud.h"
+#include "r_data.h"
 
 #include "wad_stats.h" // [Cherry]
 
@@ -296,7 +297,7 @@ void D_Display (void)
     fractionaltic = I_GetFracTime();
 
     if (!menuactive && gamestate == GS_LEVEL && raw_input
-        && (!paused || R_FreecamTurningOverride())) // [Nugget] Freecam
+        && (!paused || R_FreecamOn())) // [Nugget] Freecam
     {
       I_StartDisplay();
     }
@@ -319,8 +320,13 @@ void D_Display (void)
         I_DynamicResolution();
     }
 
-  if (setsmoothlight)
-    R_SmoothLight();
+  // [Nugget] True color
+  if (R_InitColormapsPending())
+  { R_InitColormaps(); }
+
+  // [Nugget] Lighting modes
+  if (R_InitLightTablesPending())
+  { R_InitLightTables(); }
 
   if (setsizeneeded)                // change the view size if needed
     {
@@ -329,8 +335,17 @@ void D_Display (void)
       borderdrawcount = true;
     }
 
+  // [Nugget] Radial fog
+  if (R_InitDistLightTablesPending())
+  { R_InitDistLightTables(); }
+
   if (gamestate == GS_LEVEL && gametic)
     ST_Erase();
+
+  // [Nugget] True color: brought from below
+  // clean up border stuff
+  if (gamestate != oldgamestate && gamestate != GS_LEVEL)
+    I_SetPalette (0); // [Nugget] Pass index
 
   switch (gamestate)                // do buffered drawing
     {
@@ -355,9 +370,7 @@ void D_Display (void)
   if (gamestate == GS_LEVEL && gametic)
       R_RenderPlayerView(&players[displayplayer]);
 
-  // clean up border stuff
-  if (gamestate != oldgamestate && gamestate != GS_LEVEL)
-    I_SetPalette (W_CacheLumpName ("PLAYPAL",PU_CACHE));
+  // [Nugget] True color: moved "border stuff" code above
 
   // see if the border needs to be initially drawn
   if (gamestate == GS_LEVEL && oldgamestate != GS_LEVEL)
@@ -483,7 +496,8 @@ void D_PageTicker(void)
 
 void D_PageDrawer(void)
 {
-  V_DrawPatchFullScreen(V_CachePatchName(pagename, PU_CACHE));
+  V_DrawPatchFullScreen(
+    V_CachePatchName(W_CheckWidescreenPatch(pagename), PU_CACHE));
 }
 
 //
@@ -510,20 +524,12 @@ void D_DoAdvanceDemo(void)
     usergame = false; // no save / end game here
     paused = false;
     gameaction = ga_nothing;
+    gamestate = GS_DEMOSCREEN;
 
     D_AdvanceDemoLoop();
     switch (demoloop_point->type)
     {
         case TYPE_ART:
-            gamestate = GS_DEMOSCREEN;
-
-            // Needed to support the Doom 3: BFG Edition variant
-            if (W_CheckNumForName(demoloop_point->primary_lump) < 0
-                && !strcasecmp(demoloop_point->primary_lump, "TITLEPIC"))
-            {
-                M_CopyLumpName(demoloop_point->primary_lump, "DMENUPIC");
-            }
-
             if (W_CheckNumForName(demoloop_point->primary_lump) >= 0)
             {
                 pagename = demoloop_point->primary_lump;
@@ -533,24 +539,18 @@ void D_DoAdvanceDemo(void)
                 {
                     S_ChangeMusInfoMusic(music, false);
                 }
-                break;
             }
-            // fallthrough
+            break;
 
         case TYPE_DEMO:
-            gamestate = GS_DEMOSCREEN;
-
             if (W_CheckNumForName(demoloop_point->primary_lump) >= 0)
             {
                 G_DeferedPlayDemo(demoloop_point->primary_lump);
-                break;
             }
-            // fallthrough
+            break;
 
         default:
-            I_Printf(VB_WARNING,
-                     "D_DoAdvanceDemo: Invalid demoloop[%d] entry, skipping",
-                     demosequence);
+            I_Printf(VB_DEBUG, "D_DoAdvanceDemo: unhandled demoloop type");
             break;
     }
 }
@@ -1377,6 +1377,10 @@ static void LoadIWadBase(void)
     {
         W_AddBaseDir("doom-all");
     }
+    else if (local_gamemission == pack_chex || local_gamemission == pack_chex3v)
+    {
+        W_AddBaseDir("chex-all");
+    }
     if (local_gamemission == doom)
     {
         W_AddBaseDir("doom1-all");
@@ -1407,6 +1411,12 @@ static void AutoloadIWadDir(void (*AutoLoadFunc)(const char *path, wad_source_t 
             if (local_gamemission < pack_chex)
             {
                 dir = GetAutoloadDir(autoload_paths[i], "doom-all", true);
+                AutoLoadFunc(dir, source_other);
+                free(dir);
+            }
+            else if (local_gamemission == pack_chex || local_gamemission == pack_chex3v)
+            {
+                dir = GetAutoloadDir(autoload_paths[i], "chex-all", true);
                 AutoLoadFunc(dir, source_other);
                 free(dir);
             }
@@ -1612,7 +1622,7 @@ static void D_ShowEndDoom(void)
 
 boolean disable_endoom = false;
 
-static boolean AllowEndDoom(void)
+boolean D_AllowEndDoom(void)
 {
   return (!disable_endoom
           && (exit_sequence == EXIT_SEQUENCE_FULL
@@ -1622,7 +1632,7 @@ static boolean AllowEndDoom(void)
 static void D_EndDoom(void)
 {
   // Do we even want to show an ENDOOM?
-  if (!AllowEndDoom())
+  if (!D_AllowEndDoom())
   {
     return;
   }
@@ -1642,6 +1652,7 @@ static void D_EndDoom(void)
 // [FG] fast-forward demo to the desired map
 int playback_warp = -1;
 
+// [Nugget] SSG in Doom 1
 // [FG] check for SSG assets
 static boolean CheckHaveSSG (void)
 {
@@ -1819,7 +1830,7 @@ void D_UpdateCasualPlay(void)
 
     R_SetFuzzColumnMode();
     R_SetZoom(ZOOM_RESET); // Reset FOV
-    R_SetFreecamOn(R_GetFreecamOn());
+    R_SetFreecamOn(R_FreecamOn());
 
     MN_SetupResetMenu();
   }
@@ -2355,6 +2366,12 @@ void D_DoomMain(void)
 
   W_InitMultipleFiles();
 
+  // Always process chex.deh first
+  if (gamemission == pack_chex)
+  {
+    ProcessDehLump(W_GetNumForName("chexdeh"));
+  }
+
   // Check for wolf levels
   haswolflevels = (W_CheckNumForName("map31") >= 0);
 
@@ -2546,8 +2563,10 @@ void D_DoomMain(void)
       I_Printf(VB_INFO, "External statistics registered.");
     }
 
+  // [Nugget] SSG in Doom 1
   // [FG] check for SSG assets
   have_ssg = CheckHaveSSG();
+  MN_UpdateDoom1SSGItem();
 
   //!
   // @category game
@@ -2753,11 +2772,12 @@ void D_DoomMain(void)
 
   D_StartGameLoop();
 
-  D_UpdateCasualPlay(); // [Nugget]
+  // [Nugget] /---------------------------------------------------------------
 
-  weapon_inertia_scale = weapon_inertia_scale_pct * ORIG_WEAPON_INERTIA_SCALE / 100; // [Nugget] Weapon inertia
+  D_UpdateCasualPlay();
 
-  // [Nugget]
+  P_NuggetSetWeaponInertiaScale();
+
   if (casual_play && !fail_safe)
   {
     time_t curtime = time(NULL);
@@ -2765,12 +2785,16 @@ void D_DoomMain(void)
 
     if (curtm)
     {
-           if (curtm->tm_mon ==  3 && curtm->tm_mday ==  1) {  cheese = true; }
-      else if (curtm->tm_mon ==  6 && curtm->tm_mday == 15) {    tanz = true; }
+           if (curtm->tm_mon ==  3 && curtm->tm_mday ==  1) { cheese = true; }
+      else if (curtm->tm_mon ==  6 && curtm->tm_mday == 15) { tanz = true; }
+      else if (curtm->tm_mon ==  9 && curtm->tm_mday ==  7) { src_ain = true; }
       else if (curtm->tm_mon ==  9 && curtm->tm_mday == 31) { frights = true; }
-      else if (curtm->tm_mon == 11 && curtm->tm_mday == 25) {  flakes = allow_flakes = true; }
+      else if (curtm->tm_mon == 11 && curtm->tm_mday == 24) { flakes = allow_flakes = faint_flakes = true; }
+      else if (curtm->tm_mon == 11 && curtm->tm_mday == 25) { flakes = allow_flakes = true; }
     }
   }
+
+  // [Nugget] ---------------------------------------------------------------/
 
   for (;;)
     {
@@ -2798,12 +2822,12 @@ void D_BindMiscVariables(void)
 
   // [Nugget] /---------------------------------------------------------------
 
-  BIND_NUM_GENERAL(wipe_speed_percentage,
-                   100, 50, 200,
-                   "Screen-wipe speed percent");
+  M_BindNum("wipe_speed_percentage", &wipe_speed_percentage, NULL,
+            100, 50, 200, ss_display, wad_no,
+            "Screen-wipe speed percent");
 
   M_BindNum("alt_interpic", &alt_interpic, NULL,
-            ALTINTERPIC_OFF, ALTINTERPIC_OFF, NUM_ALTINTERPIC-1, ss_gen, wad_yes,
+            ALTINTERPIC_OFF, ALTINTERPIC_OFF, NUM_ALTINTERPIC-1, ss_display, wad_yes,
             "Alternative intermission background (0 = Off; 1 = IWAD backgrounds only; 2 = Always)");
 
   // (CFG-only)
@@ -2811,9 +2835,14 @@ void D_BindMiscVariables(void)
              false, ss_none, wad_yes,
              "Use ratios for stats in intermission screen");
 
-  BIND_NUM_GENERAL(no_page_ticking,
-                   0, 0, 2,
-                   "Play internal demos (0 = Always; 1 = Not in menus; 2 = Never)");
+  // (CFG-only)
+  M_BindBool("inter_entering_delay", &inter_entering_delay, NULL,
+             false, ss_none, wad_yes,
+             "Increase the duration of the \"Entering\" screen in Doom 2's intermission screen");
+
+  M_BindNum("no_page_ticking", &no_page_ticking, NULL,
+            0, 0, 2, ss_misc, wad_no,
+            "Play internal demos (0 = Always; 1 = Not in menus; 2 = Never)");
 
   // [Nugget] ---------------------------------------------------------------/
 
