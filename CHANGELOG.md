@@ -21,9 +21,12 @@
 - **Made bloodier crushing apply only to shootable things**
 - **Improved crosshair target detection for modded weapons**
   - Fixed _Smart Autoaim_ disabling target detection for projectile weapons
-- **Made the following trigger _Explosion Shake Effect_:**
-  - Impact of high-damage projectiles (e.g. BFG projectile)
-  - Hitscan attacks whose damage exceeds their range (e.g. berserk fist)
+- **Replaced _Explosion Shake Effect_ with _Screen-Shake Effects_**
+  - The setting now governs the effects in general, with each effect being toggleable
+  - Renamed `explosion_shake` and `explosion_shake_intensity_pct`
+    to `screen_shake_explosions` and `screen_shake_intensity_pct` respectively [^1]
+  - Added shake effect upon impact of high-damage projectiles (e.g. BFG projectile)
+  - Added shake effect for hitscan attacks whose damage exceeds their range (e.g. berserk fist)
 - **Raised upper limits of color _Intensity_ and _Saturation_ settings to 200%**
 - **Made automap-mark coloring take the <kbd>Shift</kbd> key into account**
 - **Randomized duration of spawn, death, and gib states in _Fancy Cast_**, emulating in-game behavior
@@ -33,7 +36,7 @@
 
 - **Crash when toggling _Smooth Palette Tinting_ while the screen were tinted**
 - **_Sprite Shadows_ relying on the first palette color being black**
-- **Partially fixed continuous area-of-effect attacks (e.g. fire, gas) triggering _Explosion Shake Effect_ excessively**
+- **Partially fixed continuous area-of-effect attacks (e.g. fire, gas) triggering the explosion shake effect excessively**
 - **Wrong _Tag Finder_ colors with different palettes**
 - **Damage tint not being reduced when the game were paused if _Smooth Palette Tinting_ were enabled**
 - **_Blink Missing Keys_ not working when `screenblocks` were set to 12 and NUGHUD were disabled**
@@ -41,3 +44,5 @@
 - **Horizontal-autoaim indicators not accounting for _Flip Levels_**
 - **True-color rendering breaking invisibility colormap in beta-emulation mode**
 - **_Solid [Status Bar] Background Color_ not respecting color settings with true-color rendering**
+
+[^1]. This may affect existing config files.

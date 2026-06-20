@@ -150,7 +150,9 @@ void P_ExplodeMissile (mobj_t* mo)
 
   P_SetMobjState(mo, mobjinfo[mo->type].deathstate);
 
-  { // [Nugget] Explosion shake effect
+  // [Nugget] Screen-shake effects
+  if (screen_shake_projectiles)
+  {
     const int damage = mo->info->damage;
 
     if (damage >= 20) { R_ExplosionShake(mo->x, mo->y, damage, damage * 2); }

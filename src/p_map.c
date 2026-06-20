@@ -2248,8 +2248,8 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance,
     }
   }
 
-  // Explosion shake effect
-  if (!no_hit)
+  // Screen-shake effects
+  if (!no_hit && screen_shake_hitscan)
   {
     int value = (damage - FixedToInt(distance)) / 3;
         value = MIN(50, value);
@@ -2745,9 +2745,9 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
 
   // [Nugget] /---------------------------------------------------------------
 
-  // Explosion shake effect: don't apply if the spot triggered an explosion
+  // Screen-shake effects: don't apply if the spot triggered an explosion
   // recently (it might be a continuously "exploding" attack, e.g. fire)
-  if (gametic - bombspot->last_explosion_tic >= TICRATE * 2/5)
+  if (screen_shake_explosions && gametic - bombspot->last_explosion_tic >= TICRATE * 2/5)
   { R_ExplosionShake(bombspot->x, bombspot->y, bombdamage, bombdistance); }
 
   bombspot->last_explosion_tic = gametic;
