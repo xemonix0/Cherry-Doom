@@ -217,7 +217,7 @@ enum {
   FOVFX_SLOWMO,
   FOVFX_TELEPORT,
 
-  NUMFOVFX
+  NUM_FOVFX
 };
 
 enum {
