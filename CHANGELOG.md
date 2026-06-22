@@ -44,6 +44,7 @@
 - **Sprite shadows flickering when the crosshair locked onto a target with _Flip Levels_ enabled**
 - **Horizontal-autoaim indicators not accounting for _Flip Levels_**
 - **Late _Radial Fog_ initialization when changing FOV**
+- **Message review not being enabled while new messages were being shown**
 - **True-color rendering breaking invisibility colormap in beta-emulation mode**
 - **_Solid [Status Bar] Background Color_ not respecting color settings with true-color rendering**
 
