@@ -172,6 +172,7 @@ fixed_t R_GetNughudViewPitch(void);
 boolean R_SpriteShadowsOn(void);
 int R_GetLightLevelInPoint(fixed_t x, fixed_t y, boolean force_mbf);
 int R_GetLightLevelInSector(struct sector_s *sector, const boolean force_mbf);
+const struct mobj_s *R_POVMobj(void);
 
 #define PSPR_INVIS_TRANSLUCENCY 50
 
