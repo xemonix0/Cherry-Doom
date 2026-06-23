@@ -1660,7 +1660,9 @@ static void UpdatePOVMobj(void)
 
 const mobj_t *R_POVMobj(void)
 {
-  return nodrawers ? players[displayplayer].mo : &povmobj;
+  return (!(R_FreecamOn() || R_ChasecamOn()) || nodrawers)
+         ? players[displayplayer].mo
+         : &povmobj;
 }
 
 // [Nugget] =================================================================/
