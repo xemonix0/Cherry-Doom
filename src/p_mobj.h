@@ -409,6 +409,8 @@ typedef struct mobj_s
     byte                *gentranmap;
     signed char         gentranmap_pct;
 
+    int last_explosion_tic;
+
     // [Cherry]: [JN] Amplitude of floating powerups, used *only* while rendering.
     fixed_t float_amp;
     fixed_t float_z;
@@ -506,6 +508,8 @@ extern boolean comp_fuzzyblood;
 extern boolean comp_nonbleeders;
 extern boolean comp_deadoof;
 
+#define AUTOAIM_RANGE() (16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1))
+
 int P_FindDoomedNum(unsigned type); // Global
 
 void P_ToggleDuplicateSpawns(const boolean state);
@@ -513,6 +517,7 @@ void P_ToggleDuplicateSpawns(const boolean state);
 void P_SetMobjAltState(mobj_t *const mobj, altstatenum_t statenum); // Alt. states
 
 mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenum);
+mobjinfo_t *P_VisualMobjDummyInfo(void);
 
 #define FLAKER_DIST (32 * FRACUNIT)
 #define FLAKER_DIST_MASK (FLAKER_DIST - 1)

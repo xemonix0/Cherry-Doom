@@ -36,11 +36,13 @@ struct player_s;
 
 // CVARs
 extern boolean no_menu_tint;
+extern boolean hud_menu_allow_lowercase;
 extern boolean no_berserk_tint;
 extern boolean no_radsuit_tint;
 extern boolean comp_godface;
 extern boolean comp_unusedpals;
 extern int force_carousel;
+extern int carousel_fadeout;
 
 boolean ST_GetLayout(void);
 int ST_GetMessageFontHeight(void);
@@ -50,6 +52,8 @@ boolean ST_GetNughudOn(void);
 // Animated health/armor counts
 int ST_GetStatusBarHealth(void);
 int ST_GetStatusBarArmor(void);
+
+char ST_ToUpper(const char c);
 
 // Key blinking --------------------------------------------------------------
 

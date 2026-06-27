@@ -55,6 +55,7 @@
 
 // [Nugget]
 #include "g_game.h"
+#include "i_thread.h"
 #include "m_nughud.h"
 #include "m_random.h"
 #include "p_map.h"
@@ -192,6 +193,7 @@ static int num_colormap_rows;
 
 boolean vertical_lockon;
 
+boolean allow_hires_graphics;
 spriteshadows_t sprite_shadows;
 int sprite_shadows_tran_pct;
 thinglighting_t thing_lighting_mode;
@@ -363,6 +365,46 @@ void R_DeferredInitDistLightTables(void)
   init_radfog = true;
 }
 
+static int idlt_iteration, idlt_units_quot, idlt_units_rem, idlt_units_cur;
+
+static void ThreadInitDistLightTables(void)
+{
+  I_WorkerMutexLock();
+
+  const int light_distance_start = idlt_units_cur;
+
+  idlt_units_cur += idlt_units_quot + (idlt_iteration < idlt_units_rem);
+
+  const int light_distance_end = idlt_units_cur;
+
+  idlt_iteration++;
+
+  I_WorkerMutexUnlock();
+
+  const int width = viewwidth - 1;
+
+  const int shift_bits = light_distance_shift_bits - LIGHTZSHIFT,
+            maxlightz = MAXLIGHTZ-1;
+
+  for (int i = light_distance_start;  i < light_distance_end;  i++)
+  {
+    // spandistlight
+    uint16_t *sdll = planedistlight[i],
+             *sdlr = sdll + width;
+
+    const angle_t *xtva = xtoviewangle;
+
+    const fixed_t base_distance = (i << shift_bits) * (1.0 / RADFOG_MULT);
+
+    for (; sdll <= sdlr;  sdll++, sdlr--, xtva++)
+    {
+      const fixed_t distance = base_distance * floatsecant[*xtva >> ANGLETOFINESHIFT];
+
+      *sdll = *sdlr = MIN(maxlightz, distance);
+    }
+  }
+}
+
 void R_InitDistLightTables(void)
 {
   static int max_width = 0, max_light_distance = 0;
@@ -404,28 +446,22 @@ void R_InitDistLightTables(void)
     { planedistlight[i] = all_spandistlight + (max_width * i); }
   }
 
-  const int width = viewwidth - 1;
+  const int idlt_iterations = MIN(max_light_distance, I_ThreadsNum());
 
-  const int shift_bits = light_distance_shift_bits - LIGHTZSHIFT,
-            maxlightz = MAXLIGHTZ-1;
+  idlt_iteration = 0;
+  idlt_units_quot = max_light_distance / idlt_iterations;
+  idlt_units_rem  = max_light_distance % idlt_iterations;
+  idlt_units_cur  = 0;
 
-  for (int i = 0;  i < max_light_distance;  i++)
-  {
-    // spandistlight
-    uint16_t *sdll = planedistlight[i],
-             *sdlr = sdll + width;
+  I_ThreadSetWorkerFunction(ThreadInitDistLightTables);
 
-    const angle_t *xtva = xtoviewangle;
+  for (int i = 1;  i < idlt_iterations;  i++)
+  { I_SemaphorePost(I_WorkerSemaphoreIndex()); }
 
-    const fixed_t base_distance = (i << shift_bits) * (1.0 / RADFOG_MULT);
+  ThreadInitDistLightTables();
 
-    for (; sdll <= sdlr;  sdll++, sdlr--, xtva++)
-    {
-      const fixed_t distance = base_distance * floatsecant[*xtva >> ANGLETOFINESHIFT];
-
-      *sdll = *sdlr = MIN(maxlightz, distance);
-    }
-  }
+  for (int i = 1;  i < idlt_iterations;  i++)
+  { I_SemaphoreWait(I_MainSemaphoreIndex()); }
 
   init_radfog = false;
 }
@@ -440,14 +476,14 @@ typedef struct fovfx_s {
   float old, current, target;
 } fovfx_t;
 
-static fovfx_t fovfx[NUMFOVFX] = {0}; // FOV effects (recoil, teleport)
-static int     zoomed = 0; // ---------- Current zoom state
+static fovfx_t fovfx[NUM_FOVFX] = {0};
+static int zoomed = 0;
 
 void R_ClearFOVFX(void)
 {
   R_SetZoom(ZOOM_RESET);
 
-  for (int i = FOVFX_ZOOM+1;  i < NUMFOVFX;  i++)
+  for (int i = FOVFX_ZOOM+1;  i < NUM_FOVFX;  i++)
   {
     fovfx[i] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
   }
@@ -464,10 +500,6 @@ void R_SetFOVFX(const int fx)
 
   switch (fx)
   {
-    case FOVFX_ZOOM:
-      // Handled by `R_Get/SetZoom()`
-      break;
-
     case FOVFX_TELEPORT:
     {
       if (!teleporter_zoom) { break; }
@@ -477,6 +509,8 @@ void R_SetFOVFX(const int fx)
 
       break;
     }
+
+    default: break; // The rest are handled elsewhere
   }
 }
 
@@ -514,13 +548,12 @@ static void ProcessFOVEffects(void)
   else {
     static int oldtic = -1;
 
-    int zoomtarget;
+    int zoomtarget = 0;
 
     // Force zoom reset
     if (strictmode || zoomed == ZOOM_RESET)
     {
-      zoomtarget = 0;
-      fovfx[FOVFX_ZOOM] = (fovfx_t) { .target = 0, .current = 0, .old = 0 };
+      fovfx[FOVFX_ZOOM] = (fovfx_t) {0};
       zoomed = ZOOM_OFF;
     }
     else {
@@ -537,18 +570,19 @@ static void ProcessFOVEffects(void)
 
     boolean fovchange = false;
 
+    static const float SLOWMO_FOV_TARGET = -10.0f;
+
     if (!strictmode)
     {
       if (fovfx[FOVFX_ZOOM].target != zoomtarget)
       {
         fovchange = true;
       }
-      else if (fovfx[FOVFX_SLOWMO].target
-               || (G_GetSlowMotion() && fovfx[FOVFX_SLOWMO].target != 10))
+      else if (G_GetSlowMotion() && fovfx[FOVFX_SLOWMO].target != SLOWMO_FOV_TARGET)
       {
         fovchange = true;
       }
-      else for (int i = 0;  i < NUMFOVFX;  i++)
+      else for (int i = 0;  i < NUM_FOVFX;  i++)
       {
         if (fovfx[i].target || fovfx[i].current)
         {
@@ -562,8 +596,6 @@ static void ProcessFOVEffects(void)
     {
       if (oldtic != gametic)
       {
-        fovchange = false;
-
         float *target;
 
         // Zoom --------------------------------------------------------------
@@ -574,10 +606,10 @@ static void ProcessFOVEffects(void)
         // Special handling for zoom
         if (zoomtarget || *target)
         {
-          float step = zoomtarget - *target;
+          const float step = zoomtarget - *target;
           const int sign = (step > 0) ? 1 : -1;
 
-          *target += BETWEEN(1, 16, fabs(step) / 3.0) * sign;
+          *target += BETWEEN(0.1f, 16.0f, fabs(step) / 3.0f) * sign;
 
           if (   (sign > 0 && *target > zoomtarget)
               || (sign < 0 && *target < zoomtarget))
@@ -600,21 +632,26 @@ static void ProcessFOVEffects(void)
 
         if (G_GetSlowMotionFactor() != SLOWMO_FACTOR_NORMAL)
         {
-          *target = -10.0f * (SLOWMO_FACTOR_NORMAL - G_GetSlowMotionFactor())
-                           / (SLOWMO_FACTOR_NORMAL - SLOWMO_FACTOR_TARGET);
+          *target = SLOWMO_FOV_TARGET
+                  * (SLOWMO_FACTOR_NORMAL - G_GetSlowMotionFactor())
+                  / (SLOWMO_FACTOR_NORMAL - SLOWMO_FACTOR_TARGET);
         }
         else { *target = 0; }
       }
       else if (uncapped)
       {
-        for (int i = 0;  i < NUMFOVFX;  i++)
-        { fovfx[i].current = fovfx[i].old + ((fovfx[i].target - fovfx[i].old) * ((float) fractionaltic/FRACUNIT)); }
+        for (int i = 0;  i < NUM_FOVFX;  i++)
+        {
+          fovfx[i].current = fovfx[i].old
+                           + ((fovfx[i].target - fovfx[i].old)
+                              * ((float) fractionaltic / FRACUNIT));
+        }
       }
     }
 
     oldtic = gametic;
 
-    for (int i = 0;  i < NUMFOVFX;  i++)
+    for (int i = 0;  i < NUM_FOVFX;  i++)
     {
       if (FOVFX_ZOOM < i && R_FreecamOn()) { break; }
 
@@ -645,13 +682,18 @@ static void ProcessFOVEffects(void)
     skyiscalediff = (custom_fov == FOV_DEFAULT)
                   ? FRACUNIT
                   : tan(custom_fov * M_PI / 360.0) * FRACUNIT;
+
+    R_InitDistLightTables();
   }
 }
 
-// Explosion shake effect ----------------------------------------------------
+// Screen-shake effects ------------------------------------------------------
 
-boolean explosion_shake;
-int explosion_shake_intensity_pct;
+boolean screen_shake;
+boolean screen_shake_hitscan;
+boolean screen_shake_projectiles;
+boolean screen_shake_explosions;
+int screen_shake_intensity_pct;
 
 static int shake;
 #define MAX_SHAKE 50
@@ -663,7 +705,7 @@ void R_ClearShake(void)
 
 void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
 {
-  if (strictmode || !explosion_shake) { return; }
+  if (strictmode || !screen_shake || nodrawers) { return; }
 
   #define SHAKE_RANGE_MULT 5
 
@@ -673,12 +715,10 @@ void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
   const fixed_t dx = abs(viewx - bombx),
                 dy = abs(viewy - bomby);
 
-  const fixed_t radius = viewplayer
-                       ? viewplayer->mo->radius
-                       : players[displayplayer].mo->radius;
+  const fixed_t radius = R_POVMobj()->radius;
 
-  fixed_t dist = (MAX(dx, dy) - radius) >> FRACBITS;
-          dist = MAX(0, dist);
+  int dist = FixedToInt(MAX(dx, dy) - radius);
+      dist = MAX(0, dist);
 
   if (dist >= range) { return; }
 
@@ -842,7 +882,7 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
       dummymo.z = freecam.z;
       dummymo.player = &dummyplayer;
 
-      P_AimLineAttack(&dummymo, freecam.angle, 16*64*FRACUNIT * (comp_longautoaim+1), CROSSHAIR_AIM);
+      P_AimLineAttack(&dummymo, freecam.angle, AUTOAIM_RANGE(), CROSSHAIR_AIM);
 
       overflow[emu_intercepts].enabled = intercepts_overflow_enabled;
 
@@ -1584,20 +1624,67 @@ void R_UpdateViewAngleFunction(void)
   }
 }
 
+// [Nugget] /=================================================================
+
+static mobj_t povmobj = {0};
+
+static void UpdatePOVMobj(void)
+{
+  static player_t povplayer = {0};
+
+  const fixed_t
+    old_viewx = povmobj.x,
+    old_viewy = povmobj.y,
+    old_viewz = povmobj.z,
+    old_viewpitch = povplayer.pitch;
+
+  const angle_t old_viewangle = povmobj.angle;
+
+  povmobj = *(viewplayer->mo);
+  povmobj.player = &povplayer;
+
+  povmobj.x     = viewx;
+  povmobj.y     = viewy;
+  povmobj.z     = viewz;
+  povmobj.angle = viewangle;
+
+  povmobj.oldx     = old_viewx;
+  povmobj.oldy     = old_viewy;
+  povmobj.oldz     = old_viewz;
+  povmobj.oldangle = old_viewangle;
+
+  povplayer = *viewplayer;
+  povplayer.mo = &povmobj;
+
+  povplayer.viewz = viewz;
+  povplayer.pitch = viewpitch;
+  povplayer.oldpitch = old_viewpitch;
+}
+
+const mobj_t *R_POVMobj(void)
+{
+  return (!(R_FreecamOn() || R_ChasecamOn()) || nodrawers)
+         ? players[displayplayer].mo
+         : &povmobj;
+}
+
+// [Nugget] =================================================================/
+
 //
 // R_SetupFrame
 //
 
 void R_SetupFrame (player_t *player)
 {
-  // [Nugget]
+  // [Nugget] /===============================================================
+
   chasecam_on = gamestate == GS_LEVEL
                 && !(R_FreecamOn() && !R_GetFreecamMobj())
                 && STRICTMODE(chasecam_mode || (death_camera && player->mo->health <= 0
                                                 && player->playerstate == PST_DEAD
                                                 && !R_FreecamOn()));
 
-  // [Nugget] Freecam
+  // Freecam
   if (R_FreecamOn() && gamestate == GS_LEVEL)
   {
     static player_t dummyplayer = {0};
@@ -1650,6 +1737,8 @@ void R_SetupFrame (player_t *player)
     player = &dummyplayer;
   }
 
+  // [Nugget] ===============================================================/
+
   int i, cm;
   fixed_t pitch;
   const boolean use_localview = CheckLocalView(player);
@@ -1664,15 +1753,13 @@ void R_SetupFrame (player_t *player)
     leveltime > oldleveltime
   );
 
-  // [Nugget]
-  fixed_t playerz, basepitch;
-  static angle_t old_interangle, target_interangle;
-  static fixed_t camera_height;
-
   viewplayer = player;
 
   // [AM] Interpolate the player camera if the feature is enabled.
   // [Nugget] Freecam: separated position and rotation
+
+  // [Nugget]
+  fixed_t playerz, basepitch;
 
   if (uncapped && (camera_ready || (R_FreecamOn() && freecam.interp && !R_GetFreecamMobj())))
   {
@@ -1743,11 +1830,9 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget] /===============================================================
 
-  // Flip levels
-  if (viewangleoffset && STRICTMODE(flip_levels))
-  { viewangle += ANG180; }
-
   // Alt. intermission background --------------------------------------------
+
+  static angle_t old_interangle, target_interangle;
 
   if (WI_AltInterpicOn() && gamestate == GS_INTERMISSION)
   {
@@ -1767,7 +1852,9 @@ void R_SetupFrame (player_t *player)
   }
   else { target_interangle = viewangle; }
 
-  // Explosion shake effect --------------------------------------------------
+  // Screen-shake effects ----------------------------------------------------
+
+  static fixed_t camera_height;
 
   camera_height = R_GetFreecamMobj() ? freecam.z - freecam.mobj->z
                                      : chasecam_height * FRACUNIT;
@@ -1779,7 +1866,7 @@ void R_SetupFrame (player_t *player)
     if (!((menuactive && !demoplayback && !netgame) || paused))
     {
       static int oldtime = -1;
-      const fixed_t intensity = FRACUNIT * explosion_shake_intensity_pct / 100;
+      const fixed_t intensity = FRACUNIT * screen_shake_intensity_pct / 100;
 
       #define CALC_SHAKE (((Woof_Random() - 128) % 3) * intensity) * shake / MAX_SHAKE
 
@@ -1928,8 +2015,14 @@ void R_SetupFrame (player_t *player)
     R_SetupFreelook();
   }
 
+  UpdatePOVMobj(); // [Nugget]
+
   // 3-screen display mode.
   viewangle += viewangleoffset;
+
+  // [Nugget] Flip levels
+  if (viewangleoffset && STRICTMODE(flip_levels))
+  { viewangle += ANG180; }
 
   // [Nugget]: [crispy] A11Y
   if (!(strictmode || a11y_weapon_flash))
@@ -2270,6 +2363,11 @@ void R_BindRenderVariables(void)
             2, 0, 4, ss_none, wad_yes,
             "Fidelity of radial fog for planes (higher values cause more stutter)");
 
+  // (CFG-only)
+  M_BindBool("allow_hires_graphics", &allow_hires_graphics, NULL,
+             true, ss_none, wad_no,
+             "Use high-resolution sprites when available");
+
   // [Nugget] ---------------------------------------------------------------/
 
   // [Cherry] Floating powerups from International Doom
@@ -2364,14 +2462,29 @@ void R_BindRenderVariables(void)
              false, ss_view, wad_no,
              "Camera automatically locks onto targets vertically");
 
-  M_BindBool("explosion_shake", &explosion_shake, NULL,
+  M_BindBool("screen_shake", &screen_shake, NULL,
              false, ss_view, wad_yes,
-             "Explosions shake the view");
+             "Enable screen-shake effects in general (affected by CVARs below)");
 
   // (CFG-only)
-  M_BindNum("explosion_shake_intensity_pct", &explosion_shake_intensity_pct, NULL,
+  M_BindBool("screen_shake_hitscan", &screen_shake_hitscan, NULL,
+             true, ss_none, wad_yes,
+             "Screen shake for hitscan attacks with damage greater than range");
+
+  // (CFG-only)
+  M_BindBool("screen_shake_projectiles", &screen_shake_projectiles, NULL,
+             true, ss_none, wad_yes,
+             "Screen shake for impact of high-damage projectiles");
+
+  // (CFG-only)
+  M_BindBool("screen_shake_explosions", &screen_shake_explosions, NULL,
+             true, ss_none, wad_yes,
+             "Screen shake for explosions");
+
+  // (CFG-only)
+  M_BindNum("screen_shake_intensity_pct", &screen_shake_intensity_pct, NULL,
             100, 10, 100, ss_none, wad_yes,
-            "Explosion-shake intensity percent");
+            "Screen-shake effects intensity percent");
 
   M_BindBool("breathing", &breathing, NULL,
              false, ss_view, wad_yes,

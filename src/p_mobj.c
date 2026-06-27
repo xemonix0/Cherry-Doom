@@ -169,6 +169,14 @@ void P_ExplodeMissile (mobj_t* mo)
 
   P_SetMobjState(mo, mobjinfo[mo->type].deathstate);
 
+  // [Nugget] Screen-shake effects
+  if (screen_shake_projectiles)
+  {
+    const int damage = mo->info->damage;
+
+    if (damage >= 20) { R_ExplosionShake(mo->x, mo->y, damage, damage * 2); }
+  }
+
   mo->tics -= P_Random(pr_explode)&3;
 
   if (mo->tics < 1)
@@ -1828,15 +1836,15 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
       do
         {
           // [Nugget] Double Autoaim range
-          slope = P_AimLineAttack(source, an, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
+          slope = P_AimLineAttack(source, an, AUTOAIM_RANGE(), mask);
           if (!linetarget)
             // [Nugget] Disable horizontal autoaim
             if (!casual_play || !no_hor_autoaim)
-              slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
+              slope = P_AimLineAttack(source, an += 1<<26, AUTOAIM_RANGE(), mask);
           if (!linetarget)
             // [Nugget] Disable horizontal autoaim
             if (!casual_play || !no_hor_autoaim)
-              slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT * NOTCASUALPLAY(comp_longautoaim+1), mask);
+              slope = P_AimLineAttack(source, an -= 2<<26, AUTOAIM_RANGE(), mask);
           if (!linetarget)
             an = source->angle,
             // [Nugget] Vertical aiming
@@ -2024,8 +2032,6 @@ mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenu
 {
   mobj_t *const mobj = Z_Malloc(sizeof(*mobj), PU_LEVEL, NULL);
 
-  static mobjinfo_t info = {0};
-
   memset(mobj, 0, sizeof(*mobj));
 
   mobj->oldx = mobj->x = x;
@@ -2040,7 +2046,7 @@ mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenu
 
   mobj->type = mobj->tics = -1;
 
-  mobj->info = &info;
+  mobj->info = P_VisualMobjDummyInfo();
 
   mobj->gentranmap_pct = -1;
 
@@ -2066,6 +2072,13 @@ mobj_t *P_SpawnVisualMobj(fixed_t x, fixed_t y, fixed_t z, altstatenum_t statenu
   P_AddThinker(&mobj->thinker);
 
   return mobj;
+}
+
+mobjinfo_t *P_VisualMobjDummyInfo(void)
+{
+  static mobjinfo_t info = { .scale = FRACUNIT };
+
+  return &info;
 }
 
 boolean flakes, allow_flakes, faint_flakes;

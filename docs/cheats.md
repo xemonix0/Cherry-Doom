@@ -179,19 +179,31 @@ Change the player speed in-game.
 `NOMOMENTUM`  
 Toggle no-momentum mode (re-enabled debugging cheat).
 
+`VERSION`  
+Display program version and related info.
+
 The following cheats in this section are developer-only: the `nugget_devmode` CVAR must be enabled for them to take effect.
 
 `FAUXDEMO`  
 Toggle faux-demo mode, which emulates the condition of demo/net play (disables some features).
 
+`NETGAME`  
+Toggle netgame state.
+
+`DMATCH`  
+Toggle deathmatch state.
+
 `MYRNG[X]`  
 Override the RNG output with `X`, which is a three-digit number between 0 and 255.
 
 `DIMLIGHT`  
-Toggle diminishing lighting.
+Toggle diminishing lighting (`diminishing_lighting` CVAR).
 
 `FOVSKY`  
-Toggle FOV-based sky stretching.
+Toggle FOV-based sky stretching (`fov_stretchsky` CVAR).
+
+`HIRESGFX`  
+Toggle usage of high-resolution graphics (`allow_hires_graphics` CVAR).
 
 `CASTCALL`  
 Enter the character cast call.

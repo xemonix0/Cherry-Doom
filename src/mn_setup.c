@@ -509,6 +509,10 @@ static void DrawTabs(void)
 
     int width = 0;
 
+    // [Nugget]
+    const boolean old_lowercase = hud_menu_allow_lowercase;
+    hud_menu_allow_lowercase = false;
+
     for (int i = 0; tabs[i].text; ++i)
     {
         if (i)
@@ -525,6 +529,8 @@ static void DrawTabs(void)
         }
         width += rect->w;
     }
+
+    hud_menu_allow_lowercase = old_lowercase;
 
     int x = (SCREENWIDTH - width) / 2;
 
@@ -2476,7 +2482,7 @@ static setup_menu_t stat_settings4[] = {
 
     // Message fadeout
     {"Message Fadeout", S_ONOFF, H_X, M_SPC, {"message_fadeout"},
-     .action = R_InitMessageFadeoutTranMaps},
+     .action = R_InitFadeoutTranMaps},
 
     // Message flash
     {"Message Flash", S_ONOFF, H_X, M_SPC, {"message_flash"}},
@@ -4229,7 +4235,7 @@ static setup_menu_t view_settings1[] = {
     {"View Height",                   S_NUM   |S_STRICT, N_X,       M_SPC,      {"viewheight_value"}, .action = ChangeViewHeight},
     {"Vertical Target Lock-on",       S_ONOFF |S_STRICT, N_X,       M_SPC,      {"vertical_lockon"}, .action = ToggleVerticalLockon},
     {"Flinch upon",                   S_CHOICE|S_STRICT, N_X,       M_SPC,      {"flinching"}, .strings_id = str_flinching},
-    {"Explosion Shake Effect",        S_ONOFF |S_STRICT, N_X,       M_SPC,      {"explosion_shake"}},
+    {"Screen-Shake Effects",          S_ONOFF |S_STRICT, N_X,       M_SPC,      {"screen_shake"}},
     {"Subtle Idle Bobbing/Breathing", S_ONOFF |S_STRICT, N_X,       M_SPC,      {"breathing"}},
     {"Teleporter Zoom",               S_ONOFF |S_STRICT, N_X,       M_SPC,      {"teleporter_zoom"}},
     MI_GAP,
@@ -4302,7 +4308,7 @@ setup_menu_t display_settings1[] = {
     {"Backdrop For All Menus",       S_ONOFF,                 N_X, M_SPC, {"menu_background_all"}},
     {"No Palette Tint in Menus",     S_ONOFF |S_STRICT,       N_X, M_SPC, {"no_menu_tint"}},
     {"HUD/Menu Shadows",             S_ONOFF,                 N_X, M_SPC, {"hud_menu_shadows"}, .action = V_InitShadowTranMap},
-    {"Sprite Shadows",               S_CHOICE|S_STRICT,       N_X, M_SPC, {"sprite_shadows"}, .strings_id = str_sprite_shadows, .action = R_InitShadowTranMap},
+    {"Sprite Shadows",               S_CHOICE|S_STRICT,       N_X, M_SPC, {"sprite_shadows"}, .strings_id = str_sprite_shadows, .action = R_InitSpriteShadowsColormap},
     {"Thing Lighting Mode",          S_CHOICE|S_STRICT,       N_X, M_SPC, {"thing_lighting_mode"}, .strings_id = str_thing_lighting},
     {"Radial Fog",                   S_ONOFF,                 N_X, M_SPC, {"radial_fog"}, .action = R_DeferredInitLightTables},
     {"Flip Levels",                  S_ONOFF,                 N_X, M_SPC, {"flip_levels"}},
@@ -4368,12 +4374,16 @@ void MN_DrawDisplay(void)
 
     if (current_page == 1)
     {
-      patch_t *const patch = V_CachePatchName("M_PALETT", PU_CACHE);
+      patch_t *const patch  = V_CachePatchName("NG_PALBG", PU_CACHE);
 
       const int x = (SCREENWIDTH / 2) - (SHORT(patch->width) / 2);
       const int y = 109;
 
       V_DrawPatchSH(x, y, patch);
+
+      patch_t *const patch2 = V_CachePatchName("NG_PALET", PU_CACHE);
+
+      V_DrawPatch(x, y, patch2);
     }
 }
 
@@ -5030,7 +5040,7 @@ void MN_DrawStringCR(int cx, int cy, byte *cr1, byte *cr2, const char *ch)
             continue;
         }
 
-        c = M_ToUpper(c) - HU_FONTSTART;
+        c = ST_ToUpper(c) - HU_FONTSTART;
         if (c < 0 || c >= HU_FONTSIZE || hu_font[c] == NULL)
         {
             cx += SPACEWIDTH; // space
@@ -5127,7 +5137,7 @@ int MN_GetPixelWidth(const char *ch)
             continue;
         }
 
-        c = M_ToUpper(c) - HU_FONTSTART;
+        c = ST_ToUpper(c) - HU_FONTSTART;
         if (c < 0 || c >= HU_FONTSIZE || hu_font[c] == NULL)
         {
             len += SPACEWIDTH; // space
@@ -6359,7 +6369,7 @@ int MN_StringWidth(const char *string)
             }
             continue;
         }
-        c = M_ToUpper(c) - HU_FONTSTART;
+        c = ST_ToUpper(c) - HU_FONTSTART;
         if (c < 0 || c >= HU_FONTSIZE || hu_font[c] == NULL)
         {
             w += SPACEWIDTH;
@@ -6655,6 +6665,11 @@ void MN_BindMenuVariables(void)
     M_BindNum("hud_menu_shadows_filter_pct", &hud_menu_shadows_filter_pct, NULL,
               66, 0, 100, ss_none, wad_yes,
               "HUD/menu-shadows opacity percent");
+
+    // (CFG-only)
+    M_BindBool("hud_menu_allow_lowercase", &hud_menu_allow_lowercase, NULL,
+               false, ss_none, wad_yes,
+               "Allow display of lowercase console-font characters in HUD/menu");
 
     M_BindBool("quick_quitgame", &quick_quitgame, NULL,
                false, ss_misc, wad_no,

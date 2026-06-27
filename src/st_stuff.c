@@ -84,6 +84,7 @@ static void LoadNuggetGraphics(void);
 // CVARs ---------------------------------------------------------------------
 
 boolean no_menu_tint;
+boolean hud_menu_allow_lowercase;
 boolean no_berserk_tint;
 boolean no_radsuit_tint;
 boolean comp_godface;
@@ -93,6 +94,15 @@ static boolean use_nughud;
 static boolean hud_blink_keys;
 static boolean sts_show_berserk;
 int force_carousel;
+int carousel_fadeout;
+
+char ST_ToUpper(const char c)
+{
+  if (c >= 'a' && c <= 'z' && !hud_menu_allow_lowercase)
+    return c + 'A' - 'a';
+  else
+    return c;
+}
 
 // Font extras ---------------------------------------------------------------
 
@@ -592,6 +602,14 @@ static boolean CheckConditions(sbarcondition_t *conditions, player_t *player)
                 }
                 break;
 
+            // [Nugget] NUGHUD
+            case sbc_havearmor:
+                if (st_nughud)
+                {
+                    result &= player->armorpoints != 0;
+                }
+                break;
+
             case sbc_none:
             default:
                 result = false;
@@ -984,7 +1002,7 @@ static void UpdateLines(sbarelem_t *elem)
 
             if (font->type == sbf_proportional)
             {
-                ch = (unsigned char) M_ToUpper(ch) - HU_FONTSTART; // [Nugget] Cast to unsigned
+                ch = (unsigned char) ST_ToUpper(ch) - HU_FONTSTART; // [Nugget] Cast to unsigned
                 if (ch < 0 || ch >= HU_FONTSIZE + HU_FONTEXTRAS) // [Nugget]
                 {
                     totalwidth += SPACEWIDTH;
@@ -1242,7 +1260,7 @@ static void UpdateStatusBar(player_t *player)
     // [crispy] blinking key or skull in the status bar
     if (keyblinktics)
     {
-        if (!hud_blink_keys || barindex == 2)
+        if (!hud_blink_keys || barindex == array_size(sbardef->statusbars) - 1)
         {
             keyblinktics = 0;
         }
@@ -1666,7 +1684,7 @@ static void DrawLines(int x, int y, sbarelem_t *elem)
                 continue;
             }
 
-            ch = (unsigned char) M_ToUpper(ch) - HU_FONTSTART; // [Nugget] Cast to unsigned
+            ch = (unsigned char) ST_ToUpper(ch) - HU_FONTSTART; // [Nugget] Cast to unsigned
 
             // [Nugget] HUD/menu shadows
 
@@ -1821,16 +1839,21 @@ static void DrawSolidBackground(void)
             {
                 for (x = 0; x < depth; x++)
                 {
-                    pixel32_t *c = st_backing_screen32 + V_ScaleY(y) * video.pitch
-                                 + V_ScaleX(x);
-                    r += V_RedFromRGB(*c);
-                    g += V_GreenFromRGB(*c);
-                    b += V_BlueFromRGB(*c);
+                    pixel32_t *tc = st_backing_screen32 + V_ScaleY(y) * video.pitch
+                                    + V_ScaleX(x);
 
-                    c += V_ScaleX(width - 2 * x - 1);
-                    r += V_RedFromRGB(*c);
-                    g += V_GreenFromRGB(*c);
-                    b += V_BlueFromRGB(*c);
+                    pixel_t c = V_IndexFromRGB(*tc);
+
+                    r += pal[3 * c + 0];
+                    g += pal[3 * c + 1];
+                    b += pal[3 * c + 2];
+
+                    tc += V_ScaleX(width - 2 * x - 1);
+                    c = V_IndexFromRGB(*tc);
+
+                    r += pal[3 * c + 0];
+                    g += pal[3 * c + 1];
+                    b += pal[3 * c + 2];
                 }
             }
 
@@ -1840,9 +1863,7 @@ static void DrawSolidBackground(void)
 
             col = I_GetNearestColor(pal, r / 2, g / 2, b / 2);
 
-            V_FillRectRGB(
-              0, v0, video.unscaledw, v1 - v0, V_ComponentsToRGB(col, r/2, g/2, b/2)
-            );
+            V_FillRect(0, v0, video.unscaledw, v1 - v0, col);
         }
 
         return;
@@ -2177,13 +2198,18 @@ static void DoPaletteStuff(player_t *player)
             // [Nugget] Smooth palette tinting
             if (I_SmoothPaletteTinting())
             {
-              if (damagecount < 16
+              int damagecount2 = damagecount;
+
+              if (menuactive || paused)
+              { damagecount2 = MAX(1, damagecount2 / 2); }
+
+              if (damagecount2 < 16
                   && POWER_RUNOUT(player->powers[pw_ironfeet])
                   && !STRICTMODE(no_radsuit_tint))
               {
-                palette = 97 + damagecount;
+                palette = 97 + damagecount2;
               }
-              else { palette = 0 + MIN(64, damagecount); }
+              else { palette = 0 + MIN(64, damagecount2); }
             }
         }
     }
@@ -2969,10 +2995,13 @@ static void DrawNughudGraphics(void)
 
     if (weaponinfo[plyr->readyweapon].ammo != am_noammo)
     {
+      const int maxammo_divisor = nughud.ammobar_resize
+                                ? 1 : (1 + plyr->backpack);
+
       DrawNughudBar(
         &nughud.ammobar, nhambar,
         plyr->ammo[weaponinfo[plyr->readyweapon].ammo],
-        plyr->maxammo[weaponinfo[plyr->readyweapon].ammo] / (1 + plyr->backpack)
+        plyr->maxammo[weaponinfo[plyr->readyweapon].ammo] / maxammo_divisor
       );
     }
 
@@ -2980,7 +3009,9 @@ static void DrawNughudGraphics(void)
                armor = sbar_armor;
 
     DrawNughudBar(&nughud.healthbar, nhhlbar, health, maxhealth);
-    DrawNughudBar(&nughud.armorbar,  nharbar,  armor, max_armor/2);
+
+    if (!nughud.armor_hide || plyr->armorpoints)
+    { DrawNughudBar(&nughud.armorbar,  nharbar,  armor, max_armor/2); }
   }
 
   for (int i = NUMNUGHUDPATCHES/2;  i < NUMNUGHUDPATCHES;  i++)
@@ -3111,7 +3142,7 @@ static void DrawNughudGraphics(void)
     if (patch) { DrawNughudPatch(&nughud.healthicon, patch, no_offsets); }
   }
 
-  if (nughud.armoricon.x > -1)
+  if (nughud.armoricon.x > -1 && (!nughud.armor_hide || plyr->armorpoints))
   {
     patch_t *patch = NULL;
     boolean no_offsets = false;
@@ -3264,6 +3295,9 @@ static hudfont_t LoadNughudHUDFont(
 
   int maxwidth = 0, maxheight = 0;
 
+  // [Nugget] If any lowercase character is missing, don't use lowercase at all
+  boolean use_lowercase = true;
+
   for (int i = 0;  i < HU_FONTSIZE;  i++)
   {
     char namebuf[16];
@@ -3277,6 +3311,34 @@ static hudfont_t LoadNughudHUDFont(
       maxwidth  = MAX(maxwidth,  SHORT(font.characters[i]->width));
       maxheight = MAX(maxheight, SHORT(font.characters[i]->height));
     }
+    else {
+      const char c = i + HU_FONTSTART;
+
+      if ('a' <= c && c <= 'z') { use_lowercase = false; }
+    }
+  }
+
+  if (use_lowercase)
+  {
+    // All lowercase characters are present; now check if they were loaded
+    // after the uppercase ones to guess if they're from the same set
+
+    char namebuf[16];
+    int upper_lumpnum = 0, lower_lumpnum = 0;
+
+    M_snprintf(namebuf, sizeof(namebuf), "%s065", stem);
+    upper_lumpnum = (W_CheckNumForName)(namebuf, ns_global);
+
+    M_snprintf(namebuf, sizeof(namebuf), "%s097", stem);
+    lower_lumpnum = (W_CheckNumForName)(namebuf, ns_global);
+
+    use_lowercase = upper_lumpnum < lower_lumpnum;
+  }
+
+  if (!use_lowercase)
+  {
+    for (int i = 'a' - HU_FONTSTART;  i <= 'z' - HU_FONTSTART;  i++)
+    { font.characters[i] = font.characters[i + 'A' - 'a']; }
   }
 
   font.monowidth = maxwidth;
@@ -3746,7 +3808,18 @@ end_amnum:
 
   if (nughud.armor.x > -1)
   {
-    array_push(sb.children, CreateNughudNumber(nughud.armor, sbn_armor, &tnum, 3, true));
+    sbarelem_t elem = CreateNughudNumber(nughud.armor, sbn_armor, &tnum, 3, true);
+
+    if (nughud.armor_hide)
+    {
+      sbarcondition_t condition = {0};
+
+      condition.condition = sbc_havearmor;
+
+      array_push(elem.conditions, condition);
+    }
+
+    array_push(sb.children, elem);
   }
 
   // Ammos -------------------------------------------------------------------
@@ -4018,10 +4091,14 @@ void ST_BindSTSVariables(void)
   M_BindBool("weapon_carousel", &weapon_carousel, NULL,
              true, ss_weap, wad_no, "Show weapon carousel");
 
-  // [Nugget]
+  // [Nugget] ----------------------------------------------------------------
+
   M_BindNum("force_carousel", &force_carousel, NULL,
             1, 0, 2, ss_weap, wad_no,
             "Force display of weapon carousel (0 = Off; 1 = Off player; 2 = Always)");
+
+  M_BindBool("carousel_fadeout", &carousel_fadeout, NULL,
+             true, ss_none, wad_yes, "Carousel fades out");
 }
 
 //----------------------------------------------------------------------------

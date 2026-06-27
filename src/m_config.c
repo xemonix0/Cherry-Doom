@@ -62,6 +62,9 @@
 #include "wad_stats.h" // [Cherry]
 #include "z_zone.h"
 
+// [Nugget]
+#include "i_thread.h"
+
 //
 // DEFAULTS
 //
@@ -116,6 +119,11 @@ void M_InitConfig(void)
       "Show help strings about each variable in the config file");
 
     // [Nugget] /-------------------------------------------------------------
+
+    // Multithreading (CFG-only)
+    M_BindNum("worker_threads", &cvar_worker_threads, NULL,
+              -1, 0, 255, ss_none, wad_no,
+              "Number of additional threads to use (-1 = Auto)");
 
     // (CFG-only)
     M_BindStr("savegame_dir", &savegame_dir, "", wad_no,

@@ -57,6 +57,7 @@ typedef enum
 
     // [Nugget]
     sbc_weaponnotowned,
+    sbc_havearmor,
 
     sbc_max,
 } sbarconditiontype_t;

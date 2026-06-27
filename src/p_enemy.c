@@ -2756,9 +2756,10 @@ void A_BrainScream(mobj_t *mo)
   int x1, x2; // [Nugget] Fix lopsided IoS death explosions
 
   if (casual_play && comp_iosdeath)
-  { x1 = x2 = 280; }
-  else
-  { x1 = 196; x2 = 320; }
+  {
+    x1 = x2 = 280;
+  }
+  else { x1 = 196; x2 = 320; }
 
   for (x=mo->x - x1*FRACUNIT ; x< mo->x + x2*FRACUNIT ; x+= FRACUNIT*8)
     {
@@ -2773,7 +2774,8 @@ void A_BrainScream(mobj_t *mo)
     }
   S_StartSound(NULL,sfx_bosdth);
 
-  R_ExplosionShake(mo->x, mo->y, 2048, 2048); // [Nugget] Explosion shake effect
+  // [Nugget] Screen-shake effects
+  if (screen_shake_explosions) { R_ExplosionShake(mo->x, mo->y, 2048, 2048); }
 }
 
 void A_BrainExplode(mobj_t *mo)

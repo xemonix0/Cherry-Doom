@@ -7,7 +7,7 @@
 
 ## Nugget Doom merges
 
-Merged changes from Nugget Doom releases [3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0) through [5.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-5.0.0), note:
+Merged changes from Nugget Doom releases [3.3.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-3.3.0) through [5.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-5.1.0), note:
 - Stats tracking is disabled when _Duplicate Monsters_ is active
 
 ## Changes

@@ -218,6 +218,11 @@ static int S_getChannel(const mobj_t *origin, int priority, int singularity)
 
 static int optionals[NUG_SFX_END - NUG_SFX_START]; // [Nugget]
 
+static const mobj_t *S_ListenerMobj(void)
+{
+  return R_POVMobj();
+}
+
 static void StartSound(const mobj_t *origin, int sfx_id,
                        pitchrange_t pitch_range, rumble_type_t rumble_type)
 {
@@ -259,12 +264,10 @@ static void StartSound(const mobj_t *origin, int sfx_id,
     // Check to see if it is audible, modify the params
     // killough 3/7/98, 4/25/98: code rearranged slightly
 
-    // [Nugget] Freecam
-    const mobj_t *playermo = (R_FreecamOn() && !nodrawers)
-                             ? viewplayer->mo
-                             : players[displayplayer].mo;
+    // [Nugget] Use POV as listener if possible
+    const mobj_t *const listener = S_ListenerMobj();
 
-    if (!S_AdjustSoundParams(playermo, origin, &params))
+    if (!S_AdjustSoundParams(listener, origin, &params))
     {
         return;
     }
@@ -331,7 +334,7 @@ static void StartSound(const mobj_t *origin, int sfx_id,
 
         if (rumble_type != RUMBLE_NONE)
         {
-            I_StartRumble(players[displayplayer].mo, origin, sfx, handle,
+            I_StartRumble(listener, origin, sfx, handle,
                           rumble_type);
         }
     }
@@ -349,7 +352,8 @@ void S_StartSoundPitch(const mobj_t *origin, int sfx_id,
 
 static boolean IsRumblePlayer(const mobj_t *mo)
 {
-    return (I_RumbleEnabled() && mo && mo == players[displayplayer].mo);
+    // [Nugget] Use POV as listener if possible
+    return (I_RumbleEnabled() && mo && mo == S_ListenerMobj());
 }
 
 static rumble_type_t RumbleType(const mobj_t *mo, rumble_type_t rumble_type)
@@ -671,8 +675,8 @@ void S_UpdateSounds(const mobj_t *listener)
         return;
     }
 
-    // [Nugget] Freecam
-    if (R_FreecamOn() && !nodrawers) { listener = viewplayer->mo; }
+    // [Nugget] Use POV as listener if possible
+    listener = S_ListenerMobj();
 
     I_DeferSoundUpdates();
     I_UpdateListenerParams(listener);

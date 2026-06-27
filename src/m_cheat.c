@@ -60,6 +60,7 @@
 #include "f_finale.h"
 #include "m_random.h"
 #include "r_main.h"
+#include "version.h"
 
 #define plyr (players+consoleplayer)     /* the console player */
 
@@ -186,11 +187,16 @@ static void cheat_mdk(void);         // Inspired by ZDoom's console command
 static void cheat_saitama(void);     // MDK Fist
 static void cheat_boomcan(void);     // Explosive hitscan
 
+static void cheat_version(void);
+
 static void cheat_fauxdemo(void); // Emulates demo/net-play state, for debugging
+static void cheat_netgame(void);
+static void cheat_dmatch(void);
 static void cheat_myrng(void);
 static void cheat_myrngx(char *buf);
 static void cheat_dimlight(void);
 static void cheat_fovsky(void);
+static void cheat_hiresgfx(void);
 static void cheat_castcall(void);
 
 static void cheat_cheese(void);
@@ -465,12 +471,17 @@ struct cheat_s cheat[] = {
   { "saitama",    NULL, not_net | not_demo, {.v = cheat_saitama} }, // --------------------------- MDK Fist
   { "boomcan",    NULL, not_net | not_demo, {.v = cheat_boomcan} }, // --------------------------- Explosive hitscan
 
-  { "fauxdemo",   NULL, devmode_only, {.v = cheat_fauxdemo} }, // Emulates demo/net-play state, for debugging
-  { "myrng",        NULL, devmode_only, {.v = cheat_myrng} },
-  { "myrng",        NULL, devmode_only, {.s = cheat_myrngx}, -3 },
-  { "dimlight",   NULL, devmode_only, {.v = cheat_dimlight} },
-  { "fovsky",     NULL, devmode_only, {.v = cheat_fovsky} },
-  { "castcall",   NULL, devmode_only, {.v = cheat_castcall} },
+  { "version", NULL, always, {.v = cheat_version} },
+
+  { "fauxdemo",   NULL, devmode_only|not_demo|not_net, {.v = cheat_fauxdemo} },
+  { "netgame",    NULL, devmode_only|not_demo,         {.v = cheat_netgame}, .repeatable = true },
+  { "dmatch",     NULL, devmode_only|not_demo,         {.v = cheat_dmatch}, .repeatable = true },
+  { "myrng",      NULL, devmode_only|not_demo|not_net, {.v = cheat_myrng} },
+  { "myrng",      NULL, devmode_only|not_demo|not_net, {.s = cheat_myrngx}, -3 },
+  { "dimlight",   NULL, devmode_only,                  {.v = cheat_dimlight}, .repeatable = true },
+  { "fovsky",     NULL, devmode_only,                  {.v = cheat_fovsky}, .repeatable = true },
+  { "hiresgfx",   NULL, devmode_only,                  {.v = cheat_hiresgfx}, .repeatable = true },
+  { "castcall",   NULL, devmode_only|not_demo|not_net, {.v = cheat_castcall} },
 
   { "cheese",     NULL, not_net | not_demo, {.v = cheat_cheese} },
   { "flakes",     NULL, not_net | not_demo, {.v = cheat_flakes} },
@@ -930,7 +941,7 @@ static void cheat_mdk(void)
     slope = plyr->slope;
   }
   else {
-    slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, 16*64*FRACUNIT * (comp_longautoaim+1), 0);
+    slope = P_AimLineAttack(plyr->mo, plyr->mo->angle, AUTOAIM_RANGE(), 0);
 
     if (!linetarget && vertical_aiming == VERTAIM_DIRECTAUTO)
     { slope = plyr->slope; }
@@ -957,6 +968,11 @@ static void cheat_boomcan(void)
   displaymsg("Explosive Hitscan %s", (plyr->cheats & CF_BOOMCAN) ? "ON" : "OFF");
 }
 
+static void cheat_version(void)
+{
+  displaymsg("%s (built on %s)", PROJECT_STRING, version_date);
+}
+
 // Developer cheats ----------------------------------------------------------
 
 // Emulates demo/net-play state, for debugging
@@ -969,6 +985,18 @@ static void cheat_fauxdemo(void)
 
   S_StartSound(plyr->mo, sfx_tink);
   displaymsg("Fauxdemo %s", fauxdemo ? "ON" : "OFF");
+}
+
+static void cheat_netgame(void)
+{
+  netgame = !netgame;
+  displaymsg("Netgame State %s", netgame ? "ON" : "OFF");
+}
+
+static void cheat_dmatch(void)
+{
+  deathmatch = !deathmatch;
+  displaymsg("Deathmatch State %s", deathmatch ? "ON" : "OFF");
 }
 
 static void cheat_myrng(void)
@@ -1020,6 +1048,12 @@ static void cheat_fovsky(void)
 
   fov_stretchsky = !fov_stretchsky;
   displaymsg("FOV Stretching %s", fov_stretchsky ? "ON" : "OFF");
+}
+
+static void cheat_hiresgfx(void)
+{
+  allow_hires_graphics = !allow_hires_graphics;
+  displaymsg("Hi-Res Graphics %s", allow_hires_graphics ? "ON" : "OFF");
 }
 
 static void cheat_castcall(void)
@@ -1958,7 +1992,7 @@ static boolean CheatAllowed(cheat_when_t when)
            && !(when & not_demo && (demorecording || demoplayback))
            && !(when & not_menu && menuactive)
            && !(when & beta_only && !beta_emulation)
-           && !(when & devmode_only_bit && !nugget_devmode); // [Nugget]
+           && !(when & devmode_only && !nugget_devmode); // [Nugget]
 }
 
 // The cheat detection function was replaced with a version from Chocolate Doom

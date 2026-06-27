@@ -26,6 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// [Nugget]
+#include <time.h>
+
 #include "am_map.h"
 #include "config.h"
 #include "d_deh.h"  // Ty 04/08/98 - Externalizations
@@ -90,7 +93,7 @@
 #include "z_zone.h"
 
 // [Nugget]
-#include <time.h>
+#include "i_thread.h"
 #include "m_nughud.h"
 #include "r_data.h"
 
@@ -179,6 +182,7 @@ int organize_savefiles;
 // [Nugget]
 const char *savegame_dir = NULL;
 const char *screenshot_dir = NULL;
+static int organize_screenshots;
 
 boolean coop_spawns = false;
 
@@ -1506,6 +1510,9 @@ static void D_InitTables(void)
     mobjinfo[i].bloodcolor       = 0; // Normal
     // DEHEXTRA
     mobjinfo[i].droppeditem      = MT_NULL;
+
+    // [Nugget] Sprite scaling
+    mobjinfo[i].scale = FRACUNIT;
   }
 
   mobjinfo[MT_VILE].flags2    = MF2_SHORTMRANGE | MF2_DMGIGNORED | MF2_NOTHRESHOLD;
@@ -1757,7 +1764,7 @@ void D_SetSavegameDirectory(void)
             char *oldsavegame = basesavegame;
 
             // [Nugget] Don't default to a "savegames" directory if path is set by config file
-            if (!savegame_dir || !strcmp(savegame_dir, ""))
+            if (!(savegame_dir && strcmp(savegame_dir, "")))
             {
                 basesavegame =
                     M_StringJoin(oldsavegame, DIR_SEPARATOR_S, "savegames");
@@ -1787,12 +1794,49 @@ void D_SetSavegameDirectory(void)
 
         M_MakeDirectory(screenshotdir);
     }
-    // [Nugget] Set screenshot path as determined by config file
-    else if (screenshot_dir && strcmp(screenshot_dir, ""))
+    // [Nugget]
+    else
     {
-        SET_DIR(screenshotdir, M_StringDuplicate(screenshot_dir));
+        // Set screenshot path as determined by config file
+        if (screenshot_dir && strcmp(screenshot_dir, ""))
+        {
+            SET_DIR(screenshotdir, M_StringDuplicate(screenshot_dir));
 
-        M_MakeDirectory(screenshotdir);
+            M_MakeDirectory(screenshotdir);
+        }
+
+        if (organize_screenshots)
+        {
+            const char *wadname = wadfiles[0].name;
+
+            for (int i = mainwadfile; i < array_size(wadfiles); i++)
+            {
+                if (FileContainsMaps(wadfiles[i].name))
+                {
+                    wadname = wadfiles[i].name;
+                    break;
+                }
+            }
+
+            char *olddir;
+
+            if (!(screenshot_dir && strcmp(screenshot_dir, "")))
+            {
+                olddir = screenshotdir;
+                screenshotdir =
+                    M_StringJoin(olddir, DIR_SEPARATOR_S, "screenshots");
+                free(olddir);
+            }
+
+            M_MakeDirectory(screenshotdir);
+
+            olddir = screenshotdir;
+            screenshotdir = M_StringJoin(olddir, DIR_SEPARATOR_S,
+                M_BaseName(wadname));
+            free(olddir);
+
+            M_MakeDirectory(screenshotdir);
+        }
     }
 
     I_Printf(VB_INFO, "Savegame directory: %s", basesavegame);
@@ -2358,6 +2402,9 @@ void D_DoomMain(void)
   M_LoadDefaults();  // load before initing other systems
   M_NughudLoadDefaults(); // [Nugget]
 
+  // [Nugget] Multithreading
+  I_InitThreading();
+
   bodyquesize = default_bodyquesize; // killough 10/98
 
   // 1/18/98 killough: Z_Init call moved to i_main.c
@@ -2776,6 +2823,8 @@ void D_DoomMain(void)
 
   D_UpdateCasualPlay();
 
+  P_AnalyzeWeapons();
+
   P_NuggetSetWeaponInertiaScale();
 
   if (casual_play && !fail_safe)
@@ -2852,6 +2901,10 @@ void D_BindMiscVariables(void)
   BIND_BOOL_GENERAL(palette_changes, true, "Palette changes when taking damage or picking up items");
   BIND_NUM_GENERAL(organize_savefiles, -1, -1, 1,
     "Organize save files");
+
+  // [Nugget]
+  BIND_BOOL_GENERAL(organize_screenshots, false, "Organize screenshots");
+
   M_BindStr("net_player_name", &net_player_name, DEFAULT_PLAYER_NAME, wad_no,
     "Network setup player name");
 

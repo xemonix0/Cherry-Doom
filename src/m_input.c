@@ -28,7 +28,7 @@
 
 // [Nugget]
 #include "am_map.h"
-#include "g_game.h"
+#include "i_input.h"
 #include "i_video.h"
 #include "mn_internal.h"
 #include "r_main.h"
@@ -527,6 +527,12 @@ boolean M_IsMouseWheel(int mouseb)
     return mouseb >= MOUSE_BUTTON_WHEELUP && mouseb <= MOUSE_BUTTON_WHEELRIGHT;
 }
 
+// [Nugget]
+boolean M_ShiftPressed(void)
+{
+  return I_ShiftPressed();
+}
+
 void M_InputPredefined(void)
 {
     input_t right[] = {
@@ -816,13 +822,19 @@ void M_BindInputVariables(void)
 
     // [Nugget] /---------------------------------------------------------------
 
+    // (CFG-only)
+    M_BindBool("minimap_double_press", &minimap_double_press, NULL,
+               true, ss_none, wad_no,
+               "Toggle minimap by quickly pressing the automap button twice");
+
     BIND_INPUT_SUB(input_map_blink, "Highlight points of interest (keyed lines, marks) on the automap", ss_mapkeys);
 
     BIND_INPUT_SUB(input_map_tagfinder, "Find associated sectors and lines", ss_mapkeys);
 
     BIND_INPUT_SUB(input_map_teleport, "Teleport to automap pointer", ss_mapkeys);
 
-    M_BindBool("fancy_teleport", &fancy_teleport, NULL, true, ss_mapkeys, wad_no,
+    M_BindBool("fancy_teleport", &fancy_teleport, NULL,
+               true, ss_mapkeys, wad_no,
                "Use effects when teleporting to pointer (fog, sound and zoom)");
 
     // [Nugget] ---------------------------------------------------------------/

@@ -18,7 +18,7 @@ Although the new code has been written with the intention of not breaking demo c
 
 ## Features
 
-This feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features). The build corresponding to this README is based on [Nugget Doom 5.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-4.3.0).
+This feature list is relative to [Nugget Doom's](https://github.com/MrAlaux/Nugget-Doom/blob/master/README.md#features). The build corresponding to this README is based on [Nugget Doom 5.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-5.1.0).
 
 Some of Cherry Doom's features originate from other sources; acknowledgements are provided _(ported from [p.f.] or inspired by [i.b.])_.
 
