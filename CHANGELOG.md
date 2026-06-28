@@ -21,6 +21,7 @@ Merged changes from Nugget Doom releases [3.3.0](https://github.com/MrAlaux/Nugg
 - Removed menu items for the _Rocket Trails Interval_ and _Smoke Translucency_ settings
 - Times on the level table now display hours when exceeding 60 minutes
 - Renamed the `rocket_trails_tran` CVAR to `rocket_trails_tran_pct` for consistency [^1]
+- The dark backdrop in menus and in the automap now fades in and out
 
 ### Regressions
 

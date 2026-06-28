@@ -948,11 +948,35 @@ void V_DrawPatchFullScreen(patch_t *patch)
     DrawPatchInternal(x, 0, patch, false);
 }
 
+// [Cherry] /- Smooth screen shade -------------------------------------------
+
+static int screen_shade_level = 0;
+static boolean smooth_shade = true;
+
+boolean V_IsScreenShaded(void)
+{
+    return screen_shade_level > 0;
+}
+
+void V_SetSmoothShade(const boolean value)
+{
+    smooth_shade = value;
+}
+
+// [Cherry] -----------------------------------------------------------------/
+
 void (*V_ShadeScreen)(int level) = NULL;
 
 static void V_ShadeScreen8(const int level) // [Nugget]
 {
-    const lighttable_t *darkcolormap = &colormaps[0][level * 256];
+    // [Cherry] Smoothen screen shading
+    if (!smooth_shade) screen_shade_level = level;
+    else if (screen_shade_level != level)
+    {
+        screen_shade_level += (screen_shade_level < level) ? 1 : -1;
+    }
+
+    const lighttable_t *darkcolormap = &colormaps[0][screen_shade_level * 256];
 
     pixel_t *row = dest_screen;
     int height = video.height;
@@ -974,7 +998,14 @@ static void V_ShadeScreen8(const int level) // [Nugget]
 
 static void V_ShadeScreen32(const int level) // [Nugget]
 {
-    const lighttable32_t *darkcolormap = &colormaps32[0][level * 256 << COLORMAP_ROW_SHIFT_BITS];
+    // [Cherry] Smoothen screen shading
+    if (!smooth_shade) screen_shade_level = level;
+    else if (screen_shade_level != level)
+    {
+        screen_shade_level += (screen_shade_level < level) ? 1 : -1;
+    }
+
+    const lighttable32_t *darkcolormap = &colormaps32[0][screen_shade_level * 256 << COLORMAP_ROW_SHIFT_BITS];
 
     pixel32_t *row = dest_screen32;
     int height = video.height;

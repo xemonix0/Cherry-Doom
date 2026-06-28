@@ -312,6 +312,9 @@ void D_Display (void)
   // save the current screen if about to wipe
   if (gamestate != wipegamestate && (strictmode || screen_melt))
     {
+      // [Cherry] Prevent late fade-out after the wipe
+      V_SetSmoothShade(false);
+
       wipe = true;
       wipe_StartScreen(0, 0, video.width, video.height);
     }
@@ -398,6 +401,13 @@ void D_Display (void)
   menuactivestate = menuactive;
   viewactivestate = viewactive;
   oldgamestate = wipegamestate = gamestate;
+
+  // [Cherry] Shade fade-out
+  if (V_IsScreenShaded() &&
+      (MN_MenuWasShaded() && (!automapactive && automapoverlay == AM_OVERLAY_DARK)))
+  {
+      V_ShadeScreen(0);
+  }
 
   // [Nugget] Centralized drawer calls
   if (gamestate == GS_LEVEL)

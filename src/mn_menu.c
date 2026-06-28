@@ -3658,6 +3658,13 @@ boolean MN_MenuIsShaded(void)
            && menu_backdrop == MENU_BG_DARK;
 }
 
+// [Cherry]
+boolean MN_MenuWasShaded(void)
+{
+    return (!menuactive || (!menu_background_all && !options_active))
+           && menu_backdrop == MENU_BG_DARK;
+}
+
 void M_Drawer(void)
 {
     // Horiz. & Vertically center string and print it.
