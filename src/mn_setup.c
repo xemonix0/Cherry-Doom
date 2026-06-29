@@ -4720,6 +4720,13 @@ static setup_menu_t customskill_settings1[] = {
     MI_END
 };
 
+// [Cherry]
+void MN_UpdateCSStatsTrackingItem(void)
+{
+    DisableItem(notracking || !lt_enable_tracking,
+                customskill_settings1, "custom_skill_notracking");
+}
+
 static setup_menu_t *customskill_settings[] = {customskill_settings1, NULL};
 
 void MN_CustomSkill(void)
@@ -6634,6 +6641,7 @@ void MN_SetupResetMenu(void)
     // [Cherry] ----------------------------------------------------------------
 
     UpdateDarkeningItems();
+    MN_UpdateCSStatsTrackingItem();
 }
 
 void MN_BindMenuVariables(void)

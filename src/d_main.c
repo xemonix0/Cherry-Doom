@@ -2577,12 +2577,15 @@ void D_DoomMain(void)
   // Disable WAD stats tracking.
   //
 
-  notrackingparm = M_ParmExists("-notracking");
+  notracking = notrackingparm = M_ParmExists("-notracking");
 
   if (!netgame)
   {
-      I_Printf(VB_INFO, "WadStats_Init: Setting up WAD stats tracking.");
+      I_Printf(VB_INFO, "WadStats_Init: ");
+      I_Printf(VB_INFO, notracking ?
+          "Stats tracking disabled." : "Setting up WAD stats tracking.");
       WadStats_Init();
+      MN_UpdateCSStatsTrackingItem();
   }
 
   G_UpdateSideMove();

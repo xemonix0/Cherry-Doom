@@ -27,6 +27,10 @@ This version is up to date with [_Nugget Doom 5.1.0_](https://github.com/MrAlaux
 - Renamed the `rocket_trails_tran` CVAR to `rocket_trails_tran_pct` for consistency [^1]
 - The dark backdrop in menus and in the automap now fades in and out
 
+### Fixed
+
+- `stats.txt` still being created when tracking is globally disabled
+
 ### Removed
 
 - The _Movement widget_, favoring Woof!'s _speedometer_ and _command history widget_
