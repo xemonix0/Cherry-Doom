@@ -12,8 +12,8 @@ set(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)
 cmake_minimum_required(VERSION 3.15)
 
 project("Cherry Doom"
-    VERSION 2.0.0
-    DESCRIPTION "Cherry Doom 2.0.0"
+    VERSION 2.1.0
+    DESCRIPTION "Cherry Doom 2.1.0"
     HOMEPAGE_URL "https://github.com/xemonix0/Cherry-Doom"
     LANGUAGES C)
 

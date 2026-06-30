@@ -1,10 +1,10 @@
 # Changelog
 
-This file contains the full list of changes for every version of Cherry Doom. Changes in the upcoming release are listed in the [Unreleased](#unreleased) section of this changelog.
+This file contains the full list of changes for every version of Cherry Doom.
 
-## Unreleased
+## 2.1.0
 
-This version is up to date with [_Nugget Doom 5.1.0_](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-5.1.0) and [_Woof! 15.3.0_](https://github.com/fabiangreffrath/woof/releases/tag/woof_15.3.0).
+**Cherry Doom 2.1.0**, released June 30th, 2026. This version is up to date with [_Nugget Doom 5.1.0_](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-5.1.0) and [_Woof! 15.3.0_](https://github.com/fabiangreffrath/woof/releases/tag/woof_15.3.0).
 
 ### Added
 
