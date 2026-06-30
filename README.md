@@ -3,8 +3,8 @@
 
 [![Release](https://img.shields.io/github/release/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
 [![Release Date](https://img.shields.io/github/release-date/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
-[![Downloads (total)](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/total)](https://github.com/fabiangreffrath/woof/releases/latest)
-[![Downloads (latest)](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/latest/total.svg)](https://github.com/fabiangreffrath/woof/releases/latest)
+[![Downloads (total)](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/total)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
+[![Downloads (latest)](https://img.shields.io/github/downloads/xemonix0/Cherry-Doom/latest/total.svg)](https://github.com/xemonix0/Cherry-Doom/releases/latest)
 [![Commits Since Latest Release](https://img.shields.io/github/commits-since/xemonix0/Cherry-Doom/latest.svg)](https://github.com/xemonix0/Cherry-Doom/commits/master)
 [![Last Commit](https://img.shields.io/github/last-commit/xemonix0/Cherry-Doom.svg)](https://github.com/xemonix0/Cherry-Doom/commits/master)
 
