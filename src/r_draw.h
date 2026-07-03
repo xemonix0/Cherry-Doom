@@ -76,12 +76,13 @@ void R_DrawSkyColumnMasked(void);
 
 extern void (*R_DrawTranslatedColumn)(void);
 
-extern lighttable_t *ds_colormap[2];
+extern lighttable_t *ds_colormap[3]; // [Cherry] 0 and 1 for dithering, 2 for brightmaps
 extern lighttable32_t *ds_colormap32[2];
 
 extern int     ds_y;
 extern int     ds_x1;
 extern int     ds_x2;
+extern int     ds_z; // [Cherry] Dithered lighting from Doom Retro
 extern fixed_t ds_xfrac;
 extern fixed_t ds_yfrac;
 extern fixed_t ds_xstep;

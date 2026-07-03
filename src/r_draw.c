@@ -87,6 +87,24 @@ int dc_texheight; // killough
 byte *dc_source;  // first pixel in a column (possibly virtual)
 byte dc_skycolor;
 
+// [Cherry] /- Dithered lighting from Doom Retro ------------------------------
+
+#define DITHERSIZE 4
+#define DITHERMASK (DITHERSIZE - 1)
+
+static const byte dithermatrix[DITHERSIZE][DITHERSIZE] =
+{
+    {   0, 224,  48, 208 },
+    { 176,  80, 128,  96 },
+    { 192,  32, 240,  16 },
+    { 112, 144,  64, 160 }
+};
+
+#define dither(x, y, z) (dithermatrix[(y) & DITHERMASK] \
+                            [((x) + viewwindowx - video.deltaw + !video.deltaw) & DITHERMASK] < (z))
+
+// [Cherry] ------------------------------------------------------------------/
+
 //
 // A column is a vertical slice/span from a wall texture that,
 //  given the DOOM style restrictions on the view orientation,
@@ -1320,8 +1338,9 @@ void R_InitTranslationTables(void)
 int ds_y;
 int ds_x1;
 int ds_x2;
+int ds_z; // [Cherry] Dithered lighting from Doom Retro
 
-lighttable_t *ds_colormap[2];
+lighttable_t *ds_colormap[3]; // [Cherry] 0 and 1 for dithering, 2 for brightmaps
 lighttable32_t *ds_colormap32[2];
 const byte *ds_brightmap;
 
@@ -1398,8 +1417,9 @@ static void (*DrawSpanBrightmap)(void) = NULL;
         }                                              \
     }
 
-R_DRAW_SPAN(, ds_colormap[0][src])
-R_DRAW_SPAN(Brightmap, ds_colormap[ds_brightmap[src]][src])
+// [Cherry] Dithered lighting from Doom Retro
+R_DRAW_SPAN(, ds_colormap[dither(ds_x1++, ds_y, ds_z)][src])
+R_DRAW_SPAN(Brightmap, ds_colormap[ds_brightmap[src] ? 2 : dither(ds_x1++, ds_y, ds_z)][src])
 
 #define R_DRAW_SPAN32(NAME, SRCPIXEL)                  \
     static void DrawSpan32##NAME(void)                 \
@@ -1523,7 +1543,7 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
     }
 
 R_DRAW_SPAN_RADFOG(, ds_colormap[0][src])
-R_DRAW_SPAN_RADFOG(Brightmap, ds_colormap[ds_brightmap[src]][src])
+R_DRAW_SPAN_RADFOG(Brightmap, ds_colormap[ds_brightmap[src] ? 2 : 0][src])
 
 #undef DRAW_SPAN_RADFOG_PIXEL
 

@@ -175,7 +175,7 @@ static void DrawPlane8(fixed_t distance)
   // [Nugget] Radial fog
   void (*DrawSpan)(void) = R_DrawSpan;
 
-  if (!(ds_colormap[0] = ds_colormap[1] = fixedcolormap))
+  if (!(ds_colormap[0] = ds_colormap[1] = ds_colormap[2] = fixedcolormap))
     {
       boolean do_plane_radial_fog = do_radial_fog; // [Nugget] Radial fog
 
@@ -202,9 +202,11 @@ static void DrawPlane8(fixed_t distance)
       else
       {
         ds_colormap[0] = V_ColormapRowByIndex(planezlight[index]);
+        // [Cherry] Dithered lighting from Doom Retro
+        ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(MAXLIGHTZ-1, index+1)]);
       }
 
-      ds_colormap[1] = fullcolormap;
+      ds_colormap[2] = fullcolormap;
     }
 
   DrawSpan();
@@ -299,6 +301,8 @@ static void R_MapPlane(int y, int x1, int x2)
   ds_y = y;
   ds_x1 = x1;
   ds_x2 = x2;
+  // [Cherry] Dithered lighting from Doom Retro
+  ds_z = ((distance >> 12) & 255);
 
   DrawPlane(distance);
 }
