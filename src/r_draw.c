@@ -1505,7 +1505,10 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
   ds_yfrac += ds_ystep; \
   src = ds_source[spot]; \
   \
-  ds_colormap[0] = V_ColormapRowByIndex(planezlight[*sdl++]); \
+  ds_colormap[0] = V_ColormapRowByIndex(planezlight[*sdl]); \
+  /* [Cherry] Dithered lighting from Doom Retro */ \
+  ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(MAXLIGHTZ-1, *sdl+1)]); \
+  distance = ((*sdl++) & 255); \
   \
   dest[dest_index] = SRCPIXEL; \
 }
@@ -1521,6 +1524,7 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
         unsigned xtemp, ytemp, spot;                   \
                                                        \
         const uint16_t *sdl = spandistlight + ds_x1;   \
+        uint16_t distance; /* [Cherry] For dithering */ \
                                                        \
         while (count >= 4)                             \
         {                                              \
@@ -1542,8 +1546,9 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
         }                                              \
     }
 
-R_DRAW_SPAN_RADFOG(, ds_colormap[0][src])
-R_DRAW_SPAN_RADFOG(Brightmap, ds_colormap[ds_brightmap[src] ? 2 : 0][src])
+R_DRAW_SPAN_RADFOG(, ds_colormap[dither(ds_x1++, ds_y, distance)][src])
+R_DRAW_SPAN_RADFOG(Brightmap, ds_colormap[ds_brightmap[src] ? 2
+                              : dither(ds_x1++, ds_y, distance)][src])
 
 #undef DRAW_SPAN_RADFOG_PIXEL
 
