@@ -1353,7 +1353,9 @@ fixed_t ds_ystep;
 byte *ds_source;
 
 static void (*DrawSpan)(void) = NULL;
+static void (*DrawSpanNoDither)(void) = NULL; // [Cherry]
 static void (*DrawSpanBrightmap)(void) = NULL;
+static void (*DrawSpanBrightmapNoDither)(void) = NULL; // [Cherry]
 
 #define R_DRAW_SPAN(PREFIX, NAME, SRCPIXEL)            \
     static void Draw##PREFIX##Span8##NAME(void)        \
@@ -1417,12 +1419,10 @@ static void (*DrawSpanBrightmap)(void) = NULL;
         }                                              \
     }
 
-R_DRAW_SPAN(,, ds_colormap[0][src])
-R_DRAW_SPAN(Dithered, ,
-    ds_colormap[dither(ds_x1++, ds_y, ds_z)][src]) // [Cherry]
-R_DRAW_SPAN(, Brightmap, ds_colormap[ds_brightmap[src] ? 2 : 0][src])
-R_DRAW_SPAN(Dithered, Brightmap,
-    ds_colormap[ds_brightmap[src] ? 2 : dither(ds_x1++, ds_y, ds_z)][src]) // [Cherry]
+R_DRAW_SPAN(        ,          , ds_colormap[0][src])
+R_DRAW_SPAN(Dithered,          , ds_colormap[dither(ds_x1++, ds_y, ds_z)][src]) // [Cherry]
+R_DRAW_SPAN(        , Brightmap, ds_colormap[ds_brightmap[src] ? 2 : 0][src])
+R_DRAW_SPAN(Dithered, Brightmap, ds_colormap[ds_brightmap[src] ? 2 : dither(ds_x1++, ds_y, ds_z)][src]) // [Cherry]
 
 #define R_DRAW_SPAN32(NAME, SRCPIXEL)                  \
     static void DrawSpan32##NAME(void)                 \
@@ -1493,13 +1493,22 @@ void (*R_DrawColumn)(void) = NULL;
 void (*R_DrawTLColumn)(void) = NULL;
 void (*R_DrawTranslatedColumn)(void) = NULL;
 void (*R_DrawSpan)(void) = NULL;
+void (*R_DrawSpanNoDither)(void) = NULL; // [Cherry]
 
 // [Nugget] Radial fog /------------------------------------------------------
 
 static void (*DrawSpanWithRadialFog)(void) = NULL;
 static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
 
-#define DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, dest_index) \
+// [Cherry] Dithered lighting from Doom Retro
+#define DRAW_SPAN_RADFOG_DITHER_SETUP \
+  ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(MAXLIGHTZ-1, *sdl+1)]); \
+  const int distance = ((*sdl) & 255); \
+  boolean do_dither = true; \
+  if (ds_colormap[0] == ds_colormap[1]) do_dither = false;
+#define DRAW_SPAN_RADFOG_NO_DITHER_SETUP /* */
+
+#define DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, dest_index, DITHER_SETUP) \
 { \
   ytemp = (ds_yfrac >> 10) & 0x0FC0; \
   xtemp = (ds_xfrac >> 16) & 0x003F; \
@@ -1509,15 +1518,14 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
   src = ds_source[spot]; \
   \
   ds_colormap[0] = V_ColormapRowByIndex(planezlight[*sdl]); \
-  /* [Cherry] Dithered lighting from Doom Retro */ \
-  ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(MAXLIGHTZ-1, *sdl+1)]); \
-  distance = ((*sdl++) & 255); \
-  \
+  DITHER_SETUP \
   dest[dest_index] = SRCPIXEL; \
+  sdl++; \
+  ds_x1++; \
 }
 
-#define R_DRAW_SPAN_RADFOG(NAME, SRCPIXEL)             \
-    static void DrawSpanWithRadialFog8##NAME(void)      \
+#define R_DRAW_SPAN_RADFOG(PREFIX, NAME, DITHER_SETUP, SRCPIXEL) \
+    static void Draw##PREFIX##SpanWithRadialFog8##NAME(void) \
     {                                                  \
         pixel_t *dest = ylookup[ds_y] + columnofs[ds_x1]; \
         byte src;                                      \
@@ -1527,14 +1535,13 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
         unsigned xtemp, ytemp, spot;                   \
                                                        \
         const uint16_t *sdl = spandistlight + ds_x1;   \
-        uint16_t distance; /* [Cherry] For dithering */ \
                                                        \
         while (count >= 4)                             \
         {                                              \
-            DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, 0);       \
-            DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, 1);       \
-            DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, 2);       \
-            DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, 3);       \
+            DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, 0, DITHER_SETUP); \
+            DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, 1, DITHER_SETUP); \
+            DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, 2, DITHER_SETUP); \
+            DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, 3, DITHER_SETUP); \
                                                        \
             dest += 4;                                 \
             count -= 4;                                \
@@ -1542,18 +1549,26 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
                                                        \
         while (count)                                  \
         {                                              \
-            DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, 0);       \
+            DRAW_SPAN_RADFOG_PIXEL(SRCPIXEL, 0, DITHER_SETUP); \
                                                        \
             dest++;                                    \
             count--;                                   \
         }                                              \
     }
 
-R_DRAW_SPAN_RADFOG(, ds_colormap[dither(ds_x1++, ds_y, distance)][src])
-R_DRAW_SPAN_RADFOG(Brightmap, ds_colormap[ds_brightmap[src] ? 2
-                              : dither(ds_x1++, ds_y, distance)][src])
+#define DITHER_COLORMAP (do_dither ? dither(ds_x1, ds_y, distance) : 0)
+
+R_DRAW_SPAN_RADFOG(        ,          , DRAW_SPAN_RADFOG_NO_DITHER_SETUP,
+    ds_colormap[0][src]);
+R_DRAW_SPAN_RADFOG(Dithered,          , DRAW_SPAN_RADFOG_DITHER_SETUP,
+    ds_colormap[DITHER_COLORMAP][src])
+R_DRAW_SPAN_RADFOG(        , Brightmap, DRAW_SPAN_RADFOG_NO_DITHER_SETUP,
+    ds_colormap[ds_brightmap[src] ? 2 : 0][src])
+R_DRAW_SPAN_RADFOG(Dithered, Brightmap, DRAW_SPAN_RADFOG_DITHER_SETUP,
+    ds_colormap[ds_brightmap[src] ? 2 : DITHER_COLORMAP][src])
 
 #undef DRAW_SPAN_RADFOG_PIXEL
+#undef DITHER_COLORMAP
 
 #define DRAW_SPAN_RADFOG32_PIXEL(SRCPIXEL, dest_index) \
 { \
@@ -1620,6 +1635,7 @@ void R_InitDrawFunctions(void)
         R_DrawTLColumn = DrawColumnTLBrightmap;
         R_DrawTranslatedColumn = DrawColumnTRBrightmap;
         R_DrawSpan = DrawSpanBrightmap;
+        R_DrawSpanNoDither = DrawSpanBrightmapNoDither; // [Cherry]
 
         R_DrawSpanWithRadialFog = DrawSpanWithRadialFogBrightmap; // [Nugget] Radial fog
     }
@@ -1629,6 +1645,7 @@ void R_InitDrawFunctions(void)
         R_DrawTLColumn = DrawColumnTL;
         R_DrawTranslatedColumn = DrawColumnTR;
         R_DrawSpan = DrawSpan;
+        R_DrawSpanNoDither = DrawSpanNoDither; // [Cherry]
 
         R_DrawSpanWithRadialFog = DrawSpanWithRadialFog; // [Nugget] Radial fog
     }
@@ -1886,8 +1903,12 @@ void R_InitDrawColorFunctions(void)
 
         DrawSpan = dithered_lighting ? DrawDitheredSpan8 : DrawSpan8;
         DrawSpanBrightmap = dithered_lighting ? DrawDitheredSpan8Brightmap : DrawSpan8Brightmap;
-        DrawSpanWithRadialFog = DrawSpanWithRadialFog8;
-        DrawSpanWithRadialFogBrightmap = DrawSpanWithRadialFog8Brightmap;
+        DrawSpanWithRadialFog = dithered_lighting ? DrawDitheredSpanWithRadialFog8 : DrawSpanWithRadialFog8;
+        DrawSpanWithRadialFogBrightmap = dithered_lighting ? DrawDitheredSpanWithRadialFog8Brightmap : DrawSpanWithRadialFog8Brightmap;
+
+        // [Cherry]
+        DrawSpanNoDither = DrawSpan8;
+        DrawSpanBrightmapNoDither = DrawSpan8Brightmap;
     }
 }
 

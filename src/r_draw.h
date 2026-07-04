@@ -96,6 +96,7 @@ extern const byte *ds_brightmap;
 
 // Span blitting for rows, floor/ceiling. No Spectre effect needed.
 extern void (*R_DrawSpan)(void);
+extern void (*R_DrawSpanNoDither)(void); // [Cherry]
 
 extern void (*R_DrawSpanWithRadialFog)(void); // [Nugget] Radial fog
 
