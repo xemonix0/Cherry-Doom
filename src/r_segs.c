@@ -96,12 +96,13 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
   column_t *col;
 
   if (fixedcolormap)
-    dc_colormap[0] = dc_colormap[1] = fixedcolormap;
+    dc_colormap[0] = dc_colormap[2] = fixedcolormap;
 
   // draw the columns
   for (dc_x = x1 ; dc_x <= x2 ; dc_x++, spryscale += rw_scalestep)
     if (maskedtexturecol[dc_x] != INT_MAX) // [FG] 32-bit integer math
       {
+        colfunc = R_DrawColumn; // [Cherry] reset colfunc
         if (!fixedcolormap)      // calculate lighting
           {                             // killough 11/98:
             const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
@@ -110,9 +111,21 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
             // [crispy] brightmaps for two sided mid-textures
             dc_brightmap = texturebrightmap[texnum];
             dc_colormap[0] = V_ColormapRowByIndex(walllights[index]);
-            dc_colormap[1] = (STRICTMODE(brightmaps) || force_brightmaps)
+            dc_colormap[2] = (STRICTMODE(brightmaps) || force_brightmaps)
                               ? fullcolormap
                               : dc_colormap[0];
+
+            // [Cherry] Dithered lighting from Doom Retro
+            if (dithered_lighting)
+            {
+              dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+1, MAXLIGHTSCALE-1)]);
+              dc_z = R_GetDitheringThreshold(spryscale, dc_x, index);
+
+              if (dc_colormap[0] == dc_colormap[1])
+              {
+                colfunc = R_DrawColumnNoDither;
+              }
+            }
           }
 
         // killough 3/2/98:
@@ -423,6 +436,8 @@ static void R_RenderSegLoop (void)
             }
         }
 
+      colfunc = R_DrawColumn; // [Cherry] reset colfunc
+
       // texturecolumn and lighting are independent of wall tiers
       if (segtextured)
         {
@@ -450,10 +465,22 @@ static void R_RenderSegLoop (void)
             else
             {
               dc_colormap[0] = V_ColormapRowByIndex(walllights[index]);
-              dc_colormap[1] = (!fixedcolormap &&
+              dc_colormap[2] = (!fixedcolormap &&
                                 (STRICTMODE(brightmaps) || force_brightmaps))
                                 ? fullcolormap
                                 : dc_colormap[0];
+
+              // [Cherry] Dithered lighting from Doom Retro
+              if (dithered_lighting)
+              {
+                dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+1, MAXLIGHTSCALE-1)]);
+                dc_z = R_GetDitheringThreshold(rw_scale, rw_x, index);
+
+                if (dc_colormap[0] == dc_colormap[1])
+                {
+                  colfunc = R_DrawColumnNoDither;
+                }
+              }
             }
           }
 

@@ -76,11 +76,12 @@ static pixel32_t *background_buffer32 = NULL;
 // Source is the top of the column to scale.
 //
 
-lighttable_t *dc_colormap[2]; // [crispy] brightmaps
+lighttable_t *dc_colormap[3]; // [crispy] brightmaps // [Cherry] 0 and 1 for dithering, 2 for brightmaps
 lighttable32_t *dc_colormap32[2];
 int dc_x;
 int dc_yl;
 int dc_yh;
+int dc_z; // [Cherry] Dithered lighting from Doom Retro
 fixed_t dc_iscale;
 fixed_t dc_texturemid;
 int dc_texheight; // killough
@@ -122,14 +123,16 @@ static const byte dithermatrix[DITHERSIZE][DITHERSIZE] =
 // heightmask is the Tutti-Frutti fix -- killough
 
 static void (*DrawColumn)(void) = NULL;
+static void (*DrawColumnNoDither)(void) = NULL; // [Cherry]
 static void (*DrawColumnBrightmap)(void) = NULL;
+static void (*DrawColumnBrightmapNoDither)(void) = NULL; // [Cherry]
 static void (*DrawColumnTR)(void) = NULL;
 static void (*DrawColumnTRBrightmap)(void) = NULL;
 static void (*DrawColumnTL)(void) = NULL;
 static void (*DrawColumnTLBrightmap)(void) = NULL;
 
-#define DRAW_COLUMN(NAME, SRCPIXEL)                                      \
-    static void DrawColumn8##NAME(void)                                  \
+#define DRAW_COLUMN(PREFIX, NAME, SRCPIXEL)                              \
+    static void Draw##PREFIX##Column8##NAME(void)                        \
     {                                                                    \
         int count = dc_yh - dc_yl + 1;                                   \
                                                                          \
@@ -166,6 +169,7 @@ static void (*DrawColumnTLBrightmap)(void) = NULL;
                 byte src = dc_source[frac >> FRACBITS];                  \
                 *dest = SRCPIXEL;                                        \
                 dest += linesize;                                        \
+                dc_yl++;                                                 \
                 if ((frac += fracstep) >= heightmask)                    \
                     frac -= heightmask;                                  \
             } while (--count);                                           \
@@ -178,10 +182,12 @@ static void (*DrawColumnTLBrightmap)(void) = NULL;
                 *dest = SRCPIXEL;                                        \
                 dest += linesize;                                        \
                 frac += fracstep;                                        \
+                dc_yl++;                                                 \
                 src = dc_source[(frac >> FRACBITS) & heightmask];        \
                 *dest = SRCPIXEL;                                        \
                 dest += linesize;                                        \
                 frac += fracstep;                                        \
+                dc_yl++;                                                 \
             }                                                            \
             if (count & 1)                                               \
             {                                                            \
@@ -191,8 +197,10 @@ static void (*DrawColumnTLBrightmap)(void) = NULL;
         }                                                                \
     }
 
-DRAW_COLUMN(, dc_colormap[0][src])
-DRAW_COLUMN(Brightmap, dc_colormap[dc_brightmap[src]][src])
+DRAW_COLUMN(        ,          , dc_colormap[0][src])
+DRAW_COLUMN(Dithered,          , dc_colormap[dither(dc_x, dc_yl, dc_z)][src])
+DRAW_COLUMN(        , Brightmap, dc_colormap[dc_brightmap[src] ? 2 : 0][src])
+DRAW_COLUMN(Dithered, Brightmap, dc_colormap[dc_brightmap[src] ? 2 : dither(dc_x, dc_yl, dc_z)][src])
 
 // Here is the version of R_DrawColumn that deals with translucent  // phares
 // textures and sprites. It's identical to R_DrawColumn except      //    |
@@ -206,10 +214,10 @@ DRAW_COLUMN(Brightmap, dc_colormap[dc_brightmap[src]][src])
 // opaque' decision is made outside this routine, not down where the
 // actual code differences are.
 
-DRAW_COLUMN(TL,
+DRAW_COLUMN(,TL,
     tranmap[(*dest << 8) + dc_colormap[0][src]])
-DRAW_COLUMN(TLBrightmap,
-    tranmap[(*dest << 8) + dc_colormap[dc_brightmap[src]][src]])
+DRAW_COLUMN(,TLBrightmap,
+    tranmap[(*dest << 8) + dc_colormap[dc_brightmap[src] ? 2 : 0][src]])
 
 #define DRAW_COLUMN32(NAME, SRCPIXEL)                                    \
     static void DrawColumn32##NAME(void)                                 \
@@ -1278,10 +1286,10 @@ void R_SetFuzzColumnMode(void)
 
 byte *dc_translation, *translationtables;
 
-DRAW_COLUMN(TR,
+DRAW_COLUMN(,TR,
     dc_colormap[0][dc_translation[src]])
-DRAW_COLUMN(TRBrightmap,
-    dc_colormap[dc_brightmap[src]][dc_translation[src]])
+DRAW_COLUMN(,TRBrightmap,
+    dc_colormap[dc_brightmap[src] ? 2 : 0][dc_translation[src]])
 
 DRAW_COLUMN32(TR,
     dc_colormap32[0][dc_translation[src]])
@@ -1490,6 +1498,7 @@ R_DRAW_SPAN32(, ds_colormap32[0][src])
 R_DRAW_SPAN32(Brightmap, ds_colormap32[ds_brightmap[src]][src])
 
 void (*R_DrawColumn)(void) = NULL;
+void (*R_DrawColumnNoDither)(void) = NULL; // [Cherry]
 void (*R_DrawTLColumn)(void) = NULL;
 void (*R_DrawTranslatedColumn)(void) = NULL;
 void (*R_DrawSpan)(void) = NULL;
@@ -1624,6 +1633,7 @@ void R_InitDrawFunctions(void)
     if (local_brightmaps)
     {
         R_DrawColumn = DrawColumnBrightmap;
+        R_DrawColumnNoDither = DrawColumnBrightmapNoDither; // [Cherry]
         R_DrawTLColumn = DrawColumnTLBrightmap;
         R_DrawTranslatedColumn = DrawColumnTRBrightmap;
         R_DrawSpan = DrawSpanBrightmap;
@@ -1634,6 +1644,7 @@ void R_InitDrawFunctions(void)
     else
     {
         R_DrawColumn = DrawColumn;
+        R_DrawColumnNoDither = DrawColumnNoDither; // [Cherry]
         R_DrawTLColumn = DrawColumnTL;
         R_DrawTranslatedColumn = DrawColumnTR;
         R_DrawSpan = DrawSpan;
@@ -1883,8 +1894,8 @@ void R_InitDrawColorFunctions(void)
     }
     else
     {
-        DrawColumn = DrawColumn8;
-        DrawColumnBrightmap = DrawColumn8Brightmap;
+        DrawColumn = dithered_lighting ? DrawDitheredColumn8 : DrawColumn8;
+        DrawColumnBrightmap = dithered_lighting ? DrawDitheredColumn8Brightmap : DrawColumn8Brightmap;
         DrawColumnTR = DrawColumn8TR;
         DrawColumnTRBrightmap = DrawColumn8TRBrightmap;
         DrawColumnTL = DrawColumn8TL;
@@ -1899,6 +1910,8 @@ void R_InitDrawColorFunctions(void)
         DrawSpanWithRadialFogBrightmap = DrawSpanWithRadialFog8Brightmap;
 
         // [Cherry]
+        DrawColumnNoDither = DrawColumn8;
+        DrawColumnBrightmapNoDither = DrawColumn8Brightmap;
         DrawSpanNoDither = DrawSpan8;
         DrawSpanBrightmapNoDither = DrawSpan8Brightmap;
     }
