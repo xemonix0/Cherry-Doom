@@ -1355,8 +1355,8 @@ byte *ds_source;
 static void (*DrawSpan)(void) = NULL;
 static void (*DrawSpanBrightmap)(void) = NULL;
 
-#define R_DRAW_SPAN(NAME, SRCPIXEL)                    \
-    static void DrawSpan8##NAME(void)                   \
+#define R_DRAW_SPAN(PREFIX, NAME, SRCPIXEL)            \
+    static void Draw##PREFIX##Span8##NAME(void)        \
     {                                                  \
         pixel_t *dest = ylookup[ds_y] + columnofs[ds_x1]; \
                                                        \
@@ -1417,9 +1417,12 @@ static void (*DrawSpanBrightmap)(void) = NULL;
         }                                              \
     }
 
-// [Cherry] Dithered lighting from Doom Retro
-R_DRAW_SPAN(, ds_colormap[dither(ds_x1++, ds_y, ds_z)][src])
-R_DRAW_SPAN(Brightmap, ds_colormap[ds_brightmap[src] ? 2 : dither(ds_x1++, ds_y, ds_z)][src])
+R_DRAW_SPAN(,, ds_colormap[0][src])
+R_DRAW_SPAN(Dithered, ,
+    ds_colormap[dither(ds_x1++, ds_y, ds_z)][src]) // [Cherry]
+R_DRAW_SPAN(, Brightmap, ds_colormap[ds_brightmap[src] ? 2 : 0][src])
+R_DRAW_SPAN(Dithered, Brightmap,
+    ds_colormap[ds_brightmap[src] ? 2 : dither(ds_x1++, ds_y, ds_z)][src]) // [Cherry]
 
 #define R_DRAW_SPAN32(NAME, SRCPIXEL)                  \
     static void DrawSpan32##NAME(void)                 \
@@ -1881,8 +1884,8 @@ void R_InitDrawColorFunctions(void)
         R_DrawColumnShadow = DrawColumnShadow8;
         R_DrawSkyColumn = DrawSkyColumn8;
 
-        DrawSpan = DrawSpan8;
-        DrawSpanBrightmap = DrawSpan8Brightmap;
+        DrawSpan = dithered_lighting ? DrawDitheredSpan8 : DrawSpan8;
+        DrawSpanBrightmap = dithered_lighting ? DrawDitheredSpan8Brightmap : DrawSpan8Brightmap;
         DrawSpanWithRadialFog = DrawSpanWithRadialFog8;
         DrawSpanWithRadialFogBrightmap = DrawSpanWithRadialFog8Brightmap;
     }

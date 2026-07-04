@@ -287,6 +287,7 @@ extern void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 
 // [Cherry] CVARs
 extern int rocket_trails_tran_pct;
+extern boolean dithered_lighting; // Dithered lighting from Doom Retro
 
 void R_InitLightTables(void);                // killough 8/9/98
 

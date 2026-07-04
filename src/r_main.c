@@ -938,6 +938,7 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 
 // [Cherry] CVARs
 int rocket_trails_tran_pct;
+boolean dithered_lighting;
 
 void (*colfunc)(void);                    // current column draw function
 
@@ -2329,6 +2330,9 @@ void R_BindRenderVariables(void)
 
   BIND_BOOL_GENERAL(linearsky, false, "Linear horizontal scrolling for skies");
   BIND_BOOL_GENERAL(r_swirl, false, "Swirling animated flats");
+
+  // [Cherry] Dithered lighting from Doom Retro
+  BIND_BOOL_GENERAL(dithered_lighting, false, "Dithered lighting");
 
   // [Nugget] /---------------------------------------------------------------
 

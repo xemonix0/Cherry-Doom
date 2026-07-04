@@ -4077,11 +4077,13 @@ static setup_menu_t gen_settings5[] = {
       {"Floating Powerups"  , S_ONOFF,                         M_X, M_SPC, {"floating_powerups"}},
       {"Rocket Trails",       S_ONOFF | S_STRICT | S_CRITICAL, M_X, M_SPC, {"rocket_trails"}},
       {"Less Blinding Tints", S_ONOFF | S_STRICT,              M_X, M_SPC, {"less_blinding_tints"}, .action = I_DeferredInitPalettes},
+      {"Dithered Lighting",   S_ONOFF,                         M_X, M_SPC, {"dithered_lighting"}, .action = I_DeferredInitColor},
 
     MI_END
 };
 
-// [Cherry]
+// [Cherry] /------------------------------------------------------------------
+
 static void UpdateDarkeningItems(void)
 {
     DisableItem(menu_backdrop != MENU_BG_DARK, gen_settings5,
@@ -4089,6 +4091,14 @@ static void UpdateDarkeningItems(void)
     DisableItem(automapoverlay != AM_OVERLAY_DARK, auto_settings1,
                 "automap_overlay_darkening");
 }
+
+void MN_UpdateDitheredLightingItem(void)
+{
+    DisableItem(lighting_mode >= LIGHTINGMODE_INTERPOLATED,
+                gen_settings5, "dithered_lighting");
+}
+
+// [Cherry] ------------------------------------------------------------------/
 
 const char *default_skill_strings[] = {
     // dummy first option because defaultskill is 1-based
@@ -6642,6 +6652,7 @@ void MN_SetupResetMenu(void)
 
     UpdateDarkeningItems();
     MN_UpdateCSStatsTrackingItem();
+    MN_UpdateDitheredLightingItem();
 }
 
 void MN_BindMenuVariables(void)
