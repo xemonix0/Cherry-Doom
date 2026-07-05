@@ -29,7 +29,7 @@ extern lighttable32_t *dc_colormap32[2];
 extern int      dc_x;
 extern int      dc_yl;
 extern int      dc_yh;
-extern int      dc_z; // [Cherry] Dithered lighting from Doom Retro
+extern int      dc_ditherthreshold; // [Cherry] Dithered lighting from Doom Retro
 extern fixed_t  dc_iscale;
 extern fixed_t  dc_texturemid;
 extern int      dc_texheight;    // killough
@@ -84,7 +84,7 @@ extern lighttable32_t *ds_colormap32[2];
 extern int     ds_y;
 extern int     ds_x1;
 extern int     ds_x2;
-extern int     ds_z; // [Cherry] Dithered lighting from Doom Retro
+extern int     ds_ditherthreshold; // [Cherry] Dithered lighting from Doom Retro
 extern fixed_t ds_xfrac;
 extern fixed_t ds_yfrac;
 extern fixed_t ds_xstep;

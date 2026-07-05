@@ -293,8 +293,6 @@ void R_InitLightTables(void);                // killough 8/9/98
 
 // [Nugget] Made function pointer, added X parameter
 extern int (*R_GetLightIndex)(fixed_t scale, int x);
-// [Cherry] Dithered lighting from Doom Retro
-extern int (*R_GetDitheringThreshold)(fixed_t scale, int x, int index);
 
 extern boolean setsizeneeded;
 void R_ExecuteSetViewSize(void);

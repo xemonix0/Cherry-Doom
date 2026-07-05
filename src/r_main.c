@@ -332,8 +332,6 @@ void R_DeferredInitLightTables(void)
 // Radial fog ----------------------------------------------------------------
 
 static int R_GetLightIndexVanilla(fixed_t scale, int x);
-// [Cherry]
-static int R_GetDitheringThresholdVanilla(fixed_t scale, int x, int index);
 
 #define RADFOG_MULT 1.414213562 // Square root of 2
 
@@ -341,23 +339,20 @@ static int R_GetLightIndexRadFog(fixed_t scale, const int x)
 {
   scale = FixedMul(scale, finecosine[xtoviewangle[x] >> ANGLETOFINESHIFT]) * RADFOG_MULT;
 
-  const int index = ((int64_t) scale * (160 << FRACBITS) / lightfocallength) >> LIGHTSCALESHIFT;
+  const fixed_t raw = (int64_t)scale * (160 << FRACBITS) / lightfocallength;
+  const int index = raw >> LIGHTSCALESHIFT;
+
+  // [Cherry] Calculate dithering threshold
+  if (dithered_lighting)
+  {
+    dc_ditherthreshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
+      : (raw & ((1 << LIGHTSCALESHIFT) - 1)) >> (LIGHTSCALESHIFT - 8);
+  }
 
   return BETWEEN(0, MAXLIGHTSCALE - 1, index);
 }
 
-// [Cherry]
-static int R_GetDitheringThresholdRadFog(fixed_t scale, const int x, const int index)
-{
-  if (index <= 0 || index >= MAXLIGHTSCALE) return 0;
-  scale = FixedMul(scale, finecosine[xtoviewangle[x] >> ANGLETOFINESHIFT]) * RADFOG_MULT;
-  const fixed_t raw = (int64_t)scale * (160 << FRACBITS) / lightfocallength;
-  return (raw & ((1 << LIGHTSCALESHIFT) - 1)) >> (LIGHTSCALESHIFT - 8);
-}
-
 int (*R_GetLightIndex)(fixed_t scale, int x) = R_GetLightIndexVanilla;
-// [Cherry] Dithered lighting from Doom Retro
-int (*R_GetDitheringThreshold)(fixed_t scale, int x, int index) = R_GetDitheringThresholdVanilla;
 
 int light_distance_shift_bits;
 
@@ -436,12 +431,10 @@ void R_InitDistLightTables(void)
   if (!do_radial_fog)
   {
     R_GetLightIndex = R_GetLightIndexVanilla;
-    R_GetDitheringThreshold = R_GetDitheringThresholdVanilla;
     return;
   }
 
   R_GetLightIndex = R_GetLightIndexRadFog;
-  R_GetDitheringThreshold = R_GetDitheringThresholdRadFog;
 
   light_distance_shift_bits = 18 - radial_plane_fog_fidelity;
   max_light_distance = 1 << (27 - light_distance_shift_bits);
@@ -1346,16 +1339,17 @@ void R_InitLightTables (void)
 // [Nugget] Static, added X parameter
 static int R_GetLightIndexVanilla(const fixed_t scale, const int x)
 {
-  const int index = ((int64_t)scale * (160 << FRACBITS) / lightfocallength) >> LIGHTSCALESHIFT;
-  return BETWEEN(0, MAXLIGHTSCALE - 1, index);
-}
-
-// [Cherry]
-static int R_GetDitheringThresholdVanilla(const fixed_t scale, const int x, const int index)
-{
-  if (index <= 0 || index >= MAXLIGHTSCALE) return 0;
   const fixed_t raw = (int64_t)scale * (160 << FRACBITS) / lightfocallength;
-  return (raw & ((1 << LIGHTSCALESHIFT) - 1)) >> (LIGHTSCALESHIFT - 8);
+  const int index = raw >> LIGHTSCALESHIFT;
+
+  // [Cherry] Calculate dithering threshold
+  if (dithered_lighting)
+  {
+    dc_ditherthreshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
+      : (raw & ((1 << LIGHTSCALESHIFT) - 1)) >> (LIGHTSCALESHIFT - 8);
+  }
+
+  return BETWEEN(0, MAXLIGHTSCALE - 1, index);
 }
 
 static fixed_t viewpitch;

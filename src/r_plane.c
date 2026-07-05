@@ -310,7 +310,7 @@ static void R_MapPlane(int y, int x1, int x2)
   ds_x1 = x1;
   ds_x2 = x2;
   // [Cherry] Dithered lighting from Doom Retro
-  ds_z = ((distance >> 12) & 255);
+  ds_ditherthreshold = ((distance >> 12) & 255);
 
   DrawPlane(distance);
 }

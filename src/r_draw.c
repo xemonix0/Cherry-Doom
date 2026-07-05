@@ -81,7 +81,7 @@ lighttable32_t *dc_colormap32[2];
 int dc_x;
 int dc_yl;
 int dc_yh;
-int dc_z; // [Cherry] Dithered lighting from Doom Retro
+int dc_ditherthreshold; // [Cherry] Dithered lighting from Doom Retro
 fixed_t dc_iscale;
 fixed_t dc_texturemid;
 int dc_texheight; // killough
@@ -101,8 +101,8 @@ static const byte dithermatrix[DITHERSIZE][DITHERSIZE] =
     { 112, 144,  64, 160 }
 };
 
-#define dither(x, y, z) (dithermatrix[(y) & DITHERMASK] \
-                            [((x) + viewwindowx - video.deltaw + !video.deltaw) & DITHERMASK] < (z))
+#define dither(x, y, threshold) (dithermatrix[(y) & DITHERMASK] \
+                                    [((x) + viewwindowx - video.deltaw + !video.deltaw) & DITHERMASK] < (threshold))
 
 // [Cherry] ------------------------------------------------------------------/
 
@@ -198,9 +198,9 @@ static void (*DrawColumnTLBrightmap)(void) = NULL;
     }
 
 DRAW_COLUMN(        ,          , dc_colormap[0][src])
-DRAW_COLUMN(Dithered,          , dc_colormap[dither(dc_x, dc_yl, dc_z)][src])
+DRAW_COLUMN(Dithered,          , dc_colormap[dither(dc_x, dc_yl, dc_ditherthreshold)][src])
 DRAW_COLUMN(        , Brightmap, dc_colormap[dc_brightmap[src] ? 2 : 0][src])
-DRAW_COLUMN(Dithered, Brightmap, dc_colormap[dc_brightmap[src] ? 2 : dither(dc_x, dc_yl, dc_z)][src])
+DRAW_COLUMN(Dithered, Brightmap, dc_colormap[dc_brightmap[src] ? 2 : dither(dc_x, dc_yl, dc_ditherthreshold)][src])
 
 // Here is the version of R_DrawColumn that deals with translucent  // phares
 // textures and sprites. It's identical to R_DrawColumn except      //    |
@@ -1346,7 +1346,7 @@ void R_InitTranslationTables(void)
 int ds_y;
 int ds_x1;
 int ds_x2;
-int ds_z; // [Cherry] Dithered lighting from Doom Retro
+int ds_ditherthreshold; // [Cherry] Dithered lighting from Doom Retro
 
 lighttable_t *ds_colormap[3]; // [Cherry] 0 and 1 for dithering, 2 for brightmaps
 lighttable32_t *ds_colormap32[2];
@@ -1428,9 +1428,9 @@ static void (*DrawSpanBrightmapNoDither)(void) = NULL; // [Cherry]
     }
 
 R_DRAW_SPAN(        ,          , ds_colormap[0][src])
-R_DRAW_SPAN(Dithered,          , ds_colormap[dither(ds_x1++, ds_y, ds_z)][src]) // [Cherry]
+R_DRAW_SPAN(Dithered,          , ds_colormap[dither(ds_x1++, ds_y, ds_ditherthreshold)][src]) // [Cherry]
 R_DRAW_SPAN(        , Brightmap, ds_colormap[ds_brightmap[src] ? 2 : 0][src])
-R_DRAW_SPAN(Dithered, Brightmap, ds_colormap[ds_brightmap[src] ? 2 : dither(ds_x1++, ds_y, ds_z)][src]) // [Cherry]
+R_DRAW_SPAN(Dithered, Brightmap, ds_colormap[ds_brightmap[src] ? 2 : dither(ds_x1++, ds_y, ds_ditherthreshold)][src]) // [Cherry]
 
 #define R_DRAW_SPAN32(NAME, SRCPIXEL)                  \
     static void DrawSpan32##NAME(void)                 \

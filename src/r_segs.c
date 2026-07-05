@@ -119,7 +119,6 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
             if (dithered_lighting)
             {
               dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+1, MAXLIGHTSCALE-1)]);
-              dc_z = R_GetDitheringThreshold(spryscale, dc_x, index);
 
               if (dc_colormap[0] == dc_colormap[1])
               {
@@ -474,7 +473,6 @@ static void R_RenderSegLoop (void)
               if (dithered_lighting)
               {
                 dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+1, MAXLIGHTSCALE-1)]);
-                dc_z = R_GetDitheringThreshold(rw_scale, rw_x, index);
 
                 if (dc_colormap[0] == dc_colormap[1])
                 {
