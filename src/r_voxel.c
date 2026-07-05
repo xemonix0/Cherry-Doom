@@ -707,17 +707,20 @@ boolean VX_ProjectVoxel (mobj_t * thing, byte lightnum)
 
 	// get light level...
 
+    // [Cherry]
+    vis->colormap[1] = 0;
+
 	if (vis->mobjflags & MF_SHADOW)
 	{
-		vis->colormap[0] = vis->colormap[1] = 0;
+		vis->colormap[0] = vis->colormap[2] = 0;
 	}
 	else if (fixedcolormapoffset)
 	{
-		vis->colormap[0] = vis->colormap[1] = fixedcolormapoffset;
+		vis->colormap[0] = vis->colormap[2] = fixedcolormapoffset;
 	}
 	else if (thing->frame & FF_FULLBRIGHT)
 	{
-		vis->colormap[0] = vis->colormap[1] = 0;
+		vis->colormap[0] = vis->colormap[2] = 0;
 		vis->flags |= VSF_FULLBRIGHT; // [Nugget]
 	}
 	else
@@ -739,7 +742,7 @@ boolean VX_ProjectVoxel (mobj_t * thing, byte lightnum)
 		}
 
 		vis->colormap[0] = spritelights[index];
-		vis->colormap[1] = 0;
+		vis->colormap[2] = 0;
 	}
 
 	vis->brightmap = R_BrightmapForSprite(thing->sprite);
@@ -880,7 +883,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 	const lighttable_t *colormap[2];
 
 	colormap[0] = V_ColormapRowByIndex(spr->colormap[0]);
-	colormap[1] = V_ColormapRowByIndex(spr->colormap[1]);
+	colormap[1] = V_ColormapRowByIndex(spr->colormap[2]);
 
 	byte lightnum = spr->lightnum;
 
@@ -1142,7 +1145,7 @@ static void VX_DrawColumnCubes32(vissprite_t * spr, int x, int y)
 	const lighttable32_t *colormap[2];
 
 	colormap[0] = V_ColormapRowByIndex32(spr->colormap[0]);
-	colormap[1] = V_ColormapRowByIndex32(spr->colormap[1]);
+	colormap[1] = V_ColormapRowByIndex32(spr->colormap[2]);
 
 	byte lightnum = spr->lightnum;
 
@@ -1402,7 +1405,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 	const lighttable_t *colormap[2];
 
 	colormap[0] = V_ColormapRowByIndex(spr->colormap[0]);
-	colormap[1] = V_ColormapRowByIndex(spr->colormap[1]);
+	colormap[1] = V_ColormapRowByIndex(spr->colormap[2]);
 
 	byte lightnum = spr->lightnum;
 
@@ -1608,7 +1611,7 @@ static void VX_DrawColumnBounded32(vissprite_t *const spr, const int x, const in
 	const lighttable32_t *colormap[2];
 
 	colormap[0] = V_ColormapRowByIndex32(spr->colormap[0]);
-	colormap[1] = V_ColormapRowByIndex32(spr->colormap[1]);
+	colormap[1] = V_ColormapRowByIndex32(spr->colormap[2]);
 
 	byte lightnum = spr->lightnum;
 

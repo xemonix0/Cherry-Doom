@@ -674,7 +674,11 @@ static void DrawVisSpriteLoop8(
   int texturecolumn;
 
   dc_colormap[0] = V_ColormapRowByIndex(vis->colormap[0]);
-  dc_colormap[2] = V_ColormapRowByIndex(vis->colormap[1]);
+  dc_colormap[2] = V_ColormapRowByIndex(vis->colormap[2]);
+
+  // [Cherry] Dithered lighting from Doom Retro
+  dc_colormap[1] = V_ColormapRowByIndex(vis->colormap[1]);
+  dc_ditherthreshold = vis->ditherthreshold;
 
   for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
     {
@@ -693,7 +697,12 @@ static void DrawVisSpriteLoop8(
         lightindex = R_GetLightIndex(vis->scale, dc_x);
 
         if (!percolumn_lighting)
-        { dc_colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]); }
+        {
+          dc_colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
+          // [Cherry] Dithered lighting from Doom Retro
+          if (dc_colormap[1])
+            dc_colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+1, MAXLIGHTSCALE-1)]);
+        }
       }
 
       // Thing lighting
@@ -706,12 +715,15 @@ static void DrawVisSpriteLoop8(
         const fixed_t gx = vis->gx + FixedMul(offset, pcl_cosine),
                       gy = vis->gy + FixedMul(offset, pcl_sine);
 
-        const int lightnum = (R_GetLightLevelInPoint(gx, gy, false) >> LIGHTSEGSHIFT)
-                           + extralight;
+        const int lightnum = BETWEEN(0, LIGHTLEVELS-1,
+                             (R_GetLightLevelInPoint(gx, gy, false) >> LIGHTSEGSHIFT)
+                              + extralight);
 
-        dc_colormap[0] = V_ColormapRowByIndex(
-          scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)][lightindex]
-        );
+        dc_colormap[0] = V_ColormapRowByIndex(scalelight[lightnum][lightindex]);
+
+        // [Cherry] Dithered lighting from Doom Retro
+        if (dc_colormap[1])
+          dc_colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+1, MAXLIGHTSCALE-1)]);
       }
 
       // [Nugget] ===========================================================/
@@ -835,7 +847,10 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
           tranmap = main_tranmap;       // killough 4/11/98
         }
       else
-        colfunc = R_DrawColumn;         // killough 3/14/98, 4/11/98
+        colfunc = R_DoDitheredLighting() && vis->colormap[1]
+                  && vis->colormap[0] != vis->colormap[1]
+                    ? R_DrawDitheredColumn  // [Cherry]
+                    : R_DrawColumn;         // killough 3/14/98, 4/11/98
 
   dc_iscale = abs(vis->yiscale); // [Nugget] Sprite scaling: use `yiscale`
   dc_texturemid = vis->texturemid;
@@ -898,7 +913,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     pcl_sine
   );
 
-  colfunc = R_DrawColumn;         // killough 3/14/98
+  colfunc = R_DoDitheredLighting() ? R_DrawDitheredColumn : R_DrawColumn;         // killough 3/14/98
 }
 
 //
@@ -1233,14 +1248,17 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
   if (hires_lump >= 0)
   { vis->patch = first_hires_lump + hires_lump - firstspritelump; }
 
+  // [Cherry]
+  vis->colormap[1] = 0;
+
   // get light level
   if (thing->flags & MF_SHADOW)
-    vis->colormap[0] = vis->colormap[1] = 0;               // shadow draw
+    vis->colormap[0] = vis->colormap[2] = 0;               // shadow draw
   else if (fixedcolormapoffset)
-    vis->colormap[0] = vis->colormap[1] = fixedcolormapoffset;      // fixed map
+    vis->colormap[0] = vis->colormap[2] = fixedcolormapoffset;      // fixed map
   else if (frame & FF_FULLBRIGHT)
   {
-    vis->colormap[0] = vis->colormap[1] = 0;       // full bright  // killough 3/20/98
+    vis->colormap[0] = vis->colormap[2] = 0;       // full bright  // killough 3/20/98
     vis->flags |= VSF_FULLBRIGHT; // [Nugget]
   }
   else
@@ -1261,7 +1279,14 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
       }
 
       vis->colormap[0] = spritelights[index];
-      vis->colormap[1] = 0;
+      vis->colormap[2] = 0;
+
+      // [Cherry] Dithered lighting from Doom Retro
+      if (R_DoDitheredLighting())
+      {
+        vis->colormap[1] = spritelights[MIN(index+1, MAXLIGHTSCALE-1)];
+        vis->ditherthreshold = dc_ditherthreshold;
+      }
     }
 
   vis->brightmap = R_BrightmapForState(thing->state - states);
@@ -1700,14 +1725,14 @@ void R_DrawPSprite (pspdef_t *psp, const boolean is_flash) // [Nugget] Transluce
   if (POWER_RUNOUT(viewplayer->powers[pw_invisibility]) && !beta_emulation
       && !STRICTMODE(pspr_invis_translucent)) // [Nugget] Translucent weapon when invisible
   {
-    vis->colormap[0] = vis->colormap[1] = 0;                    // shadow draw
+    vis->colormap[0] = vis->colormap[2] = 0;                    // shadow draw
     vis->mobjflags |= MF_SHADOW; // [Nugget] Give corresponding flag
   }
   else if (fixedcolormapoffset)
-    vis->colormap[0] = vis->colormap[1] = fixedcolormapoffset;           // fixed color
+    vis->colormap[0] = vis->colormap[2] = fixedcolormapoffset;           // fixed color
   else if (psp->state->frame & FF_FULLBRIGHT)
   {
-    vis->colormap[0] = vis->colormap[1] = 0;            // full bright // killough 3/20/98
+    vis->colormap[0] = vis->colormap[2] = 0;            // full bright // killough 3/20/98
     vis->flags |= VSF_FULLBRIGHT; // [Nugget]
   }
   else
@@ -1716,8 +1741,9 @@ void R_DrawPSprite (pspdef_t *psp, const boolean is_flash) // [Nugget] Transluce
     const int index = STRICTMODE(!diminishing_lighting) ? 0 : MAXLIGHTSCALE-1;
 
     vis->colormap[0] = spritelights[index];  // local light
-    vis->colormap[1] = 0;
+    vis->colormap[2] = 0;
   }
+  vis->colormap[1] = 0; // [Cherry] Never dither PSprites
   vis->brightmap = R_BrightmapForState(psp->state - states);
 
   // [Nugget] /---------------------------------------------------------------
