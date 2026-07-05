@@ -173,7 +173,7 @@ static void DrawPlane8(fixed_t distance)
   unsigned index;
 
   // [Nugget] Radial fog
-  void (*DrawSpan)(void) = R_DrawSpan;
+  void (*DrawSpan)(void) = R_DoDitheredLighting() ? R_DrawDitheredSpan : R_DrawSpan;
 
   if (!(ds_colormap[0] = ds_colormap[1] = ds_colormap[2] = fixedcolormap))
     {
@@ -204,12 +204,12 @@ static void DrawPlane8(fixed_t distance)
         ds_colormap[0] = V_ColormapRowByIndex(planezlight[index]);
 
         // [Cherry] Dithered lighting from Doom Retro
-        if (dithered_lighting)
+        if (R_DoDitheredLighting())
         {
           ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(MAXLIGHTZ-1, index+1)]);
           if (ds_colormap[0] == ds_colormap[1])
           {
-            DrawSpan = R_DrawSpanNoDither;
+            DrawSpan = R_DrawSpan;
           }
         }
       }

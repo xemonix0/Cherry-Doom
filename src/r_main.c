@@ -343,7 +343,7 @@ static int R_GetLightIndexRadFog(fixed_t scale, const int x)
   const int index = raw >> LIGHTSCALESHIFT;
 
   // [Cherry] Calculate dithering threshold
-  if (dithered_lighting)
+  if (R_DoDitheredLighting())
   {
     dc_ditherthreshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
       : (raw & ((1 << LIGHTSCALESHIFT) - 1)) >> (LIGHTSCALESHIFT - 8);
@@ -944,9 +944,18 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 
 // [Nugget] =================================================================/
 
-// [Cherry] CVARs
+// [Cherry] /=================================================================
+
 int rocket_trails_tran_pct;
+
+// Dithered lighting from Doom Retro
 boolean dithered_lighting;
+boolean R_DoDitheredLighting(void)
+{
+    return dithered_lighting && diminishing_lighting && lighting_mode < LIGHTINGMODE_INTERPOLATED;
+}
+
+// [Cherry] =================================================================/
 
 void (*colfunc)(void);                    // current column draw function
 
@@ -1343,7 +1352,7 @@ static int R_GetLightIndexVanilla(const fixed_t scale, const int x)
   const int index = raw >> LIGHTSCALESHIFT;
 
   // [Cherry] Calculate dithering threshold
-  if (dithered_lighting)
+  if (R_DoDitheredLighting())
   {
     dc_ditherthreshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
       : (raw & ((1 << LIGHTSCALESHIFT) - 1)) >> (LIGHTSCALESHIFT - 8);

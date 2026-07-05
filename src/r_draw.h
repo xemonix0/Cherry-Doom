@@ -43,7 +43,7 @@ extern const byte *dc_brightmap;
 // Hook in assembler or system specific BLT here.
 
 extern void (*R_DrawColumn)(void);
-extern void (*R_DrawColumnNoDither)(void); // [Cherry]
+extern void (*R_DrawDitheredColumn)(void); // [Cherry]
 extern void (*R_DrawTLColumn)(void);      // drawing translucent textures // phares
 extern void (*R_DrawFuzzColumn)(void);    // The Spectre/Invisibility effect.
 
@@ -98,7 +98,7 @@ extern const byte *ds_brightmap;
 
 // Span blitting for rows, floor/ceiling. No Spectre effect needed.
 extern void (*R_DrawSpan)(void);
-extern void (*R_DrawSpanNoDither)(void); // [Cherry]
+extern void (*R_DrawDitheredSpan)(void); // [Cherry]
 
 extern void (*R_DrawSpanWithRadialFog)(void); // [Nugget] Radial fog
 

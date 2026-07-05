@@ -102,7 +102,7 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
   for (dc_x = x1 ; dc_x <= x2 ; dc_x++, spryscale += rw_scalestep)
     if (maskedtexturecol[dc_x] != INT_MAX) // [FG] 32-bit integer math
       {
-        colfunc = R_DrawColumn; // [Cherry] reset colfunc
+        colfunc = R_DoDitheredLighting() ? R_DrawDitheredColumn : R_DrawColumn; // [Cherry] reset colfunc
         if (!fixedcolormap)      // calculate lighting
           {                             // killough 11/98:
             const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
@@ -116,13 +116,13 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
                               : dc_colormap[0];
 
             // [Cherry] Dithered lighting from Doom Retro
-            if (dithered_lighting)
+            if (R_DoDitheredLighting())
             {
               dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+1, MAXLIGHTSCALE-1)]);
 
               if (dc_colormap[0] == dc_colormap[1])
               {
-                colfunc = R_DrawColumnNoDither;
+                colfunc = R_DrawColumn;
               }
             }
           }
@@ -216,7 +216,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
   // killough 4/11/98: draw translucent 2s normal textures
 
-  colfunc = R_DrawColumn;
+  colfunc = R_DoDitheredLighting() ? R_DrawDitheredColumn : R_DrawColumn;
   if (curline->linedef->tranlump >= 0)
     {
       colfunc = R_DrawTLColumn;
@@ -274,7 +274,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
   RenderMaskedSegRangeLoop(x1, x2, texnum);
 
   // [FG] reset column drawing function
-  colfunc = R_DrawColumn;
+  colfunc = R_DoDitheredLighting() ? R_DrawDitheredColumn : R_DrawColumn;
 
   // Except for main_tranmap, mark others purgable at this point
   if (curline->linedef->tranlump > 0)
@@ -435,7 +435,7 @@ static void R_RenderSegLoop (void)
             }
         }
 
-      colfunc = R_DrawColumn; // [Cherry] reset colfunc
+      colfunc = R_DoDitheredLighting() ? R_DrawDitheredColumn : R_DrawColumn; // [Cherry] reset colfunc
 
       // texturecolumn and lighting are independent of wall tiers
       if (segtextured)
@@ -470,13 +470,13 @@ static void R_RenderSegLoop (void)
                                 : dc_colormap[0];
 
               // [Cherry] Dithered lighting from Doom Retro
-              if (dithered_lighting)
+              if (R_DoDitheredLighting())
               {
                 dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+1, MAXLIGHTSCALE-1)]);
 
                 if (dc_colormap[0] == dc_colormap[1])
                 {
-                  colfunc = R_DrawColumnNoDither;
+                  colfunc = R_DrawColumn;
                 }
               }
             }

@@ -123,9 +123,9 @@ static const byte dithermatrix[DITHERSIZE][DITHERSIZE] =
 // heightmask is the Tutti-Frutti fix -- killough
 
 static void (*DrawColumn)(void) = NULL;
-static void (*DrawColumnNoDither)(void) = NULL; // [Cherry]
+static void (*DrawDitheredColumn)(void) = NULL; // [Cherry]
 static void (*DrawColumnBrightmap)(void) = NULL;
-static void (*DrawColumnBrightmapNoDither)(void) = NULL; // [Cherry]
+static void (*DrawDitheredColumnBrightmap)(void) = NULL; // [Cherry]
 static void (*DrawColumnTR)(void) = NULL;
 static void (*DrawColumnTRBrightmap)(void) = NULL;
 static void (*DrawColumnTL)(void) = NULL;
@@ -1361,9 +1361,9 @@ fixed_t ds_ystep;
 byte *ds_source;
 
 static void (*DrawSpan)(void) = NULL;
-static void (*DrawSpanNoDither)(void) = NULL; // [Cherry]
+static void (*DrawDitheredSpan)(void) = NULL; // [Cherry]
 static void (*DrawSpanBrightmap)(void) = NULL;
-static void (*DrawSpanBrightmapNoDither)(void) = NULL; // [Cherry]
+static void (*DrawDitheredSpanBrightmap)(void) = NULL; // [Cherry]
 
 #define R_DRAW_SPAN(PREFIX, NAME, SRCPIXEL)            \
     static void Draw##PREFIX##Span8##NAME(void)        \
@@ -1498,11 +1498,11 @@ R_DRAW_SPAN32(, ds_colormap32[0][src])
 R_DRAW_SPAN32(Brightmap, ds_colormap32[ds_brightmap[src]][src])
 
 void (*R_DrawColumn)(void) = NULL;
-void (*R_DrawColumnNoDither)(void) = NULL; // [Cherry]
+void (*R_DrawDitheredColumn)(void) = NULL; // [Cherry]
 void (*R_DrawTLColumn)(void) = NULL;
 void (*R_DrawTranslatedColumn)(void) = NULL;
 void (*R_DrawSpan)(void) = NULL;
-void (*R_DrawSpanNoDither)(void) = NULL; // [Cherry]
+void (*R_DrawDitheredSpan)(void) = NULL; // [Cherry]
 
 // [Nugget] Radial fog /------------------------------------------------------
 
@@ -1633,28 +1633,28 @@ void R_InitDrawFunctions(void)
     if (local_brightmaps)
     {
         R_DrawColumn = DrawColumnBrightmap;
-        R_DrawColumnNoDither = DrawColumnBrightmapNoDither; // [Cherry]
+        R_DrawDitheredColumn = DrawDitheredColumnBrightmap; // [Cherry]
         R_DrawTLColumn = DrawColumnTLBrightmap;
         R_DrawTranslatedColumn = DrawColumnTRBrightmap;
         R_DrawSpan = DrawSpanBrightmap;
-        R_DrawSpanNoDither = DrawSpanBrightmapNoDither; // [Cherry]
+        R_DrawDitheredSpan = DrawDitheredSpanBrightmap; // [Cherry]
 
         R_DrawSpanWithRadialFog = DrawSpanWithRadialFogBrightmap; // [Nugget] Radial fog
     }
     else
     {
         R_DrawColumn = DrawColumn;
-        R_DrawColumnNoDither = DrawColumnNoDither; // [Cherry]
+        R_DrawDitheredColumn = DrawDitheredColumn; // [Cherry]
         R_DrawTLColumn = DrawColumnTL;
         R_DrawTranslatedColumn = DrawColumnTR;
         R_DrawSpan = DrawSpan;
-        R_DrawSpanNoDither = DrawSpanNoDither; // [Cherry]
+        R_DrawDitheredSpan = DrawDitheredSpan; // [Cherry]
 
         R_DrawSpanWithRadialFog = DrawSpanWithRadialFog; // [Nugget] Radial fog
     }
 
     // [Nugget] Initialize here
-    colfunc = R_DrawColumn;
+    colfunc = R_DoDitheredLighting() ? R_DrawDitheredColumn : R_DrawColumn;
 
     // [Nugget] Sprite shadows
     if (sprite_shadows) { R_InitSpriteShadowsColormap(); }
@@ -1904,16 +1904,16 @@ void R_InitDrawColorFunctions(void)
         R_DrawColumnShadow = DrawColumnShadow8;
         R_DrawSkyColumn = DrawSkyColumn8;
 
-        DrawSpan = dithered_lighting ? DrawDitheredSpan8 : DrawSpan8;
-        DrawSpanBrightmap = dithered_lighting ? DrawDitheredSpan8Brightmap : DrawSpan8Brightmap;
+        DrawSpan = DrawSpan8;
+        DrawSpanBrightmap = DrawSpan8Brightmap;
         DrawSpanWithRadialFog = DrawSpanWithRadialFog8;
         DrawSpanWithRadialFogBrightmap = DrawSpanWithRadialFog8Brightmap;
 
         // [Cherry]
-        DrawColumnNoDither = DrawColumn8;
-        DrawColumnBrightmapNoDither = DrawColumn8Brightmap;
-        DrawSpanNoDither = DrawSpan8;
-        DrawSpanBrightmapNoDither = DrawSpan8Brightmap;
+        DrawDitheredColumn = DrawDitheredColumn8;
+        DrawDitheredColumnBrightmap = DrawDitheredColumn8Brightmap;
+        DrawDitheredSpan = DrawDitheredSpan8;
+        DrawDitheredSpanBrightmap = DrawDitheredSpan8Brightmap;
     }
 }
 

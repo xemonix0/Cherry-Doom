@@ -4094,7 +4094,7 @@ static void UpdateDarkeningItems(void)
 
 void MN_UpdateDitheredLightingItem(void)
 {
-    DisableItem(lighting_mode >= LIGHTINGMODE_INTERPOLATED,
+    DisableItem(!(lighting_mode < LIGHTINGMODE_INTERPOLATED && diminishing_lighting),
                 gen_settings5, "dithered_lighting");
 }
 
