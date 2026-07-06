@@ -1654,7 +1654,8 @@ void R_InitDrawFunctions(void)
     }
 
     // [Nugget] Initialize here
-    colfunc = R_DoDitheredLighting() ? R_DrawDitheredColumn : R_DrawColumn;
+    colfunc = R_DrawColumn;
+    colfuncdithered = R_DrawDitheredColumn; // [Cherry]
 
     // [Nugget] Sprite shadows
     if (sprite_shadows) { R_InitSpriteShadowsColormap(); }
@@ -1894,8 +1895,8 @@ void R_InitDrawColorFunctions(void)
     }
     else
     {
-        DrawColumn = dithered_lighting ? DrawDitheredColumn8 : DrawColumn8;
-        DrawColumnBrightmap = dithered_lighting ? DrawDitheredColumn8Brightmap : DrawColumn8Brightmap;
+        DrawColumn = DrawColumn8;
+        DrawColumnBrightmap = DrawColumn8Brightmap;
         DrawColumnTR = DrawColumn8TR;
         DrawColumnTRBrightmap = DrawColumn8TRBrightmap;
         DrawColumnTL = DrawColumn8TL;

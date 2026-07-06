@@ -592,7 +592,8 @@ int   *mceilingclip; // [FG] 32-bit integer math
 fixed_t spryscale;
 int64_t sprtopscreen; // [FG] 64-bit integer math
 
-void R_DrawMaskedColumn(column_t *column)
+// [Cherry] Add dither parameter
+void R_DrawMaskedColumn(column_t *column, const boolean do_dither)
 {
   int64_t topscreen, bottomscreen; // [FG] 64-bit integer math
   fixed_t basetexturemid = dc_texturemid;
@@ -633,7 +634,7 @@ void R_DrawMaskedColumn(column_t *column)
 
           // Drawn by either R_DrawColumn
           //  or (SHADOW) R_DrawFuzzColumn.
-          colfunc();
+          do_dither ? colfuncdithered() : colfunc();
         }
       column = (column_t *)((byte *) column + column->length + 4);
     }
@@ -677,8 +678,11 @@ static void DrawVisSpriteLoop8(
   dc_colormap[2] = V_ColormapRowByIndex(vis->colormap[2]);
 
   // [Cherry] Dithered lighting from Doom Retro
-  dc_colormap[1] = V_ColormapRowByIndex(vis->colormap[1]);
-  dc_ditherthreshold = vis->ditherthreshold;
+  if (vis->do_dither)
+  {
+    dc_colormap[1] = V_ColormapRowByIndex(vis->colormap[1]);
+    dc_ditherthreshold = vis->ditherthreshold;
+  }
 
   for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
     {
@@ -700,7 +704,7 @@ static void DrawVisSpriteLoop8(
         {
           dc_colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
           // [Cherry] Dithered lighting from Doom Retro
-          if (dc_colormap[1])
+          if (vis->do_dither)
             dc_colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+1, MAXLIGHTSCALE-1)]);
         }
       }
@@ -722,7 +726,7 @@ static void DrawVisSpriteLoop8(
         dc_colormap[0] = V_ColormapRowByIndex(scalelight[lightnum][lightindex]);
 
         // [Cherry] Dithered lighting from Doom Retro
-        if (dc_colormap[1])
+        if (vis->do_dither)
           dc_colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+1, MAXLIGHTSCALE-1)]);
       }
 
@@ -730,7 +734,7 @@ static void DrawVisSpriteLoop8(
 
       column = (column_t *)((byte *) patch +
                             LONG(patch->columnofs[texturecolumn]));
-      R_DrawMaskedColumn (column);
+      R_DrawMaskedColumn (column, vis->do_dither && dc_colormap[0] != dc_colormap[1]);
     }
 }
 
@@ -794,7 +798,7 @@ static void DrawVisSpriteLoop32(
 
       column = (column_t *)((byte *) patch +
                             LONG(patch->columnofs[texturecolumn]));
-      R_DrawMaskedColumn (column);
+      R_DrawMaskedColumn (column, false);
     }
 }
 
@@ -822,12 +826,14 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     if (vis->mobjflags2 & MF2_COLOREDBLOOD)
       {
         colfunc = R_DrawTranslatedColumn;
+        //colfuncdithered = R_DrawDitheredTranslatedColumn; // [Cherry]
         dc_translation = red2col[vis->color];
       }
   else
     if (vis->mobjflags & MF_TRANSLATION)
       {
         colfunc = R_DrawTranslatedColumn;
+        //colfuncdithered = R_DrawDitheredTranslatedColumn; // [Cherry]
         dc_translation = translationtables - 256 +
           ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
       }
@@ -836,6 +842,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     else if (STRICTMODE(vis->tranmap))
     {
       colfunc = R_DrawTLColumn;
+      //colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
       tranmap = vis->tranmap;
     }
 
@@ -844,13 +851,14 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
           && vis->mobjflags & MF_TRANSLUCENT) // phares
         {
           colfunc = R_DrawTLColumn;
+          //colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
           tranmap = main_tranmap;       // killough 4/11/98
         }
       else
-        colfunc = R_DoDitheredLighting() && vis->colormap[1]
-                  && vis->colormap[0] != vis->colormap[1]
-                    ? R_DrawDitheredColumn  // [Cherry]
-                    : R_DrawColumn;         // killough 3/14/98, 4/11/98
+        {
+          colfunc = R_DrawColumn;         // killough 3/14/98, 4/11/98
+          colfuncdithered = R_DrawDitheredColumn; // [Cherry]
+        }
 
   dc_iscale = abs(vis->yiscale); // [Nugget] Sprite scaling: use `yiscale`
   dc_texturemid = vis->texturemid;
@@ -913,7 +921,8 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     pcl_sine
   );
 
-  colfunc = R_DoDitheredLighting() ? R_DrawDitheredColumn : R_DrawColumn;         // killough 3/14/98
+  colfunc = R_DrawColumn;         // killough 3/14/98
+  colfuncdithered = R_DrawDitheredColumn; // [Cherry]
 }
 
 //
@@ -1248,8 +1257,7 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
   if (hires_lump >= 0)
   { vis->patch = first_hires_lump + hires_lump - firstspritelump; }
 
-  // [Cherry]
-  vis->colormap[1] = 0;
+  vis->do_dither = false; // [Cherry]
 
   // get light level
   if (thing->flags & MF_SHADOW)
@@ -1284,6 +1292,7 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
       // [Cherry] Dithered lighting from Doom Retro
       if (R_DoDitheredLighting())
       {
+        vis->do_dither = true;
         vis->colormap[1] = spritelights[MIN(index+1, MAXLIGHTSCALE-1)];
         vis->ditherthreshold = dc_ditherthreshold;
       }
@@ -1458,6 +1467,7 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
   { shadow_vis->startfrac += shadow_vis->xiscale * (shadow_vis->x1 - shadow_x1); }
 
   shadow_vis->yiscale = FixedDiv(FRACUNIT, shadow_yscale);
+  shadow_vis->do_dither = false; // [Cherry]
 }
 
 //
@@ -1743,7 +1753,7 @@ void R_DrawPSprite (pspdef_t *psp, const boolean is_flash) // [Nugget] Transluce
     vis->colormap[0] = spritelights[index];  // local light
     vis->colormap[2] = 0;
   }
-  vis->colormap[1] = 0; // [Cherry] Never dither PSprites
+  vis->do_dither = false; // [Cherry] Never dither PSprites
   vis->brightmap = R_BrightmapForState(psp->state - states);
 
   // [Nugget] /---------------------------------------------------------------

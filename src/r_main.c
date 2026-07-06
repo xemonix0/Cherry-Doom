@@ -948,12 +948,15 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 
 int rocket_trails_tran_pct;
 
-// Dithered lighting from Doom Retro
+// Dithered lighting from Doom Retro /----------------------------------------
+
 boolean dithered_lighting;
 boolean R_DoDitheredLighting(void)
 {
     return dithered_lighting && diminishing_lighting && lighting_mode < LIGHTINGMODE_INTERPOLATED;
 }
+
+void (*colfuncdithered)(void);
 
 // [Cherry] =================================================================/
 

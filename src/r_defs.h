@@ -410,6 +410,7 @@ typedef struct vissprite_s
   fixed_t leftoffset;
 
   // [Cherry] Dithered lighting from Doom Retro
+  boolean do_dither;
   int ditherthreshold;
 } vissprite_t;
 

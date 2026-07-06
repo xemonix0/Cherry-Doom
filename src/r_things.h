@@ -60,7 +60,7 @@ extern cmapoffset_t *spritelights;
 
 extern boolean draw_nearby_sprites;
 
-void R_DrawMaskedColumn(column_t *column);
+void R_DrawMaskedColumn(column_t *column, boolean do_dither);
 void R_SortVisSprites(void);
 void R_AddSprites(sector_t *sec,int); // killough 9/18/98
 void R_AddPSprites(void);

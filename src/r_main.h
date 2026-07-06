@@ -292,6 +292,7 @@ extern int rocket_trails_tran_pct;
 // Dithered lighting from Doom Retro
 extern boolean dithered_lighting;
 extern boolean R_DoDitheredLighting(void);
+extern void (*colfuncdithered)(void);
 
 // [Cherry] =================================================================/
 
