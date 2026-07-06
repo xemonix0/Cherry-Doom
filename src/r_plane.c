@@ -173,17 +173,19 @@ static void DrawPlane8(fixed_t distance)
   unsigned index;
 
   // [Nugget] Radial fog
-  void (*DrawSpan)(void) = R_DoDitheredLighting() ? R_DrawDitheredSpan : R_DrawSpan;
+  void (*DrawSpan)(void) = R_DrawSpan;
 
-  if (!(ds_colormap[0] = ds_colormap[1] = ds_colormap[2] = fixedcolormap))
+  if (!(ds_colormap[0] = ds_colormap[2] = fixedcolormap))
     {
       boolean do_plane_radial_fog = do_radial_fog; // [Nugget] Radial fog
+      boolean do_dither_plane = R_DoDitheredLighting(); // [Cherry] Dithered lighting from Doom Retro
 
       index = distance >> LIGHTZSHIFT;
       if (index >= MAXLIGHTZ )
       {
         index = MAXLIGHTZ-1;
         do_plane_radial_fog = false;
+        do_dither_plane = false; // [Cherry]
       }
 
       // [Nugget]
@@ -191,6 +193,7 @@ static void DrawPlane8(fixed_t distance)
       {
         index = MAXLIGHTZ-1;
         do_plane_radial_fog = false;
+        do_dither_plane = false; // [Cherry]
       }
 
       // [Nugget] Radial fog
@@ -204,11 +207,10 @@ static void DrawPlane8(fixed_t distance)
         ds_colormap[0] = V_ColormapRowByIndex(planezlight[index]);
 
         // [Cherry] Dithered lighting from Doom Retro
-        if (R_DoDitheredLighting())
+        if (do_dither_plane)
         {
           ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(index+1, MAXLIGHTZ-1)]);
-          if (ds_colormap[0] == ds_colormap[1])
-            DrawSpan = R_DrawSpan;
+          DrawSpan = ds_colormap[0] == ds_colormap[1] ? R_DrawSpan : R_DrawDitheredSpan;
         }
       }
 

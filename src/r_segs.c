@@ -102,6 +102,8 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
   for (dc_x = x1 ; dc_x <= x2 ; dc_x++, spryscale += rw_scalestep)
     if (maskedtexturecol[dc_x] != INT_MAX) // [FG] 32-bit integer math
       {
+        boolean do_dither_column = false; // [Cherry]
+
         if (!fixedcolormap)      // calculate lighting
           {                             // killough 11/98:
             const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
@@ -116,7 +118,10 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
 
             // [Cherry] Dithered lighting from Doom Retro
             if (R_DoDitheredLighting())
+            {
               dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+2, MAXLIGHTSCALE-1)]);
+              do_dither_column = dc_colormap[0] != dc_colormap[1];
+            }
           }
 
         // killough 3/2/98:
@@ -150,7 +155,7 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
 
         // draw the texture
         col = (column_t *)(R_GetColumnMasked(texnum, maskedtexturecol[dc_x]) - 3);
-        R_DrawMaskedColumn (col, R_DoDitheredLighting() && dc_colormap[0] != dc_colormap[1]);
+        R_DrawMaskedColumn (col, do_dither_column);
         maskedtexturecol[dc_x] = INT_MAX; // [FG] 32-bit integer math
       }
 }

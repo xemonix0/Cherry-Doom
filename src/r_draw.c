@@ -110,13 +110,6 @@ static void (*DrawColumnTR)(void) = NULL;
 static void (*DrawColumnTRBrightmap)(void) = NULL;
 static void (*DrawColumnTL)(void) = NULL;
 static void (*DrawColumnTLBrightmap)(void) = NULL;
-// [Cherry] Dithered lighting from Doom Retro
-static void (*DrawDitheredColumn)(void) = NULL;
-static void (*DrawDitheredColumnBrightmap)(void) = NULL;
-static void (*DrawDitheredColumnTR)(void) = NULL;
-static void (*DrawDitheredColumnTRBrightmap)(void) = NULL;
-static void (*DrawDitheredColumnTL)(void) = NULL;
-static void (*DrawDitheredColumnTLBrightmap)(void) = NULL;
 
 #define DRAW_COLUMN(PREFIX, NAME, SRCPIXEL)                              \
     static void Draw##PREFIX##Column8##NAME(void)                        \
@@ -1348,9 +1341,7 @@ fixed_t ds_ystep;
 byte *ds_source;
 
 static void (*DrawSpan)(void) = NULL;
-static void (*DrawDitheredSpan)(void) = NULL; // [Cherry]
 static void (*DrawSpanBrightmap)(void) = NULL;
-static void (*DrawDitheredSpanBrightmap)(void) = NULL; // [Cherry]
 
 #define R_DRAW_SPAN(PREFIX, NAME, SRCPIXEL)            \
     static void Draw##PREFIX##Span8##NAME(void)        \
@@ -1628,10 +1619,10 @@ void R_InitDrawFunctions(void)
         R_DrawSpan = DrawSpanBrightmap;
 
         // [Cherry] Dithered lighting from Doom Retro
-        R_DrawDitheredColumn = DrawDitheredColumnBrightmap;
-        R_DrawDitheredTLColumn = DrawDitheredColumnTLBrightmap;
-        R_DrawDitheredTranslatedColumn = DrawDitheredColumnTRBrightmap;
-        R_DrawDitheredSpan = DrawDitheredSpanBrightmap;
+        R_DrawDitheredColumn = DrawDitheredColumn8Brightmap;
+        R_DrawDitheredTLColumn = DrawDitheredColumn8TLBrightmap;
+        R_DrawDitheredTranslatedColumn = DrawDitheredColumn8TRBrightmap;
+        R_DrawDitheredSpan = DrawDitheredSpan8Brightmap;
 
         R_DrawSpanWithRadialFog = DrawSpanWithRadialFogBrightmap; // [Nugget] Radial fog
     }
@@ -1643,10 +1634,10 @@ void R_InitDrawFunctions(void)
         R_DrawSpan = DrawSpan;
 
         // [Cherry] Dithered lighting from Doom Retro
-        R_DrawDitheredColumn = DrawDitheredColumn;
-        R_DrawDitheredTLColumn = DrawDitheredColumnTL;
-        R_DrawDitheredTranslatedColumn = DrawDitheredColumnTR;
-        R_DrawDitheredSpan = DrawDitheredSpan;
+        R_DrawDitheredColumn = DrawDitheredColumn8;
+        R_DrawDitheredTLColumn = DrawDitheredColumn8TL;
+        R_DrawDitheredTranslatedColumn = DrawDitheredColumn8TR;
+        R_DrawDitheredSpan = DrawDitheredSpan8;
 
         R_DrawSpanWithRadialFog = DrawSpanWithRadialFog; // [Nugget] Radial fog
     }
@@ -1907,16 +1898,6 @@ void R_InitDrawColorFunctions(void)
         DrawSpanBrightmap = DrawSpan8Brightmap;
         DrawSpanWithRadialFog = DrawSpanWithRadialFog8;
         DrawSpanWithRadialFogBrightmap = DrawSpanWithRadialFog8Brightmap;
-
-        // [Cherry] Dithered lighting from Doom Retro
-        DrawDitheredColumn = DrawDitheredColumn8;
-        DrawDitheredColumnBrightmap = DrawDitheredColumn8Brightmap;
-        DrawDitheredColumnTR = DrawDitheredColumn8TR;
-        DrawDitheredColumnTRBrightmap = DrawDitheredColumn8TRBrightmap;
-        DrawDitheredColumnTL = DrawDitheredColumn8TL;
-        DrawDitheredColumnTLBrightmap = DrawDitheredColumn8TLBrightmap;
-        DrawDitheredSpan = DrawDitheredSpan8;
-        DrawDitheredSpanBrightmap = DrawDitheredSpan8Brightmap;
     }
 }
 
