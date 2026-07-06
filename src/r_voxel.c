@@ -894,6 +894,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 	colormap[2] = V_ColormapRowByIndex(spr->colormap[2]);
 
     // [Cherry] Dithered lighting from Doom Retro
+    boolean do_dither_voxel = spr->do_dither;
     int dither_threshold = spr->ditherthreshold;
     if (spr->do_dither) colormap[1] = V_ColormapRowByIndex(spr->colormap[1]);
 
@@ -932,7 +933,10 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 
 			    // [Cherry] Dithered lighting from Doom Retro
 			    if (spr->do_dither)
+			    {
 			        colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+2, MAXLIGHTSCALE-1)]);
+			        if (colormap[0] == colormap[1]) do_dither_voxel = false;
+			    }
 			}
 			else { spritelights = scalelight[lightnum]; }
 		}
@@ -971,7 +975,10 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 		    colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
 		    // [Cherry] Dithered lighting from Doom Retro
 		    if (spr->do_dither)
+		    {
 		        colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+2, MAXLIGHTSCALE-1)]);
+			    if (colormap[0] == colormap[1]) do_dither_voxel = false;
+		    }
 		}
 
 		for (; slab < end ; slab += len)
@@ -1042,7 +1049,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 				{
 				    // [Cherry] Move here for per-pixel dithering
 				    const int cmapindex = spr->brightmap[src] ? 2
-				        : spr->do_dither ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0;
+				        : do_dither_voxel ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0;
 				    pixel_t pix = colormap[cmapindex][dc_translation[src]]; // [Nugget] Translation
 					dest[(uy >> FRACBITS) * linesize + (ux >> FRACBITS)] = pix;
 				}
@@ -1060,7 +1067,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 				{
 				    // [Cherry] Move here for per-pixel dithering
 				    const int cmapindex = spr->brightmap[src] ? 2
-				        : spr->do_dither ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0;
+				        : do_dither_voxel ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0;
 				    pixel_t pix = colormap[cmapindex][dc_translation[src]]; // [Nugget] Translation
 					dest[(uy >> FRACBITS) * linesize + (ux >> FRACBITS)] = pix;
 				}
@@ -1079,7 +1086,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 
 					byte src = slab[i];
 				    const int cmapindex = spr->brightmap[src] ? 2
-				        : spr->do_dither ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0; // [Cherry]
+				        : do_dither_voxel ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0; // [Cherry]
 					pixel_t pix = colormap[cmapindex][dc_translation[src]]; // [Nugget] Translation
 
 					dest[(uy >> FRACBITS) * linesize + (ux >> FRACBITS)] = pix;
@@ -1440,6 +1447,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 
     // [Cherry] Dithered lighting from Doom Retro
     int dither_threshold = spr->ditherthreshold;
+    boolean do_dither_voxel = spr->do_dither;
     if (spr->do_dither) colormap[1] = V_ColormapRowByIndex(spr->colormap[1]);
 
 	byte lightnum = spr->lightnum;
@@ -1477,7 +1485,10 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 
 			    // [Cherry] Dithered lighting from Doom Retro
 			    if (spr->do_dither)
+			    {
 			        colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+2, MAXLIGHTSCALE-1)]);
+			        if (colormap[0] == colormap[1]) do_dither_voxel = false;
+			    }
 			}
 			else { spritelights = scalelight[lightnum]; }
 		}
@@ -1511,7 +1522,10 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 		    colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
 		    // [Cherry] Dithered lighting from Doom Retro
 		    if (spr->do_dither)
+		    {
 		        colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+2, MAXLIGHTSCALE-1)]);
+		        if (colormap[0] == colormap[1]) do_dither_voxel = false;
+		    }
 		}
 
 		for (byte top, len, face;  slab < end;  slab += len)
@@ -1564,7 +1578,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 
 				const byte src = slab[i];
 			    const int cmapindex = spr->brightmap[src] ? 2
-			        : spr->do_dither ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0; // [Cherry]
+			        : do_dither_voxel ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0; // [Cherry]
 				const pixel_t pix = colormap[cmapindex][dc_translation[src]]; // [Nugget] Translation
 
 				dest2[(uy >> FRACBITS) * linesize] = pix;
