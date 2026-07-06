@@ -331,11 +331,13 @@ void R_DeferredInitLightTables(void)
 
 // Radial fog ----------------------------------------------------------------
 
-static int R_GetLightIndexVanilla(fixed_t scale, int x);
+// [Cherry] Added dither_threshold output parameter
+static int R_GetLightIndexVanilla(fixed_t scale, int x, int *dither_threshold);
 
 #define RADFOG_MULT 1.414213562 // Square root of 2
 
-static int R_GetLightIndexRadFog(fixed_t scale, const int x)
+// [Cherry] Added dither_threshold output parameter
+static int R_GetLightIndexRadFog(fixed_t scale, const int x, int *dither_threshold)
 {
   scale = FixedMul(scale, finecosine[xtoviewangle[x] >> ANGLETOFINESHIFT]) * RADFOG_MULT;
 
@@ -343,16 +345,17 @@ static int R_GetLightIndexRadFog(fixed_t scale, const int x)
   const int index = raw >> LIGHTSCALESHIFT;
 
   // [Cherry] Calculate dithering threshold
-  if (R_DoDitheredLighting())
+  if (R_DoDitheredLighting() && dither_threshold)
   {
-    dc_ditherthreshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
+    *dither_threshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
       : (raw & ((1 << LIGHTSCALESHIFT) - 1)) >> (LIGHTSCALESHIFT - 8);
   }
 
   return BETWEEN(0, MAXLIGHTSCALE - 1, index);
 }
 
-int (*R_GetLightIndex)(fixed_t scale, int x) = R_GetLightIndexVanilla;
+// [Cherry] Added dither_threshold output parameter
+int (*R_GetLightIndex)(fixed_t scale, int x, int *dither_threshold) = R_GetLightIndexVanilla;
 
 int light_distance_shift_bits;
 
@@ -950,6 +953,14 @@ int rocket_trails_tran_pct;
 
 // Dithered lighting from Doom Retro /----------------------------------------
 
+const byte dithermatrix[DITHERSIZE][DITHERSIZE] =
+{
+    {   0, 224,  48, 208 },
+    { 176,  80, 128,  96 },
+    { 192,  32, 240,  16 },
+    { 112, 144,  64, 160 }
+};
+
 boolean dithered_lighting;
 boolean R_DoDitheredLighting(void)
 {
@@ -1349,15 +1360,16 @@ void R_InitLightTables (void)
 }
 
 // [Nugget] Static, added X parameter
-static int R_GetLightIndexVanilla(const fixed_t scale, const int x)
+// [Cherry] Added dither_threshold output parameter
+static int R_GetLightIndexVanilla(const fixed_t scale, const int x, int *dither_threshold)
 {
   const fixed_t raw = (int64_t)scale * (160 << FRACBITS) / lightfocallength;
   const int index = raw >> LIGHTSCALESHIFT;
 
   // [Cherry] Calculate dithering threshold
-  if (R_DoDitheredLighting())
+  if (R_DoDitheredLighting() && dither_threshold)
   {
-    dc_ditherthreshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
+    *dither_threshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
       : (raw & ((1 << LIGHTSCALESHIFT) - 1)) >> (LIGHTSCALESHIFT - 8);
   }
 

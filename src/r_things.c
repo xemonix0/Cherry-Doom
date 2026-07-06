@@ -698,7 +698,7 @@ static void DrawVisSpriteLoop8(
       // Radial fog
       if (do_sprite_radial_fog)
       {
-        lightindex = R_GetLightIndex(vis->scale, dc_x);
+        lightindex = R_GetLightIndex(vis->scale, dc_x, &dc_ditherthreshold);
 
         if (!percolumn_lighting)
         {
@@ -770,7 +770,7 @@ static void DrawVisSpriteLoop32(
       // Radial fog
       if (do_sprite_radial_fog)
       {
-        lightindex = R_GetLightIndex(vis->scale, dc_x);
+        lightindex = R_GetLightIndex(vis->scale, dc_x, NULL);
 
         if (!percolumn_lighting)
         { dc_colormap32[0] = V_ColormapRowByIndex32(spritelights[lightindex]); }
@@ -901,7 +901,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
       pcl_sine   =   finesine[angle];
 
       if (diminishing_lighting && !do_sprite_radial_fog)
-      { lightindex = R_GetLightIndex(vis->scale, 0); }
+      { lightindex = R_GetLightIndex(vis->scale, 0, &vis->ditherthreshold); }
     }
     else { spritelights = scalelight[vis->lightnum]; }
   }
@@ -1272,7 +1272,7 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
   else
     {      // diminished light
       const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
-                        ? 0 : R_GetLightIndex(vis->scale, 0); // [Nugget]
+                        ? 0 : R_GetLightIndex(vis->scale, 0, &vis->ditherthreshold); // [Nugget]
 
       // [Nugget] Thing lighting
       if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_HITBOX)
@@ -1294,7 +1294,6 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
       {
         vis->do_dither = true;
         vis->colormap[1] = spritelights[MIN(index+1, MAXLIGHTSCALE-1)];
-        vis->ditherthreshold = dc_ditherthreshold;
       }
     }
 

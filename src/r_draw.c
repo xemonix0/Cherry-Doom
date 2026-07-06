@@ -88,24 +88,6 @@ int dc_texheight; // killough
 byte *dc_source;  // first pixel in a column (possibly virtual)
 byte dc_skycolor;
 
-// [Cherry] /- Dithered lighting from Doom Retro ------------------------------
-
-#define DITHERSIZE 4
-#define DITHERMASK (DITHERSIZE - 1)
-
-static const byte dithermatrix[DITHERSIZE][DITHERSIZE] =
-{
-    {   0, 224,  48, 208 },
-    { 176,  80, 128,  96 },
-    { 192,  32, 240,  16 },
-    { 112, 144,  64, 160 }
-};
-
-#define dither(x, y, threshold) (dithermatrix[(y) & DITHERMASK] \
-                                    [((x) + viewwindowx - video.deltaw + !video.deltaw) & DITHERMASK] < (threshold))
-
-// [Cherry] ------------------------------------------------------------------/
-
 //
 // A column is a vertical slice/span from a wall texture that,
 //  given the DOOM style restrictions on the view orientation,

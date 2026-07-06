@@ -290,6 +290,15 @@ extern void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 extern int rocket_trails_tran_pct;
 
 // Dithered lighting from Doom Retro
+
+#define DITHERSIZE 4
+#define DITHERMASK (DITHERSIZE - 1)
+
+extern const byte dithermatrix[DITHERSIZE][DITHERSIZE];
+
+#define dither(x, y, threshold) (dithermatrix[(y) & DITHERMASK] \
+                                    [((x) + viewwindowx - video.deltaw + !video.deltaw) & DITHERMASK] < (threshold))
+
 extern boolean dithered_lighting;
 extern boolean R_DoDitheredLighting(void);
 extern void (*colfuncdithered)(void);
@@ -299,7 +308,8 @@ extern void (*colfuncdithered)(void);
 void R_InitLightTables(void);                // killough 8/9/98
 
 // [Nugget] Made function pointer, added X parameter
-extern int (*R_GetLightIndex)(fixed_t scale, int x);
+// [Cherry] Added dither_threshold output parameter
+extern int (*R_GetLightIndex)(fixed_t scale, int x, int *dither_threshold);
 
 extern boolean setsizeneeded;
 void R_ExecuteSetViewSize(void);

@@ -105,7 +105,7 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
         if (!fixedcolormap)      // calculate lighting
           {                             // killough 11/98:
             const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
-                              ? 0 : R_GetLightIndex(spryscale, dc_x); // [Nugget] X
+                              ? 0 : R_GetLightIndex(spryscale, dc_x, &dc_ditherthreshold); // [Nugget] X
 
             // [crispy] brightmaps for two sided mid-textures
             dc_brightmap = texturebrightmap[texnum];
@@ -116,9 +116,7 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
 
             // [Cherry] Dithered lighting from Doom Retro
             if (R_DoDitheredLighting())
-            {
               dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+1, MAXLIGHTSCALE-1)]);
-            }
           }
 
         // killough 3/2/98:
@@ -170,7 +168,7 @@ static void RenderMaskedSegRangeLoop32(int x1, int x2, int texnum)
         if (!fixedcolormap32)
           {
             const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
-                              ? 0 : R_GetLightIndex(spryscale, dc_x); // [Nugget] X
+                              ? 0 : R_GetLightIndex(spryscale, dc_x, NULL); // [Nugget] X
 
             dc_brightmap = texturebrightmap[texnum];
             dc_colormap32[0] = V_ColormapRowByIndex32(walllights[index]);
@@ -438,7 +436,7 @@ static void R_RenderSegLoop (void)
       if (segtextured)
         {
           const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
-                            ? 0 : R_GetLightIndex(rw_scale, rw_x); // [Nugget] X
+                            ? 0 : R_GetLightIndex(rw_scale, rw_x, &dc_ditherthreshold); // [Nugget] X
 
           // calculate texture offset
           angle_t angle =(rw_centerangle+xtoviewangle[rw_x])>>ANGLETOFINESHIFT;
