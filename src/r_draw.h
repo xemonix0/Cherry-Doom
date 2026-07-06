@@ -45,6 +45,7 @@ extern const byte *dc_brightmap;
 extern void (*R_DrawColumn)(void);
 extern void (*R_DrawDitheredColumn)(void); // [Cherry]
 extern void (*R_DrawTLColumn)(void);      // drawing translucent textures // phares
+extern void (*R_DrawDitheredTLColumn)(void); // [Cherry]
 extern void (*R_DrawFuzzColumn)(void);    // The Spectre/Invisibility effect.
 
 // [Nugget] Sprite shadows
@@ -77,6 +78,7 @@ void R_DrawSkyColumnMasked(void);
 //  Green/Red/Blue/Indigo shirts.
 
 extern void (*R_DrawTranslatedColumn)(void);
+extern void (*R_DrawDitheredTranslatedColumn)(void); // [Cherry]
 
 extern lighttable_t *ds_colormap[3]; // [Cherry] 0 and 1 for dithering, 2 for brightmaps
 extern lighttable32_t *ds_colormap32[2];

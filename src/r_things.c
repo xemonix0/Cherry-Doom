@@ -826,14 +826,14 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     if (vis->mobjflags2 & MF2_COLOREDBLOOD)
       {
         colfunc = R_DrawTranslatedColumn;
-        //colfuncdithered = R_DrawDitheredTranslatedColumn; // [Cherry]
+        colfuncdithered = R_DrawDitheredTranslatedColumn; // [Cherry]
         dc_translation = red2col[vis->color];
       }
   else
     if (vis->mobjflags & MF_TRANSLATION)
       {
         colfunc = R_DrawTranslatedColumn;
-        //colfuncdithered = R_DrawDitheredTranslatedColumn; // [Cherry]
+        colfuncdithered = R_DrawDitheredTranslatedColumn; // [Cherry]
         dc_translation = translationtables - 256 +
           ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
       }
@@ -842,7 +842,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     else if (STRICTMODE(vis->tranmap))
     {
       colfunc = R_DrawTLColumn;
-      //colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
+      colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
       tranmap = vis->tranmap;
     }
 
@@ -851,7 +851,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
           && vis->mobjflags & MF_TRANSLUCENT) // phares
         {
           colfunc = R_DrawTLColumn;
-          //colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
+          colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
           tranmap = main_tranmap;       // killough 4/11/98
         }
       else

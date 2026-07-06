@@ -123,13 +123,18 @@ static const byte dithermatrix[DITHERSIZE][DITHERSIZE] =
 // heightmask is the Tutti-Frutti fix -- killough
 
 static void (*DrawColumn)(void) = NULL;
-static void (*DrawDitheredColumn)(void) = NULL; // [Cherry]
 static void (*DrawColumnBrightmap)(void) = NULL;
-static void (*DrawDitheredColumnBrightmap)(void) = NULL; // [Cherry]
 static void (*DrawColumnTR)(void) = NULL;
 static void (*DrawColumnTRBrightmap)(void) = NULL;
 static void (*DrawColumnTL)(void) = NULL;
 static void (*DrawColumnTLBrightmap)(void) = NULL;
+// [Cherry] Dithered lighting from Doom Retro
+static void (*DrawDitheredColumn)(void) = NULL;
+static void (*DrawDitheredColumnBrightmap)(void) = NULL;
+static void (*DrawDitheredColumnTR)(void) = NULL;
+static void (*DrawDitheredColumnTRBrightmap)(void) = NULL;
+static void (*DrawDitheredColumnTL)(void) = NULL;
+static void (*DrawDitheredColumnTLBrightmap)(void) = NULL;
 
 #define DRAW_COLUMN(PREFIX, NAME, SRCPIXEL)                              \
     static void Draw##PREFIX##Column8##NAME(void)                        \
@@ -214,10 +219,10 @@ DRAW_COLUMN(Dithered, Brightmap, dc_colormap[dc_brightmap[src] ? 2 : dither(dc_x
 // opaque' decision is made outside this routine, not down where the
 // actual code differences are.
 
-DRAW_COLUMN(,TL,
-    tranmap[(*dest << 8) + dc_colormap[0][src]])
-DRAW_COLUMN(,TLBrightmap,
-    tranmap[(*dest << 8) + dc_colormap[dc_brightmap[src] ? 2 : 0][src]])
+DRAW_COLUMN(        ,          TL, tranmap[(*dest << 8) + dc_colormap[0][src]])
+DRAW_COLUMN(Dithered,          TL, tranmap[(*dest << 8) + dc_colormap[dither(dc_x, dc_yl, dc_ditherthreshold)][src]])
+DRAW_COLUMN(        , TLBrightmap, tranmap[(*dest << 8) + dc_colormap[dc_brightmap[src] ? 2 : 0][src]])
+DRAW_COLUMN(Dithered, TLBrightmap, tranmap[(*dest << 8) + dc_colormap[dc_brightmap[src] ? 2 : dither(dc_x, dc_yl, dc_ditherthreshold)][src]])
 
 #define DRAW_COLUMN32(NAME, SRCPIXEL)                                    \
     static void DrawColumn32##NAME(void)                                 \
@@ -1286,10 +1291,10 @@ void R_SetFuzzColumnMode(void)
 
 byte *dc_translation, *translationtables;
 
-DRAW_COLUMN(,TR,
-    dc_colormap[0][dc_translation[src]])
-DRAW_COLUMN(,TRBrightmap,
-    dc_colormap[dc_brightmap[src] ? 2 : 0][dc_translation[src]])
+DRAW_COLUMN(        ,          TR, dc_colormap[0][dc_translation[src]])
+DRAW_COLUMN(Dithered,          TR, dc_colormap[dither(dc_x, dc_yl, dc_ditherthreshold)][dc_translation[src]])
+DRAW_COLUMN(        , TRBrightmap, dc_colormap[dc_brightmap[src] ? 2 : 0][dc_translation[src]])
+DRAW_COLUMN(Dithered, TRBrightmap, dc_colormap[dc_brightmap[src] ? 2 : dither(dc_x, dc_yl, dc_ditherthreshold)][dc_translation[src]])
 
 DRAW_COLUMN32(TR,
     dc_colormap32[0][dc_translation[src]])
@@ -1498,11 +1503,14 @@ R_DRAW_SPAN32(, ds_colormap32[0][src])
 R_DRAW_SPAN32(Brightmap, ds_colormap32[ds_brightmap[src]][src])
 
 void (*R_DrawColumn)(void) = NULL;
-void (*R_DrawDitheredColumn)(void) = NULL; // [Cherry]
 void (*R_DrawTLColumn)(void) = NULL;
 void (*R_DrawTranslatedColumn)(void) = NULL;
 void (*R_DrawSpan)(void) = NULL;
-void (*R_DrawDitheredSpan)(void) = NULL; // [Cherry]
+// [Cherry] Dithered lighting from Doom Retro
+void (*R_DrawDitheredColumn)(void) = NULL;
+void (*R_DrawDitheredTLColumn)(void) = NULL;
+void (*R_DrawDitheredTranslatedColumn)(void) = NULL;
+void (*R_DrawDitheredSpan)(void) = NULL;
 
 // [Nugget] Radial fog /------------------------------------------------------
 
@@ -1633,22 +1641,30 @@ void R_InitDrawFunctions(void)
     if (local_brightmaps)
     {
         R_DrawColumn = DrawColumnBrightmap;
-        R_DrawDitheredColumn = DrawDitheredColumnBrightmap; // [Cherry]
         R_DrawTLColumn = DrawColumnTLBrightmap;
         R_DrawTranslatedColumn = DrawColumnTRBrightmap;
         R_DrawSpan = DrawSpanBrightmap;
-        R_DrawDitheredSpan = DrawDitheredSpanBrightmap; // [Cherry]
+
+        // [Cherry] Dithered lighting from Doom Retro
+        R_DrawDitheredColumn = DrawDitheredColumnBrightmap;
+        R_DrawDitheredTLColumn = DrawDitheredColumnTLBrightmap;
+        R_DrawDitheredTranslatedColumn = DrawDitheredColumnTRBrightmap;
+        R_DrawDitheredSpan = DrawDitheredSpanBrightmap;
 
         R_DrawSpanWithRadialFog = DrawSpanWithRadialFogBrightmap; // [Nugget] Radial fog
     }
     else
     {
         R_DrawColumn = DrawColumn;
-        R_DrawDitheredColumn = DrawDitheredColumn; // [Cherry]
         R_DrawTLColumn = DrawColumnTL;
         R_DrawTranslatedColumn = DrawColumnTR;
         R_DrawSpan = DrawSpan;
-        R_DrawDitheredSpan = DrawDitheredSpan; // [Cherry]
+
+        // [Cherry] Dithered lighting from Doom Retro
+        R_DrawDitheredColumn = DrawDitheredColumn;
+        R_DrawDitheredTLColumn = DrawDitheredColumnTL;
+        R_DrawDitheredTranslatedColumn = DrawDitheredColumnTR;
+        R_DrawDitheredSpan = DrawDitheredSpan;
 
         R_DrawSpanWithRadialFog = DrawSpanWithRadialFog; // [Nugget] Radial fog
     }
@@ -1910,9 +1926,13 @@ void R_InitDrawColorFunctions(void)
         DrawSpanWithRadialFog = DrawSpanWithRadialFog8;
         DrawSpanWithRadialFogBrightmap = DrawSpanWithRadialFog8Brightmap;
 
-        // [Cherry]
+        // [Cherry] Dithered lighting from Doom Retro
         DrawDitheredColumn = DrawDitheredColumn8;
         DrawDitheredColumnBrightmap = DrawDitheredColumn8Brightmap;
+        DrawDitheredColumnTR = DrawDitheredColumn8TR;
+        DrawDitheredColumnTRBrightmap = DrawDitheredColumn8TRBrightmap;
+        DrawDitheredColumnTL = DrawDitheredColumn8TL;
+        DrawDitheredColumnTLBrightmap = DrawDitheredColumn8TLBrightmap;
         DrawDitheredSpan = DrawDitheredSpan8;
         DrawDitheredSpanBrightmap = DrawDitheredSpan8Brightmap;
     }

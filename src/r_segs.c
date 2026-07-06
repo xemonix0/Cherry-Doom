@@ -215,7 +215,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
   if (curline->linedef->tranlump >= 0)
     {
       colfunc = R_DrawTLColumn;
-      //colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
+      colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
       tranmap = main_tranmap;
       if (curline->linedef->tranlump > 0)
         tranmap = W_CacheLumpNum(curline->linedef->tranlump-1, PU_STATIC);
