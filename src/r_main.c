@@ -348,7 +348,7 @@ static int R_GetLightIndexRadFog(fixed_t scale, const int x, int *dither_thresho
   if (R_DoDitheredLighting() && dither_threshold)
   {
     *dither_threshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
-      : (raw & ((1 << LIGHTSCALESHIFT) - 1)) >> (LIGHTSCALESHIFT - 8);
+      : (raw & ((1 << (LIGHTSCALESHIFT + 1)) - 1)) >> (LIGHTSCALESHIFT - 7);
   }
 
   return BETWEEN(0, MAXLIGHTSCALE - 1, index);
@@ -1370,7 +1370,7 @@ static int R_GetLightIndexVanilla(const fixed_t scale, const int x, int *dither_
   if (R_DoDitheredLighting() && dither_threshold)
   {
     *dither_threshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
-      : (raw & ((1 << LIGHTSCALESHIFT) - 1)) >> (LIGHTSCALESHIFT - 8);
+      : (raw & ((1 << (LIGHTSCALESHIFT + 1)) - 1)) >> (LIGHTSCALESHIFT - 7);
   }
 
   return BETWEEN(0, MAXLIGHTSCALE - 1, index);

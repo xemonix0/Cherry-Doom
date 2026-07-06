@@ -1513,7 +1513,7 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
   byte cmap_index = 0; \
   if (dithered_lighting) \
   { \
-    ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(MAXLIGHTZ-1, *sdl+1)]); \
+    ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(*sdl+1, MAXLIGHTZ-1)]); \
     const byte distance = ((*sdl) & 255); \
     if (ds_colormap[0] != ds_colormap[1]) cmap_index = dither(ds_x1, ds_y, distance); \
   } \

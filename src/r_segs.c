@@ -116,7 +116,7 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
 
             // [Cherry] Dithered lighting from Doom Retro
             if (R_DoDitheredLighting())
-              dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+1, MAXLIGHTSCALE-1)]);
+              dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+2, MAXLIGHTSCALE-1)]);
           }
 
         // killough 3/2/98:
@@ -467,7 +467,7 @@ static void R_RenderSegLoop (void)
               // [Cherry] Dithered lighting from Doom Retro
               if (R_DoDitheredLighting())
               {
-                dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+1, MAXLIGHTSCALE-1)]);
+                dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+2, MAXLIGHTSCALE-1)]);
                 if (dc_colormap[0] == dc_colormap[1]) do_dither_column = false;
               }
             }

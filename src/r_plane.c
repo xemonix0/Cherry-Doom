@@ -206,11 +206,9 @@ static void DrawPlane8(fixed_t distance)
         // [Cherry] Dithered lighting from Doom Retro
         if (R_DoDitheredLighting())
         {
-          ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(MAXLIGHTZ-1, index+1)]);
+          ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(index+1, MAXLIGHTZ-1)]);
           if (ds_colormap[0] == ds_colormap[1])
-          {
             DrawSpan = R_DrawSpan;
-          }
         }
       }
 

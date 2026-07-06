@@ -748,7 +748,7 @@ boolean VX_ProjectVoxel (mobj_t * thing, byte lightnum)
         if (R_DoDitheredLighting())
         {
           vis->do_dither = true;
-          vis->colormap[1] = spritelights[MIN(index+1, MAXLIGHTSCALE-1)];
+          vis->colormap[1] = spritelights[MIN(index+2, MAXLIGHTSCALE-1)];
         }
 	}
 
@@ -932,7 +932,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 
 			    // [Cherry] Dithered lighting from Doom Retro
 			    if (spr->do_dither)
-			        colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+1, MAXLIGHTSCALE-1)]);
+			        colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+2, MAXLIGHTSCALE-1)]);
 			}
 			else { spritelights = scalelight[lightnum]; }
 		}
@@ -971,7 +971,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 		    colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
 		    // [Cherry] Dithered lighting from Doom Retro
 		    if (spr->do_dither)
-		        colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+1, MAXLIGHTSCALE-1)]);
+		        colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+2, MAXLIGHTSCALE-1)]);
 		}
 
 		for (; slab < end ; slab += len)
@@ -1477,7 +1477,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 
 			    // [Cherry] Dithered lighting from Doom Retro
 			    if (spr->do_dither)
-			        colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+1, MAXLIGHTSCALE-1)]);
+			        colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+2, MAXLIGHTSCALE-1)]);
 			}
 			else { spritelights = scalelight[lightnum]; }
 		}
@@ -1511,7 +1511,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 		    colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
 		    // [Cherry] Dithered lighting from Doom Retro
 		    if (spr->do_dither)
-		        colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+1, MAXLIGHTSCALE-1)]);
+		        colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+2, MAXLIGHTSCALE-1)]);
 		}
 
 		for (byte top, len, face;  slab < end;  slab += len)
