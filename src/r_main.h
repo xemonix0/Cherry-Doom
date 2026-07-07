@@ -80,6 +80,7 @@ extern int LIGHTZSHIFT;
 // killough 3/20/98: Allow colormaps to be dynamic (e.g. underwater)
 extern cmapoffset_t *(*scalelight);
 extern cmapoffset_t *(*zlight);
+extern cmapoffset_t *(*zlight_frac); // [Cherry] High precision values for radial fog dithering
 extern int numcolormaps;    // killough 4/4/98: dynamic number of maps
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
@@ -203,6 +204,7 @@ void R_DeferredInitLightTables(void);
 extern int light_distance_shift_bits;
 
 extern cmapoffset_t *planezlight;
+extern cmapoffset_t *planezlight_frac; // [Cherry] High precision values for radial fog dithering
 extern uint16_t **planedistlight, *spandistlight;
 
 extern boolean do_radial_fog;

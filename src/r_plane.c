@@ -94,6 +94,7 @@ static int *spanstart = NULL;                // killough 2/8/98
 //
 
 cmapoffset_t *planezlight; // [Nugget] Global
+cmapoffset_t *planezlight_frac; // [Cherry] High precision values for radial fog dithering
 static fixed_t planeheight;
 
 // killough 2/8/98: make variables static
@@ -776,6 +777,8 @@ static void do_draw_plane(visplane_t *pl)
 
     stop = pl->maxx + 1;
     planezlight = zlight[light];
+    if (zlight_frac) // [Cherry]
+        planezlight_frac = zlight_frac[light];
     pl->top[pl->minx - 1] = pl->top[stop] = USHRT_MAX;
 
     for (int x = pl->minx; x <= stop; x++)

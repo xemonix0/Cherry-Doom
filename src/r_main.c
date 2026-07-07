@@ -127,9 +127,11 @@ int LIGHTZSHIFT;
 int numcolormaps;
 cmapoffset_t **(*c_scalelight) = NULL;
 cmapoffset_t **(*c_zlight) = NULL;
+cmapoffset_t **(*c_zlight_frac) = NULL; // [Cherry] High precision values for radial fog dithering
 cmapoffset_t *(*scalelight) = NULL;
 cmapoffset_t *scalelightfixed = NULL;
 cmapoffset_t *(*zlight) = NULL;
+cmapoffset_t *(*zlight_frac) = NULL; // [Cherry] High precision values for radial fog dithering
 lighttable_t *fullcolormap;
 lighttable_t **colormaps;
 
@@ -1276,6 +1278,21 @@ void R_InitLightTables (void)
     Z_Free(c_zlight);
   }
 
+  // [Cherry] High precision values for radial fog dithering
+  const boolean init_zlight_frac = R_DoDitheredLighting() && STRICTMODE(radial_fog && diminishing_lighting);
+  if (c_zlight_frac)
+  {
+    for (cm = 0; cm < numcolormaps; ++cm)
+    {
+      for (i = 0; i < LIGHTLEVELS; ++i)
+        Z_Free(c_zlight_frac[cm][i]);
+
+      Z_Free(c_zlight_frac[cm]);
+    }
+    Z_Free(c_zlight_frac);
+    c_zlight_frac = NULL;
+  }
+
   // [Nugget] Lighting modes
   if (lighting_mode >= LIGHTINGMODE_INTERPOLATED) // True color
   {
@@ -1315,11 +1332,17 @@ void R_InitLightTables (void)
   // killough 4/4/98: dynamic colormaps
   c_zlight = Z_Malloc(sizeof(*c_zlight) * numcolormaps, PU_STATIC, 0);
   c_scalelight = Z_Malloc(sizeof(*c_scalelight) * numcolormaps, PU_STATIC, 0);
+  // [Cherry]
+  if (init_zlight_frac)
+    c_zlight_frac = Z_Malloc(sizeof(*c_zlight_frac) * numcolormaps, PU_STATIC, 0);
 
   for (cm = 0; cm < numcolormaps; ++cm)
   {
     c_zlight[cm] = Z_Malloc(LIGHTLEVELS * sizeof(**c_zlight), PU_STATIC, 0);
     c_scalelight[cm] = Z_Malloc(LIGHTLEVELS * sizeof(**c_scalelight), PU_STATIC, 0);
+    // [Cherry]
+    if (init_zlight_frac)
+      c_zlight_frac[cm] = Z_Malloc(LIGHTLEVELS * sizeof(**c_zlight_frac), PU_STATIC, 0);
   }
 
   // Calculate the light levels to use
@@ -1332,6 +1355,9 @@ void R_InitLightTables (void)
       {
         c_scalelight[cm][i] = Z_Malloc(MAXLIGHTSCALE * sizeof(***c_scalelight), PU_STATIC, 0);
         c_zlight[cm][i] = Z_Malloc(MAXLIGHTZ * sizeof(***c_zlight), PU_STATIC, 0);
+        // [Cherry]
+        if (init_zlight_frac)
+          c_zlight_frac[cm][i] = Z_Malloc(MAXLIGHTZ * sizeof(***c_zlight_frac), PU_STATIC, 0);
       }
 
       for (j=0; j<MAXLIGHTZ; j++)
@@ -1349,6 +1375,15 @@ void R_InitLightTables (void)
           level *= 256;
           for (t=0; t<numcolormaps; t++)         // killough 4/4/98
             c_zlight[t][i][j] = level;
+
+          // [Cherry] High precision values for radial fog dithering
+          if (init_zlight_frac)
+          {
+            const int level_frac = BETWEEN(0, (num_colormap_rows << 8) - 1,
+                (startmap << 8) - ((scale >> (LIGHTSCALESHIFT - 8)) / DISTMAP));
+            for (t = 0; t < numcolormaps; t++)
+              c_zlight_frac[t][i][j] = level_frac;
+          }
         }
     }
 
@@ -2093,6 +2128,8 @@ void R_SetupFrame (player_t *player)
   V_SetCurrentColormap(cm);
 
   zlight = c_zlight[cm];
+  if (c_zlight_frac) // [Cherry]
+    zlight_frac = c_zlight_frac[cm];
   scalelight = c_scalelight[cm];
 
   fixedcolormapoffset = 0;

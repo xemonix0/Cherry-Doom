@@ -1502,11 +1502,16 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
   ds_colormap[0] = V_ColormapRowByIndex(planezlight[*sdl]); \
   /* [Cherry] Dithered lighting from Doom Retro */ \
   byte cmap_index = 0; \
-  if (dithered_lighting) \
+  if (R_DoDitheredLighting()) \
   { \
-    ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(*sdl+1, MAXLIGHTZ-1)]); \
-    const byte distance = ((*sdl) & 255); \
-    if (ds_colormap[0] != ds_colormap[1]) cmap_index = dither(ds_x1, ds_y, distance); \
+    const int level_frac = planezlight_frac[*sdl]; \
+    const int level = level_frac >> 8; \
+    const int level_next = MIN(level+1, NUMCOLORMAPS-1); \
+    const int dither_threshold = (level_frac & 255); \
+    \
+    ds_colormap[0] = V_ColormapRowByIndex(level << 8); \
+    ds_colormap[1] = V_ColormapRowByIndex(level_next << 8); \
+    if (ds_colormap[0] != ds_colormap[1]) cmap_index = dither(ds_x1, ds_y, dither_threshold); \
   } \
   \
   dest[dest_index] = SRCPIXEL; \

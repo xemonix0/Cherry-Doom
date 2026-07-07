@@ -4077,7 +4077,7 @@ static setup_menu_t gen_settings5[] = {
       {"Floating Powerups"  , S_ONOFF,                         M_X, M_SPC, {"floating_powerups"}},
       {"Rocket Trails",       S_ONOFF | S_STRICT | S_CRITICAL, M_X, M_SPC, {"rocket_trails"}},
       {"Less Blinding Tints", S_ONOFF | S_STRICT,              M_X, M_SPC, {"less_blinding_tints"}, .action = I_DeferredInitPalettes},
-      {"Dithered Lighting",   S_ONOFF,                         M_X, M_SPC, {"dithered_lighting"}, .action = MN_UpdateDitheredLightingItem},
+      {"Dithered Lighting",   S_ONOFF,                         M_X, M_SPC, {"dithered_lighting"}, .action = R_DeferredInitLightTables},
 
     MI_END
 };
