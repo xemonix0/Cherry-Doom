@@ -3004,7 +3004,8 @@ static setup_tab_t gen_tabs[] = {
     {"display"},
     {"misc"},
 
-    {"nugget"}, // [Nugget]
+    {"nug"}, // [Nugget] // [Cherry] Shortened
+    {"chr"}, // [Cherry]
 
     {NULL}
 };
@@ -3281,6 +3282,9 @@ static setup_menu_t gen_settings2[] = {
     {"Music Volume", S_THERMO, CNTR_X, M_THRM_SPC, {"music_volume"},
      .action = UpdateMusicVolume},
 
+    // [Cherry] Mute Inactive Window feature from International Doom
+    {"Mute Inactive Window", S_ONOFF, CNTR_X, M_SPC, {"mute_inactive"}},
+
     MI_GAP,
 
     {"Sound Module", S_CHOICE, CNTR_X, M_SPC, {"snd_module"},
@@ -3288,9 +3292,6 @@ static setup_menu_t gen_settings2[] = {
 
     {"Headphones Mode", S_ONOFF, CNTR_X, M_SPC, {"snd_hrtf"}, 
      .action = SetSoundModule},
-
-    // [Cherry] Mute Inactive Window feature from International Doom
-    {"Mute Inactive Window", S_ONOFF, CNTR_X, M_SPC, {"mute_inactive"}},
 
     MI_GAP,
 
@@ -4072,15 +4073,6 @@ static setup_menu_t gen_settings5[] = {
 
     // [Nugget] -------------------------------------------------------------/
 
-    MI_SPLIT, // [Cherry] -----------------------------------------------------
-
-    {"Cherry", S_SKIP | S_TITLE, M_X, M_SPC},
-
-      {"Floating Powerups"  , S_ONOFF,                         M_X, M_SPC, {"floating_powerups"}},
-      {"Rocket Trails",       S_ONOFF | S_STRICT | S_CRITICAL, M_X, M_SPC, {"rocket_trails"}},
-      {"Less Blinding Tints", S_ONOFF | S_STRICT,              M_X, M_SPC, {"less_blinding_tints"}, .action = I_DeferredInitPalettes},
-      {"Dithered Lighting",   S_ONOFF,                         M_X, M_SPC, {"dithered_lighting"}, .action = R_DeferredInitLightTables},
-
     MI_END
 };
 
@@ -4092,12 +4084,6 @@ static void UpdateDarkeningItems(void)
                 "menu_backdrop_darkening");
     DisableItem(automapoverlay != AM_OVERLAY_DARK, auto_settings1,
                 "automap_overlay_darkening");
-}
-
-void MN_UpdateDitheredLightingItem(void)
-{
-    DisableItem(!(lighting_mode < LIGHTINGMODE_INTERPOLATED && diminishing_lighting),
-                gen_settings5, "dithered_lighting");
 }
 
 // [Cherry] ------------------------------------------------------------------/
@@ -4476,11 +4462,32 @@ void MN_DrawMisc(void)
 
 // [Nugget] -----------------------------------------------------------------/
 
+// [Cherry] /-----------------------------------------------------------------
+
+static setup_menu_t gen_settings8[] = {
+    {"Display", S_SKIP | S_TITLE, M_X, M_SPC},
+      {"Floating Powerups"  , S_ONOFF,                         M_X, M_SPC, {"floating_powerups"}},
+      {"Rocket Trails",       S_ONOFF | S_STRICT | S_CRITICAL, M_X, M_SPC, {"rocket_trails"}},
+      {"Less Blinding Tints", S_ONOFF | S_STRICT,              M_X, M_SPC, {"less_blinding_tints"}, .action = I_DeferredInitPalettes},
+      {"Dithered Lighting",   S_ONOFF,                         M_X, M_SPC, {"dithered_lighting"}, .action = R_DeferredInitLightTables},
+
+    MI_END
+};
+
+void MN_UpdateDitheredLightingItem(void)
+{
+    DisableItem(!(lighting_mode < LIGHTINGMODE_INTERPOLATED && diminishing_lighting),
+                gen_settings8, "dithered_lighting");
+}
+
+// [Cherry] -----------------------------------------------------------------/
+
 static setup_menu_t *gen_settings[] = {
     gen_settings1, gen_settings2, gen_settings3, gen_settings4,
     gen_settings5, gen_settings6,
 
     gen_settings7, // [Nugget]
+    gen_settings8, // [Cherry]
 
     NULL
 };
