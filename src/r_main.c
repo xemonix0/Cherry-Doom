@@ -127,9 +127,11 @@ int LIGHTZSHIFT;
 int numcolormaps;
 cmapoffset_t **(*c_scalelight) = NULL;
 cmapoffset_t **(*c_zlight) = NULL;
+cmapoffset_t **(*c_zlight_frac) = NULL; // [Cherry] High precision values for radial fog dithering
 cmapoffset_t *(*scalelight) = NULL;
 cmapoffset_t *scalelightfixed = NULL;
 cmapoffset_t *(*zlight) = NULL;
+cmapoffset_t *(*zlight_frac) = NULL; // [Cherry] High precision values for radial fog dithering
 lighttable_t *fullcolormap;
 lighttable_t **colormaps;
 
@@ -331,20 +333,31 @@ void R_DeferredInitLightTables(void)
 
 // Radial fog ----------------------------------------------------------------
 
-static int R_GetLightIndexVanilla(fixed_t scale, int x);
+// [Cherry] Added dither_threshold output parameter
+static int R_GetLightIndexVanilla(fixed_t scale, int x, int *dither_threshold);
 
 #define RADFOG_MULT 1.414213562 // Square root of 2
 
-static int R_GetLightIndexRadFog(fixed_t scale, const int x)
+// [Cherry] Added dither_threshold output parameter
+static int R_GetLightIndexRadFog(fixed_t scale, const int x, int *dither_threshold)
 {
   scale = FixedMul(scale, finecosine[xtoviewangle[x] >> ANGLETOFINESHIFT]) * RADFOG_MULT;
 
-  const int index = ((int64_t) scale * (160 << FRACBITS) / lightfocallength) >> LIGHTSCALESHIFT;
+  const fixed_t raw = (int64_t)scale * (160 << FRACBITS) / lightfocallength;
+  const int index = raw >> LIGHTSCALESHIFT;
+
+  // [Cherry] Calculate dithering threshold
+  if (do_dithered_lighting && dither_threshold)
+  {
+    *dither_threshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
+      : (raw & ((1 << (LIGHTSCALESHIFT + 1)) - 1)) >> (LIGHTSCALESHIFT - 7);
+  }
 
   return BETWEEN(0, MAXLIGHTSCALE - 1, index);
 }
 
-int (*R_GetLightIndex)(fixed_t scale, int x) = R_GetLightIndexVanilla;
+// [Cherry] Added dither_threshold output parameter
+int (*R_GetLightIndex)(fixed_t scale, int x, int *dither_threshold) = R_GetLightIndexVanilla;
 
 int light_distance_shift_bits;
 
@@ -936,8 +949,26 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 
 // [Nugget] =================================================================/
 
-// [Cherry] CVARs
+// [Cherry] /=================================================================
+
 int rocket_trails_tran_pct;
+
+// Dithered lighting from Doom Retro /----------------------------------------
+
+const byte dithermatrix[DITHERSIZE][DITHERSIZE] =
+{
+    {   0, 224,  48, 208 },
+    { 176,  80, 128,  96 },
+    { 192,  32, 240,  16 },
+    { 112, 144,  64, 160 }
+};
+
+boolean dithered_lighting;
+boolean do_dithered_lighting = false;
+
+void (*colfuncdithered)(void);
+
+// [Cherry] =================================================================/
 
 void (*colfunc)(void);                    // current column draw function
 
@@ -1244,6 +1275,26 @@ void R_InitLightTables (void)
     Z_Free(c_zlight);
   }
 
+  // [Cherry] Dithered lighting /----------------------------------------------
+  do_dithered_lighting = dithered_lighting && diminishing_lighting && lighting_mode < LIGHTINGMODE_INTERPOLATED;
+
+  // High precision values for radial fog dithering
+  const boolean init_zlight_frac = do_dithered_lighting && STRICTMODE(radial_fog && diminishing_lighting);
+
+  if (c_zlight_frac)
+  {
+    for (cm = 0; cm < numcolormaps; ++cm)
+    {
+      for (i = 0; i < LIGHTLEVELS; ++i)
+        Z_Free(c_zlight_frac[cm][i]);
+
+      Z_Free(c_zlight_frac[cm]);
+    }
+    Z_Free(c_zlight_frac);
+    c_zlight_frac = NULL;
+  }
+  // [Cherry] ----------------------------------------------------------------/
+
   // [Nugget] Lighting modes
   if (lighting_mode >= LIGHTINGMODE_INTERPOLATED) // True color
   {
@@ -1283,11 +1334,17 @@ void R_InitLightTables (void)
   // killough 4/4/98: dynamic colormaps
   c_zlight = Z_Malloc(sizeof(*c_zlight) * numcolormaps, PU_STATIC, 0);
   c_scalelight = Z_Malloc(sizeof(*c_scalelight) * numcolormaps, PU_STATIC, 0);
+  // [Cherry]
+  if (init_zlight_frac)
+    c_zlight_frac = Z_Malloc(sizeof(*c_zlight_frac) * numcolormaps, PU_STATIC, 0);
 
   for (cm = 0; cm < numcolormaps; ++cm)
   {
     c_zlight[cm] = Z_Malloc(LIGHTLEVELS * sizeof(**c_zlight), PU_STATIC, 0);
     c_scalelight[cm] = Z_Malloc(LIGHTLEVELS * sizeof(**c_scalelight), PU_STATIC, 0);
+    // [Cherry]
+    if (init_zlight_frac)
+      c_zlight_frac[cm] = Z_Malloc(LIGHTLEVELS * sizeof(**c_zlight_frac), PU_STATIC, 0);
   }
 
   // Calculate the light levels to use
@@ -1300,6 +1357,9 @@ void R_InitLightTables (void)
       {
         c_scalelight[cm][i] = Z_Malloc(MAXLIGHTSCALE * sizeof(***c_scalelight), PU_STATIC, 0);
         c_zlight[cm][i] = Z_Malloc(MAXLIGHTZ * sizeof(***c_zlight), PU_STATIC, 0);
+        // [Cherry]
+        if (init_zlight_frac)
+          c_zlight_frac[cm][i] = Z_Malloc(MAXLIGHTZ * sizeof(***c_zlight_frac), PU_STATIC, 0);
       }
 
       for (j=0; j<MAXLIGHTZ; j++)
@@ -1317,6 +1377,15 @@ void R_InitLightTables (void)
           level *= 256;
           for (t=0; t<numcolormaps; t++)         // killough 4/4/98
             c_zlight[t][i][j] = level;
+
+          // [Cherry] High precision values for radial fog dithering
+          if (init_zlight_frac)
+          {
+            const int level_frac = BETWEEN(0, (num_colormap_rows << 8) - 1,
+                (startmap << 8) - ((scale >> (LIGHTSCALESHIFT - 8)) / DISTMAP));
+            for (t = 0; t < numcolormaps; t++)
+              c_zlight_frac[t][i][j] = level_frac;
+          }
         }
     }
 
@@ -1328,9 +1397,19 @@ void R_InitLightTables (void)
 }
 
 // [Nugget] Static, added X parameter
-static int R_GetLightIndexVanilla(const fixed_t scale, const int x)
+// [Cherry] Added dither_threshold output parameter
+static int R_GetLightIndexVanilla(const fixed_t scale, const int x, int *dither_threshold)
 {
-  const int index = ((int64_t)scale * (160 << FRACBITS) / lightfocallength) >> LIGHTSCALESHIFT;
+  const fixed_t raw = (int64_t)scale * (160 << FRACBITS) / lightfocallength;
+  const int index = raw >> LIGHTSCALESHIFT;
+
+  // [Cherry] Calculate dithering threshold
+  if (do_dithered_lighting && dither_threshold)
+  {
+    *dither_threshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
+      : (raw & ((1 << (LIGHTSCALESHIFT + 1)) - 1)) >> (LIGHTSCALESHIFT - 7);
+  }
+
   return BETWEEN(0, MAXLIGHTSCALE - 1, index);
 }
 
@@ -2051,6 +2130,8 @@ void R_SetupFrame (player_t *player)
   V_SetCurrentColormap(cm);
 
   zlight = c_zlight[cm];
+  if (c_zlight_frac) // [Cherry]
+    zlight_frac = c_zlight_frac[cm];
   scalelight = c_scalelight[cm];
 
   fixedcolormapoffset = 0;
@@ -2094,7 +2175,7 @@ void R_SetupFrame (player_t *player)
           scalelightfixed[i] = fixedcolormapoffset;
 
         // [Nugget] Set `dc_colormap` here
-        dc_colormap[0] = dc_colormap[1] = fixedcolormap;
+        dc_colormap[0] = dc_colormap[1] = dc_colormap[2] = fixedcolormap;
       }
     else
       fixedcolormap = 0;
@@ -2329,6 +2410,9 @@ void R_BindRenderVariables(void)
 
   BIND_BOOL_GENERAL(linearsky, false, "Linear horizontal scrolling for skies");
   BIND_BOOL_GENERAL(r_swirl, false, "Swirling animated flats");
+
+  // [Cherry]
+  BIND_BOOL_GENERAL(dithered_lighting, false, "Dithered lighting");
 
   // [Nugget] /---------------------------------------------------------------
 

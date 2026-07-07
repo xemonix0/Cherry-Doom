@@ -94,6 +94,7 @@ static int *spanstart = NULL;                // killough 2/8/98
 //
 
 cmapoffset_t *planezlight; // [Nugget] Global
+cmapoffset_t *planezlight_frac; // [Cherry] High precision values for radial fog dithering
 static fixed_t planeheight;
 
 // killough 2/8/98: make variables static
@@ -175,15 +176,17 @@ static void DrawPlane8(fixed_t distance)
   // [Nugget] Radial fog
   void (*DrawSpan)(void) = R_DrawSpan;
 
-  if (!(ds_colormap[0] = ds_colormap[1] = fixedcolormap))
+  if (!(ds_colormap[0] = ds_colormap[2] = fixedcolormap))
     {
       boolean do_plane_radial_fog = do_radial_fog; // [Nugget] Radial fog
+      boolean do_dither_plane = do_dithered_lighting; // [Cherry] Dithered lighting
 
       index = distance >> LIGHTZSHIFT;
       if (index >= MAXLIGHTZ )
       {
         index = MAXLIGHTZ-1;
         do_plane_radial_fog = false;
+        do_dither_plane = false; // [Cherry]
       }
 
       // [Nugget]
@@ -191,6 +194,7 @@ static void DrawPlane8(fixed_t distance)
       {
         index = MAXLIGHTZ-1;
         do_plane_radial_fog = false;
+        do_dither_plane = false; // [Cherry]
       }
 
       // [Nugget] Radial fog
@@ -202,9 +206,16 @@ static void DrawPlane8(fixed_t distance)
       else
       {
         ds_colormap[0] = V_ColormapRowByIndex(planezlight[index]);
+
+        // [Cherry] Dithered lighting
+        if (do_dither_plane)
+        {
+          ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(index+1, MAXLIGHTZ-1)]);
+          DrawSpan = ds_colormap[0] == ds_colormap[1] ? R_DrawSpan : R_DrawDitheredSpan;
+        }
       }
 
-      ds_colormap[1] = fullcolormap;
+      ds_colormap[2] = fullcolormap;
     }
 
   DrawSpan();
@@ -299,6 +310,8 @@ static void R_MapPlane(int y, int x1, int x2)
   ds_y = y;
   ds_x1 = x1;
   ds_x2 = x2;
+  // [Cherry] Dithered lighting
+  ds_ditherthreshold = (distance & ((1 << LIGHTZSHIFT) - 1)) >> (LIGHTZSHIFT - 8);
 
   DrawPlane(distance);
 }
@@ -540,9 +553,9 @@ static void DrawSkyDef(visplane_t *pl)
     else
     {
         if (STRICTMODE_COMP(comp_skymap)
-            || !(dc_colormap[0] = dc_colormap[1] = fixedcolormap))
+            || !(dc_colormap[0] = dc_colormap[2] = fixedcolormap))
         {
-            dc_colormap[0] = dc_colormap[1] = fullcolormap; // killough 3/20/98
+            dc_colormap[0] = dc_colormap[2] = fullcolormap; // killough 3/20/98
         }
     }
 
@@ -637,9 +650,9 @@ static void do_draw_mbf_sky(visplane_t *pl)
     else
     {
         if (STRICTMODE_COMP(comp_skymap)
-            || !(dc_colormap[0] = dc_colormap[1] = fixedcolormap))
+            || !(dc_colormap[0] = dc_colormap[2] = fixedcolormap))
         {
-            dc_colormap[0] = dc_colormap[1] = fullcolormap; // killough 3/20/98
+            dc_colormap[0] = dc_colormap[2] = fullcolormap; // killough 3/20/98
         }
     }
 
@@ -764,6 +777,8 @@ static void do_draw_plane(visplane_t *pl)
 
     stop = pl->maxx + 1;
     planezlight = zlight[light];
+    if (zlight_frac) // [Cherry]
+        planezlight_frac = zlight_frac[light];
     pl->top[pl->minx - 1] = pl->top[stop] = USHRT_MAX;
 
     for (int x = pl->minx; x <= stop; x++)

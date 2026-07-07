@@ -592,7 +592,8 @@ int   *mceilingclip; // [FG] 32-bit integer math
 fixed_t spryscale;
 int64_t sprtopscreen; // [FG] 64-bit integer math
 
-void R_DrawMaskedColumn(column_t *column)
+// [Cherry] Add dither parameter
+void R_DrawMaskedColumn(column_t *column, const boolean do_dither)
 {
   int64_t topscreen, bottomscreen; // [FG] 64-bit integer math
   fixed_t basetexturemid = dc_texturemid;
@@ -633,7 +634,7 @@ void R_DrawMaskedColumn(column_t *column)
 
           // Drawn by either R_DrawColumn
           //  or (SHADOW) R_DrawFuzzColumn.
-          colfunc();
+          do_dither ? colfuncdithered() : colfunc();
         }
       column = (column_t *)((byte *) column + column->length + 4);
     }
@@ -674,7 +675,14 @@ static void DrawVisSpriteLoop8(
   int texturecolumn;
 
   dc_colormap[0] = V_ColormapRowByIndex(vis->colormap[0]);
-  dc_colormap[1] = V_ColormapRowByIndex(vis->colormap[1]);
+  dc_colormap[2] = V_ColormapRowByIndex(vis->colormap[2]);
+
+  // [Cherry] Dithered lighting
+  if (vis->do_dither)
+  {
+    dc_colormap[1] = V_ColormapRowByIndex(vis->colormap[1]);
+    dc_ditherthreshold = vis->ditherthreshold;
+  }
 
   for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
     {
@@ -690,10 +698,14 @@ static void DrawVisSpriteLoop8(
       // Radial fog
       if (do_sprite_radial_fog)
       {
-        lightindex = R_GetLightIndex(vis->scale, dc_x);
+        lightindex = R_GetLightIndex(vis->scale, dc_x, &dc_ditherthreshold);
 
         if (!percolumn_lighting)
-        { dc_colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]); }
+        {
+          dc_colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
+          if (vis->do_dither) // [Cherry] Dithered lighting
+            dc_colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+2, MAXLIGHTSCALE-1)]);
+        }
       }
 
       // Thing lighting
@@ -706,19 +718,22 @@ static void DrawVisSpriteLoop8(
         const fixed_t gx = vis->gx + FixedMul(offset, pcl_cosine),
                       gy = vis->gy + FixedMul(offset, pcl_sine);
 
-        const int lightnum = (R_GetLightLevelInPoint(gx, gy, false) >> LIGHTSEGSHIFT)
-                           + extralight;
+        const int lightnum = BETWEEN(0, LIGHTLEVELS-1,
+                             (R_GetLightLevelInPoint(gx, gy, false) >> LIGHTSEGSHIFT)
+                              + extralight);
 
-        dc_colormap[0] = V_ColormapRowByIndex(
-          scalelight[BETWEEN(0, LIGHTLEVELS-1, lightnum)][lightindex]
-        );
+        dc_colormap[0] = V_ColormapRowByIndex(scalelight[lightnum][lightindex]);
+
+        // [Cherry] Dithered lighting
+        if (vis->do_dither)
+          dc_colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+2, MAXLIGHTSCALE-1)]);
       }
 
       // [Nugget] ===========================================================/
 
       column = (column_t *)((byte *) patch +
                             LONG(patch->columnofs[texturecolumn]));
-      R_DrawMaskedColumn (column);
+      R_DrawMaskedColumn (column, vis->do_dither && dc_colormap[0] != dc_colormap[1]);
     }
 }
 
@@ -738,7 +753,7 @@ static void DrawVisSpriteLoop32(
   int texturecolumn;
 
   dc_colormap32[0] = V_ColormapRowByIndex32(vis->colormap[0]);
-  dc_colormap32[1] = V_ColormapRowByIndex32(vis->colormap[1]);
+  dc_colormap32[1] = V_ColormapRowByIndex32(vis->colormap[2]);
 
   for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
     {
@@ -754,7 +769,7 @@ static void DrawVisSpriteLoop32(
       // Radial fog
       if (do_sprite_radial_fog)
       {
-        lightindex = R_GetLightIndex(vis->scale, dc_x);
+        lightindex = R_GetLightIndex(vis->scale, dc_x, NULL);
 
         if (!percolumn_lighting)
         { dc_colormap32[0] = V_ColormapRowByIndex32(spritelights[lightindex]); }
@@ -782,7 +797,7 @@ static void DrawVisSpriteLoop32(
 
       column = (column_t *)((byte *) patch +
                             LONG(patch->columnofs[texturecolumn]));
-      R_DrawMaskedColumn (column);
+      R_DrawMaskedColumn (column, false);
     }
 }
 
@@ -810,12 +825,14 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     if (vis->mobjflags2 & MF2_COLOREDBLOOD)
       {
         colfunc = R_DrawTranslatedColumn;
+        colfuncdithered = R_DrawDitheredTranslatedColumn; // [Cherry]
         dc_translation = red2col[vis->color];
       }
   else
     if (vis->mobjflags & MF_TRANSLATION)
       {
         colfunc = R_DrawTranslatedColumn;
+        colfuncdithered = R_DrawDitheredTranslatedColumn; // [Cherry]
         dc_translation = translationtables - 256 +
           ((vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
       }
@@ -824,6 +841,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
     else if (STRICTMODE(vis->tranmap))
     {
       colfunc = R_DrawTLColumn;
+      colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
       tranmap = vis->tranmap;
     }
 
@@ -832,10 +850,14 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
           && vis->mobjflags & MF_TRANSLUCENT) // phares
         {
           colfunc = R_DrawTLColumn;
+          colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
           tranmap = main_tranmap;       // killough 4/11/98
         }
       else
-        colfunc = R_DrawColumn;         // killough 3/14/98, 4/11/98
+        {
+          colfunc = R_DrawColumn;         // killough 3/14/98, 4/11/98
+          colfuncdithered = R_DrawDitheredColumn; // [Cherry]
+        }
 
   dc_iscale = abs(vis->yiscale); // [Nugget] Sprite scaling: use `yiscale`
   dc_texturemid = vis->texturemid;
@@ -878,7 +900,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
       pcl_sine   =   finesine[angle];
 
       if (diminishing_lighting && !do_sprite_radial_fog)
-      { lightindex = R_GetLightIndex(vis->scale, 0); }
+      { lightindex = R_GetLightIndex(vis->scale, 0, &vis->ditherthreshold); }
     }
     else { spritelights = scalelight[vis->lightnum]; }
   }
@@ -899,6 +921,7 @@ void R_DrawVisSprite(vissprite_t *vis, int x1, int x2)
   );
 
   colfunc = R_DrawColumn;         // killough 3/14/98
+  colfuncdithered = R_DrawDitheredColumn; // [Cherry]
 }
 
 //
@@ -1233,20 +1256,22 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
   if (hires_lump >= 0)
   { vis->patch = first_hires_lump + hires_lump - firstspritelump; }
 
+  vis->do_dither = false; // [Cherry]
+
   // get light level
   if (thing->flags & MF_SHADOW)
-    vis->colormap[0] = vis->colormap[1] = 0;               // shadow draw
+    vis->colormap[0] = vis->colormap[2] = 0;               // shadow draw
   else if (fixedcolormapoffset)
-    vis->colormap[0] = vis->colormap[1] = fixedcolormapoffset;      // fixed map
+    vis->colormap[0] = vis->colormap[2] = fixedcolormapoffset;      // fixed map
   else if (frame & FF_FULLBRIGHT)
   {
-    vis->colormap[0] = vis->colormap[1] = 0;       // full bright  // killough 3/20/98
+    vis->colormap[0] = vis->colormap[2] = 0;       // full bright  // killough 3/20/98
     vis->flags |= VSF_FULLBRIGHT; // [Nugget]
   }
   else
     {      // diminished light
       const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
-                        ? 0 : R_GetLightIndex(vis->scale, 0); // [Nugget]
+                        ? 0 : R_GetLightIndex(vis->scale, 0, &vis->ditherthreshold); // [Nugget]
 
       // [Nugget] Thing lighting
       if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_HITBOX)
@@ -1261,7 +1286,14 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
       }
 
       vis->colormap[0] = spritelights[index];
-      vis->colormap[1] = 0;
+      vis->colormap[2] = 0;
+
+      // [Cherry] Dithered lighting
+      if (do_dithered_lighting)
+      {
+        vis->do_dither = true;
+        vis->colormap[1] = spritelights[MIN(index+2, MAXLIGHTSCALE-1)];
+      }
     }
 
   vis->brightmap = R_BrightmapForState(thing->state - states);
@@ -1433,6 +1465,7 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
   { shadow_vis->startfrac += shadow_vis->xiscale * (shadow_vis->x1 - shadow_x1); }
 
   shadow_vis->yiscale = FixedDiv(FRACUNIT, shadow_yscale);
+  shadow_vis->do_dither = false; // [Cherry]
 }
 
 //
@@ -1700,14 +1733,14 @@ void R_DrawPSprite (pspdef_t *psp, const boolean is_flash) // [Nugget] Transluce
   if (POWER_RUNOUT(viewplayer->powers[pw_invisibility]) && !beta_emulation
       && !STRICTMODE(pspr_invis_translucent)) // [Nugget] Translucent weapon when invisible
   {
-    vis->colormap[0] = vis->colormap[1] = 0;                    // shadow draw
+    vis->colormap[0] = vis->colormap[2] = 0;                    // shadow draw
     vis->mobjflags |= MF_SHADOW; // [Nugget] Give corresponding flag
   }
   else if (fixedcolormapoffset)
-    vis->colormap[0] = vis->colormap[1] = fixedcolormapoffset;           // fixed color
+    vis->colormap[0] = vis->colormap[2] = fixedcolormapoffset;           // fixed color
   else if (psp->state->frame & FF_FULLBRIGHT)
   {
-    vis->colormap[0] = vis->colormap[1] = 0;            // full bright // killough 3/20/98
+    vis->colormap[0] = vis->colormap[2] = 0;            // full bright // killough 3/20/98
     vis->flags |= VSF_FULLBRIGHT; // [Nugget]
   }
   else
@@ -1716,8 +1749,9 @@ void R_DrawPSprite (pspdef_t *psp, const boolean is_flash) // [Nugget] Transluce
     const int index = STRICTMODE(!diminishing_lighting) ? 0 : MAXLIGHTSCALE-1;
 
     vis->colormap[0] = spritelights[index];  // local light
-    vis->colormap[1] = 0;
+    vis->colormap[2] = 0;
   }
+  vis->do_dither = false; // [Cherry] Never dither PSprites
   vis->brightmap = R_BrightmapForState(psp->state - states);
 
   // [Nugget] /---------------------------------------------------------------

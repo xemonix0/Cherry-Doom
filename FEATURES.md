@@ -14,6 +14,7 @@ Config variables marked as "_CFG-only_" don't have a corresponding menu item and
     - Customize smoke particle spawn rate and translucency via CFG-only CVARs: `rocket_trails_interval` and `rocket_trails_tran_pct` respectively
 - _Mouselook_ option for the _Stretch Short Skies_ setting, enabling sky stretching only with mouselook active
 - _Less Blinding Tints_ setting (by [@Spaicrab](https://github.com/Spaicrab))
+- _Dithered Lighting_ setting [i.b. Doom Retro]
 
 #### Intermission screen
 

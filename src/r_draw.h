@@ -23,12 +23,13 @@
 #include "doomtype.h"
 #include "m_fixed.h"
 
-extern lighttable_t *dc_colormap[2];
+extern lighttable_t *dc_colormap[3]; // [Cherry] 0 and 1 for dithering, 2 for brightmaps
 extern lighttable32_t *dc_colormap32[2];
 
 extern int      dc_x;
 extern int      dc_yl;
 extern int      dc_yh;
+extern int      dc_ditherthreshold; // [Cherry] Dithered lighting
 extern fixed_t  dc_iscale;
 extern fixed_t  dc_texturemid;
 extern int      dc_texheight;    // killough
@@ -42,7 +43,9 @@ extern const byte *dc_brightmap;
 // Hook in assembler or system specific BLT here.
 
 extern void (*R_DrawColumn)(void);
+extern void (*R_DrawDitheredColumn)(void); // [Cherry]
 extern void (*R_DrawTLColumn)(void);      // drawing translucent textures // phares
+extern void (*R_DrawDitheredTLColumn)(void); // [Cherry]
 extern void (*R_DrawFuzzColumn)(void);    // The Spectre/Invisibility effect.
 
 // [Nugget] Sprite shadows
@@ -75,13 +78,15 @@ void R_DrawSkyColumnMasked(void);
 //  Green/Red/Blue/Indigo shirts.
 
 extern void (*R_DrawTranslatedColumn)(void);
+extern void (*R_DrawDitheredTranslatedColumn)(void); // [Cherry]
 
-extern lighttable_t *ds_colormap[2];
+extern lighttable_t *ds_colormap[3]; // [Cherry] 0 and 1 for dithering, 2 for brightmaps
 extern lighttable32_t *ds_colormap32[2];
 
 extern int     ds_y;
 extern int     ds_x1;
 extern int     ds_x2;
+extern int     ds_ditherthreshold; // [Cherry] Dithered lighting
 extern fixed_t ds_xfrac;
 extern fixed_t ds_yfrac;
 extern fixed_t ds_xstep;
@@ -95,6 +100,7 @@ extern const byte *ds_brightmap;
 
 // Span blitting for rows, floor/ceiling. No Spectre effect needed.
 extern void (*R_DrawSpan)(void);
+extern void (*R_DrawDitheredSpan)(void); // [Cherry]
 
 extern void (*R_DrawSpanWithRadialFog)(void); // [Nugget] Radial fog
 
