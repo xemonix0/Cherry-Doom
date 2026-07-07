@@ -116,7 +116,7 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
                               ? fullcolormap
                               : dc_colormap[0];
 
-            // [Cherry] Dithered lighting from Doom Retro
+            // [Cherry] Dithered lighting
             if (R_DoDitheredLighting())
             {
               dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+2, MAXLIGHTSCALE-1)]);
@@ -469,7 +469,7 @@ static void R_RenderSegLoop (void)
                                 ? fullcolormap
                                 : dc_colormap[0];
 
-              // [Cherry] Dithered lighting from Doom Retro
+              // [Cherry] Dithered lighting
               if (R_DoDitheredLighting())
               {
                 dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+2, MAXLIGHTSCALE-1)]);

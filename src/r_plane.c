@@ -179,7 +179,7 @@ static void DrawPlane8(fixed_t distance)
   if (!(ds_colormap[0] = ds_colormap[2] = fixedcolormap))
     {
       boolean do_plane_radial_fog = do_radial_fog; // [Nugget] Radial fog
-      boolean do_dither_plane = R_DoDitheredLighting(); // [Cherry] Dithered lighting from Doom Retro
+      boolean do_dither_plane = R_DoDitheredLighting(); // [Cherry] Dithered lighting
 
       index = distance >> LIGHTZSHIFT;
       if (index >= MAXLIGHTZ )
@@ -207,7 +207,7 @@ static void DrawPlane8(fixed_t distance)
       {
         ds_colormap[0] = V_ColormapRowByIndex(planezlight[index]);
 
-        // [Cherry] Dithered lighting from Doom Retro
+        // [Cherry] Dithered lighting
         if (do_dither_plane)
         {
           ds_colormap[1] = V_ColormapRowByIndex(planezlight[MIN(index+1, MAXLIGHTZ-1)]);
@@ -310,7 +310,7 @@ static void R_MapPlane(int y, int x1, int x2)
   ds_y = y;
   ds_x1 = x1;
   ds_x2 = x2;
-  // [Cherry] Dithered lighting from Doom Retro
+  // [Cherry] Dithered lighting
   ds_ditherthreshold = (distance & ((1 << LIGHTZSHIFT) - 1)) >> (LIGHTZSHIFT - 8);
 
   DrawPlane(distance);

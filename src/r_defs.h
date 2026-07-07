@@ -409,7 +409,7 @@ typedef struct vissprite_s
   byte lightnum;
   fixed_t leftoffset;
 
-  // [Cherry] Dithered lighting from Doom Retro
+  // [Cherry] Dithered lighting
   boolean do_dither;
   int ditherthreshold;
 } vissprite_t;

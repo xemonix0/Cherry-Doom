@@ -677,7 +677,7 @@ static void DrawVisSpriteLoop8(
   dc_colormap[0] = V_ColormapRowByIndex(vis->colormap[0]);
   dc_colormap[2] = V_ColormapRowByIndex(vis->colormap[2]);
 
-  // [Cherry] Dithered lighting from Doom Retro
+  // [Cherry] Dithered lighting
   if (vis->do_dither)
   {
     dc_colormap[1] = V_ColormapRowByIndex(vis->colormap[1]);
@@ -703,8 +703,7 @@ static void DrawVisSpriteLoop8(
         if (!percolumn_lighting)
         {
           dc_colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
-          // [Cherry] Dithered lighting from Doom Retro
-          if (vis->do_dither)
+          if (vis->do_dither) // [Cherry] Dithered lighting
             dc_colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+2, MAXLIGHTSCALE-1)]);
         }
       }
@@ -725,7 +724,7 @@ static void DrawVisSpriteLoop8(
 
         dc_colormap[0] = V_ColormapRowByIndex(scalelight[lightnum][lightindex]);
 
-        // [Cherry] Dithered lighting from Doom Retro
+        // [Cherry] Dithered lighting
         if (vis->do_dither)
           dc_colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+2, MAXLIGHTSCALE-1)]);
       }
@@ -1289,7 +1288,7 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
       vis->colormap[0] = spritelights[index];
       vis->colormap[2] = 0;
 
-      // [Cherry] Dithered lighting from Doom Retro
+      // [Cherry] Dithered lighting
       if (R_DoDitheredLighting())
       {
         vis->do_dither = true;

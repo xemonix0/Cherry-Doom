@@ -2409,7 +2409,7 @@ void R_BindRenderVariables(void)
   BIND_BOOL_GENERAL(linearsky, false, "Linear horizontal scrolling for skies");
   BIND_BOOL_GENERAL(r_swirl, false, "Swirling animated flats");
 
-  // [Cherry] Dithered lighting from Doom Retro
+  // [Cherry]
   BIND_BOOL_GENERAL(dithered_lighting, false, "Dithered lighting");
 
   // [Nugget] /---------------------------------------------------------------

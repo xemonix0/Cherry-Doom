@@ -81,7 +81,7 @@ lighttable32_t *dc_colormap32[2];
 int dc_x;
 int dc_yl;
 int dc_yh;
-int dc_ditherthreshold; // [Cherry] Dithered lighting from Doom Retro
+int dc_ditherthreshold; // [Cherry] Dithered lighting
 fixed_t dc_iscale;
 fixed_t dc_texturemid;
 int dc_texheight; // killough
@@ -1326,7 +1326,7 @@ void R_InitTranslationTables(void)
 int ds_y;
 int ds_x1;
 int ds_x2;
-int ds_ditherthreshold; // [Cherry] Dithered lighting from Doom Retro
+int ds_ditherthreshold; // [Cherry] Dithered lighting
 
 lighttable_t *ds_colormap[3]; // [Cherry] 0 and 1 for dithering, 2 for brightmaps
 lighttable32_t *ds_colormap32[2];
@@ -1479,7 +1479,7 @@ void (*R_DrawColumn)(void) = NULL;
 void (*R_DrawTLColumn)(void) = NULL;
 void (*R_DrawTranslatedColumn)(void) = NULL;
 void (*R_DrawSpan)(void) = NULL;
-// [Cherry] Dithered lighting from Doom Retro
+// [Cherry] Dithered lighting
 void (*R_DrawDitheredColumn)(void) = NULL;
 void (*R_DrawDitheredTLColumn)(void) = NULL;
 void (*R_DrawDitheredTranslatedColumn)(void) = NULL;
@@ -1500,7 +1500,8 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
   src = ds_source[spot]; \
   \
   ds_colormap[0] = V_ColormapRowByIndex(planezlight[*sdl]); \
-  /* [Cherry] Dithered lighting from Doom Retro */ \
+  \
+  /* [Cherry] Dithered lighting /----------------------------------------- */ \
   byte cmap_index = 0; \
   if (R_DoDitheredLighting()) \
   { \
@@ -1513,6 +1514,7 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
     ds_colormap[1] = V_ColormapRowByIndex(level_next << 8); \
     if (ds_colormap[0] != ds_colormap[1]) cmap_index = dither(ds_x1, ds_y, dither_threshold); \
   } \
+  /* [Cherry] -----------------------------------------------------------/ */ \
   \
   dest[dest_index] = SRCPIXEL; \
   sdl++; \
@@ -1623,7 +1625,7 @@ void R_InitDrawFunctions(void)
         R_DrawTranslatedColumn = DrawColumnTRBrightmap;
         R_DrawSpan = DrawSpanBrightmap;
 
-        // [Cherry] Dithered lighting from Doom Retro
+        // [Cherry] Dithered lighting
         R_DrawDitheredColumn = DrawDitheredColumn8Brightmap;
         R_DrawDitheredTLColumn = DrawDitheredColumn8TLBrightmap;
         R_DrawDitheredTranslatedColumn = DrawDitheredColumn8TRBrightmap;
@@ -1638,7 +1640,7 @@ void R_InitDrawFunctions(void)
         R_DrawTranslatedColumn = DrawColumnTR;
         R_DrawSpan = DrawSpan;
 
-        // [Cherry] Dithered lighting from Doom Retro
+        // [Cherry] Dithered lighting
         R_DrawDitheredColumn = DrawDitheredColumn8;
         R_DrawDitheredTLColumn = DrawDitheredColumn8TL;
         R_DrawDitheredTranslatedColumn = DrawDitheredColumn8TR;

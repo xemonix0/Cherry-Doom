@@ -744,7 +744,7 @@ boolean VX_ProjectVoxel (mobj_t * thing, byte lightnum)
 		vis->colormap[0] = spritelights[index];
 		vis->colormap[2] = 0;
 
-	    // [Cherry] Dithered lighting from Doom Retro
+	    // [Cherry] Dithered lighting
         if (R_DoDitheredLighting())
         {
           vis->do_dither = true;
@@ -893,7 +893,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 	colormap[0] = V_ColormapRowByIndex(spr->colormap[0]);
 	colormap[2] = V_ColormapRowByIndex(spr->colormap[2]);
 
-    // [Cherry] Dithered lighting from Doom Retro
+    // [Cherry] Dithered lighting
     boolean do_dither_voxel = spr->do_dither;
     int dither_threshold = spr->ditherthreshold;
     if (spr->do_dither) colormap[1] = V_ColormapRowByIndex(spr->colormap[1]);
@@ -931,7 +931,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 
 				colormap[0] = V_ColormapRowByIndex(scalelight[lightnum][lightindex]);
 
-			    // [Cherry] Dithered lighting from Doom Retro
+			    // [Cherry] Dithered lighting
 			    if (spr->do_dither)
 			    {
 			        colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+2, MAXLIGHTSCALE-1)]);
@@ -973,7 +973,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 		{
 		    const int lightindex = R_GetLightIndex(scale, ux >> FRACBITS, &dither_threshold);
 		    colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
-		    // [Cherry] Dithered lighting from Doom Retro
+		    // [Cherry] Dithered lighting
 		    if (spr->do_dither)
 		    {
 		        colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+2, MAXLIGHTSCALE-1)]);
@@ -1445,7 +1445,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 	colormap[0] = V_ColormapRowByIndex(spr->colormap[0]);
     colormap[2] = V_ColormapRowByIndex(spr->colormap[2]);
 
-    // [Cherry] Dithered lighting from Doom Retro
+    // [Cherry] Dithered lighting
     int dither_threshold = spr->ditherthreshold;
     boolean do_dither_voxel = spr->do_dither;
     if (spr->do_dither) colormap[1] = V_ColormapRowByIndex(spr->colormap[1]);
@@ -1483,7 +1483,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 
 			    colormap[0] = V_ColormapRowByIndex(scalelight[lightnum][lightindex]);
 
-			    // [Cherry] Dithered lighting from Doom Retro
+			    // [Cherry] Dithered lighting
 			    if (spr->do_dither)
 			    {
 			        colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+2, MAXLIGHTSCALE-1)]);
@@ -1520,7 +1520,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 		{
 		    const int lightindex = R_GetLightIndex(midscale, uxi, &dither_threshold);
 		    colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
-		    // [Cherry] Dithered lighting from Doom Retro
+		    // [Cherry] Dithered lighting
 		    if (spr->do_dither)
 		    {
 		        colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+2, MAXLIGHTSCALE-1)]);
