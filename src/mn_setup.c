@@ -1928,7 +1928,9 @@ static setup_tab_t weap_tabs[] = {
     {"Slots"},
     {"Priority"},
 
-    // [Cherry] Redistributed Nugget options across other pages
+    // [Nugget]
+    {"NG1"},
+    {"NG2"},
 
     {NULL}
 };
@@ -1939,27 +1941,6 @@ static const char *center_weapon_strings[] = {"Off", "Centered", "Bobbing", "Hor
 static void UpdateCenteredWeaponItem(void);
 
 // [Nugget] Removed unused `bobbing_pct_strings`
-
-// [Cherry] Moved here
-// [Nugget] /------------------------------------------------------------------
-
-static const char *bobbing_style_strings[] = {
-    "Vanilla", "Inv. Vanilla", "Alpha", "Inv. Alpha", "Smooth", "Inv. Smooth", "Quake"
-};
-
-static const char *force_carousel_strings[] = {
-    "Off", "Off Player", "Always"
-};
-
-#define W_X       235
-#define W_X_THRM8 (W_X - (M_THRM_SIZE8 + 3) * M_THRM_STEP)
-
-void WeaponFlashTrans(void)
-{
-    R_GetGenericTranMap(pspr_translucency_pct);
-}
-
-// [Nugget] ------------------------------------------------------------------/
 
 static setup_menu_t weap_settings1[] = {
 
@@ -1998,52 +1979,10 @@ static setup_menu_t weap_settings1[] = {
 
     {"Weapon Recoil", S_ONOFF, CNTR_X, M_SPC, {"weapon_recoilpitch"}},
 
-    MI_SPLIT, // [Cherry] Moved from `Nugget` ---------------------------------
-
-    {"Nugget - Gameplay", S_SKIP|S_TITLE, W_X, M_SPC},
-
-      {"Smart Autoaim",                S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"smart_autoaim"}},
-      {"No Horizontal Autoaim",        S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"no_hor_autoaim"}},
-      {"Switch on Pickup",             S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"switch_on_pickup"}},
-      {"Improved Weapon Toggles",      S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"improved_weapon_toggles"}},
-      {"Allow Switch Interruption",    S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"weapswitch_interruption"}},
-      {"Prev/Next Skip Empty Weapons", S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"skip_ammoless_weapons"}},
-
-    MI_SPLIT,
-
-    {"Nugget - Cosmetic", S_SKIP|S_TITLE, W_X, M_SPC},
-
-      {"Bobbing Style",              S_CHOICE|S_STRICT,                W_X,       M_SPC,      {"bobbing_style"}, .strings_id = str_bobbing_style},
-      {"Bob While Switching",        S_ONOFF |S_STRICT,                W_X,       M_SPC,      {"switch_bob"}},
-      {"Weapon Squat Upon Landing",  S_ONOFF |S_STRICT,                W_X,       M_SPC,      {"weaponsquat"}},
-      {"Translucent When Invisible", S_ONOFF |S_STRICT,                W_X,       M_SPC,      {"pspr_invis_translucent"}},
-      {"Force Weapon Carousel",      S_CHOICE|S_STRICT,                W_X,       M_SPC,      {"force_carousel"}, .strings_id = str_force_carousel},
-      MI_GAP,
-      #define W_X2 (W_X_THRM8 + 16)
-      {"Weapon Bob Speed",          S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X2, M_THRM_SPC, {"weapon_bobbing_speed_pct"}},
-      {"Weapon Inertia",            S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X2, M_THRM_SPC, {"weapon_inertia_scale_pct"}, .action = P_NuggetResetWeaponInertia},
-      {"Firing Weapon Inertia",     S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X2, M_THRM_SPC, {"weapon_inertia_fire_scale_pct"}, .action = P_NuggetResetWeaponInertia},
-      {"Flash Opacity",             S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X2, M_THRM_SPC, {"pspr_translucency_pct"}, .action = WeaponFlashTrans},
-    #undef W_X2
-
     MI_RESET,
 
     MI_END
 };
-
-// [Cherry] Moved here
-// [Nugget] /------------------------------------------------------------------
-
-#undef W_X_THRM8
-#undef W_X
-
-void MN_UpdateImprovedWeaponTogglesItem(void)
-{
-    DisableItem(!(demo_compatibility || doom_weapon_toggles),
-                weap_settings1, "improved_weapon_toggles");
-}
-
-// [Nugget] ------------------------------------------------------------------/
 
 static const char *weapon_slots_activation_strings[] = {
     "Off", "Hold \"Last\"", "Always On"
@@ -2211,10 +2150,73 @@ static setup_menu_t weap_settings3[] = {
     MI_END
 };
 
+// [Nugget] /-----------------------------------------------------------------
+
+#define W_X       235
+#define W_X_THRM8 (W_X - (M_THRM_SIZE8 + 3) * M_THRM_STEP)
+
+static setup_menu_t weap_settings4[] =
+{
+  {"Nugget - Gameplay", S_SKIP|S_TITLE, W_X, M_SPC},
+
+    {"Smart Autoaim",                S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"smart_autoaim"}},
+    {"No Horizontal Autoaim",        S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"no_hor_autoaim"}},
+    {"Switch on Pickup",             S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"switch_on_pickup"}},
+    {"Improved Weapon Toggles",      S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"improved_weapon_toggles"}},
+    {"Allow Switch Interruption",    S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"weapswitch_interruption"}},
+    {"Prev/Next Skip Empty Weapons", S_ONOFF|S_STRICT|S_CRITICAL, W_X, M_SPC, {"skip_ammoless_weapons"}},
+
+  MI_END
+};
+
+static const char *bobbing_style_strings[] = {
+  "Vanilla", "Inv. Vanilla", "Alpha", "Inv. Alpha", "Smooth", "Inv. Smooth", "Quake"
+};
+
+static const char *force_carousel_strings[] = {
+  "Off", "Off Player", "Always"
+};
+
+void WeaponFlashTrans(void)
+{
+    R_GetGenericTranMap(pspr_translucency_pct);
+}
+
+static setup_menu_t weap_settings5[] =
+{
+  {"Nugget - Cosmetic", S_SKIP|S_TITLE, W_X, M_SPC},
+
+    {"Bobbing Style",              S_CHOICE|S_STRICT,                W_X,       M_SPC,      {"bobbing_style"}, .strings_id = str_bobbing_style},
+    {"Bob While Switching",        S_ONOFF |S_STRICT,                W_X,       M_SPC,      {"switch_bob"}},
+    {"Weapon Squat Upon Landing",  S_ONOFF |S_STRICT,                W_X,       M_SPC,      {"weaponsquat"}},
+    {"Translucent When Invisible", S_ONOFF |S_STRICT,                W_X,       M_SPC,      {"pspr_invis_translucent"}},
+    {"Force Weapon Carousel",      S_CHOICE|S_STRICT,                W_X,       M_SPC,      {"force_carousel"}, .strings_id = str_force_carousel},
+    MI_GAP,
+    #define W_X2 (W_X_THRM8 + 16)
+    {"Weapon Bob Speed",          S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X2, M_THRM_SPC, {"weapon_bobbing_speed_pct"}},
+    {"Weapon Inertia",            S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X2, M_THRM_SPC, {"weapon_inertia_scale_pct"}, .action = P_NuggetResetWeaponInertia},
+    {"Firing Weapon Inertia",     S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X2, M_THRM_SPC, {"weapon_inertia_fire_scale_pct"}, .action = P_NuggetResetWeaponInertia},
+    {"Flash Opacity",             S_THERMO|S_STRICT|S_PCT|S_ACTION, W_X2, M_THRM_SPC, {"pspr_translucency_pct"}, .action = WeaponFlashTrans},
+    #undef W_X2
+
+  MI_END
+};
+
+#undef W_X_THRM8
+#undef W_X
+
+void MN_UpdateImprovedWeaponTogglesItem(void)
+{
+    DisableItem(!(demo_compatibility || doom_weapon_toggles),
+                weap_settings4, "improved_weapon_toggles");
+}
+
+// [Nugget] -----------------------------------------------------------------/
+
 static setup_menu_t *weap_settings[] = {
     weap_settings1, weap_settings2, weap_settings3,
 
-    // [Cherry] Redistributed Nugget options across other pages
+    weap_settings4, weap_settings5, // [Nugget]
 
     NULL
 

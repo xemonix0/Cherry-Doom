@@ -5,7 +5,12 @@ This file contains the full list of changes for every version of Cherry Doom.
 ## Unreleased
 
 ### Added
+
 - _Dithered Lighting_ setting
+
+### Changed
+
+- Reverted all rearrangements made to Nugget Doom's menu items
 
 ## 2.1.0
 

@@ -36,7 +36,6 @@ Config variables marked as "_CFG-only_" don't have a corresponding menu item and
 ### Miscellaneous
 
 - Menu items, disabled due to active compatibility options, now include hints, explaining the reason for their unavailability
-- Most setup menus have been reorganized into subpages for easier navigation
 - _Disable Stats Tracking_ setting for the _Custom Skill_
 
 ### _Level Table_

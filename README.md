@@ -18,7 +18,7 @@ Cherry Doom builds on top of Nugget Doom with numerous enhancements, most being 
 - Floating powerups _(from International Doom)_
 - Rocket trails _(from Doom Retro)_
 - Less blinding tints
-- Dithered lighting (from Doom Retro)
+- Dithered lighting _(from Doom Retro)_
 
 The main highlight of this port is the _Level Table_, inspired by DSDA-Doom. It is used for tracking individual level progress, has a summary screen with total WAD statistics, and allows you to warp to any map without using cheats.
 
