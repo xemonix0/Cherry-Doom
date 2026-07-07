@@ -302,7 +302,7 @@ extern const byte dithermatrix[DITHERSIZE][DITHERSIZE];
                                     [((x) + viewwindowx - video.deltaw + !video.deltaw) & DITHERMASK] < (threshold))
 
 extern boolean dithered_lighting;
-extern boolean R_DoDitheredLighting(void);
+extern boolean do_dithered_lighting;
 extern void (*colfuncdithered)(void);
 
 // [Cherry] =================================================================/

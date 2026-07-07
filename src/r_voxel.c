@@ -745,7 +745,7 @@ boolean VX_ProjectVoxel (mobj_t * thing, byte lightnum)
 		vis->colormap[2] = 0;
 
 	    // [Cherry] Dithered lighting
-        if (R_DoDitheredLighting())
+        if (do_dithered_lighting)
         {
           vis->do_dither = true;
           vis->colormap[1] = spritelights[MIN(index+2, MAXLIGHTSCALE-1)];

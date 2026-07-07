@@ -1289,7 +1289,7 @@ static void R_ProjectSprite (mobj_t* thing, byte lightnum) // [Nugget] Lightnum
       vis->colormap[2] = 0;
 
       // [Cherry] Dithered lighting
-      if (R_DoDitheredLighting())
+      if (do_dithered_lighting)
       {
         vis->do_dither = true;
         vis->colormap[1] = spritelights[MIN(index+2, MAXLIGHTSCALE-1)];

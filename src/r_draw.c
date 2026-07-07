@@ -1503,7 +1503,7 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
   \
   /* [Cherry] Dithered lighting /----------------------------------------- */ \
   byte cmap_index = 0; \
-  if (R_DoDitheredLighting()) \
+  if (do_dithered_lighting) \
   { \
     const int level_frac = planezlight_frac[*sdl]; \
     const int level = level_frac >> 8; \

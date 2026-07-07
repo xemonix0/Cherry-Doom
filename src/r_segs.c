@@ -117,7 +117,7 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
                               : dc_colormap[0];
 
             // [Cherry] Dithered lighting
-            if (R_DoDitheredLighting())
+            if (do_dithered_lighting)
             {
               dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+2, MAXLIGHTSCALE-1)]);
               do_dither_column = dc_colormap[0] != dc_colormap[1];
@@ -435,7 +435,7 @@ static void R_RenderSegLoop (void)
             }
         }
 
-      boolean do_dither_column = R_DoDitheredLighting(); // [Cherry]
+      boolean do_dither_column = do_dithered_lighting; // [Cherry]
 
       // texturecolumn and lighting are independent of wall tiers
       if (segtextured)
@@ -470,7 +470,7 @@ static void R_RenderSegLoop (void)
                                 : dc_colormap[0];
 
               // [Cherry] Dithered lighting
-              if (R_DoDitheredLighting())
+              if (do_dithered_lighting)
               {
                 dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+2, MAXLIGHTSCALE-1)]);
                 if (dc_colormap[0] == dc_colormap[1]) do_dither_column = false;

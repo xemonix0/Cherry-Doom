@@ -179,7 +179,7 @@ static void DrawPlane8(fixed_t distance)
   if (!(ds_colormap[0] = ds_colormap[2] = fixedcolormap))
     {
       boolean do_plane_radial_fog = do_radial_fog; // [Nugget] Radial fog
-      boolean do_dither_plane = R_DoDitheredLighting(); // [Cherry] Dithered lighting
+      boolean do_dither_plane = do_dithered_lighting; // [Cherry] Dithered lighting
 
       index = distance >> LIGHTZSHIFT;
       if (index >= MAXLIGHTZ )

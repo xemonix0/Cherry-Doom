@@ -347,7 +347,7 @@ static int R_GetLightIndexRadFog(fixed_t scale, const int x, int *dither_thresho
   const int index = raw >> LIGHTSCALESHIFT;
 
   // [Cherry] Calculate dithering threshold
-  if (R_DoDitheredLighting() && dither_threshold)
+  if (do_dithered_lighting && dither_threshold)
   {
     *dither_threshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
       : (raw & ((1 << (LIGHTSCALESHIFT + 1)) - 1)) >> (LIGHTSCALESHIFT - 7);
@@ -964,10 +964,7 @@ const byte dithermatrix[DITHERSIZE][DITHERSIZE] =
 };
 
 boolean dithered_lighting;
-boolean R_DoDitheredLighting(void)
-{
-    return dithered_lighting && diminishing_lighting && lighting_mode < LIGHTINGMODE_INTERPOLATED;
-}
+boolean do_dithered_lighting = false;
 
 void (*colfuncdithered)(void);
 
@@ -1278,8 +1275,12 @@ void R_InitLightTables (void)
     Z_Free(c_zlight);
   }
 
-  // [Cherry] High precision values for radial fog dithering
-  const boolean init_zlight_frac = R_DoDitheredLighting() && STRICTMODE(radial_fog && diminishing_lighting);
+  // [Cherry] Dithered lighting /----------------------------------------------
+  do_dithered_lighting = dithered_lighting && diminishing_lighting && lighting_mode < LIGHTINGMODE_INTERPOLATED;
+
+  // High precision values for radial fog dithering
+  const boolean init_zlight_frac = do_dithered_lighting && STRICTMODE(radial_fog && diminishing_lighting);
+
   if (c_zlight_frac)
   {
     for (cm = 0; cm < numcolormaps; ++cm)
@@ -1292,6 +1293,7 @@ void R_InitLightTables (void)
     Z_Free(c_zlight_frac);
     c_zlight_frac = NULL;
   }
+  // [Cherry] ----------------------------------------------------------------/
 
   // [Nugget] Lighting modes
   if (lighting_mode >= LIGHTINGMODE_INTERPOLATED) // True color
@@ -1402,7 +1404,7 @@ static int R_GetLightIndexVanilla(const fixed_t scale, const int x, int *dither_
   const int index = raw >> LIGHTSCALESHIFT;
 
   // [Cherry] Calculate dithering threshold
-  if (R_DoDitheredLighting() && dither_threshold)
+  if (do_dithered_lighting && dither_threshold)
   {
     *dither_threshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
       : (raw & ((1 << (LIGHTSCALESHIFT + 1)) - 1)) >> (LIGHTSCALESHIFT - 7);
