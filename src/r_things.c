@@ -753,7 +753,7 @@ static void DrawVisSpriteLoop32(
   int texturecolumn;
 
   dc_colormap32[0] = V_ColormapRowByIndex32(vis->colormap[0]);
-  dc_colormap32[1] = V_ColormapRowByIndex32(vis->colormap[1]);
+  dc_colormap32[1] = V_ColormapRowByIndex32(vis->colormap[2]);
 
   for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
     {
