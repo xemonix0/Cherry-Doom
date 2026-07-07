@@ -29,6 +29,10 @@ Config variables marked as "_CFG-only_" don't have a corresponding menu item and
 - _Disable On Slot 1_ setting [i.b. [_Precise Crosshair_ mod](https://forum.zdoom.org/viewtopic.php?t=64788)]
 - _Detection of Targets in Darkness_ setting, with required light level customizable via the CFG-only CVAR `hud_crosshair_dark_level` [i.b. [_Target Spy_ mod](https://forum.zdoom.org/viewtopic.php?t=60784)]
 
+#### Messages
+
+- _Message Pulse_ setting [i.b. UZDoom]
+
 ### Enemies
 
 - _Blood Amount Scales With Damage_ setting [i.b. Doom Retro]

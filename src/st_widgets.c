@@ -121,6 +121,28 @@ void FadeOutLine(widgetline_t *const line, const int duration_left)
 
 // [Nugget] =================================================================/
 
+// [Cherry] Pulsating messages /----------------------------------------------
+
+static boolean message_pulse;
+
+#define PULSE_SPEED 3    // Frames per translucency level
+#define PULSE_STRENGTH 4 // * 10%
+#define PULSE_LENGTH (PULSE_SPEED * PULSE_STRENGTH)
+static void PulseLine(widgetline_t *const line, int *pulse)
+{
+    if (*pulse <= PULSE_LENGTH)
+        line->tran_pct = 100 - *pulse / PULSE_SPEED * 10;
+    else if (*pulse <= PULSE_LENGTH * 2)
+        line->tran_pct = 100 - (PULSE_LENGTH * 2 - *pulse) / PULSE_SPEED * 10;
+
+    if (++*pulse > PULSE_LENGTH * 2) *pulse = 0;
+}
+#undef PULSE_LENGTH
+#undef PULSE_STRENGTH
+#undef PULSE_SPEED
+
+// [Cherry] -----------------------------------------------------------------/
+
 boolean       show_messages;
 boolean       show_toggle_messages;
 boolean       show_pickup_messages;
@@ -180,6 +202,7 @@ typedef struct linkedmessage_s
     size_t orig_length;
     int duration_left;
     int flash_duration_left; // Message flash
+    int pulse; // [Cherry] Pulsating messages
 
     // Messages from other players cannot be overwritten by normal messages
     // until their duration runs out
@@ -280,6 +303,9 @@ static void AddMessage(char *const string, int duration, const boolean is_chat_m
 
     // Message flash (actually 4, as it will be decremented right after this)
     message_list_tail->flash_duration_left = message_flash ? 5 : 0;
+
+    // [Cherry] Pulsating messages
+    message_list_tail->pulse = 0;
 
 clear_string:
 
@@ -391,6 +417,11 @@ static void UpdateMessage(sbe_widget_t *widget, player_t *player)
             if (m->flash_duration_left > 0) { m->flash_duration_left--; }
 
             line->flash = !!m->flash_duration_left;
+
+            // [Cherry] Pulsating messages -----------------------------------
+
+            if (message_pulse && !line->flash && fadeout_time >= 9)
+                PulseLine(line, &m->pulse);
         }
         else {
             m->duration_left = 0;
@@ -1926,6 +1957,11 @@ void ST_BindHUDVariables(void)
   BIND_BOOL(hud_msg_scrollup, true, "Message list scrolls upwards");
 
   // [Nugget] ---------------------------------------------------------------/
+
+  // [Cherry] Pulsating messages
+  M_BindBool("message_pulse", &message_pulse, NULL,
+             false, ss_stat, wad_yes,
+             "Messages pulse");
 
 #define BIND_CHAT(num)                                                     \
     M_BindStr("chatmacro" #num, &chat_macros[(num)], HUSTR_CHATMACRO##num, \

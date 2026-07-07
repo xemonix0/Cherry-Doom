@@ -2470,7 +2470,7 @@ static setup_menu_t stat_settings4[] = {
     {"Show Pickup Messages", S_ONOFF, H_X, M_SPC, {"show_pickup_messages"}},
     {"Show Obituaries",      S_ONOFF, H_X, M_SPC, {"show_obituary_messages"}},
 
-    MI_GAP, // [Nugget]
+    MI_GAP_Y(4), // [Nugget]
 
     {"Center Messages",      S_ONOFF, H_X, M_SPC, {"message_centered"}},
     {"Colorize Messages",    S_ONOFF, H_X, M_SPC, {"message_colorized"},
@@ -2488,6 +2488,9 @@ static setup_menu_t stat_settings4[] = {
 
     // Message flash
     {"Message Flash", S_ONOFF, H_X, M_SPC, {"message_flash"}},
+
+    // [Cherry] Pulsating messages
+    {"Message Pulse", S_ONOFF, H_X, M_SPC, {"message_pulse"}},
 
     {"Message Lines", S_NUM, H_X, M_SPC, {"hud_msg_lines"}, .action = MoveMinimap},
 
