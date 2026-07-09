@@ -1095,8 +1095,8 @@ void MN_DrawScrollIndicators(void)
     {
         patch_t *patch = V_CachePatchName("SCRLUP", PU_CACHE);
 
-        int x = LT_SCROLL_X - SHORT(patch->width) / 2;
-        int y = LT_SCROLL_UP_Y;
+        int x = M_SCROLL_X - SHORT(patch->width) / 2;
+        int y = M_SCROLL_UP_Y;
 
         V_DrawPatchSH(x, y, patch);
     }
@@ -1105,8 +1105,8 @@ void MN_DrawScrollIndicators(void)
     {
         patch_t *patch = V_CachePatchName("SCRLDOWN", PU_CACHE);
 
-        int x = LT_SCROLL_X - SHORT(patch->width) / 2;
-        int y = LT_SCROLL_DOWN_Y;
+        int x = M_SCROLL_X - SHORT(patch->width) / 2;
+        int y = set_lvltbl_active ? LT_SCROLL_DOWN_Y : M_SCROLL_DOWN_Y;
 
         V_DrawPatchSH(x, y, patch);
     }
@@ -1518,7 +1518,8 @@ static void DrawInstructions(void)
         }
     }
 
-    MN_DrawStringCR((SCREENWIDTH - MN_GetPixelWidth(s)) / 2, M_Y_WARN,
+    MN_DrawStringCR((SCREENWIDTH - MN_GetPixelWidth(s)) / 2,
+                    set_lvltbl_active ? LT_Y_WARN : M_Y_WARN, // [Cherry]
                     cr_shaded, NULL, s);
 
     // [Nugget] Report current resolution

@@ -27,6 +27,7 @@
 #include "st_widgets.h"
 #include "wad_stats.h"
 
+#define LT_Y                (M_Y - 4)
 #define LT_X_MARGIN         16
 #define LT_LEFT_EDGE_X      (LT_X_MARGIN)
 #define LT_RIGHT_EDGE_X     (SCREENWIDTH - LT_X_MARGIN)
@@ -43,7 +44,7 @@
 #define LT_SUMMARY_X        (SCREENWIDTH / 2)
 #define LT_SUMMARY_Y        (M_Y + M_SPC * 2)
 
-#define LT_MAX_ROWS         14
+#define LT_MAX_ROWS         16
 #define LT_SCROLL_BUFFER    3
 
 typedef enum
@@ -528,7 +529,7 @@ static inline void DrawTrackingDisabledWarning(int y)
 
 static void DrawLevelsPage(setup_menu_t *menu, int page)
 {
-    int accum_y = M_Y;
+    int accum_y = LT_Y;
 
     if (TRACKING_WAD_STATS)
     {
@@ -545,7 +546,7 @@ static void DrawLevelsPage(setup_menu_t *menu, int page)
     for (setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
     {
         boolean skip =
-            (rows - scroll_pos < 0 || rows - scroll_pos > LT_MAX_ROWS)
+            (rows - scroll_pos < 0 || rows - scroll_pos >= LT_MAX_ROWS)
             && !(src->m_flags & S_RESET); // Always draw the reset button
 
         if (!(src->m_flags & S_DIRECT))
@@ -683,9 +684,9 @@ boolean LT_HandleKeyboardScroll(setup_menu_t *menu, setup_menu_t *item)
     int buffer_i = MIN(LT_SCROLL_BUFFER, rows - current_row - 1);
     int top_buffer_i = MIN(LT_SCROLL_BUFFER, current_row);
 
-    if (rows > LT_MAX_ROWS)
+    if (rows >= LT_MAX_ROWS)
     {
-        while (current_row - scroll_pos > LT_MAX_ROWS - buffer_i)
+        while (current_row - scroll_pos >= LT_MAX_ROWS - buffer_i)
         {
             ++scroll_pos;
         }
@@ -723,7 +724,7 @@ boolean LT_HandleMouseScroll(setup_menu_t *menu, int inc)
         }
     }
 
-    scroll_pos = MAX(0, MIN(rows - LT_MAX_ROWS - 1, scroll_pos + inc));
+    scroll_pos = MAX(0, MIN(rows - LT_MAX_ROWS, scroll_pos + inc));
     UpdateScrollIndicators(rows);
     return true;
 }

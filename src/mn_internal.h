@@ -103,9 +103,13 @@ enum
 #define M_Y_WARN (SCREENHEIGHT - 15)
 #define M_TAB_Y  22
 
-#define LT_SCROLL_X      (SCREENWIDTH - 9)
-#define LT_SCROLL_UP_Y   (M_TAB_Y + M_SPC)
-#define LT_SCROLL_DOWN_Y (M_Y_WARN - 5)
+// [Cherry]
+#define M_SCROLL_X       (SCREENWIDTH - 9)
+#define M_SCROLL_UP_Y    (M_TAB_Y + M_SPC)
+#define M_SCROLL_DOWN_Y  (M_Y_WARN - 5)
+
+#define LT_Y_WARN        (M_Y_WARN + 5)
+#define LT_SCROLL_DOWN_Y (LT_Y_WARN - 5)
 
 extern char menu_buffer[66];
 extern int scroll_indicators;
