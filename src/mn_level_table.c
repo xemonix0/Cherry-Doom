@@ -47,20 +47,6 @@
 #define LT_MAX_ROWS         16
 #define LT_SCROLL_BUFFER    3
 
-typedef enum
-{
-    format_ratio,
-    format_skill,
-    format_stat,
-    format_time,
-} value_format_t;
-
-typedef enum
-{
-    context_levels,
-    context_summary,
-} value_context_t;
-
 typedef struct
 {
     int map_count, maps_completed;
@@ -74,7 +60,7 @@ typedef struct
 typedef struct
 {
     char *text;
-    int64_t flags;
+    boolean highlight;
 } formatted_value_t;
 
 static int scroll_pos;
@@ -84,7 +70,7 @@ setup_tab_t level_table_tabs[] = {
     {"stats"},
     {"times"},
     {"summary"},
-    
+
     {NULL}
 };
 
@@ -105,7 +91,16 @@ boolean LT_IsLevelsPage(int page)
     }
 }
 
-static void FormatTimeString(char **dest, int tics)
+static void AddEndItem(setup_menu_t **menu)
+{
+    const setup_menu_t item = {NULL, S_SKIP | S_END};
+    array_push(*menu, item);
+}
+
+// Value formatting
+// ----------------
+
+static void FormatTimeString(char **dest, const int tics)
 {
     const float seconds = (float)(tics % (60 * TICRATE)) / TICRATE;
     const int minutes = tics / TICRATE / 60;
@@ -114,22 +109,16 @@ static void FormatTimeString(char **dest, int tics)
     if (tics >= 0)
     {
         if (hours)
-        {
-            M_StringPrintF(dest, "%d:%02d:%05.2f", hours, minutes % 60,
-                           seconds);
-        }
+            M_StringPrintF(dest, "%d:%02d:%05.2f", hours, minutes % 60, seconds);
         else
-        {
             M_StringPrintF(dest, "%d:%05.2f", minutes, seconds);
-        }
     }
     else
-    {
         *dest = M_StringDuplicate("- : --");
-    }
 }
 
-static char *FormatStat(int a, int b, boolean known_total)
+static char *FormatStatString(const int a, const int b,
+                              const boolean known_total)
 {
     char *str = NULL;
 
@@ -139,32 +128,22 @@ static char *FormatStat(int a, int b, boolean known_total)
         case STATSFORMAT_RATIO:
             M_StringPrintF(&str, "%d", a);
             if (known_total)
-            {
                 M_StringConcatF(&str, "/%d", b);
-            }
             break;
         case STATSFORMAT_BOOLEAN:
             M_StringPrintF(&str, "%s", (known_total && a >= b) ? "YES" : "NO");
             break;
         case STATSFORMAT_PERCENT:
             if (known_total)
-            {
                 M_StringPrintF(&str, "%d%%", !b ? 100 : a * 100 / b);
-            }
             else
-            {
                 M_StringPrintF(&str, "N/A");
-            }
             break;
         case STATSFORMAT_REMAINING:
             if (known_total)
-            {
                 M_StringPrintF(&str, "%d", b - a);
-            }
             else
-            {
                 M_StringPrintF(&str, "N/A");
-            }
             break;
         case STATSFORMAT_COUNT:
             M_StringPrintF(&str, "%d", a);
@@ -175,71 +154,58 @@ static char *FormatStat(int a, int b, boolean known_total)
     return str;
 }
 
-static formatted_value_t FormatValue(value_context_t context,
-                                     value_format_t format, boolean done, int a,
-                                     int b)
+static formatted_value_t FormatValue_MapsCompleted(const int a, const int b)
 {
     char *text = NULL;
-    int64_t flags = 0;
+    M_StringPrintF(&text, "%d/%d", a, b);
 
-    switch (format)
-    {
-        case format_ratio:
-            if (a)
-            {
-                M_StringPrintF(&text, "%d", a);
-                if (done)
-                {
-                    M_StringConcatF(&text, "/%d", b);
-                    if (a == b)
-                    {
-                        flags |= S_ALT_COL;
-                    }
-                }
-            }
-            break;
-        case format_skill:
-            if (done)
-            {
-                M_StringPrintF(&text, "%s", default_skill_strings[a]);
-                if (a >= 4)
-                {
-                    flags |= S_ALT_COL;
-                }
-            }
-            break;
-        case format_stat:
-            if ((context == context_levels && done)
-                || (context == context_summary && a))
-            {
-                text = FormatStat(a, b, done);
-                if (done && a == b)
-                {
-                    flags |= S_ALT_COL;
-                }
-            }
-            break;
-        case format_time:
-            FormatTimeString(&text, a);
-            if (done)
-            {
-                flags |= S_ALT_COL;
-            }
-    }
-
-    if (!text)
-    {
-        text = M_StringDuplicate("-");
-    }
-
-    formatted_value_t value = {text, flags};
+    const formatted_value_t value = {text, a == b};
     return value;
 }
 
-static void AddEndItem(setup_menu_t **menu)
+static formatted_value_t FormatValue_Skill(const boolean done, const int skill)
 {
-    setup_menu_t item = {NULL, S_SKIP | S_END};
-    array_push(*menu, item);
+    char *text = NULL;
+    boolean highlight = false;
+
+    if (done)
+    {
+        M_StringPrintF(&text, "%s", default_skill_strings[skill]);
+        highlight = skill >= sk_hard + 1;
+    }
+    else text = M_StringDuplicate("-");
+
+    const formatted_value_t value = {text, highlight};
+    return value;
+}
+
+static formatted_value_t FormatValue_Stat(const boolean is_summary_screen,
+                                          const boolean one_done, const boolean done,
+                                          const int a, const int b)
+{
+    char *text = NULL;
+
+    if ((!is_summary_screen && done)
+        || (is_summary_screen && one_done))
+    {
+        text = FormatStatString(a, b, done);
+    }
+    else text = M_StringDuplicate("-");
+
+    const formatted_value_t value = {text, done && a == b};
+    return value;
+}
+
+#define FormatValue_LevelStat(done, a, b) FormatValue_Stat(false, 0, done, a, b)
+#define FormatValue_SummaryStat(one_done, done, a, b) FormatValue_Stat(true, one_done, done, a, b)
+
+static formatted_value_t FormatValue_Time(const boolean highlight, const int tics)
+{
+    char *text = NULL;
+    FormatTimeString(&text, tics);
+
+    const formatted_value_t value = {text, highlight};
+    return value;
 }
 
 // Building
@@ -248,29 +214,28 @@ static void AddEndItem(setup_menu_t **menu)
 // Level Table
 // -----------
 
-static inline void AddWadTitle(setup_menu_t **menu, char *wad_name)
+static void AddWadTitle(setup_menu_t **menu, char *wad_name)
 {
-    setup_menu_t item =
+    const setup_menu_t item =
         {wad_name, S_SKIP | S_LEFTJUST | S_TITLE,
          SCREENWIDTH / 2 - MN_GetPixelWidth(wad_name) / 2, M_SPC};
     array_push(*menu, item);
 }
 
-static inline void AddLevelRow(setup_menu_t **menu, char *text, int map_i,
-                               boolean display_stats)
+static void AddLevelRow(setup_menu_t **menu, char *text,
+                        const int map_i, const boolean display_stats)
 {
     extern void LT_Warp(void);
 
-    int64_t flags = S_LEFTJUST | S_TITLE | S_FUNC2 | S_LTBL_MAP * display_stats;
-
-    setup_menu_t item =
+    const int64_t flags = S_LEFTJUST | S_TITLE | S_FUNC2 | S_LTBL_MAP * display_stats;
+    const setup_menu_t item =
         {text, flags, LT_X_MARGIN, M_SPC, .action = LT_Warp, .var.map_i = map_i};
     array_push(*menu, item);
 }
 
-static inline void AddResetButton(setup_menu_t** menu)
+static void AddResetButton(setup_menu_t** menu)
 {
-    setup_menu_t item = {NULL, S_RESET, X_BUTTON, Y_BUTTON};
+    const setup_menu_t item = {NULL, S_RESET, X_BUTTON, Y_BUTTON};
     array_push(*menu, item);
 }
 
@@ -285,9 +250,7 @@ static void BuildLevelsPages(void)
         {
             const map_stats_t *ms = &wad_stats.maps[i];
             if (ms->episode == -1)
-            {
                 continue;
-            }
 
             const int wad_index = ms->wad_index;
 
@@ -303,16 +266,12 @@ static void BuildLevelsPages(void)
         }
 
         if (TRACKING_WAD_STATS)
-        {
             AddResetButton(page);
-        }
 
         AddEndItem(page);
 
         if (p == 0 && !TRACKING_WAD_STATS)
-        {
             break;
-        }
     }
 }
 
@@ -325,26 +284,20 @@ static void CalculateSummary(void)
     summary.best_time = summary.best_max_time = summary.best_sk5_time = -1;
 
     if (!TRACKING_WAD_STATS)
-    {
         return;
-    }
 
     summary.best_skill = sk_nightmare + 2;
     for (int i = 0; i < array_size(wad_stats.maps); ++i)
     {
-        map_stats_t *ms = &wad_stats.maps[i];
+        const map_stats_t *ms = &wad_stats.maps[i];
 
         if (ms->wad_index || ms->episode == -1)
-        {
             continue;
-        }
 
         summary.map_count++;
 
         if (!ms->best_skill)
-        {
             continue;
-        }
 
         summary.maps_completed++;
         summary.best_skill    = MIN(ms->best_skill, summary.best_skill);
@@ -383,7 +336,7 @@ void LT_RecalculateSummary(void)
 static void BuildSummaryPage(void)
 {
     setup_menu_t **page = &level_table[lt_page_summary];
-    AddEndItem(page); // See DrawSummaryPage
+    AddEndItem(page); // No interactable items - See DrawSummaryPage
 
     CalculateSummary();
 }
@@ -396,13 +349,8 @@ void LT_Reset(void)
     for (int i = 0; i < lt_page_max; ++i)
     {
         for (int j = 0; j < array_size(level_table[i]); ++j)
-        {
             if (level_table[i][j].m_text)
-            {
                 free(level_table[i][j].m_text);
-            }
-        }
-
         array_clear(level_table[i]);
     }
 }
@@ -430,12 +378,11 @@ void LT_Build(void)
 // Level Table
 // -----------
 
-static void DrawLevelStat(value_format_t format, boolean done, int a, int b,
-                            int x, int accum_y, int64_t additional_flags)
+static void DrawLevelStat(const formatted_value_t value,
+                          const int x, const int accum_y,
+                          const int64_t flags)
 {
-    formatted_value_t value = FormatValue(context_levels, format, done, a, b);
-    const int64_t flags = value.flags | additional_flags;
-    const int color = flags & S_ALT_COL  ? CR_ALT_COL
+    const int color =    value.highlight ? CR_ALT_COL
                       : flags & S_SELECT ? CR_SELECT
                                          : CR_ITEM;
     M_snprintf(menu_buffer, sizeof(menu_buffer), "%s", value.text);
@@ -444,48 +391,41 @@ static void DrawLevelStat(value_format_t format, boolean done, int a, int b,
     free(value.text);
 }
 
-static void DrawLevelRow(setup_menu_t *src, int y, int page)
+static void DrawLevelRow(setup_menu_t *src, const int y, const int page)
 {
-    const int64_t flags = src->m_flags;
+    int64_t flags = src->m_flags;
 
     if (flags & S_SHOWDESC)
-    {
         MN_DrawItem(src, y);
-    }
 
     if (!(flags & S_LTBL_MAP))
-    {
         return;
-    }
 
     const map_stats_t *ms = &wad_stats.maps[src->var.map_i];
-    const boolean done = ms->best_skill;
+    const boolean is_map_done = ms->best_skill;
 
-    const int64_t additional_flags = flags & (S_HILITE | S_SELECT);
+    flags &= S_HILITE | S_SELECT;
     switch (page)
     {
         case lt_page_stats:
-            DrawLevelStat(format_skill, done, ms->best_skill, 0,
-                          LT_STATS_SKILL_X, y, additional_flags);
-            DrawLevelStat(format_stat, done, ms->best_kills, ms->max_kills,
-                          LT_STATS_KILLS_X, y, additional_flags);
-            DrawLevelStat(format_stat, done, ms->best_items, ms->max_items,
-                          LT_STATS_ITEMS_X, y, additional_flags);
-            DrawLevelStat(format_stat, done, ms->best_secrets, ms->max_secrets,
-                          LT_STATS_SECRETS_X, y, additional_flags);
+            DrawLevelStat(FormatValue_Skill(is_map_done, ms->best_skill),
+                          LT_STATS_SKILL_X, y, flags);
+            DrawLevelStat(FormatValue_LevelStat(is_map_done, ms->best_kills, ms->max_kills),
+                          LT_STATS_KILLS_X, y, flags);
+            DrawLevelStat(FormatValue_LevelStat(is_map_done, ms->best_items, ms->max_items),
+                          LT_STATS_ITEMS_X, y, flags);
+            DrawLevelStat(FormatValue_LevelStat(is_map_done, ms->best_secrets, ms->max_secrets),
+                          LT_STATS_SECRETS_X, y, flags);
             break;
         case lt_page_times:
-            DrawLevelStat(format_time, done, ms->best_time, 0,
-                          LT_TIMES_TIME_X, y, additional_flags);
-            DrawLevelStat(format_time, done && ms->best_max_time >= 0,
-                          ms->best_max_time, 0,
-                          LT_TIMES_MAX_TIME_X, y, additional_flags);
-            DrawLevelStat(format_time, done && ms->best_sk5_time >= 0,
-                          ms->best_sk5_time, 0,
-                          LT_TIMES_SK5_TIME_X, y, additional_flags);
+            DrawLevelStat(FormatValue_Time(is_map_done, ms->best_time),
+                          LT_TIMES_TIME_X, y, flags);
+            DrawLevelStat(FormatValue_Time(is_map_done && ms->best_max_time >= 0, ms->best_max_time),
+                          LT_TIMES_MAX_TIME_X, y, flags);
+            DrawLevelStat(FormatValue_Time(is_map_done && ms->best_sk5_time >= 0, ms->best_sk5_time),
+                          LT_TIMES_SK5_TIME_X, y, flags);
             break;
-        default:
-            break;
+        default:;
     }
 
     menu_buffer[0] = '\0';
@@ -494,14 +434,14 @@ static void DrawLevelRow(setup_menu_t *src, int y, int page)
                         flags & S_SELECT ? CR_SELECT : CR_TITLE);
 }
 
-static void DrawColumnHeader(const char *text, int x, int y)
+static void DrawColumnHeader(const char *text, const int x, const int y)
 {
     M_snprintf(menu_buffer, sizeof(menu_buffer), "%s", text);
     MN_DrawMenuStringEx(0, x - (MN_GetPixelWidth(menu_buffer) + 4), y,
                         CR_TITLE);
 }
 
-static void DrawPageColumnHeaders(int page, int y)
+static void DrawPageColumnHeaders(const int page, const int y)
 {
     switch (page)
     {
@@ -515,44 +455,37 @@ static void DrawPageColumnHeaders(int page, int y)
             DrawColumnHeader("TIME",         LT_TIMES_TIME_X,     y);
             DrawColumnHeader("100% TIME",    LT_TIMES_MAX_TIME_X, y);
             DrawColumnHeader("SKILL 5 TIME", LT_TIMES_SK5_TIME_X, y);
-        default:
-            break;
+        default:;
     }
 }
 
-static inline void DrawTrackingDisabledWarning(int y)
+static void DrawTrackingDisabledWarning(const int y)
 {
     M_snprintf(menu_buffer, sizeof(menu_buffer), "Stats tracking is disabled");
     MN_DrawMenuStringEx(0, SCREENWIDTH / 2 - MN_GetPixelWidth(menu_buffer) / 2,
                         y, CR_NONE);
 }
 
-static void DrawLevelsPage(setup_menu_t *menu, int page)
+static void DrawLevelsPage(setup_menu_t *menu, const int page)
 {
     int accum_y = LT_Y;
 
     if (TRACKING_WAD_STATS)
-    {
         DrawPageColumnHeaders(page, accum_y);
-    }
     else
-    {
         DrawTrackingDisabledWarning(accum_y);
-    }
 
     accum_y += M_SPC;
 
     int rows = 0;
     for (setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
     {
-        boolean skip =
+        const boolean skip =
             (rows - scroll_pos < 0 || rows - scroll_pos >= LT_MAX_ROWS)
             && !(src->m_flags & S_RESET); // Always draw the reset button
 
         if (!(src->m_flags & S_DIRECT))
-        {
             ++rows;
-        }
 
         if (skip)
         {
@@ -569,9 +502,7 @@ static void DrawLevelsPage(setup_menu_t *menu, int page)
         DrawLevelRow(src, accum_y, page);
 
         if (!(src->m_flags & S_DIRECT))
-        {
             accum_y += src->m_y;
-        }
     }
 
     MN_DrawScrollIndicators();
@@ -580,8 +511,7 @@ static void DrawLevelsPage(setup_menu_t *menu, int page)
 // WAD summary
 // -----------
 
-static void DrawSummaryStat(const char *heading, value_format_t format,
-                            boolean done, int a, int b, int y)
+static void DrawSummaryStat(const char *heading, const formatted_value_t value, const int y)
 {
     // Draw heading
     M_snprintf(menu_buffer, sizeof(menu_buffer), "%s", heading);
@@ -589,10 +519,9 @@ static void DrawSummaryStat(const char *heading, value_format_t format,
                         y, CR_TITLE);
 
     // Format and draw value
-    formatted_value_t value = FormatValue(context_summary, format, done, a, b);
-    const int color = value.flags & S_ALT_COL ? CR_ALT_COL : CR_ITEM;
+    const int color = value.highlight ? CR_ALT_COL : CR_ITEM;
     M_snprintf(menu_buffer, sizeof(menu_buffer), "%s", value.text);
-    MN_DrawMenuStringEx(value.flags, LT_SUMMARY_X + 2, y, color);
+    MN_DrawMenuStringEx(0, LT_SUMMARY_X + 2, y, color);
 
     free(value.text);
 }
@@ -601,57 +530,52 @@ static void DrawSummaryPage(void)
 {
     int accum_y = LT_SUMMARY_Y;
 
-    boolean done =
-        summary.map_count != 0 && summary.maps_completed == summary.map_count;
+    const boolean wad_started = summary.map_count;
+    const boolean wad_finished = wad_started && summary.maps_completed == summary.map_count;
 
-    DrawSummaryStat("Maps Completed", format_ratio, true,
-                    summary.maps_completed, summary.map_count,
-                    accum_y);
+    DrawSummaryStat("Maps Completed",
+        FormatValue_MapsCompleted(summary.maps_completed, summary.map_count), accum_y);
     accum_y += M_SPC * 2;
 
-    DrawSummaryStat("Skill", format_skill, done,
-                    summary.best_skill, 0, accum_y);
+    DrawSummaryStat("Skill",
+        FormatValue_Skill(wad_finished, summary.best_skill), accum_y);
     accum_y += M_SPC * 2;
 
-    DrawSummaryStat("Kill Completion", format_stat, done,
-                    summary.best_kills, summary.max_kills, accum_y);
+    DrawSummaryStat("Kill Completion",
+        FormatValue_SummaryStat(wad_started, wad_finished, summary.best_kills, summary.max_kills), accum_y);
     accum_y += M_SPC;
-    DrawSummaryStat("Item Completion", format_stat, done,
-                    summary.best_items, summary.max_items, accum_y);
+    DrawSummaryStat("Item Completion",
+        FormatValue_SummaryStat(wad_started, wad_finished, summary.best_items, summary.max_items), accum_y);
     accum_y += M_SPC;
-    DrawSummaryStat("Secret Completion", format_stat, done,
-                    summary.best_secrets, summary.max_secrets, accum_y);
+    DrawSummaryStat("Secret Completion",
+        FormatValue_SummaryStat(wad_started, wad_finished, summary.best_secrets, summary.max_secrets), accum_y);
     accum_y += M_SPC * 2;
 
-    DrawSummaryStat("Total Time", format_time, summary.timed == summary.map_count,
-                    summary.best_time, 0, accum_y);
+    DrawSummaryStat("Total Time",
+        FormatValue_Time(summary.timed == summary.map_count, summary.best_time), accum_y);
     accum_y += M_SPC;
-    DrawSummaryStat("100% Time", format_time, summary.max_timed == summary.map_count,
-                    summary.best_max_time, 0, accum_y);
+    DrawSummaryStat("100% Time",
+        FormatValue_Time(summary.max_timed == summary.map_count, summary.best_max_time), accum_y);
     accum_y += M_SPC;
-    DrawSummaryStat("Nightmare Time", format_time, summary.sk5_timed == summary.map_count,
-                    summary.best_sk5_time, 0, accum_y);
+    DrawSummaryStat("Nightmare Time",
+        FormatValue_Time(summary.sk5_timed == summary.map_count, summary.best_sk5_time), accum_y);
 }
 
 // Master Drawer
 // -------------
 
-void LT_Draw(setup_menu_t *menu, int page)
+void LT_Draw(setup_menu_t *menu, const int page)
 {
     if (LT_IsLevelsPage(page))
-    {
         DrawLevelsPage(menu, page);
-    }
     else
-    {
         DrawSummaryPage();
-    }
 }
 
 // Scrolling
 //===============================================
 
-static void UpdateScrollIndicators(int rows)
+static void UpdateScrollIndicators(const int rows)
 {
     scroll_indicators = (rows - LT_MAX_ROWS - scroll_pos - 1) > 0
                             ? (scroll_indicators | scroll_down)
@@ -660,90 +584,61 @@ static void UpdateScrollIndicators(int rows)
                                    : (scroll_indicators & ~scroll_up);
 }
 
-boolean LT_HandleKeyboardScroll(setup_menu_t *menu, setup_menu_t *item)
+boolean LT_HandleKeyboardScroll(const setup_menu_t *menu, const setup_menu_t *item)
 {
     if (!set_lvltbl_active)
-    {
         return false;
-    }
 
     int current_row = 0, rows = 0;
-    for (setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
+    for (const setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
     {
-        if (src == item)
-        {
-            current_row = rows;
-        }
-
+        if (src == item) current_row = rows;
         if (!(src->m_flags & S_DIRECT))
-        {
             ++rows;
-        }
     }
 
-    int buffer_i = MIN(LT_SCROLL_BUFFER, rows - current_row - 1);
-    int top_buffer_i = MIN(LT_SCROLL_BUFFER, current_row);
+    const int buffer_i = MIN(LT_SCROLL_BUFFER, rows - current_row - 1);
+    const int top_buffer_i = MIN(LT_SCROLL_BUFFER, current_row);
 
     if (rows >= LT_MAX_ROWS)
-    {
         while (current_row - scroll_pos >= LT_MAX_ROWS - buffer_i)
-        {
             ++scroll_pos;
-        }
-    }
 
     while (scroll_pos && current_row - scroll_pos < top_buffer_i)
-    {
         --scroll_pos;
-    }
 
     // Hack for the reset button to act like the first item in the menu
     if (item->m_flags & S_RESET)
-    {
         scroll_pos = 0;
-    }
 
     UpdateScrollIndicators(rows);
 
     return true;
 }
 
-boolean LT_HandleMouseScroll(setup_menu_t *menu, int inc)
+boolean LT_HandleMouseScroll(const setup_menu_t *menu, const int inc)
 {
     if (!set_lvltbl_active || menu_input != mouse_mode)
-    {
         return false;
-    }
 
     int rows = 0;
-    for (setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
-    {
+    for (const setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
         if (!(src->m_flags & S_DIRECT))
-        {
             ++rows;
-        }
-    }
 
     scroll_pos = MAX(0, MIN(rows - LT_MAX_ROWS, scroll_pos + inc));
     UpdateScrollIndicators(rows);
     return true;
 }
 
-void LT_UpdateScrollIndicators(setup_menu_t *menu)
+void LT_UpdateScrollIndicators(const setup_menu_t *menu)
 {
-    if (!set_lvltbl_active)
-    {
-        return;
-    }
+    if (!set_lvltbl_active) return;
 
     int rows = 0;
-    for (setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
-    {
+    for (const setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
         if (!(src->m_flags & S_DIRECT))
-        {
             ++rows;
-        }
-    }
 
     UpdateScrollIndicators(rows);
 }
