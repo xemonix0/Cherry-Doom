@@ -3659,7 +3659,7 @@ boolean MN_MenuIsShaded(void)
 }
 
 // [Cherry]
-boolean MN_MenuWasShaded(void)
+boolean MN_DoMenuFadeOut(void)
 {
     return (!menuactive || (!menu_background_all && !options_active))
            && menu_backdrop == MENU_BG_DARK;

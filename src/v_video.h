@@ -367,7 +367,7 @@ extern void (*V_TileBlock64)(int line, int width, int height, const byte *src);
 
 void V_DrawBackground(const char *patchname);
 
-boolean V_IsScreenShaded(void); // [Cherry]
+void V_ScreenShadeFadeOut(void); // [Cherry]
 void V_SetSmoothShade(boolean value); // [Cherry]
 extern void (*V_ShadeScreen)(int level); // [Nugget]
 

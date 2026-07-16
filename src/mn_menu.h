@@ -106,7 +106,7 @@ extern backdrop_t menu_backdrop;
 extern boolean menu_background_all;
 
 boolean MN_MenuIsShaded(void);
-boolean MN_MenuWasShaded(void); // [Cherry]
+boolean MN_DoMenuFadeOut(void); // [Cherry]
 
 extern int savepage;
 

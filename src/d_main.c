@@ -403,11 +403,7 @@ void D_Display (void)
   oldgamestate = wipegamestate = gamestate;
 
   // [Cherry] Shade fade-out
-  if (V_IsScreenShaded() &&
-      (MN_MenuWasShaded() && (!automapactive && automapoverlay == AM_OVERLAY_DARK)))
-  {
-      V_ShadeScreen(0);
-  }
+  V_ScreenShadeFadeOut();
 
   // [Nugget] Centralized drawer calls
   if (gamestate == GS_LEVEL)

@@ -49,6 +49,9 @@
 // [Nugget]
 #include "st_stuff.h"
 
+// [Cherry] Screen shade fade-out
+#include "mn_menu.h"
+
 pixel_t *I_VideoBuffer;
 pixel32_t *I_VideoBuffer32;
 
@@ -953,9 +956,11 @@ void V_DrawPatchFullScreen(patch_t *patch)
 static int screen_shade_level = 0;
 static boolean smooth_shade = true;
 
-boolean V_IsScreenShaded(void)
+void V_ScreenShadeFadeOut(void)
 {
-    return screen_shade_level > 0;
+    if (screen_shade_level && MN_DoMenuFadeOut()
+        && !(automapactive == AM_FULL && automapoverlay == AM_OVERLAY_DARK))
+        V_ShadeScreen(0);
 }
 
 void V_SetSmoothShade(const boolean value)
