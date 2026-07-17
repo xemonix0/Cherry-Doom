@@ -298,8 +298,8 @@ void HU_UpdateCrosshair(void)
         if (linetarget
             && (!(linetarget->flags & MF_SHADOW)
                 || hud_crosshair_fuzzy) // [Nugget]
-            && (!(linetarget->subsector->sector->lightlevel
-                  < hud_crosshair_dark_level)
+            && (linetarget->subsector->sector->lightlevel + (extralight<<LIGHTSEGSHIFT)
+                    >= hud_crosshair_dark_level
                 || (linetarget->frame & FF_FULLBRIGHT)
                 || hud_crosshair_dark)) // [Cherry]
         {
