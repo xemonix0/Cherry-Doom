@@ -1961,7 +1961,7 @@ void ST_BindHUDVariables(void)
   // [Cherry] Pulsating messages
   M_BindBool("message_pulse", &message_pulse, NULL,
              false, ss_stat, wad_yes,
-             "Messages pulse");
+             "Pulsating message display");
 
 #define BIND_CHAT(num)                                                     \
     M_BindStr("chatmacro" #num, &chat_macros[(num)], HUSTR_CHATMACRO##num, \

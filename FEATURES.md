@@ -31,7 +31,7 @@ Config variables marked as "_CFG-only_" don't have a corresponding menu item and
 
 #### Messages
 
-- _Message Pulse_ setting [i.b. UZDoom]
+- _Pulsating Message Display_ setting [i.b. UZDoom]
 
 ### Enemies
 

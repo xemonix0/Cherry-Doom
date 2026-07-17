@@ -7,7 +7,7 @@ This file contains the full list of changes for every version of Cherry Doom.
 ### Added
 
 - _Dithered Lighting_ setting
-- _Message Pulse_ setting
+- _Pulsating Message Display_ setting
 
 ### Changed
 

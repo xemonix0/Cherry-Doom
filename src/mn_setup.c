@@ -2491,7 +2491,7 @@ static setup_menu_t stat_settings4[] = {
     {"Message Flash", S_ONOFF, H_X, M_SPC, {"message_flash"}},
 
     // [Cherry] Pulsating messages
-    {"Message Pulse", S_ONOFF, H_X, M_SPC, {"message_pulse"}},
+    {"Pulsating Message Display", S_ONOFF, H_X, M_SPC, {"message_pulse"}},
 
     {"Message Lines", S_NUM, H_X, M_SPC, {"hud_msg_lines"}, .action = MoveMinimap},
 
