@@ -8,9 +8,9 @@ Config variables marked as "_CFG-only_" don't have a corresponding menu item and
 
 ### General
 
-- _Mute Inactive Window_ setting [p.f. [International Doom](https://jnechaevsky.github.io/inter-doom/)]
+- _Mute Inactive Window_ setting [p.f. International Doom]
 - _Floating Powerups_ setting [p.f. International Doom]
-- _Rocket Trails_ setting [partially p.f. [Doom Retro](https://www.doomretro.com/)]
+- _Rocket Trails_ setting [partially p.f. Doom Retro]
     - Customize smoke particle spawn rate and translucency via CFG-only CVARs: `rocket_trails_interval` and `rocket_trails_tran_pct` respectively
 - _Mouselook_ option for the _Stretch Short Skies_ setting, enabling sky stretching only with mouselook active
 - _Less Blinding Tints_ setting (by [@Spaicrab](https://github.com/Spaicrab))
