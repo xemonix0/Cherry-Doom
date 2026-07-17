@@ -953,19 +953,20 @@ void V_DrawPatchFullScreen(patch_t *patch)
 
 // [Cherry] /- Smooth screen shade -------------------------------------------
 
-static int screen_shade_level = 0;
-static boolean smooth_shade = true;
+static int screen_shade = 0;
+boolean smooth_screen_shade = true;
 
 void V_ScreenShadeFadeOut(void)
 {
-    if (screen_shade_level && MN_DoMenuFadeOut()
+    if (smooth_screen_shade && screen_shade && MN_DoMenuFadeOut()
         && !(automapactive == AM_FULL && automapoverlay == AM_OVERLAY_DARK))
         V_ShadeScreen(0);
 }
 
-void V_SetSmoothShade(const boolean value)
+void V_ResetScreenShade(void)
 {
-    smooth_shade = value;
+    smooth_screen_shade = false;
+    screen_shade = 0;
 }
 
 // [Cherry] -----------------------------------------------------------------/
@@ -975,13 +976,11 @@ void (*V_ShadeScreen)(int level) = NULL;
 static void V_ShadeScreen8(const int level) // [Nugget]
 {
     // [Cherry] Smoothen screen shading
-    if (!smooth_shade) screen_shade_level = level;
-    else if (screen_shade_level != level)
-    {
-        screen_shade_level += (screen_shade_level < level) ? 1 : -1;
-    }
+    if (!smooth_screen_shade) screen_shade = level;
+    else if (screen_shade != level)
+        screen_shade += (screen_shade < level) ? 1 : -1;
 
-    const lighttable_t *darkcolormap = &colormaps[0][screen_shade_level * 256];
+    const lighttable_t *darkcolormap = &colormaps[0][screen_shade * 256];
 
     pixel_t *row = dest_screen;
     int height = video.height;
@@ -1004,13 +1003,11 @@ static void V_ShadeScreen8(const int level) // [Nugget]
 static void V_ShadeScreen32(const int level) // [Nugget]
 {
     // [Cherry] Smoothen screen shading
-    if (!smooth_shade) screen_shade_level = level;
-    else if (screen_shade_level != level)
-    {
-        screen_shade_level += (screen_shade_level < level) ? 1 : -1;
-    }
+    if (!smooth_screen_shade) screen_shade = level;
+    else if (screen_shade != level)
+        screen_shade += (screen_shade < level) ? 1 : -1;
 
-    const lighttable32_t *darkcolormap = &colormaps32[0][screen_shade_level * 256 << COLORMAP_ROW_SHIFT_BITS];
+    const lighttable32_t *darkcolormap = &colormaps32[0][screen_shade * 256 << COLORMAP_ROW_SHIFT_BITS];
 
     pixel32_t *row = dest_screen32;
     int height = video.height;

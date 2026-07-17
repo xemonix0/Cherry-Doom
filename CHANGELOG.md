@@ -15,7 +15,7 @@ This file contains the full list of changes for every version of Cherry Doom.
 
 ### Fixed
 
-- Dark backdrop fade-in/out animations not always working
+- Multiple issues with the dark backdrop fade-in/out animations
 
 ## 2.1.0
 

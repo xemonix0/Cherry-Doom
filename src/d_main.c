@@ -313,7 +313,7 @@ void D_Display (void)
   if (gamestate != wipegamestate && (strictmode || screen_melt))
     {
       // [Cherry] Prevent late fade-out after the wipe
-      V_SetSmoothShade(false);
+      V_ResetScreenShade();
 
       wipe = true;
       wipe_StartScreen(0, 0, video.width, video.height);
@@ -465,6 +465,9 @@ void D_Display (void)
       wipestart = nowtime;
       M_Drawer();                   // menu is drawn even on top of wipes
       I_FinishUpdate();             // page flip or blit buffer
+
+      // [Cherry] reset after the M_Drawer call to prevent flickering
+      if (done) smooth_screen_shade = true;
     }
   while (!done);
 }

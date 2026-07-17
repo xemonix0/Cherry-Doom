@@ -153,9 +153,6 @@ static int wipe_exit(int width, int height, int ticks)
         Z_Free(wipe_scr_end);
     }
 
-    // [Cherry]
-    V_SetSmoothShade(true);
-
     return 0;
 }
 

@@ -367,8 +367,9 @@ extern void (*V_TileBlock64)(int line, int width, int height, const byte *src);
 
 void V_DrawBackground(const char *patchname);
 
+extern int smooth_screen_shade; // [Cherry]
 void V_ScreenShadeFadeOut(void); // [Cherry]
-void V_SetSmoothShade(boolean value); // [Cherry]
+void V_ResetScreenShade(void); // [Cherry]
 extern void (*V_ShadeScreen)(int level); // [Nugget]
 
 // [FG] colored blood and gibs
