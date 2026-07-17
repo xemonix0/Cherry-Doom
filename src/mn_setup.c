@@ -383,7 +383,9 @@ enum
     str_thing_spawns,
 
     // [Cherry]
+
     str_stretchsky,
+    str_weapswspeed,
 };
 
 static const char **GetStrings(int id);
@@ -1943,6 +1945,9 @@ static void UpdateCenteredWeaponItem(void);
 
 // [Nugget] Removed unused `bobbing_pct_strings`
 
+// [Cherry] Weapon switching speed
+static const char *weapswspeed_strings[] = {"Slow (x0.5)", "Default", "Fast (x1.5)", "Faster (x2)", "Instant"};
+
 static setup_menu_t weap_settings1[] = {
 
     {"Gameplay", S_SKIP | S_TITLE, CNTR_X, M_SPC},
@@ -1957,6 +1962,10 @@ static setup_menu_t weap_settings1[] = {
 
     // killough 8/8/98
     {"Pre-Beta BFG", S_ONOFF | S_STRICT, CNTR_X, M_SPC, {"classic_bfg"}},
+
+    // [Cherry] Weapon switching speed
+    {"Switch Speed", S_CHOICE | S_STRICT | S_CRITICAL, CNTR_X, M_SPC,
+     {"weapon_switch_speed"}, .strings_id = str_weapswspeed},
 
     MI_GAP,
 
@@ -6539,7 +6548,9 @@ static const char **selectstrings[] = {
     thing_spawns_strings,
 
     // [Cherry]
+
     stretchsky_strings,
+    weapswspeed_strings,
 };
 
 static const char **GetStrings(int id)

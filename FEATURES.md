@@ -33,6 +33,10 @@ Config variables marked as "_CFG-only_" don't have a corresponding menu item and
 
 - _Pulsating Message Display_ setting [i.b. UZDoom]
 
+### Weapons
+
+- _Switch Speed_ setting [i.b. Nyan Doom]
+
 ### Enemies
 
 - _Blood Amount Scales With Damage_ setting [i.b. Doom Retro]

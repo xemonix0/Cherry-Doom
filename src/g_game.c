@@ -6611,6 +6611,11 @@ void G_BindWeapVariables(void)
 
   // [Nugget] ---------------------------------------------------------------/
 
+  // [Cherry] Weapon switching speed
+  M_BindNum("weapon_switch_speed", &weapon_switch_speed, NULL,
+            SWSPEED_DEFAULT, 0, NUM_SWSPEEDS-1, ss_weap, wad_yes,
+            "Weapon switching speed (0 = Slow (x0.5); 1 = Default; 2 = Fast (x1.5); 3 = Faster (x2); 4 = Instant");
+
 #define BIND_WEAP(num, v, help) \
   M_BindNum("weapon_choice_"#num, &weapon_preferences[0][(num) - 1], NULL, \
       (v), 1, 9, ss_weap, wad_yes, help)

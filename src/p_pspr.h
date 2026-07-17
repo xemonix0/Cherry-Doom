@@ -77,6 +77,23 @@ void P_NuggetResetWeaponInertia(void);
 
 // [Nugget] =================================================================/
 
+// [Cherry] Weapon switching speed /------------------------------------------
+
+typedef enum switch_speed_e
+{
+    SWSPEED_SLOW,
+    SWSPEED_DEFAULT,
+    SWSPEED_FAST,
+    SWSPEED_FASTER,
+    SWSPEED_INSTANT,
+
+    NUM_SWSPEEDS,
+} switch_speed_t;
+
+extern switch_speed_t weapon_switch_speed;
+
+// [Cherry] -----------------------------------------------------------------/
+
 //
 // Overlay psprites are scaled shapes
 // drawn directly on the view screen,

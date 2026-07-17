@@ -333,8 +333,35 @@ void P_AnalyzeWeapons(void)
 
 // [Nugget] =================================================================/
 
-#define LOWERSPEED   (FRACUNIT*6)
-#define RAISESPEED   (FRACUNIT*6)
+// [Cherry] Weapon switching speed /------------------------------------------
+
+switch_speed_t weapon_switch_speed; // CVAR
+
+static int switch_speed_values[NUM_SWSPEEDS] = {
+    [SWSPEED_SLOW]    = FRACUNIT*3,
+    [SWSPEED_DEFAULT] = FRACUNIT*6,
+    [SWSPEED_FAST]    = FRACUNIT*9,
+    [SWSPEED_FASTER]  = FRACUNIT*12,
+    [SWSPEED_INSTANT] = FRACUNIT*128,
+};
+
+static int GetSwitchSpeed(const boolean fastweaps)
+{
+    if (!casual_play) return switch_speed_values[SWSPEED_DEFAULT];
+
+    const int speed = switch_speed_values[weapon_switch_speed];
+
+    if (fastweaps)
+    {
+        if (weapon_switch_speed < SWSPEED_INSTANT) return speed * 2;
+        return switch_speed_values[SWSPEED_INSTANT];
+    }
+
+    return speed;
+}
+
+// [Cherry] -----------------------------------------------------------------/
+
 #define WEAPONBOTTOM (FRACUNIT*128)
 #define WEAPONTOP    (FRACUNIT*32)
 
@@ -1020,7 +1047,7 @@ void A_Lower(player_t *player, pspdef_t *psp)
   }
 
   // [Nugget] Double speed with fast-weapons cheat
-  const int speed = (player->cheats & CF_FASTWEAPS) ? LOWERSPEED*2 : LOWERSPEED;
+  const int speed = GetSwitchSpeed(player->cheats & CF_FASTWEAPS);
 
   psp->sy += speed;
 
@@ -1071,7 +1098,7 @@ void A_Raise(player_t *player, pspdef_t *psp)
 
   statenum_t newstate;
   // [Nugget] Double speed with fast-weapons cheat
-  const int speed = (player->cheats & CF_FASTWEAPS) ? RAISESPEED*2 : RAISESPEED;
+  const int speed = GetSwitchSpeed(player->cheats & CF_FASTWEAPS);
 
   psp->sy -= speed;
 
