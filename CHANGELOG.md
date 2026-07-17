@@ -12,6 +12,8 @@ This file contains the full list of changes for every version of Cherry Doom.
 ### Changed
 
 - Reverted all rearrangements made to Nugget Doom's menu items and moved Cherry Doom's display options into a separate tab
+- The level table now fits 16 rows on the screen instead of 15
+- The level table now displays partial totals on the summary page
 
 ### Fixed
 

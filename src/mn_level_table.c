@@ -117,41 +117,28 @@ static void FormatTimeString(char **dest, const int tics)
         *dest = M_StringDuplicate("- : --");
 }
 
-static char *FormatStatString(const int a, const int b,
-                              const boolean known_total)
+static void FormatStatString(char **str, const int a, const int b)
 {
-    char *str = NULL;
-
     switch (lt_stats_format != STATSFORMAT_MATCHHUD ? lt_stats_format
                                                     : hud_stats_format)
     {
         case STATSFORMAT_RATIO:
-            M_StringPrintF(&str, "%d", a);
-            if (known_total)
-                M_StringConcatF(&str, "/%d", b);
+            M_StringPrintF(str, "%d/%d", a, b);
             break;
         case STATSFORMAT_BOOLEAN:
-            M_StringPrintF(&str, "%s", (known_total && a >= b) ? "YES" : "NO");
+            M_StringPrintF(str, "%s", a >= b ? "YES" : "NO");
             break;
         case STATSFORMAT_PERCENT:
-            if (known_total)
-                M_StringPrintF(&str, "%d%%", !b ? 100 : a * 100 / b);
-            else
-                M_StringPrintF(&str, "N/A");
+            M_StringPrintF(str, "%d%%", !b ? 100 : a * 100 / b);
             break;
         case STATSFORMAT_REMAINING:
-            if (known_total)
-                M_StringPrintF(&str, "%d", b - a);
-            else
-                M_StringPrintF(&str, "N/A");
+            M_StringPrintF(str, "%d", b - a);
             break;
         case STATSFORMAT_COUNT:
-            M_StringPrintF(&str, "%d", a);
-        default:
+            M_StringPrintF(str, "%d", a);
             break;
+        default:;
     }
-
-    return str;
 }
 
 static formatted_value_t FormatValue_MapsCompleted(const int a, const int b)
@@ -166,38 +153,25 @@ static formatted_value_t FormatValue_MapsCompleted(const int a, const int b)
 static formatted_value_t FormatValue_Skill(const boolean done, const int skill)
 {
     char *text = NULL;
-    boolean highlight = false;
 
-    if (done)
-    {
-        M_StringPrintF(&text, "%s", default_skill_strings[skill]);
-        highlight = skill >= sk_hard + 1;
-    }
+    if (done) M_StringPrintF(&text, "%s", default_skill_strings[skill]);
     else text = M_StringDuplicate("-");
 
-    const formatted_value_t value = {text, highlight};
+    const formatted_value_t value = {text, done && skill >= sk_hard + 1};
     return value;
 }
 
-static formatted_value_t FormatValue_Stat(const boolean is_summary_screen,
-                                          const boolean one_done, const boolean done,
+static formatted_value_t FormatValue_Stat(const boolean done,
                                           const int a, const int b)
 {
     char *text = NULL;
 
-    if ((!is_summary_screen && done)
-        || (is_summary_screen && one_done))
-    {
-        text = FormatStatString(a, b, done);
-    }
+    if (done) FormatStatString(&text, a, b);
     else text = M_StringDuplicate("-");
 
     const formatted_value_t value = {text, done && a == b};
     return value;
 }
-
-#define FormatValue_LevelStat(done, a, b) FormatValue_Stat(false, 0, done, a, b)
-#define FormatValue_SummaryStat(one_done, done, a, b) FormatValue_Stat(true, one_done, done, a, b)
 
 static formatted_value_t FormatValue_Time(const boolean highlight, const int tics)
 {
@@ -410,11 +384,11 @@ static void DrawLevelRow(setup_menu_t *src, const int y, const int page)
         case lt_page_stats:
             DrawLevelStat(FormatValue_Skill(is_map_done, ms->best_skill),
                           LT_STATS_SKILL_X, y, flags);
-            DrawLevelStat(FormatValue_LevelStat(is_map_done, ms->best_kills, ms->max_kills),
+            DrawLevelStat(FormatValue_Stat(is_map_done, ms->best_kills, ms->max_kills),
                           LT_STATS_KILLS_X, y, flags);
-            DrawLevelStat(FormatValue_LevelStat(is_map_done, ms->best_items, ms->max_items),
+            DrawLevelStat(FormatValue_Stat(is_map_done, ms->best_items, ms->max_items),
                           LT_STATS_ITEMS_X, y, flags);
-            DrawLevelStat(FormatValue_LevelStat(is_map_done, ms->best_secrets, ms->max_secrets),
+            DrawLevelStat(FormatValue_Stat(is_map_done, ms->best_secrets, ms->max_secrets),
                           LT_STATS_SECRETS_X, y, flags);
             break;
         case lt_page_times:
@@ -530,7 +504,7 @@ static void DrawSummaryPage(void)
 {
     int accum_y = LT_SUMMARY_Y;
 
-    const boolean wad_started = summary.map_count;
+    const boolean wad_started = summary.maps_completed;
     const boolean wad_finished = wad_started && summary.maps_completed == summary.map_count;
 
     DrawSummaryStat("Maps Completed",
@@ -542,13 +516,13 @@ static void DrawSummaryPage(void)
     accum_y += M_SPC * 2;
 
     DrawSummaryStat("Kill Completion",
-        FormatValue_SummaryStat(wad_started, wad_finished, summary.best_kills, summary.max_kills), accum_y);
+        FormatValue_Stat(wad_started, summary.best_kills, summary.max_kills), accum_y);
     accum_y += M_SPC;
     DrawSummaryStat("Item Completion",
-        FormatValue_SummaryStat(wad_started, wad_finished, summary.best_items, summary.max_items), accum_y);
+        FormatValue_Stat(wad_started, summary.best_items, summary.max_items), accum_y);
     accum_y += M_SPC;
     DrawSummaryStat("Secret Completion",
-        FormatValue_SummaryStat(wad_started, wad_finished, summary.best_secrets, summary.max_secrets), accum_y);
+        FormatValue_Stat(wad_started, summary.best_secrets, summary.max_secrets), accum_y);
     accum_y += M_SPC * 2;
 
     DrawSummaryStat("Total Time",
