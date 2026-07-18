@@ -77,12 +77,6 @@ typedef struct
     int64_t flags;
 } setup_tab_t;
 
-enum
-{
-    scroll_up = 1,
-    scroll_down = 2,
-};
-
 // Establish the message colors to be used
 
 #define CR_TITLE   CR_GOLD
@@ -104,17 +98,10 @@ enum
 #define M_TAB_Y  22
 
 // [Cherry]
-#define M_SCROLL_X       (SCREENWIDTH - 9)
-#define M_SCROLL_UP_Y    (M_TAB_Y + M_SPC)
-#define M_SCROLL_DOWN_Y  (M_Y_WARN - 5)
-
-#define LT_Y_WARN        (M_Y_WARN + 5)
-#define LT_SCROLL_DOWN_Y (LT_Y_WARN - 5)
+#define LT_Y_WARN (M_Y_WARN + 5)
 
 extern char menu_buffer[66];
-extern int scroll_indicators;
 
-void MN_DrawScrollIndicators(void);
 void MN_BlinkingArrowRight(struct setup_menu_s *s);
 void MN_DrawItem(struct setup_menu_s *s, int accum_y);
 void MN_DrawMenuStringEx(int64_t flags, int x, int y, int color);

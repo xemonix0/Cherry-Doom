@@ -1072,35 +1072,6 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
     }
 }
 
-// [Cherry] /--- Draw scroll indicators ---------------------------------------
-
-int scroll_indicators = 0x00;
-
-void MN_DrawScrollIndicators(void)
-{
-    if (scroll_indicators & scroll_up)
-    {
-        patch_t *patch = V_CachePatchName("SCRLUP", PU_CACHE);
-
-        int x = M_SCROLL_X - SHORT(patch->width) / 2;
-        int y = M_SCROLL_UP_Y;
-
-        V_DrawPatchSH(x, y, patch);
-    }
-
-    if (scroll_indicators & scroll_down)
-    {
-        patch_t *patch = V_CachePatchName("SCRLDOWN", PU_CACHE);
-
-        int x = M_SCROLL_X - SHORT(patch->width) / 2;
-        int y = set_lvltbl_active ? LT_SCROLL_DOWN_Y : M_SCROLL_DOWN_Y;
-
-        V_DrawPatchSH(x, y, patch);
-    }
-}
-
-// [Cherry] ------------------------------------------------------------------/
-
 /////////////////////////////
 //
 // M_DrawScreenItems takes the data for each menu item and gives it to
@@ -1531,8 +1502,6 @@ static void SetupMenu(void)
         current_menu[set_item_on].m_flags |= S_HILITE;
     }
     highlight_item = set_item_on;
-
-    LT_UpdateScrollIndicators(current_menu);
 }
 
 static void SetupMenuSecondary(void)
@@ -5613,8 +5582,6 @@ static boolean NextPage(int inc)
     }
     highlight_item = set_item_on;
 
-    LT_UpdateScrollIndicators(current_menu);
-
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
     return true;
 }
@@ -5840,7 +5807,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
             }
         } while (current_item->m_flags & S_SKIP);
 
-        // [Cherry]
+        // [Cherry] Level table scrolling
         LT_HandleKeyboardScroll(current_menu, current_item);
 
         SelectDone(current_item); // phares 4/17/98
@@ -5870,7 +5837,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
             current_item--;
         } while (current_item->m_flags & S_SKIP);
 
-        // [Cherry]
+        // [Cherry] Level table scrolling
         LT_HandleKeyboardScroll(current_menu, current_item);
 
         SelectDone(current_item); // phares 4/17/98
@@ -6041,8 +6008,6 @@ static boolean SetupTab(void)
         }
     }
     highlight_item = set_item_on;
-
-    LT_UpdateScrollIndicators(current_menu);
 
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
     return true;

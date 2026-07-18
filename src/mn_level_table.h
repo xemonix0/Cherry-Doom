@@ -37,8 +37,7 @@ void LT_Reset(void);
 void LT_Build(void);
 void LT_Draw(setup_menu_t *menu, int page);
 
-boolean LT_HandleKeyboardScroll(const setup_menu_t *menu, const setup_menu_t *item);
+void LT_HandleKeyboardScroll(const setup_menu_t *menu, const setup_menu_t *item);
 boolean LT_HandleMouseScroll(const setup_menu_t *menu, int inc);
-void LT_UpdateScrollIndicators(const setup_menu_t *menu);
 
 #endif

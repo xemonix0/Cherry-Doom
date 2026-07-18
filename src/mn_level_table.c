@@ -14,6 +14,7 @@
 
 #include "mn_level_table.h"
 
+#include <math.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -25,6 +26,7 @@
 #include "mn_menu.h"
 #include "mn_internal.h"
 #include "st_widgets.h"
+#include "v_video.h"
 #include "wad_stats.h"
 
 #define LT_Y                (M_Y - 4)
@@ -479,7 +481,21 @@ static void DrawLevelsPage(setup_menu_t *menu, const int page)
             accum_y += src->m_y;
     }
 
-    MN_DrawScrollIndicators();
+    // Draw scrollbar
+    if (rows > LT_MAX_ROWS)
+    {
+        const int base_y = LT_Y + M_SPC; // Start below column headers
+        const int total_height = LT_MAX_ROWS * M_SPC;
+        const int width = 2;
+        const int x = SCREENWIDTH - width + video.deltaw;
+        V_FillRect(x, base_y, width, total_height, v_darkest_color); // Background
+
+        const float scale = total_height / (float)rows;
+
+        const int y = base_y + scroll_pos * scale;
+        const int height = ceilf(LT_MAX_ROWS * scale);
+        V_FillRect(x, y, width, height, v_lightest_color); // Scrollbar
+    }
 }
 
 // WAD summary
@@ -549,19 +565,9 @@ void LT_Draw(setup_menu_t *menu, const int page)
 // Scrolling
 //===============================================
 
-static void UpdateScrollIndicators(const int rows)
+void LT_HandleKeyboardScroll(const setup_menu_t *menu, const setup_menu_t *item)
 {
-    scroll_indicators = (rows - LT_MAX_ROWS - scroll_pos - 1) > 0
-                            ? (scroll_indicators | scroll_down)
-                            : (scroll_indicators & ~scroll_down);
-    scroll_indicators = scroll_pos ? (scroll_indicators | scroll_up)
-                                   : (scroll_indicators & ~scroll_up);
-}
-
-boolean LT_HandleKeyboardScroll(const setup_menu_t *menu, const setup_menu_t *item)
-{
-    if (!set_lvltbl_active)
-        return false;
+    if (!set_lvltbl_active) return;
 
     int current_row = 0, rows = 0;
     for (const setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
@@ -584,10 +590,6 @@ boolean LT_HandleKeyboardScroll(const setup_menu_t *menu, const setup_menu_t *it
     // Hack for the reset button to act like the first item in the menu
     if (item->m_flags & S_RESET)
         scroll_pos = 0;
-
-    UpdateScrollIndicators(rows);
-
-    return true;
 }
 
 boolean LT_HandleMouseScroll(const setup_menu_t *menu, const int inc)
@@ -601,18 +603,5 @@ boolean LT_HandleMouseScroll(const setup_menu_t *menu, const int inc)
             ++rows;
 
     scroll_pos = MAX(0, MIN(rows - LT_MAX_ROWS, scroll_pos + inc));
-    UpdateScrollIndicators(rows);
     return true;
-}
-
-void LT_UpdateScrollIndicators(const setup_menu_t *menu)
-{
-    if (!set_lvltbl_active) return;
-
-    int rows = 0;
-    for (const setup_menu_t *src = menu; !(src->m_flags & S_END); ++src)
-        if (!(src->m_flags & S_DIRECT))
-            ++rows;
-
-    UpdateScrollIndicators(rows);
 }

@@ -90,8 +90,6 @@ set(BASE_SOURCES
     all-all/sbardef.lmp
     all-all/sbhuddef.lmp
     all-all/sbnugdef.lmp # [Nugget]
-    all-all/scrldown.png # [Cherry]
-    all-all/scrlup.png # [Cherry]
     all-all/skytran.lmp
 
     # [Nugget]

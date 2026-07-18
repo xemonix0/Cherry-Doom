@@ -16,6 +16,7 @@ This file contains the full list of changes for every version of Cherry Doom.
 - The level table now fits 16 rows on the screen instead of 15
 - The level table now displays partial totals on the summary page
 - _Detection of Targets in Darkness_ now accounts for weapon flashes, the light amplification visor, the invulnerability colormap and the _Extra Lighting_ setting
+- Added a scrollbar to the level table, replacing the barely noticeable arrows
 
 ### Fixed
 
