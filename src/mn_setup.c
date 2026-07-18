@@ -143,10 +143,6 @@ static boolean default_reset;
 #define MI_GAP_Y(y) \
     {NULL, S_SKIP, 0, (y)}
 
-// [Cherry] Page split (subpages)
-#define MI_SPLIT \
-    {NULL, S_SKIP | S_SPLIT}
-
 static void DisableItem(boolean condition, setup_menu_t *menu, const char *item)
 {
     while (!(menu->m_flags & S_END))
@@ -210,8 +206,6 @@ static int current_page;           // the index of the current screen in a set
 static setup_tab_t *current_tabs;
 static int highlight_tab;
 
-// [Cherry] Subpages
-static int current_subpage, total_subpages;
 // [Cherry] Saved index of the map item being cleared
 static setup_menu_t *ltbl_map_erase_item;
 
@@ -1082,15 +1076,6 @@ static void DrawSetting(setup_menu_t *s, int accum_y)
 
 int scroll_indicators = 0x00;
 
-static void UpdateScrollIndicators(void)
-{
-    scroll_indicators = current_subpage < total_subpages - 1
-                            ? (scroll_indicators | scroll_down)
-                            : (scroll_indicators & ~scroll_down);
-    scroll_indicators = current_subpage > 0 ? (scroll_indicators | scroll_up)
-                                            : (scroll_indicators & ~scroll_up);
-}
-
 void MN_DrawScrollIndicators(void)
 {
     if (scroll_indicators & scroll_up)
@@ -1121,7 +1106,6 @@ void MN_DrawScrollIndicators(void)
 // M_DrawScreenItems takes the data for each menu item and gives it to
 // the drawing routines above.
 //
-// [Cherry] Implement subpages
 
 static void DrawScreenItems(setup_menu_t *src)
 {
@@ -1147,29 +1131,9 @@ static void DrawScreenItems(setup_menu_t *src)
     }
 
     int accum_y = M_Y;
-    int subpage = 0;
 
-    for (; !(src->m_flags & S_END); src++)
+    while (!(src->m_flags & S_END))
     {
-        if (src->m_flags & S_SPLIT)
-        {
-            subpage++;
-            continue;
-        }
-
-        if (subpage != current_subpage
-            && !(src->m_flags & S_RESET)) // Always draw the reset button
-        {
-            // prevent mouse interaction with skipped entries
-            mrect_t *rect = &src->rect;
-            rect->x = 0;
-            rect->y = 0;
-            rect->w = 0;
-            rect->h = 0;
-
-            continue;
-        }
-
         // See if we're to draw the item description (left-hand part)
 
         if (src->m_flags & S_SHOWDESC)
@@ -1188,9 +1152,9 @@ static void DrawScreenItems(setup_menu_t *src)
         {
             accum_y += src->m_y;
         }
-    }
 
-    MN_DrawScrollIndicators();
+        src++;
+    }
 }
 
 /////////////////////////////
@@ -1538,42 +1502,6 @@ static void DrawInstructions(void)
     }
 }
 
-// [Cherry]
-static void KeyboardScrollSubpage(int force_end)
-{
-    setup_menu_t* current_item = NULL;
-    total_subpages = 1;
-    current_subpage = 0;
-
-    for (setup_menu_t *item = current_menu; !(item->m_flags & S_END); item++)
-    {
-        if (item->m_flags & S_SPLIT)
-        {
-            total_subpages++;
-            continue;
-        }
-
-        if (item == current_menu + set_item_on)
-        {
-            current_item = item;
-            current_subpage = total_subpages - 1;
-        }
-    }
-
-    if (force_end > 0)
-    {
-        current_subpage = total_subpages - 1;
-    }
-    else if (force_end < 0 ||
-             // Hack for the reset button to act like the first item in the menu
-             (current_item && current_item->m_flags & S_RESET))
-    {
-        current_subpage = 0;
-    }
-
-    UpdateScrollIndicators();
-}
-
 static void SetupMenu(void)
 {
     setup_active = true;
@@ -1604,8 +1532,6 @@ static void SetupMenu(void)
     }
     highlight_item = set_item_on;
 
-    // [Cherry]
-    KeyboardScrollSubpage(0);
     LT_UpdateScrollIndicators(current_menu);
 }
 
@@ -5626,62 +5552,6 @@ void LT_Warp(void)
     M_StartSoundOptional(sfx_mnucls, sfx_swtchx); // [Nugget]: [NS] Optional menu sounds.
 }
 
-// [Cherry] Scroll subpages with mouse wheel
-static boolean MouseScrollSubpage(int inc, boolean loop)
-{
-    if (menu_input != mouse_mode)
-    {
-        return false;
-    }
-
-    int i = current_subpage + inc;
-    if (!loop)
-    {
-        if (i < 0 || i > total_subpages - 1)
-        {
-            return false;
-        }
-    }
-    else
-    {
-        if (i < 0)
-        {
-            i = total_subpages - 1;
-        }
-        else if (i > total_subpages - 1)
-        {
-            i = 0;
-        }
-    }
-    current_subpage = i;
-
-    current_menu[set_item_on].m_flags &= ~S_HILITE;
-
-    int subpage = 0;
-    for (i = 0; !(current_menu[i].m_flags & S_END); i++)
-    {
-        if (current_menu[i].m_flags & S_SPLIT)
-        {
-            subpage++;
-            continue;
-        }
-
-        if (subpage == current_subpage
-            && !(current_menu[i].m_flags & S_SKIP))
-        {
-            break;
-        }
-    }
-    highlight_item = set_item_on = i;
-    current_menu[set_item_on].m_flags |= S_HILITE;
-
-    UpdateScrollIndicators();
-
-    print_warning_about_changes = false; // killough 10/98
-    M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
-    return true;
-}
-
 static boolean NextPage(int inc)
 {
     // Some setup screens may have multiple screens.
@@ -5743,8 +5613,6 @@ static boolean NextPage(int inc)
     }
     highlight_item = set_item_on;
 
-    // [Cherry]
-    KeyboardScrollSubpage(menu_input == mouse_mode ? -inc : false);
     LT_UpdateScrollIndicators(current_menu);
 
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
@@ -5973,10 +5841,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         } while (current_item->m_flags & S_SKIP);
 
         // [Cherry]
-        if (!LT_HandleKeyboardScroll(current_menu, current_item))
-        {
-            KeyboardScrollSubpage(0);
-        }
+        LT_HandleKeyboardScroll(current_menu, current_item);
 
         SelectDone(current_item); // phares 4/17/98
         return true;
@@ -6006,10 +5871,7 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
         } while (current_item->m_flags & S_SKIP);
 
         // [Cherry]
-        if (!LT_HandleKeyboardScroll(current_menu, current_item))
-        {
-            KeyboardScrollSubpage(0);
-        }
+        LT_HandleKeyboardScroll(current_menu, current_item);
 
         SelectDone(current_item); // phares 4/17/98
         return true;
@@ -6116,12 +5978,6 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
             return true;
         }
 
-        // [Cherry] Subpage scrolling
-        if (MouseScrollSubpage(-1, false))
-        {
-            return true;
-        }
-
         if (NextPage(-1))
         {
             return true;
@@ -6132,12 +5988,6 @@ boolean MN_SetupResponder(menu_action_t action, int ch)
     {
         // [Cherry] Level table scrolling
         if (LT_HandleMouseScroll(current_menu, 1))
-        {
-            return true;
-        }
-
-        // [Cherry] Subpage scrolling
-        if (MouseScrollSubpage(1, false))
         {
             return true;
         }
@@ -6159,8 +6009,6 @@ static boolean SetupTab(void)
         return false;
     }
 
-    // [Cherry] Cycle subpages if clicking current tab
-    const boolean same_tab = highlight_tab == current_page;
     setup_tab_t *tab = current_tabs + highlight_tab;
 
     if (!(M_InputActivated(input_menu_enter) && tab->flags & S_HILITE))
@@ -6177,34 +6025,24 @@ static boolean SetupTab(void)
 
     lt_level_pages &= (set_lvltbl_active && LT_IsLevelsPage(current_page));
 
-    // [Cherry] Cycle subpages if clicking current tab
-    if (same_tab && total_subpages > 1)
+    if (!lt_level_pages)
     {
-        MouseScrollSubpage(1, true);
-    }
-    else
-    {
-        if (!lt_level_pages)
+        set_item_on = 0;
+
+        // [Cherry] prevent UB when there is nothing to select
+        while (current_menu[set_item_on].m_flags & S_SKIP)
         {
-            set_item_on = 0;
-
-            // [Cherry] prevent UB when there is nothing to select
-            while (current_menu[set_item_on].m_flags & S_SKIP)
+            if (current_menu[set_item_on].m_flags & S_END)
             {
-                if (current_menu[set_item_on].m_flags & S_END)
-                {
-                    break;
-                }
-
-                ++set_item_on;
+                break;
             }
-        }
-        highlight_item = set_item_on;
 
-        // [Cherry]
-        KeyboardScrollSubpage(0);
-        LT_UpdateScrollIndicators(current_menu);
+            ++set_item_on;
+        }
     }
+    highlight_item = set_item_on;
+
+    LT_UpdateScrollIndicators(current_menu);
 
     M_StartSoundOptional(sfx_mnumov, sfx_pstop); // [Nugget]: [NS] Optional menu sounds.
     return true;

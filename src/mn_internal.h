@@ -227,7 +227,6 @@ void MN_UpdateNughudItem(void);
 
 // [Cherry]
 #define S_LTBL_MAP    0x0001000000000000 // Level table row with a map's info
-#define S_SPLIT       0x0002000000000000 // Split page
 
 // S_SHOWDESC  = the set of items whose description should be displayed
 // S_SHOWSET   = the set of items whose setting should be displayed
