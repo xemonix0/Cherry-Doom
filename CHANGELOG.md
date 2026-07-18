@@ -15,7 +15,7 @@ This file contains the full list of changes for every version of Cherry Doom.
 - Reverted all rearrangements made to Nugget Doom's menu items and moved Cherry Doom's display options into a separate tab
 - The level table now fits 16 rows on the screen instead of 15
 - The level table now displays partial totals on the summary page
-- _Detection of Targets in Darkness_ now accounts for weapon flashes and _Extra Lighting_
+- _Detection of Targets in Darkness_ now accounts for weapon flashes, the light amplification visor, the invulnerability colormap and the _Extra Lighting_ setting
 
 ### Fixed
 

@@ -300,7 +300,8 @@ void HU_UpdateCrosshair(void)
                 || hud_crosshair_fuzzy) // [Nugget]
             && (linetarget->subsector->sector->lightlevel + (extralight<<LIGHTSEGSHIFT)
                     >= hud_crosshair_dark_level
-                || (linetarget->frame & FF_FULLBRIGHT)
+                || linetarget->frame & FF_FULLBRIGHT
+                || plr->fixedcolormap // invuln or ir goggles
                 || hud_crosshair_dark)) // [Cherry]
         {
             crosshair_target = linetarget;
