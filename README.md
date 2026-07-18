@@ -147,6 +147,12 @@ Copyright:
  © 2023-2024 Korp.  
 License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
+Files: `base/all-all/sprites/rsmk*0.png`  
+Copyright:  
+ © 2018 Talon1024;  
+ © 2022 Brad Harding.  
+License: public-domain
+
 Files: `base/all-all/dsdg*, base/all-all/sprites/dog*`  
 Copyright:  
  © 2017 Nash Muhandes;  
