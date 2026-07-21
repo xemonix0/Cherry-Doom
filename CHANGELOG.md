@@ -21,6 +21,7 @@ This file contains the full list of changes for every version of Cherry Doom.
 ### Fixed
 
 - Multiple issues with the dark backdrop fade-in/out animations
+- Demo/coop desyncs related to intermission screen fixes introduced in 2.0.0
 
 ## 2.1.0
 

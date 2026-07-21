@@ -131,6 +131,7 @@ typedef struct
   int   y;
 } point_t;
 
+
 //
 // Animation.
 // There is another anim_t used in p_spec.
@@ -1839,8 +1840,8 @@ static void WI_updateNetgameStats(void)
           if (!playeringame[i])
             continue;
 
-          // [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
-          cnt_kills[i] = !inter_accurate_kill_count || wbs->maxkills ?
+          // [Cherry] Make kills = 100% if maxkills = 0
+          cnt_kills[i] = wbs->maxkills ?
             (plrs[i].skills * 100) / wbs->maxkills : 100;
 
           // [Cherry] Make items = 100% if maxitems = 0
@@ -1870,11 +1871,9 @@ static void WI_updateNetgameStats(void)
             continue;
 
           cnt_kills[i] += 2;
-          // [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
-          if ((!wbs->maxkills && inter_accurate_kill_count) ||
-              cnt_kills[i] >= (wbs->maxkills ? (plrs[i].skills * 100) / wbs->maxkills : 100))
-            cnt_kills[i] = !inter_accurate_kill_count || wbs->maxkills ?
-              (plrs[i].skills * 100) / wbs->maxkills : 100;
+          // [Cherry] Make kills = 100% if maxkills = 0
+          if (cnt_kills[i] >= (wbs->maxkills ? (plrs[i].skills * 100) / wbs->maxkills : casual_play ? 100 : 0))
+            cnt_kills[i] = wbs->maxkills ? (plrs[i].skills * 100) / wbs->maxkills : 100;
           else
             stillticking = true; // still got stuff to tally
         }
@@ -1900,8 +1899,7 @@ static void WI_updateNetgameStats(void)
 
             cnt_items[i] += 2;
             // [Cherry] Make items = 100% if maxitems = 0
-            if (!wbs->maxitems ||
-                cnt_items[i] >= (wbs->maxitems ? (plrs[i].sitems * 100) / wbs->maxitems : 100))
+            if (cnt_items[i] >= (wbs->maxitems ? (plrs[i].sitems * 100) / wbs->maxitems : casual_play ? 100 : 0))
               cnt_items[i] = wbs->maxitems ? (plrs[i].sitems * 100) / wbs->maxitems : 100;
             else
               stillticking = true;
@@ -2100,8 +2098,8 @@ static void WI_updateStats(void)
     {
       acceleratestage = 0;
 
-      // [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
-      cnt_kills[0] = (!inter_accurate_kill_count || wbs->maxkills ?
+      // [Cherry] Make kills = 100% if maxkills = 0
+      cnt_kills[0] = (wbs->maxkills ?
                       (plrs[me].skills * 100) / wbs->maxkills : 100);
 
       // [Cherry] Make items = 100% if maxitems = 0
@@ -2136,8 +2134,8 @@ static void WI_updateStats(void)
       if (!(bcnt&3))
         S_StartSoundOptional(0, sfx_inttic, sfx_pistol); // [Nugget]: [NS] Optional inter sounds.
 
-      // [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
-      if ((!wbs->maxkills && !casual_play && inter_accurate_kill_count) ||
+      // [Cherry] Make kills = 100% if maxkills = 0
+      if ((!wbs->maxkills && !casual_play)||
           cnt_kills[0] >= (wbs->maxkills ?
                            (plrs[me].skills * 100) / wbs->maxkills : 100))
         {
@@ -2779,8 +2777,14 @@ static void WI_initVariables(wbstartstruct_t* wbstartstruct)
   me = wbs->pnum;
   plrs = wbs->plyr;
 
-  // [Cherry] Adjust intermission kill percentage to follow UV max speedrun requirements
-  if (!wbs->maxkills && !inter_accurate_kill_count)
+  // [Cherry] Keep maxkills = 0, unless accurate kill count is off and someone
+  // killed an IoS-spawned monster - then set it to 1 for percentage calculation
+  boolean any_kills = false;
+  for (int i = 0; i < MAXPLAYERS && !any_kills; i++)
+    if (plrs[i].skills)
+      any_kills = true;
+
+  if (!wbs->maxkills && any_kills && NOTCASUALPLAY(!inter_accurate_kill_count))
     wbs->maxkills = 1;  // probably only useful in MAP30
 
   // [Cherry] Keep maxitems = 0

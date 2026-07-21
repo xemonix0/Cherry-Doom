@@ -2901,6 +2901,11 @@ void D_BindMiscVariables(void)
              false, ss_none, wad_yes,
              "Increase the duration of the \"Entering\" screen in Doom 2's intermission screen");
 
+  // [Cherry]
+  M_BindBool("inter_accurate_kill_count", &inter_accurate_kill_count, NULL,
+             false, ss_none, wad_no,
+             "Adjust intermission kill percentage to follow UV max speedrun requirements");
+
   M_BindNum("no_page_ticking", &no_page_ticking, NULL,
             0, 0, 2, ss_misc, wad_no,
             "Play internal demos (0 = Always; 1 = Not in menus; 2 = Never)");
@@ -2922,10 +2927,6 @@ void D_BindMiscVariables(void)
 
   M_BindBool("colored_blood", &colored_blood, NULL, false, ss_enem, wad_no,
              "Allow colored blood");
-
-  // [Cherry]
-  M_BindBool("inter_accurate_kill_count", &inter_accurate_kill_count, NULL, false, ss_stat, wad_no,
-             "Adjust intermission kill percentage to follow UV max speedrun requirements");
 }
 
 //----------------------------------------------------------------------------

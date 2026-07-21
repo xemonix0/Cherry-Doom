@@ -18,9 +18,9 @@ Config variables marked as "_CFG-only_" don't have a corresponding menu item and
 
 #### Intermission screen
 
-- Setting to adjust intermission kill percentage to meet UV max speedrun requirements (CFG-only: `inter_accurate_kill_count`)
-    - Ensures that resurrected and Icon of Sin-spawned monsters do not increase the kill count. Maps without monsters display 100% kill completion
-- Maps without items display 100% item completion
+- Maps without items or monsters display 100% item or kill completion respectively
+- Setting to _adjust intermission kill percentage to meet UV max speedrun requirements_ (CFG-only: `inter_accurate_kill_count`)
+    - Ensures that resurrected and Icon of Sin-spawned monsters do not increase the kill count
 
 ### Status Bar/HUD
 
