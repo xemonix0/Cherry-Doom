@@ -1358,8 +1358,7 @@ static void D_ProcessDehCommandLine(void)
 
 // Load all WAD files from the given directory.
 
-// [Cherry] Added the `source` parameter
-static void AutoLoadWADs(const char *path, wad_source_t source)
+static void AutoLoadWADs(const char *path)
 {
     glob_t * glob = I_StartMultiGlob(path, GLOB_FLAG_NOCASE|GLOB_FLAG_SORTED,
                                      "*.wad", "*.zip", "*.pk3");
@@ -1371,14 +1370,14 @@ static void AutoLoadWADs(const char *path, wad_source_t source)
             break;
         }
 
-        if (!W_AddPath(filename, source))
+        if (!W_AddPath(filename, source_other))
         {
             I_Error("Error: Failed to load %s", filename);
         }
     }
     I_EndGlob(glob);
 
-    W_AddPath(path, source);
+    W_AddPath(path, source_other);
 }
 
 static void LoadIWadBase(void)
@@ -1406,8 +1405,7 @@ static void LoadIWadBase(void)
     W_AddBaseDir(M_BaseName(wadfiles[0].name));
 }
 
-// [Cherry] Added the `source` parameter to `AutoLoadFunc`
-static void AutoloadIWadDir(void (*AutoLoadFunc)(const char *path, wad_source_t source))
+static void AutoloadIWadDir(void (*AutoLoadFunc)(const char *path))
 {
     GameMission_t local_gamemission =
         D_GetGameMissionByIWADName(M_BaseName(wadfiles[0].name));
@@ -1415,7 +1413,7 @@ static void AutoloadIWadDir(void (*AutoLoadFunc)(const char *path, wad_source_t 
     for (int i = 0; i < array_size(autoload_paths); ++i)
     {
         char *dir = GetAutoloadDir(autoload_paths[i], "all-all", true);
-        AutoLoadFunc(dir, source_other);
+        AutoLoadFunc(dir);
         free(dir);
 
         // common auto-loaded files for all Doom flavors
@@ -1424,34 +1422,34 @@ static void AutoloadIWadDir(void (*AutoLoadFunc)(const char *path, wad_source_t 
             if (local_gamemission < pack_chex)
             {
                 dir = GetAutoloadDir(autoload_paths[i], "doom-all", true);
-                AutoLoadFunc(dir, source_other);
+                AutoLoadFunc(dir);
                 free(dir);
             }
             else if (local_gamemission == pack_chex || local_gamemission == pack_chex3v)
             {
                 dir = GetAutoloadDir(autoload_paths[i], "chex-all", true);
-                AutoLoadFunc(dir, source_other);
+                AutoLoadFunc(dir);
                 free(dir);
             }
 
             if (local_gamemission == doom)
             {
                 dir = GetAutoloadDir(autoload_paths[i], "doom1-all", true);
-                AutoLoadFunc(dir, source_other);
+                AutoLoadFunc(dir);
                 free(dir);
             }
             else if (local_gamemission >= doom2
                      && local_gamemission <= pack_plut)
             {
                 dir = GetAutoloadDir(autoload_paths[i], "doom2-all", true);
-                AutoLoadFunc(dir, source_other);
+                AutoLoadFunc(dir);
                 free(dir);
             }
         }
 
         // auto-loaded files per IWAD
         dir = GetAutoloadDir(autoload_paths[i], M_BaseName(wadfiles[0].name), true);
-        AutoLoadFunc(dir, source_other);
+        AutoLoadFunc(dir);
         free(dir);
     }
 }
@@ -1464,8 +1462,7 @@ static void LoadPWadBase(void)
     }
 }
 
-// [Cherry] Added the `source` parameter to `AutoLoadFunc`
-static void AutoloadPWadDir(void (*AutoLoadFunc)(const char *path, wad_source_t source))
+static void AutoloadPWadDir(void (*AutoLoadFunc)(const char *path))
 {
     for (int i = 1; i < array_size(wadfiles); ++i)
     {
@@ -1473,7 +1470,7 @@ static void AutoloadPWadDir(void (*AutoLoadFunc)(const char *path, wad_source_t 
         {
             char *dir = GetAutoloadDir(autoload_paths[j],
                                        M_BaseName(wadfiles[i].name), false);
-            AutoLoadFunc(dir, source_other);
+            AutoLoadFunc(dir);
             free(dir);
         }
     }
@@ -1481,7 +1478,7 @@ static void AutoloadPWadDir(void (*AutoLoadFunc)(const char *path, wad_source_t 
 
 // Load all dehacked patches from the given directory.
 
-static void AutoLoadPatches(const char *path, wad_source_t source)
+static void AutoLoadPatches(const char *path)
 {
     const char *filename;
     glob_t *glob;
