@@ -331,7 +331,6 @@ void I_DeferredInitColor(void)
 {
   init_color_pending = true;
   resetneeded = true;
-  MN_UpdateDitheredLightingItem(); // [Cherry]
 }
 
 static void InitColorFunctions(void);

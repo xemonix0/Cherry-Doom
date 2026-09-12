@@ -96,32 +96,23 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
   column_t *col;
 
   if (fixedcolormap)
-    dc_colormap[0] = dc_colormap[2] = fixedcolormap;
+    dc_colormap[0] = dc_colormap[1] = fixedcolormap;
 
   // draw the columns
   for (dc_x = x1 ; dc_x <= x2 ; dc_x++, spryscale += rw_scalestep)
     if (maskedtexturecol[dc_x] != INT_MAX) // [FG] 32-bit integer math
       {
-        boolean do_dither_column = false; // [Cherry]
-
         if (!fixedcolormap)      // calculate lighting
           {                             // killough 11/98:
             const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
-                              ? 0 : R_GetLightIndex(spryscale, dc_x, &dc_ditherthreshold); // [Nugget] X
+                              ? 0 : R_GetLightIndex(spryscale, dc_x); // [Nugget] X
 
             // [crispy] brightmaps for two sided mid-textures
             dc_brightmap = texturebrightmap[texnum];
             dc_colormap[0] = V_ColormapRowByIndex(walllights[index]);
-            dc_colormap[2] = (STRICTMODE(brightmaps) || force_brightmaps)
+            dc_colormap[1] = (STRICTMODE(brightmaps) || force_brightmaps)
                               ? fullcolormap
                               : dc_colormap[0];
-
-            // [Cherry] Dithered lighting
-            if (do_dithered_lighting)
-            {
-              dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+2, MAXLIGHTSCALE-1)]);
-              do_dither_column = dc_colormap[0] != dc_colormap[1];
-            }
           }
 
         // killough 3/2/98:
@@ -155,7 +146,7 @@ static void RenderMaskedSegRangeLoop8(int x1, int x2, int texnum)
 
         // draw the texture
         col = (column_t *)(R_GetColumnMasked(texnum, maskedtexturecol[dc_x]) - 3);
-        R_DrawMaskedColumn (col, do_dither_column);
+        R_DrawMaskedColumn (col);
         maskedtexturecol[dc_x] = INT_MAX; // [FG] 32-bit integer math
       }
 }
@@ -173,7 +164,7 @@ static void RenderMaskedSegRangeLoop32(int x1, int x2, int texnum)
         if (!fixedcolormap32)
           {
             const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
-                              ? 0 : R_GetLightIndex(spryscale, dc_x, NULL); // [Nugget] X
+                              ? 0 : R_GetLightIndex(spryscale, dc_x); // [Nugget] X
 
             dc_brightmap = texturebrightmap[texnum];
             dc_colormap32[0] = V_ColormapRowByIndex32(walllights[index]);
@@ -194,7 +185,7 @@ static void RenderMaskedSegRangeLoop32(int x1, int x2, int texnum)
         dc_iscale = 0xffffffffu / (unsigned) spryscale;
 
         col = (column_t *)(R_GetColumnMasked(texnum, maskedtexturecol[dc_x]) - 3);
-        R_DrawMaskedColumn (col, false);
+        R_DrawMaskedColumn (col);
         maskedtexturecol[dc_x] = INT_MAX;
       }
 }
@@ -214,11 +205,9 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
   // killough 4/11/98: draw translucent 2s normal textures
 
   colfunc = R_DrawColumn;
-  colfuncdithered = R_DrawDitheredColumn; // [Cherry]
   if (curline->linedef->tranlump >= 0)
     {
       colfunc = R_DrawTLColumn;
-      colfuncdithered = R_DrawDitheredTLColumn; // [Cherry]
       tranmap = main_tranmap;
       if (curline->linedef->tranlump > 0)
         tranmap = W_CacheLumpNum(curline->linedef->tranlump-1, PU_STATIC);
@@ -274,7 +263,6 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
   // [FG] reset column drawing function
   colfunc = R_DrawColumn;
-  colfuncdithered = R_DrawDitheredColumn; // [Cherry]
 
   // Except for main_tranmap, mark others purgable at this point
   if (curline->linedef->tranlump > 0)
@@ -435,13 +423,11 @@ static void R_RenderSegLoop (void)
             }
         }
 
-      boolean do_dither_column = do_dithered_lighting; // [Cherry]
-
       // texturecolumn and lighting are independent of wall tiers
       if (segtextured)
         {
           const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
-                            ? 0 : R_GetLightIndex(rw_scale, rw_x, &dc_ditherthreshold); // [Nugget] X
+                            ? 0 : R_GetLightIndex(rw_scale, rw_x); // [Nugget] X
 
           // calculate texture offset
           angle_t angle =(rw_centerangle+xtoviewangle[rw_x])>>ANGLETOFINESHIFT;
@@ -464,17 +450,10 @@ static void R_RenderSegLoop (void)
             else
             {
               dc_colormap[0] = V_ColormapRowByIndex(walllights[index]);
-              dc_colormap[2] = (!fixedcolormap &&
+              dc_colormap[1] = (!fixedcolormap &&
                                 (STRICTMODE(brightmaps) || force_brightmaps))
                                 ? fullcolormap
                                 : dc_colormap[0];
-
-              // [Cherry] Dithered lighting
-              if (do_dithered_lighting)
-              {
-                dc_colormap[1] = V_ColormapRowByIndex(walllights[MIN(index+2, MAXLIGHTSCALE-1)]);
-                if (dc_colormap[0] == dc_colormap[1]) do_dither_column = false;
-              }
             }
           }
 
@@ -491,7 +470,7 @@ static void R_RenderSegLoop (void)
           dc_source = R_GetColumn(midtexture, texturecolumn);
           dc_texheight = textureheight[midtexture]>>FRACBITS; // killough
           dc_brightmap = texturebrightmap[midtexture];
-          do_dither_column ? colfuncdithered () : colfunc ();
+          colfunc ();
           ceilingclip[rw_x] = viewheight;
           floorclip[rw_x] = -1;
         }
@@ -515,7 +494,7 @@ static void R_RenderSegLoop (void)
                   dc_source = R_GetColumn(toptexture,texturecolumn);
                   dc_texheight = textureheight[toptexture]>>FRACBITS;//killough
                   dc_brightmap = texturebrightmap[toptexture];
-                  do_dither_column ? colfuncdithered () : colfunc ();
+                  colfunc ();
                   ceilingclip[rw_x] = mid;
                 }
               else
@@ -543,7 +522,7 @@ static void R_RenderSegLoop (void)
                                           texturecolumn);
                   dc_texheight = textureheight[bottomtexture]>>FRACBITS; // killough
                   dc_brightmap = texturebrightmap[bottomtexture];
-                  do_dither_column ? colfuncdithered () : colfunc ();
+                  colfunc ();
                   floorclip[rw_x] = mid;
                 }
               else

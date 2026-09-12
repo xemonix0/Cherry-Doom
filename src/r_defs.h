@@ -385,8 +385,7 @@ typedef struct vissprite_s
   int mobjflags2;
 
   // for color translation and shadow draw, maxbright frames as well
-  // [Cherry] 0 and 1 for dithering, 2 for brightmaps
-  cmapoffset_t colormap[3];
+  cmapoffset_t colormap[2];
 
   // killough 3/27/98: height sector for underwater/fake ceiling support
   int heightsec;
@@ -408,10 +407,6 @@ typedef struct vissprite_s
   byte *tranmap;
   byte lightnum;
   fixed_t leftoffset;
-
-  // [Cherry] Dithered lighting
-  boolean do_dither;
-  int ditherthreshold;
 } vissprite_t;
 
 //

@@ -707,27 +707,24 @@ boolean VX_ProjectVoxel (mobj_t * thing, byte lightnum)
 
 	// get light level...
 
-    // [Cherry]
-    vis->do_dither = false;
-
 	if (vis->mobjflags & MF_SHADOW)
 	{
-		vis->colormap[0] = vis->colormap[2] = 0;
+		vis->colormap[0] = vis->colormap[1] = 0;
 	}
 	else if (fixedcolormapoffset)
 	{
-		vis->colormap[0] = vis->colormap[2] = fixedcolormapoffset;
+		vis->colormap[0] = vis->colormap[1] = fixedcolormapoffset;
 	}
 	else if (thing->frame & FF_FULLBRIGHT)
 	{
-		vis->colormap[0] = vis->colormap[2] = 0;
+		vis->colormap[0] = vis->colormap[1] = 0;
 		vis->flags |= VSF_FULLBRIGHT; // [Nugget]
 	}
 	else
 	{
 		// diminished light
 		const int index = STRICTMODE(!diminishing_lighting) // [Nugget]
-		                  ? 0 : R_GetLightIndex(xscale, 0, &vis->ditherthreshold);
+		                  ? 0 : R_GetLightIndex(xscale, 0);
 
 		// [Nugget] Thing lighting
 		if (STRICTMODE(thing_lighting_mode) == THINGLIGHTING_HITBOX)
@@ -742,14 +739,7 @@ boolean VX_ProjectVoxel (mobj_t * thing, byte lightnum)
 		}
 
 		vis->colormap[0] = spritelights[index];
-		vis->colormap[2] = 0;
-
-	    // [Cherry] Dithered lighting
-        if (do_dithered_lighting)
-        {
-          vis->do_dither = true;
-          vis->colormap[1] = spritelights[MIN(index+2, MAXLIGHTSCALE-1)];
-        }
+		vis->colormap[1] = 0;
 	}
 
 	vis->brightmap = R_BrightmapForSprite(thing->sprite);
@@ -887,16 +877,10 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 
 	// [Nugget] Thing lighting, radial fog /------------------------------------
 
-    // [Cherry] 0 and 1 for dithering, 2 for brightmaps
-	const lighttable_t *colormap[3];
+	const lighttable_t *colormap[2];
 
 	colormap[0] = V_ColormapRowByIndex(spr->colormap[0]);
-	colormap[2] = V_ColormapRowByIndex(spr->colormap[2]);
-
-    // [Cherry] Dithered lighting
-    boolean do_dither_voxel = spr->do_dither;
-    int dither_threshold = spr->ditherthreshold;
-    if (spr->do_dither) colormap[1] = V_ColormapRowByIndex(spr->colormap[1]);
+	colormap[1] = V_ColormapRowByIndex(spr->colormap[1]);
 
 	byte lightnum = spr->lightnum;
 
@@ -927,16 +911,9 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 			if (!do_voxel_radial_fog)
 			{
 				const int lightindex = STRICTMODE(!diminishing_lighting)
-				                       ? 0 : R_GetLightIndex(B_xscale, (ux2 - ux) / 2, &dither_threshold);
+				                       ? 0 : R_GetLightIndex(B_xscale, (ux2 - ux) / 2);
 
 				colormap[0] = V_ColormapRowByIndex(scalelight[lightnum][lightindex]);
-
-			    // [Cherry] Dithered lighting
-			    if (spr->do_dither)
-			    {
-			        colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+2, MAXLIGHTSCALE-1)]);
-			        if (colormap[0] == colormap[1]) do_dither_voxel = false;
-			    }
 			}
 			else { spritelights = scalelight[lightnum]; }
 		}
@@ -970,16 +947,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 
 		// [Nugget] Radial fog
 		if (do_voxel_radial_fog)
-		{
-		    const int lightindex = R_GetLightIndex(scale, ux >> FRACBITS, &dither_threshold);
-		    colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
-		    // [Cherry] Dithered lighting
-		    if (spr->do_dither)
-		    {
-		        colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+2, MAXLIGHTSCALE-1)]);
-			    if (colormap[0] == colormap[1]) do_dither_voxel = false;
-		    }
-		}
+		{ colormap[0] = V_ColormapRowByIndex(spritelights[R_GetLightIndex(scale, ux >> FRACBITS)]); }
 
 		for (; slab < end ; slab += len)
 		{
@@ -1044,13 +1012,10 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 					uy = clip_y1;
 
 				byte src = slab[0];
+				pixel_t pix = colormap[spr->brightmap[src]][dc_translation[src]]; // [Nugget] Translation
 
 				for (; uy < uy1 ; uy += FRACUNIT)
 				{
-				    // [Cherry] Move here for per-pixel dithering
-				    const int cmapindex = spr->brightmap[src] ? 2
-				        : do_dither_voxel ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0;
-				    pixel_t pix = colormap[cmapindex][dc_translation[src]]; // [Nugget] Translation
 					dest[(uy >> FRACBITS) * linesize + (ux >> FRACBITS)] = pix;
 				}
 			}
@@ -1062,13 +1027,10 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 					uy = clip_y2;
 
 				byte src = slab[len - 1];
+				pixel_t pix = colormap[spr->brightmap[src]][dc_translation[src]]; // [Nugget] Translation
 
 				for (; uy > uy2 ; uy -= FRACUNIT)
 				{
-				    // [Cherry] Move here for per-pixel dithering
-				    const int cmapindex = spr->brightmap[src] ? 2
-				        : do_dither_voxel ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0;
-				    pixel_t pix = colormap[cmapindex][dc_translation[src]]; // [Nugget] Translation
 					dest[(uy >> FRACBITS) * linesize + (ux >> FRACBITS)] = pix;
 				}
 			}
@@ -1085,9 +1047,7 @@ static void VX_DrawColumnCubes (vissprite_t * spr, int x, int y)
 					if (i >= len) i = len - 1;
 
 					byte src = slab[i];
-				    const int cmapindex = spr->brightmap[src] ? 2
-				        : do_dither_voxel ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0; // [Cherry]
-					pixel_t pix = colormap[cmapindex][dc_translation[src]]; // [Nugget] Translation
+					pixel_t pix = colormap[spr->brightmap[src]][dc_translation[src]]; // [Nugget] Translation
 
 					dest[(uy >> FRACBITS) * linesize + (ux >> FRACBITS)] = pix;
 				}
@@ -1182,7 +1142,7 @@ static void VX_DrawColumnCubes32(vissprite_t * spr, int x, int y)
 	const lighttable32_t *colormap[2];
 
 	colormap[0] = V_ColormapRowByIndex32(spr->colormap[0]);
-	colormap[1] = V_ColormapRowByIndex32(spr->colormap[2]);
+	colormap[1] = V_ColormapRowByIndex32(spr->colormap[1]);
 
 	byte lightnum = spr->lightnum;
 
@@ -1213,7 +1173,7 @@ static void VX_DrawColumnCubes32(vissprite_t * spr, int x, int y)
 			if (!do_voxel_radial_fog)
 			{
 				const int lightindex = STRICTMODE(!diminishing_lighting)
-				                       ? 0 : R_GetLightIndex(B_xscale, (ux2 - ux) / 2, NULL);
+				                       ? 0 : R_GetLightIndex(B_xscale, (ux2 - ux) / 2);
 
 				colormap[0] = V_ColormapRowByIndex32(scalelight[lightnum][lightindex]);
 			}
@@ -1248,7 +1208,7 @@ static void VX_DrawColumnCubes32(vissprite_t * spr, int x, int y)
 
 		// [Nugget] Radial fog
 		if (do_voxel_radial_fog)
-		{ colormap[0] = V_ColormapRowByIndex32(spritelights[R_GetLightIndex(scale, ux >> FRACBITS, NULL)]); }
+		{ colormap[0] = V_ColormapRowByIndex32(spritelights[R_GetLightIndex(scale, ux >> FRACBITS)]); }
 
 		for (; slab < end ; slab += len)
 		{
@@ -1439,16 +1399,10 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 
 	// [Nugget] Thing lighting, radial fog /------------------------------------
 
-    // [Cherry] 0 and 1 for dithering, 2 for brightmaps
-    const lighttable_t *colormap[3];
+	const lighttable_t *colormap[2];
 
 	colormap[0] = V_ColormapRowByIndex(spr->colormap[0]);
-    colormap[2] = V_ColormapRowByIndex(spr->colormap[2]);
-
-    // [Cherry] Dithered lighting
-    int dither_threshold = spr->ditherthreshold;
-    boolean do_dither_voxel = spr->do_dither;
-    if (spr->do_dither) colormap[1] = V_ColormapRowByIndex(spr->colormap[1]);
+	colormap[1] = V_ColormapRowByIndex(spr->colormap[1]);
 
 	byte lightnum = spr->lightnum;
 
@@ -1479,16 +1433,9 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 			if (!do_voxel_radial_fog)
 			{
 				const int lightindex = STRICTMODE(!diminishing_lighting)
-				                       ? 0 : R_GetLightIndex(midscale, (ux2 - ux) / 2, &dither_threshold);
+				                       ? 0 : R_GetLightIndex(midscale, (ux2 - ux) / 2);
 
-			    colormap[0] = V_ColormapRowByIndex(scalelight[lightnum][lightindex]);
-
-			    // [Cherry] Dithered lighting
-			    if (spr->do_dither)
-			    {
-			        colormap[1] = V_ColormapRowByIndex(scalelight[lightnum][MIN(lightindex+2, MAXLIGHTSCALE-1)]);
-			        if (colormap[0] == colormap[1]) do_dither_voxel = false;
-			    }
+				colormap[0] = V_ColormapRowByIndex(scalelight[lightnum][lightindex]);
 			}
 			else { spritelights = scalelight[lightnum]; }
 		}
@@ -1517,16 +1464,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 
 		// [Nugget] Radial fog
 		if (do_voxel_radial_fog)
-		{
-		    const int lightindex = R_GetLightIndex(midscale, uxi, &dither_threshold);
-		    colormap[0] = V_ColormapRowByIndex(spritelights[lightindex]);
-		    // [Cherry] Dithered lighting
-		    if (spr->do_dither)
-		    {
-		        colormap[1] = V_ColormapRowByIndex(spritelights[MIN(lightindex+2, MAXLIGHTSCALE-1)]);
-		        if (colormap[0] == colormap[1]) do_dither_voxel = false;
-		    }
-		}
+		{ colormap[0] = V_ColormapRowByIndex(spritelights[R_GetLightIndex(midscale, uxi)]); }
 
 		for (byte top, len, face;  slab < end;  slab += len)
 		{
@@ -1577,9 +1515,7 @@ static void VX_DrawColumnBounded(vissprite_t *const spr, const int x, const int 
 				i = BETWEEN(0, len - 1, i);
 
 				const byte src = slab[i];
-			    const int cmapindex = spr->brightmap[src] ? 2
-			        : do_dither_voxel ? dither(ux >> FRACBITS, uy >> FRACBITS, dither_threshold) : 0; // [Cherry]
-				const pixel_t pix = colormap[cmapindex][dc_translation[src]]; // [Nugget] Translation
+				const pixel_t pix = colormap[spr->brightmap[src]][dc_translation[src]]; // [Nugget] Translation
 
 				dest2[(uy >> FRACBITS) * linesize] = pix;
 			}
@@ -1672,7 +1608,7 @@ static void VX_DrawColumnBounded32(vissprite_t *const spr, const int x, const in
 	const lighttable32_t *colormap[2];
 
 	colormap[0] = V_ColormapRowByIndex32(spr->colormap[0]);
-	colormap[1] = V_ColormapRowByIndex32(spr->colormap[2]);
+	colormap[1] = V_ColormapRowByIndex32(spr->colormap[1]);
 
 	byte lightnum = spr->lightnum;
 
@@ -1703,7 +1639,7 @@ static void VX_DrawColumnBounded32(vissprite_t *const spr, const int x, const in
 			if (!do_voxel_radial_fog)
 			{
 				const int lightindex = STRICTMODE(!diminishing_lighting)
-				                       ? 0 : R_GetLightIndex(midscale, (ux2 - ux) / 2, NULL);
+				                       ? 0 : R_GetLightIndex(midscale, (ux2 - ux) / 2);
 
 				colormap[0] = V_ColormapRowByIndex32(scalelight[lightnum][lightindex]);
 			}
@@ -1734,7 +1670,7 @@ static void VX_DrawColumnBounded32(vissprite_t *const spr, const int x, const in
 
 		// [Nugget] Radial fog
 		if (do_voxel_radial_fog)
-		{ colormap[0] = V_ColormapRowByIndex32(spritelights[R_GetLightIndex(midscale, uxi, NULL)]); }
+		{ colormap[0] = V_ColormapRowByIndex32(spritelights[R_GetLightIndex(midscale, uxi)]); }
 
 		for (byte top, len, face;  slab < end;  slab += len)
 		{

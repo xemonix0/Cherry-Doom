@@ -90,7 +90,6 @@ void MN_DisableVoxelsRenderingItem(void);
 void MN_UpdateDynamicResolutionItem(void);
 void MN_DisableResolutionScaleItem(void);
 void MN_UpdateFpsLimitItem(void);
-void MN_UpdateDitheredLightingItem(void); // [Cherry]
 void MN_UpdateCSStatsTrackingItem(void); // [Cherry]
 
 typedef enum

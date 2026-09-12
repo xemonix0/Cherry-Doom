@@ -76,12 +76,11 @@ static pixel32_t *background_buffer32 = NULL;
 // Source is the top of the column to scale.
 //
 
-lighttable_t *dc_colormap[3]; // [crispy] brightmaps // [Cherry] 0 and 1 for dithering, 2 for brightmaps
+lighttable_t *dc_colormap[2]; // [crispy] brightmaps
 lighttable32_t *dc_colormap32[2];
 int dc_x;
 int dc_yl;
 int dc_yh;
-int dc_ditherthreshold; // [Cherry] Dithered lighting
 fixed_t dc_iscale;
 fixed_t dc_texturemid;
 int dc_texheight; // killough
@@ -111,8 +110,8 @@ static void (*DrawColumnTRBrightmap)(void) = NULL;
 static void (*DrawColumnTL)(void) = NULL;
 static void (*DrawColumnTLBrightmap)(void) = NULL;
 
-#define DRAW_COLUMN(PREFIX, NAME, SRCPIXEL)                              \
-    static void Draw##PREFIX##Column8##NAME(void)                        \
+#define DRAW_COLUMN(NAME, SRCPIXEL)                                      \
+    static void DrawColumn8##NAME(void)                                  \
     {                                                                    \
         int count = dc_yh - dc_yl + 1;                                   \
                                                                          \
@@ -149,7 +148,6 @@ static void (*DrawColumnTLBrightmap)(void) = NULL;
                 byte src = dc_source[frac >> FRACBITS];                  \
                 *dest = SRCPIXEL;                                        \
                 dest += linesize;                                        \
-                dc_yl++;                                                 \
                 if ((frac += fracstep) >= heightmask)                    \
                     frac -= heightmask;                                  \
             } while (--count);                                           \
@@ -162,12 +160,10 @@ static void (*DrawColumnTLBrightmap)(void) = NULL;
                 *dest = SRCPIXEL;                                        \
                 dest += linesize;                                        \
                 frac += fracstep;                                        \
-                dc_yl++;                                                 \
                 src = dc_source[(frac >> FRACBITS) & heightmask];        \
                 *dest = SRCPIXEL;                                        \
                 dest += linesize;                                        \
                 frac += fracstep;                                        \
-                dc_yl++;                                                 \
             }                                                            \
             if (count & 1)                                               \
             {                                                            \
@@ -177,10 +173,8 @@ static void (*DrawColumnTLBrightmap)(void) = NULL;
         }                                                                \
     }
 
-DRAW_COLUMN(        ,          , dc_colormap[0][src])
-DRAW_COLUMN(Dithered,          , dc_colormap[dither(dc_x, dc_yl, dc_ditherthreshold)][src])
-DRAW_COLUMN(        , Brightmap, dc_colormap[dc_brightmap[src] ? 2 : 0][src])
-DRAW_COLUMN(Dithered, Brightmap, dc_colormap[dc_brightmap[src] ? 2 : dither(dc_x, dc_yl, dc_ditherthreshold)][src])
+DRAW_COLUMN(, dc_colormap[0][src])
+DRAW_COLUMN(Brightmap, dc_colormap[dc_brightmap[src]][src])
 
 // Here is the version of R_DrawColumn that deals with translucent  // phares
 // textures and sprites. It's identical to R_DrawColumn except      //    |
@@ -194,10 +188,10 @@ DRAW_COLUMN(Dithered, Brightmap, dc_colormap[dc_brightmap[src] ? 2 : dither(dc_x
 // opaque' decision is made outside this routine, not down where the
 // actual code differences are.
 
-DRAW_COLUMN(        ,          TL, tranmap[(*dest << 8) + dc_colormap[0][src]])
-DRAW_COLUMN(Dithered,          TL, tranmap[(*dest << 8) + dc_colormap[dither(dc_x, dc_yl, dc_ditherthreshold)][src]])
-DRAW_COLUMN(        , TLBrightmap, tranmap[(*dest << 8) + dc_colormap[dc_brightmap[src] ? 2 : 0][src]])
-DRAW_COLUMN(Dithered, TLBrightmap, tranmap[(*dest << 8) + dc_colormap[dc_brightmap[src] ? 2 : dither(dc_x, dc_yl, dc_ditherthreshold)][src]])
+DRAW_COLUMN(TL,
+    tranmap[(*dest << 8) + dc_colormap[0][src]])
+DRAW_COLUMN(TLBrightmap,
+    tranmap[(*dest << 8) + dc_colormap[dc_brightmap[src]][src]])
 
 #define DRAW_COLUMN32(NAME, SRCPIXEL)                                    \
     static void DrawColumn32##NAME(void)                                 \
@@ -1266,10 +1260,10 @@ void R_SetFuzzColumnMode(void)
 
 byte *dc_translation, *translationtables;
 
-DRAW_COLUMN(        ,          TR, dc_colormap[0][dc_translation[src]])
-DRAW_COLUMN(Dithered,          TR, dc_colormap[dither(dc_x, dc_yl, dc_ditherthreshold)][dc_translation[src]])
-DRAW_COLUMN(        , TRBrightmap, dc_colormap[dc_brightmap[src] ? 2 : 0][dc_translation[src]])
-DRAW_COLUMN(Dithered, TRBrightmap, dc_colormap[dc_brightmap[src] ? 2 : dither(dc_x, dc_yl, dc_ditherthreshold)][dc_translation[src]])
+DRAW_COLUMN(TR,
+    dc_colormap[0][dc_translation[src]])
+DRAW_COLUMN(TRBrightmap,
+    dc_colormap[dc_brightmap[src]][dc_translation[src]])
 
 DRAW_COLUMN32(TR,
     dc_colormap32[0][dc_translation[src]])
@@ -1326,9 +1320,8 @@ void R_InitTranslationTables(void)
 int ds_y;
 int ds_x1;
 int ds_x2;
-int ds_ditherthreshold; // [Cherry] Dithered lighting
 
-lighttable_t *ds_colormap[3]; // [Cherry] 0 and 1 for dithering, 2 for brightmaps
+lighttable_t *ds_colormap[2];
 lighttable32_t *ds_colormap32[2];
 const byte *ds_brightmap;
 
@@ -1343,8 +1336,8 @@ byte *ds_source;
 static void (*DrawSpan)(void) = NULL;
 static void (*DrawSpanBrightmap)(void) = NULL;
 
-#define R_DRAW_SPAN(PREFIX, NAME, SRCPIXEL)            \
-    static void Draw##PREFIX##Span8##NAME(void)        \
+#define R_DRAW_SPAN(NAME, SRCPIXEL)                    \
+    static void DrawSpan8##NAME(void)                   \
     {                                                  \
         pixel_t *dest = ylookup[ds_y] + columnofs[ds_x1]; \
                                                        \
@@ -1405,10 +1398,8 @@ static void (*DrawSpanBrightmap)(void) = NULL;
         }                                              \
     }
 
-R_DRAW_SPAN(        ,          , ds_colormap[0][src])
-R_DRAW_SPAN(Dithered,          , ds_colormap[dither(ds_x1++, ds_y, ds_ditherthreshold)][src]) // [Cherry]
-R_DRAW_SPAN(        , Brightmap, ds_colormap[ds_brightmap[src] ? 2 : 0][src])
-R_DRAW_SPAN(Dithered, Brightmap, ds_colormap[ds_brightmap[src] ? 2 : dither(ds_x1++, ds_y, ds_ditherthreshold)][src]) // [Cherry]
+R_DRAW_SPAN(, ds_colormap[0][src])
+R_DRAW_SPAN(Brightmap, ds_colormap[ds_brightmap[src]][src])
 
 #define R_DRAW_SPAN32(NAME, SRCPIXEL)                  \
     static void DrawSpan32##NAME(void)                 \
@@ -1479,11 +1470,6 @@ void (*R_DrawColumn)(void) = NULL;
 void (*R_DrawTLColumn)(void) = NULL;
 void (*R_DrawTranslatedColumn)(void) = NULL;
 void (*R_DrawSpan)(void) = NULL;
-// [Cherry] Dithered lighting
-void (*R_DrawDitheredColumn)(void) = NULL;
-void (*R_DrawDitheredTLColumn)(void) = NULL;
-void (*R_DrawDitheredTranslatedColumn)(void) = NULL;
-void (*R_DrawDitheredSpan)(void) = NULL;
 
 // [Nugget] Radial fog /------------------------------------------------------
 
@@ -1499,30 +1485,13 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
   ds_yfrac += ds_ystep; \
   src = ds_source[spot]; \
   \
-  ds_colormap[0] = V_ColormapRowByIndex(planezlight[*sdl]); \
-  \
-  /* [Cherry] Dithered lighting /----------------------------------------- */ \
-  byte cmap_index = 0; \
-  if (do_dithered_lighting) \
-  { \
-    const int level_frac = planezlight_frac[*sdl]; \
-    const int level = level_frac >> 8; \
-    const int level_next = MIN(level+1, NUMCOLORMAPS-1); \
-    const int dither_threshold = (level_frac & 255); \
-    \
-    ds_colormap[0] = V_ColormapRowByIndex(level << 8); \
-    ds_colormap[1] = V_ColormapRowByIndex(level_next << 8); \
-    if (ds_colormap[0] != ds_colormap[1]) cmap_index = dither(ds_x1, ds_y, dither_threshold); \
-  } \
-  /* [Cherry] -----------------------------------------------------------/ */ \
+  ds_colormap[0] = V_ColormapRowByIndex(planezlight[*sdl++]); \
   \
   dest[dest_index] = SRCPIXEL; \
-  sdl++; \
-  ds_x1++; \
 }
 
 #define R_DRAW_SPAN_RADFOG(NAME, SRCPIXEL)             \
-    static void DrawSpanWithRadialFog8##NAME(void)     \
+    static void DrawSpanWithRadialFog8##NAME(void)      \
     {                                                  \
         pixel_t *dest = ylookup[ds_y] + columnofs[ds_x1]; \
         byte src;                                      \
@@ -1553,11 +1522,10 @@ static void (*DrawSpanWithRadialFogBrightmap)(void) = NULL;
         }                                              \
     }
 
-R_DRAW_SPAN_RADFOG(, ds_colormap[cmap_index][src]);
-R_DRAW_SPAN_RADFOG(Brightmap, ds_colormap[ds_brightmap[src] ? 2 : cmap_index][src])
+R_DRAW_SPAN_RADFOG(, ds_colormap[0][src])
+R_DRAW_SPAN_RADFOG(Brightmap, ds_colormap[ds_brightmap[src]][src])
 
 #undef DRAW_SPAN_RADFOG_PIXEL
-#undef DITHER_COLORMAP
 
 #define DRAW_SPAN_RADFOG32_PIXEL(SRCPIXEL, dest_index) \
 { \
@@ -1625,12 +1593,6 @@ void R_InitDrawFunctions(void)
         R_DrawTranslatedColumn = DrawColumnTRBrightmap;
         R_DrawSpan = DrawSpanBrightmap;
 
-        // [Cherry] Dithered lighting
-        R_DrawDitheredColumn = DrawDitheredColumn8Brightmap;
-        R_DrawDitheredTLColumn = DrawDitheredColumn8TLBrightmap;
-        R_DrawDitheredTranslatedColumn = DrawDitheredColumn8TRBrightmap;
-        R_DrawDitheredSpan = DrawDitheredSpan8Brightmap;
-
         R_DrawSpanWithRadialFog = DrawSpanWithRadialFogBrightmap; // [Nugget] Radial fog
     }
     else
@@ -1640,18 +1602,11 @@ void R_InitDrawFunctions(void)
         R_DrawTranslatedColumn = DrawColumnTR;
         R_DrawSpan = DrawSpan;
 
-        // [Cherry] Dithered lighting
-        R_DrawDitheredColumn = DrawDitheredColumn8;
-        R_DrawDitheredTLColumn = DrawDitheredColumn8TL;
-        R_DrawDitheredTranslatedColumn = DrawDitheredColumn8TR;
-        R_DrawDitheredSpan = DrawDitheredSpan8;
-
         R_DrawSpanWithRadialFog = DrawSpanWithRadialFog; // [Nugget] Radial fog
     }
 
     // [Nugget] Initialize here
     colfunc = R_DrawColumn;
-    colfuncdithered = R_DrawDitheredColumn; // [Cherry]
 
     // [Nugget] Sprite shadows
     if (sprite_shadows) { R_InitSpriteShadowsColormap(); }
