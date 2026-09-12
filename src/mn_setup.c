@@ -3939,6 +3939,12 @@ void MN_UpdateFreeLook(void)
     // [Nugget]
     UpdateVerticalLockonItem();
     UpdateCrosshairItems();
+
+    // [Cherry] Option to stretch short skies only when free look is enabled
+    if (stretchsky == STRETCHSKY_FREELOOK)
+    {
+        R_UpdateStretchSkies();
+    }
 }
 
 static void UpdateFreeLookMode(void)
@@ -4559,6 +4565,10 @@ static const char *sky_projection_strings[] = {
 
 // [Cherry] /------------------------------------------------------------------
 
+static const char *stretchsky_strings[] = {
+    "Off", "Always", "Free Look"
+};
+
 #define OFF_CNTR_THRM8_X (OFF_CNTR_X - (M_THRM_SIZE8 + 3) * M_THRM_STEP)
 
 // [Cherry] ------------------------------------------------------------------/
@@ -4605,8 +4615,8 @@ static setup_menu_t gen_settings5[] = {
 
     {"Brightmaps", S_ONOFF | S_STRICT, OFF_CNTR_X, M_SPC, {"brightmaps"}},
 
-    {"Stretch Short Skies", S_ONOFF, OFF_CNTR_X, M_SPC, {"stretchsky"},
-     .action = R_UpdateStretchSkies},
+    {"Stretch Short Skies", S_CHOICE, OFF_CNTR_X, M_SPC, {"stretchsky"},
+     .action = R_UpdateStretchSkies, .strings_id = str_stretchsky},
 
     // [Nugget] Replaced `linearsky` with `sky_projection`
     {"Sky Projection", S_CHOICE, OFF_CNTR_X, M_SPC, {"sky_projection"},
@@ -7145,6 +7155,7 @@ static const char **selectstrings[] = {
 
     // [Cherry]
 
+    [str_stretchsky] = stretchsky_strings,
     [str_weapswspeed] = weapswspeed_strings,
 };
 

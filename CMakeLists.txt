@@ -44,7 +44,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 project(
     "Cherry Doom"
-    VERSION 2.1.0
+    VERSION 3.0.0
     HOMEPAGE_URL "https://github.com/xemonix0/Cherry-Doom"
     LANGUAGES C CXX)
 

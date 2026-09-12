@@ -28,7 +28,7 @@ _For a full list of features and more details on the Level Table, check out [FEA
 Source code and Windows binaries (MSVC builds for Windows 7 and newer)
 for the latest release can be found on the [Release](https://github.com/xemonix0/Cherry-Doom/releases/latest) page.
 
-The changes currently in progress since the latest release can be found in the [Changelog](https://github.com/xemonix0/Cherry-Doom/blob/master/CHANGELOG.md).
+The changes currently in progress since the latest release can be found in the [Changelog](https://github.com/xemonix0/Cherry-Doom/blob/master/RELEASE_NOTES.md).
 
 A complete history of changes and releases can be found on the [Releases](https://github.com/xemonix0/Cherry-Doom/releases) page.
 

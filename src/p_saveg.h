@@ -208,7 +208,8 @@ typedef enum
   saveg_cherry100,
   saveg_cherry101,
   saveg_cherry200,
-  saveg_current, // saveg_cherry210
+  saveg_cherry210,
+  saveg_current, // saveg_cherry300
 } saveg_compat_t;
 
 extern saveg_compat_t saveg_compat;

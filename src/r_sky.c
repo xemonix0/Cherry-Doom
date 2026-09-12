@@ -43,9 +43,13 @@
 // [Nugget]
 #include "r_main.h"
 
+// [Cherry]
+#include "g_game.h"
+
 // [FG] stretch short skies
-// [Cherry] Option to stretch short skies only when mouselook is enabled
+// [Cherry] Option to stretch short skies only when free look is enabled
 int stretchsky;
+boolean do_stretchsky; // [Cherry]
 
 boolean fov_stretchsky; // [Nugget]
 
@@ -231,7 +235,7 @@ void R_StretchSky(skytex_t *const skytex, fixed_t *const skymid_p, fixed_t *cons
     }
 
     // Stretch sky just as much as necessary for free look or lack thereof
-    fixed_t skytop_target = (stretchsky ? 200 : 100) << FRACBITS;
+    fixed_t skytop_target = (do_stretchsky ? 200 : 100) << FRACBITS;
 
     // FOV-based sky stretching
     if (fov_stretchsky && skyiscalediff > FRACUNIT)
@@ -259,7 +263,7 @@ static void StretchSky(sky_t *sky)
     sky->background.mid = sky->background.orig_mid;
     sky->background.scaley = sky->background.orig_scaley;
 
-    if (stretchsky || fov_stretchsky)
+    if (do_stretchsky || fov_stretchsky)
     {
         R_StretchSky(&sky->background, &sky->background.mid, &sky->background.scaley);
     }
@@ -267,6 +271,9 @@ static void StretchSky(sky_t *sky)
 
 void R_UpdateStretchSkies(void)
 {
+    // [Cherry] Option to stretch short skies only when free look is enabled
+    do_stretchsky = (stretchsky == STRETCHSKY_FREELOOK) ? freelook : stretchsky == STRETCHSKY_ALWAYS;
+
     sky_t *sky;
     array_foreach(sky, levelskies)
     {

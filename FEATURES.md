@@ -11,7 +11,7 @@ Config variables marked as "_CFG-only_" don't have a corresponding menu item and
 - _Floating Powerups_ setting [p.f. International Doom]
 - _Rocket Trails_ setting [partially p.f. Doom Retro]
     - Customize smoke particle spawn rate and translucency via CFG-only CVARs: `rocket_trails_interval` and `rocket_trails_tran_pct` respectively
-- _Mouselook_ option for the _Stretch Short Skies_ setting, enabling sky stretching only with mouselook active
+- _Free Look_ option for the _Stretch Short Skies_ setting, enabling sky stretching only when free look is active
 - _Less Blinding Tints_ setting (by [@Spaicrab](https://github.com/Spaicrab))
 
 #### Intermission screen

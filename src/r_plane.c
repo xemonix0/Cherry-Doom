@@ -43,7 +43,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
-#include "g_game.h" // [Cherry] Option to stretch short skies only when mouselook is enabled
 #include "i_system.h"
 #include "i_video.h"
 #include "m_fixed.h"
@@ -610,7 +609,7 @@ static void DrawSkyTex(visplane_t *pl, sky_t *sky, skytex_t *skytex)
         }
 
         // [Nugget] Reworked sky stretching
-        if ((stretchsky || fov_stretchsky) && sky->stretchable)
+        if ((do_stretchsky || fov_stretchsky) && sky->stretchable)
         {
             R_StretchSky(skytex, &dc_texturemid, &dc_iscale);
         }

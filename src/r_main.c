@@ -2609,8 +2609,9 @@ void R_BindRenderVariables(void)
   BIND_NUM_GENERAL(extra_level_brightness, 0, -8, 8, "Level brightness"); // [Nugget] Broader light-level range
   BIND_NUM_GENERAL(fuzzmode, FUZZ_BLOCKY, FUZZ_BLOCKY, FUZZ_ORIGINAL,
     "Partial Invisibility (0 = Blocky; 1 = Refraction; 2 = Shadow, 3 = Original)");
-  // [Cherry] Option to stretch short skies only when mouselook is enabled
-  BIND_NUM_GENERAL(stretchsky, STRETCHSKY_OFF, STRETCHSKY_OFF, STRETCHSKY_MOUSELOOK,
+
+  // [Cherry] Option to stretch short skies only when free look is enabled
+  BIND_NUM_GENERAL(stretchsky, STRETCHSKY_OFF, STRETCHSKY_OFF, STRETCHSKY_FREELOOK,
                    "Stretch short skies for free look"); // [Nugget] Extended description
 
   // [Nugget] FOV-based sky stretching (CFG-only)

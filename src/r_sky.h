@@ -34,14 +34,15 @@
 
 // [Nugget] Removed unnecessary `SKYSTRETCH_HEIGHT` macro
 
-// [Cherry] Option to stretch short skies only when mouselook is enabled
+// [Cherry] Option to stretch short skies only when free look is enabled
 enum {
     STRETCHSKY_OFF,
     STRETCHSKY_ALWAYS,
-    STRETCHSKY_MOUSELOOK,
+    STRETCHSKY_FREELOOK,
 };
 
 extern int stretchsky;
+extern boolean do_stretchsky; // [Cherry]
 
 extern boolean fov_stretchsky; // [Nugget]
 

@@ -271,7 +271,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: Cherry Doom ${{ env.VERSION }}
-          bodyFile: CHANGELOG.md
+          bodyFile: RELEASE_NOTES.md
           allowUpdates: true
           artifacts: ${{ matrix.config.artifact-path }}
 

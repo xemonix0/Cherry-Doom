@@ -2902,6 +2902,7 @@ static const char *saveg_versions[] =
     [saveg_cherry100] = "Cherry 1.0.0",
     [saveg_cherry101] = "Cherry 1.0.1",
     [saveg_cherry200] = "Cherry 2.0.0",
+    [saveg_cherry210] = "Cherry 2.1.0",
 };
 
 static char *savename = NULL;
