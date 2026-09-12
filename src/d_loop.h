@@ -37,9 +37,6 @@ void NetUpdate(void);
 //  to notify of game exit
 void D_QuitNetGame(void);
 
-// [Cherry] Mute Inactive Window feature from International Doom
-extern boolean mute_inactive;
-
 //? how many ticks to run?
 void TryRunTics(void);
 

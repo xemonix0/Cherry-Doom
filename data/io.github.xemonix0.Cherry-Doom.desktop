@@ -1,8 +1,16 @@
 [Desktop Entry]
 Name=Cherry Doom
-Exec=cherry-doom
+Exec=cherry-doom %F
 Icon=cherry-doom
+TryExec=cherry-doom
 Type=Application
-Comment=Cherry Doom is a fork of Nugget Doom intended to add even more features.
+Comment=Cherry Doom is a Doom source port forked from Nugget Doom with even more additional features.
 Categories=Game;ActionGame;
+MimeType=application/x-doom-wad;
 Keywords=first;person;shooter;vanilla;doom;boom;mbf;woof;
+StartupWMClass=io.github.xemonix0.Cherry-Doom
+Actions=launch-setup
+
+[Desktop Action launch-setup]
+Name=Cherry Doom Setup
+Exec=cherry-doom -setup

@@ -11,6 +11,8 @@ This file contains the full list of changes for every version of Cherry Doom.
 
 ### Changed
 
+- **Merged changes from Nugget Doom releases [6.0.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-6.0.0) and [6.0.1](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-6.0.1)**, note:
+  - Removed `mute_inactive` in favor of Woof!'s `mute_unfocused` [^1]
 - Reverted all rearrangements made to Nugget Doom's menu items and moved Cherry Doom's display options into a separate tab
 - The level table now fits 16 rows on the screen instead of 15
 - The level table now displays partial totals on the summary page

@@ -30,6 +30,7 @@
 #include "doomdata.h"
 #include "doomdef.h"
 #include "doomtype.h"
+#include "f_wipe.h"
 
 struct mapentry_s;
 
@@ -40,13 +41,10 @@ struct mapentry_s;
 extern  boolean nomonsters; // checkparm of -nomonsters
 extern  boolean respawnparm;  // checkparm of -respawn
 extern  boolean fastparm; // checkparm of -fast
+extern  boolean pistolstart; // checkparm of -pistolstart
+extern  boolean coopspawns; // checkparm of -coop_spawns
 extern  boolean devparm;  // DEBUG: launched with -devparm
-
-// [Nugget]
-extern  boolean coopspawnsparm;
-
-// [Cherry]
-extern  boolean notrackingparm;
+extern  boolean notracking; // [Cherry] checkparm of -notracking
 
 extern  int screenblocks;     // killough 11/98
 
@@ -76,10 +74,12 @@ extern  boolean modifiedgame;
 
 // [Nugget] SSG in Doom 1
 extern boolean doom1_ssg;
-
 extern boolean have_ssg;
+
 #define ALLOW_SSG (gamemode == commercial \
-                   || (CRITICAL(have_ssg && doom1_ssg))) // [Nugget] SSG in Doom 1
+                   || (CRITICAL(doom1_ssg && have_ssg))) // [Nugget] SSG in Doom 1
+
+extern boolean pwad_help2;
 
 // compatibility with old engines (monster behavior, metrics, etc.)
 extern int compatibility, default_compatibility;          // killough 1/31/98
@@ -112,6 +112,7 @@ typedef enum {
   DV_BOOM    = 202,
   DV_MBF     = 203,
   DV_MBF21   = 221,
+  DV_ID24    = 224, // (2025-03-20) COMPATIBILITY NOT YET STABLE
   DV_UM      = 255,
 } demo_version_t;
 
@@ -122,7 +123,7 @@ extern demo_version_t demo_version;           // killough 7/19/98: Version of de
 
 #define demo_compatibility (demo_version < DV_BOOM200) /* killough 11/98: macroized */
 
-#define mbf21 (demo_version == DV_MBF21)
+#define mbf21 (demo_version >= DV_MBF21)
 
 // killough 7/19/98: whether monsters should fight against each other
 extern boolean monster_infighting, default_monster_infighting;
@@ -178,10 +179,6 @@ enum {
 extern int comp[COMP_TOTAL], default_comp[COMP_TOTAL];
 
 // -------------------------------------------
-// Language.
-extern  Language_t   language;
-
-// -------------------------------------------
 // Selected skill type, map etc.
 //
 
@@ -207,19 +204,26 @@ extern  int             timelimit;
 // Nightmare mode flag, single player.
 extern  boolean         respawnmonsters;
 
-// [Nugget] /-----------------------------------------------------------------
+// [Nugget] Custom skill flags /----------------------------------------------
 
-enum { THINGSPAWNS_EASY, THINGSPAWNS_NORMAL, THINGSPAWNS_HARD };
-extern  int             thingspawns;
+enum {
+  THINGSPAWNS_BABY,
+  THINGSPAWNS_EASY,
+  THINGSPAWNS_MEDIUM,
+  THINGSPAWNS_HARD,
+  THINGSPAWNS_NIGHTMARE
+};
 
-extern  boolean         realnomonsters;
-extern  boolean         doubleammo;
-extern  boolean         halfdamage;
-extern  boolean         slowbrain;
-extern  boolean         fastmonsters;
-extern  boolean         aggressive;
-extern  boolean         x2monsters;
-extern  boolean         notracking; // [Cherry]
+extern int     thingspawns;
+extern boolean realnomonsters;
+extern boolean doubleammo;
+extern boolean halfplayerdamage;
+extern boolean slowbrain;
+extern boolean fastmonsters;
+extern boolean aggromonsters;
+extern boolean x2monsters;
+
+// Removed helper dogs from custom skill
 
 // [Nugget] -----------------------------------------------------------------/
 
@@ -232,8 +236,6 @@ extern boolean D_CheckNetConnect(void);
 // Flag: true only if started as net deathmatch.
 // An enum might handle altdeath/cooperative better.
 extern int deathmatch;
-
-extern boolean coop_spawns;
 
 // ------------------------------------------
 // Internal parameters for sound rendering.
@@ -249,26 +251,11 @@ extern boolean coop_spawns;
 extern int snd_SfxVolume;      // maximum volume for sound
 extern int snd_MusicVolume;    // maximum volume for music
 
-extern boolean volume_needs_update;
-
 // -------------------------
 // Status flags for refresh.
 //
 
-// Depending on view size - no status bar?
-// Note that there is no way to disable the
-//  status bar explicitely.
-extern  boolean statusbaractive;
-
-// [Nugget]
-typedef enum automapmode_e {
-  AM_FORCEOFF = -1,
-  AM_OFF,
-  AM_FULL,
-  AM_MINI, // Minimap
-} automapmode_t;
-
-extern  automapmode_t automapactive; // In AutoMap mode?
+extern  boolean automapactive; // In AutoMap mode?
 
 typedef enum
 {
@@ -279,11 +266,11 @@ typedef enum
 
 extern  overlay_t automapoverlay;
 
-// [Nugget] Minimap support
-#define automap_on (automapactive == AM_FULL && !automapoverlay)
-#define automap_off (automapactive != AM_FULL || automapoverlay)
+#define automap_on (automapactive && !automapoverlay)
+#define automap_off (!automapactive || automapoverlay)
 
 extern  boolean menuactive;    // Menu overlayed?
+extern  boolean menu_pause_demos;
 extern  int     paused;        // Game Pause?
 extern  boolean viewactive;
 extern  boolean nodrawers;
@@ -316,7 +303,8 @@ extern milestone_t complete_milestones;
 
 // Timer, for scores.
 extern  int levelstarttic;  // gametic at level start
-extern  int basetic;    // killough 9/29/98: levelstarttic, adjusted
+extern  int boom_basetic;    // killough 9/29/98: levelstarttic, adjusted
+extern  int true_basetic;
 extern  int leveltime;  // tics in game play for par
 extern  int oldleveltime;
 extern  int totalleveltimes; // [FG] total time for all completed levels
@@ -358,8 +346,7 @@ extern  int       playback_skiptics;
 
 extern  boolean   frozen_mode;
 
-extern  boolean   strictmode, default_strictmode;
-extern  boolean   force_strictmode;
+extern  boolean   strictmode;
 
 #define STRICTMODE(x) (strictmode ? 0 : (x))
 
@@ -414,6 +401,8 @@ extern  boolean precache;
 // wipegamestate can be set to -1
 //  to force a wipe on the next draw
 extern  gamestate_t     wipegamestate;
+extern  wipefx_t        screen_wipe_internal;
+extern  wipefx_t        screen_wipe;
 
 // debug flag to cancel adaptiveness
 extern  boolean         singletics;
@@ -475,6 +464,9 @@ extern boolean help_friends, default_help_friends;
 
 extern boolean hide_weapon;
 
+// haleyjd 9/22/99
+extern int helper_type; // in P_SpawnMapThing to substitute helper thing
+
 // [FG] centered weapon sprite
 extern int center_weapon;
 
@@ -505,7 +497,7 @@ typedef enum {
 void doomprintf(player_t *player, msg_category_t category,
               const char *, ...) PRINTF_ATTR(3, 4);
 #define displaymsg(...) doomprintf(NULL, MESSAGES_NONE, __VA_ARGS__)
-#define pickupmsg(player, ...) doomprintf(player, MESSAGES_PICKUP, __VA_ARGS__)
+#define pickupmsg(player, ...) doomprintf(player, MESSAGES_PICKUP, "%s", __VA_ARGS__)
 #define togglemsg(...) doomprintf(NULL, MESSAGES_TOGGLE, __VA_ARGS__)
 
 #endif

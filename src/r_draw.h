@@ -23,8 +23,12 @@
 #include "doomtype.h"
 #include "m_fixed.h"
 
-extern lighttable_t *dc_colormap[2];
-extern lighttable32_t *dc_colormap32[2];
+extern const lighttable_t *dc_colormap[2];
+extern const lighttable32_t *dc_colormap32[2];
+
+// [Nugget] Dithered lighting
+extern const lighttable_t *dc_nextcolormap[2];
+extern const lighttable32_t *dc_nextcolormap32[2];
 
 extern int      dc_x;
 extern int      dc_yl;
@@ -75,17 +79,22 @@ void R_DrawSkyColumnMasked(void);
 //  Green/Red/Blue/Indigo shirts.
 
 extern void (*R_DrawTranslatedColumn)(void);
+extern void (*R_DrawTRTLColumn)(void);
 
-extern lighttable_t *ds_colormap[2];
-extern lighttable32_t *ds_colormap32[2];
+extern const lighttable_t *ds_colormap[2];
+extern const lighttable32_t *ds_colormap32[2];
+
+// [Nugget] Dithered lighting
+extern const lighttable_t *ds_nextcolormap[2];
+extern const lighttable32_t *ds_nextcolormap32[2];
 
 extern int     ds_y;
 extern int     ds_x1;
 extern int     ds_x2;
-extern fixed_t ds_xfrac;
-extern fixed_t ds_yfrac;
-extern fixed_t ds_xstep;
-extern fixed_t ds_ystep;
+extern uint32_t ds_xfrac;
+extern uint32_t ds_yfrac;
+extern uint32_t ds_xstep;
+extern uint32_t ds_ystep;
 
 // start of a 64*64 tile image
 extern byte *ds_source;              
@@ -98,13 +107,35 @@ extern void (*R_DrawSpan)(void);
 
 extern void (*R_DrawSpanWithRadialFog)(void); // [Nugget] Radial fog
 
+// [Nugget] /=================================================================
+
+boolean R_InitDrawFunctionsPending(void);
+void R_DeferredInitDrawFunctions(void);
+
+// Dithered lighting ---------------------------------------------------------
+
+#define NUM_DITHER_LEVELS_BITS 3
+#define NUM_DITHER_LEVELS (1 << NUM_DITHER_LEVELS_BITS)
+
+#define DITHER_PATTERN_WIDTH  4
+#define DITHER_PATTERN_HEIGHT 4
+
+#define DITHER_PATTERN_WIDTH_MASK  (DITHER_PATTERN_WIDTH  - 1)
+#define DITHER_PATTERN_HEIGHT_MASK (DITHER_PATTERN_HEIGHT - 1)
+
+extern const byte dither_patterns[NUM_DITHER_LEVELS][DITHER_PATTERN_HEIGHT][DITHER_PATTERN_WIDTH];
+extern const byte (*dither_pattern)[DITHER_PATTERN_WIDTH];
+
+void R_SetDitherPattern(int index);
+
+// [Nugget] =================================================================/
+
 void R_InitBuffer(void);
 
 // Initialize color translation tables, for player rendering etc.
 void R_InitTranslationTables(void);
 
 // Rendering function.
-void R_VideoErase(int x, int y, int w, int h);
 void R_FillBackScreen(void);
 void R_DrawBorder(int x, int y, int w, int h);
 
@@ -112,8 +143,6 @@ void R_DrawBorder(int x, int y, int w, int h);
 void R_DrawViewBorder(void);
 
 void R_InitBufferRes(void);
-
-void R_InitDrawFunctions(void);
 
 void R_InitDrawColorFunctions(void);
 

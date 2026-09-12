@@ -20,7 +20,6 @@
 #include <string.h>
 
 #include "d_iwad.h"
-#include "d_main.h"
 #include "d_think.h"
 #include "doomdef.h"
 #include "doomstat.h"
@@ -534,9 +533,9 @@ static inline int CustomToVanillaSkill(void)
 {
     return (x2monsters ? sk_none
             : (thingspawns == THINGSPAWNS_EASY)
-                ? (doubleammo && halfdamage) ? sk_baby : sk_easy
+                ? (doubleammo && halfplayerdamage) ? sk_baby : sk_easy
             : (thingspawns == THINGSPAWNS_HARD)
-                ? (doubleammo && fastmonsters && respawnmonsters && aggressive)
+                ? (doubleammo && fastmonsters && respawnmonsters && aggromonsters)
                       ? sk_nightmare
                       : sk_hard
                 : sk_medium)

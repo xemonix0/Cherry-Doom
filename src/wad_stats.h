@@ -16,6 +16,7 @@
 #ifndef __WAD_STATS__
 #define __WAD_STATS__
 
+#include "doomstat.h"
 #include "doomtype.h"
 #include "st_widgets.h"
 
@@ -51,7 +52,7 @@ extern boolean lt_track_continuous;
 extern boolean lt_reset_on_higher_skill;
 extern statsformat_t lt_stats_format;
 
-#define TRACKING_WAD_STATS (lt_enable_tracking && !notrackingparm)
+#define TRACKING_WAD_STATS (lt_enable_tracking && !notracking)
 
 void WadStats_Init(void);
 void WadStats_Save(void);

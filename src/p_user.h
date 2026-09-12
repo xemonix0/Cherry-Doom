@@ -54,12 +54,13 @@ typedef enum
 extern death_use_state_t death_use_state;
 
 boolean P_EvaluateItemOwned(itemtype_t item, struct player_s *player);
+int P_GetPowerDuration(powertype_t power);
 
 extern boolean onground; // whether player is on ground or in air
 
 // [Nugget] ==================================================================
 
-extern boolean jump_crouch; // Jumping/crouching
+extern boolean jump_crouch;
 extern boolean breathing;
 
 void P_SetFlinch(player_t *const player, int pitch); // Flinching
