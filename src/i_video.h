@@ -66,7 +66,6 @@ extern boolean dynamic_resolution;
 extern boolean uncapped;
 extern int fps;
 extern int custom_fov;    // Custom FOV set by the player.
-extern boolean window_focused; // [Cherry] Made extern
 extern boolean resetneeded;
 extern boolean setrefreshneeded;
 extern boolean toggle_fullscreen;

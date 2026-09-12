@@ -29,7 +29,6 @@
 #include "m_io.h"
 #include "m_misc.h"
 #include "z_zone.h"
-#include "wi_stuff.h" // [Cherry] ws_more_widgets
 
 #include "config.h"
 #ifdef HAVE_GETPWUID
@@ -749,8 +748,6 @@ int M_ReadFile(char const *name, byte **buffer)
 int M_ReadFileToString(char const *name, char **buffer)
 {
     FILE *fp;
-
-    errno = 0;
 
     if ((fp = M_fopen(name, "rb")))
     {
