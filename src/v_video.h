@@ -394,6 +394,11 @@ void V_DrawBackground(const char *patchname);
 
 void V_ShadeScreen(int level); // [Nugget] Parameterized
 
+// [Cherry] Smooth menu/automap shade
+extern int smooth_screen_shade;
+void V_ScreenShadeFadeOut(void);
+void V_ResetScreenShade(void);
+
 extern void (*V_ShadeRect)(int x, int y, int width, int height, int level); // [Nugget] Parameterized
 
 // [FG] colored blood and gibs

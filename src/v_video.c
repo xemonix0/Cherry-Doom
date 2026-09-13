@@ -50,7 +50,7 @@
 #include "st_stuff.h"
 #include "st_widgets.h"
 
-// [Cherry] Screen shade fade-out
+// [Cherry] Smooth menu/automap shade
 #include "mn_menu.h"
 
 pixel_t *I_VideoBuffer = NULL;
@@ -1582,9 +1582,41 @@ static void V_ShadeRect32(int x, int y, int width, int height, const int level)
     }
 }
 
+// [Cherry] Smooth menu/automap shade /----------------------------------------
+
+static int screen_shade = 0;
+boolean smooth_screen_shade = true;
+
+void V_ScreenShadeFadeOut(void)
+{
+    if (smooth_screen_shade && screen_shade && MN_DoMenuFadeOut()
+        && !(automapactive && automapoverlay == AM_OVERLAY_DARK))
+    {
+        V_ShadeScreen(0);
+    }
+}
+
+void V_ResetScreenShade(void)
+{
+    smooth_screen_shade = false;
+    screen_shade = 0;
+}
+
+// [Cherry] ------------------------------------------------------------------/
+
 void V_ShadeScreen(const int level) // [Nugget] Parameterized
 {
-    V_ShadeRect(0, 0, video.unscaledw, SCREENHEIGHT, level);
+    // [Cherry] Smooth menu/automap shade
+    if (!smooth_screen_shade)
+    {
+        screen_shade = level;
+    }
+    else if (screen_shade != level)
+    {
+        screen_shade += (screen_shade < level) ? 1 : -1;
+    }
+
+    V_ShadeRect(0, 0, video.unscaledw, SCREENHEIGHT, screen_shade);
 }
 
 //
