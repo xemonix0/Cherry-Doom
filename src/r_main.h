@@ -69,6 +69,7 @@ void R_BindRenderVariables(void);
 
 // Lighting constants.
 
+// [Nugget] Variable
 extern int LIGHTLEVELS;
 extern int LIGHTSEGSHIFT;
 extern int LIGHTBRIGHT;
@@ -78,15 +79,19 @@ extern int MAXLIGHTZ;
 extern int LIGHTZSHIFT;
 
 // killough 3/20/98: Allow colormaps to be dynamic (e.g. underwater)
-extern cmapoffset_t *(*scalelight);
-extern cmapoffset_t *(*zlight);
-extern cmapoffset_t *(*zlight_frac); // [Cherry] High precision values for radial fog dithering
 extern int numcolormaps;    // killough 4/4/98: dynamic number of maps
+
+extern int       ** scalelightoffset;
+extern int       ** zlightoffset;
+extern int const *  planezlightoffset;
+extern int const *  walllightoffset;
+
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
-extern int          extralight;
-extern lighttable_t *fixedcolormap;
-extern lighttable32_t *fixedcolormap32;
+extern int extralight;
+extern const lighttable_t *fixedcolormap;
+extern const lighttable32_t *fixedcolormap32;
+extern int fixedcolormapoffset;
 
 // Number of diminishing brightness levels.
 // There a 0-31, i.e. 32 LUT in the COLORMAP lump.
@@ -103,7 +108,9 @@ extern void (*colfunc)(void);
 // Utility functions.
 //
 
-int R_PointOnSide(fixed_t x, fixed_t y, struct node_s *node);
+extern int (*R_PointOnSide)(fixed_t x, fixed_t y, struct node_s *node);
+int R_PointOnSide_Classic(fixed_t x, fixed_t y, struct node_s *node);
+int R_PointOnSide_Precise(fixed_t x, fixed_t y, struct node_s *node);
 int R_PointOnSegSide(fixed_t x, fixed_t y, struct seg_s *line);
 angle_t R_PointToAngle(fixed_t x, fixed_t y);
 angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
@@ -123,6 +130,14 @@ void R_SetViewSize(int blocks);              // Called by M_Responder.
 
 // CVARs ---------------------------------------------------------------------
 
+typedef enum skyprojection_s {
+  SKYPROJ_VANILLA,
+  SKYPROJ_LINEAR,
+  SKYPROJ_CYLINDRICAL,
+
+  NUM_SKYPROJS
+} skyprojection_t;
+
 typedef enum spriteshadows_s {
   SPRITESHADOWS_OFF,
   SPRITESHADOWS_SIMPLE,
@@ -141,15 +156,20 @@ typedef enum thinglighting_s {
 
 typedef enum fakecontrast_s {
   FAKECONTRAST_OFF,
-  FAKECONTRAST_SMOOTH,
   FAKECONTRAST_VANILLA,
+  FAKECONTRAST_SMOOTH,
 
   NUM_FAKECONTRAST
 } fakecontrast_t;
 
+extern skyprojection_t sky_projection;
+
 extern boolean vertical_lockon;
+extern int vertical_lockon_speed_pct;
 
 extern boolean allow_hires_graphics;
+extern boolean dithered_lighting;
+extern boolean allow_truecolor_dithering;
 extern spriteshadows_t sprite_shadows;
 extern int sprite_shadows_tran_pct;
 extern thinglighting_t thing_lighting_mode;
@@ -171,8 +191,22 @@ extern boolean have_crouch_sprites;
 
 fixed_t R_GetNughudViewPitch(void);
 boolean R_SpriteShadowsOn(void);
-int R_GetLightLevelInPoint(fixed_t x, fixed_t y, boolean force_mbf);
-int R_GetLightLevelInSector(struct sector_s *sector, const boolean force_mbf);
+
+void R_GetLightLevelAndTintInPoint(
+  fixed_t x,
+  fixed_t y,
+  boolean force_mbf,
+  int *const lightlevel_p,
+  int *const tint_p
+);
+
+void R_GetLightLevelAndTintInSector(
+  struct sector_s *sector,
+  boolean force_mbf,
+  int *const lightlevel_p,
+  int *const tint_p
+);
+
 const struct mobj_s *R_POVMobj(void);
 
 #define PSPR_INVIS_TRANSLUCENCY 50
@@ -196,16 +230,35 @@ typedef enum lightingmode_e {
 
 extern lightingmode_t lighting_mode;
 
+extern int num_colormap_rows;
+
 boolean R_InitLightTablesPending(void);
 void R_DeferredInitLightTables(void);
+
+// Dithered lighting ---------------------------------------------------------
+
+extern fixed_t dc_rawlightindex;
+
+extern int LIGHTSCALEDITHERSHIFT;
+extern byte **scalelight_ditherlevel;
+extern int **scalelight_nextcolormap;
+
+extern int LIGHTZDITHERSHIFT;
+extern byte **zlight_ditherlevel;
+extern int **zlight_nextcolormap;
 
 // Radial fog ----------------------------------------------------------------
 
 extern int light_distance_shift_bits;
 
-extern cmapoffset_t *planezlight;
-extern cmapoffset_t *planezlight_frac; // [Cherry] High precision values for radial fog dithering
-extern uint16_t **planedistlight, *spandistlight;
+extern uint16_t       ** planedistlight;
+extern uint16_t const  * spandistlight;
+
+// Dithered lighting
+extern byte const *planezlight_ditherlevel;
+extern int const *planezlight_nextcolormap;
+extern uint16_t       ** planedistlight_ditherlevel;
+extern uint16_t const  * spandistlight_ditherlevel;
 
 extern boolean do_radial_fog;
 
@@ -248,17 +301,19 @@ extern void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
 
 // Chasecam ------------------------------------------------------------------
 
-enum {
+typedef enum chasecammode_s {
   CHASECAMMODE_OFF,
   CHASECAMMODE_BACK,
   CHASECAMMODE_FRONT,
 
   NUM_CHASECAMMODES
-}; extern int chasecam_mode;
+} chasecammode_t;
+
+extern chasecammode_t chasecam_mode;
 extern boolean chasecam_crosshair;
 
 extern boolean R_ChasecamOn(void);
-extern void    R_SetChasecamHit(const boolean value);
+extern void    R_SetChasecamHit(boolean value);
 extern void    R_UpdateChasecam(fixed_t x, fixed_t y, fixed_t z);
 
 // Freecam -------------------------------------------------------------------
@@ -267,51 +322,35 @@ typedef enum freecammode_s {
   FREECAM_OFF,
   FREECAM_CAM,
   FREECAM_PLAYER,
-  
-  NUMFREECAMMODES
+
+  NUM_FREECAMMODES
 } freecammode_t;
 
-extern boolean       R_FreecamOn(void);
-extern void          R_SetFreecamOn(const boolean value);
-extern freecammode_t R_GetFreecamMode(void);
-extern freecammode_t R_CycleFreecamMode(void);
-extern angle_t       R_GetFreecamAngle(void);
-extern void          R_ResetFreecam(const boolean newmap);
-extern void          R_MoveFreecam(fixed_t x, fixed_t y, fixed_t z);
+boolean       R_FreecamOn(void);
+void          R_ToggleFreecam(void);
+void          R_DisableFreecamIfStrictMode(void);
+freecammode_t R_GetFreecamMode(void);
+freecammode_t R_CycleFreecamMode(void);
+angle_t       R_GetFreecamAngle(void);
+void          R_ResetFreecam(const boolean newmap);
+void          R_MoveFreecam(fixed_t x, fixed_t y, fixed_t z);
 
-extern void                 R_UpdateFreecamMobj(struct mobj_s *const mobj);
-extern const struct mobj_s *R_GetFreecamMobj(void);
+void                 R_UpdateFreecamMobj(struct mobj_s *const mobj);
+const struct mobj_s *R_GetFreecamMobj(void);
 
-extern void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
-                            angle_t ticangle, fixed_t pitch, boolean center, boolean lock);
+void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
+                     angle_t ticangle, fixed_t pitch, boolean center, boolean lock);
 
 // [Nugget] =================================================================/
 
-// [Cherry] /=================================================================
-
+// [Cherry] CVARs
 extern int rocket_trails_tran_pct;
-
-// Dithered lighting from Doom Retro
-
-#define DITHERSIZE 4
-#define DITHERMASK (DITHERSIZE - 1)
-
-extern const byte dithermatrix[DITHERSIZE][DITHERSIZE];
-
-#define dither(x, y, threshold) (dithermatrix[(y) & DITHERMASK] \
-                                    [((x) + viewwindowx - video.deltaw + !video.deltaw) & DITHERMASK] < (threshold))
-
-extern boolean dithered_lighting;
-extern boolean do_dithered_lighting;
-extern void (*colfuncdithered)(void);
-
-// [Cherry] =================================================================/
 
 void R_InitLightTables(void);                // killough 8/9/98
 
-// [Nugget] Made function pointer, added X parameter
-// [Cherry] Added dither_threshold output parameter
-extern int (*R_GetLightIndex)(fixed_t scale, int x, int *dither_threshold);
+// [Nugget]
+extern int (*R_GetLightIndex)(fixed_t scale, int x); // Made function pointer, added X parameter
+int R_GetLightIndexVanilla(fixed_t scale, int x);
 
 extern boolean setsizeneeded;
 void R_ExecuteSetViewSize(void);
@@ -335,16 +374,16 @@ inline static angle_t LerpAngle(angle_t oangle, angle_t nangle)
     else if (nangle > oangle)
     {
         if (nangle - oangle < ANG270)
-            return oangle + (angle_t)((nangle - oangle) * FIXED2DOUBLE(fractionaltic));
+            return oangle + (angle_t)((nangle - oangle) * FixedToDouble(fractionaltic));
         else // Wrapped around
-            return oangle - (angle_t)((oangle - nangle) * FIXED2DOUBLE(fractionaltic));
+            return oangle - (angle_t)((oangle - nangle) * FixedToDouble(fractionaltic));
     }
     else // nangle < oangle
     {
         if (oangle - nangle < ANG270)
-            return oangle - (angle_t)((oangle - nangle) * FIXED2DOUBLE(fractionaltic));
+            return oangle - (angle_t)((oangle - nangle) * FixedToDouble(fractionaltic));
         else // Wrapped around
-            return oangle + (angle_t)((nangle - oangle) * FIXED2DOUBLE(fractionaltic));
+            return oangle + (angle_t)((nangle - oangle) * FixedToDouble(fractionaltic));
     }
 }
 

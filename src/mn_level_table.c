@@ -19,7 +19,6 @@
 #include <string.h>
 
 #include "doomdef.h"
-#include "doomstat.h"
 #include "doomtype.h"
 #include "m_array.h"
 #include "m_misc.h"
@@ -152,11 +151,13 @@ static formatted_value_t FormatValue_MapsCompleted(const int a, const int b)
     return value;
 }
 
+static const char *skill_names[] = { "", "ITYTD", "HNTR", "HMP", "UV", "NM" };
+
 static formatted_value_t FormatValue_Skill(const boolean done, const int skill)
 {
     char *text = NULL;
 
-    if (done) M_StringPrintF(&text, "%s", default_skill_strings[skill]);
+    if (done) M_StringPrintF(&text, "%s", skill_names[skill]);
     else text = M_StringDuplicate("-");
 
     const formatted_value_t value = {text, done && skill >= sk_hard + 1};

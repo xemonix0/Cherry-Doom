@@ -1,6 +1,8 @@
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+//  Copyright (C) 2025 by
+//  Fabian Greffrath, Roman Fomin, Guilherme Miranda
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -21,6 +23,7 @@
 #define __R_SKY__
 
 #include "doomtype.h"
+#include "r_defs.h"
 #include "r_skydefs.h"
 
 // SKY, store the number for name.
@@ -31,36 +34,39 @@
 
 // [Nugget] Removed unnecessary `SKYSTRETCH_HEIGHT` macro
 
-// [Cherry] Option to stretch short skies only when mouselook is enabled
+// [Cherry] Option to stretch short skies only when free look is enabled
 enum {
     STRETCHSKY_OFF,
     STRETCHSKY_ALWAYS,
-    STRETCHSKY_MOUSELOOK,
+    STRETCHSKY_FREELOOK,
 };
 
 extern int stretchsky;
+extern boolean do_stretchsky; // [Cherry]
 
 extern boolean fov_stretchsky; // [Nugget]
 
+// [Nugget] Reworked sky stretching
+void R_StretchSky(skytex_t *skytex, fixed_t *skymid_p, fixed_t *skyscaley_p);
+
 // [FG] linear horizontal sky scrolling
-extern boolean linearsky;
+// [Nugget] Sky projection: replaced `linearsky`
 
-extern int skytexture;
-extern int skytexturemid;
-
-extern sky_t *sky;
+extern sky_t *levelskies;
+void R_ClearLevelskies(void);
+skyindex_t R_AddLevelsky(int texture);
+skyindex_t R_AddLevelskyFromLine(side_t *side);
+sky_t *R_GetLevelsky(skyindex_t index);
+void R_UpdateStretchSkies(void);
 
 // Called whenever the view size changes.
 void R_InitSkyMap(void);
 
+void R_InitSkyDefs(void);
+
 byte R_GetSkyColor(int texturenum);
 
-void R_UpdateSky(void);
-
-#define FIRE_WIDTH     128
-#define FIRE_HEIGHT    450 // [Nugget] Increased
-
-byte *R_GetFireColumn(int col);
+void R_UpdateSkies(void);
 
 #endif
 

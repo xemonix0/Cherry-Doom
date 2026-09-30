@@ -1,6 +1,7 @@
 //
 //  Copyright (C) 1999 by
 //  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+//  Copyright (C) 2020 by Ethan Watson
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -33,7 +34,6 @@
 #include "i_video.h"
 #include "p_mobj.h"
 #include "p_pspr.h"
-#include "p_setup.h" // P_SegLengths
 #include "r_bsp.h"
 #include "r_data.h"
 #include "r_defs.h"
@@ -59,8 +59,8 @@
 #include "m_nughud.h"
 #include "m_random.h"
 #include "p_map.h"
+#include "p_setup.h"
 #include "p_user.h"
-#include "s_sound.h"
 #include "wi_stuff.h"
 
 // Fineangles in the SCREENWIDTH wide window.
@@ -72,8 +72,9 @@
 
 int viewangleoffset;
 int validcount = 1;         // increment every time a check is made
-lighttable_t *fixedcolormap;
-lighttable32_t *fixedcolormap32 = NULL;
+const lighttable_t *fixedcolormap;
+const lighttable32_t *fixedcolormap32 = NULL;
+int fixedcolormapoffset;
 int      centerx, centery;
 fixed_t  centerxfrac, centeryfrac;
 fixed_t  projection;
@@ -113,32 +114,21 @@ angle_t *xtoviewangle = NULL;   // killough 2/8/98
 // [FG] linear horizontal sky scrolling
 angle_t *linearskyangle = NULL;
 
-int LIGHTLEVELS;
-int LIGHTSEGSHIFT;
-int LIGHTBRIGHT;
-int MAXLIGHTSCALE;
-int LIGHTSCALESHIFT;
-int MAXLIGHTZ;
-int LIGHTZSHIFT;
-
 // killough 3/20/98: Support dynamic colormaps, e.g. deep water
 // killough 4/4/98: support dynamic number of them as well
 
 int numcolormaps;
-cmapoffset_t **(*c_scalelight) = NULL;
-cmapoffset_t **(*c_zlight) = NULL;
-cmapoffset_t **(*c_zlight_frac) = NULL; // [Cherry] High precision values for radial fog dithering
-cmapoffset_t *(*scalelight) = NULL;
-cmapoffset_t *scalelightfixed = NULL;
-cmapoffset_t *(*zlight) = NULL;
-cmapoffset_t *(*zlight_frac) = NULL; // [Cherry] High precision values for radial fog dithering
 lighttable_t *fullcolormap;
 lighttable_t **colormaps;
 
 lighttable32_t ***pal_colormaps = NULL;
 lighttable32_t *fullcolormap32 = NULL;
 lighttable32_t **colormaps32 = NULL;
-cmapoffset_t fixedcolormapoffset = 0;
+
+int       ** scalelightoffset = NULL;
+int       ** zlightoffset = NULL;
+int const  * planezlightoffset = NULL;
+int const  * walllightoffset = NULL;
 
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
@@ -163,39 +153,66 @@ boolean R_SpriteShadowsOn(void)
   return sprite_shadows_on;
 }
 
-int R_GetLightLevelInPoint(
+void R_GetLightLevelAndTintInPoint(
   const fixed_t x,
   const fixed_t y,
-  const boolean force_mbf
+  const boolean force_mbf,
+  int *const lightlevel_p,
+  int *const tint_p
 ) {
-  return R_GetLightLevelInSector(R_PointInSubsector(x, y)->sector, force_mbf);
+  sector_t *const sector = R_PointInSubsector(x, y)->sector;
+  R_GetLightLevelAndTintInSector(sector, force_mbf, lightlevel_p, tint_p);
 }
 
-int R_GetLightLevelInSector(
+void R_GetLightLevelAndTintInSector(
   sector_t *const sector,
-  const boolean force_mbf
+  const boolean force_mbf,
+  int *const lightlevel_p,
+  int *const tint_p
 ) {
-  if (demo_version > DV_BOOM || force_mbf)
+  if (lightlevel_p)
   {
-    sector_t tempsector;
-    int floorlightlevel, ceilinglightlevel;
+    int lightlevel;
 
-    R_FakeFlat(sector, &tempsector, &floorlightlevel, &ceilinglightlevel, false);
+    if (demo_version >= DV_MBF || force_mbf)
+    {
+      sector_t tempsector;
+      int floorlightlevel, ceilinglightlevel;
 
-    return (floorlightlevel + ceilinglightlevel) >> 1;
+      R_FakeFlat(sector, &tempsector, &floorlightlevel, &ceilinglightlevel, false);
+
+      lightlevel = (floorlightlevel + ceilinglightlevel) / 2;
+    }
+    else { lightlevel = sector->lightlevel; }
+
+    *lightlevel_p = lightlevel;
   }
 
-  return sector->lightlevel;
-}
+  if (tint_p)
+  {
+    int tint;
 
-// True color
-static int num_colormap_rows;
+    if (sector->floorlightsec >= 0)
+    {
+      tint = sectors[sector->floorlightsec].tint;
+    }
+    else { tint = sector->tint; }
+
+    *tint_p = tint;
+  }
+}
 
 // CVARs ---------------------------------------------------------------------
 
+skyprojection_t sky_projection;
+
 boolean vertical_lockon;
+int vertical_lockon_speed_pct;
 
 boolean allow_hires_graphics;
+static boolean cvar_dithered_lighting;
+boolean dithered_lighting;
+boolean allow_truecolor_dithering;
 spriteshadows_t sprite_shadows;
 int sprite_shadows_tran_pct;
 thinglighting_t thing_lighting_mode;
@@ -238,10 +255,10 @@ static void ApplyBlockPostProcess(void)
       for (y2 = 0;  y2 < (first_y ? first_y : MIN(ph, (viewwindowy + viewheight) - y));  y2++)
       {
         memset(
-          dest + ((y + y2) * video.pitch) + x,
+          dest + ((y + y2) * video.width) + x,
           dest[
             ( (first_y ? viewwindowy + first_y
-                       : y + ((y < viewwindowy + viewheight/2) ? ph-1 : 0)) * video.pitch)
+                       : y + ((y < viewwindowy + viewheight/2) ? ph-1 : 0)) * video.width)
             + (first_x ? viewwindowx + first_x
                        : x + ((x < viewwindowx + viewwidth/2)  ? pw-1 : 0))
           ],
@@ -287,10 +304,10 @@ static void ApplyBlockPostProcess32(void)
       for (y2 = 0;  y2 < (first_y ? first_y : MIN(ph, (viewwindowy + viewheight) - y));  y2++)
       {
         V_RGBSet(
-          dest + ((y + y2) * video.pitch) + x,
+          dest + ((y + y2) * video.width) + x,
           dest[
             ( (first_y ? viewwindowy + first_y
-                       : y + ((y < viewwindowy + viewheight/2) ? ph-1 : 0)) * video.pitch)
+                       : y + ((y < viewwindowy + viewheight/2) ? ph-1 : 0)) * video.width)
             + (first_x ? viewwindowx + first_x
                        : x + ((x < viewwindowx + viewwidth/2)  ? pw-1 : 0))
           ],
@@ -319,6 +336,14 @@ static void ApplyBlockPostProcess32(void)
 
 lightingmode_t lighting_mode;
 
+int LIGHTLEVELS;
+int LIGHTSEGSHIFT;
+int LIGHTBRIGHT;
+int MAXLIGHTSCALE;
+int LIGHTSCALESHIFT;
+int MAXLIGHTZ;
+int LIGHTZSHIFT;
+
 static boolean init_light_tables = false;
 
 boolean R_InitLightTablesPending(void)
@@ -331,38 +356,55 @@ void R_DeferredInitLightTables(void)
   init_light_tables = true;
 }
 
-// Radial fog ----------------------------------------------------------------
+int num_colormap_rows = NUMCOLORMAPS;
 
-// [Cherry] Added dither_threshold output parameter
-static int R_GetLightIndexVanilla(fixed_t scale, int x, int *dither_threshold);
+// Dithered lighting ---------------------------------------------------------
+
+fixed_t dc_rawlightindex;
+
+int LIGHTSCALEDITHERSHIFT;
+static int MAXLIGHTSCALEDITHER;
+byte **scalelight_ditherlevel = NULL;
+int **scalelight_nextcolormap = NULL;
+
+int LIGHTZDITHERSHIFT;
+static int MAXLIGHTZDITHER;
+byte **zlight_ditherlevel = NULL;
+int **zlight_nextcolormap = NULL;
+
+// Radial fog ----------------------------------------------------------------
 
 #define RADFOG_MULT 1.414213562 // Square root of 2
 
-// [Cherry] Added dither_threshold output parameter
-static int R_GetLightIndexRadFog(fixed_t scale, const int x, int *dither_threshold)
+static int R_GetLightIndexRadFog(fixed_t scale, const int x)
 {
   scale = FixedMul(scale, finecosine[xtoviewangle[x] >> ANGLETOFINESHIFT]) * RADFOG_MULT;
 
-  const fixed_t raw = (int64_t)scale * (160 << FRACBITS) / lightfocallength;
-  const int index = raw >> LIGHTSCALESHIFT;
+  // Dithered lighting
+  dc_rawlightindex = ((int64_t) scale * (160 << FRACBITS) / lightfocallength);
 
-  // [Cherry] Calculate dithering threshold
-  if (do_dithered_lighting && dither_threshold)
-  {
-    *dither_threshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
-      : (raw & ((1 << (LIGHTSCALESHIFT + 1)) - 1)) >> (LIGHTSCALESHIFT - 7);
-  }
+  const int index = dc_rawlightindex >> LIGHTSCALESHIFT;
 
-  return BETWEEN(0, MAXLIGHTSCALE - 1, index);
+  return clampi(index, 0, MAXLIGHTSCALE - 1);
 }
 
-// [Cherry] Added dither_threshold output parameter
-int (*R_GetLightIndex)(fixed_t scale, int x, int *dither_threshold) = R_GetLightIndexVanilla;
+int (*R_GetLightIndex)(fixed_t scale, int x) = R_GetLightIndexVanilla;
 
 int light_distance_shift_bits;
 
-uint16_t ** planedistlight = NULL,
-          *  spandistlight = NULL;
+uint16_t       ** planedistlight = NULL;
+uint16_t const  * spandistlight = NULL;
+
+static float *plane_radfog_multipliers = NULL;
+
+// Dithered lighting /--------------------------------------------------------
+
+uint16_t       ** planedistlight_ditherlevel = NULL;
+uint16_t const  * spandistlight_ditherlevel = NULL;
+
+static float *plane_radfog_dither_multipliers = NULL;
+
+// --------------------------------------------------------------------------/
 
 boolean do_radial_fog = false;
 
@@ -395,9 +437,7 @@ static void ThreadInitDistLightTables(void)
   I_WorkerMutexUnlock();
 
   const int width = viewwidth - 1;
-
-  const int shift_bits = light_distance_shift_bits - LIGHTZSHIFT,
-            maxlightz = MAXLIGHTZ-1;
+  const int maxlightz = MAXLIGHTZ-1;
 
   for (int i = light_distance_start;  i < light_distance_end;  i++)
   {
@@ -405,21 +445,43 @@ static void ThreadInitDistLightTables(void)
     uint16_t *sdll = planedistlight[i],
              *sdlr = sdll + width;
 
-    const angle_t *xtva = xtoviewangle;
+    const float *prfm = plane_radfog_multipliers;
+    const fixed_t base_distance = i << light_distance_shift_bits;
 
-    const fixed_t base_distance = (i << shift_bits) * (1.0 / RADFOG_MULT);
-
-    for (; sdll <= sdlr;  sdll++, sdlr--, xtva++)
+    for (; sdll <= sdlr;  sdll++, sdlr--, prfm++)
     {
-      const fixed_t distance = base_distance * floatsecant[*xtva >> ANGLETOFINESHIFT];
-
+      const fixed_t distance = base_distance * *prfm;
       *sdll = *sdlr = MIN(maxlightz, distance);
+    }
+  }
+
+  // Dithered lighting
+  if (dithered_lighting)
+  {
+    const int maxlightzdither = MAXLIGHTZDITHER-1;
+
+    for (int i = light_distance_start;  i < light_distance_end;  i++)
+    {
+      // spandistlight_ditherlevel
+      uint16_t *sdldl = planedistlight_ditherlevel[i],
+               *sdldr = sdldl + width;
+
+      const float *prfdm = plane_radfog_dither_multipliers;
+      const fixed_t base_distance = i << light_distance_shift_bits;
+
+      for (; sdldl <= sdldr;  sdldl++, sdldr--, prfdm++)
+      {
+        const fixed_t distance = base_distance * *prfdm;
+        *sdldl = *sdldr = MIN(maxlightzdither, distance);
+      }
     }
   }
 }
 
 void R_InitDistLightTables(void)
 {
+  init_radfog = false;
+
   static int max_width = 0, max_light_distance = 0;
 
   const int old_width = max_width;
@@ -427,8 +489,18 @@ void R_InitDistLightTables(void)
   if (planedistlight && planedistlight[0] && old_width < video.width)
   {
     Z_Free(planedistlight[0]);
+    Z_Free(plane_radfog_multipliers);
 
     planedistlight[0] = NULL;
+  }
+
+  // Dithered lighting
+  if (planedistlight_ditherlevel && planedistlight_ditherlevel[0])
+  {
+    Z_Free(planedistlight_ditherlevel[0]);
+    Z_Free(plane_radfog_dither_multipliers);
+
+    planedistlight_ditherlevel[0] = NULL;
   }
 
   do_radial_fog = STRICTMODE(radial_fog && diminishing_lighting);
@@ -457,6 +529,48 @@ void R_InitDistLightTables(void)
 
     for (int i = 0;  i < max_light_distance;  i++)
     { planedistlight[i] = all_spandistlight + (max_width * i); }
+
+    plane_radfog_multipliers = Z_Malloc(
+      sizeof(*plane_radfog_multipliers) * (max_width / 2 + max_width % 2),
+      PU_STATIC, 0
+    );
+  }
+
+  const int halfwidth = viewwidth / 2 + viewwidth % 2;
+
+  for (int i = 0;  i < halfwidth;  i++)
+  {
+    plane_radfog_multipliers[i] =
+      (1.0 / RADFOG_MULT) * floatsecant[xtoviewangle[i] >> ANGLETOFINESHIFT] / (1 << LIGHTZSHIFT);
+  }
+
+  // Dithered lighting
+  if (dithered_lighting)
+  {
+    if (!planedistlight_ditherlevel)
+    {
+      planedistlight_ditherlevel = Z_Malloc(
+        sizeof(*planedistlight_ditherlevel) * max_light_distance, PU_STATIC, 0
+      );
+    }
+
+    uint16_t *const all_spandistlight_ditherlevel = Z_Malloc(
+      sizeof(**planedistlight_ditherlevel) * max_light_distance * max_width, PU_STATIC, 0
+    );
+
+    for (int i = 0;  i < max_light_distance;  i++)
+    { planedistlight_ditherlevel[i] = all_spandistlight_ditherlevel + (max_width * i); }
+
+    plane_radfog_dither_multipliers = Z_Malloc(
+      sizeof(*plane_radfog_dither_multipliers) * (max_width / 2 + max_width % 2),
+      PU_STATIC, 0
+    );
+
+    for (int i = 0;  i < halfwidth;  i++)
+    {
+      plane_radfog_dither_multipliers[i] =
+        (1.0 / RADFOG_MULT) * floatsecant[xtoviewangle[i] >> ANGLETOFINESHIFT] / (1 << LIGHTZDITHERSHIFT);
+    }
   }
 
   const int idlt_iterations = MIN(max_light_distance, I_ThreadsNum());
@@ -476,7 +590,7 @@ void R_InitDistLightTables(void)
   for (int i = 1;  i < idlt_iterations;  i++)
   { I_SemaphoreWait(I_MainSemaphoreIndex()); }
 
-  init_radfog = false;
+  I_DRSSkipFrame();
 }
 
 // FOV effects ---------------------------------------------------------------
@@ -622,7 +736,7 @@ static void ProcessFOVEffects(void)
           const float step = zoomtarget - *target;
           const int sign = (step > 0) ? 1 : -1;
 
-          *target += BETWEEN(0.1f, 16.0f, fabs(step) / 3.0f) * sign;
+          *target += CLAMP(fabs(step) / 3.0f, 0.1f, 16.0f) * sign;
 
           if (   (sign > 0 && *target > zoomtarget)
               || (sign < 0 && *target < zoomtarget))
@@ -672,7 +786,7 @@ static void ProcessFOVEffects(void)
     }
   }
 
-  targetfov = BETWEEN(1.0f, 179.0f, targetfov);
+  targetfov = CLAMP(targetfov, 1.0f, 179.0f);
 
   if (r_fov != targetfov)
   {
@@ -743,7 +857,7 @@ void R_ExplosionShake(fixed_t bombx, fixed_t bomby, int force, int range)
 
 // Chasecam ------------------------------------------------------------------
 
-int chasecam_mode;
+chasecammode_t chasecam_mode;
 static int chasecam_distance;
 static int chasecam_height;
 boolean chasecam_crosshair;
@@ -770,7 +884,7 @@ void R_SetChasecamHit(const boolean value)
   chasecam.hit = value;
 }
 
-void R_UpdateChasecam(fixed_t x, fixed_t y, fixed_t z)
+void R_UpdateChasecam(const fixed_t x, const fixed_t y, const fixed_t z)
 {
   chasecam.x = x;
   chasecam.y = y;
@@ -794,12 +908,17 @@ static struct {
 
 boolean R_FreecamOn(void)
 {
-  return freecam_on;
+  return freecam_on && gamestate == GS_LEVEL;
 }
 
-void R_SetFreecamOn(const boolean value)
+void R_ToggleFreecam(void)
 {
-  freecam_on = STRICTMODE(value);
+  freecam_on = STRICTMODE(!freecam_on);
+}
+
+void R_DisableFreecamIfStrictMode(void)
+{
+  freecam_on = STRICTMODE(freecam_on);
 }
 
 freecammode_t R_GetFreecamMode(void)
@@ -809,7 +928,7 @@ freecammode_t R_GetFreecamMode(void)
 
 freecammode_t R_CycleFreecamMode(void)
 {
-  return (++freecam_mode >= NUMFREECAMMODES) ? freecam_mode = FREECAM_OFF + 1 : freecam_mode;
+  return (++freecam_mode >= NUM_FREECAMMODES) ? freecam_mode = FREECAM_OFF + 1 : freecam_mode;
 }
 
 angle_t R_GetFreecamAngle(void)
@@ -877,7 +996,8 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 
   if (lock)
   {
-    if (freecam.mobj) {
+    if (freecam.mobj)
+    {
       freecam.angle += freecam.mobj->angle;
       R_UpdateFreecamMobj(NULL);
     }
@@ -944,31 +1064,16 @@ void R_UpdateFreecam(fixed_t x, fixed_t y, fixed_t z, angle_t angle,
     if (!(freecam.pitch = MAX(0, abs(freecam.pitch) - 4*ANG1) * ((freecam.pitch > 0) ? 1 : -1)))
     { freecam.centering = false; }
   }
-  else { freecam.pitch = BETWEEN(-max_pitch_angle, max_pitch_angle, freecam.pitch + pitch); }
+  else {
+    freecam.pitch += pitch;
+    freecam.pitch  = CLAMP(freecam.pitch, -max_pitch_angle, max_pitch_angle);
+  }
 }
 
 // [Nugget] =================================================================/
 
-// [Cherry] /=================================================================
-
+// [Cherry] CVARs
 int rocket_trails_tran_pct;
-
-// Dithered lighting from Doom Retro /----------------------------------------
-
-const byte dithermatrix[DITHERSIZE][DITHERSIZE] =
-{
-    {   0, 224,  48, 208 },
-    { 176,  80, 128,  96 },
-    { 192,  32, 240,  16 },
-    { 112, 144,  64, 160 }
-};
-
-boolean dithered_lighting;
-boolean do_dithered_lighting = false;
-
-void (*colfuncdithered)(void);
-
-// [Cherry] =================================================================/
 
 void (*colfunc)(void);                    // current column draw function
 
@@ -980,13 +1085,14 @@ void (*colfunc)(void);                    // current column draw function
 //
 // killough 5/2/98: reformatted
 //
+int (*R_PointOnSide)(fixed_t x, fixed_t y, struct node_s *node) = R_PointOnSide_Classic;
 
 // Workaround for optimization bug in clang
 // fixes desync in competn/doom/fp2-3655.lmp and in dmnsns.wad dmn01m909.lmp
 #if defined(__clang__)
-int R_PointOnSide(volatile fixed_t x, volatile fixed_t y, node_t *node)
+int R_PointOnSide_Classic(volatile fixed_t x, volatile fixed_t y, node_t *node)
 #else
-int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
+int R_PointOnSide_Classic(fixed_t x, fixed_t y, node_t *node)
 #endif
 {
   if (!node->dx)
@@ -1004,8 +1110,29 @@ int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
   return FixedMul(y, node->dx>>FRACBITS) >= FixedMul(node->dy>>FRACBITS, x);
 }
 
-// killough 5/2/98: reformatted
+#if defined(__clang__)
+int R_PointOnSide_Precise(volatile fixed_t x, volatile fixed_t y, node_t *node)
+#else
+int R_PointOnSide_Precise(fixed_t x, fixed_t y, node_t *node)
+#endif
+{
+   if(!node->dx)
+      return x <= node->x ? node->dy > 0 : node->dy < 0;
 
+   if(!node->dy)
+      return y <= node->y ? node->dx < 0 : node->dx > 0;
+
+   x -= node->x;
+   y -= node->y;
+
+   // Try to quickly decide by looking at sign bits.
+   if((node->dy ^ node->dx ^ x ^ y) < 0)
+      return (node->dy ^ x) < 0;  // (left is negative)
+   return (int64_t)y * node->dx >= (int64_t)node->dy * x;
+}
+
+// killough 5/2/98: reformatted
+// [Woof!] rewritten to use only higher precision version
 int R_PointOnSegSide(fixed_t x, fixed_t y, seg_t *line)
 {
   fixed_t lx = line->v1->x;
@@ -1025,7 +1152,7 @@ int R_PointOnSegSide(fixed_t x, fixed_t y, seg_t *line)
   // Try to quickly decide by looking at sign bits.
   if ((ldy ^ ldx ^ x ^ y) < 0)
     return (ldy ^ x) < 0;          // (left is negative)
-  return FixedMul(y, ldx>>FRACBITS) >= FixedMul(ldy>>FRACBITS, x);
+  return (int64_t) y * ldx >= (int64_t) x * ldy;
 }
 
 //
@@ -1203,7 +1330,7 @@ static void R_InitTextureMapping(void)
   //  xtoviewangle will give the smallest view angle
   //  that maps to x.
 
-  linearskyfactor = FIXED2DOUBLE(slopefrac) * ANG90;
+  linearskyfactor = FixedToDouble(slopefrac) * ANG90;
 
   for (x=0; x<=viewwidth; x++)
     {
@@ -1242,60 +1369,26 @@ static void R_InitTextureMapping(void)
 
 void R_InitLightTables (void)
 {
-  init_light_tables = false; // [Nugget] Lighting modes
+  // [Nugget] Lighting modes /------------------------------------------------
 
-  int i, cm;
+  init_light_tables = false;
 
-  if (c_scalelight)
+  if (zlightoffset)
   {
-    for (cm = 0; cm < numcolormaps; ++cm)
-    {
-      for (i = 0; i < LIGHTLEVELS; ++i)
-        Z_Free(c_scalelight[cm][i]);
+    Z_Free(zlightoffset[0]);
+    Z_Free(zlightoffset);
 
-      Z_Free(c_scalelight[cm]);
-    }
-    Z_Free(c_scalelight);
+    zlightoffset = NULL;
   }
 
-  if (scalelightfixed)
+  if (scalelightoffset)
   {
-    Z_Free(scalelightfixed);
+    Z_Free(scalelightoffset[0]);
+    Z_Free(scalelightoffset);
+
+    scalelightoffset = NULL;
   }
 
-  if (c_zlight)
-  {
-    for (cm = 0; cm < numcolormaps; ++cm)
-    {
-      for (i = 0; i < LIGHTLEVELS; ++i)
-        Z_Free(c_zlight[cm][i]);
-
-      Z_Free(c_zlight[cm]);
-    }
-    Z_Free(c_zlight);
-  }
-
-  // [Cherry] Dithered lighting /----------------------------------------------
-  do_dithered_lighting = dithered_lighting && diminishing_lighting && lighting_mode < LIGHTINGMODE_INTERPOLATED;
-
-  // High precision values for radial fog dithering
-  const boolean init_zlight_frac = do_dithered_lighting && STRICTMODE(radial_fog && diminishing_lighting);
-
-  if (c_zlight_frac)
-  {
-    for (cm = 0; cm < numcolormaps; ++cm)
-    {
-      for (i = 0; i < LIGHTLEVELS; ++i)
-        Z_Free(c_zlight_frac[cm][i]);
-
-      Z_Free(c_zlight_frac[cm]);
-    }
-    Z_Free(c_zlight_frac);
-    c_zlight_frac = NULL;
-  }
-  // [Cherry] ----------------------------------------------------------------/
-
-  // [Nugget] Lighting modes
   if (lighting_mode >= LIGHTINGMODE_INTERPOLATED) // True color
   {
     num_colormap_rows = 256;
@@ -1320,97 +1413,224 @@ void R_InitLightTables (void)
     }
   }
 
-  // [Nugget] Radial fog
-  if (STRICTMODE(radial_fog))
-  { LIGHTZSHIFT = MIN(LIGHTZSHIFT, 18 - radial_plane_fog_fidelity); }
-
   LIGHTLEVELS = 1 << (8 - LIGHTSEGSHIFT);
   LIGHTBRIGHT = LIGHTLEVELS / 16;
   MAXLIGHTSCALE = 3 << (16 - LIGHTSCALESHIFT);
   MAXLIGHTZ = 1 << (27 - LIGHTZSHIFT);
 
-  scalelightfixed = Z_Malloc(MAXLIGHTSCALE * sizeof(*scalelightfixed), PU_STATIC, 0);
+  // [Nugget] ---------------------------------------------------------------/
 
   // killough 4/4/98: dynamic colormaps
-  c_zlight = Z_Malloc(sizeof(*c_zlight) * numcolormaps, PU_STATIC, 0);
-  c_scalelight = Z_Malloc(sizeof(*c_scalelight) * numcolormaps, PU_STATIC, 0);
-  // [Cherry]
-  if (init_zlight_frac)
-    c_zlight_frac = Z_Malloc(sizeof(*c_zlight_frac) * numcolormaps, PU_STATIC, 0);
 
-  for (cm = 0; cm < numcolormaps; ++cm)
-  {
-    c_zlight[cm] = Z_Malloc(LIGHTLEVELS * sizeof(**c_zlight), PU_STATIC, 0);
-    c_scalelight[cm] = Z_Malloc(LIGHTLEVELS * sizeof(**c_scalelight), PU_STATIC, 0);
-    // [Cherry]
-    if (init_zlight_frac)
-      c_zlight_frac[cm] = Z_Malloc(LIGHTLEVELS * sizeof(**c_zlight_frac), PU_STATIC, 0);
-  }
+  zlightoffset = Z_Malloc(sizeof(*zlightoffset) * LIGHTLEVELS, PU_STATIC, NULL);
+
+  int *const all_zlightoffsets =
+    Z_Malloc(sizeof(**zlightoffset) * LIGHTLEVELS * MAXLIGHTZ, PU_STATIC, NULL);
 
   // Calculate the light levels to use
   //  for each level / distance combination.
-  for (i=0; i< LIGHTLEVELS; i++)
-    {
-      int j, startmap = ((LIGHTLEVELS-LIGHTBRIGHT-i)*2)*num_colormap_rows/LIGHTLEVELS;
-
-      for (cm = 0; cm < numcolormaps; ++cm)
-      {
-        c_scalelight[cm][i] = Z_Malloc(MAXLIGHTSCALE * sizeof(***c_scalelight), PU_STATIC, 0);
-        c_zlight[cm][i] = Z_Malloc(MAXLIGHTZ * sizeof(***c_zlight), PU_STATIC, 0);
-        // [Cherry]
-        if (init_zlight_frac)
-          c_zlight_frac[cm][i] = Z_Malloc(MAXLIGHTZ * sizeof(***c_zlight_frac), PU_STATIC, 0);
-      }
-
-      for (j=0; j<MAXLIGHTZ; j++)
-        {
-          int scale = FixedDiv ((SCREENWIDTH/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
-          int t, level = startmap - (scale >> LIGHTSCALESHIFT)/DISTMAP;
-
-          if (level < 0)
-            level = 0;
-          else
-            if (level >= num_colormap_rows)
-              level = num_colormap_rows-1;
-
-          // killough 3/20/98: Initialize multiple colormaps
-          level *= 256;
-          for (t=0; t<numcolormaps; t++)         // killough 4/4/98
-            c_zlight[t][i][j] = level;
-
-          // [Cherry] High precision values for radial fog dithering
-          if (init_zlight_frac)
-          {
-            const int level_frac = BETWEEN(0, (num_colormap_rows << 8) - 1,
-                (startmap << 8) - ((scale >> (LIGHTSCALESHIFT - 8)) / DISTMAP));
-            for (t = 0; t < numcolormaps; t++)
-              c_zlight_frac[t][i][j] = level_frac;
-          }
-        }
-    }
-
-  // [Nugget]: [crispy] re-calculate fake contrast
-  P_SegLengths(true);
-
-  setsizeneeded = true;
-  R_DeferredInitDistLightTables(); // [Nugget] Radial fog
-}
-
-// [Nugget] Static, added X parameter
-// [Cherry] Added dither_threshold output parameter
-static int R_GetLightIndexVanilla(const fixed_t scale, const int x, int *dither_threshold)
-{
-  const fixed_t raw = (int64_t)scale * (160 << FRACBITS) / lightfocallength;
-  const int index = raw >> LIGHTSCALESHIFT;
-
-  // [Cherry] Calculate dithering threshold
-  if (do_dithered_lighting && dither_threshold)
+  for (int lightlevel = 0; lightlevel < LIGHTLEVELS; lightlevel++)
   {
-    *dither_threshold = (index <= 0 || index >= MAXLIGHTSCALE) ? 0
-      : (raw & ((1 << (LIGHTSCALESHIFT + 1)) - 1)) >> (LIGHTSCALESHIFT - 7);
+    zlightoffset[lightlevel] = all_zlightoffsets + MAXLIGHTZ * lightlevel;
+
+    const int startmap =
+      ((LIGHTLEVELS - 1 - lightlevel) * 2) * num_colormap_rows / LIGHTLEVELS;
+
+    for (int lightz = 0; lightz < MAXLIGHTZ; lightz++)
+    {
+      const int scale =
+        FixedDiv((SCREENWIDTH / 2 * FRACUNIT), (lightz + 1) << LIGHTZSHIFT);
+
+      int level = startmap - (scale >> LIGHTSCALESHIFT) / DISTMAP;
+      level = CLAMP(level, 0, num_colormap_rows - 1);
+
+      zlightoffset[lightlevel][lightz] = level * 256;
+    }
   }
 
-  return BETWEEN(0, MAXLIGHTSCALE - 1, index);
+  // [Woof!] scalelight has been made independent of view size,
+  // so we initialize it here
+
+  scalelightoffset = Z_Malloc(sizeof(*scalelightoffset) * LIGHTLEVELS, PU_STATIC, NULL);
+
+  int *const all_scalelightoffsets =
+    Z_Malloc(sizeof(**scalelightoffset) * LIGHTLEVELS * MAXLIGHTSCALE, PU_STATIC, NULL);
+
+  // Calculate the light levels to use
+  //  for each level / scale combination.
+  for (int lightlevel = 0; lightlevel < LIGHTLEVELS; lightlevel++)
+  {
+    scalelightoffset[lightlevel] = all_scalelightoffsets + MAXLIGHTSCALE * lightlevel;
+
+    const int startmap =
+      ((LIGHTLEVELS - 1 - lightlevel) * 2) * num_colormap_rows / LIGHTLEVELS;
+
+    for (int lightscale = 0; lightscale < MAXLIGHTSCALE; lightscale++)
+    {
+      int level = startmap - lightscale / DISTMAP;
+      level = CLAMP(level, 0, num_colormap_rows - 1);
+
+      scalelightoffset[lightlevel][lightscale] = level * 256;
+    }
+  }
+
+  // [Nugget] Dithered lighting /---------------------------------------------
+
+  // If one of these is initialized, all of them must be, so just check one
+  if (scalelight_ditherlevel)
+  {
+    Z_Free(scalelight_ditherlevel[0]);
+    Z_Free(scalelight_nextcolormap[0]);
+    Z_Free(zlight_ditherlevel[0]);
+    Z_Free(zlight_nextcolormap[0]);
+
+    Z_Free(scalelight_ditherlevel);
+    Z_Free(scalelight_nextcolormap);
+    Z_Free(zlight_ditherlevel);
+    Z_Free(zlight_nextcolormap);
+
+    scalelight_ditherlevel = NULL;
+  }
+
+  static boolean old_dithered_lighting = false;
+
+  dithered_lighting =
+    cvar_dithered_lighting && (!truecolor_rendering || allow_truecolor_dithering);
+
+  if (old_dithered_lighting != dithered_lighting)
+  {
+    old_dithered_lighting = dithered_lighting;
+    R_DeferredInitDrawFunctions();
+  }
+
+  if (dithered_lighting)
+  {
+    LIGHTSCALEDITHERSHIFT = MAX(0, LIGHTSCALESHIFT - NUM_DITHER_LEVELS_BITS);
+    LIGHTZDITHERSHIFT = MAX(0, LIGHTZSHIFT - NUM_DITHER_LEVELS_BITS);
+
+    MAXLIGHTSCALEDITHER = 3 << (16 - LIGHTSCALEDITHERSHIFT);
+    MAXLIGHTZDITHER = 1 << (27 - LIGHTZDITHERSHIFT);
+
+    scalelight_ditherlevel = Z_Malloc(sizeof(*scalelight_ditherlevel) * LIGHTLEVELS, PU_STATIC, 0);
+    scalelight_nextcolormap = Z_Malloc(sizeof(*scalelight_nextcolormap) * LIGHTLEVELS, PU_STATIC, 0);
+    zlight_ditherlevel = Z_Malloc(sizeof(*zlight_ditherlevel) * LIGHTLEVELS, PU_STATIC, 0);
+    zlight_nextcolormap = Z_Malloc(sizeof(*zlight_nextcolormap) * LIGHTLEVELS, PU_STATIC, 0);
+
+    byte *const all_scalelight_ditherlevels =
+      Z_Malloc(sizeof(*all_scalelight_ditherlevels) * LIGHTLEVELS * MAXLIGHTSCALEDITHER, PU_STATIC, 0);
+
+    memset(
+      all_scalelight_ditherlevels, NUM_DITHER_LEVELS-1,
+      sizeof(*all_scalelight_ditherlevels) * LIGHTLEVELS * MAXLIGHTSCALEDITHER
+    );
+
+    int *const all_scalelight_nextcolormaps =
+      Z_Malloc(sizeof(*all_scalelight_nextcolormaps) * LIGHTLEVELS * MAXLIGHTSCALE, PU_STATIC, 0);
+
+    byte *const all_planezlight_ditherlevels =
+      Z_Malloc(sizeof(*all_planezlight_ditherlevels) * LIGHTLEVELS * MAXLIGHTZDITHER, PU_STATIC, 0);
+
+    memset(
+      all_planezlight_ditherlevels, 0,
+      sizeof(*all_planezlight_ditherlevels) * LIGHTLEVELS * MAXLIGHTZDITHER
+    );
+
+    int *const all_planezlight_nextcolormaps =
+      Z_Malloc(sizeof(*all_planezlight_nextcolormaps) * LIGHTLEVELS * MAXLIGHTZ, PU_STATIC, 0);
+
+    const int dither_levels_per_z = MAXLIGHTZDITHER / MAXLIGHTZ;
+
+    for (int i = 0;  i < LIGHTLEVELS;  i++)
+    {
+      zlight_ditherlevel[i] = all_planezlight_ditherlevels + (MAXLIGHTZDITHER * i);
+      zlight_nextcolormap[i] = all_planezlight_nextcolormaps + (MAXLIGHTZ * i);
+
+      int *const curr_planezlight = zlightoffset[i];
+
+      for (int j = 0, next_j = j;  j < MAXLIGHTZ-1;  j = next_j)
+      {
+        do {
+          next_j++;
+        } while (next_j < MAXLIGHTZ && curr_planezlight[j] == curr_planezlight[next_j]);
+
+        for (int k = j;  k < next_j;  k++)
+        { zlight_nextcolormap[i][k] = curr_planezlight[MIN(MAXLIGHTZ-1, next_j)]; }
+
+        if (next_j >= MAXLIGHTZ) { break; }
+
+        const int dither_level_max = dither_levels_per_z * (next_j - j);
+
+        for (int k = 0;  k < dither_level_max;  k++)
+        {
+          zlight_ditherlevel[i][j * dither_levels_per_z + k] =
+            NUM_DITHER_LEVELS * k / dither_level_max;
+        }
+
+        if (curr_planezlight[next_j] / 256 >= num_colormap_rows-1)
+        {
+          for (int k = next_j;  k < MAXLIGHTZ;  k++)
+          { zlight_nextcolormap[i][k] = curr_planezlight[MAXLIGHTZ-1]; }
+
+          break;
+        }
+      }
+    }
+
+    const int dither_levels_per_scale = MAXLIGHTSCALEDITHER / MAXLIGHTSCALE;
+
+    for (int i = 0;  i < LIGHTLEVELS;  i++)
+    {
+      scalelight_ditherlevel[i] = all_scalelight_ditherlevels + (MAXLIGHTSCALEDITHER * i);
+      scalelight_nextcolormap[i] = all_scalelight_nextcolormaps + (MAXLIGHTSCALE * i);
+
+      int *const curr_scalelight = scalelightoffset[i];
+
+      for (int j = MAXLIGHTSCALE-1, next_j = j;  j > 0;  j = next_j)
+      {
+        do {
+          next_j--;
+        } while (next_j >= 0 && curr_scalelight[j] == curr_scalelight[next_j]);
+
+        for (int k = j;  k > next_j;  k--)
+        { scalelight_nextcolormap[i][k] = curr_scalelight[MAX(0, next_j)]; }
+
+        if (next_j < 0) { break; }
+
+        const int dither_level_max = dither_levels_per_scale * (j - next_j);
+
+        for (int k = 0;  k < dither_level_max;  k++)
+        {
+          scalelight_ditherlevel[i][(j-1) * dither_levels_per_scale + k] =
+            (NUM_DITHER_LEVELS * k / dither_level_max) ^ (NUM_DITHER_LEVELS - 1);
+        }
+
+        if (curr_scalelight[next_j] / 256 >= num_colormap_rows-1)
+        {
+          for (int k = next_j;  k >= 0;  k--)
+          { scalelight_nextcolormap[i][k] = curr_scalelight[0]; }
+
+          break;
+        }
+      }
+    }
+  }
+
+  // [Nugget] ---------------------------------------------------------------/
+
+  // [Nugget]
+  P_InitFakeContrast();
+  R_DeferredInitDistLightTables(); // Radial fog
+}
+
+// [Nugget] Added X parameter, renamed
+int R_GetLightIndexVanilla(const fixed_t scale, const int x)
+{
+  // Dithered lighting
+  dc_rawlightindex = ((int64_t) scale * (160 << FRACBITS) / lightfocallength);
+
+  const int index = dc_rawlightindex >> LIGHTSCALESHIFT;
+
+  return clampi(index, 0, MAXLIGHTSCALE - 1);
 }
 
 static fixed_t viewpitch;
@@ -1446,7 +1666,7 @@ static void R_SetupFreelook(void)
 
   for (i = 0; i < viewheight; i++)
   {
-    dy = abs(((i - centery) << FRACBITS) + FRACUNIT / 2);
+    dy = abs(IntToFixed(i - centery) + FRACUNIT / 2);
     yslope[i] = FixedDiv(projection, dy);
   }
 }
@@ -1479,6 +1699,11 @@ void R_ExecuteSetViewSize (void)
 
   setsizeneeded = false;
 
+  if (setblocks <= 10)
+  {
+    st_height = st_height_screenblocks10;
+  }
+
   if (setblocks == 11)
     {
       scaledviewwidth_nonwide = NONWIDEWIDTH;
@@ -1490,14 +1715,17 @@ void R_ExecuteSetViewSize (void)
     {
       scaledviewwidth_nonwide = NONWIDEWIDTH;
       scaledviewwidth = video.unscaledw;
-      scaledviewheight = SCREENHEIGHT - ST_HEIGHT;
+      scaledviewheight = SCREENHEIGHT - st_height;
     }
   else
     {
-      const int st_screen = SCREENHEIGHT - ST_HEIGHT;
+      const int st_screen = SCREENHEIGHT - st_height;
 
       scaledviewwidth_nonwide = setblocks * 32;
       scaledviewheight = (setblocks * st_screen / 10) & ~7; // killough 11/98
+
+      if (!scaledviewheight)
+        return;
 
       if (video.unscaledw > SCREENWIDTH)
         scaledviewwidth = (scaledviewheight * video.unscaledw / st_screen) & ~7;
@@ -1510,7 +1738,7 @@ void R_ExecuteSetViewSize (void)
   if (scaledviewwidth == video.unscaledw)
     scaledviewy = 0;
   else
-    scaledviewy = (SCREENHEIGHT - ST_HEIGHT - scaledviewheight) / 2;
+    scaledviewy = (SCREENHEIGHT - st_height - scaledviewheight) / 2;
 
   view.x = scaledviewx;
   view.y = scaledviewy;
@@ -1558,47 +1786,26 @@ void R_ExecuteSetViewSize (void)
     skyiscale = tan(r_fov * M_PI / 360.0) * SCREENWIDTH / viewwidth_nonwide * FRACUNIT;
   }
 
-  // [Nugget] FOV-based sky stretching;
-  // we intentionally use `custom_fov` to disregard any FOV effects
+  // [Nugget] FOV-based sky stretching /--------------------------------------
+
+  // We intentionally use `custom_fov` to disregard any FOV effects
   skyiscalediff = (custom_fov == FOV_DEFAULT)
                 ? FRACUNIT
                 : tan(custom_fov * M_PI / 360.0) * FRACUNIT;
 
+  R_UpdateStretchSkies();
+
+  // [Nugget] ---------------------------------------------------------------/
+
   for (i=0 ; i<viewwidth ; i++)
     {
-      fixed_t cosadj = abs(finecosine[xtoviewangle[i]>>ANGLETOFINESHIFT]);
-      distscale[i] = FixedDiv(FRACUNIT,cosadj);
       // thing clipping
       screenheightarray[i] = viewheight;
     }
 
-  // Calculate the light levels to use
-  //  for each level / scale combination.
-  for (i=0; i<LIGHTLEVELS; i++)
-    {
-      int j, startmap = ((LIGHTLEVELS-LIGHTBRIGHT-i)*2)*num_colormap_rows/LIGHTLEVELS;
-
-      for (j=0 ; j<MAXLIGHTSCALE ; j++)
-        {                                       // killough 11/98:
-          int t, level = startmap - j / DISTMAP;
-
-          if (level < 0)
-            level = 0;
-
-          if (level >= num_colormap_rows)
-            level = num_colormap_rows-1;
-
-          // killough 3/20/98: initialize multiple colormaps
-          level *= 256;
-
-          for (t=0; t<numcolormaps; t++)     // killough 4/4/98
-            c_scalelight[t][i][j] = level;
-        }
-    }
-
   // [Nugget] Alt. intermission background
   if (!WI_AltInterpicOn())
-    ST_refreshBackground(); // [Nugget] NUGHUD
+    st_refresh_background = true;
 }
 
 //
@@ -1625,16 +1832,12 @@ void R_Init (void)
   R_InitData();
   R_SetViewSize(screenblocks);
   R_InitPlanes();
-  R_InitLightTables();
-  R_InitSkyMap();
+  /*R_InitLightTables();*/ // [Nugget] Don't initialize twice at startup
   R_InitTranslationTables();
   V_InitFlexTranTable();
 
   // [FG] spectre drawing mode
   R_SetFuzzColumnMode();
-
-  // [Nugget] `colfunc` initialized in this function
-  R_InitDrawFunctions();
 }
 
 //
@@ -1764,7 +1967,7 @@ void R_SetupFrame (player_t *player)
                                                 && !R_FreecamOn()));
 
   // Freecam
-  if (R_FreecamOn() && gamestate == GS_LEVEL)
+  if (R_FreecamOn())
   {
     static player_t dummyplayer = {0};
     static mobj_t dummymobj = {0};
@@ -1818,7 +2021,7 @@ void R_SetupFrame (player_t *player)
 
   // [Nugget] ===============================================================/
 
-  int i, cm;
+  int cm;
   fixed_t pitch;
   const boolean use_localview = CheckLocalView(player);
   const boolean camera_ready = (
@@ -1862,7 +2065,7 @@ void R_SetupFrame (player_t *player)
   {
     if ((use_localview
          // [Nugget] Freecam
-         || (R_FreecamOn() && R_GetFreecamMode() == FREECAM_CAM
+         || (R_GetFreecamMode() == FREECAM_CAM
              && (!R_GetFreecamMobj() || R_ChasecamOn())))
         && CalcViewAngle)
     {
@@ -1873,11 +2076,11 @@ void R_SetupFrame (player_t *player)
       viewangle = LerpAngle(player->mo->oldangle, player->mo->angle);
     }
 
-    if ((use_localview || (R_FreecamOn() && R_GetFreecamMode() == FREECAM_CAM)) // [Nugget] Freecam
-        && raw_input && !player->centering && (mouselook || padlook)) // [Nugget] Freelook checks
+    if ((use_localview || R_GetFreecamMode() == FREECAM_CAM) // [Nugget] Freecam
+        && raw_input && !player->centering && freelook) // [Nugget] Freelook check
     {
       basepitch = player->pitch + localview.pitch;
-      basepitch = BETWEEN(-max_pitch_angle, max_pitch_angle, basepitch);
+      basepitch = CLAMP(basepitch, -max_pitch_angle, max_pitch_angle);
     }
     else
     {
@@ -2069,7 +2272,7 @@ void R_SetupFrame (player_t *player)
       {
         fixed_t frac;
 
-        viewz  = BETWEEN(sec->floorheight + FRACUNIT, sec->ceilingheight - FRACUNIT, viewz);
+        viewz  = CLAMP(viewz, sec->floorheight + FRACUNIT, sec->ceilingheight - FRACUNIT);
         frac   = FixedDiv(viewz - z, FixedMul(slope, dist));
         viewx -= FixedMul(dx, frac);
         viewy -= FixedMul(dy, frac);
@@ -2109,76 +2312,83 @@ void R_SetupFrame (player_t *player)
   else
     extralight = player->extralight * LIGHTBRIGHT;
 
-  extralight += STRICTMODE(LIGHTBRIGHT * extra_level_brightness);
+  extralight += STRICTMODE(extra_level_brightness * LIGHTBRIGHT);
 
   viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
   viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
 
   // killough 3/20/98, 4/4/98: select colormap based on player status
+  const sector_t * sec = player->mo->subsector->sector;
 
-  if (player->mo->subsector->sector->heightsec != -1)
-    {
-      const sector_t *s = player->mo->subsector->sector->heightsec + sectors;
-      cm = viewz < s->interpfloorheight ? s->bottommap : viewz > s->interpceilingheight ?
-        s->topmap : s->midmap;
-      if (cm < 0 || cm > numcolormaps)
-        cm = 0;
-    }
-  else
-    cm = 0;
-
-  V_SetCurrentColormap(cm);
-
-  zlight = c_zlight[cm];
-  if (c_zlight_frac) // [Cherry]
-    zlight_frac = c_zlight_frac[cm];
-  scalelight = c_scalelight[cm];
-
-  fixedcolormapoffset = 0;
-
-  if (truecolor_rendering)
+  if (sec->colormap)
   {
-    if (player->fixedcolormap)
-      {
-        // Only the first 32 original rows are expanded and should be shifted
-        const int cmaprow = (MIN(32, player->fixedcolormap) << COLORMAP_ROW_SHIFT_BITS)
-                          + MAX(0, player->fixedcolormap - 32);
-
-        fixedcolormapoffset = cmaprow * 256;
-
-        fixedcolormap32 = fullcolormap32
-          + fixedcolormapoffset;
-
-        walllights = scalelightfixed;
-
-        for (i=0 ; i<MAXLIGHTSCALE ; i++)
-          scalelightfixed[i] = fixedcolormapoffset;
-
-        // [Nugget] Set `dc_colormap` here
-        dc_colormap32[0] = dc_colormap32[1] = fixedcolormap32;
-      }
-    else
-      fixedcolormap32 = NULL;
+    cm = sec->colormap;
+  }
+  else if (sec->heightsec != -1)
+  {
+    const sector_t * const s = &sectors[sec->heightsec];
+    cm = viewz < s->interpfloorheight   ? s->bottommap
+       : viewz > s->interpceilingheight ? s->topmap
+                                        : s->midmap;
   }
   else
   {
-    if (player->fixedcolormap)
-      {
-        fixedcolormapoffset = player->fixedcolormap * 256;
+    cm = 0;
+  }
 
-        fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
-          + fixedcolormapoffset;
+  if (cm < 0 || cm > numcolormaps)
+  {
+    cm = 0;
+  }
 
-        walllights = scalelightfixed;
+  V_SetCurrentColormap(cm);
 
-        for (i=0 ; i<MAXLIGHTSCALE ; i++)
-          scalelightfixed[i] = fixedcolormapoffset;
+  fixedcolormapoffset = player->fixedcolormap * 256;
 
-        // [Nugget] Set `dc_colormap` here
-        dc_colormap[0] = dc_colormap[1] = dc_colormap[2] = fixedcolormap;
-      }
+  if (truecolor_rendering)
+  {
+    if (fixedcolormapoffset)
+    {
+      // Only the first 32 original rows are expanded and should be shifted
+      const int fixedcolormapindex =
+        (MIN(32, player->fixedcolormap) << COLORMAP_ROW_SHIFT_BITS)
+        + MAX(0, player->fixedcolormap - 32);
+
+      fixedcolormapoffset = fixedcolormapindex * 256;
+
+      // killough 3/20/98: use fullcolormap
+      fixedcolormap32 = fullcolormap32 + fixedcolormapoffset;
+
+      // [Nugget] Set `dc_colormap` here
+      dc_colormap32[0] = dc_colormap32[1] = fixedcolormap32;
+
+      // [Nugget] Dithered lighting
+      dc_nextcolormap32[0] = dc_nextcolormap32[1] = fixedcolormap32;
+      R_SetDitherPattern(0);
+    }
     else
-      fixedcolormap = 0;
+    {
+      fixedcolormap32 = NULL;
+    }
+  }
+  else
+  {
+    if (fixedcolormapoffset)
+    {
+      // killough 3/20/98: use fullcolormap
+      fixedcolormap = fullcolormap + fixedcolormapoffset;
+
+      // [Nugget] Set `dc_colormap` here
+      dc_colormap[0] = dc_colormap[1] = fixedcolormap;
+
+      // [Nugget] Dithered lighting
+      dc_nextcolormap[0] = dc_nextcolormap[1] = fixedcolormap;
+      R_SetDitherPattern(0);
+    }
+    else
+    {
+      fixedcolormap = NULL;
+    }
   }
 
   validcount++;
@@ -2399,31 +2609,42 @@ void R_BindRenderVariables(void)
   BIND_NUM_GENERAL(extra_level_brightness, 0, -8, 8, "Level brightness"); // [Nugget] Broader light-level range
   BIND_NUM_GENERAL(fuzzmode, FUZZ_BLOCKY, FUZZ_BLOCKY, FUZZ_ORIGINAL,
     "Partial Invisibility (0 = Blocky; 1 = Refraction; 2 = Shadow, 3 = Original)");
-  // [Cherry] Option to stretch short skies only when mouselook is enabled
-  BIND_NUM_GENERAL(stretchsky, STRETCHSKY_OFF, STRETCHSKY_OFF, STRETCHSKY_MOUSELOOK,
-                   "Stretch short skies for mouselook"); // [Nugget] Extended description
+
+  // [Cherry] Option to stretch short skies only when free look is enabled
+  BIND_NUM_GENERAL(stretchsky, STRETCHSKY_OFF, STRETCHSKY_OFF, STRETCHSKY_FREELOOK,
+                   "Stretch short skies for free look"); // [Nugget] Extended description
 
   // [Nugget] FOV-based sky stretching (CFG-only)
   M_BindBool("fov_stretchsky", &fov_stretchsky, NULL,
-             true, ss_display, wad_no,
+             true, ss_none, wad_no,
              "Stretch skies based on FOV");
 
-  BIND_BOOL_GENERAL(linearsky, false, "Linear horizontal scrolling for skies");
-  BIND_BOOL_GENERAL(r_swirl, false, "Swirling animated flats");
+  // [Nugget] Sky projection: replaced `linearsky`
+  M_BindNum("sky_projection", &sky_projection, NULL,
+            SKYPROJ_VANILLA, SKYPROJ_VANILLA, NUM_SKYPROJS-1, ss_gen, wad_yes,
+            "Sky projection (0 = Vanilla; 1 = Linear; 2 = Cylindrical)");
 
-  // [Cherry]
-  BIND_BOOL_GENERAL(dithered_lighting, false, "Dithered lighting");
+  BIND_BOOL_GENERAL(r_swirl, false, "Swirling animated flats");
 
   // [Nugget] /---------------------------------------------------------------
 
   M_BindNum("fake_contrast", &fake_contrast, NULL,
-            FAKECONTRAST_SMOOTH, FAKECONTRAST_OFF, NUM_FAKECONTRAST-1, ss_display, wad_yes,
-            "Fake contrast for walls (0 = Off; 1 = Smooth; 2 = Vanilla)");
+            FAKECONTRAST_VANILLA, FAKECONTRAST_OFF, NUM_FAKECONTRAST-1, ss_display, wad_yes,
+            "Fake contrast for walls (0 = Off; 1 = Vanilla; 2 = Smooth)");
 
   // (CFG-only)
   M_BindBool("diminishing_lighting", &diminishing_lighting, NULL,
              true, ss_none, wad_yes,
              "Diminishing lighting (light emitted by player)");
+
+  M_BindBool("dithered_lighting", &cvar_dithered_lighting, NULL,
+             false, ss_display, wad_yes,
+             "Dithered lighting");
+
+  // (CFG-only)
+  M_BindBool("allow_truecolor_dithering", &allow_truecolor_dithering, NULL,
+             false, ss_none, wad_no,
+             "Allow dithered lighting for true-color rendering");
 
   M_BindNum("sprite_shadows", &sprite_shadows, NULL,
             SPRITESHADOWS_OFF, SPRITESHADOWS_OFF, NUM_SPRITESHADOWS-1, ss_display, wad_yes,
@@ -2522,9 +2743,6 @@ void R_BindRenderVariables(void)
 
   M_BindBool("translucency", &translucency, NULL, true, ss_gen, wad_yes,
              "Translucency for some things");
-  M_BindNum("tran_filter_pct", &tran_filter_pct, NULL,
-            66, 0, 100, ss_none, wad_yes,
-            "Percent of foreground/background translucency mix");
 
   M_BindBool("flipcorpses", &flipcorpses, NULL, false, ss_enem, wad_no,
              "Randomly mirrored death animations");
@@ -2539,12 +2757,17 @@ void R_BindRenderVariables(void)
             "Height of player's POV");
 
   M_BindNum("flinching", &flinching, NULL,
-            0, 0, 3, ss_view, wad_yes,
+            FLINCH_OFF, FLINCH_OFF, NUM_FLINCHS-1, ss_view, wad_yes,
             "Flinch player view (0 = Off; 1 = Upon landing; 2 = Upon taking damage; 3 = Upon either)");
 
   M_BindBool("vertical_lockon", &vertical_lockon, NULL,
              false, ss_view, wad_no,
              "Camera automatically locks onto targets vertically");
+
+  // (CFG-only)
+  M_BindNum("vertical_lockon_speed_pct", &vertical_lockon_speed_pct, NULL,
+            100, 50, 100, ss_none, wad_no,
+            "Vertical-lockon speed percent");
 
   M_BindBool("screen_shake", &screen_shake, NULL,
              false, ss_view, wad_yes,

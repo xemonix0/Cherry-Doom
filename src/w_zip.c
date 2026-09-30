@@ -61,7 +61,7 @@ static void AddWadInMem(w_handle_t handle, const char *name, int index,
 
     if (!mz_zip_reader_extract_to_mem(zip, index, data, data_size, 0))
     {
-        I_Error("AddWadInZip: mz_zip_reader_extract_to_mem failed");
+        I_Error("mz_zip_reader_extract_to_mem failed");
     }
 
     wadinfo_t header;
@@ -120,7 +120,11 @@ static void AddWadInMem(w_handle_t handle, const char *name, int index,
         // [FG] WAD file that contains the lump
         item.wad_file = wadname;
 
-        item.source = source; // [Cherry]
+        // [Nugget]
+        item.file_index = numfiles - 1;
+
+        // [Cherry]
+        item.source = source;
         array_push(lumpinfo, item);
 
         // [Cherry] Mark the WAD file as one containing maps (for WAD stats)
@@ -197,6 +201,9 @@ static boolean W_ZIP_AddDir(w_handle_t handle, const char *path,
                                    .priority = handle.priority};
         item.handle = local_handle;
 
+        // [Nugget]
+        item.file_index = numfiles - 1;
+
         // [Cherry]
         item.source = source;
 
@@ -246,6 +253,9 @@ static w_type_t W_ZIP_Open(const char *path, w_handle_t *handle, wad_source_t so
 
     I_Printf(VB_INFO, " adding %s", path);
 
+    // [Nugget]
+    numfiles++;
+
     archive_t archive = {zip, directory};
     array_push(archives, archive);
     handle->p1.archive = array_end(archives) - 1;
@@ -260,7 +270,7 @@ static void W_ZIP_Read(w_handle_t handle, void *dest, int size)
 
     if (!result)
     {
-        I_Error("W_ZIP_Read: mz_zip_reader_extract_to_mem failed");
+        I_Error("mz_zip_reader_extract_to_mem failed");
     }
 }
 

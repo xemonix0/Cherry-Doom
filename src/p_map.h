@@ -104,6 +104,8 @@ extern int numspechit;
 
 extern fixed_t attackrange;
 
+extern struct arena_s *msecnodes_arena;
+
 // [Cherry] Blood amount scales with the amount of damage dealt
 extern boolean blood_amount_scaling;
 

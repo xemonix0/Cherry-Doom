@@ -1,6 +1,6 @@
 ## Features
 
-The build corresponding to this feature list is based on [Nugget Doom 5.1.0](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-5.1.0).
+The build corresponding to this feature list is based on [Nugget Doom 6.0.1](https://github.com/MrAlaux/Nugget-Doom/releases/tag/nugget-doom-6.0.1).
 
 Some of Cherry Doom's features originate from other sources; acknowledgements are provided _(ported from [p.f.] or inspired by [i.b.])_.
 
@@ -8,13 +8,11 @@ Config variables marked as "_CFG-only_" don't have a corresponding menu item and
 
 ### General
 
-- _Mute Inactive Window_ setting [p.f. International Doom]
 - _Floating Powerups_ setting [p.f. International Doom]
 - _Rocket Trails_ setting [partially p.f. Doom Retro]
     - Customize smoke particle spawn rate and translucency via CFG-only CVARs: `rocket_trails_interval` and `rocket_trails_tran_pct` respectively
-- _Mouselook_ option for the _Stretch Short Skies_ setting, enabling sky stretching only with mouselook active
+- _Free Look_ option for the _Stretch Short Skies_ setting, enabling sky stretching only when free look is active
 - _Less Blinding Tints_ setting (by [@Spaicrab](https://github.com/Spaicrab))
-- _Dithered Lighting_ setting [i.b. Doom Retro]
 
 #### Intermission screen
 
